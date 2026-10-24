@@ -11,6 +11,7 @@ import {
   mapPublicCategories,
   mapPublicStoryDetail,
   mapPublicStoryListItem,
+  mapPublicStoryListItems,
 } from './mappers.ts'
 
 const categories = mapPublicCategories([
@@ -65,18 +66,39 @@ assert.equal(detail.bodyFormat, 'html')
 assert.equal(detail.viewCount, 9)
 assert.equal(detail.blocks.length, 0)
 
-const pinned = featuredFromPreview(
-  [
-    { ...mapped!, id: '1', isFeatured: true },
-    { ...mapped!, id: '2', isFeatured: false },
-    { ...mapped!, id: '3', isFeatured: true },
-  ],
-  3
-)
+const pinned = featuredFromPreview([
+  { ...mapped!, id: '1', isFeatured: true },
+  { ...mapped!, id: '2', isFeatured: false },
+  { ...mapped!, id: '3', isFeatured: true },
+  { ...mapped!, id: '4', isFeatured: true },
+  { ...mapped!, id: '5', isFeatured: true },
+])
 assert.deepEqual(
   pinned.map(item => item.id),
-  ['1', '3']
+  ['1', '3', '4', '5']
 )
+
+const publicListPage = {
+  items: [
+    { id: 11, pinned: true, title: '민재', imageUrl: 'http://localhost:9000/cover.png' },
+    { id: 9, pinned: true, title: '협약' },
+    { id: 6, pinned: true, title: '페스티벌' },
+    { id: 2, pinned: false, title: '커리큘럼' },
+    { id: 7, pinned: false, title: '보고회' },
+    { id: 4, pinned: false, title: '후기' },
+    { id: 12, pinned: false, title: '개소식' },
+    { id: 5, pinned: false, title: '인터뷰' },
+    { id: 1, pinned: false, title: '스크랩' },
+  ],
+}
+const fromPublicList = featuredFromPreview(mapPublicStoryListItems(publicListPage.items))
+assert.deepEqual(
+  fromPublicList.map(item => item.id),
+  ['11', '9', '6']
+)
+assert.equal(fromPublicList[0]?.imageUrl, 'http://localhost:9000/cover.png')
+assert.equal(fromPublicList[1]?.imageUrl, undefined)
+assert.equal(fromPublicList[2]?.imageUrl, undefined)
 
 const latest = latestExcluding(
   [

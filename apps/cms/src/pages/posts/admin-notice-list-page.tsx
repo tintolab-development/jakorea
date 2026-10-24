@@ -31,6 +31,7 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   ActionResultModal,
+  showDeleteCompletedAlert,
   useCmsAlert,
   FilterTableToolbarButton,
 } from '@/shared/ui'
@@ -160,6 +161,7 @@ export function AdminNoticeListPage() {
       await bulkDeleteMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setBulkDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       setActionResultTitle('공지 삭제 실패')
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))

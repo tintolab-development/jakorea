@@ -125,6 +125,17 @@ export function formatApprovalNotificationSentAt(d = new Date()): string {
   return `${y}.${m}.${day} ${hh}:${mm}:${ss}`
 }
 
+function withIndividualRejectedAvailableActions(actions?: string[]): string[] {
+  const next = new Set(
+    (actions ?? []).filter(
+      action => action !== 'APPROVE' && action !== 'REJECT' && action !== 'CANCEL_APPROVAL'
+    )
+  )
+  next.add('VIEW')
+  next.add('CANCEL_REJECTION')
+  return [...next]
+}
+
 export function patchGeneralIndividualApplicantForApprovalStatus(
   row: GeneralIndividualApplicantRow,
   approvalStatus: ApplicantApprovalStatusKey,
@@ -148,6 +159,7 @@ export function patchGeneralIndividualApplicantForApprovalStatus(
       approvalNotifyTiming: undefined,
       rejectionNotifyTiming: notifyOptions?.notifyTiming,
       approvalNotificationSentAt: resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
+      availableActions: withIndividualRejectedAvailableActions(row.availableActions),
     }
   }
   return {

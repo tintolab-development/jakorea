@@ -8,7 +8,15 @@ export function isIdTypeResidentOptionId(optionId: string | null | undefined): b
 }
 
 export function splitIdTypeResidentInputValue(raw: string): { front: string; back: string } {
-  const digits = (raw ?? '').replace(/\D/g, '')
+  const text = raw ?? ''
+  const hyphen = text.indexOf('-')
+  if (hyphen >= 0) {
+    return {
+      front: text.slice(0, hyphen).replace(/\D/g, '').slice(0, 6),
+      back: text.slice(hyphen + 1).replace(/\D/g, '').slice(0, 7),
+    }
+  }
+  const digits = text.replace(/\D/g, '')
   return { front: digits.slice(0, 6), back: digits.slice(6, 13) }
 }
 
@@ -17,6 +25,7 @@ export function joinIdTypeResidentInputValue(front: string, back: string): strin
   const b = (back ?? '').replace(/\D/g, '').slice(0, 7)
   if (!f && !b) return ''
   if (!b) return f
+  if (!f) return `-${b}`
   return `${f}-${b}`
 }
 

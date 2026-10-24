@@ -20,6 +20,28 @@ export type GeneralParticipantRegistrationFlags = GeneralParticipantAudienceFlag
   volunteer: boolean
 }
 
+export type SavedGeneralParticipantTypeLocks = {
+  individual: boolean
+  organization: boolean
+  teacherInstructor: boolean
+  volunteer: boolean
+}
+
+/**
+ * 프로그램 상세 공통 정보 수정 — 참여자 유형은 등록 이후 전부 잠근다.
+ * 개인 / 학교·기관 / 강사 / 봉사자 모두 추가·해제 불가.
+ */
+export function savedGeneralParticipantTypeLocks(
+  _program?: Pick<Program, 'generalParticipantTypes' | 'programRecruitments'>,
+): SavedGeneralParticipantTypeLocks {
+  return {
+    individual: true,
+    organization: true,
+    teacherInstructor: true,
+    volunteer: true,
+  }
+}
+
 const PARTICIPANT_AUDIENCE_LABEL_BY_KIND: Record<GeneralParticipantAudienceSelectValue, string> = {
   individual:
     TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.find(option => option.value === 'individual')?.label ??

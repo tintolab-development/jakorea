@@ -7,7 +7,15 @@ import type {
   FormDocumentPreviewParagraphGapResolver,
   FormDocumentPreviewRenderMode,
 } from '@/features/template/lib/a4-document-preview'
-import { resolveAgreementA4DocumentHiddenParagraphIds } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
+import {
+  isSubmittedAgreementA4SignaturePreview,
+  resolveAgreementA4DocumentHiddenParagraphIds,
+  shouldFlattenAgreementAdminProxyConfirmInA4Preview,
+} from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
+import { AGREEMENT_EXPENSE_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/agreement-expense-a4-preview'
+import { AGREEMENT_NOTICE_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/agreement-notice-a4-preview'
+import { AGREEMENT_PORTRAIT_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/agreement-portrait-a4-preview'
+import { PAYMENT_STATEMENT_PRE_CONSENT_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
 import { FormDocumentPreviewParagraph } from '@/features/template/ui/document-preview/form-document-preview-paragraph'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { AgreementSheetClosingFooter } from '@/features/template/ui/paragraph/explanation/agreement-sheet-closing-footer'
@@ -49,17 +57,37 @@ export function FormDocumentPreviewBody({
   agreementClosingFooter,
 }: FormDocumentPreviewBodyProps) {
   const useCustomGaps = paragraphGapPx != null
-  /** A4 contentOnly — proxy 확인 카드가 아닐 때만 날짜·서명 플랫 스택 */
-  const resolvedParagraphBodyOptions: RenderFormParagraphBodyOptions | undefined =
+  /** A4 contentOnly — 지급조서 등은 대리동의 카드 대신 날짜·서명 플랫 스택 */
+  const flattenAdminProxyConfirm =
     renderMode === 'contentOnly' &&
     paragraphBodyOptions != null &&
-    paragraphBodyOptions.agreementAdminProxyConfirm !== true
+    shouldFlattenAgreementAdminProxyConfirmInA4Preview(paragraphBodyOptions)
+  const isPaymentPreConsentA4Preview =
+    paragraphBodyOptions?.documentPreviewClassName ===
+    PAYMENT_STATEMENT_PRE_CONSENT_A4_PREVIEW_BODY_CLASS_NAME
+  const isAgreementExpenseA4Preview =
+    paragraphBodyOptions?.documentPreviewClassName === AGREEMENT_EXPENSE_A4_PREVIEW_BODY_CLASS_NAME
+  const isAgreementNoticeA4Preview =
+    paragraphBodyOptions?.documentPreviewClassName === AGREEMENT_NOTICE_A4_PREVIEW_BODY_CLASS_NAME
+  const isAgreementPortraitA4Preview =
+    paragraphBodyOptions?.documentPreviewClassName === AGREEMENT_PORTRAIT_A4_PREVIEW_BODY_CLASS_NAME
+  const keepSubmittedSignatureValues =
+    paragraphBodyOptions != null && isSubmittedAgreementA4SignaturePreview(paragraphBodyOptions)
+  const resolvedParagraphBodyOptions: RenderFormParagraphBodyOptions | undefined =
+    flattenAdminProxyConfirm && paragraphBodyOptions != null
       ? {
           ...paragraphBodyOptions,
           agreementAdminProxyConfirm: false,
           hiddenParagraphIds: resolveAgreementA4DocumentHiddenParagraphIds(
             paragraphBodyOptions.hiddenParagraphIds
           ),
+          ...((isPaymentPreConsentA4Preview ||
+            isAgreementExpenseA4Preview ||
+            isAgreementNoticeA4Preview ||
+            isAgreementPortraitA4Preview) &&
+          !keepSubmittedSignatureValues
+            ? { agreementSystemParticipantName: undefined }
+            : {}),
         }
       : paragraphBodyOptions
   const hiddenParagraphIds = resolvedParagraphBodyOptions?.hiddenParagraphIds

@@ -8,7 +8,7 @@ import {
 } from '@/features/program/general/lib/institution-application-session-display'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
-import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import { resolveParticipatingIndividualProgressScheduleSessionsFallback } from '@/features/program/general/lib/participating-individual-progress-schedule-sessions'
 import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
@@ -32,13 +32,12 @@ export function useParticipatingIndividualParticipantColumns(
   scheduleDisplay?: {
     detailScheduleTimeSpan?: string | null
     curriculumSessionLabels?: readonly string[] | null
-    educationScheduleLines?: readonly string[] | null
   } | null
 ): ColumnsType<ParticipatingIndividualParticipantRow> {
   const hasScheduleMultiLines =
     programBridge?.educationStructure === 'schedule' &&
     programBridge.sessionRound === 'multi' &&
-    (scheduleDisplay?.educationScheduleLines?.length ?? 0) > 0
+    (programBridge.educationScheduleLines?.length ?? 0) > 0
   const showSessionsColumn =
     hasScheduleMultiLines ||
     programBridge == null ||
@@ -97,7 +96,9 @@ export function useParticipatingIndividualParticipantColumns(
         }),
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
         render: (_: unknown, record: ParticipatingIndividualParticipantRow) => {
-          const assignedSessions = resolveParticipatingProgressAssignedSessions(record.sessions)
+          const assignedSessions = resolveParticipatingIndividualProgressScheduleSessionsFallback(
+            record.sessions
+          )
           const sessions = prepareGeneralEducationScheduleSessions(
             assignedSessions,
             generalEducationScheduleShapeFromBridge(programBridge),

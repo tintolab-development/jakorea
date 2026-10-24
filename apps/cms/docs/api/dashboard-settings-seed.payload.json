@@ -83,7 +83,7 @@
     {
       "id": 162903,
       "shortcutKey": "programs-gemini",
-      "shortcutName": "제미나이 프로그램",
+      "shortcutName": "Gemini 프로그램",
       "targetUrl": "/programs/gemini/visiting-training",
       "useYn": true
     },
@@ -97,7 +97,7 @@
     {
       "id": 162906,
       "shortcutKey": "users-school",
-      "shortcutName": "학교(교사) 회원",
+      "shortcutName": "학교(교사) 회원 관리",
       "targetUrl": "/users/list?kind=institutions",
       "useYn": true
     },
@@ -111,7 +111,7 @@
     {
       "id": 162908,
       "shortcutKey": "users-admin",
-      "shortcutName": "관리자 관리",
+      "shortcutName": "관리자 회원 관리",
       "targetUrl": "/users/list?kind=admins",
       "useYn": true
     },
@@ -133,7 +133,7 @@
       "id": 162927,
       "shortcutKey": "program-permission-settings",
       "shortcutName": "프로그램 권한 설정",
-      "targetUrl": "/admin/settings/program-permissions",
+      "targetUrl": "/admin/settings/program-manager-permissions",
       "useYn": true
     },
     {
@@ -181,7 +181,7 @@
     {
       "id": 162915,
       "shortcutKey": "inquiries",
-      "shortcutName": "문의사항",
+      "shortcutName": "문의내역",
       "targetUrl": "/admin/posts/inquiries",
       "useYn": true
     },
@@ -223,7 +223,7 @@
     {
       "id": 162921,
       "shortcutKey": "member-login-history",
-      "shortcutName": "회원 로그인 이력",
+      "shortcutName": "CMS 로그인 이력",
       "targetUrl": "/logs/member-login-history",
       "useYn": true
     },

@@ -4,6 +4,7 @@
  */
 
 import dayjs from 'dayjs'
+import { formatDateDot } from '@/shared/utils/date'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { RequestedScheduleWithResolved } from '@/features/program/general/api/instructor-assignment-types'
@@ -16,7 +17,7 @@ function formatRequestedDate(raw?: string): { date: string; dayOfWeek: string } 
   const d = dayjs(raw)
   if (!d.isValid()) return { date: raw.trim(), dayOfWeek: '' }
   return {
-    date: d.format('YYYY. MM. DD'),
+    date: formatDateDot(d),
     dayOfWeek: DAY_LABELS[d.day()] ?? '',
   }
 }

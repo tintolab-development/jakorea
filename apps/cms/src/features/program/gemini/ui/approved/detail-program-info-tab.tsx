@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { HomeAddressDisplay } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -21,7 +22,6 @@ import '@/features/program/general/ui/detail-modal/applications/applicant-detail
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './detail-program-info-tab.css'
 
-const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 function statusClassName(status: GeminiApprovedTrainingStatus) {
   return `gemini-approved-training-detail-info__status--${approvedTrainingStatusModifier(status)}`
@@ -35,7 +35,8 @@ function formatDetailTrainingDatetime(detail: GeminiApprovedTrainingDetail): str
   if (!x.isValid()) {
     return '-'
   }
-  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]}) | ${detail.trainingTimeText}`
+  const datePart = formatDateDotWithWeekday(x)
+  return datePart === '-' ? '-' : `${datePart} | ${detail.trainingTimeText}`
 }
 
 type AssignedInstructorRow = {

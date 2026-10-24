@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
+import { formatDateDot } from '@/shared/utils/date'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { resolveSettlementUiStatus } from '@/features/user/api/map-settlement-to-instructor-member-row'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
@@ -33,7 +34,8 @@ function formatLectureDateOnly(iso?: string): string {
   if (!iso?.trim()) return ''
   const parsed = dayjs(iso.slice(0, 10))
   if (!parsed.isValid()) return iso.trim()
-  return parsed.format('YYYY. MM. DD')
+  const label = formatDateDot(parsed)
+  return label === '-' ? iso.trim() : label
 }
 
 export function buildParticipatingInstructorEducationScheduleLabel(
@@ -134,4 +136,28 @@ export function summarizeParticipatingInstructorSettlementProgress(
     .filter((value): value is number => value != null && value > 0)
   const total = sessionTotals.length > 0 ? Math.max(...sessionTotals) : rows.length
   return { completed, total }
+}
+
+/** 요약 카드 — 표시 가능한 지급조서 상태 집계 */
+export function summarizeParticipatingInstructorPaymentStatementStatus(
+  rows: Array<
+    Pick<
+      ParticipatingInstructorSettlementApiRow,
+      'lectureProgress' | 'hasPaymentStatementApplication' | 'paymentStatementStatus'
+    >
+  >
+): InstructorSettlementUiStatus {
+  const statuses = rows
+    .filter(
+      row =>
+        row.lectureProgress === 'completed' &&
+        row.hasPaymentStatementApplication &&
+        row.paymentStatementStatus !== 'none'
+    )
+    .map(row => row.paymentStatementStatus)
+
+  if (statuses.length === 0) return 'none'
+  const unique = new Set(statuses)
+  if (unique.size === 1) return statuses[0]!
+  return 'partial_confirmation'
 }

@@ -5,6 +5,14 @@ import { UJAT_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragrap
 import { resolveRegistrationWizardIncompleteParagraphIds } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
 
 describe('resolveRegistrationWizardIncompleteParagraphIds', () => {
+  it('maps curriculum unitContent[2] onto the education curriculum paragraph', () => {
+    const ids = resolveRegistrationWizardIncompleteParagraphIds(
+      ['curriculum.unitContent[2]'],
+      'general'
+    )
+    expect([...ids]).toEqual([PROGRAM_REGISTRATION_IDS.educationCurriculum])
+  })
+
   it('maps program phase keys to seed paragraph ids', () => {
     const ids = resolveRegistrationWizardIncompleteParagraphIds(
       ['kpi.instructor', 'basicInfo.programTitleKo'],

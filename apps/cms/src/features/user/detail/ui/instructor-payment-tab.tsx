@@ -44,6 +44,7 @@ import {
 } from './instructor-settlement-calendar'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import '@/shared/components/filter-table-layout.css'
 import './instructor-payment-tab.css'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -301,6 +302,14 @@ export function InstructorPaymentTab({
     [openInvoice]
   )
 
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: true,
+      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }
+  )
+
   const excelExportColumns: ColumnsType<InstructorSettlementListRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no' },
@@ -464,19 +473,21 @@ export function InstructorPaymentTab({
 
         <div className="instructor-payment-tab__content">
           {viewMode === 'list' ? (
-            <CmsDataTable<InstructorSettlementListRow>
-              rowKey="id"
-              columns={columns}
-              dataSource={filteredRows}
-              pagination={false}
-              scroll={{ x: 'max-content' }}
-              className="cms-data-table cms-data-table--fluid"
-              rowSelection={{
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                selectedRowKeys,
-                onChange: keys => setSelectedRowKeys(keys),
-              }}
-            />
+            <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
+              <CmsDataTable<InstructorSettlementListRow>
+                rowKey="id"
+                columns={columns}
+                dataSource={filteredRows}
+                pagination={false}
+                scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+                className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+                rowSelection={{
+                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                  selectedRowKeys,
+                  onChange: keys => setSelectedRowKeys(keys),
+                }}
+              />
+            </div>
           ) : (
             <div className="instructor-payment-tab__calendar-view-container instructor-payment-tab__calendar-view-container--no-inner-scroll">
               <InstructorSettlementCalendarView

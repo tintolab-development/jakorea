@@ -191,7 +191,7 @@
 
 .main-header-account-dropdown {
   display: inline-flex;
-  width: 76px;
+  width: 100px;
   height: auto;
   padding: 4px;
   flex-direction: column;
@@ -206,7 +206,7 @@
 
 .main-header-account-dropdown-item {
   display: flex;
-  width: 68px;
+  width: 100%;
   padding: 5px 8px 4px 8px;
   justify-content: center;
   align-items: flex-end;

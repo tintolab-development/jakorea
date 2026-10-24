@@ -163,7 +163,7 @@ function ConsentDocumentFieldEdit({
       <span className="instructor-register-modal__consent-sep" aria-hidden>
         |
       </span>
-      <CmsButton variant="secondary" size="medium" type="button" onClick={onWrite}>
+      <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
         동의서 작성
       </CmsButton>
     </span>
@@ -362,11 +362,11 @@ export function InstructorProfileFormBody({
     </div>
   ) : (
     <div className="instructor-register-modal__affiliation-row">
-      <Form.Item name="affiliationName" style={{ ...FORM_ITEM_STYLE, flex: 1, minWidth: 0 }}>
+      <Form.Item name="affiliationName" style={{ ...FORM_ITEM_STYLE, width: 200 }}>
         <CmsInput
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.affiliationName}
           inputSize="small"
-          width="100%"
+          width={200}
           disabled={affiliationNone}
         />
       </Form.Item>
@@ -398,7 +398,7 @@ export function InstructorProfileFormBody({
   )
 
   const homeAddressFieldEdit = (
-    <Space.Compact style={{ width: '100%' }}>
+    <Space.Compact style={{ width: 480 }}>
       <Form.Item name="homeAddress" noStyle>
         <AddressSearch
           value={homeAddress}
@@ -408,7 +408,7 @@ export function InstructorProfileFormBody({
           }}
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddress}
           inputSize="small"
-          width="100%"
+          width={240}
         />
       </Form.Item>
       <DetailInfoForm.InputsSeparator />
@@ -416,7 +416,7 @@ export function InstructorProfileFormBody({
         <CmsInput
           placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddressDetail}
           inputSize="small"
-          width="100%"
+          width={240}
         />
       </Form.Item>
     </Space.Compact>
@@ -483,7 +483,7 @@ export function InstructorProfileFormBody({
     <CmsButton
       type="button"
       variant="secondary"
-      size="medium"
+      size="h32"
       adminAction="write"
       disabled={!onOpenJaGradeEvaluation}
       onClick={() => onOpenJaGradeEvaluation?.()}
@@ -740,6 +740,7 @@ export function InstructorProfileFormBody({
                         options={INSTRUCTOR_FEE_GRADE_OPTIONS}
                         inputSize="small"
                         width="100%"
+                        withAllOption={false}
                         allowClear
                       />
                     </Form.Item>
@@ -763,80 +764,13 @@ export function InstructorProfileFormBody({
         ) : null}
 
         {!isDetailEdit ? (
-        <DetailInfoForm
-          title={formLayout.consent.title}
-          mode="edit"
-          description={formLayout.consent.description}
-          className="instructor-register-modal__consent-heading"
-        >
-          <div className="instructor-register-modal__consent-form-stack">
-            <DetailInfoForm
-              title="약관 및 동의"
-              hideHeader
-              mode="edit"
-              className="instructor-register-modal__consent-block"
-            >
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="서비스 이용약관"
-                  required={!isDetailEdit}
-                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                  view="-"
-                  edit={
-                    <Form.Item name="consentTermsOfService" noStyle>
-                      {/* 상세 수정: 필수 약관 변경 불가 (FE/BE 공통) */}
-                      <CmsRadioGroup
-                        options={CONSENT_RADIO_OPTIONS}
-                        size="medium"
-                        disabled={isDetailEdit}
-                      />
-                    </Form.Item>
-                  }
-                />
-                <DetailInfoForm.Field
-                  label="개인정보 수집·이용 동의"
-                  required={!isDetailEdit}
-                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                  view="-"
-                  edit={
-                    <Form.Item name="consentPersonal" noStyle>
-                      <CmsRadioGroup
-                        options={CONSENT_RADIO_OPTIONS}
-                        size="medium"
-                        disabled={isDetailEdit}
-                      />
-                    </Form.Item>
-                  }
-                />
-              </DetailInfoForm.Row>
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="마케팅 제공 동의"
-                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                  view="-"
-                  edit={
-                    <Form.Item name="consentMarketing" noStyle>
-                      {/* CMS 강사 등록·상세 — 마케팅 미동의 고정 */}
-                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="medium" disabled />
-                    </Form.Item>
-                  }
-                />
-                <DetailInfoForm.Field
-                  label="초상권 수집·이용 동의"
-                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                  view="-"
-                  edit={
-                    <Form.Item name="consentPortrait" noStyle>
-                      <ConsentDocumentFieldEdit
-                        onWrite={() => handleConsentWrite('consentPortrait')}
-                      />
-                    </Form.Item>
-                  }
-                />
-              </DetailInfoForm.Row>
-            </DetailInfoForm>
-
-            {showInstructorConsentDocuments ? (
+          <DetailInfoForm
+            title={formLayout.consent.title}
+            mode="edit"
+            description={formLayout.consent.description}
+            className="instructor-register-modal__consent-heading"
+          >
+            <div className="instructor-register-modal__consent-form-stack">
               <DetailInfoForm
                 title="약관 및 동의"
                 hideHeader
@@ -845,25 +779,32 @@ export function InstructorProfileFormBody({
               >
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
-                    label="지급조서 사전 동의서"
+                    label="서비스 이용약관"
+                    required={!isDetailEdit}
                     labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                     view="-"
                     edit={
-                      <Form.Item name="consentPaymentStatement" noStyle>
-                        <ConsentDocumentFieldEdit
-                          onWrite={() => handleConsentWrite('consentPaymentStatement')}
+                      <Form.Item name="consentTermsOfService" noStyle>
+                        {/* 상세 수정: 필수 약관 변경 불가 (FE/BE 공통) */}
+                        <CmsRadioGroup
+                          options={CONSENT_RADIO_OPTIONS}
+                          size="medium"
+                          disabled={isDetailEdit}
                         />
                       </Form.Item>
                     }
                   />
                   <DetailInfoForm.Field
-                    label="교육진행자 서약서"
+                    label="개인정보 수집·이용 동의"
+                    required={!isDetailEdit}
                     labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                     view="-"
                     edit={
-                      <Form.Item name="consentEducatorPledge" noStyle>
-                        <ConsentDocumentFieldEdit
-                          onWrite={() => handleConsentWrite('consentEducatorPledge')}
+                      <Form.Item name="consentPersonal" noStyle>
+                        <CmsRadioGroup
+                          options={CONSENT_RADIO_OPTIONS}
+                          size="medium"
+                          disabled={isDetailEdit}
                         />
                       </Form.Item>
                     }
@@ -871,34 +812,94 @@ export function InstructorProfileFormBody({
                 </DetailInfoForm.Row>
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
-                    label="행정정보 공동이용 사전동의서"
+                    label="마케팅 제공 동의"
                     labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                     view="-"
                     edit={
-                      <Form.Item name="consentAdministrativeJoint" noStyle>
-                        <ConsentDocumentFieldEdit
-                          onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
-                        />
+                      <Form.Item name="consentMarketing" noStyle>
+                        {/* CMS 강사 등록·상세 — 마케팅 미동의 고정 */}
+                        <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="medium" disabled />
                       </Form.Item>
                     }
                   />
                   <DetailInfoForm.Field
-                    label="성범죄 경력 조회 동의서"
+                    label="초상권 수집·이용 동의"
                     labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                     view="-"
                     edit={
-                      <Form.Item name="consentSexOffenseCheck" noStyle>
+                      <Form.Item name="consentPortrait" noStyle>
                         <ConsentDocumentFieldEdit
-                          onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
+                          onWrite={() => handleConsentWrite('consentPortrait')}
                         />
                       </Form.Item>
                     }
                   />
                 </DetailInfoForm.Row>
               </DetailInfoForm>
-            ) : null}
-          </div>
-        </DetailInfoForm>
+
+              {showInstructorConsentDocuments ? (
+                <DetailInfoForm
+                  title="약관 및 동의"
+                  hideHeader
+                  mode="edit"
+                  className="instructor-register-modal__consent-block"
+                >
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="지급조서 사전 동의서"
+                      labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                      view="-"
+                      edit={
+                        <Form.Item name="consentPaymentStatement" noStyle>
+                          <ConsentDocumentFieldEdit
+                            onWrite={() => handleConsentWrite('consentPaymentStatement')}
+                          />
+                        </Form.Item>
+                      }
+                    />
+                    <DetailInfoForm.Field
+                      label="교육진행자 서약서"
+                      labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                      view="-"
+                      edit={
+                        <Form.Item name="consentEducatorPledge" noStyle>
+                          <ConsentDocumentFieldEdit
+                            onWrite={() => handleConsentWrite('consentEducatorPledge')}
+                          />
+                        </Form.Item>
+                      }
+                    />
+                  </DetailInfoForm.Row>
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="행정정보 공동이용 사전동의서"
+                      labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                      view="-"
+                      edit={
+                        <Form.Item name="consentAdministrativeJoint" noStyle>
+                          <ConsentDocumentFieldEdit
+                            onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
+                          />
+                        </Form.Item>
+                      }
+                    />
+                    <DetailInfoForm.Field
+                      label="성범죄 경력 조회 동의서"
+                      labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                      view="-"
+                      edit={
+                        <Form.Item name="consentSexOffenseCheck" noStyle>
+                          <ConsentDocumentFieldEdit
+                            onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
+                          />
+                        </Form.Item>
+                      }
+                    />
+                  </DetailInfoForm.Row>
+                </DetailInfoForm>
+              ) : null}
+            </div>
+          </DetailInfoForm>
         ) : null}
 
         {!isDetailEdit && showInstructorApplicationSections ? (

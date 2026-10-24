@@ -38,6 +38,7 @@ import {
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
+import { deriveIndependentEditorExtrasFromProgram } from '@/features/program/general/lib/overlay-phase1/common-info-domain'
 import { parseScheduleProgressTimeSummary } from '@/features/program/general/model/common-info-edit-schema'
 import {
   describeIncompleteGeneralProgramRegistrationRequiredFields,
@@ -535,6 +536,161 @@ export function extrasFromGeneralProgram(program: Program): GeneralRegistrationE
   }
 }
 
+function stripCurriculumAndScheduleOverlayMaps(
+  overlay: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (!overlay) return overlay
+  const out = { ...overlay }
+  for (const key of Object.keys({
+    ...emptyCurriculumProgressOverlay(),
+    ...emptyScheduleProgressOverlay(),
+  })) {
+    delete out[key]
+  }
+  return out
+}
+
+function isOverlayRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+/** BE overlay JSON deep-merge 대비 — nested에 없는 회차 키는 null 로 명시 삭제한다. */
+function overlayMapsWithDeletedKeysNulled(
+  nextMaps: Record<string, unknown>,
+  existingOverlay: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  if (!existingOverlay) return nextMaps
+  const out: Record<string, unknown> = { ...nextMaps }
+  for (const [key, nextValue] of Object.entries(nextMaps)) {
+    if (!isOverlayRecord(nextValue)) continue
+    const previous = existingOverlay[key]
+    if (!isOverlayRecord(previous)) continue
+    const merged: Record<string, unknown> = { ...nextValue }
+    for (const previousKey of Object.keys(previous)) {
+      if (Object.prototype.hasOwnProperty.call(nextValue, previousKey)) continue
+      merged[previousKey] = null
+    }
+    out[key] = merged
+  }
+  return out
+}
+
+function overlayValueIsGeneratedEmpty(value: unknown): boolean {
+  if (value == null) return true
+  if (value === '') return true
+  return Array.isArray(value) && value.length === 0
+}
+
+function overlayValueIsMeaningful(value: unknown): boolean {
+  return !overlayValueIsGeneratedEmpty(value)
+}
+
+const GENERATED_ENUM_OVERLAY_DEFAULTS: Record<string, unknown> = {
+  [`${TYPE}.singleEducationForm`]: 'online',
+  [`${TYPE}.multiCommonEducationForm`]: 'online',
+  [`${TYPE}.singleParticipation`]: 'individual',
+  [`${TYPE}.multiCommonParticipation`]: 'individual',
+}
+
+const OVERLAY_KEY_NESTED_SOURCE: Record<string, string> = {
+  [`${BASIC}.detailedProgramName`]: 'detailedProgramName',
+  [`${BASIC}.educationVenueDetail`]: 'venueDetail',
+  [`${BASIC}.educationVenueKind`]: 'venueKind',
+  [GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]: 'sponsorManagementIds',
+  [GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]: 'sponsorManagementIds',
+  [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: 'sponsorManagerContactIds',
+  [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]: 'sponsorManagerContactIds',
+  [GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY]: 'sponsorManagerLine',
+  [`${KPI}.participantCount`]: 'kpi',
+  [`${KPI}.instructor`]: 'kpi',
+  [`${KPI}.volunteer`]: 'kpi',
+  [`${TYPE}.singleEducationForm`]: 'educationFormLabel',
+  [`${TYPE}.multiCommonEducationForm`]: 'educationFormLabel',
+  [`${TYPE}.educationForm`]: 'educationFormLabel',
+  [`${TYPE}.singleParticipation`]: 'participationMethod',
+  [`${TYPE}.multiCommonParticipation`]: 'participationMethod',
+  [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: 'educationScheduleLines',
+}
+
+function nestedSourcePresent(
+  overlayKey: string,
+  nestedCommonKeys: ReadonlySet<string> | undefined
+): boolean {
+  if (nestedCommonKeys == null) return true
+  const source = OVERLAY_KEY_NESTED_SOURCE[overlayKey]
+  if (!source) return true
+  return nestedCommonKeys.has(source)
+}
+
+/**
+ * Independent overlay 미러. nested 에 없는 키의 `""`/`[]`/`null`/기본 enum 으로
+ * GET overlay 를 덮지 않는다. 커리큘럼·일정 맵은 아래에서 nested만 다시 쓴다.
+ */
+export function mergeGeneralRegistrationOverlayPreferExisting(
+  existing: Record<string, unknown>,
+  fromNested: Record<string, unknown>,
+  nestedCommonKeys?: ReadonlySet<string>
+): Record<string, unknown> {
+  const merged = { ...existing }
+  for (const [key, next] of Object.entries(fromNested)) {
+    const prev = existing[key]
+    const source = OVERLAY_KEY_NESTED_SOURCE[key]
+    if (nestedCommonKeys != null && source && !nestedCommonKeys.has(source)) {
+      continue
+    }
+    const sourcePresent = nestedSourcePresent(key, nestedCommonKeys)
+    if (
+      !sourcePresent &&
+      overlayValueIsMeaningful(prev) &&
+      overlayValueIsGeneratedEmpty(next)
+    ) {
+      continue
+    }
+    if (
+      !sourcePresent &&
+      overlayValueIsMeaningful(prev) &&
+      GENERATED_ENUM_OVERLAY_DEFAULTS[key] === next &&
+      prev !== next
+    ) {
+      continue
+    }
+    merged[key] = next
+  }
+  return merged
+}
+
+/**
+ * Independent nested SSOT overlay.
+ * recruit 등 비세션 키는 유지하고, 커리큘럼·일정 맵은 nested만 미러한다.
+ * 빈 nested 는 명시적 {} 로 stale unit map 을 덮어 삭제 회차 복원을 막는다.
+ */
+export function mergeRegistrationOverlayNestedSsot(
+  program: Program,
+  existingOverlay?: Record<string, unknown>,
+  explicitCommonInfoKeys?: ReadonlySet<string>
+): Record<string, unknown> {
+  const fromNested = buildGeneralRegistrationOverlayFromProgram({
+    ...program,
+    registrationOverlay: stripCurriculumAndScheduleOverlayMaps(existingOverlay),
+  })
+  const nestedCommonKeys =
+    explicitCommonInfoKeys ?? new Set(Object.keys(program.generalCommonInfo ?? {}))
+  const merged = mergeGeneralRegistrationOverlayPreferExisting(
+    existingOverlay ?? {},
+    fromNested,
+    nestedCommonKeys
+  )
+  const rebuilt = {
+    ...emptyCurriculumProgressOverlay(),
+    ...emptyScheduleProgressOverlay(),
+    ...(program.generalProgramEducationStructure === 'schedule'
+      ? scheduleOverlayFromProgram(program)
+      : curriculumOverlayFromProgram(program)),
+  }
+  Object.assign(merged, overlayMapsWithDeletedKeysNulled(rebuilt, existingOverlay))
+  return merged
+}
+
 export function buildGeneralRegistrationOverlayFromProgram(
   program: Program
 ): Record<string, unknown> {
@@ -688,7 +844,11 @@ export function writeGeneralRegistrationOverlayFromCommonInfoFormValues(
 ): void {
   const fromForm = buildGeneralRegistrationOverlayFromProgram(draftFromForm)
   const saved = readGeneralRegistrationOverlayForSave()
-  const merged = { ...saved, ...fromForm }
+  const merged = mergeGeneralRegistrationOverlayPreferExisting(
+    saved,
+    fromForm,
+    new Set(Object.keys(draftFromForm.generalCommonInfo ?? {}))
+  )
   for (const key of [
     `${KPI}.participantCount`,
     `${KPI}.instructor`,
@@ -699,7 +859,12 @@ export function writeGeneralRegistrationOverlayFromCommonInfoFormValues(
     }
   }
   replaceProgramRegistrationOverlayPrefix(GENERAL_REGISTRATION_OVERLAY_PREFIX, merged)
-  setGeneralRegistrationDetailEditExtras(extrasFromGeneralProgram(draftFromForm))
+  setGeneralRegistrationDetailEditExtras(
+    deriveIndependentEditorExtrasFromProgram({
+      ...draftFromForm,
+      registrationOverlay: merged,
+    })
+  )
 }
 
 export function readGeneralRegistrationOverlayForSave(): Record<string, unknown> {

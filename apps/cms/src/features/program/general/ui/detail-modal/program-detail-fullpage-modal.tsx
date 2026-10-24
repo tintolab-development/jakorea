@@ -100,6 +100,7 @@ import {
 import {
   detailEditValuesToProgramPatch,
   narrowProgramDetailPatchForCommonInfoSave,
+  programToDetailEditValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   getGeneralRecruitmentRemoteUnavailableReason,
@@ -126,10 +127,18 @@ import {
 import { PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/general/model/common-info-edit-schema'
 import { handleError } from '@/shared/utils/error-handler'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { isProgramTypeSettingsSaveBlocked } from '@/features/program/shared/lib/program-edit-window'
+import {
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+  PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+} from '@/shared/lib/program-edit-window-error-message'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
   canGeneralProgramCommonInfoEdit,
+  canGeneralProgramRecruitmentInfoEdit,
   getGeneralProgramCommonInfoEditBlockedAlertMessage,
+  getGeneralProgramRecruitmentInfoEditBlockedAlertMessage,
+  getGeneralProgramRecruitmentInfoEditBlockedAlertTitle,
 } from '@/features/program/general/lib/common-info-edit-policy'
 import { useGeneralProgramNavigation } from '@/features/program/general/hooks/use-general-program-navigation'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
@@ -1525,6 +1534,21 @@ export function ProgramDetailFullPageModal({
     })
 
   const handleInfoSave = useCallback(async () => {
+    if (displayProgram) {
+      const values = infoForm.getValues()
+      if (
+        isProgramTypeSettingsSaveBlocked(displayProgram, {
+          educationStructure: values.educationStructure,
+          sessionRound: values.sessionRound,
+        })
+      ) {
+        void showAlert({
+          title: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+          content: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+        })
+        return
+      }
+    }
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
       const patch = narrowProgramDetailPatchForCommonInfoSave(
         detailEditValuesToProgramPatch(infoForm.getValues(), displayProgram)
@@ -1679,6 +1703,16 @@ export function ProgramDetailFullPageModal({
         return
       }
       if (activeTab === 'institutions') {
+        const recruitmentType = isCompanySchoolRecruitmentInstructorTab
+          ? 'INSTRUCTOR'
+          : 'PARTICIPANT'
+        if (!canGeneralProgramRecruitmentInfoEdit(displayProgram, recruitmentType)) {
+          void showAlert({
+            title: getGeneralProgramRecruitmentInfoEditBlockedAlertTitle(),
+            content: getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(displayProgram),
+          })
+          return
+        }
         if (isCompanySchoolRecruitmentInstructorTab) {
           prepareRecruitOperationalEditFromProgram(displayProgram, 'instructor', {
             strictRemote: strictRemoteRecruitment,
@@ -2098,6 +2132,16 @@ export function ProgramDetailFullPageModal({
                         handleError(error, {
                           context: 'programDetailFullpageModal.trainedTeacherInfoSave',
                         })
+                        try {
+                          const latest = await getTrainedTeacherProgram(displayProgram.id)
+                          await reflectTrainedTeacherProgramSave(queryClient, {
+                            programId: displayProgram.id,
+                            echoed: latest,
+                          })
+                          infoForm.reset(programToDetailEditValues(latest))
+                        } catch {
+                          // B 실패 안내가 우선. 재조회 실패는 가리지 않는다.
+                        }
                         throw error
                       }
                     }

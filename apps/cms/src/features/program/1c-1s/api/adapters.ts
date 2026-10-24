@@ -13,6 +13,7 @@ import type {
 import type { Status } from '@/types'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import { coerceProgramPaymentItemsText } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import {
   derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
@@ -168,15 +169,19 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   }
   const savedPaymentItems = coerceProgramPaymentItemsText(fromJson.paymentItems).trim()
   const mergedSettlement = applySettlementPolicyToCommonInfo(fromJson, dto.settlementPolicy)
+  const policyHasPaymentItems = Array.isArray(dto.settlementPolicy?.paymentItems)
   // 등록 시 넣은 serviceDetailJson 임금이 있으면 그걸 화면 SSOT로 쓴다.
   // settlementPolicy 기본값(500,000 등)이 JSON을 덮어 상세와 GET body가 달라지는 것을 막는다.
+  // 지급 항목은 구조화 settlementPolicy.paymentItems가 있으면 유형 필터 없이 우선한다.
   const generalCommonInfoWithSettlement = mergedSettlement
     ? {
         ...mergedSettlement,
         wageGradeRows: fromJson.wageGradeRows?.length
           ? fromJson.wageGradeRows
           : mergedSettlement.wageGradeRows,
-        paymentItems: savedPaymentItems || mergedSettlement.paymentItems,
+        paymentItems: policyHasPaymentItems
+          ? mergedSettlement.paymentItems
+          : savedPaymentItems || mergedSettlement.paymentItems,
         deductionItems:
           typeof fromJson.deductionItems === 'string' && fromJson.deductionItems.trim()
             ? fromJson.deductionItems
@@ -539,6 +544,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
         : program
     ),
   }
+  assignProgramPaymentItemsToWriteRequest({ body, program })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'full',
     merged: program,
@@ -692,6 +698,12 @@ function mapCompanySchoolPatchFieldsToRequest(
   }
 
   applyRecruitmentParticipantColumnFieldsToUpdateRequest(body, { merged, existing, patch })
+  assignProgramPaymentItemsToWriteRequest({
+    body,
+    program: merged,
+    patch,
+    baseline: existing,
+  })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'patch',
     merged,

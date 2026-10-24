@@ -394,7 +394,7 @@ describe('general-program-adapters', () => {
         status: 'ACTIVE',
       }),
     ])
-    expect(create.sponsors).toEqual([{ sponsorId: 'sponsor-1' }])
+    expect(create.sponsors).toEqual([{ sponsorId: 'sponsor-1', sponsorContactIds: [] }])
   })
 
   it('does not send featuredOnHome or homeDisplayOrder on create or PATCH', () => {
@@ -425,6 +425,29 @@ describe('general-program-adapters', () => {
     expect(program).not.toHaveProperty('homeDisplayOrder')
   })
 
+  it('omits sponsors on PATCH when assignment keys are display-only leftovers', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      sponsorId: '1627251',
+      generalCommonInfo: {
+        sponsorManagementIds: ['1627251', '163301'],
+        sponsorManagerContactIds: ['1627251::1627253', '163301::163322'],
+      },
+    }
+    const request = mapGeneralProgramToUpdateRequest(
+      existing,
+      {
+        generalCommonInfo: {
+          announcementTitle: '제목만',
+          sponsorDisplayName: '',
+        },
+      },
+      existing
+    )
+    expect(request).not.toHaveProperty('sponsors')
+    expect(request).not.toHaveProperty('sponsorId')
+  })
+
   it('maps multi sponsor manager contact refs into create sponsors[]', () => {
     const request = mapGeneralProgramToCreateRequest({
       ...sampleProgram,
@@ -435,8 +458,8 @@ describe('general-program-adapters', () => {
     })
 
     expect(request.sponsors).toEqual([
-      { sponsorId: '1627251', sponsorContactId: '1627253' },
-      { sponsorId: '163302', sponsorContactId: '111' },
+      { sponsorId: '1627251', sponsorContactIds: ['1627253'] },
+      { sponsorId: '163302', sponsorContactIds: ['111'] },
     ])
     expect(request.sponsorId).toBe('1627251')
   })
@@ -822,7 +845,7 @@ describe('general-program-adapters', () => {
     expect(request.contactPhone).toBeUndefined()
   })
 
-  it('운영이 시작된 유형의 기간·recruitments는 빼고 아직 시작 전인 유형은 보낸다', () => {
+  it('모집이 시작된 유형의 기간은 빼고 아직 시작 전인 유형은 보낸다', () => {
     const request = mapGeneralProgramToUpdateRequest(
       {
         ...sampleProgram,
@@ -831,14 +854,16 @@ describe('general-program-adapters', () => {
         instructorApplicationEndDate: '2099-02-01T00:00:00.000Z',
         programRecruitments: [
           {
+            id: 11,
             recruitmentType: 'PARTICIPANT',
             startAt: '2020-01-01T00:00:00+09:00',
-            operationStartDate: '2020-01-01',
+            operationStartDate: '2099-01-01',
           },
           {
+            id: 12,
             recruitmentType: 'INSTRUCTOR',
-            startAt: '2020-01-01T00:00:00+09:00',
-            operationStartDate: '2099-01-01',
+            startAt: '2099-01-01T00:00:00+09:00',
+            operationStartDate: '2020-01-01',
           },
         ],
       },
@@ -1038,6 +1063,77 @@ describe('general-program-adapters', () => {
       generalCommonInfo?: { paymentItems?: string }
     }
     expect(detail.generalCommonInfo?.paymentItems).toBe('강사 교통비, 숙박비')
+    expect(request.paymentItems).toEqual([
+      { itemType: 'TRANSPORTATION', useYn: true },
+      { itemType: 'LODGING', useYn: true },
+    ])
+  })
+
+  it('Create는 숙박비·장거리 교통비 복수 선택을 paymentItems로 보낸다', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      generalProgramAudience: 'individual',
+      generalCommonInfo: {
+        paymentItems: '숙박비, 장거리 교통비, 식사비',
+      },
+    })
+    expect(request.paymentItems).toEqual([
+      { itemType: 'LODGING', useYn: true },
+      { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+      { itemType: 'MEAL', useYn: true },
+    ])
+  })
+
+  it('지급 항목 외 PATCH는 상위 paymentItems를 omit한다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalCommonInfo: { paymentItems: '숙박비' },
+    }
+    const request = mapGeneralProgramToUpdateRequest(existing, { title: '제목만' }, existing)
+    expect(request).not.toHaveProperty('paymentItems')
+  })
+
+  it('전체 지급 항목 해제는 paymentItems: []를 보낸다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalCommonInfo: { paymentItems: '숙박비' },
+    }
+    const patch = { generalCommonInfo: { paymentItems: '해당없음' } }
+    const request = mapGeneralProgramToUpdateRequest({ ...existing, ...patch }, patch, existing)
+    expect(request.paymentItems).toEqual([])
+  })
+
+  it('상세 settlementPolicy 지급 항목을 유형으로 숨기지 않는다', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '186090',
+      programType: 'GENERAL_INDIVIDUAL',
+      title: '개인',
+      settlementPolicy: {
+        paymentItems: [
+          { itemType: 'TRANSPORTATION', useYn: true },
+          { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+          { itemType: 'LODGING', useYn: true },
+          { itemType: 'ACTIVITY', useYn: true },
+          { itemType: 'MEAL', useYn: true },
+        ],
+      },
+    } as ProgramResponse)
+    expect(program.generalCommonInfo?.paymentItems).toBe(
+      '교통비, 장거리 교통비, 숙박비, 참여자 활동비, 식비'
+    )
+  })
+
+  it('settlementPolicy.paymentItems []는 JSON overlay 지급 항목을 덮어 빈 상태로 둔다', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '186090',
+      programType: 'GENERAL_ORGANIZATION',
+      title: '기관',
+      serviceDetailJson: JSON.stringify({
+        generalCommonInfo: { paymentItems: '숙박비' },
+      }),
+      settlementPolicy: { paymentItems: [] },
+    } as ProgramResponse)
+    expect(program.generalCommonInfo?.paymentItems).toBeUndefined()
   })
 
   it('공통 정보 패치는 같은 참여자 유형이면 applicationTargetMode를 모집 시작 후에 빼다', () => {
@@ -1058,6 +1154,78 @@ describe('general-program-adapters', () => {
     )
     expect(request.title).toBe('공통만')
     expect(request.applicationTargetMode).toBeUndefined()
+    expect(request.recruitments).toBeUndefined()
+  })
+
+  it('저장된 참여자 행에 봉사 모집을 더할 때 기존 id를 유지하고 새 행은 id 없이 보낸다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalParticipantTypes: ['individual'],
+      programRecruitments: [
+        {
+          id: 99011,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'INDIVIDUAL',
+          targetType: 'INDIVIDUAL',
+        },
+      ],
+    }
+    const request = mapGeneralProgramToUpdateRequest(
+      existing,
+      {
+        title: '봉사 추가',
+        generalParticipantTypes: ['individual', 'volunteer'],
+      },
+      existing
+    )
+    expect(request.recruitments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 99011,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'INDIVIDUAL',
+        }),
+        expect.objectContaining({
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+        }),
+      ])
+    )
+    expect(request.recruitments?.find(row => row.recruitmentType === 'VOLUNTEER')).not.toHaveProperty(
+      'id'
+    )
+    expect(request.recruitments).toHaveLength(2)
+  })
+
+  it('같은 참여자 유형이면 저장된 행이 있어도 recruitments를 보내지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalParticipantTypes: ['individual'],
+      programRecruitments: [
+        { id: 99011, recruitmentType: 'PARTICIPANT', applicationType: 'INDIVIDUAL' },
+      ],
+    }
+    const request = mapGeneralProgramToUpdateRequest(
+      existing,
+      { title: '제목만', generalParticipantTypes: ['individual'] },
+      existing
+    )
+    expect(request.recruitments).toBeUndefined()
+  })
+
+  it('저장된 개인 모집은 기관 유형으로 바꾸지 않는다', () => {
+    const existing: Program = {
+      ...sampleProgram,
+      generalParticipantTypes: ['individual'],
+      programRecruitments: [
+        { id: 99011, recruitmentType: 'PARTICIPANT', applicationType: 'INDIVIDUAL' },
+      ],
+    }
+    const request = mapGeneralProgramToUpdateRequest(
+      existing,
+      { generalParticipantTypes: ['school_institution'] },
+      existing
+    )
     expect(request.recruitments).toBeUndefined()
   })
 
@@ -1095,7 +1263,10 @@ describe('general-program-adapters', () => {
     })
 
     expect(request.mainTitle).toBe('공통정보만')
-    expect(request.sponsorId).toBe('1627251')
+    expect(request).not.toHaveProperty('sponsorId')
+    expect(request.sponsors).toEqual([
+      { sponsorId: '1627251', sponsorContactIds: [] },
+    ])
     expect(request.applicationTargetMode).toBeUndefined()
     expect(request.serviceDetailJson).toContain('announcementTitle')
     expect(request.rounds).toBeUndefined()
@@ -1226,8 +1397,8 @@ describe('general-program-adapters', () => {
           targetType: 'ORGANIZATION',
           operationStartDate: '2026-11-18',
           operationEndDate: '2026-12-25',
-          startAt: '2026-10-01',
-          endAt: '2026-10-31',
+          startAt: '2099-10-01',
+          endAt: '2099-10-31',
         },
       ],
       generalCommonInfo: {
@@ -1255,7 +1426,7 @@ describe('general-program-adapters', () => {
         description: '기관 모집 설명',
         generalCommonInfo: {
           participantRecruitmentInfo: {
-            operationPeriodLabel: '2026. 12. 01 (화) ~ 2027. 01. 15 (금)',
+            operationPeriodLabel: '2026.12.01(화) ~ 2027.01.15(금)',
           },
         },
         ...operationPatch,
@@ -1287,7 +1458,7 @@ describe('general-program-adapters', () => {
       registration?: { overlay?: Record<string, { start?: string; end?: string } | unknown> }
     }
     expect(detail.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel).toContain(
-      '2026. 12. 01'
+      '2026.12.01'
     )
     expect(detail.registration?.overlay?.['recruit.programRangeSeal']).toMatchObject({
       start: '2026-12-01',

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatDateRangeDotWithWeekday } from '@/shared/utils/date'
 import type { InstructorPreferredOrganizationResponse } from '@/shared/api/generated/dashboard/schemas/instructorPreferredOrganizationResponse'
 import type { ApplicantInstructorPreferredSchool } from '@/features/program/shared/model/applicant-instructor'
 
@@ -12,10 +13,8 @@ function formatPreferredOrganizationDateRangeFromInstants(
   const startDay = dayjs(start)
   const endDay = dayjs(end)
   if (!startDay.isValid() || !endDay.isValid()) return undefined
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토']
-  const startLabel = `${startDay.format('YYYY.MM.DD')}(${weekdays[startDay.day()]})`
-  const endLabel = `${endDay.format('YYYY.MM.DD')}(${weekdays[endDay.day()]})`
-  return `${startLabel} ~ ${endLabel}`
+  const range = formatDateRangeDotWithWeekday(startDay, endDay)
+  return range === '-' ? undefined : range
 }
 
 export function mapInstructorPreferredOrganizationsToPreferredSchools(

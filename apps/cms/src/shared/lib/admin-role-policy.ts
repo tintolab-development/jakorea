@@ -5,6 +5,7 @@
 
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { AdminLevel, AdminRoleCode, User } from '@/types/user'
+import { isAdminSessionRoleSyncPending } from '@/features/auth/lib/admin-session-sync-state'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 export type { AdminRoleCode }
@@ -117,6 +118,18 @@ export function isPermissionSettingsPath(pathname: string): boolean {
   )
 }
 
+export function isProgramManagerPermissionSettingsPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return (
+    normalized === '/admin/settings/program-manager-permissions' ||
+    normalized.startsWith('/admin/settings/program-manager-permissions/')
+  )
+}
+
+export function isMemberPermissionSettingsPath(pathname: string): boolean {
+  return isPermissionSettingsPath(pathname) || isProgramManagerPermissionSettingsPath(pathname)
+}
+
 export function isPermissionRequestsPath(pathname: string): boolean {
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
   return (
@@ -135,7 +148,7 @@ export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPol
   if (!pathname) return 'default'
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
   if (isSecurityLogPath(normalized)) return 'security-logs'
-  if (isPermissionSettingsPath(normalized)) {
+  if (isMemberPermissionSettingsPath(normalized)) {
     return 'permission-settings'
   }
   if (isPermissionRequestsPath(normalized)) {
@@ -221,6 +234,7 @@ export function guardAdminAction(input: {
   screen?: AdminPolicyScreen
   pathname?: string
 }): boolean {
+  if (isAdminSessionRoleSyncPending()) return false
   if (canAdminAction(input)) return true
   showAdminAccessDeniedAlert()
   return false

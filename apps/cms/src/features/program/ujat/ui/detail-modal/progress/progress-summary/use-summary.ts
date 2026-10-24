@@ -88,7 +88,7 @@ function countInstitutions(rows: readonly UjatInstitutionApplicationRow[]) {
   const students = nullRegionValues()
   for (const row of rows) {
     addCount(schools, row.regionKey)
-    addCount(classes, row.regionKey, row.totalClassCount)
+    addCount(classes, row.regionKey, row.totalClassCount ?? 0)
     if (row.regionKey && typeof row.operatingStudentCount === 'number') {
       students[row.regionKey] = (students[row.regionKey] ?? 0) + row.operatingStudentCount
     }

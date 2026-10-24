@@ -22,7 +22,7 @@ function baseProgram(): Program {
         { sessionLabel: '1차시', title: '1단원 나를 알리는 기술', description: '기본값 설명 1' },
         { sessionLabel: '2차시', title: '2단원 나를 보여주는 기술', description: '기본값 설명 2' },
       ],
-      educationScheduleLines: ['2026. 03. 01 ~ 2026. 12. 31'],
+      educationScheduleLines: ['2026.03.01 ~ 2026.12.31'],
       wageGradeRows: [
         { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 500,000원 | 장거리 : 500,000원' },
         { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 400,000원 | 장거리 : 400,000원' },
@@ -38,7 +38,7 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
   it('overlay가 비어 있으면 기존 기본값(목업)을 그대로 유지한다', () => {
     const result = applyEconomyRegistrationOverlayToProgram(baseProgram(), {})
     expect(result.generalCommonInfo?.curriculumSessions?.[0].title).toBe('1단원 나를 알리는 기술')
-    expect(result.generalCommonInfo?.educationScheduleLines).toEqual(['2026. 03. 01 ~ 2026. 12. 31'])
+    expect(result.generalCommonInfo?.educationScheduleLines).toEqual(['2026.03.01 ~ 2026.12.31'])
     expect(result.generalCommonInfo?.wageGradeRows?.[0].pricing).toContain('500,000원')
   })
 
@@ -69,7 +69,7 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
     expect(result.generalCommonInfo?.curriculumSessions?.[1].title).toBe('실제 입력한 2차시 제목')
 
     expect(result.generalCommonInfo?.educationScheduleLines).toEqual([
-      '2026. 05. 01 ~ 2026. 11. 30',
+      '2026.05.01 ~ 2026.11.30',
     ])
     expect(result.generalCommonInfo?.educationScheduleMode).toBe('period')
 

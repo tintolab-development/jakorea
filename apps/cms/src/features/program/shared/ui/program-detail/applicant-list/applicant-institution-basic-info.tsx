@@ -25,19 +25,6 @@ import { formatClassStudentCountSegments } from '@/features/program/general/lib/
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import './applicant-institution-basic-info.css'
 
-/** 성범죄 조회 요청 행: ID·검증번호 가림 */
-function maskSexOffenseCheckRequestLine(text: string): string {
-  return text
-    .replace(/\bID\s*:\s*(\S+)/gi, (_, id: string) => {
-      if (id.length <= 1) return 'ID : *'
-      return `ID : ${id[0]}***`
-    })
-    .replace(/\b검증번호\s*:\s*(\d+)/gi, (_, n: string) => {
-      if (n.length <= 2) return '검증번호 : **'
-      return `검증번호 : ${n[0]}${'*'.repeat(Math.max(0, n.length - 2))}${n[n.length - 1]}`
-    })
-}
-
 const APPROVAL_STATUS_LABELS: Record<ApplicantSchoolRow['approvalStatus'], string> = {
   pending: '대기 중',
   approved: '승인 완료',
@@ -116,13 +103,11 @@ function TableRowTwoCols({
 }
 
 function buildSexOffenseRequestCell(
-  detail: ApplicantInstitutionDetailExtend | undefined,
-  shouldMask: boolean
+  detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
   const raw = detail?.sexOffenseCheckRequest?.trim()
   if (!raw) return '-'
-  const text = shouldMask ? maskSexOffenseCheckRequestLine(raw) : raw
-  const parts = text
+  const parts = raw
     .split(' | ')
     .map(s => s.trim())
     .filter(Boolean)
@@ -164,11 +149,10 @@ function buildTeacherInfoCell(
 export function ApplicantInstitutionBasicInfo({
   institution,
   detail,
-  maskSensitive = true,
+  maskSensitive: _maskSensitive = true,
 }: ApplicantInstitutionBasicInfoProps) {
   const managerComment = '정보 재검토 정보 재확인 필요, 입금기입이 다르네요.'
   const showManagerComment = institution.approvalStatus === 'approved'
-  const shouldMask = maskSensitive && institution.approvalStatus !== 'approved'
 
   const address = institution.region ?? '-'
   const addressDetail = detail?.addressDetail ?? '-'
@@ -186,7 +170,7 @@ export function ApplicantInstitutionBasicInfo({
 
   const teacherInfo = buildTeacherInfoCell(institution, detail)
 
-  const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
+  const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail)
 
   const sessions = institution.sessions ?? []
 

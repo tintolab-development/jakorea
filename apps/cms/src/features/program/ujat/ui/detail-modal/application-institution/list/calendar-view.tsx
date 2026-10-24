@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -25,6 +26,17 @@ import {
   type UjatInstitutionCalendarOriginalItem,
 } from './calendar-events'
 import type { UjatInstitutionApplicationRow } from './types'
+import { useUjatProgramScheduleDates } from '../use-program-schedule-dates'
+import {
+  parseUjatInstitutionCalendarDateParam,
+  resolveUjatInstitutionCalendarFocusIso,
+} from './calendar-query'
+import { UJAT_INSTITUTION_CALENDAR_DATE_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
+import {
+  goToTodayState,
+  resolveViewAnchor,
+  syncViewAnchorOnDateSelect,
+} from '@/shared/components/calendar/lib/calendar-navigation'
 import './calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
@@ -97,18 +109,62 @@ export function UjatInstitutionApplicationCalendarView({
   selectedRowKeys,
   onSelectionChange,
   onOpenDetail,
+  programId,
+  listPending = false,
 }: {
   rows: UjatInstitutionApplicationRow[]
   selectedRowKeys: Key[]
   onSelectionChange: (keys: Key[]) => void
   onOpenDetail?: (row: UjatInstitutionApplicationRow) => void
+  programId?: string | null
+  listPending?: boolean
 }) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { dates: programScheduleDates, loading: schedulesLoading } =
+    useUjatProgramScheduleDates(programId)
   const events = useMemo(() => buildUjatInstitutionApplicationCalendarEvents(rows), [rows])
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs('2026-04-03'))
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => dayjs('2026-04-01'))
+  const eventIsoDates = useMemo(
+    () => [
+      ...events.map(event => event.startDate.slice(0, 10)),
+      ...programScheduleDates.map(entry => entry.isoDate),
+    ],
+    [events, programScheduleDates]
+  )
+  const waitingRemoteDates = listPending || schedulesLoading
+  const focusIso = resolveUjatInstitutionCalendarFocusIso(
+    parseUjatInstitutionCalendarDateParam(searchParams.get(UJAT_INSTITUTION_CALENDAR_DATE_PARAM)),
+    eventIsoDates,
+    waitingRemoteDates ? null : dayjs().format('YYYY-MM-DD')
+  )
+  const selectedDate = useMemo(() => dayjs(focusIso ?? dayjs().format('YYYY-MM-DD')), [focusIso])
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() =>
+    resolveViewAnchor('month', dayjs(focusIso))
+  )
   const [selectedSchools, setSelectedSchools] = useState<string[]>([])
+
+  useEffect(() => {
+    setCurrentMonth(prev =>
+      selectedDate.isSame(prev, 'month') ? prev : resolveViewAnchor('month', selectedDate)
+    )
+  }, [selectedDate])
+
+  useEffect(() => {
+    if (!focusIso) return
+    const current = parseUjatInstitutionCalendarDateParam(
+      searchParams.get(UJAT_INSTITUTION_CALENDAR_DATE_PARAM)
+    )
+    if (current === focusIso) return
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set(UJAT_INSTITUTION_CALENDAR_DATE_PARAM, focusIso)
+        return next.toString() === prev.toString() ? prev : next
+      },
+      { replace: true }
+    )
+  }, [focusIso, searchParams, setSearchParams])
 
   const dayEvents = useMemo((): UjatInstitutionCalendarEvent[] => {
     return events.filter(event => {
@@ -167,20 +223,39 @@ export function UjatInstitutionApplicationCalendarView({
     [filteredDayEvents, listColorMap]
   )
 
-  const handleDateSelect = useCallback((date: Dayjs) => {
-    setSelectedDate(date)
-    setCurrentMonth(prev => (date.isSame(prev, 'month') ? prev : date.startOf('month')))
-  }, [])
+  const writeSelectedDate = useCallback(
+    (date: Dayjs) => {
+      const iso = date.format('YYYY-MM-DD')
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          if (next.get(UJAT_INSTITUTION_CALENDAR_DATE_PARAM) === iso) return prev
+          next.set(UJAT_INSTITUTION_CALENDAR_DATE_PARAM, iso)
+          return next
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams]
+  )
+
+  const handleDateSelect = useCallback(
+    (date: Dayjs) => {
+      setCurrentMonth(prev => syncViewAnchorOnDateSelect('month', date, prev))
+      writeSelectedDate(date)
+    },
+    [writeSelectedDate]
+  )
 
   const handleMonthChange = useCallback((month: Dayjs) => {
     setCurrentMonth(month)
   }, [])
 
   const handleTodayClick = useCallback(() => {
-    const today = dayjs('2026-04-03')
-    setSelectedDate(today)
-    setCurrentMonth(today.startOf('month'))
-  }, [])
+    const today = goToTodayState('month')
+    setCurrentMonth(today.viewAnchor)
+    writeSelectedDate(today.selectedDate)
+  }, [writeSelectedDate])
 
   const handleListRowClick = useCallback(
     (listRow: CalendarInstitutionApplicationListRow) => {

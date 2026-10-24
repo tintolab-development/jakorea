@@ -514,28 +514,3 @@
   align-items: center;
   gap: 8px;
 }
-
-/*
- * 엑셀 다운로드 — UJAT 상세 전용 large + icon 180×44
- * 모달은 portal 이라 풀페이지 하위가 아님 → 모달 className 으로 따로 스코프.
- * 모달 푸터 140×44 강제(content-modal.css)보다 특이도를 높여 덮어씀.
- */
-.ujat-program-detail-fullpage-modal .cms-button.ant-btn.excel-button,
-.volunteer-1365-preview-modal .content-modal__footer-actions .cms-button.ant-btn.excel-button,
-.ujat-schedule-sheet-preview-modal .content-modal__footer-actions .cms-button.ant-btn.excel-button,
-.ujat-region-assignment-download-modal .content-modal__footer-actions .cms-button.ant-btn.excel-button {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  flex-shrink: 0;
-  justify-content: center;
-  align-items: center;
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
-  padding: 6px 16px 6px 10px !important;
-  gap: 6px;
-  box-sizing: border-box;
-}

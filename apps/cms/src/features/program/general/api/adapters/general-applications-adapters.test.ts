@@ -408,7 +408,7 @@ describe('general-applications-adapters', () => {
     )
 
     expect(row.sessions).toHaveLength(1)
-    expect(row.sessions?.[0]?.date).toBe('2026. 10. 26')
+    expect(row.sessions?.[0]?.date).toBe('2026.10.26')
   })
 
   it('maps organization preferredEducationSchedules (B) to assignment sessions', () => {
@@ -431,7 +431,7 @@ describe('general-applications-adapters', () => {
             round: 2,
             startAt: null,
             endAt: null,
-            label: '26년 11월 2일(월) 13:30 ~ 16:00',
+            label: '2026.11.02(월) 13:30 ~ 16:00',
           },
         ],
       } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
@@ -444,7 +444,7 @@ describe('general-applications-adapters', () => {
     expect(row.sessions?.[0]?.resolvedScheduleId).toBe(801)
     expect(row.sessions?.[0]?.status).toBe('pending')
     expect(row.sessions?.[1]?.scheduleUnresolved).toBe(true)
-    expect(row.sessions?.[1]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
+    expect(row.sessions?.[1]?.scheduleLabel).toBe('2026.11.02(월) 13:30 ~ 16:00')
   })
 
   it('maps materialized line:N preferred schedules with scheduleId and startAt', () => {
@@ -460,7 +460,7 @@ describe('general-applications-adapters', () => {
             round: 1,
             startAt: '2026-11-02T04:30:00Z',
             endAt: '2026-11-02T07:00:00Z',
-            label: '26년 11월 2일(월) 13:30 ~ 16:00',
+            label: '2026.11.02(월) 13:30 ~ 16:00',
           },
         ],
       } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
@@ -471,21 +471,21 @@ describe('general-applications-adapters', () => {
     expect(row.sessions).toHaveLength(1)
     expect(row.sessions?.[0]?.resolvedScheduleId).toBe(902)
     expect(row.sessions?.[0]?.scheduleUnresolved).toBeUndefined()
-    expect(row.sessions?.[0]?.scheduleLabel).toBe('26년 11월 2일(월) 13:30 ~ 16:00')
+    expect(row.sessions?.[0]?.scheduleLabel).toBe('2026.11.02(월) 13:30 ~ 16:00')
     expect(row.sessions?.[0]?.timeRange).toContain('~')
   })
 
   it('does not render 00:00 for a date-only preferred schedule', () => {
     const sessions = mapPreferredEducationSchedulesToSessions([
       {
-        label: '26년 11월 2일(월)',
+        label: '2026.11.02(월)',
         startAt: '2026-11-02T00:00:00+09:00',
         endAt: '2026-11-02T00:00:00+09:00',
       },
     ])
     expect(sessions[0]?.timeRange).toBe('-')
     expect(sessions[0]?.duration).toBe('-')
-    expect(sessions[0]?.scheduleLabel).toBe('26년 11월 2일(월)')
+    expect(sessions[0]?.scheduleLabel).toBe('2026.11.02(월)')
   })
 
   it('maps ORGANIZATION participant give-up fields to participating school row', () => {
@@ -697,6 +697,47 @@ describe('general-applications-adapters', () => {
     expect(individual.sessions?.[0]?.deliveryScheduleStatus).toBe('COMPLETED')
     expect(individual.lectureAttendanceSessions).toEqual([])
     expect(individual.satisfactionSurveyCompleted).toBe(false)
+  })
+
+  it('maps INDIVIDUAL list sessions as returned without filling empty with program catalog', () => {
+    const scoped = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 892031,
+        memberName: '배정일부',
+        participantType: 'INDIVIDUAL',
+        sessions: [
+          {
+            scheduleId: 892011,
+            resolvedScheduleId: 892011,
+            sessionNo: 1,
+            startAt: '2026-10-01T01:00:00Z',
+            endAt: '2026-10-01T03:00:00Z',
+          },
+          {
+            scheduleId: 892013,
+            resolvedScheduleId: 892013,
+            sessionNo: 3,
+            startAt: '2026-10-15T01:00:00Z',
+            endAt: '2026-10-15T03:00:00Z',
+          },
+        ],
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '186089'
+    )
+    expect(scoped.sessions?.map(row => row.resolvedScheduleId)).toEqual([892011, 892013])
+
+    const empty = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 892032,
+        memberName: '미배정',
+        participantType: 'INDIVIDUAL',
+        sessions: [],
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '186089'
+    )
+    expect(empty.sessions).toEqual([])
   })
 
   it('derives session education progress from scheduleStatus only', () => {
@@ -1285,6 +1326,29 @@ describe('general-applications-adapters', () => {
     expect(row.homeAddress).toBe('서울특별시 강서구')
   })
 
+  it('keeps list availableActions when detail omits the field', () => {
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 3,
+        applicationStatus: 'REJECTED',
+        profile: { name: '김반려' },
+      } as never,
+      {
+        id: '3',
+        no: 1,
+        applicantName: '김반려',
+        affiliation: '',
+        educationGrade: '',
+        homeAddress: '',
+        approvalStatus: 'rejected',
+        availableActions: ['VIEW', 'CANCEL_REJECTION'],
+      }
+    )
+
+    expect(row.approvalStatus).toBe('rejected')
+    expect(row.availableActions).toEqual(['VIEW', 'CANCEL_REJECTION'])
+  })
+
   it('clears detail grade when affiliation is not a K-12 school', () => {
     const row = mapIndividualApplicationDetailToApplicantRow(
       {
@@ -1384,11 +1448,11 @@ describe('general-applications-adapters', () => {
     expect(row.interviewSlotCount).toBe(3)
     expect(row.detail?.interviewAvailability).toEqual([
       {
-        dateLabel: '26. 09. 18(금)',
+        dateLabel: '2026.09.18(금)',
         slots: ['10:00 ~ 11:00', '14:00 ~ 15:00'],
       },
       {
-        dateLabel: '26. 09. 20(일)',
+        dateLabel: '2026.09.20(일)',
         slots: ['10:00 ~ 11:00'],
       },
     ])

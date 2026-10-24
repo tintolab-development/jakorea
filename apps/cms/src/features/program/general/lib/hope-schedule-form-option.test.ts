@@ -26,8 +26,8 @@ function fixedDateBridge(
     sessionRound: 'multi',
     educationScheduleMode: 'date',
     educationScheduleLines: [
-      '2026. 11. 03(화) 10:00 ~ 12:00 | 1차시',
-      '2026. 11. 27(금) 10:38 ~ 11:38 | 2차시',
+      '2026.11.03(화) 10:00 ~ 12:00 | 1차시',
+      '2026.11.27(금) 10:38 ~ 11:38 | 2차시',
     ],
     ...overrides,
   }
@@ -37,13 +37,13 @@ describe('hope-schedule-form-option', () => {
   it('날짜만 있는 신청 응답도 폼 선택지 문구(시각 포함)로 표시한다', () => {
     expect(
       formatHopeScheduleFormOptionLine(session({ date: '2026.11.03' }), fixedDateBridge())
-    ).toBe('2026. 11. 03(화) 10:00 ~ 12:00 | 1차시')
+    ).toBe('2026.11.03(화) 10:00 ~ 12:00 | 1차시')
     expect(
       formatHopeScheduleFormOptionLine(
         session({ date: '2026.11.27', dayOfWeek: '금', round: 2, classNum: '2지망' }),
         fixedDateBridge()
       )
-    ).toBe('2026. 11. 27(금) 10:38 ~ 11:38 | 2차시')
+    ).toBe('2026.11.27(금) 10:38 ~ 11:38 | 2차시')
   })
 
   it('line:N 선택은 해당 인덱스 선택지 문구를 쓴다', () => {
@@ -52,7 +52,7 @@ describe('hope-schedule-form-option', () => {
         session({ scheduleLabel: 'line:1', date: '-' }),
         fixedDateBridge()
       )
-    ).toBe('2026. 11. 27(금) 10:38 ~ 11:38 | 2차시')
+    ).toBe('2026.11.27(금) 10:38 ~ 11:38 | 2차시')
   })
 
   it('기간형 지망은 폼 고정 선택지가 아니므로 덮지 않는다', () => {
@@ -70,11 +70,11 @@ describe('hope-schedule-form-option', () => {
   it('목록 포맷터도 같은 폼 문구를 쓴다', () => {
     expect(
       formatGeneralDetailSessionLine(
-        session({ date: '2026.11.03', timeRange: '-', scheduleLabel: '2026. 11. 03(화) | 1지망' }),
+        session({ date: '2026.11.03', timeRange: '-', scheduleLabel: '2026.11.03(화) | 1지망' }),
         fixedDateBridge(),
         { preferFormOptionLabel: true }
       )
-    ).toBe('2026. 11. 03(화) 10:00 ~ 12:00 | 1차시')
+    ).toBe('2026.11.03(화) 10:00 ~ 12:00 | 1차시')
   })
 
   it('preferFormOptionLabel이 없으면 배정 시각을 폼 문구로 덮지 않는다', () => {
@@ -83,10 +83,10 @@ describe('hope-schedule-form-option', () => {
         session({
           date: '2026.11.03',
           timeRange: '09:00~10:00',
-          scheduleLabel: '2026. 11. 03(화) | 1지망',
+          scheduleLabel: '2026.11.03(화) | 1지망',
         }),
         fixedDateBridge()
       )
-    ).toBe('2026. 11. 03(화) 09:00 ~ 10:00')
+    ).toBe('2026.11.03(화) 09:00 ~ 10:00')
   })
 })

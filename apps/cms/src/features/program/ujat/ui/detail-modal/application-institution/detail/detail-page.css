@@ -1,0 +1,11 @@
+.ujat-institution-application-detail-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
+
+.ujat-institution-application-detail-view {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}

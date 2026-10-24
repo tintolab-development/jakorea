@@ -91,6 +91,29 @@ export type PortalUjatApplicationSupplement = {
   assignmentRevision?: number
   assignmentLocked?: boolean
   portalBannerState?: UjatPortalBannerState | string
+  /** 상세 조회 전용 CMS 임시 배정 일정. 신청 당시 희망 일정과 별도 SSOT. */
+  temporarySchedule?: PortalUjatTemporarySchedule | null
+  /** CMS 일정 수정 요청 `reason`. OpenAPI 미기재 시에도 응답에 있으면 표시 */
+  revisionReason?: string
+  scheduleChangeReason?: string
+  lastScheduleChangeReason?: string
+  revisionRequestReason?: string
+  changeRequestReason?: string
+  revisionMessage?: string
+  reason?: string
+}
+
+export type PortalUjatTemporarySchedule = {
+  slots?: PortalUjatTemporaryScheduleSlot[]
+}
+
+export type PortalUjatTemporaryScheduleSlot = {
+  scheduleId?: number | null
+  scheduleStartAt?: string | null
+  grade?: string | null
+  className?: string | null
+  studentCount?: number | null
+  assignmentStatus?: string | null
 }
 
 /** OpenAPI `ProgramApplicationSupplement` */

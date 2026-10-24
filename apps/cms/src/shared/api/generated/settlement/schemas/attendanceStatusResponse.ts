@@ -7,7 +7,7 @@
  */
 
 /**
- * 회원 포탈 UJAT 봉사자 출석 현황
+ * 회원 포탈 UJAT 봉사자 출석 현황. 활동 포기 후에도 본인 ASSIGNED 교육일은 조회할 수 있고, 그때 canCheckIn은 false이며 CHECK_IN과 SUBMIT_ABSENCE_REASON은 없습니다.
  */
 export interface AttendanceStatusResponse {
   applicationId?: number;

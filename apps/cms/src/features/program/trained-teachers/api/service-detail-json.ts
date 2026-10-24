@@ -13,6 +13,10 @@ import {
 } from '@/features/program/general/lib/general-survey-menu-keys'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import {
+  omitTrainedTeacherInfoDetailOwnedCommonInfo,
+  omitTrainedTeacherStaleSessionOverlayKeys,
+} from '@/features/program/trained-teachers/lib/common-info-persist'
+import {
   resolvePersistedProgramTargetLevels,
   resolveStoredBusinessArea,
 } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -75,6 +79,7 @@ const TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS = [
   'mainTitle',
   'representativeProgramNameKo',
   'textbookName',
+  'detailedProgramName',
   'sponsorId',
   'businessArea',
   'educationStructure',
@@ -155,7 +160,6 @@ function sanitizeTrainedTeacherCommonInfo(
   )
     .map(id => String(id).trim())
     .filter(Boolean)
-  const detailedProgramName = common.detailedProgramName?.trim() || undefined
   const participantRecruitmentInfo = common.participantRecruitmentInfo
     ? {
         ...common.participantRecruitmentInfo,
@@ -176,7 +180,6 @@ function sanitizeTrainedTeacherCommonInfo(
           sponsorManagementId: sponsorManagementIds[0],
         }
       : {}),
-    ...(detailedProgramName ? { detailedProgramName } : {}),
     ...(participantRecruitmentInfo ? { participantRecruitmentInfo } : {}),
     announcementTitle: common.announcementTitle?.trim() || undefined,
   }
@@ -258,23 +261,36 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
   })
 }
 
-export function serializeTrainedTeacherServiceDetailJson(program: Program): string {
+export function serializeTrainedTeacherServiceDetailJson(
+  program: Program,
+  options?: { omitInfoDetailOwnedFields?: boolean; omitRegistrationOverlay?: boolean }
+): string {
   const generalSurveyMenuKeys = trainedTeacherSurveyMenuKeys(program.generalSurveyMenuKeys)
-  const baseOverlay = persistScheduleEducationFormByDetailOverlay(
-    buildRegistrationOverlayForPersist(program),
-    program.generalCommonInfo?.scheduleDetails
-  )
-  // keys가 있을 때만(빈 배열 포함) overlay surveyItems를 맞춤. 키 생략 시 overlay를 지우지 않는다.
-  const registrationOverlay =
-    generalSurveyMenuKeys !== undefined
-      ? syncSurveyItemsIntoRegistrationOverlay(baseOverlay, generalSurveyMenuKeys)
-      : baseOverlay
+  const programDetails = trainedTeacherDetails(program)
+  if (options?.omitInfoDetailOwnedFields) {
+    programDetails.generalCommonInfo = omitTrainedTeacherInfoDetailOwnedCommonInfo(
+      programDetails.generalCommonInfo
+    )
+  }
   const payload: TrainedTeacherServiceDetailJsonV1 = {
     schemaVersion: TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION,
     // 일반 프로그램과 동일 — 루트 generalSurveyMenuKeys가 LNB SSOT
     ...(generalSurveyMenuKeys !== undefined ? { generalSurveyMenuKeys } : {}),
-    program: trainedTeacherDetails(program),
-    ...(registrationOverlay ? { registration: { overlay: registrationOverlay } } : {}),
+    program: programDetails,
+  }
+  if (!options?.omitRegistrationOverlay) {
+    const baseOverlay = persistScheduleEducationFormByDetailOverlay(
+      buildRegistrationOverlayForPersist(program),
+      program.generalCommonInfo?.scheduleDetails
+    )
+    const registrationOverlay = omitTrainedTeacherStaleSessionOverlayKeys(
+      generalSurveyMenuKeys !== undefined
+        ? syncSurveyItemsIntoRegistrationOverlay(baseOverlay, generalSurveyMenuKeys)
+        : baseOverlay
+    )
+    if (registrationOverlay) {
+      payload.registration = { overlay: registrationOverlay }
+    }
   }
   return JSON.stringify(payload)
 }

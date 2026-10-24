@@ -75,7 +75,7 @@ describe('organization-education-schedule-sources', () => {
       hopeEducationSessions: [
         {
           round: 1,
-          date: '2026. 11. 02',
+          date: '2026.11.02',
           dayOfWeek: '월',
           duration: '-',
           format: '-',
@@ -87,7 +87,7 @@ describe('organization-education-schedule-sources', () => {
       sessions: [
         {
           round: 99,
-          date: '2026. 11. 13',
+          date: '2026.11.13',
           dayOfWeek: '목',
           duration: '-',
           format: '-',

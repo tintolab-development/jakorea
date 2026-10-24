@@ -8,7 +8,7 @@ import {
 const empty: TextbookListFilters = {
   businessArea: 'ALL',
   educationTarget: 'ALL',
-  grade: 'ALL',
+  grade: '',
   textbookName: '',
   useStatus: 'USED',
 }

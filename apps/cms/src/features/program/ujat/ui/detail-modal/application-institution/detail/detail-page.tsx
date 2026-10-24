@@ -8,33 +8,24 @@ import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api
 import { UjatInstitutionApplicationDetailView } from './detail-view'
 import {
   UjatInstitutionApplicationActionModal,
-  type UjatInstitutionApplicationRejectModalAction,
+  type UjatInstitutionApplicationModalAction,
 } from '../list/action-modal'
-import {
-  getUjatInstitutionTempAssignCompleteContent,
-  UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
-} from '../list/temp-assign-complete'
-import {
-  checkUjatRegionClassCapacityExceeded,
-  getUjatRegionClassCapacityExceededAlertContent,
-} from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
-
-const TEMP_REJECT_BUTTON_STYLE = {
-  borderColor: '#e07a96',
-  color: '#e07a96',
-} as const
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import './detail-page.css'
 
 export function UjatInstitutionApplicationDetailPage({
   institutionId,
   programId,
   onBack,
   onStatusUpdated,
+  onOpenScheduleAssign,
 }: {
   institutionId: string
   programId?: string | null
   onBack: () => void
   onStatusUpdated: () => void
+  onOpenScheduleAssign?: () => void
 }) {
   const { showAlert } = useCmsAlert()
   const {
@@ -44,6 +35,8 @@ export function UjatInstitutionApplicationDetailPage({
     approveRemote,
     rejectRemote,
     tempRejectRemote,
+    workflow,
+    workflowReady,
   } = useUjatInstitutionApplicationDetail({ institutionId, programId })
 
   const {
@@ -56,48 +49,59 @@ export function UjatInstitutionApplicationDetailPage({
     controlMode: 'headerStickyNoop',
   })
 
-  const [pendingAction, setPendingAction] =
-    useState<UjatInstitutionApplicationRejectModalAction | null>(null)
+  const [pendingAction, setPendingAction] = useState<UjatInstitutionApplicationModalAction | null>(
+    null
+  )
   const [actionLoading, setActionLoading] = useState(false)
 
-  const handleTempAssign = useCallback(() => {
-    if (!row) return
+  const handlePrimaryAction = useCallback(() => {
+    if (!workflowReady || workflow.primaryDisabled) return
+    if (workflow.primaryAction === 'open_schedule_assign') {
+      onOpenScheduleAssign?.()
+      return
+    }
+    if (workflow.primaryAction === 'final_approve') {
+      setPendingAction('application_approve')
+    }
+  }, [onOpenScheduleAssign, workflow.primaryAction, workflow.primaryDisabled, workflowReady])
+
+  const handleFinalApprove = useCallback(() => {
+    if (!workflow.canFinalApprove) {
+      setPendingAction(null)
+      showAlert({
+        title: '안내',
+        content: '먼저 임시 일정을 배정하고 기관 확인을 완료해 주세요.',
+      })
+      return
+    }
     void (async () => {
       setActionLoading(true)
       try {
         await approveRemote()
+        setPendingAction(null)
         onStatusUpdated()
         onBack()
-        const capacityCheck = checkUjatRegionClassCapacityExceeded({
-          regionKey: row.regionKey,
-          rowsAfterAssign: [{ ...row, tempAssignmentStatus: 'temp_assigned' }],
-        })
-        const completeContent = getUjatInstitutionTempAssignCompleteContent(1)
-        const content =
-          capacityCheck.exceeded && capacityCheck.maxClassCount != null
-            ? `${completeContent}\n\n${getUjatRegionClassCapacityExceededAlertContent({
-                regionLabel: capacityCheck.regionLabel,
-                maxClassCount: capacityCheck.maxClassCount,
-                totalAfterAssign: capacityCheck.totalAfterAssign,
-              })}`
-            : completeContent
         showAlert({
-          title: UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
-          content,
+          title: '최종 승인',
+          content: '기관 확인이 완료된 신청을 최종 승인했습니다.',
         })
       } catch (error) {
         showAlert({
           title: '안내',
-          content: error instanceof Error ? error.message : '임시 배정(승인)에 실패했습니다.',
+          content: readApiErrorAlertMessage(error, '최종 승인에 실패했습니다.'),
         })
       } finally {
         setActionLoading(false)
       }
     })()
-  }, [approveRemote, onBack, onStatusUpdated, row, showAlert])
+  }, [approveRemote, onBack, onStatusUpdated, showAlert, workflow.canFinalApprove])
 
   const handleActionConfirm = (payload: PermissionModalPayload) => {
     if (!pendingAction || !row) return
+    if (pendingAction === 'application_approve') {
+      handleFinalApprove()
+      return
+    }
     void (async () => {
       setActionLoading(true)
       try {
@@ -112,8 +116,7 @@ export function UjatInstitutionApplicationDetailPage({
       } catch (error) {
         showAlert({
           title: '안내',
-          content:
-            error instanceof Error ? error.message : '신청기관 반려 처리에 실패했습니다.',
+            content: readApiErrorAlertMessage(error, '신청기관 반려 처리에 실패했습니다.'),
         })
       } finally {
         setActionLoading(false)
@@ -142,10 +145,7 @@ export function UjatInstitutionApplicationDetailPage({
 
   return (
     <div className="ujat-institution-application-detail-page">
-      <div
-        className="ujat-institution-application-detail-page__actions"
-        style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}
-      >
+      <div className="ujat-institution-application-detail-page__actions">
         <Space size={8} wrap>
           <CmsButton
             type="button"
@@ -164,7 +164,6 @@ export function UjatInstitutionApplicationDetailPage({
             size="large"
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
-            style={TEMP_REJECT_BUTTON_STYLE}
             loading={actionLoading}
             onClick={() => setPendingAction('temp_reject')}
           >
@@ -177,9 +176,10 @@ export function UjatInstitutionApplicationDetailPage({
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
             loading={actionLoading}
-            onClick={handleTempAssign}
+            disabled={!workflowReady || workflow.primaryDisabled}
+            onClick={handlePrimaryAction}
           >
-            임시 배정
+            {workflow.primaryAction === 'open_schedule_assign' ? '임시 배정' : workflow.primaryLabel}
           </CmsButton>
           <PersonalInfoRevealButton
             labelMode="stickyReveal"

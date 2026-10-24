@@ -165,4 +165,19 @@ const unregisteredSchedule = mapPortalEducationSchedule(
 assert.equal(unregisteredSchedule.scheduleId, null)
 assert.equal('scheduleId' in unregisteredSchedule, true)
 
+const availableActions = mapPortalEducationSchedule(
+  {
+    scheduleId: 9,
+    attendanceStatus: 'ABSENT',
+    availableActions: ['VIEW_ATTENDANCE'],
+    assignmentStatus: 'ASSIGNED',
+    classLabel: '1학년 3반',
+  },
+  0,
+)
+assert.deepEqual(availableActions.availableActions, ['VIEW_ATTENDANCE'])
+assert.equal(availableActions.assignmentStatus, 'ASSIGNED')
+assert.equal(availableActions.classLabel, '1학년 3반')
+assert.equal(availableActions.attendanceStatus, 'absent')
+
 console.log('map-from-portal.selfcheck: ok')

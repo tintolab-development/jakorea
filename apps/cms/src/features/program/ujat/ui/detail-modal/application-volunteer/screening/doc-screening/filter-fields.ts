@@ -1,4 +1,5 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import {
   UJAT_DOCUMENT_SCREENING_STATUS_LABELS,
   UJAT_MANAGER_EVALUATION_LABELS,
@@ -79,6 +80,15 @@ export const UJAT_VOLUNTEER_DOC_SCREENING_TRAILING_FILTER_KEYS = [
   'managerBEvaluation',
   'documentScreeningStatus',
 ] as const
+
+function withDocScreeningFilterWidth(field: FilterFieldConfig): FilterFieldConfig {
+  return { ...field, width: FILTER_CONTROL_MAX_WIDTH_PX }
+}
+
+/** FilterTableLayout `fields` — 공통 filterResponsiveWrap(4개 이상 flex-wrap) */
+export function buildUjatVolunteerDocScreeningFilterFields(): FilterFieldConfig[] {
+  return buildUjatVolunteerDocScreeningFilterRows().flat().map(withDocScreeningFilterWidth)
+}
 
 export function buildUjatVolunteerDocScreeningFilterRows(): FilterFieldConfig[][] {
   const regionOptions = [

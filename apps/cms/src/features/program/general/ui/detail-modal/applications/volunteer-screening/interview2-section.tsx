@@ -9,8 +9,8 @@ import type {
 } from '@/features/program/general/model/volunteer-applicant'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  buildGeneralVolunteerInterview2CalendarFilterRows,
-  buildGeneralVolunteerInterview2FilterRows,
+  buildGeneralVolunteerInterview2CalendarFilterFields,
+  buildGeneralVolunteerInterview2FilterFields,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import {
   screeningInterview2ListTitle,
@@ -130,11 +130,11 @@ export function GeneralVolunteerInterview2Section({
     resetKey: `${programId}:${subjectKind}:${viewMode}`,
   })
 
-  const filterRows = useMemo(
+  const filterFields = useMemo(
     () =>
       viewMode === 'calendar'
-        ? buildGeneralVolunteerInterview2CalendarFilterRows(filterRowsSource, subjectKind)
-        : buildGeneralVolunteerInterview2FilterRows(filterRowsSource, subjectKind),
+        ? buildGeneralVolunteerInterview2CalendarFilterFields(filterRowsSource, subjectKind)
+        : buildGeneralVolunteerInterview2FilterFields(filterRowsSource, subjectKind),
     [filterRowsSource, subjectKind, viewMode]
   )
 
@@ -370,7 +370,7 @@ export function GeneralVolunteerInterview2Section({
         bordered={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         className="general-volunteer-interview2__filter-layout applicant-details__filter-table-layout"
-        rows={filterRows}
+        fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}

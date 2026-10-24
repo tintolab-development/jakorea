@@ -33,7 +33,18 @@ describe('seedDraft', () => {
     expect(draft.kpiFinalParticipants).toBe(10)
   })
 
-  it('저장된 일정이 없으면 빈 행만 만들고 기존 이름을 지어내지 않는다', () => {
+  it('canonical false 는 overlay yes 가 있어도 교육일지를 켜지 않는다', () => {
+    const draft = seedDraft(
+      { educationJournalEnabled: false, teacherTrainingEnabled: true },
+      undefined,
+      undefined,
+      { educationStructure: 'curriculum', sessionRound: 'multi' }
+    )
+    expect(draft.educationJournalEnabled).toBe(false)
+    expect(draft.teacherTrainingEnabled).toBe(true)
+  })
+
+  it('저장된 일정이 없으면 빈 배열을 유지하고 임시 행을 만들지 않는다', () => {
     const draft = seedDraft(
       { educationJournalEnabled: true, teacherTrainingEnabled: false },
       undefined,
@@ -41,9 +52,7 @@ describe('seedDraft', () => {
       { educationStructure: 'schedule', sessionRound: 'single' }
     )
 
-    expect(draft.scheduleDetails).toEqual([
-      { scheduleLabel: '세부 일정 01', name: '' },
-    ])
-    expect(draft.progressGroupsByDetail).toEqual([['']])
+    expect(draft.scheduleDetails).toEqual([])
+    expect(draft.curriculumSessions).toEqual([])
   })
 })

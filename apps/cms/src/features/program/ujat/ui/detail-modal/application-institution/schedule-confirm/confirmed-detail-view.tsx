@@ -11,21 +11,50 @@ import { UjatInstitutionTeacherInfoValue } from '../detail/detail-display'
 import type { UjatScheduleConfirmConfirmedDetail } from './confirmed-detail-types'
 import './confirmed-detail-view.css'
 
+function displayOrDash(value: string | null | undefined): string {
+  return value?.trim() || '-'
+}
+
 function TextbookInfoValue({
   textbook,
 }: {
   textbook: UjatScheduleConfirmConfirmedDetail['gradeEducationBlocks'][number]['textbook']
 }) {
+  if (!textbook) return '-'
+  const parts = [textbook.textbookName, textbook.kitSummary]
+    .map(part => part.trim())
+    .filter(part => part && part !== '-')
+  if (parts.length === 0 && !textbook.deliveryStatus) return '-'
+
   return (
     <div className="textbook-delivery-info">
-      <PipeSeparatedValues
-        parts={[
-          <span key="name">{textbook.textbookName}</span>,
-          <span key="kit">{textbook.kitSummary}</span>,
-        ]}
-      />
-      <DeliveryStatusBadge status={textbook.deliveryStatus} />
+      {parts.length > 0 ? (
+        <PipeSeparatedValues
+          parts={parts.map(part => (
+            <span key={part}>{part}</span>
+          ))}
+        />
+      ) : null}
+      {textbook.deliveryStatus ? <DeliveryStatusBadge status={textbook.deliveryStatus} /> : null}
     </div>
+  )
+}
+
+function ClassRosterValue({
+  classes,
+}: {
+  classes: UjatScheduleConfirmConfirmedDetail['gradeEducationBlocks'][number]['classes']
+}) {
+  if (classes.length === 0) return '-'
+  return (
+    <PipeSeparatedValues
+      parts={classes.map(classRow => (
+        <span key={classRow.classNo}>
+          {classRow.classNo}반
+          {classRow.studentCount != null ? ` : ${formatNumberDisplay(classRow.studentCount)}명` : ''}
+        </span>
+      ))}
+    />
   )
 }
 
@@ -36,15 +65,18 @@ export function UjatScheduleConfirmConfirmedDetailView({
 }: {
   detail: UjatScheduleConfirmConfirmedDetail
   personalInfoRevealed: boolean
-  /** `institution_confirmed`일 때만 true — UJAT 기관 안내 사항 폼 제출 내용 */
+  /** `institution_confirmed` · `approval_completed`일 때만 true */
   showGuidanceNotes?: boolean
 }) {
   const { guidanceNotes } = detail
 
   return (
     <div className="schedule-confirm-confirmed-detail">
-      <section className="schedule-confirm-confirmed-detail__section" aria-labelledby="schedule-confirm-basic-info-heading">
-        <h2 id="schedule-confirm-basic-info-heading" className="detail-info-form__title">
+      <section
+        className="schedule-confirm-confirmed-detail__section"
+        aria-labelledby="schedule-confirm-basic-info-heading"
+      >
+        <h2 id="schedule-confirm-basic-info-heading" className="info-section-title detail-info-form__title">
           기본 정보
         </h2>
         <div className="schedule-confirm-confirmed-detail__form-stack">
@@ -56,7 +88,9 @@ export function UjatScheduleConfirmConfirmedDetailView({
                 view={
                   detail.scheduleConfirmStatus ? (
                     <UjatInstitutionScheduleConfirmStatusBadge status={detail.scheduleConfirmStatus} />
-                  ) : null
+                  ) : (
+                    '-'
+                  )
                 }
               />
             </DetailInfoForm.Row>
@@ -64,12 +98,12 @@ export function UjatScheduleConfirmConfirmedDetailView({
 
           <DetailInfoForm title="기본 정보" hideHeader mode="view">
             <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field label="임시 배정 기관명" view={detail.institutionName} />
-              <DetailInfoForm.Field label="교육 지역" view={detail.regionLabel} />
+              <DetailInfoForm.Field label="임시 배정 기관명" view={displayOrDash(detail.institutionName)} />
+              <DetailInfoForm.Field label="교육 지역" view={displayOrDash(detail.regionLabel)} />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field label="기관 소재지" view={detail.address} />
-              <DetailInfoForm.Field label="상세 주소" view={detail.addressDetail} />
+              <DetailInfoForm.Field label="기관 소재지" view={displayOrDash(detail.address)} />
+              <DetailInfoForm.Field label="상세 주소" view={displayOrDash(detail.addressDetail)} />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
@@ -84,7 +118,11 @@ export function UjatScheduleConfirmConfirmedDetailView({
               />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field label="기타 요청사항" fullRow view={detail.otherRequests || '-'} />
+              <DetailInfoForm.Field
+                label="기타 요청사항"
+                fullRow
+                view={displayOrDash(detail.otherRequests)}
+              />
             </DetailInfoForm.Row>
           </DetailInfoForm>
         </div>
@@ -94,48 +132,54 @@ export function UjatScheduleConfirmConfirmedDetailView({
         className="schedule-confirm-confirmed-detail__section"
         aria-labelledby="schedule-confirm-grade-info-heading"
       >
-        <h2 id="schedule-confirm-grade-info-heading" className="detail-info-form__title">
+        <h2 id="schedule-confirm-grade-info-heading" className="info-section-title detail-info-form__title">
           교육 학년 별 정보
         </h2>
         <div className="schedule-confirm-confirmed-detail__form-stack">
-          {detail.gradeEducationBlocks.map((block, blockIndex) => (
-            <DetailInfoForm
-              key={`${block.gradeLabel}-${blockIndex}`}
-              title={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
-              hideHeader
-              mode="view"
-            >
+          {detail.gradeEducationBlocks.length === 0 ? (
+            <DetailInfoForm title="교육 학년 별 정보" hideHeader mode="view">
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
-                  fullRow
-                  view={
-                    <PipeSeparatedValues
-                      parts={block.classes.map(classRow => (
-                        <span key={classRow.classNo}>
-                          {classRow.classNo}반 : {formatNumberDisplay(classRow.studentCount)}명
-                        </span>
-                      ))}
-                    />
-                  }
-                />
-              </DetailInfoForm.Row>
-              <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="교재 정보"
-                  fullRow
-                  view={<TextbookInfoValue textbook={block.textbook} />}
-                />
+                <DetailInfoForm.Field label="교육 학년 별 정보" fullRow view="-" />
               </DetailInfoForm.Row>
             </DetailInfoForm>
-          ))}
+          ) : (
+            detail.gradeEducationBlocks.map((block, blockIndex) => (
+              <DetailInfoForm
+                key={`${block.gradeLabel}-${blockIndex}`}
+                title={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
+                hideHeader
+                mode="view"
+              >
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field
+                    label={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
+                    fullRow
+                    view={<ClassRosterValue classes={block.classes} />}
+                  />
+                </DetailInfoForm.Row>
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field
+                    label="교재 정보"
+                    fullRow
+                    view={<TextbookInfoValue textbook={block.textbook} />}
+                  />
+                </DetailInfoForm.Row>
+              </DetailInfoForm>
+            ))
+          )}
         </div>
       </section>
 
       <DetailInfoForm title="학년 별 수업 시간" mode="view">
-        <DetailInfoForm.Row type="custom">
-          <ClassTimeTable rows={detail.classTimeRows} />
-        </DetailInfoForm.Row>
+        {detail.classTimeRows.length === 0 ? (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="학년 별 수업 시간" fullRow view="-" />
+          </DetailInfoForm.Row>
+        ) : (
+          <DetailInfoForm.Row type="custom">
+            <ClassTimeTable rows={detail.classTimeRows} />
+          </DetailInfoForm.Row>
+        )}
       </DetailInfoForm>
 
       <DetailInfoForm title="진행 교육 일정" mode="view">
@@ -150,11 +194,15 @@ export function UjatScheduleConfirmConfirmedDetailView({
                 label={day.dateLabel}
                 fullRow
                 view={
-                  <PipeSeparatedValues
-                    parts={day.classLabels.map(label => (
-                      <span key={label}>{label}</span>
-                    ))}
-                  />
+                  day.classLabels.length > 0 ? (
+                    <PipeSeparatedValues
+                      parts={day.classLabels.map(label => (
+                        <span key={label}>{label}</span>
+                      ))}
+                    />
+                  ) : (
+                    '-'
+                  )
                 }
               />
             </DetailInfoForm.Row>
@@ -168,31 +216,35 @@ export function UjatScheduleConfirmConfirmedDetailView({
             <DetailInfoForm.Field
               label="검색 기기 사용 가능 여부 (6학년)"
               fullRow
-              view={guidanceNotes.searchDeviceGrade6}
+              view={displayOrDash(guidanceNotes.searchDeviceGrade6)}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field label="대기 장소 안내" fullRow view={guidanceNotes.waitingArea} />
+            <DetailInfoForm.Field
+              label="대기 장소 안내"
+              fullRow
+              view={displayOrDash(guidanceNotes.waitingArea)}
+            />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="잔여교재 배출 장소"
               fullRow
-              view={guidanceNotes.textbookDisposalLocation}
+              view={displayOrDash(guidanceNotes.textbookDisposalLocation)}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="기타 특이사항 (주차, 전달사항 등)"
               fullRow
-              view={guidanceNotes.otherSpecialNotes}
+              view={displayOrDash(guidanceNotes.otherSpecialNotes)}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
-              label="간식 제공 가능 여부"
+              label="간식 제공 가능 여부 (ABC초콜릿)"
               fullRow
-              view={guidanceNotes.snackAvailability}
+              view={displayOrDash(guidanceNotes.snackAvailability)}
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">

@@ -19,6 +19,7 @@
  *    새 공통정보 필드를 추가하면 패치 함수와 `Program` 모델도 함께 갱신할 것.
  */
 
+import { formatNumberDisplay } from '@/shared/lib/numeric-input'
 import {
   formatDateOnly,
   formatDateRange,
@@ -68,7 +69,10 @@ import {
   generalParticipantTypesFromUjatFlags,
   ujatParticipantFlagsFromOverlaySave,
 } from '@/features/program/ujat/lib/participant-type-flags'
-import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
+import {
+  looksLikeTrainedTeacherProgramId,
+  TRAINED_TEACHER_TRAINING_SCHEDULE_NAME,
+} from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import type { GeneralProgramSurveyMenuKey, TargetLevel } from '@/types/domain'
 
@@ -114,7 +118,7 @@ const optionalNonNegJavaInt = z.preprocess(
   z
     .number()
     .min(0)
-    .max(JAVA_INT_MAX, `0 ~ ${JAVA_INT_MAX.toLocaleString('ko-KR')} 범위로 입력해주세요`)
+    .max(JAVA_INT_MAX, `0 ~ ${formatNumberDisplay(JAVA_INT_MAX)} 범위로 입력해주세요`)
     .optional()
 )
 
@@ -356,6 +360,12 @@ const programDetailEditSchemaBase = z.object({
   educationScheduleLines: z.array(z.string()).optional(),
   /** 교육받은 교사·공통정보 — 교육 진행 일정 유형 */
   educationScheduleMode: z.enum(['date', 'period']).optional(),
+  /** 교육받은 교사 상세 — 커리큘럼/일정 nested RHF. 다른 유형은 비움 */
+  trainedTeachersCurriculumSessions: z.array(z.unknown()).optional(),
+  trainedTeachersScheduleDetails: z.array(z.unknown()).optional(),
+  trainedTeachersProgressGroupsByDetail: z.array(z.array(z.string())).optional(),
+  teacherTrainingEnabled: optionalBoolean,
+  educationJournalEnabled: optionalBoolean,
   // 수강자 모집
   /** 결과 발표일 및 방법(공통 정보 수강자 모집 / 참여자 정보 참여자 모집) */
   resultAnnouncementDate: z.string().min(1, '결과 발표일을 선택해주세요'),
@@ -419,6 +429,8 @@ const programDetailEditSchemaBase = z.object({
   detailedProgramName: z.string().optional(),
   /** 세부 프로그램 마스터 id — Select 저장용 */
   detailedProgramId: z.string().optional(),
+  /** 교재명 — detailedProgramName 과 독립 (TT canonical) */
+  textbookName: z.string().optional(),
   /** 교육받은 교사 프로그램 유형 설정 (opt-in) */
   educationStructure: z.enum(['curriculum', 'schedule']).optional(),
   sessionRound: z.enum(['single', 'multi']).optional(),
@@ -709,7 +721,7 @@ function formatCompanySchoolWageAmount(amount: string | number | undefined): str
   if (amount == null || amount === '') return ''
   const num = typeof amount === 'number' ? amount : Number(String(amount).replace(/,/g, ''))
   if (Number.isNaN(num)) return String(amount)
-  return num.toLocaleString('ko-KR')
+  return formatNumberDisplay(num)
 }
 
 function buildWageGradeRowsFromDetailValues(
@@ -1007,6 +1019,18 @@ export function programToDetailEditValues(
     curriculumSession2Description: program.generalCommonInfo?.curriculumSessions?.[1]?.description,
     educationScheduleLines: program.generalCommonInfo?.educationScheduleLines,
     educationScheduleMode: program.generalCommonInfo?.educationScheduleMode ?? 'date',
+    trainedTeachersCurriculumSessions: isTrainedTeacherForm
+      ? program.generalCommonInfo?.curriculumSessions
+      : undefined,
+    trainedTeachersScheduleDetails: isTrainedTeacherForm
+      ? program.generalCommonInfo?.scheduleDetails
+      : undefined,
+    teacherTrainingEnabled: isTrainedTeacherForm
+      ? program.generalCommonInfo?.teacherTrainingEnabled === true
+      : undefined,
+    educationJournalEnabled: isTrainedTeacherForm
+      ? program.generalCommonInfo?.educationJournalEnabled === true
+      : undefined,
     mainTitle: program.mainTitle ?? undefined,
     titleEn: program.titleEn ?? undefined,
     announcementTitle: isTrainedTeacherForm
@@ -1019,6 +1043,7 @@ export function programToDetailEditValues(
         }) || undefined,
     detailedProgramName: program.generalCommonInfo?.detailedProgramName?.trim() || undefined,
     detailedProgramId: program.detailedProgramId ?? undefined,
+    textbookName: program.textbookName ?? '',
     educationStructure: (() => {
       const raw = program.generalProgramEducationStructure
       if (raw === 'curriculum' || raw === 'schedule') return raw
@@ -1356,10 +1381,7 @@ export function detailEditValuesToProgramPatch(
       : existing.generalSurveyMenuKeys
   const registrationOverlay =
     isTrainedTeacherProgram && surveyKeysTouched
-      ? syncSurveyItemsIntoRegistrationOverlay(
-          existing.registrationOverlay,
-          generalSurveyMenuKeys
-        )
+      ? syncSurveyItemsIntoRegistrationOverlay({}, generalSurveyMenuKeys)
       : undefined
   const ujatParticipantFlags = isUjatProgram
     ? ujatParticipantFlagsFromOverlaySave(existing.ujatRegistrationOverlay)
@@ -1375,7 +1397,11 @@ export function detailEditValuesToProgramPatch(
     title:
       (isTrainedTeacherProgram ? values.announcementTitle?.trim() : values.title?.trim()) ||
       existing.title,
-    textbookName: existing.textbookName,
+    textbookName: isTrainedTeacherProgram
+      ? values.textbookName !== undefined
+        ? values.textbookName
+        : existing.textbookName
+      : existing.textbookName,
     startDate,
     endDate,
     category: values.category,
@@ -1468,19 +1494,25 @@ export function detailEditValuesToProgramPatch(
         return existing.generalCommonInfo?.sponsorManagerContactIds
       })(),
       sponsorManagerContactId: (() => {
-        const ids =
-          values.sponsorManagerContactIds ??
-          (values.sponsorManagerContactId?.trim()
-            ? [values.sponsorManagerContactId.trim()]
-            : undefined)
-        return (
-          ids?.[0] ??
-          existing.generalCommonInfo?.sponsorManagerContactId
-        )
+        if (values.sponsorManagerContactIds != null) {
+          return values.sponsorManagerContactIds[0]
+        }
+        if (values.sponsorManagerContactId != null) {
+          return values.sponsorManagerContactId.trim() || undefined
+        }
+        return existing.generalCommonInfo?.sponsorManagerContactId
       })(),
       venueDetail: values.venueDetail ?? existing.generalCommonInfo?.venueDetail,
       venueKind: values.venueKind ?? existing.generalCommonInfo?.venueKind,
       curriculumSessions: (() => {
+        if (isTrainedTeacherProgram) {
+          const fromRhf = values.trainedTeachersCurriculumSessions as
+            | NonNullable<import('@/types/domain').Program['generalCommonInfo']>['curriculumSessions']
+            | undefined
+          return Array.isArray(fromRhf)
+            ? fromRhf
+            : existing.generalCommonInfo?.curriculumSessions
+        }
         const existingSessions = existing.generalCommonInfo?.curriculumSessions
         const hasSlotEdit =
           values.curriculumSession1Title != null ||
@@ -1517,10 +1549,29 @@ export function detailEditValuesToProgramPatch(
         }
         return edited
       })(),
-      educationScheduleLines:
-        values.educationScheduleLines ?? existing.generalCommonInfo?.educationScheduleLines,
+      educationScheduleLines: isTrainedTeacherProgram
+        ? values.educationScheduleLines !== undefined
+          ? values.educationScheduleLines
+          : existing.generalCommonInfo?.educationScheduleLines
+        : values.educationScheduleLines ?? existing.generalCommonInfo?.educationScheduleLines,
       educationScheduleMode:
         values.educationScheduleMode ?? existing.generalCommonInfo?.educationScheduleMode,
+      ...(isTrainedTeacherProgram
+        ? {
+            scheduleDetails: Array.isArray(values.trainedTeachersScheduleDetails)
+              ? (values.trainedTeachersScheduleDetails as NonNullable<
+                  import('@/types/domain').Program['generalCommonInfo']
+                >['scheduleDetails'])
+              : existing.generalCommonInfo?.scheduleDetails,
+            teacherTrainingEnabled: values.teacherTrainingEnabled === true,
+            educationJournalEnabled: values.educationJournalEnabled === true,
+            teacherTrainingScheduleName:
+              values.teacherTrainingEnabled === true
+                ? existing.generalCommonInfo?.teacherTrainingScheduleName?.trim() ||
+                  TRAINED_TEACHER_TRAINING_SCHEDULE_NAME
+                : '',
+          }
+        : {}),
       educationFormLabel: (() => {
         if (values.educationForm == null) return existing.generalCommonInfo?.educationFormLabel
         const map: Record<string, string> = {
@@ -1879,9 +1930,12 @@ export function detailEditValuesToProgramPatch(
     mainTitle: values.mainTitle ?? existing.mainTitle,
     titleEn: values.titleEn ?? existing.titleEn,
     detailedProgramId: values.detailedProgramId ?? existing.detailedProgramId,
-    generalProgramEducationStructure:
-      values.educationStructure ?? existing.generalProgramEducationStructure,
-    generalProgramSessionRound: values.sessionRound ?? existing.generalProgramSessionRound,
+    generalProgramEducationStructure: isTrainedTeacherProgram
+      ? existing.generalProgramEducationStructure ?? values.educationStructure
+      : values.educationStructure ?? existing.generalProgramEducationStructure,
+    generalProgramSessionRound: isTrainedTeacherProgram
+      ? existing.generalProgramSessionRound ?? values.sessionRound
+      : values.sessionRound ?? existing.generalProgramSessionRound,
     teamDivision: values.teamDivision ?? existing.teamDivision,
     educationProcess: values.educationProcess ?? existing.educationProcess,
     ipOwned: values.ipOwned ?? existing.ipOwned,

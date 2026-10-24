@@ -4,5 +4,13 @@ export * from './normalize-member-consent-write-draft.js'
 export * from './notice-subject-contact.js'
 export * from './payment-statement-basic-info.js'
 export * from './payment-statement-resident-number.js'
+export {
+  applyResidentBackMaskedDisplayChange,
+  formatResidentBackMaskedDisplay,
+  formatResidentNumberForPreview,
+  formatResidentNumberRawForPreview,
+  maskResidentBackForPreview,
+  sanitizeResidentBackDigits,
+} from './resident-back-mask.js'
 export * from './portrait-consent-cell.js'
 export * from './platform-consent-fill-config.js'

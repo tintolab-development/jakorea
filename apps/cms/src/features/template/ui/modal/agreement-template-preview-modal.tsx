@@ -1,10 +1,11 @@
 import { Alert } from 'antd'
-import { DownloadOutlined } from '@ant-design/icons'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type {
   FormEditorKind,
   WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
 import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-pages'
@@ -158,22 +159,28 @@ export function AgreementTemplatePreviewModal({
             </p>
             {pdfError ? <Alert type="error" description={pdfError} showIcon /> : null}
             <div className="agreement-template-preview-modal__actions">
-              <button
+              <CmsButton
                 type="button"
-                className="agreement-template-preview-modal__action-button agreement-template-preview-modal__action-button--download"
+                variant="secondary"
+                size="large"
+                width={180}
+                icon={<ButtonDownloadIcon />}
+                adminAction="download"
                 onClick={() => void handlePdfDownload()}
+                loading={pdfLoading}
                 disabled={pdfLoading || pages.length === 0}
               >
-                <DownloadOutlined />
                 문서 다운로드
-              </button>
-              <button
+              </CmsButton>
+              <CmsButton
                 type="button"
-                className="agreement-template-preview-modal__action-button agreement-template-preview-modal__action-button--change"
+                variant="primary"
+                size="large"
+                width={CMS_ACTION_BUTTON_WIDTH}
                 disabled
               >
                 문서 변경
-              </button>
+              </CmsButton>
             </div>
           </div>
 

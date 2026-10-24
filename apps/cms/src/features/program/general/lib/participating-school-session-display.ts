@@ -274,12 +274,12 @@ export function prepareGeneralEducationScheduleSessions(
   return [...sessions]
 }
 
-/** 스크린샷 형식: YYYY. MM. DD(요일) HH:mm ~ HH:mm | N차시 */
+/** 스크린샷 형식: YYYY.MM.DD(요일) HH:mm ~ HH:mm | N차시 */
 export function formatParticipatingSchoolSessionLine(s: ParticipatingSchoolSession): string {
   const scheduleLabel = s.scheduleLabel?.trim()
   if (scheduleLabel) return formatCmsScheduleDisplayLabel(scheduleLabel)
 
-  const datePart = s.date.replace(/\./g, '. ')
+  const datePart = s.date.replace(/\s/g, '')
   const [startRaw, endRaw] = s.timeRange.split('~')
   const timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`
   return formatCmsScheduleDisplayLabel(`${datePart}(${s.dayOfWeek}) ${timePart} | ${s.round}차시`)
@@ -339,8 +339,7 @@ export function formatVolunteerAssignmentScheduleLine(
   s: ParticipatingSchoolSession,
   program?: Program
 ): string {
-  const datePart = s.date.replace(/\./g, '. ')
-  const dateWithDow = `${datePart}(${s.dayOfWeek})`
+  const dateWithDow = formatCmsScheduleDisplayLabel(`${s.date}(${s.dayOfWeek})`)
 
   const timeRange = s.timeRange?.trim()
   let timePart = ''

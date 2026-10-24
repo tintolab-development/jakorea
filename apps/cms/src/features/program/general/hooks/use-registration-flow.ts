@@ -44,6 +44,8 @@ import {
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   persistRegistrationOperationalOverlaysToLocal,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import { collectWizardApplicationOverlayForCatalog } from '@/features/program/general/lib/overlay-phase1/registration-wizard-application-from-rhf'
 import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
@@ -70,6 +72,8 @@ import {
 } from '@/features/program/general/lib/registration-required-fields'
 import { listIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
 import { listIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { listIncompleteTrainedTeachersRecruitmentRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-recruitment-required-fields'
 import { listIncompleteApplicationFormThirdPartyRecipientFieldKeys } from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { formatRegistrationStepTransitionLabel } from '@/features/program/shared/lib/log-program-registration-create-payload'
 import {
@@ -583,7 +587,13 @@ export function useGeneralProgramRegistrationFlow(
       if (!isProgramStep && isParticipantStep) {
         await participantVm.handleSave({ silent: true })
       }
-      flushParticipantSessionOverlaysToOperationalStores()
+      // TT는 위저드 RHF가 모집·신청 정본이다. session overlay flush는
+      // stale snapshot으로 라이브 기간을 덮은 뒤 collect가 그 값을 저장한다.
+      if (registrationFormVariant !== 'trainedTeachers') {
+        flushParticipantSessionOverlaysToOperationalStores({
+          excludeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
+        })
+      }
       await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
       syncRegistrationProgramDraftSession({
         programType,
@@ -601,6 +611,7 @@ export function useGeneralProgramRegistrationFlow(
     registrationFormVariant,
     registrationTemplateId,
     registrationVm,
+    selectedTemplateCode,
   ])
 
   const selectStep = useCallback(
@@ -663,13 +674,8 @@ export function useGeneralProgramRegistrationFlow(
         })
         return
       }
-      /** 모집→신청 필수 검사는 일반·1사1교만 — 교육받은 교사는 프로그램 단계 검사만 적용 */
-      if (
-        shouldCheckRequired &&
-        registrationFormVariant !== 'trainedTeachers' &&
-        phase === 'recruitment' &&
-        nextPhase === 'application'
-      ) {
+      /** 모집→신청 필수 검사. TT는 typed RHF, 일반·1사1교는 기존 경로 */
+      if (shouldCheckRequired && phase === 'recruitment' && nextPhase === 'application') {
         const recruitCtx = {
           participant: participantFlags,
           programType: registrationVm.programType,
@@ -679,9 +685,16 @@ export function useGeneralProgramRegistrationFlow(
           registrationProgramType: programType,
         }
         const recruitIncompleteKeys =
-          registrationFormVariant === 'economy'
-            ? listIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
-            : listIncompleteGeneralProgramRecruitmentRequiredFields(recruitCtx)
+          registrationFormVariant === 'trainedTeachers'
+            ? (() => {
+                const rhf = peekTrainedTeachersRegistrationRhf()
+                return rhf != null
+                  ? listIncompleteTrainedTeachersRecruitmentRequiredFields(rhf.getValues())
+                  : []
+              })()
+            : registrationFormVariant === 'economy'
+              ? listIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
+              : listIncompleteGeneralProgramRecruitmentRequiredFields(recruitCtx)
         const recruitIncomplete = recruitIncompleteKeys.length > 0
         if (recruitIncomplete) {
           options?.reportValidationIncomplete?.(recruitIncompleteKeys)
@@ -765,12 +778,63 @@ export function useGeneralProgramRegistrationFlow(
         })
         return
       }
-      if (isProgramStep && registrationVm.hasCurriculumMultiDateScheduleCountMismatch()) {
+      if (
+        (registrationFormVariant === 'general' ||
+          registrationFormVariant === 'economy' ||
+          registrationFormVariant === 'trainedTeachers') &&
+        registrationVm.hasIncompleteRequiredFields()
+      ) {
+        const incompleteKeys = registrationVm.listIncompleteRequiredFieldKeys()
+        options?.reportValidationIncomplete?.(incompleteKeys)
+        console.debug(
+          '[registration] 등록 완료 공통정보 필수항목 미입력:',
+          registrationVm.getIncompleteRequiredFieldsReason?.()
+        )
+        showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
+      if (registrationVm.hasCurriculumMultiDateScheduleCountMismatch()) {
         showAlert({
           title: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_TITLE,
           content: EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE,
         })
         return
+      }
+      if (
+        registrationFormVariant === 'general' ||
+        registrationFormVariant === 'economy' ||
+        registrationFormVariant === 'trainedTeachers'
+      ) {
+        const recruitCtx = {
+          participant: participantFlags,
+          programType: registrationVm.programType,
+          sessionRoundType: registrationVm.sessionRoundType,
+          educationScheduleMode: registrationVm.educationScheduleMode,
+          volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+          registrationProgramType: programType,
+        }
+        const recruitIncompleteKeys =
+          registrationFormVariant === 'trainedTeachers'
+            ? (() => {
+                const rhf = peekTrainedTeachersRegistrationRhf()
+                return rhf != null
+                  ? listIncompleteTrainedTeachersRecruitmentRequiredFields(rhf.getValues())
+                  : []
+              })()
+            : registrationFormVariant === 'economy'
+              ? listIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
+              : listIncompleteGeneralProgramRecruitmentRequiredFields(recruitCtx)
+        if (recruitIncompleteKeys.length > 0) {
+          options?.reportValidationIncomplete?.(recruitIncompleteKeys)
+          showAlert({
+            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          })
+          return
+        }
       }
     }
 
@@ -793,7 +857,11 @@ export function useGeneralProgramRegistrationFlow(
               }),
             }
           : undefined,
-        overlayForTemplateCode: collectOperationalOverlayForCatalogId,
+        overlayForTemplateCode: code =>
+          collectWizardApplicationOverlayForCatalog(
+            code,
+            peekGeneralRegistrationWizardRhf()?.getValues() ?? null
+          ) ?? collectOperationalOverlayForCatalogId(code),
       })
 
     if (isProgramStep) {
@@ -834,8 +902,11 @@ export function useGeneralProgramRegistrationFlow(
     selectedTemplateCode,
     isParticipantStep,
     isProgramStep,
+    options,
+    participantFlags,
     participantVariant,
     participantVm,
+    programType,
     registrationFormVariant,
     registrationVm,
     showAlert,

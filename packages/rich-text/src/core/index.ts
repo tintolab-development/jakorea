@@ -38,6 +38,21 @@ export {
 } from './insert-actions'
 export type { ResolvedRichTextImageSrc } from './insert-actions'
 export {
+  EMPTY_RICH_TEXT_TABLE_COMMAND_AVAILABILITY,
+  RICH_TEXT_TABLE_EDIT_ACTIONS,
+  canRunRichTextTableCommand,
+  getRichTextTableCommandAvailability,
+  isRichTextTableActive,
+  listRichTextTableToolbarItems,
+  richTextDocumentHasTable,
+  runRichTextTableCommand,
+} from './table-actions'
+export type {
+  RichTextTableCommandAvailability,
+  RichTextTableEditCommand,
+  RichTextTableToolbarItem,
+} from './table-actions'
+export {
   emojis,
   filterEmojis,
   findEmojiByName,

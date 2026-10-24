@@ -5,7 +5,7 @@ export type DeleteBlockedGuideCopy = {
 
 export function buildDeleteBlockedBulkLead(selectedCount: number): string {
   const n = Math.max(0, selectedCount)
-  return `선택한 ${n}개의 항목 중 삭제가 불가한 항목이 포함되어 있습니다.`
+  return `**선택한 ${n}개의 항목** 중 삭제가 불가한 항목이 포함되어 있습니다.`
 }
 
 export function buildDeleteBlockedGuideTitle(entityLabel: string, bulk: boolean): string {
@@ -22,9 +22,7 @@ export function resolveDeleteBlockedGuideCopy(params: {
   const bulk = selectedCount >= 2
 
   const title = buildDeleteBlockedGuideTitle(entityLabel, bulk)
-  const description = bulk
-    ? `${buildDeleteBlockedBulkLead(selectedCount)}\n${reason}`
-    : reason
+  const description = bulk ? `${buildDeleteBlockedBulkLead(selectedCount)}\n${reason}` : reason
 
   return { title, description }
 }

@@ -246,7 +246,371 @@
 .form-document-preview-body--agreement-portrait
   .form-document-preview-paragraph__body-text--explanation-placeholder {
   font-size: 20px;
-  line-height: 140%;
+  line-height: 150%;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph[data-paragraph-id='agreement-portrait-intro'] {
+  margin-top: 0;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-editor-vertical-table__cell-text--body:not(.form-editor-vertical-table__cell-text--placeholder) {
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-vertical-table__bottom {
+  gap: 8px;
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent {
+  margin-top: 4px;
+}
+
+/* A4 문서 — 읽기 전용 회색 라디오(실제 선택값은 유지) */
+.form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent .ant-radio-wrapper {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+}
+
+.form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent .ant-radio-inner {
+  border-color: #c4c4c4;
+  background-color: #fff;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-editor-table-bottom-consent
+  .ant-radio-checked
+  .ant-radio-inner {
+  border-color: #85969d;
+  background-color: #85969d;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-closing.form-document-preview-paragraph--content-only-confirm-rule {
+  padding-top: 24px;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-confirm-rule::before {
+  margin-bottom: 24px;
+}
+
+.form-document-preview-body--agreement-portrait
+  .form-document-preview-paragraph--content-only-closing
+  .form-document-preview-paragraph__body-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.form-document-preview-body--agreement-portrait .agreement-sheet-closing-footer--document {
+  margin-top: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 지급조서 사전 동의서 A4 — 1페이지 확인 스택 수용 · 시안 정렬                    */
+/* -------------------------------------------------------------------------- */
+
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph__content-header {
+  margin-bottom: 4px;
+}
+
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph__body-text--explanation-filled,
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph__body-text--explanation-placeholder {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 150%;
+}
+
+.form-document-preview-body--payment-pre-consent .form-editor-horizontal-table-wrap {
+  gap: 8px;
+}
+
+.form-document-preview-body--payment-pre-consent .form-editor-horizontal-table__bottom {
+  gap: 8px;
+}
+
+.form-document-preview-body--payment-pre-consent .form-editor-table-bottom-consent {
+  margin-top: 0;
+}
+
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph--content-only-closing,
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph--content-only-confirm {
+  margin-bottom: 16px;
+}
+
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule {
+  padding-top: 24px;
+}
+
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph--content-only-confirm-rule::before {
+  margin-bottom: 24px;
+}
+
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph--content-only-confirm
+  .form-document-preview-paragraph__body-text,
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph--content-only-confirm
+  .form-document-preview-paragraph__body-text--explanation-filled,
+.form-document-preview-body--payment-pre-consent
+  .form-document-preview-paragraph--content-only-confirm
+  .payment-pre-consent-fixed-block {
+  color: #000;
+  text-align: right;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.form-document-preview-body--payment-pre-consent .explanation-system--document-date {
+  margin-bottom: 8px;
+}
+
+.form-document-preview-body--payment-pre-consent .explanation-system--document-signature {
+  margin-bottom: 0;
+}
+
+.form-document-preview-body--payment-pre-consent .agreement-sheet-closing-footer--document {
+  margin-top: 24px;
+}
+
+.form-document-preview-body--payment-pre-consent
+  .payment-statement-basic-info-detail-form
+  .detail-info-form__field {
+  height: auto;
+  min-height: 54px;
+  max-height: none;
+}
+
+.form-document-preview-body--payment-pre-consent
+  .payment-statement-basic-info-detail-form
+  .detail-info-form__field-label {
+  text-align: center;
+  justify-content: center;
+}
+
+.form-document-preview-body--payment-pre-consent
+  .payment-statement-basic-info-detail-form
+  .detail-info-form__field-content,
+.form-document-preview-body--payment-pre-consent
+  .payment-statement-basic-info-detail-form
+  .detail-info-form__field-content--view {
+  justify-content: flex-start;
+  text-align: left;
+  overflow: visible;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.form-document-preview-body--payment-pre-consent
+  .payment-statement-basic-info-detail-form
+  .detail-info-form__field-content--view
+  > span {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 교육진행자 서약서 A4 — 시안 1페이지 · 확인 스택 플랫                           */
+/* -------------------------------------------------------------------------- */
+
+.form-document-preview-body--agreement-expense .form-document-preview-paragraph__content-header {
+  margin-bottom: 4px;
+}
+
+.form-document-preview-body--agreement-expense .form-document-preview-paragraph__required {
+  display: none;
+}
+
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph[data-paragraph-id='agreement-expense-pledge-intro']
+  .form-document-preview-paragraph__body-text--explanation-filled,
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph[data-paragraph-id='agreement-expense-pledge-intro']
+  .form-document-preview-paragraph__body-text--explanation-placeholder {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 150%;
+}
+
+.form-document-preview-body--agreement-expense .form-document-preview-paragraph__title-text {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph--content-only
+  .form-document-preview-paragraph__description-text {
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.form-document-preview-body--agreement-expense .form-document-preview-multiple-choice {
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.form-document-preview-body--agreement-expense .form-document-preview-multiple-choice__description {
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.form-document-preview-body--agreement-expense .form-document-preview-multiple-choice__row {
+  font-size: 20px;
+  gap: 12px;
+}
+
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph--content-only-closing,
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph--content-only-confirm {
+  margin-bottom: 16px;
+}
+
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph--content-only-confirm.form-document-preview-paragraph--content-only-confirm-rule {
+  padding-top: 24px;
+}
+
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph--content-only-confirm-rule::before {
+  margin-bottom: 24px;
+}
+
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph--content-only-confirm
+  .form-document-preview-paragraph__body-text,
+.form-document-preview-body--agreement-expense
+  .form-document-preview-paragraph--content-only-confirm
+  .form-document-preview-paragraph__body-text--explanation-filled {
+  color: #000;
+  text-align: right;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.form-document-preview-body--agreement-expense .explanation-system--document-date {
+  margin-bottom: 8px;
+}
+
+.form-document-preview-body--agreement-expense .explanation-system--document-signature {
+  margin-bottom: 0;
+}
+
+.form-document-preview-body--agreement-expense .agreement-sheet-closing-footer--document {
+  margin-top: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 행정정보 공동이용 사전동의서 A4 — 시안 1페이지 · 표·식별번호·확인 스택          */
+/* -------------------------------------------------------------------------- */
+
+.form-document-preview-body--agreement-notice .form-document-preview-paragraph__content-header {
+  margin-bottom: 4px;
+}
+
+.form-document-preview-body--agreement-notice
+  .form-document-preview-paragraph__body-text--explanation-filled,
+.form-document-preview-body--agreement-notice
+  .form-document-preview-paragraph__body-text--explanation-placeholder {
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.form-document-preview-body--agreement-notice .form-document-preview-paragraph__title-text {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.form-document-preview-body--agreement-notice
+  .form-document-preview-paragraph--content-only
+  .form-document-preview-paragraph__description-text {
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.form-document-preview-body--agreement-notice .form-editor-horizontal-table-wrap {
+  gap: 0;
+}
+
+.form-document-preview-body--agreement-notice
+  [data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__row {
+  min-height: 54px;
+}
+
+.form-document-preview-body--agreement-notice .id-type-with-input {
+  gap: 12px;
+}
+
+.form-document-preview-body--agreement-notice .id-type-with-input__radios {
+  gap: 12px;
+}
+
+.form-document-preview-body--agreement-notice .id-type-with-input__doc-label,
+.form-document-preview-body--agreement-notice .id-type-with-input .ant-radio-wrapper {
+  font-size: 16px;
+}
+
+.form-document-preview-body--agreement-notice .form-document-short-essay-table th,
+.form-document-preview-body--agreement-notice .form-document-short-essay-table td {
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+.form-document-preview-body--agreement-notice
+  .form-document-preview-paragraph--content-only-stack-divider {
+  padding: 24px 0;
+}
+
+.form-document-preview-body--agreement-notice
+  .form-document-preview-paragraph--notice-date-stack
+  .form-document-preview-paragraph__content-slot {
+  margin-top: 24px;
+}
+
+.form-document-preview-body--agreement-notice .explanation-system--document-date {
+  margin-bottom: 8px;
+}
+
+.form-document-preview-body--agreement-notice .explanation-system--document-signature {
+  margin-bottom: 0;
+}
+
+.form-document-preview-body--agreement-notice .agreement-sheet-closing-footer--document {
+  margin-top: 0;
 }
 
 .form-document-preview-paragraph--overflow .paragraph-card__slot {

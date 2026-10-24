@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
-import { buildTextbookMatchesParamsFromProgram } from '@/features/textbook/api/textbook-program-catalog'
+import {
+  buildTextbookMatchesParamsFromProgram,
+  serializeIndividualTextbookCatalogKey,
+} from '@/features/textbook/api/textbook-program-catalog'
 import {
   filterTextbooksForApplicant,
   filterTextbooksForIndividualApplicant,
@@ -141,6 +144,17 @@ describe('filterTextbooksForApplicant', () => {
 })
 
 describe('filterTextbooksForIndividualApplicant', () => {
+  it('사업분야 alias와 마스터명이 달라도 같은 분야로 본다', () => {
+    const program = {
+      businessArea: 'economy_finance',
+      targetLevel: 'elementary',
+    } as Program
+    const rows = filterTextbooksForIndividualApplicant(program, '3학년', [
+      makeTextbook({ id: '1', businessArea: '경제금융', grade: '3학년' }),
+    ])
+    expect(rows.map(row => row.id)).toEqual(['1'])
+  })
+
   it('프로그램 교육대상과 달라도 사업분야·학년만 맞으면 포함한다', () => {
     const program = {
       businessArea: '경제금융',
@@ -173,6 +187,19 @@ describe('resolveProgramEducationTargets', () => {
         targetLevels: ['adult', '중학생'],
       } as Program)
     ).toEqual(['중학교'])
+  })
+})
+
+describe('serializeIndividualTextbookCatalogKey', () => {
+  it('사업분야와 신청 학년이 바뀌면 matches 쿼리 키도 바뀐다', () => {
+    const program = { businessArea: '경제금융' } as Program
+    expect(serializeIndividualTextbookCatalogKey(program, '3학년')).toBe('경제금융|3학년')
+    expect(serializeIndividualTextbookCatalogKey(program, '5학년')).toBe('경제금융|5학년')
+    expect(serializeIndividualTextbookCatalogKey(program, '3')).toBe('경제금융|3학년')
+    expect(
+      serializeIndividualTextbookCatalogKey({ businessArea: 'economy_finance' } as Program, '3학년')
+    ).toBe('경제금융|3학년')
+    expect(serializeIndividualTextbookCatalogKey(program, '')).toBe('')
   })
 })
 

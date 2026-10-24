@@ -16,7 +16,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const store = useAuthStore()
-  const { checkAuth, isAuthenticated } = store
+  const { checkAuth, isAuthenticated } = store // isAuthenticated: 세션 만료 폴링용
 
   const authContextValue = useMemo(
     () => ({
@@ -57,14 +57,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const bufferTime = 30 * 1000 // 30초 버퍼
 
           if (expiryTime > now + bufferTime) {
-            // 만료되지 않았으면 인증 확인
-            if (!isAuthenticated) {
-              try {
-                await checkAuth()
-              } catch (error) {
-                console.error('Auth check failed in AuthProvider:', error)
-                // 에러 발생 시에도 계속 진행 (사용자 정보가 있으면 유지)
-              }
+            try {
+              await checkAuth()
+            } catch (error) {
+              console.error('Auth check failed in AuthProvider:', error)
             }
           } else {
             // 만료되었으면 로그아웃

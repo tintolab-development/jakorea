@@ -7,10 +7,7 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
-import {
-  programDetailCacheFromSave,
-  syncOpenProgramDetailCache,
-} from '@/features/program/shared/lib/program-detail-cache-after-save'
+import { syncOpenProgramDetailCache } from '@/features/program/shared/lib/program-detail-cache-after-save'
 import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { isProgramHardDeleteBlockedError } from '@/features/program/shared/lib/program-delete-guide'
 import { fetchUjatProgramBusinessYears } from './business-years'
@@ -115,8 +112,12 @@ export function useCreateProgram() {
   return useMutation({
     mutationFn: (input: CreateInput) => create(input),
     retry: false,
-    onSuccess: program => {
-      queryClient.setQueryData(queryKeys.detail(dataScope, program.id), program)
+    onSuccess: async program => {
+      const detailKey = queryKeys.detail(dataScope, program.id)
+      queryClient.setQueryData(detailKey, program)
+      // 모집 row 미디어는 생성 응답 이후 row PUT으로 연결된다. 다음 상세 조회가
+      // thumbnail/attachments를 다시 읽도록 캐시를 stale 처리한다.
+      await queryClient.invalidateQueries({ queryKey: detailKey })
       invalidateUjatProgramListCaches(queryClient)
     },
   })
@@ -137,12 +138,7 @@ export function useUpdateProgram() {
       await syncOpenProgramDetailCache(
         queryClient,
         detailKey,
-        programDetailCacheFromSave(
-          variables.programId,
-          program,
-          variables.program,
-          variables.patch
-        ),
+        program,
         { refetch: false }
       )
       invalidateUjatProgramListCaches(queryClient)

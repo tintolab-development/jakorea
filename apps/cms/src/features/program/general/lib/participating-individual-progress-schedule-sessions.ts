@@ -75,7 +75,11 @@ export function resolveParticipatingIndividualProgressScheduleSessions(input: {
   return result
 }
 
-/** education-scope API 없을 때 — participants sessions 중 확정 일정만 */
+/**
+ * 교육 참여자 목록 「교육 진행 일정」.
+ * GET …/participants INDIVIDUAL `sessions`(education-scope 배정)만 쓴다.
+ * 공통 예정일·educationScheduleLines 치환 금지.
+ */
 export function resolveParticipatingIndividualProgressScheduleSessionsFallback(
   participantSessions?: ReadonlyArray<ParticipatingSchoolSession> | null
 ): ParticipatingSchoolSession[] {

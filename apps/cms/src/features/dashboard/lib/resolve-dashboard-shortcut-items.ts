@@ -1,9 +1,13 @@
+import { DASHBOARD_HOME_PATH } from '@/features/dashboard/model/dashboard-settings-store'
 import {
-  DASHBOARD_HOME_PATH,
-  SHORTCUT_ITEMS,
+  isDashboardShortcutSettingsDisabled,
   isShortcutItemEnabled,
-} from '@/features/dashboard/model/dashboard-settings-store'
+} from '@/features/dashboard/model/dashboard-shortcut-contract'
 import type { DashboardShortcutItem } from '@/features/dashboard/api/admin-dashboard-service'
+import {
+  SHORTCUT_ITEMS,
+  isShortcutSettingsDisabled,
+} from '@/features/dashboard/model/dashboard-settings-store'
 
 export interface ResolvedShortcutItem {
   id: string
@@ -11,28 +15,64 @@ export interface ResolvedShortcutItem {
   path: string
 }
 
-/** API shortcuts + 로컬 상수 merge. visibility는 preferences shortcutEnabled */
+function isShortcutAllowedOnHome(item: DashboardShortcutItem): boolean {
+  if (!item.useYn) return false
+  if (item.permissionAllowed === false) return false
+  if (isDashboardShortcutSettingsDisabled(item.id)) return false
+  return true
+}
+
+/** remote: API catalog 순서·라벨·URL. mock: SHORTCUT_ITEMS */
 export function resolveDashboardShortcutItems(
   apiItems: DashboardShortcutItem[] | undefined,
   shortcutEnabled: Record<string, boolean>
 ): ResolvedShortcutItem[] {
-  const localById = new Map(SHORTCUT_ITEMS.map(item => [item.id, item]))
-
-  if (!apiItems || apiItems.length === 0) {
-    return SHORTCUT_ITEMS.filter(
-      item => !item.settingsDisabled && isShortcutItemEnabled(shortcutEnabled, item.id)
-    )
+  if (apiItems != null && apiItems.length > 0) {
+    return apiItems
+      .filter(isShortcutAllowedOnHome)
+      .filter(item => isShortcutItemEnabled(shortcutEnabled, item.id))
+      .map(item => ({
+        id: item.id,
+        label: item.label,
+        path: item.path || DASHBOARD_HOME_PATH,
+      }))
   }
 
-  /** remote: 서버 useYn + preferences 그대로 (FE settingsDisabled 필터 없음) */
-  return apiItems
-    .filter(item => item.useYn && isShortcutItemEnabled(shortcutEnabled, item.id))
-    .map(item => {
-      const local = localById.get(item.id)
-      return {
+  return SHORTCUT_ITEMS.filter(
+    item => !item.settingsDisabled && isShortcutItemEnabled(shortcutEnabled, item.id)
+  ).map(item => ({
+    id: item.id,
+    label: item.label,
+    path: item.path || DASHBOARD_HOME_PATH,
+  }))
+}
+
+export function mapDashboardShortcutSettingsCatalogItems(
+  apiItems: DashboardShortcutItem[] | undefined
+): Array<{
+  id: string
+  label: string
+  path: string
+  settingsDisabled: boolean
+  permissionAllowed: boolean
+}> {
+  if (apiItems != null && apiItems.length > 0) {
+    return apiItems
+      .filter(item => item.useYn)
+      .map(item => ({
         id: item.id,
-        label: item.label || local?.label || item.id,
-        path: item.path || local?.path || DASHBOARD_HOME_PATH,
-      }
-    })
+        label: item.label,
+        path: item.path || DASHBOARD_HOME_PATH,
+        settingsDisabled: isDashboardShortcutSettingsDisabled(item.id),
+        permissionAllowed: item.permissionAllowed !== false,
+      }))
+  }
+
+  return SHORTCUT_ITEMS.map(item => ({
+    id: item.id,
+    label: item.label,
+    path: item.path,
+    settingsDisabled: isShortcutSettingsDisabled(item.id),
+    permissionAllowed: true,
+  }))
 }

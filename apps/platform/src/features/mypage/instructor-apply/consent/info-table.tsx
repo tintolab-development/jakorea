@@ -43,12 +43,15 @@ export function ConsentInfoTable({
   rows,
   emphasizedColumns = [],
   hideEmptyPairs = false,
+  blankEmptyCells = false,
 }: {
   headers: readonly string[]
   rows: readonly (readonly string[])[]
   emphasizedColumns?: readonly number[]
   /** 행정정보 공동이용 표 — 완전 빈 행 숨김, 빈 셀은 `-` 대신 공백(테두리 유지) */
   hideEmptyPairs?: boolean
+  /** A4 미리보기 — 빈 셀을 시안처럼 공백으로 */
+  blankEmptyCells?: boolean
 }) {
   const colCount = headers.length
   const bodyRows = hideEmptyPairs ? rows.filter(row => rowHasVisiblePair(row, colCount)) : rows
@@ -76,7 +79,7 @@ export function ConsentInfoTable({
                 return (
                   <td key={`${rowIndex}-${cellIndex}`} data-label={headers[cellIndex] ?? ''}>
                     {renderCellContent(
-                      hideEmptyPairs ? cell : cell || '—',
+                      hideEmptyPairs || blankEmptyCells ? cell : cell || '—',
                       cellIndex,
                       emphasizedColumns
                     )}

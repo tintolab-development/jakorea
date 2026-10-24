@@ -11,7 +11,11 @@ import { AddressSearch } from '@/shared/ui/address-search'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { mergePaymentStatementBasicInfo } from '@jakorea/form-schema/consent'
+import { CmsResidentBackInput } from '@/shared/ui/cms-resident-back-input'
+import {
+  formatResidentNumberForPreview,
+  mergePaymentStatementBasicInfo,
+} from '@jakorea/form-schema/consent'
 import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
 import './payment-statement-basic-info-detail-form.css'
 
@@ -100,7 +104,7 @@ export function PaymentStatementBasicInfoDetailForm({
   }
 
   const rowDash = <span className="payment-statement-basic-info-detail-form__dash">-</span>
-  const residentNumber = [v.residentFront, v.residentBack].filter(Boolean).join('-')
+  const residentNumber = formatResidentNumberForPreview(v.residentFront, v.residentBack)
   const affiliationText = displayAffiliation(v.affiliation, v.noAffiliation)
   const addressText = [v.addressRoad, v.addressDetail].filter(Boolean).join(' ')
   const accountText = [textOrDash(v.bankName), v.accountNumber, v.accountHolder]
@@ -169,14 +173,12 @@ export function PaymentStatementBasicInfoDetailForm({
                 aria-label="주민등록번호 앞자리"
               />
               {rowDash}
-              <CmsNumericInput
-                mode="numericText"
+              <CmsResidentBackInput
                 disabled={allAutofillLocked}
                 inputSize="small"
                 placeholder="주민등록 뒤 7자리"
                 value={v.residentBack}
                 onValueChange={value => patch({ residentBack: value })}
-                maxLength={7}
                 width="100%"
                 aria-label="주민등록번호 뒷자리"
               />

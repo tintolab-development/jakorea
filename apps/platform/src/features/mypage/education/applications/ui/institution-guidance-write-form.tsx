@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION,
@@ -17,7 +18,6 @@ import {
   emptyUjatInstitutionGuidanceExtras,
   UJAT_CLASSROOM_SETTING_FIELD,
   UJAT_CLASSROOM_SETTING_OPTIONS,
-  UJAT_SEX_OFFENSE_WRITE_HEADING,
   UJAT_SNACK_AVAILABILITY_OPTIONS,
   UJAT_SNACK_FIELD,
   type ApplyUjatInstitutionGuidanceExtras,
@@ -30,17 +30,37 @@ import {
   type ApplyInstitutionSexOffenseValues,
 } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
 import type { ProgramApplicationType } from '../api/types'
-import { usePatchOrganizationGuidanceAnswersMutation } from '../api/institution-guidance-hooks'
+import type { PortalProgramApplicationDetail } from '../api/types'
+import {
+  useConfirmUjatTemporaryScheduleMutation,
+  usePatchOrganizationGuidanceAnswersMutation,
+} from '../api/institution-guidance-hooks'
 import type { TeacherInstitutionGuidanceFormState } from '../lib/institution-guidance-from-answers'
-import { resolveInstitutionGuidanceErrorMessage } from '../lib/institution-guidance-errors'
+import {
+  isUjatStaleRevisionError,
+  resolveInstitutionGuidanceErrorMessage,
+  resolveUjatTemporaryScheduleConfirmErrorMessage,
+  UJAT_STALE_REVISION_ALERT_MESSAGE,
+} from '../lib/institution-guidance-errors'
+import { UjatTemporaryScheduleSummary } from './ujat-progress-confirm-form'
+import type { EducationUjatTemporarySchedule } from '../model/types'
 import {
   resolveOrganizationGuidancePatchBlockedMessage,
   type OrganizationGuidancePatchPortalContext,
 } from '../lib/institution-guidance-patch-readiness'
-import { educationInstitutionGuidanceApplicationTabPath } from '../lib/guidance-path'
+import {
+  educationInstitutionGuidanceApplicationTabPath,
+  educationUjatProgressConfirmPath,
+} from '../lib/guidance-path'
+import {
+  isValidUjatAcknowledgedScheduleForApplication,
+  type UjatAcknowledgedSchedule,
+  UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE,
+} from '../lib/ujat-acknowledged-schedule'
 import { hasInstitutionGuidanceDraftContent } from '../lib/teacher-institution-guidance'
 import { isTeacherInstitutionGuidanceSubmitIncomplete } from '../lib/validate-institution-guidance'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
 import { institutionGuidanceParagraphHeading } from '@/features/program/ui/apply-institution-guidance/institution-guidance-paragraph-heading'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
@@ -56,6 +76,9 @@ type EducationInstitutionGuidanceWriteFormProps = {
   variant?: 'general' | 'ujat'
   isEdit?: boolean
   submitPeriodLabel?: string
+  ujatAcknowledgedSchedule?: UjatAcknowledgedSchedule | null
+  scheduleRevisionDrift?: boolean
+  temporarySchedule?: EducationUjatTemporarySchedule
 }
 
 export function EducationInstitutionGuidanceWriteForm({
@@ -65,10 +88,13 @@ export function EducationInstitutionGuidanceWriteForm({
   initialState,
   portalPatchContext,
   variant = 'general',
-  isEdit = false,
   submitPeriodLabel,
+  ujatAcknowledgedSchedule,
+  scheduleRevisionDrift = false,
+  temporarySchedule,
 }: EducationInstitutionGuidanceWriteFormProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const isUjat = variant === 'ujat'
   const [guidance, setGuidance] = useState<ApplyInstitutionGuidanceAnswers>(initialState.guidance)
   const [sexOffense, setSexOffense] = useState<ApplyInstitutionSexOffenseValues>(
@@ -78,20 +104,31 @@ export function EducationInstitutionGuidanceWriteForm({
     initialState.ujatExtras ?? emptyUjatInstitutionGuidanceExtras(),
   )
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [afterAlertPath, setAfterAlertPath] = useState<string | null>(null)
+  const submittingRef = useRef(false)
   const patchGuidanceMutation = usePatchOrganizationGuidanceAnswersMutation(
+    applicationType,
+    applicationId,
+  )
+  const confirmUjatTemporaryScheduleMutation = useConfirmUjatTemporaryScheduleMutation(
     applicationType,
     applicationId,
   )
 
   const submitLabel = isUjat
-    ? isEdit
-      ? '수정 제출하기'
-      : '제출하기'
+    ? '제출하기'
     : hasInstitutionGuidanceDraftContent(initialState.guidance)
       ? '수정하기'
       : '작성하기'
 
   const handleSubmit = async () => {
+    if (
+      submittingRef.current ||
+      patchGuidanceMutation.isPending ||
+      confirmUjatTemporaryScheduleMutation.isPending
+    ) {
+      return
+    }
     const nextSexOffense = isUjat
       ? { ...sexOffense, submissionRequest: sexOffense.submissionRequest || 'request' }
       : sexOffense
@@ -103,7 +140,6 @@ export function EducationInstitutionGuidanceWriteForm({
     if (
       isTeacherInstitutionGuidanceSubmitIncomplete(guidance, nextSexOffense, {
         ujat: isUjat,
-        isEdit: isUjat && isEdit,
         ujatExtras: isUjat ? ujatExtras : undefined,
       })
     ) {
@@ -115,19 +151,114 @@ export function EducationInstitutionGuidanceWriteForm({
       setAlertMessage('API가 설정되지 않아 저장할 수 없습니다.')
       return
     }
+    if (isUjat) {
+      if (scheduleRevisionDrift) {
+        setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+        setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+        return
+      }
+      if (
+        !isValidUjatAcknowledgedScheduleForApplication(
+          ujatAcknowledgedSchedule,
+          applicationId,
+        )
+      ) {
+        setAlertMessage(UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE)
+        setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+        return
+      }
+    }
+    submittingRef.current = true
     try {
       const blockedMessage = resolveOrganizationGuidancePatchBlockedMessage(portalPatchContext ?? {})
       if (blockedMessage) {
         setAlertMessage(blockedMessage)
         return
       }
-      await patchGuidanceMutation.mutateAsync({ detailCase, state })
+      const acknowledgedRevision = isUjat
+        ? ujatAcknowledgedSchedule?.assignmentRevision
+        : undefined
+      await patchGuidanceMutation.mutateAsync({
+        detailCase,
+        state,
+        existingAnswers: portalPatchContext?.applicationAnswers,
+      })
+
+      if (isUjat) {
+        const detailQueryKey = platformQueryKeys.mypage.programApplications.detail(
+          applicationType,
+          applicationId,
+        )
+        await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
+        const latest = queryClient.getQueryData<PortalProgramApplicationDetail>(detailQueryKey)
+        const latestRevision = latest?.supplement?.ujat?.assignmentRevision
+        if (
+          typeof acknowledgedRevision !== 'number' ||
+          !Number.isInteger(acknowledgedRevision) ||
+          acknowledgedRevision < 1
+        ) {
+          setAlertMessage(UJAT_SCHEDULE_RECONFIRM_REQUIRED_MESSAGE)
+          setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+          return
+        }
+        if (
+          typeof latestRevision === 'number' &&
+          Number.isInteger(latestRevision) &&
+          latestRevision !== acknowledgedRevision
+        ) {
+          setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+          setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+          return
+        }
+        try {
+          const confirmation = await confirmUjatTemporaryScheduleMutation.mutateAsync(
+            acknowledgedRevision,
+          )
+          if (confirmation.portalBannerState !== 'ADMIN_REVIEW') {
+            await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
+            const afterConfirm = queryClient.getQueryData<PortalProgramApplicationDetail>(
+              detailQueryKey,
+            )
+            if (afterConfirm?.supplement?.ujat?.portalBannerState !== 'ADMIN_REVIEW') {
+              setAlertMessage(
+                '일정 확인 응답을 확인하지 못했습니다. 신청 상세를 새로고침 후 다시 시도해 주세요.',
+              )
+              return
+            }
+          }
+        } catch (confirmError) {
+          await queryClient.refetchQueries({ queryKey: detailQueryKey, exact: true })
+          const afterError = queryClient.getQueryData<PortalProgramApplicationDetail>(detailQueryKey)
+          if (afterError?.supplement?.ujat?.portalBannerState === 'ADMIN_REVIEW') {
+            navigate(
+              educationInstitutionGuidanceApplicationTabPath(applicationId, applicationType),
+              { replace: true },
+            )
+            return
+          }
+          if (isUjatStaleRevisionError(confirmError)) {
+            setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+            setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+            return
+          }
+          setAlertMessage(resolveUjatTemporaryScheduleConfirmErrorMessage(confirmError))
+          return
+        }
+      }
+
       navigate(
         educationInstitutionGuidanceApplicationTabPath(applicationId, applicationType),
         { replace: true },
       )
     } catch (error) {
+      if (isUjatStaleRevisionError(error)) {
+        setAlertMessage(UJAT_STALE_REVISION_ALERT_MESSAGE)
+        setAfterAlertPath(educationUjatProgressConfirmPath(applicationId, applicationType))
+        return
+      }
       setAlertMessage(resolveInstitutionGuidanceErrorMessage(error))
+    } finally {
+      submittingRef.current = false
     }
   }
 
@@ -135,6 +266,7 @@ export function EducationInstitutionGuidanceWriteForm({
     <>
       <FormTemplateHost surface="platformUser">
         <div className={styles.paragraphStack}>
+          {isUjat ? <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} /> : null}
           {isUjat ? (
             <ParagraphCard
               dataParagraphId="ujat-institution-guidance-intro"
@@ -185,27 +317,15 @@ export function EducationInstitutionGuidanceWriteForm({
                 />
               </ParagraphCard>
 
-              {isEdit ? (
-                <ParagraphCard
-                  dataParagraphId="institution-sex-offense-submission"
-                  editableHeading={institutionGuidanceParagraphHeading(
-                    INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title,
-                    INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description,
-                  )}
-                >
-                  <ApplyInstitutionSexOffenseInquiry value={sexOffense} onChange={setSexOffense} />
-                </ParagraphCard>
-              ) : (
-                <ParagraphCard
-                  dataParagraphId="institution-sex-offense-ujat-write"
-                  editableHeading={institutionGuidanceParagraphHeading(
-                    UJAT_SEX_OFFENSE_WRITE_HEADING.title,
-                    UJAT_SEX_OFFENSE_WRITE_HEADING.description,
-                  )}
-                >
-                  <ApplyInstitutionSexOffenseUjatWrite value={sexOffense} onChange={setSexOffense} />
-                </ParagraphCard>
-              )}
+              <ParagraphCard
+                dataParagraphId="institution-sex-offense-ujat-write"
+                editableHeading={institutionGuidanceParagraphHeading(
+                  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title,
+                  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description,
+                )}
+              >
+                <ApplyInstitutionSexOffenseUjatWrite value={sexOffense} onChange={setSexOffense} />
+              </ParagraphCard>
 
               <ParagraphCard
                 dataParagraphId="institution-guidance-classroom"
@@ -265,12 +385,19 @@ export function EducationInstitutionGuidanceWriteForm({
           type="button"
           size="xlarge"
           width={240}
-          disabled={patchGuidanceMutation.isPending}
+          disabled={
+            patchGuidanceMutation.isPending ||
+            confirmUjatTemporaryScheduleMutation.isPending
+          }
           onClick={() => {
             void handleSubmit()
           }}
         >
-          {patchGuidanceMutation.isPending ? '저장 중…' : submitLabel}
+          {patchGuidanceMutation.isPending || confirmUjatTemporaryScheduleMutation.isPending
+            ? isUjat
+              ? '제출 중…'
+              : '저장 중…'
+            : submitLabel}
         </PFButton>
       </div>
 
@@ -278,7 +405,14 @@ export function EducationInstitutionGuidanceWriteForm({
         open={alertMessage != null}
         title="안내"
         description={alertMessage ?? undefined}
-        onConfirm={() => setAlertMessage(null)}
+        onConfirm={() => {
+          const nextPath = afterAlertPath
+          setAlertMessage(null)
+          setAfterAlertPath(null)
+          if (nextPath) {
+            navigate(nextPath, { replace: true })
+          }
+        }}
       />
     </>
   )

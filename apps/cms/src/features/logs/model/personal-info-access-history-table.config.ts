@@ -7,6 +7,7 @@ import type { TablePageConfig } from '@/shared/components/table-system/types/tab
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 
 export type PersonalInfoAccessHistoryPendingFilters = {
+  targetName: string
   accessPurpose: string
   accessorName: string
   dateRange: PersonalInfoAccessHistoryPendingDateRange
@@ -66,6 +67,13 @@ const tanstackColumns: ColumnDef<PersonalInfoAccessLog>[] = [{ accessorKey: 'id'
 const searchSyncRules: readonly TableSearchParamRule<PersonalInfoAccessHistoryPendingFilters>[] = [
   {
     kind: 'param',
+    filterKey: 'targetName',
+    paramKey: 'pia_target',
+    condition: f => f.targetName.trim().length > 0,
+    transform: v => String(v).trim(),
+  },
+  {
+    kind: 'param',
     filterKey: 'accessPurpose',
     paramKey: 'pia_purpose',
     condition: f => f.accessPurpose.trim().length > 0,
@@ -103,11 +111,13 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
   },
   filters: {
     initialPending: {
+      targetName: '',
       accessPurpose: '',
       accessorName: '',
       dateRange: null,
     },
     syncPendingFromUrl: ({ searchParams, setPendingFilters }) => {
+      const targetName = searchParams.get('pia_target') ?? ''
       const accessPurpose = searchParams.get('pia_purpose') ?? ''
       const accessorName = searchParams.get('pia_accessor') ?? ''
       const from = searchParams.get('pia_from')
@@ -120,11 +130,13 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
           prev: prev.dateRange,
         })
         const next: PersonalInfoAccessHistoryPendingFilters = {
+          targetName,
           accessPurpose,
           accessorName,
           dateRange,
         }
         if (
+          prev.targetName === next.targetName &&
           prev.accessPurpose === next.accessPurpose &&
           prev.accessorName === next.accessorName &&
           dayjsPairEqual(prev.dateRange, next.dateRange)
@@ -135,6 +147,7 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
       })
     },
     hasActiveFilters: ({ searchParams }) => {
+      if ((searchParams.get('pia_target') ?? '').trim()) return true
       if ((searchParams.get('pia_purpose') ?? '').trim()) return true
       if ((searchParams.get('pia_accessor') ?? '').trim()) return true
       if (searchParams.get('pia_from') || searchParams.get('pia_to')) return true
@@ -145,7 +158,7 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
       if (key === 'dateRange') {
         return { ...prev, dateRange: normalizeDateRangePickerValue(value) }
       }
-      if (key === 'accessPurpose' || key === 'accessorName') {
+      if (key === 'targetName' || key === 'accessPurpose' || key === 'accessorName') {
         return { ...prev, [key]: String(value ?? '') }
       }
       return { ...prev, [key]: value } as PersonalInfoAccessHistoryPendingFilters

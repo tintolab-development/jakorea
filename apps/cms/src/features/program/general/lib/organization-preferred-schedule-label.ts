@@ -100,9 +100,9 @@ function pad2(value: number): string {
   return String(value).padStart(2, '0')
 }
 
-/** `2026. 01. 09(금)` */
+/** `2026.01.09(금)` */
 function formatSeoulDate(clock: SeoulClock): string {
-  return `${clock.year}. ${pad2(clock.month)}. ${pad2(clock.day)}(${clock.weekday})`
+  return `${clock.year}.${pad2(clock.month)}.${pad2(clock.day)}(${clock.weekday})`
 }
 
 /** `09:20` */
@@ -231,7 +231,12 @@ function parseScheduleDisplayPoint(raw: string): ScheduleDisplayPoint | null {
 }
 
 function formatScheduleDisplayPointDate(point: ScheduleDisplayPoint): string {
-  return `${point.year}. ${pad2(point.month)}. ${pad2(point.day)}(${point.weekday})`
+  return `${point.year}.${pad2(point.month)}.${pad2(point.day)}(${point.weekday})`
+}
+
+/** `2026년 4월 20일(월)` — 월·일 비패딩 */
+function formatScheduleDisplayPointDateKorean(point: ScheduleDisplayPoint): string {
+  return `${point.year}년 ${point.month}월 ${point.day}일(${point.weekday})`
 }
 
 function formatScheduleDisplayPointTime(point: ScheduleDisplayPoint): string | null {
@@ -243,8 +248,12 @@ function isMidnightPoint(point: ScheduleDisplayPoint): boolean {
   return point.hour === 0 && point.minute === 0
 }
 
-function formatScheduleDisplayRange(start: ScheduleDisplayPoint, end: ScheduleDisplayPoint | null): string {
-  const startDate = formatScheduleDisplayPointDate(start)
+function formatScheduleDisplayRange(
+  start: ScheduleDisplayPoint,
+  end: ScheduleDisplayPoint | null,
+  formatDate: (point: ScheduleDisplayPoint) => string = formatScheduleDisplayPointDate
+): string {
+  const startDate = formatDate(start)
   const startTime = formatScheduleDisplayPointTime(start)
   if (end == null) {
     if (isMidnightPoint(start)) return startDate
@@ -255,19 +264,17 @@ function formatScheduleDisplayRange(start: ScheduleDisplayPoint, end: ScheduleDi
   if (sameDay && isMidnightPoint(start) && isMidnightPoint(end)) return startDate
   if (startTime && endTime && sameDay) return `${startDate} ${startTime} ~ ${endTime}`
   if (!startTime && !endTime) {
-    return sameDay ? startDate : `${startDate} ~ ${formatScheduleDisplayPointDate(end)}`
+    return sameDay ? startDate : `${startDate} ~ ${formatDate(end)}`
   }
   const left = startTime ? `${startDate} ${startTime}` : startDate
-  const right =
-    endTime && sameDay ? endTime : `${formatScheduleDisplayPointDate(end)}${endTime ? ` ${endTime}` : ''}`
+  const right = endTime && sameDay ? endTime : `${formatDate(end)}${endTime ? ` ${endTime}` : ''}`
   return `${left} ~ ${right}`
 }
 
-/**
- * 저장된 한글·점 표기를 화면용 `2026. 01. 09(금) 09:20`으로만 바꾼다.
- * `| 1차시` 같은 뒤 문구와, 날짜가 아닌 원문은 그대로 둔다.
- */
-export function formatCmsScheduleDisplayLabel(label: string): string {
+function formatCmsScheduleLabelWith(
+  label: string,
+  formatDate: (point: ScheduleDisplayPoint) => string
+): string {
   const trimmed = label.trim()
   if (!trimmed) return trimmed
   const suffixMatch = /(\s*\|[\s\S]*)$/u.exec(trimmed)
@@ -286,7 +293,20 @@ export function formatCmsScheduleDisplayLabel(label: string): string {
       end = { ...start, hour: timeOnly.hour, minute: timeOnly.minute }
     }
   }
-  return `${formatScheduleDisplayRange(start, end)}${suffix}`
+  return `${formatScheduleDisplayRange(start, end, formatDate)}${suffix}`
+}
+
+/**
+ * 저장된 한글·점 표기를 화면용 `2026.01.09(금) 09:20`으로만 바꾼다.
+ * `| 1차시` 같은 뒤 문구와, 날짜가 아닌 원문은 그대로 둔다.
+ */
+export function formatCmsScheduleDisplayLabel(label: string): string {
+  return formatCmsScheduleLabelWith(label, formatScheduleDisplayPointDate)
+}
+
+/** 일정 선택 UI 예외 — `2026년 4월 20일(월) 09:30 ~ 12:20` */
+export function formatCmsScheduleKoreanDisplayLabel(label: string): string {
+  return formatCmsScheduleLabelWith(label, formatScheduleDisplayPointDateKorean)
 }
 
 /** 신청 희망 일정 표시. 시작·종료가 있으면 그 값으로 만들고, 라벨만 있으면 표시용으로만 바꾼다. */
@@ -330,7 +350,7 @@ function positiveScheduleCount(value: number | null | undefined): number | null 
   return Math.trunc(value)
 }
 
-/** 승인 모달 카드 첫 줄. `2026. 04. 20(월) 09:30 ~ 12:20` */
+/** 승인 모달 카드 첫 줄. `2026.04.20(월) 09:30 ~ 12:20` */
 export function formatOrganizationApproveScheduleCardTitle(
   startAt: string | null | undefined,
   endAt: string | null | undefined

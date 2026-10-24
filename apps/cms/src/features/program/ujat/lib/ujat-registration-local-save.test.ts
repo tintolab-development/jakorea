@@ -3,9 +3,14 @@ import type { WritingFormDraft } from '@/features/template/model/writing-form-dr
 import { UJAT_DETAILED_PROGRAM_UJAT_LABEL } from './ujat-registration-basic-info-defaults'
 import {
   buildUjatProgramListRowFromRegistrationSnapshot,
+  collectUjatRegistrationCreateOverlay,
   persistUjatRegistrationFormLocal,
   readUjatRegistrationLocalSaveRecords,
 } from './ujat-registration-local-save'
+import {
+  patchUjatApplicationVolunteerOverlay,
+  resetUjatApplicationVolunteerOverlayStoreForTests,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
 const draft = {
   title: 'UJAT 등록',
@@ -35,6 +40,7 @@ describe('UJAT registration local save', () => {
 
   beforeEach(() => {
     storage.clear()
+    resetUjatApplicationVolunteerOverlayStoreForTests()
   })
 
   it('같은 완료 idempotency key를 한 번만 저장한다', () => {
@@ -49,6 +55,18 @@ describe('UJAT registration local save', () => {
 
     expect(second.id).toBe(first.id)
     expect(readUjatRegistrationLocalSaveRecords()).toHaveLength(1)
+  })
+
+  it('지원자 수료증 파일명은 관리자 프로그램 생성 overlay에서 제외한다', () => {
+    patchUjatApplicationVolunteerOverlay({
+      'ujatVolunteerApplication.previousTerm': '1',
+      'ujatVolunteerApplication.previousTermFileNames': ['certificate.pdf'],
+    })
+
+    const overlay = collectUjatRegistrationCreateOverlay({})
+
+    expect(overlay['ujatVolunteerApplication.previousTerm']).toBe('1')
+    expect(overlay['ujatVolunteerApplication.previousTermFileNames']).toBeUndefined()
   })
 })
 

@@ -7,9 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
-import type {
-  GeneralIndividualApplicantRow,
-} from '@/features/program/general/model/individual-applicant'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { MESSAGES } from '@/shared/constants/messages'
@@ -23,7 +21,10 @@ import {
   updateIndividualApplication,
 } from '@/features/program/general/api/applications-api-client'
 import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
-import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import {
+  extractApiErrorMessage,
+  getApiErrorHttpStatus,
+} from '@/shared/lib/extract-api-error-message'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import {
   fetchGeneralParticipantEducationScope,
@@ -121,8 +122,10 @@ export function ParticipatingParticipantFullpageView({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
-  const attendanceSectionRef = useRef<ParticipatingIndividualParticipantAttendanceSectionHandle>(null)
-  const assignmentSectionRef = useRef<ParticipatingIndividualParticipantAssignmentSectionHandle>(null)
+  const attendanceSectionRef =
+    useRef<ParticipatingIndividualParticipantAttendanceSectionHandle>(null)
+  const assignmentSectionRef =
+    useRef<ParticipatingIndividualParticipantAssignmentSectionHandle>(null)
   const [submissionTeamRejected, setSubmissionTeamRejected] = useState(false)
   const submissionTeamApplicable =
     isSubmissionTeamApplicable(program.businessArea) && !submissionTeamRejected
@@ -142,9 +145,8 @@ export function ParticipatingParticipantFullpageView({
   const availableTabKeys = useMemo(() => getParticipantDetailTabKeys(program), [program])
   const visibleActiveTab = availableTabKeys.includes(activeTab) ? activeTab : 'application'
 
-  const enrichedParticipant = useParticipatingIndividualApplicationDetailEnrichment(
-    initialParticipant
-  )
+  const enrichedParticipant =
+    useParticipatingIndividualApplicationDetailEnrichment(initialParticipant)
   const baseParticipant = enrichedParticipant ?? initialParticipant
 
   const mergedParticipant = useMemo(
@@ -227,10 +229,7 @@ export function ParticipatingParticipantFullpageView({
   const revealParticipatingParticipantPersonalInfo = useCallback(
     async (reason: string) => {
       if (hasIndividualApplicationId) {
-        const dto = await unmaskIndividualApplicationPrivacyRemote(
-          individualApplicationId,
-          reason
-        )
+        const dto = await unmaskIndividualApplicationPrivacyRemote(individualApplicationId, reason)
         queryClient.setQueryData(
           generalApplicationsQueryKeys.individualDetail(individualApplicationId),
           dto
@@ -260,35 +259,33 @@ export function ParticipatingParticipantFullpageView({
       }
       return fetchMemberRolePrivacyUnmask(memberId, reason, 'INDIVIDUAL')
     },
-    [
-      hasIndividualApplicationId,
-      individualApplicationId,
-      mergedParticipant,
-      queryClient,
-    ]
+    [hasIndividualApplicationId, individualApplicationId, mergedParticipant, queryClient]
   )
 
-  const applyParticipatingParticipantPersonalInfo = useCallback((payload: unknown) => {
-    if (payload == null || typeof payload !== 'object') return
-    const privacy = payload as {
-      name?: unknown
-      phone?: unknown
-      email?: unknown
-      address?: unknown
-    }
-    setParticipantPatches(prev => ({
-      ...prev,
-      ...(typeof privacy.name === 'string' ? { applicantName: privacy.name } : {}),
-      ...(typeof privacy.address === 'string' ? { homeAddress: privacy.address } : {}),
-      detail: {
-        ...mergedParticipant.detail,
-        ...prev.detail,
-        ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
-        ...(typeof privacy.email === 'string' ? { email: privacy.email } : {}),
-        ...(typeof privacy.address === 'string' ? { homeAddressFull: privacy.address } : {}),
-      },
-    }))
-  }, [mergedParticipant.detail])
+  const applyParticipatingParticipantPersonalInfo = useCallback(
+    (payload: unknown) => {
+      if (payload == null || typeof payload !== 'object') return
+      const privacy = payload as {
+        name?: unknown
+        phone?: unknown
+        email?: unknown
+        address?: unknown
+      }
+      setParticipantPatches(prev => ({
+        ...prev,
+        ...(typeof privacy.name === 'string' ? { applicantName: privacy.name } : {}),
+        ...(typeof privacy.address === 'string' ? { homeAddress: privacy.address } : {}),
+        detail: {
+          ...mergedParticipant.detail,
+          ...prev.detail,
+          ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
+          ...(typeof privacy.email === 'string' ? { email: privacy.email } : {}),
+          ...(typeof privacy.address === 'string' ? { homeAddressFull: privacy.address } : {}),
+        },
+      }))
+    },
+    [mergedParticipant.detail]
+  )
 
   const {
     personalInfoRevealed,
@@ -422,8 +419,7 @@ export function ParticipatingParticipantFullpageView({
         }))
         .find(({ key }) => key === payload.stopSessionKey)
       const stopScheduleIdRaw = matched?.session.resolvedScheduleId
-      const stopScheduleIdNum =
-        stopScheduleIdRaw != null ? Number(stopScheduleIdRaw) : Number.NaN
+      const stopScheduleIdNum = stopScheduleIdRaw != null ? Number(stopScheduleIdRaw) : Number.NaN
 
       if (progressRemoteEnabled) {
         setActivityWithdrawSubmitting(true)
@@ -445,7 +441,10 @@ export function ParticipatingParticipantFullpageView({
           setActivityWithdrawModalOpen(false)
           showAlert({
             title: '활동 포기',
-            content: screeningWithdrawCompleteContent('participant', mergedParticipant.applicantName),
+            content: screeningWithdrawCompleteContent(
+              'participant',
+              mergedParticipant.applicantName
+            ),
           })
         } catch (error) {
           const message =
@@ -485,11 +484,7 @@ export function ParticipatingParticipantFullpageView({
     }
     if (isApplicationInfoEditing) return
     setCertificateIssueModalOpen(true)
-  }, [
-    certificateExportActive,
-    isApplicationInfoEditing,
-    mergedParticipant.participationAppliedAt,
-  ])
+  }, [certificateExportActive, isApplicationInfoEditing, mergedParticipant.participationAppliedAt])
 
   const handleCertificateIssueModalCancel = useCallback(() => {
     setCertificateIssueModalOpen(false)
@@ -709,13 +704,14 @@ export function ParticipatingParticipantFullpageView({
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
-                width={140}
+                size="h44"
                 onClick={() => attendanceSectionRef.current?.openAttendanceCorrectionModal()}
               >
                 출결 정정
               </CmsButton>
               <ExcelButton
+                size="h44"
+                width={160}
                 onClick={() => attendanceSectionRef.current?.exportExcel()}
               />
             </>
@@ -724,8 +720,7 @@ export function ParticipatingParticipantFullpageView({
               {submissionTeamApplicable ? (
                 <CmsButton
                   variant="secondary"
-                  size="large"
-                  width={140}
+                  size="h40"
                   onClick={() => assignmentSectionRef.current?.openTeamChangeModal()}
                 >
                   팀 변경
@@ -733,8 +728,7 @@ export function ParticipatingParticipantFullpageView({
               ) : null}
               <CmsButton
                 variant="secondary"
-                size="large"
-                width={200}
+                size="h40"
                 icon={<ButtonDownloadIcon />}
                 adminAction="download"
                 onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()}
@@ -760,7 +754,7 @@ export function ParticipatingParticipantFullpageView({
                 maskSensitive={privacyMasked}
                 mode={isApplicationInfoEditing ? 'edit' : 'view'}
                 detailContext="progress"
-                draft={isApplicationInfoEditing ? draft ?? undefined : undefined}
+                draft={isApplicationInfoEditing ? (draft ?? undefined) : undefined}
                 onDraftChange={isApplicationInfoEditing ? updateDraft : undefined}
                 validationErrors={validationErrors}
                 textbookOptions={textbookOptions}
@@ -806,7 +800,7 @@ export function ParticipatingParticipantFullpageView({
           >
             <ParticipatingParticipantSettlementSection
               program={program}
-              participantId={mergedParticipant.id}
+              participant={mergedParticipant}
             />
           </div>
         ) : null}

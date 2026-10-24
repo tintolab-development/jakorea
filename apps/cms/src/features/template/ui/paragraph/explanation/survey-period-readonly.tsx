@@ -1,14 +1,10 @@
-import dayjs from 'dayjs'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import './survey-period-readonly.css'
-
-const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 function formatSurveyPeriodDate(isoDate: string | null | undefined): string {
   if (isoDate == null || isoDate === '') return '—'
-  const parsed = dayjs(isoDate)
-  if (!parsed.isValid()) return '—'
-  const weekday = WEEKDAYS_KO[parsed.day()] ?? '—'
-  return `${parsed.year()}년 ${parsed.month() + 1}월 ${parsed.date()}일(${weekday})`
+  const label = formatDateDotWithWeekday(isoDate)
+  return label === '-' ? '—' : label
 }
 
 export function formatSurveyPeriodRangeText(

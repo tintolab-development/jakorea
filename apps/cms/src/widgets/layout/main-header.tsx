@@ -267,11 +267,7 @@ export function MainHeader() {
                 </div>
               )}
             >
-              <div
-                className="main-header-notification-badge"
-                role="button"
-                tabIndex={0}
-              >
+              <div className="main-header-notification-badge" role="button" tabIndex={0}>
                 {unreadCount > 0 ? (
                   <BellFilled className="main-header-notification-icon" />
                 ) : (
@@ -323,7 +319,7 @@ export function MainHeader() {
                       className="main-header-account-dropdown-item"
                       onClick={() => handleAccountMenuAction('profile')}
                     >
-                      정보 수정
+                      내 정보 확인
                     </button>
                     {SHOW_NOTIFICATION_SETTINGS ? (
                       <button

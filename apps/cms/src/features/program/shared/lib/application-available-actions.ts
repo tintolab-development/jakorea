@@ -23,3 +23,14 @@ export function hasExplicitApplicationAction(
 ): boolean {
   return Array.isArray(availableActions) && availableActions.includes(action)
 }
+
+/**
+ * 참여자 신청 상세 — 신청 반려 시 [반려 취소].
+ * 스펙은 `approvalStatus=rejected` 기준이며, BE `availableActions`에
+ * `CANCEL_REJECTION`이 없거나 빈 배열이어도 노출한다.
+ */
+export function canCancelParticipantApplicationRejection(
+  _availableActions?: string[]
+): boolean {
+  return true
+}

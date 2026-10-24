@@ -15,7 +15,7 @@ import {
   ReactionUserList,
 } from '@/shared/ui'
 import type { ProgramPost, ProgramFile } from '@/types/domain'
-import dayjs from 'dayjs'
+import { formatDateTimeDot } from '@/shared/utils/date'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
 import { RichTextViewer } from '@/shared/rich-text'
 import {
@@ -40,10 +40,7 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {
-  const d = dayjs(date)
-  const ampm = d.hour() < 12 ? '오전' : '오후'
-  const hour = d.hour() % 12 || 12
-  return d.format(`YYYY년 M월 D일 ${ampm} ${hour}:mm`)
+  return formatDateTimeDot(date)
 }
 
 // ── 아이콘 ───────────────────────────────────────────

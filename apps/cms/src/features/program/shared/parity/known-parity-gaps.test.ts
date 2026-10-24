@@ -12,7 +12,7 @@ import { loadParityFixture } from './load-fixture'
 describe('program detail parity — known gaps (registration overlay persist)', () => {
   const screen = parityScreenById('registration.general.seed_to_detail')
 
-  it('general-organization-overlay_only: recruit.detailInfo persisted keys not rehydrated to store', () => {
+  it('general-organization-overlay_only: recruit.detailInfo persisted keys rehydrate to catalog store', () => {
     const fixture = loadParityFixture('general-organization-overlay_only')
     expect(screen).toBeDefined()
     expect(fixture).toBeDefined()
@@ -21,8 +21,13 @@ describe('program detail parity — known gaps (registration overlay persist)', 
     const api = buildApiTruthSnapshot(screen, fixture.program)
     const ui = buildUiExposedSnapshot(screen, fixture.program, 'strict')
     const diffs = diffFlatRecords(api.flat, ui.flat)
-    expect(diffs.length).toBeGreaterThan(0)
-    expect(diffs.some(d => d.path.includes('recruit.detailInfo'))).toBe(true)
+    expect(diffs.filter(d => d.path.includes('recruit.detailInfo'))).toEqual([])
+    expect(ui.flat['registrationOverlay.recruit.detailInfo.programDescription']).toBe(
+      'overlay-only-desc'
+    )
+    expect(ui.flat['registrationOverlay.recruit.detailInfo.recruitmentGuide']).toBe(
+      'overlay-only-guide'
+    )
   })
 
   it('general-organization-nested_overlay_conflict: nested wins over overlay on recruit.detailInfo', () => {

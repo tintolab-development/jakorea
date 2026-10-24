@@ -14,6 +14,7 @@ const INITIAL_PROGRAM_HISTORY_FILTERS = {
   lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
   participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
   educationTarget: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+  beneficiaryCount: '',
   managerName: '',
 } as const satisfies SponsorProgramHistoryFilters
 

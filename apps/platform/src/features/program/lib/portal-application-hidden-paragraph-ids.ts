@@ -27,18 +27,30 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
+function readBooleanFlag(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined
+}
+
+/**
+ * `preEducationNoticeRequired`(정본) · `advanceGuidanceRequired`(구필드).
+ * OpenAPI는 두 값이 같다고 하지만, 한쪽만 true이면 작성 필요로 본다.
+ */
+export function readCanonicalPreEducationNoticeFlag(source: unknown): boolean | undefined {
+  if (!isRecord(source)) return undefined
+  const pre = readBooleanFlag(source.preEducationNoticeRequired)
+  const advance = readBooleanFlag(source.advanceGuidanceRequired)
+  if (pre === true || advance === true) return true
+  if (pre === false || advance === false) return false
+  return undefined
+}
+
 /** CMS 모집 「사전 안내 사항 작성 여부」 — runtime `preEducationNoticeRequired` */
 export function readPreEducationNoticeRequiredFromRuntime(runtime: unknown): boolean | null {
   if (!isRecord(runtime)) return null
-  const raw = runtime.preEducationNoticeRequired ?? runtime.advanceGuidanceRequired
-  if (typeof raw === 'boolean') return raw
-  const audience = runtime.audienceApplication
-  if (isRecord(audience)) {
-    const fromAudience =
-      audience.preEducationNoticeRequired ?? audience.advanceGuidanceRequired
-    if (typeof fromAudience === 'boolean') return fromAudience
-  }
-  return null
+  const fromRoot = readCanonicalPreEducationNoticeFlag(runtime)
+  if (fromRoot !== undefined) return fromRoot
+  const fromAudience = readCanonicalPreEducationNoticeFlag(runtime.audienceApplication)
+  return fromAudience ?? null
 }
 
 /**
@@ -47,12 +59,18 @@ export function readPreEducationNoticeRequiredFromRuntime(runtime: unknown): boo
  * 둘 다 없으면 레거시 작성(true). 강사·봉사자 신청에는 호출하지 않는다.
  */
 export function resolveInstitutionPreEducationNoticeRequired(
-  program: { preEducationNoticeRequired?: boolean | null } | null | undefined,
+  program:
+    | {
+        preEducationNoticeRequired?: boolean | null
+        advanceGuidanceRequired?: boolean | null
+      }
+    | null
+    | undefined,
   runtimeContext?: unknown,
 ): boolean {
   return (
     readPreEducationNoticeRequiredFromRuntime(runtimeContext) ??
-    program?.preEducationNoticeRequired ??
+    readCanonicalPreEducationNoticeFlag(program) ??
     true
   )
 }

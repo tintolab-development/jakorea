@@ -6,6 +6,13 @@ import {
 
 export const personalInfoAccessHistoryFilterFields: FilterFieldConfig[] = [
   {
+    key: 'targetName',
+    type: 'search',
+    label: '조회 대상자명',
+    placeholder: '조회 대상자명을 입력하세요',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
+  },
+  {
     key: 'accessPurpose',
     type: 'search',
     label: '조회 목적',

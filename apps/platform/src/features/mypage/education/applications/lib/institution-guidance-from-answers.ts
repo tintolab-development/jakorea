@@ -35,21 +35,24 @@ type InstitutionGuidanceParagraphIds = {
   sexOffenseInquiry: string
 }
 
-function resolveInstitutionGuidanceParagraphIds(
+const INSTITUTION_GUIDANCE_PARAGRAPH_IDS: InstitutionGuidanceParagraphIds = {
+  guidance: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance,
+  sexOffenseSubmission: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentSubmissionRequest,
+  sexOffenseInquiry: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod,
+}
+
+const ECONOMY_GUIDANCE_PARAGRAPH_IDS: InstitutionGuidanceParagraphIds = {
+  guidance: PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance,
+  sexOffenseSubmission: PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentSubmissionRequest,
+  sexOffenseInquiry: PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod,
+}
+
+function preferredInstitutionGuidanceParagraphIds(
   detailCase: ProgramDetailCase | undefined,
 ): InstitutionGuidanceParagraphIds {
-  if (detailCase === 'gemini') {
-    return {
-      guidance: PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance,
-      sexOffenseSubmission: PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentSubmissionRequest,
-      sexOffenseInquiry: PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod,
-    }
-  }
-  return {
-    guidance: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance,
-    sexOffenseSubmission: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentSubmissionRequest,
-    sexOffenseInquiry: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod,
-  }
+  return detailCase === 'gemini'
+    ? ECONOMY_GUIDANCE_PARAGRAPH_IDS
+    : INSTITUTION_GUIDANCE_PARAGRAPH_IDS
 }
 
 function readAnswer(answers: Record<string, unknown>, key: string): unknown {
@@ -58,11 +61,54 @@ function readAnswer(answers: Record<string, unknown>, key: string): unknown {
   return undefined
 }
 
+function pickExistingAnswerKey(
+  answers: Record<string, unknown>,
+  keys: readonly string[],
+): string | undefined {
+  for (const key of keys) {
+    if (key in answers) return key
+  }
+  return undefined
+}
+
+function resolveInstitutionGuidanceParagraphIds(
+  detailCase: ProgramDetailCase | undefined,
+  existingAnswers?: Record<string, unknown> | null,
+): InstitutionGuidanceParagraphIds {
+  const preferred = preferredInstitutionGuidanceParagraphIds(detailCase)
+  const answers = existingAnswers ?? {}
+  const guidanceKey =
+    pickExistingAnswerKey(answers, [
+      preferred.guidance,
+      INSTITUTION_GUIDANCE_PARAGRAPH_IDS.guidance,
+      ECONOMY_GUIDANCE_PARAGRAPH_IDS.guidance,
+    ]) ??
+    Object.keys(answers).find(key => key.includes('seed-guidance')) ??
+    preferred.guidance
+  const sexOffenseSubmissionKey =
+    pickExistingAnswerKey(answers, [
+      preferred.sexOffenseSubmission,
+      INSTITUTION_GUIDANCE_PARAGRAPH_IDS.sexOffenseSubmission,
+      ECONOMY_GUIDANCE_PARAGRAPH_IDS.sexOffenseSubmission,
+    ]) ?? preferred.sexOffenseSubmission
+  const sexOffenseInquiryKey =
+    pickExistingAnswerKey(answers, [
+      preferred.sexOffenseInquiry,
+      INSTITUTION_GUIDANCE_PARAGRAPH_IDS.sexOffenseInquiry,
+      ECONOMY_GUIDANCE_PARAGRAPH_IDS.sexOffenseInquiry,
+    ]) ?? preferred.sexOffenseInquiry
+  return {
+    guidance: guidanceKey,
+    sexOffenseSubmission: sexOffenseSubmissionKey,
+    sexOffenseInquiry: sexOffenseInquiryKey,
+  }
+}
+
 export function mapInstitutionGuidanceFromApplicationAnswers(
   answers: Record<string, unknown> | undefined,
   detailCase: ProgramDetailCase | undefined,
 ): TeacherInstitutionGuidanceFormState {
-  const ids = resolveInstitutionGuidanceParagraphIds(detailCase)
+  const ids = resolveInstitutionGuidanceParagraphIds(detailCase, answers)
   const guidanceRaw = readAnswer(answers ?? {}, ids.guidance)
   const submissionRaw = readAnswer(answers ?? {}, ids.sexOffenseSubmission)
   const inquiryRaw = readAnswer(answers ?? {}, ids.sexOffenseInquiry)
@@ -80,8 +126,9 @@ export function mapInstitutionGuidanceFromApplicationAnswers(
 export function buildInstitutionGuidanceAnswerPatch(
   state: TeacherInstitutionGuidanceFormState,
   detailCase: ProgramDetailCase | undefined,
+  existingAnswers?: Record<string, unknown> | null,
 ): Record<string, unknown> {
-  const ids = resolveInstitutionGuidanceParagraphIds(detailCase)
+  const ids = resolveInstitutionGuidanceParagraphIds(detailCase, existingAnswers)
   const guidanceAnswer = guidanceAnswerFromValues(state.guidance)
   const patch: Record<string, unknown> = {
     [ids.guidance]:
@@ -106,6 +153,7 @@ export function formatSexOffenseConsentMethodDisplay(
   if (sexOffense.submissionRequest === 'no_submit') {
     return '동의서 미제출'
   }
+  if (sexOffense.submissionRequest !== 'request') return undefined
   const parts = [formatSiteSubmissionLabel(sexOffense.siteSubmission)]
   if (sexOffense.siteSubmission === 'online') {
     const id = sexOffense.institutionId.trim()

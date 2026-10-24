@@ -46,10 +46,10 @@ export function UserPersonalInfoRevealConfirmModal({
       zIndex={zIndex}
       footer={
         <>
-          <CmsButton variant="secondary" width={70} type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" width={100} type="button" onClick={handleConfirm}>
+          <CmsButton variant="primary" size="large" type="button" onClick={handleConfirm}>
             정보 열람
           </CmsButton>
         </>

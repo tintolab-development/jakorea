@@ -9,6 +9,7 @@ import type {
   ApplicantInstructorJaKoreaActivity,
 } from '@/features/program/shared/model/applicant-instructor'
 import dayjs from 'dayjs'
+import { formatDateDot } from '@/shared/utils/date'
 import {
   formatInstructorEducationLevelDisplay,
   isInstructorMaskedPlaceholder,
@@ -239,9 +240,9 @@ function formatJaKoreaActivityDate(raw: string | undefined): string | undefined 
   const parsed = dayjs(trimmed, [...JA_KOREA_ACTIVITY_DATE_PARSE_FORMATS], true)
   if (!parsed.isValid()) return trimmed
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed) || /^\d{4}\.\d{2}\.\d{2}$/.test(trimmed)) {
-    return parsed.format('YYYY. MM. DD')
+    return formatDateDot(parsed)
   }
-  return parsed.format('YYYY. MM')
+  return parsed.format('YYYY.MM')
 }
 
 export function formatJaKoreaActivityPeriod(item: ApplicantInstructorJaKoreaActivity): string {

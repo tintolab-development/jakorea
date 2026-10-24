@@ -16,6 +16,9 @@ import {
   insertImageFromUrl,
   insertTable,
   insertYoutubeFromUrl,
+  canRunRichTextTableCommand,
+  listRichTextTableToolbarItems,
+  runRichTextTableCommand,
   NodeSelection,
   promptLinkUrl,
   RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
@@ -149,6 +152,55 @@ describe('mail template editor toolbar commands', () => {
       if (node.type.name === 'horizontalRule') hasRule = true
     })
     expect(hasRule).toBe(true)
+  })
+
+  it('adds table rows and columns then deletes the table', () => {
+    const instance = createEditor('<p></p>')
+    instance.commands.focus()
+    insertTable(instance)
+    expect(instance.isActive('table')).toBe(true)
+    expect(canRunRichTextTableCommand(instance, 'addRowAfter')).toBe(true)
+    expect(canRunRichTextTableCommand(instance, 'addColumnAfter')).toBe(true)
+    expect(canRunRichTextTableCommand(instance, 'mergeCells')).toBe(false)
+
+    const countRows = () => {
+      let rows = 0
+      instance.state.doc.descendants(node => {
+        if (node.type.name === 'tableRow') rows += 1
+      })
+      return rows
+    }
+    const countCellsInFirstRow = () => {
+      let cells = 0
+      instance.state.doc.descendants(node => {
+        if (node.type.name !== 'tableRow') return
+        if (cells > 0) return false
+        node.forEach(child => {
+          if (child.type.name === 'tableHeader' || child.type.name === 'tableCell') cells += 1
+        })
+        return false
+      })
+      return cells
+    }
+
+    const rowsBefore = countRows()
+    const colsBefore = countCellsInFirstRow()
+    runRichTextTableCommand(instance, 'addRowAfter')
+    runRichTextTableCommand(instance, 'addColumnAfter')
+    expect(countRows()).toBe(rowsBefore + 1)
+    expect(countCellsInFirstRow()).toBe(colsBefore + 1)
+
+    runRichTextTableCommand(instance, 'deleteTable')
+    expect(instance.isActive('table')).toBe(false)
+    expect(canRunRichTextTableCommand(instance, 'addRowAfter')).toBe(false)
+  })
+
+  it('lists table edit commands even when the cursor is outside a table', () => {
+    const items = listRichTextTableToolbarItems({ inTable: false })
+    expect(items.some(item => item.kind === 'insert')).toBe(true)
+    expect(
+      items.some(item => item.kind === 'command' && item.command === 'addRowAfter' && item.disabled)
+    ).toBe(true)
   })
 
   it('keeps mail variable atoms intact when toggling bold on the chip', () => {

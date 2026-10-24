@@ -3,8 +3,7 @@
  *
  * OpenAPI 확정안(백엔드 갭 B-1). 서버가 다른 키를 쓰면 이 파일만 수정합니다.
  * - file-access: `fileName`, `userName`, `from`, `to`
- * - privacy-access: `accessPurpose`, `accessorName`, `from`, `to`
- *   (`targetName`은 API 지원이나 기능정의서 필터에 없어 UI에 두지 않음)
+ * - privacy-access: `targetName`, `accessPurpose`, `accessorName`, `from`, `to`
  * - system-issues: `userName`, `from`, `to`
  */
 

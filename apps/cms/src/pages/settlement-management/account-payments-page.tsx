@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
+import { formatDateDot, formatDateDotWithWeekday, formatNumberDisplay } from '@/shared/utils'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   ACCOUNT_PAYMENT_STATUS_LABELS,
@@ -92,8 +93,6 @@ interface AppliedFilters {
   transferDateRange: [Dayjs | null, Dayjs | null] | null
 }
 
-const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
-
 /** 계좌 지급 풀페이지 상세 — URL 동기화(뒤로가기로 목록 복귀) */
 const AP_DETAIL_ID = 'ap_detail'
 
@@ -106,9 +105,9 @@ const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 160 } as const
  */
 const ACCOUNT_PAYMENTS_LIST_SCROLL_X = 80 + 80 + 88 + 420 + 130 + 100 + 130 + 110 + 140
 
-/** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YY. MM. DD ~ YY. MM. DD` */
+/** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YYYY.MM.DD ~ YYYY.MM.DD` */
 function formatYyMmDd(d: Dayjs): string {
-  return d.format('YY. MM. DD')
+  return formatDateDot(d)
 }
 
 function formatSettlementPendingDateRangeOnly(range: [Dayjs | null, Dayjs | null]): string {
@@ -121,8 +120,7 @@ function formatSettlementPendingDateRangeOnly(range: [Dayjs | null, Dayjs | null
 }
 
 function formatTransferCell(iso: string): string {
-  const d = dayjs(iso)
-  return `${d.format('YYYY. MM. DD')}(${KO_WEEKDAY[d.day()]})`
+  return formatDateDotWithWeekday(iso)
 }
 
 function matchesDateRange(iso: string, range: [Dayjs | null, Dayjs | null] | null): boolean {
@@ -150,7 +148,7 @@ function filterRows(rows: AccountPaymentRow[], applied: AppliedFilters): Account
 }
 
 function formatWon(amount: number): string {
-  return `${amount.toLocaleString('ko-KR')}원`
+  return `${formatNumberDisplay(amount)}원`
 }
 
 const statusSelectOptions: { value: AppliedAccountStatus; label: string }[] = [

@@ -191,12 +191,20 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
           dto.educationJournalEnabled ??
           programCommon?.educationJournalEnabled ??
           patchCommon?.educationJournalEnabled,
-        // detail GET 배열이 정본. programs JSON 이전 행으로 셀을 채우지 않는다. 없으면 빈 표.
-        curriculumSessions: patchCommon?.curriculumSessions,
-        scheduleDetails: patchCommon?.scheduleDetails,
-        educationScheduleLines: patchCommon?.educationScheduleLines,
-        educationScheduleMode: patchCommon?.educationScheduleMode,
-        educationScheduleRange: patchCommon?.educationScheduleRange,
+        // B 배열이 있으면 B가 정본. 키 생략 시 A nested 를 undefined 로 지우지 않는다.
+        curriculumSessions: Array.isArray(patchCommon?.curriculumSessions)
+          ? patchCommon.curriculumSessions
+          : programCommon?.curriculumSessions,
+        scheduleDetails: Array.isArray(patchCommon?.scheduleDetails)
+          ? patchCommon.scheduleDetails
+          : programCommon?.scheduleDetails,
+        educationScheduleLines: Array.isArray(patchCommon?.educationScheduleLines)
+          ? patchCommon.educationScheduleLines
+          : programCommon?.educationScheduleLines,
+        educationScheduleMode:
+          patchCommon?.educationScheduleMode ?? programCommon?.educationScheduleMode,
+        educationScheduleRange:
+          patchCommon?.educationScheduleRange ?? programCommon?.educationScheduleRange,
         kpi: programKpi ?? patchKpi,
       },
       {

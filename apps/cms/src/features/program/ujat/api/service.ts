@@ -10,6 +10,10 @@ import {
   buildUjatProgramListRowFromRegistrationSnapshot,
   collectUjatRegistrationCreateOverlay,
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import {
+  awaitRecruitDetailMediaUploads,
+  bindUjatRecruitDetailMediaToRows,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import type { Program } from '@/types/domain'
 import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
 import { shouldUseRemoteApi } from './capabilities'
@@ -114,18 +118,28 @@ export async function detail(programId: string): Promise<Program | null> {
 
 export async function create(input: CreateInput): Promise<Program> {
   assertRemoteReady()
+  await awaitRecruitDetailMediaUploads()
   const overlay = collectUjatRegistrationCreateOverlay(input.overlay)
   const pending = buildUjatProgramListRowFromRegistrationSnapshot({
     id: `ujat-pending-${input.idempotencyKey}`,
     overlay,
   })
-  return fromDetail(
+  const created = fromDetail(
     await createAdminProgramRemoteWithRegistrationForms(
       pending,
       toCreateRequest(pending, { draft: input.draft, overlay }),
       input.preparedFormBindings
     )
   )
+  try {
+    await bindUjatRecruitDetailMediaToRows(created, overlay)
+    return created
+  } catch (error) {
+    await deleteAdminProgramRemote(created.id).catch(rollbackError => {
+      console.error('[ujat registration] rollback created program failed', created.id, rollbackError)
+    })
+    throw error
+  }
 }
 
 /** 모집 행 저장 뒤 overlay만 남긴다. 날짜 키가 있으면 recruitments를 다시 써서 행을 덮는다. */
@@ -163,14 +177,10 @@ export async function update(
     programId,
     toUpdateRequest(program, patch, nextRegistration)
   )
-  const mapped = fromDetail(dto)
-  const { withFetchedProgramSponsorAssignments } = await import(
-    '@/features/program/shared/lib/merge-program-sponsor-assignments'
-  )
-  const { fetchAdminProgramSponsorsRemote } = await import(
-    '@/features/program/general/api/programs-api-client'
-  )
-  return withFetchedProgramSponsorAssignments(mapped, programId, fetchAdminProgramSponsorsRemote)
+  // PATCH echo는 서버 정규화·clearFields 적용 결과의 최종 정본이 아니다.
+  // 저장 직후 canonical GET을 다시 읽어 열린 상세와 다음 화면이 같은 값을 사용하게 한다.
+  const canonical = await detail(programId)
+  return canonical ?? fromDetail(dto)
 }
 
 export async function remove(programId: string): Promise<void> {

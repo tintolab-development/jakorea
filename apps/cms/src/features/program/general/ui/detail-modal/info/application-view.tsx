@@ -12,7 +12,10 @@ import {
 } from '@/features/program/general/lib/application-tabs'
 import { canGeneralProgramApplicationFormEdit } from '@/features/program/general/lib/common-info-edit-policy'
 import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
-import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
+import {
+  PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
+  PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
+} from '@/shared/lib/program-edit-window-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { ApplicationFormPreviewPanel } from './application-form-preview-panel'
 import './application-view.css'
@@ -46,7 +49,7 @@ export function GeneralProgramApplicationView({
   const handleEditForm = () => {
     if (!formWritable) {
       showAlert({
-        title: '안내',
+        title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
         content: PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
       })
       return
@@ -70,7 +73,6 @@ export function GeneralProgramApplicationView({
             <CmsButton
               variant="secondary"
               size="large"
-              disabled={!formWritable}
               onClick={handleEditForm}
             >
               양식 수정

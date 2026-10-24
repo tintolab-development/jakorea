@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyRegistrationWageOverlayToCommonInfo,
   parseWageGradeAmount,
+  parseWageGradeAmountToFormString,
   pricingByWageGrade,
   resolveWagePaymentItemIds,
   resolveWagePaymentItemsView,
@@ -12,6 +13,14 @@ describe('parseWageGradeAmount', () => {
     expect(parseWageGradeAmount('1시간 당 | 기본 : 240,000원')).toBe(240_000)
     expect(parseWageGradeAmount('1시간 당 | 100,000원')).toBe(100_000)
     expect(parseWageGradeAmount('1시간 당 | 기본 : -')).toBeNull()
+  })
+
+  it('「1시간 당」의 1을 140,000원 금액으로 바꾸지 않는다', () => {
+    expect(parseWageGradeAmount('1시간 당 | 기본 : 140,000원')).toBe(140_000)
+    expect(parseWageGradeAmount('1시간 당 | 기본 : 120,000원')).toBe(120_000)
+    expect(parseWageGradeAmount('1시간 당 | 기본 : 100,000원')).toBe(100_000)
+    expect(parseWageGradeAmountToFormString('1시간 당 | 기본 : 140,000원')).toBe('140000')
+    expect(parseWageGradeAmountToFormString('1시간 당 | 기본 : 140,000원')).not.toBe('1')
   })
 })
 
@@ -39,6 +48,19 @@ describe('resolveWagePaymentItemIds', () => {
     expect(resolveWagePaymentItemsView('교통비, 숙박비, 활동비')).toBe(
       '강사 교통비, 숙박비, 참여자 활동비'
     )
+  })
+
+  it('학생 교통비 GET은 강사 교통과 분리하고, 강사만 있으면 학생을 켜지 않는다', () => {
+    expect(
+      resolveWagePaymentItemIds([
+        { itemType: 'TRANSPORTATION', useYn: true },
+        { itemType: 'STUDENT_TRANSPORTATION', useYn: true },
+      ])
+    ).toEqual(['p-1', '학생 교통비'])
+    expect(resolveWagePaymentItemIds([{ itemType: 'TRANSPORTATION', useYn: true }])).toEqual(['p-1'])
+    expect(resolveWagePaymentItemIds([{ itemType: 'STUDENT_TRANSPORTATION', useYn: true }])).toEqual([
+      '학생 교통비',
+    ])
   })
 })
 

@@ -1,4 +1,7 @@
-import type { TextbookEducationTarget } from '@/features/textbook/model/textbook-education-targets'
+import {
+  TEXTBOOK_EDUCATION_TARGETS,
+  type TextbookEducationTarget,
+} from '@/features/textbook/model/textbook-education-targets'
 import type {
   TextbookEducationStage,
   TextbookEducationStageKey,
@@ -67,6 +70,25 @@ export function toEducationStageKey(target: string): TextbookEducationStageKey |
 export function normalizeEducationTargetLabel(target: string): TextbookEducationTarget | '' {
   const key = toEducationStageKey(target)
   return key ? mapStageKeyToEducationTarget(key) : ''
+}
+
+/** 단일·쉼표 구분 교육 대상을 고정 순서 한글 라벨로 */
+export function parseEducationTargetLabels(target: string): TextbookEducationTarget[] {
+  const raw = target.trim()
+  if (!raw) return []
+  const asSingle = normalizeEducationTargetLabel(raw)
+  if (asSingle) return [asSingle]
+  const seen = new Set<TextbookEducationTarget>()
+  for (const part of raw.split(/\s*[,、]\s*/)) {
+    const label = normalizeEducationTargetLabel(part)
+    if (label) seen.add(label)
+  }
+  return TEXTBOOK_EDUCATION_TARGETS.filter(label => seen.has(label))
+}
+
+export function serializeEducationTargetLabels(targets: readonly string[]): string {
+  const seen = new Set(targets.map(item => item.trim()).filter(Boolean))
+  return TEXTBOOK_EDUCATION_TARGETS.filter(label => seen.has(label)).join(', ')
 }
 
 export function mapStageKeyToEducationTarget(
@@ -230,15 +252,28 @@ function buildStageGrades(
   }))
 }
 
+function selectedStageKeysFromTarget(target: string): Set<TextbookEducationStageKey> {
+  const keys = new Set<TextbookEducationStageKey>()
+  for (const label of parseEducationTargetLabels(target)) {
+    const key = toEducationStageKey(label)
+    if (key) keys.add(key)
+  }
+  if (keys.size === 0) {
+    const fallback = toEducationStageKey(target)
+    if (fallback) keys.add(fallback)
+  }
+  return keys
+}
+
 /** 교육 대상·학년 요약값으로 5개 stage UI 상태 생성 */
 export function buildEducationStages(
   target: string,
   grade: string
 ): TextbookEducationStage[] {
-  const selectedStageKey = toEducationStageKey(target)
+  const selectedKeys = selectedStageKeysFromTarget(target)
 
   return EDUCATION_STAGE_META.map(stage => {
-    const selected = stage.key === selectedStageKey
+    const selected = selectedKeys.has(stage.key)
     if (!stage.hasGrades) {
       return {
         key: stage.key,
@@ -254,6 +289,50 @@ export function buildEducationStages(
         label => isGradeSelectedForStage(stage.key, grade, label)
       )),
       grades: buildStageGrades(stage.key, selected, grade),
+    }
+  })
+}
+
+/** 등록 멀티셀렉트 — 대상별 학년으로 5개 stage UI 상태 생성 */
+export function buildEducationStagesFromSelections(
+  targets: readonly string[],
+  gradesByTarget: ReadonlyMap<string, readonly string[]>
+): TextbookEducationStage[] {
+  const selectedKeys = selectedStageKeysFromTarget(serializeEducationTargetLabels(targets))
+
+  return EDUCATION_STAGE_META.map(stage => {
+    const targetLabel = mapStageKeyToEducationTarget(stage.key)
+    if (!selectedKeys.has(stage.key)) {
+      if (!stage.hasGrades) {
+        return { key: stage.key, label: stage.label, selected: false }
+      }
+      return {
+        key: stage.key,
+        label: stage.label,
+        selected: false,
+        grades: gradeLabelsForStage(stage.key).map(label => ({ label, selected: false })),
+      }
+    }
+
+    const selectedGrades = [...(gradesByTarget.get(targetLabel) ?? [])]
+    const allLabel = getStageAllLabel(stage.key)
+    const optionLabels = gradeLabelsForStage(stage.key)
+    const isAll =
+      selectedGrades.includes(allLabel) ||
+      (optionLabels.length > 0 && optionLabels.every(label => selectedGrades.includes(label)))
+
+    if (!stage.hasGrades) {
+      return { key: stage.key, label: stage.label, selected: true }
+    }
+
+    return {
+      key: stage.key,
+      label: stage.label,
+      selected: isAll,
+      grades: optionLabels.map(label => ({
+        label,
+        selected: isAll || selectedGrades.includes(label),
+      })),
     }
   })
 }
@@ -358,36 +437,52 @@ export function formatSelectedGradeSummary(
   return labels.join(', ')
 }
 
+function summarizeStageGrade(stage: TextbookEducationStage): string {
+  const selectedGrades =
+    stage.grades?.filter(grade => grade.selected).map(grade => grade.label) ?? []
+
+  if (stage.key === 'university') {
+    return getStageAllLabel('university')
+  }
+
+  if (stage.key === 'kindergarten') {
+    const wholeLabel = getStageAllLabel('kindergarten')
+    return selectedGrades.length === 1 ? (selectedGrades[0] ?? wholeLabel) : wholeLabel
+  }
+
+  return formatSelectedGradeSummary(stage.key, selectedGrades)
+}
+
 export function summarizeEducationStages(stages: TextbookEducationStage[]): {
-  educationTarget: TextbookEducationTarget
+  educationTarget: string
   grade: string
 } {
-  const selectedStage =
-    stages.find(stage => stage.selected || (stage.grades ?? []).some(grade => grade.selected)) ??
-    null
+  const selectedStages = EDUCATION_STAGE_META.flatMap(meta => {
+    const stage = stages.find(item => item.key === meta.key)
+    if (!stage) return []
+    if (!(stage.selected || (stage.grades ?? []).some(grade => grade.selected))) return []
+    return [stage]
+  })
 
-  if (!selectedStage) {
+  if (selectedStages.length === 0) {
     return { educationTarget: '초등학교', grade: '전학년' }
   }
 
-  const selectedGrades =
-    selectedStage.grades?.filter(grade => grade.selected).map(grade => grade.label) ?? []
+  const educationTarget = selectedStages
+    .map(stage => mapStageKeyToEducationTarget(stage.key))
+    .join(', ')
 
-  if (selectedStage.key === 'university') {
-    return { educationTarget: '대학교', grade: '전학년' }
-  }
+  const grade = selectedStages
+    .map(stage => {
+      const label = mapStageKeyToEducationTarget(stage.key)
+      const summary = summarizeStageGrade(stage)
+      if (selectedStages.length === 1) return summary
+      if (summary === label) return summary
+      return `${label} ${summary}`
+    })
+    .join(', ')
 
-  if (selectedStage.key === 'kindergarten') {
-    return {
-      educationTarget: '유아',
-      grade: selectedGrades.length === 1 ? (selectedGrades[0] ?? '전학년') : '전학년',
-    }
-  }
-
-  return {
-    educationTarget: mapStageKeyToEducationTarget(selectedStage.key),
-    grade: formatSelectedGradeSummary(selectedStage.key, selectedGrades),
-  }
+  return { educationTarget, grade }
 }
 
 function clearStageSelection(stage: TextbookEducationStage): TextbookEducationStage {
@@ -409,7 +504,7 @@ function selectAllGrades(stage: TextbookEducationStage): TextbookEducationStage 
   }
 }
 
-/** 한 교육 대상 row의 전체(전학년) 토글 — 다른 stage는 해제 */
+/** 한 교육 대상 row의 전체(전학년) 토글 — 다른 stage 선택은 유지 */
 export function toggleEducationStageAll(
   stages: TextbookEducationStage[],
   stageKey: TextbookEducationStageKey
@@ -423,9 +518,7 @@ export function toggleEducationStageAll(
   )
 
   return stages.map(stage => {
-    if (stage.key !== stageKey) {
-      return clearStageSelection(stage)
-    }
+    if (stage.key !== stageKey) return stage
     if (!nextActive) {
       return clearStageSelection(stage)
     }
@@ -433,16 +526,14 @@ export function toggleEducationStageAll(
   })
 }
 
-/** 한 교육 대상 row의 개별 학년 토글 — 다른 stage는 해제 */
+/** 한 교육 대상 row의 개별 학년 토글 — 다른 stage 선택은 유지 */
 export function toggleEducationStageGrade(
   stages: TextbookEducationStage[],
   stageKey: TextbookEducationStageKey,
   gradeLabel: string
 ): TextbookEducationStage[] {
   return stages.map(stage => {
-    if (stage.key !== stageKey) {
-      return clearStageSelection(stage)
-    }
+    if (stage.key !== stageKey) return stage
 
     const nextGrades = stage.grades?.map(grade =>
       grade.label === gradeLabel ? { ...grade, selected: !grade.selected } : grade

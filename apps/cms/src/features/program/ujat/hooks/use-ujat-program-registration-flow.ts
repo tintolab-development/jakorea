@@ -481,7 +481,9 @@ export function useUjatProgramRegistrationFlow(
       if (!isProgramStep && isParticipantStep) {
         await participantVm.handleSave({ silent: true })
       }
-      flushParticipantSessionOverlaysToOperationalStores()
+      flushParticipantSessionOverlaysToOperationalStores({
+        excludeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
+      })
       await persistRegistrationOperationalOverlaysToLocal(programType, 'ujat')
       syncRegistrationProgramDraftSession({
         programType,
@@ -500,6 +502,7 @@ export function useUjatProgramRegistrationFlow(
     participantVm,
     programType,
     registrationVm,
+    selectedTemplateCode,
   ])
 
   const handleCompleteRegistration = useCallback(() => {

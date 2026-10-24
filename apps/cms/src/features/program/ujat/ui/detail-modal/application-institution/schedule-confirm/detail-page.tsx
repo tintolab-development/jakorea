@@ -5,11 +5,13 @@ export function UjatInstitutionScheduleConfirmDetailPage({
   programId,
   onBack,
   onStatusUpdated,
+  onOpenScheduleAssign,
 }: {
   institutionId: string
   programId?: string | null
   onBack: () => void
   onStatusUpdated: () => void
+  onOpenScheduleAssign?: () => void
 }) {
   return (
     <UjatInstitutionScheduleConfirmConfirmedDetailPage
@@ -17,6 +19,7 @@ export function UjatInstitutionScheduleConfirmDetailPage({
       programId={programId}
       onBack={onBack}
       onStatusUpdated={onStatusUpdated}
+      onOpenScheduleAssign={onOpenScheduleAssign}
     />
   )
 }

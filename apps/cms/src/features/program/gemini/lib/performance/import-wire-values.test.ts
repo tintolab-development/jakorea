@@ -13,7 +13,7 @@ describe('gemini training report import wire values', () => {
   })
 
   it('normalizes excel date text to ISO date', () => {
-    expect(toJavaLocalDate('2026. 9. 30')).toBe('2026-09-30')
+    expect(toJavaLocalDate('2026.09.30')).toBe('2026-09-30')
     expect(toJavaLocalDate('2026년 9월 30일')).toBe('2026-09-30')
     expect(toJavaLocalDate('교육일 미정')).toBeUndefined()
   })

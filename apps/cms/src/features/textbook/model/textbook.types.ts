@@ -1,5 +1,4 @@
 import type { TextbookBusinessArea } from '@/features/textbook/model/textbook-business-areas'
-import type { TextbookEducationTarget } from '@/features/textbook/model/textbook-education-targets'
 
 export type TextbookUseStatus = 'ALL' | 'USED' | 'UNUSED'
 
@@ -23,7 +22,7 @@ export type TextbookEducationStage = {
 export type TextbookRow = {
   id: string
   businessArea: TextbookBusinessArea
-  educationTarget: TextbookEducationTarget
+  educationTarget: string
   grade: string
   textbookName: string
   textbookNameEn: string
@@ -38,7 +37,7 @@ export type TextbookCreateInput = {
   textbookName: string
   textbookNameEn?: string
   businessArea: TextbookBusinessArea
-  educationTarget: TextbookEducationTarget
+  educationTarget: string
   grade: string
   educationStages?: TextbookEducationStage[]
 }

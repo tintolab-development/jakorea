@@ -148,7 +148,7 @@ export function mapTextbookResponse(dto: TextbookResponse): TextbookRow {
     // BE가 number로 내려줘도 쿼리키·캐시 키가 흔들리지 않게 문자열로 고정
     id: dto.id == null || dto.id === '' ? '' : String(dto.id),
     businessArea: (dto.businessArea ?? '') as TextbookBusinessArea,
-    educationTarget: (hasSelection ? summary.educationTarget : educationTarget) as TextbookEducationTarget,
+    educationTarget: hasSelection ? summary.educationTarget : educationTarget,
     grade: hasSelection
       ? summary.grade
       : normalizeSummaryGrade(educationTarget || rawTarget, rawGrade),

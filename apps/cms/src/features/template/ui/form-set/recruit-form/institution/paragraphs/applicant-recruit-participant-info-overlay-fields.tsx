@@ -417,6 +417,7 @@ export const ApplicantRecruitRecruitPeriodField = memo(function ApplicantRecruit
             width="100%"
             placeholder="모집 기간을 선택하세요"
             preferPeriodModeInPopover
+            suppressAutoTodayWhenEmpty
             showTimeToggle={false}
             appliedSurfaceRange={recruitRange}
             appliedSurfaceWithTime={false}

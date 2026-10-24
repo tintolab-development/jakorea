@@ -139,6 +139,16 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   UJAT_ACTIVITY_CERTIFICATE_ADMIN_ONLY: 'UJAT 활동인증서는 관리자만 발급할 수 있습니다.',
   UJAT_INTERVIEW_SCORE_INVALID: 'UJAT 면접 점수는 평가자별 1~5점 정수만 입력할 수 있습니다.',
   UJAT_VOLUNTEER_INTERVIEW_REQUIRED: 'UJAT 봉사자 모집은 면접이 필수입니다. 면접 기간을 입력해 주세요.',
+  FORM_RESUBMISSION_DEADLINE_PASSED: '수정 제출 기한이 종료되었습니다.',
+  FORM_SUBMISSION_ACTIVITY_ABANDONED:
+    '활동 포기 이후에는 교육계획서·교육일지를 새로 제출하거나 수정할 수 없습니다.',
+  PARTICIPATION_REQUIRED: '최종 합격 후 배정된 교육일에 대해 작성할 수 있습니다.',
+  UJAT_VOLUNTEER_EDUCATION_DOCUMENT_REQUIRED:
+    'UJAT 봉사자 신청에서만 교육계획서·교육일지를 사용할 수 있습니다.',
+  FORM_TEMPLATE_VERSION_NOT_PUBLISHED: '교육 문서 양식이 아직 공개되지 않았습니다.',
+  FORM_BINDING_NOT_FOUND: '교육 문서 양식이 아직 준비되지 않았습니다.',
+  FORM_TEMPLATE_DISABLED: '교육 문서 양식을 사용할 수 없습니다.',
+  SCHEDULE_NOT_FOUND: '해당 교육일의 문서를 조회할 수 없습니다.',
 }
 
 export const INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE =

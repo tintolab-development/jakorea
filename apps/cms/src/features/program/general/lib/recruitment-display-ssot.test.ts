@@ -222,7 +222,7 @@ describe('모집 정보 display — 공통정보 폴백 금지', () => {
       },
     }
     const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
-    expect(display.operationPeriodLabel).toContain('2026. 11. 18')
+    expect(display.operationPeriodLabel).toContain('2026.11.18')
     expect(display.operationPeriodLabel).not.toContain('11. 11')
   })
 

@@ -38,6 +38,7 @@ import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/ap
 import { PostReadStatusPopoverContent } from './post-read-status-popover'
 import { downloadFile } from '@/shared/lib/file-download'
 import dayjs from 'dayjs'
+import { formatDateTimeDot } from '@/shared/utils/date'
 
 export interface EnrollmentProgramDetailPostsTabProps {
   program: Program
@@ -61,10 +62,7 @@ export interface EnrollmentProgramDetailPostsTabProps {
 }
 
 function formatKoDate(date: string | Date): string {
-  const d = dayjs(date)
-  const ampm = d.hour() < 12 ? '오전' : '오후'
-  const hour = d.hour() % 12 || 12
-  return d.format(`YYYY년 M월 D일 ${ampm} ${hour}:mm`)
+  return formatDateTimeDot(date)
 }
 
 function formatFileSize(bytes?: number): string {

@@ -33,7 +33,7 @@ import {
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
-import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import './sponsor-page.css'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -42,8 +42,7 @@ import {
   buildDeleteCompletedMessageBulk,
   buildDeleteCompletedMessageSingle,
   buildDeleteCompletedTitle,
-  buildRegisterCompletedMessage,
-  buildRegisterCompletedTitle,
+  showRegisterCompletedAlert,
   useCmsAlert,
   FilterTableToolbarButton,
 } from '@/shared/ui'
@@ -294,13 +293,9 @@ export default function SponsorPage() {
   const handleRegisterSubmit = useCallback(
     async (payload: SponsorRegisterPayload) => {
       try {
-        const created = await createMutation.mutateAsync(payload)
+        await createMutation.mutateAsync(payload)
         setRegisterModalOpen(false)
-        setActionResultTitle(buildRegisterCompletedTitle('후원사'))
-        setActionResultMessage(
-          buildRegisterCompletedMessage(created.name ?? payload.nameDisplayKo, '후원사')
-        )
-        setActionResultModalOpen(true)
+        showRegisterCompletedAlert()
       } catch (error) {
         setActionResultTitle('후원사 등록 실패')
         setActionResultMessage(
@@ -462,7 +457,7 @@ export default function SponsorPage() {
           dataSource={tableData}
           loading={isListFetching && !isInitialListLoading}
           pagination={false}
-          scroll={{ ...TABLE_CONFIG.scroll, x: tableMinWidth }}
+          scroll={{ x: tableMinWidth }}
           onRow={record => ({
             style: { cursor: 'pointer' },
             // hover prefetch 금지: 등록 후 목록 remount 시 GET /sponsors/{id} N건 과호출.

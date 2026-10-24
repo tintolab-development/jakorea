@@ -10,7 +10,14 @@ import { useInquiryMutations } from '@/features/posts/hooks/use-inquiry-mutation
 import { usePostsRemoteEnabled } from '@/features/posts/hooks/use-posts-remote-enabled'
 import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { RichTextViewer } from '@/shared/rich-text'
-import { ActionResultModal, CmsButton, ContentModal } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import {
+  ActionResultModal,
+  CmsButton,
+  CmsTextArea,
+  ContentModal,
+  showRegisterCompletedAlert,
+} from '@/shared/ui'
 import './admin-inquiry-detail-modal.css'
 
 export interface AdminInquiryDetailModalProps {
@@ -49,6 +56,7 @@ export function AdminInquiryDetailModal({
   }, [])
 
   const [answerText, setAnswerText] = useState('')
+  const [answerError, setAnswerError] = useState<string | null>(null)
   const [actionResultOpen, setActionResultOpen] = useState(false)
   const [actionResultTitle, setActionResultTitle] = useState('')
   const [actionResultMessage, setActionResultMessage] = useState('')
@@ -56,6 +64,7 @@ export function AdminInquiryDetailModal({
   useEffect(() => {
     if (!open) return
     setAnswerText(detail?.answerMarkdown ?? '')
+    setAnswerError(null)
   }, [detail?.answerMarkdown, open])
 
   const isAnswerRegistered =
@@ -65,12 +74,15 @@ export function AdminInquiryDetailModal({
     if (!detail || isAnswerRegistered) return
     const md = answerText.trim()
     if (md === '') {
+      setAnswerError('내용을 입력해 주세요.')
       return
     }
+    setAnswerError(null)
     try {
       await replyMutation.mutateAsync({ inquiryId: detail.id, content: md })
       onSuccess()
       onCancel()
+      showRegisterCompletedAlert()
     } catch (error) {
       setActionResultTitle('답변 등록 실패')
       setActionResultMessage(getPostsApiErrorMessage(error, '답변 등록에 실패했습니다.'))
@@ -91,7 +103,7 @@ export function AdminInquiryDetailModal({
         onClick={handleDelete}
         disabled={!detail || isAnswerRegistered}
       >
-        문의 삭제
+        삭제
       </CmsButton>
       <div className="admin-inquiry-detail-modal__footer-right">
         <CmsButton variant="secondary" size="medium" onClick={onCancel}>
@@ -135,138 +147,68 @@ export function AdminInquiryDetailModal({
           <div className="admin-inquiry-detail-modal__empty">문의를 불러올 수 없습니다.</div>
         ) : (
           <div className="admin-inquiry-detail-modal__inner">
-            <section
-              className="admin-inquiry-detail-modal__section"
-              aria-labelledby="inquiry-detail-content-heading"
-            >
-              <h3
-                id="inquiry-detail-content-heading"
-                className="admin-inquiry-detail-modal__section-title"
+            <section className="admin-inquiry-detail-modal__section">
+              <DetailInfoForm
+                title="문의내용"
+                mode="view"
+                className="admin-inquiry-detail-modal__content-form"
               >
-                문의내용
-              </h3>
-              <div className="admin-inquiry-detail-modal__table-wrap">
-                <table className="admin-inquiry-detail-modal__info-table">
-                  <tbody>
-                    <tr>
-                      <th
-                        scope="row"
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
-                      >
-                        문의 회원명
-                      </th>
-                      <td className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value">
-                        {detail.memberName}
-                      </td>
-                      <th
-                        scope="row"
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
-                      >
-                        문의일시
-                      </th>
-                      <td className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value">
-                        {dayjs(detail.createdAt).format('YYYY.MM.DD HH:mm:ss')}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th
-                        scope="row"
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
-                      >
-                        연락처
-                      </th>
-                      <td className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value">
-                        {detail.phone}
-                      </td>
-                      <th
-                        scope="row"
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
-                      >
-                        이메일
-                      </th>
-                      <td className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value">
-                        {detail.email}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th
-                        scope="row"
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
-                      >
-                        카테고리
-                      </th>
-                      <td className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value">
-                        {detail.category}
-                      </td>
-                      <th
-                        scope="row"
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
-                      >
-                        답변 현황
-                      </th>
-                      <td className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value">
-                        {detail.status === 'PENDING' ? (
-                          <span className="admin-inquiry-detail-modal__status admin-inquiry-detail-modal__status--pending">
-                            답변 대기
-                          </span>
-                        ) : (
-                          <span className="admin-inquiry-detail-modal__status admin-inquiry-detail-modal__status--answered">
-                            답변 완료
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th
-                        scope="row"
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
-                      >
-                        프로그램명
-                      </th>
-                      <td
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value"
-                        colSpan={3}
-                      >
-                        {detail.programName == null || detail.programName === ''
-                          ? '-'
-                          : detail.programName}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th
-                        scope="row"
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
-                      >
-                        문의 제목
-                      </th>
-                      <td
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value"
-                        colSpan={3}
-                      >
-                        {detail.title}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th
-                        scope="row"
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--label"
-                      >
-                        문의 내용
-                      </th>
-                      <td
-                        className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value admin-inquiry-detail-modal__cell--multiline"
-                        colSpan={3}
-                      >
-                        <RichTextViewer
-                          markdown={detail.body}
-                          className="admin-inquiry-detail-modal__body-viewer"
-                          maxHeight="none"
-                        />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field label="문의 회원명" view={detail.memberName} />
+                  <DetailInfoForm.Field
+                    label="문의일시"
+                    view={dayjs(detail.createdAt).format('YYYY.MM.DD HH:mm:ss')}
+                  />
+                </DetailInfoForm.Row>
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field label="연락처" view={detail.phone} />
+                  <DetailInfoForm.Field label="이메일" view={detail.email} />
+                </DetailInfoForm.Row>
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field label="카테고리" view={detail.category} />
+                  <DetailInfoForm.Field
+                    label="답변 현황"
+                    view={
+                      detail.status === 'PENDING' ? (
+                        <span className="admin-inquiry-detail-modal__status admin-inquiry-detail-modal__status--pending">
+                          답변 대기
+                        </span>
+                      ) : (
+                        <span className="admin-inquiry-detail-modal__status admin-inquiry-detail-modal__status--answered">
+                          답변 완료
+                        </span>
+                      )
+                    }
+                  />
+                </DetailInfoForm.Row>
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field
+                    label="프로그램명"
+                    fullRow
+                    view={
+                      detail.programName == null || detail.programName === ''
+                        ? '-'
+                        : detail.programName
+                    }
+                  />
+                </DetailInfoForm.Row>
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field label="문의 제목" fullRow view={detail.title} />
+                </DetailInfoForm.Row>
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field
+                    label="문의 내용"
+                    fullRow
+                    view={
+                      <RichTextViewer
+                        markdown={detail.body}
+                        className="admin-inquiry-detail-modal__body-viewer"
+                        maxHeight="none"
+                      />
+                    }
+                  />
+                </DetailInfoForm.Row>
+              </DetailInfoForm>
             </section>
 
             {attachments.length > 0 ? (
@@ -283,7 +225,8 @@ export function AdminInquiryDetailModal({
                 <ul className="admin-inquiry-detail-modal__attachments">
                   {attachments.map(item => {
                     const fileObjectId = item.fileObjectId
-                    const fileName = item.originalFileName?.trim() || `첨부파일-${fileObjectId ?? ''}`
+                    const fileName =
+                      item.originalFileName?.trim() || `첨부파일-${fileObjectId ?? ''}`
                     return (
                       <li key={item.attachmentId ?? fileObjectId ?? fileName}>
                         {fileObjectId == null ? (
@@ -306,22 +249,22 @@ export function AdminInquiryDetailModal({
               </section>
             ) : null}
 
-            <section
-              className="admin-inquiry-detail-modal__section"
-              aria-labelledby="inquiry-detail-reply-heading"
-            >
-              <h3
-                id="inquiry-detail-reply-heading"
-                className="admin-inquiry-detail-modal__section-title admin-inquiry-detail-modal__section-title--reply"
-              >
-                내용 (답변)
-              </h3>
-              <textarea
-                className="admin-inquiry-detail-modal__answer-textarea"
+            <section className="admin-inquiry-detail-modal__section">
+              <CmsTextArea
+                className="admin-inquiry-detail-modal__answer-field"
+                label="내용 (답변)"
+                required={!isAnswerRegistered}
+                inputSize="large"
+                width="100%"
                 value={answerText}
-                onChange={e => setAnswerText(e.target.value)}
-                placeholder="문의에 답변을 입력해 주세요."
+                onChange={e => {
+                  setAnswerText(e.target.value)
+                  if (answerError) setAnswerError(null)
+                }}
+                placeholder="내용을 입력해 주세요."
                 disabled={isAnswerRegistered}
+                error={Boolean(answerError)}
+                message={answerError ?? undefined}
               />
             </section>
           </div>

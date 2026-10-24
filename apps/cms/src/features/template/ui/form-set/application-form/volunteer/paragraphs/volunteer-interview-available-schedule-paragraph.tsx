@@ -13,15 +13,12 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import {
-  getGeneralApplicationOverlayRecord,
-} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
-import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
-import {
   listVolunteerInterviewExceptionBlockIds,
   persistMissingVolunteerInterviewOverlayDefaults,
   reconcileVolunteerInterviewExceptionBlockKeys,
   removeVolunteerInterviewExceptionBlock,
   updateVolunteerInterviewOverlayKey,
+  readVolunteerInterviewLiveRecord,
   useVolunteerInterviewOverlayKv,
   type VolunteerInterviewOverlayStore,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
@@ -528,19 +525,13 @@ function VolunteerInterviewScheduleTemplateUi({
 }) {
   const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>(() => {
     if (exceptionBlockKeys != null) return []
-    const record =
-      overlayStore === 'recruit'
-        ? getGeneralRecruitOverlayRecord()
-        : getGeneralApplicationOverlayRecord()
+    const record = readVolunteerInterviewLiveRecord(overlayStore)
     return listVolunteerInterviewExceptionBlockIds(record, overlayStore, overlayNamespace)
   })
 
   useEffect(() => {
     if (exceptionBlockKeys != null) return
-    const record =
-      overlayStore === 'recruit'
-        ? getGeneralRecruitOverlayRecord()
-        : getGeneralApplicationOverlayRecord()
+    const record = readVolunteerInterviewLiveRecord(overlayStore)
     const saved = listVolunteerInterviewExceptionBlockIds(record, overlayStore, overlayNamespace)
     setInternalBlockKeys(prev => {
       const next = reconcileVolunteerInterviewExceptionBlockKeys({

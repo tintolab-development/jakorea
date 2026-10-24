@@ -93,7 +93,8 @@ function PlatformAgreementNoticeTableBody({
         headers={headers}
         rows={rows}
         emphasizedColumns={emphasizedColumns}
-        hideEmptyPairs
+        hideEmptyPairs={!documentPreview}
+        blankEmptyCells={documentPreview}
       />
       {paragraph.showBottomText || idType != null ? (
         <div className={styles.tableAfter}>
@@ -159,6 +160,8 @@ function PlatformHorizontalTableBody({
             <ConsentWriteRadioGroup
               name={`consent-table-${paragraph.id}`}
               value={tableBottomConsentToChoice(paragraph.bottomConsent)}
+              readOnly={documentPreview}
+              documentTone={documentPreview}
               onChange={next =>
                 onUpdateParagraph(paragraph.id, current =>
                   current.kind === 'single_item' && current.variant === 'horizontal_table'
@@ -238,6 +241,7 @@ export function PlatformConsentParagraphBody({
         <PlatformPortraitLockedVerticalTable
           paragraph={paragraph}
           onUpdateParagraph={onUpdateParagraph}
+          documentPreview={documentPreview}
         />
       )
     }
@@ -299,6 +303,8 @@ export function PlatformConsentParagraphBody({
       <ConsentWriteRadioGroup
         name={`consent-mc-${paragraph.id}`}
         value={consentValue}
+        readOnly={documentPreview}
+        documentTone={documentPreview}
         onChange={(next: ConsentValue) =>
           applyMultipleChoiceConsent(paragraph, next, onUpdateParagraph)
         }
@@ -380,6 +386,26 @@ export function PlatformConsentParagraphBody({
           <p className={previewTypography.explanationText}>{paragraph.bodyText.trim() || '-'}</p>
         )
       }
+      if (paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject) {
+        return (
+          <table className={previewTypography.subjectTable}>
+            <thead>
+              <tr>
+                {items.map(item => (
+                  <th key={`h-${item.id}`}>{item.label?.trim() || ''}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {items.map(item => (
+                  <td key={`c-${item.id}`}>{item.bodyText.trim() || '-'}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        )
+      }
       return (
         <div className={previewTypography.answerStack}>
           {items.map(item => (
@@ -403,6 +429,15 @@ export function PlatformConsentParagraphBody({
   }
 
   if (paragraph.kind === 'description' && paragraph.variant === 'static_description_lines') {
+    if (documentPreview) {
+      return (
+        <ul className={previewTypography.consentLines}>
+          {paragraph.lines.map(line => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )
+    }
     return (
       <ul className={styles.proseList}>
         {paragraph.lines.map(line => (

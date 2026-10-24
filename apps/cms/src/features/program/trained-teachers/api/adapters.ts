@@ -438,7 +438,8 @@ function mergeTrainedTeacherUpdateProgram(program: Program, patch: Partial<Progr
 
 export function mapTrainedTeacherToUpdateRequest(
   program: Program,
-  patch?: Partial<Program>
+  patch?: Partial<Program>,
+  options?: { omitInfoDetailOwnedFields?: boolean; omitRegistrationOverlay?: boolean }
 ): ProgramUpdateRequest {
   const merged = patch ? mergeTrainedTeacherUpdateProgram(program, patch) : program
   const educationStructure = mapDomainEducationStructureToApi(
@@ -462,10 +463,13 @@ export function mapTrainedTeacherToUpdateRequest(
   )
     .map(id => String(id).trim())
     .filter(Boolean)
-  const contactRefs = normalizeSponsorManagerContactIds({
-    ids: merged.generalCommonInfo?.sponsorManagerContactIds,
-    id: merged.generalCommonInfo?.sponsorManagerContactId,
-  })
+  const contactIds = merged.generalCommonInfo?.sponsorManagerContactIds
+  const contactRefs =
+    contactIds != null
+      ? normalizeSponsorManagerContactIds({ ids: contactIds })
+      : normalizeSponsorManagerContactIds({
+          id: merged.generalCommonInfo?.sponsorManagerContactId,
+        })
   const sponsors = buildProgramSponsorAssignmentsWire(sponsorIdsFromForm, contactRefs)
   const primarySponsorId =
     sponsors.find(s => s.sponsorContactId)?.sponsorId || sponsors[0]?.sponsorId || merged.sponsorId
@@ -557,7 +561,10 @@ export function mapTrainedTeacherToUpdateRequest(
     learningSupportContent: merged.learningSupportContent,
     attachmentFileNames: merged.attachmentFileNames,
     rounds: mapRounds(merged),
-    serviceDetailJson: serializeTrainedTeacherServiceDetailJson(serializeSource),
+    serviceDetailJson: serializeTrainedTeacherServiceDetailJson(serializeSource, {
+      omitInfoDetailOwnedFields: options?.omitInfoDetailOwnedFields !== false,
+      omitRegistrationOverlay: options?.omitRegistrationOverlay === true,
+    }),
   }
   // top-level 3필드가 stale serviceDetailJson 보다 우선 (BE handoff 2026-09-29)
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
@@ -575,7 +582,10 @@ export function mapTrainedTeacherToUpdateRequest(
 
 export function mapTrainedTeacherToCreateRequest(program: Program): ProgramCreateRequest {
   return omitNullRecordValues({
-    ...mapTrainedTeacherToUpdateRequest(program),
+    ...mapTrainedTeacherToUpdateRequest(program, undefined, {
+      omitInfoDetailOwnedFields: false,
+      omitRegistrationOverlay: true,
+    }),
     programType: TRAINED_TEACHER_PROGRAM_API_TYPE,
     applicationTargetMode: 'ORGANIZATION',
     businessStartDate: toDate(program.startDate),

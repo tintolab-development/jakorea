@@ -191,6 +191,16 @@ export function mapPerformanceStatsToSummaryTabView(
     return addRows(acc, total)
   }, { ...SUMMARY_EMPTY_ROW })
 
+  // sections.total은 사업분야별 소계라 같은 기관이 여러 사업분야에 있으면
+  // schoolCount를 단순 합산할 수 없다. BE가 전체 필터 기준 고유 기관 수를
+  // stats.totalSchools로 제공하므로, 그 값이 있을 때만 총합계의 기관 수를 교체한다.
+  if (dto.stats?.totalSchools != null) {
+    view.grandTotal = {
+      ...view.grandTotal,
+      schoolCount: num(dto.stats.totalSchools),
+    }
+  }
+
   return view
 }
 

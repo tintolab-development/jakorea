@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import chevronLeftUrl from '../image/icon/chevron-left.svg'
 import chevronRightUrl from '../image/icon/chevron-right.svg'
-import storyMetlifeUrl from '../image/illustration/story-metlife.png'
 import type { CareersFeaturedStory } from '../model/types'
 import { PFText } from '@/shared/ui'
-import { FallbackImage } from './fallback-image'
 import styles from './featured-story-carousel.module.css'
 
 export type FeaturedStoryCarouselProps = {
@@ -56,14 +54,17 @@ export function FeaturedStoryCarousel({ stories }: FeaturedStoryCarouselProps) {
     <section className={styles.section} aria-roledescription="carousel" aria-label="스토리">
       <div className={styles.carousel}>
         <div className={styles.media}>
-          <FallbackImage
-            className={styles.image}
-            src={story.imageUrl}
-            fallbackSrc={storyMetlifeUrl}
-            alt=""
-            width={720}
-            height={480}
-          />
+          {story.imageUrl ? (
+            <img
+              className={styles.image}
+              src={story.imageUrl}
+              alt=""
+              width={720}
+              height={480}
+            />
+          ) : (
+            <div className={styles.mediaEmpty} aria-hidden="true" />
+          )}
         </div>
 
         <div className={styles.content}>

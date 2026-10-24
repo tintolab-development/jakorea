@@ -53,10 +53,10 @@ describe('UJAT 기관 신청 동적 필드', () => {
     ])
     expect(options.every(option => option.display.includes('금'))).toBe(true)
     expect(options.map(option => option.display)).toEqual([
-      '26년 4월 3일(금)',
-      '26년 4월 17일(금)',
-      '26년 9월 4일(금)',
-      '26년 9월 18일(금)',
+      '2026년 4월 3일(금)',
+      '2026년 4월 17일(금)',
+      '2026년 9월 4일(금)',
+      '2026년 9월 18일(금)',
     ])
   })
 
@@ -84,6 +84,6 @@ describe('UJAT 기관 신청 동적 필드', () => {
     const options = buildProgramLinkedScheduleOptions({
       [h1.eventRange]: { start: '2026-04-03T00:00:00.000Z', end: '2026-04-03T00:00:00.000Z' },
     })
-    expect(options).toEqual([{ id: 'h1:2026-04-03', display: '26년 4월 3일(금)' }])
+    expect(options).toEqual([{ id: 'h1:2026-04-03', display: '2026년 4월 3일(금)' }])
   })
 })

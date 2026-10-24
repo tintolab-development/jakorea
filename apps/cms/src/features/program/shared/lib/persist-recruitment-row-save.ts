@@ -73,28 +73,42 @@ function windowStartForAudience(
   audience: RecruitmentCopyAudience,
   patch: Partial<Program>,
   row: ProgramRecruitmentWindow
-): string | undefined {
+): string | null | undefined {
+  const fromPatch = (key: keyof Program, value: DateValue | null | undefined) =>
+    Object.prototype.hasOwnProperty.call(patch, key)
+      ? (optionalDateToApiString(value) ?? null)
+      : undefined
   if (audience === 'instructor') {
-    return optionalDateToApiString(patch.instructorApplicationStartDate) ?? row.startAt ?? undefined
+    const value = fromPatch('instructorApplicationStartDate', patch.instructorApplicationStartDate)
+    return value !== undefined ? value : (row.startAt ?? undefined)
   }
   if (audience === 'volunteer') {
-    return optionalDateToApiString(patch.volunteerApplicationStartDate) ?? row.startAt ?? undefined
+    const value = fromPatch('volunteerApplicationStartDate', patch.volunteerApplicationStartDate)
+    return value !== undefined ? value : (row.startAt ?? undefined)
   }
-  return optionalDateToApiString(patch.applicationStartDate) ?? row.startAt ?? undefined
+  const value = fromPatch('applicationStartDate', patch.applicationStartDate)
+  return value !== undefined ? value : (row.startAt ?? undefined)
 }
 
 function windowEndForAudience(
   audience: RecruitmentCopyAudience,
   patch: Partial<Program>,
   row: ProgramRecruitmentWindow
-): string | undefined {
+): string | null | undefined {
+  const fromPatch = (key: keyof Program, value: DateValue | null | undefined) =>
+    Object.prototype.hasOwnProperty.call(patch, key)
+      ? (optionalDateToApiString(value) ?? null)
+      : undefined
   if (audience === 'instructor') {
-    return optionalDateToApiString(patch.instructorApplicationEndDate) ?? row.endAt ?? undefined
+    const value = fromPatch('instructorApplicationEndDate', patch.instructorApplicationEndDate)
+    return value !== undefined ? value : (row.endAt ?? undefined)
   }
   if (audience === 'volunteer') {
-    return optionalDateToApiString(patch.volunteerApplicationEndDate) ?? row.endAt ?? undefined
+    const value = fromPatch('volunteerApplicationEndDate', patch.volunteerApplicationEndDate)
+    return value !== undefined ? value : (row.endAt ?? undefined)
   }
-  return optionalDateToApiString(patch.applicationEndDate) ?? row.endAt ?? undefined
+  const value = fromPatch('applicationEndDate', patch.applicationEndDate)
+  return value !== undefined ? value : (row.endAt ?? undefined)
 }
 
 function maxCountFromPatch(
@@ -133,6 +147,21 @@ function assignOptionalString(
   value: string | null | undefined
 ): void {
   if (value === undefined) return
+  // 모집 행 계약에서 null은 유지, 빈 문자열은 비움이다.
+  body[key] = value ?? ''
+}
+
+function assignOptionalDate(
+  body: ProgramRecruitmentRequest,
+  clearFields: string[],
+  key: 'startAt' | 'endAt' | 'operationStartDate' | 'operationEndDate',
+  value: string | null | undefined
+): void {
+  if (value === undefined) return
+  if (value === null) {
+    if (!clearFields.includes(key)) clearFields.push(key)
+    return
+  }
   body[key] = value
 }
 
@@ -166,11 +195,15 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   const endAt = windowEndForAudience(audience, patch, row)
   const interviewStartAt =
     audience === 'volunteer'
-      ? (optionalDateToApiString(patch.interviewStartDate) ?? row.interviewStartAt ?? undefined)
+      ? Object.prototype.hasOwnProperty.call(patch, 'interviewStartDate')
+        ? (optionalDateToApiString(patch.interviewStartDate) ?? null)
+        : (row.interviewStartAt ?? undefined)
       : (row.interviewStartAt ?? undefined)
   const interviewEndAt =
     audience === 'volunteer'
-      ? (optionalDateToApiString(patch.interviewEndDate) ?? row.interviewEndAt ?? undefined)
+      ? Object.prototype.hasOwnProperty.call(patch, 'interviewEndDate')
+        ? (optionalDateToApiString(patch.interviewEndDate) ?? null)
+        : (row.interviewEndAt ?? undefined)
       : (row.interviewEndAt ?? undefined)
   const interviewEnabled =
     audience === 'volunteer'
@@ -181,13 +214,26 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
     id: row.id,
     recruitmentType,
   }
+  const clearFields: string[] = []
   const applicationType = applicationTypeOf(row)
   if (applicationType) body.applicationType = applicationType
   if (row.targetType) body.targetType = row.targetType
-  if (startAt) body.startAt = String(startAt)
-  if (endAt) body.endAt = String(endAt)
-  if (row.operationStartDate) body.operationStartDate = String(row.operationStartDate)
-  if (row.operationEndDate) body.operationEndDate = String(row.operationEndDate)
+  assignOptionalDate(body, clearFields, 'startAt', startAt)
+  assignOptionalDate(body, clearFields, 'endAt', endAt)
+  assignOptionalDate(
+    body,
+    clearFields,
+    'operationStartDate',
+    Object.prototype.hasOwnProperty.call(row, 'operationStartDate')
+      ? row.operationStartDate
+      : undefined
+  )
+  assignOptionalDate(
+    body,
+    clearFields,
+    'operationEndDate',
+    Object.prototype.hasOwnProperty.call(row, 'operationEndDate') ? row.operationEndDate : undefined
+  )
   const maxCount = maxCountFromPatch(audience, patch)
   if (typeof maxCount === 'number') body.maxCount = maxCount
   if (
@@ -213,6 +259,7 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   }
   assignOptionalString(body, 'interviewStartAt', interviewStartAt)
   assignOptionalString(body, 'interviewEndAt', interviewEndAt)
+  if (clearFields.length > 0) body.clearFields = clearFields
   return body
 }
 
@@ -270,7 +317,7 @@ function responseRowFields(
   for (const key of AUDIENCE_ROW_KEYS) {
     if (!Object.prototype.hasOwnProperty.call(response, key)) continue
     const value = response[key as keyof ProgramRecruitmentResponse]
-    if (value === undefined || value === null) continue
+    if (value === undefined) continue
     ;(next as Record<string, unknown>)[key] = value
   }
   return next
@@ -329,7 +376,11 @@ function mergeSavedAudienceRow(
   const rows = fetched.programRecruitments ?? patch.programRecruitments
   if (!base || !rows?.length) return rows
   const saved = overlayDefinedRowFields(
-    audienceColumnOntoRow(overlayDefinedRowFields(base, patchRow, AUDIENCE_ROW_KEYS), patch, audience),
+    audienceColumnOntoRow(
+      overlayDefinedRowFields(base, patchRow, AUDIENCE_ROW_KEYS),
+      patch,
+      audience
+    ),
     responseRowFields(response),
     AUDIENCE_ROW_KEYS
   )

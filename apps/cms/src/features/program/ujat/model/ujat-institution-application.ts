@@ -61,7 +61,9 @@ export function getUjatInstitutionScheduleConfirmConfirmedDetailExtras(
 export function getUjatInstitutionApplicationDetail(
   row: UjatInstitutionApplicationRow
 ): UjatInstitutionApplicationDetail {
-  const regionLabel = getUjatEducationRegionLabel(row.regionKey, row.regionKey)
+  const regionLabel = row.regionKey
+    ? getUjatEducationRegionLabel(row.regionKey, '-')
+    : '-'
   return {
     institutionName: row.institutionName,
     regionLabel,

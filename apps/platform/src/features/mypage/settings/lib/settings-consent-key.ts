@@ -28,6 +28,22 @@ export function settingsConsentItemIdToInstructorKey(
   return null
 }
 
+const INSTRUCTOR_TO_SETTINGS: Record<
+  InstructorApplyConsentKey,
+  keyof typeof SETTINGS_TO_INSTRUCTOR
+> = {
+  consentPaymentStatement: 'paymentStatement',
+  consentEducatorPledge: 'educatorPledge',
+  consentAdministrativeJoint: 'administrativeJoint',
+  consentSexOffenseCheck: 'sexOffenseCheck',
+}
+
+export function instructorApplyKeyToSettingsConsentItemId(
+  key: InstructorApplyConsentKey,
+): keyof typeof SETTINGS_TO_INSTRUCTOR {
+  return INSTRUCTOR_TO_SETTINGS[key]
+}
+
 /** 마이페이지 작성 라우트 `:consentKey` (강사 신청 키 + 초상권) */
 export function settingsConsentItemIdToWriteKey(id: SettingsConsentItemId): string | null {
   const instructorKey = settingsConsentItemIdToInstructorKey(id)

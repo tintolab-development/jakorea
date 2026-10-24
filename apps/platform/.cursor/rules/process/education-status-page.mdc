@@ -117,6 +117,7 @@ alwaysApply: false
 #### 진행·완료 탭 세부
 
 - **설문조사·만족도조사**: 진행 중 내용이 없어도 **탭 유지**. 단 프로그램 등록 시 해당 항목을 **설정하지 않은** 경우(`surveyConfigured` / `satisfactionConfigured === false`) 탭 **비노출**
+- **정산현황**: 일반 개인·강사·강사 겸직·봉사자 노출. **학교·교사회원은 진행 상태와 관계없이 비노출**.
 - **교육 일정** 탭·패널 제목: 교육현황 상세는 **`교육일정` 고정** (`EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL` · `program.detailCase` 무관). 봉사·강의현황은 `resolveEducationScheduleTabLabel(detailCase)` 유지.
 - 구현: [`detail-tabs.ts`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts)
 
@@ -208,7 +209,7 @@ alwaysApply: false
 | 교육 진행일        | `YYYY년 MM월 DD일(요일)`                                         |
 | 회차/일정명        | 공통정보만. 커리큘럼 복수=차시(`1차시`), 커리큘럼 단일=단원명, 일정형=일정명. 운영 슬롯명(`공통 교육 예정…`)·장소·회차 폴백 금지. 없으면 `-` |
 | 출석               | 출석 / 지각 / 결석 / 사유 불참(+사유). **미진행(예정)은 비노출** |
-| 결석 사유 제출하기 | **진행 예정** 또는 **결석**만. 클릭 → 팝업(현재 준비 중)         |
+| 결석 사유 제출하기 | **진행 예정** 또는 **결석**만. CMS **출석·지각**(·사유 불참)이면 숨김 |
 
 ### 과제 안내
 
@@ -267,7 +268,7 @@ alwaysApply: false
 ## 학생 명단 탭 (교사 회원 · 진행중/완료/교육중 포기)
 
 컴포넌트: [`EducationStudentsPanel`](apps/platform/src/features/mypage/education/applications/ui/students-panel.tsx)  
-탭 노출: [`buildTeacherInProgressDetailTabItems`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts) — 일반 회원 정산 탭 대신 **학생 명단**.
+탭 노출: [`buildTeacherInProgressDetailTabItems`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts) — 일반 탭에 **학생 명단**을 추가. **정산현황**은 [`shouldShowSettlementTab`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts) — 학교·교사회원 비노출, 강사 겸직은 해당 교육 상세에 노출.
 
 ### 레이아웃
 

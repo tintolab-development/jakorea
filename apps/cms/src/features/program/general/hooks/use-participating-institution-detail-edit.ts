@@ -39,6 +39,7 @@ import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabi
 import { useAffiliatedTeachersQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { isSchoolAffiliatedTeacherRowSelectable } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
+import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
 import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
 import { useCmsAlert } from '@/shared/ui'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
@@ -62,6 +63,7 @@ import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
+  organizationApplicationDetailCacheKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
@@ -117,9 +119,19 @@ export function useParticipatingInstitutionDetailEdit({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const { showAlert } = useCmsAlert()
 
+  const isCompanySchool = useMemo(() => isCompanySchoolProgram(program), [program])
+  const applicantEducationGrade = useMemo(() => {
+    const raw =
+      isEditing && draft?.educationGrade
+        ? draft.educationGrade
+        : (row.educationGrade ?? detail.educationGrade)
+    return formatInstitutionApplicationGradeDisplay(raw ?? '')
+  }, [detail.educationGrade, draft?.educationGrade, isEditing, row.educationGrade])
+
+  const { catalog: gradeTextbookCatalog, isLoading: isGradeTextbookCatalogLoading } =
+    useIndividualApplicantTextbookOptions(program, applicantEducationGrade || undefined)
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
     useProgramTextbookCatalog(program, undefined, { businessAreaOnly: true })
-  const isCompanySchool = useMemo(() => isCompanySchoolProgram(program), [program])
   /** 일정형이 아니면 매칭 교재가 없어도 수정 셀렉트를 연다 */
   const programAllowsTextbookSelect = useMemo(
     () => programOffersParticipatingTextbookSelect(program, { isCompanySchool }),
@@ -128,8 +140,18 @@ export function useParticipatingInstitutionDetailEdit({
 
   /** 카탈로그 로딩 중에는 필드를 숨기지 않음(새로고침 플래시 방지) */
   const usesTextbook = useMemo(
-    () => isCompanySchool || isTextbookCatalogLoading || programUsesTextbook(program, textbookCatalog),
-    [isCompanySchool, isTextbookCatalogLoading, program, textbookCatalog]
+    () =>
+      isCompanySchool ||
+      isTextbookCatalogLoading ||
+      isGradeTextbookCatalogLoading ||
+      programUsesTextbook(program, textbookCatalog),
+    [
+      isCompanySchool,
+      isGradeTextbookCatalogLoading,
+      isTextbookCatalogLoading,
+      program,
+      textbookCatalog,
+    ]
   )
 
   const isCombinedClassProgramEligibleFlag = useMemo(
@@ -194,14 +216,6 @@ export function useParticipatingInstitutionDetailEdit({
     ]
   )
 
-  const applicantEducationGrade = useMemo(() => {
-    const raw =
-      isEditing && draft?.educationGrade
-        ? draft.educationGrade
-        : (row.educationGrade ?? detail.educationGrade)
-    return formatInstitutionApplicationGradeDisplay(raw ?? '')
-  }, [detail.educationGrade, draft?.educationGrade, isEditing, row.educationGrade])
-
   const textbookOptions = useMemo((): TextbookSelectOption[] => {
     if (!usesTextbook && !programAllowsTextbookSelect) return []
 
@@ -215,7 +229,7 @@ export function useParticipatingInstitutionDetailEdit({
       : buildParticipatingInstitutionTextbookSelectOptions({
           program,
           educationGrade: applicantEducationGrade,
-          catalog: textbookCatalog,
+          catalog: gradeTextbookCatalog,
         })
 
     return ensureTextbookNotUsedSelectOption(options)
@@ -223,6 +237,7 @@ export function useParticipatingInstitutionDetailEdit({
     applicantEducationGrade,
     detail.combinedClassApplication,
     draft?.combinedClassApplication,
+    gradeTextbookCatalog,
     isCompanySchool,
     program,
     programAllowsTextbookSelect,
@@ -325,6 +340,18 @@ export function useParticipatingInstitutionDetailEdit({
       setDraft(prev => {
         if (!prev) return prev
         const next = { ...prev, ...partial }
+        if (
+          partial.educationGrade != null &&
+          formatInstitutionApplicationGradeDisplay(partial.educationGrade) !==
+            formatInstitutionApplicationGradeDisplay(prev.educationGrade)
+        ) {
+          return {
+            ...next,
+            textbookId: TEXTBOOK_NOT_USED_OPTION_VALUE,
+            textbookName: '해당 없음',
+            textbookGrade: '',
+          }
+        }
         if (partial.textbookId != null && (usesTextbook || programAllowsTextbookSelect)) {
           if (partial.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE || partial.textbookId === '') {
             return {
@@ -336,6 +363,7 @@ export function useParticipatingInstitutionDetailEdit({
           }
           const selected = textbookOptions.find(option => option.value === partial.textbookId)
           const storeRow =
+            (gradeTextbookCatalog ?? []).find(rowItem => rowItem.id === partial.textbookId) ??
             (resolvedTextbookCatalog ?? []).find(rowItem => rowItem.id === partial.textbookId) ??
             filterTextbooksForCombinedClassEdit(program, textbookCatalog).find(
               rowItem => rowItem.id === partial.textbookId
@@ -361,6 +389,7 @@ export function useParticipatingInstitutionDetailEdit({
       setValidationErrors({})
     },
     [
+      gradeTextbookCatalog,
       program,
       programAllowsTextbookSelect,
       resolvedTextbookCatalog,
@@ -490,15 +519,11 @@ export function useParticipatingInstitutionDetailEdit({
           })
           await updateOrganizationApplicationRemote(applicationId, updateBody)
           const canonicalDetail = await fetchOrganizationApplicationDetailRemote(applicationId)
-          queryClient.setQueryData(
-            generalApplicationsQueryKeys.organizationDetail(applicationId),
-            canonicalDetail
-          )
-
           const programId = String(program.id ?? '')
-          void queryClient.invalidateQueries({
-            queryKey: generalApplicationsQueryKeys.organizationDetail(applicationId),
-          })
+          for (const queryKey of organizationApplicationDetailCacheKeys(applicationId, programId)) {
+            queryClient.setQueryData(queryKey, canonicalDetail)
+            void queryClient.invalidateQueries({ queryKey })
+          }
           if (programId) {
             void queryClient.invalidateQueries({
               queryKey: generalApplicationsQueryKeys.organizationList(programId),

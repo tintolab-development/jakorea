@@ -1,3 +1,4 @@
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
@@ -50,10 +51,13 @@ export function GuardianProfileStep({ signUp }: GuardianProfileStepProps) {
             size="xlarge"
             label="보호자님 휴대폰 번호"
             placeholder="숫자만 입력해 주세요"
-            value={profile.phone}
+            value={formatKoreanPhoneNumber(profile.phone)}
             required
-            inputMode="tel"
-            onValueChange={profile.setPhone}
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            maxLength={13}
+            onValueChange={next => profile.setPhone(formatKoreanPhoneNumber(next))}
           />
           <PFTextInput
             size="xlarge"

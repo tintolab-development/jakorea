@@ -1,0 +1,67 @@
+/**
+ * persist overlay 출력 키. 제품 overlay store가 아니라 직렬화 계약이다.
+ * 문자열은 기존 generalRegistration 키와 동일해야 한다.
+ */
+export const COMMON_INFO_PERSIST_KEYS = {
+  programTitleKo: 'generalRegistration.basicInfo.localProgramTitleKo',
+  programTitleEn: 'generalRegistration.basicInfo.programTitleEn',
+  publicProgramTitle: 'generalRegistration.basicInfo.publicProgramTitle',
+  detailedProgramId: 'generalRegistration.basicInfo.detailedProgramId',
+  detailedProgramName: 'generalRegistration.basicInfo.detailedProgramName',
+  businessField: 'generalRegistration.basicInfo.businessField',
+  partnerInvolvement: 'generalRegistration.basicInfo.partnerInvolvement',
+  educationVenueKind: 'generalRegistration.basicInfo.educationVenueKind',
+  educationVenueDetail: 'generalRegistration.basicInfo.educationVenueDetail',
+  educationCourse: 'generalRegistration.basicInfo.educationCourse',
+  ipOwned: 'generalRegistration.basicInfo.ipOwned',
+  courseDeliveredBy: 'generalRegistration.basicInfo.courseDeliveredBy',
+  operationRangeSeal: 'generalRegistration.basicInfo.operationRangeSeal',
+  surveyItems: 'generalRegistration.basicInfo.surveyItems',
+  sponsorId: 'generalRegistration.basicInfo.localSponsorId',
+  sponsorIds: 'generalRegistration.basicInfo.localSponsorIds',
+  managerContactId: 'generalRegistration.basicInfo.localManagerContactId',
+  managerContactIds: 'generalRegistration.basicInfo.localManagerContactIds',
+  sponsorManagerLine: 'generalRegistration.basicInfo.sponsorManagerLine',
+  kpiParticipantCount: 'generalRegistration.kpi.participantCount',
+  kpiInstructor: 'generalRegistration.kpi.instructor',
+  kpiVolunteer: 'generalRegistration.kpi.volunteer',
+  kpiDispatchedSchool: 'generalRegistration.kpi.dispatchedSchool',
+  kpiDispatchedClass: 'generalRegistration.kpi.dispatchedClass',
+  wageGrade1Fee: 'generalRegistration.wageInfo.grade1Fee',
+  wageGrade2Fee: 'generalRegistration.wageInfo.grade2Fee',
+  wageGrade3Fee: 'generalRegistration.wageInfo.grade3Fee',
+  paymentItemValues: 'generalRegistration.wageInfo.paymentItemValues',
+  paymentItemLabels: 'generalRegistration.wageInfo.paymentItemLabels',
+  singleEducationForm: 'generalRegistration.typeSettings.singleEducationForm',
+  multiCommonEducationForm: 'generalRegistration.typeSettings.multiCommonEducationForm',
+  legacyEducationForm: 'generalRegistration.typeSettings.educationForm',
+  singleParticipation: 'generalRegistration.typeSettings.singleParticipation',
+  multiCommonParticipation: 'generalRegistration.typeSettings.multiCommonParticipation',
+  ipsType: 'generalRegistration.typeSettings.ipsType',
+  scheduleLines: 'generalRegistration.educationScheduleSettings.scheduleLines',
+  unitNameBySession: 'generalRegistration.educationCurriculum.unitNameBySession',
+  unitContentBySession: 'generalRegistration.educationCurriculum.unitContentBySession',
+  progressSessionByRound: 'generalRegistration.educationCurriculum.progressSessionByRound',
+  roundContentByRound: 'generalRegistration.educationCurriculum.roundContentByRound',
+  educationFormBySession: 'generalRegistration.educationCurriculum.educationFormBySession',
+  participationBySession: 'generalRegistration.educationCurriculum.participationBySession',
+  ipsBySession: 'generalRegistration.educationCurriculum.ipsBySession',
+  assignmentByRound: 'generalRegistration.educationCurriculum.assignmentByRound',
+  preEducationScheduleName: 'generalRegistration.educationCurriculum.preEducationScheduleName',
+  preEducationScheduleLine: 'generalRegistration.educationCurriculum.preEducationScheduleLine',
+  teacherTrainingEducationForm:
+    'generalRegistration.educationCurriculum.teacherTrainingEducationForm',
+  eventNameByDetail: 'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
+  scheduleDateByDetailIso:
+    'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso',
+  groupTimesByDetail: 'generalRegistration.educationScheduleCurriculum.groupTimesByDetail',
+  educationFormByDetail: 'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
+  participationByDetail: 'generalRegistration.educationScheduleCurriculum.participationByDetail',
+  ipsByDetailIndex: 'generalRegistration.educationScheduleCurriculum.ipsByDetailIndex',
+  assignmentByDetail: 'generalRegistration.educationScheduleCurriculum.assignmentByDetail',
+  preEducationName: 'generalRegistration.educationScheduleCurriculum.preEducationName',
+} as const
+
+export const COMMON_INFO_OWNED_PERSIST_KEY_SET = new Set<string>(
+  Object.values(COMMON_INFO_PERSIST_KEYS)
+)

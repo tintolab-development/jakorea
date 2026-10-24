@@ -283,7 +283,7 @@ export function AddStudentModal({
                   value={field.value ?? ''}
                   inputSize="medium"
                   width="100%"
-                  placeholder="비고를 입력하세요"
+                  placeholder="비고를 입력해 주세요"
                 />
               )}
             />

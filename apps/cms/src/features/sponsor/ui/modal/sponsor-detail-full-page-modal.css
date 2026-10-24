@@ -30,15 +30,27 @@
   vertical-align: middle !important;
 }
 
-.sponsor-detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar),
-.sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td {
+.sponsor-detail-fullpage-modal
+  .cms-data-table:not(.cms-data-table--fit-scroll)
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar),
+.sponsor-detail-fullpage-modal
+  .cms-data-table:not(.cms-data-table--fit-scroll)
+  .ant-table-tbody
+  > tr
+  > td {
   height: 52px !important;
   min-height: 52px !important;
   max-height: 52px !important;
   box-sizing: border-box !important;
 }
 
-.sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td {
+.sponsor-detail-fullpage-modal
+  .cms-data-table:not(.cms-data-table--fit-scroll)
+  .ant-table-tbody
+  > tr
+  > td {
   padding-top: 10px !important;
   padding-bottom: 10px !important;
 }

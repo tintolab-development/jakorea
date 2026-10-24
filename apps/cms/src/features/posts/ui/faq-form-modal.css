@@ -132,18 +132,30 @@
   flex-shrink: 0;
 }
 
-.faq-form-modal__form .ant-form-item-label > label {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
+.faq-form-modal__form .ant-form-item-label {
+  display: none;
 }
 
-/* 라벨 ↔ 인풋 간격 6px */
-.faq-form-modal__form.ant-form-vertical .ant-form-item-label {
-  padding-bottom: 0 !important;
-  margin-bottom: 6px;
+.faq-form-modal__form .ant-form-item-explain,
+.faq-form-modal__form .ant-form-item-extra {
+  display: none;
+}
+
+.faq-form-modal__section.ant-form-item {
+  margin-bottom: 24px;
+}
+
+.faq-form-modal__section--editor.cms-field {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.faq-form-modal__section--editor .cms-field__message--error {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  color: var(--Status-red-main, #c32f4a);
 }
 
 /* 내용(답변) WYSIWYG — 공지 등록 에디터와 동일 높이·폭 */

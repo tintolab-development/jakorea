@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CMS_ACTION_BUTTON_WIDTH, FilterTableToolbarButton } from '@/shared/ui'
-import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
-import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
+import { useUjatInstitutionEducationRegion } from '../use-institution-education-region'
 import { UjatInstitutionApplicationCalendarView } from './calendar-view'
 import { ujatInstitutionApplicationTableScrollX } from './columns'
 import type { UjatInstitutionApplicationRow } from './types'
@@ -18,19 +17,20 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 export function UjatInstitutionApplicationList({
   onOpenDetail,
+  onOpenScheduleAssign,
   programId,
 }: {
   onOpenDetail: (row: UjatInstitutionApplicationRow) => void
+  onOpenScheduleAssign?: () => void
   programId?: string | null
 }) {
-  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
-    getDefaultUjatEducationRegionKey
-  )
+  const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const {
     pendingFilters,
     handleFilterChange,
     handleSearch,
     tableData,
+    totalElements,
     columns,
     scheduleColumnCount,
     selectedRowKeys,
@@ -50,6 +50,7 @@ export function UjatInstitutionApplicationList({
     hasNextPage,
     isFetchingNextPage,
     infiniteScrollResetKey,
+    isListPending,
   } = useUjatInstitutionApplicationList(activeRegion, programId)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
@@ -85,7 +86,7 @@ export function UjatInstitutionApplicationList({
         onSearch={handleSearch}
         title="기관 신청 목록"
         titleNote={titleNote}
-        description={`${tableData.length}건`}
+        description={`${totalElements}건`}
         actions={
           <div className="ujat-institution-application-list__actions">
             <FilterTableToolbarButton
@@ -110,10 +111,17 @@ export function UjatInstitutionApplicationList({
               type="button"
               variant="secondary"
               className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={handleBulkTempAssign}
+              width={180}
+              onClick={() => {
+                if (selectedRowKeys.length === 0) {
+                  handleBulkTempAssign()
+                  return
+                }
+                onOpenScheduleAssign?.()
+                handleBulkTempAssign()
+              }}
             >
-              선택 임시 배정
+              임시 일정 배정
             </FilterTableToolbarButton>
             {viewMode === 'table' ? (
               <FilterTableToolbarButton
@@ -172,10 +180,12 @@ export function UjatInstitutionApplicationList({
           </div>
         ) : (
           <UjatInstitutionApplicationCalendarView
+            programId={programId}
             rows={tableData}
             selectedRowKeys={selectedRowKeys}
             onSelectionChange={setSelectedRowKeys}
             onOpenDetail={onOpenDetail}
+            listPending={isListPending}
           />
         )}
         <div ref={loadMoreRef} aria-hidden={!isFetchingNextPage} style={{ minHeight: 1 }}>

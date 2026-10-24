@@ -152,7 +152,11 @@ export function PlatformPortraitPersonalConsentTable({
         />
       </div>
 
-      <PortraitVerticalTableBottom paragraph={paragraph} onUpdateParagraph={onUpdateParagraph} />
+      <PortraitVerticalTableBottom
+        paragraph={paragraph}
+        onUpdateParagraph={onUpdateParagraph}
+        documentPreview={readOnly}
+      />
     </div>
   )
 }

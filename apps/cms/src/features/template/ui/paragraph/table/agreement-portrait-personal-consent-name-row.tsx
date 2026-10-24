@@ -41,6 +41,15 @@ export function PortraitAffiliationBody({
     interactive && !noAffiliation ? onChange : undefined
   )
 
+  if (!interactive) {
+    const displayText = noAffiliation ? PORTRAIT_NO_AFFILIATION : affiliation.trim()
+    return (
+      <span className="agreement-portrait-personal-consent-name-row__affiliation-readonly">
+        {displayText || '\u00a0'}
+      </span>
+    )
+  }
+
   return (
     <div className="agreement-portrait-personal-consent-name-row__affiliation">
       <div className="agreement-portrait-personal-consent-name-row__affiliation-input-shell">

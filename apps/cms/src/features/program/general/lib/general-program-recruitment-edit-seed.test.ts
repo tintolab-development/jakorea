@@ -438,7 +438,7 @@ describe('parse helpers', () => {
   })
 
   it('parseDisplayPeriodLabelToIsoRange', () => {
-    const range = parseDisplayPeriodLabelToIsoRange('2026. 04. 03(금) ~ 2026. 11. 20(금)')
+    const range = parseDisplayPeriodLabelToIsoRange('2026.04.03(금) ~ 2026.11.20(금)')
     expect(range.start).toBeTruthy()
     expect(range.end).toBeTruthy()
   })

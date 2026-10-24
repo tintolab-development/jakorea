@@ -21,7 +21,6 @@ export function isTeacherInstitutionGuidanceSubmitIncomplete(
   sexOffense: ApplyInstitutionSexOffenseValues,
   options?: {
     ujat?: boolean
-    isEdit?: boolean
     ujatExtras?: ApplyUjatInstitutionGuidanceExtras
   },
 ): boolean {
@@ -32,12 +31,6 @@ export function isTeacherInstitutionGuidanceSubmitIncomplete(
       findIncompleteUjatInstitutionGuidanceExtrasMessage(options.ujatExtras)
     ) {
       return true
-    }
-    if (options.isEdit) {
-      return findIncompleteSexOffenseMessage({
-        ...sexOffense,
-        submissionRequest: sexOffense.submissionRequest || 'request',
-      }) != null
     }
     return findIncompleteUjatSexOffenseWriteMessage(sexOffense) != null
   }

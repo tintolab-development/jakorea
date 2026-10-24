@@ -11,7 +11,7 @@ export function buildMemberWithdrawMessageLines(params: { displayName: string } 
   if (!name) return []
   return [
     `**[${name}] 님**을 탈퇴 처리하시겠습니까?`,
-    '탈퇴 처리 시 개인정보와 활동 내역을 비롯한 모든 회원 정보가 즉시 삭제되며,',
+    '탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보처리방침에 따라 삭제∙처리됩니다.',
     '삭제된 정보는 복구할 수 없습니다.',
   ]
 }
@@ -28,8 +28,8 @@ export function buildSchoolDeleteMessageLines(params: { displayName: string } | 
 export function buildSelfWithdrawMessageLines(): string[] {
   return [
     'JA KOREA 서비스를 탈퇴하시겠습니까?',
-    '탈퇴 시 회원님의 개인정보와 활동 내역을 비롯한 모든 회원 정보가 즉시 삭제되며,',
-    '삭제된 정보는 복구할 수 없습니다.',
+    '탈퇴 시 개인정보는 관련 법령 및 당사의 개인정보처리방침에 따라 삭제∙처리됩니다.',
+    '삭제된 정보는 복구할 수 없습니다. 탈퇴하시려면 로그인 비밀번호를 입력해 주세요.',
   ]
 }
 

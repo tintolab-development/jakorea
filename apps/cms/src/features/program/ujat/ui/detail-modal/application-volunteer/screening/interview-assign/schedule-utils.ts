@@ -2,8 +2,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerInterviewScheduleData } from '@/features/program/ujat/model/ujat-volunteer-interview-schedule'
 import { parseUjatInterviewDateLabel } from '../shared/interview-calendar-events'
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 
 import { getKoreanPublicHolidayDateKeysSync } from '@/features/program/ujat/api/korean-public-holidays'
 
@@ -12,22 +11,16 @@ export function getPublicHolidayDateKeysForSchedule(): Set<string> {
   return getKoreanPublicHolidayDateKeysSync()
 }
 
-/** 목록·배정 저장용 — `26. 03. 23(월)` */
+/** 목록·배정 저장용 — `2026.03.23(월)` */
 export function formatStoredInterviewDateLabel(date: Dayjs): string {
-  const y = date.year() % 100
-  const m = String(date.month() + 1).padStart(2, '0')
-  const d = String(date.date()).padStart(2, '0')
-  const weekday = WEEKDAY_KO[date.day()]
-  return `${String(y).padStart(2, '0')}. ${m}. ${d}(${weekday})`
+  const label = formatDateDotWithWeekday(date)
+  return label === '-' ? '' : label
 }
 
-/** 모달 요약·스크린 표시 — `26년 3월 23일(월)` */
+/** 모달 요약·스크린 표시 — `2026.03.23(월)` */
 export function formatInterviewSummaryDate(date: Dayjs): string {
-  const y = date.year() % 100
-  const m = date.month() + 1
-  const d = date.date()
-  const weekday = WEEKDAY_KO[date.day()]
-  return `${y}년 ${m}월 ${d}일(${weekday})`
+  const label = formatDateDotWithWeekday(date)
+  return label === '-' ? '' : label
 }
 
 /** `09:00 ~ 09:30` → `09:00 - 09:30` */
@@ -49,14 +42,21 @@ function parseTimeSlotsString(slotsString: string): string[] {
     .map(normalizeTimeRangeKey)
 }
 
-/** `26년 3월 6일(금)` 또는 `26. 03. 06(금)` */
+/** `2026.03.06(금)` · `26년 3월 6일(금)` · `26. 03. 06(금)` */
 export function parseInterviewDisplayDateLabel(label: string): Dayjs | null {
   const dotted = parseUjatInterviewDateLabel(label)
   if (dotted) return dotted
 
-  const longMatch = label.match(/(\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일/)
-  if (!longMatch) return null
-  return dayjs(`20${longMatch[1]}-${longMatch[2]}-${longMatch[3]}`)
+  const longYear = label.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/)
+  if (longYear) {
+    const parsed = dayjs(
+      `${longYear[1]}-${String(longYear[2]).padStart(2, '0')}-${String(longYear[3]).padStart(2, '0')}`
+    )
+    return parsed.isValid() ? parsed : null
+  }
+  const shortYear = label.match(/(\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일/)
+  if (!shortYear) return null
+  return dayjs(`20${shortYear[1]}-${shortYear[2]}-${shortYear[3]}`)
 }
 
 function parseUnavailableDateLabels(specificUnavailableDates: string): Set<string> {
@@ -237,12 +237,9 @@ export function buildProgramInterviewUnavailableDateKeys(
 }
 
 export function formatInterviewAssignScheduledSummary(date: Dayjs, timeRange: string): string {
-  const weekday = WEEKDAY_KO[date.day()]
-  const y = date.year()
-  const m = String(date.month() + 1).padStart(2, '0')
-  const d = String(date.date()).padStart(2, '0')
+  const datePart = formatDateDotWithWeekday(date)
   const time = normalizeTimeRangeKey(timeRange)
-  return `${y}.${m}.${d}(${weekday}) ${time}`
+  return datePart === '-' ? time : `${datePart} ${time}`
 }
 
 function dateLabelsMatch(a: string, b: string): boolean {

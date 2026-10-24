@@ -11,7 +11,7 @@ function formatScheduleDate(dateIso: string, dayOfWeek?: string | null): string 
   const year = match[1]!
   const month = match[2]!
   const day = match[3]!
-  const base = `${year}. ${month}. ${day}`
+  const base = `${year}.${month}.${day}`
 
   const fromField = dayOfWeek?.trim()
   if (fromField) {

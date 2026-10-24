@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
-import type { Program } from '@/types/domain'
+import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { normalizeVolunteerTargetList } from '@/features/program/shared/lib/program-detail-info-constants'
-import { hasRecruitmentCopy, pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
+import { pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
 import { pickUjatVolunteerRecruitmentRow } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import {
   buildUjatRecruitInstitutionOverlayFromDetailEditValues,
@@ -308,9 +308,33 @@ export function programToUjatRecruitTemplateFormValues(
   return applyUjatRecruitmentRowCopyToForm(next, program, 'volunteer', volunteerHalf)
 }
 
-function nonemptyRowText(value: string | null | undefined): string | undefined {
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : undefined
+function hasOwnField(value: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key)
+}
+
+function rowText(
+  row: ProgramRecruitmentWindow,
+  key:
+    | 'announcementTitle'
+    | 'applicationMethod'
+    | 'contactName'
+    | 'contactPhone'
+    | 'contactEmail'
+    | 'startAt'
+    | 'endAt'
+    | 'operationStartDate'
+    | 'operationEndDate'
+    | 'interviewStartAt'
+    | 'interviewEndAt'
+    | 'programDescription'
+    | 'recruitmentGuide'
+    | 'learningSupportContent'
+    | 'additionalContentHtml'
+    | 'remarks'
+    | 'otherMatters'
+): string | undefined {
+  if (!hasOwnField(row, key) || row[key] === undefined) return undefined
+  return row[key] ?? ''
 }
 
 function applyUjatRecruitmentRowCopyToForm(
@@ -324,17 +348,23 @@ function applyUjatRecruitmentRowCopyToForm(
       ? pickUjatVolunteerRecruitmentRow(program, volunteerHalf ?? 'h1')
       : pickRecruitmentCopyRow(program, 'participant')
   if (!row) return values
-  const announcementTitle = nonemptyRowText(row.announcementTitle)
-  const applicationMethod = nonemptyRowText(row.applicationMethod)
-  const contactName = nonemptyRowText(row.contactName)
-  const contactPhone = nonemptyRowText(row.contactPhone)
-  const contactEmail = nonemptyRowText(row.contactEmail)
-  const startAt = nonemptyRowText(row.startAt)
-  const endAt = nonemptyRowText(row.endAt)
-  const operationStart = nonemptyRowText(row.operationStartDate)
-  const operationEnd = nonemptyRowText(row.operationEndDate)
-  const interviewStart = nonemptyRowText(row.interviewStartAt)
-  const interviewEnd = nonemptyRowText(row.interviewEndAt)
+  const announcementTitle = rowText(row, 'announcementTitle')
+  const applicationMethod = rowText(row, 'applicationMethod')
+  const contactName = rowText(row, 'contactName')
+  const contactPhone = rowText(row, 'contactPhone')
+  const contactEmail = rowText(row, 'contactEmail')
+  const startAt = rowText(row, 'startAt')
+  const endAt = rowText(row, 'endAt')
+  const operationStart = rowText(row, 'operationStartDate')
+  const operationEnd = rowText(row, 'operationEndDate')
+  const interviewStart = rowText(row, 'interviewStartAt')
+  const interviewEnd = rowText(row, 'interviewEndAt')
+  const description = rowText(row, 'programDescription')
+  const recruitmentGuide = rowText(row, 'recruitmentGuide')
+  const learningSupportContent = rowText(row, 'learningSupportContent')
+  const additionalContentHtml = rowText(row, 'additionalContentHtml')
+  const remarks = rowText(row, 'remarks')
+  const otherMatters = rowText(row, 'otherMatters')
   const contactNameField =
     kind === 'institution'
       ? { recruitmentContactOrganizationName: contactName ?? '' }
@@ -342,48 +372,35 @@ function applyUjatRecruitmentRowCopyToForm(
   const halfPeriod =
     kind === 'volunteer'
       ? {
-          ...(startAt ? { volunteerApplicationStartDate: startAt } : {}),
-          ...(endAt ? { volunteerApplicationEndDate: endAt } : {}),
+          ...(startAt !== undefined ? { volunteerApplicationStartDate: startAt } : {}),
+          ...(endAt !== undefined ? { volunteerApplicationEndDate: endAt } : {}),
         }
-      : volunteerHalf !== 'h2' && startAt
-        ? {
-            applicationStartDate: startAt,
-            ...(endAt ? { applicationEndDate: endAt } : {}),
-          }
-        : {}
+      : {
+          ...(startAt !== undefined ? { applicationStartDate: startAt } : {}),
+          ...(endAt !== undefined ? { applicationEndDate: endAt } : {}),
+        }
   return {
     ...values,
-    ...(announcementTitle != null ? { announcementTitle } : {}),
-    ...(applicationMethod != null ? { applicationMethod } : {}),
-    ...(contactName != null ? contactNameField : {}),
-    ...(contactPhone != null ? { contactPhone } : {}),
-    ...(contactEmail != null ? { contactEmail } : {}),
+    ...(announcementTitle !== undefined ? { announcementTitle } : {}),
+    ...(applicationMethod !== undefined ? { applicationMethod } : {}),
+    ...(contactName !== undefined ? contactNameField : {}),
+    ...(contactPhone !== undefined ? { contactPhone } : {}),
+    ...(contactEmail !== undefined ? { contactEmail } : {}),
     ...halfPeriod,
-    startDate: operationStart ?? '',
-    endDate: operationEnd ?? '',
+    ...(operationStart !== undefined ? { startDate: operationStart } : {}),
+    ...(operationEnd !== undefined ? { endDate: operationEnd } : {}),
     ...(kind === 'volunteer'
       ? {
-          interviewStartDate: interviewStart ?? '',
-          interviewEndDate: interviewEnd ?? '',
+          ...(interviewStart !== undefined ? { interviewStartDate: interviewStart } : {}),
+          ...(interviewEnd !== undefined ? { interviewEndDate: interviewEnd } : {}),
         }
       : {}),
-    ...(hasRecruitmentCopy(row)
-      ? {
-          ...(nonemptyRowText(row.programDescription)
-            ? { description: row.programDescription!.trim() }
-            : {}),
-          ...(nonemptyRowText(row.recruitmentGuide)
-            ? { recruitmentGuide: row.recruitmentGuide!.trim() }
-            : {}),
-          ...(nonemptyRowText(row.learningSupportContent)
-            ? { learningSupportContent: row.learningSupportContent!.trim() }
-            : {}),
-          ...(nonemptyRowText(row.additionalContentHtml)
-            ? { additionalContentHtml: row.additionalContentHtml!.trim() }
-            : {}),
-          ...(nonemptyRowText(row.remarks) ? { oneLineIntroduction: row.remarks!.trim() } : {}),
-        }
-      : {}),
+    ...(description !== undefined ? { description } : {}),
+    ...(recruitmentGuide !== undefined ? { recruitmentGuide } : {}),
+    ...(learningSupportContent !== undefined ? { learningSupportContent } : {}),
+    ...(additionalContentHtml !== undefined ? { additionalContentHtml } : {}),
+    ...(remarks !== undefined ? { oneLineIntroduction: remarks } : {}),
+    ...(otherMatters !== undefined ? { otherNotes: otherMatters } : {}),
   }
 }
 

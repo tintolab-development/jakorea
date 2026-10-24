@@ -499,6 +499,8 @@ export interface DashboardShortcutItem {
   path: string
   iconKey?: string
   useYn: boolean
+  visible?: boolean
+  permissionAllowed?: boolean
 }
 
 /** Swagger: GET /api/admin/dashboard/shortcuts */
@@ -514,12 +516,16 @@ export async function getDashboardShortcuts(): Promise<DashboardShortcutItem[]> 
         targetUrl?: string
         iconKey?: string
         useYn?: boolean
+        visible?: boolean
+        permissionAllowed?: boolean
       }) => ({
         id: item.shortcutKey!,
         label: item.shortcutName ?? item.shortcutKey!,
         path: item.targetUrl ?? DASHBOARD_HOME_PATH,
         iconKey: item.iconKey,
         useYn: item.useYn !== false,
+        visible: item.visible,
+        permissionAllowed: item.permissionAllowed,
       }))
   }
   return SHORTCUT_ITEMS.map(item => ({

@@ -214,30 +214,34 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFFormInlineRow>
             <PFFormInlineSegment>
               <PFFormControlCluster>
-                <PFSelect
-                  variant="formPage"
-                  size="large"
-                  width={120}
-                  placeholder="신청 학급"
-                  options={classCountOptions}
-                  value={value.classCount || undefined}
-                  onValueChange={next => patch({ classCount: next })}
-                />
+                <span data-field="classCount">
+                  <PFSelect
+                    variant="formPage"
+                    size="large"
+                    width={120}
+                    placeholder="신청 학급"
+                    options={classCountOptions}
+                    value={value.classCount || undefined}
+                    onValueChange={next => patch({ classCount: next })}
+                  />
+                </span>
                 <PFFormControlSuffix>개 학급</PFFormControlSuffix>
               </PFFormControlCluster>
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
             <PFFormInlineSegment>
               <PFFormControlCluster>
-                <PFTextInput
-                  variant="formPage"
-                  size="large"
-                  width={120}
-                  inputMode="numeric"
-                  placeholder="총 학생 수"
-                  value={value.studentCount}
-                  onValueChange={next => patch({ studentCount: next.replace(/[^\d]/g, '') })}
-                />
+                <span data-field="studentCount">
+                  <PFTextInput
+                    variant="formPage"
+                    size="large"
+                    width={120}
+                    inputMode="numeric"
+                    placeholder="총 학생 수"
+                    value={value.studentCount}
+                    onValueChange={next => patch({ studentCount: next.replace(/[^\d]/g, '') })}
+                  />
+                </span>
                 <PFFormControlSuffix>명</PFFormControlSuffix>
               </PFFormControlCluster>
             </PFFormInlineSegment>
@@ -425,17 +429,4 @@ export function ApplyTrainedTeachersBasicInfo({
   )
 }
 
-export function findIncompleteTrainedTeachersBasicInfoMessage(
-  values: ApplyTrainedTeachersBasicInfoValues,
-): string | null {
-  if (!values.schoolName.trim()) return '신청 기관명(학교명)을 확인해 주세요.'
-  if (!values.regionLabel.trim()) return '기관 소재지를 확인해 주세요.'
-  if (!values.applicationGrade.trim()) return '신청 학년을 선택해 주세요.'
-  if (!values.addressDetail.trim()) return '상세 주소를 입력해 주세요.'
-  const classCount = Number.parseInt(values.classCount, 10)
-  if (!Number.isFinite(classCount) || classCount < 1) return '신청 학급 수를 선택해 주세요.'
-  const studentCount = Number.parseInt(values.studentCount, 10)
-  if (!Number.isFinite(studentCount) || studentCount < 1) return '총 학생 수를 입력해 주세요.'
-  if (!values.applicationReason.trim()) return '신청 사유를 입력해 주세요.'
-  return null
-}
+export { findIncompleteTrainedTeachersBasicInfoMessage } from './apply-trained-teachers-basic-info-incomplete'

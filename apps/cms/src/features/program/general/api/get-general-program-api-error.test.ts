@@ -100,7 +100,7 @@ describe('getGeneralProgramApiErrorMessage', () => {
     ).toContain('공통 정보')
     expect(
       getGeneralProgramApiErrorMessage(errorFor('PROGRAM_PARTICIPANT_TYPE_IMMUTABLE'), 'fallback')
-    ).toContain('참여자 유형')
+    ).toBe('raw')
     expect(
       getGeneralProgramApiErrorMessage(
         {
@@ -135,6 +135,29 @@ describe('getGeneralProgramApiErrorMessage', () => {
         'fallback'
       )
     ).toBe('모집 시작 이후에는 신청 양식을 수정할 수 없습니다.')
+  })
+
+  it('모집 구조 오류는 서버 문장이 없으면 정책 문구를 쓴다', () => {
+    const errorFor = (code: string) => ({
+      response: { status: 409, data: { success: false, error: { code } } },
+    })
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('PROGRAM_PARTICIPANT_TYPE_IMMUTABLE'), 'fallback')
+    ).toBe('모집 등록 후 참여자 유형은 변경할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED'), 'fallback')
+    ).toBe('최초 모집 시작일 이후에는 모집 단위(추가/삭제)를 변경할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED'),
+        'fallback'
+      )
+    ).toBe('해당 모집 시작 후에는 모집 정보를 수정할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('RECRUITMENT_HAS_APPLICATIONS'), 'fallback')
+    ).toBe(
+      '신청자가 있는 모집은 삭제하거나 참여자 유형을 변경할 수 없습니다. 필요한 경우 상태를 INACTIVE로 변경해 주세요.'
+    )
   })
 
   it('참여 강사 등록·강등·포기 코드를 FE 메시지로 매핑한다', () => {
@@ -345,5 +368,46 @@ describe('getParticipationConsentRequiredMessage', () => {
       response: { status: 409, data: { error: { code: 'CONFLICT', message: 'x' } } },
     }
     expect(getParticipationConsentRequiredMessage(error)).toBeUndefined()
+  })
+})
+
+describe('교육구조 Guard 코드', () => {
+  it('400/409 코드를 지정 안내로 바꾼다', () => {
+    const errorFor = (code: string) => ({
+      response: {
+        status: 409,
+        data: { success: false, error: { code, message: code } },
+      },
+    })
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_EDUCATION_STRUCTURE_CHANGE_BLOCKED'),
+        'fallback'
+      )
+    ).toBe('이미 신청·배정 또는 교육 운영 이력이 있는 프로그램은 교육구조를 변경할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_EDUCATION_STRUCTURE_CHANGE_CONCURRENT'),
+        'fallback'
+      )
+    ).toBe('다른 관리자가 프로그램 정보를 변경했습니다. 최신 정보를 확인한 후 다시 시도해 주세요.')
+    expect(getGeneralProgramApiErrorMessage(errorFor('VERSION_CONFLICT'), 'fallback')).toBe(
+      '다른 관리자가 프로그램 정보를 변경했습니다. 최신 정보를 확인한 후 다시 시도해 주세요.'
+    )
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('GENERAL_CURRICULUM_SESSION_IN_USE'), 'fallback')
+    ).toBe('설문에 연결된 교육 회차가 있어 교육구조를 변경할 수 없습니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_EDUCATION_STRUCTURE_RESET_REQUIRED'),
+        'fallback'
+      )
+    ).toBe('교육구조를 변경하려면 이전 교육구조의 회차 또는 일정 정보를 비워야 합니다.')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        errorFor('PROGRAM_EDUCATION_STRUCTURE_PAYLOAD_REQUIRED'),
+        'fallback'
+      )
+    ).toBe('변경할 교육구조의 회차 또는 일정 정보를 입력해 주세요.')
   })
 })

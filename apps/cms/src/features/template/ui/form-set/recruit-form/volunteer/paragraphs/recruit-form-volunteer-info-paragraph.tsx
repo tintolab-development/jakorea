@@ -238,6 +238,7 @@ export function RecruitFormVolunteerInfoParagraph() {
                   width="100%"
                   placeholder="프로그램 운영 기간을 선택하세요"
                   preferPeriodModeInPopover
+                  suppressAutoTodayWhenEmpty
                   appliedSurfaceRange={programRange}
                   appliedSurfaceWithTime={programRangeWithTime}
                   onRangeChange={range => setProgramRange(range)}

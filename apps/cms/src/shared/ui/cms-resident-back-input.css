@@ -1,0 +1,78 @@
+/**
+ * 주민등록번호 뒷자리 — CmsInput 크롬 + 단일 7자리 인풋 + 눈 토글
+ */
+
+.cms-resident-back-input .cms-resident-back-input__control {
+  overflow: hidden;
+  width: 240px;
+  min-width: 120px;
+}
+
+.cms-resident-back-input.cms-input--explicit-width .cms-resident-back-input__control {
+  width: 100%;
+  min-width: 0;
+}
+
+.cms-resident-back-input__inner {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+}
+
+.cms-resident-back-input__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: var(--cms-control-font, 16px);
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.cms-resident-back-input__field::placeholder {
+  overflow: hidden;
+  color: var(--Content-tertiary, #85969d);
+  text-overflow: ellipsis;
+  font-weight: 500;
+  opacity: 1;
+}
+
+.cms-resident-back-input__control--disabled .cms-resident-back-input__field {
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  cursor: not-allowed;
+}
+
+.cms-resident-back-input__toggle {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--cms-icon-size, 22px);
+  height: var(--cms-icon-size, 22px);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: calc(var(--cms-icon-size, 22px) * 0.8);
+  line-height: 0;
+  color: #9fafb5;
+  cursor: pointer;
+}
+
+.cms-resident-back-input__toggle:hover,
+.cms-resident-back-input__control:focus-within .cms-resident-back-input__toggle {
+  color: var(--Netural-black, #3d3d3d);
+}
+
+.cms-resident-back-input__control--disabled .cms-resident-back-input__toggle {
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  cursor: not-allowed;
+}

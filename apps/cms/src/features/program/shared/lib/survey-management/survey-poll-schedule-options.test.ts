@@ -77,7 +77,7 @@ describe('buildSurveyPollScheduleSelectOptions', () => {
         endAt: '2026-03-01T12:00:00+09:00',
       }),
     ])
-    expect(options[0]?.label).toBe('2026. 03. 01(일) 10:00 ~ 12:00')
+    expect(options[0]?.label).toBe('2026.03.01(일) 10:00 ~ 12:00')
   })
 
   it('keeps only PROGRAM_DEFINED EDUCATION/SESSION ACTIVE candidates', () => {
@@ -237,7 +237,7 @@ describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
       }),
     ])
     expect(options[0]?.value).toBe('10')
-    expect(options[0]?.label).toBe('2026. 04. 03(금) 09:30 ~ 12:20')
+    expect(options[0]?.label).toBe('2026.04.03(금) 09:30 ~ 12:20')
   })
 
   it('does not overwrite non-trained-teacher labels with scheduleDetails', () => {
@@ -264,7 +264,7 @@ describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
         endAt: '2026-04-03T12:20:00+09:00',
       }),
     ])
-    expect(options[0]?.label).toBe('2026. 04. 03(금) 09:30 ~ 12:20')
+    expect(options[0]?.label).toBe('2026.04.03(금) 09:30 ~ 12:20')
   })
 
   it('does not invent options from scheduleDetails when education-slots are empty', () => {
@@ -378,7 +378,7 @@ describe('formatSurveyPollScheduleOptionLabel', () => {
       },
       0
     )
-    expect(label).toBe('2026. 03. 01(일) 10:00 ~ 12:00')
+    expect(label).toBe('2026.03.01(일) 10:00 ~ 12:00')
     expect(label).not.toContain('본 교육')
   })
 })

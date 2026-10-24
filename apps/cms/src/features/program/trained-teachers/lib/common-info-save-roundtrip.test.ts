@@ -56,6 +56,41 @@ function baseProgram(): Program {
 }
 
 describe('교육받은 교사 공통정보 저장 왕복', () => {
+  it('nested 2행이면 stale overlay 4행을 복원하지 않는다', () => {
+    const existing = baseProgram()
+    const nested = {
+      ...existing.generalCommonInfo,
+      curriculumSessions: [
+        { sessionLabel: '1회차', title: '1', description: 'a' },
+        { sessionLabel: '2회차', title: '2', description: 'b' },
+      ],
+      scheduleDetails: [] as NonNullable<Program['generalCommonInfo']>['scheduleDetails'],
+    }
+    const withStaleOverlay: Program = {
+      ...existing,
+      generalCommonInfo: nested,
+      registrationOverlay: {
+        'trainedTeachersRegistration.educationCurriculum.unitNameBySession': {
+          1: '1',
+          2: '2',
+          3: '3',
+          4: '4',
+        },
+      },
+    }
+    const json = serializeTrainedTeacherServiceDetailJson(withStaleOverlay)
+    const envelope = JSON.parse(json) as {
+      program?: { generalCommonInfo?: { curriculumSessions?: unknown[] } }
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(envelope.program?.generalCommonInfo?.curriculumSessions).toHaveLength(2)
+    expect(
+      envelope.registration?.overlay?.[
+        'trainedTeachersRegistration.educationCurriculum.unitNameBySession'
+      ]
+    ).toBeUndefined()
+  })
+
   it('일정 공통 라벨은 행에 들어가고 B 이후에도 공고·KPI가 남는다', () => {
     const existing = baseProgram()
     const curriculumSessions = stampTrainedTeachersSessionFields(
@@ -100,16 +135,9 @@ describe('교육받은 교사 공통정보 저장 왕복', () => {
       '02-000-0000'
     )
     expect(programsDetail.program?.generalCommonInfo?.kpi?.finalParticipants).toBe(30)
-    expect(programsDetail.program?.generalCommonInfo?.curriculumSessions).toEqual([
-      expect.objectContaining({
-        educationFormLabel: '오프라인',
-        ipsTypeSummary: '일정 공통 | Inspire | 학교',
-      }),
-      expect.objectContaining({
-        educationFormLabel: '오프라인',
-        ipsTypeSummary: '일정 공통 | Inspire | 학교',
-      }),
-    ])
+    expect(programsDetail.program?.generalCommonInfo?.curriculumSessions).toBeUndefined()
+    expect(infoRequest.configJson).toContain('오프라인')
+    expect(infoRequest.configJson).toContain('일정 공통 | Inspire | 학교')
     expect(infoRequest.configJson).not.toContain('announcementTitle')
     expect(infoRequest.configJson).not.toContain('finalParticipants')
 
@@ -134,7 +162,7 @@ describe('교육받은 교사 공통정보 저장 왕복', () => {
     )
   })
 
-  it('일정별 상이 교육 형태는 행 값을 유지한 채 A에 실린다', () => {
+  it('일정별 상이 교육 형태는 행 값을 유지한 채 B에 실린다', () => {
     const existing = baseProgram()
     const curriculumSessions = stampTrainedTeachersSessionFields(
       existing.generalCommonInfo?.curriculumSessions,
@@ -145,26 +173,30 @@ describe('교육받은 교사 공통정보 저장 왕복', () => {
         ipsTypeSummary: '일정 공통 | Inspire | 학교',
       }
     )
-    const request = mapTrainedTeacherToUpdateRequest(existing, {
+    const aRequest = mapTrainedTeacherToUpdateRequest(existing, {
       generalCommonInfo: {
         ...existing.generalCommonInfo,
         educationFormScheduleDetail: 'perSchedule',
         curriculumSessions,
       },
     })
-    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+    const bRequest = mapTrainedTeacherInfoSaveToRequest({
+      commonInfo: {
+        ...existing.generalCommonInfo,
+        educationFormScheduleDetail: 'perSchedule',
+        curriculumSessions,
+      },
+    })
+    const aDetail = JSON.parse(aRequest.serviceDetailJson ?? '{}') as {
       program?: {
         generalCommonInfo?: {
           curriculumSessions?: Array<{ educationFormLabel?: string }>
         }
       }
     }
-    expect(detail.program?.generalCommonInfo?.curriculumSessions?.[0]?.educationFormLabel).toBe(
-      '오프라인'
-    )
-    expect(detail.program?.generalCommonInfo?.curriculumSessions?.[1]?.educationFormLabel).toBe(
-      '온라인'
-    )
+    expect(aDetail.program?.generalCommonInfo?.curriculumSessions).toBeUndefined()
+    expect(bRequest.configJson).toContain('"educationFormLabel":"오프라인"')
+    expect(bRequest.configJson).toContain('"educationFormLabel":"온라인"')
   })
 
   it('설문 keys·overlay가 serialize → parse 왕복에서 유지된다', () => {

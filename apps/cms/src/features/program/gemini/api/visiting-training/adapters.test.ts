@@ -159,7 +159,7 @@ describe('gemini visiting-training adapters', () => {
         regionSigungu: '강서구',
         teacherName: '김교사',
         preferredLectureScheduleText:
-          '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)',
+          '1지망 : 2026.01.09(금) | 15:30~16:40(2차시)',
         resultNotificationSentAt: '2026-09-27T05:00:00Z',
         availableActions: ['RESEND_NOTIFICATION'],
       },
@@ -173,7 +173,7 @@ describe('gemini visiting-training adapters', () => {
     expect(app.institutionSigungu).toBe('강서구')
     expect(app.teacherName).toBe('김교사')
     expect(app.preferredLectureSchedule).toBe(
-      '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)'
+      '1지망 : 2026.01.09(금) | 15:30~16:40(2차시)'
     )
     expect(app.availableActions).toContain('RESEND_NOTIFICATION')
     expect(app.resultNotificationSentAt).toBe('2026-09-27T05:00:00Z')
@@ -198,7 +198,7 @@ describe('gemini visiting-training adapters', () => {
       0
     )
     expect(app.preferredLectureSchedule).toBe(
-      '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)'
+      '1지망 : 2026.01.09(금) | 15:30~16:40(2차시)'
     )
     expect(app.teacherName).toBe('-')
     expect(app.institutionSido).toBe('')

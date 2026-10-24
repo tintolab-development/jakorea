@@ -69,7 +69,22 @@ export async function listUjatInstitutionApplicationsPage(
   const response = await fetchOrganizationApplicationsRemote(programId, {
     page: pageParam,
     size: PAGE_SIZE,
-    ...query,
+    ...(query.status ? { status: query.status } : {}),
+    ...(query.keyword ? { keyword: query.keyword } : {}),
+    ...(query.organizationName ? { organizationName: query.organizationName } : {}),
+    ...(query.teacherName ? { teacherName: query.teacherName } : {}),
+    ...(query.requestedClassCount != null
+      ? { requestedClassCount: query.requestedClassCount }
+      : {}),
+    ...(query.educationRegionCode
+      ? { educationRegionCode: query.educationRegionCode }
+      : {}),
+    ...(query.temporaryAssignmentStatus
+      ? { temporaryAssignmentStatus: query.temporaryAssignmentStatus }
+      : {}),
+    ...(query.scheduleDate ? { scheduleDate: query.scheduleDate } : {}),
+    ...(query.recruitHalf ? { recruitHalf: query.recruitHalf } : {}),
+    ...(query.recruitmentId != null ? { recruitmentId: query.recruitmentId } : {}),
   })
   const meta = resolvePageMeta({
     itemCount: response.items?.length ?? 0,
@@ -82,7 +97,9 @@ export async function listUjatInstitutionApplicationsPage(
   return {
     ...meta,
     rows: (response.items ?? []).map((dto, index) =>
-      mapOrganizationApplicationToUjatInstitutionRow(dto, meta.page * meta.size + index)
+      mapOrganizationApplicationToUjatInstitutionRow(dto, meta.page * meta.size + index, {
+        totalElements: meta.totalElements,
+      })
     ),
   }
 }

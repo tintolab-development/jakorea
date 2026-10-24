@@ -3,8 +3,10 @@ import {
   buildParticipatingInstructorEducationScheduleLabel,
   inferParticipatingInstructorLectureProgress,
   mapSettlementsToParticipatingInstructorSettlementRows,
+  summarizeParticipatingInstructorPaymentStatementStatus,
   summarizeParticipatingInstructorSettlementProgress,
 } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
+import { shouldShowIndividualSettlementDash } from '@/features/program/general/lib/participating-individual-instructor-settlement-display'
 
 describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
   it('maps settlement list items to table rows', () => {
@@ -43,9 +45,9 @@ describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
   it('builds education schedule label from session display or date', () => {
     expect(
       buildParticipatingInstructorEducationScheduleLabel({
-        programSessionProgressDisplay: '2026. 01. 09(금) 09:20 ~ 11:20 | 1회차',
+        programSessionProgressDisplay: '2026.01.09(금) 09:20 ~ 11:20 | 1회차',
       })
-    ).toBe('2026. 01. 09(금) 09:20 ~ 11:20 | 1회차')
+    ).toBe('2026.01.09(금) 09:20 ~ 11:20 | 1회차')
 
     expect(
       buildParticipatingInstructorEducationScheduleLabel({
@@ -77,6 +79,75 @@ describe('mapSettlementsToParticipatingInstructorSettlementRows', () => {
     })
     expect(inferParticipatingInstructorLectureProgress({ lectureDate: '2025-01-01' })).toBe(
       'completed'
+    )
+  })
+
+  it('진행 예정·지급조서 없음은 대시 대상이다', () => {
+    const rows = mapSettlementsToParticipatingInstructorSettlementRows([
+      {
+        settlementId: 10,
+        lectureDate: '2027-12-01T09:00:00',
+        statementStatus: 'CONFIRMED',
+        netPaymentAmount: 300_000,
+      },
+    ])
+
+    expect(rows[0]?.lectureProgress).toBe('scheduled')
+    expect(shouldShowIndividualSettlementDash(rows[0]!)).toBe(true)
+    expect(
+      shouldShowIndividualSettlementDash({
+        lectureProgress: 'completed',
+        hasPaymentStatementApplication: false,
+      })
+    ).toBe(true)
+  })
+
+  it('지급조서 상태가 섞이면 확인 진행 중이다', () => {
+    const rows = mapSettlementsToParticipatingInstructorSettlementRows([
+      {
+        settlementId: 1,
+        lectureDate: '2025-01-01T09:00:00',
+        statementStatus: 'CONFIRMED',
+        paymentStatus: 'PAID',
+        sessionTotal: 7,
+      },
+      {
+        settlementId: 2,
+        lectureDate: '2025-02-01T09:00:00',
+        statementStatus: 'REQUESTED',
+        sessionTotal: 7,
+      },
+      {
+        settlementId: 3,
+        lectureDate: '2027-12-01T09:00:00',
+        statementStatus: 'NONE',
+        sessionTotal: 7,
+      },
+    ])
+
+    expect(summarizeParticipatingInstructorPaymentStatementStatus(rows)).toBe(
+      'partial_confirmation'
+    )
+  })
+
+  it('표시 가능한 지급조서 상태가 모두 같으면 그 상태를 쓴다', () => {
+    const rows = mapSettlementsToParticipatingInstructorSettlementRows([
+      {
+        settlementId: 1,
+        lectureDate: '2025-01-01T09:00:00',
+        statementStatus: 'CONFIRMED',
+        paymentStatus: 'CONFIRMED',
+      },
+      {
+        settlementId: 2,
+        lectureDate: '2025-02-01T09:00:00',
+        statementStatus: 'CONFIRMED',
+        paymentStatus: 'CONFIRMED',
+      },
+    ])
+
+    expect(summarizeParticipatingInstructorPaymentStatementStatus(rows)).toBe(
+      'payment_statement_verified'
     )
   })
 })

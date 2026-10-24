@@ -12,4 +12,5 @@ export interface FormResponseFeedbackCreateRequest {
      * @maxLength 4000
      */
   content: string;
+  decision?: string;
 }

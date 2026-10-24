@@ -16,12 +16,11 @@ import {
   type DisplayItemMeta,
   type DashboardWidgetOrderState,
 } from '@/features/dashboard/model/dashboard-widget-order-store'
-import {
-  SHORTCUT_ITEMS,
-  isShortcutItemEnabled,
-  useDashboardSettingsStore,
-} from '@/features/dashboard/model/dashboard-settings-store'
+import { useDashboardSettingsStore } from '@/features/dashboard/model/dashboard-settings-store'
 import { useDashboardQueryScope } from '@/features/dashboard/hooks/use-dashboard-query-scope'
+import { useDashboardShortcuts } from '@/features/dashboard/hooks/use-dashboard-shortcuts'
+import { resolveDashboardShortcutItems } from '@/features/dashboard/lib/resolve-dashboard-shortcut-items'
+import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 
 export interface UseDashboardLayoutParams {
   userRole: UserRole | null
@@ -83,12 +82,12 @@ export function useDashboardLayout({
     (s: DashboardWidgetOrderState) => s.setWidgetWidth
   )
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
+  const useRemoteShortcuts =
+    queryScope === 'remote' && userRole === 'ADMIN' && shouldUseDashboardRemoteApi()
+  const { data: apiShortcuts } = useDashboardShortcuts(useRemoteShortcuts)
   const hasVisibleMenuShortcuts = useMemo(
-    () =>
-      SHORTCUT_ITEMS.some(
-        item => !item.settingsDisabled && isShortcutItemEnabled(shortcutEnabled, item.id)
-      ),
-    [shortcutEnabled]
+    () => resolveDashboardShortcutItems(apiShortcuts, shortcutEnabled).length > 0,
+    [apiShortcuts, shortcutEnabled]
   )
   const roleWidths = (widthByRole[userRole ?? ''] ?? {}) as Record<string, 12 | 24>
 

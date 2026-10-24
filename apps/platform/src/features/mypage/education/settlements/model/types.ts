@@ -9,19 +9,48 @@ export type EducationSettlementStatus =
   | 'confirmed'
   | 'paid'
   | 'rejected'
+  | 'correction_requested'
+  | 'correction_completed'
   | 'upcoming'
+  | 'unresolved'
+
+export type SettlementDeadlineNotice = 'overdue' | 'operation_ended'
 
 export type EducationSettlementItem = {
   id: string
+  scheduleId?: number | null
   sessionNumber: number
   heldAt: string
   /** 예: 10:00~11:20 3차시 */
   sessionMeta: string
   progress: EducationSettlementProgress
   status: EducationSettlementStatus
+  deadlineAt?: string
+  submittedAt?: string
   deadlineLabel?: string
   amount?: number
   rejectReason?: string
+  settlementApplicationId?: number
+  receiptId?: number
+  currentRevisionNo?: number
+  canSubmitReceipt?: boolean
+  canResubmitReceipt?: boolean
+  eligible?: boolean
+  evidencePolicyUnconfigured?: boolean
+  hasPayableItems?: boolean
+  payableItems?: Array<{
+    itemType: string
+    itemName: string
+    evidenceRequired: boolean | null
+  }>
+  submittedItems?: Array<{
+    itemType?: string
+    amount?: number
+    evidenceRequired?: boolean | null
+  }>
+  submitBlockedReason?: string
+  deadlineNotice?: SettlementDeadlineNotice
+  previousAmount?: number
 }
 
 export const EDUCATION_SETTLEMENT_PAGE_SIZE = 7

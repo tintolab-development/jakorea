@@ -13,6 +13,7 @@ export type RegistrationStepTemplateChromeProps = {
   isDefault: boolean
   category: WritingTemplateSelectCategory
   familyBaseTemplateCode?: string
+  allowedFamilyBaseTemplateCode?: string
   pickerOpen: boolean
   onOpenPicker: () => void
   onClosePicker: () => void
@@ -77,6 +78,7 @@ export function RegistrationStepTemplateChrome({
   isDefault,
   category,
   familyBaseTemplateCode,
+  allowedFamilyBaseTemplateCode,
   pickerOpen,
   onOpenPicker,
   onClosePicker,
@@ -97,6 +99,7 @@ export function RegistrationStepTemplateChrome({
           open
           category={category}
           familyBaseTemplateCode={familyBaseTemplateCode}
+          allowedFamilyBaseTemplateCode={allowedFamilyBaseTemplateCode}
           currentTemplateName={templateName}
           onClose={onClosePicker}
           onUse={onUseTemplate}

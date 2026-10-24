@@ -48,6 +48,7 @@ export interface ProgramCreateRequest {
   educationStructure?: ProgramCreateRequestEducationStructure;
   titleEn?: string;
   mainTitle?: string;
+  /** 명시적으로 입력하는 교재명. detailedProgramName/curriculumTitle alias는 구 클라이언트 호환용이며 master 세부 프로그램명을 변경하지 않는다. */
   textbookName?: string;
   textbookNameEn?: string;
   schoolId?: string;

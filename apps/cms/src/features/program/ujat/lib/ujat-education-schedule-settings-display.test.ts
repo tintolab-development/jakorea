@@ -13,7 +13,7 @@ describe('formatUjatEventRangeLabel', () => {
       end: '2026-12-11T00:00:00.000Z',
     })
     expect(text).not.toMatch(/\(Mon|Tue|Wed|Thu|Fri|Sat|Sun\)/)
-    expect(text).toMatch(/26년 11월 20일\(금\) ~ 26년 12월 11일\(금\)/)
+    expect(text).toBe('2026.11.20(금) ~ 2026.12.11(금)')
   })
 })
 

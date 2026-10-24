@@ -129,10 +129,23 @@ describe('program-update-common-string-fields', () => {
     expect(merged.contactOrganizationName).toBe('JA')
   })
 
+  it('top-level API null은 stale nested 문자열을 되살리지 않는다', () => {
+    const merged = mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo(
+      { contactName: '구담당', recruitmentTargetDetail: '구 상세' },
+      { contactName: null, recruitmentTargetDetail: null }
+    )
+    expect(merged.contactName).toBeUndefined()
+    expect(merged.recruitmentTargetDetail).toBeUndefined()
+    expect(resolveOtherNotesFromProgramResponse({ otherMatters: null, otherNotes: '구 기타' })).toBe(
+      undefined
+    )
+  })
+
   it('prefers otherMatters over nested otherNotes and ignores remarks', () => {
     expect(resolveOtherNotesFromProgramResponse({ otherMatters: '컬럼', otherNotes: 'json' })).toBe(
       '컬럼'
     )
+    expect(resolveOtherNotesFromProgramResponse({ otherNotes: 'json' })).toBe('json')
     expect(resolveProgramOtherMatters(baseProgram({ otherNotes: 'x', remarks: '비고' }))).toBe('x')
     expect(
       resolveProgramRecruitmentTargetDetail(

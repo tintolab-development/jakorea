@@ -192,14 +192,14 @@ describe('resolveEmployeeVolunteerSessionRowsForInstitution', () => {
           format: '오프라인',
           classNum: '1',
           timeRange: '10:00~12:00',
-          educationScheduleLabel: '2026. 03. 01(일) 10:00 ~ 12:00',
+          educationScheduleLabel: '2026.03.01(일) 10:00 ~ 12:00',
         },
       ],
     })
 
     expect(rows).toHaveLength(1)
     expect(rows[0]?.id).toBe('program_progress')
-    expect(rows[0]?.label).toBe('2026. 03. 01(일) 10:00 ~ 12:00')
+    expect(rows[0]?.label).toBe('2026.03.01(일) 10:00 ~ 12:00')
   })
 
   it('기관 복수 커리큘럼은 N회차 교육 라벨을 유지한다', () => {

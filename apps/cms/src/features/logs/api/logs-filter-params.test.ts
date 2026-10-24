@@ -49,9 +49,12 @@ describe('logs-filter-params', () => {
 
   it('maps personal info access URL params to API params', () => {
     const params = personalInfoAccessLogsParamsFromSearchParams(
-      new URLSearchParams('pia_purpose=업무&pia_accessor=관리자&pia_from=2026-02-01&pia_to=2026-02-28')
+      new URLSearchParams(
+        'pia_target=홍길동&pia_purpose=업무&pia_accessor=관리자&pia_from=2026-02-01&pia_to=2026-02-28'
+      )
     )
     expect(params).toEqual({
+      targetName: '홍길동',
       accessPurpose: '업무',
       accessorName: '관리자',
       from: '2026-02-01',

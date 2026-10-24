@@ -51,7 +51,7 @@ function mapOrgRowToProgressInstitution(
       : '-',
     educationScheduleIsoDates,
     gradeClassCounts,
-    totalEducationClassCount: row.totalClassCount,
+    totalEducationClassCount: row.totalClassCount ?? 0,
     teacherName: row.teacherName,
     half,
   }

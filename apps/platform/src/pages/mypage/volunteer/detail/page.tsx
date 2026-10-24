@@ -28,10 +28,14 @@ import {
   type EducationDisplayStatus,
   type ProgramApplicationType,
 } from '@/features/mypage'
+import { useApplicationSchedulesQuery } from '@/features/mypage/education/applications/api/activity-hooks'
 import {
+  UjatVolunteerSchedulePanel,
   VolunteerAssignmentPanel,
   VolunteerNoticePanel,
+  resolveUjatVolunteerWithdrawnDetailView,
   resolveVolunteerListBackPath,
+  resolveVolunteerSchedulePanelKind,
 } from '@/features/mypage/volunteer'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
@@ -161,21 +165,49 @@ export function MypageVolunteerDetailPage() {
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
     : false
+  const isUjatVolunteer = application?.detailCase === 'ujat-volunteer'
+  const ujatSchedulesQuery = useApplicationSchedulesQuery(
+    isUjatVolunteer ? routeApplicationType : null,
+    isUjatVolunteer ? applicationId : null,
+  )
+  const ujatWithdrawnView = resolveUjatVolunteerWithdrawnDetailView({
+    isUjatVolunteer: Boolean(isUjatVolunteer),
+    displayStatus: application?.displayStatus,
+    schedulesQuery: {
+      enabled: ujatSchedulesQuery.enabled,
+      isLoading: ujatSchedulesQuery.isLoading,
+      isError: ujatSchedulesQuery.isError,
+      items: ujatSchedulesQuery.items,
+    },
+  })
   const isDetailLoading =
     !isAuthReady ||
     isChecking ||
     isRedirecting ||
     isApplicationLoading ||
-    (Boolean(application) && isProgramLoading && !program)
-
-  const isWithdrawnBefore = application ? isWithdrawnBeforeEducation(application) : false
-  const isWithdrawnDuring = application ? isWithdrawnDuringEducation(application) : false
+    (Boolean(application) && isProgramLoading && !program) ||
+    ujatWithdrawnView === 'loading'
+  const isWithdrawnBefore = application
+    ? isUjatVolunteer
+      ? false
+      : isWithdrawnBeforeEducation(application)
+    : false
+  const isWithdrawnDuring = application
+    ? isUjatVolunteer
+      ? ujatWithdrawnView === 'history'
+      : isWithdrawnDuringEducation(application)
+    : false
   const isProgramApplicationStatus = application
-    ? PROGRAM_APPLICATION_STATUSES.has(application.displayStatus) || isWithdrawnBefore
+    ? PROGRAM_APPLICATION_STATUSES.has(application.displayStatus) ||
+      isWithdrawnBefore ||
+      ujatWithdrawnView === 'applied'
     : false
   const isActivityStatus = application
     ? ACTIVITY_STATUSES.has(application.displayStatus)
     : false
+  const schedulePanelKind = resolveVolunteerSchedulePanelKind(application?.detailCase)
+  const lastParticipatedSession =
+    isWithdrawnDuring && !isUjatVolunteer ? application?.lastParticipatedSession : undefined
 
   const activityTabOptions = useMemo(
     () =>
@@ -402,23 +434,29 @@ export function MypageVolunteerDetailPage() {
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLines={preferredEducationScheduleLines}
           alwaysShowPreferredSchedule
-          lastParticipatedSession={
-            isWithdrawnDuring ? application.lastParticipatedSession : undefined
-          }
+          lastParticipatedSession={lastParticipatedSession}
           applicationType={routeApplicationType}
           applicationId={application.id}
         />
       )
     }
     if (active === 'schedule') {
+      if (schedulePanelKind === 'ujat-schedules') {
+        return (
+          <UjatVolunteerSchedulePanel
+            applicationType={routeApplicationType}
+            applicationId={application.id}
+            listTitle="배정 및 출결 현황"
+            readOnly={application.displayStatus === 'withdrawn'}
+          />
+        )
+      }
       return (
         <VolunteerAssignmentPanel
           programAudience={program.programAudience}
           applicationType={routeApplicationType}
           applicationId={application.id}
-          lastParticipatedSession={
-            isWithdrawnDuring ? application.lastParticipatedSession : undefined
-          }
+          lastParticipatedSession={lastParticipatedSession}
         />
       )
     }
@@ -464,9 +502,8 @@ export function MypageVolunteerDetailPage() {
           programId={program.id}
           applicationType={routeApplicationType}
           applicationId={application.id}
-          lastParticipatedSession={
-            isWithdrawnDuring ? application.lastParticipatedSession : undefined
-          }
+          operationEndAt={program.operatingPeriodEnd}
+          lastParticipatedSession={lastParticipatedSession}
         />
       )
     }
@@ -493,7 +530,22 @@ export function MypageVolunteerDetailPage() {
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
       ) : null}
 
-      {isProgramApplicationStatus ? (
+      {ujatWithdrawnView === 'error' ? (
+        <div className={styles.errorStatus}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            배정 및 출결 현황을 불러오지 못했습니다.
+          </PFText>
+          <PFButton
+            type="button"
+            variant="tertiary"
+            size="large"
+            disabled={ujatSchedulesQuery.isRefetching}
+            onClick={() => void ujatSchedulesQuery.refetch()}
+          >
+            다시 시도
+          </PFButton>
+        </div>
+      ) : isProgramApplicationStatus ? (
         <>
           <PFTabs
             className={styles.tabs}

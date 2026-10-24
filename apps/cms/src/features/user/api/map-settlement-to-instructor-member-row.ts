@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import { formatDateDot } from '@/shared/utils/date'
 import type { SettlementFrontendItemResponse, SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import type {
@@ -71,8 +71,8 @@ function mapItemToLine(item: SettlementFrontendItemResponse, index: number): Ins
 
 function formatIsoDate(iso?: string): string {
   if (!iso?.trim()) return '-'
-  const parsed = dayjs(iso.slice(0, 10))
-  return parsed.isValid() ? parsed.format('YYYY. MM. DD') : iso
+  const label = formatDateDot(iso.slice(0, 10))
+  return label === '-' ? iso : label
 }
 
 export function mapSettlementDetailToInstructorInvoice(

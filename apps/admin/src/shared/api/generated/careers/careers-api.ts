@@ -7,7 +7,16 @@
  */
 import type {
   AssetResponse,
+  CareerGuideAdminCultureItemResponse,
+  CareerGuideAdminInterviewResponse,
   CareerGuideAdminResponse,
+  CareerGuideBannerResponse,
+  CareerGuideBannerUpdateRequest,
+  CareerGuideCultureItemsUpdateRequest,
+  BulkDeleteRequest,
+  CareerGuideInterviewCreateRequest,
+  CareerGuideInterviewDeleteRequest,
+  CareerGuideInterviewUpdateRequest,
   CareerGuideResponse,
   CareerPostingAdminDetail,
   CareerPostingAdminItem,
@@ -58,6 +67,63 @@ const update14 = (
       {url: `/api/admin/careers/postings/${id}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: careerPostingUpdateRequest
+    },
+      options);
+    }
+
+const updateCareerGuideInterview = (
+    id: number,
+    careerGuideInterviewUpdateRequest: CareerGuideInterviewUpdateRequest,
+ options?: SecondParameter<typeof customInstance<CareerGuideAdminInterviewResponse>>,) => {
+      return customInstance<CareerGuideAdminInterviewResponse>(
+      {url: `/api/admin/careers/guide/interviews/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: careerGuideInterviewUpdateRequest
+    },
+      options);
+    }
+
+const deleteCareerGuideInterview = (
+    id: number,
+    careerGuideInterviewDeleteRequest: CareerGuideInterviewDeleteRequest,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/admin/careers/guide/interviews/${id}`, method: 'DELETE',
+      headers: {'Content-Type': 'application/json', },
+      data: careerGuideInterviewDeleteRequest
+    },
+      options);
+    }
+
+const bulkDeleteCareerGuideInterviews = (
+    bulkDeleteRequest: BulkDeleteRequest,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/admin/careers/guide/interviews/bulk-delete`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkDeleteRequest
+    },
+      options);
+    }
+
+const updateCareerGuideCultureItems = (
+    careerGuideCultureItemsUpdateRequest: CareerGuideCultureItemsUpdateRequest,
+ options?: SecondParameter<typeof customInstance<CareerGuideAdminCultureItemResponse[]>>,) => {
+      return customInstance<CareerGuideAdminCultureItemResponse[]>(
+      {url: `/api/admin/careers/guide/culture-items`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: careerGuideCultureItemsUpdateRequest
+    },
+      options);
+    }
+
+const updateCareerGuideBanner = (
+    careerGuideBannerUpdateRequest: CareerGuideBannerUpdateRequest,
+ options?: SecondParameter<typeof customInstance<CareerGuideBannerResponse>>,) => {
+      return customInstance<CareerGuideBannerResponse>(
+      {url: `/api/admin/careers/guide/banner`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: careerGuideBannerUpdateRequest
     },
       options);
     }
@@ -146,6 +212,17 @@ const prepare3 = (
       {url: `/api/admin/careers/postings/attachments/upload-requests`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: careerPostingAttachmentPrepareRequest
+    },
+      options);
+    }
+
+const createCareerGuideInterview = (
+    careerGuideInterviewCreateRequest: CareerGuideInterviewCreateRequest,
+ options?: SecondParameter<typeof customInstance<CareerGuideAdminInterviewResponse>>,) => {
+      return customInstance<CareerGuideAdminInterviewResponse>(
+      {url: `/api/admin/careers/guide/interviews`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: careerGuideInterviewCreateRequest
     },
       options);
     }
@@ -259,9 +336,14 @@ const guide1 = (
       options);
     }
 
-return {detail3,update14,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownload2,guide1}};
+return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,bulkDeleteCareerGuideInterviews,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownload2,guide1}};
 export type Detail3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail3']>>>
 export type Update14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['update14']>>>
+export type UpdateCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideInterview']>>>
+export type DeleteCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['deleteCareerGuideInterview']>>>
+export type BulkDeleteCareerGuideInterviewsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['bulkDeleteCareerGuideInterviews']>>>
+export type UpdateCareerGuideCultureItemsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideCultureItems']>>>
+export type UpdateCareerGuideBannerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideBanner']>>>
 export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['create2']>>>
 export type Confirm2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['confirm2']>>>
 export type Prepare2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['prepare2']>>>
@@ -270,6 +352,7 @@ export type Create11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof ge
 export type Delete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['delete2']>>>
 export type Confirm3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['confirm3']>>>
 export type Prepare3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['prepare3']>>>
+export type CreateCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['createCareerGuideInterview']>>>
 export type Confirm4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['confirm4']>>>
 export type ChangeVisibilityResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['changeVisibility']>>>
 export type Detail6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail6']>>>

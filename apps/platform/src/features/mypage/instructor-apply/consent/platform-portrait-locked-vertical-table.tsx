@@ -15,9 +15,11 @@ import styles from './consent-form.module.css'
 export function PlatformPortraitLockedVerticalTable({
   paragraph,
   onUpdateParagraph,
+  documentPreview = false,
 }: {
   paragraph: VerticalTableParagraph
   onUpdateParagraph: FormUpdateParagraph
+  documentPreview?: boolean
 }) {
   return (
     <div className={styles.tableBlock}>
@@ -39,7 +41,11 @@ export function PlatformPortraitLockedVerticalTable({
 
       <div className={styles.portraitTableMobile}>
         <PortraitVerticalTableMobileBody paragraph={paragraph} onUpdateParagraph={onUpdateParagraph} />
-        <PortraitVerticalTableBottom paragraph={paragraph} onUpdateParagraph={onUpdateParagraph} />
+        <PortraitVerticalTableBottom
+          paragraph={paragraph}
+          onUpdateParagraph={onUpdateParagraph}
+          documentPreview={documentPreview}
+        />
       </div>
     </div>
   )

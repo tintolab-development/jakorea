@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Program } from '@/types/domain'
-import { Controller, useFormState } from 'react-hook-form'
+import { Controller } from 'react-hook-form'
 import type { ControllerRenderProps, FieldPath, UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
@@ -35,7 +35,6 @@ import {
 } from '@/features/program/shared/api/program-media-target'
 import { useCmsAlert } from '@/shared/ui'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
-import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
   DEFAULT_ADDITIONAL_HTML,
@@ -372,14 +371,20 @@ function resolveAdditionalContentHtml(
   return DEFAULT_ADDITIONAL_HTML
 }
 
+function additionalContentReadContent(
+  program: Program,
+  emptyReadDisplay: DetailInfoEmptyReadDisplay
+): ReactNode {
+  if (emptyReadDisplay === 'dash' && isAdditionalContentEmpty(program)) return '-'
+  return resolveAdditionalContentHtml(program, emptyReadDisplay)
+}
+
 function useDetailInfoEditorBlock(
   program: Program,
   isEditMode: boolean,
   form: UseFormReturn<ProgramDetailEditFormValues> | undefined,
-  onRegisterGetAdditionalContentHtml?: (getter: () => string) => void,
-  emptyReadDisplay: DetailInfoEmptyReadDisplay = 'mock-default'
+  onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
 ) {
-  const [editorOpen, setEditorOpen] = useState(false)
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
   const [thumbnailPreviewBlobUrl, setThumbnailPreviewBlobUrl] = useState<string | null>(null)
   const [linkedThumbnail, setLinkedThumbnail] = useState<{
@@ -388,40 +393,23 @@ function useDetailInfoEditorBlock(
   } | null>(null)
 
   useEffect(() => {
-    if (!isEditMode) {
-      setEditorOpen(false)
-      setThumbnailPreviewBlobUrl(prev => {
-        if (prev) URL.revokeObjectURL(prev)
-        return null
-      })
-      return
-    }
-    const t = setTimeout(() => setEditorOpen(true), 500)
-    return () => clearTimeout(t)
+    if (isEditMode) return
+    setThumbnailPreviewBlobUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
   }, [isEditMode])
 
-  const additionalContentHtml = resolveAdditionalContentHtml(program, emptyReadDisplay)
-  const inlineImageOwner = programInlineImageOwner(parseFileObjectId(program.id))
-
-  const { editor, editorMinHeight, getHTML } = useTemplateEditor(
-    editorOpen,
-    '',
-    additionalContentHtml,
-    inlineImageOwner
-  )
-  const getterRef = useRef<() => string>(() => '')
-
   useEffect(() => {
-    getterRef.current = () => (editorOpen ? getHTML() : additionalContentHtml)
-  }, [editorOpen, getHTML, additionalContentHtml])
-
-  useEffect(() => {
-    if (!isEditMode) return
-    onRegisterGetAdditionalContentHtml?.(() => getterRef.current())
+    if (!isEditMode || !form) return
+    onRegisterGetAdditionalContentHtml?.(() => {
+      const value = form.getValues('additionalContentHtml')
+      return typeof value === 'string' ? value : ''
+    })
     return () => {
       onRegisterGetAdditionalContentHtml?.(() => '')
     }
-  }, [isEditMode, onRegisterGetAdditionalContentHtml])
+  }, [isEditMode, form, onRegisterGetAdditionalContentHtml])
 
   const isFormEdit = Boolean(isEditMode && form)
   const rowMedia = usesRecruitmentRowMedia(program)
@@ -544,9 +532,6 @@ function useDetailInfoEditorBlock(
         : '')
 
   return {
-    editorOpen,
-    editor,
-    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -686,90 +671,6 @@ function ThumbnailImageField({
         fullRow
         view={renderThumbnail(true)}
         edit={renderThumbnail(false)}
-      />
-    </DetailInfoForm.Row>
-  )
-}
-
-function AdditionalContentFieldError({
-  control,
-}: {
-  control: UseFormReturn<ProgramDetailEditFormValues>['control']
-}) {
-  const { errors } = useFormState({ control })
-  const message = (errors as { additionalContentHtml?: { message?: string } }).additionalContentHtml
-    ?.message
-  if (!message) return null
-  return (
-    <p className="text-area-field-row__field-error" role="alert">
-      {message}
-    </p>
-  )
-}
-
-function AdditionalContentField({
-  program,
-  isEditMode,
-  isFormEdit,
-  editorOpen,
-  editor,
-  showRequiredOnTh,
-  emptyReadDisplay = 'mock-default',
-  form,
-}: {
-  program: Program
-  isEditMode: boolean
-  isFormEdit: boolean
-  editorOpen: boolean
-  editor: ReturnType<typeof useTemplateEditor>['editor']
-  editorMinHeight?: string
-  showRequiredOnTh: boolean
-  emptyReadDisplay?: DetailInfoEmptyReadDisplay
-  form?: UseFormReturn<ProgramDetailEditFormValues>
-}) {
-  const additionalEmpty =
-    emptyReadDisplay === 'dash' ? isAdditionalContentEmpty(program) : false
-
-  const readView = additionalEmpty
-    ? '-'
-    : (
-        <div className="program-detail-info-tab__additional-content">
-          <RichTextViewer
-            content={resolveAdditionalContentHtml(program, emptyReadDisplay)}
-            contentFormat="html"
-            maxHeight="none"
-            className="program-detail-info-tab__editor-content"
-          />
-        </div>
-      )
-
-  const editView = (
-    <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
-      {editorOpen && editor ? (
-        <div className="program-detail-info-tab__editor-host program-detail-info-tab__editor-host--field">
-          <RichTextEditor
-            editor={editor}
-            className="program-detail-info-tab__rich-text-editor"
-            minHeight="100px"
-            fileUploadOwner={programInlineImageOwner(parseFileObjectId(program.id))}
-          />
-          {form ? <AdditionalContentFieldError control={form.control} /> : null}
-        </div>
-      ) : (
-        <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
-      )}
-    </div>
-  )
-
-  return (
-    <DetailInfoForm.Row type="single">
-      <DetailInfoForm.Field
-        label="추가 내용"
-        required={showRequiredOnTh && isFormEdit}
-        labelWidth={DETAIL_INFO_FIELD_LABEL_WIDTH}
-        fullRow
-        view={readView}
-        edit={isEditMode ? editView : undefined}
       />
     </DetailInfoForm.Row>
   )
@@ -957,9 +858,6 @@ export function DetailInfoSection({
   textFieldControl = 'textarea',
 }: DetailInfoSectionProps) {
   const {
-    editorOpen,
-    editor,
-    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -976,8 +874,7 @@ export function DetailInfoSection({
     program,
     isEditMode,
     form,
-    onRegisterGetAdditionalContentHtml,
-    emptyReadDisplay
+    onRegisterGetAdditionalContentHtml
   )
 
   const headerDescription = !isFormEdit
@@ -1066,16 +963,15 @@ export function DetailInfoSection({
             DEFAULT_LEARNING_SUPPORT
           )}
         />
-        <AdditionalContentField
-          program={program}
-          isEditMode={isEditMode}
+        <RichTextDetailField
+          label="추가 내용"
+          showRequiredStar={false}
           isFormEdit={isFormEdit}
-          editorOpen={editorOpen}
-          editor={editor}
-          editorMinHeight={editorMinHeight}
-          showRequiredOnTh={false}
-          emptyReadDisplay={emptyReadDisplay}
           form={f}
+          program={program}
+          name="additionalContentHtml"
+          placeholder="내용을 작성하세요"
+          readContent={additionalContentReadContent(program, emptyReadDisplay)}
         />
         <AttachmentDetailField
           program={program}
@@ -1110,9 +1006,6 @@ export function InstructorDetailInfoSection({
   emptyReadDisplay = 'mock-default',
 }: InstructorDetailInfoSectionProps) {
   const {
-    editorOpen,
-    editor,
-    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -1129,8 +1022,7 @@ export function InstructorDetailInfoSection({
     program,
     isEditMode,
     form,
-    onRegisterGetAdditionalContentHtml,
-    emptyReadDisplay
+    onRegisterGetAdditionalContentHtml
   )
 
   const applicationMethod = resolveTextReadContent(
@@ -1203,16 +1095,15 @@ export function InstructorDetailInfoSection({
           placeholder="지원 방법"
           readContent={applicationMethod}
         />
-        <AdditionalContentField
-          program={program}
-          isEditMode={isEditMode}
+        <RichTextDetailField
+          label="추가 내용"
+          showRequiredStar={false}
           isFormEdit={isFormEdit}
-          editorOpen={editorOpen}
-          editor={editor}
-          editorMinHeight={editorMinHeight}
-          showRequiredOnTh={false}
-          emptyReadDisplay={emptyReadDisplay}
           form={f}
+          program={program}
+          name="additionalContentHtml"
+          placeholder="내용을 작성하세요"
+          readContent={additionalContentReadContent(program, emptyReadDisplay)}
         />
         <RichTextDetailField
           label="기타사항"
@@ -1266,9 +1157,6 @@ export function VolunteerDetailInfoSection({
   emptyReadDisplay = 'mock-default',
 }: VolunteerDetailInfoSectionProps) {
   const {
-    editorOpen,
-    editor,
-    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -1285,8 +1173,7 @@ export function VolunteerDetailInfoSection({
     program,
     isEditMode,
     form,
-    onRegisterGetAdditionalContentHtml,
-    emptyReadDisplay
+    onRegisterGetAdditionalContentHtml
   )
 
   const applicationMethod = resolveTextReadContent(
@@ -1361,16 +1248,15 @@ export function VolunteerDetailInfoSection({
           placeholder="지원 방법"
           readContent={applicationMethod}
         />
-        <AdditionalContentField
-          program={program}
-          isEditMode={isEditMode}
+        <RichTextDetailField
+          label="추가 내용"
+          showRequiredStar={false}
           isFormEdit={isFormEdit}
-          editorOpen={editorOpen}
-          editor={editor}
-          editorMinHeight={editorMinHeight}
-          showRequiredOnTh={false}
-          emptyReadDisplay={emptyReadDisplay}
           form={f}
+          program={program}
+          name="additionalContentHtml"
+          placeholder="내용을 작성하세요"
+          readContent={additionalContentReadContent(program, emptyReadDisplay)}
         />
         <RichTextDetailField
           label="기타사항"

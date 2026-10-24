@@ -25,7 +25,7 @@ export function sumUjatRegionAssignedClassCount(
       if (options?.onlyTempAssigned && row.tempAssignmentStatus !== 'temp_assigned') return false
       return true
     })
-    .reduce((sum, row) => sum + row.totalClassCount, 0)
+    .reduce((sum, row) => sum + (row.totalClassCount ?? 0), 0)
 }
 
 export function checkUjatRegionClassCapacityExceeded(args: {

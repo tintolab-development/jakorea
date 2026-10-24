@@ -1,4 +1,3 @@
-import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   forwardRef,
   useCallback,
@@ -8,11 +7,11 @@ import {
   useState,
 } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { useCmsAlert } from '@/shared/ui'
+import '@/shared/components/detail-info-form/detail-info-form.css'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import {
@@ -24,8 +23,6 @@ import {
   formatParticipatingIndividualParticipantAttendanceShortDateLabel,
   resolveParticipatingIndividualParticipantAbsenceDateLabel,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-display'
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-participant-attendance-export'
 import type {
   ParticipatingIndividualParticipantAbsenceReason,
@@ -33,8 +30,6 @@ import type {
 } from '@/features/program/general/lib/participating-individual-participant-attendance-types'
 import {
   isParticipatingIndividualParticipantAttendanceRowWithdrawn,
-  PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_STATUS_LABELS,
-  PARTICIPATING_INDIVIDUAL_PARTICIPANT_SESSION_PROGRESS_LABELS,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-types'
 import {
   ProgramAttendanceAbsenceReasons,
@@ -46,11 +41,8 @@ import {
 } from '@/features/program/general/api/absence-reasons'
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import { ProgramAttendanceRateValue } from '@/features/program/shared/ui/program-attendance-rate-value'
-import {
-  CompletionStatusText,
-  ProgramAttendanceStatusText,
-  type ProgramAttendanceStatusTextKind,
-} from '@/features/program/shared/ui/program-attendance-status-text'
+import { CompletionStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
+import { ParticipatingIndividualParticipantAttendanceTable } from './participating-individual-participant-attendance-table'
 import {
   ParticipatingIndividualParticipantAttendanceCorrectionModal,
   type ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload,
@@ -70,6 +62,8 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { handleError } from '@/shared/utils/error-handler'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { formatAttendanceRecordingNotOpenMessage } from '@/features/program/general/lib/attendance-recording-not-open'
 import {
   ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
@@ -80,14 +74,6 @@ import type { ParticipatingIndividualProgressAttendanceStatus } from '@/features
 export type ParticipatingIndividualParticipantAttendanceSectionHandle = {
   openAttendanceCorrectionModal: () => void
   exportExcel: () => void
-}
-
-function toAttendanceStatusTextKind(
-  status: ParticipatingIndividualParticipantAttendanceRow['attendanceStatus']
-): ProgramAttendanceStatusTextKind {
-  if (status === 'pending') return 'pending'
-  if (status === 'withdrawn') return 'withdrawn'
-  return status
 }
 
 function mapCorrectionPayloadToAttendanceStatus(
@@ -133,16 +119,6 @@ function mapDetailStatusToProgressStatus(
   if (status === 'excused_absence') return 'excused_absence'
   if (status === 'present') return 'present'
   return 'absent'
-}
-
-function renderAttendanceStatus(row: ParticipatingIndividualParticipantAttendanceRow) {
-  return (
-    <ProgramAttendanceStatusText
-      kind={toAttendanceStatusTextKind(row.attendanceStatus)}
-      label={PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_STATUS_LABELS[row.attendanceStatus]}
-      lateTime={row.lateTime}
-    />
-  )
 }
 
 export interface ParticipatingIndividualParticipantAttendanceSectionProps {
@@ -379,10 +355,13 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
             content: '출결이 정정되었습니다.',
           })
         },
-        () => {
+        error => {
+          if (isGlobalApiErrorAlertShown(error)) return
+          if (formatAttendanceRecordingNotOpenMessage(error)) return
+          if (isInvalidAttendanceArrivalTimeError(error)) return
           showAlert({
             title: '안내',
-            content: '출결 정정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+            content: readApiErrorAlertMessage(error, '요청 처리에 실패했습니다.'),
           })
         }
       )
@@ -465,52 +444,6 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     [showAlert]
   )
 
-  const columns: ColumnsType<
-    ParticipatingIndividualParticipantAttendanceRow & { no: number }
-  > = useMemo(
-    () => [
-      {
-        title: 'No.',
-        dataIndex: 'no',
-        key: 'no',
-        width: 80,
-        align: 'center',
-      },
-      {
-        title: '교육 진행 일정',
-        dataIndex: 'scheduleLabel',
-        key: 'scheduleLabel',
-        align: 'center',
-        render: (value: string | undefined) =>
-          renderProgramDetailPipeSeparated(value ? formatCmsScheduleDisplayLabel(value) : value),
-      },
-      {
-        title: '출결 현황',
-        key: 'attendanceStatus',
-        width: 140,
-        align: 'center',
-        render: (_value, record) => renderAttendanceStatus(record),
-      },
-      {
-        title: '교육 진행 현황',
-        dataIndex: 'educationProgress',
-        key: 'educationProgress',
-        width: 120,
-        align: 'center',
-        render: (value: ParticipatingIndividualParticipantAttendanceRow['educationProgress']) =>
-          PARTICIPATING_INDIVIDUAL_PARTICIPANT_SESSION_PROGRESS_LABELS[value],
-      },
-      {
-        title: '비고',
-        key: 'remark',
-        width: 220,
-        align: 'center',
-        render: (_value, record) => record.remark?.trim() || '-',
-      },
-    ],
-    []
-  )
-
   return (
     <div className="program-attendance-detail">
       <FilterTableLayout
@@ -521,54 +454,35 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         onFilterChange={() => {}}
         onSearch={() => {}}
         title="출석 내역"
-        description={`${rows.length}건`}
+        description={`총 ${rows.length}건`}
         hideExcelDownload
       >
-        <CmsDataTable<ParticipatingIndividualParticipantAttendanceRow & { no: number }>
-          rowKey="id"
-          className="cms-data-table"
-          columns={columns}
-          dataSource={tableData}
-          pagination={false}
-          tableLayout="fixed"
-          scroll={{ x: 960 }}
-          onRow={record => ({
-            className: isParticipatingIndividualParticipantAttendanceRowWithdrawn(record)
-              ? CMS_DATA_TABLE_ROW_DISABLED_CLASS
-              : undefined,
-          })}
-        />
+        <div className="program-attendance-detail__table-outer">
+          <ParticipatingIndividualParticipantAttendanceTable rows={rows} />
+        </div>
       </FilterTableLayout>
 
-      <section className="program-detail-fullpage-modal__info-tab-block">
-        <h3 className="program-detail-info-tab__section-title">출결 현황</h3>
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-            <colgroup>
-              <col style={{ width: '200px' }} />
-              <col />
-              <col style={{ width: '200px' }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th scope="row">수료 여부</th>
-                <td>
-                  <CompletionStatusText label={summary.completionStatusLabel} />
-                </td>
-                <th scope="row">지각 횟수</th>
-                <td>{summary.lateCountLabel}</td>
-              </tr>
-              <tr>
-                <th scope="row">출석률</th>
-                <td colSpan={3}>
-                  <ProgramAttendanceRateValue countLabel={summary.attendanceRateCountLabel} />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DetailInfoForm title="출결 현황" mode="view">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="수료 여부"
+            view={<CompletionStatusText label={summary.completionStatusLabel} />}
+            readOnlyDisplay
+          />
+          <DetailInfoForm.Field
+            label="지각 횟수"
+            view={summary.lateCountLabel}
+            readOnlyDisplay
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="출석률"
+            view={<ProgramAttendanceRateValue countLabel={summary.attendanceRateCountLabel} />}
+            readOnlyDisplay
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
 
       <ProgramAttendanceAbsenceReasons
         reasons={remoteAbsenceReasons ?? absenceReasons}
@@ -577,6 +491,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
 
       <ParticipatingIndividualParticipantAttendanceCorrectionModal
         open={attendanceCorrectionModalOpen}
+        participantName={participant.applicantName}
         scheduleOptions={correctableScheduleOptions}
         onCancel={() => setAttendanceCorrectionModalOpen(false)}
         onConfirm={handleAttendanceCorrectionConfirm}

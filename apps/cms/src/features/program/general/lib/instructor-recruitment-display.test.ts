@@ -10,7 +10,7 @@ describe('최종 합격자 발표 — 방법 표시', () => {
       finalPassAnnouncementMethod: '○○○',
       generalCommonInfo: {
         instructorRecruitmentInfo: {
-          finalAnnouncementLabel: '2026. 10. 08 (목) | ○○○',
+          finalAnnouncementLabel: '2026.10.08(목) | ○○○',
         },
       },
     } as unknown as Program)

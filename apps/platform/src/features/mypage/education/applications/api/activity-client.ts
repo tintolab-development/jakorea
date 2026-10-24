@@ -150,6 +150,7 @@ export type PortalEducationSchedule = {
   startAt?: string | null
   endAt?: string | null
   locationName?: string
+  classLabel?: string
   attendanceStatus?: string | null
   absenceReason?: string
   sessionLabel?: string
@@ -162,9 +163,20 @@ export type PortalEducationSchedule = {
   groupTimes?: PortalEducationScheduleGroupTime[]
   assignment?: PortalEducationScheduleAssignment | null
   scheduleStatus?: string
+  assignmentStatus?: string | null
   surveyCount?: number
   absenceReasonStatus?: string
   availableActions?: string[]
+}
+
+export type PortalScheduleAttendanceDetail = {
+  scheduleId?: number | null
+  attendanceStatus?: string | null
+  absenceReason?: string | null
+  classLabel?: string | null
+  assignmentStatus?: string | null
+  canCheckIn?: boolean
+  locationName?: string | null
 }
 
 export type PortalEducationScheduleScopeStatus =
@@ -272,6 +284,9 @@ export type PortalFormListResponse = {
 
 export type PortalExpenseReceipt = {
   receiptId?: number
+  originalReceiptId?: number
+  revisionNo?: number
+  latestRevision?: boolean
   expenseDate?: string
   amount?: number
   description?: string
@@ -279,6 +294,15 @@ export type PortalExpenseReceipt = {
   receiptStatus?: string
   rejectReason?: string
   submittedAt?: string
+  reviewedAt?: string | null
+  /** 런타임 전용. OpenAPI 목록 스키마에는 없음. 있으면 일정 연결에 사용 */
+  scheduleId?: number
+  programScheduleId?: number
+  educationScheduleId?: number
+  paymentStatus?: string
+  availableActions?: string[]
+  receiptDeadlineAt?: string
+  submitDeadlineAt?: string
 }
 
 export type PortalExpenseReceiptList = {
@@ -288,11 +312,27 @@ export type PortalExpenseReceiptList = {
 export type PortalSettlementApplication = {
   applicationId?: number
   programId?: number
+  programScheduleId?: number
+  assignmentId?: number
   status?: string
+  statementStatus?: string
+  paymentStatus?: string
   netPaymentAmount?: number
   grossAmount?: number
+  previousNetPaymentAmount?: number
+  originalNetPaymentAmount?: number
   submittedAt?: string
   createdAt?: string
+  revisionNo?: number
+  originalApplicationId?: number
+  rejectedReason?: string
+  rejectedAt?: string
+  availableActions?: string[]
+  receiptDeadlineAt?: string
+  submitDeadlineAt?: string
+  correctionRequestId?: number
+  correctionStatus?: string
+  supersededBySettlementId?: number
 }
 
 function applicationPath(applicationType: ProgramApplicationType, applicationId: string): string {
@@ -562,6 +602,20 @@ export async function fetchApplicationSchedules(
   }
 }
 
+/** GET /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance */
+export async function fetchApplicationScheduleAttendance(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  scheduleId: number,
+  signal?: AbortSignal,
+): Promise<PortalScheduleAttendanceDetail> {
+  const { data } = await axiosClient.get<unknown>(
+    `${applicationPath(applicationType, applicationId)}/schedules/${encodeURIComponent(String(scheduleId))}/attendance`,
+    { signal },
+  )
+  return unwrapEnvelope<PortalScheduleAttendanceDetail>(data) ?? {}
+}
+
 /** POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/absence-reasons */
 export async function submitApplicationAbsenceReason(
   input: PortalAbsenceReasonSubmissionInput
@@ -735,4 +789,172 @@ export async function fetchSettlementApplications(
   >(data)
   if (Array.isArray(unwrapped)) return unwrapped
   return unwrapped.items ?? []
+}
+
+/** GET /api/portal/me/individual-settlements/applications/{applicationId}/schedules */
+export type PortalIndividualPayableItem = {
+  itemType?: string
+  itemName?: string
+  evidenceRequired?: boolean | null
+}
+
+export type PortalIndividualSubmittedItem = {
+  itemType?: string
+  amount?: number
+  evidenceRequired?: boolean | null
+}
+
+export type PortalIndividualScheduleSettlement = {
+  scheduleId?: number
+  educationScheduleId?: number
+  programScheduleId?: number
+  scheduleName?: string
+  startAt?: string
+  endAt?: string
+  attendanceStatus?: string | null
+  eligible?: boolean
+  ineligibleReason?: string | null
+  settlementApplicationId?: number | null
+  currentRevisionNo?: number | null
+  status?: string | null
+  canSubmit?: boolean
+  canResubmit?: boolean
+  businessEndDate?: string
+  payableItems?: PortalIndividualPayableItem[]
+  submittedItems?: PortalIndividualSubmittedItem[]
+}
+
+export type PortalIndividualScheduleList = {
+  applicationId?: number
+  schedules?: PortalIndividualScheduleSettlement[]
+}
+
+export type PortalIndividualSettlementFile = {
+  fileObjectId?: number
+  fileName?: string
+  originalFileName?: string
+  contentType?: string
+  fileSize?: number | null
+}
+
+export type PortalIndividualSettlementExpense = {
+  receiptId?: number
+  originalReceiptId?: number | null
+  revisionNo?: number
+  expenseType?: string
+  expenseDate?: string
+  amount?: number
+  description?: string | null
+  files?: PortalIndividualSettlementFile[]
+}
+
+export type PortalIndividualSettlementItemDetail = {
+  itemType?: string
+  itemName?: string
+  amount?: number
+  evidenceRequired?: boolean
+  description?: string
+  expenses?: PortalIndividualSettlementExpense[]
+}
+
+export type PortalIndividualSettlementRevision = {
+  revisionNo?: number
+  status?: string
+  rejectionReason?: string
+  submittedAt?: string
+  reviewedAt?: string
+  items?: PortalIndividualSettlementItemDetail[]
+}
+
+export type PortalIndividualSettlementDetail = {
+  settlementApplicationId?: number
+  applicationId?: number
+  scheduleId?: number
+  scheduleName?: string
+  scheduleStartAt?: string
+  scheduleEndAt?: string
+  status?: string
+  currentRevisionNo?: number
+  revisions?: PortalIndividualSettlementRevision[]
+}
+
+export type PortalIndividualSettlementExpenseInput = {
+  receiptId?: number | null
+  revisesReceiptId?: number | null
+  expenseType: string
+  expenseDate: string
+  amount: number
+  description?: string | null
+  fileObjectIds?: number[]
+}
+
+export type PortalIndividualSettlementItemInput = {
+  itemType: string
+  amount: number
+  description?: string
+  expenses?: PortalIndividualSettlementExpenseInput[]
+}
+
+export type PortalIndividualSettlementSubmitRequest = {
+  idempotencyKey: string
+  scheduleId: number
+  items: PortalIndividualSettlementItemInput[]
+}
+
+export type PortalIndividualSettlementResubmitRequest = {
+  idempotencyKey: string
+  expectedRevisionNo: number
+  items: PortalIndividualSettlementItemInput[]
+}
+
+export async function fetchIndividualSettlementSchedules(
+  applicationId: string,
+  signal?: AbortSignal
+): Promise<PortalIndividualScheduleSettlement[]> {
+  const { data } = await axiosClient.get<unknown>(
+    `/api/portal/me/individual-settlements/applications/${applicationId}/schedules`,
+    { signal }
+  )
+  const unwrapped = unwrapEnvelope<unknown>(data)
+  if (Array.isArray(unwrapped)) return unwrapped as PortalIndividualScheduleSettlement[]
+  if (!unwrapped || typeof unwrapped !== 'object') return []
+  const record = unwrapped as Record<string, unknown>
+  for (const key of ['schedules', 'items', 'content'] as const) {
+    const value = record[key]
+    if (Array.isArray(value)) return value as PortalIndividualScheduleSettlement[]
+  }
+  return []
+}
+
+export async function fetchIndividualSettlementDetail(
+  settlementApplicationId: number,
+  signal?: AbortSignal
+): Promise<PortalIndividualSettlementDetail> {
+  const { data } = await axiosClient.get<unknown>(
+    `/api/portal/me/individual-settlements/${settlementApplicationId}`,
+    { signal }
+  )
+  return unwrapEnvelope<PortalIndividualSettlementDetail>(data)
+}
+
+export async function submitIndividualSettlement(
+  applicationId: string,
+  body: PortalIndividualSettlementSubmitRequest
+): Promise<PortalIndividualSettlementDetail> {
+  const { data } = await axiosClient.post<unknown>(
+    `/api/portal/me/individual-settlements/applications/${applicationId}`,
+    body
+  )
+  return unwrapEnvelope<PortalIndividualSettlementDetail>(data)
+}
+
+export async function resubmitIndividualSettlement(
+  settlementApplicationId: number,
+  body: PortalIndividualSettlementResubmitRequest
+): Promise<PortalIndividualSettlementDetail> {
+  const { data } = await axiosClient.post<unknown>(
+    `/api/portal/me/individual-settlements/${settlementApplicationId}/revisions`,
+    body
+  )
+  return unwrapEnvelope<PortalIndividualSettlementDetail>(data)
 }

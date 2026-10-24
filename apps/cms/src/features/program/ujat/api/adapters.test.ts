@@ -125,9 +125,7 @@ describe('UJAT program adapters', () => {
     expect(request.educationStructure).toBe('SCHEDULE')
     expect(request.businessStartDate).toBe(program.startDate)
     expect(detail.version).toBe(1)
-    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe(
-      '2026 UJAT'
-    )
+    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe('2026 UJAT')
   })
 
   it('UJAT 전용 필드를 serviceDetailJson으로 round-trip 한다', () => {
@@ -147,6 +145,68 @@ describe('UJAT program adapters', () => {
     expect(mapped.startTime).toBe('09:00')
   })
 
+  it('Create는 숙박비·장거리 교통비를 paymentItems로 보낸다', () => {
+    const request = toCreateRequest({
+      ...program,
+      generalCommonInfo: { paymentItems: '숙박비, 장거리 교통비' },
+    })
+    expect(request.paymentItems).toEqual([
+      { itemType: 'LODGING', useYn: true },
+      { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+    ])
+  })
+
+  it('지급 항목 외 PATCH는 paymentItems를 omit한다', () => {
+    const existing: Program = {
+      ...program,
+      generalCommonInfo: { paymentItems: '숙박비' },
+    }
+    const request = toUpdateRequest(existing, { title: '제목만' }, { overlay: {} })
+    expect(request).not.toHaveProperty('paymentItems')
+  })
+
+  it('전체 지급 항목 해제는 paymentItems: []를 보낸다', () => {
+    const existing: Program = {
+      ...program,
+      generalCommonInfo: { paymentItems: '숙박비' },
+    }
+    const request = toUpdateRequest(
+      existing,
+      { generalCommonInfo: { paymentItems: '해당없음' } },
+      { overlay: {} }
+    )
+    expect(request.paymentItems).toEqual([])
+  })
+
+  it('상세 settlementPolicy 지급 항목을 유형으로 숨기지 않는다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      title: program.title,
+      programType: 'UJAT',
+      settlementPolicy: {
+        paymentItems: [
+          { itemType: 'TRANSPORTATION', useYn: true },
+          { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+          { itemType: 'LODGING', useYn: true },
+        ],
+      },
+    })
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비, 장거리 교통비, 숙박비')
+  })
+
+  it('settlementPolicy.paymentItems []는 JSON overlay 지급 항목을 덮어 빈 상태로 둔다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      title: program.title,
+      programType: 'UJAT',
+      serviceDetailJson: JSON.stringify({
+        generalCommonInfo: { paymentItems: '숙박비' },
+      }),
+      settlementPolicy: { paymentItems: [] },
+    })
+    expect(mapped.generalCommonInfo?.paymentItems).toBeUndefined()
+  })
+
   it('수정 요청에서도 등록 draft와 overlay를 보존한다', () => {
     const created = toCreateRequest(program, {
       draft,
@@ -158,9 +218,7 @@ describe('UJAT program adapters', () => {
       registration?: { overlay?: Record<string, unknown> }
     }
 
-    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe(
-      '2026 UJAT'
-    )
+    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe('2026 UJAT')
     expect(updated.title).toBe('수정된 UJAT')
     expect(updated.rounds).toBeUndefined()
     expect(updated.managerName).toBeUndefined()
@@ -440,9 +498,9 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
         h2: { 서울: { classCount: '24', volunteerCount: '48' } },
       },
       'ujat.basicInfo.educationCourse': '',
-      'ujat.basicInfo.ipOwned': '',
-      'ujat.basicInfo.partnerInvolvement': '',
-      'ujat.basicInfo.detailedProgramId': '',
+      'ujat.basicInfo.ipOwned': 'ja',
+      'ujat.basicInfo.partnerInvolvement': 'no',
+      'ujat.basicInfo.detailedProgramId': '__stale__',
     })
     expect(mapped.generalCommonInfo?.kpi).toEqual({
       finalParticipants: undefined,
@@ -481,7 +539,7 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.titleEn == null || mapped.titleEn === '').toBe(true)
     expect(mapped.totalParticipants == null).toBe(true)
     expect(mapped.generalCommonInfo?.kpi).toMatchObject({
-      finalParticipants: undefined,
+      finalParticipants: null,
       finalClasses: 0,
     })
     expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual({
@@ -572,9 +630,7 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.programManagementName']).toBe(
       '새 관리명'
     )
-    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.detailedProgramName']).toBe(
-      '해당없음'
-    )
+    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.detailedProgramName']).toBe('해당없음')
     expect(mapped.generalProgramEducationStructure).toBe('schedule')
   })
 
@@ -667,7 +723,10 @@ describe('UJAT create — overlay 1차 컬럼 반영 (버그 수정 확인)', ()
         },
       },
     })
-    const request = toCreateRequest(created, { draft, overlay: created.ujatRegistrationOverlay ?? {} })
+    const request = toCreateRequest(created, {
+      draft,
+      overlay: created.ujatRegistrationOverlay ?? {},
+    })
 
     expect(request.applicationStartDate).toBeUndefined()
     expect(request.applicationEndDate).toBeUndefined()
@@ -745,6 +804,16 @@ describe('UJAT API policy', () => {
 })
 
 describe('mapUjatProgramRecruitmentsToRequest', () => {
+  it('봉사자 정원이 0이어도 maxCount를 보낸다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      ujatFirstHalfVolunteerCount: 0,
+      volunteerApplicationStartDate: '2026-03-01T00:00:00+09:00',
+      volunteerApplicationEndDate: '2026-03-31T00:00:00+09:00',
+    })
+    expect(rows?.find(row => row.recruitmentType === 'VOLUNTEER')?.maxCount).toBe(0)
+  })
+
   it('프로그램 봉사자 기간은 상반기 행에만 넣고 하반기 행은 보내지 않는다', () => {
     const rows = mapUjatProgramRecruitmentsToRequest({
       ...program,
@@ -855,16 +924,16 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
       interviewStartAt: '2026-04-01T00:00:00+09:00',
       interviewEndAt: '2026-04-15T00:00:00+09:00',
     })
-    expect(rows.find(row => row.recruitmentType === 'PARTICIPANT')?.interviewEnabled).toBeUndefined()
+    expect(
+      rows.find(row => row.recruitmentType === 'PARTICIPANT')?.interviewEnabled
+    ).toBeUndefined()
   })
 })
 
 describe('buildUjatNewVolunteerHalfRowRequests', () => {
   const existing: Program = {
     ...program,
-    programRecruitments: [
-      { id: 10, recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' },
-    ],
+    programRecruitments: [{ id: 10, recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' }],
   }
 
   it('저장되지 않은 하반기 행을 id 없이 SECOND_HALF로 보낸다', () => {
@@ -891,6 +960,69 @@ describe('buildUjatNewVolunteerHalfRowRequests', () => {
       announcementTitle: '하반기 모집',
     })
     expect(rows[0]).not.toHaveProperty('id')
+  })
+
+  it('상반기 모집이 시작해도 하반기 신규 행을 빼지 않는다', () => {
+    const rows = buildUjatNewVolunteerHalfRowRequests(
+      [
+        {
+          id: 10,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          startAt: '2020-01-01T00:00:00+09:00',
+          operationStartDate: '2020-02-01',
+        },
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          startAt: '2026-08-01T00:00:00',
+        },
+      ],
+      {
+        ...existing,
+        programRecruitments: [
+          {
+            id: 10,
+            recruitmentType: 'VOLUNTEER',
+            recruitTerm: 'FIRST_HALF',
+            startAt: '2020-01-01T00:00:00+09:00',
+            operationStartDate: '2020-02-01',
+          },
+        ],
+      }
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ recruitTerm: 'SECOND_HALF' })
+    expect(rows[0]).not.toHaveProperty('id')
+  })
+
+  it('하반기를 추가할 때 저장된 상반기 id를 함께 보낸다', () => {
+    const request = toUpdateRequest(existing, {
+      programRecruitments: [
+        ...(existing.programRecruitments ?? []),
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          startAt: '2026-08-01T00:00:00',
+        },
+      ],
+    })
+    expect(request.recruitments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 10,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+        }),
+        expect.objectContaining({
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+        }),
+      ])
+    )
+    expect(request.recruitments?.find(row => row.recruitTerm === 'SECOND_HALF')).not.toHaveProperty(
+      'id'
+    )
   })
 
   it('이미 저장된 반기는 새 행으로 보내지 않는다', () => {
@@ -942,7 +1074,10 @@ describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 �
   }
 
   function create(overlay: Record<string, unknown>) {
-    const pending = buildUjatProgramListRowFromRegistrationSnapshot({ id: 'ujat-pending-manual', overlay })
+    const pending = buildUjatProgramListRowFromRegistrationSnapshot({
+      id: 'ujat-pending-manual',
+      overlay,
+    })
     return toCreateRequest(pending, { draft, overlay })
   }
 

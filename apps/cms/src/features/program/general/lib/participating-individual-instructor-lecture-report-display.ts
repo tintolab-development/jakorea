@@ -1,11 +1,10 @@
 import dayjs from 'dayjs'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type {
   ParticipatingIndividualInstructorLectureProgress,
   ParticipatingIndividualInstructorSubmissionStatus,
 } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-types'
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 export const PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_PROGRESS_LABELS: Record<
   ParticipatingIndividualInstructorLectureProgress,
@@ -46,19 +45,16 @@ export function submissionStatusAccent(
   return STATUS_ACCENT_DEFAULT
 }
 
-/** 강의일 기준 익월 5일 — `2026. 02. 05(목)까지` */
+/** 강의일 기준 익월 5일 — `2026.02.05(목)까지` */
 export function formatLectureReportSubmissionDeadline(dateKey: string): string {
   const date = dayjs(dateKey)
   if (!date.isValid()) return '-'
   const deadline = date.add(1, 'month').date(5)
-  const weekday = WEEKDAY_KO[deadline.day()]
-  const y = deadline.year()
-  const m = String(deadline.month() + 1).padStart(2, '0')
-  const d = String(deadline.date()).padStart(2, '0')
-  return `${y}. ${m}. ${d}(${weekday})까지`
+  const label = formatDateDotWithWeekday(deadline)
+  return label === '-' ? '-' : `${label}까지`
 }
 
-/** `YYYY. MM. DD(요일) HH:mm ~ HH:mm` + 선택적 `| 회차/일정명` */
+/** `YYYY.MM.DD(요일) HH:mm ~ HH:mm` + 선택적 `| 회차/일정명` */
 export function formatIndividualInstructorEducationScheduleLabel(input: {
   dateKey: string
   timeRange?: string
@@ -67,11 +63,7 @@ export function formatIndividualInstructorEducationScheduleLabel(input: {
   const date = dayjs(input.dateKey)
   if (!date.isValid()) return '-'
 
-  const weekday = WEEKDAY_KO[date.day()]
-  const y = date.year()
-  const m = String(date.month() + 1).padStart(2, '0')
-  const d = String(date.date()).padStart(2, '0')
-  const datePart = `${y}. ${m}. ${d}(${weekday})`
+  const datePart = formatDateDotWithWeekday(date)
   const timeRange = input.timeRange?.trim()
   const sessionName = input.sessionName?.trim()
 

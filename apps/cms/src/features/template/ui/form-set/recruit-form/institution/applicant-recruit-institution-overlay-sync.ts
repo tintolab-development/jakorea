@@ -1,7 +1,40 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import {
+  beginWizardRecruitmentRhfProjection,
+  endWizardRecruitmentRhfProjection,
+  isInstitutionRecruitOwnedKey,
+  isWizardRecruitmentRhfProjecting,
+  mergeWizardRecruitmentIntoOverlayRecord,
+  patchWizardRecruitmentKv,
+  peekGeneralRegistrationWizardRhf,
+  readWizardRecruitmentKvValue,
+  subscribeGeneralRegistrationWizardRhf,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-recruitment-rhf'
+import {
+  patchActiveTrainedTeachersRecruitmentOverlay,
+  peekActiveTrainedTeachersRecruitmentOverlayRecord,
+  peekTrainedTeachersRegistrationRhf,
+  readActiveTrainedTeachersRecruitmentOverlayValue,
+  subscribeTrainedTeachersRegistrationRhf,
+} from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import {
+  isTrainedTeachersRecruitmentCatalog,
+  isTrainedTeachersRecruitmentOverlayKey,
+} from '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
+import {
+  patchActiveCompanySchoolRecruitmentOverlay,
+  peekActiveCompanySchoolRecruitmentOverlayRecord,
+  peekCompanySchoolRegistrationRhf,
+  readActiveCompanySchoolRecruitmentOverlayValue,
+  subscribeCompanySchoolRegistrationRhf,
+} from '@/features/program/1c-1s/lib/registration-rhf-api'
+import {
+  isCompanySchoolRecruitmentCatalog,
+  isCompanySchoolRecruitmentOverlayKey,
+} from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 
 export const APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
   maxAssignableInstructors: 'recruit.maxAssignableInstructors',
@@ -80,14 +113,45 @@ export function getApplicantRecruitInstitutionOverlayRecord(): Record<string, un
 export function peekApplicantRecruitInstitutionOverlayRecord(
   templateCode: string | undefined | null
 ): Record<string, unknown> {
-  return store.peekRecord(templateCode)
+  const csRecord =
+    peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)
+      ? peekActiveCompanySchoolRecruitmentOverlayRecord()
+      : null
+  const ttRecord =
+    peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)
+      ? peekActiveTrainedTeachersRecruitmentOverlayRecord()
+      : null
+  const merged = mergeWizardRecruitmentIntoOverlayRecord(
+    store.peekRecord(templateCode),
+    templateCode ?? 'recruitment-participant-school'
+  )
+  if (csRecord != null) return { ...merged, ...csRecord }
+  return ttRecord != null ? { ...merged, ...ttRecord } : merged
 }
 
 export function replaceApplicantRecruitInstitutionOverlayForScope(
   templateCode: string | undefined | null,
   next: Record<string, unknown>
 ): void {
-  store.replaceFor(templateCode, next)
+  if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)) {
+    patchActiveTrainedTeachersRecruitmentOverlay(next)
+    return
+  }
+  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)) {
+    patchActiveCompanySchoolRecruitmentOverlay(next)
+    const rhfRecord = peekActiveCompanySchoolRecruitmentOverlayRecord()
+    if (rhfRecord) syncOverlayLimitsToBridge(rhfRecord)
+    return
+  }
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(next, { shouldDirty: false })
+  }
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.replaceFor(templateCode, next)
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function resetApplicantRecruitInstitutionOverlayForScope(
@@ -157,11 +221,61 @@ export function syncInstitutionApplicationBridgeFromApplicantRecruitOverlay(
 }
 
 export function patchApplicantRecruitInstitutionOverlay(partial: Record<string, unknown>): void {
-  store.patch(partial)
+  if (peekTrainedTeachersRegistrationRhf() != null) {
+    const rest = patchActiveTrainedTeachersRecruitmentOverlay(partial)
+    if (Object.keys(rest).length === 0) return
+    beginWizardRecruitmentRhfProjection()
+    try {
+      store.patch(rest)
+    } finally {
+      endWizardRecruitmentRhfProjection()
+    }
+    return
+  }
+  if (peekCompanySchoolRegistrationRhf() != null) {
+    const rest = patchActiveCompanySchoolRecruitmentOverlay(partial)
+    const rhfRecord = peekActiveCompanySchoolRecruitmentOverlayRecord()
+    if (rhfRecord) syncOverlayLimitsToBridge(rhfRecord)
+    if (Object.keys(rest).length === 0) return
+    beginWizardRecruitmentRhfProjection()
+    try {
+      store.patch(rest)
+    } finally {
+      endWizardRecruitmentRhfProjection()
+    }
+    return
+  }
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(partial, { shouldDirty: true })
+  }
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.patch(partial)
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function replaceApplicantRecruitInstitutionOverlay(next: Record<string, unknown>): void {
-  store.replace(next)
+  if (peekTrainedTeachersRegistrationRhf() != null) {
+    patchActiveTrainedTeachersRecruitmentOverlay(next)
+    return
+  }
+  if (peekCompanySchoolRegistrationRhf() != null) {
+    patchActiveCompanySchoolRecruitmentOverlay(next)
+    const rhfRecord = peekActiveCompanySchoolRecruitmentOverlayRecord()
+    if (rhfRecord) syncOverlayLimitsToBridge(rhfRecord)
+    return
+  }
+  if (!isWizardRecruitmentRhfProjecting()) {
+    patchWizardRecruitmentKv(next, { shouldDirty: false })
+  }
+  beginWizardRecruitmentRhfProjection()
+  try {
+    store.replace(next)
+  } finally {
+    endWizardRecruitmentRhfProjection()
+  }
 }
 
 export function resetApplicantRecruitInstitutionOverlay(): void {
@@ -198,14 +312,39 @@ export function useApplicantRecruitInstitutionOverlayKv<T>(
   key: string,
   defaultValue: T
 ): [T, (next: T) => void] {
-  const version = useSyncExternalStore(
-    subscribeApplicantRecruitInstitutionOverlay,
-    getApplicantRecruitInstitutionOverlayVersion,
-    getApplicantRecruitInstitutionOverlayVersion
+  const defaultRef = useRef(defaultValue)
+  const rhfOwned = isInstitutionRecruitOwnedKey(key)
+  const getSnapshot = useCallback(() => {
+    if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentOverlayKey(key)) {
+      return readActiveTrainedTeachersRecruitmentOverlayValue(key, defaultRef.current) as T
+    }
+    if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentOverlayKey(key)) {
+      return readActiveCompanySchoolRecruitmentOverlayValue(key, defaultRef.current) as T
+    }
+    if (rhfOwned && peekGeneralRegistrationWizardRhf() != null) {
+      return readWizardRecruitmentKvValue(key, defaultRef.current)
+    }
+    const record = getApplicantRecruitInstitutionOverlayRecord()
+    return readOperationalOverlayKvValue('institution-recruit', record, key, defaultRef.current)
+  }, [key, rhfOwned])
+
+  const value = useSyncExternalStore(
+    listener => {
+      const unsubOverlay = subscribeApplicantRecruitInstitutionOverlay(listener)
+      const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+      const unsubTt = subscribeTrainedTeachersRegistrationRhf(listener)
+      const unsubCs = subscribeCompanySchoolRegistrationRhf(listener)
+      return () => {
+        unsubOverlay()
+        unsubRhf()
+        unsubTt()
+        unsubCs()
+      }
+    },
+    getSnapshot,
+    getSnapshot
   )
-  void version
-  const record = getApplicantRecruitInstitutionOverlayRecord()
-  const value = readOperationalOverlayKvValue('institution-recruit', record, key, defaultValue)
+
   const setValue = useCallback(
     (next: T) => {
       patchApplicantRecruitInstitutionOverlay({ [key]: next })

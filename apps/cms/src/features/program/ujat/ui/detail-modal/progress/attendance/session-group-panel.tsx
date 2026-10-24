@@ -19,8 +19,15 @@ import {
 } from './attendance-correction-modal'
 import { filterAttendanceVolunteersForDisplay } from './use-list'
 import { UjatAttendanceTable } from './attendance-table'
+import { formatMonthDayWithWeekday } from '@/shared/utils/date'
 import type { UjatAttendanceFilters } from './types'
 import type { UjatAttendanceSessionGroup, UjatAttendanceVolunteerRow } from './types'
+
+function resolveEducationDateLabel(session: UjatAttendanceSessionGroup): string {
+  const formatted = formatMonthDayWithWeekday(session.isoDate)
+  if (formatted !== '-') return formatted
+  return session.dateLabel
+}
 
 export function UjatAttendanceSessionGroupHeader({
   session,
@@ -78,10 +85,7 @@ export function UjatAttendanceSessionGroupPanel({
     [appliedFilters, workingRows]
   )
 
-  const excelRows = useMemo(
-    () => buildUjatAttendanceSessionExcelRows(displayRows),
-    [displayRows]
-  )
+  const excelRows = useMemo(() => buildUjatAttendanceSessionExcelRows(displayRows), [displayRows])
 
   const { exportExcel, isExporting } = useTableExcelExport({
     columns: UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
@@ -126,13 +130,7 @@ export function UjatAttendanceSessionGroupPanel({
         <div className="table-header-actions ujat-attendance-session-group__header">
           <UjatAttendanceSessionGroupHeader session={session} totalCount={displayRows.length} />
           <div className="info-section-buttons--wrapper">
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="large"
-              width={120}
-              onClick={openCorrectionModal}
-            >
+            <CmsButton type="button" variant="secondary" size="h40" onClick={openCorrectionModal}>
               출결 정정
             </CmsButton>
             <ExcelButton loading={isExporting} onClick={exportExcel} />
@@ -146,6 +144,7 @@ export function UjatAttendanceSessionGroupPanel({
       <UjatAttendanceCorrectionModal
         open={correctionModalOpen}
         timeRange={session.timeRange}
+        educationDateLabel={resolveEducationDateLabel(session)}
         volunteers={correctionVolunteers}
         onCancel={() => setCorrectionModalOpen(false)}
         onConfirm={handleCorrectionConfirm}

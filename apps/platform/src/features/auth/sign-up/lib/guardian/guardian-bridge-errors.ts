@@ -81,6 +81,9 @@ function resolveAction(httpStatus: number | undefined, code: string): GuardianBr
   if (httpStatus === 409 || code === 'CONFLICT') {
     return 'refetch_status'
   }
+  if (code === 'GUARDIAN_FINAL_CONSENT_CHALLENGE_INVALID') {
+    return 'show_message'
+  }
   if (httpStatus === 401 || code === 'UNAUTHORIZED' || code === 'INVALID_CREDENTIALS') {
     return 'restart_profile'
   }
@@ -105,4 +108,8 @@ export function resolveGuardianBridgeError(error: unknown): GuardianBridgeErrorR
 
 export function isGuardianBridgeConflict(error: unknown) {
   return resolveGuardianBridgeError(error).action === 'refetch_status'
+}
+
+export function isGuardianFinalConsentChallengeInvalid(error: unknown) {
+  return resolveGuardianBridgeError(error).code === 'GUARDIAN_FINAL_CONSENT_CHALLENGE_INVALID'
 }

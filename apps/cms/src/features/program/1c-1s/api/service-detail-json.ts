@@ -12,6 +12,7 @@ import { resolveParticipantRecruitmentRemarks } from '@/features/program/shared/
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resyncEconomyRegistrationOverlayFromProgram } from '@/features/program/1c-1s/lib/registration-overlay-sync'
+import { preserveCompanySchoolCompatibilityOverlay } from '@/features/program/1c-1s/lib/serialize-registration-overlay-from-canonical'
 
 export const COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -173,10 +174,11 @@ function persistCompanySchoolRegistrationOverlay(
   if (notesNA === true || notesNA === false) {
     overlay['recruit.notesNotApplicable'] = notesNA
   }
-  return persistScheduleEducationFormByDetailOverlay(
+  const rebuilt = persistScheduleEducationFormByDetailOverlay(
     buildRegistrationOverlayForPersist({ ...program, registrationOverlay: overlay }),
     program.generalCommonInfo?.scheduleDetails
   )
+  return preserveCompanySchoolCompatibilityOverlay(rebuilt ?? {}, program.registrationOverlay)
 }
 
 export function serializeCompanySchoolServiceDetailJson(program: Program): string {

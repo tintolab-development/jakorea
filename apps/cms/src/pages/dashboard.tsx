@@ -30,6 +30,7 @@ import {
   useDashboardHome,
   useDashboardPreferences,
   usePersistDashboardLayout,
+  useSyncDashboardShortcutCatalog,
 } from '@/features/dashboard'
 import { DashboardWidgetDragOverlayShell } from '@/features/dashboard/ui/drag-overlay-shell'
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
@@ -52,6 +53,7 @@ export function Dashboard() {
   const useRemoteDashboard = isAdmin && shouldUseDashboardRemoteApi()
   const { data: dashboardHome } = useDashboardHome(!!isAdmin)
   const { isFetched: preferencesFetched } = useDashboardPreferences(!!isAdmin)
+  useSyncDashboardShortcutCatalog(!!isAdmin && useRemoteDashboard)
   const preferencesReady = !useRemoteDashboard || preferencesFetched
   const roleCode = useSessionAdminRoleCode()
   const persistLayout = usePersistDashboardLayout(

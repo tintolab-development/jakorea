@@ -53,7 +53,7 @@ export type GeneralProgramRegistrationRequiredFieldContext = {
   allowEmptySponsor?: boolean
   /**
    * 사전 교육/교육 연수 블록.
-   * prepend=일반 사전 교육(index 0), replaceFirst=교육받은 교사 일정형 교육 연수(첫 세부 일정)
+   * prepend=일반 사전 교육(index 0), replaceFirst=교육받은 교사 교육 연수(첫 차시/회차·세부 일정)
    */
   preEducationDisplayMode?: 'prepend' | 'replaceFirst'
 }
@@ -357,7 +357,9 @@ function findIncompleteCurriculumReasons(
       )
     }
   }
-  if (ctx.scheduleCurriculumPreEducation) {
+  const replaceFirstTraining =
+    ctx.scheduleCurriculumPreEducation && ctx.preEducationDisplayMode === 'replaceFirst'
+  if (ctx.scheduleCurriculumPreEducation && !replaceFirstTraining) {
     // UI 기본값「사전 교육」은 overlay 미기록일 수 있음 — 명시적으로 비운 경우만 미완료
     const preEducationName = readOverlay(
       overlay,

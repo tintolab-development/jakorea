@@ -290,6 +290,9 @@ export const platformQueryKeys = {
     dashboard: () => [...platformQueryKeys.mypage.all(), 'dashboard'] as const,
     /** 내 통합 동의 현황 — GET /api/portal/me/consents (member scoped) */
     consents: () => [...platformQueryKeys.mypage.all(), 'consents'] as const,
+    /** 내 동의 유형 상세 — GET /api/portal/me/consents/{consentType} */
+    consent: (consentType: string) =>
+      [...platformQueryKeys.mypage.consents(), consentType] as const,
     /** 마이페이지 일정 — GET /api/portal/me/calendar (Class C, member scoped) */
     calendar: (from: string, to: string) =>
       [...platformQueryKeys.mypage.all(), 'calendar', from, to] as const,
@@ -312,6 +315,9 @@ export const platformQueryKeys = {
     /** 내 폼 응답 피드백 — GET /api/portal/me/form-responses/{id}/feedback (Class D) */
     formResponseFeedback: (formResponseId: number) =>
       [...platformQueryKeys.mypage.all(), 'form-response-feedback', formResponseId] as const,
+    /** 내 폼 응답 상세 — GET /api/portal/me/form-responses/{id} (Class D) */
+    formResponseDetail: (formResponseId: number) =>
+      [...platformQueryKeys.mypage.all(), 'form-response', formResponseId] as const,
     /** 교사 회원 배정 강사 동의서 — GET .../assigned-instructors (Class D) */
     assignedInstructors: (applicationId: number) =>
       [
@@ -375,6 +381,17 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      /**
+       * 제출된 신청 양식 런타임 — GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render
+       * 신청용 GET /api/portal/programs/.../form-bindings 는 제출 후 APPLICATION_ALREADY_SUBMITTED.
+       */
+      formBindingRender: (programId: string, bindingId: number) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'form-binding-render',
+          programId,
+          bindingId,
+        ] as const,
       educationJournals: (programId: string, organizationApplicationId: string) =>
         [
           ...platformQueryKeys.mypage.programApplications.all(),
@@ -424,6 +441,48 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      /** 일정 출결 상세 — GET .../schedules/{scheduleId}/attendance (Class D) */
+      scheduleAttendance: (
+        applicationType: string,
+        applicationId: string,
+        scheduleId: number,
+      ) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'schedules',
+          applicationType,
+          applicationId,
+          'attendance',
+          scheduleId,
+        ] as const,
+      /**
+       * UJAT 봉사자 교육계획서·교육일지 목록
+       * GET .../education-documents (Class C, applicationId 스코프 — H1/H2 분리)
+       */
+      educationDocuments: (applicationType: string, applicationId: string) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'education-documents',
+          applicationType,
+          applicationId,
+        ] as const,
+      /**
+       * UJAT 봉사자 교육일 문서
+       * GET .../schedules/{scheduleId}/education-documents (Class D)
+       */
+      educationDocumentsForSchedule: (
+        applicationType: string,
+        applicationId: string,
+        scheduleId: number,
+      ) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'education-documents',
+          applicationType,
+          applicationId,
+          'schedule',
+          scheduleId,
+        ] as const,
       /** 봉사 배정현황 — GET .../assignments (Class C). 교육일정 UI와 분리 */
       assignments: (applicationType: string, applicationId: string) =>
         [
@@ -469,5 +528,20 @@ export const platformQueryKeys = {
     /** 정산 신청 목록 — GET /api/portal/me/settlement-applications (Class C) */
     settlementApplications: () =>
       [...platformQueryKeys.mypage.all(), 'settlement-applications'] as const,
+    /**
+     * 일반회원 일정 정산 — GET /api/portal/me/individual-settlements/applications/{id}/schedules (Class C)
+     */
+    individualSettlementSchedules: (applicationId: string) =>
+      [...platformQueryKeys.mypage.all(), 'individual-settlements', 'schedules', applicationId] as const,
+    /**
+     * 일반회원 일정 정산 상세 — GET /api/portal/me/individual-settlements/{id} (Class D)
+     */
+    individualSettlementDetail: (settlementApplicationId: number) =>
+      [
+        ...platformQueryKeys.mypage.all(),
+        'individual-settlements',
+        'detail',
+        settlementApplicationId,
+      ] as const,
   },
 } as const
