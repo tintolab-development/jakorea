@@ -7,7 +7,6 @@ import {
   resolveEducationSemesterForIsoDate,
   type UjatInstitutionEducationSemesterKey,
 } from '../education-schedule'
-import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
   createEmptyRow,
   ensureUjatScheduleAssignDays,
@@ -33,6 +32,7 @@ import {
   fetchUjatTemporarySchedule,
   putUjatTemporarySchedule,
 } from '@/features/program/ujat/api/temporary-schedule-api'
+import { fetchUjatTypedDetailRemote } from '@/features/program/ujat/api/typed-detail-client'
 import {
   applyTemporaryScheduleSlotsToDraft,
   buildTemporaryScheduleSaveRequest,
@@ -77,6 +77,13 @@ export function useUjatInstitutionScheduleAssign(
   const schedulesQuery = useQuery({
     queryKey: ujatQueryKeys.programSchedules(programId ?? ''),
     queryFn: () => fetchProgramSchedulesLoose(String(programId)),
+    enabled: remoteEnabled,
+    staleTime: 60_000,
+    retry: false,
+  })
+  const typedDetailQuery = useQuery({
+    queryKey: ujatQueryKeys.typedDetail(programId ?? ''),
+    queryFn: () => fetchUjatTypedDetailRemote(String(programId)),
     enabled: remoteEnabled,
     staleTime: 60_000,
     retry: false,
@@ -268,9 +275,9 @@ export function useUjatInstitutionScheduleAssign(
       buildUjatScheduleAssignDates({
         preferredIsoDates,
         schedules: schedulesQuery.data ?? [],
-        overlay: resolveUjatRegistrationBasicInfoOverlay(),
+        typedDetail: typedDetailQuery.data,
       }),
-    [preferredIsoDates, schedulesQuery.data]
+    [preferredIsoDates, schedulesQuery.data, typedDetailQuery.data]
   )
 
   useEffect(() => {
@@ -365,7 +372,7 @@ export function useUjatInstitutionScheduleAssign(
       if (!day) continue
       const semester =
         assignDates.find(entry => entry.isoDate === isoDate)?.semester ??
-        resolveEducationSemesterForIsoDate(isoDate)
+        resolveEducationSemesterForIsoDate(isoDate, typedDetailQuery.data)
       if (semester == null) continue
       const daySum = day.rows.reduce(
         (sum, row) => sum + sumSelectedGradeClassCount(row.gradeValues),
@@ -374,7 +381,7 @@ export function useUjatInstitutionScheduleAssign(
       totals[semester] += daySum
     }
     return totals
-  }, [assignDates, regionState.days])
+  }, [assignDates, regionState.days, typedDetailQuery.data])
 
   const volunteerEducationDays = useMemo(() => {
     const out: Record<UjatInstitutionEducationSemesterKey, number | null> = { h1: null, h2: null }

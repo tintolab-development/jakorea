@@ -94,6 +94,35 @@ export type UjatTypedDetail = {
   schemaVersion?: number | null
   halfPlans?: UjatTypedHalfPlan[] | null
   common?: UjatTypedCommonSettings | null
+  /** Server-owned optimistic-lock revision. Never increment on the client. */
+  revision?: number | null
+}
+
+export const EMPTY_UJAT_TYPED_DETAIL: UjatTypedDetail = {
+  schemaVersion: 1,
+  halfPlans: [],
+  common: null,
+  revision: null,
+}
+
+export type UjatTypedSemesterType = 'FIRST_HALF' | 'SECOND_HALF'
+
+export type UjatTypedStage = 'PRE_EDUCATION' | 'MAIN_EDUCATION' | 'POST_EDUCATION'
+
+export type UjatTypedScheduleRequest = {
+  id?: number | null
+  sessionNo?: number | null
+  scheduleName?: string | null
+  startAt?: string | null
+  endAt?: string | null
+  allDay?: boolean | null
+  locationName?: string | null
+  address?: string | null
+  addressDetail?: string | null
+  maxParticipantCount?: number | null
+  completionRequired?: boolean | null
+  educationSlotKey?: string | null
+  scheduleRole?: 'PRE_EDUCATION' | 'EDUCATION' | 'CLOSING' | 'SESSION' | null
 }
 
 /** Build the Typed common settings directly from the registration Wizard RHF snapshot. */
@@ -154,6 +183,95 @@ export async function patchUjatTypedDetailRemote(
     data: patch,
   })
   return unwrapApiBody<UjatTypedDetail>(response)
+}
+
+export async function updateUjatTypedDetailHalfRemote(
+  programId: string,
+  semesterType: UjatTypedSemesterType,
+  expectedRevision: number,
+  halfPlan: UjatTypedHalfPlan
+): Promise<UjatTypedDetail> {
+  const response = await customInstance<unknown>({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/ujat/typed-detail/halves/${semesterType}`,
+    method: 'PUT',
+    data: { expectedRevision, halfPlan },
+  })
+  return unwrapApiBody<UjatTypedDetail>(response)
+}
+
+export async function syncUjatTypedDetailRowSchedulesRemote(
+  programId: string,
+  semesterType: UjatTypedSemesterType,
+  stage: UjatTypedStage,
+  rowId: string,
+  expectedRevision: number,
+  schedules?: UjatTypedScheduleRequest[] | null
+): Promise<UjatTypedDetail> {
+  const response = await customInstance<unknown>({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/ujat/typed-detail/halves/${semesterType}/stages/${stage}/rows/${encodeURIComponent(rowId)}/schedules`,
+    method: 'PUT',
+    data: { expectedRevision, ...(schedules === undefined ? {} : { schedules }) },
+  })
+  return unwrapApiBody<UjatTypedDetail>(response)
+}
+
+function dateAtSeoul(date: string, endOfDay: boolean): string {
+  return `${date}T${endOfDay ? '23:59:59' : '00:00:00'}+09:00`
+}
+
+export function typedScheduleRequestsForRow(
+  row: UjatTypedScheduleRow,
+  stage: UjatTypedStage
+): UjatTypedScheduleRequest[] {
+  const dates = (row.dates ?? []).filter(value => typeof value === 'string' && value.trim())
+  const rowDates = dates.length > 0 ? dates : row.startDate ? [row.startDate] : []
+  if (rowDates.length === 0) return []
+  const role =
+    stage === 'PRE_EDUCATION'
+      ? 'PRE_EDUCATION'
+      : stage === 'POST_EDUCATION'
+        ? 'CLOSING'
+        : 'EDUCATION'
+  return rowDates.map((date, index) => ({
+    id: row.scheduleIds?.[index] ?? null,
+    sessionNo: row.displayOrder ?? index + 1,
+    scheduleName: row.educationName ?? null,
+    startAt: dateAtSeoul(date, false),
+    endAt: dateAtSeoul(stage === 'MAIN_EDUCATION' ? row.endDate ?? date : date, true),
+    allDay: true,
+    scheduleRole: role,
+  }))
+}
+
+/** Create/update only the physical schedules represented by Typed rows. */
+export async function syncUjatTypedDetailPhysicalSchedulesRemote(
+  programId: string,
+  detail: UjatTypedDetail,
+  semesterTypes?: readonly UjatTypedSemesterType[]
+): Promise<UjatTypedDetail> {
+  let current = detail
+  for (const halfPlan of current.halfPlans ?? []) {
+    const semesterType = halfPlan.semesterType
+    if (semesterType !== 'FIRST_HALF' && semesterType !== 'SECOND_HALF') continue
+    if (semesterTypes && !semesterTypes.includes(semesterType)) continue
+    for (const stagePlan of halfPlan.stages ?? []) {
+      const stage = stagePlan.stage
+      if (stage !== 'PRE_EDUCATION' && stage !== 'MAIN_EDUCATION' && stage !== 'POST_EDUCATION') continue
+      for (const row of stagePlan.rows ?? []) {
+        if (!row.rowId) continue
+        const schedules = typedScheduleRequestsForRow(row, stage)
+        current = await syncUjatTypedDetailRowSchedulesRemote(
+          programId,
+          semesterType,
+          stage,
+          row.rowId,
+          current.revision ?? 0,
+          schedules
+        )
+      }
+    }
+  }
+  return current
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -261,6 +379,14 @@ function overlayStageToRows(
   const rowIds = Array.isArray(multi?.rowIds)
     ? multi.rowIds.map(String).filter(Boolean)
     : []
+  const regionByRow = isRecord(multi?.regionByRow) ? multi.regionByRow : null
+  const firstRowId = rowIds[0]
+  const firstRegion = firstRowId != null ? regionByRow?.[firstRowId] : undefined
+  const firstRegionCode = Array.isArray(firstRegion)
+    ? stringValue(firstRegion[0])
+    : stringValue(firstRegion)
+  const firstDateByRow = isRecord(multi?.dateByRow) ? multi.dateByRow : null
+  const firstDate = firstRowId != null ? stringValue(firstDateByRow?.[firstRowId]) : null
 
   if (rowIds.length > 1) {
     return rowIds.map((rowId, index) => {
@@ -271,9 +397,12 @@ function overlayStageToRows(
         displayOrder: index + 1,
         educationName: name,
         educationMethod: method,
-        regionCode: stringValue(existing.regionCode),
-        startDate: stage === 'event' ? stringValue(dateByRow) ?? range.startDate : null,
-        endDate: stage === 'event' ? stringValue(dateByRow) ?? range.endDate : null,
+        regionCode: stringValue(existing.regionCode) ??
+          (Array.isArray(regionByRow?.[rowId])
+            ? stringValue(regionByRow?.[rowId]?.[0])
+            : stringValue(regionByRow?.[rowId])),
+        startDate: stage === 'event' ? stringValue(dateByRow) ?? range.startDate : stringValue(dateByRow),
+        endDate: stage === 'event' ? stringValue(dateByRow) ?? range.endDate : stringValue(dateByRow),
         dates: existing.dates ?? null,
         scheduleIds: existing.scheduleIds ?? scheduleIds,
         textbook: existing.textbook ?? textbook,
@@ -290,8 +419,9 @@ function overlayStageToRows(
       displayOrder: base.displayOrder ?? 1,
       educationName: name,
       educationMethod: method,
-      startDate: stage === 'event' ? range.startDate : base.startDate ?? null,
-      endDate: stage === 'event' ? range.endDate : base.endDate ?? null,
+      regionCode: base.regionCode ?? firstRegionCode ?? null,
+      startDate: stage === 'event' ? range.startDate : base.startDate ?? firstDate,
+      endDate: stage === 'event' ? range.endDate : base.endDate ?? firstDate,
       scheduleIds,
       textbook,
       excludedDates,
@@ -487,19 +617,22 @@ export function ujatOverlayFromTypedDetail(detail: UjatTypedDetail): Record<stri
   return overlay
 }
 
-/** Remove only fields now owned by Typed detail; recruitment/wage/media compatibility data stays. */
+/** Remove only H1/H2 schedule fields from the legacy store during the migration window. */
+export function stripUjatScheduleLegacyOverlay(
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(overlay).filter(([key]) => !key.startsWith('ujat.h1.') && !key.startsWith('ujat.h2.'))
+  )
+}
+
+/** Remove fields now owned by Typed detail; recruitment/wage/media compatibility data stays. */
 export function stripUjatTypedLegacyOverlay(
   overlay: Record<string, unknown>
 ): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(overlay).filter(([key]) => {
-      if (key.startsWith('ujat.recruit.')) return true
-      return !(
-        key.startsWith('ujat.basicInfo.') ||
-        key.startsWith('ujat.kpi.') ||
-        key.startsWith('ujat.h1.') ||
-        key.startsWith('ujat.h2.')
-      )
-    })
+    Object.entries(stripUjatScheduleLegacyOverlay(overlay)).filter(
+      ([key]) => !key.startsWith('ujat.basicInfo.') && !key.startsWith('ujat.kpi.')
+    )
   )
 }

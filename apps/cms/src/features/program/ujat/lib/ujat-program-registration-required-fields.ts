@@ -58,6 +58,7 @@ import {
 import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { getSelectedOperationalTemplateCode } from '@/features/program/shared/lib/step-template-selection'
 import type { UjatBasicInfoFormValues } from './ujat-basic-info-form'
+import type { UjatTypedDetail, UjatTypedScheduleRow } from '@/features/program/ujat/api/typed-detail-client'
 
 function isEmptyText(value: unknown): boolean {
   return typeof value !== 'string' || value.trim() === ''
@@ -116,6 +117,29 @@ function isMultiScheduleBundleIncomplete(value: unknown): boolean {
   return false
 }
 
+function typedHalfPlan(detail: UjatTypedDetail | undefined, half: 'h1' | 'h2') {
+  return detail?.halfPlans?.find(item =>
+    half === 'h1' ? item.semesterType === 'FIRST_HALF' : item.semesterType === 'SECOND_HALF'
+  )
+}
+
+function typedStageRows(
+  detail: UjatTypedDetail | undefined,
+  half: 'h1' | 'h2',
+  stage: 'PRE_EDUCATION' | 'MAIN_EDUCATION' | 'POST_EDUCATION'
+): UjatTypedScheduleRow[] {
+  return typedHalfPlan(detail, half)?.stages?.find(item => item.stage === stage)?.rows ?? []
+}
+
+function typedRowDate(row: UjatTypedScheduleRow): string | null {
+  return row.dates?.find(date => !isEmptyText(date)) ?? row.startDate ?? row.endDate ?? null
+}
+
+function isTypedScheduleRowsIncomplete(rows: readonly UjatTypedScheduleRow[]): boolean {
+  if (rows.length === 0) return true
+  return rows.some(row => isEmptyText(row.regionCode) || isEmptyText(typedRowDate(row)))
+}
+
 function pushReason(reasons: string[], condition: boolean, key: string): void {
   if (condition) reasons.push(key)
 }
@@ -123,7 +147,8 @@ function pushReason(reasons: string[], condition: boolean, key: string): void {
 /** UJAT 등록 공통정보 — 미입력 필수 필드 진단 키 목록 */
 export function listIncompleteUjatProgramRegistrationRequiredFields(
   overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord(),
-  basicInfo?: Partial<UjatBasicInfoFormValues>
+  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  typedDetail?: UjatTypedDetail
 ): string[] {
   const reasons: string[] = []
   {
@@ -242,6 +267,30 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
     }
 
     for (const half of ['h1', 'h2'] as const) {
+      if (typedDetail != null) {
+        const preRows = typedStageRows(typedDetail, half, 'PRE_EDUCATION')
+        const eventRows = typedStageRows(typedDetail, half, 'MAIN_EDUCATION')
+        const closingRows = typedStageRows(typedDetail, half, 'POST_EDUCATION')
+        pushReason(
+          reasons,
+          isEmptyText(preRows[0]?.educationName ?? '사전교육(발대식)'),
+          `${half}.pre.name`
+        )
+        pushReason(reasons, isTypedScheduleRowsIncomplete(preRows), `${half}.pre.schedule`)
+        pushReason(reasons, isEmptyText(eventRows[0]?.educationName), `${half}.event.name`)
+        pushReason(
+          reasons,
+          eventRows.length === 0 ||
+            eventRows.some(row => isEmptyText(row.startDate) || isEmptyText(row.endDate)),
+          `${half}.event.range`
+        )
+        pushReason(
+          reasons,
+          isTypedScheduleRowsIncomplete(closingRows),
+          `${half}.closing.multi`
+        )
+        continue
+      }
       const keys = ujatHalfScheduleOverlayKeys(half)
       pushReason(
         reasons,
@@ -289,16 +338,18 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
 
 export function describeIncompleteUjatProgramRegistrationRequiredFields(
   overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord(),
-  basicInfo?: Partial<UjatBasicInfoFormValues>
+  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  typedDetail?: UjatTypedDetail
 ): string | null {
-  return listIncompleteUjatProgramRegistrationRequiredFields(overlay, basicInfo)[0] ?? null
+  return listIncompleteUjatProgramRegistrationRequiredFields(overlay, basicInfo, typedDetail)[0] ?? null
 }
 
 export function hasIncompleteUjatProgramRegistrationRequiredFields(
   overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord(),
-  basicInfo?: Partial<UjatBasicInfoFormValues>
+  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  typedDetail?: UjatTypedDetail
 ): boolean {
-  return describeIncompleteUjatProgramRegistrationRequiredFields(overlay, basicInfo) != null
+  return describeIncompleteUjatProgramRegistrationRequiredFields(overlay, basicInfo, typedDetail) != null
 }
 
 export function getMergedUjatRecruitInstitutionOverlay(
@@ -496,18 +547,21 @@ function selectedUjatRecruitmentValidationTemplateCodes(): UjatRecruitmentValida
 
 /** 등록 위저드 complete gate — 공통 + 모집만. 신청(template) overlay는 검사하지 않는다. */
 export function hasIncompleteUjatProgramRegistrationWizardRequiredFields(
-  basicInfo?: Partial<UjatBasicInfoFormValues>
+  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  typedDetail?: UjatTypedDetail
 ): boolean {
-  return listIncompleteUjatProgramRegistrationWizardRequiredFields(basicInfo).length > 0
+  return listIncompleteUjatProgramRegistrationWizardRequiredFields(basicInfo, typedDetail).length > 0
 }
 
 export function listIncompleteUjatProgramRegistrationWizardRequiredFields(
-  basicInfo?: Partial<UjatBasicInfoFormValues>
+  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  typedDetail?: UjatTypedDetail
 ): string[] {
   return [
     ...listIncompleteUjatProgramRegistrationRequiredFields(
       getUjatProgramRegistrationOverlayRecord(),
-      basicInfo
+      basicInfo,
+      typedDetail
     ),
     ...listIncompleteUjatProgramRecruitmentRequiredFields(
       selectedUjatRecruitmentValidationTemplateCodes()
@@ -516,7 +570,8 @@ export function listIncompleteUjatProgramRegistrationWizardRequiredFields(
 }
 
 export function describeIncompleteUjatProgramRegistrationWizardRequiredFields(
-  basicInfo?: Partial<UjatBasicInfoFormValues>
+  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  typedDetail?: UjatTypedDetail
 ): string | null {
-  return listIncompleteUjatProgramRegistrationWizardRequiredFields(basicInfo)[0] ?? null
+  return listIncompleteUjatProgramRegistrationWizardRequiredFields(basicInfo, typedDetail)[0] ?? null
 }

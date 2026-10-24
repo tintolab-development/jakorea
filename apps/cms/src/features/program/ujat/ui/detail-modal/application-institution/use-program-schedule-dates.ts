@@ -6,6 +6,7 @@ import {
   buildScheduleIdByIsoDateMap,
   fetchProgramSchedulesLoose,
 } from '@/features/program/ujat/api/temporary-schedule-api'
+import { fetchUjatTypedDetailRemote } from '@/features/program/ujat/api/typed-detail-client'
 import {
   buildUjatProgramScheduleDates,
   type UjatInstitutionScheduleAssignDateEntry,
@@ -24,10 +25,17 @@ export function useUjatProgramScheduleDates(programId?: string | null): {
     staleTime: 60_000,
     retry: false,
   })
+  const typedDetailQuery = useQuery({
+    queryKey: ujatQueryKeys.typedDetail(programId ?? ''),
+    queryFn: () => fetchUjatTypedDetailRemote(String(programId)),
+    enabled: remoteEnabled,
+    staleTime: 60_000,
+    retry: false,
+  })
 
   const dates = useMemo(
-    () => buildUjatProgramScheduleDates(schedulesQuery.data ?? []),
-    [schedulesQuery.data]
+    () => buildUjatProgramScheduleDates(schedulesQuery.data ?? [], typedDetailQuery.data),
+    [schedulesQuery.data, typedDetailQuery.data]
   )
 
   const scheduleIdByIsoDate = useMemo(
@@ -37,7 +45,7 @@ export function useUjatProgramScheduleDates(programId?: string | null): {
 
   return {
     dates,
-    loading: remoteEnabled && schedulesQuery.isLoading,
+    loading: remoteEnabled && (schedulesQuery.isLoading || typedDetailQuery.isLoading),
     scheduleIdByIsoDate,
   }
 }

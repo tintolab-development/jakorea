@@ -13,7 +13,9 @@ export function renderUjatProgramRegistrationParagraphBody(
   enabled?: boolean,
   options?: Pick<
     RenderFormParagraphBodyOptions,
-    'ujatProgramRegistrationBasicInfoForm' | 'ujatProgramRegistrationBasicInfoOverlayFree'
+    | 'ujatProgramRegistrationBasicInfoForm'
+    | 'ujatProgramRegistrationBasicInfoOverlayFree'
+    | 'ujatProgramRegistrationEducationScheduleForm'
   >
 ) {
   if (!enabled) return null
@@ -31,11 +33,25 @@ export function renderUjatProgramRegistrationParagraphBody(
     case UJAT_PROGRAM_REGISTRATION_IDS[2]:
       return <UjatWageInfoParagraph />
     case UJAT_PROGRAM_REGISTRATION_IDS[3]:
-      return <UjatHalfEducationScheduleParagraph half="h1" />
+      return (
+        <UjatHalfEducationScheduleParagraph
+          half="h1"
+          scheduleForm={options?.ujatProgramRegistrationEducationScheduleForm}
+        />
+      )
     case UJAT_PROGRAM_REGISTRATION_IDS[4]:
-      return <UjatHalfEducationScheduleParagraph half="h2" />
+      return (
+        <UjatHalfEducationScheduleParagraph
+          half="h2"
+          scheduleForm={options?.ujatProgramRegistrationEducationScheduleForm}
+        />
+      )
     case UJAT_PROGRAM_REGISTRATION_IDS[5]:
-      return <UjatEducationScheduleSettingsParagraph />
+      return (
+        <UjatEducationScheduleSettingsParagraph
+          scheduleForm={options?.ujatProgramRegistrationEducationScheduleForm}
+        />
+      )
     case UJAT_PROGRAM_REGISTRATION_IDS[6]:
       return <UjatEducationClassCapacityByRegionParagraph />
     default:

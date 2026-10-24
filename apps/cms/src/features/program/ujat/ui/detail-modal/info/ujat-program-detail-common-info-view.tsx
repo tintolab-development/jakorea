@@ -5,6 +5,7 @@
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatDate } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveUjatRegistrationBasicInfoDisplay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
@@ -26,10 +27,11 @@ import '@/features/program/shared/ui/program-detail/project-info/project-info-fo
 import './ujat-program-detail-common-info-view.css'
 
 export interface UjatProgramDetailCommonInfoViewProps {
-  program: Program
+  program: Program & { ujatTypedDetail?: UjatTypedDetail }
   sponsorName?: string
   isEditMode?: boolean
   infoForm?: UseFormReturn<ProgramDetailEditFormValues>
+  scheduleForm?: UseFormReturn<UjatTypedDetail>
 }
 
 function UjatBasicInfoRegistrationAuditRow({
@@ -76,6 +78,7 @@ export function UjatProgramDetailCommonInfoView({
   sponsorName,
   isEditMode = false,
   infoForm,
+  scheduleForm,
 }: UjatProgramDetailCommonInfoViewProps) {
   const sponsorsQuery = useSponsorOptionsQuery(true)
   const basicInfoDisplay = resolveUjatRegistrationBasicInfoDisplay(
@@ -139,11 +142,25 @@ export function UjatProgramDetailCommonInfoView({
 
       <UjatWageInfoProgramView program={program} isEdit={isEditMode} />
 
-      <UjatHalfEducationScheduleProgramView program={program} half="h1" isEdit={isEditMode} />
+      <UjatHalfEducationScheduleProgramView
+        program={program}
+        half="h1"
+        isEdit={isEditMode}
+        scheduleForm={scheduleForm}
+      />
 
-      <UjatHalfEducationScheduleProgramView program={program} half="h2" isEdit={isEditMode} />
+      <UjatHalfEducationScheduleProgramView
+        program={program}
+        half="h2"
+        isEdit={isEditMode}
+        scheduleForm={scheduleForm}
+      />
 
-      <UjatEducationScheduleSettingsProgramView program={program} isEdit={isEditMode} />
+      <UjatEducationScheduleSettingsProgramView
+        program={program}
+        isEdit={isEditMode}
+        scheduleForm={scheduleForm}
+      />
 
       <UjatRegionCapacityProgramView program={program} isEdit={isEditMode} />
     </div>

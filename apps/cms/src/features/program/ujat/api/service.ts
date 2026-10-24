@@ -33,6 +33,8 @@ import {
   fetchUjatTypedDetailRemote,
   applyUjatProgramPatchToTypedDetail,
   replaceUjatTypedDetailRemote,
+  stripUjatScheduleLegacyOverlay,
+  syncUjatTypedDetailPhysicalSchedulesRemote,
   typedDetailFromUjatBasicInfo,
   typedDetailFromUjatOverlay,
   type UjatTypedDetail,
@@ -155,9 +157,12 @@ export async function create(input: CreateInput): Promise<Program> {
   // The registration Wizard common-info form is now canonical RHF/Typed data. If it is present,
   // do not let a stale legacy snapshot overwrite those values while retaining schedule/recruitment
   // compatibility keys in the create request.
-  const overlay = input.basicInfo
-    ? stripUjatBasicInfoOverlay(collectedOverlay)
+  const compatibilityOverlay = input.basicInfo || input.typedDetail
+    ? stripUjatScheduleLegacyOverlay(collectedOverlay)
     : collectedOverlay
+  const overlay = input.basicInfo
+    ? stripUjatBasicInfoOverlay(compatibilityOverlay)
+    : compatibilityOverlay
   const pending = buildUjatProgramListRowFromRegistrationSnapshot({
     id: `ujat-pending-${input.idempotencyKey}`,
     overlay,
@@ -178,7 +183,8 @@ export async function create(input: CreateInput): Promise<Program> {
       (input.basicInfo
         ? typedDetailFromUjatBasicInfo(input.basicInfo, typedDetailFromUjatOverlay(overlay))
         : typedDetailFromUjatOverlay(overlay))
-    await replaceUjatTypedDetailRemote(created.id, typedDetail)
+    const savedTypedDetail = await replaceUjatTypedDetailRemote(created.id, typedDetail)
+    await syncUjatTypedDetailPhysicalSchedulesRemote(created.id, savedTypedDetail)
     await bindUjatRecruitDetailMediaToRows(created, overlay)
     return (await detail(created.id)) ?? created
   } catch (error) {
@@ -229,11 +235,11 @@ export async function update(
     ...readUjatRegistrationOverlayFromProgram(program),
     ...(patchOverlay ?? {}),
   }
-  const mergedOverlay = {
+  const mergedOverlay = stripUjatScheduleLegacyOverlay({
     ...persistedOverlay,
     ...(registration?.overlay ?? {}),
     ...editedOverlay,
-  }
+  })
   const nextRegistration: RegistrationPersistSnapshot | undefined =
     Object.keys(mergedOverlay).length > 0
       ? {
@@ -250,13 +256,9 @@ export async function update(
     })
   )
   if (typedDetailBefore !== undefined) {
-    const typedDetailFromLegacyOverlay = typedDetailFromUjatOverlay(
-      editedOverlay,
-      typedDetailBefore ?? (program as Program & { ujatTypedDetail?: UjatTypedDetail }).ujatTypedDetail
-    )
     await replaceUjatTypedDetailRemote(
       programId,
-      applyUjatProgramPatchToTypedDetail(typedDetailFromLegacyOverlay, patch ?? {})
+      applyUjatProgramPatchToTypedDetail(typedDetailBefore, patch ?? {})
     )
   }
   // PATCH echo는 서버 정규화·clearFields 적용 결과의 최종 정본이 아니다.
@@ -268,19 +270,8 @@ export async function update(
 function shouldPersistUjatTypedDetail(patch?: Partial<Program>): boolean {
   if (!patch) return true
   return [
-    'generalCommonInfo',
     'generalSurveyMenuKeys',
     'generalParticipantTypes',
-    'title',
-    'mainTitle',
-    'titleEn',
-    'businessArea',
-    'educationProcess',
-    'ipOwned',
-    'courseDeliveredBy',
-    'partnerInvolvement',
-    'startDate',
-    'endDate',
   ].some(key => Object.prototype.hasOwnProperty.call(patch, key))
 }
 

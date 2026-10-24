@@ -106,6 +106,7 @@ import {
   type UjatRegionCapacityBySemesterState,
 } from '@/features/program/ujat/lib/ujat-region-capacity-types'
 import {
+  stripUjatScheduleLegacyOverlay,
   stripUjatTypedLegacyOverlay,
   ujatOverlayFromTypedDetail,
   type UjatTypedDetail,
@@ -694,7 +695,11 @@ export function fromDetail(
     }
 
   const ips = programIps(dto.ips)
-  const typedOverlay = typedDetail ? ujatOverlayFromTypedDetail(typedDetail) : {}
+  // H1/H2 schedules are canonical Typed Detail data. Keep the compatibility projection for
+  // still-migrating common settings, but never rehydrate schedule fields into registration.overlay.
+  const typedOverlay = typedDetail
+    ? stripUjatScheduleLegacyOverlay(ujatOverlayFromTypedDetail(typedDetail))
+    : {}
   const typedSurveyItems = typedOverlay['ujat.basicInfo.surveyItems']
   const effectiveSurveyKeys =
     typedDetail?.common && Array.isArray(typedDetail.common.surveySettings)

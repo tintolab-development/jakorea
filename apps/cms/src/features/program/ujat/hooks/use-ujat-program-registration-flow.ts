@@ -388,7 +388,8 @@ export function useUjatProgramRegistrationFlow(
         validationTarget === 'program'
           ? listIncompleteUjatProgramRegistrationRequiredFields(
               getUjatProgramRegistrationOverlayRecord(),
-              currentBasicInfo
+              currentBasicInfo,
+              registrationVm.educationScheduleForm.getValues()
             )
           : []
       if (incompleteKeys.length > 0) {
@@ -453,6 +454,7 @@ export function useUjatProgramRegistrationFlow(
       participantVm,
       registrationVm.basicInfoForm,
       registrationVm.draft,
+      registrationVm.educationScheduleForm,
       showAlert,
     ]
   )
@@ -563,18 +565,21 @@ export function useUjatProgramRegistrationFlow(
 
     if (
       describeIncompleteUjatProgramRegistrationWizardRequiredFields(
-        registrationVm.basicInfoValues
+        registrationVm.basicInfoValues,
+        registrationVm.educationScheduleForm.getValues()
       ) != null
     ) {
       options?.reportValidationIncomplete?.(
         listIncompleteUjatProgramRegistrationWizardRequiredFields(
-          registrationVm.basicInfoValues
+          registrationVm.basicInfoValues,
+          registrationVm.educationScheduleForm.getValues()
         )
       )
       console.debug(
         '[registration] UJAT 등록 완료 필수항목 미입력:',
         describeIncompleteUjatProgramRegistrationWizardRequiredFields(
-          registrationVm.basicInfoValues
+          registrationVm.basicInfoValues,
+          registrationVm.educationScheduleForm.getValues()
         )
       )
       showAlert({
@@ -623,6 +628,7 @@ export function useUjatProgramRegistrationFlow(
           draft: registrationVm.draft,
           overlay: registrationOverlay,
           basicInfo: registrationVm.basicInfoValues,
+          typedDetail: registrationVm.getTypedDetail(),
         }
 
         if (shouldUseRegistrationCreateFormBindings()) {

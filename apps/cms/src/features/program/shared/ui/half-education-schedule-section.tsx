@@ -1,25 +1,26 @@
 /**
  * 상·하반기 교육 일정 블록 — 등록 양식·프로그램 상세 공통
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { UseFormReturn } from 'react-hook-form'
+import { useWatch } from 'react-hook-form'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import {
-  EMPTY_UJAT_HALF_EVENT_RANGE_SEAL,
-  EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE,
   type UjatEducationDelivery,
-  type UjatHalfEventRangeSeal,
-  type UjatHalfMultiScheduleBundle,
   type UjatHalfSemesterKey,
-  type UjatTextbookEducationMode,
-  ujatHalfScheduleOverlayKeys,
 } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 import type { UjatHalfScheduleTableRow } from '@/features/program/ujat/lib/ujat-half-education-schedule-display'
 import {
-  updateUjatProgramRegistrationOverlayKey,
-  useUjatProgramRegistrationOverlayKv,
-} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+  resolveUjatHalfEducationScheduleDisplayFromTypedDetail,
+} from '@/features/program/ujat/lib/ujat-half-education-schedule-display'
+import type {
+  UjatTypedDetail,
+  UjatTypedEducationStagePlan,
+  UjatTypedHalfPlan,
+  UjatTypedScheduleRow,
+} from '@/features/program/ujat/api/typed-detail-client'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -45,20 +46,307 @@ function ScheduleTextView({ text }: { text: string }) {
 function HalfEducationScheduleSubheading({ children }: { children: string }) {
   return <div className="half-education-schedule__subheading">{children}</div>
 }
-function getRowRegionOptions(
-  rowId: number,
-  regionByRow: Record<number, string[]>,
-  regions: Array<{ key: string; label: string }>
-) {
-  const current = new Set(regionByRow[rowId] ?? [])
-  const selectedByOtherRows = new Set(
-    Object.entries(regionByRow)
-      .filter(([key]) => Number(key) !== rowId)
-      .flatMap(([, values]) => values ?? [])
+type UjatScheduleForm = Pick<UseFormReturn<UjatTypedDetail>, 'control' | 'getValues' | 'setValue'>
+
+function semesterForHalf(half: UjatHalfSemesterKey): 'FIRST_HALF' | 'SECOND_HALF' {
+  return half === 'h1' ? 'FIRST_HALF' : 'SECOND_HALF'
+}
+
+function stageForSection(
+  section: 'pre' | 'event' | 'closing'
+): 'PRE_EDUCATION' | 'MAIN_EDUCATION' | 'POST_EDUCATION' {
+  return section === 'pre'
+    ? 'PRE_EDUCATION'
+    : section === 'event'
+      ? 'MAIN_EDUCATION'
+      : 'POST_EDUCATION'
+}
+
+function typedRowsFor(
+  detail: UjatTypedDetail | undefined,
+  half: UjatHalfSemesterKey,
+  section: 'pre' | 'event' | 'closing'
+): UjatTypedScheduleRow[] {
+  return (
+    detail?.halfPlans
+      ?.find(item => item.semesterType === semesterForHalf(half))
+      ?.stages?.find(item => item.stage === stageForSection(section))?.rows ?? []
   )
-  return regions
-    .map(r => ({ label: r.label, value: r.key }))
-    .filter(option => current.has(option.value) || !selectedByOtherRows.has(option.value))
+}
+
+function updateTypedRows(
+  form: UjatScheduleForm,
+  half: UjatHalfSemesterKey,
+  section: 'pre' | 'event' | 'closing',
+  updater: (rows: UjatTypedScheduleRow[]) => UjatTypedScheduleRow[]
+) {
+  const current = form.getValues()
+  const halfPlans = [...(current.halfPlans ?? [])]
+  const semesterType = semesterForHalf(half)
+  const halfIndex = halfPlans.findIndex(item => item.semesterType === semesterType)
+  const halfPlan: UjatTypedHalfPlan =
+    halfIndex >= 0
+      ? { ...(halfPlans[halfIndex] ?? {}), semesterType }
+      : { semesterType, stages: [] }
+  const stages = [...(halfPlan.stages ?? [])]
+  const stage = stageForSection(section)
+  const stageIndex = stages.findIndex(item => item.stage === stage)
+  const nextStage: UjatTypedEducationStagePlan = {
+    ...(stageIndex >= 0 ? stages[stageIndex] : {}),
+    stage,
+    rows: updater(stageIndex >= 0 ? stages[stageIndex]?.rows ?? [] : []),
+  }
+  if (stageIndex >= 0) stages[stageIndex] = nextStage
+  else stages.push(nextStage)
+  halfPlan.stages = stages
+  if (halfIndex >= 0) halfPlans[halfIndex] = halfPlan
+  else halfPlans.push(halfPlan)
+  form.setValue('halfPlans', halfPlans, { shouldDirty: true, shouldTouch: true })
+}
+
+function newTypedScheduleRow(half: UjatHalfSemesterKey, section: 'pre' | 'event' | 'closing', order: number): UjatTypedScheduleRow {
+  const randomId = globalThis.crypto?.randomUUID?.()
+  return {
+    rowId: randomId ?? `${half}-${section}-${order}`,
+    displayOrder: order,
+    educationName: section === 'pre' ? '사전교육(발대식)' : section === 'event' ? '교육 진행' : '해단식',
+    educationMethod: section === 'event' ? 'offline' : 'online',
+    regionCode: null,
+    startDate: null,
+    endDate: null,
+    dates: [],
+    scheduleIds: [],
+    textbook: null,
+    excludedDates: [],
+    exclusion: null,
+  }
+}
+
+function TypedRegionDateMultiScheduleRows({
+  half,
+  section,
+  form,
+  detail,
+}: {
+  half: UjatHalfSemesterKey
+  section: 'pre' | 'closing'
+  form: UjatScheduleForm
+  detail: UjatTypedDetail | undefined
+}) {
+  const { regions } = useUjatEducationRegions()
+  const rows = typedRowsFor(detail, half, section)
+  const visibleRows = rows.length > 0 ? rows : [newTypedScheduleRow(half, section, 1)]
+
+  const updateRow = (rowId: string, patch: Partial<UjatTypedScheduleRow>) => {
+    updateTypedRows(form, half, section, current => {
+      const source = current.length > 0 ? current : visibleRows
+      return source.map(row => (row.rowId === rowId ? { ...row, ...patch } : row))
+    })
+  }
+
+  return (
+    <div className="half-education-schedule__schedule-rows">
+      {visibleRows.map((row, index) => (
+        <div key={row.rowId ?? index} className="detail-info-form-inputs-wrapper half-education-schedule__schedule-row">
+          <CmsSelect
+            inputSize="small"
+            placeholder="교육 지역을 선택해 주세요"
+            options={regions.map(region => ({ label: region.label, value: region.key }))}
+            value={row.regionCode ?? undefined}
+            onChange={value => updateRow(String(row.rowId), { regionCode: value == null ? null : String(value) })}
+            style={{ width: 360 }}
+          />
+          <DetailInfoForm.InputsSeparator />
+          <ParagraphDatePicker
+            inputSize="small"
+            mode="single"
+            presetMode="schedule"
+            customizable={false}
+            suppressAutoTodayWhenEmpty
+            placeholder="일정을 선택해 주세요"
+            value={row.startDate ? dayjs(row.startDate) : null}
+            onChange={next => {
+              const iso = next?.format('YYYY-MM-DD') ?? null
+              updateRow(String(row.rowId), { startDate: iso, endDate: iso, dates: iso ? [iso] : [] })
+            }}
+            width={360}
+          />
+          {index === 0 ? (
+            <AddScheduleRowButton
+              onClick={() =>
+                updateTypedRows(form, half, section, current => [
+                  ...(current.length > 0 ? current : visibleRows),
+                  newTypedScheduleRow(half, section, (current.length || visibleRows.length) + 1),
+                ])
+              }
+            />
+          ) : (
+            <ItemDeleteButton
+              className="item-delete-button"
+              aria-label="진행 일정 행 삭제"
+              onClick={event => {
+                event.stopPropagation()
+                updateTypedRows(form, half, section, current =>
+                  current.filter(item => item.rowId !== row.rowId).map((item, itemIndex) => ({
+                    ...item,
+                    displayOrder: itemIndex + 1,
+                  }))
+                )
+              }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function TypedScheduleEducationRadioRow({
+  half,
+  section,
+  form,
+  detail,
+  initial,
+}: {
+  half: UjatHalfSemesterKey
+  section: 'pre' | 'event' | 'closing'
+  form: UjatScheduleForm
+  detail: UjatTypedDetail | undefined
+  initial: UjatEducationDelivery
+}) {
+  const rows = typedRowsFor(detail, half, section)
+  const value = rows[0]?.educationMethod === 'online' || rows[0]?.educationMethod === 'hybrid' || rows[0]?.educationMethod === 'offline'
+    ? rows[0].educationMethod
+    : initial
+  return (
+    <CmsRadioGroup
+      size="medium"
+      value={value}
+      onChange={event => updateTypedRows(form, half, section, current => {
+        const source = current.length > 0 ? current : [newTypedScheduleRow(half, section, 1)]
+        return source.map(row => ({ ...row, educationMethod: event.target.value }))
+      })}
+    >
+      <CmsRadio size="medium" value="online">온라인</CmsRadio>
+      <CmsRadio size="medium" value="offline">오프라인</CmsRadio>
+      <CmsRadio size="medium" value="hybrid">온/오프라인</CmsRadio>
+    </CmsRadioGroup>
+  )
+}
+
+function TypedScheduleNameField({
+  half,
+  section,
+  form,
+  detail,
+  fallback,
+}: {
+  half: UjatHalfSemesterKey
+  section: 'pre' | 'event' | 'closing'
+  form: UjatScheduleForm
+  detail: UjatTypedDetail | undefined
+  fallback: string
+}) {
+  const rows = typedRowsFor(detail, half, section)
+  const value = rows[0]?.educationName ?? fallback
+  return (
+    <CmsInput
+      inputSize="small"
+      width="100%"
+      value={value}
+      onChange={event => updateTypedRows(form, half, section, current => {
+        const source = current.length > 0 ? current : [newTypedScheduleRow(half, section, 1)]
+        return source.map(row => ({ ...row, educationName: event.target.value }))
+      })}
+    />
+  )
+}
+
+function TypedTextbookEducationField({
+  half,
+  form,
+  detail,
+}: {
+  half: UjatHalfSemesterKey
+  form: UjatScheduleForm
+  detail: UjatTypedDetail | undefined
+}) {
+  const [instructorOptions, setInstructorOptions] = useState<Array<{ value: string; label: string }>>([])
+  const rows = typedRowsFor(detail, half, 'pre')
+  const mode = rows[0]?.textbook?.provisionMethod === 'instructor_outsource' ? 'instructor_outsource' : 'ja'
+  const instructorId = rows[0]?.textbook?.responsiblePerson ?? undefined
+
+  useEffect(() => {
+    if (mode !== 'instructor_outsource') return
+    let cancelled = false
+    void fetchAllMembersPagesRemote({ rolesExactAnyOf: instructorListRolesExactAnyOf() })
+      .then(users => {
+        if (cancelled) return
+        setInstructorOptions(users.map(user => ({ value: String(user.id), label: user.name.trim() })).filter(option => option.value && option.label))
+      })
+      .catch(() => {
+        if (!cancelled) setInstructorOptions([])
+      })
+    return () => { cancelled = true }
+  }, [mode])
+
+  const setTextbook = (patch: { provisionMethod?: string | null; responsiblePerson?: string | null }) =>
+    updateTypedRows(form, half, 'pre', current => {
+      const source = current.length > 0 ? current : [newTypedScheduleRow(half, 'pre', 1)]
+      return source.map(row => ({ ...row, textbook: { ...(row.textbook ?? {}), ...patch } }))
+    })
+
+  return (
+    <div className="detail-info-form-inputs-wrapper half-education-schedule__textbook-row">
+      <CmsRadioGroup size="medium" value={mode} onChange={event => {
+        const next = event.target.value
+        setTextbook({ provisionMethod: next, ...(next === 'ja' ? { responsiblePerson: null } : {}) })
+      }}>
+        <CmsRadio size="medium" value="ja">JA 진행</CmsRadio>
+        <CmsRadio size="medium" value="instructor_outsource">강사 섭외</CmsRadio>
+      </CmsRadioGroup>
+      {mode === 'instructor_outsource' ? (
+        <>
+          <DetailInfoForm.InputsSeparator />
+          <CmsSelect inputSize="small" showSearch optionFilterProp="label" placeholder="교재 교육 강사를 선택해 주세요" style={{ minWidth: 200, flex: 1 }} options={instructorOptions} value={instructorId} onChange={value => setTextbook({ responsiblePerson: value == null || value === '' ? null : String(value) })} />
+        </>
+      ) : null}
+    </div>
+  )
+}
+
+function TypedEventRangeField({
+  half,
+  form,
+  detail,
+}: {
+  half: UjatHalfSemesterKey
+  form: UjatScheduleForm
+  detail: UjatTypedDetail | undefined
+}) {
+  const row = typedRowsFor(detail, half, 'event')[0]
+  const range: [Dayjs | null, Dayjs | null] = [
+    row?.startDate ? dayjs(row.startDate) : null,
+    row?.endDate ? dayjs(row.endDate) : null,
+  ]
+  return (
+    <ParagraphDatePicker
+      inputSize="small"
+      mode="range"
+      value={range}
+      onChange={next => updateTypedRows(form, half, 'event', current => {
+        const source = current.length > 0 ? current : [newTypedScheduleRow(half, 'event', 1)]
+        return source.map((item, index) => index === 0 ? {
+          ...item,
+          startDate: next[0]?.format('YYYY-MM-DD') ?? null,
+          endDate: next[1]?.format('YYYY-MM-DD') ?? null,
+          dates: next[0] ? [next[0].format('YYYY-MM-DD')] : [],
+        } : item)
+      })}
+      placeholder={['교육 진행 일정을 선택해 주세요', '교육 진행 일정을 선택해 주세요']}
+      className="half-education-schedule__range-picker"
+    />
+  )
 }
 
 function AddScheduleRowButton({ onClick }: { onClick: () => void }) {
@@ -74,261 +362,19 @@ function AddScheduleRowButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-function UjatRegionDateMultiScheduleRows({
-  half,
-  section,
-}: {
-  half: UjatHalfSemesterKey
-  section: 'pre' | 'closing'
-}) {
-  const { regions } = useUjatEducationRegions()
-  const keys = ujatHalfScheduleOverlayKeys(half)
-  const storageKey = section === 'pre' ? keys.preMulti : keys.closingMulti
-  const [bundle] = useUjatProgramRegistrationOverlayKv<UjatHalfMultiScheduleBundle>(
-    storageKey,
-    EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE
-  )
-
-  const regionByRow = useMemo((): Record<number, string[]> => {
-    const o: Record<number, string[]> = {}
-    for (const [k, v] of Object.entries(bundle.regionByRow)) {
-      o[Number(k)] = v
-    }
-    return o
-  }, [bundle.regionByRow])
-
-  const dateByRow = useMemo((): Record<number, Dayjs | null> => {
-    const o: Record<number, Dayjs | null> = {}
-    for (const [k, v] of Object.entries(bundle.dateByRow)) {
-      o[Number(k)] = v == null ? null : dayjs(v)
-    }
-    return o
-  }, [bundle.dateByRow])
-
-  const rowIds = bundle.rowIds
-
-  const appendRow = () => {
-    updateUjatProgramRegistrationOverlayKey<UjatHalfMultiScheduleBundle>(storageKey, prev => {
-      const p = prev ?? EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE
-      const nextId = p.rowIds.length === 0 ? 0 : Math.max(...p.rowIds) + 1
-      return {
-        rowIds: [...p.rowIds, nextId],
-        regionByRow: { ...p.regionByRow, [String(nextId)]: [] },
-        dateByRow: { ...p.dateByRow, [String(nextId)]: null },
-      }
-    })
-  }
-
-  const removeRow = (id: number) => {
-    updateUjatProgramRegistrationOverlayKey<UjatHalfMultiScheduleBundle>(storageKey, prev => {
-      const p = prev ?? EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE
-      const nextRegion = { ...p.regionByRow }
-      delete nextRegion[String(id)]
-      const nextDates = { ...p.dateByRow }
-      delete nextDates[String(id)]
-      return {
-        rowIds: p.rowIds.filter(rid => rid !== id),
-        regionByRow: nextRegion,
-        dateByRow: nextDates,
-      }
-    })
-  }
-
-  return (
-    <div className="half-education-schedule__schedule-rows">
-      {rowIds.map((id, index) => (
-        <div
-          key={id}
-          className="detail-info-form-inputs-wrapper half-education-schedule__schedule-row"
-        >
-          <CmsSelect inputSize="small"
-            mode="multiple"
-            withAllOption={false}
-            style={{ width: 360 }}
-            placeholder="교육 지역을 선택해 주세요"
-            options={getRowRegionOptions(id, regionByRow, regions)}
-            value={regionByRow[id] ?? []}
-            onChange={next =>
-              updateUjatProgramRegistrationOverlayKey<UjatHalfMultiScheduleBundle>(
-                storageKey,
-                prev => {
-                  const p = prev ?? EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE
-                  return {
-                    ...p,
-                    regionByRow: { ...p.regionByRow, [String(id)]: next as string[] },
-                  }
-                }
-              )
-            }
-          />
-          <DetailInfoForm.InputsSeparator />
-          <ParagraphDatePicker inputSize="small"
-            mode="single"
-            presetMode="schedule"
-            customizable={false}
-            suppressAutoTodayWhenEmpty
-            placeholder="일정을 선택해 주세요"
-            value={dateByRow[id] ?? null}
-            onChange={next =>
-              updateUjatProgramRegistrationOverlayKey<UjatHalfMultiScheduleBundle>(
-                storageKey,
-                prev => {
-                  const p = prev ?? EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE
-                  return {
-                    ...p,
-                    dateByRow: {
-                      ...p.dateByRow,
-                      [String(id)]: next == null ? null : next.toISOString(),
-                    },
-                  }
-                }
-              )
-            }
-            width={360}
-          />
-          {index === 0 ? (
-            <AddScheduleRowButton onClick={appendRow} />
-          ) : (
-            <ItemDeleteButton
-              className="item-delete-button"
-              aria-label="진행 일정 행 삭제"
-              onClick={event => {
-                event.stopPropagation()
-                removeRow(id)
-              }}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ScheduleEducationRadioRow({
-  half,
-  section,
-  initial,
-}: {
-  half: UjatHalfSemesterKey
-  section: 'pre' | 'event' | 'closing'
-  initial: UjatEducationDelivery
-}) {
-  const keys = ujatHalfScheduleOverlayKeys(half)
-  const storageKey =
-    section === 'pre'
-      ? keys.preDelivery
-      : section === 'event'
-        ? keys.eventDelivery
-        : keys.closingDelivery
-  const [value, setValue] = useUjatProgramRegistrationOverlayKv<UjatEducationDelivery>(
-    storageKey,
-    initial
-  )
-  return (
-    <CmsRadioGroup
-      size="medium"
-      value={value}
-      onChange={e => setValue(e.target.value as UjatEducationDelivery)}
-    >
-      <CmsRadio size="medium" value="online">온라인</CmsRadio>
-      <CmsRadio size="medium" value="offline">오프라인</CmsRadio>
-      <CmsRadio size="medium" value="hybrid">온/오프라인</CmsRadio>
-    </CmsRadioGroup>
-  )
-}
-
-function TextbookEducationField({ half }: { half: UjatHalfSemesterKey }) {
-  const keys = ujatHalfScheduleOverlayKeys(half)
-  const [instructorOptions, setInstructorOptions] = useState<
-    Array<{ value: string; label: string }>
-  >([])
-  const [mode, setMode] = useUjatProgramRegistrationOverlayKv<UjatTextbookEducationMode>(
-    keys.preTextbookMode,
-    'ja'
-  )
-  const [instructorId, setInstructorId] = useUjatProgramRegistrationOverlayKv<string | undefined>(
-    keys.preTextbookInstructorId,
-    undefined
-  )
-
-  useEffect(() => {
-    if (mode !== 'instructor_outsource') return
-    let cancelled = false
-    void fetchAllMembersPagesRemote({
-      rolesExactAnyOf: instructorListRolesExactAnyOf(),
-    })
-      .then(users => {
-        if (cancelled) return
-        setInstructorOptions(
-          users
-            .map(user => ({ value: String(user.id), label: user.name.trim() }))
-            .filter(option => option.value && option.label)
-        )
-      })
-      .catch(() => {
-        // 회원 API가 비활성화된 로컬/템플릿 환경에서는 빈 선택지로 유지한다.
-        if (!cancelled) setInstructorOptions([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [mode])
-
-  return (
-    <div className="detail-info-form-inputs-wrapper half-education-schedule__textbook-row">
-      <CmsRadioGroup
-        size="medium"
-        value={mode}
-        onChange={e => {
-          const next = e.target.value as UjatTextbookEducationMode
-          setMode(next)
-          if (next === 'ja') setInstructorId(undefined)
-        }}
-      >
-        <CmsRadio size="medium" value="ja">JA 진행</CmsRadio>
-        <CmsRadio size="medium" value="instructor_outsource">강사 섭외</CmsRadio>
-      </CmsRadioGroup>
-      {mode === 'instructor_outsource' ? (
-        <>
-          <DetailInfoForm.InputsSeparator />
-          <CmsSelect inputSize="small"
-            showSearch
-            optionFilterProp="label"
-            placeholder="교재 교육 강사를 선택해 주세요"
-            style={{ minWidth: 200, flex: 1 }}
-            options={instructorOptions}
-            value={instructorId}
-            onChange={v => setInstructorId(v == null || v === '' ? undefined : String(v))}
-          />
-        </>
-      ) : null}
-    </div>
-  )
-}
-
-function UjatScheduleNameField({ overlayKey, fallback }: { overlayKey: string; fallback: string }) {
-  const [scheduleName, setScheduleName] = useUjatProgramRegistrationOverlayKv(overlayKey, fallback)
-  return (
-    <CmsInput
-      inputSize="small"
-      width="100%"
-      value={scheduleName}
-      onChange={event => setScheduleName(event.target.value)}
-    />
-  )
-}
-
 function UjatPreEducationBlock({
   half,
   mode,
   viewRow,
+  scheduleForm,
+  typedDetail,
 }: {
   half: UjatHalfSemesterKey
   mode: 'view' | 'edit'
   viewRow: UjatHalfScheduleTableRow
+  scheduleForm?: UjatScheduleForm
+  typedDetail?: UjatTypedDetail
 }) {
-  const keys = ujatHalfScheduleOverlayKeys(half)
-
   return (
     <div className="half-education-schedule__block half-education-schedule__block--first">
       <HalfEducationScheduleSubheading>■ 사전 교육</HalfEducationScheduleSubheading>
@@ -343,11 +389,15 @@ function UjatPreEducationBlock({
             label="일정명"
             validationKey={`${half}.pre.name`}
             view={viewRow.scheduleName}
-            edit={
-              mode === 'edit' ? (
-                <UjatScheduleNameField overlayKey={keys.preName} fallback="사전교육(발대식)" />
-              ) : undefined
-            }
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedScheduleNameField
+                half={half}
+                section="pre"
+                form={scheduleForm}
+                detail={typedDetail}
+                fallback="사전교육(발대식)"
+              />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
@@ -356,29 +406,38 @@ function UjatPreEducationBlock({
             validationKey={`${half}.pre.schedule`}
             fullRow
             view={<ScheduleTextView text={viewRow.scheduleText} />}
-            edit={
-              mode === 'edit' ? (
-                <UjatRegionDateMultiScheduleRows half={half} section="pre" />
-              ) : undefined
-            }
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedRegionDateMultiScheduleRows
+                half={half}
+                section="pre"
+                form={scheduleForm}
+                detail={typedDetail}
+              />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 형태"
             view={viewRow.deliveryLabel}
-            edit={
-              mode === 'edit' ? (
-                <ScheduleEducationRadioRow half={half} section="pre" initial="online" />
-              ) : undefined
-            }
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedScheduleEducationRadioRow
+                half={half}
+                section="pre"
+                form={scheduleForm}
+                detail={typedDetail}
+                initial="online"
+              />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교재 교육"
             view={viewRow.textbookEducationLabel ?? '-'}
-            edit={mode === 'edit' ? <TextbookEducationField half={half} /> : undefined}
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedTextbookEducationField half={half} form={scheduleForm} detail={typedDetail} />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
@@ -390,21 +449,15 @@ function UjatEventScheduleBlock({
   half,
   mode,
   viewRow,
+  scheduleForm,
+  typedDetail,
 }: {
   half: UjatHalfSemesterKey
   mode: 'view' | 'edit'
   viewRow: UjatHalfScheduleTableRow
+  scheduleForm?: UjatScheduleForm
+  typedDetail?: UjatTypedDetail
 }) {
-  const keys = ujatHalfScheduleOverlayKeys(half)
-  const [seal, setSeal] = useUjatProgramRegistrationOverlayKv<UjatHalfEventRangeSeal>(
-    keys.eventRange,
-    EMPTY_UJAT_HALF_EVENT_RANGE_SEAL
-  )
-  const eventRange: [Dayjs | null, Dayjs | null] = useMemo(
-    () => [seal.start ? dayjs(seal.start) : null, seal.end ? dayjs(seal.end) : null],
-    [seal.end, seal.start]
-  )
-
   return (
     <div className="half-education-schedule__block">
       <HalfEducationScheduleSubheading>■ 행사 일정</HalfEducationScheduleSubheading>
@@ -419,11 +472,15 @@ function UjatEventScheduleBlock({
             label="일정명"
             validationKey={`${half}.event.name`}
             view={viewRow.scheduleName}
-            edit={
-              mode === 'edit' ? (
-                <UjatScheduleNameField overlayKey={keys.eventName} fallback="교육 진행" />
-              ) : undefined
-            }
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedScheduleNameField
+                half={half}
+                section="event"
+                form={scheduleForm}
+                detail={typedDetail}
+                fallback="교육 진행"
+              />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
@@ -431,33 +488,24 @@ function UjatEventScheduleBlock({
             label="진행 일정"
             validationKey={`${half}.event.range`}
             view={<ScheduleTextView text={viewRow.scheduleText} />}
-            edit={
-              mode === 'edit' ? (
-                <ParagraphDatePicker inputSize="small"
-                  mode="range"
-                  value={eventRange}
-                  onChange={next =>
-                    setSeal({
-                      start: next[0]?.toISOString() ?? null,
-                      end: next[1]?.toISOString() ?? null,
-                    })
-                  }
-                  placeholder={['교육 진행 일정을 선택해 주세요', '교육 진행 일정을 선택해 주세요']}
-                  className="half-education-schedule__range-picker"
-                />
-              ) : undefined
-            }
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedEventRangeField half={half} form={scheduleForm} detail={typedDetail} />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 형태"
             view={viewRow.deliveryLabel}
-            edit={
-              mode === 'edit' ? (
-                <ScheduleEducationRadioRow half={half} section="event" initial="offline" />
-              ) : undefined
-            }
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedScheduleEducationRadioRow
+                half={half}
+                section="event"
+                form={scheduleForm}
+                detail={typedDetail}
+                initial="offline"
+              />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
@@ -469,13 +517,15 @@ function UjatClosingCeremonyBlock({
   half,
   mode,
   viewRow,
+  scheduleForm,
+  typedDetail,
 }: {
   half: UjatHalfSemesterKey
   mode: 'view' | 'edit'
   viewRow: UjatHalfScheduleTableRow
+  scheduleForm?: UjatScheduleForm
+  typedDetail?: UjatTypedDetail
 }) {
-  const keys = ujatHalfScheduleOverlayKeys(half)
-
   return (
     <div className="half-education-schedule__block">
       <HalfEducationScheduleSubheading>■ 해단식</HalfEducationScheduleSubheading>
@@ -489,11 +539,15 @@ function UjatClosingCeremonyBlock({
           <DetailInfoForm.Field
             label="일정명"
             view={viewRow.scheduleName}
-            edit={
-              mode === 'edit' ? (
-                <UjatScheduleNameField overlayKey={keys.closingName} fallback="해단식" />
-              ) : undefined
-            }
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedScheduleNameField
+                half={half}
+                section="closing"
+                form={scheduleForm}
+                detail={typedDetail}
+                fallback="해단식"
+              />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
@@ -502,25 +556,65 @@ function UjatClosingCeremonyBlock({
             validationKey={`${half}.closing.multi`}
             fullRow
             view={<ScheduleTextView text={viewRow.scheduleText} />}
-            edit={
-              mode === 'edit' ? (
-                <UjatRegionDateMultiScheduleRows half={half} section="closing" />
-              ) : undefined
-            }
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedRegionDateMultiScheduleRows
+                half={half}
+                section="closing"
+                form={scheduleForm}
+                detail={typedDetail}
+              />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 형태"
             view={viewRow.deliveryLabel}
-            edit={
-              mode === 'edit' ? (
-                <ScheduleEducationRadioRow half={half} section="closing" initial="online" />
-              ) : undefined
-            }
+            edit={mode === 'edit' && scheduleForm ? (
+              <TypedScheduleEducationRadioRow
+                half={half}
+                section="closing"
+                form={scheduleForm}
+                detail={typedDetail}
+                initial="online"
+              />
+            ) : undefined}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
+    </div>
+  )
+}
+
+type HalfEducationScheduleSectionProps = {
+  half: UjatHalfSemesterKey
+  mode: 'view' | 'edit'
+  display: import('@/features/program/ujat/lib/ujat-half-education-schedule-display').UjatHalfEducationScheduleDisplay
+  scheduleForm?: UseFormReturn<UjatTypedDetail>
+}
+
+function HalfEducationScheduleTypedSection({
+  half,
+  mode,
+  scheduleForm,
+}: Required<Pick<HalfEducationScheduleSectionProps, 'half' | 'mode' | 'scheduleForm'>>) {
+  const typedDetail = useWatch({ control: scheduleForm.control }) as UjatTypedDetail | undefined
+  const typedDisplay = resolveUjatHalfEducationScheduleDisplayFromTypedDetail(typedDetail, half)
+  return (
+    <div className="half-education-schedule-section">
+      <UjatPreEducationBlock half={half} mode={mode} viewRow={typedDisplay.preEducation} scheduleForm={scheduleForm} typedDetail={typedDetail} />
+      <UjatEventScheduleBlock half={half} mode={mode} viewRow={typedDisplay.eventSchedule} scheduleForm={scheduleForm} typedDetail={typedDetail} />
+      <UjatClosingCeremonyBlock half={half} mode={mode} viewRow={typedDisplay.closingCeremony} scheduleForm={scheduleForm} typedDetail={typedDetail} />
+    </div>
+  )
+}
+
+function HalfEducationScheduleLegacySection({ half, mode, display }: Omit<HalfEducationScheduleSectionProps, 'scheduleForm'>) {
+  return (
+    <div className="half-education-schedule-section">
+      <UjatPreEducationBlock half={half} mode={mode} viewRow={display.preEducation} />
+      <UjatEventScheduleBlock half={half} mode={mode} viewRow={display.eventSchedule} />
+      <UjatClosingCeremonyBlock half={half} mode={mode} viewRow={display.closingCeremony} />
     </div>
   )
 }
@@ -529,16 +623,10 @@ export function HalfEducationScheduleSection({
   half,
   mode,
   display,
-}: {
-  half: UjatHalfSemesterKey
-  mode: 'view' | 'edit'
-  display: import('@/features/program/ujat/lib/ujat-half-education-schedule-display').UjatHalfEducationScheduleDisplay
-}) {
-  return (
-    <div className="half-education-schedule-section">
-      <UjatPreEducationBlock half={half} mode={mode} viewRow={display.preEducation} />
-      <UjatEventScheduleBlock half={half} mode={mode} viewRow={display.eventSchedule} />
-      <UjatClosingCeremonyBlock half={half} mode={mode} viewRow={display.closingCeremony} />
-    </div>
-  )
+  scheduleForm,
+}: HalfEducationScheduleSectionProps) {
+  if (scheduleForm) {
+    return <HalfEducationScheduleTypedSection half={half} mode={mode} scheduleForm={scheduleForm} />
+  }
+  return <HalfEducationScheduleLegacySection half={half} mode={mode} display={display} />
 }

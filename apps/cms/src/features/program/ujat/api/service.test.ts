@@ -145,7 +145,7 @@ describe('UJAT create media binding', () => {
     expect(mocks.deleteProgram).toHaveBeenCalledWith(created.id)
   })
 
-  it('Typed common-info input removes stale basic-info overlay keys but keeps schedule compatibility data', async () => {
+  it('Typed common-info input removes stale basic-info and schedule overlay keys', async () => {
     const collected = {
       'ujat.basicInfo.repKo': 'stale overlay value',
       'ujat.basicInfo.surveyItems': { survey: false },
@@ -168,13 +168,11 @@ describe('UJAT create media binding', () => {
     expect(mocks.buildPendingProgram).toHaveBeenCalledWith(
       expect.objectContaining({
         overlay: {
-          'ujat.h1.event.name': '상반기 본교육',
           'ujat.recruit.institution.publicTitle': '기관 모집',
         },
       })
     )
     expect(mocks.bindMedia).toHaveBeenCalledWith(created, {
-      'ujat.h1.event.name': '상반기 본교육',
       'ujat.recruit.institution.publicTitle': '기관 모집',
     })
   })
@@ -221,7 +219,7 @@ describe('ujat API policy', () => {
     expect(mocks.fetchProgram).toHaveBeenCalledTimes(2)
   })
 
-  it('공통정보 저장은 Typed Detail을 갱신하고 legacy 모집 저장만 남긴다', async () => {
+  it('공통정보 설문·참여자 저장만 Typed Detail을 갱신하고 일정 overlay는 쓰지 않는다', async () => {
     const baseline = {
       id: '186300',
       title: '기존',
@@ -239,11 +237,20 @@ describe('ujat API policy', () => {
       common: null,
     })
 
-    await update('186300', baseline, { title: '수정' })
+    await update('186300', baseline, {
+      generalSurveyMenuKeys: ['survey'],
+      generalParticipantTypes: ['school_institution'],
+    })
 
     expect(mocks.replaceTypedDetail).toHaveBeenCalledWith(
       '186300',
-      expect.objectContaining({ schemaVersion: 1 })
+      expect.objectContaining({
+        schemaVersion: 1,
+        common: expect.objectContaining({
+          surveySettings: expect.any(Array),
+          participantSettings: expect.any(Object),
+        }),
+      })
     )
   })
 })

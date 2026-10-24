@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -102,6 +103,14 @@ import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/
 import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
 import { queryKeys as ujatProgramQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { detail as fetchUjatProgramRemoteById } from '@/features/program/ujat/api/service'
+import {
+  EMPTY_UJAT_TYPED_DETAIL,
+  stripUjatScheduleLegacyOverlay,
+  stripUjatTypedLegacyOverlay,
+  syncUjatTypedDetailPhysicalSchedulesRemote,
+  updateUjatTypedDetailHalfRemote,
+  type UjatTypedDetail,
+} from '@/features/program/ujat/api/typed-detail-client'
 import {
   omitRecruitmentTabScheduleFields,
   persistRecruitmentTabSave,
@@ -721,6 +730,52 @@ export function UjatProgramDetailFullPageModal({
     return base ? resolveUjatProgramDisplayProgram(base) : null
   }, [detailProgram, program, onUpdateProgram, externalLoading])
 
+  const educationScheduleForm = useForm<UjatTypedDetail>({
+    defaultValues: EMPTY_UJAT_TYPED_DETAIL,
+  })
+  const educationScheduleBaselineRef = useRef<UjatTypedDetail>(EMPTY_UJAT_TYPED_DETAIL)
+  const educationScheduleIsDirty = educationScheduleForm.formState.isDirty
+  const resetEducationScheduleForm = educationScheduleForm.reset
+
+  useEffect(() => {
+    if (!displayProgram) return
+    const next = displayProgram.ujatTypedDetail ?? EMPTY_UJAT_TYPED_DETAIL
+    educationScheduleBaselineRef.current = next
+    resetEducationScheduleForm(next)
+  }, [displayProgram, resetEducationScheduleForm])
+
+  const persistUjatEducationSchedule = useCallback(
+    async (id: string) => {
+      if (!educationScheduleIsDirty) return
+      const snapshot = educationScheduleForm.getValues()
+      let current = snapshot
+      let expectedRevision = snapshot.revision ?? 0
+      const changedSemesters: Array<'FIRST_HALF' | 'SECOND_HALF'> = []
+      for (const semesterType of ['FIRST_HALF', 'SECOND_HALF'] as const) {
+        const halfPlan = current.halfPlans?.find(item => item.semesterType === semesterType) ?? {
+          semesterType,
+          stages: [],
+        }
+        const baselineHalfPlan = educationScheduleBaselineRef.current.halfPlans?.find(
+          item => item.semesterType === semesterType
+        ) ?? { semesterType, stages: [] }
+        if (JSON.stringify(halfPlan) === JSON.stringify(baselineHalfPlan)) continue
+        changedSemesters.push(semesterType)
+        current = await updateUjatTypedDetailHalfRemote(
+          id,
+          semesterType,
+          expectedRevision,
+          halfPlan
+        )
+        expectedRevision = current.revision ?? expectedRevision
+      }
+      current = await syncUjatTypedDetailPhysicalSchedulesRemote(id, current, changedSemesters)
+      educationScheduleBaselineRef.current = current
+      educationScheduleForm.reset(current)
+    },
+    [educationScheduleForm, educationScheduleIsDirty]
+  )
+
   const volunteerRecruitKindRef = useRef<UjatRecruitDisplayKind>('volunteer_h1')
   const mapInstitutionRecruitmentEditValues = useCallback(
     (p: Program) =>
@@ -758,7 +813,9 @@ export function UjatProgramDetailFullPageModal({
   const overlayHydrateStampRef = useRef<string | null>(null)
   useLayoutEffect(() => {
     if (!displayProgram) return
-    const overlay = readUjatRegistrationOverlayFromProgram(displayProgram)
+    const overlay = stripUjatScheduleLegacyOverlay(
+      readUjatRegistrationOverlayFromProgram(displayProgram)
+    )
     const stamp = `${displayProgram.id}:${Object.keys(overlay).length}`
     if (overlayHydrateStampRef.current !== stamp) {
       overlayHydrateStampRef.current = stamp
@@ -1335,7 +1392,9 @@ export function UjatProgramDetailFullPageModal({
                 const draftWithLegacyOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
                 const commonPatch: Partial<Program> = {
                   ...patch,
-                  ujatRegistrationOverlay: draftWithLegacyOverlay.ujatRegistrationOverlay,
+                  ujatRegistrationOverlay: stripUjatTypedLegacyOverlay(
+                    draftWithLegacyOverlay.ujatRegistrationOverlay ?? {}
+                  ),
                   generalSurveyMenuKeys: draft.generalSurveyMenuKeys,
                   generalParticipantTypes: draft.generalParticipantTypes,
                   generalCommonInfo: draft.generalCommonInfo,
@@ -1360,11 +1419,24 @@ export function UjatProgramDetailFullPageModal({
                 } else {
                   await updateProgram(draft.id, draft)
                 }
+                await persistUjatEducationSchedule(draft.id)
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)
                 if (programId) next.set('programId', programId)
                 setSearchParams(next, { replace: true })
               } catch (error) {
+                const code = getApiErrorCode(error)
+                if (code === 'UJAT_TYPED_DETAIL_REVISION_CONFLICT') {
+                  void showAlert({
+                    title: '일정이 변경되었습니다.',
+                    content: '다른 관리자가 일정을 먼저 변경했습니다. 최신 정보를 다시 확인한 뒤 저장해 주세요.',
+                  })
+                } else if (code === 'UJAT_TYPED_SCHEDULE_REFERENCED') {
+                  void showAlert({
+                    title: '일정을 변경할 수 없습니다.',
+                    content: '이미 교육 진행에 연결된 일정은 삭제하거나 교체할 수 없습니다. 기존 일정은 유지해 주세요.',
+                  })
+                }
                 handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
                 throw error
               }
@@ -1394,8 +1466,16 @@ export function UjatProgramDetailFullPageModal({
       return
     }
     infoResetToProgram()
+    educationScheduleForm.reset(displayProgram.ujatTypedDetail ?? EMPTY_UJAT_TYPED_DETAIL)
     setEditMode('info')
-  }, [activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
+  }, [
+    activeTab,
+    displayProgram,
+    educationScheduleForm,
+    infoResetToProgram,
+    setEditMode,
+    showAlert,
+  ])
 
   const handleInfoSave = useCallback(async () => {
     if (!displayProgram) return
@@ -1441,9 +1521,10 @@ export function UjatProgramDetailFullPageModal({
 
   const handleInfoCancel = useCallback(() => {
     infoResetToProgram()
+    educationScheduleForm.reset(displayProgram?.ujatTypedDetail ?? EMPTY_UJAT_TYPED_DETAIL)
     detailRequiredHighlight.clear()
     setEditMode(null)
-  }, [detailRequiredHighlight, displayProgram, infoResetToProgram, setEditMode])
+  }, [detailRequiredHighlight, displayProgram, educationScheduleForm, infoResetToProgram, setEditMode])
 
   const isEditModeRecruitParticipant =
     open &&
@@ -2871,6 +2952,7 @@ export function UjatProgramDetailFullPageModal({
                 sponsorName={sponsorName}
                 isEditMode={isEditModeInfo}
                 infoForm={isEditModeInfo ? infoForm : undefined}
+                scheduleForm={isEditModeInfo ? educationScheduleForm : undefined}
               />
             </>
           )}

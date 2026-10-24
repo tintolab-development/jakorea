@@ -29,6 +29,11 @@ import {
   resetUjatProgramRegistrationOverlay,
   setUjatProgramRegistrationOverlayScope,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import {
+  typedDetailFromUjatBasicInfo,
+  typedDetailFromUjatOverlay,
+  type UjatTypedDetail,
+} from '@/features/program/ujat/api/typed-detail-client'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   createUjatBasicInfoFormDefaults,
@@ -45,6 +50,13 @@ export const UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE = 'registration-ujat' as co
 /** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
 const LEGACY_UJAT_BASIC_INFO_LOCK_NOTICE =
   '참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.'
+
+const EMPTY_UJAT_TYPED_DETAIL: UjatTypedDetail = {
+  schemaVersion: 1,
+  halfPlans: [],
+  common: null,
+  revision: null,
+}
 
 function withForcedUjatRegistrationSeedTitleRequired(draft: WritingFormDraft): WritingFormDraft {
   let changed = false
@@ -116,6 +128,10 @@ export function useUjatProgramRegistrationEditor(
     defaultValues: createUjatBasicInfoFormDefaults(),
     shouldUnregister: false,
   })
+  const educationScheduleForm = useForm<UjatTypedDetail>({
+    defaultValues: EMPTY_UJAT_TYPED_DETAIL,
+    shouldUnregister: false,
+  })
   const basicInfoValues = useWatch({ control: basicInfoForm.control }) as ProgramDetailEditFormValues
 
   if (active) {
@@ -125,13 +141,14 @@ export function useUjatProgramRegistrationEditor(
   const resetToSeed = useCallback(() => {
     resetUjatProgramRegistrationOverlay()
     basicInfoForm.reset(createUjatBasicInfoFormDefaults())
+    educationScheduleForm.reset(EMPTY_UJAT_TYPED_DETAIL)
     const next = withForcedUjatRegistrationSeedTitleRequired(
       normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
     )
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
-  }, [basicInfoForm])
+  }, [basicInfoForm, educationScheduleForm])
 
   useEffect(() => {
     if (!active) {
@@ -175,6 +192,12 @@ export function useUjatProgramRegistrationEditor(
               ? (savedBasicInfo as ProgramDetailEditFormValues)
               : ujatBasicInfoFormValuesFromLegacyOverlay(saved.overlay ?? {})
           )
+          educationScheduleForm.reset(
+            saved.editorState?.ujatEducationSchedule &&
+              typeof saved.editorState.ujatEducationSchedule === 'object'
+              ? (saved.editorState.ujatEducationSchedule as UjatTypedDetail)
+              : typedDetailFromUjatOverlay(saved.overlay ?? {})
+          )
           const legacyOverlay = stripUjatBasicInfoOverlay(saved.overlay ?? {})
           if (Object.keys(legacyOverlay).length > 0) patchUjatProgramRegistrationOverlay(legacyOverlay)
           const next = withForcedUjatRegistrationSeedTitleRequired(
@@ -188,6 +211,7 @@ export function useUjatProgramRegistrationEditor(
 
         const legacy = localOnlyDraftPersistence ? loadUjatRegistrationTemplateSave() : null
         basicInfoForm.reset(ujatBasicInfoFormValuesFromLegacyOverlay(legacy?.overlay ?? {}))
+        educationScheduleForm.reset(typedDetailFromUjatOverlay(legacy?.overlay ?? {}))
         const legacyOverlay = stripUjatBasicInfoOverlay(legacy?.overlay ?? {})
         if (Object.keys(legacyOverlay).length > 0) patchUjatProgramRegistrationOverlay(legacyOverlay)
         const next = withForcedUjatRegistrationSeedTitleRequired(
@@ -213,6 +237,7 @@ export function useUjatProgramRegistrationEditor(
     templateCode,
     usesRegistrationWizardDraft,
     basicInfoForm,
+    educationScheduleForm,
   ])
 
   useEffect(() => {
@@ -225,12 +250,21 @@ export function useUjatProgramRegistrationEditor(
   useEffect(() => {
     if (!active || !usesRegistrationWizardDraft) return
 
-    const handleDevAutofillComplete = () => {
-      // DEV 자동입력은 legacy operational overlay를 채우는 기존 도구다.
-      // 공통정보만은 Typed RHF가 SSOT이므로, 명시적인 자동입력 완료 이벤트에서
-      // 한 번만 overlay snapshot을 RHF에 반영해 개발 검증 경로도 동일 계약을 쓴다.
+    const handleDevAutofillComplete = (event: Event) => {
+      const typedEducationSchedule =
+        event instanceof CustomEvent &&
+        event.detail != null &&
+        typeof event.detail === 'object' &&
+        'typedEducationSchedule' in event.detail
+          ? event.detail.typedEducationSchedule
+          : null
       basicInfoForm.reset(
         ujatBasicInfoFormValuesFromLegacyOverlay(getUjatProgramRegistrationOverlayRecord())
+      )
+      educationScheduleForm.reset(
+        typedEducationSchedule != null && typeof typedEducationSchedule === 'object'
+          ? (typedEducationSchedule as UjatTypedDetail)
+          : typedDetailFromUjatOverlay(getUjatProgramRegistrationOverlayRecord())
       )
     }
 
@@ -241,7 +275,7 @@ export function useUjatProgramRegistrationEditor(
         handleDevAutofillComplete
       )
     }
-  }, [active, basicInfoForm, usesRegistrationWizardDraft])
+  }, [active, basicInfoForm, educationScheduleForm, usesRegistrationWizardDraft])
 
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
@@ -314,9 +348,12 @@ export function useUjatProgramRegistrationEditor(
       ujatProgramRegistration: true,
       ujatProgramRegistrationBasicInfoForm: usesRegistrationWizardDraft ? basicInfoForm : undefined,
       ujatProgramRegistrationBasicInfoOverlayFree: usesRegistrationWizardDraft,
+      ujatProgramRegistrationEducationScheduleForm: usesRegistrationWizardDraft
+        ? educationScheduleForm
+        : undefined,
       structureLockedAuthoringChoicePreview: true,
     }),
-    [basicInfoForm, usesRegistrationWizardDraft]
+    [basicInfoForm, educationScheduleForm, usesRegistrationWizardDraft]
   )
 
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
@@ -353,10 +390,21 @@ export function useUjatProgramRegistrationEditor(
     openWritingUserPreview(writingPreviewSession)
   }, [openWritingUserPreview, writingPreviewSession])
 
+  const getTypedDetail = useCallback(
+    () => typedDetailFromUjatBasicInfo(basicInfoForm.getValues(), educationScheduleForm.getValues()),
+    [basicInfoForm, educationScheduleForm]
+  )
+
   const persistDraft = useCallback(async () => {
     const overlay = { ...getUjatProgramRegistrationOverlayRecord() }
     const basicInfo = usesRegistrationWizardDraft ? basicInfoForm.getValues() : undefined
-    const editorState = basicInfo == null ? undefined : { ujatBasicInfo: basicInfo }
+    const editorState =
+      basicInfo == null
+        ? { ujatEducationSchedule: educationScheduleForm.getValues() }
+        : {
+            ujatBasicInfo: basicInfo,
+            ujatEducationSchedule: educationScheduleForm.getValues(),
+          }
     if (localOnlyDraftPersistence) {
       await persistWritingFormTemplateDraft({
         templateId: templateCode,
@@ -366,7 +414,7 @@ export function useUjatProgramRegistrationEditor(
         localOnly: true,
       })
       persistUjatRegistrationTemplateSave({ draft, overlay })
-      return { draft, overlay, basicInfo }
+      return { draft, overlay, basicInfo, typedDetail: getTypedDetail() }
     }
     if (usesRegistrationWizardDraft) {
       const { persistRegistrationWizardFormDraft } = await import(
@@ -396,7 +444,7 @@ export function useUjatProgramRegistrationEditor(
         clearUjatRegistrationTemplateLocalStorage()
       }
     }
-    return { draft, overlay, basicInfo }
+    return { draft, overlay, basicInfo, typedDetail: getTypedDetail() }
   }, [
     basicInfoForm,
     draft,
@@ -404,6 +452,8 @@ export function useUjatProgramRegistrationEditor(
     registrationWizardProgramType,
     templateCode,
     usesRegistrationWizardDraft,
+    educationScheduleForm,
+    getTypedDetail,
   ])
 
   const handleSave = useCallback((options?: { silent?: boolean }) => {
@@ -462,6 +512,9 @@ export function useUjatProgramRegistrationEditor(
     paragraphBodyOptions,
     basicInfoForm,
     basicInfoValues,
+    educationScheduleForm,
+    educationScheduleValues: educationScheduleForm.getValues(),
+    getTypedDetail,
   }
 }
 
