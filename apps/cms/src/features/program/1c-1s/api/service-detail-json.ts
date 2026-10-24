@@ -160,13 +160,11 @@ function companySchoolDetails(program: Program): Partial<Program> {
 function persistCompanySchoolRegistrationOverlay(
   program: Program
 ): Record<string, unknown> | undefined {
-  const economy = resyncEconomyRegistrationOverlayFromProgram(
-    program,
-    program.registrationOverlay
-  )
+  const leftover = program.registrationOverlay ?? {}
+  const economy = resyncEconomyRegistrationOverlayFromProgram(program, leftover)
   const remarks = resolveParticipantRecruitmentRemarks(program)
   const notesNA = program.generalCommonInfo?.participantRecruitmentInfo?.notesNotApplicable
-  const overlay: Record<string, unknown> = { ...economy }
+  const overlay: Record<string, unknown> = { ...leftover, ...economy }
   if (remarks) {
     overlay['recruit.notes'] = remarks
     overlay['recruit.individual.notes'] = remarks
@@ -178,7 +176,7 @@ function persistCompanySchoolRegistrationOverlay(
     buildRegistrationOverlayForPersist({ ...program, registrationOverlay: overlay }),
     program.generalCommonInfo?.scheduleDetails
   )
-  return preserveCompanySchoolCompatibilityOverlay(rebuilt ?? {}, program.registrationOverlay)
+  return preserveCompanySchoolCompatibilityOverlay(rebuilt ?? {}, leftover)
 }
 
 export function serializeCompanySchoolServiceDetailJson(program: Program): string {

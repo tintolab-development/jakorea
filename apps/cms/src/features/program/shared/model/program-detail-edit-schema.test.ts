@@ -203,6 +203,41 @@ describe('program detail trained teachers boolean fields', () => {
     expect(patch.businessArea).toBe('진로취업')
   })
 
+  it('GET lowercase courseDeliveredBy/ipOwned 를 상세 폼 PascalCase 로 시드한다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      backendProgramType: 'TRAINED_TEACHER',
+      courseDeliveredBy: 'ja' as Program['courseDeliveredBy'],
+      ipOwned: 'ja',
+    })
+    expect(values.courseDeliveredBy).toBe('JA')
+    expect(values.ipOwned).toBe('JA')
+    expect(
+      programDetailTrainedTeachersCommonInfoEditSchema.safeParse({
+        ...values,
+        mainTitle: '대표 프로그램명',
+        titleEn: 'Program Title',
+        announcementTitle: '공고용 프로그램명',
+        detailedProgramId: '1001',
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        businessArea: '경제금융',
+        educationProcess: 'Digital',
+      }).success
+    ).toBe(true)
+  })
+
+  it('비어 있는 Course Delivered By 를 JA 로 채우지 않는다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      backendProgramType: 'TRAINED_TEACHER',
+      courseDeliveredBy: undefined,
+      ipOwned: undefined,
+    })
+    expect(values.courseDeliveredBy).toBeUndefined()
+    expect(values.ipOwned).toBeUndefined()
+  })
+
   it('programToDetailEditValues 는 partnerInvolvement null 을 false 로 정규화한다', () => {
     const values = programToDetailEditValues({
       ...program,

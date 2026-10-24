@@ -4,6 +4,7 @@ import { resetProgramRegistrationOverlay } from '@/features/template/ui/form-set
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 import {
   buildEconomyRegistrationOverlayFromProgram,
+  resolveCompanySchoolDetailSaveAnnouncementTitle,
   resyncEconomyRegistrationOverlayFromProgram,
   seedEconomyRegistrationOverlayFromProgram,
   readEconomyRegistrationOverlayForSave,
@@ -99,7 +100,7 @@ describe('buildEconomyRegistrationOverlayFromProgram → apply', () => {
     )
   })
 
-  it('임금 leftover overlay가 중첩 지급항목보다 이기지 않는다', () => {
+  it('지급항목 leftover ID는 라벨 역매핑보다 우선하고 커리큘럼은 Program이 이긴다', () => {
     const program = {
       ...baseProgram(),
       generalCommonInfo: {
@@ -120,7 +121,7 @@ describe('buildEconomyRegistrationOverlayFromProgram → apply', () => {
       program.registrationOverlay
     )
     expect(overlay['economyRegistration.educationCurriculum.session1.title']).toBe('최신 제목')
-    expect(overlay['economyRegistration.wageInfo.paymentItemValues']).not.toEqual(['p-leftover'])
+    expect(overlay['economyRegistration.wageInfo.paymentItemValues']).toEqual(['p-leftover'])
     expect(overlay['recruit.individual.notes']).toBeUndefined()
   })
 
@@ -150,5 +151,29 @@ describe('buildEconomyRegistrationOverlayFromProgram → apply', () => {
     expect(overlay['economyRegistration.kpi.dispatchedSchool']).toBeNull()
     expect(overlay['economyRegistration.kpi.dispatchedClass']).toBeNull()
     expect(overlay['economyRegistration.educationCurriculum.session1.title']).toBe('단원1')
+  })
+
+  it('상세 저장 공고명은 overlay dirty가 폼 stale보다 이기고, 폼 dirty는 overlay 원본보다 이긴다', () => {
+    expect(
+      resolveCompanySchoolDetailSaveAnnouncementTitle({
+        formAnnouncement: 'RHF-B-공고명',
+        overlayAnnouncement: 'RHF-B-공고명-PATCH',
+        programAnnouncement: 'RHF-B-공고명',
+      })
+    ).toBe('RHF-B-공고명-PATCH')
+    expect(
+      resolveCompanySchoolDetailSaveAnnouncementTitle({
+        formAnnouncement: '공고명만 변경',
+        overlayAnnouncement: 'RHF-B-공고명',
+        programAnnouncement: 'RHF-B-공고명',
+      })
+    ).toBe('공고명만 변경')
+    expect(
+      resolveCompanySchoolDetailSaveAnnouncementTitle({
+        formAnnouncement: 'RHF-B-공고명',
+        overlayAnnouncement: '',
+        programAnnouncement: 'RHF-B-공고명',
+      })
+    ).toBe('')
   })
 })

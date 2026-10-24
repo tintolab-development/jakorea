@@ -14,6 +14,7 @@ import {
 import {
   applyCompanySchoolRhfOverlayRecord,
   createDefaultCompanySchoolRegistrationRhfValues,
+  readCompanySchoolRhfOverlayValue,
   type CompanySchoolRegistrationRhfValues,
 } from './registration-rhf-values'
 
@@ -49,6 +50,19 @@ describe('1사1교 등록 overlay intercept', () => {
   afterEach(() => {
     registerCompanySchoolRegistrationRhf(null)
     resetProgramRegistrationOverlayStoreForTests()
+  })
+
+  it('담당자 ID overlay snapshot은 동일 값이면 참조가 유지된다', () => {
+    const values = createDefaultCompanySchoolRegistrationRhfValues()
+    const first = readCompanySchoolRhfOverlayValue(
+      values,
+      'economyRegistration.basicInfo.managerContactIds'
+    )
+    const second = readCompanySchoolRhfOverlayValue(
+      values,
+      'economyRegistration.basicInfo.managerContactIds'
+    )
+    expect(first).toBe(second)
   })
 
   it('공통정보 patch는 Overlay store가 아니라 RHF로 간다', () => {
