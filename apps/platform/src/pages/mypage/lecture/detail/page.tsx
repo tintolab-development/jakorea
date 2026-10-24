@@ -32,6 +32,7 @@ import {
   type ProgramApplicationType,
 } from '@/features/mypage'
 import { resolveInstructorAvailableScheduleLines } from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
+import { LectureReportPanel } from '@/features/mypage/education/schedules/ui/lecture-report-panel'
 import { programDetailToPreferredScheduleLookup } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
 import { resolveLectureListBackPath } from '@/features/mypage/lecture'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
@@ -68,15 +69,11 @@ function isActivitySection(value: string): value is EducationActivitySection {
   return (
     value === 'notice' ||
     value === 'schedule' ||
+    value === 'lecture-report' ||
     value === 'survey' ||
     value === 'satisfaction' ||
     value === 'settlement'
   )
-}
-
-function readAppliedSection(search = window.location.search): AppliedSection {
-  const value = new URLSearchParams(search).get('section')
-  return value === 'application' ? 'application' : 'program'
 }
 
 function readActivitySection(
@@ -120,7 +117,7 @@ export function MypageLectureDetailPage() {
   const routeApplicationType = readLectureApplicationType(applicationType)
   const remoteDetailEnabled = isRemoteApiConfigured() && routeApplicationType != null
   const [isAuthReady, setIsAuthReady] = useState(false)
-  const [section, setSection] = useState(readSection)
+  const section = readSection(location.search)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const cancelMutation = useCancelMyProgramApplicationMutation()
@@ -170,9 +167,10 @@ export function MypageLectureDetailPage() {
             detailCase: program.detailCase,
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
+            lectureReportVisible: routeApplicationType === 'INSTRUCTOR',
           }
         : null,
-    [program],
+    [program, routeApplicationType],
   )
 
   const inProgressTabItems = useMemo(
@@ -203,14 +201,14 @@ export function MypageLectureDetailPage() {
     if (!getDevAuthLoggedIn()) {
       navigate(
         resolveLoginRequiredPath(
-          lectureApplicationDetailPath(applicationId || 'unknown', routeApplicationType ?? undefined),
+          `${lectureApplicationDetailPath(applicationId || 'unknown', routeApplicationType ?? undefined)}${location.search}`,
         ),
       )
       return
     }
 
     setIsAuthReady(true)
-  }, [applicationId, navigate, routeApplicationType])
+  }, [applicationId, location.search, navigate, routeApplicationType])
 
   useEffect(() => {
     if (application && !isInstructorRoleApplication(application)) {
@@ -219,41 +217,6 @@ export function MypageLectureDetailPage() {
       })
     }
   }, [application, location.search, navigate])
-
-  useEffect(() => {
-    const onPopState = () => {
-      setSection(readSection())
-    }
-    window.addEventListener('popstate', onPopState)
-    return () => window.removeEventListener('popstate', onPopState)
-  }, [])
-
-  useEffect(() => {
-    if (isWithdrawnDuring) {
-      const fallback = withdrawnDuringKeys[0] ?? 'schedule'
-      if (!isActivitySection(section) || !withdrawnDuringKeys.includes(section)) {
-        setSection(fallback)
-      }
-      return
-    }
-    if (isActivityStatus) {
-      const fallback = inProgressKeys[0] ?? 'notice'
-      if (!isActivitySection(section) || !inProgressKeys.includes(section)) {
-        setSection(fallback)
-      }
-      return
-    }
-    if (isProgramApplicationStatus && !isAppliedSection(section)) {
-      setSection(readAppliedSection())
-    }
-  }, [
-    isActivityStatus,
-    isProgramApplicationStatus,
-    isWithdrawnDuring,
-    section,
-    inProgressKeys,
-    withdrawnDuringKeys,
-  ])
 
   const handleBack = () => {
     navigate(resolveLectureListBackPath(location.state), { replace: true })
@@ -276,12 +239,13 @@ export function MypageLectureDetailPage() {
     } else {
       nextSection = next === 'application' ? 'application' : 'program'
     }
-    setSection(nextSection)
     const nextPath = buildDetailPath(applicationId, nextSection, application?.applicationType)
-    const currentPath = `${window.location.pathname}${window.location.search}`
-    if (nextPath !== currentPath) {
-      window.history.replaceState(null, '', nextPath)
-    }
+    const nextUrl = new URL(nextPath, window.location.origin)
+    const nextParams = new URLSearchParams(location.search)
+    if (nextSection === 'program' || nextSection === 'notice') nextParams.delete('section')
+    else nextParams.set('section', nextSection)
+    nextUrl.search = nextParams.toString()
+    navigate(`${nextUrl.pathname}${nextUrl.search}`)
   }
 
   const handleConfirmCancel = () => {
@@ -403,16 +367,24 @@ export function MypageLectureDetailPage() {
     }
     if (active === 'schedule') {
       return (
-        <EducationSchedulePanel
-          programId={program.id}
-          applicationType={routeApplicationType}
-          applicationId={application.id}
-          lastParticipatedSession={
-            isWithdrawnDuring ? application.lastParticipatedSession : undefined
-          }
-          listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
-        />
+        <>
+          <PFButton type="button" variant="tertiary" size="large" onClick={() => handleSectionChange('lecture-report')}>
+            강의보고서 탭으로 이동
+          </PFButton>
+          <EducationSchedulePanel
+            programId={program.id}
+            applicationType={routeApplicationType}
+            applicationId={application.id}
+            lastParticipatedSession={
+              isWithdrawnDuring ? application.lastParticipatedSession : undefined
+            }
+            listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
+          />
+        </>
       )
+    }
+    if (active === 'lecture-report' && routeApplicationType === 'INSTRUCTOR') {
+      return <LectureReportPanel programId={Number(program.id)} instructorProgram={program.programAudience === 'organization'} />
     }
     if (active === 'survey') {
       return (
