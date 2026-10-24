@@ -20,7 +20,7 @@
   flex-shrink: 0;
   color: inherit;
   text-decoration: none;
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-24);
 }
 
 .mediaLink:focus-visible {
@@ -37,7 +37,7 @@
   justify-content: center;
   overflow: hidden;
   aspect-ratio: 126 / 71;
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-24);
   background: #000;
   box-shadow: 0 0 140.4px 0 rgb(0 0 0 / 6%) inset;
 }
@@ -48,6 +48,16 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
+}
+
+.categoryBadge {
+  height: 30px;
+  padding: 0 var(--spacing-12);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .content {
