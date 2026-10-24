@@ -879,6 +879,52 @@ describe('mapTrainedTeacherDetailToProgram detailedProgramId round-trip', () => 
   })
 })
 
+describe('mapTrainedTeacherDetailToProgram GET 표시 정본', () => {
+  it('serviceDetailJson 참여자 유형을 하드코딩하지 않고 type으로 교육 형태를 유지한다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186340',
+      programType: 'TRAINED_TEACHER',
+      type: 'offline',
+      ips: 'Succeed',
+      educationProcess: 'digital_computer',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          generalParticipantTypes: ['school_institution'],
+          generalCommonInfo: {
+            ipsScheduleDetail: 'perSchedule',
+            curriculumSessions: [
+              { sessionLabel: '1차시', ipsTypeSummary: 'Prepare | 해당없음' },
+              { sessionLabel: '2차시', ipsTypeSummary: 'Succeed | Award (시상)' },
+            ],
+          },
+        },
+      }),
+    })
+    expect(mapped.type).toBe('offline')
+    expect(mapped.ips).toBe('Succeed')
+    expect(mapped.educationProcess).toBe('digital_computer')
+    expect(mapped.generalParticipantTypes).toEqual(['school_institution'])
+    expect(mapped.generalCommonInfo?.curriculumSessions).toEqual([
+      { sessionLabel: '1차시', ipsTypeSummary: 'Prepare | 해당없음' },
+      { sessionLabel: '2차시', ipsTypeSummary: 'Succeed | Award (시상)' },
+    ])
+  })
+
+  it('참여자 유형이 없으면 학교/기관·교사/강사를 채우지 않는다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186340',
+      programType: 'TRAINED_TEACHER',
+      type: 'offline',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: { generalCommonInfo: {} },
+      }),
+    })
+    expect(mapped.generalParticipantTypes).toBeUndefined()
+  })
+})
+
 describe('mapTrainedTeacherDetailToProgram typed vs nested snapshot', () => {
   it('top-level mainTitle/ips/district가 stale nested snapshot을 덮는다', () => {
     const mapped = mapTrainedTeacherDetailToProgram({

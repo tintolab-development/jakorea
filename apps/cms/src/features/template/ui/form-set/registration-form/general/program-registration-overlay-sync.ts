@@ -238,7 +238,7 @@ export function readTrainedTeachersRegistrationOverlaySponsorContactIds(): strin
 
 export function readTrainedTeachersRegistrationOverlayProgramTitleKo(): string {
   const rhf = peekTrainedTeachersRegistrationRhf()
-  if (rhf != null) return rhf.getValues().title
+  if (rhf != null) return rhf.getValues().mainTitle
   return readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }
 
@@ -350,7 +350,7 @@ export function readStoredRegistrationProgramTitleKo(
 ): string {
   if (variant === 'economy') return readEconomyRegistrationOverlayProgramTitleKo()
   if (variant === 'trainedTeachers' && peekTrainedTeachersRegistrationRhf() != null) {
-    return peekTrainedTeachersRegistrationRhf()?.getValues().title.trim() || fallback.trim()
+    return peekTrainedTeachersRegistrationRhf()?.getValues().mainTitle.trim() || fallback.trim()
   }
   if (variant === 'general' && peekGeneralRegistrationWizardRhf() != null) {
     const fromRhf = peekGeneralRegistrationWizardRhf()?.getValues().programTitleKo
@@ -376,7 +376,6 @@ export function patchRegistrationOverlayProgramTitleKo(
   if (variant === 'trainedTeachers') {
     const rhf = peekTrainedTeachersRegistrationRhf()
     if (rhf != null) {
-      rhf.setPath('title', title, { shouldDirty: true })
       rhf.setPath('mainTitle', title, { shouldDirty: true })
       return
     }
@@ -388,6 +387,20 @@ export function patchRegistrationOverlayProgramTitleKo(
   patchProgramRegistrationOverlay({
     [GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]: title,
   })
+}
+
+/**
+ * 세션 메타 `programTitleKo` 복원. TT 제목 정본은 canonical snapshot이므로
+ * 레거시 메타로 RHF `mainTitle`을 덮지 않는다.
+ */
+export function hydrateRegistrationDraftProgramTitleKo(
+  variant: ProgramRegistrationFormVariant,
+  titleKo: string | undefined
+): void {
+  if (variant === 'trainedTeachers') return
+  const trimmed = titleKo?.trim()
+  if (!trimmed) return
+  patchRegistrationOverlayProgramTitleKo(variant, trimmed)
 }
 
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {

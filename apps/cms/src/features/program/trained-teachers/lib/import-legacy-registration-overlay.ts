@@ -119,6 +119,17 @@ function extractCommon(
   }
 }
 
+/** canonical `mainTitle`이 비어 있을 때만 레거시 editorState.programTitleKo를 쓴다. */
+export function applyLegacyProgramTitleKoFallback(
+  common: TrainedTeachersRegistrationCommonCanonical,
+  programTitleKo?: string | null
+): TrainedTeachersRegistrationCommonCanonical {
+  if (common.mainTitle.trim()) return common
+  const fallback = programTitleKo?.trim() ?? ''
+  if (!fallback) return common
+  return { ...common, mainTitle: fallback }
+}
+
 export function importLegacyOverlayToTrainedTeachersCanonical(args: {
   id: string
   editor: TrainedTeachersRegistrationEditorMeta

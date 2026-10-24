@@ -48,8 +48,12 @@ import { buildGeneralProgramCreateFromWizardRhf } from '@/features/program/gener
 import {
   buildTrainedTeachersCanonicalFromRhf,
   buildTrainedTeachersProgramFromRhf,
+  trainedTeachersWizardDraftSettingsJson,
 } from '@/features/program/trained-teachers/lib/build-registration-create-from-canonical'
-import { importLegacyOverlayToTrainedTeachersCanonical } from '@/features/program/trained-teachers/lib/import-legacy-registration-overlay'
+import {
+  applyLegacyProgramTitleKoFallback,
+  importLegacyOverlayToTrainedTeachersCanonical,
+} from '@/features/program/trained-teachers/lib/import-legacy-registration-overlay'
 import { TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY } from '@/features/program/trained-teachers/lib/registration-canonical-types'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import {
@@ -82,6 +86,7 @@ import { companySchoolRecruitEditorState } from '@/features/program/1c-1s/lib/re
 import { companySchoolApplicationEditorState } from '@/features/program/1c-1s/lib/application-form-state'
 import { importLegacyTrainedTeachersApplicationOverlay } from '@/features/program/trained-teachers/lib/registration-rhf-application'
 import {
+  createDefaultTrainedTeachersRegistrationRhfValues,
   isTrainedTeachersRegistrationCanonicalSnapshot,
   omitTrainedTeachersCommonInfoOverlayKeys,
   rhfValuesFromTrainedTeachersCanonicalCommon,
@@ -696,7 +701,11 @@ export function useProgramRegistrationEditor(
       setProgramTitleKo(state.programTitleKo ?? '')
       // 일반 위저드 제목 SSOT는 RHF. 빈 editorState로 overlay/RHF를 지우면
       // 임시저장 settingsJson 복원 전에 국문 대표명이 사라진다.
-      if (programRegistrationFormVariant !== 'general') {
+      // TT 제목 정본은 canonical snapshot — 레거시 programTitleKo로 mainTitle을 덮지 않는다.
+      if (
+        programRegistrationFormVariant !== 'general' &&
+        programRegistrationFormVariant !== 'trainedTeachers'
+      ) {
         patchRegistrationOverlayProgramTitleKo(
           programRegistrationFormVariant,
           state.programTitleKo ?? ''
@@ -725,6 +734,12 @@ export function useProgramRegistrationEditor(
         peekGeneralRegistrationWizardRhf()?.reset(createDefaultRegistrationWizardUiValues(), {
           keepDirty: false,
         })
+      }
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        peekTrainedTeachersRegistrationRhf()?.reset(
+          createDefaultTrainedTeachersRegistrationRhfValues(),
+          { keepDirty: false }
+        )
       }
     })
   }, [applyEditorStateSnapshot, programRegistrationFormVariant, seedParagraphIds])
@@ -886,7 +901,10 @@ export function useProgramRegistrationEditor(
                   })
                   rhf.reset(
                     rhfValuesFromTrainedTeachersCanonicalCommon(
-                      imported.common,
+                      applyLegacyProgramTitleKoFallback(
+                        imported.common,
+                        restored.programTitleKo
+                      ),
                       imported.editor,
                       undefined,
                       imported.recruit,
@@ -1668,17 +1686,7 @@ export function useProgramRegistrationEditor(
                 },
               }
             : programRegistrationFormVariant === 'trainedTeachers'
-              ? (() => {
-                  const ttRhf = peekTrainedTeachersRegistrationRhf()
-                  if (ttRhf == null) return undefined
-                  return {
-                    [TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY]:
-                      buildTrainedTeachersCanonicalFromRhf({
-                        id: registrationPendingSnapshotId('trainedTeachers'),
-                        values: ttRhf.getValues(),
-                      }),
-                  }
-                })()
+              ? trainedTeachersWizardDraftSettingsJson()
               : programRegistrationFormVariant === 'economy'
                 ? (() => {
                     const csRhf = peekCompanySchoolRegistrationRhf()

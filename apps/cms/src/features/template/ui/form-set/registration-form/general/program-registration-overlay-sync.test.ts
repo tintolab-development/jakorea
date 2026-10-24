@@ -6,8 +6,14 @@ import {
 } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 import { createDefaultRegistrationWizardUiValues } from '@/features/program/general/lib/overlay-phase1/registration-wizard-ui-values'
 import {
+  registerTrainedTeachersRegistrationRhf,
+  type TrainedTeachersRegistrationRhfApi,
+} from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { createDefaultTrainedTeachersRegistrationRhfValues } from '@/features/program/trained-teachers/lib/registration-rhf-values'
+import {
   getProgramRegistrationOverlayRecord,
   getProgramRegistrationOverlayVersion,
+  hydrateRegistrationDraftProgramTitleKo,
   patchProgramRegistrationOverlay,
   patchRegistrationOverlayProgramTitleKo,
   peekProgramRegistrationOverlayRecord,
@@ -16,6 +22,7 @@ import {
   readGeneralRegistrationOverlaySponsorId,
   readRegistrationOverlayProgramTitleKo,
   readStoredRegistrationProgramTitleKo,
+  readTrainedTeachersRegistrationOverlayProgramTitleKo,
   resetProgramRegistrationOverlayStoreForTests,
   setProgramRegistrationOverlayScope,
   subscribeProgramRegistrationOverlayKey,
@@ -25,6 +32,7 @@ import {
 
 afterEach(() => {
   registerGeneralRegistrationWizardRhf(null)
+  registerTrainedTeachersRegistrationRhf(null)
   resetProgramRegistrationOverlayStoreForTests()
 })
 
@@ -185,4 +193,57 @@ describe('readRegistrationOverlayProgramTitleKo', () => {
     patchRegistrationOverlayProgramTitleKo('economy', '')
     expect(readRegistrationOverlayProgramTitleKo('economy')).toBe('디지털 리터러시 교실')
   })
+
+  it('TT RHF 활성 시 국문 대표명은 mainTitle이다', () => {
+    const values = createDefaultTrainedTeachersRegistrationRhfValues()
+    values.mainTitle = '임시저장-대표명-A'
+    values.announcementTitle = '임시저장-공고명-B'
+    values.title = '임시저장-공고명-B'
+    registerTrainedTeachersRegistrationRhf(mockTtRhf(values))
+    expect(readTrainedTeachersRegistrationOverlayProgramTitleKo()).toBe('임시저장-대표명-A')
+    expect(readStoredRegistrationProgramTitleKo('trainedTeachers')).toBe('임시저장-대표명-A')
+  })
+
+  it('TT patch는 mainTitle만 바꾸고 title·announcementTitle을 건드리지 않는다', () => {
+    const values = createDefaultTrainedTeachersRegistrationRhfValues()
+    values.mainTitle = '대표명-원본'
+    values.announcementTitle = '공고명-원본'
+    values.title = '공고명-원본'
+    const rhf = mockTtRhf(values)
+    registerTrainedTeachersRegistrationRhf(rhf)
+    patchRegistrationOverlayProgramTitleKo('trainedTeachers', '세션메타-공고명')
+    expect(rhf.getValues().mainTitle).toBe('세션메타-공고명')
+    expect(rhf.getValues().title).toBe('공고명-원본')
+    expect(rhf.getValues().announcementTitle).toBe('공고명-원본')
+  })
+
+  it('TT 세션 메타 hydrate는 canonical mainTitle을 덮지 않는다', () => {
+    const values = createDefaultTrainedTeachersRegistrationRhfValues()
+    values.mainTitle = '임시저장-대표명-A'
+    values.announcementTitle = '임시저장-공고명-B'
+    const rhf = mockTtRhf(values)
+    registerTrainedTeachersRegistrationRhf(rhf)
+    hydrateRegistrationDraftProgramTitleKo('trainedTeachers', '임시저장-공고명-B')
+    expect(rhf.getValues().mainTitle).toBe('임시저장-대표명-A')
+    expect(rhf.getValues().announcementTitle).toBe('임시저장-공고명-B')
+  })
 })
+
+function mockTtRhf(
+  values = createDefaultTrainedTeachersRegistrationRhfValues()
+): TrainedTeachersRegistrationRhfApi {
+  let current = { ...values }
+  return {
+    getValues: () => current,
+    getPath: path => (current as Record<string, unknown>)[path],
+    setPath: (path, value) => {
+      current = { ...current, [path]: value }
+    },
+    reset: next => {
+      current = next
+    },
+    applyOverlayRecord: vi.fn(),
+    isDirty: () => false,
+    markBaseline: vi.fn(),
+  }
+}

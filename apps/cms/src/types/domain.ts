@@ -661,6 +661,8 @@ export interface Program {
   /** 일반 프로그램 캘린더 — 일정 시작·종료 시각 (HH:mm) */
   startTime?: string
   endTime?: string
+  /** TT B GET typed 값과 configJson 불일치 — 화면 경고용. PATCH에 실리지 않는다. */
+  trainedTeacherInfoDetailWarnings?: string[]
   createdAt: DateValue
   updatedAt: DateValue
   /** 등록자 표시명 (목록/상세 표시용, API·mock에서 채움) */

@@ -162,6 +162,7 @@ const ALLOWED_GET_EXACT = new Set([
   '/api/admin/form-templates',
   '/api/admin/form-templates/create-options',
   '/api/admin/notifications',
+  '/api/admin/dashboard/notifications/count',
   '/api/admin/me/dashboard-preferences',
   '/api/admin/me/dashboard-shortcut-badges',
 ])
@@ -261,6 +262,10 @@ export async function installIsolatedRegistrationNetwork(page: Page): Promise<Is
 
     if (method === 'GET' && pathname === '/api/admin/me') {
       await route.fulfill(json(adminMe()))
+      return
+    }
+    if (method === 'GET' && pathname === '/api/admin/dashboard/notifications/count') {
+      await route.fulfill(json({ count: 0, unreadCount: 0 }))
       return
     }
     if (method === 'GET' && pathname === '/api/admin/programs') {
