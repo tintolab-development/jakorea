@@ -73,6 +73,9 @@ export interface PaymentOrderCalculationBasisDetailTransportInstructor {
   totalWon: number
 }
 
+/** 거리 스냅샷·basisJson이 모두 없을 때 교통비 상세 안내 (F3-2) */
+export const DISTANCE_SNAPSHOT_UNLINKED_NOTICE = '거리 스냅샷 미연결 — 산출 금액만 표시'
+
 /** 정산 거리 스냅샷 API 기반 교통비 상세 */
 export interface PaymentOrderCalculationBasisDetailTransportSnapshot {
   layout: 'transportSnapshot'
@@ -84,6 +87,8 @@ export interface PaymentOrderCalculationBasisDetailTransportSnapshot {
   fuelCostWon?: number
   calculatedTransportAmount?: number
   snapshotAt?: string
+  /** true면 거리 스냅샷이 없어 산출 금액만 표시한다. */
+  distanceSnapshotUnlinked?: boolean
 }
 
 export interface PaymentOrderCalculationBasisDetailLodgingReceipt {
@@ -262,14 +267,14 @@ export function mapTransportationSnapshotToBasisDetail(
 ): PaymentOrderCalculationBasisDetailTransportSnapshot | undefined {
   if (!snapshot) return undefined
 
-  const hasValue =
+  const hasDistanceOrProvider =
     Boolean(snapshot.provider?.trim()) ||
     snapshot.oneWayDistanceKm != null ||
     snapshot.roundTripDistanceKm != null ||
     snapshot.tollAmount != null ||
     Boolean(snapshot.fuelType?.trim()) ||
-    snapshot.calculatedTransportAmount != null ||
     Boolean(snapshot.snapshotAt)
+  const hasValue = hasDistanceOrProvider || snapshot.calculatedTransportAmount != null
   if (!hasValue) return undefined
 
   return {
@@ -281,6 +286,7 @@ export function mapTransportationSnapshotToBasisDetail(
     fuelType: snapshot.fuelType?.trim() || undefined,
     calculatedTransportAmount: snapshot.calculatedTransportAmount,
     snapshotAt: snapshot.snapshotAt,
+    distanceSnapshotUnlinked: !hasDistanceOrProvider,
   }
 }
 
@@ -332,6 +338,7 @@ export function mapTransportationCalculationDetailToBasisDetail(
       )
     if (!isTransportation) continue
 
+    // fuelPricePerLiter는 백엔드 B2 합의 후 매핑한다.
     const mapped = {
       layout: 'transportSnapshot' as const,
       provider: stringValue(recordValue(candidate, 'provider')),
@@ -344,16 +351,21 @@ export function mapTransportationCalculationDetailToBasisDetail(
       snapshotAt: stringValue(recordValue(candidate, 'snapshotAt')),
     }
 
-    const hasValue =
+    const hasDistanceOrProvider =
       mapped.provider != null ||
       mapped.oneWayDistanceKm != null ||
       mapped.roundTripDistanceKm != null ||
       mapped.tollAmount != null ||
       mapped.fuelType != null ||
       mapped.fuelCostWon != null ||
-      mapped.calculatedTransportAmount != null ||
       mapped.snapshotAt != null
-    if (hasValue) return mapped
+    const hasValue = hasDistanceOrProvider || mapped.calculatedTransportAmount != null
+    if (hasValue) {
+      return {
+        ...mapped,
+        distanceSnapshotUnlinked: !hasDistanceOrProvider,
+      }
+    }
   }
 
   return undefined
@@ -520,21 +532,21 @@ function resolveLectureFeeTier(
 export function buildLectureFeeTierBasisDetail(
   lectureFeeStandardTitle: string,
   lectureFee: number,
-  sessionStart: number
+  lectureTimeDisplay = '-'
 ): PaymentOrderCalculationBasisDetailLectureFeeTier {
   const trimmed = lectureFeeStandardTitle.trim()
-  const categoryLabel = isGenericLectureFeeCategoryLabel(trimmed) ? '2급 강사비' : trimmed
+  const categoryLabel = isGenericLectureFeeCategoryLabel(trimmed) ? '-' : trimmed
   return {
     layout: 'lectureFeeTier',
     tier: resolveLectureFeeTier(categoryLabel),
     categoryLabel,
     feeAssessmentWon: lectureFee,
-    lectureTimeDisplay: `${sessionStart}차시`,
+    lectureTimeDisplay,
     totalWon: lectureFee,
   }
 }
 
-const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강의비', '—'])
+const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강의비', '—', '-'])
 
 export function isGenericLectureFeeCategoryLabel(title: string | undefined): boolean {
   const normalized = title?.trim()
@@ -551,25 +563,25 @@ export function isGeminiLectureFeeTitle(title: string | undefined): boolean {
 
 export function buildLectureFeeGeminiBasisDetail(
   lectureFee: number,
-  sessionStart: number
+  lectureTimeDisplay = '-'
 ): PaymentOrderCalculationBasisDetailLectureFeeGemini {
   return {
     layout: 'lectureFeeGemini',
     categoryLabel: GEMINI_LECTURE_FEE_TITLE,
-    lectureTimeDisplay: `${sessionStart}차시`,
+    lectureTimeDisplay,
     feeAssessmentWon: lectureFee,
   }
 }
 
 export function buildLectureFeeSpecialBasisDetail(
   lectureFee: number,
-  sessionStart: number
+  lectureTimeDisplay = '-'
 ): PaymentOrderCalculationBasisDetailLectureFeeSpecial {
   return {
     layout: 'lectureFeeSpecial',
     categoryLabel: SPECIAL_LECTURE_FEE_TITLE,
     feeAssessmentWon: lectureFee,
-    lectureTimeDisplay: `${sessionStart}차시`,
+    lectureTimeDisplay,
     totalWon: lectureFee,
   }
 }
@@ -577,18 +589,18 @@ export function buildLectureFeeSpecialBasisDetail(
 export function buildLectureFeeBasisDetailFromStandardTitle(
   lectureFeeStandardTitle: string,
   lectureFee: number,
-  sessionStart: number
+  lectureTimeDisplay = '-'
 ):
   | PaymentOrderCalculationBasisDetailLectureFeeTier
   | PaymentOrderCalculationBasisDetailLectureFeeSpecial
   | PaymentOrderCalculationBasisDetailLectureFeeGemini {
   if (isSpecialLectureFeeTitle(lectureFeeStandardTitle)) {
-    return buildLectureFeeSpecialBasisDetail(lectureFee, sessionStart)
+    return buildLectureFeeSpecialBasisDetail(lectureFee, lectureTimeDisplay)
   }
   if (isGeminiLectureFeeTitle(lectureFeeStandardTitle)) {
-    return buildLectureFeeGeminiBasisDetail(lectureFee, sessionStart)
+    return buildLectureFeeGeminiBasisDetail(lectureFee, lectureTimeDisplay)
   }
-  return buildLectureFeeTierBasisDetail(lectureFeeStandardTitle, lectureFee, sessionStart)
+  return buildLectureFeeTierBasisDetail(lectureFeeStandardTitle, lectureFee, lectureTimeDisplay)
 }
 
 export function lectureFeeLineDescriptionFromStandardTitle(
@@ -606,13 +618,6 @@ export function lectureFeeLineDescriptionFromStandardTitle(
   }
   const short = lectureFeeStandardTitle.replace(/ 강사비$/, '')
   return `프로그램 1회 강의비 (${short})`
-}
-
-export function parseLectureSessionStartFromDisplay(sessionDisplay: string): number {
-  const match = sessionDisplay.match(/(\d+)/)
-  if (!match) return 1
-  const n = Number.parseInt(match[1], 10)
-  return Number.isFinite(n) && n > 0 ? n : 1
 }
 
 function hashLineSeed(lineId: string): number {
@@ -674,7 +679,17 @@ function resolveLectureFeeStandardTitleForRow(
       return fromDetail
     }
   }
-  return '2급 강사비'
+  return '-'
+}
+
+function resolveLectureTimeDisplayForRow(row: {
+  basisDetail?: PaymentOrderCalculationBasisDetail
+}): string {
+  if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
+    const fromDetail = row.basisDetail.lectureTimeDisplay.trim()
+    if (fromDetail && fromDetail !== '-') return fromDetail
+  }
+  return '-'
 }
 
 /** 행 payload·기본정보로 산정 기준 상세 fallback 생성 (mock/API 공통) */
@@ -689,8 +704,6 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
   },
   context?: PaymentOrderCalculationBasisDetailResolveContext | null
 ): PaymentOrderCalculationBasisDetail | undefined {
-  const sessionStart = parseLectureSessionStartFromDisplay(row.lectureSessionDisplay)
-
   // 표시용 원격 snapshot은 기존 호환 fallback보다 우선한다.
   if (row.basisDetail?.layout === 'remote') {
     return row.basisDetail
@@ -700,8 +713,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return row.basisDetail
   }
 
-  // 원격 응답에 교통비 상세 스냅샷이 누락되어도 행 금액만으로 모달을 열 수 있다.
-  // 거리·업체 등 미제공 값은 모달에서 '-'로 표시하고, 금액은 정산 행의 원본 값을 사용한다.
+  // 원격 응답에 교통비 스냅샷·basisJson이 없으면 산출 금액만 표시하고 미연결 안내를 띄운다.
   if (context?.remoteData && (row.kind === 'travel' || row.itemLabel === '교통비')) {
     return mapTransportationSnapshotToBasisDetail({
       calculatedTransportAmount: row.amount,
@@ -712,7 +724,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return buildLectureFeeBasisDetailFromStandardTitle(
       resolveLectureFeeStandardTitleForRow(row, context),
       row.amount,
-      sessionStart
+      resolveLectureTimeDisplayForRow(row)
     )
   }
 

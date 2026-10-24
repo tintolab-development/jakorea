@@ -1,4 +1,7 @@
-import type { PaymentOrderCalculationBasisDetailTransportSnapshot } from './payment-order-calculation-basis-detail'
+import {
+  DISTANCE_SNAPSHOT_UNLINKED_NOTICE,
+  type PaymentOrderCalculationBasisDetailTransportSnapshot,
+} from './payment-order-calculation-basis-detail'
 import {
   BasisDetailInfoForm,
   BasisDetailInfoFormRow,
@@ -16,6 +19,23 @@ export function PaymentOrderCalculationBasisDetailTransportSnapshotView({
 }: {
   detail: PaymentOrderCalculationBasisDetailTransportSnapshot
 }) {
+  if (detail.distanceSnapshotUnlinked) {
+    return (
+      <BasisDetailInfoForm title="교통비 산정 기준">
+        <BasisDetailInfoFormRow label="거리 스냅샷">
+          <BasisDetailReadOnlyValue>{DISTANCE_SNAPSHOT_UNLINKED_NOTICE}</BasisDetailReadOnlyValue>
+        </BasisDetailInfoFormRow>
+        <BasisDetailInfoFormRow label="산출 교통비">
+          <BasisDetailReadOnlyValue>
+            {detail.calculatedTransportAmount == null
+              ? '-'
+              : formatPaymentOrderCalculationWonPlain(detail.calculatedTransportAmount)}
+          </BasisDetailReadOnlyValue>
+        </BasisDetailInfoFormRow>
+      </BasisDetailInfoForm>
+    )
+  }
+
   return (
     <BasisDetailInfoForm title="교통비 산정 기준">
       <BasisDetailInfoFormRow label="거리 산정 업체">

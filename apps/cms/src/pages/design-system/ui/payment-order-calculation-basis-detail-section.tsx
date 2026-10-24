@@ -22,7 +22,7 @@ type BasisDetailDemoItem = {
 }
 
 function buildPaymentOrderCalculationBasisDetailDemos(): BasisDetailDemoItem[] {
-  const lectureFeeTier2 = buildLectureFeeTierBasisDetail('2급 강사비', 915000, 1)
+  const lectureFeeTier2 = buildLectureFeeTierBasisDetail('2급 강사비', 915000, '1차시')
   if (!lectureFeeTier2) {
     throw new Error('lecture fee tier demo payload missing')
   }
@@ -31,7 +31,7 @@ function buildPaymentOrderCalculationBasisDetailDemos(): BasisDetailDemoItem[] {
     {
       id: 'lecture-fee-tier-1',
       label: '강사비 1급',
-      detail: buildLectureFeeTierBasisDetail('1급 강사비', 500000, 1)!,
+      detail: buildLectureFeeTierBasisDetail('1급 강사비', 500000, '1차시')!,
     },
     {
       id: 'lecture-fee-tier-2',
@@ -41,17 +41,17 @@ function buildPaymentOrderCalculationBasisDetailDemos(): BasisDetailDemoItem[] {
     {
       id: 'lecture-fee-tier-3',
       label: '강사비 3급',
-      detail: buildLectureFeeTierBasisDetail('3급 강사비', 300000, 2)!,
+      detail: buildLectureFeeTierBasisDetail('3급 강사비', 300000, '2차시')!,
     },
     {
       id: 'lecture-fee-special',
       label: '특강 강사비',
-      detail: buildLectureFeeSpecialBasisDetail(915000, 1),
+      detail: buildLectureFeeSpecialBasisDetail(915000, '1차시'),
     },
     {
       id: 'lecture-fee-gemini',
       label: '제미나이 강사비',
-      detail: buildLectureFeeGeminiBasisDetail(170000, 2),
+      detail: buildLectureFeeGeminiBasisDetail(170000, '2차시'),
     },
     {
       id: 'transport-round-trip',
