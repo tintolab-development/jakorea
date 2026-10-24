@@ -177,6 +177,12 @@ export function getApiErrorHttpStatus(error: unknown): number | undefined {
   return typeof status === 'number' ? status : undefined
 }
 
+/** 409 또는 UJAT workflow status conflict — 재시도 없이 모달을 닫는다. */
+export function isApiWorkflowConflictError(error: unknown): boolean {
+  if (getApiErrorHttpStatus(error) === 409) return true
+  return getApiErrorCode(error) === 'UJAT_WORKFLOW_STATE_CONFLICT'
+}
+
 export function getApiErrorCode(error: unknown): string | undefined {
   if (!error || typeof error !== 'object' || !('response' in error)) return undefined
   const data = (error as { response?: { data?: unknown } }).response?.data

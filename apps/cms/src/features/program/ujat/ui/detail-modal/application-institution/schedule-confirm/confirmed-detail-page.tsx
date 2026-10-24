@@ -5,6 +5,7 @@ import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { postUjatScheduleChangeRequest } from '@/features/program/ujat/api/temporary-schedule-api'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { submitUjatScheduleConfirmRevisionRequest } from './submit-revision-request'
 import { shouldShowScheduleConfirmGuidanceNotes } from './types'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -148,18 +149,18 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
     async (payload: UjatScheduleConfirmRevisionRequestModalPayload) => {
       if (!row) return
       if (shouldUseUjatApplicationsRemoteApi() && programId) {
-        try {
-          await postUjatScheduleChangeRequest(String(programId), row.id, {
-            reason: payload.message || '학급 수 변경 요청',
-          })
-        } catch (error) {
-          await invalidate()
-          showAlert({
-            title: '수정 요청 실패',
-            content: readApiErrorAlertMessage(error, '수정 요청 전송에 실패했습니다. 다시 시도해 주세요.'),
-          })
-          return
-        }
+        await submitUjatScheduleConfirmRevisionRequest({
+          request: () =>
+            postUjatScheduleChangeRequest(String(programId), row.id, {
+              reason: payload.message || '학급 수 변경 요청',
+            }),
+          invalidate,
+          onStatusUpdated,
+          closeModal: () => setPendingRevisionRequest(false),
+          showAlert,
+          institutionName: row.institutionName,
+        })
+        return
       }
       void invalidate()
       onStatusUpdated()
