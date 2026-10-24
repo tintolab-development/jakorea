@@ -470,6 +470,10 @@
     },
     {
       "name": "기타 API",
+      "description": "Overlay 대체용 UJAT typed authoring contract"
+    },
+    {
+      "name": "기타 API",
       "description": "대시보드, 내정보, 일정, 회원탈퇴 화면 API"
     }
   ],

@@ -5,6 +5,8 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { DocumentSlotAnswers } from './documentSlotAnswers';
+import type { FormResponseFile } from './formResponseFile';
 
 /**
  * 한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | REVISED(수정요청·재제출). deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.
@@ -18,6 +20,8 @@ export interface DocumentSlot {
   canRevise?: boolean;
   hasFeedback?: boolean;
   formResponseId?: number;
+  answers?: DocumentSlotAnswers;
+  files?: FormResponseFile[];
   programFormBindingId?: number;
   templateVersionId?: number;
   contextType?: string;
