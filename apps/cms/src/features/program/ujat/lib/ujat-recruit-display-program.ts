@@ -11,6 +11,8 @@ import {
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
+import { toOperationCalendarDate } from '@/features/program/general/lib/general-program-recruitment-operation-period'
+import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   blankUjatVolunteerRecruitProgramFields,
   buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues,
@@ -26,6 +28,10 @@ import {
   pickRecruitmentCopyRow,
   writeRecruitmentRowCopy,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import {
+  typedFieldsFromRecruitmentFormValues,
+} from '@/features/program/ujat/lib/recruitment-typed-contract'
+import { announcementPublishedToFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 
 export type UjatRecruitDisplayKind = 'institution' | 'volunteer' | 'volunteer_h1' | 'volunteer_h2'
 
@@ -84,15 +90,39 @@ function applyUjatRecruitmentRowCanonicalFields(
     ...(contactEmail ? { inquiryEmail: contactEmail, contactEmail } : { inquiryEmail: '', contactEmail: '' }),
     ...(interviewStart ? { interviewStartDate: interviewStart } : { interviewStartDate: '' }),
     ...(interviewEnd ? { interviewEndDate: interviewEnd } : { interviewEndDate: '' }),
+    ...(hasOwnField(row, 'announcementPublished')
+      ? { announcementPublished: row.announcementPublished ?? undefined }
+      : {}),
+    ...(hasOwnField(row, 'noticeExposureTiming')
+      ? { noticeExposureTiming: row.noticeExposureTiming ?? undefined }
+      : {}),
+    ...(hasOwnField(row, 'remarksNotApplicable')
+      ? { notesNotApplicable: row.remarksNotApplicable === true }
+      : {}),
   }
   const participantInfo = {
     ...(program.generalCommonInfo?.participantRecruitmentInfo ?? {}),
     ...(contactName ? { contactOrganizationName: contactName, contactName } : { contactOrganizationName: '', contactName: '' }),
     ...(contactPhone ? { inquiryTel: contactPhone, contactPhone } : { inquiryTel: '', contactPhone: '' }),
     ...(contactEmail ? { inquiryEmail: contactEmail, contactEmail } : { inquiryEmail: '', contactEmail: '' }),
+    ...(hasOwnField(row, 'announcementPublished')
+      ? { announcementPublished: row.announcementPublished ?? undefined }
+      : {}),
+    ...(hasOwnField(row, 'remarksNotApplicable')
+      ? { notesNotApplicable: row.remarksNotApplicable === true }
+      : {}),
   }
   return {
     ...program,
+    ...(hasOwnField(row, 'volunteerTargets') && row.volunteerTargets
+      ? { volunteerTargets: row.volunteerTargets }
+      : {}),
+    ...(hasOwnField(row, 'documentPassAnnouncementAt')
+      ? { documentPassAnnouncementDate: row.documentPassAnnouncementAt ?? '' }
+      : {}),
+    ...(hasOwnField(row, 'finalPassAnnouncementAt')
+      ? { finalPassAnnouncementDate: row.finalPassAnnouncementAt ?? '' }
+      : {}),
     startDate: opStart ?? '',
     endDate: opEnd ?? '',
     interviewStartDate: interviewStart ?? '',
@@ -222,6 +252,218 @@ export function resolveUjatRecruitDisplayProgram(
   return fromRows
 }
 
+/**
+ * 활성 UJAT 모집 상세의 canonical 표시 모델.
+ *
+ * Form Version authoring/legacy import은 기존 overlay helper를 사용할 수 있지만,
+ * 이미 생성된 프로그램의 모집 탭은 GET `recruitments[]` 행만 읽어야 한다.
+ * 행이 없을 때는 과거 overlay나 다른 반기 행으로 보완하지 않고 빈 상태를 유지한다.
+ */
+export function resolveUjatRecruitCanonicalDisplayProgram(
+  program: Program,
+  kind: UjatRecruitDisplayKind
+): Program {
+  const fromRows = hydrateRecruitmentWindowsOntoProgram(program)
+  const half = volunteerHalfFromRecruitDisplayKind(kind)
+  const audience = kind === 'institution' ? 'participant' : 'volunteer'
+  const row =
+    audience === 'volunteer' && half
+      ? pickUjatVolunteerRecruitmentRow(fromRows, half)
+      : pickRecruitmentCopyRow(fromRows, audience, half ?? undefined)
+  if (!row) return fromRows
+
+  const withCopy = applyRecruitmentRowCopy(fromRows, audience, half ?? undefined)
+  return applyUjatRecruitmentRowCanonicalFields(withCopy, row, {
+    volunteerHalf: audience === 'volunteer',
+  })
+}
+
+/** 활성 모집 탭의 RHF 초기값. Overlay store/프로그램 overlay를 읽지 않는다. */
+export function programToUjatRecruitCanonicalFormValues(
+  program: Program,
+  kind: UjatRecruitDisplayKind
+): ProgramDetailEditFormValues {
+  const canonical = resolveUjatRecruitCanonicalDisplayProgram(program, kind)
+  const values = programToDetailEditValues(canonical)
+  const half = volunteerHalfFromRecruitDisplayKind(kind)
+  const row =
+    kind === 'institution'
+      ? pickRecruitmentCopyRow(canonical, 'participant')
+      : half
+        ? pickUjatVolunteerRecruitmentRow(canonical, half)
+        : pickRecruitmentCopyRow(canonical, 'volunteer')
+  if (!row) return values
+
+  const volunteerRoundIndex =
+    kind === 'volunteer_h1' ? 0 : kind === 'volunteer_h2' ? 1 : null
+  const rounds =
+    volunteerRoundIndex != null && (hasOwnField(row, 'startAt') || hasOwnField(row, 'endAt'))
+      ? values.rounds.map((round, index) =>
+          index === volunteerRoundIndex
+            ? {
+                ...round,
+                ...(hasOwnField(row, 'startAt') ? { startDate: row.startAt ?? '' } : {}),
+                ...(hasOwnField(row, 'endAt') ? { endDate: row.endAt ?? '' } : {}),
+              }
+            : round
+        )
+      : values.rounds
+
+  return {
+    ...values,
+    rounds,
+    ...(hasOwnField(row, 'announcementTitle')
+      ? { announcementTitle: row.announcementTitle ?? '' }
+      : {}),
+    ...(kind === 'institution'
+      ? {
+          ...(hasOwnField(row, 'startAt') ? { applicationStartDate: row.startAt ?? '' } : {}),
+          ...(hasOwnField(row, 'endAt') ? { applicationEndDate: row.endAt ?? '' } : {}),
+          ...(hasOwnField(row, 'announcementPublished')
+            ? {
+                participantRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
+                  row.announcementPublished ?? undefined,
+                  values.participantRecruitmentAnnouncementPublished ?? 'published'
+                ),
+              }
+            : {}),
+          ...(hasOwnField(row, 'remarksNotApplicable')
+            ? {
+                participantRecruitmentNotesNotApplicable:
+                  row.remarksNotApplicable === true ? 'not_applicable' : 'applicable',
+              }
+            : {}),
+        }
+      : {
+          ...(hasOwnField(row, 'startAt')
+            ? { volunteerApplicationStartDate: row.startAt ?? '' }
+            : {}),
+          ...(hasOwnField(row, 'endAt')
+            ? { volunteerApplicationEndDate: row.endAt ?? '' }
+            : {}),
+          ...(hasOwnField(row, 'announcementPublished')
+            ? {
+                volunteerRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
+                  row.announcementPublished ?? undefined,
+                  values.volunteerRecruitmentAnnouncementPublished ?? 'published'
+                ),
+              }
+            : {}),
+          ...(hasOwnField(row, 'noticeExposureTiming') && row.noticeExposureTiming
+            ? { volunteerRecruitmentNoticeExposure: row.noticeExposureTiming }
+            : {}),
+          ...(hasOwnField(row, 'volunteerTargets') && row.volunteerTargets
+            ? { volunteerTargets: row.volunteerTargets }
+            : {}),
+          ...(hasOwnField(row, 'remarksNotApplicable')
+            ? {
+                volunteerRecruitmentNotesNotApplicable:
+                  row.remarksNotApplicable === true ? 'not_applicable' : 'applicable',
+              }
+            : {}),
+          ...(hasOwnField(row, 'documentPassAnnouncementAt')
+            ? { documentPassAnnouncementDate: row.documentPassAnnouncementAt ?? '' }
+            : {}),
+          ...(hasOwnField(row, 'finalPassAnnouncementAt')
+            ? { finalPassAnnouncementDate: row.finalPassAnnouncementAt ?? '' }
+            : {}),
+          ...(hasOwnField(row, 'interviewConfig')
+            ? { volunteerInterviewConfig: row.interviewConfig ?? {} }
+            : {}),
+        }),
+  }
+}
+
+/**
+ * 모집 RHF 값을 해당 recruitment row에만 반영한다.
+ * 프로그램 Overlay나 다른 반기 row는 변경하지 않는다.
+ */
+export function applyUjatRecruitFormValuesToProgram(
+  program: Program,
+  kind: UjatRecruitDisplayKind,
+  values: ProgramDetailEditFormValues,
+  options?: { createMissing?: boolean }
+): Program {
+  const half = volunteerHalfFromRecruitDisplayKind(kind)
+  const audience = kind === 'institution' ? 'participant' : 'volunteer'
+  const rows = program.programRecruitments ?? []
+  const existingTarget =
+    audience === 'volunteer' && half
+      ? pickUjatVolunteerRecruitmentRow(program, half)
+      : pickRecruitmentCopyRow(program, audience, half ?? undefined)
+  const hasFormValues = (isInstitution =>
+    (isInstitution
+      ? [
+          values.announcementTitle,
+          values.applicationStartDate,
+          values.applicationEndDate,
+          values.recruitmentContactOrganizationName,
+        ]
+      : [
+          values.announcementTitle,
+          values.volunteerApplicationStartDate,
+          values.volunteerApplicationEndDate,
+          values.volunteerRecruitmentContactOrganizationName,
+          values.interviewStartDate,
+          values.interviewEndDate,
+        ]
+    ).some(value => typeof value === 'string' && value.trim() !== ''))(kind === 'institution')
+  if (!existingTarget && (!options?.createMissing || !hasFormValues)) return program
+
+  const isInstitution = kind === 'institution'
+  const volunteerRoundIndex = half === 'h1' ? 0 : half === 'h2' ? 1 : null
+  const volunteerRound =
+    volunteerRoundIndex != null ? values.rounds?.[volunteerRoundIndex] : undefined
+  const volunteerStartAt =
+    volunteerRound?.startDate?.trim() || values.volunteerApplicationStartDate?.trim() || null
+  const volunteerEndAt =
+    volunteerRound?.endDate?.trim() || values.volunteerApplicationEndDate?.trim() || null
+  const contactName = isInstitution
+    ? values.recruitmentContactOrganizationName
+    : values.volunteerRecruitmentContactOrganizationName
+  const target: ProgramRecruitmentWindow = existingTarget ?? {
+    recruitmentType: isInstitution ? 'PARTICIPANT' : 'VOLUNTEER',
+    targetType: isInstitution ? 'ORGANIZATION' : 'COLLEGE_STUDENT',
+    applicationType: isInstitution ? 'ORGANIZATION' : 'VOLUNTEER',
+    ...(half === 'h1' ? { recruitTerm: 'FIRST_HALF' as const } : {}),
+    ...(half === 'h2' ? { recruitTerm: 'SECOND_HALF' as const } : {}),
+  }
+  const nextRow: ProgramRecruitmentWindow = {
+    ...target,
+    announcementTitle: values.announcementTitle?.trim() || null,
+    startAt: (isInstitution ? values.applicationStartDate : volunteerStartAt)?.trim() || null,
+    endAt: (isInstitution ? values.applicationEndDate : volunteerEndAt)?.trim() || null,
+    operationStartDate: toOperationCalendarDate(values.startDate) ?? null,
+    operationEndDate: toOperationCalendarDate(values.endDate) ?? null,
+    programDescription: values.description?.trim() || null,
+    recruitmentGuide: values.recruitmentGuide?.trim() || null,
+    applicationMethod: values.applicationMethod?.trim() || null,
+    learningSupportContent: values.learningSupportContent?.trim() || null,
+    additionalContentHtml: values.additionalContentHtml?.trim() || null,
+    contactName: contactName?.trim() || null,
+    contactPhone: values.contactPhone?.trim() || null,
+    contactEmail: values.contactEmail?.trim() || null,
+    ...(isInstitution
+      ? {
+          remarks: values.oneLineIntroduction?.trim() || null,
+          ...typedFieldsFromRecruitmentFormValues(values, 'institution'),
+        }
+      : {
+          otherMatters: values.otherNotes?.trim() || null,
+          interviewEnabled: true,
+          interviewStartAt: values.interviewStartDate?.trim() || null,
+          interviewEndAt: values.interviewEndDate?.trim() || null,
+          ...typedFieldsFromRecruitmentFormValues(values, 'volunteer'),
+        }),
+  }
+  return {
+    ...program,
+    programRecruitments: existingTarget
+      ? rows.map(row => (row === existingTarget ? nextRow : row))
+      : [...rows, nextRow],
+  }
+}
+
 function volunteerHalfPeriod(
   values: ProgramDetailEditFormValues,
   _half: UjatVolunteerRecruitHalf
@@ -264,10 +506,12 @@ function rowAnnouncementTitle(
 /** 공고용 프로그램명 — GET 행 우선, 없으면 모집 overlay. 공통정보와 공유하지 않는다. */
 export function resolveUjatRecruitAnnouncementTitle(
   program: Program,
-  kind: UjatRecruitDisplayKind
+  kind: UjatRecruitDisplayKind,
+  options?: { allowOverlayFallback?: boolean }
 ): string {
   const fromRow = rowAnnouncementTitle(program, kind)
   if (fromRow !== undefined) return fromRow || '-'
+  if (options?.allowOverlayFallback === false) return '-'
   if (kind === 'institution') {
     return (
       overlayString(mergedInstitutionOverlay(program), UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.publicTitle) ||
