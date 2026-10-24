@@ -902,6 +902,92 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
     expect(volunteer?.recruitTerm).toBe('FIRST_HALF')
   })
 
+  it('typed recruitment rows에 있는 SECOND_HALF는 별도 행으로 보낸다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      programRecruitments: [
+        { recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' },
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          startAt: '2027-08-01T00:00:00Z',
+          endAt: '2027-08-31T23:59:59Z',
+          interviewEnabled: true,
+        },
+      ],
+    })
+    expect(rows.filter(row => row.recruitmentType === 'VOLUNTEER')).toHaveLength(2)
+    expect(rows.find(row => row.recruitTerm === 'SECOND_HALF')).toMatchObject({
+      startAt: '2027-08-01T00:00:00Z',
+      endAt: '2027-08-31T23:59:59Z',
+      interviewEnabled: true,
+    })
+  })
+
+  it('신규 UJAT 생성 요청은 기관·H1·H2 typed 행의 상세 문구와 ID를 보존한다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      applicationStartDate: '2027-01-01T00:00:00Z',
+      applicationEndDate: '2027-01-31T00:00:00Z',
+      programRecruitments: [
+        {
+          id: 301,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          announcementTitle: '기관 공고',
+          programDescription: '기관 설명',
+          recruitmentGuide: '기관 안내',
+          contactName: '기관 담당',
+          contactPhone: '010-1111-1111',
+          contactEmail: 'institution@example.com',
+        },
+        {
+          id: 302,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          startAt: '2027-02-01T00:00:00Z',
+          endAt: '2027-02-28T00:00:00Z',
+          announcementTitle: 'H1 공고',
+          otherMatters: 'H1 안내',
+        },
+        {
+          id: 303,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          announcementTitle: 'H2 공고',
+          programDescription: 'H2 설명',
+        },
+      ],
+    })
+
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 301,
+          applicationType: 'ORGANIZATION',
+          announcementTitle: '기관 공고',
+          programDescription: '기관 설명',
+          recruitmentGuide: '기관 안내',
+          contactName: '기관 담당',
+        }),
+        expect.objectContaining({
+          id: 302,
+          recruitTerm: 'FIRST_HALF',
+          announcementTitle: 'H1 공고',
+          otherMatters: 'H1 안내',
+        }),
+        expect.objectContaining({
+          id: 303,
+          recruitTerm: 'SECOND_HALF',
+          announcementTitle: 'H2 공고',
+          programDescription: 'H2 설명',
+        }),
+      ])
+    )
+  })
+
   it('봉사자 행에 면접 필수와 상반기 면접 기간을 보낸다', () => {
     const rows = mapUjatProgramRecruitmentsToRequest({
       ...program,
@@ -1152,5 +1238,49 @@ describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 �
     expect(h1).not.toHaveProperty('interviewEndAt')
     const h2 = rows.find(row => row.recruitTerm === 'SECOND_HALF')
     expect(h2?.interviewStartAt).toBe(H2_INTERVIEW.start)
+  })
+
+  it('typed 행의 운영기간이 있으면 Overlay programRange로 덮지 않는다', () => {
+    const request = toCreateRequest(
+      {
+        ...program,
+        ujatRegistrationOverlay: {
+          'ujat.recruit.institution.programRange': {
+            start: '2020-01-01',
+            end: '2020-12-31',
+          },
+          'ujat.recruit.volunteer.programRange': {
+            start: '2020-01-01',
+            end: '2020-12-31',
+          },
+        },
+        programRecruitments: [
+          {
+            recruitmentType: 'PARTICIPANT',
+            applicationType: 'ORGANIZATION',
+            announcementTitle: '기관 공고',
+            operationStartDate: '2027-03-01',
+            operationEndDate: '2027-12-31',
+          },
+          {
+            recruitmentType: 'VOLUNTEER',
+            applicationType: 'VOLUNTEER',
+            recruitTerm: 'FIRST_HALF',
+            announcementTitle: 'H1 공고',
+            operationStartDate: '2027-03-01',
+            operationEndDate: '2027-06-30',
+          },
+        ],
+      },
+      { draft, overlay: {} }
+    )
+    expect(request.recruitments?.find(row => row.recruitmentType === 'PARTICIPANT')).toMatchObject({
+      operationStartDate: '2027-03-01',
+      operationEndDate: '2027-12-31',
+    })
+    expect(request.recruitments?.find(row => row.recruitTerm === 'FIRST_HALF')).toMatchObject({
+      operationStartDate: '2027-03-01',
+      operationEndDate: '2027-06-30',
+    })
   })
 })

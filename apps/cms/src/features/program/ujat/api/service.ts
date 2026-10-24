@@ -51,6 +51,8 @@ export type CreateInput = RegistrationSnapshot & {
   /** Typed RHF snapshot for UJAT registration common information. */
   basicInfo?: Partial<UjatBasicInfoFormValues>
   typedDetail?: UjatTypedDetail
+  /** Registration wizard canonical program snapshot, including recruitment rows. */
+  program?: Program
   preparedFormBindings?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
 }
 
@@ -163,11 +165,12 @@ export async function create(input: CreateInput): Promise<Program> {
   const overlay = input.basicInfo
     ? stripUjatBasicInfoOverlay(compatibilityOverlay)
     : compatibilityOverlay
-  const pending = buildUjatProgramListRowFromRegistrationSnapshot({
-    id: `ujat-pending-${input.idempotencyKey}`,
-    overlay,
-    basicInfo: input.basicInfo,
-  })
+  const pending = input.program ??
+    buildUjatProgramListRowFromRegistrationSnapshot({
+      id: `ujat-pending-${input.idempotencyKey}`,
+      overlay,
+      basicInfo: input.basicInfo,
+    })
   const created = fromDetail(
     await createAdminProgramRemoteWithRegistrationForms(
       pending,

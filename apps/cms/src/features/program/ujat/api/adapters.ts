@@ -294,6 +294,7 @@ function ujatVolunteerInterviewFields(
 function recruitmentRow(input: {
   recruitmentType: ProgramRecruitmentRequest['recruitmentType']
   targetType: string
+  applicationType?: ProgramRecruitmentRequest['applicationType']
   startAt?: string
   endAt?: string
   operationStartDate?: string
@@ -304,11 +305,14 @@ function recruitmentRow(input: {
   interviewEnabled?: boolean
   interviewStartAt?: string
   interviewEndAt?: string
+  source?: ProgramRecruitmentWindow
 }): ProgramRecruitmentRequest {
+  const source = input.source
   return {
     ...(input.id != null ? { id: input.id } : {}),
     recruitmentType: input.recruitmentType,
     targetType: input.targetType,
+    ...(input.applicationType ? { applicationType: input.applicationType } : {}),
     ...(input.recruitTerm ? { recruitTerm: input.recruitTerm } : {}),
     status: ProgramRecruitmentRequestStatus.ACTIVE,
     ...(input.startAt ? { startAt: input.startAt } : {}),
@@ -320,7 +324,49 @@ function recruitmentRow(input: {
     ...(input.interviewEnabled === true ? { interviewEnabled: true } : {}),
     ...(input.interviewStartAt ? { interviewStartAt: input.interviewStartAt } : {}),
     ...(input.interviewEndAt ? { interviewEndAt: input.interviewEndAt } : {}),
-  }
+    ...(source?.announcementTitle != null ? { announcementTitle: source.announcementTitle } : {}),
+    ...(source?.summary != null ? { summary: source.summary } : {}),
+    ...(source?.programDescription != null ? { programDescription: source.programDescription } : {}),
+    ...(source?.recruitmentGuide != null ? { recruitmentGuide: source.recruitmentGuide } : {}),
+    ...(source?.applicationMethod != null ? { applicationMethod: source.applicationMethod } : {}),
+    ...(source?.learningSupportContent != null
+      ? { learningSupportContent: source.learningSupportContent }
+      : {}),
+    ...(source?.additionalContentHtml != null
+      ? { additionalContentHtml: source.additionalContentHtml }
+      : {}),
+    ...(source?.remarks != null ? { remarks: source.remarks } : {}),
+    ...(source?.contactName != null ? { contactName: source.contactName } : {}),
+    ...(source?.contactPhone != null ? { contactPhone: source.contactPhone } : {}),
+    ...(source?.contactEmail != null ? { contactEmail: source.contactEmail } : {}),
+    ...(source?.otherMatters != null ? { otherMatters: source.otherMatters } : {}),
+    ...(source?.announcementPublished != null
+      ? { announcementPublished: source.announcementPublished }
+      : {}),
+    ...(source?.remarksNotApplicable != null
+      ? { remarksNotApplicable: source.remarksNotApplicable }
+      : {}),
+    ...(input.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
+      ? {
+          ...(source?.documentPassAnnouncementAt !== undefined
+            ? { documentPassAnnouncementAt: source.documentPassAnnouncementAt }
+            : {}),
+          ...(source?.finalPassAnnouncementAt !== undefined
+            ? { finalPassAnnouncementAt: source.finalPassAnnouncementAt }
+            : {}),
+          ...(source?.noticeExposureTiming !== undefined
+            ? { noticeExposureTiming: source.noticeExposureTiming }
+            : {}),
+          ...(source?.volunteerTargets !== undefined
+            ? { volunteerTargets: source.volunteerTargets }
+            : {}),
+          ...(source?.interviewConfig !== undefined
+            ? { interviewConfig: source.interviewConfig }
+            : {}),
+        }
+      : {}),
+    ...(source?.contentRevision != null ? { expectedRevision: source.contentRevision } : {}),
+  } as ProgramRecruitmentRequest
 }
 
 /**
@@ -330,8 +376,11 @@ function recruitmentRow(input: {
 export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRecruitmentRequest[] {
   const institutionStart = dateValue(program.applicationStartDate)
   const institutionEnd = dateValue(program.applicationEndDate)
+  const institution = (program.programRecruitments ?? []).find(
+    row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
+  )
   const volunteers = (program.programRecruitments ?? [])
-    .filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' && row.id != null)
+    .filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
     .slice()
     .sort((a, b) => {
       const aTime = Date.parse(a.startAt ?? '')
@@ -347,23 +396,23 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
     recruitmentRow({
       recruitmentType: ProgramRecruitmentRequestRecruitmentType.PARTICIPANT,
       targetType: 'ORGANIZATION',
+      applicationType: 'ORGANIZATION',
       startAt: institutionStart,
       endAt: institutionEnd,
       operationStartDate: dateValue(
-        program.programRecruitments?.find(
-          row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
-        )?.operationStartDate ?? undefined
+        institution?.operationStartDate ?? undefined
       ),
       operationEndDate: dateValue(
-        program.programRecruitments?.find(
-          row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
-        )?.operationEndDate ?? undefined
+        institution?.operationEndDate ?? undefined
       ),
       maxCount: program.participatingSchoolCount ?? program.approvedStudentCount,
+      ...(institution?.id != null ? { id: institution.id } : {}),
+      source: institution,
     }),
     recruitmentRow({
       recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
       targetType: 'COLLEGE_STUDENT',
+      applicationType: 'VOLUNTEER',
       startAt: volunteerStart,
       endAt: volunteerEnd,
       operationStartDate: dateValue(h1?.operationStartDate ?? undefined),
@@ -372,10 +421,30 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       recruitTerm: ProgramRecruitmentRequestRecruitTerm.FIRST_HALF,
       ...(h1?.id != null ? { id: h1.id } : {}),
       ...ujatVolunteerInterviewFields(program, h1),
+      source: h1,
     }),
   ]
+  const secondHalfRows = volunteers
+    .filter(row => row.recruitTerm === ProgramRecruitmentRequestRecruitTerm.SECOND_HALF)
+    .map(row =>
+      recruitmentRow({
+        recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
+        targetType: 'COLLEGE_STUDENT',
+        applicationType: 'VOLUNTEER',
+        id: row.id,
+        startAt: dateValue(row.startAt ?? undefined),
+        endAt: dateValue(row.endAt ?? undefined),
+        operationStartDate: dateValue(row.operationStartDate ?? undefined),
+        operationEndDate: dateValue(row.operationEndDate ?? undefined),
+        recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
+        interviewEnabled: row.interviewEnabled === true,
+        interviewStartAt: dateValue(row.interviewStartAt ?? undefined),
+        interviewEndAt: dateValue(row.interviewEndAt ?? undefined),
+        source: row,
+      })
+    )
   // 프로그램 봉사자 기간은 상반기 행에만 맞춘다. 하반기 기간은 그 행의 startAt/endAt 변경분으로만 보낸다.
-  return attachRecruitmentRowIdentity(rows, program.programRecruitments)
+  return attachRecruitmentRowIdentity([...rows, ...secondHalfRows], program.programRecruitments)
 }
 
 /**
@@ -420,10 +489,30 @@ export function buildUjatNewVolunteerHalfRowRequests(
       ...(row.contactName != null ? { contactName: row.contactName } : {}),
       ...(row.contactPhone != null ? { contactPhone: row.contactPhone } : {}),
       ...(row.contactEmail != null ? { contactEmail: row.contactEmail } : {}),
-      interviewEnabled: true,
       ...(row.interviewStartAt ? { interviewStartAt: row.interviewStartAt } : {}),
       ...(row.interviewEndAt ? { interviewEndAt: row.interviewEndAt } : {}),
-    }))
+      ...(row.operationStartDate ? { operationStartDate: row.operationStartDate } : {}),
+      ...(row.operationEndDate ? { operationEndDate: row.operationEndDate } : {}),
+      ...(row.otherMatters != null ? { otherMatters: row.otherMatters } : {}),
+      ...(row.interviewEnabled != null ? { interviewEnabled: row.interviewEnabled } : { interviewEnabled: true }),
+      ...(row.announcementPublished != null
+        ? { announcementPublished: row.announcementPublished }
+        : {}),
+      ...(row.remarksNotApplicable != null
+        ? { remarksNotApplicable: row.remarksNotApplicable }
+        : {}),
+      ...(row.documentPassAnnouncementAt !== undefined
+        ? { documentPassAnnouncementAt: row.documentPassAnnouncementAt }
+        : {}),
+      ...(row.finalPassAnnouncementAt !== undefined
+        ? { finalPassAnnouncementAt: row.finalPassAnnouncementAt }
+        : {}),
+      ...(row.noticeExposureTiming !== undefined
+        ? { noticeExposureTiming: row.noticeExposureTiming }
+        : {}),
+      ...(row.volunteerTargets !== undefined ? { volunteerTargets: row.volunteerTargets } : {}),
+      ...(row.interviewConfig !== undefined ? { interviewConfig: row.interviewConfig } : {}),
+    })) as ProgramRecruitmentRequest[]
 }
 
 function ujatVolunteerHalfRecruitRange(
@@ -452,6 +541,31 @@ function withUjatCreateSecondHalfVolunteerRow(
   if (rows == null) return rows
   if (rows.some(row => row.recruitTerm === ProgramRecruitmentRequestRecruitTerm.SECOND_HALF)) {
     return rows
+  }
+  const h2Row = (program.programRecruitments ?? []).find(
+    row =>
+      (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' &&
+      row.recruitTerm === 'SECOND_HALF'
+  )
+  if (h2Row) {
+    return [
+      ...rows,
+      recruitmentRow({
+        recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
+        targetType: 'COLLEGE_STUDENT',
+        applicationType: 'VOLUNTEER',
+        startAt: dateValue(h2Row.startAt ?? undefined),
+        endAt: dateValue(h2Row.endAt ?? undefined),
+        operationStartDate: dateValue(h2Row.operationStartDate ?? undefined),
+        operationEndDate: dateValue(h2Row.operationEndDate ?? undefined),
+        maxCount: program.ujatSecondHalfVolunteerCount,
+        recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
+        interviewEnabled: h2Row.interviewEnabled !== false,
+        interviewStartAt: dateValue(h2Row.interviewStartAt ?? undefined),
+        interviewEndAt: dateValue(h2Row.interviewEndAt ?? undefined),
+        source: h2Row,
+      }),
+    ]
   }
   const overlay = pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {})
   const range = ujatVolunteerHalfRecruitRange(program, 'h2')
@@ -492,8 +606,11 @@ function withUjatCreateRowCopy(
         ? UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programRange
         : UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.programRange
     const programRange = recordOf((program.ujatRegistrationOverlay ?? {})[programRangeKey])
-    const operationStartDate = dateValue(programRange?.start as string | undefined) ?? row.operationStartDate
-    const operationEndDate = dateValue(programRange?.end as string | undefined) ?? row.operationEndDate
+    // Typed recruitment row가 있으면 Overlay programRange로 덮지 않는다.
+    const operationStartDate =
+      row.operationStartDate ?? dateValue(programRange?.start as string | undefined)
+    const operationEndDate =
+      row.operationEndDate ?? dateValue(programRange?.end as string | undefined)
     return {
       ...(kind === 'institution' ? row : rowWithoutInterview),
       announcementTitle: publicTitle !== '-' ? publicTitle : undefined,
