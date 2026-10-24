@@ -1,5 +1,8 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import { syncProgramInlineImages } from '@/features/program/shared/api/program-inline-images'
+import {
+  syncProgramInlineImages,
+  syncProgramInlineImagesKeepProgram,
+} from '@/features/program/shared/api/program-inline-images'
 import { omitSchedulesFromProgramUpdateRequest } from '@/features/program/shared/lib/program-update-schedules-payload-guard'
 import {
   PROGRAM_HARD_DELETE_BLOCKED_CODE,
@@ -160,22 +163,9 @@ export async function createAdminProgramRemote(
   )
   const createdId = created.id
   if (createdId) {
-    try {
-      await syncProgramInlineImages(createdId, [payload, created])
-    } catch (error) {
-      await rollbackCreatedProgram(createdId)
-      throw error
-    }
+    await syncProgramInlineImagesKeepProgram(createdId, [payload, created])
   }
   return created
-}
-
-async function rollbackCreatedProgram(programId: string | number): Promise<void> {
-  try {
-    await deleteAdminProgramRemote(String(programId))
-  } catch (rollbackError) {
-    console.error('[program] rollback created program failed', programId, rollbackError)
-  }
 }
 
 export async function updateAdminProgramRemote(

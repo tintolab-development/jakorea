@@ -151,6 +151,39 @@ export default tseslint.config(
     },
   },
   {
+    files: [
+      'apps/cms/src/features/template/hooks/use-program-participant-application-editor.ts',
+      'apps/cms/src/features/template/hooks/use-program-registration-editor.ts',
+      'apps/cms/src/features/program/general/lib/registration-local-save.ts',
+      'apps/cms/src/features/program/general/lib/general-recruit-overlay-to-program.ts',
+      'apps/cms/src/features/program/trained-teachers/lib/recruit-form-state.ts',
+      'apps/cms/src/features/program/gemini/lib/recruitment/snapshot-from-overlay.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'warn',
+        {
+          paths: [
+            {
+              name: '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync',
+              importNames: ['getGeneralRecruitOverlayRecord'],
+              message:
+                'Do not use active-scope getGeneralRecruitOverlayRecord() in program persist paths. Use peekGeneralRecruitOverlayRecord / buildMergedRegistrationOverlayForRecruitSave (program-detail-overlay-save-ssot.mdc).',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: "CallExpression[callee.name='getGeneralRecruitOverlayRecord']",
+          message:
+            'getGeneralRecruitOverlayRecord() is UI/active-scope only; not for persist. See program-detail-overlay-save-ssot.mdc.',
+        },
+      ],
+    },
+  },
+  {
     files: ['packages/**/*.{ts,tsx}'],
     linterOptions: {
       reportUnusedDisableDirectives: true

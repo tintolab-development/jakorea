@@ -2,6 +2,7 @@ import { type Locator, type Page, expect } from '@playwright/test'
 import {
   checkCheckboxIfVisible,
   checkRadioIfVisible,
+  checkVisibleEnabledConsentCheckboxes,
   clickRegistrationTabIfVisible,
   clickSectionNavIfVisible,
   fillAllByPlaceholder,
@@ -741,14 +742,7 @@ export class GeneralProgramRegistrationPage {
   }
 
   private async fillApplicationConsentIfPresent() {
-    const checkboxes = this.page.getByRole('checkbox')
-    const count = await checkboxes.count()
-    for (let i = 0; i < count; i += 1) {
-      const box = checkboxes.nth(i)
-      if (!(await box.isVisible().catch(() => false))) continue
-      if (await box.isChecked().catch(() => false)) continue
-      await box.check({ force: true }).catch(() => undefined)
-    }
+    await checkVisibleEnabledConsentCheckboxes(this.page)
   }
 
   private async fillApplicationParticipantTab() {

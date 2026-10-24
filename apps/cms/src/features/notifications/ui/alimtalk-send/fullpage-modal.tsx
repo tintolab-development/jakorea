@@ -75,6 +75,7 @@ import { useInvalidateAlimtalkSendHistory } from '@/features/notifications/hooks
 import { ProgramSelectField } from '@/features/notifications/ui/mail-send/program-select-field'
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { ContentPanel } from './content-panel'
+import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
 import { RecipientTable } from './recipient-table'
@@ -141,6 +142,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const [recipientSelectOpen, setRecipientSelectOpen] = useState(false)
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
+  const [sendRequestCompletedOpen, setSendRequestCompletedOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [recipientSearch, setRecipientSearch] = useState<AlimtalkSendRecipientSearchParams>({
     typeValue: '',
@@ -494,12 +496,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       })
       idempotencyKeyRef.current = createIdempotencyKey()
       await invalidateHistory()
-      showAlert({
-        title: '알림톡 발송 완료',
-        content: '알림톡 발송이 완료되었습니다.',
-        confirmLabel: '닫기',
-        onConfirm: onClose,
-      })
+      setSendRequestCompletedOpen(true)
     } catch (error) {
       showAlert({
         title: '안내',
@@ -837,6 +834,14 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         cancelText="취소"
         onConfirm={() => void handleConfirmSend()}
         onCancel={() => setSendConfirmOpen(false)}
+      />
+      <SendRequestCompletedModal
+        open={sendRequestCompletedOpen && open}
+        channel="alimtalk"
+        onDismissSendScreen={() => {
+          setSendRequestCompletedOpen(false)
+          onClose()
+        }}
       />
     </>
   )

@@ -1,212 +1,415 @@
-import { useMemo, useState } from 'react'
-import { Input, Spin } from 'antd'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Spin } from 'antd'
+import { useQuery } from '@tanstack/react-query'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { StatusBadge } from '@/shared/components'
+import { CmsButton, CmsTextArea, ContentModal, ConfirmModal } from '@/shared/ui'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
+import { handleError } from '@/shared/utils/error-handler'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import {
-  approveIndividualSettlementReviewRemote,
-  fetchIndividualSettlementReviewDetailRemote,
-  rejectIndividualSettlementReviewRemote,
+  individualSettlementReviewDetailQueryOptions,
+  isIndividualSettlementReviewRemoteEnabled,
 } from '@/features/program/general/api/individual-settlement-review-remote'
+import { useIndividualSettlementReviewMutations } from '@/features/program/general/hooks/use-individual-settlement-review-mutations'
 import {
-  formatIndividualSettlementAmount,
-  INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS,
-  type IndividualSettlementReviewRowStatus,
-} from '@/features/program/general/lib/map-individual-settlement-review-rows'
-import type { IndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDetail'
+  canApproveIndividualSettlement,
+  canRejectIndividualSettlement,
+  formatIndividualSettlementDate,
+  formatIndividualSettlementDateTime,
+  formatIndividualSettlementWon,
+  individualSettlementReviewStatusAccent,
+  individualSettlementReviewStatusLabel,
+  latestIndividualSettlementReviewRevision,
+} from '@/features/program/general/lib/individual-settlement-review-status'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import type { IndividualSettlementReviewFileRef } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewFileRef'
+import type { IndividualSettlementReviewItem } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewItem'
+import type { IndividualSettlementReviewReceipt } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewReceipt'
+import './individual-settlement-review-detail-modal.css'
 
-function statusLabel(value?: string | null): string {
-  const key = value?.trim().toUpperCase() as IndividualSettlementReviewRowStatus | undefined
-  return key && key in INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS
-    ? INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS[key]
-    : value?.trim() || '-'
-}
-
-function totalRevisionAmount(detail?: IndividualSettlementReviewDetail | null): number {
-  const latestNo = detail?.latestRevisionNo
-  const revision = detail?.revisions?.find(item => item.revisionNo === latestNo) ?? detail?.revisions?.at(-1)
-  return (revision?.items ?? []).reduce((total, item) => total + (item.amount ?? 0), 0)
-}
-
-export function IndividualSettlementReviewDetailModal(props: {
+export type IndividualSettlementReviewDetailModalProps = {
   open: boolean
-  settlementApplicationId?: number
+  programId: string
+  participantId: string
+  settlementApplicationId: number | null
   onClose: () => void
-  onChanged: () => Promise<void>
-}) {
+  onReviewed?: () => Promise<void> | void
+}
+
+function scheduleLabel(name: string | undefined): string {
+  const trimmed = name?.trim()
+  if (!trimmed) return '-'
+  return formatCmsScheduleDisplayLabel(trimmed)
+}
+
+export function IndividualSettlementReviewDetailModal({
+  open,
+  programId,
+  participantId,
+  settlementApplicationId,
+  onClose,
+  onReviewed,
+}: IndividualSettlementReviewDetailModalProps) {
   const { showAlert } = useCmsAlert()
-  const [rejectMode, setRejectMode] = useState(false)
-  const [rejectReason, setRejectReason] = useState('')
-  const [downloadingFileId, setDownloadingFileId] = useState<number | null>(null)
-  const id = props.settlementApplicationId
+  const remoteEnabled = isIndividualSettlementReviewRemoteEnabled()
+  const queryEnabled = Boolean(open && remoteEnabled && settlementApplicationId != null)
 
   const detailQuery = useQuery({
-    queryKey: ['individual-settlement-review-detail', id],
-    enabled: props.open && id != null,
-    queryFn: () => fetchIndividualSettlementReviewDetailRemote(id!),
+    ...individualSettlementReviewDetailQueryOptions(settlementApplicationId ?? 0),
+    enabled: queryEnabled,
     retry: false,
   })
 
-  const approveMutation = useMutation({
-    mutationFn: () =>
-      approveIndividualSettlementReviewRemote(
-        id!,
-        detailQuery.data?.latestRevisionNo ?? 0
-      ),
-    onSuccess: async () => {
-      await props.onChanged()
-      props.onClose()
-      showAlert({ title: '완료', content: '개인 정산 신청을 승인했습니다.' })
-    },
-    onError: () => showAlert({ title: '안내', content: '승인 처리에 실패했습니다. 최신 상태를 다시 확인해 주세요.' }),
+  const { approveMutation, rejectMutation } = useIndividualSettlementReviewMutations({
+    programId,
+    participantId,
+    settlementApplicationId,
+    onReviewed,
   })
 
-  const rejectMutation = useMutation({
-    mutationFn: () =>
-      rejectIndividualSettlementReviewRemote(id!, {
-        expectedRevisionNo: detailQuery.data?.latestRevisionNo ?? 0,
-        reason: rejectReason.trim(),
-      }),
-    onSuccess: async () => {
-      await props.onChanged()
-      props.onClose()
-      setRejectMode(false)
+  const [approveOpen, setApproveOpen] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+
+  useEffect(() => {
+    if (!open) {
+      setApproveOpen(false)
+      setRejectOpen(false)
       setRejectReason('')
-      showAlert({ title: '완료', content: '개인 정산 신청을 반려했습니다.' })
-    },
-    onError: () => showAlert({ title: '안내', content: '반려 처리에 실패했습니다. 최신 상태를 다시 확인해 주세요.' }),
-  })
+    }
+  }, [open])
 
   const detail = detailQuery.data
-  const latestRevision = useMemo(
-    () => detail?.revisions?.find(item => item.revisionNo === detail.latestRevisionNo) ?? detail?.revisions?.at(-1),
-    [detail]
+  const latest = latestIndividualSettlementReviewRevision(detail)
+  const expectedRevisionNo = latest?.revisionNo ?? detail?.latestRevisionNo ?? null
+  const canApprove = canApproveIndividualSettlement(detail)
+  const canReject = canRejectIndividualSettlement(detail)
+
+  const handleDownload = useCallback(
+    async (file: IndividualSettlementReviewFileRef) => {
+      try {
+        await downloadAdminFile({
+          fileObjectId: file.fileObjectId,
+          fileName: file.fileName,
+        })
+      } catch (error) {
+        handleError(error, { context: 'individualSettlementReviewDetail.downloadFile' })
+        showAlert({
+          title: '안내',
+          content: readApiErrorAlertMessage(error, '첨부파일을 다운로드하지 못했습니다.'),
+        })
+      }
+    },
+    [showAlert]
   )
 
-  const handleDownload = async (fileObjectId: number, fileName: string) => {
-    if (downloadingFileId != null) return
-    setDownloadingFileId(fileObjectId)
-    try {
-      await downloadAdminFile({ fileObjectId, fileName })
-    } catch {
-      showAlert({ title: '안내', content: '증빙파일 다운로드에 실패했습니다.' })
-    } finally {
-      setDownloadingFileId(null)
-    }
-  }
+  const showMutationError = useCallback(
+    (error: unknown) => {
+      showAlert({
+        title: '안내',
+        content: readApiErrorAlertMessage(error, '개인 정산 심사를 처리하지 못했습니다.'),
+      })
+    },
+    [showAlert]
+  )
 
-  const canReview = detail?.status?.trim().toUpperCase() === 'SUBMITTED' && latestRevision != null
-  const loading = detailQuery.isPending || approveMutation.isPending || rejectMutation.isPending
+  const handleApprove = useCallback(async () => {
+    if (settlementApplicationId == null || expectedRevisionNo == null) return
+    try {
+      await approveMutation.mutateAsync({
+        settlementApplicationId,
+        expectedRevisionNo,
+      })
+      setApproveOpen(false)
+    } catch (error) {
+      showMutationError(error)
+    }
+  }, [approveMutation, expectedRevisionNo, settlementApplicationId, showMutationError])
+
+  const handleReject = useCallback(async () => {
+    const reason = rejectReason.trim()
+    if (!reason) {
+      showAlert({ title: '안내', content: '반려 사유를 입력해 주세요.' })
+      return
+    }
+    if (settlementApplicationId == null || expectedRevisionNo == null) return
+    try {
+      await rejectMutation.mutateAsync({
+        settlementApplicationId,
+        expectedRevisionNo,
+        reason,
+      })
+      setRejectOpen(false)
+      setRejectReason('')
+    } catch (error) {
+      showMutationError(error)
+    }
+  }, [
+    expectedRevisionNo,
+    rejectMutation,
+    rejectReason,
+    settlementApplicationId,
+    showAlert,
+    showMutationError,
+  ])
+
+  const itemColumns = useMemo(
+    () => [
+      { title: '항목', dataIndex: 'itemName', key: 'itemName' },
+      {
+        title: '금액',
+        key: 'amount',
+        render: (_value: unknown, record: IndividualSettlementReviewItem) =>
+          formatIndividualSettlementWon(record.amount),
+      },
+    ],
+    []
+  )
+
+  const receiptColumns = useMemo(
+    () => [
+      { title: '지출 유형', dataIndex: 'expenseType', key: 'expenseType' },
+      {
+        title: '지출일',
+        key: 'expenseDate',
+        render: (_value: unknown, record: IndividualSettlementReviewReceipt) =>
+          formatIndividualSettlementDate(record.expenseDate),
+      },
+      {
+        title: '금액',
+        key: 'amount',
+        render: (_value: unknown, record: IndividualSettlementReviewReceipt) =>
+          formatIndividualSettlementWon(record.amount),
+      },
+      {
+        title: '첨부파일',
+        key: 'files',
+        render: (_value: unknown, record: IndividualSettlementReviewReceipt) => (
+          <div className="individual-settlement-review-detail-modal__file-list">
+            {(record.files ?? []).length === 0
+              ? '-'
+              : (record.files ?? []).map(file => (
+                  <CmsButton
+                    key={file.fileObjectId}
+                    variant="default"
+                    size="small"
+                    className="individual-settlement-review-detail-modal__file-button"
+                    onClick={() => void handleDownload(file)}
+                  >
+                    {file.fileName}
+                  </CmsButton>
+                ))}
+          </div>
+        ),
+      },
+    ],
+    [handleDownload]
+  )
+
+  const reviewing = approveMutation.isPending || rejectMutation.isPending
 
   return (
-    <ContentModal
-      open={props.open}
-      onCancel={props.onClose}
-      title="개인 정산 신청 상세"
-      size="wide"
-      footer={
-        <>
-          <CmsButton variant="secondary" size="medium" onClick={props.onClose} disabled={loading}>
-            닫기
-          </CmsButton>
-          {canReview && !rejectMode ? (
-            <>
+    <>
+      <ContentModal
+        open={open}
+        onCancel={onClose}
+        title="개인 정산 상세"
+        size="wide"
+        className="individual-settlement-review-detail-modal"
+        footer={
+          <div className="individual-settlement-review-detail-modal__footer">
+            <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
+              닫기
+            </CmsButton>
+            {canReject ? (
               <CmsButton
-                variant="error"
-                size="medium"
-                onClick={() => setRejectMode(true)}
-                disabled={loading}
+                variant="delete"
+                size="large"
+                type="button"
+                disabled={reviewing}
+                onClick={() => setRejectOpen(true)}
               >
                 반려
               </CmsButton>
+            ) : null}
+            {canApprove ? (
               <CmsButton
                 variant="primary"
-                size="medium"
-                onClick={() => approveMutation.mutate()}
-                loading={approveMutation.isPending}
+                size="large"
+                type="button"
+                disabled={reviewing}
+                onClick={() => setApproveOpen(true)}
               >
                 승인
               </CmsButton>
-            </>
-          ) : null}
-          {canReview && rejectMode ? (
-            <CmsButton
-              variant="error"
-              size="medium"
-              onClick={() => rejectMutation.mutate()}
-              loading={rejectMutation.isPending}
-              disabled={!rejectReason.trim()}
-            >
-              반려 확정
-            </CmsButton>
-          ) : null}
-        </>
-      }
-    >
-      {detailQuery.isError ? (
-        <div role="alert">개인 정산 신청 상세를 불러오지 못했습니다.</div>
-      ) : (
-        <Spin spinning={loading}>
-          <div className="individual-settlement-review-detail">
-            <dl className="individual-settlement-review-detail__summary">
-              <div><dt>상태</dt><dd>{statusLabel(detail?.status)}</dd></div>
-              <div><dt>일정</dt><dd>{detail?.scheduleName?.trim() || '-'}</dd></div>
-              <div><dt>최신 Revision</dt><dd>{detail?.latestRevisionNo ?? '-'}</dd></div>
-              <div><dt>최신 제출 합계</dt><dd>{formatIndividualSettlementAmount(totalRevisionAmount(detail))}</dd></div>
-            </dl>
+            ) : null}
+          </div>
+        }
+      >
+        {detailQuery.isPending && queryEnabled ? (
+          <div className="individual-settlement-review-detail-modal__loading" role="status">
+            <Spin size="large" />
+          </div>
+        ) : detailQuery.isError ? (
+          <div className="individual-settlement-review-detail-modal__empty">
+            {readApiErrorAlertMessage(detailQuery.error, '개인 정산 상세를 불러오지 못했습니다.')}
+          </div>
+        ) : !detail ? (
+          <div className="individual-settlement-review-detail-modal__empty">
+            개인 정산 상세가 없습니다.
+          </div>
+        ) : (
+          <div className="individual-settlement-review-detail-modal__body">
+            <DetailInfoForm title="" hideHeader mode="view">
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="신청 상태"
+                  view={
+                    <StatusBadge
+                      domain="custom"
+                      variant="text"
+                      label={individualSettlementReviewStatusLabel(detail.status)}
+                      accentColor={individualSettlementReviewStatusAccent(detail.status)}
+                    />
+                  }
+                />
+                <DetailInfoForm.Field
+                  label="최신 Revision"
+                  view={
+                    detail.latestRevisionNo != null ? String(detail.latestRevisionNo) : '-'
+                  }
+                />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field label="프로그램" view={detail.programName?.trim() || '-'} />
+                <DetailInfoForm.Field
+                  label="교육 일정"
+                  view={scheduleLabel(detail.scheduleName)}
+                />
+              </DetailInfoForm.Row>
+            </DetailInfoForm>
 
-            {rejectMode ? (
-              <div className="individual-settlement-review-detail__reject">
-                <label htmlFor="individual-settlement-reject-reason">반려 사유</label>
-                <Input.TextArea
-                  id="individual-settlement-reject-reason"
-                  rows={3}
+            {(detail.revisions ?? []).map(revision => (
+              <section
+                key={revision.revisionId}
+                className="individual-settlement-review-detail-modal__revision"
+              >
+                <h3 className="individual-settlement-review-detail-modal__revision-title">
+                  Revision {revision.revisionNo}
+                </h3>
+                <DetailInfoForm title="" hideHeader mode="view">
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="상태"
+                      view={individualSettlementReviewStatusLabel(revision.status)}
+                    />
+                    <DetailInfoForm.Field
+                      label="제출일"
+                      view={formatIndividualSettlementDateTime(revision.submittedAt)}
+                    />
+                  </DetailInfoForm.Row>
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="심사일"
+                      view={formatIndividualSettlementDateTime(revision.reviewedAt)}
+                    />
+                    <DetailInfoForm.Field
+                      label="반려 사유"
+                      view={revision.rejectionReason?.trim() || '-'}
+                    />
+                  </DetailInfoForm.Row>
+                </DetailInfoForm>
+                <CmsDataTable<IndividualSettlementReviewItem>
+                  className="cms-data-table"
+                  rowKey="itemId"
+                  size="middle"
+                  pagination={false}
+                  columns={itemColumns}
+                  dataSource={revision.items ?? []}
+                />
+                <CmsDataTable<IndividualSettlementReviewReceipt>
+                  className="cms-data-table"
+                  rowKey="receiptId"
+                  size="middle"
+                  pagination={false}
+                  columns={receiptColumns}
+                  dataSource={(revision.items ?? []).flatMap(item => item.receipts ?? [])}
+                />
+              </section>
+            ))}
+          </div>
+        )}
+      </ContentModal>
+
+      <ConfirmModal
+        open={approveOpen}
+        title="개인 정산 승인"
+        content="이 개인 정산 신청을 승인하시겠습니까?"
+        confirmText="승인"
+        onCancel={() => setApproveOpen(false)}
+        onConfirm={() => void handleApprove()}
+        confirmLoading={approveMutation.isPending}
+      />
+
+      <ContentModal
+        open={rejectOpen}
+        onCancel={() => setRejectOpen(false)}
+        title="개인 정산 반려"
+        className="individual-settlement-review-reject-modal"
+        footer={
+          <div className="individual-settlement-review-detail-modal__footer">
+            <CmsButton
+              variant="secondary"
+              size="large"
+              type="button"
+              onClick={() => setRejectOpen(false)}
+              disabled={rejectMutation.isPending}
+            >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="delete"
+              size="large"
+              type="button"
+              onClick={() => void handleReject()}
+              loading={rejectMutation.isPending}
+              disabled={rejectMutation.isPending || !rejectReason.trim()}
+            >
+              반려
+            </CmsButton>
+          </div>
+        }
+      >
+        <DetailInfoForm
+          title=""
+          hideHeader
+          mode="edit"
+          className="individual-settlement-review-reject-modal__form"
+        >
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="반려 사유"
+              fullRow
+              edit={
+                <CmsTextArea
+                  inputSize="small"
+                  width="100%"
+                  rows={4}
                   value={rejectReason}
                   onChange={event => setRejectReason(event.target.value)}
-                  placeholder="반려 사유를 입력해 주세요."
-                  maxLength={4000}
+                  placeholder="반려 사유를 입력해 주세요"
+                  aria-label="반려 사유"
+                  className="individual-settlement-review-reject-modal__textarea"
                 />
-              </div>
-            ) : null}
-
-            <div className="individual-settlement-review-detail__revisions">
-              {(detail?.revisions ?? []).map(revision => (
-                <section key={revision.revisionId}>
-                  <h4>Revision {revision.revisionNo} · {statusLabel(revision.status)}</h4>
-                  {revision.rejectionReason ? <p>반려 사유: {revision.rejectionReason}</p> : null}
-                  {(revision.items ?? []).map(item => (
-                    <div key={item.itemId} className="individual-settlement-review-detail__item">
-                      <div className="individual-settlement-review-detail__item-heading">
-                        <strong>{item.itemName || item.itemType}</strong>
-                        <span>{formatIndividualSettlementAmount(item.amount)}</span>
-                      </div>
-                      {(item.receipts ?? []).map(receipt => (
-                        <div key={receipt.receiptId} className="individual-settlement-review-detail__receipt">
-                          <span>{receipt.expenseType} · {receipt.expenseDate}</span>
-                          <span>{formatIndividualSettlementAmount(receipt.amount)}</span>
-                          {(receipt.files ?? []).map(file => (
-                            <CmsButton
-                              key={file.fileObjectId}
-                              variant="default"
-                              size="small"
-                              onClick={() => void handleDownload(file.fileObjectId, file.fileName)}
-                              loading={downloadingFileId === file.fileObjectId}
-                            >
-                              {file.fileName}
-                            </CmsButton>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </section>
-              ))}
-            </div>
-          </div>
-        </Spin>
-      )}
-    </ContentModal>
+              }
+              view={rejectReason}
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      </ContentModal>
+    </>
   )
 }

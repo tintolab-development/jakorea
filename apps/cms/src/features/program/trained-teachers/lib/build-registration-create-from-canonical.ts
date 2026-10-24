@@ -10,16 +10,23 @@ import type {
   Program,
 } from '@/types/domain'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { collectTrainedTeachersCommonInfoState } from './collect-registration-common-info-state'
 import { importLegacyOverlayToTrainedTeachersCanonical } from './import-legacy-registration-overlay'
 import { collectTrainedTeachersApplicationState } from './registration-rhf-application'
 import { applyTrainedTeachersRecruitToProgram } from './recruit-form-state'
 import { collectTrainedTeachersRecruitmentState } from './registration-rhf-recruitment'
+import { educationFormLabelFromValue } from '@/features/program/general/lib/overlay-phase1/common-info-domain'
+import { registrationPendingSnapshotId } from '@/features/program/general/lib/registration-local-save'
 import {
   TRAINED_TEACHERS_REGISTRATION_CANONICAL_VERSION,
+  TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY,
   type TrainedTeachersRegistrationCanonical,
 } from './registration-canonical-types'
+import { peekTrainedTeachersRegistrationRhf } from './registration-rhf-api'
 import {
+  fillEmptyTrainedTeachersTitlesFromOverlay,
+  isTrainedTeachersRegistrationCanonicalSnapshot,
   trainedTeachersRhfToEditorMeta,
   type TrainedTeachersRegistrationRhfValues,
 } from './registration-rhf-values'
@@ -31,6 +38,44 @@ function withoutAssignment<T extends GeneralProgramCurriculumSessionRow | Genera
   delete (next as { assignmentEnabled?: boolean }).assignmentEnabled
   delete (next as { assignmentPeriod?: string }).assignmentPeriod
   return next
+}
+
+function scheduleDetailFieldsFromEditor(
+  editor: TrainedTeachersRegistrationCanonical['editor'],
+  educationForm: Program['type'] | undefined
+) {
+  return {
+    educationFormScheduleDetail: editor.educationFormScheduleDetail,
+    ipsScheduleDetail: editor.ipsScheduleDetail,
+    participationScheduleDetail: editor.participationScheduleDetail,
+    ...(editor.educationFormScheduleDetail === 'common' && educationForm
+      ? { educationFormLabel: educationFormLabelFromValue(educationForm) }
+      : {}),
+  }
+}
+
+export const TRAINED_TEACHER_DRAFT_RHF_REQUIRED_ERROR =
+  'TRAINED_TEACHER registration RHF is not mounted; refusing draft save'
+
+export function trainedTeachersWizardDraftSettingsJson(): {
+  [TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY]: TrainedTeachersRegistrationCanonical
+} {
+  const ttRhf = peekTrainedTeachersRegistrationRhf()
+  if (ttRhf == null) {
+    throw new Error(TRAINED_TEACHER_DRAFT_RHF_REQUIRED_ERROR)
+  }
+  const values = fillEmptyTrainedTeachersTitlesFromOverlay(
+    ttRhf.getValues(),
+    getProgramRegistrationOverlayRecord()
+  )
+  const snapshot = buildTrainedTeachersCanonicalFromRhf({
+    id: registrationPendingSnapshotId('trainedTeachers'),
+    values,
+  })
+  if (!isTrainedTeachersRegistrationCanonicalSnapshot(snapshot)) {
+    throw new Error(TRAINED_TEACHER_DRAFT_RHF_REQUIRED_ERROR)
+  }
+  return { [TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY]: snapshot }
 }
 
 function withTargetLevels(program: Program): Program {
@@ -116,6 +161,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
       scheduleDetails,
       teacherTrainingEnabled: common.teacherTrainingEnabled,
       educationJournalEnabled: common.educationJournalEnabled,
+      ...scheduleDetailFieldsFromEditor(editor, common.educationForm),
       participantRecruitmentInfo: {
         maxAssignableInstructors: 0,
         preEducationNoticeRequired: false,
@@ -160,6 +206,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
       }),
       teacherTrainingEnabled: editor.teacherTrainingEnabled,
       educationJournalEnabled: common.educationJournalEnabled,
+      ...scheduleDetailFieldsFromEditor(editor, common.educationForm),
       participantRecruitmentInfo: {
         ...withRecruit.generalCommonInfo?.participantRecruitmentInfo,
         maxAssignableInstructors: 0,

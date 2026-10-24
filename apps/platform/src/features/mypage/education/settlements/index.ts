@@ -9,6 +9,7 @@ export {
   buildSettlementConfirmPath,
   buildSettlementTabPath,
   resolveSettlementAreaFromPathname,
+  readSettlementRouteApplicationType,
 } from './lib/write-path'
 export { resolveSettlementDocumentKind } from './lib/settlement-status-ui'
 export { buildSettlementWriteDraft, hydrateSettlementWriteFormState } from './lib/build-write-draft'

@@ -12,8 +12,11 @@ import {
   type SettlementStatusAction,
 } from '../lib/settlement-status-ui'
 import { buildReceiptSubmitPath, buildReceiptViewPath } from '../lib/receipt-path'
-import { buildSettlementPaymentConsentPath } from '../lib/consent-path'
-import { buildSettlementWritePath, type SettlementArea } from '../lib/write-path'
+import {
+  buildSettlementConfirmPath,
+  buildSettlementWritePath,
+  type SettlementArea,
+} from '../lib/write-path'
 import {
   EducationSessionCard,
   EducationSessionCardHeader,
@@ -24,12 +27,13 @@ import {
 import checkMintUrl from '@/shared/assets/icons/check-mint-small.svg'
 import clockGrayUrl from '@/shared/assets/icons/clock-gray.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
-import { PFAlertModal, PFButton, PFStateBadge, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFCategoryBadge, PFStateBadge, PFText } from '@/shared/ui'
 import styles from './row.module.css'
 
 type EducationSettlementRowProps = {
   item: EducationSettlementItem
   applicationId: string
+  applicationType?: string
   documentKind?: SettlementDocumentKind
   area?: SettlementArea
   operationEndAt?: string
@@ -54,6 +58,7 @@ const UNSUBMITTED_DEADLINE_STATUSES = new Set([
 export function EducationSettlementRow({
   item,
   applicationId,
+  applicationType,
   documentKind = 'receipt',
   area = 'education',
   operationEndAt,
@@ -65,16 +70,33 @@ export function EducationSettlementRow({
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
   const config = resolveSettlementStatusUi(item.status, documentKind)
   const sessionId = item.id
-  const writePath = buildSettlementWritePath({ applicationId, sessionId, area })
-  const receiptSubmitPath = buildReceiptSubmitPath({ applicationId, sessionId, area })
+  const writePath = buildSettlementWritePath({
+    applicationId,
+    sessionId,
+    area,
+    applicationType,
+  })
+  const receiptSubmitPath = buildReceiptSubmitPath({
+    applicationId,
+    sessionId,
+    area,
+    applicationType,
+  })
   const receiptViewPath = buildReceiptViewPath({
     applicationId,
     sessionId,
     area,
+    applicationType,
     receiptId: item.receiptId,
     settlementApplicationId: item.settlementApplicationId,
   })
-  const instructorViewPath = buildSettlementPaymentConsentPath({ applicationId, mode: 'view' })
+  const instructorViewPath = buildSettlementConfirmPath({
+    applicationId,
+    sessionId,
+    area,
+    applicationType,
+    mode: 'view',
+  })
   const closeRejectReason = () => {
     setRejectOpen(false)
     const params = new URLSearchParams(window.location.search)
@@ -84,11 +106,15 @@ export function EducationSettlementRow({
     navigate({ search: params.toString() ? `?${params.toString()}` : '' }, { replace: true })
   }
   const amount = item.amount
-  const showAmount = amount != null && config.amountKind != null
+  const showStruckOnly =
+    documentKind === 'payment_statement' &&
+    item.status === 'rejected' &&
+    amount != null
+  const showAmount = amount != null && config.amountKind != null && !showStruckOnly
   const showPreviousAmount =
     documentKind === 'payment_statement' &&
-    item.status === 'correction_completed' &&
-    item.previousAmount != null
+    ((item.status === 'correction_completed' && item.previousAmount != null) ||
+      showStruckOnly)
   const guideMessage =
     item.submitBlockedReason ??
     (documentKind === 'payment_statement' && item.deadlineNotice === 'operation_ended'
@@ -122,8 +148,25 @@ export function EducationSettlementRow({
     canSubmit: item.canSubmitReceipt,
     status: item.status,
   })
-  const viewPath = documentKind === 'payment_statement' ? instructorViewPath : receiptViewPath
+  const viewPath =
+    documentKind === 'payment_statement'
+      ? item.settlementApplicationId != null
+        ? instructorViewPath
+        : null
+      : receiptViewPath
   const viewDisabled = !viewPath
+  const amountKindLabel =
+    documentKind === 'payment_statement'
+      ? config.amountKind === 'completed'
+        ? '지급 완료 금액'
+        : '정산 신청 금액'
+      : config.amountKind === 'expected'
+        ? '정산 예정금액'
+        : '정산 완료금액'
+  const headline =
+    documentKind === 'payment_statement' && item.sessionMeta
+      ? `${formatEducationSessionDate(item.heldAt)} ${item.sessionMeta}`
+      : formatEducationSessionDate(item.heldAt)
   const reapplyDisabled = isSettlementDeadlinePassed(item.deadlineAt)
 
   const renderAction = (action: SettlementStatusAction) => {
@@ -241,9 +284,13 @@ export function EducationSettlementRow({
               {EDUCATION_SETTLEMENT_PROGRESS_LABEL[item.progress]}
             </PFStateBadge>
           }
-          date={formatEducationSessionDate(item.heldAt)}
+          date={headline}
           subtitle={
-            item.sessionMeta ? (
+            documentKind === 'payment_statement' && item.institutionLabel ? (
+              <PFCategoryBadge size="small" variant="secondary">
+                {item.institutionLabel}
+              </PFCategoryBadge>
+            ) : item.sessionMeta && documentKind !== 'payment_statement' ? (
               <PFText as="span" typo="bd-lg-rg">
                 {item.sessionMeta}
               </PFText>
@@ -268,12 +315,12 @@ export function EducationSettlementRow({
             message={guideMessage ?? ''}
             description={description}
             actions={
-              actionHint || showAmount || actions.length > 0 ? (
+              actionHint || showAmount || showPreviousAmount || actions.length > 0 ? (
                 <div className={styles.buttons}>
-                  {showAmount ? (
+                  {showAmount || showPreviousAmount ? (
                     <div className={styles.amountContainer}>
                       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-                        {config.amountKind === 'expected' ? '정산 예정금액' : '정산 완료금액'}
+                        {amountKindLabel}
                       </PFText>
                       {showPreviousAmount ? (
                         <PFText
@@ -282,12 +329,14 @@ export function EducationSettlementRow({
                           color="neutral-cool-500"
                           className={styles.amountStruck}
                         >
-                          {item.previousAmount?.toLocaleString('ko-KR')}원
+                          {(item.previousAmount ?? amount)?.toLocaleString('ko-KR')}원
                         </PFText>
                       ) : null}
-                      <PFText as="p" typo="hl-lg" color="black" className={styles.amount}>
-                        {amount.toLocaleString('ko-KR')}원
-                      </PFText>
+                      {showAmount && amount != null ? (
+                        <PFText as="p" typo="hl-lg" color="black" className={styles.amount}>
+                          {amount.toLocaleString('ko-KR')}원
+                        </PFText>
+                      ) : null}
                     </div>
                   ) : null}
 

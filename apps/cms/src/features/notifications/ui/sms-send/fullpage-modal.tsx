@@ -57,6 +57,7 @@ import { PreviewModal } from '@/features/notifications/ui/sms-template/preview-m
 import { ProgramSelectField } from '@/features/notifications/ui/mail-send/program-select-field'
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { SmsSendComposeFields } from './compose-fields'
+import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
 import { RecipientTable } from './recipient-table'
@@ -105,6 +106,7 @@ export function SendFullpageModal({
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([])
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
+  const [sendRequestCompletedOpen, setSendRequestCompletedOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [recipientSearch, setRecipientSearch] = useState<SmsSendRecipientSearchParams>({
     typeValue: '',
@@ -331,12 +333,7 @@ export function SendFullpageModal({
       })
       setSendConfirmOpen(false)
       await invalidateHistory()
-      showAlert({
-        title: '문자 발송 완료',
-        content: '문자 발송이 완료되었습니다.',
-        confirmLabel: '닫기',
-      })
-      handleClose()
+      setSendRequestCompletedOpen(true)
     } catch (error) {
       setSendConfirmOpen(false)
       showAlert({
@@ -655,6 +652,14 @@ export function SendFullpageModal({
         onConfirm={() => void handleConfirmSend()}
         onCancel={() => {
           if (!sending) setSendConfirmOpen(false)
+        }}
+      />
+      <SendRequestCompletedModal
+        open={sendRequestCompletedOpen && open}
+        channel="sms"
+        onDismissSendScreen={() => {
+          setSendRequestCompletedOpen(false)
+          handleClose()
         }}
       />
     </>

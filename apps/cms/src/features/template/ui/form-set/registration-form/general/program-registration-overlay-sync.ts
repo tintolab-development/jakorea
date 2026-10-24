@@ -14,6 +14,7 @@ import {
 } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import {
   isTrainedTeachersCommonInfoOverlayKey,
+  projectTrainedTeachersRhfToOverlayRecord,
   readTrainedTeachersRhfOverlayValue,
   writeTrainedTeachersRhfOverlayValue,
 } from '@/features/program/trained-teachers/lib/registration-rhf-values'
@@ -238,7 +239,7 @@ export function readTrainedTeachersRegistrationOverlaySponsorContactIds(): strin
 
 export function readTrainedTeachersRegistrationOverlayProgramTitleKo(): string {
   const rhf = peekTrainedTeachersRegistrationRhf()
-  if (rhf != null) return rhf.getValues().title
+  if (rhf != null) return rhf.getValues().mainTitle
   return readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }
 
@@ -350,7 +351,7 @@ export function readStoredRegistrationProgramTitleKo(
 ): string {
   if (variant === 'economy') return readEconomyRegistrationOverlayProgramTitleKo()
   if (variant === 'trainedTeachers' && peekTrainedTeachersRegistrationRhf() != null) {
-    return peekTrainedTeachersRegistrationRhf()?.getValues().title.trim() || fallback.trim()
+    return peekTrainedTeachersRegistrationRhf()?.getValues().mainTitle.trim() || fallback.trim()
   }
   if (variant === 'general' && peekGeneralRegistrationWizardRhf() != null) {
     const fromRhf = peekGeneralRegistrationWizardRhf()?.getValues().programTitleKo
@@ -376,7 +377,6 @@ export function patchRegistrationOverlayProgramTitleKo(
   if (variant === 'trainedTeachers') {
     const rhf = peekTrainedTeachersRegistrationRhf()
     if (rhf != null) {
-      rhf.setPath('title', title, { shouldDirty: true })
       rhf.setPath('mainTitle', title, { shouldDirty: true })
       return
     }
@@ -388,6 +388,20 @@ export function patchRegistrationOverlayProgramTitleKo(
   patchProgramRegistrationOverlay({
     [GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]: title,
   })
+}
+
+/**
+ * 세션 메타 `programTitleKo` 복원. TT 제목 정본은 canonical snapshot이므로
+ * 레거시 메타로 RHF `mainTitle`을 덮지 않는다.
+ */
+export function hydrateRegistrationDraftProgramTitleKo(
+  variant: ProgramRegistrationFormVariant,
+  titleKo: string | undefined
+): void {
+  if (variant === 'trainedTeachers') return
+  const trimmed = titleKo?.trim()
+  if (!trimmed) return
+  patchRegistrationOverlayProgramTitleKo(variant, trimmed)
 }
 
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {
@@ -437,8 +451,34 @@ export function getProgramRegistrationOverlayVersion(): number {
   return store.getVersion()
 }
 
+function isBlankOverlayValue(value: unknown): boolean {
+  if (value == null) return true
+  if (typeof value === 'string') return value.trim() === ''
+  return false
+}
+
+/** RHF 빈 문자열이 overlay store 제목을 지우지 않게 한다 (TT title/mainTitle 반쪽 마이그레이션). */
+function mergeOverlayPreferFilled(
+  stored: Record<string, unknown>,
+  projected: Record<string, unknown>
+): Record<string, unknown> {
+  const next = { ...stored }
+  for (const [key, value] of Object.entries(projected)) {
+    if (isBlankOverlayValue(value) && !isBlankOverlayValue(stored[key])) continue
+    next[key] = value
+  }
+  return next
+}
+
 export function getProgramRegistrationOverlayRecord(): Record<string, unknown> {
   const stored = overlayState()
+  const ttRhf = peekTrainedTeachersRegistrationRhf()
+  if (ttRhf != null) {
+    return mergeOverlayPreferFilled(
+      stored,
+      projectTrainedTeachersRhfToOverlayRecord(ttRhf.getValues())
+    )
+  }
   const rhf = peekCompanySchoolRegistrationRhf()
   if (rhf == null) return stored
   return { ...stored, ...projectCompanySchoolRhfToOverlayRecord(rhf.getValues()) }

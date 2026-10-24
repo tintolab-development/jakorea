@@ -46,8 +46,6 @@ import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/prog
 import { useEducationScheduleModeLineStash } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import {
   detailEditValuesToProgramPatch,
-  resolveStoredEducationFormLabel,
-  resolveStoredIpsTypeSummary,
   type ProgramDetailEditFormValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -96,6 +94,11 @@ import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import { stampTrainedTeachersSessionFields } from '@/features/program/trained-teachers/lib/stamp-session-fields'
+import {
+  resolveTrainedTeachersEducationFormView,
+  resolveTrainedTeachersIpsTypeView,
+  shouldShowSessionIpsSummary,
+} from '@/features/program/trained-teachers/lib/common-info-display'
 import { validateTrainedTeachersCommonInfoDraft } from '@/features/program/trained-teachers/lib/validate-trained-teachers-common-info-draft'
 import {
   applyTrainedTeachersProgressGroupsToScheduleDetails,
@@ -396,25 +399,39 @@ function TrainedTeachersTypeSettingsSection({
   educationStructure,
   sessionRound,
   commonInfo,
+  programType,
+  ips,
   isEditMode = false,
   form,
 }: {
   educationStructure: 'curriculum' | 'schedule'
   sessionRound: 'single' | 'multi'
   commonInfo: TrainedTeachersCommonInfo
+  programType: Program['type']
+  ips?: Program['ips']
   isEditMode?: boolean
   form?: UseFormReturn<ProgramDetailEditFormValues>
 }) {
   const isFormEdit = isEditMode && form != null
   const isMulti = sessionRound === 'multi'
-  const educationFormPerSchedule =
-    (isFormEdit
-      ? form.watch('educationFormScheduleDetail')
-      : commonInfo.educationFormScheduleDetail) === 'perSchedule'
-  const ipsScheduleDetail =
-    (isFormEdit ? form.watch('ipsScheduleDetail') : commonInfo.ipsScheduleDetail) ?? 'common'
+  const educationFormScheduleDetail = isFormEdit
+    ? form.watch('educationFormScheduleDetail')
+    : commonInfo.educationFormScheduleDetail
+  const educationFormPerSchedule = educationFormScheduleDetail === 'perSchedule'
+  const ipsScheduleDetail = isFormEdit
+    ? form.watch('ipsScheduleDetail')
+    : commonInfo.ipsScheduleDetail
   const perScheduleHint = TYPE_SETTINGS_PER_SCHEDULE_HINT.byRound
   const educationFormOptions = getProgramRegistrationEducationFormOptions(true)
+  const educationFormResolved = resolveTrainedTeachersEducationFormView({
+    programType,
+    educationFormScheduleDetail,
+    educationFormLabel: commonInfo.educationFormLabel,
+  })
+  const ipsResolved = resolveTrainedTeachersIpsTypeView({
+    ipsScheduleDetail,
+    ips,
+  })
 
   const educationFormView = educationFormPerSchedule ? (
     <div className="detail-info-form-inputs-wrapper">
@@ -422,14 +439,14 @@ function TrainedTeachersTypeSettingsSection({
       <DetailInfoForm.InputsSeparator />
       <span className="program-registration-paragraph__schedule-hint">{perScheduleHint}</span>
     </div>
-  ) : isMulti ? (
+  ) : isMulti && educationFormScheduleDetail === 'common' ? (
     <>
       일정 공통
       <DetailInfoForm.InputsSeparator />
-      {resolveStoredEducationFormLabel(commonInfo) || '-'}
+      {educationFormResolved.formLabel}
     </>
   ) : (
-    (resolveStoredEducationFormLabel(commonInfo) || '-')
+    educationFormResolved.formLabel
   )
 
   const ipsCategory = (isFormEdit ? form.watch('ipsCategory') : undefined) as
@@ -668,7 +685,23 @@ function TrainedTeachersTypeSettingsSection({
                 label="IPS 유형"
                 fullRow
                 view={
-                  <PipeSeparatedInlineView text={resolveStoredIpsTypeSummary(commonInfo)} />
+                  ipsScheduleDetail === 'perSchedule' ? (
+                    <div className="detail-info-form-inputs-wrapper">
+                      일정 별 상이
+                      <DetailInfoForm.InputsSeparator />
+                      <span className="program-registration-paragraph__schedule-hint">
+                        {perScheduleHint}
+                      </span>
+                    </div>
+                  ) : ipsScheduleDetail === 'common' ? (
+                    <>
+                      일정 공통
+                      <DetailInfoForm.InputsSeparator />
+                      <PipeSeparatedInlineView text={ipsResolved.ipsLabel} />
+                    </>
+                  ) : (
+                    <PipeSeparatedInlineView text={ipsResolved.ipsLabel} />
+                  )
                 }
               />
             </DetailInfoForm.Row>
@@ -684,11 +717,15 @@ function EducationJournalBlock({
   enabled,
   isFormEdit,
   onChange,
+  mismatchWarning,
 }: {
   enabled: boolean | undefined
   isFormEdit: boolean
   onChange?: (next: boolean) => void
+  mismatchWarning?: string
 }) {
+  const journalView =
+    enabled === true ? '있음' : enabled === false ? '없음' : '-'
   return (
     <DetailInfoForm
       title="교육일지 설정"
@@ -700,7 +737,17 @@ function EducationJournalBlock({
         <DetailInfoForm.Field
           label="교육일지 설정"
           fullRow
-          view={enabled ? '있음' : '없음'}
+          view={
+            mismatchWarning ? (
+              <>
+                {journalView}
+                <DetailInfoForm.InputsSeparator />
+                {mismatchWarning}
+              </>
+            ) : (
+              journalView
+            )
+          }
           edit={
             isFormEdit ? (
               <CmsRadioGroup
@@ -966,19 +1013,19 @@ function TrainedTeachersCurriculumSection({
   isEditMode,
   draft,
   updateDraft,
+  journalMismatchWarning,
 }: {
   sessionRound: 'single' | 'multi'
   commonInfo: TrainedTeachersCommonInfo
   isEditMode: boolean
   draft: TrainedTeachersCommonInfoDraft | null
   updateDraft: DraftUpdater
+  journalMismatchWarning?: string
 }) {
   const isFormEdit = isEditMode && draft != null
   const isMulti = sessionRound === 'multi'
   const sessions = isFormEdit ? draft.curriculumSessions : (commonInfo.curriculumSessions ?? [])
   const showEducationPerRound = isMulti && commonInfo.educationFormScheduleDetail === 'perSchedule'
-  const showIpsPerRound = isMulti && commonInfo.ipsScheduleDetail === 'perSchedule'
-  const showIpsPerSession = !isMulti && commonInfo.ipsScheduleDetail === 'perSchedule'
   const teacherTrainingEnabled = isFormEdit
     ? draft.teacherTrainingEnabled
     : commonInfo.teacherTrainingEnabled === true
@@ -1053,6 +1100,7 @@ function TrainedTeachersCurriculumSection({
         enabled={isFormEdit ? draft.educationJournalEnabled : commonInfo.educationJournalEnabled}
         isFormEdit={isFormEdit}
         onChange={next => updateDraft(d => ({ ...d, educationJournalEnabled: next }))}
+        mismatchWarning={journalMismatchWarning}
       />
       {sessions.map((session, index) => {
         // 교육 연수 ON — 첫 차시/회차 타이틀 교육 연수 치환, IPS Prepare 고정
@@ -1064,7 +1112,13 @@ function TrainedTeachersCurriculumSection({
             heading={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
             ipsSummaryOverride={isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined}
             showEducationPerRound={showEducationPerRound && !isTeacherTrainingBlock}
-            showIpsPerRound={showIpsPerRound}
+            showIpsPerRound={
+              isTeacherTrainingBlock ||
+              shouldShowSessionIpsSummary({
+                ipsScheduleDetail: commonInfo.ipsScheduleDetail,
+                ipsTypeSummary: session.ipsTypeSummary,
+              })
+            }
             isFormEdit={isFormEdit}
             showDelete={sessions.length >= 2 && !isTeacherTrainingBlock}
             onChange={patch => patchSession(index, patch)}
@@ -1076,7 +1130,13 @@ function TrainedTeachersCurriculumSection({
             session={session}
             heading={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
             ipsSummaryOverride={isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined}
-            showIpsPerSession={showIpsPerSession}
+            showIpsPerSession={
+              isTeacherTrainingBlock ||
+              shouldShowSessionIpsSummary({
+                ipsScheduleDetail: commonInfo.ipsScheduleDetail,
+                ipsTypeSummary: session.ipsTypeSummary,
+              })
+            }
             isFormEdit={isFormEdit}
             showDelete={sessions.length >= 2 && !isTeacherTrainingBlock}
             onChange={patch => patchSession(index, patch)}
@@ -1372,18 +1432,19 @@ function TrainedTeachersScheduleSection({
   isEditMode,
   draft,
   updateDraft,
+  journalMismatchWarning,
 }: {
   sessionRound: 'single' | 'multi'
   commonInfo: TrainedTeachersCommonInfo
   isEditMode: boolean
   draft: TrainedTeachersCommonInfoDraft | null
   updateDraft: DraftUpdater
+  journalMismatchWarning?: string
 }) {
   const isFormEdit = isEditMode && draft != null
   const isMulti = sessionRound === 'multi'
   const details = isFormEdit ? draft.scheduleDetails : (commonInfo.scheduleDetails ?? [])
   const showEducationPerSchedule = commonInfo.educationFormScheduleDetail === 'perSchedule'
-  const showIpsPerSchedule = commonInfo.ipsScheduleDetail === 'perSchedule'
   const teacherTrainingEnabled = isFormEdit
     ? draft.teacherTrainingEnabled
     : commonInfo.teacherTrainingEnabled === true
@@ -1496,6 +1557,7 @@ function TrainedTeachersScheduleSection({
         enabled={isFormEdit ? draft.educationJournalEnabled : commonInfo.educationJournalEnabled}
         isFormEdit={isFormEdit}
         onChange={next => updateDraft(d => ({ ...d, educationJournalEnabled: next }))}
+        mismatchWarning={journalMismatchWarning}
       />
       {details.map((detail, index) => {
         const isEventSchedule = isMulti || detail.scheduleLabel.includes('행사 일정')
@@ -1511,7 +1573,13 @@ function TrainedTeachersScheduleSection({
               nameOverride={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
               ipsSummaryOverride={isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined}
               showEducationPerSchedule={showEducationPerSchedule}
-              showIpsPerSchedule={showIpsPerSchedule}
+              showIpsPerSchedule={
+                isTeacherTrainingBlock ||
+                shouldShowSessionIpsSummary({
+                  ipsScheduleDetail: commonInfo.ipsScheduleDetail,
+                  ipsTypeSummary: detail.ipsTypeSummary,
+                })
+              }
               isFormEdit={isFormEdit}
               showDelete={details.length >= 2 && !isTeacherTrainingBlock}
               onChange={patch => patchDetail(index, patch)}
@@ -1523,7 +1591,13 @@ function TrainedTeachersScheduleSection({
           <ScheduleDetailBlock
             key={detail.scheduleLabel || index}
             detail={detail}
-            showIpsPerSchedule={showIpsPerSchedule}
+            showIpsPerSchedule={
+              isTeacherTrainingBlock ||
+              shouldShowSessionIpsSummary({
+                ipsScheduleDetail: commonInfo.ipsScheduleDetail,
+                ipsTypeSummary: detail.ipsTypeSummary,
+              })
+            }
             isFormEdit={isFormEdit}
             showDelete={details.length >= 2 && !isTeacherTrainingBlock}
             progressGroups={isFormEdit ? draft.progressGroupsByDetail[index] : undefined}
@@ -2150,6 +2224,8 @@ export function TrainedTeachersCommonInfoView({
         educationStructure={educationStructure}
         sessionRound={sessionRound}
         commonInfo={commonInfo}
+        programType={displayProgram.type}
+        ips={displayProgram.ips}
         isEditMode={isEditMode}
         form={form}
       />
@@ -2161,16 +2237,19 @@ export function TrainedTeachersCommonInfoView({
             ...commonInfo,
             ipsScheduleDetail:
               isEditMode && form
-                ? (form.watch('ipsScheduleDetail') ?? 'common')
+                ? form.watch('ipsScheduleDetail')
                 : commonInfo.ipsScheduleDetail,
             educationFormScheduleDetail:
               isEditMode && form
-                ? (form.watch('educationFormScheduleDetail') ?? 'common')
+                ? form.watch('educationFormScheduleDetail')
                 : commonInfo.educationFormScheduleDetail,
           }}
           isEditMode={isEditMode}
           draft={draft}
           updateDraft={updateDraft}
+          journalMismatchWarning={program.trainedTeacherInfoDetailWarnings?.find(item =>
+            item.includes('educationJournalEnabled')
+          )}
         />
       ) : (
         <TrainedTeachersScheduleSection
@@ -2179,11 +2258,11 @@ export function TrainedTeachersCommonInfoView({
             ...commonInfo,
             ipsScheduleDetail:
               isEditMode && form
-                ? (form.watch('ipsScheduleDetail') ?? 'common')
+                ? form.watch('ipsScheduleDetail')
                 : commonInfo.ipsScheduleDetail,
             educationFormScheduleDetail:
               isEditMode && form
-                ? (form.watch('educationFormScheduleDetail') ?? 'common')
+                ? form.watch('educationFormScheduleDetail')
                 : commonInfo.educationFormScheduleDetail,
             educationScheduleMode:
               isEditMode && form
@@ -2193,6 +2272,9 @@ export function TrainedTeachersCommonInfoView({
           isEditMode={isEditMode}
           draft={draft}
           updateDraft={updateDraft}
+          journalMismatchWarning={program.trainedTeacherInfoDetailWarnings?.find(item =>
+            item.includes('educationJournalEnabled')
+          )}
         />
       )}
 

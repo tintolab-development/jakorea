@@ -1,10 +1,11 @@
+/** 교통비 대중교통 수단 — 영수증·지급조서 작성 드롭다운 SSOT */
 export const SETTLEMENT_TRANSIT_OPTIONS = [
   { value: 'bus', label: '버스(시내·시외·고속 등)' },
   { value: 'subway', label: '지하철' },
   { value: 'train', label: '기차(KTX·SRT·무궁화호 등)' },
   { value: 'flight', label: '항공기' },
   { value: 'other', label: '기타' },
-]
+] as const
 
 export const SETTLEMENT_TRIP_TYPE_OPTIONS = [
   { value: 'one_way' as const, label: '편도' },

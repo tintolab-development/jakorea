@@ -342,12 +342,11 @@ function TripLegBlock({
         <PFFormFieldRow type="double">
           <PFFormField label="대중교통 수단">
             <PFSelect
-              width={160}
               variant="formPage"
               size="large"
               placeholder="선택"
               aria-label={`${prefix} 대중교통 수단`}
-              options={SETTLEMENT_TRANSIT_OPTIONS}
+              options={[...SETTLEMENT_TRANSIT_OPTIONS]}
               value={transit || undefined}
               onValueChange={onTransitChange}
             />
@@ -446,15 +445,13 @@ export function EducationSettlementWriteForm({
   const { lockedBasic } = useInstructorApplyLockedBasic()
   const { profile } = useMypageMember()
   const profileQuery = usePortalProfileQuery({ enabled: true })
-  const existingDetail = useIndividualSettlementDetailQuery(
-    documentKind === 'receipt' ? session?.settlementApplicationId : null,
-  )
+  const existingDetail = useIndividualSettlementDetailQuery(session?.settlementApplicationId)
   const isInstructor = isInstructorMypageProfile(profile)
   const isReceipt = documentKind === 'receipt'
   const consentBasicQuery = usePaymentStatementConsentBasicInfo(isReceipt)
   const consentBasic = consentBasicQuery.basic
   const individualSchedules = useIndividualSettlementSchedulesQuery(
-    isReceipt && isIndividualScheduleSettlementAudience(applicationType) ? applicationId : null,
+    isIndividualScheduleSettlementAudience(applicationType) ? applicationId : null,
   )
   const matchedIndividual = useMemo(
     () =>
@@ -716,7 +713,7 @@ export function EducationSettlementWriteForm({
       bank,
       accountNumber,
       accountHolder,
-      transportItemType: transportItem?.itemType,
+      transportItemType: transportItem?.itemType ?? (!isReceipt ? 'TRANSPORTATION' : undefined),
       transportItemName: transportItem?.itemName,
       transportEvidenceRequired: isReceiptEvidenceRequired(transportItem?.evidenceRequired),
       tripType,
@@ -747,6 +744,7 @@ export function EducationSettlementWriteForm({
         applicationId,
         sessionId,
         area: resolveSettlementAreaFromPathname(location.pathname),
+        applicationType: applicationType ?? undefined,
       }),
       { state: { draft } },
     )
@@ -835,8 +833,9 @@ export function EducationSettlementWriteForm({
                         size="large"
                         width={200}
                         placeholder="은행명"
+                        disabled={isReceipt}
                         value={bank}
-                        onValueChange={setBank}
+                        onValueChange={isReceipt ? () => undefined : setBank}
                       />
                       <PFTextInput
                         variant="formPage"
@@ -844,8 +843,11 @@ export function EducationSettlementWriteForm({
                         width={200}
                         inputMode="numeric"
                         placeholder="계좌번호를 입력해 주세요."
+                        disabled={isReceipt}
                         value={accountNumber}
-                        onValueChange={value => setAccountNumber(digitsOnly(value))}
+                        onValueChange={
+                          isReceipt ? () => undefined : value => setAccountNumber(digitsOnly(value))
+                        }
                       />
                     </PFFormControlCluster>
                   </PFFormInlineSegment>
@@ -856,8 +858,9 @@ export function EducationSettlementWriteForm({
                       size="large"
                       width={200}
                       placeholder="예금주명"
+                      disabled={isReceipt}
                       value={accountHolder}
-                      onValueChange={setAccountHolder}
+                      onValueChange={isReceipt ? () => undefined : setAccountHolder}
                     />
                   </PFFormInlineSegment>
                 </PFFormInlineRow>

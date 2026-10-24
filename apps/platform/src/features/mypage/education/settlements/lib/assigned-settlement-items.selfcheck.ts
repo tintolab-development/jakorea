@@ -485,14 +485,8 @@ assert.equal(receiptUpcomingUi.writeDisabled, true)
 assert.deepEqual(receiptUpcomingUi.actions, ['write'])
 
 const instructorUpcomingUi = resolveSettlementStatusUi('upcoming', 'payment_statement')
-assert.equal(instructorUpcomingUi.message, '기한 내에 지급조서를 제출해 주세요')
-assert.equal(
-  instructorUpcomingUi.actionHint,
-  '강의보고서 작성 이후에 지급조서 작성이 가능합니다',
-)
-assert.equal(instructorUpcomingUi.writeLabel, '지급조서 작성하기')
-assert.equal(instructorUpcomingUi.writeDisabled, true)
-assert.deepEqual(instructorUpcomingUi.actions, ['write'])
+assert.equal(instructorUpcomingUi.message, undefined)
+assert.equal(instructorUpcomingUi.actions, undefined)
 
 assert.equal(resolveSettlementDocumentKind('INDIVIDUAL'), 'receipt')
 assert.equal(resolveSettlementDocumentKind('ORGANIZATION'), 'receipt')
@@ -503,7 +497,7 @@ assert.equal(resolveSettlementStatusUi('pending_submit', 'receipt').writeDisable
 assert.equal(resolveSettlementStatusUi('pending_submit', 'receipt').writeLabel, '영수증 작성하기')
 assert.equal(
   resolveSettlementStatusUi('pending_submit', 'payment_statement').writeLabel,
-  '지급조서 제출하기',
+  '지급조서 작성하기',
 )
 assert.equal(resolveSettlementStatusUi('overdue', 'receipt').writeDisabled, true)
 
@@ -704,19 +698,19 @@ assert.equal(mapPaymentStatementServerStatus({ statementStatus: 'DRAFT' }), null
 
 assert.equal(
   resolveSettlementStatusUi('waiting_confirm', 'payment_statement').markLabel,
-  '확인 대기 중',
+  '확인 대기',
 )
 assert.equal(
   resolveSettlementStatusUi('reapplied', 'payment_statement').markLabel,
-  '지급조서 재신청',
+  '재신청',
 )
 assert.equal(
   resolveSettlementStatusUi('confirmed', 'payment_statement').markLabel,
-  '지급조서 확인 완료',
+  '확인 완료',
 )
 assert.equal(
   resolveSettlementStatusUi('paid', 'payment_statement').markLabel,
-  '계좌 지급 완료',
+  '지급 완료',
 )
 assert.equal(
   resolveSettlementStatusUi('overdue', 'payment_statement').message,
@@ -724,7 +718,7 @@ assert.equal(
 )
 assert.equal(
   resolveSettlementStatusUi('correction_requested', 'payment_statement').markLabel,
-  '지급 정정 요청',
+  '정정 요청',
 )
 assert.deepEqual(
   resolveSettlementStatusUi('correction_completed', 'payment_statement').actions,
@@ -741,7 +735,7 @@ assert.equal(
     canSubmit: true,
     now: NOW,
   }),
-  'pending_submit',
+  'overdue',
 )
 assert.equal(
   resolveEducationSettlementStatusResult({

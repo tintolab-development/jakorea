@@ -1,56 +1,155 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { customInstance } = vi.hoisted(() => ({ customInstance: vi.fn() }))
+const { customInstanceMock } = vi.hoisted(() => ({
+  customInstanceMock: vi.fn(),
+}))
 
-vi.mock('@/shared/api/orval-mutator', () => ({ customInstance }))
-vi.mock('@/entities/user/api/auth-service', () => ({ hasRemoteAdminJwt: () => true }))
-vi.mock('@/shared/config/real-api-modules', () => ({ isRealApiModuleEnabled: () => true }))
+vi.mock('@/shared/api/orval-mutator', () => ({
+  default: customInstanceMock,
+  customInstance: customInstanceMock,
+}))
 
+import customInstance from '@/shared/api/orval-mutator'
+import { participatingInstructorSettlementsQueryOptions } from '@/features/program/general/api/participating-instructor-settlements-remote'
 import {
   approveIndividualSettlementReviewRemote,
+  buildIndividualSettlementReviewListParams,
+  fetchIndividualSettlementReviewDetailRemote,
   fetchIndividualSettlementReviewListRemote,
+  INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL,
+  individualSettlementReviewApproveUrl,
+  individualSettlementReviewRejectUrl,
+  isIndividualSettlementReviewConflict,
   rejectIndividualSettlementReviewRemote,
+  unwrapIndividualSettlementReviewDetail,
 } from './individual-settlement-review-remote'
 
 describe('individual settlement review remote', () => {
-  beforeEach(() => customInstance.mockReset())
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
 
-  it('queries the individual review API by program and participant, not instructor member id', async () => {
-    customInstance.mockResolvedValueOnce({
-      items: [{ settlementApplicationId: 1, participantId: 1694686, programScheduleId: 187231 }],
+  it('builds list params with programId and participantId only', () => {
+    const params = buildIndividualSettlementReviewListParams({
+      programId: 186339,
+      participantId: 123,
+    })
+    expect(params).toEqual({
+      programId: 186339,
+      participantId: 123,
+      page: 0,
+      size: 100,
+    })
+    expect(params && 'instructorMemberId' in params).toBe(false)
+    expect(params && 'memberId' in params).toBe(false)
+  })
+
+  it('GETs list URL without instructorMemberId', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      items: [
+        {
+          settlementApplicationId: 1,
+          programId: 186339,
+          individualApplicationId: 1694686,
+          participantId: 123,
+          programScheduleId: 187231,
+          status: 'SUBMITTED',
+          totalAmount: 49999,
+          latestRevisionNo: 1,
+        },
+      ],
       page: 0,
       size: 100,
       totalElements: 1,
       totalPages: 1,
     })
 
-    await expect(
-      fetchIndividualSettlementReviewListRemote({ programId: 186339, participantId: 1694686 })
-    ).resolves.toHaveLength(1)
-    expect(customInstance).toHaveBeenCalledWith({
-      url: '/api/admin/individual-settlement-applications',
-      method: 'GET',
-      params: { programId: 186339, participantId: 1694686, page: 0, size: 100 },
+    const items = await fetchIndividualSettlementReviewListRemote({
+      programId: '186339',
+      participantId: '123',
     })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL,
+      method: 'GET',
+      params: {
+        programId: 186339,
+        participantId: 123,
+        page: 0,
+        size: 100,
+      },
+    })
+    const call = vi.mocked(customInstance).mock.calls[0]?.[0] as { params?: Record<string, unknown> }
+    expect(call.params).not.toHaveProperty('instructorMemberId')
+    expect(call.params).not.toHaveProperty('memberId')
+    expect(items).toHaveLength(1)
+    expect(items[0]?.settlementApplicationId).toBe(1)
+    expect(items[0]?.totalAmount).toBe(49999)
   })
 
-  it('keeps approval and rejection ids separate from settlement ledger ids', async () => {
-    customInstance
-      .mockResolvedValueOnce({ success: true, data: { settlementApplicationId: 1, status: 'APPROVED' } })
-      .mockResolvedValueOnce({ success: true, data: { settlementApplicationId: 1, status: 'REJECTED' } })
+  it('unwraps detail ApiResponse.data', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      success: true,
+      data: {
+        settlementApplicationId: 1,
+        status: 'SUBMITTED',
+        latestRevisionNo: 1,
+        revisions: [],
+      },
+    })
+    const detail = await fetchIndividualSettlementReviewDetailRemote(1)
+    expect(detail.settlementApplicationId).toBe(1)
+    expect(detail.latestRevisionNo).toBe(1)
+    expect(unwrapIndividualSettlementReviewDetail({ success: true, data: { status: 'APPROVED' } }).status).toBe(
+      'APPROVED'
+    )
+  })
 
-    await approveIndividualSettlementReviewRemote(1, 1)
-    await rejectIndividualSettlementReviewRemote(1, { expectedRevisionNo: 2, reason: '증빙 보완' })
-
-    expect(customInstance.mock.calls[0]?.[0]).toMatchObject({
-      url: '/api/admin/individual-settlement-applications/1/approve',
+  it('approves with expectedRevisionNo', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      success: true,
+      data: { settlementApplicationId: 1, revisionNo: 1, status: 'APPROVED' },
+    })
+    await approveIndividualSettlementReviewRemote({
+      settlementApplicationId: 1,
+      expectedRevisionNo: 1,
+    })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: individualSettlementReviewApproveUrl(1),
       method: 'PATCH',
       data: { expectedRevisionNo: 1 },
     })
-    expect(customInstance.mock.calls[1]?.[0]).toMatchObject({
-      url: '/api/admin/individual-settlement-applications/1/reject',
-      method: 'PATCH',
-      data: { expectedRevisionNo: 2, reason: '증빙 보완' },
+  })
+
+  it('rejects with expectedRevisionNo and trimmed reason', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      success: true,
+      data: { settlementApplicationId: 1, revisionNo: 1, status: 'REJECTED' },
     })
+    await rejectIndividualSettlementReviewRemote({
+      settlementApplicationId: 1,
+      expectedRevisionNo: 1,
+      reason: '  증빙 보완 필요  ',
+    })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: individualSettlementReviewRejectUrl(1),
+      method: 'PATCH',
+      data: { expectedRevisionNo: 1, reason: '증빙 보완 필요' },
+    })
+  })
+
+  it('treats HTTP 409 as review conflict', () => {
+    expect(isIndividualSettlementReviewConflict({ response: { status: 409 } })).toBe(true)
+    expect(isIndividualSettlementReviewConflict({ response: { status: 400 } })).toBe(false)
+  })
+
+  it('does not reuse instructor settlement query key for individual review', () => {
+    const instructorKey = participatingInstructorSettlementsQueryOptions({
+      programId: '186339',
+      instructorMemberId: '456',
+    }).queryKey
+    expect(instructorKey).toContain('instructor-settlements')
+    expect(INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL).toBe('/api/admin/individual-settlement-applications')
+    expect(INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL).not.toContain('/api/admin/settlements')
   })
 })

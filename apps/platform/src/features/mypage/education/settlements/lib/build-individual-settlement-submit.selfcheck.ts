@@ -237,4 +237,36 @@ const dedupedTransport = buildIndividualSettlementItems(duplicateTransportDraft)
 assert.equal(dedupedTransport.length, 1)
 assert.equal(dedupedTransport[0]?.itemType, 'TRANSPORTATION')
 
+const instructorDraft = buildSettlementWriteDraft({
+  applicationId: '12',
+  sessionId: '1',
+  scheduleId: 1,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  expenseDate: '2026-04-03',
+  idempotencyKey: '55555555-5555-5555-5555-555555555555',
+  name: '강사',
+  homeAddress: '',
+  homeAddressDetail: '',
+  bank: '국민',
+  accountNumber: '123',
+  accountHolder: '강사',
+  transportItemType: 'TRANSPORTATION',
+  tripType: 'one_way',
+  departTransit: 'bus',
+  departAmount: '8,000',
+  returnTransit: '',
+  returnAmount: '',
+  extraItems: [],
+  mealAmount: '30,000',
+  mealFiles: [],
+  activityAmount: '',
+  activityFiles: [],
+})
+const instructorItems = buildIndividualSettlementItems(instructorDraft)
+assert.equal(instructorItems.length, 2)
+assert.equal(instructorItems[0]?.itemType, 'TRANSPORTATION')
+assert.equal(instructorItems[1]?.itemType, 'MEAL')
+assert.equal(instructorItems[1]?.amount, 30000)
+
 console.log('build-individual-settlement-submit.selfcheck: ok')

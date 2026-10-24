@@ -6,8 +6,13 @@ import { resolveSettlementAreaFromPathname } from '../lib/write-path'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
 import { PFButton, PFText } from '@/shared/ui'
+import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { useApplicationSettlementsQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
+import {
+  readInstructorBusinessIncomeLabel,
+  readInstructorFeeGradeLabel,
+} from '../lib/instructor-settlement-summary'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SETTLEMENT_PAGE_SIZE } from '../model/types'
@@ -51,6 +56,7 @@ export function EducationSettlementPanel({
 }: EducationSettlementPanelProps) {
   const location = useLocation()
   const [page, setPage] = useState(1)
+  const profileQuery = usePortalProfileQuery({ enabled: applicationType === 'INSTRUCTOR' })
   const remoteSettlements = useApplicationSettlementsQuery(
     applicationType,
     applicationId,
@@ -169,6 +175,16 @@ export function EducationSettlementPanel({
         processLabel={processLabel}
         completedCount={completedCount}
         totalCount={totalElements}
+        feeGradeLabel={
+          documentKind === 'payment_statement'
+            ? readInstructorFeeGradeLabel(profileQuery.data)
+            : undefined
+        }
+        businessIncomeLabel={
+          documentKind === 'payment_statement'
+            ? readInstructorBusinessIncomeLabel(profileQuery.data)
+            : undefined
+        }
       />
       <EducationSessionList
         title="정산 현황"
@@ -187,6 +203,7 @@ export function EducationSettlementPanel({
             key={item.id}
             item={item}
             applicationId={applicationId}
+            applicationType={applicationType ?? undefined}
             documentKind={documentKind}
             area={area}
             operationEndAt={operationEnd}

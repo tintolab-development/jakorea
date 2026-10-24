@@ -165,6 +165,6 @@ describe('trained-teacher Primary recruitment adapter', () => {
     const partial = parseTrainedTeacherServiceDetailJson(JSON.stringify(envelope))
     expect(partial.generalProgramEducationStructure).toBe('curriculum')
     expect(partial.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors).toBe(0)
-    expect(partial.generalParticipantTypes).toEqual(['school_institution'])
+    expect(partial.generalParticipantTypes).toBeUndefined()
   })
 })

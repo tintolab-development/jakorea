@@ -39,6 +39,12 @@ export function readSettlementScheduleJoinId(
   return readOptionalInteger(settlement.programScheduleId) ?? readScheduleJoinId(settlement)
 }
 
+export function readSettlementAssignmentJoinId(
+  settlement: PortalSettlementApplication,
+): number | undefined {
+  return readOptionalInteger(settlement.assignmentId)
+}
+
 export function readOptionalIsoTimestamp(record: object, keys: readonly string[]): string | undefined {
   const row = readRecord(record)
   for (const key of keys) {

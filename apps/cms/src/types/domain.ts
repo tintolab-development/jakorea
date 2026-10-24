@@ -654,13 +654,19 @@ export interface Program {
   generalCommonInfo?: GeneralProgramCommonInfoExtension
   /** UJAT 등록 폼 overlay — 상세 화면 SSOT (`serviceDetailJson.registration.overlay`) */
   ujatRegistrationOverlay?: Record<string, unknown>
-  /** 일반·1사1교·TT 등록 폼 overlay — 공고용명 등 SSOT (`serviceDetailJson.registration.overlay`) */
+  /**
+   * 화면·RHF용 overlay 메모리 필드.
+   * JSON 정본은 `serviceDetailJson.registration.overlay`.
+   * `serviceDetailJson.registrationOverlay` 루트 키는 레거시 조회 호환용이며 신규 저장에 보내지 않는다.
+   */
   registrationOverlay?: Record<string, unknown>
   /** 일반 프로그램 캘린더 — 시간대 사용 여부 (false면 종일) */
   scheduleTimeEnabled?: boolean
   /** 일반 프로그램 캘린더 — 일정 시작·종료 시각 (HH:mm) */
   startTime?: string
   endTime?: string
+  /** TT B GET typed 값과 configJson 불일치 — 화면 경고용. PATCH에 실리지 않는다. */
+  trainedTeacherInfoDetailWarnings?: string[]
   createdAt: DateValue
   updatedAt: DateValue
   /** 등록자 표시명 (목록/상세 표시용, API·mock에서 채움) */

@@ -23,6 +23,8 @@ export type EducationSettlementItem = {
   heldAt: string
   /** 예: 10:00~11:20 3차시 */
   sessionMeta: string
+  /** 배정 학교·기관명. API에 값이 있을 때만 채운다. */
+  institutionLabel?: string
   progress: EducationSettlementProgress
   status: EducationSettlementStatus
   deadlineAt?: string

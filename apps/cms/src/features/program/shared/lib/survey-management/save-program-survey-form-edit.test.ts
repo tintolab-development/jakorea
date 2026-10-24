@@ -42,6 +42,7 @@ import {
   resolveProgramSurveyFormEditFailure,
   saveProgramSurveyFormEdit,
 } from '@/features/program/shared/lib/survey-management/save-program-survey-form-edit'
+import { SURVEY_OPEN_ENDED_END_AT } from '@/features/program/shared/lib/survey-management/survey-binding-period'
 import { createNewSurveyDraft } from '@/features/template/model/writing-form-draft.schema'
 
 const TARGET = { programId: '186051', bindingId: '900', sourceVersionId: 352, title: '설문' }
@@ -110,6 +111,7 @@ describe('saveProgramSurveyFormEdit', () => {
       templateId: 2001,
       templateVersionId: 400,
       submissionStartAt: '2026-10-20T00:00:00.000Z',
+      submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
     })
   })
 
@@ -177,6 +179,7 @@ describe('saveProgramSurveyFormEdit', () => {
         templateId: 2001,
         templateVersionId: 400,
         submissionStartAt: '2026-10-20T00:00:00.000Z',
+        submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
       })
       expect(copyVersion).toHaveBeenCalled()
     } finally {

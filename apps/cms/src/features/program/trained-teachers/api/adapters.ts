@@ -399,7 +399,9 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     studentListRequired: toStudentListRequired(dto.studentListRequired) ?? nestedStudentListRequired,
     remarks,
     educationTargetDetail,
-    generalParticipantTypes: ['school_institution'],
+    generalParticipantTypes: Array.isArray(details.generalParticipantTypes)
+      ? details.generalParticipantTypes
+      : undefined,
     generalProgramEducationStructure: educationStructure,
     generalCommonInfo: clearTeacherTrainingScheduleIfOff({
       ...details.generalCommonInfo,

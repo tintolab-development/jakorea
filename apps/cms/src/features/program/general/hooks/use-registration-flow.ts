@@ -24,7 +24,7 @@ import {
 } from '@/features/template/hooks/use-program-participant-application-editor'
 import {
   getProgramRegistrationOverlayVersion,
-  patchRegistrationOverlayProgramTitleKo,
+  hydrateRegistrationDraftProgramTitleKo,
   subscribeProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
@@ -253,10 +253,10 @@ export function useGeneralProgramRegistrationFlow(
         setActiveStep(restored)
         onStepChangeRef.current?.(restored)
       }
-      const titleKo = payload?.programTitleKo?.trim()
-      if (titleKo) {
-        patchRegistrationOverlayProgramTitleKo(registrationFormVariant, titleKo)
-      }
+      hydrateRegistrationDraftProgramTitleKo(
+        registrationFormVariant,
+        payload?.programTitleKo
+      )
     })().catch(error => {
       console.warn('[registration-program-draft] hydrate failed', error)
     })

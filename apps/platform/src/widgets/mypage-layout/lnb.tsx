@@ -1,7 +1,16 @@
+import { useEffect, useId, useLayoutEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import type { MypageLnbItem, MypageLnbItemKey } from '@/features/mypage'
+import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
+import { useMediaQuery } from '@/shared/hooks'
+import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { PFText } from '@/shared/ui'
 import { InstructorApplyCta } from './instructor-apply-cta'
-import { getLnbIconUrl } from './lnb-icon-map'
+import {
+  getLnbIconUrl,
+  getLnbMobileTriggerIconUrl,
+  isLnbMobileTriggerIllustration,
+} from './lnb-icon-map'
 import styles from './lnb.module.css'
 
 export type LnbAppearance = 'default' | 'category'
@@ -13,49 +22,78 @@ type LnbProps = {
   appearance?: LnbAppearance
   ariaLabel?: string
   onItemSelect?: (key: MypageLnbItemKey) => void
+  dropdownOpen?: boolean
+  onDropdownOpenChange?: (open: boolean) => void
 }
 
-export function Lnb({
+type LnbMenuItemsProps = {
+  items: MypageLnbItem[]
+  isCategory: boolean
+  menuVariant?: 'default' | 'mobilePanel'
+  menuClassName?: string
+  itemClassName?: string
+  onItemSelect?: (key: MypageLnbItemKey) => void
+  onItemClick?: (key: MypageLnbItemKey) => void
+}
+
+function LnbMenuItems({
   items,
-  showInstructorApply = false,
-  appearance = 'default',
-  ariaLabel = '마이페이지 메뉴',
+  isCategory,
+  menuVariant = 'default',
+  menuClassName,
+  itemClassName,
   onItemSelect,
-}: LnbProps) {
-  const isCategory = appearance === 'category'
-  const lnbClassName = [styles.lnb, isCategory ? styles.lnbCategory : undefined]
-    .filter(Boolean)
-    .join(' ')
+  onItemClick,
+}: LnbMenuItemsProps) {
+  const isMobilePanel = menuVariant === 'mobilePanel'
 
   return (
-    <nav className={lnbClassName} aria-label={ariaLabel}>
-      <div className={styles.menu}>
-        {items.map(item => {
-          const itemClassName = [
-            styles.item,
-            item.active ? styles.itemActive : undefined,
-            item.enabled === false ? styles.itemDisabled : undefined,
-          ]
-            .filter(Boolean)
-            .join(' ')
-          const iconUrl =
-            item.hideIcon === true ? undefined : getLnbIconUrl(item.key, Boolean(item.active))
+    <div className={menuClassName ?? styles.menu}>
+      {items.map(item => {
+        const buttonClassName = [
+          styles.item,
+          itemClassName,
+          item.active ? styles.itemActive : undefined,
+          item.enabled === false ? styles.itemDisabled : undefined,
+        ]
+          .filter(Boolean)
+          .join(' ')
+        const iconUrl =
+          item.hideIcon === true ? undefined : getLnbIconUrl(item.key, Boolean(item.active))
 
-          return (
-            <div key={item.key} className={styles.itemBlock}>
-              <button
-                className={itemClassName}
-                type="button"
-                aria-current={item.active ? 'page' : undefined}
-                disabled={item.enabled === false}
-                onClick={() => {
-                  if (item.enabled === false) return
-                  onItemSelect?.(item.key)
-                }}
-              >
-                {iconUrl ? (
-                  <img className={styles.icon} src={iconUrl} alt="" aria-hidden="true" />
-                ) : null}
+        return (
+          <div key={item.key} className={styles.itemBlock}>
+            <button
+              className={buttonClassName}
+              type="button"
+              aria-current={item.active ? 'page' : undefined}
+              disabled={item.enabled === false}
+              onClick={() => {
+                if (item.enabled === false) return
+                onItemClick?.(item.key)
+                onItemSelect?.(item.key)
+              }}
+            >
+              {iconUrl ? (
+                <img
+                  className={isMobilePanel ? styles.mobilePanelIcon : styles.icon}
+                  src={iconUrl}
+                  alt=""
+                  aria-hidden="true"
+                />
+              ) : null}
+              {isMobilePanel ? (
+                <span
+                  className={[
+                    styles.mobilePanelLabel,
+                    item.active ? styles.mobilePanelLabelActive : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  {item.label}
+                </span>
+              ) : (
                 <PFText
                   as="span"
                   typo="bd-md-md"
@@ -70,14 +108,168 @@ export function Lnb({
                 >
                   {item.label}
                 </PFText>
-              </button>
-              {item.dividerAfter ? (
-                <div className={styles.divider} role="separator" aria-hidden="true" />
-              ) : null}
-            </div>
-          )
-        })}
-      </div>
+              )}
+            </button>
+            {item.dividerAfter ? (
+              <div className={styles.divider} role="separator" aria-hidden="true" />
+            ) : null}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+export function Lnb({
+  items,
+  showInstructorApply = false,
+  appearance = 'default',
+  ariaLabel = '마이페이지 메뉴',
+  onItemSelect,
+  dropdownOpen = false,
+  onDropdownOpenChange,
+}: LnbProps) {
+  const panelId = useId()
+  const panelRef = useRef<HTMLDivElement>(null)
+  const scrimRef = useRef<HTMLButtonElement>(null)
+  const { pathname } = useLocation()
+  const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
+  const isCategory = appearance === 'category'
+  const useMobileDropdown = isBelowPc && !isCategory
+
+  useEffect(() => {
+    onDropdownOpenChange?.(false)
+  }, [pathname])
+
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    const scrim = scrimRef.current
+    if (!dropdownOpen || !panel || !scrim) return
+
+    const updateOverlayMetrics = () => {
+      const panelTop = panel.getBoundingClientRect().top
+      scrim.style.top = `${panelTop}px`
+      panel.style.setProperty('--mobile-panel-top', `${panelTop}px`)
+    }
+
+    updateOverlayMetrics()
+    window.addEventListener('resize', updateOverlayMetrics)
+    window.visualViewport?.addEventListener('resize', updateOverlayMetrics)
+    window.visualViewport?.addEventListener('scroll', updateOverlayMetrics)
+    return () => {
+      window.removeEventListener('resize', updateOverlayMetrics)
+      window.visualViewport?.removeEventListener('resize', updateOverlayMetrics)
+      window.visualViewport?.removeEventListener('scroll', updateOverlayMetrics)
+      panel.style.removeProperty('--mobile-panel-top')
+    }
+  }, [dropdownOpen, items])
+
+  const activeItem = items.find(item => item.active) ?? items[0]
+  const lnbClassName = [
+    styles.lnb,
+    isCategory ? styles.lnbCategory : undefined,
+    useMobileDropdown ? styles.lnbMobileDropdown : undefined,
+    useMobileDropdown && dropdownOpen ? styles.lnbMobileDropdownOpen : undefined,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const handleItemSelect = (key: MypageLnbItemKey) => {
+    onDropdownOpenChange?.(false)
+    onItemSelect?.(key)
+  }
+
+  if (useMobileDropdown && activeItem) {
+    const triggerIconUrl =
+      activeItem.hideIcon === true
+        ? undefined
+        : getLnbMobileTriggerIconUrl(activeItem.key, true)
+    const triggerIconClassName = isLnbMobileTriggerIllustration(activeItem.key)
+      ? styles.mobileTriggerIllustration
+      : styles.mobileTriggerSmallIcon
+    const dropdownRootClassName = [
+      styles.mobileDropdownRoot,
+      dropdownOpen ? styles.mobileDropdownRootOpen : undefined,
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    return (
+      <nav className={lnbClassName} aria-label={ariaLabel}>
+        <div className={dropdownRootClassName}>
+          <div
+            className={[
+              styles.mobileTriggerShell,
+              dropdownOpen ? styles.mobileTriggerShellOpen : undefined,
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <button
+              type="button"
+              className={styles.mobileTrigger}
+              aria-expanded={dropdownOpen}
+              aria-controls={panelId}
+              onClick={() => onDropdownOpenChange?.(!dropdownOpen)}
+            >
+              <span className={styles.mobileTriggerLeading}>
+                {triggerIconUrl ? (
+                  <span className={styles.mobileTriggerIconSlot} aria-hidden="true">
+                    <img className={triggerIconClassName} src={triggerIconUrl} alt="" />
+                  </span>
+                ) : null}
+                <PFText as="span" typo="hl-lg" color="black" className={styles.mobileTriggerLabel}>
+                  {activeItem.label}
+                </PFText>
+              </span>
+              <img
+                className={[
+                  styles.mobileTriggerChevron,
+                  dropdownOpen ? styles.mobileTriggerChevronOpen : undefined,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                src={chevronDownBlackUrl}
+                alt=""
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+          {dropdownOpen ? (
+            <>
+              <div id={panelId} ref={panelRef} className={styles.mobilePanel}>
+                <LnbMenuItems
+                  items={items}
+                  isCategory={false}
+                  menuVariant="mobilePanel"
+                  menuClassName={styles.mobilePanelMenu}
+                  itemClassName={styles.mobilePanelItem}
+                  onItemSelect={handleItemSelect}
+                />
+              </div>
+              <button
+                ref={scrimRef}
+                type="button"
+                className={styles.mobileScrim}
+                aria-label="메뉴 닫기"
+                onClick={() => onDropdownOpenChange?.(false)}
+              />
+            </>
+          ) : null}
+        </div>
+
+        {showInstructorApply ? (
+          <div className={styles.ctaWrap}>
+            <InstructorApplyCta />
+          </div>
+        ) : null}
+      </nav>
+    )
+  }
+
+  return (
+    <nav className={lnbClassName} aria-label={ariaLabel}>
+      <LnbMenuItems items={items} isCategory={isCategory} onItemSelect={onItemSelect} />
 
       {showInstructorApply ? (
         <div className={styles.ctaWrap}>

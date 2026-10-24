@@ -71,8 +71,14 @@ import {
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
-import { educationProcessDisplayLabel } from '@/features/program/shared/lib/program-enum-normalize'
 import { BusinessPeriodExtendHistoryRows } from '@/features/program/shared/ui/business-period-extend-history-rows'
+import {
+  participantTypeChecked,
+  trainedTeacherOptionLabel,
+  TRAINED_TEACHER_COURSE_DELIVERED_BY_OPTIONS,
+  TRAINED_TEACHER_EDUCATION_PROCESS_OPTIONS,
+  TRAINED_TEACHER_IP_OWNED_OPTIONS,
+} from '@/features/program/trained-teachers/lib/common-info-display'
 
 const ECONOMY_ALL_VALUE = '__all__'
 
@@ -94,15 +100,19 @@ function LockedParticipantTypeCheckboxes({
   organization = false,
   teacherInstructor = false,
   teacherInstructorLabel = '강사',
+  individual = false,
+  volunteer = false,
 }: {
   organization?: boolean
   teacherInstructor?: boolean
   /** 교육받은 교사만 「교사/강사」. 1사1교·기본은 「강사」 */
   teacherInstructorLabel?: string
+  individual?: boolean
+  volunteer?: boolean
 }) {
   return (
     <div className="detail-info-form-inputs-wrapper cms-checkbox-group cms-checkbox-group--medium">
-      <CmsCheckbox checkboxSize="medium" checked={false} disabled>
+      <CmsCheckbox checkboxSize="medium" checked={individual} disabled>
         개인
       </CmsCheckbox>
       <CmsCheckbox checkboxSize="medium" checked={organization} disabled>
@@ -111,7 +121,7 @@ function LockedParticipantTypeCheckboxes({
       <CmsCheckbox checkboxSize="medium" checked={teacherInstructor} disabled>
         {teacherInstructorLabel}
       </CmsCheckbox>
-      <CmsCheckbox checkboxSize="medium" checked={false} disabled>
+      <CmsCheckbox checkboxSize="medium" checked={volunteer} disabled>
         봉사자
       </CmsCheckbox>
     </div>
@@ -122,12 +132,17 @@ function CompanySchoolFixedParticipantTypes() {
   return <LockedParticipantTypeCheckboxes organization teacherInstructor />
 }
 
-function TrainedTeachersFixedParticipantTypes() {
+function TrainedTeachersParticipantTypes({ program }: { program: Program }) {
   return (
     <LockedParticipantTypeCheckboxes
-      organization
-      teacherInstructor
+      organization={participantTypeChecked(program.generalParticipantTypes, 'school_institution')}
+      teacherInstructor={participantTypeChecked(
+        program.generalParticipantTypes,
+        'teacher_instructor'
+      )}
       teacherInstructorLabel="교사/강사"
+      individual={participantTypeChecked(program.generalParticipantTypes, 'individual')}
+      volunteer={participantTypeChecked(program.generalParticipantTypes, 'volunteer')}
     />
   )
 }
@@ -445,27 +460,34 @@ export function BasicInfoSection({
       ? program.title?.trim() || '-'
       : resolvePublicProgramTitleDisplay(program)
     const detailedProgramName = commonInfo?.detailedProgramName?.trim() || '-'
-    const educationProcessLabel = isEconomyCommonInfo
-      ? optionLabel(
-          ECONOMY_EDUCATION_PROCESS_OPTIONS,
-          program.educationProcess?.trim() || ECONOMY_ALL_VALUE
+    const educationProcessLabel = trainedTeacherCommonInfo
+      ? trainedTeacherOptionLabel(
+          TRAINED_TEACHER_EDUCATION_PROCESS_OPTIONS,
+          program.educationProcess
         )
-      : trainedTeacherCommonInfo
-        ? educationProcessDisplayLabel(program.educationProcess)
+      : isEconomyCommonInfo
+        ? optionLabel(
+            ECONOMY_EDUCATION_PROCESS_OPTIONS,
+            program.educationProcess?.trim() || ECONOMY_ALL_VALUE
+          )
         : optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
     const educationProcessSelectOptions = isEconomyCommonInfo
       ? ECONOMY_EDUCATION_PROCESS_OPTIONS
       : trainedTeacherCommonInfo
-        ? TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS
+        ? TRAINED_TEACHER_EDUCATION_PROCESS_OPTIONS
         : EDUCATION_PROCESS_OPTIONS
-    const ipOwnedLabel = optionLabel(
-      isEconomyCommonInfo ? ECONOMY_IP_OWNED_OPTIONS : IP_OWNED_OPTIONS,
-      program.ipOwned
-    )
-    const courseDeliveredByLabel = optionLabel(
-      COURSE_DELIVERED_BY_OPTIONS,
-      program.courseDeliveredBy
-    )
+    const ipOwnedLabel = trainedTeacherCommonInfo
+      ? trainedTeacherOptionLabel(TRAINED_TEACHER_IP_OWNED_OPTIONS, program.ipOwned)
+      : optionLabel(
+          isEconomyCommonInfo ? ECONOMY_IP_OWNED_OPTIONS : IP_OWNED_OPTIONS,
+          program.ipOwned
+        )
+    const courseDeliveredByLabel = trainedTeacherCommonInfo
+      ? trainedTeacherOptionLabel(
+          TRAINED_TEACHER_COURSE_DELIVERED_BY_OPTIONS,
+          program.courseDeliveredBy
+        )
+      : optionLabel(COURSE_DELIVERED_BY_OPTIONS, program.courseDeliveredBy)
     const ipsLabel = optionLabel(
       IPS_OPTIONS,
       trainedTeacherCommonInfo ? program.ips : (program.ips ?? 'Prepare')
@@ -704,7 +726,7 @@ export function BasicInfoSection({
                 isEconomyCommonInfo ? (
                   <CompanySchoolFixedParticipantTypes />
                 ) : fixedParticipantTypeLabel != null ? (
-                  <TrainedTeachersFixedParticipantTypes />
+                  <TrainedTeachersParticipantTypes program={program} />
                 ) : (
                   formatCompanySchoolParticipantTypes(program)
                 )
@@ -713,7 +735,7 @@ export function BasicInfoSection({
                 isEconomyCommonInfo ? (
                   <CompanySchoolFixedParticipantTypes />
                 ) : fixedParticipantTypeLabel != null ? (
-                  <TrainedTeachersFixedParticipantTypes />
+                  <TrainedTeachersParticipantTypes program={program} />
                 ) : undefined
               }
             />
@@ -1056,9 +1078,11 @@ export function BasicInfoSection({
                       placeholder="IP Owned를 선택하세요"
                       width={240}
                       options={
-                        isEconomyCommonInfo
-                          ? [...ECONOMY_IP_OWNED_OPTIONS]
-                          : [...IP_OWNED_OPTIONS]
+                        trainedTeacherCommonInfo
+                          ? [...TRAINED_TEACHER_IP_OWNED_OPTIONS]
+                          : isEconomyCommonInfo
+                            ? [...ECONOMY_IP_OWNED_OPTIONS]
+                            : [...IP_OWNED_OPTIONS]
                       }
                       value={field.value ?? undefined}
                       onChange={next => field.onChange(next == null ? undefined : String(next))}
@@ -1081,7 +1105,11 @@ export function BasicInfoSection({
                       withAllOption={false}
                       placeholder="Course Delivered By를 선택하세요"
                       width={240}
-                      options={[...COURSE_DELIVERED_BY_OPTIONS]}
+                      options={
+                        trainedTeacherCommonInfo
+                          ? [...TRAINED_TEACHER_COURSE_DELIVERED_BY_OPTIONS]
+                          : [...COURSE_DELIVERED_BY_OPTIONS]
+                      }
                       value={field.value ?? undefined}
                       onChange={next =>
                         field.onChange(

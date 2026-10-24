@@ -21,6 +21,10 @@
 }
 
 @media (--bp-below-pc) {
+  .pageTitleRow {
+    display: none;
+  }
+
   .tabs {
     margin-top: 0;
     margin-bottom: var(--spacing-32);

@@ -470,6 +470,10 @@
     },
     {
       "name": "기타 API",
+      "description": "Overlay 대체용 UJAT typed authoring contract"
+    },
+    {
+      "name": "기타 API",
       "description": "대시보드, 내정보, 일정, 회원탈퇴 화면 API"
     }
   ],
@@ -1746,6 +1750,315 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/ujat/typed-detail": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT Typed 상세 조회",
+        "description": "### 이 API가 하는 일\n- UJAT Typed 상세 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/programs/{programId}/ujat/typed-detail`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NOT_APPLICABLE 개인정보 정책\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Typed 문서 우선 및 legacy overlay 읽기 전용 fallback",
+        "operationId": "getUjatTypedDetail",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UjatTypedDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT Typed 상세 전체 저장",
+        "description": "### 이 API가 하는 일\n- UJAT Typed 상세 전체 저장\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/programs/{programId}/ujat/typed-detail`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NOT_APPLICABLE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 기존 overlay 보존 및 typed 문서 교체",
+        "operationId": "replaceUjatTypedDetail",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UjatTypedDetail"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UjatTypedDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT Typed 상세 부분 수정",
+        "description": "### 이 API가 하는 일\n- UJAT Typed 상세 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/admin/programs/{programId}/ujat/typed-detail`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NOT_APPLICABLE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: JSON Merge Patch와 typed scheduleId 소유권 검증",
+        "operationId": "patchUjatTypedDetail",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonNode"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UjatTypedDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/ujat/typed-detail/halves/{semesterType}": {
+      "put": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT Typed 반기 단위 저장",
+        "description": "### 이 API가 하는 일\n- UJAT Typed 반기 단위 저장\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/programs/{programId}/ujat/typed-detail/halves/{semesterType}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NOT_APPLICABLE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: expectedRevision으로 H1/H2 독립 저장 및 stale 충돌 차단",
+        "operationId": "updateUjatTypedDetailHalf",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "semesterType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HalfUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UjatTypedDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/ujat/typed-detail/halves/{semesterType}/stages/{stage}/rows/{rowId}/schedules": {
+      "put": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT Typed 계획 행 physical 일정 생성·수정·취소",
+        "description": "### 이 API가 하는 일\n- UJAT Typed 계획 행 physical 일정 생성·수정·취소\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/programs/{programId}/ujat/typed-detail/halves/{semesterType}/stages/{stage}/rows/{rowId}/schedules`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NOT_APPLICABLE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 대상 row만 transactional sync하며 scheduleIds와 revision을 함께 저장",
+        "operationId": "syncUjatTypedDetailRowSchedules",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "semesterType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage",
+            "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rowId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TypedRowScheduleReplaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UjatTypedDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -37661,6 +37974,64 @@
         }
       }
     },
+    "/api/admin/programs/{programId}/business-period": {
+      "patch": {
+        "tags": [
+          "프로그램"
+        ],
+        "summary": "프로그램 사업 종료일 연장",
+        "description": "### 이 API가 하는 일\n- 프로그램 사업 종료일 연장\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/admin/programs/{programId}/business-period`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NOT_APPLICABLE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 종료된 프로그램의 강의 보고서·정산 제출을 위한 전용 사업기간 연장",
+        "operationId": "extendBusinessPeriod",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProgramBusinessPeriodExtendRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseProgramBusinessPeriodResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/performance-records/{performanceRecordId}": {
       "get": {
         "tags": [
@@ -45643,8 +46014,8 @@
         "tags": [
           "신청/프로그램 워크플로우"
         ],
-        "summary": "배정 강의보고서 승인 양식 정보 조회",
-        "description": "### 이 API가 하는 일\n- 배정 강의보고서 승인 양식 정보 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/instructor-assignments/{assignmentId}/lecture-report/form-binding`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Existing member-owned lecture report GET route; inventory omission reproduced on main baseline.",
+        "summary": "배정 강의보고서 승인 양식 및 제출 컨텍스트 조회",
+        "description": "### 이 API가 하는 일\n- 배정 강의보고서 승인 양식 및 제출 컨텍스트 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/instructor-assignments/{assignmentId}/lecture-report/form-binding`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Returns binding IDs plus INSTRUCTOR_APPLICATION/applicationId or INSTRUCTOR_ASSIGNMENT/assignmentId for the authenticated instructor assignment.",
         "operationId": "lectureReportBinding",
         "parameters": [
           {
@@ -45664,11 +46035,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "integer",
-                    "format": "int64"
-                  }
+                  "$ref": "#/components/schemas/MemberLectureReportFormBindingResponse"
                 }
               }
             }
@@ -52857,6 +53224,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "materializePreferredEducationDays",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: selected program/post/comment and 폼 상태",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
             }
           }
         ],
@@ -66169,6 +66546,321 @@
           }
         }
       },
+      "AttendancePolicy": {
+        "type": "object",
+        "properties": {
+          "maxAbsenceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lateCountsAsAbsent": {
+            "type": "boolean"
+          },
+          "lateDeductStartTime": {
+            "type": "string"
+          }
+        }
+      },
+      "CommonSettings": {
+        "type": "object",
+        "properties": {
+          "halfSettings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HalfSettings"
+            }
+          },
+          "regionGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "attendancePolicy": {
+            "$ref": "#/components/schemas/AttendancePolicy"
+          },
+          "i1365": {
+            "$ref": "#/components/schemas/I1365Policy"
+          },
+          "surveySettings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SurveySetting"
+            }
+          },
+          "participantSettings": {
+            "$ref": "#/components/schemas/ParticipantSettings"
+          }
+        }
+      },
+      "EducationStagePlan": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRow"
+            }
+          }
+        }
+      },
+      "ExclusionPolicy": {
+        "type": "object",
+        "properties": {
+          "excludeNone": {
+            "type": "boolean"
+          },
+          "excludeSaturday": {
+            "type": "boolean"
+          },
+          "excludeSunday": {
+            "type": "boolean"
+          },
+          "excludePublicHoliday": {
+            "type": "boolean"
+          }
+        }
+      },
+      "HalfPlan": {
+        "type": "object",
+        "properties": {
+          "semesterType": {
+            "type": "string"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EducationStagePlan"
+            }
+          }
+        }
+      },
+      "HalfSettings": {
+        "type": "object",
+        "properties": {
+          "semesterType": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "I1365Policy": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "defaultHours": {
+            "type": "number"
+          }
+        }
+      },
+      "ParticipantSettings": {
+        "type": "object",
+        "properties": {
+          "individual": {
+            "type": "boolean"
+          },
+          "organization": {
+            "type": "boolean"
+          },
+          "teacher": {
+            "type": "boolean"
+          },
+          "volunteer": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ScheduleRow": {
+        "type": "object",
+        "properties": {
+          "rowId": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "educationName": {
+            "type": "string"
+          },
+          "educationMethod": {
+            "type": "string"
+          },
+          "regionCode": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "scheduleIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "textbook": {
+            "$ref": "#/components/schemas/TextbookPlan"
+          },
+          "excludedDates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "exclusion": {
+            "$ref": "#/components/schemas/ExclusionPolicy"
+          }
+        }
+      },
+      "SurveySetting": {
+        "type": "object",
+        "properties": {
+          "surveyType": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TextbookPlan": {
+        "type": "object",
+        "properties": {
+          "provisionMethod": {
+            "type": "string"
+          },
+          "responsiblePerson": {
+            "type": "string"
+          }
+        }
+      },
+      "UjatTypedDetail": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "halfPlans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HalfPlan"
+            }
+          },
+          "common": {
+            "$ref": "#/components/schemas/CommonSettings"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "HalfUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "halfPlan": {
+            "$ref": "#/components/schemas/HalfPlan"
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "halfPlan"
+        ]
+      },
+      "ProgramScheduleRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scheduleName": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string"
+          },
+          "endAt": {
+            "type": "string"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "locationName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "maxParticipantCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completionRequired": {
+            "type": "boolean"
+          },
+          "educationSlotKey": {
+            "type": "string"
+          },
+          "scheduleRole": {
+            "type": "string"
+          }
+        }
+      },
+      "TypedRowScheduleReplaceRequest": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramScheduleRequest"
+            }
+          }
+        },
+        "required": [
+          "expectedRevision"
+        ]
+      },
       "TemporaryScheduleSaveRequest": {
         "type": "object",
         "properties": {
@@ -77028,10 +77720,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -77760,53 +78452,6 @@
             "type": "string"
           },
           "deliveryType": {
-            "type": "string"
-          }
-        }
-      },
-      "ProgramScheduleRequest": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "scheduleName": {
-            "type": "string"
-          },
-          "startAt": {
-            "type": "string"
-          },
-          "endAt": {
-            "type": "string"
-          },
-          "allDay": {
-            "type": "boolean"
-          },
-          "locationName": {
-            "type": "string"
-          },
-          "address": {
-            "type": "string"
-          },
-          "addressDetail": {
-            "type": "string"
-          },
-          "maxParticipantCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "completionRequired": {
-            "type": "boolean"
-          },
-          "educationSlotKey": {
-            "type": "string"
-          },
-          "scheduleRole": {
             "type": "string"
           }
         }
@@ -86140,6 +86785,12 @@
           "scheduleOrigin": {
             "type": "string"
           },
+          "ujatEducationStage": {
+            "type": "string"
+          },
+          "ujatPlanRowId": {
+            "type": "string"
+          },
           "startDate": {
             "type": "string"
           },
@@ -91180,6 +91831,7 @@
           "educationRegionCode"
         ]
       },
+      "JsonNode": {},
       "TrainedTeacherProgramDetailRequest": {
         "type": "object",
         "properties": {
@@ -91397,6 +92049,94 @@
           },
           "role": {
             "type": "string"
+          }
+        }
+      },
+      "ProgramBusinessPeriodExtendRequest": {
+        "type": "object",
+        "description": "종료된 프로그램의 사업 종료일 연장 요청",
+        "properties": {
+          "businessEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "연장할 사업 종료일. KST 달력일 기준으로 기존 종료일보다 늦어야 합니다.",
+            "example": "2026-11-30"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "연장 사유",
+            "example": "강의 보고서 및 정산 제출 기간 연장",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "businessEndDate"
+        ]
+      },
+      "ApiResponseProgramBusinessPeriodResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/ProgramBusinessPeriodResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "ProgramBusinessPeriodResponse": {
+        "type": "object",
+        "description": "프로그램 사업 종료일 연장 결과",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 186325
+          },
+          "businessStartDate": {
+            "type": "string",
+            "format": "date",
+            "description": "사업 시작일",
+            "example": "2026-01-01"
+          },
+          "previousBusinessEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "연장 전 사업 종료일",
+            "example": "2026-10-23"
+          },
+          "businessEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "연장 후 사업 종료일",
+            "example": "2026-11-30"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "변경 시각"
           }
         }
       },
@@ -94858,7 +95598,6 @@
           }
         }
       },
-      "JsonNode": {},
       "PaymentStatementRenderDataResponse": {
         "type": "object",
         "properties": {
@@ -96294,6 +97033,39 @@
           }
         }
       },
+      "FormResponseFile": {
+        "type": "object",
+        "properties": {
+          "formSubmissionFileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "questionKey": {
+            "type": "string"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "downloadable": {
+            "type": "boolean"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AttendanceStatusResponse": {
         "type": "object",
         "description": "회원 포탈 UJAT 봉사자 출석 현황. 활동 포기 후에도 본인 ASSIGNED 교육일은 조회할 수 있고, 그때 canCheckIn은 false이며 CHECK_IN과 SUBMIT_ABSENCE_REASON은 없습니다.",
@@ -97556,6 +98328,38 @@
           }
         }
       },
+      "MemberLectureReportFormBindingResponse": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contextType": {
+            "type": "string"
+          },
+          "contextId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "MemberLectureReportContentResponse": {
         "type": "object",
         "properties": {
@@ -97899,9 +98703,8 @@
           },
           "form": {
             "type": "object",
-            "description": "UJAT 교육계획서·교육일지 제출 당시의 불변 양식 스냅샷. 해당 문서가 아니면 null",
-            "nullable": true,
-            "additionalProperties": {}
+            "additionalProperties": {},
+            "description": "UJAT 교육계획서·교육일지 제출 당시의 불변 양식 스냅샷. 해당 문서가 아니면 null"
           },
           "retentionExpiresAt": {
             "type": "string",
@@ -97912,40 +98715,6 @@
           },
           "canResubmit": {
             "type": "boolean"
-          }
-        }
-      },
-      "FormResponseFile": {
-        "type": "object",
-        "properties": {
-          "formSubmissionFileId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "questionKey": {
-            "type": "string",
-            "nullable": true
-          },
-          "fileObjectId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "originalFileName": {
-            "type": "string"
-          },
-          "contentType": {
-            "type": "string"
-          },
-          "fileSize": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "downloadable": {
-            "type": "boolean"
-          },
-          "retentionExpiresAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
