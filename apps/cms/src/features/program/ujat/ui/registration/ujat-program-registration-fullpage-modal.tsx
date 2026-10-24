@@ -16,11 +16,6 @@ import {
   recruitmentPreviewAudienceFromUjatRegistrationStep,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import {
-  buildUjatProgramListRowFromRegistrationSnapshot,
-  collectUjatRegistrationCreateOverlay,
-} from '@/features/program/ujat/lib/ujat-registration-local-save'
-import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import {
   ParticipantRecruitmentPreviewModal,
   type RecruitmentUserPreviewAudience,
 } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
@@ -215,15 +210,8 @@ function UjatProgramRegistrationFullpageModalInner({
 
   const handlePreview = useCallback(() => {
     if (flow.phase === 'recruitment') {
-      const overlay = collectUjatRegistrationCreateOverlay(
-        getUjatProgramRegistrationOverlayRecord()
-      )
-      setRecruitmentPreviewProgram(
-        buildUjatProgramListRowFromRegistrationSnapshot({
-          id: 'registration-preview',
-          overlay,
-        })
-      )
+      if (flow.recruitmentPreviewProgram == null) return
+      setRecruitmentPreviewProgram(flow.recruitmentPreviewProgram)
       setRecruitmentPreviewAudience(
         recruitmentPreviewAudienceFromUjatRegistrationStep(flow.activeStep)
       )

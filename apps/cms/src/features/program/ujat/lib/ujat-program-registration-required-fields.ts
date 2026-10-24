@@ -15,6 +15,10 @@ export class UjatRegistrationRequiredFieldsIncompleteError extends Error {
 
 import { listVolunteerInterviewExceptionBlockIds } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import {
+  interviewConfigHasSelectedSlots,
+  parseRecruitmentInterviewConfig,
+} from '@/features/program/ujat/lib/recruitment-typed-contract'
+import {
   UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
   UJAT_BASIC_INFO_REP_EN_DEFAULT,
   UJAT_BASIC_INFO_REP_KO_DEFAULT,
@@ -59,6 +63,7 @@ import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set
 import { getSelectedOperationalTemplateCode } from '@/features/program/shared/lib/step-template-selection'
 import type { UjatBasicInfoFormValues } from './ujat-basic-info-form'
 import type { UjatTypedDetail, UjatTypedScheduleRow } from '@/features/program/ujat/api/typed-detail-client'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 
 function isEmptyText(value: unknown): boolean {
   return typeof value !== 'string' || value.trim() === ''
@@ -71,6 +76,14 @@ function isEmptyNumber(value: unknown): boolean {
 function isEmptyStringList(value: unknown): boolean {
   if (!Array.isArray(value) || value.length === 0) return true
   return value.every(item => isEmptyText(item))
+}
+
+function isEmptyFormText(value: unknown): boolean {
+  return typeof value !== 'string' || value.trim() === ''
+}
+
+function isEmptyFormStringList(value: unknown): boolean {
+  return !Array.isArray(value) || value.length === 0 || value.every(item => isEmptyFormText(item))
 }
 
 function isRangeSealIncomplete(value: unknown): boolean {
@@ -530,6 +543,135 @@ export function hasIncompleteUjatProgramRecruitmentRequiredFields(): boolean {
   return describeIncompleteUjatProgramRecruitmentRequiredFields() != null
 }
 
+type TypedRecruitmentValidationInput = {
+  institution?: Partial<ProgramDetailEditFormValues>
+  volunteerH1?: Partial<ProgramDetailEditFormValues>
+  volunteerH2?: Partial<ProgramDetailEditFormValues>
+}
+
+function formVolunteerRecruitmentRange(
+  values: Partial<ProgramDetailEditFormValues>,
+  half: UjatVolunteerRecruitHalf
+): { start?: unknown; end?: unknown } {
+  const index = half === 'h1' ? 0 : 1
+  const round = values.rounds?.[index]
+  return {
+    start: round?.startDate || values.volunteerApplicationStartDate,
+    end: round?.endDate || values.volunteerApplicationEndDate,
+  }
+}
+
+function listIncompleteTypedInstitutionRecruitment(
+  values: Partial<ProgramDetailEditFormValues>
+): string[] {
+  const reasons: string[] = []
+  const p = 'recruit.institution'
+  pushReason(reasons, values.participantRecruitmentAnnouncementPublished !== 'published', `${p}.announcementPublished`)
+  pushReason(reasons, isEmptyFormText(values.startDate) || isEmptyFormText(values.endDate), `${p}.programRangeSeal`)
+  pushReason(reasons, isEmptyFormStringList(values.targetLevels), `${p}.targetLevels`)
+  pushReason(reasons, isEmptyFormText(values.district), `${p}.targetLevelDetail`)
+  pushReason(
+    reasons,
+    isEmptyFormText(values.applicationStartDate) || isEmptyFormText(values.applicationEndDate),
+    `${p}.recruitRangeSeal`
+  )
+  pushReason(
+    reasons,
+    isEmptyFormText(values.resultAnnouncementDate),
+    `${p}.finalAnnounceIso`
+  )
+  pushReason(
+    reasons,
+    isEmptyFormText(values.resultAnnouncementMethod),
+    `${p}.finalAnnounceMethod`
+  )
+  pushReason(reasons, isEmptyFormText(values.recruitmentContactOrganizationName), `${p}.inquiryContact`)
+  pushReason(reasons, isEmptyFormText(values.contactPhone), `${p}.inquiryTel`)
+  pushReason(reasons, isEmptyFormText(values.contactEmail), `${p}.inquiryEmail`)
+  pushReason(
+    reasons,
+    values.participantRecruitmentNotesNotApplicable !== 'not_applicable' &&
+      isEmptyFormText(values.oneLineIntroduction),
+    `${p}.notes`
+  )
+  return reasons
+}
+
+function listIncompleteTypedVolunteerRecruitment(
+  values: Partial<ProgramDetailEditFormValues>,
+  half: UjatVolunteerRecruitHalf
+): string[] {
+  const reasons: string[] = []
+  const p = `recruit.volunteer.${half}`
+  const range = formVolunteerRecruitmentRange(values, half)
+  pushReason(reasons, values.volunteerRecruitmentAnnouncementPublished !== 'published', `${p}.announcementPublished`)
+  if (half === 'h2') {
+    pushReason(reasons, isEmptyFormText(values.volunteerRecruitmentNoticeExposure), `${p}.noticeExposure`)
+  }
+  pushReason(reasons, isEmptyFormText(values.startDate) || isEmptyFormText(values.endDate), `${p}.programRangeSeal`)
+  pushReason(reasons, isEmptyFormStringList(values.volunteerTargets), `${p}.volunteerTargets`)
+  pushReason(reasons, isEmptyFormText(values.volunteerTargetDetail), `${p}.volunteerTargetDetail`)
+  pushReason(reasons, isEmptyFormText(range.start) || isEmptyFormText(range.end), `${p}.recruitRangeSeal`)
+  pushReason(reasons, isEmptyFormText(values.rounds?.[half === 'h1' ? 0 : 1]?.curriculum), `${p}.activityTerm`)
+  pushReason(reasons, isEmptyFormText(values.documentPassAnnouncementDate) || isEmptyFormText(values.documentPassAnnouncementMethod), `${p}.docAnnounce`)
+  pushReason(reasons, isEmptyFormText(values.interviewMethod), `${p}.interviewMethod`)
+  if (!isEmptyFormText(values.interviewMethod)) {
+    pushReason(reasons, isEmptyFormText(values.interviewStartDate) || isEmptyFormText(values.interviewEndDate), `${p}.interviewRangeSeal`)
+  }
+  pushReason(reasons, isEmptyFormText(values.finalPassAnnouncementDate), `${p}.finalAnnounceIso`)
+  pushReason(reasons, isEmptyFormText(values.finalPassAnnouncementMethod), `${p}.finalAnnounceMethod`)
+  pushReason(reasons, isEmptyFormText(values.volunteerRecruitmentContactOrganizationName), `${p}.inquiryContact`)
+  pushReason(reasons, isEmptyFormText(values.contactPhone), `${p}.inquiryTel`)
+  pushReason(reasons, isEmptyFormText(values.contactEmail), `${p}.inquiryEmail`)
+  pushReason(
+    reasons,
+    values.volunteerRecruitmentNotesNotApplicable !== 'not_applicable' &&
+      isEmptyFormText(values.otherNotes),
+    `${p}.otherNotes`
+  )
+  if (hasIncompleteTypedVolunteerInterviewSchedule(values)) {
+    reasons.push(`${p}.interviewSchedule`)
+  }
+  return reasons
+}
+
+function hasIncompleteTypedVolunteerInterviewSchedule(
+  values: Partial<ProgramDetailEditFormValues>
+): boolean {
+  const config = parseRecruitmentInterviewConfig(values.volunteerInterviewConfig)
+  if (config == null) return true
+  if (isInterviewTimeRangeIncomplete(config.interviewTimeRange)) return true
+  if (!interviewConfigHasSelectedSlots(config)) return true
+  for (const exception of config.exceptions ?? []) {
+    if (isEmptyText(exception.exceptionDate)) return true
+    if (!Array.isArray(exception.selectedSlotKeys) || exception.selectedSlotKeys.length === 0) {
+      return true
+    }
+  }
+  return false
+}
+
+/** 활성 UJAT 모집 UI의 Typed RHF 필수값 검사. 모집 Overlay를 읽지 않는다. */
+export function listIncompleteUjatProgramRecruitmentTypedRequiredFields(
+  input: TypedRecruitmentValidationInput
+): string[] {
+  return [
+    ...(input.institution ? listIncompleteTypedInstitutionRecruitment(input.institution) : []),
+    ...(input.volunteerH1 ? listIncompleteTypedVolunteerRecruitment(input.volunteerH1, 'h1') : []),
+    ...(input.volunteerH2 ? listIncompleteTypedVolunteerRecruitment(input.volunteerH2, 'h2') : []),
+  ]
+}
+
+/** Template authoring 전용. 활성 등록 위저드는 Typed RHF volunteerInterviewConfig를 검사한다. */
+export function listIncompleteUjatProgramRecruitmentInterviewScheduleRequiredFields(
+  templateCodes?: UjatRecruitmentValidationTemplateCodes
+): string[] {
+  const overlay = getMergedUjatRecruitVolunteerOverlay(templateCodes?.volunteerTemplateCode)
+  return (['h1', 'h2'] as const)
+    .filter(half => hasIncompleteUjatVolunteerInterviewSchedule(overlay, half))
+    .map(half => `recruit.volunteer.${half}.interviewSchedule`)
+}
+
 function selectedUjatRecruitmentValidationTemplateCodes(): UjatRecruitmentValidationTemplateCodes {
   return {
     institutionTemplateCode: getSelectedOperationalTemplateCode(
@@ -548,14 +690,20 @@ function selectedUjatRecruitmentValidationTemplateCodes(): UjatRecruitmentValida
 /** 등록 위저드 complete gate — 공통 + 모집만. 신청(template) overlay는 검사하지 않는다. */
 export function hasIncompleteUjatProgramRegistrationWizardRequiredFields(
   basicInfo?: Partial<UjatBasicInfoFormValues>,
-  typedDetail?: UjatTypedDetail
+  typedDetail?: UjatTypedDetail,
+  typedRecruitment?: TypedRecruitmentValidationInput
 ): boolean {
-  return listIncompleteUjatProgramRegistrationWizardRequiredFields(basicInfo, typedDetail).length > 0
+  return listIncompleteUjatProgramRegistrationWizardRequiredFields(
+    basicInfo,
+    typedDetail,
+    typedRecruitment
+  ).length > 0
 }
 
 export function listIncompleteUjatProgramRegistrationWizardRequiredFields(
   basicInfo?: Partial<UjatBasicInfoFormValues>,
-  typedDetail?: UjatTypedDetail
+  typedDetail?: UjatTypedDetail,
+  typedRecruitment?: TypedRecruitmentValidationInput
 ): string[] {
   return [
     ...listIncompleteUjatProgramRegistrationRequiredFields(
@@ -563,15 +711,22 @@ export function listIncompleteUjatProgramRegistrationWizardRequiredFields(
       basicInfo,
       typedDetail
     ),
-    ...listIncompleteUjatProgramRecruitmentRequiredFields(
-      selectedUjatRecruitmentValidationTemplateCodes()
-    ),
+    ...(typedRecruitment
+      ? listIncompleteUjatProgramRecruitmentTypedRequiredFields(typedRecruitment)
+      : listIncompleteUjatProgramRecruitmentRequiredFields(
+          selectedUjatRecruitmentValidationTemplateCodes()
+        )),
   ]
 }
 
 export function describeIncompleteUjatProgramRegistrationWizardRequiredFields(
   basicInfo?: Partial<UjatBasicInfoFormValues>,
-  typedDetail?: UjatTypedDetail
+  typedDetail?: UjatTypedDetail,
+  typedRecruitment?: TypedRecruitmentValidationInput
 ): string | null {
-  return listIncompleteUjatProgramRegistrationWizardRequiredFields(basicInfo, typedDetail)[0] ?? null
+  return listIncompleteUjatProgramRegistrationWizardRequiredFields(
+    basicInfo,
+    typedDetail,
+    typedRecruitment
+  )[0] ?? null
 }
