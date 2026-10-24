@@ -239,7 +239,7 @@
 @media (--bp-pc-up) {
   .content {
     gap: var(--spacing-200);
-    padding: 0 var(--spacing-20) var(--spacing-150);
+    padding: 0 0 var(--spacing-150);
   }
 
   .methods {
@@ -264,6 +264,12 @@
 
   .methodBody {
     padding: var(--spacing-52) var(--spacing-40);
+  }
+
+  .methodDescription {
+    font-size: 24px;
+    line-height: 36px;
+    letter-spacing: -0.24px;
   }
 
   .storyList {
@@ -292,6 +298,7 @@
 
   .storyDescription {
     font-size: 24px;
+    line-height: 38px;
     letter-spacing: -0.24px;
   }
 
