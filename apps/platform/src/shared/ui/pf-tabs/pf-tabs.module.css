@@ -152,7 +152,7 @@
 
 /**
  * category — 상단 카테고리 배지 탭
- * Active: element-default-gray bg + primary-700 text
+ * Active: element-default-gray bg + primary-700 text + primary-500 inside indicator
  * Inactive: transparent + neutral-black-30 text
  * Gap between tabs: 20px
  */
@@ -178,6 +178,7 @@
   gap: 10px;
   background: var(--color-element-default-gray);
   color: var(--color-primary-700);
+  box-shadow: inset 0 -4px 0 var(--color-primary-500);
 }
 
 .category .tab:focus-visible {
