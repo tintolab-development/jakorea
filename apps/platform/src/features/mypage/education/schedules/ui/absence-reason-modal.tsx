@@ -41,15 +41,17 @@ import type { EducationScheduleItem } from '../model/types'
 import styles from './absence-reason-modal.module.css'
 
 const ABSENCE_REASON_FILE_PURPOSE = 'ABSENCE_EVIDENCE'
-const ABSENCE_REASON_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
+const ABSENCE_REASON_ACCEPT = '.jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf'
 const ABSENCE_REASON_MAX_BYTES = 20 * 1024 * 1024
 const ABSENCE_REASON_MAX_FILES = PORTAL_ABSENCE_REASON_MAX_FILE_COUNT
+const ABSENCE_REASON_FILE_TYPES_LABEL = 'JPG, JPEG, PNG, PDF'
 
 const ABSENCE_REASON_FILE_POLICY: MemberFileUploadPolicy = {
   maxBytes: ABSENCE_REASON_MAX_BYTES,
   allowedFileTypes: [
     { extensions: ['jpg', 'jpeg'], contentType: 'image/jpeg' },
     { extensions: ['png'], contentType: 'image/png' },
+    { extensions: ['pdf'], contentType: 'application/pdf' },
   ],
 }
 
@@ -123,7 +125,7 @@ function uploadErrorMessage(error: unknown): string {
     case 'MEMBER_FILE_PURPOSE_NOT_ALLOWED':
       return '결석 증빙 파일 목적값을 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.'
     case 'MEMBER_FILE_TYPE_NOT_ALLOWED':
-      return 'JPG, JPEG, PNG 파일만 첨부할 수 있습니다.'
+      return `${ABSENCE_REASON_FILE_TYPES_LABEL} 파일만 첨부할 수 있습니다.`
     case 'MEMBER_FILE_SIZE_EXCEEDED':
       return '파일은 20MB 이하만 첨부할 수 있습니다.'
     case 'MEMBER_FILE_CONFIRM_NOT_ALLOWED':
@@ -149,7 +151,7 @@ function uploadErrorMessage(error: unknown): string {
     return '파일 상태 확인에 실패했습니다. 잠시 후 다시 시도해 주세요.'
   }
   if (error instanceof MemberFileTypeNotAllowedError) {
-    return 'JPG, JPEG, PNG 파일만 첨부할 수 있습니다.'
+    return `${ABSENCE_REASON_FILE_TYPES_LABEL} 파일만 첨부할 수 있습니다.`
   }
   if (error instanceof MemberFileRejectedError) {
     return '보안 정책상 등록할 수 없는 파일입니다. 다른 파일로 다시 시도해 주세요.'
@@ -178,7 +180,7 @@ function submitErrorMessage(error: unknown): string {
       return '불참 사유를 확인해 주세요.'
     case 'SUBMISSION_FILE_PURPOSE_NOT_ALLOWED':
     case 'MEMBER_FILE_TYPE_NOT_ALLOWED':
-      return '결석 증빙 파일을 확인해 주세요. JPG, JPEG, PNG만 제출할 수 있습니다.'
+      return `결석 증빙 파일을 확인해 주세요. ${ABSENCE_REASON_FILE_TYPES_LABEL}만 제출할 수 있습니다.`
     case 'FORBIDDEN':
       return '현재 교육 일정에 결석 사유를 제출할 수 없습니다.'
     case 'CONFLICT':
@@ -310,6 +312,7 @@ export function EducationAbsenceReasonModal({
   const isBusy = uploading || submitMutation.isPending
   const canSubmit =
     Boolean(selectedScheduleId && reason.trim()) &&
+    files.length > 0 &&
     !isBusy &&
     files.every(file => file.status === 'uploaded' && file.fileObjectId != null)
 
@@ -420,6 +423,10 @@ export function EducationAbsenceReasonModal({
       setFormError('불참 사유를 작성해 주세요.')
       return
     }
+    if (files.length === 0) {
+      setFormError('증빙서류를 첨부해 주세요.')
+      return
+    }
     if (files.some(file => file.status !== 'uploaded' || file.fileObjectId == null)) {
       return
     }
@@ -451,10 +458,13 @@ export function EducationAbsenceReasonModal({
       <div className={styles.content}>
         <div id={descriptionId} className={styles.description}>
           <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600">
-            개인사유로 교육 이행을 하지 못한 경우, 불참 사유 및 증빙 서류를 제출해 주세요.
+            개인 사유로 교육에 참여하지 못할 경우, 불참 사유 및 증빙서류를 제출해 주세요.
           </PFText>
-          <PFText as="p" typo="bd-lg-sb" color="neutral-cool-600">
-            * 사전에 담당자와 협의되지 않은 건은 별도 고지 없이 결석 처리될 수 있습니다.
+          <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600">
+            제출하면 우선 사유 불참으로 처리되며 추후 결격 사유에서 제외돼요.
+          </PFText>
+          <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600">
+            * 담당자가 제출한 사유를 반려하면 결석으로 변경되어 수료 기준에 다시 반영돼요.
           </PFText>
         </div>
 
@@ -465,6 +475,7 @@ export function EducationAbsenceReasonModal({
             placeholder="사유를 제출할 결석 일자를 선택해 주세요"
             options={dateOptions}
             value={selectedScheduleId}
+            required
             onValueChange={value => {
               setSelectedScheduleId(value)
               setFormError(null)
@@ -480,6 +491,7 @@ export function EducationAbsenceReasonModal({
             rows={2}
             maxLength={PORTAL_ABSENCE_REASON_MAX_LENGTH}
             value={reason}
+            required
             onValueChange={value => {
               setReason(value)
               setFormError(null)
@@ -491,9 +503,14 @@ export function EducationAbsenceReasonModal({
           />
 
           <div className={styles.fileField}>
-            <PFText as="label" typo="label-md" color="black">
-              증빙서류를 첨부해 주세요.
-            </PFText>
+            <div className={styles.fileLabel}>
+              <PFText as="label" typo="label-md" color="inherit" className={styles.fileLabelText}>
+                증빙서류를 첨부해 주세요.
+              </PFText>
+              <span className={styles.requiredMark} aria-hidden="true">
+                *
+              </span>
+            </div>
             <input
               ref={fileInputRef}
               className={styles.fileInput}
@@ -516,11 +533,11 @@ export function EducationAbsenceReasonModal({
               disabled={isBusy || files.length >= ABSENCE_REASON_MAX_FILES}
               onClick={() => fileInputRef.current?.click()}
             >
-              {uploading ? '업로드 중…' : '파일 추가'}
+              {uploading ? '업로드 중…' : '증빙서류 추가하기'}
             </PFButton>
             <PFDescriptionList
               items={[
-                '파일은 최대 20MB까지 JPG, JPEG, PNG 형식만 등록 가능합니다.',
+                `파일은 최대 20MB까지 ${ABSENCE_REASON_FILE_TYPES_LABEL} 형식만 등록 가능합니다.`,
                 '첨부파일명에 특수문자가 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
               ]}
             />

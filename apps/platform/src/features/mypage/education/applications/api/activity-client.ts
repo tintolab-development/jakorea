@@ -175,8 +175,55 @@ export type PortalScheduleAttendanceDetail = {
   absenceReason?: string | null
   classLabel?: string | null
   assignmentStatus?: string | null
+  assignmentRole?: string | null
+  attendanceManager?: boolean
   canCheckIn?: boolean
   locationName?: string | null
+  organizationName?: string | null
+  partnerName?: string | null
+  checkInOpensAt?: string | null
+  availableActions?: string[]
+}
+
+export type PortalAttendanceParticipant = {
+  participantId?: number | null
+  memberName?: string | null
+  assignmentGroupId?: string | null
+  assignmentRole?: string | null
+  attendanceManager?: boolean
+  organizationApplicationId?: number | null
+  organizationName?: string | null
+  classLabel?: string | null
+  partnerParticipantId?: number | null
+  partnerName?: string | null
+  attendanceStatus?: string | null
+  checkedAt?: string | null
+  memberCheckedInAt?: string | null
+  arrivalTime?: string | null
+}
+
+export type PortalAttendanceParticipantList = {
+  programId?: number | null
+  scheduleId?: number | null
+  educationRegionCode?: string | null
+  totalCount?: number | null
+  items?: PortalAttendanceParticipant[]
+}
+
+export type PortalAttendanceCheckInResult = {
+  applicationId?: number | null
+  applicationType?: string | null
+  programId?: number | null
+  scheduleId?: number | null
+  participantId?: number | null
+  attendanceId?: number | null
+  attendanceStatus?: string | null
+  recordSource?: string | null
+  checkedInAt?: string | null
+  checkInOpensAt?: string | null
+  attendanceManager?: boolean
+  idempotent?: boolean
+  availableActions?: string[]
 }
 
 export type PortalEducationScheduleScopeStatus =
@@ -602,6 +649,14 @@ export async function fetchApplicationSchedules(
   }
 }
 
+function scheduleAttendancePath(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  scheduleId: number,
+): string {
+  return `${applicationPath(applicationType, applicationId)}/schedules/${encodeURIComponent(String(scheduleId))}/attendance`
+}
+
 /** GET /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance */
 export async function fetchApplicationScheduleAttendance(
   applicationType: ProgramApplicationType,
@@ -610,10 +665,41 @@ export async function fetchApplicationScheduleAttendance(
   signal?: AbortSignal,
 ): Promise<PortalScheduleAttendanceDetail> {
   const { data } = await axiosClient.get<unknown>(
-    `${applicationPath(applicationType, applicationId)}/schedules/${encodeURIComponent(String(scheduleId))}/attendance`,
+    scheduleAttendancePath(applicationType, applicationId, scheduleId),
     { signal },
   )
   return unwrapEnvelope<PortalScheduleAttendanceDetail>(data) ?? {}
+}
+
+/** GET /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance/participants */
+export async function fetchApplicationScheduleAttendanceParticipants(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  scheduleId: number,
+  signal?: AbortSignal,
+): Promise<PortalAttendanceParticipantList> {
+  const { data } = await axiosClient.get<unknown>(
+    `${scheduleAttendancePath(applicationType, applicationId, scheduleId)}/participants`,
+    { signal },
+  )
+  const unwrapped = unwrapEnvelope<PortalAttendanceParticipantList | PortalAttendanceParticipant[]>(data)
+  if (Array.isArray(unwrapped)) {
+    return { items: unwrapped, totalCount: unwrapped.length }
+  }
+  return unwrapped ?? { items: [] }
+}
+
+/** POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance/check-in */
+export async function submitApplicationScheduleCheckIn(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  scheduleId: number,
+): Promise<PortalAttendanceCheckInResult> {
+  const { data } = await axiosClient.post<unknown>(
+    `${scheduleAttendancePath(applicationType, applicationId, scheduleId)}/check-in`,
+    {},
+  )
+  return unwrapEnvelope<PortalAttendanceCheckInResult>(data) ?? {}
 }
 
 /** POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/absence-reasons */

@@ -35,7 +35,7 @@ export function EducationScheduleRow({
   const showAbsenceSubmit =
     onAbsenceReasonSubmit != null &&
     hasOperationalSchedule &&
-    canSubmitEducationAbsenceReason(progress, item.attendanceStatus)
+    canSubmitEducationAbsenceReason(progress, item.attendanceStatus, item.availableActions)
   const attendance = hasOperationalSchedule ? item.attendanceStatus : null
   const rowLabel = item.sessionLabel?.trim() || item.scheduleLabel?.trim()
   const subtitle = rowLabel && rowLabel !== item.title ? `${rowLabel} ${item.title}` : item.title

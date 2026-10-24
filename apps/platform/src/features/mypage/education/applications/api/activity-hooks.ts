@@ -44,7 +44,9 @@ import {
   upsertApplicationNoticeReaction,
   fetchApplicationSchedules,
   fetchApplicationScheduleAttendance,
+  fetchApplicationScheduleAttendanceParticipants,
   submitApplicationAbsenceReason,
+  submitApplicationScheduleCheckIn,
   fetchExpenseReceipts,
   fetchIndividualSettlementDetail,
   fetchIndividualSettlementSchedules,
@@ -662,6 +664,100 @@ export function useApplicationScheduleAttendanceQuery(
   }
 }
 
+export function useApplicationScheduleAttendanceParticipantsQuery(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+  scheduleId: number | null | undefined,
+  options?: { enabled?: boolean },
+) {
+  const canView = options?.enabled !== false
+  const enabled =
+    isActivityQueryEnabled(applicationType, applicationId) &&
+    scheduleId != null &&
+    Number.isSafeInteger(scheduleId) &&
+    scheduleId > 0 &&
+    canView
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.programApplications.scheduleAttendanceParticipants(
+      applicationType ?? '',
+      applicationId ?? '',
+      scheduleId ?? 0,
+    ),
+    queryFn: ({ signal }) =>
+      fetchApplicationScheduleAttendanceParticipants(
+        applicationType!,
+        applicationId!,
+        scheduleId!,
+        signal,
+      ),
+    enabled,
+    staleTime: STALE_MS,
+    gcTime: GC_MS,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+  return {
+    enabled,
+    isLoading: enabled && query.isPending,
+    isError: enabled && query.isError,
+    error: enabled ? query.error : null,
+    data: query.data ?? null,
+    refetch: query.refetch,
+  }
+}
+
+function invalidateApplicationAttendanceQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+) {
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.programApplications.detail(applicationType, applicationId),
+      exact: true,
+    }),
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.programApplications.schedules(
+        applicationType,
+        applicationId,
+      ),
+      exact: true,
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [
+        ...platformQueryKeys.mypage.programApplications.schedules(applicationType, applicationId),
+        'attendance',
+      ],
+    }),
+  ])
+}
+
+export function useSubmitApplicationScheduleCheckIn(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (scheduleId: number) => {
+      if (!applicationType || !applicationId) {
+        throw new Error('출석 처리 범위가 올바르지 않습니다.')
+      }
+      return submitApplicationScheduleCheckIn(applicationType, applicationId, scheduleId)
+    },
+    onSuccess: async () => {
+      if (!applicationType || !applicationId) return
+      await invalidateApplicationAttendanceQueries(queryClient, applicationType, applicationId)
+    },
+    retry: false,
+  })
+}
+
 export function useSubmitApplicationAbsenceReason(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined
@@ -683,26 +779,7 @@ export function useSubmitApplicationAbsenceReason(
     },
     onSuccess: async () => {
       if (!applicationType || !applicationId) return
-      await Promise.all([
-        // 신청 목록에도 출결·결석 상태 요약이 포함될 수 있으므로 목록 prefix를 갱신한다.
-        queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.programApplications.detail(
-            applicationType,
-            applicationId
-          ),
-          exact: true,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.programApplications.schedules(
-            applicationType,
-            applicationId
-          ),
-          exact: true,
-        }),
-      ])
+      await invalidateApplicationAttendanceQueries(queryClient, applicationType, applicationId)
     },
     retry: false,
   })
