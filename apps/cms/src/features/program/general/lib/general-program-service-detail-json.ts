@@ -25,6 +25,10 @@ import {
 import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import {
+  omitRootRegistrationOverlay,
+  resolvedRegistrationOverlayOrUndefined,
+} from '@/features/program/shared/lib/resolve-registration-overlay'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -49,6 +53,7 @@ export function sanitizeGeneralProgramServiceDetailPersistValue(value: unknown):
     const next: Record<string, unknown> = {}
     for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
       if (key === SPONSOR_MANAGER_CONTACT_NAMES_KEY) continue
+      if (key === 'registrationOverlay') continue
       next[key] = sanitizeGeneralProgramServiceDetailPersistValue(nested)
     }
     return next
@@ -164,9 +169,12 @@ export interface GeneralProgramServiceDetailJsonV1 {
   studentListRequired?: Program['studentListRequired']
   generalParticipantInterviewEnabled?: Program['generalParticipantInterviewEnabled']
   generalVolunteerInterviewEnabled?: Program['generalVolunteerInterviewEnabled']
-  /** 등록 폼 overlay — 공고용명 등 BE가 title로 덮어쓴 announcementTitle 복원 */
+  /** 등록 폼 overlay 정본 — 공고용명 등 (`serviceDetailJson.registration.overlay`) */
   registration?: { overlay?: Record<string, unknown> }
-  /** BE GET echo — DB SSOT는 `registration.overlay`. 파싱 시 overlay와 병합(루트 우선). */
+  /**
+   * 레거시 JSON 루트. 조회 시에만 `resolveRegistrationOverlay`가 읽는다.
+   * 신규 persist에는 넣지 않는다.
+   */
   registrationOverlay?: Record<string, unknown>
   /** TT / Primary seed alias — nested로 승격 */
   participantRecruitment?: NonNullable<Program['generalCommonInfo']>['participantRecruitmentInfo']
@@ -643,7 +651,6 @@ export function serializeGeneralProgramServiceDetailJson(
     ...(registrationOverlay
       ? {
           registration: { overlay: registrationOverlay },
-          registrationOverlay: { ...registrationOverlay },
         }
       : {}),
   }
@@ -662,27 +669,22 @@ export function serializeGeneralProgramServiceDetailJson(
   })
 
   if (!hasContent) return undefined
-  return JSON.stringify(sanitizeGeneralProgramServiceDetailPersistValue(payload))
+  return JSON.stringify(
+    sanitizeGeneralProgramServiceDetailPersistValue(
+      omitRootRegistrationOverlay(payload as GeneralProgramServiceDetailJsonV1 & Record<string, unknown>)
+    )
+  )
 }
 
 function isServiceDetailRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
-/** `registration.overlay`(DB) + 루트 `registrationOverlay`(GET echo). 루트 키가 우선한다. */
+/** `registration.overlay` 정본 + 루트 `registrationOverlay` 레거시. 안쪽 키가 우선한다. */
 export function mergeServiceDetailRegistrationOverlay(
   parsed: Record<string, unknown>
 ): Record<string, unknown> | undefined {
-  const fromNested =
-    isServiceDetailRecord(parsed.registration) &&
-    isServiceDetailRecord(parsed.registration.overlay)
-      ? parsed.registration.overlay
-      : undefined
-  const fromRoot = isServiceDetailRecord(parsed.registrationOverlay)
-    ? parsed.registrationOverlay
-    : undefined
-  if (!fromNested && !fromRoot) return undefined
-  return { ...(fromNested ?? {}), ...(fromRoot ?? {}) }
+  return resolvedRegistrationOverlayOrUndefined(parsed)
 }
 
 function unwrapGeneralServiceDetailRoot(

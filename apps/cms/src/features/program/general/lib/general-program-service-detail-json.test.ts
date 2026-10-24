@@ -10,7 +10,7 @@ import {
 } from './general-program-service-detail-json'
 
 describe('parseGeneralProgramServiceDetailJson registration overlay', () => {
-  it('merges registration.overlay with root registrationOverlay (root wins)', () => {
+  it('merges registration.overlay over root registrationOverlay (nested wins)', () => {
     const raw = JSON.stringify({
       schemaVersion: 1,
       generalCommonInfo: {},
@@ -28,9 +28,30 @@ describe('parseGeneralProgramServiceDetailJson registration overlay', () => {
     const parsed = parseGeneralProgramServiceDetailJson(raw)
     expect(parsed.registrationOverlay).toEqual({
       'recruit.volunteer.interview.selectedSlotKeys': [],
-      'recruit.volunteer.interview.timeUnit': '60',
+      'recruit.volunteer.interview.timeUnit': '30',
       'recruit.volunteer.interviewRequired': 'yes',
     })
+  })
+
+  it('legacy root-only JSON still hydrates overlay for the screen', () => {
+    const parsed = parseGeneralProgramServiceDetailJson(
+      JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {},
+        registrationOverlay: {
+          'generalRegistration.basicInfo.publicProgramTitle': '구버전 공고명',
+        },
+      })
+    )
+    expect(parsed.registrationOverlay?.['generalRegistration.basicInfo.publicProgramTitle']).toBe(
+      '구버전 공고명'
+    )
+  })
+
+  it('null·빈 문자열 serviceDetailJson은 빈 객체다', () => {
+    expect(parseGeneralProgramServiceDetailJson(null)).toEqual({})
+    expect(parseGeneralProgramServiceDetailJson('')).toEqual({})
+    expect(parseGeneralProgramServiceDetailJson('   ')).toEqual({})
   })
 })
 
@@ -139,11 +160,17 @@ describe('serializeGeneralProgramServiceDetailJson overlayMerge', () => {
     } as Program
   }
 
-  function unitKeys(json: string | undefined): number[] {
+  function persistOverlay(json: string | undefined): Record<string, unknown> {
     const parsed = JSON.parse(json ?? '{}') as {
-      registrationOverlay?: Record<string, Record<string, unknown>>
+      registration?: { overlay?: Record<string, unknown> }
+      registrationOverlay?: Record<string, unknown>
     }
-    const record = parsed.registrationOverlay?.[unitKey] ?? {}
+    expect(parsed).not.toHaveProperty('registrationOverlay')
+    return parsed.registration?.overlay ?? {}
+  }
+
+  function unitKeys(json: string | undefined): number[] {
+    const record = (persistOverlay(json)[unitKey] ?? {}) as Record<string, unknown>
     return Object.keys(record)
       .filter(key => record[key] != null)
       .map(Number)
@@ -188,6 +215,142 @@ describe('serializeGeneralProgramServiceDetailJson overlayMerge', () => {
       false
     )
     expect(unitKeys(json)).toEqual([1, 2])
+  })
+})
+
+describe('serializeGeneralProgramServiceDetailJson nested-only persist', () => {
+  const TITLE_KEY = 'generalRegistration.basicInfo.publicProgramTitle'
+  const NOTES_KEY = 'recruit.notes'
+  const UNIT_KEY = 'generalRegistration.educationCurriculum.unitNameBySession'
+  const WAGE_KEY = 'generalRegistration.wageInfo.paymentItemValues'
+  const INTERVIEW_KEY = 'recruit.volunteer.interviewRequired'
+  const SLOT_KEY = 'recruit.volunteer.interview.selectedSlotKeys'
+
+  function overlayOf(json: string | undefined) {
+    const parsed = JSON.parse(json ?? '{}') as {
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(parsed).not.toHaveProperty('registrationOverlay')
+    return parsed.registration?.overlay ?? {}
+  }
+
+  function sessionsFromUnitMap(unitMap: unknown) {
+    const record = (unitMap ?? {}) as Record<string, unknown>
+    return Object.keys(record)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .map(sessionNo => ({
+        sessionNo,
+        sessionLabel: `${sessionNo}회차`,
+        title: String(record[sessionNo] ?? ''),
+        description: `본문${sessionNo}`,
+      }))
+  }
+
+  function programWithOverlay(overlay: Record<string, unknown>, common: Program['generalCommonInfo'] = {}) {
+    const notes = typeof overlay[NOTES_KEY] === 'string' ? overlay[NOTES_KEY] : ''
+    const title = typeof overlay[TITLE_KEY] === 'string' ? overlay[TITLE_KEY] : ''
+    return {
+      id: '186359',
+      sponsorId: 'sponsor-1',
+      title: '대표명',
+      mainTitle: '대표명',
+      type: 'offline' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      startDate: '2026-04-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+      status: 'pending' as const,
+      generalProgramAudience: 'organization' as const,
+      generalProgramEducationStructure: 'curriculum' as const,
+      generalProgramSessionRound: 'multi' as const,
+      generalVolunteerInterviewEnabled: true,
+      remarks: notes,
+      generalCommonInfo: {
+        announcementTitle: title,
+        participantRecruitmentInfo: { remarks: notes },
+        volunteerRecruitmentInfo: { interviewRequired: true },
+        volunteerInterviewScheduleInfo: { availableTimeSlots: '10:00 ~ 10:30' },
+        curriculumSessions: sessionsFromUnitMap(overlay[UNIT_KEY]),
+        paymentItems: Array.isArray(overlay[WAGE_KEY])
+          ? (overlay[WAGE_KEY] as string[]).join(',')
+          : undefined,
+        ...common,
+      },
+      registrationOverlay: overlay,
+      rounds: [],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    } as Program
+  }
+
+  const baselineOverlay = {
+    [TITLE_KEY]: '기존 공고명',
+    [NOTES_KEY]: '기존 모집 문구',
+    [UNIT_KEY]: { 1: '단원1', 2: '단원2' },
+    [WAGE_KEY]: ['p-166201', 'p-166204'],
+    [INTERVIEW_KEY]: 'yes',
+    [SLOT_KEY]: ['slot-a', 'slot-b'],
+  }
+
+  it('저장 JSON에 루트 registrationOverlay가 없고 dotted 키를 보존한다', () => {
+    const overlay = overlayOf(serializeGeneralProgramServiceDetailJson(programWithOverlay(baselineOverlay)))
+    expect(overlay[TITLE_KEY]).toBe('기존 공고명')
+    expect(overlay[NOTES_KEY]).toBe('기존 모집 문구')
+    expect(overlay[INTERVIEW_KEY]).toBe('yes')
+    expect(overlay[SLOT_KEY]).toEqual(['slot-a', 'slot-b'])
+  })
+
+  it('모집 문구만 수정해도 교육과정·지급 항목이 남는다', () => {
+    const overlay = overlayOf(
+      serializeGeneralProgramServiceDetailJson(
+        programWithOverlay({ ...baselineOverlay, [NOTES_KEY]: '모집 문구만 수정' })
+      )
+    )
+    expect(overlay[NOTES_KEY]).toBe('모집 문구만 수정')
+    expect(overlay[UNIT_KEY]).toEqual({ 1: '단원1', 2: '단원2' })
+    expect(overlay[WAGE_KEY]).toEqual(['p-166201', 'p-166204'])
+  })
+
+  it('교육과정 한 차시만 수정해도 봉사자 인터뷰 설정이 남는다', () => {
+    const overlay = overlayOf(
+      serializeGeneralProgramServiceDetailJson(
+        programWithOverlay({
+          ...baselineOverlay,
+          [UNIT_KEY]: { 1: '단원1-수정', 2: '단원2' },
+        })
+      )
+    )
+    expect(overlay[UNIT_KEY]).toEqual({ 1: '단원1-수정', 2: '단원2' })
+    expect(overlay[INTERVIEW_KEY]).toBe('yes')
+    expect(overlay[SLOT_KEY]).toEqual(['slot-a', 'slot-b'])
+  })
+
+  it('지급 항목만 수정해도 공고 제목이 남는다', () => {
+    const overlay = overlayOf(
+      serializeGeneralProgramServiceDetailJson(
+        programWithOverlay({ ...baselineOverlay, [WAGE_KEY]: ['p-only'] })
+      )
+    )
+    expect(overlay[WAGE_KEY]).toEqual(['p-only'])
+    expect(overlay[TITLE_KEY]).toBe('기존 공고명')
+  })
+
+  it('빈 배열 overlay는 조회 시 기본 배열을 발명하지 않는다', () => {
+    const parsed = parseGeneralProgramServiceDetailJson(
+      JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {},
+        registration: {
+          overlay: {
+            [WAGE_KEY]: [],
+            [SLOT_KEY]: [],
+          },
+        },
+      })
+    )
+    expect(parsed.registrationOverlay?.[WAGE_KEY]).toEqual([])
+    expect(parsed.registrationOverlay?.[SLOT_KEY]).toEqual([])
   })
 })
 

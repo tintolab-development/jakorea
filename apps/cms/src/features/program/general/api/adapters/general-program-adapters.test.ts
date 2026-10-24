@@ -1312,6 +1312,7 @@ describe('general-program-adapters', () => {
     expect(parsed.registration?.overlay?.['generalRegistration.basicInfo.publicProgramTitle']).toBe(
       '공고명'
     )
+    expect(parsed).not.toHaveProperty('registrationOverlay')
   })
 
   it('모집 추가 내용 PATCH — 컬럼과 participantRecruitmentInfo에 같은 HTML을 싣는다', () => {
