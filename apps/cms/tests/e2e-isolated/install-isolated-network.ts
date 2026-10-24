@@ -1,4 +1,5 @@
 import type { Page, Request, Route } from '@playwright/test'
+import { noteRootRegistrationOverlay } from './service-detail-overlay-merge'
 
 export type IsolatedCapturedMutation = {
   method: string
@@ -16,6 +17,7 @@ export type IsolatedNetworkLog = {
   formVersionPuts: IsolatedCapturedMutation[]
   formVersionPublishes: IsolatedCapturedMutation[]
   formBindings: unknown[]
+  rootRegistrationOverlayHits: number
 }
 
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost'])
@@ -208,6 +210,7 @@ export async function installIsolatedRegistrationNetwork(page: Page): Promise<Is
     formVersionPuts: [],
     formVersionPublishes: [],
     formBindings: [],
+    rootRegistrationOverlayHits: 0,
   }
 
   const copiedVersions = new Map<number, ReturnType<typeof versionResponse>>()
@@ -389,6 +392,7 @@ export async function installIsolatedRegistrationNetwork(page: Page): Promise<Is
       if (method === 'POST' && pathname === '/api/admin/programs') {
         log.createProgram = mutation
         const body = mutation.body as { title?: string; formBindings?: unknown[] } | null
+        noteRootRegistrationOverlay(log, mutation.body)
         if (Array.isArray(body?.formBindings)) {
           log.formBindings = body.formBindings
         }

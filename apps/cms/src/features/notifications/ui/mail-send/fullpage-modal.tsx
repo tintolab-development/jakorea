@@ -75,6 +75,7 @@ import { useMailSendForm } from './use-form'
 import { ProgramSelectField } from './program-select-field'
 import { TemplateSelectField } from './template-select-field'
 import { RecipientTable } from './recipient-table'
+import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
 import { RecipientManualModal } from './recipient-manual-modal'
 import './fullpage-modal.css'
@@ -136,6 +137,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([])
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
+  const [sendRequestCompletedOpen, setSendRequestCompletedOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [contextVariableValues, setContextVariableValues] = useState<
     Partial<Record<NotificationMailContextPlaceholderKey, string>>
@@ -455,12 +457,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       })
       setSendConfirmOpen(false)
       await invalidateHistory()
-      showAlert({
-        title: '메일 발송 완료',
-        content: '메일 발송이 완료되었습니다.',
-        confirmLabel: '닫기',
-      })
-      handleClose()
+      setSendRequestCompletedOpen(true)
     } catch (error) {
       setSendConfirmOpen(false)
       showAlert({
@@ -816,6 +813,14 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         onConfirm={() => void handleConfirmSend()}
         onCancel={() => {
           if (!sending) setSendConfirmOpen(false)
+        }}
+      />
+      <SendRequestCompletedModal
+        open={sendRequestCompletedOpen && open}
+        channel="mail"
+        onDismissSendScreen={() => {
+          setSendRequestCompletedOpen(false)
+          handleClose()
         }}
       />
     </>

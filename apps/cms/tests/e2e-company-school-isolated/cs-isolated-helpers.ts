@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer'
 import { expect, type Locator, type Page } from '@playwright/test'
 import { CompanySchoolRegistrationPage } from '../e2e/pages/company-school-registration.page'
 import {
+  checkVisibleEnabledAgreeRadios,
   clickSectionNavIfVisible,
   detailInfoField,
   fillAllByPlaceholder,
@@ -257,14 +258,7 @@ async function visitApplicationTabsAndFillRequired(page: Page) {
       await waitActiveWizardTabPanel(page, tab)
     }
     await fillThirdPartyRecipientIfEmpty(page)
-    const radios = page.getByRole('radio', { name: /^동의$/ })
-    const count = await radios.count()
-    for (let index = 0; index < count; index += 1) {
-      const radio = radios.nth(index)
-      if (!(await radio.isVisible().catch(() => false))) continue
-      if (await radio.isChecked().catch(() => false)) continue
-      await radio.check({ force: true }).catch(() => undefined)
-    }
+    await checkVisibleEnabledAgreeRadios(page)
   }
 }
 

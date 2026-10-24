@@ -3,6 +3,11 @@ import {
   createProgramApplicationFormTrainedTeachersDraft,
   PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS,
 } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
+import {
+  canonicalizeServiceDetailJson,
+  mergeServiceDetailForProgramPatch,
+  noteRootRegistrationOverlay,
+} from '../e2e-isolated/service-detail-overlay-merge'
 
 export type IsolatedCapturedMutation = {
   method: string
@@ -24,6 +29,7 @@ export type IsolatedNetworkLog = {
   programPatches: IsolatedCapturedMutation[]
   infoDetailPatches: IsolatedCapturedMutation[]
   realMutations: number
+  rootRegistrationOverlayHits: number
 }
 
 export type IsolatedFailMode = 'none' | 'put' | 'publish' | 'create' | 'portalPost'
@@ -269,6 +275,12 @@ function persistCreateBody(store: IsolatedProgramStore, body: Record<string, unk
       serviceDetailJson: JSON.stringify(service),
     }
   }
+  if (body.serviceDetailJson != null) {
+    body = {
+      ...body,
+      serviceDetailJson: canonicalizeServiceDetailJson(body.serviceDetailJson),
+    }
+  }
   store.program = {
     ...body,
     id: PROGRAM_ID,
@@ -318,12 +330,20 @@ function persistCreateBody(store: IsolatedProgramStore, body: Record<string, unk
 }
 
 function persistProgramPatch(store: IsolatedProgramStore, body: Record<string, unknown>) {
-  store.program = {
-    ...(store.program ?? {}),
+  const prev = store.program ?? {}
+  const next: Record<string, unknown> = {
+    ...prev,
     ...body,
     id: PROGRAM_ID,
     programType: 'TRAINED_TEACHER',
   }
+  if (body.serviceDetailJson != null) {
+    next.serviceDetailJson = mergeServiceDetailForProgramPatch(
+      prev.serviceDetailJson,
+      body.serviceDetailJson
+    )
+  }
+  store.program = next
 }
 
 function persistInfoDetailPatch(store: IsolatedProgramStore, body: Record<string, unknown>) {
@@ -423,6 +443,7 @@ export async function installTtIsolatedNetwork(
     programPatches: [],
     infoDetailPatches: [],
     realMutations: 0,
+    rootRegistrationOverlayHits: 0,
   }
 
   const copiedVersions = new Map<number, ReturnType<typeof versionResponse>>()
@@ -786,6 +807,7 @@ export async function installTtIsolatedNetwork(
       if (method === 'POST' && pathname === '/api/admin/programs') {
         log.createProgram = mutation
         const body = (mutation.body ?? {}) as Record<string, unknown>
+        noteRootRegistrationOverlay(log, body)
         if (Array.isArray(body.formBindings)) {
           log.formBindings = body.formBindings
           createdBindings = body.formBindings
@@ -802,7 +824,9 @@ export async function installTtIsolatedNetwork(
       }
       if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) {
         log.programPatches.push(mutation)
-        persistProgramPatch(store, (mutation.body ?? {}) as Record<string, unknown>)
+        const patchBody = (mutation.body ?? {}) as Record<string, unknown>
+        noteRootRegistrationOverlay(log, patchBody)
+        persistProgramPatch(store, patchBody)
         await route.fulfill(json(store.program))
         return
       }

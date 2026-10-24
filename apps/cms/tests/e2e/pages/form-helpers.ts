@@ -422,16 +422,53 @@ export async function checkRadioIfVisible(page: Page, label: string | RegExp) {
   await expect(page.getByRole('radio', { name: label }).first()).toBeChecked({ timeout: 5_000 })
 }
 
-/** 체크박스 라벨 체크 (보일 때만) */
+async function isInteractiveConsentControl(control: Locator): Promise<boolean> {
+  if (!(await control.isVisible().catch(() => false))) return false
+  if (await control.isDisabled().catch(() => true)) return false
+  return control
+    .evaluate(el => {
+      const node = el as HTMLElement
+      return !node.closest(
+        '[aria-disabled="true"], .ant-checkbox-disabled, .ant-radio-disabled, [data-preview="true"], .is-preview, [aria-readonly="true"]'
+      )
+    })
+    .catch(() => false)
+}
+
+/** 체크박스 라벨 체크 (보일 때만). 비활성·미리보기 컨트롤은 건너뛴다. */
 export async function checkCheckboxIfVisible(page: Page, label: string | RegExp) {
   const checkbox = page.getByRole('checkbox', { name: label }).first()
   if ((await checkbox.count()) === 0) return
-  if (!(await checkbox.isVisible().catch(() => false))) return
+  if (!(await isInteractiveConsentControl(checkbox))) return
   if (await checkbox.isChecked().catch(() => false)) return
-  await checkbox.check({ force: true })
-  await expect(page.getByRole('checkbox', { name: label }).first()).toBeChecked({
-    timeout: 5_000,
-  })
+  await checkbox.click({ timeout: 2000 }).catch(() => undefined)
+  await expect.poll(async () => checkbox.isChecked(), { timeout: 2000 }).toBe(true)
+}
+
+/** 보이는 활성 동의 체크박스만 체크. 비활성·미리보기·disabled는 skip. */
+export async function checkVisibleEnabledConsentCheckboxes(page: Page) {
+  const checkboxes = page.getByRole('checkbox')
+  const count = await checkboxes.count()
+  for (let i = 0; i < count; i += 1) {
+    const box = checkboxes.nth(i)
+    if (!(await isInteractiveConsentControl(box))) continue
+    if (await box.isChecked().catch(() => false)) continue
+    await box.click({ timeout: 2000 }).catch(() => undefined)
+    await expect.poll(async () => box.isChecked(), { timeout: 2000 }).toBe(true)
+  }
+}
+
+/** 보이는 활성 「동의」 라디오만 체크. 비활성·미리보기는 skip. */
+export async function checkVisibleEnabledAgreeRadios(page: Page) {
+  const radios = page.getByRole('radio', { name: /^동의$/ })
+  const count = await radios.count()
+  for (let i = 0; i < count; i += 1) {
+    const radio = radios.nth(i)
+    if (!(await isInteractiveConsentControl(radio))) continue
+    if (await radio.isChecked().catch(() => false)) continue
+    await radio.click({ timeout: 2000 }).catch(() => undefined)
+    await expect.poll(async () => radio.isChecked(), { timeout: 2000 }).toBe(true)
+  }
 }
 
 export type FillParagraphDateOptions = {
@@ -730,21 +767,60 @@ export async function fillVisibleFreeTextFields(page: Page, prefix: string) {
   }
 }
 
-/** 1x1 PNG 업로드 (보일 때) */
+/** 1x1 PNG 업로드 — 썸네일·첨부 영역만. 전역 input[type=file] nth 순회 금지. */
 export async function uploadTinyPngIfPresent(page: Page) {
   const pngBase64 =
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
-  const inputs = page.locator('input[type="file"]:not([disabled])')
-  const count = await inputs.count()
-  for (let i = 0; i < count; i += 1) {
-    const input = inputs.nth(i)
-    await input
-      .setInputFiles({
-        name: `e2e-upload-${i + 1}.png`,
-        mimeType: 'image/png',
-        buffer: Buffer.from(pngBase64, 'base64'),
-      })
-      .catch(() => undefined)
+  const file = {
+    name: 'e2e-upload.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(pngBase64, 'base64'),
+  }
+  const candidates = [
+    page.locator('.thumbnail-upload-field input[type="file"]'),
+    page.locator('.attachment-upload-field input[type="file"]'),
+    page.locator('.file-upload-field input[type="file"]'),
+    detailInfoField(page, '썸네일 이미지').locator('input[type="file"]'),
+    detailInfoField(page, '첨부 파일').locator('input[type="file"]'),
+    page
+      .getByText('썸네일 이미지', { exact: true })
+      .locator('xpath=ancestor::*[contains(@class,"field") or contains(@class,"upload")][1]')
+      .locator('input[type="file"]'),
+    page
+      .getByText(/첨부 파일/)
+      .locator('xpath=ancestor::*[contains(@class,"field") or contains(@class,"upload")][1]')
+      .locator('input[type="file"]'),
+  ]
+  const seen = new Set<string>()
+  for (const loc of candidates) {
+    const count = await loc.count()
+    for (let i = 0; i < count; i += 1) {
+      const input = loc.nth(i)
+      const key = await input
+        .evaluate(el => {
+          const node = el as HTMLInputElement
+          const box = node.getBoundingClientRect()
+          return `${node.name}|${node.id}|${box.top}|${box.left}`
+        })
+        .catch(() => '')
+      if (!key || seen.has(key)) continue
+      seen.add(key)
+      const usable = await input
+        .evaluate(el => {
+          const node = el as HTMLInputElement
+          if (node.disabled) return false
+          const field =
+            node.closest(
+              '.thumbnail-upload-field, .file-upload-field, .attachment-upload-field, .detail-info-form__field'
+            ) ?? node.parentElement
+          if (!field) return false
+          const style = window.getComputedStyle(field)
+          return style.display !== 'none' && style.visibility !== 'hidden'
+        })
+        .catch(() => false)
+      if (!usable) continue
+      await input.setInputFiles({ ...file, name: `e2e-upload-${seen.size}.png` }).catch(() => undefined)
+    }
   }
 }
 

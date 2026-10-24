@@ -4,6 +4,11 @@ import {
   createProgramApplicationFormEconomyDraft,
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS,
 } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
+import {
+  canonicalizeServiceDetailJson,
+  mergeServiceDetailForProgramPatch,
+  noteRootRegistrationOverlay,
+} from '../e2e-isolated/service-detail-overlay-merge'
 
 export type IsolatedCapturedMutation = {
   method: string
@@ -45,6 +50,7 @@ export type IsolatedNetworkLog = {
   publishedApplicationVersionId: number | null
   publishedApplicationFormSource: 'seed' | 'cms-put' | 'catalog'
   realMutations: number
+  rootRegistrationOverlayHits: number
 }
 
 export type IsolatedNetworkOptions = {
@@ -342,6 +348,12 @@ type IsolatedProgramStore = {
 }
 
 function persistCreateBody(store: IsolatedProgramStore, body: Record<string, unknown>) {
+  if (body.serviceDetailJson != null) {
+    body = {
+      ...body,
+      serviceDetailJson: canonicalizeServiceDetailJson(body.serviceDetailJson),
+    }
+  }
   store.program = {
     ...body,
     id: CS_ISOLATED_IDS.PROGRAM_ID,
@@ -388,7 +400,7 @@ function persistCreateBody(store: IsolatedProgramStore, body: Record<string, unk
   })
 }
 
-/** PATCH: 컬럼 키 교체 + serviceDetail envelope 키 병합. overlay는 deep merge 하지 않고 통째 교체. */
+/** PATCH: 컬럼 키 교체 + envelope 키 병합. nested registration.overlay는 키 단위 병합. 루트 registrationOverlay는 저장하지 않음. */
 function persistProgramPatch(store: IsolatedProgramStore, body: Record<string, unknown>) {
   const prev = store.program ?? {}
   const next: Record<string, unknown> = { ...prev }
@@ -397,27 +409,10 @@ function persistProgramPatch(store: IsolatedProgramStore, body: Record<string, u
     next[key] = value
   }
   if (body.serviceDetailJson != null) {
-    const prevJson = parseJsonObject(prev.serviceDetailJson)
-    const incoming = parseJsonObject(body.serviceDetailJson)
-    const prevProgram = parseJsonObject(prevJson.program)
-    const nextProgram = parseJsonObject(incoming.program)
-    const prevCommon = parseJsonObject(prevProgram.generalCommonInfo)
-    const incomingCommon = parseJsonObject(nextProgram.generalCommonInfo)
-    const registration = Object.prototype.hasOwnProperty.call(incoming, 'registration')
-      ? incoming.registration
-      : prevJson.registration
-    next.serviceDetailJson = JSON.stringify({
-      schemaVersion: incoming.schemaVersion ?? prevJson.schemaVersion ?? 1,
-      program: {
-        ...prevProgram,
-        ...nextProgram,
-        generalCommonInfo:
-          Object.keys(incomingCommon).length > 0
-            ? { ...prevCommon, ...incomingCommon }
-            : prevCommon,
-      },
-      ...(registration != null ? { registration } : {}),
-    })
+    next.serviceDetailJson = mergeServiceDetailForProgramPatch(
+      prev.serviceDetailJson,
+      body.serviceDetailJson
+    )
   }
   store.program = {
     ...next,
@@ -515,6 +510,7 @@ export async function installCsIsolatedNetwork(
     publishedApplicationVersionId: null,
     publishedApplicationFormSource: 'seed',
     realMutations: 0,
+    rootRegistrationOverlayHits: 0,
   }
 
   const copiedVersions = new Map<number, ReturnType<typeof versionResponse>>()
@@ -1048,6 +1044,7 @@ export async function installCsIsolatedNetwork(
       if (method === 'POST' && pathname === '/api/admin/programs') {
         log.createProgram = mutation
         const body = (mutation.body ?? {}) as Record<string, unknown>
+        noteRootRegistrationOverlay(log, body)
         if (Array.isArray(body.formBindings)) {
           log.formBindings = body.formBindings
           createdBindings = body.formBindings
@@ -1064,7 +1061,9 @@ export async function installCsIsolatedNetwork(
       }
       if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) {
         log.programPatches.push(mutation)
-        persistProgramPatch(store, (mutation.body ?? {}) as Record<string, unknown>)
+        const patchBody = (mutation.body ?? {}) as Record<string, unknown>
+        noteRootRegistrationOverlay(log, patchBody)
+        persistProgramPatch(store, patchBody)
         await route.fulfill(json(store.program))
         return
       }
