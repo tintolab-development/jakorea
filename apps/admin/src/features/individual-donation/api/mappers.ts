@@ -37,7 +37,6 @@ const USAGE_API_ID: Record<UsageGuideItemId, number> = {
 }
 
 const DONATE_CTA_LABEL = '성장 후원하기'
-const LEGACY_DONATE_CTA_LABEL = '후원하기'
 const HERO_DESCRIPTION =
   'JA Korea는 소중한 후원을 통해 청소년이 미래를 준비하고, 스스로의 가능성을 펼칠 수 있도록 돕습니다.'
 const LEGACY_HERO_DESCRIPTION =
@@ -56,7 +55,7 @@ function resolveHeroDescription(value: string | undefined): string {
 
 function resolveDonateCtaLabel(value: string | undefined): string {
   const label = value?.trim() ?? ''
-  return !label || label === LEGACY_DONATE_CTA_LABEL ? DONATE_CTA_LABEL : label
+  return label || DONATE_CTA_LABEL
 }
 
 export function usageGuideApiId(id: UsageGuideItemId): number {
@@ -148,6 +147,7 @@ export function toUsageUpdateRequest(items: UsageGuideSaveItem[]): FixedTextUpda
 export function toDonationUrlUpdateRequest(input: DonateCtaSaveInput): DonationUrlUpdateRequest {
   return {
     donationUrl: input.linkUrl.trim(),
+    label: input.buttonLabel.trim(),
     version: input.version,
   }
 }
@@ -201,7 +201,7 @@ export function mergeDonateCtaIntoPersonal(
       version,
     },
     donateCta: {
-      buttonLabel: resolveDonateCtaLabel(button.label) || prev.donateCta.buttonLabel,
+      buttonLabel: button.label?.trim() || prev.donateCta.buttonLabel,
       linkUrl: button.url ?? prev.donateCta.linkUrl,
       version,
     },

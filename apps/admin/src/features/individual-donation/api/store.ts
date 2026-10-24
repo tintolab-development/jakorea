@@ -14,7 +14,6 @@ import type {
 
 const STORAGE_KEY = 'admin.sponsor.individualDonation.v1'
 const DONATE_CTA_LABEL = '성장 후원하기'
-const LEGACY_DONATE_CTA_LABEL = '후원하기'
 const HERO_DESCRIPTION =
   'JA Korea는 소중한 후원을 통해 청소년이 미래를 준비하고, 스스로의 가능성을 펼칠 수 있도록 돕습니다.'
 const LEGACY_HERO_DESCRIPTION =
@@ -101,7 +100,7 @@ function resolveHeroDescription(value: unknown, fallback: string): string {
 
 function resolveDonateCtaLabel(value: unknown): string {
   const label = asString(value, DONATE_CTA_LABEL).trim()
-  return !label || label === LEGACY_DONATE_CTA_LABEL ? DONATE_CTA_LABEL : label
+  return label || DONATE_CTA_LABEL
 }
 
 function normalizeVersion(value: unknown, fallback: number): number {
@@ -268,14 +267,16 @@ export function saveUsageGuide(items: UsageGuideSaveItem[]): IndividualDonationD
 }
 
 export function saveDonateCta(input: DonateCtaSaveInput): IndividualDonationData {
+  const buttonLabel = input.buttonLabel.trim()
   const linkUrl = input.linkUrl.trim()
+  if (!buttonLabel) throw new Error('DONATE_LABEL_REQUIRED')
   if (!linkUrl) throw new Error('DONATE_LINK_REQUIRED')
 
   const current = readIndividualDonation()
   const next: IndividualDonationData = {
     ...current,
     donateCta: {
-      buttonLabel: current.donateCta.buttonLabel,
+      buttonLabel,
       linkUrl,
       version: input.version,
     },

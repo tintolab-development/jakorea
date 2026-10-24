@@ -94,10 +94,14 @@ export async function saveDonateCtaService(
   cached?: IndividualDonationData,
 ): Promise<IndividualDonationData> {
   if (shouldUseIndividualDonationRemoteApi()) {
+    const buttonLabel = input.buttonLabel.trim()
     const linkUrl = input.linkUrl.trim()
+    if (!buttonLabel) throw new Error('DONATE_LABEL_REQUIRED')
     if (!linkUrl) throw new Error('DONATE_LINK_REQUIRED')
     const prev = await resolvePrev(cached)
-    const button = await sponsorshipApi().updateDonationUrl(toDonationUrlUpdateRequest(input))
+    const button = await sponsorshipApi().updateDonationUrl(
+      toDonationUrlUpdateRequest({ ...input, buttonLabel, linkUrl }),
+    )
     return mergeDonateCtaIntoPersonal(prev, button)
   }
   return saveDonateCtaLocal(input)

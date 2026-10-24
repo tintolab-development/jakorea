@@ -1,5 +1,5 @@
 import type { WhyCardContent, WhyCardId } from './constants'
-import { CTA_SECTION_BUTTON_LABEL, WHY_CARDS } from './constants'
+import { WHY_CARDS } from './constants'
 import {
   normalizePublicCopy,
   readOptionalText,
@@ -16,7 +16,6 @@ const USAGE_ORDER: readonly WhyCardId[] = ['future_capability', 'education_acces
 
 const LEGACY_HERO_DESCRIPTION =
   'JA 코리아는 청소년들이 미래 사회에 필요한 역량을 키우고, 세상을 긍정적으로 변화시키는 주체가 되도록 돕습니다. 여러분의 후원이 청소년의 더 밝은 내일을 만듭니다.'
-const LEGACY_DONATION_BUTTON_LABEL = '후원하기'
 
 export type PersonalSponsorshipView = {
   titleLines: string[]
@@ -47,15 +46,8 @@ function resolveHeroDescriptionLines(
   return splitPublicTextLines(remoteDescription, fallback)
 }
 
-function resolveDonationButtonLabel(remoteLabel: string | undefined): string {
-  const label = readOptionalText(remoteLabel)
-  if (
-    !label ||
-    normalizePublicCopy(label) === normalizePublicCopy(LEGACY_DONATION_BUTTON_LABEL)
-  ) {
-    return CTA_SECTION_BUTTON_LABEL
-  }
-  return label
+function resolveDonationButtonLabel(remoteLabel: string | undefined): string | null {
+  return readOptionalText(remoteLabel) ?? null
 }
 
 export function overlayPersonalWhyCards(

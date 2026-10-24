@@ -62,6 +62,7 @@ export type UsageGuideSaveItem = {
 }
 
 export type DonateCtaSaveInput = {
+  buttonLabel: string
   linkUrl: string
   version: number
 }

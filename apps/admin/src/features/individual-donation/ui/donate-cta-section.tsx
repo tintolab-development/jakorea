@@ -22,12 +22,14 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
   const { showAlert } = useCmsAlert()
   const saveMutation = useSaveDonateCta()
   const [isEditing, setIsEditing] = useState(false)
+  const [draftLabel, setDraftLabel] = useState(donateCta.buttonLabel)
   const [draftLink, setDraftLink] = useState(donateCta.linkUrl)
 
   useEffect(() => {
     if (isEditing) return
+    setDraftLabel(donateCta.buttonLabel)
     setDraftLink(donateCta.linkUrl)
-  }, [donateCta.linkUrl, isEditing])
+  }, [donateCta.buttonLabel, donateCta.linkUrl, isEditing])
 
   const rows = useMemo<Row[]>(
     () => [{ key: 'donate', ...donateCta }],
@@ -35,33 +37,40 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
   )
 
   const handleEdit = useCallback(() => {
+    setDraftLabel(donateCta.buttonLabel)
     setDraftLink(donateCta.linkUrl)
     setIsEditing(true)
-  }, [donateCta.linkUrl])
+  }, [donateCta.buttonLabel, donateCta.linkUrl])
 
   const handleCancel = useCallback(() => {
+    setDraftLabel(donateCta.buttonLabel)
     setDraftLink(donateCta.linkUrl)
     setIsEditing(false)
-  }, [donateCta.linkUrl])
+  }, [donateCta.buttonLabel, donateCta.linkUrl])
 
   const handleSave = useCallback(async () => {
+    const buttonLabel = draftLabel.trim()
     const linkUrl = draftLink.trim()
+    if (!buttonLabel) {
+      showAlert({ title: '입력 확인', content: '버튼명을 입력해 주세요.' })
+      return
+    }
     if (!linkUrl) {
       showAlert({ title: '입력 확인', content: '연결 링크를 입력해 주세요.' })
       return
     }
     try {
-      await saveMutation.mutateAsync({ linkUrl, version: donateCta.version })
+      await saveMutation.mutateAsync({ buttonLabel, linkUrl, version: donateCta.version })
       setIsEditing(false)
     } catch (err) {
       showAlert(
         individualDonationSaveFailureAlert(
           err,
-          '성장 후원하기 연결 링크 저장에 실패했습니다. 다시 시도해 주세요.'
+          '개인후원 CTA 저장에 실패했습니다. 다시 시도해 주세요.'
         )
       )
     }
-  }, [donateCta.version, draftLink, saveMutation, showAlert])
+  }, [donateCta.version, draftLabel, draftLink, saveMutation, showAlert])
 
   const columns = useMemo<ColumnsType<Row>>(
     () => [
@@ -71,7 +80,19 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
         width: 320,
         align: 'center',
         className: 'individual-donation-col--button',
-        render: (_value, record) => record.buttonLabel,
+        render: (_value, record) =>
+          isEditing ? (
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              value={draftLabel}
+              onChange={e => setDraftLabel(e.target.value)}
+              placeholder="버튼명을 입력하세요"
+              aria-label="개인후원 CTA 버튼명"
+            />
+          ) : (
+            record.buttonLabel
+          ),
       },
       {
         title: '연결 링크',
@@ -100,14 +121,14 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
         },
       },
     ],
-    [draftLink, isEditing]
+    [draftLabel, draftLink, isEditing]
   )
 
   return (
     <div className="individual-donation-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
-          <span className="table-title">■ 성장 후원하기</span>
+          <span className="table-title">■ {donateCta.buttonLabel || '성장 후원하기'}</span>
         </div>
         <div className="table-header-actions--wrapper">
           {isEditing ? (

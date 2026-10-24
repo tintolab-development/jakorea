@@ -31,6 +31,9 @@ export function individualDonationSaveFailureAlert(
     if (code === 'DONATE_LINK_REQUIRED') {
       return { title: '입력 확인', content: '연결 링크를 입력해 주세요.' }
     }
+    if (code === 'DONATE_LABEL_REQUIRED') {
+      return { title: '입력 확인', content: '버튼명을 입력해 주세요.' }
+    }
   }
 
   if (isOptimisticLockConflictError(error)) {
