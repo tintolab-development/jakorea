@@ -58,7 +58,7 @@ export function HeroSection() {
               </span>
             </PFText>
 
-            <PFText as="p" typo="bd-lg-rg" color="neutral-cool-700" className={styles.description}>
+            <PFText as="p" typo="bd-lg-rg" color="black" className={styles.description}>
               {descriptionLines.map((line, index) => (
                 <Fragment key={`${line}-${index}`}>
                   {index > 0 ? <br /> : null}

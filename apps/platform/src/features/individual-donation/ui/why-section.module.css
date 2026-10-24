@@ -182,6 +182,12 @@
 }
 
 @media (--bp-below-pc) {
+  .actionDescription {
+    font-size: 14px;
+    line-height: 150%;
+    letter-spacing: -0.14px;
+  }
+
   .title {
     font-size: 24px;
     line-height: 150%;
@@ -203,11 +209,12 @@
 @media (--bp-pc-up) {
   .section {
     gap: var(--spacing-48);
-    padding-block: var(--spacing-80);
+    /* Figma: hero → WHY title 173px, cards → CTA eyebrow 408px */
+    padding: 173px 0 180px;
   }
 
   .content {
-    padding: 0 var(--spacing-20);
+    padding-inline: 0;
   }
 
   .sectionHeader {
@@ -224,6 +231,12 @@
     flex-shrink: 0;
     align-items: center;
     gap: var(--spacing-16);
+  }
+
+  .actionDescription {
+    font-size: 20px;
+    line-height: 30px;
+    letter-spacing: -0.2px;
   }
 
   .cardList {
@@ -247,6 +260,12 @@
     padding: var(--spacing-60) var(--spacing-52);
   }
 
+  .cardDescription {
+    font-size: 24px;
+    line-height: 36px;
+    letter-spacing: -0.24px;
+  }
+
   .media {
     flex: 1 1 55%;
     max-width: 55%;
@@ -256,5 +275,9 @@
   
   .badge {
     height: 39px;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.18px;
   }
 }

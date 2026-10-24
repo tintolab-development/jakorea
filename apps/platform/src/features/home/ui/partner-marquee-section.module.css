@@ -263,7 +263,8 @@
 
 @media (--bp-pc-up) {
   .ctaInner {
-    padding-inline: var(--spacing-40);
+    width: min(var(--content-shell-max-width), calc(100vw - var(--spacing-80)));
+    padding-inline: 0;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
@@ -307,6 +308,7 @@
     flex-direction: row;
     flex-wrap: wrap;
     gap: var(--spacing-20);
+    margin-right: calc(-1 * var(--spacing-32));
   }
 }
 
@@ -327,6 +329,7 @@
   .ctaPrimaryLink,
   .ctaSecondaryLink {
     width: auto;
+    min-width: 312px;
     justify-content: flex-start;
     padding: var(--spacing-20) var(--spacing-40) var(--spacing-20) var(--spacing-32);
   }

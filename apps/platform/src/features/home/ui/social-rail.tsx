@@ -44,8 +44,8 @@ export function SocialRail() {
         const heroMidY = rect.top + rect.height / 2
         // 시작: 히어로 세로 중앙 → 스크롤 후 뷰포트 중앙 스티키
         topPx = Math.max(heroMidY, viewportMidY)
-        // 초기(스크롤 전)는 항상 투명 · 이탈은 히어로 하단이 뷰포트 중앙을 지날 때
-        leave = isInitial ? 0 : clamp01((viewportMidY - rect.bottom) / LEAVE_FADE_PX)
+        // 히어로가 뷰포트 아래로 완전히 빠진 뒤에만 배경·쉐도우를 보간한다.
+        leave = isInitial || rect.bottom > 0 ? 0 : clamp01(-rect.bottom / LEAVE_FADE_PX)
       }
 
       const transform = `translate3d(0, calc(${topPx}px - 50%), 0)`

@@ -41,8 +41,13 @@ const INELIGIBLE_REASON_MESSAGES: Record<string, string> = {
   SCHEDULE_NOT_ENDED: '교육이 종료된 이후에 영수증을 제출할 수 있습니다.',
   SUBMISSION_DEADLINE_PASSED: '프로그램 운영이 종료되어 영수증을 제출할 수 없습니다.',
   NO_PAYABLE_ITEMS: '이 프로그램에 신청할 수 있는 지급 항목이 없습니다.',
-  EVIDENCE_POLICY_UNCONFIGURED:
-    '증빙 정책이 설정되지 않아 제출할 수 없습니다. 관리자에게 문의해 주세요.',
+  EVIDENCE_POLICY_UNCONFIGURED: '증빙 정책을 확인할 수 없어 신청할 수 없습니다',
+  EVIDENCE_REQUIRED: '증빙이 필요한 항목의 영수증을 제출해 주세요.',
+  EVIDENCE_FILE_REQUIRED: '증빙 파일 업로드가 완료되지 않았습니다. 다시 시도해 주세요.',
+  PAYMENT_ITEM_REQUIRED: '이 프로그램에 신청할 수 있는 지급 항목이 없습니다.',
+  PAYMENT_ITEM_NOT_ALLOWED: '신청할 수 없는 지급 항목이 포함되어 있습니다.',
+  DUPLICATE_PAYMENT_ITEM: '같은 지급 항목을 중복으로 신청할 수 없습니다.',
+  FILE_ATTACHED_MORE_THAN_ONCE: '같은 파일을 여러 항목에 첨부할 수 없습니다.',
   LEGACY_RECONCILIATION_REQUIRED:
     '기존 정산 내역 확인이 필요합니다. 관리자에게 문의해 주세요.',
   INDIVIDUAL_SETTLEMENT_DISABLED: INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,

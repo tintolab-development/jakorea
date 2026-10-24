@@ -73,6 +73,12 @@ import {
   looksLikeTrainedTeacherProgramId,
   TRAINED_TEACHER_TRAINING_SCHEDULE_NAME,
 } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
+import {
+  normalizeCourseDeliveredByFormValue,
+  normalizeIpOwnedSelectValue,
+} from '@/features/program/shared/lib/program-enum-normalize'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
 import type { GeneralProgramSurveyMenuKey, TargetLevel } from '@/types/domain'
 
@@ -142,25 +148,6 @@ const optionalNonNegNumberMessage = (message: string) =>
 
 /** API/RHF optional boolean — null 은 undefined 로 (Expected boolean, received null 방지) */
 const optionalBoolean = z.preprocess(nullToUndefined, z.boolean().optional())
-
-const COURSE_DELIVERED_BY_VALUES = new Set(['JA', 'Jointly', 'Partner'] as const)
-type CourseDeliveredByFormValue = 'JA' | 'Jointly' | 'Partner'
-
-/** API 확장값(TEACHER 등)은 폼 enum 밖 → undefined 시드·검증 통과, patch 시 existing 유지 */
-function normalizeCourseDeliveredByFormValue(
-  raw: unknown
-): CourseDeliveredByFormValue | undefined {
-  if (raw == null || raw === '') return undefined
-  const trimmed = String(raw).trim()
-  if ((COURSE_DELIVERED_BY_VALUES as Set<string>).has(trimmed)) {
-    return trimmed as CourseDeliveredByFormValue
-  }
-  const lower = trimmed.toLowerCase()
-  if (lower === 'ja') return 'JA'
-  if (lower === 'jointly' || lower === 'joint') return 'Jointly'
-  if (lower === 'partner') return 'Partner'
-  return undefined
-}
 
 const IPS_FORM_VALUES = new Set(['Inspire', 'Prepare', 'Succeed'] as const)
 type IpsFormValue = 'Inspire' | 'Prepare' | 'Succeed'
@@ -592,6 +579,111 @@ function parseWageAmountFromPricing(pricing: string | undefined, kind: 'regular'
   return parseCompanySchoolWageAmountFromPricing(pricing, kind)
 }
 
+function overlayHas(overlay: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(overlay, key)
+}
+
+function overlayWageAmount(
+  overlay: Record<string, unknown>,
+  key: string,
+  fallback: string | undefined
+): string | undefined {
+  if (!overlayHas(overlay, key)) return fallback
+  const value = overlay[key]
+  if (value == null || value === '') return undefined
+  const n = typeof value === 'number' ? value : Number(String(value).replace(/,/g, ''))
+  return Number.isFinite(n) ? formatNumberDisplay(n) : fallback
+}
+
+function overlayKpi(
+  overlay: Record<string, unknown>,
+  key: string,
+  fallback: number | undefined
+): number | undefined {
+  if (!overlayHas(overlay, key)) return fallback
+  const value = overlay[key]
+  if (value == null || value === '') return undefined
+  return clampJavaInt(typeof value === 'number' ? value : Number(value))
+}
+
+function companySchoolOverlayWageAndKpi(
+  program: import('@/types/domain').Program,
+  fallback: {
+    wagePaymentItemIds: string[] | undefined
+    wageGrade1Amount: string | undefined
+    wageGrade2Amount: string | undefined
+    wageGrade3Amount: string | undefined
+    wageGrade1LongDistanceAmount: string | undefined
+    wageGrade2LongDistanceAmount: string | undefined
+    wageGrade3LongDistanceAmount: string | undefined
+    kpiFinalParticipants: number | undefined
+    kpiInstructorCount: number | undefined
+    kpiFinalSchools: number | undefined
+    kpiFinalClasses: number | undefined
+  }
+) {
+  const isCompanySchool =
+    program.backendProgramType === 'COMPANY_SCHOOL' || isCompanySchoolProgram(program)
+  const overlay = program.registrationOverlay ?? {}
+  if (!isCompanySchool || Object.keys(overlay).length === 0) return fallback
+  const overlayIds = overlay['economyRegistration.wageInfo.paymentItemValues']
+  return {
+    wagePaymentItemIds: Array.isArray(overlayIds)
+      ? overlayIds.filter((id): id is string => typeof id === 'string')
+      : fallback.wagePaymentItemIds,
+    wageGrade1Amount: overlayWageAmount(
+      overlay,
+      'economyRegistration.wageInfo.grade1Fee',
+      fallback.wageGrade1Amount
+    ),
+    wageGrade2Amount: overlayWageAmount(
+      overlay,
+      'economyRegistration.wageInfo.grade2Fee',
+      fallback.wageGrade2Amount
+    ),
+    wageGrade3Amount: overlayWageAmount(
+      overlay,
+      'economyRegistration.wageInfo.grade3Fee',
+      fallback.wageGrade3Amount
+    ),
+    wageGrade1LongDistanceAmount: overlayWageAmount(
+      overlay,
+      'economyRegistration.wageInfo.grade1DistanceFee',
+      fallback.wageGrade1LongDistanceAmount
+    ),
+    wageGrade2LongDistanceAmount: overlayWageAmount(
+      overlay,
+      'economyRegistration.wageInfo.grade2DistanceFee',
+      fallback.wageGrade2LongDistanceAmount
+    ),
+    wageGrade3LongDistanceAmount: overlayWageAmount(
+      overlay,
+      'economyRegistration.wageInfo.grade3DistanceFee',
+      fallback.wageGrade3LongDistanceAmount
+    ),
+    kpiFinalParticipants: overlayKpi(
+      overlay,
+      'economyRegistration.kpi.participantCount',
+      fallback.kpiFinalParticipants
+    ),
+    kpiInstructorCount: overlayKpi(
+      overlay,
+      'economyRegistration.kpi.instructor',
+      fallback.kpiInstructorCount
+    ),
+    kpiFinalSchools: overlayKpi(
+      overlay,
+      'economyRegistration.kpi.dispatchedSchool',
+      fallback.kpiFinalSchools
+    ),
+    kpiFinalClasses: overlayKpi(
+      overlay,
+      'economyRegistration.kpi.dispatchedClass',
+      fallback.kpiFinalClasses
+    ),
+  }
+}
+
 function periodLabelFromRange(
   start: string | Date | undefined,
   end: string | Date | undefined
@@ -785,6 +877,49 @@ export function programToDetailEditValues(
     id: program.generalCommonInfo?.sponsorManagerContactId,
     managerLine: sponsorManagerLine,
     hasSelectedSponsors: sponsorManagementIds.length > 0,
+  })
+  const wageKpi = companySchoolOverlayWageAndKpi(program, {
+    wagePaymentItemIds:
+      resolveProgramPaymentItemIdsFromLabels(program.generalCommonInfo?.paymentItems) ||
+      undefined,
+    wageGrade1Amount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[0]?.pricing,
+      'regular'
+    ),
+    wageGrade2Amount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[1]?.pricing,
+      'regular'
+    ),
+    wageGrade3Amount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[2]?.pricing,
+      'regular'
+    ),
+    wageGrade1LongDistanceAmount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[0]?.pricing,
+      'longDistance'
+    ),
+    wageGrade2LongDistanceAmount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[1]?.pricing,
+      'longDistance'
+    ),
+    wageGrade3LongDistanceAmount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[2]?.pricing,
+      'longDistance'
+    ),
+    kpiFinalParticipants:
+      clampJavaInt(program.generalCommonInfo?.kpi?.finalParticipants) ??
+      clampJavaInt(program.totalParticipants) ??
+      clampJavaInt(program.approvedStudentCount) ??
+      undefined,
+    kpiInstructorCount:
+      clampJavaInt(program.generalCommonInfo?.kpi?.instructorCount) ??
+      clampJavaInt(program.instructors) ??
+      undefined,
+    kpiFinalSchools:
+      clampJavaInt(program.generalCommonInfo?.kpi?.finalSchools) ??
+      clampJavaInt(program.participatingSchoolCount) ??
+      undefined,
+    kpiFinalClasses: clampJavaInt(program.generalCommonInfo?.kpi?.finalClasses) ?? undefined,
   })
   return {
     title: program.title ?? '',
@@ -1035,12 +1170,16 @@ export function programToDetailEditValues(
     titleEn: program.titleEn ?? undefined,
     announcementTitle: isTrainedTeacherForm
       ? program.title?.trim() || undefined
-      : resolvePublicProgramTitle({
-          announcementTitle: program.generalCommonInfo?.announcementTitle,
-          overlay: program.ujatRegistrationOverlay ?? program.registrationOverlay,
-          mainTitle: program.mainTitle,
-          title: program.title,
-        }) || undefined,
+      : (program.backendProgramType === 'COMPANY_SCHOOL' || isCompanySchoolProgram(program)) &&
+          program.generalCommonInfo != null &&
+          Object.prototype.hasOwnProperty.call(program.generalCommonInfo, 'announcementTitle')
+        ? (program.generalCommonInfo.announcementTitle ?? '')
+        : resolvePublicProgramTitle({
+            announcementTitle: program.generalCommonInfo?.announcementTitle,
+            overlay: program.ujatRegistrationOverlay ?? program.registrationOverlay,
+            mainTitle: program.mainTitle,
+            title: program.title,
+          }) || undefined,
     detailedProgramName: program.generalCommonInfo?.detailedProgramName?.trim() || undefined,
     detailedProgramId: program.detailedProgramId ?? undefined,
     textbookName: program.textbookName ?? '',
@@ -1099,7 +1238,7 @@ export function programToDetailEditValues(
     })(),
     teamDivision: program.teamDivision ?? undefined,
     educationProcess: program.educationProcess ?? undefined,
-    ipOwned: program.ipOwned ?? undefined,
+    ipOwned: normalizeIpOwnedSelectValue(program.ipOwned),
     courseDeliveredBy: normalizeCourseDeliveredByFormValue(program.courseDeliveredBy),
     partnerInvolvement: isTrainedTeacherForm
       ? program.partnerInvolvement
@@ -1130,52 +1269,12 @@ export function programToDetailEditValues(
     wagePricingBase: undefined,
     wagePricingLongDistance: undefined,
     wagePaymentItems: undefined,
-    wagePaymentItemIds:
-      resolveProgramPaymentItemIdsFromLabels(program.generalCommonInfo?.paymentItems) ||
-      undefined,
-    wageGrade1Amount: parseWageAmountFromPricing(
-      program.generalCommonInfo?.wageGradeRows?.[0]?.pricing,
-      'regular'
-    ),
-    wageGrade2Amount: parseWageAmountFromPricing(
-      program.generalCommonInfo?.wageGradeRows?.[1]?.pricing,
-      'regular'
-    ),
-    wageGrade3Amount: parseWageAmountFromPricing(
-      program.generalCommonInfo?.wageGradeRows?.[2]?.pricing,
-      'regular'
-    ),
-    wageGrade1LongDistanceAmount: parseWageAmountFromPricing(
-      program.generalCommonInfo?.wageGradeRows?.[0]?.pricing,
-      'longDistance'
-    ),
-    wageGrade2LongDistanceAmount: parseWageAmountFromPricing(
-      program.generalCommonInfo?.wageGradeRows?.[1]?.pricing,
-      'longDistance'
-    ),
-    wageGrade3LongDistanceAmount: parseWageAmountFromPricing(
-      program.generalCommonInfo?.wageGradeRows?.[2]?.pricing,
-      'longDistance'
-    ),
+    ...wageKpi,
     wageDeductionItems: undefined,
-    kpiFinalParticipants:
-      clampJavaInt(program.generalCommonInfo?.kpi?.finalParticipants) ??
-      clampJavaInt(program.totalParticipants) ??
-      clampJavaInt(program.approvedStudentCount) ??
-      undefined,
-    kpiInstructorCount:
-      clampJavaInt(program.generalCommonInfo?.kpi?.instructorCount) ??
-      clampJavaInt(program.instructors) ??
-      undefined,
     kpiVolunteerCount:
       clampJavaInt(program.generalCommonInfo?.kpi?.volunteerCount) ??
       clampJavaInt(program.generalVolunteers) ??
       undefined,
-    kpiFinalSchools:
-      clampJavaInt(program.generalCommonInfo?.kpi?.finalSchools) ??
-      clampJavaInt(program.participatingSchoolCount) ??
-      undefined,
-    kpiFinalClasses: clampJavaInt(program.generalCommonInfo?.kpi?.finalClasses) ?? undefined,
     kpiEducatedTeachers: clampJavaInt(program.educatedTeachers) ?? undefined,
   }
 }
@@ -1558,6 +1657,14 @@ export function detailEditValuesToProgramPatch(
         values.educationScheduleMode ?? existing.generalCommonInfo?.educationScheduleMode,
       ...(isTrainedTeacherProgram
         ? {
+            educationScheduleRange: educationScheduleRangeFromPeriodLines({
+              mode:
+                values.educationScheduleMode ?? existing.generalCommonInfo?.educationScheduleMode,
+              lines:
+                values.educationScheduleLines !== undefined
+                  ? values.educationScheduleLines
+                  : existing.generalCommonInfo?.educationScheduleLines,
+            }),
             scheduleDetails: Array.isArray(values.trainedTeachersScheduleDetails)
               ? (values.trainedTeachersScheduleDetails as NonNullable<
                   import('@/types/domain').Program['generalCommonInfo']
@@ -1679,10 +1786,10 @@ export function detailEditValuesToProgramPatch(
               : existing.generalCommonInfo?.participantRecruitmentInfo?.certificateIssuanceProvided,
         maxAssignableInstructors: isTrainedTeacherProgram
           ? 0
-          : values.participantRecruitmentMaxInstructors,
-        maxClassCount: values.participantRecruitmentMaxClassCount,
-        maxScheduleCount: values.participantRecruitmentMaxScheduleCount,
-        maxSessionsPerDay: values.participantRecruitmentMaxSessionsPerDay,
+          : values.participantRecruitmentMaxInstructors ?? undefined,
+        maxClassCount: values.participantRecruitmentMaxClassCount ?? undefined,
+        maxScheduleCount: values.participantRecruitmentMaxScheduleCount ?? undefined,
+        maxSessionsPerDay: values.participantRecruitmentMaxSessionsPerDay ?? undefined,
         interviewEnabled:
           values.participantRecruitmentInterviewEnabled === 'yes'
             ? true

@@ -20,6 +20,7 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resolveSponsorContactIdsFromProgram } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { resolveProgramPaymentItemIdsFromLabels } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { preserveCompanySchoolCompatibilityOverlay } from './serialize-registration-overlay-from-canonical'
 
 export const ECONOMY_REGISTRATION_OVERLAY_PREFIX = 'economyRegistration.' as const
 
@@ -188,20 +189,39 @@ export function buildEconomyRegistrationOverlayFromProgram(
   }
 }
 
-export function seedEconomyRegistrationOverlayFromProgram(program: Program): void {
-  const fromProgram = buildEconomyRegistrationOverlayFromProgram(program)
-  const saved = overlayFromProgram(program)
-  // GET canonical 값이 저장된 과거 overlay보다 최신이다.
-  const merged = { ...saved, ...fromProgram }
+function applySurveyItemsFromProgram(
+  program: Program,
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
   const surveyKeys = resolveProgramSurveyMenuKeys({
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
-    registrationOverlay: merged,
+    registrationOverlay: overlay,
   })
-  merged[`${BASIC}.surveyItems`] = {
-    survey: surveyKeys.includes('survey'),
-    satisfaction: surveyKeys.includes('satisfaction'),
-    lecture_evaluation: surveyKeys.includes('lecture_evaluation'),
+  return {
+    ...overlay,
+    [`${BASIC}.surveyItems`]: {
+      survey: surveyKeys.includes('survey'),
+      satisfaction: surveyKeys.includes('satisfaction'),
+      lecture_evaluation: surveyKeys.includes('lecture_evaluation'),
+    },
   }
+}
+
+/** Program 표시값 역변환은 제목·기간만 우선하고, ID/원숫자/KPI presence는 leftover를 유지한다. */
+function mergeEconomyOverlayFromProgram(
+  program: Program,
+  leftover: Record<string, unknown>
+): Record<string, unknown> {
+  const fromProgram = buildEconomyRegistrationOverlayFromProgram(program)
+  return preserveCompanySchoolCompatibilityOverlay({ ...leftover, ...fromProgram }, leftover)
+}
+
+export function seedEconomyRegistrationOverlayFromProgram(program: Program): void {
+  const leftover = overlayFromProgram(program)
+  const merged = applySurveyItemsFromProgram(
+    program,
+    mergeEconomyOverlayFromProgram(program, leftover)
+  )
   replaceProgramRegistrationOverlayPrefix(ECONOMY_REGISTRATION_OVERLAY_PREFIX, merged)
 }
 
@@ -209,20 +229,82 @@ export function resyncEconomyRegistrationOverlayFromProgram(
   program: Program,
   extra?: Record<string, unknown>
 ): Record<string, unknown> {
-  const fromProgram = buildEconomyRegistrationOverlayFromProgram(program)
   const leftover = pickProgramRegistrationOverlayByPrefix(
     ECONOMY_REGISTRATION_OVERLAY_PREFIX,
     extra ?? {}
   )
-  const merged = { ...leftover, ...fromProgram }
-  for (const key of [
-    `${KPI}.participantCount`,
-    `${KPI}.instructor`,
-    `${KPI}.dispatchedSchool`,
-    `${KPI}.dispatchedClass`,
-  ] as const) {
-    if (Object.prototype.hasOwnProperty.call(leftover, key) && leftover[key] == null) {
-      merged[key] = leftover[key]
+  return mergeEconomyOverlayFromProgram(program, leftover)
+}
+
+/** leftover(모집·강사 포함) + economy 재생성. 공통정보 PATCH가 무관 overlay를 지우지 않는다. */
+const DETAIL_SAVE_FORM_OVERLAY_KEYS = [
+  `${BASIC}.publicProgramTitle`,
+  `${BASIC}.repKo`,
+  `${BASIC}.repEn`,
+] as const
+
+export const ECONOMY_PUBLIC_PROGRAM_TITLE_KEY = `${BASIC}.publicProgramTitle` as const
+
+/**
+ * 상세 공통정보 저장 공고명.
+ * overlay 단락이 현재 입력(등록 편집 UI)이면 overlay가 정본이고,
+ * infoForm만 바뀐 저장(단위·폼 경로)이면 폼이 정본이다.
+ * 빈 문자열은 명시적 입력이다.
+ */
+export function resolveCompanySchoolDetailSaveAnnouncementTitle(args: {
+  formAnnouncement: unknown
+  overlayAnnouncement: unknown
+  programAnnouncement: unknown
+}): string | undefined {
+  const overlay =
+    typeof args.overlayAnnouncement === 'string' ? args.overlayAnnouncement : undefined
+  const form = typeof args.formAnnouncement === 'string' ? args.formAnnouncement : undefined
+  const program =
+    typeof args.programAnnouncement === 'string' ? args.programAnnouncement : undefined
+  const overlayDirty = overlay !== undefined && overlay !== program
+  const formDirty = form !== undefined && form !== program
+  if (overlayDirty) return overlay
+  if (formDirty) return form
+  if (overlay !== undefined) return overlay
+  return form
+}
+
+export function applyLiveEconomyAnnouncementToProgram(
+  program: Program,
+  overlay: Record<string, unknown>,
+  baselineAnnouncement?: unknown
+): Program {
+  const live = resolveCompanySchoolDetailSaveAnnouncementTitle({
+    formAnnouncement: program.generalCommonInfo?.announcementTitle,
+    overlayAnnouncement: overlay[ECONOMY_PUBLIC_PROGRAM_TITLE_KEY],
+    programAnnouncement:
+      baselineAnnouncement ?? program.generalCommonInfo?.announcementTitle,
+  })
+  if (live === undefined) return program
+  if (live === program.generalCommonInfo?.announcementTitle) return program
+  return {
+    ...program,
+    generalCommonInfo: {
+      ...program.generalCommonInfo,
+      announcementTitle: live,
+    },
+  }
+}
+
+export function mergeCompanySchoolDetailSaveOverlay(
+  program: Program,
+  extra?: Record<string, unknown>
+): Record<string, unknown> {
+  const leftover = {
+    ...(program.registrationOverlay ?? {}),
+    ...extra,
+  }
+  const economy = resyncEconomyRegistrationOverlayFromProgram(program, leftover)
+  const merged = preserveCompanySchoolCompatibilityOverlay({ ...leftover, ...economy }, leftover)
+  if (extra == null) return merged
+  for (const key of DETAIL_SAVE_FORM_OVERLAY_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(extra, key)) {
+      merged[key] = extra[key]
     }
   }
   return merged
@@ -230,18 +312,14 @@ export function resyncEconomyRegistrationOverlayFromProgram(
 
 /** 1사1교 공통정보 RHF 저장 직전 — 폼이 반영한 Program으로 economy overlay 동기화 */
 export function writeEconomyRegistrationOverlayFromProgramDraft(draftFromForm: Program): void {
-  const fromProgram = buildEconomyRegistrationOverlayFromProgram(draftFromForm)
-  const saved = readEconomyRegistrationOverlayForSave()
-  const merged = { ...saved, ...fromProgram }
-  const surveyKeys = resolveProgramSurveyMenuKeys({
-    generalSurveyMenuKeys: draftFromForm.generalSurveyMenuKeys,
-    registrationOverlay: merged,
-  })
-  merged[`${BASIC}.surveyItems`] = {
-    survey: surveyKeys.includes('survey'),
-    satisfaction: surveyKeys.includes('satisfaction'),
-    lecture_evaluation: surveyKeys.includes('lecture_evaluation'),
+  const leftover = {
+    ...readEconomyRegistrationOverlayForSave(),
+    ...overlayFromProgram(draftFromForm),
   }
+  const merged = applySurveyItemsFromProgram(
+    draftFromForm,
+    mergeEconomyOverlayFromProgram(draftFromForm, leftover)
+  )
   replaceProgramRegistrationOverlayPrefix(ECONOMY_REGISTRATION_OVERLAY_PREFIX, merged)
 }
 

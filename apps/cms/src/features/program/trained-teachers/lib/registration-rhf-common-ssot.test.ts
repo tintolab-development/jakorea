@@ -36,6 +36,21 @@ function filledRhf(): ReturnType<typeof createDefaultTrainedTeachersRegistration
 }
 
 describe('TT 등록 공통정보 RHF SSOT', () => {
+  it('기간형 일정 줄에서 educationScheduleRange를 산출한다', () => {
+    const values = {
+      ...filledRhf(),
+      educationScheduleMode: 'period' as const,
+      educationScheduleLines: ['2026.11.11(수) ~ 2026.11.18(수)'],
+    }
+    const collected = collectTrainedTeachersCommonInfoState(values)
+    const seoulDay = (iso: string) =>
+      new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+    expect(seoulDay(collected.educationScheduleRange!.start)).toBe('2026-11-11')
+    expect(seoulDay(collected.educationScheduleRange!.end)).toBe('2026-11-18')
+    const program = buildTrainedTeachersProgramFromRhf({ id: 'tt-rhf', values })
+    expect(seoulDay(program.generalCommonInfo!.educationScheduleRange!.start)).toBe('2026-11-11')
+  })
+
   it('RHF와 Overlay가 달라도 화면·CREATE는 RHF를 쓴다', () => {
     const values = filledRhf()
     const overlay = {
@@ -51,10 +66,12 @@ describe('TT 등록 공통정보 RHF SSOT', () => {
       },
     }
     const afterOverlayWrite = applyTrainedTeachersRhfOverlayRecord(values, overlay)
-    expect(afterOverlayWrite.title).toBe('오래된 제목')
+    expect(afterOverlayWrite.mainTitle).toBe('오래된 제목')
+    expect(afterOverlayWrite.announcementTitle).toBe('오래된 공고명')
 
     const collected = collectTrainedTeachersCommonInfoState(values)
-    expect(collected.title).toBe('RHF 제목')
+    expect(collected.title).toBe('RHF 공고명')
+    expect(collected.mainTitle).toBe('RHF 제목')
     expect(collected.announcementTitle).toBe('RHF 공고명')
     expect(collected.textbookName).toBe('RHF 교재')
     expect(collected.sponsorManagementIds).toEqual(['sponsor-rhf'])
@@ -62,7 +79,8 @@ describe('TT 등록 공통정보 RHF SSOT', () => {
     expect(collected.generalSurveyMenuKeys).toEqual([])
 
     const program = buildTrainedTeachersProgramFromRhf({ id: 'tt-rhf', values })
-    expect(program.title).toContain('RHF')
+    expect(program.title).toBe('RHF 공고명')
+    expect(program.mainTitle).toBe('RHF 제목')
     expect(program.textbookName).toBe('RHF 교재')
     expect(program.generalSurveyMenuKeys).toEqual([])
     expect(program.generalCommonInfo?.educationJournalEnabled).toBe(false)
@@ -129,7 +147,8 @@ describe('TT 등록 공통정보 RHF SSOT', () => {
     }
     expect(isTrainedTeachersRegistrationCanonicalSnapshot(typed)).toBe(true)
     const restored = rhfValuesFromTrainedTeachersCanonicalCommon(typed.common, typed.editor)
-    expect(restored.title).toBe('RHF 제목')
+    expect(restored.mainTitle).toBe('RHF 제목')
+    expect(restored.announcementTitle).toBe('RHF 공고명')
     expect(restored.educationJournalEnabled).toBe(false)
     expect(restored.generalSurveyMenuKeys).toEqual([])
 

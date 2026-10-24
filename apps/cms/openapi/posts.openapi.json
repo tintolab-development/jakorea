@@ -3023,12 +3023,16 @@
           },
           "gender": {
             "type": "string",
+            "description": "Existing roster rows may omit or send '*' to retain the stored value. Required for new rows.",
             "maxLength": 30,
-            "minLength": 0
+            "minLength": 0,
+            "nullable": true
           },
           "birthDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "description": "Existing roster rows may omit this value to retain the stored date. Required for new rows.",
+            "nullable": true
           },
           "grade": {
             "type": "string",
@@ -3070,9 +3074,7 @@
           }
         },
         "required": [
-          "birthDate",
           "className",
-          "gender",
           "studentName"
         ]
       },
@@ -3096,6 +3098,10 @@
           "birthDate": {
             "type": "string",
             "format": "date"
+          },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "grade": {
             "type": "string"
@@ -11747,6 +11753,10 @@
             "type": "string",
             "format": "date"
           },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
+          },
           "age": {
             "type": "integer",
             "format": "int32"
@@ -15454,7 +15464,8 @@
         "type": "object",
         "properties": {
           "itemType": {
-            "type": "string"
+            "type": "string",
+            "description": "Canonical stored values: TRANSPORTATION (instructor, label 교통비), STUDENT_TRANSPORTATION (student, label 학생 교통비), LONG_DISTANCE_TRANSPORTATION, LODGING, ACTIVITY, MEAL. Request aliases are normalized to those values and are not stored as-is: TRANSPORT_STUDENT, p-166202, and labels containing both 학생 and 교통 map to STUDENT_TRANSPORTATION; TRANSPORT_INSTRUCTOR, p-166201, and 교통비 (without 학생) map to TRANSPORTATION. Do not persist Korean as item_type. TRANSPORTATION-only rows are never migrated to STUDENT_TRANSPORTATION. Instructor and student may both be present as two rows."
           },
           "useYn": {
             "type": "boolean"
@@ -21744,6 +21755,10 @@
             "type": "string",
             "format": "date"
           },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
+          },
           "phone": {
             "type": "string"
           },
@@ -23550,7 +23565,8 @@
             "format": "int64"
           },
           "itemType": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored canonical item_type. TRANSPORTATION is instructor (display 교통비). STUDENT_TRANSPORTATION is student (display 학생 교통비). GET never treats TRANSPORTATION-only as student enabled."
           },
           "useYn": {
             "type": "boolean"
@@ -27019,20 +27035,31 @@
             "format": "int64"
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 이메일 아이디 앞 3자리를 마스킹합니다."
           },
           "name": {
             "type": "string"
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 가운데 숫자를 마스킹합니다."
           },
           "birthDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "description": "기본 조회에서는 null입니다. 출생연도는 birthYear로 제공합니다.",
+            "nullable": true
+          },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32",
+            "description": "기본 조회에서 표시 가능한 출생연도",
+            "nullable": true
           },
           "gender": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 '*'로 마스킹합니다."
           },
           "memberType": {
             "type": "string"
@@ -27048,10 +27075,14 @@
             "type": "string"
           },
           "address": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 자택 주소를 동까지만 표시합니다.",
+            "nullable": true
           },
           "addressDetail": {
-            "type": "string"
+            "type": "string",
+            "description": "기본 조회에서는 반환하지 않습니다.",
+            "nullable": true
           },
           "regionSido": {
             "type": "string"
@@ -41009,6 +41040,10 @@
             "type": "string",
             "format": "date"
           },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
+          },
           "affiliation": {
             "type": "string"
           },
@@ -44770,9 +44805,9 @@
           "maskedEmail": {
             "type": "string"
           },
-          "birthDate": {
-            "type": "string",
-            "format": "date"
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "businessIncome": {
             "type": "boolean"
@@ -47537,6 +47572,10 @@
           "birthDate": {
             "type": "string",
             "format": "date"
+          },
+          "birthYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "status": {
             "type": "string"

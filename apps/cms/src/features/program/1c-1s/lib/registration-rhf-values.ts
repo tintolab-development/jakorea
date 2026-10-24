@@ -337,7 +337,13 @@ export function readCompanySchoolRhfOverlayValue(
       )
     }
     if (suffix === 'sponsorId') return values.sponsorId || COMPANY_SCHOOL_UNSELECTED
-    if (suffix === 'managerContactIds') return [...values.managerContactIds]
+    if (suffix === 'managerContactIds') {
+      return cachedDerivedOverlaySnapshot(
+        key,
+        values.managerContactIds.join('\u0001'),
+        () => [...values.managerContactIds]
+      )
+    }
     if (suffix === 'managerContactId') {
       return values.managerContactIds[0] ?? COMPANY_SCHOOL_UNSELECTED
     }

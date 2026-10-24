@@ -44,6 +44,10 @@ import {
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
 import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
+import {
+  normalizeCourseDeliveredByFormValue,
+  normalizeIpOwnedSelectValue,
+} from '@/features/program/shared/lib/program-enum-normalize'
 
 /** 목록 GET echo (상세와 동일 컬럼). 일반 프로그램 DTO에는 없을 수 있음. */
 type TrainedTeacherListItemDto = AdminProgramListItemDto & {
@@ -78,8 +82,10 @@ function toStudentListRequired(value: string | undefined): Program['studentListR
   return value === 'required' || value === 'not_required' ? value : undefined
 }
 
-function toCourseDeliveredBy(value: string | undefined): Program['courseDeliveredBy'] {
-  return value === 'JA' || value === 'Jointly' || value === 'Partner' ? value : undefined
+function toCourseDeliveredBy(
+  value: string | null | undefined
+): Program['courseDeliveredBy'] {
+  return normalizeCourseDeliveredByFormValue(value)
 }
 
 /** 프로그램 상세의 교육 일정은 ACTIVE만 남기고 시작 시각 기준으로 정렬한다. */
@@ -215,8 +221,8 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
     contactEmail: item.contactEmail?.trim() || undefined,
     contactPhone: item.contactPhone?.trim() || undefined,
     educationProcess: item.educationProcess?.trim() || undefined,
-    ipOwned: item.ipOwned?.trim() || undefined,
-    courseDeliveredBy: item.courseDeliveredBy as Program['courseDeliveredBy'],
+    ipOwned: normalizeIpOwnedSelectValue(item.ipOwned),
+    courseDeliveredBy: toCourseDeliveredBy(item.courseDeliveredBy),
     institutionType: item.institutionType as Program['institutionType'],
     teamDivision: item.teamDivision?.trim() || undefined,
     district: item.district?.trim() || undefined,
@@ -308,7 +314,12 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     id,
     sponsorId: dto.sponsorId ?? '',
     title,
-    mainTitle: dto.mainTitle?.trim() || undefined,
+    mainTitle:
+      dto.mainTitle !== undefined
+        ? dto.mainTitle?.trim() || undefined
+        : typeof detailFields.mainTitle === 'string'
+          ? detailFields.mainTitle
+          : undefined,
     // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
     detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     type: (dto.type as ProgramType | undefined) ?? 'offline',
@@ -336,23 +347,25 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
       toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
       toTypedProgramLifecycleStatus(dto.periodStatus),
     businessArea: resolveStoredBusinessArea(dto.businessArea) || undefined,
-    titleEn: dto.titleEn,
+    titleEn: dto.titleEn !== undefined ? dto.titleEn : detailFields.titleEn,
     textbookName: dto.textbookName,
     textbookNameEn: dto.textbookNameEn,
     schoolId: dto.schoolId,
-    district: dto.district,
-    ips: dto.ips as Program['ips'],
+    district: dto.district !== undefined ? dto.district : detailFields.district,
+    ips: dto.ips !== undefined ? (dto.ips as Program['ips']) : detailFields.ips,
     targetLevel: persistedTargetLevels[0],
     targetLevels:
       columnSource !== undefined || persistedTargetLevels.length > 0
         ? persistedTargetLevels
         : undefined,
     institutionType: dto.institutionType as Program['institutionType'],
-    ipOwned: dto.ipOwned?.trim() || undefined,
+    ipOwned: normalizeIpOwnedSelectValue(dto.ipOwned),
     courseDeliveredBy: toCourseDeliveredBy(dto.courseDeliveredBy),
     partnerInvolvement: dto.partnerInvolvement ?? undefined,
-    programCategory: dto.programCategory,
-    programChannel: dto.programChannel,
+    programCategory:
+      dto.programCategory !== undefined ? dto.programCategory : detailFields.programCategory,
+    programChannel:
+      dto.programChannel !== undefined ? dto.programChannel : detailFields.programChannel,
     educationTime: dto.educationTime,
     teamDivision: dto.teamDivision,
     educationProcess: dto.educationProcess?.trim() || undefined,

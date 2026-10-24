@@ -124,12 +124,12 @@
   .content {
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: var(--spacing-48);
     width: 100%;
     max-width: var(--content-shell-max-width);
     margin: 0 auto;
-    /* padding: 0 var(--spacing-40); */
+    padding-inline: 0;
   }
 
   .textArea {
@@ -148,6 +148,9 @@
 
   .description {
     padding-top: var(--spacing-28);
+    font-size: 26px;
+    line-height: 42px;
+    letter-spacing: -0.26px;
   }
 
   .media {

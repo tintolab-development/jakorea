@@ -1,6 +1,7 @@
 /**
  * GNB href SSOT. 공개 API는 경로를 주지 않는다.
- * 라벨·순서·사용 여부는 원격이 덮어쓰고, href/external 은 이 표만 쓴다.
+ * 라벨·순서·사용 여부는 원격을 기본으로 쓰되, 디자인 고정 표기·위치는 예외로 정규화한다.
+ * href/external 은 이 표만 쓴다.
  */
 
 export type GnbNavItem = {
@@ -57,7 +58,14 @@ const KNOWN_GROUP_CODES = [
   'SPONSORSHIP',
 ] as const
 
-export function isKnownGnbGroupCode(code: string): boolean {
+export type GnbGroupCode = (typeof KNOWN_GROUP_CODES)[number]
+
+/** 공개 GNB에서 디자인 시안과 일치시켜야 하는 고정 상위 메뉴 표기. */
+export const GNB_DESIGN_GROUP_LABEL_OVERRIDES: Partial<Record<GnbGroupCode, string>> = {
+  IMPACT_STORY: '임팩트 스토리',
+}
+
+export function isKnownGnbGroupCode(code: string): code is GnbGroupCode {
   return (KNOWN_GROUP_CODES as readonly string[]).includes(code)
 }
 
@@ -72,11 +80,11 @@ export const gnbFallbackGroups = [
     label: 'JA Korea',
     children: [
       { menuCode: 'JA_ORGANIZATION', label: '기관소개', href: '/about/introduction' },
+      { menuCode: 'JA_HISTORY', label: 'JA History', href: '/about/history' },
       { menuCode: 'JA_TRANSPARENCY', label: '투명경영', href: '/about/transparency' },
       { menuCode: 'JA_PEOPLE', label: '함께하는 사람들', href: '/about/people' },
       { menuCode: 'JA_DIRECTIONS', label: '오시는 길', href: '/about/directions' },
       { menuCode: 'JA_NOTICE', label: '공지사항', href: '/notices' },
-      { menuCode: 'JA_HISTORY', label: 'JA History', href: '/about/history' },
       { menuCode: 'JA_RECRUIT', label: '채용', href: '/about/careers' },
     ],
   },

@@ -127,11 +127,11 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
           </PFText>
           <div className={styles.sessionBody}>
             {content.unitCount > 0 ? (
-              <PFText as="span" typo="bd-sm-sb" color="black" className={styles.sessionUnitCount}>
+              <PFText as="span" typo="bd-lg-sb" color="black" className={styles.sessionUnitCount}>
                 총 {content.unitCount}단원
               </PFText>
             ) : (
-              <PFText as="span" typo="bd-sm-sb" color="black" className={styles.sessionUnitCount}>
+              <PFText as="span" typo="bd-lg-sb" color="black" className={styles.sessionUnitCount}>
                 {content.sessionSummary}
               </PFText>
             )}

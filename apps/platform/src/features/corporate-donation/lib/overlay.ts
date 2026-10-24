@@ -1,6 +1,7 @@
 import type { HomePartnerLogo } from '@/features/home'
 import {
   readOptionalText,
+  normalizePublicCopy,
   splitPublicTextLines,
   splitStepDescriptions,
   stripStepNumberPrefix,
@@ -29,6 +30,33 @@ const METRIC_ORDER: readonly WhyCardId[] = [
   'transparent_ops',
   'verified_impact',
 ]
+
+const LEGACY_METRIC_LABELS: Partial<Record<WhyCardId, string>> = {
+  transparent_ops: '최고 수준의 투명성',
+}
+
+const LEGACY_METRIC_DESCRIPTIONS: Partial<Record<WhyCardId, string>> = {
+  global_expansion: '글로벌 네트워크를 통한 사업 확장',
+  verified_impact: '10년 이상 이어온 파트너십을 통한 누적 교육 인원',
+}
+
+const LEGACY_PROCESS_DESCRIPTIONS: Record<number, string> = {
+  1: '파트너십 문의',
+  2: '프로그램 적합성 및 교육 대상 검토\n기업 CSR 목표 파악',
+  3: '프로그램 목적 및 포지셔닝 설계\n운영 방식 제안',
+  4: '운영 기간 및 후원 규모 확정\n프로그램 비용 지원',
+  5: '수혜자 및 강사 모집·선발\n프로그램 진행',
+  6: '결과·정산 보고서 제공\n성과 평가 및 차년도 계획 수립',
+}
+
+function resolveLegacyText(value: string | undefined, fallback: string, legacy: string | undefined): string {
+  const text = readOptionalText(value)
+  return !text ||
+    (legacy != null &&
+      normalizePublicCopy(text).replace(/·/g, '') === normalizePublicCopy(legacy).replace(/·/g, ''))
+    ? fallback
+    : text
+}
 
 export type CorporateSponsorshipView = {
   titleLines: string[]
@@ -61,9 +89,13 @@ export function overlayCorporateWhyCards(
     if (!seed) return
     byId.set(id, {
       ...seed,
-      badge: readOptionalText(item.name) ?? seed.badge,
+      badge: resolveLegacyText(item.name, seed.badge, LEGACY_METRIC_LABELS[id]),
       titleLines: splitPublicTextLines(item.title, seed.titleLines),
-      description: readOptionalText(item.description) ?? seed.description,
+      description: resolveLegacyText(
+        item.description,
+        seed.description,
+        LEGACY_METRIC_DESCRIPTIONS[id],
+      ),
     })
   })
 
@@ -91,11 +123,16 @@ export function overlayCorporateProcessSteps(
     if (number == null || number < 1 || number > 6) return
     const seed = fallback.find(step => step.number === number)
     if (!seed) return
+    const description = resolveLegacyText(
+      item.description,
+      seed.descriptions.join('\n'),
+      LEGACY_PROCESS_DESCRIPTIONS[number],
+    )
     const titleRaw = readOptionalText(item.title)
     byNumber.set(number, {
       number,
       title: titleRaw ? stripStepNumberPrefix(titleRaw) || seed.title : seed.title,
-      descriptions: splitStepDescriptions(item.description, seed.descriptions),
+      descriptions: splitStepDescriptions(description, seed.descriptions),
     })
   })
 

@@ -77,6 +77,19 @@ describe('programTrainedTeachersRecruitmentSaveSchema', () => {
     expect(result.success).toBe(true)
   })
 
+  it('학급 수를 null로 비우면 필수로 실패한다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      participantRecruitmentMaxClassCount: null,
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map(issue => issue.path.join('.'))).toContain(
+        'participantRecruitmentMaxClassCount'
+      )
+    }
+  })
+
   it('기간형은 표시되는 최대 일정·1일 최대 차시를 저장 필수값으로 요구한다', () => {
     const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
       ...complete,

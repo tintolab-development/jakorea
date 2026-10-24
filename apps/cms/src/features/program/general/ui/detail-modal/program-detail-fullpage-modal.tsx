@@ -79,9 +79,13 @@ import {
   shouldPatchGeneralProgramDetailUrl,
 } from '@/features/program/general/lib/general-program-detail-route'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { companySchoolCompatibilityOverlayFromDetailEditValues } from '@/features/program/1c-1s/lib/detail-form-compatibility-overlay'
 import {
+  applyLiveEconomyAnnouncementToProgram,
+  ECONOMY_PUBLIC_PROGRAM_TITLE_KEY,
+  mergeCompanySchoolDetailSaveOverlay,
   readEconomyRegistrationOverlayForSave,
-  resyncEconomyRegistrationOverlayFromProgram,
+  resolveCompanySchoolDetailSaveAnnouncementTitle,
   seedEconomyRegistrationOverlayFromProgram,
   writeEconomyRegistrationOverlayFromProgramDraft,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
@@ -1497,27 +1501,37 @@ export function ProgramDetailFullPageModal({
           ? async (draft, patch) => {
               try {
                 if (isCompanySchoolDetail && !isTrainedTeachersDetail) {
-                  const registrationOverlay = resyncEconomyRegistrationOverlayFromProgram(draft, {
-                    ...(draft.registrationOverlay ?? {}),
-                    ...readEconomyRegistrationOverlayForSave(),
-                  })
-                  const merged = { ...draft, registrationOverlay }
+                  const liveOverlay = { ...readEconomyRegistrationOverlayForSave() }
+                  const draftForSave = applyLiveEconomyAnnouncementToProgram(
+                    draft,
+                    liveOverlay,
+                    displayProgram.generalCommonInfo?.announcementTitle
+                  )
+                  const registrationOverlay = mergeCompanySchoolDetailSaveOverlay(
+                    draftForSave,
+                    liveOverlay
+                  )
+                  const merged = { ...draftForSave, registrationOverlay }
                   const roundsChanged =
                     JSON.stringify(merged.rounds ?? []) !== JSON.stringify(draft.rounds ?? [])
                   const periodUnchanged =
                     String(merged.startDate ?? '') === String(displayProgram.startDate ?? '') &&
                     String(merged.endDate ?? '') === String(displayProgram.endDate ?? '')
-                  const patchForSave = periodUnchanged
-                    ? Object.fromEntries(
+                  const patchForSave: Partial<Program> = periodUnchanged
+                    ? (Object.fromEntries(
                         Object.entries(patch).filter(
                           ([key]) => key !== 'startDate' && key !== 'endDate'
                         )
-                      )
+                      ) as Partial<Program>)
                     : patch
                   await persistProgramPatch(
                     merged,
                     {
                       ...patchForSave,
+                      generalCommonInfo: {
+                        ...patchForSave.generalCommonInfo,
+                        announcementTitle: merged.generalCommonInfo?.announcementTitle,
+                      },
                       registrationOverlay,
                       ...(roundsChanged && merged.rounds ? { rounds: merged.rounds } : {}),
                     }
@@ -1550,10 +1564,37 @@ export function ProgramDetailFullPageModal({
       }
     }
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
+      const values = infoForm.getValues()
+      const liveOverlay = readEconomyRegistrationOverlayForSave()
+      const liveAnnouncement = resolveCompanySchoolDetailSaveAnnouncementTitle({
+        formAnnouncement: values.announcementTitle,
+        overlayAnnouncement: liveOverlay[ECONOMY_PUBLIC_PROGRAM_TITLE_KEY],
+        programAnnouncement: displayProgram.generalCommonInfo?.announcementTitle,
+      })
+      if (typeof liveAnnouncement === 'string') {
+        infoForm.setValue('announcementTitle', liveAnnouncement)
+      }
+      const valuesForPatch = infoForm.getValues()
       const patch = narrowProgramDetailPatchForCommonInfoSave(
-        detailEditValuesToProgramPatch(infoForm.getValues(), displayProgram)
+        detailEditValuesToProgramPatch(valuesForPatch, displayProgram)
       )
-      const draftFromForm = { ...displayProgram, ...patch }
+      const formCompat = companySchoolCompatibilityOverlayFromDetailEditValues({
+        ...valuesForPatch,
+        announcementTitle: liveAnnouncement,
+      })
+      const draftFromForm = {
+        ...displayProgram,
+        ...patch,
+        generalCommonInfo: {
+          ...displayProgram.generalCommonInfo,
+          ...patch.generalCommonInfo,
+          announcementTitle: liveAnnouncement ?? patch.generalCommonInfo?.announcementTitle,
+        },
+        registrationOverlay: {
+          ...(displayProgram.registrationOverlay ?? {}),
+          ...formCompat,
+        },
+      }
       writeEconomyRegistrationOverlayFromProgramDraft(draftFromForm)
       const overlay = readEconomyRegistrationOverlayForSave()
       const economyParticipant = {

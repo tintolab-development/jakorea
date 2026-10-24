@@ -114,6 +114,7 @@
 
   .stepTitle {
     font-size: 20px;
+    font-weight: 600;
     line-height: 150%;
     letter-spacing: -0.2px;
   }
@@ -137,7 +138,11 @@
   }
 
   .title {
-    text-align: center;
+    text-align: left;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 67px;
+    letter-spacing: -0.48px;
   }
 
   .list {
@@ -273,6 +278,12 @@
 
   .stepBody {
     gap: var(--spacing-8);
+  }
+
+  .descriptionText {
+    font-size: 20px;
+    line-height: 30px;
+    letter-spacing: -0.2px;
   }
 
   .descriptionList {

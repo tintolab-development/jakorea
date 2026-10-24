@@ -101,6 +101,7 @@ function canonical(
           : [],
       educationScheduleMode: 'date',
       educationScheduleLines: educationStructure === 'schedule' ? [] : ['2026.04.01 10:00-12:00'],
+      educationScheduleRange: null,
       generalSurveyMenuKeys: ['survey'],
       educationForm: 'offline',
       ...patch,
@@ -121,6 +122,9 @@ describe('TRAINED_TEACHER 등록 canonical CREATE', () => {
       id: 'tt-create',
       canonical: canonical(),
     })
+    expect(program.title).toBe('공고용 프로그램')
+    expect(program.mainTitle).toBe('대표명')
+    expect(program.mainTitle).not.toBe(program.title)
     expect(program.textbookName).toBe('1사1교 금융특강')
     expect(program.generalCommonInfo?.detailedProgramName).toBe('UJAT 사전교육')
     expect(program.textbookName).not.toBe(program.generalCommonInfo?.detailedProgramName)
@@ -148,6 +152,101 @@ describe('TRAINED_TEACHER 등록 canonical CREATE', () => {
     expect(JSON.stringify(program.generalCommonInfo?.curriculumSessions)).not.toContain(
       'assignmentEnabled'
     )
+  })
+
+  it('기간형 줄에서 educationScheduleRange를 CREATE JSON에 싣는다', () => {
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: canonical({
+        educationStructure: 'schedule',
+        educationScheduleMode: 'period',
+        educationScheduleLines: ['2026.11.11(수) ~ 2026.11.18(수)'],
+      }),
+    })
+    expect(program.generalCommonInfo?.educationScheduleRange).toMatchObject({
+      start: expect.any(String),
+      end: expect.any(String),
+    })
+    const seoulDay = (iso: string) =>
+      new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+    expect(seoulDay(program.generalCommonInfo!.educationScheduleRange!.start)).toBe('2026-11-11')
+    expect(seoulDay(program.generalCommonInfo!.educationScheduleRange!.end)).toBe('2026-11-18')
+    const request = mapTrainedTeacherToCreateRequest(program)
+    const json = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: {
+        generalCommonInfo?: {
+          educationScheduleRange?: { start: string; end: string } | null
+          educationScheduleLines?: string[]
+        }
+      }
+    }
+    expect(json.program?.generalCommonInfo?.educationScheduleLines).toEqual([
+      '2026.11.11(수) ~ 2026.11.18(수)',
+    ])
+    expect(seoulDay(json.program!.generalCommonInfo!.educationScheduleRange!.start)).toBe(
+      '2026-11-11'
+    )
+    expect(seoulDay(json.program!.generalCommonInfo!.educationScheduleRange!.end)).toBe('2026-11-18')
+  })
+
+  it('날짜 지정이면 CREATE JSON educationScheduleRange가 null이다', () => {
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: canonical({ educationScheduleMode: 'date' }),
+    })
+    expect(program.generalCommonInfo?.educationScheduleRange).toBeNull()
+    const request = mapTrainedTeacherToCreateRequest(program)
+    const json = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: {
+        generalCommonInfo?: { educationScheduleRange?: { start: string; end: string } | null }
+      }
+    }
+    expect(json.program?.generalCommonInfo?.educationScheduleRange).toBeNull()
+  })
+
+  it('공고명과 대표명을 서로 파생하지 않고 공통 IPS와 차시 IPS를 분리한다', () => {
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: canonical({
+        ips: 'Prepare',
+        programCategory: '경제',
+        curriculumSessions: [
+          {
+            sessionLabel: '1차시',
+            title: '단원1',
+            description: '내용1',
+            ipsTypeSummary: 'Inspire',
+          },
+        ],
+      }),
+    })
+    expect(program.title).toBe('공고용 프로그램')
+    expect(program.mainTitle).toBe('대표명')
+    expect(program.ips).toBe('Prepare')
+    expect(program.generalCommonInfo?.curriculumSessions?.[0]?.ipsTypeSummary).toBe('Inspire')
+    const request = mapTrainedTeacherToCreateRequest(program)
+    expect(request.title).toBe('공고용 프로그램')
+    expect(request.mainTitle).toBe('대표명')
+    expect(request.ips).toBe('Prepare')
+    const json = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: {
+        generalCommonInfo?: {
+          curriculumSessions?: Array<{ ipsTypeSummary?: string }>
+        }
+      }
+    }
+    expect(json.program?.generalCommonInfo?.curriculumSessions?.[0]?.ipsTypeSummary).toBe(
+      'Inspire'
+    )
+  })
+
+  it('대표명이 비어 있으면 공고명으로 채우지 않는다', () => {
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: canonical({ mainTitle: '' }),
+    })
+    expect(program.title).toBe('공고용 프로그램')
+    expect(program.mainTitle).toBeUndefined()
   })
 
   it('CREATE serviceDetailJson 에 registration.overlay 와 surveyItems 가 없다', () => {

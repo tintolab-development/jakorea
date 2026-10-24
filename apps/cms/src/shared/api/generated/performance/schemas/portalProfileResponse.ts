@@ -12,18 +12,26 @@ import type { PortalTeacherOrganizationResponse } from './portalTeacherOrganizat
 
 export interface PortalProfileResponse {
   memberId?: number;
+  /** 기본 조회에서는 이메일 아이디 앞 3자리를 마스킹합니다. */
   email?: string;
   name?: string;
+  /** 기본 조회에서는 가운데 숫자를 마스킹합니다. */
   phone?: string;
-  birthDate?: string;
+  /** 기본 조회에서는 null입니다. 출생연도는 birthYear로 제공합니다. */
+  birthDate?: string | null;
+  /** 기본 조회에서 표시 가능한 출생연도 */
+  birthYear?: number | null;
+  /** 기본 조회에서는 '*'로 마스킹합니다. */
   gender?: string;
   memberType?: string;
   teacher?: boolean;
   /** 강사회원 여부. 승인된 강사 권한이 있을 때만 true. 강사 권한 신청 중(미승인)·반려·철회·권한 없음은 false. GET /api/portal/auth/me 의 instructor와 항상 동일. */
   instructor?: boolean;
   postalCode?: string;
-  address?: string;
-  addressDetail?: string;
+  /** 기본 조회에서는 자택 주소를 동까지만 표시합니다. */
+  address?: string | null;
+  /** 기본 조회에서는 반환하지 않습니다. */
+  addressDetail?: string | null;
   regionSido?: string;
   regionSigungu?: string;
   schoolOrganizationId?: number;

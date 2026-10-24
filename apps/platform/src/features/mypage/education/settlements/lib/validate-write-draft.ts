@@ -1,9 +1,9 @@
-import type { SettlementTripLegDraft, SettlementWriteDraft } from '../model/write-draft'
+import type { SettlementTripLegDraft, SettlementWriteDraft } from '../model/write-draft.ts'
 import {
   isSettlementTripLegStarted,
   parseSettlementAmount,
-} from './format-write-draft'
-import { readTripLegAttachments, readTripLegFileNames } from './empty-trip-leg'
+} from './format-write-draft.ts'
+import { readTripLegAttachments, readTripLegFileNames } from './empty-trip-leg.ts'
 
 export const SETTLEMENT_REQUIRED_FIELDS_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'
 export const SETTLEMENT_MIN_EXPENSE_ITEM_MESSAGE =
@@ -83,31 +83,40 @@ export function validateSettlementWriteDraft(
     return 'min_expense_item'
   }
 
-  if (isTripLegMissingReceipt(transport.depart)) return 'receipt_required'
-  if (transport.tripType === 'round_trip' && isTripLegMissingReceipt(transport.return)) {
-    return 'receipt_required'
-  }
-  if (isReceiptDraft(draft) && transportStarted) {
-    const departIds = readTripLegAttachments(transport.depart)
-    if (isSettlementTripLegStarted(transport.depart) && departIds.length === 0) {
-      return 'upload_incomplete'
+  const transportNeedsEvidence = isReceiptDraft(draft) && transport.evidenceRequired === true
+  if (transportNeedsEvidence) {
+    if (isTripLegMissingReceipt(transport.depart)) return 'receipt_required'
+    if (transport.tripType === 'round_trip' && isTripLegMissingReceipt(transport.return)) {
+      return 'receipt_required'
     }
-    if (transport.tripType === 'round_trip' && isSettlementTripLegStarted(transport.return)) {
-      if (readTripLegAttachments(transport.return).length === 0) return 'upload_incomplete'
+    if (transportStarted) {
+      const departIds = readTripLegAttachments(transport.depart)
+      if (isSettlementTripLegStarted(transport.depart) && departIds.length === 0) {
+        return 'upload_incomplete'
+      }
+      if (transport.tripType === 'round_trip' && isSettlementTripLegStarted(transport.return)) {
+        if (readTripLegAttachments(transport.return).length === 0) return 'upload_incomplete'
+      }
     }
   }
 
   for (const item of extraItems) {
-    const started = parseSettlementAmount(item.amount) > 0 || item.attachments.length > 0
+    const amount = parseSettlementAmount(item.amount)
+    const started = amount > 0 || item.attachments.length > 0
     if (!started) continue
-    if (item.evidenceRequired === true && item.attachments.length === 0) {
-      return parseSettlementAmount(item.amount) > 0 ? 'receipt_required' : 'receipt_required'
+    if (amount <= 0) return 'required_incomplete'
+    if (item.evidenceRequired === true) {
+      if (item.attachments.length === 0) return 'receipt_required'
+      if (item.attachments.some(file => file.fileObjectId == null || file.fileObjectId <= 0)) {
+        return 'upload_incomplete'
+      }
     }
-    if (parseSettlementAmount(item.amount) <= 0) return 'required_incomplete'
   }
 
-  if (isAmountMissingReceipt(meal.amount, meal.fileNames.length)) return 'receipt_required'
-  if (isAmountMissingReceipt(activity.amount, activity.fileNames.length)) return 'receipt_required'
+  if (!isReceiptDraft(draft)) {
+    if (isAmountMissingReceipt(meal.amount, meal.fileNames.length)) return 'receipt_required'
+    if (isAmountMissingReceipt(activity.amount, activity.fileNames.length)) return 'receipt_required'
+  }
 
   return null
 }

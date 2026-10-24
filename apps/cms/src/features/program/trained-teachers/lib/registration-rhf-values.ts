@@ -9,6 +9,7 @@ import {
   surveyItemsRecordFromMenuKeys,
   surveyMenuKeysFromRegistrationOverlay,
 } from '@/features/program/general/lib/general-survey-menu-keys'
+import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
 import {
   applyTrainedTeachersApplicationOverlayRecord,
   emptyTrainedTeachersApplicationFormState,
@@ -55,8 +56,8 @@ const COMMON_INFO_PREFIXES = [
 ] as const
 
 const FIELD_BY_SUFFIX: Record<string, keyof TrainedTeachersRegistrationCommonCanonical> = {
-  programTitleKo: 'title',
-  localProgramTitleKo: 'title',
+  programTitleKo: 'mainTitle',
+  localProgramTitleKo: 'mainTitle',
   programTitleEn: 'titleEn',
   publicProgramTitle: 'announcementTitle',
   detailedProgramId: 'detailedProgramId',
@@ -129,6 +130,7 @@ export function createDefaultTrainedTeachersRegistrationRhfValues(
     scheduleDetails: [],
     educationScheduleMode: extras?.educationScheduleMode ?? 'date',
     educationScheduleLines: [],
+    educationScheduleRange: null,
     generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
     educationFormScheduleDetail: extras?.educationFormScheduleDetail ?? 'common',
     participationScheduleDetail: extras?.participationScheduleDetail ?? 'common',
@@ -285,7 +287,15 @@ export function writeTrainedTeachersRhfOverlayValue(
   const field = FIELD_BY_SUFFIX[suffix]
   if (field != null) {
     ;(next as Record<string, unknown>)[field] = value
-    if (field === 'title') next.mainTitle = typeof value === 'string' ? value : next.mainTitle
+    if (field === 'educationScheduleLines') {
+      next.educationScheduleLines = Array.isArray(value)
+        ? value.filter((line): line is string => typeof line === 'string')
+        : []
+      next.educationScheduleRange = educationScheduleRangeFromPeriodLines({
+        mode: next.educationScheduleMode,
+        lines: next.educationScheduleLines,
+      })
+    }
     return next
   }
   next.sidecar[key] = value
@@ -333,7 +343,7 @@ export function projectTrainedTeachersRhfToOverlayRecord(
   values: TrainedTeachersRegistrationRhfValues
 ): Record<string, unknown> {
   const overlay: Record<string, unknown> = { ...values.sidecar }
-  overlay['trainedTeachersRegistration.basicInfo.programTitleKo'] = values.title
+  overlay['trainedTeachersRegistration.basicInfo.programTitleKo'] = values.mainTitle
   overlay['trainedTeachersRegistration.basicInfo.programTitleEn'] = values.titleEn
   overlay['trainedTeachersRegistration.basicInfo.publicProgramTitle'] = values.announcementTitle
   overlay['trainedTeachersRegistration.basicInfo.detailedProgramId'] = values.detailedProgramId
@@ -386,6 +396,10 @@ export function rhfValuesFromTrainedTeachersCanonicalCommon(
     curriculumSessions: [...common.curriculumSessions],
     scheduleDetails: [...common.scheduleDetails],
     educationScheduleLines: [...common.educationScheduleLines],
+    educationScheduleRange: educationScheduleRangeFromPeriodLines({
+      mode: common.educationScheduleMode,
+      lines: common.educationScheduleLines,
+    }),
     generalSurveyMenuKeys: [...common.generalSurveyMenuKeys] as GeneralProgramSurveyMenuKey[],
     educationStructure: common.educationStructure,
     sessionRound: common.sessionRound,

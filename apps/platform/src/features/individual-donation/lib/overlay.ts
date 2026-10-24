@@ -1,6 +1,10 @@
 import type { WhyCardContent, WhyCardId } from './constants'
 import { WHY_CARDS } from './constants'
-import { readOptionalText, splitPublicTextLines } from '@/shared/lib/public-text'
+import {
+  normalizePublicCopy,
+  readOptionalText,
+  splitPublicTextLines,
+} from '@/shared/lib/public-text'
 import type { PublicPersonalSponsorshipResponse, PublicPersonalUsageResponse } from '../api/types'
 
 const USAGE_CODE_TO_ID: Record<string, WhyCardId> = {
@@ -9,6 +13,9 @@ const USAGE_CODE_TO_ID: Record<string, WhyCardId> = {
 }
 
 const USAGE_ORDER: readonly WhyCardId[] = ['future_capability', 'education_access']
+
+const LEGACY_HERO_DESCRIPTION =
+  'JA 코리아는 청소년들이 미래 사회에 필요한 역량을 키우고, 세상을 긍정적으로 변화시키는 주체가 되도록 돕습니다. 여러분의 후원이 청소년의 더 밝은 내일을 만듭니다.'
 
 export type PersonalSponsorshipView = {
   titleLines: string[]
@@ -23,6 +30,24 @@ function whyIdFromUsage(item: PublicPersonalUsageResponse, index: number): WhyCa
   const fromCode = item.code ? USAGE_CODE_TO_ID[item.code] : undefined
   if (fromCode) return fromCode
   return USAGE_ORDER[index] ?? null
+}
+
+function resolveHeroDescriptionLines(
+  remoteDescription: string | undefined,
+  fallback: readonly string[],
+): string[] {
+  if (
+    remoteDescription &&
+    normalizePublicCopy(remoteDescription) === normalizePublicCopy(LEGACY_HERO_DESCRIPTION)
+  ) {
+    return [...fallback]
+  }
+
+  return splitPublicTextLines(remoteDescription, fallback)
+}
+
+function resolveDonationButtonLabel(remoteLabel: string | undefined): string | null {
+  return readOptionalText(remoteLabel) ?? null
 }
 
 export function overlayPersonalWhyCards(
@@ -67,10 +92,13 @@ export function buildPersonalSponsorshipView(
   const banner = remote?.banner
   return {
     titleLines: splitPublicTextLines(banner?.mainText, options.fallbackTitleLines),
-    descriptionLines: splitPublicTextLines(banner?.subText, options.fallbackDescriptionLines),
+    descriptionLines: resolveHeroDescriptionLines(
+      banner?.subText,
+      options.fallbackDescriptionLines,
+    ),
     heroImageUrl: readOptionalText(banner?.imageUrl) ?? options.fallbackHeroImageUrl,
     whyCards: overlayPersonalWhyCards(remote?.usageItems, options.fallbackWhyCards),
-    donationButtonLabel: readOptionalText(remote?.donationButtonLabel) ?? null,
+    donationButtonLabel: resolveDonationButtonLabel(remote?.donationButtonLabel),
     donationUrl: readOptionalText(remote?.donationUrl) ?? null,
   }
 }

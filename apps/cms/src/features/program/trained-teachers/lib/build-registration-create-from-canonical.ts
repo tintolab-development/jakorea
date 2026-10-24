@@ -3,6 +3,7 @@
  * Overlay apply 를 persist SSOT 로 쓰지 않는다.
  */
 import dayjs from 'dayjs'
+import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
 import type {
   GeneralProgramCurriculumSessionRow,
   GeneralProgramScheduleDetailRow,
@@ -45,7 +46,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
   const { common, editor, recruit } = args.canonical
   const now = new Date().toISOString()
   const y = dayjs().year()
-  const title = common.announcementTitle.trim() || common.title.trim() || '교육받은 교사 프로그램'
+  const title = common.announcementTitle.trim() || '교육받은 교사 프로그램'
   const startDate = common.startDate ?? dayjs(`${y}-04-01`).startOf('day').toISOString()
   const endDate = common.endDate ?? dayjs(`${y}-12-31`).endOf('day').toISOString()
   const sponsorId = common.sponsorManagementIds[0] ?? ''
@@ -61,7 +62,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
     id: args.id,
     sponsorId,
     title,
-    mainTitle: common.mainTitle.trim() || title,
+    mainTitle: common.mainTitle.trim() || undefined,
     titleEn: common.titleEn || undefined,
     textbookName: common.textbookName,
     type: common.educationForm ?? 'offline',
@@ -107,6 +108,10 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
       venueDetail: common.venueDetail,
       educationScheduleMode: common.educationScheduleMode,
       educationScheduleLines: [...common.educationScheduleLines],
+      educationScheduleRange: educationScheduleRangeFromPeriodLines({
+        mode: common.educationScheduleMode,
+        lines: common.educationScheduleLines,
+      }),
       curriculumSessions,
       scheduleDetails,
       teacherTrainingEnabled: common.teacherTrainingEnabled,
@@ -149,6 +154,10 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
       curriculumSessions,
       scheduleDetails,
       educationScheduleLines: [...common.educationScheduleLines],
+      educationScheduleRange: educationScheduleRangeFromPeriodLines({
+        mode: common.educationScheduleMode,
+        lines: common.educationScheduleLines,
+      }),
       teacherTrainingEnabled: editor.teacherTrainingEnabled,
       educationJournalEnabled: common.educationJournalEnabled,
       participantRecruitmentInfo: {
