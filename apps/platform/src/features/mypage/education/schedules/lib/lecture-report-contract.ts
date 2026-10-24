@@ -1,5 +1,7 @@
 export type LectureReportContextType = 'INSTRUCTOR_APPLICATION' | 'INSTRUCTOR_ASSIGNMENT'
 
+export const INVALID_LECTURE_REPORT_BINDING_MESSAGE = '강의보고서 양식 정보가 올바르지 않습니다.'
+
 export type LectureReportFormBinding = {
   assignmentId: number
   programId: number
@@ -18,6 +20,32 @@ export type LectureReportFormResponseInput = {
   contextId: number
   answers: Record<string, unknown>
   fileObjectIdsByQuestion?: Record<string, number[]>
+}
+
+type LectureReportBindingContextValidationInput = {
+  contextType: unknown
+  contextId: unknown
+  assignmentId: unknown
+  instructorApplicationId: unknown
+}
+
+export function isValidLectureReportBindingContext(
+  input: LectureReportBindingContextValidationInput,
+): boolean {
+  if (
+    (input.contextType !== 'INSTRUCTOR_APPLICATION' && input.contextType !== 'INSTRUCTOR_ASSIGNMENT') ||
+    typeof input.contextId !== 'number' ||
+    !Number.isSafeInteger(input.contextId) ||
+    input.contextId <= 0
+  ) {
+    return false
+  }
+
+  if (input.contextType === 'INSTRUCTOR_ASSIGNMENT') {
+    return input.contextId === input.assignmentId
+  }
+
+  return input.instructorApplicationId != null && input.contextId === input.instructorApplicationId
 }
 
 export function buildLectureReportFormResponseBody(input: LectureReportFormResponseInput) {
