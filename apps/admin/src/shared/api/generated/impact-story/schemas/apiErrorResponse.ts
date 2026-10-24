@@ -7,11 +7,12 @@
  */
 
 /**
- * Homepage API error envelope. Clients read `code`.
+ * Homepage API error envelope. Clients read `code`. Trace ids stay on `X-Trace-Id`, not in the body.
  */
 export interface ApiErrorResponse {
   code?: string;
   message?: string;
   traceId?: string;
   timestamp?: string;
+  field?: string | null;
 }

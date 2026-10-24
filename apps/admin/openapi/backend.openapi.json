@@ -4038,6 +4038,16 @@
         "summary": "Ingest member/admin login evidence",
         "description": "Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage Admin JWT success is also appended internally (audience=ADMIN). Use this POST for Platform USER logins (and tests). Not used by Admin list UI.",
         "operationId": "createMemberLogin",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -5582,6 +5592,29 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/guide/interviews/bulk-delete": {
+      "post": {
+        "tags": [
+          "career-guide-admin-controller"
+        ],
+        "operationId": "bulkDeleteCareerGuideInterviews",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerGuideInterviewBulkDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -10016,7 +10049,7 @@
       },
       "ApiErrorResponse": {
         "type": "object",
-        "description": "Homepage API error envelope. Clients read `code`.",
+        "description": "Homepage API error envelope. Clients read `code`. Trace ids stay on `X-Trace-Id`, not in the body.",
         "properties": {
           "code": {
             "type": "string",
@@ -13178,8 +13211,7 @@
             "type": "integer",
             "format": "int32",
             "maximum": 2200,
-            "minimum": 1900,
-            "nullable": true
+            "minimum": 1900
           },
           "version": {
             "type": "integer",
@@ -14131,6 +14163,11 @@
             "maxLength": 255,
             "minLength": 0
           },
+          "clientIp": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
+          },
           "loggedAt": {
             "type": "string",
             "format": "date-time"
@@ -14649,13 +14686,45 @@
             "type": "integer",
             "format": "int32",
             "maximum": 2200,
-            "minimum": 1900,
-            "nullable": true
+            "minimum": 1900
           }
         },
         "required": [
           "impactStoryId",
           "title"
+        ]
+      },
+      "CareerGuideInterviewBulkDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CareerGuideInterviewVersionedId"
+            },
+            "maxItems": 9,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "CareerGuideInterviewVersionedId": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "id",
+          "version"
         ]
       },
       "UploadPrepareRequest": {

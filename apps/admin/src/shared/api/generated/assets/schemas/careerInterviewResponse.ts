@@ -5,11 +5,15 @@
  * Filtered for Homepage Admin assets Orval codegen.
  * OpenAPI spec version: v1
  */
+import type { CareerInterviewImpactStoryResponse } from './careerInterviewImpactStoryResponse';
 
 export interface CareerInterviewResponse {
-  displayOrder?: number;
+  id?: number;
+  impactStoryId?: number | null;
   storyKey?: string;
+  displayOrder?: number;
   title?: string;
-  year?: number;
-  coverImageUrl?: string;
+  year?: number | null;
+  coverImageUrl?: string | null;
+  impactStory?: CareerInterviewImpactStoryResponse | null;
 }
