@@ -7,10 +7,8 @@ import {
 } from '@/shared/constants/messages'
 import { useCreateProgram } from '@/features/program/ujat/api/queries'
 import {
-  describeIncompleteUjatProgramRegistrationRequiredFields,
   describeIncompleteUjatProgramRecruitmentRequiredFields,
   describeIncompleteUjatProgramRegistrationWizardRequiredFields,
-  hasIncompleteUjatProgramRegistrationRequiredFields,
   hasIncompleteUjatProgramRecruitmentRequiredFields,
   listIncompleteUjatProgramRegistrationRequiredFields,
   listIncompleteUjatProgramRecruitmentRequiredFields,
@@ -274,6 +272,11 @@ export function useUjatProgramRegistrationFlow(
     getUjatRecruitVolunteerOverlayVersion
   )
 
+  const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName, {
+    skipDraftRestore,
+    registrationWizardProgramType: programType,
+  })
+
   const registrationWizardLinkedProgram = useMemo(() => {
     if (!open || !isApplicationStep) return null
     return buildUjatProgramListRowFromRegistrationSnapshot({
@@ -281,6 +284,7 @@ export function useUjatProgramRegistrationFlow(
       overlay: collectUjatRegistrationCreateOverlay(
         getUjatProgramRegistrationOverlayRecord()
       ),
+      basicInfo: registrationVm.basicInfoValues,
     })
   }, [
     open,
@@ -288,6 +292,7 @@ export function useUjatProgramRegistrationFlow(
     registrationOverlayVersion,
     recruitInstitutionOverlayVersion,
     recruitVolunteerOverlayVersion,
+    registrationVm.basicInfoValues,
     wizardDraftRevision,
   ])
 
@@ -299,12 +304,6 @@ export function useUjatProgramRegistrationFlow(
       sectionTitle: volunteerRecruitSectionTitleFromRegistrationStep(activeStep),
     }
   }, [activeStep])
-
-  // 공통 정보 overlay는 모집·신청 단계로 이동한 뒤 완료할 때까지 유지되어야 한다.
-  const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName, {
-    skipDraftRestore,
-    registrationWizardProgramType: programType,
-  })
 
   const participantVm = useProgramParticipantApplicationEditor(
     open && isParticipantStep,
@@ -382,15 +381,21 @@ export function useUjatProgramRegistrationFlow(
         fromPhase,
         toPhase
       )
-      if (
-        validationTarget === 'program' &&
-        hasIncompleteUjatProgramRegistrationRequiredFields()
-      ) {
-        const incompleteKeys = listIncompleteUjatProgramRegistrationRequiredFields()
+      // RHF reset 직후에도 useWatch snapshot이 한 렌더 늦을 수 있다.
+      // 단계 이동은 화면에 보이는 최신 RHF 값을 직접 읽어 검증한다.
+      const currentBasicInfo = registrationVm.basicInfoForm.getValues()
+      const incompleteKeys =
+        validationTarget === 'program'
+          ? listIncompleteUjatProgramRegistrationRequiredFields(
+              getUjatProgramRegistrationOverlayRecord(),
+              currentBasicInfo
+            )
+          : []
+      if (incompleteKeys.length > 0) {
         options?.reportValidationIncomplete?.(incompleteKeys)
         console.debug(
           '[registration] UJAT 공통정보 필수항목 미입력:',
-          describeIncompleteUjatProgramRegistrationRequiredFields()
+          incompleteKeys
         )
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -421,6 +426,7 @@ export function useUjatProgramRegistrationFlow(
         const program = buildUjatProgramListRowFromRegistrationSnapshot({
           id: 'debug',
           overlay: registrationOverlay,
+          basicInfo: currentBasicInfo,
         })
         logRegistrationStepTransitionPayload({
           program,
@@ -440,7 +446,15 @@ export function useUjatProgramRegistrationFlow(
       setActiveStep(key)
       options?.onStepChange?.(key)
     },
-    [activeStep, isParticipantStep, options, participantVm, registrationVm.draft, showAlert]
+    [
+      activeStep,
+      isParticipantStep,
+      options,
+      participantVm,
+      registrationVm.basicInfoForm,
+      registrationVm.draft,
+      showAlert,
+    ]
   )
 
   const goToPhase = useCallback(
@@ -492,6 +506,7 @@ export function useUjatProgramRegistrationFlow(
         programTitleKo: buildUjatProgramListRowFromRegistrationSnapshot({
           id: 'ujat-local-draft',
           overlay: { ...getUjatProgramRegistrationOverlayRecord() },
+          basicInfo: registrationVm.basicInfoValues,
         }).title,
       })
     })
@@ -520,6 +535,7 @@ export function useUjatProgramRegistrationFlow(
       overlay: collectUjatRegistrationCreateOverlay(
         getUjatProgramRegistrationOverlayRecord()
       ),
+      basicInfo: registrationVm.basicInfoValues,
     })
     const applicationIncompleteKeys = listIncompleteApplicationFormThirdPartyRecipientFieldKeys({
       program: applicationProgram,
@@ -545,13 +561,21 @@ export function useUjatProgramRegistrationFlow(
       return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
     }
 
-    if (describeIncompleteUjatProgramRegistrationWizardRequiredFields() != null) {
+    if (
+      describeIncompleteUjatProgramRegistrationWizardRequiredFields(
+        registrationVm.basicInfoValues
+      ) != null
+    ) {
       options?.reportValidationIncomplete?.(
-        listIncompleteUjatProgramRegistrationWizardRequiredFields()
+        listIncompleteUjatProgramRegistrationWizardRequiredFields(
+          registrationVm.basicInfoValues
+        )
       )
       console.debug(
         '[registration] UJAT 등록 완료 필수항목 미입력:',
-        describeIncompleteUjatProgramRegistrationWizardRequiredFields()
+        describeIncompleteUjatProgramRegistrationWizardRequiredFields(
+          registrationVm.basicInfoValues
+        )
       )
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -566,6 +590,7 @@ export function useUjatProgramRegistrationFlow(
     const programForLog = buildUjatProgramListRowFromRegistrationSnapshot({
       id: 'debug',
       overlay: registrationOverlayForLog,
+      basicInfo: registrationVm.basicInfoValues,
     })
     logRegistrationStepTransitionPayload({
       program: programForLog,
@@ -597,12 +622,14 @@ export function useUjatProgramRegistrationFlow(
         const registrationSnapshot = {
           draft: registrationVm.draft,
           overlay: registrationOverlay,
+          basicInfo: registrationVm.basicInfoValues,
         }
 
         if (shouldUseRegistrationCreateFormBindings()) {
           const program = buildUjatProgramListRowFromRegistrationSnapshot({
             id: `ujat-pending-${idempotencyKeyRef.current}`,
             overlay: registrationOverlay,
+            basicInfo: registrationVm.basicInfoValues,
           })
 
           const operationalOverrides = flushApplicationOperationalOverrides({
@@ -653,6 +680,7 @@ export function useUjatProgramRegistrationFlow(
 
           const createdProgram = await createProgramMutation.mutateAsync({
             ...registrationSnapshot,
+            basicInfo: registrationVm.basicInfoValues,
             idempotencyKey: idempotencyKeyRef.current,
             preparedFormBindings,
           })
@@ -667,6 +695,7 @@ export function useUjatProgramRegistrationFlow(
         const programForLog = buildUjatProgramListRowFromRegistrationSnapshot({
           id: `ujat-pending-${idempotencyKeyRef.current}`,
           overlay: registrationOverlay,
+          basicInfo: registrationVm.basicInfoValues,
         })
         await logProgramRegistrationCreatePayload({
           program: programForLog,
@@ -677,6 +706,7 @@ export function useUjatProgramRegistrationFlow(
         })
         const program = await createProgramMutation.mutateAsync({
           ...snapshot,
+          basicInfo: registrationVm.basicInfoValues,
           idempotencyKey: idempotencyKeyRef.current,
         })
         options?.onProgramRegistrationSaved?.(program)

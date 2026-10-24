@@ -70,7 +70,7 @@ describe('UJAT program adapters', () => {
     expect(request.sponsors).toEqual([{ sponsorId: '163348' }])
     expect(request.targetLevels).toEqual(['university', 'elementary'])
     expect(detail.program?.generalCommonInfo?.sponsorManagerContactIds).toBeUndefined()
-    expect(detail.registration?.overlay?.['ujat.basicInfo.sponsorContactIds']).toEqual([])
+    expect(detail.registration?.overlay?.['ujat.basicInfo.sponsorContactIds']).toBeUndefined()
     expect(detail.registration?.overlay?.['ujat.basicInfo.sponsorContactId']).toBeUndefined()
   })
 
@@ -83,7 +83,7 @@ describe('UJAT program adapters', () => {
     expect(request.programType).toBe('UJAT')
   })
 
-  it('registration overlay의 idempotencyKey·preparedFormBindings는 serviceDetailJson에 넣지 않는다', () => {
+  it('typed-owned registration overlay와 create 메타는 serviceDetailJson에 넣지 않는다', () => {
     const request = toCreateRequest(program, {
       draft,
       overlay: {
@@ -108,10 +108,10 @@ describe('UJAT program adapters', () => {
     expect(detail.registration?.overlay?.preparedFormBindings).toBeUndefined()
     expect(detail.registration?.idempotencyKey).toBeUndefined()
     expect(detail.registration?.preparedFormBindings).toBeUndefined()
-    expect(detail.registration?.overlay?.['ujat.basicInfo.repKo']).toBe('rep')
+    expect(detail.registration?.overlay?.['ujat.basicInfo.repKo']).toBeUndefined()
   })
 
-  it('create 요청에 UJAT 제안값과 versioned 상세를 넣는다', () => {
+  it('create 요청은 UJAT 제안값을 Typed API 경계 밖으로 분리하고 versioned 상세를 유지한다', () => {
     const request = toCreateRequest(program, {
       draft,
       overlay: { 'ujat.basicInfo.programManagementName': '2026 UJAT' },
@@ -125,7 +125,7 @@ describe('UJAT program adapters', () => {
     expect(request.educationStructure).toBe('SCHEDULE')
     expect(request.businessStartDate).toBe(program.startDate)
     expect(detail.version).toBe(1)
-    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe('2026 UJAT')
+    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBeUndefined()
   })
 
   it('UJAT 전용 필드를 serviceDetailJson으로 round-trip 한다', () => {
@@ -207,7 +207,7 @@ describe('UJAT program adapters', () => {
     expect(mapped.generalCommonInfo?.paymentItems).toBeUndefined()
   })
 
-  it('수정 요청에서도 등록 draft와 overlay를 보존한다', () => {
+  it('수정 요청은 등록 draft와 비-typed 호환 overlay만 보존한다', () => {
     const created = toCreateRequest(program, {
       draft,
       overlay: { 'ujat.basicInfo.programManagementName': '2026 UJAT' },
@@ -218,7 +218,7 @@ describe('UJAT program adapters', () => {
       registration?: { overlay?: Record<string, unknown> }
     }
 
-    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe('2026 UJAT')
+    expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBeUndefined()
     expect(updated.title).toBe('수정된 UJAT')
     expect(updated.rounds).toBeUndefined()
     expect(updated.managerName).toBeUndefined()

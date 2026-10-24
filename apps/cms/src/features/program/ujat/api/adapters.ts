@@ -43,6 +43,7 @@ import { mapListParticipantRecruitment } from '@/features/program/shared/lib/for
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   isRecruitmentStartLocked,
   toProgramRecruitmentWindows,
@@ -80,6 +81,10 @@ import { applySettlementPolicyToCommonInfo } from '@/features/program/general/li
 import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
+  readUjatSurveyItems,
+  ujatPersistedSurveyMenuKeysFromItems,
+} from '@/features/program/ujat/lib/registration-survey-items'
+import {
   generalParticipantTypesFromUjatFlags,
   resolveUjatParticipantTypeFlags,
 } from '@/features/program/ujat/lib/participant-type-flags'
@@ -100,6 +105,11 @@ import {
   UJAT_REGION_CAPACITY_OVERLAY_KEY,
   type UjatRegionCapacityBySemesterState,
 } from '@/features/program/ujat/lib/ujat-region-capacity-types'
+import {
+  stripUjatTypedLegacyOverlay,
+  ujatOverlayFromTypedDetail,
+  type UjatTypedDetail,
+} from './typed-detail-client'
 
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
 
@@ -108,6 +118,8 @@ export type UjatProgramWithExtras = Program & {
   ujatServiceDetailExtras?: UjatServiceDetailExtras
   /** 등록 폼 overlay — 상세 화면 SSOT. 세션 기본값으로 대체하지 않는다. */
   ujatRegistrationOverlay?: Record<string, unknown>
+  /** Canonical UJAT Typed detail. Legacy overlay is only a compatibility projection. */
+  ujatTypedDetail?: UjatTypedDetail
   periodStatus?: string
 }
 
@@ -611,7 +623,10 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
   })
 }
 
-export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
+export function fromDetail(
+  dto: ProgramResponse,
+  typedDetail?: UjatTypedDetail
+): UjatProgramWithExtras {
   const id = idOf(dto.id)
   const dtoExt = dto as ProgramResponse & {
     nameKo?: string
@@ -679,15 +694,27 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     }
 
   const ips = programIps(dto.ips)
+  const typedOverlay = typedDetail ? ujatOverlayFromTypedDetail(typedDetail) : {}
+  const typedSurveyItems = typedOverlay['ujat.basicInfo.surveyItems']
+  const effectiveSurveyKeys =
+    typedDetail?.common && Array.isArray(typedDetail.common.surveySettings)
+      ? ujatPersistedSurveyMenuKeysFromItems(readUjatSurveyItems(typedSurveyItems, {
+          survey: false,
+          volunteer_satisfaction: false,
+          school_satisfaction: false,
+          lecture_evaluation: false,
+        }))
+      : surveyKeys
   const overlay = reconcileUjatRegistrationOverlayFromProgramResponse(
     dto,
     {
       ...rawOverlay,
       ...primaryCalendarOverlay,
       ...primaryRegionCapacityOverlay,
+      ...typedOverlay,
     },
     {
-      generalSurveyMenuKeys: surveyKeys,
+      generalSurveyMenuKeys: effectiveSurveyKeys,
       sponsorManagerContactIds: generalCommonInfo?.sponsorManagerContactIds,
       sponsorManagerLine: generalCommonInfo?.sponsorManagerLine,
       kpi: responseKpi,
@@ -806,7 +833,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
           otherNotes: details.otherNotes,
         }) || undefined,
       recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
-      generalSurveyMenuKeys: surveyKeys as Program['generalSurveyMenuKeys'],
+      generalSurveyMenuKeys: effectiveSurveyKeys as Program['generalSurveyMenuKeys'],
       generalProgramEducationStructure:
         String(dto.educationStructure ?? '').toUpperCase() === 'CURRICULUM'
           ? 'curriculum'
@@ -817,6 +844,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       updatedAt: dto.updatedAt,
     }),
     ujatRegistrationOverlay: overlay,
+    ...(typedDetail ? { ujatTypedDetail: typedDetail } : {}),
   },
     {
       serviceDetailJson: dto.serviceDetailJson,
@@ -825,18 +853,22 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   )
   const withInterview = hydrateUjatVolunteerInterviewFromRecruitmentRows(mapped)
   const withRows = hydrateRecruitmentWindowsOntoProgram(withInterview)
-  return {
-    ...withRows,
-    generalParticipantTypes: generalParticipantTypesFromUjatFlags(
-      resolveUjatParticipantTypeFlags({ ...mapped, ujatRegistrationOverlay: overlay }, overlay)
-    ),
-    ujatServiceDetailExtras: {
-      ...extras,
-      semesterType: extras.semesterType ?? 'FULL_YEAR',
+  return applyBusinessPeriodHistoriesFromDto(
+    {
+      ...withRows,
+      generalParticipantTypes: generalParticipantTypesFromUjatFlags(
+        resolveUjatParticipantTypeFlags({ ...mapped, ujatRegistrationOverlay: overlay }, overlay)
+      ),
+      ujatServiceDetailExtras: {
+        ...extras,
+        semesterType: extras.semesterType ?? 'FULL_YEAR',
+      },
+      ujatRegistrationOverlay: overlay,
+      ...(typedDetail ? { ujatTypedDetail: typedDetail } : {}),
+      periodStatus,
     },
-    ujatRegistrationOverlay: overlay,
-    periodStatus,
-  }
+    dto
+  )
 }
 
 function hydrateUjatVolunteerInterviewFromRecruitmentRows(program: Program): Program {
@@ -926,7 +958,8 @@ function mapUjatProgramSponsorAssignments(program: Program) {
 }
 
 function registrationSnapshotForApi(
-  registration?: RegistrationPersistSnapshot
+  registration?: RegistrationPersistSnapshot,
+  options?: { stripTypedLegacyOverlay?: boolean }
 ): RegistrationPersistSnapshot | undefined {
   if (!registration) return undefined
   // create()가 `{ ...input, overlay }`로 넘기면 idempotencyKey·preparedFormBindings가
@@ -934,14 +967,19 @@ function registrationSnapshotForApi(
   return {
     ...(registration.draft != null ? { draft: registration.draft } : {}),
     overlay: stripRegistrationOverlayDebugKeys(
-      stripUnselectedUjatSponsorContactsFromOverlay(registration.overlay)
+      options?.stripTypedLegacyOverlay === false
+        ? stripUnselectedUjatSponsorContactsFromOverlay(registration.overlay)
+        : stripUjatTypedLegacyOverlay(
+            stripUnselectedUjatSponsorContactsFromOverlay(registration.overlay)
+          )
     ),
   }
 }
 
 function coreRequest(
   program: Program,
-  registration?: RegistrationPersistSnapshot
+  registration?: RegistrationPersistSnapshot,
+  options?: { stripTypedLegacyOverlay?: boolean }
 ): ProgramUpdateRequest {
   const targetLevels = resolveRequestTargetLevels(program)
   const sponsors = mapUjatProgramSponsorAssignments(program)
@@ -1025,7 +1063,7 @@ function coreRequest(
       targetLevels?.length
         ? { ...program, targetLevels, targetLevel: targetLevels[0] }
         : program,
-      registrationSnapshotForApi(registration)
+      registrationSnapshotForApi(registration, options)
     ),
   }
   assignProgramPaymentItemsToWriteRequest({ body, program })
@@ -1042,7 +1080,8 @@ function patchRequest(
   merged: Program,
   patch: Partial<Program>,
   registration: RegistrationPersistSnapshot | undefined,
-  existing: Program
+  existing: Program,
+  options?: { stripTypedLegacyOverlay?: boolean }
 ): ProgramUpdateRequest {
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
@@ -1185,7 +1224,7 @@ function patchRequest(
       : merged
   body.serviceDetailJson = serializeServiceDetail(
     serializeSource,
-    registrationSnapshotForApi(registration)
+    registrationSnapshotForApi(registration, options)
   )
   if (touchesTargetLevels && persistedTargetLevels != null) {
     body.targetLevels = persistedTargetLevels
@@ -1248,10 +1287,11 @@ export function toCreateRequest(
 export function toUpdateRequest(
   program: Program,
   patch?: Partial<Program>,
-  registration?: RegistrationPersistSnapshot
+  registration?: RegistrationPersistSnapshot,
+  options?: { stripTypedLegacyOverlay?: boolean }
 ): ProgramUpdateRequest {
   if (patch && Object.keys(patch).length > 0) {
-    return patchRequest({ ...program, ...patch }, patch, registration, program)
+    return patchRequest({ ...program, ...patch }, patch, registration, program, options)
   }
-  return coreRequest(program, registration)
+  return coreRequest(program, registration, options)
 }

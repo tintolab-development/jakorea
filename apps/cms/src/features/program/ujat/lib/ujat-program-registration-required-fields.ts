@@ -57,6 +57,7 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { getSelectedOperationalTemplateCode } from '@/features/program/shared/lib/step-template-selection'
+import type { UjatBasicInfoFormValues } from './ujat-basic-info-form'
 
 function isEmptyText(value: unknown): boolean {
   return typeof value !== 'string' || value.trim() === ''
@@ -121,58 +122,79 @@ function pushReason(reasons: string[], condition: boolean, key: string): void {
 
 /** UJAT 등록 공통정보 — 미입력 필수 필드 진단 키 목록 */
 export function listIncompleteUjatProgramRegistrationRequiredFields(
-  overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord()
+  overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord(),
+  basicInfo?: Partial<UjatBasicInfoFormValues>
 ): string[] {
   const reasons: string[] = []
   {
     const p = 'ujat.basicInfo'
+    const basicText = (key: keyof UjatBasicInfoFormValues, overlayKey: string, fallback = '') =>
+      basicInfo != null
+        ? typeof basicInfo[key] === 'string'
+          ? String(basicInfo[key])
+          : fallback
+        : readText(overlay, overlayKey, fallback)
+    const basicBoolean = (key: keyof UjatBasicInfoFormValues, overlayKey: string, fallback: boolean) =>
+      basicInfo != null ? basicInfo[key] === true : readBoolean(overlay, overlayKey, fallback)
+    const basicRange =
+      basicInfo != null
+        ? { start: basicInfo.startDate, end: basicInfo.endDate }
+        : read(overlay, `${p}.operationRangeSeal`)
+    const participantTypes =
+      basicInfo?.generalParticipantTypes != null
+        ? new Set(basicInfo.generalParticipantTypes)
+        : null
     pushReason(
       reasons,
-      isEmptyText(readText(overlay, `${p}.repKo`, UJAT_BASIC_INFO_REP_KO_DEFAULT)),
+      isEmptyText(basicText('mainTitle', `${p}.repKo`, UJAT_BASIC_INFO_REP_KO_DEFAULT)),
       'basicInfo.repKo'
     )
     pushReason(
       reasons,
-      isEmptyText(readText(overlay, `${p}.repEn`, UJAT_BASIC_INFO_REP_EN_DEFAULT)),
+      isEmptyText(basicText('titleEn', `${p}.repEn`, UJAT_BASIC_INFO_REP_EN_DEFAULT)),
       'basicInfo.repEn'
     )
     pushReason(
       reasons,
       isEmptyText(
-        readText(overlay, `${p}.programManagementName`, UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT)
+        basicText('title', `${p}.programManagementName`, UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT)
       ),
       'basicInfo.programManagementName'
     )
     pushReason(
       reasons,
-      isEmptyText(readText(overlay, `${p}.detailedProgramId`, UJAT_DETAILED_PROGRAM_UJAT_VALUE)),
+      isEmptyText(basicText('detailedProgramId', `${p}.detailedProgramId`, UJAT_DETAILED_PROGRAM_UJAT_VALUE)),
       'basicInfo.detailedProgramId'
     )
-    pushReason(
-      reasons,
-      isRangeSealIncomplete(read(overlay, `${p}.operationRangeSeal`)),
-      'basicInfo.operationRangeSeal'
-    )
-    const org = readBoolean(overlay, `${p}.participant.organization`, true)
-    const volunteer = readBoolean(overlay, `${p}.participant.volunteer`, true)
+    pushReason(reasons, isRangeSealIncomplete(basicRange), 'basicInfo.operationRangeSeal')
+    const org = participantTypes
+      ? participantTypes.has('organization') || participantTypes.has('school_institution')
+      : basicBoolean('generalParticipantTypes', `${p}.participant.organization`, true)
+    const volunteer = participantTypes
+      ? participantTypes.has('volunteer')
+      : basicBoolean('generalParticipantTypes', `${p}.participant.volunteer`, true)
     pushReason(reasons, !org && !volunteer, 'basicInfo.audience')
     pushReason(
       reasons,
-      isEmptyText(readText(overlay, `${p}.businessField`, 'economy_finance')),
+      isEmptyText(basicText('businessArea', `${p}.businessField`, 'economy_finance')),
       'basicInfo.businessField'
     )
     pushReason(
       reasons,
-      isEmptyText(readText(overlay, `${p}.sponsorId`, UJAT_SPONSOR_ALL_VALUE)),
+      isEmptyText(basicText('sponsorId', `${p}.sponsorId`, UJAT_SPONSOR_ALL_VALUE)),
       'basicInfo.sponsorId'
     )
-    const sponsorId = readText(overlay, `${p}.sponsorId`, UJAT_SPONSOR_ALL_VALUE)
+    const sponsorId = basicText('sponsorId', `${p}.sponsorId`, UJAT_SPONSOR_ALL_VALUE)
     if (sponsorId !== UJAT_SPONSOR_ALL_VALUE) {
-      const managerIdsRaw = read(overlay, `${p}.sponsorContactIds`)
+      const managerIdsRaw = basicInfo?.sponsorManagerContactIds ?? read(overlay, `${p}.sponsorContactIds`)
       const managerIds = Array.isArray(managerIdsRaw)
         ? managerIdsRaw.map(String).map(id => id.trim()).filter(Boolean)
         : []
-      const managerPrimary = readText(overlay, `${p}.sponsorContactId`, UJAT_SPONSOR_ALL_VALUE)
+      const managerPrimary = basicText(
+        'sponsorManagerContactId',
+        `${p}.sponsorContactId`,
+        UJAT_SPONSOR_ALL_VALUE
+      )
       pushReason(
         reasons,
         managerIds.length === 0 && isEmptyText(managerPrimary),
@@ -180,21 +202,27 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
       )
     }
     // 설문 진행 항목 — 0개 선택도 완료 (선택)
-    pushReason(reasons, isEmptyText(read(overlay, `${p}.educationCourse`)), 'basicInfo.educationCourse')
-    pushReason(reasons, isEmptyText(readText(overlay, `${p}.ipOwned`, 'ja')), 'basicInfo.ipOwned')
     pushReason(
       reasons,
-      isEmptyText(readText(overlay, `${p}.courseDeliveredBy`, 'ja')),
+      isEmptyText(basicText('educationProcess', `${p}.educationCourse`)),
+      'basicInfo.educationCourse'
+    )
+    pushReason(reasons, isEmptyText(basicText('ipOwned', `${p}.ipOwned`, 'ja')), 'basicInfo.ipOwned')
+    pushReason(
+      reasons,
+      isEmptyText(basicText('courseDeliveredBy', `${p}.courseDeliveredBy`, 'ja')),
       'basicInfo.courseDeliveredBy'
     )
     pushReason(
       reasons,
-      isEmptyText(readText(overlay, `${p}.partnerInvolvement`, 'no')),
+      basicInfo != null
+        ? basicInfo.partnerInvolvement == null
+        : isEmptyText(readText(overlay, `${p}.partnerInvolvement`, 'no')),
       'basicInfo.partnerInvolvement'
     )
     pushReason(
       reasons,
-      isEmptyText(readText(overlay, `${p}.ipsCategory`, 'prepare')),
+      isEmptyText(basicText('ipsCategory', `${p}.ipsCategory`, 'prepare')),
       'basicInfo.ipsCategory'
     )
 
@@ -260,15 +288,17 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
 }
 
 export function describeIncompleteUjatProgramRegistrationRequiredFields(
-  overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord()
+  overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord(),
+  basicInfo?: Partial<UjatBasicInfoFormValues>
 ): string | null {
-  return listIncompleteUjatProgramRegistrationRequiredFields(overlay)[0] ?? null
+  return listIncompleteUjatProgramRegistrationRequiredFields(overlay, basicInfo)[0] ?? null
 }
 
 export function hasIncompleteUjatProgramRegistrationRequiredFields(
-  overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord()
+  overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord(),
+  basicInfo?: Partial<UjatBasicInfoFormValues>
 ): boolean {
-  return describeIncompleteUjatProgramRegistrationRequiredFields(overlay) != null
+  return describeIncompleteUjatProgramRegistrationRequiredFields(overlay, basicInfo) != null
 }
 
 export function getMergedUjatRecruitInstitutionOverlay(
@@ -465,19 +495,28 @@ function selectedUjatRecruitmentValidationTemplateCodes(): UjatRecruitmentValida
 }
 
 /** 등록 위저드 complete gate — 공통 + 모집만. 신청(template) overlay는 검사하지 않는다. */
-export function hasIncompleteUjatProgramRegistrationWizardRequiredFields(): boolean {
-  return listIncompleteUjatProgramRegistrationWizardRequiredFields().length > 0
+export function hasIncompleteUjatProgramRegistrationWizardRequiredFields(
+  basicInfo?: Partial<UjatBasicInfoFormValues>
+): boolean {
+  return listIncompleteUjatProgramRegistrationWizardRequiredFields(basicInfo).length > 0
 }
 
-export function listIncompleteUjatProgramRegistrationWizardRequiredFields(): string[] {
+export function listIncompleteUjatProgramRegistrationWizardRequiredFields(
+  basicInfo?: Partial<UjatBasicInfoFormValues>
+): string[] {
   return [
-    ...listIncompleteUjatProgramRegistrationRequiredFields(),
+    ...listIncompleteUjatProgramRegistrationRequiredFields(
+      getUjatProgramRegistrationOverlayRecord(),
+      basicInfo
+    ),
     ...listIncompleteUjatProgramRecruitmentRequiredFields(
       selectedUjatRecruitmentValidationTemplateCodes()
     ),
   ]
 }
 
-export function describeIncompleteUjatProgramRegistrationWizardRequiredFields(): string | null {
-  return listIncompleteUjatProgramRegistrationWizardRequiredFields()[0] ?? null
+export function describeIncompleteUjatProgramRegistrationWizardRequiredFields(
+  basicInfo?: Partial<UjatBasicInfoFormValues>
+): string | null {
+  return listIncompleteUjatProgramRegistrationWizardRequiredFields(basicInfo)[0] ?? null
 }

@@ -438,7 +438,12 @@ const programDetailEditSchemaBase = z.object({
   programChannel: z.string().optional(),
   surveySurvey: optionalBoolean,
   surveySatisfaction: optionalBoolean,
+  /** UJAT 설문 진행 항목 — 봉사단/학교 만족도를 합치지 않는다. */
+  surveyVolunteerSatisfaction: optionalBoolean,
+  surveySchoolSatisfaction: optionalBoolean,
   surveyLectureEvaluation: optionalBoolean,
+  /** UJAT 공통정보 Typed participant settings — 기관/봉사자 고정값 포함 */
+  generalParticipantTypes: z.array(z.string()).optional(),
   // 임금 정보
   wageType: z.string().optional(),
   wagePricingTimeUnit: z.string().optional(),
@@ -1259,7 +1264,13 @@ export function programToDetailEditValues(
       const isTrainedTeacherSeed =
         program.backendProgramType === 'TRAINED_TEACHER' ||
         looksLikeTrainedTeacherProgramId(program.id)
-      const keys = isTrainedTeacherSeed
+      const isUjatProgram = isUjatDetailEditProgram(program)
+      const keys: readonly string[] = isUjatProgram
+        ? (resolveUjatPersistedSurveyMenuKeysForSave(
+            program.ujatRegistrationOverlay,
+            program.generalSurveyMenuKeys
+          ) ?? [])
+        : isTrainedTeacherSeed
         ? program.generalSurveyMenuKeys === undefined
           ? []
           : normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys)
@@ -1267,7 +1278,10 @@ export function programToDetailEditValues(
       return {
         surveySurvey: keys.includes('survey'),
         surveySatisfaction: keys.includes('satisfaction'),
+        surveyVolunteerSatisfaction: keys.includes('volunteer_satisfaction'),
+        surveySchoolSatisfaction: keys.includes('school_satisfaction'),
         surveyLectureEvaluation: keys.includes('lecture_evaluation'),
+        generalParticipantTypes: program.generalParticipantTypes,
       }
     })(),
     wageType: undefined,
@@ -1467,13 +1481,31 @@ export function detailEditValuesToProgramPatch(
   const surveyKeysTouched =
     values.surveySurvey != null ||
     values.surveySatisfaction != null ||
+    values.surveyVolunteerSatisfaction != null ||
+    values.surveySchoolSatisfaction != null ||
     values.surveyLectureEvaluation != null
   const isUjatProgram = isUjatDetailEditProgram(existing)
+  const ujatSurveyFieldsTouched =
+    values.surveySurvey != null ||
+    values.surveyVolunteerSatisfaction != null ||
+    values.surveySchoolSatisfaction != null ||
+    values.surveyLectureEvaluation != null
   const ujatSurveyMenuKeys = isUjatProgram
-    ? resolveUjatPersistedSurveyMenuKeysForSave(
-        existing.ujatRegistrationOverlay,
-        existing.generalSurveyMenuKeys
-      )
+    ? ujatSurveyFieldsTouched
+      ? ([
+          ...(values.surveySurvey ? (['survey'] as const) : []),
+          ...(values.surveyVolunteerSatisfaction
+            ? (['volunteer_satisfaction'] as const)
+            : values.surveySatisfaction
+              ? (['satisfaction'] as const)
+              : []),
+          ...(values.surveySchoolSatisfaction ? (['school_satisfaction'] as const) : []),
+          ...(values.surveyLectureEvaluation ? (['lecture_evaluation'] as const) : []),
+        ] as GeneralProgramSurveyMenuKey[])
+      : resolveUjatPersistedSurveyMenuKeysForSave(
+          existing.ujatRegistrationOverlay,
+          existing.generalSurveyMenuKeys
+        )
     : undefined
   // 체크된 항목만 keys에 실음. 전부 해제 시 [] — LNB가 keys를 SSOT로 따른다.
   // UJAT는 overlay 4종을 유지한다. 일반 3종 `satisfaction`으로 접지 않는다.
@@ -1503,8 +1535,11 @@ export function detailEditValuesToProgramPatch(
 
   return {
     title:
-      (isTrainedTeacherProgram ? values.announcementTitle?.trim() : values.title?.trim()) ||
-      existing.title,
+      (isUjatProgram
+        ? values.title?.trim()
+        : isTrainedTeacherProgram
+          ? values.announcementTitle?.trim()
+          : values.title?.trim()) || existing.title,
     textbookName: isTrainedTeacherProgram
       ? values.textbookName !== undefined
         ? values.textbookName

@@ -895,7 +895,7 @@ describe('trained teachers recruitment edit round-trip', () => {
 })
 
 describe('detailEditValuesToProgramPatch — UJAT 설문 4종', () => {
-  it('UJAT는 overlay 4종을 유지하고 satisfaction으로 접지 않는다', () => {
+  it('UJAT는 RHF의 분리된 설문 값을 저장하고 satisfaction으로 접지 않는다', () => {
     const existing = {
       ...program,
       backendProgramType: 'UJAT',
@@ -918,7 +918,11 @@ describe('detailEditValuesToProgramPatch — UJAT 설문 4종', () => {
       surveyLectureEvaluation: true,
     }
     const patch = detailEditValuesToProgramPatch(values, existing)
-    expect(patch.generalSurveyMenuKeys).toEqual(['survey', 'volunteer_satisfaction'])
+    expect(patch.generalSurveyMenuKeys).toEqual([
+      'survey',
+      'volunteer_satisfaction',
+      'lecture_evaluation',
+    ])
     expect(patch.generalParticipantTypes).toEqual(['school_institution'])
   })
 

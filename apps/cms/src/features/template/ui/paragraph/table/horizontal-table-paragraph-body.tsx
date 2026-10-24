@@ -3,6 +3,8 @@ import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import type { UseFormReturn } from 'react-hook-form'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type {
   HorizontalTableColumnField,
   HorizontalTableFieldCellValue,
@@ -430,6 +432,8 @@ export function HorizontalTableParagraphBody({
   agreementNoticeIdTypeInteractive = false,
   programRegistration,
   ujatProgramRegistration,
+  ujatProgramRegistrationBasicInfoForm,
+  ujatProgramRegistrationBasicInfoOverlayFree,
   programApplicationFormInstitution,
   programApplicationFormEconomyInstitution,
   programApplicationFormTrainedTeachersInstitution,
@@ -484,6 +488,10 @@ export function HorizontalTableParagraphBody({
   agreementNoticeIdTypeInteractive?: boolean
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   ujatProgramRegistration?: boolean
+  /** UJAT 등록 Wizard 공통정보 RHF — Overlay Store를 거치지 않는 입력 정본 */
+  ujatProgramRegistrationBasicInfoForm?: UseFormReturn<ProgramDetailEditFormValues>
+  /** true이면 UJAT 공통정보 단락이 Legacy Overlay hook을 호출하지 않는다. */
+  ujatProgramRegistrationBasicInfoOverlayFree?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** 프로그램 상세·등록 위저드 연동 — 기관 신청 폼 자동 반영 UI 노출 */
@@ -607,7 +615,11 @@ export function HorizontalTableParagraphBody({
 
   const ujatProgramRegistrationBody = renderUjatProgramRegistrationParagraphBody(
     p,
-    ujatProgramRegistration
+    ujatProgramRegistration,
+    {
+      ujatProgramRegistrationBasicInfoForm,
+      ujatProgramRegistrationBasicInfoOverlayFree,
+    }
   )
   if (ujatProgramRegistrationBody != null) return ujatProgramRegistrationBody
 

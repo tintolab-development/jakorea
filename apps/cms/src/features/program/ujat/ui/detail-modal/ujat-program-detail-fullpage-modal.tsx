@@ -19,7 +19,6 @@ import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-p
 import { handleError } from '@/shared/utils/error-handler'
 import {
   programDetailUjatCommonInfoEditSchema,
-  programToDetailEditValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import {
@@ -28,15 +27,9 @@ import {
   volunteerHalfFromRecruitDisplayKind,
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
-import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
-import { syncUjatDetailEditFormKpiToOverlay } from '@/features/program/ujat/lib/detail-edit-form-kpi-to-overlay'
 import {
   buildUjatProgramDraftWithSessionOverlay,
-  readUjatRegistrationBasicInfoOverlayForSave,
-  seedUjatRegistrationBasicInfoOverlayFromProgram,
-  touchUjatRegistrationOperationAnchorFromRangeSeal,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
-import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatInstitutionApplicationList } from './application-institution/list/list'
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
@@ -149,9 +142,7 @@ import {
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
-  hasIncompleteUjatProgramRegistrationRequiredFields,
   listIncompleteUjatProgramRecruitmentRequiredFields,
-  listIncompleteUjatProgramRegistrationRequiredFields,
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import {
   RegistrationWizardValidationHighlightProvider,
@@ -174,6 +165,7 @@ import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-ap
 import { UJAT_NOTICE_EXPOSURE_TIMING_INVALID_CODE } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   isUjatRecruitTab,
@@ -1338,33 +1330,35 @@ export function UjatProgramDetailFullPageModal({
         displayProgram && updateProgram
           ? async (draft, patch) => {
               try {
-                const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
+                // Schedule/wage/KPI legacy editors still publish their migration-boundary
+                // snapshot. Keep it in the request without using it as the RHF value source.
+                const draftWithLegacyOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
                 const commonPatch: Partial<Program> = {
                   ...patch,
-                  ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
-                  generalSurveyMenuKeys: draftWithOverlay.generalSurveyMenuKeys,
-                  generalParticipantTypes: draftWithOverlay.generalParticipantTypes,
-                  generalCommonInfo: draftWithOverlay.generalCommonInfo,
-                  mainTitle: draftWithOverlay.mainTitle,
-                  titleEn: draftWithOverlay.titleEn,
-                  title: draftWithOverlay.title,
+                  ujatRegistrationOverlay: draftWithLegacyOverlay.ujatRegistrationOverlay,
+                  generalSurveyMenuKeys: draft.generalSurveyMenuKeys,
+                  generalParticipantTypes: draft.generalParticipantTypes,
+                  generalCommonInfo: draft.generalCommonInfo,
+                  mainTitle: draft.mainTitle,
+                  titleEn: draft.titleEn,
+                  title: draft.title,
                 }
                 if (
                   shouldUseRemoteApi() &&
                   displayProgram &&
                   ujatRegionCapacitySnapshot(displayProgram) !==
-                    ujatRegionCapacitySnapshot(draftWithOverlay)
+                  ujatRegionCapacitySnapshot(draft)
                 ) {
                   // 지역 정원 PUT 성공 후 공통정보 PATCH/상세 GET을 수행한다.
                   await replaceUjatRegionCapacitiesRemote(
-                    draftWithOverlay.id,
-                    buildUjatRegionCapacityUpserts(draftWithOverlay)
+                    draft.id,
+                    buildUjatRegionCapacityUpserts(draft)
                   )
                 }
                 if (onUpdateProgram) {
-                  await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, commonPatch)
+                  await onUpdateProgram(draft.id, draft, commonPatch)
                 } else {
-                  await updateProgram(draftWithOverlay.id, draftWithOverlay)
+                  await updateProgram(draft.id, draft)
                 }
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)
@@ -1399,7 +1393,6 @@ export function UjatProgramDetailFullPageModal({
       })
       return
     }
-    seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
     infoResetToProgram()
     setEditMode('info')
   }, [activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
@@ -1419,35 +1412,6 @@ export function UjatProgramDetailFullPageModal({
       })
       return
     }
-    syncUjatDetailEditFormKpiToOverlay(infoValues)
-    let overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
-      readUjatRegistrationBasicInfoOverlayForSave()
-    )
-    // 일정형: 수정 UI와 동일하게 세부 프로그램명을「해당없음」으로 고정해 overlay·PATCH에 실는다.
-    if (displayProgram.generalProgramEducationStructure !== 'curriculum') {
-      overlay = {
-        ...overlay,
-        'ujat.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
-        'ujat.basicInfo.detailedProgramName': '해당없음',
-      }
-      patchUjatProgramRegistrationOverlay({
-        'ujat.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
-        'ujat.basicInfo.detailedProgramName': '해당없음',
-      })
-    }
-    const mergedProgram: Program = {
-      ...applyUjatRegistrationOverlayToProgram(displayProgram, overlay, { kpiClearedAsZero: true }),
-      ujatRegistrationOverlay: overlay,
-    }
-    if (hasIncompleteUjatProgramRegistrationRequiredFields(overlay)) {
-      detailRequiredHighlight.report(listIncompleteUjatProgramRegistrationRequiredFields(overlay))
-      void showAlert({
-        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-      })
-      return
-    }
-    infoForm.reset(programToDetailEditValues(mergedProgram))
     const endOverlay = beginBlockingOverlay()
     try {
       const ok = await infoTriggerSave()
@@ -1476,7 +1440,6 @@ export function UjatProgramDetailFullPageModal({
   ])
 
   const handleInfoCancel = useCallback(() => {
-    if (displayProgram) seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
     infoResetToProgram()
     detailRequiredHighlight.clear()
     setEditMode(null)
@@ -2886,16 +2849,21 @@ export function UjatProgramDetailFullPageModal({
             <>
               <div className="ujat-detail-modal__info-header">
                 <div className="program-detail-fullpage-modal__header-actions">
-                  <ProgramEditInfoActions
-                    isEditing={isEditModeInfo}
-                    idleVariant="secondary"
-                    disabled={!canEditInfo && !isEditModeInfo}
-                    onEdit={handleInfoEdit}
-                    onCancel={handleInfoCancel}
-                    onSave={() => {
-                      void handleInfoSave()
-                    }}
-                  />
+                  <BusinessPeriodExtendToolbar
+                    program={displayProgram}
+                    editDisabled={!canEditInfo && !isEditModeInfo}
+                  >
+                    <ProgramEditInfoActions
+                      isEditing={isEditModeInfo}
+                      idleVariant="secondary"
+                      disabled={!canEditInfo && !isEditModeInfo}
+                      onEdit={handleInfoEdit}
+                      onCancel={handleInfoCancel}
+                      onSave={() => {
+                        void handleInfoSave()
+                      }}
+                    />
+                  </BusinessPeriodExtendToolbar>
                 </div>
               </div>
               <UjatProgramDetailCommonInfoView
