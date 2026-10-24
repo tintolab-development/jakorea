@@ -4,16 +4,25 @@ import {
   DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE,
   getProgramApplicationApiErrorMessage,
 } from '@/features/program/lib/application-api-error'
-import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import chevronUpBlack32Url from '@/shared/assets/icons/chevron-up-black-32.svg'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFStateBadge, PFText } from '@/shared/ui'
 import { useApplicationSchedulesQuery } from '@/features/mypage/education/applications/api/activity-hooks'
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
 import { EducationSessionList } from '@/features/mypage/education/shared'
 import type { EducationScheduleItem } from '@/features/mypage/education/schedules/model/types'
+import {
+  canSubmitEducationAbsenceReason,
+  resolveEducationScheduleProgressStatus,
+} from '@/features/mypage/education/schedules/lib/schedule-rules'
+import { EducationAbsenceReasonModal } from '@/features/mypage/education/schedules/ui/absence-reason-modal'
 import { usePortalFormResponseFeedbackQuery } from '@/features/mypage/education/schedules/api/use-portal-form-response-feedback-query'
 import {
+  canCheckInUjatSchedule,
   canViewUjatScheduleAttendance,
   groupUjatVolunteerSchedulesByMonth,
   isUjatVolunteerOwnScheduleRecord,
+  resolveUjatMonthProgressStatus,
+  ujatMonthProgressLabel,
 } from '../lib/history'
 import { useUjatEducationDocumentsQuery } from '../api/education-documents-hooks'
 import {
@@ -23,6 +32,7 @@ import {
   type UjatEducationDocumentKind,
 } from '../lib/documents'
 import { UjatAttendanceDetailModal } from './attendance-detail-modal'
+import { UjatCheckInModal } from './check-in-modal'
 import { UjatEducationDocumentFillModal } from './document-fill-modal'
 import type { UjatDocumentFillMode } from './document-slot'
 import { UjatVolunteerScheduleRow } from './schedule-row'
@@ -42,6 +52,10 @@ export function UjatVolunteerSchedulePanel({
   readOnly = false,
 }: UjatVolunteerSchedulePanelProps) {
   const [attendanceSchedule, setAttendanceSchedule] = useState<EducationScheduleItem | null>(null)
+  const [checkInSchedule, setCheckInSchedule] = useState<EducationScheduleItem | null>(null)
+  const [expandedMonths, setExpandedMonths] = useState<Set<string> | null>(null)
+  const [absenceReasonScheduleId, setAbsenceReasonScheduleId] = useState<number | null>(null)
+  const [absenceReasonOpenKey, setAbsenceReasonOpenKey] = useState(0)
   const [fillTarget, setFillTarget] = useState<{
     kind: UjatEducationDocumentKind
     mode: UjatDocumentFillMode
@@ -70,6 +84,19 @@ export function UjatVolunteerSchedulePanel({
   const documentsByScheduleId = useMemo(
     () => indexUjatEducationDocumentsByScheduleId(documentsQuery.data?.items ?? []),
     [documentsQuery.data?.items],
+  )
+  const absenceReasonItems = useMemo(
+    () =>
+      ownItems.filter(
+        item =>
+          item.scheduleId != null &&
+          canSubmitEducationAbsenceReason(
+            resolveEducationScheduleProgressStatus(item.heldAt),
+            item.attendanceStatus,
+            item.availableActions,
+          ),
+      ),
+    [ownItems],
   )
   const extraDocumentDays = useMemo(() => {
     const known = new Set(
@@ -139,6 +166,18 @@ export function UjatVolunteerSchedulePanel({
 
   const planSetup = documentsQuery.data?.planSetup ?? null
   const journalSetup = documentsQuery.data?.journalSetup ?? null
+  const defaultOpenMonth = monthGroups[0]?.monthKey
+  const openMonths = expandedMonths ?? new Set(defaultOpenMonth ? [defaultOpenMonth] : [])
+
+  const toggleMonth = (monthKey: string) => {
+    setExpandedMonths(prev => {
+      const current = prev ?? new Set(defaultOpenMonth ? [defaultOpenMonth] : [])
+      const next = new Set(current)
+      if (next.has(monthKey)) next.delete(monthKey)
+      else next.add(monthKey)
+      return next
+    })
+  }
 
   return (
     <>
@@ -182,54 +221,107 @@ export function UjatVolunteerSchedulePanel({
         totalPages={1}
         onPageChange={() => undefined}
         emptyMessage="조회할 배정·출결 이력이 없어요."
+        hideHeader
       >
-        {monthGroups.map(group => (
-          <section key={group.monthKey} className={styles.month}>
-            <PFText as="h3" typo="bd-md-md" color="neutral-cool-600" className={styles.monthLabel}>
-              {group.monthLabel}
-            </PFText>
-            <div className={styles.monthList}>
-              {group.items.map(item => {
-                const scheduleId = item.scheduleId
-                const documents =
-                  typeof scheduleId === 'number' ? (documentsByScheduleId.get(scheduleId) ?? null) : null
-                return (
-                  <UjatVolunteerScheduleRow
-                    key={item.id}
-                    item={item}
-                    canViewAttendance={canViewUjatScheduleAttendance(item)}
-                    onViewAttendance={
-                      canViewUjatScheduleAttendance(item)
-                        ? selected => setAttendanceSchedule(selected)
-                        : undefined
-                    }
-                    documents={documentsQuery.isError ? null : documents}
-                    planSetup={planSetup}
-                    journalSetup={journalSetup}
-                    onFillDocument={(kind, mode, dayDocuments) =>
-                      setFillTarget({ kind, mode, documents: dayDocuments })
-                    }
-                    onViewDocumentFeedback={(kind, dayDocuments) => {
-                      const slot = kind === 'JOURNAL' ? dayDocuments.journal : dayDocuments.plan
-                      if (slot.formResponseId == null) return
-                      setFeedbackTarget({ kind, formResponseId: slot.formResponseId })
-                    }}
-                  />
-                )
-              })}
-            </div>
-          </section>
-        ))}
+        {monthGroups.map(group => {
+          const isOpen = openMonths.has(group.monthKey)
+          const monthProgress = resolveUjatMonthProgressStatus(group.items)
+          const panelId = `ujat-schedule-month-${group.monthKey}`
+          return (
+            <section key={group.monthKey} className={styles.month}>
+              <button
+                type="button"
+                className={styles.monthTrigger}
+                aria-expanded={isOpen}
+                aria-controls={panelId}
+                onClick={() => toggleMonth(group.monthKey)}
+              >
+                <span className={styles.monthHeading}>
+                  <PFText as="span" typo="hl-lg" color="black" className={styles.monthLabel}>
+                    {group.monthLabel}
+                  </PFText>
+                  <PFStateBadge size="small" tone={monthProgress === 'scheduled' ? 'progress' : 'success'}>
+                    {ujatMonthProgressLabel(monthProgress)}
+                  </PFStateBadge>
+                </span>
+                <img
+                  className={[styles.monthChevron, isOpen ? undefined : styles.monthChevronClosed]
+                    .filter(Boolean)
+                    .join(' ')}
+                  src={chevronUpBlack32Url}
+                  alt=""
+                  width={32}
+                  height={32}
+                  aria-hidden="true"
+                />
+              </button>
+              {isOpen ? (
+                <div id={panelId} className={styles.monthList}>
+                  {group.items.map(item => {
+                    const scheduleId = item.scheduleId
+                    const documents =
+                      typeof scheduleId === 'number' ? (documentsByScheduleId.get(scheduleId) ?? null) : null
+                    return (
+                      <UjatVolunteerScheduleRow
+                        key={item.id}
+                        item={item}
+                        readOnly={readOnly}
+                        canViewAttendance={canViewUjatScheduleAttendance(item)}
+                        canCheckIn={canCheckInUjatSchedule(item, { withdrawn: readOnly })}
+                        onViewAttendance={
+                          canViewUjatScheduleAttendance(item)
+                            ? selected => setAttendanceSchedule(selected)
+                            : undefined
+                        }
+                        onCheckIn={
+                          canCheckInUjatSchedule(item, { withdrawn: readOnly })
+                            ? selected => setCheckInSchedule(selected)
+                            : undefined
+                        }
+                        onAbsenceReasonSubmit={
+                          readOnly
+                            ? undefined
+                            : selected => {
+                                setAbsenceReasonScheduleId(selected.scheduleId ?? null)
+                                setAbsenceReasonOpenKey(key => key + 1)
+                              }
+                        }
+                        documents={documentsQuery.isError ? null : documents}
+                        planSetup={planSetup}
+                        journalSetup={journalSetup}
+                        onFillDocument={(kind, mode, dayDocuments) =>
+                          setFillTarget({ kind, mode, documents: dayDocuments })
+                        }
+                        onViewDocumentFeedback={(kind, dayDocuments) => {
+                          const slot = kind === 'JOURNAL' ? dayDocuments.journal : dayDocuments.plan
+                          if (slot.formResponseId == null) return
+                          setFeedbackTarget({ kind, formResponseId: slot.formResponseId })
+                        }}
+                      />
+                    )
+                  })}
+                </div>
+              ) : null}
+            </section>
+          )
+        })}
       </EducationSessionList>
       <UjatAttendanceDetailModal
         open={attendanceSchedule != null}
+        item={attendanceSchedule}
         applicationType={applicationType}
         applicationId={applicationId}
-        scheduleId={attendanceSchedule?.scheduleId ?? null}
         canViewAttendance={
           attendanceSchedule != null && canViewUjatScheduleAttendance(attendanceSchedule)
         }
         onClose={() => setAttendanceSchedule(null)}
+      />
+      <UjatCheckInModal
+        open={checkInSchedule != null}
+        item={checkInSchedule}
+        applicationType={applicationType}
+        applicationId={applicationId}
+        onClose={() => setCheckInSchedule(null)}
       />
       <UjatEducationDocumentFillModal
         open={fillTarget != null}
@@ -242,6 +334,17 @@ export function UjatVolunteerSchedulePanel({
         applicationId={applicationId}
         onClose={() => setFillTarget(null)}
       />
+      {readOnly ? null : (
+        <EducationAbsenceReasonModal
+          key={absenceReasonOpenKey}
+          open={absenceReasonScheduleId !== null}
+          items={absenceReasonItems}
+          initialScheduleId={absenceReasonScheduleId}
+          applicationType={applicationType}
+          applicationId={applicationId}
+          onClose={() => setAbsenceReasonScheduleId(null)}
+        />
+      )}
       <PFAlertModal
         open={feedbackTarget != null}
         title="피드백 확인"

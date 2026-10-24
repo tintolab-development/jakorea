@@ -36,3 +36,15 @@
   align-items: center;
   gap: var(--spacing-8);
 }
+
+.legacyAnswers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.legacyAnswer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}

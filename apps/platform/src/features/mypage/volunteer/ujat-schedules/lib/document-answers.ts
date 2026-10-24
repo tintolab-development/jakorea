@@ -15,6 +15,7 @@ export type UjatDocumentAttachedFile = {
   questionKey: string
   fileObjectId: number
   fileName: string
+  downloadable?: boolean
 }
 
 export function buildUjatDocumentAnswers(

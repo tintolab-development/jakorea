@@ -1,0 +1,40 @@
+.body {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-28);
+}
+
+.description p {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.fields {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  gap: var(--spacing-8);
+}
+
+@media (--bp-below-pc) {
+  .body {
+    gap: var(--spacing-24);
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .actions > button {
+    width: 100%;
+  }
+}

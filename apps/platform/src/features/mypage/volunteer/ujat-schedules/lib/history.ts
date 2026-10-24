@@ -1,6 +1,20 @@
 import type { EducationDisplayStatus } from '../../../education/applications/model/types'
-import type { EducationScheduleItem } from '../../../education/schedules/model/types'
-import { EDUCATION_SCHEDULE_ATTENDANCE_LABEL } from '../../../education/schedules/lib/schedule-rules'
+import type {
+  EducationScheduleItem,
+  EducationScheduleProgressStatus,
+} from '../../../education/schedules/model/types'
+import {
+  EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
+  EDUCATION_SCHEDULE_PROGRESS_LABEL,
+  resolveEducationScheduleProgressStatus,
+} from '../../../education/schedules/lib/schedule-rules'
+
+const SEOUL_YMD = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
 
 export const UJAT_SCHEDULE_ACTION_VIEW_ATTENDANCE = 'VIEW_ATTENDANCE'
 export const UJAT_SCHEDULE_ACTION_CHECK_IN = 'CHECK_IN'
@@ -112,11 +126,77 @@ function monthKeyFromHeldAt(heldAt: string): string | null {
 }
 
 function monthLabelFromKey(monthKey: string): string {
-  const [year, month] = monthKey.split('-')
-  const yearNumber = Number(year)
+  const [, month] = monthKey.split('-')
   const monthNumber = Number(month)
-  if (!Number.isFinite(yearNumber) || !Number.isFinite(monthNumber)) return monthKey
-  return `${yearNumber}년 ${monthNumber}월`
+  if (!Number.isFinite(monthNumber) || monthNumber < 1 || monthNumber > 12) return monthKey
+  return `${monthNumber}월`
+}
+
+function seoulDateFromHeldAt(heldAt: string): Date | null {
+  const trimmed = heldAt.trim()
+  if (!trimmed) return null
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(trimmed)
+    ? new Date(`${trimmed}T00:00:00+09:00`)
+    : new Date(trimmed)
+  if (Number.isNaN(date.getTime())) return null
+  return date
+}
+
+export function formatUjatScheduleCardDate(heldAt: string): string | null {
+  const date = seoulDateFromHeldAt(heldAt)
+  if (!date) return null
+  const ymd = SEOUL_YMD.format(date)
+  const parts = ymd.split('-')
+  const month = parts[1]
+  const day = parts[2]
+  if (!month || !day) return null
+  return `${month}월 ${day}일`
+}
+
+const SEOUL_WEEKDAY = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
+  weekday: 'short',
+})
+
+export function formatUjatAttendanceRosterDate(heldAt: string): string | null {
+  const date = seoulDateFromHeldAt(heldAt)
+  const cardDate = date ? formatUjatScheduleCardDate(heldAt) : null
+  if (!date || !cardDate) return null
+  const weekday = SEOUL_WEEKDAY.format(date).replace('요일', '')
+  return weekday ? `${cardDate} (${weekday})` : cardDate
+}
+
+export type UjatScheduleDayStatusTone = 'present' | 'alert' | 'scheduled'
+
+export function resolveUjatScheduleDayStatus(item: EducationScheduleItem): {
+  label: string
+  tone: UjatScheduleDayStatusTone
+} {
+  if (isCancelledUjatAssignment(item)) {
+    return { label: '활동 포기', tone: 'alert' }
+  }
+  const attendance = item.scheduleId === null ? null : item.attendanceStatus
+  if (attendance === 'present') return { label: '출석완료', tone: 'present' }
+  if (attendance === 'late') return { label: '지각', tone: 'alert' }
+  if (attendance === 'absent') return { label: '결석', tone: 'alert' }
+  if (attendance === 'excused') return { label: '사유 불참', tone: 'alert' }
+  if (resolveEducationScheduleProgressStatus(item.heldAt) === 'scheduled') {
+    return { label: '교육예정', tone: 'scheduled' }
+  }
+  return { label: '교육예정', tone: 'scheduled' }
+}
+
+export function resolveUjatMonthProgressStatus(
+  items: readonly EducationScheduleItem[],
+): EducationScheduleProgressStatus {
+  if (items.some(item => resolveEducationScheduleProgressStatus(item.heldAt) === 'scheduled')) {
+    return 'scheduled'
+  }
+  return 'completed'
+}
+
+export function ujatMonthProgressLabel(status: EducationScheduleProgressStatus): string {
+  return status === 'scheduled' ? '진행중' : EDUCATION_SCHEDULE_PROGRESS_LABEL.completed
 }
 
 export function groupUjatVolunteerSchedulesByMonth(
@@ -175,11 +255,30 @@ export function resolveScheduleAttendanceQueryErrorMessage(error: unknown): stri
   if (typeof error === 'object' && error != null && 'response' in error) {
     const status = (error as { response?: { status?: unknown } }).response?.status
     if (status === 401 || status === 403) {
-      return '출결 상세를 조회할 권한이 없습니다.'
+      return '출석현황을 조회할 권한이 없습니다.'
     }
     if (status === 404) {
-      return '출결 상세를 찾을 수 없습니다.'
+      return '출석현황을 찾을 수 없습니다.'
     }
   }
-  return '출결 상세를 불러오지 못했습니다.'
+  return '출석현황을 불러오지 못했습니다.'
+}
+
+export function resolveScheduleCheckInErrorMessage(error: unknown): string {
+  if (typeof error === 'object' && error != null && 'response' in error) {
+    const status = (error as { response?: { status?: unknown } }).response?.status
+    if (status === 401) {
+      return '로그인 정보가 만료되었습니다. 다시 로그인해 주세요.'
+    }
+    if (status === 403) {
+      return '지금은 출석할 수 없습니다. 수업 시작 30분 전부터 출석해 주세요.'
+    }
+    if (status === 404) {
+      return '출석할 일정을 찾을 수 없습니다.'
+    }
+    if (status === 409) {
+      return '출석 상태가 변경되었습니다. 배정 현황을 새로고침한 뒤 다시 시도해 주세요.'
+    }
+  }
+  return '출석 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 }
