@@ -23,7 +23,14 @@ import {
 
 const VOLUNTEER_RECRUIT_CATALOG = 'recruitment-volunteer'
 
+/** 모집 면접 슬롯 — 활성 편집은 typed 브리지, Template authoring은 Overlay store. */
+
 function patchRecruitVolunteerInterviewOverlay(partial: Record<string, unknown>): void {
+  if (recruitTypedInterviewBridgeRecord) {
+    Object.assign(recruitTypedInterviewBridgeRecord, partial)
+    notifyRecruitTypedInterviewBridge()
+    return
+  }
   patchGeneralRecruitOverlay(partial)
   const activeScope = getGeneralRecruitOverlayScope()
   if (activeScope !== VOLUNTEER_RECRUIT_CATALOG) {
@@ -39,7 +46,29 @@ function patchRecruitVolunteerInterviewOverlay(partial: Record<string, unknown>)
 
 export type VolunteerInterviewOverlayStore = 'application' | 'recruit'
 
+let recruitTypedInterviewBridgeRecord: Record<string, unknown> | null = null
+const recruitTypedInterviewBridgeListeners = new Set<() => void>()
+
+/** 활성 UJAT 모집 편집 — 전역 Overlay store 대신 행 interviewConfig 브리지. */
+export function setRecruitTypedInterviewRecordBridge(
+  record: Record<string, unknown> | null
+): void {
+  recruitTypedInterviewBridgeRecord = record
+  notifyRecruitTypedInterviewBridge()
+}
+
+export function getRecruitTypedInterviewRecord(): Record<string, unknown> | null {
+  return recruitTypedInterviewBridgeRecord
+}
+
+function notifyRecruitTypedInterviewBridge(): void {
+  for (const listener of recruitTypedInterviewBridgeListeners) listener()
+}
+
 function liveInterviewRecord(store: VolunteerInterviewOverlayStore): Record<string, unknown> {
+  if (store === 'recruit' && recruitTypedInterviewBridgeRecord) {
+    return recruitTypedInterviewBridgeRecord
+  }
   return store === 'recruit'
     ? readLiveGeneralRecruitOverlayRecord()
     : getGeneralApplicationOverlayRecord()
@@ -144,9 +173,13 @@ export function useVolunteerInterviewOverlayKv<T>(
           ? subscribeGeneralRecruitOverlay(listener)
           : subscribeGeneralApplicationOverlay(listener)
       const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+      if (store === 'recruit') {
+        recruitTypedInterviewBridgeListeners.add(listener)
+      }
       return () => {
         unsubStore()
         unsubRhf()
+        recruitTypedInterviewBridgeListeners.delete(listener)
       }
     },
     getSnapshot,

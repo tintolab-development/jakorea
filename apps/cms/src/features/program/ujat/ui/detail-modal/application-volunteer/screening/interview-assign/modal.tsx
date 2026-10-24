@@ -95,8 +95,9 @@ export function UjatVolunteerInterviewAssignModal({
       })
     }
     return parseInterviewScheduleFromDisplay(
-      resolveUjatVolunteerInterviewScheduleDisplay(program, undefined, {
+      resolveUjatVolunteerInterviewScheduleDisplay(program, applicant.half, {
         allowMockFallback: false,
+        allowOverlayFallback: false,
       }),
       {
         startIso: program.interviewStartDate,
@@ -104,7 +105,7 @@ export function UjatVolunteerInterviewAssignModal({
       },
       publicHolidayDateKeys
     )
-  }, [programDetail.data, publicHolidayDateKeys])
+  }, [applicant.half, programDetail.data, publicHolidayDateKeys])
   const schedule = scheduleOverride ?? scheduleFromProgram
 
   const assignedDateKeys = useMemo(

@@ -647,12 +647,15 @@ export function writeParticipantEditorSessionSnapshot(args: {
   ujatGradeClassTimeBlockIds: string[]
   markHydratedWhenOverlayPresent: boolean
   flushRecruitDetailBeforeCollect?: boolean
+  skipRecruitmentOverlay?: boolean
 }): void {
   if (args.draft.paragraphs.length === 0) return
-  if (args.flushRecruitDetailBeforeCollect) {
+  if (args.flushRecruitDetailBeforeCollect && !args.skipRecruitmentOverlay) {
     flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
   }
-  const overlay = collectParticipantOverlayForVariant(args.variant, args.persistTemplateId)
+  const overlay = args.skipRecruitmentOverlay
+    ? undefined
+    : collectParticipantOverlayForVariant(args.variant, args.persistTemplateId)
   const editorState = buildParticipantApplicationEditorState({
     variant: args.variant,
     volunteerExceptionScheduleCount: args.volunteerExceptionScheduleCount,
@@ -725,6 +728,10 @@ export function useProgramParticipantApplicationEditor(
   const registrationWizardProgramType = editorOptions?.registrationWizardProgramType
   const usesRegistrationWizardDraft =
     registrationWizardProgramType != null && registrationWizardProgramType !== ''
+  const usesTypedUjatRecruitmentWizard =
+    usesRegistrationWizardDraft &&
+    (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') &&
+    editorOptions?.ujatRecruitParagraphProps?.form != null
   const skipDraftRestore = editorOptions?.skipDraftRestore === true
   const persistTemplateVersionId =
     editorOptions?.templateVersionId ??
@@ -957,6 +964,7 @@ export function useProgramParticipantApplicationEditor(
         ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
         markHydratedWhenOverlayPresent: usesRegistrationWizardDraft,
         flushRecruitDetailBeforeCollect: true,
+        skipRecruitmentOverlay: usesTypedUjatRecruitmentWizard,
       })
       snapshottedOnSwitchRef.current = draftHydrateKey
     }
@@ -1012,6 +1020,7 @@ export function useProgramParticipantApplicationEditor(
         ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
         markHydratedWhenOverlayPresent: usesRegistrationWizardDraft,
         flushRecruitDetailBeforeCollect: true,
+        skipRecruitmentOverlay: usesTypedUjatRecruitmentWizard,
       })
     }
   }, [
@@ -1019,6 +1028,7 @@ export function useProgramParticipantApplicationEditor(
     draftHydrateKey,
     keepSessionCacheAcrossParticipantDeactivate,
     usesRegistrationWizardDraft,
+    usesTypedUjatRecruitmentWizard,
   ])
 
   useEffect(() => {
@@ -1057,7 +1067,10 @@ export function useProgramParticipantApplicationEditor(
       : storageHydratedTemplateIdsRef.current.has(hydrateKey)
     // draft는 render에서 맞춤. 여기선 overlay만 보강해 탭 전환 재페인트가 나지 않게 한다.
     if (cached && cacheIsHydrated && !clearOverlaysOnHydrate) {
-      if (variant === 'ujat-recruit-institution') {
+      if (usesTypedUjatRecruitmentWizard) {
+        // Typed recruitment RHF is the only source. Legacy recruitment overlays are not
+        // rehydrated when a wizard tab is revisited.
+      } else if (variant === 'ujat-recruit-institution') {
         replaceUjatRecruitInstitutionOverlay(
           coalesceUjatRecruitOverlay(cached.overlay ?? {}, getUjatRecruitInstitutionOverlayRecord())
         )
@@ -1140,6 +1153,14 @@ export function useProgramParticipantApplicationEditor(
           return
         }
         if (preferSessionCache) return
+        if (usesTypedUjatRecruitmentWizard) {
+          if (saved?.draft != null && saved.draft.paragraphs.length > 0) {
+            applyDraftNow(saved.draft)
+          }
+          storageHydratedTemplateIdsRef.current.add(hydrateKey)
+          setIsDraftLoading(false)
+          return
+        }
         if (saved?.draft || saved?.overlay) {
           if (saved.draft != null && saved.draft.paragraphs.length > 0) {
             applyDraftNow(saved.draft)
@@ -1395,11 +1416,19 @@ export function useProgramParticipantApplicationEditor(
       }
       // 추가 내용 에디터는 키 입력마다 overlay에 안 쓴다. 단계 캐시보다 먼저 넣는다.
       // suppress는 overlay 적용 후 consume. cleanup에서 풀면 Strict Mode 재마운트가 peek를 놓친다.
-      flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-      const overlay = collectParticipantOverlayForVariant(variant, templateId)
+      if (!usesTypedUjatRecruitmentWizard) {
+        flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+      }
+      const overlay = usesTypedUjatRecruitmentWizard
+        ? undefined
+        : collectParticipantOverlayForVariant(variant, templateId)
       const hasOverlayValues = overlay != null && Object.keys(overlay).length > 0
       // hydrate 완료 전 cleanup(Strict Mode 등)은 시드+빈 overlay로 캐시를 오염시키지 않음
-      if (!storageHydratedTemplateIdsRef.current.has(hydrateKey) && !hasOverlayValues) return
+      if (
+        !usesTypedUjatRecruitmentWizard &&
+        !storageHydratedTemplateIdsRef.current.has(hydrateKey) &&
+        !hasOverlayValues
+      ) return
       const existing = sessionDraftCacheRef.current.get(hydrateKey)
       const draftToSave =
         snapshottedOnSwitchRef.current === hydrateKey &&
@@ -1447,6 +1476,7 @@ export function useProgramParticipantApplicationEditor(
     registrationWizardProgramType,
     skipDraftRestore,
     usesRegistrationWizardDraft,
+    usesTypedUjatRecruitmentWizard,
     variant,
   ])
 
@@ -1455,7 +1485,7 @@ export function useProgramParticipantApplicationEditor(
     const templateId = resolvePersistTemplateId()
     return subscribeRegistrationWizardApplicationDraft((code, next, editorState, overlay) => {
       if (code !== templateId) return
-      if (overlay != null) {
+      if (overlay != null && !usesTypedUjatRecruitmentWizard) {
         restoreParticipantOverlayForVariant(variant, overlay, {
           replace: true,
           persistTemplateId: templateId,
@@ -1474,7 +1504,13 @@ export function useProgramParticipantApplicationEditor(
         prev.paragraphs.length === 0 ? next : applyDevAutofillThirdPartyRecipient(prev)
       )
     })
-  }, [active, resolvePersistTemplateId, usesRegistrationWizardDraft])
+  }, [
+    active,
+    resolvePersistTemplateId,
+    usesRegistrationWizardDraft,
+    usesTypedUjatRecruitmentWizard,
+    variant,
+  ])
 
   /** 등록 위저드 닫힘 → 세션 캐시 정리 (다음 신규 등록과 섞이지 않게) */
   useEffect(() => {
@@ -2167,7 +2203,9 @@ export function useProgramParticipantApplicationEditor(
         })
       }
       if (usesRegistrationWizardDraft) {
-        flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+        if (!usesTypedUjatRecruitmentWizard) {
+          flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+        }
         const editorState = buildParticipantApplicationEditorState({
           variant,
           volunteerExceptionScheduleCount,
@@ -2176,7 +2214,9 @@ export function useProgramParticipantApplicationEditor(
           ujatApplicationGradeByBlockId,
           ujatGradeClassTimeBlockIds,
         })
-        const overlay = collectParticipantOverlayForVariant(variant, templateId)
+        const overlay = usesTypedUjatRecruitmentWizard
+          ? undefined
+          : collectParticipantOverlayForVariant(variant, templateId)
         const { persistRegistrationWizardFormDraft } = await import(
           '@/features/program/general/lib/registration-wizard-form-draft'
         )
@@ -2273,6 +2313,7 @@ export function useProgramParticipantApplicationEditor(
     showSaveFailure,
     showSaveSuccess,
     usesRegistrationWizardDraft,
+    usesTypedUjatRecruitmentWizard,
     ujatApplicationGradeByBlockId,
     ujatGradeApplicationBlockIds,
     ujatGradeClassTimeBlockIds,
@@ -2302,6 +2343,7 @@ export function useProgramParticipantApplicationEditor(
       ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
       markHydratedWhenOverlayPresent: usesRegistrationWizardDraft,
       flushRecruitDetailBeforeCollect: true,
+      skipRecruitmentOverlay: usesTypedUjatRecruitmentWizard,
     })
   }, [
     active,
