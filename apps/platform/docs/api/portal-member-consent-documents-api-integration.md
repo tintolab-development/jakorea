@@ -21,7 +21,8 @@ CMS Orval 타입과 동일한 계약을 Platform `settings/api`에서 hand-writt
 - **Complete** — `MemberPortalConsentCompleteRequest`: `{ filledDocument?, identityVerificationSessionId?, consentStatus?, programEligible? }`  
   - `PORTRAIT_RIGHTS`: `filledDocument` + `consentStatus`(힌트 `PARTIAL`) + `programEligible`(1·2번 표 `bottomConsent` 기반 힌트, 서버 재계산)
   - `evidenceFileObjectId` — 성범죄 외 전송 금지(최신 OpenAPI)
-- **Signature profile** — `MemberPortalSignatureProfileRequest`: `{ signatureType, fileObjectId, displayName?, fontStyleCode? }`
+- **Signature profile** — `MemberPortalSignatureProfileRequest`: `{ signatureType: DRAWN, fileObjectId }`  
+  - 그리기·타이핑(서명 만들기) 모두 PNG 업로드 후 `DRAWN`만 전송. `TYPED`는 `PORTAL_SIGNATURE_TYPE_INVALID`. `displayName`/`fontStyleCode`는 승인 계약에 없어 보내지 않는다.
 
 ## `consentType` (마이페이지 동의서·서약서)
 

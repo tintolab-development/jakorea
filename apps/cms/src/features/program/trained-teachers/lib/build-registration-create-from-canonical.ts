@@ -3,6 +3,7 @@
  * Overlay apply 를 persist SSOT 로 쓰지 않는다.
  */
 import dayjs from 'dayjs'
+import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
 import type {
   GeneralProgramCurriculumSessionRow,
   GeneralProgramScheduleDetailRow,
@@ -107,6 +108,10 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
       venueDetail: common.venueDetail,
       educationScheduleMode: common.educationScheduleMode,
       educationScheduleLines: [...common.educationScheduleLines],
+      educationScheduleRange: educationScheduleRangeFromPeriodLines({
+        mode: common.educationScheduleMode,
+        lines: common.educationScheduleLines,
+      }),
       curriculumSessions,
       scheduleDetails,
       teacherTrainingEnabled: common.teacherTrainingEnabled,
@@ -149,6 +154,10 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
       curriculumSessions,
       scheduleDetails,
       educationScheduleLines: [...common.educationScheduleLines],
+      educationScheduleRange: educationScheduleRangeFromPeriodLines({
+        mode: common.educationScheduleMode,
+        lines: common.educationScheduleLines,
+      }),
       teacherTrainingEnabled: editor.teacherTrainingEnabled,
       educationJournalEnabled: common.educationJournalEnabled,
       participantRecruitmentInfo: {

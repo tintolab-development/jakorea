@@ -36,6 +36,21 @@ function filledRhf(): ReturnType<typeof createDefaultTrainedTeachersRegistration
 }
 
 describe('TT 등록 공통정보 RHF SSOT', () => {
+  it('기간형 일정 줄에서 educationScheduleRange를 산출한다', () => {
+    const values = {
+      ...filledRhf(),
+      educationScheduleMode: 'period' as const,
+      educationScheduleLines: ['2026.11.11(수) ~ 2026.11.18(수)'],
+    }
+    const collected = collectTrainedTeachersCommonInfoState(values)
+    const seoulDay = (iso: string) =>
+      new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+    expect(seoulDay(collected.educationScheduleRange!.start)).toBe('2026-11-11')
+    expect(seoulDay(collected.educationScheduleRange!.end)).toBe('2026-11-18')
+    const program = buildTrainedTeachersProgramFromRhf({ id: 'tt-rhf', values })
+    expect(seoulDay(program.generalCommonInfo!.educationScheduleRange!.start)).toBe('2026-11-11')
+  })
+
   it('RHF와 Overlay가 달라도 화면·CREATE는 RHF를 쓴다', () => {
     const values = filledRhf()
     const overlay = {

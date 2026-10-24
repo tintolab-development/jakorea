@@ -2,6 +2,7 @@
  * TT 등록 공통정보 RHF → canonical common.
  * Overlay store를 읽지 않는다. sidecar 맵은 인메모리 projection으로만 nested 배열을 만든다.
  */
+import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
 import { importLegacyOverlayToTrainedTeachersCanonical } from './import-legacy-registration-overlay'
 import type { TrainedTeachersRegistrationCommonCanonical } from './registration-canonical-types'
 import {
@@ -57,6 +58,10 @@ export function collectTrainedTeachersCommonInfoState(
       : [],
     educationScheduleMode: values.educationScheduleMode,
     educationScheduleLines: [...values.educationScheduleLines],
+    educationScheduleRange: educationScheduleRangeFromPeriodLines({
+      mode: values.educationScheduleMode,
+      lines: values.educationScheduleLines,
+    }),
     generalSurveyMenuKeys: [...values.generalSurveyMenuKeys],
     ips: values.ips ?? imported.common.ips,
     programCategory: values.programCategory ?? imported.common.programCategory,

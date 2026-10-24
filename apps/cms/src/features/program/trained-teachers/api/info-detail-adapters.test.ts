@@ -112,6 +112,34 @@ describe('trained-teacher info detail adapters', () => {
     })
   })
 
+  it('configJson null range는 기존 program range를 덮어 지운다', () => {
+    const program = {
+      id: '1',
+      title: 't',
+      generalCommonInfo: {
+        educationScheduleMode: 'period',
+        educationScheduleRange: {
+          start: '2026-04-01T00:00:00.000Z',
+          end: '2026-11-30T00:00:00.000Z',
+        },
+      },
+    } as unknown as Program
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(program, {
+      teacherTrainingEnabled: false,
+      educationJournalEnabled: false,
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {
+          educationScheduleMode: 'date',
+          educationScheduleLines: ['2026.11.11(수) 10:00 ~ 12:00'],
+          educationScheduleRange: null,
+        },
+      }),
+    })
+    expect(merged.generalCommonInfo?.educationScheduleMode).toBe('date')
+    expect(merged.generalCommonInfo?.educationScheduleRange).toBeNull()
+  })
+
   it('merges GET detail into program without wiping programs KPI', () => {
     const program = {
       id: '1',

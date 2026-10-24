@@ -25,7 +25,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
-function parseIsoRange(value: unknown): { start: string; end: string } | undefined {
+function parseIsoRange(
+  value: unknown
+): { start: string; end: string } | null | undefined {
+  if (value === null) return null
   if (!isRecord(value)) return undefined
   const start = typeof value.start === 'string' ? value.start : undefined
   const end = typeof value.end === 'string' ? value.end : undefined
@@ -123,7 +126,7 @@ export function parseTrainedTeacherInfoConfigJson(raw?: string | null): {
         nestedCommon || educationScheduleRange || educationScheduleMode || educationScheduleLines
           ? {
               ...nestedCommon,
-              ...(educationScheduleRange ? { educationScheduleRange } : {}),
+              ...(educationScheduleRange !== undefined ? { educationScheduleRange } : {}),
               ...(educationScheduleMode ? { educationScheduleMode } : {}),
               ...(educationScheduleLines ? { educationScheduleLines } : {}),
             }
@@ -204,7 +207,10 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
         educationScheduleMode:
           patchCommon?.educationScheduleMode ?? programCommon?.educationScheduleMode,
         educationScheduleRange:
-          patchCommon?.educationScheduleRange ?? programCommon?.educationScheduleRange,
+          patchCommon != null &&
+          Object.prototype.hasOwnProperty.call(patchCommon, 'educationScheduleRange')
+            ? patchCommon.educationScheduleRange
+            : programCommon?.educationScheduleRange,
         kpi: programKpi ?? patchKpi,
       },
       {

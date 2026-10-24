@@ -101,6 +101,7 @@ function canonical(
           : [],
       educationScheduleMode: 'date',
       educationScheduleLines: educationStructure === 'schedule' ? [] : ['2026.04.01 10:00-12:00'],
+      educationScheduleRange: null,
       generalSurveyMenuKeys: ['survey'],
       educationForm: 'offline',
       ...patch,
@@ -148,6 +149,56 @@ describe('TRAINED_TEACHER 등록 canonical CREATE', () => {
     expect(JSON.stringify(program.generalCommonInfo?.curriculumSessions)).not.toContain(
       'assignmentEnabled'
     )
+  })
+
+  it('기간형 줄에서 educationScheduleRange를 CREATE JSON에 싣는다', () => {
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: canonical({
+        educationStructure: 'schedule',
+        educationScheduleMode: 'period',
+        educationScheduleLines: ['2026.11.11(수) ~ 2026.11.18(수)'],
+      }),
+    })
+    expect(program.generalCommonInfo?.educationScheduleRange).toMatchObject({
+      start: expect.any(String),
+      end: expect.any(String),
+    })
+    const seoulDay = (iso: string) =>
+      new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+    expect(seoulDay(program.generalCommonInfo!.educationScheduleRange!.start)).toBe('2026-11-11')
+    expect(seoulDay(program.generalCommonInfo!.educationScheduleRange!.end)).toBe('2026-11-18')
+    const request = mapTrainedTeacherToCreateRequest(program)
+    const json = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: {
+        generalCommonInfo?: {
+          educationScheduleRange?: { start: string; end: string } | null
+          educationScheduleLines?: string[]
+        }
+      }
+    }
+    expect(json.program?.generalCommonInfo?.educationScheduleLines).toEqual([
+      '2026.11.11(수) ~ 2026.11.18(수)',
+    ])
+    expect(seoulDay(json.program!.generalCommonInfo!.educationScheduleRange!.start)).toBe(
+      '2026-11-11'
+    )
+    expect(seoulDay(json.program!.generalCommonInfo!.educationScheduleRange!.end)).toBe('2026-11-18')
+  })
+
+  it('날짜 지정이면 CREATE JSON educationScheduleRange가 null이다', () => {
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: canonical({ educationScheduleMode: 'date' }),
+    })
+    expect(program.generalCommonInfo?.educationScheduleRange).toBeNull()
+    const request = mapTrainedTeacherToCreateRequest(program)
+    const json = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: {
+        generalCommonInfo?: { educationScheduleRange?: { start: string; end: string } | null }
+      }
+    }
+    expect(json.program?.generalCommonInfo?.educationScheduleRange).toBeNull()
   })
 
   it('CREATE serviceDetailJson 에 registration.overlay 와 surveyItems 가 없다', () => {

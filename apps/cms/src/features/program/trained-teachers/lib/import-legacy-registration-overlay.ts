@@ -4,6 +4,7 @@
  */
 import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
+import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
   applyGeneralRegistrationOverlayToProgram,
@@ -106,6 +107,10 @@ function extractCommon(
     scheduleDetails: [...(program.generalCommonInfo?.scheduleDetails ?? [])],
     educationScheduleMode: editor.educationScheduleMode,
     educationScheduleLines: [...(program.generalCommonInfo?.educationScheduleLines ?? [])],
+    educationScheduleRange: educationScheduleRangeFromPeriodLines({
+      mode: editor.educationScheduleMode,
+      lines: program.generalCommonInfo?.educationScheduleLines,
+    }),
     generalSurveyMenuKeys: [...(program.generalSurveyMenuKeys ?? [])],
     ips: program.ips ?? undefined,
     programCategory: program.programCategory ?? undefined,
