@@ -146,13 +146,22 @@ export function Lnb({
     const scrim = scrimRef.current
     if (!dropdownOpen || !panel || !scrim) return
 
-    const updateScrimTop = () => {
-      scrim.style.top = `${panel.getBoundingClientRect().top}px`
+    const updateOverlayMetrics = () => {
+      const panelTop = panel.getBoundingClientRect().top
+      scrim.style.top = `${panelTop}px`
+      panel.style.setProperty('--mobile-panel-top', `${panelTop}px`)
     }
 
-    updateScrimTop()
-    window.addEventListener('resize', updateScrimTop)
-    return () => window.removeEventListener('resize', updateScrimTop)
+    updateOverlayMetrics()
+    window.addEventListener('resize', updateOverlayMetrics)
+    window.visualViewport?.addEventListener('resize', updateOverlayMetrics)
+    window.visualViewport?.addEventListener('scroll', updateOverlayMetrics)
+    return () => {
+      window.removeEventListener('resize', updateOverlayMetrics)
+      window.visualViewport?.removeEventListener('resize', updateOverlayMetrics)
+      window.visualViewport?.removeEventListener('scroll', updateOverlayMetrics)
+      panel.style.removeProperty('--mobile-panel-top')
+    }
   }, [dropdownOpen, items])
 
   const activeItem = items.find(item => item.active) ?? items[0]
@@ -176,13 +185,8 @@ export function Lnb({
         ? undefined
         : getLnbMobileTriggerIconUrl(activeItem.key, true)
     const triggerIconClassName = isLnbMobileTriggerIllustration(activeItem.key)
-      ? [
-          styles.mobileTriggerIllustration,
-          activeItem.key === 'education' ? styles.mobileTriggerIllustrationEducation : undefined,
-        ]
-          .filter(Boolean)
-          .join(' ')
-      : styles.icon
+      ? styles.mobileTriggerIllustration
+      : styles.mobileTriggerSmallIcon
     const dropdownRootClassName = [
       styles.mobileDropdownRoot,
       dropdownOpen ? styles.mobileDropdownRootOpen : undefined,
@@ -208,17 +212,16 @@ export function Lnb({
               aria-controls={panelId}
               onClick={() => onDropdownOpenChange?.(!dropdownOpen)}
             >
-              {triggerIconUrl ? (
-                <img
-                  className={triggerIconClassName}
-                  src={triggerIconUrl}
-                  alt=""
-                  aria-hidden="true"
-                />
-              ) : null}
-              <PFText as="span" typo="hl-lg" color="black" className={styles.mobileTriggerLabel}>
-                {activeItem.label}
-              </PFText>
+              <span className={styles.mobileTriggerLeading}>
+                {triggerIconUrl ? (
+                  <span className={styles.mobileTriggerIconSlot} aria-hidden="true">
+                    <img className={triggerIconClassName} src={triggerIconUrl} alt="" />
+                  </span>
+                ) : null}
+                <PFText as="span" typo="hl-lg" color="black" className={styles.mobileTriggerLabel}>
+                  {activeItem.label}
+                </PFText>
+              </span>
               <img
                 className={[
                   styles.mobileTriggerChevron,

@@ -50,9 +50,17 @@ export function MypageLayout({
   useEffect(() => {
     if (!mobileLnbOpen) return
 
-    const previousOverflow = document.body.style.overflow
+    const scrollY = window.scrollY
+    const previousBodyPosition = document.body.style.position
+    const previousBodyTop = document.body.style.top
+    const previousBodyWidth = document.body.style.width
+    const previousBodyOverflow = document.body.style.overflow
     const previousPaddingRight = document.body.style.paddingRight
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
     document.body.style.overflow = 'hidden'
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`
@@ -66,8 +74,12 @@ export function MypageLayout({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => {
-      document.body.style.overflow = previousOverflow
+      document.body.style.position = previousBodyPosition
+      document.body.style.top = previousBodyTop
+      document.body.style.width = previousBodyWidth
+      document.body.style.overflow = previousBodyOverflow
       document.body.style.paddingRight = previousPaddingRight
+      window.scrollTo(0, scrollY)
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [mobileLnbOpen])
@@ -75,6 +87,7 @@ export function MypageLayout({
   const shellClassName = [
     styles.shell,
     variant === 'subpage' ? styles.shellSubpage : undefined,
+    mobileLnbOpen ? styles.shellMenuOpen : undefined,
   ]
     .filter(Boolean)
     .join(' ')
