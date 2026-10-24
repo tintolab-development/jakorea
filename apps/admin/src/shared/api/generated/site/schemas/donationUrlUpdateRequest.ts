@@ -12,5 +12,6 @@ export interface DonationUrlUpdateRequest {
      * @maxLength 2048
      */
   donationUrl: string;
+  label?: string;
   version: number;
 }

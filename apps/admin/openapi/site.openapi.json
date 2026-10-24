@@ -589,6 +589,9 @@
             "maxLength": 2048,
             "minLength": 0
           },
+          "label": {
+            "type": "string"
+          },
           "version": {
             "type": "integer",
             "format": "int64"
