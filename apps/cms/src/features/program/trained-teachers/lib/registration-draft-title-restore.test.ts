@@ -11,13 +11,19 @@ import {
 } from './registration-rhf-api'
 import {
   createDefaultTrainedTeachersRegistrationRhfValues,
+  fillEmptyTrainedTeachersTitlesFromOverlay,
   rhfValuesFromTrainedTeachersCanonicalCommon,
   type TrainedTeachersRegistrationRhfValues,
 } from './registration-rhf-values'
-import { hydrateRegistrationDraftProgramTitleKo } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  hydrateRegistrationDraftProgramTitleKo,
+  patchProgramRegistrationOverlay,
+  resetProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 afterEach(() => {
   registerTrainedTeachersRegistrationRhf(null)
+  resetProgramRegistrationOverlay()
 })
 
 const CASE_01 = {
@@ -121,6 +127,26 @@ describe('TT 임시저장 제목 복원', () => {
       TRAINED_TEACHER_DRAFT_RHF_REQUIRED_ERROR
     )
     expect(persist).not.toHaveBeenCalled()
+  })
+
+  it('RHF mainTitle이 비어도 overlay programTitleKo로 draft canonical을 채운다', () => {
+    const empty = createDefaultTrainedTeachersRegistrationRhfValues()
+    registerTrainedTeachersRegistrationRhf(mockTtRhf(empty))
+    patchProgramRegistrationOverlay({
+      'trainedTeachersRegistration.basicInfo.programTitleKo': CASE_01.mainTitle,
+      'trainedTeachersRegistration.basicInfo.programTitleEn': CASE_01.titleEn,
+      'trainedTeachersRegistration.basicInfo.publicProgramTitle': CASE_01.announcementTitle,
+    })
+    const filled = fillEmptyTrainedTeachersTitlesFromOverlay(empty, {
+      'trainedTeachersRegistration.basicInfo.programTitleKo': CASE_01.mainTitle,
+      'trainedTeachersRegistration.basicInfo.programTitleEn': CASE_01.titleEn,
+      'trainedTeachersRegistration.basicInfo.publicProgramTitle': CASE_01.announcementTitle,
+    })
+    expect(filled.mainTitle).toBe(CASE_01.mainTitle)
+    expect(filled.titleEn).toBe(CASE_01.titleEn)
+    expect(filled.announcementTitle).toBe(CASE_01.announcementTitle)
+    const snapshot = trainedTeachersWizardDraftSettingsJson()
+    expect(snapshot.trainedTeachersRegistrationCanonical.common.mainTitle).toBe(CASE_01.mainTitle)
   })
 
   it('저장본 없이 재오픈하면 TT RHF가 기본값이다', () => {

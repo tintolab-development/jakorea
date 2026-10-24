@@ -38,10 +38,18 @@ async function fillCaseTitles(
   await publicTitle.fill(titles.announcementTitle)
 }
 
+async function ensureCommonInfoStep(page: import('@playwright/test').Page) {
+  const main = page.getByPlaceholder('대표 프로그램명을 입력하세요')
+  if (await main.first().isVisible().catch(() => false)) return
+  const common = page.getByRole('button', { name: '공통 정보' }).first()
+  if (await common.isVisible().catch(() => false)) await common.click()
+}
+
 async function expectCaseTitles(
   page: import('@playwright/test').Page,
   titles: { mainTitle: string; announcementTitle: string; titleEn: string }
 ) {
+  await ensureCommonInfoStep(page)
   const main = page.getByPlaceholder('대표 프로그램명을 입력하세요')
   await expect(main.first()).toHaveValue(titles.mainTitle)
   if ((await main.count()) > 1) {
@@ -64,10 +72,46 @@ async function saveDraft(page: import('@playwright/test').Page) {
   if (await confirm.isVisible().catch(() => false)) {
     await confirm.click()
   }
+  await expect(done.first()).toBeHidden({ timeout: 10_000 }).catch(() => undefined)
+}
+
+async function closeWizard(page: import('@playwright/test').Page) {
+  const leftover = page.getByRole('dialog').filter({ hasText: /임시 저장/ })
+  if (await leftover.isVisible().catch(() => false)) {
+    const confirm = leftover.getByRole('button', { name: '확인' }).first()
+    if (await confirm.isVisible().catch(() => false)) await confirm.click()
+  }
+  await page
+    .getByRole('banner')
+    .filter({ hasText: '교육받은 교사 프로그램 등록' })
+    .getByLabel('닫기')
+    .click()
 }
 
 async function readCanonicalCommon(page: import('@playwright/test').Page) {
   return page.evaluate(prefix => {
+    const bagRaw = localStorage.getItem('cms.jakorea.writingFormTemplateSaves.v1')
+    if (bagRaw) {
+      try {
+        const bag = JSON.parse(bagRaw) as {
+          byTemplateId?: Record<
+            string,
+            {
+              settingsJson?: {
+                trainedTeachersRegistrationCanonical?: { common?: Record<string, unknown> }
+              }
+            }
+          >
+        }
+        const match = Object.entries(bag.byTemplateId ?? {}).find(([templateId]) =>
+          templateId.startsWith(prefix)
+        )
+        const common = match?.[1]?.settingsJson?.trainedTeachersRegistrationCanonical?.common
+        if (common != null) return common
+      } catch {
+        // fall through
+      }
+    }
     const key = Object.keys(localStorage).find(item => item.startsWith(prefix))
     if (!key) return null
     const raw = localStorage.getItem(key)
@@ -106,18 +150,18 @@ test.describe('TT 등록 임시저장 복원', () => {
     expect(saved?.announcementTitle).toBe(CASE_01.announcementTitle)
     expect(saved?.titleEn).toBe(CASE_01.titleEn)
 
-    await page.getByRole('button', { name: '닫기' }).click()
+    await closeWizard(page)
     await reopenContinue(page)
     await expectCaseTitles(page, CASE_01)
 
     await saveDraft(page)
-    await page.getByRole('button', { name: '닫기' }).click()
+    await closeWizard(page)
     await reopenContinue(page)
     await expectCaseTitles(page, CASE_01)
 
     await fillCaseTitles(page, CASE_05)
     await saveDraft(page)
-    await page.getByRole('button', { name: '닫기' }).click()
+    await closeWizard(page)
     await reopenContinue(page)
     await expectCaseTitles(page, CASE_05)
 
@@ -135,7 +179,7 @@ test.describe('TT 등록 임시저장 복원', () => {
       timeout: 30_000,
     })
     await saveDraft(page)
-    await page.getByRole('button', { name: '닫기' }).click()
+    await closeWizard(page)
     await reopenContinue(page)
     await expectCaseTitles(page, CASE_05)
 

@@ -10,6 +10,7 @@ import type {
   Program,
 } from '@/types/domain'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { collectTrainedTeachersCommonInfoState } from './collect-registration-common-info-state'
 import { importLegacyOverlayToTrainedTeachersCanonical } from './import-legacy-registration-overlay'
 import { collectTrainedTeachersApplicationState } from './registration-rhf-application'
@@ -24,6 +25,7 @@ import {
 } from './registration-canonical-types'
 import { peekTrainedTeachersRegistrationRhf } from './registration-rhf-api'
 import {
+  fillEmptyTrainedTeachersTitlesFromOverlay,
   isTrainedTeachersRegistrationCanonicalSnapshot,
   trainedTeachersRhfToEditorMeta,
   type TrainedTeachersRegistrationRhfValues,
@@ -62,9 +64,13 @@ export function trainedTeachersWizardDraftSettingsJson(): {
   if (ttRhf == null) {
     throw new Error(TRAINED_TEACHER_DRAFT_RHF_REQUIRED_ERROR)
   }
+  const values = fillEmptyTrainedTeachersTitlesFromOverlay(
+    ttRhf.getValues(),
+    getProgramRegistrationOverlayRecord()
+  )
   const snapshot = buildTrainedTeachersCanonicalFromRhf({
     id: registrationPendingSnapshotId('trainedTeachers'),
-    values: ttRhf.getValues(),
+    values,
   })
   if (!isTrainedTeachersRegistrationCanonicalSnapshot(snapshot)) {
     throw new Error(TRAINED_TEACHER_DRAFT_RHF_REQUIRED_ERROR)

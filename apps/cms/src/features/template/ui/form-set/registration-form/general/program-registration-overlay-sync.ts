@@ -14,6 +14,7 @@ import {
 } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import {
   isTrainedTeachersCommonInfoOverlayKey,
+  projectTrainedTeachersRhfToOverlayRecord,
   readTrainedTeachersRhfOverlayValue,
   writeTrainedTeachersRhfOverlayValue,
 } from '@/features/program/trained-teachers/lib/registration-rhf-values'
@@ -450,8 +451,34 @@ export function getProgramRegistrationOverlayVersion(): number {
   return store.getVersion()
 }
 
+function isBlankOverlayValue(value: unknown): boolean {
+  if (value == null) return true
+  if (typeof value === 'string') return value.trim() === ''
+  return false
+}
+
+/** RHF 빈 문자열이 overlay store 제목을 지우지 않게 한다 (TT title/mainTitle 반쪽 마이그레이션). */
+function mergeOverlayPreferFilled(
+  stored: Record<string, unknown>,
+  projected: Record<string, unknown>
+): Record<string, unknown> {
+  const next = { ...stored }
+  for (const [key, value] of Object.entries(projected)) {
+    if (isBlankOverlayValue(value) && !isBlankOverlayValue(stored[key])) continue
+    next[key] = value
+  }
+  return next
+}
+
 export function getProgramRegistrationOverlayRecord(): Record<string, unknown> {
   const stored = overlayState()
+  const ttRhf = peekTrainedTeachersRegistrationRhf()
+  if (ttRhf != null) {
+    return mergeOverlayPreferFilled(
+      stored,
+      projectTrainedTeachersRhfToOverlayRecord(ttRhf.getValues())
+    )
+  }
   const rhf = peekCompanySchoolRegistrationRhf()
   if (rhf == null) return stored
   return { ...stored, ...projectCompanySchoolRhfToOverlayRecord(rhf.getValues()) }
