@@ -154,6 +154,19 @@ export const generalProgramProgressQueryKeys = {
       programId,
       participantId,
     ] as const,
+  individualSettlementReviews: (programId: string, participantId: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'individual-settlement-reviews',
+      programId,
+      participantId,
+    ] as const,
+  individualSettlementReviewDetail: (settlementApplicationId: number) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'individual-settlement-review-detail',
+      settlementApplicationId,
+    ] as const,
 }
 
 export const generalInterviewSlotsQueryKeys = {

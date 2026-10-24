@@ -1,0 +1,55 @@
+.individual-settlement-review-detail-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.individual-settlement-review-detail-modal__loading,
+.individual-settlement-review-detail-modal__empty {
+  display: flex;
+  min-height: 160px;
+  align-items: center;
+  justify-content: center;
+}
+
+.individual-settlement-review-detail-modal__revision {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.individual-settlement-review-detail-modal__revision-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.individual-settlement-review-detail-modal__file-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.individual-settlement-review-detail-modal__file-button {
+  padding: 0;
+  height: auto;
+}
+
+.individual-settlement-review-detail-modal__footer {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.individual-settlement-review-reject-modal__form .detail-info-form__field {
+  --detail-info-label-w: 120px !important;
+}
+
+.individual-settlement-review-reject-modal__form .cms-textarea,
+.individual-settlement-review-reject-modal__textarea .cms-textarea__control {
+  width: 100%;
+}
