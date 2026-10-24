@@ -29,6 +29,7 @@ import { SurveyStarRateField } from './fields/star-rate-field'
 import { SurveyTimeField } from './fields/time-field'
 import { SurveyUserInfoField } from './fields/user-info-field'
 import type { SurveySidecarState } from '../lib/survey-sidecar'
+import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
 
 export type { SurveySidecarState }
 
@@ -38,6 +39,7 @@ export type PlatformSurveyParagraphBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
+  onFileChange?: (paragraphId: string, file: File | null, questionKey: string) => void
   /** 설문자 정보 fieldKey → 표시값 (로그인·프로그램 컨텍스트) */
   userInfoValues?: Record<string, string>
   readOnly?: boolean
@@ -48,6 +50,7 @@ export function PlatformSurveyParagraphBody({
   onUpdateParagraph,
   sidecar,
   onSidecarChange,
+  onFileChange,
   userInfoValues,
   readOnly = false,
 }: PlatformSurveyParagraphBodyProps) {
@@ -143,6 +146,7 @@ export function PlatformSurveyParagraphBody({
             fileNames: { ...sidecar.fileNames, [paragraph.id]: next },
           })
         }}
+        onFileChange={next => onFileChange?.(paragraph.id, next, resolveApplicationAnswerKey(paragraph))}
         disabled={readOnly}
       />
     )
