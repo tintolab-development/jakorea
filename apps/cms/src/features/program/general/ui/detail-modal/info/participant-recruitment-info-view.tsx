@@ -21,7 +21,6 @@ import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS } from '@jakorea/form-schema/para
 import { APPLICANT_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/applicant-recruit-form-institution-draft'
 import { ECONOMY_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/economy-recruit-form-institution-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
-import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -63,13 +62,18 @@ const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 
 const FORM_CLASS = 'program-registration-paragraph'
 
-/** 수정 중 빈 칸(undefined)은 기존 program 값으로 덮지 않는다 */
+/** 빈 값은 null — RHF Controller는 undefined면 defaultValues(이전 숫자)를 다시 보여 준다. */
+function parseOptionalNonNegativeInt(raw: string): number | null {
+  return raw.trim() === '' ? null : Number.parseInt(raw, 10)
+}
+
+/** 수정 중 빈 칸(null/undefined)은 기존 program 값으로 덮지 않는다 */
 function recruitmentLimitForBridge(
-  fieldValue: number | undefined,
+  fieldValue: number | null | undefined,
   baseline: number | undefined,
   editing: boolean
 ): number | undefined {
-  if (editing) return fieldValue
+  if (editing) return fieldValue ?? undefined
   return fieldValue ?? baseline
 }
 
@@ -101,7 +105,7 @@ function NumberWithSuffixEdit({
             placeholder={placeholder}
             width={120}
             value={field.value == null ? '' : String(field.value)}
-            onValueChange={raw => field.onChange(parsePositiveIntInput(raw))}
+            onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
             className="program-detail-info-tab__max-class-count-input"
           />
           <span style={{ marginLeft: 6 }}>{suffix}</span>

@@ -273,13 +273,22 @@ export function buildCompanySchoolProgramFromCanonical(args: {
   }
 
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-  const leftoverRecruit = collectSelectedRecruitOverlaysForProgram(program)
+  const leftoverRecruit = Object.fromEntries(
+    Object.entries(collectSelectedRecruitOverlaysForProgram(program)).filter(
+      ([key]) => !key.startsWith('application.economy.')
+    )
+  )
   const rhfRecruit = serializeCompanySchoolRecruitmentForFormVersion(
     args.canonical.recruit ?? emptyCompanySchoolRecruitFormState()
   )
+  const registrationOverlay = {
+    ...(program.registrationOverlay ?? {}),
+    ...leftoverRecruit,
+    ...rhfRecruit,
+  }
   return withTargetLevels(
     applyGeneralRecruitOverlayToProgram(
-      program,
+      { ...program, registrationOverlay },
       { ...leftoverRecruit, ...rhfRecruit },
       { preferOverlay: true }
     )

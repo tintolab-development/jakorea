@@ -16,12 +16,11 @@ import { generalProgramProgressQueryKeys } from '@/features/program/general/api/
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildParticipatingIndividualProgressAttendanceFilterFields } from '@/features/program/general/lib/participating-individual-progress-attendance-filter-fields'
-import { filterProgressAttendanceParticipantsForDisplay } from '@/features/program/general/lib/participating-individual-progress-attendance-display'
+import { filterProgressAttendanceSessionGroups } from '@/features/program/general/lib/participating-individual-progress-attendance-display'
 import {
   PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL,
   type ParticipatingIndividualProgressAttendanceFilters,
   type ParticipatingIndividualProgressAttendanceParticipantRow,
-  type ParticipatingIndividualProgressAttendanceSessionGroup,
   type ParticipatingIndividualProgressAttendanceStatus,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 
@@ -58,23 +57,6 @@ export function getProgressAttendanceViewState(params: {
     kind: 'content',
     backgroundRefetchError: params.isError && params.hasQueryData,
   }
-}
-
-function filterSessionGroups(
-  sessions: ParticipatingIndividualProgressAttendanceSessionGroup[],
-  filters: ParticipatingIndividualProgressAttendanceFilters
-) {
-  const filteredBySchedule =
-    filters.educationSchedule === PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL
-      ? sessions
-      : sessions.filter(session => session.filterValue === filters.educationSchedule)
-
-  return filteredBySchedule
-    .map(session => ({
-      ...session,
-      participants: filterProgressAttendanceParticipantsForDisplay(session.participants, filters),
-    }))
-    .filter(session => session.participants.length > 0)
 }
 
 export function useParticipatingIndividualProgressAttendance(program: Program) {
@@ -127,7 +109,7 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
 
   const sessionGroups = useMemo(() => {
     if (!isRemoteDataSource || !remoteSessions) return []
-    return filterSessionGroups(remoteSessions, appliedFilters)
+    return filterProgressAttendanceSessionGroups(remoteSessions, appliedFilters)
   }, [appliedFilters, isRemoteDataSource, remoteSessions])
 
   const saveMutation = useMutation({

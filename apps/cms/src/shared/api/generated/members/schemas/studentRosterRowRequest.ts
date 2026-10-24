@@ -16,11 +16,13 @@ export interface StudentRosterRowRequest {
      */
   studentName: string;
   /**
+     * Existing roster rows may omit or send '*' to retain the stored value. Required for new rows.
      * @minLength 0
      * @maxLength 30
      */
-  gender: string;
-  birthDate: string;
+  gender?: string | null;
+  /** Existing roster rows may omit this value to retain the stored date. Required for new rows. */
+  birthDate?: string | null;
   /**
      * 선택 입력. 기본 학생명단 양식에는 포함되지 않습니다.
      * @minLength 0

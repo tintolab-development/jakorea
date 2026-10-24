@@ -13,6 +13,7 @@ export interface ParticipantRow {
   memberName?: string;
   gender?: string;
   birthDate?: string;
+  birthYear?: number;
   affiliation?: string;
   organizationName?: string;
   grade?: string;

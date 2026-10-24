@@ -14,6 +14,7 @@ import {
   isEducationScheduleLineUpcoming,
   parseEducationScheduleLineForCms,
   parseEducationScheduleLineToRange,
+  educationScheduleRangeFromPeriodLines,
   mergeUniqueEducationScheduleLines,
   rebuildEducationScheduleLinesFromGroupTimes,
   serializeEducationScheduleLineForServer,
@@ -164,6 +165,53 @@ describe('parseEducationScheduleLineToRange', () => {
     )
     expect(crossDay?.[0].format('YYYY-MM-DD HH:mm')).toBe('2026-04-20 09:30')
     expect(crossDay?.[1].format('YYYY-MM-DD HH:mm')).toBe('2026-04-21 12:20')
+  })
+})
+
+describe('educationScheduleRangeFromPeriodLines', () => {
+  function seoulDay(iso: string): string {
+    return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+  }
+
+  it('2026.11.11(수) 같은 날을 유효 기간으로 인정한다', () => {
+    const range = educationScheduleRangeFromPeriodLines({
+      mode: 'period',
+      lines: ['2026.11.11(수)'],
+    })
+    expect(range).not.toBeNull()
+    expect(seoulDay(range!.start)).toBe('2026-11-11')
+    expect(seoulDay(range!.end)).toBe('2026-11-11')
+  })
+
+  it('점 표기 기간 줄을 시작·종료로 집계한다', () => {
+    const range = educationScheduleRangeFromPeriodLines({
+      mode: 'period',
+      lines: ['2026.11.11(수) ~ 2026.11.18(수)'],
+    })
+    expect(seoulDay(range!.start)).toBe('2026-11-11')
+    expect(seoulDay(range!.end)).toBe('2026-11-18')
+  })
+
+  it('여러 기간 줄은 최소 시작일~최대 종료일이다', () => {
+    const range = educationScheduleRangeFromPeriodLines({
+      mode: 'period',
+      lines: ['2026.11.11(수) ~ 2026.11.13(금)', '2026.11.18(수) ~ 2026.11.20(금)'],
+    })
+    expect(seoulDay(range!.start)).toBe('2026-11-11')
+    expect(seoulDay(range!.end)).toBe('2026-11-20')
+  })
+
+  it('date 모드이면 줄이 있어도 null이다', () => {
+    expect(
+      educationScheduleRangeFromPeriodLines({
+        mode: 'date',
+        lines: ['2026.11.11(수) ~ 2026.11.18(수)'],
+      })
+    ).toBeNull()
+  })
+
+  it('기간 줄이 비면 null이다', () => {
+    expect(educationScheduleRangeFromPeriodLines({ mode: 'period', lines: [] })).toBeNull()
   })
 })
 

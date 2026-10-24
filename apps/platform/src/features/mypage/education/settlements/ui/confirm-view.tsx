@@ -18,6 +18,13 @@ import {
   startedReceiptExtraItems,
 } from '../lib/format-write-draft'
 import { readTripLegFileNames } from '../lib/empty-trip-leg'
+import {
+  isReceiptEvidenceRequired,
+  isReceiptWageItemType,
+  overlayPayableEvidenceRequired,
+  payableEvidenceRequired,
+  sortReceiptPayableItems,
+} from '../lib/payment-items'
 import { EducationSettlementSessionBanner } from './settlement-session-banner'
 import { PFButton, PFInfoReview, PFText, type PFInfoReviewItem } from '@/shared/ui'
 import styles from './confirm-view.module.css'
@@ -80,9 +87,11 @@ function ConfirmAmountSummary({ label, amount }: { label: string; amount: string
 function ConfirmTripLegBlock({
   heading,
   leg,
+  showReceipt,
 }: {
   heading: string
   leg: SettlementTripLegDraft
+  showReceipt: boolean
 }) {
   if (!isSettlementTripLegStarted(leg)) return null
 
@@ -91,7 +100,10 @@ function ConfirmTripLegBlock({
       <PFText as="p" typo="bd-md-sb" color="black" className={styles.legHeading}>
         {heading}
       </PFText>
-      <PFInfoReview rows={buildTripLegRows(leg)} accentFirstRow={false} />
+      <PFInfoReview
+        rows={showReceipt ? buildTripLegRows(leg) : buildTripLegRows(leg).filter(row => row.label !== '영수증 제출')}
+        accentFirstRow={false}
+      />
     </div>
   )
 }
@@ -109,7 +121,18 @@ export function EducationSettlementConfirmView({
   const showTransport = hasSettlementTransportSection(draft)
   const showMeal = hasSettlementMealSection(draft)
   const showActivity = hasSettlementActivitySection(draft)
-  const receiptExtras = isReceiptWriteDraft(draft) ? startedReceiptExtraItems(draft) : []
+  const receiptExtras = isReceiptWriteDraft(draft)
+    ? overlayPayableEvidenceRequired(
+        sortReceiptPayableItems(startedReceiptExtraItems(draft)),
+        session?.payableItems,
+      )
+    : []
+  const wageExtras = receiptExtras.filter(item => isReceiptWageItemType(item.itemType, item.itemName))
+  const restExtras = receiptExtras.filter(item => !isReceiptWageItemType(item.itemType, item.itemName))
+  const showTransportReceipt = isReceiptEvidenceRequired(
+    payableEvidenceRequired(session?.payableItems, draft.transport.itemType) ??
+      draft.transport.evidenceRequired,
+  )
   const resident = formatSettlementResidentNumber(draft)
 
   const basicRows: PFInfoReviewItem[] = [
@@ -130,6 +153,26 @@ export function EducationSettlementConfirmView({
         <PFInfoReview rows={basicRows} accentFirstRow={false} />
       </ConfirmSection>
 
+      {wageExtras.map(item => (
+        <ConfirmSection key={item.itemType} title={`${item.itemName} 신청`}>
+          {isReceiptEvidenceRequired(item.evidenceRequired) ? (
+            <PFInfoReview
+              accentFirstRow={false}
+              rows={[
+                {
+                  label: '영수증 제출',
+                  value: formatSettlementFileNames(item.attachments.map(file => file.fileName)),
+                },
+              ]}
+            />
+          ) : null}
+          <ConfirmAmountSummary
+            label={item.itemName}
+            amount={formatSettlementAmountDisplay(item.amount)}
+          />
+        </ConfirmSection>
+      ))}
+
       {showTransport ? (
         <ConfirmSection title="교통비 신청">
           <PFInfoReview
@@ -140,10 +183,15 @@ export function EducationSettlementConfirmView({
           <ConfirmTripLegBlock
             heading={draft.transport.tripType === 'round_trip' ? '가는 편(출발)' : '가는 편'}
             leg={draft.transport.depart}
+            showReceipt={showTransportReceipt}
           />
 
           {draft.transport.tripType === 'round_trip' ? (
-            <ConfirmTripLegBlock heading="오는 편(귀가)" leg={draft.transport.return} />
+            <ConfirmTripLegBlock
+              heading="오는 편(귀가)"
+              leg={draft.transport.return}
+              showReceipt={showTransportReceipt}
+            />
           ) : null}
 
           <ConfirmAmountSummary
@@ -153,21 +201,27 @@ export function EducationSettlementConfirmView({
         </ConfirmSection>
       ) : null}
 
-      {receiptExtras.map(item => (
+      {restExtras.map(item => (
         <ConfirmSection
           key={item.itemType}
           title={`${item.itemName} 신청`}
-          footer={item.itemType === 'ACTIVITY' ? '사용한 금액의 영수증을 제출해 주세요.' : undefined}
+          footer={
+            item.itemType === 'ACTIVITY' && isReceiptEvidenceRequired(item.evidenceRequired)
+              ? '사용한 금액의 영수증을 제출해 주세요.'
+              : undefined
+          }
         >
-          <PFInfoReview
-            accentFirstRow={false}
-            rows={[
-              {
-                label: '영수증 제출',
-                value: formatSettlementFileNames(item.attachments.map(file => file.fileName)),
-              },
-            ]}
-          />
+          {isReceiptEvidenceRequired(item.evidenceRequired) ? (
+            <PFInfoReview
+              accentFirstRow={false}
+              rows={[
+                {
+                  label: '영수증 제출',
+                  value: formatSettlementFileNames(item.attachments.map(file => file.fileName)),
+                },
+              ]}
+            />
+          ) : null}
           <ConfirmAmountSummary
             label={item.itemName}
             amount={formatSettlementAmountDisplay(item.amount)}

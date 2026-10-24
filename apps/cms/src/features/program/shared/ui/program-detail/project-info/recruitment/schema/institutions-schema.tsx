@@ -209,7 +209,7 @@ export function createInstitutionsSchema({
                       min={0}
                       value={field.value == null ? '' : String(field.value)}
                       onValueChange={raw =>
-                        field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                        field.onChange(raw === '' ? null : Number.parseInt(raw, 10))
                       }
                       className="program-detail-info-tab__max-class-count-input"
                     />

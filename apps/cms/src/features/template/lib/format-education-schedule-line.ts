@@ -160,6 +160,40 @@ export function parseEducationScheduleLineToRange(line: string | undefined): [Da
   return [start, applyScheduleClock(endDate, endToken)]
 }
 
+export type EducationScheduleIsoRange = { start: string; end: string }
+
+function isoRangeFromPeriodDays(start: Dayjs, end: Dayjs): EducationScheduleIsoRange {
+  const [startDay, endDay] = normalizeEducationSchedulePeriodRangeDateOnly([start, end])
+  return {
+    start: startDay.startOf('day').toISOString(),
+    end: endDay.endOf('day').toISOString(),
+  }
+}
+
+/**
+ * 기간 지정(period) 표시 줄 → typed {start,end}.
+ * 같은 날도 유효한 기간이다. 여러 줄이면 최소 시작일~최대 종료일.
+ * date 모드이거나 파싱 가능한 줄이 없으면 null.
+ * `resolvePeriodRangeFromLines`(같은 날 skip)와 별개 — 일반 위저드 Bridge 기본값을 바꾸지 않는다.
+ */
+export function educationScheduleRangeFromPeriodLines(input: {
+  mode: 'date' | 'period' | undefined
+  lines: readonly string[] | undefined
+}): EducationScheduleIsoRange | null {
+  if (input.mode !== 'period') return null
+  let minStart: Dayjs | null = null
+  let maxEnd: Dayjs | null = null
+  for (const line of input.lines ?? []) {
+    const range = parseEducationScheduleLineToRange(line)
+    if (!range) continue
+    const [start, end] = normalizeEducationSchedulePeriodRangeDateOnly(range)
+    if (!minStart || start.isBefore(minStart, 'day')) minStart = start
+    if (!maxEnd || end.isAfter(maxEnd, 'day')) maxEnd = end
+  }
+  if (!minStart || !maxEnd) return null
+  return isoRangeFromPeriodDays(minStart, maxEnd)
+}
+
 /** 기관 일정형 단일 기간 — 저장·조회 시 시각 제거 */
 export function normalizeEducationSchedulePeriodRangeDateOnly(
   range: [Dayjs, Dayjs]

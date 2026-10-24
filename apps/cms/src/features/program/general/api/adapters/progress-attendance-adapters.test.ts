@@ -51,11 +51,12 @@ describe('progress-attendance-adapters', () => {
     expect(row?.attendanceStatus).toBeUndefined()
   })
 
-  it('does not render schedules missing from the attendance response', () => {
+  it('renders every program schedule table and keeps unassigned schedules empty', () => {
     const sessions = buildProgressAttendanceSessionsFromRemote({
       schedules: [
         { scheduleId: 9001, sessionNo: 1, scheduleStatus: 'COMPLETED' },
         { scheduleId: 9002, sessionNo: 2, scheduleStatus: 'COMPLETED' },
+        { scheduleId: 9003, sessionNo: 3, scheduleStatus: 'SCHEDULED' },
       ],
       participants: [{ participantId: 1, memberName: '학생', participantType: 'INDIVIDUAL' }],
       attendancesByScheduleId: {
@@ -64,7 +65,52 @@ describe('progress-attendance-adapters', () => {
       },
     })
 
-    expect(sessions.map(session => session.id)).toEqual(['9001'])
+    expect(sessions.map(session => session.id)).toEqual(['9001', '9002', '9003'])
+    expect(sessions[0]?.participants).toHaveLength(1)
+    expect(sessions[1]?.participants).toEqual([])
+    expect(sessions[2]?.participants).toEqual([])
+  })
+
+  it('puts a participant only on assigned schedules, even without attendance yet', () => {
+    const sessions = buildProgressAttendanceSessionsFromRemote({
+      schedules: [
+        { scheduleId: 9001, sessionNo: 1, scheduleStatus: 'IN_PROGRESS' },
+        { scheduleId: 9002, sessionNo: 2, scheduleStatus: 'IN_PROGRESS' },
+      ],
+      participants: [
+        {
+          participantId: 1,
+          memberName: '배정된사람',
+          participantType: 'INDIVIDUAL',
+          sessions: [{ scheduleId: 9002, resolvedScheduleId: 9002 }],
+        },
+        {
+          participantId: 2,
+          memberName: '다른일정',
+          participantType: 'INDIVIDUAL',
+          sessions: [{ scheduleId: 9001 }],
+        },
+      ],
+      attendancesByScheduleId: {},
+    })
+
+    expect(sessions[0]?.participants.map(row => row.name)).toEqual(['다른일정'])
+    expect(sessions[1]?.participants.map(row => row.name)).toEqual(['배정된사람'])
+    expect(sessions[1]?.participants[0]?.attendanceRecorded).toBe(false)
+  })
+
+  it('drops schedules without scheduleId and still shows empty roster tables', () => {
+    const sessions = buildProgressAttendanceSessionsFromRemote({
+      schedules: [
+        { scheduleId: undefined, sessionNo: 1, scheduleStatus: 'COMPLETED' },
+        { scheduleId: 9002, sessionNo: 2, scheduleStatus: 'COMPLETED' },
+      ],
+      participants: [],
+      attendancesByScheduleId: {},
+    })
+
+    expect(sessions.map(session => session.id)).toEqual(['9002'])
+    expect(sessions[0]?.participants).toEqual([])
   })
 
   it('maps participant roster fields for attendance table columns', () => {

@@ -12,6 +12,7 @@ export interface StudentRosterItemResponse {
   studentName?: string;
   gender?: string;
   birthDate?: string;
+  birthYear?: number;
   grade?: string;
   className?: string;
   studentNo?: number;

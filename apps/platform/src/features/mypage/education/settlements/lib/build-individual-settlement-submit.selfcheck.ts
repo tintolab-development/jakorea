@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { buildSettlementWriteDraft } from './build-write-draft.ts'
 import {
   buildIndividualSettlementItems,
+  buildIndividualSettlementResubmitRequest,
   buildIndividualSettlementSubmitRequest,
 } from './build-individual-settlement-submit.ts'
 
@@ -77,6 +78,7 @@ const oneWay = buildSettlementWriteDraft({
     accountNumber: '123',
     accountHolder: '홍길동',
     transportItemType: 'TRANSPORTATION',
+    transportEvidenceRequired: true,
     tripType: 'one_way' as const,
     departTransit: 'bus',
     departAmount: '3,000',
@@ -99,5 +101,100 @@ const request = buildIndividualSettlementSubmitRequest(draft)
 assert.equal(request.scheduleId, 88)
 assert.equal(request.idempotencyKey, '11111111-1111-1111-1111-111111111111')
 assert.equal(request.items.length, 2)
+
+const noEvidenceDraft = buildSettlementWriteDraft({
+  applicationId: '12',
+  sessionId: '88',
+  scheduleId: 88,
+  isInstructor: false,
+  documentKind: 'receipt',
+  expenseDate: '2026-04-20T10:00:00+09:00',
+  idempotencyKey: '22222222-2222-2222-2222-222222222222',
+  enabledItemTypes: ['TRANSPORTATION', 'MEAL', 'ACTIVITY'],
+  name: '홍길동',
+  homeAddress: '서울',
+  homeAddressDetail: '1층',
+  bank: '국민',
+  accountNumber: '123',
+  accountHolder: '홍길동',
+  transportItemType: 'TRANSPORTATION',
+  transportItemName: '교통비',
+  transportEvidenceRequired: false,
+  tripType: 'one_way',
+  departTransit: 'bus',
+  departAmount: '5,000',
+  departAttachments: [],
+  returnTransit: '',
+  returnAmount: '',
+  extraItems: [
+    {
+      itemType: 'MEAL',
+      itemName: '식사비',
+      evidenceRequired: false,
+      amount: '12,000',
+      attachments: [],
+    },
+    {
+      itemType: 'ACTIVITY',
+      itemName: '활동비',
+      evidenceRequired: true,
+      amount: '8,000',
+      attachments: [{ fileObjectId: 31, fileName: 'activity.jpg' }],
+    },
+  ],
+  mealAmount: '',
+  mealFiles: [],
+  activityAmount: '',
+  activityFiles: [],
+})
+const noEvidenceItems = buildIndividualSettlementItems(noEvidenceDraft)
+assert.equal(noEvidenceItems[0]?.itemType, 'TRANSPORTATION')
+assert.deepEqual(noEvidenceItems[0]?.expenses, [])
+assert.equal(noEvidenceItems[1]?.itemType, 'MEAL')
+assert.deepEqual(noEvidenceItems[1]?.expenses, [])
+assert.equal(noEvidenceItems[2]?.itemType, 'ACTIVITY')
+assert.equal(noEvidenceItems[2]?.expenses?.[0]?.expenseType, 'OTHER')
+assert.deepEqual(noEvidenceItems[2]?.expenses?.[0]?.fileObjectIds, [31])
+
+const resubmitDraft = buildSettlementWriteDraft({
+  applicationId: '12',
+  sessionId: '88',
+  scheduleId: 88,
+  isInstructor: false,
+  documentKind: 'receipt',
+  expenseDate: '2026-04-20',
+  idempotencyKey: '33333333-3333-3333-3333-333333333333',
+  settlementApplicationId: 700001,
+  currentRevisionNo: 1,
+  resubmit: true,
+  name: '홍길동',
+  homeAddress: '',
+  homeAddressDetail: '',
+  bank: '국민',
+  accountNumber: '123',
+  accountHolder: '홍길동',
+  extraItems: [
+    {
+      itemType: 'MEAL',
+      itemName: '식사비',
+      evidenceRequired: true,
+      amount: '12,000',
+      attachments: [{ fileObjectId: 41, fileName: 'meal.jpg' }],
+    },
+  ],
+  tripType: 'one_way',
+  departTransit: '',
+  departAmount: '',
+  returnTransit: '',
+  returnAmount: '',
+  mealAmount: '',
+  mealFiles: [],
+  activityAmount: '',
+  activityFiles: [],
+})
+const resubmit = buildIndividualSettlementResubmitRequest(resubmitDraft)
+assert.equal(resubmit.expectedRevisionNo, 1)
+assert.equal(resubmit.idempotencyKey, '33333333-3333-3333-3333-333333333333')
+assert.equal(resubmit.items[0]?.itemType, 'MEAL')
 
 console.log('build-individual-settlement-submit.selfcheck: ok')

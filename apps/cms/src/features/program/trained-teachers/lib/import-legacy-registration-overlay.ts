@@ -4,6 +4,7 @@
  */
 import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
+import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
   applyGeneralRegistrationOverlayToProgram,
@@ -76,8 +77,8 @@ function extractCommon(
   const textbookName =
     typeof overlay[TEXTBOOK_KEY] === 'string' ? overlay[TEXTBOOK_KEY] : (program.textbookName ?? '')
   return {
-    title: program.title,
-    mainTitle: program.mainTitle ?? program.title,
+    title: program.generalCommonInfo?.announcementTitle ?? program.title,
+    mainTitle: program.mainTitle ?? '',
     titleEn: program.titleEn ?? '',
     announcementTitle: program.generalCommonInfo?.announcementTitle ?? program.title,
     detailedProgramId: program.detailedProgramId ?? '',
@@ -106,6 +107,10 @@ function extractCommon(
     scheduleDetails: [...(program.generalCommonInfo?.scheduleDetails ?? [])],
     educationScheduleMode: editor.educationScheduleMode,
     educationScheduleLines: [...(program.generalCommonInfo?.educationScheduleLines ?? [])],
+    educationScheduleRange: educationScheduleRangeFromPeriodLines({
+      mode: editor.educationScheduleMode,
+      lines: program.generalCommonInfo?.educationScheduleLines,
+    }),
     generalSurveyMenuKeys: [...(program.generalSurveyMenuKeys ?? [])],
     ips: program.ips ?? undefined,
     programCategory: program.programCategory ?? undefined,

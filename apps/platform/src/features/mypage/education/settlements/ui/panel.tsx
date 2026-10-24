@@ -116,7 +116,7 @@ export function EducationSettlementPanel({
       <div className={styles.status}>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           {individualIneligibleMessage(remoteSettlements.individualErrorCode) ??
-            '정산현황을 불러오지 못했습니다.'}
+            '지급 항목을 불러오지 못했습니다.'}
         </PFText>
         <PFButton
           type="button"

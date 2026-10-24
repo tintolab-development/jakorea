@@ -18,6 +18,7 @@ export interface AdminAccountApprovalDetailResponse {
   phone?: string;
   gender?: string;
   birthDate?: string;
+  birthYear?: number;
   status?: string;
   roleCode?: string;
   roleName?: string;

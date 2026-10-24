@@ -486,7 +486,7 @@ export function ProgramWageInfoSection({
                         value={field.value == null ? '' : String(field.value)}
                         onBlur={field.onBlur}
                         onValueChange={raw => {
-                          field.onChange(raw === '' ? undefined : Number(raw))
+                          field.onChange(raw === '' ? null : Number(raw))
                           syncWagePricingTimeUnit(form)
                         }}
                       />

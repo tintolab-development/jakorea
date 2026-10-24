@@ -54,9 +54,19 @@ export function resolveTrainedTeacherEducationJournalEnabled(
   raw: unknown,
   fallback?: boolean
 ): boolean {
-  if (raw === 'yes' || raw === true) return true
-  if (raw === 'no' || raw === false) return false
-  return fallback ?? false
+  if (raw === true || raw === 1) return true
+  if (raw === false || raw === 0) return false
+  if (typeof raw === 'string') {
+    const normalized = raw.trim().toLowerCase()
+    if (normalized === 'true' || normalized === 'yes' || normalized === 'y' || normalized === '1') {
+      return true
+    }
+    if (normalized === 'false' || normalized === 'no' || normalized === 'n' || normalized === '0') {
+      return false
+    }
+  }
+  if (fallback === true || fallback === false) return fallback
+  return false
 }
 
 function persistRegistrationAndRecruitOverlay(

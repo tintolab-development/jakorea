@@ -203,16 +203,54 @@ function persistGuidanceAnswers(raw: unknown): CompanySchoolApplicationGuidanceA
   return next
 }
 
+const derivedApplicationSnapshotCache = new Map<string, { token: string; value: unknown }>()
+
+function cachedApplicationSnapshot(key: string, token: string, create: () => unknown): unknown {
+  const hit = derivedApplicationSnapshotCache.get(key)
+  if (hit?.token === token) return hit.value
+  const value = create()
+  derivedApplicationSnapshotCache.set(key, { token, value })
+  return value
+}
+
+function scheduleSnapshotToken(block: CompanySchoolPreferredScheduleBlock): string {
+  return [
+    block.date ?? '',
+    block.session,
+    block.firstClassPeriod,
+    block.firstStart ?? '',
+    block.firstEnd ?? '',
+    block.secondClassPeriod,
+    block.secondStart ?? '',
+    block.secondEnd ?? '',
+  ].join('\u0001')
+}
+
 export function readCompanySchoolApplicationOverlayValue(
   state: CompanySchoolApplicationFormState,
   key: string
 ): unknown {
-  if (key === `${PREFIX}.guidanceAnswers`) return { ...state.guidanceAnswers }
+  if (key === `${PREFIX}.guidanceAnswers`) {
+    const answers = state.guidanceAnswers
+    return cachedApplicationSnapshot(
+      key,
+      GUIDANCE_KEYS.map(item => answers[item]).join('\u0001'),
+      () => ({ ...answers })
+    )
+  }
   if (key === `${PREFIX}.previousYearParticipation`) return state.previousYearParticipation
   if (key === `${PREFIX}.lessonReply.companyType`) return state.lessonReply.companyType
   if (key === `${PREFIX}.lessonReply.customCompanyName`) return state.lessonReply.customCompanyName
-  if (key === `${PREFIX}.schedule.first`) return { ...state.schedule.first }
-  if (key === `${PREFIX}.schedule.second`) return { ...state.schedule.second }
+  if (key === `${PREFIX}.schedule.first`) {
+    return cachedApplicationSnapshot(key, scheduleSnapshotToken(state.schedule.first), () => ({
+      ...state.schedule.first,
+    }))
+  }
+  if (key === `${PREFIX}.schedule.second`) {
+    return cachedApplicationSnapshot(key, scheduleSnapshotToken(state.schedule.second), () => ({
+      ...state.schedule.second,
+    }))
+  }
   if (key.startsWith(BASIC_PREFIX)) {
     const field = key.slice(BASIC_PREFIX.length) as keyof CompanySchoolApplicationFormState['basicInfo']
     if ((BASIC_KEYS as readonly string[]).includes(field)) return state.basicInfo[field]

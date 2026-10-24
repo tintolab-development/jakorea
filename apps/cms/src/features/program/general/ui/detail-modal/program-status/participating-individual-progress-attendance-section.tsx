@@ -79,7 +79,6 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
       <FilterTableLayout
         className="school-detail-attendance-section__filter-layout"
         bordered={false}
-        filterResponsiveWrap={false}
         fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}

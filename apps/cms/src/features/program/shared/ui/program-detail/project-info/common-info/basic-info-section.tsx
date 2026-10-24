@@ -451,11 +451,11 @@ export function BasicInfoSection({
       : optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
     const ipOwnedLabel = optionLabel(
       isEconomyCommonInfo ? ECONOMY_IP_OWNED_OPTIONS : IP_OWNED_OPTIONS,
-      trainedTeacherCommonInfo ? program.ipOwned : (program.ipOwned ?? 'JA')
+      program.ipOwned
     )
     const courseDeliveredByLabel = optionLabel(
       COURSE_DELIVERED_BY_OPTIONS,
-      trainedTeacherCommonInfo ? program.courseDeliveredBy : (program.courseDeliveredBy ?? 'JA')
+      program.courseDeliveredBy
     )
     const ipsLabel = optionLabel(
       IPS_OPTIONS,
@@ -1047,14 +1047,14 @@ export function BasicInfoSection({
                   render={({ field }) => (
                     <CmsSelect inputSize="small"
                       withAllOption={false}
-                      placeholder="전체"
+                      placeholder="IP Owned를 선택하세요"
                       width={240}
                       options={
                         isEconomyCommonInfo
                           ? [...ECONOMY_IP_OWNED_OPTIONS]
                           : [...IP_OWNED_OPTIONS]
                       }
-                      value={field.value ?? 'JA'}
+                      value={field.value ?? undefined}
                       onChange={next => field.onChange(next == null ? undefined : String(next))}
                     />
                   )}
@@ -1073,10 +1073,10 @@ export function BasicInfoSection({
                   render={({ field }) => (
                     <CmsSelect inputSize="small"
                       withAllOption={false}
-                      placeholder="전체"
+                      placeholder="Course Delivered By를 선택하세요"
                       width={240}
                       options={[...COURSE_DELIVERED_BY_OPTIONS]}
-                      value={field.value ?? 'JA'}
+                      value={field.value ?? undefined}
                       onChange={next =>
                         field.onChange(
                           next === 'JA' || next === 'Jointly' || next === 'Partner'
@@ -1499,7 +1499,7 @@ export function BasicInfoSection({
         <DetailInfoForm.Field
           label="IP Owned"
           required
-          view={program.ipOwned ?? 'JA'}
+          view={program.ipOwned ?? '-'}
           edit={
             <Controller
               name="ipOwned"
@@ -1510,7 +1510,7 @@ export function BasicInfoSection({
                   options={IP_OWNED_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  placeholder="JA"
+                  placeholder="IP Owned를 선택하세요"
                 />
               )}
             />
@@ -1533,7 +1533,7 @@ export function BasicInfoSection({
                   options={COURSE_DELIVERED_BY_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  placeholder="JA"
+                  placeholder="Course Delivered By를 선택하세요"
                 />
               )}
             />
