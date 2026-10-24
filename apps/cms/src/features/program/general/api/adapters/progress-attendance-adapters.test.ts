@@ -99,6 +99,109 @@ describe('progress-attendance-adapters', () => {
     expect(sessions[1]?.participants[0]?.attendanceRecorded).toBe(false)
   })
 
+  it('drops the curriculum period window so 공통 교육 예정 1 becomes 1회차', () => {
+    const sessions = buildProgressAttendanceSessionsFromRemote({
+      schedules: [
+        {
+          scheduleId: 187270,
+          sessionNo: 1,
+          scheduleName: '개커복날 강사테슽 커리큘럼',
+          startAt: '2026-10-23T15:00:00Z',
+          endAt: '2026-12-24T14:59:59.999Z',
+          allDay: true,
+          scheduleStatus: 'COMPLETED',
+        },
+        {
+          scheduleId: 187271,
+          sessionNo: undefined,
+          scheduleName: '공통 교육 예정 1',
+          startAt: '2026-10-24T07:00:00Z',
+          endAt: '2026-10-24T07:02:00Z',
+          allDay: false,
+          scheduleStatus: 'COMPLETED',
+        },
+        {
+          scheduleId: 187272,
+          sessionNo: 2,
+          scheduleName: '공통 교육 예정 2',
+          startAt: '2026-10-24T07:05:00Z',
+          endAt: '2026-10-24T07:06:00Z',
+          allDay: false,
+          scheduleStatus: 'COMPLETED',
+        },
+        {
+          scheduleId: 187273,
+          sessionNo: 3,
+          scheduleName: '공통 교육 예정 3',
+          startAt: '2026-10-24T07:10:00Z',
+          endAt: '2026-10-24T07:11:00Z',
+          allDay: false,
+          scheduleStatus: 'COMPLETED',
+        },
+      ],
+      participants: [
+        {
+          participantId: 1,
+          memberName: '일반회원',
+          participantType: 'INDIVIDUAL',
+          sessions: [{ scheduleId: 187271 }, { scheduleId: 187272 }, { scheduleId: 187273 }],
+        },
+      ],
+      attendancesByScheduleId: {},
+    })
+
+    expect(sessions.map(session => session.id)).toEqual(['187271', '187272', '187273'])
+    expect(sessions.map(session => session.headerTitle)).toEqual([
+      '1회차 : 2026.10.24(토)',
+      '2회차 : 2026.10.24(토)',
+      '3회차 : 2026.10.24(토)',
+    ])
+  })
+
+  it('hides a give-up participant from schedules after the give-up day', () => {
+    const sessions = buildProgressAttendanceSessionsFromRemote({
+      schedules: [
+        {
+          scheduleId: 1,
+          sessionNo: 1,
+          startAt: '2026-01-09T09:20:00+09:00',
+          endAt: '2026-01-09T11:10:00+09:00',
+          scheduleStatus: 'COMPLETED',
+        },
+        {
+          scheduleId: 2,
+          sessionNo: 2,
+          startAt: '2026-01-16T09:20:00+09:00',
+          endAt: '2026-01-16T11:10:00+09:00',
+          scheduleStatus: 'COMPLETED',
+        },
+      ],
+      participants: [
+        {
+          participantId: 10,
+          memberName: '포기자',
+          participantType: 'INDIVIDUAL',
+          participantStatus: 'GIVE_UP',
+          giveUpAt: '2026-01-09T18:00:00+09:00',
+          sessions: [{ scheduleId: 1 }, { scheduleId: 2 }],
+        },
+        {
+          participantId: 11,
+          memberName: '진행자',
+          participantType: 'INDIVIDUAL',
+          sessions: [{ scheduleId: 1 }, { scheduleId: 2 }],
+        },
+      ],
+      attendancesByScheduleId: {},
+    })
+
+    expect(sessions[0]?.headerTitle).toBe('1회차 : 2026.01.09(금)')
+    expect(sessions[0]?.headerScheduleSummary).toBe('110분')
+    expect(sessions[0]?.headerPeriodRangeLabel).toBe('09:20 ~ 11:10')
+    expect(sessions[0]?.participants.map(row => row.name)).toEqual(['포기자', '진행자'])
+    expect(sessions[1]?.participants.map(row => row.name)).toEqual(['진행자'])
+  })
+
   it('drops schedules without scheduleId and still shows empty roster tables', () => {
     const sessions = buildProgressAttendanceSessionsFromRemote({
       schedules: [

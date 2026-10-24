@@ -6,6 +6,7 @@ const SETTINGS_LNB_ITEMS: Omit<MypageLnbItem, 'active'>[] = [
   { key: 'settingsConsents', label: '약관 및 정책 동의 관리', enabled: true, hideIcon: true },
 ]
 
+/** 약관 및 정책 동의 관리는 영수증 동의 진입 이후에도 숨기지 않는다. */
 export function getSettingsLnbItems(
   activeKey: MypageSettingsLnbItemKey = 'settingsProfile'
 ): MypageLnbItem[] {

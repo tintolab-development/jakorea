@@ -30,7 +30,6 @@ import {
   pickTransportPayableItem,
   receiptPaymentItemLabel,
   sortReceiptPayableItems,
-  type ReceiptPayableItem,
 } from '../lib/payment-items'
 import {
   RECEIPT_UPLOAD_ACCEPT,
@@ -54,6 +53,7 @@ import {
 } from '../lib/write-path'
 import { EducationSettlementSessionBanner } from './settlement-session-banner'
 import { mapIndividualSettlementDetailToDraft } from '../lib/map-individual-settlement-detail'
+import { usePaymentStatementConsentBasicInfo } from '../hooks/use-payment-statement-consent-basic-info'
 import { useInstructorApplyLockedBasic } from '@/features/mypage/instructor-apply'
 import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
@@ -433,14 +433,6 @@ function AmountReceiptSection({
   )
 }
 
-function resolvePayableItems(session: EducationSettlementItem | undefined): ReceiptPayableItem[] {
-  return (session?.payableItems ?? []).map(item => ({
-    itemType: item.itemType,
-    itemName: item.itemName,
-    evidenceRequired: item.evidenceRequired,
-  }))
-}
-
 export function EducationSettlementWriteForm({
   applicationId,
   sessionId,
@@ -459,6 +451,8 @@ export function EducationSettlementWriteForm({
   )
   const isInstructor = isInstructorMypageProfile(profile)
   const isReceipt = documentKind === 'receipt'
+  const consentBasicQuery = usePaymentStatementConsentBasicInfo(isReceipt)
+  const consentBasic = consentBasicQuery.basic
   const individualSchedules = useIndividualSettlementSchedulesQuery(
     isReceipt && isIndividualScheduleSettlementAudience(applicationType) ? applicationId : null,
   )
@@ -471,10 +465,11 @@ export function EducationSettlementWriteForm({
     [individualSchedules.schedules, session, sessionId],
   )
   const payableItems = useMemo(() => {
-    const fromSession = resolvePayableItems(session)
-    if (fromSession.length > 0) return fromSession
+    if (session?.payableItems && session.payableItems.length > 0) {
+      return normalizePayableItems(session.payableItems)
+    }
     return normalizePayableItems(matchedIndividual?.payableItems)
-  }, [matchedIndividual?.payableItems, session])
+  }, [matchedIndividual?.payableItems, session?.payableItems])
   const evidencePolicyUnconfigured = isEvidencePolicyUnconfigured(
     matchedIndividual?.ineligibleReason,
     payableItems,
@@ -493,12 +488,20 @@ export function EducationSettlementWriteForm({
   const hydrated = initialDraft ? hydrateSettlementWriteFormState(initialDraft) : null
   const settlement = profileQuery.data?.instructorProfile?.settlement
 
-  const [bank, setBank] = useState(hydrated?.bank ?? settlement?.bankName ?? '')
+  const [bank, setBank] = useState(
+    hydrated?.bank || (isReceipt ? consentBasic.bank : undefined) || settlement?.bankName || '',
+  )
   const [accountNumber, setAccountNumber] = useState(
-    hydrated?.accountNumber || settlement?.accountNumber || ''
+    hydrated?.accountNumber ||
+      (isReceipt ? consentBasic.accountNumber : undefined) ||
+      settlement?.accountNumber ||
+      '',
   )
   const [accountHolder, setAccountHolder] = useState(
-    hydrated?.accountHolder || settlement?.accountHolder || lockedBasic.name
+    hydrated?.accountHolder ||
+      (isReceipt ? consentBasic.accountHolder : undefined) ||
+      settlement?.accountHolder ||
+      lockedBasic.name,
   )
   const [tripType, setTripType] = useState<TripType>(hydrated?.tripType ?? 'round_trip')
   const [departTransit, setDepartTransit] = useState(hydrated?.departTransit ?? '')
@@ -535,20 +538,63 @@ export function EducationSettlementWriteForm({
   const [alertMessage, setAlertMessage] = useState('')
   const prefilledFromDetail = useRef(Boolean(hydrated))
 
-  const name = lockedBasic.name
-  const residentFront = ''
-  const residentBack = ''
+  const name =
+    hydrated?.name || (isReceipt ? consentBasic.name : undefined) || lockedBasic.name
+  const residentFront =
+    hydrated?.residentFront || (isReceipt ? consentBasic.residentFront : undefined) || ''
+  const residentBack =
+    hydrated?.residentBack || (isReceipt ? consentBasic.residentBack : undefined) || ''
+  const homeAddress =
+    hydrated?.homeAddress ||
+    (isReceipt ? consentBasic.homeAddress : undefined) ||
+    lockedBasic.homeAddress
+  const homeAddressDetail =
+    hydrated?.homeAddressDetail ||
+    (isReceipt ? consentBasic.homeAddressDetail : undefined) ||
+    lockedBasic.homeAddressDetail
+  const accountSeeded = useRef(
+    Boolean(
+      hydrated?.bank ||
+        hydrated?.accountNumber ||
+        hydrated?.accountHolder ||
+        (isReceipt && (consentBasic.bank || consentBasic.accountNumber || consentBasic.accountHolder)),
+    ),
+  )
 
   useEffect(() => {
     setAccountHolder(prev => (prev === '' && name ? name : prev))
   }, [name])
 
   useEffect(() => {
-    if (hydrated?.bank || !settlement?.bankName) return
-    setBank(prev => prev || settlement.bankName || '')
-    setAccountNumber(prev => prev || settlement.accountNumber || '')
-    setAccountHolder(prev => prev || settlement.accountHolder || name)
-  }, [hydrated?.bank, name, settlement])
+    if (accountSeeded.current) return
+    if (isReceipt && consentBasicQuery.isLoading) return
+    if (isReceipt && (consentBasic.bank || consentBasic.accountNumber || consentBasic.accountHolder)) {
+      setBank(consentBasic.bank || '')
+      setAccountNumber(consentBasic.accountNumber || '')
+      setAccountHolder(consentBasic.accountHolder || consentBasic.name || name)
+      accountSeeded.current = true
+      return
+    }
+    if (settlement?.bankName || settlement?.accountNumber || settlement?.accountHolder) {
+      setBank(prev => prev || settlement.bankName || '')
+      setAccountNumber(prev => prev || settlement.accountNumber || '')
+      setAccountHolder(prev => prev || settlement.accountHolder || name)
+      accountSeeded.current = true
+      return
+    }
+    if (!isReceipt || !consentBasicQuery.isLoading) {
+      accountSeeded.current = true
+    }
+  }, [
+    consentBasic.accountHolder,
+    consentBasic.accountNumber,
+    consentBasic.bank,
+    consentBasic.name,
+    consentBasicQuery.isLoading,
+    isReceipt,
+    name,
+    settlement,
+  ])
 
   const amountItemTypeKey = amountItems.map(item => item.itemType).join('|')
   useEffect(() => {
@@ -558,8 +604,8 @@ export function EducationSettlementWriteForm({
         detail: existingDetail.detail,
         applicationId,
         name,
-        homeAddress: lockedBasic.homeAddress,
-        homeAddressDetail: lockedBasic.homeAddressDetail,
+        homeAddress,
+        homeAddressDetail,
       })
       if (mapped) {
         prefilledFromDetail.current = true
@@ -591,8 +637,8 @@ export function EducationSettlementWriteForm({
     amountItems,
     applicationId,
     existingDetail.detail,
-    lockedBasic.homeAddress,
-    lockedBasic.homeAddressDetail,
+    homeAddress,
+    homeAddressDetail,
     name,
     payableItems,
   ])
@@ -615,6 +661,10 @@ export function EducationSettlementWriteForm({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isReceipt && consentBasicQuery.isLoading) {
+      showAlert('지급조서 사전 동의서 정보를 불러오는 중입니다.')
+      return
+    }
     if (isReceipt && payableItems.length === 0) {
       showAlert(
         individualIneligibleMessage('NO_PAYABLE_ITEMS') ??
@@ -661,8 +711,8 @@ export function EducationSettlementWriteForm({
       name,
       residentFront,
       residentBack,
-      homeAddress: lockedBasic.homeAddress,
-      homeAddressDetail: lockedBasic.homeAddressDetail,
+      homeAddress,
+      homeAddressDetail,
       bank,
       accountNumber,
       accountHolder,
@@ -737,7 +787,13 @@ export function EducationSettlementWriteForm({
           id="settlement-basic"
           title={`${basicSectionNo}. 기본 정보`}
           required
-          description={isReceipt ? undefined : '설명이 노출됩니다.'}
+          description={
+            isReceipt
+              ? consentBasicQuery.isLoading
+                ? '지급조서 사전 동의서 정보를 불러오는 중입니다.'
+                : undefined
+              : '설명이 노출됩니다.'
+          }
         >
           <PFFormFieldTable>
             <PFFormFieldRow type="single">
@@ -762,8 +818,8 @@ export function EducationSettlementWriteForm({
                 <PFFormHomeAddressFields
                   disabled
                   fillRow
-                  roadValue={lockedBasic.homeAddress}
-                  detailValue={lockedBasic.homeAddressDetail}
+                  roadValue={homeAddress}
+                  detailValue={homeAddressDetail}
                   onRoadChange={() => undefined}
                   onDetailChange={() => undefined}
                 />

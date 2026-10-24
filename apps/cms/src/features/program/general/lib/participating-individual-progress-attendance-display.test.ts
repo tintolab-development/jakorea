@@ -26,6 +26,7 @@ function session(
     filterValue: id,
     filterLabel: `${id}회차`,
     headerTitle: `${id}회차 출석`,
+    headerDateLabel: '2026.10.21',
     headerScheduleSummary: `${id}회차`,
     headerPeriodRangeLabel: '2026.10.21',
     headerPrefix: `${id}회차`,

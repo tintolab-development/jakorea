@@ -167,7 +167,10 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
   const overlayRows = useMemo(() => {
     const remoteSessions = assignmentSubmissionsQuery.data
-      ? buildProgressAssignmentSessionsFromRemote(assignmentSubmissionsQuery.data)
+      ? buildProgressAssignmentSessionsFromRemote(assignmentSubmissionsQuery.data, {
+          program,
+          giveUpParticipants: assignmentSubmissionsQuery.data.giveUpParticipants,
+        })
       : []
     const withSubmissions = mergeParticipantDetailAssignmentRowsWithRemote({
       participantId: participant.id,
@@ -195,6 +198,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     submissionTeamQuery.data,
     participant.satisfactionResponse,
     participant.surveyResponse,
+    program,
   ])
 
   const [rows, setRows] = useState(() => overlayRows)

@@ -15,6 +15,8 @@ import { useApplicationSettlementsQuery } from '@/features/mypage/education/appl
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import { educationApplicationDetailPath } from '@/features/mypage'
 import { INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
+import { useReceiptPaymentStatementConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
+import { PaymentStatementPreConsentModal } from '@/features/mypage/education/settlements/ui/payment-statement-pre-consent-modal'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { PFFormPage, PFText } from '@/shared/ui'
 
@@ -50,6 +52,11 @@ export function MypageEducationSettlementWritePage() {
   }, [remoteSettlements.enabled, remoteSettlements.items, sessionId])
 
   const title = documentKind === 'receipt' ? '영수증 제출하기' : '지급조서 작성하기'
+  const receiptConsent = useReceiptPaymentStatementConsent()
+  const blockedReceiptWrite =
+    documentKind === 'receipt' &&
+    !receiptConsent.isConsentLoading &&
+    !receiptConsent.isConsentSubmitted
   const backPath = applicationId
     ? buildSettlementTabPath(applicationId, area)
     : educationApplicationDetailPath(applicationId)
@@ -71,6 +78,39 @@ export function MypageEducationSettlementWritePage() {
           {INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE}
         </PFText>
       </PFFormPage>
+    )
+  }
+
+  if (documentKind === 'receipt' && receiptConsent.isConsentLoading) {
+    return (
+      <PFFormPage
+        aria-label={title}
+        back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
+        title={title}
+      >
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          동의 정보를 확인하는 중입니다.
+        </PFText>
+      </PFFormPage>
+    )
+  }
+
+  if (blockedReceiptWrite) {
+    return (
+      <>
+        <PFFormPage
+          aria-label={title}
+          back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
+          title={title}
+        >
+          {null}
+        </PFFormPage>
+        <PaymentStatementPreConsentModal
+          open
+          onCancel={() => navigate(backPath)}
+          onWriteConsent={receiptConsent.goToConsents}
+        />
+      </>
     )
   }
 

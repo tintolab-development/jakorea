@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { ExcelButton } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import {
@@ -55,13 +54,11 @@ export function ParticipatingIndividualProgressAssignmentSessionPanel({
       <div className="table-header-actions">
         <div className="table-header-title--wrapper school-detail-attendance-session__title-row">
           <span className="table-title">{session.headerTitle}</span>
-          <div className="school-detail-attendance-session__header-meta">
-            <span>{formatCmsScheduleDisplayLabel(session.headerScheduleSummary)}</span>
-            <span className="detail-info-form-inputs-separator" aria-hidden />
-            <span>{formatCmsScheduleDisplayLabel(session.headerPeriodRangeLabel)}</span>
-            <span className="detail-info-form-inputs-separator" aria-hidden />
-            <span>과제 제출 기한 : {formatCmsScheduleDisplayLabel(session.assignmentPeriodLabel)}</span>
-          </div>
+          {session.assignmentPeriodLabel.trim() ? (
+            <div className="school-detail-attendance-session__header-meta">
+              <span>과제 제출 기한 : {session.assignmentPeriodLabel}</span>
+            </div>
+          ) : null}
           <span className="table-description">총 {participants.length}건</span>
         </div>
         <div className="info-section-buttons--wrapper">

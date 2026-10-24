@@ -119,10 +119,36 @@ assert.equal(
     formBinding: {
       runtimeContext: {
         audienceApplication: {
+          dynamicQuestions: { [instructorScheduleId]: { optionCount: 0 } },
+        },
+      },
+      paragraphs: [{ id: instructorScheduleId, runtimeResolved: true }],
+    },
+  }),
+  true,
+)
+assert.equal(
+  resolveInstructorPortalAvailableScheduleEnabledForHidden({
+    formBinding: {
+      runtimeContext: {
+        audienceApplication: {
           dynamicQuestions: { [instructorScheduleId]: { optionCount: 2 } },
         },
       },
       paragraphs: [{ id: instructorScheduleId, runtimeResolved: true }],
+    },
+  }),
+  true,
+)
+assert.equal(
+  resolveVolunteerPortalActivityScheduleEnabledForHidden({
+    formBinding: {
+      runtimeContext: {
+        audienceApplication: {
+          dynamicQuestions: { [activityId]: { optionCount: 0 } },
+        },
+      },
+      paragraphs: [{ id: activityId, runtimeResolved: true }],
     },
   }),
   true,

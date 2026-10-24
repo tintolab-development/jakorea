@@ -29,7 +29,10 @@ import { ParticipatingIndividualProgressAttendanceTable } from './participating-
 function resolveEducationDateLabel(
   session: ParticipatingIndividualProgressAttendanceSessionGroup
 ): string {
-  const source = session.headerPeriodRangeLabel.split('~')[0]?.trim() ?? ''
+  const source =
+    session.headerDateLabel.trim() ||
+    session.headerPeriodRangeLabel.split('~')[0]?.trim() ||
+    ''
   const formatted = formatMonthDayWithWeekday(source)
   if (formatted !== '-') return formatted
   return source || session.headerTitle
@@ -157,11 +160,17 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
       <div className="table-header-actions">
         <div className="table-header-title--wrapper school-detail-attendance-session__title-row">
           <span className="table-title">{session.headerTitle}</span>
-          <div className="school-detail-attendance-session__header-meta">
-            <span>{session.headerScheduleSummary}</span>
-            <span className="detail-info-form-inputs-separator" aria-hidden />
-            <span>{session.headerPeriodRangeLabel}</span>
-          </div>
+          {session.headerScheduleSummary || session.headerPeriodRangeLabel ? (
+            <div className="school-detail-attendance-session__header-meta">
+              {session.headerScheduleSummary ? <span>{session.headerScheduleSummary}</span> : null}
+              {session.headerScheduleSummary && session.headerPeriodRangeLabel ? (
+                <span className="detail-info-form-inputs-separator" aria-hidden />
+              ) : null}
+              {session.headerPeriodRangeLabel ? (
+                <span>{session.headerPeriodRangeLabel}</span>
+              ) : null}
+            </div>
+          ) : null}
           <span className="table-description">총 {participants.length}건</span>
         </div>
         <div className="info-section-buttons--wrapper">

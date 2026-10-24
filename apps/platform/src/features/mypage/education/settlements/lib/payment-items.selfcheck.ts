@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {
+  isIndividualTransportAlias,
   isReceiptEvidenceRequired,
   isSupportedIndividualExpenseType,
   isTransportPaymentItemType,
@@ -7,7 +8,6 @@ import {
   normalizePayableItems,
   overlayPayableEvidenceRequired,
   payableEvidenceRequired,
-  payableItemEvidenceCaption,
   pickAmountPayableItems,
   pickTransportPayableItem,
   receiptPaymentItemLabel,
@@ -24,24 +24,15 @@ assert.equal(isTransportPaymentItemType('LONG_DISTANCE_TRANSPORTATION'), true)
 
 assert.equal(mapItemTypeToExpenseType('TRANSPORT_STUDENT'), 'TRANSPORTATION')
 assert.equal(mapItemTypeToExpenseType('STUDENT_TRANSPORTATION'), 'TRANSPORTATION')
-assert.equal(isTransportPaymentItemType('STUDENT_TRANSPORTATION'), false)
+assert.equal(isTransportPaymentItemType('STUDENT_TRANSPORTATION'), true)
+assert.equal(isIndividualTransportAlias('STUDENT_TRANSPORTATION'), true)
+assert.equal(isIndividualTransportAlias('TRANSPORTATION'), true)
+assert.equal(isIndividualTransportAlias('LONG_DISTANCE_TRANSPORTATION'), false)
 assert.equal(mapItemTypeToExpenseType('MEAL'), 'MEAL')
 assert.equal(mapItemTypeToExpenseType('LODGING_1C1S'), 'LODGING')
 assert.equal(mapItemTypeToExpenseType('ACTIVITY'), 'OTHER')
 assert.equal(isSupportedIndividualExpenseType('ACTIVITY'), true)
 assert.equal(isSupportedIndividualExpenseType('MEAL'), true)
-assert.equal(
-  payableItemEvidenceCaption({ itemType: 'MEAL', itemName: '식사비', evidenceRequired: true }),
-  '식사비 · 증빙 필수',
-)
-assert.equal(
-  payableItemEvidenceCaption({ itemType: 'TRANSPORTATION', itemName: '교통비', evidenceRequired: false }),
-  '교통비',
-)
-assert.equal(
-  payableItemEvidenceCaption({ itemType: 'ACTIVITY', itemName: '활동비', evidenceRequired: null }),
-  '활동비 · 증빙 정책을 확인할 수 없어 신청할 수 없습니다',
-)
 
 assert.equal(receiptPaymentItemLabel({ itemType: 'MEAL' }), '식사비')
 assert.equal(receiptPaymentItemLabel({ itemType: 'ACTIVITY', itemName: '참여자 활동비' }), '참여자 활동비')
@@ -113,5 +104,29 @@ const overlaid = overlayPayableEvidenceRequired(
 )
 assert.equal(overlaid[0]?.evidenceRequired, true)
 assert.equal(overlaid[1]?.evidenceRequired, false)
+
+const collapsedTransport = normalizePayableItems([
+  { itemType: 'STUDENT_TRANSPORTATION', itemName: '학생 교통비', evidenceRequired: true },
+  { itemType: 'TRANSPORTATION', itemName: '교통비', evidenceRequired: false },
+  { itemType: 'MEAL', itemName: '식사비', evidenceRequired: true },
+])
+assert.deepEqual(
+  collapsedTransport.map(item => item.itemType),
+  ['TRANSPORTATION', 'MEAL'],
+)
+assert.equal(collapsedTransport[0]?.itemName, '교통비')
+assert.equal(collapsedTransport[0]?.evidenceRequired, false)
+assert.equal(pickTransportPayableItem(collapsedTransport)?.itemType, 'TRANSPORTATION')
+assert.deepEqual(
+  pickAmountPayableItems(collapsedTransport).map(item => item.itemType),
+  ['MEAL'],
+)
+
+const studentOnly = normalizePayableItems([
+  { itemType: 'STUDENT_TRANSPORTATION', itemName: '학생 교통비', evidenceRequired: true },
+])
+assert.equal(studentOnly[0]?.itemType, 'STUDENT_TRANSPORTATION')
+assert.equal(pickTransportPayableItem(studentOnly)?.itemType, 'STUDENT_TRANSPORTATION')
+assert.equal(pickAmountPayableItems(studentOnly).length, 0)
 
 console.log('payment-items.selfcheck: ok')

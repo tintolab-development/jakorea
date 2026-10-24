@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useReceiptPaymentStatementConsent } from '../hooks/use-receipt-payment-statement-consent'
+import { PaymentStatementPreConsentModal } from './payment-statement-pre-consent-modal'
 import { resolveSettlementAreaFromPathname } from '../lib/write-path'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
@@ -93,6 +95,9 @@ export function EducationSettlementPanel({
   })
   const area = resolveSettlementAreaFromPathname(location.pathname)
   const operationEnd = readProgramOperationEndAt(operationEndAt)
+  const receiptConsent = useReceiptPaymentStatementConsent()
+  const handleReceiptWrite =
+    documentKind === 'receipt' ? receiptConsent.tryWriteReceipt : undefined
 
   const pageItems = useMemo(() => {
     const start = (currentPage - 1) * EDUCATION_SETTLEMENT_PAGE_SIZE
@@ -186,6 +191,7 @@ export function EducationSettlementPanel({
             area={area}
             operationEndAt={operationEnd}
             hideInstructorWrite={isGemini}
+            onReceiptWrite={handleReceiptWrite}
             initialRejectOpen={
               shouldOpenRejectReason &&
               item.status === 'rejected' &&
@@ -194,6 +200,11 @@ export function EducationSettlementPanel({
           />
         ))}
       </EducationSessionList>
+      <PaymentStatementPreConsentModal
+        open={receiptConsent.modalOpen}
+        onCancel={receiptConsent.closeModal}
+        onWriteConsent={receiptConsent.goToConsents}
+      />
     </div>
   )
 }

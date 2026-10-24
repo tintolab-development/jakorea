@@ -20,6 +20,8 @@ import {
   useSubmitIndividualSettlementMutation,
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { mapIndividualSettlementDetailToDraft } from '@/features/mypage/education/settlements/lib/map-individual-settlement-detail'
+import { overlaySettlementBasicWithPaymentConsent } from '@/features/mypage/education/settlements/lib/map-payment-statement-basic-info'
+import { usePaymentStatementConsentBasicInfo } from '@/features/mypage/education/settlements/hooks/use-payment-statement-consent-basic-info'
 import { useInstructorApplyLockedBasic } from '@/features/mypage/instructor-apply'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import {
@@ -64,6 +66,7 @@ export function MypageEducationSettlementConfirmPage() {
   )
   const submitMutation = useSubmitIndividualSettlementMutation(applicationId)
   const { lockedBasic } = useInstructorApplyLockedBasic()
+  const consentBasicQuery = usePaymentStatementConsentBasicInfo(documentKind === 'receipt')
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
 
@@ -84,18 +87,27 @@ export function MypageEducationSettlementConfirmPage() {
     viewMode || storedDraft == null ? session?.settlementApplicationId : null,
   )
   const draft = useMemo(() => {
-    if (storedDraft) return storedDraft
-    if (!viewMode || !detailQuery.detail) return null
-    return mapIndividualSettlementDetailToDraft({
-      detail: detailQuery.detail,
-      applicationId,
-      name: lockedBasic.name,
-      homeAddress: lockedBasic.homeAddress,
-      homeAddressDetail: lockedBasic.homeAddressDetail,
-    })
+    const mapped =
+      storedDraft ??
+      (viewMode && detailQuery.detail
+        ? mapIndividualSettlementDetailToDraft({
+            detail: detailQuery.detail,
+            applicationId,
+            name: lockedBasic.name,
+            homeAddress: lockedBasic.homeAddress,
+            homeAddressDetail: lockedBasic.homeAddressDetail,
+          })
+        : null)
+    if (!mapped || documentKind !== 'receipt') return mapped
+    return {
+      ...mapped,
+      basic: overlaySettlementBasicWithPaymentConsent(mapped.basic, consentBasicQuery.basic),
+    }
   }, [
     applicationId,
+    consentBasicQuery.basic,
     detailQuery.detail,
+    documentKind,
     lockedBasic.homeAddress,
     lockedBasic.homeAddressDetail,
     lockedBasic.name,

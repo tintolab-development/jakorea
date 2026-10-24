@@ -215,18 +215,17 @@ import {
 } from '@/features/program/ui/apply-instructor-crime-record/apply-instructor-crime-record'
 import {
   ApplyInstructorAvailableSchedule,
-  buildInstructorApplyScheduleSlots,
   emptyInstructorAvailableSchedule,
   findIncompleteInstructorAvailableScheduleMessage,
   findIncompleteInterviewScheduleMessage,
   findIncompleteVolunteerActivityScheduleMessage,
   INDIVIDUAL_INTERVIEW_SCHEDULE_COPY,
   VOLUNTEER_ACTIVITY_SCHEDULE_COPY,
-  instructorAvailableScheduleAnswerFromValues,
   instructorAvailableScheduleOptionValues,
   instructorAvailableScheduleValuesFromDraftAnswer,
   readPortalApplicationBindingOptionSlots,
   readRuntimeInstructorScheduleSlots,
+  resolveApplyAvailableScheduleSlots,
   type ApplyInstructorAvailableScheduleValues,
 } from '@/features/program/ui/apply-instructor-available-schedule/apply-instructor-available-schedule'
 import {
@@ -883,18 +882,20 @@ export function ProgramApplyPage() {
     )
     return readRuntimeInstructorScheduleSlots(scheduleParagraph)
   }, [applicationFormDocument])
-  const instructorScheduleSlots = useMemo(() => {
-    if (usesOsaAvailableSchedule) return runtimeInstructorScheduleSlots ?? []
-    return (
-      runtimeInstructorScheduleSlots ??
-      (program
-        ? buildInstructorApplyScheduleSlots({
-            educationScheduleLines: program.educationScheduleLines,
-            educationSchedules: program.educationSchedules,
-          })
-        : [])
-    )
-  }, [program, runtimeInstructorScheduleSlots, usesOsaAvailableSchedule])
+  const instructorScheduleSlots = useMemo(
+    () =>
+      resolveApplyAvailableScheduleSlots({
+        runtimeSlots: runtimeInstructorScheduleSlots,
+        allowProgramDisplayFallback: !remoteApplyEnabled && !usesOsaAvailableSchedule,
+        program,
+      }),
+    [
+      program,
+      remoteApplyEnabled,
+      runtimeInstructorScheduleSlots,
+      usesOsaAvailableSchedule,
+    ]
+  )
   const interviewBindingParagraph = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
@@ -923,17 +924,12 @@ export function ProgramApplyPage() {
   }, [applicationFormDocument])
   const volunteerActivitySlots = useMemo(() => {
     const runtimeVolunteer = readRuntimeInstructorScheduleSlots(volunteerActivityBindingParagraph)
-    if (usesOsaAvailableSchedule) return runtimeVolunteer ?? []
-    return (
-      runtimeVolunteer ??
-      (program
-        ? buildInstructorApplyScheduleSlots({
-            educationScheduleLines: program.educationScheduleLines,
-            educationSchedules: program.educationSchedules,
-          })
-        : [])
-    )
-  }, [program, usesOsaAvailableSchedule, volunteerActivityBindingParagraph])
+    return resolveApplyAvailableScheduleSlots({
+      runtimeSlots: runtimeVolunteer,
+      allowProgramDisplayFallback: !remoteApplyEnabled && !usesOsaAvailableSchedule,
+      program,
+    })
+  }, [program, remoteApplyEnabled, usesOsaAvailableSchedule, volunteerActivityBindingParagraph])
   useEffect(() => {
     const currentIds = instructorScheduleSlots.map(slot => slot.id)
     setInstructorSchedule(prev => {
@@ -2539,7 +2535,7 @@ export function ProgramApplyPage() {
           instructorScheduleSlots
         )
         if (scheduleError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          setSubmitAlert({ description: scheduleError })
           return
         }
       }
@@ -2605,7 +2601,7 @@ export function ProgramApplyPage() {
           volunteerActivitySlots
         )
         if (activityError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          setSubmitAlert({ description: activityError })
           return
         }
       }
@@ -2758,12 +2754,7 @@ export function ProgramApplyPage() {
       }
       if (instructorScheduleParagraph && instructorScheduleSlots.length > 0) {
         overrides[resolveApplicationAnswerKey(instructorScheduleParagraph)] =
-          runtimeInstructorScheduleSlots != null || usesOsaAvailableSchedule
-            ? instructorAvailableScheduleOptionValues(instructorSchedule, instructorScheduleSlots)
-            : instructorAvailableScheduleAnswerFromValues(
-                instructorSchedule,
-                instructorScheduleSlots
-              )
+          instructorAvailableScheduleOptionValues(instructorSchedule, instructorScheduleSlots)
       }
       if (interviewSubmitVisible && interviewBindingParagraph) {
         const interviewAnswerKey = resolveApplicationAnswerKey(

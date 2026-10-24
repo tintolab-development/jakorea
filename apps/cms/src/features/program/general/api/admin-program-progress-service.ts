@@ -309,26 +309,11 @@ export async function saveGeneralScheduleAttendances(
   await putScheduleAttendancesRemote(scheduleId, { attendances })
 }
 
-/**
- * dashboard program-schedules + schedule attendances + participants.
- * mock/null 폴백 없음.
- */
-export async function fetchGeneralProgressAttendanceBundle(programId: string): Promise<{
-  schedules: import('@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse').DashboardProgramScheduleResponse[]
-  participants: import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse[]
-  attendancesByScheduleId: Record<
-    string,
-    import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-  >
-}> {
-  assertProgramProgressRemoteReady()
-  const [schedules, firstParticipantsPage] = await Promise.all([
-    fetchProgramSchedulesViaDashboardRemote(programId),
-    fetchProgramParticipantsRemote(programId, {
-      page: 0,
-      size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
-    }),
-  ])
+export async function fetchAllProgramProgressParticipants(programId: string) {
+  const firstParticipantsPage = await fetchProgramParticipantsRemote(programId, {
+    page: 0,
+    size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
+  })
   const participantItems = [...(firstParticipantsPage.items ?? [])]
   const participantTotalPages =
     firstParticipantsPage.totalPages ??
@@ -343,6 +328,26 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
     })
     participantItems.push(...(nextPage.items ?? []))
   }
+  return participantItems
+}
+
+/**
+ * dashboard program-schedules + schedule attendances + participants.
+ * mock/null 폴백 없음.
+ */
+export async function fetchGeneralProgressAttendanceBundle(programId: string): Promise<{
+  schedules: import('@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse').DashboardProgramScheduleResponse[]
+  participants: import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse[]
+  attendancesByScheduleId: Record<
+    string,
+    import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
+  >
+}> {
+  assertProgramProgressRemoteReady()
+  const [schedules, participantItems] = await Promise.all([
+    fetchProgramSchedulesViaDashboardRemote(programId),
+    fetchAllProgramProgressParticipants(programId),
+  ])
   const scheduleIdList = schedules
     .map(s => s.scheduleId)
     .filter((id): id is number => id != null && Number.isFinite(Number(id)) && Number(id) > 0)
@@ -362,7 +367,11 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
 /** 일반 개인 진행 현황 · 과제 관리. mock/null 폴백 없음. */
 export async function fetchGeneralProgressAssignmentBundle(programId: string) {
   assertProgramProgressRemoteReady()
-  return fetchProgramAssignmentSubmissionsRemote(programId)
+  const [submissions, giveUpParticipants] = await Promise.all([
+    fetchProgramAssignmentSubmissionsRemote(programId),
+    fetchAllProgramProgressParticipants(programId),
+  ])
+  return { ...submissions, giveUpParticipants }
 }
 
 export async function fetchGeneralProgramLectureReports(
