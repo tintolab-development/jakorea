@@ -15,6 +15,7 @@ import type {
   ProgramVolunteerInterviewSchedule,
 } from '../model/types'
 import { PROGRAM_TAB_LABEL, programTabLabels } from '../lib/constants.ts'
+import { fallbackPortalTab, isUjatProgramType, mapPortalTabs } from '../lib/portal-category.ts'
 import {
   programTabFromPortalTab,
   selectRecruitmentsForFocus,
@@ -102,15 +103,6 @@ const RECRUITMENT_STATUS = {
   recruiting: 'recruiting',
   closed: 'closed',
 } as const satisfies Record<string, RecruitmentStatus>
-
-const PORTAL_CATEGORY_CODE: Record<string, ProgramTab> = {
-  INSTRUCTOR: 'instructor',
-  ORGANIZATION: 'institution',
-  YOUTH_YOUNG: 'youth',
-}
-
-/** 코드 오름차순: INSTRUCTOR, ORGANIZATION, YOUTH_YOUNG */
-const PORTAL_CATEGORY_ORDER = ['INSTRUCTOR', 'ORGANIZATION', 'YOUTH_YOUNG'] as const
 
 const EDUCATION_FORM_LABEL: Record<EducationForm, string> = {
   online: '온라인',
@@ -318,54 +310,13 @@ function mapEducationTargets(remote: { educationTarget?: string; educationTarget
   }
 }
 
-function fallbackTab(programType: string | undefined): ProgramTab {
-  switch ((programType ?? '').trim().toUpperCase()) {
-    case 'TRAINED_TEACHER':
-      return 'institution'
-    case 'GENERAL_ORGANIZATION':
-    case 'GEMINI':
-    case 'GEMINI_TRAINING':
-    case 'COMPANY_SCHOOL':
-    case 'ECONOMY':
-      return 'institution'
-    default:
-      return 'youth'
-  }
-}
-
 /**
  * 공개 모집 탭 배지.
  * `portalCategories`가 오면 그 배열 전체를 쓴다. 진행 중 행 하나만 남기지 않는다.
  * 필드가 없는 구 응답만 programType으로 탭 하나를 만든다.
  */
-function isUjatProgramType(programType: string | undefined): boolean {
-  const type = (programType ?? '').trim().toUpperCase()
-  return type === 'UJAT' || type === 'UJAT_PROGRAM'
-}
-
-function publicPortalCategoryCodes(
-  categories: string[] | undefined,
-  programType: string | undefined,
-): string[] {
-  const codes = (categories ?? []).map(item => item.trim().toUpperCase()).filter(Boolean)
-  if (!isUjatProgramType(programType)) return codes
-  return codes.filter(code => code !== 'INSTRUCTOR')
-}
-
-function mapPortalTabs(
-  categories: string[] | undefined,
-  programType: string | undefined
-): ProgramTab[] {
-  if (categories == null) return [fallbackTab(programType)]
-  const codes = new Set(publicPortalCategoryCodes(categories, programType))
-  return PORTAL_CATEGORY_ORDER.flatMap(code => {
-    const tab = PORTAL_CATEGORY_CODE[code]
-    return codes.has(code) && tab ? [tab] : []
-  })
-}
-
 function mapCategory(categories: string[] | undefined, programType: string | undefined): ProgramTab {
-  return mapPortalTabs(categories, programType)[0] ?? fallbackTab(programType)
+  return mapPortalTabs(categories, programType)[0] ?? fallbackPortalTab(programType)
 }
 
 const KNOWN_RECRUITMENT_STATUS = new Set([
