@@ -20,3 +20,80 @@
   align-items: center;
   width: 100%;
 }
+
+.individual-settlement-review-detail__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+}
+
+.individual-settlement-review-detail__summary > div {
+  padding: 12px;
+  background: #f7f8fa;
+  border-radius: 8px;
+}
+
+.individual-settlement-review-detail__summary dt {
+  color: #777;
+  font-size: 12px;
+}
+
+.individual-settlement-review-detail__summary dd {
+  margin: 6px 0 0;
+  font-weight: 700;
+}
+
+.individual-settlement-review-detail__reject {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.individual-settlement-review-detail__revisions {
+  display: grid;
+  gap: 18px;
+}
+
+.individual-settlement-review-detail__revisions section {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.individual-settlement-review-detail__revisions h4,
+.individual-settlement-review-detail__revisions p {
+  margin: 0;
+}
+
+.individual-settlement-review-detail__item {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f1f3;
+}
+
+.individual-settlement-review-detail__item-heading,
+.individual-settlement-review-detail__receipt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.individual-settlement-review-detail__item-heading {
+  justify-content: space-between;
+}
+
+.individual-settlement-review-detail__receipt {
+  flex-wrap: wrap;
+  color: #555;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .individual-settlement-review-detail__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

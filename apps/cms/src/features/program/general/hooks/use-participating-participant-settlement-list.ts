@@ -1,93 +1,84 @@
 import { useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  isParticipatingInstructorSettlementsRemoteEnabled,
-  participatingInstructorSettlementsQueryOptions,
-} from '@/features/program/general/api/participating-instructor-settlements-remote'
+  fetchIndividualSettlementReviewListRemote,
+  individualSettlementReviewQueryOptions,
+  isIndividualSettlementReviewRemoteEnabled,
+} from '@/features/program/general/api/individual-settlement-review-remote'
 import {
-  mapSettlementsToParticipatingInstructorSettlementRows,
-  summarizeParticipatingInstructorPaymentStatementStatus,
-  summarizeParticipatingInstructorSettlementProgress,
-  type ParticipatingInstructorSettlementApiRow,
-} from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
+  mapIndividualSettlementReviewRows,
+  summarizeIndividualSettlementReviewRows,
+  type IndividualSettlementReviewRow,
+} from '@/features/program/general/lib/map-individual-settlement-review-rows'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
-import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
-import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 
-/** 참여자 상세 — 정산 현황 (강사·봉사자와 동일 settlement API). */
+/** 개인 참여자 상세 — 강사 지급조서 원장이 아닌 개인 일정별 정산 심사 API. */
 export function useParticipatingParticipantSettlementList(input: {
   programId: string
-  participant: Pick<ParticipatingIndividualParticipantRow, 'memberId'>
+  participant: Pick<ParticipatingIndividualParticipantRow, 'id' | 'sessions'>
   enabled?: boolean
 }): {
   remoteEnabled: boolean
   isLoading: boolean
-  rows: ParticipatingInstructorSettlementApiRow[]
-  settlementItems: SettlementListItemResponse[]
-  progressSummary: { completed: number; total: number }
-  paymentStatementSummaryStatus: InstructorSettlementUiStatus
+  isError: boolean
+  rows: IndividualSettlementReviewRow[]
+  reviews: Awaited<ReturnType<typeof fetchIndividualSettlementReviewListRemote>>
+  progressSummary: ReturnType<typeof summarizeIndividualSettlementReviewRows>
   invalidate: () => Promise<void>
 } {
-  const remoteEnabled = isParticipatingInstructorSettlementsRemoteEnabled()
-  const participantMemberId = input.participant.memberId?.trim() ?? ''
+  const remoteEnabled = isIndividualSettlementReviewRemoteEnabled()
+  const participantId = input.participant.id?.trim() ?? ''
   const queryEnabled = Boolean(
-    input.enabled !== false && remoteEnabled && input.programId && participantMemberId
+    input.enabled !== false && remoteEnabled && input.programId && participantId
   )
 
   useNotifyProgramApiUnavailableOnce(
-    Boolean(input.enabled !== false && (!remoteEnabled || !participantMemberId)),
+    Boolean(input.enabled !== false && (!remoteEnabled || !participantId)),
     'general-participating-participant-settlement',
-    '참여자 · 정산 현황'
+    '참여자 · 개인 정산 심사'
   )
 
-  const settlementsQuery = useQuery({
-    ...participatingInstructorSettlementsQueryOptions({
+  const reviewQuery = useQuery({
+    ...individualSettlementReviewQueryOptions({
       programId: input.programId,
-      instructorMemberId: participantMemberId,
+      participantId,
     }),
     enabled: queryEnabled,
     retry: false,
   })
 
-  const settlementItems = useMemo(() => {
-    if (!queryEnabled) return []
-    return settlementsQuery.data ?? []
-  }, [queryEnabled, settlementsQuery.data])
-
-  const rows = useMemo(() => {
-    if (!queryEnabled) return []
-    return mapSettlementsToParticipatingInstructorSettlementRows(settlementItems)
-  }, [queryEnabled, settlementItems])
-
-  const progressSummary = useMemo(
-    () => summarizeParticipatingInstructorSettlementProgress(rows),
-    [rows]
+  const reviews = useMemo(
+    () => (queryEnabled ? reviewQuery.data ?? [] : []),
+    [queryEnabled, reviewQuery.data]
   )
-
-  const paymentStatementSummaryStatus = useMemo(
-    () => summarizeParticipatingInstructorPaymentStatementStatus(rows),
-    [rows]
+  const rows = useMemo(
+    () =>
+      queryEnabled && !reviewQuery.isPending && !reviewQuery.isError
+        ? mapIndividualSettlementReviewRows({ sessions: input.participant.sessions, reviews })
+        : [],
+    [input.participant.sessions, queryEnabled, reviewQuery.isError, reviewQuery.isPending, reviews]
   )
+  const progressSummary = useMemo(() => summarizeIndividualSettlementReviewRows(rows), [rows])
 
   const queryClient = useQueryClient()
   const invalidate = async () => {
-    if (!participantMemberId) return
+    if (!participantId) return
     await queryClient.invalidateQueries({
-      queryKey: participatingInstructorSettlementsQueryOptions({
+      queryKey: individualSettlementReviewQueryOptions({
         programId: input.programId,
-        instructorMemberId: participantMemberId,
+        participantId,
       }).queryKey,
     })
   }
 
   return {
     remoteEnabled,
-    isLoading: queryEnabled && settlementsQuery.isPending,
+    isLoading: queryEnabled && reviewQuery.isPending,
+    isError: queryEnabled && reviewQuery.isError,
     rows,
-    settlementItems,
+    reviews,
     progressSummary,
-    paymentStatementSummaryStatus,
     invalidate,
   }
 }
