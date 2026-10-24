@@ -118,7 +118,7 @@ function requiredFieldContextFromRhf(
     educationScheduleMode: values.educationScheduleMode,
     sponsorId: values.sponsorManagementIds[0] ?? '',
     sponsorContactId: values.sponsorManagerContactIds[0] ?? '',
-    programTitleKo: values.title,
+    programTitleKo: values.mainTitle,
   }
 }
 

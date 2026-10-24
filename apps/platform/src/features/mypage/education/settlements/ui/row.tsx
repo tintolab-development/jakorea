@@ -14,6 +14,7 @@ import {
 import { buildReceiptSubmitPath, buildReceiptViewPath } from '../lib/receipt-path'
 import { buildSettlementPaymentConsentPath } from '../lib/consent-path'
 import { buildSettlementWritePath, type SettlementArea } from '../lib/write-path'
+import { payableItemEvidenceCaption } from '../lib/payment-items'
 import {
   EducationSessionCard,
   EducationSessionCardHeader,
@@ -250,6 +251,16 @@ export function EducationSettlementRow({
             ) : undefined
           }
         />
+
+        {documentKind === 'receipt' && (item.payableItems ?? []).length > 0 ? (
+          <div className={styles.payableItems}>
+            {(item.payableItems ?? []).map(payable => (
+              <PFText key={payable.itemType} as="p" typo="bd-sm-rg" color="neutral-cool-600">
+                {payableItemEvidenceCaption(payable)}
+              </PFText>
+            ))}
+          </div>
+        ) : null}
 
         {showGuide && guideMessage ? (
           <EducationSessionGuideBlock

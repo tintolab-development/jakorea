@@ -77,8 +77,10 @@ function StoryBlock({
           >
             {story.descriptionLines.map((line, index) => (
               <Fragment key={`${line}-${index}`}>
+                {index === 0 ? '“' : null}
                 {index > 0 ? <br /> : null}
                 {line}
+                {index === story.descriptionLines.length - 1 ? '”' : null}
               </Fragment>
             ))}
           </PFText>

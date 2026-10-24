@@ -153,7 +153,7 @@
 .form {
   display: flex;
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
   min-width: 0;
   flex-direction: column;
   /* 인풋 영역 ↔ 버튼 */
@@ -248,7 +248,7 @@
   gap: var(--spacing-4);
   padding: 13px var(--spacing-28);
   border: 1px solid rgb(61 61 61 / 10%);
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-12);
   background: var(--color-primary-500);
   color: var(--color-neutral-white);
   cursor: pointer;
@@ -303,7 +303,7 @@
   }
 
   .form {
-    width: 420px;
+    width: 480px;
     flex-shrink: 0;
   }
 }

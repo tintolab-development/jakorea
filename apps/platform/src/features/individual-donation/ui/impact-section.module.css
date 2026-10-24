@@ -61,6 +61,7 @@
 
   .content {
     gap: var(--spacing-60);
+    padding-inline: 0;
   }
 
   .list {

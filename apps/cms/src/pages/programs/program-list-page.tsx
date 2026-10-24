@@ -492,12 +492,23 @@ function ProgramListPageContent() {
   )
 
   const handleCompanySchoolRegistrationSaved = useCallback(
-    (_program?: Program) => {
+    (program?: Program) => {
       void companySchoolListQuery.refetch()
       closeWritingUserPreview()
-      handleCloseCompanySchoolRegistrationFullpage()
+      const next = new URLSearchParams(searchParams)
+      next.delete(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY)
+      next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+      next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+      next.delete('userPreview')
+      const createdId = program?.id?.trim()
+      if (createdId) {
+        next.set('programId', createdId)
+        next.set('lnb', 'info')
+        next.set('tab', 'info')
+      }
+      setSearchParams(next, { replace: true })
     },
-    [closeWritingUserPreview, companySchoolListQuery, handleCloseCompanySchoolRegistrationFullpage]
+    [closeWritingUserPreview, companySchoolListQuery, searchParams, setSearchParams]
   )
 
   const handleProgramCreateClick = () => {

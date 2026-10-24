@@ -48,6 +48,16 @@
   z-index: 1;
 }
 
+.categoryBadge {
+  height: 30px;
+  padding: 0 var(--spacing-12);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1;
+}
+
 .meta {
   display: flex;
   width: 100%;
@@ -69,6 +79,13 @@
   min-height: calc(24px * 1.5 + 39px);
   margin: 0;
   overflow: hidden;
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.24px;
   text-overflow: ellipsis;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -90,7 +107,6 @@
   }
   .title {
     min-height: auto;
-    font-size: 18px;
   }
   .date {
     font-size: 14px;

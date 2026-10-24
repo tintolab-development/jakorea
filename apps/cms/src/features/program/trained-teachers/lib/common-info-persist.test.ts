@@ -287,6 +287,49 @@ describe('resolveTrainedTeachersCanonicalCommonInfo', () => {
     expect(resolved.curriculumSessions).toHaveLength(2)
   })
 
+  it('"false" 문자열을 true로 해석하지 않고 미지원 값은 overlay로 조용히 false 만들지 않는다', () => {
+    const fromFalseString = resolveTrainedTeachersCanonicalCommonInfo({
+      id: '186312',
+      sponsorId: '1',
+      title: 't',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [],
+      startDate: '2026-03-01',
+      endDate: '2026-11-30',
+      status: 'pending',
+      backendProgramType: 'TRAINED_TEACHER',
+      generalCommonInfo: { educationJournalEnabled: 'false' as unknown as boolean },
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    })
+    expect(fromFalseString.educationJournalEnabled).toBe(false)
+
+    const fromInvalid = resolveTrainedTeachersCanonicalCommonInfo({
+      id: '186312',
+      sponsorId: '1',
+      title: 't',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [],
+      startDate: '2026-03-01',
+      endDate: '2026-11-30',
+      status: 'pending',
+      backendProgramType: 'TRAINED_TEACHER',
+      generalCommonInfo: { educationJournalEnabled: 'maybe' as unknown as boolean },
+      registrationOverlay: {
+        'trainedTeachersRegistration.educationCurriculum.educationJournalEnabled': 'yes',
+      },
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    })
+    expect(fromInvalid.educationJournalEnabled).toBe(true)
+  })
+
   it('canonical journal 이 없으면 overlay yes/no 만 fallback 한다', () => {
     const resolved = resolveTrainedTeachersCanonicalCommonInfo({
       id: '186312',
@@ -339,6 +382,36 @@ describe('buildTrainedTeachersCommonInfoSaveSlices', () => {
       scheduleDetails: [],
     })
     expect(slices.infoDetailCommonInfo).toEqual(slices.extraCommonInfo)
+  })
+
+  it('기간형 줄에서 range를 A·B에 동일하게 싣고 같은 날도 인정한다', () => {
+    const seoulDay = (iso: string) =>
+      new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+    const slices = buildTrainedTeachersCommonInfoSaveSlices({
+      educationStructure: 'schedule',
+      teacherTrainingEnabled: true,
+      educationJournalEnabled: false,
+      educationScheduleMode: 'period',
+      educationScheduleLines: ['2026.11.11(수)'],
+    })
+    expect(seoulDay(slices.extraCommonInfo.educationScheduleRange!.start)).toBe('2026-11-11')
+    expect(seoulDay(slices.extraCommonInfo.educationScheduleRange!.end)).toBe('2026-11-11')
+    expect(slices.infoDetailCommonInfo.educationScheduleRange).toEqual(
+      slices.extraCommonInfo.educationScheduleRange
+    )
+  })
+
+  it('날짜 지정으로 바꾸면 이전 range를 null로 지운다', () => {
+    const slices = buildTrainedTeachersCommonInfoSaveSlices({
+      educationStructure: 'curriculum',
+      teacherTrainingEnabled: false,
+      educationJournalEnabled: false,
+      educationScheduleMode: 'date',
+      educationScheduleLines: ['2026.11.11(수) 10:00 ~ 12:00'],
+      educationScheduleRange: { start: 'stale', end: 'stale' },
+    })
+    expect(slices.infoDetailCommonInfo.educationScheduleRange).toBeNull()
+    expect(slices.extraCommonInfo.educationScheduleRange).toBeNull()
   })
 
   it('일정형으로 바꾸면 커리큘럼 nested를 명시 빈 배열로 보낸다', () => {

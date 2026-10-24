@@ -856,7 +856,7 @@ assert.equal(evidenceUnconfigured[0]?.canSubmitReceipt, false)
 assert.equal(evidenceUnconfigured[0]?.eligible, false)
 assert.equal(
   evidenceUnconfigured[0]?.submitBlockedReason,
-  '증빙 정책이 설정되지 않아 제출할 수 없습니다. 관리자에게 문의해 주세요.',
+  '증빙 정책을 확인할 수 없어 신청할 수 없습니다',
 )
 assert.equal(
   isSettlementWriteCtaDisabled({

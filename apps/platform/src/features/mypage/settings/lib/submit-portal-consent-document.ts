@@ -17,6 +17,7 @@ import {
   putPortalSignatureCurrent,
   signPortalConsentDocumentField,
 } from '../api/portal-consent-documents'
+import { buildPortalSignatureProfileRequest } from './portal-signature-profile'
 import { PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY } from './settings-consent-key'
 import type { FormSignatureValue } from '@/shared/ui/pf-form-signature-block/types'
 import { buildPortalPortraitRightsConsentCreateRequest } from './portal-portrait-consent-create-request'
@@ -46,22 +47,15 @@ async function dataUrlToPngFile(dataUrl: string): Promise<File> {
   return new File([blob], 'electronic-signature.png', { type: blob.type || 'image/png' })
 }
 
-function resolveSignatureType(mode?: FormSignatureValue['mode']): string {
-  return mode === 'create' ? 'TYPED' : 'DRAWN'
-}
-
 async function registerSignatureProfile(signature: FormSignatureValue): Promise<number> {
   const file = await dataUrlToPngFile(signature.dataUrl)
   const fileObjectId = await uploadMemberPortalFile({
     file,
     filePurpose: SIGNATURE_FILE_PURPOSE,
   })
-  const profile = await putPortalSignatureCurrent({
-    signatureType: resolveSignatureType(signature.mode),
-    fileObjectId,
-    displayName: signature.displayName,
-    fontStyleCode: signature.fontStyleCode,
-  })
+  const profile = await putPortalSignatureCurrent(
+    buildPortalSignatureProfileRequest(fileObjectId),
+  )
   if (profile.signatureProfileId == null) {
     throw new Error('전자서명을 등록하지 못했습니다.')
   }

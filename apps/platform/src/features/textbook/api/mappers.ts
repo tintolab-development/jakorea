@@ -39,6 +39,12 @@ function sessionSummary(unitCount: number, sessionDescription: string): string {
   return sessionDescription
 }
 
+function normalizeBusinessFieldDescription(description: string | undefined): string | undefined {
+  const normalized = description?.trim()
+  if (!normalized) return undefined
+  return normalized.replaceAll('창엽 역량', '창업 역량')
+}
+
 export function mapPublicTextbookListItem(row: PublicTextbookListItem): TextbookContent | null {
   if (row.id == null) return null
   const title = row.textbookName?.trim()
@@ -73,7 +79,7 @@ export function mapPublicTextbookListItem(row: PublicTextbookListItem): Textbook
     sessionSummary: sessionSummary(unitCount, unitSessionText ?? ''),
     unitCount,
     unitSessionText,
-    fieldDescription: row.businessField?.description?.trim() || undefined,
+    fieldDescription: normalizeBusinessFieldDescription(row.businessField?.description),
     units: [],
   }
 }

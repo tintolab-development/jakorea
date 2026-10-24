@@ -3,6 +3,7 @@ import {
   isKnownGnbGroupCode,
   isKnownGnbMenuCode,
   GNB_MENU_ROUTES,
+  GNB_DESIGN_GROUP_LABEL_OVERRIDES,
   GNB_DESIGN_LABEL_OVERRIDES,
   type GnbNavGroup,
   type GnbNavItem,
@@ -59,6 +60,22 @@ function overlayMenu(menuCode: string, label: string): GnbNavItem | null {
   return { menuCode, label }
 }
 
+function applyDesignMenuOrder(groupCode: string, children: GnbNavItem[]): GnbNavItem[] {
+  if (groupCode !== 'JA_KOREA') return children
+
+  const historyIndex = children.findIndex(item => item.menuCode === 'JA_HISTORY')
+  if (historyIndex < 0) return children
+
+  const orderedChildren = children.filter(item => item.menuCode !== 'JA_HISTORY')
+  const organizationIndex = orderedChildren.findIndex(
+    item => item.menuCode === 'JA_ORGANIZATION',
+  )
+  if (organizationIndex < 0) return children
+
+  orderedChildren.splice(organizationIndex + 1, 0, children[historyIndex]!)
+  return orderedChildren
+}
+
 /**
  * `{ success, data }` 래퍼는 벗긴다. 배열이 아니면 null. 호출측이 fallback을 쓴다.
  * 배열이면 원격이 SSOT. 빈 배열은 빈 GNB다.
@@ -78,7 +95,9 @@ export function mapPublicGnb(remote: unknown): SiteGnbView | null {
     if (!fallbackGroup) continue
 
     const groupName = readLabel(rawGroup.groupName)
-    if (!groupName || !Array.isArray(rawGroup.menus)) continue
+    const canonicalGroupLabel = GNB_DESIGN_GROUP_LABEL_OVERRIDES[groupCode]
+    const displayGroupName = canonicalGroupLabel ?? groupName
+    if (!displayGroupName || !Array.isArray(rawGroup.menus)) continue
 
     const fallbackMenus = new Set<string>(fallbackGroup.children.map(menu => menu.menuCode))
     const seenMenus = new Set<string>()
@@ -102,11 +121,12 @@ export function mapPublicGnb(remote: unknown): SiteGnbView | null {
     if (children.length === 0) continue
     seenGroups.add(groupCode)
     const href = 'href' in fallbackGroup ? fallbackGroup.href : undefined
+    const orderedChildren = applyDesignMenuOrder(groupCode, children)
     groups.push({
       groupCode,
-      label: groupName,
+      label: displayGroupName,
       ...(href ? { href } : {}),
-      children,
+      children: orderedChildren,
     })
   }
 

@@ -134,6 +134,7 @@ export function TextbooksPage() {
                 updateParams({ category: category as TextbookCategoryFilter, page: 1 })
               }
               variant="pill"
+              size="medium"
               ariaLabel="교재 카테고리"
             />
           </div>

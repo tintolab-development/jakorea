@@ -11,6 +11,11 @@ import {
   mergeTrainedTeacherSponsorAssignments,
 } from './adapters'
 import { serializeTrainedTeacherServiceDetailJson } from './service-detail-json'
+import {
+  detailEditValuesToProgramPatch,
+  programDetailTrainedTeachersCommonInfoEditSchema,
+  programToDetailEditValues,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 
 describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
   it('maps BE periodStatus to typed lifecycle for table/filter sync', () => {
@@ -874,6 +879,59 @@ describe('mapTrainedTeacherDetailToProgram detailedProgramId round-trip', () => 
   })
 })
 
+describe('mapTrainedTeacherDetailToProgram typed vs nested snapshot', () => {
+  it('top-level mainTitle/ips/district가 stale nested snapshot을 덮는다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '900001',
+      programType: 'TRAINED_TEACHER',
+      title: '커리큘럼 테스트 공고',
+      mainTitle: '커리큘럼 대표명',
+      titleEn: 'Curriculum Representative',
+      ips: 'Prepare',
+      district: '고등학교 1~2학년',
+      programCategory: '경제',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          title: '구 공고',
+          mainTitle: '구 대표명',
+          ips: 'Inspire',
+          district: '구 대상',
+          programCategory: '구 카테고리',
+          generalCommonInfo: {
+            curriculumSessions: [{ sessionNo: 1, ipsTypeSummary: 'Inspire' }],
+          },
+        },
+      }),
+    })
+    expect(mapped.title).toBe('커리큘럼 테스트 공고')
+    expect(mapped.mainTitle).toBe('커리큘럼 대표명')
+    expect(mapped.titleEn).toBe('Curriculum Representative')
+    expect(mapped.ips).toBe('Prepare')
+    expect(mapped.district).toBe('고등학교 1~2학년')
+    expect(mapped.programCategory).toBe('경제')
+    expect(mapped.generalCommonInfo?.curriculumSessions?.[0]?.ipsTypeSummary).toBe('Inspire')
+  })
+
+  it('top-level ips가 생략되면 nested snapshot ips를 유지한다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '900002',
+      title: '공고',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          ips: 'Inspire',
+          mainTitle: 'nested 대표',
+          district: 'nested 대상',
+        },
+      }),
+    })
+    expect(mapped.ips).toBe('Inspire')
+    expect(mapped.mainTitle).toBe('nested 대표')
+    expect(mapped.district).toBe('nested 대상')
+  })
+})
+
 describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
   it('prefers totalParticipants over nested kpi finalParticipants', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
@@ -1324,6 +1382,66 @@ describe('trained teacher businessArea', () => {
     }
     expect(envelope.program?.businessArea).toBeUndefined()
     expect(envelope.program?.generalCommonInfo?.businessArea).toBeUndefined()
+  })
+})
+
+describe('courseDeliveredBy GET enum 정규화 (186334)', () => {
+  const getDto186334: ProgramResponse = {
+    id: '186334',
+    title: '교육받은 교사',
+    sponsorId: 'sponsor-1',
+    educationStructure: 'SCHEDULE',
+    courseDeliveredBy: 'ja',
+    ipOwned: 'ja',
+    educationProcess: 'digital_computer',
+    partnerInvolvement: false,
+  }
+
+  it('서버 ja 를 도메인 JA 로 올리고 저장 검증을 통과한다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram(getDto186334)
+    expect(mapped.courseDeliveredBy).toBe('JA')
+    expect(mapped.ipOwned).toBe('JA')
+
+    const values = programToDetailEditValues(mapped)
+    expect(values.courseDeliveredBy).toBe('JA')
+    expect(values.ipOwned).toBe('JA')
+    expect(values.courseDeliveredBy).toBe(mapped.courseDeliveredBy)
+
+    const parsed = programDetailTrainedTeachersCommonInfoEditSchema.safeParse({
+      ...values,
+      mainTitle: '대표 프로그램명',
+      titleEn: 'Program Title',
+      announcementTitle: '공고용 프로그램명',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      businessArea: '경제금융',
+      educationProcess: mapped.educationProcess ?? 'digital_computer',
+    })
+    expect(parsed.success).toBe(true)
+
+    const patch = detailEditValuesToProgramPatch(values, mapped)
+    expect(patch.courseDeliveredBy).toBe('JA')
+    expect(patch.ipOwned).toBe('JA')
+
+    const request = mapTrainedTeacherToUpdateRequest(mapped, patch)
+    expect(request.courseDeliveredBy).toBe('JA')
+    expect(request.ipOwned).toBe('JA')
+
+    const reloaded = mapTrainedTeacherDetailToProgram({
+      ...getDto186334,
+      courseDeliveredBy: 'ja',
+      ipOwned: 'ja',
+    })
+    expect(programToDetailEditValues(reloaded).courseDeliveredBy).toBe('JA')
+  })
+
+  it('미지원 ENUM 을 JA 로 치환하지 않는다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      ...getDto186334,
+      courseDeliveredBy: 'TEACHER',
+    })
+    expect(mapped.courseDeliveredBy).toBeUndefined()
+    expect(programToDetailEditValues(mapped).courseDeliveredBy).toBeUndefined()
   })
 })
 

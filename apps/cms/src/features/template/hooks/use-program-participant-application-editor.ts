@@ -2187,6 +2187,12 @@ export function useProgramParticipantApplicationEditor(
           editorState,
           ...(overlay != null ? { overlay } : {}),
         })
+        if (registrationWizardProgramType === 'COMPANY_SCHOOL') {
+          const { persistCompanySchoolRegistrationDraftRemote } = await import(
+            '@/features/program/general/lib/registration-program-draft-session'
+          )
+          await persistCompanySchoolRegistrationDraftRemote()
+        }
       } else if (variant === 'ujat-recruit-institution') {
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
         const overlay = collectParticipantOverlayForVariant(variant, templateId) ?? {}

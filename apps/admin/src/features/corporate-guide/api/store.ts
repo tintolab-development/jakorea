@@ -35,12 +35,12 @@ const FIXED_METRICS: ReadonlyArray<{
     apiId: 1,
     itemLabel: '글로벌 확장성',
     defaultTitle: '100여개 국가',
-    defaultDescription: '글로벌 네트워크를 통한 사업 확장',
+    defaultDescription: 'JA 글로벌 네트워크를 통한 교육 프로그램 확장',
   },
   {
     id: 'transparency',
     apiId: 2,
-    itemLabel: '최고 수준의 투명성',
+    itemLabel: '최고수준의 투명성',
     defaultTitle: '투명한 조직운영',
     defaultDescription: 'JA Worldwide 기준에 따른 투명한 조직 운영 체계',
   },
@@ -49,7 +49,7 @@ const FIXED_METRICS: ReadonlyArray<{
     apiId: 3,
     itemLabel: '검증된 임팩트',
     defaultTitle: '10만명 이상',
-    defaultDescription: '10년 이상 이어온 파트너십을 통한 누적 교육 인원',
+    defaultDescription: '연간 청소년 교육으로 이어온 10년 이상의 장기 파트너십',
   },
 ]
 
@@ -59,38 +59,53 @@ const FIXED_PARTNERSHIP_DEFAULTS: ReadonlyArray<{
   title: string
   description: string
 }> = [
-  { step: 1, apiId: 1, title: '1. 제안', description: '· 파트너십 문의' },
+  { step: 1, apiId: 1, title: '1. 제안', description: '· JA Korea에 파트너십 문의' },
   {
     step: 2,
     apiId: 2,
     title: '2. 검토',
-    description: '· 프로그램 적합성 및 교육 대상 검토\n· 기업 CSR 목표 파악',
+    description: '· 프로그램 적합도 및 수혜 대상 타당성 조사\n· 기업 사회공헌 목표 파악',
   },
   {
     step: 3,
     apiId: 3,
     title: '3. 기획',
-    description: '· 프로그램 목적 및 포지셔닝 설계\n· 운영 방식 제안',
+    description: '· 프로그램 목적 및 포지셔닝 설계\n· 수혜 대상 및 프로그램 운영 방식 제안',
   },
   {
     step: 4,
     apiId: 4,
     title: '4. 협약',
-    description: '· 운영 기간 및 후원 규모 확정\n· 프로그램 비용 지원',
+    description: '· 운영 기간 및 기부금 확정\n· 기부금(프로그램 운영비) 지원',
   },
   {
     step: 5,
     apiId: 5,
     title: '5. 운영',
-    description: '· 수혜자 및 강사 모집·선발\n· 프로그램 진행',
+    description: '· 수혜 대상자 및 교사·강사·봉사자 모집/선발\n· 프로그램 진행',
   },
   {
     step: 6,
     apiId: 6,
     title: '6. 보고',
-    description: '· 결과·정산 보고서 제공\n· 성과 평가 및 차년도 계획 수립',
+    description:
+      '· 프로그램 결과 및 회계 보고\n· 성과 평가\n· 차년도 계획 수립 및 파트너십 점검',
   },
 ]
+
+const LEGACY_METRIC_DESCRIPTIONS: Partial<Record<MetricItemId, string>> = {
+  global_scale: '글로벌 네트워크를 통한 사업 확장',
+  proven_impact: '10년 이상 이어온 파트너십을 통한 누적 교육 인원',
+}
+
+const LEGACY_PARTNERSHIP_DESCRIPTIONS: Readonly<Record<PartnershipStepNumber, string>> = {
+  1: '· 파트너십 문의',
+  2: '· 프로그램 적합성 및 교육 대상 검토\n· 기업 CSR 목표 파악',
+  3: '· 프로그램 목적 및 포지셔닝 설계\n· 운영 방식 제안',
+  4: '· 운영 기간 및 후원 규모 확정\n· 프로그램 비용 지원',
+  5: '· 수혜자 및 강사 모집·선발\n· 프로그램 진행',
+  6: '· 결과·정산 보고서 제공\n· 성과 평가 및 차년도 계획 수립',
+}
 
 function buildSeedBanner(): CorporateGuideBanner {
   return {
@@ -186,12 +201,16 @@ function normalizeMetrics(raw: unknown): MetricItem[] {
   }
   return seed.map(item => {
     const overlay = byId.get(item.id)
+    const description = overlay?.description ?? item.description
     return {
       id: item.id,
       apiId: item.apiId,
       itemLabel: item.itemLabel,
       title: overlay?.title ?? item.title,
-      description: overlay?.description ?? item.description,
+      description:
+        description === LEGACY_METRIC_DESCRIPTIONS[item.id]
+          ? item.description
+          : description,
       version: overlay?.version ?? item.version,
     }
   })
@@ -223,11 +242,15 @@ function normalizePartnership(raw: unknown): PartnershipStep[] {
   }
   return seed.map(item => {
     const overlay = byStep.get(item.step)
+    const description = overlay?.description ?? item.description
     return {
       step: item.step,
       apiId: item.apiId,
       title: overlay?.title ?? item.title,
-      description: overlay?.description ?? item.description,
+      description:
+        description === LEGACY_PARTNERSHIP_DESCRIPTIONS[item.step]
+          ? item.description
+          : description,
       version: overlay?.version ?? item.version,
     }
   })

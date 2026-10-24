@@ -65,6 +65,29 @@ assert.equal(
   false,
 )
 
+const mobileMenuDesignOverlay = mapPublicGnb([
+  {
+    groupCode: 'JA_KOREA',
+    groupName: 'JA Korea',
+    menus: [
+      { menuCode: 'JA_NOTICE', displayName: '공지사항', displayOrder: 3 },
+      { menuCode: 'JA_HISTORY', displayName: '연혁', displayOrder: 4 },
+      { menuCode: 'JA_ORGANIZATION', displayName: '기관소개', displayOrder: 1 },
+    ],
+  },
+  {
+    groupCode: 'IMPACT_STORY',
+    groupName: '임팩트',
+    menus: [{ menuCode: 'IMPACT_STORY', displayName: '임팩트', displayOrder: 1 }],
+  },
+])
+assert.equal(mobileMenuDesignOverlay?.groups[0]?.label, 'JA Korea')
+assert.deepEqual(
+  mobileMenuDesignOverlay?.groups[0]?.children.map(item => item.menuCode),
+  ['JA_ORGANIZATION', 'JA_HISTORY', 'JA_NOTICE'],
+)
+assert.equal(mobileMenuDesignOverlay?.groups[1]?.label, '임팩트 스토리')
+
 const empty = mapPublicGnb([])
 assert.ok(empty)
 assert.equal(empty.source, 'remote')

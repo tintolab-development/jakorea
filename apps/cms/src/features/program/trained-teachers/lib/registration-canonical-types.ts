@@ -60,6 +60,8 @@ export type TrainedTeachersRegistrationCommonCanonical = {
   scheduleDetails: GeneralProgramScheduleDetailRow[]
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
   educationScheduleLines: string[]
+  /** period 줄에서 산출. date이거나 파싱 불가하면 null. lines와 독립 편집하지 않는다. */
+  educationScheduleRange: { start: string; end: string } | null
   generalSurveyMenuKeys: GeneralProgramSurveyMenuKey[]
   ips?: Program['ips']
   programCategory?: Program['programCategory']

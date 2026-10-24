@@ -157,6 +157,9 @@
 
   .description {
     padding-top: var(--spacing-48);
+    font-size: 26px;
+    line-height: 42px;
+    letter-spacing: -0.26px;
   }
 
   .titleDesktop {

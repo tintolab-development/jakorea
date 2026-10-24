@@ -1692,6 +1692,14 @@ export function useProgramRegistrationEditor(
                   })()
                 : undefined,
       })
+      if (programRegistrationFormVariant === 'economy' && registrationWizardProgramType) {
+        const { persistCompanySchoolRegistrationDraftRemote } = await import(
+          '@/features/program/general/lib/registration-program-draft-session'
+        )
+        await persistCompanySchoolRegistrationDraftRemote({
+          programTitleKo: resolvedProgramTitleKo,
+        })
+      }
     } else {
       await persistWritingFormTemplateDraft({
         templateId: templateCode,

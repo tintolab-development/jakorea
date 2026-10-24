@@ -171,6 +171,11 @@
     padding-inline: 80px;
   }
 
+  .hero {
+    margin-top: 26px;
+    margin-bottom: var(--spacing-60);
+  }
+
   .pageBackground:after {
     content: '';
     display: block;

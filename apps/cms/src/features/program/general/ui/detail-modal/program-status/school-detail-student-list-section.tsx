@@ -1301,7 +1301,6 @@ export function SchoolDetailStudentListSection({
       <FilterTableLayout
         className="school-detail-student-list-section__filter-layout"
         bordered={false}
-        filterResponsiveWrap={false}
         fields={studentListFilterFields}
         filters={filterTableValues}
         onFilterChange={handleFilterChange}

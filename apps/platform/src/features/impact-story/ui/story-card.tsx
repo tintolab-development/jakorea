@@ -27,7 +27,11 @@ export function StoryCard({ story }: StoryCardProps) {
             />
           ) : null}
           <div className={styles.badge}>
-            <PFCategoryBadge size="large" variant="primary">
+            <PFCategoryBadge
+              className={styles.categoryBadge}
+              size="large"
+              variant="primary"
+            >
               {story.categoryLabel}
             </PFCategoryBadge>
           </div>

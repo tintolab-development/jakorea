@@ -51,6 +51,16 @@
   .intro {
     width: 280px;
   }
+
+  /* Figma: Category title — 34px / Bold / 144% (약 49px) */
+  .title {
+    font-family: var(--font-family-base);
+    font-size: 34px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 144%;
+    letter-spacing: -0.68px;
+  }
 }
 
 @media (--bp-pc-full-up) {

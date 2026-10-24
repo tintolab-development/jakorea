@@ -208,6 +208,27 @@ function buildRegistrationProgramDraftPayloadForSession(args: {
   })
 }
 
+/** 1사1교 임시저장 — local 메타와 함께 program-draft PUT. 일반/TT 임시저장 경로는 바꾸지 않는다. */
+export async function persistCompanySchoolRegistrationDraftRemote(args?: {
+  programTitleKo?: string
+  activeStep?: string
+}): Promise<void> {
+  const programType = 'COMPANY_SCHOOL'
+  const payload = buildRegistrationProgramDraftPayloadForSession({
+    programType,
+    registrationTemplateCode: registrationTemplateCodeForProgramType(programType),
+    activeStep: args?.activeStep,
+    programTitleKo: args?.programTitleKo,
+  })
+  lastPayloadByProgramType.set(programType, payload)
+  writeRegistrationProgramDraftLocal(programType, payload)
+  const saved = await upsertMyProgramDraftRemote(
+    { programType, draftPayload: payload },
+    { skipGlobalErrorAlert: true }
+  )
+  if (saved.draftId != null) rememberRegistrationProgramDraftId(programType, saved.draftId)
+}
+
 /** 「임시 저장」 메타 — localStorage 전용. remote API 호출 없음. */
 export function syncRegistrationProgramDraftSession(args: {
   programType: string

@@ -138,7 +138,7 @@
     align-items: center;
     padding: 13px var(--spacing-28);
     border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-16);
+    border-radius: var(--radius-12);
     background: var(--color-neutral-white);
     color: var(--color-neutral-black);
     font-size: 18px;
@@ -270,6 +270,11 @@
   outline: 2px solid var(--color-border-focus);
   outline-offset: 4px;
   border-radius: var(--radius-24);
+}
+
+.section[data-pointer-interaction='true'] .card:focus-visible,
+.section[data-pointer-interaction='true'] .pageButton:focus-visible {
+  outline: none;
 }
 
 .cardMedia {
@@ -420,6 +425,8 @@
     font-weight: 700;
     line-height: 144%;
     letter-spacing: 0;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
   }
 }
 
@@ -435,9 +442,10 @@
 
 @media (--bp-pc-up) {
   .cardTarget {
-    font-size: inherit;
-    font-weight: inherit;
-    line-height: inherit;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.18px;
   }
 }
 

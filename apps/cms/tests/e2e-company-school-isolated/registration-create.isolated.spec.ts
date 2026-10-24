@@ -1,0 +1,160 @@
+import { expect, test } from '@playwright/test'
+import {
+  assertIsolatedNetwork,
+  installCsIsolatedNetwork,
+  overlayFromFormVersionPut,
+} from './install-cs-isolated-network'
+import {
+  completeAndCapture,
+  createOverlay,
+  fillRegistrationThroughComplete,
+  openFreshWizard,
+  expectWizardCommonTitle,
+  saveWizardDraft,
+  VALUES_A,
+  VALUES_B,
+  waitWizard,
+} from './cs-isolated-helpers'
+
+test.describe.configure({ mode: 'default' })
+
+test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
+  test('CS-B01 공통·모집·신청 입력 후 CREATE와 Form Version을 캡처한다', async ({ page }) => {
+    const log = await installCsIsolatedNetwork(page)
+    await openFreshWizard(page)
+    await fillRegistrationThroughComplete(page)
+    await completeAndCapture(page, log)
+    assertIsolatedNetwork(log)
+
+    const create = log.createProgram?.body as {
+      programType?: string
+      title?: string
+      mainTitle?: string
+    }
+    expect(create.programType).toBe('COMPANY_SCHOOL')
+    expect(`${create.title ?? ''} ${create.mainTitle ?? ''}`).toContain(VALUES_B.title)
+
+    const overlay = createOverlay(log)
+    expect(JSON.stringify(overlay)).not.toContain('application.economy.')
+    expect(JSON.stringify(log.createProgram?.body ?? {})).not.toContain('application.economy.')
+    expect(JSON.stringify(overlay)).not.toContain('blob:')
+    expect(overlay['economyRegistration.basicInfo.publicProgramTitle']).toBe(VALUES_B.announcement)
+    expect(overlay['economyRegistration.kpi.participantCount']).toBe(20)
+    expect(overlay['economyRegistration.wageInfo.grade1Fee']).toBe(111000)
+    expect(overlay['economyRegistration.wageInfo.grade1DistanceFee']).toBe(112000)
+    const paymentIds = overlay['economyRegistration.wageInfo.paymentItemValues']
+    expect(Array.isArray(paymentIds)).toBe(true)
+    expect(JSON.stringify(paymentIds)).not.toContain('166199')
+
+    expect(log.formVersionPuts.length).toBeGreaterThan(0)
+    expect(log.formVersionPublishes.length).toBeGreaterThan(0)
+    const overlayPuts = log.formVersionPuts.map(item => overlayFromFormVersionPut(item.body))
+    const applicationPut = overlayPuts.find(item =>
+      Object.keys(item).some(key => key.startsWith('application.economy.'))
+    )
+    expect(applicationPut, 'application-economy Form Version PUT').toBeTruthy()
+    expect(JSON.stringify(applicationPut)).not.toContain('application.institution.sexOffense')
+    const firstSchedule = applicationPut?.['application.economy.schedule.first']
+    if (firstSchedule && typeof firstSchedule === 'object') {
+      const date = (firstSchedule as { date?: unknown }).date
+      const firstStart = (firstSchedule as { firstStart?: unknown }).firstStart
+      if (typeof date === 'string' && date.length > 0) {
+        expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      }
+      if (typeof firstStart === 'string' && firstStart.length > 0) {
+        expect(firstStart).toMatch(/^\d{2}:\d{2}/)
+      }
+      expect(JSON.stringify(firstSchedule)).not.toContain('$d')
+    }
+
+    await expect(page).toHaveURL(/programId=/, { timeout: 60_000 })
+    await expect(page.getByText(VALUES_B.title).first()).toBeVisible({ timeout: 30_000 })
+  })
+
+  test('CS-B03 임시저장 후 탭 전환·재진입에서 B 값이 유지된다', async ({ page }) => {
+    const log = await installCsIsolatedNetwork(page)
+    await openFreshWizard(page)
+    const registration = await fillRegistrationThroughComplete(page)
+    void registration
+    await page.getByRole('button', { name: '모집 정보 작성하기' }).click().catch(async () => {
+      await page.getByRole('tab', { name: /참여자 모집/ }).click().catch(() => undefined)
+    })
+    await saveWizardDraft(page)
+    await expect.poll(() => log.programDraftPuts.length, { timeout: 20_000 }).toBeGreaterThan(0)
+    await page.keyboard.press('Escape').catch(() => undefined)
+    await page.goto('/programs/company-school')
+    const createButton = page.getByRole('button', { name: '신규 등록' }).first()
+    await expect(createButton).toBeVisible({ timeout: 45_000 })
+    await createButton.click()
+    const draftDialog = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    await expect(draftDialog).toBeVisible({ timeout: 20_000 })
+    await draftDialog.getByRole('radio', { name: '이어서 작성' }).check()
+    await draftDialog.getByRole('button', { name: '이어서 작성' }).click()
+    await waitWizard(page)
+    await expectWizardCommonTitle(page, VALUES_B.title)
+    await expect(
+      page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요').first()
+    ).toHaveValue(VALUES_B.announcement)
+    expect(await page.getByPlaceholder('대표 프로그램명을 입력하세요').first().inputValue()).not.toBe(
+      VALUES_A.title
+    )
+    assertIsolatedNetwork(log)
+  })
+
+  test('CS-B03 PUT 실패 시 Program CREATE가 나가지 않는다', async ({ page }) => {
+    const log = await installCsIsolatedNetwork(page, { failMode: 'put' })
+    await openFreshWizard(page)
+    await fillRegistrationThroughComplete(page)
+    await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
+    await expect.poll(() => log.formVersionPuts.length, { timeout: 60_000 }).toBeGreaterThan(0)
+    expect(log.createProgram).toBeNull()
+    await expect(page.getByText('1사1교 프로그램 등록').first()).toBeVisible()
+  })
+
+  test('CS-B03 CREATE 실패 시 입력값이 유지되고 재시도 가능하다', async ({ page }) => {
+    const log = await installCsIsolatedNetwork(page, { failMode: 'create' })
+    await openFreshWizard(page)
+    await fillRegistrationThroughComplete(page)
+    await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
+    await expect.poll(() => log.createProgram, { timeout: 60_000 }).not.toBeNull()
+    await expect(page.getByText('1사1교 프로그램 등록').first()).toBeVisible()
+    await expectWizardCommonTitle(page, VALUES_B.title)
+    expect(log.mutations.filter(item => item.path === '/api/admin/programs')).toHaveLength(1)
+  })
+
+  test('CS-B03 program-draft PUT 실패 시 성공으로 표시하지 않고 RHF B를 유지한다', async ({
+    page,
+  }) => {
+    const log = await installCsIsolatedNetwork(page, { failMode: 'draft' })
+    await openFreshWizard(page)
+    await fillRegistrationThroughComplete(page)
+    await page.getByRole('button', { name: /임시저장|임시 저장/ }).first().click()
+    await expect.poll(() => log.programDraftPuts.length, { timeout: 20_000 }).toBeGreaterThan(0)
+    await expect(page.getByText('임시 저장 실패').first()).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText('임시 저장 완료')).toHaveCount(0)
+    await page.getByRole('dialog').getByRole('button', { name: '확인' }).first().click()
+    await expectWizardCommonTitle(page, VALUES_B.title)
+    await expect(
+      page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요').first()
+    ).toHaveValue(VALUES_B.announcement)
+    expect(log.createProgram).toBeNull()
+    assertIsolatedNetwork(log)
+  })
+
+  test('CS-B06 blob URL이 CREATE overlay에 저장되지 않는다', async ({ page }) => {
+    const log = await installCsIsolatedNetwork(page)
+    await openFreshWizard(page)
+    await fillRegistrationThroughComplete(page)
+    await completeAndCapture(page, log)
+    const overlay = createOverlay(log)
+    expect(JSON.stringify(overlay)).not.toContain('blob:')
+    expect(JSON.stringify(log.createProgram?.body ?? {})).not.toContain('blob:')
+    if (log.filePosts.length > 0) {
+      const ids = JSON.stringify(overlay)
+      expect(ids.includes('77001') || ids.includes('fileObjectId') || ids.includes('thumb')).toBe(
+        true
+      )
+    }
+    assertIsolatedNetwork(log)
+  })
+})

@@ -57,7 +57,11 @@ export function FeaturedCarousel({ stories }: FeaturedCarouselProps) {
 
       <div className={styles.content}>
         <div className={styles.header}>
-          <PFCategoryBadge size="large" variant="primary">
+          <PFCategoryBadge
+            className={styles.categoryBadge}
+            size="large"
+            variant="primary"
+          >
             {story.categoryLabel}
           </PFCategoryBadge>
 
