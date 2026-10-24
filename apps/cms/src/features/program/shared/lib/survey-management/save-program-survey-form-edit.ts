@@ -48,17 +48,70 @@ export function buildProgramSurveyFormEditTarget(
 export const PROGRAM_SURVEY_FORM_EDIT_LOCKED_MESSAGE =
   '진행 중이거나 응답이 있는 설문은 양식을 수정할 수 없습니다.'
 
+const SEOUL_TIME_ZONE = 'Asia/Seoul'
+
+function seoulCalendarYmd(value: string | number | Date): string | null {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString('en-CA', { timeZone: SEOUL_TIME_ZONE })
+}
+
+function isSameSeoulCalendarDay(iso: string, now = new Date()): boolean {
+  const left = seoulCalendarYmd(iso)
+  const right = seoulCalendarYmd(now)
+  return left != null && left === right
+}
+
+/** 양식 교체용 임시 시작 — Asia/Seoul 다음 달력일 00:00 */
+function seoulStartOfNextCalendarDayIso(now = new Date()): string {
+  const ymd = seoulCalendarYmd(now)
+  if (ymd == null) return dayjs(now).add(1, 'day').startOf('day').toISOString()
+  const [year, month, day] = ymd.split('-').map(Number)
+  const nextYmd = new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10)
+  return `${nextYmd}T00:00:00.000+09:00`
+}
+
 function bindingHasSubmissionPeriod(
   binding: Pick<ProgramFormBindingResponse, 'submissionStartAt' | 'submissionEndAt'>
 ): boolean {
   return Boolean(binding.submissionStartAt?.trim() || binding.submissionEndAt?.trim())
 }
 
+function snapshotBindingSubmissionPeriod(
+  binding: ProgramFormBindingResponse
+): { submissionStartAt?: string; submissionEndAt?: string } {
+  return {
+    ...(binding.submissionStartAt != null ? { submissionStartAt: binding.submissionStartAt } : {}),
+    ...(binding.submissionEndAt != null ? { submissionEndAt: binding.submissionEndAt } : {}),
+  }
+}
+
+async function restoreBindingSubmissionPeriod(
+  programId: string,
+  bindingId: string,
+  previous: { submissionStartAt?: string; submissionEndAt?: string }
+): Promise<void> {
+  if (previous.submissionStartAt == null && previous.submissionEndAt == null) return
+  try {
+    await updateAdminProgramFormBindingRemote(programId, bindingId, previous)
+  } catch (error) {
+    console.warn('[program-survey-form-edit] restore submission period failed', error)
+  }
+}
+
+function bindingAlreadyReboundToEditedTemplate(
+  binding: ProgramFormBindingResponse,
+  sourceVersionId: number
+): boolean {
+  const boundVersion = Number(binding.templateVersionId)
+  return Number.isInteger(boundVersion) && boundVersion > 0 && boundVersion !== sourceVersionId
+}
+
 /**
  * 등록 직후 최초 양식 저장만 기간을 열어 준다.
  * SATISFACTION·LECTURE_EVALUATION은 기간 null + IN_PROGRESS.
- * SURVEY는 서버가 submissionStartAt을 채워 IN_PROGRESS가 되므로, 응답 0건·시작일이 오늘(생성일 당일)인 경우만 동일하게 본다.
- * 이미 시작된 과거 기간(IN_PROGRESS)은 열지 않는다.
+ * SURVEY는 서버가 submissionStartAt을 채워 IN_PROGRESS가 되므로, 응답 0건·시작일·생성일이 Asia/Seoul 오늘인 경우만 동일하게 본다.
+ * 이미 시작된 과거 기간(IN_PROGRESS)과, 최초 저장으로 version이 바뀐 바인딩은 열지 않는다.
  */
 function canUnlockBindingPeriodForFirstSurveyFormSave(
   binding: ProgramFormBindingResponse
@@ -73,15 +126,13 @@ function canUnlockBindingPeriodForFirstSurveyFormSave(
   const start = dayjs(startRaw)
   if (!start.isValid()) return false
   if (dayjs().isBefore(start)) return false
-
-  const now = dayjs()
-  if (!start.isSame(now, 'day')) return false
+  if (!isSameSeoulCalendarDay(startRaw)) return false
 
   const createdRaw = binding.createdAt?.trim()
   if (!createdRaw) return true
   const created = dayjs(createdRaw)
   if (!created.isValid()) return true
-  return created.isSame(now, 'day')
+  return isSameSeoulCalendarDay(createdRaw)
 }
 
 /** 서버 `availableActions` 우선, 없으면 progressStatus·응답 수로 판단 */
@@ -124,20 +175,36 @@ export function resolveProgramSurveyFormSaveBlockedMessage(
   return PROGRAM_SURVEY_FORM_EDIT_LOCKED_MESSAGE
 }
 
+type PreparedSurveyFormBinding =
+  | {
+      ok: true
+      binding: ProgramFormBindingResponse
+      periodUnlock?: { previous: { submissionStartAt?: string; submissionEndAt?: string } }
+    }
+  | { ok: false; message: string; refetchBindings: boolean }
+
 async function prepareBindingForSurveyFormSave(
   programId: string,
   bindingId: string,
   draft: WritingFormDraft,
-  initialBinding: ProgramFormBindingResponse | undefined
-): Promise<
-  | { ok: true; binding: ProgramFormBindingResponse }
-  | { ok: false; message: string; refetchBindings: boolean }
-> {
+  initialBinding: ProgramFormBindingResponse | undefined,
+  sourceVersionId: number
+): Promise<PreparedSurveyFormBinding> {
   let binding = initialBinding
   if (canSwapProgramSurveyFormBinding(binding)) {
     return { ok: true, binding: binding! }
   }
   if ((binding?.submittedCount ?? 0) > 0) {
+    return {
+      ok: false,
+      message: resolveProgramSurveyFormSaveBlockedMessage(binding),
+      refetchBindings: true,
+    }
+  }
+  if (
+    binding != null &&
+    bindingAlreadyReboundToEditedTemplate(binding, sourceVersionId)
+  ) {
     return {
       ok: false,
       message: resolveProgramSurveyFormSaveBlockedMessage(binding),
@@ -154,6 +221,7 @@ async function prepareBindingForSurveyFormSave(
 
   // 등록 직후: 기간 null이거나 SURVEY 서버 기본 오늘 시작이면 IN_PROGRESS라 양식 교체가 막힌다.
   // 진행 상태 정책은 유지하고, 최초 1회만 기간을 미래로 열어 UPDATE_TEMPLATE을 탄다.
+  const previous = snapshotBindingSubmissionPeriod(binding)
   const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
   const period = readSurveySubmissionPeriodFromSchema(schemaJson)
   const draftStart = period.submissionStartAt ? dayjs(period.submissionStartAt) : null
@@ -165,22 +233,25 @@ async function prepareBindingForSurveyFormSave(
         ...(period.submissionEndAt != null ? { submissionEndAt: period.submissionEndAt } : {}),
       }
     : {
-        // 양식 교체는 BEFORE_START에서만 가능 — 등록 직후 1회 저장은 임시 미래 시작으로 연다.
-        submissionStartAt: dayjs().add(1, 'day').startOf('day').toISOString(),
+        submissionStartAt: seoulStartOfNextCalendarDayIso(),
       }
 
-  await updateAdminProgramFormBindingRemote(programId, bindingId, periodPayload)
-
-  const bindings = await fetchAdminProgramFormBindingsRemote(programId)
-  binding = bindings.find(item => String(item.bindingId) === bindingId)
-  if (canSwapProgramSurveyFormBinding(binding)) {
-    return { ok: true, binding: binding! }
-  }
-
-  return {
-    ok: false,
-    message: resolveProgramSurveyFormSaveBlockedMessage(binding),
-    refetchBindings: true,
+  try {
+    await updateAdminProgramFormBindingRemote(programId, bindingId, periodPayload)
+    const bindings = await fetchAdminProgramFormBindingsRemote(programId)
+    binding = bindings.find(item => String(item.bindingId) === bindingId)
+    if (canSwapProgramSurveyFormBinding(binding)) {
+      return { ok: true, binding: binding!, periodUnlock: { previous } }
+    }
+    await restoreBindingSubmissionPeriod(programId, bindingId, previous)
+    return {
+      ok: false,
+      message: resolveProgramSurveyFormSaveBlockedMessage(binding),
+      refetchBindings: true,
+    }
+  } catch (error) {
+    await restoreBindingSubmissionPeriod(programId, bindingId, previous)
+    throw error
   }
 }
 
@@ -247,7 +318,8 @@ export async function saveProgramSurveyFormEdit(
     target.programId,
     target.bindingId,
     draft,
-    binding
+    binding,
+    target.sourceVersionId
   )
   if (!prepared.ok) {
     return {
@@ -257,41 +329,57 @@ export async function saveProgramSurveyFormEdit(
     }
   }
 
-  const source = await fetchFormTemplateVersionRemote(target.sourceVersionId)
-  if (source.templateId == null) {
-    return { ok: false, message: '바인딩된 양식의 템플릿 ID를 찾을 수 없습니다.' }
-  }
+  const restoreUnlockPeriod = () =>
+    prepared.periodUnlock
+      ? restoreBindingSubmissionPeriod(
+          target.programId,
+          target.bindingId,
+          prepared.periodUnlock.previous
+        )
+      : Promise.resolve()
 
-  // ownerProgramId → template_scope=PROGRAM: 양식 관리 목록·등록 후보에 나오지 않는다.
-  // versionLabel은 새 템플릿 이름이 되므로 보내지 않는다.
-  const copied = await copyFormTemplateVersionRemote(source.templateId, {
-    sourceVersionId: target.sourceVersionId,
-    ownerProgramId: Number(target.programId),
-  })
-  if (copied.templateVersionId == null) {
-    return { ok: false, message: '프로그램 전용 양식 초안을 만들지 못했습니다.' }
-  }
-  const templateId = copied.templateId ?? source.templateId
-
-  const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
-  await updateFormTemplateVersionRemote(copied.templateVersionId, { schemaJson })
-  const templateVersionId = await publishFormTemplateVersionById(copied.templateVersionId)
-
-  const templateName = target.title.trim()
-  if (templateId !== source.templateId && templateName !== '') {
-    try {
-      // 복제 템플릿명은 서버가 「… 복사본」으로 만든다 — 설문 제목이 바뀌지 않게 원래 이름으로 되돌린다.
-      await updateFormTemplateRemote(templateId, { templateName })
-    } catch (error) {
-      console.warn('[program-survey-form-edit] restore template name failed', error)
+  try {
+    const source = await fetchFormTemplateVersionRemote(target.sourceVersionId)
+    if (source.templateId == null) {
+      await restoreUnlockPeriod()
+      return { ok: false, message: '바인딩된 양식의 템플릿 ID를 찾을 수 없습니다.' }
     }
+
+    // ownerProgramId → template_scope=PROGRAM: 양식 관리 목록·등록 후보에 나오지 않는다.
+    // versionLabel은 새 템플릿 이름이 되므로 보내지 않는다.
+    const copied = await copyFormTemplateVersionRemote(source.templateId, {
+      sourceVersionId: target.sourceVersionId,
+      ownerProgramId: Number(target.programId),
+    })
+    if (copied.templateVersionId == null) {
+      await restoreUnlockPeriod()
+      return { ok: false, message: '프로그램 전용 양식 초안을 만들지 못했습니다.' }
+    }
+    const templateId = copied.templateId ?? source.templateId
+
+    const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
+    await updateFormTemplateVersionRemote(copied.templateVersionId, { schemaJson })
+    const templateVersionId = await publishFormTemplateVersionById(copied.templateVersionId)
+
+    const templateName = target.title.trim()
+    if (templateId !== source.templateId && templateName !== '') {
+      try {
+        // 복제 템플릿명은 서버가 「… 복사본」으로 만든다 — 설문 제목이 바뀌지 않게 원래 이름으로 되돌린다.
+        await updateFormTemplateRemote(templateId, { templateName })
+      } catch (error) {
+        console.warn('[program-survey-form-edit] restore template name failed', error)
+      }
+    }
+
+    await updateAdminProgramFormBindingRemote(target.programId, target.bindingId, {
+      templateId,
+      templateVersionId,
+      ...readSurveySubmissionPeriodFromSchema(schemaJson),
+    })
+
+    return { ok: true, templateId, templateVersionId }
+  } catch (error) {
+    await restoreUnlockPeriod()
+    throw error
   }
-
-  await updateAdminProgramFormBindingRemote(target.programId, target.bindingId, {
-    templateId,
-    templateVersionId,
-    ...readSurveySubmissionPeriodFromSchema(schemaJson),
-  })
-
-  return { ok: true, templateId, templateVersionId }
 }

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { PaymentItemResponsePaymentItemType } from '@/shared/api/generated/settlement/schemas/paymentItemResponsePaymentItemType'
 import { WageItemResponseWageItemType } from '@/shared/api/generated/settlement/schemas/wageItemResponseWageItemType'
-import { mapWageItemToSettingDetail } from './map-settlement-config-item-detail'
+import {
+  mapPaymentItemToSettingDetail,
+  mapWageItemToSettingDetail,
+} from './map-settlement-config-item-detail'
 
 describe('mapWageItemToSettingDetail', () => {
   it('GET에 지급요건·비고·한도가 없으면 1급 카탈로그 기본값을 채운다', () => {
@@ -71,5 +75,40 @@ describe('mapWageItemToSettingDetail', () => {
       remarkLines: ['비고'],
     })
     expect(detail.maxLimitWon).toBe(500_000)
+  })
+})
+
+describe('mapPaymentItemToSettingDetail', () => {
+  it('증빙 정책은 evidenceRequiredYn을 쓰고 detailJson.evidenceSubmission은 무시한다', () => {
+    const notRequired = mapPaymentItemToSettingDetail({
+      id: 166201,
+      paymentItemType: PaymentItemResponsePaymentItemType.TRANSPORT_INSTRUCTOR,
+      itemName: '강사 교통비',
+      evidenceRequiredYn: false,
+      taxableYn: true,
+      useYn: true,
+      detailJson: JSON.stringify({ evidenceSubmission: 'required' }),
+    })
+    expect(notRequired.evidenceSubmission).toBe('not_required')
+
+    const required = mapPaymentItemToSettingDetail({
+      id: 166202,
+      paymentItemType: PaymentItemResponsePaymentItemType.TRANSPORT_STUDENT,
+      itemName: '학생 교통비',
+      evidenceRequiredYn: true,
+      taxableYn: false,
+      useYn: true,
+      detailJson: JSON.stringify({ evidenceSubmission: 'not_required' }),
+    })
+    expect(required.evidenceSubmission).toBe('required')
+  })
+
+  it('evidenceRequiredYn이 없으면 미설정으로 두고 false로 대체하지 않는다', () => {
+    const unconfigured = mapPaymentItemToSettingDetail({
+      paymentItemType: PaymentItemResponsePaymentItemType.MEAL,
+      itemName: '식사비',
+      detailJson: JSON.stringify({ evidenceSubmission: 'required' }),
+    })
+    expect(unconfigured.evidenceSubmission).toBeUndefined()
   })
 })

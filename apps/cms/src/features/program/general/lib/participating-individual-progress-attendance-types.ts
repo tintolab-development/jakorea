@@ -47,6 +47,7 @@ export type ParticipatingIndividualProgressAttendanceSessionGroup = {
   filterValue: string
   filterLabel: string
   headerTitle: string
+  headerDateLabel: string
   headerScheduleSummary: string
   headerPeriodRangeLabel: string
   headerPrefix: string

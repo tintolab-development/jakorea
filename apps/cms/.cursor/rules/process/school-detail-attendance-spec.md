@@ -19,9 +19,9 @@
 
 ### 표시 형식
 
-- **패널 제목 (`table-title`)**: `{선행 라벨} : {날짜(요일)}` — 예: `1회차 : 2026. 01. 09(금)`, `오리엔테이션 : 2026. 01. 09(금)`
+- **패널 제목 (`table-title`)**: `{선행 라벨} : {날짜(요일)}` — 예: `1회차 : 2026.01.09(금)`, `오리엔테이션 : 2026.01.09(금)`
 - **필터 [교육 일정] 옵션**: `{선행 라벨} · {날짜(요일)}`
-- **16px 메타 (`table-description`)**: `{시간} ({대면/온라인}) | {교시 구간}` — 교육 구조와 무관
+- **16px 메타**: `{N시간} ({교육형태}) | {교육시간}`. 교시가 있으면 `{N교시 (start ~ end) ~ …}`, 없으면 시계 구간. 교육형태 원문(오프라인 등)을 대면으로 바꾸지 않음.
 
 함수: `resolveSchoolDetailAttendanceSessionLeadLabel`, `buildAttendanceSessionHeaderParts`, `buildAttendanceSessionFilterLabel`.  
 commonInfo 해석: `resolveGeneralProgramCommonInfo`, `resolveEffectiveGeneralProgramTypeFields`.

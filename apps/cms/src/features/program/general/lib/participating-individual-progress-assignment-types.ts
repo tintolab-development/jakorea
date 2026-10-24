@@ -52,6 +52,7 @@ export type ParticipatingIndividualProgressAssignmentSessionGroup = {
   filterValue: string
   filterLabel: string
   headerTitle: string
+  headerDateLabel: string
   headerScheduleSummary: string
   headerPeriodRangeLabel: string
   assignmentPeriodLabel: string

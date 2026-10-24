@@ -2,6 +2,7 @@ import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/or
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
 import { formatStudentGradeClassColumnLabel } from '@/features/program/general/lib/student-registered-grade-class-options'
 import type { Program } from '@/types/domain'
 import {
@@ -15,27 +16,6 @@ function formatSessionDate(date: string, dayOfWeek: string): string {
   const formatted = formatCmsScheduleDisplayLabel(cleaned)
   if (formatted !== cleaned || /\([월화수목금토일]\)/u.test(formatted)) return formatted
   return formatCmsScheduleDisplayLabel(`${cleaned}(${dayOfWeek})`)
-}
-
-function formatEducationFormat(format: string): string {
-  if (format === '오프라인') return '대면'
-  return format
-}
-
-function formatTimeRange(timeRange: string): string {
-  return timeRange.includes('~') ? timeRange.replace(/~/g, ' ~ ') : timeRange
-}
-
-/** 회차별 2교시 구간 라벨 (스크린샷 시안) */
-function buildPeriodRangeLabel(round: number): string {
-  if (round === 1) {
-    return '1교시 (9:20 ~ 10:10) ~ 2교시 (10:20 ~ 11:10)'
-  }
-  if (round === 2) {
-    return '3교시 (11:20 ~ 12:10) ~ 4교시 (13:30 ~ 14:20)'
-  }
-  const classNum = round % 2 === 1 ? '1교시' : '3교시'
-  return `${classNum} (${formatTimeRange('9:20~10:10')})`
 }
 
 export interface SchoolDetailAttendanceSessionHeaderParts {
@@ -79,17 +59,28 @@ export function resolveSchoolDetailAttendanceSessionLeadLabel(
 
 export function buildAttendanceSessionHeaderParts(
   session: ParticipatingSchoolSession,
-  sessionLeadLabel: string
+  sessionLeadLabel: string,
+  program?: Program | null
 ): SchoolDetailAttendanceSessionHeaderParts {
-  const dateLabel = formatSessionDate(session.date, session.dayOfWeek)
-  const formatLabel = formatEducationFormat(session.format)
-  const periodRangeLabel = buildPeriodRangeLabel(session.round)
-  const title = `${sessionLeadLabel} : ${dateLabel}`
-  const scheduleSummary = formatLabel.trim()
-    ? `${session.duration} (${formatLabel})`
-    : session.duration
-  const headerPrefix = `${title} ${scheduleSummary} | ${periodRangeLabel}`
-  return { sessionLeadLabel, title, scheduleSummary, periodRangeLabel, headerPrefix }
+  const built = buildGeneralProgressSessionTableHeader({
+    round: session.round,
+    leadLabel: sessionLeadLabel,
+    educationScheduleLabel: session.educationScheduleLabel,
+    startAt: session.startAt,
+    dateLabel: formatSessionDate(session.date, session.dayOfWeek),
+    sessionDuration: session.duration,
+    sessionFormat: session.format,
+    sessionClassNum: session.classNum,
+    sessionTimeRange: session.timeRange,
+    program,
+  })
+  return {
+    sessionLeadLabel,
+    title: built.headerTitle,
+    scheduleSummary: built.headerScheduleSummary,
+    periodRangeLabel: built.headerPeriodRangeLabel,
+    headerPrefix: built.headerPrefix,
+  }
 }
 
 /** @deprecated {@link buildAttendanceSessionHeaderParts} 사용 */

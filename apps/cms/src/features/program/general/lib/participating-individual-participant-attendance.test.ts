@@ -49,6 +49,7 @@ function attendanceSession(
     filterValue: scheduleId,
     filterLabel: `${scheduleId}회차`,
     headerTitle: '1회차 출석',
+    headerDateLabel: '2026.04.03',
     headerScheduleSummary: '1회차',
     headerPeriodRangeLabel: '-',
     headerPrefix: '1회차',

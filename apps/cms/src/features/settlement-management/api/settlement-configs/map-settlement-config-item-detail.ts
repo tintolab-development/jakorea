@@ -62,10 +62,20 @@ function firstNumber(...values: unknown[]): number | null {
   return null
 }
 
-function readEvidenceSubmission(
-  value: unknown
+export function evidenceSubmissionFromRequiredYn(
+  value: boolean | null | undefined
 ): SettlementItemSettingDetail['evidenceSubmission'] {
-  return value === 'required' || value === 'not_required' ? value : undefined
+  if (value === true) return 'required'
+  if (value === false) return 'not_required'
+  return undefined
+}
+
+export function evidenceRequiredYnFromSubmission(
+  value: SettlementItemSettingDetail['evidenceSubmission']
+): boolean | null {
+  if (value === 'required') return true
+  if (value === 'not_required') return false
+  return null
 }
 
 function readTransportMode(
@@ -230,15 +240,19 @@ export function mapPaymentItemToSettingDetail(item: PaymentItemResponse): Settle
     transportCommuteMode: readTransportMode(
       detail.transportCommuteMode ?? extra.transportCommuteMode
     ),
-    evidenceSubmission: readEvidenceSubmission(
-      detail.evidenceSubmission ?? extra.evidenceSubmission
+    evidenceSubmission: evidenceSubmissionFromRequiredYn(
+      item.evidenceRequiredYn === true ? true : item.evidenceRequiredYn === false ? false : null
     ),
   }
 
-  return fillEmptyFromCatalog(
+  const filled = fillEmptyFromCatalog(
     mapped,
     getCatalogSettlementItemSettingDetailByPaymentType(item.paymentItemType)
   )
+  return {
+    ...filled,
+    evidenceSubmission: mapped.evidenceSubmission,
+  }
 }
 
 export function mapDeductionItemToSettingDetail(
