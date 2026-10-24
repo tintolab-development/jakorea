@@ -42,23 +42,15 @@ const createPayload = {
   year: 2026,
 } satisfies CareerGuideInterviewCreateRequest
 
-const createPayloadYearNull = {
-  impactStoryId: 7,
-  title: '자원봉사자 인터뷰',
-  year: null,
-} satisfies CareerGuideInterviewCreateRequest
-
 const updatePayload = {
   title: '수정된 인터뷰 제목',
-  year: null,
   version: 1,
 } satisfies CareerGuideInterviewUpdateRequest
 
 const deletePayload = { version: 1 } satisfies CareerGuideInterviewDeleteRequest
 
 assert.deepEqual(Object.keys(createPayload).sort(), ['impactStoryId', 'title', 'year'])
-assert.equal(createPayloadYearNull.year, null)
-assert.deepEqual(Object.keys(updatePayload).sort(), ['title', 'version', 'year'])
+assert.deepEqual(Object.keys(updatePayload).sort(), ['title', 'version'])
 assert.ok(!('storyKey' in updatePayload))
 assert.ok(!('impactStoryId' in updatePayload))
 assert.deepEqual(Object.keys(deletePayload), ['version'])

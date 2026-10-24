@@ -38,8 +38,8 @@ function requiredText(value: string, requiredCode: string, tooLongCode: string, 
   return normalized
 }
 
-function interviewYear(value: number | null): number | null {
-  if (value == null) return null
+function interviewYear(value: number | null): number | undefined {
+  if (value == null) return undefined
   if (!Number.isInteger(value) || value < 1900 || value > 2200) {
     throw new Error('INVALID_CAREER_GUIDE_INTERVIEW_YEAR')
   }
