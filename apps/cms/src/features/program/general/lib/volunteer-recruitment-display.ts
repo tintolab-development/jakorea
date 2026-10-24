@@ -5,8 +5,11 @@
  */
 
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import { getVolunteerRecruitmentStatus } from '@/features/program/shared/lib/program-detail-info-constants'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import {
+  getRecruitmentStatusFromDates,
+  getRecruitmentStatusLabelForStatus,
+  type RecruitmentStatus,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { getGeneralVolunteerInterviewEnabled } from '@/features/program/general/lib/detail-meta'
 import { resolveAnnouncement } from '@/features/program/shared/lib/announcement-label'
 import {
@@ -89,8 +92,9 @@ export type GeneralProgramVolunteerRecruitmentDisplay = {
   notes: string
 }
 
-function resolveVolunteerRecruitmentLifecycle(program: Program): ProgramLifecycleStatus | null {
-  const status = getVolunteerRecruitmentStatus(program)
+function resolveVolunteerRecruitmentLifecycle(
+  status: RecruitmentStatus | null
+): ProgramLifecycleStatus | null {
   if (status == null) return null
   return VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[status]
 }
@@ -102,7 +106,11 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
   const info = common?.volunteerRecruitmentInfo as VolunteerRecruitmentInfoLoose | undefined
   const row = pickAudienceRecruitmentWindow(program, 'volunteer')
   const useRow = hasRecruitmentWindows(program)
-  const lifecycle = resolveVolunteerRecruitmentLifecycle(program)
+  const recruitmentStatus = getRecruitmentStatusFromDates(
+    useRow ? row?.startAt ?? undefined : program.volunteerApplicationStartDate,
+    useRow ? row?.endAt ?? undefined : program.volunteerApplicationEndDate
+  )
+  const lifecycle = resolveVolunteerRecruitmentLifecycle(recruitmentStatus)
 
   const interviewEnabled = useRow
     ? (row?.interviewEnabled ??
@@ -142,7 +150,7 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
       audienceOperationPeriodLabelFromRecruitmentRow(program, 'volunteer'),
       useRow ? undefined : info?.operationPeriodLabel
     ),
-    recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
+    recruitmentStatusLabel: getRecruitmentStatusLabelForStatus(recruitmentStatus, 'volunteer'),
     recruitmentStatusLifecycle: lifecycle,
     volunteerTargetLabel: pickDisplayString(info?.recruitmentTarget),
     volunteerTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),

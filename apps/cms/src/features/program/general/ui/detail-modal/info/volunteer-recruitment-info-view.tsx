@@ -6,7 +6,6 @@ import { Controller } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
   INTERVIEW_METHOD_OPTIONS,
   parseVolunteerTargetsSelectValue,
@@ -64,7 +63,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
     <span
       className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
     >
-      {display.recruitmentStatusLabel || getProgramLifecycleLabel(lifecycle)}
+      {display.recruitmentStatusLabel}
     </span>
   ) : (
     display.recruitmentStatusLabel

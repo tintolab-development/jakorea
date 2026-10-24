@@ -5,7 +5,9 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import {
   formatDateRange,
   formatTargetLevelsLabel,
+  getParticipantRecruitmentStatus,
   getParticipantRecruitmentLifecycle,
+  getRecruitmentStatusLabelForStatus,
   parseTargetLevelsSelectValue,
   resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -14,7 +16,6 @@ import {
   announcementPublishedToFormValue,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { formatUjatDotDateWithWeekday } from '@/features/program/ujat/lib/ujat-date-display'
 import { resolveUjatRecruitAnnouncementTitle } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
@@ -38,13 +39,19 @@ import '@/features/template/ui/form-editor/form-editor.css'
 import './volunteer-info-program.css'
 import './participant-info-program.css'
 
-function LifecycleStatusView({ lifecycle }: { lifecycle: ProgramLifecycleStatus | null }) {
+function LifecycleStatusView({
+  lifecycle,
+  status,
+}: {
+  lifecycle: ProgramLifecycleStatus | null
+  status: ReturnType<typeof getParticipantRecruitmentStatus>
+}) {
   if (!lifecycle) return <>-</>
   return (
     <span
       className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
     >
-      {getProgramLifecycleLabel(lifecycle)}
+      {getRecruitmentStatusLabelForStatus(status, 'participant')}
     </span>
   )
 }
@@ -85,6 +92,15 @@ export function UjatRecruitParticipantInfoProgramView({
   isTemplateAuthoring?: boolean
 }) {
   const lifecycle = getParticipantRecruitmentLifecycle(
+    program,
+    isEdit && form
+      ? {
+          applicationStartDate: form.watch('applicationStartDate'),
+          applicationEndDate: form.watch('applicationEndDate'),
+        }
+      : undefined
+  )
+  const recruitmentStatus = getParticipantRecruitmentStatus(
     program,
     isEdit && form
       ? {
@@ -201,7 +217,7 @@ export function UjatRecruitParticipantInfoProgramView({
             isTemplateAuthoring ? (
               <span className="form-editor-template-field-hint-text">{UJAT_RECRUIT_PROGRESS_HINT}</span>
             ) : (
-              <LifecycleStatusView lifecycle={lifecycle} />
+              <LifecycleStatusView lifecycle={lifecycle} status={recruitmentStatus} />
             )
           }
         />

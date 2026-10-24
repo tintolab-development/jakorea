@@ -96168,6 +96168,16 @@
             "type": "integer",
             "format": "int64"
           },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormResponseFile"
+            }
+          },
           "programFormBindingId": {
             "type": "integer",
             "format": "int64"
@@ -97887,6 +97897,12 @@
               "$ref": "#/components/schemas/FormResponseFile"
             }
           },
+          "form": {
+            "type": "object",
+            "description": "UJAT 교육계획서·교육일지 제출 당시의 불변 양식 스냅샷. 해당 문서가 아니면 null",
+            "nullable": true,
+            "additionalProperties": {}
+          },
           "retentionExpiresAt": {
             "type": "string",
             "format": "date-time"
@@ -97907,7 +97923,8 @@
             "format": "int64"
           },
           "questionKey": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "fileObjectId": {
             "type": "integer",

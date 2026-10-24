@@ -14,12 +14,13 @@ import {
 import {
   formatDateRange,
   formatTargetLevelsLabel,
+  getParticipantRecruitmentStatus,
   getParticipantRecruitmentLifecycle,
+  getRecruitmentStatusLabelForStatus,
   resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
   buildInstitutionApplicationRecruitLimitVisibilityBridge,
   getInstitutionApplicationProgramBridge,
@@ -206,7 +207,17 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const info = common?.participantRecruitmentInfo as ParticipantRecruitmentInfoLoose | undefined
   const row = pickAudienceRecruitmentWindow(program, 'participant')
   const useRow = hasRecruitmentWindows(program)
-  const lifecycle = getParticipantRecruitmentLifecycle(program, options)
+  const effectiveProgram = {
+    ...program,
+    applicationStartDate:
+      options?.applicationStartDate ??
+      (useRow ? row?.startAt ?? undefined : program.applicationStartDate),
+    applicationEndDate:
+      options?.applicationEndDate ??
+      (useRow ? row?.endAt ?? undefined : program.applicationEndDate),
+  }
+  const recruitmentStatus = getParticipantRecruitmentStatus(effectiveProgram)
+  const lifecycle = getParticipantRecruitmentLifecycle(effectiveProgram)
 
   const showInstitutionApplicationLimits = isGeneralProgramSchoolInstitutionTarget(program)
   const bridge = resolveRecruitmentInstitutionLimitsBridge(program)
@@ -335,7 +346,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
         ? operationFromProgram
         : undefined
     ),
-    recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
+    recruitmentStatusLabel: getRecruitmentStatusLabelForStatus(recruitmentStatus, 'participant'),
     recruitmentStatusLifecycle: lifecycle,
     targetLabel,
     targetDetailLabel,
