@@ -18,6 +18,7 @@ import type {
 import type { Status } from '@/types'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
+import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
@@ -422,7 +423,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
     schedules: mapProgramSchedules(dto.schedules),
   })
-  return mapped
+  return applyBusinessPeriodHistoriesFromDto(mapped, dto)
 }
 
 function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {

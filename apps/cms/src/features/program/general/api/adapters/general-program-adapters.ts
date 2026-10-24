@@ -29,6 +29,7 @@ import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shar
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   isRecruitmentStartLocked,
   isRecruitmentTypeGeneralInfoClosed,
@@ -508,16 +509,19 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
 
-  return hydrateRecruitmentWindowsOntoProgram(
-    hydrateGeneralRecruitmentInfoFromRows(
-      applyResolvedAnnouncementTitle(
-        applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
-        {
-          serviceDetailJson: dto.serviceDetailJson,
-          overlay: serviceDetail.registrationOverlay,
-        }
+  return applyBusinessPeriodHistoriesFromDto(
+    hydrateRecruitmentWindowsOntoProgram(
+      hydrateGeneralRecruitmentInfoFromRows(
+        applyResolvedAnnouncementTitle(
+          applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+          {
+            serviceDetailJson: dto.serviceDetailJson,
+            overlay: serviceDetail.registrationOverlay,
+          }
+        )
       )
-    )
+    ),
+    dto
   )
 }
 

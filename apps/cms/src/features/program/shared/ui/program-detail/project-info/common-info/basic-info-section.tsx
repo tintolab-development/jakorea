@@ -72,6 +72,7 @@ import {
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
 import { educationProcessDisplayLabel } from '@/features/program/shared/lib/program-enum-normalize'
+import { BusinessPeriodExtendHistoryRows } from '@/features/program/shared/ui/business-period-extend-history-rows'
 
 const ECONOMY_ALL_VALUE = '__all__'
 
@@ -502,6 +503,7 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
+          <BusinessPeriodExtendHistoryRows program={program} />
         </DetailInfoForm>
 
         <DetailInfoForm title="기본 정보" hideHeader mode={commonInfoFormEdit ? 'edit' : 'view'}>
@@ -1182,6 +1184,7 @@ export function BasicInfoSection({
           }
         />
       </DetailInfoForm.Row>
+      <BusinessPeriodExtendHistoryRows program={program} />
 
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field

@@ -39,6 +39,8 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import './project-info-form-shared.css'
 import { CmsButton } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
+import { isCommonInfoEditPeriodOpen } from '@/features/program/shared/lib/program-edit-window'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { CompanySchoolCommonInfoRegistrationEdit } from '@/features/program/1c-1s/ui/common-info-registration-edit'
@@ -179,10 +181,16 @@ function ProjectInfoDetailTabsRow({
   onVolunteersSave: () => void
   onPreview: () => void
 }) {
-  const editInfoButton = (isEditing: boolean, onSave: () => void) => (
+  const infoEditDisabled =
+    displayProgram != null &&
+    !isEditModeInfo &&
+    !isCommonInfoEditPeriodOpen(displayProgram.endDate)
+
+  const editInfoButton = (isEditing: boolean, onSave: () => void, disabled = false) => (
     <ProgramEditInfoActions
       isEditing={isEditing}
       idleVariant="secondary"
+      disabled={disabled}
       onEdit={onInfoEdit}
       onCancel={onCancel}
       onSave={onSave}
@@ -192,9 +200,11 @@ function ProjectInfoDetailTabsRow({
   const trailing =
     displayProgram != null ? (
       <>
-        {activeTab === 'info'
-          ? editInfoButton(isEditModeInfo, onInfoSave)
-          : activeTab === 'institutions'
+        {activeTab === 'info' ? (
+          <BusinessPeriodExtendToolbar program={displayProgram} editDisabled={infoEditDisabled}>
+            {editInfoButton(isEditModeInfo, onInfoSave, infoEditDisabled)}
+          </BusinessPeriodExtendToolbar>
+        ) : activeTab === 'institutions'
             ? editInfoButton(isEditModeInstitutions, onInstitutionsSave)
             : activeTab === 'volunteers'
               ? editInfoButton(isEditModeVolunteers, onVolunteersSave)
@@ -219,28 +229,34 @@ function ProjectInfoDetailTabsRow({
 
 function ProjectInfoHiddenTabsInfoActions({
   hidden,
+  program,
   isEditModeInfo,
   onInfoEdit,
   onCancel,
   onInfoSave,
 }: {
   hidden: boolean
+  program: Program
   isEditModeInfo: boolean
   onInfoEdit: () => void
   onCancel: () => void
   onInfoSave: () => void
 }) {
   if (!hidden) return null
+  const editDisabled = !isEditModeInfo && !isCommonInfoEditPeriodOpen(program.endDate)
 
   return (
     <div className="project-info-detail__hidden-tabs-info-actions">
-      <ProgramEditInfoActions
-        isEditing={isEditModeInfo}
-        idleVariant="secondary"
-        onEdit={onInfoEdit}
-        onCancel={onCancel}
-        onSave={onInfoSave}
-      />
+      <BusinessPeriodExtendToolbar program={program} editDisabled={editDisabled}>
+        <ProgramEditInfoActions
+          isEditing={isEditModeInfo}
+          idleVariant="secondary"
+          disabled={editDisabled}
+          onEdit={onInfoEdit}
+          onCancel={onCancel}
+          onSave={onInfoSave}
+        />
+      </BusinessPeriodExtendToolbar>
     </div>
   )
 }
@@ -335,6 +351,7 @@ export function ProjectInfoDetailPanels({
             <div className="program-detail-fullpage-modal__info-tab">
               <ProjectInfoHiddenTabsInfoActions
                 hidden={hideTabsRow}
+                program={program}
                 isEditModeInfo={isEditModeInfo}
                 onInfoEdit={onInfoEdit}
                 onCancel={onCancel}

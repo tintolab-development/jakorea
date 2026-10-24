@@ -39,6 +39,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
 import { BasicInfoSection } from '@/features/program/shared/ui/program-detail/project-info/common-info/basic-info-section'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -2078,15 +2079,17 @@ export function TrainedTeachersCommonInfoView({
     <>
     <div className="trained-teachers-common-info program-detail-fullpage-modal__info-tab">
       <div className="trained-teachers-common-info__header">
-        <ProgramEditInfoActions
-          isEditing={isEditMode}
-          idleVariant="secondary"
-          onEdit={onEdit ?? (() => {})}
-          onCancel={onCancel ?? (() => {})}
-          onSave={handleSave}
-          saving={saving || persistPending}
-          disabled={editDisabled}
-        />
+        <BusinessPeriodExtendToolbar program={displayProgram} editDisabled={editDisabled}>
+          <ProgramEditInfoActions
+            isEditing={isEditMode}
+            idleVariant="secondary"
+            onEdit={onEdit ?? (() => {})}
+            onCancel={onCancel ?? (() => {})}
+            onSave={handleSave}
+            saving={saving || persistPending}
+            disabled={editDisabled}
+          />
+        </BusinessPeriodExtendToolbar>
       </div>
 
       {isEditMode ? (
