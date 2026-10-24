@@ -17,6 +17,7 @@ import {
 } from '@/features/mypage'
 import illustFlagUrl from '@/shared/assets/illustration/illust-flag.svg'
 import { PFTabs, PFText } from '@/shared/ui'
+import statusListTabsStyles from '@/features/mypage/shared/ui/mypage-status-list-tabs.module.css'
 import { MypageLayout } from '@/widgets/mypage-layout'
 import { LectureListContent } from './list-content'
 import styles from '../volunteer/page.module.css'
@@ -73,7 +74,7 @@ export function MypageLecturePage() {
       </header>
 
       <PFTabs
-        className={styles.tabs}
+        className={statusListTabsStyles.tabs}
         items={[...EDUCATION_APPLICATION_TAB_ITEMS]}
         value={params.tab}
         onChange={handleTabChange}

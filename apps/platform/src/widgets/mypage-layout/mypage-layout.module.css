@@ -240,4 +240,15 @@
   .shellSubpage .layoutHeadingFirst .content {
     padding-top: 0;
   }
+
+  /* 트리거·패널만 딤 위. 본문(캘린더 등)은 스크림 아래 */
+  .layoutMenuOpen .sidebar {
+    position: relative;
+    z-index: 6;
+  }
+
+  .layoutMenuOpen .content {
+    position: relative;
+    z-index: 1;
+  }
 }

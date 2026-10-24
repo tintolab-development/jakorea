@@ -32,7 +32,7 @@ assert.equal(keysOf('school_teacher').includes('settlement'), false)
 
 assert.deepEqual(labelsOf('instructor_only'), [
   '나의 홈',
-  '강의 현황',
+  '강의현황',
   '정산 현황',
   '교육현황',
   '봉사현황',

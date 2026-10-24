@@ -15,14 +15,8 @@
   margin: 0;
 }
 
-.tabs {
-  margin-top: var(--spacing-50);
-  margin-bottom: var(--spacing-60);
-}
-
 @media (--bp-below-pc) {
-  .tabs {
-    margin-top: 0;
-    margin-bottom: 0;
+  .pageTitleRow {
+    display: none;
   }
 }

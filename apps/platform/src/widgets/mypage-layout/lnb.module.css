@@ -90,14 +90,191 @@
   color: var(--color-primary-700);
 }
 
-/* ── Mobile · ~1079 — 가로 스크롤 메뉴 ── */
+/* ── Mobile dropdown (default LNB) ── */
+.lnbMobileDropdown {
+  width: 100%;
+  gap: 0;
+}
+
+.mobileDropdownRoot {
+  position: relative;
+  width: 100%;
+}
+
+.mobileDropdownRootOpen {
+  z-index: 20;
+}
+
+.mobileTriggerShell {
+  position: relative;
+  z-index: 25;
+  box-sizing: border-box;
+  background: var(--color-neutral-white);
+}
+
+.mobileTriggerShellOpen {
+  padding-bottom: var(--spacing-20);
+  border-bottom: 1px solid var(--color-neutral-cool-100);
+}
+
+.mobileTrigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.mobileTrigger:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-8);
+}
+
+.mobileTriggerLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mobileTriggerChevron {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: block;
+  transition: transform 0.15s ease;
+}
+
+.mobileTriggerChevronOpen {
+  transform: rotate(180deg);
+}
+
+.mobileTriggerIllustration {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: block;
+  object-fit: contain;
+}
+
+.mobileTriggerIllustrationEducation {
+  width: 58px;
+  height: 58px;
+}
+
+.mobilePanel {
+  position: relative;
+  z-index: 22;
+  margin-top: 0;
+  padding: var(--spacing-16) var(--spacing-24) var(--spacing-24);
+  border: 0;
+  border-radius: 0 0 20px 20px;
+  background: var(--color-neutral-white);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.mobilePanelMenu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+}
+
+.mobilePanelMenu .itemBlock {
+  gap: 0;
+}
+
+.mobilePanelMenu .divider {
+  margin: var(--spacing-16) 0;
+  background: var(--color-neutral-cool-100);
+}
+
+.mobilePanelItem {
+  width: 100%;
+  height: 56px;
+  min-height: 56px;
+  padding: 0 var(--spacing-12);
+  gap: 12px;
+  border-radius: 16px;
+  background: transparent;
+}
+
+.mobilePanelMenu .itemDisabled {
+  opacity: 1;
+}
+
+.mobilePanelMenu .itemActive {
+  background: #e6f4f6;
+}
+
+.mobilePanelIcon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.mobilePanelLabel {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  color: #555555;
+}
+
+.mobilePanelLabelActive {
+  font-weight: 700;
+  color: #1f5a6b;
+}
+
+.mobileScrim {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 11;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--color-neutral-black-50);
+  cursor: pointer;
+}
+
+.lnbMobileDropdownOpen .ctaWrap {
+  display: none;
+}
+
+/* ── Mobile · ~1079 — category 필 탭 + dropdown full-bleed ── */
 @media (--bp-below-pc) {
   .lnb {
     width: 100%;
+  }
+
+  .lnbMobileDropdown {
+    width: calc(100% + 2 * var(--page-padding-x));
+    margin-inline: calc(-1 * var(--page-padding-x));
+  }
+
+  .lnbMobileDropdown .mobileTriggerShell {
+    padding-inline: var(--page-padding-x);
+  }
+
+  .lnbMobileDropdown .ctaWrap {
+    margin-top: var(--spacing-12);
+  }
+
+  .lnbCategory {
     gap: var(--spacing-12);
   }
 
-  .menu {
+  .lnbCategory .menu {
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: stretch;
@@ -108,18 +285,18 @@
     scrollbar-width: none;
   }
 
-  .menu::-webkit-scrollbar {
+  .lnbCategory .menu::-webkit-scrollbar {
     display: none;
   }
 
-  .itemBlock {
+  .lnbCategory .itemBlock {
     flex-direction: row;
     align-items: center;
     width: auto;
     gap: var(--spacing-8);
   }
 
-  .item {
+  .lnbCategory .item {
     width: auto;
     min-width: max-content;
     height: 48px;
@@ -127,17 +304,16 @@
     flex-shrink: 0;
   }
 
-  .divider {
+  .lnbCategory .divider {
     width: 1px;
     height: 24px;
     align-self: center;
   }
 
-  .ctaWrap {
+  .lnbCategory .ctaWrap {
     margin-top: 0;
   }
 
-  /* category — 회원정보 설정 필 탭 (모바일만) */
   .lnbCategory .item {
     height: 30px;
     padding: 0 14px;

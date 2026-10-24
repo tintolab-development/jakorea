@@ -1,0 +1,12 @@
+/* 교육·강의·봉사·정산 현황 목록 — 알약 탭 여백 */
+.tabs {
+  margin-top: var(--spacing-50);
+  margin-bottom: var(--spacing-60);
+}
+
+@media (--bp-below-pc) {
+  .tabs {
+    margin-top: 0;
+    margin-bottom: var(--spacing-32);
+  }
+}

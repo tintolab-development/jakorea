@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { MypageLnbItem, MypageLnbItemKey } from '@/features/mypage'
+import { useMediaQuery } from '@/shared/hooks'
+import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { Lnb, type LnbAppearance } from './lnb'
 import styles from './mypage-layout.module.css'
 
@@ -35,6 +37,41 @@ export function MypageLayout({
   onLnbItemSelect,
   children,
 }: MypageLayoutProps) {
+  const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
+  const useMobileLnbDropdown = isBelowPc && lnbAppearance !== 'category'
+  const [mobileLnbOpen, setMobileLnbOpen] = useState(false)
+
+  useEffect(() => {
+    if (!useMobileLnbDropdown) {
+      setMobileLnbOpen(false)
+    }
+  }, [useMobileLnbDropdown])
+
+  useEffect(() => {
+    if (!mobileLnbOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    const previousPaddingRight = document.body.style.paddingRight
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileLnbOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.body.style.paddingRight = previousPaddingRight
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [mobileLnbOpen])
+
   const shellClassName = [
     styles.shell,
     variant === 'subpage' ? styles.shellSubpage : undefined,
@@ -45,9 +82,15 @@ export function MypageLayout({
   const layoutClassName = [
     styles.layout,
     mobileStack === 'headingFirst' ? styles.layoutHeadingFirst : undefined,
+    mobileLnbOpen ? styles.layoutMenuOpen : undefined,
   ]
     .filter(Boolean)
     .join(' ')
+
+  const handleDropdownOpenChange = (open: boolean) => {
+    if (!useMobileLnbDropdown) return
+    setMobileLnbOpen(open)
+  }
 
   return (
     <div className={shellClassName}>
@@ -65,6 +108,8 @@ export function MypageLayout({
             appearance={lnbAppearance}
             ariaLabel={lnbAriaLabel}
             onItemSelect={onLnbItemSelect}
+            dropdownOpen={useMobileLnbDropdown ? mobileLnbOpen : false}
+            onDropdownOpenChange={handleDropdownOpenChange}
           />
         </aside>
         <div className={styles.content}>
