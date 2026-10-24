@@ -3,6 +3,7 @@ import { ContentModal, CmsButton, CmsInput, CmsSelect, FileSelectField, useCmsAl
 import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
   parseAttendanceScheduleOwnerId,
+  parseProgramAttendanceCorrectionStatus,
   type ProgramAttendanceCorrectionStatus,
 } from '@/features/program/shared/lib/attendance-correction-types'
 import {
@@ -28,17 +29,9 @@ export type ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload
   evidenceFileObjectIds?: number[]
 }
 
-function toCorrectionStatus(
-  row: ParticipatingIndividualParticipantAttendanceRow
-): ProgramAttendanceCorrectionStatus {
-  if (row.attendanceStatus === 'late') return 'late'
-  if (row.attendanceStatus === 'excused_absence') return 'excused_absence'
-  if (row.attendanceStatus === 'absent') return 'absence'
-  return 'present'
-}
-
 export type ParticipatingIndividualParticipantAttendanceCorrectionModalProps = {
   open: boolean
+  participantName: string
   scheduleOptions: ReadonlyArray<ParticipatingIndividualParticipantAttendanceCorrectionScheduleOption>
   onCancel: () => void
   onConfirm: (payload: ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload) => void
@@ -46,13 +39,14 @@ export type ParticipatingIndividualParticipantAttendanceCorrectionModalProps = {
 
 export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   open,
+  participantName,
   scheduleOptions,
   onCancel,
   onConfirm,
 }: ParticipatingIndividualParticipantAttendanceCorrectionModalProps) {
   const { showAlert } = useCmsAlert()
   const [scheduleRowId, setScheduleRowId] = useState<string | undefined>(undefined)
-  const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus>('present')
+  const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus | undefined>(undefined)
   const [reason, setReason] = useState('')
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
   const [uploadingEvidence, setUploadingEvidence] = useState(false)
@@ -65,17 +59,10 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   useEffect(() => {
     if (!open) return
     setScheduleRowId(undefined)
-    setStatus('present')
+    setStatus(undefined)
     setReason('')
     setEvidenceFiles([])
   }, [open, scheduleOptions])
-
-  useEffect(() => {
-    if (!selectedOption) return
-    setStatus(toCorrectionStatus(selectedOption.row))
-    setReason(selectedOption.row.remark?.trim() ?? '')
-    setEvidenceFiles([])
-  }, [selectedOption])
 
   const showReasonTable = status === 'excused_absence'
 
@@ -87,7 +74,8 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
 
   const evidenceFileNames = evidenceFiles.map(file => file.name)
 
-  const canConfirm = Boolean(scheduleRowId && selectedOption && !uploadingEvidence)
+  const canConfirm = Boolean(scheduleRowId && selectedOption && status && !uploadingEvidence)
+  const displayName = participantName.trim() || '참여자'
 
   return (
     <ContentModal
@@ -96,6 +84,7 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
       title="출결 정정"
       width={600}
       className="participating-individual-attendance-correction-modal"
+      description={`교육 일정을 선택 후 **[${displayName}]** 님의 출결 상태를 정정해 주세요.`}
       footer={
         <div className="participating-individual-attendance-correction-modal__footer">
           <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
@@ -107,7 +96,7 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
             type="button"
             disabled={!canConfirm}
             onClick={() => {
-              if (!scheduleRowId || !selectedOption) return
+              if (!scheduleRowId || !selectedOption || !status) return
               if (status === 'excused_absence' && reason.trim().length === 0) {
                 showAlert({
                   title: '안내',
@@ -119,13 +108,13 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
               void (async () => {
                 let evidenceFileObjectIds: number[] | undefined
                 if (status === 'excused_absence' && evidenceFiles.length > 5) {
-                showAlert({
-                  title: '안내',
-                  content: '증빙 서류는 최대 5개까지 첨부할 수 있습니다.',
-                })
-                return
-              }
-              if (status === 'excused_absence' && evidenceFiles.length > 0) {
+                  showAlert({
+                    title: '안내',
+                    content: '증빙 서류는 최대 5개까지 첨부할 수 있습니다.',
+                  })
+                  return
+                }
+                if (status === 'excused_absence' && evidenceFiles.length > 0) {
                   const scheduleOwnerId = parseAttendanceScheduleOwnerId(
                     selectedOption.row.scheduleId
                   )
@@ -169,37 +158,43 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
               })()
             }}
           >
-            출결 정정
+            정정
           </CmsButton>
         </div>
       }
     >
       <div className="participating-individual-attendance-correction-modal__content">
         <div className="participating-individual-attendance-correction-modal__field">
-          <span className="participating-individual-attendance-correction-modal__label">출결 정정</span>
+          <span className="participating-individual-attendance-correction-modal__label">
+            출결 정정{' '}
+            <span
+              className="participating-individual-attendance-correction-modal__required"
+              aria-hidden
+            >
+              *
+            </span>
+          </span>
           <div className="participating-individual-attendance-correction-modal__select-row">
             <CmsSelect
               inputSize="large"
               width="100%"
               withAllOption={false}
-              placeholder="정정할 일정을 선택해 주세요"
+              placeholder="교육 일정을 선택해 주세요"
               value={scheduleRowId}
               options={scheduleOptions.map(option => ({
                 value: option.value,
                 label: option.label,
               }))}
-              onChange={value => setScheduleRowId(value == null ? undefined : String(value))}
-              aria-label="정정할 일정"
+              onChange={value => setScheduleRowId(value == null || value === '' ? undefined : String(value))}
+              aria-label="교육 일정"
             />
             <CmsSelect
               inputSize="large"
               width={170}
-              withAllOption={false}
-              value={status}
+              value={status ?? ''}
               options={[...PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS]}
-              onChange={value => setStatus((value as ProgramAttendanceCorrectionStatus) ?? 'present')}
+              onChange={value => setStatus(parseProgramAttendanceCorrectionStatus(value))}
               aria-label="출결 현황"
-              disabled={!selectedOption}
             />
           </div>
         </div>

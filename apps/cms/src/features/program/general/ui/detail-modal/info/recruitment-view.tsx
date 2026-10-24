@@ -210,7 +210,6 @@ export function GeneralProgramRecruitmentView({
                   <ProgramEditInfoActions
                     isEditing={isEditMode}
                     idleVariant="secondary"
-                    disabled={!recruitmentEditable}
                     onEdit={onEdit}
                     onCancel={onCancel}
                     onSave={onSave}

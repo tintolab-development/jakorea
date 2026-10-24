@@ -17,7 +17,7 @@ import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import {
   canAdminAction,
   isPermissionRequestsPath,
-  isPermissionSettingsPath,
+  isMemberPermissionSettingsPath,
   isSecurityLogPath,
   isTemplateManagementPath,
   resolveAdminRoleCodeFromUser,
@@ -41,7 +41,7 @@ function LayoutContent() {
     !canAdminAction({ roleCode, action: 'view', screen: 'security-logs' })
   const permissionSettingsBlocked =
     Boolean(user) &&
-    isPermissionSettingsPath(location.pathname) &&
+    isMemberPermissionSettingsPath(location.pathname) &&
     !canAdminAction({ roleCode, action: 'view', screen: 'permission-settings' })
   const permissionRequestsBlocked =
     Boolean(user) &&

@@ -271,9 +271,7 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
       },
     })
     const overlay = getUjatProgramRegistrationOverlayRecord()
-    expect(overlay['ujat.basicInfo.sponsorContactIds']).toEqual([
-      SPONSOR_CONTACT_UNSELECTED_VALUE,
-    ])
+    expect(overlay['ujat.basicInfo.sponsorContactIds']).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
     expect(overlay['ujat.basicInfo.sponsorContactId']).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
   })
 
@@ -402,10 +400,7 @@ describe('UJAT 설문 4종 — 등록 체크와 상세', () => {
         lecture_evaluation: false,
       },
     })
-    expect(next.generalSurveyMenuKeys).toEqual([
-      'volunteer_satisfaction',
-      'school_satisfaction',
-    ])
+    expect(next.generalSurveyMenuKeys).toEqual(['volunteer_satisfaction', 'school_satisfaction'])
     expect(resolveUjatSurveyMenuItems(next).map(item => item.label)).toEqual([
       '봉사단 만족도조사',
       '학교 만족도조사',
@@ -431,9 +426,7 @@ describe('UJAT 설문 4종 — 등록 체크와 상세', () => {
         lecture_evaluation: false,
       },
     })
-    expect(resolveUjatSurveyMenuItems(one)).toEqual([
-      { key: 'survey-poll', label: '설문조사' },
-    ])
+    expect(resolveUjatSurveyMenuItems(one)).toEqual([{ key: 'survey-poll', label: '설문조사' }])
   })
 })
 
@@ -458,13 +451,17 @@ describe('UJAT 공통 저장 overlay/KPI roundtrip', () => {
     expect(overlay['ujat.basicInfo.programManagementName']).toBe('수정 관리명')
   })
 
-  it('GET KPI가 비면 overlay 숫자를 지우지 않고 화면에 쓴다', () => {
+  it('GET KPI가 비면 stale overlay 숫자를 지우고 빈 KPI로 표시한다', () => {
     const overlay = reconcileUjatRegistrationOverlayFromApi(
-      { kpi: { finalParticipants: undefined, volunteerCount: undefined } },
+      {
+        kpi: { finalParticipants: null, volunteerCount: null } as unknown as NonNullable<
+          Program['generalCommonInfo']
+        >['kpi'],
+      },
       { 'ujat.kpi.participantCount': 12, 'ujat.kpi.volunteer': 4 }
     )
-    expect(overlay['ujat.kpi.participantCount']).toBe(12)
-    expect(overlay['ujat.kpi.volunteer']).toBe(4)
+    expect(overlay['ujat.kpi.participantCount']).toBe(null)
+    expect(overlay['ujat.kpi.volunteer']).toBe(null)
     const display = resolveUjatBusinessKpiDisplay({
       ...baseProgram(),
       generalCommonInfo: {
@@ -477,8 +474,8 @@ describe('UJAT 공통 저장 overlay/KPI roundtrip', () => {
       },
       ujatRegistrationOverlay: overlay,
     })
-    expect(display.finalParticipants).toBe(12)
-    expect(display.volunteerCount).toBe(4)
+    expect(display.finalParticipants).toBe(null)
+    expect(display.volunteerCount).toBe(null)
   })
 
   it('세션 overlay 설문 4종이 draft PATCH keys에 남는다', () => {

@@ -5,7 +5,7 @@
 export const PROGRAM_REGISTRATION_GENERAL_SECTION_META = {
   basicInfo: {
     title: '기본 정보',
-    editDescription: '참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.',
+    editDescription: '모집 등록 후 참여자 유형은 변경할 수 없습니다.',
   },
   typeSettings: {
     title: '프로그램 유형 설정',

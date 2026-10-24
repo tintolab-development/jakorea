@@ -74,6 +74,11 @@ type ActivityTabOptions = {
   teacherStudentDocumentTabsVisible?: boolean
   /** 서버가 명시적으로 ON인 교육받은 교사 교육일지 탭만 노출한다. */
   educationJournalEnabled?: boolean
+  /**
+   * 학교·교사회원(`school_teacher`)만 true.
+   * 강사 겸직(`instructor_dual`)은 false — 교육·강의 상세에 정산현황을 둔다.
+   */
+  schoolTeacherMember?: boolean
   /** Instructor applications only: expose the independent lecture report tab. */
   lectureReportVisible?: boolean
 }
@@ -131,6 +136,26 @@ function appendSurveySatisfactionTabs(
 }
 
 /**
+ * 정산현황 탭 노출 SSOT.
+ *
+ * 회원 유형
+ * - 노출: 일반 개인(교육현황) · 강사(강의현황) · 강사 겸직(해당 강의·교육 상세) · 봉사자(봉사현황)
+ * - 비노출: 학교·교사회원 — 진행 상태와 관계없이 교사 전용 탭만 사용
+ *
+ * 진행 상태 (학교·교사회원 제외)
+ * - 신청 완료·승인 대기·교육 전 포기: 진행 탭 빌더 미사용
+ * - 진행 예정·진행 중·진행 완료·진행 중 포기: 노출 (포기 시 lastParticipatedSession 이하)
+ */
+export function shouldShowSettlementTab(options: ActivityTabOptions): boolean {
+  return options.schoolTeacherMember !== true
+}
+
+function appendSettlementTab(items: EducationDetailTabItem[], options: ActivityTabOptions): void {
+  if (!shouldShowSettlementTab(options)) return
+  items.push({ key: 'settlement', label: '정산현황' })
+}
+
+/**
  * 진행 중 / 진행 완료 탭 (일반·강사 등).
  * 설문·만족도는 진행 중 내용이 없어도 노출하되, 프로그램 미설정(`*Configured === false`)이면 비노출.
  */
@@ -145,13 +170,14 @@ export function buildInProgressDetailTabItems(
     items.push({ key: 'lecture-report', label: '강의보고서' })
   }
   appendSurveySatisfactionTabs(items, options)
-  items.push({ key: 'settlement', label: '정산현황' })
+  appendSettlementTab(items, options)
   return items
 }
 
 /**
- * 교사 회원 — 진행 중 / 진행 완료 탭.
- * 안내사항 / 교육 일정 / 학생 명단 / 설문·만족도. 정산 비노출.
+ * 교사 역할 보유 회원 — 진행 중 / 진행 완료 탭.
+ * 안내사항 / 교육 일정 / 학생 명단 / 설문·만족도.
+ * 정산현황은 학교·교사회원 비노출, 강사 겸직만 노출.
  */
 export function buildTeacherInProgressDetailTabItems(
   options: ActivityTabOptions
@@ -170,6 +196,7 @@ export function buildTeacherInProgressDetailTabItems(
   }
   appendTeacherStudentDocumentTabs(items, options)
   appendSurveySatisfactionTabs(items, options)
+  appendSettlementTab(items, options)
   return items
 }
 
@@ -184,8 +211,9 @@ export function buildWithdrawnDuringDetailTabItems(
 }
 
 /**
- * 교사 회원 — 교육 진행 중 포기 탭.
- * 교육 일정 / 학생 명단 / 설문·만족도. 안내사항·정산 비노출.
+ * 교사 역할 보유 회원 — 교육 진행 중 포기 탭.
+ * 교육 일정 / 학생 명단 / 설문·만족도. 안내사항 비노출.
+ * 정산현황은 학교·교사회원 비노출, 강사 겸직만 노출.
  */
 export function buildTeacherWithdrawnDuringDetailTabItems(
   options: ActivityTabOptions

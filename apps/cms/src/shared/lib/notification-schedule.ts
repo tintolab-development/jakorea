@@ -1,5 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import { extractApiErrorCode, extractApiErrorDetails } from '@/shared/lib/extract-api-error-message'
+import { formatDateTimeDot } from '@/shared/utils/date'
 
 export const NOTIFICATION_MIN_LEAD_TIME_SECONDS = 60
 
@@ -31,7 +32,7 @@ export function getNotificationScheduleError(error: unknown): NotificationSchedu
   return {
     minimumScheduledAt: minimum?.isValid() ? minimum : undefined,
     message: minimum?.isValid()
-      ? `현재 시각보다 최소 1분 이후의 시간을 선택해 주세요. 허용 가능한 최소 시각: ${minimum.format('YYYY. MM. DD HH:mm')}`
+      ? `현재 시각보다 최소 1분 이후의 시간을 선택해 주세요. 허용 가능한 최소 시각: ${formatDateTimeDot(minimum)}`
       : '현재 시각보다 최소 1분 이후의 시간을 선택해 주세요.',
   }
 }

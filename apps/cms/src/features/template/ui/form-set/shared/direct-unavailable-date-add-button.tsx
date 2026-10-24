@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
@@ -95,10 +95,6 @@ function findNextEnabledDate(date: Dayjs, disabledDate?: (date: Dayjs) => boolea
   }
 
   return date
-}
-
-function areSameStringArray(a: string[], b: string[]): boolean {
-  return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
 function filterEnabledDateValues(
@@ -207,28 +203,6 @@ export function DirectUnavailableDateAddButton({
   const [uncontrolledAppliedDates, setUncontrolledAppliedDates] = useState<string[]>([])
 
   const appliedDates = isControlled ? appliedDatesProp! : uncontrolledAppliedDates
-
-  useEffect(() => {
-    if (!disabledDate || open) return
-
-    setSelectedDates(prev => {
-      const next = filterEnabledDateValues(prev, disabledDate)
-      return areSameStringArray(prev, next) ? prev : next
-    })
-
-    if (isControlled) {
-      const next = filterEnabledDateValues(appliedDatesProp ?? [], disabledDate)
-      if (!areSameStringArray(appliedDatesProp ?? [], next)) {
-        onApplyDatesChange?.(next)
-      }
-      return
-    }
-
-    setUncontrolledAppliedDates(prev => {
-      const next = filterEnabledDateValues(prev, disabledDate)
-      return areSameStringArray(prev, next) ? prev : next
-    })
-  }, [appliedDatesProp, disabledDate, isControlled, onApplyDatesChange, open])
 
   const selectedDateSet = useMemo(
     () =>

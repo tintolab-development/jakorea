@@ -4,7 +4,10 @@ import {
 } from '@/features/program/general/lib/registration-wizard-form-draft'
 import type { WritingFormTemplateSaveRecord } from '@/features/template/lib/writing-form-template-local-save'
 import { clearRegistrationWizardSessionDrafts } from '@/features/program/general/lib/registration-wizard-session-drafts'
-import { clearRegistrationStepTemplateSelections } from '@/features/program/shared/lib/step-template-selection'
+import {
+  clearRegistrationStepTemplateSelections,
+  getRegistrationStepTemplateSelections,
+} from '@/features/program/shared/lib/step-template-selection'
 
 /**
  * 등록 위저드 한 번 열기.
@@ -15,6 +18,15 @@ type RegistrationWizardVisit = {
   generation: number
   closed: boolean
   snapshot: Record<string, WritingFormTemplateSaveRecord>
+  stepTemplateSnapshot: string
+}
+
+function serializeRegistrationStepTemplateSnapshot(programType: string): string {
+  const selections = getRegistrationStepTemplateSelections(programType)
+  const sorted = Object.keys(selections)
+    .sort()
+    .map(key => [key, selections[key]])
+  return JSON.stringify(sorted)
 }
 
 const visits = new Map<string, RegistrationWizardVisit>()
@@ -34,6 +46,7 @@ export function beginRegistrationWizardVisit(programType: string): void {
     generation: (previous?.generation ?? 0) + 1,
     closed: false,
     snapshot: captureRegistrationWizardFormDraftSnapshot(programType),
+    stepTemplateSnapshot: serializeRegistrationStepTemplateSnapshot(programType),
   })
 }
 
@@ -42,6 +55,19 @@ export function commitRegistrationWizardVisit(programType: string): void {
   const visit = visits.get(programType)
   if (visit == null) return
   visit.snapshot = captureRegistrationWizardFormDraftSnapshot(programType)
+  visit.stepTemplateSnapshot = serializeRegistrationStepTemplateSnapshot(programType)
+}
+
+export function isRegistrationWizardVisitDirty(programType: string): boolean {
+  const visit = visits.get(programType)
+  if (visit == null || visit.closed) return false
+  if (
+    serializeRegistrationStepTemplateSnapshot(programType) !== visit.stepTemplateSnapshot
+  ) {
+    return true
+  }
+  const current = captureRegistrationWizardFormDraftSnapshot(programType)
+  return JSON.stringify(current) !== JSON.stringify(visit.snapshot)
 }
 
 export async function trackRegistrationWizardVisitSave<T>(

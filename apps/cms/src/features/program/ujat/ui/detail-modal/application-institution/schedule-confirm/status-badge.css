@@ -10,11 +10,11 @@
 }
 
 .ujat-schedule-confirm-status-badge--institution_checking {
-  color: var(--Status-green-main, #1e8c29);
+  color: var(--Status-blue-main, #017eaf);
 }
 
 .ujat-schedule-confirm-status-badge--institution_confirmed {
-  color: var(--Status-blue-main, #017eaf);
+  color: var(--Status-green-main, #1e8c29);
 }
 
 .ujat-schedule-confirm-status-badge--approval_completed {

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, type MouseEvent } from 'react'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ColumnsType } from 'antd/es/table'
 import type { TableRowSelection } from 'antd/es/table/interface'
 import { useNavigate } from 'react-router-dom'
@@ -41,8 +42,7 @@ const LIFECYCLE_OPTIONS = [
 const PARTICIPANT_TYPE_OPTIONS = [
   { label: '전체', value: SPONSOR_PROGRAM_HISTORY_FILTER_ALL },
   { label: '학교/기관', value: 'school' },
-  { label: '개인 학습자', value: 'individual' },
-  { label: '봉사자', value: 'volunteer' },
+  { label: '개인', value: 'individual' },
 ] as const
 
 const EDUCATION_TARGET_OPTIONS = [
@@ -95,11 +95,19 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
     width: '14%',
   },
   {
+    key: 'beneficiaryCount',
+    type: 'search',
+    label: '총 수혜자 수',
+    placeholder: '총 수혜자 수를 입력하세요',
+    searchNumericOnly: true,
+    width: '14%',
+  },
+  {
     key: 'managerName',
     type: 'search',
     label: '후원사 담당자명',
     placeholder: '후원사 담당자명을 입력하세요',
-    width: '16%',
+    width: '14%',
   },
 ]
 
@@ -161,6 +169,14 @@ export function SponsorProgramHistoryPanel({
       preserveSelectedRowKeys: false,
     }
   }, [canWrite, selectedKeys, setSelectedKeys])
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: rowSelection != null,
+      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }
+  )
 
   const handleDeleteProgramHistory = useCallback((): void => {
     if (!canWrite || deleteDisabled) return
@@ -251,6 +267,7 @@ export function SponsorProgramHistoryPanel({
           lifecycleStatus: pendingFilters.lifecycleStatus,
           participantType: pendingFilters.participantType,
           educationTarget: pendingFilters.educationTarget,
+          beneficiaryCount: pendingFilters.beneficiaryCount,
           managerName: pendingFilters.managerName,
         }}
         onFilterChange={handleFilterChange}
@@ -274,27 +291,29 @@ export function SponsorProgramHistoryPanel({
           data: filteredRows,
         }}
       >
-        <CmsDataTable<SponsorProgramHistoryRow>
-          rowKey="id"
-          className="cms-data-table"
-          columns={columns}
-          dataSource={filteredRows}
-          loading={loading}
-          pagination={
-            onPageChange
-              ? {
-                  current: page + 1,
-                  pageSize,
-                  total: totalCount ?? filteredRows.length,
-                  showSizeChanger: false,
-                  onChange: nextPage => onPageChange(nextPage - 1),
-                }
-              : false
-          }
-          scroll={{ x: 'max-content' }}
-          rowSelection={rowSelection}
-          onRow={programHistoryTableOnRow}
-        />
+        <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
+          <CmsDataTable<SponsorProgramHistoryRow>
+            rowKey="id"
+            className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+            columns={columns}
+            dataSource={filteredRows}
+            loading={loading}
+            pagination={
+              onPageChange
+                ? {
+                    current: page + 1,
+                    pageSize,
+                    total: totalCount ?? filteredRows.length,
+                    showSizeChanger: false,
+                    onChange: nextPage => onPageChange(nextPage - 1),
+                  }
+                : false
+            }
+            scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+            rowSelection={rowSelection}
+            onRow={programHistoryTableOnRow}
+          />
+        </div>
       </FilterTableLayout>
       {deleteModalOpen && deleteGuide && (
         <DeleteGuideModal
@@ -311,10 +330,7 @@ export function SponsorProgramHistoryPanel({
         />
       )}
       {deleteBlockedModalOpen ? (
-        <ProgramHistoryDeleteBlockedModal
-          open
-          onClose={() => setDeleteBlockedModalOpen(false)}
-        />
+        <ProgramHistoryDeleteBlockedModal open onClose={() => setDeleteBlockedModalOpen(false)} />
       ) : null}
     </>
   )

@@ -1,0 +1,204 @@
+/**
+ * 교육받은 교사 신규 등록 CREATE — canonical values → Program.
+ * Overlay apply 를 persist SSOT 로 쓰지 않는다.
+ */
+import dayjs from 'dayjs'
+import type {
+  GeneralProgramCurriculumSessionRow,
+  GeneralProgramScheduleDetailRow,
+  Program,
+} from '@/types/domain'
+import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import { collectTrainedTeachersCommonInfoState } from './collect-registration-common-info-state'
+import { importLegacyOverlayToTrainedTeachersCanonical } from './import-legacy-registration-overlay'
+import { collectTrainedTeachersApplicationState } from './registration-rhf-application'
+import { applyTrainedTeachersRecruitToProgram } from './recruit-form-state'
+import { collectTrainedTeachersRecruitmentState } from './registration-rhf-recruitment'
+import {
+  TRAINED_TEACHERS_REGISTRATION_CANONICAL_VERSION,
+  type TrainedTeachersRegistrationCanonical,
+} from './registration-canonical-types'
+import {
+  trainedTeachersRhfToEditorMeta,
+  type TrainedTeachersRegistrationRhfValues,
+} from './registration-rhf-values'
+
+function withoutAssignment<T extends GeneralProgramCurriculumSessionRow | GeneralProgramScheduleDetailRow>(
+  row: T
+): T {
+  const next = { ...row }
+  delete (next as { assignmentEnabled?: boolean }).assignmentEnabled
+  delete (next as { assignmentPeriod?: string }).assignmentPeriod
+  return next
+}
+
+function withTargetLevels(program: Program): Program {
+  const targetLevels = resolvePersistedProgramTargetLevels(program)
+  if (targetLevels.length === 0) return program
+  return { ...program, targetLevels, targetLevel: targetLevels[0] }
+}
+
+export function buildTrainedTeacherProgramFromCanonical(args: {
+  id: string
+  canonical: TrainedTeachersRegistrationCanonical
+}): Program {
+  const { common, editor, recruit } = args.canonical
+  const now = new Date().toISOString()
+  const y = dayjs().year()
+  const title = common.announcementTitle.trim() || common.title.trim() || '교육받은 교사 프로그램'
+  const startDate = common.startDate ?? dayjs(`${y}-04-01`).startOf('day').toISOString()
+  const endDate = common.endDate ?? dayjs(`${y}-12-31`).endOf('day').toISOString()
+  const sponsorId = common.sponsorManagementIds[0] ?? ''
+  const isSchedule = common.educationStructure === 'schedule'
+  const curriculumSessions = isSchedule
+    ? []
+    : common.curriculumSessions.map(row => withoutAssignment(row))
+  const scheduleDetails = isSchedule
+    ? common.scheduleDetails.map(row => withoutAssignment(row))
+    : []
+
+  const base: Program = {
+    id: args.id,
+    sponsorId,
+    title,
+    mainTitle: common.mainTitle.trim() || title,
+    titleEn: common.titleEn || undefined,
+    textbookName: common.textbookName,
+    type: common.educationForm ?? 'offline',
+    format: 'workshop',
+    category: 'school',
+    description: title,
+    startDate,
+    endDate,
+    applicationStartDate: dayjs().startOf('day').toISOString(),
+    applicationEndDate: dayjs().add(30, 'day').endOf('day').toISOString(),
+    status: 'pending',
+    lifecycleStatus: 'recruiting_students',
+    businessArea: common.businessArea || undefined,
+    detailedProgramId: common.detailedProgramId || undefined,
+    educationProcess: common.educationProcess,
+    ipOwned: common.ipOwned,
+    courseDeliveredBy: common.courseDeliveredBy,
+    partnerInvolvement: common.partnerInvolvement,
+    ips: common.ips,
+    programCategory: common.programCategory,
+    programChannel: common.programChannel,
+    studentListRequired: 'required',
+    generalProgramAudience: 'organization',
+    generalParticipantTypes: ['school_institution'],
+    generalProgramEducationStructure: common.educationStructure,
+    generalProgramSessionRound: common.sessionRound,
+    generalSurveyMenuKeys: [...common.generalSurveyMenuKeys],
+    venue: common.venueKind === 'other' ? common.venueDetail || undefined : undefined,
+    institutionType:
+      common.venueKind === 'inside'
+        ? 'inside_school'
+        : common.venueKind === 'outside'
+          ? 'outside_school'
+          : undefined,
+    generalCommonInfo: {
+      announcementTitle: common.announcementTitle,
+      detailedProgramName: common.detailedProgramName,
+      sponsorManagementIds: [...common.sponsorManagementIds],
+      sponsorManagementId: sponsorId || undefined,
+      sponsorManagerContactIds: [...common.sponsorManagerContactIds],
+      sponsorManagerContactId: common.sponsorManagerContactIds[0],
+      venueKind: common.venueKind,
+      venueDetail: common.venueDetail,
+      educationScheduleMode: common.educationScheduleMode,
+      educationScheduleLines: [...common.educationScheduleLines],
+      curriculumSessions,
+      scheduleDetails,
+      teacherTrainingEnabled: common.teacherTrainingEnabled,
+      educationJournalEnabled: common.educationJournalEnabled,
+      participantRecruitmentInfo: {
+        maxAssignableInstructors: 0,
+        preEducationNoticeRequired: false,
+      },
+    },
+    rounds: [
+      {
+        id: `${args.id}-round-1`,
+        programId: args.id,
+        roundNumber: 1,
+        startDate,
+        endDate,
+        capacity: 0,
+        status: 'active',
+        deliveryType: common.educationForm ?? 'offline',
+        curriculum: `${title} 커리큘럼`,
+      },
+    ],
+    createdAt: now,
+    updatedAt: now,
+  }
+
+  const withRecruit = applyTrainedTeachersRecruitToProgram(base, recruit)
+  return withTargetLevels({
+    ...withRecruit,
+    generalParticipantTypes: ['school_institution'],
+    generalProgramAudience: 'organization',
+    generalSurveyMenuKeys: [...common.generalSurveyMenuKeys],
+    textbookName: common.textbookName,
+    generalCommonInfo: {
+      ...withRecruit.generalCommonInfo,
+      announcementTitle: common.announcementTitle,
+      detailedProgramName: common.detailedProgramName,
+      sponsorManagementIds: [...common.sponsorManagementIds],
+      sponsorManagerContactIds: [...common.sponsorManagerContactIds],
+      curriculumSessions,
+      scheduleDetails,
+      educationScheduleLines: [...common.educationScheduleLines],
+      teacherTrainingEnabled: editor.teacherTrainingEnabled,
+      educationJournalEnabled: common.educationJournalEnabled,
+      participantRecruitmentInfo: {
+        ...withRecruit.generalCommonInfo?.participantRecruitmentInfo,
+        maxAssignableInstructors: 0,
+        preEducationNoticeRequired: false,
+      },
+    },
+  })
+}
+
+export function buildTrainedTeachersCanonicalFromRhf(args: {
+  id: string
+  values: TrainedTeachersRegistrationRhfValues
+  recruit?: TrainedTeachersRegistrationCanonical['recruit']
+  application?: TrainedTeachersRegistrationCanonical['application']
+}): TrainedTeachersRegistrationCanonical {
+  return {
+    schemaVersion: TRAINED_TEACHERS_REGISTRATION_CANONICAL_VERSION,
+    editor: trainedTeachersRhfToEditorMeta(args.values),
+    common: collectTrainedTeachersCommonInfoState(args.values),
+    recruit:
+      args.recruit ?? collectTrainedTeachersRecruitmentState(args.values.recruitment),
+    application: args.application ?? collectTrainedTeachersApplicationState(args.values.application),
+    sidecar: { ...args.values.sidecar },
+  }
+}
+
+export function buildTrainedTeachersProgramFromRhf(args: {
+  id: string
+  values: TrainedTeachersRegistrationRhfValues
+  recruit?: TrainedTeachersRegistrationCanonical['recruit']
+  application?: TrainedTeachersRegistrationCanonical['application']
+}): Program {
+  return buildTrainedTeacherProgramFromCanonical({
+    id: args.id,
+    canonical: buildTrainedTeachersCanonicalFromRhf(args),
+  })
+}
+
+/** Legacy overlay snapshot → Program. 정상 신규 등록 CREATE 는 사용하지 않는다. */
+export function buildTrainedTeachersCreateSnapshot(args: {
+  id: string
+  editor: TrainedTeachersRegistrationCanonical['editor']
+  overlay?: Record<string, unknown>
+}): Program {
+  const canonical = importLegacyOverlayToTrainedTeachersCanonical({
+    id: args.id,
+    editor: args.editor,
+    overlay: args.overlay,
+  })
+  return buildTrainedTeacherProgramFromCanonical({ id: args.id, canonical })
+}

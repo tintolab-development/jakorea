@@ -1,3 +1,10 @@
+.toolbarShell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: nowrap;
@@ -56,7 +63,7 @@
 
 .trigger:hover:not(:disabled),
 .toggle:hover:not(:disabled),
-.dropdownItem:hover {
+.dropdownItem:hover:not(:disabled) {
   background: var(--rt-toolbar-hover-bg, #ebebeb);
 }
 
@@ -117,6 +124,50 @@
   font-size: 14px;
   text-align: left;
   border-radius: 4px;
+}
+
+.dropdownItem:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dropdownDivider {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--table-line, #e0e0e0);
+}
+
+.tableActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 8px;
+  border-top: 1px solid var(--rt-toolbar-border, var(--table-line, #e0e0e0));
+  background: var(--rt-toolbar-table-actions-bg, #f7f8f8);
+}
+
+.tableAction {
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tableAction:hover:not(:disabled) {
+  background: #ebebeb;
+}
+
+.tableAction:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .swatchGrid {

@@ -28,7 +28,10 @@ import { clearProgramQueryCache } from '@/features/program/shared/api/clear-quer
 import { clearNotificationsQueryCache } from '@/features/notifications/api/clear-query-cache'
 import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pending-links'
 import { fetchAdminMe } from '@/features/auth/api/fetch-admin-me'
+import { registerAdminSessionSyncPendingReader } from '@/features/auth/lib/admin-session-sync-state'
+import { applyAccessTokenRoleToSessionUser } from '@/features/auth/lib/admin-session-user'
 import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { withSessionAdminRole } from '@/shared/lib/admin-role-policy'
 import {
   PASSWORD_CHANGE_REQUIRED_STORAGE_KEY,
@@ -46,6 +49,8 @@ interface AuthState {
   requiresMfa: boolean // Phase 0.5.1: MFA 필요 여부
   /** MFA verify 등에서 내려온 임시 비밀번호 변경 필요 플래그 */
   passwordChangeRequired: boolean
+  /** GET /api/admin/me 동기화 중 — 역할 가드 보류 */
+  adminSessionSyncPending: boolean
   // Phase 2: checkAuth 중복 호출 방지를 위한 내부 상태
   _isCheckingAuth: boolean
   _checkAuthPromise: Promise<void> | null
@@ -168,6 +173,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     mfaState: null, // Phase 0.5.1: MFA 상태
     requiresMfa: false, // Phase 0.5.1: MFA 필요 여부
     passwordChangeRequired: initialState.passwordChangeRequired ?? false,
+    adminSessionSyncPending: false,
     _isCheckingAuth: false, // Phase 2: checkAuth 중복 호출 방지
     _checkAuthPromise: null, // Phase 2: checkAuth Promise 저장
 
@@ -256,7 +262,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const state = get()
       if (!state.user) return
 
-      const normalizedUser = withSessionAdminRole(state.user)
+      const normalizedUser = applyAccessTokenRoleToSessionUser(state.user, tokens.accessToken)
       const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
       const passwordChangeRequired = tokens.passwordChangeRequired === true
 
@@ -309,7 +315,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         email: 'admin@social-login.local',
         name: '관리자',
         role: 'ADMIN',
-        roleCode: 'VIEWER',
         isActive: true,
         createdAt: null,
         updatedAt: null,
@@ -345,12 +350,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         email: '',
         name: '관리자',
         role: 'ADMIN',
-        roleCode: 'VIEWER',
         isActive: true,
         createdAt: null,
         updatedAt: null,
       }
-      const normalizedUser = withSessionAdminRole(placeholderUser)
+      const normalizedUser = applyAccessTokenRoleToSessionUser(placeholderUser, tokens.accessToken)
       const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
 
       set({
@@ -405,6 +409,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         error: null,
         mfaState: null,
         requiresMfa: false,
+        adminSessionSyncPending: false,
         _isCheckingAuth: false,
         _checkAuthPromise: null,
       })
@@ -500,33 +505,28 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             }
           }
 
-          if (user && user.isActive) {
-            const normalizedUser = withSessionAdminRole(user)
+          const commitSessionUser = (sessionUser: Omit<User, 'password'>) => {
+            const normalizedUser = withSessionAdminRole(sessionUser)
             localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
-
             set({
               user: normalizedUser,
               token,
               expiresAt,
               isAuthenticated: true,
             })
-            void refreshAdminSessionFromMe()
-          } else {
-            if (!storedUser || !storedUser.isActive) {
-              console.warn('User not found or inactive, logging out')
-              get().logout()
-            } else {
-              const normalizedStoredUser = withSessionAdminRole(storedUser)
-              localStorage.setItem('auth_user', JSON.stringify(normalizedStoredUser))
-              set({
-                user: normalizedStoredUser,
-                token,
-                expiresAt,
-                isAuthenticated: true,
-              })
-              void refreshAdminSessionFromMe()
-            }
           }
+
+          if (user && user.isActive) {
+            commitSessionUser(user)
+          } else if (storedUser && storedUser.isActive) {
+            commitSessionUser(storedUser)
+          } else {
+            console.warn('User not found or inactive, logging out')
+            get().logout()
+            return
+          }
+
+          await refreshAdminSessionFromMe()
         } catch (error) {
           console.error('Unexpected error in checkAuth:', error)
           try {
@@ -540,7 +540,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
                 expiresAt,
                 isAuthenticated: true,
               })
-              void refreshAdminSessionFromMe()
+              await refreshAdminSessionFromMe()
             } else {
               get().logout()
             }
@@ -688,6 +688,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 export async function refreshAdminSessionFromMe(): Promise<void> {
   if (!isRealApiModuleEnabled('adminAuth')) return
   if (isAdminFirstLoginOnboardingIncomplete()) return
+  if (!hasRemoteAdminJwt()) return
+
+  useAuthStore.setState({ adminSessionSyncPending: true })
   try {
     const me = await fetchAdminMe()
     const current = useAuthStore.getState().user
@@ -699,5 +702,11 @@ export async function refreshAdminSessionFromMe(): Promise<void> {
     useAuthStore.setState({ user: next })
   } catch (error) {
     console.warn('[auth] GET /api/admin/me failed:', error)
+  } finally {
+    useAuthStore.setState({ adminSessionSyncPending: false })
   }
 }
+
+registerAdminSessionSyncPendingReader(
+  () => useAuthStore.getState().adminSessionSyncPending === true,
+)

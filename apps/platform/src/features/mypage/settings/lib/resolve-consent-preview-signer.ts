@@ -16,10 +16,11 @@ function firstText(...values: Array<string | undefined>): string {
   return ''
 }
 
-/** 제출 양식에 적힌 성명. 없으면 전자서명 프로필 표시 이름. */
+/** 제출 양식에 적힌 성명. 없으면 회원 성명(작성 화면과 동일), 그다음 전자서명 표시 이름. */
 export function resolveConsentPreviewSignerName(input: {
   draft: WritingFormDraft | null
   paymentName?: string
+  memberName?: string
   signatureDisplayName?: string
 }): string {
   let portraitName = ''
@@ -44,5 +45,11 @@ export function resolveConsentPreviewSignerName(input: {
       }
     }
   }
-  return firstText(portraitName, noticeName, input.paymentName, input.signatureDisplayName)
+  return firstText(
+    portraitName,
+    noticeName,
+    input.paymentName,
+    input.memberName,
+    input.signatureDisplayName,
+  )
 }

@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { FilterTableToolbarButton } from '@/shared/ui'
-import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
-import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
-import { UJAT_SCHEDULE_CONFIRM_TABLE_MIN_SCROLL_X } from './columns'
+import { useUjatInstitutionEducationRegion } from '../use-institution-education-region'
 import { UjatInstitutionScheduleConfirmCalendarView } from './calendar-view'
 import { useUjatScheduleConfirmList } from './use-schedule-confirm-list'
 import type { UjatScheduleConfirmRow } from './types'
@@ -19,9 +19,7 @@ export function UjatInstitutionScheduleConfirmList({
   programId?: string | null
   onOpenDetail: (row: UjatScheduleConfirmRow) => void
 }) {
-  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
-    getDefaultUjatEducationRegionKey
-  )
+  const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const {
     pendingFilters,
     filterFields,
@@ -33,6 +31,14 @@ export function UjatInstitutionScheduleConfirmList({
     setViewMode,
     resetRegionState,
   } = useUjatScheduleConfirmList(activeRegion, programId)
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: false,
+      enabled: viewMode === 'table',
+    }
+  )
 
   useEffect(() => {
     resetRegionState()
@@ -83,15 +89,15 @@ export function UjatInstitutionScheduleConfirmList({
         }}
       >
         {viewMode === 'table' ? (
-          <div className="ujat-schedule-confirm-list__table-wrap">
+          <div ref={tableWrapRef} className="ujat-schedule-confirm-list__table-wrap">
             <CmsDataTable<UjatScheduleConfirmRow>
               rowKey="id"
-              className="cms-data-table ujat-schedule-confirm-list__table"
+              className="cms-data-table cms-data-table--skip-auto-no-col ujat-schedule-confirm-list__table"
               columns={columns}
               dataSource={tableData}
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: UJAT_SCHEDULE_CONFIRM_TABLE_MIN_SCROLL_X }}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               onRow={record => ({
                 onClick: () => onOpenDetail(record),
                 style: { cursor: 'pointer' },

@@ -593,7 +593,10 @@ export function RecruitDetailInfoParagraph({
           textFieldControl={textFieldControl}
         />
 
-        <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Row
+          type="single"
+          className="recruit-detail-info-paragraph__rich-text-row"
+        >
           <DetailInfoForm.Field
             label="추가 내용"
             fullRow

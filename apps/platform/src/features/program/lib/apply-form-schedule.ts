@@ -20,6 +20,7 @@ import {
   readRuntimeFixedScheduleChoiceItems,
   shouldShowApplicationMaxSessionsPerDayField,
   shouldShowApplicationPreferredScheduleSessionSelect,
+  isApplicationScheduleParagraphForcedHidden,
   shouldShowApplicationPreferredScheduleParagraph,
   shouldShowApplicationScheduleParagraph,
   shouldShowApplicationSchedulePeriodDateOnlyPreferred,
@@ -27,6 +28,8 @@ import {
   type ReadInstitutionFixedScheduleChoiceOptions,
   type RuntimeFixedScheduleChoiceItem,
 } from '@jakorea/form-schema/program-application'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import type { ApplyPreferredScheduleBlock } from '../ui/apply-preferred-schedule/apply-preferred-schedule'
@@ -64,6 +67,137 @@ export type ApplyScheduleVisibilityFields = {
 
 export function shouldShowApplyScheduleParagraph(program: ApplyScheduleVisibilityFields): boolean {
   return shouldShowApplicationScheduleParagraph(program)
+}
+
+export function isApplyScheduleParagraphForcedHidden(
+  program: ApplyScheduleVisibilityFields,
+): boolean {
+  return isApplicationScheduleParagraphForcedHidden(program)
+}
+
+function uniqueTrimmedIds(values: readonly string[]): string[] {
+  const seen = new Set<string>()
+  const ids: string[] = []
+  for (const value of values) {
+    const id = value.trim()
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    ids.push(id)
+  }
+  return ids
+}
+
+function readParagraphItemIds(paragraph: unknown): string[] {
+  if (!paragraph || typeof paragraph !== 'object' || Array.isArray(paragraph)) return []
+  const items = (paragraph as { items?: unknown }).items
+  if (!Array.isArray(items)) return []
+  return uniqueTrimmedIds(
+    items.map(item => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return ''
+      const id = (item as { id?: unknown }).id
+      return typeof id === 'string' ? id : ''
+    }),
+  )
+}
+
+/** 렌더와 같은 순서로 고정 일정 선택지 id를 모은다. */
+export function readApplyFixedScheduleChoiceIds(input: {
+  runtime?: unknown
+  paragraph?: unknown
+  runtimeChoices?: readonly { id: string }[] | null
+  program?: ApplyScheduleVisibilityFields
+  educationScheduleLines?: readonly string[]
+}): string[] {
+  const fromRuntimeChoices = uniqueTrimmedIds(
+    (input.runtimeChoices ?? []).map(choice => choice.id),
+  )
+  if (fromRuntimeChoices.length > 0) return fromRuntimeChoices
+
+  const fromItems = readInstitutionFixedScheduleChoiceItems(input.runtime, input.paragraph, {
+    educationStructure: input.program?.educationStructure,
+    sessionRound: input.program?.sessionRound,
+    educationScheduleMode: input.program?.educationScheduleMode,
+    educationScheduleLines:
+      input.educationScheduleLines ?? input.program?.educationScheduleLines,
+  })
+  if (fromItems && fromItems.length > 0) {
+    return uniqueTrimmedIds(fromItems.map(item => item.id))
+  }
+
+  return readParagraphItemIds(input.paragraph)
+}
+
+/**
+ * FE가 진행 희망 교육 일정을 숨긴 경우 서버 필수 검증용 자동 제출 id.
+ * 강제 숨김(일정형+복수)은 슬롯을 전부, 그 외 숨김은 유일한 슬롯 1개만 보낸다.
+ */
+export function resolveHiddenScheduleAutoSubmitIds(input: {
+  hidden: boolean
+  forcedHidden: boolean
+  choiceIds: readonly string[]
+}): string[] | null {
+  if (!input.hidden) return null
+  const ids = uniqueTrimmedIds(input.choiceIds)
+  if (ids.length === 0) return null
+  if (input.forcedHidden) return ids
+  if (ids.length === 1) return ids
+  return null
+}
+
+function readUnknownParagraphId(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return ''
+  const id = (value as { id?: unknown }).id
+  return typeof id === 'string' ? id.trim() : ''
+}
+
+/** hidden set에 개인·기관 일정 단락 id가 있으면 draft에서 빠져도 숨김으로 본다. */
+export function isApplyScheduleChoiceHiddenInSet(
+  hiddenParagraphIds: ReadonlySet<string>,
+  paragraphOrId?: unknown,
+): boolean {
+  const paragraphId = readUnknownParagraphId(paragraphOrId)
+  if (paragraphId && hiddenParagraphIds.has(paragraphId)) return true
+  for (const id of APPLY_SCHEDULE_CHOICE_PARAGRAPH_IDS) {
+    if (hiddenParagraphIds.has(id)) return true
+  }
+  return false
+}
+
+/** display draft에 없으면 form-bindings 원본 단락을 쓴다. */
+export function pickApplyScheduleChoiceParagraph(
+  draftParagraphs: readonly { id: string }[] | null | undefined,
+  formParagraphs: readonly unknown[] | null | undefined,
+): unknown {
+  const fromDraft = draftParagraphs?.find(paragraph =>
+    isApplyScheduleChoiceParagraphId(paragraph.id),
+  )
+  if (fromDraft) return fromDraft
+  if (!Array.isArray(formParagraphs)) return undefined
+  return formParagraphs.find(paragraph => {
+    if (!paragraph || typeof paragraph !== 'object' || Array.isArray(paragraph)) return false
+    return isApplyScheduleChoiceParagraphId(String((paragraph as { id?: unknown }).id ?? ''))
+  })
+}
+
+export function resolveApplyScheduleChoiceAnswerKey(
+  applyCase: string | null | undefined,
+  paragraph?: unknown,
+): string {
+  if (paragraph && typeof paragraph === 'object' && !Array.isArray(paragraph)) {
+    const row = paragraph as Record<string, unknown>
+    for (const name of ['questionKey', 'fieldKey', 'key', 'name', 'id'] as const) {
+      const value = row[name]
+      if (typeof value === 'string' && value.trim()) return value.trim()
+    }
+  }
+  if (applyCase === 'institution-general') {
+    return PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
+  }
+  if (applyCase === 'individual-general' || applyCase === 'individual-team') {
+    return PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
+  }
+  return ''
 }
 
 export function applyScheduleVisibilityFieldsFromRuntimeContext(runtime: unknown) {

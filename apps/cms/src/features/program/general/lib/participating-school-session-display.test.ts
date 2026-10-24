@@ -42,7 +42,7 @@ describe('formatGeneralEducationScheduleLine', () => {
     date: '2026.04.21',
     dayOfWeek: '화',
     timeRange: '09:30~12:20',
-    scheduleLabel: '2026. 04. 21(화) | 1지망',
+    scheduleLabel: '2026.04.21(화) | 1지망',
   })
 
   it('커리큘럼·복수·날짜는 공통정보 시각과 차시를 붙인다', () => {
@@ -56,7 +56,7 @@ describe('formatGeneralEducationScheduleLine', () => {
           curriculumSessionLabels: ['1차시', '2차시'],
         }
       )
-    ).toBe('2026. 04. 20(월) 09:30 ~ 12:20 | 2차시')
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 2차시')
   })
 
   it('커리큘럼·복수·기간은 신청 시각과 희망 차시를 붙인다', () => {
@@ -66,7 +66,7 @@ describe('formatGeneralEducationScheduleLine', () => {
           date: '2026.04.21',
           dayOfWeek: '화',
           classNum: '3차시',
-          scheduleLabel: '2026. 04. 21(화) | 1지망',
+          scheduleLabel: '2026.04.21(화) | 1지망',
         }),
         {
           educationStructure: 'curriculum',
@@ -74,7 +74,7 @@ describe('formatGeneralEducationScheduleLine', () => {
           educationScheduleMode: 'period',
         }
       )
-    ).toBe('2026. 04. 21(화) 09:20 ~ 11:20 | 3차시')
+    ).toBe('2026.04.21(화) 09:20 ~ 11:20 | 3차시')
   })
 
   it('커리큘럼·단일·기간은 신청 시각과 프로그램 차시를 붙인다', () => {
@@ -85,7 +85,7 @@ describe('formatGeneralEducationScheduleLine', () => {
         educationScheduleMode: 'period',
         curriculumSessionCount: 3,
       })
-    ).toBe('2026. 04. 21(화) 09:30 ~ 12:20 | 3차시')
+    ).toBe('2026.04.21(화) 09:30 ~ 12:20 | 3차시')
   })
 
   it('커리큘럼·단일·날짜는 공통정보 시각과 차시를 붙인다', () => {
@@ -99,7 +99,7 @@ describe('formatGeneralEducationScheduleLine', () => {
           curriculumSessionCount: 3,
         }
       )
-    ).toBe('2026. 04. 20(월) 09:30 ~ 12:20 | 3차시')
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 3차시')
   })
 
   it('일정·복수는 일정별 날짜·시간만 보여 준다', () => {
@@ -108,7 +108,7 @@ describe('formatGeneralEducationScheduleLine', () => {
         baseSession({ scheduleLabel: '26년 11월 2일(월) 10:00 ~ 12:00 | 2회차' }),
         { educationStructure: 'schedule', sessionRound: 'multi', educationScheduleMode: 'date' }
       )
-    ).toBe('2026. 11. 02(월) 10:00 ~ 12:00')
+    ).toBe('2026.11.02(월) 10:00 ~ 12:00')
   })
 
   it('일정·단일·기간은 희망일에 세부 일정 첫 시작~마지막 종료를 붙인다', () => {
@@ -122,7 +122,7 @@ describe('formatGeneralEducationScheduleLine', () => {
       sessionRound: 'single',
       educationScheduleMode: 'period',
     }, { detailScheduleTimeSpan: span })
-    expect(line).toBe('2026. 04. 21(화) 09:30 ~ 13:10')
+    expect(line).toBe('2026.04.21(화) 09:30 ~ 13:10')
     expect(line.includes('지망')).toBe(false)
   })
 
@@ -132,7 +132,23 @@ describe('formatGeneralEducationScheduleLine', () => {
         baseSession({ scheduleLabel: '26년 4월 20일(월) 09:30 ~ 12:20 | 1지망' }),
         { educationStructure: 'schedule', sessionRound: 'single', educationScheduleMode: 'date' }
       )
-    ).toBe('2026. 04. 20(월) 09:30 ~ 12:20')
+    ).toBe('2026.04.20(월) 09:30 ~ 12:20')
+  })
+
+  it('일정·복수라도 educationScheduleLines가 없으면 배정 세션만 유지한다', () => {
+    const assigned = [dated]
+    expect(
+      prepareGeneralEducationScheduleSessions(assigned, {
+        educationStructure: 'schedule',
+        sessionRound: 'multi',
+      })
+    ).toEqual(assigned)
+    expect(
+      prepareGeneralEducationScheduleSessions([], {
+        educationStructure: 'schedule',
+        sessionRound: 'multi',
+      })
+    ).toEqual([])
   })
 
   it('일정·복수는 교육 진행 일정 줄을, 일정·단일·기간은 날짜당 한 줄을 쓴다', () => {
@@ -161,11 +177,11 @@ describe('formatGeneralEducationScheduleLine', () => {
 })
 
 describe('formatParticipatingSchoolSessionLine', () => {
-  it('scheduleLabel은 화면에서만 2026. 10. 26(월) 형식으로 바꾼다', () => {
+  it('scheduleLabel은 화면에서만 2026.10.26(월) 형식으로 바꾼다', () => {
     const session = baseSession({
       scheduleLabel: '26년 10월 26일(월) 10:00 ~ 12:00',
     })
-    expect(formatParticipatingSchoolSessionLine(session)).toBe('2026. 10. 26(월) 10:00 ~ 12:00')
+    expect(formatParticipatingSchoolSessionLine(session)).toBe('2026.10.26(월) 10:00 ~ 12:00')
     expect(session.scheduleLabel).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
   })
 })
@@ -233,7 +249,7 @@ describe('formatVolunteerAssignmentScheduleLine', () => {
       })
     )
 
-    expect(line).toBe('2026. 01. 09(금) 09:20 ~ 11:20')
+    expect(line).toBe('2026.01.09(금) 09:20 ~ 11:20')
   })
 
   it('복수 커리큘럼형은 회차명을 노출한다', () => {
@@ -251,7 +267,7 @@ describe('formatVolunteerAssignmentScheduleLine', () => {
       })
     )
 
-    expect(line).toBe('2026. 01. 09(금) 09:20 ~ 11:20 | 2회차')
+    expect(line).toBe('2026.01.09(금) 09:20 ~ 11:20 | 2회차')
   })
 
   it('복수 일정형은 일정명을 노출한다', () => {
@@ -269,7 +285,7 @@ describe('formatVolunteerAssignmentScheduleLine', () => {
       })
     )
 
-    expect(line).toBe('2026. 01. 09(금) 09:20 ~ 11:20 | 오리엔테이션')
+    expect(line).toBe('2026.01.09(금) 09:20 ~ 11:20 | 오리엔테이션')
   })
 
   it('진행 시간이 없으면 날짜·회차만 노출한다', () => {
@@ -287,6 +303,6 @@ describe('formatVolunteerAssignmentScheduleLine', () => {
       })
     )
 
-    expect(line).toBe('2026. 01. 09(금) | 1회차')
+    expect(line).toBe('2026.01.09(금) | 1회차')
   })
 })

@@ -7,9 +7,12 @@ import type { ProgramDetailCase } from '@/features/program'
 import type {
   OrganizationGuidanceAnswersPatchRequest,
   OrganizationGuidanceAnswersPatchResponse,
+  UjatTemporaryScheduleConfirmRequest,
+  UjatTemporaryScheduleConfirmResponse,
 } from './institution-guidance-types'
 
 const ORGANIZATION_APPLICATIONS_PATH = '/api/portal/me/organization-applications'
+const PROGRAM_APPLICATIONS_PATH = '/api/portal/me/program-applications'
 
 function unwrapEnvelope<T>(payload: unknown): T {
   if (payload && typeof payload === 'object') {
@@ -41,15 +44,39 @@ export async function patchOrganizationGuidanceAnswers(
   return unwrapEnvelope<OrganizationGuidanceAnswersPatchResponse>(data)
 }
 
+/** POST /api/portal/me/program-applications/{applicationId}/ujat/temporary-schedule/confirm */
+export async function confirmUjatTemporarySchedule(
+  applicationId: string,
+  body: UjatTemporaryScheduleConfirmRequest,
+): Promise<UjatTemporaryScheduleConfirmResponse> {
+  const orgApplicationId = resolveOrganizationApplicationId(applicationId)
+  if (!orgApplicationId) {
+    throw new Error('신청 정보가 올바르지 않습니다.')
+  }
+  if (!Number.isInteger(body.assignmentRevision) || body.assignmentRevision < 1) {
+    throw new Error('확인한 배정 revision이 유효하지 않습니다.')
+  }
+  const { data } = await axiosClient.post<unknown>(
+    `${PROGRAM_APPLICATIONS_PATH}/${encodeURIComponent(orgApplicationId)}/ujat/temporary-schedule/confirm`,
+    { assignmentRevision: body.assignmentRevision },
+  )
+  return unwrapEnvelope<UjatTemporaryScheduleConfirmResponse>(data)
+}
+
 export async function savePortalTeacherInstitutionGuidance(input: {
   applicationType: ProgramApplicationType
   applicationId: string
   detailCase: ProgramDetailCase | undefined
   state: TeacherInstitutionGuidanceFormState
+  existingAnswers?: Record<string, unknown> | null
 }): Promise<OrganizationGuidanceAnswersPatchResponse> {
   if (input.applicationType !== 'ORGANIZATION') {
     throw new Error('기관 프로그램 신청만 안내사항을 수정할 수 있습니다.')
   }
-  const answers = buildInstitutionGuidanceAnswerPatch(input.state, input.detailCase)
+  const answers = buildInstitutionGuidanceAnswerPatch(
+    input.state,
+    input.detailCase,
+    input.existingAnswers,
+  )
   return patchOrganizationGuidanceAnswers(input.applicationId, { answers })
 }

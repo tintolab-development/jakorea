@@ -27,7 +27,17 @@ export function sumSelectedGradeClassCount(gradeValues: readonly UjatScheduleAss
   return gradeValues.length
 }
 
-export function listTempAssignedSchoolsForDate(
+const BLOCKED_ASSIGN_STATUSES = new Set<UjatInstitutionApplicationRow['tempAssignmentStatus']>([
+  'temp_rejected',
+  'application_rejected',
+])
+
+/**
+ * 해당 날짜에 배정 가능한 기관.
+ * 목록 일괄 「임시 배정」은 상태 PATCH를 하지 않으므로 SUBMITTED(평가 대기)도 포함한다.
+ * 해당 일 희망일(O)이 있는 기관만.
+ */
+export function listAssignableSchoolsForDate(
   rows: UjatInstitutionApplicationRow[],
   regionKey: UjatInstitutionApplicationRow['regionKey'],
   isoDate: string
@@ -35,9 +45,18 @@ export function listTempAssignedSchoolsForDate(
   return rows.filter(
     row =>
       row.regionKey === regionKey &&
-      row.tempAssignmentStatus === 'temp_assigned' &&
+      !BLOCKED_ASSIGN_STATUSES.has(row.tempAssignmentStatus) &&
       row.scheduleSlots[isoDate as UjatInstitutionScheduleSlotKey] === 'O'
   )
+}
+
+/** @deprecated listAssignableSchoolsForDate */
+export function listTempAssignedSchoolsForDate(
+  rows: UjatInstitutionApplicationRow[],
+  regionKey: UjatInstitutionApplicationRow['regionKey'],
+  isoDate: string
+): UjatInstitutionApplicationRow[] {
+  return listAssignableSchoolsForDate(rows, regionKey, isoDate)
 }
 
 export function computeVolunteerEducationDays(

@@ -44,13 +44,14 @@ import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/pu
 import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
-  isProgramOperationStartLocked,
+  isRecruitmentStartLocked,
   toProgramRecruitmentWindows,
 } from '@/features/program/shared/lib/program-edit-window'
 import {
   attachRecruitmentRowIdentity,
   buildRecruitmentRowCopyRequests,
   mergeRecruitmentRowRequests,
+  recruitmentRowIdentityRequests,
 } from '@/features/program/shared/lib/recruitment-row-request'
 import {
   resolveUjatRecruitAnnouncementTitle,
@@ -75,6 +76,8 @@ import {
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
+import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
   generalParticipantTypesFromUjatFlags,
@@ -299,7 +302,7 @@ function recruitmentRow(input: {
     ...(input.endAt ? { endAt: input.endAt } : {}),
     ...(input.operationStartDate ? { operationStartDate: input.operationStartDate } : {}),
     ...(input.operationEndDate ? { operationEndDate: input.operationEndDate } : {}),
-    ...(input.maxCount != null && input.maxCount > 0 ? { maxCount: input.maxCount } : {}),
+    ...(input.maxCount != null ? { maxCount: input.maxCount } : {}),
     selectionMethod: 'ADMIN_REVIEW',
     ...(input.interviewEnabled === true ? { interviewEnabled: true } : {}),
     ...(input.interviewStartAt ? { interviewStartAt: input.interviewStartAt } : {}),
@@ -370,7 +373,6 @@ export function buildUjatNewVolunteerHalfRowRequests(
   rows: Program['programRecruitments'],
   existing: Program
 ): ProgramRecruitmentRequest[] {
-  if (isProgramOperationStartLocked(existing, 'VOLUNTEER')) return []
   const savedTerms = new Set(
     (existing.programRecruitments ?? []).map(row => row.recruitTerm).filter(Boolean)
   )
@@ -633,18 +635,32 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   // UJAT 상세 응답의 최상위 KPI가 canonical source다. serviceDetailJson 안에
   // 오래된 KPI가 남아 있어도 상세 응답값(null 포함)으로 덮어쓴다.
   const responseKpi = {
-    finalParticipants: dto.totalParticipants ?? undefined,
-    instructorCount: dto.instructors ?? undefined,
-    volunteerCount: dto.generalVolunteers ?? undefined,
-    finalSchools: dto.finalSchools ?? undefined,
-    finalClasses: dto.finalClasses ?? undefined,
-  }
+    finalParticipants: dto.totalParticipants === null ? null : dto.totalParticipants ?? undefined,
+    instructorCount: dto.instructors === null ? null : dto.instructors ?? undefined,
+    volunteerCount: dto.generalVolunteers === null ? null : dto.generalVolunteers ?? undefined,
+    finalSchools: dto.finalSchools === null ? null : dto.finalSchools ?? undefined,
+    finalClasses: dto.finalClasses === null ? null : dto.finalClasses ?? undefined,
+  } as unknown as GeneralProgramCommonInfoExtension['kpi']
 
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 반영 (다른 유형과 동일 계약).
-  const generalCommonInfoBase =
-    dto.detailedProgramName?.trim()
-      ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
-      : details.generalCommonInfo
+  const namedCommonInfo = Object.prototype.hasOwnProperty.call(dto, 'detailedProgramName')
+    ? {
+        ...details.generalCommonInfo,
+        detailedProgramName: dto.detailedProgramName?.trim() ?? '',
+      }
+    : details.generalCommonInfo
+  const policyCommonInfo = applySettlementPolicyToCommonInfo(
+    namedCommonInfo,
+    dto.settlementPolicy
+  )
+  const generalCommonInfoBase = policyCommonInfo
+    ? {
+        ...namedCommonInfo,
+        ...(Array.isArray(dto.settlementPolicy?.paymentItems)
+          ? { paymentItems: policyCommonInfo.paymentItems }
+          : {}),
+      }
+    : namedCommonInfo
   const generalCommonInfo = generalCommonInfoBase
     ? {
         ...generalCommonInfoBase,
@@ -1012,6 +1028,7 @@ function coreRequest(
       registrationSnapshotForApi(registration)
     ),
   }
+  assignProgramPaymentItemsToWriteRequest({ body, program })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'full',
     merged: program,
@@ -1071,17 +1088,18 @@ function patchRequest(
     const copyRows = buildRecruitmentRowCopyRequests(
       merged.programRecruitments,
       existing.programRecruitments,
-      row =>
-        row.recruitmentType === 'PARTICIPANT' || row.recruitmentType === 'VOLUNTEER'
-          ? isProgramOperationStartLocked(existing, row.recruitmentType)
-          : false
+      row => isRecruitmentStartLocked(row.startAt)
     )
     if (copyRows.length > 0) {
       body.recruitments = mergeRecruitmentRowRequests(body.recruitments ?? [], copyRows)
     }
     const newHalfRows = buildUjatNewVolunteerHalfRowRequests(merged.programRecruitments, existing)
     if (newHalfRows.length > 0) {
-      body.recruitments = [...(body.recruitments ?? []), ...newHalfRows]
+      body.recruitments = mergeRecruitmentRowRequests(
+        recruitmentRowIdentityRequests(existing.programRecruitments),
+        body.recruitments ?? [],
+        newHalfRows
+      )
     }
   }
   if (has('businessArea')) {
@@ -1180,6 +1198,12 @@ function patchRequest(
     body.targetLevels = persistedTargetLevels
     body.targetLevel = persistedTargetLevels[0]
   }
+  assignProgramPaymentItemsToWriteRequest({
+    body,
+    program: merged,
+    patch,
+    baseline: existing,
+  })
   applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
     mode: 'patch',
     merged,

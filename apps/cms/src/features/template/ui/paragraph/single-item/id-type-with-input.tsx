@@ -1,5 +1,5 @@
 import { startTransition, useEffect, useEffectEvent, useRef, useState } from 'react'
-import { CmsInput, CmsNumericInput, CmsRadio } from '@/shared/ui'
+import { CmsInput, CmsNumericInput, CmsRadio, CmsResidentBackInput } from '@/shared/ui'
 import {
   AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
   isIdTypeResidentOptionId,
@@ -110,6 +110,10 @@ export function IdTypeWithInputBody({
   }, [])
 
   const residentParts = splitIdTypeResidentInputValue(localInputValue)
+  const residentBackRaw =
+    documentMode && localInputValue.includes('-')
+      ? localInputValue.slice(localInputValue.indexOf('-') + 1)
+      : residentParts.back
 
   const ph =
     selectedId != null
@@ -200,15 +204,13 @@ export function IdTypeWithInputBody({
           <span className="id-type-with-input__dash" aria-hidden>
             -
           </span>
-          <CmsNumericInput
+          <CmsResidentBackInput
             className="id-type-with-input__resident-input"
-            mode="numericText"
             inputSize="large"
             width="100%"
-            value={residentParts.back}
+            value={residentBackRaw}
             placeholder="주민등록 뒤 7자리"
             readOnly={inputsLocked}
-            maxLength={7}
             aria-label="주민등록번호 뒷자리"
             onValueChange={value =>
               patchInputValue(joinIdTypeResidentInputValue(residentParts.front, value))

@@ -4,6 +4,7 @@
  */
 
 import dayjs from 'dayjs'
+import { formatDateRangeDot } from '@/shared/utils/date'
 import type {
   GeneralProgramParticipantType,
   GeneralProgramScheduleDetailRow,
@@ -46,6 +47,8 @@ import {
 
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
+import { serializeCompanySchoolRecruitmentForFormVersion } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 
 export function resolveTrainedTeacherEducationJournalEnabled(
   raw: unknown,
@@ -343,7 +346,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
             },
           ],
           educationScheduleLines: [
-            `${dayjs(`${y}-03-01`).format('YYYY. MM. DD')} ~ ${dayjs(`${y}-12-31`).format('YYYY. MM. DD')}`,
+            formatDateRangeDot(`${y}-03-01`, `${y}-12-31`),
           ],
           wageGradeRows: [
             {
@@ -659,6 +662,8 @@ export async function persistGeneralProgramRegistration(args: {
     'programType' | 'sessionRoundType' | 'educationScheduleMode' | 'scheduleCurriculumDetailCount'
   >
   preparedFormBindings?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
+  /** 일반 위저드 RHF Independent 스냅샷. 있으면 overlay apply snapshot을 쓰지 않는다. */
+  programOverride?: Program
 }): Promise<Program> {
   const { shouldUseRegistrationCreateFormBindings, assertRegistrationWizardRemoteReady } =
     await import('@/features/program/general/lib/registration-create-form-bindings-capabilities')
@@ -675,22 +680,33 @@ export async function persistGeneralProgramRegistration(args: {
       : variant === 'trainedTeachers'
         ? newTrainedTeachersLocalProgramId()
         : newLocalProgramId()
-  const program = buildGeneralProgramListRowFromRegistrationSnapshot({
-    id,
-    participant: args.participant,
-    programType: args.programType,
-    variant,
-    sponsorId: args.sponsorId,
-    title: args.title,
-    sessionRoundType: args.sessionRoundType,
-    educationScheduleMode: args.educationScheduleMode,
-    educationScheduleLines: args.educationScheduleLines,
-    scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
-    editorExtras: args.editorExtras,
-  })
+  const program =
+    args.programOverride ??
+    buildGeneralProgramListRowFromRegistrationSnapshot({
+      id,
+      participant: args.participant,
+      programType: args.programType,
+      variant,
+      sponsorId: args.sponsorId,
+      title: args.title,
+      sessionRoundType: args.sessionRoundType,
+      educationScheduleMode: args.educationScheduleMode,
+      educationScheduleLines: args.educationScheduleLines,
+      scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
+      editorExtras: args.editorExtras,
+    })
 
   // 생성 요청 전에 스냅샷 — create 후 overlay 초기화돼도 썸네일·첨부 바인딩 가능
-  const recruitMediaOverlay = collectSelectedRecruitOverlaysForProgram(program)
+  const recruitMediaOverlay = (() => {
+    const leftover = collectSelectedRecruitOverlaysForProgram(program)
+    if (variant !== 'economy') return leftover
+    const rhf = peekCompanySchoolRegistrationRhf()
+    if (rhf == null) return leftover
+    return {
+      ...leftover,
+      ...serializeCompanySchoolRecruitmentForFormVersion(rhf.getValues().recruitment),
+    }
+  })()
 
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {
     const { createCompanySchoolProgram } = await import(

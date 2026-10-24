@@ -277,7 +277,11 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
           readOnlyDisplay
           view={
             <div className="program-registration-paragraph__schedule-lines">
-              <EducationSchedulePreviewLines lines={previewScheduleLines} onRemove={removeLine} />
+              <EducationSchedulePreviewLines
+                lines={previewScheduleLines}
+                onRemove={removeLine}
+                lockStartedLines={false}
+              />
             </div>
           }
         />

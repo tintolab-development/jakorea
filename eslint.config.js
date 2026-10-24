@@ -19,6 +19,8 @@ export default tseslint.config(
       '**/.playwright-mcp/**',
       '**/playwright/.auth/**',
       '**/tests/e2e/.auth/**',
+      'apps/cms/playwright.tt-registration-isolated.config.ts',
+      'apps/cms/tests/e2e-tt-isolated/**',
       'apps/platform/tests/**',
       '**/src/shared/api/generated/**',
     ],

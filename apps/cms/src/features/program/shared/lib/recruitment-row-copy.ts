@@ -8,6 +8,29 @@ function emptyToUndefined(value: string | null | undefined): string | undefined 
   return trimmed ? trimmed : undefined
 }
 
+function hasOwnField(value: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key)
+}
+
+/**
+ * 모집 row가 필드를 내려줬으면 빈 문자열도 정본이다.
+ * undefined만 구형/부분 응답에서 필드가 없는 것으로 취급한다.
+ */
+function rowText(
+  row: ProgramRecruitmentWindow,
+  key:
+    | 'programDescription'
+    | 'recruitmentGuide'
+    | 'applicationMethod'
+    | 'learningSupportContent'
+    | 'additionalContentHtml'
+    | 'remarks'
+    | 'otherMatters'
+): string | undefined {
+  if (!hasOwnField(row, key) || row[key] === undefined) return undefined
+  return row[key] ?? ''
+}
+
 export function hasRecruitmentCopy(row: ProgramRecruitmentWindow): boolean {
   return (
     row.programDescription !== undefined ||
@@ -31,15 +54,14 @@ export function resolveRecruitmentOtherMatters(
 ): string | undefined {
   if (audience === 'participant') return emptyToUndefined(program.otherNotes)
   const row = pickRecruitmentCopyRow(program, audience)
+  if (row && hasOwnField(row, 'otherMatters') && row.otherMatters !== undefined) {
+    return emptyToUndefined(row.otherMatters)
+  }
   const nested =
     audience === 'instructor'
       ? program.generalCommonInfo?.instructorRecruitmentInfo?.otherMatters
       : program.generalCommonInfo?.volunteerRecruitmentInfo?.otherMatters
-  return (
-    emptyToUndefined(row?.otherMatters) ||
-    emptyToUndefined(nested) ||
-    emptyToUndefined(program.otherNotes)
-  )
+  return emptyToUndefined(nested) || emptyToUndefined(program.otherNotes)
 }
 
 /** 모집 비고. 강사·봉사자는 nested remarks만. 행 remarks·otherMatters와 섞지 않는다. */
@@ -54,10 +76,10 @@ export function resolveRecruitmentRemarks(
     return emptyToUndefined(program.generalCommonInfo?.volunteerRecruitmentInfo?.remarks)
   }
   const row = pickRecruitmentCopyRow(program, audience)
-  return (
-    emptyToUndefined(row?.remarks) ||
-    emptyToUndefined(program.generalCommonInfo?.participantRecruitmentInfo?.remarks)
-  )
+  if (row && hasOwnField(row, 'remarks') && row.remarks !== undefined) {
+    return emptyToUndefined(row.remarks)
+  }
+  return emptyToUndefined(program.generalCommonInfo?.participantRecruitmentInfo?.remarks)
 }
 
 /**
@@ -75,7 +97,7 @@ export function hydrateGeneralRecruitmentInfoFromRows(program: Program): Program
   let changed = false
   for (const { audience, key } of patches) {
     const row = pickRecruitmentCopyRow(program, audience)
-    if (!row || row.otherMatters == null) continue
+    if (!row || !hasOwnField(row, 'otherMatters') || row.otherMatters === undefined) continue
     const info = { ...(common?.[key] ?? {}) }
     const next = emptyToUndefined(row.otherMatters)
     if (info.otherMatters === next) continue
@@ -101,9 +123,7 @@ export function pickRecruitmentCopyRow(
 ): ProgramRecruitmentWindow | undefined {
   const rows = program.programRecruitments ?? []
   if (audience === 'volunteer' && volunteerHalf) {
-    const volunteers = rows.filter(
-      row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER'
-    )
+    const volunteers = rows.filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
     if (volunteers.some(row => row.recruitTerm != null)) {
       const term = volunteerHalf === 'h1' ? 'FIRST_HALF' : 'SECOND_HALF'
       return volunteers.find(row => row.recruitTerm === term)
@@ -112,10 +132,12 @@ export function pickRecruitmentCopyRow(
     return volunteerHalf === 'h1' ? ordered[0] : ordered[1]
   }
   const type =
-    audience === 'participant' ? 'PARTICIPANT' : audience === 'instructor' ? 'INSTRUCTOR' : 'VOLUNTEER'
-  const byRecruitmentType = rows.find(
-    row => (row.recruitmentType ?? '').toUpperCase() === type
-  )
+    audience === 'participant'
+      ? 'PARTICIPANT'
+      : audience === 'instructor'
+        ? 'INSTRUCTOR'
+        : 'VOLUNTEER'
+  const byRecruitmentType = rows.find(row => (row.recruitmentType ?? '').toUpperCase() === type)
   if (byRecruitmentType) return byRecruitmentType
   if (audience === 'volunteer') {
     return rows.find(row => (row.applicationType ?? '').toUpperCase() === 'VOLUNTEER')
@@ -163,7 +185,7 @@ export function writeRecruitmentRowCopy(
   return rows.map(row => (row === target ? { ...row, ...copy } : row))
 }
 
-/** 모집 탭 문구는 recruitments[] 행의 실제 값이 있으면 그 행을 쓴다. 빈 칸은 overlay 값을 지우지 않는다. */
+/** 모집 탭 문구는 recruitments[] 행의 실제 값이 있으면 그 행을 쓴다. 빈 칸은 overlay로 대체하지 않는다. */
 export function applyRecruitmentRowCopy(
   program: Program,
   audience: RecruitmentCopyAudience,
@@ -172,32 +194,32 @@ export function applyRecruitmentRowCopy(
   const row = pickRecruitmentCopyRow(program, audience, volunteerHalf)
   if (!row) return program
   const withRow: Program = row.id != null ? { ...program, activeRecruitmentId: row.id } : program
-  const description = emptyToUndefined(row.programDescription)
-  const recruitmentGuide = emptyToUndefined(row.recruitmentGuide)
-  const applicationMethod = emptyToUndefined(row.applicationMethod)
-  const learningSupportContent = emptyToUndefined(row.learningSupportContent)
-  const additionalContentHtml = emptyToUndefined(row.additionalContentHtml)
-  const otherMatters = emptyToUndefined(row.otherMatters)
-  const remarks = emptyToUndefined(row.remarks)
+  const description = rowText(row, 'programDescription')
+  const recruitmentGuide = rowText(row, 'recruitmentGuide')
+  const applicationMethod = rowText(row, 'applicationMethod')
+  const learningSupportContent = rowText(row, 'learningSupportContent')
+  const additionalContentHtml = rowText(row, 'additionalContentHtml')
+  const otherMatters = rowText(row, 'otherMatters')
+  const remarks = rowText(row, 'remarks')
   if (
-    !description &&
-    !recruitmentGuide &&
-    !applicationMethod &&
-    !learningSupportContent &&
-    !additionalContentHtml &&
-    !otherMatters &&
-    !remarks
+    description === undefined &&
+    recruitmentGuide === undefined &&
+    applicationMethod === undefined &&
+    learningSupportContent === undefined &&
+    additionalContentHtml === undefined &&
+    otherMatters === undefined &&
+    remarks === undefined
   ) {
     return withRow
   }
   return {
     ...withRow,
-    ...(description ? { description } : {}),
-    ...(recruitmentGuide ? { recruitmentGuide } : {}),
-    ...(applicationMethod ? { applicationMethod } : {}),
-    ...(learningSupportContent ? { learningSupportContent } : {}),
-    ...(additionalContentHtml ? { additionalContentHtml } : {}),
-    ...(otherMatters ? { otherNotes: otherMatters } : {}),
-    ...(remarks ? { oneLineIntroduction: remarks } : {}),
+    ...(description !== undefined ? { description } : {}),
+    ...(recruitmentGuide !== undefined ? { recruitmentGuide } : {}),
+    ...(applicationMethod !== undefined ? { applicationMethod } : {}),
+    ...(learningSupportContent !== undefined ? { learningSupportContent } : {}),
+    ...(additionalContentHtml !== undefined ? { additionalContentHtml } : {}),
+    ...(otherMatters !== undefined ? { otherNotes: otherMatters } : {}),
+    ...(remarks !== undefined ? { oneLineIntroduction: remarks } : {}),
   }
 }

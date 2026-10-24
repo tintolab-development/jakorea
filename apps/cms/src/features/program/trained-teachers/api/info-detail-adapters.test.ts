@@ -400,4 +400,35 @@ describe('trained-teacher info detail adapters', () => {
     expect(next.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('서버 차시')
     expect(next.generalCommonInfo?.educationJournalEnabled).toBe(true)
   })
+
+  it('B configJson 이 nested 배열을 생략하면 A nested 를 지우지 않는다', () => {
+    const program = {
+      id: '186312',
+      title: 't',
+      generalCommonInfo: {
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: 'A 2회차 중 1', description: 'a' },
+          { sessionLabel: '2회차', title: 'A 2회차 중 2', description: 'b' },
+        ],
+        educationScheduleLines: ['2026.10.29 ~ 2026.10.31'],
+        educationScheduleMode: 'period',
+      },
+    } as Program
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(program, {
+      teacherTrainingEnabled: true,
+      educationJournalEnabled: false,
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {
+          teacherTrainingEnabled: true,
+          educationJournalEnabled: false,
+        },
+      }),
+    })
+    expect(merged.generalCommonInfo?.curriculumSessions).toHaveLength(2)
+    expect(merged.generalCommonInfo?.educationScheduleLines).toEqual([
+      '2026.10.29 ~ 2026.10.31',
+    ])
+    expect(merged.generalCommonInfo?.educationScheduleMode).toBe('period')
+  })
 })

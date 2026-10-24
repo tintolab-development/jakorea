@@ -32,6 +32,7 @@ export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 export { showDeleteCompletedAlert } from './show-delete-completed-alert'
 export { showRegisterCompletedAlert } from './show-register-completed-alert'
 export { showUpdateCompletedAlert } from './show-update-completed-alert'
+export { showSaveCompletedAlert } from './show-save-completed-alert'
 export { showApplicationApprovalCompletedAlert } from './show-application-approval-completed-alert'
 export { showApplicationRejectionCompletedAlert } from './show-application-rejection-completed-alert'
 export { CmsAlertModalProvider, useCmsAlert } from './cms-alert-modal-provider'
@@ -140,6 +141,11 @@ export { CmsPhoneInput } from './cms-phone-input'
 export { CmsBusinessNumberInput } from './cms-business-number-input'
 export { CmsNumericInput } from './numeric-input'
 export type { CmsNumericInputProps } from './numeric-input'
+export { CmsResidentBackInput } from './cms-resident-back-input'
+export type {
+  CmsResidentBackInputProps,
+  CmsResidentBackInputSize,
+} from './cms-resident-back-input'
 export type { NumericInputMode } from '../lib/numeric-input'
 export {
   CmsDateTextInput,

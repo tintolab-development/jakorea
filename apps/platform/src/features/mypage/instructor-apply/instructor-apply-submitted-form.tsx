@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom'
 import { CONSENT_VALUE } from '@jakorea/domain/instructor/consent'
 import {
   getInstructorConsentDocumentItems,
@@ -9,10 +8,10 @@ import { INSTRUCTOR_FORM_SECTION_DESCRIPTIONS } from '@jakorea/domain/instructor
 import { INSTRUCTOR_FREE_WRITE_ITEMS } from '@jakorea/domain/instructor/free-write'
 import type { InstructorConsentDocumentKey } from '@jakorea/domain/instructor/consent'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
-import { INSTRUCTOR_APPLY_PATH } from '../lib/constants'
 import type { InstructorApplySubmittedSnapshot } from './api/map-detail-to-form-values'
-import { getInstructorApplyConsentPath } from './consent/catalog'
 import type { InstructorApplyConsentKey } from './consent/catalog'
+import { ConsentDocumentPreviewOverlay } from '../settings/ui/consent-document-preview-overlay'
+import { useInstructorApplyConsentDocumentPreview } from './lib/use-instructor-apply-consent-document-preview'
 import {
   displayOrDash,
   formatInstructorApplyAffiliationDisplay,
@@ -72,15 +71,23 @@ export type InstructorApplySubmittedFormProps = {
 }
 
 export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmittedFormProps) {
-  const navigate = useNavigate()
   const { values, consentAgreedAt } = snapshot
+  const {
+    previewItem,
+    fallbackDraft,
+    fallbackPaymentBasicInfo,
+    fallbackSignatureImageSrc,
+    isRemoteSession,
+    openPreview,
+    closePreview,
+  } = useInstructorApplyConsentDocumentPreview()
 
   const handleConsentView = (key: InstructorConsentDocumentKey) => {
-    const returnTo = encodeURIComponent(INSTRUCTOR_APPLY_PATH)
-    navigate(`${getInstructorApplyConsentPath(key)}?mode=view&returnTo=${returnTo}`)
+    openPreview(key)
   }
 
   return (
+    <>
     <div className={styles.form}>
       <PFFormSection
         id="instructor-apply-consent"
@@ -418,5 +425,15 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
         ))}
       </PFFormSection>
     </div>
+      <ConsentDocumentPreviewOverlay
+        open={previewItem != null}
+        item={previewItem}
+        isRemoteSession={isRemoteSession}
+        fallbackDraft={fallbackDraft}
+        fallbackPaymentBasicInfo={fallbackPaymentBasicInfo}
+        fallbackSignatureImageSrc={fallbackSignatureImageSrc}
+        onClose={closePreview}
+      />
+    </>
   )
 }

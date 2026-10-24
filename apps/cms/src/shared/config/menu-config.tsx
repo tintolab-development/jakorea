@@ -545,6 +545,13 @@ const allMenuItems: MenuItemConfig[] = [
             enabled: true,
             allowedRoles: ['ADMIN'],
           },
+          {
+            key: '/admin/settings/program-manager-permissions',
+            label: '프로그램 담당자 권한 설정',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
         ],
       },
     ],
@@ -682,14 +689,14 @@ const allMenuItems: MenuItemConfig[] = [
   },
   {
     key: 'logs-group',
-    label: '보안 설정(로그 관리)',
+    label: '로그 관리',
     icon: <IconSecurityLogs />,
     enabled: true,
     allowedRoles: ['ADMIN'],
     children: [
       {
         key: '/logs/member-login-history',
-        label: '회원 로그인 이력',
+        label: 'CMS 관리자 로그인 이력',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],

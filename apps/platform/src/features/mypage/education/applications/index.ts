@@ -17,6 +17,8 @@ export type {
   EducationUjatApplicationInstitution,
   EducationUjatClassTimeBlock,
   EducationUjatGradeBlock,
+  EducationUjatTemporarySchedule,
+  EducationUjatTemporaryScheduleSlot,
   EducationWithdrawalPhase,
 } from './model/types'
 export {
@@ -28,6 +30,8 @@ export { EDUCATION_APPLICATION_TAB_ITEMS } from './lib/application-tab-items'
 export {
   educationInstitutionGuidanceWritePath,
   educationInstitutionGuidanceApplicationTabPath,
+  educationUjatProgressConfirmPath,
+  educationUjatScheduleBannerPath,
 } from './lib/guidance-path'
 export {
   shouldShowTeacherInstitutionGuidanceWrite,
@@ -88,6 +92,7 @@ export {
   UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveEducationScheduleTabLabel,
   resolveVolunteerActivityDetailCase,
+  shouldShowSettlementTab,
 } from './lib/detail-tabs'
 export type { EducationActivitySection, EducationDetailTabItem } from './lib/detail-tabs'
 export {
@@ -120,12 +125,14 @@ export type {
 } from './ui/teacher-assignment'
 export { DocumentPassBanner, shouldShowDocumentPassBanner } from './ui/document-pass-banner'
 export { UjatScheduleBanner } from './ui/ujat-schedule-banner'
+export { UjatRevisionNotice } from './ui/ujat-revision-notice'
 export { UjatApplicationContent } from './ui/ujat-application-content'
 export type { UjatApplicationContentProps } from './ui/ujat-application-content'
 export {
   APPLICATION_TYPES_BY_SCOPE,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  usePortalMeFormBindingRender,
   useProbeEducationApplicationType,
   useMyProgramApplications,
 } from './api/hooks'
@@ -140,8 +147,12 @@ export {
   useOrganizationStudentRosterQuery,
   useSubmitOrganizationPortraitConsentMutation,
 } from './api/student-documents-hooks'
-export { usePatchOrganizationGuidanceAnswersMutation } from './api/institution-guidance-hooks'
 export {
+  useConfirmUjatTemporaryScheduleMutation,
+  usePatchOrganizationGuidanceAnswersMutation,
+} from './api/institution-guidance-hooks'
+export {
+  confirmUjatTemporarySchedule,
   patchOrganizationGuidanceAnswers,
   savePortalTeacherInstitutionGuidance,
 } from './api/institution-guidance-client'

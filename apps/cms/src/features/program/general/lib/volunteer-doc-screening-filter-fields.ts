@@ -142,6 +142,10 @@ function buildGeneralFilterField(
   }
 }
 
+export function buildGeneralVolunteerDoc1FilterFields(): FilterFieldConfig[] {
+  return buildGeneralVolunteerDoc1FilterRows().flat()
+}
+
 export function buildGeneralVolunteerDoc1FilterRows(): FilterFieldConfig[][] {
   return [
     [
@@ -214,6 +218,12 @@ export function filterGeneralDoc1Applicants(
   })
 }
 
+export function buildGeneralVolunteerDocPassedFilterFields(
+  subjectKind: ScreeningSubjectKind = 'volunteer'
+): FilterFieldConfig[] {
+  return buildGeneralVolunteerDocPassedFilterRows(subjectKind).flat()
+}
+
 export function buildGeneralVolunteerDocPassedFilterRows(
   subjectKind: ScreeningSubjectKind = 'volunteer'
 ): FilterFieldConfig[][] {
@@ -250,6 +260,13 @@ export function buildGeneralVolunteerInterview2TimeOptions(rows: GeneralVoluntee
     new Set(rows.map(row => row.assignedInterviewTime).filter((t): t is string => Boolean(t)))
   ).sort()
   return [{ label: '전체', value: ALL }, ...times.map(t => ({ label: t, value: t }))]
+}
+
+export function buildGeneralVolunteerInterview2FilterFields(
+  rows: GeneralVolunteerApplicantRow[],
+  subjectKind: ScreeningSubjectKind = 'volunteer'
+): FilterFieldConfig[] {
+  return buildGeneralVolunteerInterview2FilterRows(rows, subjectKind).flat()
 }
 
 export function buildGeneralVolunteerInterview2FilterRows(
@@ -300,6 +317,13 @@ export function buildGeneralVolunteerInterview2FilterRows(
 }
 
 /** 2차 면접 대상자 캘린더 뷰 — 면접일 필드 제외, 점수 라벨 '점수 총합' */
+export function buildGeneralVolunteerInterview2CalendarFilterFields(
+  rows: GeneralVolunteerApplicantRow[],
+  subjectKind: ScreeningSubjectKind = 'volunteer'
+): FilterFieldConfig[] {
+  return buildGeneralVolunteerInterview2CalendarFilterRows(rows, subjectKind).flat()
+}
+
 export function buildGeneralVolunteerInterview2CalendarFilterRows(
   rows: GeneralVolunteerApplicantRow[],
   subjectKind: ScreeningSubjectKind = 'volunteer'

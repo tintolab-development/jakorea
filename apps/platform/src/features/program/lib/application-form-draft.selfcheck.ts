@@ -857,4 +857,25 @@ const volunteerPersonalAfterMerge = volunteerAfterBindingMerge.paragraphs.find(
 assert.ok(volunteerPersonalAfterMerge && 'bottomConsent' in volunteerPersonalAfterMerge)
 assert.equal(volunteerPersonalAfterMerge.bottomConsent, undefined)
 
+const strippedScheduleDraft = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [
+    {
+      id: 'program-participant-application-seed-personal-info',
+      kind: 'single_item',
+      variant: 'horizontal_table',
+      tableFlavor: 'field',
+      columnHeaders: ['a'],
+      dataRows: [['']],
+      fieldDataRows: [[{ kind: 'text', value: 'x' }]],
+    },
+  ],
+} as const
+const leftoverScheduleKey = 'program-participant-application-seed-schedule'
+const leftoverScheduleAnswers = buildApplicationAnswersFromDraft(strippedScheduleDraft as never, {
+  overrides: { [leftoverScheduleKey]: ['line:0', 'line:1'] },
+})
+assert.deepEqual(leftoverScheduleAnswers[leftoverScheduleKey], ['line:0', 'line:1'])
+
 console.log('application-form-draft.selfcheck: ok')

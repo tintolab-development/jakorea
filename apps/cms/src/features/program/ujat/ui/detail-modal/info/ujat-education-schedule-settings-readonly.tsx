@@ -15,21 +15,21 @@ export type UjatEducationScheduleSettingsRow = {
 export const UJAT_EDUCATION_SCHEDULE_SETTINGS_ROWS: readonly UjatEducationScheduleSettingsRow[] = [
   {
     semesterLabel: '상반기 (1학기)',
-    scheduleRange: '26년 4월 3일(금) ~ 26년 6월 19일(금)',
+    scheduleRange: '2026.04.03(금) ~ 2026.06.19(금)',
     unavailableLabel: '상반기 교육 진행 불가일',
     unavailableDates: (
       <UjatInlineDividedSegments
-        segments={['26년 5월 15일(금), 26년 6월 12일(금)', '공휴일']}
+        segments={['2026.05.15(금), 2026.06.12(금)', '공휴일']}
       />
     ),
   },
   {
     semesterLabel: '하반기 (2학기)',
-    scheduleRange: '26년 9월 11일(금) ~ 26년 11월 20일(금)',
+    scheduleRange: '2026.09.11(금) ~ 2026.11.20(금)',
     unavailableLabel: '하반기 교육 진행 불가일',
     unavailableDates: (
       <UjatInlineDividedSegments
-        segments={['26년 10월 23일(금), 26년 10월 30일(금)', '공휴일']}
+        segments={['2026.10.23(금), 2026.10.30(금)', '공휴일']}
       />
     ),
   },

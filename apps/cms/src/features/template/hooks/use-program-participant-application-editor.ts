@@ -11,6 +11,10 @@ import {
 } from 'react'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
+type UjatProgramApplicationVolunteerBodyOptions = NonNullable<
+  RenderFormParagraphBodyOptions['ujatProgramApplicationFormVolunteer']
+>
+
 const INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS: RenderFormParagraphBodyOptions = {
   structureLockedParagraphIds: new Set<string>(),
   structureLockedAuthoringChoicePreview: true,
@@ -124,6 +128,8 @@ import {
   collectOperationalOverlayForCatalogId,
   resetOperationalOverlayForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   applyParticipantApplicationEditorState,
@@ -178,8 +184,10 @@ import {
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
+  readLiveGeneralRecruitOverlayRecord,
   subscribeGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { subscribeGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 import {
   beginRecruitDetailContentReset,
   commitRecruitDetailContentReset,
@@ -253,11 +261,19 @@ function subscribeNoop(_listener: () => void): () => void {
 }
 
 function subscribeVolunteerInterviewRequiredOverlay(listener: () => void): () => void {
-  return subscribeGeneralRecruitOverlayKey(VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY, listener)
+  const unsubOverlay = subscribeGeneralRecruitOverlayKey(
+    VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY,
+    listener
+  )
+  const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+  return () => {
+    unsubOverlay()
+    unsubRhf()
+  }
 }
 
 function getVolunteerInterviewRequiredSnapshot(): unknown {
-  return getGeneralRecruitOverlayRecord()[VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY]
+  return readLiveGeneralRecruitOverlayRecord()[VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY]
 }
 
 function useParticipantApplicationMiddleActions(
@@ -541,7 +557,7 @@ function restoreParticipantOverlayForVariant(
         applyOperationalOverlayForCatalogId(overlayId, overlay)
       } else {
         const live = isGeneralRecruitOverlayVariant(variant)
-          ? getGeneralRecruitOverlayRecord()
+          ? readLiveGeneralRecruitOverlayRecord()
           : getGeneralApplicationOverlayRecord()
         const patch = overlayEntriesAbsentFromLive(overlay, live)
         if (Object.keys(patch).length === 0) return
@@ -589,8 +605,29 @@ export function clearParticipantSessionOverlayFlushRegistry(): void {
   participantSessionOverlayByCatalogId.clear()
 }
 
-export function flushParticipantSessionOverlaysToOperationalStores(): void {
+/** 테스트 전용 — stale session snapshot을 재현한다. */
+export function seedParticipantSessionOverlayForTests(
+  catalogId: string,
+  overlay: Record<string, unknown>
+): void {
+  participantSessionOverlayByCatalogId.set(catalogId, overlay)
+}
+
+export function flushParticipantSessionOverlaysToOperationalStores(options?: {
+  excludeCatalogId?: string
+}): void {
+  // TT 위저드 RHF가 켜져 있으면 session snapshot으로 모집·신청 기간을 덮지 않는다.
+  // persist는 collectTrainedTeachers*FormState()가 라이브 RHF를 읽는다.
+  if (peekTrainedTeachersRegistrationRhf() != null) return
+  const companySchoolRhf = peekCompanySchoolRegistrationRhf()
   for (const [catalogId, overlay] of participantSessionOverlayByCatalogId) {
+    if (options?.excludeCatalogId != null && catalogId === options.excludeCatalogId) continue
+    if (
+      companySchoolRhf != null &&
+      (catalogId === 'recruitment-economy' || catalogId === 'application-economy')
+    ) {
+      continue
+    }
     if (Object.keys(overlay).length === 0) continue
     applyOperationalOverlayForCatalogId(catalogId, overlay)
   }
@@ -1897,7 +1934,7 @@ export function useProgramParticipantApplicationEditor(
     return getUjatVolunteerRound(linkedProgram, half)?.curriculum?.trim() || undefined
   }, [variant, linkedProgram, editorOptions?.ujatRecruitParagraphProps?.volunteerHalf])
 
-  const ujatProgramApplicationFormVolunteerOptions = useMemo(
+  const ujatProgramApplicationFormVolunteerOptions = useMemo<UjatProgramApplicationVolunteerBodyOptions>(
     () =>
       variant === 'ujat-application-volunteer'
         ? {
@@ -1905,6 +1942,7 @@ export function useProgramParticipantApplicationEditor(
             applicationType: ujatVolunteerApplicationType,
             onApplicationTypeChange: setUjatVolunteerApplicationType,
             isTemplateAuthoringMode: !programLinkedPreview,
+            ...(programLinkedPreview ? { programLinkedPreview: true as const } : {}),
             recruitCohortLabel: ujatVolunteerRecruitCohortLabel,
           }
         : {

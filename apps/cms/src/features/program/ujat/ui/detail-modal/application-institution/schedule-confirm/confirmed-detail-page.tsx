@@ -1,16 +1,14 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Space } from 'antd'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { patchUjatInstitutionScheduleConfirmStatus } from '@/features/program/ujat/model/ujat-institution-application'
-import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { Space, Spin, Tooltip } from 'antd'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { postUjatScheduleChangeRequest } from '@/features/program/ujat/api/temporary-schedule-api'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { shouldShowScheduleConfirmGuidanceNotes } from './types'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
-import {
-  UjatInstitutionApplicationActionModal,
-} from '../list/action-modal'
+import { UjatInstitutionApplicationActionModal } from '../list/action-modal'
 import { buildUjatScheduleConfirmConfirmedDetail } from './build-confirmed-detail'
 import { UjatScheduleConfirmConfirmedDetailView } from './confirmed-detail-view'
 import {
@@ -21,6 +19,7 @@ import {
   UjatScheduleConfirmRevisionRequestModal,
   type UjatScheduleConfirmRevisionRequestModalPayload,
 } from './revision-request-modal'
+import '../detail/detail-page.css'
 
 const APPROVE_BUTTON_STYLE = {
   borderColor: 'var(--color-primary, #00a9a5)',
@@ -32,29 +31,52 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   programId,
   onBack,
   onStatusUpdated,
+  onOpenScheduleAssign,
 }: {
   institutionId: string
   programId?: string | null
   onBack: () => void
   onStatusUpdated: () => void
+  onOpenScheduleAssign?: () => void
 }) {
   const { showAlert } = useCmsAlert()
   const [pendingReject, setPendingReject] = useState(false)
   const [pendingApprove, setPendingApprove] = useState(false)
   const [pendingRevisionRequest, setPendingRevisionRequest] = useState(false)
-  const { row, detail: baseDetail, invalidate } = useUjatInstitutionApplicationDetail({
+  const [actionLoading, setActionLoading] = useState(false)
+  const {
+    row,
+    detail: baseDetail,
+    loading,
+    invalidate,
+    approveRemote,
+    rejectRemote,
+    workflow,
+    workflowReady,
+    remoteDetail,
+    temporarySchedule,
+  } = useUjatInstitutionApplicationDetail({
     institutionId,
     programId,
   })
 
   const detail = useMemo(
-    () => buildUjatScheduleConfirmConfirmedDetail(row, baseDetail),
-    [row, baseDetail]
+    () =>
+      buildUjatScheduleConfirmConfirmedDetail(
+        row,
+        baseDetail,
+        remoteDetail,
+        temporarySchedule
+      ),
+    [row, baseDetail, remoteDetail, temporarySchedule]
   )
 
   const showGuidanceNotes = shouldShowScheduleConfirmGuidanceNotes(
-    row?.scheduleConfirmStatus ?? null
+    detail?.scheduleConfirmStatus ?? row?.scheduleConfirmStatus ?? null
   )
+  const isTerminal =
+    detail?.scheduleConfirmStatus === 'approval_completed' ||
+    detail?.scheduleConfirmStatus === 'application_rejected'
 
   const {
     personalInfoRevealed,
@@ -66,28 +88,61 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
     controlMode: 'headerStickyNoop',
   })
 
-  const handleRejectConfirm = useCallback(() => {
-    if (!row) return
-    patchUjatInstitutionScheduleConfirmStatus([row.id], 'application_rejected')
-    onStatusUpdated()
-    onBack()
-    setPendingReject(false)
-  }, [row, onStatusUpdated, onBack])
+  const handleRejectConfirm = useCallback(
+    (reason?: string) => {
+      if (!row) return
+      void (async () => {
+        setActionLoading(true)
+        try {
+          await rejectRemote(reason ?? 'CMS UJAT 임시 배정 기관 신청 반려')
+          onStatusUpdated()
+          onBack()
+          setPendingReject(false)
+        } catch (error) {
+          showAlert({
+            title: '안내',
+            content: readApiErrorAlertMessage(error, '신청기관 반려 처리에 실패했습니다.'),
+          })
+        } finally {
+          setActionLoading(false)
+        }
+      })()
+    },
+    [onBack, onStatusUpdated, rejectRemote, row, showAlert]
+  )
 
   const handleApproveConfirm = useCallback(() => {
-    if (!row) return
-    patchUjatInstitutionScheduleConfirmStatus([row.id], 'approval_completed')
-    void invalidate()
-    onStatusUpdated()
-    setPendingApprove(false)
-    showAlert({
-      title: UJAT_INSTITUTION_SCHEDULE_CONFIRM_APPROVE_ALERT_TITLE,
-      content: getUjatInstitutionScheduleConfirmApproveCompleteContent(
-        row.institutionName,
-        row.assignedInstructorCount ?? null
-      ),
-    })
-  }, [row, invalidate, onStatusUpdated, showAlert])
+    if (!row || !workflow.canFinalApprove) {
+      setPendingApprove(false)
+      showAlert({
+        title: '안내',
+        content: '먼저 임시 일정을 배정하고 기관 확인을 완료해 주세요.',
+      })
+      return
+    }
+    void (async () => {
+      setActionLoading(true)
+      try {
+        await approveRemote()
+        onStatusUpdated()
+        setPendingApprove(false)
+        showAlert({
+          title: UJAT_INSTITUTION_SCHEDULE_CONFIRM_APPROVE_ALERT_TITLE,
+          content: getUjatInstitutionScheduleConfirmApproveCompleteContent(
+            row.institutionName,
+            row.assignedInstructorCount ?? null
+          ),
+        })
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: readApiErrorAlertMessage(error, '최종 승인에 실패했습니다.'),
+        })
+      } finally {
+        setActionLoading(false)
+      }
+    })()
+  }, [approveRemote, onStatusUpdated, row, showAlert, workflow.canFinalApprove])
 
   const handleRevisionRequestConfirm = useCallback(
     async (payload: UjatScheduleConfirmRevisionRequestModalPayload) => {
@@ -98,17 +153,14 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
             reason: payload.message || '학급 수 변경 요청',
           })
         } catch (error) {
+          await invalidate()
           showAlert({
             title: '수정 요청 실패',
-            content:
-              error instanceof Error
-                ? error.message
-                : '수정 요청 전송에 실패했습니다. 다시 시도해 주세요.',
+            content: readApiErrorAlertMessage(error, '수정 요청 전송에 실패했습니다. 다시 시도해 주세요.'),
           })
           return
         }
       }
-      patchUjatInstitutionScheduleConfirmStatus([row.id], 'revision_requested')
       void invalidate()
       onStatusUpdated()
       setPendingRevisionRequest(false)
@@ -120,22 +172,42 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
     [programId, row, invalidate, onStatusUpdated, showAlert]
   )
 
-  if (!row || !detail) {
-    return null
+  if (loading) {
+    return (
+      <div className="page-content-loading" role="status">
+        <Spin size="large" />
+      </div>
+    )
   }
+
+  if (!row || !detail) {
+    return (
+      <div className="ujat-institution-application-detail-page">
+        <p>신청 기관 정보를 찾을 수 없습니다.</p>
+        <CmsButton type="button" variant="secondary" size="large" onClick={onBack}>
+          목록으로
+        </CmsButton>
+      </div>
+    )
+  }
+
+  const approveOrReassignLabel =
+    workflow.primaryAction === 'open_schedule_assign' ? '일정 재배정' : '신청 승인'
+  const approveOrReassignDisabled =
+    !workflowReady || workflow.primaryDisabled || isTerminal
 
   return (
     <div className="ujat-institution-application-detail-page">
-      <div
-        className="ujat-institution-application-detail-page__actions"
-        style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}
-      >
+      <div className="ujat-institution-application-detail-page__actions">
         <Space size={8} wrap>
           <CmsButton
             type="button"
             variant="delete"
             size="large"
-            width={140}
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            loading={actionLoading}
+            disabled={isTerminal}
             onClick={() => setPendingReject(true)}
           >
             신청 반려
@@ -144,21 +216,49 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
             type="button"
             variant="secondary"
             size="large"
-            width={140}
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
             style={APPROVE_BUTTON_STYLE}
-            onClick={() => setPendingApprove(true)}
+            loading={actionLoading}
+            disabled={approveOrReassignDisabled}
+            onClick={() => {
+              if (approveOrReassignDisabled) return
+              if (workflow.primaryAction === 'open_schedule_assign') {
+                onOpenScheduleAssign?.()
+                return
+              }
+              if (workflow.canFinalApprove) setPendingApprove(true)
+            }}
           >
-            신청 승인
+            {approveOrReassignLabel}
           </CmsButton>
-          <CmsButton
-            type="button"
-            variant="primary"
-            size="large"
-            width={140}
-            onClick={() => setPendingRevisionRequest(true)}
-          >
-            수정 요청
-          </CmsButton>
+          {(() => {
+            const revisionDisabled = isTerminal || workflow.revisionRequestDisabled
+            const revisionButton = (
+              <CmsButton
+                type="button"
+                variant="primary"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                disabled={revisionDisabled}
+                onClick={() => {
+                  if (revisionDisabled) return
+                  setPendingRevisionRequest(true)
+                }}
+              >
+                수정 요청
+              </CmsButton>
+            )
+            if (!workflow.revisionRequestDisabledReason) return revisionButton
+            return (
+              <Tooltip title={workflow.revisionRequestDisabledReason}>
+                <span className="ujat-institution-application-detail-page__revision-request-wrap">
+                  {revisionButton}
+                </span>
+              </Tooltip>
+            )
+          })()}
           <PersonalInfoRevealButton
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
@@ -184,7 +284,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
           institutionName={row.institutionName}
           selectionCount={1}
           onCancel={() => setPendingReject(false)}
-          onConfirm={handleRejectConfirm}
+          onConfirm={payload => handleRejectConfirm(payload.reason)}
         />
       ) : null}
       {pendingApprove ? (

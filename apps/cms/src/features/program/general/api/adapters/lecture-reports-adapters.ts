@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatDateDot } from '@/shared/utils/date'
 import type { LectureReportListItemResponse } from '@/shared/api/generated/dashboard/schemas/lectureReportListItemResponse'
 
 /**
@@ -53,7 +54,7 @@ function buildScheduleLabel(row: LectureReportListItemResponse): string {
   const parts: string[] = []
   if (row.lectureDate) {
     const d = dayjs(row.lectureDate)
-    parts.push(d.isValid() ? d.format('YYYY. MM. DD') : row.lectureDate)
+    parts.push(d.isValid() ? formatDateDot(d) : row.lectureDate)
   }
   if (row.sessionNo != null) parts.push(`${row.sessionNo}회차`)
   if (row.timeLabel?.trim()) parts.push(row.timeLabel.trim())
@@ -73,7 +74,7 @@ export function mapLectureReportDtoToInstructorRow(
   const id = String(reportId ?? row.id ?? index + 1)
   const due = row.submitDueAt ? dayjs(row.submitDueAt) : null
   const submissionPeriodLabel =
-    due?.isValid() === true ? `${due.format('YYYY. MM. DD')}까지` : '-'
+    due?.isValid() === true ? `${formatDateDot(due)}까지` : '-'
   const submissionStatusLabel = mapSubmissionLabel(
     row.reportStatus,
     row.submittedAt ?? undefined

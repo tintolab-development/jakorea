@@ -53,7 +53,7 @@ export async function patchProgramRecruitment(
   )
 }
 
-/** DELETE …/recruitments/{recruitmentId} — 신청자가 있으면 409 RECRUITMENT_HAS_APPLICATIONS */
+/** DELETE …/recruitments/{recruitmentId}. 신청자 409 RECRUITMENT_HAS_APPLICATIONS, 구조 잠금 409 PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED. 실패 시 행을 지우지 않는다. */
 export async function deleteProgramRecruitment(
   programId: number,
   recruitmentId: number

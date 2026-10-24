@@ -19,7 +19,10 @@ import {
 import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { completeUjatRecruitDateSelections } from '@/features/program/ujat/lib/complete-recruit-date-selections'
 import { getUjatApplicationInstitutionOverlayRecord } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
-import { getUjatApplicationVolunteerOverlayRecord } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
+import {
+  getUjatApplicationVolunteerProgramOverlayRecord,
+  stripUjatApplicationVolunteerProgramOnlyFields,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
 export const UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'ujat-local-'
 
@@ -69,12 +72,14 @@ const UJAT_RECRUIT_SNAPSHOT_PROGRAM = {
 export function collectUjatRegistrationCreateOverlay(
   registrationOverlay: Record<string, unknown> = {}
 ): Record<string, unknown> {
-  return completeUjatRecruitDateSelections({
-    ...getUjatApplicationInstitutionOverlayRecord(),
-    ...getUjatApplicationVolunteerOverlayRecord(),
-    ...registrationOverlay,
-    ...collectSelectedRecruitOverlaysForProgram(UJAT_RECRUIT_SNAPSHOT_PROGRAM),
-  })
+  return stripUjatApplicationVolunteerProgramOnlyFields(
+    completeUjatRecruitDateSelections({
+      ...getUjatApplicationInstitutionOverlayRecord(),
+      ...getUjatApplicationVolunteerProgramOverlayRecord(),
+      ...registrationOverlay,
+      ...collectSelectedRecruitOverlaysForProgram(UJAT_RECRUIT_SNAPSHOT_PROGRAM),
+    })
+  )
 }
 
 export function buildUjatProgramListRowFromRegistrationSnapshot(args: {

@@ -2,22 +2,24 @@ import { useCallback, useRef, useSyncExternalStore } from 'react'
 import dayjs from 'dayjs'
 import {
   getGeneralApplicationOverlayRecord,
-  getGeneralApplicationOverlayVersion,
   patchGeneralApplicationOverlay,
   replaceGeneralApplicationOverlay,
   subscribeGeneralApplicationOverlay,
   updateGeneralApplicationOverlayKey,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
-  getGeneralRecruitOverlayRecord,
   getGeneralRecruitOverlayScope,
-  getGeneralRecruitOverlayVersion,
   patchGeneralRecruitOverlay,
   patchGeneralRecruitOverlayForScope,
+  readLiveGeneralRecruitOverlayRecord,
   replaceGeneralRecruitOverlay,
   subscribeGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
+import {
+  peekGeneralRegistrationWizardRhf,
+  subscribeGeneralRegistrationWizardRhf,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 
 const VOLUNTEER_RECRUIT_CATALOG = 'recruitment-volunteer'
 
@@ -36,6 +38,12 @@ function patchRecruitVolunteerInterviewOverlay(partial: Record<string, unknown>)
 }
 
 export type VolunteerInterviewOverlayStore = 'application' | 'recruit'
+
+function liveInterviewRecord(store: VolunteerInterviewOverlayStore): Record<string, unknown> {
+  return store === 'recruit'
+    ? readLiveGeneralRecruitOverlayRecord()
+    : getGeneralApplicationOverlayRecord()
+}
 
 function getInterviewOverlayKeyPrefix(
   store: VolunteerInterviewOverlayStore,
@@ -59,9 +67,7 @@ export function volunteerInterviewOverlayHasKey(
   namespace?: string
 ): boolean {
   const key = buildVolunteerInterviewOverlayKey(store, suffix, namespace)
-  const record =
-    store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
-  return Object.prototype.hasOwnProperty.call(record, key)
+  return Object.prototype.hasOwnProperty.call(liveInterviewRecord(store), key)
 }
 
 export function serializeVolunteerInterviewOverlayValue(value: unknown): unknown {
@@ -76,8 +82,7 @@ export function persistMissingVolunteerInterviewOverlayDefaults(args: {
   namespace?: string
   values: Record<string, unknown>
 }): void {
-  const record =
-    args.store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
+  const record = liveInterviewRecord(args.store)
   const patch: Record<string, unknown> = {}
   for (const [suffix, value] of Object.entries(args.values)) {
     if (value === undefined) continue
@@ -93,6 +98,12 @@ export function persistMissingVolunteerInterviewOverlayDefaults(args: {
   patchGeneralApplicationOverlay(patch)
 }
 
+export function readVolunteerInterviewLiveRecord(
+  store: VolunteerInterviewOverlayStore
+): Record<string, unknown> {
+  return liveInterviewRecord(store)
+}
+
 export function useVolunteerInterviewOverlayKv<T>(
   store: VolunteerInterviewOverlayStore,
   suffix: string,
@@ -101,31 +112,45 @@ export function useVolunteerInterviewOverlayKv<T>(
 ): [T, (next: T) => void] {
   const applicationKey = buildVolunteerInterviewOverlayKey('application', suffix, namespace)
   const recruitKey = buildVolunteerInterviewOverlayKey('recruit', suffix, namespace)
+  const key = store === 'recruit' ? recruitKey : applicationKey
 
   const defaultRef = useRef(defaultValue)
-  const applicationVersion = useSyncExternalStore(
-    subscribeGeneralApplicationOverlay,
-    getGeneralApplicationOverlayVersion,
-    getGeneralApplicationOverlayVersion
-  )
-  const recruitVersion = useSyncExternalStore(
-    subscribeGeneralRecruitOverlay,
-    getGeneralRecruitOverlayVersion,
-    getGeneralRecruitOverlayVersion
-  )
+  const snapshotRef = useRef<T>(defaultValue)
+  const getSnapshot = useCallback(() => {
+    const next = readOperationalOverlayKvValue(
+      store === 'recruit' ? 'general-recruit' : 'general-application',
+      liveInterviewRecord(store),
+      key,
+      defaultRef.current
+    )
+    if (Object.is(snapshotRef.current, next)) return snapshotRef.current
+    if (Array.isArray(snapshotRef.current) && Array.isArray(next)) {
+      const prevItems = snapshotRef.current
+      if (
+        prevItems.length === next.length &&
+        prevItems.every((item, index) => Object.is(item, next[index]))
+      ) {
+        return snapshotRef.current
+      }
+    }
+    snapshotRef.current = next
+    return next
+  }, [key, store])
 
-  void applicationVersion
-  void recruitVersion
-
-  const applicationRecord = getGeneralApplicationOverlayRecord()
-  const recruitRecord = getGeneralRecruitOverlayRecord()
-  const key = store === 'recruit' ? recruitKey : applicationKey
-  const record = store === 'recruit' ? recruitRecord : applicationRecord
-  const value = readOperationalOverlayKvValue(
-    store === 'recruit' ? 'general-recruit' : 'general-application',
-    record,
-    key,
-    defaultRef.current
+  const value = useSyncExternalStore(
+    listener => {
+      const unsubStore =
+        store === 'recruit'
+          ? subscribeGeneralRecruitOverlay(listener)
+          : subscribeGeneralApplicationOverlay(listener)
+      const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+      return () => {
+        unsubStore()
+        unsubRhf()
+      }
+    },
+    getSnapshot,
+    getSnapshot
   )
 
   const setValue = useCallback(
@@ -152,7 +177,7 @@ export function updateVolunteerInterviewOverlayKey<T>(
   const key = buildVolunteerInterviewOverlayKey(store, suffix, namespace)
   const wrap = (prev: T | undefined) => serializeVolunteerInterviewOverlayValue(updater(prev)) as T
   if (store === 'recruit') {
-    const live = getGeneralRecruitOverlayRecord()
+    const live = liveInterviewRecord('recruit')
     const next = wrap(live[key] as T | undefined)
     patchRecruitVolunteerInterviewOverlay({ [key]: next })
     return
@@ -306,8 +331,7 @@ export function removeVolunteerInterviewExceptionBlock(args: {
   blockKey: number
 }): void {
   const prefix = exceptionBlockKeyPrefix(args.store, args.namespace, args.blockKey)
-  const record =
-    args.store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
+  const record = liveInterviewRecord(args.store)
   const next: Record<string, unknown> = {}
   let changed = false
   for (const [key, value] of Object.entries(record)) {
@@ -317,11 +341,26 @@ export function removeVolunteerInterviewExceptionBlock(args: {
     }
     next[key] = value
   }
-  if (!changed) return
   if (args.store === 'recruit') {
+    const rhf = peekGeneralRegistrationWizardRhf()
+    if (rhf != null) {
+      const recruitmentKv = { ...rhf.getValues().recruitmentKv }
+      let rhfChanged = false
+      for (const key of Object.keys(recruitmentKv)) {
+        if (!key.startsWith(prefix)) continue
+        delete recruitmentKv[key]
+        rhfChanged = true
+      }
+      if (rhfChanged) {
+        rhf.setPath('recruitmentKv', recruitmentKv, { shouldDirty: true })
+        changed = true
+      }
+    }
+    if (!changed) return
     replaceGeneralRecruitOverlay(next)
     return
   }
+  if (!changed) return
   replaceGeneralApplicationOverlay(next)
 }
 
@@ -339,8 +378,7 @@ export function hydrateMissingVolunteerInterviewOverlay(args: {
   if (args.source == null) return
   const prefix = `${getInterviewOverlayKeyPrefix(args.store, args.namespace)}.`
   const additionalKeys = new Set(args.additionalKeys ?? [])
-  const live =
-    args.store === 'recruit' ? getGeneralRecruitOverlayRecord() : getGeneralApplicationOverlayRecord()
+  const live = liveInterviewRecord(args.store)
   const patch: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(args.source)) {
     if (!key.startsWith(prefix) && !additionalKeys.has(key)) continue

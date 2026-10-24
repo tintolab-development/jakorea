@@ -91,6 +91,45 @@ const now = Date.parse('2026-10-21T00:00:00.000Z')
 }
 
 {
+  const tokens: string[] = []
+  let challenges = 0
+  const result = await completeGuardianAfterNice({
+    termsVersion: 'v1',
+    guardianRelation: '모',
+    nowMs: now,
+    client: {
+      getStatus: async () => ({ status: 'PENDING', identityVerified: true }),
+      issueFinalConsentChallenge: async () => {
+        challenges += 1
+        return {
+          challengeToken: `challenge-token-${challenges}`,
+          expiresAt: '2026-10-21T00:05:00.000Z',
+        }
+      },
+      postFinalConsent: async input => {
+        tokens.push(input.finalConsentToken)
+        if (input.finalConsentToken === 'stale-token') {
+          throw bridgeError(
+            'GUARDIAN_FINAL_CONSENT_CHALLENGE_INVALID',
+            '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+            401,
+          )
+        }
+        return { status: 'CONSENTED' }
+      },
+      readStoredChallenge: () => ({
+        token: 'stale-token',
+        idempotencyKey: 'stale-key',
+      }),
+      createIdempotencyKey: () => 'final-retry',
+    },
+  })
+  assert.equal(result.kind, 'completed')
+  assert.deepEqual(tokens, ['stale-token', 'challenge-token-1'])
+  assert.equal(challenges, 1)
+}
+
+{
   let consentPosts = 0
   let statusCalls = 0
   const result = await completeGuardianAfterNice({

@@ -4,6 +4,10 @@ import {
   DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
 } from '@/features/template/model/writing-form-draft.schema'
+import { AGREEMENT_EXPENSE_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/agreement-expense-a4-preview'
+import { AGREEMENT_NOTICE_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/agreement-notice-a4-preview'
+import { AGREEMENT_PORTRAIT_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/agreement-portrait-a4-preview'
+import { PAYMENT_STATEMENT_PRE_CONSENT_A4_PREVIEW_BODY_CLASS_NAME } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 
 /** 관리자 대리 동의 확인 2단 카드를 호스트하는 단락 ID */
@@ -82,6 +86,40 @@ export function getAllAgreementAdminProxyConfirmHiddenIds(): Set<string> {
     for (const id of ids) out.add(id)
   }
   return out
+}
+
+/**
+ * A4 contentOnly에서 대리작성 카드를 끄고 날짜·서명 플랫 스택을 쓸지.
+ * - proxy 플래그가 꺼져 있으면 기존처럼 flatten
+ * - 지급조서·교육진행자 서약·행정정보·초상권은 A4 미리보기에서만 flatten (작성 화면 카드는 유지)
+ */
+const AGREEMENT_A4_FLAT_PROXY_CONFIRM_BODY_CLASS_NAMES = new Set<string>([
+  PAYMENT_STATEMENT_PRE_CONSENT_A4_PREVIEW_BODY_CLASS_NAME,
+  AGREEMENT_EXPENSE_A4_PREVIEW_BODY_CLASS_NAME,
+  AGREEMENT_NOTICE_A4_PREVIEW_BODY_CLASS_NAME,
+  AGREEMENT_PORTRAIT_A4_PREVIEW_BODY_CLASS_NAME,
+])
+
+export function shouldFlattenAgreementAdminProxyConfirmInA4Preview(input: {
+  agreementAdminProxyConfirm?: boolean
+  documentPreviewClassName?: string
+}): boolean {
+  if (input.agreementAdminProxyConfirm !== true) return true
+  const className = input.documentPreviewClassName
+  return className != null && AGREEMENT_A4_FLAT_PROXY_CONFIRM_BODY_CLASS_NAMES.has(className)
+}
+
+/** 제출 문서 미리보기 — 저장 날짜·서명·document 모드가 있으면 실제 값 유지 */
+export function isSubmittedAgreementA4SignaturePreview(input: {
+  agreementSystemDisplayMode?: string
+  agreementSystemNow?: Date
+  agreementSystemSignatureImageSrc?: string
+}): boolean {
+  return (
+    input.agreementSystemDisplayMode === 'document' ||
+    input.agreementSystemNow != null ||
+    Boolean(input.agreementSystemSignatureImageSrc?.trim())
+  )
 }
 
 /**

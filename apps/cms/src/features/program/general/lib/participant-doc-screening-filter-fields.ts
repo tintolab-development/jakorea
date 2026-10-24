@@ -65,6 +65,10 @@ export const DEFAULT_GENERAL_PARTICIPANT_DOC1_FILTERS: GeneralParticipantDoc1Fil
   documentScreeningStatus: GENERAL_VOLUNTEER_FILTER_ALL,
 }
 
+export function buildGeneralParticipantDoc1FilterFields(): FilterFieldConfig[] {
+  return buildGeneralParticipantDoc1FilterRows().flat()
+}
+
 export function buildGeneralParticipantDoc1FilterRows(): FilterFieldConfig[][] {
   return [
     [

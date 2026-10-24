@@ -7,7 +7,7 @@
  */
 
 /**
- * 포털 일정협의 배너 상태
+ * CMS scheduleConfirmStatus를 서버가 파생한 포털 일정협의 배너 상태. institution_checking→ACTION_REQUIRED, institution_confirmed→ADMIN_REVIEW, revision_requested→REVISION_REQUIRED, approval_completed→FINAL_APPROVED, application_rejected→REJECTED이며 임시 배정 전·교사 확인 대상 아님·알 수 없는 값은 NONE입니다. 프론트는 applicationStatus/displayStatus로 대체 추론하지 않습니다.
  */
 export type UjatApplicationSupplementPortalBannerState = typeof UjatApplicationSupplementPortalBannerState[keyof typeof UjatApplicationSupplementPortalBannerState];
 

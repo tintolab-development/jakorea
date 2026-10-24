@@ -20,7 +20,7 @@ const program186090 = {
     volunteerInterviewScheduleInfo: {
       recurringUnavailable: '토요일, 일요일, 공휴일',
       specificUnavailableDates:
-        '2026. 10. 07 (수), 2026. 10. 22 (목), 2026. 10. 20 (화), 2026. 10. 13 (화), 2026. 10. 30 (금), 2026. 11. 19 (목), 2026. 11. 10 (화), 2026. 11. 09 (월)',
+        '2026.10.07(수), 2026.10.22(목), 2026.10.20(화), 2026.10.13(화), 2026.10.30(금), 2026.11.19(목), 2026.11.10(화), 2026.11.09(월)',
       specificUnavailableDateIsos: [
         '2026-10-07',
         '2026-10-22',
@@ -87,7 +87,7 @@ describe('186090 interview assign schedule SSOT', () => {
     const fromRemote = parseGeneralInterviewScheduleFromRemoteSlots([])
     const merged = mergeApplicantAvailabilityIntoSchedule(
       mergeRemoteSlotsIntoProgramSchedule(fromProgram, fromRemote),
-      [{ dateLabel: '2026. 10. 12 (월)', slots: ['10:00 ~ 10:30'] }]
+      [{ dateLabel: '2026.10.12(월)', slots: ['10:00 ~ 10:30'] }]
     )
 
     expect(merged.clickableDateKeys.has('2026-10-12')).toBe(true)
@@ -102,8 +102,8 @@ describe('186090 interview assign schedule SSOT', () => {
   it('limits time slots to the applicant availability on each date', () => {
     const schedule = parseGeneralInterviewScheduleFromProgram(program186090)
     const restricted = mergeApplicantAvailabilityIntoSchedule(schedule, [
-      { dateLabel: '2026. 10. 12 (월)', slots: ['10:00 ~ 10:30'] },
-      { dateLabel: '2026. 10. 21 (수)', slots: ['13:00 ~ 13:30'] },
+      { dateLabel: '2026.10.12(월)', slots: ['10:00 ~ 10:30'] },
+      { dateLabel: '2026.10.21(수)', slots: ['13:00 ~ 13:30'] },
     ])
     const oct12 = getSlotsForDate(restricted, '2026-10-12')
     const oct21 = getSlotsForDate(restricted, '2026-10-21')
@@ -170,7 +170,7 @@ const programBlockingWeekendAndNov20 = {
     },
     volunteerInterviewScheduleInfo: {
       recurringUnavailable: '토요일, 일요일, 공휴일',
-      specificUnavailableDates: '2026. 11. 20 (금)',
+      specificUnavailableDates: '2026.11.20(금)',
       specificUnavailableDateIsos: ['2026-11-20'],
       periodStartDate: '2026-11-01',
       periodEndDate: '2026-11-21',

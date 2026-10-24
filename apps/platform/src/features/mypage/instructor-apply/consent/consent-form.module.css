@@ -85,6 +85,10 @@
   accent-color: var(--color-primary-500);
 }
 
+.radioGroupDocument .radioOption input {
+  accent-color: #85969d;
+}
+
 .idTypeWithInput {
   display: flex;
   width: 100%;

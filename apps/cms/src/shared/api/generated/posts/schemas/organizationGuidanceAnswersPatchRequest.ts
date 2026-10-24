@@ -8,7 +8,7 @@
 import type { OrganizationGuidanceAnswersPatchRequestAnswers } from './organizationGuidanceAnswersPatchRequestAnswers';
 
 /**
- * 기관 신청 안내·성범죄 조회 단락의 부분 갱신 요청. answers에는 현재 프로그램 양식의 안내 단락과 성범죄 단락만 넣을 수 있습니다.
+ * 기관 신청 답변 부분 갱신 요청. 기본은 안내·성범죄 단락만 허용합니다. UJAT ORGANIZATION이고 supplement.ujat.portalBannerState가 ACTION_REQUIRED 또는 REVISION_REQUIRED이면 basic-info·grade-application-info·grade-class-time·preferred-education-schedule도 함께 보낼 수 있습니다. ADMIN_REVIEW·FINAL_APPROVED·REJECTED이거나 assignmentLocked=true이면 거부합니다. 성공 시(임시배정 확인 창) 일정협의는 관리자 검토로 전이됩니다. 신청 당시 희망일 answers는 임시배정 슬롯으로 덮지 않습니다.
  */
 export interface OrganizationGuidanceAnswersPatchRequest {
   answers: OrganizationGuidanceAnswersPatchRequestAnswers;

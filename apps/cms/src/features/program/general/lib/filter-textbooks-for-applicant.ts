@@ -3,12 +3,16 @@ import { TEXTBOOK_EDUCATION_TARGETS } from '@/features/textbook/model/textbook-e
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import { listTextbooksFromStore } from '@/features/textbook/api/textbook-service'
 import {
+  normalizeEducationTargetLabel,
+  parseEducationTargetLabels,
   resolveSelectedGradeLabels,
   toEducationStageKey,
 } from '@/features/textbook/lib/textbook-education-stages'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
-import { normalizeTargetLevelValue } from '@/features/program/shared/lib/program-detail-info-constants'
-import { normalizeEducationTargetLabel } from '@/features/textbook/lib/textbook-education-stages'
+import {
+  normalizeProgramBusinessAreaValue,
+  normalizeTargetLevelValue,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import type { Program, TargetLevel } from '@/types/domain'
 
 const TARGET_LEVEL_TO_EDUCATION_TARGET: Partial<Record<TargetLevel, TextbookEducationTarget>> = {
@@ -61,6 +65,10 @@ export function textbookMatchesProgramEducationTargets(
   allowed: readonly TextbookEducationTarget[]
 ): boolean {
   if (allowed.length === 0) return true
+  const targets = parseEducationTargetLabels(educationTarget ?? '')
+  if (targets.length > 0) {
+    return targets.some(target => allowed.includes(target))
+  }
   const normalized = normalizeToTextbookEducationTarget(educationTarget)
   return normalized != null && allowed.includes(normalized)
 }
@@ -130,9 +138,12 @@ export function filterTextbooksForApplicant(
   if (!grade) return []
 
   const source = catalog ?? listTextbooksFromStore()
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea)
   const filtered = source.filter(row => {
     if (!catalog && row.useStatus !== 'USED') return false
-    if (program.businessArea && row.businessArea !== program.businessArea) return false
+    if (businessArea && normalizeProgramBusinessAreaValue(row.businessArea) !== businessArea) {
+      return false
+    }
     if (!textbookMatchesProgramEducationTargets(row.educationTarget, educationTargets)) {
       return false
     }
@@ -153,14 +164,14 @@ export function filterTextbooksForIndividualApplicant(
   educationGrade: string,
   catalog?: TextbookRow[]
 ): TextbookRow[] {
-  const businessArea = program.businessArea?.trim()
+  const businessArea = normalizeProgramBusinessAreaValue(program.businessArea)
   const grade = educationGrade.trim()
   if (!businessArea || !grade) return []
 
   const source = catalog ?? listTextbooksFromStore()
   const filtered = source.filter(row => {
     if (!catalog && row.useStatus !== 'USED') return false
-    if (row.businessArea !== businessArea) return false
+    if (normalizeProgramBusinessAreaValue(row.businessArea) !== businessArea) return false
     return textbookGradeIncludesApplicantGrade(row, grade)
   })
 

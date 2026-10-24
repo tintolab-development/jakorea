@@ -36,6 +36,7 @@ export function ProgramApplicationFormIndividualScheduleParagraph({
     <ProgramApplicationFormInstitutionFixedScheduleParagraph
       readOnlyPreview={readOnlyPreview}
       programBridge={bridge}
+      overlayKey="application.individual.fixedScheduleSelected"
     />
   )
 }

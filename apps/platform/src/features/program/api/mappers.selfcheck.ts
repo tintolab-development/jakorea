@@ -1284,6 +1284,33 @@ const instructorFocusIgnoresOrgFlag = mapPortalProgramDetail(
 )
 assert.equal(instructorFocusIgnoresOrgFlag?.preEducationNoticeRequired, undefined)
 
+const organizationFocusAudience = mapPortalProgramDetail(
+  {
+    programId: 168008,
+    title: '프로그램 제목',
+    programType: 'GENERAL_ORGANIZATION',
+    applicationTargetMode: 'INDIVIDUAL',
+    recruitments: [
+      {
+        recruitmentId: 168271,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'ORGANIZATION',
+        applicationTypes: ['ORGANIZATION'],
+        preEducationNoticeRequired: true,
+        advanceGuidanceRequired: true,
+      },
+      {
+        recruitmentId: 168272,
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'INDIVIDUAL',
+        applicationTypes: ['INDIVIDUAL'],
+      },
+    ],
+  },
+  { applicationTypes: ['ORGANIZATION'], recruitmentIds: [168271] },
+)
+assert.equal(organizationFocusAudience?.programAudience, 'organization')
+
 const legacyOrganizationFlag = mapPortalProgramDetail({
   programId: 168007,
   title: '프로그램 제목',
@@ -1299,6 +1326,57 @@ const legacyOrganizationFlag = mapPortalProgramDetail({
   ],
 })
 assert.equal(legacyOrganizationFlag?.preEducationNoticeRequired, undefined)
+
+const advanceOnlyTrue = mapPortalProgramDetail({
+  programId: 168008,
+  title: '프로그램 제목',
+  programType: 'GENERAL_ORGANIZATION',
+  applicationTargetMode: 'ORGANIZATION',
+  recruitments: [
+    {
+      recruitmentId: 168281,
+      recruitmentType: 'PARTICIPANT',
+      targetType: 'ORGANIZATION',
+      applicationTypes: ['ORGANIZATION'],
+      advanceGuidanceRequired: true,
+    },
+  ],
+})
+assert.equal(advanceOnlyTrue?.preEducationNoticeRequired, true)
+assert.equal(advanceOnlyTrue?.advanceGuidanceRequired, true)
+
+const advanceTrueWinsOverPreFalse = mapPortalProgramDetail({
+  programId: 168009,
+  title: '프로그램 제목',
+  programType: 'GENERAL_ORGANIZATION',
+  applicationTargetMode: 'ORGANIZATION',
+  recruitments: [
+    {
+      recruitmentId: 168282,
+      recruitmentType: 'PARTICIPANT',
+      targetType: 'ORGANIZATION',
+      applicationTypes: ['ORGANIZATION'],
+      preEducationNoticeRequired: false,
+      advanceGuidanceRequired: true,
+    },
+  ],
+})
+assert.equal(advanceTrueWinsOverPreFalse?.preEducationNoticeRequired, true)
+
+const orgRowWithoutRecruitmentType = mapPortalProgramDetail({
+  programId: 168010,
+  title: '프로그램 제목',
+  programType: 'GENERAL_ORGANIZATION',
+  applicationTargetMode: 'ORGANIZATION',
+  recruitments: [
+    {
+      recruitmentId: 168283,
+      applicationTypes: ['ORGANIZATION'],
+      advanceGuidanceRequired: true,
+    },
+  ],
+})
+assert.equal(orgRowWithoutRecruitmentType?.preEducationNoticeRequired, true)
 assert.equal(rowScopedEmpty.summary, '참여자 프로그램 설명')
 assert.equal(
   rowScopedEmpty.extraSections.some(section => section.title === '프로그램 설명'),

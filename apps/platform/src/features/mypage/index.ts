@@ -91,6 +91,7 @@ export {
   UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveEducationScheduleTabLabel,
   resolveVolunteerActivityDetailCase,
+  shouldShowSettlementTab,
   DEFAULT_EDUCATION_APPLICATION_LIST_PARAMS,
   buildEducationApplicationListPath,
   readEducationApplicationListParams,
@@ -139,6 +140,7 @@ export { getMypageLnbItems } from './lib/lnb-config'
 export {
   VolunteerAssignmentPanel,
   VolunteerNoticePanel,
+  UjatVolunteerSchedulePanel,
   buildVolunteerApplicationListPath,
   resolveVolunteerListBackPath,
 } from './volunteer'

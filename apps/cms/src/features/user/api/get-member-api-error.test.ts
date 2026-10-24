@@ -87,6 +87,8 @@ describe('getMemberApiErrorMessage', () => {
         },
       },
     }
-    expect(getMemberApiErrorMessage(error, 'fallback')).toBe('현재 비밀번호를 확인해 주세요.')
+    expect(getMemberApiErrorMessage(error, 'fallback')).toBe(
+      '현재 비밀번호가 일치하지 않습니다.\n비밀번호를 확인 후 다시 시도해 주세요.'
+    )
   })
 })

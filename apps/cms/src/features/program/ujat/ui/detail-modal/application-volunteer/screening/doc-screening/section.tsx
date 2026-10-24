@@ -9,7 +9,7 @@ import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
-import { buildUjatVolunteerDocScreeningFilterRows } from './filter-fields'
+import { buildUjatVolunteerDocScreeningFilterFields } from './filter-fields'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { computeDocScreeningTableScrollX } from './columns'
 import { useUjatVolunteerDocScreening } from './use-list'
@@ -37,8 +37,8 @@ export function DocScreeningSection({
 }: DocScreeningSectionProps) {
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const { labels: educationRegionLabels } = useUjatEducationRegions()
-  const filterRows = useMemo(
-    () => buildUjatVolunteerDocScreeningFilterRows(),
+  const filterFields = useMemo(
+    () => buildUjatVolunteerDocScreeningFilterFields(),
     [educationRegionLabels]
   )
 
@@ -147,8 +147,7 @@ export function DocScreeningSection({
       <div className="ujat-volunteer-doc-screening applicant-details">
         <FilterTableLayout
           bordered={false}
-          className="ujat-volunteer-doc-screening__filter-layout"
-          rows={filterRows}
+          fields={filterFields}
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}

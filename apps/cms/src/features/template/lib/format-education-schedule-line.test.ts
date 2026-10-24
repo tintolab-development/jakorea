@@ -5,12 +5,19 @@ import {
   educationScheduleLinesFromSelectionRangeApply,
   countUniqueEducationScheduleCalendarDays,
   educationScheduleAppliedSurfaceRange,
+  EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE,
+  educationScheduleLineSerializationIssue,
   flattenGroupTimeSlotsByDetail,
+  isCanonicalServerEducationScheduleLine,
   isEducationScheduleLineBeforeSeoulToday,
+  canRemoveEducationSchedulePreviewLine,
   isEducationScheduleLineUpcoming,
+  parseEducationScheduleLineForCms,
   parseEducationScheduleLineToRange,
   mergeUniqueEducationScheduleLines,
   rebuildEducationScheduleLinesFromGroupTimes,
+  serializeEducationScheduleLineForServer,
+  serializeEducationScheduleLinesForServer,
   shiftEducationScheduleLineToDate,
 } from '@/features/template/lib/format-education-schedule-line'
 
@@ -24,8 +31,8 @@ describe('buildEducationScheduleLinesFromDateAndGroupTimes', () => {
         { startTime: '13:00', endTime: '15:00' },
       ])
     ).toEqual([
-      '26년 4월 20일(월) 9:00 ~ 12:00',
-      '26년 4월 20일(월) 13:00 ~ 15:00',
+      '2026.04.20(월) 09:00 ~ 12:00',
+      '2026.04.20(월) 13:00 ~ 15:00',
     ])
   })
 
@@ -36,16 +43,16 @@ describe('buildEducationScheduleLinesFromDateAndGroupTimes', () => {
         { startTime: '13:00', endTime: '' },
         null,
       ])
-    ).toEqual(['26년 4월 20일(월) 9:00 ~ 12:00'])
+    ).toEqual(['2026.04.20(월) 09:00 ~ 12:00'])
   })
 
   it('슬롯이 모두 비면 날짜만 한 줄 추가한다', () => {
     expect(buildEducationScheduleLinesFromDateAndGroupTimes(april20, [])).toEqual([
-      '26년 4월 20일(월)',
+      '2026.04.20(월)',
     ])
     expect(
       buildEducationScheduleLinesFromDateAndGroupTimes(april20, [{ startTime: '', endTime: '' }])
-    ).toEqual(['26년 4월 20일(월)'])
+    ).toEqual(['2026.04.20(월)'])
   })
 })
 
@@ -61,7 +68,7 @@ describe('educationScheduleLinesFromSelectionRangeApply', () => {
         groupTimeSlots: [{ startTime: '09:00', endTime: '12:00' }],
         dateOnlyPeriodRange: false,
       })
-    ).toEqual(['26년 11월 1일(일) ~ 26년 11월 5일(목)'])
+    ).toEqual(['2026.11.01(일) ~ 2026.11.05(목)'])
   })
 
   it('개인 일정형 단일·날짜 지정 — range apply도 그룹 시간으로 예정일을 만든다', () => {
@@ -78,8 +85,8 @@ describe('educationScheduleLinesFromSelectionRangeApply', () => {
         dateOnlyPeriodRange: false,
       })
     ).toEqual([
-      '26년 11월 10일(화) 13:30 ~ 15:30',
-      '26년 11월 10일(화) 9:30 ~ 11:30',
+      '2026.11.10(화) 13:30 ~ 15:30',
+      '2026.11.10(화) 09:30 ~ 11:30',
     ])
   })
 })
@@ -95,10 +102,10 @@ describe('rebuildEducationScheduleLinesFromGroupTimes', () => {
         ]
       )
     ).toEqual([
-      '26년 4월 20일(월) 9:00 ~ 12:00',
-      '26년 4월 20일(월) 13:00 ~ 15:00',
-      '26년 4월 21일(화) 9:00 ~ 12:00',
-      '26년 4월 21일(화) 13:00 ~ 15:00',
+      '2026.04.20(월) 09:00 ~ 12:00',
+      '2026.04.20(월) 13:00 ~ 15:00',
+      '2026.04.21(화) 09:00 ~ 12:00',
+      '2026.04.21(화) 13:00 ~ 15:00',
     ])
   })
 
@@ -108,7 +115,7 @@ describe('rebuildEducationScheduleLinesFromGroupTimes', () => {
         ['26년 4월 20일(월) 9:00 ~ 12:00', '26년 4월 20일(월) 13:00 ~ 15:00'],
         [{ startTime: '10:00', endTime: '11:00' }]
       )
-    ).toEqual(['26년 4월 20일(월) 10:00 ~ 11:00'])
+    ).toEqual(['2026.04.20(월) 10:00 ~ 11:00'])
   })
 })
 
@@ -146,6 +153,17 @@ describe('parseEducationScheduleLineToRange', () => {
     expect(range?.[0].format('YYYY-MM-DD HH:mm')).toBe('2026-04-20 00:00')
     expect(range?.[1].format('YYYY-MM-DD HH:mm')).toBe('2026-04-20 00:00')
     expect(educationScheduleAppliedSurfaceRange(range)).toBeNull()
+  })
+
+  it('QA-126 compact 표기도 복원한다', () => {
+    const sameDay = parseEducationScheduleLineToRange('2026.04.20(월) 09:30 ~ 12:20')
+    expect(sameDay?.[0].format('YYYY-MM-DD HH:mm')).toBe('2026-04-20 09:30')
+    expect(sameDay?.[1].format('YYYY-MM-DD HH:mm')).toBe('2026-04-20 12:20')
+    const crossDay = parseEducationScheduleLineToRange(
+      '2026.04.20(월) 09:30 ~ 2026.04.21(화) 12:20'
+    )
+    expect(crossDay?.[0].format('YYYY-MM-DD HH:mm')).toBe('2026-04-20 09:30')
+    expect(crossDay?.[1].format('YYYY-MM-DD HH:mm')).toBe('2026-04-21 12:20')
   })
 })
 
@@ -199,7 +217,7 @@ describe('shiftEducationScheduleLineToDate', () => {
   it('날짜만 옮기고 시각은 남긴다', () => {
     expect(
       shiftEducationScheduleLineToDate('26년 4월 20일(월) 9:30 ~ 12:20', dayjs('2026-05-01'))
-    ).toBe('26년 5월 1일(금) 9:30 ~ 12:20')
+    ).toBe('2026.05.01(금) 09:30 ~ 12:20')
   })
 })
 
@@ -241,5 +259,127 @@ describe('isEducationScheduleLineUpcoming', () => {
     expect(
       isEducationScheduleLineUpcoming('26년 9월 20일(일) ~ 26년 10월 12일(월)', now)
     ).toBe(false)
+  })
+})
+
+describe('canRemoveEducationSchedulePreviewLine', () => {
+  const now = dayjs('2026-10-23T16:00:00')
+
+  it('이미 시작한 예정일은 삭제할 수 없다', () => {
+    expect(
+      canRemoveEducationSchedulePreviewLine('2026.10.21(수) 13:30 ~ 15:30', now)
+    ).toBe(false)
+    expect(canRemoveEducationSchedulePreviewLine('26년 10월 21일(수)', now)).toBe(false)
+  })
+
+  it('아직 시작하지 않은 예정일은 삭제할 수 있다', () => {
+    expect(
+      canRemoveEducationSchedulePreviewLine('2026.11.04(수) 13:30 ~ 15:30', now)
+    ).toBe(true)
+  })
+
+  it('등록 위저드는 지난 일정도 삭제할 수 있다', () => {
+    expect(
+      canRemoveEducationSchedulePreviewLine('2026.10.21(수) 13:30 ~ 15:30', now, {
+        lockStartedLines: false,
+      })
+    ).toBe(true)
+    expect(
+      canRemoveEducationSchedulePreviewLine('26년 10월 23일(금) 13:30 ~ 15:30', now, {
+        lockStartedLines: false,
+      })
+    ).toBe(true)
+  })
+})
+
+describe('serializeEducationScheduleLineForServer', () => {
+  it('CMS 표시를 서버 parseSlot·parsePeriod 형식으로 바꾼다', () => {
+    expect(serializeEducationScheduleLineForServer('2026.11.06(금) 10:00 ~ 12:00')).toBe(
+      '26년 11월 6일(금) 10:00 ~ 12:00'
+    )
+    expect(serializeEducationScheduleLineForServer('2026.11.06(금)')).toBe('26년 11월 6일(금)')
+    expect(serializeEducationScheduleLineForServer('2026.11.06(금) ~ 2026.11.12(목)')).toBe(
+      '26년 11월 6일(금) ~ 26년 11월 12일(목)'
+    )
+  })
+
+  it('이미 서버 형식이면 다시 고치지 않고, 날짜만인 줄에 시간을 붙이지 않는다', () => {
+    const server = '26년 11월 6일(금) 10:00 ~ 12:00'
+    expect(serializeEducationScheduleLineForServer(server)).toBe(server)
+    expect(serializeEducationScheduleLineForServer(`  ${server}  `)).toBe(server)
+    expect(isCanonicalServerEducationScheduleLine(server)).toBe(true)
+    expect(serializeEducationScheduleLineForServer('2026.11.06(금)')).not.toContain('00:00')
+  })
+
+  it('한 자리 월·일·시간과 자정·월말·연말·윤년을 달력 요일로 보존한다', () => {
+    expect(serializeEducationScheduleLineForServer('2026.1.5(월) 9:00 ~ 12:00')).toBe(
+      '26년 1월 5일(월) 9:00 ~ 12:00'
+    )
+    expect(serializeEducationScheduleLineForServer('2026.11.06(금) 00:00 ~ 00:00')).toBe(
+      '26년 11월 6일(금) 00:00 ~ 00:00'
+    )
+    expect(serializeEducationScheduleLineForServer('2026.11.30(월)')).toBe('26년 11월 30일(월)')
+    expect(serializeEducationScheduleLineForServer('2026.12.31(목)')).toBe('26년 12월 31일(목)')
+    expect(serializeEducationScheduleLineForServer('2024.02.29(목) 10:00 ~ 12:00')).toBe(
+      '24년 2월 29일(목) 10:00 ~ 12:00'
+    )
+    expect(serializeEducationScheduleLineForServer('2026.11.06(월) 10:00 ~ 12:00')).toBe(
+      '26년 11월 6일(금) 10:00 ~ 12:00'
+    )
+  })
+
+  it('잘못된 날짜·역전 시간·역전 기간·윤년이 아닌 2월 29일은 조용히 바꾸지 않는다', () => {
+    const invalid = [
+      '2026.02.29(일)',
+      '2026.11.06(금) 12:00 ~ 10:00',
+      '2026.11.12(목) ~ 2026.11.06(금)',
+      '26년 11월 6일(월) 10:00 ~ 12:00',
+    ]
+    for (const line of invalid) {
+      expect(serializeEducationScheduleLineForServer(line)).toBe(line)
+      expect(educationScheduleLineSerializationIssue(line)).toBe(
+        EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE
+      )
+    }
+  })
+
+  it('자유입력·요일 없는 기간·ISO 시각은 그대로 둔다', () => {
+    for (const line of ['협의 후 확정', '2026.03.01 ~ 2026.12.31', '2026-06-10 10:00']) {
+      expect(serializeEducationScheduleLineForServer(line)).toBe(line)
+      expect(educationScheduleLineSerializationIssue(line)).toBeNull()
+    }
+  })
+
+  it('여러 줄의 순서와 길이를 유지하고 직렬화는 멱등이다', () => {
+    const lines = [
+      '2026.11.06(금) 10:00 ~ 12:00',
+      '2026.11.06(금) 13:00 ~ 15:00',
+      '협의 후 확정',
+      '',
+    ]
+    const once = serializeEducationScheduleLinesForServer(lines)
+    expect(once).toEqual([
+      '26년 11월 6일(금) 10:00 ~ 12:00',
+      '26년 11월 6일(금) 13:00 ~ 15:00',
+      '협의 후 확정',
+      '',
+    ])
+    expect(serializeEducationScheduleLinesForServer(once)).toEqual(once)
+  })
+
+  it('조회 파싱은 서버 형식을 CMS 표시로 되돌리고 반복해도 같다', () => {
+    const cms = '2026.11.06(금) 10:00 ~ 12:00'
+    const server = serializeEducationScheduleLineForServer(cms)
+    expect(parseEducationScheduleLineForCms(server)).toBe(cms)
+    expect(parseEducationScheduleLineForCms(cms)).toBe(cms)
+    expect(parseEducationScheduleLineForCms(parseEducationScheduleLineForCms(server))).toBe(cms)
+    expect(serializeEducationScheduleLineForServer(parseEducationScheduleLineForCms(server))).toBe(
+      server
+    )
+    expect(parseEducationScheduleLineForCms('26년 11월 6일(금)')).toBe('2026.11.06(금)')
+    expect(parseEducationScheduleLineForCms('26년 11월 6일(금) ~ 26년 11월 12일(목)')).toBe(
+      '2026.11.06(금) ~ 2026.11.12(목)'
+    )
+    expect(parseEducationScheduleLineForCms('협의 후 확정')).toBe('협의 후 확정')
   })
 })

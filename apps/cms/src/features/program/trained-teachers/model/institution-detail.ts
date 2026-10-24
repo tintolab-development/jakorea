@@ -4,6 +4,7 @@
  */
 
 import dayjs from 'dayjs'
+import { formatDateDot } from '@/shared/utils/date'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import type {
@@ -73,10 +74,12 @@ export function formatTrainedTeachersEducationJournalSubmittedDate(
   for (const format of SUBMITTED_AT_PARSE_FORMATS) {
     const parsed = dayjs(trimmed, format, true)
     if (parsed.isValid()) {
-      return parsed.format('YYYY. MM. DD')
+      const label = formatDateDot(parsed)
+      return label === '-' ? trimmed : label
     }
   }
 
   const fallback = dayjs(trimmed)
-  return fallback.isValid() ? fallback.format('YYYY. MM. DD') : trimmed
+  const label = formatDateDot(fallback)
+  return label === '-' ? trimmed : label
 }

@@ -94,9 +94,7 @@ export class SponsorManagementPage {
 
   async expectDefaultKindCorporate() {
     await expect(this.page).toHaveURL(/sp_kind=corporate/, { timeout: 15_000 })
-    await expect(
-      filterField(this.page, '구분').getByRole('radio', { name: '기업' })
-    ).toBeChecked()
+    await expect(filterField(this.page, '구분').getByRole('radio', { name: '기업' })).toBeChecked()
   }
 
   async selectKind(kind: '기업' | '재단') {
@@ -260,11 +258,12 @@ export class SponsorManagementPage {
   }
 
   async openLeadTypeDropdown() {
-    const leadRow = tableRows(this.page)
-      .filter({ hasText: '주 담당자' })
-      .first()
+    const leadRow = tableRows(this.page).filter({ hasText: '주 담당자' }).first()
     await expect(leadRow).toBeVisible({ timeout: 10_000 })
-    await leadRow.locator('.status-dropdown-cell__status-trigger, .editable-status-badge').first().click()
+    await leadRow
+      .locator('.status-dropdown-cell__status-trigger, .editable-status-badge')
+      .first()
+      .click()
   }
 
   async registerSponsor() {
@@ -288,7 +287,7 @@ export class SponsorManagementPage {
       throw new Error(`후원사 등록 API 실패: HTTP ${createResponse.status()} ${body.slice(0, 400)}`)
     }
 
-    const done = this.page.getByRole('dialog').filter({ hasText: '후원사 등록 완료' })
+    const done = this.page.getByRole('dialog').filter({ hasText: '등록 완료' })
     await expect(done).toBeVisible({ timeout: 15_000 })
     await done.getByRole('button', { name: '확인' }).click()
     await expect(done).toBeHidden({ timeout: 10_000 })
@@ -323,7 +322,7 @@ export class SponsorManagementPage {
       res => isAdminMutation(res, 'PATCH', /\/api\/admin\/sponsors\/[^/]+\/?$/),
       { timeout: 60_000 }
     )
-    await dialog.getByRole('button', { name: '수정 완료' }).click()
+    await dialog.getByRole('button', { name: '정보 수정' }).click()
     const patch = await patchPromise
     if (!patch.ok()) {
       const body = await patch.text().catch(() => '')
@@ -340,11 +339,16 @@ export class SponsorManagementPage {
     await this.search()
     const row = this.dataRows().filter({ hasText: name }).first()
     await expect(row).toBeVisible({ timeout: 15_000 })
-    await row.locator('.status-dropdown-cell__status-trigger, .editable-status-badge').first().click()
+    await row
+      .locator('.status-dropdown-cell__status-trigger, .editable-status-badge')
+      .first()
+      .click()
     const option = this.page.getByRole('menuitem', { name: nextLabel }).or(
-      this.page.locator('.ant-dropdown-menu-item, .status-dropdown-cell__dropdown').getByText(nextLabel, {
-        exact: true,
-      })
+      this.page
+        .locator('.ant-dropdown-menu-item, .status-dropdown-cell__dropdown')
+        .getByText(nextLabel, {
+          exact: true,
+        })
     )
     const statusPromise = this.page.waitForResponse(
       res =>
@@ -394,12 +398,15 @@ export class SponsorManagementPage {
     await this.fillListName(name)
     await this.search()
     await selectRowCheckbox(this.page, name)
-    await this.page.getByRole('button', { name: '후원사 삭제' }).click()
+    await this.page.getByRole('button', { name: '삭제' }).click()
   }
 
   async confirmListDeleteWithoutTyping() {
-    const guide = this.page.getByRole('dialog').filter({ hasText: /후원사 삭제/ }).last()
-    await guide.getByRole('button', { name: '후원사 삭제' }).click()
+    const guide = this.page
+      .getByRole('dialog')
+      .filter({ hasText: /후원사 삭제/ })
+      .last()
+    await guide.getByRole('button', { name: '삭제' }).click()
   }
 
   async expectDeleteBlocked() {
@@ -454,13 +461,17 @@ export class SponsorManagementPage {
   async promoteContactToLead(name: string) {
     const row = tableRows(this.page).filter({ hasText: name }).first()
     await expect(row).toBeVisible({ timeout: 10_000 })
-    await row.locator('.status-dropdown-cell__status-trigger, .editable-status-badge').first().click()
-    const option = this.page.getByRole('menuitem', { name: '주 담당자' }).or(
-      this.page.locator('.ant-dropdown-menu-item, .status-dropdown-cell__dropdown').getByText(
-        '주 담당자',
-        { exact: true }
+    await row
+      .locator('.status-dropdown-cell__status-trigger, .editable-status-badge')
+      .first()
+      .click()
+    const option = this.page
+      .getByRole('menuitem', { name: '주 담당자' })
+      .or(
+        this.page
+          .locator('.ant-dropdown-menu-item, .status-dropdown-cell__dropdown')
+          .getByText('주 담당자', { exact: true })
       )
-    )
     const patchPromise = this.page.waitForResponse(
       res => isAdminMutation(res, 'PATCH', /\/api\/admin\/sponsors\/contacts\/[^/]+\/?$/),
       { timeout: 60_000 }
@@ -471,7 +482,9 @@ export class SponsorManagementPage {
       const body = await patch.text().catch(() => '')
       throw new Error(`담당자 유형 변경 API 실패: HTTP ${patch.status()} ${body.slice(0, 400)}`)
     }
-    await expect(row.getByText('주 담당자', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+    await expect(row.getByText('주 담당자', { exact: true }).first()).toBeVisible({
+      timeout: 15_000,
+    })
   }
 
   async deleteContact(name: string) {

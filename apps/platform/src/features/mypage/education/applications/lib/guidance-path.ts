@@ -16,6 +16,18 @@ export function educationUjatProgressConfirmPath(
   return `${educationApplicationDetailPath(applicationId, applicationType)}/progress/confirm`
 }
 
+/**
+ * UJAT 일정협의 배너 클릭 목적지.
+ * ACTION_REQUIRED · REVISION_REQUIRED 모두 1/2(`progress/confirm`)로 보낸 뒤
+ * 제출 시 2/2(`guidance/write`)로 이어진다.
+ */
+export function educationUjatScheduleBannerPath(
+  applicationId: string,
+  applicationType?: string,
+): string {
+  return educationUjatProgressConfirmPath(applicationId, applicationType)
+}
+
 /** 기관 신청 안내(4항목·성범죄) 수정 후 복귀 — 신청 내용 탭 */
 export function educationInstitutionGuidanceApplicationTabPath(
   applicationId: string,

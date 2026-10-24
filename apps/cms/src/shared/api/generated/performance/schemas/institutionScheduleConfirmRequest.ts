@@ -7,6 +7,8 @@
  */
 
 export interface InstitutionScheduleConfirmRequest {
+  /** 포털에서 조회한 현재 임시배정 revision. 서버 현재값과 다르면 STALE_REVISION(409)입니다. */
+  assignmentRevision: number;
   /**
      * @minLength 0
      * @maxLength 4000

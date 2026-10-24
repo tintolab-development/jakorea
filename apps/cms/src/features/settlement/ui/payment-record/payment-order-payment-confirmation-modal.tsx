@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react'
 import { type Dayjs } from 'dayjs'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -12,10 +13,8 @@ import type { PaymentOrderProgramCalculationStatement } from '@/features/settlem
 import { defaultLectureFeePaymentScheduledDate } from '@/features/settlement/lib/third-tuesday-of-month'
 import './payment-order-payment-confirmation-modal.css'
 
-const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 function formatKoreanDateWithWeekday(value: Dayjs): string {
-  return `${value.format('YYYY. MM. DD')}(${KO_DOW[value.day()]})`
+  return formatDateDotWithWeekday(value)
 }
 
 export interface PaymentOrderPaymentConfirmationModalProps {

@@ -47,19 +47,19 @@ describe('buildUjatAssignmentSessionsFromResponse', () => {
 
     expect(session.id).toBe('701')
     expect(session.isoDate).toBe('2026-10-17')
-    expect(session.planSubmissionPeriodLabel).toBe('26. 10. 10 ~ 26. 10. 16')
-    expect(session.logSubmissionPeriodLabel).toBe('26. 10. 17 ~ 26. 10. 24')
+    expect(session.planSubmissionPeriodLabel).toBe('2026.10.10 ~ 2026.10.16')
+    expect(session.logSubmissionPeriodLabel).toBe('2026.10.17 ~ 2026.10.24')
 
     const [row] = session.volunteers
     expect(row.name).toBe('김봉사')
     expect(row.plan).toEqual({
       status: 'submitted',
-      submittedDateLabel: '26. 10. 15',
-      feedbackDeliveredDateLabel: '26. 10. 16',
+      submittedDateLabel: '2026.10.15',
+      feedbackDeliveredDateLabel: '2026.10.16',
       formResponseId: 91001,
     })
     expect(row.log).toEqual({ status: 'not_submitted' })
-    expect(formatAssignmentRemarks(row)).toBe('피드백 전달 완료 (26. 10. 16)')
+    expect(formatAssignmentRemarks(row)).toBe('피드백 전달 완료 (2026.10.16)')
   })
 
   it('활동 포기자는 그 날 진행 이력이 있을 때만 노출', () => {
@@ -112,7 +112,7 @@ describe('buildUjatAssignmentSessionsFromResponse', () => {
       },
     })
     expect(formatAssignmentRemarks(session.volunteers[0])).toBe(
-      '교육 계획서 수정 제출 (26. 04. 01)\n교육일지 기한 미준수 (26. 04. 12)'
+      '교육 계획서 수정 제출 (2026.04.01)\n교육일지 기한 미준수 (2026.04.12)'
     )
   })
 
@@ -125,6 +125,6 @@ describe('buildUjatAssignmentSessionsFromResponse', () => {
 
 describe('formatAssignmentShortDate', () => {
   it('UTC 시각은 Asia/Seoul 날짜로', () => {
-    expect(formatAssignmentShortDate('2026-10-15T16:00:00Z')).toBe('26. 10. 16')
+    expect(formatAssignmentShortDate('2026-10-15T16:00:00Z')).toBe('2026.10.16')
   })
 })

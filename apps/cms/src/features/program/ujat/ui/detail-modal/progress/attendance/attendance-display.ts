@@ -1,4 +1,5 @@
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import {
   UJAT_ATTENDANCE_STATUS_LABEL,
   type UjatAttendanceStatus,
@@ -6,13 +7,8 @@ import {
 } from './types'
 
 export function formatAttendanceDateLabel(isoDate: string): string {
-  const d = new Date(`${isoDate}T12:00:00`)
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토'] as const
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const weekday = weekdays[d.getDay()]
-  return `${y}. ${m}. ${day}(${weekday})`
+  const label = formatDateDotWithWeekday(`${isoDate}T12:00:00`)
+  return label === '-' ? isoDate : label
 }
 
 export function formatAttendanceRemarks(row: Pick<

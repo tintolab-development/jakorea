@@ -17,7 +17,7 @@ export const DEV_LOGIN_QA_ACCOUNTS: readonly DevLoginQaAccount[] = [
     key: 'master',
     label: '마스터',
     email: 'admin1@jakorea.org',
-    password: 'test1234!',
+    password: 'admin1234!',
     apiReady: true,
   },
   {

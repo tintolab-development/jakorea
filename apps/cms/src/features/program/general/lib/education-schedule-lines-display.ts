@@ -1,6 +1,6 @@
 /**
  * 일반 프로그램 상세 — 교육 진행 예정일 조회.
- * 등록 화면과 같은 `26년 M월 D일(요일) H:mm ~ H:mm` 표기를 맞춘다.
+ * 등록 화면과 같은 `YYYY.MM.DD(요일) HH:mm ~ HH:mm` 표기를 맞춘다.
  */
 
 import {
@@ -30,7 +30,7 @@ function normalizeEducationScheduleLines(lines: unknown): string[] {
     .filter(Boolean)
 }
 
-/** 등록 예정일 한 줄 표기로 정규화 (`26년 9월 16일(수) 9:22 ~ 10:22`) */
+/** 등록 예정일 한 줄 표기로 정규화 (`2026.09.16(수) 09:22 ~ 10:22`) */
 export function normalizeEducationScheduleLineForView(line: string): string {
   const trimmed = line.trim()
   if (!trimmed) return ''

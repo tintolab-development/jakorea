@@ -17,7 +17,7 @@ const EDUCATION_TARGET_LABEL: Record<SponsorProgramHistoryRow['educationTarget']
 function renderParticipantType(_: unknown, row: SponsorProgramHistoryRow): string {
   if (row.participantType === 'school') return '학교/기관'
   if (row.participantType === 'volunteer') return '봉사자'
-  return '개인 학습자'
+  return '개인'
 }
 
 /**

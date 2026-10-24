@@ -126,6 +126,12 @@ export type AdminProgramSponsorAssignmentDto = {
   sponsorName?: string
   sponsorContactId?: string | null
   sponsorContactName?: string | null
+  sponsorContacts?: ReadonlyArray<{
+    sponsorContactId?: string | null
+    sponsorContactName?: string | null
+    sponsorContactPosition?: string | null
+    displayOrder?: number | null
+  }>
   sponsorYear?: number | null
   contributionAmountSnapshot?: number | null
   displayOrder?: number | null

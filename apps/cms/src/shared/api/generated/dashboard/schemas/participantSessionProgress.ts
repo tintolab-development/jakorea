@@ -9,7 +9,7 @@ import type { ParticipantSessionProgressAttendanceStatus } from './participantSe
 import type { ParticipantSessionProgressScheduleStatus } from './participantSessionProgressScheduleStatus';
 
 /**
- * 참여 일정. 기관 참여자는 해당 기관에 실제 배정된 프로그램 일정만 반환한다. 신청 희망 일정은 실제 배정 일정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 기관에 배정되지 않은 프로그램 일정과 미확정 희망 일정은 출석 상세·회차 집계에서 제외한다. null은 반환하지 않는다.
+ * 참여 일정. 기관·개인 참여자 모두 해당 참여자에 실제 배정된 프로그램 일정만 반환한다. 개인(INDIVIDUAL) 배정 SSOT는 GET …/participants/{participantId}/education-scope 의 scheduleIds. 신청 희망 일정은 실제 배정으로 확정된 경우에만 requestedScheduleId로 함께 표시한다. 배정되지 않은 프로그램 일정·미확정 희망 일정은 목록 sessions·출석 상세·회차 집계에서 제외한다. sessions가 없으면 빈 배열. null은 반환하지 않는다.
  */
 export interface ParticipantSessionProgress {
   /**

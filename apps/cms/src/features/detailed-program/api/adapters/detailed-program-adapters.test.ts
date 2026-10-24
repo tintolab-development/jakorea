@@ -26,6 +26,12 @@ describe('detailed-program-adapters', () => {
       createdBy: '관리자',
       inUse: true,
     })
+    expect(row.version).toBeUndefined()
+  })
+
+  it('preserves version from the response and does not default to 1', () => {
+    expect(mapDetailedProgramResponse({ id: 1, nameKo: 'A', version: 3 }).version).toBe(3)
+    expect(mapDetailedProgramResponse({ id: 1, nameKo: 'A' }).version).toBeUndefined()
   })
 
   it('defaults missing inUse to false', () => {
@@ -47,10 +53,11 @@ describe('detailed-program-adapters', () => {
     })
   })
 
-  it('PATCH payload sends only nameKo and useYn', () => {
-    expect(toDetailedProgramPatchRequest({ name: '테스트', active: true })).toEqual({
+  it('PATCH payload sends nameKo, useYn, and version', () => {
+    expect(toDetailedProgramPatchRequest({ name: '테스트', active: true, version: 4 })).toEqual({
       nameKo: '테스트',
       useYn: true,
+      version: 4,
     })
   })
 

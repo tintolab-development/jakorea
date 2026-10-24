@@ -14,7 +14,10 @@ import { useProgramApplicationFormLoadSource } from '@/features/program/general/
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { isTrainedTeachersApplicationFormEditable } from '@/features/program/trained-teachers/lib/application-form-edit-policy'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
-import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
+import {
+  PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
+  PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
+} from '@/shared/lib/program-edit-window-error-message'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
@@ -134,7 +137,7 @@ export function TrainedTeachersApplicationInfoView({
   const handleEditFormClick = () => {
     if (!formEditable) {
       showAlert({
-        title: '안내',
+        title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
         content: PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
       })
       return
@@ -154,7 +157,6 @@ export function TrainedTeachersApplicationInfoView({
             <CmsButton
               variant="secondary"
               size="large"
-              disabled={!formEditable}
               onClick={handleEditFormClick}
             >
               양식 수정

@@ -13,8 +13,16 @@ import { enrichUjatInstitutionDetailFromRemote } from '@/features/program/ujat/a
 import { mapOrganizationApplicationDetailToUjatInstitutionRow } from '@/features/program/ujat/api/applications-adapters'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import { fetchUjatTemporarySchedule } from '@/features/program/ujat/api/temporary-schedule-api'
 import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
+import {
+  UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE,
+  readUjatInstitutionWorkflowInput,
+  resolveUjatInstitutionWorkflow,
+  type UjatInstitutionWorkflowView,
+} from '@/features/program/ujat/lib/ujat-institution-approval-workflow'
 import { getUjatInstitutionApplicationDetail } from '@/features/program/ujat/model/ujat-institution-application'
+import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import type { UjatInstitutionApplicationRow } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
 
 type CachedUjatOrganizationApplicationsPage = {
@@ -32,6 +40,21 @@ export function useUjatInstitutionApplicationDetail(input: {
   const detailQuery = useQuery({
     queryKey: ujatQueryKeys.organizationDetail(programId ?? '', institutionId),
     queryFn: () => fetchOrganizationApplicationDetailRemote(institutionId),
+    enabled: remoteEnabled && Boolean(institutionId),
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const temporaryScheduleQuery = useQuery({
+    queryKey: ujatQueryKeys.organizationTemporarySchedule(programId ?? '', institutionId),
+    queryFn: async () => {
+      try {
+        return await fetchUjatTemporarySchedule(String(programId), institutionId)
+      } catch (error) {
+        if (getApiErrorHttpStatus(error) === 404) return null
+        throw error
+      }
+    },
     enabled: remoteEnabled && Boolean(institutionId),
     staleTime: 30_000,
     retry: false,
@@ -64,6 +87,14 @@ export function useUjatInstitutionApplicationDetail(input: {
       : getUjatInstitutionApplicationDetail(row)
   }, [detailQuery.data, row])
 
+  const workflow = useMemo((): UjatInstitutionWorkflowView => {
+    return resolveUjatInstitutionWorkflow(
+      readUjatInstitutionWorkflowInput(detailQuery.data, temporaryScheduleQuery.data)
+    )
+  }, [detailQuery.data, temporaryScheduleQuery.data])
+
+  const workflowReady = !remoteEnabled || temporaryScheduleQuery.isFetched || temporaryScheduleQuery.isError
+
   const invalidate = async () => {
     if (!programId) return
     await Promise.all([
@@ -72,6 +103,9 @@ export function useUjatInstitutionApplicationDetail(input: {
       }),
       queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.organizationDetail(programId, institutionId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.organizationTemporarySchedule(programId, institutionId),
       }),
       queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.execution(),
@@ -85,10 +119,20 @@ export function useUjatInstitutionApplicationDetail(input: {
   return {
     row,
     detail,
-    loading: remoteEnabled && detailQuery.isLoading,
+    loading: remoteEnabled && (detailQuery.isLoading || temporaryScheduleQuery.isLoading),
+    workflow,
+    workflowReady,
     remoteEnabled,
+    remoteDetail: detailQuery.data ?? null,
+    temporarySchedule: temporaryScheduleQuery.data ?? null,
     invalidate,
     approveRemote: async () => {
+      const current = resolveUjatInstitutionWorkflow(
+        readUjatInstitutionWorkflowInput(detailQuery.data, temporaryScheduleQuery.data)
+      )
+      if (!current.canFinalApprove) {
+        throw new Error(UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE)
+      }
       await approveOrganizationApplicationRemote(institutionId)
       await invalidate()
     },

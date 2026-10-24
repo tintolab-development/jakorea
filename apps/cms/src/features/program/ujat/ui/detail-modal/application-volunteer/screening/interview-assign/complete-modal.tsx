@@ -1,4 +1,5 @@
 import type { Dayjs } from 'dayjs'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { UjatInterviewAssignConfirmPayload } from './modal'
@@ -10,16 +11,14 @@ const MODAL_WIDTH = 600
 /** 풀페이지 상세(기본 z-index) 위에 완료 모달이 항상 보이도록 */
 const MODAL_Z_INDEX = 10000
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-/** 완료 모달 시안 — `2026년 9월 15일(화) 09:00 ~ 09:30` */
+/** 완료 모달 — `2026.09.15(화) 09:00 ~ 09:30` */
 export function formatInterviewAssignCompleteScheduleDisplay(
   date: Dayjs,
   timeRange: string
 ): string {
-  const weekday = WEEKDAY_KO[date.day()]
   const time = normalizeTimeRangeKey(timeRange)
-  return `${date.year()}년 ${date.month() + 1}월 ${date.date()}일(${weekday}) ${time}`
+  const datePart = formatDateDotWithWeekday(date)
+  return datePart === '-' ? time : `${datePart} ${time}`
 }
 
 export type UjatVolunteerInterviewAssignCompleteModalProps = {

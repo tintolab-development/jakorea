@@ -6,7 +6,6 @@ import {
   buildScheduleIdByIsoDateMap,
   fetchProgramSchedulesLoose,
 } from '@/features/program/ujat/api/temporary-schedule-api'
-import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
   buildUjatProgramScheduleDates,
   type UjatInstitutionScheduleAssignDateEntry,
@@ -27,11 +26,7 @@ export function useUjatProgramScheduleDates(programId?: string | null): {
   })
 
   const dates = useMemo(
-    () =>
-      buildUjatProgramScheduleDates(
-        schedulesQuery.data ?? [],
-        resolveUjatRegistrationBasicInfoOverlay()
-      ),
+    () => buildUjatProgramScheduleDates(schedulesQuery.data ?? []),
     [schedulesQuery.data]
   )
 

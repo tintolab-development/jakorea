@@ -9,6 +9,10 @@ import type { VolunteerParticipantRegisterResponse } from '@/shared/api/generate
 
 import type { PageResponseParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseParticipantListItemResponse'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
+import {
+  filterProgramProgressParticipantItems,
+  type ProgramProgressParticipantListItem,
+} from '@/features/program/general/lib/program-progress-list-visibility'
 import type { ChangeRequest } from '@/shared/api/generated/dashboard/schemas/changeRequest'
 import type { ChangeResponse } from '@/shared/api/generated/dashboard/schemas/changeResponse'
 import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
@@ -61,13 +65,24 @@ export async function fetchProgramParticipantsRemote(
   programId: string,
   params?: ProgramParticipantsListQuery
 ): Promise<ProgramParticipantsPageDto> {
-  return unwrapApiBody<PageResponseParticipantListItemResponse>(
+  const page = await unwrapApiBody<PageResponseParticipantListItemResponse>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/participants`,
       method: 'GET',
       params,
     })
   )
+  const items = (page.items ?? []) as ProgramProgressParticipantListItem[]
+  const visibleItems = filterProgramProgressParticipantItems(items)
+  const hiddenCount = items.length - visibleItems.length
+  return {
+    ...page,
+    items: visibleItems,
+    totalElements:
+      page.totalElements != null
+        ? Math.max(0, page.totalElements - hiddenCount)
+        : visibleItems.length,
+  }
 }
 
 export async function fetchScheduleAttendancesRemote(

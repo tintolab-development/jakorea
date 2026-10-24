@@ -10,6 +10,11 @@
   min-width: 0;
 }
 
+.program-attendance-detail__table-outer .cms-data-table.cms-data-table--fluid table.ant-table {
+  table-layout: fixed !important;
+  width: 100%;
+}
+
 .program-attendance-detail__status-present,
 .program-attendance-detail__status-late,
 .program-attendance-detail__status-excused,
@@ -60,11 +65,6 @@
   font-weight: 500;
   line-height: 150%;
   opacity: 0.6;
-}
-
-/* 불참 사유 — 4열 격자(일자·사유·증빙 서류·파일) */
-.program-attendance-absence-reasons__table th {
-  background: #f2f3f5;
 }
 
 .program-attendance-absence-reasons__dash {

@@ -6,6 +6,19 @@ import { PFTextInput } from '@/shared/ui'
 import { PfChevronDown } from './pf-rich-text-toolbar-toggle'
 import styles from './pf-rich-text-toolbar.module.css'
 
+export type PfToolbarMenuDivider = { type: 'divider'; key: string }
+export type PfToolbarMenuCommand = {
+  key: string
+  label: string
+  onClick: () => void
+  disabled?: boolean
+}
+export type PfToolbarMenuItem = PfToolbarMenuDivider | PfToolbarMenuCommand
+
+function isPfToolbarMenuDivider(item: PfToolbarMenuItem): item is PfToolbarMenuDivider {
+  return 'type' in item && item.type === 'divider'
+}
+
 type PfToolbarDropdownProps = {
   label: string
   valueLabel?: string
@@ -13,7 +26,7 @@ type PfToolbarDropdownProps = {
   iconOnly?: boolean
   disabled?: boolean
   ariaLabel: string
-  menuItems?: { key: string; label: string; onClick: () => void }[]
+  menuItems?: PfToolbarMenuItem[]
   panel?: ReactNode
 }
 
@@ -73,21 +86,31 @@ export function PfToolbarDropdown({
             onMouseDown={event => event.preventDefault()}
           >
             {panel ??
-              menuItems?.map(item => (
-                <button
-                  key={item.key}
-                  type="button"
-                  className={styles.dropdownItem}
-                  role="menuitem"
-                  onMouseDown={event => event.preventDefault()}
-                  onClick={() => {
-                    item.onClick()
-                    setOpen(false)
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
+              menuItems?.map(item =>
+                isPfToolbarMenuDivider(item) ? (
+                  <div
+                    key={item.key}
+                    className={styles.dropdownDivider}
+                    role="separator"
+                  />
+                ) : (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={styles.dropdownItem}
+                    role="menuitem"
+                    disabled={item.disabled}
+                    onMouseDown={event => event.preventDefault()}
+                    onClick={() => {
+                      if (item.disabled) return
+                      item.onClick()
+                      setOpen(false)
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                )
+              )}
           </div>,
           document.body
         )

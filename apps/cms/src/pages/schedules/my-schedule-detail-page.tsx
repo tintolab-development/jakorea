@@ -12,6 +12,7 @@ import { SessionFormatBadge } from '@/shared/components/session-format-badge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { SingleCTA } from '@/shared/ui'
 import dayjs from 'dayjs'
+import { formatDateDot } from '@/shared/utils/date'
 import type { Schedule } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 
@@ -152,7 +153,7 @@ export function MyScheduleDetailPage() {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="일자"
-              view={scheduleDate.format('YYYY년 MM월 DD일')}
+              view={formatDateDot(scheduleDate)}
               fullRow
             />
           </DetailInfoForm.Row>

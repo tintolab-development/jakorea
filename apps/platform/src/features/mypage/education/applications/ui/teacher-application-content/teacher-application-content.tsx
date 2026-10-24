@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ProgramApplicationType } from '../../api/types'
 import type { EducationTeacherApplicationContent as TeacherApplicationContentModel } from '../../model/types'
-import { hasTeacherApplicationGuidanceContent } from '../../lib/teacher-institution-guidance'
 import { GuidanceSection } from './guidance-section'
 import { InstitutionInfoTable } from './institution-info-table'
 import { PreferredSchedules } from './preferred-schedules'
@@ -31,9 +30,7 @@ export function TeacherApplicationContent({
     setGuidance(content.guidance)
   }, [applicationId, content.guidance])
 
-  const showGuidanceSection =
-    institutionGuidanceEnabled &&
-    (hasTeacherApplicationGuidanceContent(guidance) || showGuidanceWriteLink)
+  const showGuidanceSection = institutionGuidanceEnabled
 
   return (
     <div className={styles.root}>

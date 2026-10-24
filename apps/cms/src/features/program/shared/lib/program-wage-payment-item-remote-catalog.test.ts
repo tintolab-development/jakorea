@@ -15,7 +15,9 @@ vi.mock('@/features/settlement-management/hooks/use-settlement-remote-enabled', 
   useSettlementRemoteEnabled: () => false,
 }))
 
-function seedRemoteCatalog(items: Array<{ id: string; title: string }>): void {
+function seedRemoteCatalog(
+  items: Array<{ id: string; title: string; paymentItemType?: string }>
+): void {
   queryClient.setQueryData<SettlementConfigQueryData>(
     settlementQueryKeys.settlementConfigs.current(),
     {
@@ -82,6 +84,43 @@ describe('지급 항목 — 실 API 카탈로그 전용', () => {
 
   it('응답 전 mock 매칭도 「숙박비 (1사1교)」를 1사1교 항목으로 고른다', () => {
     expect(resolveProgramPaymentItemIdsFromLabels('숙박비 (1사1교)')).toEqual(['p-7'])
+  })
+
+  it('GET 강사·학생 itemType은 카탈로그 id로 따로 켜고, TRANSPORTATION만이면 학생은 끈다', () => {
+    seedRemoteCatalog([
+      { id: 'p-166201', title: '강사 교통비', paymentItemType: 'TRANSPORT_INSTRUCTOR' },
+      { id: 'p-166202', title: '학생 교통비', paymentItemType: 'TRANSPORT_STUDENT' },
+      { id: 'p-166206', title: '장거리 교통비', paymentItemType: 'LONG_DISTANCE_TRANSPORTATION' },
+    ])
+    expect(
+      resolveProgramPaymentItemIdsFromLabels([
+        { itemType: 'TRANSPORTATION', useYn: true },
+        { itemType: 'STUDENT_TRANSPORTATION', useYn: true },
+      ])
+    ).toEqual(['p-166201', 'p-166202'])
+    expect(
+      resolveProgramPaymentItemIdsFromLabels([{ itemType: 'TRANSPORTATION', useYn: true }])
+    ).toEqual(['p-166201'])
+    expect(
+      resolveProgramPaymentItemIdsFromLabels([{ itemType: 'STUDENT_TRANSPORTATION', useYn: true }])
+    ).toEqual(['p-166202'])
+    expect(
+      resolveProgramPaymentItemIdsFromLabels([
+        { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+      ])
+    ).toEqual(['p-166206'])
+    expect(normalizeProgramPaymentItemIds(['p-1', '학생 교통비'])).toEqual(['p-166201', 'p-166202'])
+  })
+
+  it('강사 항목명이 교통비여도 학생 교통비를 강사 id로 접지 않는다', () => {
+    seedRemoteCatalog([
+      { id: 'p-166201', title: '교통비', paymentItemType: 'TRANSPORT_INSTRUCTOR' },
+      { id: 'p-166202', title: '학생 교통비', paymentItemType: 'TRANSPORT_STUDENT' },
+    ])
+    expect(resolveProgramPaymentItemIdsFromLabels('학생 교통비')).toEqual(['p-166202'])
+    expect(
+      resolveProgramPaymentItemIdsFromLabels([{ itemType: 'TRANSPORTATION', useYn: true }])
+    ).toEqual(['p-166201'])
   })
 
   it('제출 직전 교정 — 하나도 못 찾으면 재선택 대상으로 알린다', async () => {

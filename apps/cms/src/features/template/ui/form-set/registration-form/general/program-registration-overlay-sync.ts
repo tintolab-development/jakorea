@@ -3,6 +3,30 @@ import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/s
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
+import {
+  peekGeneralRegistrationWizardRhf,
+  subscribeGeneralRegistrationWizardRhf,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import { overlayKeyToWizardUiPath } from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
+import {
+  peekTrainedTeachersRegistrationRhf,
+  subscribeTrainedTeachersRegistrationRhf,
+} from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import {
+  isTrainedTeachersCommonInfoOverlayKey,
+  readTrainedTeachersRhfOverlayValue,
+  writeTrainedTeachersRhfOverlayValue,
+} from '@/features/program/trained-teachers/lib/registration-rhf-values'
+import {
+  peekCompanySchoolRegistrationRhf,
+  subscribeCompanySchoolRegistrationRhf,
+} from '@/features/program/1c-1s/lib/registration-rhf-api'
+import {
+  isCompanySchoolCommonInfoOverlayKey,
+  projectCompanySchoolRhfToOverlayRecord,
+  readCompanySchoolRhfOverlayValue,
+  writeCompanySchoolRhfOverlayValue,
+} from '@/features/program/1c-1s/lib/registration-rhf-values'
 
 /**
  * 일반·1사1교·교육받은 교사 프로그램 등록 폼 단락 본문이 `WritingFormDraft`가 아닌
@@ -66,12 +90,44 @@ function readOverlayString(key: string): string {
   return ''
 }
 
+function readRhfSponsorIds(): string[] | null {
+  const rhf = peekGeneralRegistrationWizardRhf()
+  if (rhf == null) return null
+  const values = rhf.getValues()
+  if (Array.isArray(values.sponsorIds)) {
+    const ids = values.sponsorIds.map(String).map(id => id.trim()).filter(Boolean)
+    if (ids.length > 0) return ids
+  }
+  return typeof values.sponsorId === 'string' && values.sponsorId.trim()
+    ? [values.sponsorId.trim()]
+    : []
+}
+
+function readRhfSponsorContactIds(): string[] | null {
+  const rhf = peekGeneralRegistrationWizardRhf()
+  if (rhf == null) return null
+  const values = rhf.getValues()
+  if (Array.isArray(values.managerContactIds)) {
+    const ids = [
+      ...new Set(values.managerContactIds.map(String).map(id => id.trim()).filter(Boolean)),
+    ]
+    if (ids.length > 0) return ids
+  }
+  return typeof values.managerContactId === 'string' && values.managerContactId.trim()
+    ? [values.managerContactId.trim()]
+    : []
+}
+
 /** overlay에 남은 후원사 id (controlled state가 비었을 때 완료·복원 fallback) */
 export function readGeneralRegistrationOverlaySponsorId(): string {
+  const fromRhf = readRhfSponsorIds()
+  if (fromRhf != null) return fromRhf[0] ?? ''
   return readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
 }
 
 export function readGeneralRegistrationOverlaySponsorIds(): string[] {
+  const fromRhf = readRhfSponsorIds()
+  if (fromRhf != null) return fromRhf
   const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]
   if (Array.isArray(raw)) {
     return raw
@@ -79,16 +135,20 @@ export function readGeneralRegistrationOverlaySponsorIds(): string[] {
       .map(id => id.trim())
       .filter(Boolean)
   }
-  const primary = readGeneralRegistrationOverlaySponsorId()
+  const primary = readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
   return primary ? [primary] : []
 }
 
 export function readGeneralRegistrationOverlaySponsorContactId(): string {
+  const fromRhf = readRhfSponsorContactIds()
+  if (fromRhf != null) return fromRhf[0] ?? ''
   const ids = readGeneralRegistrationOverlaySponsorContactIds()
   return ids[0] ?? readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
 }
 
 export function readGeneralRegistrationOverlaySponsorContactIds(): string[] {
+  const fromRhf = readRhfSponsorContactIds()
+  if (fromRhf != null) return fromRhf
   const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
   if (Array.isArray(raw)) {
     return [
@@ -122,6 +182,11 @@ export function patchGeneralRegistrationSponsorSelectionOverlay(args: {
 }
 
 export function readGeneralRegistrationOverlayProgramTitleKo(): string {
+  const rhf = peekGeneralRegistrationWizardRhf()
+  if (rhf != null) {
+    const fromRhf = rhf.getValues().programTitleKo
+    return typeof fromRhf === 'string' ? fromRhf.trim() : ''
+  }
   return readOverlayString(GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }
 
@@ -135,6 +200,10 @@ const TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
   'trainedTeachersRegistration.basicInfo.programTitleKo' as const
 
 export function readTrainedTeachersRegistrationOverlaySponsorId(): string {
+  const rhf = peekTrainedTeachersRegistrationRhf()
+  if (rhf != null) {
+    return rhf.getValues().sponsorManagementIds[0] ?? ''
+  }
   const raw = readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
   return raw === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE ? '' : raw
 }
@@ -147,6 +216,10 @@ export function readTrainedTeachersRegistrationOverlaySponsorContactId(): string
 }
 
 export function readTrainedTeachersRegistrationOverlaySponsorContactIds(): string[] {
+  const rhf = peekTrainedTeachersRegistrationRhf()
+  if (rhf != null) {
+    return [...rhf.getValues().sponsorManagerContactIds]
+  }
   const raw = overlayState()[TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
   if (Array.isArray(raw)) {
     return [
@@ -164,6 +237,8 @@ export function readTrainedTeachersRegistrationOverlaySponsorContactIds(): strin
 }
 
 export function readTrainedTeachersRegistrationOverlayProgramTitleKo(): string {
+  const rhf = peekTrainedTeachersRegistrationRhf()
+  if (rhf != null) return rhf.getValues().title
   return readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }
 
@@ -176,6 +251,8 @@ export const ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT: string = '1사1교 �
 const ECONOMY_REGISTRATION_ALL_VALUE = '__all__'
 
 export function readEconomyRegistrationOverlaySponsorId(): string {
+  const rhf = peekCompanySchoolRegistrationRhf()
+  if (rhf != null) return rhf.getValues().sponsorId
   const raw = readOverlayString(ECONOMY_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
   return !raw || raw === ECONOMY_REGISTRATION_ALL_VALUE ? '' : raw
 }
@@ -192,11 +269,33 @@ export function readRegistrationOverlaySponsorId(
   return readGeneralRegistrationOverlaySponsorId()
 }
 
+export function readEconomyRegistrationOverlaySponsorContactIds(): string[] {
+  const rhf = peekCompanySchoolRegistrationRhf()
+  if (rhf != null) return [...rhf.getValues().managerContactIds]
+  const raw = overlayState()['economyRegistration.basicInfo.managerContactIds']
+  if (Array.isArray(raw)) {
+    return [
+      ...new Set(
+        raw
+          .map(String)
+          .map(id => id.trim())
+          .filter(id => id && id !== ECONOMY_REGISTRATION_ALL_VALUE)
+      ),
+    ]
+  }
+  const primary = readOverlayString('economyRegistration.basicInfo.managerContactId')
+  if (!primary || primary === ECONOMY_REGISTRATION_ALL_VALUE) return []
+  return [primary]
+}
+
 export function readRegistrationOverlaySponsorContactId(
   variant: ProgramRegistrationFormVariant = 'general'
 ): string {
   if (variant === 'trainedTeachers') {
     return readTrainedTeachersRegistrationOverlaySponsorContactId()
+  }
+  if (variant === 'economy') {
+    return readEconomyRegistrationOverlaySponsorContactIds()[0] ?? ''
   }
   return readGeneralRegistrationOverlaySponsorContactId()
 }
@@ -207,13 +306,21 @@ export function readRegistrationOverlaySponsorContactIds(
   if (variant === 'trainedTeachers') {
     return readTrainedTeachersRegistrationOverlaySponsorContactIds()
   }
+  if (variant === 'economy') {
+    return readEconomyRegistrationOverlaySponsorContactIds()
+  }
   return readGeneralRegistrationOverlaySponsorContactIds()
 }
 
 export function readEconomyRegistrationOverlayProgramTitleKo(): string {
+  const rhf = peekCompanySchoolRegistrationRhf()
+  if (rhf != null) return rhf.getValues().repKo
   const stored = overlayState()[ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]
-  if (typeof stored === 'string' && stored.trim()) return stored.trim()
+  if (typeof stored === 'string') return stored
   if (typeof stored === 'number' && Number.isFinite(stored)) return String(stored)
+  if (Object.prototype.hasOwnProperty.call(overlayState(), ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)) {
+    return ''
+  }
   const visible = readOverlayKeyValue(
     ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
     ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT
@@ -242,6 +349,13 @@ export function readStoredRegistrationProgramTitleKo(
   fallback = ''
 ): string {
   if (variant === 'economy') return readEconomyRegistrationOverlayProgramTitleKo()
+  if (variant === 'trainedTeachers' && peekTrainedTeachersRegistrationRhf() != null) {
+    return peekTrainedTeachersRegistrationRhf()?.getValues().title.trim() || fallback.trim()
+  }
+  if (variant === 'general' && peekGeneralRegistrationWizardRhf() != null) {
+    const fromRhf = peekGeneralRegistrationWizardRhf()?.getValues().programTitleKo
+    return typeof fromRhf === 'string' ? fromRhf.trim() : fallback.trim()
+  }
   const key =
     variant === 'trainedTeachers'
       ? TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY
@@ -260,6 +374,12 @@ export function patchRegistrationOverlayProgramTitleKo(
     return
   }
   if (variant === 'trainedTeachers') {
+    const rhf = peekTrainedTeachersRegistrationRhf()
+    if (rhf != null) {
+      rhf.setPath('title', title, { shouldDirty: true })
+      rhf.setPath('mainTitle', title, { shouldDirty: true })
+      return
+    }
     patchProgramRegistrationOverlay({
       [TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]: title,
     })
@@ -271,6 +391,17 @@ export function patchRegistrationOverlayProgramTitleKo(
 }
 
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {
+  const rhf = peekGeneralRegistrationWizardRhf()
+  if (rhf != null) {
+    const lines = rhf.getValues().scheduleLines
+    if (Array.isArray(lines)) {
+      return lines
+        .filter((line): line is string => typeof line === 'string')
+        .map(line => line.trim())
+        .filter(Boolean)
+    }
+    return []
+  }
   const raw = overlayState()[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
   if (!Array.isArray(raw)) return []
   return raw
@@ -307,7 +438,10 @@ export function getProgramRegistrationOverlayVersion(): number {
 }
 
 export function getProgramRegistrationOverlayRecord(): Record<string, unknown> {
-  return overlayState()
+  const stored = overlayState()
+  const rhf = peekCompanySchoolRegistrationRhf()
+  if (rhf == null) return stored
+  return { ...stored, ...projectCompanySchoolRhfToOverlayRecord(rhf.getValues()) }
 }
 
 /** 상세 수정 seed/복원용 — 등록 위저드 동작은 바꾸지 않는다. */
@@ -325,7 +459,7 @@ export function replaceProgramRegistrationOverlayPrefix(
   const kept = Object.fromEntries(
     Object.entries(overlayState()).filter(([key]) => !key.startsWith(prefix))
   )
-  replaceProgramRegistrationOverlay({ ...kept, ...nextPrefixValues })
+  replaceProgramRegistrationOverlay({ ...kept, ...nextPrefixValues }, { shouldDirty: true })
 }
 
 /** 개발용 자동입력처럼 여러 관련 namespace를 한 번에 교체할 때 사용한다. */
@@ -337,14 +471,112 @@ export function replaceProgramRegistrationOverlayPrefixes(
   const kept = Object.fromEntries(
     Object.entries(overlayState()).filter(([key]) => !shouldReplace(key))
   )
-  replaceProgramRegistrationOverlay({ ...kept, ...nextValues })
+  replaceProgramRegistrationOverlay({ ...kept, ...nextValues }, { shouldDirty: true })
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
   return readOperationalOverlayKvValue('program-registration', overlayState(), key, defaultValue)
 }
 
+/** RHF → overlay 일방향 projection 중이면 overlay 쓰기를 RHF로 되먹이지 않는다. */
+let projectingFromWizardRhf = 0
+
+export function beginRegistrationWizardRhfOverlayProjection(): void {
+  projectingFromWizardRhf += 1
+}
+
+export function endRegistrationWizardRhfOverlayProjection(): void {
+  projectingFromWizardRhf = Math.max(0, projectingFromWizardRhf - 1)
+}
+
+function syncWizardRhfFromOverlayPartial(
+  partial: Record<string, unknown>,
+  shouldDirty: boolean
+): void {
+  if (projectingFromWizardRhf > 0) return
+  const api = peekGeneralRegistrationWizardRhf()
+  if (api == null) return
+  for (const [key, value] of Object.entries(partial)) {
+    const path = overlayKeyToWizardUiPath(key)
+    if (path == null) continue
+    api.setPath(path, value, { shouldDirty })
+  }
+}
+
+function splitTrainedTeachersCommonInfoOverlay(
+  record: Record<string, unknown>
+): { commonInfo: Record<string, unknown>; rest: Record<string, unknown> } {
+  const commonInfo: Record<string, unknown> = {}
+  const rest: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    if (isTrainedTeachersCommonInfoOverlayKey(key)) commonInfo[key] = value
+    else rest[key] = value
+  }
+  return { commonInfo, rest }
+}
+
+function writeTrainedTeachersRhfOverlayPartial(partial: Record<string, unknown>): void {
+  const api = peekTrainedTeachersRegistrationRhf()
+  if (api == null) return
+  const current = api.getValues()
+  let next = current
+  let changed = false
+  for (const [key, value] of Object.entries(partial)) {
+    const prev = readTrainedTeachersRhfOverlayValue(current, key)
+    if (Object.is(prev, value)) continue
+    next = writeTrainedTeachersRhfOverlayValue(next, key, value)
+    changed = true
+  }
+  if (!changed || next === current) return
+  api.reset(next, { keepDefaultValues: true })
+}
+
+function splitCompanySchoolCommonInfoOverlay(
+  record: Record<string, unknown>
+): { commonInfo: Record<string, unknown>; rest: Record<string, unknown> } {
+  const commonInfo: Record<string, unknown> = {}
+  const rest: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    if (isCompanySchoolCommonInfoOverlayKey(key)) commonInfo[key] = value
+    else rest[key] = value
+  }
+  return { commonInfo, rest }
+}
+
+function writeCompanySchoolRhfOverlayPartial(partial: Record<string, unknown>): void {
+  const api = peekCompanySchoolRegistrationRhf()
+  if (api == null) return
+  const current = api.getValues()
+  let next = current
+  let changed = false
+  for (const [key, value] of Object.entries(partial)) {
+    const prev = readCompanySchoolRhfOverlayValue(current, key)
+    if (Object.is(prev, value)) continue
+    next = writeCompanySchoolRhfOverlayValue(next, key, value)
+    changed = true
+  }
+  if (!changed || next === current) return
+  api.reset(next, { keepDefaultValues: true })
+}
+
 export function patchProgramRegistrationOverlay(partial: Record<string, unknown>): void {
+  if (peekTrainedTeachersRegistrationRhf() != null) {
+    const { commonInfo, rest } = splitTrainedTeachersCommonInfoOverlay(partial)
+    if (Object.keys(commonInfo).length > 0) writeTrainedTeachersRhfOverlayPartial(commonInfo)
+    if (Object.keys(rest).length === 0) return
+    syncWizardRhfFromOverlayPartial(rest, true)
+    store.patch(rest)
+    return
+  }
+  if (peekCompanySchoolRegistrationRhf() != null) {
+    const { commonInfo, rest } = splitCompanySchoolCommonInfoOverlay(partial)
+    if (Object.keys(commonInfo).length > 0) writeCompanySchoolRhfOverlayPartial(commonInfo)
+    if (Object.keys(rest).length === 0) return
+    syncWizardRhfFromOverlayPartial(rest, true)
+    store.patch(rest)
+    return
+  }
+  syncWizardRhfFromOverlayPartial(partial, true)
   store.patch(partial)
 }
 
@@ -352,10 +584,74 @@ export function updateProgramRegistrationOverlayKey<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
+  const ttApi = peekTrainedTeachersRegistrationRhf()
+  if (ttApi != null && isTrainedTeachersCommonInfoOverlayKey(key)) {
+    const prev = readTrainedTeachersRhfOverlayValue(ttApi.getValues(), key) as T | undefined
+    const next = updater(prev)
+    writeTrainedTeachersRhfOverlayPartial({ [key]: next })
+    return
+  }
+  const csApi = peekCompanySchoolRegistrationRhf()
+  if (csApi != null && isCompanySchoolCommonInfoOverlayKey(key)) {
+    const prev = readCompanySchoolRhfOverlayValue(csApi.getValues(), key) as T | undefined
+    const next = updater(prev)
+    writeCompanySchoolRhfOverlayPartial({ [key]: next })
+    return
+  }
+  const api = peekGeneralRegistrationWizardRhf()
+  const path = overlayKeyToWizardUiPath(key)
+  if (api != null && path != null && projectingFromWizardRhf === 0) {
+    const prev = api.getPath(path) as T | undefined
+    const next = updater(prev)
+    api.setPath(path, next, { shouldDirty: true })
+    projectingFromWizardRhf += 1
+    try {
+      store.updateKey(key, () => next)
+    } finally {
+      projectingFromWizardRhf -= 1
+    }
+    return
+  }
   store.updateKey(key, updater)
 }
 
-export function replaceProgramRegistrationOverlay(next: Record<string, unknown>): void {
+export function replaceProgramRegistrationOverlay(
+  next: Record<string, unknown>,
+  options?: { shouldDirty?: boolean }
+): void {
+  const ttApi = peekTrainedTeachersRegistrationRhf()
+  if (ttApi != null) {
+    const { commonInfo, rest } = splitTrainedTeachersCommonInfoOverlay(next)
+    if (Object.keys(commonInfo).length > 0) {
+      ttApi.applyOverlayRecord(commonInfo, { shouldDirty: options?.shouldDirty ?? false })
+    }
+    if (projectingFromWizardRhf === 0) {
+      peekGeneralRegistrationWizardRhf()?.applyOverlayRecord(rest, {
+        shouldDirty: options?.shouldDirty ?? false,
+      })
+    }
+    store.replace(rest)
+    return
+  }
+  const csApi = peekCompanySchoolRegistrationRhf()
+  if (csApi != null) {
+    const { commonInfo, rest } = splitCompanySchoolCommonInfoOverlay(next)
+    if (Object.keys(commonInfo).length > 0) {
+      csApi.applyOverlayRecord(commonInfo, { shouldDirty: options?.shouldDirty ?? false })
+    }
+    if (projectingFromWizardRhf === 0) {
+      peekGeneralRegistrationWizardRhf()?.applyOverlayRecord(rest, {
+        shouldDirty: options?.shouldDirty ?? false,
+      })
+    }
+    store.replace(rest)
+    return
+  }
+  if (projectingFromWizardRhf === 0) {
+    peekGeneralRegistrationWizardRhf()?.applyOverlayRecord(next, {
+      shouldDirty: options?.shouldDirty ?? false,
+    })
+  }
   store.replace(next)
 }
 
@@ -383,21 +679,77 @@ export function useProgramRegistrationOverlayKv<T>(
   defaultValue: T
 ): [T, (next: T) => void] {
   const defaultRef = useRef(defaultValue)
-  const getSnapshot = useCallback(() => readOverlayKeyValue(key, defaultRef.current), [key])
+  const path = overlayKeyToWizardUiPath(key)
+  const getSnapshot = useCallback(() => {
+    const ttApi = peekTrainedTeachersRegistrationRhf()
+    if (ttApi != null && isTrainedTeachersCommonInfoOverlayKey(key)) {
+      const raw = readTrainedTeachersRhfOverlayValue(ttApi.getValues(), key)
+      return raw === undefined ? defaultRef.current : (raw as T)
+    }
+    const csApi = peekCompanySchoolRegistrationRhf()
+    if (csApi != null && isCompanySchoolCommonInfoOverlayKey(key)) {
+      const raw = readCompanySchoolRhfOverlayValue(csApi.getValues(), key)
+      return raw === undefined ? defaultRef.current : (raw as T)
+    }
+    const api = peekGeneralRegistrationWizardRhf()
+    if (api != null && path != null) {
+      const raw = api.getPath(path)
+      return raw === undefined ? defaultRef.current : (raw as T)
+    }
+    return readOverlayKeyValue(key, defaultRef.current)
+  }, [key, path])
 
   const value = useSyncExternalStore(
-    listener => subscribeProgramRegistrationOverlayKey(key, listener),
+    listener => {
+      const unsubOverlay = subscribeProgramRegistrationOverlayKey(key, listener)
+      const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
+      const unsubTt = subscribeTrainedTeachersRegistrationRhf(listener)
+      const unsubCs = subscribeCompanySchoolRegistrationRhf(listener)
+      return () => {
+        unsubOverlay()
+        unsubRhf()
+        unsubTt()
+        unsubCs()
+      }
+    },
     getSnapshot,
     getSnapshot
   )
 
   const setValue = useCallback(
     (next: T) => {
+      const ttApi = peekTrainedTeachersRegistrationRhf()
+      if (ttApi != null && isTrainedTeachersCommonInfoOverlayKey(key)) {
+        const prev = readTrainedTeachersRhfOverlayValue(ttApi.getValues(), key)
+        if (Object.is(prev, next)) return
+        writeTrainedTeachersRhfOverlayPartial({ [key]: next })
+        return
+      }
+      const csApi = peekCompanySchoolRegistrationRhf()
+      if (csApi != null && isCompanySchoolCommonInfoOverlayKey(key)) {
+        const prev = readCompanySchoolRhfOverlayValue(csApi.getValues(), key)
+        if (Object.is(prev, next)) return
+        writeCompanySchoolRhfOverlayPartial({ [key]: next })
+        return
+      }
+      const api = peekGeneralRegistrationWizardRhf()
+      if (api != null && path != null) {
+        const prev = api.getPath(path)
+        if (Object.is(prev, next)) return
+        api.setPath(path, next, { shouldDirty: true })
+        projectingFromWizardRhf += 1
+        try {
+          store.patch({ [key]: next })
+        } finally {
+          projectingFromWizardRhf -= 1
+        }
+        return
+      }
       const prev = getProgramRegistrationOverlayRecord()[key]
       if (Object.is(prev, next)) return
       patchProgramRegistrationOverlay({ [key]: next })
     },
-    [key]
+    [key, path]
   )
   return [value, setValue]
 }

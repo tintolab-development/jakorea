@@ -8,7 +8,7 @@ import type { UjatInstitutionApplicationRow } from './types'
 const COL = {
   no: 80,
   institution: 180,
-  /** 「임시 배정 평가」 16px bold + 패딩 */
+  /** 「임시 배정 현황」 16px bold + 패딩 */
   status: 160,
   /** 「학년 별 신청 학급 수」 + 학년 세그먼트 본문 */
   grade: 340,
@@ -17,7 +17,8 @@ const COL = {
   /** 「M월 D일」 헤더 */
   schedule: 112,
   teacher: 120,
-  selection: 68,
+  /** `cms-data-table` 선택 열 `--table-selection-column-width`(80px)와 동일 */
+  selection: 80,
 } as const
 
 const GRADE_CELL_CLASS = 'ujat-institution-application-list__cell-grade'
@@ -25,14 +26,21 @@ const TOTAL_CELL_CLASS = 'ujat-institution-application-list__cell-total'
 const STATUS_CELL_CLASS = 'ujat-institution-application-list__cell-status'
 const SCHEDULE_CELL_CLASS = 'ujat-institution-application-list__cell-schedule'
 const INSTITUTION_CELL_CLASS = 'ujat-institution-application-list__cell-institution'
+const TEACHER_CELL_CLASS = 'ujat-institution-application-list__cell-teacher'
+
+function formatGradeClassSegment(grade: UjatInstitutionApplicationRow['gradeClassCounts'][number]) {
+  const label = grade.gradeLabel.trim()
+  const hasLabel = Boolean(label) && label !== '-'
+  if (grade.classCount == null) return hasLabel ? label : ''
+  if (!hasLabel) return `${grade.classCount}학급`
+  return `${label} ${grade.classCount}학급`
+}
 
 function renderGradeClassCounts(row: UjatInstitutionApplicationRow) {
   if (row.gradeClassCounts.length === 0) return '-'
   return (
     <UjatInlineDividedSegments
-      segments={row.gradeClassCounts.map(
-        g => `${g.gradeLabel} / ${g.classCount == null ? '-' : g.classCount}`
-      )}
+      segments={row.gradeClassCounts.map(formatGradeClassSegment)}
     />
   )
 }
@@ -73,7 +81,7 @@ export function useUjatInstitutionApplicationColumns(
         onCell: () => ({ className: INSTITUTION_CELL_CLASS }),
       },
       {
-        title: '임시 배정 평가',
+        title: '임시 배정 현황',
         dataIndex: 'tempAssignmentStatus',
         key: 'tempAssignmentStatus',
         width: COL.status,
@@ -102,7 +110,7 @@ export function useUjatInstitutionApplicationColumns(
         className: TOTAL_CELL_CLASS,
         onHeaderCell: () => ({ className: TOTAL_CELL_CLASS }),
         onCell: () => ({ className: TOTAL_CELL_CLASS }),
-        render: (count: number) => `${count}학급`,
+        render: (count: number | null) => (count == null ? '-' : `${count}학급`),
       },
       ...scheduleColumns.map(col => ({
         title: col.title,
@@ -120,6 +128,8 @@ export function useUjatInstitutionApplicationColumns(
         key: 'teacherName',
         width: COL.teacher,
         align: 'center',
+        onHeaderCell: () => ({ className: TEACHER_CELL_CLASS }),
+        onCell: () => ({ className: TEACHER_CELL_CLASS }),
       },
     ],
     [scheduleColumns]

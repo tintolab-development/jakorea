@@ -38,6 +38,39 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>
 }
 
+const REVISION_REASON_KEYS = [
+  'revisionReason',
+  'scheduleChangeReason',
+  'lastScheduleChangeReason',
+  'revisionRequestReason',
+  'changeRequestReason',
+  'revisionMessage',
+  'requestedReason',
+  'lastRevisionReason',
+  'scheduleRevisionReason',
+  'requestReason',
+  'requestMessage',
+  'revisionRequestMessage',
+  'changeReason',
+  'comment',
+  'message',
+  'reason',
+] as const
+
+const REVISION_REASON_NESTED_KEYS = [
+  'scheduleChangeRequest',
+  'changeRequest',
+  'revisionRequest',
+  'lastScheduleChange',
+  'scheduleChange',
+] as const
+
+function readTrimmedString(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
+}
+
 export function readUjatPortalBannerState(
   supplement: PortalProgramApplicationSupplement | unknown,
 ): UjatPortalBannerState | null {
@@ -48,6 +81,43 @@ export function readUjatPortalBannerState(
   const raw = typeof ujat.portalBannerState === 'string' ? ujat.portalBannerState.trim() : ''
   if (!raw || !BANNER_STATES.has(raw)) return null
   return raw as UjatPortalBannerState
+}
+
+function readReasonFromRecord(record: Record<string, unknown>): string | null {
+  for (const key of REVISION_REASON_KEYS) {
+    const value = readTrimmedString(record[key])
+    if (value) return value
+  }
+  return null
+}
+
+/** CMS 수정 요청 본문. 응답에 없으면 null — 화면은 `-` */
+export function readUjatRevisionReason(
+  supplement: PortalProgramApplicationSupplement | unknown,
+): string | null {
+  const root = asRecord(supplement)
+  if (!root) return null
+  const ujat = asRecord(root.ujat) ?? (root.portalBannerState || root.revisionReason ? root : null)
+  if (!ujat) return null
+  const fromUjat = readReasonFromRecord(ujat)
+  if (fromUjat) return fromUjat
+  for (const nestedKey of REVISION_REASON_NESTED_KEYS) {
+    const nested = asRecord(ujat[nestedKey])
+    if (!nested) continue
+    const fromNested = readReasonFromRecord(nested)
+    if (fromNested) return fromNested
+  }
+  for (const [key, value] of Object.entries(ujat)) {
+    if (!/reason|message|comment/i.test(key)) continue
+    const nested = asRecord(value)
+    if (nested) {
+      const fromUnknownNested = readReasonFromRecord(nested)
+      if (fromUnknownNested) return fromUnknownNested
+    }
+    const asString = readTrimmedString(value)
+    if (asString) return asString
+  }
+  return null
 }
 
 export function resolveUjatScheduleBannerVariant(
@@ -82,6 +152,15 @@ export function shouldShowUjatScheduleBanner(
   state: UjatPortalBannerState | null | undefined,
 ): boolean {
   return shouldUseUjatApplicationContent(detailCase) && resolveUjatScheduleBannerFromState(state) != null
+}
+
+/** 교육현황 UJAT 기관 상세에 그릴 상태 안내 배너. 봉사·그 외 유형은 null. */
+export function resolveVisibleUjatScheduleBanner(
+  detailCase: string | undefined,
+  state: UjatPortalBannerState | null | undefined,
+): UjatScheduleBannerCopy | null {
+  if (!shouldShowUjatScheduleBanner(detailCase, state)) return null
+  return resolveUjatScheduleBannerFromState(state)
 }
 
 export function sanitizeUjatParticipantBasicInfoFields<T extends { label: string; value: string }>(

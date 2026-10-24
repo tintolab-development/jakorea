@@ -177,6 +177,7 @@ export function GeminiRecruitmentAddFullpageModal({
             isDefault={form.isDefaultStepTemplate}
             category="application"
             familyBaseTemplateCode={GEMINI_RECRUITMENT_DEFAULT_TEMPLATE_CODE}
+            allowedFamilyBaseTemplateCode={GEMINI_RECRUITMENT_DEFAULT_TEMPLATE_CODE}
             pickerOpen={templatePickerOpen}
             onOpenPicker={() => setTemplatePickerOpen(true)}
             onClosePicker={() => setTemplatePickerOpen(false)}

@@ -340,7 +340,7 @@ function SponsorDetailFullPageModalInner({
                 onClick={handleToggleBasicInfoClick}
                 adminAction="sponsorWrite"
               >
-                {isEditingBasicInfo ? '수정 완료' : '정보 수정'}
+                정보 수정
               </CmsButton>
               <CmsButton
                 variant="secondary"

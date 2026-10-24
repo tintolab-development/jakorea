@@ -8,9 +8,12 @@ import {
 import {
   buildGeneralRegistrationOverlayFromProgram,
   extrasFromGeneralProgram,
+  getGeneralRegistrationDetailEditExtras,
   hasIncompleteGeneralProgramDetailEditRequiredFields,
+  mergeRegistrationOverlayNestedSsot,
   readGeneralRegistrationOverlayForSave,
   seedGeneralRegistrationOverlayFromProgram,
+  writeGeneralRegistrationOverlayFromCommonInfoFormValues,
 } from './registration-overlay-sync'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
@@ -641,5 +644,102 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
       ],
     }
     expect(hasIncompleteGeneralProgramDetailEditRequiredFields(overlay, extras)).toBe(false)
+  })
+})
+
+describe('mergeRegistrationOverlayNestedSsot', () => {
+  const unitKey = 'generalRegistration.educationCurriculum.unitNameBySession'
+
+  it('nested 2행이면 stale overlay 3·4 키를 버린다', () => {
+    const program: Program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          { sessionNo: 1, sessionLabel: '1회차', title: '단원1', description: '본문1' },
+          { sessionNo: 2, sessionLabel: '2회차', title: '단원2', description: '본문2' },
+        ],
+      },
+    }
+    const merged = mergeRegistrationOverlayNestedSsot(program, {
+      [unitKey]: { 1: '단원1', 2: '단원2', 3: 'stale3', 4: 'stale4' },
+      'recruit.keep': 'yes',
+    })
+    expect(merged[unitKey]).toEqual({ 1: '단원1', 2: '단원2', 3: null, 4: null })
+    expect(merged['recruit.keep']).toBe('yes')
+  })
+
+  it('빈 nested 는 unit map 을 {} 로 덮어 삭제 회차를 복원하지 않는다', () => {
+    const program: Program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [],
+      },
+    }
+    const merged = mergeRegistrationOverlayNestedSsot(program, {
+      [unitKey]: { 1: '단원1', 2: '단원2', 3: 'stale3' },
+    })
+    expect(merged[unitKey]).toEqual({ 1: null, 2: null, 3: null })
+  })
+
+  it('sparse nested 는 GET overlay 의 장소·담당자·일정·교육형태를 빈값으로 덮지 않는다', () => {
+    const program: Program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        announcementTitle: '수정 공고',
+      },
+    }
+    const merged = mergeRegistrationOverlayNestedSsot(program, {
+      'generalRegistration.basicInfo.detailedProgramName': '캠프 A',
+      'generalRegistration.basicInfo.educationVenueDetail': '서울시 강남구',
+      'generalRegistration.basicInfo.localManagerContactId': 'contact-1',
+      'generalRegistration.basicInfo.localManagerContactIds': ['contact-1'],
+      'generalRegistration.educationScheduleSettings.scheduleLines': ['기존 일정'],
+      'generalRegistration.kpi.participantCount': 20,
+      'generalRegistration.typeSettings.educationForm': 'offline',
+      'generalRegistration.typeSettings.singleEducationForm': 'offline',
+      'generalRegistration.typeSettings.multiCommonEducationForm': 'offline',
+    })
+    expect(merged['generalRegistration.basicInfo.detailedProgramName']).toBe('캠프 A')
+    expect(merged['generalRegistration.basicInfo.educationVenueDetail']).toBe('서울시 강남구')
+    expect(merged['generalRegistration.basicInfo.localManagerContactId']).toBe('contact-1')
+    expect(merged['generalRegistration.basicInfo.localManagerContactIds']).toEqual(['contact-1'])
+    expect(merged['generalRegistration.educationScheduleSettings.scheduleLines']).toEqual(['기존 일정'])
+    expect(merged['generalRegistration.kpi.participantCount']).toBe(20)
+    expect(merged['generalRegistration.typeSettings.educationForm']).toBe('offline')
+    expect(merged['generalRegistration.typeSettings.singleEducationForm']).toBe('offline')
+    expect(merged['generalRegistration.typeSettings.multiCommonEducationForm']).toBe('offline')
+  })
+})
+
+describe('writeGeneralRegistrationOverlayFromCommonInfoFormValues extras', () => {
+  it('Independent extras 는 overlay 유령 회차를 일반 회차 수에 넣지 않는다', () => {
+    const program: Program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        curriculumSessions: [
+          { sessionLabel: '사전 교육', title: '사전 교육ㅋㅋㅋ', description: '' },
+          {
+            sessionLabel: '1차시',
+            title: '필요와 욕구, 현명한 소비12121212',
+            description: '본문',
+          },
+        ],
+        scheduleCurriculumPreEducation: true,
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.unitNameBySession': {
+          1: '필요와 욕구, 현명한 소비12121212',
+        },
+        'generalRegistration.educationCurriculum.unitContentBySession': { 1: '본문' },
+      },
+    }
+    writeGeneralRegistrationOverlayFromCommonInfoFormValues(program)
+    const extras = getGeneralRegistrationDetailEditExtras()
+    expect(extras.curriculumChartSessionCount).toBe(1)
+    expect(extras.scheduleCurriculumPreEducation).toBe(true)
   })
 })

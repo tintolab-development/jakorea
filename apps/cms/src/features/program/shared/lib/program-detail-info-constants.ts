@@ -9,28 +9,29 @@ import {
   getProgramLifecycleLabel,
   PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER,
 } from '@/shared/constants/status'
+import {
+  formatDateDotWithWeekday,
+  formatDateRangeDotWithWeekday,
+  formatDateTimeDotWithWeekday,
+} from '@/shared/utils/date'
 
 // ─── 요일/날짜 포맷 ────────────────────────────────────────
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-
-/** "2026. 02. 08 (일) 09:15" */
+/** "2026.04.20(월) 09:15" */
 export function formatDate(d: DateValue | undefined): string {
   if (!d) return '-'
-  const parsed = dayjs(d)
-  return `${parsed.format('YYYY. MM. DD')} (${WEEKDAYS[parsed.day()]}) ${parsed.format('HH:mm')}`
+  return formatDateTimeDotWithWeekday(d)
 }
 
-/** "2026. 04. 03 (금)" */
+/** "2026.04.03(금)" */
 export function formatDateOnly(d: DateValue | undefined): string {
   if (!d) return '-'
-  const parsed = dayjs(d)
-  return `${parsed.format('YYYY. MM. DD')} (${WEEKDAYS[parsed.day()]})`
+  return formatDateDotWithWeekday(d)
 }
 
 export function formatDateRange(start: DateValue | undefined, end: DateValue | undefined): string {
   if (!start || !end) return '-'
-  return `${formatDateOnly(start)} ~ ${formatDateOnly(end)}`
+  return formatDateRangeDotWithWeekday(start, end)
 }
 
 // ─── 모집 상태 ─────────────────────────────────────────────

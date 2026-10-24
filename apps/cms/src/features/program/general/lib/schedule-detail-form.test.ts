@@ -369,6 +369,31 @@ describe('trimTrailingBlankRegularCurriculumSessions', () => {
     expect(trimmed[0]?.sessionLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
     expect(trimmed[1]?.sessionLabel).toBe('1차시')
   })
+
+  it('기본 라벨만 있는 2차시 placeholder 는 제거한다', () => {
+    const trimmed = trimTrailingBlankRegularCurriculumSessions([
+      { sessionLabel: '1차시', title: '필요와 욕구, 현명한 소비12121212', description: '본문' },
+      { sessionLabel: '2차시', title: '2차시', description: '' },
+    ])
+    expect(trimmed).toHaveLength(1)
+    expect(trimmed[0]?.sessionLabel).toBe('1차시')
+  })
+
+  it('내용이 있는 2차시는 제거하지 않는다', () => {
+    const trimmed = trimTrailingBlankRegularCurriculumSessions([
+      { sessionLabel: '1차시', title: '단원1', description: '본문1' },
+      { sessionLabel: '2차시', title: '단원2', description: '본문2' },
+    ])
+    expect(trimmed).toHaveLength(2)
+  })
+
+  it('단원명만 기본 라벨이어도 교육 형태 라벨이 있으면 보존한다', () => {
+    const trimmed = trimTrailingBlankRegularCurriculumSessions([
+      { sessionLabel: '1회차', title: '1회차', description: '', educationFormLabel: '오프라인' },
+      { sessionLabel: '2회차', title: '2회차', description: '', educationFormLabel: '온라인' },
+    ])
+    expect(trimmed).toHaveLength(2)
+  })
 })
 
 describe('applyCurriculumPreEducationBlock', () => {

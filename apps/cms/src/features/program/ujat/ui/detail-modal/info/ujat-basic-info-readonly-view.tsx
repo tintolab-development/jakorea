@@ -1,10 +1,17 @@
+import { useMemo } from 'react'
 import type { Program } from '@/types/domain'
 import type { UjatRegistrationBasicInfoDisplay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatDate } from '@/features/program/shared/lib/program-detail-info-constants'
 import { UjatProgramListProgressCell } from '@/features/program/ujat/ui/list/ujat-program-list-progress-cell'
 import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
-import { SponsorManagerLineInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import {
+  SponsorManagerContactsView,
+  SponsorManagerLinesStackView,
+} from '@/features/program/shared/ui/sponsor-manager-inline-view'
+import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import { resolveSponsorManagerViewLines } from '@/features/program/general/model/common-info-edit-schema'
+import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -12,6 +19,49 @@ const BLOCK_GAP_STYLE = { marginTop: 16 } as const
 
 function UjatProgressStatusView({ program }: { program: Program }) {
   return <UjatProgramListProgressCell program={program} />
+}
+
+function UjatSponsorManagerFieldView({
+  program,
+  display,
+}: {
+  program?: Program
+  display: UjatRegistrationBasicInfoDisplay
+}) {
+  const sponsorIds = program?.generalCommonInfo?.sponsorManagementIds ?? []
+  const sponsorEditContext = useGeneralProgramSponsorEditContext(
+    sponsorIds,
+    sponsorIds.length > 0
+  )
+  const selectedSponsors = useMemo(
+    () =>
+      sponsorIds
+        .map(id => sponsorEditContext.sponsors.find(s => s.id === id))
+        .filter((sponsor): sponsor is SponsorManagementRow => sponsor != null),
+    [sponsorEditContext.sponsors, sponsorIds]
+  )
+  const fallbackLines = useMemo(
+    () =>
+      resolveSponsorManagerViewLines({
+        storedLine: display.sponsorManager,
+        contactRefs: program?.generalCommonInfo?.sponsorManagerContactIds,
+        contactNames: program?.generalCommonInfo?.sponsorManagerContactNames,
+        sponsors: selectedSponsors,
+        contactsBySponsorId: sponsorEditContext.contactsBySponsorId,
+      }),
+    [display.sponsorManager, program, selectedSponsors, sponsorEditContext.contactsBySponsorId]
+  )
+
+  if (program) {
+    return (
+      <SponsorManagerContactsView
+        program={program}
+        sponsorRows={selectedSponsors}
+        contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
+      />
+    )
+  }
+  return <SponsorManagerLinesStackView lines={fallbackLines} />
 }
 
 /** UJAT 등록 양식 기본 정보 — 조회(프로그램 상세·미리보기 공통 레이아웃) */
@@ -108,7 +158,7 @@ export function UjatBasicInfoReadonlyView({
           />
           <DetailInfoForm.Field
             label="후원사 담당자"
-            view={<SponsorManagerLineInlineView text={display.sponsorManager} />}
+            view={<UjatSponsorManagerFieldView program={program} display={display} />}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">

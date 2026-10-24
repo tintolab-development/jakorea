@@ -6,3 +6,10 @@
   align-items: stretch;
   gap: var(--spacing-32);
 }
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+}

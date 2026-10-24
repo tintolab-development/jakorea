@@ -14,9 +14,14 @@ export const IMPACT_STORIES_PATH = '/impact'
 
 export const impactStoryDetailPath = (id: string) => `${IMPACT_STORIES_PATH}/${id}`
 
+export { IMPACT_STORY_PIN_MAX } from './pin-max'
+
 export const IMPACT_STORIES_PAGE_SIZE = 9
 
-/** 캐러셀·인접글·홈 서브카드용 preview. 시드 18건을 한 페이지에 담는다. */
+/**
+ * GET /api/public/impact-story/stories?page=0&size=20
+ * 고정글(최대 9)과 인접글·홈 서브카드용 미리보기. 그리드(size=9)와 섞지 않는다.
+ */
 export const IMPACT_STORIES_PREVIEW_SIZE = 20
 
 export const DEFAULT_IMPACT_STORIES_LIST_PARAMS = {

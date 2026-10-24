@@ -2,7 +2,7 @@ import type { UjatInstitutionApplicationRegionKey } from './regions'
 import type { UjatInstitutionScheduleSlotKey } from '../education-schedule'
 import type { UjatInstitutionScheduleConfirmStatus } from '../schedule-confirm/types'
 
-/** 임시 배정 평가 상태 */
+/** 임시 배정 현황 상태 */
 export type UjatInstitutionTempAssignmentStatus =
   | 'evaluation_pending'
   | 'temp_rejected'
@@ -39,8 +39,10 @@ export type UjatInstitutionApplicationRow = {
   institutionName: string
   tempAssignmentStatus: UjatInstitutionTempAssignmentStatus
   gradeClassCounts: UjatInstitutionGradeClassCount[]
-  totalClassCount: number
+  totalClassCount: number | null
   scheduleSlots: Record<UjatInstitutionScheduleSlotKey, 'O' | '-'>
+  /** preferredEducationSchedules[].scheduleId. 숫자이고 미해결이 아닐 때만 */
+  preferredScheduleIdByIso: Record<string, number>
   /** GET sessions[].startAt 날짜. 없으면 빈 배열 */
   sessionIsoDates: string[]
   teacherName: string

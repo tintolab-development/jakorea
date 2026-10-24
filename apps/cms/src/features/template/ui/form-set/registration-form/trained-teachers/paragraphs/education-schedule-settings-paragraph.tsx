@@ -210,7 +210,13 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
           label="교육 진행 예정일"
           fullRow
           readOnlyDisplay
-          view={<EducationSchedulePreviewLines lines={scheduleLines} onRemove={removeLine} />}
+          view={
+            <EducationSchedulePreviewLines
+              lines={scheduleLines}
+              onRemove={removeLine}
+              lockStartedLines={false}
+            />
+          }
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

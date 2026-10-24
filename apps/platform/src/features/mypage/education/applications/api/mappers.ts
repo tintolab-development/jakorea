@@ -8,11 +8,12 @@ import {
 } from '../lib/application-content-from-answers'
 import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
 import { isOrganizationEducationApplication } from '../lib/organization-education-application'
-import { readUjatPortalBannerState } from '../lib/ujat-portal-banner'
+import { readUjatPortalBannerState, readUjatRevisionReason } from '../lib/ujat-portal-banner'
 import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-content-from-answers'
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
+  EducationUjatTemporarySchedule,
 } from '../model/types'
 import type {
   PortalProgramApplicationDetail,
@@ -202,6 +203,8 @@ export function mapPortalProgramApplicationListItem(
   const thumbnailUrl =
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
   const ujatPortalBannerState = readUjatPortalBannerState(row.supplement)
+  const ujatRevisionReason = readUjatRevisionReason(row.supplement)
+  const ujatAssignmentRevision = row.supplement?.ujat?.assignmentRevision
 
   return {
     id: String(row.applicationId),
@@ -223,6 +226,8 @@ export function mapPortalProgramApplicationListItem(
       ? { pendingSurveyCount: row.pendingSurveyCount }
       : {}),
     ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
+    ...(ujatRevisionReason ? { ujatRevisionReason } : {}),
+    ...(typeof ujatAssignmentRevision === 'number' ? { ujatAssignmentRevision } : {}),
   }
 }
 
@@ -285,12 +290,31 @@ function normalizeApplicationAnswers(raw: unknown): Record<string, unknown> {
   return record
 }
 
+function mapUjatTemporarySchedule(
+  detail: PortalProgramApplicationDetail,
+): EducationUjatTemporarySchedule | undefined {
+  const temporarySchedule = detail.supplement?.ujat?.temporarySchedule
+  if (!temporarySchedule) return undefined
+  return {
+    slots: (temporarySchedule.slots ?? []).map(slot => ({
+      scheduleId: slot.scheduleId ?? null,
+      scheduleStartAt: slot.scheduleStartAt ?? null,
+      grade: slot.grade ?? null,
+      className: slot.className ?? null,
+      studentCount: slot.studentCount ?? null,
+      assignmentStatus: slot.assignmentStatus ?? null,
+    })),
+  }
+}
+
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
+  knownApplicationType?: ProgramApplicationType | null,
 ): EducationApplicationListItem | null {
   const displayStatus = resolvePortalDisplayStatus(detail)
   const mapped = mapPortalProgramApplicationListItem({
     ...detail,
+    applicationType: detail.applicationType ?? knownApplicationType ?? undefined,
     displayStatus:
       detail.displayStatus ??
       Object.entries(DISPLAY_STATUS_FROM_API).find(([, status]) => status === displayStatus)?.[0],
@@ -300,8 +324,8 @@ export function mapPortalProgramApplicationDetail(
     programType: detail.programType,
     programGroup: detail.programGroup,
     thumbnailFileObjectId: detail.thumbnailFileObjectId ?? detail.program?.thumbnailFileObjectId,
-    educationStartAt: detail.educationStartAt ?? detail.program?.educationStartAt,
-    educationEndAt: detail.educationEndAt ?? detail.program?.educationEndAt,
+    educationStartAt: detail.educationStartAt,
+    educationEndAt: detail.educationEndAt,
   })
   if (!mapped) return null
   mapped.displayStatus = displayStatus
@@ -350,16 +374,25 @@ export function mapPortalProgramApplicationDetail(
   if (detail.formResponseId != null && Number.isFinite(detail.formResponseId)) {
     mapped.formResponseId = detail.formResponseId
   }
+  if (detail.formBindingId != null && Number.isFinite(detail.formBindingId)) {
+    mapped.formBindingId = detail.formBindingId
+  }
   const formResponseStatus = detail.formResponseStatus?.trim()
   if (formResponseStatus) {
     mapped.formResponseStatus = formResponseStatus
+  }
+  const ujatTemporarySchedule = mapUjatTemporarySchedule(detail)
+  if (ujatTemporarySchedule) {
+    mapped.ujatTemporarySchedule = ujatTemporarySchedule
   }
 
   const interview = resolveInterviewFields(detail, displayStatus)
   mapped.hasInterview = interview.hasInterview
   if (interview.interviewAtLabel) mapped.interviewAtLabel = interview.interviewAtLabel
 
-  const applicationType = readApplicationType(detail.applicationType)
+  const applicationType =
+    readApplicationType(detail.applicationType) ??
+    (knownApplicationType ? readApplicationType(knownApplicationType) ?? knownApplicationType : null)
   const nestedProgram = detail.program as
     | Pick<
         ProgramDetail,
@@ -368,8 +401,9 @@ export function mapPortalProgramApplicationDetail(
     | undefined
   const isOrganizationApplication = isOrganizationEducationApplication(
     {
-      applicationType: applicationType ?? undefined,
+      applicationType: applicationType ?? mapped.applicationType,
       categoryLabel: mapped.categoryLabel,
+      applicationAnswers: answers,
     },
     nestedProgram,
   )

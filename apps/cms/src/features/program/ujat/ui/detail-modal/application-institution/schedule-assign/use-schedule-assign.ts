@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import {
-  buildUjatProgramScheduleDates,
+  buildUjatScheduleAssignDates,
+  collectPreferredEducationIsoDates,
   resolveEducationSemesterForIsoDate,
   type UjatInstitutionEducationSemesterKey,
 } from '../education-schedule'
@@ -19,7 +20,7 @@ import {
 import type { UjatScheduleAssignRow } from './types'
 import {
   computeVolunteerEducationDays,
-  listTempAssignedSchoolsForDate,
+  listAssignableSchoolsForDate,
   sumSelectedGradeClassCount,
 } from './utils'
 import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
@@ -35,8 +36,11 @@ import {
 import {
   applyTemporaryScheduleSlotsToDraft,
   buildTemporaryScheduleSaveRequest,
+  collectStudentCountByClass,
+  serializeTemporaryScheduleSlots,
 } from './temporary-schedule-mapper'
 import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 
 export function useUjatInstitutionScheduleAssign(
   regionKey: UjatInstitutionApplicationRegionKey,
@@ -51,15 +55,18 @@ export function useUjatInstitutionScheduleAssign(
     Record<string, string>
   >({})
   const hydratedKeyRef = useRef<string | null>(null)
+  const studentCountByClassRef = useRef<Map<string, number>>(new Map())
+  const hydratedSignatureByInstitutionRef = useRef<Map<string, string>>(new Map())
+  const educationRegionCode = toUjatEducationRegionCode(regionKey)
+  const listQuery = useMemo(
+    () => ({ educationRegionCode }),
+    [educationRegionCode]
+  )
 
   const remoteQuery = useInfiniteQuery({
-    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', {
-      status: 'TEMP_ASSIGNED',
-    }),
+    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', listQuery),
     queryFn: ({ pageParam }) =>
-      listUjatInstitutionApplicationsPage(String(programId), pageParam, {
-        status: 'TEMP_ASSIGNED',
-      }),
+      listUjatInstitutionApplicationsPage(String(programId), pageParam, listQuery),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,
@@ -75,29 +82,63 @@ export function useUjatInstitutionScheduleAssign(
     retry: false,
   })
 
+  const allApplicationRows = useMemo(
+    () => remoteQuery.data?.pages.flatMap(page => page.rows) ?? [],
+    [remoteQuery.data]
+  )
+
+  const preferredIsoDates = useMemo(
+    () => collectPreferredEducationIsoDates(allApplicationRows),
+    [allApplicationRows]
+  )
+
+  const preferredScheduleIdByIso = useMemo(() => {
+    const ids: Record<string, number> = {}
+    for (const row of allApplicationRows) {
+      Object.assign(ids, row.preferredScheduleIdByIso)
+    }
+    return ids
+  }, [allApplicationRows])
+
   const scheduleIdByIsoDate = useMemo(
-    () => buildScheduleIdByIsoDateMap(schedulesQuery.data ?? []),
-    [schedulesQuery.data]
+    () =>
+      buildScheduleIdByIsoDateMap(
+        schedulesQuery.data ?? [],
+        preferredIsoDates,
+        preferredScheduleIdByIso
+      ),
+    [preferredIsoDates, preferredScheduleIdByIso, schedulesQuery.data]
   )
 
   const applicationRows = useMemo(() => {
     void version
-    const rows = remoteQuery.data?.pages.flatMap(page => page.rows) ?? []
-    return rows
+    return allApplicationRows
       .filter(row => row.regionKey === regionKey)
       .map(row => ({
         ...row,
-        // 기관 신청 목록의 명칭이 비어 있거나 ID로 내려오는 경우에도
-        // 임시 배정 API의 organizationName을 표시값으로 사용한다.
         institutionName:
           organizationNamesByApplicationId[row.id]?.trim() || row.institutionName,
       }))
-  }, [organizationNamesByApplicationId, regionKey, remoteQuery.data, version])
+  }, [allApplicationRows, organizationNamesByApplicationId, regionKey, version])
+
+  const fetchNextPage = remoteQuery.fetchNextPage
+  const hasNextPage = remoteQuery.hasNextPage
+  const isFetchingNextPage = remoteQuery.isFetchingNextPage
+
+  useEffect(() => {
+    if (!remoteEnabled || !hasNextPage || isFetchingNextPage) return
+    void fetchNextPage()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, remoteEnabled])
 
   useEffect(() => {
     if (!remoteEnabled || !programId) return
-    if (schedulesQuery.isLoading) return
-    const hydrateKey = `${programId}:${regionKey}:${scheduleIdByIsoDate.size}`
+    if (schedulesQuery.isLoading || remoteQuery.isLoading || isFetchingNextPage) return
+    if (hasNextPage) return
+    const appIds = allApplicationRows
+      .filter(row => row.regionKey === regionKey)
+      .map(row => row.id)
+      .join(',')
+    const hydrateKey = `${programId}:${regionKey}:${appIds}:${preferredIsoDates.join(',')}`
     if (hydratedKeyRef.current === hydrateKey) return
     let cancelled = false
 
@@ -105,8 +146,12 @@ export function useUjatInstitutionScheduleAssign(
       setHydrating(true)
       try {
         let draft = getUjatScheduleAssignDraftRegionState(regionKey)
-        const assignmentList = await fetchUjatOrganizationScheduleAssignments(String(programId))
+        const assignmentList = await fetchUjatOrganizationScheduleAssignments(String(programId), {
+          educationRegionCode,
+        })
         const slots = assignmentList.content ?? []
+        studentCountByClassRef.current = collectStudentCountByClass(slots)
+        hydratedSignatureByInstitutionRef.current = new Map()
         const organizationNames: Record<string, string> = {}
         const byApp = new Map<string, typeof slots>()
         for (const slot of slots) {
@@ -131,6 +176,8 @@ export function useUjatInstitutionScheduleAssign(
               s.educationRegionCode.toUpperCase() === regionCode
           )
           if (!matchedRegion) continue
+          const counts = collectStudentCountByClass(appSlots, appId)
+          for (const [key, value] of counts) studentCountByClassRef.current.set(key, value)
           draft = applyTemporaryScheduleSlotsToDraft({
             regionState: draft,
             institutionRowId: appId,
@@ -139,18 +186,21 @@ export function useUjatInstitutionScheduleAssign(
           })
         }
 
-        const appIds = (remoteQuery.data?.pages.flatMap(page => page.rows) ?? [])
+        const regionAppIds = allApplicationRows
           .filter(row => row.regionKey === regionKey)
           .map(row => row.id)
 
-        for (const appId of appIds) {
+        for (const appId of regionAppIds) {
           if (byApp.has(appId)) continue
           try {
             const detail = await fetchUjatTemporarySchedule(String(programId), appId)
+            const detailSlots = detail.slots ?? []
+            const counts = collectStudentCountByClass(detailSlots, appId)
+            for (const [key, value] of counts) studentCountByClassRef.current.set(key, value)
             draft = applyTemporaryScheduleSlotsToDraft({
               regionState: draft,
               institutionRowId: appId,
-              slots: detail.slots ?? [],
+              slots: detailSlots,
               scheduleIdByIsoDate,
             })
           } catch {
@@ -159,6 +209,25 @@ export function useUjatInstitutionScheduleAssign(
         }
 
         if (!cancelled) {
+          const signatures = new Map<string, string>()
+          const institutionIds = new Set<string>([
+            ...byApp.keys(),
+            ...regionAppIds,
+          ])
+          for (const institutionId of institutionIds) {
+            const body = buildTemporaryScheduleSaveRequest({
+              regionKey,
+              regionState: draft,
+              institutionRowId: institutionId,
+              scheduleIdByIsoDate,
+              studentCountByClass: studentCountByClassRef.current,
+            })
+            signatures.set(
+              institutionId,
+              body ? serializeTemporaryScheduleSlots(body.slots) : ''
+            )
+          }
+          hydratedSignatureByInstitutionRef.current = signatures
           replaceUjatScheduleAssignRegionState(regionKey, draft)
           hydratedKeyRef.current = hydrateKey
           setVersion(v => v + 1)
@@ -172,10 +241,15 @@ export function useUjatInstitutionScheduleAssign(
       cancelled = true
     }
   }, [
+    allApplicationRows,
+    educationRegionCode,
+    preferredIsoDates,
     programId,
     regionKey,
     remoteEnabled,
-    remoteQuery.data,
+    hasNextPage,
+    isFetchingNextPage,
+    remoteQuery.isLoading,
     scheduleIdByIsoDate,
     schedulesQuery.isLoading,
   ])
@@ -191,37 +265,37 @@ export function useUjatInstitutionScheduleAssign(
 
   const assignDates = useMemo(
     () =>
-      buildUjatProgramScheduleDates(
-        schedulesQuery.data ?? [],
-        resolveUjatRegistrationBasicInfoOverlay()
-      ),
-    [schedulesQuery.data]
+      buildUjatScheduleAssignDates({
+        preferredIsoDates,
+        schedules: schedulesQuery.data ?? [],
+        overlay: resolveUjatRegistrationBasicInfoOverlay(),
+      }),
+    [preferredIsoDates, schedulesQuery.data]
   )
 
   useEffect(() => {
+    if (hydrating) return
     if (assignDates.length === 0) return
     ensureUjatScheduleAssignDays(
       regionKey,
       assignDates.map(entry => entry.isoDate)
     )
     setVersion(v => v + 1)
-  }, [assignDates, regionKey])
+  }, [assignDates, hydrating, regionKey])
 
   const schoolsByDate = useMemo(() => {
-    const map: Record<string, ReturnType<typeof listTempAssignedSchoolsForDate>> = {}
+    const map: Record<string, ReturnType<typeof listAssignableSchoolsForDate>> = {}
     for (const { isoDate } of assignDates) {
-      const available = listTempAssignedSchoolsForDate(applicationRows, regionKey, isoDate)
+      const available = listAssignableSchoolsForDate(applicationRows, regionKey, isoDate)
       const assignedIds = new Set(
         regionState.days[isoDate]?.rows
           .map(row => row.institutionRowId)
           .filter((id): id is string => Boolean(id)) ?? []
       )
 
-      // 기존 임시 배정 행은 날짜별 scheduleSlots가 비어 있어도
-      // 선택값을 유지해야 하므로, 현재 날짜에 이미 배정된 기관을 옵션에 보강한다.
       const byId = new Map(available.map(row => [row.id, row]))
       for (const row of applicationRows) {
-        if (row.tempAssignmentStatus === 'temp_assigned' && assignedIds.has(row.id)) {
+        if (assignedIds.has(row.id)) {
           byId.set(row.id, row)
         }
       }
@@ -320,7 +394,7 @@ export function useUjatInstitutionScheduleAssign(
     setSaving(true)
     try {
       const draft = getUjatScheduleAssignDraftRegionState(regionKey)
-      const institutionIds = new Set<string>()
+      const institutionIds = new Set<string>(hydratedSignatureByInstitutionRef.current.keys())
       for (const day of Object.values(draft.days)) {
         for (const row of day.rows) {
           if (row.institutionRowId && row.gradeValues.length > 0) {
@@ -331,44 +405,96 @@ export function useUjatInstitutionScheduleAssign(
       if (institutionIds.size === 0) {
         return { ok: false as const, message: '저장할 학급 배정이 없습니다.' }
       }
-      if (scheduleIdByIsoDate.size === 0) {
-        return {
-          ok: false as const,
-          message: '프로그램 일정(scheduleId)을 찾지 못했습니다. 일정 등록 후 다시 시도해 주세요.',
-        }
-      }
+
+      const results: Array<{ institutionId: string; name: string; ok: boolean; message?: string }> =
+        []
 
       for (const institutionId of institutionIds) {
+        const name =
+          organizationNamesByApplicationId[institutionId]?.trim() || institutionId
         const body = buildTemporaryScheduleSaveRequest({
           regionKey,
           regionState: draft,
           institutionRowId: institutionId,
           scheduleIdByIsoDate,
+          studentCountByClass: studentCountByClassRef.current,
         })
-        if (!body) continue
-        await putUjatTemporarySchedule(String(programId), institutionId, body)
+        const nextSignature = body ? serializeTemporaryScheduleSlots(body.slots) : ''
+        const previousSignature =
+          hydratedSignatureByInstitutionRef.current.get(institutionId) ?? ''
+        if (nextSignature === previousSignature) continue
+        if (!body) {
+          results.push({
+            institutionId,
+            name,
+            ok: false,
+            message:
+              '해당 희망일의 하루 일정(scheduleId)을 찾지 못했습니다. 연간 기간 일정으로는 저장할 수 없습니다.',
+          })
+          continue
+        }
+        try {
+          await putUjatTemporarySchedule(String(programId), institutionId, body)
+          hydratedSignatureByInstitutionRef.current.set(institutionId, nextSignature)
+          results.push({ institutionId, name, ok: true })
+        } catch (error) {
+          results.push({
+            institutionId,
+            name,
+            ok: false,
+            message: readApiErrorAlertMessage(
+              error,
+              '임시 배정 저장에 실패했습니다. 다시 시도해 주세요.'
+            ),
+          })
+        }
+      }
+
+      if (results.length === 0) {
+        return { ok: true as const, message: '변경된 배정이 없습니다.' }
       }
 
       await queryClient.invalidateQueries({
-        queryKey: ujatQueryKeys.organizationApplications(String(programId), {
-          status: 'TEMP_ASSIGNED',
-        }),
+        queryKey: ujatQueryKeys.organizationApplicationsRoot(String(programId)),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.organizationScheduleAssignments(
+          String(programId),
+          educationRegionCode
+        ),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.programSchedules(String(programId)),
       })
       hydratedKeyRef.current = null
       setVersion(v => v + 1)
-      return { ok: true as const }
+      const failed = results.filter(item => !item.ok)
+      const summary = results
+        .map(item =>
+          item.ok ? `${item.name}: 성공` : `${item.name}: 실패${item.message ? ` (${item.message})` : ''}`
+        )
+        .join('\n')
+      if (failed.length > 0) {
+        return { ok: false as const, message: summary, results }
+      }
+      return { ok: true as const, message: summary, results }
     } catch (error) {
       return {
         ok: false as const,
-        message:
-          error instanceof Error
-            ? error.message
-            : '임시 배정 저장에 실패했습니다. 다시 시도해 주세요.',
+        message: readApiErrorAlertMessage(error, '임시 배정 저장에 실패했습니다. 다시 시도해 주세요.'),
       }
     } finally {
       setSaving(false)
     }
-  }, [programId, queryClient, regionKey, remoteEnabled, scheduleIdByIsoDate])
+  }, [
+    educationRegionCode,
+    organizationNamesByApplicationId,
+    programId,
+    queryClient,
+    regionKey,
+    remoteEnabled,
+    scheduleIdByIsoDate,
+  ])
 
   return {
     assignDates,

@@ -656,7 +656,7 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     }
     expect(detail.generalCommonInfo).toBeUndefined()
     expect(detail.program?.generalCommonInfo?.sponsorManagementId).toBe('163302')
-    expect(detail.program?.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+    expect(detail.program?.generalCommonInfo).not.toHaveProperty('detailedProgramName')
     expect(detail.program?.generalCommonInfo).not.toHaveProperty('textbookName')
     expect(detail.program?.generalCommonInfo).not.toHaveProperty('title')
     expect(detail.program?.generalCommonInfo?.educationProcess).toBe('Digital')
@@ -716,8 +716,9 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
         curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '새 내용' }],
       },
     })
-    expect(request.serviceDetailJson).toContain('"title":"신 차시"')
+    expect(request.serviceDetailJson).not.toContain('신 차시')
     expect(request.serviceDetailJson).not.toContain('구 차시')
+    expect(request.serviceDetailJson).not.toContain('curriculumSessions')
   })
 
   it('부분 generalCommonInfo가 이전 공고·모집 정보를 지우지 않는다', () => {
@@ -760,9 +761,7 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
       maxAssignableInstructors: 0,
       preEducationNoticeRequired: false,
     })
-    expect(common?.curriculumSessions).toEqual([
-      { sessionLabel: '1차시', title: '신 차시', description: '새 내용' },
-    ])
+    expect(common).not.toHaveProperty('curriculumSessions')
   })
 
   it('keeps announcement and schedule time when nested common info was previously stripped', () => {
@@ -799,13 +798,9 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     }
     const common = detail.program?.generalCommonInfo
     expect(common?.announcementTitle).toBe('교육받은교사(수정4)')
-    expect(common?.scheduleDetails).toEqual([
-      {
-        scheduleLabel: '세부 일정 01',
-        name: '교육받은교사(수정3)',
-        progressTimeSummary: '15:43 ~ 16:43',
-      },
-    ])
+    expect(common).not.toHaveProperty('scheduleDetails')
+    expect(common).not.toHaveProperty('educationJournalEnabled')
+    expect(common).not.toHaveProperty('teacherTrainingEnabled')
   })
 })
 

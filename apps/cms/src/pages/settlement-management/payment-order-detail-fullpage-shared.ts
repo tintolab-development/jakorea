@@ -3,6 +3,7 @@
  */
 
 import dayjs, { type Dayjs } from 'dayjs'
+import { formatDateDotWithWeekday, formatNumberDisplay } from '@/shared/utils'
 import {
   PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS,
   type PaymentOrderAdminLineProcessingStatus,
@@ -43,8 +44,7 @@ export const lineStatusSelectOptions: { value: AppliedLineStatus; label: string 
 ]
 
 export function formatKoreanDateWithWeekday(iso: string): string {
-  const x = dayjs(iso)
-  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]})`
+  return formatDateDotWithWeekday(iso)
 }
 
 export function matchesDateRange(iso: string, range: [Dayjs | null, Dayjs | null] | null): boolean {
@@ -73,7 +73,7 @@ export function deriveAggregateFromLines(
 }
 
 export function formatWon(amount: number): string {
-  return `${amount.toLocaleString('ko-KR')}원`
+  return `${formatNumberDisplay(amount)}원`
 }
 
 export {

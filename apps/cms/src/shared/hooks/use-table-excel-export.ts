@@ -29,7 +29,7 @@ export type UseTableExcelExportOptions<T extends object> = {
   emptyAlertTitle?: string
   emptyAlertContent?: string
   errorAlertTitle?: string
-  errorAlertContent?: string
+  errorAlertContent?: string | ((error: unknown) => string)
 }
 
 const DEFAULT_EMPTY_TITLE = '다운로드 안내'
@@ -64,7 +64,9 @@ export function useTableExcelExport<T extends object>({
       await exporter(columns, data, filename)
     } catch (error) {
       console.error('[useTableExcelExport] excel export failed', error)
-      cmsAlertModal.show({ title: errorAlertTitle, content: errorAlertContent })
+      const content =
+        typeof errorAlertContent === 'function' ? errorAlertContent(error) : errorAlertContent
+      cmsAlertModal.show({ title: errorAlertTitle, content })
     } finally {
       setIsExporting(false)
     }

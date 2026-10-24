@@ -50,6 +50,7 @@ import {
   readGeneralRegistrationOverlayScheduleLines,
   subscribeProgramRegistrationOverlayKeys,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { isProgramStructureEditPeriodOpen } from '@/features/program/shared/lib/program-edit-window'
 
 function extrasWithParticipant(
   extras: GeneralRegistrationEditorExtras,
@@ -273,6 +274,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
           onIpsScheduleDetailChange={value =>
             commitExtras({ ...extras, ipsScheduleDetail: value })
           }
+          participationMethodLocked={!isProgramStructureEditPeriodOpen(program)}
         />
       </ProgramCommonInfoEditSection>
       <ProgramCommonInfoEditSection

@@ -1,18 +1,37 @@
 /**
- * CMS `form-document-preview-body.css` / `--agreement-portrait` 발췌
+ * CMS `form-document-preview-body.css` A4 스코프와 동기
  * (A4 1464px 디자인 캔버스 기준 px)
  */
 
 .body {
+  --a4-section-gap: 40px;
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 0;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   pointer-events: none;
   font-family: Pretendard, sans-serif;
   color: #3d3d3d;
+}
+
+.body > * {
+  margin-top: var(--a4-section-gap);
+}
+
+.body > *:first-child {
+  margin-top: 0;
+}
+
+.bodyPayment,
+.bodyNotice,
+.bodyPortrait {
+  --a4-section-gap: 24px;
+}
+
+.bodyExpense {
+  --a4-section-gap: 28px;
 }
 
 .paragraph {
@@ -24,7 +43,7 @@
 }
 
 .sectionTitle {
-  margin: 0 0 8px;
+  margin: 0 0 4px;
   font-size: 20px;
   font-weight: 700;
   line-height: 150%;
@@ -45,24 +64,24 @@
 
 .closingText {
   margin: 0;
-  font-size: 24px;
-  font-weight: 400;
+  font-size: 20px;
+  font-weight: 700;
   line-height: 150%;
-  color: #3d3d3d;
+  color: #000;
+  text-align: right;
   white-space: pre-wrap;
 }
 
+.bodyPayment .explanationText,
+.bodyExpense .explanationText,
+.bodyNotice .explanationText,
 .bodyPortrait .explanationText {
   font-size: 20px;
-  line-height: 140%;
-}
-
-.bodyPortrait .paragraph:has(+ .paragraph) {
-  margin-bottom: 0;
+  line-height: 150%;
 }
 
 .bodyPortrait :global(.form-template-vertical-table-wrap) {
-  gap: 16px;
+  gap: 8px;
 }
 
 .bodyPortrait :global(.form-template-vertical-table__th),
@@ -83,18 +102,33 @@
   line-height: 150%;
 }
 
-.bodyPortrait :global(.form-template-vertical-table__bottom-consent) {
-  margin-top: 8px;
+.bodyPortrait :global(.form-template-vertical-table__bottom) {
+  gap: 8px;
 }
 
+.bodyPortrait :global(.form-template-table-bottom-consent) {
+  margin-top: 4px;
+}
+
+.bodyPortrait :global(.app-radio-group .ant-radio-wrapper),
 .bodyPortrait :global(.app-radio-group) {
+  color: #3d3d3d;
+  font-size: 16px;
+}
+
+.bodyPortrait :global(.app-radio-group .ant-radio-inner) {
+  border-color: #c4c4c4;
+  background-color: #fff;
+}
+
+.bodyPortrait :global(.app-radio-group .ant-radio-checked .ant-radio-inner) {
+  border-color: #85969d;
+  background-color: #85969d;
+}
+
+.bodyPortrait :global([class*='tableDescription']) {
   font-size: 20px;
   line-height: 150%;
-}
-
-.bodyPortrait .tableDescription {
-  font-size: 20px;
-  line-height: 140%;
 }
 
 .body :global(.pf-text-input),
@@ -103,9 +137,33 @@
   line-height: 150%;
 }
 
-.bodyPortrait :global([class*='tableDescription']) {
+.bodyNotice :global([class*='tableWrap']) {
+  border-radius: 0;
+}
+
+.bodyNotice :global([class*='infoTable'] th:first-child),
+.bodyNotice :global([class*='infoTable'] td:first-child),
+.bodyNotice :global([class*='infoTable'] th:nth-child(3)),
+.bodyNotice :global([class*='infoTable'] td:nth-child(3)) {
+  width: 100px;
+}
+
+.bodyNotice :global([class*='idTypeWithInput']) {
+  gap: 12px;
+}
+
+.bodyNotice :global([class*='idTypeWithInputRadios']) {
+  gap: 12px;
+}
+
+.bodyExpense :global([class*='tableDescription']) {
   font-size: 20px;
-  line-height: 140%;
+  line-height: 150%;
+}
+
+.bodyExpense :global([class*='radioGroup']) {
+  gap: 12px;
+  margin-top: 4px;
 }
 
 .previewDate,
@@ -178,11 +236,10 @@
   line-height: 150%;
 }
 
-/* 단락 gap 40px를 상쇄하고, 구분선 위 40px를 둔다 */
 .body > :global([data-consent-preview-rule='confirm']),
 .body > :global([data-consent-preview-rule='date']) {
-  margin-top: -40px;
-  padding-top: 40px;
+  margin-top: 0;
+  padding-top: 24px;
 }
 
 .body > :global([data-consent-preview-rule='confirm'])::before,
@@ -191,17 +248,20 @@
   display: block;
   width: 100%;
   height: 1px;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
   background: #e0e0e0;
 }
 
-/* 날짜 ↔ 서명 10px (초상권 6px) */
 .body > :global([data-consent-preview-stack='signature']) {
-  margin-top: -30px;
+  margin-top: 0;
 }
 
-.bodyPortrait > :global([data-consent-preview-stack='signature']) {
-  margin-top: -34px;
+.previewDate {
+  margin-bottom: 8px;
+}
+
+.bodyPortrait .previewDate {
+  margin-bottom: 6px;
 }
 
 .paymentInfo {
@@ -231,15 +291,15 @@
   grid-template-columns: 180px minmax(0, 1fr);
   flex: 1 1 50%;
   min-width: 0;
-  height: 64px;
-  min-height: 64px;
+  height: auto;
+  min-height: 54px;
   box-sizing: border-box;
 }
 
 .paymentInfoFieldSingle {
   flex: 1 1 100%;
   height: auto;
-  min-height: 64px;
+  min-height: 54px;
 }
 
 .paymentInfoField + .paymentInfoField {
@@ -273,9 +333,10 @@
 .paymentInfoValue {
   min-width: 0;
   font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .answerStack {
@@ -298,4 +359,50 @@
   font-weight: 700;
   line-height: 150%;
   color: #3d3d3d;
+}
+
+.subjectTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.subjectTable th,
+.subjectTable td {
+  border: 1px solid #e0e0e0;
+  padding: 10px 12px;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  color: #3d3d3d;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.subjectTable th {
+  font-weight: 700;
+  background: linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff;
+}
+
+.consentLines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.consentLines li {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 150%;
+  color: #3d3d3d;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }

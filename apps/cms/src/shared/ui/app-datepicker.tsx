@@ -1,6 +1,6 @@
 /**
  * 앱 공통 날짜 선택 (재사용)
- * CMS 전역에서 표시 형식 YYYY. MM. DD(요일) 및 스타일 통일
+ * CMS 전역에서 표시 형식 YYYY.MM.DD(요일) 및 스타일 통일
  */
 
 import {
@@ -46,16 +46,16 @@ export function formatAppDatepickerDisplay(value: Dayjs | null | undefined): str
   return formatYmdWithKoreanWeekday(value)
 }
 
-/** 날짜+시분: YYYY. MM. DD(요일) HH:mm */
+/** 날짜+시분: YYYY.MM.DD(요일) HH:mm */
 export function formatAppDatepickerDateTimeDisplay(value: Dayjs | null | undefined): string {
   if (value == null) return ''
   return formatYmdHmWithKoreanWeekday(value)
 }
 
-/** 기간 필터 등: 요일 없이 YYYY. MM. DD (시안과 동일) */
+/** 기간 필터 등: 요일 없이 YYYY.MM.DD */
 export function formatAppDatepickerRangePlain(value: Dayjs | null | undefined): string {
   if (value == null) return ''
-  return value.format('YYYY. MM. DD')
+  return value.format('YYYY.MM.DD')
 }
 
 const appDatePickerPopupContainer = () => document.body

@@ -428,6 +428,9 @@ export function MypageLectureDetailPage() {
           programId={program.id}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          operationEndAt={program.operatingPeriodEnd}
+          programType={program.programType}
+          detailCase={program.detailCase}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }

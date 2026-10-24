@@ -13,6 +13,7 @@ import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api
 import type { UjatApplicationsListQuery } from '@/features/program/ujat/api/ujat-applications-contract'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
 
 function filterRows(
   rows: UjatScheduleConfirmRow[],
@@ -51,8 +52,8 @@ export function useUjatScheduleConfirmList(
     const organizationName = appliedFilters.institutionName.trim()
     const teacherName = appliedFilters.teacherName.trim()
     return {
-      status: 'TEMP_ASSIGNED',
-      ...(regionKey ? { educationRegionCode: regionKey } : {}),
+      temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+      educationRegionCode: toUjatEducationRegionCode(regionKey),
       ...(organizationName ? { organizationName } : {}),
       ...(teacherName ? { teacherName } : {}),
     }

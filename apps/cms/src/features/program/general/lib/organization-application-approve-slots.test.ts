@@ -25,6 +25,7 @@ import {
 } from './organization-application-approve-slots'
 import {
   formatCmsScheduleDisplayLabel,
+  formatCmsScheduleKoreanDisplayLabel,
   formatOrganizationApproveScheduleCard,
   formatOrganizationPreferredScheduleLabel,
   formatOrganizationScheduleRangeLabel,
@@ -58,7 +59,7 @@ describe('organization-application-approve-slots', () => {
     expect(options[0]?.confirmableScheduleId).toBeNull()
     expect(options[1]?.scheduleId).toBe(-2)
     expect(options[1]?.confirmableScheduleId).toBeNull()
-    expect(options[1]?.label).toBe('2026. 10. 30(금) 09:30 ~ 11:30')
+    expect(options[1]?.label).toBe('2026.10.30(금) 09:30 ~ 11:30')
   })
 
   it('resolves selectedScheduleId from an explicit education slot id', () => {
@@ -130,7 +131,7 @@ describe('organization-application-approve-slots', () => {
       ],
       [educationSlot(88, { startAt: '2026-10-30T09:00:00+09:00', endAt: '2026-10-30T11:00:00+09:00' })]
     )
-    expect(result.options[0]?.label).toBe('2026. 10. 30(금)')
+    expect(result.options[0]?.label).toBe('2026.10.30(금)')
     expect(result.options[0]?.confirmableScheduleId).toBe(88)
     expect(result.assignableOptions[0]?.confirmableScheduleId).toBe(88)
     expect(result.options[0]?.label).not.toContain('00:00')
@@ -185,7 +186,7 @@ describe('organization-application-approve-slots', () => {
     expect(result.options).toEqual([
       {
         scheduleId: 88,
-        label: '2026. 10. 30(금) 13:30 ~ 15:30',
+        label: '2026.10.30(금) 13:30 ~ 15:30',
         confirmableScheduleId: 88,
       },
     ])
@@ -245,13 +246,13 @@ describe('organization approval schedule mapping regression', () => {
     expect(result.options).toHaveLength(3)
     for (const option of result.options) {
       expect(option.label).not.toContain('00:00')
-      expect(option.label).toMatch(/2026\. 11\./)
+      expect(option.label).toMatch(/2026\.11\./)
     }
     expect(formatOrganizationPreferredScheduleLabel({
       label: '26년 11월 2일(월) 00:00 ~ 00:00',
       startAt: '2026-11-02T00:00:00+09:00',
       endAt: '2026-11-02T00:00:00+09:00',
-    })).toBe('2026. 11. 02(월)')
+    })).toBe('2026.11.02(월)')
   })
 
   it('3. 공통 교육 예정 슬롯 2건만 배정 후보가 된다', () => {
@@ -288,7 +289,7 @@ describe('organization approval schedule mapping regression', () => {
     const preferred = [{ scheduleId: 777, label: '다른 일정', startAt: '2026-12-01', endAt: '2026-12-01' }]
     const result = resolveOrganizationApproveScheduleOptionsFromPreferred(preferred, [slotA, slotB])
     expect(result.invalidReason).toBeNull()
-    expect(result.options[0]?.label).toBe('2026. 12. 01(화)')
+    expect(result.options[0]?.label).toBe('2026.12.01(화)')
     expect(result.options[0]?.confirmableScheduleId).toBeNull()
     expect(result.assignableOptions).toEqual([])
     expect(result.options[0]?.assignmentNote).toContain('프로그램 공통 교육 슬롯에 없는')
@@ -320,7 +321,7 @@ describe('organization approval schedule mapping regression', () => {
       { scheduleId: 502, round: 2, label: '2회차 희망', startAt: '2026-11-02T00:00:00+09:00', endAt: '2026-11-02T00:00:00+09:00' },
     ]
     const result = resolveOrganizationApproveScheduleOptionsFromPreferred(preferred, [slotA, slotB])
-    expect(result.options.map(option => option.label)).toEqual(['2026. 11. 02(월)', '2026. 11. 02(월)'])
+    expect(result.options.map(option => option.label)).toEqual(['2026.11.02(월)', '2026.11.02(월)'])
     expect(result.assignableOptions.map(option => option.sessionNo)).toEqual([1, 2])
     expect(result.assignableOptions[0]?.label).toContain('1회차')
     expect(result.assignableOptions[1]?.label).toContain('2회차')
@@ -507,8 +508,8 @@ describe('period organization approval does not use date-slot mapping', () => {
     expect(result.invalidReason).toBeNull()
     expect(result.assignmentPolicy).toBe('approve_then_osa')
     expect(result.options.map(option => option.label)).toEqual([
-      '2026. 11. 09(월)',
-      '2026. 11. 11(수)',
+      '2026.11.09(월)',
+      '2026.11.11(수)',
     ])
     expect(result.assignableOptions).toEqual([])
     expect(result.options.every(option => option.assignmentNote == null)).toBe(true)
@@ -575,7 +576,7 @@ describe('period organization approval does not use date-slot mapping', () => {
       mode
     )
     expect(one.assignableOptions).toEqual([])
-    expect(one.options[0]?.label).toBe('2026. 11. 09(월)')
+    expect(one.options[0]?.label).toBe('2026.11.09(월)')
     expect(many.options).toHaveLength(2)
     expect(many.assignableOptions).toEqual([])
     expect(
@@ -676,7 +677,7 @@ describe('period organization approval does not use date-slot mapping', () => {
         endAt: '2026-04-27T15:50:00+09:00',
       })
     ).toEqual({
-      title: '2026. 04. 27(월) 13:00 ~ 15:50',
+      title: '2026.04.27(월) 13:00 ~ 15:50',
       detail: '2지망 | 2차시',
     })
     expect(
@@ -701,7 +702,7 @@ describe('period organization approval does not use date-slot mapping', () => {
         sessionCount: 1,
       })
     ).toEqual({
-      title: '2026. 04. 20(월) 09:30 ~ 12:20',
+      title: '2026.04.20(월) 09:30 ~ 12:20',
         detail: '1지망',
     })
     expect(
@@ -727,7 +728,7 @@ describe('period organization approval does not use date-slot mapping', () => {
         sessionCount: 2,
       })
     ).toEqual({
-      title: '2026. 04. 20(월) 09:30 ~ 12:20',
+      title: '2026.04.20(월) 09:30 ~ 12:20',
       detail: '2지망 | 2차시',
     })
     expect(
@@ -756,7 +757,7 @@ describe('period organization approval does not use date-slot mapping', () => {
         curriculumChartSessionCount: 2,
       })
     ).toEqual({
-      title: '2026. 04. 20(월) 09:30 ~ 12:20',
+      title: '2026.04.20(월) 09:30 ~ 12:20',
       detail: '2차시',
     })
     expect(
@@ -784,7 +785,7 @@ describe('period organization approval does not use date-slot mapping', () => {
         curriculumChartSessionCount: 2,
       })
     ).toEqual({
-      title: '2026. 11. 02(월)',
+      title: '2026.11.02(월)',
       detail: '',
     })
   })
@@ -812,7 +813,7 @@ describe('schedule multi auto-assigns every education slot', () => {
     expect(many.payload).not.toHaveProperty('selectedScheduleId')
     expect(many.items.map(item => item.label).join(' ')).not.toContain('00:00')
     expect(many.items.map(item => item.label).join(' ')).not.toContain('회차')
-    expect(many.items[1]?.label).toBe('2026. 11. 09(월) 13:30 ~ 16:00')
+    expect(many.items[1]?.label).toBe('2026.11.09(월) 13:30 ~ 16:00')
 
     const one = resolveOrganizationScheduleMultiAutoAssign([reversed[1]!])
     expect(one.payload).toEqual({ selectedScheduleId: 187134 })
@@ -912,7 +913,7 @@ describe('general organization approval keeps three schedule sources apart', () 
       ]
     )
     expect(matched.options[0]?.confirmableScheduleId).toBe(187135)
-    expect(matched.options[0]?.label).toBe('2026. 11. 09(월)')
+    expect(matched.options[0]?.label).toBe('2026.11.09(월)')
     expect(matched.options[0]?.label).not.toContain('차시')
     const requestedPreferred = selectOrganizationApprovePreferredSchedules([], [
       {
@@ -1057,37 +1058,49 @@ describe('general organization approval keeps three schedule sources apart', () 
 })
 
 describe('cms schedule display format', () => {
-  it('날짜만, 같은 날, 다른 날을 2026. 01. 09(금) 계열로 만든다', () => {
-    expect(formatOrganizationScheduleRangeLabel('2026-01-09', '2026-01-09')).toBe('2026. 01. 09(금)')
+  it('날짜만, 같은 날, 다른 날을 2026.01.09(금) 계열로 만든다', () => {
+    expect(formatOrganizationScheduleRangeLabel('2026-01-09', '2026-01-09')).toBe('2026.01.09(금)')
     expect(
       formatOrganizationScheduleRangeLabel('2026-01-09T09:20:00+09:00', '2026-01-09T11:20:00+09:00')
-    ).toBe('2026. 01. 09(금) 09:20 ~ 11:20')
+    ).toBe('2026.01.09(금) 09:20 ~ 11:20')
     expect(
       formatOrganizationScheduleRangeLabel('2026-01-09T09:20:00+09:00', '2026-01-10T11:20:00+09:00')
-    ).toBe('2026. 01. 09(금) 09:20 ~ 2026. 01. 10(토) 11:20')
+    ).toBe('2026.01.09(금) 09:20 ~ 2026.01.10(토) 11:20')
   })
 
   it('시각 없는 기간은 양쪽 날짜만 보여 준다', () => {
     expect(formatOrganizationScheduleRangeLabel('2026-10-28', '2026-11-12')).toBe(
-      '2026. 10. 28(수) ~ 2026. 11. 12(목)'
+      '2026.10.28(수) ~ 2026.11.12(목)'
     )
   })
 
   it('ISO 날짜와 두 자리 점 표기도 같은 형식으로 바꾼다', () => {
-    expect(formatCmsScheduleDisplayLabel('2026-11-05')).toBe('2026. 11. 05(목)')
+    expect(formatCmsScheduleDisplayLabel('2026-11-05')).toBe('2026.11.05(목)')
     expect(formatCmsScheduleDisplayLabel('2026-11-05 ~ 2026-11-13')).toBe(
-      '2026. 11. 05(목) ~ 2026. 11. 13(금)'
+      '2026.11.05(목) ~ 2026.11.13(금)'
     )
-    expect(formatCmsScheduleDisplayLabel('26.11.05(목)')).toBe('2026. 11. 05(목)')
+    expect(formatCmsScheduleDisplayLabel('26.11.05(목)')).toBe('2026.11.05(목)')
   })
 
   it('한글 표기와 공백 없는 점 표기는 표시할 때만 바꾸고 차시 접미사는 남긴다', () => {
     expect(formatCmsScheduleDisplayLabel('26년 4월 20일(월) 9:30 ~ 12:20')).toBe(
-      '2026. 04. 20(월) 09:30 ~ 12:20'
+      '2026.04.20(월) 09:30 ~ 12:20'
     )
     expect(formatCmsScheduleDisplayLabel('2026.04.20(월) 09:30 ~ 12:20 | 1차시')).toBe(
-      '2026. 04. 20(월) 09:30 ~ 12:20 | 1차시'
+      '2026.04.20(월) 09:30 ~ 12:20 | 1차시'
     )
     expect(formatOrganizationPreferredScheduleLabel({ label: '오전' })).toBe('오전')
+  })
+
+  it('일정 선택 UI는 compact·26년을 4자리 한글로 바꾼다', () => {
+    expect(formatCmsScheduleKoreanDisplayLabel('2026.04.20(월) 09:30 ~ 12:20')).toBe(
+      '2026년 4월 20일(월) 09:30 ~ 12:20'
+    )
+    expect(formatCmsScheduleKoreanDisplayLabel('26년 4월 20일(월) 9:30 ~ 12:20')).toBe(
+      '2026년 4월 20일(월) 09:30 ~ 12:20'
+    )
+    expect(formatCmsScheduleKoreanDisplayLabel('2026.04.20(월) 09:30 ~ 2026.04.21(화) 12:20')).toBe(
+      '2026년 4월 20일(월) 09:30 ~ 2026년 4월 21일(화) 12:20'
+    )
   })
 })

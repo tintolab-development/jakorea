@@ -44,6 +44,7 @@ import {
 } from '@/shared/ui'
 import { buildProgressYearSelectOptions } from '@/shared/utils'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import '@/features/program/general/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -401,6 +402,14 @@ export function AdminManagedProgramHistory({
     [membersRemote]
   )
 
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: SHOW_PROGRAM_HISTORY_DELETE,
+      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }
+  )
+
   const adminManagedProgramTableOnRow = useCallback(
     (record: Program) => ({
       onClick: (e: MouseEvent<HTMLElement>) => {
@@ -463,25 +472,27 @@ export function AdminManagedProgramHistory({
         }}
       >
         <Spin spinning={membersRemote && remoteProgramsLoading}>
-          <CmsDataTable<Program>
-            rowSelection={
-              SHOW_PROGRAM_HISTORY_DELETE
-                ? {
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys,
-                    onChange: keys => setSelectedRowKeys(keys),
-                  }
-                : undefined
-            }
-            dataSource={tableData}
-            columns={columns}
-            rowKey="id"
-            scroll={{ x: 'max-content' }}
-            pagination={false}
-            className="cms-data-table cms-data-table--fluid"
-            size={TABLE_CONFIG.size}
-            onRow={adminManagedProgramTableOnRow}
-          />
+          <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
+            <CmsDataTable<Program>
+              rowSelection={
+                SHOW_PROGRAM_HISTORY_DELETE
+                  ? {
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                      selectedRowKeys,
+                      onChange: keys => setSelectedRowKeys(keys),
+                    }
+                  : undefined
+              }
+              dataSource={tableData}
+              columns={columns}
+              rowKey="id"
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+              pagination={false}
+              className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+              size={TABLE_CONFIG.size}
+              onRow={adminManagedProgramTableOnRow}
+            />
+          </div>
         </Spin>
       </FilterTableLayout>
       {deleteModalOpen && deleteGuide && (

@@ -1,15 +1,10 @@
-.gridWrap {
+.root {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-16, 16px);
   width: 100%;
   min-width: 0;
-  padding: 16px;
-  margin: 0;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 8px;
-  background: var(--main-WT, #fff);
 }
 
 .grid {
@@ -24,38 +19,6 @@
 .empty {
   grid-column: 1 / -1;
   margin: 0;
-}
-
-.chip {
-  box-sizing: border-box;
-  min-width: 0;
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid var(--neutral-cool-200, #e0e0e0);
-  border-radius: 8px;
-  background: var(--main-WT, #fff);
-  cursor: pointer;
-  text-align: left;
-}
-
-.chip:focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 3px;
-}
-
-.chipActive {
-  border-color: var(--color-primary-500);
-  background: var(--color-neutral-white);
-}
-
-.chipActive .chipLabel {
-  color: var(--color-primary-500);
-}
-
-.chipLabel {
-  display: block;
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
 @media (--bp-pc-up) {

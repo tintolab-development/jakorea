@@ -19,7 +19,7 @@ describe('instructor JA Korea resume blocks', () => {
         periodEnd: '2024-09-15',
         title: '프로그램명',
       })
-    ).toBe('2024. 02. 15 ~ 2024. 09. 15')
+    ).toBe('2024.02.15 ~ 2024.09.15')
   })
 
   it('shows count summary for section header', () => {

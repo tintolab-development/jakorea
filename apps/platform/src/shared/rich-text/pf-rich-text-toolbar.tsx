@@ -9,6 +9,13 @@ import {
   insertImageFromUrl,
   insertTable,
   insertYoutubeFromUrl,
+  EMPTY_RICH_TEXT_TABLE_COMMAND_AVAILABILITY,
+  RICH_TEXT_TABLE_EDIT_ACTIONS,
+  getRichTextTableCommandAvailability,
+  isRichTextTableActive,
+  listRichTextTableToolbarItems,
+  richTextDocumentHasTable,
+  runRichTextTableCommand,
   LINE_HEIGHT_OPTIONS,
   LIST_OPTIONS,
   promptImageUrl,
@@ -71,6 +78,9 @@ const EMPTY_TOOLBAR_STATE = {
   isSuperscript: false,
   isBulletList: false,
   isOrderedList: false,
+  isTable: false,
+  hasTable: false,
+  tableCommandAvailability: EMPTY_RICH_TEXT_TABLE_COMMAND_AVAILABILITY,
 }
 
 function getHeadingLevel(editor: Editor): HeadingLevel {
@@ -122,6 +132,9 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
           isSuperscript: ed.isActive('superscript'),
           isBulletList: ed.isActive('bulletList'),
           isOrderedList: ed.isActive('orderedList'),
+          isTable: isRichTextTableActive(ed),
+          hasTable: richTextDocumentHasTable(ed),
+          tableCommandAvailability: getRichTextTableCommandAvailability(ed),
         }
       },
     }) ?? EMPTY_TOOLBAR_STATE
@@ -243,6 +256,30 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
     [run]
   )
 
+  const tableMenuItems = useMemo(
+    () =>
+      listRichTextTableToolbarItems({
+        inTable: state.isTable,
+        availability: state.tableCommandAvailability,
+      }).map(item => {
+        if (item.kind === 'divider') return { type: 'divider' as const, key: 'table-edit-divider' }
+        if (item.kind === 'insert') {
+          return {
+            key: 'insert-table',
+            label: item.label,
+            onClick: () => run(ed => insertTable(ed)),
+          }
+        }
+        return {
+          key: item.command,
+          label: item.label,
+          disabled: item.disabled,
+          onClick: () => run(ed => runRichTextTableCommand(ed, item.command)),
+        }
+      }),
+    [run, state.isTable, state.tableCommandAvailability]
+  )
+
   const insertMenuItems = useMemo(
     () => [
       {
@@ -292,6 +329,8 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
 
   if (!editor) return null
 
+  const showTableActions = state.isTable || state.hasTable
+
   const headingLabel =
     HEADING_OPTIONS.find(o => o.value === state.heading)?.triggerLabel ?? '본문'
   const fontSizeLabel = state.fontSize
@@ -305,6 +344,7 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
     : undefined
 
   return (
+    <div className={styles.toolbarShell}>
     <div className={styles.toolbar} role="toolbar" aria-label="서식">
       <input
         ref={imageFileInputRef}
@@ -466,13 +506,14 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
         <PfHorizontalRuleIcon />
       </PfToolbarToggle>
 
-      <PfToolbarToggle
-        title="표"
+      <PfToolbarDropdown
+        ariaLabel="표"
+        label="표"
+        leadingIcon={<PfTableIcon />}
+        iconOnly
         disabled={disabled}
-        onAction={() => run(ed => insertTable(ed))}
-      >
-        <PfTableIcon />
-      </PfToolbarToggle>
+        menuItems={tableMenuItems}
+      />
 
       <PfToolbarDropdown
         ariaLabel="삽입"
@@ -480,6 +521,26 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
         disabled={disabled}
         menuItems={insertMenuItems}
       />
+    </div>
+    {showTableActions ? (
+      <div className={styles.tableActions} role="toolbar" aria-label="표 편집">
+        {RICH_TEXT_TABLE_EDIT_ACTIONS.map(action => (
+          <button
+            key={action.command}
+            type="button"
+            className={styles.tableAction}
+            disabled={
+              disabled || !state.isTable || state.tableCommandAvailability[action.command] === false
+            }
+            title={action.label}
+            onMouseDown={event => event.preventDefault()}
+            onClick={() => run(ed => runRichTextTableCommand(ed, action.command))}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    ) : null}
     </div>
   )
 }

@@ -1,10 +1,14 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { bugIssueHistoryFilterFields } from '@/features/download/model/bug-issue-history-filter-fields'
 import { bugIssueHistoryTablePageConfig } from '@/features/download/model/bug-issue-history-table.config'
-import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
+import {
+  exportBugIssueLogs,
+  getLogsApiErrorMessage,
+} from '@/features/logs/api/admin-logs-service'
+import { bugIssueLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { useBugIssueHistoryQuery } from '@/features/logs/hooks/use-bug-issue-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
 import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
@@ -15,6 +19,7 @@ import {
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { useCmsAlert } from '@/shared/ui'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -44,17 +49,13 @@ export default function BugIssueHistoryPage() {
     fetchNextPage,
   } = useBugIssueHistoryQuery(searchParams)
 
-  const { pendingFilters, handleFilterChange, applySearch, tableData,
-    hasActiveFilters,
-  } = useTablePage(
-    bugIssueHistoryTablePageConfig,
-    {
+  const { pendingFilters, handleFilterChange, applySearch, tableData, hasActiveFilters } =
+    useTablePage(bugIssueHistoryTablePageConfig, {
       data: rows,
       searchParams,
       setSearchParams,
       context: EMPTY_TABLE_PAGE_CONTEXT,
-    }
-  )
+    })
 
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
@@ -101,6 +102,23 @@ export default function BugIssueHistoryPage() {
     [totalElements]
   )
 
+  const { showAlert } = useCmsAlert()
+  const [isExporting, setIsExporting] = useState(false)
+  const exportExcel = useCallback(async () => {
+    if (!remoteEnabled || isExporting) return
+    setIsExporting(true)
+    try {
+      await exportBugIssueLogs(bugIssueLogsParamsFromSearchParams(searchParams))
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getLogsApiErrorMessage(error, '버그/이슈 이력 다운로드에 실패했습니다.'),
+      })
+    } finally {
+      setIsExporting(false)
+    }
+  }, [isExporting, remoteEnabled, searchParams, showAlert])
+
   return (
     <FilterTableLayout
       hasActiveFilters={hasActiveFilters}
@@ -115,10 +133,8 @@ export default function BugIssueHistoryPage() {
       title="버그/이슈 이력"
       description={`총 ${totalElements.toLocaleString()}건`}
       contentLoading={remoteEnabled && isLoading}
-      excelExport={{
-        columns,
-        data: tableData,
-      }}
+      onExcelDownload={exportExcel}
+      excelDownloadLoading={isExporting}
     >
       {!remoteEnabled ? (
         <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />

@@ -97,6 +97,19 @@ function isEconomyProgramId(id: string): boolean {
   return id.startsWith('economy-') || id.includes('economy')
 }
 
+function isEconomyProgram(program: ProgramApplyFormCaseInput): boolean {
+  if (program.registrationKind === 'economy') return true
+  const type = (program.programType ?? '').trim().toUpperCase()
+  if (
+    type === 'ONE_COMPANY_ONE_SCHOOL' ||
+    type === 'COMPANY_SCHOOL' ||
+    type === 'ECONOMY'
+  ) {
+    return true
+  }
+  return isEconomyProgramId(program.id)
+}
+
 function isGeminiInstructorProgramId(id: string): boolean {
   return id === PROGRAM_DETAIL_CASE_SSOT_IDS.instructor || id.includes('gemini-prog-instructor')
 }
@@ -158,7 +171,7 @@ export function resolveProgramApplyFormCase(
     if (isTrainedTeachersProgram(program)) return 'trained-teachers'
     if (isGeminiProgram(program)) return 'institution-gemini'
     if (isUjatProgram(program)) return 'institution-ujat'
-    if (isEconomyProgramId(program.id)) return 'institution-economy'
+    if (isEconomyProgram(program)) return 'institution-economy'
     return 'institution-general'
   }
 
@@ -189,7 +202,7 @@ export function resolveProgramApplyFormCase(
     return 'institution-gemini'
   }
 
-  if (isEconomyProgramId(program.id)) {
+  if (isEconomyProgram(program)) {
     return 'institution-economy'
   }
 

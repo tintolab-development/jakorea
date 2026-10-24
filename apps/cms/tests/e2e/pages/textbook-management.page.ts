@@ -42,6 +42,16 @@ export class TextbookManagementPage {
     await this.page.goto('/textbook')
   }
 
+  private async expectAndDismissCompletedAlert(title: string, body?: string) {
+    const done = this.page.getByRole('dialog').filter({ hasText: title })
+    await expect(done).toBeVisible({ timeout: 15_000 })
+    if (body) {
+      await expect(done.getByText(body, { exact: true })).toBeVisible()
+    }
+    await done.getByRole('button', { name: '확인' }).click()
+    await expect(done).toBeHidden({ timeout: 10_000 })
+  }
+
   async expectListShell() {
     await expectAuthenticatedShell(this.page)
     await expect(this.page.getByRole('menuitem', { name: '교재 관리' })).toBeVisible()
@@ -103,7 +113,9 @@ export class TextbookManagementPage {
     await row.getByRole('button', { name: '삭제' }).click()
     const outcome = await Promise.race([
       deletePromise.then(res => ({ kind: 'deleted' as const, res })),
-      blocked.waitFor({ state: 'visible', timeout: 20_000 }).then(() => ({ kind: 'blocked' as const })),
+      blocked
+        .waitFor({ state: 'visible', timeout: 20_000 })
+        .then(() => ({ kind: 'blocked' as const })),
     ])
     if (outcome.kind === 'blocked') {
       await blocked.getByRole('button', { name: '확인' }).click()
@@ -136,7 +148,9 @@ export class TextbookManagementPage {
   }
 
   async selectUseStatus(label: '사용' | '미사용') {
-    await filterField(this.page, '사용 여부').getByRole('radio', { name: label }).check({ force: true })
+    await filterField(this.page, '사용 여부')
+      .getByRole('radio', { name: label })
+      .check({ force: true })
   }
 
   async fillTextbookName(name: string) {
@@ -158,7 +172,10 @@ export class TextbookManagementPage {
     for (const label of labels) {
       await expect(dropdown.getByText(label, { exact: true }).first()).toBeVisible()
     }
-    await field.locator('.ant-select').click({ force: true }).catch(() => undefined)
+    await field
+      .locator('.ant-select')
+      .click({ force: true })
+      .catch(() => undefined)
     await expect(this.page.locator('.ant-select-dropdown:visible'))
       .toHaveCount(0, { timeout: 5_000 })
       .catch(() => undefined)
@@ -200,7 +217,9 @@ export class TextbookManagementPage {
   async expectDetailFields() {
     const dialog = this.detailDialog()
     await expect(dialog).toBeVisible({ timeout: 30_000 })
-    await expect(dialog.getByText('교재명 (국문)', { exact: false }).or(dialog.getByText('교재명')).first()).toBeVisible()
+    await expect(
+      dialog.getByText('교재명 (국문)', { exact: false }).or(dialog.getByText('교재명')).first()
+    ).toBeVisible()
     await expect(dialog.getByText('교재명 (영문)').first()).toBeVisible()
     await expect(dialog.getByText('사업 분야').first()).toBeVisible()
     await expect(dialog.getByText('사용 여부').first()).toBeVisible()
@@ -252,6 +271,7 @@ export class TextbookManagementPage {
       throw new Error(`교재 등록 API 실패: HTTP ${createResponse.status()} ${body.slice(0, 400)}`)
     }
     await expect(modal).toBeHidden({ timeout: 15_000 })
+    await this.expectAndDismissCompletedAlert('등록 완료')
   }
 
   async expectInList(name: string) {
@@ -279,13 +299,14 @@ export class TextbookManagementPage {
       res => isAdminMutation(res, 'PATCH', /\/api\/admin\/textbooks\/[^/]+\/?$/),
       { timeout: 60_000 }
     )
-    await dialog.getByRole('button', { name: '수정 완료' }).click()
+    await dialog.getByRole('button', { name: '정보 수정' }).click()
     const patch = await patchPromise
     if (!patch.ok()) {
       const body = await patch.text().catch(() => '')
       throw new Error(`교재 수정 API 실패: HTTP ${patch.status()} ${body.slice(0, 400)}`)
     }
     await expect(dialog.getByRole('button', { name: '정보 수정' })).toBeVisible({ timeout: 15_000 })
+    await this.expectAndDismissCompletedAlert('수정 완료')
     await this.closeDetail()
   }
 
@@ -309,6 +330,7 @@ export class TextbookManagementPage {
       throw new Error(`교재 삭제 API 실패: HTTP ${deleteResponse.status()} ${body.slice(0, 400)}`)
     }
     await expect(guide).toBeHidden({ timeout: 15_000 })
+    await this.expectAndDismissCompletedAlert('삭제 완료')
   }
 
   async openKitModal() {
@@ -350,7 +372,12 @@ export class TextbookManagementPage {
 
   async saveKitChangeNotice(notice: Locator) {
     const patchPromise = this.page.waitForResponse(
-      res => isAdminMutation(res, 'POST', /\/api\/admin\/material-kits\/versions\/[^/]+\/target-counts\/?$/),
+      res =>
+        isAdminMutation(
+          res,
+          'POST',
+          /\/api\/admin\/material-kits\/versions\/[^/]+\/target-counts\/?$/
+        ),
       { timeout: 60_000 }
     )
     await notice.getByRole('button', { name: '확인' }).click()

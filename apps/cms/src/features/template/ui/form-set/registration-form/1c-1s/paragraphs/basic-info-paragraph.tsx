@@ -7,6 +7,7 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
+import { formatSponsorManagerSelectLabel } from '@/features/program/general/model/common-info-edit-schema'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { useRegistrationCatalogReady } from '@/features/template/ui/form-set/registration-form/shared/use-registration-catalog-ready'
@@ -239,7 +240,13 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     if (!sponsorId) return []
     const contacts = (contactsQuery.data ?? []).map(c => ({
       value: c.id,
-      label: c.name,
+      label: formatSponsorManagerSelectLabel({
+        sponsorName: '',
+        contactName: c.name,
+        position: c.position,
+        phone: c.phone,
+        multiSponsor: false,
+      }),
     }))
     return withSponsorContactUnselectedOption(contacts)
   }, [contactsQuery.data, sponsorId])
@@ -262,23 +269,6 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     if (sponsorId && sponsorId !== ALL_VALUE) return [SPONSOR_CONTACT_UNSELECTED_VALUE]
     return []
   }, [managerContactId, managerContactIds, sponsorId])
-
-  const selectedManagerContactPhone = useMemo(() => {
-    if (
-      selectedManagerContactIds.length === 0 ||
-      selectedManagerContactIds.some(
-        id => id === ALL_VALUE || isSponsorContactUnselected(id)
-      )
-    ) {
-      return ''
-    }
-
-    const phones = selectedManagerContactIds
-      .map(id => contactsQuery.data?.find(contact => String(contact.id) === id)?.phone?.trim())
-      .filter((phone): phone is string => Boolean(phone))
-
-    return [...new Set(phones)].join(', ')
-  }, [contactsQuery.data, selectedManagerContactIds])
 
   const applyManagerContactIds = (next: string[]) => {
     const unique = normalizeSponsorContactUnselectedSelection(next, selectedManagerContactIds)
@@ -512,16 +502,6 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                     const next = Array.isArray(v) ? v.map(String) : []
                     applyManagerContactIds(next)
                   }}
-                />
-                <DetailInfoForm.InputsSeparator />
-                <CmsInput
-                  inputSize="small"
-                  width={220}
-                  placeholder="담당자 연락처"
-                  value={selectedManagerContactPhone}
-                  readOnly
-                  allowClear={false}
-                  aria-label="선택된 후원사 담당자 연락처"
                 />
               </div>
             }

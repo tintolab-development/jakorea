@@ -20,9 +20,9 @@ function baseProgram(overrides: Partial<Program> = {}): Program {
     startDate: '2026-01-01',
     endDate: '2026-12-31',
     generalCommonInfo: {
-      participantRecruitmentInfo: { operationPeriodLabel: '2026. 03. 01 ~ 2026. 03. 31' },
-      instructorRecruitmentInfo: { operationPeriodLabel: '2026. 04. 01 ~ 2026. 04. 30' },
-      volunteerRecruitmentInfo: { operationPeriodLabel: '2026. 05. 01 ~ 2026. 05. 31' },
+      participantRecruitmentInfo: { operationPeriodLabel: '2026.03.01 ~ 2026.03.31' },
+      instructorRecruitmentInfo: { operationPeriodLabel: '2026.04.01 ~ 2026.04.30' },
+      volunteerRecruitmentInfo: { operationPeriodLabel: '2026.05.01 ~ 2026.05.31' },
     },
     ...overrides,
   } as Program
@@ -59,7 +59,7 @@ describe('general-program-recruitment-operation-period', () => {
     expect(patch.endDate).toBe('2026-12-31')
     expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.operationPeriodLabel).toContain('2026')
     expect(patch.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel).toBe(
-      '2026. 03. 01 ~ 2026. 03. 31'
+      '2026.03.01 ~ 2026.03.31'
     )
   })
 
@@ -79,7 +79,7 @@ describe('general-program-recruitment-operation-period', () => {
       ],
     })
     expect(audienceOperationPeriodLabelFromRecruitmentRow(program, 'participant')).toContain(
-      '2026. 11. 18'
+      '2026.11.18'
     )
     expect(audienceOperationPeriodLabelFromRecruitmentRow(program, 'participant')).not.toContain(
       '03. 01'

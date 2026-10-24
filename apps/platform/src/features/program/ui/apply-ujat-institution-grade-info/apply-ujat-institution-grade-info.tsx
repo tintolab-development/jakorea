@@ -196,17 +196,19 @@ export function ApplyUjatInstitutionGradeInfo({
                           onValueChange={next => patchBlock(block.id, { grade: next })}
                         />
                         <DetailInfoForm.InputsSeparator />
-                        <PFTextInput
-                          variant="formPage"
-                          size="large"
-                          width={120}
-                          inputMode="numeric"
-                          placeholder="총 학급 수"
-                          value={block.classCountInput}
-                          onValueChange={next =>
-                            patchBlock(block.id, { classCountInput: next.replace(/\D/g, '') })
-                          }
-                        />
+                        <span data-field="classCount">
+                          <PFTextInput
+                            variant="formPage"
+                            size="large"
+                            width={120}
+                            inputMode="numeric"
+                            placeholder="총 학급 수"
+                            value={block.classCountInput}
+                            onValueChange={next =>
+                              patchBlock(block.id, { classCountInput: next.replace(/\D/g, '') })
+                            }
+                          />
+                        </span>
                         <PFText as="span" typo="bd-md-md" color="black" className={blockStyles.timeUnit}>
                           학급
                         </PFText>

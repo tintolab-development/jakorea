@@ -12,7 +12,6 @@ import {
 } from '@/features/template/ui/form-set/registration-form/1c-1s'
 import {
   TrainedTeachersRegistrationBasicInfoParagraph,
-  TrainedTeachersRegistrationEducationCurriculumParagraph,
   TrainedTeachersRegistrationEducationScheduleSettingsParagraph,
   TrainedTeachersRegistrationTypeSettingsParagraph,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers'
@@ -231,11 +230,26 @@ export function renderProgramRegistrationParagraphBody(
             />
           </>
         ) : (
-          <TrainedTeachersRegistrationEducationCurriculumParagraph
-            teacherTrainingEnabled={options.trainedTeachersTeacherTrainingEnabled}
-            curriculumSessionCount={options.curriculumChartSessionCount}
-            onDeleteCurriculumSession={options.onDeleteCurriculumChartSession}
-          />
+          <>
+            <TrainedTeachersEducationJournalSettingsRow />
+            <ProgramRegistrationEducationCurriculumParagraph
+              key={`tt-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.ipsScheduleDetail}`}
+              sessionRoundType={options.sessionRoundType}
+              participantIndividual={options.participant.individual}
+              participantOrganization={options.participant.organization}
+              curriculumSessionCount={options.curriculumSessionCount}
+              onDeleteCurriculumSession={options.onDeleteCurriculumSession}
+              curriculumChartSessionCount={options.curriculumChartSessionCount}
+              onDeleteCurriculumChartSession={options.onDeleteCurriculumChartSession}
+              educationFormScheduleDetail={options.educationFormScheduleDetail}
+              participationScheduleDetail={options.participationScheduleDetail}
+              ipsScheduleDetail={options.ipsScheduleDetail}
+              scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
+              preEducationBlockLabel="교육 연수"
+              preEducationDisplayMode="replaceFirst"
+              hideAssignmentSettings
+            />
+          </>
         )
       ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationCurriculumParagraph />

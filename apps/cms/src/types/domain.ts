@@ -80,6 +80,8 @@ export type GeneralProgramSessionRoundKind = 'single' | 'multi'
 
 /** 일반 프로그램 상세 공통 정보 — 커리큘럼 차시 (등록 폼·조회 mock) */
 export interface GeneralProgramCurriculumSessionRow {
+  /** BE nested 정본 식별자. 양의 정수, 비연속 허용. 배열 index와 같지 않을 수 있다 */
+  sessionNo?: number
   sessionLabel: string
   /** 단일 회차: 단원명. 복수 회차: 진행 차시 수(표시 시 N차시) */
   title: string

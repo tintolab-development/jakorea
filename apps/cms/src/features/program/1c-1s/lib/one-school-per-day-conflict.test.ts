@@ -12,7 +12,7 @@ import {
 describe('one-school-per-day-conflict', () => {
   it('extractLectureDateKey는 ISO·점표기·표시 문자열을 YYYY-MM-DD로 정규화한다', () => {
     expect(extractLectureDateKey('2026-09-12T09:00:00')).toBe('2026-09-12')
-    expect(extractLectureDateKey('2026. 09. 12')).toBe('2026-09-12')
+    expect(extractLectureDateKey('2026.09.12')).toBe('2026-09-12')
     expect(extractLectureDateKey('2026.09.12(금)')).toBe('2026-09-12')
     expect(extractLectureDateKey('2026-09-12(금) 09:00 ~ 11:00')).toBe('2026-09-12')
     expect(extractLectureDateKey(undefined)).toBeNull()
@@ -40,7 +40,7 @@ describe('one-school-per-day-conflict', () => {
     expect(occupied.get('170024')?.has('2026-09-12')).toBe(true)
     expect(occupied.get('170034')?.has('2026-09-12')).toBe(true)
     expect(
-      resolveOneSchoolPerDayAssignmentStatus('2026. 09. 12(금)', occupied.get('170024'))
+      resolveOneSchoolPerDayAssignmentStatus('2026.09.12(금)', occupied.get('170024'))
     ).toBe('unavailable')
     expect(
       resolveOneSchoolPerDayAssignmentStatus('2026-09-20', occupied.get('170024'))

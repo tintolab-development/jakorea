@@ -328,11 +328,7 @@ function IndividualApplicantProgressScheduleSection({
   const displaySessions = prepareGeneralEducationScheduleSessions(
     sessions,
     scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null,
-    {
-      detailScheduleTimeSpan,
-      educationScheduleLines:
-        sessions.length === 0 ? readProgramEducationScheduleLines(program) : [],
-    }
+    { detailScheduleTimeSpan }
   )
   const shape = scheduleShape ? { ...scheduleShape, curriculumSessionLabels } : null
   return (

@@ -2,7 +2,10 @@ import assert from 'node:assert/strict'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
-import { resolvePortalApplicationHiddenParagraphIds } from './portal-application-hidden-paragraph-ids.ts'
+import {
+  resolveInstitutionPreEducationNoticeRequired,
+  resolvePortalApplicationHiddenParagraphIds,
+} from './portal-application-hidden-paragraph-ids.ts'
 import {
   confirmOsaScheduleOptionValue,
   hasStaleSelectedSlotIds,
@@ -87,6 +90,40 @@ const guidanceRuntimeOverridesProgram = resolvePortalApplicationHiddenParagraphI
   paragraphs: [{ id: institutionGuidanceId } as never],
 })
 assert.equal(guidanceRuntimeOverridesProgram.has(institutionGuidanceId), false)
+
+const guidanceShownByAdvanceRuntimeFlag = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-general',
+  program: { preEducationNoticeRequired: false } as never,
+  runtimeContext: { advanceGuidanceRequired: true },
+  paragraphs: [{ id: institutionGuidanceId } as never],
+})
+assert.equal(guidanceShownByAdvanceRuntimeFlag.has(institutionGuidanceId), false)
+
+const guidanceShownByAdvanceProgramFlag = resolvePortalApplicationHiddenParagraphIds({
+  applyCase: 'institution-general',
+  program: { advanceGuidanceRequired: true } as never,
+  paragraphs: [{ id: institutionGuidanceId } as never],
+})
+assert.equal(guidanceShownByAdvanceProgramFlag.has(institutionGuidanceId), false)
+
+assert.equal(
+  resolveInstitutionPreEducationNoticeRequired({
+    preEducationNoticeRequired: false,
+    advanceGuidanceRequired: true,
+  }),
+  true,
+)
+assert.equal(
+  resolveInstitutionPreEducationNoticeRequired({ advanceGuidanceRequired: true }),
+  true,
+)
+assert.equal(
+  resolveInstitutionPreEducationNoticeRequired({
+    preEducationNoticeRequired: false,
+    advanceGuidanceRequired: false,
+  }),
+  false,
+)
 
 const economyGuidanceId = 'program-application-economy-seed-guidance'
 const economyGuidanceHidden = resolvePortalApplicationHiddenParagraphIds({

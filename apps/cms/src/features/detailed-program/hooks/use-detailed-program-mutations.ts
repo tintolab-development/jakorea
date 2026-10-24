@@ -1,13 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  bulkChangeDetailedPrograms,
+  bulkUpdateDetailedPrograms,
   createDetailedProgram,
   deleteDetailedPrograms,
-  updateDetailedProgram,
 } from '@/features/detailed-program/api/admin-detailed-programs-service'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { DetailedProgramManagementRow } from '@/features/detailed-program/model/detailed-program-management.types'
 import {
   applyCreatedToMatchingArrayLists,
+  applyDeletedIdsToArrayLists,
   applyDeletedToArrayLists,
   applyUpdatedToMatchingArrayLists,
   invalidateArrayLists,
@@ -39,6 +41,7 @@ export function useDetailedProgramMutations() {
 
   const createMutation = useMutation({
     mutationFn: createDetailedProgram,
+    retry: false,
     onSuccess: async created => {
       if (!created.id) {
         await invalidateArrayLists(queryClient, listsKey)
@@ -55,27 +58,53 @@ export function useDetailedProgramMutations() {
     },
   })
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, input }: { id: string; input: { name: string; active: boolean } }) =>
-      updateDetailedProgram(id, input),
-    onSuccess: async updated => {
-      if (!updated.id) {
+  const bulkUpdateMutation = useMutation({
+    mutationFn: bulkUpdateDetailedPrograms,
+    retry: false,
+    onSuccess: async updatedRows => {
+      if (updatedRows.length === 0) {
         await invalidateArrayLists(queryClient, listsKey)
         return
       }
-      queryClient.setQueryData(dataManagementQueryKeys.detailedPrograms.detail(updated.id), updated)
-      applyUpdatedToMatchingArrayLists(
-        queryClient,
-        listsKey,
-        updated,
-        rowId,
-        detailedProgramMatchesListFilter
-      )
+      for (const updated of updatedRows) {
+        if (!updated.id) continue
+        queryClient.setQueryData(dataManagementQueryKeys.detailedPrograms.detail(updated.id), updated)
+        applyUpdatedToMatchingArrayLists(
+          queryClient,
+          listsKey,
+          updated,
+          rowId,
+          detailedProgramMatchesListFilter
+        )
+      }
+    },
+  })
+
+  const bulkChangesMutation = useMutation({
+    mutationFn: bulkChangeDetailedPrograms,
+    retry: false,
+    onSuccess: async result => {
+      for (const updated of result.updated) {
+        if (!updated.id) continue
+        queryClient.setQueryData(dataManagementQueryKeys.detailedPrograms.detail(updated.id), updated)
+        applyUpdatedToMatchingArrayLists(
+          queryClient,
+          listsKey,
+          updated,
+          rowId,
+          detailedProgramMatchesListFilter
+        )
+      }
+      for (const id of result.deletedIds) {
+        queryClient.removeQueries({ queryKey: dataManagementQueryKeys.detailedPrograms.detail(id) })
+      }
+      applyDeletedIdsToArrayLists(queryClient, listsKey, result.deletedIds, rowId)
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteDetailedPrograms,
+    retry: false,
     onSuccess: (_data, ids) => {
       for (const id of ids) {
         queryClient.removeQueries({ queryKey: dataManagementQueryKeys.detailedPrograms.detail(id) })
@@ -84,5 +113,5 @@ export function useDetailedProgramMutations() {
     },
   })
 
-  return { createMutation, updateMutation, deleteMutation }
+  return { createMutation, bulkUpdateMutation, bulkChangesMutation, deleteMutation }
 }

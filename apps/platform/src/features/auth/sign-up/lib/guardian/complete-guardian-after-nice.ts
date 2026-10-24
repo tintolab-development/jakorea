@@ -5,6 +5,7 @@ import type {
 } from '../../api/guardian-signup-bridge/types.ts'
 import {
   isGuardianBridgeConflict,
+  isGuardianFinalConsentChallengeInvalid,
   resolveGuardianBridgeError,
   type GuardianBridgeErrorAction,
 } from './guardian-bridge-errors.ts'
@@ -129,7 +130,10 @@ export async function completeGuardianAfterNice(
       return { kind: 'completed' }
     }
   } catch (error) {
-    if (!isGuardianBridgeConflict(error)) {
+    if (
+      !isGuardianBridgeConflict(error) &&
+      !isGuardianFinalConsentChallengeInvalid(error)
+    ) {
       const resolved = resolveGuardianBridgeError(error)
       return { kind: 'error', message: resolved.message, action: resolved.action }
     }

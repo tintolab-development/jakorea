@@ -129,7 +129,7 @@ export function SponsorRegisterModal({
       footer={
         <>
           <CmsButton variant="secondary" type="button" disabled={submitting} onClick={onCancel}>
-            닫기
+            취소
           </CmsButton>
           <CmsButton
             variant="primary"
@@ -213,13 +213,11 @@ export function SponsorRegisterModal({
             required
             view={noopView}
             edit={
-              <CmsDatePicker inputSize="small"
+              <CmsDatePicker
+                inputSize="small"
                 value={form.sponsorshipStartDate ? dayjs(form.sponsorshipStartDate) : null}
                 onChange={date =>
-                  setField(
-                    'sponsorshipStartDate',
-                    date ? date.startOf('day').toISOString() : ''
-                  )
+                  setField('sponsorshipStartDate', date ? date.startOf('day').toISOString() : '')
                 }
                 placeholder="후원 시작일을 입력하세요"
                 format="YYYY.MM.DD"
@@ -321,10 +319,7 @@ export function SponsorRegisterModal({
                 onFilesChange={files => {
                   const next = mergeSponsorLogoFiles(form.logoFiles, files)
                   if (next.length === form.logoFiles.length && files.length > 0) {
-                    const message = validateSponsorLogoSelection([
-                      ...form.logoFiles,
-                      ...files,
-                    ])
+                    const message = validateSponsorLogoSelection([...form.logoFiles, ...files])
                     if (message) {
                       showAlert({ title: '안내', content: message })
                     }
@@ -354,7 +349,7 @@ export function SponsorRegisterModal({
               <CmsInput
                 value={form.securityMemo}
                 onChange={e => setField('securityMemo', e.target.value)}
-                placeholder="비고를 입력하세요"
+                placeholder="비고를 입력해 주세요"
                 inputSize="small"
                 width="100%"
               />

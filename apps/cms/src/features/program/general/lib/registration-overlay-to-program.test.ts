@@ -427,13 +427,9 @@ describe('normalizeRegistrationOverlayForApply', () => {
 })
 
 describe('trained teacher curriculum overlay', () => {
-  it('prepends 교육 연수 without replacing 1차시', () => {
+  it('replaces the first session with 교육 연수 without prepending an extra block', () => {
     const overlay = normalizeRegistrationOverlayForApply(
       {
-        'trainedTeachersRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
-        'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine':
-          '26년 4월 20일(월) 9:30 ~ 12:20',
-        'trainedTeachersRegistration.educationCurriculum.teacherTrainingEducationForm': 'offline',
         'trainedTeachersRegistration.educationCurriculum.unitNameBySession': {
           1: '단원1',
           2: '단원2',
@@ -458,11 +454,10 @@ describe('trained teacher curriculum overlay', () => {
     expect(next.generalCommonInfo?.curriculumSessions).toEqual([
       expect.objectContaining({
         sessionLabel: '교육 연수',
-        title: '교육 연수',
-        scheduleDateLabel: '26년 4월 20일(월) 9:30 ~ 12:20',
-        educationFormLabel: '오프라인',
+        title: '단원1',
+        description: '내용1',
+        ipsTypeSummary: 'Prepare | 해당없음',
       }),
-      expect.objectContaining({ sessionLabel: '1차시', title: '단원1', description: '내용1' }),
       expect.objectContaining({ sessionLabel: '2차시', title: '단원2', description: '내용2' }),
     ])
   })
@@ -576,5 +571,59 @@ describe('일정형 사전 교육 overlay 교육 형태', () => {
         educationFormLabel: '오프라인',
       })
     )
+  })
+})
+
+describe('empty-public-title-apply-fallback', () => {
+  const extras = {
+    programType: 'curriculum' as const,
+    sessionRoundType: 'single' as const,
+    educationScheduleMode: 'date' as const,
+    educationFormScheduleDetail: 'common' as const,
+    participationScheduleDetail: 'common' as const,
+    ipsScheduleDetail: 'common' as const,
+    participantOrganization: true,
+  }
+
+  function programWithTitle(): Program {
+    return {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        announcementTitle: '기존 공고명',
+      },
+    }
+  }
+
+  it('키가 없으면 기존 공고명을 유지한다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(programWithTitle(), {}, extras)
+    expect(next.generalCommonInfo?.announcementTitle).toBe('기존 공고명')
+  })
+
+  it('명시적 빈 문자열은 기존 공고명으로 되돌리지 않는다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      programWithTitle(),
+      { 'generalRegistration.basicInfo.publicProgramTitle': '' },
+      extras
+    )
+    expect(next.generalCommonInfo?.announcementTitle).toBe('')
+  })
+
+  it('공백 문자열은 trim 후 명시적 빈 값이다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      programWithTitle(),
+      { 'generalRegistration.basicInfo.publicProgramTitle': '   ' },
+      extras
+    )
+    expect(next.generalCommonInfo?.announcementTitle).toBe('')
+  })
+
+  it('새 공고명을 적용한다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      programWithTitle(),
+      { 'generalRegistration.basicInfo.publicProgramTitle': '새 공고명' },
+      extras
+    )
+    expect(next.generalCommonInfo?.announcementTitle).toBe('새 공고명')
   })
 })

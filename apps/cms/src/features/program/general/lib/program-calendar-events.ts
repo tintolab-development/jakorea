@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { formatDateRangeDot } from '@/shared/utils/date'
 import type { DateValue } from '@/types'
 import type { Program } from '@/types/domain'
 import type { CalendarItem, CalendarMainEventInput } from '@/shared/components/calendar'
@@ -37,14 +38,8 @@ function toDate(value: DateValue): dayjs.Dayjs {
   return dayjs(value instanceof Date ? value.toISOString() : value)
 }
 
-function formatDate(value: DateValue): string {
-  const d = toDate(value)
-  if (!d.isValid()) return '-'
-  return d.format('YYYY.MM.DD')
-}
-
 export function formatGeneralProgramOperationPeriod(program: Program): string {
-  return `${formatDate(program.startDate)} ~ ${formatDate(program.endDate)}`
+  return formatDateRangeDot(program.startDate, program.endDate)
 }
 
 function formatTimeLabel(startTime?: string, endTime?: string): string {

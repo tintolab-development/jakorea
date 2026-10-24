@@ -5,19 +5,26 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { TemporaryScheduleSlotRequestGrade } from './temporaryScheduleSlotRequestGrade';
 
 export interface TemporaryScheduleSlotRequest {
+  /** 같은 서울 달력일의 PROGRAM_DEFINED 교육 scheduleId. GET /api/admin/programs/{programId}/schedules 의 하루짜리 행 id. 연간 기간 창(startDate≠endDate) id는 거부한다. */
   scheduleId: number;
   /**
+     * 학년. CMS는 숫자만 보낸다.
      * @minLength 0
      * @maxLength 80
      */
-  grade: string;
+  grade: TemporaryScheduleSlotRequestGrade;
   /**
+     * 학급. CMS는 {n}반 형식. gradeBlocks.classCount=N이면 1반..N반.
      * @minLength 0
      * @maxLength 120
      */
   className: string;
-  /** @minimum 0 */
+  /**
+     * 학생 수. 임시 배정 화면은 필드가 없어 0을 보낸다. 명단/카탈로그 불일치로 거절하지 않는다.
+     * @minimum 0
+     */
   studentCount: number;
 }

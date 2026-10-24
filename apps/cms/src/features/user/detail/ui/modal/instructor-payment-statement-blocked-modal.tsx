@@ -82,7 +82,7 @@ export function InstructorPaymentStatementBlockedModal({
       width={600}
       className={rootClass}
       footer={
-        <CmsButton variant="secondary" width={70} type="button" onClick={onClose}>
+        <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
           확인
         </CmsButton>
       }

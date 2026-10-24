@@ -9,10 +9,27 @@ import {
   type RecruitmentCopyAudience,
 } from '@/features/program/shared/lib/recruitment-row-copy'
 
-function nonempty(value: string | null | undefined): string | undefined {
-  if (value == null) return undefined
-  const trimmed = value.trim()
-  return trimmed ? trimmed : undefined
+function hasOwnField(value: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key)
+}
+
+function rowString(
+  row: ProgramRecruitmentWindow | undefined,
+  key: keyof Pick<
+    ProgramRecruitmentWindow,
+    | 'startAt'
+    | 'endAt'
+    | 'operationStartDate'
+    | 'operationEndDate'
+    | 'contactName'
+    | 'contactPhone'
+    | 'contactEmail'
+    | 'interviewStartAt'
+    | 'interviewEndAt'
+  >
+): string | undefined {
+  if (!row || !hasOwnField(row, key) || row[key] === undefined) return undefined
+  return row[key] ?? ''
 }
 
 export function recruitmentPeriodLabelFromWindow(
@@ -39,28 +56,34 @@ function patchNestedFromRow(
   if (!row) return info
   const next: Record<string, unknown> = { ...(info ?? {}) }
   const recruitLabel = recruitmentPeriodLabelFromWindow(row)
-  if (recruitLabel) next.recruitmentPeriodLabel = recruitLabel
+  if (hasOwnField(row, 'startAt') || hasOwnField(row, 'endAt')) {
+    next.recruitmentPeriodLabel = recruitLabel ?? ''
+  }
   const operationLabel = operationPeriodLabelFromWindow(row)
-  if (operationLabel) next.operationPeriodLabel = operationLabel
-  const contactName = nonempty(row.contactName)
-  if (contactName) {
+  if (hasOwnField(row, 'operationStartDate') || hasOwnField(row, 'operationEndDate')) {
+    next.operationPeriodLabel = operationLabel ?? ''
+  }
+  const contactName = rowString(row, 'contactName')
+  if (contactName !== undefined) {
     next.contactOrganizationName = contactName
     next.contactName = contactName
   }
-  const phone = nonempty(row.contactPhone)
-  if (phone) {
+  const phone = rowString(row, 'contactPhone')
+  if (phone !== undefined) {
     next.inquiryTel = phone
     next.contactPhone = phone
   }
-  const email = nonempty(row.contactEmail)
-  if (email) {
+  const email = rowString(row, 'contactEmail')
+  if (email !== undefined) {
     next.inquiryEmail = email
     next.contactEmail = email
   }
   if (options?.interview) {
     if (row.interviewEnabled != null) next.volunteerInterviewEnabled = row.interviewEnabled
-    if (row.interviewStartAt) next.interviewStartDate = row.interviewStartAt
-    if (row.interviewEndAt) next.interviewEndDate = row.interviewEndAt
+    const interviewStart = rowString(row, 'interviewStartAt')
+    const interviewEnd = rowString(row, 'interviewEndAt')
+    if (interviewStart !== undefined) next.interviewStartDate = interviewStart
+    if (interviewEnd !== undefined) next.interviewEndDate = interviewEnd
   }
   return next
 }
@@ -72,22 +95,27 @@ export function hydrateRecruitmentWindowsOntoProgram(program: Program): Program 
   const instructor = pickRecruitmentCopyRow(program, 'instructor')
   const volunteer = pickRecruitmentCopyRow(program, 'volunteer')
 
+  const participantStart = rowString(participant, 'startAt')
+  const participantEnd = rowString(participant, 'endAt')
+  const instructorStart = rowString(instructor, 'startAt')
+  const instructorEnd = rowString(instructor, 'endAt')
+  const volunteerStart = rowString(volunteer, 'startAt')
+  const volunteerEnd = rowString(volunteer, 'endAt')
+
   return {
     ...program,
-    ...(nonempty(participant?.startAt) ? { applicationStartDate: participant!.startAt! } : {}),
-    ...(nonempty(participant?.endAt) ? { applicationEndDate: participant!.endAt! } : {}),
-    ...(nonempty(instructor?.startAt)
-      ? { instructorApplicationStartDate: instructor!.startAt! }
-      : {}),
-    ...(nonempty(instructor?.endAt) ? { instructorApplicationEndDate: instructor!.endAt! } : {}),
-    ...(nonempty(volunteer?.startAt)
-      ? { volunteerApplicationStartDate: volunteer!.startAt! }
-      : {}),
-    ...(nonempty(volunteer?.endAt) ? { volunteerApplicationEndDate: volunteer!.endAt! } : {}),
+    ...(participantStart !== undefined ? { applicationStartDate: participantStart } : {}),
+    ...(participantEnd !== undefined ? { applicationEndDate: participantEnd } : {}),
+    ...(instructorStart !== undefined ? { instructorApplicationStartDate: instructorStart } : {}),
+    ...(instructorEnd !== undefined ? { instructorApplicationEndDate: instructorEnd } : {}),
+    ...(volunteerStart !== undefined ? { volunteerApplicationStartDate: volunteerStart } : {}),
+    ...(volunteerEnd !== undefined ? { volunteerApplicationEndDate: volunteerEnd } : {}),
     generalCommonInfo: {
       ...program.generalCommonInfo,
       participantRecruitmentInfo: patchNestedFromRow(
-        program.generalCommonInfo?.participantRecruitmentInfo as Record<string, unknown> | undefined,
+        program.generalCommonInfo?.participantRecruitmentInfo as
+          | Record<string, unknown>
+          | undefined,
         participant
       ),
       instructorRecruitmentInfo: patchNestedFromRow(

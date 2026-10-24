@@ -54,6 +54,7 @@ export {
   UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveEducationScheduleTabLabel,
   resolveVolunteerActivityDetailCase,
+  shouldShowSettlementTab,
   hasTeacherAssignmentAsideContent,
   DEFAULT_EDUCATION_APPLICATION_LIST_PARAMS,
   buildEducationApplicationListPath,
@@ -146,4 +147,6 @@ export {
   EducationSettlementWriteForm,
   buildSettlementWritePath,
   buildSettlementTabPath,
+  resolveSettlementAreaFromPathname,
+  resolveSettlementDocumentKind,
 } from './settlements'

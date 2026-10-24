@@ -203,6 +203,24 @@ const GENERAL_ROW_DETAIL_INFO_PREFIX: Record<string, string> = {
   VOLUNTEER: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer,
 }
 
+const UJAT_ROW_DETAIL_INFO_BINDINGS = [
+  {
+    recruitmentType: 'PARTICIPANT',
+    applicationType: 'ORGANIZATION',
+    prefix: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution,
+  },
+  {
+    recruitmentType: 'VOLUNTEER',
+    recruitTerm: 'FIRST_HALF',
+    prefix: 'recruitVolunteer.h1.detailInfo',
+  },
+  {
+    recruitmentType: 'VOLUNTEER',
+    recruitTerm: 'SECOND_HALF',
+    prefix: 'recruitVolunteer.h2.detailInfo',
+  },
+] as const
+
 /**
  * 일반 프로그램 생성 직후 — 모집 양식별 썸네일·첨부를 해당 모집 행에 연결한다.
  * 같은 유형 행이 여럿이면(기관·개인 참여자) 같은 양식 파일을 각 행에 넣는다.
@@ -229,6 +247,50 @@ export async function bindGeneralRecruitDetailMediaToRows(
     const attachmentIds = media.attachmentFileObjectIds ?? []
     if (attachmentIds.length > 0) {
       await putProgramRecruitmentAttachments(numericId, row.id!, attachmentIds)
+    }
+  }
+}
+
+/**
+ * UJAT 프로그램 생성 직후 — 기관·봉사자 상반기·하반기 미디어를 각 모집 행에 연결한다.
+ * 봉사자 행은 날짜 정렬이 아니라 `recruitTerm`을 SSOT로 사용한다.
+ */
+export async function bindUjatRecruitDetailMediaToRows(
+  created: Pick<Program, 'id' | 'programRecruitments'>,
+  overlay: Record<string, unknown>
+): Promise<void> {
+  const numericId = parseFileObjectId(created.id)
+  if (numericId == null) return
+
+  const rows = (created.programRecruitments ?? []).filter(row => row.id != null)
+  for (const binding of UJAT_ROW_DETAIL_INFO_BINDINGS) {
+    const media = readRecruitDetailMediaFromOverlay(overlay, [binding.prefix])
+    const hasMedia =
+      media.thumbFileObjectId != null || (media.attachmentFileObjectIds?.length ?? 0) > 0
+    if (!hasMedia) continue
+
+    const row = rows.find(candidate => {
+      if ((candidate.recruitmentType ?? '').toUpperCase() !== binding.recruitmentType) {
+        return false
+      }
+      if (
+        'applicationType' in binding &&
+        (candidate.applicationType ?? '').toUpperCase() !== binding.applicationType
+      ) {
+        return false
+      }
+      return !('recruitTerm' in binding) || candidate.recruitTerm === binding.recruitTerm
+    })
+    if (row?.id == null) {
+      throw new Error(`UJAT 모집 행을 찾을 수 없어 미디어를 연결할 수 없습니다: ${binding.prefix}`)
+    }
+
+    if (media.thumbFileObjectId != null) {
+      await putProgramRecruitmentThumbnail(numericId, row.id, media.thumbFileObjectId)
+    }
+    const attachmentIds = media.attachmentFileObjectIds ?? []
+    if (attachmentIds.length > 0) {
+      await putProgramRecruitmentAttachments(numericId, row.id, attachmentIds)
     }
   }
 }

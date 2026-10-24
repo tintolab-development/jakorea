@@ -34,14 +34,19 @@ import { fetchAdminMe, updateAdminMarketingConsent } from '@/features/auth/api/f
 import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
 import { fetchCurrentTermsDocumentMeta } from '@/features/user/api/fetch-current-terms-document'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import {
+  getMemberApiErrorMessage,
+  getMemberDeleteCurrentPasswordInvalidAlertOptions,
+  isMemberDeleteCurrentPasswordInvalidError,
+} from '@/features/user/api/get-member-api-error'
+import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import {
   cmsIdentityVerificationClient,
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
 import { useIdentityVerification as useIdentityVerificationBase } from '@jakorea/identity-verification/react'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
-import { CmsButton, CmsRadioGroup, ContentModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsRadioGroup, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { ProfilePasswordChangeModal } from '@/shared/ui/profile-password-change-modal'
 import type { User, TermsAgreementRow } from '@/types/user'
@@ -62,6 +67,17 @@ const MARKETING_RADIO_OPTIONS = [
   { label: '동의', value: 'agree' as const },
   { label: '미동의', value: 'disagree' as const },
 ]
+
+const ADMIN_MARKETING_CONSENT_WITHDRAW_CONFIRM = {
+  title: '동의 철회 안내',
+  content: [
+    '마케팅 정보 수신 동의를 철회하시겠습니까?',
+    '철회 시 JA Korea의 홍보 안내를 더 이상 받지 않습니다.',
+    '신청 내역, 계정 보안 등 서비스 이용에 필요한 안내는 계속 받을 수 있습니다.',
+  ].join('\n'),
+  confirmText: '철회하기',
+  cancelText: '취소',
+}
 
 const SAMPLE_AGREED_AT = '2026.01.15 09:15:42'
 
@@ -245,6 +261,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   const [marketingConsent, setMarketingConsent] = useState<MarketingConsentValue>('disagree')
   const [marketingAgreedAt, setMarketingAgreedAt] = useState('-')
   const [marketingConsentUpdating, setMarketingConsentUpdating] = useState(false)
+  const [marketingWithdrawConfirmOpen, setMarketingWithdrawConfirmOpen] = useState(false)
   /** 약관 표시용 — GET /api/admin/me 응답을 정본으로 사용 */
   const [profileTermsAgreements, setProfileTermsAgreements] = useState<
     TermsAgreementRow[] | undefined
@@ -289,6 +306,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
     const currentUser = useAuthStore.getState().user
     if (!open || !currentUser) {
       setProfileTermsAgreements(undefined)
+      setMarketingWithdrawConfirmOpen(false)
       return
     }
 
@@ -373,6 +391,11 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
       onCancel()
       logout()
     } catch (error) {
+      if (isGlobalApiErrorAlertShown(error)) return
+      if (isMemberDeleteCurrentPasswordInvalidError(error)) {
+        showAlert(getMemberDeleteCurrentPasswordInvalidAlertOptions())
+        return
+      }
       showAlert({
         title: '안내',
         content: getMemberApiErrorMessage(error, '회원 탈퇴에 실패했습니다.'),
@@ -404,11 +427,13 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
     await verify()
   }
 
-  const handleMarketingChange = async (next: MarketingConsentValue) => {
-    if (!user || next === marketingConsent || marketingConsentUpdating) return
+  const applyMarketingConsentChange = async (
+    next: MarketingConsentValue
+  ): Promise<boolean> => {
+    if (!user || next === marketingConsent || marketingConsentUpdating) return false
     if (!isMembersRemoteEnabled()) {
       setMarketingConsent(next)
-      return
+      return true
     }
 
     setMarketingConsentUpdating(true)
@@ -445,14 +470,37 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
       setMarketingAgreedAt(agreedAtDisplay)
       setProfileTermsAgreements(nextTerms)
       updateUser({ termsAgreements: nextTerms })
+      return true
     } catch (error) {
       showAlert({
         title: '마케팅 동의 변경 실패',
         content: getMemberApiErrorMessage(error, '마케팅 제공 동의를 변경하지 못했습니다.'),
       })
+      return false
     } finally {
       setMarketingConsentUpdating(false)
     }
+  }
+
+  const handleMarketingChange = (next: MarketingConsentValue) => {
+    if (!user || next === marketingConsent || marketingConsentUpdating) return
+    if (next === 'disagree' && marketingConsent === 'agree') {
+      setMarketingWithdrawConfirmOpen(true)
+      return
+    }
+    void applyMarketingConsentChange(next)
+  }
+
+  const handleMarketingWithdrawConfirm = () => {
+    void (async () => {
+      const succeeded = await applyMarketingConsentChange('disagree')
+      if (succeeded) setMarketingWithdrawConfirmOpen(false)
+    })()
+  }
+
+  const handleMarketingWithdrawCancel = () => {
+    if (marketingConsentUpdating) return
+    setMarketingWithdrawConfirmOpen(false)
   }
 
   if (!user) return null
@@ -666,6 +714,18 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
         onConfirm={value => void handleWithdraw(value)}
         variant="self_withdraw"
         confirmLoading={withdrawing}
+      />
+
+      <ConfirmModal
+        open={marketingWithdrawConfirmOpen}
+        title={ADMIN_MARKETING_CONSENT_WITHDRAW_CONFIRM.title}
+        content={ADMIN_MARKETING_CONSENT_WITHDRAW_CONFIRM.content}
+        confirmText={ADMIN_MARKETING_CONSENT_WITHDRAW_CONFIRM.confirmText}
+        cancelText={ADMIN_MARKETING_CONSENT_WITHDRAW_CONFIRM.cancelText}
+        onConfirm={handleMarketingWithdrawConfirm}
+        onCancel={handleMarketingWithdrawCancel}
+        confirmLoading={marketingConsentUpdating}
+        zIndex={2600}
       />
     </ContentModal>
   )

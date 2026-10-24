@@ -14,6 +14,8 @@ export const PROGRAM_SCHEDULE_KIND_ORDER: readonly ProgramScheduleKind[] = [
 const ASSIGNED_PROGRAM_TYPE_ALIASES: Record<string, ProgramScheduleKind> = {
   general: 'general',
   education: 'general',
+  trained_teachers: 'general',
+  trained_teacher: 'general',
   company_school: 'company_school',
   company_school_program: 'company_school',
   economy: 'company_school',

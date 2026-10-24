@@ -7,6 +7,7 @@ import type { ProgramSettlementPaymentItemResponse } from '@/shared/api/generate
 import type { ProgramSettlementPolicyResponse } from '@/shared/api/generated/logs/schemas/programSettlementPolicyResponse'
 import type { ProgramWagePolicyResponse } from '@/shared/api/generated/logs/schemas/programWagePolicyResponse'
 import type { Program } from '@/types/domain'
+import { formatNumberDisplay } from '@/shared/utils'
 import {
   coerceProgramPaymentItemsText,
   PROGRAM_WAGE_DEDUCTION_LABEL,
@@ -20,6 +21,9 @@ import {
 
 const PAYMENT_ITEM_LABEL: Record<string, string> = {
   TRANSPORTATION: '교통비',
+  TRANSPORT_INSTRUCTOR: '교통비',
+  STUDENT_TRANSPORTATION: '학생 교통비',
+  TRANSPORT_STUDENT: '학생 교통비',
   LONG_DISTANCE_TRANSPORTATION: '장거리 교통비',
   LODGING: '숙박비',
   ACTIVITY: '참여자 활동비',
@@ -36,7 +40,7 @@ const DEDUCTION_TYPE_LABEL: Record<string, string> = {
 
 function formatWon(amount: number | undefined): string | undefined {
   if (amount == null || Number.isNaN(amount)) return undefined
-  return `${amount.toLocaleString('ko-KR')}원`
+  return `${formatNumberDisplay(amount)}원`
 }
 
 function normalizeFeeKind(kind: string | undefined): 'NORMAL' | 'LONG_DISTANCE' | 'OTHER' {
@@ -160,17 +164,26 @@ export function applySettlementPolicyToCommonInfo(
   const wageGradeRows =
     mapSettlementWagePoliciesToGradeRows(settlementPolicy.wagePolicies) ??
     normalizedCommon?.wageGradeRows
-  const paymentItems =
-    mapSettlementPaymentItemsToLabel(settlementPolicy.paymentItems) ??
-    (normalizedCommon?.paymentItems?.trim() || undefined)
+  const policyPaymentItemsPresent = Array.isArray(settlementPolicy.paymentItems)
+  const paymentItemsFromPolicy = policyPaymentItemsPresent
+    ? mapSettlementPaymentItemsToLabel(settlementPolicy.paymentItems)
+    : undefined
+  const overlayPaymentItems = normalizedCommon?.paymentItems?.trim() || undefined
+  // 구조화 배열이 있으면(빈 배열 포함) overlay 라벨보다 우선한다. null/누락은 overlay 유지.
+  const paymentItems = policyPaymentItemsPresent
+    ? paymentItemsFromPolicy || undefined
+    : overlayPaymentItems
   const deductionItems =
     mapSettlementDeductionTypeToLabel(settlementPolicy.deductionType) ??
     normalizedCommon?.deductionItems
 
   if (!normalizedCommon && !wageGradeRows && !paymentItems && !deductionItems) return undefined
 
+  const { paymentItems: _overlayPaymentItems, ...restNormalized } = normalizedCommon ?? {}
+  void _overlayPaymentItems
+
   return {
-    ...normalizedCommon,
+    ...restNormalized,
     ...(wageGradeRows ? { wageGradeRows } : {}),
     ...(paymentItems ? { paymentItems } : {}),
     ...(deductionItems ? { deductionItems } : {}),

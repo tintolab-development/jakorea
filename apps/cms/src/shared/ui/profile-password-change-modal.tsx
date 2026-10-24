@@ -4,10 +4,11 @@
 
 import { Form } from 'antd'
 import { useState } from 'react'
+import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
 import { fetchAdminPasswordChange } from '@/features/auth/api/admin-password-change-fetcher'
 import {
   isValidRegisterPassword,
-  REGISTER_PASSWORD_MISMATCH_MESSAGE,
+  REGISTER_PASSWORD_CONDITION_MESSAGE,
 } from '@/features/auth/lib/validate-register-password'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -31,13 +32,56 @@ type ProfilePasswordChangeFormValues = {
 const MODAL_DESCRIPTION =
   '개인정보를 안전하게 보호하기 위해 비밀번호를 주기적(90일)으로 변경해 주세요.\n비밀번호는 8자 이상의 영문, 숫자, 특수문자를 조합하여 사용 가능합니다.'
 
+const NEW_PASSWORD_CONFIRM_MISMATCH_ALERT = {
+  title: '비밀번호 불일치 안내',
+  content:
+    '새 비밀번호 확인이 새 비밀번호와 일치하지 않습니다.\n비밀번호를 확인 후 다시 시도해 주세요.',
+}
+
+const NEW_PASSWORD_CONDITION_ALERT = {
+  title: '비밀번호 조건 안내',
+  content: `${REGISTER_PASSWORD_CONDITION_MESSAGE}\n비밀번호를 확인 후 다시 시도해 주세요.`,
+}
+
+const CURRENT_PASSWORD_MISMATCH_ALERT = {
+  title: '비밀번호 불일치 안내',
+  content: '현재 비밀번호가 일치하지 않습니다.\n비밀번호를 확인 후 다시 시도해 주세요.',
+}
+
+const PASSWORD_CHANGE_CURRENT_MISMATCH_CODES = new Set([
+  'INVALID_PASSWORD',
+  'PASSWORD_MISMATCH',
+  'CURRENT_PASSWORD_INVALID',
+  'CURRENT_PASSWORD_MISMATCH',
+  'WRONG_PASSWORD',
+])
+
+function resolvePasswordChangeFailureAlert(error: unknown): {
+  title: string
+  content: string
+} {
+  if (error instanceof AdminMfaApiError) {
+    const code = error.code.trim().toUpperCase()
+    if (code === 'VALIDATION_FAILED') {
+      return NEW_PASSWORD_CONDITION_ALERT
+    }
+    if (PASSWORD_CHANGE_CURRENT_MISMATCH_CODES.has(code) || code.includes('CURRENT_PASSWORD')) {
+      return CURRENT_PASSWORD_MISMATCH_ALERT
+    }
+  }
+  const message =
+    error instanceof Error ? error.message : '비밀번호 변경에 실패했습니다. 다시 시도해 주세요.'
+  return {
+    title: '비밀번호 변경 실패',
+    content: message,
+  }
+}
+
 type PasswordFieldRowProps = {
   label: string
   name: keyof ProfilePasswordChangeFormValues
   placeholder: string
   autoComplete: string
-  hasError?: boolean
-  errorMessage?: string
 }
 
 function PasswordFieldRow({
@@ -45,8 +89,6 @@ function PasswordFieldRow({
   name,
   placeholder,
   autoComplete,
-  hasError = false,
-  errorMessage,
 }: PasswordFieldRowProps) {
   return (
     <div className="profile-password-change-modal__row">
@@ -63,14 +105,10 @@ function PasswordFieldRow({
             type="password"
             inputSize="large"
             width="100%"
-            className={hasError ? 'profile-password-change-modal__input--error' : undefined}
             placeholder={placeholder}
             autoComplete={autoComplete}
           />
         </Form.Item>
-        {errorMessage ? (
-          <p className="profile-password-change-modal__error-message">{errorMessage}</p>
-        ) : null}
       </div>
     </div>
   )
@@ -84,19 +122,6 @@ export function ProfilePasswordChangeModal({
   const [form] = Form.useForm<ProfilePasswordChangeFormValues>()
   const { showAlert } = useCmsAlert()
   const [submitting, setSubmitting] = useState(false)
-
-  const newPassword = Form.useWatch('newPassword', form) ?? ''
-  const newPasswordConfirm = Form.useWatch('newPasswordConfirm', form) ?? ''
-
-  const isNewPasswordValid = isValidRegisterPassword(newPassword)
-  const isNewPasswordConditionError =
-    Boolean(newPassword) &&
-    !isNewPasswordValid &&
-    (newPassword.length >= 8 || Boolean(newPasswordConfirm))
-  const isConfirmMismatch =
-    Boolean(newPasswordConfirm) &&
-    newPassword !== newPasswordConfirm &&
-    !isNewPasswordConditionError
 
   const handleCancel = () => {
     if (submitting) return
@@ -120,7 +145,18 @@ export function ProfilePasswordChangeModal({
       return
     }
 
-    if (!isValidRegisterPassword(nextPassword) || nextPassword !== nextPasswordConfirm) {
+    if (!isValidRegisterPassword(currentPassword)) {
+      showAlert(NEW_PASSWORD_CONDITION_ALERT)
+      return
+    }
+
+    if (!isValidRegisterPassword(nextPassword)) {
+      showAlert(NEW_PASSWORD_CONDITION_ALERT)
+      return
+    }
+
+    if (nextPassword !== nextPasswordConfirm) {
+      showAlert(NEW_PASSWORD_CONFIRM_MISMATCH_ALERT)
       return
     }
 
@@ -138,12 +174,7 @@ export function ProfilePasswordChangeModal({
         content: '비밀번호가 변경되었습니다.',
       })
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : '비밀번호 변경에 실패했습니다. 다시 시도해 주세요.'
-      showAlert({
-        title: '비밀번호 변경 실패',
-        content: message,
-      })
+      showAlert(resolvePasswordChangeFailureAlert(error))
     } finally {
       setSubmitting(false)
     }
@@ -187,15 +218,12 @@ export function ProfilePasswordChangeModal({
             name="newPassword"
             placeholder="변경할 비밀번호를 입력해 주세요"
             autoComplete="new-password"
-            hasError={isNewPasswordConditionError}
           />
           <PasswordFieldRow
             label="새 비밀번호 확인"
             name="newPasswordConfirm"
             placeholder="변경할 비밀번호를 확인해 주세요"
             autoComplete="new-password"
-            hasError={isConfirmMismatch}
-            errorMessage={isConfirmMismatch ? REGISTER_PASSWORD_MISMATCH_MESSAGE : undefined}
           />
         </div>
       </Form>

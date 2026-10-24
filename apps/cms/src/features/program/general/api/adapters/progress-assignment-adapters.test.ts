@@ -59,7 +59,7 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
     expect(sessions).toHaveLength(1)
     expect(sessions[0]?.id).toBe('601')
     expect(sessions[0]?.headerTitle).toBe('1회차 과제')
-    expect(sessions[0]?.assignmentPeriodLabel).toBe('2026. 10. 20(화) ~ 2026. 10. 27(화)')
+    expect(sessions[0]?.assignmentPeriodLabel).toBe('2026.10.20(화) ~ 2026.10.27(화)')
     expect(sessions[0]?.participants[0]).toMatchObject({
       participantId: '1001',
       name: '홍길동',
@@ -100,8 +100,8 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
       ],
     })
 
-    expect(allDay?.headerScheduleSummary).toBe('1회차 · 2026. 10. 13(화)')
-    expect(timed?.headerScheduleSummary).toBe('2회차 · 2026. 10. 20(화) 10:00 ~ 12:00')
+    expect(allDay?.headerScheduleSummary).toBe('1회차 · 2026.10.13(화)')
+    expect(timed?.headerScheduleSummary).toBe('2회차 · 2026.10.20(화) 10:00 ~ 12:00')
   })
 
   it('drops schedules without scheduleId and empty items', () => {

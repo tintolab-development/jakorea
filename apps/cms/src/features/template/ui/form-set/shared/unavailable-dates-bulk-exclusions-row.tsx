@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -143,15 +143,20 @@ export function UnavailableDatesBulkExclusionsRow({
     )
   }, [controlledExclusionState])
 
-  const handleApplyDatesChange = useCallback(
-    (dates: string[]) => {
-      onApplyDatesChange?.(dates)
-      if (dates.length > 0 && exclusionState.excludeNone) {
-        updateExclusionState({ ...exclusionState, excludeNone: false })
-      }
-    },
-    [exclusionState, onApplyDatesChange, updateExclusionState]
-  )
+  const exclusionStateRef = useRef(exclusionState)
+  exclusionStateRef.current = exclusionState
+  const onApplyDatesChangeRef = useRef(onApplyDatesChange)
+  onApplyDatesChangeRef.current = onApplyDatesChange
+  const updateExclusionStateRef = useRef(updateExclusionState)
+  updateExclusionStateRef.current = updateExclusionState
+
+  const handleApplyDatesChange = useCallback((dates: string[]) => {
+    onApplyDatesChangeRef.current?.(dates)
+    const currentExclusion = exclusionStateRef.current
+    if (dates.length > 0 && currentExclusion.excludeNone) {
+      updateExclusionStateRef.current({ ...currentExclusion, excludeNone: false })
+    }
+  }, [])
 
   const hasRecurringExclusion =
     exclusionState.excludeSaturday || exclusionState.excludeSunday || exclusionState.excludeHoliday

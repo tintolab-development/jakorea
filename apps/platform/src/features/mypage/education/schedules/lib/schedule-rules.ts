@@ -49,11 +49,14 @@ export function shouldShowEducationAssignment(
   return now.getTime() >= start.getTime()
 }
 
-/** 결석 사유 제출 — 진행 전(예정) 또는 결석 */
+/** 결석 사유 제출 — 진행 전(예정) 또는 결석. CMS 출석·지각·사유불참이면 숨김 */
 export function canSubmitEducationAbsenceReason(
   progress: EducationScheduleProgressStatus,
   attendance: EducationScheduleAttendanceStatus | null,
 ): boolean {
+  if (attendance === 'present' || attendance === 'late' || attendance === 'excused') {
+    return false
+  }
   if (progress === 'scheduled') return true
   return attendance === 'absent'
 }

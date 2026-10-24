@@ -9,9 +9,11 @@ import type { ReactNode } from 'react'
 import previewTypography from './consent-document-preview-typography.module.css'
 
 const CONFIRM_RULE_IDS = new Set<string>([
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS.confirmationClosing,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
 ])
 
 export type ConsentPreviewChrome = {
@@ -98,11 +100,16 @@ export function resolveConsentDocumentPreviewChrome(
   nextParagraph: WritingFormParagraph | undefined,
   submittedDateLabel: string,
   signature?: { signerName?: string; signatureImageSrc?: string },
+  options?: { noticeClosingVisible?: boolean },
 ): ConsentPreviewChrome | null {
   if (isDateParagraph(paragraph)) {
     return {
       content: <ConsentPreviewDate label={submittedDateLabel} />,
-      rule: paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate ? 'date' : undefined,
+      rule:
+        paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate &&
+        options?.noticeClosingVisible !== true
+          ? 'date'
+          : undefined,
     }
   }
 
@@ -127,8 +134,17 @@ export function resolveConsentDocumentPreviewChrome(
     nextParagraph != null &&
     isDateParagraph(nextParagraph)
 
-  if (!text || (!isClosing && !isUntitledExplanationBeforeDate)) return null
   if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient) return null
+  if (
+    isClosing &&
+    paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+  ) {
+    return {
+      content: text ? <ConsentPreviewConfirmText text={text} /> : null,
+      rule: 'confirm',
+    }
+  }
+  if (!text || (!isClosing && !isUntitledExplanationBeforeDate)) return null
 
   return {
     content: <ConsentPreviewConfirmText text={text} />,

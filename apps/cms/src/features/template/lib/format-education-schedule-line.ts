@@ -1,34 +1,26 @@
 import dayjs, { type Dayjs } from 'dayjs'
-
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
+import { CMS_WEEKDAY_KO, formatDateDotWithWeekday } from '@/shared/utils/date'
 
 export type EducationScheduleGroupTimeSlot = {
   startTime?: string
   endTime?: string
 }
 
-/** 교육 진행 예정일 한 줄 표기 (예: `26년 4월 20일(월) 9:30 ~ 12:20`) */
+/** 교육 진행 예정일 한 줄 표기 (예: `2026.04.20(월) 09:30 ~ 12:20`) */
 export function formatEducationScheduleLineFromRange([start, end]: [Dayjs, Dayjs]): string {
-  const formatDatePart = (d: Dayjs) => {
-    const yy = d.year() % 100
-    return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${WEEKDAY_KO[d.day()]})`
-  }
-
-  const startPart = formatDatePart(start)
+  const startPart = formatDateDotWithWeekday(start)
+  const hasTime = dateRangeUsesClockTime(start, end)
   if (start.isSame(end, 'day')) {
-    const hasTime =
-      !(start.hour() === 0 && start.minute() === 0 && end.hour() === 0 && end.minute() === 0)
     if (hasTime) {
-      return `${startPart} ${start.format('H:mm')} ~ ${end.format('H:mm')}`
+      return `${startPart} ${start.format('HH:mm')} ~ ${end.format('HH:mm')}`
     }
     return startPart
   }
 
-  const endPart = formatDatePart(end)
-  const startHasTime = start.hour() !== 0 || start.minute() !== 0
-  const endHasTime = end.hour() !== 0 || end.minute() !== 0
-  if (startHasTime || endHasTime) {
-    return `${startPart} ${start.format('H:mm')} ~ ${endPart} ${end.format('H:mm')}`
+  const endPart = formatDateDotWithWeekday(end)
+  if (hasTime) {
+    return `${startPart} ${start.format('HH:mm')} ~ ${endPart} ${end.format('HH:mm')}`
   }
   return `${startPart} ~ ${endPart}`
 }
@@ -115,15 +107,22 @@ export function buildEducationScheduleLinesFromDateAndGroupTimes(
 }
 
 const SCHEDULE_DATE_PART_RE = /^(\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일/
+const DOTTED_SCHEDULE_DATE_PART_RE = /^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/
 
 function parseScheduleDatePartToken(part: string): Dayjs | null {
   const withoutWeekday = part.replace(/\([^)]*\)/g, '').trim()
   const dateOnly = withoutWeekday.replace(/\s+\d{1,2}:\d{2}.*$/, '').trim()
-  const match = dateOnly.match(SCHEDULE_DATE_PART_RE)
-  if (!match) return null
-  const yy = Number(match[1])
-  const year = 2000 + yy
-  const parsed = dayjs(`${year}-${match[2]}-${match[3]}`)
+  const korean = dateOnly.match(SCHEDULE_DATE_PART_RE)
+  if (korean) {
+    const year = 2000 + Number(korean[1])
+    const parsed = dayjs(`${year}-${korean[2]}-${korean[3]}`)
+    return parsed.isValid() ? parsed : null
+  }
+  const dotted = dateOnly.match(DOTTED_SCHEDULE_DATE_PART_RE)
+  if (!dotted) return null
+  const parsed = dayjs(
+    `${dotted[1]}-${String(dotted[2]).padStart(2, '0')}-${String(dotted[3]).padStart(2, '0')}`
+  )
   return parsed.isValid() ? parsed : null
 }
 
@@ -138,7 +137,7 @@ function applyScheduleClock(date: Dayjs, token: string): Dayjs {
   return clock ?? date.startOf('day')
 }
 
-/** `26년 4월 20일(월) 9:30 ~ 12:20` 등 → Dayjs 구간 (피커 표면·시간 복원용) */
+/** `2026.04.20(월) 09:30 ~ 12:20` 및 구 `26년 4월 20일(월)` 표기 → Dayjs 구간 */
 export function parseEducationScheduleLineToRange(line: string | undefined): [Dayjs, Dayjs] | null {
   const trimmed = line?.trim()
   if (!trimmed) return null
@@ -179,8 +178,7 @@ export function normalizeEducationSchedulePeriodLineDateOnly(line: string): stri
 }
 
 export function educationScheduleRangeHasClock(range: [Dayjs, Dayjs]): boolean {
-  const [start, end] = range
-  return start.hour() !== 0 || start.minute() !== 0 || end.hour() !== 0 || end.minute() !== 0
+  return dateRangeUsesClockTime(range[0], range[1])
 }
 
 /** 아직 시작하지 않은 예정일만 true. 지난 날·당일 시작 후·기간 진행 중은 false. */
@@ -195,6 +193,20 @@ export function isEducationScheduleLineUpcoming(
   return start.isAfter(now, 'day')
 }
 
+/**
+ * 이미 진행된 예정일은 삭제 불가. 파싱할 수 없으면 삭제 가능.
+ * 등록 위저드(임시 저장 포함)는 `lockStartedLines: false` — 미게시라 지난 줄도 삭제.
+ */
+export function canRemoveEducationSchedulePreviewLine(
+  line: string,
+  now: Dayjs = dayjs(),
+  options?: { lockStartedLines?: boolean }
+): boolean {
+  if (options?.lockStartedLines === false) return true
+  if (!parseEducationScheduleLineToRange(line)) return true
+  return isEducationScheduleLineUpcoming(line, now)
+}
+
 /** 같은 날·시각 없음이면 피커 트리거에 `날짜 ~ 날짜`가 나오지 않도록 null */
 export function educationScheduleAppliedSurfaceRange(
   range: [Dayjs, Dayjs] | null
@@ -204,7 +216,7 @@ export function educationScheduleAppliedSurfaceRange(
   return range
 }
 
-/** Overlay ISO 또는 `26년 4월 20일…` 표기 줄 → 피커 구간 */
+/** Overlay ISO 또는 교육 일정 표시 줄 → 피커 구간 */
 export function parseStoredEducationScheduleRange(
   raw: string | null | undefined
 ): [Dayjs, Dayjs] | null {
@@ -310,6 +322,248 @@ export function isEducationScheduleLineBeforeSeoulToday(
 }
 
 /** 줄의 날짜를 옮기고 시각은 유지한다. 날짜를 읽지 못하면 선택한 날짜만 표기한다. */
+const WEEKDAY_CLASS = '[일월화수목금토]'
+const CMS_DATE_TOKEN = String.raw`(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\(${WEEKDAY_CLASS}\)`
+const SERVER_DATE_TOKEN = String.raw`(\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일\(${WEEKDAY_CLASS}\)`
+const CLOCK_TOKEN = String.raw`(\d{1,2}:\d{2})`
+
+const CMS_CROSS_DAY_TIME_RE = new RegExp(
+  `^${CMS_DATE_TOKEN}\\s+${CLOCK_TOKEN}\\s*~\\s*${CMS_DATE_TOKEN}\\s+${CLOCK_TOKEN}$`
+)
+const CMS_SAME_DAY_TIME_RE = new RegExp(`^${CMS_DATE_TOKEN}\\s+${CLOCK_TOKEN}\\s*~\\s*${CLOCK_TOKEN}$`)
+const CMS_PERIOD_RE = new RegExp(`^${CMS_DATE_TOKEN}\\s*~\\s*${CMS_DATE_TOKEN}$`)
+const CMS_DATE_ONLY_RE = new RegExp(`^${CMS_DATE_TOKEN}$`)
+const SERVER_CROSS_DAY_TIME_RE = new RegExp(
+  `^${SERVER_DATE_TOKEN}\\s+${CLOCK_TOKEN}\\s*~\\s*${SERVER_DATE_TOKEN}\\s+${CLOCK_TOKEN}$`
+)
+const SERVER_SAME_DAY_TIME_RE = new RegExp(
+  `^${SERVER_DATE_TOKEN}\\s+${CLOCK_TOKEN}\\s*~\\s*${CLOCK_TOKEN}$`
+)
+const SERVER_PERIOD_RE = new RegExp(`^${SERVER_DATE_TOKEN}\\s*~\\s*${SERVER_DATE_TOKEN}$`)
+const SERVER_DATE_ONLY_RE = new RegExp(`^${SERVER_DATE_TOKEN}$`)
+export const EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE =
+  '교육 진행 예정일 형식을 확인해 주세요.'
+
+type CalendarDate = { year: number; month: number; day: number }
+
+function isValidCalendarDate(year: number, month: number, day: number): boolean {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return false
+  if (month < 1 || month > 12 || day < 1) return false
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+}
+
+function readCalendarDate(year: number, month: number, day: number): CalendarDate | null {
+  if (year < 2000 || year > 2099) return null
+  if (!isValidCalendarDate(year, month, day)) return null
+  return { year, month, day }
+}
+
+function clockToMinutes(token: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(token)
+  if (!match) return null
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (hour > 23 || minute > 59) return null
+  return hour * 60 + minute
+}
+
+function isChronologicalRange(
+  start: CalendarDate,
+  end: CalendarDate,
+  startClock?: string,
+  endClock?: string
+): boolean {
+  const startKey = start.year * 10000 + start.month * 100 + start.day
+  const endKey = end.year * 10000 + end.month * 100 + end.day
+  if (endKey < startKey) return false
+  if (endKey > startKey || !startClock || !endClock) return true
+  const startMinutes = clockToMinutes(startClock)
+  const endMinutes = clockToMinutes(endClock)
+  if (startMinutes == null || endMinutes == null) return false
+  return endMinutes >= startMinutes
+}
+
+function calendarWeekday(date: CalendarDate): string {
+  return CMS_WEEKDAY_KO[new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay()] ?? ''
+}
+
+function weekdaysMatchCalendar(line: string, dates: readonly CalendarDate[]): boolean {
+  const found = [...line.matchAll(/\(([일월화수목금토])\)/g)].map(match => match[1] ?? '')
+  return (
+    found.length === dates.length &&
+    dates.every((date, index) => found[index] === calendarWeekday(date))
+  )
+}
+
+function formatServerEducationDate(date: CalendarDate): string {
+  const year = String(date.year).slice(-2)
+  return `${year}년 ${date.month}월 ${date.day}일(${calendarWeekday(date)})`
+}
+
+function readCmsDate(match: RegExpMatchArray, offset: number): CalendarDate | null {
+  return readCalendarDate(
+    Number(match[offset]),
+    Number(match[offset + 1]),
+    Number(match[offset + 2])
+  )
+}
+
+function readServerDate(match: RegExpMatchArray, offset: number): CalendarDate | null {
+  return readCalendarDate(
+    2000 + Number(match[offset]),
+    Number(match[offset + 1]),
+    Number(match[offset + 2])
+  )
+}
+
+function trySerializeCmsEducationScheduleLine(trimmed: string): string | null {
+  const crossDay = trimmed.match(CMS_CROSS_DAY_TIME_RE)
+  if (crossDay) {
+    const start = readCmsDate(crossDay, 1)
+    const end = readCmsDate(crossDay, 6)
+    const startClock = crossDay[4]
+    const endClock = crossDay[9]
+    if (!start || !end || !startClock || !endClock) return null
+    if (clockToMinutes(startClock) == null || clockToMinutes(endClock) == null) return null
+    if (!isChronologicalRange(start, end, startClock, endClock)) return null
+    return `${formatServerEducationDate(start)} ${startClock} ~ ${formatServerEducationDate(end)} ${endClock}`
+  }
+
+  const sameDay = trimmed.match(CMS_SAME_DAY_TIME_RE)
+  if (sameDay) {
+    const start = readCmsDate(sameDay, 1)
+    const startClock = sameDay[4]
+    const endClock = sameDay[5]
+    if (!start || !startClock || !endClock) return null
+    if (clockToMinutes(startClock) == null || clockToMinutes(endClock) == null) return null
+    if (!isChronologicalRange(start, start, startClock, endClock)) return null
+    return `${formatServerEducationDate(start)} ${startClock} ~ ${endClock}`
+  }
+
+  const period = trimmed.match(CMS_PERIOD_RE)
+  if (period) {
+    const start = readCmsDate(period, 1)
+    const end = readCmsDate(period, 4)
+    if (!start || !end || !isChronologicalRange(start, end)) return null
+    return `${formatServerEducationDate(start)} ~ ${formatServerEducationDate(end)}`
+  }
+
+  const dateOnly = trimmed.match(CMS_DATE_ONLY_RE)
+  if (dateOnly) {
+    const start = readCmsDate(dateOnly, 1)
+    if (!start) return null
+    return formatServerEducationDate(start)
+  }
+
+  return null
+}
+
+function isValidServerScheduleMatch(trimmed: string): boolean {
+  const crossDay = trimmed.match(SERVER_CROSS_DAY_TIME_RE)
+  if (crossDay) {
+    const start = readServerDate(crossDay, 1)
+    const end = readServerDate(crossDay, 6)
+    const startClock = crossDay[4]
+    const endClock = crossDay[9]
+    if (!start || !end || !startClock || !endClock) return false
+    if (clockToMinutes(startClock) == null || clockToMinutes(endClock) == null) return false
+    return (
+      isChronologicalRange(start, end, startClock, endClock) &&
+      weekdaysMatchCalendar(trimmed, [start, end])
+    )
+  }
+  const sameDay = trimmed.match(SERVER_SAME_DAY_TIME_RE)
+  if (sameDay) {
+    const start = readServerDate(sameDay, 1)
+    const startClock = sameDay[4]
+    const endClock = sameDay[5]
+    if (!start || !startClock || !endClock) return false
+    if (clockToMinutes(startClock) == null || clockToMinutes(endClock) == null) return false
+    return (
+      isChronologicalRange(start, start, startClock, endClock) &&
+      weekdaysMatchCalendar(trimmed, [start])
+    )
+  }
+  const period = trimmed.match(SERVER_PERIOD_RE)
+  if (period) {
+    const start = readServerDate(period, 1)
+    const end = readServerDate(period, 4)
+    if (!start || !end) return false
+    return isChronologicalRange(start, end) && weekdaysMatchCalendar(trimmed, [start, end])
+  }
+  const dateOnly = trimmed.match(SERVER_DATE_ONLY_RE)
+  if (dateOnly) {
+    const start = readServerDate(dateOnly, 1)
+    return start != null && weekdaysMatchCalendar(trimmed, [start])
+  }
+  return false
+}
+
+function matchesEducationScheduleShape(trimmed: string): boolean {
+  return (
+    CMS_CROSS_DAY_TIME_RE.test(trimmed) ||
+    CMS_SAME_DAY_TIME_RE.test(trimmed) ||
+    CMS_PERIOD_RE.test(trimmed) ||
+    CMS_DATE_ONLY_RE.test(trimmed) ||
+    SERVER_CROSS_DAY_TIME_RE.test(trimmed) ||
+    SERVER_SAME_DAY_TIME_RE.test(trimmed) ||
+    SERVER_PERIOD_RE.test(trimmed) ||
+    SERVER_DATE_ONLY_RE.test(trimmed)
+  )
+}
+
+/** 서버 `parseSlot` / `parsePeriod` 문자열이면 다시 고치지 않는다. */
+export function isCanonicalServerEducationScheduleLine(line: string): boolean {
+  const trimmed = line.trim()
+  if (!trimmed) return false
+  return isValidServerScheduleMatch(trimmed)
+}
+
+/**
+ * CMS 표시 `2026.11.06(금) 10:00 ~ 12:00` → 서버 `26년 11월 6일(금) 10:00 ~ 12:00`.
+ * 화면·RHF 값은 바꾸지 않고 API 전송 직전에만 쓴다.
+ */
+export function serializeEducationScheduleLineForServer(line: string): string {
+  const trimmed = line.trim()
+  if (!trimmed) return line
+  if (isValidServerScheduleMatch(trimmed)) return trimmed
+  return trySerializeCmsEducationScheduleLine(trimmed) ?? line
+}
+
+export function serializeEducationScheduleLinesForServer(lines: readonly string[]): string[] {
+  return lines.map(line => serializeEducationScheduleLineForServer(line))
+}
+
+/** 일정처럼 보이지만 서버 형식으로 보낼 수 없으면 안내 문구. 자유입력은 null. */
+export function educationScheduleLineSerializationIssue(line: string): string | null {
+  const trimmed = line.trim()
+  if (!trimmed || !matchesEducationScheduleShape(trimmed)) return null
+  if (isValidServerScheduleMatch(trimmed)) return null
+  if (trySerializeCmsEducationScheduleLine(trimmed)) return null
+  return EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE
+}
+
+/**
+ * 서버 교육 예정일 → CMS 표시 `YYYY.MM.DD(요일)`.
+ * 이미 CMS 형식이거나 일정 문자열이 아니면 원문을 유지한다.
+ */
+export function parseEducationScheduleLineForCms(line: string): string {
+  const trimmed = line.trim()
+  if (!trimmed) return line
+  if (educationScheduleLineSerializationIssue(trimmed)) return line
+  if (!isValidServerScheduleMatch(trimmed) && !trySerializeCmsEducationScheduleLine(trimmed)) {
+    return line
+  }
+  const range = parseEducationScheduleLineToRange(trimmed)
+  if (!range) return line
+  return formatEducationScheduleLineFromRange(range)
+}
+
+export function parseEducationScheduleLinesForCms(lines: readonly string[]): string[] {
+  return lines.map(line => parseEducationScheduleLineForCms(line))
+}
+
 export function shiftEducationScheduleLineToDate(line: string, nextDate: Dayjs): string {
   const range = parseEducationScheduleLineToRange(line)
   if (!range) {

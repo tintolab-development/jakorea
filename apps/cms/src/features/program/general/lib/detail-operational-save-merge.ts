@@ -386,6 +386,79 @@ export function prepareRecruitOperationalEditFromProgram(
   if (!options?.strictRemote) seedOperationalRecruitOverlaysFromProgram(program)
 }
 
+function recordHasOwn(source: object | null | undefined, field: string): boolean {
+  return source != null && Object.prototype.hasOwnProperty.call(source, field)
+}
+
+/**
+ * 모집 상세정보 시드 — nested 필드가 실제로 있을 때만 derived overlay가 persist 값을 덮는다.
+ * 필드 부재는 Legacy registrationOverlay를 유지하고, 명시적 "" 은 빈 값으로 둔다.
+ */
+export function mergeRecruitOverlayForOperationalSeed(
+  registrationOverlay: Record<string, unknown>,
+  fromProgram: Record<string, unknown>,
+  program: Program
+): Record<string, unknown> {
+  const participant = program.generalCommonInfo?.participantRecruitmentInfo
+  const instructor = program.generalCommonInfo?.instructorRecruitmentInfo
+  const volunteer = program.generalCommonInfo?.volunteerRecruitmentInfo
+  const remarksPresent = recordHasOwn(participant, 'remarks')
+  const canonicalPresentByKey: Record<string, boolean> = {
+    'recruit.detailInfo.programDescription': recordHasOwn(participant, 'programDescription'),
+    'recruit.detailInfo.recruitmentGuide': recordHasOwn(participant, 'recruitmentGuide'),
+    'recruit.detailInfo.applicationMethod': recordHasOwn(participant, 'applicationMethod'),
+    'recruit.detailInfo.learningSupportContent': recordHasOwn(participant, 'learningSupportContent'),
+    'recruit.detailInfo.additionalContentHtml': recordHasOwn(participant, 'additionalContentHtml'),
+    'recruit.detailInfo.otherNotes': remarksPresent,
+    'recruit.notes': remarksPresent,
+    'recruit.individual.notes': remarksPresent,
+    'recruitInstructor.detailInfo.programDescription': recordHasOwn(instructor, 'programDescription'),
+    'recruitInstructor.detailInfo.recruitmentGuide': recordHasOwn(instructor, 'recruitmentGuide'),
+    'recruitInstructor.detailInfo.applicationMethod': recordHasOwn(instructor, 'applicationMethod'),
+    'recruitInstructor.detailInfo.learningSupportContent': recordHasOwn(
+      instructor,
+      'learningSupportContent'
+    ),
+    'recruitInstructor.detailInfo.additionalContentHtml': recordHasOwn(
+      instructor,
+      'additionalContentHtml'
+    ),
+    'recruitInstructor.detailInfo.otherNotes': recordHasOwn(instructor, 'otherMatters'),
+    'recruit.instructor.notes': recordHasOwn(instructor, 'remarks'),
+    'recruitVolunteer.detailInfo.programDescription': recordHasOwn(volunteer, 'programDescription'),
+    'recruitVolunteer.detailInfo.recruitmentGuide': recordHasOwn(volunteer, 'recruitmentGuide'),
+    'recruitVolunteer.detailInfo.applicationMethod': recordHasOwn(volunteer, 'applicationMethod'),
+    'recruitVolunteer.detailInfo.learningSupportContent': recordHasOwn(
+      volunteer,
+      'learningSupportContent'
+    ),
+    'recruitVolunteer.detailInfo.additionalContentHtml': recordHasOwn(
+      volunteer,
+      'additionalContentHtml'
+    ),
+    'recruitVolunteer.detailInfo.otherNotes': recordHasOwn(volunteer, 'otherMatters'),
+    'recruit.volunteer.notes': recordHasOwn(volunteer, 'remarks'),
+  }
+
+  const merged: Record<string, unknown> = { ...registrationOverlay }
+  for (const [key, value] of Object.entries(fromProgram)) {
+    const canonicalPresent = canonicalPresentByKey[key]
+    const overlayHasKey = Object.prototype.hasOwnProperty.call(registrationOverlay, key)
+    if (canonicalPresent === true) {
+      merged[key] = value
+      continue
+    }
+    if (canonicalPresent === false) {
+      if (!overlayHasKey) merged[key] = value
+      continue
+    }
+    const derivedEmpty = value === '' || (Array.isArray(value) && value.length === 0)
+    if (derivedEmpty && overlayHasKey) continue
+    merged[key] = value
+  }
+  return merged
+}
+
 /** 모집 편집 진입 — program.registrationOverlay를 audience별 catalog scope에 시드 */
 export function seedOperationalRecruitOverlaysFromProgram(program: Program): void {
   const registrationOverlay =
@@ -393,7 +466,11 @@ export function seedOperationalRecruitOverlaysFromProgram(program: Program): voi
       ? (program.registrationOverlay as Record<string, unknown>)
       : {}
   const fromProgram = buildGeneralRecruitOverlayFromProgram(program)
-  const mergedSource = { ...registrationOverlay, ...fromProgram }
+  const mergedSource = mergeRecruitOverlayForOperationalSeed(
+    registrationOverlay,
+    fromProgram,
+    program
+  )
 
   const seeded = new Set<string>()
   for (const spec of listVisibleOperationalFormSpecs(program)) {
@@ -403,7 +480,8 @@ export function seedOperationalRecruitOverlaysFromProgram(program: Program): voi
     applyOperationalOverlayForCatalogId(spec.templateCode, slice)
     seeded.add(spec.templateCode)
   }
-  if (!seeded.has(VOLUNTEER_RECRUIT_CATALOG)) {
+  const volunteerSelected = getGeneralParticipantTypes(program).includes('volunteer')
+  if (volunteerSelected && !seeded.has(VOLUNTEER_RECRUIT_CATALOG)) {
     applyOperationalOverlayForCatalogId(
       VOLUNTEER_RECRUIT_CATALOG,
       pickOverlayKeysByPrefixes(mergedSource, ['recruit.volunteer', 'recruitVolunteer'])

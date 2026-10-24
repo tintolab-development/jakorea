@@ -72,6 +72,7 @@ import {
   peekUjatApplicationVolunteerOverlayRecord,
   replaceUjatApplicationVolunteerOverlayForScope,
   resetUjatApplicationVolunteerOverlayForScope,
+  stripUjatApplicationVolunteerProgramOnlyFields,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
   peekUjatRecruitInstitutionOverlayRecord,
@@ -507,7 +508,9 @@ function overlayRecordForKind(
   if (kind === 'program-registration') {
     return { ...peekProgramRegistrationOverlayRecord(catalogTemplateId) }
   }
-  return { ...peekUjatApplicationVolunteerOverlayRecord(catalogTemplateId) }
+  return stripUjatApplicationVolunteerProgramOnlyFields(
+    peekUjatApplicationVolunteerOverlayRecord(catalogTemplateId)
+  )
 }
 
 export function collectOperationalOverlayForCatalogId(
@@ -624,6 +627,60 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
       templateCode: catalogId,
     })
     const overlay = saved?.overlay
+    if (variant === 'economy' && catalogId === 'recruitment-economy') {
+      const { readCompanySchoolRecruitEditorState, companySchoolRecruitStateToApplyRecord } =
+        await import('@/features/program/1c-1s/lib/recruit-form-state')
+      const recruit = readCompanySchoolRecruitEditorState(saved?.editorState)
+      if (recruit) {
+        applyOperationalOverlayForCatalogId(
+          catalogId,
+          companySchoolRecruitStateToApplyRecord(recruit)
+        )
+        continue
+      }
+    }
+    if (variant === 'economy' && catalogId === 'application-economy') {
+      const { readCompanySchoolApplicationEditorState, companySchoolApplicationStateToApplyRecord } =
+        await import('@/features/program/1c-1s/lib/application-form-state')
+      const application = readCompanySchoolApplicationEditorState(saved?.editorState)
+      if (application) {
+        applyOperationalOverlayForCatalogId(
+          catalogId,
+          companySchoolApplicationStateToApplyRecord(application)
+        )
+        continue
+      }
+    }
+    if (variant === 'trainedTeachers') {
+      const { readTrainedTeachersRecruitEditorState, trainedTeachersRecruitStateToApplyRecord } =
+        await import('@/features/program/trained-teachers/lib/recruit-form-state')
+      const { readTrainedTeachersApplicationEditorState } = await import(
+        '@/features/program/trained-teachers/lib/application-form-state'
+      )
+      if (catalogId === 'recruitment-trained-teachers') {
+        const recruit = readTrainedTeachersRecruitEditorState(saved?.editorState)
+        if (recruit) {
+          applyOperationalOverlayForCatalogId(
+            catalogId,
+            trainedTeachersRecruitStateToApplyRecord(recruit)
+          )
+          continue
+        }
+      }
+      if (catalogId === 'application-trained-teachers') {
+        const application = readTrainedTeachersApplicationEditorState(saved?.editorState)
+        if (application) {
+          const projected: Record<string, unknown> = {
+            'application.trainedTeachers.preferredSchedules': application.preferredSchedules,
+          }
+          for (const [key, value] of Object.entries(application.basicInfo)) {
+            projected[`application.trainedTeachers.basicInfo.${key}`] = value
+          }
+          applyOperationalOverlayForCatalogId(catalogId, projected)
+          continue
+        }
+      }
+    }
     if (overlay == null || Object.keys(overlay).length === 0) continue
     if (resolveOperationalOverlayKind(catalogId) == null) continue
     applyOperationalOverlayForCatalogId(catalogId, overlay)
@@ -678,20 +735,65 @@ export async function persistRegistrationOperationalOverlaysToLocal(
   )
   for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant, programType)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
-    const overlay = collectOperationalOverlayForCatalogId(catalogId)
-    if (overlay == null || Object.keys(overlay).length === 0) continue
     const saved = await loadRegistrationWizardFormDraft({
       programType,
       templateCode: catalogId,
     })
     const draft = saved?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
     if (draft == null) continue
+    // 공통정보(registration-*)는 handleSave가 settingsJson·RHF snapshot까지 저장한다.
+    // 여기서 overlay만 다시 쓰면 국문 대표명 등 RHF 입력이 지워진다.
+    if (resolveOperationalOverlayKind(catalogId) === 'program-registration') continue
+    if (variant === 'trainedTeachers') {
+      const { collectTrainedTeachersRecruitFormState, trainedTeachersRecruitEditorState } =
+        await import('@/features/program/trained-teachers/lib/recruit-form-state')
+      const { collectTrainedTeachersApplicationFormState, trainedTeachersApplicationEditorState } =
+        await import('@/features/program/trained-teachers/lib/application-form-state')
+      const editorState =
+        catalogId === 'recruitment-trained-teachers'
+          ? trainedTeachersRecruitEditorState(collectTrainedTeachersRecruitFormState())
+          : catalogId === 'application-trained-teachers'
+            ? trainedTeachersApplicationEditorState(collectTrainedTeachersApplicationFormState())
+            : saved?.editorState
+      await persistRegistrationWizardFormDraft({
+        programType,
+        templateCode: catalogId,
+        draft,
+        editorState,
+      })
+      continue
+    }
+    if (variant === 'economy' && catalogId === 'recruitment-economy') {
+      const { collectCompanySchoolRecruitFormState, companySchoolRecruitEditorState } =
+        await import('@/features/program/1c-1s/lib/recruit-form-state')
+      await persistRegistrationWizardFormDraft({
+        programType,
+        templateCode: catalogId,
+        draft,
+        editorState: companySchoolRecruitEditorState(collectCompanySchoolRecruitFormState()),
+      })
+      continue
+    }
+    if (variant === 'economy' && catalogId === 'application-economy') {
+      const { collectCompanySchoolApplicationFormState, companySchoolApplicationEditorState } =
+        await import('@/features/program/1c-1s/lib/application-form-state')
+      await persistRegistrationWizardFormDraft({
+        programType,
+        templateCode: catalogId,
+        draft,
+        editorState: companySchoolApplicationEditorState(collectCompanySchoolApplicationFormState()),
+      })
+      continue
+    }
+    const overlay = collectOperationalOverlayForCatalogId(catalogId)
+    if (overlay == null || Object.keys(overlay).length === 0) continue
     await persistRegistrationWizardFormDraft({
       programType,
       templateCode: catalogId,
       draft,
       overlay: { ...(saved?.overlay ?? {}), ...overlay },
       editorState: saved?.editorState,
+      settingsJson: saved?.settingsJson,
     })
   }
 }

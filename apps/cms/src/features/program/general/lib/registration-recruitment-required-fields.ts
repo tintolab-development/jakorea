@@ -14,6 +14,10 @@ import {
   peekApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  peekGeneralRegistrationWizardRhf,
+  selectRecruitmentKvForParticipant,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-recruitment-rhf'
 import { GENERAL_PROGRAM_REGISTRATION_STEPS } from '@/features/program/general/model/registration-flow'
 import type { RegistrationProgramTypeKey } from '@/features/program/shared/lib/registration-draft-notice'
 import { getSelectedOperationalTemplateCode } from '@/features/program/shared/lib/step-template-selection'
@@ -340,56 +344,71 @@ function listIncompleteVolunteerRecruitInfo(
   return reasons
 }
 
-/** 노출된 모집 탭 전부 — 미입력 필수 필드 진단 키 */
-export function listIncompleteGeneralProgramRecruitmentRequiredFields(
+function listIncompleteRecruitmentRequiredFieldsFromOverlay(
+  overlays: {
+    institution: Record<string, unknown>
+    individual: Record<string, unknown>
+    instructor: Record<string, unknown>
+    volunteer: Record<string, unknown>
+  },
   ctx: GeneralProgramRecruitmentRequiredFieldContext
 ): string[] {
   const reasons: string[] = []
   const { participant } = ctx
-  const registrationProgramType = ctx.registrationProgramType ?? 'GENERAL'
   if (participant.organization) {
-    reasons.push(
-      ...listIncompleteInstitutionRecruitInfo(
-        peekSelectedInstitutionRecruitOverlay(registrationProgramType),
-        ctx
-      )
-    )
+    reasons.push(...listIncompleteInstitutionRecruitInfo(overlays.institution, ctx))
   }
   if (participant.individual) {
-    reasons.push(
-      ...listIncompleteIndividualRecruitInfo(
-        peekSelectedRecruitOverlay(
-          registrationProgramType,
-          'recruit-participant-individual',
-          peekGeneralRecruitOverlayRecord
-        )
-      )
-    )
+    reasons.push(...listIncompleteIndividualRecruitInfo(overlays.individual))
   }
   if (participant.teacherInstructor) {
-    reasons.push(
-      ...listIncompleteInstructorRecruitInfo(
-        peekSelectedRecruitOverlay(
-          registrationProgramType,
-          'recruit-instructor',
-          peekGeneralRecruitOverlayRecord
-        )
-      )
-    )
+    reasons.push(...listIncompleteInstructorRecruitInfo(overlays.instructor))
   }
   if (participant.volunteer) {
-    reasons.push(
-      ...listIncompleteVolunteerRecruitInfo(
-        peekSelectedRecruitOverlay(
-          registrationProgramType,
-          'recruit-volunteer',
-          peekGeneralRecruitOverlayRecord
-        ),
-        ctx
-      )
-    )
+    reasons.push(...listIncompleteVolunteerRecruitInfo(overlays.volunteer, ctx))
   }
   return reasons
+}
+
+/** 노출된 모집 탭 전부 — 미입력 필수 필드 진단 키 */
+export function listIncompleteGeneralProgramRecruitmentRequiredFields(
+  ctx: GeneralProgramRecruitmentRequiredFieldContext
+): string[] {
+  const registrationProgramType = ctx.registrationProgramType ?? 'GENERAL'
+  const rhf = peekGeneralRegistrationWizardRhf()
+  if (registrationProgramType === 'GENERAL' && rhf != null) {
+    const kv = selectRecruitmentKvForParticipant(rhf.getValues().recruitmentKv, ctx.participant)
+    return listIncompleteRecruitmentRequiredFieldsFromOverlay(
+      {
+        institution: kv,
+        individual: kv,
+        instructor: kv,
+        volunteer: kv,
+      },
+      ctx
+    )
+  }
+  return listIncompleteRecruitmentRequiredFieldsFromOverlay(
+    {
+      institution: peekSelectedInstitutionRecruitOverlay(registrationProgramType),
+      individual: peekSelectedRecruitOverlay(
+        registrationProgramType,
+        'recruit-participant-individual',
+        peekGeneralRecruitOverlayRecord
+      ),
+      instructor: peekSelectedRecruitOverlay(
+        registrationProgramType,
+        'recruit-instructor',
+        peekGeneralRecruitOverlayRecord
+      ),
+      volunteer: peekSelectedRecruitOverlay(
+        registrationProgramType,
+        'recruit-volunteer',
+        peekGeneralRecruitOverlayRecord
+      ),
+    },
+    ctx
+  )
 }
 
 /** 노출된 모집 탭 전부에 대해 필수 미입력 여부 */

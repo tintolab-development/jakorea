@@ -11,12 +11,34 @@ export const PROGRAM_INSTRUCTOR_RECRUITMENT_EDIT_PERIOD_ENDED =
   'PROGRAM_INSTRUCTOR_RECRUITMENT_EDIT_PERIOD_ENDED'
 export const PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED =
   'PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED'
+export const PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED = 'PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED'
+export const RECRUITMENT_HAS_APPLICATIONS = 'RECRUITMENT_HAS_APPLICATIONS'
 
 export const PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED_MESSAGE =
   '사업 종료일 이후에는 공통 정보를 수정할 수 없습니다.'
 
 export const PROGRAM_PARTICIPANT_TYPE_IMMUTABLE_MESSAGE =
-  '참여자 유형은 프로그램 등록 후 수정할 수 없습니다.'
+  '모집 등록 후 참여자 유형은 변경할 수 없습니다.'
+
+export const PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED_MESSAGE =
+  '최초 모집 시작일 이후에는 모집 단위(추가/삭제)를 변경할 수 없습니다.'
+
+export const PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE = '프로그램 유형 변경 불가 안내'
+
+export const PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE =
+  '모집이 시작된 프로그램은 유형을 변경할 수 없습니다.\n변경 전 유형으로 되돌린 후 다시 저장해 주세요.'
+
+export const PROGRAM_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE =
+  '모집 정보 수정 불가 안내'
+
+export const PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE =
+  '모집 시작 후에는 모집 정보를 수정할 수 없습니다.'
+
+export const RECRUITMENT_HAS_APPLICATIONS_MESSAGE =
+  '신청자가 있는 모집은 삭제하거나 참여자 유형을 변경할 수 없습니다. 필요한 경우 상태를 INACTIVE로 변경해 주세요.'
+
+export const PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE =
+  '신청 양식 수정 불가 안내'
 
 /** 신청 양식 저장이 모집 시작 이후 거절될 때의 서버 문장. 클라이언트 선차단에도 쓴다. */
 export const PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE =
@@ -40,14 +62,46 @@ export function isProgramRecruitmentEditPeriodCode(code: string | undefined | nu
   return normalized != null && RECRUITMENT_EDIT_PERIOD_CODES.has(normalized)
 }
 
+const RECRUITMENT_POLICY_MESSAGES: Record<string, string> = {
+  [PROGRAM_PARTICIPANT_TYPE_IMMUTABLE]: PROGRAM_PARTICIPANT_TYPE_IMMUTABLE_MESSAGE,
+  [PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED]: PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED_MESSAGE,
+  [RECRUITMENT_HAS_APPLICATIONS]: RECRUITMENT_HAS_APPLICATIONS_MESSAGE,
+  [PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED]:
+    PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE,
+  [PROGRAM_INSTRUCTOR_RECRUITMENT_EDIT_PERIOD_ENDED]:
+    PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE,
+  [PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED]:
+    PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE,
+}
+
+export function programRecruitmentPolicyErrorMessage(
+  code: string | undefined | null
+): string | undefined {
+  const normalized = code?.trim()
+  if (!normalized) return undefined
+  return RECRUITMENT_POLICY_MESSAGES[normalized]
+}
+
+/**
+ * 서버 `error.message`가 코드와 다르면 그 문장을 쓰고, 없으면 정책 문구를 쓴다.
+ * 신청 양식과 모집 정보 저장이 같은 기간 코드를 쓰므로 서버 문장을 먼저 둔다.
+ */
+export function resolveProgramRecruitmentPolicyErrorMessage(
+  code: string | undefined | null,
+  serverMessage: string | undefined | null
+): string | undefined {
+  const fallback = programRecruitmentPolicyErrorMessage(code)
+  if (!fallback) return undefined
+  const server = serverMessage?.replace(/^CONFLICT:\s*/i, '').trim()
+  if (server && server !== code?.trim()) return server
+  return fallback
+}
+
 export function programEditWindowErrorMessage(code: string | undefined | null): string | undefined {
   const normalized = code?.trim()
   if (!normalized) return undefined
   if (normalized === PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED) {
     return PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED_MESSAGE
   }
-  if (normalized === PROGRAM_PARTICIPANT_TYPE_IMMUTABLE) {
-    return PROGRAM_PARTICIPANT_TYPE_IMMUTABLE_MESSAGE
-  }
-  return undefined
+  return programRecruitmentPolicyErrorMessage(normalized)
 }

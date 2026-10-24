@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {
+  instructorApplyKeyToSettingsConsentItemId,
   PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY,
   settingsConsentItemIdToInstructorKey,
 } from './settings-consent-key.ts'
@@ -7,6 +8,14 @@ import {
 assert.equal(
   settingsConsentItemIdToInstructorKey('paymentStatement'),
   'consentPaymentStatement',
+)
+assert.equal(
+  instructorApplyKeyToSettingsConsentItemId('consentPaymentStatement'),
+  'paymentStatement',
+)
+assert.equal(
+  instructorApplyKeyToSettingsConsentItemId('consentAdministrativeJoint'),
+  'administrativeJoint',
 )
 assert.equal(
   PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY.consentPaymentStatement,

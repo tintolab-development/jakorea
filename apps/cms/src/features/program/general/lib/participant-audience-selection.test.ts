@@ -7,6 +7,7 @@ import {
   participantFlagsFromGeneralProgram,
   resolveGeneralParticipantAudienceSelectValue,
   resolveGeneralRegistrationKpiFieldAvailability,
+  savedGeneralParticipantTypeLocks,
   shouldResetParticipationScheduleDetailForAudience,
 } from './participant-audience-selection'
 
@@ -112,6 +113,35 @@ describe('resolveGeneralRegistrationKpiFieldAvailability', () => {
       volunteerDisabled: false,
       dispatchedSchoolDisabled: true,
       dispatchedClassDisabled: true,
+    })
+  })
+})
+
+describe('savedGeneralParticipantTypeLocks', () => {
+  it('상세 수정에서는 저장된 유형과 무관하게 네 유형을 모두 잠근다', () => {
+    expect(
+      savedGeneralParticipantTypeLocks({
+        generalParticipantTypes: ['individual'],
+        programRecruitments: [{ id: 11, recruitmentType: 'PARTICIPANT' }],
+      })
+    ).toEqual({
+      individual: true,
+      organization: true,
+      teacherInstructor: true,
+      volunteer: true,
+    })
+  })
+
+  it('강사·봉사자 행이 없어도 잠근다', () => {
+    expect(
+      savedGeneralParticipantTypeLocks({
+        programRecruitments: [],
+      })
+    ).toEqual({
+      individual: true,
+      organization: true,
+      teacherInstructor: true,
+      volunteer: true,
     })
   })
 })

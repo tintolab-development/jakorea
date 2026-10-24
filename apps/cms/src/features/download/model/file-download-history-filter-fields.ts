@@ -22,8 +22,7 @@ export const fileDownloadHistoryFilterFields: FilterFieldConfig[] = [
   {
     key: 'dateRange',
     type: 'dateRange',
-    // 시안: 다운로드 일시 / 노션: 다운로드 기간 — 시안 우선
-    label: '다운로드 일시',
+    label: '다운로드 기간',
     defaultValue: null,
     width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   },

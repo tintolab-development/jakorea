@@ -153,6 +153,9 @@ const AdminInquiryPage = lazyLoad(() => import('@/pages/posts/admin-inquiry-page
 const PermissionCustomizationPage = lazyLoad(
   () => import('@/pages/admin/settings/permission-customization-page')
 )
+const ProgramManagerPermissionsPage = lazyLoad(
+  () => import('@/pages/admin/settings/program-manager-permissions-page')
+)
 const PermissionRequestListPage = lazyLoad(
   () => import('@/pages/admin/permission-request-list-page')
 )
@@ -705,6 +708,14 @@ export const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute requiredRoles={['ADMIN']}>
                     <PermissionCustomizationPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: 'program-manager-permissions',
+                element: (
+                  <ProtectedRoute requiredRoles={['ADMIN']}>
+                    <ProgramManagerPermissionsPage />
                   </ProtectedRoute>
                 ),
               },

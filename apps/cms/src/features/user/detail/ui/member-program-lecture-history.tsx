@@ -29,6 +29,7 @@ import {
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import {
   createMemberProgramLectureTablePageConfig,
@@ -580,6 +581,14 @@ export function MemberProgramLectureHistory({
     onVolunteerCertificateDownload,
   ])
 
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: SHOW_PROGRAM_HISTORY_DELETE || showCertificateBulkIssue,
+      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
+    }
+  )
+
   const emptyTableText =
     mode === 'schoolProgramParticipation'
       ? '프로젝트 수강 이력이 없습니다.'
@@ -719,29 +728,31 @@ export function MemberProgramLectureHistory({
           data: tableDataSource,
         }}
       >
-        <CmsDataTable<Application | UserHistory>
-          className="cms-data-table"
-          size={TABLE_CONFIG.size}
-          scroll={{ x: 'max-content' }}
-          loading={loading}
-          rowSelection={
-            SHOW_PROGRAM_HISTORY_DELETE || showCertificateBulkIssue
-              ? {
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys),
-                }
-              : undefined
-          }
-          dataSource={tableDataSource}
-          columns={columns as ColumnsType<Application | UserHistory>}
-          rowKey="id"
-          pagination={false}
-          locale={{
-            emptyText: loading ? undefined : emptyTableText,
-          }}
-          onRow={tableOnRow}
-        />
+        <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">
+          <CmsDataTable<Application | UserHistory>
+            className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+            size={TABLE_CONFIG.size}
+            scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+            loading={loading}
+            rowSelection={
+              SHOW_PROGRAM_HISTORY_DELETE || showCertificateBulkIssue
+                ? {
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys),
+                  }
+                : undefined
+            }
+            dataSource={tableDataSource}
+            columns={columns as ColumnsType<Application | UserHistory>}
+            rowKey="id"
+            pagination={false}
+            locale={{
+              emptyText: loading ? undefined : emptyTableText,
+            }}
+            onRow={tableOnRow}
+          />
+        </div>
       </FilterTableLayout>
       {deleteHistoryModalOpen && historyDeleteGuide ? (
         <DeleteGuideModal

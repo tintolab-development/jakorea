@@ -25,6 +25,7 @@ import {
   EducationSurveySection,
   DocumentPassBanner,
   hasTeacherMypageProfile,
+  isSchoolTeacherMypageProfile,
   hasTeacherAssignmentAsideContent,
   isInstructorRoleApplication,
   isParticipantRoleApplication,
@@ -60,6 +61,7 @@ import {
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import {
+  resolveEducationApplicationProgramFocus,
   shouldShowTeacherInstitutionGuidanceEditLink,
   shouldShowTeacherInstitutionGuidanceOnApplicationTab,
   shouldShowTeacherInstitutionGuidanceWrite,
@@ -74,12 +76,11 @@ import {
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
 import {
-  resolveUjatScheduleBannerFromState,
+  resolveVisibleUjatScheduleBanner,
   sanitizeUjatParticipantBasicInfoFields,
-  shouldShowUjatScheduleBanner,
   shouldUseUjatApplicationContent,
 } from '@/features/mypage/education/applications/lib/ujat-portal-banner'
-import { educationUjatProgressConfirmPath } from '@/features/mypage/education/applications/lib/guidance-path'
+import { educationUjatScheduleBannerPath } from '@/features/mypage/education/applications/lib/guidance-path'
 import type { EducationApplicationListItem } from '@/features/mypage/education/applications/model/types'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
@@ -177,26 +178,17 @@ export function MypageEducationDetailPage() {
   const queryClient = useQueryClient()
   const member = useMypageMember()
   const isTeacher = hasTeacherMypageProfile(member.profile)
+  const isSchoolTeacher = isSchoolTeacherMypageProfile(member.profile)
 
   const remoteApplicationQuery = useMyProgramApplicationDetail(
     resolvedApplicationType,
     applicationId,
   )
   const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
-  const programDetailFocus = useMemo(() => {
-    if (!application) return null
-
-    const applicationType = (
-      application.applicationType ?? resolvedApplicationType ?? ''
-    )
-      .trim()
-      .toUpperCase()
-    const recruitmentId = application.recruitmentId
-    return {
-      ...(applicationType ? { applicationTypes: [applicationType] } : {}),
-      ...(recruitmentId != null && recruitmentId > 0 ? { recruitmentIds: [recruitmentId] } : {}),
-    }
-  }, [application, resolvedApplicationType])
+  const programDetailFocus = useMemo(
+    () => resolveEducationApplicationProgramFocus(application, resolvedApplicationType),
+    [application, resolvedApplicationType],
+  )
   const remoteProgramQuery = useProgramDetail(
     application?.programId ?? null,
     { fresh: true, focus: programDetailFocus },
@@ -291,12 +283,19 @@ export function MypageEducationDetailPage() {
               isTeacher &&
               program.programType === 'TRAINED_TEACHER' &&
               program.educationJournalEnabled === true,
+            schoolTeacherMember: isSchoolTeacher,
             ...(isTeacher
               ? { teacherStudentDocumentTabsVisible: teacherStudentDocumentTabsVisible !== false }
               : {}),
           }
         : null,
-    [isTeacher, isUjatParticipant, program, teacherStudentDocumentTabsVisible],
+    [
+      isSchoolTeacher,
+      isTeacher,
+      isUjatParticipant,
+      program,
+      teacherStudentDocumentTabsVisible,
+    ],
   )
 
   const inProgressTabItems = useMemo(() => {
@@ -375,7 +374,7 @@ export function MypageEducationDetailPage() {
   }, [application, isTeacher, program])
 
   const applicationInfoBody = useMemo(() => {
-    if (!application || !program || !isTeacher) return undefined
+    if (!application || !program) return undefined
     if (shouldUseUjatApplicationContent(application.detailCase)) {
       return <UjatApplicationContent content={application.ujatApplicationContent} />
     }
@@ -408,7 +407,6 @@ export function MypageEducationDetailPage() {
     application?.id,
     application?.detailCase,
     application?.ujatApplicationContent,
-    isTeacher,
     program,
     program?.educationForm,
     routeApplicationType,
@@ -620,23 +618,26 @@ export function MypageEducationDetailPage() {
     )
   }
 
-  const ujatScheduleBanner = shouldShowUjatScheduleBanner(
+  const ujatScheduleBanner = resolveVisibleUjatScheduleBanner(
     application.detailCase,
     application.ujatPortalBannerState,
   )
-    ? resolveUjatScheduleBannerFromState(application.ujatPortalBannerState)
-    : null
   const showBanner = !ujatScheduleBanner && shouldShowDocumentPassBanner(application)
-  const programForInfo = shouldUseUjatApplicationContent(application.detailCase)
-    ? {
-        ...program,
-        basicInfoFields: sanitizeUjatParticipantBasicInfoFields(
-          application.detailCase,
-          program.educationTargetDetailLabel,
-          program.basicInfoFields,
-        ),
-      }
-    : program
+  const programForInfo = {
+    ...program,
+    ...(application.operatingPeriodLabel && application.operatingPeriodLabel !== '-'
+      ? { operatingPeriodLabel: application.operatingPeriodLabel }
+      : {}),
+    ...(shouldUseUjatApplicationContent(application.detailCase)
+      ? {
+          basicInfoFields: sanitizeUjatParticipantBasicInfoFields(
+            application.detailCase,
+            program.educationTargetDetailLabel,
+            program.basicInfoFields,
+          ),
+        }
+      : {}),
+  }
   const showCancelCta =
     application.cancellable ?? canCancelEducationApplication(application.displayStatus)
   const showTeacherAssignment =
@@ -673,10 +674,19 @@ export function MypageEducationDetailPage() {
     canShowEducationApplicationContent(application.displayStatus) ? (
       shouldUseUjatApplicationContent(application.detailCase) ? (
         <UjatApplicationContent content={application.ujatApplicationContent} />
-      ) : isTeacher && teacherApplicationContent ? (
+      ) : isOrganizationEducationApplication(application, program) &&
+        teacherApplicationContent ? (
         <TeacherApplicationContent
           applicationId={application.id}
-          applicationType={application.applicationType}
+          applicationType={
+            application.applicationType ??
+            routeApplicationType ??
+            resolveOrganizationApplicationTypeForContent(
+              undefined,
+              program,
+              application.applicationAnswers,
+            )
+          }
           content={teacherApplicationContent}
           showGuidanceWriteLink={showTeacherGuidanceEditLink}
           institutionGuidanceEnabled={showTeacherInstitutionGuidanceOnTab}
@@ -800,18 +810,12 @@ export function MypageEducationDetailPage() {
       )
     }
     if (active === 'settlement') {
-      if (isTeacher) {
-        return (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
-            준비 중입니다.
-          </PFText>
-        )
-      }
       return (
         <EducationSettlementPanel
           programId={program.id}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          operationEndAt={program.operatingPeriodEnd}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }
@@ -836,7 +840,11 @@ export function MypageEducationDetailPage() {
             educationTargetLabel={program.educationTargetLabel}
             educationForm={program.educationForm}
             educationFormLabel={program.educationFormLabel}
-            statusAudience={isTeacher ? 'teacher' : 'general'}
+            statusAudience={
+              isTeacher || shouldUseUjatApplicationContent(application.detailCase)
+                ? 'teacher'
+                : 'general'
+            }
           />
         }
         aside={
@@ -856,7 +864,7 @@ export function MypageEducationDetailPage() {
             ujatScheduleBanner.clickable
               ? () =>
                   navigate(
-                    educationUjatProgressConfirmPath(
+                    educationUjatScheduleBannerPath(
                       application.id,
                       application.applicationType,
                     ),

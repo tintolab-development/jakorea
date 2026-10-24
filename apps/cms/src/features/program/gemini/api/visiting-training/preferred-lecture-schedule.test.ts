@@ -25,8 +25,8 @@ describe('formatGeminiPreferredLectureScheduleFromBlocks', () => {
       ])
     ).toBe(
       [
-        '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)',
-        '2지망 : 2026. 01. 16(금) | 15:30~16:40(2차시)',
+        '1지망 : 2026.01.09(금) | 15:30~16:40(2차시)',
+        '2지망 : 2026.01.16(금) | 15:30~16:40(2차시)',
       ].join('\n')
     )
   })
@@ -41,7 +41,7 @@ describe('resolveGeminiPreferredLectureSchedule', () => {
   it('prefers preferredLectureScheduleText over blocks', () => {
     expect(
       resolveGeminiPreferredLectureSchedule({
-        preferredLectureScheduleText: '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)',
+        preferredLectureScheduleText: '1지망 : 2026.01.09(금) | 15:30~16:40(2차시)',
         preferredScheduleBlocks: [
           {
             preferenceRank: 1,
@@ -50,6 +50,6 @@ describe('resolveGeminiPreferredLectureSchedule', () => {
           },
         ],
       })
-    ).toBe('1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)')
+    ).toBe('1지망 : 2026.01.09(금) | 15:30~16:40(2차시)')
   })
 })

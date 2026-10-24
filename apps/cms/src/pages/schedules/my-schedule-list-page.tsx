@@ -12,6 +12,7 @@ import { SessionFormatBadge } from '@/shared/components/session-format-badge'
 import { CalendarOutlined } from '@ant-design/icons'
 import { EmptyState, SingleCTA } from '@/shared/ui'
 import dayjs from 'dayjs'
+import { formatDateDot } from '@/shared/utils/date'
 import type { Schedule } from '@/types/domain'
 
 const { Title, Paragraph, Text } = Typography
@@ -160,7 +161,7 @@ export function MyScheduleListPage() {
                         <div>
                           <Text type="secondary">일정: </Text>
                           <Text>
-                            {scheduleDate.format('YYYY년 MM월 DD일')} {schedule.startTime} -{' '}
+                            {formatDateDot(scheduleDate)} {schedule.startTime} -{' '}
                             {schedule.endTime}
                           </Text>
                         </div>

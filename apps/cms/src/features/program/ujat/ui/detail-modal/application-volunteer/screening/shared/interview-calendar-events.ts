@@ -13,9 +13,16 @@ export type UjatVolunteerInterviewCalendarEvent = CalendarMainEventInput & {
 }
 
 export function parseUjatInterviewDateLabel(dateLabel: string): dayjs.Dayjs | null {
-  const match = dateLabel.match(/(\d{2})\.\s*(\d{2})\.\s*(\d{2})/)
-  if (!match) return null
-  return dayjs(`20${match[1]}-${match[2]}-${match[3]}`)
+  const four = dateLabel.match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/)
+  if (four) {
+    const parsed = dayjs(
+      `${four[1]}-${String(four[2]).padStart(2, '0')}-${String(four[3]).padStart(2, '0')}`
+    )
+    return parsed.isValid() ? parsed : null
+  }
+  const two = dateLabel.match(/(\d{2})\.\s*(\d{2})\.\s*(\d{2})/)
+  if (!two) return null
+  return dayjs(`20${two[1]}-${two[2]}-${two[3]}`)
 }
 
 export function parseUjatInterviewSlotRange(

@@ -49,7 +49,7 @@ function baseProgram(): Program {
       participantRecruitmentInfo: {
         programDescription: '중첩 프로그램 설명',
         educationTarget: '고등학교',
-        recruitmentPeriodLabel: '2026. 01. 10 ~ 2026. 02. 10',
+        recruitmentPeriodLabel: '2026.01.10 ~ 2026.02.10',
         contactOrganizationName: '새 문의처',
         inquiryTel: '02-1111-2222',
         inquiryEmail: 'new@jakorea.org',

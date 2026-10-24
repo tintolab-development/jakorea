@@ -21,9 +21,9 @@ function session(overrides: Partial<ParticipatingSchoolSession> = {}): Participa
 describe('resolveInstructorAssignSessionDisplayLabels', () => {
   it('날짜가 있으면 날짜+시간을 유지한다', () => {
     expect(resolveInstructorAssignSessionDisplayLabels(session())).toEqual({
-      dateLabel: '2026. 04. 20(월)',
+      dateLabel: '2026.04.20(월)',
       timeLabel: '09:30 ~ 12:20',
-      scheduleLabel: '2026. 04. 20(월) 09:30 ~ 12:20',
+      scheduleLabel: '2026.04.20(월) 09:30 ~ 12:20',
     })
   })
 

@@ -50,7 +50,7 @@ function mockRow(
     blockRowSpan: 1,
     isFirstInBlock: true,
     institutionName: '테스트학교',
-    lectureDateDisplay: '2026. 01. 01(목)',
+    lectureDateDisplay: '2026.01.01(목)',
     lectureSessionDisplay: '1 ~ 2차시',
     itemLabel: '강의비',
     description: 'desc',

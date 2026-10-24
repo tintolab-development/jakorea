@@ -26,7 +26,7 @@ describe('formatParticipatingIndividualParticipantAttendanceShortDateLabel', () 
   })
 
   it('formats dotted calendar dates', () => {
-    expect(formatParticipatingIndividualParticipantAttendanceShortDateLabel('2026. 10. 30')).toBe(
+    expect(formatParticipatingIndividualParticipantAttendanceShortDateLabel('2026.10.30')).toBe(
       '10월 30일'
     )
   })

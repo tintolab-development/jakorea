@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { CapacityWarning } from './capacityWarning';
+import type { OrganizationScheduleResponsePortalBannerState } from './organizationScheduleResponsePortalBannerState';
 import type { OrganizationScheduleSlotResponse } from './organizationScheduleSlotResponse';
 
 export interface OrganizationScheduleResponse {
@@ -14,7 +15,8 @@ export interface OrganizationScheduleResponse {
   applicationStatus?: string;
   temporaryAssignmentStatus?: string;
   institutionConfirmationStatus?: string;
-  portalBannerState?: string;
+  /** 서버가 산출한 UJAT 일정협의 배너 상태. institution_checking→ACTION_REQUIRED, institution_confirmed→ADMIN_REVIEW, revision_requested→REVISION_REQUIRED, approval_completed→FINAL_APPROVED, application_rejected→REJECTED. 임시 배정 전이면 NONE입니다. */
+  portalBannerState?: OrganizationScheduleResponsePortalBannerState;
   assignmentRevision?: number;
   institutionConfirmedAt?: string;
   assignmentLockedAt?: string;

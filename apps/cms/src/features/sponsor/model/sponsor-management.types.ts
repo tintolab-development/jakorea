@@ -97,6 +97,8 @@ export type SponsorProgramHistoryFilters = {
   lifecycleStatus: string
   participantType: string
   educationTarget: string
+  /** 총 수혜자 수 — 숫자만, 빈 값이면 전체 */
+  beneficiaryCount: string
   managerName: string
 }
 
