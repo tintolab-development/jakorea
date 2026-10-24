@@ -71,6 +71,7 @@ import {
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
+import { educationProcessDisplayLabel } from '@/features/program/shared/lib/program-enum-normalize'
 
 const ECONOMY_ALL_VALUE = '__all__'
 
@@ -448,7 +449,14 @@ export function BasicInfoSection({
           ECONOMY_EDUCATION_PROCESS_OPTIONS,
           program.educationProcess?.trim() || ECONOMY_ALL_VALUE
         )
-      : optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
+      : trainedTeacherCommonInfo
+        ? educationProcessDisplayLabel(program.educationProcess)
+        : optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
+    const educationProcessSelectOptions = isEconomyCommonInfo
+      ? ECONOMY_EDUCATION_PROCESS_OPTIONS
+      : trainedTeacherCommonInfo
+        ? TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS
+        : EDUCATION_PROCESS_OPTIONS
     const ipOwnedLabel = optionLabel(
       isEconomyCommonInfo ? ECONOMY_IP_OWNED_OPTIONS : IP_OWNED_OPTIONS,
       program.ipOwned
@@ -1017,11 +1025,7 @@ export function BasicInfoSection({
                       withAllOption={false}
                       placeholder="교육 과정을 선택하세요"
                       width={240}
-                      options={
-                        isEconomyCommonInfo
-                          ? [...ECONOMY_EDUCATION_PROCESS_OPTIONS]
-                          : [...EDUCATION_PROCESS_OPTIONS]
-                      }
+                      options={[...educationProcessSelectOptions]}
                       value={
                         isEconomyCommonInfo
                           ? (field.value?.trim() || ECONOMY_ALL_VALUE)

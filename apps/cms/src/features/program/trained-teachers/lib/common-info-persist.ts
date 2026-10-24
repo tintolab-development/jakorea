@@ -10,6 +10,7 @@ import type {
 import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from './is-trained-teachers-primary-program'
+import { enrichTrainedTeachersTypeSettingsFromApi } from './resolve-type-settings-from-api'
 
 /** 전환된 공통정보 overlay — persist·hydrate 에서 source 로 쓰지 않는다. */
 export const TRAINED_TEACHER_CONVERTED_OVERLAY_PREFIXES = [
@@ -222,7 +223,7 @@ export function resolveTrainedTeachersCanonicalCommonInfo(
     program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
       ? program.registrationOverlay
       : undefined
-  return {
+  const base = {
     ...nested,
     educationJournalEnabled: explicitBoolean(
       parseCompatibleBoolean(nested.educationJournalEnabled),
@@ -239,6 +240,8 @@ export function resolveTrainedTeachersCanonicalCommonInfo(
       ? nested.scheduleDetails
       : undefined,
   }
+  const typeSettingsFromApi = enrichTrainedTeachersTypeSettingsFromApi(program, base)
+  return { ...base, ...typeSettingsFromApi }
 }
 
 /** B PATCH (`trained-teacher/detail`) 전용. A programs JSON 에는 넣지 않는다. */

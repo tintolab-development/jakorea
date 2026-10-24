@@ -54,6 +54,7 @@ import {
   resolveSponsorContactIdsForEdit,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
+import { normalizeTrainedTeacherEducationFormFromApiType } from '@/features/program/trained-teachers/lib/resolve-type-settings-from-api'
 import {
   PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS,
   PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
@@ -77,6 +78,7 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
 import {
   normalizeCourseDeliveredByFormValue,
+  normalizeEducationProcessFormValue,
   normalizeIpOwnedSelectValue,
 } from '@/features/program/shared/lib/program-enum-normalize'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
@@ -1193,13 +1195,18 @@ export function programToDetailEditValues(
       if (raw === 'single' || raw === 'multi') return raw
       return undefined
     })(),
-    educationForm: educationFormValueFromLabel(
-      resolveStoredEducationFormLabel({
-        educationFormLabel: program.generalCommonInfo?.educationFormLabel,
-        scheduleDetails: program.generalCommonInfo?.scheduleDetails,
-        curriculumSessions: program.generalCommonInfo?.curriculumSessions,
-      })
-    ),
+    educationForm: (() => {
+      const fromLabel = educationFormValueFromLabel(
+        resolveStoredEducationFormLabel({
+          educationFormLabel: program.generalCommonInfo?.educationFormLabel,
+          scheduleDetails: program.generalCommonInfo?.scheduleDetails,
+          curriculumSessions: program.generalCommonInfo?.curriculumSessions,
+        })
+      )
+      if (fromLabel) return fromLabel
+      if (!isTrainedTeacherForm) return fromLabel
+      return normalizeTrainedTeacherEducationFormFromApiType(program.type)
+    })(),
     educationFormScheduleDetail:
       program.generalCommonInfo?.educationFormScheduleDetail ?? 'common',
     ipsScheduleDetail: program.generalCommonInfo?.ipsScheduleDetail ?? (() => {
@@ -1237,7 +1244,9 @@ export function programToDetailEditValues(
       return undefined
     })(),
     teamDivision: program.teamDivision ?? undefined,
-    educationProcess: program.educationProcess ?? undefined,
+    educationProcess: isTrainedTeacherForm
+      ? normalizeEducationProcessFormValue(program.educationProcess)
+      : program.educationProcess ?? undefined,
     ipOwned: normalizeIpOwnedSelectValue(program.ipOwned),
     courseDeliveredBy: normalizeCourseDeliveredByFormValue(program.courseDeliveredBy),
     partnerInvolvement: isTrainedTeacherForm
