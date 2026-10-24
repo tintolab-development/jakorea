@@ -22,28 +22,6 @@
   gap: var(--filter-field-gap, 12px);
 }
 
-.school-detail-student-list-section__filter-layout .table-filter-group__fields-inner.ant-row {
-  flex-wrap: nowrap;
-  width: auto;
-  max-width: 100%;
-  gap: var(--filter-field-gap, 12px);
-}
-
-@media (max-width: 960px) {
-  .school-detail-student-list-section__filter-layout .table-filter-group__fields-inner.ant-row {
-    flex-wrap: wrap;
-  }
-
-  .school-detail-student-list-section__filter-layout
-    .table-filter-group__fields-inner
-    > .ant-col {
-    flex: 1 1 100% !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-  }
-}
-
 @import '../../../../shared/ui/program-application-list-toolbar.css';
 
 .school-detail-student-list-section__toolbar-actions {

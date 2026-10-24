@@ -6,6 +6,7 @@ import {
   PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_STATUS_LABELS,
   type ParticipatingIndividualProgressAttendanceFilters,
   type ParticipatingIndividualProgressAttendanceParticipantRow,
+  type ParticipatingIndividualProgressAttendanceSessionGroup,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 
 export function formatIndividualProgressAttendanceGenderBirthLabel(
@@ -98,18 +99,42 @@ export function participantMatchesProgressAttendanceFilters(
   return true
 }
 
-export function filterProgressAttendanceParticipantsForDisplay(
-  participants: ParticipatingIndividualProgressAttendanceParticipantRow[],
+export function hasProgressAttendanceParticipantSearchFilters(
   filters: ParticipatingIndividualProgressAttendanceFilters
-): ParticipatingIndividualProgressAttendanceParticipantRow[] {
-  const hasParticipantFilter =
+): boolean {
+  return (
     filters.participantName.trim() !== '' ||
     filters.affiliation.trim() !== '' ||
     filters.educationGrade !== PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL ||
     filters.attendanceStatus !== PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL
+  )
+}
 
-  if (!hasParticipantFilter) return participants
+export function filterProgressAttendanceParticipantsForDisplay(
+  participants: ParticipatingIndividualProgressAttendanceParticipantRow[],
+  filters: ParticipatingIndividualProgressAttendanceFilters
+): ParticipatingIndividualProgressAttendanceParticipantRow[] {
+  if (!hasProgressAttendanceParticipantSearchFilters(filters)) return participants
   return participants.filter(row => participantMatchesProgressAttendanceFilters(row, filters))
+}
+
+/** 교육 일정 필터만 적용. 참여자 검색이 없으면 빈 테이블 회차도 유지한다. */
+export function filterProgressAttendanceSessionGroups(
+  sessions: ParticipatingIndividualProgressAttendanceSessionGroup[],
+  filters: ParticipatingIndividualProgressAttendanceFilters
+): ParticipatingIndividualProgressAttendanceSessionGroup[] {
+  const filteredBySchedule =
+    filters.educationSchedule === PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL
+      ? sessions
+      : sessions.filter(session => session.filterValue === filters.educationSchedule)
+
+  const mapped = filteredBySchedule.map(session => ({
+    ...session,
+    participants: filterProgressAttendanceParticipantsForDisplay(session.participants, filters),
+  }))
+
+  if (!hasProgressAttendanceParticipantSearchFilters(filters)) return mapped
+  return mapped.filter(session => session.participants.length > 0)
 }
 
 export function cloneProgressAttendanceParticipantRows(

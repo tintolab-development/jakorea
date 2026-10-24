@@ -156,6 +156,27 @@ type ProgressAttendanceParticipantInput = Pick<
 > &
   Partial<ParticipantListItemResponse>
 
+function scheduleIdMatches(
+  value: number | null | undefined,
+  scheduleId: string
+): boolean {
+  return value != null && String(value) === scheduleId
+}
+
+/** 해당 일정 테이블 행: 배정(sessions) 또는 그 일정 출결 기록이 있는 참여자만. */
+function participantBelongsToSchedule(
+  participant: ProgressAttendanceParticipantInput,
+  scheduleId: string,
+  hasAttendanceOnSchedule: boolean
+): boolean {
+  if (hasAttendanceOnSchedule) return true
+  return (participant.sessions ?? []).some(
+    session =>
+      scheduleIdMatches(session.scheduleId, scheduleId) ||
+      scheduleIdMatches(session.resolvedScheduleId, scheduleId)
+  )
+}
+
 function mapParticipantRow(
   participant: ProgressAttendanceParticipantInput,
   attendance: AttendanceItemResponse | undefined,
@@ -210,11 +231,7 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
   const roster = individuals.length > 0 ? individuals : params.participants
 
   return params.schedules
-    .filter(s => {
-      if (s.scheduleId == null) return false
-      const attendances = params.attendancesByScheduleId[String(s.scheduleId)]
-      return Array.isArray(attendances) && attendances.length > 0
-    })
+    .filter(s => s.scheduleId != null)
     .map((schedule, index) => {
       const scheduleId = String(schedule.scheduleId)
       const attendances = params.attendancesByScheduleId[scheduleId] ?? []
@@ -232,9 +249,17 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
           schedule.scheduleStatus
         ),
         attendanceRecordingOpen,
-        participants: roster.map(p =>
-          mapParticipantRow(p, byParticipant.get(String(p.participantId)), schedule)
-        ),
+        participants: roster
+          .filter(p =>
+            participantBelongsToSchedule(
+              p,
+              scheduleId,
+              byParticipant.has(String(p.participantId))
+            )
+          )
+          .map(p =>
+            mapParticipantRow(p, byParticipant.get(String(p.participantId)), schedule)
+          ),
       }
     })
 }

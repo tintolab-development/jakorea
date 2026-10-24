@@ -136,6 +136,77 @@ describe('saveProgramSurveyFormEdit', () => {
     }
   })
 
+  it('등록 직후 SURVEY(서버가 오늘 시작일을 채움·IN_PROGRESS)에도 기간을 먼저 넣고 저장한다', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-19T09:00:00.000Z'))
+    listBindings
+      .mockResolvedValueOnce([
+        {
+          bindingId: 900,
+          formType: 'SURVEY',
+          progressStatus: 'IN_PROGRESS',
+          submittedCount: 0,
+          submissionStartAt: '2026-10-19T00:00:00.000Z',
+          submissionEndAt: '2026-10-19T23:59:59.000Z',
+          availableActions: ['VIEW', 'EDIT'],
+          createdAt: '2026-10-19T08:55:00.000Z',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          bindingId: 900,
+          progressStatus: 'BEFORE_START',
+          submittedCount: 0,
+          availableActions: ['UPDATE_TEMPLATE'],
+        },
+      ])
+
+    try {
+      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+        ok: true,
+        templateId: 2001,
+        templateVersionId: 400,
+      })
+
+      expect(updateBinding).toHaveBeenNthCalledWith(1, '186051', '900', {
+        submissionStartAt: '2026-10-20T00:00:00.000Z',
+      })
+      expect(updateBinding).toHaveBeenLastCalledWith('186051', '900', {
+        templateId: 2001,
+        templateVersionId: 400,
+        submissionStartAt: '2026-10-20T00:00:00.000Z',
+      })
+      expect(copyVersion).toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('시작일이 오늘이어도 생성일이 다른 IN_PROGRESS 설문은 양식 교체를 막는다', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-19T09:00:00.000Z'))
+    listBindings.mockResolvedValue([
+      {
+        bindingId: 900,
+        progressStatus: 'IN_PROGRESS',
+        submittedCount: 0,
+        submissionStartAt: '2026-10-19T00:00:00.000Z',
+        createdAt: '2026-09-01T00:00:00.000Z',
+      },
+    ])
+
+    try {
+      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toMatchObject({
+        ok: false,
+        refetchBindings: true,
+      })
+      expect(copyVersion).not.toHaveBeenCalled()
+      expect(updateBinding).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it.each([
     { progressStatus: 'IN_PROGRESS', submittedCount: 0, submissionStartAt: '2020-01-01T00:00:00.000Z' },
     { progressStatus: 'BEFORE_START', submittedCount: 2 },

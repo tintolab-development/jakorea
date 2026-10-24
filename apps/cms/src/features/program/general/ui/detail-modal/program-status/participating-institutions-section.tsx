@@ -601,7 +601,6 @@ export function ParticipatingInstitutionsSection({
       <FilterTableLayout
         className="participating-institutions-section__filter-layout"
         bordered={false}
-        filterResponsiveWrap={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={filterFields}
         filters={filterTableValues}

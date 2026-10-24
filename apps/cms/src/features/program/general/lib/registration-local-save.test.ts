@@ -205,6 +205,10 @@ describe('교육받은 교사 교육일지 등록 기본값', () => {
     expect(resolveTrainedTeacherEducationJournalEnabled(true)).toBe(true)
     expect(resolveTrainedTeacherEducationJournalEnabled('no')).toBe(false)
     expect(resolveTrainedTeacherEducationJournalEnabled(false)).toBe(false)
+    expect(resolveTrainedTeacherEducationJournalEnabled('false')).toBe(false)
+    expect(resolveTrainedTeacherEducationJournalEnabled('true')).toBe(true)
+    expect(Boolean('false')).toBe(true)
+    expect(resolveTrainedTeacherEducationJournalEnabled('false')).not.toBe(Boolean('false'))
   })
 
   it('설정이 없을 때만 기존 snapshot fallback을 사용한다', () => {

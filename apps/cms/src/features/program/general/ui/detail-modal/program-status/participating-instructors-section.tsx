@@ -683,7 +683,6 @@ export function ParticipatingInstructorsSection({
       <FilterTableLayout
         className="participating-institutions-section__filter-layout"
         bordered={false}
-        filterResponsiveWrap={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={participatingInstructorsFilterFields}
         filters={filterValues}

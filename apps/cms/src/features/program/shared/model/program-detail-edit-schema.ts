@@ -1786,10 +1786,10 @@ export function detailEditValuesToProgramPatch(
               : existing.generalCommonInfo?.participantRecruitmentInfo?.certificateIssuanceProvided,
         maxAssignableInstructors: isTrainedTeacherProgram
           ? 0
-          : values.participantRecruitmentMaxInstructors,
-        maxClassCount: values.participantRecruitmentMaxClassCount,
-        maxScheduleCount: values.participantRecruitmentMaxScheduleCount,
-        maxSessionsPerDay: values.participantRecruitmentMaxSessionsPerDay,
+          : values.participantRecruitmentMaxInstructors ?? undefined,
+        maxClassCount: values.participantRecruitmentMaxClassCount ?? undefined,
+        maxScheduleCount: values.participantRecruitmentMaxScheduleCount ?? undefined,
+        maxSessionsPerDay: values.participantRecruitmentMaxSessionsPerDay ?? undefined,
         interviewEnabled:
           values.participantRecruitmentInterviewEnabled === 'yes'
             ? true

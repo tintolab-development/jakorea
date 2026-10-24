@@ -745,6 +745,36 @@ it('참여자 모집 상한 숫자를 비우면 existing 값으로 복원하지 
   expect(info?.maxSessionsPerDay).toBeUndefined()
 })
 
+it('참여자 모집 상한 숫자를 null로 비워도 existing 값으로 복원하지 않는다', () => {
+  const withLimits = {
+    ...program,
+    generalCommonInfo: {
+      ...program.generalCommonInfo,
+      participantRecruitmentInfo: {
+        maxAssignableInstructors: 3,
+        maxClassCount: 2,
+        maxScheduleCount: 4,
+        maxSessionsPerDay: 5,
+      },
+    },
+  } as Program
+  const values = {
+    ...programToDetailEditValues(withLimits),
+    participantRecruitmentMaxInstructors: null,
+    participantRecruitmentMaxClassCount: null,
+    participantRecruitmentMaxScheduleCount: null,
+    participantRecruitmentMaxSessionsPerDay: null,
+  } as unknown as ReturnType<typeof programToDetailEditValues>
+  const patch = detailEditValuesToProgramPatch(values, withLimits, {
+    recruitmentAudience: 'participant',
+  })
+  const info = patch.generalCommonInfo?.participantRecruitmentInfo
+  expect(info?.maxAssignableInstructors).toBeUndefined()
+  expect(info?.maxClassCount).toBeUndefined()
+  expect(info?.maxScheduleCount).toBeUndefined()
+  expect(info?.maxSessionsPerDay).toBeUndefined()
+})
+
 it('강사 모집 저장 시 모집 인원·면접 일정을 비우면 existing으로 복원하지 않는다', () => {
   const withInstructor = {
     ...program,

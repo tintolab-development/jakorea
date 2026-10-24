@@ -54,6 +54,36 @@ function bindingHasSubmissionPeriod(
   return Boolean(binding.submissionStartAt?.trim() || binding.submissionEndAt?.trim())
 }
 
+/**
+ * 등록 직후 최초 양식 저장만 기간을 열어 준다.
+ * SATISFACTION·LECTURE_EVALUATION은 기간 null + IN_PROGRESS.
+ * SURVEY는 서버가 submissionStartAt을 채워 IN_PROGRESS가 되므로, 응답 0건·시작일이 오늘(생성일 당일)인 경우만 동일하게 본다.
+ * 이미 시작된 과거 기간(IN_PROGRESS)은 열지 않는다.
+ */
+function canUnlockBindingPeriodForFirstSurveyFormSave(
+  binding: ProgramFormBindingResponse
+): boolean {
+  if ((binding.submittedCount ?? 0) > 0) return false
+  if (binding.progressStatus === 'FINISHED') return false
+  if (!bindingHasSubmissionPeriod(binding)) return true
+
+  const startRaw = binding.submissionStartAt?.trim()
+  if (!startRaw) return true
+
+  const start = dayjs(startRaw)
+  if (!start.isValid()) return false
+  if (dayjs().isBefore(start)) return false
+
+  const now = dayjs()
+  if (!start.isSame(now, 'day')) return false
+
+  const createdRaw = binding.createdAt?.trim()
+  if (!createdRaw) return true
+  const created = dayjs(createdRaw)
+  if (!created.isValid()) return true
+  return created.isSame(now, 'day')
+}
+
 /** 서버 `availableActions` 우선, 없으면 progressStatus·응답 수로 판단 */
 export function canSwapProgramSurveyFormBinding(
   binding: ProgramFormBindingResponse | undefined
@@ -114,7 +144,7 @@ async function prepareBindingForSurveyFormSave(
       refetchBindings: true,
     }
   }
-  if (binding == null || bindingHasSubmissionPeriod(binding)) {
+  if (binding == null || !canUnlockBindingPeriodForFirstSurveyFormSave(binding)) {
     return {
       ok: false,
       message: resolveProgramSurveyFormSaveBlockedMessage(binding),
@@ -122,7 +152,8 @@ async function prepareBindingForSurveyFormSave(
     }
   }
 
-  // 등록 직후: submission 기간이 null이면 서버는 IN_PROGRESS지만 양식 최초 저장은 가능해야 한다.
+  // 등록 직후: 기간 null이거나 SURVEY 서버 기본 오늘 시작이면 IN_PROGRESS라 양식 교체가 막힌다.
+  // 진행 상태 정책은 유지하고, 최초 1회만 기간을 미래로 열어 UPDATE_TEMPLATE을 탄다.
   const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
   const period = readSurveySubmissionPeriodFromSchema(schemaJson)
   const draftStart = period.submissionStartAt ? dayjs(period.submissionStartAt) : null
