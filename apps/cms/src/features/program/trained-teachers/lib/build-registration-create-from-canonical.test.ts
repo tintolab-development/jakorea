@@ -122,6 +122,9 @@ describe('TRAINED_TEACHER 등록 canonical CREATE', () => {
       id: 'tt-create',
       canonical: canonical(),
     })
+    expect(program.title).toBe('공고용 프로그램')
+    expect(program.mainTitle).toBe('대표명')
+    expect(program.mainTitle).not.toBe(program.title)
     expect(program.textbookName).toBe('1사1교 금융특강')
     expect(program.generalCommonInfo?.detailedProgramName).toBe('UJAT 사전교육')
     expect(program.textbookName).not.toBe(program.generalCommonInfo?.detailedProgramName)
@@ -199,6 +202,51 @@ describe('TRAINED_TEACHER 등록 canonical CREATE', () => {
       }
     }
     expect(json.program?.generalCommonInfo?.educationScheduleRange).toBeNull()
+  })
+
+  it('공고명과 대표명을 서로 파생하지 않고 공통 IPS와 차시 IPS를 분리한다', () => {
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: canonical({
+        ips: 'Prepare',
+        programCategory: '경제',
+        curriculumSessions: [
+          {
+            sessionLabel: '1차시',
+            title: '단원1',
+            description: '내용1',
+            ipsTypeSummary: 'Inspire',
+          },
+        ],
+      }),
+    })
+    expect(program.title).toBe('공고용 프로그램')
+    expect(program.mainTitle).toBe('대표명')
+    expect(program.ips).toBe('Prepare')
+    expect(program.generalCommonInfo?.curriculumSessions?.[0]?.ipsTypeSummary).toBe('Inspire')
+    const request = mapTrainedTeacherToCreateRequest(program)
+    expect(request.title).toBe('공고용 프로그램')
+    expect(request.mainTitle).toBe('대표명')
+    expect(request.ips).toBe('Prepare')
+    const json = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: {
+        generalCommonInfo?: {
+          curriculumSessions?: Array<{ ipsTypeSummary?: string }>
+        }
+      }
+    }
+    expect(json.program?.generalCommonInfo?.curriculumSessions?.[0]?.ipsTypeSummary).toBe(
+      'Inspire'
+    )
+  })
+
+  it('대표명이 비어 있으면 공고명으로 채우지 않는다', () => {
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: canonical({ mainTitle: '' }),
+    })
+    expect(program.title).toBe('공고용 프로그램')
+    expect(program.mainTitle).toBeUndefined()
   })
 
   it('CREATE serviceDetailJson 에 registration.overlay 와 surveyItems 가 없다', () => {

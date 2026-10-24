@@ -287,6 +287,49 @@ describe('resolveTrainedTeachersCanonicalCommonInfo', () => {
     expect(resolved.curriculumSessions).toHaveLength(2)
   })
 
+  it('"false" 문자열을 true로 해석하지 않고 미지원 값은 overlay로 조용히 false 만들지 않는다', () => {
+    const fromFalseString = resolveTrainedTeachersCanonicalCommonInfo({
+      id: '186312',
+      sponsorId: '1',
+      title: 't',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [],
+      startDate: '2026-03-01',
+      endDate: '2026-11-30',
+      status: 'pending',
+      backendProgramType: 'TRAINED_TEACHER',
+      generalCommonInfo: { educationJournalEnabled: 'false' as unknown as boolean },
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    })
+    expect(fromFalseString.educationJournalEnabled).toBe(false)
+
+    const fromInvalid = resolveTrainedTeachersCanonicalCommonInfo({
+      id: '186312',
+      sponsorId: '1',
+      title: 't',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [],
+      startDate: '2026-03-01',
+      endDate: '2026-11-30',
+      status: 'pending',
+      backendProgramType: 'TRAINED_TEACHER',
+      generalCommonInfo: { educationJournalEnabled: 'maybe' as unknown as boolean },
+      registrationOverlay: {
+        'trainedTeachersRegistration.educationCurriculum.educationJournalEnabled': 'yes',
+      },
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    })
+    expect(fromInvalid.educationJournalEnabled).toBe(true)
+  })
+
   it('canonical journal 이 없으면 overlay yes/no 만 fallback 한다', () => {
     const resolved = resolveTrainedTeachersCanonicalCommonInfo({
       id: '186312',

@@ -47,8 +47,9 @@ function buildTransportItem(
   const total = computeSettlementTransportTotal(draft)
   if (total <= 0) return null
   const date = expenseDateOf(draft)
+  const evidenceRequired = draft.transport.evidenceRequired === true
   const expenses: PortalIndividualSettlementExpenseInput[] = []
-  if (isSettlementTripLegStarted(draft.transport.depart)) {
+  if (evidenceRequired && isSettlementTripLegStarted(draft.transport.depart)) {
     expenses.push({
       expenseType: mapItemTypeToExpenseType(draft.transport.itemType),
       expenseDate: date,
@@ -57,7 +58,11 @@ function buildTransportItem(
       fileObjectIds: readTripLegAttachments(draft.transport.depart).map(file => file.fileObjectId),
     })
   }
-  if (draft.transport.tripType === 'round_trip' && isSettlementTripLegStarted(draft.transport.return)) {
+  if (
+    evidenceRequired &&
+    draft.transport.tripType === 'round_trip' &&
+    isSettlementTripLegStarted(draft.transport.return)
+  ) {
     expenses.push({
       expenseType: mapItemTypeToExpenseType(draft.transport.itemType),
       expenseDate: date,
@@ -87,14 +92,17 @@ export function buildIndividualSettlementItems(
     items.push({
       itemType: extra.itemType,
       amount,
-      expenses: [
-        {
-          expenseType: mapItemTypeToExpenseType(extra.itemType),
-          expenseDate: expenseDateOf(draft),
-          amount,
-          fileObjectIds: extra.attachments.map(file => file.fileObjectId),
-        },
-      ],
+      expenses:
+        extra.evidenceRequired === true
+          ? [
+              {
+                expenseType: mapItemTypeToExpenseType(extra.itemType),
+                expenseDate: expenseDateOf(draft),
+                amount,
+                fileObjectIds: extra.attachments.map(file => file.fileObjectId),
+              },
+            ]
+          : [],
     })
   }
   return items

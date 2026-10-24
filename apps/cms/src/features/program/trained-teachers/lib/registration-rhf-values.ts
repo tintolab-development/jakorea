@@ -56,8 +56,8 @@ const COMMON_INFO_PREFIXES = [
 ] as const
 
 const FIELD_BY_SUFFIX: Record<string, keyof TrainedTeachersRegistrationCommonCanonical> = {
-  programTitleKo: 'title',
-  localProgramTitleKo: 'title',
+  programTitleKo: 'mainTitle',
+  localProgramTitleKo: 'mainTitle',
   programTitleEn: 'titleEn',
   publicProgramTitle: 'announcementTitle',
   detailedProgramId: 'detailedProgramId',
@@ -287,7 +287,6 @@ export function writeTrainedTeachersRhfOverlayValue(
   const field = FIELD_BY_SUFFIX[suffix]
   if (field != null) {
     ;(next as Record<string, unknown>)[field] = value
-    if (field === 'title') next.mainTitle = typeof value === 'string' ? value : next.mainTitle
     if (field === 'educationScheduleLines') {
       next.educationScheduleLines = Array.isArray(value)
         ? value.filter((line): line is string => typeof line === 'string')
@@ -344,7 +343,7 @@ export function projectTrainedTeachersRhfToOverlayRecord(
   values: TrainedTeachersRegistrationRhfValues
 ): Record<string, unknown> {
   const overlay: Record<string, unknown> = { ...values.sidecar }
-  overlay['trainedTeachersRegistration.basicInfo.programTitleKo'] = values.title
+  overlay['trainedTeachersRegistration.basicInfo.programTitleKo'] = values.mainTitle
   overlay['trainedTeachersRegistration.basicInfo.programTitleEn'] = values.titleEn
   overlay['trainedTeachersRegistration.basicInfo.publicProgramTitle'] = values.announcementTitle
   overlay['trainedTeachersRegistration.basicInfo.detailedProgramId'] = values.detailedProgramId

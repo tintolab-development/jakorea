@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import type { Page, Request, Route } from '@playwright/test'
 import {
   createProgramApplicationFormEconomyDraft,
@@ -16,7 +17,10 @@ export type IsolatedFailMode =
   | 'publish'
   | 'create'
   | 'media'
+  | 'bind'
+  | 'uploadSlow'
   | 'portalPost'
+  | 'portalDuplicate'
   | 'draft'
 
 export type IsolatedNetworkLog = {
@@ -31,9 +35,22 @@ export type IsolatedNetworkLog = {
   programPatches: IsolatedCapturedMutation[]
   programDraftPuts: IsolatedCapturedMutation[]
   filePosts: IsolatedCapturedMutation[]
+  fileConfirms: IsolatedCapturedMutation[]
+  s3Puts: IsolatedCapturedMutation[]
+  thumbnailPuts: IsolatedCapturedMutation[]
+  attachmentPuts: IsolatedCapturedMutation[]
+  programDeletes: IsolatedCapturedMutation[]
   portalDraftPuts: IsolatedCapturedMutation[]
   portalApplicationPosts: IsolatedCapturedMutation[]
+  publishedApplicationVersionId: number | null
+  publishedApplicationFormSource: 'seed' | 'cms-put' | 'catalog'
   realMutations: number
+}
+
+export type IsolatedNetworkOptions = {
+  failMode?: IsolatedFailMode
+  includeRecruitmentRow?: boolean
+  portalDraftAnswers?: Record<string, unknown> | null
 }
 
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost'])
@@ -115,6 +132,17 @@ function idsFromTemplateCode(templateCode: string) {
   return { templateId, versionId: templateId + 1000 }
 }
 
+function catalogSchemaForTemplate(templateCode: string) {
+  if (templateCode.includes('application-economy')) {
+    return fillPublishedThirdPartyRecipient(createProgramApplicationFormEconomyDraft())
+  }
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'none' },
+    paragraphs: [],
+  }
+}
+
 function catalogPayload(templateCode: string, templateId: number, versionId: number) {
   return {
     templateId,
@@ -122,14 +150,67 @@ function catalogPayload(templateCode: string, templateId: number, versionId: num
     templateCode,
     versionNo: 1,
     versionStatus: 'PUBLISHED',
-    schemaJson: JSON.stringify({
-      schemaVersion: 1,
-      formSettings: { titleNumbering: 'none' },
-      paragraphs: [],
-    }),
+    schemaJson: JSON.stringify(catalogSchemaForTemplate(templateCode)),
     extensionJson: JSON.stringify({ overlay: {} }),
     settingsJson: JSON.stringify({}),
   }
+}
+
+const ISOLATED_PNG_BYTES = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64'
+)
+
+function fileObjectPayload(args: {
+  fileObjectId: number
+  originalFileName?: string
+  contentType?: string
+  origin: string
+}) {
+  return {
+    fileObjectId: args.fileObjectId,
+    id: args.fileObjectId,
+    ownerType: 'PROGRAM',
+    ownerDomain: 'PROGRAM_CONTENT',
+    originalFileName: args.originalFileName ?? `isolated-${args.fileObjectId}.png`,
+    contentType: args.contentType ?? 'image/png',
+    fileSize: 80,
+    scanStatus: 'CLEAN',
+    uploadStatus: 'AVAILABLE',
+    contentUrl: `${args.origin}/api/admin/files/downloads/raw/${args.fileObjectId}`,
+  }
+}
+
+function parseSchemaDocument(raw: unknown): Record<string, unknown> | null {
+  if (isRecord(raw) && Array.isArray(raw.paragraphs)) return raw
+  if (typeof raw !== 'string' || raw.trim() === '') return null
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    return isRecord(parsed) && Array.isArray(parsed.paragraphs) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function schemaHasEconomyParagraphs(schema: Record<string, unknown> | null): boolean {
+  if (schema == null) return false
+  const paragraphs = schema.paragraphs
+  if (!Array.isArray(paragraphs)) return false
+  return paragraphs.some(item => {
+    if (!isRecord(item) || typeof item.id !== 'string') return false
+    return item.id.includes('program-application-economy-seed')
+  })
+}
+
+function bindingNumeric(value: unknown, key: string): number | null {
+  if (!Array.isArray(value)) return null
+  for (const item of value) {
+    if (!isRecord(item)) continue
+    const raw = item[key]
+    const parsed = Number(raw)
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  }
+  return null
 }
 
 function versionResponse(args: {
@@ -395,6 +476,11 @@ function isAllowedMutation(method: string, pathname: string): boolean {
   if (method === 'PATCH' && /^\/api\/admin\/form-templates\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) return true
   if (method === 'POST' && pathname.startsWith('/api/admin/files')) return true
+  if (method === 'PUT' && pathname.startsWith('/api/admin/files/uploads/raw/')) return true
+  if (method === 'PUT' && /^\/api\/admin\/programs\/\d+\/thumbnail$/.test(pathname)) return true
+  if (method === 'PUT' && /^\/api\/admin\/programs\/\d+\/attachments$/.test(pathname)) return true
+  if (method === 'PUT' && /^\/api\/admin\/programs\/\d+\/inline-images$/.test(pathname)) return true
+  if (method === 'DELETE' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) return true
   if (method === 'PUT' && /\/api\/portal\/programs\/\d+\/applications\/draft$/.test(pathname)) {
     return true
   }
@@ -404,7 +490,7 @@ function isAllowedMutation(method: string, pathname: string): boolean {
 
 export async function installCsIsolatedNetwork(
   page: Page,
-  options?: { failMode?: IsolatedFailMode; includeRecruitmentRow?: boolean }
+  options?: IsolatedNetworkOptions
 ): Promise<IsolatedNetworkLog> {
   const failMode = options?.failMode ?? 'none'
   const log: IsolatedNetworkLog = {
@@ -419,8 +505,15 @@ export async function installCsIsolatedNetwork(
     programPatches: [],
     programDraftPuts: [],
     filePosts: [],
+    fileConfirms: [],
+    s3Puts: [],
+    thumbnailPuts: [],
+    attachmentPuts: [],
+    programDeletes: [],
     portalDraftPuts: [],
     portalApplicationPosts: [],
+    publishedApplicationVersionId: null,
+    publishedApplicationFormSource: 'seed',
     realMutations: 0,
   }
 
@@ -435,6 +528,13 @@ export async function installCsIsolatedNetwork(
     includeRecruitmentRow: options?.includeRecruitmentRow === true,
   }
   let createdBindings: unknown[] = []
+  const fileRecords = new Map<number, { originalFileName: string; contentType: string }>()
+  let boundThumbnail: Record<string, unknown> | null = null
+  let boundAttachments: Array<Record<string, unknown>> = []
+  let publishedApplicationForm: ReturnType<typeof applicationSeedForm> | Record<string, unknown> =
+    applicationSeedForm()
+  let portalDraftStore: Record<string, unknown> | null = options?.portalDraftAnswers ?? null
+  let portalSubmitted = false
 
   await page.addInitScript(() => {
     localStorage.setItem('auth_token', 'e2e.mock.header.payload')
@@ -610,7 +710,18 @@ export async function installCsIsolatedNetwork(
     if (method === 'GET' && /^\/api\/admin\/form-template-versions\/\d+$/.test(pathname)) {
       const versionId = Number(pathname.split('/').at(-1))
       const copied = copiedVersions.get(versionId)
-      await route.fulfill(json(copied ?? versionResponse({ templateId: 820000, versionId })))
+      const templateCode = templateCodeByVersion.get(versionId) ?? ''
+      await route.fulfill(
+        json(
+          copied ??
+            versionResponse({
+              templateId: 820000,
+              versionId,
+              templateCode,
+              schemaJson: JSON.stringify(catalogSchemaForTemplate(templateCode)),
+            })
+        )
+      )
       return
     }
     if (
@@ -634,6 +745,63 @@ export async function installCsIsolatedNetwork(
             title: 'RHF-B-일사일교',
             programType: 'COMPANY_SCHOOL',
           }
+        )
+      )
+      return
+    }
+    if (method === 'GET' && pathname === `/api/admin/programs/${CS_ISOLATED_IDS.PROGRAM_ID}/thumbnail`) {
+      await route.fulfill(
+        json(
+          boundThumbnail ?? {
+            fileObjectId: null,
+            originalFileName: null,
+            contentType: null,
+            fileSize: null,
+            downloadPath: null,
+          }
+        )
+      )
+      return
+    }
+    if (
+      method === 'GET' &&
+      pathname === `/api/admin/programs/${CS_ISOLATED_IDS.PROGRAM_ID}/attachments`
+    ) {
+      await route.fulfill(json(boundAttachments))
+      return
+    }
+    if (method === 'GET' && /^\/api\/admin\/files\/\d+\/download$/.test(pathname)) {
+      const fileObjectId = Number(pathname.split('/')[4])
+      const origin = url.origin
+      const record = fileRecords.get(fileObjectId)
+      await route.fulfill(
+        json({
+          fileObjectId,
+          downloadUrl: `${origin}/api/admin/files/downloads/raw/${fileObjectId}`,
+          originalFileName: record?.originalFileName ?? `isolated-${fileObjectId}.png`,
+        })
+      )
+      return
+    }
+    if (method === 'GET' && pathname.startsWith('/api/admin/files/downloads/raw/')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: ISOLATED_PNG_BYTES,
+      })
+      return
+    }
+    if (method === 'GET' && /^\/api\/admin\/files\/\d+$/.test(pathname)) {
+      const fileObjectId = Number(pathname.split('/').at(-1))
+      const record = fileRecords.get(fileObjectId)
+      await route.fulfill(
+        json(
+          fileObjectPayload({
+            fileObjectId,
+            originalFileName: record?.originalFileName,
+            contentType: record?.contentType,
+            origin: url.origin,
+          })
         )
       )
       return
@@ -679,6 +847,14 @@ export async function installCsIsolatedNetwork(
       method === 'GET' &&
       pathname === `/api/portal/programs/${CS_ISOLATED_IDS.PROGRAM_ID}/application-options`
     ) {
+      const versionId =
+        log.publishedApplicationVersionId ??
+        bindingNumeric(createdBindings, 'templateVersionId') ??
+        CS_ISOLATED_IDS.TEMPLATE_VERSION_ID
+      const bindingId =
+        bindingNumeric(createdBindings, 'formBindingId') ??
+        bindingNumeric(createdBindings, 'id') ??
+        CS_ISOLATED_IDS.BINDING_ID
       await route.fulfill(
         json([
           {
@@ -686,8 +862,8 @@ export async function installCsIsolatedNetwork(
             recruitmentType: 'PARTICIPANT',
             targetType: 'ORGANIZATION',
             applicationType: 'ORGANIZATION',
-            formBindingId: CS_ISOLATED_IDS.BINDING_ID,
-            formTemplateVersionId: CS_ISOLATED_IDS.TEMPLATE_VERSION_ID,
+            formBindingId: bindingId,
+            formTemplateVersionId: versionId,
             startAt: '2026-01-01T00:00:00',
             endAt: '2026-12-31T23:59:59',
             canApply: true,
@@ -698,18 +874,22 @@ export async function installCsIsolatedNetwork(
     }
     if (
       method === 'GET' &&
-      pathname ===
-        `/api/portal/programs/${CS_ISOLATED_IDS.PROGRAM_ID}/form-bindings/${CS_ISOLATED_IDS.BINDING_ID}`
+      /^\/api\/portal\/programs\/\d+\/form-bindings\/\d+$/.test(pathname)
     ) {
+      const versionId =
+        log.publishedApplicationVersionId ??
+        bindingNumeric(createdBindings, 'templateVersionId') ??
+        CS_ISOLATED_IDS.TEMPLATE_VERSION_ID
+      const bindingId = Number(pathname.split('/').at(-1))
       await route.fulfill(
         json({
           programId: CS_ISOLATED_IDS.PROGRAM_ID,
           recruitmentId: CS_ISOLATED_IDS.RECRUITMENT_ID,
           applicationType: 'ORGANIZATION',
-          formBindingId: CS_ISOLATED_IDS.BINDING_ID,
-          templateVersionId: CS_ISOLATED_IDS.TEMPLATE_VERSION_ID,
-          form: applicationSeedForm(),
-          draftAnswers: null,
+          formBindingId: Number.isFinite(bindingId) ? bindingId : CS_ISOLATED_IDS.BINDING_ID,
+          templateVersionId: versionId,
+          form: publishedApplicationForm,
+          draftAnswers: portalDraftStore,
         })
       )
       return
@@ -740,6 +920,8 @@ export async function installCsIsolatedNetwork(
       }
       log.mutations.push(mutation)
 
+      try {
+
       if (failMode === 'put' && method === 'PUT' && pathname.includes('/form-template-versions/')) {
         log.formVersionPuts.push(mutation)
         await route.fulfill(json({ error: { code: 'PUT_FAILED', message: 'mock put fail' } }, 500))
@@ -763,6 +945,18 @@ export async function installCsIsolatedNetwork(
         log.filePosts.push(mutation)
         await route.fulfill(
           json({ error: { code: 'UPLOAD_FAILED', message: 'mock media fail' } }, 500)
+        )
+        return
+      }
+      if (
+        failMode === 'bind' &&
+        method === 'PUT' &&
+        /^\/api\/admin\/programs\/\d+\/(thumbnail|attachments)$/.test(pathname)
+      ) {
+        if (pathname.endsWith('/thumbnail')) log.thumbnailPuts.push(mutation)
+        else log.attachmentPuts.push(mutation)
+        await route.fulfill(
+          json({ error: { code: 'BIND_FAILED', message: 'mock media bind fail' } }, 500)
         )
         return
       }
@@ -811,8 +1005,35 @@ export async function installCsIsolatedNetwork(
         log.formVersionPuts.push(mutation)
         const versionId = Number(pathname.split('/').at(-1))
         const existing = copiedVersions.get(versionId)
+        const body = isRecord(mutation.body) ? mutation.body : {}
+        const overlay = overlayFromFormVersionPut(body)
+        const schema = parseSchemaDocument(body.schemaJson)
+        if (schemaHasEconomyParagraphs(schema) && schema != null) {
+          publishedApplicationForm = schema
+          log.publishedApplicationFormSource = 'cms-put'
+          log.publishedApplicationVersionId = versionId
+        } else if (Object.keys(overlay).some(key => key.startsWith('application.economy.'))) {
+          log.publishedApplicationVersionId = versionId
+        }
+        const saved = versionResponse({
+          templateId: existing?.templateId ?? 820000,
+          versionId,
+          overlay,
+          schemaJson:
+            schemaHasEconomyParagraphs(schema) && schema != null
+              ? JSON.stringify(schema)
+              : existing?.schemaJson,
+        })
+        copiedVersions.set(versionId, saved)
         await route.fulfill(
-          json(existing ?? versionResponse({ templateId: 820000, versionId, overlay: {} }))
+          json(
+            versionResponse({
+              templateId: saved.templateId,
+              versionId,
+              overlay,
+              status: 'DRAFT',
+            })
+          )
         )
         return
       }
@@ -851,6 +1072,113 @@ export async function installCsIsolatedNetwork(
         await route.fulfill(json({ id: Number(pathname.split('/').at(-1)) }))
         return
       }
+      if (method === 'POST' && pathname === '/api/admin/files/upload-requests') {
+        log.filePosts.push(mutation)
+        const fileObjectId = nextFileId
+        nextFileId += 1
+        const body = isRecord(mutation.body) ? mutation.body : {}
+        const originalFileName =
+          typeof body.originalFileName === 'string' && body.originalFileName.trim()
+            ? body.originalFileName
+            : `isolated-${fileObjectId}.png`
+        const contentType =
+          typeof body.contentType === 'string' && body.contentType.trim()
+            ? body.contentType
+            : 'image/png'
+        fileRecords.set(fileObjectId, { originalFileName, contentType })
+        await route.fulfill(
+          json({
+            fileObjectId,
+            uploadUrl: `${url.origin}/api/admin/files/uploads/raw/${fileObjectId}`,
+            method: 'PUT',
+            confirmPath: `/api/admin/files/${fileObjectId}/confirm`,
+            requiredHeaders: { 'Content-Type': contentType },
+          })
+        )
+        return
+      }
+      if (method === 'POST' && /^\/api\/admin\/files\/\d+\/confirm$/.test(pathname)) {
+        log.fileConfirms.push(mutation)
+        const fileObjectId = Number(pathname.split('/')[4])
+        const record = fileRecords.get(fileObjectId)
+        await route.fulfill(
+          json(
+            fileObjectPayload({
+              fileObjectId,
+              originalFileName: record?.originalFileName,
+              contentType: record?.contentType,
+              origin: url.origin,
+            })
+          )
+        )
+        return
+      }
+      if (method === 'PUT' && pathname.startsWith('/api/admin/files/uploads/raw/')) {
+        log.s3Puts.push(mutation)
+        if (failMode === 'uploadSlow') {
+          await new Promise(resolve => {
+            setTimeout(resolve, 8_000)
+          })
+        }
+        await route.fulfill({ status: 200, contentType: 'text/plain', body: '' })
+        return
+      }
+      if (method === 'PUT' && /^\/api\/admin\/programs\/\d+\/thumbnail$/.test(pathname)) {
+        log.thumbnailPuts.push(mutation)
+        const body = isRecord(mutation.body) ? mutation.body : {}
+        const fileObjectId =
+          typeof body.fileObjectId === 'number' ? body.fileObjectId : Number(body.fileObjectId)
+        const record = Number.isFinite(fileObjectId) ? fileRecords.get(fileObjectId) : undefined
+        boundThumbnail =
+          Number.isFinite(fileObjectId) && fileObjectId > 0
+            ? {
+                fileObjectId,
+                originalFileName: record?.originalFileName ?? `isolated-${fileObjectId}.png`,
+                contentType: record?.contentType ?? 'image/png',
+                fileSize: 80,
+                downloadPath: `/api/admin/files/${fileObjectId}/download`,
+              }
+            : {
+                fileObjectId: null,
+                originalFileName: null,
+                contentType: null,
+                fileSize: null,
+                downloadPath: null,
+              }
+        await route.fulfill(json(boundThumbnail))
+        return
+      }
+      if (method === 'PUT' && /^\/api\/admin\/programs\/\d+\/inline-images$/.test(pathname)) {
+        await route.fulfill(json({ fileObjectIds: [] }))
+        return
+      }
+      if (method === 'PUT' && /^\/api\/admin\/programs\/\d+\/attachments$/.test(pathname)) {
+        log.attachmentPuts.push(mutation)
+        const body = isRecord(mutation.body) ? mutation.body : {}
+        const ids = Array.isArray(body.fileObjectIds)
+          ? body.fileObjectIds.map(item => Number(item)).filter(id => Number.isFinite(id) && id > 0)
+          : []
+        boundAttachments = ids.map((fileObjectId, index) => {
+          const record = fileRecords.get(fileObjectId)
+          return {
+            fileObjectId,
+            originalFileName: record?.originalFileName ?? `isolated-${fileObjectId}.bin`,
+            contentType: record?.contentType ?? 'application/octet-stream',
+            displayOrder: index,
+            downloadPath: `/api/admin/files/${fileObjectId}/download`,
+          }
+        })
+        await route.fulfill(json(boundAttachments))
+        return
+      }
+      if (method === 'DELETE' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) {
+        log.programDeletes.push(mutation)
+        store.program = null
+        boundThumbnail = null
+        boundAttachments = []
+        await route.fulfill(json({ deleted: true }))
+        return
+      }
       if (method === 'POST' && pathname.startsWith('/api/admin/files')) {
         log.filePosts.push(mutation)
         const fileObjectId = nextFileId
@@ -867,7 +1195,9 @@ export async function installCsIsolatedNetwork(
       }
       if (method === 'PUT' && pathname.endsWith('/applications/draft')) {
         log.portalDraftPuts.push(mutation)
-        await route.fulfill(json({ applicationId: 95021, status: 'DRAFT' }))
+        const body = isRecord(mutation.body) ? mutation.body : {}
+        if (isRecord(body.answers)) portalDraftStore = body.answers
+        await route.fulfill(json({ applicationId: 95021, status: 'DRAFT', applicationStatus: 'DRAFT' }))
         return
       }
       if (method === 'POST' && /\/applications$/.test(pathname)) {
@@ -878,7 +1208,26 @@ export async function installCsIsolatedNetwork(
           )
           return
         }
-        await route.fulfill(json({ applicationId: 95022, status: 'SUBMITTED' }))
+        if (failMode === 'portalDuplicate' && portalSubmitted) {
+          await route.fulfill(
+            json(
+              { error: { code: 'DUPLICATE_APPLICATION', message: 'mock duplicate apply' } },
+              409
+            )
+          )
+          return
+        }
+        portalSubmitted = true
+        await route.fulfill(
+          json({ applicationId: 95022, status: 'SUBMITTED', applicationStatus: 'SUBMITTED' })
+        )
+        return
+      }
+      } catch (error) {
+        console.error(`[cs-isolated] mutation handler ${method} ${pathname}`, error)
+        await route.fulfill(
+          json({ error: { code: 'MOCK_HANDLER', message: String(error) } }, 500)
+        )
         return
       }
     }

@@ -22,10 +22,14 @@ import {
   isIndividualScheduleSettlementAudience,
 } from '../lib/individual-settlement-contract'
 import {
+  isReceiptEvidenceRequired,
+  isReceiptWageItemType,
   normalizePayableItems,
+  overlayPayableEvidenceRequired,
   pickAmountPayableItems,
   pickTransportPayableItem,
   receiptPaymentItemLabel,
+  sortReceiptPayableItems,
   type ReceiptPayableItem,
 } from '../lib/payment-items'
 import {
@@ -306,6 +310,7 @@ function TripLegBlock({
   fileNames,
   attachments,
   uploadEnabled,
+  showReceiptUpload = true,
   onTransitChange,
   onAmountChange,
   onFileNamesChange,
@@ -319,6 +324,7 @@ function TripLegBlock({
   fileNames: string[]
   attachments?: SettlementReceiptAttachment[]
   uploadEnabled: boolean
+  showReceiptUpload?: boolean
   onTransitChange: (next: string) => void
   onAmountChange: (next: string) => void
   onFileNamesChange: (next: string[]) => void
@@ -354,19 +360,21 @@ function TripLegBlock({
             />
           </PFFormField>
         </PFFormFieldRow>
-        <PFFormFieldRow type="single">
-          <PFFormField label="영수증 제출">
-            <ReceiptUpload
-              fileNames={fileNames}
-              onFileNamesChange={onFileNamesChange}
-              attachments={attachments}
-              onAttachmentsChange={onAttachmentsChange}
-              uploadEnabled={uploadEnabled}
-              ariaLabel={`${prefix} 영수증 제출`}
-              onError={onError}
-            />
-          </PFFormField>
-        </PFFormFieldRow>
+        {showReceiptUpload ? (
+          <PFFormFieldRow type="single">
+            <PFFormField label="영수증 제출">
+              <ReceiptUpload
+                fileNames={fileNames}
+                onFileNamesChange={onFileNamesChange}
+                attachments={attachments}
+                onAttachmentsChange={onAttachmentsChange}
+                uploadEnabled={uploadEnabled}
+                ariaLabel={`${prefix} 영수증 제출`}
+                onError={onError}
+              />
+            </PFFormField>
+          </PFFormFieldRow>
+        ) : null}
       </PFFormFieldTable>
     </div>
   )
@@ -405,19 +413,21 @@ function AmountReceiptSection({
             />
           </PFFormField>
         </PFFormFieldRow>
-        <PFFormFieldRow type="single">
-          <PFFormField label="영수증 제출">
-            <ReceiptUpload
-              fileNames={[]}
-              onFileNamesChange={() => undefined}
-              attachments={item.attachments}
-              onAttachmentsChange={attachments => onChange({ ...item, attachments })}
-              uploadEnabled
-              ariaLabel={`${amountLabel} 영수증 제출`}
-              onError={onError}
-            />
-          </PFFormField>
-        </PFFormFieldRow>
+        {isReceiptEvidenceRequired(item.evidenceRequired) ? (
+          <PFFormFieldRow type="single">
+            <PFFormField label="영수증 제출">
+              <ReceiptUpload
+                fileNames={[]}
+                onFileNamesChange={() => undefined}
+                attachments={item.attachments}
+                onAttachmentsChange={attachments => onChange({ ...item, attachments })}
+                uploadEnabled
+                ariaLabel={`${amountLabel} 영수증 제출`}
+                onError={onError}
+              />
+            </PFFormField>
+          </PFFormFieldRow>
+        ) : null}
       </PFFormFieldTable>
     </PFFormSection>
   )
@@ -505,11 +515,15 @@ export function EducationSettlementWriteForm({
   )
   const [extraItems, setExtraItems] = useState<SettlementAmountItemDraft[]>(() => {
     if (hydrated?.extraItems?.length) {
-      return amountItems.map(
-        item =>
-          hydrated.extraItems.find(existing => existing.itemType === item.itemType) ??
-          createEmptyAmountItemDraft(item)
-      )
+      return amountItems.map(item => {
+        const existing = hydrated.extraItems.find(row => row.itemType === item.itemType)
+        const base = existing ?? createEmptyAmountItemDraft(item)
+        return {
+          ...base,
+          itemName: item.itemName,
+          evidenceRequired: isReceiptEvidenceRequired(item.evidenceRequired),
+        }
+      })
     }
     return amountItems.map(createEmptyAmountItemDraft)
   })
@@ -557,11 +571,15 @@ export function EducationSettlementWriteForm({
         setReturnAmount(mapped.transport.return.amount)
         setReturnAttachments(mapped.transport.return.attachments)
         setExtraItems(
-          amountItems.map(
-            item =>
-              mapped.extraItems.find(existing => existing.itemType === item.itemType) ??
-              createEmptyAmountItemDraft(item)
-          )
+          amountItems.map(item => {
+            const existing = mapped.extraItems.find(row => row.itemType === item.itemType)
+            const base = existing ?? createEmptyAmountItemDraft(item)
+            return {
+              ...base,
+              itemName: item.itemName,
+              evidenceRequired: isReceiptEvidenceRequired(item.evidenceRequired),
+            }
+          })
         )
         return
       }
@@ -590,6 +608,11 @@ export function EducationSettlementWriteForm({
     setAlertOpen(true)
   }
 
+  const extraItemsForUi = overlayPayableEvidenceRequired(extraItems, payableItems)
+  const orderedExtras = sortReceiptPayableItems(extraItemsForUi)
+  const wageExtras = orderedExtras.filter(item => isReceiptWageItemType(item.itemType, item.itemName))
+  const restExtras = orderedExtras.filter(item => !isReceiptWageItemType(item.itemType, item.itemName))
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (isReceipt && payableItems.length === 0) {
@@ -602,7 +625,7 @@ export function EducationSettlementWriteForm({
     if (isReceipt && evidencePolicyUnconfigured) {
       showAlert(
         individualIneligibleMessage('EVIDENCE_POLICY_UNCONFIGURED') ??
-          '증빙 정책이 설정되지 않아 제출할 수 없습니다. 관리자에게 문의해 주세요.',
+          '증빙 정책을 확인할 수 없어 신청할 수 없습니다',
       )
       return
     }
@@ -645,7 +668,7 @@ export function EducationSettlementWriteForm({
       accountHolder,
       transportItemType: transportItem?.itemType,
       transportItemName: transportItem?.itemName,
-      transportEvidenceRequired: transportItem?.evidenceRequired === true,
+      transportEvidenceRequired: isReceiptEvidenceRequired(transportItem?.evidenceRequired),
       tripType,
       departTransit,
       departAmount,
@@ -655,7 +678,7 @@ export function EducationSettlementWriteForm({
       returnAmount,
       returnFiles,
       returnAttachments,
-      extraItems: isReceipt ? extraItems : [],
+      extraItems: isReceipt ? extraItemsForUi : [],
       mealAmount,
       mealFiles,
       activityAmount,
@@ -681,7 +704,10 @@ export function EducationSettlementWriteForm({
 
   let sectionNo = 1
   const basicSectionNo = sectionNo++
-  const transportSectionNo = transportItem || !isReceipt ? sectionNo++ : null
+  const showTransportSection = Boolean((!isReceipt || transportItem) && (transportItem || !isReceipt))
+  const wageSectionNos = wageExtras.map(() => sectionNo++)
+  const transportSectionNo = showTransportSection ? sectionNo++ : null
+  const restSectionNos = restExtras.map(() => sectionNo++)
 
   return (
     <>
@@ -694,7 +720,7 @@ export function EducationSettlementWriteForm({
         ) : null}
         {isReceipt && submittedItems.length > 0 ? (
           <PFFormSection id="settlement-submitted" title="제출된 항목">
-            {submittedItems.map((item, index) => (
+            {sortReceiptPayableItems(submittedItems).map((item, index) => (
               <PFText key={`${item.itemType ?? 'item'}-${index}`} as="p" typo="bd-md-rg" color="black">
                 {receiptPaymentItemLabel(
                   payableItems.find(payable => payable.itemType === item.itemType) ?? {
@@ -784,7 +810,27 @@ export function EducationSettlementWriteForm({
           </PFFormFieldTable>
         </PFFormSection>
 
-        {(!isReceipt || transportItem) && transportSectionNo != null ? (
+        {isReceipt
+          ? wageExtras.map((item, index) => (
+              <AmountReceiptSection
+                key={item.itemType}
+                id={`settlement-item-${item.itemType}`}
+                title={`${wageSectionNos[index]}. ${item.itemName} 신청`}
+                required={isReceiptEvidenceRequired(item.evidenceRequired)}
+                description="사전에 담당자와 협의되지 않은 비용은 지급이 반려될 수 있습니다. 반드시 사전 협의 후 신청해 주세요."
+                amountLabel={item.itemName}
+                item={item}
+                onChange={next => {
+                  setExtraItems(current =>
+                    current.map(row => (row.itemType === next.itemType ? next : row))
+                  )
+                }}
+                onError={showAlert}
+              />
+            ))
+          : null}
+
+        {showTransportSection && transportSectionNo != null ? (
           <PFFormSection
             id="settlement-transport"
             title={`${transportSectionNo}. 교통비 신청`}
@@ -815,7 +861,8 @@ export function EducationSettlementWriteForm({
               amount={departAmount}
               fileNames={departFiles}
               attachments={departAttachments}
-              uploadEnabled={isReceipt}
+              uploadEnabled={isReceipt && isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
+              showReceiptUpload={!isReceipt || isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
               onTransitChange={setDepartTransit}
               onAmountChange={setDepartAmount}
               onFileNamesChange={setDepartFiles}
@@ -831,7 +878,8 @@ export function EducationSettlementWriteForm({
                 amount={returnAmount}
                 fileNames={returnFiles}
                 attachments={returnAttachments}
-                uploadEnabled={isReceipt}
+                uploadEnabled={isReceipt && isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
+                showReceiptUpload={!isReceipt || isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
                 onTransitChange={setReturnTransit}
                 onAmountChange={setReturnAmount}
                 onFileNamesChange={setReturnFiles}
@@ -857,15 +905,17 @@ export function EducationSettlementWriteForm({
         ) : null}
 
         {isReceipt
-          ? extraItems.map((item, index) => (
+          ? restExtras.map((item, index) => (
               <AmountReceiptSection
                 key={item.itemType}
                 id={`settlement-item-${item.itemType}`}
-                title={`${transportSectionNo != null ? transportSectionNo + 1 + index : basicSectionNo + 1 + index}. ${item.itemName} 신청`}
-                required={item.evidenceRequired === true}
+                title={`${restSectionNos[index]}. ${item.itemName} 신청`}
+                required={isReceiptEvidenceRequired(item.evidenceRequired)}
                 description="사전에 담당자와 협의되지 않은 비용은 지급이 반려될 수 있습니다. 반드시 사전 협의 후 신청해 주세요."
                 footer={
-                  item.itemType === 'ACTIVITY' ? '사용한 금액의 영수증을 제출해 주세요.' : undefined
+                  item.itemType === 'ACTIVITY' && isReceiptEvidenceRequired(item.evidenceRequired)
+                    ? '사용한 금액의 영수증을 제출해 주세요.'
+                    : undefined
                 }
                 amountLabel={item.itemName}
                 item={item}

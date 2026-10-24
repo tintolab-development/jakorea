@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import { expect, type Page } from '@playwright/test'
 import { CompanySchoolRegistrationPage } from '../e2e/pages/company-school-registration.page'
 import {
@@ -84,7 +85,7 @@ async function selectPaymentItemsB(page: Page) {
 }
 
 /** 현재 RHF 공통정보 UI (국문/영문/공고용)에 맞춘 격리 입력. live page object의 구 placeholder는 쓰지 않는다. */
-async function fillIsolatedCommonInfo(page: Page) {
+export async function fillIsolatedCommonInfo(page: Page) {
   await clickSectionNavIfVisible(page, '기본 정보')
   await fillTextNearLabel(page, '대표 프로그램명 (국문)', '대표 프로그램명을 입력하세요', VALUES_B.title)
   await fillTextNearLabel(page, '대표 프로그램명 (영문)', '대표 프로그램명을 입력하세요', VALUES_B.titleEn)
@@ -337,6 +338,44 @@ export async function saveWizardDraft(page: Page) {
 
 export async function expectFieldValue(page: Page, placeholder: string, value: string) {
   await expect(page.getByPlaceholder(placeholder).first()).toHaveValue(value)
+}
+
+const ISOLATED_PNG_BUFFER = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64'
+)
+
+export async function fillInstitutionRecruitMedia(page: Page) {
+  await page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ }).first().click().catch(() => undefined)
+  await clickSectionNavIfVisible(page, '상세 정보')
+  await expect(page.getByText('썸네일 이미지').first()).toBeVisible({ timeout: 20_000 })
+  const thumbRemove = page.locator('.thumbnail-upload-field').getByRole('button', { name: /삭제/ })
+  if (await thumbRemove.first().isVisible().catch(() => false)) {
+    await thumbRemove.first().click()
+  }
+  const thumb = page.locator('.thumbnail-upload-field input[type="file"]').first()
+  await expect(thumb).toBeAttached({ timeout: 20_000 })
+  await thumb.setInputFiles({
+    name: 'cs-thumb.png',
+    mimeType: 'image/png',
+    buffer: ISOLATED_PNG_BUFFER,
+  })
+  await expect(page.getByText('cs-thumb.png').first()).toBeVisible({ timeout: 25_000 })
+  await expect(page.locator('.file-upload-overlay')).toHaveCount(0, { timeout: 20_000 })
+}
+
+export async function expectRequiredIncompleteAlert(page: Page) {
+  const dialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력' })
+  await expect(dialog).toBeVisible({ timeout: 15_000 })
+  await expect(dialog.getByText(/필수 항목을 모두 작성/)).toBeVisible()
+  await dialog.getByRole('button', { name: '확인' }).click()
+}
+
+export async function fillKpiValueAt(page: Page, index: number, value: string) {
+  await clickSectionNavIfVisible(page, '사업 KPI 목표')
+  const kpiInputs = page.getByPlaceholder('목표값 입력')
+  await expect(kpiInputs.nth(index)).toBeVisible({ timeout: 10_000 })
+  await kpiInputs.nth(index).fill(value)
 }
 
 export { fillAllByPlaceholder }

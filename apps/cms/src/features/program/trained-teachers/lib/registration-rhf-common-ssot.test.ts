@@ -66,10 +66,12 @@ describe('TT 등록 공통정보 RHF SSOT', () => {
       },
     }
     const afterOverlayWrite = applyTrainedTeachersRhfOverlayRecord(values, overlay)
-    expect(afterOverlayWrite.title).toBe('오래된 제목')
+    expect(afterOverlayWrite.mainTitle).toBe('오래된 제목')
+    expect(afterOverlayWrite.announcementTitle).toBe('오래된 공고명')
 
     const collected = collectTrainedTeachersCommonInfoState(values)
-    expect(collected.title).toBe('RHF 제목')
+    expect(collected.title).toBe('RHF 공고명')
+    expect(collected.mainTitle).toBe('RHF 제목')
     expect(collected.announcementTitle).toBe('RHF 공고명')
     expect(collected.textbookName).toBe('RHF 교재')
     expect(collected.sponsorManagementIds).toEqual(['sponsor-rhf'])
@@ -77,7 +79,8 @@ describe('TT 등록 공통정보 RHF SSOT', () => {
     expect(collected.generalSurveyMenuKeys).toEqual([])
 
     const program = buildTrainedTeachersProgramFromRhf({ id: 'tt-rhf', values })
-    expect(program.title).toContain('RHF')
+    expect(program.title).toBe('RHF 공고명')
+    expect(program.mainTitle).toBe('RHF 제목')
     expect(program.textbookName).toBe('RHF 교재')
     expect(program.generalSurveyMenuKeys).toEqual([])
     expect(program.generalCommonInfo?.educationJournalEnabled).toBe(false)
@@ -144,7 +147,8 @@ describe('TT 등록 공통정보 RHF SSOT', () => {
     }
     expect(isTrainedTeachersRegistrationCanonicalSnapshot(typed)).toBe(true)
     const restored = rhfValuesFromTrainedTeachersCanonicalCommon(typed.common, typed.editor)
-    expect(restored.title).toBe('RHF 제목')
+    expect(restored.mainTitle).toBe('RHF 제목')
+    expect(restored.announcementTitle).toBe('RHF 공고명')
     expect(restored.educationJournalEnabled).toBe(false)
     expect(restored.generalSurveyMenuKeys).toEqual([])
 

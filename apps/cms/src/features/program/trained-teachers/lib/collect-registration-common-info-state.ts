@@ -24,8 +24,8 @@ export function collectTrainedTeachersCommonInfoState(
   const isSchedule = values.educationStructure === 'schedule'
   return {
     ...imported.common,
-    title: values.title,
-    mainTitle: values.mainTitle || values.title,
+    title: values.announcementTitle,
+    mainTitle: values.mainTitle,
     titleEn: values.titleEn,
     announcementTitle: values.announcementTitle,
     detailedProgramId: values.detailedProgramId,

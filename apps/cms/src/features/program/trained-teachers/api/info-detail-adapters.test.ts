@@ -182,6 +182,41 @@ describe('trained-teacher info detail adapters', () => {
     expect(merged.generalCommonInfo?.kpi?.finalSchools).toBe(8)
   })
 
+  it('typed educationJournalEnabled를 A nested보다 우선하고 "false" 문자열을 true로 보지 않는다', () => {
+    const program = {
+      id: '186034',
+      title: 't',
+      generalCommonInfo: { educationJournalEnabled: true },
+    } as Program
+    const mergedFalse = mergeTrainedTeacherInfoDetailIntoProgram(program, {
+      teacherTrainingEnabled: false,
+      educationJournalEnabled: false,
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: { educationJournalEnabled: true },
+      }),
+    })
+    expect(mergedFalse.generalCommonInfo?.educationJournalEnabled).toBe(false)
+
+    const mergedTypedMissing = mergeTrainedTeacherInfoDetailIntoProgram(program, {
+      teacherTrainingEnabled: false,
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: { educationJournalEnabled: false },
+      }),
+    })
+    expect(mergedTypedMissing.generalCommonInfo?.educationJournalEnabled).toBe(false)
+
+    const fromFalseString = mapTrainedTeacherInfoDetailToProgramPatch({
+      educationJournalEnabled: 'false' as unknown as boolean,
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: { educationJournalEnabled: true },
+      }),
+    })
+    expect(fromFalseString.generalCommonInfo?.educationJournalEnabled).toBe(false)
+  })
+
   it('prefers detail configJson curriculum over stale programs nested copy', () => {
     const program = {
       id: '186034',

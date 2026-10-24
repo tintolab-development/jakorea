@@ -172,10 +172,23 @@ export function omitTrainedTeacherStaleSessionOverlayKeys(
   return Object.keys(next).length > 0 ? next : undefined
 }
 
-function overlayYesNo(value: unknown): boolean | undefined {
-  if (value === true || value === 'yes') return true
-  if (value === false || value === 'no') return false
+/** JSON boolean 및 레거시 yes/no·1/0·y/n. Boolean("false") 금지. 미지원 값은 undefined. */
+export function parseCompatibleBoolean(value: unknown): boolean | undefined {
+  if (value === true || value === false) return value
+  if (value === 1 || value === 0) return value === 1
+  if (typeof value !== 'string') return undefined
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'true' || normalized === 'yes' || normalized === 'y' || normalized === '1') {
+    return true
+  }
+  if (normalized === 'false' || normalized === 'no' || normalized === 'n' || normalized === '0') {
+    return false
+  }
   return undefined
+}
+
+function overlayYesNo(value: unknown): boolean | undefined {
+  return parseCompatibleBoolean(value)
 }
 
 export function readTrainedTeacherOverlayJournalEnabled(
@@ -212,7 +225,7 @@ export function resolveTrainedTeachersCanonicalCommonInfo(
   return {
     ...nested,
     educationJournalEnabled: explicitBoolean(
-      nested.educationJournalEnabled,
+      parseCompatibleBoolean(nested.educationJournalEnabled),
       readTrainedTeacherOverlayJournalEnabled(overlay)
     ),
     teacherTrainingEnabled: nested.teacherTrainingEnabled === true,

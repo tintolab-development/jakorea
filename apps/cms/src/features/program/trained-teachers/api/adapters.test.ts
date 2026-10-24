@@ -879,6 +879,59 @@ describe('mapTrainedTeacherDetailToProgram detailedProgramId round-trip', () => 
   })
 })
 
+describe('mapTrainedTeacherDetailToProgram typed vs nested snapshot', () => {
+  it('top-level mainTitle/ips/district가 stale nested snapshot을 덮는다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '900001',
+      programType: 'TRAINED_TEACHER',
+      title: '커리큘럼 테스트 공고',
+      mainTitle: '커리큘럼 대표명',
+      titleEn: 'Curriculum Representative',
+      ips: 'Prepare',
+      district: '고등학교 1~2학년',
+      programCategory: '경제',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          title: '구 공고',
+          mainTitle: '구 대표명',
+          ips: 'Inspire',
+          district: '구 대상',
+          programCategory: '구 카테고리',
+          generalCommonInfo: {
+            curriculumSessions: [{ sessionNo: 1, ipsTypeSummary: 'Inspire' }],
+          },
+        },
+      }),
+    })
+    expect(mapped.title).toBe('커리큘럼 테스트 공고')
+    expect(mapped.mainTitle).toBe('커리큘럼 대표명')
+    expect(mapped.titleEn).toBe('Curriculum Representative')
+    expect(mapped.ips).toBe('Prepare')
+    expect(mapped.district).toBe('고등학교 1~2학년')
+    expect(mapped.programCategory).toBe('경제')
+    expect(mapped.generalCommonInfo?.curriculumSessions?.[0]?.ipsTypeSummary).toBe('Inspire')
+  })
+
+  it('top-level ips가 생략되면 nested snapshot ips를 유지한다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '900002',
+      title: '공고',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          ips: 'Inspire',
+          mainTitle: 'nested 대표',
+          district: 'nested 대상',
+        },
+      }),
+    })
+    expect(mapped.ips).toBe('Inspire')
+    expect(mapped.mainTitle).toBe('nested 대표')
+    expect(mapped.district).toBe('nested 대상')
+  })
+})
+
 describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
   it('prefers totalParticipants over nested kpi finalParticipants', () => {
     const mapped = mapTrainedTeacherDetailToProgram({

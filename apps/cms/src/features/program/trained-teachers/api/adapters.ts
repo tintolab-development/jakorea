@@ -314,7 +314,12 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     id,
     sponsorId: dto.sponsorId ?? '',
     title,
-    mainTitle: dto.mainTitle?.trim() || undefined,
+    mainTitle:
+      dto.mainTitle !== undefined
+        ? dto.mainTitle?.trim() || undefined
+        : typeof detailFields.mainTitle === 'string'
+          ? detailFields.mainTitle
+          : undefined,
     // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
     detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     type: (dto.type as ProgramType | undefined) ?? 'offline',
@@ -342,12 +347,12 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
       toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
       toTypedProgramLifecycleStatus(dto.periodStatus),
     businessArea: resolveStoredBusinessArea(dto.businessArea) || undefined,
-    titleEn: dto.titleEn,
+    titleEn: dto.titleEn !== undefined ? dto.titleEn : detailFields.titleEn,
     textbookName: dto.textbookName,
     textbookNameEn: dto.textbookNameEn,
     schoolId: dto.schoolId,
-    district: dto.district,
-    ips: dto.ips as Program['ips'],
+    district: dto.district !== undefined ? dto.district : detailFields.district,
+    ips: dto.ips !== undefined ? (dto.ips as Program['ips']) : detailFields.ips,
     targetLevel: persistedTargetLevels[0],
     targetLevels:
       columnSource !== undefined || persistedTargetLevels.length > 0
@@ -357,8 +362,10 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     ipOwned: normalizeIpOwnedSelectValue(dto.ipOwned),
     courseDeliveredBy: toCourseDeliveredBy(dto.courseDeliveredBy),
     partnerInvolvement: dto.partnerInvolvement ?? undefined,
-    programCategory: dto.programCategory,
-    programChannel: dto.programChannel,
+    programCategory:
+      dto.programCategory !== undefined ? dto.programCategory : detailFields.programCategory,
+    programChannel:
+      dto.programChannel !== undefined ? dto.programChannel : detailFields.programChannel,
     educationTime: dto.educationTime,
     teamDivision: dto.teamDivision,
     educationProcess: dto.educationProcess?.trim() || undefined,

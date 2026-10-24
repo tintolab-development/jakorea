@@ -77,8 +77,8 @@ function extractCommon(
   const textbookName =
     typeof overlay[TEXTBOOK_KEY] === 'string' ? overlay[TEXTBOOK_KEY] : (program.textbookName ?? '')
   return {
-    title: program.title,
-    mainTitle: program.mainTitle ?? program.title,
+    title: program.generalCommonInfo?.announcementTitle ?? program.title,
+    mainTitle: program.mainTitle ?? '',
     titleEn: program.titleEn ?? '',
     announcementTitle: program.generalCommonInfo?.announcementTitle ?? program.title,
     detailedProgramId: program.detailedProgramId ?? '',

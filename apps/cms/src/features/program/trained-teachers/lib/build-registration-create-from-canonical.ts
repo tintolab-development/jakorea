@@ -46,7 +46,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
   const { common, editor, recruit } = args.canonical
   const now = new Date().toISOString()
   const y = dayjs().year()
-  const title = common.announcementTitle.trim() || common.title.trim() || '교육받은 교사 프로그램'
+  const title = common.announcementTitle.trim() || '교육받은 교사 프로그램'
   const startDate = common.startDate ?? dayjs(`${y}-04-01`).startOf('day').toISOString()
   const endDate = common.endDate ?? dayjs(`${y}-12-31`).endOf('day').toISOString()
   const sponsorId = common.sponsorManagementIds[0] ?? ''
@@ -62,7 +62,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
     id: args.id,
     sponsorId,
     title,
-    mainTitle: common.mainTitle.trim() || title,
+    mainTitle: common.mainTitle.trim() || undefined,
     titleEn: common.titleEn || undefined,
     textbookName: common.textbookName,
     type: common.educationForm ?? 'offline',

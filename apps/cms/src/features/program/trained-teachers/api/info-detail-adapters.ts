@@ -2,6 +2,7 @@ import type { Program } from '@/types/domain'
 import type { TrainedTeacherProgramDetailRequest } from '@/shared/api/generated/dashboard/schemas/trainedTeacherProgramDetailRequest'
 import type { TrainedTeacherProgramDetailResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherProgramDetailResponse'
 import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
+import { parseCompatibleBoolean } from '@/features/program/trained-teachers/lib/common-info-persist'
 import { clearTeacherTrainingScheduleIfOff } from '@/features/program/trained-teachers/lib/teacher-training-schedule'
 
 export const TRAINED_TEACHER_INFO_CONFIG_JSON_VERSION = 1 as const
@@ -74,7 +75,7 @@ function narrowTrainedTeacherInfoConfigCommonInfo(
   })
   const source = cleared as Record<string, unknown>
   const next: Record<string, unknown> = {
-    educationJournalEnabled: cleared.educationJournalEnabled === true,
+    educationJournalEnabled: parseCompatibleBoolean(cleared.educationJournalEnabled) === true,
     teacherTrainingEnabled: trainingEnabled,
     teacherTrainingScheduleName: trainingEnabled ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME : '',
   }
@@ -149,7 +150,8 @@ export function mapTrainedTeacherInfoDetailToProgramPatch(
       {
         ...baseCommon,
         educationJournalEnabled:
-          dto.educationJournalEnabled ?? baseCommon.educationJournalEnabled,
+          parseCompatibleBoolean(dto.educationJournalEnabled) ??
+          parseCompatibleBoolean(baseCommon.educationJournalEnabled),
       },
       {
         teacherTrainingEnabled: dto.teacherTrainingEnabled ?? baseCommon.teacherTrainingEnabled,
@@ -191,9 +193,9 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
         ...patchCommon,
         ...programCommon,
         educationJournalEnabled:
-          dto.educationJournalEnabled ??
-          programCommon?.educationJournalEnabled ??
-          patchCommon?.educationJournalEnabled,
+          parseCompatibleBoolean(dto.educationJournalEnabled) ??
+          parseCompatibleBoolean(patchCommon?.educationJournalEnabled) ??
+          parseCompatibleBoolean(programCommon?.educationJournalEnabled),
         // B 배열이 있으면 B가 정본. 키 생략 시 A nested 를 undefined 로 지우지 않는다.
         curriculumSessions: Array.isArray(patchCommon?.curriculumSessions)
           ? patchCommon.curriculumSessions
@@ -237,7 +239,8 @@ export function mapTrainedTeacherInfoSaveToRequest(
 ): TrainedTeacherProgramDetailRequest {
   return {
     teacherTrainingEnabled: payload.commonInfo.teacherTrainingEnabled ?? false,
-    educationJournalEnabled: payload.commonInfo.educationJournalEnabled ?? false,
+    educationJournalEnabled:
+      parseCompatibleBoolean(payload.commonInfo.educationJournalEnabled) === true,
     educationJournalRequired: false,
     journalSubmissionLimitType: 'UNLIMITED',
     teacherTrainingScheduleName: payload.commonInfo.teacherTrainingEnabled
