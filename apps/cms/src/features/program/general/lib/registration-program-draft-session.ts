@@ -188,6 +188,7 @@ function buildRegistrationProgramDraftPayloadForSession(args: {
   registrationTemplateCode: string
   activeStep?: string
   programTitleKo?: string
+  recruitments?: unknown[]
 }): RegistrationProgramDraftPayloadV1 {
   const draftId = draftIdByProgramType.get(args.programType)
   const formVersions =
@@ -199,12 +200,14 @@ function buildRegistrationProgramDraftPayloadForSession(args: {
           ])
         )
       : {}
+  const previous = lastPayloadByProgramType.get(args.programType)
   return createRegistrationProgramDraftPayload({
     registrationTemplateCode: args.registrationTemplateCode,
     activeStep: args.activeStep,
     formVersions,
     programTitleKo: args.programTitleKo,
     selectedOperationalTemplates: getRegistrationStepTemplateSelections(args.programType),
+    recruitments: args.recruitments ?? previous?.recruitments,
   })
 }
 
@@ -235,6 +238,7 @@ export function syncRegistrationProgramDraftSession(args: {
   registrationTemplateCode: string
   activeStep?: string
   programTitleKo?: string
+  recruitments?: unknown[]
 }): void {
   const payload = buildRegistrationProgramDraftPayloadForSession(args)
   lastPayloadByProgramType.set(args.programType, payload)

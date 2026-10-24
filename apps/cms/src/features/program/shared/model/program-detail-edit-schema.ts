@@ -401,6 +401,8 @@ const programDetailEditSchemaBase = z.object({
     .optional(),
   /** UJAT 봉사자 모집 비고 — 해당 없음 선택 시 공고 비노출 */
   volunteerRecruitmentNotesNotApplicable: z.enum(['applicable', 'not_applicable']).optional(),
+  /** UJAT 봉사자 모집 행 interviewConfig. Overlay KV가 아니라 모집 행 SSOT. */
+  volunteerInterviewConfig: z.unknown().optional(),
   applicationMethod: z
     .string()
     .optional()
