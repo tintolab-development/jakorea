@@ -4,6 +4,7 @@ import type { ProgramDetailCase } from '@/features/program'
 export type EducationActivitySection =
   | 'notice'
   | 'schedule'
+  | 'lecture-report'
   | 'educationJournal'
   | 'students'
   | 'survey'
@@ -78,6 +79,8 @@ type ActivityTabOptions = {
    * 강사 겸직(`instructor_dual`)은 false — 교육·강의 상세에 정산현황을 둔다.
    */
   schoolTeacherMember?: boolean
+  /** Instructor applications only: expose the independent lecture report tab. */
+  lectureReportVisible?: boolean
 }
 
 function resolveActivityScheduleTabLabel(options: ActivityTabOptions): string {
@@ -163,6 +166,9 @@ export function buildInProgressDetailTabItems(
     { key: 'notice', label: '안내사항' },
     { key: 'schedule', label: resolveActivityScheduleTabLabel(options) },
   ]
+  if (options.lectureReportVisible === true) {
+    items.push({ key: 'lecture-report', label: '강의보고서' })
+  }
   appendSurveySatisfactionTabs(items, options)
   appendSettlementTab(items, options)
   return items
@@ -182,6 +188,9 @@ export function buildTeacherInProgressDetailTabItems(
     ? [{ key: 'educationJournal', label: '교육 일지' }]
     : [{ key: 'notice', label: '안내사항' }]
   items.push({ key: 'schedule', label: resolveActivityScheduleTabLabel(options) })
+  if (options.lectureReportVisible === true) {
+    items.push({ key: 'lecture-report', label: '강의보고서' })
+  }
   if (options.educationJournalEnabled !== true) {
     appendTeacherEducationJournalTab(items, options)
   }
