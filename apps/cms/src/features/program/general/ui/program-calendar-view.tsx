@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type Key, type ReactNode } from 'react'
 import { Spin } from 'antd'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -15,7 +15,6 @@ import {
 } from '@/shared/components/calendar'
 import { useCalendarNavigationState } from '@/shared/components/calendar/lib/use-calendar-navigation-state'
 import {
-  SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
@@ -24,7 +23,7 @@ import type { AdminProgramCalendarQuery } from '../api/program-calendar-api-clie
 import {
   getGeneralProgramCalendarEventFromCalendarItem,
   mapAdminProgramCalendarItemsToEvents,
-  resolveProgramCalendarEventColors,
+  resolveProgramCalendarDisplayColors,
 } from '../lib/program-calendar-events'
 import {
   mapProgramListViewToCalendarProgramStatus,
@@ -47,6 +46,8 @@ interface ProgramCalendarViewProps {
   listKeyword?: string
   /** 3열 grid 1행 — 프로그램 목록 툴바 등 */
   toolbar?: ReactNode
+  selectedProgramIds?: Key[]
+  onProgramSelectionChange?: (keys: Key[]) => void
 }
 
 function renderGeneralProgramMonthEventContent({
@@ -92,6 +93,8 @@ export function ProgramCalendarView({
   calendarProgramType,
   listKeyword,
   toolbar,
+  selectedProgramIds,
+  onProgramSelectionChange,
 }: ProgramCalendarViewProps) {
   const {
     selectedDate,
@@ -176,6 +179,17 @@ export function ProgramCalendarView({
     const selected = new Set(calendarProgramSelection)
     return allEvents.filter(event => selected.has(event.programId))
   }, [allEvents, calendarProgramSelection])
+  const selectedProgramIdSet = useMemo(
+    () => new Set((selectedProgramIds ?? []).map(String)),
+    [selectedProgramIds]
+  )
+  const selectedCalendarEventIds = useMemo(
+    () =>
+      events
+        .filter(event => selectedProgramIdSet.has(event.programId))
+        .map(event => event.id),
+    [events, selectedProgramIdSet]
+  )
 
   const eventDateSet = useMemo(() => {
     const dates = new Set<string>()
@@ -201,25 +215,21 @@ export function ProgramCalendarView({
     () => buildResolvedScheduleColorMapForPrograms(programsForColorMap),
     [programsForColorMap]
   )
-  const overrideEventColorMap = useCallback((dayEvents: CalendarItem[]) => {
-    const map = new Map<string | number, ScheduleColorPair>()
-    dayEvents.forEach(item => {
-      const event = getGeneralProgramCalendarEventFromCalendarItem(item)
-      map.set(
-        item.id,
-        event ? resolveProgramCalendarEventColors(event.colorKey) : SCHEDULE_COLORS[0]
-      )
-    })
-    return map
-  }, [])
-  const resolveEventColors = useCallback(
-    (event: CalendarGeneralProgramEventListRow) => {
-      const source = events.find(item => item.id === event.id)
-      return source
-        ? resolveProgramCalendarEventColors(source.colorKey)
-        : SCHEDULE_COLORS[0]
+  const overrideEventColorMap = useCallback(
+    (dayEvents: CalendarItem[]) => {
+      const map = new Map<string | number, ScheduleColorPair>()
+      dayEvents.forEach(item => {
+        const event = getGeneralProgramCalendarEventFromCalendarItem(item)
+        map.set(item.id, resolveProgramCalendarDisplayColors(event?.programId, programColorMap))
+      })
+      return map
     },
-    [events]
+    [programColorMap]
+  )
+  const resolveEventColors = useCallback(
+    (event: CalendarGeneralProgramEventListRow) =>
+      resolveProgramCalendarDisplayColors(event.programId, programColorMap),
+    [programColorMap]
   )
 
   const onOptionToggle = useCallback(
@@ -274,6 +284,7 @@ export function ProgramCalendarView({
           onSelectDate={handleMainDateSelect}
           onMonthChange={handleMainMonthChange}
           onModeChange={onModeChange}
+          selectedRowKeys={selectedCalendarEventIds}
           onEventClick={handleCalendarEventClick}
           previewTooltipContent={renderGeneralProgramCalendarPreviewTooltipContent}
           renderMonthEventContent={renderGeneralProgramMonthEventContent}
@@ -289,6 +300,8 @@ export function ProgramCalendarView({
           events={events}
           onEventClick={onItemClick}
           resolveEventColors={resolveEventColors}
+          selectedProgramIds={selectedProgramIds}
+          onProgramSelectionChange={onProgramSelectionChange}
         />
       </div>
     </div>

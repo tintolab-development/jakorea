@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { AdminProgramCalendarItem } from '@/features/program/general/api/program-calendar-api-client'
+import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import {
   mapAdminProgramCalendarItemsToEvents,
   resolveProgramCalendarColorKey,
+  resolveProgramCalendarDisplayColors,
 } from './program-calendar-events'
 
 function item(overrides: AdminProgramCalendarItem): AdminProgramCalendarItem {
@@ -33,6 +35,28 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
     expect(events[0]?.endTime).toBeUndefined()
     expect(events[0]?.timeLabel).toBe('종일')
     expect(events[0]?.scheduleContent).toBe('운영 시작')
+  })
+
+  it('treats a midnight BUSINESS_START as all-day even when BE sends allDay false', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'BUSINESS_START:186305',
+        programId: 186305,
+        programName: '자정 운영 시작 프로그램',
+        eventType: 'BUSINESS_START',
+        scheduleName: '운영 시작',
+        allDay: false,
+        startAt: '2026-10-24T15:00:00Z',
+        endAt: '2026-10-24T15:00:00Z',
+        colorKey: 'BUSINESS',
+      }),
+    ])
+
+    expect(events[0]?.startDate).toBe('2026-10-25')
+    expect(events[0]?.endDate).toBe('2026-10-25')
+    expect(events[0]?.startTime).toBeUndefined()
+    expect(events[0]?.endTime).toBeUndefined()
+    expect(events[0]?.timeLabel).toBe('종일')
   })
 
   it('converts EDUCATION instants to Asia/Seoul clock without synthesizing 09:00', () => {
@@ -151,6 +175,51 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
     ])
 
     expect(events[0]?.originalItem.lifecycleStatus).toBe('in_progress')
+  })
+})
+
+describe('resolveProgramCalendarDisplayColors', () => {
+  it('uses the program search color map, not event-type colorKey', () => {
+    const yellow = SCHEDULE_COLORS[4]
+    const green = SCHEDULE_COLORS[0]
+    const map = new Map([['p-yellow', yellow]])
+
+    expect(resolveProgramCalendarDisplayColors('p-yellow', map)).toBe(yellow)
+    expect(resolveProgramCalendarDisplayColors('p-other', map)).not.toBe(yellow)
+    expect(resolveProgramCalendarDisplayColors(undefined, map)).toBe(green)
+  })
+})
+
+describe('programOperationStartDate', () => {
+  it('copies BUSINESS_START date onto other events of the same program', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION_PERIOD:1',
+        programId: 10,
+        programName: '노란 기간',
+        eventType: 'EDUCATION_PERIOD',
+        scheduleName: '교육 진행 기간',
+        allDay: true,
+        eventDate: '2026-12-01',
+        startAt: '2026-11-30T15:00:00Z',
+        endAt: '2026-12-31T15:00:00Z',
+        colorKey: 'EDUCATION',
+      }),
+      item({
+        eventId: 'BUSINESS_START:10',
+        programId: 10,
+        programName: '노란 기간',
+        eventType: 'BUSINESS_START',
+        scheduleName: '운영 시작',
+        allDay: true,
+        eventDate: '2026-01-15',
+        colorKey: 'BUSINESS',
+      }),
+    ])
+
+    expect(events.find(event => event.id === 'EDUCATION_PERIOD:1')?.programOperationStartDate).toBe(
+      '2026-01-15'
+    )
   })
 })
 

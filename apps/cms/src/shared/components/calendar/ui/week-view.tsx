@@ -18,15 +18,18 @@ import {
   type CalendarItem,
 } from '../lib/calendar-helpers'
 import {
+  buildAllDayWeekGroupLayout,
   buildTimedItemGroupLayouts,
   buildWeekTimeGridColumnStyle,
   buildWeekTimeGridGroupStyle,
   countEventsOverlappingHourSlot,
+  formatAllDayGroupOverflowText,
   isAllDayScheduleSpan,
   layoutTimedItemsForDay,
   parseHHmmToMinutes,
   readTimesOrAllDaySpan,
   resolveWeekTimeGridSubtext,
+  WEEK_ALL_DAY_LABEL,
   WEEK_TIME_GRID_HOUR_PX,
   WEEK_TIME_GRID_HOURS,
   WEEK_TIME_GRID_TOTAL_PX,
@@ -106,6 +109,28 @@ function weekGridSurfaceFromOriginal(
   return (
     tryRead(item.original) ?? tryRead((item.original as { originalItem?: unknown })?.originalItem)
   )
+}
+
+function weekAllDaySortFields(item: CalendarItem): {
+  operationStartDate?: string
+  title?: string
+} {
+  const original = item.original
+  if (original != null && typeof original === 'object') {
+    const record = original as {
+      programOperationStartDate?: string
+      programTitle?: string
+      title?: string
+      originalItem?: { startDate?: string; title?: string }
+    }
+    const nestedStart =
+      typeof record.originalItem?.startDate === 'string' ? record.originalItem.startDate : ''
+    return {
+      operationStartDate: record.programOperationStartDate || nestedStart || undefined,
+      title: record.programTitle || record.title || item.title || '',
+    }
+  }
+  return { title: item.title ?? '' }
 }
 
 function weekTimeGridItemLabel(item: CalendarItem): string {
@@ -291,7 +316,18 @@ export function WeekView({
                     : buildResolvedColorMap(dayEvents)
                 const readLayoutSpan = (item: CalendarItem) =>
                   readTimesOrAllDaySpan(item, readTimesFromCalendarItem)
-                const timedLayouts = layoutTimedItemsForDay(dayEvents, hourPx, readLayoutSpan)
+                const allDayEvents = dayEvents.filter(item =>
+                  isAllDayScheduleSpan(item, readTimesFromCalendarItem)
+                )
+                const timedEvents = dayEvents.filter(
+                  item => !isAllDayScheduleSpan(item, readTimesFromCalendarItem)
+                )
+                const allDayGroup = buildAllDayWeekGroupLayout(
+                  allDayEvents,
+                  hourPx,
+                  weekAllDaySortFields
+                )
+                const timedLayouts = layoutTimedItemsForDay(timedEvents, hourPx, readLayoutSpan)
                 const daySpans = timedLayouts.map(layout => {
                   const span = readLayoutSpan(layout.item)
                   return {
@@ -326,6 +362,53 @@ export function WeekView({
                         className="calendar-week-time-grid__column-inner"
                         style={{ height: totalPx }}
                       >
+                        {allDayGroup
+                          ? (() => {
+                              const item = allDayGroup.representative
+                              const hiddenCount = allDayGroup.items.length - 1
+                              const displayTitle = weekTimeGridItemLabel(item)
+                              const subtext =
+                                hiddenCount > 0
+                                  ? (eventsConfig.formatEventsOverflowText?.(hiddenCount) ??
+                                    formatAllDayGroupOverflowText(hiddenCount))
+                                  : WEEK_ALL_DAY_LABEL
+                              const isSelected = allDayGroup.items.some(ev =>
+                                eventsConfig.selectedRowKeys.includes(ev.id)
+                              )
+                              const colors = weekTimeGridItemColors(
+                                item,
+                                eventsConfig.resolveEventColors,
+                                resolvedDayColors
+                              )
+                              const pos = buildWeekTimeGridGroupStyle(allDayGroup)
+                              return (
+                                <div
+                                  key={`${String(item.id)}-all-day-${allDayGroup.items.length}`}
+                                  className="calendar-event-tooltip-trigger calendar-week-time-grid__event-anchor"
+                                  style={{ ...pos, zIndex: 18 }}
+                                >
+                                  <div
+                                    className={[
+                                      'calendar-week-time-grid__event',
+                                      'calendar-event',
+                                      'calendar-week-time-grid__event--timed',
+                                      'calendar-week-time-grid__event--all-day',
+                                      isSelected ? 'calendar-event--selected' : '',
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' ')}
+                                    style={{ backgroundColor: colors.bg }}
+                                    onClick={e => {
+                                      e.stopPropagation()
+                                      eventsConfig.onEventClick?.(item)
+                                    }}
+                                  >
+                                    <WeekTimeGridEventText title={displayTitle} subtext={subtext} />
+                                  </div>
+                                </div>
+                              )
+                            })()
+                          : null}
                         {timedLayouts.map((layout, idx) => {
                           const item = layout.item
                           const displayTitle = weekTimeGridItemLabel(item)

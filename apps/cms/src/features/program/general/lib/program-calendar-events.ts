@@ -6,6 +6,7 @@ import type { CalendarItem, CalendarMainEventInput } from '@/shared/components/c
 import { formatCalendarEventTimeLabel } from '@/shared/components/calendar'
 import {
   SCHEDULE_COLORS,
+  getScheduleColorPair,
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
 import type { AdminProgramCalendarItem } from '@/features/program/general/api/program-calendar-api-client'
@@ -34,6 +35,7 @@ export type GeneralProgramCalendarEvent = CalendarMainEventInput & {
   colorKey: string
   eventType: string
   originalItem: Program
+  programOperationStartDate?: string
 }
 
 function toSeoul(iso: string | null | undefined) {
@@ -82,6 +84,72 @@ export function resolveProgramCalendarEventColors(colorKey: string): ScheduleCol
   return SCHEDULE_COLORS[idx] ?? SCHEDULE_COLORS[0]
 }
 
+/** 검색 체크·칸 칩·우측 목록 공통. 일정 종류(colorKey)가 아니라 프로그램 id. */
+export function resolveProgramCalendarDisplayColors(
+  programId: string | undefined,
+  programColorMap: Map<string, ScheduleColorPair>
+): ScheduleColorPair {
+  if (!programId) return SCHEDULE_COLORS[0]
+  return programColorMap.get(programId) ?? getScheduleColorPair(programId)
+}
+
+function readOptionalCalendarDate(value: unknown): string {
+  if (typeof value !== 'string' || !value.trim()) return ''
+  return calendarDateOnly(value)
+}
+
+function readApiProgramOperationStartDate(item: AdminProgramCalendarItem): string {
+  const record = item as AdminProgramCalendarItem & {
+    businessStartDate?: string | null
+    operationStartDate?: string | null
+    programStartDate?: string | null
+  }
+  return (
+    readOptionalCalendarDate(record.businessStartDate) ||
+    readOptionalCalendarDate(record.operationStartDate) ||
+    readOptionalCalendarDate(record.programStartDate)
+  )
+}
+
+function isBusinessStartEventType(eventType: string): boolean {
+  return eventType === 'BUSINESS_START' || eventType === 'BUSINESS'
+}
+
+function isDateOnlyOperationalEventType(eventType: string): boolean {
+  return (
+    eventType === 'EDUCATION_PERIOD' ||
+    eventType.startsWith('BUSINESS') ||
+    eventType.startsWith('RECRUITMENT') ||
+    eventType.startsWith('SURVEY') ||
+    eventType.startsWith('ASSIGNMENT')
+  )
+}
+
+function attachProgramOperationStartDates(
+  events: GeneralProgramCalendarEvent[]
+): GeneralProgramCalendarEvent[] {
+  const starts = new Map<string, string>()
+  for (const event of events) {
+    const fromEvent =
+      isBusinessStartEventType(event.eventType) && event.startDate
+        ? calendarDateOnly(event.startDate)
+        : ''
+    const next = fromEvent || event.programOperationStartDate || ''
+    if (!next || !event.programId) continue
+    const prev = starts.get(event.programId)
+    if (!prev || next < prev) starts.set(event.programId, next)
+  }
+  return events.map(event => {
+    const start = starts.get(event.programId) || event.programOperationStartDate
+    if (!start) return event
+    return {
+      ...event,
+      programOperationStartDate: start,
+      originalItem: { ...event.originalItem, startDate: start },
+    }
+  })
+}
+
 function stubProgramFromCalendarItem(item: AdminProgramCalendarItem): Program {
   const programId = item.programId == null ? '' : String(item.programId)
   return {
@@ -106,7 +174,9 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
   const eventId = (item.eventId ?? item.eventKey)?.trim()
   if (!eventId) return null
 
-  const allDay = item.allDay === true
+  // 운영·모집·설문·과제 경계와 교육기간은 날짜 이벤트다.
+  // BE가 startAt=00:00과 allDay=false를 함께 줘도 주간 시간 일정으로 분할하지 않는다.
+  const allDay = item.allDay === true || isDateOnlyOperationalEventType(eventType)
   const eventDate = item.eventDate?.trim() ? calendarDateOnly(item.eventDate) : ''
   const startKst = toSeoul(item.startAt)
   const endKst = toSeoul(item.endAt)
@@ -116,8 +186,9 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
   let startTime: string | undefined
   let endTime: string | undefined
 
-  if (allDay && eventDate) {
-    startDate = eventDate
+  const allDayStartDate = eventDate || startKst?.format('YYYY-MM-DD') || ''
+  if (allDay && allDayStartDate) {
+    startDate = allDayStartDate
     if (eventType === 'EDUCATION_PERIOD' && endKst) {
       const exclusiveKstMidnight =
         endKst.hour() === 0 && endKst.minute() === 0 && endKst.second() === 0
@@ -125,7 +196,7 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
         ? endKst.subtract(1, 'day').format('YYYY-MM-DD')
         : endKst.format('YYYY-MM-DD')
     } else {
-      endDate = eventDate
+      endDate = allDayStartDate
     }
   } else if (startKst) {
     startDate = startKst.format('YYYY-MM-DDTHH:mm:ss')
@@ -159,6 +230,7 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
     originalItem: stubProgramFromCalendarItem(item),
     startTime,
     endTime,
+    programOperationStartDate: readApiProgramOperationStartDate(item) || undefined,
   }
 }
 
@@ -170,7 +242,7 @@ export function mapAdminProgramCalendarItemsToEvents(
     const event = mapCalendarItemToEvent(item)
     if (event) events.push(event)
   }
-  return events.sort((a, b) => {
+  return attachProgramOperationStartDates(events).sort((a, b) => {
     const dateDiff = dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf()
     if (dateDiff !== 0) return dateDiff
     return String(a.programTitle).localeCompare(String(b.programTitle), 'ko')
