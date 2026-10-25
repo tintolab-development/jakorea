@@ -137,6 +137,10 @@ export function IndividualSettlementReviewDetailModal({
       showAlert({ title: '안내', content: '반려 사유를 입력해 주세요.' })
       return
     }
+    if (reason.length > 1000) {
+      showAlert({ title: '안내', content: '반려 사유는 1000자 이하로 입력해 주세요.' })
+      return
+    }
     if (settlementApplicationId == null || expectedRevisionNo == null) return
     try {
       await rejectMutation.mutateAsync({
@@ -415,6 +419,7 @@ export function IndividualSettlementReviewDetailModal({
                   width="100%"
                   rows={4}
                   value={rejectReason}
+                  maxLength={1000}
                   onChange={event => setRejectReason(event.target.value)}
                   placeholder="반려 사유를 입력해 주세요"
                   aria-label="반려 사유"
