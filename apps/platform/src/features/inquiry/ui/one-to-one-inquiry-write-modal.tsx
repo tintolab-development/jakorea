@@ -1,5 +1,7 @@
 import { useCallback, useId, useState } from 'react'
 import { INQUIRY_CATEGORY_OPTIONS, INQUIRY_PROGRAM_OPTIONS } from '../lib/constants'
+import { createInquiryIdempotencyKey } from '../lib/idempotency'
+import { getInquiryApiErrorMessage } from '../lib/inquiry-errors'
 import type { OneToOneInquiryWritePayload } from '../model/types'
 import { PFButton, PFModal, PFSelect, PFText, PFTextInput } from '@/shared/ui'
 import styles from './one-to-one-inquiry-write-modal.module.css'
@@ -12,7 +14,7 @@ export type InquirySelectOption = {
 export type OneToOneInquiryWriteModalProps = {
   open: boolean
   onClose: () => void
-  onSubmit: (payload: OneToOneInquiryWritePayload) => void
+  onSubmit: (payload: OneToOneInquiryWritePayload, idempotencyKey: string) => Promise<void>
   programOptions?: readonly InquirySelectOption[]
   categoryOptions?: readonly InquirySelectOption[]
 }
@@ -48,6 +50,9 @@ export function OneToOneInquiryWriteModal({
   const [title, setTitle] = useState(EMPTY_FORM.title)
   const [content, setContent] = useState(EMPTY_FORM.content)
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null)
 
   const resetForm = useCallback(() => {
     setProgramValue(EMPTY_FORM.programValue)
@@ -55,14 +60,19 @@ export function OneToOneInquiryWriteModal({
     setTitle(EMPTY_FORM.title)
     setContent(EMPTY_FORM.content)
     setErrors({})
+    setSubmitError(null)
+    setIdempotencyKey(null)
   }, [])
 
   const handleClose = useCallback(() => {
+    if (isSubmitting) return
     resetForm()
     onClose()
-  }, [onClose, resetForm])
+  }, [isSubmitting, onClose, resetForm])
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return
+    setSubmitError(null)
     const nextErrors: FieldErrors = {}
     const trimmedTitle = title.trim()
     const trimmedContent = content.trim()
@@ -85,15 +95,24 @@ export function OneToOneInquiryWriteModal({
       return
     }
 
-    onSubmit({
-      programValue,
-      programName: resolveProgramName(programValue, programOptions),
-      category,
-      title: trimmedTitle,
-      content: trimmedContent,
-    })
-    resetForm()
-    onClose()
+    setIsSubmitting(true)
+    const requestKey = idempotencyKey ?? createInquiryIdempotencyKey()
+    setIdempotencyKey(requestKey)
+    try {
+      await onSubmit({
+        programValue,
+        programName: resolveProgramName(programValue, programOptions),
+        category,
+        title: trimmedTitle,
+        content: trimmedContent,
+      }, requestKey)
+      resetForm()
+      onClose()
+    } catch (error) {
+      setSubmitError(getInquiryApiErrorMessage(error))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -102,6 +121,8 @@ export function OneToOneInquiryWriteModal({
       size="md"
       title="1:1 문의 작성하기"
       mobilePlacement="full"
+      closeOnBackdropClick={!isSubmitting}
+      closeOnEscape={!isSubmitting}
       onClose={handleClose}
     >
       <div className={styles.form}>
@@ -119,9 +140,12 @@ export function OneToOneInquiryWriteModal({
               '프로그램 문의가 아닌 단순 문의인 경우, [해당 없음] 항목을 선택해 주세요.'
             }
             messageStatus={errors.program ? 'error' : 'neutral'}
+            disabled={isSubmitting}
             onValueChange={value => {
               setProgramValue(value)
+              setIdempotencyKey(null)
               setErrors(previous => ({ ...previous, program: undefined }))
+              setSubmitError(null)
             }}
           />
         </div>
@@ -137,9 +161,12 @@ export function OneToOneInquiryWriteModal({
             error={Boolean(errors.category)}
             message={errors.category}
             messageStatus={errors.category ? 'error' : 'neutral'}
+            disabled={isSubmitting}
             onValueChange={value => {
               setCategory(value)
+              setIdempotencyKey(null)
               setErrors(previous => ({ ...previous, category: undefined }))
+              setSubmitError(null)
             }}
           />
         </div>
@@ -154,9 +181,12 @@ export function OneToOneInquiryWriteModal({
             error={Boolean(errors.title)}
             message={errors.title}
             messageStatus={errors.title ? 'error' : 'neutral'}
+            disabled={isSubmitting}
             onValueChange={value => {
               setTitle(value)
+              setIdempotencyKey(null)
               setErrors(previous => ({ ...previous, title: undefined }))
+              setSubmitError(null)
             }}
           />
         </div>
@@ -177,9 +207,12 @@ export function OneToOneInquiryWriteModal({
               .join(' ')}
             value={content}
             placeholder="문의내용을 입력해 주세요."
+            disabled={isSubmitting}
             onChange={event => {
               setContent(event.target.value)
+              setIdempotencyKey(null)
               setErrors(previous => ({ ...previous, content: undefined }))
+              setSubmitError(null)
             }}
           />
           {errors.content ? (
@@ -187,12 +220,29 @@ export function OneToOneInquiryWriteModal({
           ) : null}
         </div>
 
+        {submitError ? (
+          <PFText as="p" typo="bd-sm-md" color="error" role="alert" className={styles.submitError}>
+            {submitError}
+          </PFText>
+        ) : null}
+
         <div className={styles.actions}>
-          <PFButton type="button" variant="secondary" size="xlarge" onClick={handleClose}>
+          <PFButton
+            type="button"
+            variant="secondary"
+            size="xlarge"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
             취소
           </PFButton>
-          <PFButton type="button" size="xlarge" onClick={handleSubmit}>
-            등록
+          <PFButton
+            type="button"
+            size="xlarge"
+            onClick={() => void handleSubmit()}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? '등록 중…' : '등록'}
           </PFButton>
         </div>
       </div>

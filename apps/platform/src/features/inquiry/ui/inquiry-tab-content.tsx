@@ -10,7 +10,11 @@ import {
   type OneToOneInquiryItem,
   type OneToOneInquiryWritePayload,
 } from '@/features/inquiry'
-import { PFButton, PFPagination } from '@/shared/ui'
+import { PFButton, PFPagination, PFText } from '@/shared/ui'
+import {
+  getInquiryApiErrorMessage,
+  INQUIRY_DELETE_ERROR_FALLBACK,
+} from '../lib/inquiry-errors'
 import { InquiryAccordionList } from './inquiry-accordion-list'
 import { OneToOneInquiryWriteModal } from './one-to-one-inquiry-write-modal'
 import styles from './inquiry-tab-content.module.css'
@@ -29,7 +33,7 @@ function formatCreatedAt(date: Date) {
 
 function createInquiryItem(
   payload: OneToOneInquiryWritePayload,
-  order: number,
+  order: number
 ): OneToOneInquiryItem {
   return {
     id: `inq-${Date.now()}`,
@@ -48,6 +52,8 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   const [localItems, setLocalItems] = useState<OneToOneInquiryItem[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [inquiryError, setInquiryError] = useState<string | null>(null)
   const remoteDetail = useMyInquiryDetailQuery(remoteInquiries.enabled ? expandedId : null)
   const writeOptions = useInquiryWriteOptionsQuery(remoteInquiries.enabled)
   const createInquiry = useCreateMyInquiryMutation()
@@ -56,26 +62,34 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   const items = useMemo(() => {
     const source = remoteInquiries.enabled ? remoteInquiries.items : localItems
     if (!remoteDetail.detail || !expandedId) return source
-    return source.map(item =>
-      item.id === expandedId ? { ...item, ...remoteDetail.detail } : item,
-    )
+    return source.map(item => (item.id === expandedId ? { ...item, ...remoteDetail.detail } : item))
   }, [expandedId, localItems, remoteDetail.detail, remoteInquiries.enabled, remoteInquiries.items])
 
   const sortedItems = useMemo(
     () => [...items].sort((left, right) => left.order - right.order),
-    [items],
+    [items]
   )
 
   const totalPages = Math.max(1, Math.ceil(sortedItems.length / INQUIRY_PAGE_SIZE))
   const currentPage = Math.min(params.page, totalPages)
   const pageItems = sortedItems.slice(
     (currentPage - 1) * INQUIRY_PAGE_SIZE,
-    currentPage * INQUIRY_PAGE_SIZE,
+    currentPage * INQUIRY_PAGE_SIZE
   )
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    if (deletingId) return
+    setInquiryError(null)
     if (remoteInquiries.enabled) {
-      deleteInquiry.mutate(id)
+      setDeletingId(id)
+      try {
+        await deleteInquiry.mutateAsync(id)
+      } catch (error) {
+        setInquiryError(getInquiryApiErrorMessage(error, INQUIRY_DELETE_ERROR_FALLBACK))
+        return
+      } finally {
+        setDeletingId(null)
+      }
     } else {
       setLocalItems(previous => previous.filter(item => item.id !== id))
     }
@@ -84,9 +98,12 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
     }
   }
 
-  const handleCreateInquiry = (payload: OneToOneInquiryWritePayload) => {
+  const handleCreateInquiry = async (
+    payload: OneToOneInquiryWritePayload,
+    idempotencyKey: string,
+  ) => {
     if (remoteInquiries.enabled) {
-      createInquiry.mutate(payload)
+      await createInquiry.mutateAsync({ payload, idempotencyKey })
     } else {
       const nextOrder = localItems.reduce((maxOrder, item) => Math.max(maxOrder, item.order), 0) + 1
       setLocalItems(previous => [createInquiryItem(payload, nextOrder), ...previous])
@@ -98,16 +115,30 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   return (
     <div className={styles.root}>
       <div className={styles.toolbar}>
-        <PFButton size="xlarge" type="button" onClick={() => setIsWriteModalOpen(true)}>
+        <PFButton
+          size="xlarge"
+          type="button"
+          onClick={() => {
+            setInquiryError(null)
+            setIsWriteModalOpen(true)
+          }}
+        >
           1:1 문의 작성하기
         </PFButton>
       </div>
+
+      {inquiryError ? (
+        <PFText as="p" typo="bd-sm-md" color="error" role="alert" className={styles.error}>
+          {inquiryError}
+        </PFText>
+      ) : null}
 
       <InquiryAccordionList
         items={pageItems}
         expandedId={expandedId}
         onExpandedChange={setExpandedId}
         onDelete={handleDelete}
+        deletingId={deletingId}
         loading={remoteInquiries.isLoading}
         emptyMessage="등록된 1:1 문의가 없습니다."
       />
