@@ -8,7 +8,7 @@ import {
   buildInstitutionClassCountOptions,
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { useTrainedTeachersApplicationField } from '@/features/template/ui/form-set/application-form/trained-teachers/trained-teachers-application-form-rhf'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -51,51 +51,51 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
   const showPreferredEducationForm =
     isTemplateAuthoringMode || shouldShowInstitutionApplicationPreferredEducationForm(bridge)
 
-  const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
+  const [applicationGrade, setApplicationGrade] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.applicationGrade',
     ''
   )
-  const [classCount, setClassCount] = useGeneralApplicationOverlayKv<string>(
+  const [classCount, setClassCount] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.classCount',
     ''
   )
-  const [educationFormat, setEducationFormat] = useGeneralApplicationOverlayKv<string>(
+  const [educationFormat, setEducationFormat] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.educationFormat',
     'online'
   )
-  const [educationPlace, setEducationPlace] = useGeneralApplicationOverlayKv<string>(
+  const [educationPlace, setEducationPlace] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.educationPlace',
     'inside'
   )
-  const [detailAddress, setDetailAddress] = useGeneralApplicationOverlayKv<string>(
+  const [detailAddress, setDetailAddress] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.detailAddress',
     ''
   )
-  const [totalStudents, setTotalStudents] = useGeneralApplicationOverlayKv<string>(
+  const [totalStudents, setTotalStudents] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.totalStudents',
     ''
   )
-  const [educationPlaceDetail, setEducationPlaceDetail] = useGeneralApplicationOverlayKv<string>(
+  const [educationPlaceDetail, setEducationPlaceDetail] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.educationPlaceDetail',
     ''
   )
-  const [teacherTel, setTeacherTel] = useGeneralApplicationOverlayKv<string>(
+  const [teacherTel, setTeacherTel] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.teacherTel',
     ''
   )
-  const [teacherMobile, setTeacherMobile] = useGeneralApplicationOverlayKv<string>(
+  const [teacherMobile, setTeacherMobile] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.teacherMobile',
     ''
   )
-  const [teacherEmail, setTeacherEmail] = useGeneralApplicationOverlayKv<string>(
+  const [teacherEmail, setTeacherEmail] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.teacherEmail',
     ''
   )
-  const [applicationReason, setApplicationReason] = useGeneralApplicationOverlayKv<string>(
+  const [applicationReason, setApplicationReason] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.applicationReason',
     ''
   )
-  const [otherRequests, setOtherRequests] = useGeneralApplicationOverlayKv<string>(
+  const [otherRequests, setOtherRequests] = useTrainedTeachersApplicationField<string>(
     'application.trainedTeachers.basicInfo.otherRequests',
     ''
   )

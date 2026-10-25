@@ -275,24 +275,11 @@ export function listFilledVolunteerInterviewExceptionBlockIds(
     .map(block => block.blockId)
 }
 
-export const VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY = 'recruit.volunteer.interviewRangeSeal'
-
-/** 봉사자 모집 「2차 면접 기간」→ 진행 불가일 달력 범위 overlay */
-export function syncVolunteerInterviewRangeSealOverlay(
-  start: string | Date | undefined,
-  end: string | Date | undefined
-): void {
-  const startDay = start == null ? null : dayjs(start)
-  const endDay = end == null ? null : dayjs(end)
-  if (startDay == null || endDay == null || !startDay.isValid() || !endDay.isValid()) return
-  const [from, to] = startDay.isBefore(endDay, 'day') ? [startDay, endDay] : [endDay, startDay]
-  patchGeneralRecruitOverlay({
-    [VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY]: {
-      start: from.startOf('day').toISOString(),
-      end: to.startOf('day').toISOString(),
-    },
-  })
-}
+/** Part3 5단계: 면접 기간 키는 봉사자 모집 RHF 필드 폼이 소유한다. */
+export {
+  VOLUNTEER_INTERVIEW_RANGE_SEAL_KEY,
+  syncVolunteerInterviewRangeSealOverlay,
+} from '@/features/template/ui/form-set/recruit-form/volunteer/volunteer-recruit-form-rhf'
 
 export function readVolunteerInterviewExceptionOverlayBlocks(
   record: Record<string, unknown>,

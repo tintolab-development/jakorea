@@ -172,9 +172,9 @@ import {
   resetUjatRecruitVolunteerOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import {
-  resetGeminiRecruitOverlay,
-  restoreGeminiRecruitOverlay,
-} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+  resetGeminiRecruitForm,
+  restoreGeminiRecruitForm,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import {
   getApplicantRecruitInstitutionOverlayRecord,
   patchApplicantRecruitInstitutionOverlay,
@@ -514,14 +514,14 @@ function restoreParticipantOverlayForVariant(
   if (variant === 'gemini-recruit') {
     const detailPrefix = recruitDetailInfoOverlayPrefixForEditorVariant(variant)
     if (overlay) {
-      restoreGeminiRecruitOverlay(overlay)
+      restoreGeminiRecruitForm(overlay)
       if (replace) {
         replaceRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix, overlayId)
       } else {
         restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
       }
     } else if (resetIfMissing) {
-      resetGeminiRecruitOverlay()
+      resetGeminiRecruitForm()
       replaceRecruitDetailInfoIntoGeneralStore(undefined, detailPrefix, overlayId)
     }
     return
@@ -1554,7 +1554,7 @@ export function useProgramParticipantApplicationEditor(
         if (variant === 'ujat-recruit-institution') resetUjatRecruitInstitutionOverlay()
         if (variant === 'ujat-recruit-volunteer') resetUjatRecruitVolunteerOverlay()
         if (variant === 'gemini-recruit') {
-          resetGeminiRecruitOverlay()
+          resetGeminiRecruitForm()
         }
         if (variant === 'ujat-application-institution') resetUjatApplicationInstitutionOverlay()
         if (variant === 'ujat-application-volunteer') resetUjatApplicationVolunteerOverlay()
