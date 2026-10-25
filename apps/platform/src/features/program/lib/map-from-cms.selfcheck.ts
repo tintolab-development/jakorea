@@ -253,6 +253,31 @@ function testDetailCaseSsotMapping() {
   assert.ok(ujatVol.educationSchedules.some(s => s.label === '교육 진행'))
   assert.ok(ujatVol.educationSchedules.some(s => s.label === '해단식'))
 
+  const ujatVolWithHiddenSchedule = mapCmsProgramToPlatformDetail({
+    ...UJAT_VOLUNTEER_FIXTURE,
+    schedules: [
+      ...(UJAT_VOLUNTEER_FIXTURE.schedules ?? []),
+      {
+        id: 209999,
+        scheduleKind: 'EDUCATION',
+        term: 'FIRST_HALF',
+        startAt: '2028-04-03T00:00:00.000Z',
+        endAt: '2028-06-19T23:59:59.000Z',
+        publiclyVisible: false,
+      },
+    ],
+  })
+  assert.equal(
+    ujatVolWithHiddenSchedule.educationSchedules.filter(s => s.label === '교육 진행').length,
+    2
+  )
+
+  const ujatVolWithoutSchedules = mapCmsProgramToPlatformDetail({
+    ...UJAT_VOLUNTEER_FIXTURE,
+    schedules: [],
+  })
+  assert.deepEqual(ujatVolWithoutSchedules.educationSchedules, [])
+
   const ujatOrg = mapCmsProgramToPlatformDetail(UJAT_PARTICIPANT_FIXTURE)
   assert.equal(ujatOrg.detailCase, 'ujat-participant')
   assert.equal(ujatOrg.category, 'institution')

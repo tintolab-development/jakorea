@@ -524,9 +524,41 @@ function mapMaxPreferredScheduleCount(program: CmsProgramLike): number {
   return Math.min(raw, 10)
 }
 
+function mapUjatEducationSchedules(
+  program: CmsProgramLike,
+  detailCase: ProgramDetailCase
+): ProgramLabeledValue[] {
+  if (detailCase !== 'ujat-participant' && detailCase !== 'ujat-volunteer') return []
+
+  return (program.schedules ?? [])
+    .filter(schedule => schedule.publiclyVisible !== false)
+    .flatMap(schedule => {
+      const kind = schedule.scheduleKind?.trim().toUpperCase()
+      const term = schedule.term?.trim().toUpperCase()
+      let label: string | null = null
+
+      if (detailCase === 'ujat-participant') {
+        if (kind !== 'EDUCATION') return []
+        if (term === 'FIRST_HALF') label = '상반기'
+        if (term === 'SECOND_HALF') label = '하반기'
+      } else {
+        if (kind === 'PRE_EDUCATION') label = '사전교육(발대식)'
+        if (kind === 'EDUCATION') label = '교육 진행'
+        if (kind === 'CLOSING') label = '해단식'
+      }
+
+      if (!label) return []
+      const start = toDate(schedule.startAt ?? undefined)
+      const end = toDate(schedule.endAt ?? undefined)
+      if (!start && !end) return []
+
+      return [{ label, value: formatDisplayDateRange(start, end, { empty: '-' }) }]
+    })
+}
+
 /**
  * 세부내용 「교육 일정」 카드.
- * - UJAT: ujatPublicEducationSchedules 우선 (기관 상·하반기 / 봉사 사전교육·진행·해단식)
+ * - UJAT: backend schedules[]의 공개 물리 일정만 사용 (기관 상·하반기 / 봉사 사전교육·진행·해단식)
  * - 일정형 + 복수회차: 비노출 (기획 SSOT — 일정은 기본정보 행사·세부 일정으로만)
  * - educationScheduleLines — 불가일 필터 후 사용
  * - 커리큘럼형: lines 없으면 운영 기간 1줄 폴백
@@ -536,14 +568,8 @@ function mapEducationSchedules(
   program: CmsProgramLike,
   detailCase: ProgramDetailCase
 ): ProgramLabeledValue[] {
-  const ujatRows = program.ujatPublicEducationSchedules?.filter(
-    row => row.label.trim() && row.value.trim() && !isUnavailableScheduleLine(row.value)
-  )
-  if (ujatRows?.length && (detailCase === 'ujat-volunteer' || detailCase === 'ujat-participant')) {
-    return ujatRows.map(row => ({
-      label: row.label.trim(),
-      value: normalizeScheduleDisplayLabel(row.value.trim()),
-    }))
+  if (detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer') {
+    return mapUjatEducationSchedules(program, detailCase)
   }
 
   // 기획: 일정형 + 복수회차 → 세부내용 「교육 일정」 비노출
@@ -562,17 +588,6 @@ function mapEducationSchedules(
   if (lines.length) {
     const scheduleMode = mapEducationScheduleMode(program)
     return lines.map((line, index) => {
-      // UJAT 기관: "상반기: …" 형태면 label 분리
-      if (detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer') {
-        const colon = line.indexOf(':')
-        if (colon > 0 && colon < 24) {
-          const label = line.slice(0, colon).trim()
-          const value = line.slice(colon + 1).trim()
-          if (label && value) {
-            return { label, value: formatEducationScheduleLineForDetailCard(value, scheduleMode) }
-          }
-        }
-      }
       return {
         label: educationScheduleDetailCardLabel(index, lines.length),
         value: formatEducationScheduleLineForDetailCard(line, scheduleMode),
