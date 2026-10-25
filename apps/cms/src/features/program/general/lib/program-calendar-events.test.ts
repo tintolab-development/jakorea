@@ -21,8 +21,6 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
         scheduleName: '운영 시작',
         allDay: true,
         eventDate: '2026-10-01',
-        startAt: null as unknown as undefined,
-        endAt: null as unknown as undefined,
         colorKey: 'BUSINESS',
       }),
     ])
@@ -49,7 +47,7 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
         startAt: '2026-10-20T01:00:00Z',
         endAt: '2026-10-20T02:00:00Z',
         allDay: false,
-        eventDate: null as unknown as undefined,
+        eventDate: null,
         colorKey: 'EDUCATION',
       }),
     ])
@@ -135,6 +133,24 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
 
     expect(events[0]?.scheduleContent).toBe('예시초등학교 1회차 교육')
     expect(events[0]?.originalItem.id).toBe('186400')
+  })
+
+  it('copies periodStatus onto the stub so in-progress calendar clicks match the list entry', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION:187231:PROGRAM',
+        programId: 186304,
+        programName: '진행 중 프로그램',
+        eventType: 'EDUCATION',
+        periodStatus: 'IN_PROGRESS',
+        startAt: '2026-10-20T01:00:00Z',
+        endAt: '2026-10-20T02:00:00Z',
+        allDay: false,
+        colorKey: 'EDUCATION',
+      }),
+    ])
+
+    expect(events[0]?.originalItem.lifecycleStatus).toBe('in_progress')
   })
 })
 

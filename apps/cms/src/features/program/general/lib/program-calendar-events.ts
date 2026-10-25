@@ -9,6 +9,7 @@ import {
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
 import type { AdminProgramCalendarItem } from '@/features/program/general/api/program-calendar-api-client'
+import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -96,6 +97,7 @@ function stubProgramFromCalendarItem(item: AdminProgramCalendarItem): Program {
     status: 'active',
     createdAt: '',
     updatedAt: '',
+    lifecycleStatus: toTypedProgramLifecycleStatus(item.periodStatus),
   }
 }
 
