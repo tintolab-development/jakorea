@@ -35,6 +35,7 @@ import {
   type UjatTypedDetail,
 } from '@/features/program/ujat/api/typed-detail-client'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { stripUjatKpiWageCapacityOverlay } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import {
   createUjatBasicInfoFormDefaults,
   stripUjatBasicInfoOverlay,
@@ -198,7 +199,9 @@ export function useUjatProgramRegistrationEditor(
               ? (saved.editorState.ujatEducationSchedule as UjatTypedDetail)
               : typedDetailFromUjatOverlay(saved.overlay ?? {})
           )
-          const legacyOverlay = stripUjatBasicInfoOverlay(saved.overlay ?? {})
+          const legacyOverlay = stripUjatKpiWageCapacityOverlay(
+            stripUjatBasicInfoOverlay(saved.overlay ?? {})
+          )
           if (Object.keys(legacyOverlay).length > 0) patchUjatProgramRegistrationOverlay(legacyOverlay)
           const next = withForcedUjatRegistrationSeedTitleRequired(
             normalizeWritingFormDraft(saved.draft)
@@ -212,7 +215,9 @@ export function useUjatProgramRegistrationEditor(
         const legacy = localOnlyDraftPersistence ? loadUjatRegistrationTemplateSave() : null
         basicInfoForm.reset(ujatBasicInfoFormValuesFromLegacyOverlay(legacy?.overlay ?? {}))
         educationScheduleForm.reset(typedDetailFromUjatOverlay(legacy?.overlay ?? {}))
-        const legacyOverlay = stripUjatBasicInfoOverlay(legacy?.overlay ?? {})
+        const legacyOverlay = stripUjatKpiWageCapacityOverlay(
+          stripUjatBasicInfoOverlay(legacy?.overlay ?? {})
+        )
         if (Object.keys(legacyOverlay).length > 0) patchUjatProgramRegistrationOverlay(legacyOverlay)
         const next = withForcedUjatRegistrationSeedTitleRequired(
           normalizeWritingFormDraft(legacy?.draft ?? createUjatProgramRegistrationDraft())
@@ -251,15 +256,17 @@ export function useUjatProgramRegistrationEditor(
     if (!active || !usesRegistrationWizardDraft) return
 
     const handleDevAutofillComplete = (event: Event) => {
+      const detail =
+        event instanceof CustomEvent && event.detail != null && typeof event.detail === 'object'
+          ? event.detail
+          : {}
       const typedEducationSchedule =
-        event instanceof CustomEvent &&
-        event.detail != null &&
-        typeof event.detail === 'object' &&
-        'typedEducationSchedule' in event.detail
-          ? event.detail.typedEducationSchedule
-          : null
+        'typedEducationSchedule' in detail ? detail.typedEducationSchedule : null
+      const typedBasicInfo = 'typedBasicInfo' in detail ? detail.typedBasicInfo : null
       basicInfoForm.reset(
-        ujatBasicInfoFormValuesFromLegacyOverlay(getUjatProgramRegistrationOverlayRecord())
+        typedBasicInfo != null && typeof typedBasicInfo === 'object'
+          ? (typedBasicInfo as ProgramDetailEditFormValues)
+          : ujatBasicInfoFormValuesFromLegacyOverlay(getUjatProgramRegistrationOverlayRecord())
       )
       educationScheduleForm.reset(
         typedEducationSchedule != null && typeof typedEducationSchedule === 'object'

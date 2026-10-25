@@ -252,9 +252,84 @@ import {
 import { isRegistrationWizardVisitEnding } from '@/features/program/general/lib/registration-wizard-visit'
 import { getUjatVolunteerRound } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
 import { resolveUjatVolunteerHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
+import {
+  buildUjatRecruitTemplateSettingsJson,
+  hydrateUjatRecruitTemplateTypedStateFromSettings,
+  patchUjatRecruitTemplateTypedState,
+  type UjatRecruitTemplateTypedState,
+} from '@/features/program/ujat/lib/ujat-recruit-template-typed-state'
+import {
+  interviewConfigFromLegacyOverlay,
+  overlayRecordToInterviewConfig,
+} from '@/features/program/ujat/lib/recruitment-typed-contract'
+import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import { UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-institution-recruit-template-preview-program'
+import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-volunteer-recruit-template-preview-program'
+import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
+import { getRecruitTypedInterviewRecord } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import type { Program } from '@/types/domain'
 
 const VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY = 'recruit.volunteer.interviewRequired'
+
+function buildUjatRecruitTemplateLegacyTypedState(args: {
+  variant: 'ujat-recruit-institution' | 'ujat-recruit-volunteer'
+  overlay: Record<string, unknown>
+}): UjatRecruitTemplateTypedState {
+  if (args.variant === 'ujat-recruit-institution') {
+    return {
+      institution: programToUjatRecruitTemplateFormValues(
+        UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+        'institution',
+        undefined,
+        { sourceOverlay: args.overlay }
+      ),
+    }
+  }
+  const h1Interview = interviewConfigFromLegacyOverlay(
+    args.overlay,
+    ujatVolunteerRecruitInterviewNamespace('h1')
+  )
+  const h2Interview = interviewConfigFromLegacyOverlay(
+    args.overlay,
+    ujatVolunteerRecruitInterviewNamespace('h2')
+  )
+  return {
+    volunteerH1: programToUjatRecruitTemplateFormValues(
+      UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      'volunteer',
+      'h1',
+      { sourceOverlay: args.overlay }
+    ),
+    volunteerH2: programToUjatRecruitTemplateFormValues(
+      UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      'volunteer',
+      'h2',
+      { sourceOverlay: args.overlay }
+    ),
+    ...(h1Interview ? { interviewH1: h1Interview } : {}),
+    ...(h2Interview ? { interviewH2: h2Interview } : {}),
+  }
+}
+
+function collectUjatRecruitTemplateTypedSettings(args: {
+  templateCode: string
+  variant: 'ujat-recruit-institution' | 'ujat-recruit-volunteer'
+  volunteerHalf?: 'h1' | 'h2'
+}): Record<string, unknown> {
+  if (args.variant === 'ujat-recruit-volunteer') {
+    const liveInterview = getRecruitTypedInterviewRecord()
+    if (liveInterview != null) {
+      const half = args.volunteerHalf ?? 'h2'
+      patchUjatRecruitTemplateTypedState(args.templateCode, {
+        [half === 'h2' ? 'interviewH2' : 'interviewH1']: overlayRecordToInterviewConfig(
+          liveInterview,
+          ujatVolunteerRecruitInterviewNamespace(half)
+        ),
+      })
+    }
+  }
+  return buildUjatRecruitTemplateSettingsJson(args.templateCode)
+}
 
 function subscribeNoop(_listener: () => void): () => void {
   return () => {}
@@ -744,6 +819,10 @@ export function useProgramParticipantApplicationEditor(
   const registrationWizardOpen = editorOptions?.registrationWizardOpen
   const keepSessionCacheAcrossParticipantDeactivate = registrationWizardOpen === true
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
+  const isUjatTemplateAuthoring =
+    isTemplateManagementSave &&
+    !usesRegistrationWizardDraft &&
+    (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer')
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
 
   const resolvePersistTemplateId = useCallback(() => {
@@ -964,7 +1043,7 @@ export function useProgramParticipantApplicationEditor(
         ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
         markHydratedWhenOverlayPresent: usesRegistrationWizardDraft,
         flushRecruitDetailBeforeCollect: true,
-        skipRecruitmentOverlay: usesTypedUjatRecruitmentWizard,
+        skipRecruitmentOverlay: usesTypedUjatRecruitmentWizard || isUjatTemplateAuthoring,
       })
       snapshottedOnSwitchRef.current = draftHydrateKey
     }
@@ -1020,7 +1099,7 @@ export function useProgramParticipantApplicationEditor(
         ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
         markHydratedWhenOverlayPresent: usesRegistrationWizardDraft,
         flushRecruitDetailBeforeCollect: true,
-        skipRecruitmentOverlay: usesTypedUjatRecruitmentWizard,
+        skipRecruitmentOverlay: usesTypedUjatRecruitmentWizard || isUjatTemplateAuthoring,
       })
     }
   }, [
@@ -1029,6 +1108,7 @@ export function useProgramParticipantApplicationEditor(
     keepSessionCacheAcrossParticipantDeactivate,
     usesRegistrationWizardDraft,
     usesTypedUjatRecruitmentWizard,
+    isUjatTemplateAuthoring,
   ])
 
   useEffect(() => {
@@ -1047,7 +1127,8 @@ export function useProgramParticipantApplicationEditor(
     setOperationalOverlayScope(templateId)
     const hydrateKey = editorHydrateKey
     const clearOverlaysOnHydrate = peekWizardContentResetPending()
-    const replaceHydratedOverlay = clearOverlaysOnHydrate || !usesRegistrationWizardDraft
+    const replaceHydratedOverlay =
+      !isUjatTemplateAuthoring && (clearOverlaysOnHydrate || !usesRegistrationWizardDraft)
     setRemoteDraftLoadError(null)
     const finishWizardDetailHydrate = () => {
       if (replaceHydratedOverlay) commitRecruitDetailContentReset()
@@ -1067,7 +1148,9 @@ export function useProgramParticipantApplicationEditor(
       : storageHydratedTemplateIdsRef.current.has(hydrateKey)
     // draft는 render에서 맞춤. 여기선 overlay만 보강해 탭 전환 재페인트가 나지 않게 한다.
     if (cached && cacheIsHydrated && !clearOverlaysOnHydrate) {
-      if (usesTypedUjatRecruitmentWizard) {
+      if (isUjatTemplateAuthoring) {
+        // Independent UJAT authoring is hydrated from the typed template state below.
+      } else if (usesTypedUjatRecruitmentWizard) {
         // Typed recruitment RHF is the only source. Legacy recruitment overlays are not
         // rehydrated when a wizard tab is revisited.
       } else if (variant === 'ujat-recruit-institution') {
@@ -1116,7 +1199,7 @@ export function useProgramParticipantApplicationEditor(
 
     const preferSessionCache = cached != null && cacheIsHydrated && !clearOverlaysOnHydrate
 
-    if (!usesRegistrationWizardDraft && !preferSessionCache) {
+    if (!usesRegistrationWizardDraft && !preferSessionCache && !isUjatTemplateAuthoring) {
       restoreParticipantOverlayForVariant(variant, undefined, {
         resetIfMissing: true,
         replace: true,
@@ -1153,6 +1236,26 @@ export function useProgramParticipantApplicationEditor(
           return
         }
         if (preferSessionCache) return
+        if (isUjatTemplateAuthoring) {
+          const legacyState =
+            saved?.settingsJson == null && saved?.overlay != null
+              ? buildUjatRecruitTemplateLegacyTypedState({
+                  variant,
+                  overlay: saved.overlay,
+                })
+              : undefined
+          hydrateUjatRecruitTemplateTypedStateFromSettings({
+            templateCode: templateId,
+            settingsJson: saved?.settingsJson,
+            legacyState,
+          })
+          if (saved?.draft != null && saved.draft.paragraphs.length > 0) {
+            applyDraftNow(saved.draft)
+          }
+          storageHydratedTemplateIdsRef.current.add(hydrateKey)
+          setIsDraftLoading(false)
+          return
+        }
         if (usesTypedUjatRecruitmentWizard) {
           if (saved?.draft != null && saved.draft.paragraphs.length > 0) {
             applyDraftNow(saved.draft)
@@ -1416,16 +1519,17 @@ export function useProgramParticipantApplicationEditor(
       }
       // 추가 내용 에디터는 키 입력마다 overlay에 안 쓴다. 단계 캐시보다 먼저 넣는다.
       // suppress는 overlay 적용 후 consume. cleanup에서 풀면 Strict Mode 재마운트가 peek를 놓친다.
-      if (!usesTypedUjatRecruitmentWizard) {
+      if (!usesTypedUjatRecruitmentWizard && !isUjatTemplateAuthoring) {
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
       }
-      const overlay = usesTypedUjatRecruitmentWizard
+      const overlay = usesTypedUjatRecruitmentWizard || isUjatTemplateAuthoring
         ? undefined
         : collectParticipantOverlayForVariant(variant, templateId)
       const hasOverlayValues = overlay != null && Object.keys(overlay).length > 0
       // hydrate 완료 전 cleanup(Strict Mode 등)은 시드+빈 overlay로 캐시를 오염시키지 않음
       if (
         !usesTypedUjatRecruitmentWizard &&
+        !isUjatTemplateAuthoring &&
         !storageHydratedTemplateIdsRef.current.has(hydrateKey) &&
         !hasOverlayValues
       ) return
@@ -1477,6 +1581,7 @@ export function useProgramParticipantApplicationEditor(
     skipDraftRestore,
     usesRegistrationWizardDraft,
     usesTypedUjatRecruitmentWizard,
+    isUjatTemplateAuthoring,
     variant,
   ])
 
@@ -2079,7 +2184,13 @@ export function useProgramParticipantApplicationEditor(
       geminiRecruitForm: variant === 'gemini-recruit',
       ujatRecruitFormInstitution: variant === 'ujat-recruit-institution',
       ujatRecruitFormVolunteer: variant === 'ujat-recruit-volunteer',
-      ujatRecruitParagraphProps: editorOptions?.ujatRecruitParagraphProps,
+      ujatRecruitParagraphProps: isUjatTemplateAuthoring
+        ? {
+            ...(editorOptions?.ujatRecruitParagraphProps ?? {}),
+            templateCode: editorHydrateTemplateId,
+            templateAuthoring: true,
+          }
+        : editorOptions?.ujatRecruitParagraphProps,
       programApplicationFormIndividual: variant === 'individual',
       programApplicationFormInstructor: programApplicationFormInstructorOptions,
       programApplicationFormVolunteer:
@@ -2116,6 +2227,7 @@ export function useProgramParticipantApplicationEditor(
       editorOptions?.applicantRecruitInstitutionLayoutVariant,
       editorOptions?.participantOrganization,
       editorOptions?.ujatRecruitParagraphProps,
+      editorHydrateTemplateId,
       economyApplicationHiddenParagraphIds,
       individualApplicationHiddenParagraphIds,
       institutionApplicationBridge,
@@ -2126,6 +2238,7 @@ export function useProgramParticipantApplicationEditor(
       linkedProgram,
       localOnlyDraftPersistence,
       usesRegistrationWizardDraft,
+      isUjatTemplateAuthoring,
       programApplicationFormInstructorOptions,
       programApplicationFormVolunteerOptions,
       programLinkedInstitutionApplicationForm,
@@ -2177,6 +2290,7 @@ export function useProgramParticipantApplicationEditor(
         draft: typeof draft
         overlay?: Record<string, unknown>
         editorState?: Record<string, unknown>
+        settingsJson?: Record<string, unknown>
         localOnly: boolean
       }) => {
         if (!payload.localOnly && persistTemplateVersionId != null && linkedProgram?.id != null) {
@@ -2190,6 +2304,7 @@ export function useProgramParticipantApplicationEditor(
             draft: payload.draft,
             overlay: payload.overlay,
             editorState: payload.editorState,
+            settingsJson: payload.settingsJson,
           })
           return
         }
@@ -2198,6 +2313,7 @@ export function useProgramParticipantApplicationEditor(
           draft: payload.draft,
           overlay: payload.overlay,
           editorState: payload.editorState,
+          settingsJson: payload.settingsJson,
           localOnly: payload.localOnly,
           templateVersionId: persistTemplateVersionId,
         })
@@ -2234,40 +2350,65 @@ export function useProgramParticipantApplicationEditor(
           await persistCompanySchoolRegistrationDraftRemote()
         }
       } else if (variant === 'ujat-recruit-institution') {
-        flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-        const overlay = collectParticipantOverlayForVariant(variant, templateId) ?? {}
-        await persistBoundForm({
-          draft,
-          overlay,
-          localOnly:
-            localOnlyDraftPersistence ||
-            (preferLocalDraft && persistTemplateVersionId == null),
-        })
-        if (localOnlyDraftPersistence) {
-          persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
-        } else {
+        if (isUjatTemplateAuthoring) {
+          const settingsJson = collectUjatRecruitTemplateTypedSettings({
+            templateCode: templateId,
+            variant,
+          })
+          await persistBoundForm({ draft, settingsJson, localOnly: false })
           const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
             await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
           clearUjatRecruitTemplateLocalStorage()
-          rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+          rememberUjatRecruitTemplateSave(templateId, { draft, overlay: {}, settingsJson })
+        } else {
+          flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+          const overlay = collectParticipantOverlayForVariant(variant, templateId) ?? {}
+          await persistBoundForm({
+            draft,
+            overlay,
+            localOnly:
+              localOnlyDraftPersistence ||
+              (preferLocalDraft && persistTemplateVersionId == null),
+          })
+          if (localOnlyDraftPersistence) {
+            persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
+          } else {
+            const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
+              await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
+            clearUjatRecruitTemplateLocalStorage()
+            rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+          }
         }
       } else if (variant === 'ujat-recruit-volunteer') {
-        flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-        const overlay = collectParticipantOverlayForVariant(variant, templateId) ?? {}
-        await persistBoundForm({
-          draft,
-          overlay,
-          localOnly:
-            localOnlyDraftPersistence ||
-            (preferLocalDraft && persistTemplateVersionId == null),
-        })
-        if (localOnlyDraftPersistence) {
-          persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
-        } else {
+        if (isUjatTemplateAuthoring) {
+          const settingsJson = collectUjatRecruitTemplateTypedSettings({
+            templateCode: templateId,
+            variant,
+            volunteerHalf: editorOptions?.ujatRecruitParagraphProps?.volunteerHalf,
+          })
+          await persistBoundForm({ draft, settingsJson, localOnly: false })
           const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
             await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
           clearUjatRecruitTemplateLocalStorage()
-          rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+          rememberUjatRecruitTemplateSave(templateId, { draft, overlay: {}, settingsJson })
+        } else {
+          flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+          const overlay = collectParticipantOverlayForVariant(variant, templateId) ?? {}
+          await persistBoundForm({
+            draft,
+            overlay,
+            localOnly:
+              localOnlyDraftPersistence ||
+              (preferLocalDraft && persistTemplateVersionId == null),
+          })
+          if (localOnlyDraftPersistence) {
+            persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
+          } else {
+            const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
+              await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
+            clearUjatRecruitTemplateLocalStorage()
+            rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+          }
         }
       } else {
         const editorState = buildParticipantApplicationEditorState({
@@ -2303,6 +2444,7 @@ export function useProgramParticipantApplicationEditor(
     draft,
     editorOptions?.program,
     isTemplateManagementSave,
+    isUjatTemplateAuthoring,
     localOnlyDraftPersistence,
     onTemplateDraftSaveConfirmed,
     persistTemplateVersionId,
@@ -2314,6 +2456,7 @@ export function useProgramParticipantApplicationEditor(
     showSaveSuccess,
     usesRegistrationWizardDraft,
     usesTypedUjatRecruitmentWizard,
+    editorOptions?.ujatRecruitParagraphProps?.volunteerHalf,
     ujatApplicationGradeByBlockId,
     ujatGradeApplicationBlockIds,
     ujatGradeClassTimeBlockIds,
@@ -2343,14 +2486,16 @@ export function useProgramParticipantApplicationEditor(
       ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
       markHydratedWhenOverlayPresent: usesRegistrationWizardDraft,
       flushRecruitDetailBeforeCollect: true,
-      skipRecruitmentOverlay: usesTypedUjatRecruitmentWizard,
+      skipRecruitmentOverlay: usesTypedUjatRecruitmentWizard || isUjatTemplateAuthoring,
     })
   }, [
     active,
     editorHydrateKey,
     editorHydrateTemplateId,
     usesRegistrationWizardDraft,
+    usesTypedUjatRecruitmentWizard,
     variant,
+    isUjatTemplateAuthoring,
   ])
 
   return {

@@ -18,6 +18,7 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   onCommonExclusionChange,
   /** 템플릿 관리만 true — 프로그램 등록·상세 편집은 false */
   freezeUnavailableCalendar = false,
+  typedTemplateAuthoring = false,
   overlayNamespace,
   interviewRangeSealKey,
   interviewPeriodRange: interviewPeriodRangeProp,
@@ -29,19 +30,23 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
   /** 템플릿 관리 화면 — 진행 불가일 모달 달력 샘플 고정 */
   freezeUnavailableCalendar?: boolean
+  typedTemplateAuthoring?: boolean
   overlayNamespace?: string
   interviewRangeSealKey?: string
   interviewPeriodRange?: [Dayjs, Dayjs] | null
 }) {
   const [interviewRangeSeal] = useGeneralRecruitOverlayKv<{ start: string; end: string } | null>(
     interviewRangeSealKey ?? 'recruit.volunteer.interviewRangeSeal',
-    null
+    null,
+    { typedTemplateAuthoring }
   )
   const interviewPeriodRangeFromOverlay = useMemo(
     () => normalizeRangeSealToLocalDayBounds(interviewRangeSeal),
     [interviewRangeSeal]
   )
-  const interviewPeriodRange = interviewPeriodRangeProp ?? interviewPeriodRangeFromOverlay
+  const interviewPeriodRange = typedTemplateAuthoring
+    ? (interviewPeriodRangeProp ?? null)
+    : interviewPeriodRangeProp ?? interviewPeriodRangeFromOverlay
 
   return (
     <VolunteerInterviewAvailableScheduleParagraph
@@ -55,6 +60,7 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
       commonScheduleSeed={commonScheduleSeed}
       onCommonExclusionChange={onCommonExclusionChange}
       freezeUnavailableCalendar={freezeUnavailableCalendar}
+      typedTemplateAuthoring={typedTemplateAuthoring}
       interviewPeriodRange={interviewPeriodRange}
     />
   )
