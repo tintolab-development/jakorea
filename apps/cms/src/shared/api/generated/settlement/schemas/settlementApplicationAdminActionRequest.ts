@@ -6,10 +6,14 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 정산 신청서 반려 또는 정정 요청. reason은 필수이다.
+ */
 export interface SettlementApplicationAdminActionRequest {
   /**
-     * @minLength 2
-     * @maxLength 500
+     * 처리 사유
+     * @minLength 0
+     * @maxLength 1000
      */
   reason: string;
 }

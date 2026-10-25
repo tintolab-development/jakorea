@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramRecruitmentRequestApplicationType } from './programRecruitmentRequestApplicationType';
+import type { ProgramRecruitmentRequestNoticeExposureTiming } from './programRecruitmentRequestNoticeExposureTiming';
 import type { ProgramRecruitmentRequestRecruitmentType } from './programRecruitmentRequestRecruitmentType';
 import type { ProgramRecruitmentRequestRecruitTerm } from './programRecruitmentRequestRecruitTerm';
 import type { ProgramRecruitmentRequestStatus } from './programRecruitmentRequestStatus';
@@ -69,21 +70,21 @@ export interface ProgramRecruitmentRequest {
   interviewStartAt?: string | null;
   /** 2차 면접 종료. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지. */
   interviewEndAt?: string | null;
-  /** 공고 게시 여부. null 이면 기존 값 유지. */
+  /** 공고 게시 여부. null 이면 기존 값 유지. false 는 포털 비공개. */
   announcementPublished?: boolean | null;
-  /** 서류 발표 시각. null 유지, clearFields에 있으면 비움. */
+  /** 서류 발표 시각. null 유지, clearFields에 documentPassAnnouncementAt 이면 비움. */
   documentPassAnnouncementAt?: string | null;
-  /** 최종 발표 시각. null 유지, clearFields에 있으면 비움. */
+  /** 최종 발표 시각. null 유지, clearFields에 finalPassAnnouncementAt 이면 비움. */
   finalPassAnnouncementAt?: string | null;
-  /** 봉사자 공고 노출 시점. VOLUNTEER만. null 유지. */
-  noticeExposureTiming?: 'start-day' | 'one-day-before' | 'one-week-before' | null;
-  /** 봉사자 모집 대상. VOLUNTEER만. null 유지, [] 는 명시적 빈 값. */
+  /** 봉사자 공고 노출 시점. VOLUNTEER만. start-day|one-day-before|one-week-before. null 유지. */
+  noticeExposureTiming?: ProgramRecruitmentRequestNoticeExposureTiming;
+  /** 봉사자 모집 대상 코드 배열. VOLUNTEER만. null 유지, [] 는 제한 없음(명시적 빈 값). */
   volunteerTargets?: string[] | null;
   /** 비고 해당 없음. null 유지. */
   remarksNotApplicable?: boolean | null;
-  /** 봉사자 면접 슬롯 설정. VOLUNTEER만. 객체 생략은 기존 유지, 빈 객체는 명시적 빈 typed 값. */
+  /** 봉사자 면접 슬롯 설정. VOLUNTEER만. 객체 생략(null)은 기존 유지, 빈 객체는 명시적 빈 typed 값. */
   interviewConfig?: RecruitmentInterviewConfig | null;
-  /** 동시 수정 검증. 조회 contentRevision 과 같아야 한다. 생략하면 검사하지 않는다. */
+  /** 동시 수정 검증용. 조회 응답 contentRevision 과 같아야 한다. 생략하면 검사하지 않는다. */
   expectedRevision?: number | null;
   /** null 로 비울 필드 이름. 예: ["maxCount","remarks","interviewConfig"] */
   clearFields?: string[] | null;
