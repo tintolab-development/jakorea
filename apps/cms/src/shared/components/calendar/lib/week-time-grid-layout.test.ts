@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildAllDayWeekGroupLayout,
   buildWeekTimeGridColumnStyle,
   buildWeekTimeGridGroupStyle,
+  compareAllDayWeekRepresentatives,
   computeWeekEventCardHeight,
   computeWeekEventCardTop,
   countAdjacentTouchingEvents,
   countOccupiedHourSlots,
+  formatAllDayGroupOverflowText,
   layoutTimedItemsForDay,
   readTimesOrAllDaySpan,
   resolveWeekTimeGridSubtext,
@@ -135,5 +138,35 @@ describe('week event card metrics (Figma)', () => {
     expect(layout?.endM).toBe(24 * 60)
     expect(layout?.top).toBe(computeWeekEventCardTop(23 * 60 + 30))
     expect(layout?.height).toBe(30)
+  })
+
+})
+
+describe('same-day all-day week grouping', () => {
+  it('picks the earliest program operation start, then hangul before latin titles', () => {
+    expect(
+      compareAllDayWeekRepresentatives(
+        { operationStartDate: '2026-03-01', title: '베타' },
+        { operationStartDate: '2026-01-01', title: '알파' }
+      )
+    ).toBeGreaterThan(0)
+    expect(
+      compareAllDayWeekRepresentatives(
+        { operationStartDate: '2026-01-01', title: 'Beta' },
+        { operationStartDate: '2026-01-01', title: '가나다' }
+      )
+    ).toBeGreaterThan(0)
+  })
+
+  it('keeps one representative and overflow copy for same-day all-day items', () => {
+    const items = [
+      { id: 'late', operationStartDate: '2026-06-01', title: 'Zebra' },
+      { id: 'early', operationStartDate: '2026-01-01', title: '나중에' },
+      { id: 'mid', operationStartDate: '2026-03-01', title: 'Alpha' },
+    ]
+    const group = buildAllDayWeekGroupLayout(items, WEEK_TIME_GRID_HOUR_PX, item => item)
+    expect(group?.representative.id).toBe('early')
+    expect(group?.items).toHaveLength(3)
+    expect(formatAllDayGroupOverflowText(2)).toBe('외 2개의 일정')
   })
 })

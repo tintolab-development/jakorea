@@ -27,6 +27,52 @@ export function formatTimedGroupOverflowText(hiddenCount: number): string {
   return `외 ${hiddenCount}개의 항목`
 }
 
+export function formatAllDayGroupOverflowText(hiddenCount: number): string {
+  return `외 ${hiddenCount}개의 일정`
+}
+
+export type AllDayWeekSortFields = {
+  operationStartDate?: string
+  title?: string
+}
+
+function titleScriptRank(title: string): number {
+  const first = title.trim().charAt(0)
+  if (/[가-힣]/.test(first)) return 0
+  if (/[A-Za-z]/.test(first)) return 1
+  return 2
+}
+
+/** 가나다 → 알파벳 → 그 외. 같은 스크립트 안에서는 ko locale. */
+export function compareHangulThenLatinTitle(a: string, b: string): number {
+  const rankA = titleScriptRank(a)
+  const rankB = titleScriptRank(b)
+  if (rankA !== rankB) return rankA - rankB
+  return a.localeCompare(b, 'ko')
+}
+
+/** 운영 시작일 빠른 순. 날짜 동률·없음이면 프로그램명 가나다→알파벳. */
+export function compareAllDayWeekRepresentatives(
+  a: AllDayWeekSortFields,
+  b: AllDayWeekSortFields
+): number {
+  const dateA = a.operationStartDate?.trim().slice(0, 10) ?? ''
+  const dateB = b.operationStartDate?.trim().slice(0, 10) ?? ''
+  if (dateA && dateB && dateA !== dateB) return dateA.localeCompare(dateB)
+  if (dateA && !dateB) return -1
+  if (!dateA && dateB) return 1
+  return compareHangulThenLatinTitle(a.title?.trim() ?? '', b.title?.trim() ?? '')
+}
+
+export function pickAllDayWeekRepresentative<T>(
+  items: readonly T[],
+  readSortFields: (item: T) => AllDayWeekSortFields
+): T {
+  return [...items].sort((left, right) =>
+    compareAllDayWeekRepresentatives(readSortFields(left), readSortFields(right))
+  )[0]
+}
+
 export function hasTimedScheduleSpan<T>(item: T, readSpan: TimedSpanReader<T>): boolean {
   return parseHHmmToMinutes(readSpan(item).startTime) != null
 }
@@ -420,6 +466,30 @@ export function buildTimedItemGroupLayouts<T>(
   flushCluster()
 
   return groups
+}
+
+/** 같은 날 종일 일정은 1블록 + 외 N개. 대표는 운영 시작일·프로그램명 규칙. */
+export function buildAllDayWeekGroupLayout<T>(
+  items: T[],
+  hourPx: number,
+  readSortFields: (item: T) => AllDayWeekSortFields
+): TimedItemGroupLayout<T> | null {
+  if (items.length === 0) return null
+  const representative = pickAllDayWeekRepresentative(items, readSortFields)
+  const startM = 0
+  const endM = WEEK_TIME_GRID_HOURS * 60
+  return {
+    items,
+    representative,
+    startM,
+    endM,
+    top: computeWeekEventCardTop(startM, hourPx),
+    height: computeWeekEventCardHeight({
+      startM,
+      endM,
+      adjacentEventCount: 0,
+    }),
+  }
 }
 
 /** 집약 블록: 열 안 2px inset. height는 occupancy 계산값 그대로 */
