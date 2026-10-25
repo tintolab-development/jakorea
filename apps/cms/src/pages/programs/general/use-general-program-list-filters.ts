@@ -127,8 +127,9 @@ export function useGeneralProgramListFilters() {
       mode: 'overview',
       view: listView,
       lifecycleStatus: undefined,
+      serverSideOverviewFilters: remoteEnabled,
     }
-  }, [statusFilter])
+  }, [remoteEnabled, statusFilter])
 
   return {
     statusFilter,

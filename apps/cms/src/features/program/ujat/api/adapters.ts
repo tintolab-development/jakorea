@@ -22,9 +22,9 @@ import type {
 import type { Status } from '@/types/index'
 import {
   mapPeriodStatusToLifecycle,
+  normalizeUjatProgressStatus,
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
-import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import {
   buildProgramSponsorAssignmentsWire,
@@ -671,11 +671,8 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
   const registrationOverlay = parseRegistrationOverlay(dtoExt.serviceDetailJson)
   const title = echoProgramManagementTitle(dto.title, dto.nameKo)
   const mainTitle = typeof dto.mainTitle === 'string' ? dto.mainTitle : ''
-  const ujatProgressStatus = resolveUjatProgressStatus({
-    ujatProgressStatus: fromJson.ujatProgressStatus ?? dtoExt.ujatProgressStatus,
-    periodStatus: dto.periodStatus,
-    primaryFallback: resolveUjatPrimaryProgressById(id),
-  })
+  // 목록 진행 현황은 서버가 내려준 canonical 필드만 사용한다.
+  const ujatProgressStatus = normalizeUjatProgressStatus(dto.ujatProgressStatus)
   const lifecycleStatus =
     (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
     mapPeriodStatusToLifecycle(dto.periodStatus) ??
@@ -692,7 +689,6 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     titleEn: dto.titleEn?.trim() || undefined,
     ...resolveBusinessPeriodDates(dto),
     lifecycleStatus,
-    ujatProgressStatus,
     listDeleteBlocked: resolveProgramListDeleteBlocked({
       lifecycleStatus,
       ujatProgressStatus: ujatProgressStatus ?? undefined,
@@ -708,6 +704,8 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     ...fromJson,
+    // serviceDetailJson·Primary id fallback이 목록 진행 현황을 덮지 못하게 한다.
+    ujatProgressStatus,
     ...(Object.keys(registrationOverlay).length > 0
       ? { ujatRegistrationOverlay: registrationOverlay }
       : {}),
