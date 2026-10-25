@@ -38,9 +38,7 @@ import {
   shouldUseFormsSurveysRemoteApi,
 } from '@/features/template/api/admin-form-templates-service'
 import { coalesceScopedFormDraftForPut } from '@/features/program/general/lib/coalesce-scoped-form-draft-for-put'
-import { loadOperationalFormDraftForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { resolveFormBindingTargetType } from '@/features/program/general/lib/resolve-form-binding-target-type'
-import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import type { ApplicationCountResponse } from '@/shared/api/generated/dashboard/schemas/applicationCountResponse'
 import { fetchProgramApplicationCountsRemote } from '@/features/program/general/api/application-counts-api-client'
 import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
@@ -104,17 +102,37 @@ export function invalidateProgramFormBindingsCache(programId: string): void {
 }
 
 /**
- * Check the recruitment-specific binding before any template COPY/PUT/publish.
- *
- * A missing binding intentionally remains writable: there is no existing form
- * binding to replace. Once an active APPLICATION binding exists, however, the
- * backend lock is based on applications for that recruitment, not on dates.
- * The count endpoint only returns grouped rows that exist, so no matching row
- * means zero applications for the target recruitment.
+ * Lock APPLICATION writes from recruitment application counts, not from whether
+ * a form-binding row already exists. Missing or inactive bindings still cannot
+ * be created once the target recruitment (or an unscoped same-targetType row)
+ * already has applications.
  */
 function scopedProgramForApplicationForm(program: Program, templateCode: string): Program {
   const variant = getParticipantApplicationEditorVariantForTemplateCode(templateCode)
   return variant != null ? programForApplicationFormEditor(program, variant) : program
+}
+
+function countHasRecruitmentId(count: ApplicationCountResponse): boolean {
+  return count.recruitmentId != null && Number.isFinite(Number(count.recruitmentId))
+}
+
+function applicationCountMatchesTarget(args: {
+  count: ApplicationCountResponse
+  scopeTargetScopeId?: number
+  expectedTargetType: string
+}): boolean {
+  const { count, scopeTargetScopeId, expectedTargetType } = args
+  if (
+    scopeTargetScopeId != null &&
+    countHasRecruitmentId(count) &&
+    Number(count.recruitmentId) === scopeTargetScopeId
+  ) {
+    return true
+  }
+  if (!countHasRecruitmentId(count) && expectedTargetType !== '') {
+    return (count.targetType ?? '').trim().toUpperCase() === expectedTargetType
+  }
+  return false
 }
 
 export async function assertProgramApplicationFormWritable(
@@ -128,15 +146,17 @@ export async function assertProgramApplicationFormWritable(
 
   const scopedProgram = scopedProgramForApplicationForm(program, templateCode)
   const scope = recruitmentApplicationBindingScope(scopedProgram, spec.formType)
-  if (scope == null) return
-
-  const bindings = await fetchProgramFormBindingsCached(scopedProgram.id, { fresh: true })
-  const row = resolveRowApplicationBinding(scopedProgram, bindings, spec)
-  if (row.kind !== 'binding' || row.binding.active === false) return
+  const expectedTargetType = spec.targetRole
+    ? resolveFormBindingTargetType(spec.targetRole).trim().toUpperCase()
+    : ''
 
   const counts = await fetchProgramApplicationCountsCached(scopedProgram.id)
-  const targetCounts = counts.filter(
-    count => Number(count.recruitmentId) === scope.targetScopeId
+  const targetCounts = counts.filter(count =>
+    applicationCountMatchesTarget({
+      count,
+      scopeTargetScopeId: scope?.targetScopeId,
+      expectedTargetType,
+    })
   )
   for (const count of targetCounts) {
     const hasApplications = hasApplicationCount(count)
@@ -179,7 +199,7 @@ function bindingToUpdatePayload(
   const scope = program
     ? recruitmentApplicationBindingScope(program, spec.formType)
     : undefined
-  return {
+  return sanitizeProgramFormBindingPayload(program, {
     formType: binding.formType ?? spec.formType,
     templateId: ids.templateId,
     templateVersionId: ids.templateVersionId,
@@ -190,7 +210,7 @@ function bindingToUpdatePayload(
     required: binding.required,
     active: true,
     displayOrder: binding.displayOrder,
-  }
+  })
 }
 
 function selectBindingForOperationalSpec(
@@ -210,9 +230,22 @@ function withRecruitmentApplicationScope(
   spec: OperationalFormSpec,
   payload: ProgramFormBindingRequest
 ): ProgramFormBindingRequest {
-  const scope = recruitmentApplicationBindingScope(program, spec.formType)
-  if (scope == null) return payload
-  return { ...payload, ...scope }
+  const scoped = recruitmentApplicationBindingScope(program, spec.formType)
+  if (scoped == null) return sanitizeProgramFormBindingPayload(program, payload)
+  return sanitizeProgramFormBindingPayload(program, { ...payload, ...scoped })
+}
+
+function sanitizeProgramFormBindingPayload(
+  program: Program | undefined,
+  payload: ProgramFormBindingRequest
+): ProgramFormBindingRequest {
+  const next: ProgramFormBindingRequest & { recruitments?: unknown } = { ...payload }
+  delete next.recruitments
+  if (program?.backendProgramType?.trim().toUpperCase() === 'COMPANY_SCHOOL') {
+    delete next.targetScope
+    delete next.targetScopeId
+  }
+  return next
 }
 
 /** 숫자 프로그램 ID만 ownerProgramId로 쓴다(로컬 임시 ID는 제외). */
@@ -221,210 +254,16 @@ function toOwnerProgramId(programId: string | number | null | undefined): number
   return Number.isSafeInteger(n) && n > 0 ? n : undefined
 }
 
-async function attachLocalDraftToBinding(args: {
-  program: Program
-  spec: OperationalFormSpec
-  bindings: ProgramFormBindingResponse[]
-  catalogTemplateId: number
-  catalogVersionId: number
-}): Promise<void> {
-  const programId = args.program.id
-  const local = await loadOperationalFormDraftForProgram(args.program, args.spec.templateCode)
-  if (local?.draft == null) return
-
-  const existing = selectBindingForOperationalSpec(
-    args.program,
-    args.bindings,
-    args.spec,
-    args.catalogTemplateId
-  )
-  const alreadyScoped =
-    existing?.templateId != null &&
-    existing.templateVersionId != null &&
-    existing.templateId !== args.catalogTemplateId
-
-  if (alreadyScoped) {
-    rememberProgramOperationalFormBinding(programId, args.spec.templateCode, {
-      templateId: existing.templateId!,
-      templateVersionId: existing.templateVersionId!,
-    })
-    return
-  }
-
-  const ownerProgramId = toOwnerProgramId(programId)
-  const copied = await copyFormTemplateVersionRemote(args.catalogTemplateId, {
-    sourceVersionId: existing?.templateVersionId ?? args.catalogVersionId,
-    versionLabel: `program-${programId}`,
-    // 복사본을 이 프로그램 소유(template_scope=PROGRAM)로 만든다 — 소유 불명 COPY 방지
-    ...(ownerProgramId != null ? { ownerProgramId } : {}),
-  })
-  const templateId = copied.templateId ?? args.catalogTemplateId
-  const templateVersionId = copied.templateVersionId
-  if (templateVersionId == null) {
-    throw new Error('프로그램 전용 양식 버전을 만들지 못했습니다.')
-  }
-
-  const baseline = await loadFormTemplateVersionDraftByVersionId(
-    args.spec.templateCode,
-    templateVersionId
-  )
-  const draftForPut =
-    baseline?.draft != null
-      ? coalesceScopedFormDraftForPut(baseline.draft, local.draft)
-      : local.draft
-
-  await saveFormTemplateVersionDraftByVersionId({
-    versionId: templateVersionId,
-    draft: draftForPut,
-    overlay: local.overlay,
-    editorState: local.editorState,
-    settingsJson: local.settingsJson,
-    templateCode: args.spec.templateCode,
-  })
-
-  // form-bindings는 PUBLISHED version만 허용
-  const publishedVersionId = await publishFormTemplateVersionById(templateVersionId)
-
-  // 주의: `useYn:false`로 숨기지 않는다 — BE의 form-binding 검증이 `use_yn=true`를
-  // "존재/활성" 판정에 그대로 쓰므로, false로 두면 이후 binding 조회·수정이
-  // `templateVersionId does not exist or is inactive`로 거절될 수 있다(2026-09-21 BE 확인).
-  // description만 남겨 어떤 program이 소유한 복사본인지 추적한다.
-  if (templateId !== args.catalogTemplateId) {
-    try {
-      await updateFormTemplateRemote(templateId, {
-        description: `program-scoped:${programId}`,
-      })
-    } catch (error) {
-      console.warn('[program-form-bindings] label program-scoped template failed', error)
-    }
-  }
-
-  const ids = { templateId, templateVersionId: publishedVersionId }
-  const createPayload = withRecruitmentApplicationScope(args.program, args.spec, {
-    formType: args.spec.formType,
-    templateId,
-    templateVersionId: publishedVersionId,
-    active: true,
-    required: false,
-  })
-  if (args.spec.targetRole != null && args.spec.targetRole !== '') {
-    createPayload.targetRole = args.spec.targetRole
-    createPayload.targetType = resolveFormBindingTargetType(args.spec.targetRole)
-  }
-
-  const bindingInactive = existing?.active === false
-  if (existing?.bindingId == null || bindingInactive) {
-    await createGeneralProgramFormBinding(programId, createPayload)
-  } else {
-    try {
-      await updateGeneralProgramFormBinding(
-        programId,
-        String(existing.bindingId),
-        bindingToUpdatePayload(existing, ids, args.spec, args.program)
-      )
-    } catch (error) {
-      if (getApiErrorCode(error) === 'OPERATION_NOT_ALLOWED') {
-        throw error
-      }
-      throw error
-    }
-  }
-  rememberProgramOperationalFormBinding(programId, args.spec.templateCode, ids)
-  invalidateProgramFormBindingsCache(programId)
-}
-
-async function promoteCatalogBindingToProgramScoped(args: {
-  program: Program
-  spec: OperationalFormSpec
-  bindings: ProgramFormBindingResponse[]
-  catalogTemplateId: number
-  catalogVersionId: number
-}): Promise<RememberedBinding | undefined> {
-  const programId = args.program.id
-  const existing = selectBindingForOperationalSpec(
-    args.program,
-    args.bindings,
-    args.spec,
-    args.catalogTemplateId
-  )
-  if (
-    existing?.templateId != null &&
-    existing.templateVersionId != null &&
-    existing.templateId !== args.catalogTemplateId
-  ) {
-    const ids = {
-      templateId: existing.templateId,
-      templateVersionId: existing.templateVersionId,
-    }
-    rememberProgramOperationalFormBinding(programId, args.spec.templateCode, ids)
-    return ids
-  }
-
-  const ownerProgramId = toOwnerProgramId(programId)
-  const copied = await copyFormTemplateVersionRemote(args.catalogTemplateId, {
-    sourceVersionId: existing?.templateVersionId ?? args.catalogVersionId,
-    versionLabel: `program-${programId}`,
-    // 복사본을 이 프로그램 소유(template_scope=PROGRAM)로 만든다 — 소유 불명 COPY 방지
-    ...(ownerProgramId != null ? { ownerProgramId } : {}),
-  })
-  const templateId = copied.templateId ?? args.catalogTemplateId
-  const templateVersionId = copied.templateVersionId
-  if (templateVersionId == null) {
-    throw new Error('프로그램 전용 양식 버전을 만들지 못했습니다.')
-  }
-
-  const publishedVersionId = await publishFormTemplateVersionById(templateVersionId)
-  // 주의: `useYn:false`로 숨기지 않는다 — 사유는 위 `attachLocalDraftToBinding` 주석과 동일.
-  if (templateId !== args.catalogTemplateId) {
-    try {
-      await updateFormTemplateRemote(templateId, {
-        description: `program-scoped:${programId}`,
-      })
-    } catch (error) {
-      console.warn('[program-form-bindings] label program-scoped template failed', error)
-    }
-  }
-
-  const ids = { templateId, templateVersionId: publishedVersionId }
-  const createPayload = withRecruitmentApplicationScope(args.program, args.spec, {
-    formType: args.spec.formType,
-    templateId,
-    templateVersionId: publishedVersionId,
-    active: true,
-    required: false,
-  })
-  if (args.spec.targetRole != null && args.spec.targetRole !== '') {
-    createPayload.targetRole = args.spec.targetRole
-    createPayload.targetType = resolveFormBindingTargetType(args.spec.targetRole)
-  }
-
-  const bindingInactive = existing?.active === false
-  if (existing?.bindingId == null || bindingInactive) {
-    await createGeneralProgramFormBinding(programId, createPayload)
-  } else {
-    try {
-      await updateGeneralProgramFormBinding(
-        programId,
-        String(existing.bindingId),
-        bindingToUpdatePayload(existing, ids, args.spec, args.program)
-      )
-    } catch (error) {
-      if (getApiErrorCode(error) === 'OPERATION_NOT_ALLOWED') {
-        throw error
-      }
-      throw error
-    }
-  }
-  rememberProgramOperationalFormBinding(programId, args.spec.templateCode, ids)
-  invalidateProgramFormBindingsCache(programId)
-  return ids
-}
-
 /**
  * 프로그램 상세 신청 양식 저장.
  * 바인딩된 버전은 PUBLISHED라 PUT이 409 FORM_VERSION_IMMUTABLE이다.
  * 발행본이면 새 DRAFT로 복사한 뒤 저장·발행하고, 그 버전으로 바인딩을 교체한다.
  */
+const inFlightProgramFormSaves = new Map<
+  string,
+  Promise<RememberedBinding & { bindingId?: number }>
+>()
+
 export async function saveProgramScopedOperationalFormVersion(input: {
   program: Program
   templateCode: string
@@ -439,6 +278,30 @@ export async function saveProgramScopedOperationalFormVersion(input: {
    * 같은 적용 실행에서 이미 다른 양식이 차지한 바인딩. 여기 있으면 PATCH하지 않고 새 바인딩을 만든다.
    * (1사1교: BE 자동 적용은 모집·신청 바인딩을 1개씩만 만든다 → 기관/강사 양식이 같은 바인딩을 덮어쓰는 것 방지)
    */
+  excludeBindingIds?: ReadonlySet<number>
+}): Promise<RememberedBinding & { bindingId?: number }> {
+  const saveKey = `${input.program.id}:${input.templateCode}:${input.versionId}`
+  const pending = inFlightProgramFormSaves.get(saveKey)
+  if (pending != null) return pending
+
+  const run = saveProgramScopedOperationalFormVersionOnce(input).finally(() => {
+    if (inFlightProgramFormSaves.get(saveKey) === run) {
+      inFlightProgramFormSaves.delete(saveKey)
+    }
+  })
+  inFlightProgramFormSaves.set(saveKey, run)
+  return run
+}
+
+async function saveProgramScopedOperationalFormVersionOnce(input: {
+  program: Program
+  templateCode: string
+  versionId: number
+  draft: WritingFormDraft
+  overlay?: Record<string, unknown>
+  editorState?: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
+  ownerProgramId?: number
   excludeBindingIds?: ReadonlySet<number>
 }): Promise<RememberedBinding & { bindingId?: number }> {
   const args = {
@@ -608,7 +471,7 @@ async function rebindProgramOperationalFormVersion(args: {
     ...spec,
     catalogTemplateId: catalog?.templateId,
   })
-  const payload: ProgramFormBindingRequest = {
+  const payload = sanitizeProgramFormBindingPayload(undefined, {
     formType: existing?.formType ?? spec.formType,
     templateId: ids.templateId,
     templateVersionId: ids.templateVersionId,
@@ -621,7 +484,7 @@ async function rebindProgramOperationalFormVersion(args: {
     required: existing?.required ?? false,
     active: true,
     displayOrder: existing?.displayOrder,
-  }
+  })
 
   if (existing?.bindingId == null) {
     await createGeneralProgramFormBinding(args.programId, payload)
@@ -695,7 +558,9 @@ export async function saveMutableProgramFormVersion(args: {
   return publishedVersionId
 }
 
-/** catalog binding → program-scoped copy (양식 수정 모달·저장 SSOT) */
+/**
+ * 신청 양식 로드 소스만 맞춘다. COPY/publish/form-binding POST는 저장 경로에서만 수행한다.
+ */
 export async function ensureProgramScopedOperationalBinding(
   inputProgram: Program,
   templateCode: string,
@@ -716,48 +581,11 @@ export async function ensureProgramScopedOperationalBinding(
   }
   const catalog = await resolveFormTemplateCatalogIds(templateCode)
   const bindings = await fetchProgramFormBindingsCached(program.id)
-  const initial = resolveApplicationFormLoadSource({
-    programId: program.id,
-    program,
-    templateCode,
-    bindings,
-    catalogTemplateId: catalog?.templateId,
-    strictRemote,
-  })
-  if (!strictRemote && (!initial.preferLocalDraft || initial.unavailableReason)) return initial
-  // 원격 SSOT 모드에서는 binding이 없을 때 카탈로그를 복제해 화면을 채우지 않는다.
-  // 유효한 binding version이 있을 때만 읽고, 수정 저장 시 copy/rebind를 수행한다.
-  if (strictRemote) return initial
-
-  // Opening the edit modal may promote a catalog/local version. Apply the same
-  // guard here so entering the modal cannot create a version before save.
-  await assertProgramApplicationFormWritable(program, templateCode)
-
-  const local = await loadOperationalFormDraftForProgram(program, templateCode)
-  if (local?.draft != null && catalog != null) {
-    await attachLocalDraftToBinding({
-      program,
-      spec,
-      bindings,
-      catalogTemplateId: catalog.templateId,
-      catalogVersionId: catalog.templateVersionId,
-    })
-  } else if (catalog != null) {
-    await promoteCatalogBindingToProgramScoped({
-      program,
-      spec,
-      bindings,
-      catalogTemplateId: catalog.templateId,
-      catalogVersionId: catalog.templateVersionId,
-    })
-  }
-
-  const nextBindings = await fetchProgramFormBindingsCached(program.id, { fresh: true })
   return resolveApplicationFormLoadSource({
     programId: program.id,
     program,
     templateCode,
-    bindings: nextBindings,
+    bindings,
     catalogTemplateId: catalog?.templateId,
     strictRemote,
   })

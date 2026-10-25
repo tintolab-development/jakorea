@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Program } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import { queryClient } from '@/shared/lib/query-client'
 
 const fetchFormTemplateVersionRemote = vi.fn()
 const copyFormTemplateVersionRemote = vi.fn()
@@ -50,6 +51,7 @@ vi.mock('@/features/program/ujat/api/capabilities', () => ({
 }))
 
 import {
+  ensureProgramScopedOperationalBinding,
   getRememberedProgramOperationalFormBinding,
   saveProgramScopedOperationalFormVersion,
 } from './sync-registration-form-bindings'
@@ -60,6 +62,7 @@ const userDraft = { paragraphs: [] } as unknown as WritingFormDraft
 describe('saveProgramScopedOperationalFormVersion', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    queryClient.clear()
     loadFormTemplateVersionDraftByVersionId.mockResolvedValue(null)
     saveFormTemplateVersionDraftByVersionId.mockResolvedValue(undefined)
     publishFormTemplateVersionById.mockImplementation(async (versionId: number) => versionId)
@@ -279,5 +282,150 @@ describe('saveProgramScopedOperationalFormVersion', () => {
       expect.objectContaining({ versionId: 94 })
     )
     expect(publishFormTemplateVersionById).not.toHaveBeenCalledWith(94)
+  })
+
+  it('바인딩이 없어도 대상 모집 신청이 있으면 COPY 전에 저장을 차단한다', async () => {
+    fetchGeneralProgramFormBindings.mockResolvedValue([])
+    fetchProgramApplicationCountsRemote.mockResolvedValue([
+      { programId: 170100, recruitmentId: 41, targetType: 'ORGANIZATION', totalCount: 1 },
+    ])
+
+    await expect(
+      saveProgramScopedOperationalFormVersion({
+        program: {
+          id: '170100',
+          backendProgramType: 'COMPANY_SCHOOL',
+          generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+          programRecruitments: [
+            {
+              id: 41,
+              recruitmentType: 'PARTICIPANT',
+              applicationType: 'ORGANIZATION',
+            },
+            { id: 42, recruitmentType: 'INSTRUCTOR' },
+          ],
+        } as Program,
+        templateCode: 'application-economy',
+        versionId: 501,
+        draft: userDraft,
+      })
+    ).rejects.toThrow('모집 시작 이후에는 신청 양식을 수정할 수 없습니다.')
+
+    expect(fetchProgramApplicationCountsRemote).toHaveBeenCalledWith('170100')
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(createGeneralProgramFormBinding).not.toHaveBeenCalled()
+    expect(updateGeneralProgramFormBinding).not.toHaveBeenCalled()
+  })
+
+  it('1사1교 form-binding POST에는 recruitments와 모집 행 scope를 넣지 않는다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 55,
+      templateVersionId: 501,
+      versionStatus: 'PUBLISHED',
+    })
+    copyFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 88,
+      templateVersionId: 880,
+      versionStatus: 'DRAFT',
+    })
+    publishFormTemplateVersionById.mockResolvedValue(880)
+    fetchGeneralProgramFormBindings.mockResolvedValue([])
+    fetchProgramApplicationCountsRemote.mockResolvedValue([])
+
+    await saveProgramScopedOperationalFormVersion({
+      program: {
+        id: '170100',
+        backendProgramType: 'COMPANY_SCHOOL',
+        generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+        programRecruitments: [
+          {
+            id: 41,
+            recruitmentType: 'PARTICIPANT',
+            applicationType: 'ORGANIZATION',
+          },
+        ],
+      } as Program,
+      templateCode: 'application-economy',
+      versionId: 501,
+      draft: userDraft,
+    })
+
+    expect(createGeneralProgramFormBinding).toHaveBeenCalledTimes(1)
+    const payload = createGeneralProgramFormBinding.mock.calls[0]?.[1] as Record<string, unknown>
+    expect(payload).not.toHaveProperty('recruitments')
+    expect(payload.targetScope).toBeUndefined()
+    expect(payload.targetScopeId).toBeUndefined()
+  })
+
+  it('같은 저장을 동시에 호출하면 COPY/publish를 한 번만 한다', async () => {
+    let resolveCopy: ((value: { templateId: number; templateVersionId: number }) => void) | undefined
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 55,
+      templateVersionId: 501,
+      versionStatus: 'PUBLISHED',
+    })
+    copyFormTemplateVersionRemote.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          resolveCopy = resolve
+        })
+    )
+    publishFormTemplateVersionById.mockResolvedValue(880)
+
+    const first = saveProgramScopedOperationalFormVersion({
+      program,
+      templateCode: 'application-trained-teachers',
+      versionId: 501,
+      draft: userDraft,
+    })
+    const second = saveProgramScopedOperationalFormVersion({
+      program,
+      templateCode: 'application-trained-teachers',
+      versionId: 501,
+      draft: userDraft,
+    })
+
+    await vi.waitFor(() => {
+      expect(copyFormTemplateVersionRemote).toHaveBeenCalledTimes(1)
+    })
+    resolveCopy?.({ templateId: 88, templateVersionId: 880 })
+    await Promise.all([first, second])
+    expect(copyFormTemplateVersionRemote).toHaveBeenCalledTimes(1)
+    expect(publishFormTemplateVersionById).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('ensureProgramScopedOperationalBinding', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    queryClient.clear()
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 10, templateVersionId: 100 })
+    fetchGeneralProgramFormBindings.mockResolvedValue([])
+    fetchProgramApplicationCountsRemote.mockResolvedValue([
+      { programId: 170100, recruitmentId: 41, targetType: 'ORGANIZATION', totalCount: 1 },
+    ])
+  })
+
+  it('모달 오픈 경로에서는 COPY/publish/form-binding POST를 하지 않는다', async () => {
+    await ensureProgramScopedOperationalBinding(
+      {
+        id: '170100',
+        backendProgramType: 'COMPANY_SCHOOL',
+        generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+        programRecruitments: [
+          {
+            id: 41,
+            recruitmentType: 'PARTICIPANT',
+            applicationType: 'ORGANIZATION',
+          },
+        ],
+      } as Program,
+      'application-economy'
+    )
+
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
+    expect(createGeneralProgramFormBinding).not.toHaveBeenCalled()
+    expect(updateGeneralProgramFormBinding).not.toHaveBeenCalled()
   })
 })

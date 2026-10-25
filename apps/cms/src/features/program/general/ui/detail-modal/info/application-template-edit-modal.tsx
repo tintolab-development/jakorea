@@ -111,7 +111,6 @@ export function GeneralProgramApplicationTemplateEditModal({
   }, [open, scopedProgram, variant])
 
   const formSource = useProgramApplicationFormLoadSource(scopedProgram, variant, {
-    ensureScopedBinding: open,
     remoteStrict,
   })
 

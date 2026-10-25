@@ -17,9 +17,14 @@ import type { ProgramParticipantApplicationEditorVariant } from '@/features/temp
 const showAlert = vi.fn()
 const fetchGeneralProgramFormBindings = vi.fn()
 const fetchProgramApplicationCountsRemote = vi.fn()
+const copyFormTemplateVersionRemote = vi.fn()
+const publishFormTemplateVersionById = vi.fn()
+const createGeneralProgramFormBinding = vi.fn()
+const updateGeneralProgramFormBinding = vi.fn()
 
 vi.mock('@/features/template/api/admin-form-templates-service', () => ({
   shouldUseFormsSurveysRemoteApi: () => true,
+  publishFormTemplateVersionById: (...args: unknown[]) => publishFormTemplateVersionById(...args),
 }))
 
 vi.mock('@/features/program/general/api/general-programs-remote-capabilities', () => ({
@@ -30,9 +35,17 @@ vi.mock('@/features/program/ujat/api/capabilities', () => ({
   shouldUseRemoteApi: () => false,
 }))
 
+vi.mock('@/features/template/api/form-templates-api-client', () => ({
+  copyFormTemplateVersionRemote: (...args: unknown[]) => copyFormTemplateVersionRemote(...args),
+}))
+
 vi.mock('@/features/program/general/api/admin-general-programs-service', () => ({
   fetchGeneralProgramFormBindings: (...args: unknown[]) =>
     fetchGeneralProgramFormBindings(...args),
+  createGeneralProgramFormBinding: (...args: unknown[]) =>
+    createGeneralProgramFormBinding(...args),
+  updateGeneralProgramFormBinding: (...args: unknown[]) =>
+    updateGeneralProgramFormBinding(...args),
 }))
 
 vi.mock('@/features/program/general/api/application-counts-api-client', () => ({
@@ -347,5 +360,41 @@ describe('신청 양식 수정 진입 preflight', () => {
     })
     expect(fetchProgramApplicationCountsRemote).toHaveBeenCalledWith('170100')
     expect(showAlert).not.toHaveBeenCalled()
+  })
+
+  it('바인딩 0개이고 신청이 있는 1사1교는 counts GET 후 알림만 뜨고 쓰기는 없다', async () => {
+    fetchGeneralProgramFormBindings.mockResolvedValue([])
+    fetchProgramApplicationCountsRemote.mockResolvedValue([
+      { programId: 170100, recruitmentId: 41, targetType: 'ORGANIZATION', totalCount: 1 },
+      { programId: 170100, recruitmentId: null, targetType: 'ORGANIZATION', totalCount: 1 },
+    ])
+
+    const program = {
+      ...companySchoolProgram,
+      programRecruitments: [
+        {
+          id: 41,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+        },
+        { id: 42, recruitmentType: 'INSTRUCTOR' },
+      ],
+    } as Program
+
+    render(<ApplicationEditFormHarness program={program} tab="institutions" />)
+    fireEvent.click(screen.getByRole('button', { name: '양식 수정' }))
+
+    await waitFor(() => {
+      expect(fetchProgramApplicationCountsRemote).toHaveBeenCalledWith('170100')
+    })
+    expect(showAlert).toHaveBeenCalledWith({
+      title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
+      content: '모집 시작 이후에는 신청 양식을 수정할 수 없습니다.',
+    })
+    expect(screen.queryByText('application-form-editor')).toBeNull()
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
+    expect(createGeneralProgramFormBinding).not.toHaveBeenCalled()
+    expect(updateGeneralProgramFormBinding).not.toHaveBeenCalled()
   })
 })
