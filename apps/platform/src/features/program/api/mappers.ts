@@ -896,6 +896,23 @@ function mapPortalEducationScheduleCards(
   }))
 }
 
+function mapEventScheduleCards(
+  eventSchedules: readonly ProgramEventSchedule[],
+): ProgramLabeledValue[] {
+  return eventSchedules.flatMap((item, index) => {
+    const name = item.name.trim()
+    const dateLabel = item.dateLabel.trim() && item.dateLabel !== '-' ? item.dateLabel.trim() : ''
+    const value = [name, dateLabel].filter(Boolean).join(' · ')
+    if (!value) return []
+    return [
+      {
+        label: educationScheduleDetailCardLabel(index, eventSchedules.length),
+        value,
+      },
+    ]
+  })
+}
+
 /**
  * 봉사자 모집 행 `volunteerInterviewSchedule` → `ProgramDetail` 필드.
  * 프로그램 상세 세부내용에는 비노출(신청 폼·후속 연동용).
@@ -1168,6 +1185,8 @@ export function mapPortalProgramDetail(
     hasProjectedEducationProgress(remote) || isGeneralEducationProgressProgram(programType)
   const legacySessions = mapSessions(remote.curricula)
   const legacyEventSchedules = legacySessions.length > 0 ? [] : mapEventSchedules(remote.schedules)
+  const isUjatDetailCase = detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer'
+  const ujatRuntimeSchedules = isUjatDetailCase ? mapEventSchedules(remote.schedules) : []
   const rowVisibility: EducationProgressRowVisibility = {
     showEducationForm: perScheduleEducationForm || !optionalText(remote.educationFormLabel),
     showAssignmentPeriod: isTrainedTeacher,
@@ -1179,7 +1198,7 @@ export function mapPortalProgramDetail(
         rowVisibility
       )
     : legacySessions
-  const eventSchedules = usesEducationProgressFields
+  const projectedScheduleDetails = usesEducationProgressFields
     ? mapPortalScheduleDetails(
         remote.scheduleDetails,
         remote.educationStructure,
@@ -1187,6 +1206,13 @@ export function mapPortalProgramDetail(
         rowVisibility
       )
     : legacyEventSchedules
+  // UJAT's published schedule rows are the canonical half/pre-education/closing
+  // schedule source. A projected common-info structure may be present as well,
+  // but it must not hide the actual program_schedule rows returned by the portal API.
+  const eventSchedules =
+    isUjatDetailCase && ujatRuntimeSchedules.length > 0
+      ? ujatRuntimeSchedules
+      : projectedScheduleDetails
   const educationStructure = usesEducationProgressFields
     ? remote.educationStructure === 'schedule'
       ? 'schedule'
@@ -1354,21 +1380,12 @@ export function mapPortalProgramDetail(
           ? recruitmentRows
           : remote.recruitments,
     ),
-    educationSchedules: usesEducationProgressFields
-      ? mapPortalEducationScheduleCards(remote, educationScheduleLines)
-      : eventSchedules.flatMap((item, index) => {
-          const name = item.name.trim()
-          const dateLabel =
-            item.dateLabel.trim() && item.dateLabel !== '-' ? item.dateLabel.trim() : ''
-          const value = [name, dateLabel].filter(Boolean).join(' · ')
-          if (!value) return []
-          return [
-            {
-              label: educationScheduleDetailCardLabel(index, eventSchedules.length),
-              value,
-            },
-          ]
-        }),
+    educationSchedules:
+      isUjatDetailCase && ujatRuntimeSchedules.length > 0
+        ? mapEventScheduleCards(eventSchedules)
+        : usesEducationProgressFields
+          ? mapPortalEducationScheduleCards(remote, educationScheduleLines)
+          : mapEventScheduleCards(eventSchedules),
     ...(volunteerInterviewSchedule ? { volunteerInterviewSchedule } : {}),
     extraSections,
     contactValue: contactValue(

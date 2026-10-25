@@ -279,6 +279,71 @@ assert.deepEqual(
   ],
 )
 
+// UJAT can carry the generic education-progress projection while its public
+// half/pre-education/closing rows still arrive through schedules[]. The latter
+// must remain visible instead of being discarded by the projection branch.
+const ujatProjectedWithRuntimeSchedules = mapPortalProgramDetail({
+  programId: 182200,
+  title: 'UJAT 투영 정보와 공개 일정',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'PARTICIPANT', applicationTypes: ['ORGANIZATION'] }],
+  educationStructure: 'curriculum',
+  sessionRound: 'multi',
+  educationScheduleLines: [],
+  scheduleDetails: [],
+  schedules: [
+    {
+      scheduleName: '기관 교육',
+      scheduleKind: 'EDUCATION',
+      term: 'FIRST_HALF',
+      startAt: '2026-04-10T01:00:00Z',
+      endAt: '2026-04-10T03:00:00Z',
+    },
+    {
+      scheduleName: '봉사자 사전교육',
+      scheduleKind: 'PRE_EDUCATION',
+      startAt: '2026-03-20T01:00:00Z',
+      endAt: '2026-03-20T02:00:00Z',
+    },
+    {
+      scheduleName: '해단식',
+      scheduleKind: 'CLOSING',
+      startAt: '2026-12-20T01:00:00Z',
+      endAt: '2026-12-20T02:00:00Z',
+    },
+  ],
+})
+assert.ok(ujatProjectedWithRuntimeSchedules)
+assert.deepEqual(
+  ujatProjectedWithRuntimeSchedules.eventSchedules.map(schedule => schedule.name),
+  ['교육 전반 기관 교육', '사전교육 봉사자 사전교육', '수료·폐회 해단식'],
+)
+assert.equal(ujatProjectedWithRuntimeSchedules.educationSchedules.length, 3)
+
+const ujatVolunteerProjectedWithRuntimeSchedules = mapPortalProgramDetail({
+  programId: 182201,
+  title: 'UJAT 봉사자 투영 정보와 공개 일정',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'VOLUNTEER', applicationTypes: ['VOLUNTEER'] }],
+  educationStructure: 'curriculum',
+  educationScheduleLines: [],
+  schedules: [
+    {
+      scheduleName: '봉사자 교육 진행',
+      scheduleKind: 'EDUCATION',
+      term: 'SECOND_HALF',
+      startAt: '2026-09-10T01:00:00Z',
+      endAt: '2026-09-10T03:00:00Z',
+    },
+  ],
+})
+assert.ok(ujatVolunteerProjectedWithRuntimeSchedules)
+assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.detailCase, 'ujat-volunteer')
+assert.equal(
+  ujatVolunteerProjectedWithRuntimeSchedules.eventSchedules[0]?.name,
+  '교육 후반 봉사자 교육 진행',
+)
+
 const generalCurriculum = mapPortalProgramDetail({
   programId: 186021,
   programType: 'GENERAL_INDIVIDUAL',
