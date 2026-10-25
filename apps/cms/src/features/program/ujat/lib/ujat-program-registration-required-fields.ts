@@ -39,17 +39,9 @@ import {
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { pickUjatVolunteerRecruitGeneralStoreSidecar } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
-import {
-  EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE,
-  type UjatHalfMultiScheduleBundle,
-  ujatHalfScheduleOverlayKeys,
-} from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
-import {
-  type UjatRegionCapacityBySemesterState,
-  UJAT_REGION_CAPACITY_OVERLAY_KEY,
-} from '@/features/program/ujat/lib/ujat-region-capacity-types'
+import { type UjatRegionCapacityBySemesterState } from '@/features/program/ujat/lib/ujat-region-capacity-types'
+import { cloneUjatRegionCapacityState } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
-import { UJAT_WAGE_OVERLAY_PAYMENT_KEY } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import {
   getUjatRecruitInstitutionOverlayRecord,
@@ -61,9 +53,12 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { getSelectedOperationalTemplateCode } from '@/features/program/shared/lib/step-template-selection'
+import type { DefaultValues } from 'react-hook-form'
 import type { UjatBasicInfoFormValues } from './ujat-basic-info-form'
 import type { UjatTypedDetail, UjatTypedScheduleRow } from '@/features/program/ujat/api/typed-detail-client'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+
+type UjatBasicInfoValidationValues = DefaultValues<UjatBasicInfoFormValues>
 
 function isEmptyText(value: unknown): boolean {
   return typeof value !== 'string' || value.trim() === ''
@@ -102,32 +97,8 @@ function readText(overlay: Record<string, unknown>, key: string, fallback = ''):
   return typeof raw === 'string' ? raw : ''
 }
 
-function readBoolean(overlay: Record<string, unknown>, key: string, fallback: boolean): boolean {
-  const raw = overlay[key]
-  if (raw === undefined) return fallback
-  return raw === true
-}
-
 function isPublished(value: unknown): boolean {
   return value === true || value === 'published'
-}
-
-function isMultiScheduleBundleIncomplete(value: unknown): boolean {
-  const bundle =
-    value != null && typeof value === 'object'
-      ? (value as UjatHalfMultiScheduleBundle)
-      : EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE
-  const rowIds = Array.isArray(bundle.rowIds) && bundle.rowIds.length > 0 ? bundle.rowIds : [0]
-  for (const rowId of rowIds) {
-    const key = String(rowId)
-    const regions = bundle.regionByRow?.[key]
-    const date = bundle.dateByRow?.[key]
-    if (!Array.isArray(regions) || regions.length === 0 || regions.every(r => isEmptyText(r))) {
-      return true
-    }
-    if (isEmptyText(date)) return true
-  }
-  return false
 }
 
 function typedHalfPlan(detail: UjatTypedDetail | undefined, half: 'h1' | 'h2') {
@@ -160,24 +131,23 @@ function pushReason(reasons: string[], condition: boolean, key: string): void {
 /** UJAT 등록 공통정보 — 미입력 필수 필드 진단 키 목록 */
 export function listIncompleteUjatProgramRegistrationRequiredFields(
   overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord(),
-  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  basicInfo?: UjatBasicInfoValidationValues,
   typedDetail?: UjatTypedDetail
 ): string[] {
+  void overlay
   const reasons: string[] = []
   {
     const p = 'ujat.basicInfo'
-    const basicText = (key: keyof UjatBasicInfoFormValues, overlayKey: string, fallback = '') =>
-      basicInfo != null
-        ? typeof basicInfo[key] === 'string'
-          ? String(basicInfo[key])
-          : fallback
-        : readText(overlay, overlayKey, fallback)
-    const basicBoolean = (key: keyof UjatBasicInfoFormValues, overlayKey: string, fallback: boolean) =>
-      basicInfo != null ? basicInfo[key] === true : readBoolean(overlay, overlayKey, fallback)
-    const basicRange =
-      basicInfo != null
-        ? { start: basicInfo.startDate, end: basicInfo.endDate }
-        : read(overlay, `${p}.operationRangeSeal`)
+    const useTypedBasic = basicInfo != null
+    const basicText = (key: keyof UjatBasicInfoFormValues, _overlayKey: string, fallback = '') => {
+      if (!useTypedBasic) return ''
+      return typeof basicInfo[key] === 'string' ? String(basicInfo[key]) : fallback
+    }
+    const basicBoolean = (key: keyof UjatBasicInfoFormValues, _overlayKey: string, _fallback: boolean) =>
+      useTypedBasic ? basicInfo[key] === true : false
+    const basicRange = useTypedBasic
+      ? { start: basicInfo.startDate, end: basicInfo.endDate }
+      : undefined
     const participantTypes =
       basicInfo?.generalParticipantTypes != null
         ? new Set(basicInfo.generalParticipantTypes)
@@ -223,8 +193,8 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
       'basicInfo.sponsorId'
     )
     const sponsorId = basicText('sponsorId', `${p}.sponsorId`, UJAT_SPONSOR_ALL_VALUE)
-    if (sponsorId !== UJAT_SPONSOR_ALL_VALUE) {
-      const managerIdsRaw = basicInfo?.sponsorManagerContactIds ?? read(overlay, `${p}.sponsorContactIds`)
+    if (useTypedBasic && sponsorId !== UJAT_SPONSOR_ALL_VALUE) {
+      const managerIdsRaw = basicInfo?.sponsorManagerContactIds
       const managerIds = Array.isArray(managerIdsRaw)
         ? managerIdsRaw.map(String).map(id => id.trim()).filter(Boolean)
         : []
@@ -253,9 +223,7 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
     )
     pushReason(
       reasons,
-      basicInfo != null
-        ? basicInfo.partnerInvolvement == null
-        : isEmptyText(readText(overlay, `${p}.partnerInvolvement`, 'no')),
+      !useTypedBasic || basicInfo.partnerInvolvement == null,
       'basicInfo.partnerInvolvement'
     )
     pushReason(
@@ -264,19 +232,20 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
       'basicInfo.ipsCategory'
     )
 
-    const kpiP = 'ujat.kpi'
-    pushReason(reasons, isEmptyNumber(read(overlay, `${kpiP}.participantCount`)), 'kpi.participantCount')
-    pushReason(reasons, isEmptyNumber(read(overlay, `${kpiP}.volunteer`)), 'kpi.volunteer')
-    pushReason(reasons, isEmptyNumber(read(overlay, `${kpiP}.dispatchedSchool`)), 'kpi.dispatchedSchool')
-    pushReason(reasons, isEmptyNumber(read(overlay, `${kpiP}.dispatchedClass`)), 'kpi.dispatchedClass')
+    const kpiValue = (rhfKey: keyof UjatBasicInfoFormValues): unknown =>
+      useTypedBasic ? basicInfo[rhfKey] : undefined
+    pushReason(reasons, isEmptyNumber(kpiValue('kpiFinalParticipants')), 'kpi.participantCount')
+    const volunteerSelected = participantTypes
+      ? participantTypes.has('volunteer')
+      : false
+    if (volunteerSelected) {
+      pushReason(reasons, isEmptyNumber(kpiValue('kpiVolunteerCount')), 'kpi.volunteer')
+    }
+    pushReason(reasons, isEmptyNumber(kpiValue('kpiFinalSchools')), 'kpi.dispatchedSchool')
+    pushReason(reasons, isEmptyNumber(kpiValue('kpiFinalClasses')), 'kpi.dispatchedClass')
 
-    const payment = read(overlay, UJAT_WAGE_OVERLAY_PAYMENT_KEY)
-    if (payment !== undefined) {
-      pushReason(
-        reasons,
-        !Array.isArray(payment) || payment.length === 0,
-        'wage.paymentItemValues'
-      )
+    if (useTypedBasic && basicInfo.wagePaymentItemIds != null && !Array.isArray(basicInfo.wagePaymentItemIds)) {
+      pushReason(reasons, true, 'wage.paymentItemValues')
     }
 
     for (const half of ['h1', 'h2'] as const) {
@@ -304,35 +273,16 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
         )
         continue
       }
-      const keys = ujatHalfScheduleOverlayKeys(half)
-      pushReason(
-        reasons,
-        isEmptyText(readText(overlay, keys.preName, '사전교육(발대식)')),
-        `${half}.pre.name`
-      )
-      pushReason(
-        reasons,
-        isMultiScheduleBundleIncomplete(read(overlay, keys.preMulti)),
-        `${half}.pre.schedule`
-      )
-      pushReason(reasons, isEmptyText(read(overlay, keys.eventName)), `${half}.event.name`)
-      pushReason(
-        reasons,
-        isRangeSealIncomplete(read(overlay, keys.eventRange)),
-        `${half}.event.range`
-      )
-      pushReason(
-        reasons,
-        isMultiScheduleBundleIncomplete(read(overlay, keys.closingMulti)),
-        `${half}.closing.multi`
-      )
+      pushReason(reasons, true, `${half}.pre.name`)
+      pushReason(reasons, true, `${half}.pre.schedule`)
+      pushReason(reasons, true, `${half}.event.name`)
+      pushReason(reasons, true, `${half}.event.range`)
+      pushReason(reasons, true, `${half}.closing.multi`)
     }
 
-    const raw = overlay[UJAT_REGION_CAPACITY_OVERLAY_KEY]
-    const capacity =
-      raw != null && typeof raw === 'object'
-        ? (raw as UjatRegionCapacityBySemesterState)
-        : { h1: {}, h2: {} }
+    const capacity: UjatRegionCapacityBySemesterState = cloneUjatRegionCapacityState(
+      basicInfo?.ujatRegionCapacity
+    )
     for (const half of ['h1', 'h2'] as const) {
       for (const region of listUjatEducationRegionsActive()) {
         const row = capacity[half]?.[region.label]
@@ -351,7 +301,7 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
 
 export function describeIncompleteUjatProgramRegistrationRequiredFields(
   overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord(),
-  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  basicInfo?: UjatBasicInfoValidationValues,
   typedDetail?: UjatTypedDetail
 ): string | null {
   return listIncompleteUjatProgramRegistrationRequiredFields(overlay, basicInfo, typedDetail)[0] ?? null
@@ -359,7 +309,7 @@ export function describeIncompleteUjatProgramRegistrationRequiredFields(
 
 export function hasIncompleteUjatProgramRegistrationRequiredFields(
   overlay: Record<string, unknown> = getUjatProgramRegistrationOverlayRecord(),
-  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  basicInfo?: UjatBasicInfoValidationValues,
   typedDetail?: UjatTypedDetail
 ): boolean {
   return describeIncompleteUjatProgramRegistrationRequiredFields(overlay, basicInfo, typedDetail) != null
@@ -543,7 +493,7 @@ export function hasIncompleteUjatProgramRecruitmentRequiredFields(): boolean {
   return describeIncompleteUjatProgramRecruitmentRequiredFields() != null
 }
 
-type TypedRecruitmentValidationInput = {
+export type TypedRecruitmentValidationInput = {
   institution?: Partial<ProgramDetailEditFormValues>
   volunteerH1?: Partial<ProgramDetailEditFormValues>
   volunteerH2?: Partial<ProgramDetailEditFormValues>
@@ -689,7 +639,7 @@ function selectedUjatRecruitmentValidationTemplateCodes(): UjatRecruitmentValida
 
 /** 등록 위저드 complete gate — 공통 + 모집만. 신청(template) overlay는 검사하지 않는다. */
 export function hasIncompleteUjatProgramRegistrationWizardRequiredFields(
-  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  basicInfo?: UjatBasicInfoValidationValues,
   typedDetail?: UjatTypedDetail,
   typedRecruitment?: TypedRecruitmentValidationInput
 ): boolean {
@@ -701,13 +651,13 @@ export function hasIncompleteUjatProgramRegistrationWizardRequiredFields(
 }
 
 export function listIncompleteUjatProgramRegistrationWizardRequiredFields(
-  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  basicInfo?: UjatBasicInfoValidationValues,
   typedDetail?: UjatTypedDetail,
   typedRecruitment?: TypedRecruitmentValidationInput
 ): string[] {
   return [
     ...listIncompleteUjatProgramRegistrationRequiredFields(
-      getUjatProgramRegistrationOverlayRecord(),
+      {},
       basicInfo,
       typedDetail
     ),
@@ -720,7 +670,7 @@ export function listIncompleteUjatProgramRegistrationWizardRequiredFields(
 }
 
 export function describeIncompleteUjatProgramRegistrationWizardRequiredFields(
-  basicInfo?: Partial<UjatBasicInfoFormValues>,
+  basicInfo?: UjatBasicInfoValidationValues,
   typedDetail?: UjatTypedDetail,
   typedRecruitment?: TypedRecruitmentValidationInput
 ): string | null {

@@ -121,6 +121,7 @@ function UjatProgramRegistrationFullpageModalInner({
 
   const initialStep = useMemo(() => {
     const raw = searchParams.get(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    if (raw == null) return undefined
     return normalizeUjatProgramRegistrationStepKey(raw)
   }, [searchParams])
 
@@ -136,10 +137,11 @@ function UjatProgramRegistrationFullpageModalInner({
   useEffect(() => {
     if (!open) return
     if (searchParams.has(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)) return
+    if (!skipDraftRestore) return
     const next = new URLSearchParams(searchParams)
     next.set(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
     setSearchParams(next, { replace: true })
-  }, [open, searchParams, setSearchParams])
+  }, [open, searchParams, setSearchParams, skipDraftRestore])
 
   useEffect(() => {
     if (open) return
