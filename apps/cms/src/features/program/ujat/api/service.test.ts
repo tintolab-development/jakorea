@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   fetchSponsors: vi.fn(),
   fetchTypedDetail: vi.fn(),
   replaceTypedDetail: vi.fn(),
+  syncHalves: vi.fn(),
 }))
 
 vi.mock(
@@ -80,6 +81,10 @@ vi.mock('@/features/program/shared/lib/merge-program-sponsor-assignments', () =>
 vi.mock('@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media', () => ({
   awaitRecruitDetailMediaUploads: (...args: unknown[]) => mocks.awaitMediaUploads(...args),
   bindUjatRecruitDetailMediaToRows: (...args: unknown[]) => mocks.bindMedia(...args),
+}))
+
+vi.mock('./ujat-typed-detail-sync', () => ({
+  syncStoredUjatTypedHalves: (...args: unknown[]) => mocks.syncHalves(...args),
 }))
 
 import { create, update } from './service'
@@ -254,5 +259,76 @@ describe('ujat API policy', () => {
         }),
       })
     )
+  })
+})
+
+describe('UJAT typed-detail 반기 동기화 (part4 step7)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.shouldUseRemoteApi.mockReturnValue(true)
+    mocks.fromDetail.mockReturnValue({ id: '186300' })
+    mocks.syncHalves.mockResolvedValue({ sentHalves: [], revision: 1 })
+  })
+
+  it('typed 가 없는 기존 프로그램은 typed-detail 을 부르지 않는다(backfill 금지)', async () => {
+    mocks.fetchProgram.mockResolvedValue({
+      id: '186300',
+      serviceDetailJson: JSON.stringify({
+        registration: { overlay: { 'ujat.h1.event.name': '기존' } },
+      }),
+    })
+    await update(
+      '186300',
+      {
+        id: '186300',
+        ujatRegistrationOverlay: { 'ujat.h1.event.name': '수정' },
+      } as unknown as Program,
+      {
+        title: '수정',
+      }
+    )
+    expect(mocks.syncHalves).not.toHaveBeenCalled()
+    expect(mocks.updateProgram).toHaveBeenCalledOnce()
+  })
+
+  it('typed 가 저장된 프로그램은 프로그램 PATCH 전에 반기 동기화를 먼저 한다', async () => {
+    mocks.fetchProgram.mockResolvedValue({
+      id: '186300',
+      serviceDetailJson: JSON.stringify({
+        registration: { overlay: { 'ujat.h1.event.name': '기존' } },
+        ujatTypedDetail: { schemaVersion: 1, halfPlans: [] },
+      }),
+    })
+    await update(
+      '186300',
+      {
+        id: '186300',
+        ujatRegistrationOverlay: { 'ujat.h1.event.name': '수정' },
+      } as unknown as Program,
+      {
+        title: '수정',
+      }
+    )
+    expect(mocks.syncHalves).toHaveBeenCalledWith('186300', { 'ujat.h1.event.name': '수정' })
+    expect(mocks.syncHalves.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.updateProgram.mock.invocationCallOrder[0]
+    )
+  })
+
+  it('반기 동기화가 409 로 실패하면 프로그램 PATCH 를 보내지 않는다', async () => {
+    mocks.fetchProgram.mockResolvedValue({
+      id: '186300',
+      serviceDetailJson: JSON.stringify({ ujatTypedDetail: { schemaVersion: 1, halfPlans: [] } }),
+    })
+    mocks.syncHalves.mockRejectedValue(
+      Object.assign(new Error('conflict'), { response: { status: 409 } })
+    )
+    await expect(
+      update('186300', {
+        id: '186300',
+        ujatRegistrationOverlay: { 'ujat.h1.event.name': '수정' },
+      } as unknown as Program)
+    ).rejects.toThrow('conflict')
+    expect(mocks.updateProgram).not.toHaveBeenCalled()
   })
 })

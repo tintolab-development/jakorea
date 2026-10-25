@@ -64,10 +64,7 @@ export type GeneralProgramParticipantType =
   | 'volunteer'
 
 /** 일반 프로그램 등록 폼 — 설문 진행 항목 키 (등록 양식·상세 LNB 공통 3종) */
-export type GeneralProgramSurveyMenuKey =
-  | 'survey'
-  | 'satisfaction'
-  | 'lecture_evaluation'
+export type GeneralProgramSurveyMenuKey = 'survey' | 'satisfaction' | 'lecture_evaluation'
 
 /** 일반 프로그램 대분류 — 등록 폼 참여자 유형 [기관] / [개인] */
 export type GeneralProgramAudienceKind = 'organization' | 'individual'
@@ -688,6 +685,12 @@ export interface Program {
   generalProgramSessionRound?: GeneralProgramSessionRoundKind
   /** 일반 프로그램 상세 공통 정보 확장 필드 */
   generalCommonInfo?: GeneralProgramCommonInfoExtension
+  /**
+   * 프로그램 GET `serviceDetailJson.generalCommonInfo.volunteerInterviewScheduleInfo` 원본 — 상세 「면접 진행 가능 일정」 표시 SSOT.
+   * BE가 봉사 행 typed `interviewConfig`(typed 없으면 overlay)로 만든다. `null` = 서버 응답에 객체 없음.
+   * `undefined` = 서버 조회가 아닌 Program(등록 중 미리보기·mock) — 이때만 overlay 계산 표시를 쓴다.
+   */
+  volunteerInterviewScheduleInfoFromServer?: GeneralProgramVolunteerInterviewScheduleInfo | null
   /** UJAT 등록 폼 overlay — 상세 화면 SSOT (`serviceDetailJson.registration.overlay`) */
   ujatRegistrationOverlay?: Record<string, unknown>
   /**

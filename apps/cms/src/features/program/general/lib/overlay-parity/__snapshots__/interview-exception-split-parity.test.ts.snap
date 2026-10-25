@@ -1,0 +1,175 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`part4-8 봉사 면접 예외 블록 순수 함수 parity > list / listFilled / read — namespace 1`] = `
+{
+  "empty": [],
+  "h1Blocks": [
+    {
+      "appliedUnavailableDates": undefined,
+      "blockId": 5,
+      "exceptionDate": "2026-04-02T00:00:00.000Z",
+      "exclusionState": undefined,
+      "interviewTime": undefined,
+      "interviewTimeRange": undefined,
+      "selectedSlotKeys": [
+        "1793667600000-1793669400000",
+      ],
+      "timeUnit": undefined,
+    },
+    {
+      "appliedUnavailableDates": undefined,
+      "blockId": 6,
+      "exceptionDate": "",
+      "exclusionState": undefined,
+      "interviewTime": undefined,
+      "interviewTimeRange": undefined,
+      "selectedSlotKeys": undefined,
+      "timeUnit": undefined,
+    },
+  ],
+  "h1Filled": [
+    5,
+  ],
+  "h1Ids": [
+    5,
+    6,
+  ],
+  "h2Filled": [
+    7,
+  ],
+}
+`;
+
+exports[`part4-8 봉사 면접 예외 블록 순수 함수 parity > list / listFilled / read — recruit 기본 prefix 1`] = `
+{
+  "applicationBlocks": [
+    {
+      "appliedUnavailableDates": undefined,
+      "blockId": 9,
+      "exceptionDate": "2026-11-10T00:00:00.000Z",
+      "exclusionState": undefined,
+      "interviewTime": undefined,
+      "interviewTimeRange": undefined,
+      "selectedSlotKeys": undefined,
+      "timeUnit": undefined,
+    },
+  ],
+  "applicationIds": [
+    9,
+  ],
+  "blocks": [
+    {
+      "appliedUnavailableDates": undefined,
+      "blockId": 1730000000001,
+      "exceptionDate": "2026-11-03T00:00:00.000Z",
+      "exclusionState": undefined,
+      "interviewTime": "",
+      "interviewTimeRange": undefined,
+      "selectedSlotKeys": [
+        "1793667600000-1793669400000",
+        "1793671200000-1793673000000",
+      ],
+      "timeUnit": 30,
+    },
+    {
+      "appliedUnavailableDates": undefined,
+      "blockId": 1730000000002,
+      "exceptionDate": null,
+      "exclusionState": undefined,
+      "interviewTime": undefined,
+      "interviewTimeRange": undefined,
+      "selectedSlotKeys": [],
+      "timeUnit": undefined,
+    },
+    {
+      "appliedUnavailableDates": [
+        "2026-11-07",
+      ],
+      "blockId": 1730000000003,
+      "exceptionDate": undefined,
+      "exclusionState": {
+        "weekend": true,
+      },
+      "interviewTime": "14:00",
+      "interviewTimeRange": [
+        "14:00",
+        "15:00",
+      ],
+      "selectedSlotKeys": undefined,
+      "timeUnit": undefined,
+    },
+  ],
+  "filled": [
+    1730000000001,
+    1730000000003,
+  ],
+  "ids": [
+    1730000000001,
+    1730000000002,
+    1730000000003,
+  ],
+}
+`;
+
+exports[`part4-8 봉사 면접 예외 블록 순수 함수 parity > map — 프로그램 저장·표시용 예외 일정 1`] = `
+{
+  "application": [
+    {
+      "blockId": 9,
+      "exceptionDate": "2026.11.10(화)",
+      "exceptionDateIso": "2026-11-10T00:00:00.000Z",
+    },
+  ],
+  "namespaced": [
+    {
+      "availableTimeSlots": "10:00 ~ 10:30",
+      "blockId": 5,
+      "exceptionDate": "2026.04.02(목)",
+      "exceptionDateIso": "2026-04-02T00:00:00.000Z",
+    },
+  ],
+  "recruit": [
+    {
+      "availableTimeSlots": "10:00 ~ 10:30, 11:00 ~ 11:30",
+      "blockId": 1730000000001,
+      "exceptionDate": "2026.11.03(화)",
+      "exceptionDateIso": "2026-11-03T00:00:00.000Z",
+    },
+    {
+      "blockId": 1730000000003,
+    },
+  ],
+}
+`;
+
+exports[`part4-8 봉사 면접 예외 블록 순수 함수 parity > reconcile — 새 id 발급이 없는 경우 1`] = `
+[
+  [],
+  [
+    11,
+    12,
+  ],
+  [
+    11,
+    12,
+  ],
+  [
+    11,
+    12,
+    13,
+  ],
+  [
+    21,
+    22,
+  ],
+  [
+    21,
+    11,
+    12,
+  ],
+  [
+    21,
+    22,
+  ],
+]
+`;

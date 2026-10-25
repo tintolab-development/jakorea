@@ -851,7 +851,7 @@ describe('company-school adapters', () => {
 })
 
 describe('1사1교 serviceDetailJson nested overlay 정본', () => {
-  it('legacy root-only JSON도 화면 overlay로 읽는다', () => {
+  it('legacy root-only JSON은 읽지 않는다(루트 fallback 제거)', () => {
     const parsed = parseCompanySchoolServiceDetailJson(
       JSON.stringify({
         schemaVersion: 1,
@@ -862,10 +862,7 @@ describe('1사1교 serviceDetailJson nested overlay 정본', () => {
         },
       })
     )
-    expect(parsed.registrationOverlay?.['economyRegistration.basicInfo.publicProgramTitle']).toBe(
-      '구버전 공고명'
-    )
-    expect(parsed.registrationOverlay?.['economyRegistration.wageInfo.paymentItemValues']).toEqual(['p-1'])
+    expect(parsed.registrationOverlay).toBeUndefined()
   })
 
   it('저장 JSON에 루트 registrationOverlay가 없다', () => {

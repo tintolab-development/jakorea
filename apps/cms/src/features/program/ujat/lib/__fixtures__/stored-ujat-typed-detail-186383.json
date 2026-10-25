@@ -1,0 +1,184 @@
+{
+  "_comment": "186383 GET /api/admin/programs/{id} serviceDetailJson 의 반기 overlay 키와 ujatTypedDetail(BE Jackson 배열 날짜) 원문. 개인정보·나머지 필드 제외(2026-10-25 진단 응답 기준).",
+  "registrationOverlay": {
+    "ujat.h1.pre.name": "상반기 사전교육(발대식)",
+    "ujat.h1.pre.delivery": "online",
+    "ujat.h1.event.name": "상반기 학교 경제교육",
+    "ujat.h1.event.range": {
+      "start": "2027-03-18T15:00:00.000Z",
+      "end": "2027-06-24T15:00:00.000Z"
+    },
+    "ujat.h1.event.delivery": "offline",
+    "ujat.h1.closing.name": "상반기 해단식",
+    "ujat.h1.closing.delivery": "online",
+    "ujat.h1.eduSchedule.exclusion": {
+      "excludeNone": false,
+      "excludeSaturday": false,
+      "excludeSunday": false,
+      "excludeHoliday": false
+    },
+    "ujat.h1.eduSchedule.unavailableDates": [
+      "2027-03-26",
+      "2027-04-09"
+    ],
+    "ujat.h2.pre.name": "하반기 사전교육(발대식)",
+    "ujat.h2.pre.delivery": "online",
+    "ujat.h2.event.name": "하반기 학교 경제교육",
+    "ujat.h2.event.range": {
+      "start": "2027-09-09T15:00:00.000Z",
+      "end": "2027-11-25T15:00:00.000Z"
+    },
+    "ujat.h2.event.delivery": "offline",
+    "ujat.h2.closing.name": "하반기 해단식",
+    "ujat.h2.closing.delivery": "online",
+    "ujat.h2.eduSchedule.exclusion": {
+      "excludeNone": false,
+      "excludeSaturday": false,
+      "excludeSunday": false,
+      "excludeHoliday": true
+    },
+    "ujat.h2.eduSchedule.unavailableDates": []
+  },
+  "ujatTypedDetail": {
+    "schemaVersion": 1,
+    "halfPlans": [
+      {
+        "semesterType": "FIRST_HALF",
+        "stages": [
+          {
+            "stage": "PRE_EDUCATION",
+            "rows": [
+              {
+                "rowId": "legacy-FIRST_HALF-PRE_EDUCATION",
+                "displayOrder": 1,
+                "educationName": "상반기 사전교육(발대식)",
+                "educationMethod": "online",
+                "dates": [],
+                "scheduleIds": [],
+                "excludedDates": []
+              }
+            ]
+          },
+          {
+            "stage": "MAIN_EDUCATION",
+            "rows": [
+              {
+                "rowId": "legacy-FIRST_HALF-MAIN_EDUCATION",
+                "displayOrder": 1,
+                "educationName": "상반기 학교 경제교육",
+                "educationMethod": "offline",
+                "startDate": [
+                  2027,
+                  3,
+                  19
+                ],
+                "endDate": [
+                  2027,
+                  6,
+                  25
+                ],
+                "dates": [],
+                "scheduleIds": [],
+                "excludedDates": [
+                  [
+                    2027,
+                    3,
+                    26
+                  ],
+                  [
+                    2027,
+                    4,
+                    9
+                  ]
+                ],
+                "exclusion": {
+                  "excludeNone": false,
+                  "excludeSaturday": false,
+                  "excludeSunday": false,
+                  "excludePublicHoliday": false
+                }
+              }
+            ]
+          },
+          {
+            "stage": "POST_EDUCATION",
+            "rows": [
+              {
+                "rowId": "legacy-FIRST_HALF-POST_EDUCATION",
+                "displayOrder": 1,
+                "educationName": "상반기 해단식",
+                "educationMethod": "online",
+                "dates": [],
+                "scheduleIds": [],
+                "excludedDates": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "semesterType": "SECOND_HALF",
+        "stages": [
+          {
+            "stage": "PRE_EDUCATION",
+            "rows": [
+              {
+                "rowId": "legacy-SECOND_HALF-PRE_EDUCATION",
+                "displayOrder": 1,
+                "educationName": "하반기 사전교육(발대식)",
+                "educationMethod": "online",
+                "dates": [],
+                "scheduleIds": [],
+                "excludedDates": []
+              }
+            ]
+          },
+          {
+            "stage": "MAIN_EDUCATION",
+            "rows": [
+              {
+                "rowId": "legacy-SECOND_HALF-MAIN_EDUCATION",
+                "displayOrder": 1,
+                "educationName": "하반기 학교 경제교육",
+                "educationMethod": "offline",
+                "startDate": [
+                  2027,
+                  9,
+                  10
+                ],
+                "endDate": [
+                  2027,
+                  11,
+                  26
+                ],
+                "dates": [],
+                "scheduleIds": [],
+                "excludedDates": [],
+                "exclusion": {
+                  "excludeNone": false,
+                  "excludeSaturday": false,
+                  "excludeSunday": false,
+                  "excludePublicHoliday": true
+                }
+              }
+            ]
+          },
+          {
+            "stage": "POST_EDUCATION",
+            "rows": [
+              {
+                "rowId": "legacy-SECOND_HALF-POST_EDUCATION",
+                "displayOrder": 1,
+                "educationName": "하반기 해단식",
+                "educationMethod": "online",
+                "dates": [],
+                "scheduleIds": [],
+                "excludedDates": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,361 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BE 후속 parity (part6) — 모집 행 저장 후 재조회 병합 > patch 의 overlay 계산 표시 객체 vs 재조회 서버 표시 객체 1`] = `
+{
+  "availableTimeSlots": "10:00 ~ 10:30",
+  "exceptions": [
+    {
+      "availableTimeSlots": "14:00 ~ 14:30",
+      "exceptionDateIso": "2026-12-08",
+    },
+  ],
+  "periodEndDate": "2026-12-20",
+  "periodStartDate": "2026-12-07",
+  "recurringUnavailable": "토요일, 일요일",
+  "specificUnavailableDateIsos": [
+    "2026-12-15",
+  ],
+}
+`;
+
+exports[`BE 후속 parity (part6) — 상세 면접 일정 표시 > typed null 구 프로그램 — 서버 표시 객체는 overlay 기준 1`] = `
+{
+  "availableTimeSlots": "10:00 ~ 10:30, 10:30 ~ 11:00",
+  "exceptions": [
+    {
+      "availableTimeSlots": "14:00 ~ 14:30",
+      "blockId": 1,
+      "exceptionDate": "2026.12.09(수)",
+      "exceptionDateIso": "2026-12-09",
+    },
+  ],
+  "recurringUnavailable": "토요일, 일요일, 공휴일",
+  "specificUnavailableDates": "2026.12.10(목)",
+}
+`;
+
+exports[`BE 후속 parity (part6) — 상세 면접 일정 표시 > typed 빈 객체 저장 — 서버 표시 객체는 기간만 1`] = `
+{
+  "availableTimeSlots": "-",
+  "exceptions": [],
+  "recurringUnavailable": "-",
+  "specificUnavailableDates": "-",
+}
+`;
+
+exports[`BE 후속 parity (part6) — 상세 면접 일정 표시 > typed(12/15) ≠ overlay(12/10), 서버 표시 객체는 typed 기준 1`] = `
+{
+  "availableTimeSlots": "10:00 ~ 10:30",
+  "exceptions": [
+    {
+      "availableTimeSlots": "14:00 ~ 14:30",
+      "blockId": 1,
+      "exceptionDate": "2026.12.08(화)",
+      "exceptionDateIso": "2026-12-08",
+    },
+  ],
+  "recurringUnavailable": "토요일, 일요일",
+  "specificUnavailableDates": "2026.12.15(화)",
+}
+`;
+
+exports[`BE 후속 parity (part6) — 생성 본문 > 일반 개인 + 봉사 면접 OFF 1`] = `
+{
+  "overlayInterviewKeys": {},
+  "programType": "GENERAL_INDIVIDUAL",
+  "recruitments": [
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "INDIVIDUAL",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990012,
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "PARTICIPANT",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "INDIVIDUAL",
+    },
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "VOLUNTEER",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990011,
+      "interviewConfig": {
+        "schemaVersion": 1,
+      },
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+}
+`;
+
+exports[`BE 후속 parity (part6) — 생성 본문 > 일반 개인 + 봉사 면접 ON 1`] = `
+{
+  "overlayInterviewKeys": {
+    "recruit.volunteer.interview.exception.1765000000000.interviewTimeRange": [
+      "2026-12-09T05:00:00.000Z",
+      "2026-12-09T06:00:00.000Z",
+    ],
+    "recruit.volunteer.interview.exception.1765000000000.timeUnit": "30",
+    "recruit.volunteer.interview.interviewTime": "2026-12-07T01:00:00.000Z",
+    "recruit.volunteer.interviewMethod": "online",
+  },
+  "programType": "GENERAL_INDIVIDUAL",
+  "recruitments": [
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "INDIVIDUAL",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990012,
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "PARTICIPANT",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "INDIVIDUAL",
+    },
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "VOLUNTEER",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990011,
+      "interviewConfig": {
+        "appliedUnavailableDates": [
+          "2026-12-10",
+        ],
+        "exceptions": [
+          {
+            "exceptionDate": "2026-12-09",
+            "id": "1765000000000",
+            "selectedSlotKeys": [
+              "1796792400000-1796794200000",
+            ],
+          },
+        ],
+        "exclusionState": {
+          "excludeHoliday": true,
+          "excludeSaturday": true,
+          "excludeSunday": true,
+        },
+        "interviewTimeRange": [
+          "2026-12-07T01:00:00.000Z",
+          "2026-12-07T03:00:00.000Z",
+        ],
+        "schemaVersion": 1,
+        "selectedSlotKeys": [
+          "1796605200000-1796607000000",
+          "1796607000000-1796608800000",
+        ],
+        "specificUnavailableDates": [
+          "2026-12-10",
+        ],
+        "timeUnit": 30,
+      },
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+}
+`;
+
+exports[`BE 후속 parity (part6) — 생성 본문 > 일반 기관 + 봉사 면접 OFF 1`] = `
+{
+  "overlayInterviewKeys": {
+    "recruit.volunteer.interviewRequired": "no",
+  },
+  "programType": "GENERAL_ORGANIZATION",
+  "recruitments": [
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "ORGANIZATION",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990002,
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "PARTICIPANT",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "ORGANIZATION",
+    },
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "VOLUNTEER",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990001,
+      "interviewConfig": {
+        "schemaVersion": 1,
+      },
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+}
+`;
+
+exports[`BE 후속 parity (part6) — 생성 본문 > 일반 기관 + 봉사 면접 ON 1`] = `
+{
+  "overlayInterviewKeys": {
+    "recruit.volunteer.interview.exception.1765000000000.interviewTimeRange": [
+      "2026-12-09T05:00:00.000Z",
+      "2026-12-09T06:00:00.000Z",
+    ],
+    "recruit.volunteer.interview.exception.1765000000000.timeUnit": "30",
+    "recruit.volunteer.interview.interviewTime": "2026-12-07T01:00:00.000Z",
+    "recruit.volunteer.interviewMethod": "online",
+    "recruit.volunteer.interviewRequired": "yes",
+  },
+  "programType": "GENERAL_ORGANIZATION",
+  "recruitments": [
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "ORGANIZATION",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990002,
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "PARTICIPANT",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "ORGANIZATION",
+    },
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "VOLUNTEER",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990001,
+      "interviewConfig": {
+        "appliedUnavailableDates": [
+          "2026-12-10",
+        ],
+        "exceptions": [
+          {
+            "exceptionDate": "2026-12-09",
+            "id": "1765000000000",
+            "selectedSlotKeys": [
+              "1796792400000-1796794200000",
+            ],
+          },
+        ],
+        "exclusionState": {
+          "excludeHoliday": true,
+          "excludeSaturday": true,
+          "excludeSunday": true,
+        },
+        "interviewTimeRange": [
+          "2026-12-07T01:00:00.000Z",
+          "2026-12-07T03:00:00.000Z",
+        ],
+        "schemaVersion": 1,
+        "selectedSlotKeys": [
+          "1796605200000-1796607000000",
+          "1796607000000-1796608800000",
+        ],
+        "specificUnavailableDates": [
+          "2026-12-10",
+        ],
+        "timeUnit": 30,
+      },
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+}
+`;

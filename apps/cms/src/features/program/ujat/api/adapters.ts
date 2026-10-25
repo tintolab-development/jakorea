@@ -85,12 +85,20 @@ import {
 import {
   parseRegistrationOverlay,
   parseServiceDetail,
+  readUjatRegistrationOverlayFromProgram,
   parseUjatServiceDetailExtras,
   serializeServiceDetail,
   type RegistrationPersistSnapshot,
   type RegistrationSnapshot,
   type UjatServiceDetailExtras,
 } from './service-detail'
+import {
+  applyStoredUjatTypedHalvesToOverlay,
+  buildUjatTypedDetailForCreate,
+  normalizeUjatTypedDetailForWrite,
+  parseStoredUjatTypedDetail,
+  UJAT_TYPED_DETAIL_ROOT_KEY,
+} from '@/features/program/ujat/lib/ujat-typed-detail'
 import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
 import { ujatHalfScheduleOverlayKeys } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 import { ujatEducationScheduleSettingsOverlayKeys } from '@/features/program/ujat/lib/ujat-education-schedule-settings-types'
@@ -731,7 +739,10 @@ export function fromDetail(
     remarks?: string
     businessField?: string
   }
-  const rawOverlay = parseRegistrationOverlay(dto.serviceDetailJson)
+  const rawOverlay = applyStoredUjatTypedHalvesToOverlay(
+    parseRegistrationOverlay(dto.serviceDetailJson),
+    parseStoredUjatTypedDetail(dto.serviceDetailJson)
+  )
   const timestamp = now()
   const details = parseServiceDetail(dto.serviceDetailJson)
   const extras = parseUjatServiceDetailExtras(dto.serviceDetailJson)
@@ -1382,6 +1393,29 @@ function patchRequest(
   return body
 }
 
+/**
+ * 새 UJAT 프로그램은 반기 계획을 `serviceDetailJson.ujatTypedDetail` 로 함께 만든다(BE 생성 경로가 같은 문서를 저장).
+ * 이후 반기 저장은 typed-detail 반기 PUT 으로 맞춘다. 기존 프로그램 수정 요청에는 넣지 않는다.
+ */
+function withUjatTypedDetailForCreate(
+  serviceDetailJson: string | null | undefined,
+  source: Program
+): string | undefined {
+  if (!serviceDetailJson) return serviceDetailJson ?? undefined
+  try {
+    const parsed: unknown = JSON.parse(serviceDetailJson)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return serviceDetailJson
+    return JSON.stringify({
+      ...(parsed as Record<string, unknown>),
+      [UJAT_TYPED_DETAIL_ROOT_KEY]: normalizeUjatTypedDetailForWrite(
+        buildUjatTypedDetailForCreate(readUjatRegistrationOverlayFromProgram(source))
+      ),
+    })
+  } catch {
+    return serviceDetailJson
+  }
+}
+
 export function toCreateRequest(
   program: Program,
   registration?: RegistrationSnapshot
@@ -1402,7 +1436,7 @@ export function toCreateRequest(
   // programType·serviceDetailJson을 앞에 — DevTools/문서 복사 시 detail 잘림·BE INVALID_VALUE 방지
   return omitNullRecordValues({
     programType: 'UJAT',
-    serviceDetailJson: serviceDetailJson ?? undefined,
+    serviceDetailJson: withUjatTypedDetailForCreate(serviceDetailJson, copySource),
     ...coreWithoutDetail,
     recruitments: withUjatCreateRowCopy(
       withUjatCreateSecondHalfVolunteerRow(coreWithoutDetail.recruitments ?? undefined, copySource),

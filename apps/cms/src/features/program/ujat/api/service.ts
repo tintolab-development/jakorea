@@ -17,6 +17,8 @@ import {
 import type { Program } from '@/types/domain'
 import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
 import { shouldUseRemoteApi } from './capabilities'
+import { parseStoredUjatTypedDetail } from '@/features/program/ujat/lib/ujat-typed-detail'
+import { syncStoredUjatTypedHalves } from './ujat-typed-detail-sync'
 import {
   UJAT_PROGRAM_LIST_PAGE_SIZE,
   toRemoteListParams,
@@ -239,12 +241,13 @@ export async function update(
     ...readUjatRegistrationOverlayFromProgram(program),
     ...(patchOverlay ?? {}),
   }
+  const mergedForTypedHalves = {
+    ...persistedOverlay,
+    ...(registration?.overlay ?? {}),
+    ...editedOverlay,
+  }
   const mergedOverlay = stripUjatTypedLegacyOverlay(
-    stripUjatScheduleLegacyOverlay({
-      ...persistedOverlay,
-      ...(registration?.overlay ?? {}),
-      ...editedOverlay,
-    })
+    stripUjatScheduleLegacyOverlay(mergedForTypedHalves)
   )
   const nextRegistration: RegistrationPersistSnapshot | undefined =
     Object.keys(mergedOverlay).length > 0
@@ -253,6 +256,15 @@ export async function update(
           overlay: mergedOverlay,
         }
       : registration
+  // typed 가 저장된 프로그램만 반기 값을 typed-detail 반기 PUT(expectedRevision)으로 먼저 맞춘다.
+  // 기존 legacy 프로그램은 typed 를 만들지 않는다(서버 overlay fallback 읽기 유지).
+  // 반기 키는 아래 PATCH overlay에서 strip 되므로, 동기화에는 strip 전 값을 넘긴다.
+  if (
+    parseStoredUjatTypedDetail(current.serviceDetailJson) &&
+    Object.keys(mergedForTypedHalves).length > 0
+  ) {
+    await syncStoredUjatTypedHalves(programId, mergedForTypedHalves)
+  }
   const dto = await updateAdminProgramRemote(
     programId,
     toUpdateRequest(program, patch, nextRegistration, {
