@@ -1,4 +1,7 @@
-import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import {
+  formatKoreanPhoneNumber,
+  formatKoreanPhoneNumberPreservingMask,
+} from '@jakorea/domain/shared/korean-phone'
 import {
   PFFormControlCluster,
   PFFormControlSuffix,
@@ -160,17 +163,19 @@ export function ApplyTrainedTeachersBasicInfo({
     <PFFormFieldTable className={styles.root}>
       <PFFormFieldRow type="double">
         <PFFormField label="신청 기관명">
-          <PFTextInput
-            variant="formPage"
-            size="large"
-            width="100%"
-            placeholder={
-              answerKeyPlaceholders && schoolNameLocked ? 'schoolName' : '로그인 교사의 소속 학교'
-            }
-            value={schoolDisplay}
-            disabled={schoolNameLocked}
-            onValueChange={next => patch({ schoolName: next })}
-          />
+          <span data-field="schoolName">
+            <PFTextInput
+              variant="formPage"
+              size="large"
+              width="100%"
+              placeholder={
+                answerKeyPlaceholders && schoolNameLocked ? 'schoolName' : '로그인 교사의 소속 학교'
+              }
+              value={schoolDisplay}
+              disabled={schoolNameLocked}
+              onValueChange={next => patch({ schoolName: next })}
+            />
+          </span>
         </PFFormField>
         <PFFormField label="신청 학년">
           <PFSelect
@@ -362,7 +367,7 @@ export function ApplyTrainedTeachersBasicInfo({
                       ? 'teacherMobile'
                       : '담당 교사의 휴대폰 번호'
                   }
-                  value={formatKoreanPhoneNumber(teacherMobileDisplay)}
+                  value={formatKoreanPhoneNumberPreservingMask(teacherMobileDisplay)}
                   disabled={teacherMobileEmailLocked}
                   onValueChange={next =>
                     patch({ teacherMobile: formatKoreanPhoneNumber(next) })

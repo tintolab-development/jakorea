@@ -11,9 +11,10 @@ type ProgramInfoAsideProps = {
   thumbnailUrl?: string
   attachments: ProgramAttachment[]
   isRecruiting?: boolean
-  /** 신청하기 활성 — 모집 중·모집 예정 */
+  /** 신청하기 활성 — 모집 중·모집 예정이고 신청 옵션이 막히지 않음 */
   canApply?: boolean
   applicationPeriodLabel?: string
+  applyBlockedReason?: string | null
   showApplyCta?: boolean
   showCancelCta?: boolean
   onApply?: () => void
@@ -30,6 +31,7 @@ export function ProgramInfoAside({
   isRecruiting = false,
   canApply = isRecruiting,
   applicationPeriodLabel = '',
+  applyBlockedReason = null,
   showApplyCta = false,
   showCancelCta = false,
   onApply,
@@ -66,29 +68,36 @@ export function ProgramInfoAside({
       </div>
 
       {showApplyCta ? (
-        <button
-          type="button"
-          className={styles.applyButton}
-          disabled={!canApply || applyChecking}
-          aria-busy={applyChecking}
-          onClick={onApply}
-        >
-          <span className={styles.applyCopy}>
-            <PFText as="span" typo="bd-lg-sb" color="white">
-              신청하기
+        <div className={styles.applyBlock}>
+          <button
+            type="button"
+            className={styles.applyButton}
+            disabled={!canApply || applyChecking}
+            aria-busy={applyChecking}
+            onClick={onApply}
+          >
+            <span className={styles.applyCopy}>
+              <PFText as="span" typo="bd-lg-sb" color="white">
+                신청하기
+              </PFText>
+              <PFText as="span" typo="bd-sm-rg" color="white">
+                {applicationPeriodLabel}
+              </PFText>
+            </span>
+            <img
+              className={styles.applyArrow}
+              src={arrowRightWhite16Url}
+              alt=""
+              width={16}
+              height={16}
+            />
+          </button>
+          {!canApply && applyBlockedReason ? (
+            <PFText as="p" typo="bd-sm-rg" color="neutral-cool-700" className={styles.applyHint}>
+              {applyBlockedReason}
             </PFText>
-            <PFText as="span" typo="bd-sm-rg" color="white">
-              {applicationPeriodLabel}
-            </PFText>
-          </span>
-          <img
-            className={styles.applyArrow}
-            src={arrowRightWhite16Url}
-            alt=""
-            width={16}
-            height={16}
-          />
-        </button>
+          ) : null}
+        </div>
       ) : null}
 
       {showCancelCta ? (

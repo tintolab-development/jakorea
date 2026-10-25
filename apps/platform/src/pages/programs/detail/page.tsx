@@ -7,6 +7,7 @@ import {
   programApplyGateApplicationsPathForType,
   programApplyGateMemberSettingsPath,
   readPortalRecruitmentFocus,
+  usePortalApplicationOption,
   useProgramApplyGate,
   useProgramDetail,
 } from '@/features/program'
@@ -67,6 +68,7 @@ export function ProgramDetailPage() {
     programId,
     applySelection,
   )
+  const applyOptionQuery = usePortalApplicationOption(programId, applySelection)
 
   if (isLoading && !program) {
     return <ProgramDetailLoading />
@@ -92,7 +94,7 @@ export function ProgramDetailPage() {
   }
 
   const handleApply = () => {
-    if (program.recruitmentSelectionAmbiguous) {
+    if (program.recruitmentSelectionAmbiguous || applyOptionQuery.blockedMessage) {
       return
     }
     const nextFocus = applySelection
@@ -113,7 +115,8 @@ export function ProgramDetailPage() {
         program={program}
         onBackToList={handleBackToList}
         onApply={handleApply}
-        applyChecking={isChecking}
+        applyChecking={isChecking || applyOptionQuery.isLoading}
+        applyBlockedReason={applyOptionQuery.blockedMessage}
       />
       <ProgramApplyGateModals
         kind={gateModal}

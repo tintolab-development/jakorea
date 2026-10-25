@@ -46,6 +46,11 @@ assert.equal(fromOrganization.teacherName, '이진희')
 assert.equal(fromOrganization.teacherMobile, '010-5764-9470')
 assert.equal(fromOrganization.teacherEmail, 'teacher@example.com')
 
+const fromMaskedPhone = trainedTeachersProfileDefaults({
+  phone: '010-****-1080',
+})
+assert.equal(fromMaskedPhone.teacherMobile, '010-****-1080')
+
 const fromMemberAddress = trainedTeachersProfileDefaults({
   regionSido: '경기도',
   regionSigungu: '성남시',

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { hasIncompleteApplicationFormThirdPartyRecipient } from '@jakorea/form-schema/paragraph-ids/application-form-third-party-recipient'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
@@ -2165,10 +2164,7 @@ export function ProgramApplyPage() {
       setSubmitAlert({ description: blockedMessage })
       return
     }
-    if (hasIncompleteApplicationFormThirdPartyRecipient(displayDraft)) {
-      setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
-      return
-    }
+    // 「제공받는 곳」은 CMS 양식 작성 칸이다. 포털 신청 화면에 입력 UI가 없어 필수로 보지 않는다.
     if (showTrainedTeachersApply) {
       const missingConsentId = findMissingRequiredBottomConsentId(displayDraft)
       if (missingConsentId) {
@@ -2372,12 +2368,25 @@ export function ProgramApplyPage() {
         : showPreferredScheduleInput && !skipPreferredScheduleInput
           ? toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
           : null
-      if (
+      const applyScheduleChoiceParagraphId =
+        applyScheduleChoiceParagraph &&
+        typeof applyScheduleChoiceParagraph === 'object' &&
+        'id' in applyScheduleChoiceParagraph
+          ? String((applyScheduleChoiceParagraph as { id?: unknown }).id ?? '').trim()
+          : ''
+      const preferredScheduleParagraphId =
+        trainedTeachersScheduleParagraph?.id ??
+        (applyScheduleChoiceParagraphId ||
+          institutionScheduleParagraph?.id ||
+          'preferredScheduleBlocks')
+      const preferredScheduleVisible =
         showPreferredScheduleInput &&
         !skipPreferredScheduleInput &&
-        !preferredAnswer &&
-        !isTrainedTeachersFixedScheduleTarget
-      ) {
+        !isTrainedTeachersFixedScheduleTarget &&
+        (preferredScheduleParagraphId === 'preferredScheduleBlocks' ||
+          !hiddenParagraphIds.has(preferredScheduleParagraphId))
+      if (preferredScheduleVisible && !preferredAnswer) {
+        setSubmitErrorField(preferredScheduleParagraphId)
         setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
         return
       }
@@ -2399,12 +2408,17 @@ export function ProgramApplyPage() {
           scheduleParagraph.kind === 'single_item' &&
           scheduleParagraph.variant === 'multiple_choice'
         ) {
+          const selectableCount = Math.max(
+            scheduleParagraph.items.length,
+            institutionRuntimeFixedScheduleChoices?.length ?? 0
+          )
           const selected = normalizeInstitutionFixedScheduleAnswerTokens(
             scheduleParagraph.selectedPreviewMultipleIds ?? [],
             applicationFormDocument?.runtimeContext,
             institutionScheduleParagraph
           )
-          if (selected.length === 0) {
+          if (selectableCount > 0 && selected.length === 0) {
+            setSubmitErrorField(scheduleParagraph.id)
             setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
             return
           }
@@ -2414,23 +2428,28 @@ export function ProgramApplyPage() {
       const existingBasicAnswer = basicParagraph
         ? draftAnswerForParagraph(remoteForm?.draftAnswers, basicParagraph)
         : undefined
+      const basicInfoForSubmit = fillTrainedTeachersBasicInfoFromProfile(
+        basicInfo,
+        profileDefaults,
+      )
       const basicAnswer = basicParagraph
-        ? basicInfoAnswerFromValues(basicInfo, {
+        ? basicInfoAnswerFromValues(basicInfoForSubmit, {
             includePreferredEducationFields: showPreferredEducationForm,
             existingAnswer: existingBasicAnswer,
           })
         : null
       if (basicParagraph) {
         const basicIncomplete = resolveGeneralBasicInfoApplyIncomplete(
-          basicInfo,
+          basicInfoForSubmit,
           basicParagraph.id,
         )
         if (basicIncomplete) {
           pendingApplyIncompleteRef.current = basicIncomplete
+          setSubmitErrorField(basicIncomplete.paragraphId)
           setSubmitAlert({ description: basicIncomplete.message })
           return
         }
-        const requestedClassCount = Number.parseInt(basicInfo.classCount, 10)
+        const requestedClassCount = Number.parseInt(basicInfoForSubmit.classCount, 10)
         const maxClassCount = applicationRecruitmentLimits.maxClassCount
         if (
           Number.isFinite(requestedClassCount) &&
@@ -2443,6 +2462,7 @@ export function ProgramApplyPage() {
           return
         }
         if (!basicAnswer) {
+          setSubmitErrorField(basicParagraph.id)
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
