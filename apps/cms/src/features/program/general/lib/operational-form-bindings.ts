@@ -311,6 +311,8 @@ const RECRUITMENT_ROW_PROGRAM_TYPES = new Set([
   'GENERAL_INDIVIDUAL',
   'GENERAL_ORGANIZATION',
   'UJAT',
+  'COMPANY_SCHOOL',
+  'TRAINED_TEACHER',
 ])
 
 function normalizeBindingType(value: string | undefined): string {

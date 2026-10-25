@@ -121,11 +121,13 @@ function TrainedTeachersApplicationFormPreviewPanel({ program }: { program: Prog
 export function TrainedTeachersApplicationInfoView({
   program,
   canWrite,
+  editFormLoading = false,
   onEditForm,
   previewReloadKey = 0,
 }: {
   program: Program
   canWrite: boolean
+  editFormLoading?: boolean
   onEditForm: () => void
   previewReloadKey?: number
 }) {
@@ -138,7 +140,12 @@ export function TrainedTeachersApplicationInfoView({
         items={[{ key: 'institutions', label: '참여 기관 신청 정보' }]}
         trailing={
           canWrite ? (
-            <CmsButton variant="secondary" size="large" onClick={onEditForm}>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              onClick={onEditForm}
+              disabled={editFormLoading}
+            >
               양식 수정
             </CmsButton>
           ) : null
