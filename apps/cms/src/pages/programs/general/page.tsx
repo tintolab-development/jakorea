@@ -359,7 +359,10 @@ export function GeneralProgramListPageContent() {
       prev => {
         const nextParams = new URLSearchParams(prev)
         nextParams.set('programId', program.id)
-        const entry = resolveProgramListDetailEntry(program, { statusFilter })
+        const entry = resolveProgramListDetailEntry(program, {
+          statusFilter,
+          detailSurface: 'general',
+        })
         nextParams.set('lnb', entry.lnb)
         nextParams.set('tab', entry.tab)
         return nextParams
@@ -442,7 +445,20 @@ export function GeneralProgramListPageContent() {
       >
         {programListToolbarActions}
       </ProgramList>
-      {isRemoteDataSource ? <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} /> : null}
+      {isRemoteDataSource ? (
+        <div className="program-list-page__load-more">
+          {hasNextPage ? (
+            <FilterTableToolbarButton
+              variant="secondary"
+              onClick={() => void fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? '불러오는 중...' : '다음 페이지'}
+            </FilterTableToolbarButton>
+          ) : null}
+          <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+        </div>
+      ) : null}
 
       <ProgramModalWhenOpen open={generalDetailModalOpen}>
         <LazyGeneralProgramDetailFullPageModal

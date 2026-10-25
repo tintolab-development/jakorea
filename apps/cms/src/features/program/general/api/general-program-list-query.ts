@@ -9,6 +9,12 @@ import type { GeneralProgramOverviewStatusFilter } from '@/features/program/gene
 
 const GENERAL_PROGRAM_LIST_STALE_TIME_MS = 30_000
 
+export function getNextGeneralProgramPageParam(
+  lastPage: GeneralProgramsRemoteListPage
+): number | undefined {
+  return lastPage.hasMore ? lastPage.page + 1 : undefined
+}
+
 /** URL 검색 파라미터 → 목록 테이블 필터 (목록 훅·상단 위젯 프리페치가 같은 쿼리 키를 쓰도록 공용) */
 export function readGeneralProgramTableFilters(
   searchParams: URLSearchParams
@@ -42,8 +48,7 @@ export function generalProgramListInfiniteQueryOptions(
     queryFn: ({ pageParam }) =>
       fetchGeneralProgramsRemoteListPage(statusFilter, tableFilters, pageParam),
     initialPageParam: 0,
-    getNextPageParam: (lastPage: GeneralProgramsRemoteListPage) =>
-      lastPage.hasMore ? lastPage.page + 1 : undefined,
+    getNextPageParam: getNextGeneralProgramPageParam,
     staleTime: GENERAL_PROGRAM_LIST_STALE_TIME_MS,
     retry: false,
   })
