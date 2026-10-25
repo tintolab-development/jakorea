@@ -103,7 +103,6 @@ describe('UJAT typed detail migration boundary', () => {
 
     expect(stripped).toEqual({
       'ujat.recruit.institution.publicTitle': '기관 모집 공고',
-      'ujat.wage.paymentItemValues': [],
       other: false,
     })
   })

@@ -270,7 +270,7 @@ describe('UJAT program adapters', () => {
       serviceDetailJson: updated.serviceDetailJson ?? undefined,
     })
     expect(mapped.generalProgramEducationStructure).toBe('curriculum')
-    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual(capacity)
+    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toBeUndefined()
   })
 
   it('부분 수정에 ips와 후원 담당자 sponsors를 싣고 재조회한다', () => {
@@ -417,7 +417,7 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.repEn']).toBe(
       'Local Spending and Saving'
     )
-    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBe(61)
+    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBeUndefined()
   })
 
   it('기본 semesterCalendars의 교육일정을 등록 화면 overlay로 매핑한다', () => {
@@ -457,6 +457,67 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.ujatRegistrationOverlay?.['ujat.h1.eduSchedule.unavailableDates']).toEqual([
       '2026-07-20',
     ])
+    expect(mapped.ujatTypedDetail?.halfPlans?.some(plan =>
+      (plan.stages ?? []).some(stage => (stage.rows ?? []).length > 0)
+    )).toBe(true)
+  })
+
+  it('GET periodStatus는 Program 컬럼이 아니라 UJAT extras와 진행 현황 매핑에 쓴다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: program.title,
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      periodStatus: 'SCHEDULED',
+    })
+    expect(mapped.periodStatus).toBe('SCHEDULED')
+    expect(mapped.lifecycleStatus).toBe('planned')
+  })
+
+  it('Typed 교육일정이 있으면 semesterCalendars overlay를 덮어쓰지 않는다', () => {
+    const mapped = fromDetail(
+      {
+        id: program.id,
+        sponsorId: program.sponsorId,
+        title: program.title,
+        startDate: String(program.startDate),
+        endDate: String(program.endDate),
+        serviceDetailJson: JSON.stringify({
+          semesterCalendars: {
+            FIRST_HALF: {
+              preTrainingDate: '2026-07-07',
+              educationFridays: ['2026-07-17', '2026-07-24'],
+              closingDate: '2026-08-21',
+            },
+          },
+        }),
+      },
+      {
+        schemaVersion: 1,
+        halfPlans: [
+          {
+            semesterType: 'FIRST_HALF',
+            stages: [
+              {
+                stage: 'PRE_EDUCATION',
+                rows: [
+                  {
+                    rowId: 'typed-pre-1',
+                    startDate: '2027-01-10',
+                    endDate: '2027-01-10',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+    )
+    expect(mapped.ujatRegistrationOverlay?.['ujat.h1.pre.multi']).toBeUndefined()
+    expect(mapped.ujatTypedDetail?.halfPlans?.[0]?.stages?.[0]?.rows?.[0]?.startDate).toBe(
+      '2027-01-10'
+    )
   })
 
   it('상세 응답 KPI와 serviceDetailJson 지역 정원을 canonical source로 매핑한다', () => {
@@ -488,15 +549,13 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
       }),
     })
 
+    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.volunteer']).toBeUndefined()
+    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toBeUndefined()
+    expect(mapped.ujatRegionCapacity).toEqual({
+      h1: { 서울: { classCount: '20', volunteerCount: '40' } },
+      h2: { 서울: { classCount: '24', volunteerCount: '48' } },
+    })
     expect(mapped.ujatRegistrationOverlay).toMatchObject({
-      'ujat.kpi.instructor': 0,
-      'ujat.kpi.volunteer': 60,
-      'ujat.kpi.dispatchedSchool': 30,
-      'ujat.kpi.dispatchedClass': 30,
-      'ujat.capacity.byRegion': {
-        h1: { 서울: { classCount: '20', volunteerCount: '40' } },
-        h2: { 서울: { classCount: '24', volunteerCount: '48' } },
-      },
       'ujat.basicInfo.educationCourse': '',
       'ujat.basicInfo.ipOwned': 'ja',
       'ujat.basicInfo.partnerInvolvement': 'no',
@@ -542,10 +601,9 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
       finalParticipants: null,
       finalClasses: 0,
     })
-    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual({
-      h1: { 서울: { classCount: '3', volunteerCount: '6' } },
-    })
-    expect(mapped.ujatRegistrationOverlay?.['ujat.wage.paymentItemValues']).toEqual([])
+    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toBeUndefined()
+    expect(mapped.ujatRegistrationOverlay?.['ujat.wage.paymentItemValues']).toBeUndefined()
+    expect(mapped.ujatRegionCapacity?.h1.서울).toEqual({ classCount: '3', volunteerCount: '6' })
   })
 
   it('등록 overlay 모집 공고명·설명을 create body와 상세 매핑에 남긴다', () => {
@@ -1159,16 +1217,59 @@ describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 �
     }
   }
 
-  function create(overlay: Record<string, unknown>) {
-    const pending = buildUjatProgramListRowFromRegistrationSnapshot({
-      id: 'ujat-pending-manual',
-      overlay,
-    })
+  function create(
+    overlay: Record<string, unknown>,
+    programRecruitments?: Program['programRecruitments']
+  ) {
+    const pending = {
+      ...buildUjatProgramListRowFromRegistrationSnapshot({
+        id: 'ujat-pending-manual',
+        overlay,
+      }),
+      ...(programRecruitments != null ? { programRecruitments } : {}),
+    }
     return toCreateRequest(pending, { draft, overlay })
   }
 
+  const typedRecruitments = {
+    institution: {
+      recruitmentType: 'PARTICIPANT' as const,
+      applicationType: 'ORGANIZATION' as const,
+      startAt: '2027-01-03T15:00:00.000Z',
+      endAt: '2027-02-11T15:00:00.000Z',
+      announcementTitle: '2027 UJAT 참여 학교 모집',
+    },
+    h1: {
+      recruitmentType: 'VOLUNTEER' as const,
+      applicationType: 'VOLUNTEER' as const,
+      recruitTerm: 'FIRST_HALF' as const,
+      startAt: H1_RECRUIT.start,
+      endAt: H1_RECRUIT.end,
+      interviewEnabled: true,
+      interviewStartAt: H1_INTERVIEW.start,
+      interviewEndAt: H1_INTERVIEW.end,
+      announcementTitle: '2027 UJAT 상반기 봉사자 모집',
+    },
+    h2: {
+      recruitmentType: 'VOLUNTEER' as const,
+      applicationType: 'VOLUNTEER' as const,
+      recruitTerm: 'SECOND_HALF' as const,
+      startAt: H2_RECRUIT.start,
+      endAt: H2_RECRUIT.end,
+      interviewEnabled: true,
+      interviewStartAt: H2_INTERVIEW.start,
+      interviewEndAt: H2_INTERVIEW.end,
+      announcementTitle: '2027 UJAT 하반기 봉사자 모집',
+    },
+  }
+
   it('기관·H1·H2 행을 각각 만들고 반기별 모집·면접 기간을 해당 행에만 싣는다', () => {
-    const rows = create(wizardOverlay()).recruitments ?? []
+    const rows =
+      create(wizardOverlay(), [
+        typedRecruitments.institution,
+        typedRecruitments.h1,
+        typedRecruitments.h2,
+      ]).recruitments ?? []
     expect(rows.map(row => [row.recruitmentType, row.recruitTerm ?? null])).toEqual([
       ['PARTICIPANT', null],
       ['VOLUNTEER', 'FIRST_HALF'],
@@ -1219,19 +1320,35 @@ describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 �
   })
 
   it('하반기 입력이 없으면 H2 행을 만들지 않고 상반기 값을 복사하지 않는다', () => {
-    const rows = create(wizardOverlay({ h2: false })).recruitments ?? []
+    const rows =
+      create(wizardOverlay({ h2: false }), [
+        typedRecruitments.institution,
+        typedRecruitments.h1,
+      ]).recruitments ?? []
     expect(rows.map(row => row.recruitTerm ?? null)).toEqual([null, 'FIRST_HALF'])
+  })
+
+  it('Typed H2 행이 없으면 Overlay H2 키만으로 SECOND_HALF를 만들지 않는다', () => {
+    const rows = create(wizardOverlay({ h2: true })).recruitments ?? []
+    expect(rows.some(row => row.recruitTerm === 'SECOND_HALF')).toBe(false)
   })
 
   it('H1 면접 기간이 없으면 다른 반기·레거시 공용 키 값으로 채우지 않는다', () => {
     const rows =
-      create({
-        ...wizardOverlay({ h1Interview: false }),
-        'ujat.recruit.volunteer.interviewRange': {
-          start: '2026-01-01T00:00:00.000Z',
-          end: '2026-01-02T00:00:00.000Z',
+      create(
+        {
+          ...wizardOverlay({ h1Interview: false }),
+          'ujat.recruit.volunteer.interviewRange': {
+            start: '2026-01-01T00:00:00.000Z',
+            end: '2026-01-02T00:00:00.000Z',
+          },
         },
-      }).recruitments ?? []
+        [
+          typedRecruitments.institution,
+          { ...typedRecruitments.h1, interviewStartAt: undefined, interviewEndAt: undefined },
+          typedRecruitments.h2,
+        ]
+      ).recruitments ?? []
     const h1 = rows.find(row => row.recruitTerm === 'FIRST_HALF')
     expect(h1).toMatchObject({ interviewEnabled: true })
     expect(h1).not.toHaveProperty('interviewStartAt')

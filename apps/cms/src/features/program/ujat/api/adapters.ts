@@ -59,11 +59,6 @@ import {
   resolveUjatRecruitDisplayProgram,
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
-import { pickUjatRecruitVolunteerOverlay } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
-import {
-  hasVolunteerHalfOverlayKeys,
-  type UjatVolunteerRecruitHalf,
-} from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import {
   UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
@@ -101,13 +96,15 @@ import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/p
 import { ujatHalfScheduleOverlayKeys } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 import { ujatEducationScheduleSettingsOverlayKeys } from '@/features/program/ujat/lib/ujat-education-schedule-settings-types'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
+import { type UjatRegionCapacityBySemesterState } from '@/features/program/ujat/lib/ujat-region-capacity-types'
 import {
-  UJAT_REGION_CAPACITY_OVERLAY_KEY,
-  type UjatRegionCapacityBySemesterState,
-} from '@/features/program/ujat/lib/ujat-region-capacity-types'
+  stripUjatKpiWageCapacityOverlay,
+  ujatKpiWageCapacityFromLegacyOverlay,
+} from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import {
   stripUjatScheduleLegacyOverlay,
   stripUjatTypedLegacyOverlay,
+  typedDetailFromUjatOverlay,
   ujatOverlayFromTypedDetail,
   type UjatTypedDetail,
 } from './typed-detail-client'
@@ -152,9 +149,11 @@ function numberStringOf(value: unknown): string | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? String(value) : undefined
 }
 
-function overlayFromPrimaryRegionCapacities(value: unknown): Record<string, unknown> {
+function regionCapacityFromPrimaryExtras(
+  value: unknown
+): UjatRegionCapacityBySemesterState | undefined {
   const root = recordOf(value)
-  if (!root) return {}
+  if (!root) return undefined
   const result: UjatRegionCapacityBySemesterState = { h1: {}, h2: {} }
   const semesters = [
     ['h1', root?.FIRST_HALF] as const,
@@ -178,8 +177,8 @@ function overlayFromPrimaryRegionCapacities(value: unknown): Record<string, unkn
     }
   }
 
-  if (Object.keys(result.h1).length === 0 && Object.keys(result.h2).length === 0) return {}
-  return { [UJAT_REGION_CAPACITY_OVERLAY_KEY]: result }
+  if (Object.keys(result.h1).length === 0 && Object.keys(result.h2).length === 0) return undefined
+  return result
 }
 
 /** Primary UJAT calendar JSON → 등록 overlay 표시/수정 필드 */
@@ -229,6 +228,22 @@ function overlayFromPrimarySemesterCalendars(value: unknown): Record<string, unk
   }
 
   return result
+}
+
+function pickUjatScheduleOverlayKeys(
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(overlay).filter(
+      ([key]) => key.startsWith('ujat.h1.') || key.startsWith('ujat.h2.')
+    )
+  )
+}
+
+function typedDetailHasScheduleRows(detail?: UjatTypedDetail): boolean {
+  return (detail?.halfPlans ?? []).some(plan =>
+    (plan.stages ?? []).some(stage => (stage.rows ?? []).length > 0)
+  )
 }
 
 function dateValue(value: Date | string | undefined): string | undefined {
@@ -515,24 +530,9 @@ export function buildUjatNewVolunteerHalfRowRequests(
     })) as ProgramRecruitmentRequest[]
 }
 
-function ujatVolunteerHalfRecruitRange(
-  program: Program,
-  half: UjatVolunteerRecruitHalf
-): { startAt?: string; endAt?: string } {
-  const overlay = pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {})
-  const key =
-    half === 'h1'
-      ? UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.recruitRangeH1
-      : UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.recruitRangeH2
-  const seal = recordOf(overlay[key])
-  const startAt = stringOf(seal?.start) ?? undefined
-  const endAt = stringOf(seal?.end) ?? undefined
-  return { ...(startAt ? { startAt } : {}), ...(endAt ? { endAt } : {}) }
-}
-
 /**
- * 하반기 봉사자 모집 행. 등록 위저드는 하반기를 별도 반기 키로만 저장하므로
- * 하반기 입력이 있을 때 `SECOND_HALF` 행을 따로 만든다. 상반기 값으로 채우지 않는다.
+ * 하반기 봉사자 모집 행. Typed `programRecruitments`에 SECOND_HALF가 있을 때만 보강한다.
+ * Legacy Overlay로 빈 모집 행을 채우지 않는다.
  */
 function withUjatCreateSecondHalfVolunteerRow(
   rows: ProgramRecruitmentRequest[] | undefined,
@@ -547,42 +547,24 @@ function withUjatCreateSecondHalfVolunteerRow(
       (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' &&
       row.recruitTerm === 'SECOND_HALF'
   )
-  if (h2Row) {
-    return [
-      ...rows,
-      recruitmentRow({
-        recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
-        targetType: 'COLLEGE_STUDENT',
-        applicationType: 'VOLUNTEER',
-        startAt: dateValue(h2Row.startAt ?? undefined),
-        endAt: dateValue(h2Row.endAt ?? undefined),
-        operationStartDate: dateValue(h2Row.operationStartDate ?? undefined),
-        operationEndDate: dateValue(h2Row.operationEndDate ?? undefined),
-        maxCount: program.ujatSecondHalfVolunteerCount,
-        recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
-        interviewEnabled: h2Row.interviewEnabled !== false,
-        interviewStartAt: dateValue(h2Row.interviewStartAt ?? undefined),
-        interviewEndAt: dateValue(h2Row.interviewEndAt ?? undefined),
-        source: h2Row,
-      }),
-    ]
-  }
-  const overlay = pickUjatRecruitVolunteerOverlay(program.ujatRegistrationOverlay ?? {})
-  const range = ujatVolunteerHalfRecruitRange(program, 'h2')
-  if (!hasVolunteerHalfOverlayKeys(overlay, 'h2') && !range.startAt && !range.endAt) return rows
+  if (!h2Row) return rows
   return [
     ...rows,
-    {
-      ...recruitmentRow({
-        recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
-        targetType: 'COLLEGE_STUDENT',
-        ...range,
-        maxCount: program.ujatSecondHalfVolunteerCount,
-        recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
-        interviewEnabled: true,
-      }),
+    recruitmentRow({
+      recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
+      targetType: 'COLLEGE_STUDENT',
       applicationType: 'VOLUNTEER',
-    },
+      startAt: dateValue(h2Row.startAt ?? undefined),
+      endAt: dateValue(h2Row.endAt ?? undefined),
+      operationStartDate: dateValue(h2Row.operationStartDate ?? undefined),
+      operationEndDate: dateValue(h2Row.operationEndDate ?? undefined),
+      maxCount: program.ujatSecondHalfVolunteerCount,
+      recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
+      interviewEnabled: h2Row.interviewEnabled !== false,
+      interviewStartAt: dateValue(h2Row.interviewStartAt ?? undefined),
+      interviewEndAt: dateValue(h2Row.interviewEndAt ?? undefined),
+      source: h2Row,
+    }),
   ]
 }
 
@@ -757,9 +739,7 @@ export function fromDetail(
   const details = parseServiceDetail(dto.serviceDetailJson)
   const extras = parseUjatServiceDetailExtras(dto.serviceDetailJson)
   const primaryCalendarOverlay = overlayFromPrimarySemesterCalendars(extras.semesterCalendars)
-  const primaryRegionCapacityOverlay = overlayFromPrimaryRegionCapacities(
-    extras.ujatRegionCapacities
-  )
+  const primaryRegionCapacity = regionCapacityFromPrimaryExtras(extras.ujatRegionCapacities)
   const surveyKeys =
     details.generalSurveyMenuKeys ??
     extras.surveyMenuKeys ??
@@ -812,8 +792,13 @@ export function fromDetail(
     }
 
   const ips = programIps(dto.ips)
-  // H1/H2 schedules are canonical Typed Detail data. Keep the compatibility projection for
-  // still-migrating common settings, but never rehydrate schedule fields into registration.overlay.
+  const legacyScheduleOverlay = {
+    ...pickUjatScheduleOverlayKeys(rawOverlay),
+    ...primaryCalendarOverlay,
+  }
+  const hasTypedScheduleRows = typedDetailHasScheduleRows(typedDetail)
+  // Typed 일정이 있으면 overlay 일정 키를 쓰지 않는다. 없을 때만 semesterCalendars·
+  // 레거시 overlay를 최초 조회 호환용으로 남기고 Typed RHF hydrate 원본으로 쓴다.
   const typedOverlay = typedDetail
     ? stripUjatScheduleLegacyOverlay(ujatOverlayFromTypedDetail(typedDetail))
     : {}
@@ -831,8 +816,7 @@ export function fromDetail(
     dto,
     {
       ...rawOverlay,
-      ...primaryCalendarOverlay,
-      ...primaryRegionCapacityOverlay,
+      ...(hasTypedScheduleRows ? {} : primaryCalendarOverlay),
       ...typedOverlay,
     },
     {
@@ -842,6 +826,14 @@ export function fromDetail(
       kpi: responseKpi,
     }
   )
+  const overlayForProgram = hasTypedScheduleRows
+    ? overlay
+    : { ...overlay, ...legacyScheduleOverlay }
+  const resolvedTypedDetail = hasTypedScheduleRows
+    ? typedDetail
+    : Object.keys(legacyScheduleOverlay).length > 0
+      ? typedDetailFromUjatOverlay(legacyScheduleOverlay, typedDetail)
+      : typedDetail
   const title = echoProgramManagementTitle(dto.title, dtoExt.nameKo)
   const periodStatus = dtoExt.periodStatus
   const ujatProgressStatus = resolveUjatProgressStatus({
@@ -865,7 +857,7 @@ export function fromDetail(
   const persistedTargetLevels = resolvePersistedProgramTargetLevels({
     targetLevels: columnSource,
     targetLevel: dto.targetLevel,
-    registrationOverlay: overlay,
+    registrationOverlay: overlayForProgram,
     generalCommonInfo,
   })
 
@@ -965,32 +957,40 @@ export function fromDetail(
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     }),
-    ujatRegistrationOverlay: overlay,
-    ...(typedDetail ? { ujatTypedDetail: typedDetail } : {}),
+    ujatRegistrationOverlay: overlayForProgram,
+    ...(resolvedTypedDetail ? { ujatTypedDetail: resolvedTypedDetail } : {}),
   },
     {
       serviceDetailJson: dto.serviceDetailJson,
-      overlay,
+      overlay: overlayForProgram,
     }
   )
   const withInterview = hydrateUjatVolunteerInterviewFromRecruitmentRows(mapped)
   const withRows = hydrateRecruitmentWindowsOntoProgram(withInterview)
-  return applyBusinessPeriodHistoriesFromDto(
-    {
-      ...withRows,
-      generalParticipantTypes: generalParticipantTypesFromUjatFlags(
-        resolveUjatParticipantTypeFlags({ ...mapped, ujatRegistrationOverlay: overlay }, overlay)
-      ),
-      ujatServiceDetailExtras: {
-        ...extras,
-        semesterType: extras.semesterType ?? 'FULL_YEAR',
-      },
-      ujatRegistrationOverlay: overlay,
-      ...(typedDetail ? { ujatTypedDetail: typedDetail } : {}),
-      periodStatus,
+  const result: UjatProgramWithExtras = {
+    ...withRows,
+    generalParticipantTypes: generalParticipantTypesFromUjatFlags(
+      resolveUjatParticipantTypeFlags(
+        { ...mapped, ujatRegistrationOverlay: overlayForProgram },
+        overlayForProgram
+      )
+    ),
+    ujatServiceDetailExtras: {
+      ...extras,
+      semesterType: extras.semesterType ?? 'FULL_YEAR',
     },
-    dto
-  )
+    ujatRegistrationOverlay: stripUjatKpiWageCapacityOverlay(overlayForProgram),
+    ...(primaryRegionCapacity ?? ujatKpiWageCapacityFromLegacyOverlay(rawOverlay).ujatRegionCapacity
+      ? {
+          ujatRegionCapacity:
+            primaryRegionCapacity ??
+            ujatKpiWageCapacityFromLegacyOverlay(rawOverlay).ujatRegionCapacity,
+        }
+      : {}),
+    ...(resolvedTypedDetail ? { ujatTypedDetail: resolvedTypedDetail } : {}),
+    ...(periodStatus != null ? { periodStatus } : {}),
+  }
+  return applyBusinessPeriodHistoriesFromDto(result, dto)
 }
 
 function hydrateUjatVolunteerInterviewFromRecruitmentRows(program: Program): Program {
