@@ -7,6 +7,7 @@
  */
 import type { ProgramRecruitmentAttachmentResponse } from './programRecruitmentAttachmentResponse';
 import type { ProgramRecruitmentResponseApplicationType } from './programRecruitmentResponseApplicationType';
+import type { ProgramRecruitmentResponseNoticeExposureTiming } from './programRecruitmentResponseNoticeExposureTiming';
 import type { ProgramRecruitmentResponseRecruitTerm } from './programRecruitmentResponseRecruitTerm';
 import type { RecruitmentInterviewConfig } from './recruitmentInterviewConfig';
 
@@ -71,13 +72,13 @@ export interface ProgramRecruitmentResponse {
   documentPassAnnouncementAt?: string | null;
   /** 최종 발표 시각. 없으면 null. */
   finalPassAnnouncementAt?: string | null;
-  /** 봉사자 공고 노출 시점. VOLUNTEER가 아니면 null. */
-  noticeExposureTiming?: 'start-day' | 'one-day-before' | 'one-week-before' | null;
-  /** 봉사자 모집 대상 코드. VOLUNTEER가 아니면 null. 명시적 [] 는 제한 없음. */
+  /** 봉사자 공고 노출 시점. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환 조회. */
+  noticeExposureTiming?: ProgramRecruitmentResponseNoticeExposureTiming;
+  /** 봉사자 모집 대상. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환. 명시적 [] 는 제한 없음. */
   volunteerTargets?: string[] | null;
-  /** 비고 해당 없음. 없으면 null. */
+  /** 비고 해당 없음. typed 없으면 overlay 호환. 없으면 null. */
   remarksNotApplicable?: boolean | null;
-  /** 봉사자 면접 슬롯. VOLUNTEER가 아니면 null. */
+  /** 봉사자 면접 슬롯. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환. 명시적 빈 typed 는 overlay로 복원하지 않는다. */
   interviewConfig?: RecruitmentInterviewConfig | null;
   /** 행 내용 수정 revision. PATCH expectedRevision 과 비교한다. */
   contentRevision?: number | null;

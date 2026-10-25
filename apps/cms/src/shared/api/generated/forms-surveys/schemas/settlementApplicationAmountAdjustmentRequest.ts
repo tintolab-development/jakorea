@@ -11,8 +11,9 @@ export interface SettlementApplicationAmountAdjustmentRequest {
   /** @minItems 1 */
   items: SettlementApplicationItemAmountAdjustmentRequest[];
   /**
-     * @minLength 2
-     * @maxLength 500
+     * 승인 금액 조정 사유
+     * @minLength 0
+     * @maxLength 1000
      */
   reason: string;
 }

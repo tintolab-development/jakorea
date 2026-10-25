@@ -14678,10 +14678,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -14814,7 +14814,7 @@
           },
           "recruitments": {
             "type": "array",
-            "description": "모집 유형별 canonical 설정. 지정 시 legacy applicationStartDate/applicationEndDate보다 우선",
+            "description": "모집 유형별 canonical 설정. 지정 시 legacy applicationStartDate/applicationEndDate보다 우선. VOLUNTEER 행은 interviewConfig를 직접 넣을 수 있으며, 있으면 overlay 면접 키 없이 생성할 수 있다.",
             "items": {
               "$ref": "#/components/schemas/ProgramRecruitmentRequest"
             }
@@ -15315,9 +15315,64 @@
             "description": "2차 면접 종료. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지.",
             "nullable": true
           },
+          "announcementPublished": {
+            "type": "boolean",
+            "description": "공고 게시 여부. null 이면 기존 값 유지. false 는 포털 비공개.",
+            "nullable": true
+          },
+          "documentPassAnnouncementAt": {
+            "type": "string",
+            "description": "서류 발표 시각. null 유지, clearFields에 documentPassAnnouncementAt 이면 비움.",
+            "nullable": true
+          },
+          "finalPassAnnouncementAt": {
+            "type": "string",
+            "description": "최종 발표 시각. null 유지, clearFields에 finalPassAnnouncementAt 이면 비움.",
+            "nullable": true
+          },
+          "noticeExposureTiming": {
+            "type": "string",
+            "description": "봉사자 공고 노출 시점. VOLUNTEER만. start-day|one-day-before|one-week-before. null 유지.",
+            "enum": [
+              "start-day",
+              "one-day-before",
+              "one-week-before"
+            ],
+            "nullable": true
+          },
+          "volunteerTargets": {
+            "type": "array",
+            "description": "봉사자 모집 대상 코드 배열. VOLUNTEER만. null 유지, [] 는 제한 없음(명시적 빈 값).",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "remarksNotApplicable": {
+            "type": "boolean",
+            "description": "비고 해당 없음. null 유지.",
+            "nullable": true
+          },
+          "interviewConfig": {
+            "description": "봉사자 면접 슬롯 설정. VOLUNTEER만. 객체 생략(null)은 기존 유지, 빈 객체는 명시적 빈 typed 값.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RecruitmentInterviewConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "format": "int64",
+            "description": "동시 수정 검증용. 조회 응답 contentRevision 과 같아야 한다. 생략하면 검사하지 않는다.",
+            "nullable": true
+          },
           "clearFields": {
             "type": "array",
-            "description": "null 로 비울 필드 이름. 예: [\"maxCount\",\"remarks\"]",
+            "description": "null 로 비울 필드 이름. 예: [\"maxCount\",\"remarks\",\"interviewConfig\"]",
             "items": {
               "type": "string"
             },
@@ -15403,6 +15458,121 @@
           },
           "maxAmount": {
             "type": "number"
+          }
+        }
+      },
+      "RecruitmentInterviewConfig": {
+        "type": "object",
+        "description": "봉사자 면접 슬롯 설정. 모집 행마다 독립. schemaVersion=1. null 필드는 저장 시 기존 값 유지가 아니라 이 객체 단위 저장이다(객체 자체가 null이면 기존 유지).",
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "format": "int32",
+            "description": "계약 버전. 생략 시 1.",
+            "example": 1,
+            "nullable": true
+          },
+          "selectedSlotKeys": {
+            "type": "array",
+            "description": "선택된 슬롯 키 배열. 형식 epochMillis-epochMillis. 명시적 [] 는 슬롯 없음.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "timeUnit": {
+            "type": "integer",
+            "format": "int32",
+            "description": "슬롯 시간 단위(분). 예: 30. 생략 시 조회에서 null.",
+            "nullable": true
+          },
+          "interviewTimeRange": {
+            "type": "array",
+            "description": "면접 가능 시간대 [시작ISO, 종료ISO] 길이 2. 명시적 [] 는 비움.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "specificUnavailableDates": {
+            "type": "array",
+            "description": "특정 불가 날짜 YYYY-MM-DD. 명시적 [] 는 없음.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "appliedUnavailableDates": {
+            "type": "array",
+            "description": "적용된 불가 날짜 YYYY-MM-DD. 명시적 [] 는 없음.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "exclusionState": {
+            "description": "반복 제외 정책. 객체 생략 시 null.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RecruitmentInterviewExclusionState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exceptions": {
+            "type": "array",
+            "description": "예외 날짜·슬롯. 명시적 [] 는 예외 없음.",
+            "items": {
+              "$ref": "#/components/schemas/RecruitmentInterviewException"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "RecruitmentInterviewException": {
+        "type": "object",
+        "description": "특정 날짜의 면접 가능 슬롯 예외. overlay 키 exception.{id}.* 와 대응.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "예외 블록 id. 생성 전 draft 에서 FE가 부여한 키를 보존한다.",
+            "nullable": true
+          },
+          "exceptionDate": {
+            "type": "string",
+            "description": "예외 날짜 YYYY-MM-DD 또는 ISO instant.",
+            "nullable": true
+          },
+          "selectedSlotKeys": {
+            "type": "array",
+            "description": "그날의 슬롯 키 배열. 명시적 [] 는 그날 슬롯 없음.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "RecruitmentInterviewExclusionState": {
+        "type": "object",
+        "description": "면접 반복 제외. 각 플래그 null 은 false 와 구분되어 저장된다.",
+        "properties": {
+          "excludeSaturday": {
+            "type": "boolean",
+            "description": "토요일 제외. null 은 미설정.",
+            "nullable": true
+          },
+          "excludeSunday": {
+            "type": "boolean",
+            "description": "일요일 제외. null 은 미설정.",
+            "nullable": true
+          },
+          "excludeHoliday": {
+            "type": "boolean",
+            "description": "공휴일 제외. null 은 미설정.",
+            "nullable": true
           }
         }
       },
@@ -23015,6 +23185,63 @@
             "format": "date-time",
             "description": "2차 면접 종료. 저장된 값이 없으면 null.",
             "nullable": true
+          },
+          "announcementPublished": {
+            "type": "boolean",
+            "description": "공고 게시 여부. 저장된 값이 없으면 true(DB 기본).",
+            "nullable": true
+          },
+          "documentPassAnnouncementAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "서류 발표 시각. 없으면 null.",
+            "nullable": true
+          },
+          "finalPassAnnouncementAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "최종 발표 시각. 없으면 null.",
+            "nullable": true
+          },
+          "noticeExposureTiming": {
+            "type": "string",
+            "description": "봉사자 공고 노출 시점. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환 조회.",
+            "enum": [
+              "start-day",
+              "one-day-before",
+              "one-week-before"
+            ],
+            "nullable": true
+          },
+          "volunteerTargets": {
+            "type": "array",
+            "description": "봉사자 모집 대상. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환. 명시적 [] 는 제한 없음.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "remarksNotApplicable": {
+            "type": "boolean",
+            "description": "비고 해당 없음. typed 없으면 overlay 호환. 없으면 null.",
+            "nullable": true
+          },
+          "interviewConfig": {
+            "description": "봉사자 면접 슬롯. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환. 명시적 빈 typed 는 overlay로 복원하지 않는다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RecruitmentInterviewConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contentRevision": {
+            "type": "integer",
+            "format": "int64",
+            "description": "행 내용 수정 revision. PATCH expectedRevision 과 비교한다.",
+            "nullable": true
           }
         }
       },
@@ -27905,11 +28132,13 @@
       },
       "SettlementApplicationAdminActionRequest": {
         "type": "object",
+        "description": "정산 신청서 반려 또는 정정 요청. reason은 필수이다.",
         "properties": {
           "reason": {
             "type": "string",
-            "maxLength": 500,
-            "minLength": 2
+            "description": "처리 사유",
+            "maxLength": 1000,
+            "minLength": 0
           }
         },
         "required": [
@@ -27972,6 +28201,19 @@
           }
         }
       },
+      "SettlementApplicationConfirmRequest": {
+        "type": "object",
+        "description": "정산 신청서 승인 요청. reason은 선택이며 생략 시 기본값 '정산 신청서 승인'을 사용한다.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "승인 사유. 생략·공백이면 기본값 '정산 신청서 승인'을 사용한다.",
+            "maxLength": 1000,
+            "minLength": 0,
+            "nullable": true
+          }
+        }
+      },
       "SettlementApplicationAmountAdjustmentRequest": {
         "type": "object",
         "properties": {
@@ -27984,8 +28226,9 @@
           },
           "reason": {
             "type": "string",
-            "maxLength": 500,
-            "minLength": 2
+            "description": "승인 금액 조정 사유",
+            "maxLength": 1000,
+            "minLength": 0
           }
         },
         "required": [
@@ -28385,7 +28628,6 @@
           "educationRegionCode"
         ]
       },
-      "JsonNode": {},
       "TrainedTeacherProgramDetailRequest": {
         "type": "object",
         "properties": {
@@ -29379,6 +29621,182 @@
           "businessIncomeEarnerStatus": {
             "type": "string",
             "writeOnly": true
+          }
+        }
+      },
+      "CategoryBatchChangesRequest": {
+        "type": "object",
+        "properties": {
+          "creates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryCreateItem"
+            }
+          },
+          "updates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryUpdateItem"
+            }
+          },
+          "deleteItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryDeleteItem"
+            }
+          }
+        }
+      },
+      "CategoryCreateItem": {
+        "type": "object",
+        "properties": {
+          "clientKey": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CategoryDeleteItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "expectedUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CategoryUpdateItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expectedUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiResponseCategoryBatchSaveResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/CategoryBatchSaveResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
+      "CategoryBatchSaveResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryResponse"
+            }
+          },
+          "created": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryCreatedResponse"
+            }
+          },
+          "updatedIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "deletedIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "revision": {
+            "type": "string"
+          }
+        }
+      },
+      "CategoryCreatedResponse": {
+        "type": "object",
+        "properties": {
+          "clientKey": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/CategoryResponse"
+          }
+        }
+      },
+      "CategoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "useYn": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -31026,6 +31444,18 @@
             ],
             "nullable": true
           },
+          "trainingRequestStartDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Gemini 연수 요청 가능 기간 시작일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null.",
+            "nullable": true
+          },
+          "trainingRequestEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Gemini 연수 요청 가능 기간 종료일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null.",
+            "nullable": true
+          },
           "preEducationNoticeRequired": {
             "type": "boolean",
             "description": "기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 기관 모집이 아니면 생략. 값이 없던 레거시 기관 설정은 true(작성)로 투영.",
@@ -31996,6 +32426,7 @@
           }
         }
       },
+      "JsonNode": {},
       "PaymentStatementRenderDataResponse": {
         "type": "object",
         "properties": {
@@ -44410,15 +44841,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },

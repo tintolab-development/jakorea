@@ -39,7 +39,7 @@ export interface ProgramCreateRequest {
   businessPeriod?: ProgramPeriodRequest;
   applicationStartDate?: string;
   applicationEndDate?: string;
-  /** 모집 유형별 canonical 설정. 지정 시 legacy applicationStartDate/applicationEndDate보다 우선 */
+  /** 모집 유형별 canonical 설정. 지정 시 legacy applicationStartDate/applicationEndDate보다 우선. VOLUNTEER 행은 interviewConfig를 직접 넣을 수 있으며, 있으면 overlay 면접 키 없이 생성할 수 있다. */
   recruitments?: ProgramRecruitmentRequest[];
   businessArea?: string;
   /** 세부 프로그램 마스터 ID. 일정형 등 해당없음인 경우 null */
