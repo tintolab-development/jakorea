@@ -62,9 +62,7 @@ describe('canGeneralProgramCommonInfoEdit', () => {
 
 describe('getGeneralProgramCommonInfoEditBlockedAlertMessage', () => {
   it('사업 종료 안내를 반환한다', () => {
-    expect(
-      getGeneralProgramCommonInfoEditBlockedAlertMessage(baseProgram())
-    ).toContain('공통 정보')
+    expect(getGeneralProgramCommonInfoEditBlockedAlertMessage(baseProgram())).toContain('공통 정보')
   })
 })
 
@@ -81,12 +79,10 @@ describe('canGeneralProgramRecruitmentInfoEdit', () => {
         },
       ],
     })
-    expect(canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)).toBe(
-      false
-    )
-    expect(canGeneralProgramApplicationFormEdit(program, 'PARTICIPANT', duringBusiness)).toBe(
-      false
-    )
+    expect(canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)).toBe(false)
+    expect(
+      canGeneralProgramApplicationFormEdit(program, 'PARTICIPANT', { applicationCount: 0 })
+    ).toBe(true)
   })
 
   it('시작하지 않은 모집행은 다른 유형이 시작해도 수정할 수 있다', () => {
@@ -102,12 +98,55 @@ describe('canGeneralProgramRecruitmentInfoEdit', () => {
         { id: 14, recruitmentType: 'VOLUNTEER', startAt: '2099-06-01T00:00:00+09:00' },
       ],
     })
-    expect(canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)).toBe(
-      false
-    )
+    expect(canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)).toBe(false)
     expect(canGeneralProgramRecruitmentInfoEdit(program, 'INSTRUCTOR', duringBusiness)).toBe(true)
     expect(canGeneralProgramRecruitmentInfoEdit(program, 'VOLUNTEER', duringBusiness)).toBe(true)
-    expect(canGeneralProgramApplicationFormEdit(program, 'VOLUNTEER', duringBusiness)).toBe(false)
+    expect(
+      canGeneralProgramApplicationFormEdit(program, 'VOLUNTEER', { applicationCount: 0 })
+    ).toBe(true)
+  })
+
+  it('모집 시작일이 오늘이어도 신청 0건이면 양식 수정을 선차단하지 않는다', () => {
+    const program = baseProgram({
+      programRecruitments: [
+        {
+          id: 11,
+          recruitmentType: 'PARTICIPANT',
+          startAt: '2026-06-01T00:00:00+09:00',
+          applicationFormBindingId: 77,
+        },
+      ],
+    })
+    expect(
+      canGeneralProgramApplicationFormEdit(program, 'PARTICIPANT', {
+        applicationCount: 0,
+        hasBinding: true,
+      })
+    ).toBe(true)
+  })
+
+  it('모집별 신청 건수가 있으면 잠그되 바인딩이 없으면 항상 허용한다', () => {
+    const program = baseProgram({
+      programRecruitments: [
+        {
+          id: 11,
+          recruitmentType: 'PARTICIPANT',
+          applicationFormBindingId: 77,
+        },
+      ],
+    })
+    expect(
+      canGeneralProgramApplicationFormEdit(program, 'PARTICIPANT', {
+        applicationCount: 1,
+        hasBinding: true,
+      })
+    ).toBe(false)
+    expect(
+      canGeneralProgramApplicationFormEdit(program, 'PARTICIPANT', {
+        applicationCount: 1,
+        hasBinding: false,
+      })
+    ).toBe(true)
   })
 
   it('저장된 행이 없으면 모집 일반 정보를 닫지 않는다', () => {
@@ -122,9 +161,7 @@ describe('canGeneralProgramRecruitmentInfoEdit', () => {
 
 describe('getGeneralProgramRecruitmentInfoEditBlockedAlertMessage', () => {
   it('모집 시작 이후 안내를 반환한다', () => {
-    expect(getGeneralProgramRecruitmentInfoEditBlockedAlertTitle()).toBe(
-      '모집 정보 수정 불가 안내'
-    )
+    expect(getGeneralProgramRecruitmentInfoEditBlockedAlertTitle()).toBe('모집 정보 수정 불가 안내')
     expect(getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(baseProgram())).toBe(
       '모집 시작 이후에는 모집 정보를 수정할 수 없습니다.'
     )

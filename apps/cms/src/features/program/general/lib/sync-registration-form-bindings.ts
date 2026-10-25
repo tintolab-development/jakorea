@@ -18,10 +18,12 @@ import {
   getOperationalFormSpec,
   getRegistrationFormSpec,
   pickOperationalFormBinding,
+  programForApplicationFormEditor,
   recruitmentApplicationBindingScope,
   resolveRowApplicationBinding,
   type OperationalFormSpec,
 } from '@/features/program/general/lib/operational-form-bindings'
+import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
 import {
   copyFormTemplateVersionRemote,
   fetchFormTemplateVersionRemote,
@@ -38,11 +40,10 @@ import {
 import { coalesceScopedFormDraftForPut } from '@/features/program/general/lib/coalesce-scoped-form-draft-for-put'
 import { loadOperationalFormDraftForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { resolveFormBindingTargetType } from '@/features/program/general/lib/resolve-form-binding-target-type'
-import {
-  assertProgramFormBindingWritable,
-  isProgramFormBindingWriteLocked,
-} from '@/features/program/shared/lib/program-edit-window'
 import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
+import type { ApplicationCountResponse } from '@/shared/api/generated/dashboard/schemas/applicationCountResponse'
+import { fetchProgramApplicationCountsRemote } from '@/features/program/general/api/application-counts-api-client'
+import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 
 type RememberedBinding = { templateId: number; templateVersionId: number }
 
@@ -54,6 +55,34 @@ export type ApplicationFormLoadSource = {
 
 const rememberedByProgram = new Map<string, Map<string, RememberedBinding>>()
 const FORM_BINDINGS_STALE_MS = 30_000
+
+function hasApplicationCount(count: ApplicationCountResponse): boolean | undefined {
+  if (typeof count.totalCount === 'number' && Number.isFinite(count.totalCount)) {
+    return count.totalCount > 0
+  }
+
+  const statusCounts = [
+    count.submittedCount,
+    count.approvedCount,
+    count.rejectedCount,
+    count.waitingCount,
+  ].filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+  if (statusCounts.length === 0) return undefined
+  return statusCounts.some(value => value > 0)
+}
+
+async function fetchProgramApplicationCountsCached(
+  programId: string
+): Promise<ApplicationCountResponse[]> {
+  return queryClient.fetchQuery({
+    queryKey: generalProgramQueryKeys.applicationCounts(programId),
+    queryFn: () => fetchProgramApplicationCountsRemote(programId),
+    // A stale zero would recreate the orphan-version bug. This is an imperative
+    // write guard, so keep the query key for deduplication but always revalidate.
+    staleTime: 0,
+    retry: false,
+  })
+}
 
 async function fetchProgramFormBindingsCached(
   programId: string,
@@ -72,6 +101,52 @@ async function fetchProgramFormBindingsCached(
 
 export function invalidateProgramFormBindingsCache(programId: string): void {
   void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.formBindings(programId) })
+}
+
+/**
+ * Check the recruitment-specific binding before any template COPY/PUT/publish.
+ *
+ * A missing binding intentionally remains writable: there is no existing form
+ * binding to replace. Once an active APPLICATION binding exists, however, the
+ * backend lock is based on applications for that recruitment, not on dates.
+ * The count endpoint only returns grouped rows that exist, so no matching row
+ * means zero applications for the target recruitment.
+ */
+function scopedProgramForApplicationForm(program: Program, templateCode: string): Program {
+  const variant = getParticipantApplicationEditorVariantForTemplateCode(templateCode)
+  return variant != null ? programForApplicationFormEditor(program, variant) : program
+}
+
+export async function assertProgramApplicationFormWritable(
+  program: Program,
+  templateCode: string
+): Promise<void> {
+  if (!shouldUseProgramFormBindingsRemoteApi() || !shouldUseFormsSurveysRemoteApi()) return
+
+  const spec = getOperationalFormSpec(templateCode)
+  if (spec == null || spec.formType.trim().toUpperCase() !== 'APPLICATION') return
+
+  const scopedProgram = scopedProgramForApplicationForm(program, templateCode)
+  const scope = recruitmentApplicationBindingScope(scopedProgram, spec.formType)
+  if (scope == null) return
+
+  const bindings = await fetchProgramFormBindingsCached(scopedProgram.id, { fresh: true })
+  const row = resolveRowApplicationBinding(scopedProgram, bindings, spec)
+  if (row.kind !== 'binding' || row.binding.active === false) return
+
+  const counts = await fetchProgramApplicationCountsCached(scopedProgram.id)
+  const targetCounts = counts.filter(
+    count => Number(count.recruitmentId) === scope.targetScopeId
+  )
+  for (const count of targetCounts) {
+    const hasApplications = hasApplicationCount(count)
+    if (hasApplications == null) {
+      throw new Error('신청서 현황을 확인하지 못해 양식을 수정할 수 없습니다. 다시 시도해 주세요.')
+    }
+    if (hasApplications) {
+      throw new Error(PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE)
+    }
+  }
 }
 
 function shouldUseProgramFormBindingsRemoteApi(): boolean {
@@ -350,7 +425,7 @@ async function promoteCatalogBindingToProgramScoped(args: {
  * 바인딩된 버전은 PUBLISHED라 PUT이 409 FORM_VERSION_IMMUTABLE이다.
  * 발행본이면 새 DRAFT로 복사한 뒤 저장·발행하고, 그 버전으로 바인딩을 교체한다.
  */
-export async function saveProgramScopedOperationalFormVersion(args: {
+export async function saveProgramScopedOperationalFormVersion(input: {
   program: Program
   templateCode: string
   versionId: number
@@ -366,16 +441,18 @@ export async function saveProgramScopedOperationalFormVersion(args: {
    */
   excludeBindingIds?: ReadonlySet<number>
 }): Promise<RememberedBinding & { bindingId?: number }> {
+  const args = {
+    ...input,
+    program: scopedProgramForApplicationForm(input.program, input.templateCode),
+  }
   const spec = getOperationalFormSpec(args.templateCode) ?? getRegistrationFormSpec(args.templateCode)
   if (spec == null) {
     throw new Error(`운영 양식 스펙을 찾을 수 없습니다: ${args.templateCode}`)
   }
-  assertProgramFormBindingWritable(
-    args.program,
-    spec.targetRole ? resolveFormBindingTargetType(spec.targetRole) : undefined,
-    spec.targetRole
-  )
-
+  // Do this before fetching or mutating a template version. A binding PATCH
+  // can be rejected after recruitment applications exist; the preflight keeps
+  // that rejection from leaving a copied/published orphan version behind.
+  await assertProgramApplicationFormWritable(args.program, args.templateCode)
   const current = await fetchFormTemplateVersionRemote(args.versionId)
   const sourceTemplateId = current.templateId
   if (sourceTemplateId == null) {
@@ -620,10 +697,11 @@ export async function saveMutableProgramFormVersion(args: {
 
 /** catalog binding → program-scoped copy (양식 수정 모달·저장 SSOT) */
 export async function ensureProgramScopedOperationalBinding(
-  program: Program,
+  inputProgram: Program,
   templateCode: string,
   options?: { strictRemote?: boolean }
 ): Promise<ApplicationFormLoadSource> {
+  const program = scopedProgramForApplicationForm(inputProgram, templateCode)
   const strictRemote = options?.strictRemote === true
   if (!shouldUseProgramFormBindingsRemoteApi() || !shouldUseFormsSurveysRemoteApi()) {
     return strictRemote
@@ -636,25 +714,6 @@ export async function ensureProgramScopedOperationalBinding(
       ? { preferLocalDraft: false, unavailableReason: '신청 양식 계약을 찾을 수 없습니다.' }
       : { preferLocalDraft: true }
   }
-  if (
-    isProgramFormBindingWriteLocked(
-      program,
-      spec.targetRole ? resolveFormBindingTargetType(spec.targetRole) : undefined,
-      spec.targetRole
-    )
-  ) {
-    const bindings = await fetchProgramFormBindingsCached(program.id)
-    const catalog = await resolveFormTemplateCatalogIds(templateCode).catch(() => null)
-    return resolveApplicationFormLoadSource({
-      programId: program.id,
-      program,
-      templateCode,
-      bindings,
-      catalogTemplateId: catalog?.templateId,
-      strictRemote,
-    })
-  }
-
   const catalog = await resolveFormTemplateCatalogIds(templateCode)
   const bindings = await fetchProgramFormBindingsCached(program.id)
   const initial = resolveApplicationFormLoadSource({
@@ -669,6 +728,10 @@ export async function ensureProgramScopedOperationalBinding(
   // 원격 SSOT 모드에서는 binding이 없을 때 카탈로그를 복제해 화면을 채우지 않는다.
   // 유효한 binding version이 있을 때만 읽고, 수정 저장 시 copy/rebind를 수행한다.
   if (strictRemote) return initial
+
+  // Opening the edit modal may promote a catalog/local version. Apply the same
+  // guard here so entering the modal cannot create a version before save.
+  await assertProgramApplicationFormWritable(program, templateCode)
 
   const local = await loadOperationalFormDraftForProgram(program, templateCode)
   if (local?.draft != null && catalog != null) {

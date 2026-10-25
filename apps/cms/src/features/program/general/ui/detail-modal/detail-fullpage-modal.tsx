@@ -111,11 +111,11 @@ import {
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import {
   isProgramTypeSettingsSaveBlocked,
-  recruitmentEditTypeForDetailTab,
 } from '@/features/program/shared/lib/program-edit-window'
 import {
   PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
   PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+  PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
 } from '@/shared/lib/program-edit-window-error-message'
 import {
   getGeneralProgramApiErrorCode,
@@ -134,7 +134,6 @@ import {
   EDUCATION_STRUCTURE_CHANGE_CONFIRM_TITLE,
 } from '@/features/program/general/lib/education-structure-guard'
 import {
-  canGeneralProgramApplicationFormEdit,
   canGeneralProgramCommonInfoEdit,
   canGeneralProgramRecruitmentInfoEdit,
   getGeneralProgramCommonInfoEditBlockedAlertMessage,
@@ -163,12 +162,16 @@ import {
 } from '@/features/program/general/lib/general-program-modal-z-index'
 import { GeneralProgramApplicationView } from './info/application-view'
 import { GeneralProgramApplicationTemplateEditModal } from './info/application-template-edit-modal'
+import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
+import { assertProgramApplicationFormWritable } from '@/features/program/general/lib/sync-registration-form-bindings'
+import { programForApplicationFormEditor } from '@/features/program/general/lib/operational-form-bindings'
 import {
   normalizeGeneralRecruitTab,
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
 import {
   normalizeGeneralApplicationTab,
+  resolveGeneralApplicationEditorVariant,
   type GeneralApplicationTabKey,
 } from '@/features/program/general/lib/application-tabs'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
@@ -1221,6 +1224,8 @@ export function GeneralProgramDetailFullPageModal({
   ])
 
   const [applicationTemplateEditOpen, setApplicationTemplateEditOpen] = useState(false)
+  const [applicationTemplateEditPreflightLoading, setApplicationTemplateEditPreflightLoading] =
+    useState(false)
   const [applicationPreviewReloadKey, setApplicationPreviewReloadKey] = useState(0)
 
   const handleApplicationSubTabChange = useCallback(
@@ -1240,30 +1245,29 @@ export function GeneralProgramDetailFullPageModal({
   )
 
   const handleApplicationEditForm = useCallback(() => {
-    if (
-      displayProgram &&
-      !canGeneralProgramApplicationFormEdit(
-        displayProgram,
-        recruitmentEditTypeForDetailTab(applicationSubTab)
-      )
-    ) {
-      return
-    }
-    setApplicationTemplateEditOpen(true)
-  }, [applicationSubTab, displayProgram])
-
-  useEffect(() => {
-    if (!applicationTemplateEditOpen || !displayProgram) return
-    if (
-      canGeneralProgramApplicationFormEdit(
-        displayProgram,
-        recruitmentEditTypeForDetailTab(applicationSubTab)
-      )
-    ) {
-      return
-    }
-    setApplicationTemplateEditOpen(false)
-  }, [applicationSubTab, applicationTemplateEditOpen, displayProgram])
+    if (displayProgram == null || applicationTemplateEditPreflightLoading) return
+    const variant = resolveGeneralApplicationEditorVariant(displayProgram, applicationSubTab)
+    const templateCode = getTemplateIdForParticipantApplicationVariant(variant)
+    const scopedProgram = programForApplicationFormEditor(displayProgram, variant)
+    setApplicationTemplateEditPreflightLoading(true)
+    void assertProgramApplicationFormWritable(scopedProgram, templateCode)
+      .then(() => setApplicationTemplateEditOpen(true))
+      .catch(error => {
+        void showAlert({
+          title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
+          content:
+            error instanceof Error && error.message.trim() !== ''
+              ? error.message
+              : '신청서 현황을 확인하지 못해 양식을 수정할 수 없습니다. 다시 시도해 주세요.',
+        })
+      })
+      .finally(() => setApplicationTemplateEditPreflightLoading(false))
+  }, [
+    applicationSubTab,
+    applicationTemplateEditPreflightLoading,
+    displayProgram,
+    showAlert,
+  ])
 
   const handleApplicationTemplateEditClose = useCallback(() => {
     setApplicationTemplateEditOpen(false)
@@ -2414,6 +2418,7 @@ export function GeneralProgramDetailFullPageModal({
                 showVolunteerTab={showVolunteerApplications}
                 canWrite={canWrite}
                 onEditForm={handleApplicationEditForm}
+                editFormLoading={applicationTemplateEditPreflightLoading}
                 previewReloadKey={applicationPreviewReloadKey}
               />
             ) : activeLnb === 'survey' ? (

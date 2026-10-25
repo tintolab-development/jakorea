@@ -1,6 +1,6 @@
 /**
  * 교육받은 교사 프로그램 상세 — 신청 정보 탭.
- * 참여 기관 신청 정보 단일 탭 + 양식 미리보기(읽기 전용) + 양식 수정(모집 시작 전까지만).
+ * 참여 기관 신청 정보 단일 탭 + 양식 미리보기(읽기 전용) + 서버 최종 판단 양식 수정.
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -12,18 +12,12 @@ import {
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
-import { isTrainedTeachersApplicationFormEditable } from '@/features/program/trained-teachers/lib/application-form-edit-policy'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
-import {
-  PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
-  PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
-} from '@/shared/lib/program-edit-window-error-message'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { CmsButton } from '@/shared/ui'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import '@/features/program/general/ui/detail-modal/info/application-view.css'
@@ -49,9 +43,13 @@ function TrainedTeachersApplicationFormPreviewPanel({ program }: { program: Prog
     }
   }, [program])
 
-  const formSource = useProgramApplicationFormLoadSource(program, TRAINED_TEACHERS_APPLICATION_VARIANT, {
-    remoteStrict,
-  })
+  const formSource = useProgramApplicationFormLoadSource(
+    program,
+    TRAINED_TEACHERS_APPLICATION_VARIANT,
+    {
+      remoteStrict,
+    }
+  )
 
   const vm = useProgramParticipantApplicationEditor(
     editorActive && !formSource.bindingsLoading && formSource.unavailableReason == null,
@@ -131,20 +129,6 @@ export function TrainedTeachersApplicationInfoView({
   onEditForm: () => void
   previewReloadKey?: number
 }) {
-  const { showAlert } = useCmsAlert()
-  const formEditable = isTrainedTeachersApplicationFormEditable(program)
-
-  const handleEditFormClick = () => {
-    if (!formEditable) {
-      showAlert({
-        title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
-        content: PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
-      })
-      return
-    }
-    onEditForm()
-  }
-
   return (
     <div className="application-view program-detail-fullpage-modal__info-tab">
       <CmsTextTabs
@@ -154,11 +138,7 @@ export function TrainedTeachersApplicationInfoView({
         items={[{ key: 'institutions', label: '참여 기관 신청 정보' }]}
         trailing={
           canWrite ? (
-            <CmsButton
-              variant="secondary"
-              size="large"
-              onClick={handleEditFormClick}
-            >
+            <CmsButton variant="secondary" size="large" onClick={onEditForm}>
               양식 수정
             </CmsButton>
           ) : null

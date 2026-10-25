@@ -41,9 +41,7 @@ describe('isCommonInfoEditPeriodOpen', () => {
   })
 
   it('종료일이 없으면 막지 않는다', () => {
-    expect(isCommonInfoEditPeriodOpen(undefined, new Date('2026-11-08T00:00:00+09:00'))).toBe(
-      true
-    )
+    expect(isCommonInfoEditPeriodOpen(undefined, new Date('2026-11-08T00:00:00+09:00'))).toBe(true)
   })
 })
 
@@ -160,12 +158,12 @@ describe('isProgramStructureEditPeriodOpen', () => {
       { id: 1, recruitmentType: 'INSTRUCTOR', startAt: '2026-11-01T00:00:00+09:00' },
       { id: 2, recruitmentType: 'PARTICIPANT', startAt },
     ])
-    expect(
-      isProgramStructureEditPeriodOpen(program, new Date('2026-10-01T10:14:59+09:00'))
-    ).toBe(true)
-    expect(
-      isProgramStructureEditPeriodOpen(program, new Date('2026-10-01T10:15:00+09:00'))
-    ).toBe(false)
+    expect(isProgramStructureEditPeriodOpen(program, new Date('2026-10-01T10:14:59+09:00'))).toBe(
+      true
+    )
+    expect(isProgramStructureEditPeriodOpen(program, new Date('2026-10-01T10:15:00+09:00'))).toBe(
+      false
+    )
   })
 
   it('저장된 startAt이 없으면 연다', () => {
@@ -304,12 +302,31 @@ describe('resolveRecruitmentTypeForFormBinding', () => {
     expect(resolveRecruitmentTypeForFormBinding('SURVEY', null)).toBeNull()
   })
 
-  it('모집이 시작된 바인딩만 쓰기를 막는다', () => {
+  it('신청 건수가 있는 바인딩만 쓰기를 잠그고 날짜로 선차단하지 않는다', () => {
     const program = programWith([
-      { recruitmentType: 'INSTRUCTOR', startAt: '2020-01-01T00:00:00+09:00' },
+      {
+        recruitmentType: 'INSTRUCTOR',
+        startAt: '2020-01-01T00:00:00+09:00',
+        applicationFormBindingId: 901,
+      },
     ])
-    const now = new Date('2026-09-28T12:00:00+09:00')
-    expect(isProgramFormBindingWriteLocked(program, 'TEACHER', null, now)).toBe(true)
-    expect(isProgramFormBindingWriteLocked(program, 'ORGANIZATION', null, now)).toBe(false)
+    expect(
+      isProgramFormBindingWriteLocked(program, 'TEACHER', null, {
+        applicationCount: 1,
+        hasBinding: true,
+      })
+    ).toBe(true)
+    expect(
+      isProgramFormBindingWriteLocked(program, 'TEACHER', null, {
+        applicationCount: 0,
+        hasBinding: true,
+      })
+    ).toBe(false)
+    expect(
+      isProgramFormBindingWriteLocked(program, 'TEACHER', null, {
+        applicationCount: 1,
+        hasBinding: false,
+      })
+    ).toBe(false)
   })
 })
