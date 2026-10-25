@@ -16,6 +16,7 @@ export function readGeneralProgramTableFilters(
   return {
     title: searchParams.get('title') ?? undefined,
     lifecycleStatus: searchParams.get('lifecycleStatus') ?? undefined,
+    participantType: searchParams.get('participantType') ?? undefined,
     targetLevel: searchParams.get('targetLevel') ?? undefined,
     participantRecruitment: searchParams.get('participantRecruitment') ?? undefined,
     operationStartDate: searchParams.get('operationStartDate') ?? undefined,

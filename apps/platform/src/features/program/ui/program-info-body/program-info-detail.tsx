@@ -92,8 +92,11 @@ export function ProgramInfoDetail({
   const hasCurriculumBlock = program.sessions.length > 0 || program.eventSchedules.length > 0
   const hasBasicInfoSection = basicInfoFields.length > 0 || hasCurriculumBlock
   const applicationMethodValue = program.applicationMethodValue.trim()
+  const geminiTrainingRequestPeriodLabel =
+    program.detailCase === 'gemini' ? (program.geminiTrainingRequestPeriodLabel ?? '').trim() : ''
   const hasDetailContent =
     program.recruitmentPhases.length > 0 ||
+    Boolean(geminiTrainingRequestPeriodLabel) ||
     program.educationSchedules.length > 0 ||
     program.extraSections.length > 0 ||
     Boolean(program.contactValue.trim())
@@ -195,23 +198,35 @@ export function ProgramInfoDetail({
           </PFText>
 
           <div className={styles.detailContentBody}>
-            {program.recruitmentPhases.length > 0 ? (
+            {program.recruitmentPhases.length > 0 || geminiTrainingRequestPeriodLabel ? (
               <div className={styles.recruitmentCard}>
                 <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
                   {program.recruitmentPhaseGroupLabel}
                 </PFText>
-                <div className={styles.recruitmentList}>
-                  {program.recruitmentPhases.map((phase, index) => (
-                    <div key={`${phase.label}-${index}`} className={styles.infoBlock}>
-                      <PFText as="span" typo="bd-md-sb" color="black">
-                        {phase.label}
-                      </PFText>
-                      <PFText as="span" typo="bd-md-md" color="black">
-                        {phase.value}
-                      </PFText>
-                    </div>
-                  ))}
-                </div>
+                {program.recruitmentPhases.length > 0 ? (
+                  <div className={styles.recruitmentList}>
+                    {program.recruitmentPhases.map((phase, index) => (
+                      <div key={`${phase.label}-${index}`} className={styles.infoBlock}>
+                        <PFText as="span" typo="bd-md-sb" color="black">
+                          {phase.label}
+                        </PFText>
+                        <PFText as="span" typo="bd-md-md" color="black">
+                          {phase.value}
+                        </PFText>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {geminiTrainingRequestPeriodLabel ? (
+                  <div className={styles.infoBlock}>
+                    <PFText as="span" typo="bd-md-sb" color="black">
+                      연수 요청 가능 기간
+                    </PFText>
+                    <PFText as="span" typo="bd-md-md" color="black">
+                      {geminiTrainingRequestPeriodLabel}
+                    </PFText>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 

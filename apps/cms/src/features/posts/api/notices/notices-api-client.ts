@@ -6,6 +6,11 @@ import {
 import { customInstance } from '@/shared/api/orval-mutator'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
 import type { NoticeWriteRequest } from '@/features/posts/api/notices/adapters/notice-adapters'
+import {
+  patchCategoryBatchChanges,
+  type CategoryBatchSaveResponse,
+} from '@/features/posts/api/shared/category-bulk-api'
+import type { CategoryManagementDraftChanges } from '@/features/posts/model/category-management-draft'
 import type {
   ApiResponseMapStringObjectData,
   CategoryRequest,
@@ -130,4 +135,13 @@ export async function updateNoticeCategoryRemote(
 
 export async function deleteNoticeCategoryRemote(categoryId: string): Promise<void> {
   await postsApi.deleteNoticeCategory(pathId(categoryId))
+}
+
+export async function bulkChangeNoticeCategoriesRemote(
+  changes: CategoryManagementDraftChanges
+): Promise<CategoryBatchSaveResponse> {
+  return patchCategoryBatchChanges(
+    '/api/admin/content/notice-categories/bulk-changes',
+    changes
+  )
 }

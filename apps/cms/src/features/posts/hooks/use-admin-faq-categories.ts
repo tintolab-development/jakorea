@@ -1,10 +1,14 @@
 import { useCallback, useMemo } from 'react'
 import {
+  saveFaqCategoriesBulk,
+} from '@/features/posts/api/faqs/admin-faqs-service'
+import {
   useFaqCategoriesQuery,
   useFaqCategoryMutations,
 } from '@/features/posts/hooks/use-faq-categories-query'
 import type { CategoryRemoteActions } from '@/features/posts/hooks/category-remote-actions'
 import type { FaqCategoryRow } from '@/features/posts/model/admin-faq-management.types'
+import type { CategoryManagementDraftChanges } from '@/features/posts/model/category-management-draft'
 
 export type FaqCategoryRemoteActions = CategoryRemoteActions
 
@@ -20,6 +24,10 @@ const EMPTY_CATEGORY_ROWS: FaqCategoryRow[] = []
 export function useAdminFaqCategories(): UseAdminFaqCategoriesResult {
   const categoriesQuery = useFaqCategoriesQuery()
   const { createMutation, updateMutation, deleteMutation } = useFaqCategoryMutations()
+  const createCategory = createMutation.mutateAsync
+  const updateCategory = updateMutation.mutateAsync
+  const deleteCategory = deleteMutation.mutateAsync
+  const refetchCategories = categoriesQuery.refetch
 
   const categoryRows = categoriesQuery.data ?? EMPTY_CATEGORY_ROWS
 
@@ -35,28 +43,36 @@ export function useAdminFaqCategories(): UseAdminFaqCategoriesResult {
 
   const onCreate = useCallback(
     async (name: string) => {
-      await createMutation.mutateAsync(name)
+      await createCategory(name)
     },
-    [createMutation.mutateAsync]
+    [createCategory]
   )
 
   const onUpdate = useCallback(
     async (id: string, name: string) => {
-      await updateMutation.mutateAsync({ id, name })
+      await updateCategory({ id, name })
     },
-    [updateMutation.mutateAsync]
+    [updateCategory]
   )
 
   const onDelete = useCallback(
     async (id: string) => {
-      await deleteMutation.mutateAsync(id)
+      await deleteCategory(id)
     },
-    [deleteMutation.mutateAsync]
+    [deleteCategory]
+  )
+
+  const onSave = useCallback(
+    async (changes: CategoryManagementDraftChanges) => {
+      await saveFaqCategoriesBulk(changes)
+      await refetchCategories()
+    },
+    [refetchCategories]
   )
 
   const remoteActions = useMemo(
-    () => ({ onCreate, onUpdate, onDelete }),
-    [onCreate, onDelete, onUpdate]
+    () => ({ onCreate, onUpdate, onDelete, onSave }),
+    [onCreate, onDelete, onSave, onUpdate]
   )
 
   return {

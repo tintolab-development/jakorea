@@ -4,9 +4,12 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getQueryRetryHttpStatus, queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import type { ProgramDetail, ProgramListItem, ProgramsListParams } from '../model/types'
 import { fetchPortalProgramDetail, fetchPortalPrograms } from './client'
-import { HOME_PORTAL_PROGRAMS_QUERY, toPortalProgramListQuery } from './list-query'
+import {
+  HOME_PORTAL_PROGRAMS_QUERY,
+  normalizePortalProgramFilterValues,
+  toPortalProgramListQuery,
+} from './list-query'
 import type { PortalRecruitmentFocus } from '../lib/portal-recruitment'
-import { filterProgramsByEducationTargetParams } from '../lib/education-target-filter'
 import { mapPortalProgramDetail, mapPortalProgramListItem, parsePortalProgramId } from './mappers'
 import type { PortalProgramListQuery } from './types'
 
@@ -30,11 +33,12 @@ function shouldRefetchProgramDetail(query: { state: { error: unknown } }): boole
 function listKeyParams(query: PortalProgramListQuery) {
   return {
     keyword: query.keyword ?? '',
-    portalTab: query.portalTab ?? '',
-    programType: query.programType ?? '',
-    recruitmentStatus: query.recruitmentStatus ?? '',
-    educationTargets: query.educationTargets ?? '',
-    educationMethod: query.educationMethod ?? '',
+    portalTab: normalizePortalProgramFilterValues(query.portalTab),
+    programType: normalizePortalProgramFilterValues(query.programType),
+    recruitmentStatus: normalizePortalProgramFilterValues(query.recruitmentStatus),
+    recruitmentTarget: normalizePortalProgramFilterValues(query.recruitmentTarget),
+    educationTarget: normalizePortalProgramFilterValues(query.educationTarget),
+    educationMethod: normalizePortalProgramFilterValues(query.educationMethod),
     operatingFrom: query.operatingFrom ?? '',
     operatingTo: query.operatingTo ?? '',
     sort: query.sort ?? 'LATEST',
@@ -168,14 +172,13 @@ export function usePortalProgramsList(params: ProgramsListParams): PortalProgram
     }
   }
 
-  const items = filterProgramsByEducationTargetParams(
-    (query.data?.items ?? []).flatMap(row => {
-      const mapped = mapPortalProgramListItem(row)
-      return mapped ? [mapped] : []
-    }),
-    params,
-  )
-  const totalCount = query.data?.totalElements ?? items.length
+  // The API applies every filter before pagination. Never filter only the current
+  // page here, otherwise the cards and server total can describe different sets.
+  const items = (query.data?.items ?? []).flatMap(row => {
+    const mapped = mapPortalProgramListItem(row)
+    return mapped ? [mapped] : []
+  })
+  const totalCount = query.data?.totalElements ?? 0
   const totalPages = Math.max(1, query.data?.totalPages ?? 1)
 
   return {

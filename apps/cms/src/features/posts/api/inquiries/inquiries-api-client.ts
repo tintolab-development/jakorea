@@ -12,6 +12,11 @@ import type {
   PageResponseMapStringObject,
 } from '@/shared/api/generated/posts/schemas'
 import type { InquiryAnswerUpdateRequest } from '@/shared/api/generated/posts/schemas/inquiryAnswerUpdateRequest'
+import {
+  patchCategoryBatchChanges,
+  type CategoryBatchSaveResponse,
+} from '@/features/posts/api/shared/category-bulk-api'
+import type { CategoryManagementDraftChanges } from '@/features/posts/model/category-management-draft'
 
 const postsApi = getJAKoreaCMSBackendAPIPostsSubset()
 
@@ -92,6 +97,12 @@ export async function updateInquiryCategoryRemote(
 
 export async function deleteInquiryCategoryRemote(categoryId: string): Promise<void> {
   await postsApi.deleteInquiryCategory(categoryPathId(categoryId))
+}
+
+export async function bulkChangeInquiryCategoriesRemote(
+  changes: CategoryManagementDraftChanges
+): Promise<CategoryBatchSaveResponse> {
+  return patchCategoryBatchChanges('/api/admin/inquiry-categories/bulk-changes', changes)
 }
 
 export async function fetchInquiryAttachmentsRemote(

@@ -5,9 +5,11 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { InputRef } from 'antd'
 import type { CategoryRemoteActions } from '@/features/posts/hooks/category-remote-actions'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import {
   isCategoryDuplicateError,
   isCategoryInUseError,
+  isCategoryConcurrentModificationError,
   type CategoryManagementKind,
   type PostWithCategoryLabel,
   getPostCategoryLabel,
@@ -18,6 +20,13 @@ import {
   hasDuplicateCategoryName,
 } from '@/features/posts/model/notice-category-domain'
 import type { PostsCategoryRow } from '@/features/posts/model/posts-category-row'
+import {
+  buildCategoryManagementDraftChanges,
+  CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE,
+  CATEGORY_NAME_REQUIRED_MESSAGE,
+  hasCategoryManagementDraftChanges,
+  validateCategoryName,
+} from '@/features/posts/model/category-management-draft'
 
 export type UseCategoryManagementModalParams = {
   kind: CategoryManagementKind
@@ -42,10 +51,14 @@ export type UseCategoryManagementModalResult = {
   duplicateAlertOpen: boolean
   deleteConfirmOpen: boolean
   settingsCompleteOpen: boolean
+  saveErrorMessage: string | null
+  isSaving: boolean
+  draftCategories: PostsCategoryRow[]
   pendingDeleteRow: PostsCategoryRow | null
   closeDeleteBlocked: () => void
   closeDuplicateAlert: () => void
   closeSettingsComplete: () => void
+  closeSaveError: () => void
   handleClose: () => void
   startEdit: (row: PostsCategoryRow) => void
   cancelEdit: () => void
@@ -56,7 +69,7 @@ export type UseCategoryManagementModalResult = {
   cancelNew: () => void
   submitNew: () => void
   openCompose: () => void
-  applySettings: () => void
+  applySettings: () => Promise<void>
 }
 
 export function useCategoryManagementModal({
@@ -76,6 +89,11 @@ export function useCategoryManagementModal({
   const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [settingsCompleteOpen, setSettingsCompleteOpen] = useState(false)
+  const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [draftCategories, setDraftCategories] = useState<PostsCategoryRow[]>(categories)
+  const baseCategoriesRef = useRef<PostsCategoryRow[]>(categories)
+  const wasOpenRef = useRef(false)
   const [pendingDeleteRow, setPendingDeleteRow] = useState<PostsCategoryRow | null>(null)
   const newInputRef = useRef<InputRef>(null)
   const editInputRef = useRef<InputRef>(null)
@@ -89,19 +107,25 @@ export function useCategoryManagementModal({
     setDuplicateAlertOpen(false)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
+    setSaveErrorMessage(null)
   }, [])
 
   useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      baseCategoriesRef.current = categories.map(row => ({ ...row }))
+      setDraftCategories(categories.map(row => ({ ...row })))
+    }
+    wasOpenRef.current = open
     if (!open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- props `open`과 로컬 UI 동기화
       resetEphemeralUi()
     }
-  }, [open, resetEphemeralUi])
+  }, [categories, open, resetEphemeralUi])
 
   const handleClose = useCallback(() => {
+    if (isSaving) return
     resetEphemeralUi()
     onClose()
-  }, [onClose, resetEphemeralUi])
+  }, [isSaving, onClose, resetEphemeralUi])
 
   const startEdit = useCallback((row: PostsCategoryRow) => {
     setComposeOpen(false)
@@ -116,39 +140,32 @@ export function useCategoryManagementModal({
     setEditDraft('')
   }, [])
 
-  const submitEdit = useCallback(async () => {
+  const submitEdit = useCallback(() => {
     if (editingId == null) return
     const trimmed = editDraft.trim()
-    if (trimmed === '') {
+    const validation = validateCategoryName(trimmed)
+    if (validation === 'empty') {
+      setSaveErrorMessage(CATEGORY_NAME_REQUIRED_MESSAGE)
       return
     }
-    if (hasDuplicateCategoryName(categories, trimmed, editingId)) {
+    if (validation === 'invalid_characters') {
+      setSaveErrorMessage(CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE)
+      return
+    }
+    if (hasDuplicateCategoryName(draftCategories, trimmed, editingId)) {
       setDuplicateAlertOpen(true)
       return
     }
-    if (remoteActions) {
-      try {
-        await remoteActions.onUpdate(editingId, trimmed)
-        cancelEdit()
-      } catch (error) {
-        if (isCategoryDuplicateError(error, kind)) {
-          setDuplicateAlertOpen(true)
-        }
-      }
-      return
-    }
-    onCategoriesChange(
-      categories.map(c => (c.id === editingId ? { ...c, name: trimmed } : c))
-    )
+    setDraftCategories(rows => rows.map(c => (c.id === editingId ? { ...c, name: trimmed } : c)))
     cancelEdit()
-  }, [cancelEdit, categories, editDraft, editingId, kind, onCategoriesChange, remoteActions])
+  }, [cancelEdit, draftCategories, editDraft, editingId])
 
   const removeCategory = useCallback(
     (id: string) => {
-      onCategoriesChange(categories.filter(c => c.id !== id))
+      setDraftCategories(rows => rows.filter(c => c.id !== id))
       if (editingId === id) cancelEdit()
     },
-    [cancelEdit, categories, editingId, onCategoriesChange]
+    [cancelEdit, editingId]
   )
 
   const requestDeleteCategory = useCallback(
@@ -175,56 +192,36 @@ export function useCategoryManagementModal({
 
   const confirmDeleteCategory = useCallback(async () => {
     if (pendingDeleteRow == null) return
-    if (remoteActions) {
-      try {
-        await remoteActions.onDelete(pendingDeleteRow.id)
-        setDeleteConfirmOpen(false)
-        setPendingDeleteRow(null)
-      } catch (error) {
-        if (isCategoryInUseError(error, kind)) {
-          setDeleteConfirmOpen(false)
-          setPendingDeleteRow(null)
-          setDeleteBlockedOpen(true)
-        }
-      }
-      return
-    }
     removeCategory(pendingDeleteRow.id)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
-  }, [kind, pendingDeleteRow, remoteActions, removeCategory])
+  }, [pendingDeleteRow, removeCategory])
 
   const cancelNew = useCallback(() => {
     setNewDraft('')
     setComposeOpen(false)
   }, [])
 
-  const submitNew = useCallback(async () => {
+  const submitNew = useCallback(() => {
     const trimmed = newDraft.trim()
-    if (trimmed === '') {
+    const validation = validateCategoryName(trimmed)
+    if (validation === 'empty') {
+      setSaveErrorMessage(CATEGORY_NAME_REQUIRED_MESSAGE)
       return
     }
-    if (hasDuplicateCategoryName(categories, trimmed)) {
+    if (validation === 'invalid_characters') {
+      setSaveErrorMessage(CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE)
+      return
+    }
+    if (hasDuplicateCategoryName(draftCategories, trimmed)) {
       setDuplicateAlertOpen(true)
       return
     }
-    if (remoteActions) {
-      try {
-        await remoteActions.onCreate(trimmed)
-        setNewDraft('')
-        setComposeOpen(false)
-      } catch (error) {
-        if (isCategoryDuplicateError(error, kind)) {
-          setDuplicateAlertOpen(true)
-        }
-      }
-      return
-    }
     const id = createNoticeCategoryId()
-    onCategoriesChange([...categories, { id, name: trimmed }])
+    setDraftCategories(rows => [...rows, { id, name: trimmed }])
     setNewDraft('')
     setComposeOpen(false)
-  }, [categories, kind, newDraft, onCategoriesChange, remoteActions])
+  }, [draftCategories, newDraft])
 
   const openCompose = useCallback(() => {
     cancelEdit()
@@ -240,11 +237,69 @@ export function useCategoryManagementModal({
     setDuplicateAlertOpen(false)
   }, [])
 
-  const applySettings = useCallback(() => {
-    resetEphemeralUi()
-    onClose()
-    setSettingsCompleteOpen(true)
-  }, [onClose, resetEphemeralUi])
+  const closeSaveError = useCallback(() => {
+    setSaveErrorMessage(null)
+  }, [])
+
+  const applySettings = useCallback(async () => {
+    if (isSaving) return
+    const changes = buildCategoryManagementDraftChanges(baseCategoriesRef.current, draftCategories)
+    if (!hasCategoryManagementDraftChanges(changes)) {
+      resetEphemeralUi()
+      onClose()
+      return
+    }
+
+    if (remoteActions?.onSave == null) {
+      if (remoteActions == null) {
+        onCategoriesChange(draftCategories)
+        resetEphemeralUi()
+        onClose()
+        setSettingsCompleteOpen(true)
+        return
+      }
+      setSaveErrorMessage('카테고리 일괄 저장 API가 아직 연결되지 않았습니다.')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      await remoteActions.onSave(changes)
+      baseCategoriesRef.current = draftCategories.map(row => ({ ...row }))
+      resetEphemeralUi()
+      onClose()
+      setSettingsCompleteOpen(true)
+    } catch (error) {
+      if (isCategoryInUseError(error, kind)) {
+        setDeleteConfirmOpen(false)
+        setPendingDeleteRow(null)
+        setDeleteBlockedOpen(true)
+      } else if (isCategoryDuplicateError(error, kind)) {
+        setDuplicateAlertOpen(true)
+      } else if (isCategoryConcurrentModificationError(error, kind)) {
+        setSaveErrorMessage(
+          getPostsApiErrorMessage(
+            error,
+            '다른 관리자가 카테고리를 먼저 변경했습니다. 최신 목록을 확인한 후 다시 저장해 주세요.'
+          )
+        )
+      } else {
+        setSaveErrorMessage(
+          getPostsApiErrorMessage(error, '카테고리 설정을 저장하지 못했습니다. 변경 내용을 확인해 주세요.')
+        )
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }, [
+    draftCategories,
+    isSaving,
+    kind,
+    onCategoriesChange,
+    onClose,
+    remoteActions,
+    resetEphemeralUi,
+  ])
 
   const closeSettingsComplete = useCallback(() => {
     setSettingsCompleteOpen(false)
@@ -263,10 +318,14 @@ export function useCategoryManagementModal({
     duplicateAlertOpen,
     deleteConfirmOpen,
     settingsCompleteOpen,
+    saveErrorMessage,
+    isSaving,
+    draftCategories,
     pendingDeleteRow,
     closeDeleteBlocked,
     closeDuplicateAlert,
     closeSettingsComplete,
+    closeSaveError,
     handleClose,
     startEdit,
     cancelEdit,
