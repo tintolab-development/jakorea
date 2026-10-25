@@ -397,4 +397,23 @@ describe('신청 양식 수정 진입 preflight', () => {
     expect(createGeneralProgramFormBinding).not.toHaveBeenCalled()
     expect(updateGeneralProgramFormBinding).not.toHaveBeenCalled()
   })
+
+  it('recruitmentId가 null인 레거시 신청 건수도 targetType으로 매칭해 양식 수정을 막는다', async () => {
+    fetchGeneralProgramFormBindings.mockResolvedValue([])
+    fetchProgramApplicationCountsRemote.mockResolvedValue([
+      { programId: 170100, recruitmentId: null, targetType: 'ORGANIZATION', totalCount: 1 },
+    ])
+
+    render(<ApplicationEditFormHarness program={companySchoolProgram} tab="institutions" />)
+    fireEvent.click(screen.getByRole('button', { name: '양식 수정' }))
+
+    await waitFor(() => {
+      expect(fetchProgramApplicationCountsRemote).toHaveBeenCalledWith('170100')
+    })
+    expect(showAlert).toHaveBeenCalledWith({
+      title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
+      content: '모집 시작 이후에는 신청 양식을 수정할 수 없습니다.',
+    })
+    expect(screen.queryByText('application-form-editor')).toBeNull()
+  })
 })
