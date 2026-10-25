@@ -258,11 +258,14 @@ export function resetGeneralRecruitOverlayStoreForTests(): void {
  */
 export function useGeneralRecruitOverlayKv<T>(
   key: string,
-  defaultValue: T
+  defaultValue: T,
+  options?: { typedTemplateAuthoring?: boolean }
 ): [T, (next: T) => void] {
   const defaultRef = useRef(defaultValue)
+  const typedTemplateAuthoring = options?.typedTemplateAuthoring === true
   const rhfOwned = isGeneralRecruitOwnedKey(key)
   const getSnapshot = useCallback(() => {
+    if (typedTemplateAuthoring) return defaultRef.current
     if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentOverlayKey(key)) {
       return readActiveTrainedTeachersRecruitmentOverlayValue(key, defaultRef.current) as T
     }
@@ -273,11 +276,14 @@ export function useGeneralRecruitOverlayKv<T>(
       return readWizardRecruitmentKvValue(key, defaultRef.current)
     }
     return readOverlayKeyValue(key, defaultRef.current)
-  }, [key, rhfOwned])
+  }, [key, rhfOwned, typedTemplateAuthoring])
 
   const value = useSyncExternalStore(
     listener => {
-      const unsubOverlay = subscribeGeneralRecruitOverlayKey(key, listener)
+      const unsubOverlay = typedTemplateAuthoring
+        ? () => {}
+        : subscribeGeneralRecruitOverlayKey(key, listener)
+      if (typedTemplateAuthoring) return unsubOverlay
       const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
       const unsubTt = subscribeTrainedTeachersRegistrationRhf(listener)
       const unsubCs = subscribeCompanySchoolRegistrationRhf(listener)
@@ -287,16 +293,17 @@ export function useGeneralRecruitOverlayKv<T>(
         unsubTt()
         unsubCs()
       }
-    },
+  },
     getSnapshot,
     getSnapshot
   )
 
   const setValue = useCallback(
     (next: T) => {
+      if (typedTemplateAuthoring) return
       patchGeneralRecruitOverlay({ [key]: next })
     },
-    [key]
+    [key, typedTemplateAuthoring]
   )
   return [value, setValue]
 }

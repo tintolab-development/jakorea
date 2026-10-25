@@ -41,7 +41,7 @@ describe('syncUjatDetailEditFormKpiToOverlay', () => {
     resetUjatProgramRegistrationOverlay()
   })
 
-  it('RHF KPI를 overlay 키로 옮긴다', () => {
+  it('RHF KPI를 overlay에 쓰지 않는다', () => {
     syncUjatDetailEditFormKpiToOverlay({
       kpiFinalParticipants: 61,
       kpiVolunteerCount: 16,
@@ -49,44 +49,12 @@ describe('syncUjatDetailEditFormKpiToOverlay', () => {
       kpiFinalClasses: 10,
     })
     const overlay = getUjatProgramRegistrationOverlayRecord()
-    expect(overlay['ujat.kpi.participantCount']).toBe(61)
-    expect(overlay['ujat.kpi.volunteer']).toBe(16)
-    expect(overlay['ujat.kpi.dispatchedSchool']).toBe(3)
-    expect(overlay['ujat.kpi.dispatchedClass']).toBe(10)
+    expect(overlay['ujat.kpi.participantCount']).toBeUndefined()
+    expect(buildUjatKpiOverlayFromDetailEditForm({ kpiFinalParticipants: 61 })).toEqual({})
   })
 
-  it('overlay KPI가 apply 후 Program.kpi에 반영된다', () => {
-    const overlay = {
-      ...buildUjatKpiOverlayFromDetailEditForm({
-        kpiFinalParticipants: 40,
-        kpiVolunteerCount: 8,
-        kpiFinalSchools: 4,
-        kpiFinalClasses: 12,
-      }),
-    }
-    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), overlay)
-    expect(next.generalCommonInfo?.kpi?.finalParticipants).toBe(40)
-    expect(next.generalCommonInfo?.kpi?.volunteerCount).toBe(8)
-    expect(next.generalCommonInfo?.kpi?.finalSchools).toBe(4)
-    expect(next.generalCommonInfo?.kpi?.finalClasses).toBe(12)
-  })
-
-  it('상세 저장(kpiClearedAsZero)에서는 지운 KPI를 이전 값으로 되돌리지 않는다', () => {
-    const overlay = buildUjatKpiOverlayFromDetailEditForm({})
-    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), overlay, {
-      kpiClearedAsZero: true,
-    })
-    expect(next.generalCommonInfo?.kpi).toMatchObject({
-      finalParticipants: 0,
-      volunteerCount: 0,
-      finalSchools: 0,
-      finalClasses: 0,
-    })
-  })
-
-  it('표시용 병합(옵션 없음)에서는 null KPI 키가 기존 값을 유지한다', () => {
-    const overlay = buildUjatKpiOverlayFromDetailEditForm({})
-    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), overlay)
+  it('KPI overlay 키가 없으면 기존 Program.kpi를 유지한다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {})
     expect(next.generalCommonInfo?.kpi).toMatchObject({
       finalParticipants: 10,
       volunteerCount: 2,

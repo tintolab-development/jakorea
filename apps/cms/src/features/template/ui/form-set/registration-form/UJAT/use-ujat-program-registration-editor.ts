@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
@@ -25,7 +25,6 @@ import {
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import {
   getUjatProgramRegistrationOverlayRecord,
-  patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
   setUjatProgramRegistrationOverlayScope,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
@@ -37,7 +36,6 @@ import {
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   createUjatBasicInfoFormDefaults,
-  stripUjatBasicInfoOverlay,
   ujatBasicInfoFormValuesFromLegacyOverlay,
 } from '@/features/program/ujat/lib/ujat-basic-info-form'
 import {
@@ -124,6 +122,9 @@ export function useUjatProgramRegistrationEditor(
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [isDraftLoading, setIsDraftLoading] = useState(() => active)
+  // Legacy registration overlay is retained only as an opaque compatibility snapshot. It is
+  // never hydrated into the live store when the registration Wizard uses Typed RHF.
+  const legacyOverlayRef = useRef<Record<string, unknown>>({})
   const basicInfoForm = useForm<ProgramDetailEditFormValues>({
     defaultValues: createUjatBasicInfoFormDefaults(),
     shouldUnregister: false,
@@ -134,12 +135,13 @@ export function useUjatProgramRegistrationEditor(
   })
   const basicInfoValues = useWatch({ control: basicInfoForm.control }) as ProgramDetailEditFormValues
 
-  if (active) {
+  if (active && !usesRegistrationWizardDraft) {
     setUjatProgramRegistrationOverlayScope(templateCode)
   }
 
   const resetToSeed = useCallback(() => {
-    resetUjatProgramRegistrationOverlay()
+    legacyOverlayRef.current = {}
+    if (!usesRegistrationWizardDraft) resetUjatProgramRegistrationOverlay()
     basicInfoForm.reset(createUjatBasicInfoFormDefaults())
     educationScheduleForm.reset(EMPTY_UJAT_TYPED_DETAIL)
     const next = withForcedUjatRegistrationSeedTitleRequired(
@@ -148,7 +150,7 @@ export function useUjatProgramRegistrationEditor(
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
-  }, [basicInfoForm, educationScheduleForm])
+  }, [basicInfoForm, educationScheduleForm, usesRegistrationWizardDraft])
 
   useEffect(() => {
     if (!active) {
@@ -157,8 +159,10 @@ export function useUjatProgramRegistrationEditor(
     }
 
     let cancelled = false
-    setUjatProgramRegistrationOverlayScope(templateCode)
-    resetUjatProgramRegistrationOverlay()
+    if (!usesRegistrationWizardDraft) {
+      setUjatProgramRegistrationOverlayScope(templateCode)
+      resetUjatProgramRegistrationOverlay()
+    }
 
     if (skipDraftRestore) {
       setIsDraftLoading(false)
@@ -186,6 +190,7 @@ export function useUjatProgramRegistrationEditor(
       .then(saved => {
         if (cancelled) return
         if (saved?.draft) {
+          legacyOverlayRef.current = saved.overlay ?? {}
           const savedBasicInfo = saved.editorState?.ujatBasicInfo
           basicInfoForm.reset(
             savedBasicInfo && typeof savedBasicInfo === 'object'
@@ -198,8 +203,6 @@ export function useUjatProgramRegistrationEditor(
               ? (saved.editorState.ujatEducationSchedule as UjatTypedDetail)
               : typedDetailFromUjatOverlay(saved.overlay ?? {})
           )
-          const legacyOverlay = stripUjatBasicInfoOverlay(saved.overlay ?? {})
-          if (Object.keys(legacyOverlay).length > 0) patchUjatProgramRegistrationOverlay(legacyOverlay)
           const next = withForcedUjatRegistrationSeedTitleRequired(
             normalizeWritingFormDraft(saved.draft)
           )
@@ -210,10 +213,9 @@ export function useUjatProgramRegistrationEditor(
         }
 
         const legacy = localOnlyDraftPersistence ? loadUjatRegistrationTemplateSave() : null
+        legacyOverlayRef.current = legacy?.overlay ?? {}
         basicInfoForm.reset(ujatBasicInfoFormValuesFromLegacyOverlay(legacy?.overlay ?? {}))
         educationScheduleForm.reset(typedDetailFromUjatOverlay(legacy?.overlay ?? {}))
-        const legacyOverlay = stripUjatBasicInfoOverlay(legacy?.overlay ?? {})
-        if (Object.keys(legacyOverlay).length > 0) patchUjatProgramRegistrationOverlay(legacyOverlay)
         const next = withForcedUjatRegistrationSeedTitleRequired(
           normalizeWritingFormDraft(legacy?.draft ?? createUjatProgramRegistrationDraft())
         )
@@ -242,29 +244,31 @@ export function useUjatProgramRegistrationEditor(
 
   useEffect(() => {
     if (!active) {
-      resetUjatProgramRegistrationOverlay()
+      if (!usesRegistrationWizardDraft) resetUjatProgramRegistrationOverlay()
       closeWritingUserPreview()
     }
-  }, [active, closeWritingUserPreview])
+  }, [active, closeWritingUserPreview, usesRegistrationWizardDraft])
 
   useEffect(() => {
     if (!active || !usesRegistrationWizardDraft) return
 
     const handleDevAutofillComplete = (event: Event) => {
+      const detail =
+        event instanceof CustomEvent && event.detail != null && typeof event.detail === 'object'
+          ? event.detail
+          : {}
       const typedEducationSchedule =
-        event instanceof CustomEvent &&
-        event.detail != null &&
-        typeof event.detail === 'object' &&
-        'typedEducationSchedule' in event.detail
-          ? event.detail.typedEducationSchedule
-          : null
+        'typedEducationSchedule' in detail ? detail.typedEducationSchedule : null
+      const typedBasicInfo = 'typedBasicInfo' in detail ? detail.typedBasicInfo : null
       basicInfoForm.reset(
-        ujatBasicInfoFormValuesFromLegacyOverlay(getUjatProgramRegistrationOverlayRecord())
+        typedBasicInfo != null && typeof typedBasicInfo === 'object'
+          ? (typedBasicInfo as ProgramDetailEditFormValues)
+          : ujatBasicInfoFormValuesFromLegacyOverlay(legacyOverlayRef.current)
       )
       educationScheduleForm.reset(
         typedEducationSchedule != null && typeof typedEducationSchedule === 'object'
           ? (typedEducationSchedule as UjatTypedDetail)
-          : typedDetailFromUjatOverlay(getUjatProgramRegistrationOverlayRecord())
+          : typedDetailFromUjatOverlay(legacyOverlayRef.current)
       )
     }
 
@@ -396,7 +400,9 @@ export function useUjatProgramRegistrationEditor(
   )
 
   const persistDraft = useCallback(async () => {
-    const overlay = { ...getUjatProgramRegistrationOverlayRecord() }
+    const overlay = usesRegistrationWizardDraft
+      ? { ...legacyOverlayRef.current }
+      : { ...getUjatProgramRegistrationOverlayRecord() }
     const basicInfo = usesRegistrationWizardDraft ? basicInfoForm.getValues() : undefined
     const editorState =
       basicInfo == null

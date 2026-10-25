@@ -632,7 +632,11 @@ export function stripUjatTypedLegacyOverlay(
 ): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(stripUjatScheduleLegacyOverlay(overlay)).filter(
-      ([key]) => !key.startsWith('ujat.basicInfo.') && !key.startsWith('ujat.kpi.')
+      ([key]) =>
+        !key.startsWith('ujat.basicInfo.') &&
+        !key.startsWith('ujat.kpi.') &&
+        key !== 'ujat.wage.paymentItemValues' &&
+        key !== 'ujat.capacity.byRegion'
     )
   )
 }

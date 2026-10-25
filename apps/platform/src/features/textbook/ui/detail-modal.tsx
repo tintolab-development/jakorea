@@ -1,9 +1,12 @@
 import type { TextbookContent, TextbookTag } from '../model/types'
+import { FallbackImage } from '@/features/careers'
 import { RichTextViewer } from '@/shared/rich-text'
 import { PFCategoryBadge, PFLoadingSpinner, PFModal, PFText } from '@/shared/ui'
+import defaultTextbookThumbnailUrl from '@/shared/assets/illustration/illust-book.svg'
 import badgeCategoryIconUrl from '../image/icon/badge-category.svg'
 import badgeSkillIconUrl from '../image/icon/badge-skill.svg'
 import badgeTargetIconUrl from '../image/icon/badge-target.svg'
+import { hasTextbookUnitIntroduction, visibleTextbookUnits } from '../lib/detail-display'
 import styles from './detail-modal.module.css'
 
 type DetailModalProps = {
@@ -21,6 +24,9 @@ const TAG_ICON_SRC: Record<NonNullable<TextbookTag['icon']>, string> = {
 }
 
 export function DetailModal({ open, content, loading = false, onClose }: DetailModalProps) {
+  const unitItems = content ? visibleTextbookUnits(content.units) : []
+  const hasUnitIntroduction = content ? hasTextbookUnitIntroduction(content) : false
+
   return (
     <PFModal open={open} onClose={onClose} title="교육 콘텐츠 안내" size="lg">
       {loading && !content ? (
@@ -38,9 +44,12 @@ export function DetailModal({ open, content, loading = false, onClose }: DetailM
                   : styles.thumbnailWrapNoImage,
               ].join(' ')}
             >
-              {content.thumbnailUrl?.trim() ? (
-                <img className={styles.thumbnail} src={content.thumbnailUrl} alt="" />
-              ) : null}
+              <FallbackImage
+                className={styles.thumbnail}
+                src={content.thumbnailUrl?.trim() || defaultTextbookThumbnailUrl}
+                fallbackSrc={defaultTextbookThumbnailUrl}
+                alt=""
+              />
             </div>
 
             <div className={styles.summaryContent}>
@@ -115,55 +124,57 @@ export function DetailModal({ open, content, loading = false, onClose }: DetailM
               </dd>
             </div>
 
-            <div className={styles.detailRow}>
-              <PFText
-                as="dt"
-                typo="bd-sm-rg"
-                color="neutral-cool-600"
-                className={styles.detailLabel}
-              >
-                단원 소개
-              </PFText>
-              <dd className={styles.detailValue}>
-                {content.unitIntroHtml ? (
-                  <RichTextViewer
-                    className={styles.unitIntro}
-                    content={content.unitIntroHtml}
-                    contentFormat="html"
-                    maxHeight="none"
-                  />
-                ) : content.units.length > 0 ? (
-                  <ul className={styles.units}>
-                    {content.units.map(unit => (
-                      <li key={`${unit.unitLabel ?? ''}-${unit.title}`} className={styles.unit}>
-                        <p className={styles.unitHeading}>
-                          {unit.unitLabel ? (
-                            <>
-                              <span className={`typo-bd-sm-rg ${styles.unitLabel}`}>
-                                {unit.unitLabel}
-                              </span>{' '}
-                            </>
+            {hasUnitIntroduction ? (
+              <div className={styles.detailRow}>
+                <PFText
+                  as="dt"
+                  typo="bd-sm-rg"
+                  color="neutral-cool-600"
+                  className={styles.detailLabel}
+                >
+                  단원 소개
+                </PFText>
+                <dd className={styles.detailValue}>
+                  {content.unitIntroHtml?.trim() ? (
+                    <RichTextViewer
+                      className={styles.unitIntro}
+                      content={content.unitIntroHtml}
+                      contentFormat="html"
+                      maxHeight="none"
+                    />
+                  ) : (
+                    <ul className={styles.units}>
+                      {unitItems.map(unit => (
+                        <li key={`${unit.unitLabel ?? ''}-${unit.title}`} className={styles.unit}>
+                          <p className={styles.unitHeading}>
+                            {unit.unitLabel ? (
+                              <>
+                                <span className={`typo-bd-sm-rg ${styles.unitLabel}`}>
+                                  {unit.unitLabel}
+                                </span>{' '}
+                              </>
+                            ) : null}
+                            <span className={`typo-bd-sm-sb ${styles.unitTitle}`}>
+                              {unit.title}
+                            </span>
+                          </p>
+                          {unit.description.trim() ? (
+                            <PFText
+                              as="p"
+                              typo="bd-md-rg"
+                              color="black"
+                              className={styles.unitDescription}
+                            >
+                              {unit.description}
+                            </PFText>
                           ) : null}
-                          <span className={`typo-bd-sm-sb ${styles.unitTitle}`}>{unit.title}</span>
-                        </p>
-                        <PFText
-                          as="p"
-                          typo="bd-md-rg"
-                          color="black"
-                          className={styles.unitDescription}
-                        >
-                          {unit.description}
-                        </PFText>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                    -
-                  </PFText>
-                )}
-              </dd>
-            </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </div>
       ) : (

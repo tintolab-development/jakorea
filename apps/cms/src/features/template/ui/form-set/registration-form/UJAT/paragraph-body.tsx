@@ -29,9 +29,11 @@ export function renderUjatProgramRegistrationParagraphBody(
         />
       )
     case UJAT_PROGRAM_REGISTRATION_IDS[1]:
-      return <UjatBusinessKpiParagraph />
+      return (
+        <UjatBusinessKpiParagraph infoForm={options?.ujatProgramRegistrationBasicInfoForm} />
+      )
     case UJAT_PROGRAM_REGISTRATION_IDS[2]:
-      return <UjatWageInfoParagraph />
+      return <UjatWageInfoParagraph infoForm={options?.ujatProgramRegistrationBasicInfoForm} />
     case UJAT_PROGRAM_REGISTRATION_IDS[3]:
       return (
         <UjatHalfEducationScheduleParagraph
@@ -53,7 +55,11 @@ export function renderUjatProgramRegistrationParagraphBody(
         />
       )
     case UJAT_PROGRAM_REGISTRATION_IDS[6]:
-      return <UjatEducationClassCapacityByRegionParagraph />
+      return (
+        <UjatEducationClassCapacityByRegionParagraph
+          infoForm={options?.ujatProgramRegistrationBasicInfoForm}
+        />
+      )
     default:
       return null
   }

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { searchJusoAddresses } from '../client'
 import { JUSO_ADDR_LINK_API_URL } from '../constants'
@@ -18,6 +18,7 @@ export function useJusoAddressSearch(
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const searchGenerationRef = useRef(0)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const search = useCallback(
     async (
@@ -25,6 +26,9 @@ export function useJusoAddressSearch(
       page: number = 1,
       pageSize: number = countPerPage,
     ): Promise<{ addresses: JusoAddressItem[]; totalCount: number }> => {
+      abortControllerRef.current?.abort()
+      const controller = new AbortController()
+      abortControllerRef.current = controller
       const gen = ++searchGenerationRef.current
       const trimmed = keyword.trim()
 
@@ -45,6 +49,7 @@ export function useJusoAddressSearch(
           setError(err)
           setAddresses([])
           setTotalCount(0)
+          setLoading(false)
         }
         return { addresses: [], totalCount: 0 }
       }
@@ -60,6 +65,7 @@ export function useJusoAddressSearch(
           countPerPage: pageSize,
           apiUrl,
           missingKeyMessage,
+          signal: controller.signal,
         })
 
         if (gen !== searchGenerationRef.current) {
@@ -70,6 +76,9 @@ export function useJusoAddressSearch(
         setTotalCount(result.totalCount)
         return result
       } catch (err) {
+        if (controller.signal.aborted || (err instanceof Error && err.name === 'AbortError')) {
+          return { addresses: [], totalCount: 0 }
+        }
         const e = err instanceof Error ? err : new Error(String(err))
         if (gen === searchGenerationRef.current) {
           setError(e)
@@ -87,11 +96,19 @@ export function useJusoAddressSearch(
   )
 
   const reset = useCallback(() => {
+    abortControllerRef.current?.abort()
+    abortControllerRef.current = null
     searchGenerationRef.current += 1
     setAddresses([])
     setTotalCount(0)
     setError(null)
     setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort()
+    }
   }, [])
 
   return { addresses, totalCount, loading, error, search, reset }

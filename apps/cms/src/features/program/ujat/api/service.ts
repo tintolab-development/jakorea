@@ -34,6 +34,7 @@ import {
   applyUjatProgramPatchToTypedDetail,
   replaceUjatTypedDetailRemote,
   stripUjatScheduleLegacyOverlay,
+  stripUjatTypedLegacyOverlay,
   syncUjatTypedDetailPhysicalSchedulesRemote,
   typedDetailFromUjatBasicInfo,
   typedDetailFromUjatOverlay,
@@ -42,9 +43,11 @@ import {
 import type { UjatBasicInfoFormValues } from '@/features/program/ujat/lib/ujat-basic-info-form'
 import { stripUjatBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-basic-info-form'
 import {
-  buildUjatRegionCapacityOverlay,
   fetchUjatRegionCapacitiesRemote,
+  regionCapacityStateFromRows,
+  replaceUjatRegionCapacitiesRemote,
 } from './region-capacities-client'
+import { ujatRegionCapacityUpsertsFromState } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 
 export type CreateInput = RegistrationSnapshot & {
   idempotencyKey: string
@@ -130,10 +133,7 @@ export async function detail(programId: string): Promise<Program | null> {
     if (capacities.length > 0) {
       mappedWithRegionCapacities = {
         ...mapped,
-        ujatRegistrationOverlay: {
-          ...(mapped.ujatRegistrationOverlay ?? {}),
-          ...buildUjatRegionCapacityOverlay(capacities),
-        },
+        ujatRegionCapacity: regionCapacityStateFromRows(capacities),
       }
     }
   } catch {
@@ -156,15 +156,9 @@ export async function create(input: CreateInput): Promise<Program> {
   assertRemoteReady()
   await awaitRecruitDetailMediaUploads()
   const collectedOverlay = collectUjatRegistrationCreateOverlay(input.overlay)
-  // The registration Wizard common-info form is now canonical RHF/Typed data. If it is present,
-  // do not let a stale legacy snapshot overwrite those values while retaining schedule/recruitment
-  // compatibility keys in the create request.
-  const compatibilityOverlay = input.basicInfo || input.typedDetail
-    ? stripUjatScheduleLegacyOverlay(collectedOverlay)
-    : collectedOverlay
-  const overlay = input.basicInfo
-    ? stripUjatBasicInfoOverlay(compatibilityOverlay)
-    : compatibilityOverlay
+  const overlay = stripUjatTypedLegacyOverlay(
+    input.basicInfo ? stripUjatBasicInfoOverlay(collectedOverlay) : collectedOverlay
+  )
   const pending = input.program ??
     buildUjatProgramListRowFromRegistrationSnapshot({
       id: `ujat-pending-${input.idempotencyKey}`,
@@ -184,25 +178,32 @@ export async function create(input: CreateInput): Promise<Program> {
     // fully migrated, but typed fields are no longer written as registration.overlay.
     const typedDetail = input.typedDetail ??
       (input.basicInfo
-        ? typedDetailFromUjatBasicInfo(input.basicInfo, typedDetailFromUjatOverlay(overlay))
+        ? typedDetailFromUjatBasicInfo(input.basicInfo)
         : typedDetailFromUjatOverlay(overlay))
     const savedTypedDetail = await replaceUjatTypedDetailRemote(created.id, typedDetail)
     await syncUjatTypedDetailPhysicalSchedulesRemote(created.id, savedTypedDetail)
     await bindUjatRecruitDetailMediaToRows(created, overlay)
+    try {
+      await replaceUjatRegionCapacitiesRemote(
+        created.id,
+        ujatRegionCapacityUpsertsFromState(
+          pending.ujatRegionCapacity ?? input.basicInfo?.ujatRegionCapacity
+        )
+      )
+    } catch (capacityError) {
+      const error = capacityError instanceof Error ? capacityError : new Error(String(capacityError))
+      ;(error as Error & { programId?: string; stage?: string }).programId = created.id
+      ;(error as Error & { programId?: string; stage?: string }).stage = 'region-capacity'
+      throw error
+    }
     return (await detail(created.id)) ?? created
   } catch (error) {
+    if ((error as { stage?: string }).stage === 'region-capacity') throw error
     await deleteAdminProgramRemote(created.id).catch(rollbackError => {
       console.error('[ujat registration] rollback created program failed', created.id, rollbackError)
     })
     throw error
   }
-}
-
-/** 모집 행 저장 뒤 overlay만 남긴다. 날짜 키가 있으면 recruitments를 다시 써서 행을 덮는다. */
-export async function persistRecruitmentOverlaySnapshot(program: Program): Promise<void> {
-  await update(program.id, program, {
-    ujatRegistrationOverlay: program.ujatRegistrationOverlay,
-  })
 }
 
 export async function update(
@@ -238,11 +239,13 @@ export async function update(
     ...readUjatRegistrationOverlayFromProgram(program),
     ...(patchOverlay ?? {}),
   }
-  const mergedOverlay = stripUjatScheduleLegacyOverlay({
-    ...persistedOverlay,
-    ...(registration?.overlay ?? {}),
-    ...editedOverlay,
-  })
+  const mergedOverlay = stripUjatTypedLegacyOverlay(
+    stripUjatScheduleLegacyOverlay({
+      ...persistedOverlay,
+      ...(registration?.overlay ?? {}),
+      ...editedOverlay,
+    })
+  )
   const nextRegistration: RegistrationPersistSnapshot | undefined =
     Object.keys(mergedOverlay).length > 0
       ? {

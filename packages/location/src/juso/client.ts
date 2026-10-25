@@ -33,6 +33,7 @@ export async function searchJusoAddresses(
     countPerPage = 10,
     apiUrl = JUSO_ADDR_LINK_API_URL,
     missingKeyMessage = DEFAULT_MISSING_KEY_MESSAGE,
+    signal,
   } = options
 
   const trimmed = keyword.trim()
@@ -51,7 +52,7 @@ export async function searchJusoAddresses(
     keyword: trimmed,
     resultType: 'json',
   })
-  const res = await fetch(`${apiUrl}?${params.toString()}`)
+  const res = await fetch(`${apiUrl}?${params.toString()}`, { signal })
   const data = await res.json()
 
   if (!res.ok) {

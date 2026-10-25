@@ -1,6 +1,7 @@
 export { searchAllNeisSchools, searchNeisSchools } from './client'
 export { resolveNeisAtptOfcdcScCode } from './atpt-code-map'
 export { filterNeisSchoolsByRegion } from './filter-by-region'
+export { sortNeisSchools } from './sort'
 export { NEIS_SCHOOL_INFO_URL } from './constants'
 export type {
   NeisSchoolItem,

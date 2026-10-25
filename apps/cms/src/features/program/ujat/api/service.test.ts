@@ -58,6 +58,8 @@ vi.mock('@/features/program/ujat/api/capabilities', () => ({
 vi.mock('@/features/program/ujat/api/region-capacities-client', () => ({
   buildUjatRegionCapacityOverlay: vi.fn(),
   fetchUjatRegionCapacitiesRemote: vi.fn(),
+  regionCapacityStateFromRows: vi.fn(() => ({ h1: {}, h2: {} })),
+  replaceUjatRegionCapacitiesRemote: vi.fn(async () => []),
 }))
 
 vi.mock('@/features/program/ujat/api/typed-detail-client', async () => {

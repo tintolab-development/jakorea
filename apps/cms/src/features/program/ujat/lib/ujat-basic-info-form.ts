@@ -10,6 +10,9 @@ import {
   UJAT_SURVEY_ITEMS_DEFAULT,
 } from './ujat-registration-basic-info-defaults'
 import { readUjatSurveyItems } from './registration-survey-items'
+import { ujatKpiWageCapacityFromLegacyOverlay } from './ujat-kpi-wage-capacity-typed'
+import { resolveUjatDefaultPaymentItemValues } from './ujat-wage-info-display'
+import { EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER } from './ujat-region-capacity-types'
 
 export type UjatBasicInfoFormValues = ProgramDetailEditFormValues
 
@@ -85,6 +88,8 @@ export function createUjatBasicInfoFormDefaults(
     surveyVolunteerSatisfaction: UJAT_SURVEY_ITEMS_DEFAULT.volunteer_satisfaction,
     surveySchoolSatisfaction: UJAT_SURVEY_ITEMS_DEFAULT.school_satisfaction,
     surveyLectureEvaluation: UJAT_SURVEY_ITEMS_DEFAULT.lecture_evaluation,
+    wagePaymentItemIds: resolveUjatDefaultPaymentItemValues(),
+    ujatRegionCapacity: EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER,
   }
 }
 
@@ -147,5 +152,6 @@ export function ujatBasicInfoFormValuesFromLegacyOverlay(
     surveyVolunteerSatisfaction: survey.volunteer_satisfaction,
     surveySchoolSatisfaction: survey.school_satisfaction,
     surveyLectureEvaluation: survey.lecture_evaluation,
+    ...ujatKpiWageCapacityFromLegacyOverlay(overlay),
   }
 }

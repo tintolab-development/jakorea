@@ -11,6 +11,7 @@ export type InquiryAccordionListProps = {
   expandedId?: string | null
   onExpandedChange?: (id: string | null) => void
   onDelete?: (id: string) => void
+  deletingId?: string | null
   emptyMessage?: string
   loading?: boolean
   className?: string
@@ -26,6 +27,7 @@ export function InquiryAccordionList({
   expandedId = null,
   onExpandedChange,
   onDelete,
+  deletingId = null,
   emptyMessage = '등록된 1:1 문의가 없습니다.',
   loading = false,
   className,
@@ -55,7 +57,7 @@ export function InquiryAccordionList({
       {items.map(item => {
         const isExpanded = expandedId === item.id
         const panelId = `inquiry-accordion-panel-${item.id}`
-        const isDeleteDisabled = item.status === 'answered'
+        const isDeleteDisabled = item.status === 'answered' || deletingId === item.id
 
         return (
           <article key={item.id} className={styles.item}>
@@ -94,9 +96,43 @@ export function InquiryAccordionList({
                   </div>
 
                   <div className={styles.rowMeta}>
-                    <PFText as="span" typo="bd-md-rg" color="neutral-cool-600" className={styles.date}>
-                      {item.createdAt}
-                    </PFText>
+                    <div className={styles.metaDate}>
+                      <PFText
+                        as="span"
+                        typo="bd-md-rg"
+                        color="neutral-cool-500"
+                        className={styles.metaLabel}
+                      >
+                        문의
+                      </PFText>
+                      <PFText
+                        as="span"
+                        typo="bd-md-rg"
+                        color="neutral-cool-600"
+                        className={styles.date}
+                      >
+                        {item.createdAt || '-'}
+                      </PFText>
+                    </div>
+                    <span className={styles.metaDivider} aria-hidden="true" />
+                    <div className={styles.metaDate}>
+                      <PFText
+                        as="span"
+                        typo="bd-md-rg"
+                        color="neutral-cool-500"
+                        className={styles.metaLabel}
+                      >
+                        답변
+                      </PFText>
+                      <PFText
+                        as="span"
+                        typo="bd-md-rg"
+                        color="neutral-cool-600"
+                        className={styles.date}
+                      >
+                        {item.answeredAt || '-'}
+                      </PFText>
+                    </div>
                     <span className={styles.metaDivider} aria-hidden="true" />
                     <PFText
                       as="span"
@@ -134,7 +170,7 @@ export function InquiryAccordionList({
                 <PFCircleIconButton
                   icon="delete"
                   disabled={isDeleteDisabled}
-                  aria-label="문의 삭제"
+                  aria-label={deletingId === item.id ? '문의 삭제 중' : '문의 삭제'}
                   onClick={event => {
                     event.stopPropagation()
                     if (!isDeleteDisabled) {

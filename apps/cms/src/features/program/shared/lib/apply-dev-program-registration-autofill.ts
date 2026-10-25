@@ -95,6 +95,7 @@ import {
   resolveUjatDefaultPaymentItemValues,
   UJAT_WAGE_OVERLAY_PAYMENT_KEY,
 } from '@/features/program/ujat/lib/ujat-wage-info-display'
+import { stripUjatKpiWageCapacityOverlay } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import {
   ujatVolunteerHalfOverlayKey,
   ujatVolunteerRecruitDetailInfoPrefix,
@@ -2003,7 +2004,9 @@ export async function applyDevProgramRegistrationAutofill(
       resolved.contactId,
       false
     )
-    const ujatOverlay = buildUjatOverlay(sample, { ...resolved, contactId: contactSelectId })
+    const ujatOverlay = stripUjatKpiWageCapacityOverlay(
+      buildUjatOverlay(sample, { ...resolved, contactId: contactSelectId })
+    )
     patchUjatProgramRegistrationOverlay(ujatOverlay)
     const interviewUnavailable = buildInterviewUnavailableSelection(
       dayjs(sample.recruitDates.interview.start),

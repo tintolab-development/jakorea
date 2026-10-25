@@ -95,6 +95,17 @@
   align-items: center;
 }
 
+.metaDate {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.metaLabel {
+  flex-shrink: 0;
+}
+
 .date {
   overflow: hidden;
   text-overflow: ellipsis;

@@ -34,6 +34,7 @@ export interface SearchJusoAddressesOptions {
   countPerPage?: number
   apiUrl?: string
   missingKeyMessage?: string
+  signal?: AbortSignal
 }
 
 export interface SearchJusoAddressesResult {

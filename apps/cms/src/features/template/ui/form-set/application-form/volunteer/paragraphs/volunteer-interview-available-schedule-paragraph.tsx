@@ -135,6 +135,7 @@ function VolunteerInterviewScheduleBlock({
   overlayNamespace,
   interviewRangeSealKey = 'recruit.volunteer.interviewRangeSeal',
   freezeUnavailableCalendar = false,
+  typedTemplateAuthoring = false,
   interviewPeriodRange: interviewPeriodFromParent,
 }: {
   /** 예외 일정이 있을 때만 공통 블록에 전달 */
@@ -147,6 +148,7 @@ function VolunteerInterviewScheduleBlock({
   interviewRangeSealKey?: string
   /** 템플릿 편집 — 진행 불가일 모달 달력 월 이동·선택 고정 */
   freezeUnavailableCalendar?: boolean
+  typedTemplateAuthoring?: boolean
   interviewPeriodRange?: [Dayjs, Dayjs] | null
 }) {
   const { showAlert } = useCmsAlert()
@@ -159,7 +161,8 @@ function VolunteerInterviewScheduleBlock({
   /** 봉사자 모집 정보「2차 면접 기간」— 진행 불가일·예외 일정 선택 가능 범위 */
   const [interviewRangeSeal] = useGeneralRecruitOverlayKv<RecruitInterviewRangeSeal>(
     interviewRangeSealKey,
-    null
+    null,
+    { typedTemplateAuthoring }
   )
   const applyInterviewPeriodConstraint =
     overlayStore === 'recruit' && !freezeUnavailableCalendar
@@ -271,6 +274,7 @@ function VolunteerInterviewScheduleBlock({
     persistMissingVolunteerInterviewOverlayDefaults({
       store: overlayStore,
       namespace: overlayNamespace,
+      typedTemplateAuthoring,
       values: {
         timeUnit,
         exclusionState,
@@ -287,6 +291,7 @@ function VolunteerInterviewScheduleBlock({
     overlayNamespace,
     overlayStore,
     timeUnit,
+    typedTemplateAuthoring,
   ])
   const interviewTimeSlots = useMemo(
     () => buildInterviewTimeSlots(normalizedInterviewTimeRange, timeUnit),
@@ -510,6 +515,7 @@ function VolunteerInterviewScheduleTemplateUi({
   overlayNamespace,
   interviewRangeSealKey,
   freezeUnavailableCalendar = false,
+  typedTemplateAuthoring = false,
   interviewPeriodRange,
 }: {
   exceptionScheduleCount?: number
@@ -521,6 +527,7 @@ function VolunteerInterviewScheduleTemplateUi({
   overlayNamespace?: string
   interviewRangeSealKey?: string
   freezeUnavailableCalendar?: boolean
+  typedTemplateAuthoring?: boolean
   interviewPeriodRange?: [Dayjs, Dayjs] | null
 }) {
   const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>(() => {
@@ -571,6 +578,7 @@ function VolunteerInterviewScheduleTemplateUi({
         overlayNamespace={overlayNamespace}
         interviewRangeSealKey={interviewRangeSealKey}
         freezeUnavailableCalendar={freezeUnavailableCalendar}
+        typedTemplateAuthoring={typedTemplateAuthoring}
         interviewPeriodRange={interviewPeriodRange}
       />
       {blockKeys.map((key, index) => (
@@ -581,6 +589,7 @@ function VolunteerInterviewScheduleTemplateUi({
             overlayStore={overlayStore}
             overlayNamespace={exceptionInterviewOverlayNamespace(overlayStore, overlayNamespace, key)}
             interviewRangeSealKey={interviewRangeSealKey}
+            typedTemplateAuthoring={typedTemplateAuthoring}
             interviewPeriodRange={interviewPeriodRange}
           />
           <div className="volunteer-interview-available-schedule__exception-delete-cell">
@@ -612,6 +621,7 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   overlayNamespace,
   interviewRangeSealKey,
   freezeUnavailableCalendar = false,
+  typedTemplateAuthoring = false,
   interviewPeriodRange,
 }: {
   isTemplateAuthoringMode?: boolean
@@ -626,6 +636,7 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   interviewRangeSealKey?: string
   /** 템플릿 관리 화면 — 진행 불가일 모달 달력 샘플 고정 */
   freezeUnavailableCalendar?: boolean
+  typedTemplateAuthoring?: boolean
   interviewPeriodRange?: [Dayjs, Dayjs] | null
 }) {
   if (isTemplateAuthoringMode && !readOnlyPreview) {
@@ -640,6 +651,7 @@ export function VolunteerInterviewAvailableScheduleParagraph({
         overlayNamespace={overlayNamespace}
         interviewRangeSealKey={interviewRangeSealKey}
         freezeUnavailableCalendar={freezeUnavailableCalendar}
+        typedTemplateAuthoring={typedTemplateAuthoring}
         interviewPeriodRange={interviewPeriodRange}
       />
     )

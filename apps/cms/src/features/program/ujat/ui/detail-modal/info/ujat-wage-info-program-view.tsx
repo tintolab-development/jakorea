@@ -1,4 +1,6 @@
+import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { resolveUjatWageInfoDisplay } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { UjatWageInfoFields } from '@/features/program/ujat/ui/detail-modal/info/ujat-wage-info-fields'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -10,12 +12,14 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 export function UjatWageInfoProgramView({
   program,
   isEdit = false,
+  form,
 }: {
   program: Program
   isEdit?: boolean
+  form?: UseFormReturn<ProgramDetailEditFormValues>
 }) {
   const display = resolveUjatWageInfoDisplay(program)
-  const mode = isEdit ? 'edit' : 'view'
+  const mode = isEdit && form != null ? 'edit' : 'view'
 
   return (
     <section className="program-detail-fullpage-modal__info-tab-block">
@@ -34,7 +38,7 @@ export function UjatWageInfoProgramView({
         mode={mode}
         className="program-registration-paragraph"
       >
-        <UjatWageInfoFields mode={mode} viewDisplay={display} />
+        <UjatWageInfoFields mode={mode} viewDisplay={display} form={form} />
       </DetailInfoForm>
     </section>
   )

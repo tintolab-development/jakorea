@@ -18,6 +18,9 @@ export type UjatRecruitParagraphProps = {
   sectionTitle?: string
   /** 등록 시드 단락 id — 상세 수정 필수 누락 제목 강조 */
   highlightParagraphId?: string
+  /** 독립 Template Authoring — Form Version settingsJson의 typed 상태 키 */
+  templateCode?: string
+  templateAuthoring?: boolean
 }
 
 export function resolveUjatRecruitParagraphMode(props: UjatRecruitParagraphProps): UjatRecruitParagraphMode {

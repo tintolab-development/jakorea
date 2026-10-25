@@ -43,6 +43,7 @@ export interface SearchNeisSchoolsOptions {
   page?: number
   pageSize?: number
   missingKeyMessage?: string
+  signal?: AbortSignal
 }
 
 export interface SearchNeisSchoolsResult {

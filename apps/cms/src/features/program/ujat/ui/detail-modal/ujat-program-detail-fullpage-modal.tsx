@@ -2,7 +2,7 @@
  * UJAT 프로그램 상세 풀페이지 모달 — `/programs/ujat?programId=…&lnb=…&tab=…`
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
@@ -27,9 +27,6 @@ import {
   volunteerHalfFromRecruitDisplayKind,
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
-import {
-  buildUjatProgramDraftWithSessionOverlay,
-} from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatInstitutionApplicationList } from './application-institution/list/list'
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
@@ -98,14 +95,11 @@ import {
 import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/ujat-program-display-program'
 import { hydrateUjatRecruitTemplatesForProgram } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { resolveUjatProgramDisplayTitle } from '@/features/program/ujat/lib/ujat-program-list-display'
-import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
 import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
 import { queryKeys as ujatProgramQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { detail as fetchUjatProgramRemoteById } from '@/features/program/ujat/api/service'
 import {
   EMPTY_UJAT_TYPED_DETAIL,
-  stripUjatScheduleLegacyOverlay,
-  stripUjatTypedLegacyOverlay,
   syncUjatTypedDetailPhysicalSchedulesRemote,
   updateUjatTypedDetailHalfRemote,
   type UjatTypedDetail,
@@ -121,12 +115,7 @@ import {
   replaceUjatRegionCapacitiesRemote,
   type UjatRegionCapacityUpsert,
 } from '@/features/program/ujat/api/region-capacities-client'
-import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
-import { resolveUjatRegionCapacitySemesterValues } from '@/features/program/ujat/lib/ujat-region-capacity-display'
-import {
-  patchUjatProgramRegistrationOverlay,
-  resetUjatProgramRegistrationOverlay,
-} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { ujatRegionCapacityUpsertsFromState } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
@@ -335,22 +324,7 @@ const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
 const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
 
 function buildUjatRegionCapacityUpserts(program: Program): UjatRegionCapacityUpsert[] {
-  const overlay = readUjatRegistrationOverlayFromProgram(program)
-  const regions = listUjatEducationRegionsActive()
-  const halves = [
-    ['FIRST_HALF', 'h1'],
-    ['SECOND_HALF', 'h2'],
-  ] as const
-
-  return halves.flatMap(([semesterType, half]) => {
-    const values = resolveUjatRegionCapacitySemesterValues(half, overlay)
-    return regions.map(region => ({
-      semesterType,
-      educationRegionCode: region.key,
-      maxClassCount: Number.parseInt(values[region.label]?.classCount ?? '', 10) || 0,
-      maxVolunteerCount: Number.parseInt(values[region.label]?.volunteerCount ?? '', 10) || 0,
-    }))
-  })
+  return ujatRegionCapacityUpsertsFromState(program.ujatRegionCapacity)
 }
 
 function ujatRegionCapacitySnapshot(program: Program): string {
@@ -799,22 +773,8 @@ export function UjatProgramDetailFullPageModal({
       : mapVolunteerH1RecruitmentEditValues(p)
   }, [mapVolunteerH1RecruitmentEditValues, mapVolunteerH2RecruitmentEditValues])
 
-  const overlayHydrateStampRef = useRef<string | null>(null)
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!displayProgram) return
-    const overlay = stripUjatScheduleLegacyOverlay(
-      readUjatRegistrationOverlayFromProgram(displayProgram)
-    )
-    const stamp = `${displayProgram.id}:${Object.keys(overlay).length}`
-    if (overlayHydrateStampRef.current !== stamp) {
-      overlayHydrateStampRef.current = stamp
-      // programId가 바뀌면 이전 프로그램의 전역 overlay를 먼저 제거한다.
-      // 새 상세 응답에 값이 없어도 이전 프로그램 값이 남지 않아야 한다.
-      resetUjatProgramRegistrationOverlay()
-      if (Object.keys(overlay).length > 0) {
-        patchUjatProgramRegistrationOverlay(overlay)
-      }
-    }
     void hydrateUjatRecruitTemplatesForProgram(displayProgram)
   }, [displayProgram])
 
@@ -1376,14 +1336,8 @@ export function UjatProgramDetailFullPageModal({
         displayProgram && updateProgram
           ? async (draft, patch) => {
               try {
-                // Schedule/wage/KPI legacy editors still publish their migration-boundary
-                // snapshot. Keep it in the request without using it as the RHF value source.
-                const draftWithLegacyOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
                 const commonPatch: Partial<Program> = {
                   ...patch,
-                  ujatRegistrationOverlay: stripUjatTypedLegacyOverlay(
-                    draftWithLegacyOverlay.ujatRegistrationOverlay ?? {}
-                  ),
                   generalSurveyMenuKeys: draft.generalSurveyMenuKeys,
                   generalParticipantTypes: draft.generalParticipantTypes,
                   generalCommonInfo: draft.generalCommonInfo,

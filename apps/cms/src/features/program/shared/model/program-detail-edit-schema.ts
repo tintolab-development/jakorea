@@ -65,10 +65,12 @@ import {
   resolveProgramSurveyMenuKeys,
   syncSurveyItemsIntoRegistrationOverlay,
 } from '@/features/program/general/lib/general-survey-menu-keys'
-import { resolveUjatPersistedSurveyMenuKeysForSave } from '@/features/program/ujat/lib/registration-survey-items'
+import {
+  resolveUjatPersistedSurveyMenuKeysForSave,
+} from '@/features/program/ujat/lib/registration-survey-items'
 import {
   generalParticipantTypesFromUjatFlags,
-  ujatParticipantFlagsFromOverlaySave,
+  resolveUjatParticipantTypeFlags,
 } from '@/features/program/ujat/lib/participant-type-flags'
 import {
   looksLikeTrainedTeacherProgramId,
@@ -466,6 +468,13 @@ const programDetailEditSchemaBase = z.object({
   wagePaymentItems: z.string().optional(),
   wagePaymentItemIds: z.array(z.string()).optional(),
   wageDeductionItems: z.string().optional(),
+  /** UJAT 지역별 정원 — GET/PUT region-capacities. 다른 프로그램 유형은 미사용. */
+  ujatRegionCapacity: z
+    .object({
+      h1: z.record(z.object({ classCount: z.string().optional(), volunteerCount: z.string().optional() })),
+      h2: z.record(z.object({ classCount: z.string().optional(), volunteerCount: z.string().optional() })),
+    })
+    .optional(),
   // KPI — BE Integer(int32); 초과 시 MALFORMED_REQUEST
   kpiFinalParticipants: optionalNonNegJavaInt,
   kpiInstructorCount: optionalNonNegJavaInt,
@@ -1179,6 +1188,8 @@ export function programToDetailEditValues(
     titleEn: program.titleEn ?? undefined,
     announcementTitle: isTrainedTeacherForm
       ? program.title?.trim() || undefined
+      : isUjatDetailEditProgram(program)
+        ? program.mainTitle?.trim() || program.title?.trim() || undefined
       : (program.backendProgramType === 'COMPANY_SCHOOL' || isCompanySchoolProgram(program)) &&
           program.generalCommonInfo != null &&
           Object.prototype.hasOwnProperty.call(program.generalCommonInfo, 'announcementTitle')
@@ -1279,10 +1290,10 @@ export function programToDetailEditValues(
         looksLikeTrainedTeacherProgramId(program.id)
       const isUjatProgram = isUjatDetailEditProgram(program)
       const keys: readonly string[] = isUjatProgram
-        ? (resolveUjatPersistedSurveyMenuKeysForSave(
-            program.ujatRegistrationOverlay,
+        ? resolveUjatPersistedSurveyMenuKeysForSave(
+            program.generalParticipantTypes == null ? program.ujatRegistrationOverlay : undefined,
             program.generalSurveyMenuKeys
-          ) ?? [])
+          ) ?? []
         : isTrainedTeacherSeed
         ? program.generalSurveyMenuKeys === undefined
           ? []
@@ -1307,6 +1318,12 @@ export function programToDetailEditValues(
     wagePaymentItems: undefined,
     ...wageKpi,
     wageDeductionItems: undefined,
+    ujatRegionCapacity: program.ujatRegionCapacity
+      ? {
+          h1: { ...program.ujatRegionCapacity.h1 },
+          h2: { ...program.ujatRegionCapacity.h2 },
+        }
+      : undefined,
     kpiVolunteerCount:
       clampJavaInt(program.generalCommonInfo?.kpi?.volunteerCount) ??
       clampJavaInt(program.generalVolunteers) ??
@@ -1516,7 +1533,7 @@ export function detailEditValuesToProgramPatch(
           ...(values.surveyLectureEvaluation ? (['lecture_evaluation'] as const) : []),
         ] as GeneralProgramSurveyMenuKey[])
       : resolveUjatPersistedSurveyMenuKeysForSave(
-          existing.ujatRegistrationOverlay,
+          existing.generalParticipantTypes == null ? existing.ujatRegistrationOverlay : undefined,
           existing.generalSurveyMenuKeys
         )
     : undefined
@@ -1536,9 +1553,14 @@ export function detailEditValuesToProgramPatch(
     isTrainedTeacherProgram && surveyKeysTouched
       ? syncSurveyItemsIntoRegistrationOverlay({}, generalSurveyMenuKeys)
       : undefined
-  const ujatParticipantFlags = isUjatProgram
-    ? ujatParticipantFlagsFromOverlaySave(existing.ujatRegistrationOverlay)
-    : null
+  const ujatParticipantTypes = isUjatProgram
+    ? existing.generalParticipantTypes ??
+      (existing.ujatRegistrationOverlay != null
+        ? generalParticipantTypesFromUjatFlags(
+            resolveUjatParticipantTypeFlags(existing, existing.ujatRegistrationOverlay)
+          )
+        : undefined)
+    : undefined
   const volunteerContactEmail = recruitAudienceScalar(
     values.volunteerContactEmail,
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail,
@@ -1627,9 +1649,17 @@ export function detailEditValuesToProgramPatch(
     participatingSchoolCount: clampJavaInt(
       values.kpiFinalSchools ?? existing.participatingSchoolCount
     ),
+    ...(values.ujatRegionCapacity != null
+      ? {
+          ujatRegionCapacity: {
+            h1: { ...(values.ujatRegionCapacity.h1 ?? {}) },
+            h2: { ...(values.ujatRegionCapacity.h2 ?? {}) },
+          },
+        }
+      : {}),
     generalSurveyMenuKeys,
-    ...(ujatParticipantFlags
-      ? { generalParticipantTypes: generalParticipantTypesFromUjatFlags(ujatParticipantFlags) }
+    ...(ujatParticipantTypes !== undefined
+      ? { generalParticipantTypes: ujatParticipantTypes }
       : {}),
     ...(registrationOverlay ? { registrationOverlay } : {}),
     generalCommonInfo: {

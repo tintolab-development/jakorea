@@ -140,7 +140,11 @@ export function UjatProgramDetailCommonInfoView({
         form={isEditMode ? infoForm : undefined}
       />
 
-      <UjatWageInfoProgramView program={program} isEdit={isEditMode} />
+      <UjatWageInfoProgramView
+        program={program}
+        isEdit={isEditMode}
+        form={isEditMode ? infoForm : undefined}
+      />
 
       <UjatHalfEducationScheduleProgramView
         program={program}
@@ -162,7 +166,11 @@ export function UjatProgramDetailCommonInfoView({
         scheduleForm={scheduleForm}
       />
 
-      <UjatRegionCapacityProgramView program={program} isEdit={isEditMode} />
+      <UjatRegionCapacityProgramView
+        program={program}
+        isEdit={isEditMode}
+        form={isEditMode ? infoForm : undefined}
+      />
     </div>
   )
 }

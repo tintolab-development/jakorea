@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -73,19 +73,22 @@ export function UjatRecruitInterviewScheduleProgramView({
   const [exceptionScheduleAddDisabled, setExceptionScheduleAddDisabled] = useState(
     () => editSeed?.excludeNone ?? false
   )
+  const programRef = useRef(program)
+  programRef.current = program
   useLayoutEffect(() => {
+    const programSnapshot = programRef.current
     if (isTemplateAuthoring) {
       const registrationOverlay =
-        program.ujatRegistrationOverlay != null &&
-        typeof program.ujatRegistrationOverlay === 'object' &&
-        !Array.isArray(program.ujatRegistrationOverlay)
-          ? program.ujatRegistrationOverlay
+        programSnapshot.ujatRegistrationOverlay != null &&
+        typeof programSnapshot.ujatRegistrationOverlay === 'object' &&
+        !Array.isArray(programSnapshot.ujatRegistrationOverlay)
+          ? programSnapshot.ujatRegistrationOverlay
           : {}
       const savedOverlay =
-        program.registrationOverlay != null &&
-        typeof program.registrationOverlay === 'object' &&
-        !Array.isArray(program.registrationOverlay)
-          ? program.registrationOverlay
+        programSnapshot.registrationOverlay != null &&
+        typeof programSnapshot.registrationOverlay === 'object' &&
+        !Array.isArray(programSnapshot.registrationOverlay)
+          ? programSnapshot.registrationOverlay
           : {}
       const source = { ...savedOverlay, ...registrationOverlay }
       hydrateMissingVolunteerInterviewOverlay({
@@ -113,11 +116,13 @@ export function UjatRecruitInterviewScheduleProgramView({
 
     const ns = interviewNamespace ?? 'recruit.volunteer.interview'
     const fromForm = parseRecruitmentInterviewConfig(form.getValues('volunteerInterviewConfig'))
-    const row = volunteerHalf ? pickUjatVolunteerRecruitmentRow(program, volunteerHalf) : undefined
+    const row = volunteerHalf
+      ? pickUjatVolunteerRecruitmentRow(programSnapshot, volunteerHalf)
+      : undefined
     const fromRow = row?.interviewConfig
     const fromLegacy =
       row && !Object.prototype.hasOwnProperty.call(row, 'interviewConfig')
-        ? interviewConfigFromLegacyOverlay(program.ujatRegistrationOverlay, ns)
+        ? interviewConfigFromLegacyOverlay(programSnapshot.ujatRegistrationOverlay, ns)
         : null
     const seed = fromForm ?? fromRow ?? fromLegacy
     const record = interviewConfigToLegacyOverlayRecord(seed, ns)
@@ -142,7 +147,6 @@ export function UjatRecruitInterviewScheduleProgramView({
     interviewRangeSealKey,
     isEdit,
     isTemplateAuthoring,
-    program,
     volunteerHalf,
   ])
 

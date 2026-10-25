@@ -78403,12 +78403,48 @@
             ],
             "description": "2차 면접 종료. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지."
           },
+          "announcementPublished": {
+            "type": ["boolean", "null"],
+            "description": "공고 게시 여부. null 이면 기존 값 유지."
+          },
+          "documentPassAnnouncementAt": {
+            "type": ["string", "null"],
+            "description": "서류 발표 시각. null 유지, clearFields에 있으면 비움."
+          },
+          "finalPassAnnouncementAt": {
+            "type": ["string", "null"],
+            "description": "최종 발표 시각. null 유지, clearFields에 있으면 비움."
+          },
+          "noticeExposureTiming": {
+            "type": ["string", "null"],
+            "enum": ["start-day", "one-day-before", "one-week-before"],
+            "description": "봉사자 공고 노출 시점. VOLUNTEER만. null 유지."
+          },
+          "volunteerTargets": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "description": "봉사자 모집 대상. VOLUNTEER만. null 유지, [] 는 명시적 빈 값."
+          },
+          "remarksNotApplicable": {
+            "type": ["boolean", "null"],
+            "description": "비고 해당 없음. null 유지."
+          },
+          "interviewConfig": {
+            "nullable": true,
+            "$ref": "#/components/schemas/RecruitmentInterviewConfig",
+            "description": "봉사자 면접 슬롯 설정. VOLUNTEER만. 객체 생략은 기존 유지, 빈 객체는 명시적 빈 typed 값."
+          },
+          "expectedRevision": {
+            "type": ["integer", "null"],
+            "format": "int64",
+            "description": "동시 수정 검증. 조회 contentRevision 과 같아야 한다. 생략하면 검사하지 않는다."
+          },
           "clearFields": {
             "type": [
               "array",
               "null"
             ],
-            "description": "null 로 비울 필드 이름. 예: [\"maxCount\",\"remarks\"]",
+            "description": "null 로 비울 필드 이름. 예: [\"maxCount\",\"remarks\",\"interviewConfig\"]",
             "items": {
               "type": "string"
             }
@@ -78417,6 +78453,70 @@
         "required": [
           "recruitmentType"
         ]
+      },
+      "RecruitmentInterviewConfig": {
+        "type": "object",
+        "description": "봉사자 면접 슬롯 설정 schemaVersion=1. selectedSlotKeys는 epochMillis-epochMillis.",
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "nullable": true,
+            "description": "계약 버전. 생략 시 1."
+          },
+          "selectedSlotKeys": {
+            "type": "array",
+            "nullable": true,
+            "items": { "type": "string" }
+          },
+          "timeUnit": {
+            "type": "integer",
+            "nullable": true
+          },
+          "interviewTimeRange": {
+            "type": "array",
+            "nullable": true,
+            "items": { "type": "string" }
+          },
+          "specificUnavailableDates": {
+            "type": "array",
+            "nullable": true,
+            "items": { "type": "string" }
+          },
+          "appliedUnavailableDates": {
+            "type": "array",
+            "nullable": true,
+            "items": { "type": "string" }
+          },
+          "exclusionState": {
+            "nullable": true,
+            "$ref": "#/components/schemas/RecruitmentInterviewExclusionState"
+          },
+          "exceptions": {
+            "type": "array",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/RecruitmentInterviewException" }
+          }
+        }
+      },
+      "RecruitmentInterviewExclusionState": {
+        "type": "object",
+        "properties": {
+          "excludeSaturday": { "type": "boolean", "nullable": true },
+          "excludeSunday": { "type": "boolean", "nullable": true },
+          "excludeHoliday": { "type": "boolean", "nullable": true }
+        }
+      },
+      "RecruitmentInterviewException": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "nullable": true },
+          "exceptionDate": { "type": "string", "nullable": true },
+          "selectedSlotKeys": {
+            "type": "array",
+            "nullable": true,
+            "items": { "type": "string" }
+          }
+        }
       },
       "ProgramRoundRequest": {
         "type": "object",

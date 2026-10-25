@@ -6,10 +6,15 @@
 import dayjs from 'dayjs'
 import type { Program, ProgramRound } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import { stripUjatTypedLegacyOverlay } from '@/features/program/ujat/api/typed-detail-client'
 import {
   stripUjatBasicInfoOverlay,
   type UjatBasicInfoFormValues,
 } from './ujat-basic-info-form'
+import {
+  applyUjatKpiWageCapacityFromFormValues,
+  stripUjatKpiWageCapacityOverlay,
+} from './ujat-kpi-wage-capacity-typed'
 import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
   applyUjatRecruitInstitutionOverlayOntoProgram,
@@ -20,7 +25,6 @@ import {
   pickUjatRecruitVolunteerOverlay,
   stampUjatVolunteerActivityTermsOnRounds,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
-import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { completeUjatRecruitDateSelections } from '@/features/program/ujat/lib/complete-recruit-date-selections'
 import { getUjatApplicationInstitutionOverlayRecord } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 import {
@@ -67,22 +71,36 @@ function newLocalProgramId(): string {
   return `${UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}${uuid ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
 }
 
-const UJAT_RECRUIT_SNAPSHOT_PROGRAM = {
-  id: 'ujat-registration-snapshot',
-  ujatProgressStatus: 'EDUCATION_SCHEDULED',
-} as Program
+function stripUjatRecruitmentCreateOverlay(
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(overlay).filter(
+      ([key]) =>
+        !key.startsWith('ujat.recruit.') &&
+        !key.startsWith('ujatRecruit.') &&
+        !key.startsWith('recruitVolunteer.') &&
+        !key.startsWith('recruit.volunteer.')
+    )
+  )
+}
 
-/** 등록 공통 + 모집·신청 탭 overlay. 상세·formBindings가 같은 스냅샷을 보게 한다. */
+/** 등록 공통 + 신청 탭 overlay. 신규 CREATE의 모집 행은 Typed RHF만 사용한다. */
 export function collectUjatRegistrationCreateOverlay(
   registrationOverlay: Record<string, unknown> = {}
 ): Record<string, unknown> {
-  return stripUjatApplicationVolunteerProgramOnlyFields(
-    completeUjatRecruitDateSelections({
-      ...getUjatApplicationInstitutionOverlayRecord(),
-      ...getUjatApplicationVolunteerProgramOverlayRecord(),
-      ...registrationOverlay,
-      ...collectSelectedRecruitOverlaysForProgram(UJAT_RECRUIT_SNAPSHOT_PROGRAM),
-    })
+  return stripUjatRecruitmentCreateOverlay(
+    stripUjatTypedLegacyOverlay(
+      stripUjatKpiWageCapacityOverlay(
+        stripUjatApplicationVolunteerProgramOnlyFields(
+          completeUjatRecruitDateSelections({
+            ...getUjatApplicationInstitutionOverlayRecord(),
+            ...getUjatApplicationVolunteerProgramOverlayRecord(),
+            ...registrationOverlay,
+          })
+        )
+      )
+    )
   )
 }
 
@@ -203,7 +221,10 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
 
   // 버그 수정: 예전엔 제목·기간만 있는 뼈대를 그대로 create에 써서
   // 등록 실입력(영문명·사업분야·IP·KPI 등)이 1차 컬럼에 안 실렸다.
-  return applyUjatRegistrationCreateOverlaysToProgram(base, overlay)
+  return applyUjatKpiWageCapacityFromFormValues(
+    applyUjatRegistrationCreateOverlaysToProgram(base, overlay),
+    args.basicInfo
+  )
 }
 
 /** 등록 공통정보가 운영 식별·기간 SSOT. 모집 overlay는 담당자·모집기간만 얹는다. */

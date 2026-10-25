@@ -139,6 +139,26 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     expect(loadWritingFormTemplateSave(TEMPLATE_CODE)).toBeNull()
   })
 
+  it('saves typed template settings without rewriting extensionJson.overlay', async () => {
+    updateRemoteMock.mockResolvedValue({})
+    const draft = createRecruitFormInstructorDraft()
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'recruitment-ujat-school',
+      draft,
+      settingsJson: {
+        ujatRecruitment: { institution: { description: 'typed' } },
+      },
+    })
+
+    const putBody = updateRemoteMock.mock.calls[0]?.[1] as {
+      extensionJson?: string
+      settingsJson?: string
+    }
+    expect(putBody.settingsJson).toContain('typed')
+    expect(putBody.extensionJson).toBeUndefined()
+  })
+
   it('adds a new draft version to the same template on FORM_VERSION_IMMUTABLE', async () => {
     updateRemoteMock.mockRejectedValueOnce({
       response: { data: { error: { code: 'FORM_VERSION_IMMUTABLE' } } },

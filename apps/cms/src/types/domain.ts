@@ -454,7 +454,7 @@ export type RecruitmentInterviewConfig = {
   interviewTimeRange?: string[]
   specificUnavailableDates?: string[]
   appliedUnavailableDates?: string[]
-  exclusionState?: RecruitmentInterviewExclusionState | null
+  exclusionState?: RecruitmentInterviewExclusionState
   exceptions?: RecruitmentInterviewException[]
 }
 
@@ -690,6 +690,14 @@ export interface Program {
   generalCommonInfo?: GeneralProgramCommonInfoExtension
   /** UJAT 등록 폼 overlay — 상세 화면 SSOT (`serviceDetailJson.registration.overlay`) */
   ujatRegistrationOverlay?: Record<string, unknown>
+  /**
+   * UJAT 지역별 정원 화면 상태. GET/PUT `/ujat/region-capacities` 정본.
+   * 프로그램 PATCH 본문에는 실리지 않는다.
+   */
+  ujatRegionCapacity?: {
+    h1: Record<string, { classCount?: string; volunteerCount?: string }>
+    h2: Record<string, { classCount?: string; volunteerCount?: string }>
+  }
   /**
    * 화면·RHF용 overlay 메모리 필드.
    * JSON 정본은 `serviceDetailJson.registration.overlay`.
