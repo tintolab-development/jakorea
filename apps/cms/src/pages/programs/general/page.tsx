@@ -387,7 +387,11 @@ export function GeneralProgramListPageContent() {
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {showBulkSelection && (
-        <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
+        <FilterTableToolbarButton
+          variant="delete"
+          onClick={handleBulkDeleteClick}
+          disabled={selectedRowKeys.length === 0}
+        >
           선택 삭제
         </FilterTableToolbarButton>
       )}

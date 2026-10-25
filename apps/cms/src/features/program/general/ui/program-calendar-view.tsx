@@ -184,6 +184,13 @@ export function ProgramCalendarView({
       programColorMap.get(event.programId) ?? SCHEDULE_COLORS[0],
     [programColorMap]
   )
+  const handleCalendarEventClick = useCallback(
+    (item: CalendarItem) => {
+      const event = getGeneralProgramCalendarEventFromCalendarItem(item)
+      if (event) onItemClick(event.originalItem)
+    },
+    [onItemClick]
+  )
 
   if (loading) {
     return (
@@ -230,6 +237,7 @@ export function ProgramCalendarView({
           onSelectDate={handleMainDateSelect}
           onMonthChange={handleMainMonthChange}
           onModeChange={onModeChange}
+          onEventClick={handleCalendarEventClick}
           previewTooltipContent={renderGeneralProgramCalendarPreviewTooltipContent}
           renderMonthEventContent={renderGeneralProgramMonthEventContent}
           overrideEventColorMap={overrideEventColorMap}

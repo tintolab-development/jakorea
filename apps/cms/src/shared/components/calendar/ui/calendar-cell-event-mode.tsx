@@ -48,7 +48,10 @@ function renderMonthEventStrips(
             <div
               className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
               style={{ backgroundColor: colors.bg }}
-              onClick={e => e.stopPropagation()}
+              onClick={e => {
+                e.stopPropagation()
+                config.onEventClick?.(row.sourceEvent)
+              }}
             >
               {renderContent({
                 row,
@@ -185,7 +188,10 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
                 <div
                   className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
                   style={{ backgroundColor: colors.bg }}
-                  onClick={e => e.stopPropagation()}
+                  onClick={e => {
+                    e.stopPropagation()
+                    config.onEventClick?.(event)
+                  }}
                 >
                   <span className="calendar-event-title">{displayTitle}</span>
                 </div>
@@ -239,7 +245,10 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
               <div
                 className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
                 style={{ backgroundColor: colors.bg }}
-                onClick={e => e.stopPropagation()}
+                onClick={e => {
+                  e.stopPropagation()
+                  config.onEventClick?.(event)
+                }}
               >
                 <span className="calendar-event-title">{displayTitle}</span>
               </div>
