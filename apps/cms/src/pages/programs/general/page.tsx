@@ -390,7 +390,6 @@ export function GeneralProgramListPageContent() {
         <FilterTableToolbarButton
           variant="delete"
           onClick={handleBulkDeleteClick}
-          disabled={selectedRowKeys.length === 0}
         >
           선택 삭제
         </FilterTableToolbarButton>

@@ -207,6 +207,15 @@ export function ProgramList({
     },
     [externalSelectedRowKeys, onSelectionChange]
   )
+  const handleCalendarProgramSelectionChange = useCallback(
+    (programIds: React.Key[]) => {
+      const selectedIds = new Set(programIds.map(String))
+      handleSelectionChange(
+        data.filter(program => selectedIds.has(String(program.id))).map(program => program.id)
+      )
+    },
+    [data, handleSelectionChange]
+  )
   const filterFieldsOverride = config?.filterFields
   const filterFieldsForLayout = useMemo(() => {
     if (filterFieldsOverride) return filterFieldsOverride
@@ -330,6 +339,10 @@ export function ProgramList({
                     {toolbarActionsAfterExcel}
                   </div>
                 </div>
+              }
+              selectedProgramIds={showRowSelection ? effectiveSelectedRowKeys : undefined}
+              onProgramSelectionChange={
+                showRowSelection ? handleCalendarProgramSelectionChange : undefined
               }
             />
           </Suspense>
