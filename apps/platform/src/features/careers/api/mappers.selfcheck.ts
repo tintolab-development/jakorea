@@ -404,6 +404,24 @@ assert.equal(detail?.viewCount, 1232)
 assert.equal(detail?.content, '<p>본문</p>')
 assert.equal(detail?.attachments.length, 1)
 assert.equal(detail?.attachments[0]?.name, '모집요강.pdf')
+assert.equal(detail?.buttonLabel, '')
+assert.equal(detail?.linkUrl, '')
+
+const detailWithLink = mapPublicCareerPostingDetail({
+  ...detailSample,
+  buttonLabel: '  지원하기  ',
+  linkUrl: ' https://jobs.example.test ',
+})
+assert.equal(detailWithLink?.buttonLabel, '지원하기')
+assert.equal(detailWithLink?.linkUrl, 'https://jobs.example.test')
+assert.equal(
+  mapPublicCareerPostingDetail({
+    ...detailSample,
+    buttonLabel: null,
+    linkUrl: null,
+  })?.buttonLabel,
+  '',
+)
 
 const detailFromPublishedAt = mapPublicCareerPostingDetail({
   ...detailSample,

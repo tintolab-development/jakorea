@@ -305,6 +305,15 @@
   line-height: 150%;
 }
 
+.posting-form-modal__section--link {
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.posting-form-modal__section--link + .posting-form-modal__section--link {
+  margin-top: 16px;
+}
+
 @media (max-width: 1100px) {
   .posting-form-modal__filter-inner {
     flex-wrap: wrap;

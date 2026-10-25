@@ -51,6 +51,10 @@ export type RecruitPosting = {
   /** 조회수 — 목록 OpenAPI에 없으면 0 */
   viewCount: number
   attachments: RecruitPostingAttachment[]
+  /** 홈페이지 상세 하단 버튼명. 비어 있으면 버튼·모집기간 비노출 */
+  buttonLabel: string
+  /** 하단 버튼 이동 URL. 버튼명과 함께 설정 */
+  linkUrl: string
   version: number
 }
 
@@ -76,6 +80,8 @@ export type RecruitPostingCreateInput = {
   recruitEnd: string
   authorName: string
   attachments: RecruitPostingAttachment[]
+  buttonLabel: string
+  linkUrl: string
 }
 
 export type RecruitPostingUpdateInput = RecruitPostingCreateInput & {

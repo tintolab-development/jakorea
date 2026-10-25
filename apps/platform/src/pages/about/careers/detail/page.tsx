@@ -79,6 +79,9 @@ export function CareerPostingDetailPage() {
     fileName: file.name,
     href: file.fileUrl,
   }))
+  const showLinkButton = detail.buttonLabel.length > 0
+  const showRecruitPeriod =
+    showLinkButton && detail.status === 'recruiting' && Boolean(detail.recruitPeriodLabel)
 
   return (
     <section className={styles.page}>
@@ -97,16 +100,6 @@ export function CareerPostingDetailPage() {
               >
                 {detail.statusLabel}
               </PFCategoryBadge>
-              {detail.recruitPeriodLabel ? (
-                <span className={styles.recruitPeriod}>
-                  <PFText as="span" typo="bd-lg-rg" color="neutral-cool-600">
-                    모집 기간
-                  </PFText>
-                  <PFText as="span" typo="hl-sm" color="black">
-                    {detail.recruitPeriodLabel}
-                  </PFText>
-                </span>
-              ) : null}
             </div>
 
             <PFText as="h1" typo="page-title-md" color="black" className={styles.title}>
@@ -154,6 +147,32 @@ export function CareerPostingDetailPage() {
         </div>
 
         <div className={styles.footerNav}>
+          {showLinkButton ? (
+            <div className={styles.linkAction}>
+              <PFButton
+                variant="primary"
+                size="xlarge"
+                className={styles.linkButton}
+                onClick={() => {
+                  if (!detail.linkUrl) return
+                  window.open(detail.linkUrl, '_blank', 'noopener,noreferrer')
+                }}
+              >
+                {detail.buttonLabel}
+              </PFButton>
+              {showRecruitPeriod ? (
+                <span className={styles.ctaRecruitPeriod}>
+                  <PFText as="span" typo="bd-lg-rg" color="neutral-cool-600">
+                    모집 기간
+                  </PFText>
+                  <PFText as="span" typo="hl-sm" color="black">
+                    {detail.recruitPeriodLabel}
+                  </PFText>
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+
           <CareerPostingAdjacentNav
             previous={adjacent.previous}
             next={adjacent.next}

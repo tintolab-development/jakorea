@@ -15,6 +15,10 @@ import type {
 import { DEFAULT_AUTHOR } from '@/features/recruit-posting/api/store'
 import { useRecruitPostingWysiwygEditor } from '@/features/recruit-posting/hooks/use-recruit-posting-wysiwyg-editor'
 import {
+  CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH,
+  validateCareerPostingLinkFields,
+} from '@/features/recruit-posting/lib/link-fields'
+import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
@@ -152,6 +156,8 @@ export function RecruitPostingFormModal({
   const [isPublic, setIsPublic] = useState(true)
   const [status, setStatus] = useState<RecruitPostingFormStatus>('recruiting')
   const [title, setTitle] = useState('')
+  const [buttonLabel, setButtonLabel] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
   const [attachments, setAttachments] = useState<RecruitPostingAttachment[]>([])
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
@@ -189,6 +195,8 @@ export function RecruitPostingFormModal({
       setIsPublic(initial.isPublic)
       setStatus(toFormStatus(initial.status))
       setTitle(initial.title)
+      setButtonLabel(initial.buttonLabel ?? '')
+      setLinkUrl(initial.linkUrl ?? '')
       setAttachments(initial.attachments.map(a => ({ ...a })))
     } else {
       setPublishedAt(null)
@@ -196,6 +204,8 @@ export function RecruitPostingFormModal({
       setIsPublic(true)
       setStatus('recruiting')
       setTitle('')
+      setButtonLabel('')
+      setLinkUrl('')
       setAttachments([])
     }
   }, [mode, initial])
@@ -298,6 +308,12 @@ export function RecruitPostingFormModal({
       return
     }
 
+    const linkError = validateCareerPostingLinkFields({ buttonLabel, linkUrl })
+    if (linkError) {
+      showAlert({ title: '입력 확인', content: linkError })
+      return
+    }
+
     // remote body는 HTML. 로컬 mock도 HTML을 받을 수 있다.
     const contentMarkdown = getHTML().trim()
     if (!contentMarkdown || contentMarkdown === '<p></p>') {
@@ -321,11 +337,15 @@ export function RecruitPostingFormModal({
       recruitEnd: recruitEnd.format('YYYY-MM-DD'),
       authorName: mode === 'edit' && initial ? initial.authorName : DEFAULT_AUTHOR,
       attachments,
+      buttonLabel: buttonLabel.trim(),
+      linkUrl: linkUrl.trim(),
     })
   }, [
     publishedAt,
     recruitRange,
     title,
+    buttonLabel,
+    linkUrl,
     getHTML,
     isPublic,
     status,
@@ -491,6 +511,31 @@ export function RecruitPostingFormModal({
                 onRemoveFile={handleRemoveFile}
               />
             </div>
+          </div>
+
+          <div className="posting-form-modal__section posting-form-modal__section--link">
+            <FieldLabel>채용 공고 바로가기 버튼명</FieldLabel>
+            <CmsInput
+              inputSize="large"
+              width="100%"
+              value={buttonLabel}
+              maxLength={CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH}
+              onChange={e => setButtonLabel(e.target.value)}
+              placeholder="상세 하단 버튼명을 입력하세요 (최대 15자)"
+              aria-label="채용 공고 바로가기 버튼명"
+            />
+          </div>
+
+          <div className="posting-form-modal__section posting-form-modal__section--link">
+            <FieldLabel>채용 공고 버튼 링크</FieldLabel>
+            <CmsInput
+              inputSize="large"
+              width="100%"
+              value={linkUrl}
+              onChange={e => setLinkUrl(e.target.value)}
+              placeholder="버튼 선택 시 이동할 링크를 입력하세요"
+              aria-label="채용 공고 버튼 링크"
+            />
           </div>
         </div>
       </ContentModal>
