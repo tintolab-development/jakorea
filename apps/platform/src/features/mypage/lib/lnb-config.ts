@@ -10,12 +10,11 @@ const GENERAL_LNB_ITEMS: Omit<MypageLnbItem, 'active'>[] = [
 /**
  * 강사회원 LNB — 교사(school_teacher) 스펙과 분리.
  * 노션: 나의 홈 → 강의 현황 → 정산 현황 → (구분선) → 교육현황 → 봉사현황 → 문의내역
- * 정산 현황 페이지 미구현으로 enabled: false (노출만, 클릭 불가).
  */
 const INSTRUCTOR_LNB_ITEMS: Omit<MypageLnbItem, 'active'>[] = [
   { key: 'home', label: '나의 홈', enabled: true },
   { key: 'lectures', label: '강의현황', enabled: true },
-  { key: 'settlement', label: '정산 현황', enabled: false, dividerAfter: true },
+  { key: 'settlement', label: '정산 현황', enabled: true, dividerAfter: true },
   { key: 'education', label: '교육현황', enabled: true },
   { key: 'volunteer', label: '봉사현황', enabled: true },
   { key: 'inquiries', label: '문의내역', enabled: true },

@@ -214,7 +214,11 @@ export function Lnb({
             >
               <span className={styles.mobileTriggerLeading}>
                 {triggerIconUrl ? (
-                  <span className={styles.mobileTriggerIconSlot} aria-hidden="true">
+                  <span
+                    className={styles.mobileTriggerIconSlot}
+                    data-illust={activeItem.key}
+                    aria-hidden="true"
+                  >
                     <img className={triggerIconClassName} src={triggerIconUrl} alt="" />
                   </span>
                 ) : null}

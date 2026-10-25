@@ -106,8 +106,8 @@ export function EducationSchedulePanel({
   const emptyMessage = remoteSchedules.enabled
     ? resolveEducationScheduleEmptyMessage(remoteSchedules.scopeStatus, listTitle)
     : listTitle === '배정현황'
-      ? '등록된 배정 일정이 없어요.'
-      : '등록된 교육일정이 없어요.'
+      ? '등록된 배정 일정이 없어요'
+      : '등록된 교육일정이 없어요'
 
   return (
     <>
@@ -118,6 +118,11 @@ export function EducationSchedulePanel({
         totalPages={totalPages}
         onPageChange={setPage}
         emptyMessage={emptyMessage}
+        emptyDescription={
+          listTitle === '배정현황'
+            ? '배정된 일정이 생기면 이곳에서 확인할 수 있어요.'
+            : '교육 일정이 생기면 이곳에서 확인할 수 있어요.'
+        }
         alwaysShowPagination
       >
         {pageItems.map((item: EducationScheduleItem) => (

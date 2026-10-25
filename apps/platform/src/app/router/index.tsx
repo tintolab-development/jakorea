@@ -46,6 +46,7 @@ import {
   MypageVolunteerDetailPage,
   MypageLecturePage,
   MypageLectureDetailPage,
+  MypageSettlementPage,
   MypageSettingsPage,
   MypageSettingsConsentPage,
 } from '@/pages/mypage'
@@ -161,6 +162,7 @@ export const router = createBrowserRouter([
       { path: '/mypage/education', element: <MypageEducationPage /> },
       { path: '/mypage/volunteer', element: <MypageVolunteerPage /> },
       { path: '/mypage/lectures', element: <MypageLecturePage /> },
+      { path: '/mypage/settlement', element: <MypageSettlementPage /> },
       { path: '/mypage/inquiries', element: <MypageInquiriesPage /> },
     ],
   },

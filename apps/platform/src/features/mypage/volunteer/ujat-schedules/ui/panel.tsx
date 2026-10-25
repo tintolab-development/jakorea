@@ -220,7 +220,8 @@ export function UjatVolunteerSchedulePanel({
         currentPage={1}
         totalPages={1}
         onPageChange={() => undefined}
-        emptyMessage="조회할 배정·출결 이력이 없어요."
+        emptyMessage="조회할 배정·출결 이력이 없어요"
+        emptyDescription="배정·출결 이력이 생기면 이곳에서 확인할 수 있어요."
         hideHeader
       >
         {monthGroups.map(group => {

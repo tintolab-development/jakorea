@@ -195,8 +195,9 @@ export function EducationSettlementPanel({
         emptyMessage={
           remoteSettlements.individualEmpty
             ? INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE
-            : '정산 현황이 없어요.'
+            : '정산 현황이 없어요'
         }
+        emptyDescription="정산 대상 일정이 생기면 이곳에서 확인할 수 있어요."
       >
         {pageItems.map(item => (
           <EducationSettlementRow

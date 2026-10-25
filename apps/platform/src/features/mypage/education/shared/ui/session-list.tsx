@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { PFPagination, PFText } from '@/shared/ui'
+import { PFEmptyState, PFPagination, PFText } from '@/shared/ui'
 import styles from './session-list.module.css'
 
 type EducationSessionListProps = {
@@ -9,6 +9,7 @@ type EducationSessionListProps = {
   totalPages: number
   onPageChange: (page: number) => void
   emptyMessage: string
+  emptyDescription?: string
   children: ReactNode
   paginationAriaLabel?: string
   /** 1페이지뿐이어도 페이지네이션 노출 (기본: 2페이지 이상일 때만) */
@@ -24,6 +25,7 @@ export function EducationSessionList({
   totalPages,
   onPageChange,
   emptyMessage,
+  emptyDescription,
   children,
   paginationAriaLabel,
   alwaysShowPagination = false,
@@ -33,9 +35,15 @@ export function EducationSessionList({
 
   if (totalCount === 0) {
     return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-        {emptyMessage}
-      </PFText>
+      <div className={styles.empty}>
+        <PFEmptyState
+          variant="inline"
+          title={emptyMessage}
+          description={
+            emptyDescription ?? '관련 일정이 생기면 이곳에서 확인할 수 있어요.'
+          }
+        />
+      </div>
     )
   }
 

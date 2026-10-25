@@ -1,0 +1,82 @@
+.layout {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  gap: var(--spacing-24);
+}
+
+.calendar {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.legend {
+  flex-wrap: wrap;
+}
+
+.side {
+  display: flex;
+  width: 280px;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  padding: var(--spacing-20);
+  border: 1px solid rgb(61 61 61 / 10%);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+}
+
+.sideHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-8);
+}
+
+.sideDay,
+.sideWeekday,
+.sideProgram,
+.sideAmount {
+  margin: 0;
+}
+
+.sideList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sideItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.sideStatus {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: 4px 8px;
+  border-radius: var(--radius-8);
+}
+
+.sideStatusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-999);
+}
+
+@media (--bp-below-pc) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .side {
+    width: 100%;
+  }
+}

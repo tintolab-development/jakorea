@@ -44,6 +44,9 @@ export function volunteerApplicationDetailPath(
 /** 마이페이지 — 강의현황(강사·강사겸교사 전용) */
 export const MYPAGE_LECTURE_PATH = '/mypage/lectures'
 
+/** 마이페이지 — 정산 현황(강사·강사겸교사 전용) */
+export const MYPAGE_SETTLEMENT_PATH = '/mypage/settlement'
+
 export function lectureApplicationDetailPath(
   applicationId: string,
   applicationType?: string,
