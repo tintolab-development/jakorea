@@ -27,6 +27,7 @@ export type RegistrationFormApplyFailure = {
   /** 모집 행 신청 양식이면 행 id */
   recruitmentId?: number
   message: string
+  code?: string
 }
 
 export type RegistrationFormApplyResult = {
@@ -40,18 +41,55 @@ type ApplyTarget = {
   recruitmentId?: number
 }
 
-function errorMessage(error: unknown): string {
+type FormApplyServerError = {
+  message: string
+  code?: string
+}
+
+function parseFormApplyError(error: unknown): FormApplyServerError {
   if (error && typeof error === 'object') {
     const data = (error as { response?: { data?: { error?: { code?: string; message?: string } } } })
       .response?.data?.error
-    const code = data?.code?.trim()
+    const code = data?.code?.trim() || undefined
     const message = data?.message?.trim()
-    if (code && message) return `${message} (${code})`
-    if (message) return message
-    if (code) return code
+    if (message) return { message, code }
+    if (code) return { message: code, code }
   }
-  if (error instanceof Error && error.message.trim()) return error.message
-  return '양식 적용에 실패했습니다.'
+  if (error instanceof Error && error.message.trim()) return { message: error.message }
+  return { message: '양식 적용에 실패했습니다.' }
+}
+
+function recruitmentAudienceLabel(templateCode: string): string {
+  const spec = getOperationalFormSpec(templateCode) ?? getRegistrationFormSpec(templateCode)
+  if (spec?.targetRole === 'INSTRUCTOR') return '강사'
+  if (spec?.targetRole === 'VOLUNTEER') return '봉사자'
+  if (spec?.targetRole === 'INDIVIDUAL') return '참여자'
+  if (spec?.targetRole === 'ORGANIZATION') return '참여기관'
+  return '프로그램 등록'
+}
+
+function formDisplayName(templateCode: string): string {
+  const spec = getOperationalFormSpec(templateCode) ?? getRegistrationFormSpec(templateCode)
+  return spec?.nameHints[0] ?? templateCode
+}
+
+export function formatRegistrationFormApplyFailureContent(
+  failed: readonly RegistrationFormApplyFailure[]
+): string {
+  const groups = new Map<string, string[]>()
+  for (const item of failed) {
+    const audience = recruitmentAudienceLabel(item.templateCode)
+    const name = formDisplayName(item.templateCode)
+    const detail = [item.message, item.code].filter(Boolean).join(' · ')
+    const line = `- ${name}: ${detail}`
+    const lines = groups.get(audience) ?? []
+    lines.push(line)
+    groups.set(audience, lines)
+  }
+  const body = [...groups.entries()]
+    .map(([audience, lines]) => `${audience}\n${lines.join('\n')}`)
+    .join('\n\n')
+  return `프로그램은 등록되었지만 일부 양식을 적용하지 못했습니다.\n\n${body}\n\n실패한 양식만 다시 적용할 수 있습니다. 임시저장본은 남겨 둡니다.`
 }
 
 function programWithRecruitmentRow(program: Program, binding: ProgramFormBindingResponse): Program {
@@ -170,10 +208,12 @@ export async function applyRegistrationFormsAfterCreate(args: {
         await applyOne(target, item, claimedBindingIds)
         result.applied.push({ templateCode: item.templateCode, recruitmentId: target.recruitmentId })
       } catch (error) {
+        const parsed = parseFormApplyError(error)
         result.failed.push({
           templateCode: item.templateCode,
           recruitmentId: target.recruitmentId,
-          message: errorMessage(error),
+          message: parsed.message,
+          code: parsed.code,
         })
       }
     }
@@ -207,15 +247,9 @@ function failedItems(
 }
 
 function showRegistrationFormApplyFailureAlert(result: RegistrationFormApplyResult): void {
-  const lines = result.failed
-    .slice(0, 5)
-    .map(
-      item =>
-        `- ${item.templateCode}${item.recruitmentId != null ? ` (모집 행 ${item.recruitmentId})` : ''}: ${item.message}`
-    )
   cmsAlertModal.show({
     title: '일부 양식 적용 실패',
-    content: `프로그램은 등록되었지만 일부 양식을 적용하지 못했습니다.\n${lines.join('\n')}\n실패한 양식만 다시 적용할 수 있습니다. 임시저장본은 남겨 둡니다.`,
+    content: formatRegistrationFormApplyFailureContent(result.failed),
     confirmLabel: '다시 시도',
     onConfirm: () => {
       void retryPendingRegistrationFormApply()

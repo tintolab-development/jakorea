@@ -32,6 +32,7 @@ vi.mock('@/shared/ui/cms-alert-modal-api', () => ({
 import {
   applyPreparedRegistrationFormsAfterCreate,
   applyRegistrationFormsAfterCreate,
+  formatRegistrationFormApplyFailureContent,
   hasPendingRegistrationFormApplyFailures,
   retryPendingRegistrationFormApply,
 } from './apply-registration-forms-after-create'
@@ -213,5 +214,28 @@ describe('applyPreparedRegistrationFormsAfterCreate (부분 실패 → 안내·�
       expect.objectContaining({ templateCode: 'recruitment-economy' })
     )
     expect(hasPendingRegistrationFormApplyFailures()).toBe(false)
+  })
+
+  it('실패 안내에 모집 대상·양식 이름·서버 코드가 들어간다', () => {
+    const content = formatRegistrationFormApplyFailureContent([
+      {
+        templateCode: 'application-participant-school',
+        recruitmentId: 10,
+        message: '바인딩을 저장하지 못했습니다.',
+        code: 'FORM_BINDING_COPY_FAILED',
+      },
+      {
+        templateCode: 'application-instructor',
+        recruitmentId: 11,
+        message: '템플릿 버전이 없습니다.',
+        code: 'TEMPLATE_VERSION_NOT_FOUND',
+      },
+    ])
+    expect(content).toContain('참여기관')
+    expect(content).toContain('기관 신청')
+    expect(content).toContain('FORM_BINDING_COPY_FAILED')
+    expect(content).toContain('강사')
+    expect(content).toContain('강사 신청')
+    expect(content).toContain('TEMPLATE_VERSION_NOT_FOUND')
   })
 })

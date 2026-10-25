@@ -126,7 +126,7 @@ describe('getGeneralProgramRecruitmentInfoEditBlockedAlertMessage', () => {
       '모집 정보 수정 불가 안내'
     )
     expect(getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(baseProgram())).toBe(
-      '모집 시작 후에는 모집 정보를 수정할 수 없습니다.'
+      '모집 시작 이후에는 모집 정보를 수정할 수 없습니다.'
     )
   })
 })

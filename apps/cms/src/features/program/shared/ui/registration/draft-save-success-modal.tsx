@@ -15,11 +15,13 @@ export const REGISTRATION_DRAFT_SAVE_SUCCESS_BODY = [
 export type RegistrationDraftSaveSuccessModalProps = {
   open: boolean
   onConfirm: () => void
+  body?: string
 }
 
 export function RegistrationDraftSaveSuccessModal({
   open,
   onConfirm,
+  body = REGISTRATION_DRAFT_SAVE_SUCCESS_BODY,
 }: RegistrationDraftSaveSuccessModalProps) {
   return (
     <ContentModal
@@ -36,7 +38,7 @@ export function RegistrationDraftSaveSuccessModal({
       }
     >
       <p className="registration-draft-save-success-modal__body">
-        {REGISTRATION_DRAFT_SAVE_SUCCESS_BODY}
+        {body}
       </p>
     </ContentModal>
   )
