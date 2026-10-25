@@ -283,7 +283,14 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
       typedBody.volunteerTargets = row.volunteerTargets
     }
     if (row.interviewConfig !== undefined) {
-      typedBody.interviewConfig = row.interviewConfig
+      const interviewConfig = row.interviewConfig
+      typedBody.interviewConfig =
+        interviewConfig == null
+          ? null
+          : {
+              ...interviewConfig,
+              exclusionState: interviewConfig.exclusionState ?? undefined,
+            }
     }
   }
   if (clearFields.length > 0) body.clearFields = clearFields

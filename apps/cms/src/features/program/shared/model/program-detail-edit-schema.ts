@@ -466,6 +466,13 @@ const programDetailEditSchemaBase = z.object({
   wagePaymentItems: z.string().optional(),
   wagePaymentItemIds: z.array(z.string()).optional(),
   wageDeductionItems: z.string().optional(),
+  /** UJAT 지역별 정원 — GET/PUT region-capacities. 다른 프로그램 유형은 미사용. */
+  ujatRegionCapacity: z
+    .object({
+      h1: z.record(z.object({ classCount: z.string().optional(), volunteerCount: z.string().optional() })),
+      h2: z.record(z.object({ classCount: z.string().optional(), volunteerCount: z.string().optional() })),
+    })
+    .optional(),
   // KPI — BE Integer(int32); 초과 시 MALFORMED_REQUEST
   kpiFinalParticipants: optionalNonNegJavaInt,
   kpiInstructorCount: optionalNonNegJavaInt,
@@ -1307,6 +1314,12 @@ export function programToDetailEditValues(
     wagePaymentItems: undefined,
     ...wageKpi,
     wageDeductionItems: undefined,
+    ujatRegionCapacity: program.ujatRegionCapacity
+      ? {
+          h1: { ...program.ujatRegionCapacity.h1 },
+          h2: { ...program.ujatRegionCapacity.h2 },
+        }
+      : undefined,
     kpiVolunteerCount:
       clampJavaInt(program.generalCommonInfo?.kpi?.volunteerCount) ??
       clampJavaInt(program.generalVolunteers) ??
@@ -1627,6 +1640,14 @@ export function detailEditValuesToProgramPatch(
     participatingSchoolCount: clampJavaInt(
       values.kpiFinalSchools ?? existing.participatingSchoolCount
     ),
+    ...(values.ujatRegionCapacity != null
+      ? {
+          ujatRegionCapacity: {
+            h1: { ...(values.ujatRegionCapacity.h1 ?? {}) },
+            h2: { ...(values.ujatRegionCapacity.h2 ?? {}) },
+          },
+        }
+      : {}),
     generalSurveyMenuKeys,
     ...(ujatParticipantFlags
       ? { generalParticipantTypes: generalParticipantTypesFromUjatFlags(ujatParticipantFlags) }
