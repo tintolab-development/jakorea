@@ -27,9 +27,6 @@ import {
   volunteerHalfFromRecruitDisplayKind,
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
-import {
-  buildUjatProgramDraftWithSessionOverlay,
-} from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatInstitutionApplicationList } from './application-institution/list/list'
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
@@ -121,8 +118,7 @@ import {
   replaceUjatRegionCapacitiesRemote,
   type UjatRegionCapacityUpsert,
 } from '@/features/program/ujat/api/region-capacities-client'
-import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
-import { resolveUjatRegionCapacitySemesterValues } from '@/features/program/ujat/lib/ujat-region-capacity-display'
+import { ujatRegionCapacityUpsertsFromState } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import {
   patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
@@ -335,22 +331,7 @@ const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
 const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
 
 function buildUjatRegionCapacityUpserts(program: Program): UjatRegionCapacityUpsert[] {
-  const overlay = readUjatRegistrationOverlayFromProgram(program)
-  const regions = listUjatEducationRegionsActive()
-  const halves = [
-    ['FIRST_HALF', 'h1'],
-    ['SECOND_HALF', 'h2'],
-  ] as const
-
-  return halves.flatMap(([semesterType, half]) => {
-    const values = resolveUjatRegionCapacitySemesterValues(half, overlay)
-    return regions.map(region => ({
-      semesterType,
-      educationRegionCode: region.key,
-      maxClassCount: Number.parseInt(values[region.label]?.classCount ?? '', 10) || 0,
-      maxVolunteerCount: Number.parseInt(values[region.label]?.volunteerCount ?? '', 10) || 0,
-    }))
-  })
+  return ujatRegionCapacityUpsertsFromState(program.ujatRegionCapacity)
 }
 
 function ujatRegionCapacitySnapshot(program: Program): string {
@@ -1378,11 +1359,10 @@ export function UjatProgramDetailFullPageModal({
               try {
                 // Schedule/wage/KPI legacy editors still publish their migration-boundary
                 // snapshot. Keep it in the request without using it as the RHF value source.
-                const draftWithLegacyOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
                 const commonPatch: Partial<Program> = {
                   ...patch,
                   ujatRegistrationOverlay: stripUjatTypedLegacyOverlay(
-                    draftWithLegacyOverlay.ujatRegistrationOverlay ?? {}
+                    draft.ujatRegistrationOverlay ?? {}
                   ),
                   generalSurveyMenuKeys: draft.generalSurveyMenuKeys,
                   generalParticipantTypes: draft.generalParticipantTypes,
