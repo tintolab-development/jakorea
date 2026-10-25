@@ -11,6 +11,10 @@ import type { ProgramRecruitmentResponse } from '@/shared/api/generated/dashboar
 import { ProgramRecruitmentRequestApplicationType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestApplicationType'
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
 import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitTerm'
+import {
+  buildVolunteerInterviewConfigForSave,
+  type RecruitmentInterviewConfig,
+} from '@/features/program/shared/lib/volunteer-interview-config'
 import type { DateValue } from '@/types'
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
 
@@ -171,7 +175,7 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   patch: Partial<Program>
   audience: RecruitmentCopyAudience
   volunteerHalf?: 'h1' | 'h2'
-}): ProgramRecruitmentRequest | null {
+}): ProgramRecruitmentRowSaveRequest | null {
   const { baseline, draft, patch, audience, volunteerHalf } = args
   const source: Program = {
     ...baseline,
@@ -210,7 +214,7 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
       ? (patch.generalVolunteerInterviewEnabled ?? row.interviewEnabled)
       : row.interviewEnabled
 
-  const body: ProgramRecruitmentRequest = {
+  const body: ProgramRecruitmentRowSaveRequest = {
     id: row.id,
     recruitmentType,
   }
@@ -293,8 +297,49 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
             }
     }
   }
+  const overlayInterviewConfig = volunteerInterviewConfigForRowSave({
+    source,
+    row,
+    patch,
+    audience,
+    volunteerHalf,
+    recruitmentType,
+  })
+  if (overlayInterviewConfig) {
+    typedBody.interviewConfig = {
+      ...overlayInterviewConfig,
+      exclusionState: overlayInterviewConfig.exclusionState ?? undefined,
+    }
+  }
   if (clearFields.length > 0) body.clearFields = clearFields
   return body
+}
+
+/** 생성 타입에 아직 없는 BE V80 `interviewConfig`(봉사 행 전용)를 더한 행 PATCH 본문 */
+export type ProgramRecruitmentRowSaveRequest = ProgramRecruitmentRequest & {
+  interviewConfig?: RecruitmentInterviewConfig
+}
+
+/**
+ * 일반 봉사 행 저장 — 이번 저장의 overlay(`patch.registrationOverlay`)에 담긴 면접 키를 typed 로 함께 보낸다.
+ * UJAT 반기 행·overlay 가 없는 저장에는 넣지 않는다(서버 typed 값 유지).
+ */
+function volunteerInterviewConfigForRowSave(args: {
+  source: Program
+  row: ProgramRecruitmentWindow
+  patch: Partial<Program>
+  audience: RecruitmentCopyAudience
+  volunteerHalf?: 'h1' | 'h2'
+  recruitmentType: string
+}): RecruitmentInterviewConfig | undefined {
+  if (args.audience !== 'volunteer' || args.volunteerHalf) return undefined
+  if (args.recruitmentType !== ProgramRecruitmentRequestRecruitmentType.VOLUNTEER) return undefined
+  if (args.row.recruitTerm === 'FIRST_HALF' || args.row.recruitTerm === 'SECOND_HALF')
+    return undefined
+  if ((args.source.backendProgramType ?? '').toUpperCase() === 'UJAT') return undefined
+  const overlay = args.patch.registrationOverlay
+  if (!overlay || typeof overlay !== 'object') return undefined
+  return buildVolunteerInterviewConfigForSave(overlay as Record<string, unknown>)
 }
 
 const AUDIENCE_ROW_KEYS = [
@@ -523,11 +568,8 @@ export function applySavedRecruitmentOntoProgram(args: {
           },
         }
       : {}),
-    ...(audience === 'volunteer' &&
-    patchCommon &&
-    Object.prototype.hasOwnProperty.call(patchCommon, 'volunteerInterviewScheduleInfo')
-      ? { volunteerInterviewScheduleInfo: patchCommon.volunteerInterviewScheduleInfo }
-      : {}),
+    // 면접 일정 표시 객체는 재조회한 프로그램 GET 값이 정본(BE가 typed interviewConfig 로 만든다).
+    // patch 의 overlay 계산 값으로 덮지 않는다.
   } as Program['generalCommonInfo']
 
   return {

@@ -1,0 +1,133 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`봉사 면접 parity (part4 step6) > UJAT 반기 봉사 행 본문은 그대로 > ujat-h1-row-body 1`] = `
+{
+  "applicationType": "VOLUNTEER",
+  "endAt": "2026-12-15T14:59:59.999Z",
+  "id": 990011,
+  "interviewEnabled": true,
+  "interviewEndAt": "2026-12-20T14:59:59.999Z",
+  "interviewStartAt": "2026-12-06T15:00:00.000Z",
+  "operationEndDate": "2027-02-28",
+  "operationStartDate": "2026-12-01",
+  "recruitTerm": "FIRST_HALF",
+  "recruitmentType": "VOLUNTEER",
+  "startAt": "2026-11-30T15:00:00.000Z",
+  "targetType": "COLLEGE_STUDENT",
+}
+`;
+
+exports[`봉사 면접 parity (part4 step6) > 봉사 모집 행 PATCH 본문 — interviewConfig 외 키는 그대로 > volunteer-row-body 1`] = `
+{
+  "applicationType": "VOLUNTEER",
+  "endAt": "2026-12-15T14:59:59.999Z",
+  "id": 990001,
+  "interviewEnabled": true,
+  "interviewEndAt": "2026-12-20T14:59:59.999Z",
+  "interviewStartAt": "2026-12-06T15:00:00.000Z",
+  "operationEndDate": "2027-02-28",
+  "operationStartDate": "2026-12-01",
+  "recruitmentType": "VOLUNTEER",
+  "startAt": "2026-11-30T15:00:00.000Z",
+  "targetType": "COLLEGE_STUDENT",
+}
+`;
+
+exports[`봉사 면접 parity (part4 step6) > 봉사 모집 행 PATCH 본문 — overlay patch 없는 저장 > volunteer-row-body-no-overlay 1`] = `
+{
+  "applicationType": "VOLUNTEER",
+  "endAt": "2026-12-16T14:59:59.999Z",
+  "id": 990001,
+  "interviewEnabled": true,
+  "interviewEndAt": "2026-12-20T14:59:59.999Z",
+  "interviewStartAt": "2026-12-06T15:00:00.000Z",
+  "operationEndDate": "2027-02-28",
+  "operationStartDate": "2026-12-01",
+  "recruitmentType": "VOLUNTEER",
+  "startAt": "2026-11-30T15:00:00.000Z",
+  "targetType": "COLLEGE_STUDENT",
+}
+`;
+
+exports[`봉사 면접 parity (part4 step6) > 조회 — interviewConfig 키가 없는 응답(구 서버)도 overlay 그대로 > overlay-typed-absent 1`] = `
+{
+  "generalRegistration.basicInfo.educationVenueDetail": "본관",
+  "recruit.volunteer.interview.appliedUnavailableDates": [
+    "2026-12-10",
+  ],
+  "recruit.volunteer.interview.exception.1765000000000.exceptionDate": "2026-12-08T15:00:00.000Z",
+  "recruit.volunteer.interview.exception.1765000000000.interviewTimeRange": [
+    "2026-12-09T05:00:00.000Z",
+    "2026-12-09T06:00:00.000Z",
+  ],
+  "recruit.volunteer.interview.exception.1765000000000.selectedSlotKeys": [
+    "1796792400000-1796794200000",
+  ],
+  "recruit.volunteer.interview.exception.1765000000000.timeUnit": "30",
+  "recruit.volunteer.interview.exceptionDate": null,
+  "recruit.volunteer.interview.exclusionState": {
+    "excludeHoliday": true,
+    "excludeNone": false,
+    "excludeSaturday": true,
+    "excludeSunday": true,
+  },
+  "recruit.volunteer.interview.interviewTime": "2026-12-07T01:00:00.000Z",
+  "recruit.volunteer.interview.interviewTimeRange": [
+    "2026-12-07T01:00:00.000Z",
+    "2026-12-07T03:00:00.000Z",
+  ],
+  "recruit.volunteer.interview.selectedSlotKeys": [
+    "1796605200000-1796607000000",
+    "1796607000000-1796608800000",
+  ],
+  "recruit.volunteer.interview.timeUnit": "30",
+  "recruit.volunteer.interviewMethod": "online",
+  "recruit.volunteer.interviewRequired": "yes",
+}
+`;
+
+exports[`봉사 면접 parity (part4 step6) > 조회 — typed null 이면 overlay 그대로 > overlay-typed-null 1`] = `
+{
+  "generalRegistration.basicInfo.educationVenueDetail": "본관",
+  "recruit.volunteer.interview.appliedUnavailableDates": [
+    "2026-12-10",
+  ],
+  "recruit.volunteer.interview.exception.1765000000000.exceptionDate": "2026-12-08T15:00:00.000Z",
+  "recruit.volunteer.interview.exception.1765000000000.interviewTimeRange": [
+    "2026-12-09T05:00:00.000Z",
+    "2026-12-09T06:00:00.000Z",
+  ],
+  "recruit.volunteer.interview.exception.1765000000000.selectedSlotKeys": [
+    "1796792400000-1796794200000",
+  ],
+  "recruit.volunteer.interview.exception.1765000000000.timeUnit": "30",
+  "recruit.volunteer.interview.exceptionDate": null,
+  "recruit.volunteer.interview.exclusionState": {
+    "excludeHoliday": true,
+    "excludeNone": false,
+    "excludeSaturday": true,
+    "excludeSunday": true,
+  },
+  "recruit.volunteer.interview.interviewTime": "2026-12-07T01:00:00.000Z",
+  "recruit.volunteer.interview.interviewTimeRange": [
+    "2026-12-07T01:00:00.000Z",
+    "2026-12-07T03:00:00.000Z",
+  ],
+  "recruit.volunteer.interview.selectedSlotKeys": [
+    "1796605200000-1796607000000",
+    "1796607000000-1796608800000",
+  ],
+  "recruit.volunteer.interview.timeUnit": "30",
+  "recruit.volunteer.interviewMethod": "online",
+  "recruit.volunteer.interviewRequired": "yes",
+}
+`;
+
+exports[`봉사 면접 parity (part4 step6) > 참여 행 본문은 그대로 > participant-row-body 1`] = `
+{
+  "applicationType": "ORGANIZATION",
+  "endAt": "2026-12-16T14:59:59.999Z",
+  "id": 990002,
+  "recruitmentType": "PARTICIPANT",
+}
+`;

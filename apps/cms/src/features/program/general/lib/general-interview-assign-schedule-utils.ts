@@ -4,7 +4,10 @@ import type { GeneralInterviewSlotListItem } from '@/features/program/general/ap
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import { resolveGeneralProgramVolunteerInterviewScheduleDisplay } from '@/features/program/general/lib/volunteer-interview-schedule-display'
-import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK, GENERAL_INTERVIEW_MOCK_RANGE } from '@/features/program/general/model/volunteer-interview-schedule'
+import {
+  DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
+  GENERAL_INTERVIEW_MOCK_RANGE,
+} from '@/features/program/general/model/volunteer-interview-schedule'
 import {
   formatDisplayTimeRange,
   getPublicHolidayDateKeysForSchedule,
@@ -274,9 +277,7 @@ export function mergeApplicantAvailabilityIntoSchedule(
     const date = parseInterviewDisplayDateLabel(day.dateLabel)
     if (!date) continue
     const slots = new Set(
-      day.slots
-        .filter(raw => /\d{2}:\d{2}/.test(raw))
-        .map(normalizeTimeRangeKey)
+      day.slots.filter(raw => /\d{2}:\d{2}/.test(raw)).map(normalizeTimeRangeKey)
     )
     if (slots.size > 0) availabilityByDate.set(date.format('YYYY-MM-DD'), slots)
   }
@@ -322,7 +323,11 @@ export function parseGeneralInterviewScheduleFromProgram(
   publicHolidayDateKeys?: ReadonlySet<string>
 ): ParsedInterviewSchedule {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
-  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+  // 표시와 같은 소스 — 서버 조회 Program 은 GET 표시 객체(typed 기준)
+  const info =
+    program.volunteerInterviewScheduleInfoFromServer !== undefined
+      ? (program.volunteerInterviewScheduleInfoFromServer ?? undefined)
+      : program.generalCommonInfo?.volunteerInterviewScheduleInfo
   const parsedSlots = parseTimeSlotsString(
     display.availableTimeSlots === '-' ? '' : display.availableTimeSlots
   )

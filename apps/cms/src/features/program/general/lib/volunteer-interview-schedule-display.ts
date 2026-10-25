@@ -3,7 +3,12 @@
  * 값 없으면 '-' (mock/하드코드 기본값 없음)
  */
 
-import type { GeneralProgramVolunteerInterviewScheduleException, Program } from '@/types/domain'
+import type {
+  GeneralProgramVolunteerInterviewScheduleException,
+  GeneralProgramVolunteerInterviewScheduleInfo,
+  Program,
+} from '@/types/domain'
+import { formatDateOnly } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   buildVolunteerInterviewScheduleEditSeed,
   type VolunteerInterviewScheduleEditSeed,
@@ -14,7 +19,7 @@ import {
   resolveVolunteerInterviewAvailableTimeSlotsForDisplay,
   volunteerInterviewHasSelectedSlotKeys,
 } from '@/features/program/general/lib/general-recruit-overlay-to-program'
-import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-keys'
 import dayjs from 'dayjs'
 import { mapVolunteerInterviewExceptionsFromOverlay } from '@/features/program/shared/lib/volunteer-interview-exception-overlay'
 
@@ -103,9 +108,61 @@ function selectedSlotLabelsFromOverlay(overlay: Record<string, unknown>): string
     .filter(Boolean)
 }
 
+function dateLabel(iso: string | undefined | null): string | undefined {
+  const trimmed = iso?.trim()
+  if (!trimmed) return undefined
+  const formatted = formatDateOnly(trimmed)
+  return formatted === '-' ? trimmed : formatted
+}
+
+/**
+ * 서버 표시 객체 → 화면 값. overlay 로 다시 계산하지 않는다.
+ * - 불가일: `specificUnavailableDateIsos` 가 배열이면 그 값만(`[]` = 없음). 키가 없을 때만 서버 문구 `specificUnavailableDates`.
+ * - 예외: 서버 `exceptions[]`({exceptionDateIso, availableTimeSlots}) 순서 그대로.
+ */
+function displayFromServerScheduleInfo(
+  info: GeneralProgramVolunteerInterviewScheduleInfo | null
+): GeneralProgramVolunteerInterviewScheduleDisplay {
+  const isos = Array.isArray(info?.specificUnavailableDateIsos)
+    ? info.specificUnavailableDateIsos
+    : undefined
+  const specific = isos
+    ? isos
+        .map(dateLabel)
+        .filter((label): label is string => label != null)
+        .join(', ')
+    : info?.specificUnavailableDates
+  const exceptions = Array.isArray(info?.exceptions) ? info.exceptions : []
+  return {
+    recurringUnavailable: dashOr(info?.recurringUnavailable),
+    specificUnavailableDates: dashOr(specific),
+    availableTimeSlots: dashOr(info?.availableTimeSlots),
+    exceptions: exceptions.map((exception, index) => {
+      const label = dateLabel(exception.exceptionDateIso) ?? exception.exceptionDate?.trim()
+      return {
+        blockId: index + 1,
+        ...(label ? { exceptionDate: label } : {}),
+        ...(exception.exceptionDateIso ? { exceptionDateIso: exception.exceptionDateIso } : {}),
+        ...(exception.availableTimeSlots
+          ? { availableTimeSlots: exception.availableTimeSlots }
+          : {}),
+      }
+    }),
+  }
+}
+
+/**
+ * 상세 「면접 진행 가능 일정」 표시.
+ * 서버에서 읽은 프로그램은 GET `generalCommonInfo.volunteerInterviewScheduleInfo` 가 SSOT
+ * (BE가 typed `interviewConfig` 로 만들고, typed 가 null 인 구 프로그램만 overlay 로 만든다).
+ * 서버 조회가 아닌 Program(등록 미리보기·mock)만 기존 overlay 계산 표시를 쓴다.
+ */
 export function resolveGeneralProgramVolunteerInterviewScheduleDisplay(
   program: Program
 ): GeneralProgramVolunteerInterviewScheduleDisplay {
+  if (program.volunteerInterviewScheduleInfoFromServer !== undefined) {
+    return displayFromServerScheduleInfo(program.volunteerInterviewScheduleInfoFromServer)
+  }
   const overlay = readRegistrationOverlay(program)
   const merged = resolveVolunteerInterviewScheduleProgramForDisplay(program)
   const nestedInfo = program.generalCommonInfo?.volunteerInterviewScheduleInfo
@@ -114,10 +171,7 @@ export function resolveGeneralProgramVolunteerInterviewScheduleDisplay(
   return {
     recurringUnavailable: dashOr(mergedInfo?.recurringUnavailable),
     specificUnavailableDates: dashOr(mergedInfo?.specificUnavailableDates),
-    availableTimeSlots: resolveAvailableTimeSlotsDisplay(
-      nestedInfo?.availableTimeSlots,
-      overlay
-    ),
+    availableTimeSlots: resolveAvailableTimeSlotsDisplay(nestedInfo?.availableTimeSlots, overlay),
     exceptions: resolveVolunteerInterviewExceptions(merged),
   }
 }
@@ -127,8 +181,9 @@ export function resolveGeneralProgramVolunteerInterviewScheduleEditSeed(
 ): VolunteerInterviewScheduleEditSeed | undefined {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
   const overlay = readRegistrationOverlay(program)
-  const info = resolveVolunteerInterviewScheduleProgramForDisplay(program).generalCommonInfo
-    ?.volunteerInterviewScheduleInfo
+  const info =
+    resolveVolunteerInterviewScheduleProgramForDisplay(program).generalCommonInfo
+      ?.volunteerInterviewScheduleInfo
   const interviewTimeRange = parseInterviewTimeRangeFromOverlay(overlay)
   const selectedTimeSlotLabels = selectedSlotLabelsFromOverlay(overlay)
 
@@ -144,8 +199,7 @@ export function resolveGeneralProgramVolunteerInterviewScheduleEditSeed(
   }
 
   return buildVolunteerInterviewScheduleEditSeed({
-    recurringUnavailable:
-      display.recurringUnavailable === '-' ? '' : display.recurringUnavailable,
+    recurringUnavailable: display.recurringUnavailable === '-' ? '' : display.recurringUnavailable,
     specificUnavailableDateIsos: info?.specificUnavailableDateIsos,
     selectedTimeSlotLabels,
     interviewTimeRange,
