@@ -433,7 +433,7 @@ export function resolveRowApplicationBinding(
 }
 
 /**
- * GENERAL·UJAT CREATE 후 BE `fanOutProgramBindings`가 만든 모집 행(RECRUITMENT scope) 신청 바인딩 중
+ * CREATE 후 BE `fanOutProgramBindings`가 만든 모집 행(RECRUITMENT scope) 신청 바인딩 중
  * spec 역할과 맞는 활성 바인딩 목록. 행마다 독립 양식이므로 CREATE 후 양식 적용은 행 단위로 한다.
  */
 export function listRecruitmentRowApplicationBindings(
