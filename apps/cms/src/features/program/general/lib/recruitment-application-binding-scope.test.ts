@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
 import {
+  programForApplicationFormEditor,
   programWithApplicationFormRecruitmentScope,
   recruitmentApplicationBindingScope,
   resolveRowApplicationBinding,
@@ -125,5 +126,23 @@ describe('recruitment application binding scope', () => {
       targetScope: 'RECRUITMENT',
       targetScopeId: 186080,
     })
+  })
+
+  it('편집 variant로 모집 행 범위를 맞춘다', () => {
+    const unscoped = program({
+      activeRecruitmentId: undefined,
+      generalParticipantTypes: ['school_institution'],
+      programRecruitments: [
+        { id: 168241, recruitmentType: 'PARTICIPANT', applicationType: 'ORGANIZATION' },
+        { id: 186080, recruitmentType: 'INSTRUCTOR' },
+      ],
+    })
+    expect(recruitmentApplicationBindingScope(unscoped, 'APPLICATION')).toBeUndefined()
+    expect(programForApplicationFormEditor(unscoped, 'institution').activeRecruitmentId).toBe(
+      168241
+    )
+    expect(programForApplicationFormEditor(unscoped, 'instructor').activeRecruitmentId).toBe(
+      186080
+    )
   })
 })
