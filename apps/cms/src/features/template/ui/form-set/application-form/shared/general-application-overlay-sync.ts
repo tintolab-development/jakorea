@@ -60,10 +60,6 @@ export function setGeneralApplicationOverlayScope(templateCode: string | undefin
   store.setScope(templateCode)
 }
 
-export function getGeneralApplicationOverlayScope(): string {
-  return store.getScope()
-}
-
 export function subscribeGeneralApplicationOverlay(listener: () => void): () => void {
   return store.subscribe(listener)
 }
@@ -73,10 +69,6 @@ export function subscribeGeneralApplicationOverlayKey(
   listener: () => void
 ): () => void {
   return store.subscribeKey(key, listener)
-}
-
-export function getGeneralApplicationOverlayVersion(): number {
-  return store.getVersion()
 }
 
 export function getGeneralApplicationOverlayRecord(): Record<string, unknown> {
@@ -120,12 +112,6 @@ export function replaceGeneralApplicationOverlayForScope(
   } finally {
     endWizardApplicationRhfProjection()
   }
-}
-
-export function resetGeneralApplicationOverlayForScope(
-  templateCode: string | undefined | null
-): void {
-  store.resetFor(templateCode)
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {

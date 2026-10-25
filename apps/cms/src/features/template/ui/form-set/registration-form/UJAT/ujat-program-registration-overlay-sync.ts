@@ -22,19 +22,6 @@ export function peekUjatProgramRegistrationOverlayRecord(
   return store.peekRecord(templateCode)
 }
 
-export function replaceUjatProgramRegistrationOverlayForScope(
-  templateCode: string | undefined | null,
-  next: Record<string, unknown>
-): void {
-  store.replaceFor(templateCode, next)
-}
-
-export function resetUjatProgramRegistrationOverlayForScope(
-  templateCode: string | undefined | null
-): void {
-  store.resetFor(templateCode)
-}
-
 export function subscribeUjatProgramRegistrationOverlay(listener: () => void): () => void {
   return store.subscribe(listener)
 }

@@ -2,31 +2,27 @@ export type ServiceDetailOverlaySource = {
   registration?: {
     overlay?: Record<string, unknown> | null
   } | null
-  /** Legacy JSON root. Read compatibility only — do not send on new writes. */
+  /**
+   * Legacy JSON root. 더 이상 읽지 않는다(루트만 있는 행 0건 확인 후 part4에서 제거).
+   * 쓰기 경로는 `omitRootRegistrationOverlay`로 계속 떼어 낸다.
+   */
   registrationOverlay?: Record<string, unknown> | null
 }
 
-export function isRegistrationOverlayRecord(
-  value: unknown
-): value is Record<string, unknown> {
+export function isRegistrationOverlayRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
 /**
- * 조회용 overlay 정본.
- * 루트 레거시 위에 안쪽 `registration.overlay`를 덮는다.
- * `null` / `false` / `0` / `[]` / `{}` 도 안쪽 값이면 루트로 대체하지 않는다.
+ * 조회용 overlay 정본 = 안쪽 `registration.overlay`만.
+ * 루트 `registrationOverlay`는 읽지 않는다(레거시 fallback 제거).
  */
 export function resolveRegistrationOverlay(
   detail: ServiceDetailOverlaySource | null | undefined
 ): Record<string, unknown> {
-  const legacy = isRegistrationOverlayRecord(detail?.registrationOverlay)
-    ? detail.registrationOverlay
+  return isRegistrationOverlayRecord(detail?.registration?.overlay)
+    ? { ...detail.registration.overlay }
     : {}
-  const nested = isRegistrationOverlayRecord(detail?.registration?.overlay)
-    ? detail.registration.overlay
-    : {}
-  return { ...legacy, ...nested }
 }
 
 export function resolvedRegistrationOverlayOrUndefined(

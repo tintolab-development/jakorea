@@ -131,12 +131,6 @@ export function replaceGeneralRecruitOverlayForScope(
   }
 }
 
-export function resetGeneralRecruitOverlayForScope(
-  templateCode: string | undefined | null
-): void {
-  store.resetFor(templateCode)
-}
-
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
   return readOperationalOverlayKvValue('general-recruit', store.getRecord(), key, defaultValue)
 }

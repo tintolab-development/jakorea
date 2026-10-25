@@ -6,7 +6,7 @@ import { buildRegistrationOverlayForPersist } from '@/features/program/shared/li
 import {
   buildGeneralRegistrationOverlayFromProgram,
   mergeRegistrationOverlayNestedSsot,
-} from '@/features/program/general/lib/registration-overlay-sync'
+} from '@/features/program/general/lib/general-registration-overlay-from-program'
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
 import {
   parseEducationScheduleLineForCms,
@@ -14,7 +14,7 @@ import {
   serializeEducationScheduleLineForServer,
   serializeEducationScheduleLinesForServer,
 } from '@/features/template/lib/format-education-schedule-line'
-import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-keys'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
@@ -172,7 +172,7 @@ export interface GeneralProgramServiceDetailJsonV1 {
   /** 등록 폼 overlay 정본 — 공고용명 등 (`serviceDetailJson.registration.overlay`) */
   registration?: { overlay?: Record<string, unknown> }
   /**
-   * 레거시 JSON 루트. 조회 시에만 `resolveRegistrationOverlay`가 읽는다.
+   * 레거시 JSON 루트. 읽지도 보내지도 않는다(타입 호환용).
    * 신규 persist에는 넣지 않는다.
    */
   registrationOverlay?: Record<string, unknown>
@@ -680,7 +680,7 @@ function isServiceDetailRecord(value: unknown): value is Record<string, unknown>
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
-/** `registration.overlay` 정본 + 루트 `registrationOverlay` 레거시. 안쪽 키가 우선한다. */
+/** `registration.overlay` 정본. 루트 `registrationOverlay`는 읽지 않는다. */
 export function mergeServiceDetailRegistrationOverlay(
   parsed: Record<string, unknown>
 ): Record<string, unknown> | undefined {

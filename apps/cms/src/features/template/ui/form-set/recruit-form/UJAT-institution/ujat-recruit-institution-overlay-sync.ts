@@ -1,5 +1,3 @@
-import { useCallback, useSyncExternalStore } from 'react'
-import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 
 /**
@@ -48,12 +46,6 @@ export function patchUjatRecruitInstitutionOverlay(partial: Record<string, unkno
 export function replaceUjatRecruitInstitutionOverlay(next: Record<string, unknown>): void {
   store.replace(next)
 }
-export function updateUjatRecruitInstitutionOverlayKey<T>(
-  key: string,
-  updater: (prev: T | undefined) => T
-): void {
-  store.updateKey(key, updater)
-}
 export function resetUjatRecruitInstitutionOverlay(): void {
   store.reset()
 }
@@ -62,24 +54,4 @@ export function resetAllUjatRecruitInstitutionOverlay(): void {
 }
 export function resetUjatRecruitInstitutionOverlayStoreForTests(): void {
   store.resetAll()
-}
-export function useUjatRecruitInstitutionOverlayKv<T>(
-  key: string,
-  defaultValue: T
-): [T, (next: T) => void] {
-  const version = useSyncExternalStore(
-    subscribeUjatRecruitInstitutionOverlay,
-    getUjatRecruitInstitutionOverlayVersion,
-    getUjatRecruitInstitutionOverlayVersion
-  )
-  void version
-  const record = getUjatRecruitInstitutionOverlayRecord()
-  const value = readOperationalOverlayKvValue('ujat-recruit-institution', record, key, defaultValue)
-  const setValue = useCallback(
-    (next: T) => {
-      patchUjatRecruitInstitutionOverlay({ [key]: next })
-    },
-    [key]
-  )
-  return [value, setValue]
 }

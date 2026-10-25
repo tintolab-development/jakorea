@@ -16,17 +16,17 @@ describe('resolveRegistrationOverlay', () => {
     ).toEqual({ 'generalRegistration.basicInfo.publicProgramTitle': '중첩 공고명' })
   })
 
-  it('legacy root만 있으면 화면에 그 값을 쓴다', () => {
+  it('legacy root만 있으면 읽지 않는다(빈 객체)', () => {
     expect(
       resolveRegistrationOverlay({
         registrationOverlay: {
           'generalRegistration.basicInfo.publicProgramTitle': '구버전 공고명',
         },
       })
-    ).toEqual({ 'generalRegistration.basicInfo.publicProgramTitle': '구버전 공고명' })
+    ).toEqual({})
   })
 
-  it('nested와 root가 모두 있으면 nested가 우선한다', () => {
+  it('nested와 root가 모두 있으면 nested만 쓴다', () => {
     expect(
       resolveRegistrationOverlay({
         registration: {
@@ -39,17 +39,16 @@ describe('resolveRegistrationOverlay', () => {
       })
     ).toEqual({
       'generalRegistration.basicInfo.publicProgramTitle': '중첩 값',
-      'recruit.notes': '루트에만 있는 값',
     })
   })
 
-  it('root에만 있는 추가 키는 nested 결과에 포함한다', () => {
+  it('root에만 있는 추가 키는 포함하지 않는다', () => {
     expect(
       resolveRegistrationOverlay({
         registration: { overlay: { a: 1 } },
         registrationOverlay: { b: 2 },
       })
-    ).toEqual({ a: 1, b: 2 })
+    ).toEqual({ a: 1 })
   })
 
   it('nested 값이 null이면 root로 fallback하지 않는다', () => {

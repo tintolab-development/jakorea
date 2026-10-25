@@ -5,7 +5,7 @@
 import dayjs from 'dayjs'
 import { formatDateDotWithWeekday, formatNumberDisplay } from '@/shared/utils'
 import { z } from 'zod'
-import { GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-keys'
 import type {
   GeneralProgramParticipantType,
   GeneralProgramSessionRoundKind,

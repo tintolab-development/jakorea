@@ -2,24 +2,11 @@ import { useCallback, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 
-export const UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS = {
-  applicationRegion: 'ujatApplication.applicationRegion',
-  gradeDetailByBlock: 'ujatApplication.gradeDetailByBlock',
-  classTimeCheckedByBlock: 'ujatApplication.classTimeCheckedByBlock',
-  classTimePeriodsByBlock: 'ujatApplication.classTimePeriodsByBlock',
-  preferredScheduleSelectedIds: 'ujatApplication.preferredScheduleSelectedIds',
-} as const
-
-export type UjatApplicationGradeDetail = {
-  classCountInput: string
-  classNoByIndex: Record<number, string>
-  studentCountByIndex: Record<number, string>
-}
-
-export type UjatApplicationClassTimePeriods = Record<
-  string,
-  { start: string | null; end: string | null }
->
+export {
+  UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS,
+  type UjatApplicationClassTimePeriods,
+  type UjatApplicationGradeDetail,
+} from './ujat-application-institution-overlay-keys'
 
 const store = createScopedOverlayStore()
 

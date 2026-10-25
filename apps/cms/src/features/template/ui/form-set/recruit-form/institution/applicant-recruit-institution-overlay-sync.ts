@@ -81,10 +81,6 @@ export function subscribeApplicantRecruitInstitutionOverlay(listener: () => void
   return store.subscribe(listener)
 }
 
-export function getApplicantRecruitInstitutionOverlayVersion(): number {
-  return store.getVersion()
-}
-
 /** UI·활성 스코프 전용. persist/create 스냅샷에는 `collectSelectedRecruitOverlaysForProgram` / `collectOperationalOverlayForCatalogId`를 쓴다. */
 export function getApplicantRecruitInstitutionOverlayRecord(): Record<string, unknown> {
   return store.getRecord()
@@ -268,24 +264,6 @@ export function resetAllApplicantRecruitInstitutionOverlay(): void {
 
 export function resetApplicantRecruitInstitutionOverlayStoreForTests(): void {
   store.resetAll()
-}
-
-export function getApplicantRecruitInstitutionLimitsFromOverlay(): ApplicantRecruitInstitutionLimitsOverlay {
-  const record = getApplicantRecruitInstitutionOverlayRecord()
-  return {
-    maxAssignableInstructors: record[
-      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxAssignableInstructors
-    ] as number | undefined,
-    maxClassCount: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxClassCount] as
-      | number
-      | undefined,
-    maxScheduleCount: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxScheduleCount] as
-      | number
-      | undefined,
-    maxSessionsPerDay: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxSessionsPerDay] as
-      | number
-      | undefined,
-  }
 }
 
 export function useApplicantRecruitInstitutionOverlayKv<T>(

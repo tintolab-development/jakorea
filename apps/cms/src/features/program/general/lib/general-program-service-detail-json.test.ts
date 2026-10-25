@@ -10,7 +10,7 @@ import {
 } from './general-program-service-detail-json'
 
 describe('parseGeneralProgramServiceDetailJson registration overlay', () => {
-  it('merges registration.overlay over root registrationOverlay (nested wins)', () => {
+  it('reads registration.overlay only and ignores root registrationOverlay', () => {
     const raw = JSON.stringify({
       schemaVersion: 1,
       generalCommonInfo: {},
@@ -29,11 +29,10 @@ describe('parseGeneralProgramServiceDetailJson registration overlay', () => {
     expect(parsed.registrationOverlay).toEqual({
       'recruit.volunteer.interview.selectedSlotKeys': [],
       'recruit.volunteer.interview.timeUnit': '30',
-      'recruit.volunteer.interviewRequired': 'yes',
     })
   })
 
-  it('legacy root-only JSON still hydrates overlay for the screen', () => {
+  it('legacy root-only JSON no longer hydrates overlay (root fallback removed)', () => {
     const parsed = parseGeneralProgramServiceDetailJson(
       JSON.stringify({
         schemaVersion: 1,
@@ -43,9 +42,7 @@ describe('parseGeneralProgramServiceDetailJson registration overlay', () => {
         },
       })
     )
-    expect(parsed.registrationOverlay?.['generalRegistration.basicInfo.publicProgramTitle']).toBe(
-      '구버전 공고명'
-    )
+    expect(parsed.registrationOverlay).toBeUndefined()
   })
 
   it('null·빈 문자열 serviceDetailJson은 빈 객체다', () => {

@@ -23,7 +23,7 @@ import {
 import {
   GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY,
   GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
-} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-keys'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import {
   PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT,

@@ -310,18 +310,6 @@ export function readRegistrationOverlaySponsorContactId(
   return readGeneralRegistrationOverlaySponsorContactId()
 }
 
-export function readRegistrationOverlaySponsorContactIds(
-  variant: ProgramRegistrationFormVariant = 'general'
-): string[] {
-  if (variant === 'trainedTeachers') {
-    return readTrainedTeachersRegistrationOverlaySponsorContactIds()
-  }
-  if (variant === 'economy') {
-    return readEconomyRegistrationOverlaySponsorContactIds()
-  }
-  return readGeneralRegistrationOverlaySponsorContactIds()
-}
-
 export function readEconomyRegistrationOverlayProgramTitleKo(): string {
   const rhf = peekCompanySchoolRegistrationRhf()
   if (rhf != null) return rhf.getValues().repKo
