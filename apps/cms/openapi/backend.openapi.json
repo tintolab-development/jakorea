@@ -55964,12 +55964,44 @@
             }
           },
           {
-            "name": "programType",
+            "name": "startDate",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "description": "조회 시작 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "programType",
+            "in": "query",
+            "description": "프로그램 유형",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GENERAL",
+                "GENERAL_ORGANIZATION",
+                "GENERAL_INDIVIDUAL",
+                "COMPANY_SCHOOL",
+                "ONE_COMPANY_ONE_SCHOOL",
+                "TRAINED_TEACHER",
+                "GEMINI",
+                "GEMINI_TRAINING",
+                "UJAT",
+                "DGBONG",
+                "UJAT_DGBONG",
+                "VOLUNTEER"
+              ]
             }
           },
           {
@@ -55980,6 +56012,34 @@
             "schema": {
               "type": "string",
               "default": "ALL"
+            }
+          },
+          {
+            "name": "programStatus",
+            "in": "query",
+            "description": "viewType 별칭. UPCOMING|IN_PROGRESS|COMPLETED|ALL",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -77913,10 +77973,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -106673,6 +106733,16 @@
       "ProgramCalendarItemResponse": {
         "type": "object",
         "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "scheduleStatus": {
+            "type": "string"
+          },
           "scheduleId": {
             "type": "integer",
             "format": "int64"
@@ -106768,6 +106838,25 @@
           },
           "organizationName": {
             "type": "string"
+          },
+          "eventDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Asia/Seoul 달력 날짜. 종일·날짜 전용 이벤트는 이 값을 사용한다. 시각이 있는 교육 회차는 null."
+          },
+          "scheduleStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "program_schedule.schedule_status. 교육·기간 이벤트가 아니면 null."
+          },
+          "eventId": {
+            "type": "string",
+            "description": "이벤트 고유 ID. eventKey와 동일하다."
           }
         }
       },

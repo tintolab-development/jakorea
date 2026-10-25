@@ -15185,10 +15185,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -43130,6 +43130,21 @@
           },
           "organizationName": {
             "type": "string"
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Asia/Seoul 달력 날짜. 종일·날짜 전용 이벤트는 이 값을 사용한다. 시각이 있는 교육 회차는 null.",
+            "nullable": true
+          },
+          "scheduleStatus": {
+            "type": "string",
+            "description": "program_schedule.schedule_status. 교육·기간 이벤트가 아니면 null.",
+            "nullable": true
+          },
+          "eventId": {
+            "type": "string",
+            "description": "이벤트 고유 ID. eventKey와 동일하다."
           }
         }
       },
