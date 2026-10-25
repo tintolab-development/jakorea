@@ -34,9 +34,9 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { resetAllOperationalOverlayStoresForTests } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
-  getGeminiRecruitOverlayRecord,
-  resetGeminiRecruitOverlay,
-} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+  getGeminiRecruitFormRecord,
+  resetGeminiRecruitForm,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import {
   clearOperationalSeedDefaultSuppression,
   readOperationalOverlayKvValue,
@@ -464,7 +464,7 @@ describe('applyRegistrationStepTemplateChange', () => {
     expect(
       readOperationalOverlayKvValue(
         'gemini-recruit',
-        getGeminiRecruitOverlayRecord(),
+        getGeminiRecruitFormRecord(),
         'geminiRecruit.minStudentCount',
         15
       )
@@ -575,7 +575,7 @@ describe('applyRegistrationStepTemplateChange', () => {
     ).toEqual([])
 
     clearOperationalSeedDefaultSuppression()
-    resetGeminiRecruitOverlay()
+    resetGeminiRecruitForm()
     await applyRegistrationStepTemplateChange({
       programType: 'GEMINI',
       stepKey: 'recruit-gemini',
@@ -584,11 +584,11 @@ describe('applyRegistrationStepTemplateChange', () => {
       defaultCode: 'recruitment-gemini-visiting-training',
       baseTemplateCode: 'recruitment-gemini-visiting-training',
     })
-    expect(getGeminiRecruitOverlayRecord()['geminiRecruit.minStudentCount']).toBeUndefined()
+    expect(getGeminiRecruitFormRecord()['geminiRecruit.minStudentCount']).toBeUndefined()
     expect(
       readOperationalOverlayKvValue(
         'gemini-recruit',
-        getGeminiRecruitOverlayRecord(),
+        getGeminiRecruitFormRecord(),
         'geminiRecruit.minStudentCount',
         15
       )
@@ -596,7 +596,7 @@ describe('applyRegistrationStepTemplateChange', () => {
     expect(
       readOperationalOverlayKvValue(
         'gemini-recruit',
-        getGeminiRecruitOverlayRecord(),
+        getGeminiRecruitFormRecord(),
         'geminiRecruit.educationForm',
         'online'
       )

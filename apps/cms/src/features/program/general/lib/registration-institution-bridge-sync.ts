@@ -8,8 +8,8 @@ import {
   syncInstitutionApplicationPreferredEducationFormFromOverlay,
   type InstitutionApplicationEducationScheduleMode,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import {
-  APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
   peekApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'

@@ -1705,7 +1705,7 @@ export function useProgramRegistrationEditor(
                 },
               }
             : programRegistrationFormVariant === 'trainedTeachers'
-              ? trainedTeachersWizardDraftSettingsJson()
+              ? trainedTeachersWizardDraftSettingsJson(getProgramRegistrationOverlayRecord())
               : programRegistrationFormVariant === 'economy'
                 ? (() => {
                     const csRhf = peekCompanySchoolRegistrationRhf()
@@ -2247,6 +2247,7 @@ export function useProgramRegistrationEditor(
                       teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
                       participant,
                     },
+                    overlay: getProgramRegistrationOverlayRecord(),
                   })
               const recruitSaved = registrationWizardProgramType
                 ? await loadRegistrationWizardFormDraft({

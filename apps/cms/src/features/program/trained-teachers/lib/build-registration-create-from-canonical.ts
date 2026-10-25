@@ -10,7 +10,6 @@ import type {
   Program,
 } from '@/types/domain'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
-import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { collectTrainedTeachersCommonInfoState } from './collect-registration-common-info-state'
 import { importLegacyOverlayToTrainedTeachersCanonical } from './import-legacy-registration-overlay'
 import { collectTrainedTeachersApplicationState } from './registration-rhf-application'
@@ -57,7 +56,10 @@ function scheduleDetailFieldsFromEditor(
 export const TRAINED_TEACHER_DRAFT_RHF_REQUIRED_ERROR =
   'TRAINED_TEACHER registration RHF is not mounted; refusing draft save'
 
-export function trainedTeachersWizardDraftSettingsJson(): {
+/**
+ * @param registrationOverlay 등록 overlay 레코드(빈 RHF 제목 보정용). 호출부가 넘긴다 — 이 모듈은 overlay 스토어를 읽지 않는다.
+ */
+export function trainedTeachersWizardDraftSettingsJson(registrationOverlay: Record<string, unknown>): {
   [TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY]: TrainedTeachersRegistrationCanonical
 } {
   const ttRhf = peekTrainedTeachersRegistrationRhf()
@@ -66,7 +68,7 @@ export function trainedTeachersWizardDraftSettingsJson(): {
   }
   const values = fillEmptyTrainedTeachersTitlesFromOverlay(
     ttRhf.getValues(),
-    getProgramRegistrationOverlayRecord()
+    registrationOverlay
   )
   const snapshot = buildTrainedTeachersCanonicalFromRhf({
     id: registrationPendingSnapshotId('trainedTeachers'),
@@ -249,7 +251,7 @@ export function buildTrainedTeachersProgramFromRhf(args: {
 export function buildTrainedTeachersCreateSnapshot(args: {
   id: string
   editor: TrainedTeachersRegistrationCanonical['editor']
-  overlay?: Record<string, unknown>
+  overlay: Record<string, unknown>
 }): Program {
   const canonical = importLegacyOverlayToTrainedTeachersCanonical({
     id: args.id,

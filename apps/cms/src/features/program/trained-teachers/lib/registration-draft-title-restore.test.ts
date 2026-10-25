@@ -17,6 +17,7 @@ import {
 } from './registration-rhf-values'
 import {
   hydrateRegistrationDraftProgramTitleKo,
+  getProgramRegistrationOverlayRecord,
   patchProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
@@ -123,7 +124,7 @@ describe('TT 임시저장 제목 복원', () => {
   it('TT RHF가 없으면 draft settings가 throw하고 persist 인자를 평가하지 않는다', () => {
     registerTrainedTeachersRegistrationRhf(null)
     const persist = vi.fn()
-    expect(() => persist(trainedTeachersWizardDraftSettingsJson())).toThrow(
+    expect(() => persist(trainedTeachersWizardDraftSettingsJson(getProgramRegistrationOverlayRecord()))).toThrow(
       TRAINED_TEACHER_DRAFT_RHF_REQUIRED_ERROR
     )
     expect(persist).not.toHaveBeenCalled()
@@ -145,7 +146,7 @@ describe('TT 임시저장 제목 복원', () => {
     expect(filled.mainTitle).toBe(CASE_01.mainTitle)
     expect(filled.titleEn).toBe(CASE_01.titleEn)
     expect(filled.announcementTitle).toBe(CASE_01.announcementTitle)
-    const snapshot = trainedTeachersWizardDraftSettingsJson()
+    const snapshot = trainedTeachersWizardDraftSettingsJson(getProgramRegistrationOverlayRecord())
     expect(snapshot.trainedTeachersRegistrationCanonical.common.mainTitle).toBe(CASE_01.mainTitle)
   })
 

@@ -11,7 +11,6 @@ import {
   normalizeRegistrationOverlayForApply,
 } from '@/features/program/general/lib/registration-overlay-to-program'
 import { resolveTrainedTeacherEducationJournalEnabled } from '@/features/program/general/lib/registration-local-save'
-import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { collectTrainedTeachersApplicationFormState } from './application-form-state'
 import { collectTrainedTeachersRecruitFormState } from './recruit-form-state'
 import {
@@ -133,9 +132,10 @@ export function applyLegacyProgramTitleKoFallback(
 export function importLegacyOverlayToTrainedTeachersCanonical(args: {
   id: string
   editor: TrainedTeachersRegistrationEditorMeta
-  overlay?: Record<string, unknown>
+  /** 레거시 overlay 레코드. 호출부가 넘긴다 — 이 모듈은 overlay 스토어를 읽지 않는다. */
+  overlay: Record<string, unknown>
 }): TrainedTeachersRegistrationCanonical {
-  const overlay = args.overlay ?? getProgramRegistrationOverlayRecord()
+  const overlay = args.overlay
   const normalized = normalizeRegistrationOverlayForApply(overlay, 'trainedTeachers')
   const extras: GeneralRegistrationEditorExtras = {
     programType: args.editor.educationStructure,

@@ -15,6 +15,7 @@ import {
   resetApplicantRecruitInstitutionOverlayForScope,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
+  getGeneralRecruitOverlayRecord,
   peekGeneralRecruitOverlayRecord,
   replaceGeneralRecruitOverlayForScope,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
@@ -77,10 +78,10 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import { createGeminiVisitingTrainingRecruitFormDraft } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
 import {
-  peekGeminiRecruitOverlayRecord,
-  replaceGeminiRecruitOverlayForScope,
-  resetGeminiRecruitOverlayForScope,
-} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+  peekGeminiRecruitFormRecord,
+  replaceGeminiRecruitFormForScope,
+  resetGeminiRecruitFormForScope,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import { suppressOperationalSeedDefaults } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import {
   peekProgramRegistrationOverlayRecord,
@@ -345,7 +346,7 @@ export function resetOperationalOverlayForCatalogId(catalogTemplateId: string): 
   }
   if (kind === 'gemini-recruit') {
     suppressOperationalSeedDefaults('gemini-recruit', ['*'])
-    resetGeminiRecruitOverlayForScope(catalogTemplateId)
+    resetGeminiRecruitFormForScope(catalogTemplateId)
     replaceRecruitDetailInfoIntoGeneralStore(
       undefined,
       recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId),
@@ -457,7 +458,7 @@ function overlayRecordForKind(
   }
   if (kind === 'gemini-recruit') {
     return mergeRecruitDetailInfoFromGeneralStore(
-      { ...peekGeminiRecruitOverlayRecord(catalogTemplateId) },
+      { ...peekGeminiRecruitFormRecord(catalogTemplateId) },
       detailPrefix,
       generalRecruit
     )
@@ -571,7 +572,7 @@ export function applyOperationalOverlayForCatalogId(
     return
   }
   if (kind === 'gemini-recruit') {
-    replaceGeminiRecruitOverlayForScope(catalogTemplateId, overlay)
+    replaceGeminiRecruitFormForScope(catalogTemplateId, overlay)
     replaceRecruitDetailInfoIntoGeneralStore(
       overlay,
       recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId),
@@ -712,7 +713,12 @@ export async function persistRegistrationOperationalOverlaysToLocal(
         await import('@/features/program/trained-teachers/lib/application-form-state')
       const editorState =
         catalogId === 'recruitment-trained-teachers'
-          ? trainedTeachersRecruitEditorState(collectTrainedTeachersRecruitFormState())
+          ? trainedTeachersRecruitEditorState(
+              collectTrainedTeachersRecruitFormState(undefined, () => ({
+                ...peekApplicantRecruitInstitutionOverlayRecord('recruitment-trained-teachers'),
+                ...getGeneralRecruitOverlayRecord(),
+              }))
+            )
           : catalogId === 'application-trained-teachers'
             ? trainedTeachersApplicationEditorState(collectTrainedTeachersApplicationFormState())
             : saved?.editorState

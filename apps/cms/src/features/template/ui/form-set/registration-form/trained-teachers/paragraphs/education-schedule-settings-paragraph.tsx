@@ -17,9 +17,9 @@ import {
 import { getInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { syncInstitutionApplicationBridgeForRegistrationWizard } from '@/features/program/general/lib/registration-institution-bridge-sync'
 import {
-  updateProgramRegistrationOverlayKey,
-  useProgramRegistrationOverlayKv,
-} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+  updateTrainedTeachersRegistrationField,
+  useTrainedTeachersRegistrationField,
+} from '@/features/template/ui/form-set/registration-form/trained-teachers/trained-teachers-registration-form-rhf'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const EMPTY_SCHEDULE_LINES: string[] = []
@@ -36,19 +36,19 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
   onEducationScheduleModeChange,
   overlayKeyPrefix = 'trainedTeachersRegistration.educationScheduleSettings',
 }: TrainedTeachersRegistrationEducationScheduleSettingsParagraphProps) {
-  const [singleDateIso, setSingleDateIso] = useProgramRegistrationOverlayKv<string | null>(
+  const [singleDateIso, setSingleDateIso] = useTrainedTeachersRegistrationField<string | null>(
     `${overlayKeyPrefix}.singleDateIso`,
     null
   )
-  const [periodDateIso, setPeriodDateIso] = useProgramRegistrationOverlayKv<string | null>(
+  const [periodDateIso, setPeriodDateIso] = useTrainedTeachersRegistrationField<string | null>(
     `${overlayKeyPrefix}.periodDateIso`,
     null
   )
-  const [scheduleLines] = useProgramRegistrationOverlayKv<string[]>(
+  const [scheduleLines] = useTrainedTeachersRegistrationField<string[]>(
     `${overlayKeyPrefix}.scheduleLines`,
     EMPTY_SCHEDULE_LINES
   )
-  const [operationRangeSeal] = useProgramRegistrationOverlayKv<EducationOperationRangeSeal>(
+  const [operationRangeSeal] = useTrainedTeachersRegistrationField<EducationOperationRangeSeal>(
     educationOperationRangeSealKeyFromSchedulePrefix(overlayKeyPrefix),
     null
   )
@@ -70,7 +70,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
     (line: string) => {
       const trimmed = line.trim()
       if (!trimmed) return
-      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
+      updateTrainedTeachersRegistrationField<string[]>(scheduleLinesKey, prev => {
         const current = prev ?? []
         return current.includes(trimmed) ? current : [...current, trimmed]
       })
@@ -107,7 +107,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
 
   const removeLine = useCallback(
     (index: number) => {
-      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
+      updateTrainedTeachersRegistrationField<string[]>(scheduleLinesKey, prev => {
         const next = (prev ?? []).filter((_, i) => i !== index)
         syncBridgeFromLines(next, educationScheduleMode)
         return next

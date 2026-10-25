@@ -1,6 +1,9 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import { composeOverlayStoreWithFieldForms } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
+import { generalRegistrationScheduleFieldForm } from '@/features/template/ui/form-set/registration-form/general/general-registration-schedule-form-rhf'
+import { trainedTeachersRegistrationFieldForm } from '@/features/template/ui/form-set/registration-form/trained-teachers/trained-teachers-registration-form-rhf'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import {
@@ -12,11 +15,11 @@ import {
   peekTrainedTeachersRegistrationRhf,
   subscribeTrainedTeachersRegistrationRhf,
 } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { writeTrainedTeachersRhfOverlayPartial } from '@/features/program/trained-teachers/lib/registration-rhf-overlay-write'
 import {
   isTrainedTeachersCommonInfoOverlayKey,
   projectTrainedTeachersRhfToOverlayRecord,
   readTrainedTeachersRhfOverlayValue,
-  writeTrainedTeachersRhfOverlayValue,
 } from '@/features/program/trained-teachers/lib/registration-rhf-values'
 import {
   peekCompanySchoolRegistrationRhf,
@@ -35,27 +38,33 @@ import {
  * 입력값이 갈라지지 않도록 동일 키를 공유한다.
  */
 
-/** 일반 등록 기본정보 — controlled editor state와 동기화하는 overlay 키 */
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
-  'generalRegistration.basicInfo.localSponsorId' as const
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY =
-  'generalRegistration.basicInfo.localSponsorIds' as const
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
-  'generalRegistration.basicInfo.localManagerContactId' as const
-/** 후원사 담당자 ref 다중 선택 (`sponsorManagementId::contactId`) */
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY =
-  'generalRegistration.basicInfo.localManagerContactIds' as const
-/** 후원사 담당자 표시 문구 (`직책 이름 | 연락처`) — create/상세 조회용 */
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY =
-  'generalRegistration.basicInfo.sponsorManagerLine' as const
-export const GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
-  'generalRegistration.basicInfo.localProgramTitleKo' as const
-export const GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY =
-  'generalRegistration.educationScheduleSettings.scheduleLines' as const
-export const GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY =
-  'generalRegistration.educationScheduleCurriculum.groupTimesByDetail' as const
+export {
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY,
+  GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
+  GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY,
+} from './program-registration-overlay-keys'
+import {
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
+  GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
+} from './program-registration-overlay-keys'
 
-const store = createScopedOverlayStore()
+/**
+ * Part3: TT 공통정보 키(`trainedTeachersRegistration.*`)는 TT 등록 RHF 미마운트 때 RHF 필드 폼이 소유한다(합성).
+ * Part3 5단계: 일반 등록 예정일 목록(scheduleLines·모드별 보관 키)도 RHF 필드 폼이 소유한다(형식 불변).
+ */
+const store = composeOverlayStoreWithFieldForms(createScopedOverlayStore(), [
+  trainedTeachersRegistrationFieldForm,
+  generalRegistrationScheduleFieldForm,
+])
 
 export function setProgramRegistrationOverlayScope(templateCode: string | undefined | null): void {
   store.setScope(templateCode)
@@ -545,22 +554,6 @@ function splitTrainedTeachersCommonInfoOverlay(
     else rest[key] = value
   }
   return { commonInfo, rest }
-}
-
-function writeTrainedTeachersRhfOverlayPartial(partial: Record<string, unknown>): void {
-  const api = peekTrainedTeachersRegistrationRhf()
-  if (api == null) return
-  const current = api.getValues()
-  let next = current
-  let changed = false
-  for (const [key, value] of Object.entries(partial)) {
-    const prev = readTrainedTeachersRhfOverlayValue(current, key)
-    if (Object.is(prev, value)) continue
-    next = writeTrainedTeachersRhfOverlayValue(next, key, value)
-    changed = true
-  }
-  if (!changed || next === current) return
-  api.reset(next, { keepDefaultValues: true })
 }
 
 function splitCompanySchoolCommonInfoOverlay(

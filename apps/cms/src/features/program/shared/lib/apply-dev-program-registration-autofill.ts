@@ -25,7 +25,7 @@ import { isDetailedProgramMasterId } from '@/features/program/general/lib/detail
 import { shouldDisableEducationSchedulePeriodMode } from '@/features/program/general/lib/schedule-detail-form'
 import { completeTrainedTeachersDevAutofillOverlay } from '@/features/program/trained-teachers/lib/dev-autofill-required'
 import type { TrainedTeachersRegistrationRequiredFieldContext } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
-import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import { applyDevAutofillRecruitOverlayPartials } from '@/features/program/shared/lib/dev-autofill-recruit-overlay'
 import { getDetailedProgramOptionsList } from '@/features/detailed-program/api/admin-detailed-programs-service'
 import {

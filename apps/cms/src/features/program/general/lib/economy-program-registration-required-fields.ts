@@ -6,7 +6,7 @@
 import { INSTITUTION_GUIDANCE_FIELDS } from '@/features/template/lib/institution-guidance-field-definitions'
 import type { ProgramRegistrationParticipantSelection } from '@/features/template/lib/program-registration-editor-state'
 import { getProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS as RK } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS as RK } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import { getGeneralApplicationOverlayRecord } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getInstitutionSexOffenseConsentSubmissionRequest,
