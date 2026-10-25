@@ -1,0 +1,195 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TT overlay save parity (part3 step3) > 등록(공통정보) 양식: 불러오기·입력 → 레코드·collect·legacy import > reg-active 1`] = `
+{
+  "generalRegistration.basicInfo.localProgramTitleKo": "일반키",
+  "trainedTeachersRegistration.basicInfo.operationRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "trainedTeachersRegistration.basicInfo.programTitleKo": "연수",
+  "trainedTeachersRegistration.educationCurriculum.educationJournalEnabled": "no",
+  "trainedTeachersRegistration.educationScheduleSettings.scheduleLines": [
+    "2026-12-02",
+    "2026-12-04",
+  ],
+  "trainedTeachersRegistration.educationScheduleSettings.singleDateIso": "2026-12-03",
+  "trainedTeachersRegistration.typeSettings.educationForm": "offline",
+  "trainedTeachersRegistration.typeSettings.ipsType": {
+    "category": "prepare",
+    "detail": "none",
+  },
+}
+`;
+
+exports[`TT overlay save parity (part3 step3) > 등록(공통정보) 양식: 불러오기·입력 → 레코드·collect·legacy import > reg-apply 1`] = `
+{
+  "generalRegistration.basicInfo.localProgramTitleKo": "일반키",
+  "trainedTeachersRegistration.basicInfo.operationRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "trainedTeachersRegistration.basicInfo.programTitleKo": "연수",
+  "trainedTeachersRegistration.educationCurriculum.educationJournalEnabled": "yes",
+  "trainedTeachersRegistration.educationScheduleSettings.scheduleLines": [
+    "2026-12-02",
+  ],
+  "trainedTeachersRegistration.typeSettings.educationForm": "offline",
+  "trainedTeachersRegistration.typeSettings.ipsType": {
+    "category": "prepare",
+    "detail": "none",
+  },
+}
+`;
+
+exports[`TT overlay save parity (part3 step3) > 등록(공통정보) 양식: 불러오기·입력 → 레코드·collect·legacy import > reg-collect 1`] = `
+{
+  "generalRegistration.basicInfo.localProgramTitleKo": "일반키",
+  "trainedTeachersRegistration.basicInfo.operationRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "trainedTeachersRegistration.basicInfo.programTitleKo": "연수",
+  "trainedTeachersRegistration.educationCurriculum.educationJournalEnabled": "yes",
+  "trainedTeachersRegistration.educationScheduleSettings.scheduleLines": [
+    "2026-12-02",
+  ],
+  "trainedTeachersRegistration.typeSettings.educationForm": "offline",
+  "trainedTeachersRegistration.typeSettings.ipsType": {
+    "category": "prepare",
+    "detail": "none",
+  },
+}
+`;
+
+exports[`TT overlay save parity (part3 step3) > 등록(공통정보) 양식: 불러오기·입력 → 레코드·collect·legacy import > reg-legacy-import 1`] = `
+{
+  "announcementTitle": "일반키",
+  "businessArea": "",
+  "courseDeliveredBy": undefined,
+  "curriculumSessions": [],
+  "detailedProgramId": "",
+  "detailedProgramName": "",
+  "educationForm": "offline",
+  "educationJournalEnabled": false,
+  "educationProcess": undefined,
+  "educationScheduleLines": [
+    "2026-12-02",
+    "2026-12-04",
+  ],
+  "educationScheduleMode": "date",
+  "educationScheduleRange": null,
+  "educationStructure": "schedule",
+  "endDate": "2026-12-31T14:59:59.999Z",
+  "generalSurveyMenuKeys": [],
+  "ipOwned": undefined,
+  "ips": "Prepare",
+  "mainTitle": "일반키",
+  "partnerInvolvement": true,
+  "programCategory": undefined,
+  "programChannel": undefined,
+  "scheduleDetails": [
+    {
+      "assignmentEnabled": false,
+      "assignmentPeriod": undefined,
+      "educationFormLabel": undefined,
+      "ipsTypeSummary": undefined,
+      "name": "",
+      "participationMethodLabel": undefined,
+      "progressTimeSummary": undefined,
+      "scheduleDateLabel": undefined,
+      "scheduleLabel": "세부 일정 01",
+    },
+  ],
+  "sessionRound": "single",
+  "sponsorManagementIds": [],
+  "sponsorManagerContactIds": [],
+  "startDate": "2026-11-30T15:00:00.000Z",
+  "teacherTrainingEnabled": false,
+  "textbookName": "",
+  "title": "일반키",
+  "titleEn": "",
+  "venueDetail": "",
+  "venueKind": "inside",
+}
+`;
+
+exports[`TT overlay save parity (part3 step3) > 신청 양식: 불러오기 → collect·peek·fallback state > app-apply 1`] = `
+{
+  "application.trainedTeachers.basicInfo.applicationGrade": "3",
+  "application.trainedTeachers.basicInfo.classCount": "2",
+  "application.trainedTeachers.basicInfo.teacherEmail": "t@a.b",
+  "application.trainedTeachers.preferredSchedules": [
+    {
+      "date": "2026-12-01",
+      "id": "b1",
+    },
+  ],
+}
+`;
+
+exports[`TT overlay save parity (part3 step3) > 신청 양식: 불러오기 → collect·peek·fallback state > app-fallback-state 1`] = `
+{
+  "basicInfo": {
+    "applicationGrade": "3",
+    "applicationReason": "",
+    "classCount": "2",
+    "detailAddress": "",
+    "educationFormat": "",
+    "educationPlace": "",
+    "educationPlaceDetail": "",
+    "otherRequests": "",
+    "teacherEmail": "t@a.b",
+    "teacherMobile": "",
+    "teacherTel": "",
+    "totalStudents": "",
+  },
+  "preferredSchedules": [
+    {
+      "date": "2026-12-01",
+      "session": undefined,
+      "times": [],
+    },
+  ],
+}
+`;
+
+exports[`TT overlay save parity (part3 step3) > 신청 양식: 불러오기 → collect·peek·fallback state > app-peek 1`] = `
+{
+  "application.trainedTeachers.basicInfo.applicationGrade": "3",
+  "application.trainedTeachers.basicInfo.classCount": "2",
+  "application.trainedTeachers.basicInfo.teacherEmail": "t@a.b",
+  "application.trainedTeachers.preferredSchedules": [
+    {
+      "date": "2026-12-01",
+      "id": "b1",
+    },
+  ],
+}
+`;
+
+exports[`TT overlay save parity (part3 step3) > 신청 양식: 입력(patch·updateKey·훅) → collect·활성 레코드·reset > app-active 1`] = `
+{
+  "application.trainedTeachers.basicInfo.classCount": "4",
+  "application.trainedTeachers.basicInfo.teacherTel": "02",
+  "application.trainedTeachers.preferredSchedules": [
+    {
+      "id": "n1",
+    },
+  ],
+}
+`;
+
+exports[`TT overlay save parity (part3 step3) > 신청 양식: 입력(patch·updateKey·훅) → collect·활성 레코드·reset > app-input 1`] = `
+{
+  "application.trainedTeachers.basicInfo.classCount": "4",
+  "application.trainedTeachers.basicInfo.teacherTel": "02",
+  "application.trainedTeachers.preferredSchedules": [
+    {
+      "id": "n1",
+    },
+  ],
+}
+`;
+
+exports[`TT overlay save parity (part3 step3) > 신청 양식: 입력(patch·updateKey·훅) → collect·활성 레코드·reset > app-reset 1`] = `{}`;
