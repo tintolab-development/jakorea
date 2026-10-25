@@ -207,12 +207,13 @@ describe.each<ProgramType>(['GENERAL_ORGANIZATION', 'GENERAL_INDIVIDUAL'])(
   }
 )
 
+// part7: typed 가 있으면 typed 가 먼저라 서버 표시 객체 의미는 typed null(구 프로그램)에서 확인한다.
 describe('null 과 [] 의미 유지', () => {
   it('specificUnavailableDateIsos: [] 는 불가일 없음(서버 문구로 대체하지 않음)', () => {
     const program = mapAdminProgramDetailToProgram(
       dto({
         programType: 'GENERAL_ORGANIZATION',
-        interviewConfig: TYPED_1215,
+        interviewConfig: null,
         schedule: { specificUnavailableDateIsos: [], specificUnavailableDates: '2026.12.10(목)' },
       })
     )
@@ -224,7 +225,7 @@ describe('null 과 [] 의미 유지', () => {
     const program = mapAdminProgramDetailToProgram(
       dto({
         programType: 'GENERAL_ORGANIZATION',
-        interviewConfig: TYPED_1215,
+        interviewConfig: null,
         schedule: { specificUnavailableDates: '2026.12.10(목)' },
       })
     )

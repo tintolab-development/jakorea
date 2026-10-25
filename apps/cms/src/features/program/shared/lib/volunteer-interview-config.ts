@@ -492,3 +492,87 @@ export function omitTypedVolunteerInterviewKeysFromServiceDetailJson(
   ;(registration as Record<string, unknown>).overlay = Object.fromEntries(kept)
   return JSON.stringify(root)
 }
+
+/**
+ * Part7(keonhee 2026-10-25 21:09) — 저장(생성·PATCH) 본문에서 빼는 overlay 봉사 면접 키.
+ * typed `interviewConfig`(봉사 행) 또는 행 필드(`interviewEnabled`)에 같은 정보가 있는 키만 뺀다.
+ * - typed 가 덮는 9종(`isTypedCoveredVolunteerInterviewOverlayKey`)
+ * - `recruit.volunteer.interviewRequired` → 행 `interviewEnabled`(BE 면접 스위치, typed 있으면 BE 가 보지 않음)
+ * - `recruit.volunteer.interview.interviewTime` → typed `interviewTimeRange[0]`(시간 선택기 시작값, 화면도 범위에서 기본값을 만든다)
+ * - `recruit.volunteer.interview.exceptionDate`(루트) → 공통 일정 칸에는 날짜 입력이 없다(예외 블록 날짜는 typed exceptions[].exceptionDate)
+ * - 접두사 없는 legacy `recruit.volunteer.{selectedSlotKeys,timeUnit,interviewTimeRange,appliedUnavailableDates,
+ *   specificUnavailableDates,exclusionState}` → typed 같은 필드(BE overlay fallback 만 읽고 FE 는 쓰지 않음)
+ * 남기는 키(typed·행 어디에도 없음 — keonhee 확인 대상): `interviewMethod`, `interviewRangeSeal`·`interviewAnchorIso`
+ * (면접 기간 — GENERAL 행 interviewStartAt/EndAt 은 GET 에서 null, CMS 읽기는 nested·overlay),
+ * 예외 블록 `exception.<id>.{timeUnit,interviewTimeRange,interviewTime,exclusionState,appliedUnavailableDates}`(typed 예외는 id·날짜·슬롯만).
+ */
+const SAVE_OMITTED_VOLUNTEER_INTERVIEW_KEYS = new Set([
+  'recruit.volunteer.interviewRequired',
+  `${VOLUNTEER_INTERVIEW_OVERLAY_PREFIX}.interviewTime`,
+  `${VOLUNTEER_INTERVIEW_OVERLAY_PREFIX}.exceptionDate`,
+  ...COVERED_SUFFIXES.map(suffix => `recruit.volunteer.${suffix}`),
+])
+
+export function isVolunteerInterviewOverlayKeyOmittedOnSave(key: string): boolean {
+  return (
+    isTypedCoveredVolunteerInterviewOverlayKey(key) ||
+    SAVE_OMITTED_VOLUNTEER_INTERVIEW_KEYS.has(key)
+  )
+}
+
+/**
+ * 저장 본문 serviceDetailJson — overlay 봉사 면접 키(`isVolunteerInterviewOverlayKeyOmittedOnSave`)와
+ * `generalCommonInfo.volunteerInterviewScheduleInfo`(BE 가 typed 로 만드는 표시 복사본)를 뺀다.
+ * 조건(호출부): UJAT 아님 + 반기 아닌 봉사 행 1개(생성은 그 행에 typed interviewConfig 를 함께 보냄).
+ * BE PATCH 는 키 단위 deep merge 라 서버에 저장된 값은 지워지지 않는다(구 프로그램 읽기 fallback 유지).
+ * 뺄 것이 없으면 입력 문자열을 그대로 돌려준다.
+ */
+export function omitVolunteerInterviewSaveKeysFromServiceDetailJson(
+  serviceDetailJson: string | undefined
+): string | undefined {
+  if (!serviceDetailJson) return serviceDetailJson
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(serviceDetailJson)
+  } catch {
+    return serviceDetailJson
+  }
+  if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed))
+    return serviceDetailJson
+  const root = parsed as Record<string, unknown>
+  let changed = false
+  const common = root.generalCommonInfo
+  if (
+    common != null &&
+    typeof common === 'object' &&
+    !Array.isArray(common) &&
+    Object.prototype.hasOwnProperty.call(common, 'volunteerInterviewScheduleInfo')
+  ) {
+    const { volunteerInterviewScheduleInfo: _schedule, ...rest } = common as Record<string, unknown>
+    root.generalCommonInfo = rest
+    changed = true
+  }
+  const registration = root.registration
+  if (registration != null && typeof registration === 'object' && !Array.isArray(registration)) {
+    const overlay = (registration as Record<string, unknown>).overlay
+    if (overlay != null && typeof overlay === 'object' && !Array.isArray(overlay)) {
+      const entries = Object.entries(overlay as Record<string, unknown>)
+      const kept = entries.filter(([key]) => !isVolunteerInterviewOverlayKeyOmittedOnSave(key))
+      if (kept.length !== entries.length) {
+        ;(registration as Record<string, unknown>).overlay = Object.fromEntries(kept)
+        changed = true
+      }
+    }
+  }
+  return changed ? JSON.stringify(root) : serviceDetailJson
+}
+
+/** overlay `recruit.volunteer.interviewRequired`(yes/no) → boolean. 없거나 다른 값이면 undefined */
+export function volunteerInterviewRequiredFromOverlay(
+  overlay: Record<string, unknown> | null | undefined
+): boolean | undefined {
+  const raw = overlay?.['recruit.volunteer.interviewRequired']
+  if (raw === 'yes' || raw === true) return true
+  if (raw === 'no' || raw === false) return false
+  return undefined
+}

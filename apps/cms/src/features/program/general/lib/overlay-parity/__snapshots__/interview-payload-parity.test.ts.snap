@@ -1,0 +1,459 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`면접 payload parity (part7) — CMS 면접 일정 화면(186382 모양) > typed null 구 프로그램 — 표시 1`] = `
+{
+  "availableTimeSlots": "10:00 ~ 10:30, 10:30 ~ 11:00",
+  "exceptions": [
+    {
+      "availableTimeSlots": "10:00 ~ 10:30",
+      "blockId": 1,
+      "exceptionDate": "2026.12.08(화)",
+      "exceptionDateIso": "2026-12-08",
+    },
+  ],
+  "recurringUnavailable": "토요일, 일요일, 공휴일",
+  "specificUnavailableDates": "2026.12.15(화)",
+}
+`;
+
+exports[`면접 payload parity (part7) — CMS 면접 일정 화면(186382 모양) > 면접 배정 캘린더 날짜 선택 가능 여부 1`] = `
+{
+  "2026-12-09": true,
+  "2026-12-10": false,
+  "2026-12-11": true,
+  "2026-12-15": false,
+}
+`;
+
+exports[`면접 payload parity (part7) — CMS 면접 일정 화면(186382 모양) > 상세 표시 1`] = `
+{
+  "availableTimeSlots": "10:00 ~ 10:30, 10:30 ~ 11:00",
+  "exceptions": [
+    {
+      "availableTimeSlots": "10:00 ~ 10:30",
+      "blockId": 1,
+      "exceptionDate": "2026.12.08(화)",
+      "exceptionDateIso": "2026-12-08",
+    },
+  ],
+  "recurringUnavailable": "토요일, 일요일, 공휴일",
+  "specificUnavailableDates": "2026.12.10(목), 2026.12.15(화)",
+}
+`;
+
+exports[`면접 payload parity (part7) — CMS 면접 일정 화면(186382 모양) > 수정 seed 1`] = `
+{
+  "appliedUnavailableDates": [
+    "2026-12-10",
+    "2026-12-15",
+  ],
+  "excludeHoliday": true,
+  "excludeNone": false,
+  "excludeSaturday": true,
+  "excludeSunday": true,
+  "interviewTimeRange": {
+    "endHour": 12,
+    "endMinute": 0,
+    "startHour": 10,
+    "startMinute": 0,
+  },
+  "selectedTimeSlotLabels": [
+    "10:00 ~ 10:30",
+    "10:30 ~ 11:00",
+  ],
+  "timeUnit": "30",
+}
+`;
+
+exports[`면접 payload parity (part7) — CMS 면접 일정 화면(186382 모양) > 읽기 overlay 면접 키(typed 반영 후) 1`] = `
+{
+  "recruit.volunteer.interview.appliedUnavailableDates": [
+    "2026-12-10",
+    "2026-12-15",
+  ],
+  "recruit.volunteer.interview.exception.1793000000000.exceptionDate": "2026-12-07T15:00:00.000Z",
+  "recruit.volunteer.interview.exception.1793000000000.interviewTimeRange": [
+    "2026-12-08T01:00:00.000Z",
+    "2026-12-08T01:30:00.000Z",
+  ],
+  "recruit.volunteer.interview.exception.1793000000000.selectedSlotKeys": [
+    "1796691600000-1796693400000",
+  ],
+  "recruit.volunteer.interview.exception.1793000000000.timeUnit": "30",
+  "recruit.volunteer.interview.exclusionState": {
+    "excludeHoliday": true,
+    "excludeNone": false,
+    "excludeSaturday": true,
+    "excludeSunday": true,
+  },
+  "recruit.volunteer.interview.interviewTimeRange": [
+    "2026-12-07T01:00:00.000Z",
+    "2026-12-07T03:00:00.000Z",
+  ],
+  "recruit.volunteer.interview.selectedSlotKeys": [
+    "1796605200000-1796607000000",
+    "1796607000000-1796608800000",
+  ],
+  "recruit.volunteer.interview.specificUnavailableDates": [
+    "2026-12-15",
+  ],
+  "recruit.volunteer.interview.timeUnit": "30",
+  "recruit.volunteer.interviewRequired": "yes",
+}
+`;
+
+exports[`면접 payload parity (part7) — 모집 행 PATCH > overlay 면접 여부 no, patch 에 generalVolunteerInterviewEnabled 없음 1`] = `
+{
+  "interviewConfig": {
+    "appliedUnavailableDates": [
+      "2026-12-10",
+    ],
+    "exceptions": [
+      {
+        "exceptionDate": "2026-12-09",
+        "id": "1765000000000",
+        "selectedSlotKeys": [
+          "1796792400000-1796794200000",
+        ],
+      },
+    ],
+    "exclusionState": {
+      "excludeHoliday": true,
+      "excludeSaturday": true,
+      "excludeSunday": true,
+    },
+    "interviewTimeRange": [
+      "2026-12-07T01:00:00.000Z",
+      "2026-12-07T03:00:00.000Z",
+    ],
+    "schemaVersion": 1,
+    "selectedSlotKeys": [
+      "1796605200000-1796607000000",
+      "1796607000000-1796608800000",
+    ],
+    "timeUnit": 30,
+  },
+  "interviewEnabled": false,
+  "interviewEndAt": undefined,
+  "interviewStartAt": undefined,
+}
+`;
+
+exports[`면접 payload parity (part7) — 생성 본문 > 일반 개인 + 봉사 면접 ON 1`] = `
+{
+  "hasScheduleInfo": false,
+  "nestedVolunteerInterviewEnabled": true,
+  "overlayVolunteerInterviewKeys": [
+    "recruit.volunteer.interview.exception.1765000000000.interviewTime",
+    "recruit.volunteer.interview.exception.1765000000000.interviewTimeRange",
+    "recruit.volunteer.interview.exception.1765000000000.timeUnit",
+    "recruit.volunteer.interviewAnchorIso",
+    "recruit.volunteer.interviewMethod",
+    "recruit.volunteer.interviewRangeSeal",
+  ],
+  "rootVolunteerInterviewEnabled": true,
+  "scheduleInfo": undefined,
+  "volunteerRows": [
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "VOLUNTEER",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990001,
+      "interviewConfig": {
+        "appliedUnavailableDates": [
+          "2026-12-10",
+        ],
+        "exceptions": [
+          {
+            "exceptionDate": "2026-12-09",
+            "id": "1765000000000",
+            "selectedSlotKeys": [
+              "1796792400000-1796794200000",
+            ],
+          },
+        ],
+        "exclusionState": {
+          "excludeHoliday": true,
+          "excludeSaturday": true,
+          "excludeSunday": true,
+        },
+        "interviewTimeRange": [
+          "2026-12-07T01:00:00.000Z",
+          "2026-12-07T03:00:00.000Z",
+        ],
+        "schemaVersion": 1,
+        "selectedSlotKeys": [
+          "1796605200000-1796607000000",
+          "1796607000000-1796608800000",
+        ],
+        "timeUnit": 30,
+      },
+      "interviewEnabled": true,
+      "interviewEndAt": "2026-12-20T14:59:59.999Z",
+      "interviewStartAt": "2026-12-06T15:00:00.000Z",
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+}
+`;
+
+exports[`면접 payload parity (part7) — 생성 본문 > 일반 기관 + 봉사 면접 OFF 1`] = `
+{
+  "hasScheduleInfo": false,
+  "nestedVolunteerInterviewEnabled": false,
+  "overlayVolunteerInterviewKeys": [],
+  "rootVolunteerInterviewEnabled": false,
+  "scheduleInfo": undefined,
+  "volunteerRows": [
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "VOLUNTEER",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990001,
+      "interviewConfig": {
+        "schemaVersion": 1,
+      },
+      "interviewEnabled": false,
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+}
+`;
+
+exports[`면접 payload parity (part7) — 생성 본문 > 일반 기관 + 봉사 면접 ON 1`] = `
+{
+  "hasScheduleInfo": false,
+  "nestedVolunteerInterviewEnabled": true,
+  "overlayVolunteerInterviewKeys": [
+    "recruit.volunteer.interview.exception.1765000000000.interviewTime",
+    "recruit.volunteer.interview.exception.1765000000000.interviewTimeRange",
+    "recruit.volunteer.interview.exception.1765000000000.timeUnit",
+    "recruit.volunteer.interviewAnchorIso",
+    "recruit.volunteer.interviewMethod",
+    "recruit.volunteer.interviewRangeSeal",
+  ],
+  "rootVolunteerInterviewEnabled": true,
+  "scheduleInfo": undefined,
+  "volunteerRows": [
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "VOLUNTEER",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990001,
+      "interviewConfig": {
+        "appliedUnavailableDates": [
+          "2026-12-10",
+        ],
+        "exceptions": [
+          {
+            "exceptionDate": "2026-12-09",
+            "id": "1765000000000",
+            "selectedSlotKeys": [
+              "1796792400000-1796794200000",
+            ],
+          },
+        ],
+        "exclusionState": {
+          "excludeHoliday": true,
+          "excludeSaturday": true,
+          "excludeSunday": true,
+        },
+        "interviewTimeRange": [
+          "2026-12-07T01:00:00.000Z",
+          "2026-12-07T03:00:00.000Z",
+        ],
+        "schemaVersion": 1,
+        "selectedSlotKeys": [
+          "1796605200000-1796607000000",
+          "1796607000000-1796608800000",
+        ],
+        "timeUnit": 30,
+      },
+      "interviewEnabled": true,
+      "interviewEndAt": "2026-12-20T14:59:59.999Z",
+      "interviewStartAt": "2026-12-06T15:00:00.000Z",
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+}
+`;
+
+exports[`면접 payload parity (part7) — 생성 본문 > 일반 기관 + 봉사 면접 ON — 위저드가 만든 nested 일정 표시 객체 포함 1`] = `
+{
+  "hasScheduleInfo": false,
+  "nestedVolunteerInterviewEnabled": true,
+  "overlayVolunteerInterviewKeys": [
+    "recruit.volunteer.interview.exception.1765000000000.interviewTime",
+    "recruit.volunteer.interview.exception.1765000000000.interviewTimeRange",
+    "recruit.volunteer.interview.exception.1765000000000.timeUnit",
+    "recruit.volunteer.interviewAnchorIso",
+    "recruit.volunteer.interviewMethod",
+    "recruit.volunteer.interviewRangeSeal",
+  ],
+  "rootVolunteerInterviewEnabled": true,
+  "scheduleInfo": undefined,
+  "volunteerRows": [
+    {
+      "additionalContentHtml": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "VOLUNTEER",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "endAt": undefined,
+      "id": 990001,
+      "interviewConfig": {
+        "appliedUnavailableDates": [
+          "2026-12-10",
+        ],
+        "exceptions": [
+          {
+            "exceptionDate": "2026-12-09",
+            "id": "1765000000000",
+            "selectedSlotKeys": [
+              "1796792400000-1796794200000",
+            ],
+          },
+        ],
+        "exclusionState": {
+          "excludeHoliday": true,
+          "excludeSaturday": true,
+          "excludeSunday": true,
+        },
+        "interviewTimeRange": [
+          "2026-12-07T01:00:00.000Z",
+          "2026-12-07T03:00:00.000Z",
+        ],
+        "schemaVersion": 1,
+        "selectedSlotKeys": [
+          "1796605200000-1796607000000",
+          "1796607000000-1796608800000",
+        ],
+        "timeUnit": 30,
+      },
+      "interviewEnabled": true,
+      "interviewEndAt": "2026-12-20T14:59:59.999Z",
+      "interviewStartAt": "2026-12-06T15:00:00.000Z",
+      "learningSupportContent": undefined,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": undefined,
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+}
+`;
+
+exports[`면접 payload parity (part7) — 프로그램 PATCH > 공통정보형 PATCH(제목·공통정보·overlay) 1`] = `
+{
+  "hasScheduleInfo": false,
+  "nestedVolunteerInterviewEnabled": undefined,
+  "overlayVolunteerInterviewKeys": [
+    "recruit.volunteer.interview.exception.1765000000000.interviewTime",
+    "recruit.volunteer.interview.exception.1765000000000.interviewTimeRange",
+    "recruit.volunteer.interview.exception.1765000000000.timeUnit",
+    "recruit.volunteer.interviewAnchorIso",
+    "recruit.volunteer.interviewMethod",
+    "recruit.volunteer.interviewRangeSeal",
+  ],
+  "rootVolunteerInterviewEnabled": undefined,
+  "scheduleInfo": undefined,
+  "volunteerRows": [],
+}
+`;
+
+exports[`면접 payload parity (part7) — 프로그램 PATCH > 모집 행 저장 뒤 nested 스냅샷 PATCH 1`] = `
+{
+  "hasScheduleInfo": false,
+  "nestedVolunteerInterviewEnabled": true,
+  "overlayVolunteerInterviewKeys": [],
+  "rootVolunteerInterviewEnabled": undefined,
+  "scheduleInfo": undefined,
+  "volunteerRows": [],
+}
+`;
+
+exports[`면접 payload parity (part7) — 프로그램 PATCH > 모집형 PATCH(봉사 모집 창·면접 여부·nested·overlay) 1`] = `
+{
+  "hasScheduleInfo": false,
+  "nestedVolunteerInterviewEnabled": true,
+  "overlayVolunteerInterviewKeys": [
+    "recruit.volunteer.interview.exception.1765000000000.interviewTime",
+    "recruit.volunteer.interview.exception.1765000000000.interviewTimeRange",
+    "recruit.volunteer.interview.exception.1765000000000.timeUnit",
+    "recruit.volunteer.interviewAnchorIso",
+    "recruit.volunteer.interviewMethod",
+    "recruit.volunteer.interviewRangeSeal",
+  ],
+  "rootVolunteerInterviewEnabled": true,
+  "scheduleInfo": undefined,
+  "volunteerRows": [
+    {
+      "applicationType": "VOLUNTEER",
+      "endAt": "2026-12-15T14:59:59.999Z",
+      "id": 990001,
+      "interviewEnabled": true,
+      "maxCount": undefined,
+      "operationEndDate": undefined,
+      "operationStartDate": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "selectionMethod": "ADMIN_REVIEW",
+      "startAt": "2026-11-30T15:00:00.000Z",
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+}
+`;

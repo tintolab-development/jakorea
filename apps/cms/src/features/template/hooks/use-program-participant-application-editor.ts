@@ -240,7 +240,7 @@ import {
   buildVolunteerActivityAvailableScheduleSlots,
 } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
-import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
+import { resolveGeneralProgramVolunteerInterviewSchedulePreviewSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
 import { shouldSkipFreshWizardDraftLoad } from '@/features/program/shared/lib/skip-fresh-wizard-draft-load'
 import { applyDevAutofillThirdPartyRecipient } from '@/features/program/general/lib/fill-application-form-third-party-recipient'
@@ -1935,7 +1935,7 @@ export function useProgramParticipantApplicationEditor(
   const volunteerScheduleSeed = useMemo(
     () =>
       linkedProgram && variant === 'volunteer'
-        ? resolveGeneralProgramVolunteerInterviewScheduleEditSeed(linkedProgram)
+        ? resolveGeneralProgramVolunteerInterviewSchedulePreviewSeed(linkedProgram)
         : undefined,
     [linkedProgram, variant]
   )

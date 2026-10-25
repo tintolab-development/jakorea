@@ -1,7 +1,8 @@
 import {
   applyTypedVolunteerInterviewToOverlay,
   buildVolunteerInterviewConfigForSave,
-  omitTypedVolunteerInterviewKeysFromServiceDetailJson,
+  omitVolunteerInterviewSaveKeysFromServiceDetailJson,
+  volunteerInterviewRequiredFromOverlay,
   type RecruitmentInterviewConfig,
 } from '@/features/program/shared/lib/volunteer-interview-config'
 import type {
@@ -349,27 +350,63 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
   })
 }
 
-/**
- * 일반 봉사 모집 행 typed `interviewConfig`(V80) 우선 — overlay 면접 키를 typed 값으로 맞춘다.
- * typed 가 null 이거나 overlay fallback 과 같으면 overlay 그대로. UJAT·반기 행은 건드리지 않는다.
- */
-function applyTypedVolunteerInterviewToServiceDetail<
-  T extends { registrationOverlay?: Record<string, unknown> },
->(serviceDetail: T, dto: ProgramResponse): T {
-  if ((dto.programType ?? '').toUpperCase() === 'UJAT') return serviceDetail
+/** 조회 typed 대상 행 — UJAT 아님 + 반기 아닌 봉사 모집 행 정확히 1개 */
+function singleTypedVolunteerInterviewRow(
+  dto: ProgramResponse
+):
+  | { interviewEnabled?: boolean | null; interviewConfig?: RecruitmentInterviewConfig | null }
+  | undefined {
+  if ((dto.programType ?? '').toUpperCase() === 'UJAT') return undefined
   const volunteerRows = (dto.recruitments ?? []).filter(
     row =>
       (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' &&
       row.recruitTerm !== 'FIRST_HALF' &&
       row.recruitTerm !== 'SECOND_HALF'
   )
-  if (volunteerRows.length !== 1) return serviceDetail
-  const config = (volunteerRows[0] as { interviewConfig?: RecruitmentInterviewConfig | null })
-    .interviewConfig
-  const overlay = applyTypedVolunteerInterviewToOverlay(serviceDetail.registrationOverlay, config)
+  if (volunteerRows.length !== 1) return undefined
+  return volunteerRows[0] as {
+    interviewEnabled?: boolean | null
+    interviewConfig?: RecruitmentInterviewConfig | null
+  }
+}
+
+/**
+ * 일반 봉사 모집 행 typed `interviewConfig`(V80) 우선 — overlay 면접 키를 typed 값으로 맞춘다.
+ * typed 가 null 이거나 overlay fallback 과 같으면 overlay 그대로. UJAT·반기 행은 건드리지 않는다.
+ * typed 가 있으면 overlay 면접 여부(`recruit.volunteer.interviewRequired`)도 행 interviewEnabled 로 맞춘다
+ * (part7부터 저장 본문에 그 키를 보내지 않아 서버 overlay 값이 오래될 수 있다).
+ */
+function applyTypedVolunteerInterviewToServiceDetail<
+  T extends { registrationOverlay?: Record<string, unknown> },
+>(serviceDetail: T, dto: ProgramResponse): T {
+  const row = singleTypedVolunteerInterviewRow(dto)
+  if (!row) return serviceDetail
+  const config = row.interviewConfig
+  let overlay = applyTypedVolunteerInterviewToOverlay(serviceDetail.registrationOverlay, config)
+  if (config != null && typeof row.interviewEnabled === 'boolean') {
+    const required = row.interviewEnabled ? 'yes' : 'no'
+    if (overlay?.['recruit.volunteer.interviewRequired'] !== required) {
+      overlay = { ...(overlay ?? {}), 'recruit.volunteer.interviewRequired': required }
+    }
+  }
   return overlay === serviceDetail.registrationOverlay
     ? serviceDetail
     : { ...serviceDetail, registrationOverlay: overlay }
+}
+
+/** 상세 Program typed 면접 필드 — typed 가 있으면 면접 여부도 행 interviewEnabled 가 SSOT */
+function typedVolunteerInterviewProgramFields(
+  dto: ProgramResponse
+): Pick<Program, 'volunteerInterviewConfigFromServer' | 'generalVolunteerInterviewEnabled'> {
+  const row = singleTypedVolunteerInterviewRow(dto)
+  if (!row) return {}
+  const config = row.interviewConfig ?? null
+  return {
+    volunteerInterviewConfigFromServer: config,
+    ...(config != null && typeof row.interviewEnabled === 'boolean'
+      ? { generalVolunteerInterviewEnabled: row.interviewEnabled }
+      : {}),
+  }
 }
 
 export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
@@ -534,6 +571,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
           volunteerInterviewScheduleInfoFromServer:
             parsedServiceDetail.generalCommonInfo?.volunteerInterviewScheduleInfo ?? null,
         }),
+    ...typedVolunteerInterviewProgramFields(dto),
   })
 
   return applyBusinessPeriodHistoriesFromDto(
@@ -665,6 +703,12 @@ export function mapGeneralProgramRecruitmentsToRequest(
       ...recruitmentOperationRequestDates(program, 'VOLUNTEER'),
       maxCount: program.generalVolunteers ?? undefined,
       selectionMethod: 'ADMIN_REVIEW',
+      // 면접 ON/OFF 스위치는 행 interviewEnabled(BE program_recruitment.interview_enabled). 값이 있을 때만 싣는다(null 은 BE 가 유지).
+      // UJAT 운영 봉사 행은 false 를 거절한다(UJAT_VOLUNTEER_INTERVIEW_REQUIRED) — UJAT 는 자체 adapter 가 true 로 보낸다.
+      ...(typeof program.generalVolunteerInterviewEnabled === 'boolean' &&
+      (program.backendProgramType ?? '').toUpperCase() !== 'UJAT'
+        ? { interviewEnabled: program.generalVolunteerInterviewEnabled }
+        : {}),
     })
   }
 
@@ -1011,32 +1055,61 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
   return withTypedVolunteerInterviewConfigForCreate(body, program)
 }
 
-function readRequestOverlay(serviceDetailJson: string | undefined): Record<string, unknown> {
+function readRequestServiceDetail(serviceDetailJson: string | undefined): Record<string, unknown> {
   if (!serviceDetailJson) return {}
   try {
-    const parsed = JSON.parse(serviceDetailJson) as { registration?: { overlay?: unknown } }
-    const overlay = parsed?.registration?.overlay
-    return overlay != null && typeof overlay === 'object' && !Array.isArray(overlay)
-      ? (overlay as Record<string, unknown>)
+    const parsed: unknown = JSON.parse(serviceDetailJson)
+    return parsed != null && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
       : {}
   } catch {
     return {}
   }
 }
 
+function recordOrEmpty(value: unknown): Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function nonEmptyText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+/** 생성 봉사 행 면접 기간 — 폼 nested(volunteerRecruitmentInfo) → overlay interviewRangeSeal 순 */
+function volunteerInterviewPeriodForCreate(
+  detail: Record<string, unknown>,
+  overlay: Record<string, unknown>
+): { interviewStartAt?: string; interviewEndAt?: string } {
+  const info = recordOrEmpty(recordOrEmpty(detail.generalCommonInfo).volunteerRecruitmentInfo)
+  const seal = recordOrEmpty(overlay['recruit.volunteer.interviewRangeSeal'])
+  const start = nonEmptyText(info.interviewStartDate) ?? nonEmptyText(seal.start)
+  const end = nonEmptyText(info.interviewEndDate) ?? nonEmptyText(seal.end)
+  return {
+    ...(start ? { interviewStartAt: start } : {}),
+    ...(end ? { interviewEndAt: end } : {}),
+  }
+}
+
 /**
- * 생성 본문 — 봉사 모집 행(반기 아님)이 정확히 1개면 그 행에 typed `interviewConfig` 를 넣는다
- * (BE 2026-10-25: 생성도 typed 저장 + 일정 표시 반영). 값은 이번 생성 overlay 로 만든 전체 객체(부분 객체 없음).
- * 면접 키가 없으면(면접 OFF) 명시적 빈 typed `{schemaVersion:1}`.
- * typed 가 덮는 overlay 면접 키 9종은 생성에서도 보내지 않는다. `interviewRequired`·`interviewMethod`·
- * 예외 블록 timeUnit/interviewTimeRange 등 typed 가 덮지 않는 키는 그대로 보낸다.
- * 배포 순서: 이 BE 이후에만 켠다(구 BE 는 생성 interviewConfig 를 표시에 반영하지 않음).
+ * 생성 본문 — 봉사 모집 행(반기 아님)이 정확히 1개면 그 행에 면접 정본을 싣는다.
+ * - `interviewEnabled`: 면접 ON/OFF(BE 스위치). 폼 값(generalVolunteerInterviewEnabled → overlay interviewRequired), 없으면 false
+ * - `interviewConfig`: 이번 생성 overlay 로 만든 전체 typed(부분 객체 없음, specific/applied 각각). OFF 면 `{schemaVersion:1}`
+ * - `interviewStartAt`/`interviewEndAt`: 면접 ON 이고 폼에 면접 기간이 있을 때만
+ * serviceDetailJson 에서는 BE 가 typed 로 만드는 `generalCommonInfo.volunteerInterviewScheduleInfo` 와
+ * typed·행 필드에 같은 정보가 있는 overlay 봉사 면접 키를 뺀다(`omitVolunteerInterviewSaveKeysFromServiceDetailJson`).
+ * 배포 순서: BE 2026-10-25 이후(생성 interviewConfig 반영).
  */
 function withTypedVolunteerInterviewConfigForCreate(
   body: ProgramCreateRequestBody,
   program: Program
 ): ProgramCreateRequestBody {
-  if ((body.programType ?? program.backendProgramType ?? '').toUpperCase() === 'UJAT') return body
+  if (
+    (body.programType ?? '').toUpperCase() === 'UJAT' ||
+    (program.backendProgramType ?? '').toUpperCase() === 'UJAT'
+  )
+    return body
   const rows = body.recruitments ?? []
   const volunteerIndexes = rows
     .map((row, index) => ({ row, index }))
@@ -1048,15 +1121,24 @@ function withTypedVolunteerInterviewConfigForCreate(
     )
   if (volunteerIndexes.length !== 1) return body
   const target = volunteerIndexes[0]!.index
-  const interviewConfig = buildVolunteerInterviewConfigForSave(
-    readRequestOverlay(body.serviceDetailJson)
-  )
+  const detail = readRequestServiceDetail(body.serviceDetailJson)
+  const overlay = recordOrEmpty(recordOrEmpty(detail.registration).overlay)
+  const interviewConfig = buildVolunteerInterviewConfigForSave(overlay)
+  const interviewEnabled =
+    (typeof program.generalVolunteerInterviewEnabled === 'boolean'
+      ? program.generalVolunteerInterviewEnabled
+      : undefined) ??
+    volunteerInterviewRequiredFromOverlay(overlay) ??
+    false
+  const period = interviewEnabled ? volunteerInterviewPeriodForCreate(detail, overlay) : {}
   return {
     ...body,
     recruitments: rows.map((row, index) =>
-      index === target ? ({ ...row, interviewConfig } as typeof row) : row
+      index === target
+        ? ({ ...row, interviewEnabled, ...period, interviewConfig } as typeof row)
+        : row
     ),
-    serviceDetailJson: omitTypedVolunteerInterviewKeysFromServiceDetailJson(body.serviceDetailJson),
+    serviceDetailJson: omitVolunteerInterviewSaveKeysFromServiceDetailJson(body.serviceDetailJson),
   }
 }
 
@@ -1427,7 +1509,7 @@ export function mapGeneralProgramToUpdateRequest(
 }
 
 /** 조회 typed 적용 조건과 같다 — UJAT 아님 + 반기 아닌 봉사 모집 행 정확히 1개 */
-function hasSingleTypedVolunteerInterviewRow(program: Program): boolean {
+export function hasSingleTypedVolunteerInterviewRow(program: Program): boolean {
   if ((program.backendProgramType ?? '').toUpperCase() === 'UJAT') return false
   const rows = (program.programRecruitments ?? []).filter(
     row =>
@@ -1439,16 +1521,17 @@ function hasSingleTypedVolunteerInterviewRow(program: Program): boolean {
 }
 
 /**
- * 생성 외 프로그램 PATCH — typed `interviewConfig`(봉사 행 V80)가 덮는 overlay 면접 키는 보내지 않는다.
- * 면접 설정 정본은 봉사 행 PATCH 의 interviewConfig(생성은 `withTypedVolunteerInterviewConfigForCreate`).
- * 서버 `volunteerInterviewScheduleInfo` 는 typed 기준(BE 2026-10-25)이라 CMS 일정 표시도 typed 와 같다.
+ * 생성 외 프로그램 PATCH — `generalCommonInfo.volunteerInterviewScheduleInfo`(BE 가 typed 로 다시 만드는 표시 복사본)와
+ * typed·행 필드에 같은 정보가 있는 overlay 봉사 면접 키는 보내지 않는다(keonhee 2026-10-25 21:09).
+ * 면접 설정 정본은 봉사 행 PATCH 의 interviewEnabled·interviewConfig(생성은 `withTypedVolunteerInterviewConfigForCreate`).
+ * BE PATCH 는 저장된 live typed 로 상세를 정규화하므로 FE overlay 값은 쓰이지 않는다.
  */
 function omitTypedVolunteerInterviewKeysFromUpdateRequest(
   body: ProgramUpdateRequestBody,
   program: Program
 ): ProgramUpdateRequestBody {
   if (!body.serviceDetailJson || !hasSingleTypedVolunteerInterviewRow(program)) return body
-  const serviceDetailJson = omitTypedVolunteerInterviewKeysFromServiceDetailJson(
+  const serviceDetailJson = omitVolunteerInterviewSaveKeysFromServiceDetailJson(
     body.serviceDetailJson
   )
   return serviceDetailJson === body.serviceDetailJson ? body : { ...body, serviceDetailJson }

@@ -13,6 +13,7 @@ import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated
 import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitTerm'
 import {
   buildVolunteerInterviewConfigForSave,
+  volunteerInterviewRequiredFromOverlay,
   type RecruitmentInterviewConfig,
 } from '@/features/program/shared/lib/volunteer-interview-config'
 import type { DateValue } from '@/types'
@@ -209,9 +210,19 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
         ? (optionalDateToApiString(patch.interviewEndDate) ?? null)
         : (row.interviewEndAt ?? undefined)
       : (row.interviewEndAt ?? undefined)
+  // 면접 ON/OFF → 행 interviewEnabled. 폼 값이 patch 에 없으면 이번 저장 overlay 의 면접 여부(일반 봉사만, UJAT 반기 행은 제외).
+  const isGeneralVolunteerRow =
+    audience === 'volunteer' &&
+    volunteerHalf == null &&
+    row.recruitTerm !== ProgramRecruitmentRequestRecruitTerm.FIRST_HALF &&
+    row.recruitTerm !== ProgramRecruitmentRequestRecruitTerm.SECOND_HALF
   const interviewEnabled =
     audience === 'volunteer'
-      ? (patch.generalVolunteerInterviewEnabled ?? row.interviewEnabled)
+      ? (patch.generalVolunteerInterviewEnabled ??
+        (isGeneralVolunteerRow
+          ? volunteerInterviewRequiredFromOverlay(patch.registrationOverlay)
+          : undefined) ??
+        row.interviewEnabled)
       : row.interviewEnabled
 
   const body: ProgramRecruitmentRowSaveRequest = {

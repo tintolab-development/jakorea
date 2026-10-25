@@ -91,7 +91,7 @@ function overlayOf(serviceDetailJson: string | undefined): Record<string, unknow
   )
 }
 
-type Row = { recruitmentType?: string; interviewConfig?: unknown }
+type Row = { recruitmentType?: string; interviewConfig?: unknown; interviewEnabled?: boolean }
 
 describe.each<Kind>(['GENERAL_ORGANIZATION', 'GENERAL_INDIVIDUAL'])('%s 생성 본문', kind => {
   it('면접 ON — 봉사 행 interviewConfig(전체 객체), typed 가 덮는 overlay 면접 키 없음', () => {
@@ -278,7 +278,9 @@ describe('위저드 RHF 생성 경로(buildGeneralProgramCreateFromWizardRhf)', 
     })
     const overlay = overlayOf(body.serviceDetailJson)
     expect(Object.keys(overlay).filter(isTypedCoveredVolunteerInterviewOverlayKey)).toEqual([])
-    expect(overlay['recruit.volunteer.interviewRequired']).toBe('yes')
+    // part7: 면접 여부는 봉사 행 interviewEnabled 로 보낸다(overlay interviewRequired 없음)
+    expect(overlay).not.toHaveProperty('recruit.volunteer.interviewRequired')
+    expect(volunteer?.interviewEnabled).toBe(true)
     expect(body.autoApplyDefaultFormBindings).toBe(true)
   })
 })

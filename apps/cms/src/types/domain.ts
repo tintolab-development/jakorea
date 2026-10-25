@@ -358,6 +358,28 @@ export interface GeneralProgramVolunteerInterviewScheduleInfo {
   periodEndDate?: string
 }
 
+/** 봉사 모집 행 typed 면접 설정 — `features/program/shared/lib/volunteer-interview-config` RecruitmentInterviewConfig 와 같은 모양 */
+export interface ProgramVolunteerInterviewConfig {
+  schemaVersion?: number | null
+  selectedSlotKeys?: string[] | null
+  timeUnit?: number | null
+  interviewTimeRange?: string[] | null
+  /** 직접 지정 불가일(KST `YYYY-MM-DD`) */
+  specificUnavailableDates?: string[] | null
+  /** 적용 불가일(KST `YYYY-MM-DD`) — CMS 수정 화면이 쓰는 배열 */
+  appliedUnavailableDates?: string[] | null
+  exclusionState?: {
+    excludeSaturday?: boolean | null
+    excludeSunday?: boolean | null
+    excludeHoliday?: boolean | null
+  } | null
+  exceptions?: Array<{
+    id?: string | null
+    exceptionDate?: string | null
+    selectedSlotKeys?: string[] | null
+  }> | null
+}
+
 // IPS 분류
 export type IPSClassification = 'Prepare' | 'Succeed' | 'Inspire'
 
@@ -691,6 +713,12 @@ export interface Program {
    * `undefined` = 서버 조회가 아닌 Program(등록 중 미리보기·mock) — 이때만 overlay 계산 표시를 쓴다.
    */
   volunteerInterviewScheduleInfoFromServer?: GeneralProgramVolunteerInterviewScheduleInfo | null
+  /**
+   * 반기 아닌 봉사 모집 행 1개의 typed `interviewConfig`(BE RecruitmentInterviewConfig, V80) — CMS 면접 일정
+   * 표시·수정 초기값·배정 캘린더 SSOT(part7). `null` = 행에 typed 없음(구 프로그램 → 서버 표시 객체·overlay),
+   * `undefined` = 서버 조회가 아닌 Program 또는 UJAT·봉사 행 여러 개.
+   */
+  volunteerInterviewConfigFromServer?: ProgramVolunteerInterviewConfig | null
   /** UJAT 등록 폼 overlay — 상세 화면 SSOT (`serviceDetailJson.registration.overlay`) */
   ujatRegistrationOverlay?: Record<string, unknown>
   /**

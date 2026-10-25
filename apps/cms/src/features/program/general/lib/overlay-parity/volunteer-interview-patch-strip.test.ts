@@ -145,7 +145,8 @@ describe('봉사 면접 overlay 키 — 생성 외 PATCH 에서 typed 가 덮는
     for (const body of bodies) {
       const overlay = overlayOf(body.serviceDetailJson)
       expect(Object.keys(overlay).filter(isTypedCoveredVolunteerInterviewOverlayKey)).toEqual([])
-      expect(overlay['recruit.volunteer.interview.interviewTime']).toBe('2026-12-07T01:00:00.000Z')
+      // part7: interview.interviewTime 은 typed interviewTimeRange[0] 와 같아 저장에서 뺀다. 면접 방식은 typed 에 없어 남긴다.
+      expect(overlay).not.toHaveProperty('recruit.volunteer.interview.interviewTime')
       expect(overlay['recruit.volunteer.interviewMethod']).toBe('online')
     }
   })

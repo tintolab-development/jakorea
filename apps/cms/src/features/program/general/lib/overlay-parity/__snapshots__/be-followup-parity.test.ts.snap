@@ -98,6 +98,7 @@ exports[`BE 후속 parity (part6) — 생성 본문 > 일반 개인 + 봉사 면
       "interviewConfig": {
         "schemaVersion": 1,
       },
+      "interviewEnabled": false,
       "learningSupportContent": undefined,
       "maxCount": undefined,
       "operationEndDate": undefined,
@@ -123,7 +124,6 @@ exports[`BE 후속 parity (part6) — 생성 본문 > 일반 개인 + 봉사 면
       "2026-12-09T06:00:00.000Z",
     ],
     "recruit.volunteer.interview.exception.1765000000000.timeUnit": "30",
-    "recruit.volunteer.interview.interviewTime": "2026-12-07T01:00:00.000Z",
     "recruit.volunteer.interviewMethod": "online",
   },
   "programType": "GENERAL_INDIVIDUAL",
@@ -191,6 +191,7 @@ exports[`BE 후속 parity (part6) — 생성 본문 > 일반 개인 + 봉사 면
         ],
         "timeUnit": 30,
       },
+      "interviewEnabled": false,
       "learningSupportContent": undefined,
       "maxCount": undefined,
       "operationEndDate": undefined,
@@ -210,9 +211,7 @@ exports[`BE 후속 parity (part6) — 생성 본문 > 일반 개인 + 봉사 면
 
 exports[`BE 후속 parity (part6) — 생성 본문 > 일반 기관 + 봉사 면접 OFF 1`] = `
 {
-  "overlayInterviewKeys": {
-    "recruit.volunteer.interviewRequired": "no",
-  },
+  "overlayInterviewKeys": {},
   "programType": "GENERAL_ORGANIZATION",
   "recruitments": [
     {
@@ -249,6 +248,7 @@ exports[`BE 후속 parity (part6) — 생성 본문 > 일반 기관 + 봉사 면
       "interviewConfig": {
         "schemaVersion": 1,
       },
+      "interviewEnabled": false,
       "learningSupportContent": undefined,
       "maxCount": undefined,
       "operationEndDate": undefined,
@@ -274,9 +274,7 @@ exports[`BE 후속 parity (part6) — 생성 본문 > 일반 기관 + 봉사 면
       "2026-12-09T06:00:00.000Z",
     ],
     "recruit.volunteer.interview.exception.1765000000000.timeUnit": "30",
-    "recruit.volunteer.interview.interviewTime": "2026-12-07T01:00:00.000Z",
     "recruit.volunteer.interviewMethod": "online",
-    "recruit.volunteer.interviewRequired": "yes",
   },
   "programType": "GENERAL_ORGANIZATION",
   "recruitments": [
@@ -343,6 +341,7 @@ exports[`BE 후속 parity (part6) — 생성 본문 > 일반 기관 + 봉사 면
         ],
         "timeUnit": 30,
       },
+      "interviewEnabled": true,
       "learningSupportContent": undefined,
       "maxCount": undefined,
       "operationEndDate": undefined,
