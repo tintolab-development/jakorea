@@ -1,5 +1,5 @@
-import type { TextbookCategoryFilter, TextbooksListParams } from '../model/types'
-import { TEXTBOOKS_PAGE_SIZE } from './constants'
+import type { TextbookCategoryFilter, TextbooksListParams } from '../model/types.ts'
+import { TEXTBOOKS_PAGE_SIZE } from './constants.ts'
 
 /** GET /api/public/education/textbooks `fieldCode` */
 export const TEXTBOOK_BUSINESS_FIELD_CODE = {

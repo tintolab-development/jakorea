@@ -1,6 +1,8 @@
 import type { KeyboardEvent } from 'react'
 import type { TextbookContent, TextbookTag } from '../model/types'
+import { FallbackImage } from '@/features/careers'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
+import defaultTextbookThumbnailUrl from '@/shared/assets/illustration/illust-book.svg'
 import badgeCategoryIconUrl from '../image/icon/badge-category.svg'
 import badgeSkillIconUrl from '../image/icon/badge-skill.svg'
 import badgeTargetIconUrl from '../image/icon/badge-target.svg'
@@ -47,9 +49,12 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
           hasThumbnailImage ? styles.thumbnailWrapHasImage : styles.thumbnailWrapNoImage,
         ].join(' ')}
       >
-        {hasThumbnailImage ? (
-          <img className={styles.thumbnail} src={content.thumbnailUrl} alt="" />
-        ) : null}
+        <FallbackImage
+          className={styles.thumbnail}
+          src={content.thumbnailUrl?.trim() || defaultTextbookThumbnailUrl}
+          fallbackSrc={defaultTextbookThumbnailUrl}
+          alt=""
+        />
       </div>
 
       <div className={styles.content}>
