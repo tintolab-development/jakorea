@@ -15,6 +15,7 @@ import {
   CRIME_CONSENT_TEMPLATE_NAME,
   E2E_OPEN_SAVE_SKIP_TEMPLATE_NAMES,
 } from '../../helpers/form-template-catalog'
+import { installUjatTemplateAuthoringNetwork } from '../../../e2e-isolated/ujat-template-authoring-network'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -39,6 +40,7 @@ test.describe('폼 양식 관리 — 브라우저 QA (전수)', () => {
   })
 
   test('모집 — UJAT 참여 기관: 저장·재진입', async ({ page }) => {
+    await installUjatTemplateAuthoringNetwork(page)
     await page.goto(FORM_MANAGEMENT_URL)
     await openTemplateByName(page, 'UJAT_참여 기관 모집 폼')
     await expect(page.getByRole('button', { name: '단락 추가' })).toHaveCount(0)

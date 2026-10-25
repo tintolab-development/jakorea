@@ -73,6 +73,10 @@ export class UjatProgramRegistrationPage {
     await expect(this.page.getByRole('button', { name: '모집 정보 작성하기' })).toBeVisible({
       timeout: 30_000,
     })
+    const networkError = this.page.getByRole('dialog').filter({ hasText: '네트워크 오류' })
+    if (await networkError.isVisible().catch(() => false)) {
+      await networkError.getByRole('button', { name: '확인' }).click()
+    }
     // DEV 전용 자동입력은 화면의 실제 overlay/state를 채우는 공식 개발 도구다.
     // 이후 고유 제목을 다시 입력해 테스트 데이터가 겹치지 않도록 한다.
     const autofill = this.page.getByRole('button', { name: '자동입력(개발용)' })
@@ -109,6 +113,10 @@ export class UjatProgramRegistrationPage {
           .first()
       ).toBeVisible({ timeout: 15_000 })
       await this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first().fill(this.programTitle)
+      const autofillAlert = this.page.getByRole('dialog').filter({ hasText: '자동입력 완료' })
+      if (await autofillAlert.isVisible().catch(() => false)) {
+        await autofillAlert.getByRole('button', { name: '확인' }).click()
+      }
     }
     await this.page
       .waitForResponse(res => /sponsor/i.test(res.url()) && res.ok(), { timeout: 20_000 })
@@ -140,12 +148,14 @@ export class UjatProgramRegistrationPage {
     await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택하세요')
     await selectByPlaceholderIfVisible(this.page, '교육 과정을 선택하세요')
     await selectNearLabelIfVisible(this.page, '교육 과정')
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '사업 운영 기간을 선택하세요',
-      'range',
-      OPERATION_DATE_OPTS
-    )
+    if (!this.devAutofillApplied) {
+      await fillParagraphDateByPlaceholder(
+        this.page,
+        '사업 운영 기간을 선택하세요',
+        'range',
+        OPERATION_DATE_OPTS
+      )
+    }
 
     await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택하세요', '경제금융')
     await selectNearLabelIfVisible(this.page, '사업 분야', '경제금융')
@@ -274,7 +284,11 @@ export class UjatProgramRegistrationPage {
       )
       await autofill.click()
       await autofillCompleted
-      await expect(this.page.getByText('참여 기관 모집 정보', { exact: true })).toBeVisible({
+      const autofillAlert = this.page.getByRole('dialog').filter({ hasText: '자동입력 완료' })
+      if (await autofillAlert.isVisible().catch(() => false)) {
+        await autofillAlert.getByRole('button', { name: '확인' }).click()
+      }
+      await expect(this.page.getByRole('heading', { name: '참여 기관 모집 정보' })).toBeVisible({
         timeout: 15_000,
       })
 
@@ -313,10 +327,10 @@ export class UjatProgramRegistrationPage {
     await expect(this.page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible({
       timeout: 30_000,
     })
-    await expect(this.page.getByText('참여 기관 신청 정보', { exact: true })).toBeVisible({
+    await expect(this.page.getByRole('tab', { name: '참여 기관 신청 정보' })).toBeVisible({
       timeout: 30_000,
     })
-    await expect(this.page.getByText('봉사자 신청 정보', { exact: true })).toBeVisible({
+    await expect(this.page.getByRole('tab', { name: '봉사자 신청 정보' })).toBeVisible({
       timeout: 30_000,
     })
   }
