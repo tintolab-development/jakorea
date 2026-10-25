@@ -224,6 +224,30 @@ describe('UJAT program adapters', () => {
     expect(updated.managerName).toBeUndefined()
   })
 
+  it('상세 PATCH payload는 Typed 운영 필드를 registration.overlay에 재기록하지 않는다', () => {
+    const updated = toUpdateRequest(
+      program,
+      { title: 'Typed 수정' },
+      {
+        overlay: {
+          'ujat.basicInfo.repKo': 'stale',
+          'ujat.h1.event.name': 'stale schedule',
+          'ujat.kpi.volunteer': 99,
+          'ujat.capacity.byRegion': { h1: { 서울: { classCount: '9' } } },
+          'ujat.wage.paymentItemValues': ['lodging'],
+          'ujat.recruit.institution.publicTitle': 'Legacy 모집 호환값',
+        },
+      }
+    )
+    const detail = JSON.parse(updated.serviceDetailJson ?? '{}') as {
+      registration?: { overlay?: Record<string, unknown> }
+    }
+
+    expect(detail.registration?.overlay).toEqual({
+      'ujat.recruit.institution.publicTitle': 'Legacy 모집 호환값',
+    })
+  })
+
   it('공통정보 패치는 컬럼 targetLevels를 유지하고 모집 라벨로 키우지 않는다', () => {
     const existing: Program = {
       ...program,

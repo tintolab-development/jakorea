@@ -76,7 +76,6 @@ import { applySettlementPolicyToCommonInfo } from '@/features/program/general/li
 import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
-  readUjatSurveyItems,
   ujatPersistedSurveyMenuKeysFromItems,
 } from '@/features/program/ujat/lib/registration-survey-items'
 import {
@@ -102,10 +101,8 @@ import {
   ujatKpiWageCapacityFromLegacyOverlay,
 } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import {
-  stripUjatScheduleLegacyOverlay,
   stripUjatTypedLegacyOverlay,
   typedDetailFromUjatOverlay,
-  ujatOverlayFromTypedDetail,
   type UjatTypedDetail,
 } from './typed-detail-client'
 
@@ -797,27 +794,38 @@ export function fromDetail(
     ...primaryCalendarOverlay,
   }
   const hasTypedScheduleRows = typedDetailHasScheduleRows(typedDetail)
-  // Typed 일정이 있으면 overlay 일정 키를 쓰지 않는다. 없을 때만 semesterCalendars·
-  // 레거시 overlay를 최초 조회 호환용으로 남기고 Typed RHF hydrate 원본으로 쓴다.
-  const typedOverlay = typedDetail
-    ? stripUjatScheduleLegacyOverlay(ujatOverlayFromTypedDetail(typedDetail))
-    : {}
-  const typedSurveyItems = typedOverlay['ujat.basicInfo.surveyItems']
+  // Typed 값은 Typed 응답 모델에만 둔다. Overlay는 raw/semester legacy 값을
+  // 최초 조회 호환용으로만 유지하고, Typed → Overlay projection은 수행하지 않는다.
   const effectiveSurveyKeys =
     typedDetail?.common && Array.isArray(typedDetail.common.surveySettings)
-      ? ujatPersistedSurveyMenuKeysFromItems(readUjatSurveyItems(typedSurveyItems, {
-          survey: false,
-          volunteer_satisfaction: false,
-          school_satisfaction: false,
-          lecture_evaluation: false,
-        }))
+      ? ujatPersistedSurveyMenuKeysFromItems(
+          typedDetail.common.surveySettings.reduce(
+            (items, item) => {
+              const key =
+                item.surveyType === 'VOLUNTEER_SATISFACTION'
+                  ? 'volunteer_satisfaction'
+                  : item.surveyType === 'SCHOOL_SATISFACTION'
+                    ? 'school_satisfaction'
+                    : item.surveyType === 'LECTURE_EVALUATION'
+                      ? 'lecture_evaluation'
+                      : 'survey'
+              items[key] = item.enabled === true
+              return items
+            },
+            {
+              survey: false,
+              volunteer_satisfaction: false,
+              school_satisfaction: false,
+              lecture_evaluation: false,
+            } as Parameters<typeof ujatPersistedSurveyMenuKeysFromItems>[0]
+          )
+        )
       : surveyKeys
   const overlay = reconcileUjatRegistrationOverlayFromProgramResponse(
     dto,
     {
       ...rawOverlay,
       ...(hasTypedScheduleRows ? {} : primaryCalendarOverlay),
-      ...typedOverlay,
     },
     {
       generalSurveyMenuKeys: effectiveSurveyKeys,
