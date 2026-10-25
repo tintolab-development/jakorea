@@ -4,6 +4,7 @@ import {
   formatApiErrorAlertContent,
   getApiErrorCode,
   getApiErrorHttpStatus,
+  isApiWorkflowConflictError,
 } from './extract-api-error-message'
 
 describe('extractApiErrorMessage', () => {
@@ -130,5 +131,30 @@ describe('getApiErrorCode / getApiErrorHttpStatus', () => {
     }
     expect(getApiErrorCode(error)).toBe('DETAILED_PROGRAM_IN_USE')
     expect(getApiErrorHttpStatus(error)).toBe(409)
+  })
+})
+
+describe('isApiWorkflowConflictError', () => {
+  it('409와 UJAT_WORKFLOW_STATE_CONFLICT를 충돌로 본다', () => {
+    expect(
+      isApiWorkflowConflictError({
+        response: {
+          status: 409,
+          data: { error: { code: 'UJAT_WORKFLOW_STATE_CONFLICT', field: 'status' } },
+        },
+      })
+    ).toBe(true)
+    expect(
+      isApiWorkflowConflictError({
+        response: {
+          status: 400,
+          data: { error: { code: 'UJAT_WORKFLOW_STATE_CONFLICT', field: 'status' } },
+        },
+      })
+    ).toBe(true)
+  })
+
+  it('네트워크 오류는 충돌이 아니다', () => {
+    expect(isApiWorkflowConflictError(new Error('Network Error'))).toBe(false)
   })
 })

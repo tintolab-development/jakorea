@@ -65,4 +65,29 @@ describe('program registration local-only draft', () => {
     expect(saveFormTemplateVersionDraft).not.toHaveBeenCalled()
     expect(loadFormTemplateVersionDraft).not.toHaveBeenCalled()
   })
+
+  it('round-trips the UJAT typed common-info snapshot inside editorState', async () => {
+    const draft = createProgramRegistrationDraft('general')
+    const ujatBasicInfo = {
+      mainTitle: 'UJAT RHF 대표명',
+      titleEn: 'UJAT Representative',
+      surveySurvey: false,
+      generalParticipantTypes: ['school_institution', 'volunteer'],
+    }
+
+    await persistWritingFormTemplateDraft({
+      templateId: 'registration-wizard:UJAT:registration-ujat',
+      draft,
+      overlay: { 'ujat.h1.event.name': '상반기 본교육' },
+      editorState: { ujatBasicInfo },
+      localOnly: true,
+    })
+
+    const loaded = await loadWritingFormTemplateDraft('registration-wizard:UJAT:registration-ujat', {
+      localOnly: true,
+    })
+
+    expect(loaded?.editorState?.ujatBasicInfo).toEqual(ujatBasicInfo)
+    expect(loaded?.overlay).toEqual({ 'ujat.h1.event.name': '상반기 본교육' })
+  })
 })

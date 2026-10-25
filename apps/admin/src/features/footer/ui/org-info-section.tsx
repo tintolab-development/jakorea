@@ -11,7 +11,7 @@ import {
   CmsButton,
   CmsInput,
   FileSelectField,
-  FILE_SELECT_MAX_TOTAL_BYTES,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
   PageContentLoading,
@@ -22,8 +22,8 @@ import './org-info-section.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 권장 로고 사이즈는 195*60입니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 권장 로고 사이즈는 195 × 60px입니다.',
 ]
 
 function fieldClass(isEditing: boolean) {
@@ -268,10 +268,10 @@ export function FooterOrgInfoSection() {
       if (
         isFileSelectTotalSizeExceeded({
           incoming: [file],
-          maxTotalBytes: FILE_SELECT_MAX_TOTAL_BYTES,
+          maxTotalBytes: FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded()
+        notifyFileSelectTotalSizeExceeded(FILE_SELECT_IMAGE_MAX_TOTAL_BYTES)
         return
       }
       try {
@@ -488,6 +488,7 @@ export function FooterOrgInfoSection() {
                       accept={IMAGE_ACCEPT}
                       buttonLabel="파일 추가"
                       fileNames={draft.logoFileName ? [draft.logoFileName] : []}
+                      maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                       guideLines={IMAGE_GUIDE_LINES}
                       onFilesChange={files => {
                         void handleFilesChange(files)

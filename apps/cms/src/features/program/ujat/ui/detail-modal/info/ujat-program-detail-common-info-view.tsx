@@ -5,6 +5,7 @@
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatDate } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveUjatRegistrationBasicInfoDisplay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
@@ -17,6 +18,7 @@ import { UjatEducationScheduleSettingsProgramView } from './ujat-education-sched
 import { UjatRegionCapacityProgramView } from './ujat-region-capacity-program-view'
 import { UjatBasicInfoReadonlyView } from './ujat-basic-info-readonly-view'
 import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
+import { BusinessPeriodExtendHistoryRows } from '@/features/program/shared/ui/business-period-extend-history-rows'
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
@@ -25,10 +27,11 @@ import '@/features/program/shared/ui/program-detail/project-info/project-info-fo
 import './ujat-program-detail-common-info-view.css'
 
 export interface UjatProgramDetailCommonInfoViewProps {
-  program: Program
+  program: Program & { ujatTypedDetail?: UjatTypedDetail }
   sponsorName?: string
   isEditMode?: boolean
   infoForm?: UseFormReturn<ProgramDetailEditFormValues>
+  scheduleForm?: UseFormReturn<UjatTypedDetail>
 }
 
 function UjatBasicInfoRegistrationAuditRow({
@@ -65,6 +68,7 @@ function UjatBasicInfoRegistrationAuditRow({
           }
         />
       </DetailInfoForm.Row>
+      <BusinessPeriodExtendHistoryRows program={program} />
     </DetailInfoForm>
   )
 }
@@ -74,6 +78,7 @@ export function UjatProgramDetailCommonInfoView({
   sponsorName,
   isEditMode = false,
   infoForm,
+  scheduleForm,
 }: UjatProgramDetailCommonInfoViewProps) {
   const sponsorsQuery = useSponsorOptionsQuery(true)
   const basicInfoDisplay = resolveUjatRegistrationBasicInfoDisplay(
@@ -116,6 +121,7 @@ export function UjatProgramDetailCommonInfoView({
                 lockDetailedProgramToNone={
                   program.generalProgramEducationStructure !== 'curriculum'
                 }
+                infoForm={infoForm}
               />
             </div>
           </>
@@ -136,11 +142,25 @@ export function UjatProgramDetailCommonInfoView({
 
       <UjatWageInfoProgramView program={program} isEdit={isEditMode} />
 
-      <UjatHalfEducationScheduleProgramView program={program} half="h1" isEdit={isEditMode} />
+      <UjatHalfEducationScheduleProgramView
+        program={program}
+        half="h1"
+        isEdit={isEditMode}
+        scheduleForm={scheduleForm}
+      />
 
-      <UjatHalfEducationScheduleProgramView program={program} half="h2" isEdit={isEditMode} />
+      <UjatHalfEducationScheduleProgramView
+        program={program}
+        half="h2"
+        isEdit={isEditMode}
+        scheduleForm={scheduleForm}
+      />
 
-      <UjatEducationScheduleSettingsProgramView program={program} isEdit={isEditMode} />
+      <UjatEducationScheduleSettingsProgramView
+        program={program}
+        isEdit={isEditMode}
+        scheduleForm={scheduleForm}
+      />
 
       <UjatRegionCapacityProgramView program={program} isEdit={isEditMode} />
     </div>

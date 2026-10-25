@@ -8,6 +8,10 @@ import { EMPTY_SURVEY_SIDECAR, type SurveySidecarState } from '@/features/mypage
 import { buildEducationSurveyAnswers, validateEducationSurveyFill } from '@/features/mypage/education/surveys/lib/survey-answers'
 import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/member-file-upload'
 import {
+  INVALID_LECTURE_REPORT_BINDING_MESSAGE,
+  isValidLectureReportBindingContext,
+} from '../lib/lecture-report-contract'
+import {
   getLectureReportApiErrorMessage, getLectureReportAssignments, getLectureReportBinding,
   getLectureReportContent, getLectureReportState, renderLectureReport, saveLectureReportDraft,
   submitLectureReport, submitLectureReportResponse, type LectureReportAssignment,
@@ -89,6 +93,7 @@ export function LectureReportPanel({ programId, instructorProgram }: Props) {
       if (!state.canSubmit || !['AVAILABLE', 'OVERDUE'].includes(state.reportStatus)) throw new Error(state.reportStatus === 'BUSINESS_ENDED' ? '사업 운영이 종료되어 제출할 수 없습니다.' : '현재 강의보고서를 작성할 수 없습니다.')
       const binding = await getLectureReportBinding(row.assignmentId)
       if (binding.assignmentId !== row.assignmentId || binding.programId !== programId) throw new Error('강의보고서 양식 정보가 일정과 일치하지 않습니다.')
+      if (!isValidLectureReportBindingContext({ ...binding, instructorApplicationId: row.instructorApplicationId })) throw new Error(INVALID_LECTURE_REPORT_BINDING_MESSAGE)
       const rendered = await renderLectureReport(programId, binding.bindingId)
       if (rendered.formType !== 'WRITING') throw new Error('강의보고서 양식이 작성형(WRITING)이 아닙니다.')
       setBinding(binding); setForm(rendered)
@@ -117,6 +122,13 @@ export function LectureReportPanel({ programId, instructorProgram }: Props) {
   }
 
   function formResponseInput(currentBinding: LectureReportFormBinding): LectureReportFormResponseInput {
+    if (!view) throw new Error(INVALID_LECTURE_REPORT_BINDING_MESSAGE)
+    if (currentBinding.assignmentId !== view.assignment.assignmentId || currentBinding.programId !== programId) {
+      throw new Error('강의보고서 양식 정보가 일정과 일치하지 않습니다.')
+    }
+    if (!isValidLectureReportBindingContext({ ...currentBinding, instructorApplicationId: view.assignment.instructorApplicationId })) {
+      throw new Error(INVALID_LECTURE_REPORT_BINDING_MESSAGE)
+    }
     const responseAnswers = buildEducationSurveyAnswers(draft!, sidecar)
     return {
       templateVersionId: currentBinding.templateVersionId,

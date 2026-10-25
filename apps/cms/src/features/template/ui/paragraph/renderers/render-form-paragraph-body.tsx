@@ -11,6 +11,9 @@ import {
   UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import type { UseFormReturn } from 'react-hook-form'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
 import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import {
@@ -169,6 +172,12 @@ export type RenderFormParagraphBodyOptions = {
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   /** UJAT 프로그램 등록 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramRegistration?: boolean
+  /** UJAT 등록 Wizard 공통정보 RHF — Overlay Store를 거치지 않는 입력 정본 */
+  ujatProgramRegistrationBasicInfoForm?: UseFormReturn<ProgramDetailEditFormValues>
+  /** true이면 UJAT 공통정보 단락이 Legacy Overlay hook을 호출하지 않는다. */
+  ujatProgramRegistrationBasicInfoOverlayFree?: boolean
+  /** UJAT H1/H2 교육 일정 Typed RHF 정본 */
+  ujatProgramRegistrationEducationScheduleForm?: UseFormReturn<UjatTypedDetail>
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -518,6 +527,10 @@ export function renderFormParagraphBody(
           }
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
+          ujatProgramRegistrationBasicInfoForm={options?.ujatProgramRegistrationBasicInfoForm}
+          ujatProgramRegistrationBasicInfoOverlayFree={
+            options?.ujatProgramRegistrationBasicInfoOverlayFree
+          }
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
           programLinkedInstitutionApplicationForm={
             options?.programLinkedInstitutionApplicationForm

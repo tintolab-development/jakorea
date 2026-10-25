@@ -118,7 +118,9 @@ export function UjatRecruitParticipantInfoProgramView({
   ) : (
     '-'
   )
-  const publicTitle = resolveUjatRecruitAnnouncementTitle(program, 'institution')
+  const publicTitle = resolveUjatRecruitAnnouncementTitle(program, 'institution', {
+    allowOverlayFallback: isTemplateAuthoring,
+  })
   const notes = resolveParticipantNotesDisplay(program)
   const announcementPublishedValue =
     (isEdit && form ? form.watch('participantRecruitmentAnnouncementPublished') : undefined) ??

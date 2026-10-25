@@ -47,6 +47,8 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule',
   '/api/admin/programs/{programId}/ujat/organization-schedule-assignments',
   '/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/schedule-change-request',
+  // UJAT Typed detail is the canonical replacement for typed registration.overlay writes.
+  '/api/admin/programs/{programId}/ujat/typed-detail',
 ])
 
 function isDashboardSubsetPath(path) {

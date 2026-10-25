@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -19,24 +20,16 @@ import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-p
 import { handleError } from '@/shared/utils/error-handler'
 import {
   programDetailUjatCommonInfoEditSchema,
-  programToDetailEditValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
-import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import {
-  applyUjatRecruitAnnouncementTitleToDraft,
-  resolveUjatRecruitDisplayProgram,
+  applyUjatRecruitFormValuesToProgram,
+  programToUjatRecruitCanonicalFormValues,
   volunteerHalfFromRecruitDisplayKind,
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
-import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
-import { syncUjatDetailEditFormKpiToOverlay } from '@/features/program/ujat/lib/detail-edit-form-kpi-to-overlay'
 import {
   buildUjatProgramDraftWithSessionOverlay,
-  readUjatRegistrationBasicInfoOverlayForSave,
-  seedUjatRegistrationBasicInfoOverlayFromProgram,
-  touchUjatRegistrationOperationAnchorFromRangeSeal,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
-import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatInstitutionApplicationList } from './application-institution/list/list'
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
@@ -110,11 +103,18 @@ import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
 import { queryKeys as ujatProgramQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { detail as fetchUjatProgramRemoteById } from '@/features/program/ujat/api/service'
 import {
+  EMPTY_UJAT_TYPED_DETAIL,
+  stripUjatScheduleLegacyOverlay,
+  stripUjatTypedLegacyOverlay,
+  syncUjatTypedDetailPhysicalSchedulesRemote,
+  updateUjatTypedDetailHalfRemote,
+  type UjatTypedDetail,
+} from '@/features/program/ujat/api/typed-detail-client'
+import {
   omitRecruitmentTabScheduleFields,
   persistRecruitmentTabSave,
 } from '@/features/program/shared/lib/persist-recruitment-row-save'
 import { syncOpenProgramDetailCache } from '@/features/program/shared/lib/program-detail-cache-after-save'
-import { persistRecruitmentOverlaySnapshot } from '@/features/program/ujat/api/service'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { invalidateUjatProgramListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import {
@@ -149,9 +149,8 @@ import {
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
-  hasIncompleteUjatProgramRegistrationRequiredFields,
-  listIncompleteUjatProgramRecruitmentRequiredFields,
-  listIncompleteUjatProgramRegistrationRequiredFields,
+  listIncompleteUjatProgramRecruitmentInterviewScheduleRequiredFields,
+  listIncompleteUjatProgramRecruitmentTypedRequiredFields,
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import {
   RegistrationWizardValidationHighlightProvider,
@@ -172,8 +171,12 @@ import {
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { extractApiErrorMessage, getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { UJAT_NOTICE_EXPOSURE_TIMING_INVALID_CODE } from '@/features/template/lib/ujat-volunteer-notice-exposure'
+import { overlayRecordToInterviewConfig } from '@/features/program/ujat/lib/recruitment-typed-contract'
+import { getRecruitTypedInterviewRecord } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   isUjatRecruitTab,
@@ -730,31 +733,63 @@ export function UjatProgramDetailFullPageModal({
     return base ? resolveUjatProgramDisplayProgram(base) : null
   }, [detailProgram, program, onUpdateProgram, externalLoading])
 
+  const educationScheduleForm = useForm<UjatTypedDetail>({
+    defaultValues: EMPTY_UJAT_TYPED_DETAIL,
+  })
+  const educationScheduleBaselineRef = useRef<UjatTypedDetail>(EMPTY_UJAT_TYPED_DETAIL)
+  const educationScheduleIsDirty = educationScheduleForm.formState.isDirty
+  const resetEducationScheduleForm = educationScheduleForm.reset
+
+  useEffect(() => {
+    if (!displayProgram) return
+    const next = displayProgram.ujatTypedDetail ?? EMPTY_UJAT_TYPED_DETAIL
+    educationScheduleBaselineRef.current = next
+    resetEducationScheduleForm(next)
+  }, [displayProgram, resetEducationScheduleForm])
+
+  const persistUjatEducationSchedule = useCallback(
+    async (id: string) => {
+      if (!educationScheduleIsDirty) return
+      const snapshot = educationScheduleForm.getValues()
+      let current = snapshot
+      let expectedRevision = snapshot.revision ?? 0
+      const changedSemesters: Array<'FIRST_HALF' | 'SECOND_HALF'> = []
+      for (const semesterType of ['FIRST_HALF', 'SECOND_HALF'] as const) {
+        const halfPlan = current.halfPlans?.find(item => item.semesterType === semesterType) ?? {
+          semesterType,
+          stages: [],
+        }
+        const baselineHalfPlan = educationScheduleBaselineRef.current.halfPlans?.find(
+          item => item.semesterType === semesterType
+        ) ?? { semesterType, stages: [] }
+        if (JSON.stringify(halfPlan) === JSON.stringify(baselineHalfPlan)) continue
+        changedSemesters.push(semesterType)
+        current = await updateUjatTypedDetailHalfRemote(
+          id,
+          semesterType,
+          expectedRevision,
+          halfPlan
+        )
+        expectedRevision = current.revision ?? expectedRevision
+      }
+      current = await syncUjatTypedDetailPhysicalSchedulesRemote(id, current, changedSemesters)
+      educationScheduleBaselineRef.current = current
+      educationScheduleForm.reset(current)
+    },
+    [educationScheduleForm, educationScheduleIsDirty]
+  )
+
   const volunteerRecruitKindRef = useRef<UjatRecruitDisplayKind>('volunteer_h1')
   const mapInstitutionRecruitmentEditValues = useCallback(
-    (p: Program) =>
-      programToUjatRecruitTemplateFormValues(
-        resolveUjatRecruitDisplayProgram(p, 'institution'),
-        'institution'
-      ),
+    (p: Program) => programToUjatRecruitCanonicalFormValues(p, 'institution'),
     []
   )
   const mapVolunteerH1RecruitmentEditValues = useCallback(
-    (p: Program) =>
-      programToUjatRecruitTemplateFormValues(
-        resolveUjatRecruitDisplayProgram(p, 'volunteer_h1'),
-        'volunteer',
-        'h1'
-      ),
+    (p: Program) => programToUjatRecruitCanonicalFormValues(p, 'volunteer_h1'),
     []
   )
   const mapVolunteerH2RecruitmentEditValues = useCallback(
-    (p: Program) =>
-      programToUjatRecruitTemplateFormValues(
-        resolveUjatRecruitDisplayProgram(p, 'volunteer_h2'),
-        'volunteer',
-        'h2'
-      ),
+    (p: Program) => programToUjatRecruitCanonicalFormValues(p, 'volunteer_h2'),
     []
   )
   const mapVolunteerRecruitmentEditValues = useCallback((p: Program) => {
@@ -767,7 +802,9 @@ export function UjatProgramDetailFullPageModal({
   const overlayHydrateStampRef = useRef<string | null>(null)
   useLayoutEffect(() => {
     if (!displayProgram) return
-    const overlay = readUjatRegistrationOverlayFromProgram(displayProgram)
+    const overlay = stripUjatScheduleLegacyOverlay(
+      readUjatRegistrationOverlayFromProgram(displayProgram)
+    )
     const stamp = `${displayProgram.id}:${Object.keys(overlay).length}`
     if (overlayHydrateStampRef.current !== stamp) {
       overlayHydrateStampRef.current = stamp
@@ -1339,39 +1376,56 @@ export function UjatProgramDetailFullPageModal({
         displayProgram && updateProgram
           ? async (draft, patch) => {
               try {
-                const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
+                // Schedule/wage/KPI legacy editors still publish their migration-boundary
+                // snapshot. Keep it in the request without using it as the RHF value source.
+                const draftWithLegacyOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
                 const commonPatch: Partial<Program> = {
                   ...patch,
-                  ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
-                  generalSurveyMenuKeys: draftWithOverlay.generalSurveyMenuKeys,
-                  generalParticipantTypes: draftWithOverlay.generalParticipantTypes,
-                  generalCommonInfo: draftWithOverlay.generalCommonInfo,
-                  mainTitle: draftWithOverlay.mainTitle,
-                  titleEn: draftWithOverlay.titleEn,
-                  title: draftWithOverlay.title,
+                  ujatRegistrationOverlay: stripUjatTypedLegacyOverlay(
+                    draftWithLegacyOverlay.ujatRegistrationOverlay ?? {}
+                  ),
+                  generalSurveyMenuKeys: draft.generalSurveyMenuKeys,
+                  generalParticipantTypes: draft.generalParticipantTypes,
+                  generalCommonInfo: draft.generalCommonInfo,
+                  mainTitle: draft.mainTitle,
+                  titleEn: draft.titleEn,
+                  title: draft.title,
                 }
                 if (
                   shouldUseRemoteApi() &&
                   displayProgram &&
                   ujatRegionCapacitySnapshot(displayProgram) !==
-                    ujatRegionCapacitySnapshot(draftWithOverlay)
+                  ujatRegionCapacitySnapshot(draft)
                 ) {
                   // 지역 정원 PUT 성공 후 공통정보 PATCH/상세 GET을 수행한다.
                   await replaceUjatRegionCapacitiesRemote(
-                    draftWithOverlay.id,
-                    buildUjatRegionCapacityUpserts(draftWithOverlay)
+                    draft.id,
+                    buildUjatRegionCapacityUpserts(draft)
                   )
                 }
                 if (onUpdateProgram) {
-                  await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, commonPatch)
+                  await onUpdateProgram(draft.id, draft, commonPatch)
                 } else {
-                  await updateProgram(draftWithOverlay.id, draftWithOverlay)
+                  await updateProgram(draft.id, draft)
                 }
+                await persistUjatEducationSchedule(draft.id)
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)
                 if (programId) next.set('programId', programId)
                 setSearchParams(next, { replace: true })
               } catch (error) {
+                const code = getApiErrorCode(error)
+                if (code === 'UJAT_TYPED_DETAIL_REVISION_CONFLICT') {
+                  void showAlert({
+                    title: '일정이 변경되었습니다.',
+                    content: '다른 관리자가 일정을 먼저 변경했습니다. 최신 정보를 다시 확인한 뒤 저장해 주세요.',
+                  })
+                } else if (code === 'UJAT_TYPED_SCHEDULE_REFERENCED') {
+                  void showAlert({
+                    title: '일정을 변경할 수 없습니다.',
+                    content: '이미 교육 진행에 연결된 일정은 삭제하거나 교체할 수 없습니다. 기존 일정은 유지해 주세요.',
+                  })
+                }
                 handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
                 throw error
               }
@@ -1400,10 +1454,17 @@ export function UjatProgramDetailFullPageModal({
       })
       return
     }
-    seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
     infoResetToProgram()
+    educationScheduleForm.reset(displayProgram.ujatTypedDetail ?? EMPTY_UJAT_TYPED_DETAIL)
     setEditMode('info')
-  }, [activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
+  }, [
+    activeTab,
+    displayProgram,
+    educationScheduleForm,
+    infoResetToProgram,
+    setEditMode,
+    showAlert,
+  ])
 
   const handleInfoSave = useCallback(async () => {
     if (!displayProgram) return
@@ -1420,35 +1481,6 @@ export function UjatProgramDetailFullPageModal({
       })
       return
     }
-    syncUjatDetailEditFormKpiToOverlay(infoValues)
-    let overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
-      readUjatRegistrationBasicInfoOverlayForSave()
-    )
-    // 일정형: 수정 UI와 동일하게 세부 프로그램명을「해당없음」으로 고정해 overlay·PATCH에 실는다.
-    if (displayProgram.generalProgramEducationStructure !== 'curriculum') {
-      overlay = {
-        ...overlay,
-        'ujat.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
-        'ujat.basicInfo.detailedProgramName': '해당없음',
-      }
-      patchUjatProgramRegistrationOverlay({
-        'ujat.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
-        'ujat.basicInfo.detailedProgramName': '해당없음',
-      })
-    }
-    const mergedProgram: Program = {
-      ...applyUjatRegistrationOverlayToProgram(displayProgram, overlay, { kpiClearedAsZero: true }),
-      ujatRegistrationOverlay: overlay,
-    }
-    if (hasIncompleteUjatProgramRegistrationRequiredFields(overlay)) {
-      detailRequiredHighlight.report(listIncompleteUjatProgramRegistrationRequiredFields(overlay))
-      void showAlert({
-        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-      })
-      return
-    }
-    infoForm.reset(programToDetailEditValues(mergedProgram))
     const endOverlay = beginBlockingOverlay()
     try {
       const ok = await infoTriggerSave()
@@ -1477,11 +1509,11 @@ export function UjatProgramDetailFullPageModal({
   ])
 
   const handleInfoCancel = useCallback(() => {
-    if (displayProgram) seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
     infoResetToProgram()
+    educationScheduleForm.reset(displayProgram?.ujatTypedDetail ?? EMPTY_UJAT_TYPED_DETAIL)
     detailRequiredHighlight.clear()
     setEditMode(null)
-  }, [detailRequiredHighlight, displayProgram, infoResetToProgram, setEditMode])
+  }, [detailRequiredHighlight, displayProgram, educationScheduleForm, infoResetToProgram, setEditMode])
 
   const isEditModeRecruitParticipant =
     open &&
@@ -1515,29 +1547,24 @@ export function UjatProgramDetailFullPageModal({
     mapToValues: mapInstitutionRecruitmentEditValues,
     recruitmentAudience: 'participant',
     recruitmentNotesField: 'oneLineIntroduction',
-    onSaveEdit:
-      displayProgram && updateProgram
-        ? async (draft, patch) => {
+    strictRemote: true,
+    onSaveEdit: displayProgram
+      ? async (draft, patch) => {
             try {
-              const draftWithOverlay = applyUjatRecruitAnnouncementTitleToDraft({
-                draft: buildUjatProgramDraftWithSessionOverlay(draft, {
-                  includeRecruitSession: true,
-                }),
-                existing: displayProgram,
-                title: institutionsForm.getValues().announcementTitle,
-                kind: 'institution',
-                values: institutionsForm.getValues(),
-              })
+              const canonicalDraft = applyUjatRecruitFormValuesToProgram(
+                draft,
+                'institution',
+                institutionsForm.getValues()
+              )
               const { registrationOverlay: _omitRegistrationOverlay, ...recruitPatch } = patch
               const remotePatch = omitRecruitmentTabScheduleFields({
                 ...recruitPatch,
-                ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
-                generalCommonInfo: draftWithOverlay.generalCommonInfo,
-                programRecruitments: draftWithOverlay.programRecruitments,
+                generalCommonInfo: canonicalDraft.generalCommonInfo,
+                programRecruitments: canonicalDraft.programRecruitments,
               })
               const result = await persistRecruitmentTabSave({
                 baseline: displayProgram,
-                draft: draftWithOverlay,
+                draft: canonicalDraft,
                 patch: remotePatch,
                 audience: 'participant',
                 refetchProgram: async id => {
@@ -1546,28 +1573,31 @@ export function UjatProgramDetailFullPageModal({
                   return next
                 },
                 remoteResponsePriority: true,
-                beforeRefetch: () => persistRecruitmentOverlaySnapshot(draftWithOverlay),
               })
-              if (result.mode === 'row') {
-                const scope = shouldUseRemoteApi() ? 'remote' : 'local'
-                await syncOpenProgramDetailCache(
-                  queryClient,
-                  ujatProgramQueryKeys.detail(scope, result.program.id),
-                  result.program,
-                  { refetch: false }
-                )
-                invalidateUjatProgramListCaches(queryClient)
-              } else if (onUpdateProgram) {
-                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, result.patch)
-              } else {
-                await updateProgram(draftWithOverlay.id, draftWithOverlay)
+              if (result.mode !== 'row') {
+                throw new Error('UJAT 참여 기관 모집 행을 찾지 못했습니다. 중복 행을 생성하지 않고 저장을 중단합니다.')
               }
+              const scope = shouldUseRemoteApi() ? 'remote' : 'local'
+              await syncOpenProgramDetailCache(
+                queryClient,
+                ujatProgramQueryKeys.detail(scope, result.program.id),
+                result.program,
+                { refetch: false }
+              )
+              invalidateUjatProgramListCaches(queryClient)
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)
               setSearchParams(next, { replace: true })
             } catch (error) {
               handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
+              if (getApiErrorCode(error) === 'RECRUITMENT_REVISION_CONFLICT') {
+                void showAlert({
+                  title: '모집 정보가 변경되었습니다.',
+                  content:
+                    '다른 관리자가 모집 정보를 먼저 저장했습니다. 입력값은 유지됩니다. 최신 모집 행을 확인한 뒤 다시 저장해 주세요.',
+                })
+              }
               throw error
             }
           }
@@ -1603,9 +1633,9 @@ export function UjatProgramDetailFullPageModal({
     mapToValues: mapVolunteerRecruitmentEditValues,
     recruitmentAudience: 'volunteer',
     recruitmentNotesField: 'otherNotes',
-    onSaveEdit:
-      displayProgram && updateProgram
-        ? async (draft, patch) => {
+    strictRemote: true,
+    onSaveEdit: displayProgram
+      ? async (draft, patch) => {
             try {
               const values = volunteersForm.getValues()
               if (!values.interviewStartDate?.trim() || !values.interviewEndDate?.trim()) {
@@ -1620,49 +1650,34 @@ export function UjatProgramDetailFullPageModal({
                 })
                 return
               }
-              const draftWithOverlay = applyUjatRecruitAnnouncementTitleToDraft({
-                draft: buildUjatProgramDraftWithSessionOverlay(draft, {
-                  includeRecruitSession: true,
-                }),
-                existing: displayProgram,
-                title: values.announcementTitle,
-                kind: volunteerRecruitKindRef.current,
-                values,
-              })
+              const volunteerKind = volunteerRecruitKindRef.current
+              const volunteerHalf =
+                volunteerHalfFromRecruitDisplayKind(volunteerKind) ?? undefined
+              const liveInterview = getRecruitTypedInterviewRecord()
+              const interviewValues =
+                liveInterview != null && volunteerHalf
+                  ? {
+                      ...values,
+                      volunteerInterviewConfig: overlayRecordToInterviewConfig(
+                        liveInterview,
+                        ujatVolunteerRecruitInterviewNamespace(volunteerHalf)
+                      ),
+                    }
+                  : values
+              const canonicalDraft = applyUjatRecruitFormValuesToProgram(
+                draft,
+                volunteerKind,
+                interviewValues
+              )
               const { registrationOverlay: _omitRegistrationOverlay, ...recruitPatch } = patch
               const remotePatch = omitRecruitmentTabScheduleFields({
                 ...recruitPatch,
-                ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
-                generalCommonInfo: draftWithOverlay.generalCommonInfo,
-                startDate: draftWithOverlay.startDate,
-                endDate: draftWithOverlay.endDate,
-                volunteerTargets: draftWithOverlay.volunteerTargets,
-                volunteerTarget: draftWithOverlay.volunteerTarget,
-                volunteerTargetDetail: draftWithOverlay.volunteerTargetDetail,
-                volunteerApplicationStartDate: draftWithOverlay.volunteerApplicationStartDate,
-                volunteerApplicationEndDate: draftWithOverlay.volunteerApplicationEndDate,
-                documentPassAnnouncementDate: draftWithOverlay.documentPassAnnouncementDate,
-                documentPassAnnouncementMethod: draftWithOverlay.documentPassAnnouncementMethod,
-                interviewStartDate: draftWithOverlay.interviewStartDate,
-                interviewEndDate: draftWithOverlay.interviewEndDate,
-                interviewMethod: draftWithOverlay.interviewMethod,
-                finalPassAnnouncementDate: draftWithOverlay.finalPassAnnouncementDate,
-                finalPassAnnouncementMethod: draftWithOverlay.finalPassAnnouncementMethod,
-                contactPhone: draftWithOverlay.contactPhone,
-                contactEmail: draftWithOverlay.contactEmail,
-                managerName: draftWithOverlay.managerName,
-                otherNotes: draftWithOverlay.otherNotes,
-                description: draftWithOverlay.description,
-                recruitmentGuide: draftWithOverlay.recruitmentGuide,
-                applicationMethod: draftWithOverlay.applicationMethod,
-                additionalContentHtml: draftWithOverlay.additionalContentHtml,
-                programRecruitments: draftWithOverlay.programRecruitments,
+                generalCommonInfo: canonicalDraft.generalCommonInfo,
+                programRecruitments: canonicalDraft.programRecruitments,
               })
-              const volunteerHalf =
-                volunteerHalfFromRecruitDisplayKind(volunteerRecruitKindRef.current) ?? undefined
               const result = await persistRecruitmentTabSave({
                 baseline: displayProgram,
-                draft: draftWithOverlay,
+                draft: canonicalDraft,
                 patch: remotePatch,
                 audience: 'volunteer',
                 volunteerHalf,
@@ -1672,35 +1687,46 @@ export function UjatProgramDetailFullPageModal({
                   return next
                 },
                 remoteResponsePriority: true,
-                beforeRefetch: () => persistRecruitmentOverlaySnapshot(draftWithOverlay),
               })
-              if (result.mode === 'row') {
-                const scope = shouldUseRemoteApi() ? 'remote' : 'local'
-                await syncOpenProgramDetailCache(
-                  queryClient,
-                  ujatProgramQueryKeys.detail(scope, result.program.id),
-                  result.program,
-                  { refetch: false }
-                )
-                invalidateUjatProgramListCaches(queryClient)
-              } else if (onUpdateProgram) {
-                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, result.patch)
-              } else {
-                await updateProgram(draftWithOverlay.id, draftWithOverlay)
+              if (result.mode !== 'row') {
+                throw new Error('UJAT 봉사자 모집 행을 찾지 못했습니다. 중복 행을 생성하지 않고 저장을 중단합니다.')
               }
+              const scope = shouldUseRemoteApi() ? 'remote' : 'local'
+              await syncOpenProgramDetailCache(
+                queryClient,
+                ujatProgramQueryKeys.detail(scope, result.program.id),
+                result.program,
+                { refetch: false }
+              )
+              invalidateUjatProgramListCaches(queryClient)
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)
               setSearchParams(next, { replace: true })
             } catch (error) {
               handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
-              if (getApiErrorCode(error) === UJAT_NOTICE_EXPOSURE_TIMING_INVALID_CODE) {
+              const errorCode = getApiErrorCode(error)
+              if (errorCode === 'RECRUITMENT_REVISION_CONFLICT') {
+                void showAlert({
+                  title: '모집 정보가 변경되었습니다.',
+                  content:
+                    '다른 관리자가 모집 정보를 먼저 저장했습니다. 입력값은 유지됩니다. 최신 모집 행을 확인한 뒤 다시 저장해 주세요.',
+                })
+              }
+              if (errorCode === 'INTERVIEW_CONFIG_CONFLICTS_WITH_ASSIGNMENTS') {
+                void showAlert({
+                  title: '면접 설정을 저장할 수 없습니다.',
+                  content:
+                    '이미 배정된 면접 일정과 충돌합니다. 기존 배정은 유지되며, 입력값은 버리지 않습니다. 배정된 슬롯을 제거하지 말고 설정을 조정해 주세요.',
+                })
+              }
+              if (errorCode === UJAT_NOTICE_EXPOSURE_TIMING_INVALID_CODE) {
                 volunteersForm.setError('volunteerRecruitmentNoticeExposure', {
                   type: 'server',
                   message: '모집 공고 노출 시점을 다시 선택해 주세요.',
                 })
               }
-              if (getApiErrorCode(error)?.startsWith('UJAT_RECRUIT_TERM_')) {
+              if (errorCode?.startsWith('UJAT_RECRUIT_TERM_')) {
                 void showAlert({
                   title: '저장 실패',
                   content: extractApiErrorMessage(
@@ -1814,11 +1840,24 @@ export function UjatProgramDetailFullPageModal({
         : activeRecruitTab === 'recruit_volunteer_h2'
           ? 'h2'
           : null
-    const incompleteKeys = listIncompleteUjatProgramRecruitmentRequiredFields().filter(key => {
-      if (activeRecruitTab === 'recruit_participant') return key.startsWith('recruit.institution')
-      if (recruitHalf == null) return false
-      return key.startsWith(`recruit.volunteer.${recruitHalf}`)
-    })
+    const typedIncompleteKeys =
+      activeRecruitTab === 'recruit_participant'
+        ? listIncompleteUjatProgramRecruitmentTypedRequiredFields({
+            institution: institutionsForm.getValues(),
+          })
+        : recruitHalf == null
+          ? []
+          : listIncompleteUjatProgramRecruitmentTypedRequiredFields({
+              ...(recruitHalf === 'h1' ? { volunteerH1: volunteersForm.getValues() } : {}),
+              ...(recruitHalf === 'h2' ? { volunteerH2: volunteersForm.getValues() } : {}),
+            })
+    const interviewIncompleteKeys =
+      recruitHalf == null
+        ? []
+        : listIncompleteUjatProgramRecruitmentInterviewScheduleRequiredFields().filter(key =>
+            key.startsWith(`recruit.volunteer.${recruitHalf}`)
+          )
+    const incompleteKeys = [...typedIncompleteKeys, ...interviewIncompleteKeys]
     if (incompleteKeys.length > 0) {
       detailRequiredHighlight.report(incompleteKeys)
       void showAlert({
@@ -1843,9 +1882,11 @@ export function UjatProgramDetailFullPageModal({
   }, [
     activeRecruitTab,
     detailRequiredHighlight,
+    institutionsForm,
     institutionsTriggerSave,
     setEditMode,
     showAlert,
+    volunteersForm,
     volunteersTriggerSave,
   ])
 
@@ -2886,16 +2927,21 @@ export function UjatProgramDetailFullPageModal({
             <>
               <div className="ujat-detail-modal__info-header">
                 <div className="program-detail-fullpage-modal__header-actions">
-                  <ProgramEditInfoActions
-                    isEditing={isEditModeInfo}
-                    idleVariant="secondary"
-                    disabled={!canEditInfo && !isEditModeInfo}
-                    onEdit={handleInfoEdit}
-                    onCancel={handleInfoCancel}
-                    onSave={() => {
-                      void handleInfoSave()
-                    }}
-                  />
+                  <BusinessPeriodExtendToolbar
+                    program={displayProgram}
+                    editDisabled={!canEditInfo && !isEditModeInfo}
+                  >
+                    <ProgramEditInfoActions
+                      isEditing={isEditModeInfo}
+                      idleVariant="secondary"
+                      disabled={!canEditInfo && !isEditModeInfo}
+                      onEdit={handleInfoEdit}
+                      onCancel={handleInfoCancel}
+                      onSave={() => {
+                        void handleInfoSave()
+                      }}
+                    />
+                  </BusinessPeriodExtendToolbar>
                 </div>
               </div>
               <UjatProgramDetailCommonInfoView
@@ -2903,6 +2949,7 @@ export function UjatProgramDetailFullPageModal({
                 sponsorName={sponsorName}
                 isEditMode={isEditModeInfo}
                 infoForm={isEditModeInfo ? infoForm : undefined}
+                scheduleForm={isEditModeInfo ? educationScheduleForm : undefined}
               />
             </>
           )}

@@ -1,5 +1,70 @@
 import assert from 'node:assert/strict'
-import { mapPortalProgramApplicationDetail } from './mappers.ts'
+import {
+  mapPortalProgramApplicationDetail,
+  mapPortalProgramApplicationListItem,
+} from './mappers.ts'
+
+const generalOrganization = mapPortalProgramApplicationListItem({
+  applicationId: 1,
+  applicationType: 'ORGANIZATION',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '일반 기관 프로그램',
+  displayStatus: '진행 중',
+})
+assert.ok(generalOrganization)
+assert.equal(generalOrganization.categoryLabel, '기관')
+
+const generalYouth = mapPortalProgramApplicationListItem({
+  applicationId: 2,
+  applicationType: 'INDIVIDUAL',
+  programId: 101,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  programTitle: '일반 청소년 프로그램',
+  displayStatus: '진행 중',
+})
+assert.ok(generalYouth)
+assert.equal(generalYouth.categoryLabel, '청소년 · 청년')
+
+const ujatVolunteer = mapPortalProgramApplicationListItem({
+  applicationId: 3,
+  applicationType: 'VOLUNTEER',
+  programId: 102,
+  programType: 'UJAT',
+  programGroup: 'UJAT',
+  programTitle: 'UJAT 봉사 프로그램',
+  displayStatus: '진행 중',
+})
+assert.ok(ujatVolunteer)
+assert.equal(ujatVolunteer.categoryLabel, '청소년 · 청년')
+
+const companySchool = mapPortalProgramApplicationListItem({
+  applicationId: 4,
+  applicationType: 'ORGANIZATION',
+  programId: 103,
+  programType: 'COMPANY_SCHOOL',
+  programGroup: 'ONE_COMPANY_ONE_SCHOOL',
+  portalCategories: ['ORGANIZATION'],
+  programTitle: '1사1교 프로그램',
+  displayStatus: '진행 중',
+})
+assert.ok(companySchool)
+assert.equal(companySchool.categoryLabel, '기관')
+
+const mixedCategories = mapPortalProgramApplicationListItem({
+  applicationId: 5,
+  applicationType: 'VOLUNTEER',
+  programId: 104,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  portalCategories: ['ORGANIZATION', 'YOUTH_YOUNG'],
+  programTitle: '복수 카테고리 프로그램',
+  displayStatus: '진행 중',
+})
+assert.ok(mixedCategories)
+assert.equal(mixedCategories.categoryLabel, '기관 · 청소년 · 청년')
 
 const mapped = mapPortalProgramApplicationDetail({
   applicationId: 1691620,

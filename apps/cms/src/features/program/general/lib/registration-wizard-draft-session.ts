@@ -74,12 +74,14 @@ export function syncRegistrationProgramDraftSession(args: {
   registrationTemplateCode: string
   activeStep?: string
   programTitleKo?: string
+  recruitments?: unknown[]
 }): void {
   const payload = createRegistrationProgramDraftPayload({
     registrationTemplateCode: args.registrationTemplateCode,
     activeStep: args.activeStep,
     programTitleKo: args.programTitleKo,
     selectedOperationalTemplates: getRegistrationStepTemplateSelections(args.programType),
+    recruitments: args.recruitments,
   })
   writeRegistrationProgramDraftLocal(args.programType, payload)
 }

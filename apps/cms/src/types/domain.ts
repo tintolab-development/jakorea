@@ -430,6 +430,34 @@ export interface ProgramRecruitmentAttachment {
   displayOrder?: number
 }
 
+export type RecruitmentNoticeExposureTiming =
+  | 'start-day'
+  | 'one-day-before'
+  | 'one-week-before'
+
+export type RecruitmentInterviewExclusionState = {
+  excludeSaturday?: boolean
+  excludeSunday?: boolean
+  excludeHoliday?: boolean
+}
+
+export type RecruitmentInterviewException = {
+  id?: string
+  exceptionDate?: string | null
+  selectedSlotKeys?: string[]
+}
+
+export type RecruitmentInterviewConfig = {
+  schemaVersion?: 1
+  selectedSlotKeys?: string[]
+  timeUnit?: number | null
+  interviewTimeRange?: string[]
+  specificUnavailableDates?: string[]
+  appliedUnavailableDates?: string[]
+  exclusionState?: RecruitmentInterviewExclusionState | null
+  exceptions?: RecruitmentInterviewException[]
+}
+
 export interface ProgramRecruitmentWindow {
   /** 모집 행 id. 저장 시 기존 행은 이 id로 고친다. */
   id?: number
@@ -462,6 +490,14 @@ export interface ProgramRecruitmentWindow {
   interviewEnabled?: boolean | null
   interviewStartAt?: string | null
   interviewEndAt?: string | null
+  announcementPublished?: boolean | null
+  documentPassAnnouncementAt?: string | null
+  finalPassAnnouncementAt?: string | null
+  noticeExposureTiming?: RecruitmentNoticeExposureTiming | null
+  volunteerTargets?: string[] | null
+  remarksNotApplicable?: boolean | null
+  interviewConfig?: RecruitmentInterviewConfig | null
+  contentRevision?: number
   /** 이 모집 대표 이미지. 프로그램 대표 이미지로 대체하지 않는다. */
   thumbnailFileObjectId?: number | null
   attachments?: ProgramRecruitmentAttachment[]
@@ -673,6 +709,14 @@ export interface Program {
   createdByName?: string
   /** 최종 수정자 표시명 (목록/상세 표시용, API·mock에서 채움) */
   updatedByName?: string
+  /** PATCH/GET이 내려주는 사업 종료일 연장 이력. 없으면 표시하지 않는다. */
+  businessPeriodHistories?: Array<{
+    previousBusinessEndDate?: string | null
+    businessEndDate?: string | null
+    reason?: string | null
+    changedByName?: string | null
+    changedAt?: string | null
+  }>
 }
 
 // 회차별 진행 방식 (교육 커리큘럼 수정용)

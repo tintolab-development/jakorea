@@ -1,5 +1,6 @@
 import type { PaymentOrderCalculationLineKind } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
+  mapTransportationCalculationDetailToBasisDetail,
   isSupportedBasisDetailLayout,
   type PaymentOrderCalculationBasisDetail,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
@@ -22,15 +23,15 @@ const SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER = [
 export function sortSettlementFrontendItems(
   items: SettlementFrontendItemResponse[]
 ): SettlementFrontendItemResponse[] {
-  const rank = new Map(
-    SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER.map((type, index) => [type, index])
-  )
+  const rank = new Map(SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER.map((type, index) => [type, index]))
   return [...items].sort((a, b) => {
     const aType = a.type ?? ''
     const bType = b.type ?? ''
-    const aRank = rank.get(aType as (typeof SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER)[number]) ??
+    const aRank =
+      rank.get(aType as (typeof SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER)[number]) ??
       SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER.length
-    const bRank = rank.get(bType as (typeof SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER)[number]) ??
+    const bRank =
+      rank.get(bType as (typeof SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER)[number]) ??
       SETTLEMENT_FRONTEND_ITEM_TYPE_ORDER.length
     return aRank - bRank
   })
@@ -213,10 +214,51 @@ function hasTypedBasisDetailFields(value: unknown): boolean {
   }
 }
 
+function nonEmptyStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+}
+
+function mapRemoteCalculationDetail(
+  detail: SettlementFrontendCalculationDetailResponse
+): PaymentOrderCalculationBasisDetail | undefined {
+  const title = detail.title?.trim()
+  const formulaText = detail.formulaText?.trim()
+  const lineLabels = nonEmptyStringArray(detail.lineLabels)
+  const formulaLines = nonEmptyStringArray(detail.formulaLines)
+  const summaryLabels = nonEmptyStringArray(detail.summaryLabels)
+
+  if (
+    !formulaText &&
+    lineLabels.length === 0 &&
+    formulaLines.length === 0 &&
+    summaryLabels.length === 0 &&
+    detail.resultAmount == null
+  ) {
+    return undefined
+  }
+
+  return {
+    layout: 'remote',
+    sourceLayout: detail.layout?.trim() || undefined,
+    title: title || '산정 기준 상세',
+    formulaText: formulaText || undefined,
+    lineLabels,
+    formulaLines,
+    summaryLabels,
+    resultAmount: detail.resultAmount,
+    iconKey: detail.iconKey?.trim() || undefined,
+    emojiOverride: detail.emojiOverride?.trim() || undefined,
+  }
+}
+
 export function mapCalculationDetailToBasisDetail(
   detail?: SettlementFrontendCalculationDetailResponse | null
 ): PaymentOrderCalculationBasisDetail | undefined {
   if (!detail) return undefined
+
+  const transportationSnapshot = mapTransportationCalculationDetailToBasisDetail(detail)
+  if (transportationSnapshot) return transportationSnapshot
 
   const candidates: unknown[] = []
   if (detail.basisJson?.trim()) {
@@ -238,5 +280,5 @@ export function mapCalculationDetailToBasisDetail(
     }
   }
 
-  return undefined
+  return mapRemoteCalculationDetail(detail)
 }

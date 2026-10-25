@@ -17,6 +17,8 @@ const mocks = vi.hoisted(() => ({
   fetchProgram: vi.fn(),
   updateProgram: vi.fn(),
   fetchSponsors: vi.fn(),
+  fetchTypedDetail: vi.fn(),
+  replaceTypedDetail: vi.fn(),
 }))
 
 vi.mock(
@@ -57,6 +59,17 @@ vi.mock('@/features/program/ujat/api/region-capacities-client', () => ({
   buildUjatRegionCapacityOverlay: vi.fn(),
   fetchUjatRegionCapacitiesRemote: vi.fn(),
 }))
+
+vi.mock('@/features/program/ujat/api/typed-detail-client', async () => {
+  const actual = await vi.importActual<typeof import('./typed-detail-client')>(
+    './typed-detail-client'
+  )
+  return {
+    ...actual,
+    fetchUjatTypedDetailRemote: (...args: unknown[]) => mocks.fetchTypedDetail(...args),
+    replaceUjatTypedDetailRemote: (...args: unknown[]) => mocks.replaceTypedDetail(...args),
+  }
+})
 
 vi.mock('@/features/program/shared/lib/merge-program-sponsor-assignments', () => ({
   withFetchedProgramSponsorAssignments: async (program: Program) => program,
@@ -105,6 +118,8 @@ describe('UJAT create media binding', () => {
     mocks.fetchProgram.mockResolvedValue({ id: '186300', title: 'server detail' })
     mocks.updateProgram.mockResolvedValue({ id: '186300', title: 'patch echo' })
     mocks.fetchSponsors.mockResolvedValue([])
+    mocks.fetchTypedDetail.mockResolvedValue({ schemaVersion: 1, halfPlans: [], common: null })
+    mocks.replaceTypedDetail.mockResolvedValue({ schemaVersion: 1, halfPlans: [], common: null })
   })
 
   it('업로드 완료를 기다린 뒤 생성하고 UJAT 모집 row 미디어를 연결한다', async () => {
@@ -129,9 +144,52 @@ describe('UJAT create media binding', () => {
     await expect(create(input())).rejects.toBe(error)
     expect(mocks.deleteProgram).toHaveBeenCalledWith(created.id)
   })
+
+  it('Typed common-info input removes stale basic-info and schedule overlay keys', async () => {
+    const collected = {
+      'ujat.basicInfo.repKo': 'stale overlay value',
+      'ujat.basicInfo.surveyItems': { survey: false },
+      'ujat.h1.event.name': '상반기 본교육',
+      'ujat.recruit.institution.publicTitle': '기관 모집',
+    }
+    mocks.collectOverlay.mockReturnValue(collected)
+
+    await expect(
+      create({
+        ...input(),
+        basicInfo: {
+          mainTitle: 'RHF 대표명',
+          surveySurvey: true,
+          generalParticipantTypes: ['school_institution', 'volunteer'],
+        },
+      })
+    ).resolves.toBe(created)
+
+    expect(mocks.buildPendingProgram).toHaveBeenCalledWith(
+      expect.objectContaining({
+        overlay: {
+          'ujat.recruit.institution.publicTitle': '기관 모집',
+        },
+      })
+    )
+    expect(mocks.bindMedia).toHaveBeenCalledWith(created, {
+      'ujat.recruit.institution.publicTitle': '기관 모집',
+    })
+  })
 })
 
 describe('ujat API policy', () => {
+  beforeEach(() => {
+    mocks.fetchProgram.mockReset()
+    mocks.updateProgram.mockReset()
+    mocks.fetchTypedDetail.mockReset()
+    mocks.replaceTypedDetail.mockReset()
+    mocks.fromDetail.mockReset()
+    mocks.shouldUseRemoteApi.mockReturnValue(true)
+    mocks.fetchTypedDetail.mockResolvedValue({ schemaVersion: 1, halfPlans: [], common: null })
+    mocks.replaceTypedDetail.mockResolvedValue({ schemaVersion: 1, halfPlans: [], common: null })
+  })
+
   it('always scopes list requests to UJAT with default page size 500', () => {
     expect(toRemoteListParams({ keyword: ' 서울 ', businessYear: 2026 })).toEqual({
       keyword: ' 서울 ',
@@ -159,5 +217,40 @@ describe('ujat API policy', () => {
     await expect(update('186300', baseline, { title: '수정' })).resolves.toBe(canonical)
     expect(mocks.updateProgram).toHaveBeenCalledOnce()
     expect(mocks.fetchProgram).toHaveBeenCalledTimes(2)
+  })
+
+  it('공통정보 설문·참여자 저장만 Typed Detail을 갱신하고 일정 overlay는 쓰지 않는다', async () => {
+    const baseline = {
+      id: '186300',
+      title: '기존',
+      ujatRegistrationOverlay: {
+        'ujat.h1.event.name': '상반기 본교육',
+        'ujat.recruit.institution.publicTitle': '기관 모집',
+      },
+    } as unknown as Program
+    mocks.fetchProgram
+      .mockResolvedValueOnce({ id: '186300', serviceDetailJson: '{}' })
+      .mockResolvedValueOnce({ id: '186300', serviceDetailJson: '{}' })
+    mocks.fetchTypedDetail.mockResolvedValue({
+      schemaVersion: 1,
+      halfPlans: [],
+      common: null,
+    })
+
+    await update('186300', baseline, {
+      generalSurveyMenuKeys: ['survey'],
+      generalParticipantTypes: ['school_institution'],
+    })
+
+    expect(mocks.replaceTypedDetail).toHaveBeenCalledWith(
+      '186300',
+      expect.objectContaining({
+        schemaVersion: 1,
+        common: expect.objectContaining({
+          surveySettings: expect.any(Array),
+          participantSettings: expect.any(Object),
+        }),
+      })
+    )
   })
 })

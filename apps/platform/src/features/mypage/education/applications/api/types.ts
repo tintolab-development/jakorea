@@ -38,6 +38,8 @@ export type PortalProgramApplicationListItem = {
   programTitle?: string
   programType?: string
   programGroup?: string
+  /** 참여하기 프로그램 목록과 동일한 공개 카테고리 코드. */
+  portalCategories?: string[]
   recruitmentId?: number
   recruitmentType?: string
   applicationStatus?: string
@@ -159,6 +161,7 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
     title?: string
     programType?: string
     programGroup?: string
+    portalCategories?: string[]
     educationFormLabel?: string | null
     educationJournalEnabled?: boolean | null
     surveyConfigured?: boolean | null

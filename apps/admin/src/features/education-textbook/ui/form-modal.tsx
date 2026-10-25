@@ -38,10 +38,10 @@ import './form-modal.css'
 dayjs.locale('ko')
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
-const MAX_BYTES = 15 * 1024 * 1024
+const MAX_BYTES = 20 * 1024 * 1024
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 썸네일 권장 사이즈는 226*320입니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 썸네일 권장 사이즈는 233 × 320px입니다.',
 ]
 
 export type TextbookFormValues = EducationTextbookCreateInput
@@ -286,7 +286,7 @@ function TextbookFormBody({
       if (file.size > MAX_BYTES) {
         showAlert({
           title: '파일 용량',
-          content: '파일은 최대 15MB까지 등록 가능합니다.',
+          content: '파일은 최대 20MB까지 등록 가능합니다.',
         })
         return
       }
@@ -669,6 +669,7 @@ function TextbookFormBody({
                         accept={IMAGE_ACCEPT}
                         buttonLabel="파일 추가"
                         fileNames={thumbnailFileName ? [thumbnailFileName] : []}
+                        maxTotalBytes={MAX_BYTES}
                         onFilesChange={files => {
                           void handleFilesChange(files)
                         }}

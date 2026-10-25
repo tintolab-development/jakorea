@@ -1,6 +1,7 @@
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import { formatDisplayDateRange } from '@/shared/lib/format-display-date'
 import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
+import { mapPortalCategoryLabel } from '@/features/program/lib/portal-category'
 import {
   formatInterviewAtLabel,
   resolveApplicationContentFromAnswers,
@@ -169,17 +170,35 @@ function mapDetailCase(
 }
 
 function mapCategoryLabel(
-  applicationType: ProgramApplicationType,
-  programGroup: string | undefined,
+  input: {
+    applicationType: ProgramApplicationType
+    programType?: string
+    programGroup?: string
+    portalCategories?: string[]
+  },
 ): string {
-  const group = (programGroup ?? '').toUpperCase()
-  if (group === 'UJAT') return 'UJAT'
-  if (group === 'ONE_COMPANY_ONE_SCHOOL') return '1사1교'
-  if (group === 'TRAINED_TEACHER') return '교육받은 교사'
-  if (applicationType === 'INSTRUCTOR') return '강사'
-  if (applicationType === 'VOLUNTEER') return '봉사'
-  if (applicationType === 'ORGANIZATION') return '기관'
-  return '일반'
+  if (input.portalCategories != null) {
+    return mapPortalCategoryLabel(input.portalCategories, input.programType)
+  }
+
+  const group = (input.programGroup ?? '').trim().toUpperCase()
+  if (group === 'UJAT') {
+    return mapPortalCategoryLabel(
+      [input.applicationType === 'ORGANIZATION' ? 'ORGANIZATION' : 'YOUTH_YOUNG'],
+      input.programType,
+    )
+  }
+
+  if (input.programType?.trim()) {
+    return mapPortalCategoryLabel(undefined, input.programType)
+  }
+
+  const fallbackCategory = input.applicationType === 'INSTRUCTOR'
+    ? 'INSTRUCTOR'
+    : input.applicationType === 'ORGANIZATION'
+      ? 'ORGANIZATION'
+      : 'YOUTH_YOUNG'
+  return mapPortalCategoryLabel([fallbackCategory], undefined)
 }
 
 function formatDateRange(start: string | null | undefined, end: string | null | undefined): string {
@@ -211,7 +230,12 @@ export function mapPortalProgramApplicationListItem(
     applicationType,
     programId: String(row.programId),
     recruitmentId: row.recruitmentId,
-    categoryLabel: mapCategoryLabel(applicationType, row.programGroup),
+    categoryLabel: mapCategoryLabel({
+      applicationType,
+      programType: row.programType,
+      programGroup: row.programGroup,
+      portalCategories: row.portalCategories,
+    }),
     title,
     recruitmentPeriodLabel: formatDateRange(row.recruitmentStartAt, row.recruitmentEndAt),
     operatingPeriodLabel: formatDateRange(row.educationStartAt, row.educationEndAt),
@@ -323,6 +347,7 @@ export function mapPortalProgramApplicationDetail(
     // 화면에 섞일 수 있다.
     programType: detail.programType,
     programGroup: detail.programGroup,
+    portalCategories: detail.portalCategories ?? detail.program?.portalCategories,
     thumbnailFileObjectId: detail.thumbnailFileObjectId ?? detail.program?.thumbnailFileObjectId,
     educationStartAt: detail.educationStartAt,
     educationEndAt: detail.educationEndAt,

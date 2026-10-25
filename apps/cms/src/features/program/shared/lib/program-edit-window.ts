@@ -5,10 +5,63 @@
  * 신청양식은 유형별 `startAt`. `startAt`이 없으면 아직 시작 전이다.
  */
 
-import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
+import type {
+  Program,
+  ProgramRecruitmentWindow,
+  RecruitmentInterviewConfig,
+  RecruitmentNoticeExposureTiming,
+} from '@/types/domain'
 import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 
 export type ProgramRecruitmentEditType = 'PARTICIPANT' | 'INSTRUCTOR' | 'VOLUNTEER'
+
+function optionalNoticeExposure(value: unknown): RecruitmentNoticeExposureTiming | null | undefined {
+  if (value === undefined) return undefined
+  if (value === 'start-day' || value === 'one-day-before' || value === 'one-week-before') return value
+  return null
+}
+
+function optionalInterviewConfig(value: unknown): RecruitmentInterviewConfig | null | undefined {
+  if (value === undefined) return undefined
+  if (value == null) return null
+  if (typeof value !== 'object' || Array.isArray(value)) return null
+  return value as RecruitmentInterviewConfig
+}
+
+function typedRecruitmentWindowFields(row: Record<string, unknown>): Partial<ProgramRecruitmentWindow> {
+  const next: Partial<ProgramRecruitmentWindow> = {}
+  if ('announcementPublished' in row) {
+    next.announcementPublished =
+      typeof row.announcementPublished === 'boolean' ? row.announcementPublished : null
+  }
+  if ('documentPassAnnouncementAt' in row) {
+    next.documentPassAnnouncementAt =
+      typeof row.documentPassAnnouncementAt === 'string' ? row.documentPassAnnouncementAt : null
+  }
+  if ('finalPassAnnouncementAt' in row) {
+    next.finalPassAnnouncementAt =
+      typeof row.finalPassAnnouncementAt === 'string' ? row.finalPassAnnouncementAt : null
+  }
+  if ('noticeExposureTiming' in row) {
+    next.noticeExposureTiming = optionalNoticeExposure(row.noticeExposureTiming) ?? null
+  }
+  if ('volunteerTargets' in row) {
+    next.volunteerTargets = Array.isArray(row.volunteerTargets)
+      ? row.volunteerTargets.filter((item): item is string => typeof item === 'string')
+      : null
+  }
+  if ('remarksNotApplicable' in row) {
+    next.remarksNotApplicable =
+      typeof row.remarksNotApplicable === 'boolean' ? row.remarksNotApplicable : null
+  }
+  if ('interviewConfig' in row) {
+    next.interviewConfig = optionalInterviewConfig(row.interviewConfig) ?? null
+  }
+  if (typeof row.contentRevision === 'number' && Number.isFinite(row.contentRevision)) {
+    next.contentRevision = row.contentRevision
+  }
+  return next
+}
 
 const MINUTE_MS = 60_000
 const SEOUL_TIME_ZONE = 'Asia/Seoul'
@@ -88,6 +141,7 @@ export function toProgramRecruitmentWindows(
     additionalContentHtml: row.additionalContentHtml ?? null,
     remarks: row.remarks ?? null,
     otherMatters: row.otherMatters ?? null,
+    ...typedRecruitmentWindowFields(row as Record<string, unknown>),
   }))
 }
 

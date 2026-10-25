@@ -1,44 +1,42 @@
 /* 산출 내역서 ContentModal (프로그램 맥락) */
 
-/* 모odal 바디가 overflow hidden이면 테이블 가로 넘침이 우측에서 잘림 → 가로 스크롤 허용 */
+/* Figma `popup / table / w1400 / 산출 내역서` — 헤더·푸터는 고정하고 본문만 스크롤 */
 .payment-order-calc-statement-modal.teal-header-modal--large .ant-modal-body {
-  flex: 0 0 auto !important;
+  flex: 1 1 auto !important;
   min-height: 0;
-  overflow-x: auto;
-  overflow-y: visible !important;
+  overflow: hidden !important;
 }
 
-/* 모달 크기 1400×880 (뷰포트보다 클 때는 축소) */
+/* Figma 셸: 1400×880, padding 24px 30px 34px, radius 16, shadow 0.3 */
 .payment-order-calc-statement-modal.content-modal.teal-header-modal--large .ant-modal-content {
-  padding: 26px 30px 34px !important;
-  border-radius: 12px !important;
-  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35) !important;
+  padding: 24px 30px 34px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
 .payment-order-calc-statement-modal.teal-header-modal--large .ant-modal-content {
   width: min(1400px, calc(100vw - 32px)) !important;
-  height: auto !important;
-  min-height: 0;
-  max-height: calc(100vh - 48px) !important;
+  height: min(880px, calc(100dvh - 48px)) !important;
+  max-height: min(880px, calc(100dvh - 48px)) !important;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   overflow-x: hidden;
-  overflow-y: visible;
+  overflow-y: hidden;
 }
 
 .payment-order-calc-statement-modal.teal-header-modal--large
   .teal-header-modal__body.teal-header-modal__body--scrollable,
 .payment-order-calc-statement-modal.teal-header-modal--large .teal-header-modal__body {
-  overflow-y: visible !important;
-  overflow-x: auto;
+  overflow: auto !important;
   max-height: none !important;
   min-width: 0;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
 }
 
-/* 모달 타이틀(헤더) ↔ 본문 첫 블록 간격 24px */
+/* Figma root gap: title/header와 본문 사이 30px */
 .payment-order-calc-statement-modal.teal-header-modal .teal-header-modal__body {
-  padding-top: 24px;
+  padding-top: 30px;
   /* 기본 center면 자식이 콘텐츠 폭으로 줄어 테이블·우측이 잘림 → 전폭 사용 */
   align-items: stretch;
   min-width: 0;
@@ -280,7 +278,7 @@
 }
 
 .payment-order-calc-statement-modal__basic {
-  margin-bottom: 28px;
+  margin-bottom: 30px;
 }
 
 /* 산출 내역 상세(테이블 블록)와 하단 푸터(닫기) 사이 30px — content-modal 기본과 동일 스펙 명시 */
@@ -298,6 +296,9 @@
 }
 
 .payment-order-calc-statement-modal__detail-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
   flex: 1;
   min-width: 0;
 }
@@ -333,7 +334,7 @@
   padding: 0 16px;
   box-sizing: border-box;
   vertical-align: middle;
-  background: #f5f6f7;
+  background: var(--BG-header, #f5f6f7);
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
@@ -489,7 +490,7 @@
 }
 
 .payment-order-calc-statement-modal__summary-row .ant-table-cell {
-  background: #f0f7f8 !important;
+  background: var(--Brand-500-06, rgba(1, 161, 175, 0.06)) !important;
   border-top: 1px solid var(--table-line) !important;
   border-inline-end-color: var(--table-line) !important;
   border-bottom-color: var(--table-line) !important;
@@ -529,6 +530,6 @@
   font-style: normal;
   font-weight: 700;
   line-height: 150%;
-  color: #01a1af;
+  color: var(--color-brand-primary, #01a1af);
   font-variant-numeric: tabular-nums;
 }

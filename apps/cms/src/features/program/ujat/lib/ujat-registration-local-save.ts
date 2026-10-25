@@ -6,6 +6,10 @@
 import dayjs from 'dayjs'
 import type { Program, ProgramRound } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import {
+  stripUjatBasicInfoOverlay,
+  type UjatBasicInfoFormValues,
+} from './ujat-basic-info-form'
 import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
   applyUjatRecruitInstitutionOverlayOntoProgram,
@@ -85,26 +89,38 @@ export function collectUjatRegistrationCreateOverlay(
 export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
   id: string
   overlay: Record<string, unknown>
+  basicInfo?: Partial<UjatBasicInfoFormValues>
 }): Program {
   const now = new Date().toISOString()
-  const sponsorRaw = overlayString(args.overlay, 'ujat.basicInfo.sponsorId')
+  const overlay = args.basicInfo
+    ? stripUjatBasicInfoOverlay(args.overlay)
+    : args.overlay
+  const sponsorRaw =
+    args.basicInfo?.sponsorId?.trim() || overlayString(overlay, 'ujat.basicInfo.sponsorId')
   const sponsorId =
     sponsorRaw && sponsorRaw !== SPONSOR_ALL_VALUE ? sponsorRaw : resolveDefaultSponsorId()
 
-  const repKo = overlayString(args.overlay, 'ujat.basicInfo.repKo')?.trim() || ''
+  const repKo = args.basicInfo?.mainTitle?.trim() || overlayString(overlay, 'ujat.basicInfo.repKo') || ''
   const programManagementName =
-    overlayString(args.overlay, 'ujat.basicInfo.programManagementName')?.trim() || ''
+    args.basicInfo?.title?.trim() ||
+    overlayString(overlay, 'ujat.basicInfo.programManagementName') ||
+    ''
 
   const title = programManagementName
 
-  const seal = args.overlay['ujat.basicInfo.operationRangeSeal'] as
+  const seal = overlay['ujat.basicInfo.operationRangeSeal'] as
     | { start?: string | null; end?: string | null }
     | undefined
     | null
 
   let startDate = ''
   let endDate = ''
-  if (seal?.start && seal?.end) {
+  const basicInfoStart = args.basicInfo?.startDate?.trim()
+  const basicInfoEnd = args.basicInfo?.endDate?.trim()
+  if (basicInfoStart && basicInfoEnd) {
+    startDate = dayjs(basicInfoStart).startOf('day').toISOString()
+    endDate = dayjs(basicInfoEnd).endOf('day').toISOString()
+  } else if (seal?.start && seal?.end) {
     startDate = dayjs(seal.start).startOf('day').toISOString()
     endDate = dayjs(seal.end).endOf('day').toISOString()
   }
@@ -121,6 +137,13 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
     deliveryType: 'offline',
   }
 
+  const participantTypes = args.basicInfo?.generalParticipantTypes
+  const surveyKeys = [
+    args.basicInfo?.surveySurvey ? 'survey' : null,
+    args.basicInfo?.surveyVolunteerSatisfaction ? 'volunteer_satisfaction' : null,
+    args.basicInfo?.surveySchoolSatisfaction ? 'school_satisfaction' : null,
+    args.basicInfo?.surveyLectureEvaluation ? 'lecture_evaluation' : null,
+  ].filter((key): key is string => key != null)
   const base: Program = {
     id,
     sponsorId,
@@ -142,13 +165,45 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
     approvedStudentCount: 0,
     targetLevel: 'elementary',
     mainTitle: repKo,
+    titleEn:
+      args.basicInfo?.titleEn?.trim() || overlayString(overlay, 'ujat.basicInfo.repEn') || '',
+    businessArea:
+      args.basicInfo?.businessArea?.trim() ||
+      overlayString(overlay, 'ujat.basicInfo.businessField') ||
+      undefined,
+    detailedProgramId:
+      args.basicInfo?.detailedProgramId?.trim() ||
+      overlayString(overlay, 'ujat.basicInfo.detailedProgramId') ||
+      undefined,
+    educationProcess:
+      args.basicInfo?.educationProcess?.trim() ||
+      overlayString(overlay, 'ujat.basicInfo.educationCourse') ||
+      undefined,
+    ipOwned: args.basicInfo?.ipOwned ?? overlayString(overlay, 'ujat.basicInfo.ipOwned'),
+    courseDeliveredBy:
+      args.basicInfo?.courseDeliveredBy ??
+      (overlayString(overlay, 'ujat.basicInfo.courseDeliveredBy') as Program['courseDeliveredBy']),
+    partnerInvolvement:
+      args.basicInfo?.partnerInvolvement ??
+      (overlayString(overlay, 'ujat.basicInfo.partnerInvolvement') === 'yes'),
+    generalParticipantTypes: participantTypes as Program['generalParticipantTypes'],
+    generalSurveyMenuKeys: surveyKeys as Program['generalSurveyMenuKeys'],
+    generalCommonInfo: {
+      sponsorManagerContactIds: args.basicInfo?.sponsorManagerContactIds,
+      sponsorManagerContactId: args.basicInfo?.sponsorManagerContactId,
+      sponsorManagerLine: args.basicInfo?.managerName,
+      educationProcess: args.basicInfo?.educationProcess,
+      ipOwned: args.basicInfo?.ipOwned,
+      courseDeliveredBy: args.basicInfo?.courseDeliveredBy,
+      partnerInvolvement: args.basicInfo?.partnerInvolvement,
+    },
     createdAt: now,
     updatedAt: now,
   }
 
   // 버그 수정: 예전엔 제목·기간만 있는 뼈대를 그대로 create에 써서
   // 등록 실입력(영문명·사업분야·IP·KPI 등)이 1차 컬럼에 안 실렸다.
-  return applyUjatRegistrationCreateOverlaysToProgram(base, args.overlay)
+  return applyUjatRegistrationCreateOverlaysToProgram(base, overlay)
 }
 
 /** 등록 공통정보가 운영 식별·기간 SSOT. 모집 overlay는 담당자·모집기간만 얹는다. */

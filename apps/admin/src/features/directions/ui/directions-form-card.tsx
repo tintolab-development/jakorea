@@ -108,7 +108,7 @@ export function DirectionsFormCard({ data }: Props) {
         <div className="table-header-title--wrapper">
           <span className="table-title">오시는 길 관리</span>
           <span className="table-description">
-            카카오맵 HTML 삽입 시, 지도의 크기는 1440*728 설정을 권장합니다.
+            카카오맵 HTML 삽입 시, 지도의 크기는 1440 × 728px 설정을 권장합니다.
           </span>
         </div>
         <div className="table-header-actions--wrapper">

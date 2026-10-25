@@ -14,12 +14,21 @@ type PrepareRuntime = {
   uploadToken?: string
 }
 
+function sponsorLogoContentType(file: File): string {
+  const name = file.name.toLowerCase()
+  if (name.endsWith('.ai')) return 'application/illustrator'
+  if (name.endsWith('.eps')) return 'application/postscript'
+  if (name.endsWith('.svg')) return 'image/svg+xml'
+  return file.type || 'application/octet-stream'
+}
+
 export async function uploadSponsorLogoAsset(file: File): Promise<number> {
   const assetsApi = getJAKoreaHomepageAdminAPIAssetsSubset()
+  const contentType = sponsorLogoContentType(file)
   const prepared = (await assetsApi.prepareUpload({
     purpose: 'SPONSOR_LOGO',
     originalName: file.name,
-    contentType: file.type || 'application/octet-stream',
+    contentType,
     sizeBytes: file.size,
   })) as PrepareRuntime
 
@@ -35,7 +44,7 @@ export async function uploadSponsorLogoAsset(file: File): Promise<number> {
     ...(prepared.requiredHeaders ?? {}),
   }
   if (!headers['Content-Type'] && !headers['content-type']) {
-    headers['Content-Type'] = file.type || 'application/octet-stream'
+    headers['Content-Type'] = contentType
   }
 
   const uploadRes = await fetch(resolvePresignedUploadUrl(uploadUrl), {

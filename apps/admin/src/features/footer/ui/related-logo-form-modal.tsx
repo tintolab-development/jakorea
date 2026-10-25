@@ -13,7 +13,7 @@ import {
   CmsRadioGroup,
   ContentModal,
   FileSelectField,
-  FILE_SELECT_MAX_TOTAL_BYTES,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
   useCmsAlert,
@@ -23,8 +23,8 @@ import './related-logo-form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 권장 배너 사이즈는 195*60입니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 권장 로고 사이즈는 100 × 60px입니다.',
 ]
 
 const MODAL_DESCRIPTION =
@@ -136,10 +136,10 @@ export function RelatedLogoFormModal({
       if (
         isFileSelectTotalSizeExceeded({
           incoming: [file],
-          maxTotalBytes: FILE_SELECT_MAX_TOTAL_BYTES,
+          maxTotalBytes: FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded()
+        notifyFileSelectTotalSizeExceeded(FILE_SELECT_IMAGE_MAX_TOTAL_BYTES)
         return
       }
       try {
@@ -261,6 +261,7 @@ export function RelatedLogoFormModal({
                   accept={IMAGE_ACCEPT}
                   buttonLabel="파일 추가"
                   fileNames={logoFileName ? [logoFileName] : []}
+                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                   guideLines={IMAGE_GUIDE_LINES}
                   onFilesChange={files => {
                     void handleFilesChange(files)

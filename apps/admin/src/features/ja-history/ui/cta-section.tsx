@@ -4,7 +4,7 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaHistoryCta } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryCta } from '@/features/ja-history/api/hooks'
 import {
-  FILE_SELECT_MAX_TOTAL_BYTES,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   FileSelectField,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
@@ -15,7 +15,8 @@ import { CtaButtonsNestedTable } from './cta-buttons-nested-table'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
 
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 권장 이미지 사이즈는 680 × 400px입니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
@@ -51,10 +52,10 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
       if (
         isFileSelectTotalSizeExceeded({
           incoming: [file],
-          maxTotalBytes: FILE_SELECT_MAX_TOTAL_BYTES,
+          maxTotalBytes: FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded()
+        notifyFileSelectTotalSizeExceeded(FILE_SELECT_IMAGE_MAX_TOTAL_BYTES)
         return
       }
       try {
@@ -153,6 +154,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
                   accept={JA_HISTORY_IMAGE_ACCEPT}
                   buttonLabel="파일 추가"
                   fileNames={draft.image.fileName ? [draft.image.fileName] : []}
+                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                   guideLines={IMAGE_GUIDE_LINES}
                   onFilesChange={files => {
                     void handleFilesChange(files)

@@ -15,6 +15,8 @@ export type RegistrationProgramDraftPayloadV1 = {
   programTitleKo?: string
   /** 모집/신청 탭별 선택 양식 code (기본이면 키 생략) */
   selectedOperationalTemplates?: Record<string, string>
+  /** UJAT 등록 Draft — 기관/H1/H2 typed 모집 행 */
+  recruitments?: unknown[]
 }
 
 export function isRegistrationProgramDraftPayloadV1(
@@ -43,6 +45,7 @@ export function createRegistrationProgramDraftPayload(args: {
   formVersions?: Record<string, RegistrationProgramDraftFormVersionRef>
   programTitleKo?: string
   selectedOperationalTemplates?: Record<string, string>
+  recruitments?: unknown[]
 }): RegistrationProgramDraftPayloadV1 {
   return {
     version: REGISTRATION_PROGRAM_DRAFT_PAYLOAD_VERSION,
@@ -52,5 +55,6 @@ export function createRegistrationProgramDraftPayload(args: {
     savedAt: new Date().toISOString(),
     programTitleKo: args.programTitleKo,
     selectedOperationalTemplates: args.selectedOperationalTemplates,
+    ...(args.recruitments != null ? { recruitments: args.recruitments } : {}),
   }
 }

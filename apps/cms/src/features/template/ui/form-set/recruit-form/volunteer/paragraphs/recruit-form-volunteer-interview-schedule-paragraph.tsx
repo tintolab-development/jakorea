@@ -6,7 +6,10 @@ import type { UnavailableDatesExclusionState } from '@/features/template/ui/form
 import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { normalizeRangeSealToLocalDayBounds } from '@/features/template/ui/form-set/shared/unavailable-dates-calendar-range'
 
-/** 봉사자 모집 폼 — 면접 진행 가능 일정(신청 폼 템플릿 UI 재사용) */
+/**
+ * 봉사자 모집 폼 — 면접 진행 가능 일정(신청 폼 템플릿 UI 재사용).
+ * Overlay KV(selectedSlotKeys/timeUnit/exception) 전용. 모집 행 DTO에는 슬롯 필드가 없다.
+ */
 export function RecruitFormVolunteerInterviewScheduleParagraph({
   exceptionScheduleCount = 0,
   exceptionBlockKeys,

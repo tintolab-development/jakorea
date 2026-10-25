@@ -1,0 +1,12 @@
+.business-period-extend-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16, 16px);
+}
+
+.business-period-extend-modal__confirm {
+  margin: 0;
+  color: var(--color-text-body);
+  font-size: var(--font-size-14, 14px);
+  line-height: 150%;
+}

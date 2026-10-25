@@ -1,4 +1,14 @@
-/** UJAT 모집 overlay 키 — import 순환 방지용 단독 모듈 */
+/**
+ * UJAT 모집 overlay 키 — import 순환 방지용 단독 모듈.
+ *
+ * 활성 모집 탭 SSOT는 GET `recruitments[]` 행이다. 아래 키는
+ * Template authoring·등록 위저드 draft·면접 슬롯처럼 행 DTO에 없는 필드의
+ * Legacy compatibility용이다. 행 필드(공고명·기간·담당자·안내 문구)를
+ * Overlay로 다시 덮지 않는다.
+ *
+ * BACKEND BLOCKER: ProgramRecruitmentRequest/Response에는 selectedSlotKeys,
+ * timeUnit, interviewTimeRange, exception schedule이 없다.
+ */
 
 export const UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
   announcementPublished: 'ujat.recruit.institution.announcementPublished',

@@ -44,6 +44,7 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type { UjatVolunteerRecruitHalf } from '../ujat-recruit-paragraph-props'
 import {
   getUjatVolunteerRecruitPeriod,
+  resolveUjatVolunteerActivityTermCanonicalDisplay,
   resolveUjatVolunteerActivityTermDisplay,
 } from '../ujat-recruit-program-round'
 import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
@@ -151,7 +152,8 @@ export function UjatRecruitVolunteerInfoProgramView({
     : null
   const publicTitle = resolveUjatRecruitAnnouncementTitle(
     program,
-    ujatRecruitDisplayKindFromVolunteerHalf(volunteerHalf)
+    ujatRecruitDisplayKindFromVolunteerHalf(volunteerHalf),
+    { allowOverlayFallback: isTemplateAuthoring }
   )
   const watchedTargets = isEdit && form ? form.watch('volunteerTargets') : undefined
   const savedTargets = resolveProgramVolunteerTargets(program)
@@ -170,7 +172,9 @@ export function UjatRecruitVolunteerInfoProgramView({
     program.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail?.trim() ||
     '-'
   const notes = resolveVolunteerNotesDisplay(program)
-  const activityTerm = resolveActivityTermDisplay(program, volunteerHalf)
+  const activityTerm = isTemplateAuthoring
+    ? resolveActivityTermDisplay(program, volunteerHalf)
+    : resolveUjatVolunteerActivityTermCanonicalDisplay(program, volunteerHalf)
   const noticeExposureSetting =
     program.generalCommonInfo?.volunteerRecruitmentInfo?.noticeExposureTiming ??
     (isEdit && form ? form.watch('volunteerRecruitmentNoticeExposure') : undefined)

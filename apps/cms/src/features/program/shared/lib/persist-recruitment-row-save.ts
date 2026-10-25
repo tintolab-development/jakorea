@@ -259,6 +259,33 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   }
   assignOptionalString(body, 'interviewStartAt', interviewStartAt)
   assignOptionalString(body, 'interviewEndAt', interviewEndAt)
+  const typedBody = body as ProgramRecruitmentRequest & Record<string, unknown>
+  if (row.announcementPublished != null) {
+    typedBody.announcementPublished = row.announcementPublished
+  }
+  if (row.remarksNotApplicable != null) {
+    typedBody.remarksNotApplicable = row.remarksNotApplicable
+  }
+  if (typeof row.contentRevision === 'number') {
+    typedBody.expectedRevision = row.contentRevision
+  }
+  if (audience === 'volunteer') {
+    if (row.documentPassAnnouncementAt !== undefined) {
+      typedBody.documentPassAnnouncementAt = row.documentPassAnnouncementAt
+    }
+    if (row.finalPassAnnouncementAt !== undefined) {
+      typedBody.finalPassAnnouncementAt = row.finalPassAnnouncementAt
+    }
+    if (row.noticeExposureTiming !== undefined) {
+      typedBody.noticeExposureTiming = row.noticeExposureTiming
+    }
+    if (row.volunteerTargets !== undefined) {
+      typedBody.volunteerTargets = row.volunteerTargets
+    }
+    if (row.interviewConfig !== undefined) {
+      typedBody.interviewConfig = row.interviewConfig
+    }
+  }
   if (clearFields.length > 0) body.clearFields = clearFields
   return body
 }
@@ -283,6 +310,14 @@ const AUDIENCE_ROW_KEYS = [
   'interviewEnabled',
   'interviewStartAt',
   'interviewEndAt',
+  'announcementPublished',
+  'documentPassAnnouncementAt',
+  'finalPassAnnouncementAt',
+  'noticeExposureTiming',
+  'volunteerTargets',
+  'remarksNotApplicable',
+  'interviewConfig',
+  'contentRevision',
 ] as const satisfies ReadonlyArray<keyof ProgramRecruitmentWindow>
 
 function nestedInfoKey(

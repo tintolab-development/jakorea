@@ -83,6 +83,13 @@ interface AuthState {
 const TOKEN_STORAGE_KEY = 'auth_token'
 const TOKEN_EXPIRY_KEY = 'auth_expires_at'
 
+/** 만료 임박 판단 버퍼. 관리자 access TTL(1h)과 같은 고정 1h 임계값은 쓰지 않는다. */
+export const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 30 * 1000
+
+export function shouldRefreshAccessToken(expiresAtMs: number, nowMs: number): boolean {
+  return expiresAtMs <= nowMs + ACCESS_TOKEN_EXPIRY_BUFFER_MS
+}
+
 function tokenExpiresAtFromResponse(tokens: AuthTokenResponse): string {
   if (tokens.expiresInSeconds && tokens.expiresInSeconds > 0) {
     return new Date(Date.now() + tokens.expiresInSeconds * 1000).toISOString()
@@ -457,10 +464,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         try {
           const now = new Date()
           let expiryTime = new Date(expiresAt)
-          const bufferTime = 30 * 1000 // 30초 버퍼
 
-          // access 만료(버퍼 포함) 시 refresh 시도 후 실패하면 logout
-          if (expiryTime.getTime() <= now.getTime() + bufferTime) {
+          // access 만료 임박(30초 버퍼)일 때만 refresh. TTL 1h와 같은 고정 1h 선제 갱신은 하지 않는다.
+          if (shouldRefreshAccessToken(expiryTime.getTime(), now.getTime())) {
             const refreshed = await get().refreshToken()
             if (!refreshed) {
               get().logout()
@@ -473,18 +479,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               return
             }
             expiryTime = new Date(expiresAt)
-          }
-
-          // 만료 1시간 전 선제 갱신 (백그라운드)
-          const timeUntilExpiry = expiryTime.getTime() - now.getTime()
-          const oneHour = 60 * 60 * 1000
-
-          if (timeUntilExpiry < oneHour && timeUntilExpiry > 0) {
-            get()
-              .refreshToken()
-              .catch(() => {
-                // 갱신 실패는 조용히 처리 (사용자에게 노출하지 않음)
-              })
           }
 
           // localStorage에 저장된 사용자 정보로 먼저 확인
@@ -658,9 +652,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
       const now = new Date()
       const expiryTime = new Date(state.expiresAt)
-      const bufferTime = 30 * 1000 // 30초 버퍼
 
-      if (expiryTime.getTime() <= now.getTime() + bufferTime) {
+      if (shouldRefreshAccessToken(expiryTime.getTime(), now.getTime())) {
         const refreshToken =
           typeof window !== 'undefined' && window.localStorage
             ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)

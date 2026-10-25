@@ -41,6 +41,11 @@ import {
   replaceUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import {
+  stripUjatScheduleLegacyOverlay,
+  typedDetailFromUjatOverlay,
+  type UjatTypedDetail,
+} from '@/features/program/ujat/api/typed-detail-client'
+import {
   peekUjatRecruitInstitutionOverlayRecord,
   replaceUjatRecruitInstitutionOverlayForScope,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
@@ -122,6 +127,8 @@ export type UjatDevAutofillResult = {
   manualInputRequired: string[]
   /** 적용 후 제품 필수값 검증 결과 (빈 배열이어야 등록 가능) */
   incompleteRequiredFields: string[]
+  /** 교육 일정은 등록 Overlay가 아닌 Typed RHF에 직접 주입한다. */
+  typedEducationSchedule: UjatTypedDetail
 }
 
 function omitPrefixes(
@@ -256,7 +263,7 @@ function snapshotStores(targets: UjatDevAutofillTargets): StoreSnapshot {
 function applyOverlays(fixture: UjatDevAutofillFixture, targets: UjatDevAutofillTargets): void {
   replaceUjatProgramRegistrationOverlay({
     ...omitPrefixes(getUjatProgramRegistrationOverlayRecord(), REGISTRATION_OWNED_PREFIXES),
-    ...fixture.registration,
+    ...stripUjatScheduleLegacyOverlay(fixture.registration),
   })
   for (const code of new Set(targets.recruitInstitution)) {
     replaceUjatRecruitInstitutionOverlayForScope(code, {
@@ -384,6 +391,7 @@ export async function applyUjatDevAutofillCase(options: {
     }
 
     const targets = resolveUjatDevAutofillTargets()
+    const typedEducationSchedule = typedDetailFromUjatOverlay(fixture.registration)
     const restore = snapshotStores(targets)
     try {
       applyOverlays(fixture, targets)
@@ -406,7 +414,11 @@ export async function applyUjatDevAutofillCase(options: {
       sponsorContactId: String(fixture.registration['ujat.basicInfo.sponsorContactId']),
       targets,
       manualInputRequired,
-      incompleteRequiredFields: listIncompleteUjatProgramRegistrationWizardRequiredFields(),
+      incompleteRequiredFields: listIncompleteUjatProgramRegistrationWizardRequiredFields(
+        undefined,
+        typedEducationSchedule
+      ),
+      typedEducationSchedule,
     }
   } finally {
     running = false

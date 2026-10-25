@@ -8,7 +8,6 @@ import { CmsButton, type CmsButtonSize } from '@/shared/ui/cms-button'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
-  PaymentOrderAdminLineProcessingStatus,
   PaymentOrderCalculationLineKind,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
@@ -17,6 +16,8 @@ import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './payment-order-program-calculation-statement-modal.css'
 
 export const PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH = 1200
+/** 산출 내역서 Figma w1400 콘텐츠 폭: 1400 - 좌우 30px */
+export const PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH = 1340
 
 export interface PaymentOrderCalculationTableRow {
   key: string
@@ -86,6 +87,8 @@ export function getPaymentOrderCalculationColumns(options?: {
   /** 산정 기준 상세 · 지급조서 발급 버튼 (기본 large / 160px) */
   actionButtonSize?: CmsButtonSize
   actionButtonWidth?: number
+  /** 산출 내역서(1340px)와 계좌 지급 현황(1200px)의 열 폭 프리셋 */
+  columnWidthPreset?: 'statement-modal' | 'compact'
 }): ColumnsType<PaymentOrderCalculationTableRow> {
   const handleBasisDetailClick = (row: PaymentOrderCalculationTableRow) => {
     if (options?.onBasisDetailClick) {
@@ -99,13 +102,18 @@ export function getPaymentOrderCalculationColumns(options?: {
   const sessionLabelMode = options?.lectureSessionSegmentLabel ?? 'session'
   const actionButtonSize = options?.actionButtonSize ?? 'large'
   const actionButtonWidth = options?.actionButtonWidth ?? 160
+  const columnWidthPreset = options?.columnWidthPreset ?? 'statement-modal'
+  const columnWidths =
+    columnWidthPreset === 'statement-modal'
+      ? { institution: 188, date: 264, item: 142, description: 311, amount: 214, detail: 221 }
+      : { institution: 160, date: 268, item: 120, description: 320, amount: 152, detail: 176 }
 
   return [
     {
       title: '참여 기관명',
       dataIndex: 'institutionName',
       key: 'institutionName',
-      width: 160,
+      width: columnWidths.institution,
       align: 'center',
       onCell: (record: PaymentOrderCalculationTableRow) => ({
         rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
@@ -114,7 +122,7 @@ export function getPaymentOrderCalculationColumns(options?: {
     {
       title: '강의 진행 일자',
       key: 'lectureProgress',
-      width: 268,
+      width: columnWidths.date,
       align: 'center',
       onCell: (record: PaymentOrderCalculationTableRow) => ({
         rowSpan: record.isFirstInBlock ? record.blockRowSpan : 0,
@@ -132,14 +140,14 @@ export function getPaymentOrderCalculationColumns(options?: {
       title: '산정 항목',
       dataIndex: 'itemLabel',
       key: 'itemLabel',
-      width: 120,
+      width: columnWidths.item,
       align: 'center',
     },
     {
       title: '항목 설명',
       dataIndex: 'description',
       key: 'description',
-      width: 320,
+      width: columnWidths.description,
       ellipsis: { showTitle: true },
       align: 'center',
     },
@@ -147,7 +155,7 @@ export function getPaymentOrderCalculationColumns(options?: {
       title: '정산 금액',
       dataIndex: 'amount',
       key: 'amount',
-      width: 152,
+      width: columnWidths.amount,
       align: 'center',
       render: (amount: number, row: PaymentOrderCalculationTableRow) =>
         row.amountDisplayOverride ? (
@@ -169,7 +177,7 @@ export function getPaymentOrderCalculationColumns(options?: {
     {
       title: '산정 기준 상세',
       key: 'detail',
-      width: 176,
+      width: columnWidths.detail,
       align: 'center',
       render: (_: unknown, row: PaymentOrderCalculationTableRow) => (
         <div className="payment-order-calc-statement-modal__detail-btn-wrap">
@@ -191,11 +199,6 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   blocks: PaymentOrderCalculationStatementSessionBlock[]
   formulaLabel: string
   totalAmount: number
-  /**
-   * 지급조서 처리 현황(라인/기본정보 클래스). `confirmed`(지급조서 확인 완료)이면 headerActions 미노출.
-   * 미전달 시 headerActions 는 항상 표시(예: 계좌 지급 상세의 「지급 완료 처리」만 쓰는 경우).
-   */
-  processingStatus?: PaymentOrderAdminLineProcessingStatus
   /** 산출 내역 헤더 우측 (예: 신청 반려/확인 처리, 지급 완료 처리) */
   headerActions?: ReactNode
   onDownloadPaymentStatement?: () => void
@@ -208,9 +211,13 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   lectureSessionSegmentLabel?: 'session' | 'round'
   /** 산정 기준 상세 모달 열기 */
   onBasisDetailClick?: (row: PaymentOrderCalculationTableRow) => void
+  /** 산출 내역 상세 제목 옆 안내 문구 */
+  detailDescription?: string
   /** 산정 기준 상세 · 지급조서 발급 버튼 (기본 large / 160px) */
   actionButtonSize?: CmsButtonSize
   actionButtonWidth?: number
+  /** 산출 내역서(1340px)와 계좌 지급 현황(1200px)의 열 폭 프리셋 */
+  columnWidthPreset?: 'statement-modal' | 'compact'
   /**
    * `cms-data-table`: 공유 테이블 패딩·타이포(8×12, 14px/150%).
    * `statement-modal`: 산출 내역서 모달 전용 오버라이드(기본).
@@ -222,16 +229,23 @@ export function PaymentOrderCalculationBreakdownTable({
   blocks,
   formulaLabel,
   totalAmount,
-  processingStatus,
   headerActions,
   onDownloadPaymentStatement,
   paymentStatementIssueDisabled = false,
   lectureSessionSegmentLabel = 'session',
   onBasisDetailClick,
+  detailDescription,
   actionButtonSize = 'large',
   actionButtonWidth = 160,
+  columnWidthPreset,
   tableCellSpec = 'statement-modal',
 }: PaymentOrderCalculationBreakdownTableProps) {
+  const resolvedColumnWidthPreset =
+    columnWidthPreset ?? (tableCellSpec === 'statement-modal' ? 'statement-modal' : 'compact')
+  const tableMinWidth =
+    tableCellSpec === 'statement-modal'
+      ? PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH
+      : PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH
   const tableClassName =
     tableCellSpec === 'cms-data-table'
       ? 'cms-data-table cms-data-table--skip-auto-no-col account-payment-status-detail__calc-table'
@@ -244,18 +258,17 @@ export function PaymentOrderCalculationBreakdownTable({
         onBasisDetailClick,
         actionButtonSize,
         actionButtonWidth,
+        columnWidthPreset: resolvedColumnWidthPreset,
       }),
-    [lectureSessionSegmentLabel, onBasisDetailClick, actionButtonSize, actionButtonWidth]
+    [
+      lectureSessionSegmentLabel,
+      onBasisDetailClick,
+      actionButtonSize,
+      actionButtonWidth,
+      resolvedColumnWidthPreset,
+    ]
   )
-  const hideHeaderActionsStatuses: PaymentOrderAdminLineProcessingStatus[] = [
-    'confirmed',
-    'awaiting_payment',
-    'application_rejected',
-    'rejected',
-  ]
-  const showHeaderActions =
-    headerActions != null &&
-    (processingStatus === undefined || !hideHeaderActionsStatuses.includes(processingStatus))
+  const showHeaderActions = headerActions != null
 
   const handleDownload = () => {
     if (paymentStatementIssueDisabled) return
@@ -269,13 +282,16 @@ export function PaymentOrderCalculationBreakdownTable({
   return (
     <div
       className="payment-order-calc-statement-modal__detail-section"
-      style={{ minWidth: PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH }}
+      style={{ minWidth: tableMinWidth }}
     >
       <div className="payment-order-calc-statement-modal__detail-header">
         <div className="payment-order-calc-statement-modal__detail-header-left">
-          <div>
-            <span className="info-section-title">산출 내역 상세</span>
-          </div>
+          <span className="info-section-title">산출 내역 상세</span>
+          {detailDescription ? (
+            <span className="payment-order-calc-statement-modal__detail-desc">
+              {detailDescription}
+            </span>
+          ) : null}
         </div>
         {showHeaderActions ? (
           <div className="payment-order-calc-statement-modal__detail-actions">{headerActions}</div>
@@ -291,7 +307,7 @@ export function PaymentOrderCalculationBreakdownTable({
         size="middle"
         tableLayout="fixed"
         rowHoverable={false}
-        scroll={{ x: PAYMENT_ORDER_CALC_BREAKDOWN_MIN_WIDTH }}
+        scroll={{ x: tableMinWidth }}
         summary={() => (
           <CmsDataTable.Summary fixed="bottom">
             <CmsDataTable.Summary.Row className="payment-order-calc-statement-modal__summary-row">

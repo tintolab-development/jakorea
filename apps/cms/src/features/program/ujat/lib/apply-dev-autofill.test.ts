@@ -14,8 +14,6 @@ import { applyUjatDevAutofillCase, UjatDevAutofillError } from './apply-dev-auto
 import { UJAT_DEV_AUTOFILL_CASE_IDS, type UjatDevAutofillCaseId } from './dev-autofill-cases'
 import type { ResolvedUjatDevDependencies } from './dev-autofill-fixture'
 import { listFridaysInRange, buildUjatDevDatePlan } from './dev-autofill-fixture'
-import { ujatHalfScheduleOverlayKeys } from './ujat-half-education-schedule-types'
-import { ujatEducationScheduleSettingsOverlayKeys } from './ujat-education-schedule-settings-types'
 import { ujatVolunteerHalfOverlayKey } from './ujat-recruit-volunteer-half-overlay'
 import { listUjatEducationRegionsActive } from './ujat-education-regions'
 import { listIncompleteUjatProgramRegistrationWizardRequiredFields } from './ujat-program-registration-required-fields'
@@ -105,7 +103,13 @@ describe.each(UJAT_DEV_AUTOFILL_CASE_IDS)('%s — 6단계 적용', caseId => {
     const result = await apply(caseId)
 
     expect(result.incompleteRequiredFields).toEqual([])
-    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields()).toEqual([])
+    expect(
+      listIncompleteUjatProgramRegistrationWizardRequiredFields(
+        undefined,
+        result.typedEducationSchedule
+      )
+    ).toEqual([])
+    expect(Object.keys(getUjatProgramRegistrationOverlayRecord()).some(key => key.startsWith('ujat.h1.') || key.startsWith('ujat.h2.'))).toBe(false)
     expect(result.manualInputRequired).toEqual([])
 
     const registration = getUjatProgramRegistrationOverlayRecord()
@@ -189,12 +193,18 @@ describe.each(UJAT_DEV_AUTOFILL_CASE_IDS)('%s — 6단계 적용', caseId => {
 describe('케이스 전환 잔류값', () => {
   it('REG-06 → REG-01: 추가 학년/수업시간 블록·강사 ID·불가일·추가 일정 행이 남지 않는다', async () => {
     await apply('REG-06')
-    await apply('REG-01')
+    const result = await apply('REG-01')
     const registration = getUjatProgramRegistrationOverlayRecord()
-    expect(ujatHalfScheduleOverlayKeys('h2').preTextbookInstructorId in registration).toBe(false)
-    expect(registration[ujatHalfScheduleOverlayKeys('h2').preTextbookMode]).toBe('ja')
-    expect(registration[ujatEducationScheduleSettingsOverlayKeys('h1').unavailableDates]).toEqual([])
-    expect((registration[ujatHalfScheduleOverlayKeys('h1').preMulti] as { rowIds: number[] }).rowIds).toEqual([0])
+    expect(Object.keys(registration).some(key => key.startsWith('ujat.h1.') || key.startsWith('ujat.h2.'))).toBe(false)
+    const h1Pre = result.typedEducationSchedule.halfPlans
+      ?.find(plan => plan.semesterType === 'FIRST_HALF')
+      ?.stages?.find(stage => stage.stage === 'PRE_EDUCATION')?.rows ?? []
+    const h2Pre = result.typedEducationSchedule.halfPlans
+      ?.find(plan => plan.semesterType === 'SECOND_HALF')
+      ?.stages?.find(stage => stage.stage === 'PRE_EDUCATION')?.rows ?? []
+    expect(h2Pre[0]?.textbook?.provisionMethod).toBe('ja')
+    expect(h1Pre).toHaveLength(1)
+    expect(h1Pre[0]?.excludedDates).toEqual([])
 
     const institutionApp = peekUjatApplicationInstitutionOverlayRecord('application-ujat-school')
     expect(Object.keys(institutionApp['ujatApplication.gradeDetailByBlock'] as object)).toEqual(['ujat-dev-grade-1'])
@@ -249,7 +259,12 @@ describe('선택된 운영 양식 버킷', () => {
     expect(Object.keys(peekUjatApplicationInstitutionOverlayRecord('application-ujat-school'))).toEqual([])
     // 고른 양식의 세션 draft가 없으면 기본 seed로 덮지 않고 직접 확인을 요구한다.
     expect(result.manualInputRequired).toContain('application.institution.draft')
-    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields()).toEqual([])
+    expect(
+      listIncompleteUjatProgramRegistrationWizardRequiredFields(
+        undefined,
+        result.typedEducationSchedule
+      )
+    ).toEqual([])
   })
 })
 
@@ -299,18 +314,18 @@ describe('안전 장치', () => {
 
 describe('Negative — 제품 검증 대조', () => {
   it('NEG-01 — 반기 면접 기간을 지우면 제품 필수값 검증이 해당 반기를 막는다', async () => {
-    await apply('REG-01')
+    const result = await apply('REG-01')
     const record = { ...peekUjatRecruitVolunteerOverlayRecord(VOLUNTEER_CODE) }
     delete record[ujatVolunteerHalfOverlayKey('h2', 'interviewRange')]
     replaceUjatRecruitVolunteerOverlayForScope(VOLUNTEER_CODE, record)
     patchUjatProgramRegistrationOverlay({ [ujatVolunteerHalfOverlayKey('h2', 'interviewRange')]: undefined })
-    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields()).toContain(
+    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields(undefined, result.typedEducationSchedule)).toContain(
       'recruit.volunteer.h2.interviewRangeSeal'
     )
   })
 
   it('NEG-02 — 현행 제품 FE 필수값 검증은 면접 시작 > 종료를 막지 않는다 (NEEDS_DECISION)', async () => {
-    await apply('REG-01')
+    const result = await apply('REG-01')
     const key = ujatVolunteerHalfOverlayKey('h1', 'interviewRange')
     const inverted = { start: '2027-02-07T00:00:00.000Z', end: '2027-02-05T00:00:00.000Z' }
     replaceUjatRecruitVolunteerOverlayForScope(VOLUNTEER_CODE, {
@@ -318,18 +333,18 @@ describe('Negative — 제품 검증 대조', () => {
       [key]: inverted,
     })
     patchUjatProgramRegistrationOverlay({ [key]: inverted })
-    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields()).toEqual([])
+    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields(undefined, result.typedEducationSchedule)).toEqual([])
   })
 
   it('NEG-03 — 현행 제품 FE 필수값 검증은 사업 기간 연도 불일치를 막지 않는다 (NEEDS_DECISION)', async () => {
-    await apply('REG-01')
+    const result = await apply('REG-01')
     patchUjatProgramRegistrationOverlay({
       'ujat.basicInfo.operationRangeSeal': {
         start: '2027-03-01T00:00:00.000Z',
         end: '2028-02-28T00:00:00.000Z',
       },
     })
-    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields()).toEqual([])
+    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields(undefined, result.typedEducationSchedule)).toEqual([])
   })
 })
 

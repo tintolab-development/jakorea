@@ -34,6 +34,7 @@ export const queryKeys = {
     ] as const,
   programSchedules: (programId: string) =>
     [...queryKeys.all, 'program-schedules', programId] as const,
+  typedDetail: (programId: string) => [...queryKeys.all, 'typed-detail', programId] as const,
   volunteerApplications: (
     programId: string,
     half: UjatVolunteerRecruitHalf,

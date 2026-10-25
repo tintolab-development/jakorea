@@ -6,6 +6,7 @@ import { useEffect, useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { useForm, useWatch, type UseFormReturn } from 'react-hook-form'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { formatSponsorManagerSelectLabel } from '@/features/program/general/model/common-info-edit-schema'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
@@ -36,6 +37,7 @@ import {
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   updateUjatProgramRegistrationOverlayKey,
   useUjatProgramRegistrationOverlayKv,
@@ -59,6 +61,7 @@ import {
   UJAT_REGISTRATION_SURVEY_ITEM_IDS,
   UJAT_REGISTRATION_SURVEY_ITEM_LABELS,
 } from '@/features/program/ujat/lib/registration-survey-items'
+import { UjatBasicInfoRHFParagraph } from './ujat-basic-info-rhf-paragraph'
 
 const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 
@@ -75,20 +78,83 @@ function participantTypeLabel(
 
 const educationCourseSelectOptions = [...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS]
 
+type UjatBasicInfoForm = UseFormReturn<ProgramDetailEditFormValues>
+
+/**
+ * 상세 수정 화면에서는 부모가 이미 만든 RHF를 정본으로 사용한다.
+ * 등록 Wizard는 아직 Legacy Overlay 기반이므로 같은 컴포넌트가 사용하는
+ * 임시 RHF를 통해 hook 호출 순서를 고정하고, 실제 입력은 기존 Overlay로 유지한다.
+ * (Wizard 전환은 P3-R2 후속 범위에서 별도 처리한다.)
+ */
+function useUjatBasicInfoFormValues(infoForm?: UjatBasicInfoForm) {
+  const fallbackForm = useForm<ProgramDetailEditFormValues>({
+    defaultValues: {} as ProgramDetailEditFormValues,
+  })
+  const form = infoForm ?? fallbackForm
+  const values = useWatch({ control: form.control }) as ProgramDetailEditFormValues
+  return { form, values }
+}
+
+function formValue<T extends keyof ProgramDetailEditFormValues>(
+  values: ProgramDetailEditFormValues,
+  key: T,
+  fallback: ProgramDetailEditFormValues[T]
+): ProgramDetailEditFormValues[T] {
+  return values[key] === undefined ? fallback : values[key]
+}
+
+function useUjatBasicInfoValue<T>(
+  infoForm: UjatBasicInfoForm | undefined,
+  formValues: ProgramDetailEditFormValues,
+  formKey: keyof ProgramDetailEditFormValues,
+  overlayKey: string,
+  defaultValue: T
+): [T, (next: T) => void] {
+  const [overlayValue, setOverlayValue] = useUjatProgramRegistrationOverlayKv<T>(
+    overlayKey,
+    defaultValue
+  )
+  if (!infoForm) return [overlayValue, setOverlayValue]
+
+  const nextValue = formValue(
+    formValues,
+    formKey,
+    defaultValue as ProgramDetailEditFormValues[typeof formKey]
+  ) as T
+  return [nextValue, next => {
+    infoForm.setValue(formKey, next as never, {
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+  }]
+}
+
 function UjatOverlayTextField({
   label,
   validationKey,
   overlayKey,
   placeholder,
   defaultValue,
+  infoForm,
+  formValues,
+  formKey,
 }: {
   label: string
   validationKey: string
   overlayKey: string
   placeholder: string
   defaultValue: string
+  infoForm?: UjatBasicInfoForm
+  formValues?: ProgramDetailEditFormValues
+  formKey?: keyof ProgramDetailEditFormValues
 }) {
-  const [value, setValue] = useUjatProgramRegistrationOverlayKv(overlayKey, defaultValue)
+  const [value, setValue] = useUjatBasicInfoValue<string>(
+    infoForm,
+    formValues ?? ({} as ProgramDetailEditFormValues),
+    formKey ?? 'title',
+    overlayKey,
+    defaultValue
+  )
   return (
     <DetailInfoForm.Field
       label={label}
@@ -115,43 +181,100 @@ export type UjatBasicInfoParagraphProps = {
    * 실적·조회에서는 일정명이 세부 프로그램명으로 반영된다.
    */
   lockDetailedProgramToNone?: boolean
+  /** 상세 수정에서는 Overlay 대신 기존 공통정보 RHF를 정본으로 사용한다. */
+  infoForm?: UjatBasicInfoForm
+  /** 등록 Wizard에서는 공통정보 RHF 경로만 사용하고 Legacy Overlay hook을 호출하지 않는다. */
+  overlayFree?: boolean
 }
 
 export function UjatBasicInfoParagraph({
   lockDetailedProgramToNone = false,
+  infoForm,
+  overlayFree = false,
 }: UjatBasicInfoParagraphProps = {}) {
-  const [detailedProgramId, setDetailedProgramId] = useUjatProgramRegistrationOverlayKv<string>(
+  if (overlayFree && infoForm) {
+    return (
+      <UjatBasicInfoRHFParagraph
+        infoForm={infoForm}
+        lockDetailedProgramToNone={lockDetailedProgramToNone}
+      />
+    )
+  }
+  return (
+    <UjatBasicInfoLegacyParagraph
+      lockDetailedProgramToNone={lockDetailedProgramToNone}
+      infoForm={infoForm}
+    />
+  )
+}
+
+function UjatBasicInfoLegacyParagraph({
+  lockDetailedProgramToNone = false,
+  infoForm,
+}: UjatBasicInfoParagraphProps) {
+  const { values: formValues } = useUjatBasicInfoFormValues(infoForm)
+  const [detailedProgramId, setDetailedProgramId] = useUjatBasicInfoValue<string>(
+    infoForm,
+    formValues,
+    'detailedProgramId',
     'ujat.basicInfo.detailedProgramId',
     UJAT_DETAILED_PROGRAM_UJAT_VALUE
   )
-  const [, setDetailedProgramName] = useUjatProgramRegistrationOverlayKv<string>(
+  const [, setDetailedProgramName] = useUjatBasicInfoValue<string>(
+    infoForm,
+    formValues,
+    'detailedProgramName',
     'ujat.basicInfo.detailedProgramName',
     UJAT_DETAILED_PROGRAM_UJAT_LABEL
   )
 
-  const [operationAnchorIso, setOperationAnchorIso] = useUjatProgramRegistrationOverlayKv<
-    string | null
-  >('ujat.basicInfo.operationAnchorIso', null)
-  const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
-  const setOperationAnchorDate = (next: Dayjs | null) => {
-    setOperationAnchorIso(next == null ? null : next.toISOString())
-  }
-
-  const [operationRangeSeal, setOperationRangeSeal] =
+  const [overlayOperationAnchorIso, setOverlayOperationAnchorIso] =
+    useUjatProgramRegistrationOverlayKv<string | null>('ujat.basicInfo.operationAnchorIso', null)
+  const [overlayOperationRangeSeal, setOverlayOperationRangeSeal] =
     useUjatProgramRegistrationOverlayKv<OperationRangeSeal>(
       'ujat.basicInfo.operationRangeSeal',
       null
     )
+  const operationAnchorIso = infoForm ? formValues.startDate ?? null : overlayOperationAnchorIso
+  const operationEndIso = infoForm ? formValues.endDate ?? null : overlayOperationRangeSeal?.end ?? null
+  const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
+  const setOperationAnchorDate = (next: Dayjs | null) => {
+    if (infoForm) {
+      infoForm.setValue('startDate', next == null ? '' : next.toISOString(), {
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    } else {
+      setOverlayOperationAnchorIso(next == null ? null : next.toISOString())
+    }
+  }
   const operationRange: [Dayjs, Dayjs] | null = useMemo(() => {
-    if (operationRangeSeal == null) return null
+    const operationRangeSeal: OperationRangeSeal = infoForm
+      ? { start: operationAnchorIso ?? '', end: operationEndIso ?? '' }
+      : overlayOperationRangeSeal
+    if (
+      operationRangeSeal == null ||
+      !operationRangeSeal.start ||
+      !operationRangeSeal.end
+    ) return null
     return [dayjs(operationRangeSeal.start), dayjs(operationRangeSeal.end)]
-  }, [operationRangeSeal])
+  }, [infoForm, operationAnchorIso, operationEndIso, overlayOperationRangeSeal])
   const setOperationRange = (next: [Dayjs, Dayjs] | null) => {
     if (next == null) {
-      setOperationRangeSeal(null)
+      if (infoForm) {
+        infoForm.setValue('startDate', '', { shouldDirty: true, shouldTouch: true })
+        infoForm.setValue('endDate', '', { shouldDirty: true, shouldTouch: true })
+      } else {
+        setOverlayOperationRangeSeal(null)
+      }
       return
     }
-    setOperationRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+    if (infoForm) {
+      infoForm.setValue('startDate', next[0].toISOString(), { shouldDirty: true, shouldTouch: true })
+      infoForm.setValue('endDate', next[1].toISOString(), { shouldDirty: true, shouldTouch: true })
+    } else {
+      setOverlayOperationRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+    }
   }
 
   const operationRangeWithTime = useMemo(
@@ -178,52 +301,132 @@ export function UjatBasicInfoParagraph({
     'ujat.basicInfo.participant.volunteer',
     true
   )
+  const participantTypes = infoForm
+    ? new Set(formValues.generalParticipantTypes ?? ['school_institution', 'volunteer'])
+    : null
+  const resolvedIndividualChecked = infoForm
+    ? participantTypes?.has('individual') === true
+    : individualChecked
+  const resolvedOrganizationChecked = infoForm
+    ? participantTypes?.has('school_institution') === true || participantTypes?.has('organization') === true
+    : organizationChecked
+  const resolvedTeacherChecked = infoForm
+    ? participantTypes?.has('teacher_instructor') === true || participantTypes?.has('teacher') === true
+    : teacherChecked
+  const resolvedVolunteerChecked = infoForm
+    ? participantTypes?.has('volunteer') === true
+    : volunteerChecked
 
-  const [businessField, setBusinessField] = useUjatProgramRegistrationOverlayKv(
+  const [businessField, setBusinessField] = useUjatBasicInfoValue(
+    infoForm,
+    formValues,
+    'businessArea',
     'ujat.basicInfo.businessField',
     'economy_finance'
   )
 
-  const [sponsorId, setSponsorId] = useUjatProgramRegistrationOverlayKv<string>(
+  const [sponsorId, setSponsorId] = useUjatBasicInfoValue<string>(
+    infoForm,
+    formValues,
+    'sponsorId',
     'ujat.basicInfo.sponsorId',
     UJAT_DEFAULT_SPONSOR_ID
   )
-  const [sponsorContactId, setSponsorContactId] = useUjatProgramRegistrationOverlayKv<string>(
+  const [sponsorContactId, setSponsorContactId] = useUjatBasicInfoValue<string>(
+    infoForm,
+    formValues,
+    'sponsorManagerContactId',
     'ujat.basicInfo.sponsorContactId',
     UJAT_SPONSOR_ALL_VALUE
   )
-  const [sponsorContactIds, setSponsorContactIds] = useUjatProgramRegistrationOverlayKv<string[]>(
+  const [sponsorContactIds, setSponsorContactIds] = useUjatBasicInfoValue<string[]>(
+    infoForm,
+    formValues,
+    'sponsorManagerContactIds',
     'ujat.basicInfo.sponsorContactIds',
     []
   )
-  const [sponsorManagerName, setSponsorManagerName] = useUjatProgramRegistrationOverlayKv(
+  const [sponsorManagerName, setSponsorManagerName] = useUjatBasicInfoValue(
+    infoForm,
+    formValues,
+    'managerName',
     'ujat.basicInfo.sponsorManagerName',
     ''
   )
 
-  const [ipOwned, setIpOwned] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.ipOwned', 'ja')
-  const [courseDeliveredBy, setCourseDeliveredBy] = useUjatProgramRegistrationOverlayKv(
+  const [ipOwned, setIpOwned] = useUjatBasicInfoValue(
+    infoForm,
+    formValues,
+    'ipOwned',
+    'ujat.basicInfo.ipOwned',
+    'ja'
+  )
+  const [courseDeliveredBy, setCourseDeliveredBy] = useUjatBasicInfoValue(
+    infoForm,
+    formValues,
+    'courseDeliveredBy',
     'ujat.basicInfo.courseDeliveredBy',
     'ja'
   )
-  const [ipsCategory, setIpsCategory] = useUjatProgramRegistrationOverlayKv(
+  const [ipsCategory, setIpsCategory] = useUjatBasicInfoValue(
+    infoForm,
+    formValues,
+    'ipsCategory',
     'ujat.basicInfo.ipsCategory',
     'prepare'
   )
 
-  const [surveyItemsRaw] = useUjatProgramRegistrationOverlayKv<Record<string, boolean>>(
+  const [surveyItemsRaw] = useUjatBasicInfoValue<Record<string, boolean>>(
+    infoForm,
+    formValues,
+    'surveySurvey',
     'ujat.basicInfo.surveyItems',
     UJAT_SURVEY_ITEMS_DEFAULT
   )
-  const surveyItems = useMemo(() => readUjatSurveyItems(surveyItemsRaw), [surveyItemsRaw])
+  const surveyItems = useMemo(
+    () =>
+      infoForm
+        ? {
+            survey: formValues.surveySurvey === true,
+            volunteer_satisfaction: formValues.surveyVolunteerSatisfaction === true,
+            school_satisfaction: formValues.surveySchoolSatisfaction === true,
+            lecture_evaluation: formValues.surveyLectureEvaluation === true,
+          }
+        : readUjatSurveyItems(surveyItemsRaw),
+    [
+      formValues.surveyLectureEvaluation,
+      formValues.surveySchoolSatisfaction,
+      formValues.surveyVolunteerSatisfaction,
+      formValues.surveySurvey,
+      infoForm,
+      surveyItemsRaw,
+    ]
+  )
 
-  const [educationCourse, setEducationCourse] = useUjatProgramRegistrationOverlayKv(
+  const [educationCourse, setEducationCourse] = useUjatBasicInfoValue(
+    infoForm,
+    formValues,
+    'educationProcess',
     'ujat.basicInfo.educationCourse',
     ''
   )
-  const [partnerInvolvement, setPartnerInvolvement] = useUjatProgramRegistrationOverlayKv<
-    'yes' | 'no'
-  >('ujat.basicInfo.partnerInvolvement', 'no')
+  const [overlayPartnerInvolvement, setOverlayPartnerInvolvement] =
+    useUjatProgramRegistrationOverlayKv<'yes' | 'no'>('ujat.basicInfo.partnerInvolvement', 'no')
+  const partnerInvolvement = infoForm
+    ? formValues.partnerInvolvement === true
+      ? 'yes'
+      : 'no'
+    : overlayPartnerInvolvement
+  const setPartnerInvolvement = (next: 'yes' | 'no') => {
+    if (infoForm) {
+      infoForm.setValue('partnerInvolvement', next === 'yes', {
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    } else {
+      setOverlayPartnerInvolvement(next)
+    }
+  }
 
   const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady({
     overlayBasicInfoPrefix: 'ujat.basicInfo',
@@ -291,15 +494,22 @@ export function UjatBasicInfoParagraph({
     const primary =
       unique[0] ?? (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
     setSponsorContactId(primary)
+    if (infoForm) {
+      infoForm.setValue('sponsorManagerContactIds', unique, { shouldDirty: true, shouldTouch: true })
+      infoForm.setValue('sponsorManagerContactId', primary, { shouldDirty: true, shouldTouch: true })
+    }
     const labels = unique
       .filter(id => id !== UJAT_SPONSOR_ALL_VALUE && !isSponsorContactUnselected(id))
       .map(id => managerOptions.find(o => o.value === id)?.label ?? '')
       .filter(Boolean)
-    setSponsorManagerName(
+    const nextManagerName =
       unique.length > 0 && unique.every(id => isSponsorContactUnselected(id))
         ? SPONSOR_CONTACT_UNSELECTED_LABEL
         : labels.join(', ')
-    )
+    setSponsorManagerName(nextManagerName)
+    if (infoForm) {
+      infoForm.setValue('managerName', nextManagerName, { shouldDirty: true, shouldTouch: true })
+    }
   }
 
   useEffect(() => {
@@ -351,7 +561,55 @@ export function UjatBasicInfoParagraph({
     ? TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
     : detailedProgramId
 
+  const selectValue = (value: unknown): string => {
+    const normalized = String(value ?? '')
+    if (!infoForm) return normalized
+    if (normalized === 'JA' || normalized.toLowerCase() === 'ja') return 'ja'
+    if (normalized === 'Partner' || normalized.toLowerCase() === 'partner') return 'partner'
+    if (
+      normalized === 'Joint' ||
+      normalized === 'Jointly' ||
+      normalized.toLowerCase() === 'jointly'
+    ) {
+      return 'jointly'
+    }
+    return normalized
+  }
+
+  const setSelectValue = (
+    setter: (next: string) => void,
+    value: unknown,
+    formValue?: 'ipOwned' | 'courseDeliveredBy'
+  ) => {
+    const normalized = String(value ?? '')
+    if (!infoForm || formValue == null) {
+      setter(normalized)
+      return
+    }
+    const canonical =
+      normalized === 'ja'
+        ? 'JA'
+        : normalized === 'partner'
+          ? 'Partner'
+          : normalized === 'jointly'
+            ? 'Jointly'
+            : normalized
+    setter(canonical)
+  }
+
   const toggleSurveyItem = (id: UjatSurveyRowId) => (e: CheckboxChangeEvent) => {
+    if (infoForm) {
+      const field =
+        id === 'survey'
+          ? 'surveySurvey'
+          : id === 'volunteer_satisfaction'
+            ? 'surveyVolunteerSatisfaction'
+            : id === 'school_satisfaction'
+              ? 'surveySchoolSatisfaction'
+              : 'surveyLectureEvaluation'
+      infoForm.setValue(field, e.target.checked, { shouldDirty: true, shouldTouch: true })
+      return
+    }
     updateUjatProgramRegistrationOverlayKey<Record<string, boolean>>(
       'ujat.basicInfo.surveyItems',
       prev => ({
@@ -377,6 +635,9 @@ export function UjatBasicInfoParagraph({
             overlayKey="ujat.basicInfo.repKo"
             placeholder="대표 프로그램명을 입력하세요"
             defaultValue={UJAT_BASIC_INFO_REP_KO_DEFAULT}
+            infoForm={infoForm}
+            formValues={formValues}
+            formKey="mainTitle"
           />
           <UjatOverlayTextField
             label="대표 프로그램명 (영문)"
@@ -384,6 +645,9 @@ export function UjatBasicInfoParagraph({
             overlayKey="ujat.basicInfo.repEn"
             placeholder="대표 프로그램명을 입력하세요"
             defaultValue={UJAT_BASIC_INFO_REP_EN_DEFAULT}
+            infoForm={infoForm}
+            formValues={formValues}
+            formKey="titleEn"
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
@@ -393,6 +657,9 @@ export function UjatBasicInfoParagraph({
             overlayKey="ujat.basicInfo.programManagementName"
             placeholder="프로그램 관리명을 입력하세요"
             defaultValue={UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT}
+            infoForm={infoForm}
+            formValues={formValues}
+            formKey="title"
           />
           <DetailInfoForm.Field
             label="세부 프로그램명"
@@ -457,16 +724,16 @@ export function UjatBasicInfoParagraph({
             validationKey="basicInfo.audience"
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                <CmsCheckbox checkboxSize="medium" checked={individualChecked} disabled>
+                <CmsCheckbox checkboxSize="medium" checked={resolvedIndividualChecked} disabled>
                   {participantTypeLabel('individual')}
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="medium" checked={organizationChecked} disabled>
+                <CmsCheckbox checkboxSize="medium" checked={resolvedOrganizationChecked} disabled>
                   {participantTypeLabel('school_institution')}
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="medium" checked={teacherChecked} disabled>
+                <CmsCheckbox checkboxSize="medium" checked={resolvedTeacherChecked} disabled>
                   {participantTypeLabel('teacher_instructor')}
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="medium" checked={volunteerChecked} disabled>
+                <CmsCheckbox checkboxSize="medium" checked={resolvedVolunteerChecked} disabled>
                   {participantTypeLabel('volunteer')}
                 </CmsCheckbox>
               </div>
@@ -510,6 +777,12 @@ export function UjatBasicInfoParagraph({
                   onChange={v => {
                     const next = String(v ?? '')
                     setSponsorId(next)
+                    if (infoForm) {
+                      infoForm.setValue('sponsorManagementIds', next ? [next] : [], {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                      })
+                    }
                     applySponsorContactIds(
                       next === UJAT_SPONSOR_ALL_VALUE ? [UJAT_SPONSOR_ALL_VALUE] : []
                     )
@@ -595,8 +868,8 @@ export function UjatBasicInfoParagraph({
                 inputSize="small"
                 width={240}
                 options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
-                value={ipOwned}
-                onChange={v => setIpOwned(String(v ?? ''))}
+                value={selectValue(ipOwned)}
+                onChange={v => setSelectValue(setIpOwned, v, 'ipOwned')}
               />
             }
             view="-"
@@ -612,8 +885,8 @@ export function UjatBasicInfoParagraph({
                 inputSize="small"
                 width={240}
                 options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
-                value={courseDeliveredBy}
-                onChange={v => setCourseDeliveredBy(String(v ?? ''))}
+                value={selectValue(courseDeliveredBy)}
+                onChange={v => setSelectValue(setCourseDeliveredBy, v, 'courseDeliveredBy')}
               />
             }
             view="-"

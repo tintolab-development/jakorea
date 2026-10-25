@@ -8,7 +8,7 @@ export type ProgramIntroImageSlot = {
   guideLines: readonly string[]
 }
 
-const BASE_GUIDE = '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.'
+const BASE_GUIDE = '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.'
 
 function slot(label: string, recommendedSize: string): ProgramIntroImageSlot {
   return {
@@ -20,9 +20,13 @@ function slot(label: string, recommendedSize: string): ProgramIntroImageSlot {
 
 /** 0-based program index → image slots */
 export const PROGRAM_INTRO_IMAGE_SLOTS: readonly (readonly ProgramIntroImageSlot[])[] = [
-  [slot('이미지 01', '960*540'), slot('이미지 02', '440*540')],
-  [slot('이미지 01', '1440*540')],
-  [slot('이미지 01', '880*540'), slot('이미지 02', '520*260'), slot('이미지 03', '520*260')],
+  [slot('이미지 01', '960 × 540px'), slot('이미지 02', '440 × 540px')],
+  [slot('이미지 01', '1440 × 540px')],
+  [
+    slot('이미지 01', '880 × 540px'),
+    slot('이미지 02', '520 × 260px'),
+    slot('이미지 03', '520 × 260px'),
+  ],
 ]
 
 export function getProgramImageSlotCount(programIndex: number): number {
@@ -30,7 +34,7 @@ export function getProgramImageSlotCount(programIndex: number): number {
 }
 
 export const PROGRAM_INTRO_IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
-export const PROGRAM_INTRO_IMAGE_MAX_BYTES = 15 * 1024 * 1024
+export const PROGRAM_INTRO_IMAGE_MAX_BYTES = 20 * 1024 * 1024
 
 export function isAllowedProgramIntroImage(file: File): boolean {
   const type = file.type.toLowerCase()

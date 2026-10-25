@@ -288,7 +288,8 @@ export function ParticipatingInstructorLectureReportsSection({
           <CmsButton
             variant="secondary"
             size="large"
-            width={220}
+            width="max-content"
+            className="cms-button--no-label-ellipsis"
             icon={<ButtonDownloadIcon />}
             disabled={bulkDownloading || submittedRows.length === 0}
             loading={bulkDownloading}

@@ -11,6 +11,12 @@ export const settlementQueryKeys = {
       [...settlementQueryKeys.paymentOrders.details(), type, key, dateRangeKey] as const,
     settlement: (settlementId: number) =>
       [...settlementQueryKeys.paymentOrders.all(), 'settlement', settlementId] as const,
+    transportationSnapshots: (settlementId: number) =>
+      [
+        ...settlementQueryKeys.paymentOrders.all(),
+        'transportationSnapshots',
+        settlementId,
+      ] as const,
   },
   accountPayments: {
     all: () => [...settlementQueryKeys.all, 'accountPayments'] as const,
@@ -18,8 +24,7 @@ export const settlementQueryKeys = {
     list: (searchParamsKey: string) =>
       [...settlementQueryKeys.accountPayments.lists(), searchParamsKey] as const,
     details: () => [...settlementQueryKeys.accountPayments.all(), 'detail'] as const,
-    detail: (rowId: string) =>
-      [...settlementQueryKeys.accountPayments.details(), rowId] as const,
+    detail: (rowId: string) => [...settlementQueryKeys.accountPayments.details(), rowId] as const,
     budgetSummary: (year: number, fromDate?: string, toDate?: string) =>
       [
         ...settlementQueryKeys.accountPayments.all(),

@@ -1,6 +1,8 @@
+import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
+import { EMPTY_UJAT_TYPED_DETAIL, type UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 import {
-  resolveUjatHalfEducationScheduleDisplay,
+  resolveUjatHalfEducationScheduleDisplayFromTypedDetail,
   type UjatHalfEducationScheduleDisplay,
 } from '@/features/program/ujat/lib/ujat-half-education-schedule-display'
 import {
@@ -19,15 +21,20 @@ export function UjatHalfEducationScheduleProgramView({
   half,
   isEdit = false,
   display: displayInput,
+  scheduleForm,
 }: {
-  program: Program
+  program: Program & { ujatTypedDetail?: UjatTypedDetail }
   half: UjatHalfSemesterKey
   isEdit?: boolean
   display?: UjatHalfEducationScheduleDisplay
+  scheduleForm?: UseFormReturn<UjatTypedDetail>
 }) {
   const display =
     displayInput ??
-    resolveUjatHalfEducationScheduleDisplay(half, program.ujatRegistrationOverlay ?? {})
+    resolveUjatHalfEducationScheduleDisplayFromTypedDetail(
+      program.ujatTypedDetail ?? EMPTY_UJAT_TYPED_DETAIL,
+      half
+    )
   const mode = isEdit ? 'edit' : 'view'
   const sectionMeta =
     half === 'h1'
@@ -54,7 +61,7 @@ export function UjatHalfEducationScheduleProgramView({
           </h3>
         </div>
       )}
-      <HalfEducationScheduleSection half={half} mode={mode} display={display} />
+      <HalfEducationScheduleSection half={half} mode={mode} display={display} scheduleForm={scheduleForm} />
     </section>
   )
 }
