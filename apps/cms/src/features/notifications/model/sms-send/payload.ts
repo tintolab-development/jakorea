@@ -1,5 +1,4 @@
 import type { CreateRequest, RecipientRequest } from '@/shared/api/generated/notifications/schemas'
-import type { SmsMessageType } from '@/features/notifications/api/adapters/sms-channel'
 import {
   isValidKoreanPhoneNumber,
   normalizeKoreanPhoneDigits,
@@ -14,35 +13,16 @@ import {
   validateNotificationScheduledAt,
 } from '@/features/notifications/model/send-scheduled-at'
 import { normalizeNotificationPlaceholderMarkup } from '@/features/notifications/model/shared/notification-placeholder-markup'
+import {
+  collectSmsComposeFieldIssues,
+  firstSmsComposeIssueMessage,
+} from './text-bytes'
 
-export const SMS_SEND_BODY_BYTE_LIMIT = 90
-export const SMS_SEND_LMS_MMS_BODY_BYTE_LIMIT = 2000
-
-export function estimateSmsSendBodyBytes(text: string): number {
-  let bytes = 0
-  for (const ch of text) {
-    bytes += ch.charCodeAt(0) <= 0x7f ? 1 : 2
-  }
-  return bytes
-}
-
-/**
- * 발송 화면(읽기 전용 유형): 본문 바이트·첨부에 맞춰 표시 유형을 맞춘다.
- * - 첨부 있으면 MMS
- * - SMS 한도 초과 시 SMS → LMS
- * - 그 외는 현재 값 유지
- */
-export function resolveSmsSendMessageTypeForBody(input: {
-  current: SmsMessageType
-  bodyBytes: number
-  hasAttachments: boolean
-}): SmsMessageType {
-  if (input.hasAttachments) return 'MMS'
-  if (input.bodyBytes > SMS_SEND_BODY_BYTE_LIMIT && input.current === 'SMS') {
-    return 'LMS'
-  }
-  return input.current
-}
+export {
+  SMS_SEND_BODY_BYTE_LIMIT,
+  SMS_SEND_LMS_MMS_BODY_BYTE_LIMIT,
+  estimateSmsSendBodyBytes,
+} from './text-bytes'
 
 /**
  * @deprecated 서버 enrich 예약 키는 Create body에 넣지 않는다.
@@ -116,10 +96,7 @@ export function buildSmsSendPayload(draft: SmsSendDraft): SmsSendDraft {
   return {
     ...draft,
     senderPhone: draft.senderPhone.trim(),
-    subject:
-      draft.messageType === 'SMS'
-        ? ''
-        : normalizeNotificationPlaceholderMarkup(draft.subject.trim()),
+    subject: normalizeNotificationPlaceholderMarkup(draft.subject),
     bodyText: normalizeNotificationPlaceholderMarkup(draft.bodyText),
   }
 }
@@ -148,14 +125,16 @@ export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
       !(normalizeKoreanPhoneDigits(recipient.phone) || recipient.phone.trim())
   )
   if (missingDirectContact) return '직접 입력 수신자의 연락처를 입력하세요.'
-  if (!draft.bodyText.trim()) return '내용을 작성하세요.'
-  if (draft.messageType !== 'SMS' && !draft.subject.trim()) return '제목을 작성하세요.'
 
-  const bodyByteLimit =
-    draft.messageType === 'SMS' ? SMS_SEND_BODY_BYTE_LIMIT : SMS_SEND_LMS_MMS_BODY_BYTE_LIMIT
-  if (estimateSmsSendBodyBytes(draft.bodyText) > bodyByteLimit) {
-    return `내용은 ${bodyByteLimit.toLocaleString()}byte 이하로 입력하세요.`
-  }
+  const composeError = firstSmsComposeIssueMessage(
+    collectSmsComposeFieldIssues({
+      messageType: draft.messageType,
+      subject: draft.subject,
+      bodyText: draft.bodyText,
+      attachmentCount: draft.attachmentFileNames.length,
+    })
+  )
+  if (composeError) return composeError
 
   return null
 }

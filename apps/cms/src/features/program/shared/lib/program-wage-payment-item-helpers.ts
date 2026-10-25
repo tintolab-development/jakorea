@@ -242,6 +242,27 @@ export function getProgramWagePaymentItemOptions(
 
 export type ProgramWagePaymentItemOptionsState = PaymentItemCatalogState
 
+const COMPANY_SCHOOL_ONLY_PAYMENT_LABEL = /\((1사1교|일사일교)\)/
+
+/** 1사1교 전용 지급 항목(예: 「숙박비 (1사1교)」)인지 — 라벨 기준 */
+export function isCompanySchoolOnlyPaymentItemOption(option: CmsSelectMultipleOption): boolean {
+  return COMPANY_SCHOOL_ONLY_PAYMENT_LABEL.test(String(option.label ?? '').replace(/\s+/g, ''))
+}
+
+/**
+ * R14: 일반 프로그램 지급 항목 옵션에서 1사1교 전용 항목을 뺀다.
+ * 이미 선택된 값은 표시·저장값 보존을 위해 남긴다(기존 데이터 변경 금지).
+ */
+export function excludeCompanySchoolOnlyPaymentItemOptions(
+  options: readonly CmsSelectMultipleOption[],
+  selectedValues: readonly string[] | undefined = []
+): CmsSelectMultipleOption[] {
+  const selected = new Set(selectedValues ?? [])
+  return options.filter(
+    option => selected.has(option.value) || !isCompanySchoolOnlyPaymentItemOption(option)
+  )
+}
+
 /** 정산 항목 설정(지급) 목록 + 「해당없음」 + 로딩·실패 상태 — 등록·상세 편집 UI용 */
 export function useProgramWagePaymentItemOptionsState(
   catalogEnabled = true

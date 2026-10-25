@@ -521,14 +521,6 @@ function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
 /** RHF → overlay 일방향 projection 중이면 overlay 쓰기를 RHF로 되먹이지 않는다. */
 let projectingFromWizardRhf = 0
 
-export function beginRegistrationWizardRhfOverlayProjection(): void {
-  projectingFromWizardRhf += 1
-}
-
-export function endRegistrationWizardRhfOverlayProjection(): void {
-  projectingFromWizardRhf = Math.max(0, projectingFromWizardRhf - 1)
-}
-
 function syncWizardRhfFromOverlayPartial(
   partial: Record<string, unknown>,
   shouldDirty: boolean
@@ -612,7 +604,7 @@ export function patchProgramRegistrationOverlay(partial: Record<string, unknown>
     const { commonInfo, rest } = splitCompanySchoolCommonInfoOverlay(partial)
     if (Object.keys(commonInfo).length > 0) writeCompanySchoolRhfOverlayPartial(commonInfo)
     if (Object.keys(rest).length === 0) return
-    syncWizardRhfFromOverlayPartial(rest, true)
+    // C3: 1사1교 rest 키는 일반 위저드 RHF로 라우팅하지 않는다.
     store.patch(rest)
     return
   }
@@ -679,11 +671,8 @@ export function replaceProgramRegistrationOverlay(
     if (Object.keys(commonInfo).length > 0) {
       csApi.applyOverlayRecord(commonInfo, { shouldDirty: options?.shouldDirty ?? false })
     }
-    if (projectingFromWizardRhf === 0) {
-      peekGeneralRegistrationWizardRhf()?.applyOverlayRecord(rest, {
-        shouldDirty: options?.shouldDirty ?? false,
-      })
-    }
+    // C3: 1사1교 활성 중에는 rest 키를 일반 위저드 RHF로 라우팅하지 않는다(store에만 보존).
+    // TT 분기는 TT 동작 불변 제약으로 그대로 둔다.
     store.replace(rest)
     return
   }

@@ -11,3 +11,28 @@
 .alimtalk-send-recipient-table.cms-data-table table.ant-table {
   width: 100% !important;
 }
+
+.alimtalk-send-recipient-table__variables {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.alimtalk-send-recipient-table__variable {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alimtalk-send-recipient-table__variable-label,
+.alimtalk-send-recipient-table__variable-blocked {
+  margin: 0;
+  font-size: var(--font-size-12, 12px);
+  line-height: 1.4;
+  color: var(--color-text-body);
+}
+
+.alimtalk-send-recipient-table__variable-blocked {
+  color: var(--color-text-secondary, #667085);
+}

@@ -6,7 +6,7 @@ import {
   interviewConfigToLegacyOverlayRecord,
   overlayRecordToInterviewConfig,
 } from '@/features/program/ujat/lib/recruitment-typed-contract'
-import { setRecruitTypedInterviewRecordBridge } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import { setRecruitTypedInterviewRecordBridge } from '@/features/program/shared/lib/recruit-typed-interview-record-bridge'
 import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 
 export const UJAT_RECRUIT_TEMPLATE_SETTINGS_KEY = 'ujatRecruitment' as const

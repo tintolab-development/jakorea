@@ -34,7 +34,7 @@ describe('program-delete-guide', () => {
   it('삭제 불가 — message가 없으면 기획 문장으로 폴백', () => {
     const error = new ProgramHardDeleteBlockedError(2, '  ')
     expect(isProgramHardDeleteBlockedError(error)).toBe(true)
-    expect(error.message).toContain('선택한 2개의 항목 중 삭제가 불가한 항목이 포함되어 있습니다.')
+    expect(error.message).toContain('**선택한 2개의 항목** 중 삭제가 불가한 항목이 포함되어 있습니다.')
     expect(error.message).toContain(
       '교육 예정 신청자 또는 교육 진행 이력이 있는 프로그램은 삭제할 수 없습니다.'
     )

@@ -146,34 +146,32 @@ describe('resolvePublishedSurveyBinding', () => {
     expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
   })
 
-  it('publishes the latest draft of the same template instead of duplicating it', async () => {
+  it('does not publish a catalog draft from the program flow (shared data guard)', async () => {
     resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 1995, templateVersionId: 352 })
     fetchFormTemplateVersionsRemote.mockResolvedValue([
       { templateVersionId: 352, versionNo: 1, versionStatus: 'DRAFT' },
     ])
-    publishFormTemplateVersionById.mockResolvedValue(352)
 
     await expect(resolvePublishedSurveyBinding('survey-period')).resolves.toEqual({
-      ok: true,
-      templateId: 1995,
-      templateVersionId: 352,
+      ok: false,
+      reason: 'not_published',
     })
-    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(352)
+    expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
   })
 
-  it('publishes a newer draft over an older published version', async () => {
+  it('binds the older published version instead of publishing a newer draft', async () => {
     resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 99, templateVersionId: 101 })
     fetchFormTemplateVersionsRemote.mockResolvedValue([
       { templateVersionId: 100, versionNo: 1, versionStatus: 'PUBLISHED' },
       { templateVersionId: 101, versionNo: 2, versionStatus: 'DRAFT' },
     ])
-    publishFormTemplateVersionById.mockResolvedValue(101)
 
     await expect(resolvePublishedSurveyBinding('survey-student')).resolves.toEqual({
       ok: true,
       templateId: 99,
-      templateVersionId: 101,
+      templateVersionId: 100,
     })
+    expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
   })
 
   it('binds the in-use published version instead of publishing a newer draft (avoids archiving it)', async () => {

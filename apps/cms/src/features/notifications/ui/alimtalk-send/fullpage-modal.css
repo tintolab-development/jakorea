@@ -208,6 +208,15 @@
   gap: 16px;
 }
 
+.alimtalk-send-fullpage__variable-hint {
+  margin: 12px 0 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.7;
+}
+
 .alimtalk-send-fullpage__section-actions {
   display: flex;
   align-items: center;

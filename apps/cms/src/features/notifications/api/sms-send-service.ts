@@ -21,6 +21,7 @@ import {
 import {
   buildSmsSendCreateRequest,
   buildSmsSendPayload,
+  validateSmsSendDraft,
 } from '@/features/notifications/model/sms-send/payload'
 import type { SmsSendDraft, SmsSendRecipient } from '@/features/notifications/model/sms-send/types'
 import { applyNotificationSendBodySnapshot } from '@/features/notifications/model/shared/send-body-snapshot'
@@ -166,8 +167,12 @@ export async function submitSmsSend(input: {
     senderProfileId,
     variables,
   } = input
-  assertSmsSendRemoteReady()
   const draft = buildSmsSendPayload(input.draft)
+  const validationError = validateSmsSendDraft(draft)
+  if (validationError) {
+    throw new Error(validationError)
+  }
+  assertSmsSendRemoteReady()
   const numericTemplateId =
     draft.templateId && /^\d+$/.test(draft.templateId.trim())
       ? Number(draft.templateId.trim())
@@ -212,7 +217,7 @@ export async function submitSmsSend(input: {
     body.contentTemplate = draft.bodyText
   }
   if (draft.messageType !== 'SMS' && draft.subject.trim()) {
-    body.titleTemplate = draft.subject.trim().slice(0, 40)
+    body.titleTemplate = draft.subject.trim()
   }
 
   await createSendBatchRemote(body, idempotencyKey)

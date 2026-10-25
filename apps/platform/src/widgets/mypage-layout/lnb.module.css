@@ -165,6 +165,7 @@
 
 .mobileTriggerIconSlot {
   /* 탭마다 일러스트 비율이 달라도 텍스트 시작점·트리거 높이가 같도록 고정 슬롯 */
+  position: relative;
   display: flex;
   flex: 0 0 48px;
   width: 48px;
@@ -173,12 +174,54 @@
   justify-content: center;
 }
 
+/*
+ * 일러스트 SVG마다 캔버스 안 여백이 달라서(실제 그림이 캔버스의 23~68%),
+ * 그림 영역 기준으로 최대 40x34 안에 들어오게 스케일하고 슬롯 중앙에 맞춘다.
+ * 값은 각 SVG의 실제 그림 bbox를 측정해서 계산한 것.
+ */
 .mobileTriggerIllustration {
+  position: absolute;
   display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
+  max-width: none;
+  width: var(--illust-w, 48px);
+  height: var(--illust-h, 48px);
+  left: var(--illust-x, 0px);
+  top: var(--illust-y, 0px);
+}
+
+.mobileTriggerIconSlot[data-illust='home'] {
+  --illust-w: 46.9px;
+  --illust-h: 46.9px;
+  --illust-x: 0.4px;
+  --illust-y: -1.6px;
+}
+
+.mobileTriggerIconSlot[data-illust='education'] {
+  --illust-w: 67.8px;
+  --illust-h: 60.3px;
+  --illust-x: -10px;
+  --illust-y: -7.8px;
+}
+
+.mobileTriggerIconSlot[data-illust='lectures'] {
+  --illust-w: 75.4px;
+  --illust-h: 66.4px;
+  --illust-x: -13.6px;
+  --illust-y: -9.8px;
+}
+
+.mobileTriggerIconSlot[data-illust='volunteer'] {
+  --illust-w: 41.7px;
+  --illust-h: 41.7px;
+  --illust-x: 2.9px;
+  --illust-y: 3.4px;
+}
+
+.mobileTriggerIconSlot[data-illust='inquiries'] {
+  --illust-w: 45.6px;
+  --illust-h: 36.5px;
+  --illust-x: 1.5px;
+  --illust-y: 7.2px;
 }
 
 .mobileTriggerSmallIcon {

@@ -6,12 +6,18 @@ import type { IndividualSettlementReviewRevision } from '@/shared/api/generated/
 
 export const INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS = {
   NONE: '미신청',
-  SUBMITTED: '심사 대기',
-  APPROVED: '승인',
-  REJECTED: '반려',
+  SUBMITTED: '확인 대기 중',
+  APPROVED: '영수증 확인 완료',
+  REJECTED: '신청 반려',
   WITHDRAWN: '철회',
   DRAFT: '작성중',
 } as const
+
+export const INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL = '지급 대상 아님'
+
+export function isIndividualSettlementLodgingType(value: string | null | undefined): boolean {
+  return normalizeIndividualSettlementReviewStatus(value) === 'LODGING'
+}
 
 export type IndividualSettlementReviewStatusKey =
   keyof typeof INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS
@@ -27,6 +33,7 @@ export function individualSettlementReviewStatusLabel(
 ): string {
   const key = normalizeIndividualSettlementReviewStatus(status)
   if (!key) return INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS.NONE
+  if (key === 'PAID') return key
   if (key in INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS) {
     return INDIVIDUAL_SETTLEMENT_REVIEW_STATUS_LABELS[key as IndividualSettlementReviewStatusKey]
   }

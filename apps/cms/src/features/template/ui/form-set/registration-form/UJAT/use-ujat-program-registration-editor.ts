@@ -90,7 +90,7 @@ export type UseUjatProgramRegistrationEditorOptions = {
   skipDraftRestore?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
-  /** 등록 위저드 — draft-owned form version PUT/GET (program-draft SSOT) */
+  /** 등록 위저드 — 양식 초안은 localStorage(registration-wizard:UJAT:*) 전용, CREATE 후 프로그램 전용 COPY로 적용 */
   registrationWizardProgramType?: string
 }
 

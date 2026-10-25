@@ -755,3 +755,30 @@ export function parseGeneralProgramServiceDetailJson(
     return {}
   }
 }
+
+/**
+ * P5-f R8b: 모집 탭 저장용 최소 serviceDetailJson patch.
+ * BE `ProgramServiceDetailCommandService.mergeObjectPatch`는 키 단위 deep merge(빠진 키 유지)이므로,
+ * 공통정보 전체(마지막 GET 값)를 다시 보내지 않고 nested 모집 정보만 보낸다.
+ * overlay·paymentItems 등은 싣지 않는다(동시 수정 덮어쓰기·지급항목 재치환 방지).
+ */
+export function serializeGeneralRecruitmentNestedServiceDetailPatch(
+  program: Program
+): string | undefined {
+  const full = serializeGeneralProgramServiceDetailJson(program, {
+    omitRecruitmentWindow: true,
+    keepNestedRecruitmentInfo: true,
+  })
+  if (!full) return undefined
+  const parsed = JSON.parse(full) as GeneralProgramServiceDetailJsonV1 & Record<string, unknown>
+  const common = isServiceDetailRecord(parsed.generalCommonInfo) ? parsed.generalCommonInfo : {}
+  const picked: Record<string, unknown> = {}
+  for (const key of NESTED_RECRUITMENT_INFO_KEYS) {
+    if (common[key] !== undefined) picked[key] = common[key]
+  }
+  if (Object.keys(picked).length === 0) return undefined
+  return JSON.stringify({
+    schemaVersion: parsed.schemaVersion ?? GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
+    generalCommonInfo: picked,
+  })
+}

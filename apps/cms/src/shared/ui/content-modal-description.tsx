@@ -28,12 +28,17 @@ function normalizeDescriptionNewlines(text: string): string {
   return text.replace(/\\n/g, '\n')
 }
 
-/** ContentModal `description` — `\n` 개행, `**텍스트**` 볼드(700) */
-export function renderContentModalDescription(text: string): ReactNode {
+/**
+ * ContentModal `description` / CmsModal `content` — `\n`(실제 개행·리터럴) 줄바꿈, `**텍스트**` 볼드(700)
+ */
+export function renderContentModalDescription(
+  text: string,
+  className = 'content-modal__description-text',
+): ReactNode {
   const lines = normalizeDescriptionNewlines(text).split('\n')
 
   return (
-    <p className="content-modal__description-text">
+    <p className={className}>
       {lines.map((line, lineIndex) => (
         <Fragment key={lineIndex}>
           {lineIndex > 0 ? <br /> : null}

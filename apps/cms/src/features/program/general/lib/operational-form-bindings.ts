@@ -421,6 +421,28 @@ export function resolveRowApplicationBinding(
   return { kind: 'missing' }
 }
 
+/**
+ * GENERAL·UJAT CREATE 후 BE `fanOutProgramBindings`가 만든 모집 행(RECRUITMENT scope) 신청 바인딩 중
+ * spec 역할과 맞는 활성 바인딩 목록. 행마다 독립 양식이므로 CREATE 후 양식 적용은 행 단위로 한다.
+ */
+export function listRecruitmentRowApplicationBindings(
+  program: Pick<Program, 'backendProgramType'>,
+  bindings: readonly ProgramFormBindingResponse[],
+  spec: Pick<OperationalFormSpec, 'formType' | 'targetRole'>
+): ProgramFormBindingResponse[] {
+  if (normalizeBindingType(spec.formType) !== 'APPLICATION') return []
+  const programType = program.backendProgramType?.trim().toUpperCase()
+  if (programType == null || !RECRUITMENT_ROW_PROGRAM_TYPES.has(programType)) return []
+  return bindings.filter(
+    item =>
+      item.active !== false &&
+      normalizeBindingType(item.formType) === 'APPLICATION' &&
+      (item.targetScope ?? '').toUpperCase() === 'RECRUITMENT' &&
+      item.targetScopeId != null &&
+      roleMatches(item, spec.targetRole)
+  )
+}
+
 function roleMatches(binding: ProgramFormBindingResponse, targetRole: string | undefined): boolean {
   if (targetRole == null || targetRole === '') return true
   const role = normalizeBindingType(binding.targetRole || binding.targetType)

@@ -4,134 +4,52 @@ import { enrichProgramCreateRequestWithRegistrationFormBindings } from './enrich
 
 vi.mock('./registration-create-form-bindings-capabilities', () => ({
   shouldUseRegistrationCreateFormBindings: vi.fn(() => true),
-  shouldAttachInlineFormBindingsOnProgramCreate: vi.fn(() => true),
+  shouldApplyRegistrationFormsAfterCreate: vi.fn(() => true),
 }))
 
-vi.mock('./build-registration-create-form-bindings', () => ({
-  buildRegistrationCreateFormBindings: vi.fn(async () => ({
-    programDraftId: 42,
-    formBindings: [
-      {
-        formType: 'APPLICATION',
-        templateId: 10,
-        templateVersionId: 99,
-        targetRole: 'ORGANIZATION',
-        active: true,
-      },
-    ],
-  })),
-}))
-
-describe('enrichProgramCreateRequestWithRegistrationFormBindings', () => {
+describe('enrichProgramCreateRequestWithRegistrationFormBindings (programDraftId 없는 CREATE)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('merges programDraftId, formBindings and disables autoApplyDefaultFormBindings', async () => {
+  it('programDraftId·formBindings 없이 autoApplyDefaultFormBindings=true로 보낸다', () => {
     const program = { id: '186010' } as Program
-    const base = {
+    const result = enrichProgramCreateRequestWithRegistrationFormBindings(program, {
       title: 'test',
-      autoApplyDefaultFormBindings: true,
-    }
-
-    const result = await enrichProgramCreateRequestWithRegistrationFormBindings(program, base)
-
-    expect(result.autoApplyDefaultFormBindings).toBe(false)
-    expect(result.programDraftId).toBe(42)
-    expect(result.formBindings).toHaveLength(1)
+      autoApplyDefaultFormBindings: false,
+    })
+    expect(result.autoApplyDefaultFormBindings).toBe(true)
+    expect(result).not.toHaveProperty('programDraftId')
+    expect(result).not.toHaveProperty('formBindings')
     expect(result.title).toBe('test')
   })
 
-  it('uses prepared payload without calling buildRegistrationCreateFormBindings', async () => {
-    const { buildRegistrationCreateFormBindings } = await import(
-      './build-registration-create-form-bindings'
-    )
-    const program = { id: '186010' } as Program
-    const prepared = {
-      programDraftId: 7,
-      formBindings: [
-        {
-          formType: 'REGISTRATION' as const,
-          templateId: 1,
-          templateVersionId: 2,
-          active: true,
-        },
-      ],
-    }
-
-    const result = await enrichProgramCreateRequestWithRegistrationFormBindings(
-      program,
-      { title: 'prepared' },
-      prepared
-    )
-
-    expect(buildRegistrationCreateFormBindings).not.toHaveBeenCalled()
-    expect(result.programDraftId).toBe(7)
-    expect(result.formBindings).toHaveLength(1)
-  })
-
-  it('merges inline formBindings for TRAINED_TEACHER', async () => {
+  it('기존 요청에 programDraftId·formBindings가 있어도 제거한다', () => {
     const program = { id: 'trained-teachers-local-test' } as Program
-    const base = {
+    const result = enrichProgramCreateRequestWithRegistrationFormBindings(program, {
       title: 'tt',
-      autoApplyDefaultFormBindings: true,
-      programType: 'TRAINED_TEACHER' as const,
-    }
-    const prepared = {
+      programType: 'TRAINED_TEACHER',
       programDraftId: 42,
       formBindings: [
-        {
-          formType: 'REGISTRATION' as const,
-          templateId: 1,
-          templateVersionId: 2,
-          active: true,
-        },
+        { formType: 'REGISTRATION', templateId: 1, templateVersionId: 2, active: true },
       ],
-    }
-
-    const result = await enrichProgramCreateRequestWithRegistrationFormBindings(
-      program,
-      base,
-      prepared
-    )
-
-    expect(result.autoApplyDefaultFormBindings).toBe(false)
-    expect(result.programDraftId).toBe(42)
-    expect(result.formBindings).toEqual(prepared.formBindings)
+    })
+    expect(result).not.toHaveProperty('programDraftId')
+    expect(result).not.toHaveProperty('formBindings')
+    expect(result.autoApplyDefaultFormBindings).toBe(true)
     expect(result.programType).toBe('TRAINED_TEACHER')
   })
 
-  it('skips enrich when inline formBindings are not allowed (Gemini / Volunteer)', async () => {
-    const { shouldAttachInlineFormBindingsOnProgramCreate } = await import(
+  it('대상이 아닌 유형(Gemini / Volunteer)은 요청을 그대로 둔다', async () => {
+    const { shouldApplyRegistrationFormsAfterCreate } = await import(
       './registration-create-form-bindings-capabilities'
     )
-    const { buildRegistrationCreateFormBindings } = await import(
-      './build-registration-create-form-bindings'
+    vi.mocked(shouldApplyRegistrationFormsAfterCreate).mockReturnValueOnce(false)
+    const base = { title: 'gemini', autoApplyDefaultFormBindings: true }
+    const result = enrichProgramCreateRequestWithRegistrationFormBindings(
+      { id: 'gemini-local-test' } as Program,
+      base
     )
-    vi.mocked(shouldAttachInlineFormBindingsOnProgramCreate).mockReturnValueOnce(false)
-
-    const program = { id: 'gemini-local-test' } as Program
-    const base = {
-      title: 'gemini',
-      autoApplyDefaultFormBindings: true,
-    }
-
-    const result = await enrichProgramCreateRequestWithRegistrationFormBindings(program, base, {
-      programDraftId: 42,
-      formBindings: [
-        {
-          formType: 'REGISTRATION',
-          templateId: 1,
-          templateVersionId: 2,
-          active: true,
-        },
-      ],
-    })
-
     expect(result).toEqual(base)
-    expect(result.formBindings).toBeUndefined()
-    expect(result.programDraftId).toBeUndefined()
-    expect(result.autoApplyDefaultFormBindings).toBe(true)
-    expect(buildRegistrationCreateFormBindings).not.toHaveBeenCalled()
   })
 })

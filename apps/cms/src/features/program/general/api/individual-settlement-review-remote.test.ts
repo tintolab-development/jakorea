@@ -31,12 +31,12 @@ describe('individual settlement review remote', () => {
 
   it('builds list params with programId and participantId only', () => {
     const params = buildIndividualSettlementReviewListParams({
-      programId: 186339,
-      participantId: 123,
+      programId: 186304,
+      participantId: 1694942,
     })
     expect(params).toEqual({
-      programId: 186339,
-      participantId: 123,
+      programId: 186304,
+      participantId: 1694942,
       page: 0,
       size: 100,
     })
@@ -49,9 +49,9 @@ describe('individual settlement review remote', () => {
       items: [
         {
           settlementApplicationId: 1,
-          programId: 186339,
+          programId: 186304,
           individualApplicationId: 1694686,
-          participantId: 123,
+          participantId: 1694942,
           programScheduleId: 187231,
           status: 'SUBMITTED',
           totalAmount: 49999,
@@ -65,16 +65,16 @@ describe('individual settlement review remote', () => {
     })
 
     const items = await fetchIndividualSettlementReviewListRemote({
-      programId: '186339',
-      participantId: '123',
+      programId: '186304',
+      participantId: '1694942',
     })
 
     expect(customInstance).toHaveBeenCalledWith({
       url: INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL,
       method: 'GET',
       params: {
-        programId: 186339,
-        participantId: 123,
+        programId: 186304,
+        participantId: 1694942,
         page: 0,
         size: 100,
       },
@@ -145,11 +145,23 @@ describe('individual settlement review remote', () => {
 
   it('does not reuse instructor settlement query key for individual review', () => {
     const instructorKey = participatingInstructorSettlementsQueryOptions({
-      programId: '186339',
-      instructorMemberId: '456',
+      programId: '186304',
+      instructorMemberId: '190080',
     }).queryKey
     expect(instructorKey).toContain('instructor-settlements')
     expect(INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL).toBe('/api/admin/individual-settlement-applications')
     expect(INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL).not.toContain('/api/admin/settlements')
+    expect(INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL).not.toContain('/participants/')
+  })
+
+  it('treats 200 empty items as empty list, not missing API', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      items: [],
+      page: 0,
+      size: 100,
+      totalElements: 0,
+      totalPages: 0,
+    })
+    await expect(fetchIndividualSettlementReviewListRemote({ page: 0, size: 100 })).resolves.toEqual([])
   })
 })

@@ -7,8 +7,11 @@ import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } f
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
-  CmsButton, CmsModal, ConfirmModal, useCmsAlert,
-  FilterTableToolbarButton
+  CmsButton,
+  CmsModal,
+  ConfirmModal,
+  useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import {
   MAIL_ROOT_CATEGORY_ID,
@@ -159,8 +162,7 @@ export function MailTemplateList() {
     mutations.createTemplate.isPending ||
     mutations.updateTemplate.isPending
   const busy = isSyncing || isMutating
-  const treeLoading =
-    remote && !treeQuery.data && (treeQuery.isLoading || treeQuery.isFetching)
+  const treeLoading = remote && !treeQuery.data && (treeQuery.isLoading || treeQuery.isFetching)
   const treeError = remote && treeQuery.isError && !treeQuery.data
 
   const clearTreeSearchAfterMutation = useCallback(() => {
@@ -281,7 +283,7 @@ export function MailTemplateList() {
     remote && Boolean(selectedTemplateId)
   )
   const treeTemplate =
-    selection?.kind === 'template' ? findTemplate(templates, selection.id) ?? null : null
+    selection?.kind === 'template' ? (findTemplate(templates, selection.id) ?? null) : null
   const selectedTemplate = (remote ? detailQuery.data : null) ?? treeTemplate
   const detailLoading =
     remote && Boolean(selectedTemplateId) && detailQuery.isLoading && !detailQuery.data
@@ -660,11 +662,7 @@ export function MailTemplateList() {
           return
         }
         setFormBodyError(null)
-        offerSyncOnError(
-          '저장 실패',
-          error,
-          '템플릿 저장에 실패했습니다. 다시 시도해 주세요.'
-        )
+        offerSyncOnError('저장 실패', error, '템플릿 저장에 실패했습니다. 다시 시도해 주세요.')
       }
     },
     [
@@ -833,9 +831,7 @@ export function MailTemplateList() {
         open={deleteDialog === 'category'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제"
-        content={
-          '해당 카테고리를 삭제하시겠습니까?\n삭제 시 NHN 서비스에서도 함께 반영됩니다.'
-        }
+        content={'해당 카테고리를 삭제하시겠습니까?\n삭제 시 NHN 서비스에서도 함께 반영됩니다.'}
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           {

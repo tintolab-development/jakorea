@@ -49,15 +49,6 @@ import {
   resolveProgramOperationalBindingKind,
   type ProgramOperationalBindingKind,
 } from '@/features/program/general/lib/program-operational-binding-profile'
-import {
-  ensureRegistrationProgramDraftId,
-  peekRegistrationProgramDraftId,
-} from '@/features/program/general/lib/registration-program-draft-session'
-import {
-  ensureDraftOwnedFormVersionWithBaseline,
-  loadDraftOwnedFormVersionRecord,
-  persistDraftOwnedFormVersion,
-} from '@/features/program/general/lib/registration-draft-form-versions'
 import { listVisibleOperationalFormSpecs } from '@/features/program/general/lib/operational-form-bindings'
 import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
@@ -184,15 +175,19 @@ export function resolveOperationalDraftStorageKey(
   return resolveRegistrationOperationalDraftStorageKey(variant, catalogTemplateCode)
 }
 
+/** 상세·CREATE 후 양식 적용 — 등록 위저드 localStorage 초안만 읽는다(서버 임시저장 없음). */
 export async function loadOperationalFormDraftForProgram(
   program: Program,
   catalogTemplateCode: string
 ): Promise<WritingFormTemplateSaveRecord | null> {
   const programDraftType = resolveRegistrationProgramDraftProgramType(program)
-  const programDraftId =
-    peekRegistrationProgramDraftId(programDraftType) ??
-    (await ensureRegistrationProgramDraftId(programDraftType))
-  return loadDraftOwnedFormVersionRecord({ programDraftId, templateCode: catalogTemplateCode })
+  const { loadRegistrationWizardFormDraft } = await import(
+    '@/features/program/general/lib/registration-wizard-form-draft'
+  )
+  return loadRegistrationWizardFormDraft({
+    programType: programDraftType,
+    templateCode: catalogTemplateCode,
+  })
 }
 
 type OperationalOverlayKind =
@@ -688,40 +683,6 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
 }
 
 /**
- * 등록 완료 직전 — visible operational spec overlay를 draft-owned version에 PUT.
- * @deprecated `prepareRegistrationCreateFormBindings` 사용. 하위 호환용.
- */
-export async function persistRegistrationOperationalOverlaySnapshots(
-  program: Program
-): Promise<void> {
-  flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-  const programDraftType = resolveRegistrationProgramDraftProgramType(program)
-  const programDraftId = await ensureRegistrationProgramDraftId(programDraftType)
-  for (const spec of listVisibleOperationalFormSpecs(program)) {
-    const catalogId = spec.templateCode
-    const overlay = collectOperationalOverlayForCatalogId(catalogId)
-    if (overlay == null || Object.keys(overlay).length === 0) continue
-
-    const { owned, baseline } = await ensureDraftOwnedFormVersionWithBaseline({
-      programDraftId,
-      templateCode: catalogId,
-    })
-    const draft = baseline?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
-    if (draft == null) continue
-
-    await persistDraftOwnedFormVersion({
-      programDraftId,
-      templateCode: catalogId,
-      owned,
-      baseline,
-      draft,
-      overlay,
-      editorState: baseline?.editorState,
-    })
-  }
-}
-
-/**
  * 「임시 저장」— 현재 메모리 overlay를 모든 모집/신청 양식 localStorage에 기록.
  * 현재 단계 handleSave만 하면 다른 탭 상세 정보가 빠진다.
  */
@@ -801,7 +762,7 @@ export async function persistRegistrationOperationalOverlaysToLocal(
 export function clearRegistrationOperationalFormDrafts(
   _variant: RegistrationOperationalDraftVariant
 ): void {
-  // no-op — draft-owned versions는 program-draft DELETE/clearRegistrationProgramDraftSession에서 정리
+  // no-op — 위저드 양식 초안은 localStorage(clearRegistrationProgramDraftLocal)에서 정리한다.
 }
 
 /** @deprecated `clearRegistrationOperationalFormDrafts('general')` 사용 */

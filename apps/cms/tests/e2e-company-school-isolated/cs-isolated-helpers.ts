@@ -185,6 +185,8 @@ async function waitActiveWizardTabPanel(page: Page, tab?: Locator) {
   if (tab && (await tab.isVisible().catch(() => false))) {
     await expect(tab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
   }
+  // 탭 템플릿 fetch가 끝나기 전에는 이전 탭 패널 DOM이 잠깐 남는다(G1) — 네트워크가 잠잠해질 때까지 짧게 기다린다.
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined)
   const panel = page.locator('[role="tabpanel"]:visible').first()
   if ((await panel.count()) > 0) {
     await expect(panel).toBeVisible({ timeout: 10_000 })
@@ -241,7 +243,9 @@ async function fillThirdPartyRecipientIfEmpty(page: Page) {
       if (!(await input.isVisible().catch(() => false))) continue
       const value = await input
         .inputValue({ timeout: 2000 })
-        .catch(async () => (await input.innerText()).trim())
+        .catch(async () =>
+          (await input.innerText({ timeout: 2000 }).catch(() => '')).trim()
+        )
       if (String(value ?? '').trim()) continue
       await input.fill('JA코리아').catch(() => undefined)
       break
@@ -279,6 +283,11 @@ export async function completeAndCapture(page: Page, log: IsolatedNetworkLog) {
     await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
   }
   await expect.poll(() => log.createProgram, { timeout: 90_000 }).not.toBeNull()
+  // P2(방안 C): 양식 COPY/PUT/publish는 CREATE 이후에 나간다 — 실패 모드에서는 publish가 없을 수 있어 soft wait.
+  await expect
+    .poll(() => log.formVersionPublishes.length, { timeout: 30_000 })
+    .toBeGreaterThan(0)
+    .catch(() => undefined)
   const successDialog = page.getByRole('dialog').filter({ hasText: '등록되었습니다.' })
   if (await successDialog.isVisible().catch(() => false)) {
     await successDialog.getByRole('button', { name: '확인' }).click()

@@ -93,6 +93,7 @@ import {
   resolveProgramWageDeductionLabel,
   useNormalizeProgramPaymentItemValues,
   useProgramWagePaymentItemOptionsState,
+  excludeCompanySchoolOnlyPaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { paymentItemSelectPlaceholder } from '@/features/template/lib/template-registration-payment-item-options'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
@@ -1360,7 +1361,11 @@ function WageSection({
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
   const paymentCatalog = useProgramWagePaymentItemOptionsState()
-  const paymentItemOptions = paymentCatalog.options
+  // R14: 일반 상세에서 1사1교 전용 지급 항목 제외(저장된 선택값은 유지)
+  const paymentItemOptions = useMemo(
+    () => excludeCompanySchoolOnlyPaymentItemOptions(paymentCatalog.options, paymentItemIds),
+    [paymentCatalog.options, paymentItemIds]
+  )
 
   const editForm =
     form ??

@@ -40,6 +40,11 @@ export type AlimtalkSendRecipient = {
   /** BE RecipientRequest.actorType — MEMBER / DIRECT 등 */
   actorType?: string
   actorId?: number
+  /**
+   * 수신자별 수동 변수.
+   * SYSTEM·서버 예약 키는 발송 요청에 넣지 않는다.
+   */
+  variables?: Record<string, string>
 }
 
 export type AlimtalkSendRecipientSearchParams = {

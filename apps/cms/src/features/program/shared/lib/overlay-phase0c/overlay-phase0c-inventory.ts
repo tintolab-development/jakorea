@@ -136,7 +136,7 @@ export const OVERLAY_PHASE0C_MATRIX: readonly OverlayPhase0CMatrixRow[] = [
     updateApi: 'updateAdminProgramRemote PATCH + buildProgramRecruitmentRowSaveRequest',
     previewSource: 'overlay + institution-application-program-bridge (Legacy extras)',
     draftRestore:
-      'program-draft remote + localStorage registration-wizard:GENERAL + operational overlay local',
+      'localStorage registration-wizard:GENERAL + operational overlay local',
     commonInfoBuilder: 'reuse-as-is',
     recruitmentBuilder: 'reuse-as-is',
     applicationBuilder: 'reuse-as-is',

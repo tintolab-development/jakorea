@@ -67,7 +67,9 @@ export function MypageLecturePage() {
   return (
     <MypageLayout variant="subpage" lnbItems={lnbItems} onLnbItemSelect={handleLnbItemSelect}>
       <header className={styles.pageTitleRow}>
-        <img className={styles.pageIcon} src={illustFlagUrl} alt="" aria-hidden="true" />
+        <span className={styles.pageIconFlagWrap} aria-hidden="true">
+          <img className={styles.pageIconFlag} src={illustFlagUrl} alt="" />
+        </span>
         <PFText as="h1" typo="page-title" color="black" className={styles.pageTitle}>
           강의현황
         </PFText>

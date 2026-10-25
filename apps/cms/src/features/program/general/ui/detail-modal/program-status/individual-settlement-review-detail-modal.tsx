@@ -22,6 +22,8 @@ import {
   formatIndividualSettlementWon,
   individualSettlementReviewStatusAccent,
   individualSettlementReviewStatusLabel,
+  INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL,
+  isIndividualSettlementLodgingType,
   latestIndividualSettlementReviewRevision,
 } from '@/features/program/general/lib/individual-settlement-review-status'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
@@ -158,7 +160,14 @@ export function IndividualSettlementReviewDetailModal({
 
   const itemColumns = useMemo(
     () => [
-      { title: '항목', dataIndex: 'itemName', key: 'itemName' },
+      {
+        title: '항목',
+        key: 'itemName',
+        render: (_value: unknown, record: IndividualSettlementReviewItem) =>
+          isIndividualSettlementLodgingType(record.itemType)
+            ? `${record.itemName} (${INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL})`
+            : record.itemName,
+      },
       {
         title: '금액',
         key: 'amount',
@@ -171,7 +180,14 @@ export function IndividualSettlementReviewDetailModal({
 
   const receiptColumns = useMemo(
     () => [
-      { title: '지출 유형', dataIndex: 'expenseType', key: 'expenseType' },
+      {
+        title: '지출 유형',
+        key: 'expenseType',
+        render: (_value: unknown, record: IndividualSettlementReviewReceipt) =>
+          isIndividualSettlementLodgingType(record.expenseType)
+            ? `${record.expenseType} (${INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL})`
+            : record.expenseType,
+      },
       {
         title: '지출일',
         key: 'expenseDate',

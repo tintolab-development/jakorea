@@ -1,4 +1,7 @@
-import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import {
+  formatKoreanPhoneNumber,
+  isValidKoreanPhoneNumber,
+} from '@jakorea/domain/shared/korean-phone'
 import type {
   AlimtalkSendMemberType,
   AlimtalkSendParticipationType,
@@ -91,18 +94,52 @@ export function normalizeAlimtalkSendPhone(value: string): string {
   return formatKoreanPhoneNumber(value.trim())
 }
 
+export const ALIMTALK_DUPLICATE_PHONE_MESSAGE =
+  '같은 휴대폰 번호는 1건만 발송 대상에 포함됩니다.'
+
+/** 하이픈 차이를 없앤 비교 키. 마스킹·미완성 번호는 중복으로 보지 않는다. */
+export function alimtalkSendPhoneDedupKey(phone: string): string | null {
+  if (phone.includes('*')) return null
+  if (!isValidKoreanPhoneNumber(phone)) return null
+  const digits = phone.replace(/\D/g, '')
+  return digits || null
+}
+
+/**
+ * 수신자 ID가 달라도 같은 휴대폰 번호는 먼저 들어온 1건만 남긴다.
+ * 회원-회원, 회원-직접입력, 직접입력-직접입력에 같이 적용한다.
+ */
+export function dedupeAlimtalkSendRecipients(
+  recipients: AlimtalkSendRecipient[]
+): AlimtalkSendRecipient[] {
+  const next: AlimtalkSendRecipient[] = []
+  const seenIds = new Set<string>()
+  const seenPhones = new Set<string>()
+  for (const recipient of recipients) {
+    if (seenIds.has(recipient.id)) continue
+    const phoneKey = alimtalkSendPhoneDedupKey(recipient.phone)
+    if (phoneKey && seenPhones.has(phoneKey)) continue
+    seenIds.add(recipient.id)
+    if (phoneKey) seenPhones.add(phoneKey)
+    next.push(recipient)
+  }
+  return next
+}
+
 export function mergeAlimtalkSendRecipients(
   current: AlimtalkSendRecipient[],
   incoming: AlimtalkSendRecipient[]
 ): AlimtalkSendRecipient[] {
-  const next = [...current]
-  const seen = new Set(current.map(item => item.id))
-  for (const recipient of incoming) {
-    if (seen.has(recipient.id)) continue
-    seen.add(recipient.id)
-    next.push(recipient)
-  }
-  return next
+  return dedupeAlimtalkSendRecipients([...current, ...incoming])
+}
+
+export function countDroppedAlimtalkSendRecipients(
+  current: AlimtalkSendRecipient[],
+  incoming: AlimtalkSendRecipient[]
+): number {
+  const mergedIds = new Set(mergeAlimtalkSendRecipients(current, incoming).map(item => item.id))
+  const currentIds = new Set(current.map(item => item.id))
+  return incoming.filter(item => !mergedIds.has(item.id) && !currentIds.has(item.id)).length
 }
 
 export function filterAlimtalkSendRecipients(
@@ -134,7 +171,11 @@ export function manualRecipientId(phone: string): string {
   return `manual-${normalizeAlimtalkSendPhone(phone).replace(/\D/g, '')}`
 }
 
-export function createManualRecipient(phone: string, name = ''): AlimtalkSendRecipient {
+export function createManualRecipient(
+  phone: string,
+  name = '',
+  variables?: Record<string, string>
+): AlimtalkSendRecipient {
   const normalized = normalizeAlimtalkSendPhone(phone)
   return {
     id: manualRecipientId(normalized),
@@ -144,6 +185,7 @@ export function createManualRecipient(phone: string, name = ''): AlimtalkSendRec
     phone: normalized,
     source: 'manual',
     actorType: 'DIRECT',
+    ...(variables ? { variables: { ...variables } } : {}),
   }
 }
 

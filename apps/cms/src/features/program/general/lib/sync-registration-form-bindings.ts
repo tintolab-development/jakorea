@@ -1,3 +1,7 @@
+import {
+  canWriteProgramFormVersionInPlace,
+  readFormVersionStatus,
+} from '@/features/template/lib/program-form-version-write-guard'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
 import type { Program } from '@/types/domain'
@@ -12,7 +16,7 @@ import { queryClient } from '@/shared/lib/query-client'
 import { shouldUseRemoteApi as shouldUseUjatProgramsRemoteApi } from '@/features/program/ujat/api/capabilities'
 import {
   getOperationalFormSpec,
-  listVisibleOperationalFormSpecs,
+  getRegistrationFormSpec,
   pickOperationalFormBinding,
   recruitmentApplicationBindingScope,
   resolveRowApplicationBinding,
@@ -49,7 +53,6 @@ export type ApplicationFormLoadSource = {
 }
 
 const rememberedByProgram = new Map<string, Map<string, RememberedBinding>>()
-const inflightByProgram = new Map<string, Promise<void>>()
 const FORM_BINDINGS_STALE_MS = 30_000
 
 async function fetchProgramFormBindingsCached(
@@ -137,6 +140,12 @@ function withRecruitmentApplicationScope(
   return { ...payload, ...scope }
 }
 
+/** 숫자 프로그램 ID만 ownerProgramId로 쓴다(로컬 임시 ID는 제외). */
+function toOwnerProgramId(programId: string | number | null | undefined): number | undefined {
+  const n = Number(programId)
+  return Number.isSafeInteger(n) && n > 0 ? n : undefined
+}
+
 async function attachLocalDraftToBinding(args: {
   program: Program
   spec: OperationalFormSpec
@@ -167,9 +176,12 @@ async function attachLocalDraftToBinding(args: {
     return
   }
 
+  const ownerProgramId = toOwnerProgramId(programId)
   const copied = await copyFormTemplateVersionRemote(args.catalogTemplateId, {
     sourceVersionId: existing?.templateVersionId ?? args.catalogVersionId,
     versionLabel: `program-${programId}`,
+    // 복사본을 이 프로그램 소유(template_scope=PROGRAM)로 만든다 — 소유 불명 COPY 방지
+    ...(ownerProgramId != null ? { ownerProgramId } : {}),
   })
   const templateId = copied.templateId ?? args.catalogTemplateId
   const templateVersionId = copied.templateVersionId
@@ -273,9 +285,12 @@ async function promoteCatalogBindingToProgramScoped(args: {
     return ids
   }
 
+  const ownerProgramId = toOwnerProgramId(programId)
   const copied = await copyFormTemplateVersionRemote(args.catalogTemplateId, {
     sourceVersionId: existing?.templateVersionId ?? args.catalogVersionId,
     versionLabel: `program-${programId}`,
+    // 복사본을 이 프로그램 소유(template_scope=PROGRAM)로 만든다 — 소유 불명 COPY 방지
+    ...(ownerProgramId != null ? { ownerProgramId } : {}),
   })
   const templateId = copied.templateId ?? args.catalogTemplateId
   const templateVersionId = copied.templateVersionId
@@ -330,10 +345,6 @@ async function promoteCatalogBindingToProgramScoped(args: {
   return ids
 }
 
-function isFormVersionMutable(versionStatus: string | null | undefined): boolean {
-  return versionStatus == null || versionStatus === 'DRAFT'
-}
-
 /**
  * 프로그램 상세 신청 양식 저장.
  * 바인딩된 버전은 PUBLISHED라 PUT이 409 FORM_VERSION_IMMUTABLE이다.
@@ -347,8 +358,15 @@ export async function saveProgramScopedOperationalFormVersion(args: {
   overlay?: Record<string, unknown>
   editorState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
-}): Promise<RememberedBinding> {
-  const spec = getOperationalFormSpec(args.templateCode)
+  /** CREATE 직후 양식 적용 — COPY를 이 프로그램 소유(`ownerProgramId`)로 만든다. */
+  ownerProgramId?: number
+  /**
+   * 같은 적용 실행에서 이미 다른 양식이 차지한 바인딩. 여기 있으면 PATCH하지 않고 새 바인딩을 만든다.
+   * (1사1교: BE 자동 적용은 모집·신청 바인딩을 1개씩만 만든다 → 기관/강사 양식이 같은 바인딩을 덮어쓰는 것 방지)
+   */
+  excludeBindingIds?: ReadonlySet<number>
+}): Promise<RememberedBinding & { bindingId?: number }> {
+  const spec = getOperationalFormSpec(args.templateCode) ?? getRegistrationFormSpec(args.templateCode)
   if (spec == null) {
     throw new Error(`운영 양식 스펙을 찾을 수 없습니다: ${args.templateCode}`)
   }
@@ -366,10 +384,21 @@ export async function saveProgramScopedOperationalFormVersion(args: {
 
   let draftTemplateId = sourceTemplateId
   let draftVersionId = args.versionId
-  if (!isFormVersionMutable(current.versionStatus)) {
+  // 안전장치: CREATE 직후 적용(ownerProgramId)·공용 카탈로그·공유·발행·상태 불명 버전은 항상 COPY한다.
+  // (자동 적용 바인딩은 공용 카탈로그 버전을 가리킨다 — 제자리 PUT/publish는 공용 양식을 덮어쓴다.)
+  const catalogForGuard = await resolveFormTemplateCatalogIds(args.templateCode).catch(() => null)
+  if (
+    !canWriteProgramFormVersionInPlace(current, {
+      catalogTemplateId: catalogForGuard?.templateId,
+      programId: args.program.id,
+      forceCopy: args.ownerProgramId != null,
+    })
+  ) {
+    const copyOwnerProgramId = args.ownerProgramId ?? toOwnerProgramId(args.program.id)
     const copied = await copyFormTemplateVersionRemote(sourceTemplateId, {
       sourceVersionId: args.versionId,
       versionLabel: `program-${args.program.id}`,
+      ...(copyOwnerProgramId != null ? { ownerProgramId: copyOwnerProgramId } : {}),
     })
     if (copied.templateVersionId == null) {
       throw new Error('프로그램 전용 양식 초안을 만들지 못했습니다.')
@@ -410,12 +439,16 @@ export async function saveProgramScopedOperationalFormVersion(args: {
 
   const ids = { templateId: draftTemplateId, templateVersionId: publishedVersionId }
   const bindings = await fetchGeneralProgramFormBindings(args.program.id)
-  const existing = selectBindingForOperationalSpec(
+  const selected = selectBindingForOperationalSpec(
     args.program,
     bindings,
     spec,
     catalog?.templateId
   )
+  const existing =
+    selected?.bindingId != null && args.excludeBindingIds?.has(Number(selected.bindingId))
+      ? undefined
+      : selected
   const createPayload = withRecruitmentApplicationScope(args.program, spec, {
     formType: spec.formType,
     templateId: draftTemplateId,
@@ -440,53 +473,9 @@ export async function saveProgramScopedOperationalFormVersion(args: {
   }
   rememberProgramOperationalFormBinding(args.program.id, args.templateCode, ids)
   invalidateProgramFormBindingsCache(args.program.id)
-  return ids
-}
-
-async function attachRegistrationFormDrafts(program: Program): Promise<void> {
-  if (!shouldUseProgramFormBindingsRemoteApi() || !shouldUseFormsSurveysRemoteApi()) return
-  const specs = listVisibleOperationalFormSpecs(program)
-  if (specs.length === 0) return
-
-  const bindings = await fetchGeneralProgramFormBindings(program.id)
-  for (const spec of specs) {
-    const local = await loadOperationalFormDraftForProgram(program, spec.templateCode)
-    if (local?.draft == null) continue
-    try {
-      const catalog = await resolveFormTemplateCatalogIds(spec.templateCode)
-      if (catalog == null) {
-        console.warn(
-          '[program-form-bindings] catalog template ids missing',
-          spec.templateCode
-        )
-        continue
-      }
-      await attachLocalDraftToBinding({
-        program,
-        spec,
-        bindings,
-        catalogTemplateId: catalog.templateId,
-        catalogVersionId: catalog.templateVersionId,
-      })
-    } catch (error) {
-      console.warn(
-        '[program-form-bindings] attach local draft failed',
-        spec.templateCode,
-        error
-      )
-    }
-  }
-}
-
-/** 등록 위저드 localStorage 신청/모집 초안을 프로그램 form-binding 전용 version에 반영 */
-export async function attachRegistrationFormDraftsToProgram(program: Program): Promise<void> {
-  const existing = inflightByProgram.get(program.id)
-  if (existing) return existing
-  const run = attachRegistrationFormDrafts(program).finally(() => {
-    inflightByProgram.delete(program.id)
-  })
-  inflightByProgram.set(program.id, run)
-  return run
+  const usedBindingId =
+    existing?.bindingId != null && !bindingInactive ? Number(existing.bindingId) : undefined
+  return usedBindingId != null ? { ...ids, bindingId: usedBindingId } : ids
 }
 
 /** form-bindings GET + resolve만 (조회·미리보기용, PATCH/PUT 없음) */
@@ -520,9 +509,9 @@ export async function resolveProgramOperationalFormLoadSource(
   return { templateVersionId: binding.templateVersionId, preferLocalDraft: false }
 }
 
-/** 발행·보관 버전은 PUT 불가. DRAFT만 수정한다. */
+/** 발행·보관·상태 불명 버전은 PUT 불가. DRAFT만 수정한다(공용 여부는 canWriteProgramFormVersionInPlace). */
 export function isProgramFormVersionMutable(versionStatus: string | null | undefined): boolean {
-  return versionStatus == null || versionStatus === 'DRAFT'
+  return readFormVersionStatus({ versionStatus }) === 'DRAFT'
 }
 
 async function rebindProgramOperationalFormVersion(args: {
@@ -583,13 +572,22 @@ export async function saveMutableProgramFormVersion(args: {
   let writeVersionId = args.templateVersionId
   let templateId = current.templateId
 
-  if (!isProgramFormVersionMutable(current.versionStatus)) {
+  const catalogForGuard = await resolveFormTemplateCatalogIds(args.templateCode).catch(() => null)
+  if (
+    !canWriteProgramFormVersionInPlace(current, {
+      catalogTemplateId: catalogForGuard?.templateId,
+      programId: args.programId,
+    })
+  ) {
     if (templateId == null) {
       throw new Error('발행된 양식을 복사할 템플릿 ID가 없습니다.')
     }
     const copied = await copyFormTemplateVersionRemote(templateId, {
       sourceVersionId: args.templateVersionId,
       versionLabel: `program-${args.programId}-edit`,
+      ...(toOwnerProgramId(args.programId) != null
+        ? { ownerProgramId: toOwnerProgramId(args.programId) }
+        : {}),
     })
     if (copied.templateVersionId == null) {
       throw new Error('수정용 양식 draft를 만들지 못했습니다.')

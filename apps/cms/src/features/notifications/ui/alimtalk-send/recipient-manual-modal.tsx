@@ -5,9 +5,10 @@ import {
   formatKoreanPhoneNumber,
   isValidKoreanPhoneNumber,
 } from '@jakorea/domain/shared/korean-phone'
-import { ContentModal, CmsButton, CmsPhoneInput, useCmsAlert } from '@/shared/ui'
+import { ContentModal, CmsButton, CmsInput, CmsPhoneInput, useCmsAlert } from '@/shared/ui'
 import { normalizeAlimtalkSendPhone } from '@/features/notifications/model/alimtalk-send/recipients'
 import '@/features/notifications/ui/mail-send/recipient-manual-modal.css'
+import './recipient-table.css'
 
 const PICKER_Z_INDEX = 1100
 const TABLE_MAX_HEIGHT = 400
@@ -15,15 +16,27 @@ const TABLE_HEADER_HEIGHT = 54
 const TABLE_ROW_HEIGHT = 54
 const PHONE_PLACEHOLDER = '수신자 정보를 입력하세요'
 
+type ManualRecipientEntry = {
+  phone: string
+  variables?: Record<string, string>
+}
+
 type DraftRow =
-  | { key: string; mode: 'input'; phone: string; originPhone?: string }
-  | { key: string; mode: 'saved'; phone: string }
+  | {
+      key: string
+      mode: 'input'
+      phone: string
+      originPhone?: string
+      variables: Record<string, string>
+    }
+  | { key: string; mode: 'saved'; phone: string; variables: Record<string, string> }
 
 type RecipientManualModalProps = {
   open: boolean
-  phones: string[]
+  entries: ManualRecipientEntry[]
+  manualVariableKeys?: string[]
   onClose: () => void
-  onConfirm: (phones: string[]) => void
+  onConfirm: (entries: ManualRecipientEntry[]) => void
   zIndex?: number
 }
 
@@ -31,36 +44,41 @@ function nextKey() {
   return `row-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-function rowsFromPhones(phones: string[]): DraftRow[] {
-  const saved: DraftRow[] = phones.map(phone => ({
+function rowsFromEntries(entries: ManualRecipientEntry[]): DraftRow[] {
+  const saved: DraftRow[] = entries.map(entry => ({
     key: nextKey(),
     mode: 'saved',
-    phone: formatKoreanPhoneNumber(phone),
+    phone: formatKoreanPhoneNumber(entry.phone),
+    variables: { ...(entry.variables ?? {}) },
   }))
   // 최초(등록 번호 없음): 입력 인풋 1개. 기존 번호만 있으면 인풋은 「수신자 추가」로만 생성
   if (saved.length === 0) {
-    return [{ key: nextKey(), mode: 'input', phone: '' }]
+    return [{ key: nextKey(), mode: 'input', phone: '', variables: {} }]
   }
   return saved
 }
 
 export function RecipientManualModal({
   open,
-  phones,
+  entries,
+  manualVariableKeys = [],
   onClose,
   onConfirm,
   zIndex = PICKER_Z_INDEX,
 }: RecipientManualModalProps) {
   const { showAlert } = useCmsAlert()
-  const [rows, setRows] = useState<DraftRow[]>(() => rowsFromPhones(phones))
+  const [rows, setRows] = useState<DraftRow[]>(() => rowsFromEntries(entries))
 
   useEffect(() => {
     if (!open) return
-    setRows(rowsFromPhones(phones))
-  }, [open, phones])
+    setRows(rowsFromEntries(entries))
+  }, [open, entries])
 
-  const savedPhones = useMemo(
-    () => rows.filter(row => row.mode === 'saved').map(row => row.phone),
+  const savedEntries = useMemo(
+    () =>
+      rows
+        .filter(row => row.mode === 'saved')
+        .map(row => ({ phone: row.phone, variables: row.variables })),
     [rows]
   )
   const needScroll = rows.length * TABLE_ROW_HEIGHT + TABLE_HEADER_HEIGHT > TABLE_MAX_HEIGHT
@@ -85,7 +103,11 @@ export function RecipientManualModal({
       return
     }
     setRows(prev =>
-      prev.map(row => (row.key === key ? ({ key: row.key, mode: 'saved', phone } as DraftRow) : row))
+      prev.map(row =>
+        row.key === key
+          ? ({ key: row.key, mode: 'saved', phone, variables: row.variables } as DraftRow)
+          : row
+      )
     )
   }
 
@@ -96,14 +118,19 @@ export function RecipientManualModal({
       if (current.originPhone) {
         return prev.map(row =>
           row.key === key
-            ? ({ key: row.key, mode: 'saved', phone: current.originPhone ?? '' } as DraftRow)
+            ? ({
+                key: row.key,
+                mode: 'saved',
+                phone: current.originPhone ?? '',
+                variables: current.variables,
+              } as DraftRow)
             : row
         )
       }
       const remaining = prev.filter(row => row.key !== key)
       // 행이 모두 사라지면 초기와 같이 입력 인풋 1개 유지
       if (remaining.length === 0) {
-        return [{ key: nextKey(), mode: 'input', phone: '' }]
+        return [{ key: nextKey(), mode: 'input', phone: '', variables: {} }]
       }
       return remaining
     })
@@ -113,7 +140,13 @@ export function RecipientManualModal({
     setRows(prev =>
       prev.map(row =>
         row.key === key && row.mode === 'saved'
-          ? { key: row.key, mode: 'input', phone: row.phone, originPhone: row.phone }
+          ? {
+              key: row.key,
+              mode: 'input',
+              phone: row.phone,
+              originPhone: row.phone,
+              variables: row.variables,
+            }
           : row
       )
     )
@@ -123,7 +156,7 @@ export function RecipientManualModal({
     setRows(prev => {
       const remaining = prev.filter(row => row.key !== key)
       if (remaining.length === 0) {
-        return [{ key: nextKey(), mode: 'input', phone: '' }]
+        return [{ key: nextKey(), mode: 'input', phone: '', variables: {} }]
       }
       return remaining
     })
@@ -131,7 +164,7 @@ export function RecipientManualModal({
 
   /** 수신자 추가 → 새 입력 인풋 행 추가 (등록 후에는 인풋이 없으므로 여기서만 생성) */
   const handleAdd = () => {
-    setRows(prev => [...prev, { key: nextKey(), mode: 'input', phone: '' }])
+    setRows(prev => [...prev, { key: nextKey(), mode: 'input', phone: '', variables: {} }])
   }
 
   const handleConfirm = () => {
@@ -142,13 +175,25 @@ export function RecipientManualModal({
         showAlert({ title: '안내', content: '올바른 휴대폰 번호를 입력하세요.' })
         return
       }
-      const merged = [...savedPhones]
+      const merged = [...savedEntries]
       const digits = phone.replace(/\D/g, '')
-      if (!merged.some(item => item.replace(/\D/g, '') === digits)) merged.push(phone)
+      if (!merged.some(item => item.phone.replace(/\D/g, '') === digits)) {
+        merged.push({ phone, variables: pending.variables })
+      }
       onConfirm(merged)
       return
     }
-    onConfirm(savedPhones)
+    onConfirm(savedEntries)
+  }
+
+  const updateVariable = (key: string, variableKey: string, value: string) => {
+    setRows(prev =>
+      prev.map(row =>
+        row.key === key
+          ? { ...row, variables: { ...row.variables, [variableKey]: value } }
+          : row
+      )
+    )
   }
 
   const columns: ColumnsType<DraftRow> = [
@@ -230,12 +275,37 @@ export function RecipientManualModal({
     },
   ]
 
+  if (manualVariableKeys.length > 0) {
+    columns.splice(1, 0, {
+      title: '변수값',
+      key: 'variables',
+      width: 280,
+      render: (_, record) => (
+        <div className="alimtalk-send-recipient-table__variables">
+          {manualVariableKeys.map(variableKey => (
+            <label key={variableKey} className="alimtalk-send-recipient-table__variable">
+              <span className="alimtalk-send-recipient-table__variable-label">{variableKey}</span>
+              <CmsInput
+                inputSize="small"
+                width="100%"
+                allowClear={false}
+                value={record.variables[variableKey] ?? ''}
+                placeholder="변수값을 입력하세요"
+                onChange={event => updateVariable(record.key, variableKey, event.target.value)}
+              />
+            </label>
+          ))}
+        </div>
+      ),
+    })
+  }
+
   return (
     <ContentModal
       open={open}
       onCancel={onClose}
       title="수신자 직접 입력"
-      size="compact"
+      size={manualVariableKeys.length > 0 ? 'default' : 'compact'}
       className="mail-send-recipient-manual-modal"
       titleBodyGap="none"
       zIndex={zIndex}

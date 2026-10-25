@@ -2,6 +2,7 @@ import type { MypageHomeLnbItemKey, MypageLnbItemKey } from '@/features/mypage'
 import illustBookUrl from '@/shared/assets/illustration/illust-book.svg'
 import illustFlagUrl from '@/shared/assets/illustration/illust-flag.svg'
 import illustMyHomeUrl from '@/shared/assets/illustration/illust-my-home.svg'
+import illustPiggyBankUrl from '@/shared/assets/illustration/illust-piggy-bank.png'
 import illustTeardropsUrl from '@/shared/assets/illustration/illust-teardrops.svg'
 import illustWordballoonsUrl from '@/shared/assets/illustration/illust-wordballoons.svg'
 import bookGrayIconUrl from './image/icon/book-gray-24.svg'
@@ -37,6 +38,7 @@ const LNB_MOBILE_TRIGGER_ILLUSTRATION: Partial<Record<MypageLnbItemKey, string>>
   home: illustMyHomeUrl,
   education: illustBookUrl,
   lectures: illustFlagUrl,
+  settlement: illustPiggyBankUrl,
   volunteer: illustTeardropsUrl,
   inquiries: illustWordballoonsUrl,
 }

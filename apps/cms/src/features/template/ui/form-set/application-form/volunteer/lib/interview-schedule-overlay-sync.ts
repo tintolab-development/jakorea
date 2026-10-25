@@ -20,6 +20,11 @@ import {
   peekGeneralRegistrationWizardRhf,
   subscribeGeneralRegistrationWizardRhf,
 } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import {
+  getRecruitTypedInterviewRecord,
+  patchRecruitTypedInterviewBridgeRecord,
+  subscribeRecruitTypedInterviewBridge,
+} from '@/features/program/shared/lib/recruit-typed-interview-record-bridge'
 
 const VOLUNTEER_RECRUIT_CATALOG = 'recruitment-volunteer'
 
@@ -34,16 +39,7 @@ function sameInterviewBridgeValue(left: unknown, right: unknown): boolean {
 }
 
 function patchRecruitVolunteerInterviewOverlay(partial: Record<string, unknown>): void {
-  if (recruitTypedInterviewBridgeRecord) {
-    let changed = false
-    for (const [key, value] of Object.entries(partial)) {
-      if (sameInterviewBridgeValue(recruitTypedInterviewBridgeRecord[key], value)) continue
-      recruitTypedInterviewBridgeRecord[key] = value
-      changed = true
-    }
-    if (!changed) return
-    recruitTypedInterviewBridgeOnChange?.({ ...recruitTypedInterviewBridgeRecord })
-    notifyRecruitTypedInterviewBridge()
+  if (patchRecruitTypedInterviewBridgeRecord(partial, sameInterviewBridgeValue)) {
     return
   }
   patchGeneralRecruitOverlay(partial)
@@ -61,31 +57,13 @@ function patchRecruitVolunteerInterviewOverlay(partial: Record<string, unknown>)
 
 export type VolunteerInterviewOverlayStore = 'application' | 'recruit'
 
-let recruitTypedInterviewBridgeRecord: Record<string, unknown> | null = null
-let recruitTypedInterviewBridgeOnChange:
-  | ((record: Record<string, unknown>) => void)
-  | null = null
-const recruitTypedInterviewBridgeListeners = new Set<() => void>()
-
-/** 활성 UJAT 모집 편집 — 전역 Overlay store 대신 행 interviewConfig 브리지. */
-export function setRecruitTypedInterviewRecordBridge(
-  record: Record<string, unknown> | null,
-  onChange?: ((record: Record<string, unknown>) => void) | null
-): void {
-  recruitTypedInterviewBridgeRecord = record
-  recruitTypedInterviewBridgeOnChange = record == null ? null : onChange ?? null
-  notifyRecruitTypedInterviewBridge()
-}
-
-export function getRecruitTypedInterviewRecord(): Record<string, unknown> | null {
-  return recruitTypedInterviewBridgeRecord
-}
-
-function notifyRecruitTypedInterviewBridge(): void {
-  for (const listener of recruitTypedInterviewBridgeListeners) listener()
-}
+export {
+  getRecruitTypedInterviewRecord,
+  setRecruitTypedInterviewRecordBridge,
+} from '@/features/program/shared/lib/recruit-typed-interview-record-bridge'
 
 function liveInterviewRecord(store: VolunteerInterviewOverlayStore): Record<string, unknown> {
+  const recruitTypedInterviewBridgeRecord = getRecruitTypedInterviewRecord()
   if (store === 'recruit' && recruitTypedInterviewBridgeRecord) {
     return recruitTypedInterviewBridgeRecord
   }
@@ -197,13 +175,12 @@ export function useVolunteerInterviewOverlayKv<T>(
           ? subscribeGeneralRecruitOverlay(listener)
           : subscribeGeneralApplicationOverlay(listener)
       const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
-      if (store === 'recruit') {
-        recruitTypedInterviewBridgeListeners.add(listener)
-      }
+      const unsubBridge =
+        store === 'recruit' ? subscribeRecruitTypedInterviewBridge(listener) : () => {}
       return () => {
         unsubStore()
         unsubRhf()
-        recruitTypedInterviewBridgeListeners.delete(listener)
+        unsubBridge()
       }
     },
     getSnapshot,

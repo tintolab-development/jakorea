@@ -1,8 +1,6 @@
 /** @vitest-environment node */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  beginRegistrationWizardRhfOverlayProjection,
-  endRegistrationWizardRhfOverlayProjection,
   getProgramRegistrationOverlayRecord,
   patchProgramRegistrationOverlay,
   replaceProgramRegistrationOverlay,
@@ -41,18 +39,6 @@ describe('registration wizard overlay intercept', () => {
     registerGeneralRegistrationWizardRhf(api)
     patchProgramRegistrationOverlay({ [K.programTitleKo]: '제목' })
     expect(api.setPath).toHaveBeenCalledWith('programTitleKo', '제목', { shouldDirty: true })
-  })
-
-  it('projection 중이면 overlay 쓰기를 RHF로 되먹이지 않는다', () => {
-    const api = mockApi()
-    registerGeneralRegistrationWizardRhf(api)
-    beginRegistrationWizardRhfOverlayProjection()
-    try {
-      patchProgramRegistrationOverlay({ [K.programTitleKo]: '무시' })
-    } finally {
-      endRegistrationWizardRhfOverlayProjection()
-    }
-    expect(api.setPath).not.toHaveBeenCalled()
   })
 
   it('replace는 applyOverlayRecord로 일괄 투영한다', () => {

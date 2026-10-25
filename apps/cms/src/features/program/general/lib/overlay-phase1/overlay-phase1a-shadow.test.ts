@@ -117,6 +117,13 @@ describe('Phase 1-A Phase1-B overlay 의존성 목록', () => {
       PHASE1B_OVERLAY_DEPENDENCIES.length
     )
   })
+
+  it('part2 판정: 스토어를 읽는 의존성은 live-overlay-store 하나뿐이고 호출 지점이 기록돼 있다', () => {
+    const live = PHASE1B_OVERLAY_DEPENDENCIES.filter(item => item.status === 'store-live')
+    expect(live.map(item => item.id)).toEqual(['live-overlay-store'])
+    expect(live[0]?.storeCallSites?.length ?? 0).toBeGreaterThan(0)
+    expect(PHASE1B_OVERLAY_DEPENDENCIES.every(item => item.status != null)).toBe(true)
+  })
 })
 
 describe('1. 신규 등록 shadow', () => {

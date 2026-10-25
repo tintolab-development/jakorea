@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   createRegistrationProgramDraftPayload,
   parseRegistrationProgramDraftPayload,
-} from './registration-program-draft-payload'
+} from './registration-wizard-draft-payload'
 
-describe('registration-program-draft-payload', () => {
+describe('registration-wizard-draft-payload', () => {
   it('round-trips v1 payload', () => {
     const payload = createRegistrationProgramDraftPayload({
       registrationTemplateCode: 'registration-general',

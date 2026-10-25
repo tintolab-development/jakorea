@@ -3,7 +3,7 @@
  * 레거시 키 정리용. 양식 관리 draft SSOT는 remote API
  * (`saveFormTemplateVersionDraft` / `loadFormTemplateVersionDraft`).
  *
- * 프로그램 코드에서는 `@/features/program/shared/lib/program-draft-local-save` 를 선호한다.
+ * 프로그램 코드에서는 `features/program/shared/lib`의 프로그램 로컬 저장 헬퍼를 선호한다.
  */
 import {
   normalizeWritingFormDraft,
@@ -184,9 +184,21 @@ export async function persistWritingFormTemplateDraft(args: {
     return
   }
   if (args.templateVersionId != null) {
-    const { saveFormTemplateVersionDraftByVersionId } = await import(
+    const { saveFormTemplateVersionDraftByVersionId, resolveFormTemplateCatalogIds } = await import(
       '@/features/template/api/admin-form-templates-service'
     )
+    // 프로그램 바인딩 버전 직접 저장 — 공용 카탈로그·발행·공유 버전이면 막는다(fail-closed).
+    const [{ fetchFormTemplateVersionRemote }, guard] = await Promise.all([
+      import('@/features/template/api/form-templates-api-client'),
+      import('@/features/template/lib/program-form-version-write-guard'),
+    ])
+    const current = await fetchFormTemplateVersionRemote(args.templateVersionId)
+    const catalog = await resolveFormTemplateCatalogIds(args.templateId).catch(() => null)
+    if (
+      !guard.canWriteProgramFormVersionInPlace(current, { catalogTemplateId: catalog?.templateId })
+    ) {
+      throw new guard.SharedFormVersionWriteBlockedError(args.templateVersionId)
+    }
     await saveFormTemplateVersionDraftByVersionId({
       versionId: args.templateVersionId,
       draft: args.draft,

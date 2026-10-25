@@ -46,4 +46,10 @@ export const settlementQueryKeys = {
     all: () => [...settlementQueryKeys.all, 'settlementConfigs'] as const,
     current: () => [...settlementQueryKeys.settlementConfigs.all(), 'current'] as const,
   },
+  individualSettlementReviews: {
+    all: () => [...settlementQueryKeys.all, 'individualSettlementReviews'] as const,
+    lists: () => [...settlementQueryKeys.individualSettlementReviews.all(), 'list'] as const,
+    list: (filterKey: string) =>
+      [...settlementQueryKeys.individualSettlementReviews.lists(), filterKey] as const,
+  },
 } as const

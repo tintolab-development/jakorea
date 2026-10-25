@@ -152,7 +152,7 @@ describe('getGeneralProgramApiErrorMessage', () => {
         errorFor('PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED'),
         'fallback'
       )
-    ).toBe('해당 모집 시작 후에는 모집 정보를 수정할 수 없습니다.')
+    ).toBe('모집 시작 후에는 모집 정보를 수정할 수 없습니다.')
     expect(
       getGeneralProgramApiErrorMessage(errorFor('RECRUITMENT_HAS_APPLICATIONS'), 'fallback')
     ).toBe(

@@ -88,7 +88,7 @@ import {
   hydrateRegistrationProgramDraft,
   peekRegistrationProgramDraftPayload,
   syncRegistrationProgramDraftSession,
-} from '@/features/program/general/lib/registration-program-draft-session'
+} from '@/features/program/general/lib/registration-wizard-draft-session'
 import { overlayRecordToInterviewConfig } from '@/features/program/ujat/lib/recruitment-typed-contract'
 import { getRecruitTypedInterviewRecord } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
@@ -242,7 +242,7 @@ export function useUjatProgramRegistrationFlow(
       setActiveStep(restored)
       onStepChangeRef.current?.(restored)
     })().catch(error => {
-      console.warn('[registration-program-draft] UJAT hydrate failed', error)
+      console.warn('[registration-wizard-draft] UJAT hydrate failed', error)
     })
   }, [open, skipDraftRestore, programType])
 

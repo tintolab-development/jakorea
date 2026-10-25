@@ -27,7 +27,7 @@ import {
 import {
   peekRegistrationProgramDraftPayload,
   syncRegistrationProgramDraftSession,
-} from '@/features/program/general/lib/registration-program-draft-session'
+} from '@/features/program/general/lib/registration-wizard-draft-session'
 import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'

@@ -3,9 +3,16 @@ import {
   buildSmsSendCreateRequest,
   buildSmsSendPayload,
   estimateSmsSendBodyBytes,
-  resolveSmsSendMessageTypeForBody,
   validateSmsSendDraft,
 } from './payload'
+import {
+  collectSmsComposeFieldIssues,
+  LMS_MMS_BODY_BYTE_LIMIT,
+  SMS_BODY_BYTE_LIMIT,
+  SMS_COMPOSE_ERROR,
+  SMS_SUBJECT_BYTE_LIMIT,
+  smsComposeInlineMessage,
+} from './text-bytes'
 import { SMS_SEND_ALL_PROGRAM_ID, type SmsSendDraft } from './types'
 
 function draft(overrides: Partial<SmsSendDraft> = {}): SmsSendDraft {
@@ -42,51 +49,102 @@ describe('estimateSmsSendBodyBytes', () => {
   })
 })
 
-describe('resolveSmsSendMessageTypeForBody', () => {
-  it('upgrades SMS to LMS when over SMS byte limit', () => {
+describe('collectSmsComposeFieldIssues', () => {
+  it('SMS-01: allows SMS body of exactly 90 bytes', () => {
+    const body = 'a'.repeat(SMS_BODY_BYTE_LIMIT)
+    expect(estimateSmsSendBodyBytes(body)).toBe(90)
     expect(
-      resolveSmsSendMessageTypeForBody({
-        current: 'SMS',
-        bodyBytes: 91,
-        hasAttachments: false,
-      })
-    ).toBe('LMS')
+      collectSmsComposeFieldIssues({
+        messageType: 'SMS',
+        subject: '',
+        bodyText: body,
+        attachmentCount: 0,
+      }).bodyError
+    ).toBeNull()
   })
 
-  it('keeps LMS when over limit without attachments', () => {
-    expect(
-      resolveSmsSendMessageTypeForBody({
-        current: 'LMS',
-        bodyBytes: 200,
-        hasAttachments: false,
-      })
-    ).toBe('LMS')
+  it('SMS-02: keeps SMS type and flags over-limit body', () => {
+    const issues = collectSmsComposeFieldIssues({
+      messageType: 'SMS',
+      subject: '',
+      bodyText: 'a'.repeat(91),
+      attachmentCount: 0,
+    })
+    expect(issues.bodyError).toBe(SMS_COMPOSE_ERROR.smsBodyOver)
   })
 
-  it('forces MMS when attachments exist', () => {
+  it('shows inline field error only when byte limit is exceeded', () => {
+    expect(smsComposeInlineMessage(SMS_COMPOSE_ERROR.subjectRequired)).toBeUndefined()
+    expect(smsComposeInlineMessage(SMS_COMPOSE_ERROR.bodyRequired)).toBeUndefined()
+    expect(smsComposeInlineMessage(SMS_COMPOSE_ERROR.smsSubjectUnsupported)).toBeUndefined()
+    expect(smsComposeInlineMessage(SMS_COMPOSE_ERROR.subjectOver)).toBe(
+      SMS_COMPOSE_ERROR.subjectOver
+    )
+    expect(smsComposeInlineMessage(SMS_COMPOSE_ERROR.smsBodyOver)).toBe(
+      SMS_COMPOSE_ERROR.smsBodyOver
+    )
+  })
+
+  it('TYPE-01: preserves LMS title as SMS error', () => {
+    const issues = collectSmsComposeFieldIssues({
+      messageType: 'SMS',
+      subject: '보존된 제목',
+      bodyText: '본문',
+      attachmentCount: 0,
+    })
+    expect(issues.subjectError).toBe(SMS_COMPOSE_ERROR.smsSubjectUnsupported)
+  })
+
+  it('TYPE-02: preserves MMS images as LMS error', () => {
+    const issues = collectSmsComposeFieldIssues({
+      messageType: 'LMS',
+      subject: '제목',
+      bodyText: '본문',
+      attachmentCount: 1,
+    })
+    expect(issues.attachmentError).toBe(SMS_COMPOSE_ERROR.lmsImageUnsupported)
+  })
+
+  it('LMS-01: allows LMS body of exactly 2,000 bytes', () => {
+    const body = 'a'.repeat(LMS_MMS_BODY_BYTE_LIMIT)
+    expect(estimateSmsSendBodyBytes(body)).toBe(2000)
     expect(
-      resolveSmsSendMessageTypeForBody({
-        current: 'SMS',
-        bodyBytes: 10,
-        hasAttachments: true,
-      })
-    ).toBe('MMS')
+      collectSmsComposeFieldIssues({
+        messageType: 'LMS',
+        subject: '제목',
+        bodyText: body,
+        attachmentCount: 0,
+      }).bodyError
+    ).toBeNull()
+  })
+
+  it('LMS-04: keeps over-limit title and flags error', () => {
+    const subject = '가'.repeat(SMS_SUBJECT_BYTE_LIMIT / 2 + 1)
+    expect(estimateSmsSendBodyBytes(subject)).toBeGreaterThan(SMS_SUBJECT_BYTE_LIMIT)
+    expect(
+      collectSmsComposeFieldIssues({
+        messageType: 'LMS',
+        subject,
+        bodyText: '본문',
+        attachmentCount: 0,
+      }).subjectError
+    ).toBe(SMS_COMPOSE_ERROR.subjectOver)
   })
 })
 
 describe('buildSmsSendPayload', () => {
-  it('trims sender phone and clears subject for SMS type', () => {
+  it('trims sender phone and preserves SMS leftover subject', () => {
     expect(
       buildSmsSendPayload(
         draft({
           senderPhone: ' 010-1234-5678 ',
           messageType: 'SMS',
-          subject: ' 유지되면 안 됨 ',
+          subject: ' 보존 ',
         })
       )
     ).toMatchObject({
       senderPhone: '010-1234-5678',
-      subject: '',
+      subject: ' 보존 ',
     })
   })
 })
@@ -237,6 +295,30 @@ describe('validateSmsSendDraft', () => {
 
   it('does not require a subject for SMS type', () => {
     expect(validateSmsSendDraft(draft({ messageType: 'SMS', subject: '' }))).toBeNull()
+  })
+
+  it('blocks SMS send while leftover title remains', () => {
+    expect(validateSmsSendDraft(draft({ messageType: 'SMS', subject: '제목' }))).toBe(
+      SMS_COMPOSE_ERROR.smsSubjectUnsupported
+    )
+  })
+
+  it('blocks SMS send when body exceeds 90 bytes without changing type', () => {
+    expect(
+      validateSmsSendDraft(
+        draft({
+          messageType: 'SMS',
+          subject: '',
+          bodyText: 'a'.repeat(91),
+        })
+      )
+    ).toBe(SMS_COMPOSE_ERROR.smsBodyOver)
+  })
+
+  it('blocks LMS send when title is missing', () => {
+    expect(validateSmsSendDraft(draft({ messageType: 'LMS', subject: '' }))).toBe(
+      SMS_COMPOSE_ERROR.subjectRequired
+    )
   })
 
   it('requires DIRECT recipient contact', () => {

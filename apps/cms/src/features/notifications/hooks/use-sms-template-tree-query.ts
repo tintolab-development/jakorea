@@ -1,4 +1,7 @@
+import { useEffect, useRef } from 'react'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
+import { useCmsAlert } from '@/shared/ui'
 import {
   createSmsCategory,
   createSmsTemplate,
@@ -97,6 +100,28 @@ async function invalidateSmsTemplateCaches(queryClient: ReturnType<typeof useQue
   await queryClient.invalidateQueries({
     queryKey: notificationsQueryKeys.smsTemplates.all(),
   })
+}
+
+/** 문자 관리 페이지 진입 시 NHN 카탈로그를 한 번 맞춘다. 성공 팝업은 띄우지 않는다. */
+export function useAutoSyncSmsCatalogOnEnter(enabled: boolean) {
+  const { showAlert } = useCmsAlert()
+  const { syncCatalog } = useSmsTemplateTreeMutations()
+  const syncCatalogMutateAsync = syncCatalog.mutateAsync
+  const didSyncRef = useRef(false)
+
+  useEffect(() => {
+    if (!enabled || didSyncRef.current) return
+    didSyncRef.current = true
+    void syncCatalogMutateAsync().catch(error => {
+      showAlert({
+        title: '연동 실패',
+        content: getNotificationsApiErrorMessage(
+          error,
+          '문자 템플릿 연동에 실패했습니다. 다시 시도해 주세요.'
+        ),
+      })
+    })
+  }, [enabled, showAlert, syncCatalogMutateAsync])
 }
 
 export function useSmsTemplateTreeMutations() {

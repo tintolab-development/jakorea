@@ -37,6 +37,8 @@ export type IsolatedNetworkLog = {
     rows: UjatRegionCapacityUpsert[]
   }>
   rootRegistrationOverlayHits: number
+  /** `/api/admin/program-draft` 요청(어떤 메서드든) — 서버 draft 제거 후 0이어야 한다 */
+  programDraftRequests: string[]
 }
 
 export type IsolatedRegistrationNetworkOptions = {
@@ -204,7 +206,6 @@ function idsFromTemplateCode(templateCode: string) {
 const ALLOWED_GET_EXACT = new Set([
   '/api/admin/me',
   '/api/admin/programs',
-  '/api/admin/program-draft',
   '/api/admin/sponsors',
   '/api/admin/detailed-programs',
   '/api/admin/form-templates',
@@ -232,7 +233,6 @@ function isAllowedGet(pathname: string): boolean {
 }
 
 function isAllowedMutation(method: string, pathname: string): boolean {
-  if (method === 'PUT' && pathname === '/api/admin/program-draft') return true
   if (method === 'PUT' && /^\/api\/admin\/form-template-versions\/\d+$/.test(pathname)) return true
   if (method === 'POST' && /^\/api\/admin\/form-template-versions\/\d+\/publish$/.test(pathname)) {
     return true
@@ -242,6 +242,7 @@ function isAllowedMutation(method: string, pathname: string): boolean {
   }
   if (method === 'POST' && pathname === '/api/admin/programs') return true
   if (method === 'POST' && /^\/api\/admin\/programs\/\d+\/form-bindings$/.test(pathname)) return true
+  if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+\/form-bindings\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/form-templates\/\d+$/.test(pathname)) return true
   if (method === 'POST' && pathname.startsWith('/api/admin/files')) return true
   if (method === 'PUT' && pathname.includes('/ujat/typed-detail')) return true
@@ -277,12 +278,12 @@ export async function installIsolatedRegistrationNetwork(
     regionCapacityPutStatuses: [],
     regionCapacityGetResponses: [],
     rootRegistrationOverlayHits: 0,
+    programDraftRequests: [],
   }
 
   const copiedVersions = new Map<number, ReturnType<typeof versionResponse>>()
   let nextCopiedVersionId = 900001
   let createdProgram: Record<string, unknown> | null = null
-  let programDraft: Record<string, unknown> | null = null
   let failedFirstRegionCapacityPut = false
   const regionCapacityRowsByProgramId = new Map<string, UjatRegionCapacityUpsert[]>()
 
@@ -333,6 +334,13 @@ export async function installIsolatedRegistrationNetwork(
 
     log.api.push({ method, path: pathname })
 
+    // 서버 program-draft는 모든 유형에서 제거됨 — 어떤 메서드든 회귀로 기록하고 차단한다.
+    if (pathname === '/api/admin/program-draft') {
+      log.programDraftRequests.push(method)
+      await route.fulfill(json({ success: false }, 410))
+      return
+    }
+
     if (method === 'GET' && pathname === '/api/admin/me') {
       await route.fulfill(json(adminMe()))
       return
@@ -366,14 +374,6 @@ export async function installIsolatedRegistrationNetwork(
       await route.fulfill(json({ capacities: rows }))
       return
     }
-    if (method === 'GET' && pathname === '/api/admin/program-draft') {
-      if (programDraft == null) {
-        await route.fulfill(json({ success: false }, 404))
-        return
-      }
-      await route.fulfill(json(programDraft))
-      return
-    }
     if (method === 'GET' && pathname === '/api/admin/sponsors') {
       await route.fulfill(json(emptyPage([sponsorRow()])))
       return
@@ -388,6 +388,11 @@ export async function installIsolatedRegistrationNetwork(
     }
     if (method === 'GET' && pathname === '/api/admin/detailed-programs') {
       await route.fulfill(json(emptyPage([detailedProgramRow()])))
+      return
+    }
+    // 지급항목 카탈로그(정산 설정) — 앱이 등록 위저드 진입 시 읽는다. 빈 설정으로 응답한다.
+    if (method === 'GET' && pathname === '/api/admin/settlement-configs/current') {
+      await route.fulfill(json({ wageItems: [], paymentItems: [] }))
       return
     }
     if (method === 'GET' && pathname === '/api/admin/form-templates') {
@@ -432,20 +437,6 @@ export async function installIsolatedRegistrationNetwork(
       }
       log.mutations.push(mutation)
 
-      if (method === 'PUT' && pathname === '/api/admin/program-draft') {
-        const body = mutation.body as {
-          programType?: string
-          draftPayload?: unknown
-        } | null
-        programDraft = {
-          draftId: 99001,
-          programType: body?.programType?.trim() || 'UJAT',
-          draftPayload: body?.draftPayload ?? null,
-          saved: true,
-        }
-        await route.fulfill(json(programDraft))
-        return
-      }
       if (method === 'POST' && pathname.endsWith('/versions/copy')) {
         const templateId = Number(pathname.split('/')[4])
         const versionId = nextCopiedVersionId
@@ -538,11 +529,6 @@ export async function installIsolatedRegistrationNetwork(
         await route.fulfill(json({ success: true }))
         return
       }
-      if (method === 'DELETE' && pathname === '/api/admin/program-draft') {
-        programDraft = null
-        await route.fulfill(json({ success: true }))
-        return
-      }
       if (method === 'POST' && /\/recruitments$/.test(pathname)) {
         await route.fulfill(json({ id: 92001, ...(typeof mutation.body === 'object' ? mutation.body : {}) }))
         return
@@ -563,6 +549,11 @@ export async function installIsolatedRegistrationNetwork(
         )
         log.regionCapacityPutStatuses.push(200)
         await route.fulfill(json({ capacities: rows }))
+        return
+      }
+      if (method === 'PATCH' && /\/form-bindings\/\d+$/.test(pathname)) {
+        log.formBindings = [...log.formBindings, mutation.body]
+        await route.fulfill(json({ id: Number(pathname.split('/').at(-1)) }))
         return
       }
       if (method === 'POST' && pathname.endsWith('/form-bindings')) {
@@ -606,5 +597,14 @@ export function assertIsolatedNetwork(log: IsolatedNetworkLog) {
   }
   if (log.unexpected.length > 0) {
     throw new Error(`허용하지 않은 API: ${log.unexpected.join(', ')}`)
+  }
+  if (log.programDraftRequests.length > 0) {
+    throw new Error(`program-draft 요청이 발생함: ${log.programDraftRequests.join(', ')}`)
+  }
+  if (log.createProgram != null) {
+    const body = log.createProgram.body as Record<string, unknown> | null
+    if (body != null && ('programDraftId' in body || 'formBindings' in body)) {
+      throw new Error('CREATE에 programDraftId/formBindings가 실렸습니다')
+    }
   }
 }

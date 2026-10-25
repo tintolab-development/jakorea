@@ -37,6 +37,8 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  background: linear-gradient(var(--Border-default, #e0e0e0), var(--Border-default, #e0e0e0))
+    no-repeat top / 100% 1px;
 }
 
 .mail-template-variables__list .ant-collapse {
@@ -48,13 +50,22 @@
 }
 
 .mail-template-variables__list .ant-collapse-header {
-  padding: 8px 0 !important;
-  align-items: center !important;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  color: var(--Netural-black, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
   font-weight: 700;
-  line-height: 150%;
+  line-height: 150%; /* 27px */
+  padding: 0 !important;
+  padding: 20px 0 16px 0 !important;
+}
+
+.mail-template-variables__list .ant-collapse-expand-icon {
+  height: auto !important;
+  padding-inline-end: 8px;
+  align-self: center;
 }
 
 .mail-template-variables__list .ant-collapse-content-box {
@@ -67,26 +78,27 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 16px;
 }
 
 .mail-template-variables__item {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px;
   width: 100%;
-  padding: 6px 4px;
+  padding: 0 0 0 24px;
   border: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 15px;
+  overflow: hidden;
+  color: var(--Netural-black, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
 }
 
 .mail-template-variables__item-label {
@@ -141,7 +153,9 @@
   font-weight: 500;
 }
 
-.mail-template-variables--disabled .mail-template-variables__item:hover .mail-template-variables__item-hint {
+.mail-template-variables--disabled
+  .mail-template-variables__item:hover
+  .mail-template-variables__item-hint {
   color: var(--main-BK, #3d3d3d);
   opacity: 0.5;
 }

@@ -27,7 +27,7 @@ export function resolveProgramApiTypeForDraft(program: Program): string {
 }
 
 /**
- * GET/PUT/DELETE /api/admin/program-draft query programType — 위저드·copy ownerProgramDraftId SSOT.
+ * 등록 위저드 localStorage 키(registration-wizard:<TYPE>:*)·임시저장 메타의 programType SSOT (서버 임시저장 API는 쓰지 않음).
  * create body.programType(GENERAL_INDIVIDUAL 등)과 **분리**된 4값 키.
  */
 export function resolveRegistrationProgramDraftProgramType(

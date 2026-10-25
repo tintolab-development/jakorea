@@ -20,5 +20,20 @@
 }
 
 .sms-send-fullpage__byte-count--danger {
-  color: var(--color-danger, #d92d20);
+  color: var(--Status-red-main, #c32f4a);
+}
+
+.sms-send-fullpage__subject-field,
+.sms-send-fullpage__attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.sms-send-fullpage__attachments--error {
+  border: 1px solid var(--Status-red-main, #c32f4a);
+  border-radius: var(--radius-8, 8px);
+  padding: 12px;
 }

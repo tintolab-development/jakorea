@@ -4,10 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { useRegistrationWizardLeaveGuard } from '@/features/program/shared/lib/registration-wizard-leave-guard'
 import {
-  beginRegistrationWizardRhfOverlayProjection,
-  endRegistrationWizardRhfOverlayProjection,
   getProgramRegistrationOverlayRecord,
-  replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlayStoreForTests,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
@@ -96,13 +93,11 @@ describe('Phase 2 RHF 정본 시나리오', () => {
       expect(peekGeneralRegistrationWizardRhf()?.getValues().programTitleKo).toBe('RHF-우선')
     })
 
-    beginRegistrationWizardRhfOverlayProjection()
-    try {
-      replaceProgramRegistrationOverlay({ [K.programTitleKo]: 'overlay-stale' })
-    } finally {
-      endRegistrationWizardRhfOverlayProjection()
+    // R6: projection begin/end API 삭제 — stale overlay를 CREATE 빌더 입력으로 직접 준다.
+    const staleOverlay = {
+      ...getProgramRegistrationOverlayRecord(),
+      [K.programTitleKo]: 'overlay-stale',
     }
-    expect(getProgramRegistrationOverlayRecord()[K.programTitleKo]).toBe('overlay-stale')
     expect(peekGeneralRegistrationWizardRhf()?.getValues().programTitleKo).toBe('RHF-우선')
 
     const created = buildGeneralProgramCreateFromWizardRhf({
@@ -114,7 +109,7 @@ describe('Phase 2 RHF 정본 시나리오', () => {
           participant: orgCtx.participant,
         },
       },
-      overlay: getProgramRegistrationOverlayRecord(),
+      overlay: staleOverlay,
     })
     expect(created.program.mainTitle).toBe('RHF-우선')
   })
