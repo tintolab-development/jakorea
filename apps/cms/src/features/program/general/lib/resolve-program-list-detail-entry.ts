@@ -6,8 +6,9 @@ import {
 } from '@/features/program/general/ui/constants/program-list-constants'
 
 export type ProgramListDetailEntry = {
-  lnb: 'info' | 'applicants' | 'progress'
-  tab: 'info' | 'institutions'
+  /** 호출한 상세 모달이 허용하는 실제 URL 값 */
+  lnb: 'info' | 'applicants' | 'institution_applications' | 'progress'
+  tab: 'info' | 'main' | 'institutions'
 }
 
 type ProgramListDetailEntryOptions = {
@@ -15,6 +16,8 @@ type ProgramListDetailEntryOptions = {
   programType?: 'company_school' | 'education' | 'all' | 'volunteer'
   /** 목록 위젯에서 선택한 진행 단계. 없으면 프로그램의 canonical lifecycleStatus를 사용한다. */
   statusFilter?: ProgramProgressPhaseFilter | ProgramLifecycleStatus | null
+  /** `/programs/general` 전용 모달과 기존 `/programs` 모달의 URL 계약을 구분한다. */
+  detailSurface?: 'general' | 'program-list'
 }
 
 function resolveProgressPhase(
@@ -40,11 +43,16 @@ export function resolveProgramListDetailEntry(
   options: ProgramListDetailEntryOptions = {}
 ): ProgramListDetailEntry {
   const phase = resolveProgressPhase(program, options.statusFilter)
+  const isGeneralDetailSurface = options.detailSurface === 'general'
 
   if (options.programType === 'company_school' && (phase === 'in_progress' || phase === 'completed')) {
     return { lnb: 'applicants', tab: 'institutions' }
   }
-  if (phase === 'in_progress') return { lnb: 'applicants', tab: 'institutions' }
+  if (phase === 'in_progress') {
+    return isGeneralDetailSurface
+      ? { lnb: 'institution_applications', tab: 'main' }
+      : { lnb: 'applicants', tab: 'institutions' }
+  }
   if (phase === 'completed') return { lnb: 'progress', tab: 'institutions' }
   return { lnb: 'info', tab: 'info' }
 }
