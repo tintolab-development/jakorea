@@ -1,9 +1,6 @@
 import dayjs from 'dayjs'
 import { schemaJsonToWritingFormDraft } from '@/features/template/api/adapters/form-template-draft-adapters'
-import {
-  publishFormTemplateVersionById,
-  resolveFormTemplateCatalogIds,
-} from '@/features/template/api/admin-form-templates-service'
+import { resolveFormTemplateCatalogIds } from '@/features/template/api/admin-form-templates-service'
 import {
   fetchFormTemplateVersionRemote,
   fetchFormTemplateVersionsRemote,
@@ -77,9 +74,8 @@ async function fetchSubmissionPeriod(templateVersionId: number): Promise<SurveyS
 
 /**
  * 설문·만족도·강의평가 등록은 양식 관리에서 고른 템플릿 자체의 version에 바인딩한다(카탈로그 복제 없음).
- * 최신 version이 DRAFT면 게시(내용 불변)해 바인딩한다. 단, 새 version을 게시하면 기존 PUBLISHED가
- * ARCHIVED되어 그 version에 묶인 다른 프로그램 설문이 Platform에서 사라지므로,
- * 바인딩이 걸린 PUBLISHED version이 있으면 게시하지 않고 그 version에 바인딩한다.
+ * 최신 PUBLISHED version에만 바인딩한다. 프로그램 흐름에서 공용 템플릿을 게시하지 않는다
+ * (게시하면 기존 PUBLISHED가 ARCHIVED되어 다른 프로그램 설문이 Platform에서 사라질 수 있다).
  */
 export async function resolvePublishedSurveyBinding(
   templateCode: string
@@ -94,16 +90,11 @@ export async function resolvePublishedSurveyBinding(
     .filter(version => version.templateVersionId != null)
     .sort((left, right) => (right.versionNo ?? 0) - (left.versionNo ?? 0))
 
-  const latest = versions[0]
   const latestPublished = versions.find(version => version.versionStatus === 'PUBLISHED')
-  const publishedInUse = (latestPublished?.activeBindingCount ?? 0) > 0
 
-  let templateVersionId: number | undefined
-  if (latest?.versionStatus === 'DRAFT' && latest.templateVersionId != null && !publishedInUse) {
-    templateVersionId = await publishFormTemplateVersionById(latest.templateVersionId)
-  } else {
-    templateVersionId = latestPublished?.templateVersionId
-  }
+  // 공용 데이터 보호(2026-10-25): 프로그램 흐름에서는 카탈로그 설문 버전을 게시(publish)하지 않는다.
+  // DRAFT만 있으면 양식 관리에서 게시한 뒤 바인딩하도록 not_published를 돌려준다.
+  const templateVersionId: number | undefined = latestPublished?.templateVersionId
   if (templateVersionId == null) return { ok: false, reason: 'not_published' }
 
   return {

@@ -30,7 +30,7 @@ import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/reg
 import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
 import type { Program } from '@/types/domain'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { deleteRegistrationProgramDraftRemote } from '@/features/program/general/lib/registration-program-draft-session'
+import { hasPendingRegistrationFormApplyFailures } from '@/features/program/general/lib/apply-registration-forms-after-create'
 import {
   clearRegistrationDraftForFreshStart,
   peekRegistrationDraftNotice,
@@ -182,8 +182,8 @@ function UjatProgramRegistrationFullpageModalInner({
     const created = pendingCreatedProgramRef.current
     pendingCreatedProgramRef.current = undefined
     setCompleteSuccessOpen(false)
-    void deleteRegistrationProgramDraftRemote('UJAT')
-    if (shouldRemoveSavedDraftAfterCompletion) {
+    // 서버 임시저장 DELETE 없음 — 임시저장은 localStorage 전용.
+    if (shouldRemoveSavedDraftAfterCompletion && !hasPendingRegistrationFormApplyFailures()) {
       void clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
     }
     if (created != null) {

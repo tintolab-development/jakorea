@@ -1,7 +1,8 @@
 import { queryOptions } from '@tanstack/react-query'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { customInstance } from '@/shared/api/orval-mutator'
 import type { ApiResponseIndividualSettlementReviewDecision } from '@/shared/api/generated/dashboard/schemas/apiResponseIndividualSettlementReviewDecision'
@@ -36,27 +37,32 @@ export function parseIndividualSettlementNumericId(
 }
 
 export function buildIndividualSettlementReviewListParams(input: {
-  programId: string | number
-  participantId: string | number
+  programId?: string | number | null
+  participantId?: string | number | null
   page?: number
   size?: number
   status?: string
-}): { programId: number; participantId: number; page: number; size: number; status?: string } | null {
-  const programId = parseIndividualSettlementNumericId(input.programId)
-  const participantId = parseIndividualSettlementNumericId(input.participantId)
-  if (programId == null || participantId == null) return null
+}): {
+  page: number
+  size: number
+  programId?: number
+  participantId?: number
+  status?: string
+} {
   const params: {
-    programId: number
-    participantId: number
     page: number
     size: number
+    programId?: number
+    participantId?: number
     status?: string
   } = {
-    programId,
-    participantId,
     page: input.page ?? 0,
     size: input.size ?? 100,
   }
+  const programId = parseIndividualSettlementNumericId(input.programId)
+  const participantId = parseIndividualSettlementNumericId(input.participantId)
+  if (programId != null) params.programId = programId
+  if (participantId != null) params.participantId = participantId
   const status = input.status?.trim()
   if (status) params.status = status
   return params
@@ -115,21 +121,20 @@ export function isIndividualSettlementReviewConflict(error: unknown): boolean {
 }
 
 export async function fetchIndividualSettlementReviewListRemote(input: {
-  programId: string | number
-  participantId: string | number
+  programId?: string | number | null
+  participantId?: string | number | null
   page?: number
   size?: number
   status?: string
-}): Promise<IndividualSettlementReviewListItem[]> {
+} = {}): Promise<IndividualSettlementReviewListItem[]> {
   const params = buildIndividualSettlementReviewListParams(input)
-  if (params == null) return []
-
   const response = await customInstance<unknown>({
     url: INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL,
     method: 'GET',
     params,
   })
-  return unwrapIndividualSettlementReviewListPage(response).items ?? []
+  const page = unwrapIndividualSettlementReviewListPage(response)
+  return Array.isArray(page.items) ? page.items : []
 }
 
 export async function fetchIndividualSettlementReviewDetailRemote(
@@ -204,5 +209,5 @@ export function individualSettlementReviewDetailQueryOptions(settlementApplicati
 }
 
 export function isIndividualSettlementReviewRemoteEnabled(): boolean {
-  return shouldUseGeneralProgramProgressRemoteApi()
+  return isRemoteApiConfigured() && hasRemoteAdminJwt()
 }

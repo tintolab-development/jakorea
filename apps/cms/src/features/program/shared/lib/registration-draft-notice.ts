@@ -10,8 +10,8 @@ import {
 import {
   clearRegistrationProgramDraftLocal,
   peekRegistrationProgramDraftPayload,
-} from '@/features/program/general/lib/registration-program-draft-session'
-import type { RegistrationProgramDraftPayloadV1 } from '@/features/program/general/lib/registration-program-draft-payload'
+} from '@/features/program/general/lib/registration-wizard-draft-session'
+import type { RegistrationProgramDraftPayloadV1 } from '@/features/program/general/lib/registration-wizard-draft-payload'
 
 export {
   PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,

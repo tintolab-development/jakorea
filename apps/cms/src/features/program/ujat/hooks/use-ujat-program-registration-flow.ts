@@ -78,7 +78,7 @@ import { resetAllOperationalOverlayStores } from '@/features/template/ui/form-se
 import {
   hydrateRegistrationProgramDraft,
   syncRegistrationProgramDraftSession,
-} from '@/features/program/general/lib/registration-program-draft-session'
+} from '@/features/program/general/lib/registration-wizard-draft-session'
 import { PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE } from '@/features/program/shared/lib/registration-draft-notice'
 import {
   UJAT_PROGRAM_REGISTRATION_DEFAULT_RECRUIT_STEP,
@@ -198,7 +198,7 @@ export function useUjatProgramRegistrationFlow(
       setActiveStep(restored)
       onStepChangeRef.current?.(restored)
     })().catch(error => {
-      console.warn('[registration-program-draft] UJAT hydrate failed', error)
+      console.warn('[registration-wizard-draft] UJAT hydrate failed', error)
     })
   }, [open, skipDraftRestore, programType])
 

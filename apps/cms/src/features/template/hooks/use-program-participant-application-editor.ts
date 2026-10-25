@@ -181,6 +181,8 @@ import {
   replaceApplicantRecruitInstitutionOverlay,
   resetApplicantRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+// TODO(P2→P5-d): 활성 스코프 getGeneralRecruitOverlayRecord() 호출 5곳(hydrate 병합)은 ESLint warn으로 남겨 둔다.
+// 저장 경로를 모집 RHF/peek…ForScope로 바꾸면서 제거한다(overlay 제거 계획 P5-d, 규칙은 P8에서 error).
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
@@ -2187,12 +2189,6 @@ export function useProgramParticipantApplicationEditor(
           editorState,
           ...(overlay != null ? { overlay } : {}),
         })
-        if (registrationWizardProgramType === 'COMPANY_SCHOOL') {
-          const { persistCompanySchoolRegistrationDraftRemote } = await import(
-            '@/features/program/general/lib/registration-program-draft-session'
-          )
-          await persistCompanySchoolRegistrationDraftRemote()
-        }
       } else if (variant === 'ujat-recruit-institution') {
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
         const overlay = collectParticipantOverlayForVariant(variant, templateId) ?? {}

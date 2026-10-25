@@ -15,6 +15,7 @@ export function collectCompanySchoolRegistrationCommonState(
     detailedProgramId: values.detailedProgramId,
     detailedProgramName: values.detailedProgramName,
     operationRange: values.operationRange ? { ...values.operationRange } : null,
+    operationAnchorIso: values.operationAnchorIso,
     businessField: values.businessField,
     sponsorId: values.sponsorId,
     managerContactIds: [...values.managerContactIds],

@@ -26,7 +26,6 @@ export type IsolatedFailMode =
   | 'uploadSlow'
   | 'portalPost'
   | 'portalDuplicate'
-  | 'draft'
 
 export type IsolatedNetworkLog = {
   api: Array<{ method: string; path: string }>
@@ -38,6 +37,7 @@ export type IsolatedNetworkLog = {
   formVersionPublishes: IsolatedCapturedMutation[]
   formBindings: unknown[]
   programPatches: IsolatedCapturedMutation[]
+  /** `/api/admin/program-draft` 요청(어떤 메서드든) — 서버 draft 제거 후 0이어야 한다 */
   programDraftPuts: IsolatedCapturedMutation[]
   filePosts: IsolatedCapturedMutation[]
   fileConfirms: IsolatedCapturedMutation[]
@@ -343,7 +343,6 @@ function applicationSeedForm() {
 type IsolatedProgramStore = {
   program: Record<string, unknown> | null
   sponsors: Array<Record<string, unknown>>
-  draft: Record<string, unknown> | null
   includeRecruitmentRow: boolean
 }
 
@@ -426,7 +425,6 @@ function isAllowedGet(pathname: string): boolean {
     pathname === '/api/admin/me' ||
     pathname === '/api/admin/programs' ||
     pathname === '/api/admin/programs/overview-stages' ||
-    pathname === '/api/admin/program-draft' ||
     pathname === '/api/admin/sponsors' ||
     pathname === '/api/admin/detailed-programs' ||
     pathname === '/api/admin/form-templates' ||
@@ -457,8 +455,6 @@ function isAllowedGet(pathname: string): boolean {
 }
 
 function isAllowedMutation(method: string, pathname: string): boolean {
-  if (method === 'PUT' && pathname === '/api/admin/program-draft') return true
-  if (method === 'DELETE' && pathname === '/api/admin/program-draft') return true
   if (method === 'PUT' && /^\/api\/admin\/form-template-versions\/\d+$/.test(pathname)) return true
   if (method === 'POST' && /^\/api\/admin\/form-template-versions\/\d+\/publish$/.test(pathname)) {
     return true
@@ -468,6 +464,7 @@ function isAllowedMutation(method: string, pathname: string): boolean {
   }
   if (method === 'POST' && pathname === '/api/admin/programs') return true
   if (method === 'POST' && /^\/api\/admin\/programs\/\d+\/form-bindings$/.test(pathname)) return true
+  if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+\/form-bindings\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/form-templates\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) return true
   if (method === 'POST' && pathname.startsWith('/api/admin/files')) return true
@@ -520,7 +517,6 @@ export async function installCsIsolatedNetwork(
   const store: IsolatedProgramStore = {
     program: null,
     sponsors: [],
-    draft: null,
     includeRecruitmentRow: options?.includeRecruitmentRow === true,
   }
   let createdBindings: unknown[] = []
@@ -588,6 +584,13 @@ export async function installCsIsolatedNetwork(
 
     log.api.push({ method, path: pathname })
 
+    // 서버 program-draft는 모든 유형에서 제거됨 — 어떤 메서드든 회귀로 기록하고 차단한다.
+    if (pathname === '/api/admin/program-draft') {
+      log.programDraftPuts.push({ method, path: pathname, body: parseBody(request) })
+      await route.fulfill(json({ success: false }, 410))
+      return
+    }
+
     if (method === 'GET' && pathname === '/api/admin/me') {
       await route.fulfill(
         json({
@@ -647,14 +650,6 @@ export async function installCsIsolatedNetwork(
       await route.fulfill(
         json({ total: store.program ? 1 : 0, scheduled: 0, inProgress: 0, completed: 0 })
       )
-      return
-    }
-    if (method === 'GET' && pathname === '/api/admin/program-draft') {
-      if (store.draft) {
-        await route.fulfill(json(store.draft))
-        return
-      }
-      await route.fulfill(json({ success: false }, 404))
       return
     }
     if (method === 'GET' && pathname === '/api/admin/sponsors') {
@@ -957,28 +952,6 @@ export async function installCsIsolatedNetwork(
         return
       }
 
-      if (method === 'PUT' && pathname === '/api/admin/program-draft') {
-        log.programDraftPuts.push(mutation)
-        if (failMode === 'draft') {
-          await route.fulfill(
-            json({ error: { code: 'DRAFT_PUT_FAILED', message: 'mock draft put fail' } }, 500)
-          )
-          return
-        }
-        store.draft = {
-          draftId: 99021,
-          programType: 'COMPANY_SCHOOL',
-          saved: true,
-          ...(isRecord(mutation.body) ? mutation.body : {}),
-        }
-        await route.fulfill(json(store.draft))
-        return
-      }
-      if (method === 'DELETE' && pathname === '/api/admin/program-draft') {
-        store.draft = null
-        await route.fulfill(json({ deleted: true }))
-        return
-      }
       if (method === 'POST' && pathname.endsWith('/versions/copy')) {
         const templateId = Number(pathname.split('/')[4])
         const versionId = nextCopiedVersionId
@@ -1051,6 +1024,11 @@ export async function installCsIsolatedNetwork(
         }
         persistCreateBody(store, body)
         await route.fulfill(json(store.program))
+        return
+      }
+      if (method === 'PATCH' && /\/form-bindings\/\d+$/.test(pathname)) {
+        log.formBindings = [...log.formBindings, mutation.body]
+        await route.fulfill(json({ id: Number(pathname.split('/').at(-1)) }))
         return
       }
       if (method === 'POST' && pathname.endsWith('/form-bindings')) {
@@ -1253,6 +1231,17 @@ export function assertIsolatedNetwork(log: IsolatedNetworkLog) {
   }
   if (log.realMutations !== 0) {
     throw new Error(`실제 네트워크 mutation 발생: ${log.realMutations}`)
+  }
+  if (log.programDraftPuts.length > 0) {
+    throw new Error(
+      `program-draft 요청이 발생함: ${log.programDraftPuts.map(item => item.method).join(', ')}`
+    )
+  }
+  if (log.createProgram != null) {
+    const body = log.createProgram.body as Record<string, unknown> | null
+    if (body != null && ('programDraftId' in body || 'formBindings' in body)) {
+      throw new Error('CREATE에 programDraftId/formBindings가 실렸습니다')
+    }
   }
 }
 

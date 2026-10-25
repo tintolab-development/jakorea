@@ -140,10 +140,7 @@ export function WritingTemplateSelectModal({
     () =>
       previewRow == null
         ? undefined
-        : resolveWritingTemplateSelectPreviewEditorKind(
-            previewRow.id,
-            previewRow.baseTemplateCode
-          ),
+        : resolveWritingTemplateSelectPreviewEditorKind(previewRow.id, previewRow.baseTemplateCode),
     [previewRow]
   )
 
@@ -246,7 +243,7 @@ export function WritingTemplateSelectModal({
                 value={keyword}
                 onChange={event => setKeyword(event.target.value)}
                 onPressEnter={handleSearch}
-                placeholder="템플릿명을 입력하세요"
+                placeholder="템플릿명을 입력해 주세요"
                 inputSize="large"
                 width="100%"
                 allowClear

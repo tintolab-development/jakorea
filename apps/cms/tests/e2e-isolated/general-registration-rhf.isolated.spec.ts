@@ -36,7 +36,10 @@ function overlayFromFormVersionPut(body: unknown): Record<string, unknown> {
 
 async function expectWizardOpen(page: import('@playwright/test').Page) {
   await expect(page).toHaveURL(/\/programs\/general\?.*new=1/, { timeout: 30_000 })
-  await expect(page.getByText('기본 정보').first()).toBeVisible({ timeout: 30_000 })
+  // 「기본 정보」 단락 제목은 텍스트 노드 매칭이 안정적이지 않아(리치 텍스트 렌더) 대표 입력란으로 확인한다.
+  await expect(page.getByPlaceholder('대표 프로그램명을 입력하세요').first()).toBeVisible({
+    timeout: 30_000,
+  })
 }
 
 async function runRepresentativeCase(
@@ -68,7 +71,11 @@ async function runRepresentativeCase(
   const createText = JSON.stringify(log.createProgram?.body ?? {})
   expect(createText).not.toContain('application.')
   expect(createText).not.toContain('blob:')
-  expect(log.formVersionPuts.length + log.formBindings.length).toBeGreaterThan(0)
+  // P2(방안 C): 양식 PUT/binding은 CREATE 이후에 나간다.
+  await expect
+    .poll(() => log.formVersionPuts.length + log.formBindings.length, { timeout: 30_000 })
+    .toBeGreaterThan(0)
+  expect(log.programDraftRequests).toHaveLength(0)
   return { registration, capturedTitle }
 }
 

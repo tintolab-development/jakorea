@@ -2,20 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Program } from '@/types/domain'
 
-const ensureDraftOwnedFormVersionWithBaseline = vi.fn()
 const loadRegistrationWizardFormDraft = vi.fn()
 const persistRegistrationWizardFormDraft = vi.fn()
-const persistDraftOwnedFormVersion = vi.fn()
-vi.mock('@/features/program/general/lib/registration-draft-form-versions', () => ({
-  ensureDraftOwnedFormVersionWithBaseline: (...args: unknown[]) =>
-    ensureDraftOwnedFormVersionWithBaseline(...args),
-  persistDraftOwnedFormVersion: (...args: unknown[]) => persistDraftOwnedFormVersion(...args),
-}))
-
-vi.mock('@/features/program/general/lib/registration-program-draft-session', () => ({
-  ensureRegistrationProgramDraftId: vi.fn(async () => 99),
-  peekRegistrationProgramDraftId: vi.fn(() => 99),
-}))
 
 vi.mock('@/features/program/general/lib/registration-wizard-form-draft', () => ({
   loadRegistrationWizardFormDraft: (...args: unknown[]) =>
@@ -32,7 +20,7 @@ import {
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   listRegistrationOperationalFormDraftStorageKeys,
   persistRegistrationOperationalOverlaysToLocal,
-  persistRegistrationOperationalOverlaySnapshots,
+  loadOperationalFormDraftForProgram,
   resetOperationalOverlayForCatalogId,
   resolveOperationalDraftStorageKey,
 } from './registration-operational-form-drafts'
@@ -45,7 +33,6 @@ import {
   peekGeneralRecruitOverlayRecord,
   setGeneralRecruitOverlayScope,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
-import { patchGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   resetAllOperationalOverlayStoresForTests,
   setOperationalOverlayScope,
@@ -179,45 +166,24 @@ describe('registration operational draft-owned helpers', () => {
     ).toBe('개인 프로그램 설명')
   })
 
-  it('persists only visible operational overlays for individual general program', async () => {
-    setOperationalOverlayScope('recruitment-participant-individual')
-    patchGeneralRecruitOverlay({
-      'recruit.individual.inquiryContact': '개인문의',
-    })
-    setOperationalOverlayScope('recruitment-instructor')
-    patchGeneralRecruitOverlay({
-      'recruit.instructor.inquiryContact': '강사문의',
-    })
-    setOperationalOverlayScope('application-volunteer')
-    patchGeneralApplicationOverlay({ 'application.volunteer.essay': '에세이' })
-    ensureDraftOwnedFormVersionWithBaseline.mockResolvedValue({
-      owned: { templateCode: 'recruitment-participant-individual', templateId: 1, draftVersionId: 10 },
-      baseline: null,
-    })
-    persistDraftOwnedFormVersion.mockResolvedValue(undefined)
-
+  it('loadOperationalFormDraftForProgram은 서버 draft 없이 위저드 localStorage 초안을 읽는다', async () => {
+    const saved = { draft: { paragraphs: [] }, overlay: { k: 1 } }
+    loadRegistrationWizardFormDraft.mockResolvedValueOnce(saved)
     const program = {
       id: '100001',
       generalProgramAudience: 'individual',
       generalParticipantTypes: ['individual'],
     } as Program
 
-    await persistRegistrationOperationalOverlaySnapshots(program)
-
-    expect(persistDraftOwnedFormVersion).toHaveBeenCalled()
-    type PersistCallArg = { templateCode?: string; baseline?: unknown; owned?: unknown }
-    const templateCodes = persistDraftOwnedFormVersion.mock.calls.map(
-      (call: PersistCallArg[]) => call[0]?.templateCode
+    const result = await loadOperationalFormDraftForProgram(
+      program,
+      'recruitment-participant-individual'
     )
-    expect(templateCodes).not.toContain('recruitment-instructor')
-    expect(templateCodes).not.toContain('application-volunteer')
-    expect(templateCodes).toContain('recruitment-participant-individual')
-    expect(
-      persistDraftOwnedFormVersion.mock.calls.every(
-        (call: PersistCallArg[]) =>
-          call[0]?.owned != null && call[0]?.baseline !== undefined
-      )
-    ).toBe(true)
+
+    expect(result).toBe(saved)
+    expect(loadRegistrationWizardFormDraft).toHaveBeenCalledWith(
+      expect.objectContaining({ templateCode: 'recruitment-participant-individual' })
+    )
   })
 
   it('clears instructor detail-info HTML so a new template does not persist leftover editors', () => {

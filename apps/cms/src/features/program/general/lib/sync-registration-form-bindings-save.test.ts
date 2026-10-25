@@ -106,18 +106,20 @@ describe('saveProgramScopedOperationalFormVersion', () => {
         templateVersionId: 880,
       })
     )
-    expect(saved).toEqual({ templateId: 88, templateVersionId: 880 })
+    expect(saved).toEqual({ templateId: 88, templateVersionId: 880, bindingId: 7 })
     expect(
       getRememberedProgramOperationalFormBinding('tt-program-1', 'application-trained-teachers')
     ).toEqual({ templateId: 88, templateVersionId: 880 })
   })
 
-  it('puts a draft version without copying', async () => {
+  it('copies even a DRAFT version when ownership is unknown (always COPY — shared data guard)', async () => {
     fetchFormTemplateVersionRemote.mockResolvedValue({
       templateId: 55,
       templateVersionId: 502,
       versionStatus: 'DRAFT',
     })
+    copyFormTemplateVersionRemote.mockResolvedValue({ templateId: 88, templateVersionId: 881 })
+    publishFormTemplateVersionById.mockResolvedValue(881)
 
     await saveProgramScopedOperationalFormVersion({
       program: { id: 'tt-program-2' } as Program,
@@ -126,10 +128,39 @@ describe('saveProgramScopedOperationalFormVersion', () => {
       draft: userDraft,
     })
 
-    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
-    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
+    expect(copyFormTemplateVersionRemote).toHaveBeenCalled()
+    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalledWith(
       expect.objectContaining({ versionId: 502 })
     )
-    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(502)
+    expect(publishFormTemplateVersionById).not.toHaveBeenCalledWith(502)
+  })
+
+  it.each([
+    ['ownerProgramId(CREATE 직후 적용)', { versionStatus: undefined }, { ownerProgramId: 186363 }],
+    ['ownerProgramId + DRAFT', { versionStatus: 'DRAFT' }, { ownerProgramId: 186363 }],
+    ['여러 바인딩이 공유하는 DRAFT', { versionStatus: 'DRAFT', activeBindingCount: 3 }, {}],
+    ['카탈로그(공용) 템플릿의 DRAFT', { versionStatus: 'DRAFT', templateId: 10 }, {}],
+  ])('공용 버전 보호: %s 이면 상태와 무관하게 COPY 후 저장한다', async (_label, version, extra) => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({ templateId: 1, templateVersionId: 94, ...version })
+    copyFormTemplateVersionRemote.mockReset()
+    copyFormTemplateVersionRemote.mockResolvedValue({ templateId: 1, templateVersionId: 9401 })
+    publishFormTemplateVersionById.mockResolvedValue(9401)
+
+    await saveProgramScopedOperationalFormVersion({
+      program: { id: '186363' } as Program,
+      templateCode: 'application-trained-teachers',
+      versionId: 94,
+      draft: userDraft,
+      ...extra,
+    })
+
+    expect(copyFormTemplateVersionRemote).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.objectContaining({ sourceVersionId: 94, ownerProgramId: 186363 })
+    )
+    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalledWith(
+      expect.objectContaining({ versionId: 94 })
+    )
+    expect(publishFormTemplateVersionById).not.toHaveBeenCalledWith(94)
   })
 })

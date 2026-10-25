@@ -61,7 +61,7 @@ import { shouldUseRegistrationCreateFormBindings } from '@/features/program/gene
 import {
   hydrateRegistrationProgramDraft,
   syncRegistrationProgramDraftSession,
-} from '@/features/program/general/lib/registration-program-draft-session'
+} from '@/features/program/general/lib/registration-wizard-draft-session'
 import {
   registrationProgramTypeForTemplateCode,
   type ProgramRegistrationDraftTemplateCode,
@@ -258,7 +258,7 @@ export function useGeneralProgramRegistrationFlow(
         payload?.programTitleKo
       )
     })().catch(error => {
-      console.warn('[registration-program-draft] hydrate failed', error)
+      console.warn('[registration-wizard-draft] hydrate failed', error)
     })
   }, [
     open,
@@ -857,11 +857,15 @@ export function useGeneralProgramRegistrationFlow(
               }),
             }
           : undefined,
-        overlayForTemplateCode: code =>
-          collectWizardApplicationOverlayForCatalog(
-            code,
-            peekGeneralRegistrationWizardRhf()?.getValues() ?? null
-          ) ?? collectOperationalOverlayForCatalogId(code),
+        overlayForTemplateCode: code => {
+          // P5-d: 일반 RHF가 마운트돼 있으면 신청 overlay는 RHF 투영만 쓴다(스토어 fallback 없음).
+          // RHF가 없는 경로(구 경로)만 스토어를 읽는다.
+          const wizardRhf = peekGeneralRegistrationWizardRhf()
+          if (wizardRhf != null) {
+            return collectWizardApplicationOverlayForCatalog(code, wizardRhf.getValues())
+          }
+          return collectOperationalOverlayForCatalogId(code)
+        },
       })
 
     if (isProgramStep) {

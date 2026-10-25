@@ -121,11 +121,11 @@ export function ParticipatingParticipantSettlementSection({
   const summaryStatusLabel = isError
     ? '조회 실패'
     : summary.submitted > 0
-      ? `심사 대기 ${summary.submitted}건`
+      ? `확인 대기 중 ${summary.submitted}건`
       : summary.approved > 0
-        ? `승인 ${summary.approved}건`
+        ? `영수증 확인 완료 ${summary.approved}건`
         : summary.rejected > 0
-          ? `반려 ${summary.rejected}건`
+          ? `신청 반려 ${summary.rejected}건`
           : summary.total > 0
             ? '미신청'
             : '-'

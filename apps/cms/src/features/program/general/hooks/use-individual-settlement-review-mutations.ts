@@ -6,6 +6,7 @@ import {
   rejectIndividualSettlementReviewRemote,
 } from '@/features/program/general/api/individual-settlement-review-remote'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
 
 export function useIndividualSettlementReviewMutations(input: {
   programId: string
@@ -22,6 +23,9 @@ export function useIndividualSettlementReviewMutations(input: {
           input.programId,
           input.participantId
         ),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: settlementQueryKeys.individualSettlementReviews.all(),
       }),
     ]
     if (input.settlementApplicationId != null) {

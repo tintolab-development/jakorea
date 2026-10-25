@@ -110,9 +110,10 @@ function parseServiceDetail(json: string | undefined): Record<string, unknown> {
 }
 
 function overlayKeys(detail: Record<string, unknown>): string[] {
+  const registration = detail.registration as { overlay?: unknown } | undefined
   const overlay =
-    detail.registrationOverlay != null && typeof detail.registrationOverlay === 'object'
-      ? (detail.registrationOverlay as Record<string, unknown>)
+    registration?.overlay != null && typeof registration.overlay === 'object'
+      ? (registration.overlay as Record<string, unknown>)
       : {}
   return Object.keys(overlay).sort()
 }
@@ -408,7 +409,7 @@ describe('8. 미디어 업로드 전후', () => {
 })
 
 describe('9. serialize overlay 키 안정성', () => {
-  it('serviceDetailJson은 registration.overlay와 루트 registrationOverlay를 같이 쓴다', () => {
+  it('serviceDetailJson은 registration.overlay에만 쓰고 루트 registrationOverlay는 쓰지 않는다', () => {
     const json = serializeGeneralProgramServiceDetailJson({
       ...baseProgram(),
       registrationOverlay: createOverlay,
@@ -419,7 +420,7 @@ describe('9. serialize overlay 키 안정성', () => {
         ? (detail.registration as { overlay?: Record<string, unknown> }).overlay
         : undefined
     expect(nested).toBeDefined()
-    expect(detail.registrationOverlay).toEqual(nested)
+    expect(detail.registrationOverlay).toBeUndefined()
     expect(nested?.['generalRegistration.basicInfo.publicProgramTitle']).toBe('기존 공고')
   })
 })

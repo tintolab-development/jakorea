@@ -1,35 +1,24 @@
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { Program } from '@/types/domain'
-import {
-  buildRegistrationCreateFormBindings,
-  type RegistrationCreateFormBindingsPayload,
-} from '@/features/program/general/lib/build-registration-create-form-bindings'
-import { shouldAttachInlineFormBindingsOnProgramCreate } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import { shouldApplyRegistrationFormsAfterCreate } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 
 /**
- * OpenAPI v9 — create와 동일 트랜잭션에서 program-scoped formBindings publish/bind.
- * 실패 시 throw (attach fallback으로 조용히 넘기지 않음).
- * 일반·교육받은 교사·1사1교·UJAT. Gemini / Volunteer는 인라인 금지.
+ * POST `/api/admin/programs` — 서버 임시저장 없이 CREATE한다(방안 C).
+ * - 서버 임시저장 ID·inline `formBindings`는 보내지 않는다.
+ * - `autoApplyDefaultFormBindings: true`로 카탈로그 기본 양식을 붙여 GENERAL readiness를 충족한다.
+ * - 위저드 양식은 CREATE 후 `applyPreparedRegistrationFormsAfterCreate`가 프로그램 전용 COPY로 적용한다.
+ * Gemini / Volunteer 등 대상이 아닌 유형은 요청을 그대로 둔다.
  */
-export async function enrichProgramCreateRequestWithRegistrationFormBindings(
+export function enrichProgramCreateRequestWithRegistrationFormBindings(
   program: Program,
-  baseRequest: ProgramCreateRequest,
-  prepared?: RegistrationCreateFormBindingsPayload | null
-): Promise<ProgramCreateRequest> {
-  if (!shouldAttachInlineFormBindingsOnProgramCreate(program)) {
+  baseRequest: ProgramCreateRequest
+): ProgramCreateRequest {
+  if (!shouldApplyRegistrationFormsAfterCreate(program)) {
     return baseRequest
   }
-
-  const bindingPayload =
-    prepared !== undefined ? prepared : await buildRegistrationCreateFormBindings(program)
-  if (bindingPayload == null) {
-    return baseRequest
-  }
-
+  const { programDraftId: _programDraftId, formBindings: _formBindings, ...rest } = baseRequest
   return {
-    ...baseRequest,
-    autoApplyDefaultFormBindings: false,
-    programDraftId: bindingPayload.programDraftId,
-    formBindings: bindingPayload.formBindings,
+    ...rest,
+    autoApplyDefaultFormBindings: true,
   }
 }

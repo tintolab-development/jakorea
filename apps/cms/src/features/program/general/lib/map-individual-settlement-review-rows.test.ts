@@ -11,7 +11,9 @@ import {
   canReviewIndividualSettlement,
   flattenIndividualSettlementReviewReceipts,
   formatIndividualSettlementWon,
+  INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL,
   individualSettlementReviewStatusLabel,
+  isIndividualSettlementLodgingType,
   latestIndividualSettlementReviewRevision,
 } from './individual-settlement-review-status'
 
@@ -34,9 +36,9 @@ function session(
 
 const submittedApplication: IndividualSettlementReviewListItem = {
   settlementApplicationId: 1,
-  programId: 186339,
+  programId: 186304,
   individualApplicationId: 1694686,
-  participantId: 123,
+  participantId: 1694942,
   programScheduleId: 187231,
   scheduleName: '1회차',
   latestRevisionNo: 1,
@@ -50,10 +52,10 @@ const submittedApplication: IndividualSettlementReviewListItem = {
 
 const reviewDetail: IndividualSettlementReviewDetail = {
   settlementApplicationId: 1,
-  programId: 186339,
+  programId: 186304,
   programName: '프로그램명',
   individualApplicationId: 1694686,
-  participantId: 123,
+  participantId: 1694942,
   programScheduleId: 187231,
   scheduleName: '1회차',
   status: 'SUBMITTED',
@@ -81,7 +83,7 @@ const reviewDetail: IndividualSettlementReviewDetail = {
               receiptId: 1,
               originalReceiptId: null,
               revisionNo: 1,
-              expenseType: 'ACTIVITY',
+              expenseType: 'OTHER',
               expenseDate: '2026-10-01',
               amount: 20000,
               description: null,
@@ -92,18 +94,18 @@ const reviewDetail: IndividualSettlementReviewDetail = {
         },
         {
           itemId: 21,
-          itemType: 'MEAL',
-          itemName: '식비',
-          amount: 14999,
+          itemType: 'LODGING',
+          itemName: '숙박비',
+          amount: 19999,
           evidenceRequired: true,
           receipts: [
             {
               receiptId: 2,
               originalReceiptId: null,
               revisionNo: 1,
-              expenseType: 'MEAL',
+              expenseType: 'LODGING',
               expenseDate: '2026-10-01',
-              amount: 14999,
+              amount: 19999,
               receiptStatus: 'SUBMITTED',
               files: [{ fileObjectId: 101, fileName: 'receipt-2.jpg', contentType: 'image/jpeg' }],
             },
@@ -111,18 +113,18 @@ const reviewDetail: IndividualSettlementReviewDetail = {
         },
         {
           itemId: 22,
-          itemType: 'TRANSPORTATION',
-          itemName: '교통비',
-          amount: 15000,
+          itemType: 'MEAL',
+          itemName: '식비',
+          amount: 10000,
           evidenceRequired: true,
           receipts: [
             {
               receiptId: 3,
               originalReceiptId: null,
               revisionNo: 1,
-              expenseType: 'TRANSPORTATION',
+              expenseType: 'MEAL',
               expenseDate: '2026-10-01',
-              amount: 15000,
+              amount: 10000,
               receiptStatus: 'SUBMITTED',
               files: [{ fileObjectId: 102, fileName: 'receipt-3.pdf', contentType: 'application/pdf' }],
             },
@@ -143,7 +145,7 @@ describe('mapIndividualSettlementReviewListRows', () => {
     expect(rows[0]).toMatchObject({
       programScheduleId: 187231,
       status: 'SUBMITTED',
-      statusLabel: '심사 대기',
+      statusLabel: '확인 대기 중',
       totalAmount: 49999,
       totalAmountLabel: '49,999원',
       latestRevisionNo: 1,
@@ -187,7 +189,7 @@ describe('mapIndividualSettlementReviewListRows', () => {
     expect(rows[1]).toMatchObject({
       settlementApplicationId: 1,
       orphanApplication: true,
-      statusLabel: '심사 대기',
+      statusLabel: '확인 대기 중',
     })
   })
 
@@ -246,6 +248,22 @@ describe('individual settlement review detail display', () => {
         revisions: [{ ...reviewDetail.revisions![0]!, status: 'WITHDRAWN' }],
       })
     ).toBe(false)
+  })
+
+  it('does not promote APPROVED or PAID to account payment labels', () => {
+    expect(individualSettlementReviewStatusLabel('APPROVED')).toBe('영수증 확인 완료')
+    expect(individualSettlementReviewStatusLabel('APPROVED')).not.toContain('계좌 지급')
+    expect(individualSettlementReviewStatusLabel('PAID')).toBe('PAID')
+    expect(individualSettlementReviewStatusLabel('PAID')).not.toContain('계좌 지급 완료')
+  })
+
+  it('keeps LODGING visible as not payable and not an instructor statement id', () => {
+    const lodging = reviewDetail.revisions?.[0]?.items.find(item => item.itemType === 'LODGING')
+    expect(lodging?.amount).toBe(19999)
+    expect(isIndividualSettlementLodgingType(lodging?.itemType)).toBe(true)
+    expect(INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL).toBe('지급 대상 아님')
+    expect(reviewDetail.settlementApplicationId).toBe(1)
+    expect('settlementId' in reviewDetail).toBe(false)
   })
 
   it('shows rejection reason from latest revision', () => {

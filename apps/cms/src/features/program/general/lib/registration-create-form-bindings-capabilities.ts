@@ -7,7 +7,7 @@ import {
 } from '@/features/program/general/lib/program-operational-binding-profile'
 import type { Program } from '@/types/domain'
 
-/** create 시 programDraftId + formBindings (OpenAPI v9) 경로 — remote 게이트 */
+/** 등록 완료 시 CREATE 후 양식 적용(방안 C) 경로 — remote 게이트 */
 export function shouldUseRegistrationCreateFormBindings(): boolean {
   return (
     shouldUseFormsSurveysRemoteApi() &&
@@ -16,20 +16,20 @@ export function shouldUseRegistrationCreateFormBindings(): boolean {
 }
 
 /**
- * POST `/api/admin/programs` 인라인 formBindings 허용 유형.
- * Gemini / Volunteer는 BE가 여전히 `INLINE_PROGRAM_FORM_BINDINGS_GENERAL_ONLY` 400.
+ * CREATE에 `autoApplyDefaultFormBindings: true`를 싣고, CREATE 후 위저드 양식을 프로그램 전용 COPY로
+ * 적용하는 유형. Gemini / Volunteer는 기존 요청을 그대로 둔다.
  */
-const INLINE_PROGRAM_FORM_BINDINGS_KINDS: ReadonlySet<ProgramOperationalBindingKind> = new Set([
+const APPLY_FORMS_AFTER_CREATE_KINDS: ReadonlySet<ProgramOperationalBindingKind> = new Set([
   'GENERAL',
   'TRAINED_TEACHER',
   'COMPANY_SCHOOL',
   'UJAT',
 ])
 
-export function shouldAttachInlineFormBindingsOnProgramCreate(program: Program): boolean {
+export function shouldApplyRegistrationFormsAfterCreate(program: Program): boolean {
   return (
     shouldUseRegistrationCreateFormBindings() &&
-    INLINE_PROGRAM_FORM_BINDINGS_KINDS.has(resolveProgramOperationalBindingKind(program))
+    APPLY_FORMS_AFTER_CREATE_KINDS.has(resolveProgramOperationalBindingKind(program))
   )
 }
 
