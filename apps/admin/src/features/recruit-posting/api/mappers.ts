@@ -14,8 +14,7 @@ import type {
 import {
   normalizeCareerPostingLinkFields,
   readCareerPostingLinkFields,
-  type CareerPostingLinkFields,
-} from '@/features/recruit-posting/lib/link-fields'
+} from '../lib/link-fields.ts'
 import type { AssetResponse } from '@/shared/api/generated/careers/schemas/assetResponse'
 import type { CareerPostingAdminDetail } from '@/shared/api/generated/careers/schemas/careerPostingAdminDetail'
 import type { CareerPostingAdminItem } from '@/shared/api/generated/careers/schemas/careerPostingAdminItem'
@@ -73,24 +72,13 @@ function mapAttachment(asset: AssetResponse | undefined | null): RecruitPostingA
   ]
 }
 
-function mapAdminFields(row: {
-  id?: number
-  isPublic?: boolean
-  status?: CareerPostingAdminItemStatus | CareerPostingAdminDetail['status']
-  title?: string
-  authorName?: string
-  recruitStart?: string
-  recruitEnd?: string
-  publishedOn?: string
-  createdAt?: string
-  version?: number
-  buttonLabel?: string | null
-  linkUrl?: string | null
-}): Omit<RecruitPosting, 'contentMarkdown' | 'attachments'> | null {
+function mapAdminFields(
+  row: CareerPostingAdminItem | CareerPostingAdminDetail,
+  link = readCareerPostingLinkFields(undefined),
+): Omit<RecruitPosting, 'contentMarkdown' | 'attachments'> | null {
   if (row.id == null) return null
   const status = mapStatus(row.status)
   if (!status) return null
-  const link = readCareerPostingLinkFields(row)
   return {
     id: String(row.id),
     isPublic: row.isPublic ?? false,
@@ -121,7 +109,7 @@ export function mapCareerPostingAdminItem(row: CareerPostingAdminItem): RecruitP
 
 /** 상세·create/update 응답 */
 export function mapCareerPostingAdminDetail(row: CareerPostingAdminDetail): RecruitPosting | null {
-  const base = mapAdminFields(row)
+  const base = mapAdminFields(row, readCareerPostingLinkFields(row))
   if (!base) return null
   return {
     ...base,
@@ -146,17 +134,15 @@ export function toUpdateWireStatus(
   return 'RESULT'
 }
 
-export type CareerPostingWriteRequest = CareerPostingCreateRequest & CareerPostingLinkFields
-
 export function toCareerPostingCreateRequest(
   input: RecruitPostingCreateInput,
   attachmentAssetId?: number,
-): CareerPostingWriteRequest {
+): CareerPostingCreateRequest {
   const link = normalizeCareerPostingLinkFields({
     buttonLabel: input.buttonLabel,
     linkUrl: input.linkUrl,
   })
-  const request: CareerPostingWriteRequest = {
+  const request: CareerPostingCreateRequest = {
     title: input.title.trim(),
     body: input.contentMarkdown,
     isPublic: input.isPublic,
@@ -174,18 +160,16 @@ export function toCareerPostingCreateRequest(
   return request
 }
 
-export type CareerPostingUpdateWriteRequest = CareerPostingUpdateRequest & CareerPostingLinkFields
-
 export function toCareerPostingUpdateRequest(
   input: RecruitPostingUpdateInput,
   version: number,
   attachmentAssetId?: number,
-): CareerPostingUpdateWriteRequest {
+): CareerPostingUpdateRequest {
   const link = normalizeCareerPostingLinkFields({
     buttonLabel: input.buttonLabel,
     linkUrl: input.linkUrl,
   })
-  const request: CareerPostingUpdateWriteRequest = {
+  const request: CareerPostingUpdateRequest = {
     title: input.title.trim(),
     body: input.contentMarkdown,
     isPublic: input.isPublic,

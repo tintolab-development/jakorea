@@ -105,9 +105,9 @@ export type PublicCareerPostingDetail = {
   attachment?: PublicCareerPostingAsset | null
   /** GET 성공 시 증가한 뒤의 값. 항상 숫자 */
   viewCount?: number
-  /** 상세 하단 버튼명. 없으면 버튼 비노출. OpenAPI 미반영 시 런타임 키만 존재할 수 있다. */
+  /** CareerPostingPublicDetail.buttonLabel — nullable, maxLength 15 */
   buttonLabel?: string | null
-  /** 하단 버튼 이동 URL */
+  /** CareerPostingPublicDetail.linkUrl — nullable, maxLength 2048, http/https */
   linkUrl?: string | null
 }
 

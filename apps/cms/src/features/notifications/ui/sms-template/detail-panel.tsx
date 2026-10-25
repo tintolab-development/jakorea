@@ -3,6 +3,7 @@ import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import type { SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
+import { formatSmsMessageTypeLabel } from '@/features/notifications/api/adapters/sms-channel'
 
 type DetailPanelProps = {
   template: SmsTemplateItem | null
@@ -63,7 +64,10 @@ export function DetailPanel({ template, categoryName, onPreview, loading }: Deta
             label="보낸사람(전화번호)"
             view={template.senderPhone.trim() || '-'}
           />
-          <DetailInfoForm.Field label="발송 유형" view={template.messageType} />
+          <DetailInfoForm.Field
+            label="발송 유형"
+            view={formatSmsMessageTypeLabel(template.messageType)}
+          />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="제목" view={subjectView(template)} />

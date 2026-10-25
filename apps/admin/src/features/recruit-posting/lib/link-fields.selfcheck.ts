@@ -44,6 +44,18 @@ assert.deepEqual(hydrated, {
   linkUrl: 'https://jobs.example.test',
 })
 assert.deepEqual(readCareerPostingLinkFields({}), { buttonLabel: '', linkUrl: '' })
+assert.deepEqual(readCareerPostingLinkFields({ buttonLabel: null, linkUrl: null }), {
+  buttonLabel: '',
+  linkUrl: '',
+})
+assert.deepEqual(readCareerPostingLinkFields({ buttonLabel: '버튼만', linkUrl: null }), {
+  buttonLabel: '버튼만',
+  linkUrl: '',
+})
+assert.deepEqual(readCareerPostingLinkFields({ buttonLabel: null, linkUrl: 'https://jobs.example.test' }), {
+  buttonLabel: '',
+  linkUrl: 'https://jobs.example.test',
+})
 assert.equal(careerPostingLinkButtonVisible(''), false)
 assert.equal(careerPostingLinkButtonVisible('지원하기'), true)
 assert.deepEqual(

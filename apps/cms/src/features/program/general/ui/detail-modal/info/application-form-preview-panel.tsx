@@ -13,10 +13,7 @@ import { buildGeneralApplicationFormPreviewParagraphBodyOptions } from '@/featur
 import { buildInstructorAvailableScheduleSlotsFromProgram } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { resolveGeneralApplicationEditorVariant } from '@/features/program/general/lib/application-tabs'
 import type { GeneralApplicationTabKey } from '@/features/program/general/lib/application-tabs'
-import {
-  applicationAudienceForEditorVariant,
-  programWithApplicationFormRecruitmentScope,
-} from '@/features/program/general/lib/operational-form-bindings'
+import { programForApplicationFormEditor } from '@/features/program/general/lib/operational-form-bindings'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
@@ -44,12 +41,10 @@ export function ApplicationFormPreviewPanel({
     () => resolveGeneralApplicationEditorVariant(program, applicationTab),
     [program, applicationTab]
   )
-  const scopedProgram = useMemo(() => {
-    const audience = applicationAudienceForEditorVariant(variant)
-    return audience != null
-      ? programWithApplicationFormRecruitmentScope(program, audience)
-      : program
-  }, [program, variant])
+  const scopedProgram = useMemo(
+    () => programForApplicationFormEditor(program, variant),
+    [program, variant]
+  )
   const templateName = useMemo(() => resolveGeneralApplicationTemplateName(variant), [variant])
   const templateId = useMemo(
     () => getTemplateIdForParticipantApplicationVariant(variant),

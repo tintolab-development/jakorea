@@ -44,6 +44,11 @@ assert.notEqual(
   receiptPaymentItemLabel({ itemType: 'TRANSPORTATION', itemName: '교통비' }),
   'TRANSPORTATION',
 )
+assert.equal(
+  receiptPaymentItemLabel({ itemType: 'TRANSPORTATION', itemName: 'GASOLINE' }),
+  '교통비',
+)
+assert.equal(receiptPaymentItemLabel({ itemType: 'MEAL', itemName: 'GASOLINE' }), '식사비')
 
 const withNullEvidence = normalizePayableItems([
   { itemType: 'MEAL', itemName: '식사비', evidenceRequired: null },

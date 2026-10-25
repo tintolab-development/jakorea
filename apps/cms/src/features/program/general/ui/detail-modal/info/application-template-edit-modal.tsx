@@ -20,10 +20,7 @@ import {
   resolveGeneralApplicationEditorVariant,
   type GeneralApplicationTabKey,
 } from '@/features/program/general/lib/application-tabs'
-import {
-  applicationAudienceForEditorVariant,
-  programWithApplicationFormRecruitmentScope,
-} from '@/features/program/general/lib/operational-form-bindings'
+import { programForApplicationFormEditor } from '@/features/program/general/lib/operational-form-bindings'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import {
@@ -65,12 +62,10 @@ export function GeneralProgramApplicationTemplateEditModal({
     () => variantOverride ?? resolveGeneralApplicationEditorVariant(program, applicationTab),
     [variantOverride, program, applicationTab]
   )
-  const scopedProgram = useMemo(() => {
-    const audience = applicationAudienceForEditorVariant(variant)
-    return audience != null
-      ? programWithApplicationFormRecruitmentScope(program, audience)
-      : program
-  }, [program, variant])
+  const scopedProgram = useMemo(
+    () => programForApplicationFormEditor(program, variant),
+    [program, variant]
+  )
   const templateName = useMemo(() => resolveGeneralApplicationTemplateName(variant), [variant])
   const definitionId = useMemo(
     () => getTemplateIdForParticipantApplicationVariant(variant),
@@ -116,7 +111,6 @@ export function GeneralProgramApplicationTemplateEditModal({
   }, [open, scopedProgram, variant])
 
   const formSource = useProgramApplicationFormLoadSource(scopedProgram, variant, {
-    ensureScopedBinding: open,
     remoteStrict,
   })
 
@@ -220,7 +214,7 @@ export function GeneralProgramApplicationTemplateEditModal({
       leftContent={
         formSource.unavailableReason != null || vm.remoteDraftLoadError != null ? (
           <div className="form-draft-unavailable" role="alert">
-            원격 신청 양식을 불러올 수 없습니다.
+            {formSource.unavailableReason ?? '원격 신청 양식을 불러올 수 없습니다.'}
           </div>
         ) : vm.isDraftLoading ? (
           <FormDraftLoading />

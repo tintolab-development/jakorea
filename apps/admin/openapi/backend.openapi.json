@@ -13126,6 +13126,24 @@
             "type": "integer",
             "format": "int64"
           },
+          "buttonLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "채용 공고 바로가기 버튼명. 미입력·공백은 null로 저장됩니다.",
+            "maxLength": 15,
+            "minLength": 0
+          },
+          "linkUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "채용 공고 버튼 링크. http/https만 허용. 미입력·공백은 null로 저장됩니다.",
+            "maxLength": 2048,
+            "minLength": 0
+          },
           "version": {
             "type": "integer",
             "format": "int64"
@@ -13195,6 +13213,20 @@
           },
           "attachment": {
             "$ref": "#/components/schemas/AssetResponse"
+          },
+          "buttonLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 15
+          },
+          "linkUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2048
           },
           "updatedAt": {
             "type": "string",
@@ -14608,6 +14640,24 @@
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
+          },
+          "buttonLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "채용 공고 바로가기 버튼명. 미입력·공백은 null로 저장됩니다.",
+            "maxLength": 15,
+            "minLength": 0
+          },
+          "linkUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "채용 공고 버튼 링크. http/https만 허용. 미입력·공백은 null로 저장됩니다.",
+            "maxLength": 2048,
+            "minLength": 0
           }
         },
         "required": [
@@ -16805,6 +16855,20 @@
           },
           "attachment": {
             "$ref": "#/components/schemas/AssetResponse"
+          },
+          "buttonLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 15
+          },
+          "linkUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2048
           },
           "viewCount": {
             "type": "integer",

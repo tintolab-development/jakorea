@@ -1,6 +1,10 @@
 /**
  * 채용공고 하단 연결 버튼 — 기획 15자, 미설정은 빈 문자열.
- * OpenAPI CareerPosting* 스키마에는 아직 키가 없다. 저장 왕복은 BE가 동일 키를 받을 때만 성립한다.
+ *
+ * OpenAPI CareerPostingCreateRequest / UpdateRequest / AdminDetail / PublicDetail
+ * 에 buttonLabel·linkUrl (nullable string)이 있다.
+ * FE 입력은 둘 다 비움 또는 둘 다 입력만 허용한다 (FE_ONLY_VALIDATION).
+ * BE 부분 입력 조회는 빈 문자열로 hydrate 하고 오류를 내지 않는다.
  */
 
 export const CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH = 15
@@ -10,16 +14,18 @@ export type CareerPostingLinkFields = {
   linkUrl: string
 }
 
-export function readOptionalText(value: unknown): string {
-  return typeof value === 'string' ? value : ''
+export type CareerPostingLinkSource = {
+  buttonLabel?: string | null
+  linkUrl?: string | null
 }
 
-export function readCareerPostingLinkFields(row: object | null | undefined): CareerPostingLinkFields {
+export function readCareerPostingLinkFields(
+  row: CareerPostingLinkSource | null | undefined,
+): CareerPostingLinkFields {
   if (!row) return { buttonLabel: '', linkUrl: '' }
-  const record = row as Record<string, unknown>
   return {
-    buttonLabel: readOptionalText(record.buttonLabel).trim(),
-    linkUrl: readOptionalText(record.linkUrl).trim(),
+    buttonLabel: typeof row.buttonLabel === 'string' ? row.buttonLabel.trim() : '',
+    linkUrl: typeof row.linkUrl === 'string' ? row.linkUrl.trim() : '',
   }
 }
 

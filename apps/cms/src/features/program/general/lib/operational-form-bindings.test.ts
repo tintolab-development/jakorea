@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
-import { getOperationalFormSpec, listAllRegistrationCreateFormSpecs, listVisibleOperationalFormSpecs } from './operational-form-bindings'
+import {
+  getOperationalFormSpec,
+  listAllRegistrationCreateFormSpecs,
+  listRecruitmentRowApplicationBindings,
+  listVisibleOperationalFormSpecs,
+  pickOperationalFormBinding,
+} from './operational-form-bindings'
+import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
 import {
   clearRegistrationStepTemplateSelections,
   setRegistrationStepTemplateSelection,
@@ -15,7 +22,14 @@ describe('listAllRegistrationCreateFormSpecs', () => {
     const specs = listAllRegistrationCreateFormSpecs(program)
     expect(specs[0]?.formType).toBe('REGISTRATION')
     expect(specs[0]?.templateCode).toBe('registration-general')
-    expect(specs.every(s => s.formType === 'REGISTRATION' || s.formType === 'RECRUITMENT' || s.formType === 'APPLICATION')).toBe(true)
+    expect(
+      specs.every(
+        s =>
+          s.formType === 'REGISTRATION' ||
+          s.formType === 'RECRUITMENT' ||
+          s.formType === 'APPLICATION'
+      )
+    ).toBe(true)
   })
 
   it('uses registration-economy for COMPANY_SCHOOL', () => {
@@ -72,7 +86,9 @@ describe('listAllRegistrationCreateFormSpecs', () => {
       generalParticipantTypes: ['school_institution'],
     } as Program
     const specs = listVisibleOperationalFormSpecs(program)
-    const schoolRecruit = specs.find(spec => spec.targetRole === 'ORGANIZATION' && spec.formType === 'RECRUITMENT')
+    const schoolRecruit = specs.find(
+      spec => spec.targetRole === 'ORGANIZATION' && spec.formType === 'RECRUITMENT'
+    )
     expect(schoolRecruit?.templateCode).toBe('recruitment-instructor')
   })
 
@@ -87,5 +103,74 @@ describe('listAllRegistrationCreateFormSpecs', () => {
     const spec = getOperationalFormSpec('recruitment-participant-school-custom-01')
     expect(spec?.formType).toBe('RECRUITMENT')
     expect(spec?.templateCode).toBe('recruitment-participant-school-custom-01')
+  })
+
+  it('targetType가 ORGANIZATION인 TEACHER role 바인딩을 강사 바인딩으로 오인하지 않는다', () => {
+    const bindings: ProgramFormBindingResponse[] = [
+      {
+        bindingId: 189454,
+        formType: 'APPLICATION',
+        targetType: 'ORGANIZATION',
+        targetRole: 'TEACHER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 101,
+        templateVersionId: 1,
+      },
+      {
+        bindingId: 189455,
+        formType: 'APPLICATION',
+        targetType: 'TEACHER',
+        targetRole: 'TEACHER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 102,
+        templateVersionId: 2,
+      },
+      {
+        bindingId: 189456,
+        formType: 'APPLICATION',
+        targetType: 'VOLUNTEER',
+        targetRole: 'VOLUNTEER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 103,
+        templateVersionId: 3,
+      },
+    ]
+    const program = { backendProgramType: 'GENERAL' } as Program
+
+    expect(
+      listRecruitmentRowApplicationBindings(program, bindings, {
+        formType: 'APPLICATION',
+        targetRole: 'ORGANIZATION',
+      }).map(binding => binding.bindingId)
+    ).toEqual([189454])
+    expect(
+      listRecruitmentRowApplicationBindings(program, bindings, {
+        formType: 'APPLICATION',
+        targetRole: 'INSTRUCTOR',
+      }).map(binding => binding.bindingId)
+    ).toEqual([189455])
+    expect(
+      listRecruitmentRowApplicationBindings(program, bindings, {
+        formType: 'APPLICATION',
+        targetRole: 'VOLUNTEER',
+      }).map(binding => binding.bindingId)
+    ).toEqual([189456])
+  })
+
+  it('서로 다른 스펙에 이미 선택된 bindingId를 다시 선택하면 실패한다', () => {
+    const binding: ProgramFormBindingResponse = {
+      bindingId: 189454,
+      formType: 'APPLICATION',
+      targetType: 'ORGANIZATION',
+      targetRole: 'ORGANIZATION',
+      templateName: '기관 신청',
+    }
+    expect(() =>
+      pickOperationalFormBinding(
+        [binding],
+        { formType: 'APPLICATION', targetRole: 'ORGANIZATION', nameHints: ['기관 신청'] },
+        { claimedBindingIds: new Set([189454]) }
+      )
+    ).toThrow('같은 운영 바인딩')
   })
 })

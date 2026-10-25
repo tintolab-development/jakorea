@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
 import {
+  programForApplicationFormEditor,
   programWithApplicationFormRecruitmentScope,
   recruitmentApplicationBindingScope,
   resolveRowApplicationBinding,
@@ -57,7 +58,19 @@ describe('recruitment application binding scope', () => {
         program({ backendProgramType: 'COMPANY_SCHOOL' }),
         'APPLICATION'
       )
-    ).toBeUndefined()
+    ).toEqual({
+      targetScope: 'RECRUITMENT',
+      targetScopeId: 168241,
+    })
+    expect(
+      recruitmentApplicationBindingScope(
+        program({ backendProgramType: 'TRAINED_TEACHER' }),
+        'APPLICATION'
+      )
+    ).toEqual({
+      targetScope: 'RECRUITMENT',
+      targetScopeId: 168241,
+    })
   })
 
   it('applicationFormBindingId가 null이면 프로그램 바인딩을 고르지 않는다', () => {
@@ -125,5 +138,45 @@ describe('recruitment application binding scope', () => {
       targetScope: 'RECRUITMENT',
       targetScopeId: 186080,
     })
+  })
+
+  it('1사1교 역할 탭은 기관·강사 모집 행을 각각 지정한다', () => {
+    const unscoped = program({
+      backendProgramType: 'COMPANY_SCHOOL',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+      activeRecruitmentId: undefined,
+      programRecruitments: [
+        {
+          id: 41,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          applicationFormBindingId: 410,
+        },
+        { id: 42, recruitmentType: 'INSTRUCTOR', applicationFormBindingId: 420 },
+      ],
+    })
+    expect(
+      programForApplicationFormEditor(unscoped, 'economy-application-institution')
+        .activeRecruitmentId
+    ).toBe(41)
+    expect(programForApplicationFormEditor(unscoped, 'instructor').activeRecruitmentId).toBe(42)
+  })
+
+  it('편집 variant로 모집 행 범위를 맞춘다', () => {
+    const unscoped = program({
+      activeRecruitmentId: undefined,
+      generalParticipantTypes: ['school_institution'],
+      programRecruitments: [
+        { id: 168241, recruitmentType: 'PARTICIPANT', applicationType: 'ORGANIZATION' },
+        { id: 186080, recruitmentType: 'INSTRUCTOR' },
+      ],
+    })
+    expect(recruitmentApplicationBindingScope(unscoped, 'APPLICATION')).toBeUndefined()
+    expect(programForApplicationFormEditor(unscoped, 'institution').activeRecruitmentId).toBe(
+      168241
+    )
+    expect(programForApplicationFormEditor(unscoped, 'instructor').activeRecruitmentId).toBe(
+      186080
+    )
   })
 })

@@ -13,8 +13,7 @@ import { getTemplateIdForParticipantApplicationVariant } from '@/features/templa
 
 /**
  * 신청 양식 로드 소스.
- * - 기본(미리보기): form-bindings GET + resolve만 — PATCH/PUT 없음.
- * - `ensureScopedBinding: true`(양식 수정 모달): catalog → program-scoped 승격 시도.
+ * form-bindings GET + resolve만 수행한다. COPY/publish/form-binding POST는 저장 경로에서만 한다.
  */
 export function useProgramApplicationFormLoadSource(
   program: Program,

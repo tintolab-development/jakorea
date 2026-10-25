@@ -39,6 +39,7 @@ type ApplyTarget = {
   program: Program
   versionId: number
   recruitmentId?: number
+  bindingId?: number
 }
 
 type FormApplyServerError = {
@@ -48,8 +49,9 @@ type FormApplyServerError = {
 
 function parseFormApplyError(error: unknown): FormApplyServerError {
   if (error && typeof error === 'object') {
-    const data = (error as { response?: { data?: { error?: { code?: string; message?: string } } } })
-      .response?.data?.error
+    const data = (
+      error as { response?: { data?: { error?: { code?: string; message?: string } } } }
+    ).response?.data?.error
     const code = data?.code?.trim() || undefined
     const message = data?.message?.trim()
     if (message) return { message, code }
@@ -57,6 +59,10 @@ function parseFormApplyError(error: unknown): FormApplyServerError {
   }
   if (error instanceof Error && error.message.trim()) return { message: error.message }
   return { message: '양식 적용에 실패했습니다.' }
+}
+
+function errorMessage(error: unknown): string {
+  return parseFormApplyError(error).message
 }
 
 function recruitmentAudienceLabel(templateCode: string): string {
@@ -109,7 +115,8 @@ async function resolveApplyTargets(
   item: RegistrationFormApplyItem,
   claimedBindingIds: ReadonlySet<number>
 ): Promise<ApplyTarget[]> {
-  const spec = getOperationalFormSpec(item.templateCode) ?? getRegistrationFormSpec(item.templateCode)
+  const spec =
+    getOperationalFormSpec(item.templateCode) ?? getRegistrationFormSpec(item.templateCode)
   if (spec == null) throw new Error(`양식 스펙을 찾을 수 없습니다: ${item.templateCode}`)
 
   // GENERAL·UJAT 신청 양식: BE fan-out으로 모집 행마다 바인딩이 있다 → 행마다 적용한다.
@@ -120,22 +127,43 @@ async function resolveApplyTargets(
       program: programWithRecruitmentRow(program, row),
       versionId: row.templateVersionId as number,
       recruitmentId: row.targetScopeId as number,
+      bindingId: row.bindingId,
     }))
-  if (rowTargets.length > 0) return rowTargets
+  if (rowTargets.length > 0) {
+    const duplicate = rowTargets.find(
+      target => target.bindingId != null && claimedBindingIds.has(Number(target.bindingId))
+    )
+    if (duplicate?.bindingId != null) {
+      throw new Error(
+        `서로 다른 양식 스펙에 같은 운영 바인딩을 선택할 수 없습니다: ${String(duplicate.bindingId)}`
+      )
+    }
+    return rowTargets
+  }
 
   const catalog = await resolveFormTemplateCatalogIds(item.templateCode).catch(() => null)
-  const picked = pickOperationalFormBinding(bindings, {
-    ...spec,
-    catalogTemplateId: catalog?.templateId,
-  })
-  // 앞선 양식이 이미 차지한 바인딩(예: 1사1교 기관 모집이 쓴 TEACHER 바인딩)은 강사 양식의 원본으로 쓰지 않는다.
+  const isApplicationSpec = spec.formType === 'APPLICATION'
+  const picked = pickOperationalFormBinding(
+    bindings,
+    {
+      ...spec,
+      catalogTemplateId: catalog?.templateId,
+    },
+    isApplicationSpec ? { claimedBindingIds } : undefined
+  )
+  // 신청 양식은 서로 다른 스펙이 같은 bindingId를 고르면 fail-closed한다.
+  // 모집 양식은 기존 1사1교 fallback(사용 중인 바인딩을 제외하고 카탈로그 COPY)을 유지한다.
   const existing =
-    picked?.bindingId != null && claimedBindingIds.has(Number(picked.bindingId)) ? undefined : picked
+    isApplicationSpec ||
+    picked?.bindingId == null ||
+    !claimedBindingIds.has(Number(picked.bindingId))
+      ? picked
+      : undefined
   const versionId = existing?.templateVersionId ?? catalog?.templateVersionId
   if (versionId == null) {
     throw new Error(`적용할 기본 양식 버전을 찾을 수 없습니다: ${item.templateCode}`)
   }
-  return [{ program, versionId }]
+  return [{ program, versionId, bindingId: existing?.bindingId }]
 }
 
 async function applyOne(
@@ -153,7 +181,9 @@ async function applyOne(
   const ownerProgramId = Number(target.program.id)
   if (!Number.isSafeInteger(ownerProgramId) || ownerProgramId <= 0) {
     // fail-closed: 프로그램 소유 COPY를 보장할 수 없으면 공용 버전에 쓰지 않는다.
-    throw new Error(`프로그램 ID가 올바르지 않아 양식을 적용할 수 없습니다: ${String(target.program.id)}`)
+    throw new Error(
+      `프로그램 ID가 올바르지 않아 양식을 적용할 수 없습니다: ${String(target.program.id)}`
+    )
   }
   const saved = await saveProgramScopedOperationalFormVersion({
     program: target.program,
@@ -212,7 +242,10 @@ export async function applyRegistrationFormsAfterCreate(args: {
     for (const target of targets) {
       try {
         await applyOne(target, item, claimedBindingIds)
-        result.applied.push({ templateCode: item.templateCode, recruitmentId: target.recruitmentId })
+        result.applied.push({
+          templateCode: item.templateCode,
+          recruitmentId: target.recruitmentId,
+        })
       } catch (error) {
         const parsed = parseFormApplyError(error)
         result.failed.push({

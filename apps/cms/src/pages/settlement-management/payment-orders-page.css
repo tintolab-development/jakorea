@@ -12,14 +12,6 @@
   overflow: visible;
 }
 
-.payment-orders-page__source-tabs {
-  margin-bottom: 8px;
-}
-
-.payment-orders-page__individual .table-header-actions {
-  margin-bottom: 16px;
-}
-
 .payment-orders-page__content-wrapper {
   background: var(--color-bg-base);
   flex: 0 1 auto;

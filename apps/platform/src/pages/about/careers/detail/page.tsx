@@ -79,7 +79,7 @@ export function CareerPostingDetailPage() {
     fileName: file.name,
     href: file.fileUrl,
   }))
-  const showLinkButton = detail.buttonLabel.length > 0
+  const showLinkButton = detail.buttonLabel.length > 0 && detail.linkUrl.length > 0
   const showRecruitPeriod =
     showLinkButton && detail.status === 'recruiting' && Boolean(detail.recruitPeriodLabel)
 

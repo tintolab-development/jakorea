@@ -162,6 +162,67 @@ describe('applyRegistrationFormsAfterCreate', () => {
     expect(call.program.activeRecruitmentId).toBe(701)
   })
 
+  it('기관·강사·봉사자 신청은 각 모집 targetScopeId의 바인딩을 한 번씩 적용한다', async () => {
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      {
+        bindingId: 189454,
+        formType: 'APPLICATION',
+        targetType: 'ORGANIZATION',
+        targetRole: 'TEACHER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 301,
+        templateVersionId: 31,
+        active: true,
+      },
+      {
+        bindingId: 189455,
+        formType: 'APPLICATION',
+        targetType: 'TEACHER',
+        targetRole: 'TEACHER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 302,
+        templateVersionId: 32,
+        active: true,
+      },
+      {
+        bindingId: 189456,
+        formType: 'APPLICATION',
+        targetType: 'VOLUNTEER',
+        targetRole: 'VOLUNTEER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 303,
+        templateVersionId: 33,
+        active: true,
+      },
+    ])
+    saveProgramScopedOperationalFormVersion
+      .mockResolvedValueOnce({ templateId: 9, templateVersionId: 91, bindingId: 189454 })
+      .mockResolvedValueOnce({ templateId: 9, templateVersionId: 92, bindingId: 189455 })
+      .mockResolvedValueOnce({ templateId: 9, templateVersionId: 93, bindingId: 189456 })
+
+    const result = await applyRegistrationFormsAfterCreate({
+      program: { id: '186391', backendProgramType: 'GENERAL' } as Program,
+      forms: [
+        { templateCode: 'application-participant-school', formType: 'APPLICATION', draft },
+        { templateCode: 'application-instructor', formType: 'APPLICATION', draft },
+        { templateCode: 'application-volunteer', formType: 'APPLICATION', draft },
+      ],
+    })
+
+    expect(result.failed).toEqual([])
+    expect(result.applied).toEqual([
+      { templateCode: 'application-participant-school', recruitmentId: 301 },
+      { templateCode: 'application-instructor', recruitmentId: 302 },
+      { templateCode: 'application-volunteer', recruitmentId: 303 },
+    ])
+    expect(saveProgramScopedOperationalFormVersion).toHaveBeenCalledTimes(3)
+    expect(saveProgramScopedOperationalFormVersion.mock.calls.map(call => call[0].versionId)).toEqual([
+      31,
+      32,
+      33,
+    ])
+  })
+
   it('draft가 null이면 바인딩 버전 본문(baseline)을 쓴다', async () => {
     fetchGeneralProgramFormBindings.mockResolvedValue([
       { bindingId: 2, formType: 'RECRUITMENT', targetRole: 'INDIVIDUAL', templateId: 5, templateVersionId: 52, active: true },

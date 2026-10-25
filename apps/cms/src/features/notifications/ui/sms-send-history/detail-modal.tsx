@@ -5,6 +5,7 @@ import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { downloadSmsSendHistoryAttachment } from '@/features/notifications/model/sms-send-history/download-attachment'
 import type { SmsSendHistoryRow } from '@/features/notifications/model/sms-send-history/types'
 import { NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT } from '@/features/notifications/model/shared/send-ux-copy'
+import { formatSmsMessageTypeLabel } from '@/features/notifications/api/adapters/sms-channel'
 import './detail-modal.css'
 
 type DetailModalProps = {
@@ -113,7 +114,10 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field label="발송 상태" view={sendStatusView(row)} />
-              <DetailInfoForm.Field label="발송 유형" view={row.messageType} />
+              <DetailInfoForm.Field
+                label="발송 유형"
+                view={formatSmsMessageTypeLabel(row.messageType)}
+              />
             </DetailInfoForm.Row>
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field label="템플릿명" fullRow view={templateName} />
