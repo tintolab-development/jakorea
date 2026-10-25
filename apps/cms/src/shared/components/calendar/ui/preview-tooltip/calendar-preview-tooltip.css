@@ -69,10 +69,16 @@
 }
 
 .calendar-cell-tooltip-trigger--full-cell .calendar-event-title {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start !important;
+  flex: 1 1 0;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-cell-tooltip-trigger--full-cell .calendar-event-title--with-divider {
+  display: flex;
+  align-items: center;
 }
 
 .calendar-cell-tooltip-trigger--full-cell .calendar-event-more {
@@ -109,8 +115,11 @@
 }
 
 .calendar-week-cell-tooltip-trigger--full-cell .calendar-event-title {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .calendar-week-cell-tooltip-trigger--full-cell .calendar-event-more {

@@ -185,21 +185,20 @@
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  font-family: var(--font-family-primary, Pretendard, sans-serif);
+  height: 25px;
 }
 
 .calendar-event-title {
-  flex: 1 0 0;
+  flex: 1 1 0;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--Neutral-black, #3d3d3d);
+  font-family: Pretendard;
   font-size: 13px;
   font-weight: 500;
   line-height: 130%; /* 16.9px */
-  color: var(--Netural-black, #3d3d3d);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
 }
 
 .calendar-event-title--with-divider {
