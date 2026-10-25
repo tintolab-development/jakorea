@@ -10,7 +10,10 @@ export function hasDuplicateCategoryName(
 ): boolean {
   const t = candidate.trim()
   if (t === '') return false
-  return rows.some(r => r.id !== excludeId && r.name.trim() === t)
+  const normalized = t.toLowerCase()
+  return rows.some(
+    r => r.id !== excludeId && r.name.trim().toLowerCase() === normalized
+  )
 }
 
 export function createNoticeCategoryId(): string {

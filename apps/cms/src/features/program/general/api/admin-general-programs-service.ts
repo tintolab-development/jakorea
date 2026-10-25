@@ -6,7 +6,6 @@ import {
   type GeneralProgramUpdateSerializeOptions,
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import {
-  clientFilterGeneralPrograms,
   GENERAL_PROGRAM_LIST_PAGE_SIZE,
   generalProgramListParamsFromFilters,
   type GeneralProgramListTableFilters,
@@ -102,11 +101,10 @@ export async function fetchGeneralProgramsRemoteListPage(
   const query = generalProgramListParamsFromFilters(statusFilter, tableFilters, pageParam)
   const page = await fetchAdminProgramsRemote(query)
 
-  const programs = clientFilterGeneralPrograms(
-    (page.items ?? []).map(mapAdminProgramListItemToProgram),
-    tableFilters
-  )
-  // periodStatus는 서버 필터 — trained-teachers/1사1교와 같이 클라이언트 overview 재필터 스킵
+  // 원격 목록의 필터 결과와 totalElements를 서버 응답의 정본으로 사용한다.
+  // 현재 페이지를 다시 클라이언트 필터링하면 무한 스크롤 이전 행만 남아
+  // 목록·건수·페이지네이션이 서로 달라질 수 있다.
+  const programs = (page.items ?? []).map(mapAdminProgramListItemToProgram)
   const size = page.size ?? GENERAL_PROGRAM_LIST_PAGE_SIZE
   const currentPage = page.page ?? pageParam
   const totalElements = page.totalElements ?? programs.length

@@ -798,15 +798,14 @@ function mapPortalScheduleDetails(
     const scheduleDateHasTime = Boolean(
       scheduleDateLabel && parseScheduleDisplayLabel(scheduleDateLabel).timeRange
     )
-    const combined =
-      isMultiSessionRound(sessionRound)
-        ? scheduleDateHasTime
-          ? scheduleDateLabel
-          : [scheduleDateLabel, timeSummary]
-              .filter((part): part is string => Boolean(part))
-              .join(' ')
-        : (timeSummary ?? scheduleDateLabel ?? '')
-    const dateLabel = combined ? normalizeScheduleDisplayLabel(combined) : ''
+    // A date-only schedule still needs its canonical date and its group/time
+    // summary. Only a date label that already contains a time is authoritative
+    // for the time portion, for both single- and multi-round schedules.
+    const dateLabel = (scheduleDateHasTime ? [scheduleDateLabel] : [scheduleDateLabel, timeSummary])
+      .filter((part): part is string => Boolean(part))
+      .map(part => normalizeScheduleDisplayLabel(part))
+      .filter(Boolean)
+      .join(' ')
     const educationFormLabel = rows.showEducationForm
       ? optionalText(detail.educationFormLabel)
       : undefined
@@ -1218,6 +1217,12 @@ export function mapPortalProgramDetail(
       : eventSchedules.map(item => item.dateLabel).filter(label => label !== '-')
   ).map(line => normalizeScheduleDisplayLabel(line))
   const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
+  const geminiTrainingRequestStart = toDate(remote.trainingRequestStartDate ?? undefined)
+  const geminiTrainingRequestEnd = toDate(remote.trainingRequestEndDate ?? undefined)
+  const geminiTrainingRequestPeriodLabel =
+    detailCase === 'gemini' && (geminiTrainingRequestStart || geminiTrainingRequestEnd)
+      ? formatCompactRange(geminiTrainingRequestStart, geminiTrainingRequestEnd)
+      : ''
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
   const programDescription = visibleCopy(
@@ -1269,6 +1274,9 @@ export function mapPortalProgramDetail(
     applicationEndDate: appEnd ? formatYmd(appEnd) : null,
     recruitmentPeriodLabel,
     applicationPeriodLabel: recruitmentPeriodLabel,
+    ...(geminiTrainingRequestPeriodLabel
+      ? { geminiTrainingRequestPeriodLabel }
+      : {}),
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetKeys: targets.keys,
@@ -1337,7 +1345,8 @@ export function mapPortalProgramDetail(
     ),
     sessions,
     eventSchedules,
-    recruitmentPhaseGroupLabel: '모집 및 선별 기간',
+    recruitmentPhaseGroupLabel:
+      detailCase === 'gemini' ? '신청 및 연수 기간' : '모집 및 선별 기간',
     recruitmentPhases: mapRecruitmentPhases(
       selected?.ambiguous
         ? undefined

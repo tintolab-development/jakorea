@@ -93,10 +93,12 @@ export const platformQueryKeys = {
     /** 공개 목록 — GET /api/portal/programs (Class C, CMS 8080) */
     list: (params: {
       keyword: string
-      portalTab: string
-      recruitmentStatus: string
-      educationTargets: string
-      educationMethod: string
+      portalTab: readonly string[]
+      programType: readonly string[]
+      recruitmentStatus: readonly string[]
+      recruitmentTarget: readonly string[]
+      educationTarget: readonly string[]
+      educationMethod: readonly string[]
       operatingFrom: string
       operatingTo: string
       sort: string
@@ -108,8 +110,10 @@ export const platformQueryKeys = {
         'list',
         params.keyword,
         params.portalTab,
+        params.programType,
         params.recruitmentStatus,
-        params.educationTargets,
+        params.recruitmentTarget,
+        params.educationTarget,
         params.educationMethod,
         params.operatingFrom,
         params.operatingTo,

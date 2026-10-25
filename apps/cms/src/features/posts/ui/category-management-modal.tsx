@@ -170,7 +170,9 @@ export function CategoryManagementModal({
         size="h40"
         className="cms-button--footer-auto"
         type="button"
-        onClick={ctrl.applySettings}
+        onClick={() => void ctrl.applySettings()}
+        loading={ctrl.isSaving}
+        disabled={ctrl.isSaving}
       >
         저장
       </CmsButton>
@@ -197,7 +199,7 @@ export function CategoryManagementModal({
               tableLayout="fixed"
               pagination={false}
               columns={columns}
-              dataSource={categories}
+              dataSource={ctrl.draftCategories}
               locale={{ emptyText: '등록된 카테고리가 없습니다.' }}
               summary={
                 ctrl.composeOpen
@@ -268,6 +270,14 @@ export function CategoryManagementModal({
         title="카테고리 설정 완료"
         body="카테고리 설정이 완료되었습니다."
         onClose={ctrl.closeSettingsComplete}
+        zIndex={CATEGORY_SUB_MODAL_Z}
+      />
+
+      <ActionResultModal
+        open={ctrl.saveErrorMessage != null}
+        title="카테고리 저장 안내"
+        body={ctrl.saveErrorMessage ?? ''}
+        onClose={ctrl.closeSaveError}
         zIndex={CATEGORY_SUB_MODAL_Z}
       />
 

@@ -16,6 +16,8 @@ import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/p
 export type AdminProgramsListQuery = {
   keyword?: string
   programType?: string
+  /** 일반 프로그램 참여자 유형 — `school` | `individual` | `instructor` | `volunteer` */
+  participantType?: string
   periodStatus?: string
   businessYear?: number
   /** 교육 대상 — `elementary` \| `middle` \| `high` \| `university` \| `adult` */
@@ -27,6 +29,8 @@ export type AdminProgramsListQuery = {
   progressPhase?: string
   /** `progressPhase` 별칭. 둘 다 있으면 BE는 progressPhase 우선 */
   lifecycleStatus?: string
+  /** UJAT 전용 canonical 진행 현황 */
+  ujatProgressStatus?: string
   /** 예정 탭 사업 운영 기간 overlap (YYYY-MM-DD) */
   operationStartDate?: string
   operationEndDate?: string
@@ -63,6 +67,8 @@ export interface AdminProgramListItemDto {
   lifecycleStatus?: string
   /** 참여자 모집 창 (`scheduled`|`recruiting`|`closed`) — `periodStatus`와 독립 */
   recruitmentStatus?: string
+  /** UJAT 프로그램 진행 현황 canonical 값 */
+  ujatProgressStatus?: string
   businessYear?: number
   businessStartDate?: string
   businessEndDate?: string
