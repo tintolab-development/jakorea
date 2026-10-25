@@ -61,10 +61,6 @@ function parseFormApplyError(error: unknown): FormApplyServerError {
   return { message: '양식 적용에 실패했습니다.' }
 }
 
-function errorMessage(error: unknown): string {
-  return parseFormApplyError(error).message
-}
-
 function recruitmentAudienceLabel(templateCode: string): string {
   const spec = getOperationalFormSpec(templateCode) ?? getRegistrationFormSpec(templateCode)
   if (spec?.targetRole === 'INSTRUCTOR') return '강사'
