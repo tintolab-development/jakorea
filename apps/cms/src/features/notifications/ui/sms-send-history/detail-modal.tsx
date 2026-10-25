@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { downloadSmsSendHistoryAttachment } from '@/features/notifications/model/sms-send-history/download-attachment'
@@ -91,8 +92,13 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
       }
     >
       {loading && !row ? (
-        <div className="sms-send-history-detail-modal__loading" aria-busy="true">
-          불러오는 중…
+        <div
+          className="sms-send-history-detail-modal__loading"
+          role="status"
+          aria-label="로딩 중"
+          aria-busy="true"
+        >
+          <Spin size="large" />
         </div>
       ) : row ? (
         <div className="sms-send-history-detail-modal__content">

@@ -43,23 +43,33 @@ export type AlimtalkSendValidationResult =
       fingerprint: string
     }
 
+function recipientFingerprint(recipient: AlimtalkSendRecipient) {
+  return {
+    id: recipient.id,
+    actorType: recipient.actorType ?? '',
+    actorId: recipient.actorId ?? null,
+    phone: recipient.phone,
+    variables: recipient.variables ?? {},
+  }
+}
+
 function sendFingerprint(
   input: AlimtalkSendValidationInput,
-  validRecipients: AlimtalkSendRecipient[]
+  validRecipients: AlimtalkSendRecipient[],
+  excludedIds: string[]
 ): string {
   return JSON.stringify({
     templateId: input.templateId ?? '',
+    approvalStatus: input.approvalStatus ?? '',
     senderKey: input.senderKey ?? '',
+    senderProfileId: input.senderProfileId ?? null,
     programId: input.programId ?? '',
     sendTiming: input.sendTiming,
     scheduledAt: input.scheduledAt ?? '',
-    recipients: validRecipients.map(recipient => ({
-      id: recipient.id,
-      actorType: recipient.actorType ?? '',
-      actorId: recipient.actorId ?? null,
-      phone: recipient.phone,
-      variables: recipient.variables ?? {},
-    })),
+    placeholderKeys: [...input.placeholderKeys].map(key => key.trim()).filter(Boolean).sort(),
+    recipients: input.recipients.map(recipientFingerprint),
+    validIds: validRecipients.map(recipient => recipient.id),
+    excludedIds,
   })
 }
 
@@ -109,6 +119,9 @@ export function validateAlimtalkSendRequest(
       return { ok: false, title: '필수 입력 안내', alert: '수신자를 설정하세요.' }
     }
     const dropped = input.recipients.length - uniqueValid.length
+    const excludedIds = input.recipients
+      .filter(recipient => !uniqueValid.some(item => item.id === recipient.id))
+      .map(recipient => recipient.id)
     return {
       ok: true,
       validRecipients: uniqueValid,
@@ -116,7 +129,7 @@ export function validateAlimtalkSendRequest(
         dropped > 0
           ? `같은 휴대폰 번호로 이미 포함된 수신자 ${dropped}명은 이번 발송에서 제외됩니다.\n제외하고 발송할까요?`
           : ALIMTALK_SEND_CONFIRM_MESSAGE,
-      fingerprint: sendFingerprint(input, uniqueValid),
+      fingerprint: sendFingerprint(input, uniqueValid, excludedIds),
     }
   }
 
@@ -168,6 +181,16 @@ export function validateAlimtalkSendRequest(
     ok: true,
     validRecipients: uniqueValid,
     confirmMessage,
-    fingerprint: sendFingerprint(input, uniqueValid),
+    fingerprint: sendFingerprint(
+      input,
+      uniqueValid,
+      partitioned.gaps
+        .map(gap => gap.id)
+        .concat(
+          partitioned.valid
+            .filter(recipient => !uniqueValid.some(item => item.id === recipient.id))
+            .map(recipient => recipient.id)
+        )
+    ),
   }
 }

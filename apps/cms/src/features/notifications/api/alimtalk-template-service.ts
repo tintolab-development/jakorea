@@ -186,6 +186,9 @@ export async function deleteAlimtalkTemplate(
   return mapOrThrowMutationTree(result)
 }
 
+export const ALIMTALK_NO_APPROVED_TEMPLATE_MESSAGE =
+  '카카오 승인이 확인된 알림톡 템플릿이 없습니다. 템플릿 승인 상태를 동기화한 뒤 다시 불러오세요.'
+
 /**
  * 승인 상태가 APPROVED인 템플릿만 발송 후보로 남긴다.
  * null·UNKNOWN은 승인 완료로 보지 않는다.

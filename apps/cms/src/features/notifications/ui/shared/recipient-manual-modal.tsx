@@ -104,10 +104,7 @@ export function RecipientManualModal({
     }
     const nextId = identityKey(contact, nextContact)
     const duplicate = rows.some(
-      row =>
-        row.key !== key &&
-        row.mode === 'saved' &&
-        identityKey(contact, row.contact) === nextId
+      row => row.key !== key && row.mode === 'saved' && identityKey(contact, row.contact) === nextId
     )
     if (duplicate) {
       showAlert({ title: '안내', content: '이미 추가된 수신자입니다.' })
@@ -222,7 +219,7 @@ export function RecipientManualModal({
         record.mode === 'input' ? (
           contact === 'phone' ? (
             <CmsPhoneInput
-              inputSize="large"
+              inputSize="small"
               width="100%"
               allowClear={false}
               placeholder={CONTACT_PLACEHOLDER}
@@ -232,7 +229,7 @@ export function RecipientManualModal({
             />
           ) : (
             <CmsInput
-              inputSize="large"
+              inputSize="small"
               width="100%"
               allowClear={false}
               placeholder={CONTACT_PLACEHOLDER}
@@ -333,13 +330,13 @@ export function RecipientManualModal({
       zIndex={zIndex}
       footer={
         <>
-          <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
+          <CmsButton variant="cancel" size="h40" type="button" onClick={onClose}>
             닫기
           </CmsButton>
-          <CmsButton variant="secondary" size="large" type="button" onClick={handleAdd}>
+          <CmsButton variant="secondary" size="h40" type="button" onClick={handleAdd}>
             수신자 추가
           </CmsButton>
-          <CmsButton variant="primary" size="large" type="button" onClick={handleConfirm}>
+          <CmsButton variant="primary" size="h40" type="button" onClick={handleConfirm}>
             수신자 설정
           </CmsButton>
         </>

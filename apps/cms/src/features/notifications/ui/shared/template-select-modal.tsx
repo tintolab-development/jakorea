@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
+import { CMS_TABLE_EMPTY_COPY } from '@/shared/ui/cms-table-empty-copy'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import './template-select-modal.css'
 
@@ -54,6 +55,7 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
   const { showAlert } = useCmsAlert()
   const [keyword, setKeyword] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
+  const [hasSearched, setHasSearched] = useState(false)
   const [page, setPage] = useState(1)
 
   const filtered = useMemo(
@@ -71,6 +73,7 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
 
   const handleSearch = () => {
     setAppliedKeyword(keyword.trim())
+    setHasSearched(true)
     setPage(1)
   }
 
@@ -156,11 +159,7 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
       className="send-template-select-modal"
       titleBodyGap="always"
       zIndex={zIndex}
-      footer={
-        <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
-          닫기
-        </CmsButton>
-      }
+      footer={null}
     >
       <div className="send-template-select-modal__body">
         <div className="send-template-select-modal__search">
@@ -181,7 +180,7 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
           </CmsButton>
         </div>
 
-        {hasResults ? (
+        {hasSearched && hasResults ? (
           <>
             <div className="send-template-select-modal__table-section">
               <p className="send-template-select-modal__count">총 {filtered.length}건</p>
@@ -203,11 +202,17 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
               />
             </div>
           </>
-        ) : (
+        ) : null}
+        {hasSearched && !hasResults ? (
           <div className="send-template-select-modal__empty" role="status">
-            {'검색 결과가 없습니다.\n검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.'}
+            <p className="send-template-select-modal__empty-title">
+              {CMS_TABLE_EMPTY_COPY['no-search'].title}
+            </p>
+            <p className="send-template-select-modal__empty-description">
+              {CMS_TABLE_EMPTY_COPY['no-search'].description}
+            </p>
           </div>
-        )}
+        ) : null}
       </div>
     </ContentModal>
   )

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
+import { CMS_TABLE_EMPTY_COPY } from '@/shared/ui/cms-table-empty-copy'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   listMailSendProgramPickerRows,
@@ -31,10 +32,11 @@ export function ProgramSelectModal({
   onClearProgram,
   zIndex,
 }: ProgramSelectModalProps) {
-  const [year, setYear] = useState<number | ''>('')
+  const [year, setYear] = useState<number | '' | undefined>(undefined)
   const [keyword, setKeyword] = useState('')
   const [appliedYear, setAppliedYear] = useState<number | ''>('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
+  const [hasSearched, setHasSearched] = useState(false)
   const [page, setPage] = useState(1)
 
   const yearOptions = useMemo(
@@ -56,9 +58,22 @@ export function ProgramSelectModal({
   const hasResults = filtered.length > 0
 
   const handleSearch = () => {
-    setAppliedYear(year)
+    setAppliedYear(year === undefined ? '' : year)
     setAppliedKeyword(keyword.trim())
+    setHasSearched(true)
     setPage(1)
+  }
+
+  const handleYearChange = (value: string | number | null | undefined) => {
+    if (value == null) {
+      setYear(undefined)
+      return
+    }
+    if (value === '') {
+      setYear('')
+      return
+    }
+    setYear(Number(value))
   }
 
   const columns: ColumnsType<MailSendProgram> = [
@@ -110,13 +125,7 @@ export function ProgramSelectModal({
             inputSize="large"
             placeholder="년도"
             value={year}
-            onChange={value => {
-              if (value === '' || value == null) {
-                setYear('')
-                return
-              }
-              setYear(Number(value))
-            }}
+            onChange={handleYearChange}
             options={yearOptions}
             style={{ width: 140 }}
           />
@@ -126,7 +135,7 @@ export function ProgramSelectModal({
               value={keyword}
               onChange={event => setKeyword(event.target.value)}
               onPressEnter={handleSearch}
-              placeholder="프로그램명을 입력하세요"
+              placeholder="프로그램명을 입력해 주세요"
               inputSize="large"
               width="100%"
               allowClear
@@ -137,7 +146,7 @@ export function ProgramSelectModal({
           </CmsButton>
         </div>
 
-        {hasResults ? (
+        {hasSearched && hasResults ? (
           <>
             <div className="mail-send-program-select-modal__table-section">
               <p className="mail-send-program-select-modal__count">총 {filtered.length}건</p>
@@ -165,11 +174,17 @@ export function ProgramSelectModal({
               />
             </div>
           </>
-        ) : (
+        ) : null}
+        {hasSearched && !hasResults ? (
           <div className="mail-send-program-select-modal__empty" role="status">
-            {'검색 결과가 없습니다.\n검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.'}
+            <p className="mail-send-program-select-modal__empty-title">
+              {CMS_TABLE_EMPTY_COPY['no-search'].title}
+            </p>
+            <p className="mail-send-program-select-modal__empty-description">
+              {CMS_TABLE_EMPTY_COPY['no-search'].description}
+            </p>
           </div>
-        )}
+        ) : null}
       </div>
     </ContentModal>
   )

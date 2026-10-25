@@ -722,6 +722,7 @@ export function MailTemplateList() {
         bordered={false}
         filterResponsiveWrap={false}
         hideExcelDownload
+        contentLoading={Boolean(treeLoading && !treeError)}
         fields={MAIL_TEMPLATE_FILTER_FIELDS}
         filters={{
           categoryName: pendingFilters.categoryName,
@@ -788,10 +789,6 @@ export function MailTemplateList() {
             >
               다시 시도
             </CmsButton>
-          </div>
-        ) : treeLoading ? (
-          <div className="mail-template-tree-status" aria-busy="true">
-            불러오는 중…
           </div>
         ) : (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>

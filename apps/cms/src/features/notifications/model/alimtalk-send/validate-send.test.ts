@@ -36,16 +36,28 @@ function input(overrides: Partial<AlimtalkSendValidationInput> = {}): AlimtalkSe
 
 describe('validateAlimtalkSendRequest', () => {
   it('AT-06 값이 있는 수신자만 발송 후보가 되고 누락 수신자는 목록에 남는다', () => {
-    const recipients = [recipient('1', { '방문 안내': '오전' }), recipient('2')]
+    const recipients = [
+      ...Array.from({ length: 8 }, (_, index) =>
+        recipient(String(index + 1), { '방문 안내': `값${index + 1}` })
+      ),
+      recipient('9'),
+      recipient('10', { '방문 안내': '  ' }),
+    ]
     const result = validateAlimtalkSendRequest(input({ recipients }))
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.validRecipients.map(item => item.id)).toEqual(['1'])
-    expect(result.confirmMessage).toContain('2')
+    expect(result.validRecipients).toHaveLength(8)
+    expect(result.validRecipients.map(item => item.id)).toEqual(
+      Array.from({ length: 8 }, (_, index) => String(index + 1))
+    )
+    expect(result.confirmMessage).toContain('변수 조건이 맞지 않는 수신자 2명은 이번 발송에서 제외됩니다.')
+    expect(result.confirmMessage).toContain('조건을 충족한 수신자 8명만 발송합니다.')
     expect(result.confirmMessage).toContain('방문 안내')
     expect(result.confirmMessage).toContain('제외하고 발송할까요?')
-    expect(recipients).toHaveLength(2)
-    expect(recipients[1]?.variables).toBeUndefined()
+    expect(JSON.parse(result.fingerprint).excludedIds).toEqual(['9', '10'])
+    expect(recipients).toHaveLength(10)
+    expect(recipients[8]?.variables).toBeUndefined()
+    expect(recipients[9]?.variables).toEqual({ '방문 안내': '  ' })
   })
 
   it('AT-07 유효 수신자가 없으면 발송 확인으로 넘어가지 않는다', () => {
@@ -70,9 +82,40 @@ describe('validateAlimtalkSendRequest', () => {
       input({ recipients: [recipient('1', { '방문 안내': '오후' })] })
     )
     const emptied = validateAlimtalkSendRequest(input({ recipients: [recipient('1')] }))
-    expect(first.ok && changed.ok).toBe(true)
-    if (!first.ok || !changed.ok) return
+    const profileChanged = validateAlimtalkSendRequest(input({ senderProfileId: 99 }))
+    const excludedRemoved = validateAlimtalkSendRequest(
+      input({
+        recipients: [
+          recipient('1', { '방문 안내': '오전' }),
+          recipient('2'),
+        ],
+      })
+    )
+    const excludedKept = validateAlimtalkSendRequest(
+      input({
+        recipients: [
+          recipient('1', { '방문 안내': '오전' }),
+          recipient('2'),
+        ],
+      })
+    )
+    expect(first.ok && changed.ok && profileChanged.ok && excludedRemoved.ok && excludedKept.ok).toBe(
+      true
+    )
+    if (
+      !first.ok ||
+      !changed.ok ||
+      !profileChanged.ok ||
+      !excludedRemoved.ok ||
+      !excludedKept.ok
+    ) {
+      return
+    }
     expect(first.fingerprint).not.toBe(changed.fingerprint)
+    expect(first.fingerprint).not.toBe(profileChanged.fingerprint)
+    expect(JSON.parse(excludedRemoved.fingerprint).excludedIds).toEqual(['2'])
+    expect(excludedRemoved.fingerprint).toBe(excludedKept.fingerprint)
+    expect(first.fingerprint).not.toBe(excludedRemoved.fingerprint)
     expect(emptied.ok).toBe(false)
   })
 
@@ -97,5 +140,26 @@ describe('validateAlimtalkSendRequest', () => {
   it('수신자가 없으면 발송하지 않는다', () => {
     const result = validateAlimtalkSendRequest(input({ recipients: [], placeholderKeys: [] }))
     expect(result.ok).toBe(false)
+  })
+
+  it('제외 대상의 입력값이 바뀌면 이전 확인 지문으로 발송할 수 없다', () => {
+    const withGap = [
+      recipient('1', { '방문 안내': '오전' }),
+      recipient('2', { '방문 안내': '' }),
+    ]
+    const first = validateAlimtalkSendRequest(input({ recipients: withGap }))
+    const filled = validateAlimtalkSendRequest(
+      input({
+        recipients: [
+          recipient('1', { '방문 안내': '오전' }),
+          recipient('2', { '방문 안내': '오후' }),
+        ],
+      })
+    )
+    expect(first.ok && filled.ok).toBe(true)
+    if (!first.ok || !filled.ok) return
+    expect(first.validRecipients).toHaveLength(1)
+    expect(filled.validRecipients).toHaveLength(2)
+    expect(first.fingerprint).not.toBe(filled.fingerprint)
   })
 })

@@ -31,6 +31,7 @@ import {
 } from '@/features/notifications/model/alimtalk-send/recipients'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
+import { ALIMTALK_NO_APPROVED_TEMPLATE_MESSAGE } from '@/features/notifications/api/alimtalk-template-service'
 import { PreviewModal } from '@/features/notifications/ui/alimtalk-template/preview-modal'
 import {
   classifyAlimtalkPlaceholderKey,
@@ -610,6 +611,16 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
               <p className="alimtalk-send-fullpage-modal__notice-text">
                 * 템플릿은 카카오 승인을 받은 템플릿만 사용이 가능합니다.
               </p>
+              {remote && templatesQuery.isSuccess && pickerTemplates.length === 0 ? (
+                <p className="alimtalk-send-fullpage-modal__notice-text">
+                  * {ALIMTALK_NO_APPROVED_TEMPLATE_MESSAGE}
+                </p>
+              ) : null}
+              {remote && templatesQuery.isError ? (
+                <p className="alimtalk-send-fullpage-modal__notice-text">
+                  * 승인 템플릿 목록을 불러오지 못했습니다. 다시 시도해 주세요.
+                </p>
+              ) : null}
               <div className="alimtalk-send-fullpage-modal__notice-actions">
                 <CmsButton
                   variant="cancel"

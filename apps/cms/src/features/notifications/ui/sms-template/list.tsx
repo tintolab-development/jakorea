@@ -720,6 +720,7 @@ export function SmsTemplateList() {
         bordered={false}
         filterResponsiveWrap={false}
         hideExcelDownload
+        contentLoading={Boolean(treeLoading && !treeError)}
         fields={SMS_TEMPLATE_FILTER_FIELDS}
         filters={{
           categoryName: pendingFilters.categoryName,
@@ -786,10 +787,6 @@ export function SmsTemplateList() {
             >
               다시 시도
             </CmsButton>
-          </div>
-        ) : treeLoading ? (
-          <div className="sms-template-tree-status" aria-busy="true">
-            불러오는 중…
           </div>
         ) : (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
