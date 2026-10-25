@@ -6,8 +6,9 @@ export type UjatRegionCapacityRegionValues = Partial<
   Record<UjatRegionCapacityField, string>
 >
 
-export type UjatRegionCapacitySemesterValues = Partial<
-  Record<UjatRegionCapacityRegionName, UjatRegionCapacityRegionValues>
+export type UjatRegionCapacitySemesterValues = Record<
+  UjatRegionCapacityRegionName,
+  UjatRegionCapacityRegionValues
 >
 
 export type UjatRegionCapacityBySemesterState = {

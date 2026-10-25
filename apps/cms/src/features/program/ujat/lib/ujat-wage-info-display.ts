@@ -71,13 +71,8 @@ function readPaymentItemIdsFromOverlay(overlay: Record<string, unknown>): string
 
 export function resolveUjatPaymentItemIdsFromProgram(
   program: Program,
-  overlayInput?: Record<string, unknown>
+  _overlayInput?: Record<string, unknown>
 ): string[] {
-  const overlay = overlayInput ?? program.ujatRegistrationOverlay
-  const fromOverlay = overlay ? readPaymentItemIdsFromOverlay(overlay) : undefined
-  // 사용자가 []로 비운 값은 유지. 키 미기록(undefined)은 GET 지급항목만 쓰고 mock id로 채우지 않는다.
-  if (fromOverlay !== undefined) return fromOverlay
-
   const labels = coerceProgramPaymentItemsText(program.generalCommonInfo?.paymentItems).trim()
   if (!labels) return []
 
@@ -85,14 +80,12 @@ export function resolveUjatPaymentItemIdsFromProgram(
   if (fromLabels.length > 0) return fromLabels
 
   const options = getUjatWagePaymentItemOptions()
-  const resolved = labels
+  return labels
     .split(',')
     .map((s: string) => s.trim())
     .filter(Boolean)
     .map((label: string) => options.find(o => o.label === label)?.value)
     .filter((v: string | undefined): v is string => Boolean(v))
-
-  return resolved
 }
 
 export function resolveUjatWageInfoDisplay(
