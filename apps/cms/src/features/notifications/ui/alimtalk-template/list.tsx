@@ -61,8 +61,6 @@ import { PreviewModal } from './preview-modal'
 import '@/pages/programs/program-list-page.css'
 import './list.css'
 
-const AUTO_SYNC_SESSION_KEY = 'cms.alimtalk.nhnAutoSyncAttempted'
-
 type SyncBannerKind =
   | 'need-sync'
   | 'local-mode'
@@ -155,7 +153,6 @@ export function AlimtalkTemplateList({
   const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
   const templates = remote ? (treeQuery.data?.templates ?? []) : localTemplates
   const isTreeEmpty = remote && categories.length === 0 && templates.length === 0
-  const isSyncing = mutations.syncCatalog.isPending
   const isMutating =
     mutations.createCategory.isPending ||
     mutations.updateCategory.isPending ||
@@ -214,7 +211,7 @@ export function AlimtalkTemplateList({
         }
 
         setSyncBanner(null)
-        if (source === 'manual' || outcome.upsertedCount > 0) {
+        if (source === 'manual') {
           showAlert({
             title: '안내',
             content: alimtalkSyncSuccessMessage(outcome),
@@ -238,33 +235,10 @@ export function AlimtalkTemplateList({
   runNhnSyncRef.current = runNhnSync
 
   useEffect(() => {
-    if (!remote || !treeSettled || !isTreeEmpty) return
-    if (autoSyncStartedRef.current) return
-    if (syncBanner === 'local-mode' || syncBanner === 'synced-empty') return
-
-    const alreadyAttempted =
-      typeof sessionStorage !== 'undefined' && sessionStorage.getItem(AUTO_SYNC_SESSION_KEY) === '1'
-
-    if (alreadyAttempted) {
-      setSyncBanner(prev =>
-        prev === 'local-mode' ||
-        prev === 'error' ||
-        prev === 'provider-unavailable' ||
-        prev === 'synced-empty'
-          ? prev
-          : 'need-sync'
-      )
-      return
-    }
-
+    if (!remote || autoSyncStartedRef.current) return
     autoSyncStartedRef.current = true
-    try {
-      sessionStorage.setItem(AUTO_SYNC_SESSION_KEY, '1')
-    } catch {
-      // ignore
-    }
     void runNhnSyncRef.current('auto')
-  }, [isTreeEmpty, remote, syncBanner, treeSettled])
+  }, [remote])
 
   useEffect(() => {
     if (!remote || !treeSettled) return
@@ -627,7 +601,7 @@ export function AlimtalkTemplateList({
   )
 
   const editCategoryId = categoryIdForEdit(selection, templates, categories)
-  const busy = isSyncing || isMutating
+  const busy = isMutating
 
   return (
     <div className="program-list-page">
@@ -645,16 +619,6 @@ export function AlimtalkTemplateList({
         title="알림톡 템플릿"
         actions={
           <>
-            {remote ? (
-              <FilterTableToolbarButton
-                variant="secondary"
-                type="button"
-                disabled={busy}
-                onClick={() => void runNhnSync('manual')}
-              >
-                {isSyncing ? '동기화 중…' : '동기화'}
-              </FilterTableToolbarButton>
-            ) : null}
             <FilterTableToolbarButton
               variant="delete"
               type="button"

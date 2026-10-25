@@ -13,6 +13,10 @@ import {
 import { insertMailVariableInText } from '@/features/notifications/model/mail-template/insert-variable'
 import { mergeSmsSendRecipients } from '@/features/notifications/model/sms-send/recipients'
 import {
+  rejectSmsMmsAttachments,
+  smsMmsAttachmentRejectMessage,
+} from '@/features/notifications/model/sms-template/attachments'
+import {
   SMS_SEND_DEFAULT_PROGRAM_ID,
   type SmsSendDraft,
   type SmsSendRecipient,
@@ -38,6 +42,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
   const bodyTextRef = useRef('')
   const messageTypeRef = useRef<SmsMessageType>('SMS')
   const attachmentFileNamesRef = useRef<string[]>([])
+  const newFilesRef = useRef<File[]>([])
 
   useEffect(() => {
     messageTypeRef.current = messageType
@@ -60,6 +65,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     messageTypeRef.current = 'SMS'
     setAttachmentFileNames([])
     attachmentFileNamesRef.current = []
+    newFilesRef.current = []
     setSendTiming('immediate')
     setScheduledAt(null)
     setRecipients([])
@@ -93,6 +99,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     messageTypeRef.current = template.messageType
     setAttachmentFileNames([...template.attachmentFileNames])
     attachmentFileNamesRef.current = [...template.attachmentFileNames]
+    newFilesRef.current = []
     subjectRef.current = template.subject
     bodyTextRef.current = template.bodyText
     setComposeSeed({ subject: template.subject, bodyText: template.bodyText })
@@ -112,6 +119,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     messageTypeRef.current = 'SMS'
     setAttachmentFileNames([])
     attachmentFileNamesRef.current = []
+    newFilesRef.current = []
     subjectRef.current = ''
     bodyTextRef.current = ''
     setComposeSeed({ subject: '', bodyText: '' })
@@ -119,8 +127,47 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setComposeVersion(version => version + 1)
   }, [])
 
+  const addAttachments = useCallback(async (files: File[]) => {
+    if (messageTypeRef.current !== 'MMS') {
+      return {
+        ok: false as const,
+        message: '첨부파일은 MMS 유형에서만 추가할 수 있습니다.',
+      }
+    }
+    const result = await rejectSmsMmsAttachments({
+      incoming: files,
+      currentCount: attachmentFileNamesRef.current.length,
+      currentTotalBytes: newFilesRef.current.reduce((sum, file) => sum + file.size, 0),
+    })
+    if (result.reason) {
+      return { ok: false as const, message: smsMmsAttachmentRejectMessage(result.reason) }
+    }
+    if (result.accepted.length === 0) return { ok: true as const }
+    newFilesRef.current = [...newFilesRef.current, ...result.accepted]
+    setAttachmentFileNames(prev => {
+      const next = [...prev, ...result.accepted.map(file => file.name)]
+      attachmentFileNamesRef.current = next
+      const issues = collectSmsComposeFieldIssues({
+        messageType: messageTypeRef.current,
+        subject: subjectRef.current,
+        bodyText: bodyTextRef.current,
+        attachmentCount: next.length,
+      })
+      setComposeBlocking(smsComposeBlocksSend(issues))
+      return next
+    })
+    return { ok: true as const }
+  }, [])
+
   const removeAttachmentAt = useCallback((index: number) => {
     setAttachmentFileNames(prev => {
+      const name = prev[index]
+      if (name) {
+        const fileIndex = newFilesRef.current.findIndex(file => file.name === name)
+        if (fileIndex >= 0) {
+          newFilesRef.current = newFilesRef.current.filter((_, i) => i !== fileIndex)
+        }
+      }
       const next = prev.filter((_, fileIndex) => fileIndex !== index)
       attachmentFileNamesRef.current = next
       const issues = collectSmsComposeFieldIssues({
@@ -182,7 +229,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
 
   const bodyByteLimit = smsBodyByteLimit(messageType)
   const showSubject = messageType !== 'SMS' || subjectRef.current.trim().length > 0
-  const showAttachments = attachmentFileNames.length > 0
+  const showAttachments = messageType === 'MMS' || attachmentFileNames.length > 0
 
   const readComposeSnapshot = useCallback(
     () => ({
@@ -261,6 +308,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     applyMessageType,
     applyTemplate,
     clearTemplate,
+    addAttachments,
     removeAttachmentAt,
     setComposeBlocking,
     addRecipients,

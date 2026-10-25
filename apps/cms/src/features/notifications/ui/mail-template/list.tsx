@@ -147,11 +147,11 @@ export function MailTemplateList() {
   const [formBodyError, setFormBodyError] = useState<string | null>(null)
   const didInitExpandRef = useRef(!remote)
   const syncInFlightRef = useRef(false)
+  const autoSyncStartedRef = useRef(false)
   const syncCatalogMutateAsync = mutations.syncCatalog.mutateAsync
 
   const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
   const templates = remote ? (treeQuery.data?.templates ?? []) : localTemplates
-  const isSyncing = mutations.syncCatalog.isPending
   const isMutating =
     mutations.createCategory.isPending ||
     mutations.updateCategory.isPending ||
@@ -161,7 +161,7 @@ export function MailTemplateList() {
     mutations.moveTemplate.isPending ||
     mutations.createTemplate.isPending ||
     mutations.updateTemplate.isPending
-  const busy = isSyncing || isMutating
+  const busy = isMutating
   const treeLoading = remote && !treeQuery.data && (treeQuery.isLoading || treeQuery.isFetching)
   const treeError = remote && treeQuery.isError && !treeQuery.data
 
@@ -175,17 +175,19 @@ export function MailTemplateList() {
     setSearchParams(prev => applyMailFiltersToSearchParams(prev, cleared), { replace: true })
   }, [setSearchParams])
 
-  const runMailSync = useCallback(async () => {
+  const runMailSync = useCallback(async (source: 'auto' | 'manual' = 'manual') => {
     // isPending만으로는 리렌더 전 동시 클릭을 막지 못함 → sync 과호출 방지
     if (!remote || syncInFlightRef.current) return
     syncInFlightRef.current = true
     try {
       // tree는 mutation onSuccess invalidate로만 갱신 (refetch 중복 금지)
       const result = await syncCatalogMutateAsync()
-      showAlert({
-        title: '안내',
-        content: mailSyncSuccessMessage(result.templates),
-      })
+      if (source === 'manual' || result.templates.isLocalApprovalMark) {
+        showAlert({
+          title: '안내',
+          content: mailSyncSuccessMessage(result.templates),
+        })
+      }
     } catch (error) {
       showAlert({
         title: '연동 실패',
@@ -198,6 +200,12 @@ export function MailTemplateList() {
       syncInFlightRef.current = false
     }
   }, [remote, showAlert, syncCatalogMutateAsync])
+
+  useEffect(() => {
+    if (!remote || autoSyncStartedRef.current) return
+    autoSyncStartedRef.current = true
+    void runMailSync('auto')
+  }, [remote, runMailSync])
 
   const offerSyncOnError = useCallback(
     (title: string, error: unknown, fallback: string) => {
@@ -724,16 +732,6 @@ export function MailTemplateList() {
         title="메일 템플릿"
         actions={
           <>
-            {remote ? (
-              <FilterTableToolbarButton
-                variant="secondary"
-                type="button"
-                disabled={busy}
-                onClick={() => void runMailSync()}
-              >
-                {isSyncing ? '동기화 중…' : '동기화'}
-              </FilterTableToolbarButton>
-            ) : null}
             <FilterTableToolbarButton
               variant="delete"
               type="button"

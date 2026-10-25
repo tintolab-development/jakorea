@@ -25,38 +25,48 @@ const member: AlimtalkSendRecipient = {
   actorId: 9,
 }
 
+const enabledVisit = [
+  { key: '방문 안내', enabled: true, requiresProgram: false },
+]
+
 describe('classifyAlimtalkPlaceholderKey', () => {
-  it('SYSTEM 키는 회원은 서버, 직접 입력은 발송 불가다', () => {
+  it('AT-01 프로그램 미선택 회원은 일반 활성 변수를 수기 입력한다', () => {
     expect(
       classifyAlimtalkPlaceholderKey({
-        key: '휴면 전환일시',
-        catalog: [],
+        key: '방문 안내',
+        catalog: enabledVisit,
         recipient: member,
         programSelected: false,
       })
-    ).toBe('server')
-    expect(
-      classifyAlimtalkPlaceholderKey({
-        key: '휴면 전환일시',
-        catalog: [],
-        recipient: direct,
-        programSelected: false,
-      })
-    ).toBe('blocked')
+    ).toBe('manual')
   })
 
-  it('카탈로그에 없는 키는 직접 입력이다', () => {
+  it('AT-02 프로그램 미선택 직접 입력도 일반 변수를 수기 입력한다', () => {
     expect(
       classifyAlimtalkPlaceholderKey({
-        key: '안내문',
-        catalog: [],
+        key: '방문 안내',
+        catalog: enabledVisit,
         recipient: direct,
         programSelected: false,
       })
     ).toBe('manual')
   })
 
-  it('requiresProgram 키는 프로그램이 없으면 프로그램 선택이 필요하다', () => {
+  it('AT-03 프로그램 미선택의 requiresProgram 일반 변수는 수기 입력이다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '교육 진행 수업 시간',
+        catalog: [
+          {
+            key: '교육 진행 수업 시간',
+            requiresProgram: true,
+            enabled: false,
+          },
+        ],
+        recipient: member,
+        programSelected: false,
+      })
+    ).toBe('manual')
     expect(
       classifyAlimtalkPlaceholderKey({
         key: '교육 진행 수업 시간',
@@ -70,7 +80,86 @@ describe('classifyAlimtalkPlaceholderKey', () => {
         recipient: direct,
         programSelected: false,
       })
-    ).toBe('needs-program')
+    ).toBe('manual')
+  })
+
+  it('AT-04 프로그램 미선택의 서버 예약 변수는 수기 전송 대상이 아니다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '프로그램명',
+        catalog: [{ key: '프로그램명', enabled: true, requiresProgram: true }],
+        recipient: member,
+        programSelected: false,
+      })
+    ).toBe('blocked')
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '휴면 전환일시',
+        catalog: [],
+        recipient: member,
+        programSelected: false,
+      })
+    ).toBe('blocked')
+    expect(
+      pickAlimtalkRecipientSendVariables({
+        recipient: {
+          ...member,
+          variables: { 프로그램명: '임의', '휴면 전환일시': '2026-01-01' },
+        },
+        keys: ['프로그램명', '휴면 전환일시'],
+        catalog: [{ key: '프로그램명', enabled: true, requiresProgram: true }],
+        programSelected: false,
+      })
+    ).toBeUndefined()
+  })
+
+  it('AT-05 프로그램 선택의 허용 변수는 회원 자동 매칭을 유지한다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '방문 안내',
+        catalog: enabledVisit,
+        recipient: member,
+        programSelected: true,
+      })
+    ).toBe('server')
+    expect(
+      pickAlimtalkRecipientSendVariables({
+        recipient: { ...member, variables: { '방문 안내': '덮어쓰면 안 됨' } },
+        keys: ['방문 안내'],
+        catalog: enabledVisit,
+        programSelected: true,
+      })
+    ).toBeUndefined()
+  })
+
+  it('카탈로그에 없는 키는 직접 입력이다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '안내문',
+        catalog: [],
+        recipient: direct,
+        programSelected: false,
+      })
+    ).toBe('manual')
+  })
+
+  it('회원 신원 키는 프로그램 없이도 서버 치환이고 payload에 넣지 않는다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '회원명',
+        catalog: [{ key: '회원명', enabled: true }],
+        recipient: member,
+        programSelected: false,
+      })
+    ).toBe('server')
+    expect(
+      pickAlimtalkRecipientSendVariables({
+        recipient: { ...member, variables: { 회원명: '홍길동' } },
+        keys: ['회원명'],
+        catalog: [{ key: '회원명', enabled: true }],
+        programSelected: false,
+      })
+    ).toBeUndefined()
   })
 })
 
@@ -97,5 +186,16 @@ describe('collectAlimtalkRecipientVariableGaps', () => {
       programSelected: false,
     })
     expect(sent).toEqual({ 안내문: '오후' })
+  })
+
+  it('AT-15 현재 템플릿에 없는 이전 변수값은 payload에 실리지 않는다', () => {
+    const sent = pickAlimtalkRecipientSendVariables({
+      recipient: { ...direct, variables: { 안내문: '오전', '다른 안내': '유지' } },
+      keys: ['다른 안내'],
+      catalog: [],
+      programSelected: false,
+    })
+    expect(sent).toEqual({ '다른 안내': '유지' })
+    expect(direct.variables).toBeUndefined()
   })
 })

@@ -1,40 +1,60 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { CmsSelect } from '@/shared/ui'
 import { FieldSearchIcon } from '@/shared/ui/icons'
-import { PreviewModal } from '@/features/notifications/ui/alimtalk-template/preview-modal'
-import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
-import { TemplateSelectModal } from './template-select-modal'
+import {
+  TemplateSelectModal,
+  type SendTemplatePickerItem,
+  type TemplateSelectModalProps,
+} from './template-select-modal'
 import './template-select-modal.css'
 
 const PICKER_Z_INDEX = 1100
 const PREVIEW_Z_INDEX = 1200
 
-type TemplateSelectFieldProps = {
-  value?: string
-  templates: AlimtalkTemplateItem[]
-  disabled?: boolean
-  onSelect: (template: AlimtalkTemplateItem) => void
-  isTemplateUsable?: (template: AlimtalkTemplateItem) => boolean
-  getTemplateUnusableMessage?: (template: AlimtalkTemplateItem) => string | null
+export type TemplateSelectFieldPreviewArgs<T extends SendTemplatePickerItem> = {
+  template: T | null
+  open: boolean
+  onClose: () => void
+  onUse: (template: T) => void
+  zIndex: number
 }
 
-export function TemplateSelectField({
+export type TemplateSelectFieldProps<T extends SendTemplatePickerItem> = {
+  value?: string
+  templates?: T[]
+  disabled?: boolean
+  onSelect: (template: T) => void
+  isTemplateUsable?: (template: T) => boolean
+  getTemplateUnusableMessage?: (template: T) => string | null
+  isUseEnabled?: (template: T) => boolean
+  onBeforeUse?: (template: T) => boolean
+  useButtonLabel?: string
+  extraColumns?: TemplateSelectModalProps<T>['extraColumns']
+  renderPreview: (args: TemplateSelectFieldPreviewArgs<T>) => ReactNode
+}
+
+export function TemplateSelectField<T extends SendTemplatePickerItem>({
   value,
-  templates,
+  templates = [],
   disabled,
   onSelect,
   isTemplateUsable,
   getTemplateUnusableMessage,
-}: TemplateSelectFieldProps) {
+  isUseEnabled,
+  onBeforeUse,
+  useButtonLabel,
+  extraColumns,
+  renderPreview,
+}: TemplateSelectFieldProps<T>) {
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [previewTemplate, setPreviewTemplate] = useState<AlimtalkTemplateItem | null>(null)
+  const [previewTemplate, setPreviewTemplate] = useState<T | null>(null)
 
   const selectedTemplate = templates.find(template => template.id === value)
   const selectOptions = selectedTemplate
     ? [{ label: selectedTemplate.name, value: selectedTemplate.id }]
     : []
 
-  const handleUse = (template: AlimtalkTemplateItem) => {
+  const handleUse = (template: T) => {
     onSelect(template)
     setPreviewTemplate(null)
     setPickerOpen(false)
@@ -48,7 +68,7 @@ export function TemplateSelectField({
   return (
     <>
       <span
-        className="template-select-field__trigger"
+        className="send-template-select-field__trigger"
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled || undefined}
@@ -94,16 +114,20 @@ export function TemplateSelectField({
           onUse={handleUse}
           isTemplateUsable={isTemplateUsable}
           getTemplateUnusableMessage={getTemplateUnusableMessage}
+          isUseEnabled={isUseEnabled}
+          onBeforeUse={onBeforeUse}
+          useButtonLabel={useButtonLabel}
+          extraColumns={extraColumns}
           zIndex={PICKER_Z_INDEX}
         />
       ) : null}
-      <PreviewModal
-        open={previewTemplate != null}
-        template={previewTemplate}
-        onClose={() => setPreviewTemplate(null)}
-        onUse={handleUse}
-        zIndex={PREVIEW_Z_INDEX}
-      />
+      {renderPreview({
+        template: previewTemplate,
+        open: previewTemplate != null,
+        onClose: () => setPreviewTemplate(null),
+        onUse: handleUse,
+        zIndex: PREVIEW_Z_INDEX,
+      })}
     </>
   )
 }

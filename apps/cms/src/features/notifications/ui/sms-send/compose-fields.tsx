@@ -1,8 +1,8 @@
 import { memo, useDeferredValue, useEffect, useMemo, useState, type MutableRefObject } from 'react'
 import type { SmsMessageType } from '@/features/notifications/api/adapters/sms-channel'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput, CmsTextArea } from '@/shared/ui'
-import { FileAttachmentRow } from '@/shared/ui/file-attachment-row'
+import { CmsInput, CmsTextArea, FileSelectField, useCmsAlert } from '@/shared/ui'
+import { SMS_MMS_ATTACHMENT_GUIDE_LINES } from '@/features/notifications/model/sms-template/attachments'
 import {
   collectSmsComposeFieldIssues,
   estimateSmsSendBodyBytes,
@@ -27,6 +27,7 @@ type SmsSendComposeFieldsProps = {
   onRememberSubjectRange?: (el: HTMLInputElement | null) => void
   onRememberBodyRange?: (el: HTMLTextAreaElement | null) => void
   onRemoveAttachment?: (index: number) => void
+  onAddAttachments?: (files: File[]) => Promise<{ ok: boolean; message?: string }>
   onBlockingChange?: (blocking: boolean) => void
 }
 
@@ -46,8 +47,10 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   onRememberSubjectRange,
   onRememberBodyRange,
   onRemoveAttachment,
+  onAddAttachments,
   onBlockingChange,
 }: SmsSendComposeFieldsProps) {
+  const { showAlert } = useCmsAlert()
   const [subject, setSubject] = useState(initialSubject)
   const [bodyText, setBodyText] = useState(initialBodyText)
 
@@ -61,14 +64,8 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   const deferredBody = useDeferredValue(bodyText)
   const deferredSubject = useDeferredValue(subject)
   const bodyByteLimit = smsBodyByteLimit(messageType)
-  const bodyByteLength = useMemo(
-    () => estimateSmsSendBodyBytes(deferredBody),
-    [deferredBody]
-  )
-  const subjectByteLength = useMemo(
-    () => estimateSmsTextBytes(deferredSubject),
-    [deferredSubject]
-  )
+  const bodyByteLength = useMemo(() => estimateSmsSendBodyBytes(deferredBody), [deferredBody])
+  const subjectByteLength = useMemo(() => estimateSmsTextBytes(deferredSubject), [deferredSubject])
 
   const issues = useMemo(
     () =>
@@ -91,7 +88,8 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   }
 
   const showSubject = messageType !== 'SMS' || subject.trim().length > 0
-  const showAttachments = attachmentFileNames.length > 0
+  const showAttachments = messageType === 'MMS' || attachmentFileNames.length > 0
+  const attachmentsEnabled = messageType === 'MMS'
   const subjectRequired = messageType !== 'SMS'
 
   return (
@@ -137,17 +135,18 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
                   />
                 </SmsVariableTextField>
                 <div className="sms-send-fullpage__byte-row">
-                  {messageType !== 'SMS' ? (
-                    <span
-                      className={
-                        subjectByteLength > SMS_SUBJECT_BYTE_LIMIT
-                          ? 'sms-send-fullpage__byte-count sms-send-fullpage__byte-count--danger'
-                          : 'sms-send-fullpage__byte-count'
-                      }
-                    >
-                      {subjectByteLength}/{SMS_SUBJECT_BYTE_LIMIT} byte
-                    </span>
-                  ) : null}
+                  <span
+                    className={
+                      subjectByteLength > SMS_SUBJECT_BYTE_LIMIT
+                        ? 'sms-send-fullpage__byte-count sms-send-fullpage__byte-count--danger'
+                        : 'sms-send-fullpage__byte-count'
+                    }
+                  >
+                    {subjectByteLength}
+                  </span>
+                  <span className="sms-send-fullpage__byte-label">
+                    / {SMS_SUBJECT_BYTE_LIMIT}byte
+                  </span>
                 </div>
               </div>
             }
@@ -178,15 +177,20 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
                 />
               </SmsVariableTextField>
               <div className="sms-send-fullpage__byte-row">
-                <span>SMS는 90byte, LMS/MMS는 2,000byte까지 작성할 수 있습니다.</span>
-                <span
-                  className={
-                    bodyByteLength > bodyByteLimit
-                      ? 'sms-send-fullpage__byte-count sms-send-fullpage__byte-count--danger'
-                      : 'sms-send-fullpage__byte-count'
-                  }
-                >
-                  {bodyByteLength}/{bodyByteLimit} byte
+                <span className="sms-send-fullpage__byte-label">문자내용</span>
+                <span className="sms-send-fullpage__byte-meter">
+                  <span
+                    className={
+                      bodyByteLength > bodyByteLimit
+                        ? 'sms-send-fullpage__byte-count sms-send-fullpage__byte-count--danger'
+                        : 'sms-send-fullpage__byte-count'
+                    }
+                  >
+                    {bodyByteLength}
+                  </span>
+                  <span className="sms-send-fullpage__byte-label">
+                    / {bodyByteLimit}byte
+                  </span>
                 </span>
               </div>
             </div>
@@ -207,16 +211,22 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
                     : 'sms-send-fullpage__attachments'
                 }
               >
-                <div className="file-attachment-list">
-                  {attachmentFileNames.map((name, index) => (
-                    <FileAttachmentRow
-                      key={`${index}-${name}`}
-                      fileName={name}
-                      removeLabel={`${name} 삭제`}
-                      onRemove={() => onRemoveAttachment?.(index)}
-                    />
-                  ))}
-                </div>
+                <FileSelectField
+                  multiple
+                  accept=".jpg,.jpeg"
+                  disabled={!attachmentsEnabled}
+                  fileNames={attachmentFileNames}
+                  guideLines={[...SMS_MMS_ATTACHMENT_GUIDE_LINES]}
+                  onFilesChange={files => {
+                    void (async () => {
+                      const result = await onAddAttachments?.(files)
+                      if (result && !result.ok && result.message) {
+                        showAlert({ title: '안내', content: result.message })
+                      }
+                    })()
+                  }}
+                  onRemoveFile={onRemoveAttachment}
+                />
                 {issues.attachmentError ? (
                   <p className="cms-field__message cms-field__message--error">
                     {issues.attachmentError}

@@ -3,13 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import {
-  AlimtalkPhonePreview,
-  CmsButton,
-  CmsSelect,
-  ConfirmModal,
-  useCmsAlert,
-} from '@/shared/ui'
+import { AlimtalkPhonePreview, CmsButton, CmsSelect, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import {
   ALIMTALK_CHANNEL_ADD_GUIDE,
   ALIMTALK_EMPHASIS_TYPE_LABEL,
@@ -21,21 +15,33 @@ import type {
   AlimtalkSendRecipientSearchParams,
 } from '@/features/notifications/model/alimtalk-send/types'
 import {
-  ALIMTALK_DUPLICATE_PHONE_MESSAGE,
-  countDroppedAlimtalkSendRecipients,
-  createManualRecipient,
-  mergeAlimtalkSendRecipients,
-  resolveAlimtalkSendRecipientTypeMode,
+  ALIMTALK_SEND_MEMBER_TYPE_OPTIONS,
+  ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS,
   alimtalkSendRecipientTypeColumnTitle,
+  alimtalkSendRecipientTypeLabel,
+  createManualRecipient,
+  filterAlimtalkSendRecipients,
+  formatAlimtalkPhoneDuplicateMessage,
+  listAlimtalkPhoneDuplicateNotices,
+  mergeAlimtalkSendRecipients,
+  normalizeAlimtalkSendPhone,
+  resolveAlimtalkSendRecipientTypeMode,
   toAlimtalkSendMemberTypeApi,
   toAlimtalkSendParticipantTypeApi,
 } from '@/features/notifications/model/alimtalk-send/recipients'
+import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
+import { PreviewModal } from '@/features/notifications/ui/alimtalk-template/preview-modal'
 import {
   classifyAlimtalkPlaceholderKey,
-  collectAlimtalkRecipientVariableGaps,
-  formatAlimtalkRecipientVariableGapMessage,
   listAlimtalkManualVariableKeys,
 } from '@/features/notifications/model/alimtalk-send/recipient-variables'
+import {
+  ALIMTALK_SEND_CONFIRM_MESSAGE,
+  ALIMTALK_SEND_STATE_CHANGED_MESSAGE,
+  validateAlimtalkSendRequest,
+  type AlimtalkSendValidationInput,
+} from '@/features/notifications/model/alimtalk-send/validate-send'
 import { collectTemplatePlaceholderKeys } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
 import {
@@ -52,17 +58,14 @@ import {
   buildNotificationTemplateVariablesQuery,
   inferUniqueRecipientTypeValue,
 } from '@/features/notifications/model/shared/template-variables-query'
-import { ALIMTALK_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/alimtalk-send/types'
+import {
+  ALIMTALK_SEND_ALL_PROGRAM_ID,
+  ALIMTALK_SEND_PICKER_PAGE_SIZE,
+} from '@/features/notifications/model/alimtalk-send/types'
 import { categoryPathNames } from '@/features/notifications/lib/tree'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
-import {
-  getNotificationsApiErrorMessage,
-} from '@/features/notifications/api/get-notifications-api-error'
-import {
-  resolveScheduledAtForCreateRequest,
-  validateNotificationScheduledAt,
-} from '@/features/notifications/model/send-scheduled-at'
+import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
+import { resolveScheduledAtForCreateRequest } from '@/features/notifications/model/send-scheduled-at'
 import {
   createAlimtalkSendBatch,
   fetchAllAlimtalkRecipientCandidates,
@@ -85,10 +88,10 @@ import { SendScheduleField } from '@/features/notifications/ui/shared/send-sched
 import { ContentPanel } from './content-panel'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
-import { RecipientManualModal } from './recipient-manual-modal'
-import { RecipientSelectModal } from './recipient-select-modal'
+import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
+import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
+import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
 import { RecipientTable } from './recipient-table'
-import { TemplateSelectField } from './template-select-field'
 import './fullpage-modal.css'
 
 const EMPTY_HINT = '발신 프로필/템플릿을 먼저 선택하세요.'
@@ -122,11 +125,7 @@ function emptyFallbackTemplate(templateId: string | undefined): AlimtalkTemplate
   }
 }
 
-function recipientTotalPages(
-  total: number,
-  size: number,
-  totalPages?: number
-): number {
+function recipientTotalPages(total: number, size: number, totalPages?: number): number {
   if (totalPages != null && totalPages > 0) return totalPages
   return Math.max(Math.ceil((total || 0) / (size || 20)), 1)
 }
@@ -151,8 +150,12 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const [recipientSelectOpen, setRecipientSelectOpen] = useState(false)
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
+  const [sendConfirmMessage, setSendConfirmMessage] = useState(ALIMTALK_SEND_CONFIRM_MESSAGE)
   const [sendRequestCompletedOpen, setSendRequestCompletedOpen] = useState(false)
   const [sending, setSending] = useState(false)
+  const sendingRef = useRef(false)
+  const confirmedFingerprintRef = useRef('')
+  const sendDraftRef = useRef<AlimtalkSendValidationInput | null>(null)
   const [recipientSearch, setRecipientSearch] = useState<AlimtalkSendRecipientSearchParams>({
     typeValue: '',
     keyword: '',
@@ -165,8 +168,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const programs = programsQuery.data ?? []
   /** 미선택(전체회원) · 특정 프로그램 — 템플릿/변수 카탈로그 로드. 비정상 id만 제외. */
   const canLoadProgramScoped =
-    isNotificationSendWithoutProgram(programId) ||
-    parseNotificationSendProgramId(programId) != null
+    isNotificationSendWithoutProgram(programId) || parseNotificationSendProgramId(programId) != null
 
   useEffect(() => {
     if (!open || !remote || !programsQuery.isError) return
@@ -179,9 +181,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     })
   }, [open, programsQuery.error, programsQuery.isError, remote, showAlert])
 
-  const templatesQuery = useAlimtalkSendTemplatePickerQuery(
-    open && remote && canLoadProgramScoped
-  )
+  const templatesQuery = useAlimtalkSendTemplatePickerQuery(open && remote && canLoadProgramScoped)
   const treeQuery = useAlimtalkCategoryTreeQuery(
     new URLSearchParams(),
     open && remote && canLoadProgramScoped
@@ -203,8 +203,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   const programNumericId = parseNotificationSendProgramId(programId)
   const isWithoutProgram = isNotificationSendWithoutProgram(programId)
-  const canPickTemplate =
-    canSelectNotificationSendTemplate(programId) && pickerTemplates.length > 0
+  const canPickTemplate = canSelectNotificationSendTemplate(programId) && pickerTemplates.length > 0
 
   const recipientTypeMode = resolveAlimtalkSendRecipientTypeMode(programId)
   const typeColumnTitle = alimtalkSendRecipientTypeColumnTitle(recipientTypeMode)
@@ -452,6 +451,26 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     [recipients]
   )
 
+  sendDraftRef.current = {
+    senderSelected: Boolean(selectedSender),
+    senderKey: selectedSender?.senderKey,
+    senderProfileId: selectedSender?.profileId,
+    templateId: selectedTemplate?.id,
+    templateName: selectedTemplate?.templateName || selectedTemplate?.name,
+    approvalStatus: selectedTemplate?.approvalStatus ?? pickerTemplate?.approvalStatus ?? null,
+    sendTiming,
+    scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
+    programId,
+    recipients,
+    placeholderKeys,
+    catalog: variablesCatalog ?? null,
+    catalogState: variablesQuery.isError
+      ? 'error'
+      : variablesQuery.isSuccess && variablesCatalog != null
+        ? 'ready'
+        : 'pending',
+  }
+
   const canConfigureRecipients = Boolean(selectedSender && selectedTemplate)
 
   const handleSelectTemplate = (template: AlimtalkTemplateItem) => {
@@ -497,96 +516,51 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }
 
   const handleRequestSend = () => {
-    if (!selectedSender) {
-      showAlert({ title: '필수 입력 안내', content: '발신 프로필을 선택하세요.' })
+    const draft = sendDraftRef.current
+    if (!draft) return
+    const result = validateAlimtalkSendRequest(draft)
+    if (!result.ok) {
+      showAlert({ title: result.title, content: result.alert })
       return
     }
-    if (!selectedTemplate) {
-      showAlert({ title: '필수 입력 안내', content: '템플릿을 선택하세요.' })
-      return
-    }
-    if (!isAlimtalkTemplateApproved(selectedTemplate) && remote) {
-      showAlert({
-        title: '안내',
-        content: '카카오 승인이 완료되지 않은 템플릿은 발송할 수 없습니다.',
-      })
-      return
-    }
-    if (sendTiming === 'scheduled') {
-      const scheduleError = validateNotificationScheduledAt({
-        sendTiming,
-        scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
-      })
-      if (scheduleError) {
-        showAlert({ title: '필수 입력 안내', content: scheduleError })
-        return
-      }
-    }
-    if (recipients.length === 0) {
-      showAlert({ title: '필수 입력 안내', content: '수신자를 설정하세요.' })
-      return
-    }
-    if (remote && placeholderKeys.size > 0) {
-      if (variablesQuery.isError || variablesCatalog == null) {
-        showAlert({
-          title: '안내',
-          content: variablesQuery.isError
-            ? '변수 목록을 불러오지 못했습니다. 다시 시도해 주세요.'
-            : '변수 목록을 확인한 뒤 발송할 수 있습니다.',
-        })
-        return
-      }
-      const gaps = collectAlimtalkRecipientVariableGaps({
-        keys: placeholderKeys,
-        catalog: variablesCatalog,
-        recipients,
-        programSelected,
-      })
-      if (gaps.length > 0) {
-        showAlert({
-          title: '필수 입력 안내',
-          content: formatAlimtalkRecipientVariableGapMessage(gaps),
-        })
-        return
-      }
-    }
-    if (!isWithoutProgram && !programNumericId) {
-      showAlert({
-        title: '필수 입력 안내',
-        content: '대상 프로그램을 선택하세요.',
-      })
-      return
-    }
+    confirmedFingerprintRef.current = result.fingerprint
+    setSendConfirmMessage(result.confirmMessage)
     setSendConfirmOpen(true)
   }
 
   const handleConfirmSend = async () => {
-    if (!selectedTemplate || !selectedSender) return
-    setSendConfirmOpen(false)
-
-    if (!isWithoutProgram && !programNumericId) {
-      showAlert({
-        title: '필수 입력 안내',
-        content: '대상 프로그램을 선택하세요.',
-      })
+    if (sendingRef.current) return
+    const draft = sendDraftRef.current
+    if (!draft?.templateId) return
+    const result = validateAlimtalkSendRequest(draft)
+    if (!result.ok) {
+      setSendConfirmOpen(false)
+      showAlert({ title: result.title, content: result.alert })
+      return
+    }
+    if (result.fingerprint !== confirmedFingerprintRef.current) {
+      setSendConfirmOpen(false)
+      showAlert({ title: '안내', content: ALIMTALK_SEND_STATE_CHANGED_MESSAGE })
       return
     }
 
+    sendingRef.current = true
+    setSendConfirmOpen(false)
     setSending(true)
     try {
       await createAlimtalkSendBatch({
-        batchName: selectedTemplate.templateName || selectedTemplate.name || '알림톡 발송',
-        templateId: selectedTemplate.id,
-        programId,
+        batchName: draft.templateName || '알림톡 발송',
+        templateId: draft.templateId,
+        programId: draft.programId,
         scheduledAt: resolveScheduledAtForCreateRequest({
-          sendTiming,
-          scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
+          sendTiming: draft.sendTiming,
+          scheduledAt: draft.scheduledAt,
         }),
-        senderKey: selectedSender.senderKey,
-        senderProfileId: selectedSender.profileId,
-        recipients,
-        placeholderKeys,
-        variableCatalog: variablesCatalog ?? null,
+        senderKey: draft.senderKey,
+        senderProfileId: draft.senderProfileId,
+        recipients: result.validRecipients,
+        placeholderKeys: draft.placeholderKeys,
+        variableCatalog: draft.catalog ?? null,
         idempotencyKey: idempotencyKeyRef.current,
       })
       idempotencyKeyRef.current = createIdempotencyKey()
@@ -595,6 +569,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     } catch {
       showNotificationSendRequestFailedAlert(showAlert)
     } finally {
+      sendingRef.current = false
       setSending(false)
     }
   }
@@ -636,7 +611,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 * 템플릿은 카카오 승인을 받은 템플릿만 사용이 가능합니다.
               </p>
               <div className="alimtalk-send-fullpage-modal__notice-actions">
-                <CmsButton variant="cancel" size="large" width={140} type="button" onClick={onClose}>
+                <CmsButton
+                  variant="cancel"
+                  size="large"
+                  width={140}
+                  type="button"
+                  onClick={onClose}
+                >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -707,7 +688,28 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         disabled={!canPickTemplate}
                         isTemplateUsable={isTemplateUsable}
                         getTemplateUnusableMessage={getTemplateUnusableMessage}
+                        isUseEnabled={isAlimtalkTemplateApproved}
+                        useButtonLabel="템플릿 사용"
+                        onBeforeUse={template => {
+                          if (!isAlimtalkTemplateApproved(template)) {
+                            showAlert({
+                              title: '안내',
+                              content: '카카오 승인이 완료되지 않은 템플릿은 발송할 수 없습니다.',
+                            })
+                            return false
+                          }
+                          return true
+                        }}
                         onSelect={handleSelectTemplate}
+                        renderPreview={({ template, open, onClose, onUse, zIndex }) => (
+                          <PreviewModal
+                            open={open}
+                            template={template}
+                            onClose={onClose}
+                            onUse={onUse}
+                            zIndex={zIndex}
+                          />
+                        )}
                       />
                     }
                   />
@@ -737,7 +739,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 <div className="alimtalk-send-fullpage__section-actions">
                   <CmsButton
                     variant="delete"
-                    size="large"
+                    size="h40"
                     type="button"
                     onClick={handleDeleteSelected}
                   >
@@ -746,7 +748,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   {isWithoutProgram ? (
                     <CmsButton
                       variant="secondary"
-                      size="large"
+                      size="h40"
                       type="button"
                       onClick={handleManualRecipients}
                     >
@@ -755,7 +757,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   ) : null}
                   <CmsButton
                     variant="secondary"
-                    size="large"
+                    size="h40"
                     type="button"
                     onClick={handleSetRecipients}
                   >
@@ -883,7 +885,24 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         open={open && recipientSelectOpen}
         candidates={candidatesQuery.data?.items}
         initialSelected={recipients}
-        typeMode={recipientTypeMode}
+        resetKey={recipientTypeMode}
+        pageSize={ALIMTALK_SEND_PICKER_PAGE_SIZE}
+        typeColumnTitle={typeColumnTitle}
+        typeOptions={
+          recipientTypeMode === 'member'
+            ? ALIMTALK_SEND_MEMBER_TYPE_OPTIONS
+            : ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS
+        }
+        getTypeLabel={row => alimtalkSendRecipientTypeLabel(row) || '-'}
+        contactColumnTitle="휴대폰 번호"
+        getContact={row => row.phone}
+        filterCandidates={(rows, applied) =>
+          filterAlimtalkSendRecipients(rows, {
+            typeMode: recipientTypeMode,
+            typeValue: applied.typeValue,
+            keyword: applied.keyword,
+          })
+        }
         onSearch={
           remote
             ? params => {
@@ -921,10 +940,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         }
         onClose={() => setRecipientSelectOpen(false)}
         onConfirm={next => {
-          const dropped = countDroppedAlimtalkSendRecipients(recipients, next)
+          const notices = listAlimtalkPhoneDuplicateNotices(recipients, next)
           setRecipients(prev => mergeAlimtalkSendRecipients(prev, next))
-          if (dropped > 0) {
-            showAlert({ title: '안내', content: ALIMTALK_DUPLICATE_PHONE_MESSAGE })
+          if (notices.length > 0) {
+            showAlert({ title: '안내', content: formatAlimtalkPhoneDuplicateMessage(notices) })
           }
           setRecipientSelectOpen(false)
         }}
@@ -932,18 +951,25 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       <RecipientManualModal
         key={recipientManualOpen ? 'recipient-manual-open' : 'recipient-manual-closed'}
         open={open && recipientManualOpen}
-        entries={manualEntries}
-        manualVariableKeys={directManualKeys}
+        contact="phone"
+        values={manualEntries.map(entry => ({
+          contact: entry.phone,
+          variables: entry.variables,
+        }))}
+        variableKeys={directManualKeys}
+        normalize={normalizeAlimtalkSendPhone}
+        isValid={isValidKoreanPhoneNumber}
+        invalidMessage="올바른 휴대폰 번호를 입력하세요."
         onClose={() => setRecipientManualOpen(false)}
         onConfirm={nextEntries => {
           const manual = nextEntries.map(entry =>
-            createManualRecipient(entry.phone, '', entry.variables)
+            createManualRecipient(entry.contact, '', entry.variables)
           )
           const withoutManual = recipients.filter(item => item.source !== 'manual')
-          const dropped = countDroppedAlimtalkSendRecipients(withoutManual, manual)
+          const notices = listAlimtalkPhoneDuplicateNotices(withoutManual, manual)
           setRecipients(mergeAlimtalkSendRecipients(withoutManual, manual))
-          if (dropped > 0) {
-            showAlert({ title: '안내', content: ALIMTALK_DUPLICATE_PHONE_MESSAGE })
+          if (notices.length > 0) {
+            showAlert({ title: '안내', content: formatAlimtalkPhoneDuplicateMessage(notices) })
           }
           setRecipientManualOpen(false)
         }}
@@ -951,11 +977,15 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       <ConfirmModal
         open={sendConfirmOpen}
         title="알림톡 발송"
-        content="해당 내용으로 알림톡을 발송하시겠습니까?"
+        content={sendConfirmMessage}
         confirmText="발송"
         cancelText="취소"
+        confirmLoading={sending}
         onConfirm={() => void handleConfirmSend()}
-        onCancel={() => setSendConfirmOpen(false)}
+        onCancel={() => {
+          if (sending) return
+          setSendConfirmOpen(false)
+        }}
       />
       <SendRequestCompletedModal
         open={sendRequestCompletedOpen && open}

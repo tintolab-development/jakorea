@@ -4,61 +4,71 @@ import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import {
-  SMS_SEND_MEMBER_TYPE_OPTIONS,
-  SMS_SEND_PARTICIPATION_TYPE_OPTIONS,
-  filterSmsSendRecipients,
-  smsSendRecipientTypeColumnTitle,
-  smsSendRecipientTypeLabel,
-} from '@/features/notifications/model/sms-send/recipients'
-import type {
-  SmsSendRecipient,
-  SmsSendRecipientSearchParams,
-  SmsSendRecipientTypeMode,
-} from '@/features/notifications/model/sms-send/types'
-import { SMS_SEND_PICKER_PAGE_SIZE } from '@/features/notifications/model/sms-send/types'
-import '@/features/notifications/ui/mail-send/recipient-select-modal.css'
+import './recipient-select-modal.css'
 
 const PICKER_Z_INDEX = 1100
 const TYPE_COL_WIDTH = 140
+export const SEND_RECIPIENT_PICKER_PAGE_SIZE = 5
 
-type RecipientSelectModalProps = {
+export type SendRecipientPickerSearchParams = {
+  typeValue: string
+  keyword: string
+  page: number
+}
+
+export type SendRecipientPickerRow = {
+  id: string
+  name: string
+}
+
+export type RecipientSelectModalProps<T extends SendRecipientPickerRow> = {
   open: boolean
-  candidates?: SmsSendRecipient[]
-  initialSelected?: SmsSendRecipient[]
+  candidates?: T[]
+  initialSelected?: T[]
   onClose: () => void
-  onConfirm: (recipients: SmsSendRecipient[]) => void
-  typeMode: SmsSendRecipientTypeMode
-  onSearch?: (params: SmsSendRecipientSearchParams) => void
+  onConfirm: (recipients: T[]) => void
+  typeColumnTitle: string
+  typeOptions: { label: string; value: string }[]
+  getTypeLabel: (row: T) => string
+  contactColumnTitle: string
+  getContact: (row: T) => string
+  filterCandidates?: (rows: T[], applied: { typeValue: string; keyword: string }) => T[]
+  onSearch?: (params: SendRecipientPickerSearchParams) => void
   totalCount?: number
   totalPages?: number
-  fetchAllCandidates?: () => Promise<SmsSendRecipient[]>
+  fetchAllCandidates?: () => Promise<T[]>
+  pageSize?: number
+  /** 유형 모드 전환 시 선택·검색 초기화 */
+  resetKey?: string
   zIndex?: number
 }
 
-export function RecipientSelectModal({
+export function RecipientSelectModal<T extends SendRecipientPickerRow>({
   open,
   candidates = [],
   initialSelected = [],
   onClose,
   onConfirm,
-  typeMode,
+  typeColumnTitle,
+  typeOptions,
+  getTypeLabel,
+  contactColumnTitle,
+  getContact,
+  filterCandidates,
   onSearch,
   totalCount,
   totalPages: serverTotalPages,
   fetchAllCandidates,
+  pageSize = SEND_RECIPIENT_PICKER_PAGE_SIZE,
+  resetKey,
   zIndex = PICKER_Z_INDEX,
-}: RecipientSelectModalProps) {
-  const typeColumnTitle = smsSendRecipientTypeColumnTitle(typeMode)
-  const typeOptions =
-    typeMode === 'member' ? SMS_SEND_MEMBER_TYPE_OPTIONS : SMS_SEND_PARTICIPATION_TYPE_OPTIONS
-
+}: RecipientSelectModalProps<T>) {
   const [typeValue, setTypeValue] = useState('')
   const [keyword, setKeyword] = useState('')
   const [appliedType, setAppliedType] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
   const [page, setPage] = useState(1)
-  const [selectedById, setSelectedById] = useState<Record<string, SmsSendRecipient>>({})
+  const [selectedById, setSelectedById] = useState<Record<string, T>>({})
   const [selectingAll, setSelectingAll] = useState(false)
 
   useEffect(() => {
@@ -70,18 +80,17 @@ export function RecipientSelectModal({
     setAppliedKeyword('')
     setPage(1)
     setSelectingAll(false)
-  }, [open, typeMode])
+  }, [open, resetKey])
 
   const useServerPaging = Boolean(onSearch)
 
   const filtered = useMemo(() => {
     if (useServerPaging) return candidates
-    return filterSmsSendRecipients(candidates, {
-      typeMode,
-      typeValue: appliedType,
-      keyword: appliedKeyword,
-    })
-  }, [appliedKeyword, appliedType, candidates, typeMode, useServerPaging])
+    if (filterCandidates) {
+      return filterCandidates(candidates, { typeValue: appliedType, keyword: appliedKeyword })
+    }
+    return candidates
+  }, [appliedKeyword, appliedType, candidates, filterCandidates, useServerPaging])
 
   useEffect(() => {
     if (!open || filtered.length === 0) return
@@ -98,22 +107,19 @@ export function RecipientSelectModal({
     })
   }, [filtered, open])
 
-  const clientTotalPages = Math.ceil(filtered.length / SMS_SEND_PICKER_PAGE_SIZE)
+  const clientTotalPages = Math.ceil(filtered.length / pageSize)
   const totalPages = useServerPaging ? Math.max(serverTotalPages ?? 1, 1) : clientTotalPages
   const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1
   const paged = useServerPaging
     ? filtered
-    : filtered.slice(
-        (currentPage - 1) * SMS_SEND_PICKER_PAGE_SIZE,
-        currentPage * SMS_SEND_PICKER_PAGE_SIZE
-      )
+    : filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   const hasResults = filtered.length > 0
   const checkedIds = useMemo(() => Object.keys(selectedById), [selectedById])
   const selectedCount = checkedIds.length
   const displayedTotal = useServerPaging ? (totalCount ?? filtered.length) : filtered.length
   const allSelected = displayedTotal > 0 && selectedCount >= displayedTotal
 
-  function emitSearch(nextPage: number, nextType = appliedType, nextKeyword = appliedKeyword) {
+  const emitSearch = (nextPage: number, nextType = appliedType, nextKeyword = appliedKeyword) => {
     onSearch?.({
       typeValue: nextType,
       keyword: nextKeyword,
@@ -121,7 +127,7 @@ export function RecipientSelectModal({
     })
   }
 
-  function handleSearch() {
+  const handleSearch = () => {
     const nextType = typeValue
     const nextKeyword = keyword.trim()
     setAppliedType(nextType)
@@ -131,12 +137,12 @@ export function RecipientSelectModal({
     emitSearch(1, nextType, nextKeyword)
   }
 
-  function handlePageChange(nextPage: number) {
+  const handlePageChange = (nextPage: number) => {
     setPage(nextPage)
     if (useServerPaging) emitSearch(nextPage)
   }
 
-  async function handleSelectAll() {
+  const handleSelectAll = async () => {
     if (allSelected) {
       setSelectedById({})
       return
@@ -156,17 +162,17 @@ export function RecipientSelectModal({
     setSelectedById(Object.fromEntries(filtered.map(item => [item.id, item])))
   }
 
-  function handleConfirm() {
+  const handleConfirm = () => {
     onConfirm(Object.values(selectedById))
   }
 
-  const columns: ColumnsType<SmsSendRecipient> = [
+  const columns: ColumnsType<T> = [
     {
       title: typeColumnTitle,
       key: 'type',
       width: TYPE_COL_WIDTH,
       align: 'center',
-      render: (_value, record) => smsSendRecipientTypeLabel(record) || '-',
+      render: (_value, record) => getTypeLabel(record) || '-',
     },
     {
       title: '수신자명',
@@ -176,11 +182,11 @@ export function RecipientSelectModal({
       ellipsis: true,
     },
     {
-      title: '휴대폰 번호',
-      dataIndex: 'phone',
-      key: 'phone',
+      title: contactColumnTitle,
+      key: 'contact',
       align: 'center',
       ellipsis: true,
+      render: (_value, record) => getContact(record) || '-',
     },
   ]
 
@@ -190,7 +196,7 @@ export function RecipientSelectModal({
       onCancel={onClose}
       title="수신자 설정"
       size="default"
-      className="mail-send-recipient-select-modal"
+      className="send-recipient-select-modal"
       titleBodyGap="always"
       zIndex={zIndex}
       footer={
@@ -211,8 +217,8 @@ export function RecipientSelectModal({
         </>
       }
     >
-      <div className="mail-send-recipient-select-modal__body">
-        <div className="mail-send-recipient-select-modal__search">
+      <div className="send-recipient-select-modal__body">
+        <div className="send-recipient-select-modal__search">
           <CmsSelect
             inputSize="large"
             placeholder={typeColumnTitle}
@@ -222,7 +228,7 @@ export function RecipientSelectModal({
             allowClear
             style={{ width: 180 }}
           />
-          <span className="mail-send-recipient-select-modal__search-input">
+          <span className="send-recipient-select-modal__search-input">
             <CmsInput
               icon={<SearchOutlined />}
               value={keyword}
@@ -239,16 +245,16 @@ export function RecipientSelectModal({
           </CmsButton>
         </div>
 
-        <p className="mail-send-recipient-select-modal__count">
+        <p className="send-recipient-select-modal__count">
           총 {displayedTotal}명 / 선택{' '}
-          <span className="mail-send-recipient-select-modal__count-selected">{selectedCount}</span>명
+          <span className="send-recipient-select-modal__count-selected">{selectedCount}</span>명
         </p>
 
         {hasResults ? (
           <>
-            <div className="mail-send-recipient-select-modal__table-wrap">
+            <div className="send-recipient-select-modal__table-wrap">
               <CmsDataTable
-                className="cms-data-table cms-data-table--skip-auto-no-col mail-send-recipient-select-modal__table"
+                className="cms-data-table cms-data-table--skip-auto-no-col send-recipient-select-modal__table"
                 columns={columns}
                 dataSource={paged}
                 rowKey="id"
@@ -269,7 +275,7 @@ export function RecipientSelectModal({
                 }}
               />
             </div>
-            <div className="mail-send-recipient-select-modal__pagination">
+            <div className="send-recipient-select-modal__pagination">
               <CmsCompactPagination
                 variant="modal"
                 currentPage={currentPage}
@@ -280,7 +286,7 @@ export function RecipientSelectModal({
             </div>
           </>
         ) : (
-          <div className="mail-send-recipient-select-modal__empty" role="status">
+          <div className="send-recipient-select-modal__empty" role="status">
             {'검색 결과가 없습니다.\n검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.'}
           </div>
         )}

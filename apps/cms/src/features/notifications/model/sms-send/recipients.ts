@@ -63,12 +63,25 @@ export function smsSendRecipientTypeColumnTitle(mode: SmsSendRecipientTypeMode):
   return mode === 'member' ? '회원 유형' : '참여 유형'
 }
 
-export function smsSendRecipientTypeLabel(recipient: SmsSendRecipient): string {
+export function smsSendRecipientTypeLabel(
+  recipient: SmsSendRecipient,
+  mode: SmsSendRecipientTypeMode = 'member'
+): string {
+  if (mode === 'participation') {
+    if (recipient.participationType) {
+      return SMS_SEND_PARTICIPATION_TYPE_LABEL[recipient.participationType]
+    }
+  } else if (recipient.memberType) {
+    return SMS_SEND_MEMBER_TYPE_LABEL[recipient.memberType]
+  }
   return recipient.typeLabel?.trim() || ''
 }
 
 export function normalizeSmsSendPhone(value: string): string {
-  return formatKoreanPhoneNumber(value.trim())
+  const trimmed = value.trim()
+  if (!trimmed || trimmed === '-') return trimmed
+  if (trimmed.includes('*')) return trimmed
+  return formatKoreanPhoneNumber(trimmed) || trimmed
 }
 
 export function mergeSmsSendRecipients(

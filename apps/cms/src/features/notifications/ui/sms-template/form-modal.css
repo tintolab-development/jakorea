@@ -446,7 +446,7 @@
 .sms-template-form-modal__byte-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 6px;
   flex-shrink: 0;
   width: 100%;

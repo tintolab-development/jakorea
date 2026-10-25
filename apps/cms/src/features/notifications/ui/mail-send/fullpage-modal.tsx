@@ -2,13 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import {
-  CmsButton,
-  CmsInput,
-  CmsSelect,
-  ConfirmModal,
-  useCmsAlert,
-} from '@/shared/ui'
+import { CmsButton, CmsInput, CmsSelect, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import {
   findHarvestedMailSenderKey,
   MAIL_SENDER_DISPLAY_NAME_READONLY_HINT,
@@ -21,9 +15,7 @@ import type {
   MailPreviewRecipient,
 } from '@/features/notifications/model/mail-template/preview'
 import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
-import {
-  groupMailTemplateVariablesFromCatalog,
-} from '@/features/notifications/model/mail-template/variables'
+import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import { type MailSendRecipientSearchParams } from '@/features/notifications/model/mail-send/types'
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
 import {
@@ -43,7 +35,13 @@ import {
 } from '@/features/notifications/model/shared/template-variables-query'
 import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
 import {
+  MAIL_SEND_MEMBER_TYPE_OPTIONS,
+  MAIL_SEND_PARTICIPATION_TYPE_OPTIONS,
+  filterMailSendRecipients,
+  isMailSendEmail,
   mailSendRecipientTypeColumnTitle,
+  mailSendRecipientTypeLabel,
+  normalizeMailSendEmail,
   resolveMailSendRecipientTypeMode,
   toMailSendMemberTypeApi,
   toMailSendParticipantTypeApi,
@@ -53,9 +51,7 @@ import {
   submitMailSend,
   fetchAllMailRecipientCandidates,
 } from '@/features/notifications/api/mail-send-service'
-import {
-  getNotificationsApiErrorMessage,
-} from '@/features/notifications/api/get-notifications-api-error'
+import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
 import { useInvalidateMailSendHistory } from '@/features/notifications/hooks/use-mail-send-history-query'
 import {
   useMailRecipientCandidatesQuery,
@@ -72,12 +68,12 @@ import {
 } from '@/features/notifications/model/shared/mail-context-variables'
 import { useMailSendForm } from './use-form'
 import { ProgramSelectField } from './program-select-field'
-import { TemplateSelectField } from './template-select-field'
 import { RecipientTable } from './recipient-table'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
-import { RecipientSelectModal } from './recipient-select-modal'
-import { RecipientManualModal } from './recipient-manual-modal'
+import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
+import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
+import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
 import './fullpage-modal.css'
 
 type SenderNameFieldProps = {
@@ -262,9 +258,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     // 후보 모달 검색 필터(recipientSearch)는 목록에만 사용.
     // 여기 넣으면 필터만 바꿔도 catalog가 바뀌고 선택 템플릿이 clear되는 회귀가 난다.
     if (recipientTypeMode === 'participation') {
-      return inferUniqueRecipientTypeValue(
-        form.recipients.map(item => item.participationType)
-      )
+      return inferUniqueRecipientTypeValue(form.recipients.map(item => item.participationType))
     }
     return inferUniqueRecipientTypeValue(form.recipients.map(item => item.memberType))
   }, [form.recipients, recipientTypeMode])
@@ -496,7 +490,13 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                 프로그램 선택이 필요합니다. 제목·본문·첨부는 선택한 템플릿 기준으로 발송됩니다.
               </p>
               <div className="mail-send-fullpage-modal__notice-actions">
-                <CmsButton variant="cancel" size="large" width={140} type="button" onClick={handleClose}>
+                <CmsButton
+                  variant="cancel"
+                  size="large"
+                  width={140}
+                  type="button"
+                  onClick={handleClose}
+                >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -568,6 +568,22 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                               const displayName = resolveHarvestDisplayName(email)
                               if (displayName) form.replaceSenderName(displayName)
                             }}
+                            renderPreview={({ template, open, onClose, zIndex }) => (
+                              <PreviewModal
+                                open={open}
+                                zIndex={zIndex}
+                                subject={template?.subject ?? ''}
+                                bodyHtml={template?.bodyHtml ?? ''}
+                                senderName={template?.senderName}
+                                senderEmail={template?.senderEmail}
+                                attachments={template?.attachmentFileNames.map(name => ({
+                                  name,
+                                  sizeBytes: template.attachmentSizes?.[name],
+                                }))}
+                                previewAt={new Date().toISOString()}
+                                onClose={onClose}
+                              />
+                            )}
                           />
                         }
                       />
@@ -643,7 +659,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                     <div className="mail-send-fullpage__section-actions">
                       <CmsButton
                         variant="delete"
-                        size="large"
+                        size="h40"
                         type="button"
                         onClick={handleDeleteSelected}
                       >
@@ -652,7 +668,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       {isWithoutProgram ? (
                         <CmsButton
                           variant="secondary"
-                          size="large"
+                          size="h40"
                           type="button"
                           onClick={handleOpenRecipientManual}
                         >
@@ -661,7 +677,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       ) : null}
                       <CmsButton
                         variant="secondary"
-                        size="large"
+                        size="h40"
                         type="button"
                         onClick={handleOpenRecipientSelect}
                       >
@@ -762,8 +778,24 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         key={recipientSelectOpen ? 'recipient-select-open' : 'recipient-select-closed'}
         open={open && recipientSelectOpen}
         candidates={candidatesQuery.data?.items}
-        selectedIds={form.recipients.map(item => item.id)}
-        typeMode={recipientTypeMode}
+        initialSelected={form.recipients}
+        resetKey={recipientTypeMode}
+        typeColumnTitle={typeColumnTitle}
+        typeOptions={
+          recipientTypeMode === 'member'
+            ? MAIL_SEND_MEMBER_TYPE_OPTIONS
+            : MAIL_SEND_PARTICIPATION_TYPE_OPTIONS
+        }
+        getTypeLabel={row => mailSendRecipientTypeLabel(row) || '-'}
+        contactColumnTitle="이메일"
+        getContact={row => row.email}
+        filterCandidates={(rows, applied) =>
+          filterMailSendRecipients(rows, {
+            typeMode: recipientTypeMode,
+            typeValue: applied.typeValue,
+            keyword: applied.keyword,
+          })
+        }
         onSearch={remote ? params => setRecipientSearch(params) : undefined}
         totalCount={candidatesQuery.data?.total}
         totalPages={candidatesQuery.data?.totalPages}
@@ -794,10 +826,16 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       <RecipientManualModal
         key={recipientManualOpen ? 'recipient-manual-open' : 'recipient-manual-closed'}
         open={open && recipientManualOpen}
-        emails={form.recipients.filter(item => item.source === 'manual').map(item => item.email)}
+        contact="email"
+        values={form.recipients
+          .filter(item => item.source === 'manual')
+          .map(item => ({ contact: item.email }))}
+        normalize={normalizeMailSendEmail}
+        isValid={isMailSendEmail}
+        invalidMessage="올바른 이메일 주소를 입력하세요."
         onClose={() => setRecipientManualOpen(false)}
-        onConfirm={emails => {
-          form.addManualEmails(emails)
+        onConfirm={entries => {
+          form.addManualEmails(entries.map(entry => entry.contact))
           setRecipientManualOpen(false)
         }}
       />

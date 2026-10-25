@@ -187,6 +187,16 @@ export async function deleteAlimtalkTemplate(
 }
 
 /**
+ * 승인 상태가 APPROVED인 템플릿만 발송 후보로 남긴다.
+ * null·UNKNOWN은 승인 완료로 보지 않는다.
+ */
+export function selectApprovedAlimtalkSendTemplates<T extends { approvalStatus?: string | null }>(
+  templates: readonly T[]
+): T[] {
+  return templates.filter(item => item.approvalStatus === 'APPROVED')
+}
+
+/**
  * 발송 「템플릿 선택」— APPROVED만 (트리·send-batch 가드와 동일).
  * PENDING은 목록/상세 approvalStatus로만 확인.
  */
@@ -197,20 +207,19 @@ export async function getAlimtalkSendTemplatePicker(): Promise<AlimtalkTemplateI
     channelType: ALIMTALK_API_CHANNEL_TYPE,
     approvalStatus: 'APPROVED',
   })
-  const fromList = templateItems
-    .filter(
-      item => (item.channelType ?? ALIMTALK_API_CHANNEL_TYPE).toUpperCase() === ALIMTALK_API_CHANNEL_TYPE
-    )
-    .map(item => mapNotificationTemplateToItem(item))
-    .filter((item): item is AlimtalkTemplateItem => item != null)
-    .filter(item => item.approvalStatus === 'APPROVED')
+  const fromList = selectApprovedAlimtalkSendTemplates(
+    templateItems
+      .filter(
+        item => (item.channelType ?? ALIMTALK_API_CHANNEL_TYPE).toUpperCase() === ALIMTALK_API_CHANNEL_TYPE
+      )
+      .map(item => mapNotificationTemplateToItem(item))
+      .filter((item): item is AlimtalkTemplateItem => item != null)
+  )
   if (fromList.length > 0) return fromList
 
-  // fallback: 트리(서버가 APPROVED만 내려줌). FE에서 PENDING 재삽입/이중 필터 금지
+  // 목록이 비었을 때만 트리. 상태가 없으면 승인으로 간주하지 않는다.
   const { templates } = await getAlimtalkCategoryTree(new URLSearchParams())
-  return templates.filter(
-    item => item.approvalStatus == null || item.approvalStatus === 'APPROVED'
-  )
+  return selectApprovedAlimtalkSendTemplates(templates)
 }
 
 /** NHN Console 카탈로그 → CMS DB. Body 없음. 성공 후 tree 재조회는 호출측. */

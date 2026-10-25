@@ -2,26 +2,33 @@ import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
-import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
-import { MAIL_SEND_PICKER_PAGE_SIZE } from '@/features/notifications/model/mail-send/types'
-import { NOTIFICATION_SEND_SELECTABLE_NOT_SUCCESS_HINT } from '@/features/notifications/model/shared/send-ux-copy'
-import './template-select-modal.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import './template-select-modal.css'
 
-type TemplateSelectModalProps = {
+export const TEMPLATE_SELECT_MODAL_PAGE_SIZE = 5
+
+export type SendTemplatePickerItem = {
+  id: string
+  name: string
+  templateName: string
+}
+
+export type TemplateSelectModalProps<T extends SendTemplatePickerItem> = {
   open: boolean
-  templates: MailTemplateItem[]
+  templates: T[]
   onClose: () => void
-  onPreview: (template: MailTemplateItem) => void
-  onUse: (template: MailTemplateItem) => void
-  /** false면 「사용하기」 비활성 (프로그램·참여유형 문맥에서 enabled=false 키 포함) */
-  isTemplateUsable?: (template: MailTemplateItem) => boolean
-  /** 비활성 클릭 시 안내 (키 목록 포함 권장) */
-  getTemplateUnusableMessage?: (template: MailTemplateItem) => string | null
+  onPreview: (template: T) => void
+  onUse: (template: T) => void
+  isTemplateUsable?: (template: T) => boolean
+  getTemplateUnusableMessage?: (template: T) => string | null
+  isUseEnabled?: (template: T) => boolean
+  onBeforeUse?: (template: T) => boolean
+  useButtonLabel?: string
+  extraColumns?: ColumnsType<T>
   zIndex?: number
 }
 
-function matchesTemplateName(template: MailTemplateItem, keyword: string): boolean {
+function matchesTemplateName(template: SendTemplatePickerItem, keyword: string): boolean {
   const needle = keyword.trim().toLowerCase()
   if (!needle) return true
   return (
@@ -30,7 +37,7 @@ function matchesTemplateName(template: MailTemplateItem, keyword: string): boole
   )
 }
 
-export function TemplateSelectModal({
+export function TemplateSelectModal<T extends SendTemplatePickerItem>({
   open,
   templates,
   onClose,
@@ -38,8 +45,12 @@ export function TemplateSelectModal({
   onUse,
   isTemplateUsable,
   getTemplateUnusableMessage,
+  isUseEnabled,
+  onBeforeUse,
+  useButtonLabel = '사용하기',
+  extraColumns,
   zIndex,
-}: TemplateSelectModalProps) {
+}: TemplateSelectModalProps<T>) {
   const { showAlert } = useCmsAlert()
   const [keyword, setKeyword] = useState('')
   const [appliedKeyword, setAppliedKeyword] = useState('')
@@ -50,11 +61,11 @@ export function TemplateSelectModal({
     [appliedKeyword, templates]
   )
 
-  const totalPages = Math.ceil(filtered.length / MAIL_SEND_PICKER_PAGE_SIZE)
+  const totalPages = Math.ceil(filtered.length / TEMPLATE_SELECT_MODAL_PAGE_SIZE)
   const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1
   const paged = filtered.slice(
-    (currentPage - 1) * MAIL_SEND_PICKER_PAGE_SIZE,
-    currentPage * MAIL_SEND_PICKER_PAGE_SIZE
+    (currentPage - 1) * TEMPLATE_SELECT_MODAL_PAGE_SIZE,
+    currentPage * TEMPLATE_SELECT_MODAL_PAGE_SIZE
   )
   const hasResults = filtered.length > 0
 
@@ -63,28 +74,44 @@ export function TemplateSelectModal({
     setPage(1)
   }
 
-  const columns: ColumnsType<MailTemplateItem> = [
+  const handleUse = (record: T) => {
+    if (onBeforeUse?.(record) === false) return
+    if (isTemplateUsable?.(record) === false) {
+      showAlert({
+        title: '안내',
+        content:
+          getTemplateUnusableMessage?.(record) ||
+          '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
+      })
+      return
+    }
+    onUse(record)
+  }
+
+  const columns: ColumnsType<T> = [
     {
       title: '템플릿명',
       dataIndex: 'name',
       key: 'name',
       align: 'center',
-      className: 'mail-send-template-select-modal__col-name',
-      onHeaderCell: () => ({ className: 'mail-send-template-select-modal__col-name' }),
+      className: 'send-template-select-modal__col-name',
+      onHeaderCell: () => ({ className: 'send-template-select-modal__col-name' }),
       ellipsis: true,
     },
+    ...(extraColumns ?? []),
     {
       title: '관리',
       key: 'actions',
       width: 220,
       align: 'center',
-      className: 'mail-send-template-select-modal__col-actions',
-      onHeaderCell: () => ({ className: 'mail-send-template-select-modal__col-actions' }),
+      className: 'send-template-select-modal__col-actions',
+      onHeaderCell: () => ({ className: 'send-template-select-modal__col-actions' }),
       render: (_, record) => {
-        const canUse = isTemplateUsable?.(record) !== false
+        const canUse =
+          (isUseEnabled?.(record) ?? true) && isTemplateUsable?.(record) !== false
         return (
           <div
-            className="mail-send-template-select-modal__row-actions"
+            className="send-template-select-modal__row-actions"
             onClick={event => event.stopPropagation()}
           >
             <CmsButton
@@ -92,7 +119,7 @@ export function TemplateSelectModal({
               variant="default"
               size="small"
               width={80}
-              className="mail-send-template-select-modal__action-btn mail-send-template-select-modal__action-btn--preview"
+              className="send-template-select-modal__action-btn send-template-select-modal__action-btn--preview"
               onClick={event => {
                 event.stopPropagation()
                 onPreview(record)
@@ -105,23 +132,14 @@ export function TemplateSelectModal({
               variant="secondary"
               size="small"
               width={80}
-              className="mail-send-template-select-modal__action-btn mail-send-template-select-modal__action-btn--use"
+              className="send-template-select-modal__action-btn send-template-select-modal__action-btn--use"
               disabled={!canUse}
               onClick={event => {
                 event.stopPropagation()
-                if (!canUse) {
-                  showAlert({
-                    title: '안내',
-                    content:
-                      getTemplateUnusableMessage?.(record) ||
-                      '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
-                  })
-                  return
-                }
-                onUse(record)
+                handleUse(record)
               }}
             >
-              사용하기
+              {useButtonLabel}
             </CmsButton>
           </div>
         )
@@ -135,7 +153,7 @@ export function TemplateSelectModal({
       onCancel={onClose}
       title="템플릿 선택"
       size="default"
-      className="mail-send-template-select-modal"
+      className="send-template-select-modal"
       titleBodyGap="always"
       zIndex={zIndex}
       footer={
@@ -144,12 +162,9 @@ export function TemplateSelectModal({
         </CmsButton>
       }
     >
-      <div className="mail-send-template-select-modal__body">
-        <p className="mail-send-template-select-modal__hint" role="note">
-          {NOTIFICATION_SEND_SELECTABLE_NOT_SUCCESS_HINT}
-        </p>
-        <div className="mail-send-template-select-modal__search">
-          <span className="mail-send-template-select-modal__search-input">
+      <div className="send-template-select-modal__body">
+        <div className="send-template-select-modal__search">
+          <span className="send-template-select-modal__search-input">
             <CmsInput
               icon={<SearchOutlined />}
               value={keyword}
@@ -168,17 +183,17 @@ export function TemplateSelectModal({
 
         {hasResults ? (
           <>
-            <div className="mail-send-template-select-modal__table-section">
-              <p className="mail-send-template-select-modal__count">총 {filtered.length}건</p>
+            <div className="send-template-select-modal__table-section">
+              <p className="send-template-select-modal__count">총 {filtered.length}건</p>
               <CmsDataTable
-                className="cms-data-table cms-data-table--skip-auto-no-col mail-send-template-select-modal__table"
+                className="cms-data-table cms-data-table--skip-auto-no-col send-template-select-modal__table"
                 columns={columns}
                 dataSource={paged}
                 rowKey="id"
                 pagination={false}
               />
             </div>
-            <div className="mail-send-template-select-modal__pagination">
+            <div className="send-template-select-modal__pagination">
               <CmsCompactPagination
                 variant="modal"
                 currentPage={currentPage}
@@ -189,7 +204,7 @@ export function TemplateSelectModal({
             </div>
           </>
         ) : (
-          <div className="mail-send-template-select-modal__empty" role="status">
+          <div className="send-template-select-modal__empty" role="status">
             {'검색 결과가 없습니다.\n검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.'}
           </div>
         )}

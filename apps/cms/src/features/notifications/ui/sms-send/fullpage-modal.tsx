@@ -2,16 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import {
-  CmsButton,
-  CmsPhoneInput,
-  CmsRadio,
-  ConfirmModal,
-  useCmsAlert,
-} from '@/shared/ui'
-import {
-  getNotificationsApiErrorMessage,
-} from '@/features/notifications/api/get-notifications-api-error'
+import { CmsButton, CmsPhoneInput, CmsRadio, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
 import {
   fetchAllSmsRecipientCandidates,
   resolveSmsSenderProfileId,
@@ -36,7 +28,10 @@ import {
   formatNotificationSendTemplateDisabledKeysWarning,
   listNotificationSendTemplateDisabledKeysForProgram,
 } from '@/features/notifications/model/shared/template-usable-for-program'
-import { SMS_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/sms-send/types'
+import {
+  SMS_SEND_ALL_PROGRAM_ID,
+  SMS_SEND_PICKER_PAGE_SIZE,
+} from '@/features/notifications/model/sms-send/types'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
 import {
@@ -44,12 +39,18 @@ import {
   inferUniqueRecipientTypeValue,
 } from '@/features/notifications/model/shared/template-variables-query'
 import {
+  SMS_SEND_MEMBER_TYPE_OPTIONS,
+  SMS_SEND_PARTICIPATION_TYPE_OPTIONS,
   createManualRecipient,
+  filterSmsSendRecipients,
+  normalizeSmsSendPhone,
   resolveSmsSendRecipientTypeMode,
   smsSendRecipientTypeColumnTitle,
+  smsSendRecipientTypeLabel,
   toSmsSendMemberTypeApi,
   toSmsSendParticipantTypeApi,
 } from '@/features/notifications/model/sms-send/recipients'
+import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { type SmsSendRecipientSearchParams } from '@/features/notifications/model/sms-send/types'
 import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
 import { PreviewModal } from '@/features/notifications/ui/sms-template/preview-modal'
@@ -58,10 +59,10 @@ import { SendScheduleField } from '@/features/notifications/ui/shared/send-sched
 import { SmsSendComposeFields } from './compose-fields'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
-import { RecipientManualModal } from './recipient-manual-modal'
-import { RecipientSelectModal } from './recipient-select-modal'
+import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
+import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
+import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
 import { RecipientTable } from './recipient-table'
-import { TemplateSelectField } from './template-select-field'
 import { useSmsSendForm } from './use-form'
 import '@/features/notifications/ui/mail-send/fullpage-modal.css'
 import './fullpage-modal.css'
@@ -75,7 +76,7 @@ function createIdempotencyKey(): string {
 
 function recipientTotalPages(total: number, size: number, totalPages?: number): number {
   if (totalPages != null && totalPages > 0) return totalPages
-  return Math.max(Math.ceil((total || 0) / (size || 20)), 1)
+  return Math.max(Math.ceil((total || 0) / (size || SMS_SEND_PICKER_PAGE_SIZE)), 1)
 }
 
 type SendFullpageModalProps = {
@@ -84,11 +85,7 @@ type SendFullpageModalProps = {
   initialTemplateId?: string
 }
 
-export function SendFullpageModal({
-  open,
-  onClose,
-  initialTemplateId,
-}: SendFullpageModalProps) {
+export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFullpageModalProps) {
   const { showAlert } = useCmsAlert()
   const invalidateHistory = useInvalidateSmsSendHistory()
   const form = useSmsSendForm(open, initialTemplateId)
@@ -158,9 +155,7 @@ export function SendFullpageModal({
   const variablesTypeValue = useMemo(() => {
     // 후보 모달 검색 필터는 목록에만 사용 — 확정 수신자만 변수 카탈로그 문맥에 반영
     if (recipientTypeMode === 'participation') {
-      return inferUniqueRecipientTypeValue(
-        form.recipients.map(item => item.participationType)
-      )
+      return inferUniqueRecipientTypeValue(form.recipients.map(item => item.participationType))
     }
     return inferUniqueRecipientTypeValue(form.recipients.map(item => item.memberType))
   }, [form.recipients, recipientTypeMode])
@@ -186,9 +181,11 @@ export function SendFullpageModal({
           ? toSmsSendParticipantTypeApi(recipientSearch.typeValue)
           : undefined,
       memberType:
-        recipientTypeMode === 'member' ? toSmsSendMemberTypeApi(recipientSearch.typeValue) : undefined,
+        recipientTypeMode === 'member'
+          ? toSmsSendMemberTypeApi(recipientSearch.typeValue)
+          : undefined,
       page: recipientSearch.page,
-      size: 20,
+      size: SMS_SEND_PICKER_PAGE_SIZE,
     },
     open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
   )
@@ -378,13 +375,14 @@ export function SendFullpageModal({
 
           <div className="mail-send-fullpage-modal__body">
             <div className="mail-send-fullpage-modal__notice">
-              <p className="mail-send-fullpage-modal__notice-text">
-                * 프로그램은 현재 운영 중인 프로그램만 선택 가능합니다. 프로그램 미선택 시
-                전체 회원 대상 조회·직접 입력이 가능합니다. 템플릿을 선택하면 발송 유형, 발신 번호,
-                제목/내용이 자동 반영됩니다.
-              </p>
               <div className="mail-send-fullpage-modal__notice-actions">
-                <CmsButton variant="cancel" size="large" width={140} type="button" onClick={handleClose}>
+                <CmsButton
+                  variant="cancel"
+                  size="large"
+                  width={140}
+                  type="button"
+                  onClick={handleClose}
+                >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -458,6 +456,67 @@ export function SendFullpageModal({
                             isTemplateUsable={isTemplateUsable}
                             getTemplateUnusableMessage={getTemplateUnusableMessage}
                             onSelect={form.applyTemplate}
+                            extraColumns={[
+                              {
+                                title: '발송 유형',
+                                dataIndex: 'messageType',
+                                key: 'messageType',
+                                width: 140,
+                                align: 'center',
+                              },
+                            ]}
+                            renderPreview={({ template, open, onClose, zIndex }) => (
+                              <PreviewModal
+                                open={open}
+                                zIndex={zIndex}
+                                templateName={template?.templateName ?? ''}
+                                senderPhone={template?.senderPhone ?? ''}
+                                messageType={template?.messageType ?? 'SMS'}
+                                subject={template?.subject ?? ''}
+                                bodyText={template?.bodyText ?? ''}
+                                attachments={
+                                  template?.attachments?.length
+                                    ? template.attachments.map(item => ({
+                                        name: item.fileName,
+                                        sizeBytes: item.byteSize,
+                                      }))
+                                    : template?.attachmentFileNames.map(name => ({ name }))
+                                }
+                                previewAt={new Date().toISOString()}
+                                onClose={onClose}
+                              />
+                            )}
+                          />
+                        }
+                      />
+                      <DetailInfoForm.Field
+                        label="발송 시점"
+                        required
+                        view={form.sendTiming === 'immediate' ? '즉시 발송' : '예약 발송'}
+                        edit={
+                          <SendScheduleField
+                            className="mail-send-fullpage__timing"
+                            sendTiming={form.sendTiming}
+                            scheduledAt={form.scheduledAt}
+                            onSendTimingChange={form.setSendTiming}
+                            onScheduledAtChange={form.setScheduledAt}
+                          />
+                        }
+                      />
+                    </DetailInfoForm.Row>
+                    <DetailInfoForm.Row type="double">
+                      <DetailInfoForm.Field
+                        label="발신 번호"
+                        required
+                        view={form.senderPhone}
+                        edit={
+                          <CmsPhoneInput
+                            inputSize="small"
+                            width="100%"
+                            allowClear={false}
+                            placeholder="발신 번호를 입력하세요"
+                            value={form.senderPhone}
+                            onChange={event => form.setSenderPhone(event.target.value)}
                           />
                         }
                       />
@@ -490,37 +549,6 @@ export function SendFullpageModal({
                         }
                       />
                     </DetailInfoForm.Row>
-                    <DetailInfoForm.Row type="double">
-                      <DetailInfoForm.Field
-                        label="발신 번호"
-                        required
-                        view={form.senderPhone}
-                        edit={
-                          <CmsPhoneInput
-                            inputSize="small"
-                            width="100%"
-                            allowClear={false}
-                            placeholder="발신 번호를 입력하세요"
-                            value={form.senderPhone}
-                            onChange={event => form.setSenderPhone(event.target.value)}
-                          />
-                        }
-                      />
-                      <DetailInfoForm.Field
-                        label="발송 시점"
-                        required
-                        view={form.sendTiming === 'immediate' ? '즉시 발송' : '예약 발송'}
-                        edit={
-                          <SendScheduleField
-                            className="mail-send-fullpage__timing"
-                            sendTiming={form.sendTiming}
-                            scheduledAt={form.scheduledAt}
-                            onSendTimingChange={form.setSendTiming}
-                            onScheduledAtChange={form.setScheduledAt}
-                          />
-                        }
-                      />
-                    </DetailInfoForm.Row>
                   </DetailInfoForm>
                 </section>
 
@@ -533,7 +561,7 @@ export function SendFullpageModal({
                     <div className="mail-send-fullpage__section-actions">
                       <CmsButton
                         variant="delete"
-                        size="large"
+                        size="h40"
                         type="button"
                         onClick={handleDeleteSelected}
                       >
@@ -542,7 +570,7 @@ export function SendFullpageModal({
                       {isWithoutProgram ? (
                         <CmsButton
                           variant="secondary"
-                          size="large"
+                          size="h40"
                           type="button"
                           onClick={handleOpenRecipientManual}
                         >
@@ -551,7 +579,7 @@ export function SendFullpageModal({
                       ) : null}
                       <CmsButton
                         variant="secondary"
-                        size="large"
+                        size="h40"
                         type="button"
                         onClick={handleOpenRecipientSelect}
                       >
@@ -564,6 +592,7 @@ export function SendFullpageModal({
                     selectedIds={selectedRecipientIds}
                     onSelectedIdsChange={setSelectedRecipientIds}
                     typeColumnTitle={typeColumnTitle}
+                    typeMode={recipientTypeMode}
                   />
                 </section>
 
@@ -580,6 +609,7 @@ export function SendFullpageModal({
                     onRememberSubjectRange={form.rememberSubjectRange}
                     onRememberBodyRange={form.rememberBodyRange}
                     onRemoveAttachment={form.removeAttachmentAt}
+                    onAddAttachments={form.addAttachments}
                     onBlockingChange={form.setComposeBlocking}
                   />
                 </section>
@@ -623,7 +653,23 @@ export function SendFullpageModal({
         open={open && recipientSelectOpen}
         candidates={candidatesQuery.data?.items}
         initialSelected={form.recipients}
-        typeMode={recipientTypeMode}
+        resetKey={recipientTypeMode}
+        typeColumnTitle={typeColumnTitle}
+        typeOptions={
+          recipientTypeMode === 'member'
+            ? SMS_SEND_MEMBER_TYPE_OPTIONS
+            : SMS_SEND_PARTICIPATION_TYPE_OPTIONS
+        }
+        getTypeLabel={row => smsSendRecipientTypeLabel(row, recipientTypeMode) || '-'}
+        contactColumnTitle="휴대폰 번호"
+        getContact={row => normalizeSmsSendPhone(row.phone) || '-'}
+        filterCandidates={(rows, applied) =>
+          filterSmsSendRecipients(rows, {
+            typeMode: recipientTypeMode,
+            typeValue: applied.typeValue,
+            keyword: applied.keyword,
+          })
+        }
         onSearch={remote ? params => setRecipientSearch(params) : undefined}
         totalCount={candidatesQuery.data?.total}
         totalPages={
@@ -667,10 +713,18 @@ export function SendFullpageModal({
       <RecipientManualModal
         key={recipientManualOpen ? 'recipient-manual-open' : 'recipient-manual-closed'}
         open={open && recipientManualOpen}
-        phones={form.recipients.filter(item => item.source === 'manual').map(item => item.phone)}
+        contact="phone"
+        values={form.recipients
+          .filter(item => item.source === 'manual')
+          .map(item => ({ contact: item.phone }))}
+        normalize={normalizeSmsSendPhone}
+        isValid={isValidKoreanPhoneNumber}
+        invalidMessage="올바른 휴대폰 번호를 입력하세요."
         onClose={() => setRecipientManualOpen(false)}
-        onConfirm={phones => {
-          form.replaceManualRecipients(phones.map(phone => createManualRecipient(phone)))
+        onConfirm={entries => {
+          form.replaceManualRecipients(
+            entries.map(entry => createManualRecipient(entry.contact))
+          )
           setRecipientManualOpen(false)
         }}
       />

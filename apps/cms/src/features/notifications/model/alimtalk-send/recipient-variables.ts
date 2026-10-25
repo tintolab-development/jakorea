@@ -17,7 +17,7 @@ export const ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS = new Set([
 
 /**
  * SYSTEM/자동발송 카탈로그 키. 수동 입력·variables 덮어쓰기 금지.
- * 회원 수신자는 서버가 채우고, 직접 입력 수신자는 발송할 수 없다.
+ * 값 존재는 FE가 확인하지 못하므로 발송 가능으로 간주하지 않는다.
  */
 export const NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS = new Set([
   '로그인 실패 횟수',
@@ -117,7 +117,12 @@ function isMemberWithActor(recipient: RecipientLike): boolean {
 
 /**
  * 템플릿 `#{키}` 하나를 서버 치환 / 수신자 직접 입력 / 발송 불가로 나눈다.
- * catalog가 아직 없으면 예약·SYSTEM 목록에 없는 키는 pending이다.
+ *
+ * 프로그램 미선택: 일반 변수는 회원·직접 입력 모두 수기 입력.
+ * `enabled`·`requiresProgram`만으로 막지 않는다.
+ * 특정 프로그램 선택: 카탈로그에서 허용된 변수만 서버 자동 매칭.
+ * SYSTEM·서버 예약 키는 payload에 넣지 않고, 값 존재를 성공으로 보지 않는다.
+ * 회원 actorId로 채우는 신원 키(회원명·이메일·휴대폰)만 프로그램 없이도 서버 치환이다.
  */
 export function classifyAlimtalkPlaceholderKey(input: {
   key: string
@@ -129,22 +134,24 @@ export function classifyAlimtalkPlaceholderKey(input: {
   if (!key) return 'blocked'
   const item = findCatalogEntry(input.catalog, key)
   const member = isMemberWithActor(input.recipient)
+  const system = isAlimtalkSystemVariableKey(key, input.catalog)
+  const reserved = isAlimtalkReservedVariableKey(key)
 
-  if (isAlimtalkSystemVariableKey(key, input.catalog)) {
-    return member ? 'server' : 'blocked'
+  if (!input.programSelected) {
+    if (member && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) return 'server'
+    if (system || reserved) return 'blocked'
+    if (input.catalog == null) return 'pending'
+    return 'manual'
   }
+
+  if (system) return 'blocked'
   if (member && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) return 'server'
-  if (member && input.programSelected && PROGRAM_CONTEXT_KEYS.has(key)) return 'server'
-  if (item?.requiresProgram === true && !input.programSelected) return 'needs-program'
-  if (item?.requiresProgram === true && input.programSelected && item.enabled === true) {
-    return 'server'
-  }
-  if (item?.requiresProgram === true && input.programSelected && item.enabled !== true) {
-    return 'blocked'
-  }
+  if (member && PROGRAM_CONTEXT_KEYS.has(key)) return 'server'
+  if (item?.requiresProgram === true && item.enabled === true) return 'server'
+  if (item?.requiresProgram === true && item.enabled !== true) return 'blocked'
   if (item && item.enabled === true && member) return 'server'
   if (item && item.enabled !== true) return 'blocked'
-  if (isAlimtalkReservedVariableKey(key)) return 'blocked'
+  if (reserved) return 'blocked'
   if (input.catalog == null) return 'pending'
   return 'manual'
 }
@@ -250,6 +257,41 @@ export function collectAlimtalkRecipientVariableGaps(input: {
     })
   }
   return gaps
+}
+
+export function partitionAlimtalkRecipientsByVariables(input: {
+  keys: Iterable<string>
+  catalog: AlimtalkVariableCatalogEntry[] | null | undefined
+  recipients: AlimtalkSendRecipient[]
+  programSelected: boolean
+}): { valid: AlimtalkSendRecipient[]; gaps: AlimtalkRecipientVariableGap[] } {
+  const gaps = collectAlimtalkRecipientVariableGaps(input)
+  const invalidIds = new Set(gaps.map(gap => gap.id))
+  return {
+    valid: input.recipients.filter(recipient => !invalidIds.has(recipient.id)),
+    gaps,
+  }
+}
+
+export function formatAlimtalkPartialSendConfirm(input: {
+  validCount: number
+  gaps: AlimtalkRecipientVariableGap[]
+}): string {
+  const lines = [
+    `변수 조건이 맞지 않는 수신자 ${input.gaps.length}명은 이번 발송에서 제외됩니다.`,
+    `조건을 충족한 수신자 ${input.validCount}명만 발송합니다.`,
+    '제외된 수신자와 입력값은 발송 화면에 남으며, 확인 전에는 삭제되지 않습니다.',
+  ]
+  for (const gap of input.gaps.slice(0, 8)) {
+    const reasons: string[] = []
+    if (gap.manualMissing.length > 0) reasons.push(`값 없음: ${gap.manualMissing.join(', ')}`)
+    if (gap.blocked.length > 0) reasons.push(`서버 전용 변수: ${gap.blocked.join(', ')}`)
+    if (gap.needsProgram.length > 0) reasons.push(`프로그램 변수: ${gap.needsProgram.join(', ')}`)
+    lines.push(`${gap.label} — ${reasons.join(' / ')}`)
+  }
+  if (input.gaps.length > 8) lines.push(`외 ${input.gaps.length - 8}명`)
+  lines.push('제외하고 발송할까요?')
+  return lines.join('\n')
 }
 
 export function formatAlimtalkRecipientVariableGapMessage(

@@ -38,12 +38,12 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
     )
   })
 
-  it('MEMBER+actorId는 enrich·SYSTEM 키를 서버 소유로 본다', () => {
+  it('MEMBER+actorId는 신원 키만 서버 치환으로 보고 SYSTEM 값은 있다고 보지 않는다', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['사용자 아이디(이메일)', '휴면 전환일시'],
       recipients: [{ actorType: 'MEMBER', actorId: 12 }],
     })
-    expect(missing).toEqual([])
+    expect(missing).toEqual(['휴면 전환일시'])
   })
 
   it('DIRECT는 예약·SYSTEM 키를 batch variables로 충족하지 않는다', () => {
