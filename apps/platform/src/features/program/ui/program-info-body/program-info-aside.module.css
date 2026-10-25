@@ -50,6 +50,17 @@
   object-position: 50% 50%;
 }
 
+.applyBlock {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.applyHint {
+  margin: 0;
+}
+
 .applyButton {
   display: flex;
   width: 100%;

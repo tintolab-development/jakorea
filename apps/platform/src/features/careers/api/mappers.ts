@@ -332,6 +332,8 @@ export function mapPublicCareerPostingDetail(
     contentFormat: 'html',
     viewCount,
     attachments: mapPostingAttachment(item.attachment),
+    buttonLabel: singleLine(item.buttonLabel),
+    linkUrl: typeof item.linkUrl === 'string' ? item.linkUrl.trim() : '',
   }
 }
 

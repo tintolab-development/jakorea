@@ -15,6 +15,7 @@ type ProgramInfoBodyProps = {
   showCancelCta?: boolean
   onApply?: () => void
   applyChecking?: boolean
+  applyBlockedReason?: string | null
   onCancel?: () => void
   showTopFab?: boolean
   className?: string
@@ -28,6 +29,7 @@ export function ProgramInfoBody({
   showCancelCta = false,
   onApply,
   applyChecking,
+  applyBlockedReason,
   onCancel,
   showTopFab = true,
   className,
@@ -47,9 +49,12 @@ export function ProgramInfoBody({
         thumbnailUrl={program.thumbnailUrl}
         attachments={program.attachments}
         canApply={
-          canApplyToProgram(program.recruitmentStatus) && !program.recruitmentSelectionAmbiguous
+          canApplyToProgram(program.recruitmentStatus) &&
+          !program.recruitmentSelectionAmbiguous &&
+          !applyBlockedReason
         }
         applicationPeriodLabel={program.applicationPeriodLabel}
+        applyBlockedReason={applyBlockedReason}
         showApplyCta={showApplyCta}
         showCancelCta={showCancelCta}
         onApply={onApply}

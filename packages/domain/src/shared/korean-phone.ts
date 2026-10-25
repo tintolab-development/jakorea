@@ -98,6 +98,19 @@ export function formatKoreanPhoneNumber(value: string): string {
   return formatLocalNumber(prefix, digits.slice(prefix.length))
 }
 
+/** BE 마스킹(`010-****-1080`) 여부. `*`를 숫자에서 빼면 `010-1080`처럼 잘린다. */
+export function isMaskedKoreanPhoneNumber(value: string): boolean {
+  return value.includes('*')
+}
+
+/** 프로필·잠금 표시용. 마스킹은 유지하고, 원문만 하이픈 포맷한다. */
+export function formatKoreanPhoneNumberPreservingMask(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  if (isMaskedKoreanPhoneNumber(trimmed)) return trimmed
+  return formatKoreanPhoneNumber(trimmed)
+}
+
 /** 허용 prefix + 해당 자리수인지 확인합니다. 빈 값은 false입니다. */
 export function isValidKoreanPhoneNumber(value: string): boolean {
   const rawDigits = toHalfWidthDigits(value).replace(/\D/g, '')

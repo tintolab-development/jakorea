@@ -70,6 +70,7 @@ export {
   useProgramDetail,
 } from './api/hooks'
 export {
+  usePortalApplicationOption,
   useProgramApplicationForm,
   useSubmitProgramApplication,
 } from './api/application-hooks'

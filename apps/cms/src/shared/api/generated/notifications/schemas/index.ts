@@ -631,8 +631,6 @@ export * from './inquiryResponseStatus';
 export * from './institutionScheduleConfirmRequest';
 export * from './instructorActivityTypeResponse';
 export * from './instructorActivityTypeUpsertRequest';
-export * from './instructorApplicationApprovalCancellationRequest';
-export * from './instructorApplicationApprovalCancellationRequestFaultParty';
 export * from './instructorApplicationDetailResponse';
 export * from './instructorApplicationListItemResponse';
 export * from './instructorAssignmentCalendarResponse';

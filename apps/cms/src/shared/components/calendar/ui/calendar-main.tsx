@@ -106,6 +106,7 @@ export type CalendarMainProgramProps = CalendarMainItemsProps
 export type CalendarMainEventsProps = CalendarMainSharedProps & {
   events: CalendarMainEventInput[]
   selectedRowKeys?: React.Key[]
+  onEventClick?: (item: CalendarItem) => void
   previewTooltipContent?: (args: {
     events: CalendarItem[]
     colorMap: Map<string | number, ScheduleColorPair>
@@ -358,6 +359,7 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
     const eventsConfig: CalendarEventsConfig | undefined = isEventsMode
       ? {
           selectedRowKeys: props.selectedRowKeys ?? [],
+          onEventClick: props.onEventClick,
           previewTooltipContent: props.previewTooltipContent,
           overrideEventColorMap: props.overrideEventColorMap,
           resolveEventColors: props.resolveEventColors,

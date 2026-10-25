@@ -218,7 +218,7 @@ function GeneralProgramRegistrationFullpageModalInner({
       // 등록 위자드는 mutation onSuccess를 타지 않으므로 목록·위젯을 여기서 무효화한다.
       invalidateProgramListCachesAfterRegistration(queryClient, registrationFormVariant)
       pendingCreatedProgramRef.current = program
-      setCompleteSuccessOpen(true)
+      setCompleteSuccessOpen(!hasPendingRegistrationFormApplyFailures())
     },
     [queryClient, registrationFormVariant]
   )

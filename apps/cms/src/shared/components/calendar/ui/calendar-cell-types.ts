@@ -9,6 +9,7 @@ import type { CalendarItem } from '../lib/calendar-helpers'
 
 export type CalendarEventsConfig = {
   selectedRowKeys: Key[]
+  onEventClick?: (item: CalendarItem) => void
   previewTooltipContent?: (args: {
     events: CalendarItem[]
     colorMap: Map<string | number, ScheduleColorPair>

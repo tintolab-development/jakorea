@@ -65,6 +65,7 @@ import {
 } from '@/features/program/shared/lib/program-delete-guide'
 import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
+import { resolveProgramListDetailEntry } from '@/features/program/general/lib/resolve-program-list-detail-entry'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
@@ -586,13 +587,9 @@ function ProgramListPageContent() {
       setSelectedProgramForFullPageModal(program)
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('programId', program.id)
-      if (
-        programType === 'company_school' &&
-        (statusFilter === 'in_progress' || statusFilter === 'completed')
-      ) {
-        nextParams.set('lnb', 'applicants')
-        nextParams.set('tab', 'institutions')
-      }
+      const entry = resolveProgramListDetailEntry(program, { programType, statusFilter })
+      nextParams.set('lnb', entry.lnb)
+      nextParams.set('tab', entry.tab)
       setSearchParams(nextParams, { replace: false })
       return
     }

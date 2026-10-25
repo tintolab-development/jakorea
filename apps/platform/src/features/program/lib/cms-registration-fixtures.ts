@@ -720,13 +720,41 @@ export const UJAT_VOLUNTEER_FIXTURE: CmsRegistrationFixture = {
   recruitmentGuide: '1. 신청 자격: 대학(원)생\n2. 신청 방법: 홈페이지 온라인 신청',
   otherNotes: '면접 일정은 개별 안내 예정',
   applicationMethod: '홈페이지 온라인 신청',
-  ujatPublicEducationSchedules: [
-    { label: '사전교육(발대식)', value: '2028.03.28(금) 13:00 ~ 17:00' },
+  schedules: [
     {
-      label: '교육 진행',
-      value: '상반기 2028.04.03 ~ 2028.06.19 / 하반기 2028.09.11 ~ 2028.11.20',
+      id: 202801,
+      scheduleKind: 'PRE_EDUCATION',
+      scheduleName: '봉사자 사전교육',
+      startAt: '2028-03-28T13:00:00.000Z',
+      endAt: '2028-03-28T17:00:00.000Z',
+      publiclyVisible: true,
     },
-    { label: '해단식', value: '2028.11.27(금) 14:00 ~ 16:00' },
+    {
+      id: 202802,
+      term: 'FIRST_HALF',
+      scheduleKind: 'EDUCATION',
+      scheduleName: '봉사자 교육',
+      startAt: '2028-04-03T00:00:00.000Z',
+      endAt: '2028-06-19T23:59:59.000Z',
+      publiclyVisible: true,
+    },
+    {
+      id: 202803,
+      term: 'SECOND_HALF',
+      scheduleKind: 'EDUCATION',
+      scheduleName: '봉사자 교육',
+      startAt: '2028-09-11T00:00:00.000Z',
+      endAt: '2028-11-20T23:59:59.000Z',
+      publiclyVisible: true,
+    },
+    {
+      id: 202804,
+      scheduleKind: 'CLOSING',
+      scheduleName: '해단식',
+      startAt: '2028-11-27T14:00:00.000Z',
+      endAt: '2028-11-27T16:00:00.000Z',
+      publiclyVisible: true,
+    },
   ],
   rounds: [
     {
@@ -801,9 +829,25 @@ export const UJAT_PARTICIPANT_FIXTURE: CmsRegistrationFixture = {
   contactPhone: '02-6085-6028',
   contactEmail: 'school@jakorea.org',
   notes: '금요일 1~4교시 일정이 가능한 학교만 신청해 주세요.',
-  ujatPublicEducationSchedules: [
-    { label: '상반기', value: '2029.04.03 ~ 2029.06.19' },
-    { label: '하반기', value: '2029.09.11 ~ 2029.11.20' },
+  schedules: [
+    {
+      id: 202901,
+      term: 'FIRST_HALF',
+      scheduleKind: 'EDUCATION',
+      scheduleName: '기관 상반기 교육',
+      startAt: '2029-04-03T00:00:00.000Z',
+      endAt: '2029-06-19T23:59:59.000Z',
+      publiclyVisible: true,
+    },
+    {
+      id: 202902,
+      term: 'SECOND_HALF',
+      scheduleKind: 'EDUCATION',
+      scheduleName: '기관 하반기 교육',
+      startAt: '2029-09-11T00:00:00.000Z',
+      endAt: '2029-11-20T23:59:59.000Z',
+      publiclyVisible: true,
+    },
   ],
   rounds: [
     {

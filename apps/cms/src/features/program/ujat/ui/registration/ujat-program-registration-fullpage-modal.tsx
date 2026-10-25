@@ -160,7 +160,7 @@ function UjatProgramRegistrationFullpageModalInner({
     (program: Program) => {
       invalidateUjatProgramListCaches(queryClient)
       pendingCreatedProgramRef.current = program
-      setCompleteSuccessOpen(true)
+      setCompleteSuccessOpen(!hasPendingRegistrationFormApplyFailures())
     },
     [queryClient]
   )

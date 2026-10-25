@@ -5,7 +5,6 @@
 
 import type { UjatProgramProgressStatus } from '@/types/domain'
 import { normalizeUjatProgressStatus } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
-import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
 
 export const UJAT_PROGRAM_LIST_PROGRESS_ORDER: readonly UjatProgramProgressStatus[] = [
   'EDUCATION_SCHEDULED',
@@ -45,8 +44,6 @@ export function resolveUjatProgramListProgressStatus(program: {
   return (
     normalizeUjatProgressStatus(
       typeof program.ujatProgressStatus === 'string' ? program.ujatProgressStatus : null
-    ) ??
-    resolveUjatPrimaryProgressById(program.id) ??
-    null
+    ) ?? null
   )
 }

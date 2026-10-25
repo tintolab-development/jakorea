@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mapCategoryItem,
   mapCreatedCategory,
   withCreatedCategory,
   withoutCategory,
@@ -15,6 +16,24 @@ describe('mapCreatedCategory', () => {
         status: 'active',
       })
     ).toEqual({ id: '12', name: '신규' })
+  })
+
+  it('keeps canonical version and ordering fields from the category list', () => {
+    expect(
+      mapCategoryItem({
+        id: 12,
+        name: '공지',
+        useYn: true,
+        displayOrder: 2,
+        updatedAt: '2026-10-25T06:00:00Z',
+      })
+    ).toEqual({
+      id: '12',
+      name: '공지',
+      useYn: true,
+      displayOrder: 2,
+      updatedAt: '2026-10-25T06:00:00Z',
+    })
   })
 
   it('maps page-shaped create response items by name', () => {

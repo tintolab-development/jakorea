@@ -240,6 +240,83 @@ export function useProgramApplicationForm(
   }
 }
 
+export type PortalApplicationOptionQuery = {
+  isLoading: boolean
+  option: ReturnType<typeof pickApplicationOption>
+  blockedReason: string | null
+  blockedMessage: string | null
+}
+
+/** 상세 「신청하기」 비활성·사유. 양식 GET은 하지 않는다. */
+export function usePortalApplicationOption(
+  programId: string | null | undefined,
+  selection?: ProgramApplicationSelection | null,
+): PortalApplicationOptionQuery {
+  const remote = isRemoteApiConfigured()
+  const numericId = parsePortalProgramId(programId)
+  const enabled = remote && numericId != null
+
+  const optionsQuery = useQuery({
+    queryKey: platformQueryKeys.program.applicationOptions(String(numericId ?? '')),
+    queryFn: ({ signal }) => fetchPortalApplicationOptions(numericId!, signal),
+    enabled,
+    staleTime: FORM_STALE_MS,
+    gcTime: FORM_GC_MS,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+
+  if (!enabled || optionsQuery.isPending) {
+    return {
+      isLoading: Boolean(enabled && optionsQuery.isPending),
+      option: null,
+      blockedReason: null,
+      blockedMessage: null,
+    }
+  }
+
+  if (optionsQuery.isError) {
+    const blockedReason = getApplicationApiErrorCode(optionsQuery.error)
+    return {
+      isLoading: false,
+      option: null,
+      blockedReason,
+      blockedMessage: resolveApplicationBlockedDisplayMessage(
+        blockedReason,
+        optionsQuery.error,
+      ),
+    }
+  }
+
+  const option = pickApplicationOption(optionsQuery.data, selection)
+  if (!option) {
+    const blockedReason =
+      selection?.recruitmentId != null || (selection?.recruitmentIds?.length ?? 0) > 0
+        ? 'RECRUITMENT_NOT_FOUND'
+        : 'APPLICATION_FORM_NOT_CONFIGURED'
+    return {
+      isLoading: false,
+      option: null,
+      blockedReason,
+      blockedMessage: messageForApplicationBlockedReason(blockedReason),
+    }
+  }
+
+  const blockedReason =
+    option.formBindingId == null
+      ? (option.blockedReason ?? 'APPLICATION_FORM_NOT_CONFIGURED')
+      : option.canApply === false
+        ? (option.blockedReason ?? 'PROGRAM_NOT_APPLICABLE')
+        : null
+
+  return {
+    isLoading: false,
+    option,
+    blockedReason,
+    blockedMessage: messageForApplicationBlockedReason(blockedReason),
+  }
+}
+
 export function useSubmitProgramApplication(programId: number | null) {
   const queryClient = useQueryClient()
   return useMutation({

@@ -15,6 +15,11 @@ import type {
   PageResponseFaqResponse,
   PageResponseMapStringObject,
 } from '@/shared/api/generated/posts/schemas'
+import {
+  patchCategoryBatchChanges,
+  type CategoryBatchSaveResponse,
+} from '@/features/posts/api/shared/category-bulk-api'
+import type { CategoryManagementDraftChanges } from '@/features/posts/model/category-management-draft'
 
 const postsApi = getJAKoreaCMSBackendAPIPostsSubset()
 
@@ -79,6 +84,12 @@ export async function updateFaqCategoryRemote(
 
 export async function deleteFaqCategoryRemote(categoryId: string): Promise<void> {
   await postsApi.deleteFaqCategory(pathId(categoryId))
+}
+
+export async function bulkChangeFaqCategoriesRemote(
+  changes: CategoryManagementDraftChanges
+): Promise<CategoryBatchSaveResponse> {
+  return patchCategoryBatchChanges('/api/admin/content/faq-categories/bulk-changes', changes)
 }
 
 function faqInlineImagePath(faqId: string): string {

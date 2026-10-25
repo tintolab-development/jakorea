@@ -1,5 +1,5 @@
 import type { ProgramsListParams } from '../model/types.ts'
-import type { PortalProgramListQuery } from './types.ts'
+import type { PortalProgramListFilterValue, PortalProgramListQuery } from './types.ts'
 
 const PORTAL_TAB = {
   youth: 'YOUTH_YOUNG',
@@ -23,13 +23,37 @@ const EDUCATION_METHOD = {
   online: 'ONLINE',
   offline: 'OFFLINE',
   hybrid: 'HYBRID',
-  participant_choice: 'PARTICIPANT_CHOICE',
+  participant_choice: 'PARTICIPANT_SELECTION',
 } as const
 
 function omitAll(value: string): string | undefined {
   const trimmed = value.trim()
   if (!trimmed || trimmed === 'all') return undefined
   return trimmed
+}
+
+/** 중복·순서 차이를 제거해 query key에 넣을 필터 값을 정규화한다. */
+export function normalizePortalProgramFilterValues(
+  value: PortalProgramListFilterValue | undefined,
+): string[] {
+  const values = Array.isArray(value) ? value : value == null ? [] : [value]
+  return [...new Set(values.map(item => item.trim()).filter(Boolean))].sort()
+}
+
+function omitAllValues(values: readonly string[] | undefined): string[] {
+  return [...new Set((values ?? []).map(item => item.trim()).filter(item => item && item !== 'all'))]
+}
+
+function mappedFilterValue(
+  scalar: string,
+  values: readonly string[] | undefined,
+  map: (value: string) => string | undefined,
+): PortalProgramListFilterValue | undefined {
+  const scalarValue = omitAll(scalar)
+  const source = values && values.length > 0 ? omitAllValues(values) : scalarValue ? [scalarValue] : []
+  const mapped = source.map(map).filter((value): value is string => Boolean(value))
+  if (mapped.length === 0) return undefined
+  return mapped.length === 1 ? mapped[0] : mapped
 }
 
 function operatingRange(value: string): { operatingFrom?: string; operatingTo?: string } {
@@ -47,31 +71,44 @@ export function toPortalProgramListQuery(
 ): PortalProgramListQuery {
   const category = params.category
   const portalTab = category === 'all' ? undefined : PORTAL_TAB[category]
-  const programType = omitAll(params.programType)?.toUpperCase()
-  const recruitmentStatus = omitAll(params.recruitmentStatus)
-  const educationForm = omitAll(params.educationForm)
+  const programType = mappedFilterValue(
+    params.programType,
+    params.programTypeValues,
+    value => value.toUpperCase(),
+  )
+  const recruitmentStatus = mappedFilterValue(
+    params.recruitmentStatus,
+    params.recruitmentStatusValues,
+    value =>
+      PORTAL_RECRUITMENT_STATUS[value as keyof typeof PORTAL_RECRUITMENT_STATUS] ??
+      value.toUpperCase(),
+  )
+  const educationForm = mappedFilterValue(
+    params.educationForm,
+    params.educationFormValues,
+    value =>
+      EDUCATION_METHOD[value as keyof typeof EDUCATION_METHOD] ?? value.toUpperCase(),
+  )
   const operating = operatingRange(params.operatingPeriod)
-  const recruitmentTargetFilter = omitAll(params.recruitmentTarget)
-  const educationTargetFilter = omitAll(params.educationTarget)
-  /** API는 `educationTargets`만 사용. URL의 모집·교육 대상 필터가 서로 다르면 전송하지 않는다. */
-  const educationTargets =
-    educationTargetFilter && recruitmentTargetFilter && educationTargetFilter !== recruitmentTargetFilter
-      ? undefined
-      : educationTargetFilter ?? recruitmentTargetFilter
+  const recruitmentTargetFilter = mappedFilterValue(
+    params.recruitmentTarget,
+    params.recruitmentTargetValues,
+    omitAll,
+  )
+  const educationTargetFilter = mappedFilterValue(
+    params.educationTarget,
+    params.educationTargetValues,
+    omitAll,
+  )
 
   return {
     keyword: omitAll(params.q),
     portalTab,
     programType,
-    recruitmentStatus: recruitmentStatus
-      ? PORTAL_RECRUITMENT_STATUS[recruitmentStatus as keyof typeof PORTAL_RECRUITMENT_STATUS] ??
-        recruitmentStatus.toUpperCase()
-      : undefined,
-    educationTargets,
-    educationMethod: educationForm
-      ? EDUCATION_METHOD[educationForm as keyof typeof EDUCATION_METHOD] ??
-        educationForm.toUpperCase()
-      : undefined,
+    recruitmentStatus,
+    recruitmentTarget: recruitmentTargetFilter,
+    educationTarget: educationTargetFilter,
+    educationMethod: educationForm,
     ...operating,
     sort: PORTAL_SORT[params.sort] ?? 'LATEST',
     page: Math.max(0, params.page - 1),

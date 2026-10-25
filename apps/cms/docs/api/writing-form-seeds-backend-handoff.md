@@ -265,7 +265,7 @@
 | `gemini-vt-inst-seed-third-party` | single_item | horizontal_table | 개인정보 제3자 정보 제공·이용 동의 |
 | `gemini-vt-inst-seed-portrait` | single_item | horizontal_table | 초상권 수집·이용 동의 |
 | `gemini-vt-inst-seed-training-info` | single_item | horizontal_table | 연수 정보 |
-| `gemini-vt-inst-seed-contact` | single_item | horizontal_table | 담당 교사 정보 |
+| `gemini-vt-inst-seed-contact` | single_item | horizontal_table | 담당자 정보 |
 | `gemini-vt-inst-seed-preferred-schedule` | single_item | horizontal_table | 진행 희망 교육 일정 |
 
 ### `application-ujat-school` — UJAT_참여 기관 신청 폼

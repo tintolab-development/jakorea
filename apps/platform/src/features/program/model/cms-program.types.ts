@@ -53,6 +53,18 @@ export type CmsScheduleDetail = {
   scheduleDateLabel?: string
 }
 
+/** CMS schedules[]의 공개 교육 일정 계약 (UJAT 공개 상세용). */
+export type CmsProgramSchedule = {
+  id?: number | string | null
+  scheduleId?: number | string | null
+  scheduleName?: string | null
+  term?: string | null
+  scheduleKind?: string | null
+  startAt?: string | null
+  endAt?: string | null
+  publiclyVisible?: boolean | null
+}
+
 /** CMS 일반 프로그램 공통정보 — 참여 방식 (신청 폼 teamInfo 분기) */
 export type CmsParticipationMethod = 'individual' | 'team'
 
@@ -89,12 +101,6 @@ export type CmsProgramCommonInfo = {
    * `team`이면 개인 신청 폼에 teamInfo 단락 노출 (CMS 미리보기와 동일).
    */
   participationMethod?: CmsParticipationMethod
-}
-
-/** UJAT 공개 상세 교육 일정 행 (불가일 제외·사전교육/진행/해단식) */
-export type CmsUjatEducationScheduleLine = {
-  label: string
-  value: string
 }
 
 /** UJAT 목록 `ujatProgressStatus` 중 홈 상세 매핑에 쓰는 값 */
@@ -157,6 +163,8 @@ export type CmsProgramLike = {
   registrationKind?: 'general' | 'economy' | 'trainedTeachers' | 'gemini' | 'ujat'
   /** UJAT 진행 현황 (registrationKind=ujat) */
   ujatProgressStatus?: CmsUjatProgressStatus
+  /** CMS schedules[]의 물리 교육 일정 (공개 상세의 정식 SSOT) */
+  schedules?: CmsProgramSchedule[]
   /** 봉사 모집 기간 (일반 봉사·UJAT 봉사) */
   volunteerApplicationStartDate?: string
   volunteerApplicationEndDate?: string
@@ -175,11 +183,6 @@ export type CmsProgramLike = {
   interviewEndDate?: string
   finalPassAnnouncementDate?: string
   resultAnnouncementDate?: string
-  /**
-   * UJAT 공개 상세 교육 일정 (기관: 상·하반기 / 봉사: 사전교육·교육 진행·해단식).
-   * 있으면 educationScheduleLines 보다 우선. 불가일 행은 넣지 않는다.
-   */
-  ujatPublicEducationSchedules?: CmsUjatEducationScheduleLine[]
 }
 
 export type CmsRegistrationCaseKind =

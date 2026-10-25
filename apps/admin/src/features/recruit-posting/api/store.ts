@@ -84,6 +84,8 @@ function normalizePosting(raw: Partial<RecruitPosting>, i: number): RecruitPosti
     createdAt: asString(raw.createdAt, ''),
     viewCount: asNumber(raw.viewCount, 0),
     attachments: asAttachments(raw.attachments),
+    buttonLabel: asString(raw.buttonLabel, '').trim(),
+    linkUrl: asString(raw.linkUrl, '').trim(),
     version: asNumber(raw.version, 0),
   }
 }
@@ -201,6 +203,8 @@ function buildSeed(): RecruitPosting[] {
         authorName: DEFAULT_AUTHOR,
         attachments: [],
         viewCount: 0,
+        buttonLabel: '',
+        linkUrl: '',
         version: 0,
       },
       i,
@@ -325,6 +329,8 @@ export function createRecruitPosting(input: RecruitPostingCreateInput): RecruitP
       dataUrl: a.dataUrl,
       assetId: a.assetId,
     })),
+    buttonLabel: input.buttonLabel.trim(),
+    linkUrl: input.linkUrl.trim(),
     version: 0,
   }
   writeFile({ version: 2, items: [posting, ...file.items] })
@@ -353,6 +359,8 @@ export function updateRecruitPosting(input: RecruitPostingUpdateInput): RecruitP
       dataUrl: a.dataUrl,
       assetId: a.assetId,
     })),
+    buttonLabel: input.buttonLabel.trim(),
+    linkUrl: input.linkUrl.trim(),
     version: prev.version + 1,
   }
   const items = file.items.slice()

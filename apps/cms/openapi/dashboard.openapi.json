@@ -19833,7 +19833,7 @@
       },
       "InstructorAssignmentCancelRequest": {
         "type": "object",
-        "description": "강사 배정 취소 요청. 봉사자/UJAT AssignmentCancelRequest와 분리되며 faultParty를 포함한다.",
+        "description": "강사 배정 취소 요청",
         "properties": {
           "reason": {
             "type": "string",
@@ -19850,17 +19850,17 @@
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true,
             "description": "취소 알림 직접 설정 시 예약 발송 시각. timing=SCHEDULED일 때 필수이며 미래 시각이어야 합니다."
           },
           "faultParty": {
             "type": "string",
-            "nullable": true,
-            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
+            "description": "취소 귀책. USER=강사 사유(JA 평가 등급 강의 취소 감점 대상), ADMIN=운영 사유. 생략·null이면 ADMIN으로 처리합니다.",
             "enum": [
               "USER",
               "ADMIN"
-            ]
+            ],
+            "example": "USER",
+            "nullable": true
           }
         }
       },
@@ -23476,43 +23476,36 @@
             }
           },
           "fixedEvaluationScore": {
-            "type": "number",
-            "description": "4개 항목 합 ×5 (20~100). 평가 전 null",
-            "nullable": true
+            "type": "number"
           },
           "administrativeAdjustmentScore": {
             "type": "number",
-            "description": "취소·보고서 감점의 합 (0 이하)"
+            "description": "행정능력 자동 감점 합계(cancellationAdjustmentScore + lateReportAdjustmentScore). 0 이하."
           },
           "cancellationAdjustmentScore": {
             "type": "number",
-            "description": "강사 사유 취소 감점 (0, -5, -10 …). projection 없으면 null",
-            "nullable": true
+            "description": "CMS에서 강사 사유(faultParty=USER)로 처리한 취소 감점. 2회당 -5점."
           },
           "lateReportAdjustmentScore": {
             "type": "number",
-            "description": "강의보고서 기한 미준수 감점 (0, -5, -10 …). projection 없으면 null",
-            "nullable": true
+            "description": "강의보고서 제출기한 미준수 감점. 2회당 -5점. 취소 건수와 합산하지 않습니다."
           },
           "lateSettlementAdjustmentScore": {
             "type": "number",
-            "description": "호환용. 항상 0. 화면에서 행 제거/숨김."
+            "description": "호환용 필드. 정산 신청 기한 미준수는 JA 평가 등급 감점 대상이 아니므로 산정 결과는 항상 0입니다."
           },
           "totalScore": {
-            "type": "number",
-            "description": "fixed + administrative. 음수 가능. FE에서 0으로 clamp하지 않음.",
-            "nullable": true
+            "type": "number"
           },
           "currentGrade": {
             "type": "string",
-            "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). 평가 전 null.",
+            "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음).",
             "enum": [
               "A",
               "B",
               "C",
               "D"
-            ],
-            "nullable": true
+            ]
           },
           "evaluatedAt": {
             "type": "string",
@@ -23528,12 +23521,11 @@
           },
           "policyVersion": {
             "type": "string",
-            "nullable": true,
-            "description": "활성 정책 버전. 고객사 최종은 CLIENT_FINAL_2026-10-20. 평가 이력 없으면 활성 정책 버전, 미초기화면 null."
+            "description": "활성 정책 버전. 정책 미초기화면 null."
           },
           "policyReady": {
             "type": "boolean",
-            "description": "true면 평가 가능. false일 때만 정책 미확정 안내. 정책 버전 문자열로 판단하지 않음."
+            "description": "false면 전역 JA 등급 정책 미초기화. POST 평가 완료 불가. GET은 200으로 이 플래그만 확인."
           }
         }
       },
@@ -46086,12 +46078,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
+            "description": "카탈로그 key = #{…} 안쪽 라벨",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
+            "description": "본문 삽입용 토큰",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -46101,11 +46093,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true이면 programId 없이 enabled=false."
+            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
+            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
           },
           "programGroups": {
             "type": "array",
@@ -46123,14 +46115,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "description": "허용 참여 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
+            "description": "허용 회원 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
@@ -50441,30 +50433,6 @@
           },
           "status": {
             "type": "string"
-          }
-        }
-      },
-      "InstructorApplicationApprovalCancellationRequest": {
-        "type": "object",
-        "description": "강사 신청 승인 취소 요청. 승인 취소 1건 = JA 감점 1건. 연쇄 배정 취소는 별도 집계하지 않는다.",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "maxLength": 500,
-            "minLength": 0,
-            "example": "강사 개인 사정"
-          },
-          "notification": {
-            "$ref": "#/components/schemas/Notification"
-          },
-          "faultParty": {
-            "type": "string",
-            "nullable": true,
-            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
-            "enum": [
-              "USER",
-              "ADMIN"
-            ]
           }
         }
       }

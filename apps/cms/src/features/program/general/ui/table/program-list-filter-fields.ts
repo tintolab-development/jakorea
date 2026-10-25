@@ -6,7 +6,6 @@ import {
   businessAreaOptions,
   targetLevelOptions,
   programListTargetLevelOptions,
-  programListAudienceFilterOptions,
   programListParticipantTypeFilterOptions,
 } from '../constants/program-list-constants'
 import {
@@ -39,7 +38,10 @@ export const programListOverviewFilterFields = [
     type: 'select' as const,
     label: '참여자 유형',
     placeholder: '전체',
-    options: [...programListAudienceFilterOptions],
+    // 전체 탭도 서버 participantType 계약의 4개 값을 그대로 노출한다.
+    // 학교/개인만 두면 강사·봉사자 프로그램을 필터링할 수 없고,
+    // 서버가 반환한 totalElements와 화면 선택지가 불일치한다.
+    options: [...programListParticipantTypeFilterOptions],
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

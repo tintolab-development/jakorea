@@ -60,9 +60,14 @@ import {
   UJAT_PROGRESS_YEAR_ALL,
   type UjatProgressYearFilter,
 } from '@/features/program/ujat/lib/progress-year-options'
+import {
+  UJAT_PROGRAM_LIST_PROGRESS_LABELS,
+  UJAT_PROGRAM_LIST_PROGRESS_ORDER,
+  resolveUjatProgramListProgressStatus,
+} from '@/features/program/ujat/lib/ujat-program-list-progress'
 import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
 import { getHttpStatus } from '@/features/program/ujat/api/errors'
-import type { Program } from '@/types/domain'
+import type { Program, UjatProgramProgressStatus } from '@/types/domain'
 import {
   FilterTableLayout,
   DeleteGuideModal,
@@ -93,6 +98,23 @@ import './ujat-program-list-page.css'
 
 /** `/programs/ujat?new` — 5단계 UJAT 등록 플로우 풀페이지. `userPreview`는 상단「미리보기」시 `TemplatePreviewModal` 동기화용. */
 const PROGRAMS_UJAT_NEW_QUERY_KEY = 'new'
+const UJAT_PROGRESS_STATUS_ALL = '__all__' as const
+type UjatProgressStatusFilter = UjatProgramProgressStatus | typeof UJAT_PROGRESS_STATUS_ALL
+
+const UJAT_PROGRESS_STATUS_FILTER_OPTIONS = [
+  { label: '전체', value: UJAT_PROGRESS_STATUS_ALL },
+  ...UJAT_PROGRAM_LIST_PROGRESS_ORDER.map(status => ({
+    label: UJAT_PROGRAM_LIST_PROGRESS_LABELS[status],
+    value: status,
+  })),
+]
+
+function readUjatProgressStatusFilter(raw: string | null): UjatProgressStatusFilter {
+  if (!raw) return UJAT_PROGRESS_STATUS_ALL
+  return (UJAT_PROGRAM_LIST_PROGRESS_ORDER as readonly string[]).includes(raw)
+    ? (raw as UjatProgramProgressStatus)
+    : UJAT_PROGRESS_STATUS_ALL
+}
 
 /** `/programs/ujat` 및 하위 경로(라우터 `ujat/*`) — 교육 지역 관리 제외 */
 function isUjatProgramListPath(pathnameNormalized: string): boolean {
@@ -105,6 +127,12 @@ function isUjatProgramListPath(pathnameNormalized: string): boolean {
   return (
     pathnameNormalized === '/programs/ujat' || pathnameNormalized.startsWith('/programs/ujat/')
   )
+}
+
+function readUjatProgressYearFilter(raw: string | null): UjatProgressYearFilter {
+  if (!raw) return UJAT_PROGRESS_YEAR_ALL
+  const year = Number(raw)
+  return Number.isInteger(year) ? year : UJAT_PROGRESS_YEAR_ALL
 }
 
 function clearUjatDetailQueryParams(next: URLSearchParams): URLSearchParams {
@@ -139,16 +167,34 @@ function UjatProgramListPageContent() {
     isUjatProgramListPath(pNorm) && searchParams.has(PROGRAMS_UJAT_NEW_QUERY_KEY)
 
   const ujatRemoteEnabled = shouldUseRemoteApi()
-  const [pendingFilters, setPendingFilters] = useState<{ progressYear: UjatProgressYearFilter }>({
-    progressYear: UJAT_PROGRESS_YEAR_ALL,
-  })
-  const [appliedYear, setAppliedYear] = useState<UjatProgressYearFilter>(UJAT_PROGRESS_YEAR_ALL)
+  const [pendingFilters, setPendingFilters] = useState<{
+    keyword: string
+    progressYear: UjatProgressYearFilter
+    ujatProgressStatus: UjatProgressStatusFilter
+  }>(() => ({
+    keyword: searchParams.get('keyword') ?? '',
+    progressYear: readUjatProgressYearFilter(searchParams.get('progressYear')),
+    ujatProgressStatus: readUjatProgressStatusFilter(searchParams.get('ujatProgressStatus')),
+  }))
+  const [appliedKeyword, setAppliedKeyword] = useState(() => searchParams.get('keyword') ?? '')
+  const [appliedYear, setAppliedYear] = useState<UjatProgressYearFilter>(() =>
+    readUjatProgressYearFilter(searchParams.get('progressYear'))
+  )
+  const [appliedUjatProgressStatus, setAppliedUjatProgressStatus] =
+    useState<UjatProgressStatusFilter>(() =>
+      readUjatProgressStatusFilter(searchParams.get('ujatProgressStatus'))
+    )
 
   const listParams = useMemo(
     () => ({
+      keyword: appliedKeyword.trim() || undefined,
       businessYear: appliedYear === UJAT_PROGRESS_YEAR_ALL ? undefined : appliedYear,
+      ujatProgressStatus:
+        appliedUjatProgressStatus === UJAT_PROGRESS_STATUS_ALL
+          ? undefined
+          : appliedUjatProgressStatus,
     }),
-    [appliedYear]
+    [appliedKeyword, appliedYear, appliedUjatProgressStatus]
   )
   const programsQuery = usePrograms(listParams)
   const businessYearsQuery = useUjatBusinessYears()
@@ -160,7 +206,7 @@ function UjatProgramListPageContent() {
     [programsQuery.data]
   )
   const loading = programsQuery.isFetching && !programsQuery.isFetchingNextPage
-  const infiniteResetKey = String(appliedYear)
+  const infiniteResetKey = `${appliedKeyword}:${String(appliedYear)}:${appliedUjatProgressStatus}`
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage: programsQuery.hasNextPage ?? false,
     isFetchingNextPage: programsQuery.isFetchingNextPage,
@@ -170,6 +216,26 @@ function UjatProgramListPageContent() {
 
   const totalElements =
     programsQuery.data?.pages[0]?.totalElements ?? programs.length
+
+  useEffect(() => {
+    const nextKeyword = searchParams.get('keyword') ?? ''
+    const nextYear = readUjatProgressYearFilter(searchParams.get('progressYear'))
+    const nextStatus = readUjatProgressStatusFilter(searchParams.get('ujatProgressStatus'))
+
+    setPendingFilters(prev => {
+      if (
+        prev.keyword === nextKeyword &&
+        prev.progressYear === nextYear &&
+        prev.ujatProgressStatus === nextStatus
+      ) {
+        return prev
+      }
+      return { keyword: nextKeyword, progressYear: nextYear, ujatProgressStatus: nextStatus }
+    })
+    setAppliedKeyword(prev => (prev === nextKeyword ? prev : nextKeyword))
+    setAppliedYear(prev => (prev === nextYear ? prev : nextYear))
+    setAppliedUjatProgressStatus(prev => (prev === nextStatus ? prev : nextStatus))
+  }, [searchParams])
 
   useEffect(() => {
     if (!programsQuery.isError || programsQuery.isFetching) return
@@ -356,6 +422,13 @@ function UjatProgramListPageContent() {
   const filterFields = useMemo<FilterFieldConfig[]>(
     () => [
       {
+        key: 'keyword',
+        type: 'search',
+        label: '프로그램명',
+        placeholder: '프로그램명을 입력하세요',
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
+      },
+      {
         key: 'progressYear',
         type: 'select',
         label: '진행년도',
@@ -364,34 +437,94 @@ function UjatProgramListPageContent() {
         allowClear: false,
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
+      {
+        key: 'ujatProgressStatus',
+        type: 'select',
+        label: '프로그램 진행 현황',
+        options: UJAT_PROGRESS_STATUS_FILTER_OPTIONS,
+        placeholder: '전체',
+        allowClear: false,
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
+      },
     ],
     [progressYearFieldOptions]
   )
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
+    if (key === 'keyword') {
+      setPendingFilters(prev => ({ ...prev, keyword: String(value ?? '') }))
+      return
+    }
+    if (key === 'ujatProgressStatus') {
+      setPendingFilters(prev => ({
+        ...prev,
+        ujatProgressStatus: readUjatProgressStatusFilter(String(value ?? '')),
+      }))
+      return
+    }
     if (key !== 'progressYear') return
     if (value === UJAT_PROGRESS_YEAR_ALL) {
-      setPendingFilters({ progressYear: UJAT_PROGRESS_YEAR_ALL })
+      setPendingFilters(prev => ({ ...prev, progressYear: UJAT_PROGRESS_YEAR_ALL }))
       return
     }
     const nextYear = Number(value)
-    setPendingFilters({
+    setPendingFilters(prev => ({
+      ...prev,
       progressYear: Number.isFinite(nextYear) ? nextYear : UJAT_PROGRESS_YEAR_ALL,
-    })
+    }))
   }, [])
 
   const handleSearch = useCallback(() => {
+    const keyword = pendingFilters.keyword.trim()
+    setAppliedKeyword(keyword)
     setAppliedYear(pendingFilters.progressYear)
-  }, [pendingFilters.progressYear])
+    setAppliedUjatProgressStatus(pendingFilters.ujatProgressStatus)
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        if (keyword) next.set('keyword', keyword)
+        else next.delete('keyword')
+        if (pendingFilters.progressYear === UJAT_PROGRESS_YEAR_ALL) {
+          next.delete('progressYear')
+        } else {
+          next.set('progressYear', String(pendingFilters.progressYear))
+        }
+        if (pendingFilters.ujatProgressStatus === UJAT_PROGRESS_STATUS_ALL) {
+          next.delete('ujatProgressStatus')
+        } else {
+          next.set('ujatProgressStatus', pendingFilters.ujatProgressStatus)
+        }
+        return next
+      },
+      { replace: true }
+    )
+  }, [
+    pendingFilters.keyword,
+    pendingFilters.progressYear,
+    pendingFilters.ujatProgressStatus,
+    setSearchParams,
+  ])
 
   const filteredRows = useMemo(() => {
     const sorted = [...ujatPrograms].sort(
       (a, b) => dayjs(b.startDate).valueOf() - dayjs(a.startDate).valueOf()
     )
-    // remote: API `businessYear`가 이미 반영됨 — 클라이언트 year 재필터 금지
-    if (ujatRemoteEnabled || appliedYear === UJAT_PROGRESS_YEAR_ALL) return sorted
-    return sorted.filter(p => dayjs(p.startDate).year() === appliedYear)
-  }, [ujatPrograms, appliedYear, ujatRemoteEnabled])
+    // remote: API `keyword`/`businessYear`가 이미 반영됨 — 클라이언트 재필터 금지
+    if (ujatRemoteEnabled) return sorted
+    return sorted.filter(program => {
+      const matchesKeyword = appliedKeyword
+        ? resolveUjatProgramDisplayTitle(program)
+            .toLocaleLowerCase()
+            .includes(appliedKeyword.toLocaleLowerCase())
+        : true
+      const matchesYear =
+        appliedYear === UJAT_PROGRESS_YEAR_ALL || dayjs(program.startDate).year() === appliedYear
+      const matchesStatus =
+        appliedUjatProgressStatus === UJAT_PROGRESS_STATUS_ALL ||
+        resolveUjatProgramListProgressStatus(program) === appliedUjatProgressStatus
+      return matchesKeyword && matchesYear && matchesStatus
+    })
+  }, [ujatPrograms, appliedKeyword, appliedYear, appliedUjatProgressStatus, ujatRemoteEnabled])
 
   const columns = useMemo<ColumnsType<Program>>(
     () => [

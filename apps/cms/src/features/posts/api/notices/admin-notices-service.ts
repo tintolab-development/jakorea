@@ -17,6 +17,7 @@ import {
   deleteNoticeCategoryRemote,
   deleteNoticeRemote,
   bulkDeleteNoticesRemote,
+  bulkChangeNoticeCategoriesRemote,
   fetchNoticeCategoriesRemote,
   fetchNoticeRemote,
   fetchNoticesRemote,
@@ -38,6 +39,8 @@ import {
   uploadUnboundNoticeAttachments,
 } from '@/features/posts/api/notices/notice-attachments'
 import { collectAdminFileObjectIdsFromContent } from '@/shared/lib/admin-file-upload'
+import type { CategoryManagementDraftChanges } from '@/features/posts/model/category-management-draft'
+import type { CategoryBatchSaveResponse } from '@/features/posts/api/shared/category-bulk-api'
 
 function assertNoticesRemoteReady(): void {
   if (!isRealApiModuleEnabled('notices')) {
@@ -210,4 +213,11 @@ export async function updateNoticeCategory(categoryId: string, name: string): Pr
 export async function deleteNoticeCategory(categoryId: string): Promise<void> {
   assertNoticesRemoteReady()
   await deleteNoticeCategoryRemote(categoryId)
+}
+
+export async function saveNoticeCategoriesBulk(
+  changes: CategoryManagementDraftChanges
+): Promise<CategoryBatchSaveResponse> {
+  assertNoticesRemoteReady()
+  return bulkChangeNoticeCategoriesRemote(changes)
 }

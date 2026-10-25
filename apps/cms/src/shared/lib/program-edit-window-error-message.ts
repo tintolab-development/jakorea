@@ -32,7 +32,7 @@ export const PROGRAM_RECRUITMENT_INFO_EDIT_BLOCKED_ALERT_TITLE =
   '모집 정보 수정 불가 안내'
 
 export const PROGRAM_RECRUITMENT_ROW_EDIT_PERIOD_ENDED_MESSAGE =
-  '모집 시작 후에는 모집 정보를 수정할 수 없습니다.'
+  '모집 시작 이후에는 모집 정보를 수정할 수 없습니다.'
 
 export const RECRUITMENT_HAS_APPLICATIONS_MESSAGE =
   '신청자가 있는 모집은 삭제하거나 참여자 유형을 변경할 수 없습니다. 필요한 경우 상태를 INACTIVE로 변경해 주세요.'

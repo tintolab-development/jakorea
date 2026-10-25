@@ -10,6 +10,7 @@ import {
   fetchUjatTypedDetailRemote,
   patchUjatTypedDetailRemote,
   replaceUjatTypedDetailRemote,
+  syncUjatTypedDetailPhysicalSchedulesRemote,
   syncUjatTypedDetailRowSchedulesRemote,
   typedScheduleRequestsForRow,
   updateUjatTypedDetailHalfRemote,
@@ -88,6 +89,52 @@ describe('UJAT Typed detail HTTP contract', () => {
       url: '/api/admin/programs/186264/ujat/typed-detail/halves/FIRST_HALF/stages/MAIN_EDUCATION/rows/h1-main-1/schedules',
       method: 'PUT',
       data: { expectedRevision: 8, schedules },
+    })
+  })
+
+  it('syncs every physical schedule row from the saved half plan with the latest revision', async () => {
+    const detail = {
+      schemaVersion: 1,
+      revision: 9,
+      common: null,
+      halfPlans: [
+        {
+          semesterType: 'FIRST_HALF' as const,
+          stages: [
+            {
+              stage: 'MAIN_EDUCATION' as const,
+              rows: [
+                {
+                  rowId: 'h1-main-1',
+                  displayOrder: 1,
+                  educationName: '상반기 본교육',
+                  dates: ['2027-04-01'],
+                  scheduleIds: [187001],
+                  endDate: '2027-04-01',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    request.mockResolvedValue(detail)
+
+    await syncUjatTypedDetailPhysicalSchedulesRemote('186264', detail, ['FIRST_HALF'])
+
+    expect(request).toHaveBeenCalledTimes(1)
+    expect(request).toHaveBeenCalledWith({
+      url: '/api/admin/programs/186264/ujat/typed-detail/halves/FIRST_HALF/stages/MAIN_EDUCATION/rows/h1-main-1/schedules',
+      method: 'PUT',
+      data: {
+        expectedRevision: 9,
+        schedules: [
+          expect.objectContaining({
+            id: 187001,
+            scheduleRole: 'EDUCATION',
+          }),
+        ],
+      },
     })
   })
 

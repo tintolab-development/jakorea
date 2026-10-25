@@ -145,6 +145,13 @@ export function ProgramCalendarView({
     () => mapAdminProgramCalendarItemsToEvents(calendarItems),
     [calendarItems]
   )
+  const handleCalendarEventClick = useCallback(
+    (item: CalendarItem) => {
+      const event = getGeneralProgramCalendarEventFromCalendarItem(item)
+      if (event) onItemClick(event.originalItem)
+    },
+    [onItemClick]
+  )
 
   const programFilterOptions = useMemo(() => {
     const seen = new Map<string, string>()
@@ -267,6 +274,7 @@ export function ProgramCalendarView({
           onSelectDate={handleMainDateSelect}
           onMonthChange={handleMainMonthChange}
           onModeChange={onModeChange}
+          onEventClick={handleCalendarEventClick}
           previewTooltipContent={renderGeneralProgramCalendarPreviewTooltipContent}
           renderMonthEventContent={renderGeneralProgramMonthEventContent}
           overrideEventColorMap={overrideEventColorMap}

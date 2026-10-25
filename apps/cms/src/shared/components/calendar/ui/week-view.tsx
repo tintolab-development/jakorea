@@ -374,7 +374,10 @@ export function WeekView({
                                   .filter(Boolean)
                                   .join(' ')}
                                 style={{ backgroundColor: colors.bg }}
-                                onClick={e => e.stopPropagation()}
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  eventsConfig.onEventClick?.(item)
+                                }}
                               >
                                 <WeekTimeGridEventText title={displayTitle} subtext={subtext} />
                               </div>

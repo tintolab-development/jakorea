@@ -125,6 +125,7 @@ describe('gemini visiting-training adapters', () => {
       updatedByName: null,
     })
     expect(detail.programDescription).toBe('설명')
+    expect(detail.thumbnailFileName).toBeNull()
     expect(detail.minStudentCount).toBe(20)
     expect(detail.applicationPeriodStart).toBe('2026-01-01')
     expect(detail.applicationPeriodEnd).toBe('2026-02-01')
@@ -148,6 +149,12 @@ describe('gemini visiting-training adapters', () => {
     expect(detail.createdByName).toBe('관리자')
     expect(detail.updatedAt).toBe('2026-09-30T05:00:00Z')
     expect(detail.updatedByName).toBe('-')
+    expect(
+      mapGeminiRecruitmentDetailToDetail({
+        programId: 2,
+        thumbnailFileName: 'null',
+      }).thumbnailFileName
+    ).toBeNull()
 
     const app = mapGeminiOrganizationApplicationToRow(
       {

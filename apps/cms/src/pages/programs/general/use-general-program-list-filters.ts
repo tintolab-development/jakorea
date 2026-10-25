@@ -128,8 +128,9 @@ export function useGeneralProgramListFilters() {
       view: listView,
       lifecycleStatus: undefined,
       calendarProgramType: 'GENERAL',
+      serverSideOverviewFilters: remoteEnabled,
     }
-  }, [statusFilter])
+  }, [remoteEnabled, statusFilter])
 
   return {
     statusFilter,

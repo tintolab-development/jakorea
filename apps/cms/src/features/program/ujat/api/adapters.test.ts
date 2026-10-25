@@ -865,6 +865,29 @@ describe('UJAT create — overlay 1차 컬럼 반영 (버그 수정 확인)', ()
     expect(mapped.participantApprovedCount).toBe(2)
     expect(mapped.participantCapacity).toBe(15)
   })
+
+  it('목록 진행 현황은 canonical 응답 필드만 사용한다', () => {
+    const mapped = fromListItem({
+      id: 182102,
+      title: 'UJAT',
+      ujatProgressStatus: 'VOLUNTEER_RECRUITING',
+      serviceDetailJson: JSON.stringify({
+        ujatProgressStatus: 'PROGRAM_ENDED',
+      }),
+    } as Parameters<typeof fromListItem>[0])
+
+    expect(mapped.ujatProgressStatus).toBe('VOLUNTEER_RECRUITING')
+
+    const legacyOnly = fromListItem({
+      id: 182103,
+      title: 'UJAT',
+      serviceDetailJson: JSON.stringify({
+        ujatProgressStatus: 'PROGRAM_ENDED',
+      }),
+    } as Parameters<typeof fromListItem>[0])
+
+    expect(legacyOnly.ujatProgressStatus).toBeUndefined()
+  })
 })
 
 describe('UJAT API policy', () => {
@@ -873,6 +896,24 @@ describe('UJAT API policy', () => {
       programType: 'UJAT',
       businessYear: 2026,
       page: 0,
+      size: 20,
+    })
+  })
+
+  it('목록 요청에 UJAT canonical 진행 현황을 전달한다', () => {
+    expect(
+      toRemoteListParams({
+        keyword: ' 샘플 ',
+        businessYear: 2026,
+        ujatProgressStatus: 'VOLUNTEER_RECRUITING',
+        page: 1,
+      })
+    ).toEqual({
+      keyword: ' 샘플 ',
+      programType: 'UJAT',
+      businessYear: 2026,
+      ujatProgressStatus: 'VOLUNTEER_RECRUITING',
+      page: 1,
       size: 20,
     })
   })
