@@ -59,6 +59,19 @@ function singleLine(value: string | undefined | null): string {
   return value.replace(/\n/g, ' ').trim()
 }
 
+function safeExternalCareerLink(value: string | undefined | null): string {
+  if (typeof value !== 'string') return ''
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+
+  try {
+    const url = new URL(trimmed)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? trimmed : ''
+  } catch {
+    return ''
+  }
+}
+
 /** API `\n`이 있으면 그대로, 한 줄이면 fallback 시안 줄바꿈을 유지한다. */
 function resolvePreservedLines(
   raw: string | undefined | null,
@@ -333,7 +346,7 @@ export function mapPublicCareerPostingDetail(
     viewCount,
     attachments: mapPostingAttachment(item.attachment),
     buttonLabel: singleLine(item.buttonLabel),
-    linkUrl: typeof item.linkUrl === 'string' ? item.linkUrl.trim() : '',
+    linkUrl: safeExternalCareerLink(item.linkUrl),
   }
 }
 

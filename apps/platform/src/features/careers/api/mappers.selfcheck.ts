@@ -417,6 +417,22 @@ assert.equal(detailWithLink?.linkUrl, 'https://jobs.example.test')
 assert.equal(
   mapPublicCareerPostingDetail({
     ...detailSample,
+    buttonLabel: '지원하기',
+    linkUrl: null,
+  })?.buttonLabel,
+  '지원하기',
+)
+assert.equal(
+  mapPublicCareerPostingDetail({
+    ...detailSample,
+    buttonLabel: '지원하기',
+    linkUrl: 'javascript:alert(1)',
+  })?.linkUrl,
+  '',
+)
+assert.equal(
+  mapPublicCareerPostingDetail({
+    ...detailSample,
     buttonLabel: null,
     linkUrl: null,
   })?.buttonLabel,
