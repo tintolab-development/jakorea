@@ -31,6 +31,7 @@ type TemplateSaveRecord = {
   savedAt: string
   draft: WritingFormDraft
   overlay: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
 }
 
 type LocalSaveFile = {
@@ -41,6 +42,7 @@ type LocalSaveFile = {
 type RecruitTemplateSnapshot = {
   draft: WritingFormDraft
   overlay: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
 }
 
 const memoryCache = new Map<string, RecruitTemplateSnapshot>()
@@ -130,6 +132,7 @@ export function rememberUjatRecruitTemplateSave(
   memoryCache.set(templateId, {
     draft: normalizeWritingFormDraft(snapshot.draft),
     overlay: cloneJson(snapshot.overlay),
+    settingsJson: snapshot.settingsJson ? cloneJson(snapshot.settingsJson) : undefined,
   })
   dispatchChanged(templateId)
 }
@@ -143,6 +146,7 @@ export function loadUjatRecruitTemplateSave(
     return {
       draft: normalizeWritingFormDraft(cached.draft),
       overlay: cloneJson(cached.overlay),
+      settingsJson: cached.settingsJson ? cloneJson(cached.settingsJson) : undefined,
     }
   }
 
@@ -156,6 +160,7 @@ export function loadUjatRecruitTemplateSave(
   return {
     draft: normalizeWritingFormDraft(record.draft),
     overlay: cloneJson(record.overlay),
+    settingsJson: record.settingsJson ? cloneJson(record.settingsJson) : undefined,
   }
 }
 
@@ -164,6 +169,7 @@ export function persistUjatRecruitTemplateSaveLocal(args: {
   templateId: string
   draft: WritingFormDraft
   overlay: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
 }): void {
   const file = readFile()
   file.byTemplateId[args.templateId] = {
@@ -172,11 +178,13 @@ export function persistUjatRecruitTemplateSaveLocal(args: {
     savedAt: new Date().toISOString(),
     draft: cloneJson(normalizeWritingFormDraft(args.draft)),
     overlay: cloneJson(args.overlay),
+    settingsJson: args.settingsJson ? cloneJson(args.settingsJson) : undefined,
   }
   writeFile(file)
   rememberUjatRecruitTemplateSave(args.templateId, {
     draft: args.draft,
     overlay: args.overlay,
+    settingsJson: args.settingsJson,
   })
 }
 
@@ -231,6 +239,7 @@ export async function hydrateUjatRecruitTemplateFromRemote(
     const snapshot: RecruitTemplateSnapshot = {
       draft: normalizeWritingFormDraft(saved.draft),
       overlay: saved.overlay ? cloneJson(saved.overlay) : {},
+      settingsJson: saved.settingsJson ? cloneJson(saved.settingsJson) : undefined,
     }
     rememberUjatRecruitTemplateSave(templateId, snapshot)
     return snapshot

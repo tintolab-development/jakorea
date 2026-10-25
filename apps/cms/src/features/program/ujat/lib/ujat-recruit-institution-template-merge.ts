@@ -1,10 +1,10 @@
 import { formatDateDot, formatDateRangeDot } from '@/shared/utils/date'
 import type { Program } from '@/types/domain'
 import type { DateValue } from '@/types'
-import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { loadUjatRecruitInstitutionTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 
 export { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS }
 
@@ -234,8 +234,18 @@ export function applyUjatRecruitInstitutionOverlayOntoProgram(
 /** 저장된 학교 모집 템플릿 오버레이를 프로그램 필드에 병합(프로그램 값이 있으면 우선). */
 export function applyUjatRecruitInstitutionTemplateDefaults(program: Program): Program {
   const saved = loadUjatRecruitInstitutionTemplateSave()
-  if (!saved?.overlay || Object.keys(saved.overlay).length === 0) return program
-  const overlay = saved.overlay
+  const typed = saved?.settingsJson?.ujatRecruitment
+  const typedInstitution =
+    typed != null && typeof typed === 'object' && !Array.isArray(typed)
+      ? (typed as { institution?: Partial<ProgramDetailEditFormValues> }).institution
+      : undefined
+  const typedOverlay = typedInstitution
+    ? buildUjatRecruitInstitutionOverlayFromDetailEditValues(
+        typedInstitution as ProgramDetailEditFormValues
+      )
+    : {}
+  const overlay = { ...(saved?.overlay ?? {}), ...typedOverlay }
+  if (Object.keys(overlay).length === 0) return program
   const programRange = readRangeSeal(overlay, OVERLAY_KEYS.programRange)
   const recruitRange = readRangeSeal(overlay, OVERLAY_KEYS.recruitRange)
   const result = overlay[OVERLAY_KEYS.resultAnnounce] as ResultSeal | undefined

@@ -309,9 +309,15 @@ export function programToUjatRecruitCanonicalFormValues(
         )
       : values.rounds
 
+  const inquiryContactName = rowString(row, 'contactName') ?? ''
   return {
     ...values,
     rounds,
+    ...(kind === 'institution'
+      ? { recruitmentContactOrganizationName: inquiryContactName }
+      : { volunteerRecruitmentContactOrganizationName: inquiryContactName }),
+    ...(hasOwnField(row, 'contactPhone') ? { contactPhone: row.contactPhone ?? '' } : {}),
+    ...(hasOwnField(row, 'contactEmail') ? { contactEmail: row.contactEmail ?? '' } : {}),
     ...(hasOwnField(row, 'announcementTitle')
       ? { announcementTitle: row.announcementTitle ?? '' }
       : {}),
