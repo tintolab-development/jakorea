@@ -24,6 +24,8 @@ describe('education-record-labels', () => {
 
   it('maps education type hybrid aliases', () => {
     expect(formatEducationRecordEducationType('hybrid')).toBe('온/오프라인')
+    expect(formatEducationRecordEducationType('HYBRID')).toBe('온/오프라인')
+    expect(formatEducationRecordEducationType('ONLINE')).toBe('온라인')
     expect(formatEducationRecordEducationType('혼합')).toBe('온/오프라인')
   })
 

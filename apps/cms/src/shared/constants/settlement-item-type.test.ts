@@ -13,6 +13,8 @@ describe('formatSettlementItemTypeLabel', () => {
     expect(formatSettlementItemTypeLabel('activity')).toBe('참여자 활동비')
     expect(formatSettlementItemTypeLabel('withholding')).toBe('원천징수')
     expect(formatSettlementItemTypeLabel('other')).toBe('기타')
+    expect(formatSettlementItemTypeLabel('TRANSPORTATION')).toBe('교통비')
+    expect(formatSettlementItemTypeLabel('MEAL')).toBe('식사비')
   })
 
   it('미정의 type은 원문 유지', () => {

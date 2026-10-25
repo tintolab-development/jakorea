@@ -48,14 +48,22 @@ export function isIndividualTransportAlias(itemType: string | null | undefined):
   return INDIVIDUAL_TRANSPORT_ALIASES.has(normalizePaymentItemType(itemType))
 }
 
+function looksLikeApiEnum(value: string): boolean {
+  return /^[A-Z][A-Z0-9_]*$/.test(value)
+}
+
 export function receiptPaymentItemLabel(item: {
   itemType?: string | null
   itemName?: string | null
 }): string {
   const named = item.itemName?.trim()
-  if (named) return named
+  if (named) {
+    const namedLabel = RECEIPT_ITEM_TYPE_LABELS[named.toUpperCase()]
+    if (namedLabel) return namedLabel
+    if (!looksLikeApiEnum(named)) return named
+  }
   const type = normalizePaymentItemType(item.itemType)
-  return RECEIPT_ITEM_TYPE_LABELS[type] ?? item.itemType?.trim() ?? '지급 항목'
+  return RECEIPT_ITEM_TYPE_LABELS[type] ?? '지급 항목'
 }
 
 /** IndividualSettlementExpenseInput.expenseType OpenAPI enum */

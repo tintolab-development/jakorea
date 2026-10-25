@@ -4,7 +4,10 @@ import {
   formatMailPreviewDateTime,
   type MailPreviewAttachment,
 } from '@/features/notifications/model/mail-template/preview'
-import type { SmsMessageType } from '@/features/notifications/api/adapters/sms-channel'
+import {
+  formatSmsMessageTypeLabel,
+  type SmsMessageType,
+} from '@/features/notifications/api/adapters/sms-channel'
 import './preview-modal.css'
 
 type PreviewModalProps = {
@@ -84,7 +87,7 @@ export function PreviewModal({
             </div>
             <div className="sms-template-preview__meta-row">
               <dt>발송 유형</dt>
-              <dd>{messageType}</dd>
+              <dd>{formatSmsMessageTypeLabel(messageType)}</dd>
             </div>
             <div className="sms-template-preview__meta-row">
               <dt>미리보기 시각</dt>

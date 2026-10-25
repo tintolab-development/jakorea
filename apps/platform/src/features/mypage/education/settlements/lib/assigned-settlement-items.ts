@@ -391,11 +391,7 @@ export function buildAssignedSettlementItems(
       ...(deadlineAt ? { deadlineAt } : {}),
       ...(submittedAt ? { submittedAt } : {}),
       ...(amount != null ? { amount } : {}),
-      ...(ineligibleMessage
-        ? { submitBlockedReason: ineligibleMessage }
-        : individual?.ineligibleReason?.trim()
-          ? { submitBlockedReason: individual.ineligibleReason.trim() }
-          : {}),
+      ...(ineligibleMessage ? { submitBlockedReason: ineligibleMessage } : {}),
       ...(individual?.eligible != null ? { eligible: individual.eligible } : {}),
       ...(evidencePolicyUnconfigured ? { evidencePolicyUnconfigured: true } : {}),
       ...(individual?.submittedItems?.length ? { submittedItems: [...individual.submittedItems] } : {}),
