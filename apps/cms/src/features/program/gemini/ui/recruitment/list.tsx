@@ -27,7 +27,6 @@ import { useGeminiRecruitmentRows } from '../../hooks/use-gemini-recruitment-row
 import { useToday } from '../../hooks/use-today'
 import { GEMINI_RECRUITMENT_FILTER_FIELDS } from '../../model/recruitment/filter-fields'
 import {
-  getDefaultTrainingRequestPeriodRange,
   geminiRecruitmentTablePageConfig,
   type GeminiRecruitmentTableContext,
 } from '../../model/recruitment/table.config'
@@ -109,14 +108,11 @@ export function GeminiRecruitmentList() {
   const detailOpen = Boolean(recruitmentId)
   const queryFilters = useMemo(() => {
     const params = new URLSearchParams(searchParamsKey)
-    const [defaultFrom, defaultTo] = getDefaultTrainingRequestPeriodRange(todayKey)
     return {
       title: params.get('gvt_title') ?? undefined,
       status: params.get('gvt_status') ?? undefined,
-      from: params.get('gvt_from') ?? defaultFrom.format('YYYY-MM-DD'),
-      to: params.get('gvt_to') ?? defaultTo.format('YYYY-MM-DD'),
     }
-  }, [searchParamsKey, todayKey])
+  }, [searchParamsKey])
   const {
     rows: recruitmentRows,
     remoteEnabled,

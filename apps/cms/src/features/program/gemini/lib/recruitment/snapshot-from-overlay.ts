@@ -36,7 +36,12 @@ function readString(record: Record<string, unknown>, key: string, fallback = '')
 function readNullableString(record: Record<string, unknown>, key: string): string | null {
   const raw = record[key]
   if (raw == null) return null
-  return typeof raw === 'string' ? raw : null
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (!trimmed || trimmed.toLowerCase() === 'null' || trimmed.toLowerCase() === 'undefined') {
+    return null
+  }
+  return trimmed
 }
 
 function readStringArray(record: Record<string, unknown>, key: string): string[] {

@@ -117,7 +117,13 @@ export function GeminiRecruitmentDetailFields({
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
 
   // 저장된 썸네일 — 저장 후 파일명이 바뀌면 다시 불러온다.
-  const savedThumbnailName = values.thumbnailFileName
+  const thumbnailFileName =
+    values.thumbnailFileName?.trim() &&
+    values.thumbnailFileName.trim().toLowerCase() !== 'null' &&
+    values.thumbnailFileName.trim().toLowerCase() !== 'undefined'
+      ? values.thumbnailFileName.trim()
+      : null
+  const savedThumbnailName = thumbnailFileName
   useEffect(() => {
     if (programNumericId == null || !shouldUseGeminiVisitingTrainingRemoteApi()) return
     let cancelled = false
@@ -196,7 +202,7 @@ export function GeminiRecruitmentDetailFields({
 
   const thumbnailPreviewUrl =
     thumbObjectUrl ??
-    (values.thumbnailFileName && values.thumbnailFileObjectId !== null ? storedThumbUrl : null)
+    (thumbnailFileName && values.thumbnailFileObjectId !== null ? storedThumbUrl : null)
 
   const programDescription = GEMINI_RECRUITMENT_PROGRAM_DESCRIPTION_FIELD
 
@@ -209,7 +215,7 @@ export function GeminiRecruitmentDetailFields({
           view={
             <ThumbnailUploadField
               previewUrl={thumbnailPreviewUrl}
-              fileName={values.thumbnailFileName}
+              fileName={thumbnailFileName}
               guideLines={THUMBNAIL_GUIDE_LINES}
               disabled
             />
@@ -218,7 +224,7 @@ export function GeminiRecruitmentDetailFields({
             isEdit ? (
               <ThumbnailUploadField
                 previewUrl={thumbnailPreviewUrl}
-                fileName={values.thumbnailFileName}
+                fileName={thumbnailFileName}
                 guideLines={THUMBNAIL_GUIDE_LINES}
                 disabled={readOnlyUpload}
                 uploading={uploadingThumbnail}
