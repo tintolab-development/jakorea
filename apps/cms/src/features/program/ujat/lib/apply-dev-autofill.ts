@@ -43,11 +43,6 @@ import {
 } from '@/features/template/lib/template-registration-payment-item-options'
 import { UJAT_SPONSOR_ALL_VALUE } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import {
-  getUjatProgramRegistrationOverlayRecord,
-  replaceUjatProgramRegistrationOverlay,
-} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import {
-  stripUjatTypedLegacyOverlay,
   typedDetailFromUjatOverlay,
   type UjatTypedDetail,
 } from '@/features/program/ujat/api/typed-detail-client'
@@ -80,7 +75,6 @@ import {
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 
 /** 이전 프리셋 잔류를 막기 위해 교체 전 지우는 UJAT 소유 키 prefix */
-const REGISTRATION_OWNED_PREFIXES = ['ujat.'] as const
 const APPLICATION_INSTITUTION_OWNED_PREFIXES = ['ujatApplication.'] as const
 const APPLICATION_GENERAL_OWNED_PREFIXES = ['application.ujat.inst.'] as const
 const APPLICATION_VOLUNTEER_OWNED_PREFIXES = ['ujatVolunteerApplication.'] as const
@@ -243,7 +237,6 @@ export function resolveUjatDevAutofillTargets(): UjatDevAutofillTargets {
 type StoreSnapshot = () => void
 
 function snapshotStores(targets: UjatDevAutofillTargets): StoreSnapshot {
-  const registration = { ...getUjatProgramRegistrationOverlayRecord() }
   const recruitCodes = [...targets.recruitInstitution, ...targets.recruitVolunteer]
   const recruitInstitution = targets.recruitInstitution.map(code => [code, peekUjatRecruitInstitutionOverlayRecord(code)] as const)
   const recruitVolunteer = targets.recruitVolunteer.map(code => [code, peekUjatRecruitVolunteerOverlayRecord(code)] as const)
@@ -252,7 +245,6 @@ function snapshotStores(targets: UjatDevAutofillTargets): StoreSnapshot {
   const appGeneral = peekGeneralApplicationOverlayRecord(targets.applicationInstitution)
   const appVolunteer = peekUjatApplicationVolunteerOverlayRecord(targets.applicationVolunteer)
   return () => {
-    replaceUjatProgramRegistrationOverlay(registration)
     for (const [code, record] of recruitInstitution) replaceUjatRecruitInstitutionOverlayForScope(code, record)
     for (const [code, record] of recruitVolunteer) replaceUjatRecruitVolunteerOverlayForScope(code, record)
     for (const [code, record] of recruitGeneral) replaceGeneralRecruitOverlayForScope(code, record)
@@ -297,13 +289,6 @@ function typedRecruitmentFromAutofillFixture(
 }
 
 function applyOverlays(fixture: UjatDevAutofillFixture, targets: UjatDevAutofillTargets): void {
-  replaceUjatProgramRegistrationOverlay({
-    ...omitPrefixes(getUjatProgramRegistrationOverlayRecord(), REGISTRATION_OWNED_PREFIXES),
-    ...omitPrefixes(stripUjatTypedLegacyOverlay(fixture.registration), [
-      'ujat.recruit.',
-      'ujatRecruit.',
-    ]),
-  })
   const institutionCode = targets.applicationInstitution
   replaceUjatApplicationInstitutionOverlayForScope(institutionCode, {
     ...omitPrefixes(

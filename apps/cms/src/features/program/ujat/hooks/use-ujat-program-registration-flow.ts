@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useWatch } from 'react-hook-form'
 import { useCmsAlert } from '@/shared/ui'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
@@ -28,12 +28,6 @@ import {
   useProgramParticipantApplicationEditor,
 } from '@/features/template/hooks/use-program-participant-application-editor'
 import {
-  getUjatProgramRegistrationOverlayVersion,
-  subscribeUjatProgramRegistrationOverlay,
-  getUjatProgramRegistrationOverlayRecord,
-  patchUjatProgramRegistrationOverlay,
-} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import {
   normalizeOverlayPaymentItemsBeforeSubmit,
   PAYMENT_ITEM_RESELECT_ALERT,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
@@ -41,14 +35,12 @@ import { UJAT_WAGE_OVERLAY_PAYMENT_KEY } from '@/features/program/ujat/lib/ujat-
 import { toCreateRequest } from '@/features/program/ujat/api/adapters'
 import {
   buildUjatProgramListRowFromRegistrationSnapshot,
-  collectUjatRegistrationCreateOverlay,
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import {
   applyUjatRecruitFormValuesToProgram,
   programToUjatRecruitCanonicalFormValues,
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
-import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import {
@@ -131,39 +123,12 @@ function createRegistrationIdempotencyKey(): string {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
-function hasCanonicalUjatRecruitmentRow(
-  program: Program,
-  kind: UjatRecruitDisplayKind
-): boolean {
-  if (kind === 'institution') {
-    return (program.programRecruitments ?? []).some(
-      row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
-    )
-  }
-  const term = kind === 'volunteer_h2' ? 'SECOND_HALF' : 'FIRST_HALF'
-  return (program.programRecruitments ?? []).some(
-    row =>
-      (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' &&
-      row.recruitTerm === term
-  )
-}
-
-/**
- * 신규 위저드의 첫 hydrate에서만 legacy overlay를 읽는다. 이후 값은 RHF가
- * canonical source이고, canonical recruitment row가 있으면 overlay를 절대 우선하지 않는다.
- */
+/** 신규 UJAT Wizard의 모집 입력은 GET row/Typed RHF만 읽는다. */
 function mapUjatRegistrationRecruitmentFormValues(
   program: Program,
   kind: UjatRecruitDisplayKind
 ): ProgramDetailEditFormValues {
-  if (hasCanonicalUjatRecruitmentRow(program, kind)) {
-    return programToUjatRecruitCanonicalFormValues(program, kind)
-  }
-  return programToUjatRecruitTemplateFormValues(
-    program,
-    kind === 'institution' ? 'institution' : 'volunteer',
-    kind === 'institution' ? undefined : kind === 'volunteer_h2' ? 'h2' : 'h1'
-  )
+  return programToUjatRecruitCanonicalFormValues(program, kind)
 }
 
 function resolveStepTemplateName(templateId: string): string {
@@ -231,12 +196,6 @@ export function useUjatProgramRegistrationFlow(
         )
         setStepTemplateByKey(payload.selectedOperationalTemplates)
       }
-      const titleKo = payload?.programTitleKo?.trim()
-      if (titleKo) {
-        patchUjatProgramRegistrationOverlay({
-          'ujat.basicInfo.programManagementName': titleKo,
-        })
-      }
       if (payload?.activeStep == null) return
       const restored = normalizeUjatProgramRegistrationStepKey(payload.activeStep)
       setActiveStep(restored)
@@ -299,14 +258,6 @@ export function useUjatProgramRegistrationFlow(
   const isParticipantStep = isParticipantRegistrationStep(activeStep)
   const isApplicationStep = phase === 'application'
 
-  // 신청 Form은 공통정보와 canonical recruitment row로 만든 현재 프로그램 snapshot을
-  // 입력 단락의 source로 사용한다. 모집 overlay store는 구버전 초회 변환 외에는 구독하지 않는다.
-  const registrationOverlayVersion = useSyncExternalStore(
-    subscribeUjatProgramRegistrationOverlay,
-    getUjatProgramRegistrationOverlayVersion,
-    getUjatProgramRegistrationOverlayVersion
-  )
-
   const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName, {
     skipDraftRestore,
     registrationWizardProgramType: programType,
@@ -316,17 +267,24 @@ export function useUjatProgramRegistrationFlow(
     if (!open) return null
     return buildUjatProgramListRowFromRegistrationSnapshot({
       id: 'ujat-registration-linked',
-      overlay: collectUjatRegistrationCreateOverlay(
-        getUjatProgramRegistrationOverlayRecord()
-      ),
+      overlay: {},
       basicInfo: registrationVm.basicInfoValues,
     })
   }, [
     open,
-    registrationOverlayVersion,
     registrationVm.basicInfoValues,
     wizardDraftRevision,
   ])
+
+  useEffect(() => {
+    if (!open || skipDraftRestore) return
+    const payload = peekRegistrationProgramDraftPayload(programType)
+    const titleKo = payload?.programTitleKo?.trim()
+    if (!titleKo) return
+    registrationVm.basicInfoForm.setValue('title', titleKo, {
+      shouldDirty: false,
+    })
+  }, [open, programType, registrationVm.basicInfoForm, skipDraftRestore])
 
   const mapInstitutionRecruitmentFormValues = useCallback(
     (program: Program) => mapUjatRegistrationRecruitmentFormValues(program, 'institution'),
@@ -701,7 +659,7 @@ export function useUjatProgramRegistrationFlow(
       const incompleteKeys =
         validationTarget === 'program'
           ? listIncompleteUjatProgramRegistrationRequiredFields(
-              getUjatProgramRegistrationOverlayRecord(),
+              {},
               currentBasicInfo,
               registrationVm.educationScheduleForm.getValues()
             )
@@ -743,9 +701,7 @@ export function useUjatProgramRegistrationFlow(
         return
       }
       if (fromPhase !== toPhase) {
-        const registrationOverlay = collectUjatRegistrationCreateOverlay(
-          getUjatProgramRegistrationOverlayRecord()
-        )
+        const registrationOverlay: Record<string, unknown> = {}
         const program = buildUjatProgramListRowFromRegistrationSnapshot({
           id: 'debug',
           overlay: registrationOverlay,
@@ -833,7 +789,7 @@ export function useUjatProgramRegistrationFlow(
         activeStep,
         programTitleKo: buildUjatProgramListRowFromRegistrationSnapshot({
           id: 'ujat-local-draft',
-          overlay: { ...getUjatProgramRegistrationOverlayRecord() },
+          overlay: {},
           basicInfo: registrationVm.basicInfoValues,
         }).title,
         recruitments,
@@ -864,9 +820,7 @@ export function useUjatProgramRegistrationFlow(
       registrationWizardLinkedProgram ??
       buildUjatProgramListRowFromRegistrationSnapshot({
         id: 'ujat-registration-validation',
-        overlay: collectUjatRegistrationCreateOverlay(
-          getUjatProgramRegistrationOverlayRecord()
-        ),
+        overlay: {},
         basicInfo: registrationVm.basicInfoValues,
       })
     const applicationIncompleteKeys = listIncompleteApplicationFormThirdPartyRecipientFieldKeys({
@@ -927,9 +881,7 @@ export function useUjatProgramRegistrationFlow(
       return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
     }
 
-    const registrationOverlayForLog = collectUjatRegistrationCreateOverlay(
-      getUjatProgramRegistrationOverlayRecord()
-    )
+    const registrationOverlayForLog: Record<string, unknown> = {}
     const programForLog =
       registrationWizardLinkedProgram ??
       buildUjatProgramListRowFromRegistrationSnapshot({
@@ -966,9 +918,7 @@ export function useUjatProgramRegistrationFlow(
           showAlert(PAYMENT_ITEM_RESELECT_ALERT)
           throw new UjatRegistrationRequiredFieldsIncompleteError()
         }
-        const registrationOverlay = collectUjatRegistrationCreateOverlay(
-          getUjatProgramRegistrationOverlayRecord()
-        )
+        const registrationOverlay: Record<string, unknown> = {}
         const registrationSnapshot = {
           draft: registrationVm.draft,
           overlay: registrationOverlay,

@@ -81,10 +81,8 @@ const educationCourseSelectOptions = [...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS]
 type UjatBasicInfoForm = UseFormReturn<ProgramDetailEditFormValues>
 
 /**
- * 상세 수정 화면에서는 부모가 이미 만든 RHF를 정본으로 사용한다.
- * 등록 Wizard는 아직 Legacy Overlay 기반이므로 같은 컴포넌트가 사용하는
- * 임시 RHF를 통해 hook 호출 순서를 고정하고, 실제 입력은 기존 Overlay로 유지한다.
- * (Wizard 전환은 P3-R2 후속 범위에서 별도 처리한다.)
+ * 상세 수정·등록 Wizard는 부모가 만든 RHF를 정본으로 사용한다. Legacy branch는
+ * 독립적인 구형 템플릿/읽기 호환 화면에서만 유지한다.
  */
 function useUjatBasicInfoFormValues(infoForm?: UjatBasicInfoForm) {
   const fallbackForm = useForm<ProgramDetailEditFormValues>({
@@ -190,9 +188,8 @@ export type UjatBasicInfoParagraphProps = {
 export function UjatBasicInfoParagraph({
   lockDetailedProgramToNone = false,
   infoForm,
-  overlayFree = false,
 }: UjatBasicInfoParagraphProps = {}) {
-  if (overlayFree && infoForm) {
+  if (infoForm) {
     return (
       <UjatBasicInfoRHFParagraph
         infoForm={infoForm}
