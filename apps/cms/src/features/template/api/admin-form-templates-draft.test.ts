@@ -159,6 +159,24 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     expect(putBody.extensionJson).toBeUndefined()
   })
 
+  it('adds a new draft version to the same template on FORM_CATALOG_VERSION_IMMUTABLE', async () => {
+    updateRemoteMock.mockRejectedValueOnce({
+      response: { data: { error: { code: 'FORM_CATALOG_VERSION_IMMUTABLE' } } },
+    })
+    fetchRemoteMock.mockResolvedValue({
+      templateVersionId: 10,
+      schemaJson: '{"source":true}',
+      extensionJson: null,
+      settingsJson: '{"s":1}',
+    })
+    createVersionMock.mockResolvedValue({ templateId: 1, templateVersionId: 11, versionNo: 2 })
+    const draft = createProgramRegistrationDraft('general')
+
+    await saveFormTemplateVersionDraft({ templateCode: TEMPLATE_CODE, draft })
+
+    expect(createVersionMock).toHaveBeenCalled()
+  })
+
   it('adds a new draft version to the same template on FORM_VERSION_IMMUTABLE', async () => {
     updateRemoteMock.mockRejectedValueOnce({
       response: { data: { error: { code: 'FORM_VERSION_IMMUTABLE' } } },

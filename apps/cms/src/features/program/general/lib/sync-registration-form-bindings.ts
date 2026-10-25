@@ -256,7 +256,7 @@ function toOwnerProgramId(programId: string | number | null | undefined): number
 
 /**
  * 프로그램 상세 신청 양식 저장.
- * 바인딩된 버전은 PUBLISHED라 PUT이 409 FORM_VERSION_IMMUTABLE이다.
+ * 바인딩된 버전은 PUBLISHED·카탈로그라 PUT이 409 FORM_VERSION_IMMUTABLE 또는 FORM_CATALOG_VERSION_IMMUTABLE이다.
  * 발행본이면 새 DRAFT로 복사한 뒤 저장·발행하고, 그 버전으로 바인딩을 교체한다.
  */
 const inFlightProgramFormSaves = new Map<
