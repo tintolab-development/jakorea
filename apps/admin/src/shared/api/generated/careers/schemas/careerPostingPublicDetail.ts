@@ -19,5 +19,9 @@ export interface CareerPostingPublicDetail {
   recruitEnd?: string;
   body?: string;
   attachment?: AssetResponse;
+  /** @maxLength 15 */
+  buttonLabel?: string | null;
+  /** @maxLength 2048 */
+  linkUrl?: string | null;
   viewCount?: number;
 }
