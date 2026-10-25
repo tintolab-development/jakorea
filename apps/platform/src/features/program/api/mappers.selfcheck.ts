@@ -226,7 +226,7 @@ assert.equal(
   true
 )
 assert.equal(withSelection.eventSchedules.length, 1)
-assert.equal(withSelection.eventSchedules[0]?.name, '사전교육 전반 오리엔테이션')
+assert.equal(withSelection.eventSchedules[0]?.name, '봉사자 사전교육 상반기 오리엔테이션')
 
 const ujatTermSchedules = mapPortalProgramDetail({
   programId: 182199,
@@ -269,15 +269,16 @@ const ujatTermSchedules = mapPortalProgramDetail({
 })
 assert.ok(ujatTermSchedules)
 assert.deepEqual(
-  ujatTermSchedules.eventSchedules.map(schedule => schedule.name),
+  ujatTermSchedules.eventSchedules.map(schedule => `${schedule.scheduleLabel} ${schedule.name}`.trim()),
   [
-    '교육 전반 기관 교육',
-    '교육 후반 기관 교육',
-    '사전교육 봉사자 사전교육',
-    '교육 봉사자 교육',
-    '수료·폐회 해단식',
+    '상반기 교육 진행',
+    '하반기 교육 진행',
+    '봉사자 사전교육',
+    '교육 진행',
+    '해단식',
   ],
 )
+assert.equal(ujatTermSchedules.educationSchedules.length, 0)
 
 // UJAT can carry the generic education-progress projection while its public
 // half/pre-education/closing rows still arrive through schedules[]. The latter
@@ -315,10 +316,12 @@ const ujatProjectedWithRuntimeSchedules = mapPortalProgramDetail({
 })
 assert.ok(ujatProjectedWithRuntimeSchedules)
 assert.deepEqual(
-  ujatProjectedWithRuntimeSchedules.eventSchedules.map(schedule => schedule.name),
-  ['교육 전반 기관 교육', '사전교육 봉사자 사전교육', '수료·폐회 해단식'],
+  ujatProjectedWithRuntimeSchedules.eventSchedules.map(schedule =>
+    `${schedule.scheduleLabel} ${schedule.name}`.trim(),
+  ),
+  ['상반기 교육 진행', '봉사자 사전교육', '해단식'],
 )
-assert.equal(ujatProjectedWithRuntimeSchedules.educationSchedules.length, 3)
+assert.equal(ujatProjectedWithRuntimeSchedules.educationSchedules.length, 0)
 
 const ujatVolunteerProjectedWithRuntimeSchedules = mapPortalProgramDetail({
   programId: 182201,
@@ -339,10 +342,26 @@ const ujatVolunteerProjectedWithRuntimeSchedules = mapPortalProgramDetail({
 })
 assert.ok(ujatVolunteerProjectedWithRuntimeSchedules)
 assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.detailCase, 'ujat-volunteer')
-assert.equal(
-  ujatVolunteerProjectedWithRuntimeSchedules.eventSchedules[0]?.name,
-  '교육 후반 봉사자 교육 진행',
-)
+assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.eventSchedules[0]?.scheduleLabel, '하반기')
+assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.eventSchedules[0]?.name, '교육 진행')
+assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.educationSchedules.length, 0)
+
+const ujatUndatedPublicSchedules = mapPortalProgramDetail({
+  programId: 182202,
+  title: 'UJAT 일정 미정',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'PARTICIPANT', applicationTypes: ['ORGANIZATION'] }],
+  schedules: [
+    { scheduleKind: 'SESSION', term: 'FIRST_HALF', publiclyVisible: true },
+    { scheduleKind: 'PRE_EDUCATION', term: 'FIRST_HALF', publiclyVisible: false },
+  ],
+})
+assert.ok(ujatUndatedPublicSchedules)
+assert.equal(ujatUndatedPublicSchedules.eventSchedules.length, 1)
+assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.scheduleLabel, '상반기')
+assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.name, '기관')
+assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.dateLabel, '일정 미정')
+assert.equal(ujatUndatedPublicSchedules.educationSchedules.length, 0)
 
 const generalCurriculum = mapPortalProgramDetail({
   programId: 186021,

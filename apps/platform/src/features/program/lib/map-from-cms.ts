@@ -524,35 +524,58 @@ function mapMaxPreferredScheduleCount(program: CmsProgramLike): number {
   return Math.min(raw, 10)
 }
 
-function mapUjatEducationSchedules(
-  program: CmsProgramLike,
-  detailCase: ProgramDetailCase
-): ProgramLabeledValue[] {
-  if (detailCase !== 'ujat-participant' && detailCase !== 'ujat-volunteer') return []
+const UJAT_SCHEDULE_KIND_LABEL: Record<string, string> = {
+  PRE_EDUCATION: '봉사자 사전교육',
+  EDUCATION: '교육 진행',
+  CLOSING: '해단식',
+  SESSION: '기관',
+}
 
+const UJAT_TERM_LABEL: Record<string, string> = {
+  FIRST_HALF: '상반기',
+  SECOND_HALF: '하반기',
+}
+
+const UJAT_KIND_ORDER: Record<string, number> = {
+  SESSION: 0,
+  PRE_EDUCATION: 1,
+  EDUCATION: 2,
+  CLOSING: 3,
+}
+
+const UJAT_TERM_ORDER: Record<string, number> = {
+  FIRST_HALF: 0,
+  SECOND_HALF: 1,
+}
+
+function mapUjatPublicEventSchedules(program: CmsProgramLike): ProgramEventSchedule[] {
   return (program.schedules ?? [])
     .filter(schedule => schedule.publiclyVisible !== false)
+    .slice()
+    .sort((left, right) => {
+      const leftTerm = left.term?.trim().toUpperCase() ?? ''
+      const rightTerm = right.term?.trim().toUpperCase() ?? ''
+      const termDiff = (UJAT_TERM_ORDER[leftTerm] ?? 99) - (UJAT_TERM_ORDER[rightTerm] ?? 99)
+      if (termDiff !== 0) return termDiff
+      const leftKind = left.scheduleKind?.trim().toUpperCase() ?? ''
+      const rightKind = right.scheduleKind?.trim().toUpperCase() ?? ''
+      return (UJAT_KIND_ORDER[leftKind] ?? 99) - (UJAT_KIND_ORDER[rightKind] ?? 99)
+    })
     .flatMap(schedule => {
       const kind = schedule.scheduleKind?.trim().toUpperCase()
       const term = schedule.term?.trim().toUpperCase()
-      let label: string | null = null
-
-      if (detailCase === 'ujat-participant') {
-        if (kind !== 'EDUCATION') return []
-        if (term === 'FIRST_HALF') label = '상반기'
-        if (term === 'SECOND_HALF') label = '하반기'
-      } else {
-        if (kind === 'PRE_EDUCATION') label = '사전교육(발대식)'
-        if (kind === 'EDUCATION') label = '교육 진행'
-        if (kind === 'CLOSING') label = '해단식'
-      }
-
-      if (!label) return []
-      const start = toDate(schedule.startAt ?? undefined)
-      const end = toDate(schedule.endAt ?? undefined)
-      if (!start && !end) return []
-
-      return [{ label, value: formatDisplayDateRange(start, end, { empty: '-' }) }]
+      const kindLabel = kind ? UJAT_SCHEDULE_KIND_LABEL[kind] : undefined
+      const termLabel = term ? UJAT_TERM_LABEL[term] : undefined
+      const fallbackName = schedule.scheduleName?.trim() ?? ''
+      const scheduleLabel = termLabel ?? kindLabel ?? '일정'
+      const name = termLabel ? (kindLabel ?? fallbackName) : kindLabel ? '' : fallbackName
+      const dateLabel = formatDisplayDateRange(
+        toDate(schedule.startAt ?? undefined),
+        toDate(schedule.endAt ?? undefined),
+        { empty: '일정 미정' },
+      )
+      if (!scheduleLabel && !name) return []
+      return [{ scheduleLabel, name, dateLabel }]
     })
 }
 
@@ -569,7 +592,7 @@ function mapEducationSchedules(
   detailCase: ProgramDetailCase
 ): ProgramLabeledValue[] {
   if (detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer') {
-    return mapUjatEducationSchedules(program, detailCase)
+    return []
   }
 
   // 기획: 일정형 + 복수회차 → 세부내용 「교육 일정」 비노출
@@ -834,7 +857,10 @@ export function mapCmsProgramToPlatformDetail(
     maxPreferredScheduleCount: mapMaxPreferredScheduleCount(program),
     maxSessionsPerDay: mapMaxSessionsPerDay(program),
     sessions: mapSessions(program),
-    eventSchedules: mapEventSchedules(program),
+    eventSchedules:
+      detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer'
+        ? mapUjatPublicEventSchedules(program)
+        : mapEventSchedules(program),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(program, detailCase, appStart, appEnd),
     educationSchedules: mapEducationSchedules(program, detailCase),

@@ -478,16 +478,30 @@ function recruitmentTypeKey(value: string | undefined): string {
 }
 
 const SCHEDULE_KIND_LABEL: Record<string, string> = {
-  PRE_EDUCATION: '사전교육',
-  EDUCATION: '교육',
-  CLOSING: '수료·폐회',
-  SESSION: '회차',
+  PRE_EDUCATION: '봉사자 사전교육',
+  EDUCATION: '교육 진행',
+  CLOSING: '해단식',
+  SESSION: '기관',
 }
 
 const TERM_LABEL: Record<string, string> = {
-  FIRST_HALF: '전반',
-  SECOND_HALF: '후반',
+  FIRST_HALF: '상반기',
+  SECOND_HALF: '하반기',
 }
+
+const UJAT_KIND_ORDER: Record<string, number> = {
+  SESSION: 0,
+  PRE_EDUCATION: 1,
+  EDUCATION: 2,
+  CLOSING: 3,
+}
+
+const UJAT_TERM_ORDER: Record<string, number> = {
+  FIRST_HALF: 0,
+  SECOND_HALF: 1,
+}
+
+const UNCONFIRMED_SCHEDULE_DATE_LABEL = '일정 미정'
 
 function visibleSchedules(schedules: PortalSchedule[] | undefined): PortalSchedule[] {
   return (schedules ?? []).filter(row => row.publiclyVisible !== false)
@@ -530,6 +544,43 @@ function mapEventSchedules(schedules: PortalSchedule[] | undefined) {
       },
     ]
   })
+}
+
+function mapUjatPublicEventSchedules(schedules: PortalSchedule[] | undefined) {
+  return visibleSchedules(schedules)
+    .slice()
+    .sort((left, right) => {
+      const leftTerm = readString(left.term)?.toUpperCase() ?? ''
+      const rightTerm = readString(right.term)?.toUpperCase() ?? ''
+      const termDiff = (UJAT_TERM_ORDER[leftTerm] ?? 99) - (UJAT_TERM_ORDER[rightTerm] ?? 99)
+      if (termDiff !== 0) return termDiff
+      const leftKind = readString(left.scheduleKind)?.toUpperCase() ?? ''
+      const rightKind = readString(right.scheduleKind)?.toUpperCase() ?? ''
+      return (UJAT_KIND_ORDER[leftKind] ?? 99) - (UJAT_KIND_ORDER[rightKind] ?? 99)
+    })
+    .flatMap(schedule => {
+      const kind = readString(schedule.scheduleKind)?.toUpperCase()
+      const term = readString(schedule.term)?.toUpperCase()
+      const kindLabel = kind ? SCHEDULE_KIND_LABEL[kind] : undefined
+      const termLabel = term ? TERM_LABEL[term] : undefined
+      const fallbackName = readString(schedule.scheduleName) ?? ''
+      const scheduleLabel = termLabel ?? kindLabel ?? '일정'
+      const name = termLabel ? (kindLabel ?? fallbackName) : kindLabel ? '' : fallbackName
+      const formatted = formatRange(toDate(schedule.startAt), toDate(schedule.endAt))
+      const dateLabel = formatted === '-' ? UNCONFIRMED_SCHEDULE_DATE_LABEL : formatted
+      if (!scheduleLabel && !name) return []
+
+      return [
+        {
+          scheduleLabel,
+          name,
+          dateLabel,
+          ...(schedule.scheduleId != null ? { scheduleId: schedule.scheduleId } : {}),
+          ...(readString(schedule.startAt) ? { startAt: readString(schedule.startAt)! } : {}),
+          ...(readString(schedule.endAt) ? { endAt: readString(schedule.endAt)! } : {}),
+        },
+      ]
+    })
 }
 
 function venueFromSchedules(schedules: PortalSchedule[] | undefined): string {
@@ -1186,7 +1237,7 @@ export function mapPortalProgramDetail(
   const legacySessions = mapSessions(remote.curricula)
   const legacyEventSchedules = legacySessions.length > 0 ? [] : mapEventSchedules(remote.schedules)
   const isUjatDetailCase = detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer'
-  const ujatRuntimeSchedules = isUjatDetailCase ? mapEventSchedules(remote.schedules) : []
+  const ujatRuntimeSchedules = isUjatDetailCase ? mapUjatPublicEventSchedules(remote.schedules) : []
   const rowVisibility: EducationProgressRowVisibility = {
     showEducationForm: perScheduleEducationForm || !optionalText(remote.educationFormLabel),
     showAssignmentPeriod: isTrainedTeacher,
@@ -1381,8 +1432,8 @@ export function mapPortalProgramDetail(
           : remote.recruitments,
     ),
     educationSchedules:
-      isUjatDetailCase && ujatRuntimeSchedules.length > 0
-        ? mapEventScheduleCards(eventSchedules)
+      isUjatDetailCase
+        ? []
         : usesEducationProgressFields
           ? mapPortalEducationScheduleCards(remote, educationScheduleLines)
           : mapEventScheduleCards(eventSchedules),

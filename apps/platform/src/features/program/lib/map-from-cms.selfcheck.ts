@@ -249,9 +249,14 @@ function testDetailCaseSsotMapping() {
   assert.ok(ujatVol.recruitmentPhases.some(p => p.label === '봉사자 모집 기간'))
   assert.match(ujatVol.recruitmentPhases[0]?.value ?? '', /2028/)
   assert.equal(ujatVol.recruitmentStatus, RECRUITMENT_STATUS.scheduled)
-  assert.ok(ujatVol.educationSchedules.some(s => s.label === '사전교육(발대식)'))
-  assert.ok(ujatVol.educationSchedules.some(s => s.label === '교육 진행'))
-  assert.ok(ujatVol.educationSchedules.some(s => s.label === '해단식'))
+  assert.deepEqual(ujatVol.educationSchedules, [])
+  assert.ok(
+    ujatVol.eventSchedules.some(
+      s => s.scheduleLabel === '봉사자 사전교육' || s.name === '봉사자 사전교육',
+    ),
+  )
+  assert.ok(ujatVol.eventSchedules.some(s => s.name === '교육 진행'))
+  assert.ok(ujatVol.eventSchedules.some(s => s.scheduleLabel === '해단식' || s.name === '해단식'))
 
   const ujatVolWithHiddenSchedule = mapCmsProgramToPlatformDetail({
     ...UJAT_VOLUNTEER_FIXTURE,
@@ -268,7 +273,7 @@ function testDetailCaseSsotMapping() {
     ],
   })
   assert.equal(
-    ujatVolWithHiddenSchedule.educationSchedules.filter(s => s.label === '교육 진행').length,
+    ujatVolWithHiddenSchedule.eventSchedules.filter(s => s.name === '교육 진행').length,
     2
   )
 
@@ -277,14 +282,16 @@ function testDetailCaseSsotMapping() {
     schedules: [],
   })
   assert.deepEqual(ujatVolWithoutSchedules.educationSchedules, [])
+  assert.deepEqual(ujatVolWithoutSchedules.eventSchedules, [])
 
   const ujatOrg = mapCmsProgramToPlatformDetail(UJAT_PARTICIPANT_FIXTURE)
   assert.equal(ujatOrg.detailCase, 'ujat-participant')
   assert.equal(ujatOrg.category, 'institution')
   assert.ok(ujatOrg.recruitmentPhases.some(p => p.label === '기관 모집 기간'))
   assert.equal(ujatOrg.recruitmentRoleLabel, '기관')
-  assert.ok(ujatOrg.educationSchedules.some(s => s.label === '상반기'))
-  assert.ok(ujatOrg.educationSchedules.some(s => s.label === '하반기'))
+  assert.deepEqual(ujatOrg.educationSchedules, [])
+  assert.ok(ujatOrg.eventSchedules.some(s => s.scheduleLabel === '상반기' && s.name === '교육 진행'))
+  assert.ok(ujatOrg.eventSchedules.some(s => s.scheduleLabel === '하반기' && s.name === '교육 진행'))
   assert.ok(ujatOrg.extraSections.some(s => s.title === '학습 지원 내용'))
   assert.ok(!ujatOrg.extraSections.some(s => s.title === '기타사항'))
   assert.ok(ujatOrg.contactValue.includes('school@jakorea.org'))
