@@ -9,6 +9,7 @@ import type { ProgramRecruitmentRequestApplicationType } from './programRecruitm
 import type { ProgramRecruitmentRequestRecruitmentType } from './programRecruitmentRequestRecruitmentType';
 import type { ProgramRecruitmentRequestRecruitTerm } from './programRecruitmentRequestRecruitTerm';
 import type { ProgramRecruitmentRequestStatus } from './programRecruitmentRequestStatus';
+import type { RecruitmentInterviewConfig } from './recruitmentInterviewConfig';
 
 /**
  * 프로그램 모집 유형별 canonical 설정
@@ -68,6 +69,22 @@ export interface ProgramRecruitmentRequest {
   interviewStartAt?: string | null;
   /** 2차 면접 종료. UJAT VOLUNTEER 운영 행(ACTIVE/OPEN)에서는 필수. null 이면 기존 값 유지. */
   interviewEndAt?: string | null;
-  /** null 로 비울 필드 이름. 예: ["maxCount","remarks"] */
+  /** 공고 게시 여부. null 이면 기존 값 유지. */
+  announcementPublished?: boolean | null;
+  /** 서류 발표 시각. null 유지, clearFields에 있으면 비움. */
+  documentPassAnnouncementAt?: string | null;
+  /** 최종 발표 시각. null 유지, clearFields에 있으면 비움. */
+  finalPassAnnouncementAt?: string | null;
+  /** 봉사자 공고 노출 시점. VOLUNTEER만. null 유지. */
+  noticeExposureTiming?: 'start-day' | 'one-day-before' | 'one-week-before' | null;
+  /** 봉사자 모집 대상. VOLUNTEER만. null 유지, [] 는 명시적 빈 값. */
+  volunteerTargets?: string[] | null;
+  /** 비고 해당 없음. null 유지. */
+  remarksNotApplicable?: boolean | null;
+  /** 봉사자 면접 슬롯 설정. VOLUNTEER만. 객체 생략은 기존 유지, 빈 객체는 명시적 빈 typed 값. */
+  interviewConfig?: RecruitmentInterviewConfig | null;
+  /** 동시 수정 검증. 조회 contentRevision 과 같아야 한다. 생략하면 검사하지 않는다. */
+  expectedRevision?: number | null;
+  /** null 로 비울 필드 이름. 예: ["maxCount","remarks","interviewConfig"] */
   clearFields?: string[] | null;
 }
