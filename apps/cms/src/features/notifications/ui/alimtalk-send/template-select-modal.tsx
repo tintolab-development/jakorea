@@ -104,8 +104,7 @@ export function TemplateSelectModal({
       className: 'template-select-modal__col-actions',
       onHeaderCell: () => ({ className: 'template-select-modal__col-actions' }),
       render: (_, record) => {
-        const canUse =
-          isAlimtalkTemplateApproved(record) && isTemplateUsable?.(record) !== false
+        const canUse = isAlimtalkTemplateApproved(record) && isTemplateUsable?.(record) !== false
         return (
           <div
             className="template-select-modal__row-actions"
@@ -170,7 +169,7 @@ export function TemplateSelectModal({
               value={keyword}
               onChange={event => setKeyword(event.target.value)}
               onPressEnter={handleSearch}
-              placeholder="템플릿명을 입력하세요"
+              placeholder="템플릿명을 입력해 주세요"
               inputSize="large"
               width="100%"
               allowClear

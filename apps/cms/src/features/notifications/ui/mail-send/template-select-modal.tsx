@@ -155,7 +155,7 @@ export function TemplateSelectModal({
               value={keyword}
               onChange={event => setKeyword(event.target.value)}
               onPressEnter={handleSearch}
-              placeholder="템플릿명을 입력하세요"
+              placeholder="템플릿명을 입력해 주세요"
               inputSize="large"
               width="100%"
               allowClear

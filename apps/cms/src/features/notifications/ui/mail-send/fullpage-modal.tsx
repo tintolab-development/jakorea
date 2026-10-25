@@ -54,7 +54,6 @@ import {
   fetchAllMailRecipientCandidates,
 } from '@/features/notifications/api/mail-send-service'
 import {
-  getNotificationSendBatchErrorMessage,
   getNotificationsApiErrorMessage,
 } from '@/features/notifications/api/get-notifications-api-error'
 import { useInvalidateMailSendHistory } from '@/features/notifications/hooks/use-mail-send-history-query'
@@ -76,6 +75,7 @@ import { ProgramSelectField } from './program-select-field'
 import { TemplateSelectField } from './template-select-field'
 import { RecipientTable } from './recipient-table'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
+import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientSelectModal } from './recipient-select-modal'
 import { RecipientManualModal } from './recipient-manual-modal'
 import './fullpage-modal.css'
@@ -458,12 +458,9 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       setSendConfirmOpen(false)
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
-    } catch (error) {
+    } catch {
       setSendConfirmOpen(false)
-      showAlert({
-        title: '메일 발송 실패',
-        content: getNotificationSendBatchErrorMessage(error, '메일 발송에 실패했습니다.'),
-      })
+      showNotificationSendRequestFailedAlert(showAlert)
     } finally {
       setSending(false)
     }

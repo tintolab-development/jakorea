@@ -41,10 +41,7 @@ export const VariablesPanel = memo(function VariablesPanel({
   const [query, setQuery] = useState('')
   const sourceGroups = groupsProp?.length ? groupsProp : MAIL_TEMPLATE_VARIABLE_GROUPS
   const defaultActiveKey = useMemo(() => sourceGroups.map(group => group.id), [sourceGroups])
-  const groups = useMemo(
-    () => filterMailVariableGroups(sourceGroups, query),
-    [query, sourceGroups]
-  )
+  const groups = useMemo(() => filterMailVariableGroups(sourceGroups, query), [query, sourceGroups])
   const collapseItems = useMemo(
     () =>
       groups.map(group => ({
@@ -87,9 +84,6 @@ export const VariablesPanel = memo(function VariablesPanel({
                     <span className="mail-template-variables__item-label">
                       {formatMailVariableToken(label)}
                     </span>
-                    {variable.hint ? (
-                      <span className="mail-template-variables__item-hint">{variable.hint}</span>
-                    ) : null}
                   </button>
                 </li>
               )
@@ -112,7 +106,9 @@ export const VariablesPanel = memo(function VariablesPanel({
   return (
     <aside
       className={
-        disabled ? 'mail-template-variables mail-template-variables--disabled' : 'mail-template-variables'
+        disabled
+          ? 'mail-template-variables mail-template-variables--disabled'
+          : 'mail-template-variables'
       }
       aria-disabled={disabled || undefined}
     >
@@ -131,7 +127,7 @@ export const VariablesPanel = memo(function VariablesPanel({
         <Collapse
           ghost
           bordered={false}
-          expandIconPosition="end"
+          expandIconPosition="start"
           defaultActiveKey={defaultActiveKey}
           items={collapseItems}
         />

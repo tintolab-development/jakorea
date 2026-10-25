@@ -18,6 +18,7 @@ import {
   fetchTemplateVariablesRemote,
 } from '@/features/notifications/api/notifications-api-client'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
+import type { AlimtalkVariableCatalogEntry } from '@/features/notifications/model/alimtalk-send/recipient-variables'
 import {
   isNotificationSendWithoutProgram,
   NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT,
@@ -136,6 +137,8 @@ export async function createAlimtalkSendBatch(input: {
   senderProfileId?: number
   recipients: AlimtalkSendRecipient[]
   variables?: Record<string, unknown>
+  placeholderKeys?: Iterable<string>
+  variableCatalog?: AlimtalkVariableCatalogEntry[] | null
   idempotencyKey: string
 }): Promise<void> {
   assertAlimtalkSendRemoteReady()
@@ -156,6 +159,8 @@ export async function createAlimtalkSendBatch(input: {
     senderProfileId: input.senderProfileId,
     recipients: input.recipients,
     variables: input.variables,
+    placeholderKeys: input.placeholderKeys,
+    variableCatalog: input.variableCatalog,
   })
 
   await createSendBatchRemote(body, input.idempotencyKey)

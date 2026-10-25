@@ -7,9 +7,7 @@ import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } f
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsModal, useCmsAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { CmsModal, useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
 import {
   ALIMTALK_ROOT_CATEGORY_ID,
   type AlimtalkCategory,
@@ -53,7 +51,11 @@ import {
 } from '@/features/notifications/hooks/use-alimtalk-template-tree-query'
 import { notificationsQueryKeys } from '@/features/notifications/api/notifications-query-keys'
 import { CategoryNameModal } from './category-name-modal'
-import { CategoryTree, parseAlimtalkDndId, ALIMTALK_DND_CATEGORY_MOVE_PREFIX } from './category-tree'
+import {
+  CategoryTree,
+  parseAlimtalkDndId,
+  ALIMTALK_DND_CATEGORY_MOVE_PREFIX,
+} from './category-tree'
 import { DetailPanel } from './detail-panel'
 import { PreviewModal } from './preview-modal'
 import '@/pages/programs/program-list-page.css'
@@ -93,7 +95,10 @@ function withUiRootExpanded(ids?: Iterable<string>): Set<string> {
   return next
 }
 
-function targetCategoryForAdd(selection: AlimtalkTreeSelection, templates: AlimtalkTemplateItem[]): string {
+function targetCategoryForAdd(
+  selection: AlimtalkTreeSelection,
+  templates: AlimtalkTemplateItem[]
+): string {
   if (!selection) return ALIMTALK_ROOT_CATEGORY_ID
   if (selection.kind === 'category') return selection.id
   return findTemplate(templates, selection.id)?.categoryId ?? ALIMTALK_ROOT_CATEGORY_ID
@@ -127,7 +132,8 @@ export function AlimtalkTemplateList({
   const remote = shouldUseAlimtalkTemplatesRemoteApi()
   const [searchParams, setSearchParams] = useSearchParams()
   const appliedFilters = useMemo(() => pendingFiltersFromSearchParams(searchParams), [searchParams])
-  const [pendingFilters, setPendingFilters] = useState<AlimtalkTemplatePendingFilters>(appliedFilters)
+  const [pendingFilters, setPendingFilters] =
+    useState<AlimtalkTemplatePendingFilters>(appliedFilters)
   const pendingFiltersRef = useRef(pendingFilters)
   pendingFiltersRef.current = pendingFilters
 
@@ -237,8 +243,7 @@ export function AlimtalkTemplateList({
     if (syncBanner === 'local-mode' || syncBanner === 'synced-empty') return
 
     const alreadyAttempted =
-      typeof sessionStorage !== 'undefined' &&
-      sessionStorage.getItem(AUTO_SYNC_SESSION_KEY) === '1'
+      typeof sessionStorage !== 'undefined' && sessionStorage.getItem(AUTO_SYNC_SESSION_KEY) === '1'
 
     if (alreadyAttempted) {
       setSyncBanner(prev =>
@@ -283,9 +288,10 @@ export function AlimtalkTemplateList({
   const [previewOpen, setPreviewOpen] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialog>(null)
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
-  const [categoryModal, setCategoryModal] = useState<{ mode: 'add' | 'edit'; categoryId: string | null } | null>(
-    null
-  )
+  const [categoryModal, setCategoryModal] = useState<{
+    mode: 'add' | 'edit'
+    categoryId: string | null
+  } | null>(null)
   const didInitExpandRef = useRef(!remote)
 
   useEffect(() => {
@@ -320,7 +326,7 @@ export function AlimtalkTemplateList({
     remote && Boolean(selectedTemplateId)
   )
   const treeTemplate =
-    selection?.kind === 'template' ? findTemplate(templates, selection.id) ?? null : null
+    selection?.kind === 'template' ? (findTemplate(templates, selection.id) ?? null) : null
   const selectedTemplate = (remote ? detailQuery.data : null) ?? treeTemplate
   const selectedCategoryName = selectedTemplate
     ? categoryNameById(categories, selectedTemplate.categoryId)
@@ -335,12 +341,12 @@ export function AlimtalkTemplateList({
 
   const canDeleteSelection = Boolean(
     selection &&
-      !(
-        selection.kind === 'category' &&
-        (selection.id === ALIMTALK_ROOT_CATEGORY_ID ||
-          isVirtualUnclassifiedCategoryId(selection.id) ||
-          categories.find(item => item.id === selection.id)?.isVirtualUnclassified)
-      )
+    !(
+      selection.kind === 'category' &&
+      (selection.id === ALIMTALK_ROOT_CATEGORY_ID ||
+        isVirtualUnclassifiedCategoryId(selection.id) ||
+        categories.find(item => item.id === selection.id)?.isVirtualUnclassified)
+    )
   )
 
   const sensors = useSensors(
@@ -493,7 +499,7 @@ export function AlimtalkTemplateList({
         setDeleteDialog(null)
         showAlert({
           title: '삭제 완료',
-          content: '삭제가 완료되었습니다.',
+          content: '삭제되었습니다.',
           confirmLabel: '닫기',
         })
         return
@@ -510,7 +516,7 @@ export function AlimtalkTemplateList({
         setDeleteDialog(null)
         showAlert({
           title: '삭제 완료',
-          content: '삭제가 완료되었습니다.',
+          content: '삭제되었습니다.',
           confirmLabel: '닫기',
         })
       }
@@ -592,10 +598,7 @@ export function AlimtalkTemplateList({
         }
         setCategoryModal(null)
       } catch (error) {
-        const content = getNotificationsApiErrorMessage(
-          error,
-          '카테고리 저장에 실패했습니다.'
-        )
+        const content = getNotificationsApiErrorMessage(error, '카테고리 저장에 실패했습니다.')
         if (remote && isCategoryNeedsSyncError(error)) {
           showAlert({
             title: '안내',
@@ -685,11 +688,7 @@ export function AlimtalkTemplateList({
               variant="primary"
               type="button"
               onClick={() =>
-                window.open(
-                  resolveNhnConsoleUrl(selectedTemplate),
-                  '_blank',
-                  'noopener,noreferrer'
-                )
+                window.open(resolveNhnConsoleUrl(selectedTemplate), '_blank', 'noopener,noreferrer')
               }
             >
               템플릿 등록
@@ -738,9 +737,9 @@ export function AlimtalkTemplateList({
       <CmsModal
         open={deleteDialog === 'category'}
         onClose={() => setDeleteDialog(null)}
-        title="카테고리 삭제"
+        title="카테고리 삭제 안내"
         content={
-          '해당 카테고리를 삭제하시겠습니까?\n삭제 시 NHN 서비스에서도 함께 반영됩니다.'
+          '해당 카테고리를 삭제하시겠습니까?\n삭제시 NHN 서비스에 함께 반영되며, 삭제된 정보는 되돌릴 수 없습니다.'
         }
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },

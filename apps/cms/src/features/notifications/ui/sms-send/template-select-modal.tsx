@@ -75,7 +75,7 @@ export function TemplateSelectModal({
       ellipsis: true,
     },
     {
-      title: '메시지 유형',
+      title: '발송 유형',
       dataIndex: 'messageType',
       key: 'messageType',
       width: 140,
@@ -163,7 +163,7 @@ export function TemplateSelectModal({
               value={keyword}
               onChange={event => setKeyword(event.target.value)}
               onPressEnter={handleSearch}
-              placeholder="템플릿명을 입력하세요"
+              placeholder="템플릿명을 입력해 주세요"
               inputSize="large"
               width="100%"
               allowClear

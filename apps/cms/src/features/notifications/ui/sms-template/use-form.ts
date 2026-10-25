@@ -3,6 +3,13 @@ import type { InputRef } from 'antd'
 import type { TextAreaRef } from 'antd/es/input/TextArea'
 import { insertMailVariableInText } from '@/features/notifications/model/mail-template/insert-variable'
 import {
+  collectSmsComposeFieldIssues,
+  estimateSmsBodyBytes,
+  LMS_MMS_BODY_BYTE_LIMIT,
+  SMS_BODY_BYTE_LIMIT,
+  SMS_SUBJECT_BYTE_LIMIT,
+} from '@/features/notifications/model/sms-send/text-bytes'
+import {
   rejectSmsMmsAttachments,
   smsMmsAttachmentRejectMessage,
 } from '@/features/notifications/model/sms-template/attachments'
@@ -52,9 +59,7 @@ const EMPTY_DRAFT: SmsTemplateFormDraft = {
   newFiles: [],
 }
 
-export const SMS_SUBJECT_MAX_LENGTH = 40
-const SMS_BODY_BYTE_LIMIT = 90
-const LMS_MMS_BODY_BYTE_LIMIT = 2000
+export const SMS_SUBJECT_MAX_LENGTH = SMS_SUBJECT_BYTE_LIMIT
 
 function normalizeCategoryId(value: string | null | undefined): string {
   const trimmed = value?.trim() ?? ''
@@ -62,13 +67,7 @@ function normalizeCategoryId(value: string | null | undefined): string {
   return trimmed
 }
 
-export function estimateSmsBodyBytes(text: string): number {
-  let bytes = 0
-  for (const ch of text) {
-    bytes += ch.charCodeAt(0) <= 0x7f ? 1 : 2
-  }
-  return bytes
-}
+export { estimateSmsBodyBytes }
 
 export function draftFromTemplate(
   template: SmsTemplateItem | null,
@@ -85,7 +84,7 @@ export function draftFromTemplate(
     templateName: sanitizeSmsTemplateNameInput(template.templateName),
     senderPhone: template.senderPhone,
     messageType: template.messageType,
-    subject: template.subject.slice(0, SMS_SUBJECT_MAX_LENGTH),
+    subject: template.subject,
     bodyText: template.bodyText,
     attachmentFileNames: [...template.attachmentFileNames],
     newFiles: [],
@@ -144,8 +143,8 @@ export function useSmsTemplateForm(
   newFilesRef.current = newFiles
   attachmentFileNamesRef.current = attachmentFileNames
 
-  const showSubject = messageType !== 'SMS'
-  const showAttachments = messageType === 'MMS'
+  const showSubject = messageType !== 'SMS' || subject.trim().length > 0
+  const showAttachments = messageType === 'MMS' || attachmentFileNames.length > 0
   const attachmentsEnabled = messageType === 'MMS'
   const bodyByteLength = useMemo(() => estimateSmsBodyBytes(bodyText), [bodyText])
   const bodyByteLimit = messageType === 'SMS' ? SMS_BODY_BYTE_LIMIT : LMS_MMS_BODY_BYTE_LIMIT
@@ -161,7 +160,7 @@ export function useSmsTemplateForm(
   }, [])
 
   const setSubject = useCallback((value: string) => {
-    setSubjectState(value.slice(0, SMS_SUBJECT_MAX_LENGTH))
+    setSubjectState(value)
   }, [])
 
   useEffect(() => {
@@ -210,7 +209,7 @@ export function useSmsTemplateForm(
   }, [])
 
   const handleAttachmentAdd = useCallback(
-    (files: File[]) => {
+    async (files: File[]) => {
       if (!attachmentsEnabled) {
         return {
           ok: false as const,
@@ -221,7 +220,7 @@ export function useSmsTemplateForm(
         (sum, item) => sum + (item.byteSize ?? 0),
         0
       )
-      const result = rejectSmsMmsAttachments({
+      const result = await rejectSmsMmsAttachments({
         incoming: files,
         currentCount: attachmentFileNamesRef.current.length,
         currentTotalBytes:
@@ -253,26 +252,9 @@ export function useSmsTemplateForm(
 
   const insertVariable = useCallback(
     (label: string) => {
-      // LMS/MMS 제목 포커스 시 제목에 삽입 (메일 compose와 동일). SMS는 제목 미사용.
-      if (lastTargetRef.current === 'subject' && showSubject) {
-        const range = subjectRangeRef.current
-        const { next, caret } = insertMailVariableInText(
-          subjectRef.current,
-          label,
-          range.start,
-          range.end,
-          SMS_SUBJECT_MAX_LENGTH
-        )
-        setSubject(next)
-        subjectRangeRef.current = { start: caret, end: caret }
-        lastTargetRef.current = 'subject'
-        requestAnimationFrame(() => {
-          const input = subjectInputRef.current?.input
-          if (!input) return
-          input.focus()
-          input.setSelectionRange(caret, caret)
-        })
-        return
+      // 제목에는 자동입력 변수 사용 불가 — 본문에만 삽입
+      if (lastTargetRef.current === 'subject') {
+        lastTargetRef.current = 'body'
       }
 
       const range = bodyRangeRef.current
@@ -292,7 +274,7 @@ export function useSmsTemplateForm(
         textarea.setSelectionRange(caret, caret)
       })
     },
-    [setSubject, showSubject]
+    []
   )
 
   const getDraft = useCallback((): SmsTemplateFormDraft => {
@@ -301,17 +283,16 @@ export function useSmsTemplateForm(
       templateName: templateName.trim(),
       senderPhone: senderPhone.trim(),
       messageType,
-      // SMS는 제목을 발송 페이로드에서 제외 (UI는 시안대로 항상 노출)
-      subject: messageType === 'SMS' ? '' : subject.trim(),
+      subject,
       bodyText,
-      attachmentFileNames: messageType === 'MMS' ? attachmentFileNames : [],
-      newFiles: messageType === 'MMS' ? [...newFilesRef.current] : [],
+      attachmentFileNames,
+      newFiles: [...newFilesRef.current],
     }
   }, [attachmentFileNames, bodyText, categoryId, messageType, senderPhone, subject, templateName])
 
   const getPreviewAttachments = useCallback(
     () =>
-      (messageType === 'MMS' ? attachmentFileNames : []).map(name => {
+      attachmentFileNames.map(name => {
         const file = newFilesRef.current.find(item => item.name === name)
         const existing = existingAttachmentsRef.current.find(item => item.fileName === name)
         return { name, sizeBytes: file?.size ?? existing?.byteSize }
@@ -326,14 +307,17 @@ export function useSmsTemplateForm(
       if (nameError) return nameError
       const senderError = validateSmsSenderPhone(draft.senderPhone, senderOptions)
       if (senderError) return senderError
-      if (!draft.bodyText.trim()) return '내용을 작성하세요.'
-      if (draft.messageType !== 'SMS' && !draft.subject) return '제목을 작성하세요.'
-      if (estimateSmsBodyBytes(draft.bodyText) > bodyByteLimit) {
-        return `내용은 ${bodyByteLimit.toLocaleString()}byte 이하로 입력하세요.`
-      }
+      const issues = collectSmsComposeFieldIssues({
+        messageType: draft.messageType,
+        subject: draft.subject,
+        bodyText: draft.bodyText,
+        attachmentCount: draft.attachmentFileNames.length,
+      })
+      if (issues.bodyError) return issues.bodyError
+      if (draft.messageType !== 'SMS' && issues.subjectError) return issues.subjectError
       return null
     },
-    [bodyByteLimit, getDraft]
+    [getDraft]
   )
 
   return {

@@ -83,7 +83,7 @@ export function PreviewModal({
               <dd>{senderPhone.trim() || '-'}</dd>
             </div>
             <div className="sms-template-preview__meta-row">
-              <dt>메시지 유형</dt>
+              <dt>발송 유형</dt>
               <dd>{messageType}</dd>
             </div>
             <div className="sms-template-preview__meta-row">

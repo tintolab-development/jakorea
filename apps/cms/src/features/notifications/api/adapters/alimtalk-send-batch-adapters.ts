@@ -14,11 +14,23 @@ import {
   ListNotificationTemplateVariablesMemberType as TemplateVariablesMemberTypeEnum,
   ListNotificationTemplateVariablesParticipantType as TemplateVariablesParticipantTypeEnum,
 } from '@/shared/api/generated/notifications/schemas'
+import {
+  alimtalkRecipientCoversPlaceholder,
+  pickAlimtalkRecipientSendVariables,
+  NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS,
+} from '@/features/notifications/model/alimtalk-send/recipient-variables'
+import { dedupeAlimtalkSendRecipients } from '@/features/notifications/model/alimtalk-send/recipients'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
 import type {
   AlimtalkSendMemberType,
   AlimtalkSendParticipationType,
 } from '@/features/notifications/model/alimtalk-send/types'
+
+export {
+  ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS,
+  NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS,
+  NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS,
+} from '@/features/notifications/model/alimtalk-send/recipient-variables'
 
 export type AlimtalkTemplateVariable = {
   key: string
@@ -187,66 +199,6 @@ export function mapTemplateVariablesCatalog(
 
 const TEMPLATE_PLACEHOLDER_RE = /#\{([^{}]+)\}/g
 
-/** BE MEMBER/ADMIN actor enrich로 채울 수 있는 본문 토큰 (DIRECT는 FE가 명시) */
-export const ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS = new Set([
-  '회원명',
-  '수신자명',
-  '사용자 아이디(이메일)',
-  '이메일',
-  'email',
-  '휴대폰 번호',
-  '전화번호',
-  'phone',
-])
-
-/**
- * Create.variables 에 넣으면 NOTIFICATION_SERVER_RESERVED_VARIABLE 이 나는 키.
- * 서버 enrich / 카탈로그 SYSTEM·문맥 키 — 커스텀 키만 variables로 허용.
- */
-/**
- * SYSTEM/자동발송 카탈로그 키 — BE enrich 전용.
- * FE `request.variables` 로 넣으면 NOTIFICATION_SERVER_RESERVED_VARIABLE.
- * (TEMP QA fixture 키 포함 — 수동 발송도 서버가 채움)
- */
-export const NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS = new Set([
-  '로그인 실패 횟수',
-  '마지막 로그인 실패일시',
-  '로그인 잠금 종료일시',
-  '관리자 2단계 인증 실패 횟수',
-  '관리자 마지막 2단계 인증 일시',
-  '관리자 2단계 인증 코드 생성일시',
-  '동의 항목',
-  '만료일시',
-  '동의 철회일시',
-  '동의 철회 항목',
-  '동의 철회 일시',
-  '휴면 전환일시',
-  '본인인증 일시',
-  '생년월일',
-  '성별',
-  '사용자 휴대폰 번호',
-  '마지막 로그인 일시',
-  '탈퇴 처리예정일시',
-  '사용자 이메일',
-  '서비스 탈퇴일시',
-  '회원 유형',
-  '서비스 가입일시',
-  '서비스명',
-  'UJAT 프로그램 기관 일정 확인 현황',
-  'UJAT 프로그램 기관 일정 수정사항',
-  'UJAT 봉사자 출석 현황',
-  '프로그램 수료 현황',
-  '피드백 내용',
-])
-
-export const NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS = new Set([
-  ...ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS,
-  ...NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS,
-  '프로그램명',
-  '소속명',
-  '담당교사명',
-])
-
 /** 텍스트들에서 `#{키}` 추출 — contentTemplate·titleTemplate이 SSOT */
 export function extractPlaceholderKeysFromTexts(
   ...texts: Array<string | null | undefined>
@@ -274,18 +226,6 @@ export {
   formatNotificationMissingVariablesMessage as formatAlimtalkMissingVariablesMessage,
 } from '@/features/notifications/model/shared/format-notification-failed-reason'
 
-function hasNonEmptyVariableValue(
-  variables: Record<string, unknown> | null | undefined,
-  key: string
-): boolean {
-  if (!variables) return false
-  const value = variables[key]
-  if (value == null) return false
-  if (typeof value === 'string') return value.trim().length > 0
-  if (typeof value === 'number' || typeof value === 'boolean') return true
-  return String(value).trim().length > 0
-}
-
 export type AlimtalkRequiredVariableCheckInput = {
   requiredKeys: Iterable<string>
   batchVariables?: Record<string, unknown> | null
@@ -295,12 +235,31 @@ export type AlimtalkRequiredVariableCheckInput = {
     source?: string
     variables?: Record<string, unknown> | null
   }>
+  catalog?: Array<{
+    key: string
+    token?: string
+    categoryCode?: string
+    enabled?: boolean
+    requiresProgram?: boolean
+  }> | null
+  programSelected?: boolean
+}
+
+function asStringVariables(
+  variables: Record<string, unknown> | null | undefined
+): Record<string, string> | undefined {
+  if (!variables) return undefined
+  const next: Record<string, string> = {}
+  for (const [key, value] of Object.entries(variables)) {
+    if (typeof value === 'string') next[key] = value
+  }
+  return next
 }
 
 /**
- * 본문 `#{...}` 대비 batch/recipient variables 누락 키.
- * - MEMBER+actorId: BE가 enrich하는 「사용자 아이디(이메일)」은 충족으로 본다.
- * - DIRECT / 수동 번호: enrich 없음 → 모든 토큰이 variables에 있어야 함.
+ * 본문 `#{...}` 대비 수신자별 누락 키.
+ * 한 수신자의 값이 다른 수신자를 충족시키지 않는다.
+ * SYSTEM·예약 키는 수동 값으로 충족되지 않는다.
  */
 export function findMissingAlimtalkTemplateVariableKeys(
   input: AlimtalkRequiredVariableCheckInput
@@ -309,24 +268,33 @@ export function findMissingAlimtalkTemplateVariableKeys(
   if (required.length === 0) return []
 
   const recipients = input.recipients ?? []
-  const allMembersWithId =
-    recipients.length > 0 &&
-    recipients.every(recipient => {
-      const actorType = (recipient.actorType || '').trim().toUpperCase()
-      const isDirect =
-        recipient.source === 'manual' || actorType === 'DIRECT' || recipient.actorId == null
-      return !isDirect && Number.isFinite(recipient.actorId)
-    })
-
   const missing: string[] = []
   for (const key of required) {
-    if (hasNonEmptyVariableValue(input.batchVariables, key)) continue
-    const coveredByRecipient = recipients.some(recipient =>
-      hasNonEmptyVariableValue(recipient.variables, key)
+    if (recipients.length === 0) {
+      const covered = alimtalkRecipientCoversPlaceholder({
+        key,
+        recipient: { actorType: 'DIRECT', source: 'manual' },
+        batchVariables: input.batchVariables,
+        catalog: input.catalog,
+        programSelected: input.programSelected === true,
+      })
+      if (!covered) missing.push(key)
+      continue
+    }
+    const uncovered = recipients.some(
+      recipient =>
+        !alimtalkRecipientCoversPlaceholder({
+          key,
+          recipient: {
+            ...recipient,
+            variables: asStringVariables(recipient.variables),
+          },
+          batchVariables: input.batchVariables,
+          catalog: input.catalog,
+          programSelected: input.programSelected === true,
+        })
     )
-    if (coveredByRecipient) continue
-    if (allMembersWithId && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) continue
-    missing.push(key)
+    if (uncovered) missing.push(key)
   }
   return missing
 }
@@ -443,19 +411,40 @@ function mapCatalogVariable(
 }
 
 export function buildSendBatchRecipients(
-  recipients: AlimtalkSendRecipient[]
+  recipients: AlimtalkSendRecipient[],
+  variableContext?: {
+    keys: Iterable<string>
+    catalog: Array<{
+      key: string
+      token?: string
+      categoryCode?: string
+      enabled?: boolean
+      requiresProgram?: boolean
+    }> | null
+    programSelected: boolean
+  }
 ): RecipientRequest[] {
-  return recipients.map(recipient => {
+  return dedupeAlimtalkSendRecipients(recipients).map(recipient => {
+    const variables = variableContext
+      ? pickAlimtalkRecipientSendVariables({
+          recipient,
+          keys: variableContext.keys,
+          catalog: variableContext.catalog,
+          programSelected: variableContext.programSelected,
+        })
+      : undefined
     if (recipient.source === 'manual' || recipient.actorType === 'DIRECT') {
       return {
         actorType: 'DIRECT',
         recipientContact: recipient.phone.replace(/\D/g, '') || recipient.phone,
         recipientName: recipient.name.trim() || undefined,
+        ...(variables ? { variables } : {}),
       }
     }
     return {
       actorType: recipient.actorType || 'MEMBER',
       actorId: recipient.actorId,
+      ...(variables ? { variables } : {}),
     }
   })
 }
@@ -469,15 +458,33 @@ export function buildCreateSendBatchRequest(input: {
   senderProfileId?: number
   recipients: AlimtalkSendRecipient[]
   variables?: Record<string, unknown>
+  placeholderKeys?: Iterable<string>
+  variableCatalog?: Array<{
+    key: string
+    token?: string
+    categoryCode?: string
+    enabled?: boolean
+    requiresProgram?: boolean
+  }> | null
 }): CreateRequest {
   const variables = pickNonEmptySendVariables(input.variables)
+  const programSelected = input.programId != null
   const body: CreateRequest = {
     batchName: input.batchName,
     templateId: input.templateId,
     scheduledAt: input.scheduledAt,
     senderKey: input.senderKey,
     senderProfileId: input.senderProfileId,
-    recipients: buildSendBatchRecipients(input.recipients),
+    recipients: buildSendBatchRecipients(
+      input.recipients,
+      input.placeholderKeys
+        ? {
+            keys: input.placeholderKeys,
+            catalog: input.variableCatalog ?? null,
+            programSelected,
+          }
+        : undefined
+    ),
   }
   if (input.programId != null) body.programId = input.programId
   if (variables) body.variables = variables

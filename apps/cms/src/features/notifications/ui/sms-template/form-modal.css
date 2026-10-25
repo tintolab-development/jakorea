@@ -129,13 +129,6 @@
   background: rgba(61, 61, 61, 0.06);
 }
 
-.sms-template-form-modal__title-actions {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 8px;
-}
-
 .sms-template-form-modal__title-close {
   display: inline-flex;
   width: 32px;
@@ -160,7 +153,7 @@
   padding: 32px 52px 0;
   flex-direction: column;
   align-items: stretch;
-  gap: 32px;
+  gap: 16px;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -213,7 +206,7 @@
   padding: 20px;
   flex-direction: column;
   align-items: flex-start;
-  gap: 20px;
+  gap: 16px;
   align-self: stretch;
   box-sizing: border-box;
   border-radius: 16px;
@@ -289,7 +282,7 @@
 
 .sms-template-form-modal__compose-row {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   gap: 24px;
   width: 100%;
   min-width: 0;
@@ -302,6 +295,8 @@
   min-width: 0;
   min-height: 0;
   align-self: stretch;
+  max-height: 785px;
+  overflow: hidden;
 }
 
 /* 휴대폰(785px) 높이에 맞춰 본문 격자 stretch — 라디오별 노출 행만큼 내용칸이 남은 높이 fill */
@@ -317,8 +312,7 @@
   flex: 0 0 auto;
 }
 
-.sms-template-form-modal__compose
-  .detail-info-form__row:has(.sms-template-form-modal__body-field) {
+.sms-template-form-modal__compose .detail-info-form__row:has(.sms-template-form-modal__body-field) {
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
@@ -342,34 +336,28 @@
 
 .sms-template-form-modal__subject-field {
   display: flex;
+  flex-direction: row;
   width: 100%;
   min-width: 0;
   align-items: center;
   gap: 8px;
 }
 
-/* field-content > * { display:block } 보다 우선 — 인풋·카운터 한 줄 정렬 */
-.sms-template-form-modal
-  .detail-info-form__field-content--edit
-  > .sms-template-form-modal__subject-field {
-  display: flex !important;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.sms-template-form-modal__subject-field .cms-input,
-.sms-template-form-modal__subject-field .cms-input__field {
-  flex: 1 1 auto;
-  display: flex;
-  width: auto;
-  min-width: 0;
-  max-width: 100%;
-}
-
 .sms-template-form-modal__subject-field .sms-variable-text-field {
   flex: 1 1 auto;
+  width: auto;
   min-width: 0;
+}
+
+.sms-template-form-modal__subject-field .sms-template-form-modal__byte-row {
+  width: auto;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.sms-template-form-modal__subject-field .sms-template-form-modal__byte-count,
+.sms-template-form-modal__subject-field .sms-template-form-modal__byte-label {
+  font-size: 16px;
 }
 
 .sms-template-form-modal__subject-count {
@@ -425,7 +413,11 @@
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
+  overflow: hidden;
+}
+
+.sms-template-form-modal__body-field .sms-variable-text-field__mirror {
+  overflow: hidden;
 }
 
 .sms-template-form-modal__body-field .sms-variable-text-field__control,
@@ -439,7 +431,7 @@
   width: 100%;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  overflow: hidden;
 }
 
 .sms-template-form-modal__body-field .cms-textarea__inner textarea.ant-input {
@@ -447,30 +439,51 @@
   width: 100%;
   min-height: 120px !important;
   height: 100% !important;
+  overflow: auto !important;
   resize: none;
 }
 
 .sms-template-form-modal__byte-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 6px;
   flex-shrink: 0;
   width: 100%;
 }
 
-.sms-template-form-modal__byte-label,
-.sms-template-form-modal__byte-count {
-  color: rgba(61, 61, 61, 0.6);
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
+.sms-template-form-modal__byte-meter {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.sms-template-form-modal__byte-label {
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 150%; /* 21px */
+}
+.sms-template-form-modal__byte-count {
+  color: var(--Brand-500, #00a0af);
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+}
+.sms-template-form-modal__byte-count--danger {
+  color: var(--Status-red-main, #c32f4a);
 }
 
-.sms-template-form-modal__byte-count--danger {
-  color: var(--color-danger, #d92d20);
+.sms-template-form-modal__file-wrap--error {
+  border: 1px solid var(--Status-red-main, #c32f4a);
+  border-radius: var(--radius-8, 8px);
+  padding: 12px;
 }
 
 .sms-template-form-modal .detail-info-form__field-content--edit > * {
@@ -481,7 +494,18 @@
   align-items: stretch;
 }
 
-.sms-template-form-modal .detail-info-form__field-content--edit > .sms-template-form-modal__body-field {
+.sms-template-form-modal
+  .detail-info-form__field-content--edit
+  > .sms-template-form-modal__subject-field {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.sms-template-form-modal
+  .detail-info-form__field-content--edit
+  > .sms-template-form-modal__body-field {
   display: flex !important;
   flex: 1 1 auto;
   flex-direction: column;

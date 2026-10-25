@@ -13,7 +13,7 @@ export const ALIMTALK_TEMPLATE_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'templateName',
     type: 'search',
     label: '템플릿명',
-    placeholder: '템플릿명을 입력하세요',
+    placeholder: '템플릿명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
 ]

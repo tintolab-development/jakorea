@@ -4,13 +4,12 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
   CmsButton,
-  CmsInput,
   CmsPhoneInput,
+  CmsRadio,
   ConfirmModal,
   useCmsAlert,
 } from '@/shared/ui'
 import {
-  getNotificationSendBatchErrorMessage,
   getNotificationsApiErrorMessage,
 } from '@/features/notifications/api/get-notifications-api-error'
 import {
@@ -58,6 +57,7 @@ import { ProgramSelectField } from '@/features/notifications/ui/mail-send/progra
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { SmsSendComposeFields } from './compose-fields'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
+import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
 import { RecipientTable } from './recipient-table'
@@ -293,6 +293,11 @@ export function SendFullpageModal({
   }
 
   function handleSend() {
+    if (form.composeBlocking) {
+      const error = form.validateRequired()
+      showAlert({ title: '필수 입력 안내', content: error ?? '입력값을 확인하세요.' })
+      return
+    }
     const error = form.validateRequired()
     if (error) {
       showAlert({ title: '필수 입력 안내', content: error })
@@ -314,6 +319,12 @@ export function SendFullpageModal({
 
   async function handleConfirmSend() {
     if (sending) return
+    const error = form.validateRequired()
+    if (error) {
+      setSendConfirmOpen(false)
+      showAlert({ title: '필수 입력 안내', content: error })
+      return
+    }
     setSending(true)
     try {
       const draft = form.getDraft()
@@ -334,12 +345,9 @@ export function SendFullpageModal({
       setSendConfirmOpen(false)
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
-    } catch (error) {
+    } catch {
       setSendConfirmOpen(false)
-      showAlert({
-        title: '문자 발송 실패',
-        content: getNotificationSendBatchErrorMessage(error, '문자 발송에 실패했습니다.'),
-      })
+      showNotificationSendRequestFailedAlert(showAlert)
     } finally {
       setSending(false)
     }
@@ -371,8 +379,8 @@ export function SendFullpageModal({
           <div className="mail-send-fullpage-modal__body">
             <div className="mail-send-fullpage-modal__notice">
               <p className="mail-send-fullpage-modal__notice-text">
-                * 프로그램은 현재 운영 중인 프로그램만 선택 가능합니다. 발송·수신자 조회에는
-                프로그램 선택이 필요합니다. 템플릿을 선택하면 메시지 유형, 발신 번호,
+                * 프로그램은 현재 운영 중인 프로그램만 선택 가능합니다. 프로그램 미선택 시
+                전체 회원 대상 조회·직접 입력이 가능합니다. 템플릿을 선택하면 발송 유형, 발신 번호,
                 제목/내용이 자동 반영됩니다.
               </p>
               <div className="mail-send-fullpage-modal__notice-actions">
@@ -393,7 +401,14 @@ export function SendFullpageModal({
                   size="large"
                   width={140}
                   type="button"
-                  disabled={sending}
+                  disabled={
+                    sending ||
+                    form.composeBlocking ||
+                    form.recipients.length === 0 ||
+                    !form.templateId?.trim() ||
+                    !form.senderPhone.trim() ||
+                    (form.sendTiming === 'scheduled' && !form.scheduledAt)
+                  }
                   onClick={handleSend}
                 >
                   문자 발송
@@ -447,16 +462,31 @@ export function SendFullpageModal({
                         }
                       />
                       <DetailInfoForm.Field
-                        label="메시지 유형"
+                        label="발송 유형"
+                        required
                         view={form.messageType}
                         edit={
-                          <CmsInput
-                            inputSize="small"
-                            width="100%"
-                            allowClear={false}
+                          <CmsRadio.Group
+                            size="medium"
                             value={form.messageType}
-                            disabled
-                          />
+                            onChange={event =>
+                              form.applyMessageType(
+                                event.target.value === 'MMS' || event.target.value === 'LMS'
+                                  ? event.target.value
+                                  : 'SMS'
+                              )
+                            }
+                          >
+                            <CmsRadio size="medium" value="SMS">
+                              SMS
+                            </CmsRadio>
+                            <CmsRadio size="medium" value="LMS">
+                              LMS
+                            </CmsRadio>
+                            <CmsRadio size="medium" value="MMS">
+                              MMS
+                            </CmsRadio>
+                          </CmsRadio.Group>
                         }
                       />
                     </DetailInfoForm.Row>
@@ -543,13 +573,14 @@ export function SendFullpageModal({
                     composeVersion={form.composeVersion}
                     initialSubject={form.composeSeed.subject}
                     initialBodyText={form.composeSeed.bodyText}
-                    showSubject={form.showSubject}
-                    bodyByteLimit={form.bodyByteLimit}
+                    messageType={form.messageType}
+                    attachmentFileNames={form.attachmentFileNames}
                     subjectRef={form.subjectRef}
                     bodyTextRef={form.bodyTextRef}
-                    onBodyTextChange={form.syncMessageTypeToBodyBytes}
                     onRememberSubjectRange={form.rememberSubjectRange}
                     onRememberBodyRange={form.rememberBodyRange}
+                    onRemoveAttachment={form.removeAttachmentAt}
+                    onBlockingChange={form.setComposeBlocking}
                   />
                 </section>
               </div>
@@ -649,6 +680,7 @@ export function SendFullpageModal({
         content="해당 내용으로 문자를 발송하시겠습니까?"
         confirmText="발송"
         cancelText="취소"
+        confirmLoading={sending}
         onConfirm={() => void handleConfirmSend()}
         onCancel={() => {
           if (!sending) setSendConfirmOpen(false)

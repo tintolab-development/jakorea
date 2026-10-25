@@ -21,6 +21,8 @@ import type {
   AlimtalkSendRecipientSearchParams,
 } from '@/features/notifications/model/alimtalk-send/types'
 import {
+  ALIMTALK_DUPLICATE_PHONE_MESSAGE,
+  countDroppedAlimtalkSendRecipients,
   createManualRecipient,
   mergeAlimtalkSendRecipients,
   resolveAlimtalkSendRecipientTypeMode,
@@ -28,6 +30,13 @@ import {
   toAlimtalkSendMemberTypeApi,
   toAlimtalkSendParticipantTypeApi,
 } from '@/features/notifications/model/alimtalk-send/recipients'
+import {
+  classifyAlimtalkPlaceholderKey,
+  collectAlimtalkRecipientVariableGaps,
+  formatAlimtalkRecipientVariableGapMessage,
+  listAlimtalkManualVariableKeys,
+} from '@/features/notifications/model/alimtalk-send/recipient-variables'
+import { collectTemplatePlaceholderKeys } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
 import {
   canSelectNotificationSendTemplate,
@@ -48,7 +57,6 @@ import { categoryPathNames } from '@/features/notifications/lib/tree'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import {
-  getNotificationSendBatchErrorMessage,
   getNotificationsApiErrorMessage,
 } from '@/features/notifications/api/get-notifications-api-error'
 import {
@@ -76,6 +84,7 @@ import { ProgramSelectField } from '@/features/notifications/ui/mail-send/progra
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { ContentPanel } from './content-panel'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
+import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
 import { RecipientTable } from './recipient-table'
@@ -383,6 +392,66 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     } satisfies AlimtalkTemplateItem
   }, [detailQuery.data, pickerTemplate, previewQuery.data, remote, templateId])
 
+  const placeholderKeys = useMemo(
+    () => collectTemplatePlaceholderKeys(selectedTemplate),
+    [selectedTemplate]
+  )
+  const programSelected = programNumericId != null
+  const directRecipientProbe = useMemo(
+    () => ({ source: 'manual' as const, actorType: 'DIRECT' }),
+    []
+  )
+  const directManualKeys = useMemo(
+    () =>
+      listAlimtalkManualVariableKeys({
+        keys: placeholderKeys,
+        catalog: variablesCatalog,
+        recipient: directRecipientProbe,
+        programSelected,
+      }),
+    [directRecipientProbe, placeholderKeys, programSelected, variablesCatalog]
+  )
+  const manualKeysByRecipientId = useMemo(() => {
+    const next: Record<string, string[]> = {}
+    for (const recipient of recipients) {
+      next[recipient.id] = listAlimtalkManualVariableKeys({
+        keys: placeholderKeys,
+        catalog: variablesCatalog,
+        recipient,
+        programSelected,
+      })
+    }
+    return next
+  }, [placeholderKeys, programSelected, recipients, variablesCatalog])
+  const blockedKeysByRecipientId = useMemo(() => {
+    const next: Record<string, string[]> = {}
+    if (variablesCatalog == null) return next
+    for (const recipient of recipients) {
+      const blocked: string[] = []
+      for (const key of placeholderKeys) {
+        if (
+          classifyAlimtalkPlaceholderKey({
+            key,
+            catalog: variablesCatalog,
+            recipient,
+            programSelected,
+          }) === 'blocked'
+        ) {
+          blocked.push(key)
+        }
+      }
+      next[recipient.id] = blocked
+    }
+    return next
+  }, [placeholderKeys, programSelected, recipients, variablesCatalog])
+  const manualEntries = useMemo(
+    () =>
+      recipients
+        .filter(item => item.source === 'manual')
+        .map(item => ({ phone: item.phone, variables: item.variables })),
+    [recipients]
+  )
+
   const canConfigureRecipients = Boolean(selectedSender && selectedTemplate)
 
   const handleSelectTemplate = (template: AlimtalkTemplateItem) => {
@@ -457,6 +526,30 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       showAlert({ title: '필수 입력 안내', content: '수신자를 설정하세요.' })
       return
     }
+    if (remote && placeholderKeys.size > 0) {
+      if (variablesQuery.isError || variablesCatalog == null) {
+        showAlert({
+          title: '안내',
+          content: variablesQuery.isError
+            ? '변수 목록을 불러오지 못했습니다. 다시 시도해 주세요.'
+            : '변수 목록을 확인한 뒤 발송할 수 있습니다.',
+        })
+        return
+      }
+      const gaps = collectAlimtalkRecipientVariableGaps({
+        keys: placeholderKeys,
+        catalog: variablesCatalog,
+        recipients,
+        programSelected,
+      })
+      if (gaps.length > 0) {
+        showAlert({
+          title: '필수 입력 안내',
+          content: formatAlimtalkRecipientVariableGapMessage(gaps),
+        })
+        return
+      }
+    }
     if (!isWithoutProgram && !programNumericId) {
       showAlert({
         title: '필수 입력 안내',
@@ -492,16 +585,15 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         senderKey: selectedSender.senderKey,
         senderProfileId: selectedSender.profileId,
         recipients,
+        placeholderKeys,
+        variableCatalog: variablesCatalog ?? null,
         idempotencyKey: idempotencyKeyRef.current,
       })
       idempotencyKeyRef.current = createIdempotencyKey()
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
-    } catch (error) {
-      showAlert({
-        title: '안내',
-        content: getNotificationSendBatchErrorMessage(error, '알림톡 발송에 실패했습니다.'),
-      })
+    } catch {
+      showNotificationSendRequestFailedAlert(showAlert)
     } finally {
       setSending(false)
     }
@@ -541,8 +633,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           <div className="alimtalk-send-fullpage-modal__body">
             <div className="alimtalk-send-fullpage-modal__notice">
               <p className="alimtalk-send-fullpage-modal__notice-text">
-                * 프로그램은 현재 운영 중인 프로그램만 선택 가능하며, 템플릿은 카카오 승인을 받은
-                템플릿만 사용이 가능합니다.
+                * 템플릿은 카카오 승인을 받은 템플릿만 사용이 가능합니다.
               </p>
               <div className="alimtalk-send-fullpage-modal__notice-actions">
                 <CmsButton variant="cancel" size="large" width={140} type="button" onClick={onClose}>
@@ -673,12 +764,34 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 </div>
               </div>
               {canConfigureRecipients ? (
-                <RecipientTable
-                  recipients={recipients}
-                  selectedIds={selectedRecipientIds}
-                  onSelectedIdsChange={setSelectedRecipientIds}
-                  typeColumnTitle={typeColumnTitle}
-                />
+                <>
+                  {directManualKeys.length > 0 ? (
+                    <p className="alimtalk-send-fullpage__variable-hint">
+                      직접 입력 변수는 수신자마다 값을 넣어야 합니다. 값이 없으면 해당 수신자는
+                      발송할 수 없습니다.
+                    </p>
+                  ) : null}
+                  <RecipientTable
+                    recipients={recipients}
+                    selectedIds={selectedRecipientIds}
+                    onSelectedIdsChange={setSelectedRecipientIds}
+                    typeColumnTitle={typeColumnTitle}
+                    manualKeysByRecipientId={manualKeysByRecipientId}
+                    blockedKeysByRecipientId={blockedKeysByRecipientId}
+                    onVariableChange={(recipientId, key, value) => {
+                      setRecipients(prev =>
+                        prev.map(item =>
+                          item.id === recipientId
+                            ? {
+                                ...item,
+                                variables: { ...item.variables, [key]: value },
+                              }
+                            : item
+                        )
+                      )
+                    }}
+                  />
+                </>
               ) : (
                 <div className="alimtalk-send-fullpage__empty">{EMPTY_HINT}</div>
               )}
@@ -808,21 +921,30 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         }
         onClose={() => setRecipientSelectOpen(false)}
         onConfirm={next => {
+          const dropped = countDroppedAlimtalkSendRecipients(recipients, next)
           setRecipients(prev => mergeAlimtalkSendRecipients(prev, next))
+          if (dropped > 0) {
+            showAlert({ title: '안내', content: ALIMTALK_DUPLICATE_PHONE_MESSAGE })
+          }
           setRecipientSelectOpen(false)
         }}
       />
       <RecipientManualModal
         key={recipientManualOpen ? 'recipient-manual-open' : 'recipient-manual-closed'}
         open={open && recipientManualOpen}
-        phones={recipients.filter(item => item.source === 'manual').map(item => item.phone)}
+        entries={manualEntries}
+        manualVariableKeys={directManualKeys}
         onClose={() => setRecipientManualOpen(false)}
-        onConfirm={phones => {
-          const manual = phones.map(phone => createManualRecipient(phone))
-          setRecipients(prev => {
-            const withoutManual = prev.filter(item => item.source !== 'manual')
-            return mergeAlimtalkSendRecipients(withoutManual, manual)
-          })
+        onConfirm={nextEntries => {
+          const manual = nextEntries.map(entry =>
+            createManualRecipient(entry.phone, '', entry.variables)
+          )
+          const withoutManual = recipients.filter(item => item.source !== 'manual')
+          const dropped = countDroppedAlimtalkSendRecipients(withoutManual, manual)
+          setRecipients(mergeAlimtalkSendRecipients(withoutManual, manual))
+          if (dropped > 0) {
+            showAlert({ title: '안내', content: ALIMTALK_DUPLICATE_PHONE_MESSAGE })
+          }
           setRecipientManualOpen(false)
         }}
       />

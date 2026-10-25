@@ -38,15 +38,15 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
     )
   })
 
-  it('MEMBER+actorId는 이메일을 enrich 충족으로 보고 휴면일시만 누락', () => {
+  it('MEMBER+actorId는 enrich·SYSTEM 키를 서버 소유로 본다', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['사용자 아이디(이메일)', '휴면 전환일시'],
       recipients: [{ actorType: 'MEMBER', actorId: 12 }],
     })
-    expect(missing).toEqual(['휴면 전환일시'])
+    expect(missing).toEqual([])
   })
 
-  it('batch variables에 모두 채우면 누락 없음', () => {
+  it('DIRECT는 예약·SYSTEM 키를 batch variables로 충족하지 않는다', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['사용자 아이디(이메일)', '휴면 전환일시'],
       batchVariables: {
@@ -55,7 +55,23 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
       },
       recipients: [{ actorType: 'DIRECT', source: 'manual' }],
     })
-    expect(missing).toEqual([])
+    expect(missing).toEqual(['사용자 아이디(이메일)', '휴면 전환일시'])
+  })
+
+  it('수신자 한 명의 커스텀 값이 다른 수신자를 충족시키지 않는다', () => {
+    const missing = findMissingAlimtalkTemplateVariableKeys({
+      requiredKeys: ['안내문'],
+      catalog: [],
+      recipients: [
+        {
+          actorType: 'DIRECT',
+          source: 'manual',
+          variables: { 안내문: '오전 안내' },
+        },
+        { actorType: 'DIRECT', source: 'manual' },
+      ],
+    })
+    expect(missing).toEqual(['안내문'])
   })
 
   it('failedReason 코드를 사용자 문구로 변환', () => {
@@ -142,6 +158,77 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
       recipientName: '직접',
     })
     expect(request.recipients[0]).not.toHaveProperty('actorId')
+    expect(request.recipients[0]).not.toHaveProperty('variables')
+  })
+
+  it('직접 입력 수신자의 수동 변수만 recipients[].variables로 전달한다', () => {
+    const request = buildCreateSendBatchRequest({
+      batchName: '알림톡 발송',
+      templateId: 11,
+      placeholderKeys: ['안내문', '휴면 전환일시', '회원명'],
+      variableCatalog: [],
+      recipients: [
+        {
+          id: 'manual-1',
+          participationType: '',
+          name: '직접',
+          phone: '010-3333-4444',
+          source: 'manual',
+          actorType: 'DIRECT',
+          variables: {
+            안내문: '  오후 교육  ',
+            '휴면 전환일시': '2026-01-01',
+            회원명: '홍길동',
+            빈값: '   ',
+          },
+        },
+      ],
+    })
+    expect(request.recipients[0]).toEqual({
+      actorType: 'DIRECT',
+      recipientContact: '01033334444',
+      recipientName: '직접',
+      variables: { 안내문: '오후 교육' },
+    })
+  })
+
+  it('같은 휴대폰 번호는 발송 DTO에서 1건만 남긴다', () => {
+    const request = buildCreateSendBatchRequest({
+      batchName: '알림톡 발송',
+      templateId: 11,
+      recipients: [
+        {
+          id: 'actor-MEMBER-1',
+          participationType: 'participant',
+          name: '회원',
+          phone: '010-1111-2222',
+          source: 'program',
+          actorType: 'MEMBER',
+          actorId: 1,
+        },
+        {
+          id: 'manual-01011112222',
+          participationType: '',
+          name: '직접',
+          phone: '01011112222',
+          source: 'manual',
+          actorType: 'DIRECT',
+        },
+        {
+          id: 'actor-MEMBER-2',
+          participationType: 'participant',
+          name: '다른 회원',
+          phone: '010-9999-8888',
+          source: 'program',
+          actorType: 'MEMBER',
+          actorId: 2,
+        },
+      ],
+    })
+    expect(request.recipients).toEqual([
+      { actorType: 'MEMBER', actorId: 1 },
+      { actorType: 'MEMBER', actorId: 2 },
+    ])
   })
 
   it('enabled를 BE 값 그대로 옮기고 로컬 재계산하지 않는다', () => {

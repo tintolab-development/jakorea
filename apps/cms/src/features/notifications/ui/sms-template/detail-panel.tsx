@@ -57,7 +57,7 @@ export function DetailPanel({ template, categoryName, onPreview, loading }: Deta
             label="보낸사람(전화번호)"
             view={template.senderPhone.trim() || '-'}
           />
-          <DetailInfoForm.Field label="메시지 유형" view={template.messageType} />
+          <DetailInfoForm.Field label="발송 유형" view={template.messageType} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="제목" view={subjectView(template)} />
@@ -68,7 +68,7 @@ export function DetailPanel({ template, categoryName, onPreview, loading }: Deta
             label="미리보기"
             fullRow
             view={
-              <CmsButton variant="secondary" size="medium" type="button" onClick={onPreview}>
+              <CmsButton variant="secondary" size="h32" type="button" onClick={onPreview}>
                 미리보기
               </CmsButton>
             }

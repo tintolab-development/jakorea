@@ -152,9 +152,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
               loading={senderLoading}
               disabled={senderEmailDisabled}
               placeholder={
-                senderEmailDisabled
-                  ? '발신 프로필 동기화 후 선택하세요'
-                  : '발신 메일을 선택하세요'
+                senderEmailDisabled ? '발신 프로필 동기화 후 선택하세요' : '발신 메일을 선택하세요'
               }
               options={senderOptions}
               value={senderEmail || undefined}
@@ -266,10 +264,7 @@ export function FormModal({
     if (
       mode === 'edit' &&
       form.senderEmail &&
-      !fromApi.some(
-        option =>
-          option.value.toLowerCase() === form.senderEmail.trim().toLowerCase()
-      )
+      !fromApi.some(option => option.value.toLowerCase() === form.senderEmail.trim().toLowerCase())
     ) {
       return [{ label: form.senderEmail, value: form.senderEmail }, ...fromApi]
     }
@@ -435,7 +430,13 @@ export function FormModal({
               <div className="mail-template-form-modal__notice-actions">
                 {isEdit ? (
                   <>
-                    <CmsButton variant="cancel" size="large" width={140} type="button" onClick={onClose}>
+                    <CmsButton
+                      variant="cancel"
+                      size="large"
+                      width={140}
+                      type="button"
+                      onClick={onClose}
+                    >
                       닫기
                     </CmsButton>
                     <CmsButton
@@ -446,7 +447,7 @@ export function FormModal({
                       disabled={submitting}
                       onClick={() => setDeleteOpen(true)}
                     >
-                      템플릿 삭제
+                      삭제
                     </CmsButton>
                     <CmsButton
                       variant="secondary"
@@ -471,7 +472,13 @@ export function FormModal({
                   </>
                 ) : (
                   <>
-                    <CmsButton variant="cancel" size="large" width={140} type="button" onClick={onClose}>
+                    <CmsButton
+                      variant="cancel"
+                      size="large"
+                      width={140}
+                      type="button"
+                      onClick={onClose}
+                    >
                       취소
                     </CmsButton>
                     <CmsButton
@@ -536,9 +543,7 @@ export function FormModal({
                       {remote
                         ? ` ${MAIL_SENDER_DISPLAY_NAME_READONLY_HINT}`
                         : ' 발신자명 미기재 시 수신자에게 메일 주소만 표시됩니다.'}
-                      {senderListEmpty
-                        ? ` ${MAIL_SENDER_PROFILES_EMPTY_MESSAGE}`
-                        : null}
+                      {senderListEmpty ? ` ${MAIL_SENDER_PROFILES_EMPTY_MESSAGE}` : null}
                       {defaultMissingFromHarvest
                         ? ` 기본 발신 메일(${MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL})이 동기화 목록에 없습니다. NHN 등록 후 「발신 프로필 동기화」를 실행해 주세요.`
                         : null}
