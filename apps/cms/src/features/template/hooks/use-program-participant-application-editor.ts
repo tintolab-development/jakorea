@@ -2317,7 +2317,10 @@ export function useProgramParticipantApplicationEditor(
           editorState: payload.editorState,
           settingsJson: payload.settingsJson,
           localOnly: payload.localOnly,
-          templateVersionId: persistTemplateVersionId,
+          // 독립 Template Authoring은 catalog code의 Form Version DRAFT를 저장한다.
+          // versionId만 있고 linked program이 없는 경우를 프로그램 전용 버전으로
+          // 취급하면 공용 DRAFT까지 fail-closed COPY 가드에 걸린다.
+          templateVersionId: linkedProgram?.id != null ? persistTemplateVersionId : undefined,
         })
       }
       if (usesRegistrationWizardDraft) {
