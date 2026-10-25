@@ -49,57 +49,84 @@
   flex-shrink: 0;
 }
 
-/* Ant Checkbox: 라벨은 형제 span — flex + min-width:0 으로 말줄임 동작 */
+/* Ant Checkbox: 라벨은 형제 span — 20px 박스와 같은 줄 높이로 세로 중앙 */
 .calendar-search__filter-item.ant-checkbox-wrapper {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  min-height: 20px;
   box-sizing: border-box;
   font-size: 16px;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 20px;
 }
 
 .calendar-search__filter-item .ant-checkbox {
   flex-shrink: 0;
-  align-self: flex-start;
-  top: 2px;
+  align-self: center;
+  top: 0 !important;
+  margin: 0 !important;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
 }
 
-.calendar-search__filter-item.ant-checkbox-wrapper > span:last-child {
+.calendar-search__filter-item.ant-checkbox-wrapper > span:not(.ant-checkbox) {
   flex: 1;
   min-width: 0;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  height: 20px;
+  line-height: 20px;
+  padding: 0 !important;
   color: var(--main-BK, #3d3d3d);
 }
 
 /*
- * Ant Design 5: `ant-checkbox-checked`는 label이 아니라 내부 span.ant-checkbox에만 붙음.
- * `--calendar-search-checkbox-fill`은 `.calendar-search__filters-wrapper`에 행마다 설정.
+ * 프로그램별 일정 칩 `bg`와 동일 채움. 체크는 칩 텍스트색(검정).
+ * `--calendar-search-checkbox-fill` / `--calendar-search-checkbox-check` 는 행 래퍼에 설정.
  */
 .calendar-search__filters-wrapper
   .calendar-search__filter-item
-  .ant-checkbox.ant-checkbox-checked
+  .ant-checkbox
   .ant-checkbox-inner {
-  background-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary)) !important;
-  border-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary)) !important;
-}
-
-.calendar-search__filters-wrapper
-  .calendar-search__filter-item.ant-checkbox-wrapper-checked:hover
-  .ant-checkbox.ant-checkbox-checked:not(.ant-checkbox-disabled)
-  .ant-checkbox-inner {
-  background-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary)) !important;
-  border-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary)) !important;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background-color: var(--calendar-search-checkbox-fill, var(--Tag-green, #e1f7d9)) !important;
+  border: 1px solid
+    color-mix(in srgb, var(--calendar-search-checkbox-fill, #e1f7d9) 62%, #3d3d3d 18%) !important;
 }
 
 .calendar-search__filters-wrapper
   .calendar-search__filter-item:not(.ant-checkbox-wrapper-disabled):hover
-  .ant-checkbox:not(.ant-checkbox-disabled):not(.ant-checkbox-checked)
+  .ant-checkbox:not(.ant-checkbox-disabled)
   .ant-checkbox-inner {
-  border-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary));
+  background-color: var(--calendar-search-checkbox-fill, var(--Tag-green, #e1f7d9)) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--calendar-search-checkbox-fill, #e1f7d9) 55%,
+    #3d3d3d 24%
+  ) !important;
+}
+
+.calendar-search__filters-wrapper
+  .calendar-search__filter-item
+  .ant-checkbox.ant-checkbox-checked
+  .ant-checkbox-inner::after {
+  box-sizing: border-box;
+  width: 6px;
+  height: 10px;
+  top: 47%;
+  inset-inline-start: 27%;
+  margin: 0;
+  border: 2px solid var(--calendar-search-checkbox-check, var(--Neutral-black, #3d3d3d)) !important;
+  border-top: 0 !important;
+  border-inline-start: 0 !important;
+  transform: rotate(45deg) scale(1) translate(-50%, -50%);
+  transition: none;
 }

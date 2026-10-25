@@ -10,14 +10,15 @@
   width: max(100%, var(--calendar-week-time-grid-min-width));
   min-width: var(--calendar-week-time-grid-min-width);
   max-width: none;
-  gap: 0;
+  gap: 8px;
   box-sizing: border-box;
   --calendar-week-grid-line: var(--table-line, #e0e0e0);
-  --calendar-week-hour-px: 56px;
+  --calendar-week-hour-px: 65px;
   --calendar-week-total-px: calc(24 * var(--calendar-week-hour-px));
-  --calendar-week-gutter-width: 72px;
-  --calendar-week-gutter-gap: 20px;
-  --calendar-week-columns-min-width: calc(var(--calendar-cell-min-width, 116px) * 7);
+  --calendar-week-gutter-width: 40px;
+  --calendar-week-gutter-gap: 8px;
+  --calendar-week-column-min-width: 108px;
+  --calendar-week-columns-min-width: calc(var(--calendar-week-column-min-width) * 7);
   --calendar-week-time-grid-min-width: calc(
     var(--calendar-week-gutter-width) + var(--calendar-week-gutter-gap) +
       var(--calendar-week-columns-min-width)
@@ -35,13 +36,13 @@
   grid-template-columns:
     var(--calendar-week-gutter-width)
     var(--calendar-week-gutter-gap)
-    repeat(7, minmax(var(--calendar-cell-min-width, 116px), 1fr));
+    repeat(7, minmax(var(--calendar-week-column-min-width, 108px), 1fr));
   align-items: stretch;
   min-width: var(--calendar-week-time-grid-min-width);
   width: 100%;
   max-width: none;
   flex-shrink: 0;
-  min-height: var(--calendar-week-time-grid-header-min-height, 40px);
+  min-height: var(--calendar-week-time-grid-header-min-height, 21px);
   box-sizing: border-box;
 }
 
@@ -86,7 +87,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: var(--calendar-cell-min-width, 116px);
+  min-width: var(--calendar-week-column-min-width, 108px);
   color: var(--gray-85969-d, #85969d);
   text-align: center;
   font-size: 16px;
@@ -112,7 +113,7 @@
   grid-template-columns:
     var(--calendar-week-gutter-width)
     var(--calendar-week-gutter-gap)
-    repeat(7, minmax(var(--calendar-cell-min-width, 116px), 1fr));
+    repeat(7, minmax(var(--calendar-week-column-min-width, 108px), 1fr));
   align-items: stretch;
   flex: 0 0 auto;
   min-width: var(--calendar-week-time-grid-min-width);
@@ -126,22 +127,39 @@
   box-sizing: border-box;
 }
 
-/* 시간 가로선 — gutter·gap(col 1~2) 제외, 요일 격자(col 3~)만 */
-.calendar-week-time-grid__shell::after {
-  content: '';
+/* Figma 14931:749823 — 요일 격자 외곽 8px radius + overflow clip */
+.calendar-week-time-grid__board {
   grid-column: 3 / -1;
   grid-row: 1;
-  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(var(--calendar-week-column-min-width, 108px), 1fr));
+  align-items: stretch;
+  position: relative;
+  z-index: 0;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  isolation: isolate;
+  border: 1px solid var(--calendar-week-grid-line);
+  border-radius: var(--calendar-grid-radius, 8px);
+  overflow: hidden;
+  background: var(--main-WT, #fff);
+}
+
+.calendar-week-time-grid__board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   pointer-events: none;
   z-index: 0;
   box-sizing: border-box;
-  border-top: 1px solid var(--calendar-week-grid-line);
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0,
-    transparent calc(var(--calendar-week-hour-px, 56px) - 1px),
-    var(--calendar-week-grid-line) calc(var(--calendar-week-hour-px, 56px) - 1px),
-    var(--calendar-week-grid-line) var(--calendar-week-hour-px, 56px)
+    transparent calc(var(--calendar-week-hour-px, 65px) - 1px),
+    var(--calendar-week-grid-line) calc(var(--calendar-week-hour-px, 65px) - 1px),
+    var(--calendar-week-grid-line) var(--calendar-week-hour-px, 65px)
   );
 }
 
@@ -160,30 +178,26 @@
   overflow: visible;
 }
 
-.calendar-week-time-grid__columns {
-  display: contents;
-}
-
 .calendar-week-time-grid__gutter-cell {
   position: absolute;
   left: 0;
   right: 0;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
   gap: 4px;
   min-width: 0;
   box-sizing: border-box;
   padding: 0;
   border: none;
-  transform: translateY(-50%);
+  transform: none;
+  height: var(--calendar-week-hour-px, 65px);
   pointer-events: none;
 }
 
-/* 0시 라벨 — translateY(-50%) 시 상단 절반이 gutter 밖으로 나가 잘림 */
 .calendar-week-time-grid__gutter-cell--first {
-  transform: translateY(0);
+  transform: none;
 }
 
 .calendar-week-time-grid__gutter-period {
@@ -206,11 +220,12 @@
   text-align: left;
   color: #3d3d3d;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 500;
   line-height: 130%;
-  letter-spacing: -0.312px;
+  letter-spacing: -0.3125px;
+  white-space: nowrap;
 }
 
 .calendar-week-time-grid__column {
@@ -232,38 +247,8 @@
   background: transparent;
 }
 
-.calendar-week-time-grid__column:nth-child(1) {
-  grid-column: 3;
-}
-
-.calendar-week-time-grid__column:nth-child(2) {
-  grid-column: 4;
-}
-
-.calendar-week-time-grid__column:nth-child(3) {
-  grid-column: 5;
-}
-
-.calendar-week-time-grid__column:nth-child(4) {
-  grid-column: 6;
-}
-
-.calendar-week-time-grid__column:nth-child(5) {
-  grid-column: 7;
-}
-
-.calendar-week-time-grid__column:nth-child(6) {
-  grid-column: 8;
-}
-
-.calendar-week-time-grid__column:nth-child(7) {
-  grid-column: 9;
-}
-
-/* 마지막 요일 열 우측 보더 유지 — shell border-right 제거·clip 시 잘림 방지 */
-
-.calendar-week-time-grid__columns .calendar-week-time-grid__column:first-child {
-  border-left: 1px solid var(--calendar-week-grid-line);
+.calendar-week-time-grid__board .calendar-week-time-grid__column:last-child {
+  border-right: none;
 }
 
 .calendar-week-time-grid__column-inner {
@@ -274,14 +259,25 @@
   min-height: 0;
   box-sizing: border-box;
   width: 100%;
+  overflow: visible;
+}
+
+.calendar-week-time-grid__event-anchor {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .calendar-week--time-grid .calendar-week-time-grid__event.calendar-event {
-  height: auto;
+  width: 100%;
+  height: 100%;
   min-height: 0;
   max-height: none;
   align-items: flex-start;
   justify-content: flex-start;
+  background-clip: border-box;
+  box-shadow: none;
+  outline: none;
 }
 
 .calendar-week-time-grid__event {
@@ -291,28 +287,14 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 4px;
-  border-radius: 4px;
-  padding: 8px;
+  gap: 2px;
+  border: 1px solid var(--Border-alpha-06, rgba(61, 61, 61, 0.06));
+  border-radius: var(--radius-6, 6px);
+  padding: 6px;
   box-sizing: border-box;
+  background-clip: border-box;
   text-align: left;
   min-width: 0;
-  background: #fff;
-}
-
-.calendar-week-time-grid__event::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--calendar-week-event-overlay-bg, transparent);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.calendar-week-time-grid__event > * {
-  position: relative;
-  z-index: 1;
 }
 
 .calendar-week-time-grid__event--timed {
@@ -329,10 +311,11 @@
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--Neutral-black, #3d3d3d);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 130%; /* 15.6px */
+  text-align: left;
   /* `.calendar-event-title`의 nowrap을 덮어써야 line-clamp 다줄+말줄임이 동작함 */
   white-space: normal;
   overflow: hidden;
@@ -348,11 +331,11 @@
 
 .calendar-week-time-grid__event-subtext {
   display: block;
-  margin-top: 2px;
+  margin-top: 0;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
-  color: var(--main-BK, #3d3d3d);
+  color: var(--Neutral-black, #3d3d3d);
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
@@ -423,8 +406,9 @@
   display: block;
   width: 100%;
   min-width: 0;
-  font-size: 10px;
+  color: var(--Neutral-black, #3d3d3d);
+  font-size: 12px;
   font-weight: 500;
-  line-height: 1.3;
-  opacity: 0.85;
+  line-height: 130%;
+  opacity: 0.5;
 }

@@ -19,26 +19,31 @@ import {
 } from '../lib/calendar-helpers'
 import {
   buildTimedItemGroupLayouts,
+  buildWeekTimeGridColumnStyle,
   buildWeekTimeGridGroupStyle,
+  countEventsOverlappingHourSlot,
   isAllDayScheduleSpan,
+  layoutTimedItemsForDay,
+  parseHHmmToMinutes,
   readTimesOrAllDaySpan,
   resolveWeekTimeGridSubtext,
   WEEK_TIME_GRID_HOUR_PX,
+  WEEK_TIME_GRID_HOURS,
   WEEK_TIME_GRID_TOTAL_PX,
 } from '../lib/week-time-grid-layout'
 
 const WEEK_HEADER_WEEKDAY_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
-const WEEK_TIME_GRID_HOUR_ROWS: readonly { period: '오전' | '오후'; hour: string }[] = (() => {
-  const rows: { period: '오전' | '오후'; hour: string }[] = []
-  rows.push({ period: '오전', hour: '12시' })
-  for (let h = 1; h <= 11; h++) rows.push({ period: '오전', hour: `${h}시` })
-  rows.push({ period: '오후', hour: '12시' })
-  for (let h = 1; h <= 11; h++) rows.push({ period: '오후', hour: `${h}시` })
-  return rows
-})()
+const WEEK_TIME_GRID_HOUR_LABELS: readonly string[] = Array.from(
+  { length: WEEK_TIME_GRID_HOURS + 1 },
+  (_, hour) => `${String(hour).padStart(2, '0')}:00`
+)
 
-function formatWeekHeaderDayLabel(date: Dayjs): string {
+function formatWeekHeaderDayLabel(date: Dayjs, weekDates: readonly Dayjs[]): string {
+  const anchor = weekDates[3] ?? weekDates[0]
+  if (anchor && !date.isSame(anchor, 'month') && date.date() === 1) {
+    return `${date.month() + 1}.${date.date()}`
+  }
   return String(date.date())
 }
 
@@ -237,7 +242,7 @@ export function WeekView({
         {weekDates.map(date => {
           const isSelected = date.isSame(selectedDate, 'day')
           const dateKey = date.format('YYYY-MM-DD')
-          const dayLabel = formatWeekHeaderDayLabel(date)
+          const dayLabel = formatWeekHeaderDayLabel(date, weekDates)
           const weekday = WEEK_HEADER_WEEKDAY_EN[date.day()]
           return (
             <button
@@ -258,23 +263,22 @@ export function WeekView({
       </div>
       <div className="calendar-week-time-grid__shell">
         <div className="calendar-week-time-grid__gutter">
-            {WEEK_TIME_GRID_HOUR_ROWS.map((row, hourIdx) => (
+            {WEEK_TIME_GRID_HOUR_LABELS.map((label, hourIdx) => (
               <div
-                key={`week-gutter-${hourIdx}`}
+                key={`week-gutter-${label}`}
                 className={[
                   'calendar-week-time-grid__gutter-cell',
                   hourIdx === 0 ? 'calendar-week-time-grid__gutter-cell--first' : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}
-                style={{ top: hourIdx * hourPx }}
+                style={{ top: hourIdx * hourPx + 1 }}
               >
-                <span className="calendar-week-time-grid__gutter-period">{row.period}</span>
-                <span className="calendar-week-time-grid__gutter-hour">{row.hour}</span>
+                <span className="calendar-week-time-grid__gutter-hour">{label}</span>
               </div>
             ))}
           </div>
-          <div className="calendar-week-time-grid__columns">
+          <div className="calendar-week-time-grid__board">
             {weekDates.map(date => {
               const dateKey = date.format('YYYY-MM-DD')
               const dayItems = getItemsForDate(items, date)
@@ -285,9 +289,16 @@ export function WeekView({
                   eventsConfig.overrideEventColorMap != null
                     ? eventsConfig.overrideEventColorMap(dayEvents)
                     : buildResolvedColorMap(dayEvents)
-                const timedGroups = buildTimedItemGroupLayouts(dayEvents, hourPx, item =>
+                const readLayoutSpan = (item: CalendarItem) =>
                   readTimesOrAllDaySpan(item, readTimesFromCalendarItem)
-                )
+                const timedLayouts = layoutTimedItemsForDay(dayEvents, hourPx, readLayoutSpan)
+                const daySpans = timedLayouts.map(layout => {
+                  const span = readLayoutSpan(layout.item)
+                  return {
+                    startM: parseHHmmToMinutes(span.startTime) ?? 0,
+                    endM: parseHHmmToMinutes(span.endTime) ?? WEEK_TIME_GRID_HOURS * 60,
+                  }
+                })
 
                 const fullDayPreview =
                   dayEvents.length > 0 && eventsConfig.previewTooltipContent != null
@@ -315,32 +326,42 @@ export function WeekView({
                         className="calendar-week-time-grid__column-inner"
                         style={{ height: totalPx }}
                       >
-                        {timedGroups.map((group, idx) => {
-                          const item = group.representative
+                        {timedLayouts.map((layout, idx) => {
+                          const item = layout.item
                           const displayTitle = weekTimeGridItemLabel(item)
+                          const rawSpan = readTimesFromCalendarItem(item)
+                          const startM = parseHHmmToMinutes(rawSpan.startTime)
+                          const layoutSpan = readLayoutSpan(item)
+                          const layoutStart = parseHHmmToMinutes(layoutSpan.startTime) ?? 0
+                          const layoutEnd = parseHHmmToMinutes(layoutSpan.endTime) ?? layoutStart + 60
+                          const hourSlotStart = Math.floor(layoutStart / 60) * 60
+                          const sameHourSlotEventCount = countEventsOverlappingHourSlot(
+                            hourSlotStart,
+                            daySpans
+                          )
                           const subtext = resolveWeekTimeGridSubtext(
                             item,
-                            group.items.length,
-                            readTimesFromCalendarItem
+                            1,
+                            readTimesFromCalendarItem,
+                            {
+                              sameHourSlotEventCount,
+                              durationMinutes:
+                                startM == null ? undefined : Math.max(layoutEnd - layoutStart, 0),
+                            }
                           )
                           const isAllDay = isAllDayScheduleSpan(item, readTimesFromCalendarItem)
-                          const isSelected = group.items.some(grouped =>
-                            eventsConfig.selectedRowKeys.includes(grouped.id)
-                          )
+                          const isSelected = eventsConfig.selectedRowKeys.includes(item.id)
                           const colors = weekTimeGridItemColors(
                             item,
                             eventsConfig.resolveEventColors,
                             resolvedDayColors
                           )
-                          const pos: CSSProperties & Record<string, string | number> = {
-                            ...buildWeekTimeGridGroupStyle(group),
-                            zIndex: 20 + idx,
-                            '--calendar-week-event-overlay-bg': colors.bg,
-                          }
+                          const pos = buildWeekTimeGridColumnStyle(layout)
                           return (
                             <div
-                              key={`${String(item.id)}-${group.startM}-${group.endM}-${group.items.length}`}
-                              className="calendar-event-tooltip-trigger"
+                              key={`${String(item.id)}-${layout.startM}-${layout.endM}-${layout.columnIndex}`}
+                              className="calendar-event-tooltip-trigger calendar-week-time-grid__event-anchor"
+                              style={{ ...pos, zIndex: 20 + idx }}
                             >
                               <div
                                 className={[
@@ -352,7 +373,7 @@ export function WeekView({
                                 ]
                                   .filter(Boolean)
                                   .join(' ')}
-                                style={pos}
+                                style={{ backgroundColor: colors.bg }}
                                 onClick={e => e.stopPropagation()}
                               >
                                 <WeekTimeGridEventText title={displayTitle} subtext={subtext} />
@@ -399,22 +420,15 @@ export function WeekView({
                             colorMap={colorMap}
                           />
                         ) : (
-                          <div className="program-preview">
-                            <div className="program-preview-item program-preview-item--stack">
-                              <span
-                                className="program-preview-item__title"
-                                style={{ color: colors.text }}
-                              >
+                          <div className="calendar-preview-popover">
+                            <div className="calendar-preview-popover__entry">
+                              <span className="calendar-preview-popover__title">
                                 {weekTimeGridItemLabel(item)}
                               </span>
                             </div>
                           </div>
                         )
-                      const pos: CSSProperties & Record<string, string | number> = {
-                        ...buildWeekTimeGridGroupStyle(group),
-                        zIndex: 20 + idx,
-                        '--calendar-week-event-overlay-bg': colors.bg,
-                      }
+                      const pos = buildWeekTimeGridGroupStyle(group)
                       const displayTitle = item.title ?? weekTimeGridItemLabel(item)
                       const subtext = resolveWeekTimeGridSubtext(
                         item,
@@ -427,7 +441,10 @@ export function WeekView({
                           key={`${String(item.id)}-${group.startM}-${group.endM}-${group.items.length}`}
                         >
                           {withScheduleOverlay(
-                            <div className="calendar-event-tooltip-trigger">
+                            <div
+                              className="calendar-event-tooltip-trigger calendar-week-time-grid__event-anchor"
+                              style={{ ...pos, zIndex: 20 + idx }}
+                            >
                               <div
                                 className={[
                                   'calendar-week-time-grid__event',
@@ -437,7 +454,7 @@ export function WeekView({
                                 ]
                                   .filter(Boolean)
                                   .join(' ')}
-                                style={pos}
+                                style={{ backgroundColor: colors.bg }}
                                 onClick={e => {
                                   e.stopPropagation()
                                   if (uniquePrograms.length > 0) {

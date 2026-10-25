@@ -94,6 +94,8 @@ export type CalendarMainItemsProps = CalendarMainSharedProps & {
   onItemClick: (item: Program) => void
   events?: undefined
   selectedRowKeys?: undefined
+  /** 검색 체크박스와 동일 팔레트. 없으면 `items`로 재계산 */
+  scheduleColorMap?: Map<string, ScheduleColorPair>
 }
 
 export type CalendarMainScheduleProps = CalendarMainItemsProps
@@ -340,12 +342,17 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
       if (isEventsProps(props)) {
         return props.overrideEventColorMap?.(items) ?? buildResolvedColorMap(items)
       }
-      return buildResolvedScheduleColorMapForPrograms((props as CalendarMainItemsProps).items)
+      const scheduleProps = props as CalendarMainItemsProps
+      return (
+        scheduleProps.scheduleColorMap ??
+        buildResolvedScheduleColorMapForPrograms(scheduleProps.items)
+      )
     }, [
       buildResolvedColorMap,
       isEventsMode,
       items,
       isEventsMode ? (props as CalendarMainEventsProps).overrideEventColorMap : undefined,
+      isEventsMode ? undefined : (props as CalendarMainItemsProps).scheduleColorMap,
     ])
 
     const eventsConfig: CalendarEventsConfig | undefined = isEventsMode

@@ -134,3 +134,7 @@
   min-width: 0;
   box-sizing: border-box;
 }
+
+.calendar-week-time-grid__event-anchor.calendar-event-tooltip-trigger {
+  width: auto;
+}

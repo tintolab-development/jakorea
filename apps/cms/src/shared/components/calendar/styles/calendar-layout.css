@@ -36,7 +36,7 @@
   --calendar-search-height: 391px;
   --calendar-sub-right-list-height: 743px;
   --calendar-sub-right-list-min-width: 280px;
-  --calendar-sub-right-list-max-width: 400px;
+  --calendar-sub-right-list-max-width: 394px;
   /*
    * grid 3열: 좌 300px · 중앙 minmax(min, 1fr) · 우 minmax(280px, 400px).
    * 가로 확장 시 우측이 400px까지 먼저 채워지고, 이후 남는 공간은 1fr(메인)이 흡수.
@@ -105,7 +105,7 @@
 .calendar-set:has(.calendar-week--time-grid) {
   grid-template-columns:
     var(--calendar-sub-left-width, 300px)
-    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px)), 1fr)
+    minmax(var(--calendar-main-week-min-width, calc(40px + 8px + 108px * 7 + 42px)), 1fr)
     minmax(
       var(--calendar-sub-right-list-min-width, 280px),
       var(--calendar-sub-right-list-max-width, 400px)
@@ -115,7 +115,7 @@
 
 .calendar-set:has(.calendar-week--time-grid):not(:has(.calendar-sub-left)) {
   grid-template-columns:
-    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px)), 1fr)
+    minmax(var(--calendar-main-week-min-width, calc(40px + 8px + 108px * 7 + 42px)), 1fr)
     minmax(
       var(--calendar-sub-right-list-min-width, 280px),
       var(--calendar-sub-right-list-max-width, 400px)
@@ -177,10 +177,10 @@
 }
 
 .calendar-main-container:has(.calendar-week--time-grid) {
-  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
+  min-width: var(--calendar-main-week-min-width, calc(40px + 8px + 108px * 7 + 42px));
   min-height: var(
     --calendar-main-week-min-height,
-    calc(1344px + 40px + 50px + 32px)
+    calc(1560px + 40px + 50px + 32px)
   );
   flex-shrink: 0;
 }
@@ -192,7 +192,7 @@
 .calendar-set:has(.calendar-week--time-grid) > .calendar-main-container,
 .calendar-set:has(.calendar-week--time-grid) > .calendar-main {
   flex-shrink: 0;
-  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
+  min-width: var(--calendar-main-week-min-width, calc(40px + 8px + 108px * 7 + 42px));
   max-width: none;
 }
 

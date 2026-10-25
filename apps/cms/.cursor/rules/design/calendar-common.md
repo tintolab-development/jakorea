@@ -64,20 +64,20 @@ border-radius: 16px;
 | `--calendar-cell-min-width` | **116px** | 월간 날짜 칸·주간 요일 열 **최소 너비** |
 | `--calendar-cell-min-height` | **124px** | 월간 날짜 칸 **최소 높이** (기본 행 높이) |
 | `--calendar-week-hour-px` | **56px** | 주간 시간 격자 **1시간당 높이** |
-| `--calendar-week-total-px` | `24 × 56px` = **1344px** | 주간 격자 전체 높이 |
+| `--calendar-week-total-px` | `24 × 65px` = **1560px** | 주간 격자 전체 높이 |
 
 | 규칙 | 동작 |
 |------|------|
 | **월간 셀** | `min-width: 116px` · `min-height: 124px` · `height: auto`. 테이블 `width: 100%`, 열 `calc(100% / 7)`. **3열 `calendar-set`:** 우측이 400px 미만이면 메인은 min 너비·셀 116px 유지; **우측 400px 도달 후** 메인이 늘어나며 열 확장 |
 | **월간 행 높이** | `tbody tr { height: auto }` — 일정·strip 등 **콘텐츠에 따라 행·셀 높이 증가** (124px은 바닥선) |
-| **주간 시간 격자** | `week-time-grid-layout.ts` · `week-view.tsx` · `calendar-time-grid.css` — **56px/시간**, 총 1344px. 요일 열 `minmax(116px, 1fr)` |
-| **`.calendar-main` · `.calendar-main-container`** | 월간 `min-width` = 7×116px + 좌우 padding(40px) · `min-height` = 6×124px + 요일 헤더(37px) + 상단 nav(50px) + 세로 padding(32px). 주간 `:has(.calendar-week--time-grid)` 시 gutter(112+20px) + 7열 + padding / 1344px + 헤더 — **`--calendar-main-month-*` · `--calendar-main-week-*` 토큰** |
+| **주간 시간 격자** | `week-time-grid-layout.ts` · `week-view.tsx` · `calendar-time-grid.css` — **65px/시간** 격자(총 1560px). 카드 높이는 1분=1px + 칸/+인접 보정. 요일 열 `minmax(116px, 1fr)` |
+| **`.calendar-main` · `.calendar-main-container`** | 월간 `min-width` = 7×116px + 좌우 padding(40px) · `min-height` = 6×124px + 요일 헤더(37px) + 상단 nav(50px) + 세로 padding(32px). 주간 `:has(.calendar-week--time-grid)` 시 gutter(112+20px) + 7열 + padding / 1560px + 헤더 — **`--calendar-main-month-*` · `--calendar-main-week-*` 토큰** |
 | **3열 가로 분배** | `calendar-layout.css` — **grid** 3열(2열: `:not(:has(.calendar-sub-left))`). 주간 `:has(.calendar-week--time-grid)` 시 메인 `minmax`만 week 토큰으로 교체 |
 | **7:3 split 좌측** | `calendar-split-card-layout.css` — **grid** `minmax(메인 min, 1fr) \| minmax(280px, 400px)`. `min-height: 900px` · `overflow: visible` |
 | **강사 정산 탭** | `InstructorSettlementCalendarView` = `calendar-set` + `calendar-main-container` + `calendar-sub-right-list` — **공통 min 치수 그대로**. `instructor-payment-tab__calendar-view-container--no-inner-scroll`는 **내부 스크롤만** 끔(`overflow: visible`) — `min-height: 0`으로 공통 치수 **덮어쓰지 않음** |
 
 - **금지:** 페이지·도메인 CSS에서 `.calendar-cell` / `.ant-picker-cell` **고정 width·height(px)** 재정의 (`participating-institutions-calendar-view.css`는 tooltip/popover만)
-- **금지:** 주간 `hourPx`를 54px 등 다른 값으로 **페이지별 하드코딩** — `WEEK_TIME_GRID_HOUR_PX`(56) 단일 소스
+- **금지:** 주간 `hourPx`를 54px 등 다른 값으로 **페이지별 하드코딩** — `WEEK_TIME_GRID_HOUR_PX`(65) 단일 소스
 
 **코드:** `styles/calendar-tokens.css` · `calendar-main.css` · `calendar-cell.css` · `calendar-antd-override.css` · `calendar-time-grid.css` · `lib/week-time-grid-layout.ts` · `ui/calendar-main.tsx`(`calendar.css` side-effect import)
 
@@ -161,7 +161,7 @@ border-radius: 16px;
 - [ ] 체크박스 있으면 래퍼 className **`calendar-list-item__checkbox`만** (도메인 `__checkbox` 금지) — DevTools hover 시 mint 6% 배경
 - [ ] 주간 토글 시 **선택일 유지** + 해당 주 그리드 표시 (월 1일 주로 튀지 않음)
 - [ ] 메인 ◀▶ 이동: **월간** ±1개월 + 선택일 **해당 월 1일** · **주간** ±1주 + 선택일 **해당 주 월요일** (`shiftCalendarViewByStep`)
-- [ ] 메인 그리드: 월간 셀 **min 116×124px** · 주간 **56px/시간** · `.calendar-main` / `.calendar-main-container` **min 치수** (DevTools)
+- [ ] 메인 그리드: 월간 셀 **min 116×124px** · 주간 **65px/시간** · `.calendar-main` / `.calendar-main-container` **min 치수** (DevTools)
 - [ ] [오늘] 클릭 시 선택일·주/월 앵커 모두 오늘
 - [ ] 3열 + `CalendarMini`이면 미니·메인 **날짜 state 분리** + 미니 **300×332px** (4·6주월 동일 높이)
 - [ ] 3열 + `CalendarSearch`이면 `.calendar-search` **`--calendar-search-height`(391px)** + 필터 목록 내부 스크롤

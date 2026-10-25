@@ -13,24 +13,80 @@
 }
 
 .calendar-main:has(.calendar-week--time-grid) {
-  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
+  min-width: var(--calendar-main-week-min-width, calc(40px + 8px + 108px * 7 + 42px));
   min-height: var(
     --calendar-main-week-min-height,
-    calc(1344px + 40px + 50px + 32px)
+    calc(1560px + 21px + 43px + 32px)
   );
   flex-shrink: 0;
   max-width: none;
   align-items: flex-start;
+  gap: 8px;
+  padding: 16px 20px;
 }
 
 .calendar-main:has(.calendar-week--time-grid) .calendar-header {
   width: 100%;
   align-self: stretch;
   box-sizing: border-box;
+  padding: 0;
+  min-height: 43px;
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-header-left {
+  gap: 16px;
+  padding: 0 8px;
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-header-title {
+  margin-right: 0;
+  font-weight: 500;
+  line-height: 130%;
+  color: var(--Neutral-black, #3d3d3d);
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-today-btn {
+  width: auto;
+  min-width: 0;
+  height: 34px;
+  min-height: 34px;
+  padding: 8px 14px;
+  border-radius: var(--radius-6, 6px);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-nav .calendar-nav-btn {
+  width: 40px;
+  height: 38px;
+  min-width: 40px;
+  min-height: 38px;
+  aspect-ratio: auto;
+  padding: 7px;
+  border-radius: var(--radius-8, 8px);
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-header-right .segmented-tab--medium {
+  width: 120px;
+  height: 43px;
+  padding: 4px;
+  border-radius: var(--radius-8, 8px);
+  background: #f2f3f5;
+  border: 1px solid rgba(61, 61, 61, 0.1);
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-header-right .segmented-tab--medium .segmented-tab__btn {
+  height: 35px;
+  padding: 8px 14px;
+  border-radius: var(--radius-6, 6px);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .calendar-main:has(.calendar-week--time-grid) .calendar-week--time-grid {
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* header */

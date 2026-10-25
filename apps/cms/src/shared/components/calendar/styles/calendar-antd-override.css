@@ -38,6 +38,9 @@
   height: auto;
   max-height: none;
   box-sizing: border-box;
+  text-align: left;
+  overflow: hidden;
+  border-radius: 0;
 }
 
 .calendar-main .ant-picker-calendar-date-value {
@@ -55,6 +58,33 @@
   min-width: calc(var(--calendar-cell-min-width, 116px) * 7);
   border-collapse: separate;
   border-spacing: 0;
+}
+
+/*
+ * 테이블 tbody에는 overflow/clip-path가 적용되지 않아 외곽이 각진 채로 남는다.
+ * thead(요일)는 그리드 밖, tbody만 block + overflow hidden 으로 8px 프레임을 만든다.
+ */
+.calendar-main .ant-picker-calendar-mini .ant-picker-content table {
+  display: block;
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content thead,
+.calendar-main .ant-picker-calendar-mini .ant-picker-content thead tr,
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--calendar-grid-radius, 8px);
+  isolation: isolate;
+  background: var(--main-WT, #fff);
 }
 
 .calendar-main .ant-picker-content thead th,
