@@ -52,6 +52,11 @@ export type ProgramListConfig = {
    * 생략 시 기존 클라 필터 유지 (일반·1사1교 기본).
    */
   serverSideOverviewFilters?: boolean
+  /**
+   * 프로그램 관리 캘린더 `GET /api/admin/program-calendar` 의 programType.
+   * GENERAL | COMPANY_SCHOOL | TRAINED_TEACHER | …
+   */
+  calendarProgramType?: string
 }
 
 export interface ProgramListProps {
@@ -307,10 +312,12 @@ export function ProgramList({
             }
           >
             <ProgramCalendarView
-              items={filteredRows}
-              loading={loading}
               onItemClick={onView}
               view={listView}
+              calendarProgramType={config?.calendarProgramType}
+              listKeyword={
+                typeof pendingFilters.title === 'string' ? pendingFilters.title : undefined
+              }
               toolbar={
                 <div className="table-header-actions">
                   <div className="table-header-title--wrapper">

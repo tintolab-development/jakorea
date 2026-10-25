@@ -1,11 +1,19 @@
 import dayjs from 'dayjs'
-import { formatDateRangeDot } from '@/shared/utils/date'
-import type { DateValue } from '@/types'
+import timezone from 'dayjs/plugin/timezone'
+import utc from 'dayjs/plugin/utc'
 import type { Program } from '@/types/domain'
 import type { CalendarItem, CalendarMainEventInput } from '@/shared/components/calendar'
-import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
+import { formatCalendarEventTimeLabel } from '@/shared/components/calendar'
+import {
+  SCHEDULE_COLORS,
+  type ScheduleColorPair,
+} from '@/features/program/shared/ui/program-schedule-colors'
+import type { AdminProgramCalendarItem } from '@/features/program/general/api/program-calendar-api-client'
 
-export type GeneralProgramCalendarView = 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+const SEOUL = 'Asia/Seoul'
 
 export type GeneralProgramCalendarEventKind =
   | 'recruitment'
@@ -13,6 +21,7 @@ export type GeneralProgramCalendarEventKind =
   | 'education'
   | 'survey'
   | 'assignment'
+  | 'event'
 
 export type GeneralProgramCalendarEvent = CalendarMainEventInput & {
   programId: string
@@ -21,275 +30,144 @@ export type GeneralProgramCalendarEvent = CalendarMainEventInput & {
   timeLabel: string
   operationPeriodLabel: string
   kind: GeneralProgramCalendarEventKind
+  colorKey: string
+  eventType: string
   originalItem: Program
 }
 
-type CalendarEventSeed = {
-  id: string
-  date: DateValue
-  scheduleContent: string
-  kind: GeneralProgramCalendarEventKind
-  startTime?: string
-  endTime?: string
-  timeLabel?: string
+function toSeoul(iso: string | null | undefined) {
+  if (!iso?.trim()) return null
+  const parsed = dayjs.utc(iso).tz(SEOUL)
+  return parsed.isValid() ? parsed : null
 }
 
-function toDate(value: DateValue): dayjs.Dayjs {
-  return dayjs(value instanceof Date ? value.toISOString() : value)
+function calendarDateOnly(value: string): string {
+  return value.trim().slice(0, 10)
 }
 
-export function formatGeneralProgramOperationPeriod(program: Program): string {
-  return formatDateRangeDot(program.startDate, program.endDate)
+function kindFromEventType(eventType: string): GeneralProgramCalendarEventKind {
+  if (eventType.startsWith('RECRUITMENT')) return 'recruitment'
+  if (eventType.startsWith('BUSINESS')) return 'operation'
+  if (eventType.startsWith('SURVEY')) return 'survey'
+  if (eventType.startsWith('ASSIGNMENT')) return 'assignment'
+  if (eventType === 'EVENT') return 'event'
+  return 'education'
 }
 
-function formatTimeLabel(startTime?: string, endTime?: string): string {
-  const start = startTime?.trim()
-  const end = endTime?.trim()
-  if (start && end) return `${start} ~ ${end}`
-  if (start) return start
-  return '종일'
+export function resolveProgramCalendarColorKey(item: AdminProgramCalendarItem): string {
+  const explicit = item.colorKey?.trim()
+  if (explicit) return explicit
+  const eventType = item.eventType?.trim() ?? ''
+  if (eventType.startsWith('BUSINESS')) return 'BUSINESS'
+  if (eventType.startsWith('RECRUITMENT')) return 'RECRUITMENT'
+  if (eventType === 'EDUCATION' || eventType === 'EDUCATION_PERIOD') return 'EDUCATION'
+  if (eventType === 'EVENT') return 'EVENT'
+  if (eventType.startsWith('SURVEY')) return 'SURVEY'
+  if (eventType.startsWith('ASSIGNMENT')) return 'ASSIGNMENT'
+  return 'EDUCATION'
 }
 
-function dateTimeForEvent(date: DateValue, time?: string, isEnd = false): string {
-  const d = toDate(date)
-  if (!d.isValid()) return ''
-  const safeTime = time?.trim() || (isEnd ? '23:59:59' : '00:00:00')
-  const normalizedTime = /^\d{1,2}:\d{2}$/.test(safeTime) ? `${safeTime}:00` : safeTime
-  return `${d.format('YYYY-MM-DD')}T${normalizedTime}`
+const COLOR_KEY_INDEX: Record<string, number> = {
+  BUSINESS: 0,
+  RECRUITMENT: 2,
+  EDUCATION: 4,
+  EVENT: 3,
+  SURVEY: 1,
+  ASSIGNMENT: 3,
 }
 
-function createEvent(program: Program, seed: CalendarEventSeed): GeneralProgramCalendarEvent | null {
-  const startDate = dateTimeForEvent(seed.date, seed.startTime)
-  const endDate = dateTimeForEvent(seed.date, seed.endTime, true)
-  if (!startDate || !endDate) return null
+export function resolveProgramCalendarEventColors(colorKey: string): ScheduleColorPair {
+  const idx = COLOR_KEY_INDEX[colorKey] ?? COLOR_KEY_INDEX.EDUCATION
+  return SCHEDULE_COLORS[idx] ?? SCHEDULE_COLORS[0]
+}
 
-  const programTitle = resolveGeneralProgramListTitle(program)
+function stubProgramFromCalendarItem(item: AdminProgramCalendarItem): Program {
+  const programId = item.programId == null ? '' : String(item.programId)
   return {
-    id: `${program.id}:${seed.id}`,
-    title: programTitle,
-    programId: String(program.id),
+    id: programId,
+    sponsorId: '',
+    title: item.programName?.trim() || '',
+    type: 'offline',
+    format: 'course',
+    category: 'school',
+    rounds: [],
+    startDate: '',
+    endDate: '',
+    status: 'active',
+    createdAt: '',
+    updatedAt: '',
+  }
+}
+
+function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramCalendarEvent | null {
+  const eventType = item.eventType?.trim() ?? ''
+  const eventId = (item.eventId ?? item.eventKey)?.trim()
+  if (!eventId) return null
+
+  const allDay = item.allDay === true
+  const eventDate = item.eventDate?.trim() ? calendarDateOnly(item.eventDate) : ''
+  const startKst = toSeoul(item.startAt)
+  const endKst = toSeoul(item.endAt)
+
+  let startDate = ''
+  let endDate = ''
+  let startTime: string | undefined
+  let endTime: string | undefined
+
+  if (allDay && eventDate) {
+    startDate = eventDate
+    if (eventType === 'EDUCATION_PERIOD' && endKst) {
+      const exclusiveKstMidnight =
+        endKst.hour() === 0 && endKst.minute() === 0 && endKst.second() === 0
+      endDate = exclusiveKstMidnight
+        ? endKst.subtract(1, 'day').format('YYYY-MM-DD')
+        : endKst.format('YYYY-MM-DD')
+    } else {
+      endDate = eventDate
+    }
+  } else if (startKst) {
+    startDate = startKst.format('YYYY-MM-DDTHH:mm:ss')
+    endDate = (endKst ?? startKst).format('YYYY-MM-DDTHH:mm:ss')
+    startTime = startKst.format('HH:mm')
+    endTime = endKst?.format('HH:mm')
+  } else if (eventDate) {
+    startDate = eventDate
+    endDate = eventDate
+  } else {
+    return null
+  }
+
+  const programTitle = item.programName?.trim() || ''
+  const scheduleName = item.scheduleName?.trim() || item.displayLabel?.trim() || programTitle
+  const colorKey = resolveProgramCalendarColorKey(item)
+
+  return {
+    id: eventId,
+    title: scheduleName,
+    programId: item.programId == null ? '' : String(item.programId),
     programTitle,
-    scheduleContent: seed.scheduleContent,
-    timeLabel: seed.timeLabel ?? formatTimeLabel(seed.startTime, seed.endTime),
-    operationPeriodLabel: formatGeneralProgramOperationPeriod(program),
-    kind: seed.kind,
+    scheduleContent: scheduleName,
+    timeLabel: formatCalendarEventTimeLabel(startTime, endTime),
+    operationPeriodLabel: '',
+    kind: kindFromEventType(eventType),
+    colorKey,
+    eventType,
     startDate,
     endDate,
-    originalItem: program,
-    startTime: seed.startTime,
-    endTime: seed.endTime,
+    originalItem: stubProgramFromCalendarItem(item),
+    startTime,
+    endTime,
   }
 }
 
-function pushEvent(
-  events: GeneralProgramCalendarEvent[],
-  program: Program,
-  seed: CalendarEventSeed
-): void {
-  const event = createEvent(program, seed)
-  if (event) events.push(event)
-}
-
-function addRecruitmentEvents(events: GeneralProgramCalendarEvent[], program: Program): void {
-  if (program.applicationStartDate) {
-    pushEvent(events, program, {
-      id: 'participant-recruitment-start',
-      date: program.applicationStartDate,
-      scheduleContent: '참여자 모집 시작',
-      kind: 'recruitment',
-    })
-  }
-  if (program.applicationEndDate) {
-    pushEvent(events, program, {
-      id: 'participant-recruitment-end',
-      date: program.applicationEndDate,
-      scheduleContent: '참여자 모집 종료',
-      kind: 'recruitment',
-    })
-  }
-  if (program.instructorApplicationStartDate) {
-    pushEvent(events, program, {
-      id: 'instructor-recruitment-start',
-      date: program.instructorApplicationStartDate,
-      scheduleContent: '강사 모집 시작',
-      kind: 'recruitment',
-    })
-  }
-  if (program.instructorApplicationEndDate) {
-    pushEvent(events, program, {
-      id: 'instructor-recruitment-end',
-      date: program.instructorApplicationEndDate,
-      scheduleContent: '강사 모집 종료',
-      kind: 'recruitment',
-    })
-  }
-  if (program.volunteerApplicationStartDate) {
-    pushEvent(events, program, {
-      id: 'volunteer-recruitment-start',
-      date: program.volunteerApplicationStartDate,
-      scheduleContent: '봉사자 모집 시작',
-      kind: 'recruitment',
-    })
-  }
-  if (program.volunteerApplicationEndDate) {
-    pushEvent(events, program, {
-      id: 'volunteer-recruitment-end',
-      date: program.volunteerApplicationEndDate,
-      scheduleContent: '봉사자 모집 종료',
-      kind: 'recruitment',
-    })
-  }
-}
-
-function addOperationEvents(events: GeneralProgramCalendarEvent[], program: Program): void {
-  pushEvent(events, program, {
-    id: 'operation-start',
-    date: program.startDate,
-    scheduleContent: '사업 운영 시작',
-    kind: 'operation',
-  })
-  pushEvent(events, program, {
-    id: 'operation-end',
-    date: program.endDate,
-    scheduleContent: '사업 운영 종료',
-    kind: 'operation',
-  })
-}
-
-function parseEducationScheduleLine(
-  line: string
-): { date: string; startTime?: string; endTime?: string } | null {
-  const match = line.match(
-    /(\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일(?:\([^)]*\))?\s*(?:(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2}))?/
-  )
-  if (!match) return null
-  const year = `20${match[1]}`
-  const month = match[2].padStart(2, '0')
-  const day = match[3].padStart(2, '0')
-  return {
-    date: `${year}-${month}-${day}T00:00:00`,
-    startTime: match[4],
-    endTime: match[5],
-  }
-}
-
-function getEducationContent(program: Program, index: number, total: number): string {
-  if (program.generalProgramSessionRound === 'single' || total === 1) {
-    return '1회차 교육'
-  }
-
-  if (program.generalProgramEducationStructure === 'schedule') {
-    const detailName = program.generalCommonInfo?.scheduleDetails?.[index]?.name?.trim()
-    if (detailName) return detailName
-  }
-
-  return `${index + 1}회차 교육`
-}
-
-function addEducationEvents(events: GeneralProgramCalendarEvent[], program: Program): void {
-  const lines = program.generalCommonInfo?.educationScheduleLines ?? []
-  const parsedLines = lines
-    .map(line => parseEducationScheduleLine(line))
-    .filter((item): item is NonNullable<typeof item> => item != null)
-
-  parsedLines.forEach((item, index) => {
-    pushEvent(events, program, {
-      id: `education-${index + 1}`,
-      date: item.date,
-      scheduleContent: getEducationContent(program, index, parsedLines.length),
-      kind: 'education',
-      startTime: item.startTime,
-      endTime: item.endTime,
-    })
-  })
-}
-
-function addSurveyEvents(events: GeneralProgramCalendarEvent[], program: Program): void {
-  for (const row of program.generalCommonInfo?.calendarSurveySchedules ?? []) {
-    if (row.startDate) {
-      pushEvent(events, program, {
-        id: `survey-${row.id}-start`,
-        date: row.startDate,
-        scheduleContent: row.title,
-        kind: 'survey',
-        startTime: row.startTime,
-        endTime: row.endTime,
-      })
-    }
-    if (row.endDate) {
-      pushEvent(events, program, {
-        id: `survey-${row.id}-end`,
-        date: row.endDate,
-        scheduleContent: row.title,
-        kind: 'survey',
-        startTime: row.startTime,
-        endTime: row.endTime,
-      })
-    }
-  }
-}
-
-function addAssignmentEvents(events: GeneralProgramCalendarEvent[], program: Program): void {
-  for (const row of program.generalCommonInfo?.calendarAssignmentSchedules ?? []) {
-    const date = row.dueDate ?? row.endDate ?? row.startDate
-    if (!date) continue
-    pushEvent(events, program, {
-      id: `assignment-${row.id}`,
-      date,
-      scheduleContent: row.title,
-      kind: 'assignment',
-      startTime: row.startTime,
-      endTime: row.endTime,
-    })
-  }
-}
-
-function addAllProgramEvents(events: GeneralProgramCalendarEvent[], program: Program): void {
-  addRecruitmentEvents(events, program)
-  addOperationEvents(events, program)
-  addSurveyEvents(events, program)
-  addAssignmentEvents(events, program)
-  addEducationEvents(events, program)
-}
-
-function addScheduledProgramEvent(events: GeneralProgramCalendarEvent[], program: Program): void {
-  pushEvent(events, program, {
-    id: 'scheduled-operation-start',
-    date: program.startDate,
-    scheduleContent: '운영 시작',
-    timeLabel: formatGeneralProgramOperationPeriod(program),
-    kind: 'operation',
-  })
-}
-
-function addCompletedProgramEvent(events: GeneralProgramCalendarEvent[], program: Program): void {
-  pushEvent(events, program, {
-    id: 'completed-operation-end',
-    date: program.endDate,
-    scheduleContent: '운영 종료',
-    timeLabel: formatGeneralProgramOperationPeriod(program),
-    kind: 'operation',
-  })
-}
-
-export function buildGeneralProgramCalendarEvents(
-  programs: Program[],
-  view: GeneralProgramCalendarView
+export function mapAdminProgramCalendarItemsToEvents(
+  items: AdminProgramCalendarItem[]
 ): GeneralProgramCalendarEvent[] {
   const events: GeneralProgramCalendarEvent[] = []
-
-  for (const program of programs) {
-    if (view === 'SCHEDULED') {
-      addScheduledProgramEvent(events, program)
-      continue
-    }
-    if (view === 'COMPLETED') {
-      addCompletedProgramEvent(events, program)
-      continue
-    }
-    addAllProgramEvents(events, program)
+  for (const item of items) {
+    const event = mapCalendarItemToEvent(item)
+    if (event) events.push(event)
   }
-
   return events.sort((a, b) => {
     const dateDiff = dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf()
     if (dateDiff !== 0) return dateDiff

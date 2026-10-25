@@ -434,6 +434,7 @@ function ProgramListPageContent() {
 
     return {
       mode: programType === 'company_school' ? ('overview' as const) : ('general' as const),
+      calendarProgramType: programType === 'company_school' ? 'COMPANY_SCHOOL' : 'GENERAL',
       view: listView,
       tableType:
         statusFilter === 'recruiting_students'

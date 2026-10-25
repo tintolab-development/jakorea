@@ -1,105 +1,149 @@
 import { describe, expect, it } from 'vitest'
-import type { Program } from '@/types/domain'
-import { buildGeneralProgramCalendarEvents } from './program-calendar-events'
+import type { AdminProgramCalendarItem } from '@/features/program/general/api/program-calendar-api-client'
+import {
+  mapAdminProgramCalendarItemsToEvents,
+  resolveProgramCalendarColorKey,
+} from './program-calendar-events'
 
-function createProgram(overrides: Partial<Program> = {}): Program {
-  return {
-    id: 'program-1',
-    sponsorId: 'sponsor-1',
-    title: '테스트 프로그램',
-    type: 'offline',
-    format: 'course',
-    category: 'school',
-    rounds: [],
-    startDate: '2026-04-03T00:00:00+09:00',
-    endDate: '2026-11-20T23:59:59+09:00',
-    applicationStartDate: '2026-01-05T00:00:00+09:00',
-    applicationEndDate: '2026-01-28T23:59:59+09:00',
-    status: 'active',
-    lifecycleStatus: 'education_in_progress',
-    generalProgramEducationStructure: 'curriculum',
-    generalProgramSessionRound: 'multi',
-    generalCommonInfo: {
-      educationScheduleLines: [
-        '26년 4월 20일(월) 09:30 ~ 12:20',
-        '26년 4월 27일(월) 13:00 ~ 15:50',
-      ],
-      calendarSurveySchedules: [
-        {
-          id: 'survey-start',
-          title: '설문조사 시작',
-          startDate: '2026-04-03T00:00:00+09:00',
-        },
-      ],
-      calendarAssignmentSchedules: [
-        {
-          id: 'assignment-due',
-          title: '과제 제출 마감',
-          dueDate: '2026-04-27T23:59:59+09:00',
-        },
-      ],
-    },
-    createdAt: '2026-01-01T00:00:00+09:00',
-    updatedAt: '2026-01-01T00:00:00+09:00',
-    ...overrides,
-  }
+function item(overrides: AdminProgramCalendarItem): AdminProgramCalendarItem {
+  return overrides
 }
 
-describe('buildGeneralProgramCalendarEvents', () => {
-  it('creates one operation-start event for scheduled view', () => {
-    const events = buildGeneralProgramCalendarEvents([createProgram()], 'SCHEDULED')
+describe('mapAdminProgramCalendarItemsToEvents', () => {
+  it('uses eventDate for all-day BUSINESS_START and does not shift to the UTC previous day', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'BUSINESS_START:186304',
+        eventKey: 'BUSINESS_START:186304',
+        programId: 186304,
+        programName: '예시 프로그램',
+        eventType: 'BUSINESS_START',
+        scheduleName: '운영 시작',
+        allDay: true,
+        eventDate: '2026-10-01',
+        startAt: null as unknown as undefined,
+        endAt: null as unknown as undefined,
+        colorKey: 'BUSINESS',
+      }),
+    ])
 
     expect(events).toHaveLength(1)
+    expect(events[0]?.id).toBe('BUSINESS_START:186304')
+    expect(events[0]?.startDate).toBe('2026-10-01')
+    expect(events[0]?.endDate).toBe('2026-10-01')
+    expect(events[0]?.startTime).toBeUndefined()
+    expect(events[0]?.endTime).toBeUndefined()
+    expect(events[0]?.timeLabel).toBe('종일')
     expect(events[0]?.scheduleContent).toBe('운영 시작')
-    expect(events[0]?.startDate).toBe('2026-04-03T00:00:00')
-    expect(events[0]?.timeLabel).toBe('2026.04.03 ~ 2026.11.20')
   })
 
-  it('creates one operation-end event for completed view', () => {
-    const events = buildGeneralProgramCalendarEvents([createProgram()], 'COMPLETED')
+  it('converts EDUCATION instants to Asia/Seoul clock without synthesizing 09:00', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION:187231:PROGRAM',
+        programId: 186304,
+        programName: '예시 프로그램',
+        eventType: 'EDUCATION',
+        scheduleName: '3회차 교육',
+        sessionNo: 3,
+        startAt: '2026-10-20T01:00:00Z',
+        endAt: '2026-10-20T02:00:00Z',
+        allDay: false,
+        eventDate: null as unknown as undefined,
+        colorKey: 'EDUCATION',
+      }),
+    ])
 
     expect(events).toHaveLength(1)
-    expect(events[0]?.scheduleContent).toBe('운영 종료')
-    expect(events[0]?.startDate).toBe('2026-11-20T00:00:00')
-    expect(events[0]?.timeLabel).toBe('2026.04.03 ~ 2026.11.20')
+    expect(events[0]?.scheduleContent).toBe('3회차 교육')
+    expect(events[0]?.startDate).toBe('2026-10-20T10:00:00')
+    expect(events[0]?.endDate).toBe('2026-10-20T11:00:00')
+    expect(events[0]?.startTime).toBe('10:00')
+    expect(events[0]?.endTime).toBe('11:00')
+    expect(events[0]?.timeLabel).toBe('10:00 ~ 11:00')
   })
 
-  it('creates recruitment, operation, education, survey, and assignment events for all view', () => {
-    const events = buildGeneralProgramCalendarEvents([createProgram()], 'ALL')
-    const contents = events.map(event => event.scheduleContent)
+  it('keeps EDUCATION_PERIOD as a single span and does not expand into daily EDUCATION', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION_PERIOD:187500:PROGRAM',
+        programId: 186500,
+        programName: '기간만 있는 프로그램',
+        eventType: 'EDUCATION_PERIOD',
+        scheduleName: '교육 진행 기간',
+        allDay: true,
+        eventDate: '2026-04-03',
+        startAt: '2026-04-02T15:00:00Z',
+        endAt: '2026-11-20T15:00:00Z',
+        colorKey: 'EDUCATION',
+      }),
+    ])
 
-    expect(contents).toEqual(
-      expect.arrayContaining([
-        '참여자 모집 시작',
-        '참여자 모집 종료',
-        '사업 운영 시작',
-        '사업 운영 종료',
-        '1회차 교육',
-        '2회차 교육',
-        '설문조사 시작',
-        '과제 제출 마감',
-      ])
-    )
-    expect(events.find(event => event.scheduleContent === '1회차 교육')?.timeLabel).toBe(
-      '09:30 ~ 12:20'
-    )
+    expect(events).toHaveLength(1)
+    expect(events[0]?.id).toBe('EDUCATION_PERIOD:187500:PROGRAM')
+    expect(events[0]?.startDate).toBe('2026-04-03')
+    expect(events[0]?.endDate).toBe('2026-11-20')
+    expect(events[0]?.kind).toBe('education')
+    expect(events[0]?.eventType).toBe('EDUCATION_PERIOD')
   })
 
-  it('normalizes single-session education label', () => {
-    const events = buildGeneralProgramCalendarEvents(
-      [
-        createProgram({
-          generalProgramEducationStructure: 'schedule',
-          generalProgramSessionRound: 'single',
-          generalCommonInfo: {
-            educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20'],
-            scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '오리엔테이션' }],
-          },
-        }),
-      ],
-      'ALL'
-    )
+  it('keeps recruitment end and education session as two events on the same day', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'RECRUITMENT_END:1',
+        programId: 1,
+        programName: '동시 일정',
+        eventType: 'RECRUITMENT_END',
+        scheduleName: '참여자 모집 종료',
+        allDay: true,
+        eventDate: '2026-10-20',
+        colorKey: 'RECRUITMENT',
+      }),
+      item({
+        eventId: 'EDUCATION:2:PROGRAM',
+        programId: 1,
+        programName: '동시 일정',
+        eventType: 'EDUCATION',
+        scheduleName: '1회차 교육',
+        startAt: '2026-10-20T01:00:00Z',
+        endAt: '2026-10-20T02:00:00Z',
+        allDay: false,
+        colorKey: 'EDUCATION',
+      }),
+    ])
 
-    expect(events.find(event => event.kind === 'education')?.scheduleContent).toBe('1회차 교육')
+    expect(events.map(event => event.id)).toEqual(['RECRUITMENT_END:1', 'EDUCATION:2:PROGRAM'])
+  })
+
+  it('uses organizationName only from the API scheduleName and does not parse educationScheduleLines', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION:187300:12',
+        programId: 186400,
+        programName: '1사1교 예시',
+        programType: 'COMPANY_SCHOOL',
+        eventType: 'EDUCATION',
+        scheduleName: '예시초등학교 1회차 교육',
+        organizationName: '예시초등학교',
+        sessionNo: 1,
+        startAt: '2026-10-15T00:00:00Z',
+        endAt: '2026-10-15T03:00:00Z',
+        allDay: false,
+        colorKey: 'EDUCATION',
+      }),
+    ])
+
+    expect(events[0]?.scheduleContent).toBe('예시초등학교 1회차 교육')
+    expect(events[0]?.originalItem.id).toBe('186400')
+  })
+})
+
+describe('resolveProgramCalendarColorKey', () => {
+  it('prefers colorKey and otherwise derives from eventType', () => {
+    expect(resolveProgramCalendarColorKey({ colorKey: 'SURVEY', eventType: 'EDUCATION' })).toBe(
+      'SURVEY'
+    )
+    expect(resolveProgramCalendarColorKey({ eventType: 'BUSINESS_END' })).toBe('BUSINESS')
+    expect(resolveProgramCalendarColorKey({ eventType: 'EDUCATION_PERIOD' })).toBe('EDUCATION')
   })
 })

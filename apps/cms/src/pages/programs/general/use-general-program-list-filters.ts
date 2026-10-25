@@ -127,6 +127,7 @@ export function useGeneralProgramListFilters() {
       mode: 'overview',
       view: listView,
       lifecycleStatus: undefined,
+      calendarProgramType: 'GENERAL',
     }
   }, [statusFilter])
 

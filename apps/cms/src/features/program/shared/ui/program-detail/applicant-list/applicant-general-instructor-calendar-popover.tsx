@@ -58,45 +58,37 @@ function resolveInstructorInstitutionFromCalendarItem(item: CalendarItem): {
 
 export function renderGeneralInstructorCalendarPreviewTooltipContent({
   events,
-  colorMap,
 }: {
   events: CalendarItem[]
   colorMap: Map<string | number, ScheduleColorPair>
 }): ReactNode {
   return (
-    <div className="participating-institutions-calendar-popover">
+    <div className="calendar-preview-popover">
       {events.map(item => {
         const resolved = resolveInstructorInstitutionFromCalendarItem(item)
         if (resolved == null) return null
 
         const { schoolName, regionDisplay, applicantCount, sessionLabel } = resolved
-        const titleColor = colorMap.get(item.id)?.text
-
         return (
-          <div key={String(item.id)} className="participating-institutions-calendar-popover__entry">
-            <div
-              className="participating-institutions-calendar-popover__title"
-              style={titleColor ? { color: titleColor } : undefined}
-            >
-              {schoolName}
-            </div>
-            <div className="participating-institutions-calendar-popover__meta participating-institutions-calendar-popover__meta--applicant-instructor">
-              <span className="participating-institutions-calendar-popover__meta-part">
+          <div key={String(item.id)} className="calendar-preview-popover__entry">
+            <div className="calendar-preview-popover__title">{schoolName}</div>
+            <div className="calendar-preview-popover__meta calendar-preview-popover__meta--applicant-instructor">
+              <span className="calendar-preview-popover__meta-part">
                 {regionDisplay}
               </span>
               {sessionLabel !== '-' ? (
                 <>
                   <span
-                    className="participating-institutions-calendar-popover__meta-sep"
+                    className="calendar-preview-popover__meta-sep"
                     aria-hidden
                   />
-                  <span className="participating-institutions-calendar-popover__meta-part">
+                  <span className="calendar-preview-popover__meta-part">
                     {sessionLabel}
                   </span>
                 </>
               ) : null}
-              <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
-              <span className="participating-institutions-calendar-popover__meta-part">
+              <span className="calendar-preview-popover__meta-sep" aria-hidden />
+              <span className="calendar-preview-popover__meta-part">
                 {`신청 : ${applicantCount}명`}
               </span>
             </div>

@@ -4,7 +4,6 @@ import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
-import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
 import {
   CalendarMain,
   CalendarMini,
@@ -20,11 +19,18 @@ import {
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
+import { useAdminProgramCalendarQuery } from '../api/program-calendar-query'
+import type { AdminProgramCalendarQuery } from '../api/program-calendar-api-client'
 import {
-  buildGeneralProgramCalendarEvents,
   getGeneralProgramCalendarEventFromCalendarItem,
-  type GeneralProgramCalendarView,
+  mapAdminProgramCalendarItemsToEvents,
+  resolveProgramCalendarEventColors,
 } from '../lib/program-calendar-events'
+import {
+  mapProgramListViewToCalendarProgramStatus,
+  resolveProgramCalendarVisibleRange,
+} from '../lib/program-calendar-range'
+import type { ProgramListView } from './table/program-table-column-resolver'
 import '@/shared/components/calendar/styles/calendar.css'
 import './program-calendar-view.css'
 
@@ -32,10 +38,13 @@ dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
 interface ProgramCalendarViewProps {
-  items: Program[]
   loading?: boolean
   onItemClick: (program: Program) => void
-  view?: GeneralProgramCalendarView
+  view?: ProgramListView
+  /** BE `programType`. 예: GENERAL, COMPANY_SCHOOL, TRAINED_TEACHER */
+  calendarProgramType?: string
+  /** 목록 필터의 프로그램명. 캘린더 검색이 비어 있을 때 API keyword로 보낸다 */
+  listKeyword?: string
   /** 3열 grid 1행 — 프로그램 목록 툴바 등 */
   toolbar?: ReactNode
 }
@@ -46,83 +55,42 @@ function renderGeneralProgramMonthEventContent({
   row: { sourceEvent: CalendarItem }
 }) {
   const event = getGeneralProgramCalendarEventFromCalendarItem(row.sourceEvent)
-  return <span className="calendar-event-title">{event?.programTitle ?? row.sourceEvent.title}</span>
+  return (
+    <span className="calendar-event-title">
+      {event?.scheduleContent ?? event?.programTitle ?? row.sourceEvent.title}
+    </span>
+  )
 }
 
-function useProgramCalendarFilter(items: Program[]) {
+function useProgramCalendarSelection() {
   const [calendarSearchKeyword, setCalendarSearchKeyword] = useState('')
   const [calendarProgramSelection, setCalendarProgramSelection] = useState<string[] | null>(null)
 
-  const normalizedKeyword = useMemo(
-    () => calendarSearchKeyword.trim().toLowerCase(),
-    [calendarSearchKeyword]
-  )
-
-  const allProgramIds = useMemo(() => items.map(program => String(program.id)), [items])
-
-  const programFilterOptions = useMemo(() => {
-    const keywordFiltered = normalizedKeyword
-      ? items.filter(program =>
-          resolveGeneralProgramListTitle(program).toLowerCase().includes(normalizedKeyword)
-        )
-      : items
-    const sortedPrograms = [...keywordFiltered].sort((a, b) =>
-      resolveGeneralProgramListTitle(a).localeCompare(resolveGeneralProgramListTitle(b), 'ko')
-    )
-    return sortedPrograms.map(program => ({
-      id: String(program.id),
-      title: resolveGeneralProgramListTitle(program),
-    }))
-  }, [items, normalizedKeyword])
-
-  const effectiveProgramSelection = useMemo(
-    () => calendarProgramSelection ?? allProgramIds,
-    [calendarProgramSelection, allProgramIds]
-  )
-
-  const filteredPrograms = useMemo(() => {
-    const keywordFiltered = normalizedKeyword
-      ? items.filter(program =>
-          resolveGeneralProgramListTitle(program).toLowerCase().includes(normalizedKeyword)
-        )
-      : items
-    if (calendarProgramSelection === null) return keywordFiltered
-    if (calendarProgramSelection.length === 0) return []
-
-    const selectedSet = new Set(calendarProgramSelection)
-    return keywordFiltered.filter(program => selectedSet.has(String(program.id)))
-  }, [items, normalizedKeyword, calendarProgramSelection])
-
-  const handleProgramFilterChange = useCallback(
-    (programId: string, checked: boolean) => {
-      const ids = items.map(program => String(program.id))
-      setCalendarProgramSelection(prev => {
-        const base = prev ?? ids
-        const next = checked
-          ? [...new Set([...base, programId])]
-          : base.filter(id => id !== programId)
-        const allSelected = next.length === ids.length && ids.every(id => next.includes(id))
-        return allSelected ? null : next
-      })
-    },
-    [items]
-  )
+  const handleProgramFilterChange = useCallback((programId: string, checked: boolean, allIds: string[]) => {
+    setCalendarProgramSelection(prev => {
+      const base = prev ?? allIds
+      const next = checked
+        ? [...new Set([...base, programId])]
+        : base.filter(id => id !== programId)
+      const allSelected = next.length === allIds.length && allIds.every(id => next.includes(id))
+      return allSelected ? null : next
+    })
+  }, [])
 
   return {
     calendarSearchKeyword,
-    programFilterOptions,
-    effectiveProgramSelection,
-    filteredPrograms,
+    calendarProgramSelection,
     handleProgramFilterChange,
     onKeywordChange: setCalendarSearchKeyword,
   }
 }
 
 export function ProgramCalendarView({
-  items,
   loading,
   onItemClick,
   view = 'ALL',
+  calendarProgramType,
+  listKeyword,
   toolbar,
 }: ProgramCalendarViewProps) {
   const {
@@ -135,12 +103,29 @@ export function ProgramCalendarView({
   } = useCalendarNavigationState('month')
   const {
     calendarSearchKeyword,
-    programFilterOptions,
-    effectiveProgramSelection,
-    filteredPrograms,
+    calendarProgramSelection,
     handleProgramFilterChange,
     onKeywordChange,
-  } = useProgramCalendarFilter(items)
+  } = useProgramCalendarSelection()
+
+  const visibleRange = useMemo(
+    () => resolveProgramCalendarVisibleRange(calendarMode, currentMonth),
+    [calendarMode, currentMonth]
+  )
+  const apiKeyword = calendarSearchKeyword.trim() || listKeyword?.trim() || undefined
+  const calendarQueryParams = useMemo((): AdminProgramCalendarQuery => {
+    return {
+      includeOperationalEvents: true,
+      startDate: visibleRange.startDate,
+      endDate: visibleRange.endDate,
+      programType: calendarProgramType?.trim() || undefined,
+      programStatus: mapProgramListViewToCalendarProgramStatus(view),
+      keyword: apiKeyword,
+    }
+  }, [apiKeyword, calendarProgramType, view, visibleRange.endDate, visibleRange.startDate])
+
+  const calendarQuery = useAdminProgramCalendarQuery(calendarQueryParams, true)
+  const calendarItems = calendarQuery.data ?? []
 
   const handleMiniDateSelect = useCallback(
     (date: dayjs.Dayjs) => {
@@ -156,36 +141,88 @@ export function ProgramCalendarView({
     [handleMainMonthChange]
   )
 
-  const events = useMemo(
-    () => buildGeneralProgramCalendarEvents(filteredPrograms, view),
-    [filteredPrograms, view]
-  )
-  const eventDateSet = useMemo(
-    () => new Set(events.map(event => dayjs(event.startDate).format('YYYY-MM-DD'))),
-    [events]
-  )
-  const programColorMap = useMemo(
-    () => buildResolvedScheduleColorMapForPrograms(filteredPrograms),
-    [filteredPrograms]
-  )
-  const overrideEventColorMap = useCallback(
-    (dayEvents: CalendarItem[]) => {
-      const map = new Map<string | number, ScheduleColorPair>()
-      dayEvents.forEach(item => {
-        const event = getGeneralProgramCalendarEventFromCalendarItem(item)
-        map.set(item.id, programColorMap.get(event?.programId ?? '') ?? SCHEDULE_COLORS[0])
-      })
-      return map
-    },
-    [programColorMap]
-  )
-  const resolveEventColors = useCallback(
-    (event: CalendarGeneralProgramEventListRow) =>
-      programColorMap.get(event.programId) ?? SCHEDULE_COLORS[0],
-    [programColorMap]
+  const allEvents = useMemo(
+    () => mapAdminProgramCalendarItemsToEvents(calendarItems),
+    [calendarItems]
   )
 
-  if (loading) {
+  const programFilterOptions = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const event of allEvents) {
+      if (!event.programId || seen.has(event.programId)) continue
+      seen.set(event.programId, event.programTitle)
+    }
+    return [...seen.entries()]
+      .map(([id, title]) => ({ id, title }))
+      .sort((a, b) => a.title.localeCompare(b.title, 'ko'))
+  }, [allEvents])
+
+  const allProgramIds = useMemo(
+    () => programFilterOptions.map(option => option.id),
+    [programFilterOptions]
+  )
+  const effectiveProgramSelection = calendarProgramSelection ?? allProgramIds
+
+  const events = useMemo(() => {
+    if (calendarProgramSelection === null) return allEvents
+    if (calendarProgramSelection.length === 0) return []
+    const selected = new Set(calendarProgramSelection)
+    return allEvents.filter(event => selected.has(event.programId))
+  }, [allEvents, calendarProgramSelection])
+
+  const eventDateSet = useMemo(() => {
+    const dates = new Set<string>()
+    for (const event of events) {
+      const start = dayjs(event.startDate)
+      const end = dayjs(event.endDate)
+      if (!start.isValid() || !end.isValid()) continue
+      let cursor = start.startOf('day')
+      const last = end.startOf('day')
+      while (cursor.isSameOrBefore(last, 'day')) {
+        dates.add(cursor.format('YYYY-MM-DD'))
+        cursor = cursor.add(1, 'day')
+      }
+    }
+    return dates
+  }, [events])
+
+  const programsForColorMap = useMemo(
+    () => programFilterOptions.map(option => ({ id: option.id }) as Program),
+    [programFilterOptions]
+  )
+  const programColorMap = useMemo(
+    () => buildResolvedScheduleColorMapForPrograms(programsForColorMap),
+    [programsForColorMap]
+  )
+  const overrideEventColorMap = useCallback((dayEvents: CalendarItem[]) => {
+    const map = new Map<string | number, ScheduleColorPair>()
+    dayEvents.forEach(item => {
+      const event = getGeneralProgramCalendarEventFromCalendarItem(item)
+      map.set(
+        item.id,
+        event ? resolveProgramCalendarEventColors(event.colorKey) : SCHEDULE_COLORS[0]
+      )
+    })
+    return map
+  }, [])
+  const resolveEventColors = useCallback(
+    (event: CalendarGeneralProgramEventListRow) => {
+      const source = events.find(item => item.id === event.id)
+      return source
+        ? resolveProgramCalendarEventColors(source.colorKey)
+        : SCHEDULE_COLORS[0]
+    },
+    [events]
+  )
+
+  const onOptionToggle = useCallback(
+    (programId: string, checked: boolean) => {
+      handleProgramFilterChange(programId, checked, allProgramIds)
+    },
+    [allProgramIds, handleProgramFilterChange]
+  )
+
+  if (loading || calendarQuery.isLoading) {
     return (
       <div className="calendar-view calendar-view--loading">
         <Spin size="large" />
@@ -218,7 +255,7 @@ export function ProgramCalendarView({
           selectedIds={effectiveProgramSelection}
           programColorMap={programColorMap}
           onKeywordChange={onKeywordChange}
-          onOptionToggle={handleProgramFilterChange}
+          onOptionToggle={onOptionToggle}
         />
       </div>
       <div className="calendar-main-container">
