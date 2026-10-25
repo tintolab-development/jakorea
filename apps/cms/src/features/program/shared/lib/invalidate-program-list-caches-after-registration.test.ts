@@ -5,6 +5,7 @@ import { generalProgramQueryKeys } from '@/features/program/general/api/general-
 import { geminiVisitingTrainingQueryKeys } from '@/features/program/gemini/api/visiting-training/query-keys'
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import { queryKeys as ujatProgramQueryKeys } from '@/features/program/ujat/api/query-keys'
+import { programCalendarQueryKeys } from '@/features/program/general/api/program-calendar-query-keys'
 import {
   invalidateCompanySchoolListCaches,
   invalidateGeminiRecruitmentListCaches,
@@ -30,7 +31,11 @@ describe('invalidateProgramListCachesAfterRegistration', () => {
     const queryClient = new QueryClient()
     expect(
       invalidatedQueryKeys(queryClient, () => invalidateGeneralProgramListCaches(queryClient))
-    ).toEqual([generalProgramQueryKeys.lists(), generalProgramQueryKeys.overviewStages()])
+    ).toEqual([
+      generalProgramQueryKeys.lists(),
+      generalProgramQueryKeys.overviewStages(),
+      programCalendarQueryKeys.all,
+    ])
   })
 
   it('economy variant: invalidates 1c-1s lists + overviewStages', () => {
@@ -39,7 +44,11 @@ describe('invalidateProgramListCachesAfterRegistration', () => {
       invalidatedQueryKeys(queryClient, () =>
         invalidateProgramListCachesAfterRegistration(queryClient, 'economy')
       )
-    ).toEqual([companySchoolQueryKeys.lists(), companySchoolQueryKeys.overviewStages()])
+    ).toEqual([
+      companySchoolQueryKeys.lists(),
+      companySchoolQueryKeys.overviewStages(),
+      programCalendarQueryKeys.all,
+    ])
   })
 
   it('trainedTeachers variant: invalidates lists + overviewStages', () => {
@@ -48,21 +57,33 @@ describe('invalidateProgramListCachesAfterRegistration', () => {
       invalidatedQueryKeys(queryClient, () =>
         invalidateProgramListCachesAfterRegistration(queryClient, 'trainedTeachers')
       )
-    ).toEqual([trainedTeacherQueryKeys.lists(), trainedTeacherQueryKeys.overviewStages()])
+    ).toEqual([
+      trainedTeacherQueryKeys.lists(),
+      trainedTeacherQueryKeys.overviewStages(),
+      programCalendarQueryKeys.all,
+    ])
   })
 
   it('companySchool helper matches economy registration path', () => {
     const queryClient = new QueryClient()
     expect(
       invalidatedQueryKeys(queryClient, () => invalidateCompanySchoolListCaches(queryClient))
-    ).toEqual([companySchoolQueryKeys.lists(), companySchoolQueryKeys.overviewStages()])
+    ).toEqual([
+      companySchoolQueryKeys.lists(),
+      companySchoolQueryKeys.overviewStages(),
+      programCalendarQueryKeys.all,
+    ])
   })
 
   it('trainedTeacher helper invalidates lists + overviewStages', () => {
     const queryClient = new QueryClient()
     expect(
       invalidatedQueryKeys(queryClient, () => invalidateTrainedTeacherListCaches(queryClient))
-    ).toEqual([trainedTeacherQueryKeys.lists(), trainedTeacherQueryKeys.overviewStages()])
+    ).toEqual([
+      trainedTeacherQueryKeys.lists(),
+      trainedTeacherQueryKeys.overviewStages(),
+      programCalendarQueryKeys.all,
+    ])
   })
 
   it('ujat: invalidates lists only (no overviewStages widget)', () => {

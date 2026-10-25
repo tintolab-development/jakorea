@@ -9,6 +9,7 @@ import {
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import {
   buildVolunteerInterviewConfigForSave,
+  completeVolunteerInterviewConfig,
   isTypedCoveredVolunteerInterviewOverlayKey,
 } from '@/features/program/shared/lib/volunteer-interview-config'
 import { buildGeneralProgramCreateFromWizardRhf } from './build-registration-create-from-rhf'
@@ -99,7 +100,10 @@ describe.each<Kind>(['GENERAL_ORGANIZATION', 'GENERAL_INDIVIDUAL'])('%s 생성 �
     expect(body.programType).toBe(kind)
     const rows = (body.recruitments ?? []) as Row[]
     const volunteer = rows.find(r => r.recruitmentType === 'VOLUNTEER')
-    expect(volunteer?.interviewConfig).toEqual(buildVolunteerInterviewConfigForSave(ON_OVERLAY))
+    // part8: 생성도 전체 객체(빈 배열·null 명시) — BE interviewConfig 는 통째 교체
+    expect(volunteer?.interviewConfig).toEqual(
+      completeVolunteerInterviewConfig(buildVolunteerInterviewConfigForSave(ON_OVERLAY))
+    )
     expect(volunteer?.interviewConfig).toMatchObject({
       schemaVersion: 1,
       appliedUnavailableDates: ['2026-12-15'],
@@ -108,7 +112,6 @@ describe.each<Kind>(['GENERAL_ORGANIZATION', 'GENERAL_INDIVIDUAL'])('%s 생성 �
         { id: '1765000000000', exceptionDate: '2026-12-14', selectedSlotKeys: [SLOT(14, 5, 0)] },
       ],
     })
-    expect(Object.values(volunteer?.interviewConfig as object)).not.toContain(null)
     expect(
       rows.filter(r => r.recruitmentType !== 'VOLUNTEER').every(r => !('interviewConfig' in r))
     ).toBe(true)
@@ -119,12 +122,21 @@ describe.each<Kind>(['GENERAL_ORGANIZATION', 'GENERAL_INDIVIDUAL'])('%s 생성 �
     expect(overlay['recruit.volunteer.interview.exception.1765000000000.timeUnit']).toBe('30')
   })
 
-  it('면접 OFF — 명시적 빈 typed {schemaVersion:1}', () => {
+  it('면접 OFF — 명시적 빈 typed 전체 객체(빈 배열·null)', () => {
     const body = mapGeneralProgramToCreateRequest(program(kind, OFF_OVERLAY, false))
     const volunteer = ((body.recruitments ?? []) as Row[]).find(
       r => r.recruitmentType === 'VOLUNTEER'
     )
-    expect(volunteer?.interviewConfig).toEqual({ schemaVersion: 1 })
+    expect(volunteer?.interviewConfig).toEqual({
+      schemaVersion: 1,
+      selectedSlotKeys: [],
+      timeUnit: null,
+      interviewTimeRange: [],
+      specificUnavailableDates: [],
+      appliedUnavailableDates: [],
+      exclusionState: null,
+      exceptions: [],
+    })
     expect(
       Object.keys(overlayOf(body.serviceDetailJson)).filter(k =>
         k.startsWith('recruit.volunteer.interview.')

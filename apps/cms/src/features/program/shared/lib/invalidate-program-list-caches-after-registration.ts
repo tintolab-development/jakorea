@@ -5,23 +5,27 @@ import { generalProgramQueryKeys } from '@/features/program/general/api/general-
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import { queryKeys as ujatProgramQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { geminiVisitingTrainingQueryKeys } from '@/features/program/gemini/api/visiting-training/query-keys'
+import { programCalendarQueryKeys } from '@/features/program/general/api/program-calendar-query-keys'
 
 /** 일반 프로그램 — 목록 테이블 + 상단/대시보드 4카드 위젯 */
 export function invalidateGeneralProgramListCaches(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.lists() })
   void queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.overviewStages() })
+  void queryClient.invalidateQueries({ queryKey: programCalendarQueryKeys.all })
 }
 
 /** 1사1교 — 목록 테이블 + 상단/대시보드 4카드 위젯 */
 export function invalidateCompanySchoolListCaches(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.lists() })
   void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.overviewStages() })
+  void queryClient.invalidateQueries({ queryKey: programCalendarQueryKeys.all })
 }
 
 /** 교육받은 교사 — 목록 테이블 + 상단/대시보드 4카드 위젯 */
 export function invalidateTrainedTeacherListCaches(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
   void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.overviewStages() })
+  void queryClient.invalidateQueries({ queryKey: programCalendarQueryKeys.all })
 }
 
 /** UJAT — 목록 테이블 (상단 overviewStages 위젯 없음) */

@@ -209,6 +209,7 @@ describe('봉사 면접 typed (part4 step6 신규 동작)', () => {
       selectedSlotKeys: [SLOT_B],
       timeUnit: 30,
       interviewTimeRange: ['2026-12-07T01:00:00.000Z', '2026-12-07T03:00:00.000Z'],
+      specificUnavailableDates: [],
       appliedUnavailableDates: ['2026-12-10', '2026-12-11'],
       exclusionState: { excludeSaturday: true, excludeSunday: true, excludeHoliday: true },
       exceptions: [
@@ -235,7 +236,8 @@ describe('봉사 면접 typed (part4 step6 신규 동작)', () => {
     expect(participant).not.toHaveProperty('interviewConfig')
   })
 
-  it('면접 키가 없는 overlay 저장은 빈 typed 로 보낸다', () => {
+  // part8: interviewConfig 는 BE 에서 통째 교체 — 면접 설정 키가 없으면 보내지 않아 저장값 유지
+  it('면접 설정 키가 없는 overlay 저장은 interviewConfig 를 생략한다', () => {
     const program = orgProgram({})
     const body = buildProgramRecruitmentRowSaveRequest({
       baseline: program,
@@ -243,7 +245,7 @@ describe('봉사 면접 typed (part4 step6 신규 동작)', () => {
       patch: { registrationOverlay: { 'recruit.volunteer.interviewRequired': 'no' } },
       audience: 'volunteer',
     }) as unknown as Record<string, unknown>
-    expect(body.interviewConfig).toEqual({ schemaVersion: 1 })
+    expect(body).not.toHaveProperty('interviewConfig')
   })
 
   it('조회 — 서버 fallback(typed null 행 응답)과 같은 값이면 overlay 그대로', () => {

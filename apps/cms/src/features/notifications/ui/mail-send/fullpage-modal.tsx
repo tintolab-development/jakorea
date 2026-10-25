@@ -28,7 +28,6 @@ import {
   formatNotificationSendTemplateDisabledKeysWarning,
   listNotificationSendTemplateDisabledKeysForProgram,
 } from '@/features/notifications/model/shared/template-usable-for-program'
-import { MAIL_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/mail-send/types'
 import {
   inferUniqueRecipientTypeValue,
   buildNotificationTemplateVariablesQuery,
@@ -397,6 +396,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   }
 
   const handleOpenRecipientManual = () => {
+    if (!isWithoutProgram) return
     setRecipientManualOpen(true)
   }
 
@@ -539,11 +539,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                               form.clearRecipients()
                               setSelectedRecipientIds([])
                               setRecipientManualOpen(false)
-                            }}
-                            onClearProgram={() => {
-                              form.setProgramId(MAIL_SEND_ALL_PROGRAM_ID)
-                              form.clearRecipients()
-                              setSelectedRecipientIds([])
                             }}
                           />
                         }
@@ -825,7 +820,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       />
       <RecipientManualModal
         key={recipientManualOpen ? 'recipient-manual-open' : 'recipient-manual-closed'}
-        open={open && recipientManualOpen}
+        open={open && recipientManualOpen && isWithoutProgram}
         contact="email"
         values={form.recipients
           .filter(item => item.source === 'manual')

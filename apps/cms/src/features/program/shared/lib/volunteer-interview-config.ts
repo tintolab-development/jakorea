@@ -576,3 +576,77 @@ export function volunteerInterviewRequiredFromOverlay(
   if (raw === 'no' || raw === false) return false
   return undefined
 }
+
+/**
+ * 저장용 전체 typed — 모든 필드를 명시한다(배열은 `[]`, 값 없음은 null).
+ * BE `interviewConfig` 는 객체 단위 교체이고 normalizeAndValidate 가 생략 배열을 `[]` 로 만든다(keonhee 2026-10-25) —
+ * 보낸 객체가 그대로 저장 값이 되도록 빈 값도 드러낸다.
+ */
+export function completeVolunteerInterviewConfig(
+  config: RecruitmentInterviewConfig | null | undefined
+): RecruitmentInterviewConfig {
+  const c = config ?? {}
+  return {
+    schemaVersion: INTERVIEW_CONFIG_SCHEMA_VERSION,
+    selectedSlotKeys: [...(c.selectedSlotKeys ?? [])],
+    timeUnit: c.timeUnit ?? null,
+    interviewTimeRange: [...(c.interviewTimeRange ?? [])],
+    specificUnavailableDates: [...(c.specificUnavailableDates ?? [])],
+    appliedUnavailableDates: [...(c.appliedUnavailableDates ?? [])],
+    exclusionState: c.exclusionState
+      ? {
+          excludeSaturday: c.exclusionState.excludeSaturday ?? null,
+          excludeSunday: c.exclusionState.excludeSunday ?? null,
+          excludeHoliday: c.exclusionState.excludeHoliday ?? null,
+        }
+      : null,
+    exceptions: (c.exceptions ?? []).map(exception => ({
+      id: exception.id ?? null,
+      exceptionDate: exception.exceptionDate ?? null,
+      selectedSlotKeys: [...(exception.selectedSlotKeys ?? [])],
+    })),
+  }
+}
+
+const CONFIG_FIELD_BY_SUFFIX = {
+  selectedSlotKeys: 'selectedSlotKeys',
+  timeUnit: 'timeUnit',
+  interviewTimeRange: 'interviewTimeRange',
+  specificUnavailableDates: 'specificUnavailableDates',
+  appliedUnavailableDates: 'appliedUnavailableDates',
+  exclusionState: 'exclusionState',
+} as const satisfies Record<(typeof COVERED_SUFFIXES)[number], keyof RecruitmentInterviewConfig>
+
+/**
+ * 모집 행 PATCH 용 interviewConfig — 저장된 typed 와 이번 저장 폼(overlay)을 합친 전체 객체. 부분 객체는 만들지 않는다.
+ * - overlay 에 typed 가 덮는 면접 키(`isTypedCoveredVolunteerInterviewOverlayKey`)가 하나도 없으면 undefined
+ *   (보내지 않음 = BE 유지). overlay 에 남는 예외 블록 `timeUnit`·`interviewTimeRange` 만으로는 보내지 않는다.
+ * - 필드별: overlay 에 그 키가 있으면 폼 값(빈 배열이면 비움), 없으면 저장 typed 값.
+ *   typed 가 없는 구 프로그램은 BE overlay fallback 과 같은 규칙(접두사 없는 legacy 키 포함)으로 읽은 값.
+ * - 예외: overlay 에 예외 날짜·슬롯 키가 있거나 시간대(selectedSlotKeys) 키가 있으면(폼 면접 일정 전체 상태) 폼 예외,
+ *   아니면 저장 값.
+ */
+export function buildVolunteerInterviewConfigForRowSave(
+  overlay: Record<string, unknown> | null | undefined,
+  stored: RecruitmentInterviewConfig | null | undefined
+): RecruitmentInterviewConfig | undefined {
+  const source = overlay ?? {}
+  const p = VOLUNTEER_INTERVIEW_OVERLAY_PREFIX
+  const keys = Object.keys(source).filter(isTypedCoveredVolunteerInterviewOverlayKey)
+  if (keys.length === 0) return undefined
+  const fromForm = buildVolunteerInterviewConfigForSave(source)
+  const base = stored ?? volunteerInterviewConfigFromOverlayLikeServer(source) ?? {}
+  const merged: RecruitmentInterviewConfig = { schemaVersion: INTERVIEW_CONFIG_SCHEMA_VERSION }
+  for (const suffix of COVERED_SUFFIXES) {
+    const field = CONFIG_FIELD_BY_SUFFIX[suffix]
+    const value = Object.prototype.hasOwnProperty.call(source, `${p}.${suffix}`)
+      ? fromForm[field]
+      : base[field]
+    ;(merged as Record<string, unknown>)[field] = value ?? null
+  }
+  const formOwnsExceptions =
+    keys.some(key => EXCEPTION_KEY.test(key)) ||
+    Object.prototype.hasOwnProperty.call(source, `${p}.selectedSlotKeys`)
+  merged.exceptions = formOwnsExceptions ? (fromForm.exceptions ?? []) : (base.exceptions ?? [])
+  return completeVolunteerInterviewConfig(merged)
+}

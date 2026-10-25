@@ -28,10 +28,7 @@ import {
   formatNotificationSendTemplateDisabledKeysWarning,
   listNotificationSendTemplateDisabledKeysForProgram,
 } from '@/features/notifications/model/shared/template-usable-for-program'
-import {
-  SMS_SEND_ALL_PROGRAM_ID,
-  SMS_SEND_PICKER_PAGE_SIZE,
-} from '@/features/notifications/model/sms-send/types'
+import { SMS_SEND_PICKER_PAGE_SIZE } from '@/features/notifications/model/sms-send/types'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
 import {
@@ -274,6 +271,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }
 
   function handleOpenRecipientManual() {
+    if (!isWithoutProgram) return
     setRecipientManualOpen(true)
   }
 
@@ -433,11 +431,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                               form.clearRecipients()
                               setSelectedRecipientIds([])
                               setRecipientManualOpen(false)
-                            }}
-                            onClearProgram={() => {
-                              form.setProgramId(SMS_SEND_ALL_PROGRAM_ID)
-                              form.clearRecipients()
-                              setSelectedRecipientIds([])
                             }}
                           />
                         }
@@ -712,7 +705,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       />
       <RecipientManualModal
         key={recipientManualOpen ? 'recipient-manual-open' : 'recipient-manual-closed'}
-        open={open && recipientManualOpen}
+        open={open && recipientManualOpen && isWithoutProgram}
         contact="phone"
         values={form.recipients
           .filter(item => item.source === 'manual')

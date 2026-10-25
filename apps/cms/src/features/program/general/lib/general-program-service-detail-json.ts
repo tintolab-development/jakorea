@@ -438,6 +438,50 @@ export function toKstDateKey(value: string | Date | undefined | null): string | 
   return new Date(time + KST_OFFSET_MS).toISOString().slice(0, 10)
 }
 
+const VOLUNTEER_INTERVIEW_PERIOD_KEYS = ['interviewStartDate', 'interviewEndDate'] as const
+const SCHEDULE_PERIOD_KEYS = ['periodStartDate', 'periodEndDate'] as const
+
+function isEmptyPeriodValue(value: unknown): boolean {
+  return value === null || (typeof value === 'string' && value.trim() === '')
+}
+
+function withoutEmptyKeys<T extends object>(
+  record: T | undefined,
+  keys: readonly string[]
+): T | undefined {
+  if (!record) return record
+  const source = record as Record<string, unknown>
+  if (!keys.some(key => key in source && isEmptyPeriodValue(source[key]))) return record
+  const kept = { ...source }
+  for (const key of keys) if (key in kept && isEmptyPeriodValue(kept[key])) delete kept[key]
+  return kept as T
+}
+
+/**
+ * 저장 본문 nested 면접 기간 — null·'' 는 키째 뺀다(keonhee 2026-10-25).
+ * BE 상세 PATCH 는 deep merge 라 생략하면 저장된 기간이 남고, 명시적 null 은 지운다.
+ * 구 GENERAL 봉사 행은 행 면접 기간이 null 이라 nested 가 유일한 기간이다(BE backfill 전 임시 방어).
+ */
+export function omitEmptyVolunteerInterviewPeriod(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const volunteerRecruitmentInfo = withoutEmptyKeys(
+    common.volunteerRecruitmentInfo,
+    VOLUNTEER_INTERVIEW_PERIOD_KEYS
+  )
+  const volunteerInterviewScheduleInfo = withoutEmptyKeys(
+    common.volunteerInterviewScheduleInfo,
+    SCHEDULE_PERIOD_KEYS
+  )
+  if (
+    volunteerRecruitmentInfo === common.volunteerRecruitmentInfo &&
+    volunteerInterviewScheduleInfo === common.volunteerInterviewScheduleInfo
+  )
+    return common
+  return { ...common, volunteerRecruitmentInfo, volunteerInterviewScheduleInfo }
+}
+
 /** BE 면접 선택지 펼침 기간 — 봉사자 「2차 면접 심사」 기간을 그대로 쓴다. */
 export function withVolunteerInterviewSchedulePeriod(
   program: Program,
@@ -447,9 +491,9 @@ export function withVolunteerInterviewSchedulePeriod(
   if (!common || !schedule) return common
   const volunteerInfo = common.volunteerRecruitmentInfo
   const periodStartDate = toKstDateKey(
-    program.interviewStartDate ?? volunteerInfo?.interviewStartDate
+    program.interviewStartDate || volunteerInfo?.interviewStartDate
   )
-  const periodEndDate = toKstDateKey(program.interviewEndDate ?? volunteerInfo?.interviewEndDate)
+  const periodEndDate = toKstDateKey(program.interviewEndDate || volunteerInfo?.interviewEndDate)
   const { periodStartDate: _start, periodEndDate: _end, ...rest } = schedule
   return {
     ...common,
@@ -578,11 +622,13 @@ export function serializeGeneralProgramServiceDetailJson(
     !isTrainedTeachersDetailProgram(program)
       ? omitMirroredDetailedProgramMasterIdFromCommonInfo(withAudienceRule)
       : withAudienceRule
-  const generalCommonInfo = commonInfoWithServerEducationScheduleLines(
-    omitColumnTargetLevelsFromCommonInfo(
-      options?.omitRecruitmentWindow && !options?.keepNestedRecruitmentInfo
-        ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
-        : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
+  const generalCommonInfo = omitEmptyVolunteerInterviewPeriod(
+    commonInfoWithServerEducationScheduleLines(
+      omitColumnTargetLevelsFromCommonInfo(
+        options?.omitRecruitmentWindow && !options?.keepNestedRecruitmentInfo
+          ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
+          : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
+      )
     )
   )
   const nestedProgram: Program = {

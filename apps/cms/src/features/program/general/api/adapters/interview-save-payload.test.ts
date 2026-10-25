@@ -238,7 +238,7 @@ describe('생성 본문', () => {
     expect(row).not.toHaveProperty('interviewStartAt')
   })
 
-  it('면접 OFF — interviewEnabled false, typed 는 schemaVersion 만', () => {
+  it('면접 OFF — interviewEnabled false, typed 는 빈 전체 객체', () => {
     const body = mapGeneralProgramToCreateRequest(
       program(
         { generalVolunteerInterviewEnabled: false },
@@ -247,7 +247,16 @@ describe('생성 본문', () => {
     )
     const row = volunteerRow(body.recruitments)
     expect(row?.interviewEnabled).toBe(false)
-    expect(row?.interviewConfig).toEqual({ schemaVersion: 1 })
+    expect(row?.interviewConfig).toEqual({
+      schemaVersion: 1,
+      selectedSlotKeys: [],
+      timeUnit: null,
+      interviewTimeRange: [],
+      specificUnavailableDates: [],
+      appliedUnavailableDates: [],
+      exclusionState: null,
+      exceptions: [],
+    })
     expect(
       Object.keys(detail(body.serviceDetailJson).overlay).filter(k =>
         VOLUNTEER_INTERVIEW_KEY.test(k)

@@ -21,15 +21,12 @@ type ProgramSelectFieldProps = {
   /** GET /api/admin/programs items[].id 기준. mock id 금지. */
   programs?: MailSendProgram[]
   onSelect: (program: MailSendProgram) => void
-  /** 지정 해제 → 미선택 표시(`all` sentinel, programId 미전송) */
-  onClearProgram?: () => void
 }
 
 export function ProgramSelectField({
   value,
   programs = [],
   onSelect,
-  onClearProgram,
 }: ProgramSelectFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const selected = findMailSendProgram(programs, value)
@@ -97,13 +94,6 @@ export function ProgramSelectField({
           selectedId={isAll || isUnset ? undefined : value}
           onClose={() => setPickerOpen(false)}
           onSelect={handleUse}
-          onClearProgram={
-            onClearProgram
-              ? () => {
-                  onClearProgram()
-                }
-              : undefined
-          }
           zIndex={PICKER_Z_INDEX}
         />
       ) : null}

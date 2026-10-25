@@ -59,10 +59,7 @@ import {
   buildNotificationTemplateVariablesQuery,
   inferUniqueRecipientTypeValue,
 } from '@/features/notifications/model/shared/template-variables-query'
-import {
-  ALIMTALK_SEND_ALL_PROGRAM_ID,
-  ALIMTALK_SEND_PICKER_PAGE_SIZE,
-} from '@/features/notifications/model/alimtalk-send/types'
+import { ALIMTALK_SEND_PICKER_PAGE_SIZE } from '@/features/notifications/model/alimtalk-send/types'
 import { categoryPathNames } from '@/features/notifications/lib/tree'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
@@ -506,6 +503,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }
 
   const handleManualRecipients = () => {
+    if (!isWithoutProgram) return
     if (!requireProfileAndTemplate()) return
     setRecipientManualOpen(true)
   }
@@ -660,11 +658,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                           setRecipients([])
                           setSelectedRecipientIds([])
                           setRecipientManualOpen(false)
-                        }}
-                        onClearProgram={() => {
-                          setProgramId(ALIMTALK_SEND_ALL_PROGRAM_ID)
-                          setRecipients([])
-                          setSelectedRecipientIds([])
                         }}
                       />
                     }
@@ -961,7 +954,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       />
       <RecipientManualModal
         key={recipientManualOpen ? 'recipient-manual-open' : 'recipient-manual-closed'}
-        open={open && recipientManualOpen}
+        open={open && recipientManualOpen && isWithoutProgram}
         contact="phone"
         values={manualEntries.map(entry => ({
           contact: entry.phone,

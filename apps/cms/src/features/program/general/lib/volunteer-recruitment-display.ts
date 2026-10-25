@@ -141,9 +141,12 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
       info?.announcementPublishedLabel,
       labelBool(info?.announcementPublished, '게시', '미게시')
     ),
+    // 면접 여부 값(행 interviewEnabled 우선)이 있으면 그 값으로 — 저장 nested 라벨은 끄기/켜기 뒤 남은 옛 값일 수 있다(part9).
     interviewEnabledLabel: pickDisplayString(
-      info?.volunteerInterviewEnabledLabel,
-      labelBool(interviewEnabled, '면접 있음', '면접 없음')
+      interviewEnabled == null
+        ? undefined
+        : labelBool(interviewEnabled, '면접 있음', '면접 없음'),
+      info?.volunteerInterviewEnabledLabel
     ),
     operationPeriodLabel: pickDisplayString(
       operationPeriodLabelFromWindow(row),

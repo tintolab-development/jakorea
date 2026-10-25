@@ -2005,6 +2005,14 @@ export function detailEditValuesToProgramPatch(
             : values.volunteerRecruitmentInterviewEnabled === 'no'
               ? false
               : existing.generalCommonInfo?.volunteerRecruitmentInfo?.generalVolunteerInterviewEnabled,
+        // 면접 여부 표시 라벨도 함께(part9) — 끄기 뒤 nested 에 「면접 있음」 이 남지 않게
+        ...(values.volunteerRecruitmentInterviewEnabled === 'yes' ||
+        values.volunteerRecruitmentInterviewEnabled === 'no'
+          ? {
+              volunteerInterviewEnabledLabel:
+                values.volunteerRecruitmentInterviewEnabled === 'yes' ? '면접 있음' : '면접 없음',
+            }
+          : {}),
         ...finalPassAnnouncementPatch(
           values,
           existing,

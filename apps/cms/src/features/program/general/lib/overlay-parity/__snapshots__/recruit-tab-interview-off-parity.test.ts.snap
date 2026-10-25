@@ -1,0 +1,225 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · nested 기간 전혀 없음 · seal 없음 1`] = `
+{
+  "nested": {
+    "rootGeneralVolunteerInterviewEnabled": true,
+    "schedule": undefined,
+    "vriGeneralVolunteerInterviewEnabled": true,
+    "vriInterviewEndDate": "(omitted)",
+    "vriInterviewStartDate": "(omitted)",
+    "vriVolunteerInterviewEnabled": true,
+    "vriVolunteerInterviewEnabledLabel": "면접 있음",
+  },
+  "row": {
+    "clearFields": undefined,
+    "hasInterviewConfig": true,
+    "interviewEnabled": true,
+    "interviewEndAt": "(omitted)",
+    "interviewStartAt": "(omitted)",
+    "operationEndDate": "2027-02-28",
+    "operationStartDate": "2026-12-01",
+  },
+  "seededForm": {
+    "interviewEndDate": undefined,
+    "interviewStartDate": undefined,
+    "volunteerRecruitmentInterviewEnabled": "yes",
+  },
+}
+`;
+
+exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · nested 없음 · overlay interviewRangeSeal 만 있음 1`] = `
+{
+  "nested": {
+    "rootGeneralVolunteerInterviewEnabled": true,
+    "schedule": undefined,
+    "vriGeneralVolunteerInterviewEnabled": true,
+    "vriInterviewEndDate": "(omitted)",
+    "vriInterviewStartDate": "(omitted)",
+    "vriVolunteerInterviewEnabled": true,
+    "vriVolunteerInterviewEnabledLabel": "면접 있음",
+  },
+  "row": {
+    "clearFields": undefined,
+    "hasInterviewConfig": true,
+    "interviewEnabled": true,
+    "interviewEndAt": "(omitted)",
+    "interviewStartAt": "(omitted)",
+    "operationEndDate": "2027-02-28",
+    "operationStartDate": "2026-12-01",
+  },
+  "seededForm": {
+    "interviewEndDate": undefined,
+    "interviewStartDate": undefined,
+    "volunteerRecruitmentInterviewEnabled": "yes",
+  },
+}
+`;
+
+exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · scheduleInfo period 와 volunteerRecruitmentInfo 가 다름 1`] = `
+{
+  "nested": {
+    "rootGeneralVolunteerInterviewEnabled": true,
+    "schedule": undefined,
+    "vriGeneralVolunteerInterviewEnabled": true,
+    "vriInterviewEndDate": "2026-12-20T14:59:59.999Z",
+    "vriInterviewStartDate": "2026-12-06T15:00:00.000Z",
+    "vriVolunteerInterviewEnabled": true,
+    "vriVolunteerInterviewEnabledLabel": "면접 있음",
+  },
+  "row": {
+    "clearFields": undefined,
+    "hasInterviewConfig": true,
+    "interviewEnabled": true,
+    "interviewEndAt": "2026-12-18T14:59:59.999Z",
+    "interviewStartAt": "2026-12-08T15:00:00.000Z",
+    "operationEndDate": "2027-02-28",
+    "operationStartDate": "2026-12-01",
+  },
+  "seededForm": {
+    "interviewEndDate": "2026-12-20T14:59:59.999Z",
+    "interviewStartDate": "2026-12-06T15:00:00.000Z",
+    "volunteerRecruitmentInterviewEnabled": "yes",
+  },
+}
+`;
+
+exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · volunteerRecruitmentInfo 없음 · scheduleInfo period 만 있음 1`] = `
+{
+  "nested": {
+    "rootGeneralVolunteerInterviewEnabled": true,
+    "schedule": undefined,
+    "vriGeneralVolunteerInterviewEnabled": true,
+    "vriInterviewEndDate": "(omitted)",
+    "vriInterviewStartDate": "(omitted)",
+    "vriVolunteerInterviewEnabled": true,
+    "vriVolunteerInterviewEnabledLabel": "면접 있음",
+  },
+  "row": {
+    "clearFields": undefined,
+    "hasInterviewConfig": true,
+    "interviewEnabled": true,
+    "interviewEndAt": "(omitted)",
+    "interviewStartAt": "(omitted)",
+    "operationEndDate": "2027-02-28",
+    "operationStartDate": "2026-12-01",
+  },
+  "seededForm": {
+    "interviewEndDate": undefined,
+    "interviewStartDate": undefined,
+    "volunteerRecruitmentInterviewEnabled": "yes",
+  },
+}
+`;
+
+exports[`모집 탭 봉사 저장 parity (part9 전) > (a) 행 null · 둘 다 같은 기간(186382·186384 모양) 1`] = `
+{
+  "nested": {
+    "rootGeneralVolunteerInterviewEnabled": true,
+    "schedule": undefined,
+    "vriGeneralVolunteerInterviewEnabled": true,
+    "vriInterviewEndDate": "2026-12-20T14:59:59.999Z",
+    "vriInterviewStartDate": "2026-12-06T15:00:00.000Z",
+    "vriVolunteerInterviewEnabled": true,
+    "vriVolunteerInterviewEnabledLabel": "면접 있음",
+  },
+  "row": {
+    "clearFields": undefined,
+    "hasInterviewConfig": true,
+    "interviewEnabled": true,
+    "interviewEndAt": "2026-12-20T14:59:59.999Z",
+    "interviewStartAt": "2026-12-06T15:00:00.000Z",
+    "operationEndDate": "2027-02-28",
+    "operationStartDate": "2026-12-01",
+  },
+  "seededForm": {
+    "interviewEndDate": "2026-12-20T14:59:59.999Z",
+    "interviewStartDate": "2026-12-06T15:00:00.000Z",
+    "volunteerRecruitmentInterviewEnabled": "yes",
+  },
+}
+`;
+
+exports[`모집 탭 봉사 저장 parity (part9 전) > (b) 면접 끄기 — 행에 기간 있음(186386 모양) 1`] = `
+{
+  "nested": {
+    "rootGeneralVolunteerInterviewEnabled": false,
+    "schedule": undefined,
+    "vriGeneralVolunteerInterviewEnabled": false,
+    "vriInterviewEndDate": "2026-12-20T14:59:59.999Z",
+    "vriInterviewStartDate": "2026-12-06T15:00:00.000Z",
+    "vriVolunteerInterviewEnabled": false,
+    "vriVolunteerInterviewEnabledLabel": "면접 없음",
+  },
+  "row": {
+    "clearFields": undefined,
+    "hasInterviewConfig": true,
+    "interviewEnabled": false,
+    "interviewEndAt": "2026-12-20T14:59:59.999Z",
+    "interviewStartAt": "2026-12-06T15:00:00.000Z",
+    "operationEndDate": "2027-02-28",
+    "operationStartDate": "2026-12-01",
+  },
+  "seededForm": {
+    "interviewEndDate": "2026-12-20T14:59:59.999Z",
+    "interviewStartDate": "2026-12-06T15:00:00.000Z",
+    "volunteerRecruitmentInterviewEnabled": "yes",
+  },
+}
+`;
+
+exports[`모집 탭 봉사 저장 parity (part9 전) > (b) 면접 켜기 — 꺼진 프로그램 1`] = `
+{
+  "nested": {
+    "rootGeneralVolunteerInterviewEnabled": true,
+    "schedule": undefined,
+    "vriGeneralVolunteerInterviewEnabled": true,
+    "vriInterviewEndDate": "2026-12-20T14:59:59.999Z",
+    "vriInterviewStartDate": "2026-12-06T15:00:00.000Z",
+    "vriVolunteerInterviewEnabled": true,
+    "vriVolunteerInterviewEnabledLabel": "면접 있음",
+  },
+  "row": {
+    "clearFields": undefined,
+    "hasInterviewConfig": true,
+    "interviewEnabled": true,
+    "interviewEndAt": "2026-12-20T14:59:59.999Z",
+    "interviewStartAt": "2026-12-06T15:00:00.000Z",
+    "operationEndDate": "2027-02-28",
+    "operationStartDate": "2026-12-01",
+  },
+  "seededForm": {
+    "interviewEndDate": "2026-12-20T14:59:59.999Z",
+    "interviewStartDate": "2026-12-06T15:00:00.000Z",
+    "volunteerRecruitmentInterviewEnabled": "no",
+  },
+}
+`;
+
+exports[`모집 탭 봉사 저장 parity (part9 전) > (b) 표시 라벨 — 행 false(끈 뒤 GET), nested 플래그 false·라벨 「면접 있음」 이 남은 경우 1`] = `"면접 없음"`;
+
+exports[`모집 탭 봉사 저장 parity (part9 전) > (c) 운영일 GET null → clearFields, 값 있음 → 그대로 1`] = `
+{
+  "nullOp": {
+    "clearFields": [
+      "operationStartDate",
+      "operationEndDate",
+    ],
+    "hasInterviewConfig": true,
+    "interviewEnabled": true,
+    "interviewEndAt": "2026-12-20T14:59:59.999Z",
+    "interviewStartAt": "2026-12-06T15:00:00.000Z",
+    "operationEndDate": undefined,
+    "operationStartDate": undefined,
+  },
+  "withOp": {
+    "clearFields": undefined,
+    "hasInterviewConfig": true,
+    "interviewEnabled": true,
+    "interviewEndAt": "2026-12-20T14:59:59.999Z",
+    "interviewStartAt": "2026-12-06T15:00:00.000Z",
+    "operationEndDate": "2027-02-28",
+    "operationStartDate": "2026-12-01",
+  },
+}
+`;

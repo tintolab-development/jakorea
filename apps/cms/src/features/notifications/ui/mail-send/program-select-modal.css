@@ -126,7 +126,3 @@
   font-size: 14px;
   font-weight: 400;
 }
-
-.mail-send-program-select-modal .content-modal__footer-actions {
-  justify-content: flex-end;
-}

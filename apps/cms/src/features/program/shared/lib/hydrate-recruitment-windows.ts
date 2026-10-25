@@ -80,10 +80,12 @@ function patchNestedFromRow(
   }
   if (options?.interview) {
     if (row.interviewEnabled != null) next.volunteerInterviewEnabled = row.interviewEnabled
-    const interviewStart = rowString(row, 'interviewStartAt')
-    const interviewEnd = rowString(row, 'interviewEndAt')
-    if (interviewStart !== undefined) next.interviewStartDate = interviewStart
-    if (interviewEnd !== undefined) next.interviewEndDate = interviewEnd
+    // 면접 기간: 행 값이 있을 때만 nested 를 덮는다. 구 GENERAL 봉사 행은 interview_start_at/end_at 이 null 이고
+    // 기간은 nested 에만 있다(keonhee 2026-10-25, BE backfill 전 임시 방어) — null 을 '' 로 바꾸지 않는다.
+    const interviewStart = rowString(row, 'interviewStartAt')?.trim()
+    const interviewEnd = rowString(row, 'interviewEndAt')?.trim()
+    if (interviewStart) next.interviewStartDate = interviewStart
+    if (interviewEnd) next.interviewEndDate = interviewEnd
   }
   return next
 }

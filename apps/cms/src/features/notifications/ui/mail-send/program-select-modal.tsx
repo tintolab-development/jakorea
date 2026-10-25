@@ -18,8 +18,6 @@ type ProgramSelectModalProps = {
   selectedId?: string
   onClose: () => void
   onSelect: (program: MailSendProgram) => void
-  /** 「프로그램 지정 해제」— 전체(회원) 발송 맥락 */
-  onClearProgram?: () => void
   zIndex?: number
 }
 
@@ -29,7 +27,6 @@ export function ProgramSelectModal({
   selectedId,
   onClose,
   onSelect,
-  onClearProgram,
   zIndex,
 }: ProgramSelectModalProps) {
   const [year, setYear] = useState<number | '' | undefined>(undefined)
@@ -103,21 +100,6 @@ export function ProgramSelectModal({
       className="mail-send-program-select-modal"
       titleBodyGap="always"
       zIndex={zIndex}
-      footer={
-        onClearProgram ? (
-          <CmsButton
-            variant="secondary"
-            size="large"
-            type="button"
-            onClick={() => {
-              onClearProgram()
-              onClose()
-            }}
-          >
-            프로그램 지정 해제
-          </CmsButton>
-        ) : null
-      }
     >
       <div className="mail-send-program-select-modal__body">
         <div className="mail-send-program-select-modal__search">

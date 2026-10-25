@@ -1,6 +1,7 @@
 import {
   applyTypedVolunteerInterviewToOverlay,
   buildVolunteerInterviewConfigForSave,
+  completeVolunteerInterviewConfig,
   omitVolunteerInterviewSaveKeysFromServiceDetailJson,
   volunteerInterviewRequiredFromOverlay,
   type RecruitmentInterviewConfig,
@@ -1123,7 +1124,10 @@ function withTypedVolunteerInterviewConfigForCreate(
   const target = volunteerIndexes[0]!.index
   const detail = readRequestServiceDetail(body.serviceDetailJson)
   const overlay = recordOrEmpty(recordOrEmpty(detail.registration).overlay)
-  const interviewConfig = buildVolunteerInterviewConfigForSave(overlay)
+  // 전체 객체(빈 배열·null 도 명시) — BE interviewConfig 는 객체 단위 저장
+  const interviewConfig = completeVolunteerInterviewConfig(
+    buildVolunteerInterviewConfigForSave(overlay)
+  )
   const interviewEnabled =
     (typeof program.generalVolunteerInterviewEnabled === 'boolean'
       ? program.generalVolunteerInterviewEnabled
