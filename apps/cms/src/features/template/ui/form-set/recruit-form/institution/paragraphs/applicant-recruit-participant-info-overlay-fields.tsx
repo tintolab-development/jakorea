@@ -1,8 +1,8 @@
 import { memo, useEffect, useMemo } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import {
-  APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
   syncInstitutionApplicationBridgeFromApplicantRecruitOverlay,
   useApplicantRecruitInstitutionOverlayKv,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'

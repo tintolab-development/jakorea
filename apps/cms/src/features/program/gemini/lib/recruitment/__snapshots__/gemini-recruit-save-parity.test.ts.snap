@@ -1,0 +1,248 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`gemini recruit save parity (part3 step1) > apply(양식 불러오기) → collect 는 받은 키를 그대로 돌려준다 > apply-collect 1`] = `
+{
+  "custom.passthrough": "x",
+  "geminiRecruit.educationTargetLevels": [
+    "adult",
+  ],
+  "geminiRecruit.minStudentCount": null,
+  "geminiRecruit.title": "불러온 공고",
+}
+`;
+
+exports[`gemini recruit save parity (part3 step1) > apply(양식 불러오기) → collect 는 받은 키를 그대로 돌려준다 > apply-snapshot 1`] = `
+{
+  "additionalContentMarkdown": "",
+  "announcementPublished": "published",
+  "applicationMethod": "",
+  "applicationPeriodEnd": null,
+  "applicationPeriodStart": null,
+  "attachmentFileNames": [],
+  "detailSectionDescription": "공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.",
+  "educationForm": "online",
+  "educationStructure": "SCHEDULE",
+  "educationTargetDetail": "",
+  "educationTargetLevels": [
+    "adult",
+  ],
+  "inquiryContactName": "",
+  "inquiryEmail": "",
+  "inquiryTel": "",
+  "institutionSectionDescription": "설명 입력",
+  "learningSupportContent": "",
+  "minStudentCount": 15,
+  "notes": "",
+  "notesNotApplicable": false,
+  "programDescription": "",
+  "recruitmentGuide": "",
+  "thumbnailFileName": null,
+  "title": "불러온 공고",
+  "trainingRequestPeriodEnd": null,
+  "trainingRequestPeriodStart": null,
+}
+`;
+
+exports[`gemini recruit save parity (part3 step1) > reset(시드 억제) → collect·snapshot > reset-collect 1`] = `{}`;
+
+exports[`gemini recruit save parity (part3 step1) > reset(시드 억제) → collect·snapshot > reset-snapshot 1`] = `
+{
+  "additionalContentMarkdown": "",
+  "announcementPublished": "published",
+  "applicationMethod": "",
+  "applicationPeriodEnd": null,
+  "applicationPeriodStart": null,
+  "attachmentFileNames": [],
+  "detailSectionDescription": "공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.",
+  "educationForm": "online",
+  "educationStructure": "SCHEDULE",
+  "educationTargetDetail": "",
+  "educationTargetLevels": [],
+  "inquiryContactName": "",
+  "inquiryEmail": "",
+  "inquiryTel": "",
+  "institutionSectionDescription": "설명 입력",
+  "learningSupportContent": "",
+  "minStudentCount": 15,
+  "notes": "",
+  "notesNotApplicable": false,
+  "programDescription": "",
+  "recruitmentGuide": "",
+  "thumbnailFileName": null,
+  "title": "",
+  "trainingRequestPeriodEnd": null,
+  "trainingRequestPeriodStart": null,
+}
+`;
+
+exports[`gemini recruit save parity (part3 step1) > seed → snapshot → geminiRecruitment create payload > create 1`] = `
+{
+  "additionalContentHtml": "추가",
+  "applicationEndDate": "2026-11-10T00:00:00.000Z",
+  "applicationMethod": "지원 방법",
+  "applicationStartDate": "2026-11-01T00:00:00.000Z",
+  "attachmentFileNames": [
+    "a.pdf",
+  ],
+  "businessEndDate": "2026-11-10T00:00:00.000Z",
+  "businessStartDate": "2026-11-01T00:00:00.000Z",
+  "contactEmail": "gemini@jakorea.org",
+  "contactName": "담당자",
+  "contactPhone": "02-0000-0000",
+  "description": "프로그램 설명",
+  "draftStatus": "DRAFT",
+  "educationForm": "offline",
+  "educationStructure": "SCHEDULE",
+  "keyVisualImage": "thumb.png",
+  "learningSupportContent": "학습 지원",
+  "managerName": "담당자",
+  "otherMatters": "비고",
+  "programType": "GEMINI_TRAINING",
+  "recruitmentGuide": "모집 안내",
+  "recruitmentTargetDetail": "성인 학습 기관",
+  "serviceDetailJson": "{"geminiRecruitment":{"title":"찾아가는 연수","announcementPublished":"unpublished","educationTargetLevels":["adult","university"],"educationTargetDetail":"성인 학습 기관","applicationPeriodStart":"2026-11-01T00:00:00.000Z","applicationPeriodEnd":"2026-11-10T00:00:00.000Z","trainingRequestPeriodStart":"2026-11-11T00:00:00.000Z","trainingRequestPeriodEnd":"2026-11-20T00:00:00.000Z","minStudentCount":20,"educationForm":"offline","educationStructure":"SCHEDULE","inquiryContactName":"담당자","inquiryTel":"02-0000-0000","inquiryEmail":"gemini@jakorea.org","notesNotApplicable":false,"notes":"비고","thumbnailFileName":"thumb.png","programDescription":"프로그램 설명","recruitmentGuide":"모집 안내","applicationMethod":"지원 방법","learningSupportContent":"학습 지원","additionalContentMarkdown":"추가","attachmentFileNames":["a.pdf"],"institutionSectionDescription":"설명 입력","detailSectionDescription":"공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다."}}",
+  "targetLevel": "adult",
+  "targetLevels": [
+    "adult",
+    "university",
+  ],
+  "title": "찾아가는 연수",
+  "totalParticipants": 20,
+  "trainingRequestEndDate": "2026-11-20T00:00:00.000Z",
+  "trainingRequestStartDate": "2026-11-11T00:00:00.000Z",
+}
+`;
+
+exports[`gemini recruit save parity (part3 step1) > seed → snapshot → geminiRecruitment create payload > persist 1`] = `
+{
+  "additionalContentMarkdown": "추가",
+  "announcementPublished": "unpublished",
+  "applicationMethod": "지원 방법",
+  "applicationPeriodEnd": "2026-11-10T00:00:00.000Z",
+  "applicationPeriodStart": "2026-11-01T00:00:00.000Z",
+  "attachmentFileNames": [
+    "a.pdf",
+  ],
+  "detailSectionDescription": "공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.",
+  "educationForm": "offline",
+  "educationStructure": "SCHEDULE",
+  "educationTargetDetail": "성인 학습 기관",
+  "educationTargetLevels": [
+    "adult",
+    "university",
+  ],
+  "inquiryContactName": "담당자",
+  "inquiryEmail": "gemini@jakorea.org",
+  "inquiryTel": "02-0000-0000",
+  "institutionSectionDescription": "설명 입력",
+  "learningSupportContent": "학습 지원",
+  "minStudentCount": 20,
+  "notes": "비고",
+  "notesNotApplicable": false,
+  "programDescription": "프로그램 설명",
+  "recruitmentGuide": "모집 안내",
+  "thumbnailFileName": "thumb.png",
+  "title": "찾아가는 연수",
+  "trainingRequestPeriodEnd": "2026-11-20T00:00:00.000Z",
+  "trainingRequestPeriodStart": "2026-11-11T00:00:00.000Z",
+}
+`;
+
+exports[`gemini recruit save parity (part3 step1) > seed → snapshot → geminiRecruitment create payload > snapshot 1`] = `
+{
+  "additionalContentMarkdown": "추가",
+  "announcementPublished": "unpublished",
+  "applicationMethod": "지원 방법",
+  "applicationPeriodEnd": "2026-11-10T00:00:00.000Z",
+  "applicationPeriodStart": "2026-11-01T00:00:00.000Z",
+  "attachmentFileNames": [
+    "a.pdf",
+  ],
+  "detailSectionDescription": "공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.",
+  "educationForm": "offline",
+  "educationStructure": "SCHEDULE",
+  "educationTargetDetail": "성인 학습 기관",
+  "educationTargetLevels": [
+    "adult",
+    "university",
+  ],
+  "inquiryContactName": "담당자",
+  "inquiryEmail": "gemini@jakorea.org",
+  "inquiryTel": "02-0000-0000",
+  "institutionSectionDescription": "설명 입력",
+  "learningSupportContent": "학습 지원",
+  "minStudentCount": 20,
+  "notes": "비고",
+  "notesNotApplicable": false,
+  "programDescription": "프로그램 설명",
+  "recruitmentGuide": "모집 안내",
+  "thumbnailFileName": "thumb.png",
+  "thumbnailFileObjectId": 77,
+  "title": "찾아가는 연수",
+  "trainingRequestPeriodEnd": "2026-11-20T00:00:00.000Z",
+  "trainingRequestPeriodStart": "2026-11-11T00:00:00.000Z",
+}
+`;
+
+exports[`gemini recruit save parity (part3 step1) > seed → 양식 extensionJson overlay > collect 1`] = `
+{
+  "geminiRecruit.announcementPublished": "unpublished",
+  "geminiRecruit.applicationPeriodEnd": "2026-11-10T00:00:00.000Z",
+  "geminiRecruit.applicationPeriodStart": "2026-11-01T00:00:00.000Z",
+  "geminiRecruit.detailInfo.additionalContentHtml": "추가",
+  "geminiRecruit.detailInfo.applicationMethod": "지원 방법",
+  "geminiRecruit.detailInfo.attachmentFileNames": [
+    "a.pdf",
+  ],
+  "geminiRecruit.detailInfo.learningSupportContent": "학습 지원",
+  "geminiRecruit.detailInfo.programDescription": "프로그램 설명",
+  "geminiRecruit.detailInfo.recruitmentGuide": "모집 안내",
+  "geminiRecruit.detailInfo.thumbFileName": "thumb.png",
+  "geminiRecruit.detailInfo.thumbFileObjectId": 77,
+  "geminiRecruit.educationForm": "offline",
+  "geminiRecruit.educationTargetDetail": "성인 학습 기관",
+  "geminiRecruit.educationTargetLevels": [
+    "adult",
+    "university",
+  ],
+  "geminiRecruit.inquiryContactName": "담당자",
+  "geminiRecruit.inquiryEmail": "gemini@jakorea.org",
+  "geminiRecruit.inquiryTel": "02-0000-0000",
+  "geminiRecruit.minStudentCount": 20,
+  "geminiRecruit.notes": "비고",
+  "geminiRecruit.notesNotApplicable": false,
+  "geminiRecruit.title": "찾아가는 연수",
+  "geminiRecruit.trainingRequestPeriodEnd": "2026-11-20T00:00:00.000Z",
+  "geminiRecruit.trainingRequestPeriodStart": "2026-11-11T00:00:00.000Z",
+}
+`;
+
+exports[`gemini recruit save parity (part3 step1) > 기본 상태(시드 기본값) snapshot > default-snapshot 1`] = `
+{
+  "additionalContentMarkdown": "",
+  "announcementPublished": "published",
+  "applicationMethod": "",
+  "applicationPeriodEnd": null,
+  "applicationPeriodStart": null,
+  "attachmentFileNames": [],
+  "detailSectionDescription": "공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.",
+  "educationForm": "online",
+  "educationStructure": "SCHEDULE",
+  "educationTargetDetail": "",
+  "educationTargetLevels": [],
+  "inquiryContactName": "",
+  "inquiryEmail": "",
+  "inquiryTel": "",
+  "institutionSectionDescription": "설명 입력",
+  "learningSupportContent": "",
+  "minStudentCount": 15,
+  "notes": "",
+  "notesNotApplicable": false,
+  "programDescription": "",
+  "recruitmentGuide": "",
+  "thumbnailFileName": null,
+  "title": "",
+  "trainingRequestPeriodEnd": null,
+  "trainingRequestPeriodStart": null,
+}
+`;

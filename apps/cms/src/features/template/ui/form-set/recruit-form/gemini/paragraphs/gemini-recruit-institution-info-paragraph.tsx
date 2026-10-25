@@ -8,9 +8,9 @@ import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/feature
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
-  GEMINI_RECRUIT_OVERLAY_KEYS,
-  useGeminiRecruitOverlayKv,
-} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+  GEMINI_RECRUIT_FIELD_KEYS,
+  useGeminiRecruitField,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './gemini-recruit-institution-info-paragraph.css'
 
@@ -35,56 +35,56 @@ function serializePeriodToOverlay(period: [Dayjs | null, Dayjs | null] | null): 
 
 /** Gemini 찾아가는 연수 모집 폼 — 참여 기관 모집 정보 단락 */
 export function GeminiRecruitInstitutionInfoParagraph() {
-  const [title, setTitle] = useGeminiRecruitOverlayKv(GEMINI_RECRUIT_OVERLAY_KEYS.title, '')
-  const [announcementPublished, setAnnouncementPublished] = useGeminiRecruitOverlayKv<
+  const [title, setTitle] = useGeminiRecruitField(GEMINI_RECRUIT_FIELD_KEYS.title, '')
+  const [announcementPublished, setAnnouncementPublished] = useGeminiRecruitField<
     ParticipantRecruitmentAnnouncementPublishedValue
-  >(GEMINI_RECRUIT_OVERLAY_KEYS.announcementPublished, 'published')
-  const [educationTargetLevels, setEducationTargetLevels] = useGeminiRecruitOverlayKv<string[]>(
-    GEMINI_RECRUIT_OVERLAY_KEYS.educationTargetLevels,
+  >(GEMINI_RECRUIT_FIELD_KEYS.announcementPublished, 'published')
+  const [educationTargetLevels, setEducationTargetLevels] = useGeminiRecruitField<string[]>(
+    GEMINI_RECRUIT_FIELD_KEYS.educationTargetLevels,
     []
   )
-  const [educationTargetDetail, setEducationTargetDetail] = useGeminiRecruitOverlayKv(
-    GEMINI_RECRUIT_OVERLAY_KEYS.educationTargetDetail,
+  const [educationTargetDetail, setEducationTargetDetail] = useGeminiRecruitField(
+    GEMINI_RECRUIT_FIELD_KEYS.educationTargetDetail,
     ''
   )
-  const [applicationPeriodStart, setApplicationPeriodStart] = useGeminiRecruitOverlayKv<
+  const [applicationPeriodStart, setApplicationPeriodStart] = useGeminiRecruitField<
     string | null
-  >(GEMINI_RECRUIT_OVERLAY_KEYS.applicationPeriodStart, null)
-  const [applicationPeriodEnd, setApplicationPeriodEnd] = useGeminiRecruitOverlayKv<string | null>(
-    GEMINI_RECRUIT_OVERLAY_KEYS.applicationPeriodEnd,
+  >(GEMINI_RECRUIT_FIELD_KEYS.applicationPeriodStart, null)
+  const [applicationPeriodEnd, setApplicationPeriodEnd] = useGeminiRecruitField<string | null>(
+    GEMINI_RECRUIT_FIELD_KEYS.applicationPeriodEnd,
     null
   )
-  const [trainingRequestPeriodStart, setTrainingRequestPeriodStart] = useGeminiRecruitOverlayKv<
+  const [trainingRequestPeriodStart, setTrainingRequestPeriodStart] = useGeminiRecruitField<
     string | null
-  >(GEMINI_RECRUIT_OVERLAY_KEYS.trainingRequestPeriodStart, null)
-  const [trainingRequestPeriodEnd, setTrainingRequestPeriodEnd] = useGeminiRecruitOverlayKv<
+  >(GEMINI_RECRUIT_FIELD_KEYS.trainingRequestPeriodStart, null)
+  const [trainingRequestPeriodEnd, setTrainingRequestPeriodEnd] = useGeminiRecruitField<
     string | null
-  >(GEMINI_RECRUIT_OVERLAY_KEYS.trainingRequestPeriodEnd, null)
-  const [minStudentCount, setMinStudentCount] = useGeminiRecruitOverlayKv<number | null>(
-    GEMINI_RECRUIT_OVERLAY_KEYS.minStudentCount,
+  >(GEMINI_RECRUIT_FIELD_KEYS.trainingRequestPeriodEnd, null)
+  const [minStudentCount, setMinStudentCount] = useGeminiRecruitField<number | null>(
+    GEMINI_RECRUIT_FIELD_KEYS.minStudentCount,
     15
   )
-  const [educationForm, setEducationForm] = useGeminiRecruitOverlayKv<GeminiRecruitmentEducationForm>(
-    GEMINI_RECRUIT_OVERLAY_KEYS.educationForm,
+  const [educationForm, setEducationForm] = useGeminiRecruitField<GeminiRecruitmentEducationForm>(
+    GEMINI_RECRUIT_FIELD_KEYS.educationForm,
     'online'
   )
-  const [inquiryContactName, setInquiryContactName] = useGeminiRecruitOverlayKv(
-    GEMINI_RECRUIT_OVERLAY_KEYS.inquiryContactName,
+  const [inquiryContactName, setInquiryContactName] = useGeminiRecruitField(
+    GEMINI_RECRUIT_FIELD_KEYS.inquiryContactName,
     ''
   )
-  const [inquiryTel, setInquiryTel] = useGeminiRecruitOverlayKv(
-    GEMINI_RECRUIT_OVERLAY_KEYS.inquiryTel,
+  const [inquiryTel, setInquiryTel] = useGeminiRecruitField(
+    GEMINI_RECRUIT_FIELD_KEYS.inquiryTel,
     ''
   )
-  const [inquiryEmail, setInquiryEmail] = useGeminiRecruitOverlayKv(
-    GEMINI_RECRUIT_OVERLAY_KEYS.inquiryEmail,
+  const [inquiryEmail, setInquiryEmail] = useGeminiRecruitField(
+    GEMINI_RECRUIT_FIELD_KEYS.inquiryEmail,
     ''
   )
-  const [notesNotApplicable, setNotesNotApplicable] = useGeminiRecruitOverlayKv(
-    GEMINI_RECRUIT_OVERLAY_KEYS.notesNotApplicable,
+  const [notesNotApplicable, setNotesNotApplicable] = useGeminiRecruitField(
+    GEMINI_RECRUIT_FIELD_KEYS.notesNotApplicable,
     false
   )
-  const [notes, setNotes] = useGeminiRecruitOverlayKv(GEMINI_RECRUIT_OVERLAY_KEYS.notes, '')
+  const [notes, setNotes] = useGeminiRecruitField(GEMINI_RECRUIT_FIELD_KEYS.notes, '')
 
   const values = useMemo<GeminiRecruitmentFormFieldValues>(
     () => ({

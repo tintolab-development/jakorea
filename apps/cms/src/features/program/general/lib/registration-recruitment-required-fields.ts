@@ -9,8 +9,8 @@ import type {
   ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import {
-  APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
   peekApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'

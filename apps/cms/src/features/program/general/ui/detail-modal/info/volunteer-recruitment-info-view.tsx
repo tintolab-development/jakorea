@@ -30,7 +30,7 @@ import {
   resolveGeneralProgramVolunteerRecruitmentDisplay,
   resolveVolunteerRecruitmentInterviewEnabled,
 } from '@/features/program/general/lib/volunteer-recruitment-display'
-import { syncVolunteerInterviewRangeSealOverlay } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import { syncVolunteerInterviewRangeSealOverlay } from '@/features/template/ui/form-set/recruit-form/volunteer/volunteer-recruit-form-rhf'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './volunteer-recruitment-info-view.css'

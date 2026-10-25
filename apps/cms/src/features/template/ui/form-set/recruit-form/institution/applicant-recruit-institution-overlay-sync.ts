@@ -36,29 +36,9 @@ import {
   isCompanySchoolRecruitmentOverlayKey,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 
-export const APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
-  maxAssignableInstructors: 'recruit.maxAssignableInstructors',
-  maxClassCount: 'recruit.maxClassCount',
-  maxScheduleCount: 'recruit.maxScheduleCount',
-  maxSessionsPerDay: 'recruit.maxSessionsPerDay',
-  announcementPublished: 'recruit.announcementPublished',
-  preguidanceRequired: 'recruit.preguidanceRequired',
-  studentListRequired: 'recruit.studentListRequired',
-  certificateProvided: 'recruit.certificateProvided',
-  programAnchorIso: 'recruit.programAnchorIso',
-  programRangeSeal: 'recruit.programRangeSeal',
-  recruitAnchorIso: 'recruit.recruitAnchorIso',
-  recruitRangeSeal: 'recruit.recruitRangeSeal',
-  finalAnnounceIso: 'recruit.finalAnnounceIso',
-  finalAnnounceMethod: 'recruit.finalAnnounceMethod',
-  targetLevels: 'recruit.targetLevels',
-  targetLevelDetail: 'recruit.targetLevelDetail',
-  inquiryContact: 'recruit.inquiryContact',
-  inquiryTel: 'recruit.inquiryTel',
-  inquiryEmail: 'recruit.inquiryEmail',
-  notesNotApplicable: 'recruit.notesNotApplicable',
-  notes: 'recruit.notes',
-} as const
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from './applicant-recruit-institution-overlay-keys'
+
+export { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS }
 
 export type ApplicantRecruitInstitutionLimitsOverlay = {
   maxAssignableInstructors?: number

@@ -13,12 +13,12 @@ import {
   toGeminiNumericIds,
 } from './adapters'
 import {
-  GEMINI_RECRUIT_OVERLAY_KEYS,
-  pickGeminiRecruitOverlay,
-  restoreGeminiRecruitOverlay,
-  getGeminiRecruitOverlayRecord,
-  resetGeminiRecruitOverlay,
-} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+  GEMINI_RECRUIT_FIELD_KEYS,
+  pickGeminiRecruitFields,
+  restoreGeminiRecruitForm,
+  getGeminiRecruitFormRecord,
+  resetGeminiRecruitForm,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
@@ -639,18 +639,18 @@ describe('gemini visiting-training adapters', () => {
   })
 
   it('gemini overlay restore는 일반 recruit.* 와 섞이지 않는다', () => {
-    resetGeminiRecruitOverlay()
+    resetGeminiRecruitForm()
     resetGeneralRecruitOverlay()
     patchGeneralRecruitOverlay({ 'recruit.individual.notes': '일반 leftover' })
-    restoreGeminiRecruitOverlay({
-      [GEMINI_RECRUIT_OVERLAY_KEYS.title]: '제미니 공고',
+    restoreGeminiRecruitForm({
+      [GEMINI_RECRUIT_FIELD_KEYS.title]: '제미니 공고',
       'recruit.individual.notes': '섞이면 안 됨',
     })
-    expect(getGeminiRecruitOverlayRecord()[GEMINI_RECRUIT_OVERLAY_KEYS.title]).toBe('제미니 공고')
+    expect(getGeminiRecruitFormRecord()[GEMINI_RECRUIT_FIELD_KEYS.title]).toBe('제미니 공고')
     expect(getGeneralRecruitOverlayRecord()['recruit.individual.notes']).toBe('일반 leftover')
-    expect(pickGeminiRecruitOverlay({
-      [GEMINI_RECRUIT_OVERLAY_KEYS.title]: 'a',
+    expect(pickGeminiRecruitFields({
+      [GEMINI_RECRUIT_FIELD_KEYS.title]: 'a',
       'recruit.targetLevels': ['high'],
-    })).toEqual({ [GEMINI_RECRUIT_OVERLAY_KEYS.title]: 'a' })
+    })).toEqual({ [GEMINI_RECRUIT_FIELD_KEYS.title]: 'a' })
   })
 })

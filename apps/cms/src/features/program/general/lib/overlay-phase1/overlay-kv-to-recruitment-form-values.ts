@@ -2,7 +2,7 @@
  * 테스트 전용 입력 어댑터. overlay KV → RecruitmentFormValues.
  * 프로덕션 Builder는 이 모듈을 import하지 않는다.
  */
-import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS as INST } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS as INST } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import { GENERAL_RECRUIT_OVERLAY_KEYS as KEYS } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { mapVolunteerInterviewExceptionsFromOverlay } from '@/features/program/shared/lib/volunteer-interview-exception-overlay'
 import {

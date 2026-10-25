@@ -7,8 +7,18 @@ import {
   replaceGeneralRecruitOverlay,
   replaceGeneralRecruitOverlayForScope,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  getRecruitDetailInfoRecord,
+  patchRecruitDetailInfo,
+  peekRecruitDetailInfoRecord,
+  replaceActiveRecruitDetailInfo,
+  replaceRecruitDetailInfoForScope,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 
 /**
+ * Part3 5단계: 상세정보 키는 공용 상세정보 RHF 필드 폼(`recruit-detail-info-form-rhf`)이 소유한다.
+ * 아래 상세정보 함수는 그 폼만 읽고 쓴다. UJAT 봉사 반기 sidecar(`recruit.volunteer.h1/h2` 포함)는 UJAT 범위라 스토어 API 그대로 둔다.
+ *
  * 상세 정보 단락은 general-recruit 스토어에 쓰이지만,
  * 기관·UJAT 모집은 전용 overlay만 persist 해서 임시저장 후 설명이 사라졌다.
  */
@@ -142,7 +152,7 @@ export function pickOverlayKeysByPrefix(
 
 export function pickRecruitDetailInfoFromGeneralStore(
   prefix: string,
-  record: Record<string, unknown> = getGeneralRecruitOverlayRecord()
+  record: Record<string, unknown> = getRecruitDetailInfoRecord()
 ): Record<string, unknown> {
   return pickOverlayKeysByPrefix(record, prefix)
 }
@@ -171,7 +181,7 @@ export function overlayEntriesAbsentFromLive(
 export function mergeRecruitDetailInfoFromGeneralStore(
   overlay: Record<string, unknown>,
   prefix: string | null,
-  record: Record<string, unknown> = getGeneralRecruitOverlayRecord()
+  record: Record<string, unknown> = getRecruitDetailInfoRecord()
 ): Record<string, unknown> {
   if (prefix == null) return overlay
   return {
@@ -194,7 +204,7 @@ export function restoreRecruitDetailInfoIntoGeneralStore(
       ? detail
       : overlayEntriesAbsentFromLive(detail, liveDetail)
   if (Object.keys(patch).length === 0) return
-  patchGeneralRecruitOverlay(patch)
+  patchRecruitDetailInfo(patch)
 }
 
 /** 템플릿 조회·변경 — prefix 잔여 키를 지운 뒤 불러온 상세 정보로 덮어쓴다. */
@@ -205,9 +215,7 @@ export function replaceRecruitDetailInfoIntoGeneralStore(
 ): void {
   if (prefix == null) return
   const live =
-    templateCode != null
-      ? peekGeneralRecruitOverlayRecord(templateCode)
-      : getGeneralRecruitOverlayRecord()
+    templateCode != null ? peekRecruitDetailInfoRecord(templateCode) : getRecruitDetailInfoRecord()
   const needle = prefix.endsWith('.') ? prefix : `${prefix}.`
   const next: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(live)) {
@@ -217,6 +225,6 @@ export function replaceRecruitDetailInfoIntoGeneralStore(
   if (overlay != null) {
     Object.assign(next, pickOverlayKeysByPrefix(overlay, prefix))
   }
-  if (templateCode != null) replaceGeneralRecruitOverlayForScope(templateCode, next)
-  else replaceGeneralRecruitOverlay(next)
+  if (templateCode != null) replaceRecruitDetailInfoForScope(templateCode, next)
+  else replaceActiveRecruitDetailInfo(next)
 }

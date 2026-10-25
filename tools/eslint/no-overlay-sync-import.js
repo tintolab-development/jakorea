@@ -2,7 +2,7 @@
  * P8 ratchet 규칙 — overlay 동기화 모듈(`*-overlay-sync`)과 `scoped-overlay-store` import 금지.
  * 정본은 RHF(폼 값)이고 저장은 serviceDetailJson.registration.overlay 직렬화기만 쓴다.
  * 기존 사용처는 overlay-sync-import-allowlist.json 에 고정하고, 목록은 줄이기만 한다.
- * (UJAT·Gemini·TT 는 동작 불변 제약으로 스토어를 계속 쓴다 → 해당 파일도 allowlist.)
+ * (UJAT 등 아직 스토어를 쓰는 파일은 allowlist. Gemini 모집 단락 상태는 part3 1단계에서 RHF로 이전.)
  */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'

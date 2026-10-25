@@ -22,14 +22,14 @@ import type { TemplateEditorVm } from '@/features/template/ui/template-renderers
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
-  getGeminiRecruitOverlayVersion,
-  resetAllGeminiRecruitOverlay,
-  subscribeGeminiRecruitOverlay,
-} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+  getGeminiRecruitFormVersion,
+  resetAllGeminiRecruitForms,
+  subscribeGeminiRecruitForm,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import {
-  getGeneralRecruitOverlayVersion,
-  subscribeGeneralRecruitOverlay,
-} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+  getRecruitDetailInfoVersion,
+  subscribeRecruitDetailInfo,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 import {
   RECRUIT_DETAIL_INFO_OVERLAY_PREFIX,
   replaceRecruitDetailInfoIntoGeneralStore,
@@ -53,8 +53,8 @@ import {
 } from '../lib/recruitment/snapshot-from-overlay'
 
 function subscribeRecruitOverlays(onStoreChange: () => void): () => void {
-  const unsubGemini = subscribeGeminiRecruitOverlay(onStoreChange)
-  const unsubDetail = subscribeGeneralRecruitOverlay(onStoreChange)
+  const unsubGemini = subscribeGeminiRecruitForm(onStoreChange)
+  const unsubDetail = subscribeRecruitDetailInfo(onStoreChange)
   return () => {
     unsubGemini()
     unsubDetail()
@@ -62,11 +62,11 @@ function subscribeRecruitOverlays(onStoreChange: () => void): () => void {
 }
 
 function overlayStoreVersion(): number {
-  return getGeminiRecruitOverlayVersion() + getGeneralRecruitOverlayVersion()
+  return getGeminiRecruitFormVersion() + getRecruitDetailInfoVersion()
 }
 
 function resetGeminiRecruitmentWizardMemory(): void {
-  resetAllGeminiRecruitOverlay()
+  resetAllGeminiRecruitForms()
   replaceRecruitDetailInfoIntoGeneralStore(
     undefined,
     RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.gemini,

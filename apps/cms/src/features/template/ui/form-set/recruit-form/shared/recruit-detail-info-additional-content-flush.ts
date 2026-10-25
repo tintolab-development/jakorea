@@ -4,7 +4,7 @@
  */
 
 import { useSyncExternalStore } from 'react'
-import { patchGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { patchRecruitDetailInfo } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 
 const gettersByOverlayKey = new Map<string, () => string | null>()
 const resetGenerationListeners = new Set<() => void>()
@@ -95,7 +95,7 @@ export function flushRecruitDetailRichTextIntoGeneralRecruitOverlay(): void {
     partial[key] = html
   }
   if (Object.keys(partial).length === 0) return
-  patchGeneralRecruitOverlay(partial)
+  patchRecruitDetailInfo(partial)
 }
 
 /** @deprecated 상세 정보 리치 텍스트 전 필드 flush로 확장됨 */
