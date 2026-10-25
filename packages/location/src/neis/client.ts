@@ -139,6 +139,7 @@ export async function searchNeisSchools(
     page,
     pageSize,
     missingKeyMessage = DEFAULT_MISSING_KEY_MESSAGE,
+    signal,
   } = options
 
   const normalizedPage = normalizeNeisPageIndex(page)
@@ -163,7 +164,7 @@ export async function searchNeisSchools(
   if (atptOfcdcScCode?.trim()) {
     params.set('ATPT_OFCDC_SC_CODE', atptOfcdcScCode.trim())
   }
-  const res = await fetch(`${NEIS_SCHOOL_INFO_URL}?${params.toString()}`)
+  const res = await fetch(`${NEIS_SCHOOL_INFO_URL}?${params.toString()}`, { signal })
   const data = await res.json()
 
   if (!res.ok) {
