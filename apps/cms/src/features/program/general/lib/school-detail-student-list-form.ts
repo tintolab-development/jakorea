@@ -8,12 +8,14 @@ import type {
   StudentListFormStudent,
   StudentListFormValues,
 } from '@/features/program/general/model/school-detail-types'
+import { readCommittedRosterId } from '@/features/program/general/lib/student-roster-commit-safety'
 import { matchesStudentListFilters } from '@/features/program/general/lib/student-list-filter-fields'
 
 export function rowsToFormValues(rows: SchoolDetailStudentRow[]): StudentListFormValues {
   return {
     students: rows.map(r => ({
       id: r.id,
+      serverRosterId: readCommittedRosterId(r) ?? undefined,
       no: r.no,
       name: r.name,
       gender: r.gender,
@@ -30,6 +32,7 @@ export function rowsToFormValues(rows: SchoolDetailStudentRow[]): StudentListFor
 export function formValuesToRows(students: StudentListFormStudent[]): SchoolDetailStudentRow[] {
   return students.map(r => ({
     id: r.id,
+    serverRosterId: readCommittedRosterId(r) ?? undefined,
     no: r.no,
     name: r.name,
     gender: r.gender,

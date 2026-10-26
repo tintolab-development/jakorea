@@ -107,7 +107,13 @@ export const STUDENT_GENDER_LABELS: Record<StudentGenderKey, string> = {
 }
 
 export interface SchoolDetailStudentRow {
+  /** 화면 행 키. 서버 학생 식별자가 아니다. */
   id: string
+  /**
+   * GET 학생명단의 rosterId. 이 값이 있을 때만 PUT에 rosterId를 보낸다.
+   * 신규 행·임시 id에는 두지 않는다.
+   */
+  serverRosterId?: number
   /** BE 회원 ID — 참여자 PK와 구분 */
   memberId?: number
   /** 진행 출석 API용 participant PK */
@@ -137,6 +143,8 @@ export interface SchoolDetailStudentRow {
 /** 학생 명단 수정 폼: useFieldArray 기준 */
 export interface StudentListFormStudent {
   id: string
+  /** 편집 폼을 거쳐도 유지하는 서버 rosterId. 신규 행에는 없다. */
+  serverRosterId?: number
   no: number
   name: string
   gender?: StudentGenderKey

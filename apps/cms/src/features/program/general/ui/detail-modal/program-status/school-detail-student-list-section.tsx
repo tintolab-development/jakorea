@@ -729,7 +729,7 @@ export function SchoolDetailStudentListSection({
     async (values: AddStudentFormValues) => {
       const nextNo = mergedStudentList.length + 1
       const newRow: SchoolDetailStudentRow = {
-        id: crypto.randomUUID(),
+        id: `draft-student-${crypto.randomUUID()}`,
         no: nextNo,
         name: values.name,
         gender: values.gender,

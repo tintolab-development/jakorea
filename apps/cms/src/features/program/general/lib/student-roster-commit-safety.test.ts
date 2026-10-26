@@ -8,7 +8,14 @@ import {
 } from './student-roster-commit-safety'
 
 function rosterRow(id: string): SchoolDetailStudentRow {
-  return { id, no: 1, name: `학생${id}`, gradeClass: '1반' }
+  const serverRosterId = /^[1-9]\d*$/.test(id) ? Number(id) : undefined
+  return {
+    id,
+    ...(serverRosterId != null ? { serverRosterId } : {}),
+    no: 1,
+    name: `학생${id}`,
+    gradeClass: '1반',
+  }
 }
 
 describe('student-roster-commit-safety', () => {
@@ -87,6 +94,44 @@ describe('student-roster-commit-safety', () => {
       expectedRevisionNo: 3,
     })
     expect(result.ok).toBe(true)
+  })
+
+  it('T05/T06: a positive integer temp id is not an existing rosterId', () => {
+    const existing = rosterRow('67243')
+    const tempCollision: SchoolDetailStudentRow = {
+      id: '67243',
+      no: 2,
+      name: '신규',
+      gradeClass: '1반',
+      contact: '010-2222-3333',
+      email: 'new@example.com',
+    }
+    const uuidTemp: SchoolDetailStudentRow = {
+      id: '67243e8a-4f2b-4c1d-9a10-aabbccddeeff',
+      no: 3,
+      name: '임시',
+      gradeClass: '1반',
+      contact: '010-3333-4444',
+      email: 'temp@example.com',
+    }
+    const result = validateStudentRosterCommit({
+      remoteEnabled: true,
+      baselineRows: [existing],
+      commitRows: [existing, tempCollision, uuidTemp],
+      totalCount: 1,
+      expectedRevisionNo: 0,
+    })
+    expect(result.ok).toBe(true)
+
+    const missingContact = validateStudentRosterCommit({
+      remoteEnabled: true,
+      baselineRows: [],
+      commitRows: [{ id: '67243', no: 1, name: '신규', gradeClass: '1반' }],
+      totalCount: 0,
+      expectedRevisionNo: 0,
+    })
+    expect(missingContact.ok).toBe(false)
+    if (!missingContact.ok) expect(missingContact.code).toBe('NEW_ROW_CONTACT_REQUIRED')
   })
 
   it('edit entry blocked while loading', () => {

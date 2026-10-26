@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { SchoolDetailStudentRow } from '@/features/program/general/model/school-detail-types'
 import { PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID } from '@/features/program/general/lib/student-portrait-consent'
 import {
   formatStudentGradeClass,
@@ -7,6 +8,7 @@ import {
   mapDisplayBirthDateToApi,
   mapRosterPortraitConsentSubmission,
   mapStudentRosterItemToRow,
+  mapStudentRosterResponseToRows,
   mapStudentRowToRosterRequest,
   mapStudentRowsToRosterCommitRequest,
 } from './student-roster-adapters'
@@ -46,6 +48,7 @@ describe('student-roster-adapters', () => {
     )
     expect(row).toMatchObject({
       id: '12',
+      serverRosterId: 12,
       memberId: 4401,
       no: 3,
       name: '김학생',
@@ -95,6 +98,7 @@ describe('student-roster-adapters', () => {
   it('includes plaintext phone/email only when the user actually changed them', () => {
     const payload = mapStudentRowToRosterRequest({
       id: '123',
+      serverRosterId: 123,
       no: 1,
       name: '김학생',
       gender: 'male',
@@ -112,6 +116,7 @@ describe('student-roster-adapters', () => {
     const payload = mapStudentRowToRosterRequest(
       {
         id: '1',
+        serverRosterId: 1,
         no: 1,
         name: '김학생',
         gender: 'male',
@@ -212,6 +217,7 @@ describe('student-roster-adapters', () => {
       rows: [
         {
           id: '1',
+          serverRosterId: 1,
           no: 1,
           name: '김학생',
           birthDate: '2010. 01. 01.',
@@ -223,5 +229,112 @@ describe('student-roster-adapters', () => {
     expect('sourceFileObjectId' in body).toBe(false)
     expect(body.rows[0]?.memberId).toBe(4401)
     expect(body.rows[0]?.rosterId).toBe(1)
+  })
+
+  function commitRow(
+    partial: Partial<SchoolDetailStudentRow> & Pick<SchoolDetailStudentRow, 'id' | 'name'>
+  ) {
+    return mapStudentRowToRosterRequest({
+      no: 1,
+      gender: 'female',
+      birthDate: '2010. 04. 04.',
+      gradeClass: '1학년 1',
+      contact: '010-2222-3333',
+      email: 'student@example.com',
+      ...partial,
+    })
+  }
+
+  it('T01/T02: new rows omit rosterId even when the temp id starts with digits', () => {
+    const uuidLike = '67243e8a-4f2b-4c1d-9a10-aabbccddeeff'
+    expect(Number.parseInt(uuidLike, 10)).toBe(67243)
+
+    const one = commitRow({ id: `draft-student-${uuidLike}`, name: '테스트학생' })
+    const many = [
+      commitRow({ id: 'draft-student-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', name: '가' }),
+      commitRow({ id: '67243', name: '나' }),
+      commitRow({ id: uuidLike, name: '다' }),
+    ]
+    expect('rosterId' in one).toBe(false)
+    expect(many.every(row => !('rosterId' in row))).toBe(true)
+  })
+
+  it('T03/T04/T06/T09: keeps server rosterId and omits it on a colliding temp id', () => {
+    const body = mapStudentRowsToRosterCommitRequest({
+      expectedRevisionNo: 4,
+      educationGrade: '1학년',
+      rows: [
+        {
+          id: '67243',
+          serverRosterId: 67243,
+          no: 1,
+          name: '기존학생',
+          gender: 'female',
+          birthDate: '2010. 04. 04.',
+          gradeClass: '1학년 1',
+          contact: '010-****-1111',
+          email: 'o***@example.com',
+        },
+        {
+          id: '67243',
+          no: 2,
+          name: '신규학생',
+          gender: 'female',
+          birthDate: '2010. 04. 04.',
+          gradeClass: '1학년 1',
+          contact: '010-2222-3333',
+          email: 'new@example.com',
+        },
+      ],
+    })
+    expect(body.expectedRevisionNo).toBe(4)
+    expect(body.rows).toHaveLength(2)
+    expect(body.rows[0]?.rosterId).toBe(67243)
+    expect('phone' in (body.rows[0] ?? {})).toBe(false)
+    expect('email' in (body.rows[0] ?? {})).toBe(false)
+    expect('rosterId' in (body.rows[1] ?? {})).toBe(false)
+    expect(body.rows[1]?.phone).toBe('010-2222-3333')
+    expect(body.rows[1]?.email).toBe('new@example.com')
+  })
+
+  it('T07/T12: GET rows after save or excel import keep the issued rosterId', () => {
+    const [existing] = mapStudentRosterResponseToRows({
+      revisionNo: 1,
+      totalCount: 1,
+      rows: [
+        {
+          rosterId: 201,
+          studentName: '가져오기학생',
+          gender: 'female',
+          birthDate: '2010-04-04',
+          grade: '1학년',
+          className: '1',
+          studentNo: 1,
+          maskedPhone: '010-****-3333',
+          maskedEmail: 'i***@example.com',
+        },
+      ],
+    })
+    expect(existing?.serverRosterId).toBe(201)
+    const body = mapStudentRowsToRosterCommitRequest({
+      expectedRevisionNo: 1,
+      rows: [
+        existing!,
+        {
+          id: 'draft-student-11111111-2222-3333-4444-555555555555',
+          no: 2,
+          name: '수동추가',
+          gender: 'male',
+          birthDate: '2011. 01. 01.',
+          gradeClass: '1학년 1',
+          contact: '010-4444-5555',
+          email: 'manual@example.com',
+        },
+      ],
+    })
+    expect(body.rows[0]?.rosterId).toBe(201)
+    expect('phone' in (body.rows[0] ?? {})).toBe(false)
+    expect('rosterId' in (body.rows[1] ?? {})).toBe(false)
+    expect('sourceFileObjectId' in body).toBe(false)
   })
 })

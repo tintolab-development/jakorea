@@ -36,14 +36,20 @@ export type StudentRosterCommitValidationResult =
   | { ok: true }
   | { ok: false; code: StudentRosterCommitValidationCode; message: string }
 
-export function parsePositiveRosterId(rowId: string): number | null {
-  const parsed = Number.parseInt(rowId, 10)
-  if (!Number.isFinite(parsed) || parsed <= 0) return null
-  return parsed
+/**
+ * PUT에 실을 서버 rosterId.
+ * 행 `id`가 숫자·UUID처럼 보여도 서버 식별자로 쓰지 않는다.
+ */
+export function readCommittedRosterId(
+  row: Pick<SchoolDetailStudentRow, 'serverRosterId'>
+): number | null {
+  const rosterId = row.serverRosterId
+  if (typeof rosterId !== 'number' || !Number.isInteger(rosterId) || rosterId <= 0) return null
+  return rosterId
 }
 
 export function collectExistingRosterIds(rows: SchoolDetailStudentRow[]): number[] {
-  return rows.map(row => parsePositiveRosterId(row.id)).filter((id): id is number => id != null)
+  return rows.map(row => readCommittedRosterId(row)).filter((id): id is number => id != null)
 }
 
 export function validateStudentRosterCommit(input: {
@@ -148,7 +154,7 @@ export function validateStudentRosterCommit(input: {
   for (let index = 0; index < commitRows.length; index += 1) {
     const row = commitRows[index]
     if (row == null) continue
-    if (parsePositiveRosterId(row.id) != null) continue
+    if (readCommittedRosterId(row) != null) continue
     if (studentRosterRowHasCommitContact(row)) continue
     return {
       ok: false,
