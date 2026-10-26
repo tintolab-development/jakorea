@@ -23,6 +23,9 @@ import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { usePortalFormResponseFeedbackQuery } from '../api/use-portal-form-response-feedback-query'
 import {
   AssignmentFileCountExceededError,
+  AssignmentSubmissionLimitExceededError,
+  AssignmentSubmissionRequiredError,
+  AssignmentUploadPolicyError,
   useScheduleAssignmentFilesMutation,
 } from '../api/assignment-hooks'
 import { EducationAssignmentFeedbackModal } from './assignment-feedback-modal'
@@ -37,6 +40,9 @@ const EMPTY_ASSIGNMENT_FILES: readonly EducationScheduleAssignmentFile[] = []
 
 const UPLOAD_ERROR_CLASSES = [
   AssignmentFileCountExceededError,
+  AssignmentSubmissionLimitExceededError,
+  AssignmentSubmissionRequiredError,
+  AssignmentUploadPolicyError,
   MemberFileTooLargeError,
   MemberFileEmptyError,
   MemberFileRejectedError,
@@ -89,8 +95,9 @@ export function EducationScheduleAssignmentBlock({
     scheduleId > 0 &&
     canSubmitEducationAssignment(assignment, isRevision ? 'revise' : 'submit')
   const uploading = filesMutation.isPending
-  const files = assignment.files ?? EMPTY_ASSIGNMENT_FILES
-  const hasFiles = files.length > 0
+  // 제출물은 신청 일정 GET 응답의 submissions만 사용한다. 예시·로컬 파일은 여기서 만들지 않는다.
+  const remoteFiles = assignment.files ?? EMPTY_ASSIGNMENT_FILES
+  const hasRemoteFiles = remoteFiles.length > 0
   const blockVariant =
     assignment.status === 'feedback' ? 'feedback' : isSubmitted ? 'submitted' : 'default'
 
@@ -102,14 +109,13 @@ export function EducationScheduleAssignmentBlock({
 
   const feedbackBody =
     remoteFeedbackText?.trim() ||
-    assignment.feedback?.trim() ||
     (feedbackQuery.isFetching ? (
       <PFLoadingSpinner label="피드백을 불러오는 중" />
     ) : (
       '등록된 피드백이 없습니다.'
     ))
 
-  const submitFiles = (keepFileObjectIds: number[], newFiles: File[]) => {
+  const submitFiles = (keepFileObjectIds: number[], newFiles: File[], urls: string[]) => {
     if (scheduleId == null || scheduleId <= 0) return
     filesMutation.mutate(
       {
@@ -117,6 +123,7 @@ export function EducationScheduleAssignmentBlock({
         mode: isRevision ? 'revise' : 'submit',
         keepFileObjectIds,
         newFiles,
+        urls,
       },
       {
         onError: error => {
@@ -126,13 +133,9 @@ export function EducationScheduleAssignmentBlock({
     )
   }
 
-  const handleSubmit = ({ newFiles, keepFileObjectIds, links }: AssignmentSubmitModalInput) => {
-    if (links.length > 0) {
-      setErrorMessage('링크 제출은 백엔드 제출 계약이 확정된 후 이용할 수 있어요.')
-      return
-    }
+  const handleSubmit = ({ newFiles, keepFileObjectIds, urls }: AssignmentSubmitModalInput) => {
     setSubmitOpen(false)
-    submitFiles(keepFileObjectIds, newFiles)
+    submitFiles(keepFileObjectIds, newFiles, urls)
   }
 
   return (
@@ -168,12 +171,13 @@ export function EducationScheduleAssignmentBlock({
           </div>
         }
       >
-        {hasFiles ? <div className={styles.divider} aria-hidden="true" /> : null}
+        {hasRemoteFiles ? <div className={styles.divider} aria-hidden="true" /> : null}
 
-        {hasFiles ? (
+        {hasRemoteFiles ? (
           <ul className={styles.files}>
-            {files.map(file => {
+            {remoteFiles.map(file => {
               const isUrl = file.kind === 'url'
+              const label = isUrl ? file.url : file.fileName
               return (
                 <li
                   key={file.id}
@@ -204,9 +208,9 @@ export function EducationScheduleAssignmentBlock({
                       typo="bd-sm-sb"
                       color={isUrl ? 'black' : 'primary-700'}
                       className={styles.chipLabel}
-                      title={file.fileName}
+                      title={label}
                     >
-                      {file.fileName}
+                      {label}
                     </PFText>
                   </span>
                 </li>
@@ -236,7 +240,9 @@ export function EducationScheduleAssignmentBlock({
         <EducationAssignmentSubmitModal
           open
           sessionHeading={sessionHeading}
-          initialFiles={files}
+          periodLabel={assignment.periodLabel}
+          mode={isRevision ? 'revise' : 'submit'}
+          initialFiles={remoteFiles}
           submitting={uploading}
           onClose={() => setSubmitOpen(false)}
           onSubmit={handleSubmit}

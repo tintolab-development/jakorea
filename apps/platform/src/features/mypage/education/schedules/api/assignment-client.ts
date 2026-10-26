@@ -1,16 +1,24 @@
 import { axiosClient } from '@/shared/api/axios-instance'
+import {
+  FILE_UPLOAD_MAX_BYTES,
+  FILE_UPLOAD_MAX_COUNT,
+} from '@/shared/lib/file-upload-policy'
 import type { ProgramApplicationType } from '../../applications/api/types'
 
 /** 과제 첨부 업로드 `filePurpose` — 회원 파일 API로 올린 뒤 fileObjectId 만 제출한다. */
 export const PORTAL_ASSIGNMENT_FILE_PURPOSE = 'ASSIGNMENT_ATTACHMENT'
 
-/** 서버 `MemberPortalAssignmentSubmissionService` 제한과 같아야 한다. */
-export const PORTAL_ASSIGNMENT_MAX_FILE_COUNT = 20
-export const PORTAL_ASSIGNMENT_MAX_FILE_BYTES = 50 * 1024 * 1024
+/** Platform 업로드 정책(파일 10개·20MB·전체 100MB). 링크는 파일 정책에서 제외한다. */
+export const PORTAL_ASSIGNMENT_MAX_FILE_COUNT = FILE_UPLOAD_MAX_COUNT
+export const PORTAL_ASSIGNMENT_MAX_FILE_BYTES = FILE_UPLOAD_MAX_BYTES
+/** 서버 제출 항목(fileObjectIds + urls) 합계 상한 */
+export const PORTAL_ASSIGNMENT_MAX_SUBMISSION_ITEMS = 20
 
 export type PortalScheduleAssignmentSubmissionBody = {
-  /** 제출(또는 수정 후 최종) 파일 집합. 1개 이상. */
-  fileObjectIds: number[]
+  /** 제출(또는 수정 후 최종) 파일 집합. URL은 포함하지 않는다. */
+  fileObjectIds?: number[]
+  /** 제출(또는 수정 후 최종) URL 집합. 파일 ID는 포함하지 않는다. */
+  urls?: string[]
 }
 
 function assignmentSubmissionsPath(

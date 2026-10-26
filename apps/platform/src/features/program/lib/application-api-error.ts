@@ -152,7 +152,14 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   ASSIGNMENT_SUBMISSION_NOT_STARTED: '과제 제출 기간이 아직 시작되지 않았습니다.',
   ASSIGNMENT_SUBMISSION_CLOSED: '과제 제출 기간이 종료되었습니다.',
   ASSIGNMENT_SUBMISSION_NOT_ALLOWED: '해당 회차에는 과제를 제출할 수 없습니다.',
+  ASSIGNMENT_FILES_REQUIRED: '과제 파일 또는 링크를 1개 이상 첨부해 제출해 주세요.',
+  ASSIGNMENT_URL_INVALID: 'https://로 시작하는 올바른 링크를 입력해 주세요.',
+  ASSIGNMENT_SUBMISSION_LIMIT_EXCEEDED:
+    '과제 파일과 링크를 합쳐 최대 20개까지 제출할 수 있어요.',
+  ASSIGNMENT_FILE_INVALID: '업로드할 수 없는 과제 파일입니다.',
+  ASSIGNMENT_NOT_ENABLED: '해당 회차에는 과제를 제출할 수 없습니다.',
   ASSIGNMENT_ALREADY_SUBMITTED: '이미 과제를 제출했습니다.',
+  ASSIGNMENT_NOT_SUBMITTED: '제출된 과제가 없습니다.',
   ASSIGNMENT_RESUBMIT_NOT_ALLOWED: '과제 수정 제출이 허용되지 않습니다.',
 }
 

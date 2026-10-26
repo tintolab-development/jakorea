@@ -104,26 +104,45 @@ function formatGroupTimes(times: PortalEducationScheduleGroupTime[] | undefined)
     .join(' | ')
 }
 
+function positiveInteger(value: unknown): number | undefined {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim().length > 0
+        ? Number(value)
+        : Number.NaN
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined
+}
+
 function mapSubmissions(
   assignment: PortalEducationScheduleAssignment,
 ): EducationScheduleAssignmentFile[] | undefined {
-  const files = (assignment.submissions ?? []).flatMap((row, index) => {
-    const fileName = optionalText(row.fileName) ?? optionalText(row.url)
-    if (!fileName) return []
-    const kind = (row.kind ?? '').toUpperCase() === 'URL' ? ('url' as const) : ('file' as const)
-    const fileObjectId =
-      kind === 'file' && typeof row.fileObjectId === 'number' && row.fileObjectId > 0
-        ? row.fileObjectId
-        : undefined
-    return [
-      {
-        id: row.id != null ? String(row.id) : `submission-${index}`,
-        fileName,
-        kind,
-        ...(fileObjectId != null ? { fileObjectId } : {}),
-      } satisfies EducationScheduleAssignmentFile,
-    ]
-  })
+  const files = (assignment.submissions ?? []).flatMap<EducationScheduleAssignmentFile>(
+    (row, index): EducationScheduleAssignmentFile[] => {
+      const normalizedKind = (row.kind ?? '').toUpperCase()
+      if (normalizedKind !== 'FILE' && normalizedKind !== 'URL') return []
+      const kind = normalizedKind === 'URL' ? ('url' as const) : ('file' as const)
+      const id = `${kind}-${row.id != null ? String(row.id) : index}`
+      if (kind === 'url') {
+        const url = optionalText(row.url)
+        if (!url) return []
+        return [{ id, kind, url } satisfies EducationScheduleAssignmentFile]
+      }
+
+      const fileName = optionalText(row.fileName)
+      if (!fileName) return []
+      // Portal 스키마에서 FILE 제출물의 id가 fileObjectId다.
+      const fileObjectId = positiveInteger(row.fileObjectId ?? row.id)
+      return [
+        {
+          id,
+          fileName,
+          kind,
+          ...(fileObjectId != null ? { fileObjectId } : {}),
+        } satisfies EducationScheduleAssignmentFile,
+      ]
+    },
+  )
   return files.length > 0 ? files : undefined
 }
 

@@ -23,15 +23,22 @@ export type EducationAssignmentSubmitStatus =
 
 export type EducationScheduleAssignmentSubmissionKind = 'file' | 'url'
 
-export type EducationScheduleAssignmentFile = {
-  id: string
-  /** 표시 라벨 (파일명 또는 URL) */
-  fileName: string
-  /** 제출 형식 — 칩 스타일 분기 */
-  kind: EducationScheduleAssignmentSubmissionKind
-  /** FILE 제출물 fileObjectId — 있어야 수정 제출 시 개별 삭제 가능 */
-  fileObjectId?: number
-}
+export type EducationScheduleAssignmentFile =
+  | {
+      id: string
+      /** 제출 형식 — 칩 스타일 분기 */
+      kind: 'file'
+      fileName: string
+      /** FILE 제출물 fileObjectId — 있어야 수정 제출 시 개별 삭제 가능 */
+      fileObjectId?: number
+    }
+  | {
+      id: string
+      /** 제출 형식 — 칩 스타일 분기 */
+      kind: 'url'
+      /** URL 제출물 — 파일명 필드와 분리한다. */
+      url: string
+    }
 
 export type EducationScheduleAssignment = {
   /** 과제 제출 시작일 (ISO). 이 시각 이전·진행 예정이면 과제 영역 비노출 */
@@ -46,8 +53,6 @@ export type EducationScheduleAssignment = {
   /** 서버 수정 제출 가능 여부. 없으면 상태·기한 안내 규칙으로 판단 */
   canResubmit?: boolean
   files?: EducationScheduleAssignmentFile[]
-  /** mock/로컬 미리보기용 — remote GET이 우선 */
-  feedback?: string
   /** Wave11 portal GET feedback — 있을 때만 원격 조회 */
   formResponseId?: number
 }

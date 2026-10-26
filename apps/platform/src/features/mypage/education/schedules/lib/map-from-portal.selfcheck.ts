@@ -76,8 +76,8 @@ const assignmentOn = mapPortalEducationSchedule(
       canResubmit: true,
       formResponseId: 88,
       submissions: [
-        { id: 1, kind: 'FILE', fileName: '과제.pdf', fileObjectId: 501 },
-        { id: 2, kind: 'URL', fileName: '과제_링크', url: 'https://example.com' },
+        { id: 501, kind: 'FILE', fileName: '과제.pdf' },
+        { id: 2, kind: 'URL', url: 'https://example.com' },
       ],
     },
   },
@@ -87,9 +87,15 @@ assert.ok(assignmentOn.assignment)
 assert.equal(assignmentOn.assignment.status, 'feedback')
 assert.equal(assignmentOn.assignment.formResponseId, 88)
 assert.equal(assignmentOn.assignment.files?.length, 2)
-assert.equal(assignmentOn.assignment.files?.[1]?.kind, 'url')
-assert.equal(assignmentOn.assignment.files?.[0]?.fileObjectId, 501)
-assert.equal(assignmentOn.assignment.files?.[1]?.fileObjectId, undefined)
+const assignmentSubmissions = assignmentOn.assignment.files ?? []
+assert.equal(assignmentSubmissions[0]?.id, 'file-1')
+assert.equal(assignmentSubmissions[1]?.id, 'url-2')
+if (assignmentSubmissions[0]?.kind === 'file') {
+  assert.equal(assignmentSubmissions[0].fileObjectId, 501)
+}
+if (assignmentSubmissions[1]?.kind === 'url') {
+  assert.equal(assignmentSubmissions[1].url, 'https://example.com')
+}
 assert.equal(assignmentOn.assignment.canSubmit, false)
 assert.equal(assignmentOn.assignment.canResubmit, true)
 assert.equal(assignmentOff.assignment, undefined)

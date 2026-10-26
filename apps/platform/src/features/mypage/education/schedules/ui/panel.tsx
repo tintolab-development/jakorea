@@ -28,8 +28,8 @@ type EducationSchedulePanelProps = {
 }
 
 /**
- * 교육일정 탭 — remote면 신청 GET .../schedules만 SSOT.
- * mock 로그인 세션에서만 mock 시드. 프로그램 상세 일정은 사용하지 않는다.
+ * 교육일정 탭 — 신청 GET .../schedules 응답만 SSOT.
+ * 프로그램 상세 일정이나 로컬 시드/목업 데이터는 사용하지 않는다.
  */
 export function EducationSchedulePanel({
   lastParticipatedSession,
