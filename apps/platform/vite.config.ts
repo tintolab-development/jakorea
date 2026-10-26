@@ -80,6 +80,8 @@ export default defineConfig(({ mode }) => {
         ...withNgrokSkip(cmsTarget, ngrokSkip),
         // 안내사항 본문 이미지 302 Location(백엔드 절대 주소)을 dev origin 으로 — XHR 이 교차 출처로 넘어가지 않게
         autoRewrite: true,
+        // 백엔드(ngrok 등 https)가 준 Location 의 https 를 dev 서버(http)에 맞춤 — 썸네일 302 → raw 다운로드가 https://localhost:5173 으로 깨지지 않게
+        protocolRewrite: 'http',
       }
       // 회원 파일 업로드 요청이 반환하는 signed uploadUrl은
       // `/api/admin/files/uploads/raw/*` 경로를 사용한다. `/api` catch-all
