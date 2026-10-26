@@ -4,11 +4,15 @@ import dayjs from 'dayjs'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
 import type { MailPreviewRecipient } from '@/features/notifications/model/mail-template/preview'
 import { mailSendUseTemplate } from '@/features/notifications/model/mail-send/flags'
-import { buildMailSendPayload, validateMailSendDraft } from '@/features/notifications/model/mail-send/payload'
 import {
-  createManualRecipient,
+  buildMailSendPayload,
+  validateMailSendDraft,
+} from '@/features/notifications/model/mail-send/payload'
+import {
+  applyMailManualEntries,
   mergeMailSendRecipients,
 } from '@/features/notifications/model/mail-send/recipients'
+import { listMailSendPlaceholderKeys } from '@/features/notifications/model/mail-send/validate-send'
 import {
   MAIL_SEND_DEFAULT_PROGRAM_ID,
   MAIL_SEND_DEFAULT_SENDER,
@@ -35,9 +39,36 @@ export function useMailSendForm(open: boolean) {
   const [composeInitial, setComposeInitial] = useState<MailComposeInitial>(EMPTY_MAIL_COMPOSE)
   const [composeNonce, setComposeNonce] = useState(0)
   const [recipients, setRecipients] = useState<MailSendRecipient[]>([])
+  const [placeholderKeys, setPlaceholderKeys] = useState<string[]>([])
+  const placeholderSigRef = useRef('')
 
   const resetKey = open ? `send-${composeNonce}` : 'closed'
   const compose = useMailCompose(open, resetKey, composeInitial, templateId)
+  const { editor, getSubject, getBodyHtml, handleSubjectChange: changeSubject } = compose
+
+  const publishPlaceholderKeys = useCallback((subject: string, html: string) => {
+    const keys = listMailSendPlaceholderKeys(subject, html)
+    const sig = keys.join('\0')
+    if (sig === placeholderSigRef.current) return
+    placeholderSigRef.current = sig
+    setPlaceholderKeys(keys)
+  }, [])
+
+  useEffect(() => {
+    if (!open) {
+      placeholderSigRef.current = ''
+      return
+    }
+    const publish = () => {
+      publishPlaceholderKeys(getSubject(), getBodyHtml())
+    }
+    publish()
+    if (!editor) return
+    editor.on('update', publish)
+    return () => {
+      editor.off('update', publish)
+    }
+  }, [compose.subject, editor, getBodyHtml, getSubject, open, publishPlaceholderKeys])
 
   const setSenderName = useCallback((value: string) => {
     senderNameRef.current = value
@@ -93,9 +124,28 @@ export function useMailSendForm(open: boolean) {
     setRecipients(prev => mergeMailSendRecipients(prev, incoming))
   }, [])
 
-  const addManualEmails = useCallback((emails: string[]) => {
-    setRecipients(prev => mergeMailSendRecipients(prev, emails.map(createManualRecipient)))
+  const applyManualEntries = useCallback(
+    (entries: Array<{ contact: string; variables?: Record<string, string> }>) => {
+      setRecipients(prev => applyMailManualEntries(prev, entries))
+    },
+    []
+  )
+
+  const updateRecipientVariable = useCallback((recipientId: string, key: string, value: string) => {
+    setRecipients(prev =>
+      prev.map(item =>
+        item.id === recipientId ? { ...item, variables: { ...item.variables, [key]: value } } : item
+      )
+    )
   }, [])
+
+  const handleSubjectChange = useCallback(
+    (value: string) => {
+      changeSubject(value)
+      publishPlaceholderKeys(value, getBodyHtml())
+    },
+    [changeSubject, getBodyHtml, publishPlaceholderKeys]
+  )
 
   const removeRecipients = useCallback((ids: string[]) => {
     const remove = new Set(ids)
@@ -121,15 +171,7 @@ export function useMailSendForm(open: boolean) {
       attachmentFileNames: compose.attachmentFileNames,
       recipients,
     })
-  }, [
-    compose,
-    programId,
-    recipients,
-    scheduledAt,
-    sendTiming,
-    senderEmail,
-    templateId,
-  ])
+  }, [compose, programId, recipients, scheduledAt, sendTiming, senderEmail, templateId])
 
   const validateRequired = useCallback(() => validateMailSendDraft(getDraft()), [getDraft])
 
@@ -164,13 +206,14 @@ export function useMailSendForm(open: boolean) {
     subject: compose.subject,
     attachmentFileNames: compose.attachmentFileNames,
     recipients,
+    placeholderKeys,
     setProgramId,
     setSenderName,
     replaceSenderName,
     setSenderEmail,
     setSendTiming,
     setScheduledAt,
-    handleSubjectChange: compose.handleSubjectChange,
+    handleSubjectChange,
     rememberSubjectRange: compose.rememberSubjectRange,
     insertVariable: compose.insertVariable,
     handleAttachmentAdd: compose.handleAttachmentAdd,
@@ -178,7 +221,8 @@ export function useMailSendForm(open: boolean) {
     applyTemplate,
     clearTemplate,
     addRecipients,
-    addManualEmails,
+    applyManualEntries,
+    updateRecipientVariable,
     removeRecipients,
     clearRecipients,
     getDraft,

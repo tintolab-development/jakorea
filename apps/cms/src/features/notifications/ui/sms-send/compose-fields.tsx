@@ -12,6 +12,7 @@ import {
   smsComposeBlocksSend,
   smsComposeInlineMessage,
 } from '@/features/notifications/model/sms-send/text-bytes'
+import { listSmsSendPlaceholderKeys } from '@/features/notifications/model/sms-send/validate-send'
 import { SmsVariableTextField } from '@/features/notifications/ui/sms-template/variable-text-field'
 import './fullpage-modal.css'
 
@@ -29,6 +30,8 @@ type SmsSendComposeFieldsProps = {
   onRemoveAttachment?: (index: number) => void
   onAddAttachments?: (files: File[]) => Promise<{ ok: boolean; message?: string }>
   onBlockingChange?: (blocking: boolean) => void
+  /** #{키} 집합이 바뀔 때만 호출. 일반 타이핑으로 부모를 다시 그리지 않는다. */
+  onUsedVariableKeysChange?: (keys: string[]) => void
 }
 
 /**
@@ -49,6 +52,7 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   onRemoveAttachment,
   onAddAttachments,
   onBlockingChange,
+  onUsedVariableKeysChange,
 }: SmsSendComposeFieldsProps) {
   const { showAlert } = useCmsAlert()
   const [subject, setSubject] = useState(initialSubject)
@@ -81,6 +85,20 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   useEffect(() => {
     onBlockingChange?.(smsComposeBlocksSend(issues))
   }, [issues, onBlockingChange])
+
+  const usedVariableKeySig = useMemo(
+    () =>
+      listSmsSendPlaceholderKeys({
+        messageType,
+        subject,
+        bodyText,
+      }).join('\0'),
+    [bodyText, messageType, subject]
+  )
+
+  useEffect(() => {
+    onUsedVariableKeysChange?.(usedVariableKeySig ? usedVariableKeySig.split('\0') : [])
+  }, [onUsedVariableKeysChange, usedVariableKeySig])
 
   const commitBody = (next: string) => {
     setBodyText(next)
@@ -188,9 +206,7 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
                   >
                     {bodyByteLength}
                   </span>
-                  <span className="sms-send-fullpage__byte-label">
-                    / {bodyByteLimit}byte
-                  </span>
+                  <span className="sms-send-fullpage__byte-label">/ {bodyByteLimit}byte</span>
                 </span>
               </div>
             </div>

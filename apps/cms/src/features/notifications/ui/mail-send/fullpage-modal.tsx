@@ -38,10 +38,23 @@ import {
 } from '@/features/notifications/model/shared/template-variables-query'
 import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
 import {
+  classifyAlimtalkPlaceholderKey,
+  listAlimtalkManualVariableKeys,
+} from '@/features/notifications/model/alimtalk-send/recipient-variables'
+import {
+  MAIL_SEND_CONFIRM_MESSAGE,
+  listMailSendPlaceholderKeys,
+  validateMailSendVariables,
+  type MailSendVariableValidationResult,
+} from '@/features/notifications/model/mail-send/validate-send'
+import {
   MAIL_SEND_MEMBER_TYPE_OPTIONS,
   MAIL_SEND_PARTICIPATION_TYPE_OPTIONS,
+  createManualRecipient,
   filterMailSendRecipients,
+  formatMailEmailDuplicateMessage,
   isMailSendEmail,
+  listMailEmailDuplicateNotices,
   mailSendRecipientTypeColumnTitle,
   mailSendRecipientTypeLabel,
   normalizeMailSendEmail,
@@ -310,6 +323,67 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   }, [open, remote, showAlert, variablesQuery.error, variablesQuery.isError])
 
   const variablesCatalog = variablesQuery.data?.variables
+  const variableCatalogState = variablesQuery.isError
+    ? 'error'
+    : variablesQuery.isSuccess && variablesCatalog != null
+      ? 'ready'
+      : 'pending'
+  const programSelected = programNumericId != null
+  const directManualKeys = useMemo(
+    () =>
+      listAlimtalkManualVariableKeys({
+        keys: form.placeholderKeys,
+        catalog: variablesCatalog,
+        recipient: { source: 'manual', actorType: 'DIRECT' },
+        programSelected,
+      }),
+    [form.placeholderKeys, programSelected, variablesCatalog]
+  )
+  const manualKeysByRecipientId = useMemo(() => {
+    const next: Record<string, string[]> = {}
+    for (const recipient of form.recipients) {
+      next[recipient.id] = listAlimtalkManualVariableKeys({
+        keys: form.placeholderKeys,
+        catalog: variablesCatalog,
+        recipient,
+        programSelected,
+      })
+    }
+    return next
+  }, [form.placeholderKeys, form.recipients, programSelected, variablesCatalog])
+  const blockedKeysByRecipientId = useMemo(() => {
+    const next: Record<string, string[]> = {}
+    if (variablesCatalog == null) return next
+    for (const recipient of form.recipients) {
+      const blocked: string[] = []
+      for (const key of form.placeholderKeys) {
+        if (
+          classifyAlimtalkPlaceholderKey({
+            key,
+            catalog: variablesCatalog,
+            recipient,
+            programSelected,
+          }) === 'blocked'
+        ) {
+          blocked.push(key)
+        }
+      }
+      next[recipient.id] = blocked
+    }
+    return next
+  }, [form.placeholderKeys, form.recipients, programSelected, variablesCatalog])
+  const readVariableCheck = (): MailSendVariableValidationResult => {
+    const draft = form.getDraft()
+    return validateMailSendVariables({
+      programId: draft.programId,
+      subject: draft.subject,
+      bodyHtml: draft.bodyHtml,
+      recipients: draft.recipients,
+      catalog: variablesCatalog ?? null,
+      catalogState: variableCatalogState,
+    })
+  }
+  const variableCheck = readVariableCheck()
   const variableGroups = useMemo(
     () => groupMailTemplateVariablesFromCatalog(variablesCatalog ?? []),
     [variablesCatalog]
@@ -429,11 +503,22 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       showAlert({ title: '필수 입력 안내', content: error })
       return
     }
+    const variableResult = readVariableCheck()
+    if (!variableResult.ok) {
+      showAlert({ title: variableResult.title, content: variableResult.alert })
+      return
+    }
     setSendConfirmOpen(true)
   }
 
   const handleConfirmSend = async () => {
     if (sending) return
+    const variableResult = readVariableCheck()
+    if (!variableResult.ok) {
+      setSendConfirmOpen(false)
+      showAlert({ title: variableResult.title, content: variableResult.alert })
+      return
+    }
     setSending(true)
     try {
       const draft = form.getDraft()
@@ -441,7 +526,9 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         ? templates.find(item => item.id === draft.templateId)
         : undefined
       await submitMailSend({
-        draft,
+        draft: { ...draft, recipients: variableResult.validRecipients },
+        placeholderKeys: listMailSendPlaceholderKeys(draft.subject, draft.bodyHtml),
+        variableCatalog: variablesCatalog ?? null,
         templateDisplayName: selected?.templateName,
         templateCategoryId: selected?.categoryId,
         templateBaseline: selected
@@ -523,7 +610,9 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                 <section className="notification-fullpage-modal__widget">
                   <div className="mail-send-fullpage__section-intro">
                     <h3 className="mail-send-fullpage__section-title">1. 기본 설정</h3>
-                    <p className="mail-send-fullpage__section-hint">{MAIL_SENDER_NAME_EMPTY_HINT}</p>
+                    <p className="mail-send-fullpage__section-hint">
+                      {MAIL_SENDER_NAME_EMPTY_HINT}
+                    </p>
                   </div>
                   <DetailInfoForm title="기본 설정" hideHeader mode="edit">
                     <DetailInfoForm.Row type="single">
@@ -670,11 +759,20 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       </CmsButton>
                     </div>
                   </div>
+                  {directManualKeys.length > 0 ? (
+                    <p className="mail-send-fullpage__section-hint">
+                      사용하는 변수값은 수신자마다 입력합니다. 값이 없으면 해당 수신자는 발송되지
+                      않습니다.
+                    </p>
+                  ) : null}
                   <RecipientTable
                     recipients={form.recipients}
                     selectedIds={selectedRecipientIds}
                     onSelectedIdsChange={setSelectedRecipientIds}
                     typeColumnTitle={typeColumnTitle}
+                    manualKeysByRecipientId={manualKeysByRecipientId}
+                    blockedKeysByRecipientId={blockedKeysByRecipientId}
+                    onVariableChange={form.updateRecipientVariable}
                   />
                 </section>
 
@@ -805,7 +903,11 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         }
         onClose={() => setRecipientSelectOpen(false)}
         onConfirm={recipients => {
+          const notices = listMailEmailDuplicateNotices(form.recipients, recipients)
           form.addRecipients(recipients)
+          if (notices.length > 0) {
+            showAlert({ title: '안내', content: formatMailEmailDuplicateMessage(notices) })
+          }
           setRecipientSelectOpen(false)
         }}
       />
@@ -815,20 +917,28 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         contact="email"
         values={form.recipients
           .filter(item => item.source === 'manual')
-          .map(item => ({ contact: item.email }))}
+          .map(item => ({ contact: item.email, variables: item.variables }))}
+        variableKeys={directManualKeys}
         normalize={normalizeMailSendEmail}
         isValid={isMailSendEmail}
         invalidMessage="올바른 이메일 주소를 입력하세요."
         onClose={() => setRecipientManualOpen(false)}
         onConfirm={entries => {
-          form.addManualEmails(entries.map(entry => entry.contact))
+          const incoming = entries.map(entry =>
+            createManualRecipient(entry.contact, entry.variables)
+          )
+          const notices = listMailEmailDuplicateNotices(form.recipients, incoming)
+          form.applyManualEntries(entries)
+          if (notices.length > 0) {
+            showAlert({ title: '안내', content: formatMailEmailDuplicateMessage(notices) })
+          }
           setRecipientManualOpen(false)
         }}
       />
       <ConfirmModal
         open={sendConfirmOpen}
         title="메일 발송"
-        content="해당 내용으로 메일을 발송하시겠습니까?"
+        content={variableCheck.ok ? variableCheck.confirmMessage : MAIL_SEND_CONFIRM_MESSAGE}
         confirmText="발송"
         cancelText="취소"
         onConfirm={() => void handleConfirmSend()}
