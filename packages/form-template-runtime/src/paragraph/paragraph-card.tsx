@@ -59,6 +59,8 @@ export interface ParagraphCardProps {
   editableHeading?: ParagraphCardEditableHeading
   /** 중앙 본문 슬롯 */
   children?: ReactNode
+  /** 제출 검증·API 필드 오류 (작성 화면) */
+  errorMessage?: string
   /** 하단 좌측(토글 등) */
   toggles?: ReactNode
   /** 하단 우측(단락 액션 버튼 등) */
@@ -74,6 +76,7 @@ export function ParagraphCard({
   description,
   editableHeading,
   children,
+  errorMessage,
   toggles,
   actions,
 }: ParagraphCardProps) {
@@ -159,9 +162,15 @@ export function ParagraphCard({
       className={['paragraph-card', className].filter(Boolean).join(' ')}
       onClick={onClick}
       data-paragraph-id={dataParagraphId}
+      data-application-error={errorMessage ? 'true' : undefined}
     >
       <div className="paragraph-card__header">{renderHeading()}</div>
       {children != null ? <div className="paragraph-card__slot">{children}</div> : null}
+      {errorMessage ? (
+        <p className="paragraph-card__error" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
       {showFooter ? (
         <footer className="paragraph-card__footer">
           <div className="paragraph-card__toggles">{toggles}</div>

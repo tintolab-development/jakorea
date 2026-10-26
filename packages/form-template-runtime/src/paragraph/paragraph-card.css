@@ -260,3 +260,11 @@
 .paragraph-card--survey-title-with-period .form-paragraph-section-description {
   font-size: 18px;
 }
+
+.paragraph-card__error {
+  margin: 8px 0 0;
+  color: var(--color-error, #d92d20);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}

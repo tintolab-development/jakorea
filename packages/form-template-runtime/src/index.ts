@@ -30,6 +30,7 @@ export {
 } from './renderer/vertical-table-preview.js'
 export { HorizontalTablePreviewBody } from './renderer/horizontal-table-preview-body.js'
 export type { HorizontalTablePreviewBodyProps } from './renderer/horizontal-table-preview-body.js'
+export { patchHorizontalTableDataCell } from './renderer/horizontal-table-preview.js'
 export { FillParagraphBody } from './renderer/fill-paragraph-body.js'
 export type {
   FillParagraphBodyOptions,
