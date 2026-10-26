@@ -4,6 +4,7 @@ import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-c
 import {
   mapAdminProgramCalendarItemsToEvents,
   resolveProgramCalendarColorKey,
+  resolveProgramCalendarParticipantScope,
   resolveProgramCalendarDisplayColors,
 } from './program-calendar-events'
 
@@ -85,7 +86,7 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
     expect(events[0]?.timeLabel).toBe('10:00 ~ 11:00')
   })
 
-  it('keeps EDUCATION_PERIOD as a single span and does not expand into daily EDUCATION', () => {
+  it('drops EDUCATION_PERIOD so it never renders as a session card', () => {
     const events = mapAdminProgramCalendarItemsToEvents([
       item({
         eventId: 'EDUCATION_PERIOD:187500:PROGRAM',
@@ -101,12 +102,238 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
       }),
     ])
 
+    expect(events).toEqual([])
+  })
+
+  it('drops a multi-day allDay EDUCATION period window instead of expanding daily 24h cards', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION:187204:PROGRAM',
+        scheduleId: 187204,
+        programId: 186301,
+        eventType: 'EDUCATION',
+        allDay: true,
+        eventDate: '2026-10-01',
+        startAt: '2026-09-30T15:00:00Z',
+        endAt: '2026-12-01T15:00:00Z',
+        scheduleRole: null,
+        scheduleOrigin: 'PROGRAM_DEFINED',
+      }),
+    ])
+
+    expect(events).toEqual([])
+  })
+
+  it('keeps a single-day allDay EDUCATION on eventDate (Asia/Seoul)', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION:1:PROGRAM',
+        programId: 1,
+        eventType: 'EDUCATION',
+        allDay: true,
+        eventDate: '2026-10-24',
+        startAt: '2026-10-23T15:00:00Z',
+        endAt: '2026-10-24T15:00:00Z',
+      }),
+    ])
+
     expect(events).toHaveLength(1)
-    expect(events[0]?.id).toBe('EDUCATION_PERIOD:187500:PROGRAM')
-    expect(events[0]?.startDate).toBe('2026-04-03')
-    expect(events[0]?.endDate).toBe('2026-11-20')
-    expect(events[0]?.kind).toBe('education')
-    expect(events[0]?.eventType).toBe('EDUCATION_PERIOD')
+    expect(events[0]?.startDate).toBe('2026-10-24')
+    expect(events[0]?.endDate).toBe('2026-10-24')
+  })
+
+  it('186339: keeps 5 timed sessions on 2026-10-24 KST separately and drops 187270 period row', () => {
+    const base = {
+      programId: 186339,
+      programName: '개커복날 강사테슽',
+      programType: 'GENERAL_INDIVIDUAL',
+      eventType: 'EDUCATION',
+      allDay: false,
+      eventDate: null,
+      scheduleOrigin: 'PROGRAM_DEFINED',
+      scheduleRole: 'EDUCATION',
+      assignmentStatus: null,
+      organizationApplicationId: null,
+      organizationName: null,
+    } satisfies AdminProgramCalendarItem
+    const timed = (scheduleId: number, startAt: string, endAt: string) =>
+      item({
+        ...base,
+        scheduleId,
+        eventId: `EDUCATION:${scheduleId}:PROGRAM`,
+        eventKey: `EDUCATION:${scheduleId}:PROGRAM`,
+        startAt,
+        endAt,
+      })
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        ...base,
+        scheduleId: 187270,
+        eventId: 'EDUCATION:187270:PROGRAM',
+        scheduleName: '커리큘럼 기간',
+        allDay: true,
+        eventDate: '2026-10-24',
+        startAt: '2026-10-23T15:00:00Z',
+        endAt: '2026-12-24T15:00:00Z',
+        scheduleRole: null,
+      }),
+      timed(187271, '2026-10-24T07:00:00Z', '2026-10-24T07:02:00Z'),
+      timed(187272, '2026-10-24T07:05:00Z', '2026-10-24T07:06:00Z'),
+      timed(187273, '2026-10-24T07:10:00Z', '2026-10-24T07:11:00Z'),
+      timed(187274, '2026-10-24T07:35:00Z', '2026-10-24T07:36:00Z'),
+      timed(187310, '2026-10-24T01:00:00Z', '2026-10-24T03:00:00Z'),
+    ])
+
+    expect(events.map(event => event.scheduleId)).toEqual([187310, 187271, 187272, 187273, 187274])
+    expect(events.every(event => event.startDate.startsWith('2026-10-24T'))).toBe(true)
+    expect(events.map(event => `${event.startTime}-${event.endTime}`)).toEqual([
+      '10:00-12:00',
+      '16:00-16:02',
+      '16:05-16:06',
+      '16:10-16:11',
+      '16:35-16:36',
+    ])
+    expect(events.some(event => event.scheduleId === 187270)).toBe(false)
+    expect(events.every(event => event.participantScope === 'individual')).toBe(true)
+  })
+
+  it('buckets timed events by Asia/Seoul date, not the UTC ISO date', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION:IAC:185744',
+        eventType: 'EDUCATION',
+        programId: 186317,
+        startAt: '2026-09-08T00:00:00Z',
+        endAt: '2026-09-08T03:00:00Z',
+        allDay: false,
+        eventDate: null,
+      }),
+      item({
+        eventId: 'EDUCATION:2:PROGRAM',
+        eventType: 'EDUCATION',
+        programId: 2,
+        startAt: '2026-10-23T16:30:00Z',
+        endAt: '2026-10-23T17:30:00Z',
+        allDay: false,
+        eventDate: null,
+      }),
+    ])
+
+    const byId = new Map(events.map(event => [event.id, event]))
+    expect(byId.get('EDUCATION:IAC:185744')?.startDate).toBe('2026-09-08T09:00:00')
+    expect(byId.get('EDUCATION:2:PROGRAM')?.startDate).toBe('2026-10-24T01:30:00')
+    expect(byId.get('EDUCATION:2:PROGRAM')?.startTime).toBe('01:30')
+  })
+
+  it('keeps events with the same scheduleId but different eventId (org / instructor assignments)', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION:1411:41',
+        eventType: 'EDUCATION',
+        programId: 1,
+        programType: 'GENERAL_ORGANIZATION',
+        scheduleId: 1411,
+        organizationApplicationId: 41,
+        organizationName: '서울초등학교',
+        assignmentStatus: 'TEMP_ASSIGNED',
+        scheduleName: '1회차 교육',
+        startAt: '2026-10-20T01:00:00Z',
+        endAt: '2026-10-20T02:00:00Z',
+        allDay: false,
+      }),
+      item({
+        eventId: 'EDUCATION:1411:42',
+        eventType: 'EDUCATION',
+        programId: 1,
+        programType: 'GENERAL_ORGANIZATION',
+        scheduleId: 1411,
+        organizationApplicationId: 42,
+        organizationName: '부산중학교',
+        assignmentStatus: 'CONFIRMED',
+        scheduleName: '1회차 교육',
+        startAt: '2026-10-20T01:00:00Z',
+        endAt: '2026-10-20T02:00:00Z',
+        allDay: false,
+      }),
+    ])
+
+    expect(events.map(event => event.id)).toEqual(['EDUCATION:1411:41', 'EDUCATION:1411:42'])
+    expect(events.map(event => event.scheduleContent)).toEqual([
+      '서울초등학교 · 1회차 교육',
+      '부산중학교 · 1회차 교육',
+    ])
+    expect(events.map(event => event.title)).toEqual([
+      '서울초등학교 · 1회차 교육',
+      '부산중학교 · 1회차 교육',
+    ])
+    expect(events.map(event => event.organizationApplicationId)).toEqual([41, 42])
+    expect(events.map(event => event.assignmentStatus)).toEqual(['TEMP_ASSIGNED', 'CONFIRMED'])
+    expect(events.every(event => event.participantScope === 'organization')).toBe(true)
+  })
+
+  it('maps company-school IAC events without filtering by assignmentStatus', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION:IAC:185744',
+        eventKey: 'EDUCATION:IAC:185744',
+        eventType: 'EDUCATION',
+        sourceType: 'INSTRUCTOR_ASSIGNMENT_CALENDAR',
+        scheduleId: 187239,
+        programId: 186317,
+        programType: 'COMPANY_SCHOOL',
+        organizationApplicationId: 1691461,
+        organizationName: 'GROK_E2E_CS_학교A',
+        assignmentStatus: 'ASSIGNED',
+        startAt: '2026-09-08T00:00:00Z',
+        endAt: '2026-09-08T03:00:00Z',
+        allDay: false,
+        eventDate: null,
+      }),
+      item({
+        eventId: 'EDUCATION:IAC:185745',
+        eventType: 'EDUCATION',
+        sourceType: 'INSTRUCTOR_ASSIGNMENT_CALENDAR',
+        scheduleId: 187239,
+        programId: 186317,
+        programType: 'COMPANY_SCHOOL',
+        organizationApplicationId: 1691461,
+        organizationName: 'GROK_E2E_CS_학교A',
+        assignmentStatus: 'COMPLETED',
+        startAt: '2026-09-08T00:00:00Z',
+        endAt: '2026-09-08T03:00:00Z',
+        allDay: false,
+        eventDate: null,
+      }),
+    ])
+
+    expect(events).toHaveLength(2)
+    expect(events[0]?.scheduleContent).toBe('GROK_E2E_CS_학교A')
+    expect(events[0]?.scheduleId).toBe(187239)
+    expect(events[0]?.sourceType).toBe('INSTRUCTOR_ASSIGNMENT_CALENDAR')
+    expect(events[0]?.participantScope).toBeUndefined()
+  })
+
+  it('collapses only exact duplicate eventId rows', () => {
+    const row = item({
+      eventId: 'EDUCATION:9:PROGRAM',
+      eventType: 'EDUCATION',
+      programId: 9,
+      startAt: '2026-10-20T01:00:00Z',
+      endAt: '2026-10-20T02:00:00Z',
+      allDay: false,
+    })
+    expect(mapAdminProgramCalendarItemsToEvents([row, { ...row }])).toHaveLength(1)
+  })
+
+  it('returns [] for an empty response without synthesizing fallback events', () => {
+    expect(mapAdminProgramCalendarItemsToEvents([])).toEqual([])
+  })
+
+  it('treats stored programType GENERAL as individual', () => {
+    expect(resolveProgramCalendarParticipantScope('GENERAL')).toBe('individual')
+    expect(resolveProgramCalendarParticipantScope('GENERAL_INDIVIDUAL')).toBe('individual')
+    expect(resolveProgramCalendarParticipantScope('GENERAL_ORGANIZATION')).toBe('organization')
+    expect(resolveProgramCalendarParticipantScope('TRAINED_TEACHER')).toBeUndefined()
   })
 
   it('keeps recruitment end and education session as two events on the same day', () => {
@@ -194,15 +421,14 @@ describe('programOperationStartDate', () => {
   it('copies BUSINESS_START date onto other events of the same program', () => {
     const events = mapAdminProgramCalendarItemsToEvents([
       item({
-        eventId: 'EDUCATION_PERIOD:1',
+        eventId: 'EDUCATION:1:PROGRAM',
         programId: 10,
         programName: '노란 기간',
-        eventType: 'EDUCATION_PERIOD',
-        scheduleName: '교육 진행 기간',
-        allDay: true,
-        eventDate: '2026-12-01',
-        startAt: '2026-11-30T15:00:00Z',
-        endAt: '2026-12-31T15:00:00Z',
+        eventType: 'EDUCATION',
+        scheduleName: '1회차 교육',
+        allDay: false,
+        startAt: '2026-12-01T01:00:00Z',
+        endAt: '2026-12-01T02:00:00Z',
         colorKey: 'EDUCATION',
       }),
       item({
@@ -217,7 +443,7 @@ describe('programOperationStartDate', () => {
       }),
     ])
 
-    expect(events.find(event => event.id === 'EDUCATION_PERIOD:1')?.programOperationStartDate).toBe(
+    expect(events.find(event => event.id === 'EDUCATION:1:PROGRAM')?.programOperationStartDate).toBe(
       '2026-01-15'
     )
   })
