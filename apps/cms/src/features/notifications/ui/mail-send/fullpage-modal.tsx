@@ -16,7 +16,10 @@ import type {
 } from '@/features/notifications/model/mail-template/preview'
 import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
-import { type MailSendRecipientSearchParams } from '@/features/notifications/model/mail-send/types'
+import {
+  MAIL_SEND_PICKER_PAGE_SIZE,
+  type MailSendRecipientSearchParams,
+} from '@/features/notifications/model/mail-send/types'
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
 import {
   canSelectNotificationSendTemplate,
@@ -287,7 +290,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
           ? toMailSendMemberTypeApi(recipientSearch.typeValue)
           : undefined,
       page: recipientSearch.page,
-      size: 20,
+      size: MAIL_SEND_PICKER_PAGE_SIZE,
     },
     open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
   )
@@ -775,6 +778,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         candidates={candidatesQuery.data?.items}
         initialSelected={form.recipients}
         resetKey={recipientTypeMode}
+        pageSize={MAIL_SEND_PICKER_PAGE_SIZE}
         typeColumnTitle={typeColumnTitle}
         typeOptions={
           recipientTypeMode === 'member'

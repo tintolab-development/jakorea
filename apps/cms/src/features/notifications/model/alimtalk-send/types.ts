@@ -1,6 +1,6 @@
 export const ALIMTALK_SEND_ALL_PROGRAM_ID = 'all'
-/** 수신자 설정 팝업 — 기획: 한 페이지 최대 50명 */
-export const ALIMTALK_SEND_PICKER_PAGE_SIZE = 50
+/** 수신자 설정 팝업 — 한 페이지 5행 */
+export const ALIMTALK_SEND_PICKER_PAGE_SIZE = 5
 
 export type AlimtalkSendTiming = 'immediate' | 'scheduled'
 export type AlimtalkSendRecipientSource = 'program' | 'manual'

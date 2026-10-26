@@ -9,7 +9,7 @@
  */
 export const MAIL_ALLOWED_SENDER_DOMAINS = ['jakorea.org'] as const
 
-/** 메일 템플릿 등록 시 기본 발신 메일 (기획) */
+/** 메일 발송 화면 harvest 기본 From 후보 (템플릿 등록은 기본값 없음) */
 export const MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL = 'jakorea@jakorea.org' as const
 
 const EMAIL_SHAPE_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

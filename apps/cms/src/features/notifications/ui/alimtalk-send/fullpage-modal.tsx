@@ -280,7 +280,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           ? toAlimtalkSendMemberTypeApi(recipientSearch.typeValue)
           : undefined,
       page: recipientSearch.page,
-      size: 20,
+      size: ALIMTALK_SEND_PICKER_PAGE_SIZE,
     },
     open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
   )
