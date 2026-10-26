@@ -408,6 +408,9 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
               programId={program.id}
               overlayKeyPrefix="generalRegistration.educationScheduleSettings"
               educationScheduleMode={extras.educationScheduleMode ?? 'date'}
+              educationStructure={extras.programType}
+              participantOrganization={participant.organization}
+              sessionRound={extras.sessionRoundType}
               autoFillFromScheduleGroupTimes={shouldAutoFillEducationScheduleFromGroupTimes({
                 educationStructure: extras.programType,
                 sessionRound: extras.sessionRoundType,

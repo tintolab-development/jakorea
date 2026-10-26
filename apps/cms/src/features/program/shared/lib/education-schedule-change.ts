@@ -13,9 +13,7 @@ export type EducationOperationRangeSeal = {
   end?: string | null
 } | null
 
-export function educationOperationRangeSealKeyFromSchedulePrefix(
-  schedulePrefix: string
-): string {
+export function educationOperationRangeSealKeyFromSchedulePrefix(schedulePrefix: string): string {
   const root = schedulePrefix.replace(/\.educationScheduleSettings$/, '')
   return `${root}.basicInfo.operationRangeSeal`
 }
@@ -131,9 +129,7 @@ export function padEducationScheduleChangeLabel(index: number): string {
   return String(index + 1).padStart(2, '0')
 }
 
-export function parseEducationScheduleLineToChangeRange(
-  line: string
-): [Dayjs, Dayjs] | null {
+export function parseEducationScheduleLineToChangeRange(line: string): [Dayjs, Dayjs] | null {
   return parseEducationScheduleLineToRange(line) ?? parseStoredEducationScheduleRange(line)
 }
 
@@ -189,11 +185,25 @@ export function applyChangedDatesToEducationScheduleLines(
 
 export function applyChangedRangesToEducationScheduleLines(
   lines: readonly string[],
-  changedRanges: Record<number, [Dayjs, Dayjs] | null | undefined>
+  changedRanges: Record<number, [Dayjs, Dayjs] | null | undefined>,
+  options?: { keepOriginalTimeWhenDateOnly?: boolean }
 ): string[] {
   return lines.map((line, index) => {
     const range = changedRanges[index]
     if (range == null) return line
+    const originalRange = parseEducationScheduleLineToChangeRange(line)
+    /**
+     * 시간 입력이 없는 선택(일정형 자동 시간·시간 비활성)은 날짜만 옮기고 기존 시간을 유지한다.
+     * 시간까지 고른 선택은 그 범위를 그대로 쓴다.
+     */
+    if (
+      options?.keepOriginalTimeWhenDateOnly &&
+      !educationScheduleRangeHasClock(range) &&
+      originalRange != null &&
+      educationScheduleRangeHasClock(originalRange)
+    ) {
+      return applyDateToEducationScheduleLine(line, range[0])
+    }
     return formatEducationScheduleLineFromRange(range)
   })
 }
@@ -230,4 +240,15 @@ export function buildSameDateScheduleChangePairs(
     pairs.push({ fromDate, toDate })
   }
   return pairs
+}
+
+/**
+ * 이미 지나간 일정인지 — 일정 변경 모달에서 노출·수정하지 않는다.
+ * 시간이 있는 일정은 시작 시각, 날짜만 있는 일정은 시작일(오늘 이전) 기준.
+ */
+export function isEducationScheduleLinePast(line: string, now: Dayjs = dayjs()): boolean {
+  const range = parseEducationScheduleLineToChangeRange(line)
+  if (range == null) return false
+  if (educationScheduleRangeHasClock(range)) return !range[0].isAfter(now)
+  return range[0].isBefore(now, 'day')
 }
