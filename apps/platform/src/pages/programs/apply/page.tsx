@@ -2154,6 +2154,14 @@ export function ProgramApplyPage() {
     setSubmitAlert(null)
     setSubmitErrorField(null)
     if (displayDraft == null) {
+      const gateKind = readGateModalForOptions(
+        applicationFormQuery.bundle?.option.canApply,
+        applicationFormQuery.blockedReason,
+      )
+      if (gateKind) {
+        setGateModal(gateKind)
+        return
+      }
       setSubmitAlert({
         description:
           blockedMessage ?? '신청 양식을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -2161,6 +2169,14 @@ export function ProgramApplyPage() {
       return
     }
     if (blockedMessage && !canSubmitRemote) {
+      const gateKind = readGateModalForOptions(
+        applicationFormQuery.bundle?.option.canApply,
+        applicationFormQuery.blockedReason,
+      )
+      if (gateKind) {
+        setGateModal(gateKind)
+        return
+      }
       setSubmitAlert({ description: blockedMessage })
       return
     }
@@ -2986,6 +3002,11 @@ export function ProgramApplyPage() {
           error: errorEnvelope,
         })
         if (getQueryRetryHttpStatus(error) !== 400) {
+          const gateKind = readGateModalForOptions(undefined, errorCode)
+          if (gateKind) {
+            setGateModal(gateKind)
+            return
+          }
           setSubmitAlert({
             description: message,
             promptSettingsGrade,
@@ -3020,6 +3041,14 @@ export function ProgramApplyPage() {
       return
     }
     if (remoteApplyEnabled) {
+      const gateKind = readGateModalForOptions(
+        applicationFormQuery.bundle?.option.canApply,
+        applicationFormQuery.blockedReason,
+      )
+      if (gateKind) {
+        setGateModal(gateKind)
+        return
+      }
       setSubmitAlert({
         description:
           blockedMessage ?? '신청을 제출할 수 없습니다. 모집 기간과 회원 자격을 확인해 주세요.',
