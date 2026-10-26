@@ -10,6 +10,10 @@
  * 회원 포탈 프로그램 안내사항 첨부파일 전체 교체 요청
  */
 export interface NoticeAttachmentReplaceRequest {
-  /** 연결할 fileObjectId 목록. 빈 배열이면 모든 첨부를 제거합니다. */
+  /**
+     * 연결할 fileObjectId 목록. 게시글당 최대 10개이며, 파일당 20MB·합계 100MB입니다. 빈 배열이면 모든 첨부를 제거합니다.
+     * @minItems 0
+     * @maxItems 10
+     */
   fileObjectIds?: number[];
 }

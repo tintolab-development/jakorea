@@ -11,10 +11,16 @@ import type { CapacityWarning } from './capacityWarning';
 export interface AutoAssignmentResponse {
   programId?: number;
   educationRegionCode?: string;
+  /** 빈 슬롯 수 + 보강 대상 1인 슬롯 수 */
   targetSlotCount?: number;
   pairAssignedCount?: number;
   singleAssignedCount?: number;
   unassignedCount?: number;
+  /** 기존 1인 슬롯에 두 번째 봉사자를 추가한 수 (result=SECONDARY_ADDED) */
+  secondaryAddedCount?: number;
+  /** 기존 1인 슬롯을 보강하지 못한 수 (result=SECONDARY_UNAVAILABLE) */
+  secondaryUnfilledCount?: number;
   results?: AutoAssignmentSlotResult[];
+  /** 지역 정원 초과 경고(CLASS, VOLUNTEER)와 이번 실행 후 1인으로 남은 슬롯의 인원 부족 경고(capacityType=VOLUNTEER_SHORTAGE, 반기·지역별 1건, maxCount=필요 인원, currentCount=배정 인원). 없으면 []. */
   capacityWarnings?: CapacityWarning[];
 }

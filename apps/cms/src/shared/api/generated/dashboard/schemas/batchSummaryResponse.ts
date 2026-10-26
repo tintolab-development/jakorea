@@ -25,4 +25,10 @@ export interface BatchSummaryResponse {
   piiDestroyedAt?: string;
   createdByAdminId?: number;
   createdAt?: string;
+  /** false = 템플릿 없이 발송한 SMS. 이때 templateId·templateCode는 null. */
+  templateUsed?: boolean;
+  /** 발송 목적 NORMAL|AD|AUTH. 템플릿 없는 SMS는 항상 NORMAL. */
+  messagePurpose?: string;
+  /** SMS 채널 문자 유형 SMS|LMS|MMS. SMS 외 채널은 null. */
+  smsMessageType?: string;
 }

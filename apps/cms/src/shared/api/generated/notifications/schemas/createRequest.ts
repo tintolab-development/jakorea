@@ -14,7 +14,7 @@ export interface CreateRequest {
      * @maxLength 200
      */
   batchName: string;
-  templateId: number;
+  templateId?: number;
   /**
      * 대상 프로그램. 미전달(발송 UI 미선택/지정 해제)이면 program 스코프 enrich 불가.
      * requiresProgram 변수 포함 템플릿은 NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES.
@@ -55,4 +55,17 @@ export interface CreateRequest {
      * 생략 시 등록 템플릿 content_template 사용. ALIMTALK 전달 시 거부.
      */
   contentTemplate?: string;
+  /** 템플릿 없는 SMS 문자 유형 SMS|LMS|MMS. templateId가 있으면 무시(템플릿 유형 사용). */
+  messageType?: string;
+  /**
+     * EMAIL 전용 발신자명. 비우면 NHN 프로필 표시명. 다른 채널은 400.
+     * @minLength 0
+     * @maxLength 255
+     */
+  senderProfileDisplayName?: string;
+  /**
+     * MMS 전용 첨부 fileObjectId(선택 순서). 비MMS에 1개 이상이면 400 NOTIFICATION_ATTACHMENT_ONLY_MMS.
+     * 템플릿 MMS에서 생략/[]이면 템플릿 첨부, 1개 이상이면 요청 첨부만 사용(병합 없음).
+     */
+  attachmentFileIds?: number[];
 }

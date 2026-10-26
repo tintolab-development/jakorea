@@ -510,7 +510,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -564,7 +564,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -622,7 +622,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -719,7 +719,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {

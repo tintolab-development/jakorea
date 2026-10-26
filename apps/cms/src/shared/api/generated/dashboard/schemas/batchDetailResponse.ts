@@ -5,10 +5,12 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { BatchBodySnapshotResponse } from './batchBodySnapshotResponse';
 import type { BatchSummaryResponse } from './batchSummaryResponse';
 import type { RecipientResponse } from './recipientResponse';
 
 export interface BatchDetailResponse {
   batch?: BatchSummaryResponse;
   recipients?: RecipientResponse[];
+  bodySnapshot?: BatchBodySnapshotResponse;
 }

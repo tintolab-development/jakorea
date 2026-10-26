@@ -28,9 +28,9 @@ export interface SettlementBulkStatusChangeRequest {
      * @maxItems 500
      */
   paymentIds?: number[];
-  /** 강의비 지급 예정일. lectureFeePaymentScheduledDate와 동일 처리. */
+  /** 강의비 지급 예정일. lectureFeePaymentScheduledDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다. */
   scheduledPaymentDate?: string;
-  /** FE UI 호환 강의비 지급 예정일. scheduledPaymentDate와 동일 처리. */
+  /** FE UI 호환 강의비 지급 예정일. scheduledPaymentDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다. */
   lectureFeePaymentScheduledDate?: string;
   /**
      * 상태 변경 사유
