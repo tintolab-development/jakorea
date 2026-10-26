@@ -18,6 +18,8 @@ export type CalendarEventsConfig = {
   resolveEventColors?: (item: CalendarItem) => ScheduleColorPair | undefined
   eventsTooltipScope: 'trigger-only' | 'full-day'
   formatEventsOverflowText?: (hiddenCount: number) => string
+  /** 주간 시간 격자 겹침 묶음 문구. 미지정 시 `외 N개의 항목` (Figma) */
+  formatWeekEventsOverflowText?: (hiddenCount: number) => string
   eventsTooltipTrigger: 'event-strip' | 'cell'
   /** 월간 셀 strip 목록. 미지정 시 dayEvents 1:1 */
   buildMonthCellRows?: BuildCalendarMonthCellRows

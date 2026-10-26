@@ -20,7 +20,13 @@ export type AdminProgramCalendarQuery = {
   programId?: number
 }
 
-export type AdminProgramCalendarItem = ProgramCalendarItemResponse
+/**
+ * calendar_1 응답 항목. BE 계약상 organizationName은 해당 없으면 JSON null로 오지만
+ * 생성 타입은 string|undefined라 null만 좁게 허용한다.
+ */
+export type AdminProgramCalendarItem = Omit<ProgramCalendarItemResponse, 'organizationName'> & {
+  organizationName?: string | null
+}
 
 export type AdminProgramCalendarRequestParams = {
   includeOperationalEvents: true

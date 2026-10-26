@@ -17948,7 +17948,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -18483,7 +18483,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -26107,7 +26107,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -26235,7 +26235,7 @@
             "type": "string",
             "format": "password",
             "description": "현재 로그인 관리자 비밀번호. 탈퇴 본인 확인 SoT.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -31543,7 +31543,7 @@
           "password": {
             "type": "string",
             "description": "관리자 비밀번호. 서버 비밀번호 정책을 통과해야 합니다.",
-            "example": "admin1234!",
+            "example": "admin12341!",
             "maxLength": 255,
             "minLength": 0
           },
@@ -47921,6 +47921,27 @@
             "description": "program_schedule.schedule_status. 교육·기간 이벤트가 아니면 null.",
             "nullable": true
           },
+          "scheduleOrigin": {
+            "type": "string",
+            "description": "PROGRAM_DEFINED | APPLICATION_MATERIALIZED | UNKNOWN. 교육 이벤트가 아니면 null.",
+            "nullable": true
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|CLOSING|SESSION. 기간 행·비교육 이벤트는 null.",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "description": "기관 OSA는 TEMP_ASSIGNED|CONFIRMED. 1사1교 강사 배정은 ASSIGNED 등. 배정이 없으면 null.",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기관형 배정 이벤트의 program_organization_application.id. 없으면 null.",
+            "nullable": true
+          },
           "eventId": {
             "type": "string",
             "description": "이벤트 고유 ID. eventKey와 동일하다."
@@ -54308,7 +54329,7 @@
     "examples": {
       "AdminLoginRequest": {
         "summary": "관리자 로그인 요청",
-        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin1234!\"}"
+        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin12341!\"}"
       },
       "AdminMfaVerifyRequest": {
         "summary": "관리자 MFA 검증 요청",
@@ -54316,7 +54337,7 @@
       },
       "LocalDemoAdminAccount": {
         "summary": "로컬 데모 관리자 계정",
-        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin1234!\",\"mfaCode\":\"000000\",\"profile\":\"local only\"}"
+        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin12341!\",\"mfaCode\":\"000000\",\"profile\":\"local only\"}"
       },
       "LocalDemoMemberAccount": {
         "summary": "로컬 데모 회원 계정",

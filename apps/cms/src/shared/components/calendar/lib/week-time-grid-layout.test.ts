@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  buildAllDayWeekGroupLayout,
+  buildTimedItemGroupLayouts,
   buildWeekTimeGridColumnStyle,
   buildWeekTimeGridGroupStyle,
   compareAllDayWeekRepresentatives,
@@ -8,13 +8,15 @@ import {
   computeWeekEventCardTop,
   countAdjacentTouchingEvents,
   countOccupiedHourSlots,
-  formatAllDayGroupOverflowText,
+  formatTimedGroupOverflowText,
   layoutTimedItemsForDay,
   readTimesOrAllDaySpan,
+  resolveWeekEventCardContent,
   resolveWeekTimeGridSubtext,
   shouldShowWeekEventTimeText,
   WEEK_EVENT_INSET_X_PX,
   WEEK_EVENT_INSET_Y_PX,
+  WEEK_EVENT_MIN_HEIGHT_PX,
   WEEK_TIME_GRID_HOUR_PX,
 } from './week-time-grid-layout'
 
@@ -158,15 +160,134 @@ describe('same-day all-day week grouping', () => {
     ).toBeGreaterThan(0)
   })
 
-  it('keeps one representative and overflow copy for same-day all-day items', () => {
-    const items = [
-      { id: 'late', operationStartDate: '2026-06-01', title: 'Zebra' },
-      { id: 'early', operationStartDate: '2026-01-01', title: '나중에' },
-      { id: 'mid', operationStartDate: '2026-03-01', title: 'Alpha' },
+})
+
+describe('week overlap clusters (Figma: 1 card + 외 N개의 항목)', () => {
+  it('collapses 15 overlapping 10:00–12:00 sessions into one full-width card with hiddenCount 14', () => {
+    const items = Array.from({ length: 15 }, (_, i) => ({
+      id: `s${String(i).padStart(2, '0')}`,
+      startTime: '10:00',
+      endTime: '12:00',
+    }))
+    const groups = buildTimedItemGroupLayouts(items, WEEK_TIME_GRID_HOUR_PX, readSpan)
+    expect(groups).toHaveLength(1)
+    expect(groups[0]?.items).toHaveLength(15)
+    expect(groups[0]?.items.length - 1).toBe(14)
+    expect(formatTimedGroupOverflowText(14)).toBe('외 14개의 항목')
+    const style = buildWeekTimeGridGroupStyle(groups[0]!)
+    expect(style.width).toBe('calc(100% - 4px)')
+  })
+
+  it('lays out an all-day item as 00:00–24:00 in the same grid and groups it with overlapping timed events', () => {
+    const items: Span[] = [
+      { id: 'milestone' },
+      { id: 'edu-a', startTime: '10:00', endTime: '12:00' },
+      { id: 'edu-b', startTime: '16:00', endTime: '16:02' },
     ]
-    const group = buildAllDayWeekGroupLayout(items, WEEK_TIME_GRID_HOUR_PX, item => item)
-    expect(group?.representative.id).toBe('early')
-    expect(group?.items).toHaveLength(3)
-    expect(formatAllDayGroupOverflowText(2)).toBe('외 2개의 일정')
+    const groups = buildTimedItemGroupLayouts(items, WEEK_TIME_GRID_HOUR_PX, item =>
+      readTimesOrAllDaySpan(item, readSpan)
+    )
+    expect(groups).toHaveLength(1)
+    expect(groups[0]?.startM).toBe(0)
+    expect(groups[0]?.endM).toBe(24 * 60)
+    expect(groups[0]?.top).toBe(0)
+    expect(groups[0]?.representative.id).toBe('milestone')
+    expect(groups[0]?.items.map(item => item.id).sort()).toEqual(['edu-a', 'edu-b', 'milestone'])
+    expect(
+      resolveWeekEventCardContent({
+        height: groups[0]!.height,
+        durationMinutes: groups[0]!.endM - groups[0]!.startM,
+        groupSize: groups[0]!.items.length,
+      })
+    ).toEqual({ titleLines: 2, showTime: true, showOverflow: true })
+  })
+
+  it('keeps the bottom inset for cards that reach 24:00 so radius/border are not clipped', () => {
+    const [group] = buildTimedItemGroupLayouts(
+      [{ id: 'all-day' }],
+      WEEK_TIME_GRID_HOUR_PX,
+      item => readTimesOrAllDaySpan(item, readSpan)
+    )
+    const style = buildWeekTimeGridGroupStyle(group!)
+    const gridContentBottom = WEEK_TIME_GRID_HOUR_PX * 24 - 2
+    expect(Number(style.top) + Number(style.height)).toBe(gridContentBottom - WEEK_EVENT_INSET_Y_PX)
+    expect(Number(style.top)).toBe(WEEK_EVENT_INSET_Y_PX)
+
+    const [late] = buildTimedItemGroupLayouts(
+      [{ id: 'late', startTime: '22:00', endTime: '24:00' }],
+      WEEK_TIME_GRID_HOUR_PX,
+      readSpan
+    )
+    const lateStyle = buildWeekTimeGridGroupStyle(late!)
+    expect(Number(lateStyle.top) + Number(lateStyle.height)).toBeLessThanOrEqual(
+      gridContentBottom - WEEK_EVENT_INSET_Y_PX
+    )
+  })
+
+  it('does not shrink cards that end before the grid bottom', () => {
+    const [group] = buildTimedItemGroupLayouts(
+      [{ id: 'mid', startTime: '10:00', endTime: '12:00' }],
+      WEEK_TIME_GRID_HOUR_PX,
+      readSpan
+    )
+    expect(group?.height).toBe(130)
+  })
+
+  it('keeps non-overlapping short sessions as separate cards', () => {
+    const groups = buildTimedItemGroupLayouts(
+      [
+        { id: 'a', startTime: '16:00', endTime: '16:02' },
+        { id: 'b', startTime: '16:05', endTime: '16:06' },
+        { id: 'c', startTime: '10:00', endTime: '12:00' },
+      ],
+      WEEK_TIME_GRID_HOUR_PX,
+      readSpan
+    )
+    expect(groups.map(group => group.items.length)).toEqual([1, 1, 1])
+  })
+
+  it('gives a 1–2 minute session at least one readable line', () => {
+    const height = computeWeekEventCardHeight({ startM: 960, endM: 962, adjacentEventCount: 0 })
+    expect(height).toBe(WEEK_EVENT_MIN_HEIGHT_PX)
+    expect(WEEK_EVENT_MIN_HEIGHT_PX).toBeGreaterThanOrEqual(29)
+    expect(resolveWeekEventCardContent({ height, durationMinutes: 2, groupSize: 1 })).toEqual({
+      titleLines: 1,
+      showTime: false,
+      showOverflow: false,
+    })
+  })
+})
+
+describe('week event card content (Figma Calendar/Tag/2 Line)', () => {
+  it('1h cluster of 2 (60px): title 1 line + 외 N, no time', () => {
+    expect(resolveWeekEventCardContent({ height: 60, durationMinutes: 60, groupSize: 2 })).toEqual({
+      titleLines: 1,
+      showTime: false,
+      showOverflow: true,
+    })
+  })
+
+  it('2h cluster (125px): 2-line title + time + 외 N', () => {
+    expect(resolveWeekEventCardContent({ height: 125, durationMinutes: 120, groupSize: 2 })).toEqual({
+      titleLines: 2,
+      showTime: true,
+      showOverflow: true,
+    })
+  })
+
+  it('single 1h event (60px): title 1 line + time, never a truncated time', () => {
+    expect(resolveWeekEventCardContent({ height: 60, durationMinutes: 60, groupSize: 1 })).toEqual({
+      titleLines: 1,
+      showTime: true,
+      showOverflow: false,
+    })
+  })
+
+  it('30 minute card: title only', () => {
+    expect(resolveWeekEventCardContent({ height: 30, durationMinutes: 30, groupSize: 1 })).toEqual({
+      titleLines: 1,
+      showTime: false,
+      showOverflow: false,
+    })
   })
 })

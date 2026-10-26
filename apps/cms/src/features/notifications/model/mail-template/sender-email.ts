@@ -9,7 +9,7 @@
  */
 export const MAIL_ALLOWED_SENDER_DOMAINS = ['jakorea.org'] as const
 
-/** 메일 템플릿 등록 시 기본 발신 메일 (기획) */
+/** 메일 발송 화면 harvest 기본 From 후보 (템플릿 등록은 기본값 없음) */
 export const MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL = 'jakorea@jakorea.org' as const
 
 const EMAIL_SHAPE_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -49,6 +49,8 @@ export const MAIL_SENDER_PROFILE_MISMATCH_MESSAGE =
   '메일 발신 프로필이 템플릿 발신 메일과 일치하지 않습니다.'
 export const MAIL_SENDER_DISPLAY_NAME_READONLY_HINT =
   '발신자명은 NHN 발신 프로필 표시명(SSOT)입니다. 직접 수정할 수 없습니다.'
+export const MAIL_SENDER_NAME_EMPTY_HINT =
+  '발신자명 미기재 시, 이메일을 받는 사람에게 이메일 주소 형식만 표시됩니다.'
 
 
 /** harvest senderKey 목록에서 대소문자 무시로 매칭되는 원본 키를 반환 */

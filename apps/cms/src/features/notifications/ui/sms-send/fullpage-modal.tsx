@@ -61,6 +61,7 @@ import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipie
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
 import { RecipientTable } from './recipient-table'
 import { useSmsSendForm } from './use-form'
+import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import '@/features/notifications/ui/mail-send/fullpage-modal.css'
 import './fullpage-modal.css'
 
@@ -356,24 +357,24 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         title="문자 발송"
         size="full"
         hideHeader
-        className="mail-send-fullpage-modal teal-header-modal--full"
+        className="notification-fullpage-modal mail-send-fullpage-modal teal-header-modal--full"
       >
-        <div className="mail-send-fullpage-modal__shell">
-          <header className="mail-send-fullpage-modal__title-row">
-            <span className="mail-send-fullpage-modal__title-text">문자 발송</span>
+        <div className="notification-fullpage-modal__shell">
+          <header className="notification-fullpage-modal__title-row">
+            <span className="notification-fullpage-modal__title-text">문자 발송</span>
             <button
               type="button"
-              className="mail-send-fullpage-modal__title-close"
+              className="notification-fullpage-modal__title-close"
               onClick={handleClose}
               aria-label="닫기"
             >
-              <ModalCloseIcon tone="white" />
+              <ModalCloseIcon />
             </button>
           </header>
 
-          <div className="mail-send-fullpage-modal__body">
-            <div className="mail-send-fullpage-modal__notice">
-              <div className="mail-send-fullpage-modal__notice-actions">
+          <div className="notification-fullpage-modal__body">
+            <div className="notification-fullpage-modal__notice">
+              <div className="notification-fullpage-modal__notice-actions">
                 <CmsButton
                   variant="cancel"
                   size="large"
@@ -412,9 +413,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
               </div>
             </div>
 
-            <div className="mail-send-fullpage-modal__layout">
-              <div className="mail-send-fullpage-modal__main">
-                <section className="mail-send-fullpage__widget">
+            <div className="notification-fullpage-modal__layout">
+              <div className="notification-fullpage-modal__main">
+                <section className="notification-fullpage-modal__widget">
                   <h3 className="mail-send-fullpage__section-title">1. 기본 설정</h3>
                   <DetailInfoForm title="기본 설정" hideHeader mode="edit">
                     <DetailInfoForm.Row type="single">
@@ -545,7 +546,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   </DetailInfoForm>
                 </section>
 
-                <section className="mail-send-fullpage__widget mail-send-fullpage__widget--recipients">
+                <section className="notification-fullpage-modal__widget mail-send-fullpage__widget--recipients">
                   <div className="mail-send-fullpage__section-head">
                     <h3 className="mail-send-fullpage__section-title">
                       2. 수신자 설정
@@ -589,7 +590,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   />
                 </section>
 
-                <section className="mail-send-fullpage__widget">
+                <section className="notification-fullpage-modal__widget">
                   <h3 className="mail-send-fullpage__section-title">3. 문자 작성</h3>
                   <SmsSendComposeFields
                     composeVersion={form.composeVersion}

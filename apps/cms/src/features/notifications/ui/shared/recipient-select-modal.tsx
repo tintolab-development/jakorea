@@ -4,6 +4,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { CMS_TABLE_EMPTY_COPY } from '@/shared/ui/cms-table-empty-copy'
 import './recipient-select-modal.css'
 
 const PICKER_Z_INDEX = 1100
@@ -287,7 +288,12 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
           </>
         ) : (
           <div className="send-recipient-select-modal__empty" role="status">
-            {'검색 결과가 없습니다.\n검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.'}
+            <p className="send-recipient-select-modal__empty-title">
+              {CMS_TABLE_EMPTY_COPY['no-search'].title}
+            </p>
+            <p className="send-recipient-select-modal__empty-description">
+              {CMS_TABLE_EMPTY_COPY['no-search'].description}
+            </p>
           </div>
         )}
       </div>

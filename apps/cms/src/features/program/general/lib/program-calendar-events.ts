@@ -11,6 +11,7 @@ import {
 } from '@/features/program/shared/ui/program-schedule-colors'
 import type { AdminProgramCalendarItem } from '@/features/program/general/api/program-calendar-api-client'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
+import { isMultiDayAllDayPeriodWindowForSurvey } from '@/features/program/shared/lib/program-schedule-canonical'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -25,6 +26,9 @@ export type GeneralProgramCalendarEventKind =
   | 'assignment'
   | 'event'
 
+/** 항목 programType(저장값) 기준 개인/기관 구분. 쿼리 programType=GENERAL이어도 항목은 하위 유형일 수 있다. */
+export type GeneralProgramCalendarParticipantScope = 'individual' | 'organization'
+
 export type GeneralProgramCalendarEvent = CalendarMainEventInput & {
   programId: string
   programTitle: string
@@ -36,6 +40,18 @@ export type GeneralProgramCalendarEvent = CalendarMainEventInput & {
   eventType: string
   originalItem: Program
   programOperationStartDate?: string
+  /** 항목 programType 저장값 (GENERAL, GENERAL_INDIVIDUAL, GENERAL_ORGANIZATION, COMPANY_SCHOOL …) */
+  programType?: string
+  participantScope?: GeneralProgramCalendarParticipantScope
+  scheduleId?: number
+  sourceType?: string
+  scheduleOrigin?: string | null
+  scheduleRole?: string | null
+  /** TEMP_ASSIGNED·CONFIRMED(기관·교육받은 교사), ASSIGNED·COMPLETED(1사1교). 필터하지 않고 그대로 둔다. */
+  assignmentStatus?: string | null
+  organizationName?: string | null
+  /** 기관 배정 이벤트의 신청 id. 상세 이동·기관 범위 식별용 */
+  organizationApplicationId?: number | null
 }
 
 function toSeoul(iso: string | null | undefined) {
@@ -115,9 +131,44 @@ function isBusinessStartEventType(eventType: string): boolean {
   return eventType === 'BUSINESS_START' || eventType === 'BUSINESS'
 }
 
+const EDUCATION_EVENT_TYPE = 'EDUCATION'
+const EDUCATION_PERIOD_EVENT_TYPE = 'EDUCATION_PERIOD'
+
+export function resolveProgramCalendarParticipantScope(
+  programType: string | null | undefined
+): GeneralProgramCalendarParticipantScope | undefined {
+  const normalized = programType?.trim().toUpperCase()
+  if (normalized === 'GENERAL' || normalized === 'GENERAL_INDIVIDUAL') return 'individual'
+  if (normalized === 'GENERAL_ORGANIZATION') return 'organization'
+  return undefined
+}
+
+/**
+ * 운영 캘린더에서 세션 카드로 그리면 안 되는 항목.
+ * - EDUCATION_PERIOD(교육 가능·운영 기간): BE가 더 이상 내려주지 않지만 방어적으로 제외
+ * - 여러 날에 걸친 allDay EDUCATION(기간 창): 매일 24시간 카드로 펼치지 않는다
+ */
+export function isExcludedProgramCalendarItem(item: AdminProgramCalendarItem): boolean {
+  const eventType = item.eventType?.trim() ?? ''
+  if (eventType === EDUCATION_PERIOD_EVENT_TYPE) return true
+  if (eventType !== EDUCATION_EVENT_TYPE) return false
+  return isMultiDayAllDayPeriodWindowForSurvey(item)
+}
+
+function buildEducationLabel(item: AdminProgramCalendarItem, fallback: string): string {
+  const scheduleName = item.scheduleName?.trim() || item.displayLabel?.trim() || fallback
+  const organizationName = item.organizationName?.trim()
+  if (!organizationName || scheduleName.includes(organizationName)) return scheduleName
+  return scheduleName ? `${organizationName} ${scheduleName}` : organizationName
+}
+
+function hasExplicitKstClock(value: dayjs.Dayjs | null): boolean {
+  if (!value) return false
+  return value.hour() !== 0 || value.minute() !== 0 || value.second() !== 0
+}
+
 function isDateOnlyOperationalEventType(eventType: string): boolean {
   return (
-    eventType === 'EDUCATION_PERIOD' ||
     eventType.startsWith('BUSINESS') ||
     eventType.startsWith('RECRUITMENT') ||
     eventType.startsWith('SURVEY') ||
@@ -173,13 +224,17 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
   const eventType = item.eventType?.trim() ?? ''
   const eventId = (item.eventId ?? item.eventKey)?.trim()
   if (!eventId) return null
+  if (isExcludedProgramCalendarItem(item)) return null
 
-  // 운영·모집·설문·과제 경계와 교육기간은 날짜 이벤트다.
-  // BE가 startAt=00:00과 allDay=false를 함께 줘도 주간 시간 일정으로 분할하지 않는다.
-  const allDay = item.allDay === true || isDateOnlyOperationalEventType(eventType)
   const eventDate = item.eventDate?.trim() ? calendarDateOnly(item.eventDate) : ''
   const startKst = toSeoul(item.startAt)
   const endKst = toSeoul(item.endAt)
+  // 운영·모집·설문·과제 경계는 기본적으로 날짜 이벤트다.
+  // BE가 startAt=00:00(KST)과 allDay=false를 함께 줘도 주간 시간 일정으로 분할하지 않는다.
+  // 00:00이 아닌 시각이 있는 마일스톤(예: 모집 시작 14:00)은 시간 카드로 둔다.
+  const allDay =
+    item.allDay === true ||
+    (isDateOnlyOperationalEventType(eventType) && !hasExplicitKstClock(startKst))
 
   let startDate = ''
   let endDate = ''
@@ -188,17 +243,11 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
 
   const allDayStartDate = eventDate || startKst?.format('YYYY-MM-DD') || ''
   if (allDay && allDayStartDate) {
+    // allDay는 eventDate(Asia/Seoul) 하루. 여러 날 기간 바로 펼치지 않는다.
     startDate = allDayStartDate
-    if (eventType === 'EDUCATION_PERIOD' && endKst) {
-      const exclusiveKstMidnight =
-        endKst.hour() === 0 && endKst.minute() === 0 && endKst.second() === 0
-      endDate = exclusiveKstMidnight
-        ? endKst.subtract(1, 'day').format('YYYY-MM-DD')
-        : endKst.format('YYYY-MM-DD')
-    } else {
-      endDate = allDayStartDate
-    }
+    endDate = allDayStartDate
   } else if (startKst) {
+    // 시각 회차: startAt/endAt(UTC Instant)을 Asia/Seoul로 변환해 날짜·시각을 정한다.
     startDate = startKst.format('YYYY-MM-DDTHH:mm:ss')
     endDate = (endKst ?? startKst).format('YYYY-MM-DDTHH:mm:ss')
     startTime = startKst.format('HH:mm')
@@ -211,8 +260,9 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
   }
 
   const programTitle = item.programName?.trim() || ''
-  const scheduleName = item.scheduleName?.trim() || item.displayLabel?.trim() || programTitle
+  const scheduleName = buildEducationLabel(item, programTitle)
   const colorKey = resolveProgramCalendarColorKey(item)
+  const programType = item.programType?.trim() || undefined
 
   return {
     id: eventId,
@@ -221,6 +271,9 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
     programTitle,
     scheduleContent: scheduleName,
     timeLabel: formatCalendarEventTimeLabel(startTime, endTime),
+    // 주간 격자 카드 제목은 항상 프로그램명(Figma). 종일·마일스톤도 일정명을 쓰지 않는다.
+    // 우측 목록·Hover는 scheduleContent(일정명)를 그대로 쓴다.
+    timeGridLabel: programTitle || undefined,
     operationPeriodLabel: '',
     kind: kindFromEventType(eventType),
     colorKey,
@@ -231,22 +284,48 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
     startTime,
     endTime,
     programOperationStartDate: readApiProgramOperationStartDate(item) || undefined,
+    programType,
+    participantScope: resolveProgramCalendarParticipantScope(programType),
+    scheduleId: item.scheduleId ?? undefined,
+    sourceType: item.sourceType?.trim() || undefined,
+    scheduleOrigin: item.scheduleOrigin ?? null,
+    scheduleRole: item.scheduleRole ?? null,
+    assignmentStatus: item.assignmentStatus ?? null,
+    organizationName: item.organizationName?.trim() || null,
+    organizationApplicationId: item.organizationApplicationId ?? null,
   }
 }
 
+/**
+ * BE 응답만으로 이벤트를 만든다. 빈 배열이면 프로그램 상세·사업기간·educationScheduleLines로 대체 생성하지 않는다.
+ * 고유 키는 eventId(=eventKey). scheduleId·날짜로 병합하지 않고, 같은 eventId 중복 응답만 1건으로 둔다.
+ */
 export function mapAdminProgramCalendarItemsToEvents(
   items: AdminProgramCalendarItem[]
 ): GeneralProgramCalendarEvent[] {
   const events: GeneralProgramCalendarEvent[] = []
+  const seenEventIds = new Set<string>()
   for (const item of items) {
     const event = mapCalendarItemToEvent(item)
-    if (event) events.push(event)
+    if (!event) continue
+    const key = String(event.id)
+    if (seenEventIds.has(key)) continue
+    seenEventIds.add(key)
+    events.push(event)
   }
   return attachProgramOperationStartDates(events).sort((a, b) => {
     const dateDiff = dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf()
     if (dateDiff !== 0) return dateDiff
     return String(a.programTitle).localeCompare(String(b.programTitle), 'ko')
   })
+}
+
+/** 월간 칸 라벨: 주간 격자와 같이 프로그램명 우선, 비어 있을 때만 일정명 */
+export function resolveGeneralProgramMonthEventLabel(
+  event: Pick<GeneralProgramCalendarEvent, 'programTitle' | 'scheduleContent'> | null | undefined,
+  fallbackTitle?: string
+): string {
+  return event?.programTitle?.trim() || event?.scheduleContent?.trim() || fallbackTitle || ''
 }
 
 export function getGeneralProgramCalendarEventFromCalendarItem(

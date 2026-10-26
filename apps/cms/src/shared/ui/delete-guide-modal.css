@@ -49,3 +49,17 @@
   box-sizing: border-box;
   max-width: 100%;
 }
+
+/* 확인 문구 입력 전에도 삭제 버튼은 시안의 분홍 아웃라인. 동작은 disabled로 막는다. */
+.delete-guide-modal .content-modal__footer-actions .cms-button.ant-btn.cms-button--error.ant-btn-disabled,
+.delete-guide-modal .content-modal__footer-actions .cms-button.ant-btn.cms-button--error:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed;
+  border-color: var(--Status-red-main, #c32f4a) !important;
+  background: var(
+    --Status-red-bg,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.06) 0%, rgba(195, 47, 74, 0.06) 100%),
+    #fff
+  ) !important;
+  color: var(--Status-red-main, #c32f4a) !important;
+}

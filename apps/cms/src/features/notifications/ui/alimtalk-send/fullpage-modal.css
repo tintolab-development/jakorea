@@ -1,159 +1,4 @@
-.alimtalk-send-fullpage-modal.teal-header-modal--full .teal-header-modal__body {
-  padding: 0 !important;
-  margin-top: 0 !important;
-  gap: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-x: clip;
-  width: 100%;
-  background: #f4f6f6;
-}
-
-@supports not (overflow-x: clip) {
-  .alimtalk-send-fullpage-modal.teal-header-modal--full .teal-header-modal__body {
-    overflow-x: visible;
-  }
-}
-
-.alimtalk-send-fullpage-modal__shell {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
-  box-sizing: border-box;
-  background: #f4f6f6;
-}
-
-.alimtalk-send-fullpage-modal__title-row {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-  width: 100%;
-  box-sizing: border-box;
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
-  background: var(--color-mint-01, #01a1af);
-  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
-  padding: 16px 52px;
-}
-
-.alimtalk-send-fullpage-modal__title-text {
-  color: var(--main-WT, #fff);
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 26px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 120%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.alimtalk-send-fullpage-modal__title-close {
-  display: inline-flex;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--main-WT, #fff);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.alimtalk-send-fullpage-modal__title-close .anticon {
-  font-size: 16px;
-}
-
-.alimtalk-send-fullpage-modal__notice {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 44px;
-}
-
-.alimtalk-send-fullpage-modal__notice-text {
-  margin: 0;
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-}
-
-.alimtalk-send-fullpage-modal__notice-actions {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 8px;
-}
-
-.alimtalk-send-fullpage-modal__body {
-  display: flex;
-  width: 100%;
-  padding: 32px 52px 0;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 32px;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  margin: 0;
-  box-sizing: border-box;
-  background: #f4f6f6;
-}
-
-/* 미리보기 풀페이지와 분리 — flex 자식이 padding-bottom을 덮지 않도록 52px 스페이서 */
-.alimtalk-send-fullpage-modal__body::after {
-  content: '';
-  display: block;
-  flex: 0 0 52px;
-  align-self: stretch;
-  width: 100%;
-  margin-top: -32px;
-  pointer-events: none;
-}
-
-.alimtalk-send-fullpage-modal__notice,
-.alimtalk-send-fullpage__widget {
-  align-self: stretch;
-  width: 100%;
-}
-
-.alimtalk-send-fullpage__widget {
-  display: flex;
-  flex: 0 0 auto;
-  padding: 20px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
-  align-self: stretch;
-  box-sizing: border-box;
-  border-radius: var(--16, 16px);
-  background: var(--main-WT, #fff);
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
-}
-
-.alimtalk-send-fullpage__widget > * {
-  align-self: stretch;
-  width: 100%;
-  min-width: 0;
-}
+/* 레이아웃 크롬은 notification-fullpage-modal.css SSOT */
 
 .alimtalk-send-fullpage__widget--content {
   flex-direction: row;
@@ -201,6 +46,29 @@
   line-height: 140%;
 }
 
+.alimtalk-send-fullpage__section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.alimtalk-send-fullpage__section-title-row .alimtalk-send-fullpage__section-title {
+  flex: 0 0 auto;
+}
+
+.alimtalk-send-fullpage__section-guide {
+  margin: 0;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
 .alimtalk-send-fullpage__section-head {
   display: flex;
   align-items: center;
@@ -229,7 +97,8 @@
 }
 
 .alimtalk-send-fullpage__widget--recipients .alimtalk-send-fullpage__empty {
-  min-height: 220px;
+  height: 180px;
+  flex: 0 0 auto;
 }
 
 .alimtalk-send-fullpage__timing {
@@ -242,23 +111,45 @@
 
 .alimtalk-send-fullpage__empty {
   display: flex;
-  flex: 1 1 auto;
-  align-items: center;
+  flex-direction: column;
+  height: 180px;
+  padding: 40px;
   justify-content: center;
-  min-height: 160px;
-  border-radius: 8px;
-  border: 1px solid var(--table-line, #e0e0e0);
-  background: var(--color-bg-secondary, #f5f6f7);
-  color: rgba(61, 61, 61, 0.6);
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
+  align-items: center;
+  gap: 4px;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-radius: var(--Radius-8, 8px);
+  border: 1px solid var(--Border-default, #e0e0e0);
+  background: var(--White, #fff);
   text-align: center;
 }
 
+.alimtalk-send-fullpage__empty-title,
+.alimtalk-send-fullpage__empty-description {
+  margin: 0;
+  color: var(--Neutral-black, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-style: normal;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.alimtalk-send-fullpage__empty-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.alimtalk-send-fullpage__empty-description {
+  font-size: 14px;
+  font-weight: 400;
+}
+
 .alimtalk-send-fullpage__empty--fill {
+  height: auto;
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 .alimtalk-send-fullpage__content-row {
