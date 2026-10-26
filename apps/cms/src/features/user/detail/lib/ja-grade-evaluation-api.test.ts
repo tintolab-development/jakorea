@@ -74,12 +74,9 @@ describe('ja-grade-evaluation-api', () => {
     expect(resolveJaEvaluationDisplayGrade({}, 'C')).toBe('C')
   })
 
-  it('평가 전 null 총점·등급 응답은 빈 초안을 0점으로 채우지 않는다', () => {
+  it('평가 전 미존재 총점·등급 응답은 빈 초안을 0점으로 채우지 않는다', () => {
     const empty = buildJaGradeEvaluationDraft(null)
     const draft = applyJaEvaluationResponseToDraft(empty, {
-      currentGrade: null,
-      totalScore: null,
-      fixedEvaluationScore: null,
       policyReady: true,
       criteria: [],
     })

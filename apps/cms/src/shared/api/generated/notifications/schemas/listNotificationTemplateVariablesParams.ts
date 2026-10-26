@@ -11,23 +11,23 @@ import type { ListNotificationTemplateVariablesParticipantType } from './listNot
 
 export type ListNotificationTemplateVariablesParams = {
 /**
- * 카탈로그 카테고리 코드.
+ * 카테고리 코드 필터
  */
 category?: ListNotificationTemplateVariablesCategory;
 /**
- * key/description 부분 검색.
+ * key/description 부분검색
  */
 keyword?: string;
 /**
- * 대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.
+ * 대상 프로그램. 없으면 requiresProgram=true 항목 enabled=false
  */
 programId?: number;
 /**
- * 프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.
+ * 참여 유형 필터. 프로그램 선택 시 수신자 유형과 맞춤
  */
 participantType?: ListNotificationTemplateVariablesParticipantType;
 /**
- * 프로그램 미선택(전체) 시 회원 유형 필터.
+ * 회원 유형 필터. 프로그램 미선택(전체) 시 주로 사용
  */
 memberType?: ListNotificationTemplateVariablesMemberType;
 };
