@@ -379,7 +379,7 @@ describe('general-program-adapters', () => {
     expect(create.type).toBe('offline')
     expect(create.targetLevel).toBe('elementary')
     expect(create.targetLevels).toEqual(['elementary'])
-    expect(create.rounds).toHaveLength(1)
+    expect(create.rounds).toBeUndefined()
     // audience 미설정 → ORGANIZATION → GENERAL_ORGANIZATION
     expect(create.programType).toBe('GENERAL_ORGANIZATION')
     expect(create.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
@@ -407,11 +407,12 @@ describe('general-program-adapters', () => {
 
     const patch = mapGeneralProgramToUpdateRequest(
       sampleProgram,
-      { title: '제목만' },
+      { title: '제목만', rounds: sampleProgram.rounds },
       sampleProgram
     ) as unknown as Record<string, unknown>
     expect(patch.featuredOnHome).toBeUndefined()
     expect(patch.homeDisplayOrder).toBeUndefined()
+    expect(patch.rounds).toBeUndefined()
   })
 
   it('does not hydrate featuredOnHome from admin GET', () => {

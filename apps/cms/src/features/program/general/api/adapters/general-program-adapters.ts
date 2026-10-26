@@ -21,7 +21,6 @@ import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
-import type { ProgramUpdateRequestRoundsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestRoundsItem'
 import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
 import { omitNullRecordValues } from '@/shared/lib/openapi-null'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
@@ -599,26 +598,6 @@ export function filterGeneralProgramsByOverviewStatus(
   return programs.filter(program => programMatchesProgressPhase(program, statusFilter))
 }
 
-function mapProgramRoundsToUpdateRequest(
-  program: Program
-): ProgramUpdateRequestRoundsItem[] | undefined {
-  const rounds = mapProgramRoundsToRequest(program)
-  return rounds as ProgramUpdateRequestRoundsItem[] | undefined
-}
-
-function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['rounds'] {
-  return program.rounds?.map(round => ({
-    roundNumber: round.roundNumber,
-    startDate: toRequestDate(round.startDate),
-    endDate: toRequestDate(round.endDate),
-    capacity: round.capacity,
-    classCount: round.classCount,
-    status: round.status,
-    curriculum: round.curriculum,
-    deliveryType: round.deliveryType,
-  }))
-}
-
 /**
  * BE canonical `recruitments[]` — 참여자 유형별 ACTIVE 모집 row.
  * `generalParticipantTypes`에 volunteer가 있으면 VOLUNTEER ACTIVE 필수
@@ -1026,7 +1005,6 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     attachmentFileNames: program.attachmentFileNames,
     // BE 필수 — serviceDetailJson 앞쪽에 둬 로깅·디버깅 시 잘리지 않게
     applicationTargetMode,
-    rounds: mapProgramRoundsToUpdateRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
   }
   assignProgramPaymentItemsToWriteRequest({ body, program })
@@ -1397,8 +1375,6 @@ function mapProgramPatchFieldsToRequest(
     body.learningSupportContent = merged.learningSupportContent
   }
   if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
-  if (has('rounds')) body.rounds = mapProgramRoundsToUpdateRequest(merged)
-
   const detailSource =
     has('generalProgramAudience') || has('generalParticipantTypes')
       ? {

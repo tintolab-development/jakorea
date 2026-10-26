@@ -25,17 +25,9 @@ export function ProgramFormPage() {
 
   const handleSubmit = async (data: ProgramFormData) => {
     try {
-      // ProgramFormData를 Program 타입으로 변환 (rounds에 id, programId 추가)
-      const programData = {
-        ...data,
-        rounds: data.rounds.map((round, index) => ({
-          ...round,
-          id: isEdit && selectedProgram
-            ? selectedProgram.rounds[index]?.id || `round-${index + 1}`
-            : `round-${index + 1}`,
-          programId: isEdit && id ? id : '', // create 시에는 서비스에서 처리
-        })),
-      }
+      // GENERAL의 레거시 rounds는 일정 교체 입력이므로 remote create/update에 보내지 않는다.
+      const { rounds: _legacyRounds, ...programData } = data
+      void _legacyRounds
 
       if (isEdit && id) {
         await updateProgram(id, programData)
@@ -63,4 +55,3 @@ export function ProgramFormPage() {
     </div>
   )
 }
-
