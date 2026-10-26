@@ -14,6 +14,28 @@ export function containsMailVariableTokens(text: string): boolean {
   return MAIL_VARIABLE_TOKEN_RE.test(text) || MAIL_VARIABLE_ATTR_RE.test(text)
 }
 
+/** BE senderProfileDisplayName 최대 길이 */
+export const MAIL_SENDER_DISPLAY_NAME_MAX_LENGTH = 255
+
+function isBlockedSenderDisplayNameChar(ch: string): boolean {
+  const code = ch.charCodeAt(0)
+  return code <= 0x1f || code === 0x7f || ch === '<' || ch === '>'
+}
+
+/** 발신자명 입력: 줄바꿈 등 제어문자와 < > 를 막고 255자로 자른다. */
+export function sanitizeMailSenderDisplayNameInput(value: string): string {
+  return Array.from(value)
+    .filter(ch => !isBlockedSenderDisplayNameChar(ch))
+    .join('')
+    .slice(0, MAIL_SENDER_DISPLAY_NAME_MAX_LENGTH)
+}
+
+/** 발송 요청 senderProfileDisplayName. 비면 생략(BE가 NHN 프로필 표시명 사용). */
+export function resolveMailSenderDisplayNameForSend(value: string | undefined): string | undefined {
+  const name = sanitizeMailSenderDisplayNameInput(value ?? '').trim()
+  return name || undefined
+}
+
 export function buildMailSendPayload(draft: MailSendDraft): MailSendPayload {
   return {
     ...draft,

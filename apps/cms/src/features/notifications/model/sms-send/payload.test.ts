@@ -3,6 +3,7 @@ import {
   buildSmsSendCreateRequest,
   buildSmsSendPayload,
   estimateSmsSendBodyBytes,
+  SMS_SEND_CONTENT_UTF8_OVER_MESSAGE,
   validateSmsSendDraft,
 } from './payload'
 import {
@@ -212,6 +213,50 @@ describe('buildSmsSendCreateRequest', () => {
     const request = buildSmsSendCreateRequest({ draft: draft(), templateId: 101 })
     expect(request.templateId).toBe(101)
     expect(request).not.toHaveProperty('messageType')
+  })
+
+  it('템플릿 미선택: senderProfileId가 있으면 senderKey는 생략하고 목적·표시명 필드를 보내지 않는다', () => {
+    const request = buildSmsSendCreateRequest({
+      draft: draft({ templateId: undefined, messageType: 'SMS' }),
+      templateId: null,
+      senderKey: '01012345678',
+      senderProfileId: 12,
+    })
+    expect(request).not.toHaveProperty('templateId')
+    expect(request.messageType).toBe('SMS')
+    expect(request.senderProfileId).toBe(12)
+    expect(request.senderKey).toBeUndefined()
+    expect(request).not.toHaveProperty('senderProfileType')
+    expect(request).not.toHaveProperty('senderProfileDisplayName')
+    expect(request).not.toHaveProperty('messagePurpose')
+  })
+
+  it('템플릿 미선택: senderProfileId가 없으면 senderKey로 보낸다', () => {
+    const request = buildSmsSendCreateRequest({
+      draft: draft({ templateId: undefined }),
+      templateId: null,
+      senderKey: '01012345678',
+    })
+    expect(request.senderKey).toBe('01012345678')
+    expect(request.senderProfileId).toBeUndefined()
+  })
+
+  it('템플릿 선택: senderKey/senderProfileId는 기존처럼 함께 보낸다', () => {
+    const request = buildSmsSendCreateRequest({
+      draft: draft(),
+      templateId: 101,
+      senderKey: '01012345678',
+      senderProfileId: 12,
+    })
+    expect(request).toMatchObject({ senderKey: '01012345678', senderProfileId: 12 })
+  })
+
+  it('본문이 UTF-8 2,000byte를 넘으면 막는다', () => {
+    // 한글 700자: NHN 1,400byte(화면 통과) / UTF-8 2,100byte(BE 거부)
+    expect(validateSmsSendDraft(draft({ bodyText: '가'.repeat(700) }))).toBe(
+      SMS_SEND_CONTENT_UTF8_OVER_MESSAGE
+    )
+    expect(validateSmsSendDraft(draft({ bodyText: '가'.repeat(666) }))).toBeNull()
   })
 
   it('rejects non-numeric program id', () => {

@@ -85,10 +85,11 @@ export function resolveSmsSendProgramId(programId: string | undefined): number |
 }
 
 /**
- * 문자 발송 Create body.
+ * 문자 발송 Create body (BE JABACK PR #43).
  * - templateId 있음: 기존 계약 그대로
- * - templateId 없음(템플릿 미선택 = 템플릿 사용 안 함): templateId 생략 + messageType 추가.
- *   BE가 SMS 한정으로 templateId optional 처리 예정(keonhee). messageType 필드명은 BE 확정 전 가정값.
+ * - templateId 없음(템플릿 미선택 = 템플릿 사용 안 함): templateId 생략(null/0/'' 금지) + messageType 필수.
+ *   발신번호는 senderProfileId 우선, 없을 때만 senderKey. 발송 목적·senderProfileType·
+ *   senderProfileDisplayName은 보내지 않는다(BE가 NORMAL 저장).
  */
 export type SmsSendCreateRequest = Omit<CreateRequest, 'templateId'> & {
   templateId?: number
@@ -116,7 +117,9 @@ export function buildSmsSendCreateRequest(input: {
       sendTiming: draft.sendTiming,
       scheduledAt: draft.scheduledAt,
     }),
-    senderKey: senderKey?.trim() || undefined,
+    // 템플릿 미선택: senderProfileId가 있으면 senderKey 생략(둘 다 보내면 BE가 일치 검증)
+    senderKey:
+      templateId == null && senderProfileId != null ? undefined : senderKey?.trim() || undefined,
     senderProfileId,
     recipients: buildSmsSendRecipients(
       draft.recipients,
@@ -140,6 +143,15 @@ export function buildSmsSendPayload(draft: SmsSendDraft): SmsSendDraft {
     subject: normalizeNotificationPlaceholderMarkup(draft.subject),
     bodyText: normalizeNotificationPlaceholderMarkup(draft.bodyText),
   }
+}
+
+/** BE contentTemplate 한도: UTF-8 2,000byte (화면 카운터의 NHN 바이트와 별개) */
+export const SMS_SEND_CONTENT_UTF8_BYTE_LIMIT = 2000
+export const SMS_SEND_CONTENT_UTF8_OVER_MESSAGE =
+  '본문은 UTF-8 기준 최대 2,000byte까지 발송할 수 있습니다. 내용을 줄여 주세요.'
+
+export function estimateUtf8Bytes(text: string): number {
+  return new TextEncoder().encode(text).length
 }
 
 export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
@@ -175,6 +187,9 @@ export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
     })
   )
   if (composeError) return composeError
+  if (estimateUtf8Bytes(draft.bodyText) > SMS_SEND_CONTENT_UTF8_BYTE_LIMIT) {
+    return SMS_SEND_CONTENT_UTF8_OVER_MESSAGE
+  }
 
   return null
 }

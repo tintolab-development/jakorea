@@ -246,6 +246,6 @@ export async function submitSmsSend(input: {
     body.titleTemplate = draft.subject.trim()
   }
 
-  // templateId 생략(템플릿 미선택)은 BE SMS optional 계약 반영 전까지 생성 타입과 다르다.
+  // templateId 생략·messageType은 BE PR #43 계약. OpenAPI 재생성 전까지 생성 타입과 다르다.
   await createSendBatchRemote(body as CreateRequest, idempotencyKey)
 }

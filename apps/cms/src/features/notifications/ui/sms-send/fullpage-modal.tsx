@@ -68,7 +68,7 @@ import { ProgramSelectField } from '@/features/notifications/ui/mail-send/progra
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { SmsSendComposeFields } from './compose-fields'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
-import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
+import { showNotificationSendErrorAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
 import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
@@ -84,6 +84,14 @@ function createIdempotencyKey(): string {
   }
   return `sms-batch-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
+
+/** BE 발송 검증 오류(error.code) → 포커스할 입력 */
+const SMS_SEND_ERROR_FOCUS_SELECTORS = {
+  template: '.sms-send-fullpage__message-type input:not(:disabled)',
+  messageType: '.sms-send-fullpage__message-type input:not(:disabled)',
+  content: '.sms-send-fullpage__body-field textarea',
+  sender: '.sms-send-fullpage__sender-select input',
+} as const
 
 function recipientTotalPages(total: number, size: number, totalPages?: number): number {
   if (totalPages != null && totalPages > 0) return totalPages
@@ -444,9 +452,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       setSendConfirmOpen(false)
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
-    } catch {
+    } catch (error) {
       setSendConfirmOpen(false)
-      showNotificationSendRequestFailedAlert(showAlert)
+      showNotificationSendErrorAlert(showAlert, error, SMS_SEND_ERROR_FOCUS_SELECTORS)
     } finally {
       setSending(false)
     }
@@ -606,6 +614,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         view={form.senderPhone}
                         edit={
                           <CmsSelect
+                            className="sms-send-fullpage__sender-select"
                             inputSize="small"
                             width="100%"
                             withAllOption={false}
@@ -623,6 +632,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         view={form.messageType}
                         edit={
                           <CmsRadio.Group
+                            className="sms-send-fullpage__message-type"
                             size="medium"
                             disabled={Boolean(form.templateId?.trim())}
                             value={form.messageType}

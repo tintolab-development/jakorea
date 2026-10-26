@@ -406,3 +406,48 @@ export function getNotificationSendBatchErrorMessage(error: unknown, fallback: s
   }
   return getNotificationsApiErrorMessage(error, fallback)
 }
+
+/** 발송 배치 POST 400 중 화면 필드로 안내할 오류 (BE PR #43) */
+export type NotificationSendErrorField =
+  | 'template'
+  | 'messageType'
+  | 'content'
+  | 'sender'
+  | 'senderDisplayName'
+  | null
+
+const NOTIFICATION_SEND_FIELD_ERROR_CODES: Record<string, NotificationSendErrorField> = {
+  NOTIFICATION_TEMPLATE_REQUIRED: 'template',
+  NOTIFICATION_SMS_MESSAGE_TYPE_INVALID: 'messageType',
+  NOTIFICATION_SMS_CONTENT_REQUIRED: 'content',
+  NOTIFICATION_SMS_SENDER_REQUIRED: 'sender',
+  NOTIFICATION_SENDER_PROFILE_NOT_FOUND: 'sender',
+  NOTIFICATION_SMS_SENDER_PROFILE_MISMATCH: 'sender',
+  NOTIFICATION_SENDER_DISPLAY_NAME_INVALID: 'senderDisplayName',
+  NOTIFICATION_SENDER_DISPLAY_NAME_EMAIL_ONLY: 'senderDisplayName',
+  NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES: null,
+  NOTIFICATION_SERVER_RESERVED_VARIABLE: null,
+}
+
+/**
+ * 발송 배치 POST 실패 중 사용자가 고칠 수 있는 검증 오류면 BE 문구와 포커스 대상 필드를 돌려준다.
+ * `CODE:{키}` 형태도 접두어로 매칭. 해당 없으면 null(공통 실패 안내 사용).
+ */
+export function resolveNotificationSendFieldError(
+  error: unknown
+): { code: string; field: NotificationSendErrorField; message: string } | null {
+  const rawCode = getApiErrorCode(error) ?? extractApiErrorCode(readAxiosData(error))
+  if (!rawCode) return null
+  const code = rawCode.split(':')[0]?.trim() ?? ''
+  if (!(code in NOTIFICATION_SEND_FIELD_ERROR_CODES)) return null
+  const data = readAxiosData(error)
+  const serverMessage =
+    data != null
+      ? extractApiErrorMessage(data, { httpStatus: getApiErrorHttpStatus(error), fallback: '' })
+      : ''
+  const message =
+    serverMessage && serverMessage !== rawCode
+      ? serverMessage
+      : getNotificationsApiErrorMessage(error, '입력값을 확인하세요.')
+  return { code, field: NOTIFICATION_SEND_FIELD_ERROR_CODES[code] ?? null, message }
+}

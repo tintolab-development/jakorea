@@ -113,6 +113,19 @@ describe('submitSmsSend', () => {
       contentTemplate: '직접 본문',
       senderProfileId: 9,
     })
+    expect(body?.senderKey).toBeUndefined()
+  })
+
+  it('sends without template as SMS type: no titleTemplate', async () => {
+    await submitSmsSend({
+      draft: draft({ templateId: undefined, messageType: 'SMS', subject: '', bodyText: '짧은 본문' }),
+      idempotencyKey: 'idem-sms-no-template-sms',
+      senderProfileId: 9,
+    })
+    const body = vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]
+    expect(body).not.toHaveProperty('templateId')
+    expect(body).toMatchObject({ messageType: 'SMS', contentTemplate: '짧은 본문' })
+    expect(body?.titleTemplate).toBeUndefined()
   })
 
   it('rejects a non-numeric template id instead of silently sending without template', async () => {
