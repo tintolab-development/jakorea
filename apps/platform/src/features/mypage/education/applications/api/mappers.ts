@@ -2,6 +2,7 @@ import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-
 import { formatDisplayDateRange } from '@/shared/lib/format-display-date'
 import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import { mapPortalCategoryLabel } from '@/features/program/lib/portal-category'
+import { mapApplicationWindowToRecruitmentStatus } from '@/features/program/lib/map-from-cms'
 import {
   formatInterviewAtLabel,
   resolveApplicationContentFromAnswers,
@@ -205,8 +206,25 @@ function formatDateRange(start: string | null | undefined, end: string | null | 
   return formatDisplayDateRange(start, end, { empty: '-' })
 }
 
-function mapRecruitmentStatus(displayStatus: EducationDisplayStatus): RecruitmentStatus {
-  if (displayStatus === 'in_progress') return 'recruiting'
+function parseRecruitmentDate(value: string | null | undefined): Date | null {
+  if (!value?.trim()) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+/**
+ * 모집 배지는 프로그램 모집기간 기준(프로그램 목록과 동일).
+ * 신청 진행 상태(displayStatus)는 내 신청 상태라 모집 상태와 다르다 — 기간이 없을 때만 폴백.
+ */
+export function mapApplicationRecruitmentStatus(input: {
+  recruitmentStartAt?: string | null
+  recruitmentEndAt?: string | null
+  displayStatus: EducationDisplayStatus
+}): RecruitmentStatus {
+  const start = parseRecruitmentDate(input.recruitmentStartAt)
+  const end = parseRecruitmentDate(input.recruitmentEndAt)
+  if (start && end) return mapApplicationWindowToRecruitmentStatus(start, end)
+  if (input.displayStatus === 'in_progress') return 'recruiting'
   return 'closed'
 }
 
@@ -239,7 +257,11 @@ export function mapPortalProgramApplicationListItem(
     title,
     recruitmentPeriodLabel: formatDateRange(row.recruitmentStartAt, row.recruitmentEndAt),
     operatingPeriodLabel: formatDateRange(row.educationStartAt, row.educationEndAt),
-    recruitmentStatus: mapRecruitmentStatus(displayStatus),
+    recruitmentStatus: mapApplicationRecruitmentStatus({
+      recruitmentStartAt: row.recruitmentStartAt,
+      recruitmentEndAt: row.recruitmentEndAt,
+      displayStatus,
+    }),
     educationTargetLabel: '전체',
     educationForm: 'offline',
     educationFormLabel: '오프라인',
@@ -354,7 +376,11 @@ export function mapPortalProgramApplicationDetail(
   })
   if (!mapped) return null
   mapped.displayStatus = displayStatus
-  mapped.recruitmentStatus = mapRecruitmentStatus(displayStatus)
+  mapped.recruitmentStatus = mapApplicationRecruitmentStatus({
+    recruitmentStartAt: detail.recruitmentStartAt ?? detail.program?.recruitmentStartAt,
+    recruitmentEndAt: detail.recruitmentEndAt ?? detail.program?.recruitmentEndAt,
+    displayStatus,
+  })
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
   if (detail.certificateAvailable != null) {
     mapped.certificateAvailable = detail.certificateAvailable
