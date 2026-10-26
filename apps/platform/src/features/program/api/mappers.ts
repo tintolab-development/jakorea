@@ -1263,7 +1263,9 @@ export function mapPortalProgramDetail(
   const eventSchedules =
     isUjatDetailCase && ujatRuntimeSchedules.length > 0
       ? ujatRuntimeSchedules
-      : projectedScheduleDetails
+      : projectedScheduleDetails.length > 0
+        ? projectedScheduleDetails
+        : legacyEventSchedules
   const educationStructure = usesEducationProgressFields
     ? remote.educationStructure === 'schedule'
       ? 'schedule'

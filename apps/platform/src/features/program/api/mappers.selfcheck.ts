@@ -363,6 +363,63 @@ assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.name, '기관')
 assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.dateLabel, '일정 미정')
 assert.equal(ujatUndatedPublicSchedules.educationSchedules.length, 0)
 
+const ujat186383 = mapPortalProgramDetail({
+  programId: 186383,
+  title: 'UJAT 기관 상반기',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'PARTICIPANT', applicationTypes: ['ORGANIZATION'] }],
+  schedules: [
+    { scheduleKind: 'SESSION', term: 'FIRST_HALF' },
+    {
+      scheduleKind: 'PRE_EDUCATION',
+      term: 'FIRST_HALF',
+      publiclyVisible: false,
+      startAt: '2026-03-01T00:00:00Z',
+    },
+  ],
+})
+assert.ok(ujat186383)
+assert.deepEqual(ujat186383.eventSchedules, [
+  {
+    scheduleLabel: '상반기',
+    name: '기관',
+    dateLabel: '일정 미정',
+  },
+])
+assert.deepEqual(ujat186383.educationSchedules, [])
+
+const ujat186385 = mapPortalProgramDetail({
+  programId: 186385,
+  title: 'UJAT 기관 하반기',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'PARTICIPANT', applicationTypes: ['ORGANIZATION'] }],
+  schedules: [
+    {
+      scheduleKind: 'SESSION',
+      term: 'SECOND_HALF',
+      startAt: '2026-09-01T00:00:00Z',
+      endAt: '2026-09-01T03:00:00Z',
+    },
+  ],
+})
+assert.ok(ujat186385)
+assert.equal(ujat186385.eventSchedules[0]?.scheduleLabel, '하반기')
+assert.equal(ujat186385.eventSchedules[0]?.name, '기관')
+assert.equal(ujat186385.educationSchedules.length, 0)
+
+const general186389 = mapPortalProgramDetail({
+  programId: 186389,
+  title: '일반 기관 프로그램',
+  programType: 'GENERAL_ORGANIZATION',
+  schedules: [
+    { scheduleKind: 'SESSION', startAt: '2026-04-01T00:00:00Z' },
+    { scheduleKind: 'SESSION', startAt: '2026-05-01T00:00:00Z' },
+  ],
+})
+assert.ok(general186389)
+assert.equal(general186389.eventSchedules.length, 2)
+assert.deepEqual(general186389.eventSchedules.map(schedule => schedule.name), ['기관', '기관'])
+
 const generalCurriculum = mapPortalProgramDetail({
   programId: 186021,
   programType: 'GENERAL_INDIVIDUAL',
