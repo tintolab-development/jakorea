@@ -7,12 +7,16 @@ import {
 import { NodeSelection } from '@tiptap/pm/state'
 import { findEmojiByName } from './emoji-extension'
 import {
+  getRichTextImageCount,
   getRichTextImageFileSize,
   getRichTextImageTotalBytes,
+  RICH_TEXT_IMAGE_MAX_COUNT,
   RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
 } from './limits'
 import {
+  RICH_TEXT_INLINE_IMAGE_COUNT_MESSAGE,
   RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
+  RICH_TEXT_INLINE_IMAGE_SIZE_MESSAGE,
   RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE,
 } from './visible-length'
 
@@ -105,7 +109,32 @@ function applyImageSrc(
   return ok
 }
 
+function selectedImageNode(editor: Editor) {
+  const selection = editor.state.selection
+  if (!(selection instanceof NodeSelection) || selection.node.type.name !== 'image') return null
+  return selection.node
+}
+
+/** 한도를 넘으면 알림 후 true. 선택한 이미지를 교체할 때는 그 장·용량을 뺀다. */
+function rejectRichTextImageInsert(editor: Editor, incomingBytes: number): boolean {
+  const selected = selectedImageNode(editor)
+  const selectedSize = selected == null ? 0 : getRichTextImageFileSize(selected)
+  const nextCount = getRichTextImageCount(editor) - (selected == null ? 0 : 1) + 1
+  if (nextCount > RICH_TEXT_IMAGE_MAX_COUNT) {
+    window.alert(RICH_TEXT_INLINE_IMAGE_COUNT_MESSAGE)
+    return true
+  }
+  if (incomingBytes <= 0) return false
+  const nextTotalBytes = getRichTextImageTotalBytes(editor) - selectedSize + incomingBytes
+  if (nextTotalBytes > RICH_TEXT_IMAGE_MAX_TOTAL_BYTES) {
+    window.alert(RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE)
+    return true
+  }
+  return false
+}
+
 export function insertImageFromUrl(editor: Editor, src: string): void {
+  if (rejectRichTextImageInsert(editor, 0)) return
   applyImageSrc(editor, src)
 }
 
@@ -119,20 +148,13 @@ export function insertImageFromFile(
     return
   }
   if (file.size > IMAGE_MAX_BYTES) {
-    window.alert('이미지는 20MB 이하만 삽입할 수 있습니다.')
+    window.alert(RICH_TEXT_INLINE_IMAGE_SIZE_MESSAGE)
     return
   }
-  const selectedImageSize =
-    editor.state.selection instanceof NodeSelection
-      ? getRichTextImageFileSize(editor.state.selection.node)
-      : 0
-  const nextTotalBytes = getRichTextImageTotalBytes(editor) - selectedImageSize + file.size
-  if (nextTotalBytes > RICH_TEXT_IMAGE_MAX_TOTAL_BYTES) {
-    window.alert(RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE)
-    return
-  }
+  if (rejectRichTextImageInsert(editor, file.size)) return
 
   const insertResolved = (src: string, persistSrc?: string) => {
+    if (rejectRichTextImageInsert(editor, file.size)) return
     applyImageSrc(editor, src, file.name, persistSrc, file.size)
   }
 
