@@ -12,6 +12,7 @@ describe('mapAccountPaymentListItemToRow', () => {
       netPaymentAmount: 915000,
       paymentStatus: 'WAITING_PAYMENT',
       scheduledPaymentDate: '2026-08-26',
+      paidAt: '2026-08-27T00:00:00.000Z',
       programNameKo: 'JA 경제교실',
       institutionName: '○○초등학교',
       sessionLabel: '2 ~ 3차시',
@@ -29,6 +30,7 @@ describe('mapAccountPaymentListItemToRow', () => {
     expect(row.sessionLabel).toBe('2 ~ 3차시')
     expect(row.lectureDate).toBe('2026-08-12')
     expect(row.transferScheduledDate).toBe('2026-08-26')
+    expect(row.paidAt).toBe('2026-08-27T00:00:00.000Z')
     expect(row.accountPaymentStatus).toBe('awaiting_confirmation')
   })
 

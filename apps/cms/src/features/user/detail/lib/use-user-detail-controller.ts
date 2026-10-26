@@ -48,6 +48,7 @@ import { useUserDetailUrlSync } from './use-user-detail-url-sync'
 import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
+import type { InstructorPermissionRevokeChannelType } from './instructor-permission-revoke-channel'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'
@@ -1453,6 +1454,7 @@ export function useUserDetailController({
     async (payload: {
       reason: string
       notifyTiming: InstructorPermissionRevokeNotifyTiming
+      channelType?: InstructorPermissionRevokeChannelType
       scheduledAt?: string
     }) => {
       if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
@@ -1475,6 +1477,7 @@ export function useUserDetailController({
           {
             reason,
             revokeReason: reason,
+            channelType: payload.channelType,
             scheduledAt: payload.notifyTiming === 'manual' ? payload.scheduledAt : undefined,
           },
           { memberId: displayUser.memberId }

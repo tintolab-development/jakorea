@@ -4,6 +4,11 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { ContentModal } from '@/shared/ui/content-modal'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
+import {
+  DEFAULT_INSTRUCTOR_PERMISSION_REVOKE_CHANNEL,
+  INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS,
+  type InstructorPermissionRevokeChannelType,
+} from '@/features/user/detail/lib/instructor-permission-revoke-channel'
 import './instructor-permission-revoke-modal.css'
 
 export interface InstructorPermissionRevokeModalProps {
@@ -13,6 +18,7 @@ export interface InstructorPermissionRevokeModalProps {
   onConfirm: (payload: {
     reason: string
     notifyTiming: InstructorPermissionRevokeNotifyTiming
+    channelType?: InstructorPermissionRevokeChannelType
     scheduledAt?: string
   }) => void | Promise<void>
 }
@@ -25,6 +31,9 @@ export function InstructorPermissionRevokeModal({
 }: InstructorPermissionRevokeModalProps) {
   const [notifyTiming, setNotifyTiming] =
     useState<InstructorPermissionRevokeNotifyTiming>('immediate')
+  const [channelType, setChannelType] = useState<InstructorPermissionRevokeChannelType | undefined>(
+    DEFAULT_INSTRUCTOR_PERMISSION_REVOKE_CHANNEL
+  )
   const [scheduledAt, setScheduledAt] = useState('')
   const [reason, setReason] = useState('')
   const [confirmLoading, setConfirmLoading] = useState(false)
@@ -32,6 +41,7 @@ export function InstructorPermissionRevokeModal({
   useEffect(() => {
     if (!open) return
     setNotifyTiming('immediate')
+    setChannelType(DEFAULT_INSTRUCTOR_PERMISSION_REVOKE_CHANNEL)
     setScheduledAt('')
     setReason('')
     setConfirmLoading(false)
@@ -57,6 +67,7 @@ export function InstructorPermissionRevokeModal({
       await onConfirm({
         reason: trimmedReason,
         notifyTiming,
+        channelType,
         scheduledAt:
           notifyTiming === 'manual' && scheduledAt
             ? new Date(scheduledAt).toISOString()
@@ -133,6 +144,28 @@ export function InstructorPermissionRevokeModal({
               aria-label="알림 발송 예약 시각"
             />
           ) : null}
+        </div>
+
+        <div className="instructor-permission-revoke-modal__field">
+          <span className="instructor-permission-revoke-modal__label">알림 방식</span>
+          <CmsRadio.Group
+            size="large"
+            value={channelType ?? 'POLICY'}
+            onChange={e => {
+              const value = e.target.value as InstructorPermissionRevokeChannelType | 'POLICY'
+              setChannelType(value === 'POLICY' ? undefined : value)
+            }}
+            disabled={confirmLoading}
+          >
+            <CmsRadio value="POLICY">기존 채널 정책</CmsRadio>
+            <CmsRadio value="ALIMTALK">
+              {INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS.ALIMTALK}
+            </CmsRadio>
+            <CmsRadio value="SMS">{INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS.SMS}</CmsRadio>
+            <CmsRadio value="EMAIL">
+              {INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS.EMAIL}
+            </CmsRadio>
+          </CmsRadio.Group>
         </div>
 
         <div className="instructor-permission-revoke-modal__field">

@@ -99,6 +99,7 @@ import type { MemberEnrollmentSummaryResponse } from '@/shared/api/generated/mem
 import type { MemberAssignmentSubmissionResponse } from '@/shared/api/generated/members/schemas/memberAssignmentSubmissionResponse'
 import type { GetApplicationEnrollmentSummaryParams } from '@/shared/api/generated/members/schemas/getApplicationEnrollmentSummaryParams'
 import type { ListAssignmentSubmissionsParams } from '@/shared/api/generated/members/schemas/listAssignmentSubmissionsParams'
+import type { InstructorPermissionRevokeChannelType } from '@/features/user/detail/lib/instructor-permission-revoke-channel'
 
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
@@ -1039,7 +1040,7 @@ export async function withdrawAdminSelfRemote(
  */
 export async function revokeInstructorPermissionRemote(
   instructorId: number,
-  body: InstructorRoleReviewRequest
+  body: InstructorRoleReviewRequest & { channelType?: InstructorPermissionRevokeChannelType }
 ) {
   await customInstance({
     url: `/api/admin/instructors/${instructorId}/revoke`,
