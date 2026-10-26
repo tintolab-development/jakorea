@@ -18,22 +18,17 @@ import {
   type CalendarItem,
 } from '../lib/calendar-helpers'
 import {
-  buildAllDayWeekGroupLayout,
   buildTimedItemGroupLayouts,
-  buildWeekTimeGridColumnStyle,
   buildWeekTimeGridGroupStyle,
-  countEventsOverlappingHourSlot,
-  formatAllDayGroupOverflowText,
-  isAllDayScheduleSpan,
-  layoutTimedItemsForDay,
-  parseHHmmToMinutes,
+  formatTimedGroupOverflowText,
   readTimesOrAllDaySpan,
-  resolveWeekTimeGridSubtext,
-  WEEK_ALL_DAY_LABEL,
+  resolveWeekEventCardContent,
   WEEK_TIME_GRID_HOUR_PX,
   WEEK_TIME_GRID_HOURS,
   WEEK_TIME_GRID_TOTAL_PX,
+  type TimedItemGroupLayout,
 } from '../lib/week-time-grid-layout'
+import { formatCalendarEventTimeLabel } from '../lib/format-calendar-event-time-label'
 
 const WEEK_HEADER_WEEKDAY_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
@@ -111,28 +106,6 @@ function weekGridSurfaceFromOriginal(
   )
 }
 
-function weekAllDaySortFields(item: CalendarItem): {
-  operationStartDate?: string
-  title?: string
-} {
-  const original = item.original
-  if (original != null && typeof original === 'object') {
-    const record = original as {
-      programOperationStartDate?: string
-      programTitle?: string
-      title?: string
-      originalItem?: { startDate?: string; title?: string }
-    }
-    const nestedStart =
-      typeof record.originalItem?.startDate === 'string' ? record.originalItem.startDate : ''
-    return {
-      operationStartDate: record.programOperationStartDate || nestedStart || undefined,
-      title: record.programTitle || record.title || item.title || '',
-    }
-  }
-  return { title: item.title ?? '' }
-}
-
 function weekTimeGridItemLabel(item: CalendarItem): string {
   const custom = timeGridLabelFromOriginal(item)
   if (custom) return custom
@@ -186,24 +159,64 @@ function weekProgramItemColor(
   return colorMap.get(item.id) ?? SCHEDULE_COLORS[0]
 }
 
-function WeekTimeGridEventText({
+/** Figma Calendar/Tag/2 Line: 제목(최대 2줄) · 시간(Bold) · 외 N개의 항목(50%) */
+function WeekTimeGridEventCardText({
   title,
-  subtext,
+  titleLines,
+  timeText,
+  overflowText,
 }: {
   title: string
-  subtext?: string
+  titleLines: number
+  timeText?: string
+  overflowText?: string
 }) {
-  if (subtext) {
-    return (
-      <span className="calendar-event-title calendar-week-time-grid__event-text">
-        <span>{title}</span>
-        <span className="calendar-week-time-grid__event-subtext">{subtext}</span>
-      </span>
-    )
-  }
   return (
-    <span className="calendar-event-title calendar-week-time-grid__event-text">{title}</span>
+    <span className="calendar-week-time-grid__card-text">
+      <span
+        className={[
+          'calendar-week-time-grid__card-title',
+          titleLines <= 1 ? 'calendar-week-time-grid__card-title--single' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        style={titleLines > 1 ? { WebkitLineClamp: titleLines, lineClamp: titleLines } : undefined}
+      >
+        {title}
+      </span>
+      {timeText ? <span className="calendar-week-time-grid__card-time">{timeText}</span> : null}
+      {overflowText ? (
+        <span className="calendar-week-time-grid__event-subtext">{overflowText}</span>
+      ) : null}
+    </span>
   )
+}
+
+function resolveGroupCardText(
+  group: TimedItemGroupLayout<CalendarItem>,
+  formatOverflow: (hiddenCount: number) => string
+): { titleLines: number; timeText?: string; overflowText?: string } {
+  const content = resolveWeekEventCardContent({
+    height: group.height,
+    durationMinutes: Math.max(group.endM - group.startM, 0),
+    groupSize: group.items.length,
+  })
+  // 종일 항목은 00:00 ~ 24:00 시간 일정으로 취급한다.
+  const span = readTimesOrAllDaySpan(group.representative, readTimesFromCalendarItem)
+  return {
+    titleLines: content.titleLines,
+    timeText: content.showTime
+      ? formatCalendarEventTimeLabel(span.startTime, span.endTime)
+      : undefined,
+    overflowText: content.showOverflow ? formatOverflow(group.items.length - 1) : undefined,
+  }
+}
+
+function uniqueProgramsOf(items: CalendarItem[]): Program[] {
+  const programs = items
+    .map(it => (isProgramOriginal(it.original) ? it.original : null))
+    .filter((p): p is Program => p != null)
+  return Array.from(new Map(programs.map(p => [String(p.id), p])).values())
 }
 
 function withScheduleOverlay(
@@ -259,6 +272,38 @@ export function WeekView({
   } as CSSProperties
 
   const overlayProps = { tooltipOverlayClassName }
+  const eventsModeConfig = isEventsMode ? eventsConfig : undefined
+  const formatTimedOverflow =
+    eventsModeConfig?.formatWeekEventsOverflowText ?? formatTimedGroupOverflowText
+  const readLayoutSpan = (item: CalendarItem) =>
+    readTimesOrAllDaySpan(item, readTimesFromCalendarItem)
+
+  const dayModels = weekDates.map(date => {
+    const dateKey = date.format('YYYY-MM-DD')
+    const dayItems = getItemsForDate(items, date)
+    const gridItems = eventsModeConfig
+      ? calendarItemsForEventMode(dayItems)
+      : dedupeProgramWeekGridItems(dayItems)
+    const resolvedDayColors = eventsModeConfig
+      ? eventsModeConfig.overrideEventColorMap != null
+        ? eventsModeConfig.overrideEventColorMap(gridItems)
+        : buildResolvedColorMap(gridItems)
+      : colorMap
+    return {
+      date,
+      dateKey,
+      gridItems,
+      resolvedDayColors,
+      // 종일·날짜 전용 일정은 그 날짜 00:00–24:00 시간 일정으로 같은 격자에 배치한다.
+      // 겹치는 일정은 N열 분할하지 않고 카드 1개 + 외 N개의 항목
+      timedGroups: buildTimedItemGroupLayouts(gridItems, hourPx, readLayoutSpan),
+    }
+  })
+
+  const itemColors = (item: CalendarItem, resolvedDayColors: Map<string | number, ScheduleColorPair>) =>
+    eventsModeConfig
+      ? weekTimeGridItemColors(item, eventsModeConfig.resolveEventColors, resolvedDayColors)
+      : weekProgramItemColor(item, colorMap)
 
   return (
     <div className="calendar-week calendar-week--time-grid" style={rootStyle}>
@@ -304,47 +349,19 @@ export function WeekView({
             ))}
           </div>
           <div className="calendar-week-time-grid__board">
-            {weekDates.map(date => {
-              const dateKey = date.format('YYYY-MM-DD')
-              const dayItems = getItemsForDate(items, date)
+            {dayModels.map(model => {
+              const { date, dateKey, gridItems, resolvedDayColors, timedGroups } = model
 
-              if (isEventsMode && eventsConfig) {
-                const dayEvents = calendarItemsForEventMode(dayItems)
-                const resolvedDayColors =
-                  eventsConfig.overrideEventColorMap != null
-                    ? eventsConfig.overrideEventColorMap(dayEvents)
-                    : buildResolvedColorMap(dayEvents)
-                const readLayoutSpan = (item: CalendarItem) =>
-                  readTimesOrAllDaySpan(item, readTimesFromCalendarItem)
-                const allDayEvents = dayEvents.filter(item =>
-                  isAllDayScheduleSpan(item, readTimesFromCalendarItem)
-                )
-                const timedEvents = dayEvents.filter(
-                  item => !isAllDayScheduleSpan(item, readTimesFromCalendarItem)
-                )
-                const allDayGroup = buildAllDayWeekGroupLayout(
-                  allDayEvents,
-                  hourPx,
-                  weekAllDaySortFields
-                )
-                const timedLayouts = layoutTimedItemsForDay(timedEvents, hourPx, readLayoutSpan)
-                const daySpans = timedLayouts.map(layout => {
-                  const span = readLayoutSpan(layout.item)
-                  return {
-                    startM: parseHHmmToMinutes(span.startTime) ?? 0,
-                    endM: parseHHmmToMinutes(span.endTime) ?? WEEK_TIME_GRID_HOURS * 60,
-                  }
-                })
-
+              if (eventsModeConfig) {
                 const fullDayPreview =
-                  dayEvents.length > 0 && eventsConfig.previewTooltipContent != null
+                  gridItems.length > 0 && eventsModeConfig.previewTooltipContent != null
                     ? buildEventsPreview(
-                        dayEvents,
+                        gridItems,
                         resolvedDayColors,
-                        eventsConfig.previewTooltipContent
+                        eventsModeConfig.previewTooltipContent
                       )
                     : null
-                const fullDayPreviewEnabled = dayEvents.length > 0 && fullDayPreview != null
+                const fullDayPreviewEnabled = gridItems.length > 0 && fullDayPreview != null
 
                 return (
                   <div
@@ -362,87 +379,17 @@ export function WeekView({
                         className="calendar-week-time-grid__column-inner"
                         style={{ height: totalPx }}
                       >
-                        {allDayGroup
-                          ? (() => {
-                              const item = allDayGroup.representative
-                              const hiddenCount = allDayGroup.items.length - 1
-                              const displayTitle = weekTimeGridItemLabel(item)
-                              const subtext =
-                                hiddenCount > 0
-                                  ? (eventsConfig.formatEventsOverflowText?.(hiddenCount) ??
-                                    formatAllDayGroupOverflowText(hiddenCount))
-                                  : WEEK_ALL_DAY_LABEL
-                              const isSelected = allDayGroup.items.some(ev =>
-                                eventsConfig.selectedRowKeys.includes(ev.id)
-                              )
-                              const colors = weekTimeGridItemColors(
-                                item,
-                                eventsConfig.resolveEventColors,
-                                resolvedDayColors
-                              )
-                              const pos = buildWeekTimeGridGroupStyle(allDayGroup)
-                              return (
-                                <div
-                                  key={`${String(item.id)}-all-day-${allDayGroup.items.length}`}
-                                  className="calendar-event-tooltip-trigger calendar-week-time-grid__event-anchor"
-                                  style={{ ...pos, zIndex: 18 }}
-                                >
-                                  <div
-                                    className={[
-                                      'calendar-week-time-grid__event',
-                                      'calendar-event',
-                                      'calendar-week-time-grid__event--timed',
-                                      'calendar-week-time-grid__event--all-day',
-                                      isSelected ? 'calendar-event--selected' : '',
-                                    ]
-                                      .filter(Boolean)
-                                      .join(' ')}
-                                    style={{ backgroundColor: colors.bg }}
-                                    onClick={e => {
-                                      e.stopPropagation()
-                                      eventsConfig.onEventClick?.(item)
-                                    }}
-                                  >
-                                    <WeekTimeGridEventText title={displayTitle} subtext={subtext} />
-                                  </div>
-                                </div>
-                              )
-                            })()
-                          : null}
-                        {timedLayouts.map((layout, idx) => {
-                          const item = layout.item
-                          const displayTitle = weekTimeGridItemLabel(item)
-                          const rawSpan = readTimesFromCalendarItem(item)
-                          const startM = parseHHmmToMinutes(rawSpan.startTime)
-                          const layoutSpan = readLayoutSpan(item)
-                          const layoutStart = parseHHmmToMinutes(layoutSpan.startTime) ?? 0
-                          const layoutEnd = parseHHmmToMinutes(layoutSpan.endTime) ?? layoutStart + 60
-                          const hourSlotStart = Math.floor(layoutStart / 60) * 60
-                          const sameHourSlotEventCount = countEventsOverlappingHourSlot(
-                            hourSlotStart,
-                            daySpans
+                        {timedGroups.map((group, idx) => {
+                          const item = group.representative
+                          const text = resolveGroupCardText(group, formatTimedOverflow)
+                          const isSelected = group.items.some(ev =>
+                            eventsModeConfig.selectedRowKeys.includes(ev.id)
                           )
-                          const subtext = resolveWeekTimeGridSubtext(
-                            item,
-                            1,
-                            readTimesFromCalendarItem,
-                            {
-                              sameHourSlotEventCount,
-                              durationMinutes:
-                                startM == null ? undefined : Math.max(layoutEnd - layoutStart, 0),
-                            }
-                          )
-                          const isAllDay = isAllDayScheduleSpan(item, readTimesFromCalendarItem)
-                          const isSelected = eventsConfig.selectedRowKeys.includes(item.id)
-                          const colors = weekTimeGridItemColors(
-                            item,
-                            eventsConfig.resolveEventColors,
-                            resolvedDayColors
-                          )
-                          const pos = buildWeekTimeGridColumnStyle(layout)
+                          const colors = itemColors(item, resolvedDayColors)
+                          const pos = buildWeekTimeGridGroupStyle(group)
                           return (
                             <div
-                              key={`${String(item.id)}-${layout.startM}-${layout.endM}-${layout.columnIndex}`}
+                              key={`${String(item.id)}-${group.startM}-${group.endM}-${group.items.length}`}
                               className="calendar-event-tooltip-trigger calendar-week-time-grid__event-anchor"
                               style={{ ...pos, zIndex: 20 + idx }}
                             >
@@ -451,7 +398,7 @@ export function WeekView({
                                   'calendar-week-time-grid__event',
                                   'calendar-event',
                                   'calendar-week-time-grid__event--timed',
-                                  isAllDay ? 'calendar-week-time-grid__event--all-day' : '',
+                                  'calendar-week-time-grid__event--card',
                                   isSelected ? 'calendar-event--selected' : '',
                                 ]
                                   .filter(Boolean)
@@ -459,10 +406,13 @@ export function WeekView({
                                 style={{ backgroundColor: colors.bg }}
                                 onClick={e => {
                                   e.stopPropagation()
-                                  eventsConfig.onEventClick?.(item)
+                                  eventsModeConfig.onEventClick?.(item)
                                 }}
                               >
-                                <WeekTimeGridEventText title={displayTitle} subtext={subtext} />
+                                <WeekTimeGridEventCardText
+                                  title={weekTimeGridItemLabel(item)}
+                                  {...text}
+                                />
                               </div>
                             </div>
                           )
@@ -472,11 +422,6 @@ export function WeekView({
                   </div>
                 )
               }
-
-              const gridDayItems = dedupeProgramWeekGridItems(dayItems)
-              const timedGroups = buildTimedItemGroupLayouts(gridDayItems, hourPx, item =>
-                readTimesOrAllDaySpan(item, readTimesFromCalendarItem)
-              )
 
               return (
                 <div
@@ -492,12 +437,7 @@ export function WeekView({
                     {timedGroups.map((group, idx) => {
                       const item = group.representative
                       const colors = weekProgramItemColor(item, colorMap)
-                      const groupedPrograms = group.items
-                        .map(it => (isProgramOriginal(it.original) ? it.original : null))
-                        .filter((p): p is Program => p != null)
-                      const uniquePrograms = Array.from(
-                        new Map(groupedPrograms.map(p => [String(p.id), p])).values()
-                      )
+                      const uniquePrograms = uniqueProgramsOf(group.items)
                       const preview =
                         uniquePrograms.length > 0 ? (
                           <CalendarCellSchedulePreview
@@ -516,12 +456,7 @@ export function WeekView({
                         )
                       const pos = buildWeekTimeGridGroupStyle(group)
                       const displayTitle = item.title ?? weekTimeGridItemLabel(item)
-                      const subtext = resolveWeekTimeGridSubtext(
-                        item,
-                        group.items.length,
-                        readTimesFromCalendarItem
-                      )
-                      const isAllDay = isAllDayScheduleSpan(item, readTimesFromCalendarItem)
+                      const text = resolveGroupCardText(group, formatTimedOverflow)
                       return (
                         <Fragment
                           key={`${String(item.id)}-${group.startM}-${group.endM}-${group.items.length}`}
@@ -536,7 +471,7 @@ export function WeekView({
                                   'calendar-week-time-grid__event',
                                   'calendar-event',
                                   'calendar-week-time-grid__event--timed',
-                                  isAllDay ? 'calendar-week-time-grid__event--all-day' : '',
+                                  'calendar-week-time-grid__event--card',
                                 ]
                                   .filter(Boolean)
                                   .join(' ')}
@@ -551,7 +486,7 @@ export function WeekView({
                                     onProgramClick?.(item.original)
                                 }}
                               >
-                                <WeekTimeGridEventText title={displayTitle} subtext={subtext} />
+                                <WeekTimeGridEventCardText title={displayTitle} {...text} />
                               </div>
                             </div>,
                             true,

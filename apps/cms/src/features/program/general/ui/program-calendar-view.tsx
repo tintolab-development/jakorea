@@ -292,6 +292,7 @@ export function ProgramCalendarView({
           eventsTooltipTrigger="cell"
           eventsTooltipScope="full-day"
           formatEventsOverflowText={hiddenCount => `외 ${hiddenCount}개의 일정`}
+          formatWeekEventsOverflowText={hiddenCount => `외 ${hiddenCount}개의 항목`}
         />
       </div>
       <div className="calendar-sub-right-list">

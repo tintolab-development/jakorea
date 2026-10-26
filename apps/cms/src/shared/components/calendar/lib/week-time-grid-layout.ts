@@ -11,7 +11,14 @@ export const WEEK_EVENT_PX_PER_MINUTE = 1
 export const WEEK_EVENT_OCCUPIED_HOUR_SLOT_PX = 5
 /** 30분 단위로 위·아래가 맞닿는 일정 하나당 -1px */
 export const WEEK_EVENT_ADJACENT_PX = 1
-export const WEEK_EVENT_MIN_HEIGHT_PX = 10
+/** Figma Calendar/Tag 1줄(29px): padding 6*2 + border 1*2 + 12px/130% 한 줄. 짧은 회차도 제목 1줄은 읽히게 한다. */
+export const WEEK_EVENT_MIN_HEIGHT_PX = 29
+/** Figma Calendar/Tag 내부 텍스트 metrics */
+export const WEEK_EVENT_CARD_CHROME_PX = 14
+export const WEEK_EVENT_LINE_PX = 15.6
+export const WEEK_EVENT_LINE_GAP_PX = 2
+/** Figma: 카드 제목 최대 2줄 */
+export const WEEK_EVENT_TITLE_MAX_LINES = 2
 
 export const WEEK_TIME_GRID_OVERLAP_GAP_PX = 2
 /** Figma Calendar/Tag: 108px 열 안 104px 카드 → 좌우·상단 2px (높이는 occupancy와 분리) */
@@ -143,6 +150,24 @@ export function computeWeekEventCardHeight(input: {
     base + slotBonus - input.adjacentEventCount * WEEK_EVENT_ADJACENT_PX,
     WEEK_EVENT_MIN_HEIGHT_PX
   )
+}
+
+/** `.calendar-week-time-grid__board` 테두리(1px). 격자 내용 높이 = 24*hourPx - 상하 테두리 */
+export const WEEK_TIME_GRID_BOARD_BORDER_PX = 1
+
+/**
+ * 카드 하단이 격자 바닥(보드 테두리 안쪽)을 넘지 않게 높이를 줄인다.
+ * 위쪽과 같은 2px inset을 아래에도 남겨 radius·테두리가 overflow:hidden에 잘리지 않게 한다.
+ * (예: 00:00–24:00은 1440 + 24*5 = 1560px라 top inset 2px만큼 격자 밖으로 나가 하단이 잘렸다)
+ */
+export function clampWeekEventCardHeightToGrid(
+  top: number,
+  height: number,
+  hourPx: number = WEEK_TIME_GRID_HOUR_PX
+): number {
+  const contentBottom = hourPx * WEEK_TIME_GRID_HOURS - WEEK_TIME_GRID_BOARD_BORDER_PX * 2
+  const maxHeight = contentBottom - WEEK_EVENT_INSET_Y_PX - (top + WEEK_EVENT_INSET_Y_PX)
+  return Math.max(Math.min(height, maxHeight), WEEK_EVENT_MIN_HEIGHT_PX)
 }
 
 export function countEventsOverlappingHourSlot(
@@ -444,11 +469,15 @@ export function buildTimedItemGroupLayouts<T>(
       startM: clusterStart,
       endM: clusterEnd,
       top: computeWeekEventCardTop(clusterStart, hourPx),
-      height: computeWeekEventCardHeight({
-        startM: clusterStart,
-        endM: clusterEnd,
-        adjacentEventCount: 0,
-      }),
+      height: clampWeekEventCardHeightToGrid(
+        computeWeekEventCardTop(clusterStart, hourPx),
+        computeWeekEventCardHeight({
+          startM: clusterStart,
+          endM: clusterEnd,
+          adjacentEventCount: 0,
+        }),
+        hourPx
+      ),
     })
   }
 
@@ -468,27 +497,41 @@ export function buildTimedItemGroupLayouts<T>(
   return groups
 }
 
-/** 같은 날 종일 일정은 1블록 + 외 N개. 대표는 운영 시작일·프로그램명 규칙. */
-export function buildAllDayWeekGroupLayout<T>(
-  items: T[],
-  hourPx: number,
-  readSortFields: (item: T) => AllDayWeekSortFields
-): TimedItemGroupLayout<T> | null {
-  if (items.length === 0) return null
-  const representative = pickAllDayWeekRepresentative(items, readSortFields)
-  const startM = 0
-  const endM = WEEK_TIME_GRID_HOURS * 60
+export type WeekEventCardContent = {
+  /** 제목 줄 수(1~2). 공간이 부족하면 시간·외 N개보다 제목을 먼저 1줄 말줄임한다. */
+  titleLines: number
+  showTime: boolean
+  showOverflow: boolean
+}
+
+/**
+ * Figma Calendar/Tag/2 Line 내용 규칙.
+ * - 제목 1줄은 항상
+ * - 겹침 묶음이면 `외 N개의 항목` 줄
+ * - 시간 줄은 2시간 이상, 또는 일정 1개일 때 1시간 이상 + 한 줄 공간이 남을 때만 (잘린 `13:30 ~ 1…` 금지)
+ * - 남는 공간이 있으면 제목 2줄
+ */
+export function resolveWeekEventCardContent(input: {
+  height: number
+  durationMinutes: number
+  groupSize: number
+}): WeekEventCardContent {
+  const content = Math.max(input.height - WEEK_EVENT_CARD_CHROME_PX, 0)
+  const lines = Math.max(
+    Math.floor((content + WEEK_EVENT_LINE_GAP_PX + 0.01) / (WEEK_EVENT_LINE_PX + WEEK_EVENT_LINE_GAP_PX)),
+    1
+  )
+  let remaining = lines - 1
+  const showOverflow = input.groupSize > 1 && remaining >= 1
+  if (showOverflow) remaining -= 1
+  const timeAllowed =
+    input.durationMinutes >= 120 || (input.durationMinutes >= 60 && input.groupSize === 1)
+  const showTime = timeAllowed && remaining >= 1
+  if (showTime) remaining -= 1
   return {
-    items,
-    representative,
-    startM,
-    endM,
-    top: computeWeekEventCardTop(startM, hourPx),
-    height: computeWeekEventCardHeight({
-      startM,
-      endM,
-      adjacentEventCount: 0,
-    }),
+    titleLines: Math.min(WEEK_EVENT_TITLE_MAX_LINES, 1 + remaining),
+    showTime,
+    showOverflow,
   }
 }
 

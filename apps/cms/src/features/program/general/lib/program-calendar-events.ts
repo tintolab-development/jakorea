@@ -159,7 +159,12 @@ function buildEducationLabel(item: AdminProgramCalendarItem, fallback: string): 
   const scheduleName = item.scheduleName?.trim() || item.displayLabel?.trim() || fallback
   const organizationName = item.organizationName?.trim()
   if (!organizationName || scheduleName.includes(organizationName)) return scheduleName
-  return scheduleName ? `${organizationName} · ${scheduleName}` : organizationName
+  return scheduleName ? `${organizationName} ${scheduleName}` : organizationName
+}
+
+function hasExplicitKstClock(value: dayjs.Dayjs | null): boolean {
+  if (!value) return false
+  return value.hour() !== 0 || value.minute() !== 0 || value.second() !== 0
 }
 
 function isDateOnlyOperationalEventType(eventType: string): boolean {
@@ -221,12 +226,15 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
   if (!eventId) return null
   if (isExcludedProgramCalendarItem(item)) return null
 
-  // 운영·모집·설문·과제 경계는 날짜 이벤트다.
-  // BE가 startAt=00:00과 allDay=false를 함께 줘도 주간 시간 일정으로 분할하지 않는다.
-  const allDay = item.allDay === true || isDateOnlyOperationalEventType(eventType)
   const eventDate = item.eventDate?.trim() ? calendarDateOnly(item.eventDate) : ''
   const startKst = toSeoul(item.startAt)
   const endKst = toSeoul(item.endAt)
+  // 운영·모집·설문·과제 경계는 기본적으로 날짜 이벤트다.
+  // BE가 startAt=00:00(KST)과 allDay=false를 함께 줘도 주간 시간 일정으로 분할하지 않는다.
+  // 00:00이 아닌 시각이 있는 마일스톤(예: 모집 시작 14:00)은 시간 카드로 둔다.
+  const allDay =
+    item.allDay === true ||
+    (isDateOnlyOperationalEventType(eventType) && !hasExplicitKstClock(startKst))
 
   let startDate = ''
   let endDate = ''
@@ -263,6 +271,8 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
     programTitle,
     scheduleContent: scheduleName,
     timeLabel: formatCalendarEventTimeLabel(startTime, endTime),
+    // 주간 시간 카드 제목은 프로그램명(Figma). 종일 줄 칩은 일정명(운영 시작 등) 유지.
+    timeGridLabel: startTime && programTitle ? programTitle : undefined,
     operationPeriodLabel: '',
     kind: kindFromEventType(eventType),
     colorKey,

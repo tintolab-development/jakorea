@@ -115,6 +115,8 @@ export type CalendarMainEventsProps = CalendarMainSharedProps & {
   resolveEventColors?: (item: CalendarItem) => ScheduleColorPair | undefined
   eventsTooltipScope?: 'trigger-only' | 'full-day'
   formatEventsOverflowText?: (hiddenCount: number) => string
+  /** 주간 시간 격자 겹침 묶음 문구. 미지정 시 `외 N개의 항목` */
+  formatWeekEventsOverflowText?: (hiddenCount: number) => string
   eventsTooltipTrigger?: 'event-strip' | 'cell'
   /** 월간 셀 strip 목록 — 페이지별 (UJAT 지원자·슬롯 묶음 등) */
   buildMonthCellRows?: BuildCalendarMonthCellRows
@@ -365,6 +367,7 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
           resolveEventColors: props.resolveEventColors,
           eventsTooltipScope: props.eventsTooltipScope ?? 'trigger-only',
           formatEventsOverflowText: props.formatEventsOverflowText,
+          formatWeekEventsOverflowText: props.formatWeekEventsOverflowText,
           eventsTooltipTrigger: props.eventsTooltipTrigger ?? 'event-strip',
           buildMonthCellRows: props.buildMonthCellRows,
           renderMonthEventContent: props.renderMonthEventContent,

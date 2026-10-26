@@ -259,12 +259,12 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
 
     expect(events.map(event => event.id)).toEqual(['EDUCATION:1411:41', 'EDUCATION:1411:42'])
     expect(events.map(event => event.scheduleContent)).toEqual([
-      '서울초등학교 · 1회차 교육',
-      '부산중학교 · 1회차 교육',
+      '서울초등학교 1회차 교육',
+      '부산중학교 1회차 교육',
     ])
     expect(events.map(event => event.title)).toEqual([
-      '서울초등학교 · 1회차 교육',
-      '부산중학교 · 1회차 교육',
+      '서울초등학교 1회차 교육',
+      '부산중학교 1회차 교육',
     ])
     expect(events.map(event => event.organizationApplicationId)).toEqual([41, 42])
     expect(events.map(event => event.assignmentStatus)).toEqual(['TEMP_ASSIGNED', 'CONFIRMED'])
@@ -323,6 +323,56 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
       allDay: false,
     })
     expect(mapAdminProgramCalendarItemsToEvents([row, { ...row }])).toHaveLength(1)
+  })
+
+  it('keeps a milestone with a non-midnight KST clock as a timed card', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'RECRUITMENT_START:5',
+        programId: 5,
+        programName: 'SAP-함께 성장하JA!',
+        eventType: 'RECRUITMENT_START',
+        scheduleName: '참여자 모집 시작',
+        allDay: false,
+        startAt: '2026-11-09T05:00:00Z',
+        endAt: '2026-11-09T06:00:00Z',
+      }),
+    ])
+
+    expect(events[0]?.startTime).toBe('14:00')
+    expect(events[0]?.endTime).toBe('15:00')
+    expect(events[0]?.timeLabel).toBe('14:00 ~ 15:00')
+    expect(events[0]?.scheduleContent).toBe('참여자 모집 시작')
+  })
+
+  it('uses the program name as the week time-card title and keeps all-day milestones on their own label', () => {
+    const events = mapAdminProgramCalendarItemsToEvents([
+      item({
+        eventId: 'EDUCATION:1:PROGRAM',
+        programId: 1,
+        programName: '디즈니가 후원하는 청소년 콘텐츠 역량 강화 교육',
+        eventType: 'EDUCATION',
+        scheduleName: '1회차 교육',
+        startAt: '2026-11-09T01:00:00Z',
+        endAt: '2026-11-09T03:00:00Z',
+        allDay: false,
+      }),
+      item({
+        eventId: 'BUSINESS_START:1',
+        programId: 1,
+        programName: '디즈니가 후원하는 청소년 콘텐츠 역량 강화 교육',
+        eventType: 'BUSINESS_START',
+        scheduleName: '운영 시작',
+        allDay: true,
+        eventDate: '2026-11-09',
+      }),
+    ])
+    const byId = new Map(events.map(event => [event.id, event]))
+    expect(byId.get('EDUCATION:1:PROGRAM')?.timeGridLabel).toBe(
+      '디즈니가 후원하는 청소년 콘텐츠 역량 강화 교육'
+    )
+    expect(byId.get('BUSINESS_START:1')?.timeGridLabel).toBeUndefined()
+    expect(byId.get('BUSINESS_START:1')?.title).toBe('운영 시작')
   })
 
   it('returns [] for an empty response without synthesizing fallback events', () => {
