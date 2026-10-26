@@ -21,6 +21,8 @@ export type TableExcelExporter<T extends object> = (
 export type UseTableExcelExportOptions<T extends object> = {
   columns: ColumnsType<T>
   data: T[]
+  /** 현재 화면에 로드된 data 대신 다운로드 시점의 전체 데이터를 resolve한다. */
+  resolveData?: () => T[] | Promise<T[]>
   filename: string
   /** 기본: exportTableToExcel */
   exporter?: TableExcelExporter<T>
@@ -40,6 +42,7 @@ const DEFAULT_ERROR_CONTENT = '엑셀 다운로드에 실패했습니다. 잠시
 export function useTableExcelExport<T extends object>({
   columns,
   data,
+  resolveData,
   filename,
   exporter = exportTableToExcel,
   alertOnEmpty = true,
@@ -53,15 +56,16 @@ export function useTableExcelExport<T extends object>({
   const exportExcel = useCallback(async () => {
     if (isExporting) return
     if (!guardAdminDownload()) return
-    if (data.length === 0) {
-      if (alertOnEmpty) {
-        cmsAlertModal.show({ title: emptyAlertTitle, content: emptyAlertContent })
-      }
-      return
-    }
     setIsExporting(true)
     try {
-      await exporter(columns, data, filename)
+      const exportData = resolveData ? await resolveData() : data
+      if (exportData.length === 0) {
+        if (alertOnEmpty) {
+          cmsAlertModal.show({ title: emptyAlertTitle, content: emptyAlertContent })
+        }
+        return
+      }
+      await exporter(columns, exportData, filename)
     } catch (error) {
       console.error('[useTableExcelExport] excel export failed', error)
       const content =
@@ -81,6 +85,7 @@ export function useTableExcelExport<T extends object>({
     exporter,
     filename,
     isExporting,
+    resolveData,
   ])
 
   return { exportExcel, isExporting }

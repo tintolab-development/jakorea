@@ -143,8 +143,8 @@ export function AccountPaymentStatusDetailBasicInfo({ basic }: AccountPaymentSta
             }
           />
           <DetailInfoForm.Field
-            label={basic.accountPaymentStatus === 'account_paid' ? '지급 완료일' : '이체 예정일'}
-            view={<span>{basic.transferScheduledDateDisplay}</span>}
+            label="이체 완료일"
+            view={<span>{basic.paidAtDisplay}</span>}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">

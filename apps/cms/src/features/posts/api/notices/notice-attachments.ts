@@ -135,7 +135,7 @@ export async function hydrateNoticeAttachments(notice: Notice): Promise<Notice> 
   }
 }
 
-/** 서버 allow-list. 파일당 20MiB, 요청 전체 합계도 20MiB. */
+/** 서버 allow-list. 첨부 파일마다 최대 20MiB이며 파일 전체 합계 제한은 없다. */
 export const NOTICE_ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024
 export const NOTICE_ATTACHMENT_ACCEPT = '.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx'
 

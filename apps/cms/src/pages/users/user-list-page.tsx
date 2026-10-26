@@ -66,7 +66,7 @@ import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-cod
 import { handleError } from '@/shared/utils/error-handler'
 import {
   DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
-  FilterTableToolbarButton
+  FilterTableToolbarButton, showRegisterCompletedAlert,
 } from '@/shared/ui'
 import '@/shared/ui/detail-fullpage-modal.css'
 import {
@@ -95,6 +95,7 @@ import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabi
 import { memberQueryKeys, serializeMemberListFilters } from '@/features/user/api/member-query-keys'
 import { resolveDeleteUserOptions } from '@/features/user/api/resolve-delete-user-options'
 import { resolveSelectedListUsers } from '@/features/user/api/resolve-selected-list-users'
+import { fetchAllMembersPagesRemote } from '@/features/user/api/fetch-all-members-pages-remote'
 import {
   mergeListUserWithFetchedDetail,
   patchMemberListPagesWithFetchedDetail,
@@ -213,7 +214,7 @@ export function UserListPage() {
   )
 
   const { pendingFilters, handleFilterChange, applySearch,
-    hasActiveFilters,
+    hasActiveFilters, tableData,
   } = useTablePage(
     userListTablePageConfig,
     {
@@ -384,6 +385,20 @@ export function UserListPage() {
       })),
     [selectedUsersForExcel]
   )
+
+  const resolveUserExcelData = useCallback(async () => {
+    if (userExcelData.length > 0) return userExcelData
+
+    const users = isMembersRemoteEnabled()
+      ? await fetchAllMembersPagesRemote(listQueryFilters)
+      : tableData
+
+    return users.map(user => ({
+      name: user.name,
+      email: user.email,
+      phone: user.phone ?? '',
+    }))
+  }, [listQueryFilters, tableData, userExcelData])
 
   /**
    * URL에서 id가 빠지면(뒤로가기 등) 풀페이지·드로어를 같은 페인트 전에 닫는다.
@@ -973,6 +988,7 @@ export function UserListPage() {
       })
       invalidateList()
       closeAdminRegisterModal()
+      showRegisterCompletedAlert()
     } catch (error) {
       handleError(error, { defaultMessage: '관리자 등록에 실패했습니다.' })
       throw error
@@ -1319,6 +1335,7 @@ export function UserListPage() {
         excelExport={{
           columns: userExcelColumns,
           data: userExcelData,
+          resolveData: resolveUserExcelData,
           alertOnEmpty: true,
           emptyAlertTitle: '항목 선택 안내',
           emptyAlertContent: '엑셀로 내보낼 항목을 선택해 주세요.',
