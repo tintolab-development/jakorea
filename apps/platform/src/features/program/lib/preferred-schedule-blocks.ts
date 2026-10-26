@@ -18,6 +18,17 @@ function normalizeScheduleTime(raw: string): string {
 
 const SCHEDULE_TIME_RE = /^\d{2}:\d{2}$/
 
+/**
+ * 희망 차시 선택값은 화면에서 `1`, `2`처럼 전달되지만 legacy draft에는
+ * `1교시` 형태가 남아 있을 수 있다. BE가 사용하는 sessionCount는 선택한
+ * 차시 번호를 그대로 반영해야 하므로 숫자 prefix를 정규화한다.
+ */
+function parsePreferredSessionCount(classPeriod: string): number {
+  const match = classPeriod.trim().match(/^\d+/)
+  const value = match ? Number(match[0]) : Number.NaN
+  return Number.isInteger(value) && value > 0 ? value : 1
+}
+
 function isValidScheduleTime(value: string): boolean {
   if (!SCHEDULE_TIME_RE.test(value)) return false
   const [hour, minute] = value.split(':').map(Number)
@@ -74,7 +85,7 @@ export function toPortalPreferredScheduleBlocks(
     out.push({
       preferenceRank: rank,
       date,
-      sessionCount: 1,
+      sessionCount: parsePreferredSessionCount(classPeriod),
       ...(block.session ? { session: block.session } : {}),
       sessionTimes: [
         {
