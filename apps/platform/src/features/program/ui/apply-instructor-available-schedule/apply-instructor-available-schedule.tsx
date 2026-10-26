@@ -369,6 +369,41 @@ function seoulDateTimeParts(value: unknown): { dateKey: string; time: string } |
   }
 }
 
+const GEMINI_PREFERRED_SCHEDULE_SOURCE = 'GEMINI_PREFERRED_SCHEDULE'
+
+function readPositiveInteger(value: unknown): number | undefined {
+  const parsed = typeof value === 'string' && value.trim() ? Number(value) : value
+  return typeof parsed === 'number' && Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+}
+
+/** Gemini 승인 연수 희망 일정 후보 — `기관 | n지망` / `n차시 | 10:00 ~ 12:00` (scheduleId 없음) */
+function geminiPreferredScheduleSlotFromOption(
+  option: Record<string, unknown>,
+  meta: Record<string, unknown>,
+  id: string,
+  displayLabel: string,
+): ApplyInstructorScheduleSlot | null {
+  if (meta.source !== GEMINI_PREFERRED_SCHEDULE_SOURCE) return null
+  const start = seoulDateTimeParts(option.startAt ?? meta.startAt)
+  const end = seoulDateTimeParts(option.endAt ?? meta.endAt)
+  const dateKey = readIsoDateOnly(meta.date) ?? start?.dateKey
+  const rank = readPositiveInteger(meta.preferenceRank)
+  const sessionCount = readPositiveInteger(meta.sessionCount)
+  const timeRange = start ? buildScheduleTimeRangeLabel(option, meta, start, end, start.dateKey) : ''
+  const title = joinScheduleCardLine([
+    readScheduleMetaString(option, meta, ['organizationName']),
+    rank ? `${rank}지망` : '',
+  ])
+  const detail = joinScheduleCardLine([sessionCount ? `${sessionCount}차시` : '', timeRange])
+  return {
+    id,
+    label: displayLabel,
+    dateKey,
+    title,
+    detail: detail || undefined,
+  }
+}
+
 function runtimeScheduleSlotFromOption(
   option: Record<string, unknown>,
   id: string,
@@ -376,6 +411,8 @@ function runtimeScheduleSlotFromOption(
 ): ApplyInstructorScheduleSlot {
   const meta = optionMetadata(option)
   const displayLabel = label || String(option.label ?? option.option_label ?? '').trim() || id
+  const geminiPreferred = geminiPreferredScheduleSlotFromOption(option, meta, id, displayLabel)
+  if (geminiPreferred) return geminiPreferred
   const isEducationPeriod =
     isEducationPeriodScheduleValue(id) || meta.educationPeriodIndex != null
 
