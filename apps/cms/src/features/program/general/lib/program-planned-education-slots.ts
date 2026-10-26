@@ -1,6 +1,7 @@
 import {
   fetchAdminProgramEducationSlotsRemote,
 } from '@/features/program/general/api/program-schedules-api-client'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type { AdminProgramScheduleResponse } from '@/features/program/shared/api/admin-program-schedule-response'
 import {
   filterProgramSchedulesForNewEducationAssignment,
@@ -23,8 +24,8 @@ function readEducationSlotScheduleId(slot: ProgramEducationSlotResponse): number
 function readEducationSlotScheduleName(slot: ProgramEducationSlotResponse): string | undefined {
   const raw = slot as ProgramEducationSlotResponse & { scheduleName?: unknown }
   if (typeof raw.scheduleName !== 'string') return undefined
-  const trimmed = raw.scheduleName.trim()
-  return trimmed || undefined
+  // 백엔드 자동 기본명(`공통 교육 예정 N`)은 일정명으로 쓰지 않는다.
+  return toDisplayEducationScheduleName(raw.scheduleName)
 }
 
 /** education-slots 응답 → 승인·OSA·설문에서 쓰는 최소 ProgramScheduleResponse 호환 뷰 */

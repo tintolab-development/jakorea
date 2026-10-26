@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { CmsButton, CmsPhoneInput, CmsRadio, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsRadio, CmsSelect, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
 import {
   fetchAllSmsRecipientCandidates,
@@ -29,6 +29,7 @@ import {
   listNotificationSendTemplateDisabledKeysForProgram,
 } from '@/features/notifications/model/shared/template-usable-for-program'
 import { SMS_SEND_PICKER_PAGE_SIZE } from '@/features/notifications/model/sms-send/types'
+import { buildSmsSenderPhoneOptions } from '@/features/notifications/model/sms-template/sender-phone'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
 import {
@@ -67,7 +68,7 @@ import { ProgramSelectField } from '@/features/notifications/ui/mail-send/progra
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { SmsSendComposeFields } from './compose-fields'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
-import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
+import { showNotificationSendErrorAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
 import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
@@ -83,6 +84,14 @@ function createIdempotencyKey(): string {
   }
   return `sms-batch-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
+
+/** BE 발송 검증 오류(error.code) → 포커스할 입력 */
+const SMS_SEND_ERROR_FOCUS_SELECTORS = {
+  template: '.sms-send-fullpage__message-type input:not(:disabled)',
+  messageType: '.sms-send-fullpage__message-type input:not(:disabled)',
+  content: '.sms-send-fullpage__body-field textarea',
+  sender: '.sms-send-fullpage__sender-select input',
+} as const
 
 function recipientTotalPages(total: number, size: number, totalPages?: number): number {
   if (totalPages != null && totalPages > 0) return totalPages
@@ -163,6 +172,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     })
   }, [open, programsQuery.error, programsQuery.isError, remote, showAlert])
 
+  // NHN 사전 등록 발신번호만 노출 (orphan 미포함)
+  const senderOptions = useMemo(
+    () => buildSmsSenderPhoneOptions(senderProfilesQuery.data),
+    [senderProfilesQuery.data]
+  )
   const resolvedSenderProfileId = useMemo(() => {
     return resolveSmsSenderProfileId(senderProfilesQuery.data ?? [], form.senderPhone)
   }, [form.senderPhone, senderProfilesQuery.data])
@@ -387,7 +401,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       if (!resolvedSenderProfileId) {
         showAlert({
           title: '필수 입력 안내',
-          content: 'NHN에 등록된 발신 번호를 입력하세요.',
+          content: 'NHN에 등록된 발신 번호를 선택하세요.',
         })
         return
       }
@@ -438,9 +452,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       setSendConfirmOpen(false)
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
-    } catch {
+    } catch (error) {
       setSendConfirmOpen(false)
-      showNotificationSendRequestFailedAlert(showAlert)
+      showNotificationSendErrorAlert(showAlert, error, SMS_SEND_ERROR_FOCUS_SELECTORS)
     } finally {
       setSending(false)
     }
@@ -499,7 +513,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     sending ||
                     form.composeBlocking ||
                     form.recipients.length === 0 ||
-                    !form.templateId?.trim() ||
                     !form.senderPhone.trim() ||
                     (form.sendTiming === 'scheduled' && !form.scheduledAt)
                   }
@@ -537,7 +550,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     <DetailInfoForm.Row type="double">
                       <DetailInfoForm.Field
                         label="템플릿"
-                        required
                         view=""
                         edit={
                           <TemplateSelectField
@@ -601,13 +613,16 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         required
                         view={form.senderPhone}
                         edit={
-                          <CmsPhoneInput
+                          <CmsSelect
+                            className="sms-send-fullpage__sender-select"
                             inputSize="small"
                             width="100%"
-                            allowClear={false}
-                            placeholder="발신 번호를 입력하세요"
-                            value={form.senderPhone}
-                            onChange={event => form.setSenderPhone(event.target.value)}
+                            withAllOption={false}
+                            loading={senderProfilesQuery.isLoading}
+                            placeholder="발신 번호를 선택해 주세요"
+                            options={senderOptions}
+                            value={form.senderPhone || undefined}
+                            onChange={value => form.setSenderPhone(String(value ?? ''))}
                           />
                         }
                       />
@@ -617,7 +632,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         view={form.messageType}
                         edit={
                           <CmsRadio.Group
+                            className="sms-send-fullpage__message-type"
                             size="medium"
+                            disabled={Boolean(form.templateId?.trim())}
                             value={form.messageType}
                             onChange={event =>
                               form.applyMessageType(

@@ -1,6 +1,7 @@
 import {
   mapPreferredEducationSchedulesToSessions,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import type {
   ParticipatingSchoolRow,
@@ -167,7 +168,7 @@ function mapProgramScheduleAndSlotToSession(
     typeof schedule.sessionNo === 'number' && Number.isFinite(schedule.sessionNo)
       ? schedule.sessionNo
       : order + 1
-  const scheduleLabel = schedule.scheduleName?.trim() || `${round}회차`
+  const scheduleLabel = toDisplayEducationScheduleName(schedule.scheduleName) || `${round}회차`
   const assignmentId = slot.assignmentId
   return {
     round,

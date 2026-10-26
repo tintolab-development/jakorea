@@ -52,9 +52,22 @@ export function parseNotificationServerReservedVariableKeys(raw: string): string
   return []
 }
 
+/** BE 실제 수신자 변수 누락 failureCode 접두어 (문서상 REQUIRED_VARIABLE_MISSING과 다름) */
+export const NOTIFICATION_VARIABLE_RESOLUTION_FAILED_PREFIX =
+  'NOTIFICATION_TEMPLATE_VARIABLE_RESOLUTION_FAILED'
+
 export function formatNotificationFailedReason(raw?: string | null): string {
   const text = (raw ?? '').trim()
   if (!text) return ''
+  if (text.startsWith(NOTIFICATION_VARIABLE_RESOLUTION_FAILED_PREFIX)) {
+    const detail = text
+      .slice(NOTIFICATION_VARIABLE_RESOLUTION_FAILED_PREFIX.length)
+      .replace(/^[:\s]+/, '')
+      .trim()
+    return detail
+      ? `자동입력 변수값이 없어 발송되지 않았습니다: ${detail}`
+      : '자동입력 변수값이 없어 발송되지 않았습니다.'
+  }
   const missingPrefix = 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING'
   if (text === missingPrefix || text.startsWith(`${missingPrefix}:`)) {
     return formatNotificationMissingVariablesMessage(parseNotificationMissingVariableKeys(text))

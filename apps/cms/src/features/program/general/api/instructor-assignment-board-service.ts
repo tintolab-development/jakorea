@@ -5,6 +5,7 @@
  */
 
 import dayjs from 'dayjs'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import {
   fetchInstructorAssignmentCalendarRemote,
   fetchInstructorAssignmentsRemote,
@@ -61,7 +62,10 @@ function buildScheduleLabelById(
     map.set(String(schedule.id), {
       date: dateKey ?? start,
       time,
-      session: schedule.sessionNo != null ? `${schedule.sessionNo}차시` : schedule.scheduleName,
+      session:
+        schedule.sessionNo != null
+          ? `${schedule.sessionNo}차시`
+          : toDisplayEducationScheduleName(schedule.scheduleName),
     })
   }
   return map

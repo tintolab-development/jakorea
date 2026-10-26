@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import {
   applyChangedDatesToEducationScheduleLines,
   applyChangedRangesToEducationScheduleLines,
+  isEducationScheduleLinePast,
   applyDateToEducationScheduleLine,
   buildSameDateScheduleChangePairs,
   educationOperationRangeSealKeyFromSchedulePrefix,
@@ -117,5 +118,49 @@ describe('education-schedule-change', () => {
         ['26년 5월 1일(금) 9:30 ~ 12:20', '26년 5월 1일(금) 14:00 ~ 16:00']
       )
     ).toEqual([{ fromDate: '2026-04-20', toDate: '2026-05-01' }])
+  })
+})
+
+describe('applyChangedRangesToEducationScheduleLines — 피커 시간 입력 여부', () => {
+  const lines = ['2026.10.26 18:48 ~ 19:43']
+
+  it('시간까지 고른 범위는 그대로 반영한다', () => {
+    const next = applyChangedRangesToEducationScheduleLines(
+      lines,
+      { 0: [dayjs('2026-10-27T10:00'), dayjs('2026-10-27T11:30')] },
+      { keepOriginalTimeWhenDateOnly: false }
+    )
+    expect(next[0]).toContain('2026.10.27')
+    expect(next[0]).toContain('10:00')
+    expect(next[0]).toContain('11:30')
+  })
+
+  it('날짜만 고른 경우 기존 시간을 유지한 채 날짜만 옮긴다', () => {
+    const next = applyChangedRangesToEducationScheduleLines(
+      lines,
+      { 0: [dayjs('2026-10-27').startOf('day'), dayjs('2026-10-27').startOf('day')] },
+      { keepOriginalTimeWhenDateOnly: true }
+    )
+    expect(next[0]).toContain('2026.10.27')
+    expect(next[0]).toContain('18:48')
+    expect(next[0]).toContain('19:43')
+  })
+})
+
+describe('isEducationScheduleLinePast', () => {
+  const now = dayjs('2026-10-26T21:00')
+
+  it('시작 시각이 지난 오늘 일정은 지난 일정이다', () => {
+    expect(isEducationScheduleLinePast('2026.10.26 18:48 ~ 19:43', now)).toBe(true)
+  })
+
+  it('아직 시작 전인 오늘 일정은 변경 대상이다', () => {
+    expect(isEducationScheduleLinePast('2026.10.26 21:30 ~ 22:00', now)).toBe(false)
+  })
+
+  it('날짜만 있는 일정은 오늘 이전일 때만 지난 일정이다', () => {
+    expect(isEducationScheduleLinePast('2026.10.25', now)).toBe(true)
+    expect(isEducationScheduleLinePast('2026.10.26', now)).toBe(false)
+    expect(isEducationScheduleLinePast('2026.10.27', now)).toBe(false)
   })
 })

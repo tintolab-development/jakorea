@@ -37,6 +37,7 @@ import {
 } from '@/features/notifications/model/alimtalk-send/recipient-variables'
 import { dedupeMailSendRecipients } from '@/features/notifications/model/mail-send/recipients'
 import { validateMailSendVariables } from '@/features/notifications/model/mail-send/validate-send'
+import { resolveMailSenderDisplayNameForSend } from '@/features/notifications/model/mail-send/payload'
 import type {
   MailSendDraft,
   MailSendRecipient,
@@ -310,7 +311,8 @@ export async function submitMailSend(input: {
       )
     )
   )
-  const body: CreateRequest = {
+  // senderProfileDisplayName: BE PR #43 메일 전용 선택 필드. OpenAPI 재생성 전까지 생성 타입에 없다.
+  const body: CreateRequest & { senderProfileDisplayName?: string } = {
     batchName: (templateDisplayName || subject).slice(0, 200).trim() || '메일 발송',
     templateId: numericTemplateId,
     scheduledAt: resolveScheduledAtForCreateRequest({
@@ -323,6 +325,8 @@ export async function submitMailSend(input: {
   }
   if (programId != null) body.programId = programId
   if (batchVariables) body.variables = batchVariables
+  const senderProfileDisplayName = resolveMailSenderDisplayNameForSend(draft.senderName)
+  if (senderProfileDisplayName) body.senderProfileDisplayName = senderProfileDisplayName
 
   applyNotificationSendBodySnapshot(body, {
     channel: 'EMAIL',

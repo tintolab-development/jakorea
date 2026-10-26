@@ -1,4 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { normalizeEducationScheduleLineForView } from '@/features/program/general/lib/education-schedule-lines-display'
 import {
@@ -123,7 +124,7 @@ export function formatSurveyPollScheduleOptionLabel(
     typeof schedule.sessionNo === 'number' && Number.isFinite(schedule.sessionNo)
       ? schedule.sessionNo
       : _index + 1
-  return schedule.scheduleName?.trim() || `${sessionNo}회차`
+  return toDisplayEducationScheduleName(schedule.scheduleName) || `${sessionNo}회차`
 }
 
 function rangeMinuteKey(range: [Dayjs, Dayjs]): string {

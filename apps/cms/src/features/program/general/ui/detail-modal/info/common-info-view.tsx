@@ -4868,6 +4868,11 @@ function ScheduleSettingsSection({
                 ? (editForm.watch('educationScheduleMode') ?? 'date')
                 : 'date'
             }
+            educationStructure={educationStructure === 'schedule' ? 'schedule' : 'curriculum'}
+            participantOrganization={Boolean(
+              isFormEdit && editForm.watch('participantOrganization')
+            )}
+            sessionRound={sessionRound === 'multi' ? 'multi' : 'single'}
             autoFillFromScheduleGroupTimes={shouldAutoFillEducationScheduleFromGroupTimes({
               educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
               sessionRound: sessionRound === 'multi' ? 'multi' : 'single',

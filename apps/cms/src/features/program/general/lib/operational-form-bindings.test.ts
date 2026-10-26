@@ -6,6 +6,7 @@ import {
   listRecruitmentRowApplicationBindings,
   listVisibleOperationalFormSpecs,
   pickOperationalFormBinding,
+  resolveRowApplicationBinding,
 } from './operational-form-bindings'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
 import {
@@ -172,5 +173,98 @@ describe('listAllRegistrationCreateFormSpecs', () => {
         { claimedBindingIds: new Set([189454]) }
       )
     ).toThrow('같은 운영 바인딩')
+  })
+})
+
+describe('강사 모집 행 fan-out 바인딩(targetType INSTRUCTOR + targetRole MEMBER)', () => {
+  const instructorRow = {
+    bindingId: 189485,
+    formType: 'APPLICATION',
+    targetType: 'INSTRUCTOR',
+    targetRole: 'MEMBER',
+    targetScope: 'RECRUITMENT',
+    targetScopeId: 186839,
+    templateId: 12,
+    templateVersionId: 1,
+    active: true,
+  } as ProgramFormBindingResponse
+  const orgRow = {
+    bindingId: 189484,
+    formType: 'APPLICATION',
+    targetType: 'ORGANIZATION',
+    targetRole: 'TEACHER',
+    targetScope: 'RECRUITMENT',
+    targetScopeId: 186838,
+    active: true,
+  } as ProgramFormBindingResponse
+  const program = {
+    id: '186394',
+    backendProgramType: 'GENERAL',
+    activeRecruitmentId: 186839,
+    programRecruitments: [{ id: 186839, recruitmentType: 'INSTRUCTOR' }],
+  } as unknown as Program
+  const spec = { formType: 'APPLICATION', targetRole: 'INSTRUCTOR' } as const
+
+  it('모집 행 강사 바인딩을 강사 신청으로 인식해 그 행을 갱신 대상으로 고른다', () => {
+    const resolved = resolveRowApplicationBinding(program, [orgRow, instructorRow], spec)
+    expect(resolved).toEqual({ kind: 'binding', binding: instructorRow })
+    expect(
+      listRecruitmentRowApplicationBindings(program, [orgRow, instructorRow], spec).map(
+        item => item.bindingId
+      )
+    ).toEqual([189485])
+  })
+
+  it('ORGANIZATION + TEACHER 기관 바인딩은 여전히 강사로 보지 않는다', () => {
+    expect(listRecruitmentRowApplicationBindings(program, [orgRow], spec)).toEqual([])
+  })
+})
+
+describe('신청 바인딩 대상 별칭 — BE canonicalTarget와 같은 규칙', () => {
+  const program = {
+    id: '1',
+    backendProgramType: 'GENERAL',
+    activeRecruitmentId: 20,
+    programRecruitments: [{ id: 20 }],
+  } as unknown as Program
+  const row = (bindingId: number, targetType: string, targetRole?: string) =>
+    ({
+      bindingId,
+      formType: 'APPLICATION',
+      targetType,
+      targetRole,
+      targetScope: 'RECRUITMENT',
+      targetScopeId: 20,
+      active: true,
+    }) as ProgramFormBindingResponse
+  const ids = (role: string, bindings: ProgramFormBindingResponse[]) =>
+    listRecruitmentRowApplicationBindings(program, bindings, {
+      formType: 'APPLICATION',
+      targetRole: role,
+    }).map(item => item.bindingId)
+
+  it('봉사자는 COLLEGE_STUDENT·VOLUNTEER 모두 인식한다', () => {
+    expect(
+      ids('VOLUNTEER', [row(1, 'COLLEGE_STUDENT', 'VOLUNTEER'), row(2, 'VOLUNTEER', 'MEMBER')])
+    ).toEqual([1, 2])
+  })
+  it('기관은 ORGANIZATION·SCHOOL·INSTITUTION, 개인은 INDIVIDUAL·PERSONAL을 인식한다', () => {
+    const all = [
+      row(1, 'SCHOOL'),
+      row(2, 'INSTITUTION'),
+      row(3, 'ORGANIZATION', 'TEACHER'),
+      row(4, 'PERSONAL'),
+      row(5, 'INDIVIDUAL'),
+    ]
+    expect(ids('ORGANIZATION', all)).toEqual([1, 2, 3])
+    expect(ids('INDIVIDUAL', all)).toEqual([4, 5])
+    expect(ids('INSTRUCTOR', all)).toEqual([])
+  })
+  it('대상 유형이 다른 바인딩은 targetRole이 같아도 고르지 않는다', () => {
+    expect(ids('VOLUNTEER', [row(1, 'INSTRUCTOR', 'VOLUNTEER')])).toEqual([])
+  })
+  it('targetType이 빈 레거시 행은 targetRole로 판단한다', () => {
+    expect(ids('INSTRUCTOR', [row(1, '', 'INSTRUCTOR')])).toEqual([1])
+    expect(ids('INDIVIDUAL', [row(2, '', 'MEMBER')])).toEqual([2])
   })
 })

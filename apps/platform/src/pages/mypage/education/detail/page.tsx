@@ -26,6 +26,7 @@ import {
   DocumentPassBanner,
   hasTeacherMypageProfile,
   isSchoolTeacherMypageProfile,
+  hasTeacherAssignmentAsideContent,
   isInstructorRoleApplication,
   isParticipantRoleApplication,
   isVolunteerRoleApplication,
@@ -640,8 +641,7 @@ export function MypageEducationDetailPage() {
   const showCancelCta =
     application.cancellable ?? canCancelEducationApplication(application.displayStatus)
   const showTeacherAssignment =
-    isSchoolTeacher && application.applicationType === 'ORGANIZATION'
-  const teacherAssignment = application.teacherAssignment ?? { instructors: [] }
+    isTeacher && hasTeacherAssignmentAsideContent(application.teacherAssignment)
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection =
     isActivitySection(section) &&
@@ -847,11 +847,10 @@ export function MypageEducationDetailPage() {
           />
         }
         aside={
-          showTeacherAssignment ? (
+          showTeacherAssignment && application.teacherAssignment ? (
             <TeacherEducationAssignmentAside
               applicationId={application.id}
-              applicationType={application.applicationType}
-              assignment={teacherAssignment}
+              assignment={application.teacherAssignment}
             />
           ) : undefined
         }

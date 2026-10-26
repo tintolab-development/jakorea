@@ -98,4 +98,44 @@ describe('submitSmsSend', () => {
     const body = vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]
     expect(body).toMatchObject({ contentTemplate: '등록본문', titleTemplate: '안내' })
   })
+
+  it('sends without template: omits templateId, includes messageType and compose snapshot', async () => {
+    await submitSmsSend({
+      draft: draft({ templateId: undefined, subject: '직접 제목', bodyText: '직접 본문' }),
+      idempotencyKey: 'idem-sms-no-template',
+      senderProfileId: 9,
+    })
+    const body = vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]
+    expect(body).not.toHaveProperty('templateId')
+    expect(body).toMatchObject({
+      messageType: 'LMS',
+      titleTemplate: '직접 제목',
+      contentTemplate: '직접 본문',
+      senderProfileId: 9,
+    })
+    expect(body?.senderKey).toBeUndefined()
+  })
+
+  it('sends without template as SMS type: no titleTemplate', async () => {
+    await submitSmsSend({
+      draft: draft({ templateId: undefined, messageType: 'SMS', subject: '', bodyText: '짧은 본문' }),
+      idempotencyKey: 'idem-sms-no-template-sms',
+      senderProfileId: 9,
+    })
+    const body = vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]
+    expect(body).not.toHaveProperty('templateId')
+    expect(body).toMatchObject({ messageType: 'SMS', contentTemplate: '짧은 본문' })
+    expect(body?.titleTemplate).toBeUndefined()
+  })
+
+  it('rejects a non-numeric template id instead of silently sending without template', async () => {
+    await expect(
+      submitSmsSend({
+        draft: draft({ templateId: 'local-tpl-1' }),
+        idempotencyKey: 'idem-sms-bad-template',
+        senderProfileId: 9,
+      })
+    ).rejects.toThrow('문자 발송에는 서버에 등록된 템플릿이 필요합니다.')
+    expect(createSendBatchRemote).not.toHaveBeenCalled()
+  })
 })

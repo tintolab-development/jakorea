@@ -38,7 +38,10 @@ import {
   shouldUseFormsSurveysRemoteApi,
 } from '@/features/template/api/admin-form-templates-service'
 import { coalesceScopedFormDraftForPut } from '@/features/program/general/lib/coalesce-scoped-form-draft-for-put'
-import { resolveFormBindingTargetType } from '@/features/program/general/lib/resolve-form-binding-target-type'
+import {
+  canonicalFormBindingTarget,
+  resolveFormBindingTargetType,
+} from '@/features/program/general/lib/resolve-form-binding-target-type'
 import type { ApplicationCountResponse } from '@/shared/api/generated/dashboard/schemas/applicationCountResponse'
 import { fetchProgramApplicationCountsRemote } from '@/features/program/general/api/application-counts-api-client'
 import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
@@ -82,10 +85,7 @@ async function fetchProgramApplicationCountsCached(
   })
 }
 
-async function fetchProgramFormBindingsCached(
-  programId: string,
-  options?: { fresh?: boolean }
-) {
+async function fetchProgramFormBindingsCached(programId: string, options?: { fresh?: boolean }) {
   const queryKey = generalProgramQueryKeys.formBindings(programId)
   if (options?.fresh) {
     await queryClient.invalidateQueries({ queryKey })
@@ -130,7 +130,10 @@ function applicationCountMatchesTarget(args: {
     return true
   }
   if (!countHasRecruitmentId(count) && expectedTargetType !== '') {
-    return (count.targetType ?? '').trim().toUpperCase() === expectedTargetType
+    return (
+      canonicalFormBindingTarget(count.targetType) ===
+      canonicalFormBindingTarget(expectedTargetType)
+    )
   }
   return false
 }
@@ -196,9 +199,7 @@ function bindingToUpdatePayload(
   spec: OperationalFormSpec,
   program?: Program
 ): ProgramFormBindingRequest {
-  const scope = program
-    ? recruitmentApplicationBindingScope(program, spec.formType)
-    : undefined
+  const scope = program ? recruitmentApplicationBindingScope(program, spec.formType) : undefined
   return sanitizeProgramFormBindingPayload(program, {
     formType: binding.formType ?? spec.formType,
     templateId: ids.templateId,
@@ -308,7 +309,8 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
     ...input,
     program: scopedProgramForApplicationForm(input.program, input.templateCode),
   }
-  const spec = getOperationalFormSpec(args.templateCode) ?? getRegistrationFormSpec(args.templateCode)
+  const spec =
+    getOperationalFormSpec(args.templateCode) ?? getRegistrationFormSpec(args.templateCode)
   if (spec == null) {
     throw new Error(`운영 양식 스펙을 찾을 수 없습니다: ${args.templateCode}`)
   }
@@ -347,14 +349,9 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
     draftVersionId = copied.templateVersionId
   }
 
-  const baseline = await loadFormTemplateVersionDraftByVersionId(
-    args.templateCode,
-    draftVersionId
-  )
+  const baseline = await loadFormTemplateVersionDraftByVersionId(args.templateCode, draftVersionId)
   const draftForPut =
-    baseline?.draft != null
-      ? coalesceScopedFormDraftForPut(baseline.draft, args.draft)
-      : args.draft
+    baseline?.draft != null ? coalesceScopedFormDraftForPut(baseline.draft, args.draft) : args.draft
 
   await saveFormTemplateVersionDraftByVersionId({
     versionId: draftVersionId,
@@ -466,7 +463,10 @@ export async function ensureProgramScopedOperationalBinding(
   const strictRemote = options?.strictRemote === true
   if (!shouldUseProgramFormBindingsRemoteApi() || !shouldUseFormsSurveysRemoteApi()) {
     return strictRemote
-      ? { preferLocalDraft: false, unavailableReason: '원격 신청 양식 API가 활성화되지 않았습니다.' }
+      ? {
+          preferLocalDraft: false,
+          unavailableReason: '원격 신청 양식 API가 활성화되지 않았습니다.',
+        }
       : { preferLocalDraft: true }
   }
   const spec = getOperationalFormSpec(templateCode)

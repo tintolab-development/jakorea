@@ -11,6 +11,10 @@ import {
   resolveEducationScheduleRowLabel,
 } from './common-info-label.ts'
 import {
+  stripDefaultEducationSlotNameFromLabel,
+  toDisplayEducationScheduleName,
+} from '../../../../../shared/lib/education-schedule-name.ts'
+import {
   formatDisplayDateTimeRange,
   normalizeScheduleDisplayLabel,
 } from '@/shared/lib/format-display-date'
@@ -188,8 +192,9 @@ export function mapPortalEducationSchedule(
   meta?: MapPortalEducationScheduleMeta,
 ): EducationScheduleItem {
   const sessionNumber = item.sessionNo ?? index + 1
-  const sessionLabel = optionalText(item.sessionLabel)
-  const scheduleLabel = optionalText(item.scheduleLabel)
+  // 백엔드 자동 기본명(`공통 교육 예정 N`)은 회차·일정 라벨로 쓰지 않는다.
+  const sessionLabel = toDisplayEducationScheduleName(item.sessionLabel)
+  const scheduleLabel = optionalText(stripDefaultEducationSlotNameFromLabel(item.scheduleLabel))
   const title = resolveEducationScheduleCommonInfoLabel({
     educationStructure: meta?.educationStructure,
     sessionRound: meta?.sessionRound,

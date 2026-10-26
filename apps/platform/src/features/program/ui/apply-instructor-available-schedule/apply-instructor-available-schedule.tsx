@@ -5,6 +5,10 @@ import {
   isScheduleDateLikeText,
   parseScheduleDisplayLabel,
 } from '@/shared/lib/format-display-date'
+import {
+  isDefaultEducationSlotName,
+  stripDefaultEducationSlotNameFromLabel,
+} from '@/shared/lib/education-schedule-name'
 import { PFDatePickerCalendar } from '@/shared/ui/pf-date-input'
 import {
   PFFormField,
@@ -63,7 +67,12 @@ const SCHEDULE_DISPLAY_PLACEHOLDER = '미지정'
 
 function isScheduleDisplayPlaceholder(value: string): boolean {
   const trimmed = value.trim()
-  return trimmed.length === 0 || trimmed === SCHEDULE_DISPLAY_PLACEHOLDER
+  // 백엔드 자동 기본명(`공통 교육 예정 N`)도 표시하지 않는다.
+  return (
+    trimmed.length === 0 ||
+    trimmed === SCHEDULE_DISPLAY_PLACEHOLDER ||
+    isDefaultEducationSlotName(trimmed)
+  )
 }
 
 function readScheduleMetaString(
@@ -410,7 +419,11 @@ function runtimeScheduleSlotFromOption(
   label: string,
 ): ApplyInstructorScheduleSlot {
   const meta = optionMetadata(option)
-  const displayLabel = label || String(option.label ?? option.option_label ?? '').trim() || id
+  const rawLabel = label || String(option.label ?? option.option_label ?? '').trim()
+  // 서버 라벨 끝의 자동 기본명(`| 공통 교육 예정 N`)은 제거한다.
+  const displayLabel = rawLabel
+    ? stripDefaultEducationSlotNameFromLabel(rawLabel) || '교육 일정'
+    : id
   const geminiPreferred = geminiPreferredScheduleSlotFromOption(option, meta, id, displayLabel)
   if (geminiPreferred) return geminiPreferred
   const isEducationPeriod =
