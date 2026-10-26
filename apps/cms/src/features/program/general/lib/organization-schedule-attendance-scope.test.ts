@@ -14,6 +14,7 @@ function student(
     gradeClass: partial.gradeClass ?? '1반',
     participantId: partial.participantId ?? 1,
     status: partial.status ?? 'present',
+    attendanceRecorded: partial.attendanceRecorded ?? partial.status !== 'unrecorded',
   }
 }
 

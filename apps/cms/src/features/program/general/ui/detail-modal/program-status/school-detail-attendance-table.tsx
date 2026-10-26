@@ -4,9 +4,12 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { formatSchoolDetailAttendanceClassLabel } from '@/features/program/general/lib/school-detail-attendance-display'
+import { SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES } from '@/features/program/general/lib/school-detail-attendance'
 import {
-  STUDENT_GENDER_LABELS,
+  formatStudentGenderLabel,
+  SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS,
   type SchoolDetailAttendanceStudentRow,
+  type SchoolSessionAttendanceEditableStatusKey,
   type SchoolSessionAttendanceStatusKey,
 } from '../../../model/school-detail-types'
 
@@ -25,34 +28,45 @@ function AttendanceStatusRadios({
   onChange,
 }: {
   value: SchoolSessionAttendanceStatusKey
-  onChange: (next: SchoolSessionAttendanceStatusKey) => void
+  onChange: (next: SchoolSessionAttendanceEditableStatusKey) => void
 }) {
+  const selected =
+    value === 'absent' || value === 'late' ? value : value === 'excused' ? undefined : 'present'
   return (
-    <CmsRadioGroup
-      className="school-detail-attendance-table__status-radios"
-      size="large"
-      value={value}
-      onChange={event => onChange(event.target.value as SchoolSessionAttendanceStatusKey)}
-    >
-      <CmsRadio value="present" size="large">
-        출석
-      </CmsRadio>
-      <CmsRadio value="absent" size="large">
-        결석
-      </CmsRadio>
-      <CmsRadio value="late" size="large">
-        지각
-      </CmsRadio>
-    </CmsRadioGroup>
+    <div className="school-detail-attendance-table__status-control">
+      <CmsRadioGroup
+        className="school-detail-attendance-table__status-radios"
+        size="small"
+        value={selected}
+        onChange={event =>
+          onChange(event.target.value as SchoolSessionAttendanceEditableStatusKey)
+        }
+      >
+        <CmsRadio value="present">
+          출석
+        </CmsRadio>
+        <CmsRadio value="absent">
+          결석
+        </CmsRadio>
+        <CmsRadio value="late">
+          지각
+        </CmsRadio>
+      </CmsRadioGroup>
+    </div>
   )
 }
 
 export function SchoolDetailAttendanceTable({
   rows,
+  emptyTitle,
   onStatusChange,
 }: {
   rows: SchoolDetailAttendanceStudentRow[]
-  onStatusChange: (studentId: string, status: SchoolSessionAttendanceStatusKey) => void
+  emptyTitle?: string
+  onStatusChange: (
+    studentId: string,
+    status: SchoolSessionAttendanceEditableStatusKey
+  ) => void
 }) {
   const tableData = useMemo(() => {
     const total = rows.length
@@ -86,8 +100,8 @@ export function SchoolDetailAttendanceTable({
         width: 72,
         align: 'center',
         className: 'school-detail-attendance-table__col-gender',
-        render: (value: SchoolDetailAttendanceStudentRow['gender']) =>
-          value ? (STUDENT_GENDER_LABELS[value] ?? '-') : '-',
+        render: (_value: SchoolDetailAttendanceStudentRow['gender'], record) =>
+          formatStudentGenderLabel(record.gender, record.genderMask),
       },
       {
         title: '생년월일',
@@ -134,12 +148,21 @@ export function SchoolDetailAttendanceTable({
           className: 'school-detail-attendance-table__status-header',
         }),
         onCell: () => ({ className: 'school-detail-attendance-table__status-cell' }),
-        render: (status: SchoolSessionAttendanceStatusKey, record) => (
-          <AttendanceStatusRadios
-            value={status}
-            onChange={next => onStatusChange(record.id, next)}
-          />
-        ),
+        render: (status: SchoolSessionAttendanceStatusKey, record) => {
+          if (status === 'excused') {
+            return (
+              <span className="school-detail-attendance-table__recorded-status">
+                {SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS.excused}
+              </span>
+            )
+          }
+          return (
+            <AttendanceStatusRadios
+              value={status}
+              onChange={next => onStatusChange(record.id, next)}
+            />
+          )
+        },
       },
     ],
     [onStatusChange]
@@ -154,6 +177,8 @@ export function SchoolDetailAttendanceTable({
       pagination={false}
       tableLayout="fixed"
       scroll={{ x: SCHOOL_DETAIL_ATTENDANCE_TABLE_SCROLL_X }}
+      emptyTitle={emptyTitle ?? SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES.noStudents}
+      emptyDescription={null}
     />
   )
 }
