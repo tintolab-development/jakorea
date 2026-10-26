@@ -31,6 +31,9 @@ function buildAdminAccountDetailListMetrics(
   if (inProgress != null && !Number.isNaN(inProgress)) {
     metrics.managedProgramInProgressCount = inProgress
   }
+  if (typeof detail.hasProgramAssignmentHistory === 'boolean') {
+    metrics.hasProgramAssignmentHistory = detail.hasProgramAssignmentHistory
+  }
   return Object.keys(metrics).length > 0 ? metrics : undefined
 }
 

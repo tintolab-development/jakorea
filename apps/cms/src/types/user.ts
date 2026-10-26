@@ -278,6 +278,8 @@ export interface UserListRowMetrics {
   managedProgramCount?: number
   /** 관리자: 담당 프로그램 중 진행 중인 건수 (`managedProgramCount`와 함께 상세·목록에 표기) */
   managedProgramInProgressCount?: number
+  /** 관리자: 현재 또는 과거 프로그램 담당자 배정 이력 (BE `hasProgramAssignmentHistory`) */
+  hasProgramAssignmentHistory?: boolean
   /** 관리자 목록: 권한 유형 태그 (없으면 programRoles로 추론) */
   adminPermissionVariant?: 'manager' | 'partner' | 'viewer'
   /** 일반 교사 상세: 재직 현황 라벨 */
