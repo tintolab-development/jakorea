@@ -1008,23 +1008,33 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
           : null
         if (!url) {
-          notifyProgramApiUnavailable(
-            'general-survey-share-link-empty',
-            '설문 관리 · 설문 공유'
-          )
+          void showAlert({
+            title: '공유',
+            content:
+              response?.accessMode === 'MEMBER_AUTHENTICATED'
+                ? '회원 전용 설문은 비로그인 공유 링크를 만들 수 없습니다.'
+                : '공개 공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          })
           return
         }
         void copyText(url)
+        void queryClient.invalidateQueries({
+          queryKey: generalProgramQueryKeys.surveys(program.id),
+          exact: true,
+        })
         showShareCopyToast()
       } catch (error) {
         handleError(error, { context: 'generalSurveyShareLink' })
         showAlert({
           title: '공유',
-          content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
         })
       }
     },
-    [copyText, program.id, showAlert, showShareCopyToast]
+    [copyText, program.id, queryClient, showAlert, showShareCopyToast]
   )
 
   const shareSatisfactionSurveyUrl = useCallback(
@@ -1044,23 +1054,40 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
           : null
         if (!url) {
-          notifyProgramApiUnavailable(
-            'general-satisfaction-share-link-empty',
-            '설문 관리 · 만족도조사 공유'
-          )
+          void showAlert({
+            title: '공유',
+            content:
+              response?.accessMode === 'MEMBER_AUTHENTICATED'
+                ? '회원 전용 만족도조사는 비로그인 공유 링크를 만들 수 없습니다.'
+                : '공개 공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          })
           return
         }
         void copyText(url)
+        void queryClient.invalidateQueries({
+          queryKey: generalProgramQueryKeys.surveys(program.id),
+          exact: true,
+        })
         showShareCopyToast(GENERAL_SATISFACTION_SHARE_TOAST_COPY)
       } catch (error) {
         handleError(error, { context: 'generalSatisfactionShareLink' })
         showAlert({
           title: '공유',
-          content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
         })
       }
     },
-    [copyText, program.id, satisfactionSurveysByAudience, showAlert, showShareCopyToast]
+    [
+      copyText,
+      program.id,
+      queryClient,
+      satisfactionSurveysByAudience,
+      showAlert,
+      showShareCopyToast,
+    ]
   )
 
   const handleDownloadSatisfactionResults = useCallback(

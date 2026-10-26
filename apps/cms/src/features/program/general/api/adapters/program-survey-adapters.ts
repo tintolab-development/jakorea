@@ -11,6 +11,7 @@ import {
 } from '@/features/program/general/lib/survey-audience'
 import { SURVEY_ESSAY_QUESTION_TYPES } from '@/features/program/shared/lib/survey-management/aggregate-survey-poll-results'
 import { LECTURE_EVAL_TEMPLATE_ID } from '@/features/program/shared/lib/survey-management/lecture-eval-survey'
+import type { SurveyShareAccessMode } from '@/shared/api/generated/dashboard/schemas/surveyShareLinkResponse'
 import type {
   RegisteredSurvey,
   SurveyPollRawResponse,
@@ -89,7 +90,7 @@ export function isProgramSurveyManagementFormBinding(binding: ProgramFormBinding
 export function resolveSurveyShareClipboardUrl(
   response: {
     shareToken?: string | null
-    accessMode?: string | null
+    accessMode?: SurveyShareAccessMode | null
   },
   platformOrigin: string | null | undefined
 ): string | null {
