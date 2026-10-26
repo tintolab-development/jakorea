@@ -1,4 +1,5 @@
 import type { PortalProfileResponse } from '@/features/auth/sign-in'
+import { mapInstructorFeeGradeLabel } from '@/features/mypage/instructor-apply/api/response-codes'
 
 const MISSING = '-'
 
@@ -10,9 +11,11 @@ export function displaySettlementSummaryValue(value: string | null | undefined):
 export function readInstructorFeeGradeLabel(
   profile: PortalProfileResponse | null | undefined,
 ): string {
-  const fromMetrics = profile?.listMetrics?.instructorFeeGradeLabel?.trim()
+  const fromMetrics = mapInstructorFeeGradeLabel(profile?.listMetrics?.instructorFeeGradeLabel)
   if (fromMetrics) return fromMetrics
-  const fromProfile = profile?.instructorProfile?.profile?.defaultFeeGrade?.trim()
+  const fromProfile = mapInstructorFeeGradeLabel(
+    profile?.instructorProfile?.profile?.defaultFeeGrade,
+  )
   return fromProfile || MISSING
 }
 
