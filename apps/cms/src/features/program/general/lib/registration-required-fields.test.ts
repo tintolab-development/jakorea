@@ -939,6 +939,34 @@ describe('hasCurriculumMultiDateScheduleCountMismatch', () => {
     ).toBe(false)
   })
 
+  it('사전교육이 켜져 있으면 일반 회차에 1칸을 더해 예정일과 비교한다', () => {
+    const lines = (count: number) =>
+      filledOverlay({
+        'generalRegistration.educationScheduleSettings.scheduleLines': Array.from(
+          { length: count },
+          (_, index) => `26년 4월 ${20 + index}일(월) 09:30 ~ 12:20`
+        ),
+      })
+    const preOn = ctx({
+      programType: 'curriculum',
+      sessionRoundType: 'multi',
+      educationScheduleMode: 'date',
+      curriculumSessionCount: 2,
+      scheduleCurriculumPreEducation: true,
+    })
+    expect(hasCurriculumMultiDateScheduleCountMismatch(lines(3), preOn)).toBe(false)
+    expect(hasCurriculumMultiDateScheduleCountMismatch(lines(2), preOn)).toBe(true)
+    expect(
+      hasCurriculumMultiDateScheduleCountMismatch(
+        lines(2),
+        ctx({
+          ...preOn,
+          preEducationDisplayMode: 'replaceFirst',
+        })
+      )
+    ).toBe(false)
+  })
+
   it('예정일이 비어 있으면 필수 검사 영역이므로 불일치로 보지 않는다', () => {
     expect(
       hasCurriculumMultiDateScheduleCountMismatch(
