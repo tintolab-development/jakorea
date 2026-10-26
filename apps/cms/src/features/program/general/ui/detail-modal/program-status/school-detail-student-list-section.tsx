@@ -888,6 +888,7 @@ export function SchoolDetailStudentListSection({
           programId: programIdValue,
           participantId,
           studentName: record.name,
+          organizationApplicationId: organizationApplicationKey,
         })
         setLectureAttendanceRemoteDetail(detail)
         setAttendanceSessionsByStudentId(prev => ({
@@ -905,7 +906,7 @@ export function SchoolDetailStudentListSection({
         setLectureAttendanceRemoteLoading(false)
       }
     },
-    [programId, progressRemoteEnabled, showAlert]
+    [organizationApplicationKey, programId, progressRemoteEnabled, showAlert]
   )
 
   const handleSaveLectureAttendance = useCallback(
@@ -935,6 +936,7 @@ export function SchoolDetailStudentListSection({
           programId: programIdValue,
           participantId,
           studentName: student.name,
+          organizationApplicationId: organizationApplicationKey,
         })
         setLectureAttendanceRemoteDetail(refreshed)
         setAttendanceSessionsByStudentId(prev => ({
@@ -955,7 +957,7 @@ export function SchoolDetailStudentListSection({
         setLectureAttendanceSaving(false)
       }
     },
-    [lectureAttendanceStudent, programId, progressRemoteEnabled, showAlert]
+    [lectureAttendanceStudent, organizationApplicationKey, programId, progressRemoteEnabled, showAlert]
   )
 
   const handleEditInfoClick = useCallback(() => {

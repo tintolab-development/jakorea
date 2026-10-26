@@ -30,8 +30,7 @@ function AttendanceStatusRadios({
   value: SchoolSessionAttendanceStatusKey
   onChange: (next: SchoolSessionAttendanceEditableStatusKey) => void
 }) {
-  const selected =
-    value === 'absent' || value === 'late' ? value : value === 'excused' ? undefined : 'present'
+  const selected = value === 'absent' ? value : 'present'
   return (
     <div className="school-detail-attendance-table__status-control">
       <CmsRadioGroup
@@ -47,9 +46,6 @@ function AttendanceStatusRadios({
         </CmsRadio>
         <CmsRadio value="absent">
           결석
-        </CmsRadio>
-        <CmsRadio value="late">
-          지각
         </CmsRadio>
       </CmsRadioGroup>
     </div>
@@ -149,10 +145,10 @@ export function SchoolDetailAttendanceTable({
         }),
         onCell: () => ({ className: 'school-detail-attendance-table__status-cell' }),
         render: (status: SchoolSessionAttendanceStatusKey, record) => {
-          if (status === 'excused') {
+          if (status === 'excused' || status === 'late') {
             return (
               <span className="school-detail-attendance-table__recorded-status">
-                {SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS.excused}
+                {SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS[status]}
               </span>
             )
           }

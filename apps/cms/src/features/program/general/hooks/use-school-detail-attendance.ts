@@ -268,7 +268,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
               Number.isFinite(Number(student.participantId)) &&
               Number(student.participantId) > 0
           ).length,
-          missingByGradeClass: [],
         }
         continue
       }
@@ -277,7 +276,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
         programId,
         organizationApplicationId,
         scheduleId,
-        educationGrade: row.educationGrade,
         rosterStudents,
         assignmentSlots: assignmentScopeQuery.data,
       })
@@ -291,7 +289,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     remoteQuery.data?.rosterStudents,
     remoteSessionGroups,
     requiresAssignmentScopeForAttendance,
-    row.educationGrade,
   ])
 
   const getSessionScopeReadiness = useCallback(
@@ -349,7 +346,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
           programId,
           organizationApplicationId,
           scheduleId,
-          educationGrade: row.educationGrade,
           rosterStudents: remoteQuery.data?.rosterStudents ?? [],
           assignmentSlots: assignmentScopeQuery.data,
         })

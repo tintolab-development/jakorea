@@ -200,6 +200,11 @@ export interface LectureAttendanceSession {
   status: LectureAttendanceStatusKey
   /** 진행 출석 정정용 schedule PK */
   scheduleId?: number
+  /**
+   * 강의 시작 시각이 지나 출석을 기록할 수 있는 회차.
+   * 기록이 없어도 정정 모드에서 출석/결석/지각을 고를 수 있다.
+   */
+  recordingOpen?: boolean
 }
 
 export interface LectureAttendanceDetail {

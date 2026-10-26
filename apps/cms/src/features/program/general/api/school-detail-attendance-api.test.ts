@@ -384,4 +384,26 @@ describe('school-detail-attendance-api', () => {
       attendances: [{ participantId: 9, status: 'ABSENT' }],
     })
   })
+
+  it('sends students with empty grade/class unchanged (GENERAL_ORGANIZATION 186408 regression)', async () => {
+    bulkUpsertProgramAttendancesRemoteMock.mockResolvedValue({})
+    await saveSchoolDetailAttendanceSessionRemote({
+      programId: '186408',
+      scheduleId: 187394,
+      organizationApplicationId: '1691524',
+      students: [
+        studentRow({ id: 'r1', gradeClass: '', participantId: 1694983, status: 'late' }),
+        studentRow({ id: 'r2', gradeClass: '', participantId: 1694984, status: 'late' }),
+      ],
+    })
+
+    expect(bulkUpsertProgramAttendancesRemoteMock).toHaveBeenCalledWith('186408', {
+      scheduleId: 187394,
+      organizationApplicationId: 1691524,
+      attendances: [
+        { participantId: 1694983, status: 'LATE' },
+        { participantId: 1694984, status: 'LATE' },
+      ],
+    })
+  })
 })

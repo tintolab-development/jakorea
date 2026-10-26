@@ -35,7 +35,7 @@ function SessionStatusCell({
   editing: boolean
   onPick: (roundNumber: number, status: EditableAttendanceStatus) => void
 }) {
-  if (session.status === 'not_held') {
+  if (session.status === 'not_held' && !(editing && session.recordingOpen)) {
     return (
       <span
         className="lecture-attendance-modal__status-text lecture-attendance-modal__status-text--not_held"
@@ -60,7 +60,7 @@ function SessionStatusCell({
     <CmsRadioGroup
       className="lecture-attendance-modal__session-radios"
       size="medium"
-      value={session.status}
+      value={session.status === 'not_held' ? undefined : session.status}
       onChange={e => onPick(session.roundNumber, e.target.value as EditableAttendanceStatus)}
     >
       <CmsRadio value="attended" size="medium">
