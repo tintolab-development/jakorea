@@ -41,7 +41,9 @@ function lectureProgressClass(label: MemberLectureReportTableRow['lectureProgres
   return statusTextClassNames('completed')
 }
 
-function submissionStatusClass(label: MemberLectureReportTableRow['submissionStatusLabel']): string {
+function submissionStatusClass(
+  label: MemberLectureReportTableRow['submissionStatusLabel']
+): string {
   if (label === '미제출') return statusTextClassNames('undone')
   if (label === '진행 예정') return statusTextClassNames('scheduled')
   return statusTextClassNames('completed')
@@ -102,9 +104,7 @@ export function LectureReportSubmissionHistoryModal({
     if (memberId == null || applicationId == null) return
     setBulkDownloading(true)
     try {
-      const reportIds = rows
-        .map(row => row.reportId)
-        .filter((id): id is number => id != null)
+      const reportIds = rows.map(row => row.reportId).filter((id): id is number => id != null)
       const response = await bulkDownloadMemberLectureReportsRemote(memberId, applicationId, {
         reportIds: reportIds.length > 0 ? reportIds : undefined,
       })
@@ -217,20 +217,12 @@ export function LectureReportSubmissionHistoryModal({
       description={`**[${programTitle}]** 프로그램의 강의보고서 제출 내역입니다.`}
       footer={
         <>
-          <CmsButton
-            variant="secondary"
-            size="medium"
-            width={120}
-            className="cms-button--footer-auto lecture-report-submission-history-modal__footer-btn lecture-report-submission-history-modal__footer-btn--close"
-            onClick={onCancel}
-          >
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             닫기
           </CmsButton>
           <CmsButton
             variant="primary"
             size="medium"
-            width={200}
-            className="cms-button--footer-auto lecture-report-submission-history-modal__footer-btn lecture-report-submission-history-modal__footer-btn--bulk"
             icon={<ButtonDownloadIcon />}
             loading={bulkDownloading}
             disabled={memberId == null || applicationId == null}
