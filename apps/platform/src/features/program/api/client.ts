@@ -29,20 +29,38 @@ const SKIP_AUTH: SkipAuthConfig = {
   skipRefresh: true,
 } as SkipAuthConfig
 
-function compactParams(query: PortalProgramListQuery): Record<string, string | number> {
-  const params: Record<string, string | number> = {
-    page: query.page,
-    size: query.size,
+function appendFilterValues(
+  params: URLSearchParams,
+  key: string,
+  value: PortalProgramListQuery[keyof PortalProgramListQuery],
+) {
+  if (value == null || typeof value === 'number') return
+  const values = Array.isArray(value) ? value : [value]
+  for (const item of values) {
+    if (typeof item === 'string' && item.trim()) {
+      params.append(key, item)
+    }
   }
-  if (query.keyword) params.keyword = query.keyword
-  if (query.portalTab) params.portalTab = query.portalTab
-  if (query.programType) params.programType = query.programType
-  if (query.recruitmentStatus) params.recruitmentStatus = query.recruitmentStatus
-  if (query.educationTargets) params.educationTargets = query.educationTargets
-  if (query.educationMethod) params.educationMethod = query.educationMethod
-  if (query.operatingFrom) params.operatingFrom = query.operatingFrom
-  if (query.operatingTo) params.operatingTo = query.operatingTo
-  if (query.sort) params.sort = query.sort
+}
+
+/**
+ * 목록 query를 Spring `List<String>` 계약의 반복 query parameter로 만든다.
+ * Axios의 기본 배열 직렬화(`key[]`)는 사용하지 않는다.
+ */
+export function toPortalProgramListParams(query: PortalProgramListQuery): URLSearchParams {
+  const params = new URLSearchParams()
+  params.set('page', String(query.page))
+  params.set('size', String(query.size))
+  appendFilterValues(params, 'keyword', query.keyword)
+  appendFilterValues(params, 'portalTab', query.portalTab)
+  appendFilterValues(params, 'programType', query.programType)
+  appendFilterValues(params, 'recruitmentStatus', query.recruitmentStatus)
+  appendFilterValues(params, 'recruitmentTarget', query.recruitmentTarget)
+  appendFilterValues(params, 'educationTarget', query.educationTarget)
+  appendFilterValues(params, 'educationMethod', query.educationMethod)
+  appendFilterValues(params, 'operatingFrom', query.operatingFrom)
+  appendFilterValues(params, 'operatingTo', query.operatingTo)
+  appendFilterValues(params, 'sort', query.sort)
   return params
 }
 
@@ -78,7 +96,7 @@ export async function fetchPortalPrograms(
   const { data } = await axiosClient.get<unknown>(PORTAL_PROGRAMS_PATH, {
     ...SKIP_AUTH,
     signal,
-    params: compactParams(query),
+    params: toPortalProgramListParams(query),
   })
   return normalizeListPage(data, query.size)
 }

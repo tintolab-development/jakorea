@@ -1,6 +1,9 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import { composeOverlayStoreWithFieldForms } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
+import { generalRegistrationScheduleFieldForm } from '@/features/template/ui/form-set/registration-form/general/general-registration-schedule-form-rhf'
+import { trainedTeachersRegistrationFieldForm } from '@/features/template/ui/form-set/registration-form/trained-teachers/trained-teachers-registration-form-rhf'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import {
@@ -12,10 +15,11 @@ import {
   peekTrainedTeachersRegistrationRhf,
   subscribeTrainedTeachersRegistrationRhf,
 } from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { writeTrainedTeachersRhfOverlayPartial } from '@/features/program/trained-teachers/lib/registration-rhf-overlay-write'
 import {
   isTrainedTeachersCommonInfoOverlayKey,
+  projectTrainedTeachersRhfToOverlayRecord,
   readTrainedTeachersRhfOverlayValue,
-  writeTrainedTeachersRhfOverlayValue,
 } from '@/features/program/trained-teachers/lib/registration-rhf-values'
 import {
   peekCompanySchoolRegistrationRhf,
@@ -34,27 +38,33 @@ import {
  * 입력값이 갈라지지 않도록 동일 키를 공유한다.
  */
 
-/** 일반 등록 기본정보 — controlled editor state와 동기화하는 overlay 키 */
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
-  'generalRegistration.basicInfo.localSponsorId' as const
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY =
-  'generalRegistration.basicInfo.localSponsorIds' as const
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
-  'generalRegistration.basicInfo.localManagerContactId' as const
-/** 후원사 담당자 ref 다중 선택 (`sponsorManagementId::contactId`) */
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY =
-  'generalRegistration.basicInfo.localManagerContactIds' as const
-/** 후원사 담당자 표시 문구 (`직책 이름 | 연락처`) — create/상세 조회용 */
-export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY =
-  'generalRegistration.basicInfo.sponsorManagerLine' as const
-export const GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
-  'generalRegistration.basicInfo.localProgramTitleKo' as const
-export const GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY =
-  'generalRegistration.educationScheduleSettings.scheduleLines' as const
-export const GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY =
-  'generalRegistration.educationScheduleCurriculum.groupTimesByDetail' as const
+export {
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY,
+  GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
+  GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY,
+} from './program-registration-overlay-keys'
+import {
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
+  GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
+} from './program-registration-overlay-keys'
 
-const store = createScopedOverlayStore()
+/**
+ * Part3: TT 공통정보 키(`trainedTeachersRegistration.*`)는 TT 등록 RHF 미마운트 때 RHF 필드 폼이 소유한다(합성).
+ * Part3 5단계: 일반 등록 예정일 목록(scheduleLines·모드별 보관 키)도 RHF 필드 폼이 소유한다(형식 불변).
+ */
+const store = composeOverlayStoreWithFieldForms(createScopedOverlayStore(), [
+  trainedTeachersRegistrationFieldForm,
+  generalRegistrationScheduleFieldForm,
+])
 
 export function setProgramRegistrationOverlayScope(templateCode: string | undefined | null): void {
   store.setScope(templateCode)
@@ -238,7 +248,7 @@ export function readTrainedTeachersRegistrationOverlaySponsorContactIds(): strin
 
 export function readTrainedTeachersRegistrationOverlayProgramTitleKo(): string {
   const rhf = peekTrainedTeachersRegistrationRhf()
-  if (rhf != null) return rhf.getValues().title
+  if (rhf != null) return rhf.getValues().mainTitle
   return readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }
 
@@ -300,18 +310,6 @@ export function readRegistrationOverlaySponsorContactId(
   return readGeneralRegistrationOverlaySponsorContactId()
 }
 
-export function readRegistrationOverlaySponsorContactIds(
-  variant: ProgramRegistrationFormVariant = 'general'
-): string[] {
-  if (variant === 'trainedTeachers') {
-    return readTrainedTeachersRegistrationOverlaySponsorContactIds()
-  }
-  if (variant === 'economy') {
-    return readEconomyRegistrationOverlaySponsorContactIds()
-  }
-  return readGeneralRegistrationOverlaySponsorContactIds()
-}
-
 export function readEconomyRegistrationOverlayProgramTitleKo(): string {
   const rhf = peekCompanySchoolRegistrationRhf()
   if (rhf != null) return rhf.getValues().repKo
@@ -350,7 +348,7 @@ export function readStoredRegistrationProgramTitleKo(
 ): string {
   if (variant === 'economy') return readEconomyRegistrationOverlayProgramTitleKo()
   if (variant === 'trainedTeachers' && peekTrainedTeachersRegistrationRhf() != null) {
-    return peekTrainedTeachersRegistrationRhf()?.getValues().title.trim() || fallback.trim()
+    return peekTrainedTeachersRegistrationRhf()?.getValues().mainTitle.trim() || fallback.trim()
   }
   if (variant === 'general' && peekGeneralRegistrationWizardRhf() != null) {
     const fromRhf = peekGeneralRegistrationWizardRhf()?.getValues().programTitleKo
@@ -376,7 +374,6 @@ export function patchRegistrationOverlayProgramTitleKo(
   if (variant === 'trainedTeachers') {
     const rhf = peekTrainedTeachersRegistrationRhf()
     if (rhf != null) {
-      rhf.setPath('title', title, { shouldDirty: true })
       rhf.setPath('mainTitle', title, { shouldDirty: true })
       return
     }
@@ -388,6 +385,20 @@ export function patchRegistrationOverlayProgramTitleKo(
   patchProgramRegistrationOverlay({
     [GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]: title,
   })
+}
+
+/**
+ * 세션 메타 `programTitleKo` 복원. TT 제목 정본은 canonical snapshot이므로
+ * 레거시 메타로 RHF `mainTitle`을 덮지 않는다.
+ */
+export function hydrateRegistrationDraftProgramTitleKo(
+  variant: ProgramRegistrationFormVariant,
+  titleKo: string | undefined
+): void {
+  if (variant === 'trainedTeachers') return
+  const trimmed = titleKo?.trim()
+  if (!trimmed) return
+  patchRegistrationOverlayProgramTitleKo(variant, trimmed)
 }
 
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {
@@ -437,8 +448,34 @@ export function getProgramRegistrationOverlayVersion(): number {
   return store.getVersion()
 }
 
+function isBlankOverlayValue(value: unknown): boolean {
+  if (value == null) return true
+  if (typeof value === 'string') return value.trim() === ''
+  return false
+}
+
+/** RHF 빈 문자열이 overlay store 제목을 지우지 않게 한다 (TT title/mainTitle 반쪽 마이그레이션). */
+function mergeOverlayPreferFilled(
+  stored: Record<string, unknown>,
+  projected: Record<string, unknown>
+): Record<string, unknown> {
+  const next = { ...stored }
+  for (const [key, value] of Object.entries(projected)) {
+    if (isBlankOverlayValue(value) && !isBlankOverlayValue(stored[key])) continue
+    next[key] = value
+  }
+  return next
+}
+
 export function getProgramRegistrationOverlayRecord(): Record<string, unknown> {
   const stored = overlayState()
+  const ttRhf = peekTrainedTeachersRegistrationRhf()
+  if (ttRhf != null) {
+    return mergeOverlayPreferFilled(
+      stored,
+      projectTrainedTeachersRhfToOverlayRecord(ttRhf.getValues())
+    )
+  }
   const rhf = peekCompanySchoolRegistrationRhf()
   if (rhf == null) return stored
   return { ...stored, ...projectCompanySchoolRhfToOverlayRecord(rhf.getValues()) }
@@ -481,14 +518,6 @@ function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
 /** RHF → overlay 일방향 projection 중이면 overlay 쓰기를 RHF로 되먹이지 않는다. */
 let projectingFromWizardRhf = 0
 
-export function beginRegistrationWizardRhfOverlayProjection(): void {
-  projectingFromWizardRhf += 1
-}
-
-export function endRegistrationWizardRhfOverlayProjection(): void {
-  projectingFromWizardRhf = Math.max(0, projectingFromWizardRhf - 1)
-}
-
 function syncWizardRhfFromOverlayPartial(
   partial: Record<string, unknown>,
   shouldDirty: boolean
@@ -513,22 +542,6 @@ function splitTrainedTeachersCommonInfoOverlay(
     else rest[key] = value
   }
   return { commonInfo, rest }
-}
-
-function writeTrainedTeachersRhfOverlayPartial(partial: Record<string, unknown>): void {
-  const api = peekTrainedTeachersRegistrationRhf()
-  if (api == null) return
-  const current = api.getValues()
-  let next = current
-  let changed = false
-  for (const [key, value] of Object.entries(partial)) {
-    const prev = readTrainedTeachersRhfOverlayValue(current, key)
-    if (Object.is(prev, value)) continue
-    next = writeTrainedTeachersRhfOverlayValue(next, key, value)
-    changed = true
-  }
-  if (!changed || next === current) return
-  api.reset(next, { keepDefaultValues: true })
 }
 
 function splitCompanySchoolCommonInfoOverlay(
@@ -572,7 +585,7 @@ export function patchProgramRegistrationOverlay(partial: Record<string, unknown>
     const { commonInfo, rest } = splitCompanySchoolCommonInfoOverlay(partial)
     if (Object.keys(commonInfo).length > 0) writeCompanySchoolRhfOverlayPartial(commonInfo)
     if (Object.keys(rest).length === 0) return
-    syncWizardRhfFromOverlayPartial(rest, true)
+    // C3: 1사1교 rest 키는 일반 위저드 RHF로 라우팅하지 않는다.
     store.patch(rest)
     return
   }
@@ -639,11 +652,8 @@ export function replaceProgramRegistrationOverlay(
     if (Object.keys(commonInfo).length > 0) {
       csApi.applyOverlayRecord(commonInfo, { shouldDirty: options?.shouldDirty ?? false })
     }
-    if (projectingFromWizardRhf === 0) {
-      peekGeneralRegistrationWizardRhf()?.applyOverlayRecord(rest, {
-        shouldDirty: options?.shouldDirty ?? false,
-      })
-    }
+    // C3: 1사1교 활성 중에는 rest 키를 일반 위저드 RHF로 라우팅하지 않는다(store에만 보존).
+    // TT 분기는 TT 동작 불변 제약으로 그대로 둔다.
     store.replace(rest)
     return
   }

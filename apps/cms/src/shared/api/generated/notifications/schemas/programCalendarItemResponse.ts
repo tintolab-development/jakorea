@@ -36,4 +36,18 @@ export interface ProgramCalendarItemResponse {
   recruitmentType?: string;
   formType?: string;
   organizationName?: string;
+  /** Asia/Seoul 달력 날짜. 종일·날짜 전용 이벤트는 이 값을 사용한다. 시각이 있는 교육 회차는 null. */
+  eventDate?: string | null;
+  /** program_schedule.schedule_status. 교육·기간 이벤트가 아니면 null. */
+  scheduleStatus?: string | null;
+  /** PROGRAM_DEFINED | APPLICATION_MATERIALIZED | UNKNOWN. 교육 이벤트가 아니면 null. */
+  scheduleOrigin?: string | null;
+  /** program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|CLOSING|SESSION. 기간 행·비교육 이벤트는 null. */
+  scheduleRole?: string | null;
+  /** 기관 OSA는 TEMP_ASSIGNED|CONFIRMED. 1사1교 강사 배정은 ASSIGNED 등. 배정이 없으면 null. */
+  assignmentStatus?: string | null;
+  /** 기관형 배정 이벤트의 program_organization_application.id. 없으면 null. */
+  organizationApplicationId?: number | null;
+  /** 이벤트 고유 ID. eventKey와 동일하다. */
+  eventId?: string;
 }

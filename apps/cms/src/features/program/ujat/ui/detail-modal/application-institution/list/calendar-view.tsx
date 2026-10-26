@@ -72,7 +72,7 @@ function renderUjatInstitutionPreviewTooltipContent({
   colorMap: Map<string | number, ScheduleColorPair>
 }): ReactNode {
   return (
-    <div className="program-preview">
+    <div className="calendar-preview-popover">
       {events.map(ev => {
         const institution = extractInstitutionFromCalendarItem(ev)
         const title = institution?.institutionName ?? String(ev.title ?? '-')
@@ -80,17 +80,23 @@ function renderUjatInstitutionPreviewTooltipContent({
         const gradeDetail = institution?.calendarGradeDetail
 
         return (
-          <div key={String(ev.id)} className="program-preview-item program-preview-item--stack">
-            <span className="program-preview-item__title">{title}</span>
+          <div key={String(ev.id)} className="calendar-preview-popover__entry">
+            <span className="calendar-preview-popover__title">{title}</span>
             {totalClassSummary ? (
-              <div className="ujat-institution-preview__meta">
-                <span className="ujat-institution-preview__meta-total">{totalClassSummary}</span>
+              <div className="calendar-preview-popover__meta">
+                <span className="calendar-preview-popover__meta-part">
+                  {totalClassSummary}
+                </span>
                 {gradeDetail ? (
                   <>
-                    <span className="program-preview-item__sep" aria-hidden>
-                      |
-                    </span>
-                    <span className="ujat-institution-preview__meta-detail" title={gradeDetail}>
+                    <span
+                      className="calendar-preview-popover__meta-sep"
+                      aria-hidden
+                    />
+                    <span
+                      className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session"
+                      title={gradeDetail}
+                    >
                       {gradeDetail}
                     </span>
                   </>

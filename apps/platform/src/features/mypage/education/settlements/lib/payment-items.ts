@@ -4,13 +4,22 @@ const TRANSPORT_ITEM_TYPES = new Set([
   'TRANSPORTATION',
   'TRANSPORT_STUDENT',
   'TRANSPORT_INSTRUCTOR',
+  'STUDENT_TRANSPORTATION',
   'LONG_DISTANCE_TRANSPORTATION',
+])
+
+/** 개인 정산 API에서 동일 CMS TRANSPORT_STUDENT 정책으로 합쳐지는 교통비 별칭 */
+const INDIVIDUAL_TRANSPORT_ALIASES = new Set([
+  'TRANSPORTATION',
+  'STUDENT_TRANSPORTATION',
+  'TRANSPORT_STUDENT',
 ])
 
 const RECEIPT_ITEM_TYPE_LABELS: Record<string, string> = {
   TRANSPORTATION: '교통비',
   TRANSPORT_STUDENT: '교통비',
   TRANSPORT_INSTRUCTOR: '교통비',
+  STUDENT_TRANSPORTATION: '교통비',
   LONG_DISTANCE_TRANSPORTATION: '장거리 교통비',
   MEAL: '식사비',
   ACTIVITY: '활동비',
@@ -35,14 +44,26 @@ export function isTransportPaymentItemType(itemType: string | null | undefined):
   return resolveReceiptPaymentUiKind(itemType) === 'transport'
 }
 
+export function isIndividualTransportAlias(itemType: string | null | undefined): boolean {
+  return INDIVIDUAL_TRANSPORT_ALIASES.has(normalizePaymentItemType(itemType))
+}
+
+function looksLikeApiEnum(value: string): boolean {
+  return /^[A-Z][A-Z0-9_]*$/.test(value)
+}
+
 export function receiptPaymentItemLabel(item: {
   itemType?: string | null
   itemName?: string | null
 }): string {
   const named = item.itemName?.trim()
-  if (named) return named
+  if (named) {
+    const namedLabel = RECEIPT_ITEM_TYPE_LABELS[named.toUpperCase()]
+    if (namedLabel) return namedLabel
+    if (!looksLikeApiEnum(named)) return named
+  }
   const type = normalizePaymentItemType(item.itemType)
-  return RECEIPT_ITEM_TYPE_LABELS[type] ?? item.itemType?.trim() ?? '지급 항목'
+  return RECEIPT_ITEM_TYPE_LABELS[type] ?? '지급 항목'
 }
 
 /** IndividualSettlementExpenseInput.expenseType OpenAPI enum */
@@ -64,7 +85,7 @@ const EXPENSE_TYPE_SET = new Set<string>(INDIVIDUAL_SETTLEMENT_EXPENSE_TYPES)
  */
 export function mapItemTypeToExpenseType(itemType: string): IndividualSettlementExpenseType | string {
   const type = normalizePaymentItemType(itemType)
-  if (TRANSPORT_ITEM_TYPES.has(type) || type === 'STUDENT_TRANSPORTATION') return 'TRANSPORTATION'
+  if (TRANSPORT_ITEM_TYPES.has(type)) return 'TRANSPORTATION'
   if (type === 'MEAL') return 'MEAL'
   if (type === 'LODGING' || type === 'LODGING_GENERAL' || type === 'LODGING_1C1S') return 'LODGING'
   if (type === 'MATERIAL') return 'MATERIAL'
@@ -77,10 +98,6 @@ export function isSupportedIndividualExpenseType(itemType: string): boolean {
   return EXPENSE_TYPE_SET.has(mapItemTypeToExpenseType(itemType))
 }
 
-export const EVIDENCE_REQUIRED_LABEL = '증빙 필수'
-export const EVIDENCE_POLICY_UNCONFIGURED_LABEL =
-  '증빙 정책을 확인할 수 없어 신청할 수 없습니다'
-
 /** CMS 증빙 불필요(false)·미설정(null)은 영수증 제출 UI를 열지 않는다. */
 export function isReceiptEvidenceRequired(value: boolean | null | undefined): boolean {
   return value === true
@@ -92,7 +109,11 @@ export function payableEvidenceRequired(
 ): boolean | null {
   const type = normalizePaymentItemType(itemType)
   if (!type) return null
-  const matched = (payableItems ?? []).find(item => normalizePaymentItemType(item.itemType) === type)
+  const matched = (payableItems ?? []).find(item => {
+    const other = normalizePaymentItemType(item.itemType)
+    if (other === type) return true
+    return isIndividualTransportAlias(type) && isIndividualTransportAlias(other)
+  })
   if (!matched) return null
   return matched.evidenceRequired === true ? true : matched.evidenceRequired === false ? false : null
 }
@@ -109,17 +130,6 @@ export function overlayPayableEvidenceRequired<
       payableEvidenceRequired(payableItems, item.itemType) ?? item.evidenceRequired,
     ),
   }))
-}
-
-export function payableItemEvidenceCaption(item: {
-  itemType?: string | null
-  itemName?: string | null
-  evidenceRequired?: boolean | null
-}): string {
-  const name = receiptPaymentItemLabel(item)
-  if (item.evidenceRequired === true) return `${name} · ${EVIDENCE_REQUIRED_LABEL}`
-  if (item.evidenceRequired === false) return name
-  return `${name} · ${EVIDENCE_POLICY_UNCONFIGURED_LABEL}`
 }
 
 export type ReceiptPayableItem = {
@@ -148,11 +158,7 @@ export function receiptPayableDisplayRank(
   const type = normalizePaymentItemType(itemType)
   const name = (itemName ?? '').replace(/\s+/g, '')
   if (WAGE_ITEM_TYPES.has(type) || name.includes('강사비')) return 0
-  if (
-    isTransportPaymentItemType(type) ||
-    type === 'STUDENT_TRANSPORTATION' ||
-    type.includes('TRANSPORT')
-  ) {
+  if (isTransportPaymentItemType(type) || type.includes('TRANSPORT')) {
     return 1
   }
   if (type.includes('LODGING') || name.includes('숙박')) return 2
@@ -182,11 +188,23 @@ export function sortReceiptPayableItems<T extends { itemType?: string | null; it
 export function normalizePayableItems(
   items: readonly { itemType?: string | null; itemName?: string | null; evidenceRequired?: boolean | null }[] | null | undefined,
 ): ReceiptPayableItem[] {
+  const source = items ?? []
+  const hasCanonicalTransport = source.some(
+    item => normalizePaymentItemType(item.itemType) === 'TRANSPORTATION',
+  )
   const normalized: ReceiptPayableItem[] = []
   const seen = new Set<string>()
-  for (const item of items ?? []) {
+  let keptIndividualTransport = false
+  for (const item of source) {
     const itemType = normalizePaymentItemType(item.itemType)
-    if (!itemType || seen.has(itemType)) continue
+    if (!itemType) continue
+    if (isIndividualTransportAlias(itemType)) {
+      if (hasCanonicalTransport && itemType !== 'TRANSPORTATION') continue
+      if (keptIndividualTransport) continue
+      keptIndividualTransport = true
+    } else if (seen.has(itemType)) {
+      continue
+    }
     seen.add(itemType)
     normalized.push({
       itemType,

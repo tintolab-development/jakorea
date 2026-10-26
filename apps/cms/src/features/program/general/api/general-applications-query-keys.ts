@@ -121,6 +121,13 @@ export const generalProgramProgressQueryKeys = {
       programId,
       instructorMemberId != null && instructorMemberId !== '' ? String(instructorMemberId) : 'all',
     ] as const,
+  lectureReportPreview: (programId: string, reportRowId: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'lecture-report-preview',
+      programId,
+      reportRowId,
+    ] as const,
   posts: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'posts', programId] as const,
   surveys: (programId: string) =>
@@ -153,6 +160,19 @@ export const generalProgramProgressQueryKeys = {
       'participant-settlements',
       programId,
       participantId,
+    ] as const,
+  individualSettlementReviews: (programId: string, participantId: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'individual-settlement-reviews',
+      programId,
+      participantId,
+    ] as const,
+  individualSettlementReviewDetail: (settlementApplicationId: number) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'individual-settlement-review-detail',
+      settlementApplicationId,
     ] as const,
 }
 

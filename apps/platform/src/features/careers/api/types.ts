@@ -105,6 +105,10 @@ export type PublicCareerPostingDetail = {
   attachment?: PublicCareerPostingAsset | null
   /** GET 성공 시 증가한 뒤의 값. 항상 숫자 */
   viewCount?: number
+  /** CareerPostingPublicDetail.buttonLabel — nullable, maxLength 15 */
+  buttonLabel?: string | null
+  /** CareerPostingPublicDetail.linkUrl — nullable, maxLength 2048, http/https */
+  linkUrl?: string | null
 }
 
 /** POST /api/public/careers/talent-applications — 공개 인재채용 지원 (무토큰) */

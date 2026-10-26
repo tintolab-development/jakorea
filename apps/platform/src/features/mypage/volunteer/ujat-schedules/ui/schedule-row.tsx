@@ -1,18 +1,16 @@
 import type { EducationScheduleItem } from '@/features/mypage/education/schedules/model/types'
 import {
-  EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
-  EDUCATION_SCHEDULE_PROGRESS_LABEL,
+  canSubmitEducationAbsenceReason,
   resolveEducationScheduleProgressStatus,
 } from '@/features/mypage/education/schedules/lib/schedule-rules'
-import { resolveEducationScheduleDateLabel } from '@/features/mypage/education/schedules/lib/format'
-import checkOnSmallUrl from '@/shared/assets/icons/check-mint-small.svg'
+import { EducationSessionCard } from '@/features/mypage/education/shared'
+import { PFButton, PFCircleIconButton, PFText } from '@/shared/ui'
+import schoolIconUrl from '../image/icon/school.svg'
 import {
-  EducationSessionCard,
-  EducationSessionCardHeader,
-  EducationSessionStatusMark,
-} from '@/features/mypage/education/shared'
-import { PFButton, PFStateBadge, PFText } from '@/shared/ui'
-import { formatUjatAssignmentStatusLabel } from '../lib/history'
+  formatUjatScheduleCardDate,
+  isAssignedUjatSchedule,
+  resolveUjatScheduleDayStatus,
+} from '../lib/history'
 import type { UjatEducationDayDocuments, UjatEducationDocumentTemplateSetup } from '../lib/documents'
 import type { UjatDocumentFillMode } from './document-slot'
 import { UjatEducationDocumentSlotBlock } from './document-slot'
@@ -21,7 +19,11 @@ import styles from './schedule-row.module.css'
 type UjatVolunteerScheduleRowProps = {
   item: EducationScheduleItem
   canViewAttendance: boolean
+  canCheckIn: boolean
+  readOnly?: boolean
   onViewAttendance?: (item: EducationScheduleItem) => void
+  onCheckIn?: (item: EducationScheduleItem) => void
+  onAbsenceReasonSubmit?: (item: EducationScheduleItem) => void
   documents?: UjatEducationDayDocuments | null
   planSetup?: UjatEducationDocumentTemplateSetup | null
   journalSetup?: UjatEducationDocumentTemplateSetup | null
@@ -36,7 +38,11 @@ type UjatVolunteerScheduleRowProps = {
 export function UjatVolunteerScheduleRow({
   item,
   canViewAttendance,
+  canCheckIn,
+  readOnly = false,
   onViewAttendance,
+  onCheckIn,
+  onAbsenceReasonSubmit,
   documents = null,
   planSetup = null,
   journalSetup = null,
@@ -44,79 +50,114 @@ export function UjatVolunteerScheduleRow({
   onViewDocumentFeedback,
 }: UjatVolunteerScheduleRowProps) {
   const progress = resolveEducationScheduleProgressStatus(item.heldAt)
-  const heldLabel = resolveEducationScheduleDateLabel(item)
-  const attendance = item.scheduleId === null ? null : item.attendanceStatus
-  const classOrLocation = [item.classLabel, item.locationName].filter(Boolean).join(' · ')
-  const assignmentLabel = formatUjatAssignmentStatusLabel(item.assignmentStatus ?? item.scheduleStatus)
-  const absenceReason = item.absenceReason?.trim()
+  const heldLabel = formatUjatScheduleCardDate(item.heldAt)
+  const dayStatus = resolveUjatScheduleDayStatus(item)
+  const hasOperationalSchedule = item.scheduleId !== null
+  const canSubmitAbsence =
+    !readOnly &&
+    onAbsenceReasonSubmit != null &&
+    hasOperationalSchedule &&
+    canSubmitEducationAbsenceReason(progress, item.attendanceStatus, item.availableActions)
+  const school = item.locationName?.trim()
+  const classLabel = item.classLabel?.trim()
+  const unassigned = !isAssignedUjatSchedule(item) && !school && !classLabel
+  const schoolLabel = school ?? (unassigned ? '미배정' : null)
+  const classText = classLabel ?? (unassigned ? '미배정' : null)
+  const showPlace = Boolean(schoolLabel || classText)
+  const attendanceToneClass =
+    dayStatus.tone === 'present'
+      ? styles.statusPresent
+      : dayStatus.tone === 'alert'
+        ? styles.statusAlert
+        : styles.statusScheduled
 
   return (
-    <EducationSessionCard>
-      <EducationSessionCardHeader
-        badge={
-          <PFStateBadge size="small" tone={progress === 'completed' ? 'success' : 'progress'}>
-            {EDUCATION_SCHEDULE_PROGRESS_LABEL[progress]}
-          </PFStateBadge>
-        }
-        date={heldLabel}
-        subtitle={
-          <PFText as="span" typo="bd-lg-sb" color="primary-500">
-            {item.title}
-          </PFText>
-        }
-        aside={
-          <>
-            {canViewAttendance && onViewAttendance ? (
-              <PFButton
-                type="button"
-                variant="secondary"
-                size="large"
-                onClick={() => onViewAttendance(item)}
-              >
-                출결 상세 보기
-              </PFButton>
-            ) : null}
-            {attendance ? (
-              <EducationSessionStatusMark
-                tone={
-                  attendance === 'present'
-                    ? 'success'
-                    : attendance === 'late' || attendance === 'absent'
-                      ? 'alert'
-                      : 'muted'
-                }
-                label={EDUCATION_SCHEDULE_ATTENDANCE_LABEL[attendance]}
-                iconSrc={attendance === 'present' ? checkOnSmallUrl : undefined}
-                extra={
-                  absenceReason ? (
-                    <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
-                      {absenceReason}
-                    </PFText>
-                  ) : null
-                }
-              />
-            ) : absenceReason ? (
-              <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
-                {absenceReason}
-              </PFText>
-            ) : null}
-          </>
-        }
-      />
-      {classOrLocation || assignmentLabel !== '-' ? (
-        <div className={styles.meta}>
-          {classOrLocation ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-              {classOrLocation}
+    <EducationSessionCard className={styles.card}>
+      <div className={styles.head}>
+        <div className={styles.identity}>
+          <div className={styles.titleRow}>
+            <PFText as="h3" typo="hd-sm" color="black" className={styles.date}>
+              {heldLabel ?? '일정 미정'}
             </PFText>
-          ) : null}
-          {assignmentLabel !== '-' ? (
-            <PFText as="p" typo="bd-sm-rg" color="neutral-cool-500">
-              {assignmentLabel}
+            <PFText as="span" typo="bd-md-sb" className={[styles.status, attendanceToneClass].join(' ')}>
+              {dayStatus.label}
             </PFText>
+          </div>
+          {showPlace ? (
+            <div className={styles.info}>
+              <div className={styles.school}>
+                <img
+                  className={styles.schoolIcon}
+                  src={schoolIconUrl}
+                  alt=""
+                  width={28}
+                  height={28}
+                  aria-hidden="true"
+                />
+                {schoolLabel ? (
+                  <PFText as="span" typo="bd-md-sb" color="primary-700">
+                    {schoolLabel}
+                  </PFText>
+                ) : null}
+                {schoolLabel && classText ? <span className={styles.schoolDivider} aria-hidden="true" /> : null}
+                {classText ? (
+                  <PFText as="span" typo="bd-md-sb" color="neutral-cool-600">
+                    {classText}
+                  </PFText>
+                ) : null}
+              </div>
+            </div>
           ) : null}
         </div>
-      ) : null}
+        <div className={styles.actions}>
+          <div className={styles.actionButtons}>
+            <PFButton
+              type="button"
+              variant="secondary"
+              size="large"
+              disabled={!canSubmitAbsence}
+              onClick={() => {
+                if (!canSubmitAbsence) return
+                onAbsenceReasonSubmit?.(item)
+              }}
+            >
+              결석 사유 제출하기
+            </PFButton>
+            <PFButton
+              type="button"
+              variant="secondary"
+              size="large"
+              disabled={!canViewAttendance || onViewAttendance == null}
+              onClick={() => {
+                if (!canViewAttendance || onViewAttendance == null) return
+                onViewAttendance(item)
+              }}
+            >
+              출석현황 보기
+            </PFButton>
+          </div>
+          <span className={styles.divider} aria-hidden="true" />
+          <div className={styles.checkIn}>
+            <PFCircleIconButton
+              icon="eventCalendar"
+              disabled={!canCheckIn || onCheckIn == null}
+              aria-label="출석하기"
+              onClick={() => {
+                if (!canCheckIn || onCheckIn == null) return
+                onCheckIn(item)
+              }}
+            />
+            <PFText
+              as="span"
+              typo="bd-md-sb"
+              color={canCheckIn ? 'black' : 'neutral-warm-500'}
+              className={styles.checkInLabel}
+            >
+              출석하기
+            </PFText>
+          </div>
+        </div>
+      </div>
       {documents ? (
         <div className={styles.documents}>
           <UjatEducationDocumentSlotBlock

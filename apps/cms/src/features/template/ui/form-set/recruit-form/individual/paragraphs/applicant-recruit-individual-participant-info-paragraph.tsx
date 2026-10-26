@@ -6,7 +6,7 @@ import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
-import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { useIndividualRecruitField } from '@/features/template/ui/form-set/recruit-form/individual/individual-recruit-form-rhf'
 import {
   RecruitInquiryContactRow,
   RecruitNotesRow,
@@ -27,16 +27,16 @@ type RangeSeal = { start: string; end: string } | null
 /** 프로그램 참여자 모집 폼 (개인) — 참여자 모집 정보 */
 export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
-    useGeneralRecruitOverlayKv<ParticipantRecruitmentAnnouncementPublishedValue>(
+    useIndividualRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
       'recruit.individual.announcementPublished',
       'published'
     )
 
-  const [programAnchorIso, setProgramAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [programAnchorIso, setProgramAnchorIso] = useIndividualRecruitField<string | null>(
     'recruit.individual.programAnchorIso',
     null
   )
-  const [programRangeSeal, setProgramRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+  const [programRangeSeal, setProgramRangeSeal] = useIndividualRecruitField<RangeSeal>(
     'recruit.individual.programRangeSeal',
     null
   )
@@ -60,11 +60,11 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
     [programRange]
   )
 
-  const [recruitAnchorIso, setRecruitAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [recruitAnchorIso, setRecruitAnchorIso] = useIndividualRecruitField<string | null>(
     'recruit.individual.recruitAnchorIso',
     null
   )
-  const [recruitRangeSeal, setRecruitRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+  const [recruitRangeSeal, setRecruitRangeSeal] = useIndividualRecruitField<RangeSeal>(
     'recruit.individual.recruitRangeSeal',
     null
   )
@@ -84,7 +84,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
     setRecruitRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
 
-  const [docDeadlineIso, setDocDeadlineIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [docDeadlineIso, setDocDeadlineIso] = useIndividualRecruitField<string | null>(
     'recruit.individual.docDeadlineIso',
     null
   )
@@ -92,16 +92,16 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   const setDocDeadlineDate = (next: Dayjs | null) => {
     setDocDeadlineIso(next == null ? null : next.toISOString())
   }
-  const [docAnnounceMethod, setDocAnnounceMethod] = useGeneralRecruitOverlayKv<string>(
+  const [docAnnounceMethod, setDocAnnounceMethod] = useIndividualRecruitField<string>(
     'recruit.individual.docAnnounceMethod',
     ''
   )
 
-  const [interviewAnchorIso, setInterviewAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [interviewAnchorIso, setInterviewAnchorIso] = useIndividualRecruitField<string | null>(
     'recruit.individual.interviewAnchorIso',
     null
   )
-  const [interviewRangeSeal, setInterviewRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+  const [interviewRangeSeal, setInterviewRangeSeal] = useIndividualRecruitField<RangeSeal>(
     'recruit.individual.interviewRangeSeal',
     null
   )
@@ -127,12 +127,12 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
         : dateRangeUsesClockTime(interviewRange[0], interviewRange[1]),
     [interviewRange]
   )
-  const [interviewMethod, setInterviewMethod] = useGeneralRecruitOverlayKv<string>(
+  const [interviewMethod, setInterviewMethod] = useIndividualRecruitField<string>(
     'recruit.individual.interviewMethod',
     ''
   )
 
-  const [finalAnnounceIso, setFinalAnnounceIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [finalAnnounceIso, setFinalAnnounceIso] = useIndividualRecruitField<string | null>(
     'recruit.individual.finalAnnounceIso',
     null
   )
@@ -140,36 +140,36 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   const setFinalAnnounceDate = (next: Dayjs | null) => {
     setFinalAnnounceIso(next == null ? null : next.toISOString())
   }
-  const [finalAnnounceMethod, setFinalAnnounceMethod] = useGeneralRecruitOverlayKv<string>(
+  const [finalAnnounceMethod, setFinalAnnounceMethod] = useIndividualRecruitField<string>(
     'recruit.individual.finalAnnounceMethod',
     ''
   )
 
-  const [targetLevels, setTargetLevels] = useGeneralRecruitOverlayKv<string[]>(
+  const [targetLevels, setTargetLevels] = useIndividualRecruitField<string[]>(
     'recruit.individual.targetLevels',
     []
   )
-  const [targetLevelDetail, setTargetLevelDetail] = useGeneralRecruitOverlayKv<string>(
+  const [targetLevelDetail, setTargetLevelDetail] = useIndividualRecruitField<string>(
     'recruit.individual.targetLevelDetail',
     ''
   )
-  const [inquiryContact, setInquiryContact] = useGeneralRecruitOverlayKv<string>(
+  const [inquiryContact, setInquiryContact] = useIndividualRecruitField<string>(
     'recruit.individual.inquiryContact',
     ''
   )
-  const [inquiryTel, setInquiryTel] = useGeneralRecruitOverlayKv<string>(
+  const [inquiryTel, setInquiryTel] = useIndividualRecruitField<string>(
     'recruit.individual.inquiryTel',
     ''
   )
-  const [inquiryEmail, setInquiryEmail] = useGeneralRecruitOverlayKv<string>(
+  const [inquiryEmail, setInquiryEmail] = useIndividualRecruitField<string>(
     'recruit.individual.inquiryEmail',
     ''
   )
-  const [notesNotApplicable, setNotesNotApplicable] = useGeneralRecruitOverlayKv<boolean>(
+  const [notesNotApplicable, setNotesNotApplicable] = useIndividualRecruitField<boolean>(
     'recruit.individual.notesNotApplicable',
     false
   )
-  const [notes, setNotes] = useGeneralRecruitOverlayKv<string>('recruit.individual.notes', '')
+  const [notes, setNotes] = useIndividualRecruitField<string>('recruit.individual.notes', '')
 
   return (
     <div className="applicant-recruit-individual-participant-info-paragraph__forms">

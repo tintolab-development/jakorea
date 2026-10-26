@@ -2,13 +2,78 @@
  * 프로그램 수정 가능 기간.
  * 공통 정보는 `businessEndDate`(도메인 `endDate`) 당일까지, 한국 시간 다음 날 00:00부터 불가.
  * 모집 일반 정보는 그 모집행의 `startAt` 전. 같은 유형의 다른 행이 시작해도 아직 시작하지 않은 행은 연다.
- * 신청양식은 유형별 `startAt`. `startAt`이 없으면 아직 시작 전이다.
+ * 신청양식은 모집별 신청 건수로 서버가 최종 판단한다. 날짜는 선차단 기준이 아니다.
  */
 
-import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
+import type {
+  Program,
+  ProgramRecruitmentWindow,
+  RecruitmentInterviewConfig,
+  RecruitmentNoticeExposureTiming,
+} from '@/types/domain'
 import { PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 
 export type ProgramRecruitmentEditType = 'PARTICIPANT' | 'INSTRUCTOR' | 'VOLUNTEER'
+
+export type ProgramFormBindingWriteContext = {
+  /** 해당 모집에 신청 양식 바인딩이 없으면 항상 허용한다. */
+  hasBinding?: boolean
+  /** 해당 모집의 신청 건수. 미확인 상태에서는 클라이언트가 선차단하지 않는다. */
+  applicationCount?: number | null
+}
+
+function optionalNoticeExposure(
+  value: unknown
+): RecruitmentNoticeExposureTiming | null | undefined {
+  if (value === undefined) return undefined
+  if (value === 'start-day' || value === 'one-day-before' || value === 'one-week-before')
+    return value
+  return null
+}
+
+function optionalInterviewConfig(value: unknown): RecruitmentInterviewConfig | null | undefined {
+  if (value === undefined) return undefined
+  if (value == null) return null
+  if (typeof value !== 'object' || Array.isArray(value)) return null
+  return value as RecruitmentInterviewConfig
+}
+
+function typedRecruitmentWindowFields(
+  row: Record<string, unknown>
+): Partial<ProgramRecruitmentWindow> {
+  const next: Partial<ProgramRecruitmentWindow> = {}
+  if ('announcementPublished' in row) {
+    next.announcementPublished =
+      typeof row.announcementPublished === 'boolean' ? row.announcementPublished : null
+  }
+  if ('documentPassAnnouncementAt' in row) {
+    next.documentPassAnnouncementAt =
+      typeof row.documentPassAnnouncementAt === 'string' ? row.documentPassAnnouncementAt : null
+  }
+  if ('finalPassAnnouncementAt' in row) {
+    next.finalPassAnnouncementAt =
+      typeof row.finalPassAnnouncementAt === 'string' ? row.finalPassAnnouncementAt : null
+  }
+  if ('noticeExposureTiming' in row) {
+    next.noticeExposureTiming = optionalNoticeExposure(row.noticeExposureTiming) ?? null
+  }
+  if ('volunteerTargets' in row) {
+    next.volunteerTargets = Array.isArray(row.volunteerTargets)
+      ? row.volunteerTargets.filter((item): item is string => typeof item === 'string')
+      : null
+  }
+  if ('remarksNotApplicable' in row) {
+    next.remarksNotApplicable =
+      typeof row.remarksNotApplicable === 'boolean' ? row.remarksNotApplicable : null
+  }
+  if ('interviewConfig' in row) {
+    next.interviewConfig = optionalInterviewConfig(row.interviewConfig) ?? null
+  }
+  if (typeof row.contentRevision === 'number' && Number.isFinite(row.contentRevision)) {
+    next.contentRevision = row.contentRevision
+  }
+  return next
+}
 
 const MINUTE_MS = 60_000
 const SEOUL_TIME_ZONE = 'Asia/Seoul'
@@ -88,6 +153,7 @@ export function toProgramRecruitmentWindows(
     additionalContentHtml: row.additionalContentHtml ?? null,
     remarks: row.remarks ?? null,
     otherMatters: row.otherMatters ?? null,
+    ...typedRecruitmentWindowFields(row as Record<string, unknown>),
   }))
 }
 
@@ -345,19 +411,31 @@ export function isProgramFormBindingWriteLocked(
   program: Program | null | undefined,
   targetType?: string | null,
   targetRole?: string | null,
-  now: Date = new Date()
+  context: ProgramFormBindingWriteContext = {}
 ): boolean {
   const recruitmentType = resolveRecruitmentTypeForFormBinding(targetType, targetRole)
   if (!recruitmentType) return false
-  return isProgramRecruitmentTypeLocked(program, recruitmentType, now)
+  if (context.hasBinding === false) return false
+
+  const rows = (program?.programRecruitments ?? []).filter(
+    row => row.recruitmentType === recruitmentType
+  )
+  if (
+    context.hasBinding == null &&
+    rows.length > 0 &&
+    rows.every(row => row.applicationFormBindingId == null)
+  ) {
+    return false
+  }
+  return (context.applicationCount ?? 0) > 0
 }
 
 export function assertProgramFormBindingWritable(
   program: Program,
   targetType?: string | null,
   targetRole?: string | null,
-  now: Date = new Date()
+  context: ProgramFormBindingWriteContext = {}
 ): void {
-  if (!isProgramFormBindingWriteLocked(program, targetType, targetRole, now)) return
+  if (!isProgramFormBindingWriteLocked(program, targetType, targetRole, context)) return
   throw new Error(PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE)
 }

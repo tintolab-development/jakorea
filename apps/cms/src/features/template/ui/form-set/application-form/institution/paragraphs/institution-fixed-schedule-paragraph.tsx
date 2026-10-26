@@ -5,9 +5,9 @@ import {
   type InstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
-  useGeneralApplicationOverlayKv,
-  updateGeneralApplicationOverlayKey,
-} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+  updateFixedScheduleField,
+  useFixedScheduleField,
+} from '@/features/template/ui/form-set/application-form/shared/fixed-schedule-form-rhf'
 import { formatCmsScheduleKoreanDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
@@ -55,11 +55,11 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
     bridge.sessionsPerRound,
   ])
 
-  const [selectedIds] = useGeneralApplicationOverlayKv<string[]>(overlayKey, [])
+  const [selectedIds] = useFixedScheduleField<string[]>(overlayKey, [])
 
   const toggleOption = (optionId: string, checked: boolean) => {
     if (readOnlyPreview) return
-    updateGeneralApplicationOverlayKey<string[]>(overlayKey, prev => {
+    updateFixedScheduleField<string[]>(overlayKey, prev => {
       const current = (prev ?? []) as string[]
       if (checked) {
         return current.includes(optionId) ? current : [...current, optionId]

@@ -1,6 +1,11 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import { composeOverlayStoreWithFieldForms } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
+import { individualRecruitFieldForm } from '@/features/template/ui/form-set/recruit-form/individual/individual-recruit-form-rhf'
+import { instructorRecruitFieldForm } from '@/features/template/ui/form-set/recruit-form/instructor/instructor-recruit-form-rhf'
+import { recruitDetailInfoFieldForm } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
+import { volunteerRecruitFieldForm } from '@/features/template/ui/form-set/recruit-form/volunteer/volunteer-recruit-form-rhf'
 import {
   beginWizardRecruitmentRhfProjection,
   endWizardRecruitmentRhfProjection,
@@ -40,7 +45,16 @@ import {
  * templateCode 버킷으로 양식 인스턴스를 가른다. persist 키는 그대로다.
  */
 
-const store = createScopedOverlayStore()
+/**
+ * Part3: 키 묶음 일부는 RHF 필드 폼이 소유한다(합성). 소유 키는 스토어 버킷에 남지 않는다.
+ * 나머지 키는 아직 스코프 overlay 스토어.
+ */
+const store = composeOverlayStoreWithFieldForms(createScopedOverlayStore(), [
+  individualRecruitFieldForm,
+  instructorRecruitFieldForm,
+  recruitDetailInfoFieldForm,
+  volunteerRecruitFieldForm,
+])
 
 export function setGeneralRecruitOverlayScope(templateCode: string | undefined | null): void {
   store.setScope(templateCode)
@@ -115,12 +129,6 @@ export function replaceGeneralRecruitOverlayForScope(
   } finally {
     endWizardRecruitmentRhfProjection()
   }
-}
-
-export function resetGeneralRecruitOverlayForScope(
-  templateCode: string | undefined | null
-): void {
-  store.resetFor(templateCode)
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
@@ -244,11 +252,14 @@ export function resetGeneralRecruitOverlayStoreForTests(): void {
  */
 export function useGeneralRecruitOverlayKv<T>(
   key: string,
-  defaultValue: T
+  defaultValue: T,
+  options?: { typedTemplateAuthoring?: boolean }
 ): [T, (next: T) => void] {
   const defaultRef = useRef(defaultValue)
+  const typedTemplateAuthoring = options?.typedTemplateAuthoring === true
   const rhfOwned = isGeneralRecruitOwnedKey(key)
   const getSnapshot = useCallback(() => {
+    if (typedTemplateAuthoring) return defaultRef.current
     if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentOverlayKey(key)) {
       return readActiveTrainedTeachersRecruitmentOverlayValue(key, defaultRef.current) as T
     }
@@ -259,11 +270,14 @@ export function useGeneralRecruitOverlayKv<T>(
       return readWizardRecruitmentKvValue(key, defaultRef.current)
     }
     return readOverlayKeyValue(key, defaultRef.current)
-  }, [key, rhfOwned])
+  }, [key, rhfOwned, typedTemplateAuthoring])
 
   const value = useSyncExternalStore(
     listener => {
-      const unsubOverlay = subscribeGeneralRecruitOverlayKey(key, listener)
+      const unsubOverlay = typedTemplateAuthoring
+        ? () => {}
+        : subscribeGeneralRecruitOverlayKey(key, listener)
+      if (typedTemplateAuthoring) return unsubOverlay
       const unsubRhf = subscribeGeneralRegistrationWizardRhf(listener)
       const unsubTt = subscribeTrainedTeachersRegistrationRhf(listener)
       const unsubCs = subscribeCompanySchoolRegistrationRhf(listener)
@@ -273,16 +287,17 @@ export function useGeneralRecruitOverlayKv<T>(
         unsubTt()
         unsubCs()
       }
-    },
+  },
     getSnapshot,
     getSnapshot
   )
 
   const setValue = useCallback(
     (next: T) => {
+      if (typedTemplateAuthoring) return
       patchGeneralRecruitOverlay({ [key]: next })
     },
-    [key]
+    [key, typedTemplateAuthoring]
   )
   return [value, setValue]
 }

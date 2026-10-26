@@ -39,7 +39,8 @@ describe('resolveUjatVolunteerInterviewScheduleDisplay', () => {
         },
         'recruit.volunteer.h2.interview.appliedUnavailableDates': [],
       }),
-      'h2'
+      'h2',
+      { allowOverlayFallback: true }
     )
 
     expect(display.common.recurringUnavailable).toBe('일요일')
@@ -66,7 +67,8 @@ describe('resolveUjatVolunteerInterviewScheduleDisplay', () => {
           '1790743800000-1790744700000',
         ],
       }),
-      'h1'
+      'h1',
+      { allowOverlayFallback: true }
     )
 
     expect(display.exceptions).toEqual([
@@ -81,6 +83,73 @@ describe('resolveUjatVolunteerInterviewScheduleDisplay', () => {
     const display = resolveUjatVolunteerInterviewScheduleDisplay(programWithOverlay({}), 'h1')
     expect(display.common.availableTimeSlots).toBe('-')
     expect(display.common.recurringUnavailable).toBe('-')
+  })
+
+  it('typed interviewConfig가 있으면 overlay를 쓰지 않는다', () => {
+    const start = 1_790_743_800_000
+    const end = 1_790_743_890_000
+    const program = {
+      id: '186030',
+      programRecruitments: [
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF' as const,
+          interviewConfig: {
+            schemaVersion: 1 as const,
+            selectedSlotKeys: [`${start}-${end}`],
+            interviewTimeRange: ['2026-09-30T04:50:00.000Z', '2026-09-30T05:50:00.000Z'],
+          },
+        },
+      ],
+      ujatRegistrationOverlay: {
+        'recruit.volunteer.h1.interview.selectedSlotKeys': ['1-2'],
+      },
+    } as unknown as Program
+    const display = resolveUjatVolunteerInterviewScheduleDisplay(program, 'h1')
+    expect(display.common.availableTimeSlots).toBe(slotLabel(start, end))
+  })
+
+  it('typed 빈 설정은 overlay를 재주입하지 않는다', () => {
+    const program = {
+      id: '186030',
+      programRecruitments: [
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF' as const,
+          interviewConfig: { schemaVersion: 1 as const, selectedSlotKeys: [] },
+        },
+      ],
+      ujatRegistrationOverlay: {
+        'recruit.volunteer.h1.interview.selectedSlotKeys': ['1790743800000-1790744700000'],
+        'recruit.volunteer.h1.interview.interviewTimeRange': [
+          '2026-09-30T04:50:00.000Z',
+          '2026-09-30T05:50:00.000Z',
+        ],
+      },
+    } as unknown as Program
+    const display = resolveUjatVolunteerInterviewScheduleDisplay(program, 'h1')
+    expect(display.common.availableTimeSlots).toBe('-')
+  })
+
+  it('typed 컬럼이 없으면 서버 Legacy overlay를 표시한다', () => {
+    const overlayProgram = {
+      id: '186030',
+      programRecruitments: [
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF' as const,
+        },
+      ],
+      ujatRegistrationOverlay: {
+        'recruit.volunteer.h1.interview.selectedSlotKeys': ['1790743800000-1790744700000'],
+        'recruit.volunteer.h1.interview.interviewTimeRange': [
+          '2026-09-30T04:50:00.000Z',
+          '2026-09-30T05:50:00.000Z',
+        ],
+      },
+    } as unknown as Program
+    const display = resolveUjatVolunteerInterviewScheduleDisplay(overlayProgram, 'h1')
+    expect(display.common.availableTimeSlots).not.toBe('-')
   })
 })
 
@@ -104,7 +173,8 @@ describe('resolveUjatVolunteerInterviewScheduleEditSeed', () => {
           excludeHoliday: false,
         },
       }),
-      'h2'
+      'h2',
+      { allowOverlayFallback: true }
     )
 
     expect(seed?.timeUnit).toBe('15')

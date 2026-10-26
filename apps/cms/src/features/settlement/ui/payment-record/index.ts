@@ -92,6 +92,7 @@ export {
   buildMealBasisDetail,
   buildTravelBasisDetail,
   buildWithholdingBasisDetail,
+  DISTANCE_SNAPSHOT_UNLINKED_NOTICE,
   isSupportedBasisDetailLayout,
   lectureFeeLineDescriptionFromStandardTitle,
   resolveActivityBasisDetailTotalWon,

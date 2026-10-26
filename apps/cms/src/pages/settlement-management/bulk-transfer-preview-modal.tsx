@@ -9,6 +9,10 @@ import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
+import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import {
   BULK_TRANSFER_SHEET_COLUMN_COUNT,
   buildBulkTransferFortuneSheet,
@@ -22,26 +26,46 @@ export interface BulkTransferPreviewModalProps {
   open: boolean
   onCancel: () => void
   rows: AccountPaymentRow[]
+  serverExport?: SettlementExportHistoryResponse | null
 }
 
-export function BulkTransferPreviewModal({ open, onCancel, rows }: BulkTransferPreviewModalProps) {
+export function BulkTransferPreviewModal({
+  open,
+  onCancel,
+  rows,
+  serverExport,
+}: BulkTransferPreviewModalProps) {
   const sheetData: Sheet[] = useMemo(() => {
     const sheet = buildBulkTransferFortuneSheet(rows)
     return [sheet]
   }, [rows])
 
   const handleDownload = useCallback(async () => {
-    const { exportBulkTransferExcel } =
-      await import('@/pages/settlement-management/bulk-transfer-excel')
-    await exportBulkTransferExcel(rows)
-  }, [rows])
+    try {
+      if (serverExport?.deliveryMethod === 'SERVER_FILE') {
+        if (!serverExport.downloadUrl) {
+          throw new Error('서버에서 정산 파일을 생성 중입니다. export 이력을 확인해 주세요.')
+        }
+        await downloadFromBulkEndpoint(serverExport.downloadUrl, '대량이체', 'xlsx')
+        return
+      }
+      const { exportBulkTransferExcel } =
+        await import('@/pages/settlement-management/bulk-transfer-excel')
+      await exportBulkTransferExcel(rows)
+    } catch (error) {
+      cmsAlertModal.show({
+        title: '다운로드 불가',
+        content: getSettlementApiErrorMessage(error, '대량이체 파일 다운로드에 실패했습니다.'),
+      })
+    }
+  }, [rows, serverExport])
 
   return (
     <ContentModal
       open={open}
       onCancel={onCancel}
       title="대량이체 양식 미리보기"
-      description="계좌 지급이 완료 처리된 항목만 양식에 반영됩니다."
+      description="지급조서 확인 완료 및 계좌 지급 대기 항목만 양식에 반영됩니다. 발급만으로 지급 완료 처리되지 않습니다."
       width={1400}
       size="large"
       className="bulk-transfer-preview-modal"

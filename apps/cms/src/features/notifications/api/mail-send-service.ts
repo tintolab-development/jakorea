@@ -31,7 +31,16 @@ import {
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
 import { resolveScheduledAtForCreateRequest } from '@/features/notifications/model/send-scheduled-at'
-import type { MailSendDraft, MailSendRecipient } from '@/features/notifications/model/mail-send/types'
+import {
+  pickAlimtalkRecipientSendVariables,
+  type AlimtalkVariableCatalogEntry,
+} from '@/features/notifications/model/alimtalk-send/recipient-variables'
+import { dedupeMailSendRecipients } from '@/features/notifications/model/mail-send/recipients'
+import { validateMailSendVariables } from '@/features/notifications/model/mail-send/validate-send'
+import type {
+  MailSendDraft,
+  MailSendRecipient,
+} from '@/features/notifications/model/mail-send/types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -62,13 +71,29 @@ export function buildMailRecipientVariables(
   return undefined
 }
 
-export function buildMailSendRecipients(recipients: MailSendRecipient[]): RecipientRequest[] {
-  return recipients.map(recipient => {
+export function buildMailSendRecipients(
+  recipients: MailSendRecipient[],
+  variableContext?: {
+    keys: Iterable<string>
+    catalog: AlimtalkVariableCatalogEntry[] | null | undefined
+    programSelected: boolean
+  }
+): RecipientRequest[] {
+  return dedupeMailSendRecipients(recipients).map(recipient => {
+    const variables = variableContext
+      ? pickAlimtalkRecipientSendVariables({
+          recipient,
+          keys: variableContext.keys,
+          catalog: variableContext.catalog,
+          programSelected: variableContext.programSelected,
+        })
+      : undefined
     if (recipient.source === 'manual' || recipient.actorType === 'DIRECT') {
       return {
         actorType: 'DIRECT',
         recipientContact: recipient.email.trim(),
         recipientName: recipient.name.trim() || undefined,
+        ...(variables ? { variables } : {}),
       }
     }
     const actorIdMatch = /^actor-[^-]+-(\d+)$/.exec(recipient.id)
@@ -82,6 +107,7 @@ export function buildMailSendRecipients(recipients: MailSendRecipient[]): Recipi
     return {
       actorType: recipient.actorType || 'MEMBER',
       actorId,
+      ...(variables ? { variables } : {}),
     }
   })
 }
@@ -198,6 +224,8 @@ export async function submitMailSend(input: {
   idempotencyKey: string
   senderProfileId?: number
   variables?: Record<string, unknown>
+  placeholderKeys?: Iterable<string>
+  variableCatalog?: AlimtalkVariableCatalogEntry[] | null
 }): Promise<void> {
   const {
     draft,
@@ -206,6 +234,8 @@ export async function submitMailSend(input: {
     idempotencyKey,
     senderProfileId,
     variables,
+    placeholderKeys,
+    variableCatalog,
   } = input
   assertMailSendRemoteReady()
 
@@ -247,24 +277,47 @@ export async function submitMailSend(input: {
     resolvedSenderProfileId = resolveMailSenderProfileId(profiles, draft.senderEmail)
   }
 
-  const recipients = buildMailSendRecipients(draft.recipients)
+  let recipients = draft.recipients
+  if (placeholderKeys != null) {
+    const variableCheck = validateMailSendVariables({
+      programId: draft.programId,
+      subject: draft.subject,
+      bodyHtml: draft.bodyHtml,
+      recipients: draft.recipients,
+      placeholderKeys,
+      catalog: variableCatalog ?? null,
+      catalogState: variableCatalog == null ? 'pending' : 'ready',
+    })
+    if (!variableCheck.ok) {
+      throw new Error(variableCheck.alert)
+    }
+    recipients = variableCheck.validRecipients
+  }
+  const recipientRequests = buildMailSendRecipients(
+    recipients,
+    placeholderKeys != null
+      ? {
+          keys: placeholderKeys,
+          catalog: variableCatalog ?? null,
+          programSelected: programId != null,
+        }
+      : undefined
+  )
   const batchVariables = pickNonEmptySendVariables(
     Object.fromEntries(
       Object.entries(variables ?? {}).filter(
-        ([key]) =>
-          !(NOTIFICATION_MAIL_CONTEXT_PLACEHOLDER_KEYS as readonly string[]).includes(key)
+        ([key]) => !(NOTIFICATION_MAIL_CONTEXT_PLACEHOLDER_KEYS as readonly string[]).includes(key)
       )
     )
   )
   const body: CreateRequest = {
-    batchName:
-      (templateDisplayName || subject).slice(0, 200).trim() || '메일 발송',
+    batchName: (templateDisplayName || subject).slice(0, 200).trim() || '메일 발송',
     templateId: numericTemplateId,
     scheduledAt: resolveScheduledAtForCreateRequest({
       sendTiming: draft.sendTiming,
       scheduledAt: draft.scheduledAt,
     }),
-    recipients,
+    recipients: recipientRequests,
     senderProfileId: resolvedSenderProfileId,
     senderKey: draft.senderEmail.trim() || undefined,
   }

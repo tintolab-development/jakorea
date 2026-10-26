@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { MypageLnbItem, MypageLnbItemKey } from '@/features/mypage'
+import { useMediaQuery } from '@/shared/hooks'
+import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { Lnb, type LnbAppearance } from './lnb'
 import styles from './mypage-layout.module.css'
 
@@ -35,9 +37,57 @@ export function MypageLayout({
   onLnbItemSelect,
   children,
 }: MypageLayoutProps) {
+  const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
+  const useMobileLnbDropdown = isBelowPc && lnbAppearance !== 'category'
+  const [mobileLnbOpen, setMobileLnbOpen] = useState(false)
+
+  useEffect(() => {
+    if (!useMobileLnbDropdown) {
+      setMobileLnbOpen(false)
+    }
+  }, [useMobileLnbDropdown])
+
+  useEffect(() => {
+    if (!mobileLnbOpen) return
+
+    const scrollY = window.scrollY
+    const previousBodyPosition = document.body.style.position
+    const previousBodyTop = document.body.style.top
+    const previousBodyWidth = document.body.style.width
+    const previousBodyOverflow = document.body.style.overflow
+    const previousPaddingRight = document.body.style.paddingRight
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
+    document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileLnbOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.position = previousBodyPosition
+      document.body.style.top = previousBodyTop
+      document.body.style.width = previousBodyWidth
+      document.body.style.overflow = previousBodyOverflow
+      document.body.style.paddingRight = previousPaddingRight
+      window.scrollTo(0, scrollY)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [mobileLnbOpen])
+
   const shellClassName = [
     styles.shell,
     variant === 'subpage' ? styles.shellSubpage : undefined,
+    mobileLnbOpen ? styles.shellMenuOpen : undefined,
   ]
     .filter(Boolean)
     .join(' ')
@@ -45,9 +95,15 @@ export function MypageLayout({
   const layoutClassName = [
     styles.layout,
     mobileStack === 'headingFirst' ? styles.layoutHeadingFirst : undefined,
+    mobileLnbOpen ? styles.layoutMenuOpen : undefined,
   ]
     .filter(Boolean)
     .join(' ')
+
+  const handleDropdownOpenChange = (open: boolean) => {
+    if (!useMobileLnbDropdown) return
+    setMobileLnbOpen(open)
+  }
 
   return (
     <div className={shellClassName}>
@@ -65,6 +121,8 @@ export function MypageLayout({
             appearance={lnbAppearance}
             ariaLabel={lnbAriaLabel}
             onItemSelect={onLnbItemSelect}
+            dropdownOpen={useMobileLnbDropdown ? mobileLnbOpen : false}
+            onDropdownOpenChange={handleDropdownOpenChange}
           />
         </aside>
         <div className={styles.content}>

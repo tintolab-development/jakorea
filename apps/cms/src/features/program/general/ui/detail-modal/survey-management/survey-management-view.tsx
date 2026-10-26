@@ -70,6 +70,7 @@ import {
   surveyBindingResolutionAlert,
   type SurveySubmissionPeriod,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+import { ensureSurveyCreateSubmissionPeriod } from '@/features/program/shared/lib/survey-management/survey-binding-period'
 import { resolveLectureEvalBindingTargetForCreate } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
 import {
@@ -135,6 +136,7 @@ import {
   resolveSurveyResultsParticipantTotal,
   resolveSurveyShareClipboardUrl,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
+import { getPlatformPublicOrigin } from '@/features/program/general/lib/public-survey-origin'
 import {
   getGeneralProgramApiErrorMessage,
   getProgramFormBindingErrorMessage,
@@ -612,12 +614,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         : kind === 'lecture'
           ? 'ADMIN'
           : undefined
+    const submissionPeriod =
+      kind === 'survey' ? ensureSurveyCreateSubmissionPeriod(ids) : ids
     return {
       formType,
       templateId: ids.templateId,
       templateVersionId: ids.templateVersionId,
-      submissionStartAt: ids.submissionStartAt,
-      submissionEndAt: ids.submissionEndAt,
+      submissionStartAt: submissionPeriod.submissionStartAt,
+      submissionEndAt: submissionPeriod.submissionEndAt,
       targetRole,
       ...(audience === 'volunteer_h1'
         ? { targetScope: 'TERM', targetScopeId: 1 }
@@ -1001,7 +1005,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       try {
         const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
           : null
         if (!url) {
           notifyProgramApiUnavailable(
@@ -1037,7 +1041,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       try {
         const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
           : null
         if (!url) {
           notifyProgramApiUnavailable(

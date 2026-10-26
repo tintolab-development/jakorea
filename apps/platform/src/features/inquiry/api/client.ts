@@ -74,6 +74,17 @@ export type PortalInquiryCreateBody = {
   content: string
 }
 
+function assertSuccessfulMutationResponse(data: unknown, fallback: string): void {
+  if (!data || typeof data !== 'object' || !('success' in data) || data.success === true) return
+  const responseBody = data as { message?: unknown; error?: { message?: unknown } }
+  const nested = responseBody.error?.message
+  const message =
+    (typeof nested === 'string' && nested.trim()) ||
+    (typeof responseBody.message === 'string' && responseBody.message.trim()) ||
+    ''
+  throw new Error(message || fallback)
+}
+
 export async function fetchPublicFaqs(signal?: AbortSignal): Promise<PublicFaqItem[]> {
   const { data } = await axiosClient.get<unknown>(PUBLIC_FAQS_PATH, { signal })
   const unwrapped = unwrapEnvelope<PublicFaqList | PublicFaqItem[]>(data)
@@ -100,38 +111,47 @@ export async function fetchMyInquiries(signal?: AbortSignal): Promise<PortalInqu
 
 export async function fetchMyInquiryDetail(
   inquiryId: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalInquiryDetail> {
   const { data } = await axiosClient.get<unknown>(`${INQUIRIES_PATH}/${inquiryId}`, { signal })
   return unwrapEnvelope<PortalInquiryDetail>(data)
 }
 
 export async function fetchInquiryCategoryOptions(
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalInquiryCategoryOption[]> {
   const { data } = await axiosClient.get<unknown>(`${INQUIRIES_PATH}/category-options`, { signal })
-  const unwrapped = unwrapEnvelope<PortalInquiryCategoryOption[] | { items?: PortalInquiryCategoryOption[] }>(
-    data,
-  )
+  const unwrapped = unwrapEnvelope<
+    PortalInquiryCategoryOption[] | { items?: PortalInquiryCategoryOption[] }
+  >(data)
   if (Array.isArray(unwrapped)) return unwrapped
   return unwrapped.items ?? []
 }
 
 export async function fetchInquiryProgramOptions(
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalInquiryProgramOption[]> {
   const { data } = await axiosClient.get<unknown>(`${INQUIRIES_PATH}/program-options`, { signal })
-  const unwrapped = unwrapEnvelope<PortalInquiryProgramOption[] | { items?: PortalInquiryProgramOption[] }>(
-    data,
-  )
+  const unwrapped = unwrapEnvelope<
+    PortalInquiryProgramOption[] | { items?: PortalInquiryProgramOption[] }
+  >(data)
   if (Array.isArray(unwrapped)) return unwrapped
   return unwrapped.items ?? []
 }
 
-export async function createMyInquiry(body: PortalInquiryCreateBody): Promise<void> {
-  await axiosClient.post(INQUIRIES_PATH, body)
+export async function createMyInquiry(
+  body: PortalInquiryCreateBody,
+  idempotencyKey: string,
+): Promise<void> {
+  const key = idempotencyKey.trim()
+  if (!key) throw new Error('문의 등록 요청 키가 없습니다.')
+  const { data } = await axiosClient.post<unknown>(INQUIRIES_PATH, body, {
+    headers: { 'Idempotency-Key': key },
+  })
+  assertSuccessfulMutationResponse(data, '문의 접수에 실패했습니다.')
 }
 
 export async function deleteMyInquiry(inquiryId: string): Promise<void> {
-  await axiosClient.delete(`${INQUIRIES_PATH}/${inquiryId}`)
+  const { data } = await axiosClient.delete<unknown>(`${INQUIRIES_PATH}/${inquiryId}`)
+  assertSuccessfulMutationResponse(data, '문의 삭제에 실패했습니다.')
 }

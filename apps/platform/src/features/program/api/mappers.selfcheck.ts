@@ -164,7 +164,7 @@ assert.ok(listed)
 assert.equal(listed.id, '186012')
 assert.equal(listed.recruitmentStatus, 'recruiting')
 assert.equal(listed.educationTargetLabel, '대학(원)생')
-assert.equal(listed.recruitmentPeriodLabel, '2026년 9월 17일 ~ 9월 18일')
+assert.equal(listed.recruitmentPeriodLabel, '2026년 9월 17일(목) ~ 2026년 9월 18일(금)')
 
 const recruitingAlias = mapPortalProgramListItem({
   programId: 3,
@@ -226,7 +226,199 @@ assert.equal(
   true
 )
 assert.equal(withSelection.eventSchedules.length, 1)
-assert.equal(withSelection.eventSchedules[0]?.name, '사전교육 전반 오리엔테이션')
+assert.equal(withSelection.eventSchedules[0]?.name, '봉사자 사전교육 상반기 오리엔테이션')
+
+const ujatTermSchedules = mapPortalProgramDetail({
+  programId: 182199,
+  title: 'UJAT 상·하반기 교육 일정',
+  programType: 'UJAT',
+  schedules: [
+    {
+      scheduleName: '기관 교육',
+      scheduleKind: 'EDUCATION',
+      term: 'FIRST_HALF',
+      startAt: '2026-04-10T01:00:00Z',
+      endAt: '2026-04-10T03:00:00Z',
+    },
+    {
+      scheduleName: '기관 교육',
+      scheduleKind: 'EDUCATION',
+      term: 'SECOND_HALF',
+      startAt: '2026-09-10T01:00:00Z',
+      endAt: '2026-09-10T03:00:00Z',
+    },
+    {
+      scheduleName: '봉사자 사전교육',
+      scheduleKind: 'PRE_EDUCATION',
+      startAt: '2026-03-20T01:00:00Z',
+      endAt: '2026-03-20T02:00:00Z',
+    },
+    {
+      scheduleName: '봉사자 교육',
+      scheduleKind: 'EDUCATION',
+      startAt: '2026-04-20T01:00:00Z',
+      endAt: '2026-04-20T02:00:00Z',
+    },
+    {
+      scheduleName: '해단식',
+      scheduleKind: 'CLOSING',
+      startAt: '2026-12-20T01:00:00Z',
+      endAt: '2026-12-20T02:00:00Z',
+    },
+  ],
+})
+assert.ok(ujatTermSchedules)
+assert.deepEqual(
+  ujatTermSchedules.eventSchedules.map(schedule => `${schedule.scheduleLabel} ${schedule.name}`.trim()),
+  [
+    '상반기 교육 진행',
+    '하반기 교육 진행',
+    '봉사자 사전교육',
+    '교육 진행',
+    '해단식',
+  ],
+)
+assert.equal(ujatTermSchedules.educationSchedules.length, 0)
+
+// UJAT can carry the generic education-progress projection while its public
+// half/pre-education/closing rows still arrive through schedules[]. The latter
+// must remain visible instead of being discarded by the projection branch.
+const ujatProjectedWithRuntimeSchedules = mapPortalProgramDetail({
+  programId: 182200,
+  title: 'UJAT 투영 정보와 공개 일정',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'PARTICIPANT', applicationTypes: ['ORGANIZATION'] }],
+  educationStructure: 'curriculum',
+  sessionRound: 'multi',
+  educationScheduleLines: [],
+  scheduleDetails: [],
+  schedules: [
+    {
+      scheduleName: '기관 교육',
+      scheduleKind: 'EDUCATION',
+      term: 'FIRST_HALF',
+      startAt: '2026-04-10T01:00:00Z',
+      endAt: '2026-04-10T03:00:00Z',
+    },
+    {
+      scheduleName: '봉사자 사전교육',
+      scheduleKind: 'PRE_EDUCATION',
+      startAt: '2026-03-20T01:00:00Z',
+      endAt: '2026-03-20T02:00:00Z',
+    },
+    {
+      scheduleName: '해단식',
+      scheduleKind: 'CLOSING',
+      startAt: '2026-12-20T01:00:00Z',
+      endAt: '2026-12-20T02:00:00Z',
+    },
+  ],
+})
+assert.ok(ujatProjectedWithRuntimeSchedules)
+assert.deepEqual(
+  ujatProjectedWithRuntimeSchedules.eventSchedules.map(schedule =>
+    `${schedule.scheduleLabel} ${schedule.name}`.trim(),
+  ),
+  ['상반기 교육 진행', '봉사자 사전교육', '해단식'],
+)
+assert.equal(ujatProjectedWithRuntimeSchedules.educationSchedules.length, 0)
+
+const ujatVolunteerProjectedWithRuntimeSchedules = mapPortalProgramDetail({
+  programId: 182201,
+  title: 'UJAT 봉사자 투영 정보와 공개 일정',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'VOLUNTEER', applicationTypes: ['VOLUNTEER'] }],
+  educationStructure: 'curriculum',
+  educationScheduleLines: [],
+  schedules: [
+    {
+      scheduleName: '봉사자 교육 진행',
+      scheduleKind: 'EDUCATION',
+      term: 'SECOND_HALF',
+      startAt: '2026-09-10T01:00:00Z',
+      endAt: '2026-09-10T03:00:00Z',
+    },
+  ],
+})
+assert.ok(ujatVolunteerProjectedWithRuntimeSchedules)
+assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.detailCase, 'ujat-volunteer')
+assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.eventSchedules[0]?.scheduleLabel, '하반기')
+assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.eventSchedules[0]?.name, '교육 진행')
+assert.equal(ujatVolunteerProjectedWithRuntimeSchedules.educationSchedules.length, 0)
+
+const ujatUndatedPublicSchedules = mapPortalProgramDetail({
+  programId: 182202,
+  title: 'UJAT 일정 미정',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'PARTICIPANT', applicationTypes: ['ORGANIZATION'] }],
+  schedules: [
+    { scheduleKind: 'SESSION', term: 'FIRST_HALF', publiclyVisible: true },
+    { scheduleKind: 'PRE_EDUCATION', term: 'FIRST_HALF', publiclyVisible: false },
+  ],
+})
+assert.ok(ujatUndatedPublicSchedules)
+assert.equal(ujatUndatedPublicSchedules.eventSchedules.length, 1)
+assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.scheduleLabel, '상반기')
+assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.name, '기관')
+assert.equal(ujatUndatedPublicSchedules.eventSchedules[0]?.dateLabel, '일정 미정')
+assert.equal(ujatUndatedPublicSchedules.educationSchedules.length, 0)
+
+const ujat186383 = mapPortalProgramDetail({
+  programId: 186383,
+  title: 'UJAT 기관 상반기',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'PARTICIPANT', applicationTypes: ['ORGANIZATION'] }],
+  schedules: [
+    { scheduleKind: 'SESSION', term: 'FIRST_HALF' },
+    {
+      scheduleKind: 'PRE_EDUCATION',
+      term: 'FIRST_HALF',
+      publiclyVisible: false,
+      startAt: '2026-03-01T00:00:00Z',
+    },
+  ],
+})
+assert.ok(ujat186383)
+assert.deepEqual(ujat186383.eventSchedules, [
+  {
+    scheduleLabel: '상반기',
+    name: '기관',
+    dateLabel: '일정 미정',
+  },
+])
+assert.deepEqual(ujat186383.educationSchedules, [])
+
+const ujat186385 = mapPortalProgramDetail({
+  programId: 186385,
+  title: 'UJAT 기관 하반기',
+  programType: 'UJAT',
+  recruitments: [{ recruitmentType: 'PARTICIPANT', applicationTypes: ['ORGANIZATION'] }],
+  schedules: [
+    {
+      scheduleKind: 'SESSION',
+      term: 'SECOND_HALF',
+      startAt: '2026-09-01T00:00:00Z',
+      endAt: '2026-09-01T03:00:00Z',
+    },
+  ],
+})
+assert.ok(ujat186385)
+assert.equal(ujat186385.eventSchedules[0]?.scheduleLabel, '하반기')
+assert.equal(ujat186385.eventSchedules[0]?.name, '기관')
+assert.equal(ujat186385.educationSchedules.length, 0)
+
+const general186389 = mapPortalProgramDetail({
+  programId: 186389,
+  title: '일반 기관 프로그램',
+  programType: 'GENERAL_ORGANIZATION',
+  schedules: [
+    { scheduleKind: 'SESSION', startAt: '2026-04-01T00:00:00Z' },
+    { scheduleKind: 'SESSION', startAt: '2026-05-01T00:00:00Z' },
+  ],
+})
+assert.ok(general186389)
+assert.equal(general186389.eventSchedules.length, 2)
+assert.deepEqual(general186389.eventSchedules.map(schedule => schedule.name), ['기관', '기관'])
 
 const generalCurriculum = mapPortalProgramDetail({
   programId: 186021,
@@ -419,7 +611,7 @@ assert.ok(scheduleSingleWithGroups)
 assert.equal(scheduleSingleWithGroups.eventSchedules[0]?.scheduleLabel, '세부 일정 01')
 assert.equal(
   scheduleSingleWithGroups.eventSchedules[0]?.dateLabel,
-  '그룹 A : 09:30 ~ 09:40 | 그룹 B : 13:00 ~ 13:10'
+  '2026년 9월 29일(화) 그룹 A : 09:30 ~ 09:40 | 그룹 B : 13:00 ~ 13:10'
 )
 
 const trainedTeacherSchedule = mapPortalProgramDetail({
@@ -789,10 +981,49 @@ const geminiTraining = mapPortalProgramDetail({
   portalCategories: ['ORGANIZATION'],
   title: '제미나이 아카데미 찾아가는 연수 모집',
   recruitmentStatus: 'OPEN',
+  trainingRequestStartDate: '2026-09-01',
+  trainingRequestEndDate: '2026-09-30',
+  recruitments: [
+    {
+      recruitmentType: 'ORGANIZATION',
+      startAt: '2026-08-01',
+      endAt: '2026-08-31',
+    },
+  ],
 })
 assert.ok(geminiTraining)
 assert.equal(geminiTraining.detailCase, 'gemini')
 assert.equal(geminiTraining.category, 'institution')
+assert.equal(
+  geminiTraining.recruitmentPhases[0]?.value,
+  '2026년 8월 1일(토) ~ 2026년 8월 31일(월)',
+)
+assert.equal(
+  geminiTraining.geminiTrainingRequestPeriodLabel,
+  '2026년 9월 1일(화) ~ 2026년 9월 30일(수)',
+)
+
+const geminiWithoutTrainingRequestPeriod = mapPortalProgramDetail({
+  programId: 185004,
+  programType: 'GEMINI_TRAINING',
+  portalCategories: ['ORGANIZATION'],
+  title: '기간 미설정 Gemini',
+  recruitmentStatus: 'OPEN',
+})
+assert.ok(geminiWithoutTrainingRequestPeriod)
+assert.equal(geminiWithoutTrainingRequestPeriod.geminiTrainingRequestPeriodLabel, undefined)
+
+const generalWithGeminiFields = mapPortalProgramDetail({
+  programId: 185005,
+  programType: 'GENERAL',
+  portalCategories: ['ORGANIZATION'],
+  title: '일반 프로그램',
+  trainingRequestStartDate: '2026-09-01',
+  trainingRequestEndDate: '2026-09-30',
+})
+assert.ok(generalWithGeminiFields)
+assert.equal(generalWithGeminiFields.detailCase, 'general')
+assert.equal(generalWithGeminiFields.geminiTrainingRequestPeriodLabel, undefined)
 
 const geminiTrainingListed = mapPortalProgramListItem({
   programId: 185003,
@@ -966,7 +1197,7 @@ assert.deepEqual(focusedVolunteerRecruitment.focusedRecruitmentIds, [186674])
 assert.equal(focusedVolunteerRecruitment.applicationType, 'VOLUNTEER')
 assert.equal(
   focusedVolunteerRecruitment.recruitmentPhases[0]?.value,
-  '2026년 7월 12일 ~ 2027년 1월 1일',
+  '2026년 7월 12일(일) ~ 2027년 1월 1일(금)',
 )
 assert.equal(
   focusedVolunteerRecruitment.extraSections.find(section => section.title === '모집 안내')?.body,

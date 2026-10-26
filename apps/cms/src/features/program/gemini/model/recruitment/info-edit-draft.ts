@@ -39,6 +39,37 @@ export function detailToAddFormSnapshot(detail: GeminiRecruitmentDetail): Gemini
   }
 }
 
+export function addSnapshotToInfoEditDraft(
+  snapshot: GeminiRecruitmentAddFormSnapshot
+): GeminiRecruitmentInfoEditDraft {
+  return {
+    title: snapshot.title,
+    announcementPublished: snapshot.announcementPublished,
+    educationTargetLevels: [...snapshot.educationTargetLevels],
+    educationTargetDetail: snapshot.educationTargetDetail,
+    applicationPeriodStart: snapshot.applicationPeriodStart ?? '',
+    applicationPeriodEnd: snapshot.applicationPeriodEnd ?? '',
+    trainingRequestPeriodStart: snapshot.trainingRequestPeriodStart ?? '',
+    trainingRequestPeriodEnd: snapshot.trainingRequestPeriodEnd ?? '',
+    minStudentCount: snapshot.minStudentCount,
+    educationForm: snapshot.educationForm,
+    educationStructure: snapshot.educationStructure,
+    inquiryContactName: snapshot.inquiryContactName,
+    inquiryTel: snapshot.inquiryTel,
+    inquiryEmail: snapshot.inquiryEmail,
+    notesNotApplicable: snapshot.notesNotApplicable,
+    notes: snapshot.notes,
+    thumbnailFileName: snapshot.thumbnailFileName,
+    thumbnailFileObjectId: snapshot.thumbnailFileObjectId,
+    programDescription: snapshot.programDescription,
+    recruitmentGuide: snapshot.recruitmentGuide,
+    applicationMethod: snapshot.applicationMethod,
+    learningSupportContent: snapshot.learningSupportContent,
+    additionalContentMarkdown: snapshot.additionalContentMarkdown,
+    attachmentFileNames: [...snapshot.attachmentFileNames],
+  }
+}
+
 export function applyInfoEditDraft(
   detail: GeminiRecruitmentDetail,
   draft: GeminiRecruitmentInfoEditDraft

@@ -47,13 +47,20 @@ jobs:
         shell: bash
         env:
           VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
+          VITE_PLATFORM_PUBLIC_ORIGIN: ${{ secrets.VITE_PLATFORM_PUBLIC_ORIGIN }}
         run: |
           if [ -z "${VITE_ADDRESS_API_KEY:-}" ]; then
             echo "VITE_ADDRESS_API_KEY=MISSING"
             exit 1
           fi
 
+          if [ -z "${VITE_PLATFORM_PUBLIC_ORIGIN:-}" ]; then
+            echo "VITE_PLATFORM_PUBLIC_ORIGIN=MISSING"
+            exit 1
+          fi
+
           echo "VITE_ADDRESS_API_KEY=SET"
+          echo "VITE_PLATFORM_PUBLIC_ORIGIN=${VITE_PLATFORM_PUBLIC_ORIGIN}"
 
       - name: Build CMS
         env:
@@ -62,6 +69,7 @@ jobs:
           VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
           VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
           VITE_NAVER_CLIENT_ID: ${{ secrets.VITE_NAVER_CLIENT_ID }}
+          VITE_PLATFORM_PUBLIC_ORIGIN: ${{ secrets.VITE_PLATFORM_PUBLIC_ORIGIN }}
         run: pnpm --filter cms build
 
       - name: Verify build output

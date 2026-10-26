@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
@@ -9,18 +9,14 @@ import {
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   shouldSkipRegistrationDraftRestore,
 } from '@/features/program/shared/lib/registration-draft-notice'
-import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { invalidateGeminiRecruitmentListCaches } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
 import { geminiVisitingTrainingQueryKeys } from '../../api/visiting-training/query-keys'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
 import { useGeminiRecruitmentAddTemplateFlow } from '../../hooks/use-recruitment-add-template-flow'
-import {
-  peekGeminiRecruitmentAddDraftOverwrite,
-  persistGeminiRecruitmentAddDraft,
-  removeGeminiRecruitmentAddDraft,
-} from '../../lib/recruitment/add-local-save'
+import { formatGeminiRecruitmentDraftError, formatGeminiRecruitmentRegisterError } from '../../lib/recruitment/mutation-error'
+import { removeGeminiRecruitmentAddDraft } from '../../lib/recruitment/add-local-save'
 import { GEMINI_RECRUITMENT_DEFAULT_TEMPLATE_CODE } from '../../lib/recruitment/add-template'
 import { GeminiRecruitmentAddCloseConfirmModal } from './add-close-confirm-modal'
 import { GeminiRecruitmentAddPreviewModal } from './add-preview-modal'
@@ -32,8 +28,10 @@ import './add-fullpage-modal.css'
 
 const ADD_MODAL_TITLE = '찾아가는 연수 모집 공고 추가'
 
-const DRAFT_SAVE_FAILURE_MESSAGE =
-  '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+const GEMINI_DRAFT_SAVE_SUCCESS_BODY = [
+  '작성 내용이 임시저장(DRAFT) 상태로 서버에 저장되었습니다.',
+  '모집 공고 목록에서 이어서 확인하고 수정할 수 있습니다.',
+].join('\n')
 
 export function GeminiRecruitmentAddFullpageModal({
   open,
@@ -57,77 +55,70 @@ export function GeminiRecruitmentAddFullpageModal({
   const [previewSnapshot, setPreviewSnapshot] = useState<ReturnType<
     typeof form.buildSaveSnapshot
   > | null>(null)
-  const [overwriteOpen, setOverwriteOpen] = useState(false)
-  const [overwriteTitle, setOverwriteTitle] = useState('')
-  const [overwriteSaving, setOverwriteSaving] = useState(false)
+  const createdDraftIdRef = useRef<string | null>(null)
   const [draftSaveSuccessOpen, setDraftSaveSuccessOpen] = useState(false)
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
 
   useEffect(() => {
     if (open) return
     setTemplatePickerOpen(false)
-    setOverwriteOpen(false)
-    setOverwriteTitle('')
-    setOverwriteSaving(false)
     setDraftSaveSuccessOpen(false)
     setCompleteSuccessOpen(false)
+    createdDraftIdRef.current = null
   }, [open])
 
-  const runDraftSave = useCallback(() => {
+  const handleDraftSave = useCallback(async () => {
     if (form.isDraftLoading) return
     const snapshot = form.buildSaveSnapshot()
-    const ok = persistGeminiRecruitmentAddDraft(snapshot)
-    if (!ok) {
+    const endOverlay = beginBlockingOverlay()
+    try {
+      const saved = await geminiRecruitmentService.saveDraft(
+        snapshot,
+        createdDraftIdRef.current
+      )
+      if (saved.id) createdDraftIdRef.current = saved.id
+      removeGeminiRecruitmentAddDraft()
+      invalidateGeminiRecruitmentListCaches(queryClient)
+      form.markSavedBaseline()
+      setDraftSaveSuccessOpen(true)
+    } catch (error) {
       showAlert({
         title: '임시 저장 실패',
-        content: DRAFT_SAVE_FAILURE_MESSAGE,
+        content: formatGeminiRecruitmentDraftError(error),
       })
-      return
-    }
-    form.markSavedBaseline()
-    setDraftSaveSuccessOpen(true)
-  }, [form, showAlert])
-
-  const handleDraftSave = useCallback(() => {
-    if (form.isDraftLoading) return
-    const existing = peekGeminiRecruitmentAddDraftOverwrite()
-    if (existing != null) {
-      setOverwriteTitle(existing.title)
-      setOverwriteOpen(true)
-      return
-    }
-    runDraftSave()
-  }, [form.isDraftLoading, runDraftSave])
-
-  const handleOverwriteConfirm = useCallback(() => {
-    setOverwriteSaving(true)
-    try {
-      runDraftSave()
-      setOverwriteOpen(false)
     } finally {
-      setOverwriteSaving(false)
+      endOverlay()
     }
-  }, [runDraftSave])
+  }, [form, queryClient, showAlert])
 
   const handleRegister = useCallback(async () => {
     if (form.isDraftLoading || !form.isRegisterReady) return
     const snapshot = form.buildSaveSnapshot()
     const endOverlay = beginBlockingOverlay()
     try {
-      const created = await geminiRecruitmentService.register(snapshot)
-      removeGeminiRecruitmentAddDraft()
-      if (created.id && created.detail) {
-        queryClient.setQueryData(
-          geminiVisitingTrainingQueryKeys.recruitmentDetail(created.id),
-          created.detail
-        )
+      const existingId = createdDraftIdRef.current
+      if (existingId) {
+        await geminiRecruitmentService.publishExisting(existingId, snapshot)
+        await queryClient.invalidateQueries({
+          queryKey: geminiVisitingTrainingQueryKeys.recruitmentDetail(existingId),
+        })
+      } else {
+        const created = await geminiRecruitmentService.register(snapshot)
+        if (created.id && created.detail) {
+          queryClient.setQueryData(
+            geminiVisitingTrainingQueryKeys.recruitmentDetail(created.id),
+            created.detail
+          )
+        }
       }
+      removeGeminiRecruitmentAddDraft()
+      createdDraftIdRef.current = null
       invalidateGeminiRecruitmentListCaches(queryClient)
       setCompleteSuccessOpen(true)
-    } catch {
+    } catch (error) {
       showAlert({
         title: '안내',
-        content: '모집 공고 등록에 실패했습니다.\n입력값과 서버 상태를 확인한 뒤 다시 시도해 주세요.',
+        content: formatGeminiRecruitmentRegisterError(error),
       })
     } finally {
       endOverlay()
@@ -169,7 +160,9 @@ export function GeminiRecruitmentAddFullpageModal({
         templateTabType="writing"
         registrationUserMode
         onPreview={handlePreview}
-        onSave={handleDraftSave}
+        onSave={() => {
+          void handleDraftSave()
+        }}
         bodyLoading={form.isDraftLoading}
         bodyHeaderBelow={
           <RegistrationStepTemplateChrome
@@ -204,18 +197,9 @@ export function GeminiRecruitmentAddFullpageModal({
           onClick: handleRegister,
         }}
       />
-      <RegistrationDraftOverwriteConfirmModal
-        open={overwriteOpen}
-        draftTitle={overwriteTitle}
-        confirmLoading={overwriteSaving}
-        onCancel={() => {
-          if (overwriteSaving) return
-          setOverwriteOpen(false)
-        }}
-        onConfirm={handleOverwriteConfirm}
-      />
       <RegistrationDraftSaveSuccessModal
         open={draftSaveSuccessOpen}
+        body={GEMINI_DRAFT_SAVE_SUCCESS_BODY}
         onConfirm={() => setDraftSaveSuccessOpen(false)}
       />
       <RegistrationCompleteSuccessModal

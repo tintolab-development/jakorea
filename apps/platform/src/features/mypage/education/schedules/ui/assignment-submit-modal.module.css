@@ -1,0 +1,206 @@
+.modal {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.body {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-28);
+  margin-top: var(--spacing-28);
+}
+
+.guide,
+.sessionHeading,
+.sectionTitle,
+.error {
+  margin: 0;
+}
+
+.guide {
+  line-height: 1.6;
+}
+
+.sessionCard {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  padding: var(--spacing-28);
+  border-radius: var(--radius-24);
+  background: var(--color-element-hover);
+}
+
+.periodRow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.periodDivider {
+  width: 1px;
+  height: 24px;
+  flex: 0 0 auto;
+  background: var(--color-primary-500);
+}
+
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-8);
+}
+
+.sectionDivider {
+  width: 100%;
+  height: 1px;
+  flex: 0 0 auto;
+  background: var(--color-border-default);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.policy {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 8px 0 0;
+  padding-left: 22px;
+  color: var(--color-neutral-cool-500);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.itemList {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  box-sizing: border-box;
+  overflow: visible;
+  margin: 8px 0 0;
+  padding: 20px 28px;
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+  list-style: none;
+}
+
+.emptyItemSpace {
+  width: 100%;
+  min-height: var(--spacing-28);
+  margin-top: 0;
+}
+
+.item {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.itemLabel {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removeButton {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-neutral-cool-600);
+  cursor: pointer;
+}
+
+.removeButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.removeButton img {
+  width: 20px;
+  height: 20px;
+  filter: brightness(0) invert(1);
+}
+
+.linkRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+  gap: var(--spacing-16);
+}
+
+.linkInput {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-12);
+}
+
+@media (--bp-below-pc) {
+  .modal {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .policy {
+    font-size: 14px;
+  }
+
+  .sessionCard {
+    padding: var(--spacing-20);
+  }
+
+  .periodRow {
+    flex-wrap: wrap;
+    row-gap: var(--spacing-4);
+  }
+
+  .linkRow {
+    flex-direction: column;
+  }
+
+  .linkRow > button {
+    width: 100% !important;
+  }
+
+  .actions > button {
+    flex: 1 1 0;
+    width: auto !important;
+  }
+}

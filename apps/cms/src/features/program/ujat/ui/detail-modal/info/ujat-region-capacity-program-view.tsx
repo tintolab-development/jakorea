@@ -1,4 +1,6 @@
+import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { UjatRegionCapacitySemesterValues } from '@/features/program/ujat/lib/ujat-region-capacity-types'
 import {
   resolveUjatRegionCapacitySemesterValues,
@@ -14,16 +16,24 @@ export function UjatRegionCapacityProgramView({
   isEdit = false,
   h1Values: h1ValuesInput,
   h2Values: h2ValuesInput,
+  form,
 }: {
   program: Program
   isEdit?: boolean
   h1Values?: UjatRegionCapacitySemesterValues
   h2Values?: UjatRegionCapacitySemesterValues
+  form?: UseFormReturn<ProgramDetailEditFormValues>
 }) {
-  const overlay = program.ujatRegistrationOverlay ?? {}
-  const h1Values = h1ValuesInput ?? resolveUjatRegionCapacitySemesterValues('h1', overlay)
-  const h2Values = h2ValuesInput ?? resolveUjatRegionCapacitySemesterValues('h2', overlay)
-  const mode = isEdit ? 'edit' : 'view'
+  const canonical = program.ujatRegionCapacity
+  const h1Values =
+    h1ValuesInput ??
+    canonical?.h1 ??
+    resolveUjatRegionCapacitySemesterValues('h1', program.ujatRegistrationOverlay ?? {})
+  const h2Values =
+    h2ValuesInput ??
+    canonical?.h2 ??
+    resolveUjatRegionCapacitySemesterValues('h2', program.ujatRegistrationOverlay ?? {})
+  const mode = isEdit && form != null ? 'edit' : 'view'
 
   return (
     <section className="ujat-region-capacity-program-view program-detail-fullpage-modal__info-tab-block">
@@ -43,7 +53,7 @@ export function UjatRegionCapacityProgramView({
           </h3>
         </div>
       )}
-      <UjatRegionCapacitySection mode={mode} h1Values={h1Values} h2Values={h2Values} />
+      <UjatRegionCapacitySection mode={mode} h1Values={h1Values} h2Values={h2Values} form={form} />
     </section>
   )
 }

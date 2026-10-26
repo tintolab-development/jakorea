@@ -18,7 +18,7 @@ export function isHarvestedSmsSenderPhone(
   return harvestedSenderKeys.some(item => normalizeSmsSenderPhoneKey(item) === key)
 }
 
-export const SMS_SENDER_PHONE_REQUIRED_MESSAGE = '발신 번호를 선택하세요.'
+export const SMS_SENDER_PHONE_REQUIRED_MESSAGE = '발신 번호를 선택해 주세요.'
 export const SMS_SENDER_PHONE_NOT_REGISTERED_MESSAGE =
   'NHN에 등록된 발신 번호만 사용할 수 있습니다. 발신 프로필을 동기화한 뒤 다시 선택해 주세요.'
 export const SMS_SENDER_PROFILES_EMPTY_MESSAGE =

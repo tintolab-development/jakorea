@@ -1,6 +1,7 @@
 import type { SettlementItemSettingDetail } from '@/features/settlement-management/model/settlement-item-setting-detail'
 import type { SettlementItemSettingRow } from '@/features/settlement-management/model/settlement-item-settings'
 import {
+  evidenceRequiredYnFromSubmission,
   mapDeductionItemToSettingDetail,
   mapPaymentItemToSettingDetail,
   mapWageItemToSettingDetail,
@@ -124,6 +125,9 @@ function paymentItemToUpsert(
     maxAmount: detail.maxLimitWon ?? item.maxAmount,
     maxLimitWon: detail.maxLimitWon ?? undefined,
     taxableYn: item.taxableYn,
+    evidenceRequiredYn: evidenceRequiredYnFromSubmission(
+      detail.evidenceSubmission,
+    ) as NonNullable<SettlementConfigUpdateRequest['paymentItems']>[number]['evidenceRequiredYn'],
     useYn: item.useYn,
     iconKey: item.iconKey,
     emojiOverride: meta.emojiOverride ?? item.emojiOverride,

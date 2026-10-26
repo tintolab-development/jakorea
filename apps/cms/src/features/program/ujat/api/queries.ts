@@ -48,6 +48,7 @@ function listParamsKey(params: ListParams): string {
   return JSON.stringify({
     keyword: params.keyword ?? null,
     businessYear: params.businessYear ?? null,
+    ujatProgressStatus: params.ujatProgressStatus ?? null,
   })
 }
 

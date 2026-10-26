@@ -10,13 +10,6 @@ import {
   getGeneralApplicationInstitutionsTabLabel,
   type GeneralApplicationTabKey,
 } from '@/features/program/general/lib/application-tabs'
-import { canGeneralProgramApplicationFormEdit } from '@/features/program/general/lib/common-info-edit-policy'
-import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
-import {
-  PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
-  PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
-} from '@/shared/lib/program-edit-window-error-message'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { ApplicationFormPreviewPanel } from './application-form-preview-panel'
 import './application-view.css'
 
@@ -27,6 +20,7 @@ export function GeneralProgramApplicationView({
   showInstructorTab,
   showVolunteerTab,
   canWrite,
+  editFormLoading = false,
   onEditForm,
   previewReloadKey = 0,
 }: {
@@ -36,26 +30,11 @@ export function GeneralProgramApplicationView({
   showInstructorTab: boolean
   showVolunteerTab: boolean
   canWrite: boolean
+  editFormLoading?: boolean
   onEditForm: () => void
   previewReloadKey?: number
 }) {
-  const { showAlert } = useCmsAlert()
   const institutionsLabel = getGeneralApplicationInstitutionsTabLabel(program)
-  const formWritable = canGeneralProgramApplicationFormEdit(
-    program,
-    recruitmentEditTypeForDetailTab(activeApplicationTab)
-  )
-
-  const handleEditForm = () => {
-    if (!formWritable) {
-      showAlert({
-        title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
-        content: PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
-      })
-      return
-    }
-    onEditForm()
-  }
 
   return (
     <div className="application-view program-detail-fullpage-modal__info-tab">
@@ -73,7 +52,8 @@ export function GeneralProgramApplicationView({
             <CmsButton
               variant="secondary"
               size="large"
-              onClick={handleEditForm}
+              onClick={onEditForm}
+              disabled={editFormLoading}
             >
               양식 수정
             </CmsButton>

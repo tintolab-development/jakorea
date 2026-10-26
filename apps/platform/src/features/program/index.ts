@@ -70,11 +70,13 @@ export {
   useProgramDetail,
 } from './api/hooks'
 export {
+  usePortalApplicationOption,
   useProgramApplicationForm,
   useSubmitProgramApplication,
 } from './api/application-hooks'
 export { useProgramApplyGate } from './hooks/use-program-apply-gate'
 export {
+  isAlreadyAppliedApplicationReason,
   normalizePortalApplicationBlockedReason,
   resolveProgramApplyGateModal,
   shouldHideApplyPageBlockedBanner,

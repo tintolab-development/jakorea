@@ -39,7 +39,7 @@ import {
   assertRegistrationWizardRemoteReady,
   shouldUseRegistrationCreateFormBindings,
 } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
-import { deleteRegistrationProgramDraftRemote } from '@/features/program/general/lib/registration-program-draft-session'
+import { hasPendingRegistrationFormApplyFailures } from '@/features/program/general/lib/apply-registration-forms-after-create'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { invalidateProgramListCachesAfterRegistration } from '@/features/program/shared/lib/invalidate-program-list-caches-after-registration'
@@ -218,7 +218,7 @@ function GeneralProgramRegistrationFullpageModalInner({
       // 등록 위자드는 mutation onSuccess를 타지 않으므로 목록·위젯을 여기서 무효화한다.
       invalidateProgramListCachesAfterRegistration(queryClient, registrationFormVariant)
       pendingCreatedProgramRef.current = program
-      setCompleteSuccessOpen(true)
+      setCompleteSuccessOpen(!hasPendingRegistrationFormApplyFailures())
     },
     [queryClient, registrationFormVariant]
   )
@@ -340,10 +340,9 @@ function GeneralProgramRegistrationFullpageModalInner({
     setCompleteSuccessOpen(false)
     const registrationTemplateCode =
       flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
-    void deleteRegistrationProgramDraftRemote(
-      registrationProgramTypeForTemplateCode(registrationTemplateCode)
-    )
-    if (shouldRemoveSavedDraftAfterCompletion) {
+    // 서버 임시저장 DELETE 없음 — 임시저장은 localStorage 전용.
+    // CREATE 후 양식 적용이 일부 실패했으면 재시도할 수 있게 임시저장본을 남긴다.
+    if (shouldRemoveSavedDraftAfterCompletion && !hasPendingRegistrationFormApplyFailures()) {
       void clearRegistrationDraftForFreshStart(registrationTemplateCode)
     }
     onProgramRegistrationSaved?.(created)

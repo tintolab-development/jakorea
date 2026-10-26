@@ -11,8 +11,7 @@
   height: auto;
   max-height: none;
   padding: 8px;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: hidden;
   background: var(--main-WT, #fff);
   box-sizing: border-box;
 }
@@ -28,86 +27,29 @@
  * (대시보드 위젯 등은 program-schedule-widget.css에서 별도 처리)
  */
 .calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td {
+  border: none;
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
   padding: 0;
   vertical-align: top;
   box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 0;
 }
 
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td:first-child {
-  border-left: 1px solid var(--table-line, #e0e0e0);
-}
-
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:first-child td {
-  border-top: 1px solid var(--table-line, #e0e0e0);
-}
-
-/* clip·서브픽셀 라운딩 시 마지막 열(토) 우측·금~토 구분선 유지 */
 .calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td:last-child {
-  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-right: none;
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td .calendar-cell {
   border: none;
+  border-radius: 0;
   min-width: 0;
   max-width: 100%;
-}
-
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:first-child td:first-child {
-  border-top-left-radius: var(--radius-8, 8px);
-}
-
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:first-child td:last-child {
-  border-top-right-radius: var(--radius-8, 8px);
-}
-
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:last-child td:first-child {
-  border-bottom-left-radius: var(--radius-8, 8px);
-}
-
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:last-child td:last-child {
-  border-bottom-right-radius: var(--radius-8, 8px);
-}
-
-.calendar-main
-  .ant-picker-calendar-mini
-  .ant-picker-content
-  tbody
-  tr:first-child
-  td:first-child
-  .calendar-cell {
-  border-top-left-radius: var(--radius-8, 8px);
-}
-
-.calendar-main
-  .ant-picker-calendar-mini
-  .ant-picker-content
-  tbody
-  tr:first-child
-  td:last-child
-  .calendar-cell {
-  border-top-right-radius: var(--radius-8, 8px);
-}
-
-.calendar-main
-  .ant-picker-calendar-mini
-  .ant-picker-content
-  tbody
-  tr:last-child
-  td:first-child
-  .calendar-cell {
-  border-bottom-left-radius: var(--radius-8, 8px);
-}
-
-.calendar-main
-  .ant-picker-calendar-mini
-  .ant-picker-content
-  tbody
-  tr:last-child
-  td:last-child
-  .calendar-cell {
-  border-bottom-right-radius: var(--radius-8, 8px);
 }
 
 .calendar-cell:hover {
@@ -172,6 +114,7 @@
 .calendar-event {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--Spacing-6, 6px);
   flex: 0 0 auto;
   min-height: 0;
@@ -179,27 +122,32 @@
   box-sizing: border-box;
   border: 1px solid var(--Border-alpha-06, rgba(61, 61, 61, 0.06));
   border-radius: var(--Radius-4, 4px);
+  background-clip: border-box;
+  background-origin: border-box;
+  box-shadow: none;
+  outline: none;
   cursor: pointer;
   transition: filter 0.2s;
   min-width: 0;
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  font-family: var(--font-family-primary, Pretendard, sans-serif);
+  height: 25px;
+  text-align: left;
 }
 
 .calendar-event-title {
-  flex: 1 0 0;
+  flex: 1 1 0;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--Neutral-black, #3d3d3d);
+  font-family: Pretendard;
   font-size: 13px;
   font-weight: 500;
   line-height: 130%; /* 16.9px */
-  color: var(--Netural-black, #3d3d3d);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  text-align: left;
 }
 
 .calendar-event-title--with-divider {

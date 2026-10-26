@@ -1,11 +1,13 @@
 import type { AdminProgramsListQuery } from '@/features/program/general/api/programs-api-client'
 import { GENERAL_PROGRAM_LIST_PAGE_SIZE } from '@/features/program/general/api/general-program-list-filter-params'
+import type { UjatProgramProgressStatus } from '@/types/domain'
 
 export const UJAT_PROGRAM_LIST_PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_SIZE
 
 export type ListParams = {
   keyword?: string
   businessYear?: number
+  ujatProgressStatus?: UjatProgramProgressStatus
   page?: number
   size?: number
 }

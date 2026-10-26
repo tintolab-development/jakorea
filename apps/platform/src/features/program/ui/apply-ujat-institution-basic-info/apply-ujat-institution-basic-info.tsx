@@ -1,4 +1,7 @@
-import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import {
+  formatKoreanPhoneNumber,
+  formatKoreanPhoneNumberPreservingMask,
+} from '@jakorea/domain/shared/korean-phone'
 import {
   PFCheckbox,
   PFFormControlCluster,
@@ -255,7 +258,7 @@ export function ApplyUjatInstitutionBasicInfo({
                   inputMode="tel"
                   autoComplete="tel"
                   placeholder="담당 교사의 휴대폰 번호"
-                  value={formatKoreanPhoneNumber(teacherMobileDisplay)}
+                  value={formatKoreanPhoneNumberPreservingMask(teacherMobileDisplay)}
                   disabled
                   onValueChange={() => {}}
                 />

@@ -1,5 +1,5 @@
 import type { CategoryDeleteBlockedKind } from '@/features/posts/ui/category-delete-blocked-copy'
-import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 
 export type CategoryManagementKind = CategoryDeleteBlockedKind
 
@@ -15,16 +15,25 @@ const CATEGORY_DUPLICATE_CODE: Record<CategoryManagementKind, string> = {
   inquiry: 'INQUIRY_CATEGORY_NAME_ALREADY_EXISTS',
 }
 
-function isConflictStatus(error: unknown): boolean {
-  return getApiErrorHttpStatus(error) === 409
+const CATEGORY_CONCURRENT_MODIFICATION_CODE: Record<CategoryManagementKind, string> = {
+  notice: 'NOTICE_CATEGORY_CONCURRENT_MODIFICATION',
+  faq: 'FAQ_CATEGORY_CONCURRENT_MODIFICATION',
+  inquiry: 'INQUIRY_CATEGORY_CONCURRENT_MODIFICATION',
 }
 
 export function isCategoryInUseError(error: unknown, kind: CategoryManagementKind): boolean {
-  return getApiErrorCode(error) === CATEGORY_IN_USE_CODE[kind] || isConflictStatus(error)
+  return getApiErrorCode(error) === CATEGORY_IN_USE_CODE[kind]
 }
 
 export function isCategoryDuplicateError(error: unknown, kind: CategoryManagementKind): boolean {
-  return getApiErrorCode(error) === CATEGORY_DUPLICATE_CODE[kind] || isConflictStatus(error)
+  return getApiErrorCode(error) === CATEGORY_DUPLICATE_CODE[kind]
+}
+
+export function isCategoryConcurrentModificationError(
+  error: unknown,
+  kind: CategoryManagementKind
+): boolean {
+  return getApiErrorCode(error) === CATEGORY_CONCURRENT_MODIFICATION_CODE[kind]
 }
 
 export type PostWithCategoryLabel = { category?: string | null }

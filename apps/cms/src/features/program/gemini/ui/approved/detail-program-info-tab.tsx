@@ -14,6 +14,7 @@ import {
   formatStatusLabel,
 } from '../../lib/approved/format-display'
 import { resolveApprovedTrainingStatus } from '../../lib/approved/resolve-status'
+import { formatTrainingDateCandidatesDisplay } from '../../lib/approved/training-date-candidates'
 import type { VerticalInfoTableItem } from '../../lib/approved/vertical-info-table'
 import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import type { GeminiApprovedTrainingStatus } from '../../model/approved/types'
@@ -28,15 +29,16 @@ function statusClassName(status: GeminiApprovedTrainingStatus) {
 }
 
 function formatDetailTrainingDatetime(detail: GeminiApprovedTrainingDetail): string {
+  const candidatesLabel = formatTrainingDateCandidatesDisplay(detail.trainingDateCandidates)
   if (!detail.instructorAssigned) {
-    return '-'
+    return candidatesLabel
   }
   const x = dayjs(detail.trainingDate)
   if (!x.isValid()) {
-    return '-'
+    return candidatesLabel
   }
   const datePart = formatDateDotWithWeekday(x)
-  return datePart === '-' ? '-' : `${datePart} | ${detail.trainingTimeText}`
+  return datePart === '-' ? candidatesLabel : `${datePart} | ${detail.trainingTimeText}`
 }
 
 type AssignedInstructorRow = {

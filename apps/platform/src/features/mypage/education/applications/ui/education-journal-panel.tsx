@@ -9,6 +9,7 @@ import {
   PFText,
   type PFDataTableColumn,
 } from '@/shared/ui'
+import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
 import {
   useDownloadPortalEducationJournal,
   usePortalEducationJournals,
@@ -163,6 +164,11 @@ export function EducationJournalPanel({
     if (!enabled || !file || submitMutation.isPending) return
     // 같은 파일을 다시 선택해도 change 이벤트가 발생하도록 초기화한다.
     if (inputRef.current) inputRef.current.value = ''
+    const sizeError = validateUploadFileSize(file)
+    if (sizeError) {
+      setAlertMessage(sizeError)
+      return
+    }
     submitMutation.mutate(file, {
       onSuccess: () => {
         setPage(1)

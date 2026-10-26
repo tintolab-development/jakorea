@@ -72,7 +72,7 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   RECRUITMENT_ENDED: '모집이 마감되었습니다.',
   /** CMS 신청 양식 미설정 — URL/파싱 오류가 아님 */
   APPLICATION_FORM_NOT_CONFIGURED:
-    '신청 양식이 아직 준비되지 않았습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
+    '신청 양식이 아직 준비되지 않아 신청할 수 없습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
   PROGRAM_NOT_APPLICABLE: '현재 신청할 수 없는 프로그램입니다.',
   /** POST 403 — options ORGANIZATION_MEMBERSHIP_REQUIRED 와 쌍 */
   ACTIVE_ORGANIZATION_AFFILIATION_REQUIRED: '활성 학교·기관 소속이 필요합니다.',
@@ -131,7 +131,7 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   RECRUITMENT_CAPACITY_FULL: '모집 정원이 마감되었습니다.',
   /** POST 409 — options APPLICATION_FORM_NOT_CONFIGURED */
   APPLICATION_FORM_NOT_AVAILABLE:
-    '신청 양식이 아직 준비되지 않았습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
+    '신청 양식이 아직 준비되지 않아 신청할 수 없습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
   /** 개인 프로그램 — 재학(ENROLLED)인데 회원 프로필 학년 없음 (POST; options SSOT 아님) */
   INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED:
     '재학 중인 회원은 학년 정보를 등록한 후 개인 프로그램에 신청할 수 있습니다.',
@@ -149,6 +149,18 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   FORM_BINDING_NOT_FOUND: '교육 문서 양식이 아직 준비되지 않았습니다.',
   FORM_TEMPLATE_DISABLED: '교육 문서 양식을 사용할 수 없습니다.',
   SCHEDULE_NOT_FOUND: '해당 교육일의 문서를 조회할 수 없습니다.',
+  ASSIGNMENT_SUBMISSION_NOT_STARTED: '과제 제출 기간이 아직 시작되지 않았습니다.',
+  ASSIGNMENT_SUBMISSION_CLOSED: '과제 제출 기간이 종료되었습니다.',
+  ASSIGNMENT_SUBMISSION_NOT_ALLOWED: '해당 회차에는 과제를 제출할 수 없습니다.',
+  ASSIGNMENT_FILES_REQUIRED: '과제 파일 또는 링크를 1개 이상 첨부해 제출해 주세요.',
+  ASSIGNMENT_URL_INVALID: 'https://로 시작하는 올바른 링크를 입력해 주세요.',
+  ASSIGNMENT_SUBMISSION_LIMIT_EXCEEDED:
+    '과제 파일과 링크를 합쳐 최대 20개까지 제출할 수 있어요.',
+  ASSIGNMENT_FILE_INVALID: '업로드할 수 없는 과제 파일입니다.',
+  ASSIGNMENT_NOT_ENABLED: '해당 회차에는 과제를 제출할 수 없습니다.',
+  ASSIGNMENT_ALREADY_SUBMITTED: '이미 과제를 제출했습니다.',
+  ASSIGNMENT_NOT_SUBMITTED: '제출된 과제가 없습니다.',
+  ASSIGNMENT_RESUBMIT_NOT_ALLOWED: '과제 수정 제출이 허용되지 않습니다.',
 }
 
 export const INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE =

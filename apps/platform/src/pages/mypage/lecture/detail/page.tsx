@@ -367,24 +367,18 @@ export function MypageLectureDetailPage() {
     }
     if (active === 'schedule') {
       return (
-        <>
-          <PFButton type="button" variant="tertiary" size="large" onClick={() => handleSectionChange('lecture-report')}>
-            강의보고서 탭으로 이동
-          </PFButton>
-          <EducationSchedulePanel
-            programId={program.id}
-            applicationType={routeApplicationType}
-            applicationId={application.id}
-            lastParticipatedSession={
-              isWithdrawnDuring ? application.lastParticipatedSession : undefined
-            }
-            listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
-          />
-        </>
+        <EducationSchedulePanel
+          applicationType={routeApplicationType}
+          applicationId={application.id}
+          lastParticipatedSession={
+            isWithdrawnDuring ? application.lastParticipatedSession : undefined
+          }
+          listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
+        />
       )
     }
     if (active === 'lecture-report' && routeApplicationType === 'INSTRUCTOR') {
-      return <LectureReportPanel programId={Number(program.id)} instructorProgram={program.programAudience === 'organization'} />
+      return <LectureReportPanel applicationId={applicationId} programId={Number(program.id)} instructorProgram={program.programAudience === 'organization'} />
     }
     if (active === 'survey') {
       return (

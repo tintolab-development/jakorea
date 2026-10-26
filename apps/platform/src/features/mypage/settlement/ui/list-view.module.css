@@ -1,0 +1,73 @@
+.section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.heading {
+  margin: 0;
+}
+
+.scroller {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  border-radius: var(--radius-16);
+}
+
+.table {
+  width: 100%;
+  min-width: 960px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  box-sizing: border-box;
+  padding: var(--spacing-16) var(--spacing-12);
+  border-bottom: 1px solid rgb(61 61 61 / 10%);
+  text-align: center;
+  vertical-align: middle;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  color: var(--color-neutral-black);
+}
+
+.table th {
+  background: var(--color-neutral-cool-50);
+  font-weight: 700;
+}
+
+.colNo {
+  width: 80px;
+}
+
+.colProgram {
+  width: 28%;
+  text-align: left;
+}
+
+.colOrg {
+  width: 18%;
+}
+
+.colDate {
+  width: 34%;
+}
+
+.colStatus {
+  width: 16%;
+}
+
+.ellipsis {
+  display: block;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

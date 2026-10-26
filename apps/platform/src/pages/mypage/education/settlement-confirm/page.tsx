@@ -6,6 +6,7 @@ import {
   clearSettlementWriteDraft,
   EducationSettlementConfirmView,
   loadSettlementWriteDraft,
+  readSettlementRouteApplicationType,
   resolveSettlementAreaFromPathname,
   resolveSettlementDocumentKind,
   type SettlementWriteDraftLocationState,
@@ -20,6 +21,8 @@ import {
   useSubmitIndividualSettlementMutation,
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { mapIndividualSettlementDetailToDraft } from '@/features/mypage/education/settlements/lib/map-individual-settlement-detail'
+import { overlaySettlementBasicWithPaymentConsent } from '@/features/mypage/education/settlements/lib/map-payment-statement-basic-info'
+import { usePaymentStatementConsentBasicInfo } from '@/features/mypage/education/settlements/hooks/use-payment-statement-consent-basic-info'
 import { useInstructorApplyLockedBasic } from '@/features/mypage/instructor-apply'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import {
@@ -47,7 +50,9 @@ export function MypageEducationSettlementConfirmPage() {
   const sessionId = searchParams.get('sessionId') ?? ''
   const viewMode = searchParams.get('mode') === 'view'
   const remoteEnabled = isRemoteApiConfigured()
-  const routeApplicationType = readEducationApplicationTypeFromRoute(applicationTypeParam)
+  const routeApplicationType =
+    readSettlementRouteApplicationType(applicationTypeParam) ??
+    readEducationApplicationTypeFromRoute(applicationTypeParam)
   const typeProbe = useProbeEducationApplicationType(applicationId, routeApplicationType)
   const applicationType = routeApplicationType ?? typeProbe.applicationType ?? 'INDIVIDUAL'
   const documentKind = resolveSettlementDocumentKind(applicationType)
@@ -64,6 +69,7 @@ export function MypageEducationSettlementConfirmPage() {
   )
   const submitMutation = useSubmitIndividualSettlementMutation(applicationId)
   const { lockedBasic } = useInstructorApplyLockedBasic()
+  const consentBasicQuery = usePaymentStatementConsentBasicInfo(documentKind === 'receipt')
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
 
@@ -81,21 +87,32 @@ export function MypageEducationSettlementConfirmPage() {
     return loadSettlementWriteDraft(applicationId, sessionId)
   }, [applicationId, location.state, sessionId])
   const detailQuery = useIndividualSettlementDetailQuery(
-    viewMode || storedDraft == null ? session?.settlementApplicationId : null,
+    isIndividualScheduleSettlementAudience(applicationType) && (viewMode || storedDraft == null)
+      ? session?.settlementApplicationId
+      : null,
   )
   const draft = useMemo(() => {
-    if (storedDraft) return storedDraft
-    if (!viewMode || !detailQuery.detail) return null
-    return mapIndividualSettlementDetailToDraft({
-      detail: detailQuery.detail,
-      applicationId,
-      name: lockedBasic.name,
-      homeAddress: lockedBasic.homeAddress,
-      homeAddressDetail: lockedBasic.homeAddressDetail,
-    })
+    const mapped =
+      storedDraft ??
+      (viewMode && detailQuery.detail
+        ? mapIndividualSettlementDetailToDraft({
+            detail: detailQuery.detail,
+            applicationId,
+            name: lockedBasic.name,
+            homeAddress: lockedBasic.homeAddress,
+            homeAddressDetail: lockedBasic.homeAddressDetail,
+          })
+        : null)
+    if (!mapped || documentKind !== 'receipt') return mapped
+    return {
+      ...mapped,
+      basic: overlaySettlementBasicWithPaymentConsent(mapped.basic, consentBasicQuery.basic),
+    }
   }, [
     applicationId,
+    consentBasicQuery.basic,
     detailQuery.detail,
+    documentKind,
     lockedBasic.homeAddress,
     lockedBasic.homeAddressDetail,
     lockedBasic.name,
@@ -105,20 +122,18 @@ export function MypageEducationSettlementConfirmPage() {
 
   useEffect(() => {
     if (!applicationId || !sessionId) {
-      navigate(buildSettlementTabPath(applicationId, area), { replace: true })
+      navigate(buildSettlementTabPath(applicationId, area, applicationType), { replace: true })
       return
     }
     if (!draft && !viewMode) {
-      navigate(buildSettlementWritePath({ applicationId, sessionId, area }), { replace: true })
+      navigate(
+        buildSettlementWritePath({ applicationId, sessionId, area, applicationType }),
+        { replace: true },
+      )
       return
     }
-    if (
-      viewMode &&
-      !storedDraft &&
-      !remoteSettlements.isLoading &&
-      session?.settlementApplicationId == null
-    ) {
-      navigate(buildSettlementTabPath(applicationId, area), { replace: true })
+    if (viewMode && !storedDraft && !remoteSettlements.isLoading && !session) {
+      navigate(buildSettlementTabPath(applicationId, area, applicationType), { replace: true })
     }
   }, [
     applicationId,
@@ -130,9 +145,27 @@ export function MypageEducationSettlementConfirmPage() {
     sessionId,
     storedDraft,
     viewMode,
+    applicationType,
+    documentKind,
   ])
 
   if (!draft) {
+    if (viewMode && documentKind === 'payment_statement' && session) {
+      return (
+        <PFFormPage
+          aria-label="지급조서 확인"
+          className={styles.page}
+          innerClassName={styles.inner}
+          title="지급조서 확인"
+        >
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            {detailQuery.isLoading
+              ? '지급조서를 불러오는 중입니다.'
+              : '지급조서를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'}
+          </PFText>
+        </PFFormPage>
+      )
+    }
     return null
   }
 
@@ -152,22 +185,29 @@ export function MypageEducationSettlementConfirmPage() {
   }
 
   const handleComplete = () => {
-    if (documentKind !== 'receipt') {
-      clearSettlementWriteDraft(applicationId, sessionId)
-      navigate(buildSettlementTabPath(applicationId, area))
-      return
-    }
     if (remoteSettlements.individualDisabled) {
       setAlertMessage(INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE)
       setAlertOpen(true)
       return
     }
     if (!isIndividualScheduleSettlementAudience(applicationType)) {
-      setAlertMessage('이 신청 유형에서는 일정별 정산을 제출할 수 없습니다.')
+      setAlertMessage(
+        documentKind === 'receipt'
+          ? '이 신청 유형에서는 일정별 정산을 제출할 수 없습니다.'
+          : '이 신청 유형에서는 지급조서를 제출할 수 없습니다.',
+      )
       setAlertOpen(true)
       return
     }
     if (submitMutation.isPending) return
+    const submitFailedMessage =
+      documentKind === 'receipt'
+        ? '영수증 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
+        : '지급조서 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
+    const missingScheduleMessage =
+      documentKind === 'receipt'
+        ? '영수증 제출에 필요한 일정 정보가 없습니다. 작성 화면으로 돌아가 다시 시도해 주세요.'
+        : '지급조서 제출에 필요한 일정 정보가 없습니다. 작성 화면으로 돌아가 다시 시도해 주세요.'
     try {
       const settlementApplicationId = draft.meta.settlementApplicationId
       const resubmit =
@@ -185,32 +225,29 @@ export function MypageEducationSettlementConfirmPage() {
         })
         .then(() => {
           clearSettlementWriteDraft(applicationId, sessionId)
-          navigate(buildSettlementTabPath(applicationId, area))
+          navigate(buildSettlementTabPath(applicationId, area, applicationType))
         })
         .catch(error => {
           setAlertMessage(
             individualSettlementApiErrorMessage(
               error,
-              getProgramApplicationApiErrorMessage(
-                error,
-                '영수증 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.',
-              ),
+              getProgramApplicationApiErrorMessage(error, submitFailedMessage),
             ),
           )
           setAlertOpen(true)
         })
     } catch {
-      setAlertMessage('영수증 제출에 필요한 일정 정보가 없습니다. 작성 화면으로 돌아가 다시 시도해 주세요.')
+      setAlertMessage(missingScheduleMessage)
       setAlertOpen(true)
     }
   }
 
   const handleBack = () => {
     if (viewMode) {
-      navigate(buildSettlementTabPath(applicationId, area))
+      navigate(buildSettlementTabPath(applicationId, area, applicationType))
       return
     }
-    navigate(buildSettlementWritePath({ applicationId, sessionId, area }), {
+    navigate(buildSettlementWritePath({ applicationId, sessionId, area, applicationType }), {
       state: { draft },
     })
   }

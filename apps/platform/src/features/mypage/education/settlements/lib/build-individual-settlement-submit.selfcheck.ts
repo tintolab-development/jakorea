@@ -197,4 +197,76 @@ assert.equal(resubmit.expectedRevisionNo, 1)
 assert.equal(resubmit.idempotencyKey, '33333333-3333-3333-3333-333333333333')
 assert.equal(resubmit.items[0]?.itemType, 'MEAL')
 
+const duplicateTransportDraft = buildSettlementWriteDraft({
+  applicationId: '12',
+  sessionId: '88',
+  scheduleId: 88,
+  isInstructor: false,
+  documentKind: 'receipt',
+  expenseDate: '2026-04-20',
+  idempotencyKey: '44444444-4444-4444-4444-444444444444',
+  name: '홍길동',
+  homeAddress: '',
+  homeAddressDetail: '',
+  bank: '국민',
+  accountNumber: '123',
+  accountHolder: '홍길동',
+  transportItemType: 'TRANSPORTATION',
+  transportItemName: '교통비',
+  transportEvidenceRequired: false,
+  tripType: 'one_way',
+  departTransit: 'bus',
+  departAmount: '5,000',
+  returnTransit: '',
+  returnAmount: '',
+  extraItems: [
+    {
+      itemType: 'STUDENT_TRANSPORTATION',
+      itemName: '학생 교통비',
+      evidenceRequired: false,
+      amount: '5,000',
+      attachments: [],
+    },
+  ],
+  mealAmount: '',
+  mealFiles: [],
+  activityAmount: '',
+  activityFiles: [],
+})
+const dedupedTransport = buildIndividualSettlementItems(duplicateTransportDraft)
+assert.equal(dedupedTransport.length, 1)
+assert.equal(dedupedTransport[0]?.itemType, 'TRANSPORTATION')
+
+const instructorDraft = buildSettlementWriteDraft({
+  applicationId: '12',
+  sessionId: '1',
+  scheduleId: 1,
+  isInstructor: true,
+  documentKind: 'payment_statement',
+  expenseDate: '2026-04-03',
+  idempotencyKey: '55555555-5555-5555-5555-555555555555',
+  name: '강사',
+  homeAddress: '',
+  homeAddressDetail: '',
+  bank: '국민',
+  accountNumber: '123',
+  accountHolder: '강사',
+  transportItemType: 'TRANSPORTATION',
+  tripType: 'one_way',
+  departTransit: 'bus',
+  departAmount: '8,000',
+  returnTransit: '',
+  returnAmount: '',
+  extraItems: [],
+  mealAmount: '30,000',
+  mealFiles: [],
+  activityAmount: '',
+  activityFiles: [],
+})
+const instructorItems = buildIndividualSettlementItems(instructorDraft)
+assert.equal(instructorItems.length, 2)
+assert.equal(instructorItems[0]?.itemType, 'TRANSPORTATION')
+assert.equal(instructorItems[1]?.itemType, 'MEAL')
+assert.equal(instructorItems[1]?.amount, 30000)
+
 console.log('build-individual-settlement-submit.selfcheck: ok')

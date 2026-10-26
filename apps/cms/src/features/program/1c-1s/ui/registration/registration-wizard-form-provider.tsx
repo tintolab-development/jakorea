@@ -49,8 +49,11 @@ export function CompanySchoolRegistrationWizardFormProvider({
       },
       applyOverlayRecord: (overlay, options) => {
         const next = applyCompanySchoolRhfOverlayRecord(form.getValues(), overlay)
+        // C8: shouldDirty=true → 기본값 대비 dirty 재계산(적용 값이 dirty로 잡힘).
+        //     shouldDirty=false → 기존 dirty 상태 유지(적용 값으로 dirty를 만들지 않음).
+        //     (이전에는 keepDirty: shouldDirty 로 의미가 뒤집혀 있었다.)
         form.reset(next, {
-          keepDirty: options?.shouldDirty === true,
+          keepDirty: options?.shouldDirty !== true,
           keepDefaultValues: true,
         })
         notifyCompanySchoolRegistrationRhf()

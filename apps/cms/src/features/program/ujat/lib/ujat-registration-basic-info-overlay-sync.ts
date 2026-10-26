@@ -18,10 +18,6 @@ import {
   resolveUjatRegistrationBasicInfoOverlay,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
-  buildUjatWageOverlayPatchFromPaymentItemIds,
-  resolveUjatPaymentItemIdsFromProgram,
-} from '@/features/program/ujat/lib/ujat-wage-info-display'
-import {
   getUjatProgramRegistrationOverlayRecord,
   patchUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
@@ -31,6 +27,8 @@ import {
 } from '@/features/template/lib/template-form-select-options'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { collectUjatRegistrationCreateOverlay } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { stripUjatScheduleLegacyOverlay } from '@/features/program/ujat/api/typed-detail-client'
+import { stripUjatKpiWageCapacityOverlay } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import { resolveUjatParticipantTypeFlags } from '@/features/program/ujat/lib/participant-type-flags'
 import { buildUjatRecruitInstitutionOverlayFromProgram } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import {
@@ -130,12 +128,6 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.basicInfo.participant.teacher': participantFlags.teacher,
     'ujat.basicInfo.participant.volunteer': participantFlags.volunteer,
     'ujat.basicInfo.surveyItems': ujatSurveyItemsFromProgramKeys(program.generalSurveyMenuKeys),
-    'ujat.kpi.participantCount': program.generalCommonInfo?.kpi?.finalParticipants ?? null,
-    'ujat.kpi.instructor': program.generalCommonInfo?.kpi?.instructorCount ?? null,
-    'ujat.kpi.volunteer': program.generalCommonInfo?.kpi?.volunteerCount ?? null,
-    'ujat.kpi.dispatchedSchool': program.generalCommonInfo?.kpi?.finalSchools ?? null,
-    'ujat.kpi.dispatchedClass': program.generalCommonInfo?.kpi?.finalClasses ?? null,
-    ...buildUjatWageOverlayPatchFromPaymentItemIds(resolveUjatPaymentItemIdsFromProgram(program)),
   }
 }
 
@@ -181,7 +173,9 @@ export function seedUjatRegistrationBasicInfoOverlayFromProgram(program: Program
       createUjatSurveyItemsDefault(false)
     )
   }
-  patchUjatProgramRegistrationOverlay(merged)
+  patchUjatProgramRegistrationOverlay(
+    stripUjatKpiWageCapacityOverlay(stripUjatScheduleLegacyOverlay(merged))
+  )
 }
 
 export function readUjatRegistrationBasicInfoOverlayForSave(): Record<string, unknown> {
@@ -369,19 +363,7 @@ export function reconcileUjatRegistrationOverlayFromApi(
     next['ujat.basicInfo.sponsorContactIds'] = contactIds
     next['ujat.basicInfo.sponsorContactId'] = contactIds[0] ?? ''
   }
-  if (dto.kpi) {
-    const assignKpi = (key: string, value: unknown) => {
-      if (value === undefined) return
-      next[key] = typeof value === 'number' && Number.isFinite(value) ? value : null
-    }
-    assignKpi('ujat.kpi.participantCount', dto.kpi.finalParticipants)
-    assignKpi('ujat.kpi.instructor', dto.kpi.instructorCount)
-    assignKpi('ujat.kpi.volunteer', dto.kpi.volunteerCount)
-    assignKpi('ujat.kpi.dispatchedSchool', dto.kpi.finalSchools)
-    assignKpi('ujat.kpi.dispatchedClass', dto.kpi.finalClasses)
-  }
-
-  return next
+  return stripUjatKpiWageCapacityOverlay(stripUjatScheduleLegacyOverlay(next))
 }
 
 /** ProgramResponse + serviceDetail 파싱 결과로 overlay reconcile */

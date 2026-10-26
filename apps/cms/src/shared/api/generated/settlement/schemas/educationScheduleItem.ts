@@ -30,7 +30,7 @@ export interface EducationScheduleItem {
   surveyCount?: number;
   satisfactionCount?: number;
   availableActions?: string[];
-  /** 커리큘럼 행 라벨. 예: 1차시 / 1회차. */
+  /** 커리큘럼 행 라벨. CMS 공통정보 curriculumSessions[].sessionLabel 원문. 예: 1차시 / 1회차. 저장값이 없거나 정의와 매칭되지 않으면 null이며 합성하지 않는다. */
   sessionLabel?: string | null;
   /** 단원명. title과 같으면 생략 가능. */
   unitName?: string | null;
@@ -38,7 +38,7 @@ export interface EducationScheduleItem {
   content?: string | null;
   /** 일정형 행 라벨. 예: 세부 일정 01 / 행사 일정 01. */
   scheduleLabel?: string | null;
-  /** 일정명. title과 같으면 생략 가능. */
+  /** 일정형 일정명. CMS 공통정보 scheduleDetails[].name 원문. 예: 오리엔테이션 / 개회식. 저장값이 없거나 정의와 매칭되지 않으면 null이며 scheduleLabel·운영 슬롯 제목으로 채우지 않는다. */
   scheduleName?: string | null;
   /** 일정형만. PRE_EDUCATION | SUB | EVENT. */
   blockKind?: EducationScheduleItemBlockKind;

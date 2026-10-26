@@ -2,10 +2,31 @@ import { useCmsAlert } from '@/shared/ui'
 import {
   extractApiErrorMessage,
   getApiErrorCode,
+  getApiErrorHttpStatus,
+  readApiErrorAlertMessage,
 } from '@/shared/lib/extract-api-error-message'
+import {
+  PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE,
+  PROGRAM_INSTRUCTOR_RECRUITMENT_EDIT_PERIOD_ENDED,
+  PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED,
+  PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED,
+} from '@/shared/lib/program-edit-window-error-message'
+
+const APPLICATION_FORM_WRITE_CONFLICT_CODES = new Set([
+  PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED,
+  PROGRAM_INSTRUCTOR_RECRUITMENT_EDIT_PERIOD_ENDED,
+  PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED,
+])
 
 function resolveSaveFailureMessage(error?: unknown): string {
   const code = getApiErrorCode(error)
+  if (
+    getApiErrorHttpStatus(error) === 409 &&
+    code != null &&
+    APPLICATION_FORM_WRITE_CONFLICT_CODES.has(code)
+  ) {
+    return readApiErrorAlertMessage(error, PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE)
+  }
   if (code === 'FORM_SCHEMA_IMMUTABLE') {
     return (
       extractApiErrorMessage(error) ||
@@ -19,6 +40,12 @@ function resolveSaveFailureMessage(error?: unknown): string {
     )
   }
   const message = extractApiErrorMessage(error)
+  if (error instanceof Error && error.message.trim() !== '') {
+    // Preflight guards are local Error instances carrying the same policy
+    // message as the backend. Do not replace that message with the generic
+    // extractor fallback before showing the save failure.
+    if (message === '요청 처리에 실패했습니다.') return error.message
+  }
   if (message.trim() !== '') return message
   if (error instanceof Error && error.message.trim() !== '') {
     return error.message

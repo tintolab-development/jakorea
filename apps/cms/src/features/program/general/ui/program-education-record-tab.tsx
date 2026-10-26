@@ -13,7 +13,10 @@ const { Text } = Typography
 const programTypeLabels: Record<string, string> = {
   online: '온라인',
   offline: '오프라인',
-  hybrid: '하이브리드',
+  hybrid: '온/오프라인',
+  ONLINE: '온라인',
+  OFFLINE: '오프라인',
+  HYBRID: '온/오프라인',
 }
 
 interface ProgramEducationRecordTabProps {

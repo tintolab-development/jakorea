@@ -348,10 +348,11 @@ export function UserListPage() {
       resolvedMemberListKind
     )
     const title = deleteTargets.length >= 2 ? domain.bulkTitle : domain.singleTitle
+    const confirmText = resolvedMemberListKind === 'instructors' ? domain.confirmText : '삭제'
     return {
       title,
       lines,
-      confirmText: domain.confirmText,
+      confirmText,
     }
   }, [deleteTargets, resolvedMemberListKind])
 
@@ -1112,8 +1113,8 @@ export function UserListPage() {
       try {
         await deleteUser(u.id, {
           ...resolveDeleteUserOptions(u),
-          reason: 'CMS 관리자 회원 탈퇴',
-          withdrawConfirmationText,
+          reason: 'CMS 관리자 회원 삭제',
+          typedDeleteConfirm: withdrawConfirmationText,
         })
         setSelectedRowKeys(prev => prev.filter(key => String(key) !== String(u.id)))
         setSelectedRowsSnapshot(prev => prev.filter(row => row.id !== u.id))
@@ -1121,7 +1122,7 @@ export function UserListPage() {
         flushUserDetailModal()
         showDeleteCompletedAlert()
       } catch (error) {
-        handleError(error, { defaultMessage: '회원 탈퇴 처리에 실패했습니다.' })
+        handleError(error, { defaultMessage: '회원 삭제에 실패했습니다.' })
         throw error
       } finally {
         setDeleteLoading(false)

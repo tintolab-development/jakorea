@@ -36,6 +36,9 @@
 }
 
 .empty {
-  margin: 0;
-  padding-block: var(--spacing-40);
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  align-items: center;
 }

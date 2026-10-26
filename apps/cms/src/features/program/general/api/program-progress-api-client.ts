@@ -585,6 +585,8 @@ export type GeneralAssignmentSubmissionParticipantDto = {
   files?: GeneralAssignmentSubmissionFileDto[] | null
   surveyResponse?: { templateVersionId?: number; formResponseId?: number } | null
   satisfactionResponse?: { templateVersionId?: number; formResponseId?: number } | null
+  giveUpAt?: string | null
+  participantStatus?: string | null
 }
 
 export type GeneralAssignmentSubmissionScheduleDto = {

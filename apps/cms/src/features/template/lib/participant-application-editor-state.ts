@@ -1,5 +1,5 @@
 import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
-import { UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import { UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-keys'
 
 export type UjatApplicationInstitutionEditorState = {
   ujatGradeApplicationBlockIds: string[]

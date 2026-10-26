@@ -30,7 +30,6 @@ import {
   pickTransportPayableItem,
   receiptPaymentItemLabel,
   sortReceiptPayableItems,
-  type ReceiptPayableItem,
 } from '../lib/payment-items'
 import {
   RECEIPT_UPLOAD_ACCEPT,
@@ -54,6 +53,7 @@ import {
 } from '../lib/write-path'
 import { EducationSettlementSessionBanner } from './settlement-session-banner'
 import { mapIndividualSettlementDetailToDraft } from '../lib/map-individual-settlement-detail'
+import { usePaymentStatementConsentBasicInfo } from '../hooks/use-payment-statement-consent-basic-info'
 import { useInstructorApplyLockedBasic } from '@/features/mypage/instructor-apply'
 import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
@@ -62,6 +62,7 @@ import {
   useIndividualSettlementSchedulesQuery,
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { isInstructorMypageProfile } from '@/features/mypage/lib/member-profile'
+import { validateUploadBatch } from '@/shared/lib/file-upload-policy'
 import {
   MemberFileTooLargeError,
   MemberFileTypeNotAllowedError,
@@ -86,11 +87,6 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import styles from './write-form.module.css'
-
-const INSTRUCTOR_RECEIPT_HINTS = [
-  '파일은 최대 15M까지 JPG, PNG, Excel, PDF, Word 형식만 등록 가능합니다.',
-  '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-] as const
 
 type TripType = 'one_way' | 'round_trip'
 
@@ -202,7 +198,7 @@ function ReceiptUpload({
   const visibleNames = uploadEnabled
     ? (attachments ?? []).map(item => item.fileName)
     : fileNames
-  const hints = uploadEnabled ? RECEIPT_UPLOAD_HINTS : INSTRUCTOR_RECEIPT_HINTS
+  const hints = RECEIPT_UPLOAD_HINTS
 
   const removeName = (index: number) => {
     if (uploadEnabled) {
@@ -243,6 +239,15 @@ function ReceiptUpload({
             const files = Array.from(event.target.files ?? [])
             event.target.value = ''
             if (files.length === 0) return
+            const policyError = validateUploadBatch({
+              currentCount: visibleNames.length,
+              currentTotalBytes: 0,
+              incoming: files,
+            })
+            if (policyError) {
+              onError(policyError)
+              return
+            }
             if (!uploadEnabled) {
               onFileNamesChange([...fileNames, ...files.map(file => file.name)])
               return
@@ -342,12 +347,11 @@ function TripLegBlock({
         <PFFormFieldRow type="double">
           <PFFormField label="대중교통 수단">
             <PFSelect
-              width={160}
               variant="formPage"
               size="large"
               placeholder="선택"
               aria-label={`${prefix} 대중교통 수단`}
-              options={SETTLEMENT_TRANSIT_OPTIONS}
+              options={[...SETTLEMENT_TRANSIT_OPTIONS]}
               value={transit || undefined}
               onValueChange={onTransitChange}
             />
@@ -433,14 +437,6 @@ function AmountReceiptSection({
   )
 }
 
-function resolvePayableItems(session: EducationSettlementItem | undefined): ReceiptPayableItem[] {
-  return (session?.payableItems ?? []).map(item => ({
-    itemType: item.itemType,
-    itemName: item.itemName,
-    evidenceRequired: item.evidenceRequired,
-  }))
-}
-
 export function EducationSettlementWriteForm({
   applicationId,
   sessionId,
@@ -454,13 +450,13 @@ export function EducationSettlementWriteForm({
   const { lockedBasic } = useInstructorApplyLockedBasic()
   const { profile } = useMypageMember()
   const profileQuery = usePortalProfileQuery({ enabled: true })
-  const existingDetail = useIndividualSettlementDetailQuery(
-    documentKind === 'receipt' ? session?.settlementApplicationId : null,
-  )
+  const existingDetail = useIndividualSettlementDetailQuery(session?.settlementApplicationId)
   const isInstructor = isInstructorMypageProfile(profile)
   const isReceipt = documentKind === 'receipt'
+  const consentBasicQuery = usePaymentStatementConsentBasicInfo(isReceipt)
+  const consentBasic = consentBasicQuery.basic
   const individualSchedules = useIndividualSettlementSchedulesQuery(
-    isReceipt && isIndividualScheduleSettlementAudience(applicationType) ? applicationId : null,
+    isIndividualScheduleSettlementAudience(applicationType) ? applicationId : null,
   )
   const matchedIndividual = useMemo(
     () =>
@@ -471,10 +467,11 @@ export function EducationSettlementWriteForm({
     [individualSchedules.schedules, session, sessionId],
   )
   const payableItems = useMemo(() => {
-    const fromSession = resolvePayableItems(session)
-    if (fromSession.length > 0) return fromSession
+    if (session?.payableItems && session.payableItems.length > 0) {
+      return normalizePayableItems(session.payableItems)
+    }
     return normalizePayableItems(matchedIndividual?.payableItems)
-  }, [matchedIndividual?.payableItems, session])
+  }, [matchedIndividual?.payableItems, session?.payableItems])
   const evidencePolicyUnconfigured = isEvidencePolicyUnconfigured(
     matchedIndividual?.ineligibleReason,
     payableItems,
@@ -493,12 +490,20 @@ export function EducationSettlementWriteForm({
   const hydrated = initialDraft ? hydrateSettlementWriteFormState(initialDraft) : null
   const settlement = profileQuery.data?.instructorProfile?.settlement
 
-  const [bank, setBank] = useState(hydrated?.bank ?? settlement?.bankName ?? '')
+  const [bank, setBank] = useState(
+    hydrated?.bank || (isReceipt ? consentBasic.bank : undefined) || settlement?.bankName || '',
+  )
   const [accountNumber, setAccountNumber] = useState(
-    hydrated?.accountNumber || settlement?.accountNumber || ''
+    hydrated?.accountNumber ||
+      (isReceipt ? consentBasic.accountNumber : undefined) ||
+      settlement?.accountNumber ||
+      '',
   )
   const [accountHolder, setAccountHolder] = useState(
-    hydrated?.accountHolder || settlement?.accountHolder || lockedBasic.name
+    hydrated?.accountHolder ||
+      (isReceipt ? consentBasic.accountHolder : undefined) ||
+      settlement?.accountHolder ||
+      lockedBasic.name,
   )
   const [tripType, setTripType] = useState<TripType>(hydrated?.tripType ?? 'round_trip')
   const [departTransit, setDepartTransit] = useState(hydrated?.departTransit ?? '')
@@ -535,20 +540,63 @@ export function EducationSettlementWriteForm({
   const [alertMessage, setAlertMessage] = useState('')
   const prefilledFromDetail = useRef(Boolean(hydrated))
 
-  const name = lockedBasic.name
-  const residentFront = ''
-  const residentBack = ''
+  const name =
+    hydrated?.name || (isReceipt ? consentBasic.name : undefined) || lockedBasic.name
+  const residentFront =
+    hydrated?.residentFront || (isReceipt ? consentBasic.residentFront : undefined) || ''
+  const residentBack =
+    hydrated?.residentBack || (isReceipt ? consentBasic.residentBack : undefined) || ''
+  const homeAddress =
+    hydrated?.homeAddress ||
+    (isReceipt ? consentBasic.homeAddress : undefined) ||
+    lockedBasic.homeAddress
+  const homeAddressDetail =
+    hydrated?.homeAddressDetail ||
+    (isReceipt ? consentBasic.homeAddressDetail : undefined) ||
+    lockedBasic.homeAddressDetail
+  const accountSeeded = useRef(
+    Boolean(
+      hydrated?.bank ||
+        hydrated?.accountNumber ||
+        hydrated?.accountHolder ||
+        (isReceipt && (consentBasic.bank || consentBasic.accountNumber || consentBasic.accountHolder)),
+    ),
+  )
 
   useEffect(() => {
     setAccountHolder(prev => (prev === '' && name ? name : prev))
   }, [name])
 
   useEffect(() => {
-    if (hydrated?.bank || !settlement?.bankName) return
-    setBank(prev => prev || settlement.bankName || '')
-    setAccountNumber(prev => prev || settlement.accountNumber || '')
-    setAccountHolder(prev => prev || settlement.accountHolder || name)
-  }, [hydrated?.bank, name, settlement])
+    if (accountSeeded.current) return
+    if (isReceipt && consentBasicQuery.isLoading) return
+    if (isReceipt && (consentBasic.bank || consentBasic.accountNumber || consentBasic.accountHolder)) {
+      setBank(consentBasic.bank || '')
+      setAccountNumber(consentBasic.accountNumber || '')
+      setAccountHolder(consentBasic.accountHolder || consentBasic.name || name)
+      accountSeeded.current = true
+      return
+    }
+    if (settlement?.bankName || settlement?.accountNumber || settlement?.accountHolder) {
+      setBank(prev => prev || settlement.bankName || '')
+      setAccountNumber(prev => prev || settlement.accountNumber || '')
+      setAccountHolder(prev => prev || settlement.accountHolder || name)
+      accountSeeded.current = true
+      return
+    }
+    if (!isReceipt || !consentBasicQuery.isLoading) {
+      accountSeeded.current = true
+    }
+  }, [
+    consentBasic.accountHolder,
+    consentBasic.accountNumber,
+    consentBasic.bank,
+    consentBasic.name,
+    consentBasicQuery.isLoading,
+    isReceipt,
+    name,
+    settlement,
+  ])
 
   const amountItemTypeKey = amountItems.map(item => item.itemType).join('|')
   useEffect(() => {
@@ -558,8 +606,8 @@ export function EducationSettlementWriteForm({
         detail: existingDetail.detail,
         applicationId,
         name,
-        homeAddress: lockedBasic.homeAddress,
-        homeAddressDetail: lockedBasic.homeAddressDetail,
+        homeAddress,
+        homeAddressDetail,
       })
       if (mapped) {
         prefilledFromDetail.current = true
@@ -591,8 +639,8 @@ export function EducationSettlementWriteForm({
     amountItems,
     applicationId,
     existingDetail.detail,
-    lockedBasic.homeAddress,
-    lockedBasic.homeAddressDetail,
+    homeAddress,
+    homeAddressDetail,
     name,
     payableItems,
   ])
@@ -615,6 +663,10 @@ export function EducationSettlementWriteForm({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isReceipt && consentBasicQuery.isLoading) {
+      showAlert('지급조서 사전 동의서 정보를 불러오는 중입니다.')
+      return
+    }
     if (isReceipt && payableItems.length === 0) {
       showAlert(
         individualIneligibleMessage('NO_PAYABLE_ITEMS') ??
@@ -661,12 +713,12 @@ export function EducationSettlementWriteForm({
       name,
       residentFront,
       residentBack,
-      homeAddress: lockedBasic.homeAddress,
-      homeAddressDetail: lockedBasic.homeAddressDetail,
+      homeAddress,
+      homeAddressDetail,
       bank,
       accountNumber,
       accountHolder,
-      transportItemType: transportItem?.itemType,
+      transportItemType: transportItem?.itemType ?? (!isReceipt ? 'TRANSPORTATION' : undefined),
       transportItemName: transportItem?.itemName,
       transportEvidenceRequired: isReceiptEvidenceRequired(transportItem?.evidenceRequired),
       tripType,
@@ -697,6 +749,7 @@ export function EducationSettlementWriteForm({
         applicationId,
         sessionId,
         area: resolveSettlementAreaFromPathname(location.pathname),
+        applicationType: applicationType ?? undefined,
       }),
       { state: { draft } },
     )
@@ -737,7 +790,13 @@ export function EducationSettlementWriteForm({
           id="settlement-basic"
           title={`${basicSectionNo}. 기본 정보`}
           required
-          description={isReceipt ? undefined : '설명이 노출됩니다.'}
+          description={
+            isReceipt
+              ? consentBasicQuery.isLoading
+                ? '지급조서 사전 동의서 정보를 불러오는 중입니다.'
+                : undefined
+              : '설명이 노출됩니다.'
+          }
         >
           <PFFormFieldTable>
             <PFFormFieldRow type="single">
@@ -762,8 +821,8 @@ export function EducationSettlementWriteForm({
                 <PFFormHomeAddressFields
                   disabled
                   fillRow
-                  roadValue={lockedBasic.homeAddress}
-                  detailValue={lockedBasic.homeAddressDetail}
+                  roadValue={homeAddress}
+                  detailValue={homeAddressDetail}
                   onRoadChange={() => undefined}
                   onDetailChange={() => undefined}
                 />
@@ -779,8 +838,9 @@ export function EducationSettlementWriteForm({
                         size="large"
                         width={200}
                         placeholder="은행명"
+                        disabled={isReceipt}
                         value={bank}
-                        onValueChange={setBank}
+                        onValueChange={isReceipt ? () => undefined : setBank}
                       />
                       <PFTextInput
                         variant="formPage"
@@ -788,8 +848,11 @@ export function EducationSettlementWriteForm({
                         width={200}
                         inputMode="numeric"
                         placeholder="계좌번호를 입력해 주세요."
+                        disabled={isReceipt}
                         value={accountNumber}
-                        onValueChange={value => setAccountNumber(digitsOnly(value))}
+                        onValueChange={
+                          isReceipt ? () => undefined : value => setAccountNumber(digitsOnly(value))
+                        }
                       />
                     </PFFormControlCluster>
                   </PFFormInlineSegment>
@@ -800,8 +863,9 @@ export function EducationSettlementWriteForm({
                       size="large"
                       width={200}
                       placeholder="예금주명"
+                      disabled={isReceipt}
                       value={accountHolder}
-                      onValueChange={setAccountHolder}
+                      onValueChange={isReceipt ? () => undefined : setAccountHolder}
                     />
                   </PFFormInlineSegment>
                 </PFFormInlineRow>

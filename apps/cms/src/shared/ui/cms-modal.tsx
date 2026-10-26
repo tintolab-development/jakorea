@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { ContentModal } from './content-modal'
+import { renderContentModalDescription } from './content-modal-description'
 import { CmsButton, type CmsButtonVariant } from './cms-button'
 import './content-modal.css'
 import './cms-modal.css'
@@ -79,7 +80,7 @@ export function CmsModal({
 }: CmsModalProps) {
   const body =
     children ??
-    (content != null ? <p className="cms-modal__content">{content}</p> : null)
+    (content != null ? renderContentModalDescription(content, 'cms-modal__content') : null)
 
   return (
     <ContentModal

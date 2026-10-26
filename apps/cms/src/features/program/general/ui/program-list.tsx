@@ -52,6 +52,11 @@ export type ProgramListConfig = {
    * 생략 시 기존 클라 필터 유지 (일반·1사1교 기본).
    */
   serverSideOverviewFilters?: boolean
+  /**
+   * 프로그램 관리 캘린더 `GET /api/admin/program-calendar` 의 programType.
+   * GENERAL | COMPANY_SCHOOL | TRAINED_TEACHER | …
+   */
+  calendarProgramType?: string
 }
 
 export interface ProgramListProps {
@@ -156,6 +161,8 @@ export function ProgramList({
   }, [displayedCount, hasActiveFilters, onDisplayCountChange])
 
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<React.Key[]>([])
+  // 캘린더 우측 목록의 선택 표시용 상태. 목록 행 일괄 삭제 선택과 분리한다.
+  const [calendarSelectedProgramIds, setCalendarSelectedProgramIds] = useState<React.Key[]>([])
   const [internalViewMode] = useState<'list' | 'calendar'>('list')
   const viewMode = externalViewMode ?? internalViewMode
   const isOverviewTable = tableContext.mode === 'overview'
@@ -201,6 +208,12 @@ export function ProgramList({
       }
     },
     [externalSelectedRowKeys, onSelectionChange]
+  )
+  const handleCalendarProgramSelectionChange = useCallback(
+    (programIds: React.Key[]) => {
+      setCalendarSelectedProgramIds(programIds)
+    },
+    []
   )
   const filterFieldsOverride = config?.filterFields
   const filterFieldsForLayout = useMemo(() => {
@@ -307,10 +320,12 @@ export function ProgramList({
             }
           >
             <ProgramCalendarView
-              items={filteredRows}
-              loading={loading}
               onItemClick={onView}
               view={listView}
+              calendarProgramType={config?.calendarProgramType}
+              listKeyword={
+                typeof pendingFilters.title === 'string' ? pendingFilters.title : undefined
+              }
               toolbar={
                 <div className="table-header-actions">
                   <div className="table-header-title--wrapper">
@@ -323,6 +338,10 @@ export function ProgramList({
                     {toolbarActionsAfterExcel}
                   </div>
                 </div>
+              }
+              selectedProgramIds={showRowSelection ? calendarSelectedProgramIds : undefined}
+              onProgramSelectionChange={
+                showRowSelection ? handleCalendarProgramSelectionChange : undefined
               }
             />
           </Suspense>

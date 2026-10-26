@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import {
   EDUCATION_SCHEDULE_EMPTY_LABEL,
   resolveEducationScheduleCommonInfoLabel,
+  resolveEducationScheduleRowLabel,
 } from './common-info-label.ts'
 
 const curriculumSingle = {
@@ -113,5 +114,31 @@ assert.equal(
   }),
   '폐회식',
 )
+
+assert.equal(
+  resolveEducationScheduleRowLabel({
+    educationStructure: 'CURRICULUM',
+    sessionLabel: '2회차',
+    scheduleName: '오리엔테이션',
+  }),
+  '2회차',
+)
+assert.equal(
+  resolveEducationScheduleRowLabel({ educationStructure: 'CURRICULUM', scheduleName: '오리엔테이션' }),
+  EDUCATION_SCHEDULE_EMPTY_LABEL,
+)
+assert.equal(
+  resolveEducationScheduleRowLabel({
+    educationStructure: 'SCHEDULE',
+    sessionLabel: '1회차',
+    scheduleName: '오리엔테이션',
+  }),
+  '오리엔테이션',
+)
+assert.equal(
+  resolveEducationScheduleRowLabel({ educationStructure: 'SCHEDULE', sessionLabel: '1회차' }),
+  EDUCATION_SCHEDULE_EMPTY_LABEL,
+)
+assert.equal(resolveEducationScheduleRowLabel({}), EDUCATION_SCHEDULE_EMPTY_LABEL)
 
 console.log('common-info-label.selfcheck: ok')

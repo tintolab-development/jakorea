@@ -48,6 +48,10 @@ assert.equal(
   isOpaqueScheduleOptionToken('schedule:186659:organization-application:42:education-period:1'),
   true,
 )
+assert.equal(
+  isOpaqueScheduleOptionToken('gemini-preferred:organization-application:1691500:rank:1'),
+  true,
+)
 assert.equal(isOpaqueScheduleOptionToken('line:0'), true)
 assert.equal(isOpaqueScheduleOptionToken('2026년 04월 20일(월) 9:30 ~ 12:20'), false)
 

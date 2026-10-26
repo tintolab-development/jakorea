@@ -2,6 +2,12 @@ import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import { pickUjatVolunteerRecruitmentRow } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import {
+  interviewConfigFromLegacyOverlay,
+  interviewConfigToLegacyOverlayRecord,
+} from '@/features/program/ujat/lib/recruitment-typed-contract'
+import type { RecruitmentInterviewConfig } from '@/types/domain'
 import {
   buildVolunteerInterviewScheduleEditSeed,
   type VolunteerInterviewScheduleEditSeed,
@@ -87,6 +93,15 @@ function inferTimeUnit(keys: unknown, fallback?: unknown): '15' | '30' | '60' {
   return '30'
 }
 
+function interviewScheduleFromConfig(
+  config: RecruitmentInterviewConfig | null | undefined,
+  half?: UjatVolunteerRecruitHalf
+): ReturnType<typeof interviewScheduleFromOverlay> {
+  if (config == null) return null
+  const ns = ujatVolunteerRecruitInterviewNamespace(half ?? 'h1')
+  return interviewScheduleFromOverlay(interviewConfigToLegacyOverlayRecord(config, ns), half)
+}
+
 function interviewScheduleFromOverlay(
   overlay: Record<string, unknown> | undefined,
   half?: UjatVolunteerRecruitHalf
@@ -150,12 +165,32 @@ function interviewScheduleFromOverlay(
   }
 }
 
+/**
+ * 면접 가능 시간·예외 일정 표시.
+ * 활성 모집은 모집 행 interviewConfig가 SSOT다. typed 컬럼이 없을 때만 GET overlay를 읽기 변환한다.
+ */
 export function resolveUjatVolunteerInterviewScheduleDisplay(
   program: Program,
   half?: UjatVolunteerRecruitHalf,
-  options?: { allowMockFallback?: boolean }
+  options?: { allowMockFallback?: boolean; allowOverlayFallback?: boolean }
 ): UjatVolunteerInterviewScheduleData {
-  const fromOverlay = interviewScheduleFromOverlay(program.ujatRegistrationOverlay, half)
+  const row = half ? pickUjatVolunteerRecruitmentRow(program, half) : undefined
+  const fromTyped = interviewScheduleFromConfig(row?.interviewConfig, half)
+  if (fromTyped) return fromTyped.display
+  const fromLegacyColumn =
+    row && !Object.prototype.hasOwnProperty.call(row, 'interviewConfig')
+      ? interviewScheduleFromConfig(
+          interviewConfigFromLegacyOverlay(
+            program.ujatRegistrationOverlay,
+            ujatVolunteerRecruitInterviewNamespace(half ?? 'h1')
+          ),
+          half
+        )
+      : null
+  if (fromLegacyColumn) return fromLegacyColumn.display
+  const fromOverlay = options?.allowOverlayFallback
+    ? interviewScheduleFromOverlay(program.ujatRegistrationOverlay, half)
+    : null
   if (fromOverlay && fromOverlay.display.common.availableTimeSlots !== '-') {
     return fromOverlay.display
   }
@@ -185,9 +220,24 @@ export function resolveUjatVolunteerInterviewScheduleDisplay(
 export function resolveUjatVolunteerInterviewScheduleEditSeed(
   program: Program,
   half?: UjatVolunteerRecruitHalf,
-  options?: { allowMockFallback?: boolean }
+  options?: { allowMockFallback?: boolean; allowOverlayFallback?: boolean }
 ): VolunteerInterviewScheduleEditSeed | undefined {
-  const fromOverlay = interviewScheduleFromOverlay(program.ujatRegistrationOverlay, half)
+  const row = half ? pickUjatVolunteerRecruitmentRow(program, half) : undefined
+  const fromTyped = interviewScheduleFromConfig(row?.interviewConfig, half)
+  if (fromTyped?.seed) return fromTyped.seed
+  if (row && !Object.prototype.hasOwnProperty.call(row, 'interviewConfig')) {
+    const fromLegacy = interviewScheduleFromConfig(
+      interviewConfigFromLegacyOverlay(
+        program.ujatRegistrationOverlay,
+        ujatVolunteerRecruitInterviewNamespace(half ?? 'h1')
+      ),
+      half
+    )
+    if (fromLegacy?.seed) return fromLegacy.seed
+  }
+  const fromOverlay = options?.allowOverlayFallback
+    ? interviewScheduleFromOverlay(program.ujatRegistrationOverlay, half)
+    : null
   if (fromOverlay?.seed) return fromOverlay.seed
 
   const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo

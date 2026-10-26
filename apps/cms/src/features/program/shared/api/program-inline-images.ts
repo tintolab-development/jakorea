@@ -1,4 +1,5 @@
 import customInstance from '@/shared/api/orval-mutator'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
 const FILE_ID_RE =
   /\/api\/(?:admin|portal\/public)\/files\/(\d+)\/(?:content|download)/g
@@ -113,4 +114,75 @@ export async function syncProgramInlineImages(
   const fileObjectIds = collectProgramInlineImageFileObjectIds(content)
   if (fileObjectIds.length === 0) return
   await putProgramInlineImages(programId, fileObjectIds)
+}
+
+type PendingInlineImageBind = {
+  programId: string
+  fileObjectIds: number[]
+}
+
+let pendingInlineImageBind: PendingInlineImageBind | null = null
+
+function inlineImageBindErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const data = (error as { response?: { data?: { error?: { code?: string; message?: string } } } })
+      .response?.data?.error
+    const code = data?.code?.trim()
+    const message = data?.message?.trim()
+    if (code && message) return `${message} (${code})`
+    if (message) return message
+    if (code) return code
+  }
+  if (error instanceof Error && error.message.trim()) return error.message
+  return '본문 이미지 연결에 실패했습니다.'
+}
+
+async function retryPendingProgramInlineImageBind(): Promise<void> {
+  const pending = pendingInlineImageBind
+  if (pending == null) return
+  try {
+    await putProgramInlineImages(pending.programId, pending.fileObjectIds)
+    pendingInlineImageBind = null
+    cmsAlertModal.show({
+      title: '이미지 연결',
+      content: '본문 이미지 연결을 완료했습니다.',
+    })
+  } catch (error) {
+    showProgramInlineImageBindFailureAlert(pending.programId, pending.fileObjectIds, error)
+  }
+}
+
+export function showProgramInlineImageBindFailureAlert(
+  programId: string | number,
+  fileObjectIds: number[],
+  error: unknown
+): void {
+  pendingInlineImageBind = {
+    programId: String(programId),
+    fileObjectIds: [...fileObjectIds],
+  }
+  cmsAlertModal.show({
+    title: '이미지 연결 실패',
+    content: `프로그램은 저장되었지만 본문 이미지를 연결하지 못했습니다.\n${inlineImageBindErrorMessage(error)}\n다시 시도하거나, 프로그램 상세에서 이미지를 다시 저장하세요.`,
+    confirmLabel: '다시 시도',
+    onConfirm: () => {
+      void retryPendingProgramInlineImageBind()
+    },
+  })
+}
+
+/** CREATE 직후 바인딩 실패 시 프로그램을 지우지 않고 안내·재시도만 한다. */
+export async function syncProgramInlineImagesKeepProgram(
+  programId: string | number,
+  content: unknown
+): Promise<'ok' | 'skipped' | 'failed'> {
+  const fileObjectIds = collectProgramInlineImageFileObjectIds(content)
+  if (fileObjectIds.length === 0) return 'skipped'
+  try {
+    await putProgramInlineImages(programId, fileObjectIds)
+    return 'ok'
+  } catch (error) {
+    showProgramInlineImageBindFailureAlert(programId, fileObjectIds, error)
+    return 'failed'
+  }
 }

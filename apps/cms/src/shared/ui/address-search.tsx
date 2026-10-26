@@ -1,12 +1,13 @@
 /**
  * 주소 검색: CmsInput 클릭 시 ContentModal + 행안부/주소기반산업지원 도로명주소 검색 API
  * @see useJusoAddressSearch — `VITE_ADDRESS_API_KEY` 또는 `VITE_JUSO_CONFM_KEY`, 선택 `VITE_JUSO_ADDRESS_API_URL`
- * 결과 목록은 [검색] / Enter 시에만 갱신 (입력 중 실시간 검색 없음)
+ * 입력 중에는 debounce 자동완성, [검색] / Enter 시에는 전체 결과 조회를 사용한다.
  *
  * BE 거리 geocoding: roadAddr + 상세(addressDetail), 우편번호 제외 — `@jakorea/location/juso` `BE_MEMBER_ADDRESS_GEOCODING_QA_ONE_LINER`
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Flex, Pagination } from 'antd'
 import { pickJusoRoadAddressLine } from '@jakorea/location/juso'
@@ -24,11 +25,32 @@ import type { CmsInputProps } from '@/shared/ui/cms-input'
 import './address-search.css'
 
 const MODAL_SEARCH_PLACEHOLDER = '예) 마곡중앙로 171, 분당 주공, 백현동'
+const AUTOCOMPLETE_MIN_LENGTH = 2
+const AUTOCOMPLETE_DEBOUNCE_MS = 300
 
 const RESULT_LIST_SCROLL_END_THRESHOLD = 4
 
 function isResultListScrolledToEnd(el: HTMLElement): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight <= RESULT_LIST_SCROLL_END_THRESHOLD
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function highlightKeyword(text: string, keyword: string): ReactNode {
+  const needle = keyword.trim()
+  if (!needle) return text
+  const parts = text.split(new RegExp(`(${escapeRegExp(needle)})`, 'gi'))
+  return parts.map((part, index) =>
+    part.toLowerCase() === needle.toLowerCase() ? (
+      <span key={`hit-${index}-${part}`} className="address-search__suggest-hit">
+        {part}
+      </span>
+    ) : (
+      <Fragment key={`text-${index}-${part}`}>{part}</Fragment>
+    )
+  )
 }
 
 const ADDRESS_TIPS: { label: string; example: string }[] = [
@@ -81,6 +103,8 @@ export function AddressSearch({
   const [keyword, setKeyword] = useState('')
   const [page, setPage] = useState(1)
   const [hasQueried, setHasQueried] = useState(false)
+  const [isSuggesting, setIsSuggesting] = useState(false)
+  const [keywordValidationError, setKeywordValidationError] = useState<string | null>(null)
   /** [검색] 후 카드에서 「영문보기」 펼침 키 */
   const [expandedEngKey, setExpandedEngKey] = useState<string | null>(null)
   const resultListRef = useRef<HTMLUListElement>(null)
@@ -89,7 +113,7 @@ export function AddressSearch({
   const confmKey = confmKeyProp ?? readJusoConfmKeyFromEnv()
   const countPerPage = 10
 
-  const { addresses, totalCount, loading, search, reset } = useJusoAddressSearch({
+  const { addresses, totalCount, loading, error, search, reset } = useJusoAddressSearch({
     confmKey,
     countPerPage,
     apiUrl: readJusoApiUrlFromEnv(),
@@ -101,6 +125,8 @@ export function AddressSearch({
     setKeyword('')
     setPage(1)
     setHasQueried(false)
+    setIsSuggesting(false)
+    setKeywordValidationError(null)
     setExpandedEngKey(null)
     reset()
   }, [reset])
@@ -110,6 +136,8 @@ export function AddressSearch({
     setKeyword(value.trim())
     setPage(1)
     setHasQueried(false)
+    setIsSuggesting(false)
+    setKeywordValidationError(null)
     setExpandedEngKey(null)
     reset()
     setOpen(true)
@@ -117,14 +145,22 @@ export function AddressSearch({
 
   const runSearch = async (nextPage = 1) => {
     const trimmed = keyword.trim()
+    setIsSuggesting(false)
+    setKeywordValidationError(null)
     if (!trimmed) {
-      setHasQueried(false)
+      setHasQueried(true)
+      setPage(1)
       reset()
+      setKeywordValidationError('검색어를 입력해 주세요.')
       return
     }
     setHasQueried(true)
     setPage(nextPage)
-    await search(trimmed, nextPage)
+    try {
+      await search(trimmed, nextPage)
+    } catch {
+      // API 오류는 검색 결과 영역에서 사용자에게 표시한다.
+    }
   }
 
   const handleSelect = (item: JusoAddressItem) => {
@@ -147,11 +183,26 @@ export function AddressSearch({
     syncResultListScrollEnd()
   }, [syncResultListScrollEnd])
 
-  const showSuggestList = addresses.length > 0
   const trimmedKeyword = keyword.trim()
   const effectiveHasQueried = hasQueried && trimmedKeyword.length > 0
-  const showNoResultsMessage = effectiveHasQueried && !loading && addresses.length === 0
+  const showSuggestList = isSuggesting && !loading && !error && addresses.length > 0
+  const showResultList = effectiveHasQueried && !loading && !error && addresses.length > 0
+  const showApiError = (effectiveHasQueried || isSuggesting) && !loading && Boolean(error)
+  const showNoResultsMessage = effectiveHasQueried && !loading && !error && addresses.length === 0
   const showTip = trimmedKeyword.length === 0
+
+  useEffect(() => {
+    if (!open || !isSuggesting) return
+    if (trimmedKeyword.length < AUTOCOMPLETE_MIN_LENGTH) return
+
+    const timer = window.setTimeout(() => {
+      void search(trimmedKeyword, 1).catch(() => {
+        // API 오류는 검색 결과 영역에서 사용자에게 표시한다.
+      })
+    }, AUTOCOMPLETE_DEBOUNCE_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [isSuggesting, open, search, trimmedKeyword])
 
   /** 검색결과 1건 이상·11건 미만: 검색어 조합 안내 */
   const showResultsHint =
@@ -159,14 +210,16 @@ export function AddressSearch({
   /** 검색결과 11건 이상: 「검색결과가 많습니다」 안내 */
   const showManyResultsNotice = effectiveHasQueried && !loading && totalCount >= 11
   /** 4건 이상: 모달 max 800px · 3건 이하: compact 469 + 목록 333px */
-  const isResultsTall = effectiveHasQueried && showSuggestList && !loading && totalCount >= 4
+  const isResultsTall = effectiveHasQueried && showResultList && !loading && totalCount >= 4
   /** 검색결과 3건 이하: 목록 max 333px */
   const isSparseResults =
-    effectiveHasQueried && showSuggestList && !loading && totalCount > 0 && totalCount <= 3
+    effectiveHasQueried && showResultList && !loading && totalCount > 0 && totalCount <= 3
   const modalClassName = [
     'address-search-modal',
     isResultsTall ? 'address-search-modal--results-tall' : 'address-search-modal--compact',
-    effectiveHasQueried && showSuggestList ? 'address-search-modal--show-results' : '',
+    effectiveHasQueried && (showResultList || showNoResultsMessage || showApiError)
+      ? 'address-search-modal--show-results'
+      : '',
     isSparseResults ? 'address-search-modal--sparse-results' : '',
   ]
     .filter(Boolean)
@@ -174,10 +227,10 @@ export function AddressSearch({
 
   /** 3건 이하: 즉시 · 4건+: 목록 스크롤 끝 */
   const showPagination =
-    effectiveHasQueried && showSuggestList && !loading && (isSparseResults || resultListAtEnd)
+    effectiveHasQueried && showResultList && !loading && (isSparseResults || resultListAtEnd)
 
   useEffect(() => {
-    if (!open || !effectiveHasQueried || !showSuggestList) {
+    if (!open || !effectiveHasQueried || !showResultList) {
       setResultListAtEnd(false)
       return
     }
@@ -196,7 +249,7 @@ export function AddressSearch({
   }, [
     open,
     effectiveHasQueried,
-    showSuggestList,
+    showResultList,
     addresses,
     expandedEngKey,
     isResultsTall,
@@ -249,17 +302,41 @@ export function AddressSearch({
                 value={keyword}
                 onChange={event => {
                   const next = event.target.value
-                  if (!next.trim()) {
-                    setHasQueried(false)
-                    reset()
-                  }
                   setKeyword(next)
+                  setKeywordValidationError(null)
+                  setHasQueried(false)
+                  setPage(1)
+                  setIsSuggesting(next.trim().length >= AUTOCOMPLETE_MIN_LENGTH)
+                  setExpandedEngKey(null)
+                  reset()
                 }}
                 onPressEnter={() => void runSearch(1)}
                 placeholder={MODAL_SEARCH_PLACEHOLDER}
                 inputSize="large"
                 width="100%"
+                error={Boolean(keywordValidationError)}
+                message={keywordValidationError ?? undefined}
               />
+              {showSuggestList ? (
+                <ul className="address-search__suggest-list" aria-label="주소 검색 자동완성">
+                  {addresses.slice(0, countPerPage).map(item => {
+                    const label = item.roadAddr || item.jibunAddr
+                    const itemKey = `${item.zipNo}-${item.roadAddr}-${item.jibunAddr}`
+                    return (
+                      <li key={itemKey} className="address-search__suggest-item">
+                        <button
+                          type="button"
+                          className="address-search__suggest-btn"
+                          onClick={() => handleSelect(item)}
+                        >
+                          {highlightKeyword(label, keyword)}
+                          {item.zipNo ? ` (${item.zipNo})` : ''}
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : null}
             </span>
             <CmsButton
               type="button"
@@ -293,10 +370,10 @@ export function AddressSearch({
           <div
             className={[
               'address-search__results',
-              !trimmedKeyword && !showSuggestList && !showNoResultsMessage
+              !trimmedKeyword && !showSuggestList && !showNoResultsMessage && !showApiError
                 ? 'address-search__results--idle'
                 : '',
-              effectiveHasQueried && (showSuggestList || showNoResultsMessage)
+              effectiveHasQueried && (showResultList || showNoResultsMessage || showApiError)
                 ? 'address-search__results--queried'
                 : '',
               showNoResultsMessage ? 'address-search__results--no-results' : '',
@@ -325,7 +402,12 @@ export function AddressSearch({
                 </p>
               </div>
             ) : null}
-            {showSuggestList && effectiveHasQueried ? (
+            {showApiError ? (
+              <div className="address-search__result-error" role="alert">
+                {error?.message ?? '주소 검색 중 오류가 발생했습니다.'}
+              </div>
+            ) : null}
+            {showResultList ? (
               <ul
                 ref={resultListRef}
                 className="address-search__result-card-list"

@@ -185,6 +185,18 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
   const patchCommon = patch.generalCommonInfo
   const programKpi = programCommon?.kpi
   const patchKpi = patchCommon?.kpi
+  const typedJournal = parseCompatibleBoolean(dto.educationJournalEnabled)
+  const configJournal = parseCompatibleBoolean(
+    parseTrainedTeacherInfoConfigJson(dto.configJson).generalCommonInfo?.educationJournalEnabled
+  )
+  const warnings = [...(program.trainedTeacherInfoDetailWarnings ?? [])]
+  if (
+    typedJournal !== undefined &&
+    configJournal !== undefined &&
+    typedJournal !== configJournal
+  ) {
+    warnings.push('educationJournalEnabled typed/configJson mismatch')
+  }
   return {
     ...program,
     ...patch,
@@ -193,8 +205,8 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
         ...patchCommon,
         ...programCommon,
         educationJournalEnabled:
-          parseCompatibleBoolean(dto.educationJournalEnabled) ??
-          parseCompatibleBoolean(patchCommon?.educationJournalEnabled) ??
+          typedJournal ??
+          configJournal ??
           parseCompatibleBoolean(programCommon?.educationJournalEnabled),
         // B 배열이 있으면 B가 정본. 키 생략 시 A nested 를 undefined 로 지우지 않는다.
         curriculumSessions: Array.isArray(patchCommon?.curriculumSessions)
@@ -226,6 +238,7 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
           patchCommon?.teacherTrainingScheduleName,
       }
     ),
+    trainedTeacherInfoDetailWarnings: warnings.length > 0 ? warnings : undefined,
     educatedTeachers: program.educatedTeachers,
     totalParticipants: program.totalParticipants,
     participatingSchoolCount: program.participatingSchoolCount,

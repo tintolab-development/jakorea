@@ -36,29 +36,9 @@ import {
   isCompanySchoolRecruitmentOverlayKey,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 
-export const APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
-  maxAssignableInstructors: 'recruit.maxAssignableInstructors',
-  maxClassCount: 'recruit.maxClassCount',
-  maxScheduleCount: 'recruit.maxScheduleCount',
-  maxSessionsPerDay: 'recruit.maxSessionsPerDay',
-  announcementPublished: 'recruit.announcementPublished',
-  preguidanceRequired: 'recruit.preguidanceRequired',
-  studentListRequired: 'recruit.studentListRequired',
-  certificateProvided: 'recruit.certificateProvided',
-  programAnchorIso: 'recruit.programAnchorIso',
-  programRangeSeal: 'recruit.programRangeSeal',
-  recruitAnchorIso: 'recruit.recruitAnchorIso',
-  recruitRangeSeal: 'recruit.recruitRangeSeal',
-  finalAnnounceIso: 'recruit.finalAnnounceIso',
-  finalAnnounceMethod: 'recruit.finalAnnounceMethod',
-  targetLevels: 'recruit.targetLevels',
-  targetLevelDetail: 'recruit.targetLevelDetail',
-  inquiryContact: 'recruit.inquiryContact',
-  inquiryTel: 'recruit.inquiryTel',
-  inquiryEmail: 'recruit.inquiryEmail',
-  notesNotApplicable: 'recruit.notesNotApplicable',
-  notes: 'recruit.notes',
-} as const
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from './applicant-recruit-institution-overlay-keys'
+
+export { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS }
 
 export type ApplicantRecruitInstitutionLimitsOverlay = {
   maxAssignableInstructors?: number
@@ -99,10 +79,6 @@ export function setApplicantRecruitInstitutionOverlayScope(
 
 export function subscribeApplicantRecruitInstitutionOverlay(listener: () => void): () => void {
   return store.subscribe(listener)
-}
-
-export function getApplicantRecruitInstitutionOverlayVersion(): number {
-  return store.getVersion()
 }
 
 /** UI·활성 스코프 전용. persist/create 스냅샷에는 `collectSelectedRecruitOverlaysForProgram` / `collectOperationalOverlayForCatalogId`를 쓴다. */
@@ -288,24 +264,6 @@ export function resetAllApplicantRecruitInstitutionOverlay(): void {
 
 export function resetApplicantRecruitInstitutionOverlayStoreForTests(): void {
   store.resetAll()
-}
-
-export function getApplicantRecruitInstitutionLimitsFromOverlay(): ApplicantRecruitInstitutionLimitsOverlay {
-  const record = getApplicantRecruitInstitutionOverlayRecord()
-  return {
-    maxAssignableInstructors: record[
-      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxAssignableInstructors
-    ] as number | undefined,
-    maxClassCount: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxClassCount] as
-      | number
-      | undefined,
-    maxScheduleCount: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxScheduleCount] as
-      | number
-      | undefined,
-    maxSessionsPerDay: record[APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxSessionsPerDay] as
-      | number
-      | undefined,
-  }
 }
 
 export function useApplicantRecruitInstitutionOverlayKv<T>(

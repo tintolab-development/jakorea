@@ -16,6 +16,7 @@ export const GENERAL_PROGRAM_LIST_PAGE_SIZE = 20
 export type GeneralProgramListTableFilters = {
   title?: string
   lifecycleStatus?: string
+  participantType?: string
   targetLevel?: string
   participantRecruitment?: string
   operationStartDate?: string
@@ -52,7 +53,14 @@ export function generalProgramListParamsFromFilters(
   return {
     programType: GENERAL_PROGRAM_API_TYPE,
     keyword: tableFilters.title?.trim() || undefined,
+    participantType: tableFilters.participantType || undefined,
     periodStatus: mapOverviewStatusToPeriodStatus(statusFilter),
+    progressPhase: isProgramProgressPhaseFilter(tableFilters.lifecycleStatus ?? '')
+      ? tableFilters.lifecycleStatus
+      : undefined,
+    targetLevel: tableFilters.targetLevel || undefined,
+    operationStartDate: tableFilters.operationStartDate || undefined,
+    operationEndDate: tableFilters.operationEndDate || undefined,
     page,
     size: GENERAL_PROGRAM_LIST_PAGE_SIZE,
   }

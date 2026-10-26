@@ -1,7 +1,6 @@
 import { Controller } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   formatDateRange,
@@ -30,6 +29,7 @@ export type InstructorsSchemaParams = {
   isEdit: boolean
   sponsorName?: string
   instructorRecruitmentLifecycle: ProgramLifecycleStatus | null
+  instructorRecruitmentStatusLabel: string
   instructorTarget: string
   instructorTargetDetail: string
   notes: string
@@ -41,6 +41,7 @@ export function createInstructorsSchema({
   isEdit,
   sponsorName,
   instructorRecruitmentLifecycle,
+  instructorRecruitmentStatusLabel,
   instructorTarget,
   instructorTargetDetail,
   notes,
@@ -70,7 +71,7 @@ export function createInstructorsSchema({
               <span
                 className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${instructorRecruitmentLifecycle.replace(/_/g, '-')}`}
               >
-                {getProgramLifecycleLabel(instructorRecruitmentLifecycle)}
+                {instructorRecruitmentStatusLabel}
               </span>
             ) : (
               '-'

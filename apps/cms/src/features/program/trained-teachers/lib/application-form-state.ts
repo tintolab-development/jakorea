@@ -2,7 +2,7 @@
  * 교육받은 교사 신청 양식 CMS 설정 typed state.
  * Portal 제출 answers 와 별개. persist 는 editorState.
  */
-import { peekGeneralApplicationOverlayRecord } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { peekTrainedTeachersApplicationFieldRecord } from '@/features/template/ui/form-set/application-form/trained-teachers/trained-teachers-application-form-rhf'
 import { peekTrainedTeachersRegistrationRhf } from './registration-rhf-api'
 import {
   collectTrainedTeachersApplicationState,
@@ -26,8 +26,9 @@ export function collectTrainedTeachersApplicationFormState(
   if (rhf != null) {
     return collectTrainedTeachersApplicationState(rhf.getValues().application)
   }
+  // TT 등록 RHF 미마운트 — 양식 편집기 RHF 필드 폼(application.trainedTeachers.*)
   return importLegacyTrainedTeachersApplicationOverlay(
-    peekGeneralApplicationOverlayRecord('application-trained-teachers')
+    peekTrainedTeachersApplicationFieldRecord('application-trained-teachers')
   )
 }
 

@@ -6,7 +6,7 @@ import { INSTRUCTOR_TARGET_OPTIONS } from '@/features/program/shared/lib/program
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
-import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { useInstructorRecruitField } from '@/features/template/ui/form-set/recruit-form/instructor/instructor-recruit-form-rhf'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -60,20 +60,20 @@ function InquiryContactColumn({
 /** 프로그램 강사 모집 폼 — 강사 모집 정보 */
 export function RecruitFormInstructorInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
-    useGeneralRecruitOverlayKv<ParticipantRecruitmentAnnouncementPublishedValue>(
+    useInstructorRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
       'recruit.instructor.announcementPublished',
       'published'
     )
-  const [recruitTargets, setRecruitTargets] = useGeneralRecruitOverlayKv<string[]>(
+  const [recruitTargets, setRecruitTargets] = useInstructorRecruitField<string[]>(
     'recruit.instructor.recruitTargets',
     ['adult']
   )
 
-  const [programAnchorIso, setProgramAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [programAnchorIso, setProgramAnchorIso] = useInstructorRecruitField<string | null>(
     'recruit.instructor.programAnchorIso',
     null
   )
-  const [programRangeSeal, setProgramRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+  const [programRangeSeal, setProgramRangeSeal] = useInstructorRecruitField<RangeSeal>(
     'recruit.instructor.programRangeSeal',
     null
   )
@@ -97,11 +97,11 @@ export function RecruitFormInstructorInfoParagraph() {
     [programRange]
   )
 
-  const [recruitAnchorIso, setRecruitAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [recruitAnchorIso, setRecruitAnchorIso] = useInstructorRecruitField<string | null>(
     'recruit.instructor.recruitAnchorIso',
     null
   )
-  const [recruitRangeSeal, setRecruitRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+  const [recruitRangeSeal, setRecruitRangeSeal] = useInstructorRecruitField<RangeSeal>(
     'recruit.instructor.recruitRangeSeal',
     null
   )
@@ -121,7 +121,7 @@ export function RecruitFormInstructorInfoParagraph() {
     setRecruitRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
 
-  const [finalAnnounceIso, setFinalAnnounceIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [finalAnnounceIso, setFinalAnnounceIso] = useInstructorRecruitField<string | null>(
     'recruit.instructor.finalAnnounceIso',
     null
   )
@@ -129,31 +129,31 @@ export function RecruitFormInstructorInfoParagraph() {
   const setFinalAnnounceDate = (next: Dayjs | null) => {
     setFinalAnnounceIso(next == null ? null : next.toISOString())
   }
-  const [recruitTargetDetail, setRecruitTargetDetail] = useGeneralRecruitOverlayKv<string>(
+  const [recruitTargetDetail, setRecruitTargetDetail] = useInstructorRecruitField<string>(
     'recruit.instructor.recruitTargetDetail',
     ''
   )
-  const [finalAnnounceMethod, setFinalAnnounceMethod] = useGeneralRecruitOverlayKv<string>(
+  const [finalAnnounceMethod, setFinalAnnounceMethod] = useInstructorRecruitField<string>(
     'recruit.instructor.finalAnnounceMethod',
     ''
   )
-  const [inquiryContact, setInquiryContact] = useGeneralRecruitOverlayKv<string>(
+  const [inquiryContact, setInquiryContact] = useInstructorRecruitField<string>(
     'recruit.instructor.inquiryContact',
     ''
   )
-  const [inquiryTel, setInquiryTel] = useGeneralRecruitOverlayKv<string>(
+  const [inquiryTel, setInquiryTel] = useInstructorRecruitField<string>(
     'recruit.instructor.inquiryTel',
     ''
   )
-  const [inquiryEmail, setInquiryEmail] = useGeneralRecruitOverlayKv<string>(
+  const [inquiryEmail, setInquiryEmail] = useInstructorRecruitField<string>(
     'recruit.instructor.inquiryEmail',
     ''
   )
-  const [notesNotApplicable, setNotesNotApplicable] = useGeneralRecruitOverlayKv<boolean>(
+  const [notesNotApplicable, setNotesNotApplicable] = useInstructorRecruitField<boolean>(
     'recruit.instructor.notesNotApplicable',
     false
   )
-  const [notes, setNotes] = useGeneralRecruitOverlayKv<string>('recruit.instructor.notes', '')
+  const [notes, setNotes] = useInstructorRecruitField<string>('recruit.instructor.notes', '')
 
   return (
     <div className="recruit-form-instructor-info-paragraph__forms">

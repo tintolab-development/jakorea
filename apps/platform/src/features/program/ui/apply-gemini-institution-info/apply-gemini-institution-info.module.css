@@ -1,0 +1,31 @@
+.root :global(.typo-form-field-label) {
+  font-family: var(--font-family-base);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+:global(.form-template-host) .root :global(.typo-form-field-label) {
+  font-family: var(--font-family-base);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+@media (--bp-below-pc) {
+  .root :global(.typo-form-field-label),
+  :global(.form-template-host) .root :global(.typo-form-field-label) {
+    color: var(--color-neutral-cool-600, #667278);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 140%;
+    letter-spacing: 0;
+    text-align: left;
+  }
+}

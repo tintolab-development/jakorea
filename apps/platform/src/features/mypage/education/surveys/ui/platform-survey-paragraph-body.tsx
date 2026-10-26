@@ -1,6 +1,7 @@
 import type {
   DateParagraph,
   FileAttachmentParagraph,
+  LectureReportProgramProgressParagraph,
   MultipleChoiceParagraph,
   ScaleTypeParagraph,
   ShortEssayParagraph,
@@ -30,6 +31,7 @@ import { SurveyTimeField } from './fields/time-field'
 import { SurveyUserInfoField } from './fields/user-info-field'
 import type { SurveySidecarState } from '../lib/survey-sidecar'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
+import reportPreviewStyles from '@/features/mypage/education/schedules/ui/lecture-report-preview-body.module.css'
 
 export type { SurveySidecarState }
 
@@ -39,7 +41,7 @@ export type PlatformSurveyParagraphBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
-  onFileChange?: (paragraphId: string, file: File | null, questionKey: string) => void
+  onFileChange?: (paragraphId: string, files: File[], questionKey: string) => void
   /** 설문자 정보 fieldKey → 표시값 (로그인·프로그램 컨텍스트) */
   userInfoValues?: Record<string, string>
   readOnly?: boolean
@@ -138,16 +140,27 @@ export function PlatformSurveyParagraphBody({
     return (
       <SurveyFileAttachmentField
         paragraph={paragraph as FileAttachmentParagraph}
-        fileName={sidecar.fileNames[paragraph.id] ?? null}
-        onFileNameChange={next => {
+        fileNames={sidecar.fileNames[paragraph.id] ?? []}
+        onFileNamesChange={next => {
           if (readOnly) return
           onSidecarChange({
             ...sidecar,
             fileNames: { ...sidecar.fileNames, [paragraph.id]: next },
           })
         }}
-        onFileChange={next => onFileChange?.(paragraph.id, next, resolveApplicationAnswerKey(paragraph))}
+        onFileChange={next => {
+          if (readOnly) return
+          onFileChange?.(paragraph.id, next, resolveApplicationAnswerKey(paragraph))
+        }}
         disabled={readOnly}
+      />
+    )
+  }
+
+  if (paragraph.kind === 'single_item' && paragraph.variant === 'lecture_report_program_progress') {
+    return (
+      <LectureReportProgramProgressField
+        paragraph={paragraph as LectureReportProgramProgressParagraph}
       />
     )
   }
@@ -214,4 +227,52 @@ export function PlatformSurveyParagraphBody({
   }
 
   return null
+}
+
+function LectureReportProgramProgressField({
+  paragraph,
+}: {
+  paragraph: LectureReportProgramProgressParagraph
+}) {
+  type ProgressField = keyof Pick<
+    LectureReportProgramProgressParagraph,
+    'programName' | 'institutionName' | 'institutionLocation' | 'educationDate' | 'educationTarget'
+  >
+  const value = (key: ProgressField) => paragraph[key].trim() || '-'
+  const rows: Array<[string, string, string, string]> = [
+    [
+      '프로그램명',
+      value('programName'),
+      '사용교재 및 진행단원',
+      [paragraph.textbookName, paragraph.progressUnit].filter(Boolean).join(' | ') || '-',
+    ],
+    ['기관명', value('institutionName'), '기관 소재지', value('institutionLocation')],
+    [
+      '교육 진행일',
+      value('educationDate'),
+      '교육 진행 시간(차시)',
+      [paragraph.sessionTime, paragraph.sessionIndex].filter(Boolean).join(' | ') || '-',
+    ],
+    [
+      '교육 대상',
+      value('educationTarget'),
+      '학급 및 학생 수',
+      [paragraph.classLabel, paragraph.studentCount].filter(Boolean).join(' | ') || '-',
+    ],
+  ]
+
+  return (
+    <table className={reportPreviewStyles.infoTable}>
+      <tbody>
+        {rows.map(row => (
+          <tr key={row[0]}>
+            <th>{row[0]}</th>
+            <td>{row[1]}</td>
+            <th>{row[2]}</th>
+            <td>{row[3]}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
 }

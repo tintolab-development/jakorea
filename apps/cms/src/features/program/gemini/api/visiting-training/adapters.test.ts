@@ -13,12 +13,12 @@ import {
   toGeminiNumericIds,
 } from './adapters'
 import {
-  GEMINI_RECRUIT_OVERLAY_KEYS,
-  pickGeminiRecruitOverlay,
-  restoreGeminiRecruitOverlay,
-  getGeminiRecruitOverlayRecord,
-  resetGeminiRecruitOverlay,
-} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+  GEMINI_RECRUIT_FIELD_KEYS,
+  pickGeminiRecruitFields,
+  restoreGeminiRecruitForm,
+  getGeminiRecruitFormRecord,
+  resetGeminiRecruitForm,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import {
   getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
@@ -125,6 +125,7 @@ describe('gemini visiting-training adapters', () => {
       updatedByName: null,
     })
     expect(detail.programDescription).toBe('설명')
+    expect(detail.thumbnailFileName).toBeNull()
     expect(detail.minStudentCount).toBe(20)
     expect(detail.applicationPeriodStart).toBe('2026-01-01')
     expect(detail.applicationPeriodEnd).toBe('2026-02-01')
@@ -148,6 +149,12 @@ describe('gemini visiting-training adapters', () => {
     expect(detail.createdByName).toBe('관리자')
     expect(detail.updatedAt).toBe('2026-09-30T05:00:00Z')
     expect(detail.updatedByName).toBe('-')
+    expect(
+      mapGeminiRecruitmentDetailToDetail({
+        programId: 2,
+        thumbnailFileName: 'null',
+      }).thumbnailFileName
+    ).toBeNull()
 
     const app = mapGeminiOrganizationApplicationToRow(
       {
@@ -270,6 +277,7 @@ describe('gemini visiting-training adapters', () => {
     expect(unmatched.trainingDate).toBe('')
     expect(unmatched.trainingTimeText).toBe('')
     expect(unmatched.lastPreferredDate).toBe('')
+    expect(unmatched.trainingDateCandidates).toEqual([])
 
     const matched = mapGeminiRecruitmentItemToApprovedRow(
       {
@@ -287,6 +295,42 @@ describe('gemini visiting-training adapters', () => {
     expect(matched.trainingDate).toBe('2026-06-01')
     expect(matched.lastPreferredDate).toBe('2026-05-20')
     expect(matched.officialDocumentRequired).toBe(false)
+  })
+
+  it('maps approved list trainingDateCandidates in server order', () => {
+    const row = mapGeminiRecruitmentItemToApprovedRow(
+      {
+        id: 1691500,
+        institutionName: '서울공항초등학교',
+        trainingDate: null,
+        studentCount: 25,
+        trainingDateCandidates: [
+          {
+            preferenceRank: 1,
+            trainingDate: '2026-11-10',
+            trainingStartTime: '10:00:00',
+            trainingEndTime: '12:00:00',
+            trainingTimeText: '10:00~12:00(1차시)',
+            sessionCount: 1,
+          },
+          {
+            preferenceRank: 2,
+            trainingDate: '2026-11-12',
+            trainingStartTime: null,
+            trainingEndTime: null,
+            trainingTimeText: null,
+            sessionCount: null,
+          },
+        ],
+      },
+      0
+    )
+    expect(row.trainingDate).toBe('')
+    expect(row.studentCount).toBe(25)
+    expect(row.trainingDateCandidates).toEqual([
+      { preferenceRank: 1, trainingDate: '2026-11-10', trainingTimeText: '10:00~12:00(1차시)' },
+      { preferenceRank: 2, trainingDate: '2026-11-12', trainingTimeText: '' },
+    ])
   })
 
   it('maps create request and numeric ids', () => {
@@ -639,18 +683,18 @@ describe('gemini visiting-training adapters', () => {
   })
 
   it('gemini overlay restore는 일반 recruit.* 와 섞이지 않는다', () => {
-    resetGeminiRecruitOverlay()
+    resetGeminiRecruitForm()
     resetGeneralRecruitOverlay()
     patchGeneralRecruitOverlay({ 'recruit.individual.notes': '일반 leftover' })
-    restoreGeminiRecruitOverlay({
-      [GEMINI_RECRUIT_OVERLAY_KEYS.title]: '제미니 공고',
+    restoreGeminiRecruitForm({
+      [GEMINI_RECRUIT_FIELD_KEYS.title]: '제미니 공고',
       'recruit.individual.notes': '섞이면 안 됨',
     })
-    expect(getGeminiRecruitOverlayRecord()[GEMINI_RECRUIT_OVERLAY_KEYS.title]).toBe('제미니 공고')
+    expect(getGeminiRecruitFormRecord()[GEMINI_RECRUIT_FIELD_KEYS.title]).toBe('제미니 공고')
     expect(getGeneralRecruitOverlayRecord()['recruit.individual.notes']).toBe('일반 leftover')
-    expect(pickGeminiRecruitOverlay({
-      [GEMINI_RECRUIT_OVERLAY_KEYS.title]: 'a',
+    expect(pickGeminiRecruitFields({
+      [GEMINI_RECRUIT_FIELD_KEYS.title]: 'a',
       'recruit.targetLevels': ['high'],
-    })).toEqual({ [GEMINI_RECRUIT_OVERLAY_KEYS.title]: 'a' })
+    })).toEqual({ [GEMINI_RECRUIT_FIELD_KEYS.title]: 'a' })
   })
 })

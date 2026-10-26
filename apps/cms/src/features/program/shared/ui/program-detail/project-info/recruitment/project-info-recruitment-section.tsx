@@ -15,9 +15,10 @@ import {
   formatInstructorTargetsLabel,
   formatTargetLevelsLabel,
   getInstructorRecruitmentStatus,
+  getParticipantRecruitmentStatus,
   getParticipantRecruitmentLifecycle,
+  getRecruitmentStatusLabelForStatus,
   getVolunteerRecruitmentStatus,
-  RECRUITMENT_RADIO_OPTIONS,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
   formatVolunteerTargetsLabel,
@@ -50,13 +51,6 @@ const VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
   closed: 'document_processing_completed',
 }
 
-/** 봉사자 모집 현황 라벨 (모집 예정 / 모집 중 / 모집 마감) */
-const VOLUNTEER_RECRUITMENT_LABELS: Record<string, string> = {
-  scheduled: '봉사자 모집 예정',
-  recruiting: '봉사자 모집 중',
-  closed: '봉사자 모집 마감',
-}
-
 export interface ParticipantRecruitmentSectionProps {
   program: Program
   sponsorName?: string
@@ -80,6 +74,19 @@ export function ParticipantRecruitmentSection({
         }
       : undefined
   )
+  const participantRecruitmentStatus = getParticipantRecruitmentStatus(
+    program,
+    isFormEdit
+      ? {
+          applicationStartDate: form.watch('applicationStartDate'),
+          applicationEndDate: form.watch('applicationEndDate'),
+        }
+      : undefined
+  )
+  const participantRecruitmentStatusLabel = getRecruitmentStatusLabelForStatus(
+    participantRecruitmentStatus,
+    'participant'
+  )
   const targetLabel = formatTargetLevelsLabel(resolveProgramTargetLevels(program))
   const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
   const resultMethod = program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'
@@ -102,6 +109,7 @@ export function ParticipantRecruitmentSection({
     isEdit,
     sponsorName,
     participantRecruitmentLifecycle,
+    participantRecruitmentStatusLabel,
     targetLabel,
     resultLine,
     maxClassLabel,
@@ -130,6 +138,10 @@ export function InstructorRecruitmentSection({
   form,
 }: InstructorRecruitmentSectionProps) {
   const recruitmentStatus = getInstructorRecruitmentStatus(program)
+  const instructorRecruitmentStatusLabel = getRecruitmentStatusLabelForStatus(
+    recruitmentStatus,
+    'instructor'
+  )
   const instructorRecruitmentLifecycle =
     recruitmentStatus != null ? INSTRUCTOR_RECRUITMENT_STATUS_TO_LIFECYCLE[recruitmentStatus] : null
 
@@ -149,6 +161,7 @@ export function InstructorRecruitmentSection({
     isEdit,
     sponsorName,
     instructorRecruitmentLifecycle,
+    instructorRecruitmentStatusLabel,
     instructorTarget,
     instructorTargetDetail,
     notes,
@@ -175,12 +188,7 @@ export function VolunteerRecruitmentSection({
   form,
 }: VolunteerRecruitmentSectionProps) {
   const recruitmentStatus = getVolunteerRecruitmentStatus(program)
-  const recruitmentStatusLabel =
-    recruitmentStatus != null
-      ? (VOLUNTEER_RECRUITMENT_LABELS[recruitmentStatus] ??
-        RECRUITMENT_RADIO_OPTIONS.find(o => o.value === recruitmentStatus)?.label ??
-        '-')
-      : '-'
+  const recruitmentStatusLabel = getRecruitmentStatusLabelForStatus(recruitmentStatus, 'volunteer')
   const volunteerRecruitmentLifecycle =
     recruitmentStatus != null ? VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[recruitmentStatus] : null
 

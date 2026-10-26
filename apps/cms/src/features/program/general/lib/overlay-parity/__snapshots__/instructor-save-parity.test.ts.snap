@@ -1,0 +1,444 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS RHF 마운트 중 강사 키 입력 → 양식 collect·CREATE leftover > cs-application-collect 1`] = `
+{
+  "application.instructor.crimeRecordConfirmed": true,
+  "application.instructor.currentMonth": "2026-12-01T00:00:00.000Z",
+  "application.instructor.selectedDate": "2026-12-03T00:00:00.000Z",
+  "application.instructor.selectedSlotIds": [
+    "s1",
+    "s2",
+  ],
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS RHF 마운트 중 강사 키 입력 → 양식 collect·CREATE leftover > cs-create-instructor-leftover 1`] = `
+{
+  "recruit.instructor.announcementPublished": "published",
+  "recruit.instructor.finalAnnounceIso": "2026-11-25",
+  "recruit.instructor.finalAnnounceMethod": "개별 연락",
+  "recruit.instructor.inquiryContact": "CS 담당",
+  "recruit.instructor.inquiryEmail": "inst@example.com",
+  "recruit.instructor.inquiryTel": "02-1111-2222",
+  "recruit.instructor.notes": "CS 강사 비고",
+  "recruit.instructor.notesNotApplicable": false,
+  "recruit.instructor.programAnchorIso": "2026-12-01",
+  "recruit.instructor.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.instructor.recruitAnchorIso": "2026-11-01",
+  "recruit.instructor.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.instructor.recruitTargetDetail": "성인·대학생",
+  "recruit.instructor.recruitTargets": [
+    "adult",
+    "univ",
+  ],
+  "recruitInstructor.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruitInstructor.detailInfo.applicationMethod": "<p>방법</p>",
+  "recruitInstructor.detailInfo.attachmentFileObjectIds": [
+    41,
+    42,
+  ],
+  "recruitInstructor.detailInfo.learningSupportContent": "<p>지원</p>",
+  "recruitInstructor.detailInfo.otherNotes": "<p>기타</p>",
+  "recruitInstructor.detailInfo.programDescription": "<p>소개</p>",
+  "recruitInstructor.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruitInstructor.detailInfo.thumbFileObjectId": 31,
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS RHF 마운트 중 강사 키 입력 → 양식 collect·CREATE leftover > cs-create-overlay-keys 1`] = `
+[
+  "economyRecruit.detailInfo.additionalContentHtml",
+  "economyRecruit.detailInfo.applicationMethod",
+  "economyRecruit.detailInfo.attachmentFileNames",
+  "economyRecruit.detailInfo.attachmentFileObjectIds",
+  "economyRecruit.detailInfo.learningSupportContent",
+  "economyRecruit.detailInfo.programDescription",
+  "economyRecruit.detailInfo.recruitmentGuide",
+  "economyRecruit.detailInfo.thumbContentUrl",
+  "economyRecruit.detailInfo.thumbFileName",
+  "economyRecruit.detailInfo.thumbFileObjectId",
+  "economyRegistration.basicInfo.businessField",
+  "economyRegistration.basicInfo.courseDeliveredBy",
+  "economyRegistration.basicInfo.detailedProgramId",
+  "economyRegistration.basicInfo.detailedProgramName",
+  "economyRegistration.basicInfo.educationCourse",
+  "economyRegistration.basicInfo.ipOwned",
+  "economyRegistration.basicInfo.ipsCategory",
+  "economyRegistration.basicInfo.managerContactId",
+  "economyRegistration.basicInfo.managerContactIds",
+  "economyRegistration.basicInfo.operationAnchorIso",
+  "economyRegistration.basicInfo.operationRangeSeal",
+  "economyRegistration.basicInfo.partnerInvolvement",
+  "economyRegistration.basicInfo.publicProgramTitle",
+  "economyRegistration.basicInfo.repEn",
+  "economyRegistration.basicInfo.repKo",
+  "economyRegistration.basicInfo.sponsorId",
+  "economyRegistration.basicInfo.surveyItems",
+  "economyRegistration.educationCurriculum.session1.description",
+  "economyRegistration.educationCurriculum.session1.title",
+  "economyRegistration.educationCurriculum.session2.description",
+  "economyRegistration.educationCurriculum.session2.title",
+  "economyRegistration.educationScheduleSettings.dateRangeSeal",
+  "economyRegistration.kpi.dispatchedClass",
+  "economyRegistration.kpi.dispatchedSchool",
+  "economyRegistration.kpi.instructor",
+  "economyRegistration.kpi.participantCount",
+  "economyRegistration.wageInfo.grade1DistanceFee",
+  "economyRegistration.wageInfo.grade1Fee",
+  "economyRegistration.wageInfo.grade2DistanceFee",
+  "economyRegistration.wageInfo.grade2Fee",
+  "economyRegistration.wageInfo.grade3DistanceFee",
+  "economyRegistration.wageInfo.grade3Fee",
+  "recruit.announcementPublished",
+  "recruit.certificateProvided",
+  "recruit.detailInfo.additionalContentHtml",
+  "recruit.detailInfo.applicationMethod",
+  "recruit.detailInfo.attachmentFileNames",
+  "recruit.detailInfo.attachmentFileObjectIds",
+  "recruit.detailInfo.learningSupportContent",
+  "recruit.detailInfo.programDescription",
+  "recruit.detailInfo.recruitmentGuide",
+  "recruit.detailInfo.thumbContentUrl",
+  "recruit.detailInfo.thumbFileName",
+  "recruit.detailInfo.thumbFileObjectId",
+  "recruit.finalAnnounceIso",
+  "recruit.finalAnnounceMethod",
+  "recruit.inquiryContact",
+  "recruit.inquiryEmail",
+  "recruit.inquiryTel",
+  "recruit.instructor.announcementPublished",
+  "recruit.instructor.finalAnnounceIso",
+  "recruit.instructor.finalAnnounceMethod",
+  "recruit.instructor.inquiryContact",
+  "recruit.instructor.inquiryEmail",
+  "recruit.instructor.inquiryTel",
+  "recruit.instructor.notes",
+  "recruit.instructor.notesNotApplicable",
+  "recruit.instructor.programAnchorIso",
+  "recruit.instructor.programRangeSeal",
+  "recruit.instructor.recruitAnchorIso",
+  "recruit.instructor.recruitRangeSeal",
+  "recruit.instructor.recruitTargetDetail",
+  "recruit.instructor.recruitTargets",
+  "recruit.maxAssignableInstructors",
+  "recruit.maxClassCount",
+  "recruit.maxScheduleCount",
+  "recruit.maxSessionsPerDay",
+  "recruit.notes",
+  "recruit.notesNotApplicable",
+  "recruit.preguidanceRequired",
+  "recruit.programAnchorIso",
+  "recruit.programRangeSeal",
+  "recruit.recruitAnchorIso",
+  "recruit.recruitRangeSeal",
+  "recruit.studentListRequired",
+  "recruit.targetLevelDetail",
+  "recruit.targetLevels",
+  "recruitInstructor.detailInfo.additionalContentHtml",
+  "recruitInstructor.detailInfo.applicationMethod",
+  "recruitInstructor.detailInfo.attachmentFileObjectIds",
+  "recruitInstructor.detailInfo.learningSupportContent",
+  "recruitInstructor.detailInfo.otherNotes",
+  "recruitInstructor.detailInfo.programDescription",
+  "recruitInstructor.detailInfo.recruitmentGuide",
+  "recruitInstructor.detailInfo.thumbFileObjectId",
+]
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS RHF 마운트 중 강사 키 입력 → 양식 collect·CREATE leftover > cs-recruit-collect 1`] = `
+{
+  "recruit.instructor.announcementPublished": "published",
+  "recruit.instructor.finalAnnounceIso": "2026-11-25",
+  "recruit.instructor.finalAnnounceMethod": "개별 연락",
+  "recruit.instructor.inquiryContact": "CS 담당",
+  "recruit.instructor.inquiryEmail": "inst@example.com",
+  "recruit.instructor.inquiryTel": "02-1111-2222",
+  "recruit.instructor.notes": "CS 강사 비고",
+  "recruit.instructor.notesNotApplicable": false,
+  "recruit.instructor.programAnchorIso": "2026-12-01",
+  "recruit.instructor.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.instructor.recruitAnchorIso": "2026-11-01",
+  "recruit.instructor.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.instructor.recruitTargetDetail": "성인·대학생",
+  "recruit.instructor.recruitTargets": [
+    "adult",
+    "univ",
+  ],
+  "recruitInstructor.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruitInstructor.detailInfo.applicationMethod": "<p>방법</p>",
+  "recruitInstructor.detailInfo.attachmentFileObjectIds": [
+    41,
+    42,
+  ],
+  "recruitInstructor.detailInfo.learningSupportContent": "<p>지원</p>",
+  "recruitInstructor.detailInfo.otherNotes": "<p>기타</p>",
+  "recruitInstructor.detailInfo.programDescription": "<p>소개</p>",
+  "recruitInstructor.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruitInstructor.detailInfo.thumbFileObjectId": 31,
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 모집: reset(시드 억제) → collect 비움·기본값 > recruit-reset 1`] = `{}`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 모집: reset(시드 억제) → collect 비움·기본값 > recruit-reset-default 1`] = `""`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 모집: 단락 입력(patch·훅) → collect·활성 레코드 > recruit-active 1`] = `
+{
+  "recruit.instructor.announcementPublished": "published",
+  "recruit.instructor.finalAnnounceIso": "2026-11-25",
+  "recruit.instructor.finalAnnounceMethod": "개별 연락",
+  "recruit.instructor.inquiryContact": "강사 담당",
+  "recruit.instructor.inquiryEmail": "inst@example.com",
+  "recruit.instructor.inquiryTel": "02-1111-2222",
+  "recruit.instructor.notes": null,
+  "recruit.instructor.notesNotApplicable": true,
+  "recruit.instructor.programAnchorIso": "2026-12-01",
+  "recruit.instructor.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.instructor.recruitAnchorIso": "2026-11-01",
+  "recruit.instructor.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.instructor.recruitTargetDetail": "성인·대학생",
+  "recruit.instructor.recruitTargets": [
+    "adult",
+    "senior",
+  ],
+  "recruitInstructor.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruitInstructor.detailInfo.applicationMethod": "<p>방법</p>",
+  "recruitInstructor.detailInfo.attachmentFileObjectIds": [
+    41,
+    42,
+  ],
+  "recruitInstructor.detailInfo.learningSupportContent": "<p>지원</p>",
+  "recruitInstructor.detailInfo.otherNotes": "<p>기타</p>",
+  "recruitInstructor.detailInfo.programDescription": "<p>소개2</p>",
+  "recruitInstructor.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruitInstructor.detailInfo.thumbFileObjectId": 31,
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 모집: 단락 입력(patch·훅) → collect·활성 레코드 > recruit-input 1`] = `
+{
+  "recruit.instructor.announcementPublished": "published",
+  "recruit.instructor.finalAnnounceIso": "2026-11-25",
+  "recruit.instructor.finalAnnounceMethod": "개별 연락",
+  "recruit.instructor.inquiryContact": "강사 담당",
+  "recruit.instructor.inquiryEmail": "inst@example.com",
+  "recruit.instructor.inquiryTel": "02-1111-2222",
+  "recruit.instructor.notes": null,
+  "recruit.instructor.notesNotApplicable": true,
+  "recruit.instructor.programAnchorIso": "2026-12-01",
+  "recruit.instructor.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.instructor.recruitAnchorIso": "2026-11-01",
+  "recruit.instructor.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.instructor.recruitTargetDetail": "성인·대학생",
+  "recruit.instructor.recruitTargets": [
+    "adult",
+    "senior",
+  ],
+  "recruitInstructor.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruitInstructor.detailInfo.applicationMethod": "<p>방법</p>",
+  "recruitInstructor.detailInfo.attachmentFileObjectIds": [
+    41,
+    42,
+  ],
+  "recruitInstructor.detailInfo.learningSupportContent": "<p>지원</p>",
+  "recruitInstructor.detailInfo.otherNotes": "<p>기타</p>",
+  "recruitInstructor.detailInfo.programDescription": "<p>소개2</p>",
+  "recruitInstructor.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruitInstructor.detailInfo.thumbFileObjectId": 31,
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 모집: 양식 불러오기 → collect·peek > recruit-apply 1`] = `
+{
+  "recruit.instructor.announcementPublished": "published",
+  "recruit.instructor.finalAnnounceIso": "2026-11-25",
+  "recruit.instructor.finalAnnounceMethod": "개별 연락",
+  "recruit.instructor.inquiryContact": "강사 담당",
+  "recruit.instructor.inquiryEmail": "inst@example.com",
+  "recruit.instructor.inquiryTel": "02-1111-2222",
+  "recruit.instructor.notes": "강사 비고",
+  "recruit.instructor.notesNotApplicable": false,
+  "recruit.instructor.programAnchorIso": "2026-12-01",
+  "recruit.instructor.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.instructor.recruitAnchorIso": "2026-11-01",
+  "recruit.instructor.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.instructor.recruitTargetDetail": "성인·대학생",
+  "recruit.instructor.recruitTargets": [
+    "adult",
+    "univ",
+  ],
+  "recruitInstructor.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruitInstructor.detailInfo.applicationMethod": "<p>방법</p>",
+  "recruitInstructor.detailInfo.attachmentFileObjectIds": [
+    41,
+    42,
+  ],
+  "recruitInstructor.detailInfo.learningSupportContent": "<p>지원</p>",
+  "recruitInstructor.detailInfo.otherNotes": "<p>기타</p>",
+  "recruitInstructor.detailInfo.programDescription": "<p>소개</p>",
+  "recruitInstructor.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruitInstructor.detailInfo.thumbFileObjectId": 31,
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 모집: 양식 불러오기 → collect·peek > recruit-peek 1`] = `
+{
+  "recruit.instructor.announcementPublished": "published",
+  "recruit.instructor.finalAnnounceIso": "2026-11-25",
+  "recruit.instructor.finalAnnounceMethod": "개별 연락",
+  "recruit.instructor.inquiryContact": "강사 담당",
+  "recruit.instructor.inquiryEmail": "inst@example.com",
+  "recruit.instructor.inquiryTel": "02-1111-2222",
+  "recruit.instructor.notes": "강사 비고",
+  "recruit.instructor.notesNotApplicable": false,
+  "recruit.instructor.programAnchorIso": "2026-12-01",
+  "recruit.instructor.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.instructor.recruitAnchorIso": "2026-11-01",
+  "recruit.instructor.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.instructor.recruitTargetDetail": "성인·대학생",
+  "recruit.instructor.recruitTargets": [
+    "adult",
+    "univ",
+  ],
+  "recruitInstructor.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruitInstructor.detailInfo.applicationMethod": "<p>방법</p>",
+  "recruitInstructor.detailInfo.attachmentFileObjectIds": [
+    41,
+    42,
+  ],
+  "recruitInstructor.detailInfo.learningSupportContent": "<p>지원</p>",
+  "recruitInstructor.detailInfo.otherNotes": "<p>기타</p>",
+  "recruitInstructor.detailInfo.programDescription": "<p>소개</p>",
+  "recruitInstructor.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruitInstructor.detailInfo.thumbFileObjectId": 31,
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 모집: 임시저장 왕복(collect → 전체 reset → apply) 같은 값 > individual-after-roundtrip 1`] = `{}`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 모집: 임시저장 왕복(collect → 전체 reset → apply) 같은 값 > recruit-draft-roundtrip 1`] = `
+{
+  "recruit.instructor.announcementPublished": "published",
+  "recruit.instructor.finalAnnounceIso": "2026-11-25",
+  "recruit.instructor.finalAnnounceMethod": "개별 연락",
+  "recruit.instructor.inquiryContact": "강사 담당",
+  "recruit.instructor.inquiryEmail": "inst@example.com",
+  "recruit.instructor.inquiryTel": "02-1111-2222",
+  "recruit.instructor.notes": "강사 비고",
+  "recruit.instructor.notesNotApplicable": false,
+  "recruit.instructor.programAnchorIso": "2026-12-01",
+  "recruit.instructor.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.instructor.recruitAnchorIso": "2026-11-01",
+  "recruit.instructor.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.instructor.recruitTargetDetail": "성인·대학생",
+  "recruit.instructor.recruitTargets": [
+    "adult",
+    "univ",
+  ],
+  "recruitInstructor.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruitInstructor.detailInfo.applicationMethod": "<p>방법</p>",
+  "recruitInstructor.detailInfo.attachmentFileObjectIds": [
+    41,
+    42,
+  ],
+  "recruitInstructor.detailInfo.learningSupportContent": "<p>지원</p>",
+  "recruitInstructor.detailInfo.otherNotes": "<p>기타</p>",
+  "recruitInstructor.detailInfo.programDescription": "<p>소개</p>",
+  "recruitInstructor.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruitInstructor.detailInfo.thumbFileObjectId": 31,
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 신청: 불러오기·입력(patch·updateKey·훅) → collect·reset > application-active 1`] = `
+{
+  "application.instructor.crimeRecordConfirmed": false,
+  "application.instructor.currentMonth": "2026-12-01T00:00:00.000Z",
+  "application.instructor.selectedDate": "2026-12-05T00:00:00.000Z",
+  "application.instructor.selectedSlotIds": [
+    "s1",
+    "s2",
+    "s3",
+  ],
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 신청: 불러오기·입력(patch·updateKey·훅) → collect·reset > application-apply 1`] = `
+{
+  "application.instructor.crimeRecordConfirmed": true,
+  "application.instructor.currentMonth": "2026-12-01T00:00:00.000Z",
+  "application.instructor.selectedDate": "2026-12-03T00:00:00.000Z",
+  "application.instructor.selectedSlotIds": [
+    "s1",
+    "s2",
+  ],
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 신청: 불러오기·입력(patch·updateKey·훅) → collect·reset > application-input 1`] = `
+{
+  "application.instructor.crimeRecordConfirmed": false,
+  "application.instructor.currentMonth": "2026-12-01T00:00:00.000Z",
+  "application.instructor.selectedDate": "2026-12-05T00:00:00.000Z",
+  "application.instructor.selectedSlotIds": [
+    "s1",
+    "s2",
+    "s3",
+  ],
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 신청: 불러오기·입력(patch·updateKey·훅) → collect·reset > application-peek 1`] = `
+{
+  "application.instructor.crimeRecordConfirmed": true,
+  "application.instructor.currentMonth": "2026-12-01T00:00:00.000Z",
+  "application.instructor.selectedDate": "2026-12-03T00:00:00.000Z",
+  "application.instructor.selectedSlotIds": [
+    "s1",
+    "s2",
+  ],
+}
+`;
+
+exports[`강사 모집·신청 overlay save parity (part3 step4) > 신청: 불러오기·입력(patch·updateKey·훅) → collect·reset > application-reset 1`] = `{}`;

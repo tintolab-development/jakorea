@@ -1,7 +1,6 @@
 import { Controller } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
@@ -38,6 +37,7 @@ export type InstitutionsSchemaParams = {
   isEdit: boolean
   sponsorName?: string
   participantRecruitmentLifecycle: ProgramLifecycleStatus | null
+  participantRecruitmentStatusLabel: string
   targetLabel: string
   resultLine: string
   maxClassLabel: string
@@ -51,6 +51,7 @@ export function createInstitutionsSchema({
   isEdit,
   sponsorName,
   participantRecruitmentLifecycle,
+  participantRecruitmentStatusLabel,
   targetLabel,
   resultLine,
   maxClassLabel,
@@ -77,7 +78,7 @@ export function createInstitutionsSchema({
               <span
                 className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${participantRecruitmentLifecycle.replace(/_/g, '-')}`}
               >
-                {getProgramLifecycleLabel(participantRecruitmentLifecycle)}
+                {participantRecruitmentStatusLabel}
               </span>
             ) : (
               '-'

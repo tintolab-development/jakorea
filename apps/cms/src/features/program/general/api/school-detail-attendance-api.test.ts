@@ -4,10 +4,12 @@ const {
   fetchOrganizationStudentRosterRemoteMock,
   fetchAttendancesByScheduleIdsRemoteMock,
   bulkUpsertProgramAttendancesRemoteMock,
+  fetchAllProgramProgressParticipantsMock,
 } = vi.hoisted(() => ({
   fetchOrganizationStudentRosterRemoteMock: vi.fn(),
   fetchAttendancesByScheduleIdsRemoteMock: vi.fn(),
   bulkUpsertProgramAttendancesRemoteMock: vi.fn(),
+  fetchAllProgramProgressParticipantsMock: vi.fn(),
 }))
 
 vi.mock('@/features/program/general/api/student-roster-api-client', () => ({
@@ -17,6 +19,10 @@ vi.mock('@/features/program/general/api/student-roster-api-client', () => ({
 vi.mock('@/features/program/general/api/program-progress-api-client', () => ({
   fetchAttendancesByScheduleIdsRemote: fetchAttendancesByScheduleIdsRemoteMock,
   bulkUpsertProgramAttendancesRemote: bulkUpsertProgramAttendancesRemoteMock,
+}))
+
+vi.mock('@/features/program/general/api/admin-program-progress-service', () => ({
+  fetchAllProgramProgressParticipants: fetchAllProgramProgressParticipantsMock,
 }))
 
 import {
@@ -33,6 +39,8 @@ describe('school-detail-attendance-api', () => {
     fetchOrganizationStudentRosterRemoteMock.mockReset()
     fetchAttendancesByScheduleIdsRemoteMock.mockReset()
     bulkUpsertProgramAttendancesRemoteMock.mockReset()
+    fetchAllProgramProgressParticipantsMock.mockReset()
+    fetchAllProgramProgressParticipantsMock.mockResolvedValue([])
   })
 
   it('maps API attendance status to UI keys', () => {
@@ -75,8 +83,61 @@ describe('school-detail-attendance-api', () => {
 
     expect(groups).toHaveLength(1)
     expect(groups[0]?.scheduleId).toBe(101)
+    expect(groups[0]?.headerTitle).toBe('1회차 : 2026.01.09(금)')
+    expect(groups[0]?.headerScheduleSummary).toBe('2시간 (오프라인)')
+    expect(groups[0]?.headerPeriodRangeLabel).toBe('09:20 ~ 11:10')
     expect(groups[0]?.students[0]?.status).toBe('late')
     expect(groups[0]?.students[0]?.participantId).toBe(55)
+  })
+
+  it('hides a give-up student from later school attendance tables', () => {
+    const groups = buildSchoolDetailAttendanceSessionGroups({
+      schoolId: 'school-1',
+      program: { id: 'p1' } as Program,
+      sessions: [
+        {
+          round: 1,
+          date: '2026.01.09',
+          dayOfWeek: '금',
+          duration: '2시간',
+          format: '오프라인',
+          classNum: '1',
+          timeRange: '9:20~11:10',
+          resolvedScheduleId: 101,
+          startAt: '2026-01-09T09:20:00+09:00',
+        },
+        {
+          round: 2,
+          date: '2026.01.16',
+          dayOfWeek: '금',
+          duration: '2시간',
+          format: '오프라인',
+          classNum: '1',
+          timeRange: '9:20~11:10',
+          resolvedScheduleId: 102,
+          startAt: '2026-01-16T09:20:00+09:00',
+        },
+      ],
+      rosterStudents: [
+        { id: 'r1', no: 1, name: '포기학생', gradeClass: '1반', participantId: 55 },
+        { id: 'r2', no: 2, name: '진행학생', gradeClass: '1반', participantId: 56 },
+      ],
+      attendancesByScheduleId: {
+        '101': [{ participantId: 55, status: 'PRESENT' }],
+        '102': [{ participantId: 56, status: 'PRESENT' }],
+      },
+      includeSessionsWithoutAttendance: true,
+      giveUpParticipants: [
+        {
+          participantId: 55,
+          participantStatus: 'GIVE_UP',
+          giveUpAt: '2026-01-09T18:00:00+09:00',
+        },
+      ],
+    })
+
+    expect(groups[0]?.students.map(row => row.name)).toEqual(['포기학생', '진행학생'])
+    expect(groups[1]?.students.map(row => row.name)).toEqual(['진행학생'])
   })
 
   it('excludes unassigned and empty attendance schedules', () => {

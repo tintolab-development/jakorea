@@ -44,6 +44,7 @@ export function AppLayout({
   const isMypage = isMypageHome || layout === 'mypage-subpage'
   const isHero = layout === 'hero'
   const isAuth = layout === 'auth'
+  const isPublicForm = layout === 'public-form'
   const isHome = layout === 'home'
   const isSupport = layout === 'support'
   const isIntroduction = layout === 'introduction'
@@ -106,24 +107,28 @@ export function AppLayout({
         ? styles.mainSupport
         : isIntroduction
           ? styles.mainIntroduction
-          : styles.main
+          : isPublicForm
+            ? styles.mainPublic
+            : styles.main
 
   return (
     <div className={styles.layout}>
       <SiteDocumentHead />
       <ScrollRestoration />
       {isHome ? <TopBannerStrip /> : null}
-      <Header
-        isLoggedIn={isLoggedIn}
-        onLogout={handleLogout}
-        transparent={transparentHeader}
-        inverse={inverseHeader}
-        onDarkSurface={headerTheme === 'inverse'}
-      />
+      {isPublicForm ? null : (
+        <Header
+          isLoggedIn={isLoggedIn}
+          onLogout={handleLogout}
+          transparent={transparentHeader}
+          inverse={inverseHeader}
+          onDarkSurface={headerTheme === 'inverse'}
+        />
+      )}
       <main className={mainClassName} data-pf-main="true">
         {mainContent}
       </main>
-      <Footer />
+      {isPublicForm ? null : <Footer />}
       {fileUploadActive ? (
         <PFLoadingSpinner blocking label="파일을 업로드하는 중" />
       ) : null}

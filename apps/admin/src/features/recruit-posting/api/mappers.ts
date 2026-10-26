@@ -11,6 +11,10 @@ import type {
   RecruitPostingStatus,
   RecruitPostingUpdateInput,
 } from '@/entities/recruit-posting/model/types'
+import {
+  normalizeCareerPostingLinkFields,
+  readCareerPostingLinkFields,
+} from '../lib/link-fields.ts'
 import type { AssetResponse } from '@/shared/api/generated/careers/schemas/assetResponse'
 import type { CareerPostingAdminDetail } from '@/shared/api/generated/careers/schemas/careerPostingAdminDetail'
 import type { CareerPostingAdminItem } from '@/shared/api/generated/careers/schemas/careerPostingAdminItem'
@@ -68,18 +72,10 @@ function mapAttachment(asset: AssetResponse | undefined | null): RecruitPostingA
   ]
 }
 
-function mapAdminFields(row: {
-  id?: number
-  isPublic?: boolean
-  status?: CareerPostingAdminItemStatus | CareerPostingAdminDetail['status']
-  title?: string
-  authorName?: string
-  recruitStart?: string
-  recruitEnd?: string
-  publishedOn?: string
-  createdAt?: string
-  version?: number
-}): Omit<RecruitPosting, 'contentMarkdown' | 'attachments'> | null {
+function mapAdminFields(
+  row: CareerPostingAdminItem | CareerPostingAdminDetail,
+  link = readCareerPostingLinkFields(undefined),
+): Omit<RecruitPosting, 'contentMarkdown' | 'attachments'> | null {
   if (row.id == null) return null
   const status = mapStatus(row.status)
   if (!status) return null
@@ -95,6 +91,8 @@ function mapAdminFields(row: {
     createdAt: text(row.createdAt),
     viewCount: 0,
     version: row.version ?? 0,
+    buttonLabel: link.buttonLabel,
+    linkUrl: link.linkUrl,
   }
 }
 
@@ -111,7 +109,7 @@ export function mapCareerPostingAdminItem(row: CareerPostingAdminItem): RecruitP
 
 /** 상세·create/update 응답 */
 export function mapCareerPostingAdminDetail(row: CareerPostingAdminDetail): RecruitPosting | null {
-  const base = mapAdminFields(row)
+  const base = mapAdminFields(row, readCareerPostingLinkFields(row))
   if (!base) return null
   return {
     ...base,
@@ -140,6 +138,10 @@ export function toCareerPostingCreateRequest(
   input: RecruitPostingCreateInput,
   attachmentAssetId?: number,
 ): CareerPostingCreateRequest {
+  const link = normalizeCareerPostingLinkFields({
+    buttonLabel: input.buttonLabel,
+    linkUrl: input.linkUrl,
+  })
   const request: CareerPostingCreateRequest = {
     title: input.title.trim(),
     body: input.contentMarkdown,
@@ -149,6 +151,8 @@ export function toCareerPostingCreateRequest(
     recruitStart: toYmd(input.recruitStart),
     recruitEnd: toYmd(input.recruitEnd),
     authorName: input.authorName.trim(),
+    buttonLabel: link.buttonLabel,
+    linkUrl: link.linkUrl,
   }
   if (attachmentAssetId != null) {
     request.attachmentAssetId = attachmentAssetId
@@ -161,6 +165,10 @@ export function toCareerPostingUpdateRequest(
   version: number,
   attachmentAssetId?: number,
 ): CareerPostingUpdateRequest {
+  const link = normalizeCareerPostingLinkFields({
+    buttonLabel: input.buttonLabel,
+    linkUrl: input.linkUrl,
+  })
   const request: CareerPostingUpdateRequest = {
     title: input.title.trim(),
     body: input.contentMarkdown,
@@ -171,6 +179,8 @@ export function toCareerPostingUpdateRequest(
     recruitEnd: toYmd(input.recruitEnd),
     authorName: input.authorName.trim(),
     version,
+    buttonLabel: link.buttonLabel,
+    linkUrl: link.linkUrl,
   }
   if (attachmentAssetId != null) {
     request.attachmentAssetId = attachmentAssetId

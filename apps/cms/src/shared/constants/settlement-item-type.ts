@@ -11,13 +11,30 @@ export const SETTLEMENT_ITEM_TYPE_LABELS: Record<SettlementItemType, string> = {
   other: '기타',
 }
 
+const SETTLEMENT_ITEM_TYPE_ALIASES: Record<string, SettlementItemType> = {
+  TRANSPORTATION: 'transportation',
+  ACCOMMODATION: 'accommodation',
+  LODGING: 'accommodation',
+  MEAL: 'meal',
+  ACTIVITY: 'activity',
+  WITHHOLDING: 'withholding',
+  INSTRUCTOR_FEE: 'instructor_fee',
+  OTHER: 'other',
+}
+
 export function formatSettlementItemTypeLabel(
   type: string | undefined,
   fallback = '정산 항목'
 ): string {
   const normalized = type?.trim()
   if (!normalized) return fallback
-  return SETTLEMENT_ITEM_TYPE_LABELS[normalized as SettlementItemType] ?? normalized
+  if (normalized in SETTLEMENT_ITEM_TYPE_LABELS) {
+    return SETTLEMENT_ITEM_TYPE_LABELS[normalized as SettlementItemType]
+  }
+  const aliased = SETTLEMENT_ITEM_TYPE_ALIASES[normalized.toUpperCase()]
+  if (aliased) return SETTLEMENT_ITEM_TYPE_LABELS[aliased]
+  if (/^[A-Z][A-Z0-9_]*$/.test(normalized)) return fallback
+  return normalized
 }
 
 /** 산출 내역서 API item → 산정 항목 컬럼 라벨 */

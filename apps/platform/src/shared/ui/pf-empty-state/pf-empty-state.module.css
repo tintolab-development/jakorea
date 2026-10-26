@@ -39,9 +39,29 @@
   margin-top: var(--spacing-8);
 }
 
+.inline {
+  min-height: 0;
+  padding: var(--spacing-20) 0 var(--spacing-40);
+  border: none;
+  border-radius: 0;
+}
+
+.inline .content {
+  gap: var(--spacing-8);
+}
+
+.inline .description {
+  margin-top: 0;
+}
+
 @media (--bp-below-pc) {
   .root {
     min-height: 280px;
     padding: var(--spacing-32) var(--spacing-24);
+  }
+
+  .inline {
+    min-height: 0;
+    padding: var(--spacing-20) 0;
   }
 }

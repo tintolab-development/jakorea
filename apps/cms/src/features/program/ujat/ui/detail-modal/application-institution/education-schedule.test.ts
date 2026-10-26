@@ -44,6 +44,28 @@ describe('buildUjatProgramScheduleDates', () => {
     expect(dates[0]?.semester).toBeNull()
     expect(dates[0]?.title).toBe('10월 16일')
   })
+
+  it('Typed Detail의 반기 range로 API 일정의 학기를 판정한다', () => {
+    const dates = buildUjatProgramScheduleDates(
+      [{ id: 202, startAt: '2027-10-16T00:00:00+09:00' }],
+      {
+        schemaVersion: 1,
+        halfPlans: [
+          {
+            semesterType: 'SECOND_HALF',
+            stages: [
+              {
+                stage: 'MAIN_EDUCATION',
+                rows: [{ startDate: '2027-10-01', endDate: '2027-10-31' }],
+              },
+            ],
+          },
+        ],
+      }
+    )
+
+    expect(dates[0]?.semester).toBe('h2')
+  })
 })
 
 describe('formatUjatPreferredEducationDateDisplay', () => {

@@ -19,10 +19,12 @@ import {
 } from '@/features/program/general/lib/school-detail-attendance-display'
 import { mapStudentRosterResponseToRows } from '@/features/program/general/api/adapters/student-roster-adapters'
 import { fetchOrganizationStudentRosterRemote } from '@/features/program/general/api/student-roster-api-client'
+import { fetchAllProgramProgressParticipants } from '@/features/program/general/api/admin-program-progress-service'
 import {
   bulkUpsertProgramAttendancesRemote,
   fetchAttendancesByScheduleIdsRemote,
 } from '@/features/program/general/api/program-progress-api-client'
+import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
 
 export function mapApiStatusToSchoolSessionAttendance(
   status?: string | null
@@ -49,6 +51,12 @@ export function mapSchoolSessionAttendanceToApi(
   if (status === 'late') return 'LATE'
   if (status === 'absent') return 'ABSENT'
   return 'PRESENT'
+}
+
+function sessionScheduleStartAt(session: ParticipatingSchoolSession): string | null {
+  if (session.startAt?.trim()) return session.startAt.trim()
+  const date = session.date.trim().replace(/\./g, '-')
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T12:00:00+09:00` : null
 }
 
 function resolveSessionGroupId(
@@ -98,9 +106,18 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
    * 기본은 출결 응답이 있는 회차만.
    */
   includeSessionsWithoutAttendance?: boolean
+  giveUpParticipants?: Array<{
+    participantId?: number
+    giveUpAt?: string | null
+    participantStatus?: string | null
+  }> | null
 }): SchoolDetailAttendanceSessionGroup[] {
   const { schoolId, program, sessions, rosterStudents, attendancesByScheduleId } = input
-  const total = rosterStudents.length
+  const giveUpById = new Map(
+    (input.giveUpParticipants ?? [])
+      .filter(item => item.participantId != null)
+      .map(item => [Number(item.participantId), item] as const)
+  )
 
   return sessions.filter(session => {
     const scheduleId = session.resolvedScheduleId
@@ -123,10 +140,26 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
         .filter(item => item.participantId != null)
         .map(item => [Number(item.participantId), item] as const)
     )
-    const sessionLeadLabel =
-      session.educationScheduleLabel?.trim() ||
-      resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round)
-    const header = buildAttendanceSessionHeaderParts(session, sessionLeadLabel)
+    const sessionLeadLabel = resolveSchoolDetailAttendanceSessionLeadLabel(
+      program,
+      session.round
+    )
+    const header = buildAttendanceSessionHeaderParts(session, sessionLeadLabel, program)
+    const scheduleStartAt = sessionScheduleStartAt(session)
+    const visibleStudents = rosterStudents.filter(student => {
+      const participantId =
+        student.participantId != null && Number.isFinite(Number(student.participantId))
+          ? Number(student.participantId)
+          : null
+      if (participantId == null) return true
+      const lookup = giveUpById.get(participantId)
+      if (lookup == null) return true
+      return !shouldHideGiveUpParticipantFromSchedule({
+        giveUpAt: lookup.giveUpAt,
+        participantStatus: lookup.participantStatus,
+        scheduleStartAt,
+      })
+    })
     return {
       id,
       round: session.round,
@@ -137,7 +170,7 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
       headerScheduleSummary: header.scheduleSummary,
       headerPeriodRangeLabel: header.periodRangeLabel,
       headerPrefix: header.headerPrefix,
-      students: rosterStudents.map((student, index) => {
+      students: visibleStudents.map((student, index) => {
         const participantId =
           student.participantId != null && Number.isFinite(Number(student.participantId))
             ? Number(student.participantId)
@@ -145,7 +178,7 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
         return mapRosterStudentToAttendanceRow(
           student,
           index,
-          total,
+          visibleStudents.length,
           participantId != null ? byParticipant.get(participantId) : undefined
         )
       }),
@@ -178,12 +211,8 @@ export async function fetchSchoolDetailAttendanceBundle(input: {
 }): Promise<{
   rosterStudents: SchoolDetailStudentRow[]
   attendancesByScheduleId: Record<string, AttendanceItemResponse[]>
+  giveUpParticipants: Awaited<ReturnType<typeof fetchAllProgramProgressParticipants>>
 }> {
-  const rosterResponse = await fetchOrganizationStudentRosterRemote(
-    input.organizationApplicationId
-  )
-  const rosterStudents = mapStudentRosterResponseToRows(rosterResponse)
-
   const scheduleIds = [
     ...new Set(
       input.sessions
@@ -194,14 +223,19 @@ export async function fetchSchoolDetailAttendanceBundle(input: {
         )
     ),
   ]
+  const [rosterResponse, attendancesByScheduleId, giveUpParticipants] = await Promise.all([
+    fetchOrganizationStudentRosterRemote(input.organizationApplicationId),
+    fetchAttendancesByScheduleIdsRemote(input.programId, scheduleIds, {
+      organizationApplicationId: input.organizationApplicationId,
+    }),
+    fetchAllProgramProgressParticipants(input.programId),
+  ])
 
-  const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
-    input.programId,
-    scheduleIds,
-    { organizationApplicationId: input.organizationApplicationId }
-  )
-
-  return { rosterStudents, attendancesByScheduleId }
+  return {
+    rosterStudents: mapStudentRosterResponseToRows(rosterResponse),
+    attendancesByScheduleId,
+    giveUpParticipants,
+  }
 }
 
 /** 회차 학생 출결 bulk-upsert (participantId 있는 행만) */

@@ -4,17 +4,19 @@
   max-width: min(400px, 92vw);
   padding: 0;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 8px;
+  min-width: 0;
   box-sizing: border-box;
 }
 
 .calendar-cell-preview__item {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 4px;
   width: 100%;
+  min-width: 0;
   margin: 0;
   padding: 0;
   border: none;
@@ -30,31 +32,34 @@
 }
 
 .calendar-cell-preview__title {
-  color: var(--JA-mint-01, #01a1af);
+  color: var(--JA-mint-01, #01a1af) !important;
   font-size: 14px;
   font-style: normal;
   font-weight: 700;
   line-height: 130%;
   display: block;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
+  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .calendar-cell-preview__desc {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 140%;
   display: block;
   width: 100%;
   min-width: 0;
   overflow: hidden;
+  color: var(--Neutral-black, #3d3d3d);
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
 }
 
 .calendar-cell-preview__item:hover .calendar-cell-preview__title,

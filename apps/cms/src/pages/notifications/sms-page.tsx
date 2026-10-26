@@ -4,6 +4,8 @@
 
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { shouldUseSmsTemplatesRemoteApi } from '@/features/notifications/api/sms-template-service'
+import { useAutoSyncSmsCatalogOnEnter } from '@/features/notifications/hooks/use-sms-template-tree-query'
 import { SmsSendHistoryPage } from '@/features/notifications/ui/sms-send-history/page'
 import { SendFullpageModal } from '@/features/notifications/ui/sms-send/fullpage-modal'
 import { SmsTemplateList } from '@/features/notifications/ui/sms-template/list'
@@ -30,6 +32,7 @@ export function SmsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
   const sendOpen = searchParams.get(SEND_MODAL_PARAM) === SEND_MODAL_VALUE
+  useAutoSyncSmsCatalogOnEnter(shouldUseSmsTemplatesRemoteApi())
 
   const handleTabChange = useCallback(
     (key: string) => {

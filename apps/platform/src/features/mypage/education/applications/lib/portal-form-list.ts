@@ -9,6 +9,9 @@ export const PORTAL_SATISFACTION_FORM_TYPE_QUERIES = [
   'PROGRAM_SATISFACTION',
 ] as const
 
+/** 교육 일정의 과제 양식 — BE는 ASSIGNMENT와 HOMEWORK을 모두 허용한다. */
+export const PORTAL_ASSIGNMENT_FORM_TYPE_QUERIES = ['ASSIGNMENT', 'HOMEWORK'] as const
+
 function normalizePortalFormType(formType: string | undefined): string {
   return (formType ?? '').trim().toUpperCase()
 }
@@ -27,23 +30,64 @@ export function isPortalSatisfactionFormType(formType: string | undefined): bool
   )
 }
 
+export function isPortalAssignmentFormType(formType: string | undefined): boolean {
+  const normalized = normalizePortalFormType(formType)
+  return normalized === 'ASSIGNMENT' || normalized === 'HOMEWORK'
+}
+
+export function isPortalScheduleTargetScope(targetScope: string | undefined): boolean {
+  return (targetScope ?? '').trim().toUpperCase() === 'SCHEDULE'
+}
+
+function toPositiveInt(value: unknown): number | null {
+  if (value == null) return null
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric) || numeric <= 0) return null
+  return Math.trunc(numeric)
+}
+
+/** Assignment match/submit: canonical `bindingId` only. Aliases are ignored. */
+export function resolveCanonicalPortalFormBindingId(item: PortalFormListItem): number | null {
+  return toPositiveInt(item.bindingId)
+}
+
 export function resolvePortalFormBindingId(item: PortalFormListItem): number | null {
-  const candidates = [
-    item.bindingId,
-    item.programFormBindingId,
-    item.formBindingId,
-    item.id,
-  ]
+  const candidates = [item.bindingId, item.programFormBindingId, item.formBindingId, item.id]
   for (const candidate of candidates) {
-    if (candidate == null) continue
-    const numeric = typeof candidate === 'number' ? candidate : Number(candidate)
-    if (Number.isFinite(numeric) && numeric > 0) return Math.trunc(numeric)
+    const numeric = toPositiveInt(candidate)
+    if (numeric != null) return numeric
   }
   return null
 }
 
+/**
+ * SCHEDULE assignment row key: `scheduleId` first, then `targetScopeId`.
+ * PROGRAM-scoped items are never used, even if scheduleId/targetScopeId is present.
+ */
+export function resolvePortalAssignmentScheduleId(item: PortalFormListItem): number | null {
+  if (!isPortalScheduleTargetScope(item.targetScope)) return null
+  return toPositiveInt(item.scheduleId) ?? toPositiveInt(item.targetScopeId)
+}
+
+/**
+ * First ASSIGNMENT/HOMEWORK form bound to this schedule. No PROGRAM fallback.
+ */
+export function indexScheduleAssignmentFormsByScheduleId(
+  items: readonly PortalFormListItem[],
+): Map<number, PortalFormListItem> {
+  const forms = new Map<number, PortalFormListItem>()
+  for (const item of items) {
+    if (!isPortalAssignmentFormType(item.formType)) continue
+    const scheduleId = resolvePortalAssignmentScheduleId(item)
+    if (scheduleId == null) continue
+    if (resolveCanonicalPortalFormBindingId(item) == null) continue
+    if (!forms.has(scheduleId)) forms.set(scheduleId, item)
+  }
+  return forms
+}
+
 export function mapPortalFormListItemToSurveyEntry(
-  item: PortalFormListItem,
+  item: PortalFormListItem
 ): EducationSurveyListEntry | null {
   const bindingId = resolvePortalFormBindingId(item)
   if (bindingId == null) return null
@@ -51,6 +95,15 @@ export function mapPortalFormListItemToSurveyEntry(
   const status = (item.status ?? '').toUpperCase()
   const formResponseId = item.formResponseId ?? item.latestFormResponseId ?? undefined
   const submitted = ['SUBMITTED', 'COMPLETED', 'DONE'].includes(status)
+  const targetScope = item.targetScope?.trim() || undefined
+  const targetScopeId =
+    typeof item.targetScopeId === 'number' && Number.isFinite(item.targetScopeId)
+      ? Math.trunc(item.targetScopeId)
+      : undefined
+  const scheduleId =
+    typeof item.scheduleId === 'number' && Number.isFinite(item.scheduleId)
+      ? Math.trunc(item.scheduleId)
+      : undefined
 
   return {
     id: String(bindingId),
@@ -58,22 +111,28 @@ export function mapPortalFormListItemToSurveyEntry(
     status: submitted ? 'submitted' : 'in_progress',
     startAt: item.submissionStartAt?.slice(0, 10),
     endAt: item.submissionEndAt?.slice(0, 10),
-    createdAt: item.submissionStartAt,
+    createdAt: item.submissionStartAt ?? undefined,
     templateVersionId: item.templateVersionId,
-    targetScope: item.targetScope?.trim() || undefined,
-    targetScopeId:
-      typeof item.targetScopeId === 'number' && Number.isFinite(item.targetScopeId)
-        ? Math.trunc(item.targetScopeId)
-        : undefined,
+    formType: item.formType,
+    targetScope,
+    targetScopeId,
+    scheduleId,
     required: item.required,
     form: item.form,
     formResponseId,
     answers: item.answers,
     draftAnswers: item.draftAnswers,
+    bindingId: resolveCanonicalPortalFormBindingId(item) ?? undefined,
+    canSubmit: item.canSubmit === true,
+    canResubmit: item.canResubmit === true,
+    revisionNo: item.revisionNo,
+    retentionExpiresAt: item.retentionExpiresAt,
   }
 }
 
-export function dedupePortalFormListItems(items: readonly PortalFormListItem[]): PortalFormListItem[] {
+export function dedupePortalFormListItems(
+  items: readonly PortalFormListItem[]
+): PortalFormListItem[] {
   const seen = new Set<number>()
   const out: PortalFormListItem[] = []
   for (const item of items) {

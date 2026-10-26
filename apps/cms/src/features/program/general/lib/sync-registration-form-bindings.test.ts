@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
 import type { Program } from '@/types/domain'
-import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { queryClient } from '@/shared/lib/query-client'
 import {
   isProgramFormVersionMutable,
   resolveApplicationFormLoadSource,
   resolveProgramOperationalFormLoadSource,
-  saveMutableProgramFormVersion,
 } from './sync-registration-form-bindings'
 
 const fetchFormTemplateVersionRemote = vi.fn()
@@ -168,84 +166,10 @@ describe('resolveProgramOperationalFormLoadSource', () => {
 })
 
 describe('isProgramFormVersionMutable', () => {
-  it('allows only draft or unknown status', () => {
+  it('allows only draft status (unknown status is treated as immutable — shared data guard)', () => {
     expect(isProgramFormVersionMutable('DRAFT')).toBe(true)
-    expect(isProgramFormVersionMutable(undefined)).toBe(true)
+    expect(isProgramFormVersionMutable(undefined)).toBe(false)
     expect(isProgramFormVersionMutable('PUBLISHED')).toBe(false)
     expect(isProgramFormVersionMutable('ARCHIVED')).toBe(false)
-  })
-})
-
-describe('saveMutableProgramFormVersion', () => {
-  const draft = { sections: [] } as unknown as WritingFormDraft
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 22, templateVersionId: 1 })
-    saveFormTemplateVersionDraftByVersionId.mockResolvedValue(undefined)
-    publishFormTemplateVersionById.mockImplementation(async (versionId: number) => versionId + 50)
-    fetchGeneralProgramFormBindings.mockResolvedValue([
-      binding({
-        bindingId: 9,
-        formType: 'APPLICATION',
-        templateId: 99,
-        templateVersionId: 501,
-        targetRole: 'INDIVIDUAL',
-      }),
-    ])
-    updateGeneralProgramFormBinding.mockResolvedValue({})
-  })
-
-  it('copies a published version, saves the draft, publishes, and rebinds', async () => {
-    fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 99,
-      versionStatus: 'PUBLISHED',
-    })
-    copyFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 99,
-      templateVersionId: 700,
-    })
-
-    const publishedId = await saveMutableProgramFormVersion({
-      programId: '186100',
-      templateCode: 'application-participant-individual',
-      templateVersionId: 501,
-      draft,
-    })
-
-    expect(copyFormTemplateVersionRemote).toHaveBeenCalledWith(99, {
-      sourceVersionId: 501,
-      versionLabel: 'program-186100-edit',
-    })
-    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
-      expect.objectContaining({ versionId: 700, templateCode: 'application-participant-individual' })
-    )
-    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(700)
-    expect(updateGeneralProgramFormBinding).toHaveBeenCalledWith(
-      '186100',
-      '9',
-      expect.objectContaining({ templateId: 99, templateVersionId: 750, active: true })
-    )
-    expect(publishedId).toBe(750)
-  })
-
-  it('writes a draft version in place without copying', async () => {
-    fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 99,
-      versionStatus: 'DRAFT',
-    })
-
-    await saveMutableProgramFormVersion({
-      programId: '186100',
-      templateCode: 'application-participant-individual',
-      templateVersionId: 501,
-      draft,
-    })
-
-    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
-    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
-      expect.objectContaining({ versionId: 501 })
-    )
-    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(501)
   })
 })

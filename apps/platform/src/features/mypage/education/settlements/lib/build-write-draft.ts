@@ -108,6 +108,11 @@ export function buildSettlementWriteDraft(
 
 export function hydrateSettlementWriteFormState(draft: SettlementWriteDraft) {
   return {
+    name: draft.basic.name,
+    residentFront: draft.basic.residentFront,
+    residentBack: draft.basic.residentBack,
+    homeAddress: draft.basic.homeAddress,
+    homeAddressDetail: draft.basic.homeAddressDetail,
     bank: draft.basic.bank,
     accountNumber: draft.basic.accountNumber,
     accountHolder: draft.basic.accountHolder,

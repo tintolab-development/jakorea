@@ -291,4 +291,41 @@ describe('모집 정보 display — 공통정보 폴백 금지', () => {
       '-'
     )
   })
+
+  it('참여자·강사·봉사자 현황은 모집 행 기간 라벨을 사용한다', () => {
+    const program: Program = {
+      ...commonOnlyProgram(),
+      lifecycleStatus: 'recruiting_students',
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          startAt: '2099-01-01T00:00:00.000Z',
+          endAt: '2099-01-31T00:00:00.000Z',
+        },
+        {
+          recruitmentType: 'INSTRUCTOR',
+          applicationType: 'INSTRUCTOR',
+          startAt: '2099-02-01T00:00:00.000Z',
+          endAt: '2099-02-28T00:00:00.000Z',
+        },
+        {
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          startAt: '2099-03-01T00:00:00.000Z',
+          endAt: '2099-03-31T00:00:00.000Z',
+        },
+      ],
+    }
+
+    expect(resolveGeneralProgramParticipantRecruitmentDisplay(program).recruitmentStatusLabel).toBe(
+      '참여자 모집 예정'
+    )
+    expect(resolveGeneralProgramInstructorRecruitmentDisplay(program).recruitmentStatusLabel).toBe(
+      '강사 모집 예정'
+    )
+    expect(resolveGeneralProgramVolunteerRecruitmentDisplay(program).recruitmentStatusLabel).toBe(
+      '봉사자 모집 예정'
+    )
+  })
 })

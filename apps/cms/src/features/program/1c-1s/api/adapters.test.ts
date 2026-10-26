@@ -849,3 +849,73 @@ describe('company-school adapters', () => {
     expect(request.clearFields).toEqual(expect.arrayContaining(['applicationMethod', 'remarks']))
   })
 })
+
+describe('1사1교 serviceDetailJson nested overlay 정본', () => {
+  it('legacy root-only JSON은 읽지 않는다(루트 fallback 제거)', () => {
+    const parsed = parseCompanySchoolServiceDetailJson(
+      JSON.stringify({
+        schemaVersion: 1,
+        program: { title: '1사1교' },
+        registrationOverlay: {
+          'economyRegistration.basicInfo.publicProgramTitle': '구버전 공고명',
+          'economyRegistration.wageInfo.paymentItemValues': ['p-1'],
+        },
+      })
+    )
+    expect(parsed.registrationOverlay).toBeUndefined()
+  })
+
+  it('저장 JSON에 루트 registrationOverlay가 없다', () => {
+    const loaded: Program = {
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        announcementTitle: '중첩 공고명',
+      },
+      registrationOverlay: {
+        'economyRegistration.basicInfo.publicProgramTitle': '중첩 공고명',
+        'economyRegistration.wageInfo.paymentItemValues': ['p-keep'],
+        'recruit.notes': '모집 문구',
+      },
+    }
+    const json = serializeCompanySchoolServiceDetailJson(loaded)
+    const raw = JSON.parse(json) as {
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(raw).not.toHaveProperty('registrationOverlay')
+    expect(raw.registration?.overlay).toBeTruthy()
+  })
+
+  it('지급 항목 overlay를 바꿔도 공고 제목 nested가 유실되지 않는다', () => {
+    const json = serializeCompanySchoolServiceDetailJson({
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        announcementTitle: '유지 공고명',
+      },
+      registrationOverlay: {
+        'economyRegistration.basicInfo.publicProgramTitle': '유지 공고명',
+        'economyRegistration.wageInfo.paymentItemValues': ['p-only'],
+      },
+    })
+    const overlay = (JSON.parse(json) as { registration?: { overlay?: Record<string, unknown> } })
+      .registration?.overlay
+    expect(overlay?.['economyRegistration.basicInfo.publicProgramTitle']).toBe('유지 공고명')
+    expect(json).not.toContain('"registrationOverlay"')
+  })
+
+  it('빈 배열 overlay는 조회 시 기본 배열을 발명하지 않는다', () => {
+    const parsed = parseCompanySchoolServiceDetailJson(
+      JSON.stringify({
+        schemaVersion: 1,
+        program: { title: '1사1교' },
+        registration: {
+          overlay: {
+            'economyRegistration.wageInfo.paymentItemValues': [],
+          },
+        },
+      })
+    )
+    expect(parsed.registrationOverlay?.['economyRegistration.wageInfo.paymentItemValues']).toEqual([])
+  })
+})

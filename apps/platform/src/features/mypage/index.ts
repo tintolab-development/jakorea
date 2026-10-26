@@ -50,6 +50,7 @@ export {
   MYPAGE_EDUCATION_PATH,
   MYPAGE_VOLUNTEER_PATH,
   MYPAGE_LECTURE_PATH,
+  MYPAGE_SETTLEMENT_PATH,
   educationApplicationDetailPath,
   volunteerApplicationDetailPath,
   lectureApplicationDetailPath,

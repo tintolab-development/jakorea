@@ -34,8 +34,8 @@ import {
 import { createUjatSurveyItemsDefault } from '@/features/program/ujat/lib/registration-survey-items'
 import type { UjatVolunteerNoticeExposureValue } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
-import { UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
-import { UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
+import { UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-keys'
+import { UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-keys'
 
 const HALVES: readonly UjatHalfSemesterKey[] = ['h1', 'h2']
 const IK = UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS

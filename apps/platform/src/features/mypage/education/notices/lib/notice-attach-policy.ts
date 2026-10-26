@@ -1,15 +1,26 @@
-export const NOTICE_ATTACH_MAX_BYTES = 15 * 1024 * 1024
+import {
+  formatMultiFileUploadHint,
+  sumUploadFileBytes,
+  validateUploadBatch,
+  validateUploadFileSize,
+} from '@/shared/lib/file-upload-policy'
 
 export const NOTICE_ATTACH_ACCEPT = '.jpg,.jpeg,.png'
 
+export const NOTICE_ATTACH_HINT = formatMultiFileUploadHint('JPG, PNG')
+
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png'])
 
-export function validateNoticeAttachmentsTotalSize(files: readonly File[]): string | null {
-  const total = files.reduce((sum, file) => sum + file.size, 0)
-  if (total > NOTICE_ATTACH_MAX_BYTES) {
-    return '첨부 파일 총 용량은 15MB 이하만 등록할 수 있습니다.'
-  }
-  return null
+/** 이미 첨부한 파일 + 새 파일의 개수·전체 용량 검사 */
+export function validateNoticeAttachmentsBatch(
+  current: readonly File[],
+  incoming: readonly File[]
+): string | null {
+  return validateUploadBatch({
+    currentCount: current.length,
+    currentTotalBytes: sumUploadFileBytes(current),
+    incoming,
+  })
 }
 
 export function validateNoticeAttachmentFile(file: File): string | null {
@@ -19,10 +30,7 @@ export function validateNoticeAttachmentFile(file: File): string | null {
   if (!ALLOWED_MIME.has(mime) && !byExt) {
     return 'JPG, PNG 형식의 파일만 등록할 수 있습니다.'
   }
-  if (file.size > NOTICE_ATTACH_MAX_BYTES) {
-    return '파일 용량은 15MB 이하만 등록할 수 있습니다.'
-  }
-  return null
+  return validateUploadFileSize(file)
 }
 
 export const PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE = 'PROGRAM_POST_ATTACHMENT'

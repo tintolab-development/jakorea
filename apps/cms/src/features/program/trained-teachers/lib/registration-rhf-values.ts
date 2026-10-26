@@ -381,6 +381,45 @@ export function projectTrainedTeachersRhfToOverlayRecord(
   return overlay
 }
 
+function overlayStringBySuffix(overlay: Record<string, unknown>, suffix: string): string {
+  for (const [key, value] of Object.entries(overlay)) {
+    if (!isTrainedTeachersCommonInfoOverlayKey(key)) continue
+    if (suffixOf(key) !== suffix) continue
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
+/**
+ * RHF 제목이 비어 있을 때만 overlay(programTitleKo 등)로 채운다.
+ * hydrate가 title/mainTitle을 서로 덮지 않게 빈 칸만 보정한다.
+ */
+export function fillEmptyTrainedTeachersTitlesFromOverlay(
+  values: TrainedTeachersRegistrationRhfValues,
+  overlay: Record<string, unknown>
+): TrainedTeachersRegistrationRhfValues {
+  const mainTitle =
+    values.mainTitle.trim() || overlayStringBySuffix(overlay, 'programTitleKo')
+  const titleEn = values.titleEn.trim() || overlayStringBySuffix(overlay, 'programTitleEn')
+  const announcementTitle =
+    values.announcementTitle.trim() ||
+    overlayStringBySuffix(overlay, 'publicProgramTitle')
+  if (
+    mainTitle === values.mainTitle &&
+    titleEn === values.titleEn &&
+    announcementTitle === values.announcementTitle
+  ) {
+    return values
+  }
+  return {
+    ...values,
+    mainTitle,
+    titleEn,
+    announcementTitle,
+    title: announcementTitle || values.title,
+  }
+}
+
 export function rhfValuesFromTrainedTeachersCanonicalCommon(
   common: TrainedTeachersRegistrationCommonCanonical,
   editor: TrainedTeachersRegistrationEditorMeta,

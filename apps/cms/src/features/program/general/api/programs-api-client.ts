@@ -1,5 +1,8 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import { syncProgramInlineImages } from '@/features/program/shared/api/program-inline-images'
+import {
+  syncProgramInlineImages,
+  syncProgramInlineImagesKeepProgram,
+} from '@/features/program/shared/api/program-inline-images'
 import { omitSchedulesFromProgramUpdateRequest } from '@/features/program/shared/lib/program-update-schedules-payload-guard'
 import {
   PROGRAM_HARD_DELETE_BLOCKED_CODE,
@@ -13,6 +16,8 @@ import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/p
 export type AdminProgramsListQuery = {
   keyword?: string
   programType?: string
+  /** 일반 프로그램 참여자 유형 — `school` | `individual` | `instructor` | `volunteer` */
+  participantType?: string
   periodStatus?: string
   businessYear?: number
   /** 교육 대상 — `elementary` \| `middle` \| `high` \| `university` \| `adult` */
@@ -24,6 +29,8 @@ export type AdminProgramsListQuery = {
   progressPhase?: string
   /** `progressPhase` 별칭. 둘 다 있으면 BE는 progressPhase 우선 */
   lifecycleStatus?: string
+  /** UJAT 전용 canonical 진행 현황 */
+  ujatProgressStatus?: string
   /** 예정 탭 사업 운영 기간 overlap (YYYY-MM-DD) */
   operationStartDate?: string
   operationEndDate?: string
@@ -60,6 +67,8 @@ export interface AdminProgramListItemDto {
   lifecycleStatus?: string
   /** 참여자 모집 창 (`scheduled`|`recruiting`|`closed`) — `periodStatus`와 독립 */
   recruitmentStatus?: string
+  /** UJAT 프로그램 진행 현황 canonical 값 */
+  ujatProgressStatus?: string
   businessYear?: number
   businessStartDate?: string
   businessEndDate?: string
@@ -160,22 +169,9 @@ export async function createAdminProgramRemote(
   )
   const createdId = created.id
   if (createdId) {
-    try {
-      await syncProgramInlineImages(createdId, [payload, created])
-    } catch (error) {
-      await rollbackCreatedProgram(createdId)
-      throw error
-    }
+    await syncProgramInlineImagesKeepProgram(createdId, [payload, created])
   }
   return created
-}
-
-async function rollbackCreatedProgram(programId: string | number): Promise<void> {
-  try {
-    await deleteAdminProgramRemote(String(programId))
-  } catch (rollbackError) {
-    console.error('[program] rollback created program failed', programId, rollbackError)
-  }
 }
 
 export async function updateAdminProgramRemote(
@@ -586,6 +582,47 @@ export async function fetchAdminProgramSurveyResponseDetailRemote(
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/responses/${encodeURIComponent(formResponseId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+/** GET /api/admin/program-execution/lecture-reports/{reportId}/content */
+export type AdminLectureReportContentResponse = {
+  reportId?: number
+  programId?: number
+  scheduleId?: number
+  instructorAssignmentId?: number
+  instructorMemberId?: number
+  formResponseId?: number
+  bindingId?: number
+  templateVersionId?: number
+  contextType?: string
+  contextId?: number
+  formType?: string
+  templateName?: string
+  responseStatus?: string
+  submittedAt?: string
+  form?: Record<string, unknown>
+  answers?: Record<string, unknown>
+  files?: Array<{
+    sourceId?: number
+    sourceType?: string
+    questionKey?: string | null
+    fileObjectId?: number
+    originalFileName?: string
+    contentType?: string
+    fileSize?: number
+    downloadable?: boolean
+  }>
+}
+
+export async function fetchAdminProgramLectureReportContentRemote(
+  reportId: string | number
+): Promise<AdminLectureReportContentResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/program-execution/lecture-reports/${encodeURIComponent(String(reportId))}/content`,
       method: 'GET',
     })
   )

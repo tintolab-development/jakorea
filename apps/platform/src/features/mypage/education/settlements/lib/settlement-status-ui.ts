@@ -85,20 +85,21 @@ export function resolveSettlementStatusUi(
     },
     pending_submit: {
       message: copy.submitMessage,
-      writeLabel: kind === 'payment_statement' ? '지급조서 제출하기' : copy.writeLabel,
+      writeLabel: copy.writeLabel,
       actions: ['write'],
     },
     overdue: {
       message: copy.overdueMessage,
-      markLabel: kind === 'payment_statement' ? undefined : copy.overdueMark,
-      markTone: kind === 'payment_statement' ? undefined : 'alert',
-      writeDisabled: true,
+      markLabel: copy.overdueMark,
+      markTone: 'alert',
+      cardTone: kind === 'payment_statement' ? 'danger' : undefined,
+      writeDisabled: kind === 'payment_statement' ? undefined : true,
       writeLabel: copy.writeLabel,
       actions: ['write'],
     },
     waiting_confirm: {
       message: copy.waitingMessage,
-      markLabel: kind === 'payment_statement' ? '확인 대기 중' : '확인 대기',
+      markLabel: '확인 대기',
       markTone: 'neutral',
       statusLabel: '제출 완료',
       statusTone: 'submitted',
@@ -109,7 +110,7 @@ export function resolveSettlementStatusUi(
     },
     reapplied: {
       message: copy.reappliedMessage,
-      markLabel: kind === 'payment_statement' ? '지급조서 재신청' : '재신청',
+      markLabel: '재신청',
       markTone: 'neutral',
       statusLabel: '제출 완료',
       statusTone: 'submitted',
@@ -120,7 +121,7 @@ export function resolveSettlementStatusUi(
     },
     confirmed: {
       message: '담당자 확인이 완료되어 계좌 지급 예정이에요',
-      markLabel: kind === 'payment_statement' ? '지급조서 확인 완료' : '확인 완료',
+      markLabel: '확인 완료',
       markTone: 'success',
       amountKind: 'expected',
       viewLabel: copy.viewLabel,
@@ -128,7 +129,7 @@ export function resolveSettlementStatusUi(
     },
     paid: {
       message: '계좌 지급이 완료되었어요',
-      markLabel: kind === 'payment_statement' ? '계좌 지급 완료' : '지급 완료',
+      markLabel: '지급 완료',
       markTone: 'success',
       amountKind: 'completed',
       viewLabel: copy.viewLabel,
@@ -136,8 +137,11 @@ export function resolveSettlementStatusUi(
     },
     correction_requested: {
       message: '지급조서 정정 요청이 완료되었어요',
-      markLabel: '지급 정정 요청',
+      markLabel: kind === 'payment_statement' ? '정정 요청' : '지급 정정 요청',
       markTone: 'alert',
+      statusLabel: kind === 'payment_statement' ? '제출 완료' : undefined,
+      statusTone: kind === 'payment_statement' ? 'submitted' : undefined,
+      guideVariant: kind === 'payment_statement' ? 'submitted' : undefined,
       amountKind: 'expected',
       actionHint: '정정 요청이 처리될 때까지 기다려 주세요',
       viewLabel: copy.viewLabel,
@@ -145,8 +149,9 @@ export function resolveSettlementStatusUi(
     },
     correction_completed: {
       message: '정정된 내역으로 재신청이 가능해요',
-      markLabel: '지급 정정 요청',
+      markLabel: kind === 'payment_statement' ? '정정 요청' : '지급 정정 요청',
       markTone: 'neutral',
+      statusLabel: kind === 'payment_statement' ? '정정 완료' : undefined,
       amountKind: 'expected',
       writeLabel: kind === 'payment_statement' ? '지급조서 재신청' : copy.writeLabel,
       viewLabel: '정정 내역 확인',
@@ -162,13 +167,16 @@ export function resolveSettlementStatusUi(
       viewLabel: copy.viewLabel,
       actions: ['reject-reason', 'reapply'],
     },
-    upcoming: {
-      message: copy.submitMessage,
-      actionHint: copy.upcomingHint,
-      writeDisabled: true,
-      writeLabel: copy.writeLabel,
-      actions: ['write'],
-    },
+    upcoming:
+      kind === 'payment_statement'
+        ? {}
+        : {
+            message: copy.submitMessage,
+            actionHint: copy.upcomingHint,
+            writeDisabled: true,
+            writeLabel: copy.writeLabel,
+            actions: ['write'],
+          },
     unresolved: {},
   }
   return configs[status]
@@ -217,6 +225,10 @@ export function isSettlementWriteCtaDisabled(input: {
   status?: EducationSettlementStatus
 }): boolean {
   if (input.writeDisabledByStatus === true) return true
+  if (input.documentKind === 'payment_statement') {
+    if (input.status === 'overdue' && input.canSubmit === false) return true
+    return false
+  }
   if (input.documentKind !== 'receipt') return false
   if (input.hasPayableItems === false) return true
   if (input.evidencePolicyUnconfigured === true) return true

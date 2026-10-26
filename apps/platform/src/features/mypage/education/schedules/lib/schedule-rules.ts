@@ -1,6 +1,7 @@
 import type {
   EducationAssignmentSubmitStatus,
   EducationScheduleAttendanceStatus,
+  EducationScheduleAssignment,
   EducationScheduleItem,
   EducationScheduleProgressStatus,
 } from '../model/types'
@@ -49,13 +50,17 @@ export function shouldShowEducationAssignment(
   return now.getTime() >= start.getTime()
 }
 
-/** 결석 사유 제출 — 진행 전(예정) 또는 결석. CMS 출석·지각·사유불참이면 숨김 */
+/** 결석 사유 제출 — API 허용 동작을 우선하고, 출석·지각·사유불참이면 항상 비활성화 */
 export function canSubmitEducationAbsenceReason(
   progress: EducationScheduleProgressStatus,
   attendance: EducationScheduleAttendanceStatus | null,
+  availableActions?: readonly string[],
 ): boolean {
   if (attendance === 'present' || attendance === 'late' || attendance === 'excused') {
     return false
+  }
+  if (availableActions != null) {
+    return availableActions.some(action => action.trim().toUpperCase() === 'SUBMIT_ABSENCE_REASON')
   }
   if (progress === 'scheduled') return true
   return attendance === 'absent'
@@ -77,6 +82,17 @@ export type EducationAssignmentGuide = {
   showFeedbackButton: boolean
 }
 
+/**
+ * 과제 제출 버튼 활성화 여부는 제출 기간을 FE에서 재계산하지 않고
+ * 교육일정 API가 내려준 canSubmit/canResubmit만 신뢰한다.
+ */
+export function canSubmitEducationAssignment(
+  assignment: Pick<EducationScheduleAssignment, 'canSubmit' | 'canResubmit'>,
+  mode: 'submit' | 'revise',
+): boolean {
+  return mode === 'revise' ? assignment.canResubmit === true : assignment.canSubmit === true
+}
+
 function isDeadlinePassed(submitEndAt: string, now: Date): boolean {
   const end = new Date(submitEndAt)
   if (Number.isNaN(end.getTime())) return false
@@ -96,7 +112,7 @@ export function resolveEducationAssignmentGuide(
 
   if (status === 'feedback') {
     return {
-      message: '담당자의 과제 피드백이 있어요',
+      message: '담당자의 피드백이 있어요',
       tone: 'feedback',
       submitLabel: '수정 제출하기',
       submitDisabled: false,
@@ -131,7 +147,7 @@ export function resolveEducationAssignmentGuide(
     return {
       statusLabel: '과제 제출 완료',
       statusTone: 'submitted',
-      message: '제출한 과제는 마감 전까지는 수정 제출이 가능해요',
+      message: '제출한 과제는 마감 전까지는 수정이 가능해요',
       tone: 'default',
       submitLabel: '과제 제출하기',
       submitDisabled: false,

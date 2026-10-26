@@ -10,8 +10,10 @@ import {
   DEFAULT_REGISTRATION_EDUCATION_FORM,
   DEFAULT_REGISTRATION_PARTICIPATION,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
-import type { GeneralProgramRegistrationRequiredFieldContext } from '@/features/program/general/lib/registration-required-fields'
-import { listIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
+import {
+  listIncompleteGeneralProgramRegistrationRequiredFields,
+  type GeneralProgramRegistrationRequiredFieldContext,
+} from '@/features/program/general/lib/registration-required-fields'
 import type { RegistrationWizardUiValues } from './registration-wizard-ui-values'
 import { COMMON_INFO_PERSIST_KEYS as K } from './common-info-persist-keys'
 import {

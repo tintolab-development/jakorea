@@ -3,14 +3,14 @@
  */
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { useTrainedTeachersRegistrationField } from '@/features/template/ui/form-set/registration-form/trained-teachers/trained-teachers-registration-form-rhf'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 export const TRAINED_TEACHERS_EDUCATION_JOURNAL_OVERLAY_KEY =
   'trainedTeachersRegistration.educationCurriculum.educationJournalEnabled' as const
 
 export function TrainedTeachersEducationJournalSettingsRow() {
-  const [educationJournalEnabled, setEducationJournalEnabled] = useProgramRegistrationOverlayKv<
+  const [educationJournalEnabled, setEducationJournalEnabled] = useTrainedTeachersRegistrationField<
     'yes' | 'no'
   >(TRAINED_TEACHERS_EDUCATION_JOURNAL_OVERLAY_KEY, 'no')
 

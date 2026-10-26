@@ -93,10 +93,10 @@ export function buildUjatRegionCapacityMaxClassMap(
   return map
 }
 
-/** 지역 정원 조회 응답을 상세 화면이 사용하는 registration overlay로 변환한다. */
-export function buildUjatRegionCapacityOverlay(
+/** 지역 정원 조회 응답을 RHF/프로그램 화면 상태로 변환한다. */
+export function regionCapacityStateFromRows(
   rows: UjatRegionCapacityDto[]
-): Record<string, unknown> {
+): UjatRegionCapacityBySemesterState {
   const result: UjatRegionCapacityBySemesterState = { h1: {}, h2: {} }
   const regions = listUjatEducationRegionsActive()
 
@@ -120,5 +120,12 @@ export function buildUjatRegionCapacityOverlay(
     }
   }
 
-  return { [UJAT_REGION_CAPACITY_OVERLAY_KEY]: result }
+  return result
+}
+
+/** @deprecated Overlay 주입 경로. 화면 상태는 `regionCapacityStateFromRows`를 쓴다. */
+export function buildUjatRegionCapacityOverlay(
+  rows: UjatRegionCapacityDto[]
+): Record<string, unknown> {
+  return { [UJAT_REGION_CAPACITY_OVERLAY_KEY]: regionCapacityStateFromRows(rows) }
 }

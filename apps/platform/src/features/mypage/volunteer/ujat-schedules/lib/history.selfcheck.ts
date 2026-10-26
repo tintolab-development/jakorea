@@ -3,13 +3,20 @@ import { isWithdrawnBeforeEducation } from '../../../education/applications/lib/
 import { platformQueryKeys } from '../../../../../shared/api/query-keys.ts'
 import type { EducationScheduleItem } from '../../../education/schedules/model/types.ts'
 import { resolveVolunteerSchedulePanelKind } from '../../lib/schedule-panel-kind.ts'
-import { mapPortalScheduleAttendanceDetail } from './map-attendance.ts'
+import {
+  mapPortalAttendanceParticipantList,
+  mapPortalScheduleAttendanceDetail,
+} from './map-attendance.ts'
 import {
   canCheckInUjatSchedule,
   canViewUjatScheduleAttendance,
+  formatUjatAttendanceRosterDate,
+  formatUjatScheduleCardDate,
+  groupUjatVolunteerSchedulesByMonth,
   hasQueryableUjatEducationHistory,
   isUjatVolunteerOwnScheduleRecord,
   resolveScheduleAttendanceQueryErrorMessage,
+  resolveUjatScheduleDayStatus,
   resolveUjatVolunteerWithdrawnDetailView,
 } from './history.ts'
 
@@ -187,11 +194,11 @@ assert.equal(
 // WD-FE-10 출결 상세 401/403
 assert.equal(
   resolveScheduleAttendanceQueryErrorMessage({ response: { status: 401 } }),
-  '출결 상세를 조회할 권한이 없습니다.',
+  '출석현황을 조회할 권한이 없습니다.',
 )
 assert.equal(
   resolveScheduleAttendanceQueryErrorMessage({ response: { status: 403 } }),
-  '출결 상세를 조회할 권한이 없습니다.',
+  '출석현황을 조회할 권한이 없습니다.',
 )
 
 // WD-FE-11 H1/H2 캐시 키 분리
@@ -285,5 +292,53 @@ assert.equal(attendanceDetail.attendanceLabel, '출석')
 assert.equal(attendanceDetail.classLabel, '2학년 1반')
 assert.equal(attendanceDetail.canCheckIn, false)
 assert.equal(attendanceDetail.absenceReason, '-')
+
+const roster = mapPortalAttendanceParticipantList({
+  items: [
+    {
+      participantId: 1,
+      memberName: '김제이',
+      assignmentRole: 'A',
+      attendanceManager: true,
+      classLabel: '1학년 1반',
+      attendanceStatus: 'ABSENT',
+    },
+    {
+      participantId: 2,
+      memberName: '곽도규',
+      assignmentRole: 'B',
+      classLabel: '1학년 1반',
+      attendanceStatus: 'PRESENT',
+    },
+    {
+      participantId: 3,
+      memberName: '김도영',
+      assignmentRole: 'A',
+      classLabel: '2학년 2반',
+      attendanceStatus: 'PRESENT',
+    },
+  ],
+})
+assert.equal(roster.managerName, '김제이')
+assert.equal(roster.classCountLabel, '총 2학급')
+assert.equal(roster.rows[0]?.gradeLabel, '1학년')
+assert.equal(roster.rows[0]?.classLabel, '1반')
+assert.equal(roster.rows[0]?.volunteerA.name, '김제이')
+assert.equal(roster.rows[0]?.volunteerA.attendanceLabel, '결석')
+assert.equal(roster.rows[0]?.volunteerA.attendanceTone, 'absent')
+assert.equal(roster.rows[0]?.volunteerB.name, '곽도규')
+assert.equal(roster.rows[1]?.gradeLabel, '2학년')
+assert.equal(roster.rows[1]?.showGrade, true)
+
+assert.equal(formatUjatScheduleCardDate('2026-01-01'), '01월 01일')
+assert.equal(formatUjatAttendanceRosterDate('2026-06-25'), '06월 25일 (목)')
+assert.equal(resolveUjatScheduleDayStatus(item({ id: 'present', attendanceStatus: 'present' })).label, '출석완료')
+assert.equal(resolveUjatScheduleDayStatus(item({ id: 'late-day', attendanceStatus: 'late' })).label, '지각')
+assert.equal(
+  groupUjatVolunteerSchedulesByMonth([
+    item({ id: 'jan', heldAt: '2026-01-15T10:00:00+09:00' }),
+  ])[0]?.monthLabel,
+  '1월',
+)
 
 console.log('ujat volunteer withdrawal history.selfcheck: ok')

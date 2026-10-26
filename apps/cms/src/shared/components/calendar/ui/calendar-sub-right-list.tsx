@@ -54,6 +54,7 @@ import {
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -559,6 +560,8 @@ export type CalendarSubRightGeneralProgramEventListProps = {
   events: CalendarGeneralProgramEventListRow[]
   onEventClick: (program: Program) => void
   resolveEventColors?: (event: CalendarGeneralProgramEventListRow) => ScheduleColorPair | undefined
+  selectedProgramIds?: Key[]
+  onProgramSelectionChange?: (keys: Key[]) => void
 }
 
 export function CalendarSubRightGeneralProgramEventList({
@@ -566,6 +569,8 @@ export function CalendarSubRightGeneralProgramEventList({
   events,
   onEventClick,
   resolveEventColors,
+  selectedProgramIds,
+  onProgramSelectionChange,
 }: CalendarSubRightGeneralProgramEventListProps) {
   const dayEvents = useMemo(() => {
     return events.filter(event => {
@@ -574,6 +579,25 @@ export function CalendarSubRightGeneralProgramEventList({
       return selectedDate.isSameOrAfter(start, 'day') && selectedDate.isSameOrBefore(end, 'day')
     })
   }, [events, selectedDate])
+  const selectedSet = useMemo(
+    () => new Set((selectedProgramIds ?? []).map(String)),
+    [selectedProgramIds]
+  )
+
+  const handleToggle = useCallback(
+    (programId: string, checked: boolean) => {
+      if (!onProgramSelectionChange) return
+      const current = selectedProgramIds ?? []
+      onProgramSelectionChange(
+        checked
+          ? selectedSet.has(programId)
+            ? current
+            : [...current, programId]
+          : current.filter(selected => String(selected) !== programId)
+      )
+    },
+    [onProgramSelectionChange, selectedProgramIds, selectedSet]
+  )
 
   return (
     <div className={dayEvents.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
@@ -582,14 +606,21 @@ export function CalendarSubRightGeneralProgramEventList({
       ) : (
         dayEvents.map(event => {
           const colors = resolveEventColors?.(event) ?? SCHEDULE_COLORS[0]
+          const accent = colors.accent ?? colors.bg
           return (
             <div
               key={String(event.id)}
-              className="calendar-list-item"
+              className={[
+                'calendar-list-item',
+                onProgramSelectionChange ? 'calendar-list-item--with-checkbox' : '',
+                selectedSet.has(event.programId) ? 'calendar-list-item--selected' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               data-has-color="true"
               style={{
-                backgroundColor: colors.bg,
-                border: `1px solid ${colors.border}`,
+                backgroundColor: `color-mix(in srgb, ${accent} 6%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${accent} 10%, transparent)`,
               }}
               onClick={() => onEventClick(event.originalItem)}
             >
@@ -600,6 +631,21 @@ export function CalendarSubRightGeneralProgramEventList({
                   timeLabel={event.timeLabel}
                 />
               </div>
+              {onProgramSelectionChange ? (
+                <div
+                  className="calendar-list-item__checkbox"
+                  onClick={clickEvent => clickEvent.stopPropagation()}
+                  onKeyDown={keyEvent => keyEvent.stopPropagation()}
+                >
+                  <CmsCheckbox
+                    aria-label={`${event.programTitle} 프로그램 선택`}
+                    checked={selectedSet.has(event.programId)}
+                    onChange={changeEvent =>
+                      handleToggle(event.programId, changeEvent.target.checked)
+                    }
+                  />
+                </div>
+              ) : null}
             </div>
           )
         })

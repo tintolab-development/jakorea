@@ -17,7 +17,7 @@ import {
   buildGeneralRecruitOverlayFromProgram,
   volunteerRecruitOverlayPatchFromDetailEditValues,
 } from '@/features/program/general/lib/general-recruit-overlay-from-program'
-import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import {
   getGeneralRecruitOverlayScope,
   peekGeneralRecruitOverlayRecord,

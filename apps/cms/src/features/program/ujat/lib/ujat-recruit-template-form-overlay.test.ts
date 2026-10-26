@@ -23,8 +23,11 @@ import {
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS as VOLUNTEER_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import {
+  applyUjatRecruitFormValuesToProgram,
   applyUjatRecruitAnnouncementTitleToDraft,
+  programToUjatRecruitCanonicalFormValues,
   resolveUjatRecruitAnnouncementTitle,
+  resolveUjatRecruitCanonicalDisplayProgram,
   resolveUjatRecruitDisplayProgram,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
@@ -499,5 +502,320 @@ describe('UJAT recruit form overlay', () => {
     expect(resolveUjatRecruitAnnouncementTitle(program, 'institution')).toBe('행에 남은 기관 공고')
     expect(displayed.description).toBe('행에 남은 설명')
     expect(displayed.recruitmentGuide).toBe('행에 남은 안내')
+  })
+
+  it('활성 모집 상세의 RHF는 모집 행을 우선하고 stale 모집 overlay를 읽지 않는다', () => {
+    const program = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      ujatRegistrationOverlay: {
+        [INSTITUTION_KEYS.publicTitle]: '오래된 overlay 공고',
+        [INSTITUTION_KEYS.description]: '오래된 overlay 설명',
+      },
+      programRecruitments: [
+        {
+          id: 101,
+          recruitmentType: 'PARTICIPANT',
+          targetType: 'ORGANIZATION',
+          announcementTitle: '행 canonical 공고',
+          programDescription: '행 canonical 설명',
+          operationStartDate: '2027-01-01',
+          operationEndDate: '2027-01-31',
+          startAt: '2026-12-01T00:00:00Z',
+          endAt: '2026-12-20T00:00:00Z',
+        },
+      ],
+    }
+    const displayed = resolveUjatRecruitCanonicalDisplayProgram(program, 'institution')
+    const values = programToUjatRecruitCanonicalFormValues(program, 'institution')
+
+    expect(displayed.description).toBe('행 canonical 설명')
+    expect(displayed.startDate).toBe('2027-01-01')
+    expect(values.announcementTitle).toBe('행 canonical 공고')
+    expect(values.applicationStartDate).toBe('2026-12-01T00:00:00Z')
+    expect(values.startDate).toBe('2027-01-01')
+  })
+
+  it('봉사자 H1/H2 canonical RHF와 저장은 recruitTerm·row id를 분리 보존한다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      ujatRegistrationOverlay: {
+        [VOLUNTEER_KEYS.publicTitle]: '공유 legacy 공고',
+        'ujat.recruit.volunteer.h1.publicTitle': 'legacy H1',
+        'ujat.recruit.volunteer.h2.publicTitle': 'legacy H2',
+      },
+      programRecruitments: [
+        {
+          id: 201,
+          recruitmentType: 'VOLUNTEER',
+          targetType: 'COLLEGE_STUDENT',
+          recruitTerm: 'FIRST_HALF' as const,
+          announcementTitle: 'canonical H1',
+          startAt: '2027-01-01T00:00:00Z',
+          endAt: '2027-01-31T00:00:00Z',
+          operationStartDate: '2027-02-01',
+          operationEndDate: '2027-06-30',
+        },
+        {
+          id: 202,
+          recruitmentType: 'VOLUNTEER',
+          targetType: 'COLLEGE_STUDENT',
+          recruitTerm: 'SECOND_HALF' as const,
+          announcementTitle: 'canonical H2',
+          startAt: '2027-07-01T00:00:00Z',
+          endAt: '2027-07-31T00:00:00Z',
+          operationStartDate: '2027-08-01',
+          operationEndDate: '2027-12-31',
+        },
+      ],
+    }
+    const h1 = programToUjatRecruitCanonicalFormValues(program, 'volunteer_h1')
+    const h2 = programToUjatRecruitCanonicalFormValues(program, 'volunteer_h2')
+    expect(h1.rounds?.[0]?.startDate).toBe('2027-01-01T00:00:00Z')
+    expect(h1.rounds?.[0]?.endDate).toBe('2027-01-31T00:00:00Z')
+    const changedPeriod = applyUjatRecruitFormValuesToProgram(program, 'volunteer_h1', {
+      ...h1,
+      rounds: h1.rounds.map((round, index) =>
+        index === 0
+          ? { ...round, startDate: '2027-02-01T00:00:00Z', endDate: '2027-02-28T00:00:00Z' }
+          : round
+      ),
+    })
+    const savedH1 = applyUjatRecruitFormValuesToProgram(program, 'volunteer_h1', {
+      ...h1,
+      announcementTitle: '수정 H1',
+    })
+
+    expect(h1.announcementTitle).toBe('canonical H1')
+    expect(h2.announcementTitle).toBe('canonical H2')
+    expect(savedH1.programRecruitments?.find(row => row.id === 201)?.announcementTitle).toBe(
+      '수정 H1'
+    )
+    expect(savedH1.programRecruitments?.find(row => row.id === 202)?.announcementTitle).toBe(
+      'canonical H2'
+    )
+    expect(savedH1.programRecruitments?.find(row => row.id === 201)?.recruitTerm).toBe(
+      'FIRST_HALF'
+    )
+    expect(changedPeriod.programRecruitments?.find(row => row.id === 201)?.startAt).toBe(
+      '2027-02-01T00:00:00Z'
+    )
+    expect(savedH1.ujatRegistrationOverlay).toEqual(program.ujatRegistrationOverlay)
+  })
+
+  it('등록 위저드에서만 없는 기관·H1·H2 행을 typed 값으로 만들고 legacy overlay는 건드리지 않는다', () => {
+    const base = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      ujatRegistrationOverlay: { stale: 'keep' },
+      programRecruitments: [],
+    }
+    const institutionValues = {
+      ...programToDetailEditValues(base),
+      announcementTitle: '기관 모집',
+      applicationStartDate: '2027-01-01T00:00:00Z',
+      applicationEndDate: '2027-01-31T00:00:00Z',
+    }
+    const h1Values = {
+      ...programToDetailEditValues(base),
+      announcementTitle: 'H1 모집',
+      volunteerApplicationStartDate: '2027-02-01T00:00:00Z',
+      volunteerApplicationEndDate: '2027-02-28T00:00:00Z',
+    }
+    const h2Values = {
+      ...programToDetailEditValues(base),
+      announcementTitle: 'H2 모집',
+      volunteerApplicationStartDate: '2027-08-01T00:00:00Z',
+      volunteerApplicationEndDate: '2027-08-31T00:00:00Z',
+    }
+    const typed = applyUjatRecruitFormValuesToProgram(
+      applyUjatRecruitFormValuesToProgram(
+        applyUjatRecruitFormValuesToProgram(base, 'institution', institutionValues, {
+          createMissing: true,
+        }),
+        'volunteer_h1',
+        h1Values,
+        { createMissing: true }
+      ),
+      'volunteer_h2',
+      h2Values,
+      { createMissing: true }
+    )
+
+    expect(typed.programRecruitments?.map(row => [row.id, row.recruitTerm ?? null])).toEqual([
+      [undefined, null],
+      [undefined, 'FIRST_HALF'],
+      [undefined, 'SECOND_HALF'],
+    ])
+    expect(typed.programRecruitments?.map(row => row.announcementTitle)).toEqual([
+      '기관 모집',
+      'H1 모집',
+      'H2 모집',
+    ])
+    expect(typed.ujatRegistrationOverlay).toEqual(base.ujatRegistrationOverlay)
+  })
+
+  it('H2 수정 후 H1 row id·공고명·recruitTerm은 그대로다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      programRecruitments: [
+        {
+          id: 201,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF' as const,
+          announcementTitle: 'canonical H1',
+        },
+        {
+          id: 202,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF' as const,
+          announcementTitle: 'canonical H2',
+        },
+      ],
+    }
+    const h2 = programToUjatRecruitCanonicalFormValues(program, 'volunteer_h2')
+    const savedH2 = applyUjatRecruitFormValuesToProgram(program, 'volunteer_h2', {
+      ...h2,
+      announcementTitle: '수정 H2',
+    })
+    expect(savedH2.programRecruitments?.find(row => row.id === 201)).toMatchObject({
+      announcementTitle: 'canonical H1',
+      recruitTerm: 'FIRST_HALF',
+    })
+    expect(savedH2.programRecruitments?.find(row => row.id === 202)).toMatchObject({
+      announcementTitle: '수정 H2',
+      recruitTerm: 'SECOND_HALF',
+    })
+  })
+
+  it('기존 row가 있으면 신규 row를 만들지 않고 id·첨부·양식 바인딩을 유지한다', () => {
+    const program = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      programRecruitments: [
+        {
+          id: 101,
+          recruitmentType: 'PARTICIPANT',
+          targetType: 'ORGANIZATION',
+          announcementTitle: '기존 공고',
+          thumbnailFileObjectId: 88,
+          applicationFormBindingId: 77,
+          attachments: [{ fileObjectId: 9, originalFileName: 'guide.pdf' }],
+        },
+      ],
+    }
+    const values = {
+      ...programToUjatRecruitCanonicalFormValues(program, 'institution'),
+      announcementTitle: '수정 공고',
+    }
+    const saved = applyUjatRecruitFormValuesToProgram(program, 'institution', values)
+    expect(saved.programRecruitments).toHaveLength(1)
+    expect(saved.programRecruitments?.[0]).toMatchObject({
+      id: 101,
+      announcementTitle: '수정 공고',
+      thumbnailFileObjectId: 88,
+      applicationFormBindingId: 77,
+      attachments: [{ fileObjectId: 9, originalFileName: 'guide.pdf' }],
+    })
+  })
+
+  it('createMissing 없이 행이 없으면 신규 row를 만들지 않는다', () => {
+    const program = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      programRecruitments: [],
+    }
+    const values = {
+      ...programToDetailEditValues(program),
+      announcementTitle: '새 공고',
+      applicationStartDate: '2027-01-01T00:00:00Z',
+    }
+    const next = applyUjatRecruitFormValuesToProgram(program, 'institution', values)
+    expect(next.programRecruitments).toEqual([])
+  })
+
+  it('활성 상세는 행이 없으면 stale Overlay 공고명을 넣지 않는다', () => {
+    const program = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      programRecruitments: [],
+      ujatRegistrationOverlay: {
+        [INSTITUTION_KEYS.publicTitle]: '오래된 overlay 공고',
+        'ujat.recruit.volunteer.h1.publicTitle': '오래된 H1 overlay',
+      },
+    }
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'institution', {
+      allowOverlayFallback: false,
+    })).toBe('-')
+    expect(
+      resolveUjatRecruitAnnouncementTitle(program, 'volunteer_h1', {
+        allowOverlayFallback: false,
+      })
+    ).toBe('-')
+    expect(programToUjatRecruitCanonicalFormValues(program, 'institution').announcementTitle).not.toBe(
+      '오래된 overlay 공고'
+    )
+  })
+
+  it('모집 탭 PATCH에서 registrationOverlay를 다시 실을 대상이 아니다', () => {
+    const program = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      ujatRegistrationOverlay: { stale: 'keep' },
+      registrationOverlay: { stale: 'legacy' },
+      programRecruitments: [
+        { id: 101, recruitmentType: 'PARTICIPANT', announcementTitle: '행 공고' },
+      ],
+    }
+    const patch = {
+      registrationOverlay: program.registrationOverlay,
+      programRecruitments: program.programRecruitments,
+    }
+    const { registrationOverlay: _omitRegistrationOverlay, ...recruitPatch } = patch
+    const saved = applyUjatRecruitFormValuesToProgram(
+      program,
+      'institution',
+      programToUjatRecruitCanonicalFormValues(program, 'institution')
+    )
+    expect(recruitPatch).not.toHaveProperty('registrationOverlay')
+    expect(saved.ujatRegistrationOverlay).toEqual({ stale: 'keep' })
+  })
+
+  it('봉사자 H1 interviewConfig와 volunteerTargets 기타를 해당 행에만 쓴다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      programRecruitments: [
+        {
+          id: 201,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF' as const,
+          interviewConfig: { schemaVersion: 1 as const, selectedSlotKeys: [] },
+        },
+        {
+          id: 202,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF' as const,
+          interviewConfig: {
+            schemaVersion: 1 as const,
+            selectedSlotKeys: ['keep-h2'],
+          },
+        },
+      ],
+    }
+    const values = {
+      ...programToUjatRecruitCanonicalFormValues(program, 'volunteer_h1'),
+      volunteerTargets: ['elementary', '기타'],
+      volunteerInterviewConfig: {
+        schemaVersion: 1,
+        selectedSlotKeys: ['111-222'],
+        interviewTimeRange: [],
+        exceptions: [],
+      },
+    }
+    const saved = applyUjatRecruitFormValuesToProgram(program, 'volunteer_h1', values)
+    expect(saved.programRecruitments?.find(row => row.id === 201)?.volunteerTargets).toEqual([
+      'elementary',
+      '기타',
+    ])
+    expect(saved.programRecruitments?.find(row => row.id === 201)?.interviewConfig).toMatchObject({
+      selectedSlotKeys: ['111-222'],
+    })
+    expect(saved.programRecruitments?.find(row => row.id === 202)?.interviewConfig).toMatchObject({
+      selectedSlotKeys: ['keep-h2'],
+    })
   })
 })

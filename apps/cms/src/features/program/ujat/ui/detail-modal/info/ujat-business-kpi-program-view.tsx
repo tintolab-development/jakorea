@@ -5,7 +5,6 @@ import {
   resolveUjatBusinessKpiDisplay,
   UJAT_BUSINESS_KPI_INSTRUCTOR_NOT_APPLICABLE,
 } from '@/features/program/ujat/lib/ujat-business-kpi-display'
-import { useUjatProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
@@ -40,11 +39,14 @@ export function UjatBusinessKpiProgramView({
   const display = resolveUjatBusinessKpiDisplay(program)
   const isFormEdit = isEdit && form != null
   const formMode = isFormEdit ? 'edit' : 'view'
-  const [participantVolunteer] = useUjatProgramRegistrationOverlayKv(
-    'ujat.basicInfo.participant.volunteer',
-    display.hasVolunteerRecruitment
-  )
-  const hasVolunteerRecruitment = isFormEdit ? participantVolunteer : display.hasVolunteerRecruitment
+  const participantTypes = isFormEdit
+    ? (form.watch('generalParticipantTypes') ?? [])
+    : (program.generalParticipantTypes ?? [])
+  const hasVolunteerRecruitment = participantTypes.includes('volunteer')
+    ? true
+    : isFormEdit
+      ? false
+      : display.hasVolunteerRecruitment
 
   return (
     <section className="program-detail-fullpage-modal__info-tab-block">

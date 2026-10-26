@@ -7,8 +7,11 @@ import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } f
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
-  CmsButton, CmsModal, ConfirmModal, useCmsAlert,
-  FilterTableToolbarButton
+  CmsButton,
+  CmsModal,
+  ConfirmModal,
+  useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import {
   MAIL_ROOT_CATEGORY_ID,
@@ -144,11 +147,11 @@ export function MailTemplateList() {
   const [formBodyError, setFormBodyError] = useState<string | null>(null)
   const didInitExpandRef = useRef(!remote)
   const syncInFlightRef = useRef(false)
+  const autoSyncStartedRef = useRef(false)
   const syncCatalogMutateAsync = mutations.syncCatalog.mutateAsync
 
   const categories = remote ? (treeQuery.data?.categories ?? []) : localCategories
   const templates = remote ? (treeQuery.data?.templates ?? []) : localTemplates
-  const isSyncing = mutations.syncCatalog.isPending
   const isMutating =
     mutations.createCategory.isPending ||
     mutations.updateCategory.isPending ||
@@ -158,9 +161,8 @@ export function MailTemplateList() {
     mutations.moveTemplate.isPending ||
     mutations.createTemplate.isPending ||
     mutations.updateTemplate.isPending
-  const busy = isSyncing || isMutating
-  const treeLoading =
-    remote && !treeQuery.data && (treeQuery.isLoading || treeQuery.isFetching)
+  const busy = isMutating
+  const treeLoading = remote && !treeQuery.data && (treeQuery.isLoading || treeQuery.isFetching)
   const treeError = remote && treeQuery.isError && !treeQuery.data
 
   const clearTreeSearchAfterMutation = useCallback(() => {
@@ -173,17 +175,19 @@ export function MailTemplateList() {
     setSearchParams(prev => applyMailFiltersToSearchParams(prev, cleared), { replace: true })
   }, [setSearchParams])
 
-  const runMailSync = useCallback(async () => {
+  const runMailSync = useCallback(async (source: 'auto' | 'manual' = 'manual') => {
     // isPending만으로는 리렌더 전 동시 클릭을 막지 못함 → sync 과호출 방지
     if (!remote || syncInFlightRef.current) return
     syncInFlightRef.current = true
     try {
       // tree는 mutation onSuccess invalidate로만 갱신 (refetch 중복 금지)
       const result = await syncCatalogMutateAsync()
-      showAlert({
-        title: '안내',
-        content: mailSyncSuccessMessage(result.templates),
-      })
+      if (source === 'manual' || result.templates.isLocalApprovalMark) {
+        showAlert({
+          title: '안내',
+          content: mailSyncSuccessMessage(result.templates),
+        })
+      }
     } catch (error) {
       showAlert({
         title: '연동 실패',
@@ -196,6 +200,12 @@ export function MailTemplateList() {
       syncInFlightRef.current = false
     }
   }, [remote, showAlert, syncCatalogMutateAsync])
+
+  useEffect(() => {
+    if (!remote || autoSyncStartedRef.current) return
+    autoSyncStartedRef.current = true
+    void runMailSync('auto')
+  }, [remote, runMailSync])
 
   const offerSyncOnError = useCallback(
     (title: string, error: unknown, fallback: string) => {
@@ -281,7 +291,7 @@ export function MailTemplateList() {
     remote && Boolean(selectedTemplateId)
   )
   const treeTemplate =
-    selection?.kind === 'template' ? findTemplate(templates, selection.id) ?? null : null
+    selection?.kind === 'template' ? (findTemplate(templates, selection.id) ?? null) : null
   const selectedTemplate = (remote ? detailQuery.data : null) ?? treeTemplate
   const detailLoading =
     remote && Boolean(selectedTemplateId) && detailQuery.isLoading && !detailQuery.data
@@ -660,11 +670,7 @@ export function MailTemplateList() {
           return
         }
         setFormBodyError(null)
-        offerSyncOnError(
-          '저장 실패',
-          error,
-          '템플릿 저장에 실패했습니다. 다시 시도해 주세요.'
-        )
+        offerSyncOnError('저장 실패', error, '템플릿 저장에 실패했습니다. 다시 시도해 주세요.')
       }
     },
     [
@@ -716,6 +722,7 @@ export function MailTemplateList() {
         bordered={false}
         filterResponsiveWrap={false}
         hideExcelDownload
+        contentLoading={Boolean(treeLoading && !treeError)}
         fields={MAIL_TEMPLATE_FILTER_FIELDS}
         filters={{
           categoryName: pendingFilters.categoryName,
@@ -726,16 +733,6 @@ export function MailTemplateList() {
         title="메일 템플릿"
         actions={
           <>
-            {remote ? (
-              <FilterTableToolbarButton
-                variant="secondary"
-                type="button"
-                disabled={busy}
-                onClick={() => void runMailSync()}
-              >
-                {isSyncing ? '동기화 중…' : '동기화'}
-              </FilterTableToolbarButton>
-            ) : null}
             <FilterTableToolbarButton
               variant="delete"
               type="button"
@@ -793,10 +790,6 @@ export function MailTemplateList() {
               다시 시도
             </CmsButton>
           </div>
-        ) : treeLoading ? (
-          <div className="mail-template-tree-status" aria-busy="true">
-            불러오는 중…
-          </div>
         ) : (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <div className="mail-template-split">
@@ -833,9 +826,7 @@ export function MailTemplateList() {
         open={deleteDialog === 'category'}
         onClose={() => setDeleteDialog(null)}
         title="카테고리 삭제"
-        content={
-          '해당 카테고리를 삭제하시겠습니까?\n삭제 시 NHN 서비스에서도 함께 반영됩니다.'
-        }
+        content={'해당 카테고리를 삭제하시겠습니까?\n삭제 시 NHN 서비스에서도 함께 반영됩니다.'}
         buttons={[
           { label: '취소', onClick: () => setDeleteDialog(null), variant: 'secondary' },
           {

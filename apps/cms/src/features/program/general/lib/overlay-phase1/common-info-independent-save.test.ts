@@ -54,6 +54,7 @@ function baseProgram(): Program {
 
 function parseJson(json: string | undefined): {
   generalCommonInfo?: Record<string, unknown>
+  registration?: { overlay?: Record<string, unknown> }
   registrationOverlay?: Record<string, unknown>
 } {
   if (!json) return {}
@@ -88,7 +89,8 @@ describe('createGeneralProgramCommonInfoIndependentSave', () => {
     )
     const parsed = parseJson(body.serviceDetailJson)
     expect(parsed.generalCommonInfo).not.toHaveProperty('curriculumSessions')
-    const unitMap = parsed.registrationOverlay?.[UNIT_NAME_KEY] as Record<string, unknown> | undefined
+    const persistOverlay = parsed.registration?.overlay ?? parsed.registrationOverlay
+    const unitMap = persistOverlay?.[UNIT_NAME_KEY] as Record<string, unknown> | undefined
     expect(
       Object.keys(unitMap ?? {})
         .filter(key => unitMap?.[key] != null)

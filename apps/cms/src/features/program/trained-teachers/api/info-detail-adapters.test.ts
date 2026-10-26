@@ -182,6 +182,30 @@ describe('trained-teacher info detail adapters', () => {
     expect(merged.generalCommonInfo?.kpi?.finalSchools).toBe(8)
   })
 
+  it('typed와 configJson educationJournalEnabled가 다르면 경고를 남기고 typed를 표시 정본으로 쓴다', () => {
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(
+      {
+        id: '186340',
+        title: 't',
+        generalCommonInfo: { educationJournalEnabled: true },
+      } as Program,
+      {
+        teacherTrainingEnabled: false,
+        educationJournalEnabled: true,
+        educationJournalRequired: false,
+        journalSubmissionLimitType: 'UNLIMITED',
+        configJson: JSON.stringify({
+          schemaVersion: 1,
+          generalCommonInfo: { educationJournalEnabled: false },
+        }),
+      }
+    )
+    expect(merged.generalCommonInfo?.educationJournalEnabled).toBe(true)
+    expect(merged.trainedTeacherInfoDetailWarnings).toEqual([
+      'educationJournalEnabled typed/configJson mismatch',
+    ])
+  })
+
   it('typed educationJournalEnabled를 A nested보다 우선하고 "false" 문자열을 true로 보지 않는다', () => {
     const program = {
       id: '186034',

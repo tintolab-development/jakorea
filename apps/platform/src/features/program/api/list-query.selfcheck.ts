@@ -36,7 +36,8 @@ assert.equal(filtered.keyword, '금융')
 assert.equal(filtered.programType, 'UJAT')
 assert.equal(filtered.recruitmentStatus, 'UPCOMING')
 assert.equal(filtered.educationMethod, 'ONLINE')
-assert.equal(filtered.educationTargets, undefined)
+assert.equal(filtered.recruitmentTarget, 'high')
+assert.equal(filtered.educationTarget, 'university')
 
 const recruitmentOnly = toPortalProgramListQuery(
   {
@@ -45,7 +46,8 @@ const recruitmentOnly = toPortalProgramListQuery(
   },
   10,
 )
-assert.equal(recruitmentOnly.educationTargets, 'high')
+assert.equal(recruitmentOnly.recruitmentTarget, 'high')
+assert.equal(recruitmentOnly.educationTarget, undefined)
 
 const educationOnly = toPortalProgramListQuery(
   {
@@ -54,7 +56,17 @@ const educationOnly = toPortalProgramListQuery(
   },
   10,
 )
-assert.equal(educationOnly.educationTargets, 'university')
+assert.equal(educationOnly.recruitmentTarget, undefined)
+assert.equal(educationOnly.educationTarget, 'university')
+
+const participantChoice = toPortalProgramListQuery(
+  {
+    ...DEFAULT_PROGRAMS_LIST_PARAMS,
+    educationForm: 'participant_choice',
+  },
+  10,
+)
+assert.equal(participantChoice.educationMethod, 'PARTICIPANT_SELECTION')
 assert.equal(filtered.operatingFrom, '2026-09-01')
 assert.equal(filtered.operatingTo, '2026-12-31')
 assert.equal(filtered.sort, 'CLOSING_SOON')

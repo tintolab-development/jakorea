@@ -51,8 +51,7 @@
   text-align: left;
   cursor: pointer;
   box-sizing: border-box;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: hidden;
 }
 
 .calendar-split-card-main .calendar-cell-events {

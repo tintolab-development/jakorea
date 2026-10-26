@@ -1,11 +1,16 @@
 import dayjs from 'dayjs'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import type { Program } from '@/types/domain'
 import type {
   GeneralAssignmentSubmissionFileDto,
   GeneralAssignmentSubmissionListResponse,
   GeneralAssignmentSubmissionParticipantDto,
   GeneralAssignmentSubmissionScheduleDto,
 } from '@/features/program/general/api/program-progress-api-client'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
+import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
+import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
 import {
   formatIndividualProgressAssignmentAffiliationGradeLabel,
   formatIndividualProgressAssignmentGenderBirthLabel,
@@ -22,6 +27,7 @@ import type {
 } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 import { parseParticipantSurveyViewKey } from '@/features/program/general/model/participating-individual-participants'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { isGeneralProgressEducationSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
 
 function formatDateLabel(value: string | null | undefined, pattern: string): string {
   if (!value?.trim()) return ''
@@ -43,50 +49,64 @@ function formatPeriodLabel(start?: string | null, end?: string | null): string {
     return formatCmsScheduleDisplayLabel(`${startLabel} ~ ${endLabel}`)
   }
   const single = startLabel || endLabel
-  return single ? formatCmsScheduleDisplayLabel(single) : '-'
+  return single ? formatCmsScheduleDisplayLabel(single) : ''
 }
 
-function formatScheduleHeader(schedule: GeneralAssignmentSubmissionScheduleDto, index: number) {
+function resolveAssignmentPeriodLabel(
+  schedule: GeneralAssignmentSubmissionScheduleDto,
+  round: number,
+  program?: Program | null
+): string {
+  const fromApi = formatPeriodLabel(schedule.assignmentPeriodStart, schedule.assignmentPeriodEnd)
+  if (fromApi) return fromApi
+  const common = program ? resolveGeneralProgramCommonInfo(program) : null
+  const fromCurriculum = common?.curriculumSessions?.[round - 1]?.assignmentPeriod?.trim()
+  if (fromCurriculum) return formatCmsScheduleDisplayLabel(fromCurriculum)
+  const fromDetail = common?.scheduleDetails?.[round - 1]?.assignmentPeriod?.trim()
+  if (fromDetail) return formatCmsScheduleDisplayLabel(fromDetail)
+  return ''
+}
+
+function formatScheduleHeader(
+  schedule: GeneralAssignmentSubmissionScheduleDto,
+  index: number,
+  program?: Program | null
+) {
   const round = schedule.sessionNo ?? index + 1
   const start = schedule.startAt ? dayjs(schedule.startAt) : null
   const end = schedule.endAt ? dayjs(schedule.endAt) : null
   const hasTimeRange = start?.isValid() === true && end?.isValid() === true
-  // 응답에 종일 여부가 없어 시작·종료가 모두 자정이면 종일 회차로 보고 시간을 생략한다.
   const isAllDay =
     hasTimeRange && start.format('HH:mm') === '00:00' && end.format('HH:mm') === '00:00'
-  const dateLabel =
-    start?.isValid() === true
-      ? formatCmsScheduleDisplayLabel(
-          isAllDay || end?.isValid() !== true
-            ? start.format('YYYY-MM-DD')
-            : end.isSame(start, 'day')
-              ? `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('HH:mm')}`
-              : `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('YYYY-MM-DD HH:mm')}`
-        )
-      : (schedule.scheduleName ?? `${round}회차`)
-  const periodLabel =
-    start?.isValid() === true
-      ? formatCmsScheduleDisplayLabel(
-          end?.isValid() === true && !start.isSame(end, 'day')
-            ? `${start.format('YYYY-MM-DD')} ~ ${end.format('YYYY-MM-DD')}`
-            : start.format('YYYY-MM-DD')
-        )
-      : dateLabel
-  const filterValue = String(schedule.scheduleId ?? round)
-  const filterLabel = `${round}회차 · ${dateLabel}`
+  const leadLabel = program
+    ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
+    : `${round}회차`
+  const built = buildGeneralProgressSessionTableHeader({
+    round,
+    leadLabel,
+    scheduleName: schedule.scheduleName,
+    startAt: schedule.startAt,
+    endAt: schedule.endAt,
+    allDay: isAllDay,
+    program,
+  })
   return {
     round,
-    filterValue,
-    filterLabel,
-    headerTitle: `${round}회차 과제`,
-    headerScheduleSummary: filterLabel,
-    headerPeriodRangeLabel: periodLabel,
-    assignmentPeriodLabel: formatPeriodLabel(
-      schedule.assignmentPeriodStart,
-      schedule.assignmentPeriodEnd
-    ),
-    headerPrefix: `${round}회차`,
+    filterValue: String(schedule.scheduleId ?? round),
+    filterLabel: built.filterLabel,
+    headerTitle: built.headerTitle,
+    headerDateLabel: built.dateLabel,
+    headerScheduleSummary: built.headerScheduleSummary,
+    headerPeriodRangeLabel: built.headerPeriodRangeLabel,
+    assignmentPeriodLabel: resolveAssignmentPeriodLabel(schedule, round, program),
+    headerPrefix: built.headerPrefix,
   }
+}
+
+type GiveUpParticipantLookup = {
+  participantId?: number
+  giveUpAt?: string | null
+  participantStatus?: string | null
 }
 
 function mapGenderLabel(gender?: string | null): string {
@@ -162,16 +182,34 @@ function mapParticipantRow(
 }
 
 export function buildProgressAssignmentSessionsFromRemote(
-  data: GeneralAssignmentSubmissionListResponse
+  data: GeneralAssignmentSubmissionListResponse,
+  options?: {
+    program?: Program | null
+    giveUpParticipants?: GiveUpParticipantLookup[] | null
+  }
 ): ParticipatingIndividualProgressAssignmentSessionGroup[] {
+  const giveUpById = new Map(
+    (options?.giveUpParticipants ?? [])
+      .filter(item => item.participantId != null)
+      .map(item => [String(item.participantId), item] as const)
+  )
   return (data.items ?? [])
-    .filter(schedule => schedule.scheduleId != null)
+    .filter(isGeneralProgressEducationSessionSchedule)
     .map((schedule, index) => {
-      const header = formatScheduleHeader(schedule, index)
+      const header = formatScheduleHeader(schedule, index, options?.program)
       return {
         id: String(schedule.scheduleId),
         ...header,
-        participants: (schedule.participants ?? []).map(mapParticipantRow),
+        participants: (schedule.participants ?? [])
+          .filter(participant => {
+            const lookup = giveUpById.get(String(participant.participantId))
+            return !shouldHideGiveUpParticipantFromSchedule({
+              giveUpAt: participant.giveUpAt ?? lookup?.giveUpAt,
+              participantStatus: participant.participantStatus ?? lookup?.participantStatus,
+              scheduleStartAt: schedule.startAt,
+            })
+          })
+          .map(mapParticipantRow),
       }
     })
 }

@@ -2,11 +2,12 @@ import { useState } from 'react'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
 import { PreviewModal } from '@/features/notifications/ui/alimtalk-template/preview-modal'
 import { SendFullpageModal } from '@/features/notifications/ui/alimtalk-send/fullpage-modal'
-import { TemplateSelectField } from '@/features/notifications/ui/alimtalk-send/template-select-field'
+import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
 import {
   TemplateSelectModal,
   TEMPLATE_SELECT_MODAL_PAGE_SIZE,
-} from '@/features/notifications/ui/alimtalk-send/template-select-modal'
+} from '@/features/notifications/ui/shared/template-select-modal'
+import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsCompactPagination } from '@/shared/ui'
 import { DsDemo, DsSection } from './section'
@@ -97,6 +98,17 @@ export function AlimtalkSendSection() {
             value={selectedTemplateId}
             templates={TEMPLATE_PICKER_ITEMS}
             onSelect={template => setSelectedTemplateId(template.id)}
+            isUseEnabled={isAlimtalkTemplateApproved}
+            useButtonLabel="템플릿 사용"
+            renderPreview={({ template, open, onClose, onUse, zIndex }) => (
+              <PreviewModal
+                open={open}
+                template={template}
+                onClose={onClose}
+                onUse={onUse}
+                zIndex={zIndex}
+              />
+            )}
           />
         </div>
       </DsDemo>
@@ -131,6 +143,8 @@ export function AlimtalkSendSection() {
           onClose={handleTemplateModalClose}
           onPreview={setPreviewTemplate}
           onUse={handleTemplateUse}
+          isUseEnabled={isAlimtalkTemplateApproved}
+          useButtonLabel="템플릿 사용"
           zIndex={TEMPLATE_PICKER_Z_INDEX}
         />
       ) : null}

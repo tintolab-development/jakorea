@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { FormResponseDetailResponseAnswers } from './formResponseDetailResponseAnswers';
+import type { FormResponseDetailResponseForm } from './formResponseDetailResponseForm';
 import type { FormResponseFile } from './formResponseFile';
 
 export interface FormResponseDetailResponse {
@@ -23,6 +24,8 @@ export interface FormResponseDetailResponse {
   rejectReason?: string;
   answers?: FormResponseDetailResponseAnswers;
   files?: FormResponseFile[];
+  /** UJAT 교육계획서·교육일지 제출 당시의 불변 양식 스냅샷. 해당 문서가 아니면 null */
+  form?: FormResponseDetailResponseForm;
   retentionExpiresAt?: string;
   retentionExpired?: boolean;
   canResubmit?: boolean;

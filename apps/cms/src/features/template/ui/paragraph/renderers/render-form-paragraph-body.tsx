@@ -11,6 +11,9 @@ import {
   UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import type { UseFormReturn } from 'react-hook-form'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
 import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import {
@@ -169,6 +172,12 @@ export type RenderFormParagraphBodyOptions = {
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   /** UJAT 프로그램 등록 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramRegistration?: boolean
+  /** UJAT 등록 Wizard 공통정보 RHF — Overlay Store를 거치지 않는 입력 정본 */
+  ujatProgramRegistrationBasicInfoForm?: UseFormReturn<ProgramDetailEditFormValues>
+  /** true이면 UJAT 공통정보 단락이 Legacy Overlay hook을 호출하지 않는다. */
+  ujatProgramRegistrationBasicInfoOverlayFree?: boolean
+  /** UJAT H1/H2 교육 일정 Typed RHF 정본 */
+  ujatProgramRegistrationEducationScheduleForm?: UseFormReturn<UjatTypedDetail>
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -276,6 +285,11 @@ export type RenderFormParagraphBodyOptions = {
   surveyPeriodReadonly?: boolean
   /** 강의보고서 프로그램 진행 정보 — 프로그램·배정 연동 미리보기(템플릿 안내 대신 실값) */
   lectureReportProgramLinkedPreview?: boolean
+  /** 제출 강의보고서 미리보기 — 실제 첨부 파일 메타데이터 */
+  lectureReportFiles?: readonly {
+    fileObjectId: number
+    originalFileName?: string
+  }[]
   /** 회원 동의 작성(fill) — 제목형「작성 기간」본문 슬롯 숨김 */
   hideSurveyWritingPeriod?: boolean
 }
@@ -482,9 +496,7 @@ export function renderFormParagraphBody(
       const tableCanvasInteractive =
         !structureLocked &&
         paragraphInteractionMode === 'authoring' &&
-        (hp.tableFlavor === 'field' ||
-          hp.tableFlavor === 'text' ||
-          isParagraphSelected)
+        (hp.tableFlavor === 'field' || hp.tableFlavor === 'text' || isParagraphSelected)
       const lockedBodyColumnIndexes = structureLockedPartialTextEdit
         ? getStructureLockedPartialLockedBodyColumnIndexes(hp.id, hp.columnHeaders.length)
         : undefined
@@ -518,10 +530,12 @@ export function renderFormParagraphBody(
           }
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
-          programApplicationFormInstitution={options?.programApplicationFormInstitution}
-          programLinkedInstitutionApplicationForm={
-            options?.programLinkedInstitutionApplicationForm
+          ujatProgramRegistrationBasicInfoForm={options?.ujatProgramRegistrationBasicInfoForm}
+          ujatProgramRegistrationBasicInfoOverlayFree={
+            options?.ujatProgramRegistrationBasicInfoOverlayFree
           }
+          programApplicationFormInstitution={options?.programApplicationFormInstitution}
+          programLinkedInstitutionApplicationForm={options?.programLinkedInstitutionApplicationForm}
           programApplicationFormEconomyInstitution={
             options?.programApplicationFormEconomyInstitution
           }
@@ -547,9 +561,7 @@ export function renderFormParagraphBody(
             options?.applicantRecruitInstitutionTemplateAuthoringMode
           }
           economyRecruitFormInstitution={options?.economyRecruitFormInstitution}
-          trainedTeachersRecruitFormInstitution={
-            options?.trainedTeachersRecruitFormInstitution
-          }
+          trainedTeachersRecruitFormInstitution={options?.trainedTeachersRecruitFormInstitution}
           ujatRecruitFormInstitution={options?.ujatRecruitFormInstitution}
           applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}
           recruitFormInstructor={options?.recruitFormInstructor}
@@ -562,15 +574,14 @@ export function renderFormParagraphBody(
               ? undefined
               : {
                   ...options.programApplicationFormInstructor,
-                  isTemplateAuthoringMode: resolveProgramApplicationFormScheduleIsTemplateAuthoringMode(
-                    {
+                  isTemplateAuthoringMode:
+                    resolveProgramApplicationFormScheduleIsTemplateAuthoringMode({
                       paragraphInteractionMode,
                       programLinkedPreview:
                         options.programApplicationFormInstructor.programLinkedPreview,
                       registrationWizardApplicationSchedulePlaceholder:
                         options.registrationWizardApplicationSchedulePlaceholder,
-                    }
-                  ),
+                    }),
                   readOnlyPreview: isPreviewReadonly,
                 }
           }
@@ -579,15 +590,14 @@ export function renderFormParagraphBody(
               ? undefined
               : {
                   ...options.programApplicationFormVolunteer,
-                  isTemplateAuthoringMode: resolveProgramApplicationFormScheduleIsTemplateAuthoringMode(
-                    {
+                  isTemplateAuthoringMode:
+                    resolveProgramApplicationFormScheduleIsTemplateAuthoringMode({
                       paragraphInteractionMode,
                       programLinkedPreview:
                         options.programApplicationFormVolunteer.programLinkedPreview,
                       registrationWizardApplicationSchedulePlaceholder:
                         options.registrationWizardApplicationSchedulePlaceholder,
-                    }
-                  ),
+                    }),
                   readOnlyPreview: isPreviewReadonly,
                 }
           }
@@ -645,8 +655,7 @@ export function renderFormParagraphBody(
         !isPreviewReadonly &&
         !structureLocked
       const dateTimeCellsInteractive = isBodyInteractive || lockedAuthoringChoicePreview
-      const tableCanvasInteractive =
-        !structureLocked && paragraphInteractionMode === 'authoring'
+      const tableCanvasInteractive = !structureLocked && paragraphInteractionMode === 'authoring'
       const verticalTableEditMode = isVerticalTextTableAuthoringEdit || isBodyInteractive
       return (
         <VerticalTableParagraphBody
@@ -708,10 +717,7 @@ export function renderFormParagraphBody(
       if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
       return <StaticDescriptionLines paragraph={p} />
     case 'short_essay': {
-      if (
-        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject &&
-        paragraphInteractionMode === 'user'
-      ) {
+      if (p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject && paragraphInteractionMode === 'user') {
         return (
           <AgreementNoticeSubjectFillFields
             paragraph={p}
@@ -822,10 +828,8 @@ export function renderFormParagraphBody(
               )
           : undefined
       const suppressMcItemsEditor =
-        structureLocked ||
-        isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(p.id)
-      const usesMcItemsFocus =
-        !suppressMcItemsEditor && options?.onSelectSingleItemListItem != null
+        structureLocked || isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(p.id)
+      const usesMcItemsFocus = !suppressMcItemsEditor && options?.onSelectSingleItemListItem != null
       const itemsEditActive = suppressMcItemsEditor
         ? false
         : usesMcItemsFocus
@@ -915,12 +919,11 @@ export function renderFormParagraphBody(
        * 구조 잠금 시드(UJAT 봉사자 정보 등)도 authoring에서 노출 필드 칩 토글 허용.
        * (카드 미선택이어도 가능 — 미리보기·저장의 selectedUserFieldKeys 연동)
        */
-      const isUserInfoFieldSelectEditMode =
-        isPreviewReadonly
-          ? false
-          : structureLocked && paragraphInteractionMode === 'authoring'
-            ? true
-            : isBodyInteractive
+      const isUserInfoFieldSelectEditMode = isPreviewReadonly
+        ? false
+        : structureLocked && paragraphInteractionMode === 'authoring'
+          ? true
+          : isBodyInteractive
       return (
         <UserInfo
           paragraph={p}

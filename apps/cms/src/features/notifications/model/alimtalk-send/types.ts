@@ -1,6 +1,6 @@
 export const ALIMTALK_SEND_ALL_PROGRAM_ID = 'all'
-/** 수신자 설정 팝업 — 기획: 한 페이지 최대 50명 */
-export const ALIMTALK_SEND_PICKER_PAGE_SIZE = 50
+/** 수신자 설정 팝업 — 한 페이지 5행 */
+export const ALIMTALK_SEND_PICKER_PAGE_SIZE = 5
 
 export type AlimtalkSendTiming = 'immediate' | 'scheduled'
 export type AlimtalkSendRecipientSource = 'program' | 'manual'
@@ -40,6 +40,11 @@ export type AlimtalkSendRecipient = {
   /** BE RecipientRequest.actorType — MEMBER / DIRECT 등 */
   actorType?: string
   actorId?: number
+  /**
+   * 수신자별 수동 변수.
+   * SYSTEM·서버 예약 키는 발송 요청에 넣지 않는다.
+   */
+  variables?: Record<string, string>
 }
 
 export type AlimtalkSendRecipientSearchParams = {

@@ -284,7 +284,10 @@ export function parseGeneralCommonInfoRhfValidation(
   }
 }
 
-/** 커리큘럼형 복수 회차 + 날짜 지정 — 회차 수와 예정일 줄 수 불일치 */
+/**
+ * 커리큘럼형 복수 회차 + 날짜 지정 — 회차 수와 예정일 줄 수 불일치.
+ * 사전교육 진행 일정은 별도 필드이므로 교육 진행 예정일 줄 수와 비교하지 않는다.
+ */
 export function hasRhfCurriculumMultiDateScheduleCountMismatch(
   values: GeneralProgramCommonInfoEditFormValues
 ): boolean {

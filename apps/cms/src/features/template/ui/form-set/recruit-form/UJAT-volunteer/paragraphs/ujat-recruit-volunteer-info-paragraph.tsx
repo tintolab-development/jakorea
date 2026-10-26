@@ -1,9 +1,11 @@
 import type { Program } from '@/types/domain'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
+import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   programToUjatRecruitTemplateFormValues,
   useUjatRecruitTemplateFormOverlaySync,
 } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
+import { useUjatRecruitTemplateFormTypedSync } from '@/features/program/ujat/lib/ujat-recruit-template-typed-state'
 import { useUjatRecruitTemplateProgram } from '@/features/program/ujat/lib/use-ujat-recruit-template-program'
 import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-volunteer-recruit-template-preview-program'
 import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
@@ -15,6 +17,30 @@ import { UjatRecruitVolunteerInfoProgramView } from '@/features/program/ujat/ui/
 import '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/volunteer-info-program.css'
 
 function UjatRecruitVolunteerInfoTemplateEditor({
+  volunteerHalf = 'h2',
+  templateCode,
+  templateAuthoring = false,
+}: {
+  volunteerHalf?: 'h1' | 'h2'
+  templateCode?: string
+  templateAuthoring?: boolean
+}) {
+  if (templateAuthoring && templateCode) {
+    return (
+      <UjatRecruitVolunteerInfoTypedTemplateEditor
+        volunteerHalf={volunteerHalf}
+        templateCode={templateCode}
+      />
+    )
+  }
+  return (
+    <UjatRecruitVolunteerLegacyTemplateEditor
+      volunteerHalf={volunteerHalf}
+    />
+  )
+}
+
+function UjatRecruitVolunteerLegacyTemplateEditor({
   volunteerHalf = 'h2',
 }: {
   volunteerHalf?: 'h1' | 'h2'
@@ -29,6 +55,40 @@ function UjatRecruitVolunteerInfoTemplateEditor({
       program={program}
       revision={revision}
       volunteerHalf={volunteerHalf}
+    />
+  )
+}
+
+function UjatRecruitVolunteerInfoTypedTemplateEditor({
+  volunteerHalf,
+  templateCode,
+}: {
+  volunteerHalf: 'h1' | 'h2'
+  templateCode: string
+}) {
+  const program = UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM
+  const form = useProgramDetailEditForm({
+    program,
+    isEditMode: true,
+    resetOnProgramChange: false,
+    mapToValues: programToDetailEditValues,
+  })
+  useUjatRecruitTemplateFormTypedSync(form, {
+    templateCode,
+    kind: 'volunteer',
+    volunteerHalf,
+  })
+
+  return (
+    <UjatRecruitVolunteerInfoProgramView
+      program={program}
+      sponsorName={program.managerName}
+      form={form}
+      isEdit
+      volunteerHalf={volunteerHalf}
+      showNoticeExposure={volunteerHalf === 'h2'}
+      hideSectionHeader
+      isTemplateAuthoring
     />
   )
 }
@@ -82,5 +142,11 @@ export function UjatRecruitVolunteerInfoParagraph(props: UjatRecruitParagraphPro
       />
     )
   }
-  return <UjatRecruitVolunteerInfoTemplateEditor volunteerHalf={props.volunteerHalf ?? 'h2'} />
+  return (
+    <UjatRecruitVolunteerInfoTemplateEditor
+      volunteerHalf={props.volunteerHalf ?? 'h2'}
+      templateCode={props.templateCode}
+      templateAuthoring={props.templateAuthoring}
+    />
+  )
 }

@@ -1,7 +1,7 @@
 import type { SmsMessageType } from '@/features/notifications/api/adapters/sms-channel'
 
 export const SMS_SEND_ALL_PROGRAM_ID = 'all'
-export const SMS_SEND_PICKER_PAGE_SIZE = 50
+export const SMS_SEND_PICKER_PAGE_SIZE = 5
 export const SMS_SEND_DEFAULT_PROGRAM_ID = ''
 
 export type SmsSendTiming = 'immediate' | 'scheduled'
@@ -32,6 +32,11 @@ export type SmsSendRecipient = {
   source: SmsSendRecipientSource
   actorType?: string
   actorId?: number
+  /**
+   * 수신자별 수동 변수.
+   * SYSTEM·서버 예약 키는 발송 요청에 넣지 않는다.
+   */
+  variables?: Record<string, string>
 }
 
 export type SmsSendRecipientSearchParams = {

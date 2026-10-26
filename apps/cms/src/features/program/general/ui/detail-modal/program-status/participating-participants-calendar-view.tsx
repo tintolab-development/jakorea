@@ -32,43 +32,38 @@ dayjs.extend(isSameOrBefore)
 
 function ParticipatingParticipantCalendarPopoverContent({
   events,
-  titleColorMap,
 }: {
   events: ParticipatingIndividualParticipantCalendarEvent[]
   titleColorMap: Map<string, string>
 }) {
   return (
-    <div className="participating-institutions-calendar-popover">
+    <div className="calendar-preview-popover">
       {events.map(ev => {
         const { participant, session } = ev.originalItem
-        const titleColor = titleColorMap.get(String(ev.id))
         const sessionLine = formatInstitutionCalendarSessionTimeDisplay(session)
         const affiliation = participant.affiliation?.trim() || '-'
         const grade = participant.educationGrade?.trim() || '-'
 
         return (
-          <div key={ev.id} className="participating-institutions-calendar-popover__entry">
-            <div
-              className="participating-institutions-calendar-popover__title"
-              style={titleColor ? { color: titleColor } : undefined}
-            >
+          <div key={ev.id} className="calendar-preview-popover__entry">
+            <div className="calendar-preview-popover__title">
               {participant.applicantName?.trim() || '-'}
             </div>
-            <div className="participating-institutions-calendar-popover__meta">
-              <span className="participating-institutions-calendar-popover__meta-part">
+            <div className="calendar-preview-popover__meta">
+              <span className="calendar-preview-popover__meta-part">
                 {affiliation}
               </span>
-              <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
-              <span className="participating-institutions-calendar-popover__meta-part">
+              <span className="calendar-preview-popover__meta-sep" aria-hidden />
+              <span className="calendar-preview-popover__meta-part">
                 {grade}
               </span>
               {sessionLine !== '-' ? (
                 <>
                   <span
-                    className="participating-institutions-calendar-popover__meta-sep"
+                    className="calendar-preview-popover__meta-sep"
                     aria-hidden
                   />
-                  <span className="participating-institutions-calendar-popover__meta-part participating-institutions-calendar-popover__meta-part--session">
+                  <span className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session">
                     {sessionLine}
                   </span>
                 </>

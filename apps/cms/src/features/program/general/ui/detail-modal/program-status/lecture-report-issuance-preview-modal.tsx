@@ -34,7 +34,14 @@ export interface LectureReportIssuancePreviewModalProps {
 
 function PreviewPagePrevIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
+      fill="none"
+      aria-hidden
+    >
       <mask
         id="lecture-report-preview-page-nav-prev-mask"
         style={{ maskType: 'alpha' }}
@@ -58,7 +65,14 @@ function PreviewPagePrevIcon() {
 
 function PreviewPageNextIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
+      fill="none"
+      aria-hidden
+    >
       <mask
         id="lecture-report-preview-page-nav-next-mask"
         style={{ maskType: 'alpha' }}
@@ -108,13 +122,13 @@ export function LectureReportIssuancePreviewModal({
       paragraphBodyOptions: {
         ...base.paragraphBodyOptions,
         lectureReportProgramLinkedPreview: true,
+        lectureReportFiles: context?.content?.files ?? [],
       },
     }
-  }, [])
+  }, [context?.content?.files])
 
   const previewParagraphs = useMemo(
-    () =>
-      getA4PreviewParagraphs(draft?.paragraphs ?? [], a4Preview.a4HiddenParagraphIds),
+    () => getA4PreviewParagraphs(draft?.paragraphs ?? [], a4Preview.a4HiddenParagraphIds),
     [a4Preview.a4HiddenParagraphIds, draft?.paragraphs]
   )
 
@@ -134,7 +148,9 @@ export function LectureReportIssuancePreviewModal({
   const currentPageParagraphs = pages[safePageIndex] ?? []
   const titleNumbering = draft?.formSettings.titleNumbering ?? 'none'
   const surveyTitle =
-    draft != null ? getA4DocumentTitle(draft, LECTURE_REPORT_DOCUMENT_TITLE) : LECTURE_REPORT_DOCUMENT_TITLE
+    draft != null
+      ? getA4DocumentTitle(draft, LECTURE_REPORT_DOCUMENT_TITLE)
+      : LECTURE_REPORT_DOCUMENT_TITLE
 
   const handlePrevPage = useCallback(() => {
     setCurrentPageIndex(prev => Math.max(0, prev - 1))
@@ -164,7 +180,10 @@ export function LectureReportIssuancePreviewModal({
       await downloadFormDocumentPdfFromPageElements(pageEls, `${fileName}.pdf`)
     } catch (e) {
       handleError(e, { context: 'lectureReportIssuancePreviewModal.downloadPdf' })
-      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
+      showAlert({
+        title: '안내',
+        content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      })
     } finally {
       setPdfLoading(false)
     }
@@ -276,7 +295,11 @@ export function LectureReportIssuancePreviewModal({
       </TealHeaderModal>
 
       {open ? (
-        <div ref={pdfHostRef} className="lecture-report-issuance-preview-modal__pdf-host" aria-hidden="true">
+        <div
+          ref={pdfHostRef}
+          className="lecture-report-issuance-preview-modal__pdf-host"
+          aria-hidden="true"
+        >
           {pages.map((pageParagraphs, pageIndex) => (
             <A4DocumentPageLayout
               key={pageIndex}

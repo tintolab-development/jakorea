@@ -6,7 +6,6 @@ import { Controller } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
   INTERVIEW_METHOD_OPTIONS,
   parseVolunteerTargetsSelectValue,
@@ -31,7 +30,7 @@ import {
   resolveGeneralProgramVolunteerRecruitmentDisplay,
   resolveVolunteerRecruitmentInterviewEnabled,
 } from '@/features/program/general/lib/volunteer-recruitment-display'
-import { syncVolunteerInterviewRangeSealOverlay } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import { syncVolunteerInterviewRangeSealOverlay } from '@/features/template/ui/form-set/recruit-form/volunteer/volunteer-recruit-form-rhf'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './volunteer-recruitment-info-view.css'
@@ -64,7 +63,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
     <span
       className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
     >
-      {display.recruitmentStatusLabel || getProgramLifecycleLabel(lifecycle)}
+      {display.recruitmentStatusLabel}
     </span>
   ) : (
     display.recruitmentStatusLabel

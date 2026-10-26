@@ -57,7 +57,15 @@ export function UjatDevAutofillToolbar({
     setRunning(true)
     try {
       const result = await applyUjatDevAutofillCase({ caseId, businessYear })
-      window.dispatchEvent(new Event('cms:registration-dev-autofill-complete'))
+      window.dispatchEvent(
+        new CustomEvent('cms:registration-dev-autofill-complete', {
+          detail: {
+            typedEducationSchedule: result.typedEducationSchedule,
+            typedBasicInfo: result.typedBasicInfo,
+            typedRecruitment: result.typedRecruitment,
+          },
+        })
+      )
       showAlert({ title: '자동입력 완료', content: resultContent(result) })
     } catch (error) {
       showAlert({

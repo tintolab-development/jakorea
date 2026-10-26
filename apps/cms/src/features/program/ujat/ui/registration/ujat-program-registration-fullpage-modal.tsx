@@ -16,11 +16,6 @@ import {
   recruitmentPreviewAudienceFromUjatRegistrationStep,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import {
-  buildUjatProgramListRowFromRegistrationSnapshot,
-  collectUjatRegistrationCreateOverlay,
-} from '@/features/program/ujat/lib/ujat-registration-local-save'
-import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import {
   ParticipantRecruitmentPreviewModal,
   type RecruitmentUserPreviewAudience,
 } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
@@ -30,7 +25,7 @@ import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/reg
 import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
 import type { Program } from '@/types/domain'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { deleteRegistrationProgramDraftRemote } from '@/features/program/general/lib/registration-program-draft-session'
+import { hasPendingRegistrationFormApplyFailures } from '@/features/program/general/lib/apply-registration-forms-after-create'
 import {
   clearRegistrationDraftForFreshStart,
   peekRegistrationDraftNotice,
@@ -126,6 +121,7 @@ function UjatProgramRegistrationFullpageModalInner({
 
   const initialStep = useMemo(() => {
     const raw = searchParams.get(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    if (raw == null) return undefined
     return normalizeUjatProgramRegistrationStepKey(raw)
   }, [searchParams])
 
@@ -141,10 +137,11 @@ function UjatProgramRegistrationFullpageModalInner({
   useEffect(() => {
     if (!open) return
     if (searchParams.has(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)) return
+    if (!skipDraftRestore) return
     const next = new URLSearchParams(searchParams)
     next.set(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
     setSearchParams(next, { replace: true })
-  }, [open, searchParams, setSearchParams])
+  }, [open, searchParams, setSearchParams, skipDraftRestore])
 
   useEffect(() => {
     if (open) return
@@ -163,7 +160,7 @@ function UjatProgramRegistrationFullpageModalInner({
     (program: Program) => {
       invalidateUjatProgramListCaches(queryClient)
       pendingCreatedProgramRef.current = program
-      setCompleteSuccessOpen(true)
+      setCompleteSuccessOpen(!hasPendingRegistrationFormApplyFailures())
     },
     [queryClient]
   )
@@ -182,8 +179,8 @@ function UjatProgramRegistrationFullpageModalInner({
     const created = pendingCreatedProgramRef.current
     pendingCreatedProgramRef.current = undefined
     setCompleteSuccessOpen(false)
-    void deleteRegistrationProgramDraftRemote('UJAT')
-    if (shouldRemoveSavedDraftAfterCompletion) {
+    // 서버 임시저장 DELETE 없음 — 임시저장은 localStorage 전용.
+    if (shouldRemoveSavedDraftAfterCompletion && !hasPendingRegistrationFormApplyFailures()) {
       void clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
     }
     if (created != null) {
@@ -215,15 +212,8 @@ function UjatProgramRegistrationFullpageModalInner({
 
   const handlePreview = useCallback(() => {
     if (flow.phase === 'recruitment') {
-      const overlay = collectUjatRegistrationCreateOverlay(
-        getUjatProgramRegistrationOverlayRecord()
-      )
-      setRecruitmentPreviewProgram(
-        buildUjatProgramListRowFromRegistrationSnapshot({
-          id: 'registration-preview',
-          overlay,
-        })
-      )
+      if (flow.recruitmentPreviewProgram == null) return
+      setRecruitmentPreviewProgram(flow.recruitmentPreviewProgram)
       setRecruitmentPreviewAudience(
         recruitmentPreviewAudienceFromUjatRegistrationStep(flow.activeStep)
       )

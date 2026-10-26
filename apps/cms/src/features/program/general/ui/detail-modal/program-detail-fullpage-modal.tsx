@@ -69,7 +69,10 @@ import { generalOrganizationApplicationFilterFields } from '@/features/program/g
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
 import { GeneralProgramApplicationView } from './info/application-view'
 import { GeneralProgramApplicationTemplateEditModal } from './info/application-template-edit-modal'
-import type { GeneralApplicationTabKey } from '@/features/program/general/lib/application-tabs'
+import {
+  resolveGeneralApplicationEditorVariant,
+  type GeneralApplicationTabKey,
+} from '@/features/program/general/lib/application-tabs'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import type { Program } from '@/types/domain'
@@ -133,9 +136,13 @@ import { handleError } from '@/shared/utils/error-handler'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { isProgramTypeSettingsSaveBlocked } from '@/features/program/shared/lib/program-edit-window'
 import {
+  PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
   PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
   PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
 } from '@/shared/lib/program-edit-window-error-message'
+import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
+import { assertProgramApplicationFormWritable } from '@/features/program/general/lib/sync-registration-form-bindings'
+import { programForApplicationFormEditor } from '@/features/program/general/lib/operational-form-bindings'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
   canGeneralProgramCommonInfoEdit,
@@ -1331,10 +1338,16 @@ export function ProgramDetailFullPageModal({
   const [volunteerDetailTitle, setVolunteerDetailTitle] = useState<string | null>(null)
   /** 교육받은 교사 — 신청 정보 양식 수정 모달·미리보기 갱신 키 */
   const [trainedTeachersFormEditOpen, setTrainedTeachersFormEditOpen] = useState(false)
+  const [trainedTeachersFormEditPreflightLoading, setTrainedTeachersFormEditPreflightLoading] =
+    useState(false)
   const [trainedTeachersFormPreviewReloadKey, setTrainedTeachersFormPreviewReloadKey] = useState(0)
   /** 1사1교 — 신청 정보 양식 수정 모달·미리보기 갱신 키 */
   const [companySchoolApplicationFormEditOpen, setCompanySchoolApplicationFormEditOpen] =
     useState(false)
+  const [
+    companySchoolApplicationFormEditPreflightLoading,
+    setCompanySchoolApplicationFormEditPreflightLoading,
+  ] = useState(false)
   const [companySchoolApplicationPreviewReloadKey, setCompanySchoolApplicationPreviewReloadKey] =
     useState(0)
 
@@ -1978,6 +1991,54 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
 
+  const handleTrainedTeachersApplicationEditForm = useCallback(() => {
+    if (displayProgram == null || trainedTeachersFormEditPreflightLoading) return
+    const variant = 'trained-teachers-application-institution' as const
+    const templateCode = getTemplateIdForParticipantApplicationVariant(variant)
+    const scopedProgram = programForApplicationFormEditor(displayProgram, variant)
+    setTrainedTeachersFormEditPreflightLoading(true)
+    void assertProgramApplicationFormWritable(scopedProgram, templateCode)
+      .then(() => setTrainedTeachersFormEditOpen(true))
+      .catch(error => {
+        void showAlert({
+          title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
+          content:
+            error instanceof Error && error.message.trim() !== ''
+              ? error.message
+              : '신청서 현황을 확인하지 못해 양식을 수정할 수 없습니다. 다시 시도해 주세요.',
+        })
+      })
+      .finally(() => setTrainedTeachersFormEditPreflightLoading(false))
+  }, [displayProgram, showAlert, trainedTeachersFormEditPreflightLoading])
+
+  const handleCompanySchoolApplicationEditForm = useCallback(() => {
+    if (displayProgram == null || companySchoolApplicationFormEditPreflightLoading) return
+    const variant = resolveGeneralApplicationEditorVariant(
+      displayProgram,
+      activeCompanySchoolApplicationTab
+    )
+    const templateCode = getTemplateIdForParticipantApplicationVariant(variant)
+    const scopedProgram = programForApplicationFormEditor(displayProgram, variant)
+    setCompanySchoolApplicationFormEditPreflightLoading(true)
+    void assertProgramApplicationFormWritable(scopedProgram, templateCode)
+      .then(() => setCompanySchoolApplicationFormEditOpen(true))
+      .catch(error => {
+        void showAlert({
+          title: PROGRAM_APPLICATION_FORM_EDIT_BLOCKED_ALERT_TITLE,
+          content:
+            error instanceof Error && error.message.trim() !== ''
+              ? error.message
+              : '신청서 현황을 확인하지 못해 양식을 수정할 수 없습니다. 다시 시도해 주세요.',
+        })
+      })
+      .finally(() => setCompanySchoolApplicationFormEditPreflightLoading(false))
+  }, [
+    activeCompanySchoolApplicationTab,
+    companySchoolApplicationFormEditPreflightLoading,
+    displayProgram,
+    showAlert,
+  ])
+
   if (!open) return null
 
   const pNorm = location.pathname.replace(/\/$/, '') || '/'
@@ -2086,7 +2147,8 @@ export function ProgramDetailFullPageModal({
             <TrainedTeachersApplicationInfoView
               program={displayProgram}
               canWrite
-              onEditForm={() => setTrainedTeachersFormEditOpen(true)}
+              onEditForm={handleTrainedTeachersApplicationEditForm}
+              editFormLoading={trainedTeachersFormEditPreflightLoading}
               previewReloadKey={trainedTeachersFormPreviewReloadKey}
             />
           )}
@@ -2101,7 +2163,8 @@ export function ProgramDetailFullPageModal({
               showInstructorTab
               showVolunteerTab={false}
               canWrite
-              onEditForm={() => setCompanySchoolApplicationFormEditOpen(true)}
+              onEditForm={handleCompanySchoolApplicationEditForm}
+              editFormLoading={companySchoolApplicationFormEditPreflightLoading}
               previewReloadKey={companySchoolApplicationPreviewReloadKey}
             />
           )}

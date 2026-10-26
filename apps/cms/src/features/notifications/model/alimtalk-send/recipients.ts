@@ -1,4 +1,7 @@
-import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import {
+  formatKoreanPhoneNumber,
+  isValidKoreanPhoneNumber,
+} from '@jakorea/domain/shared/korean-phone'
 import type {
   AlimtalkSendMemberType,
   AlimtalkSendParticipationType,
@@ -91,18 +94,105 @@ export function normalizeAlimtalkSendPhone(value: string): string {
   return formatKoreanPhoneNumber(value.trim())
 }
 
+export const ALIMTALK_DUPLICATE_PHONE_MESSAGE =
+  '같은 휴대폰 번호는 1건만 발송 대상에 포함됩니다.'
+
+export type AlimtalkPhoneDuplicateNotice = {
+  kept: AlimtalkSendRecipient
+  skipped: AlimtalkSendRecipient
+}
+
+function describeAlimtalkDuplicateRecipient(recipient: AlimtalkSendRecipient): string {
+  const kind =
+    recipient.source === 'manual' || recipient.actorType === 'DIRECT' ? '직접 입력' : '회원'
+  const name = recipient.name?.trim()
+  const named = name && name !== '-' ? `${kind} ${name}` : kind
+  return recipient.actorId != null ? `${named} (actorId ${recipient.actorId})` : named
+}
+
+/** 하이픈 차이를 없앤 비교 키. 마스킹·미완성 번호는 중복으로 보지 않는다. */
+export function alimtalkSendPhoneDedupKey(phone: string): string | null {
+  if (phone.includes('*')) return null
+  if (!isValidKoreanPhoneNumber(phone)) return null
+  const digits = phone.replace(/\D/g, '')
+  return digits || null
+}
+
+/**
+ * 수신자 ID가 달라도 같은 휴대폰 번호는 먼저 들어온 1건만 남긴다.
+ * 회원-회원, 회원-직접입력, 직접입력-직접입력에 같이 적용한다.
+ */
+export function dedupeAlimtalkSendRecipients(
+  recipients: AlimtalkSendRecipient[]
+): AlimtalkSendRecipient[] {
+  const next: AlimtalkSendRecipient[] = []
+  const seenIds = new Set<string>()
+  const seenPhones = new Set<string>()
+  for (const recipient of recipients) {
+    if (seenIds.has(recipient.id)) continue
+    const phoneKey = alimtalkSendPhoneDedupKey(recipient.phone)
+    if (phoneKey && seenPhones.has(phoneKey)) continue
+    seenIds.add(recipient.id)
+    if (phoneKey) seenPhones.add(phoneKey)
+    next.push(recipient)
+  }
+  return next
+}
+
 export function mergeAlimtalkSendRecipients(
   current: AlimtalkSendRecipient[],
   incoming: AlimtalkSendRecipient[]
 ): AlimtalkSendRecipient[] {
-  const next = [...current]
-  const seen = new Set(current.map(item => item.id))
-  for (const recipient of incoming) {
-    if (seen.has(recipient.id)) continue
-    seen.add(recipient.id)
-    next.push(recipient)
+  return dedupeAlimtalkSendRecipients([...current, ...incoming])
+}
+
+export function countDroppedAlimtalkSendRecipients(
+  current: AlimtalkSendRecipient[],
+  incoming: AlimtalkSendRecipient[]
+): number {
+  const mergedIds = new Set(mergeAlimtalkSendRecipients(current, incoming).map(item => item.id))
+  const currentIds = new Set(current.map(item => item.id))
+  return incoming.filter(item => !mergedIds.has(item.id) && !currentIds.has(item.id)).length
+}
+
+/**
+ * 같은 번호는 먼저 있던 수신자를 유지한다.
+ * 변수값·actorId는 합치지 않는다. 마스킹 번호는 키가 없어 여기 포함되지 않는다.
+ */
+export function listAlimtalkPhoneDuplicateNotices(
+  current: AlimtalkSendRecipient[],
+  incoming: AlimtalkSendRecipient[]
+): AlimtalkPhoneDuplicateNotice[] {
+  const keptByPhone = new Map<string, AlimtalkSendRecipient>()
+  const notices: AlimtalkPhoneDuplicateNotice[] = []
+  for (const recipient of [...current, ...incoming]) {
+    const phoneKey = alimtalkSendPhoneDedupKey(recipient.phone)
+    if (!phoneKey) continue
+    const kept = keptByPhone.get(phoneKey)
+    if (!kept) {
+      keptByPhone.set(phoneKey, recipient)
+      continue
+    }
+    if (kept.id === recipient.id) continue
+    notices.push({ kept, skipped: recipient })
   }
-  return next
+  return notices
+}
+
+export function formatAlimtalkPhoneDuplicateMessage(
+  notices: AlimtalkPhoneDuplicateNotice[]
+): string {
+  if (notices.length === 0) return ALIMTALK_DUPLICATE_PHONE_MESSAGE
+  const lines = [
+    '같은 휴대폰 번호는 1건만 발송합니다. 이미 있는 수신자를 유지하고, 새로 고른 같은 번호는 추가하지 않습니다.',
+  ]
+  for (const notice of notices.slice(0, 8)) {
+    lines.push(
+      `${notice.kept.phone}: 유지 ${describeAlimtalkDuplicateRecipient(notice.kept)} / 제외 ${describeAlimtalkDuplicateRecipient(notice.skipped)}`
+    )
+  }
+  if (notices.length > 8) lines.push(`외 ${notices.length - 8}건`)
+  return lines.join('\n')
 }
 
 export function filterAlimtalkSendRecipients(
@@ -134,7 +224,11 @@ export function manualRecipientId(phone: string): string {
   return `manual-${normalizeAlimtalkSendPhone(phone).replace(/\D/g, '')}`
 }
 
-export function createManualRecipient(phone: string, name = ''): AlimtalkSendRecipient {
+export function createManualRecipient(
+  phone: string,
+  name = '',
+  variables?: Record<string, string>
+): AlimtalkSendRecipient {
   const normalized = normalizeAlimtalkSendPhone(phone)
   return {
     id: manualRecipientId(normalized),
@@ -144,6 +238,7 @@ export function createManualRecipient(phone: string, name = ''): AlimtalkSendRec
     phone: normalized,
     source: 'manual',
     actorType: 'DIRECT',
+    ...(variables ? { variables: { ...variables } } : {}),
   }
 }
 

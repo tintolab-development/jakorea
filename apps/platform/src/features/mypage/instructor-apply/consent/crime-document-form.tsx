@@ -7,6 +7,10 @@ import {
   PFItemDeleteButton,
   PFText,
 } from '@/shared/ui'
+import {
+  formatSingleFileUploadHint,
+  validateUploadFileSize,
+} from '@/shared/lib/file-upload-policy'
 import { submitPortalCrimeConsentComplete } from '../../settings/lib/submit-portal-consent-document'
 import type { InstructorApplyConsentKey } from './catalog'
 import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
@@ -23,7 +27,7 @@ const PDF_FILE_NAME_PATTERN = /\.pdf$/i
 const IMAGE_FILE_NAME_PATTERN = /\.(jpe?g|png)$/i
 
 const CRIME_CONSENT_UPLOAD_HINTS = [
-  '파일은 최대 20MB까지 PDF, JPG, PNG 형식만 등록 가능합니다.',
+  formatSingleFileUploadHint('PDF, JPG, PNG'),
   '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 
@@ -72,8 +76,9 @@ export function CrimeConsentDocumentForm({
       setAlertMessage(CRIME_CONSENT_FILE_TYPE_ALERT_MESSAGE)
       return
     }
-    if (file.size > 20 * 1024 * 1024) {
-      setAlertMessage('파일은 20MB 이하만 업로드할 수 있습니다.')
+    const sizeError = validateUploadFileSize(file)
+    if (sizeError) {
+      setAlertMessage(sizeError)
       return
     }
     setUploading(true)

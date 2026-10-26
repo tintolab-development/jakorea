@@ -14,6 +14,7 @@ import type { GeminiApprovedTrainingRow, GeminiApprovedTrainingStatus } from './
 import { getGeminiApprovedTrainingRowsSnapshot } from './approved-training-store'
 import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee-grade'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
+import { mapGeminiTrainingDateCandidates } from '../../lib/approved/training-date-candidates'
 
 function toId(value: number | string | null | undefined): string {
   if (value == null) return ''
@@ -103,6 +104,7 @@ export function mapGeminiApprovedTrainingDetailResponseToDetail(
     institutionName: trimmed(dto.institutionName) || '기관명 없음',
     trainingDate: trimmed(dto.trainingDate),
     trainingTimeText: trimmed(dto.trainingTimeText) || '-',
+    trainingDateCandidates: mapGeminiTrainingDateCandidates(dto.trainingDateCandidates),
     studentCount: dto.studentCount ?? null,
     recruitmentCount: dto.institutionApplicationCount ?? null,
     completedRecruitmentCount: dto.institutionCompletedTrainingCount ?? null,
@@ -206,6 +208,7 @@ export function mapGeminiApprovedTrainingRowToDetail(
     institutionName: row.institutionName,
     trainingDate: row.trainingDate,
     trainingTimeText: row.trainingTimeText,
+    trainingDateCandidates: row.trainingDateCandidates,
     studentCount: row.studentCount,
     instructor: emptyInstructor(),
     officialDocumentType: row.officialDocumentRequired ? '필요' : '필요 없음',

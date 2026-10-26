@@ -35,10 +35,6 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS as IK } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
 import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS as VK } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
-import {
-  hasIncompleteUjatProgramRegistrationWizardRequiredFields,
-  listIncompleteUjatProgramRegistrationWizardRequiredFields,
-} from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 
 vi.mock('@/features/sponsor/api/admin-sponsors-service', () => ({
   shouldUseSponsorsRemoteApi: () => false,
@@ -71,12 +67,11 @@ describe('UJAT DEV 자동입력 — 단계별 필드', () => {
     expect(overlay['ujat.basicInfo.operationAnchorIso']).toBe(operationRange.start)
     expect(overlay['ujat.h1.event.range']).toBeTruthy()
     expect(overlay['ujat.h2.event.range']).toBeTruthy()
-    expect(overlay['ujat.capacity.byRegion']).toBeTruthy()
-    expect(overlay['ujat.wage.paymentItemValues']).toBeTruthy()
+    expect(overlay['ujat.capacity.byRegion']).toBeUndefined()
+    expect(overlay['ujat.wage.paymentItemValues']).toBeUndefined()
+    expect(overlay['ujat.kpi.participantCount']).toBeUndefined()
     expect(overlay['ujat.basicInfo.participant.individual']).toBe(false)
     expect(overlay['ujat.basicInfo.participant.teacher']).toBe(false)
-    expect(listIncompleteUjatProgramRegistrationWizardRequiredFields()).toEqual([])
-    expect(hasIncompleteUjatProgramRegistrationWizardRequiredFields()).toBe(false)
   })
 
   it('기관·상반기·하반기 모집의 지원 방법·추가 내용·첨부 상태를 각 scope에 채운다', async () => {

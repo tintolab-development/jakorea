@@ -115,7 +115,7 @@ describe('교육 예정일 CMS·서버 계약', () => {
 
     const detail = serviceDetail(request.serviceDetailJson)
     expect(detail.generalCommonInfo?.educationScheduleLines).toEqual([SERVER_SLOT, SERVER_SLOT_LATER])
-    expect(detail.registrationOverlay?.[SCHEDULE_KEY]).toEqual([SERVER_SLOT, SERVER_SLOT_LATER])
+    expect(detail.registrationOverlay).toBeUndefined()
     expect(detail.registration?.overlay?.[SCHEDULE_KEY]).toEqual([SERVER_SLOT, SERVER_SLOT_LATER])
     expect(detail.program?.generalCommonInfo).toBeUndefined()
     expect(mockParseSlot(CMS_SLOT)).toBeNull()

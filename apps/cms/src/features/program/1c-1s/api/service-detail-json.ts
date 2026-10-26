@@ -13,6 +13,7 @@ import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/gen
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resyncEconomyRegistrationOverlayFromProgram } from '@/features/program/1c-1s/lib/registration-overlay-sync'
 import { preserveCompanySchoolCompatibilityOverlay } from '@/features/program/1c-1s/lib/serialize-registration-overlay-from-canonical'
+import { resolvedRegistrationOverlayOrUndefined } from '@/features/program/shared/lib/resolve-registration-overlay'
 
 export const COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -449,10 +450,7 @@ export function parseCompanySchoolServiceDetailJson(raw?: unknown): Partial<Prog
   if (!parsed) return {}
 
   try {
-    const registrationOverlay =
-      isRecord(parsed.registration) && isRecord(parsed.registration.overlay)
-        ? parsed.registration.overlay
-        : undefined
+    const registrationOverlay = resolvedRegistrationOverlayOrUndefined(parsed)
     const wageSidecar = extractCompanySchoolWageSidecar(parsed)
 
     // FE write envelope

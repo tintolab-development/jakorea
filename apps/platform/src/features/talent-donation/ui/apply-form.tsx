@@ -19,6 +19,7 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
+import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
 import { toApiDate } from '@/shared/lib/public-text'
 import { useCreatePublicTalentApplication } from '../api/hooks'
 import { TALENT_DONATION_PATH } from '../lib/constants'
@@ -180,6 +181,11 @@ export function TalentDonationApplyForm() {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null
     event.target.value = ''
+    const sizeError = file ? validateUploadFileSize(file) : null
+    if (sizeError) {
+      setAlert({ title: '안내', description: sizeError })
+      return
+    }
     setAttachedFile(file)
     setAttachedFileName(file?.name ?? '')
   }

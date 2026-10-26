@@ -1,7 +1,8 @@
 import { Buffer } from 'node:buffer'
-import { expect, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { CompanySchoolRegistrationPage } from '../e2e/pages/company-school-registration.page'
 import {
+  checkVisibleEnabledAgreeRadios,
   clickSectionNavIfVisible,
   detailInfoField,
   fillAllByPlaceholder,
@@ -180,13 +181,26 @@ async function fillIsolatedInstitutionRecruitExtras(page: Page) {
   await fillVisibleRecruitNotes(page)
 }
 
+async function waitActiveWizardTabPanel(page: Page, tab?: Locator) {
+  if (tab && (await tab.isVisible().catch(() => false))) {
+    await expect(tab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
+  }
+  // 탭 템플릿 fetch가 끝나기 전에는 이전 탭 패널 DOM이 잠깐 남는다(G1) — 네트워크가 잠잠해질 때까지 짧게 기다린다.
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined)
+  const panel = page.locator('[role="tabpanel"]:visible').first()
+  if ((await panel.count()) > 0) {
+    await expect(panel).toBeVisible({ timeout: 10_000 })
+  }
+}
+
 async function fillVisibleRecruitNotes(page: Page) {
+  await waitActiveWizardTabPanel(page)
   const notes = page.getByPlaceholder(/비고란을 작성하세요/)
   const count = await notes.count()
   for (let index = 0; index < count; index += 1) {
     const input = notes.nth(index)
     if (!(await input.isVisible().catch(() => false))) continue
-    const value = await input.inputValue().catch(() => '')
+    const value = await input.inputValue({ timeout: 2000 }).catch(() => '')
     if (!value.trim()) await input.fill('-')
   }
 }
@@ -197,9 +211,13 @@ export async function fillRegistrationThroughComplete(page: Page) {
   await registration.goToRecruitment()
   await registration.fillRecruitmentInfo()
   await fillIsolatedInstitutionRecruitExtras(page)
-  await page.getByRole('tab', { name: /강사 모집/ }).click().catch(() => undefined)
+  const instructorRecruitTab = page.getByRole('tab', { name: /강사 모집/ })
+  await instructorRecruitTab.click().catch(() => undefined)
+  await waitActiveWizardTabPanel(page, instructorRecruitTab.first())
   await fillVisibleRecruitNotes(page)
-  await page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ }).click().catch(() => undefined)
+  const institutionRecruitTab = page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ })
+  await institutionRecruitTab.click().catch(() => undefined)
+  await waitActiveWizardTabPanel(page, institutionRecruitTab.first())
   await fillIsolatedInstitutionRecruitExtras(page)
   const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력' })
   if (await requiredDialog.isVisible().catch(() => false)) {
@@ -212,6 +230,7 @@ export async function fillRegistrationThroughComplete(page: Page) {
 }
 
 async function fillThirdPartyRecipientIfEmpty(page: Page) {
+  await waitActiveWizardTabPanel(page)
   const grids = page.getByRole('grid')
   const gridCount = await grids.count()
   for (let gridIndex = 0; gridIndex < gridCount; gridIndex += 1) {
@@ -222,7 +241,11 @@ async function fillThirdPartyRecipientIfEmpty(page: Page) {
     for (let index = 0; index < inputCount; index += 1) {
       const input = inputs.nth(index)
       if (!(await input.isVisible().catch(() => false))) continue
-      const value = await input.inputValue().catch(async () => (await input.innerText()).trim())
+      const value = await input
+        .inputValue({ timeout: 2000 })
+        .catch(async () =>
+          (await input.innerText({ timeout: 2000 }).catch(() => '')).trim()
+        )
       if (String(value ?? '').trim()) continue
       await input.fill('JA코리아').catch(() => undefined)
       break
@@ -236,16 +259,10 @@ async function visitApplicationTabsAndFillRequired(page: Page) {
     const tab = page.getByRole('tab', { name }).first()
     if (await tab.isVisible().catch(() => false)) {
       await tab.click()
+      await waitActiveWizardTabPanel(page, tab)
     }
     await fillThirdPartyRecipientIfEmpty(page)
-    const radios = page.getByRole('radio', { name: /^동의$/ })
-    const count = await radios.count()
-    for (let index = 0; index < count; index += 1) {
-      const radio = radios.nth(index)
-      if (!(await radio.isVisible().catch(() => false))) continue
-      if (await radio.isChecked().catch(() => false)) continue
-      await radio.check({ force: true }).catch(() => undefined)
-    }
+    await checkVisibleEnabledAgreeRadios(page)
   }
 }
 
@@ -266,6 +283,11 @@ export async function completeAndCapture(page: Page, log: IsolatedNetworkLog) {
     await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
   }
   await expect.poll(() => log.createProgram, { timeout: 90_000 }).not.toBeNull()
+  // P2(방안 C): 양식 COPY/PUT/publish는 CREATE 이후에 나간다 — 실패 모드에서는 publish가 없을 수 있어 soft wait.
+  await expect
+    .poll(() => log.formVersionPublishes.length, { timeout: 30_000 })
+    .toBeGreaterThan(0)
+    .catch(() => undefined)
   const successDialog = page.getByRole('dialog').filter({ hasText: '등록되었습니다.' })
   if (await successDialog.isVisible().catch(() => false)) {
     await successDialog.getByRole('button', { name: '확인' }).click()

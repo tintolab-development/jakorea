@@ -12,6 +12,7 @@ import { mapPostsListPage } from '@/features/posts/api/shared/map-posts-list-pag
 import { inquiriesParamsFromSearchParams } from '@/features/posts/api/inquiries/inquiry-filter-params'
 import {
   bulkDeleteInquiriesRemote,
+  bulkChangeInquiryCategoriesRemote,
   createInquiryAnswerRemote,
   createInquiryCategoryRemote,
   deleteInquiryCategoryRemote,
@@ -31,6 +32,8 @@ import type {
 } from '@/features/posts/model/admin-inquiry-management.types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import type { CategoryManagementDraftChanges } from '@/features/posts/model/category-management-draft'
+import type { CategoryBatchSaveResponse } from '@/features/posts/api/shared/category-bulk-api'
 
 function assertInquiriesRemoteReady(): void {
   if (!isRealApiModuleEnabled('inquiries')) {
@@ -139,4 +142,11 @@ export async function updateInquiryCategory(categoryId: string, name: string): P
 export async function deleteInquiryCategory(categoryId: string): Promise<void> {
   assertInquiriesRemoteReady()
   await deleteInquiryCategoryRemote(categoryId)
+}
+
+export async function saveInquiryCategoriesBulk(
+  changes: CategoryManagementDraftChanges
+): Promise<CategoryBatchSaveResponse> {
+  assertInquiriesRemoteReady()
+  return bulkChangeInquiryCategoriesRemote(changes)
 }

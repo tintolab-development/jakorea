@@ -30,6 +30,7 @@ const remoteSession = (
   filterValue: '801',
   filterLabel: '1회차 · 2026.04.01',
   headerTitle: '1회차 과제',
+  headerDateLabel: '2026.04.01',
   headerScheduleSummary: '1회차 · 2026.04.01',
   headerPeriodRangeLabel: '2026.04.01',
   assignmentPeriodLabel: '2026.04.01 ~ 2026.04.07',

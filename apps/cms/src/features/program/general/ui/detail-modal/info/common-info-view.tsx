@@ -93,6 +93,7 @@ import {
   resolveProgramWageDeductionLabel,
   useNormalizeProgramPaymentItemValues,
   useProgramWagePaymentItemOptionsState,
+  excludeCompanySchoolOnlyPaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { paymentItemSelectPlaceholder } from '@/features/template/lib/template-registration-payment-item-options'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
@@ -151,6 +152,8 @@ import {
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsButton } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
+import { BusinessPeriodExtendHistoryRows } from '@/features/program/shared/ui/business-period-extend-history-rows'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -617,6 +620,7 @@ function BasicInfoSection({
             }
           />
         </DetailInfoForm.Row>
+        <BusinessPeriodExtendHistoryRows program={program} />
       </DetailInfoForm>
       <DetailInfoForm
         title="기본 정보"
@@ -1357,7 +1361,11 @@ function WageSection({
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
   const paymentCatalog = useProgramWagePaymentItemOptionsState()
-  const paymentItemOptions = paymentCatalog.options
+  // R14: 일반 상세에서 1사1교 전용 지급 항목 제외(저장된 선택값은 유지)
+  const paymentItemOptions = useMemo(
+    () => excludeCompanySchoolOnlyPaymentItemOptions(paymentCatalog.options, paymentItemIds),
+    [paymentCatalog.options, paymentItemIds]
+  )
 
   const editForm =
     form ??
@@ -4935,14 +4943,16 @@ export function GeneralProgramDetailCommonInfoView({
     <div className="detail-common-info-view program-detail-fullpage-modal__info-tab">
       {(canWrite || isEditMode) && (
         <div className="detail-common-info-view__header">
-          <ProgramEditInfoActions
-            isEditing={isEditMode}
-            idleVariant="secondary"
-            disabled={editDisabled}
-            onEdit={onEdit ?? (() => {})}
-            onCancel={onCancel ?? (() => {})}
-            onSave={onSave ?? (() => {})}
-          />
+          <BusinessPeriodExtendToolbar program={program} editDisabled={editDisabled}>
+            <ProgramEditInfoActions
+              isEditing={isEditMode}
+              idleVariant="secondary"
+              disabled={editDisabled}
+              onEdit={onEdit ?? (() => {})}
+              onCancel={onCancel ?? (() => {})}
+              onSave={onSave ?? (() => {})}
+            />
+          </BusinessPeriodExtendToolbar>
         </div>
       )}
 

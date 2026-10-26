@@ -3,6 +3,9 @@ import type { PageResponseMapStringObjectItemsItem } from '@/shared/api/generate
 export type CategoryRow = {
   id: string
   name: string
+  updatedAt?: string | null
+  useYn?: boolean | null
+  displayOrder?: number | null
 }
 
 export function mapCategoryItem(item: PageResponseMapStringObjectItemsItem): CategoryRow | null {
@@ -11,7 +14,23 @@ export function mapCategoryItem(item: PageResponseMapStringObjectItemsItem): Cat
   if (rawId == null || rawName == null) return null
   const name = String(rawName).trim()
   if (!name) return null
-  return { id: String(rawId), name }
+  const record = item as Record<string, unknown>
+  const updatedAt = typeof record.updatedAt === 'string' ? record.updatedAt : null
+  const useYn = typeof record.useYn === 'boolean' ? record.useYn : null
+  const rawDisplayOrder = record.displayOrder
+  const displayOrder =
+    typeof rawDisplayOrder === 'number' && Number.isFinite(rawDisplayOrder)
+      ? rawDisplayOrder
+      : rawDisplayOrder == null
+        ? null
+        : Number.isFinite(Number(rawDisplayOrder))
+          ? Number(rawDisplayOrder)
+          : null
+  const mapped: CategoryRow = { id: String(rawId), name }
+  if ('updatedAt' in record) mapped.updatedAt = updatedAt
+  if ('useYn' in record) mapped.useYn = useYn
+  if ('displayOrder' in record) mapped.displayOrder = displayOrder
+  return mapped
 }
 
 export function mapCategoryItems(

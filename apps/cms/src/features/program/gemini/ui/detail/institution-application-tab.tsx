@@ -505,6 +505,8 @@ export function GeminiInstitutionApplicationTab({
         open={bulkRejectOpen}
         title="선택 반려"
         lines={buildBulkRejectMessageLines(rejectTargetCount)}
+        confirmText="반려"
+        confirmVariant="delete"
         onCancel={() => setBulkRejectOpen(false)}
         onConfirm={confirmBulkReject}
       />
@@ -512,6 +514,8 @@ export function GeminiInstitutionApplicationTab({
         open={bulkApproveOpen}
         title="선택 승인"
         lines={buildBulkApproveMessageLines(approveTargetCount)}
+        confirmText="승인"
+        confirmVariant="primary"
         onCancel={() => setBulkApproveOpen(false)}
         onConfirm={confirmBulkApprove}
       />

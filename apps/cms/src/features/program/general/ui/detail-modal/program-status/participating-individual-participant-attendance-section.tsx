@@ -156,8 +156,11 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
 
   const remoteSessions = useMemo(() => {
     if (!remoteEnabled || remoteQuery.data == null) return null
-    return buildProgressAttendanceSessionsFromRemote(remoteQuery.data)
-  }, [remoteEnabled, remoteQuery.data])
+    return buildProgressAttendanceSessionsFromRemote({
+      ...remoteQuery.data,
+      program,
+    })
+  }, [program, remoteEnabled, remoteQuery.data])
 
   const sourceRows = useMemo(() => {
     if (assignedSessionsLoading) return []

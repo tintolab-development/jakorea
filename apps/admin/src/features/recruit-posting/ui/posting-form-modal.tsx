@@ -15,6 +15,10 @@ import type {
 import { DEFAULT_AUTHOR } from '@/features/recruit-posting/api/store'
 import { useRecruitPostingWysiwygEditor } from '@/features/recruit-posting/hooks/use-recruit-posting-wysiwyg-editor'
 import {
+  CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH,
+  validateCareerPostingLinkFields,
+} from '@/features/recruit-posting/lib/link-fields'
+import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
@@ -29,6 +33,7 @@ import {
   ConfirmModal,
   ContentModal,
   FileSelectField,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -37,10 +42,10 @@ import './posting-form-modal.css'
 const FILE_ACCEPT =
   '.jpg,.jpeg,.png,.xls,.xlsx,.pdf,.doc,.docx,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-const MAX_BYTES = 15 * 1024 * 1024
+const DOCUMENT_MAX_BYTES = 15 * 1024 * 1024
 
 const ATTACH_GUIDE = [
-  '- 파일은 1개, 최대 15MB까지 JPG, PNG, Excel, PDF, Word 형식만 등록 가능합니다.',
+  '- 이미지 파일은 최대 20MB, Excel·PDF·Word 파일은 최대 15MB까지 등록 가능합니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 
@@ -54,6 +59,13 @@ const ALLOWED_EXT = new Set([
   '.doc',
   '.docx',
 ])
+
+function isImageAttachment(file: File): boolean {
+  const type = file.type.toLowerCase()
+  if (type === 'image/jpeg' || type === 'image/png') return true
+  const name = file.name.toLowerCase()
+  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
+}
 
 export type RecruitPostingFormValues = RecruitPostingCreateInput
 
@@ -144,6 +156,8 @@ export function RecruitPostingFormModal({
   const [isPublic, setIsPublic] = useState(true)
   const [status, setStatus] = useState<RecruitPostingFormStatus>('recruiting')
   const [title, setTitle] = useState('')
+  const [buttonLabel, setButtonLabel] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
   const [attachments, setAttachments] = useState<RecruitPostingAttachment[]>([])
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
@@ -181,6 +195,8 @@ export function RecruitPostingFormModal({
       setIsPublic(initial.isPublic)
       setStatus(toFormStatus(initial.status))
       setTitle(initial.title)
+      setButtonLabel(initial.buttonLabel ?? '')
+      setLinkUrl(initial.linkUrl ?? '')
       setAttachments(initial.attachments.map(a => ({ ...a })))
     } else {
       setPublishedAt(null)
@@ -188,6 +204,8 @@ export function RecruitPostingFormModal({
       setIsPublic(true)
       setStatus('recruiting')
       setTitle('')
+      setButtonLabel('')
+      setLinkUrl('')
       setAttachments([])
     }
   }, [mode, initial])
@@ -210,10 +228,15 @@ export function RecruitPostingFormModal({
         })
         return
       }
-      if (file.size > MAX_BYTES) {
+      const maxBytes = isImageAttachment(file)
+        ? FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
+        : DOCUMENT_MAX_BYTES
+      if (file.size > maxBytes) {
         showAlert({
           title: '파일 용량',
-          content: '파일은 최대 15MB까지 등록 가능합니다.',
+          content: `이미지 파일은 최대 20MB, 문서 파일은 최대 ${
+            DOCUMENT_MAX_BYTES / (1024 * 1024)
+          }MB까지 등록 가능합니다.`,
         })
         return
       }
@@ -285,6 +308,12 @@ export function RecruitPostingFormModal({
       return
     }
 
+    const linkError = validateCareerPostingLinkFields({ buttonLabel, linkUrl })
+    if (linkError) {
+      showAlert({ title: '입력 확인', content: linkError })
+      return
+    }
+
     // remote body는 HTML. 로컬 mock도 HTML을 받을 수 있다.
     const contentMarkdown = getHTML().trim()
     if (!contentMarkdown || contentMarkdown === '<p></p>') {
@@ -308,11 +337,15 @@ export function RecruitPostingFormModal({
       recruitEnd: recruitEnd.format('YYYY-MM-DD'),
       authorName: mode === 'edit' && initial ? initial.authorName : DEFAULT_AUTHOR,
       attachments,
+      buttonLabel: buttonLabel.trim(),
+      linkUrl: linkUrl.trim(),
     })
   }, [
     publishedAt,
     recruitRange,
     title,
+    buttonLabel,
+    linkUrl,
     getHTML,
     isPublic,
     status,
@@ -470,6 +503,7 @@ export function RecruitPostingFormModal({
                 accept={FILE_ACCEPT}
                 buttonLabel="파일 추가"
                 fileNames={fileNames}
+                maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                 guideLines={ATTACH_GUIDE}
                 onFilesChange={files => {
                   void handleFilesChange(files)
@@ -477,6 +511,31 @@ export function RecruitPostingFormModal({
                 onRemoveFile={handleRemoveFile}
               />
             </div>
+          </div>
+
+          <div className="posting-form-modal__section posting-form-modal__section--link">
+            <FieldLabel>채용 공고 바로가기 버튼명</FieldLabel>
+            <CmsInput
+              inputSize="large"
+              width="100%"
+              value={buttonLabel}
+              maxLength={CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH}
+              onChange={e => setButtonLabel(e.target.value)}
+              placeholder="상세 하단 버튼명을 입력하세요 (최대 15자)"
+              aria-label="채용 공고 바로가기 버튼명"
+            />
+          </div>
+
+          <div className="posting-form-modal__section posting-form-modal__section--link">
+            <FieldLabel>채용 공고 버튼 링크</FieldLabel>
+            <CmsInput
+              inputSize="large"
+              width="100%"
+              value={linkUrl}
+              onChange={e => setLinkUrl(e.target.value)}
+              placeholder="버튼 선택 시 이동할 링크를 입력하세요"
+              aria-label="채용 공고 버튼 링크"
+            />
           </div>
         </div>
       </ContentModal>

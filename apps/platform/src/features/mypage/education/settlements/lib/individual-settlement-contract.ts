@@ -9,11 +9,12 @@ function extractApiErrorCode(data: unknown): string | null {
   return null
 }
 
-/** GENERAL_INDIVIDUAL 신청만 일정별 정산 API를 호출한다. */
+/** 일정별 정산 API 대상 — 일반 개인·강사 신청. */
 export function isIndividualScheduleSettlementAudience(
   applicationType: string | null | undefined,
 ): boolean {
-  return applicationType?.trim().toUpperCase() === 'INDIVIDUAL'
+  const normalized = applicationType?.trim().toUpperCase()
+  return normalized === 'INDIVIDUAL' || normalized === 'INSTRUCTOR'
 }
 
 export const INDIVIDUAL_SETTLEMENT_DISABLED_CODE = 'INDIVIDUAL_SETTLEMENT_DISABLED'
@@ -22,7 +23,7 @@ export const INDIVIDUAL_SETTLEMENT_NOT_FOUND_CODE = 'SETTLEMENT_NOT_FOUND'
 export const INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE =
   '일정별 정산 서비스를 사용할 수 없습니다'
 
-export const INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE = '정산 대상 일정이 없어요.'
+export const INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE = '정산 대상 일정이 없어요'
 
 export const INDIVIDUAL_INELIGIBLE_REASON = {
   ATTENDANCE_NOT_QUALIFIED: 'ATTENDANCE_NOT_QUALIFIED',

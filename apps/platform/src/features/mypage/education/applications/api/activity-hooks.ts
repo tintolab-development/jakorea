@@ -28,6 +28,7 @@ import {
   getEducationSchedulesQueryTraceId,
 } from '../../schedules/lib/schedules-query-error'
 import { buildAssignedSettlementItems } from '../../settlements/lib/assigned-settlement-items'
+import { getAllLectureReportAssignments } from '../../schedules/api/lecture-report-client'
 import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
 import {
   createApplicationNotice,
@@ -44,7 +45,9 @@ import {
   upsertApplicationNoticeReaction,
   fetchApplicationSchedules,
   fetchApplicationScheduleAttendance,
+  fetchApplicationScheduleAttendanceParticipants,
   submitApplicationAbsenceReason,
+  submitApplicationScheduleCheckIn,
   fetchExpenseReceipts,
   fetchIndividualSettlementDetail,
   fetchIndividualSettlementSchedules,
@@ -606,9 +609,10 @@ export function useApplicationSchedulesQuery(
         mapPortalEducationSchedule(item, index, {
           educationStructure: query.data?.educationStructure,
           sessionRound: query.data?.sessionRound,
+          applicationType,
         }),
       ),
-    [query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
+    [applicationType, query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
   )
   return {
     enabled,
@@ -662,6 +666,100 @@ export function useApplicationScheduleAttendanceQuery(
   }
 }
 
+export function useApplicationScheduleAttendanceParticipantsQuery(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+  scheduleId: number | null | undefined,
+  options?: { enabled?: boolean },
+) {
+  const canView = options?.enabled !== false
+  const enabled =
+    isActivityQueryEnabled(applicationType, applicationId) &&
+    scheduleId != null &&
+    Number.isSafeInteger(scheduleId) &&
+    scheduleId > 0 &&
+    canView
+  const query = useQuery({
+    queryKey: platformQueryKeys.mypage.programApplications.scheduleAttendanceParticipants(
+      applicationType ?? '',
+      applicationId ?? '',
+      scheduleId ?? 0,
+    ),
+    queryFn: ({ signal }) =>
+      fetchApplicationScheduleAttendanceParticipants(
+        applicationType!,
+        applicationId!,
+        scheduleId!,
+        signal,
+      ),
+    enabled,
+    staleTime: STALE_MS,
+    gcTime: GC_MS,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+  return {
+    enabled,
+    isLoading: enabled && query.isPending,
+    isError: enabled && query.isError,
+    error: enabled ? query.error : null,
+    data: query.data ?? null,
+    refetch: query.refetch,
+  }
+}
+
+function invalidateApplicationAttendanceQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+) {
+  return Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.programApplications.detail(applicationType, applicationId),
+      exact: true,
+    }),
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.programApplications.schedules(
+        applicationType,
+        applicationId,
+      ),
+      exact: true,
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [
+        ...platformQueryKeys.mypage.programApplications.schedules(applicationType, applicationId),
+        'attendance',
+      ],
+    }),
+  ])
+}
+
+export function useSubmitApplicationScheduleCheckIn(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined,
+) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (scheduleId: number) => {
+      if (!applicationType || !applicationId) {
+        throw new Error('출석 처리 범위가 올바르지 않습니다.')
+      }
+      return submitApplicationScheduleCheckIn(applicationType, applicationId, scheduleId)
+    },
+    onSuccess: async () => {
+      if (!applicationType || !applicationId) return
+      await invalidateApplicationAttendanceQueries(queryClient, applicationType, applicationId)
+    },
+    retry: false,
+  })
+}
+
 export function useSubmitApplicationAbsenceReason(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined
@@ -683,26 +781,7 @@ export function useSubmitApplicationAbsenceReason(
     },
     onSuccess: async () => {
       if (!applicationType || !applicationId) return
-      await Promise.all([
-        // 신청 목록에도 출결·결석 상태 요약이 포함될 수 있으므로 목록 prefix를 갱신한다.
-        queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.programApplications.detail(
-            applicationType,
-            applicationId
-          ),
-          exact: true,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.programApplications.schedules(
-            applicationType,
-            applicationId
-          ),
-          exact: true,
-        }),
-      ])
+      await invalidateApplicationAttendanceQueries(queryClient, applicationType, applicationId)
     },
     retry: false,
   })
@@ -711,7 +790,7 @@ export function useSubmitApplicationAbsenceReason(
 export function useApplicationFormsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
-  formType: 'SURVEY' | 'SATISFACTION'
+  formType: 'ASSIGNMENT' | 'HOMEWORK' | 'SURVEY' | 'SATISFACTION'
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
   const query = useQuery({
@@ -737,7 +816,9 @@ export function useApplicationFormsQuery(
     enabled,
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
+    isSuccess: enabled && query.isSuccess,
     items,
+    rawItems: query.data ?? [],
   }
 }
 
@@ -778,6 +859,7 @@ export function useApplicationSettlementsQuery(
   const schedules = useApplicationSchedulesQuery(applicationType, applicationId)
   const enabled = schedules.enabled
   const individualAudience = isIndividualScheduleSettlementAudience(applicationType)
+  const instructorAudience = applicationType === 'INSTRUCTOR'
   const receipts = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.expenseReceipts(
       applicationType ?? '',
@@ -797,11 +879,23 @@ export function useApplicationSettlementsQuery(
     applicationId,
     enabled && individualAudience,
   )
+  const lectureReports = useQuery({
+    queryKey: platformQueryKeys.mypage.lectureReportAssignments(programId ?? ''),
+    queryFn: ({ signal }) => getAllLectureReportAssignments(Number(programId), signal),
+    enabled:
+      enabled &&
+      instructorAudience &&
+      Boolean(programId) &&
+      Number.isFinite(Number(programId)) &&
+      Number(programId) > 0,
+    ...queryOptions(),
+  })
   const joinReady =
     !enabled ||
     ((receipts.isSuccess || receipts.isError) &&
       (settlements.isSuccess || settlements.isError) &&
-      (!individualAudience || individual.isSuccess || individual.isError))
+      (!individualAudience || individual.isSuccess || individual.isError) &&
+      (!instructorAudience || lectureReports.isSuccess || lectureReports.isError))
   const items = useMemo(
     () =>
       buildAssignedSettlementItems({
@@ -810,17 +904,41 @@ export function useApplicationSettlementsQuery(
         receipts: receipts.isError ? [] : (receipts.data ?? []),
         settlements: settlements.isError ? [] : (settlements.data ?? []),
         individualSchedules:
-          !individualAudience || individual.isError ? undefined : individual.schedules,
+          !individualAudience || individual.isError || individual.isDisabled
+            ? undefined
+            : individual.schedules,
+        lectureReports:
+          !instructorAudience || lectureReports.isError
+            ? undefined
+            : (lectureReports.data ?? []).map(row => ({
+                scheduleId: row.scheduleId,
+                assignmentId: row.assignmentId,
+                reportStatus: row.reportStatus,
+                lectureStatus: row.lectureStatus,
+                institutionName: row.institutionName,
+                grade: row.grade,
+                startAt: row.startAt,
+                endAt: row.endAt,
+                sessionNo: row.sessionNo,
+              })),
         programId,
         operationEndAt: options?.operationEndAt,
         deadlinePolicy: applicationType === 'INSTRUCTOR' ? 'payment_statement' : 'receipt',
-        preferIndividualSchedules: individualAudience && individual.isSuccess,
+        preferIndividualSchedules:
+          individualAudience &&
+          individual.isSuccess &&
+          !individual.isDisabled &&
+          (!instructorAudience || individual.schedules.length > 0),
       }),
     [
       applicationType,
       individual.schedules,
       individual.isError,
       individual.isSuccess,
+      individual.isDisabled,
+      instructorAudience,
+      lectureReports.data,
+      lectureReports.isError,
       options?.operationEndAt,
       programId,
       individualAudience,
@@ -844,13 +962,18 @@ export function useApplicationSettlementsQuery(
       void receipts.refetch()
       void settlements.refetch()
       if (individualAudience) void individual.refetch()
+      if (instructorAudience) void lectureReports.refetch()
     },
     errorCode: schedules.errorCode,
     traceId: schedules.traceId,
-    individualDisabled: individualAudience && individual.isDisabled,
-    individualErrorCode: individualAudience ? individual.errorCode : null,
+    individualDisabled: individualAudience && !instructorAudience && individual.isDisabled,
+    individualErrorCode:
+      individualAudience && !instructorAudience ? individual.errorCode : null,
     individualEmpty:
-      individualAudience && individual.isSuccess && individual.schedules.length === 0,
+      individualAudience &&
+      !instructorAudience &&
+      individual.isSuccess &&
+      individual.schedules.length === 0,
   }
 }
 
@@ -906,6 +1029,9 @@ export function useSubmitIndividualSettlementMutation(applicationId: string | nu
       }
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.programApplications.all(),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: [...platformQueryKeys.mypage.all(), 'lecture-report-assignments'],
       })
     },
   })

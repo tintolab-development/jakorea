@@ -1,14 +1,13 @@
 import {
   isUserInfoParagraph,
   type WritingFormDraft,
+  type LectureReportProgramProgressParagraph,
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
 import type { SurveySidecarState } from './survey-sidecar'
 
-export type EducationSurveyFillValidation =
-  | { ok: true }
-  | { ok: false; message: string }
+export type EducationSurveyFillValidation = { ok: true } | { ok: false; message: string }
 
 function isAnswerRequired(paragraph: WritingFormParagraph): boolean {
   if (paragraph.kind === 'single_item') {
@@ -19,7 +18,7 @@ function isAnswerRequired(paragraph: WritingFormParagraph): boolean {
 
 function extractSurveyParagraphAnswer(
   paragraph: WritingFormParagraph,
-  sidecar: SurveySidecarState,
+  sidecar: SurveySidecarState
 ): unknown {
   if (paragraph.kind !== 'single_item') return undefined
 
@@ -60,7 +59,24 @@ function extractSurveyParagraphAnswer(
   }
 
   if (paragraph.variant === 'file_attachment') {
-    return sidecar.fileNames[paragraph.id] ?? null
+    return sidecar.fileNames[paragraph.id] ?? []
+  }
+
+  if (paragraph.variant === 'lecture_report_program_progress') {
+    const progress = paragraph as LectureReportProgramProgressParagraph
+    return {
+      programName: progress.programName,
+      textbookName: progress.textbookName,
+      progressUnit: progress.progressUnit,
+      institutionName: progress.institutionName,
+      institutionLocation: progress.institutionLocation,
+      educationDate: progress.educationDate,
+      sessionTime: progress.sessionTime,
+      sessionIndex: progress.sessionIndex,
+      educationTarget: progress.educationTarget,
+      classLabel: progress.classLabel,
+      studentCount: progress.studentCount,
+    }
   }
 
   if (paragraph.variant === 'vertical_table') {
@@ -92,6 +108,22 @@ function isEmptyAnswer(value: unknown): boolean {
   if (Array.isArray(value)) return value.length === 0
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>
+    const progressKeys = [
+      'programName',
+      'textbookName',
+      'progressUnit',
+      'institutionName',
+      'institutionLocation',
+      'educationDate',
+      'sessionTime',
+      'sessionIndex',
+      'educationTarget',
+      'classLabel',
+      'studentCount',
+    ]
+    if (progressKeys.some(key => key in record)) {
+      return progressKeys.every(key => typeof record[key] !== 'string' || record[key].trim() === '')
+    }
     if ('bodyText' in record || 'items' in record) {
       const body = typeof record.bodyText === 'string' ? record.bodyText.trim() : ''
       const items = Array.isArray(record.items) ? record.items : []
@@ -100,7 +132,7 @@ function isEmptyAnswer(value: unknown): boolean {
           item &&
           typeof item === 'object' &&
           typeof (item as { bodyText?: unknown }).bodyText === 'string' &&
-          String((item as { bodyText: string }).bodyText).trim() !== '',
+          String((item as { bodyText: string }).bodyText).trim() !== ''
       )
       return !body && !itemText
     }
@@ -111,11 +143,12 @@ function isEmptyAnswer(value: unknown): boolean {
 
 export function buildEducationSurveyAnswers(
   draft: WritingFormDraft,
-  sidecar: SurveySidecarState,
+  sidecar: SurveySidecarState
 ): Record<string, unknown> {
   const answers: Record<string, unknown> = {}
   for (const paragraph of draft.paragraphs) {
     if (paragraph.kind === 'description') continue
+    if (paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment') continue
     const key = resolveApplicationAnswerKey(paragraph)
     if (!key) continue
     const value = extractSurveyParagraphAnswer(paragraph, sidecar)
@@ -127,9 +160,26 @@ export function buildEducationSurveyAnswers(
 export function validateEducationSurveyFill(
   draft: WritingFormDraft,
   sidecar: SurveySidecarState,
+  options?: {
+    fileObjectIdsByQuestion?: Record<string, number[]>
+    minimumFilesPerAttachment?: number
+  }
 ): EducationSurveyFillValidation {
   for (const paragraph of draft.paragraphs) {
     if (!isAnswerRequired(paragraph) || isUserInfoParagraph(paragraph)) continue
+    if (paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment') {
+      const questionKey = resolveApplicationAnswerKey(paragraph)
+      const fileCount =
+        options?.fileObjectIdsByQuestion != null
+          ? (options.fileObjectIdsByQuestion[questionKey]?.length ?? 0)
+          : (sidecar.fileNames[paragraph.id]?.length ?? 0)
+      const minimum = options?.minimumFilesPerAttachment ?? 1
+      if (fileCount < minimum) {
+        const title = paragraph.paragraphTitle?.trim() || '교육 사진'
+        return { ok: false, message: `${title}을(를) ${minimum}장 이상 첨부해 주세요.` }
+      }
+      continue
+    }
     const value = extractSurveyParagraphAnswer(paragraph, sidecar)
     if (!isEmptyAnswer(value)) continue
     const title = paragraph.paragraphTitle?.trim() || '필수 문항'
@@ -140,7 +190,7 @@ export function validateEducationSurveyFill(
 
 export function applyEducationSurveyAnswersToDraft(
   draft: WritingFormDraft,
-  answers: Record<string, unknown> | null | undefined,
+  answers: Record<string, unknown> | null | undefined
 ): WritingFormDraft {
   if (!answers || Object.keys(answers).length === 0) return draft
   return {
@@ -167,12 +217,37 @@ export function applyEducationSurveyAnswersToDraft(
       }
       if (
         (paragraph.variant === 'short_essay' || paragraph.variant === 'session_plan_short_essay') &&
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value)
+      ) {
+        const record = value as { bodyText?: unknown; items?: unknown }
+        const answerItems = Array.isArray(record.items) ? record.items : []
+        const items =
+          answerItems.length > 0
+            ? paragraph.items?.map((item, index) => {
+                const answerItem = answerItems[index]
+                return answerItem &&
+                  typeof answerItem === 'object' &&
+                  typeof (answerItem as { bodyText?: unknown }).bodyText === 'string'
+                  ? { ...item, bodyText: (answerItem as { bodyText: string }).bodyText }
+                  : item
+              })
+            : paragraph.items
+        return {
+          ...paragraph,
+          ...(typeof record.bodyText === 'string' ? { bodyText: record.bodyText } : {}),
+          items,
+        }
+      }
+      if (
+        (paragraph.variant === 'short_essay' || paragraph.variant === 'session_plan_short_essay') &&
         typeof value === 'string'
       ) {
         const items =
           paragraph.items != null && paragraph.items.length > 0
             ? paragraph.items.map((item, index) =>
-                index === 0 ? { ...item, bodyText: value } : item,
+                index === 0 ? { ...item, bodyText: value } : item
               )
             : paragraph.items
         return { ...paragraph, bodyText: value, items }
@@ -192,7 +267,43 @@ export function applyEducationSurveyAnswersToDraft(
             : {}),
         }
       }
-      if (isUserInfoParagraph(paragraph) && value && typeof value === 'object' && !Array.isArray(value)) {
+      if (
+        paragraph.variant === 'lecture_report_program_progress' &&
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value)
+      ) {
+        const progress = value as Partial<LectureReportProgramProgressParagraph>
+        return {
+          ...paragraph,
+          ...Object.fromEntries(
+            [
+              'programName',
+              'textbookName',
+              'progressUnit',
+              'institutionName',
+              'institutionLocation',
+              'educationDate',
+              'sessionTime',
+              'sessionIndex',
+              'educationTarget',
+              'classLabel',
+              'studentCount',
+            ].map(key => [
+              key,
+              typeof progress[key as keyof LectureReportProgramProgressParagraph] === 'string'
+                ? progress[key as keyof LectureReportProgramProgressParagraph]
+                : paragraph[key as keyof LectureReportProgramProgressParagraph],
+            ])
+          ),
+        } as WritingFormParagraph
+      }
+      if (
+        isUserInfoParagraph(paragraph) &&
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value)
+      ) {
         return { ...paragraph, fieldAnswers: value as Record<string, string> }
       }
       return paragraph

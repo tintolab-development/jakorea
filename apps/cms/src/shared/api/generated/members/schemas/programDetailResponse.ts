@@ -44,6 +44,10 @@ export interface ProgramDetailResponse {
   periodStatus?: string;
   /** 모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개. */
   recruitmentStatus?: ProgramDetailResponseRecruitmentStatus;
+  /** Gemini 연수 요청 가능 기간 시작일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null. */
+  trainingRequestStartDate?: string | null;
+  /** Gemini 연수 요청 가능 기간 종료일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null. */
+  trainingRequestEndDate?: string | null;
   /** 기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 기관 모집이 아니면 생략. 값이 없던 레거시 기관 설정은 true(작성)로 투영. */
   preEducationNoticeRequired?: boolean | null;
   /** preEducationNoticeRequired 구필드 호환값. 기관 참여자 모집에서만 내려가며 두 필드는 항상 같은 boolean입니다. */

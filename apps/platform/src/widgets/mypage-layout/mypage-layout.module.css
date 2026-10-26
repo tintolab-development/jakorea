@@ -176,12 +176,21 @@
   .layout {
     flex-direction: column;
     align-items: stretch;
+    box-sizing: border-box;
     width: 100%;
-    min-width: 375px;
-    max-width: 480px;
-    margin-inline: auto;
+    min-width: 0;
+    max-width: none;
+    margin-inline: 0;
     row-gap: var(--mypage-lnb-gap);
     column-gap: 0;
+  }
+
+  .layoutMenuOpen {
+    overflow-x: clip;
+  }
+
+  .shellMenuOpen {
+    overflow-x: clip;
   }
 
   /* 마이페이지 모바일 상단 패딩 40 통일 (홈 LNB · 서브 · headingFirst · 상세) */
@@ -239,5 +248,16 @@
 
   .shellSubpage .layoutHeadingFirst .content {
     padding-top: 0;
+  }
+
+  /* 트리거·패널만 딤 위. 본문(캘린더 등)은 스크림 아래 */
+  .layoutMenuOpen .sidebar {
+    position: relative;
+    z-index: 6;
+  }
+
+  .layoutMenuOpen .content {
+    position: relative;
+    z-index: 1;
   }
 }

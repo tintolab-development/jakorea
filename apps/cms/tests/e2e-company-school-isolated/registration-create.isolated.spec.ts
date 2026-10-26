@@ -80,7 +80,23 @@ test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
       await page.getByRole('tab', { name: /참여자 모집/ }).click().catch(() => undefined)
     })
     await saveWizardDraft(page)
-    await expect.poll(() => log.programDraftPuts.length, { timeout: 20_000 }).toBeGreaterThan(0)
+    // P2: 임시저장은 localStorage 전용 — 서버 program-draft 요청 0건, registration-wizard:COMPANY_SCHOOL:* 존재
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() =>
+            Object.keys(
+              (
+                JSON.parse(
+                  localStorage.getItem('cms.jakorea.writingFormTemplateSaves.v1') ?? '{}'
+                ) as { byTemplateId?: Record<string, unknown> }
+              ).byTemplateId ?? {}
+            ).some(key => key.startsWith('registration-wizard:COMPANY_SCHOOL:'))
+          ),
+        { timeout: 20_000 }
+      )
+      .toBe(true)
+    expect(log.programDraftPuts).toHaveLength(0)
     await page.keyboard.press('Escape').catch(() => undefined)
     await page.goto('/programs/company-school')
     const createButton = page.getByRole('button', { name: '신규 등록' }).first()
@@ -101,14 +117,16 @@ test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
     assertIsolatedNetwork(log)
   })
 
-  test('CS-B03 PUT 실패 시 Program CREATE가 나가지 않는다', async ({ page }) => {
+  test('CS-B03 PUT 실패 시 CREATE는 유지되고 일부 양식 적용 실패 안내가 뜬다', async ({ page }) => {
+    // 방안 C(P2): 양식은 CREATE 후 프로그램 전용 COPY로 적용 → PUT 실패는 CREATE 이후 부분 실패.
     const log = await installCsIsolatedNetwork(page, { failMode: 'put' })
     await openFreshWizard(page)
     await fillRegistrationThroughComplete(page)
     await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
+    await expect.poll(() => log.createProgram, { timeout: 60_000 }).not.toBeNull()
     await expect.poll(() => log.formVersionPuts.length, { timeout: 60_000 }).toBeGreaterThan(0)
-    expect(log.createProgram).toBeNull()
-    await expect(page.getByText('1사1교 프로그램 등록').first()).toBeVisible()
+    await expect(page.getByText('일부 양식 적용 실패').first()).toBeVisible({ timeout: 20_000 })
+    assertIsolatedNetwork(log)
   })
 
   test('CS-B03 CREATE 실패 시 입력값이 유지되고 재시도 가능하다', async ({ page }) => {
@@ -120,25 +138,6 @@ test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
     await expect(page.getByText('1사1교 프로그램 등록').first()).toBeVisible()
     await expectWizardCommonTitle(page, VALUES_B.title)
     expect(log.mutations.filter(item => item.path === '/api/admin/programs')).toHaveLength(1)
-  })
-
-  test('CS-B03 program-draft PUT 실패 시 성공으로 표시하지 않고 RHF B를 유지한다', async ({
-    page,
-  }) => {
-    const log = await installCsIsolatedNetwork(page, { failMode: 'draft' })
-    await openFreshWizard(page)
-    await fillRegistrationThroughComplete(page)
-    await page.getByRole('button', { name: /임시저장|임시 저장/ }).first().click()
-    await expect.poll(() => log.programDraftPuts.length, { timeout: 20_000 }).toBeGreaterThan(0)
-    await expect(page.getByText('임시 저장 실패').first()).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByText('임시 저장 완료')).toHaveCount(0)
-    await page.getByRole('dialog').getByRole('button', { name: '확인' }).first().click()
-    await expectWizardCommonTitle(page, VALUES_B.title)
-    await expect(
-      page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요').first()
-    ).toHaveValue(VALUES_B.announcement)
-    expect(log.createProgram).toBeNull()
-    assertIsolatedNetwork(log)
   })
 
   test('CS-B06 blob URL이 CREATE overlay에 저장되지 않는다', async ({ page }) => {

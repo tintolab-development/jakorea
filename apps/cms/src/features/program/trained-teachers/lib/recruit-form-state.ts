@@ -3,8 +3,6 @@
  * persist 는 editorState. 내부 apply 만 기존 Program merge 함수를 재사용한다.
  */
 import type { Program } from '@/types/domain'
-import { peekApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { peekTrainedTeachersRegistrationRhf } from './registration-rhf-api'
@@ -21,8 +19,13 @@ import {
 
 export { emptyTrainedTeachersRecruitFormState }
 
+/**
+ * Part3 5단계: TT RHF 미마운트 fallback 의 스토어 읽기(기관 모집 + 일반 모집)는 호출부가 넘긴다(DI).
+ * 이 모듈은 overlay 스토어를 import 하지 않는다. fallback 을 안 넘기면 빈 레코드로 읽는다.
+ */
 export function collectTrainedTeachersRecruitFormState(
-  overlay?: Record<string, unknown>
+  overlay?: Record<string, unknown>,
+  readStoreFallback?: () => Record<string, unknown>
 ): TrainedTeachersRecruitFormState {
   if (overlay != null) {
     return importLegacyTrainedTeachersRecruitmentOverlay(overlay)
@@ -33,10 +36,7 @@ export function collectTrainedTeachersRecruitFormState(
     return collectTrainedTeachersRecruitmentState(rhf.getValues().recruitment)
   }
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-  return importLegacyTrainedTeachersRecruitmentOverlay({
-    ...peekApplicantRecruitInstitutionOverlayRecord('recruitment-trained-teachers'),
-    ...getGeneralRecruitOverlayRecord(),
-  })
+  return importLegacyTrainedTeachersRecruitmentOverlay(readStoreFallback?.() ?? {})
 }
 
 /** persist/bind 용 키 레코드. 입력 정본이 아니라 Form Version 출력이다. */

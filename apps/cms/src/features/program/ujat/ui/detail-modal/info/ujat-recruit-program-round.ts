@@ -31,6 +31,14 @@ export function resolveUjatVolunteerActivityTermDisplay(
   )
 }
 
+/** 활성 모집 상세용 — 프로그램/회차 canonical 값만 읽고 Overlay로 보완하지 않는다. */
+export function resolveUjatVolunteerActivityTermCanonicalDisplay(
+  program: Program,
+  half: UjatVolunteerRecruitHalf
+): string {
+  return getUjatVolunteerRound(program, half)?.curriculum?.trim() || '-'
+}
+
 export function getUjatVolunteerRecruitPeriod(
   program: Program,
   half: UjatVolunteerRecruitHalf

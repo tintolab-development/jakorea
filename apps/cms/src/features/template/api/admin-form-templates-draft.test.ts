@@ -139,6 +139,44 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     expect(loadWritingFormTemplateSave(TEMPLATE_CODE)).toBeNull()
   })
 
+  it('saves typed template settings without rewriting extensionJson.overlay', async () => {
+    updateRemoteMock.mockResolvedValue({})
+    const draft = createRecruitFormInstructorDraft()
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'recruitment-ujat-school',
+      draft,
+      settingsJson: {
+        ujatRecruitment: { institution: { description: 'typed' } },
+      },
+    })
+
+    const putBody = updateRemoteMock.mock.calls[0]?.[1] as {
+      extensionJson?: string
+      settingsJson?: string
+    }
+    expect(putBody.settingsJson).toContain('typed')
+    expect(putBody.extensionJson).toBeUndefined()
+  })
+
+  it('adds a new draft version to the same template on FORM_CATALOG_VERSION_IMMUTABLE', async () => {
+    updateRemoteMock.mockRejectedValueOnce({
+      response: { data: { error: { code: 'FORM_CATALOG_VERSION_IMMUTABLE' } } },
+    })
+    fetchRemoteMock.mockResolvedValue({
+      templateVersionId: 10,
+      schemaJson: '{"source":true}',
+      extensionJson: null,
+      settingsJson: '{"s":1}',
+    })
+    createVersionMock.mockResolvedValue({ templateId: 1, templateVersionId: 11, versionNo: 2 })
+    const draft = createProgramRegistrationDraft('general')
+
+    await saveFormTemplateVersionDraft({ templateCode: TEMPLATE_CODE, draft })
+
+    expect(createVersionMock).toHaveBeenCalled()
+  })
+
   it('adds a new draft version to the same template on FORM_VERSION_IMMUTABLE', async () => {
     updateRemoteMock.mockRejectedValueOnce({
       response: { data: { error: { code: 'FORM_VERSION_IMMUTABLE' } } },

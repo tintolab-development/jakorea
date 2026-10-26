@@ -18,6 +18,7 @@ import {
   deleteFaqCategoryRemote,
   deleteFaqRemote,
   bulkDeleteFaqsRemote,
+  bulkChangeFaqCategoriesRemote,
   fetchFaqCategoriesRemote,
   fetchFaqRemote,
   fetchFaqsRemote,
@@ -29,6 +30,8 @@ import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import type { AdminFaq } from '@/features/posts/model/admin-faq'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import type { CategoryManagementDraftChanges } from '@/features/posts/model/category-management-draft'
+import type { CategoryBatchSaveResponse } from '@/features/posts/api/shared/category-bulk-api'
 
 function assertFaqsRemoteReady(): void {
   if (!isRealApiModuleEnabled('faqs')) {
@@ -162,4 +165,11 @@ export async function updateFaqCategory(categoryId: string, name: string): Promi
 export async function deleteFaqCategory(categoryId: string): Promise<void> {
   assertFaqsRemoteReady()
   await deleteFaqCategoryRemote(categoryId)
+}
+
+export async function saveFaqCategoriesBulk(
+  changes: CategoryManagementDraftChanges
+): Promise<CategoryBatchSaveResponse> {
+  assertFaqsRemoteReady()
+  return bulkChangeFaqCategoriesRemote(changes)
 }

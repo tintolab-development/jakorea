@@ -161,7 +161,6 @@ function resolveEventPopoverRowParts(
 
 function ParticipatingCalendarEventPopoverContent({
   events,
-  titleColorMap,
   resolvePopoverRowParts,
   usePreferredScheduleFormat,
 }: {
@@ -171,12 +170,11 @@ function ParticipatingCalendarEventPopoverContent({
   usePreferredScheduleFormat?: boolean
 }) {
   return (
-    <div className="participating-institutions-calendar-popover">
+    <div className="calendar-preview-popover">
       {events.map(ev => {
         const parts = resolvePopoverRowParts
           ? resolvePopoverRowParts(ev)
           : getPopoverRowParts(ev, usePreferredScheduleFormat)
-        const titleColor = titleColorMap?.get(String(ev.id))
         const instructorName = parts.instructorName?.trim()
         const volunteerName = parts.volunteerName?.trim()
         const isInstructorPopover = Boolean(instructorName)
@@ -192,61 +190,56 @@ function ParticipatingCalendarEventPopoverContent({
           parts.sessionLine != null &&
           parts.sessionLine !== ''
         return (
-          <div key={ev.id} className="participating-institutions-calendar-popover__entry">
-            <div
-              className="participating-institutions-calendar-popover__title"
-              style={titleColor ? { color: titleColor } : undefined}
-            >
-              {parts.title}
-            </div>
+          <div key={ev.id} className="calendar-preview-popover__entry">
+            <div className="calendar-preview-popover__title">{parts.title}</div>
             {isVolunteerPopover ? (
-              <div className="participating-institutions-calendar-popover__meta">
-                <span className="participating-institutions-calendar-popover__meta-part">
+              <div className="calendar-preview-popover__meta">
+                <span className="calendar-preview-popover__meta-part">
                   {volunteerName}
                 </span>
                 {hasLocationSession ? (
                   <>
-                    <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
-                    <span className="participating-institutions-calendar-popover__meta-part">
+                    <span className="calendar-preview-popover__meta-sep" aria-hidden />
+                    <span className="calendar-preview-popover__meta-part">
                       {parts.location}
                     </span>
-                    <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
-                    <span className="participating-institutions-calendar-popover__meta-part participating-institutions-calendar-popover__meta-part--session">
+                    <span className="calendar-preview-popover__meta-sep" aria-hidden />
+                    <span className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session">
                       {parts.sessionLine}
                     </span>
                   </>
                 ) : null}
               </div>
             ) : isInstructorPopover ? (
-              <div className="participating-institutions-calendar-popover__meta participating-institutions-calendar-popover__meta--instructor">
-                <span className="participating-institutions-calendar-popover__meta-part">
+              <div className="calendar-preview-popover__meta calendar-preview-popover__meta--instructor">
+                <span className="calendar-preview-popover__meta-part">
                   {instructorName}
                 </span>
-                <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
-                <span className="participating-institutions-calendar-popover__meta-part participating-institutions-calendar-popover__meta-part--report">
+                <span className="calendar-preview-popover__meta-sep" aria-hidden />
+                <span className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--report">
                   강의보고서 : {parts.lectureReportSubmitted ? '제출' : '미제출'}
                 </span>
               </div>
             ) : (
-            <div className="participating-institutions-calendar-popover__meta">
-              <span className="participating-institutions-calendar-popover__meta-part">
+            <div className="calendar-preview-popover__meta">
+              <span className="calendar-preview-popover__meta-part">
                 {parts.location}
               </span>
               {hasGradeSession ? (
                 <>
-                  <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
-                  <span className="participating-institutions-calendar-popover__meta-part">
+                  <span className="calendar-preview-popover__meta-sep" aria-hidden />
+                  <span className="calendar-preview-popover__meta-part">
                     {parts.grade}
                   </span>
-                  <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
-                  <span className="participating-institutions-calendar-popover__meta-part participating-institutions-calendar-popover__meta-part--session">
+                  <span className="calendar-preview-popover__meta-sep" aria-hidden />
+                  <span className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session">
                     {parts.sessionLine}
                   </span>
                 </>
               ) : parts.valueLabel ? (
                 <>
-                  <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
-                  <span className="participating-institutions-calendar-popover__meta-part">
+                  <span className="calendar-preview-popover__meta-sep" aria-hidden />
+                  <span className="calendar-preview-popover__meta-part">
                     {parts.valueLabel}
                   </span>
                 </>

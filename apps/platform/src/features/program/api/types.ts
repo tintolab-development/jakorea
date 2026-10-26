@@ -10,12 +10,22 @@ export type {
   PortalEducationCurriculumSession,
   PortalEducationScheduleDetail,
   PortalEducationScheduleRange,
-  PortalProgramDetail,
   PortalRecruitment,
   PortalSchedule,
   PortalVolunteerInterviewSchedule,
   PortalVolunteerInterviewScheduleOption,
 } from '@jakorea/domain/portal/program-detail'
+
+import type { PortalProgramDetail as DomainPortalProgramDetail } from '@jakorea/domain/portal/program-detail'
+
+/**
+ * 공개 Gemini 상세의 연수 요청 가능 기간은 기관 모집 기간과 별도인 최상위 필드다.
+ * 백엔드가 비Gemini·미설정 값을 null로 반환하므로 optional/null을 모두 허용한다.
+ */
+export type PortalProgramDetail = DomainPortalProgramDetail & {
+  trainingRequestStartDate?: string | null
+  trainingRequestEndDate?: string | null
+}
 
 /** GET /api/portal/programs 목록 행 (OpenAPI PortalProgramListItem) */
 export type PortalProgramListItem = {
@@ -67,14 +77,22 @@ export type PortalProgramListPage = {
   totalPages?: number
 }
 
+/**
+ * 반복 query parameter로 전달되는 목록 필터.
+ * 단일 값은 기존 계약과 동일하게 보내고, 여러 값은 같은 key를 반복한다.
+ */
+export type PortalProgramListFilterValue = string | readonly string[]
+
 export type PortalProgramListQuery = {
   keyword?: string
-  portalTab?: string
-  programType?: string
-  recruitmentStatus?: string
-  /** 목록 필터 — 프로그램 `educationTargets` 포함(OR) 매칭. UI `recruitmentTarget`/`educationTarget` 병합값 */
-  educationTargets?: string
-  educationMethod?: string
+  portalTab?: PortalProgramListFilterValue
+  programType?: PortalProgramListFilterValue
+  recruitmentStatus?: PortalProgramListFilterValue
+  /** 모집 대상 필터. 같은 필터의 여러 값은 OR, 다른 필터와는 AND로 적용한다. */
+  recruitmentTarget?: PortalProgramListFilterValue
+  /** 교육 대상 필터. 같은 필터의 여러 값은 OR, 다른 필터와는 AND로 적용한다. */
+  educationTarget?: PortalProgramListFilterValue
+  educationMethod?: PortalProgramListFilterValue
   operatingFrom?: string
   operatingTo?: string
   sort?: string

@@ -1050,6 +1050,16 @@ function testEducationScheduleWireContract() {
   ])
   assert.equal(preferred[0]?.date.includes('년'), false)
 
+  const secondPeriodPreferred = toPortalPreferredScheduleBlocks([
+    {
+      date: '2026-11-20',
+      classPeriod: '2',
+      startTime: '13:00',
+      endTime: '15:00',
+    },
+  ])
+  assert.equal(secondPeriodPreferred[0]?.sessionCount, 2)
+
   const incomplete = toPortalPreferredScheduleBlocks([
     { date: '2026-11-20', classPeriod: '', startTime: '', endTime: '' },
   ])

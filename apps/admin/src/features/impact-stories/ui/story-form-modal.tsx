@@ -25,16 +25,17 @@ import {
   ConfirmModal,
   ContentModal,
   FileSelectField,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   useCmsAlert,
 } from '@/shared/ui'
 
 import './story-form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
-const MAX_BYTES = 15 * 1024 * 1024
+const MAX_BYTES = FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
 
 const ATTACH_GUIDE = [
-  '- 파일은 최대 15MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 
@@ -186,7 +187,7 @@ export function StoryFormModal({
         if (file.size > MAX_BYTES) {
           showAlert({
             title: '파일 용량',
-            content: '파일은 최대 15MB까지 등록 가능합니다.',
+            content: '파일은 최대 20MB까지 등록 가능합니다.',
           })
           continue
         }
@@ -427,6 +428,7 @@ export function StoryFormModal({
                 accept={IMAGE_ACCEPT}
                 buttonLabel="파일 추가"
                 fileNames={fileNames}
+                maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                 guideLines={ATTACH_GUIDE}
                 onFilesChange={files => {
                   void handleFilesChange(files)

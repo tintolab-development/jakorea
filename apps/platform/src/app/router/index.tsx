@@ -46,6 +46,8 @@ import {
   MypageVolunteerDetailPage,
   MypageLecturePage,
   MypageLectureDetailPage,
+  MypageLectureReportWritePage,
+  MypageSettlementPage,
   MypageSettingsPage,
   MypageSettingsConsentPage,
 } from '@/pages/mypage'
@@ -69,6 +71,7 @@ import { IntroductionPage } from '@/pages/about/introduction'
 import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
+import { PublicSurveyPage } from '@/pages/surveys'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { CorporateDonationPage } from '@/pages/support/corporate'
 import { CorporateDonationInquiryPage } from '@/pages/support/corporate/inquiry'
@@ -89,6 +92,10 @@ import { ABOUT_HISTORY_PATH } from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
 
 export const router = createBrowserRouter([
+  {
+    element: <AppLayoutRoute layout="public-form" />,
+    children: [{ path: '/surveys/share/:shareToken', element: <PublicSurveyPage /> }],
+  },
   {
     element: <AppLayoutRoute layout="home" />,
     children: [{ path: '/', element: <HomePage /> }],
@@ -161,6 +168,7 @@ export const router = createBrowserRouter([
       { path: '/mypage/education', element: <MypageEducationPage /> },
       { path: '/mypage/volunteer', element: <MypageVolunteerPage /> },
       { path: '/mypage/lectures', element: <MypageLecturePage /> },
+      { path: '/mypage/settlement', element: <MypageSettlementPage /> },
       { path: '/mypage/inquiries', element: <MypageInquiriesPage /> },
     ],
   },
@@ -229,6 +237,30 @@ export const router = createBrowserRouter([
       { path: '/mypage/volunteer/:applicationId', element: <MypageVolunteerDetailPage /> },
       { path: '/mypage/lectures/:applicationType/:applicationId', element: <MypageLectureDetailPage /> },
       { path: '/mypage/lectures/:applicationId', element: <MypageLectureDetailPage /> },
+      {
+        path: '/mypage/lectures/:applicationType/:applicationId/lecture-report/write',
+        element: <MypageLectureReportWritePage />,
+      },
+      {
+        path: '/mypage/lectures/:applicationId/lecture-report/write',
+        element: <MypageLectureReportWritePage />,
+      },
+      {
+        path: '/mypage/lectures/:applicationType/:applicationId/settlement/write',
+        element: <MypageEducationSettlementWritePage />,
+      },
+      {
+        path: '/mypage/lectures/:applicationId/settlement/write',
+        element: <MypageEducationSettlementWritePage />,
+      },
+      {
+        path: '/mypage/lectures/:applicationType/:applicationId/settlement/confirm',
+        element: <MypageEducationSettlementConfirmPage />,
+      },
+      {
+        path: '/mypage/lectures/:applicationId/settlement/confirm',
+        element: <MypageEducationSettlementConfirmPage />,
+      },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       {
         path: '/mypage/instructor-apply/consent/:consentKey',

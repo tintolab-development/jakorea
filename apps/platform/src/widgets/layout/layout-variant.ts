@@ -4,6 +4,7 @@ export type LayoutVariant =
   | 'mypage'
   | 'mypage-subpage'
   | 'full'
+  | 'public-form'
   | 'hero'
   | 'home'
   | 'support'

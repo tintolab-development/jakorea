@@ -22,5 +22,9 @@ export interface CareerPostingAdminDetail {
   version?: number;
   body?: string;
   attachment?: AssetResponse;
+  /** @maxLength 15 */
+  buttonLabel?: string | null;
+  /** @maxLength 2048 */
+  linkUrl?: string | null;
   updatedAt?: string;
 }

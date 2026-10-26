@@ -29,13 +29,13 @@ describe('delete-blocked-guide-copy', () => {
     ).toEqual({
       title: '세부 프로그램 일괄 삭제 불가 안내',
       description:
-        '선택한 3개의 항목 중 삭제가 불가한 항목이 포함되어 있습니다.\n프로그램에서 사용 중인 세부 프로그램은 삭제할 수 없습니다.',
+        '**선택한 3개의 항목** 중 삭제가 불가한 항목이 포함되어 있습니다.\n프로그램에서 사용 중인 세부 프로그램은 삭제할 수 없습니다.',
     })
   })
 
   it('buildDeleteBlockedBulkLead', () => {
     expect(buildDeleteBlockedBulkLead(2)).toBe(
-      '선택한 2개의 항목 중 삭제가 불가한 항목이 포함되어 있습니다.'
+      '**선택한 2개의 항목** 중 삭제가 불가한 항목이 포함되어 있습니다.'
     )
   })
 

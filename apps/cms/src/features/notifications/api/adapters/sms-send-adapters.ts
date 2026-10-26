@@ -1,4 +1,5 @@
 import type { RecipientCandidateResponse } from '@/shared/api/generated/notifications/schemas'
+import { normalizeSmsSendPhone } from '@/features/notifications/model/sms-send/recipients'
 import type {
   SmsSendMemberType,
   SmsSendParticipationType,
@@ -68,7 +69,7 @@ export function mapSmsRecipientCandidate(
     memberType: mapMemberType(candidate),
     typeLabel: resolveTypeLabel(candidate),
     name: name || '-',
-    phone: contact || '-',
+    phone: contact ? normalizeSmsSendPhone(contact) : '-',
     source: 'program',
     actorType,
     actorId: memberId ?? undefined,

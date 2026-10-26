@@ -1,3 +1,11 @@
+import {
+  applyTypedVolunteerInterviewToOverlay,
+  buildVolunteerInterviewConfigForSave,
+  completeVolunteerInterviewConfig,
+  omitVolunteerInterviewSaveKeysFromServiceDetailJson,
+  volunteerInterviewRequiredFromOverlay,
+  type RecruitmentInterviewConfig,
+} from '@/features/program/shared/lib/volunteer-interview-config'
 import type {
   Program,
   ProgramCategory,
@@ -29,6 +37,7 @@ import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shar
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   isRecruitmentStartLocked,
   isRecruitmentTypeGeneralInfoClosed,
@@ -271,9 +280,8 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
   const lifecycleStatus = resolveListLifecycleStatus(dto)
   const audienceFromApi = resolveAudienceFromApiFields({
     programType: dto.programType,
-    applicationTargetMode: (
-      dto as AdminProgramListItemDto & { applicationTargetMode?: string }
-    ).applicationTargetMode,
+    applicationTargetMode: (dto as AdminProgramListItemDto & { applicationTargetMode?: string })
+      .applicationTargetMode,
   })
   /** 목록 DTO가 내려주는 유일한 KPI — 봉사자 모집 인원 */
   const listVolunteerKpi =
@@ -292,7 +300,9 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
     listDeleteBlocked: resolveProgramListDeleteBlocked({
       lifecycleStatus,
       participantApprovedCount: toOptionalNumber(dto.participantApprovedCount),
-      approvedOrganizationApplicationCount: toOptionalNumber(dto.approvedOrganizationApplicationCount),
+      approvedOrganizationApplicationCount: toOptionalNumber(
+        dto.approvedOrganizationApplicationCount
+      ),
       participatingSchoolCount:
         toOptionalNumber(dto.participatingSchoolCount) ??
         toOptionalNumber(dto.participatingOrganizationCount),
@@ -309,8 +319,7 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
       toOptionalNumber(dto.instructorApprovedCount) ??
       toOptionalNumber(dto.instructorApplicantCount),
     instructorCapacity:
-      toOptionalNumber(dto.instructorCapacity) ??
-      toOptionalNumber(dto.instructorRecruitmentCount),
+      toOptionalNumber(dto.instructorCapacity) ?? toOptionalNumber(dto.instructorRecruitmentCount),
     generalVolunteers: toOptionalNumber(dto.volunteerApprovedCount),
     participatingSchoolCount:
       toOptionalNumber(dto.participatingSchoolCount) ??
@@ -342,6 +351,65 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
   })
 }
 
+/** 조회 typed 대상 행 — UJAT 아님 + 반기 아닌 봉사 모집 행 정확히 1개 */
+function singleTypedVolunteerInterviewRow(
+  dto: ProgramResponse
+):
+  | { interviewEnabled?: boolean | null; interviewConfig?: RecruitmentInterviewConfig | null }
+  | undefined {
+  if ((dto.programType ?? '').toUpperCase() === 'UJAT') return undefined
+  const volunteerRows = (dto.recruitments ?? []).filter(
+    row =>
+      (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' &&
+      row.recruitTerm !== 'FIRST_HALF' &&
+      row.recruitTerm !== 'SECOND_HALF'
+  )
+  if (volunteerRows.length !== 1) return undefined
+  return volunteerRows[0] as {
+    interviewEnabled?: boolean | null
+    interviewConfig?: RecruitmentInterviewConfig | null
+  }
+}
+
+/**
+ * 일반 봉사 모집 행 typed `interviewConfig`(V80) 우선 — overlay 면접 키를 typed 값으로 맞춘다.
+ * typed 가 null 이거나 overlay fallback 과 같으면 overlay 그대로. UJAT·반기 행은 건드리지 않는다.
+ * typed 가 있으면 overlay 면접 여부(`recruit.volunteer.interviewRequired`)도 행 interviewEnabled 로 맞춘다
+ * (part7부터 저장 본문에 그 키를 보내지 않아 서버 overlay 값이 오래될 수 있다).
+ */
+function applyTypedVolunteerInterviewToServiceDetail<
+  T extends { registrationOverlay?: Record<string, unknown> },
+>(serviceDetail: T, dto: ProgramResponse): T {
+  const row = singleTypedVolunteerInterviewRow(dto)
+  if (!row) return serviceDetail
+  const config = row.interviewConfig
+  let overlay = applyTypedVolunteerInterviewToOverlay(serviceDetail.registrationOverlay, config)
+  if (config != null && typeof row.interviewEnabled === 'boolean') {
+    const required = row.interviewEnabled ? 'yes' : 'no'
+    if (overlay?.['recruit.volunteer.interviewRequired'] !== required) {
+      overlay = { ...(overlay ?? {}), 'recruit.volunteer.interviewRequired': required }
+    }
+  }
+  return overlay === serviceDetail.registrationOverlay
+    ? serviceDetail
+    : { ...serviceDetail, registrationOverlay: overlay }
+}
+
+/** 상세 Program typed 면접 필드 — typed 가 있으면 면접 여부도 행 interviewEnabled 가 SSOT */
+function typedVolunteerInterviewProgramFields(
+  dto: ProgramResponse
+): Pick<Program, 'volunteerInterviewConfigFromServer' | 'generalVolunteerInterviewEnabled'> {
+  const row = singleTypedVolunteerInterviewRow(dto)
+  if (!row) return {}
+  const config = row.interviewConfig ?? null
+  return {
+    volunteerInterviewConfigFromServer: config,
+    ...(config != null && typeof row.interviewEnabled === 'boolean'
+      ? { generalVolunteerInterviewEnabled: row.interviewEnabled }
+      : {}),
+  }
+}
+
 export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const dtoWithExtras = dto as ProgramResponse & {
     nameKo?: string
@@ -349,21 +417,17 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     businessField?: string
   }
   const title =
-    dto.title?.trim() ||
-    dto.mainTitle?.trim() ||
-    dtoWithExtras.nameKo?.trim() ||
-    '제목 없음'
+    dto.title?.trim() || dto.mainTitle?.trim() || dtoWithExtras.nameKo?.trim() || '제목 없음'
   const id = toProgramId(dto.id)
   const now = new Date().toISOString()
-  const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
+  const parsedServiceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
+  const serviceDetail = applyTypedVolunteerInterviewToServiceDetail(parsedServiceDetail, dto)
   const dtoDetailedProgramName = dto.detailedProgramName?.trim()
   const generalCommonInfoBase = applyResolvedVenueKindToCommonInfo(
     applySettlementPolicyToCommonInfo(
       {
         ...serviceDetail.generalCommonInfo,
-        ...(dtoDetailedProgramName
-          ? { detailedProgramName: dtoDetailedProgramName }
-          : {}),
+        ...(dtoDetailedProgramName ? { detailedProgramName: dtoDetailedProgramName } : {}),
       },
       dto.settlementPolicy
     ),
@@ -439,9 +503,9 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     ...resolveBusinessPeriodDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
-    businessArea: normalizeProgramBusinessAreaValue(
-      dto.businessArea || dtoWithExtras.businessField
-    ) || undefined,
+    businessArea:
+      normalizeProgramBusinessAreaValue(dto.businessArea || dtoWithExtras.businessField) ||
+      undefined,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
     textbookNameEn: dto.textbookNameEn,
@@ -486,13 +550,10 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     updatedAt: dto.updatedAt,
     ...serviceDetail,
     generalCommonInfo,
-    detailedProgramId:
-      dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
+    detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     targetLevel: detailTargetLevels[0],
     targetLevels:
-      columnSource !== undefined || detailTargetLevels.length > 0
-        ? detailTargetLevels
-        : undefined,
+      columnSource !== undefined || detailTargetLevels.length > 0 ? detailTargetLevels : undefined,
     // typed lifecycleStatus SSOT — serviceDetailJson 값으로 덮지 않음
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: toTypedProgramLifecycleStatus(dto.lifecycleStatus) ?? undefined,
@@ -500,24 +561,33 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     ...(audienceFromApi
       ? {
           category: audienceFromApi.category,
-          generalProgramAudience:
-            serviceDetail.generalProgramAudience ?? audienceFromApi.audience,
+          generalProgramAudience: serviceDetail.generalProgramAudience ?? audienceFromApi.audience,
         }
       : {}),
     backendProgramType: dto.programType,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
+    ...((dto.programType ?? '').toUpperCase() === 'UJAT'
+      ? {}
+      : {
+          volunteerInterviewScheduleInfoFromServer:
+            parsedServiceDetail.generalCommonInfo?.volunteerInterviewScheduleInfo ?? null,
+        }),
+    ...typedVolunteerInterviewProgramFields(dto),
   })
 
-  return hydrateRecruitmentWindowsOntoProgram(
-    hydrateGeneralRecruitmentInfoFromRows(
-      applyResolvedAnnouncementTitle(
-        applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
-        {
-          serviceDetailJson: dto.serviceDetailJson,
-          overlay: serviceDetail.registrationOverlay,
-        }
+  return applyBusinessPeriodHistoriesFromDto(
+    hydrateRecruitmentWindowsOntoProgram(
+      hydrateGeneralRecruitmentInfoFromRows(
+        applyResolvedAnnouncementTitle(
+          applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+          {
+            serviceDetailJson: dto.serviceDetailJson,
+            overlay: serviceDetail.registrationOverlay,
+          }
+        )
       )
-    )
+    ),
+    dto
   )
 }
 
@@ -575,18 +645,13 @@ export function mapGeneralProgramRecruitmentsToRequest(
   program: Program
 ): ProgramRecruitmentRequest[] | undefined {
   const types = program.generalParticipantTypes ?? []
-  const audienceMode = mapAudienceToApplicationTargetMode(
-    program.generalProgramAudience,
-    types
-  )
+  const audienceMode = mapAudienceToApplicationTargetMode(program.generalProgramAudience, types)
   const out: ProgramRecruitmentRequest[] = []
 
   const wantsOrg =
-    types.includes('school_institution') ||
-    (types.length === 0 && audienceMode !== 'INDIVIDUAL')
+    types.includes('school_institution') || (types.length === 0 && audienceMode !== 'INDIVIDUAL')
   const wantsIndividual =
-    types.includes('individual') ||
-    (types.length === 0 && audienceMode === 'INDIVIDUAL')
+    types.includes('individual') || (types.length === 0 && audienceMode === 'INDIVIDUAL')
 
   if (wantsOrg) {
     out.push({
@@ -622,9 +687,7 @@ export function mapGeneralProgramRecruitmentsToRequest(
       startAt: toRequestDate(
         program.instructorApplicationStartDate ?? program.applicationStartDate
       ),
-      endAt: toRequestDate(
-        program.instructorApplicationEndDate ?? program.applicationEndDate
-      ),
+      endAt: toRequestDate(program.instructorApplicationEndDate ?? program.applicationEndDate),
       ...recruitmentOperationRequestDates(program, 'INSTRUCTOR'),
       maxCount: program.instructors ?? program.instructorCapacity ?? undefined,
       selectionMethod: 'ADMIN_REVIEW',
@@ -636,15 +699,17 @@ export function mapGeneralProgramRecruitmentsToRequest(
       recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
       targetType: 'COLLEGE_STUDENT',
       status: ProgramRecruitmentRequestStatus.ACTIVE,
-      startAt: toRequestDate(
-        program.volunteerApplicationStartDate ?? program.applicationStartDate
-      ),
-      endAt: toRequestDate(
-        program.volunteerApplicationEndDate ?? program.applicationEndDate
-      ),
+      startAt: toRequestDate(program.volunteerApplicationStartDate ?? program.applicationStartDate),
+      endAt: toRequestDate(program.volunteerApplicationEndDate ?? program.applicationEndDate),
       ...recruitmentOperationRequestDates(program, 'VOLUNTEER'),
       maxCount: program.generalVolunteers ?? undefined,
       selectionMethod: 'ADMIN_REVIEW',
+      // 면접 ON/OFF 스위치는 행 interviewEnabled(BE program_recruitment.interview_enabled). 값이 있을 때만 싣는다(null 은 BE 가 유지).
+      // UJAT 운영 봉사 행은 false 를 거절한다(UJAT_VOLUNTEER_INTERVIEW_REQUIRED) — UJAT 는 자체 adapter 가 true 로 보낸다.
+      ...(typeof program.generalVolunteerInterviewEnabled === 'boolean' &&
+      (program.backendProgramType ?? '').toUpperCase() !== 'UJAT'
+        ? { interviewEnabled: program.generalVolunteerInterviewEnabled }
+        : {}),
     })
   }
 
@@ -732,7 +797,8 @@ function participantTypesKeptWithAdditions(
 }
 
 function copyAudienceOf(row: ProgramRecruitmentRequest): RecruitmentCopyAudience {
-  if (row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.INSTRUCTOR) return 'instructor'
+  if (row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.INSTRUCTOR)
+    return 'instructor'
   if (row.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER) return 'volunteer'
   return 'participant'
 }
@@ -781,7 +847,8 @@ function createRowContactOf(
       ? info.otherMatters?.trim() || undefined
       : undefined
   return {
-    contactName: info?.contactOrganizationName?.trim() || participantContactName?.trim() || undefined,
+    contactName:
+      info?.contactOrganizationName?.trim() || participantContactName?.trim() || undefined,
     contactPhone: toRequestPhone(info?.contactPhone ?? info?.inquiryTel ?? info?.tel) || undefined,
     contactEmail: (info?.contactEmail ?? info?.inquiryEmail ?? info?.email)?.trim() || undefined,
     remarks: notesNotApplicable ? undefined : info?.remarks?.trim() || undefined,
@@ -792,11 +859,10 @@ function createRowContactOf(
 function resolveSponsorIdsForAssignmentWire(program: Program): string[] {
   const common = program.generalCommonInfo
   if (common && Object.prototype.hasOwnProperty.call(common, 'sponsorManagementIds')) {
-    return (common.sponsorManagementIds ?? [])
-      .map(id => String(id).trim())
-      .filter(Boolean)
+    return (common.sponsorManagementIds ?? []).map(id => String(id).trim()).filter(Boolean)
   }
-  if (common?.sponsorManagementId) return [String(common.sponsorManagementId).trim()].filter(Boolean)
+  if (common?.sponsorManagementId)
+    return [String(common.sponsorManagementId).trim()].filter(Boolean)
   if (program.sponsorId) return [String(program.sponsorId).trim()].filter(Boolean)
   return []
 }
@@ -974,7 +1040,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
 
 export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreateRequestBody {
   const core = mapProgramCoreFieldsToRequest(program)
-  return omitNullRecordValues({
+  const body = omitNullRecordValues({
     ...core,
     recruitments: withGeneralCreateRowCopy(core.recruitments ?? undefined, program),
     // OpenAPI `sponsorId`는 string — 숫자 id가 number로 직렬화되면 BE 검증/DB 오류 유발 가능
@@ -987,6 +1053,97 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
     businessEndDate: toRequestDate(program.endDate),
     autoApplyDefaultFormBindings: true,
   }) as ProgramCreateRequestBody
+  return withTypedVolunteerInterviewConfigForCreate(body, program)
+}
+
+function readRequestServiceDetail(serviceDetailJson: string | undefined): Record<string, unknown> {
+  if (!serviceDetailJson) return {}
+  try {
+    const parsed: unknown = JSON.parse(serviceDetailJson)
+    return parsed != null && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {}
+  } catch {
+    return {}
+  }
+}
+
+function recordOrEmpty(value: unknown): Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function nonEmptyText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+/** 생성 봉사 행 면접 기간 — 폼 nested(volunteerRecruitmentInfo) → overlay interviewRangeSeal 순 */
+function volunteerInterviewPeriodForCreate(
+  detail: Record<string, unknown>,
+  overlay: Record<string, unknown>
+): { interviewStartAt?: string; interviewEndAt?: string } {
+  const info = recordOrEmpty(recordOrEmpty(detail.generalCommonInfo).volunteerRecruitmentInfo)
+  const seal = recordOrEmpty(overlay['recruit.volunteer.interviewRangeSeal'])
+  const start = nonEmptyText(info.interviewStartDate) ?? nonEmptyText(seal.start)
+  const end = nonEmptyText(info.interviewEndDate) ?? nonEmptyText(seal.end)
+  return {
+    ...(start ? { interviewStartAt: start } : {}),
+    ...(end ? { interviewEndAt: end } : {}),
+  }
+}
+
+/**
+ * 생성 본문 — 봉사 모집 행(반기 아님)이 정확히 1개면 그 행에 면접 정본을 싣는다.
+ * - `interviewEnabled`: 면접 ON/OFF(BE 스위치). 폼 값(generalVolunteerInterviewEnabled → overlay interviewRequired), 없으면 false
+ * - `interviewConfig`: 이번 생성 overlay 로 만든 전체 typed(부분 객체 없음, specific/applied 각각). OFF 면 `{schemaVersion:1}`
+ * - `interviewStartAt`/`interviewEndAt`: 면접 ON 이고 폼에 면접 기간이 있을 때만
+ * serviceDetailJson 에서는 BE 가 typed 로 만드는 `generalCommonInfo.volunteerInterviewScheduleInfo` 와
+ * typed·행 필드에 같은 정보가 있는 overlay 봉사 면접 키를 뺀다(`omitVolunteerInterviewSaveKeysFromServiceDetailJson`).
+ * 배포 순서: BE 2026-10-25 이후(생성 interviewConfig 반영).
+ */
+function withTypedVolunteerInterviewConfigForCreate(
+  body: ProgramCreateRequestBody,
+  program: Program
+): ProgramCreateRequestBody {
+  if (
+    (body.programType ?? '').toUpperCase() === 'UJAT' ||
+    (program.backendProgramType ?? '').toUpperCase() === 'UJAT'
+  )
+    return body
+  const rows = body.recruitments ?? []
+  const volunteerIndexes = rows
+    .map((row, index) => ({ row, index }))
+    .filter(
+      ({ row }) =>
+        (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' &&
+        row.recruitTerm !== 'FIRST_HALF' &&
+        row.recruitTerm !== 'SECOND_HALF'
+    )
+  if (volunteerIndexes.length !== 1) return body
+  const target = volunteerIndexes[0]!.index
+  const detail = readRequestServiceDetail(body.serviceDetailJson)
+  const overlay = recordOrEmpty(recordOrEmpty(detail.registration).overlay)
+  // 전체 객체(빈 배열·null 도 명시) — BE interviewConfig 는 객체 단위 저장
+  const interviewConfig = completeVolunteerInterviewConfig(
+    buildVolunteerInterviewConfigForSave(overlay)
+  )
+  const interviewEnabled =
+    (typeof program.generalVolunteerInterviewEnabled === 'boolean'
+      ? program.generalVolunteerInterviewEnabled
+      : undefined) ??
+    volunteerInterviewRequiredFromOverlay(overlay) ??
+    false
+  const period = interviewEnabled ? volunteerInterviewPeriodForCreate(detail, overlay) : {}
+  return {
+    ...body,
+    recruitments: rows.map((row, index) =>
+      index === target
+        ? ({ ...row, interviewEnabled, ...period, interviewConfig } as typeof row)
+        : row
+    ),
+    serviceDetailJson: omitVolunteerInterviewSaveKeysFromServiceDetailJson(body.serviceDetailJson),
+  }
 }
 
 const SERVICE_DETAIL_PROGRAM_KEYS = [
@@ -1048,7 +1205,11 @@ function looksMaskedProgramPii(value: string | null | undefined): boolean {
 function recruitmentTypeOf(
   recruitmentType: string | null | undefined
 ): ProgramRecruitmentEditType | null {
-  if (recruitmentType === 'PARTICIPANT' || recruitmentType === 'INSTRUCTOR' || recruitmentType === 'VOLUNTEER') {
+  if (
+    recruitmentType === 'PARTICIPANT' ||
+    recruitmentType === 'INSTRUCTOR' ||
+    recruitmentType === 'VOLUNTEER'
+  ) {
     return recruitmentType
   }
   return null
@@ -1118,8 +1279,7 @@ function mapProgramPatchFieldsToRequest(
     (has('instructorApplicationStartDate') || has('instructorApplicationEndDate')) &&
     !instructorLocked
   const includeVolunteerRecruitment =
-    (has('volunteerApplicationStartDate') || has('volunteerApplicationEndDate')) &&
-    !volunteerLocked
+    (has('volunteerApplicationStartDate') || has('volunteerApplicationEndDate')) && !volunteerLocked
 
   if (has('applicationStartDate') && !participantLocked) {
     body.applicationStartDate = toRequestDate(merged.applicationStartDate)
@@ -1252,10 +1412,7 @@ function mapProgramPatchFieldsToRequest(
       : merged
 
   const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(
-    key =>
-      key !== 'generalProgramAudience' &&
-      key !== 'generalParticipantTypes' &&
-      has(key)
+    key => key !== 'generalProgramAudience' && key !== 'generalParticipantTypes' && has(key)
   )
   if (touchesServiceDetail) {
     const touchesTargetLevels = has('targetLevel') || has('targetLevels')
@@ -1343,13 +1500,43 @@ export function mapGeneralProgramToUpdateRequest(
   serializeOptions?: GeneralProgramUpdateSerializeOptions
 ): ProgramUpdateRequestBody {
   const baselineProgram = baseline ?? program
-  if (patch && Object.keys(patch).length > 0) {
-    return mapProgramPatchFieldsToRequest(
-      { ...program, ...patch },
-      patch,
-      baselineProgram,
-      serializeOptions
-    )
-  }
-  return mapProgramCoreFieldsToRequest(program)
+  const body =
+    patch && Object.keys(patch).length > 0
+      ? mapProgramPatchFieldsToRequest(
+          { ...program, ...patch },
+          patch,
+          baselineProgram,
+          serializeOptions
+        )
+      : mapProgramCoreFieldsToRequest(program)
+  return omitTypedVolunteerInterviewKeysFromUpdateRequest(body, baselineProgram)
+}
+
+/** 조회 typed 적용 조건과 같다 — UJAT 아님 + 반기 아닌 봉사 모집 행 정확히 1개 */
+export function hasSingleTypedVolunteerInterviewRow(program: Program): boolean {
+  if ((program.backendProgramType ?? '').toUpperCase() === 'UJAT') return false
+  const rows = (program.programRecruitments ?? []).filter(
+    row =>
+      (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' &&
+      row.recruitTerm !== 'FIRST_HALF' &&
+      row.recruitTerm !== 'SECOND_HALF'
+  )
+  return rows.length === 1
+}
+
+/**
+ * 생성 외 프로그램 PATCH — `generalCommonInfo.volunteerInterviewScheduleInfo`(BE 가 typed 로 다시 만드는 표시 복사본)와
+ * typed·행 필드에 같은 정보가 있는 overlay 봉사 면접 키는 보내지 않는다(keonhee 2026-10-25 21:09).
+ * 면접 설정 정본은 봉사 행 PATCH 의 interviewEnabled·interviewConfig(생성은 `withTypedVolunteerInterviewConfigForCreate`).
+ * BE PATCH 는 저장된 live typed 로 상세를 정규화하므로 FE overlay 값은 쓰이지 않는다.
+ */
+function omitTypedVolunteerInterviewKeysFromUpdateRequest(
+  body: ProgramUpdateRequestBody,
+  program: Program
+): ProgramUpdateRequestBody {
+  if (!body.serviceDetailJson || !hasSingleTypedVolunteerInterviewRow(program)) return body
+  const serviceDetailJson = omitVolunteerInterviewSaveKeysFromServiceDetailJson(
+    body.serviceDetailJson
+  )
+  return serviceDetailJson === body.serviceDetailJson ? body : { ...body, serviceDetailJson }
 }

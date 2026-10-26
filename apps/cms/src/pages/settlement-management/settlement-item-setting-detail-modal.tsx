@@ -42,6 +42,16 @@ import {
   ModalSpecTableRow,
   type ModalSpecTableRadioOption,
 } from '@/shared/ui/modal-spec-table'
+import {
+  getSettlementConfigErrorField,
+} from '@/features/settlement-management/api/get-settlement-api-error'
+import { resolveSettlementConfigMutationError } from '@/features/settlement-management/hooks/use-settlement-config-mutations'
+import {
+  EMPTY_WITHHOLDING_INPUT_ERRORS,
+  validateWithholdingAmount,
+  validateWithholdingRate,
+  type WithholdingInputErrors,
+} from './settlement-item-setting-detail-validation'
 
 const BASIS_UNIT_OPTIONS_SIMPLE = [{ value: '전체', label: '전체' }]
 
@@ -86,10 +96,12 @@ function linesToEditableText(lines: string[]): string {
 }
 
 const SettlementDetailSnapshotRefContext =
-  createContext<MutableRefObject<(() => SettlementItemSettingDetail) | null> | null>(null)
+  createContext<MutableRefObject<(() => SettlementItemSettingDetail | null) | null> | null>(null)
+
+const SettlementDetailValidationContext = createContext<((isValid: boolean) => void) | null>(null)
 
 function useRegisterSettlementDetailSnapshot(
-  build: () => SettlementItemSettingDetail,
+  build: () => SettlementItemSettingDetail | null,
   deps: DependencyList
 ): void {
   const ref = useContext(SettlementDetailSnapshotRefContext)
@@ -1349,6 +1361,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
 /** 일용근로자 원천징수세액(d-1): 조건·근로소득공제·소득세율 */
 function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { itemId: string }) {
   const detail = useSettlementItemSettingDetailSource(itemId)
+  const setDetailValid = useContext(SettlementDetailValidationContext)
 
   const [qualificationText, setQualificationText] = useState(() =>
     linesToEditableText(detail.qualificationLines)
@@ -1371,9 +1384,38 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
   const [rateInterviewStr, setRateInterviewStr] = useState(() =>
     formatPercentField(detail.withholdingTaxRateInterview ?? null)
   )
+  const [inputErrors, setInputErrors] = useState<WithholdingInputErrors>(() => ({
+    ...EMPTY_WITHHOLDING_INPUT_ERRORS,
+    exclusionMax: validateWithholdingAmount(exclusionMaxStr),
+    earnedDeduction: validateWithholdingAmount(earnedDeductionStr),
+    rateBusiness: validateWithholdingRate(rateBusinessStr),
+    rateOther: validateWithholdingRate(rateOtherStr),
+    ratePrize: validateWithholdingRate(ratePrizeStr),
+    rateInterview: validateWithholdingRate(rateInterviewStr),
+  }))
+
+  const updateInput = (
+    field: keyof WithholdingInputErrors,
+    value: string,
+    setValue: (next: string) => void,
+    validate: (next: string) => string | null
+  ) => {
+    const nextError = validate(value)
+    const nextErrors = { ...inputErrors, [field]: nextError }
+    setValue(value)
+    setInputErrors(nextErrors)
+    setDetailValid?.(!Object.values(nextErrors).some(Boolean))
+  }
+
+  const inputValid = !Object.values(inputErrors).some(Boolean)
+
+  useEffect(() => {
+    setDetailValid?.(inputValid)
+  }, [inputValid, setDetailValid])
 
   useRegisterSettlementDetailSnapshot(
     () => {
+      if (Object.values(inputErrors).some(Boolean)) return null
       const merged = detail
       return {
         ...merged,
@@ -1403,6 +1445,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
       rateOtherStr,
       ratePrizeStr,
       rateInterviewStr,
+      inputErrors,
     ]
   )
 
@@ -1430,10 +1473,15 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               <span className="modal-spec-table__suffix-text">원천징수세액이</span>
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
                 <SettlementItemBasisNumericInput
-                  mode="currency"
+                  mode="decimal"
+                  allowNegative
                   inputSize="medium"
                   value={exclusionMaxStr}
-                  onValueChange={setExclusionMaxStr}
+                  error={Boolean(inputErrors.exclusionMax)}
+                  message={inputErrors.exclusionMax ?? undefined}
+                  onValueChange={value =>
+                    updateInput('exclusionMax', value, setExclusionMaxStr, validateWithholdingAmount)
+                  }
                   aria-label="소액 부징수 원천징수세액 한도(원)"
                 />
               </div>
@@ -1455,11 +1503,16 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
                 <SettlementItemBasisNumericInput
-                  mode="currency"
+                  mode="decimal"
+                  allowNegative
                   inputSize="medium"
                   suffix="원"
                   value={earnedDeductionStr}
-                  onValueChange={setEarnedDeductionStr}
+                  error={Boolean(inputErrors.earnedDeduction)}
+                  message={inputErrors.earnedDeduction ?? undefined}
+                  onValueChange={value =>
+                    updateInput('earnedDeduction', value, setEarnedDeductionStr, validateWithholdingAmount)
+                  }
                   aria-label="근로소득공제비용"
                 />
               </div>
@@ -1481,10 +1534,17 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
+                  allowNegative
+                  groupThousands={false}
+                  precision={2}
                   inputSize="medium"
                   suffix="%"
                   value={rateBusinessStr}
-                  onValueChange={setRateBusinessStr}
+                  error={Boolean(inputErrors.rateBusiness)}
+                  message={inputErrors.rateBusiness ?? undefined}
+                  onValueChange={value =>
+                    updateInput('rateBusiness', value, setRateBusinessStr, validateWithholdingRate)
+                  }
                   aria-label="사업소득 세율"
                 />
               </div>
@@ -1495,10 +1555,17 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
+                  allowNegative
+                  groupThousands={false}
+                  precision={2}
                   inputSize="medium"
                   suffix="%"
                   value={rateOtherStr}
-                  onValueChange={setRateOtherStr}
+                  error={Boolean(inputErrors.rateOther)}
+                  message={inputErrors.rateOther ?? undefined}
+                  onValueChange={value =>
+                    updateInput('rateOther', value, setRateOtherStr, validateWithholdingRate)
+                  }
                   aria-label="기타소득 세율"
                 />
               </div>
@@ -1509,10 +1576,17 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
+                  allowNegative
+                  groupThousands={false}
+                  precision={2}
                   inputSize="medium"
                   suffix="%"
                   value={ratePrizeStr}
-                  onValueChange={setRatePrizeStr}
+                  error={Boolean(inputErrors.ratePrize)}
+                  message={inputErrors.ratePrize ?? undefined}
+                  onValueChange={value =>
+                    updateInput('ratePrize', value, setRatePrizeStr, validateWithholdingRate)
+                  }
                   aria-label="상금 기타소득 세율"
                 />
               </div>
@@ -1532,10 +1606,17 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
+                  allowNegative
+                  groupThousands={false}
+                  precision={2}
                   inputSize="medium"
                   suffix="%"
                   value={rateInterviewStr}
-                  onValueChange={setRateInterviewStr}
+                  error={Boolean(inputErrors.rateInterview)}
+                  message={inputErrors.rateInterview ?? undefined}
+                  onValueChange={value =>
+                    updateInput('rateInterview', value, setRateInterviewStr, validateWithholdingRate)
+                  }
                   aria-label="면접비·지원금·경품 기타소득 세율"
                 />
               </div>
@@ -1859,7 +1940,7 @@ export function SettlementItemSettingDetailModal({
   saving = false,
 }: SettlementItemSettingDetailModalProps) {
   const show = open && item !== null
-  const snapshotRef = useRef<(() => SettlementItemSettingDetail) | null>(null)
+  const snapshotRef = useRef<(() => SettlementItemSettingDetail | null) | null>(null)
   const persistDetail = usePersistSettlementItemSettingDetail()
   const itemLayout = useSettlementItemSettingLayout(item?.id)
 
@@ -1868,6 +1949,8 @@ export function SettlementItemSettingDetailModal({
   const [headerEmoji, setHeaderEmoji] = useState<string | null>(null)
   const [titleEditing, setTitleEditing] = useState(false)
   const [descriptionEditing, setDescriptionEditing] = useState(false)
+  const [saveError, setSaveError] = useState<{ field?: string; message: string } | null>(null)
+  const [detailValid, setDetailValid] = useState(true)
 
   useEffect(() => {
     if (!show || item == null) return
@@ -1876,11 +1959,14 @@ export function SettlementItemSettingDetailModal({
     setHeaderEmoji(item.emojiOverride ?? null)
     setTitleEditing(false)
     setDescriptionEditing(false)
+    setSaveError(null)
+    setDetailValid(true)
   }, [show, item?.id, item?.title, item?.description, item?.emojiOverride])
 
   const handleSave = async () => {
     if (!item) return
     const snap = snapshotRef.current?.()
+    if (snap === null) return
     if (snap) {
       persistDetail(item.id, snap)
     }
@@ -1893,7 +1979,11 @@ export function SettlementItemSettingDetailModal({
     if (onSaveRemote && snap) {
       try {
         await onSaveRemote(item, snap, meta)
-      } catch {
+      } catch (error) {
+        setSaveError({
+          field: getSettlementConfigErrorField(error),
+          message: resolveSettlementConfigMutationError(error),
+        })
         return
       }
     } else {
@@ -1992,7 +2082,7 @@ export function SettlementItemSettingDetailModal({
             size="large"
             width={160}
             onClick={() => void handleSave()}
-            disabled={saving}
+            disabled={saving || !detailValid}
           >
             저장
           </CmsButton>
@@ -2011,9 +2101,18 @@ export function SettlementItemSettingDetailModal({
           />
         </div>
       ) : null}
-      <SettlementDetailSnapshotRefContext.Provider value={snapshotRef}>
-        {item ? <SettlementItemSettingDetailModalBody key={item.id} itemId={item.id} /> : null}
-      </SettlementDetailSnapshotRefContext.Provider>
+      <SettlementDetailValidationContext.Provider value={setDetailValid}>
+        <SettlementDetailSnapshotRefContext.Provider value={snapshotRef}>
+          {saveError ? (
+            <div className="page-content-error" role="alert" aria-live="polite">
+              {saveError.field === 'withholdingRate' ? '소득세율 입력 오류: ' : ''}
+              {saveError.field === 'withholdingAmount' ? '원천징수 금액 입력 오류: ' : ''}
+              {saveError.message || '저장할 수 없습니다.'}
+            </div>
+          ) : null}
+          {item ? <SettlementItemSettingDetailModalBody key={item.id} itemId={item.id} /> : null}
+        </SettlementDetailSnapshotRefContext.Provider>
+      </SettlementDetailValidationContext.Provider>
     </ContentModal>
   )
 }

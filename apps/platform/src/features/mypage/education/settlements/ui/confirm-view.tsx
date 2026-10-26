@@ -121,17 +121,19 @@ export function EducationSettlementConfirmView({
   const showTransport = hasSettlementTransportSection(draft)
   const showMeal = hasSettlementMealSection(draft)
   const showActivity = hasSettlementActivitySection(draft)
-  const receiptExtras = isReceiptWriteDraft(draft)
-    ? overlayPayableEvidenceRequired(
-        sortReceiptPayableItems(startedReceiptExtraItems(draft)),
-        session?.payableItems,
-      )
+  const sortedReceiptExtras = isReceiptWriteDraft(draft)
+    ? sortReceiptPayableItems(startedReceiptExtraItems(draft))
     : []
+  const receiptExtras = readOnly
+    ? sortedReceiptExtras
+    : overlayPayableEvidenceRequired(sortedReceiptExtras, session?.payableItems)
   const wageExtras = receiptExtras.filter(item => isReceiptWageItemType(item.itemType, item.itemName))
   const restExtras = receiptExtras.filter(item => !isReceiptWageItemType(item.itemType, item.itemName))
   const showTransportReceipt = isReceiptEvidenceRequired(
-    payableEvidenceRequired(session?.payableItems, draft.transport.itemType) ??
-      draft.transport.evidenceRequired,
+    readOnly
+      ? draft.transport.evidenceRequired
+      : (payableEvidenceRequired(session?.payableItems, draft.transport.itemType) ??
+        draft.transport.evidenceRequired),
   )
   const resident = formatSettlementResidentNumber(draft)
 

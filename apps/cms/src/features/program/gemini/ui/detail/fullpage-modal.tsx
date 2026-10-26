@@ -53,6 +53,7 @@ import {
   GEMINI_APPROVED_TRAINING_ID_PARAM,
   GEMINI_APPROVED_TRAINING_LNB_PARAM,
 } from '../../lib/approved/detail-url'
+import { formatGeminiRecruitmentSaveError } from '../../lib/recruitment/mutation-error'
 import { GeminiRecruitmentAddPreviewModal } from '../recruitment/add-preview-modal'
 import { GeminiRecruitmentInfoTab } from './recruitment-info-tab'
 import { GeminiInstitutionApplicationTab } from './institution-application-tab'
@@ -218,10 +219,10 @@ export function GeminiRecruitmentDetailFullPageModal({
     try {
       await handleInfoSave()
       showUpdateCompletedAlert()
-    } catch {
+    } catch (error) {
       showAlert({
         title: '안내',
-        content: '모집 정보 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+        content: formatGeminiRecruitmentSaveError(error),
       })
     }
   }, [handleInfoSave, infoDraft, isEditModeInfo, showAlert])

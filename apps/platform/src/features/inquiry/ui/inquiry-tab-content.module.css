@@ -11,6 +11,11 @@
   margin-bottom: var(--spacing-20);
 }
 
+.error {
+  margin: 0 0 var(--spacing-16);
+  color: var(--color-border-error-strong);
+}
+
 .pagination {
   display: flex;
   justify-content: center;

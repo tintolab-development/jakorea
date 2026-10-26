@@ -24,6 +24,8 @@ export type CompanySchoolRegistrationCommonCanonical = {
   detailedProgramId: string
   detailedProgramName: string
   operationRange: CompanySchoolDateRange | null
+  /** 운영기간 날짜 picker 앵커(C5). 구버전 임시저장본에는 없을 수 있다. */
+  operationAnchorIso?: string | null
   businessField: string
   sponsorId: string
   managerContactIds: string[]

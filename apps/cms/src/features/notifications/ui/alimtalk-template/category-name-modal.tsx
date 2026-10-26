@@ -2,11 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
-import {
-  CATEGORY_NAME_INPUT_HINT,
-  isValidCategoryName,
-  sanitizeCategoryNameInput,
-} from './category-name'
+import { isValidCategoryName, sanitizeCategoryNameInput } from './category-name'
 import './category-name-modal.css'
 
 type CategoryNameModalProps = {
@@ -54,18 +50,18 @@ export function CategoryNameModal({
       open={open}
       onCancel={onCancel}
       title={title}
+      description="카테고리명에는 한글, 영문 대소문자, 숫자, _, -만 입력 가능합니다."
       size="compact"
-      className={['category-name-modal', view.mode === 'add' ? 'category-name-modal--add' : ''].filter(Boolean).join(' ')}
       footer={
         <>
-          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" width={120} type="button" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
+            width={120}
             type="button"
-            className={view.mode === 'add' ? 'cms-button--footer-auto' : undefined}
             disabled={!canSubmit}
             onClick={() => onSubmit(trimmed)}
           >
@@ -74,57 +70,51 @@ export function CategoryNameModal({
         </>
       }
     >
-      <DetailInfoForm title="카테고리 정보" hideHeader mode="edit">
-        {view.mode === 'add' ? (
+      <div className="category-name-modal__content">
+        <DetailInfoForm title="카테고리 정보" hideHeader mode="edit">
+          {view.mode === 'add' ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="상위 카테고리"
+                readOnlyDisplay
+                view={<CmsInput inputSize="small" width="100%" value={view.parentName} disabled />}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
-              label="상위 카테고리"
-              readOnlyDisplay
-              view={
+              label="카테고리명"
+              view={null}
+              edit={
                 <CmsInput
                   inputSize="small"
                   width="100%"
-                  value={view.parentName}
-                  disabled
+                  value={name}
+                  placeholder="카테고리명을 입력해 주세요"
+                  onCompositionStart={() => {
+                    composingRef.current = true
+                  }}
+                  onCompositionEnd={event => {
+                    composingRef.current = false
+                    applyName(event.currentTarget.value)
+                  }}
+                  onChange={event => {
+                    const next = event.target.value
+                    if (composingRef.current) {
+                      setName(next)
+                      return
+                    }
+                    applyName(next)
+                  }}
+                  onPressEnter={() => {
+                    if (canSubmit) onSubmit(trimmed)
+                  }}
                 />
               }
             />
           </DetailInfoForm.Row>
-        ) : null}
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="카테고리명"
-            view={null}
-            edit={
-              <CmsInput
-                inputSize="small"
-                width="100%"
-                value={name}
-                placeholder="카테고리명을 입력해 주세요"
-                message={restrictCharset ? CATEGORY_NAME_INPUT_HINT : undefined}
-                onCompositionStart={() => {
-                  composingRef.current = true
-                }}
-                onCompositionEnd={event => {
-                  composingRef.current = false
-                  applyName(event.currentTarget.value)
-                }}
-                onChange={event => {
-                  const next = event.target.value
-                  if (composingRef.current) {
-                    setName(next)
-                    return
-                  }
-                  applyName(next)
-                }}
-                onPressEnter={() => {
-                  if (canSubmit) onSubmit(trimmed)
-                }}
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
+        </DetailInfoForm>
+      </div>
     </ContentModal>
   )
 }

@@ -141,6 +141,7 @@ export function useTrainedTeachersProgramListFilters() {
       columnPreset: 'trainedTeachers',
       filterFields: resolveTrainedTeachersListFilterFields(listView),
       serverSideOverviewFilters: remoteEnabled,
+      calendarProgramType: 'TRAINED_TEACHER',
     }
   }, [remoteEnabled, statusFilter])
 

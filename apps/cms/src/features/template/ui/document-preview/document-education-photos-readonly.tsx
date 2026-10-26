@@ -13,9 +13,11 @@ function trimText(value: unknown): string {
 export function DocumentEducationPhotosReadonly({
   paragraph,
   slotCount = DEFAULT_EDUCATION_PHOTOS_SLOT_COUNT,
+  files = [],
 }: {
   paragraph: FileAttachmentParagraph
   slotCount?: number
+  files?: readonly { fileObjectId: number; originalFileName?: string }[]
 }) {
   const title = trimText(paragraph.paragraphTitle) || '교육 사진'
   const description = trimText(paragraph.paragraphDescription)
@@ -42,8 +44,18 @@ export function DocumentEducationPhotosReadonly({
         ) : null}
       </div>
       <div className="document-education-photos-readonly__grid">
-        {Array.from({ length: slotCount }, (_, index) => (
-          <div key={index} className="document-education-photos-readonly__slot" />
+        {Array.from({ length: Math.max(slotCount, files.length) }, (_, index) => (
+          <div
+            key={files[index]?.fileObjectId ?? `empty-${index}`}
+            className="document-education-photos-readonly__slot"
+            data-file-object-id={files[index]?.fileObjectId}
+          >
+            {files[index] != null ? (
+              <span className="document-education-photos-readonly__file-label">
+                {files[index]?.originalFileName?.trim() || `첨부 파일 ${index + 1}`}
+              </span>
+            ) : null}
+          </div>
         ))}
       </div>
     </div>

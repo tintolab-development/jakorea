@@ -106,6 +106,9 @@ export function useUpdateRecruitPosting() {
     retry: false,
     onSuccess: data => {
       queryClient.setQueryData(recruitPostingQueryKeys.detail(source(), data.id), data)
+      void queryClient.invalidateQueries({
+        queryKey: recruitPostingQueryKeys.detail(source(), data.id),
+      })
       void queryClient.invalidateQueries({ queryKey: recruitPostingQueryKeys.lists() })
     },
   })

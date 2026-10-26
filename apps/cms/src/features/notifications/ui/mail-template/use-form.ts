@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MailTemplateItem, MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'
 import {
-  MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL,
   validateMailSenderEmail,
   type ValidateMailSenderEmailOptions,
 } from '@/features/notifications/model/mail-template/sender-email'
@@ -27,7 +26,7 @@ export type MailTemplateFormDraft = {
 const EMPTY_DRAFT: MailTemplateFormDraft = {
   templateName: '',
   senderName: '',
-  senderEmail: MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL,
+  senderEmail: '',
   ...EMPTY_MAIL_COMPOSE,
   newFiles: [],
   removedAttachmentIds: [],
@@ -91,6 +90,7 @@ export function useMailTemplateForm(
   }, [])
 
   const replaceSenderName = useCallback((value: string) => {
+    if (senderNameRef.current === value) return
     senderNameRef.current = value
     setSenderNameSeed(value)
     setSenderNameEpoch(key => key + 1)

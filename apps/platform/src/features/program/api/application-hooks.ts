@@ -23,6 +23,7 @@ import {
   pickApplicationOption,
   type ProgramApplicationSelection,
 } from './pick-application-option'
+import { shouldFetchPortalApplicationOptions } from './application-option-query'
 
 export type { ProgramApplicationSelection } from './pick-application-option'
 export { pickApplicationOption } from './pick-application-option'
@@ -54,6 +55,8 @@ export type ProgramApplicationFormQuery = {
  *
  * BE (portal-apply-form-before-recruitment-frontend-handoff-2026-10-02):
  * - form-bindings GET 은 모집 시작 전·종료 후에도 200 + 발행 양식.
+ * - 이미 제출한 신청 건을 직접 재조회하는 stale URL은
+ *   `APPLICATION_ALREADY_SUBMITTED` (409)로 반환될 수 있으며, 신청 내역 안내 모달로 분기한다.
  * - options 는 모집 전 `canApply=false` + `RECRUITMENT_NOT_STARTED`,
  *   종료 후 `RECRUITMENT_CLOSED`. formBindingId 는 유지.
  * - 제출/임시저장만 모집 window 로 409 (`RECRUITMENT_NOT_STARTED` / `RECRUITMENT_ENDED`).
@@ -237,6 +240,83 @@ export function useProgramApplicationForm(
     blockedReason,
     blockedMessage: messageForApplicationBlockedReason(blockedReason),
     refetch,
+  }
+}
+
+export type PortalApplicationOptionQuery = {
+  isLoading: boolean
+  option: ReturnType<typeof pickApplicationOption>
+  blockedReason: string | null
+  blockedMessage: string | null
+}
+
+/** 상세 「신청하기」 비활성·사유. 양식 GET은 하지 않는다. */
+export function usePortalApplicationOption(
+  programId: string | null | undefined,
+  selection?: ProgramApplicationSelection | null,
+): PortalApplicationOptionQuery {
+  const remote = isRemoteApiConfigured()
+  const numericId = parsePortalProgramId(programId)
+  const enabled = shouldFetchPortalApplicationOptions(numericId, remote, Boolean(getAccessToken()))
+
+  const optionsQuery = useQuery({
+    queryKey: platformQueryKeys.program.applicationOptions(String(numericId ?? '')),
+    queryFn: ({ signal }) => fetchPortalApplicationOptions(numericId!, signal),
+    enabled,
+    staleTime: FORM_STALE_MS,
+    gcTime: FORM_GC_MS,
+    retry: shouldRetryQuery,
+    retryDelay: queryRetryDelay,
+  })
+
+  if (!enabled || optionsQuery.isPending) {
+    return {
+      isLoading: Boolean(enabled && optionsQuery.isPending),
+      option: null,
+      blockedReason: null,
+      blockedMessage: null,
+    }
+  }
+
+  if (optionsQuery.isError) {
+    const blockedReason = getApplicationApiErrorCode(optionsQuery.error)
+    return {
+      isLoading: false,
+      option: null,
+      blockedReason,
+      blockedMessage: resolveApplicationBlockedDisplayMessage(
+        blockedReason,
+        optionsQuery.error,
+      ),
+    }
+  }
+
+  const option = pickApplicationOption(optionsQuery.data, selection)
+  if (!option) {
+    const blockedReason =
+      selection?.recruitmentId != null || (selection?.recruitmentIds?.length ?? 0) > 0
+        ? 'RECRUITMENT_NOT_FOUND'
+        : 'APPLICATION_FORM_NOT_CONFIGURED'
+    return {
+      isLoading: false,
+      option: null,
+      blockedReason,
+      blockedMessage: messageForApplicationBlockedReason(blockedReason),
+    }
+  }
+
+  const blockedReason =
+    option.formBindingId == null
+      ? (option.blockedReason ?? 'APPLICATION_FORM_NOT_CONFIGURED')
+      : option.canApply === false
+        ? (option.blockedReason ?? 'PROGRAM_NOT_APPLICABLE')
+        : null
+
+  return {
+    isLoading: false,
+    option,
+    blockedReason,
+    blockedMessage: messageForApplicationBlockedReason(blockedReason),
   }
 }
 

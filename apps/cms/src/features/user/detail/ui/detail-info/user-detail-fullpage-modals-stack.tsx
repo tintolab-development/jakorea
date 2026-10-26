@@ -1,6 +1,12 @@
 import { useMemo, useCallback, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
+import { buildMemberSingleDeleteGuideLines } from '@/features/user/shared/lib/member-withdraw-delete-guide'
+import {
+  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+} from '@/shared/constants'
+import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { LectureAttendanceModal } from '@/features/program/general/ui/lecture-attendance-modal'
 import { AssignmentSubmissionModal } from '@/features/program/general/ui/assignment-submission-modal'
 import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/modal/instructor-permission-revoke-modal'
@@ -150,20 +156,31 @@ export function UserDetailFullpageModalsStack() {
         onClose={onCloseInstitutionDeleteBlocked}
         selectedCount={1}
       />
-      {withdrawConfirmOpen && (
+      {withdrawConfirmOpen && sections.withdraw.isSchoolDelete ? (
         <MemberWithdrawGuideModal
           open
           onCancel={onWithdrawModalCancel}
           onConfirm={onWithdrawModalConfirm}
-          variant={sections.withdraw.isSchoolDelete ? 'school_delete' : 'member_withdraw'}
-          displayName={
-            sections.withdraw.isSchoolDelete
-              ? displayUser.schoolInfo?.schoolName?.trim() || displayUser.name
-              : displayUser.name
-          }
+          variant="school_delete"
+          displayName={displayUser.schoolInfo?.schoolName?.trim() || displayUser.name}
           confirmLoading={withdrawConfirmLoading}
         />
-      )}
+      ) : null}
+      {withdrawConfirmOpen && !sections.withdraw.isSchoolDelete ? (
+        <DeleteGuideModal
+          open
+          onCancel={onWithdrawModalCancel}
+          onConfirm={onWithdrawModalConfirm}
+          title="회원 삭제 안내"
+          lines={buildMemberSingleDeleteGuideLines(displayUser.name)}
+          confirmText="삭제"
+          confirmVariant="delete"
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+          confirmInputMode="phrase"
+          confirmLoading={withdrawConfirmLoading}
+        />
+      ) : null}
       <InstructorPermissionRevokeModal
         open={instructorPermissionRevokeOpen}
         instructorName={displayUser.name}

@@ -57,7 +57,7 @@ export function shouldUseMailTemplatesRemoteApi(): boolean {
   return isRealApiModuleEnabled('notifications') && hasRemoteAdminJwt()
 }
 
-/** 카테고리·발신 프로필 NHN 연동 (수동). 알림톡 승인 카탈로그 pull과 문구·목적이 다름. */
+/** 카테고리·발신 프로필 NHN 연동 (페이지 진입 시 자동). 알림톡 승인 카탈로그 pull과 문구·목적이 다름. */
 export async function syncMailCatalog(): Promise<{
   templates: AlimtalkSyncOutcome
   senderProfiles: AlimtalkSyncOutcome | null

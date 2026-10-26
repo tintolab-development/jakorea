@@ -157,6 +157,13 @@ assert.deepEqual(platformQueryKeys.mypage.consent('FACILITATOR_PLEDGE'), [
   'consents',
   'FACILITATOR_PLEDGE',
 ])
+assert.deepEqual(platformQueryKeys.mypage.consentDocument(12), [
+  'platform',
+  'mypage',
+  'consents',
+  'documents',
+  12,
+])
 
 const nestedLegacy = parseConsentWithdrawError({
   isAxiosError: true,

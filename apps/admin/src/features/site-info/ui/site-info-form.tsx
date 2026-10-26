@@ -11,7 +11,7 @@ import {
   CmsButton,
   CmsInput,
   FileSelectField,
-  FILE_SELECT_MAX_TOTAL_BYTES,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
   useCmsAlert,
@@ -21,7 +21,7 @@ import './site-info-form.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
@@ -227,10 +227,10 @@ function ImageEditField({
       if (
         isFileSelectTotalSizeExceeded({
           incoming: [file],
-          maxTotalBytes: FILE_SELECT_MAX_TOTAL_BYTES,
+          maxTotalBytes: FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded()
+        notifyFileSelectTotalSizeExceeded(FILE_SELECT_IMAGE_MAX_TOTAL_BYTES)
         return
       }
       try {
@@ -266,7 +266,13 @@ function ImageEditField({
           void handleFilesChange(files)
         }}
         onRemoveFile={onRemove}
-        guideLines={IMAGE_GUIDE_LINES}
+        guideLines={[
+          ...IMAGE_GUIDE_LINES,
+          `- 권장 ${variant === 'favicon' ? '아이콘' : '이미지'} 사이즈는 ${
+            variant === 'favicon' ? '512 × 512px' : '1200 × 630px'
+          }입니다.`,
+        ]}
+        maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
       />
     </div>
   )

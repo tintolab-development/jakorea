@@ -1,0 +1,49 @@
+.row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-16);
+  width: 100%;
+}
+
+.card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding: var(--spacing-24);
+  border: 1px solid rgb(61 61 61 / 10%);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+  box-shadow: var(--shadow-card-lg);
+}
+
+.label,
+.amount {
+  margin: 0;
+}
+
+.amountRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-4);
+  margin: 0;
+}
+
+.unit {
+  margin: 0;
+}
+
+@media (--bp-below-pc) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-10);
+  }
+
+  .label {
+    font-size: 14px !important;
+  }
+
+  .amount {
+    font-size: 20px !important;
+  }
+}

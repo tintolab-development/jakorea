@@ -7,8 +7,14 @@ import {
   resolveScheduleIdForIsoDate,
   type ProgramScheduleListItem,
 } from '@/features/program/ujat/api/temporary-schedule-api'
-import { resolveUjatEducationScheduleSettingsSemesterDisplay } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
+import {
+  resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail,
+} from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
 import type { UjatHalfEventRangeSeal } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
+import type {
+  UjatTypedDetail,
+  UjatTypedScheduleRow,
+} from '@/features/program/ujat/api/typed-detail-client'
 
 dayjs.extend(isSameOrBefore)
 
@@ -176,19 +182,36 @@ function isoInEventRange(isoDate: string, range: UjatHalfEventRangeSeal | undefi
 
 export function resolveEducationSemesterForIsoDate(
   isoDate: string,
-  overlay?: Record<string, unknown>
+  typedDetail?: UjatTypedDetail
 ): UjatInstitutionEducationSemesterKey | null {
-  const h1 = resolveUjatEducationScheduleSettingsSemesterDisplay('h1', overlay).eventRange
-  const h2 = resolveUjatEducationScheduleSettingsSemesterDisplay('h2', overlay).eventRange
+  const h1 = resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail('h1', typedDetail).eventRange
+  const h2 = resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail('h2', typedDetail).eventRange
   if (isoInEventRange(isoDate, h1)) return 'h1'
   if (isoInEventRange(isoDate, h2)) return 'h2'
+  return null
+}
+
+function scheduleSemesterFromTypedDetail(
+  item: ProgramScheduleListItem,
+  typedDetail?: UjatTypedDetail
+): UjatInstitutionEducationSemesterKey | null {
+  const scheduleId = Number(item.id ?? item.scheduleId)
+  if (!Number.isFinite(scheduleId)) return null
+  for (const halfPlan of typedDetail?.halfPlans ?? []) {
+    const half = halfPlan.semesterType === 'SECOND_HALF' ? 'h2' : 'h1'
+    for (const stage of halfPlan.stages ?? []) {
+      if ((stage.rows ?? []).some((row: UjatTypedScheduleRow) => row.scheduleIds?.includes(scheduleId))) {
+        return half
+      }
+    }
+  }
   return null
 }
 
 /** GET /programs/{id}/schedules 항목만 날짜 열로 쓴다. 응답이 없으면 빈 배열. overlay로 날짜·학기를 채우지 않는다. */
 export function buildUjatProgramScheduleDates(
   schedules: readonly ProgramScheduleListItem[],
-  overlay?: Record<string, unknown>
+  typedDetail?: UjatTypedDetail
 ): UjatInstitutionScheduleAssignDateEntry[] {
   const seen = new Set<string>()
   const entries: UjatInstitutionScheduleAssignDateEntry[] = []
@@ -210,7 +233,8 @@ export function buildUjatProgramScheduleDates(
       title: formatScheduleColumnTitle(iso),
       semester:
         semesterFromApi ??
-        (overlay != null ? resolveEducationSemesterForIsoDate(iso, overlay) : null),
+        scheduleSemesterFromTypedDetail(item, typedDetail) ??
+        resolveEducationSemesterForIsoDate(iso, typedDetail),
       scheduleId,
     })
   }
@@ -225,7 +249,7 @@ export function buildUjatProgramScheduleDates(
 export function buildUjatScheduleAssignDates(input: {
   preferredIsoDates: readonly string[]
   schedules: readonly ProgramScheduleListItem[]
-  overlay?: Record<string, unknown>
+  typedDetail?: UjatTypedDetail
 }): UjatInstitutionScheduleAssignDateEntry[] {
   const seen = new Set<string>()
   const entries: UjatInstitutionScheduleAssignDateEntry[] = []
@@ -246,7 +270,8 @@ export function buildUjatScheduleAssignDates(input: {
       title: formatScheduleColumnTitle(iso),
       semester:
         (matched ? readScheduleSemester(matched) : null) ??
-        (input.overlay != null ? resolveEducationSemesterForIsoDate(iso, input.overlay) : null),
+        (matched ? scheduleSemesterFromTypedDetail(matched, input.typedDetail) : null) ??
+        resolveEducationSemesterForIsoDate(iso, input.typedDetail),
       scheduleId: resolveScheduleIdForIsoDate(input.schedules, iso) ?? undefined,
     })
   }

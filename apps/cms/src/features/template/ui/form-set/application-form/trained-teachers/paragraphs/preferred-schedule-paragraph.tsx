@@ -8,9 +8,9 @@ import {
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
-  useGeneralApplicationOverlayKv,
-  updateGeneralApplicationOverlayKey,
-} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+  useTrainedTeachersApplicationField,
+  updateTrainedTeachersApplicationField,
+} from '@/features/template/ui/form-set/application-form/trained-teachers/trained-teachers-application-form-rhf'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
@@ -292,14 +292,14 @@ function TrainedTeachersPreferredScheduleFields({
     return (date: Dayjs) => date.isBefore(start, 'day') || date.isAfter(end, 'day')
   }, [bridge.educationScheduleMode, bridge.educationScheduleRange, fixedEducationDates])
 
-  const [blocks] = useGeneralApplicationOverlayKv<ScheduleBlockState[]>(
+  const [blocks] = useTrainedTeachersApplicationField<ScheduleBlockState[]>(
     'application.trainedTeachers.preferredSchedules',
     []
   )
 
   useMemo(() => {
     if (blocks.length === 0) {
-      updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
+      updateTrainedTeachersApplicationField<ScheduleBlockState[]>(
         'application.trainedTeachers.preferredSchedules',
         () => [createEmptyBlockState()]
       )
@@ -313,14 +313,14 @@ function TrainedTeachersPreferredScheduleFields({
   const displayBlocks = blocks.length > 0 ? blocks : [createEmptyBlockState()]
 
   const patchBlock = (index: number, patch: Partial<ScheduleBlockState>) => {
-    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
       const current = (prev ?? []) as ScheduleBlockState[]
       return current.map((b, i) => (i === index ? { ...b, ...patch } : b))
     })
   }
 
   const setBlockSession = (index: number, value: string | undefined) => {
-    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
       const current = (prev ?? []) as ScheduleBlockState[]
       return current.map((b, i) => {
         if (i !== index) return b
@@ -335,7 +335,7 @@ function TrainedTeachersPreferredScheduleFields({
   }
 
   const patchBlockTime = (index: number, timeIndex: number, patch: Partial<SessionTimeState>) => {
-    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
       const current = (prev ?? []) as ScheduleBlockState[]
       return current.map((b, i) =>
         i === index
@@ -349,7 +349,7 @@ function TrainedTeachersPreferredScheduleFields({
   }
 
   const removeBlock = (index: number) => {
-    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
       const current = (prev ?? []) as ScheduleBlockState[]
       if (current.length <= 1) return [createEmptyBlockState()]
       return current.filter((_, i) => i !== index)
@@ -357,7 +357,7 @@ function TrainedTeachersPreferredScheduleFields({
   }
 
   const addBlock = () => {
-    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
       const current = (prev ?? []) as ScheduleBlockState[]
       return current.length >= maxBlocks ? current : [...current, createEmptyBlockState()]
     })

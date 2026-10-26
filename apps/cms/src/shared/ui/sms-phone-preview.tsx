@@ -55,11 +55,7 @@ export function SmsPhonePreview({
                 </p>
               ) : null}
               <p className="sms-phone-preview__body">
-                {body
-                  ? renderNotificationVariableText(body)
-                  : hasSubject
-                    ? ''
-                    : '내용을 작성하세요'}
+                {body ? renderNotificationVariableText(body) : ''}
               </p>
             </div>
           </div>

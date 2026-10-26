@@ -7,12 +7,12 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import {
-  getGeneralRecruitOverlayRecord,
-  getGeneralRecruitOverlayScope,
-  patchGeneralRecruitOverlay,
-  useGeneralRecruitOverlayKv,
-  updateGeneralRecruitOverlayKey,
-} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+  getRecruitDetailInfoRecord,
+  getRecruitDetailInfoScope,
+  patchRecruitDetailInfo,
+  updateRecruitDetailInfoKey,
+  useRecruitDetailInfoField,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 import {
   RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
   RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
@@ -96,7 +96,7 @@ function RecruitDetailInfoTextFieldRow({
   textFieldControl?: 'textarea' | 'input'
 }) {
   const overlayKey = resolveRecruitDetailTextFieldOverlayKey(overlayKeyPrefix, field.label)
-  const [value, setValue] = useGeneralRecruitOverlayKv<string>(overlayKey, '')
+  const [value, setValue] = useRecruitDetailInfoField<string>(overlayKey, '')
 
   if (RICH_TEXT_FIELD_LABELS.has(field.label)) {
     return (
@@ -175,7 +175,7 @@ function RecruitDetailInfoTextFieldRows({
 }
 
 function readOverlayHtml(overlayKey: string): string {
-  const raw = getGeneralRecruitOverlayRecord()[overlayKey]
+  const raw = getRecruitDetailInfoRecord()[overlayKey]
   return typeof raw === 'string' ? raw : ''
 }
 
@@ -239,14 +239,14 @@ const RecruitDetailRichTextEditor = memo(function RecruitDetailRichTextEditor({
       if (!isRecruitDetailContentPersistSuppressed()) {
         const html = readEditedHtml()
         if (typeof html === 'string') {
-          patchGeneralRecruitOverlay({ [overlayKey]: html })
+          patchRecruitDetailInfo({ [overlayKey]: html })
         }
       }
       registerRecruitDetailRichTextHtml(overlayKey, null)
     }
   }, [overlayKey])
 
-  const [overlayHtml] = useGeneralRecruitOverlayKv<string>(overlayKey, '')
+  const [overlayHtml] = useRecruitDetailInfoField<string>(overlayKey, '')
   useEffect(() => {
     if (editor == null || editor.isDestroyed || editor.view == null) return
     const incoming = overlayHtml.trim()
@@ -316,7 +316,7 @@ export function RecruitDetailInfoParagraph({
   textFieldControl = 'textarea',
 }: RecruitDetailInfoParagraphProps) {
   const contentResetGeneration = useRecruitDetailContentResetGeneration()
-  const overlayScope = getGeneralRecruitOverlayScope()
+  const overlayScope = getRecruitDetailInfoScope()
   const editorResetKey = `${wysiwygResetKey}::scope-${overlayScope}::reset-${contentResetGeneration}`
   const thumbObjectUrlKey = recruitDetailThumbObjectUrlKey(overlayKeyPrefix)
   const thumbFileNameKey = recruitDetailThumbFileNameKey(overlayKeyPrefix)
@@ -326,19 +326,19 @@ export function RecruitDetailInfoParagraph({
   const attachmentFileObjectIdsKey = recruitDetailAttachmentFileObjectIdsKey(overlayKeyPrefix)
   const additionalContentKey = recruitDetailAdditionalContentOverlayKey(overlayKeyPrefix)
 
-  const [persistedThumbObjectUrl, setPersistedThumbObjectUrl] = useGeneralRecruitOverlayKv<
+  const [persistedThumbObjectUrl, setPersistedThumbObjectUrl] = useRecruitDetailInfoField<
     string | null
   >(thumbObjectUrlKey, null)
-  const [thumbFileName, setThumbFileName] = useGeneralRecruitOverlayKv<string | null>(
+  const [thumbFileName, setThumbFileName] = useRecruitDetailInfoField<string | null>(
     thumbFileNameKey,
     null
   )
-  const [thumbFileObjectId, setThumbFileObjectId] = useGeneralRecruitOverlayKv<number | null>(
+  const [thumbFileObjectId, setThumbFileObjectId] = useRecruitDetailInfoField<number | null>(
     thumbFileObjectIdKey,
     null
   )
-  const [thumbContentUrl] = useGeneralRecruitOverlayKv<string | null>(thumbContentUrlKey, null)
-  const [attachmentFileNames] = useGeneralRecruitOverlayKv<string[]>(attachmentFileNamesKey, [])
+  const [thumbContentUrl] = useRecruitDetailInfoField<string | null>(thumbContentUrlKey, null)
+  const [attachmentFileNames] = useRecruitDetailInfoField<string[]>(attachmentFileNamesKey, [])
   const resolvedThumbFileObjectId = resolveRecruitDetailThumbFileObjectId(
     thumbFileObjectId,
     thumbContentUrl
@@ -355,7 +355,7 @@ export function RecruitDetailInfoParagraph({
   useEffect(() => {
     const patch = recruitDetailDraftMediaRestorePatch(overlayScope, overlayKeyPrefix)
     if (patch == null) return
-    patchGeneralRecruitOverlay(patch)
+    patchRecruitDetailInfo(patch)
   }, [overlayKeyPrefix, overlayScope])
 
   useEffect(() => {
@@ -423,14 +423,14 @@ export function RecruitDetailInfoParagraph({
               waitUntilAvailable: true,
             })
             rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, image)
-            patchGeneralRecruitOverlay({
+            patchRecruitDetailInfo({
               [thumbFileObjectIdKey]: uploaded.fileObjectId,
               [thumbContentUrlKey]: contentUrlForFileObjectId(uploaded.fileObjectId),
               [thumbObjectUrlKey]: null,
             })
             persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
           } catch {
-            patchGeneralRecruitOverlay({
+            patchRecruitDetailInfo({
               [thumbFileObjectIdKey]: null,
               [thumbContentUrlKey]: null,
               [thumbObjectUrlKey]: null,
@@ -471,7 +471,7 @@ export function RecruitDetailInfoParagraph({
     setThumbFileName(null)
     setPersistedThumbObjectUrl(null)
     forgetProgramThumbnailPreviewBlob(resolvedThumbFileObjectId)
-    patchGeneralRecruitOverlay({
+    patchRecruitDetailInfo({
       [thumbFileObjectIdKey]: null,
       [thumbContentUrlKey]: null,
       [thumbObjectUrlKey]: null,
@@ -493,11 +493,11 @@ export function RecruitDetailInfoParagraph({
     (files: File[]) => {
       if (files.length === 0) return
       const incomingNames = files.map(file => file.name)
-      const previousCount = Array.isArray(getGeneralRecruitOverlayRecord()[attachmentFileNamesKey])
-        ? (getGeneralRecruitOverlayRecord()[attachmentFileNamesKey] as string[]).length
+      const previousCount = Array.isArray(getRecruitDetailInfoRecord()[attachmentFileNamesKey])
+        ? (getRecruitDetailInfoRecord()[attachmentFileNamesKey] as string[]).length
         : 0
       // 업로드 완료 전에 단계를 바꿔도 파일명이 남도록 먼저 기록한다.
-      updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => [
+      updateRecruitDetailInfoKey<string[]>(attachmentFileNamesKey, prev => [
         ...(prev ?? []),
         ...incomingNames,
       ])
@@ -524,7 +524,7 @@ export function RecruitDetailInfoParagraph({
               const removeAt = [...failedIndexes]
                 .map(index => previousCount + index)
                 .sort((left, right) => right - left)
-              updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => {
+              updateRecruitDetailInfoKey<string[]>(attachmentFileNamesKey, prev => {
                 const next = [...(prev ?? [])]
                 for (const index of removeAt) {
                   if (next[index] === incomingNames[index - previousCount]) next.splice(index, 1)
@@ -536,7 +536,7 @@ export function RecruitDetailInfoParagraph({
               persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)
               return
             }
-            updateGeneralRecruitOverlayKey<number[]>(attachmentFileObjectIdsKey, prev => [
+            updateRecruitDetailInfoKey<number[]>(attachmentFileObjectIdsKey, prev => [
               ...(prev ?? []),
               ...uploadedIds,
             ])
@@ -552,10 +552,10 @@ export function RecruitDetailInfoParagraph({
 
   const handleRemoveAttachment = useCallback(
     (index: number) => {
-      updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev =>
+      updateRecruitDetailInfoKey<string[]>(attachmentFileNamesKey, prev =>
         (prev ?? []).filter((_, i) => i !== index)
       )
-      updateGeneralRecruitOverlayKey<number[]>(attachmentFileObjectIdsKey, prev =>
+      updateRecruitDetailInfoKey<number[]>(attachmentFileObjectIdsKey, prev =>
         (prev ?? []).filter((_, i) => i !== index)
       )
       persistRecruitDetailDraftMediaFromOverlay(overlayScope, overlayKeyPrefix)

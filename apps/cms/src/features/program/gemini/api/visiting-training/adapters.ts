@@ -26,6 +26,7 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { GEMINI_VISITING_TRAINING_PROGRAM_TYPE } from './capabilities'
 import { resolveGeminiPreferredLectureSchedule } from './preferred-lecture-schedule'
+import { mapGeminiTrainingDateCandidates } from '@/features/program/gemini/lib/approved/training-date-candidates'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
@@ -52,6 +53,14 @@ function optionalDate(value: string | null | undefined): string | undefined {
 
 function trimmedOrEmpty(value: string | null | undefined): string {
   return value?.trim() ?? ''
+}
+
+function normalizeOptionalFileName(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
+  const lowered = trimmed.toLowerCase()
+  if (lowered === 'null' || lowered === 'undefined') return null
+  return trimmed
 }
 
 /** BE: online|offline|hybrid|null. Gemini UI 셀렉트는 online|offline만 — hybrid·기타는 offline으로 표시(정책: UI 미지원). */
@@ -116,7 +125,7 @@ function wireGeminiThumbnail(
   clearFields: string[] | null,
   thumbnailFileName: string | null | undefined
 ): void {
-  const name = thumbnailFileName?.trim()
+  const name = normalizeOptionalFileName(thumbnailFileName)
   if (name) {
     body.keyVisualImage = name
     return
@@ -163,7 +172,7 @@ export function buildGeminiRecruitmentPersistSnapshot(
     inquiryEmail: trimmedOrEmpty(draft.inquiryEmail),
     notesNotApplicable: draft.notesNotApplicable === true,
     notes: draft.notesNotApplicable ? '' : trimmedOrEmpty(draft.notes),
-    thumbnailFileName: draft.thumbnailFileName?.trim() || null,
+    thumbnailFileName: normalizeOptionalFileName(draft.thumbnailFileName),
     programDescription: draft.programDescription ?? '',
     recruitmentGuide: draft.recruitmentGuide ?? '',
     applicationMethod: draft.applicationMethod ?? '',
@@ -423,7 +432,7 @@ export function mapGeminiRecruitmentDetailToDetail(
     inquiryEmail: trimmedOrEmpty(dto.contactEmail),
     notesNotApplicable,
     notes: notesNotApplicable ? '' : otherMatters,
-    thumbnailFileName: dto.thumbnailFileName?.trim() || null,
+    thumbnailFileName: normalizeOptionalFileName(dto.thumbnailFileName),
     programDescription: trimmedOrEmpty(dto.description),
     recruitmentGuide: trimmedOrEmpty(dto.recruitmentGuide),
     applicationMethod: trimmedOrEmpty(dto.applicationMethod),
@@ -496,6 +505,7 @@ export function mapGeminiRecruitmentItemToApprovedRow(
     instructorAssigned,
     trainingDate,
     trainingTimeText,
+    trainingDateCandidates: mapGeminiTrainingDateCandidates(dto.trainingDateCandidates),
     studentCount: dto.studentCount ?? 0,
     instructorName,
     managerName: dto.managerName?.trim() || '-',

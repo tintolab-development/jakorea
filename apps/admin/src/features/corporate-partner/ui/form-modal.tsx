@@ -16,7 +16,7 @@ import {
   CmsRadioGroup,
   ContentModal,
   FileSelectField,
-  FILE_SELECT_MAX_TOTAL_BYTES,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
   useCmsAlert,
@@ -24,10 +24,11 @@ import {
 
 import './form-modal.css'
 
-const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
+const IMAGE_ACCEPT =
+  '.jpg,.jpeg,.png,.ai,.eps,.svg,image/jpeg,image/png,image/svg+xml,application/postscript,application/illustrator'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 권장 로고 사이즈는 300*110입니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG, AI, EPS, SVG 형식만 등록 가능합니다.',
+  '- 권장 로고 사이즈는 300 × 110px입니다.',
 ]
 
 /** Notion / 시안 description */
@@ -90,9 +91,35 @@ function coerceRadioBoolean(raw: unknown): boolean {
 
 function isAllowedImageFile(file: File): boolean {
   const type = file.type.toLowerCase()
-  if (type === 'image/jpeg' || type === 'image/png') return true
+  if (
+    type === 'image/jpeg' ||
+    type === 'image/png' ||
+    type === 'image/svg+xml' ||
+    type === 'application/postscript' ||
+    type === 'application/illustrator'
+  ) {
+    return true
+  }
   const name = file.name.toLowerCase()
-  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
+  return (
+    name.endsWith('.jpg') ||
+    name.endsWith('.jpeg') ||
+    name.endsWith('.png') ||
+    name.endsWith('.ai') ||
+    name.endsWith('.eps') ||
+    name.endsWith('.svg')
+  )
+}
+
+function isPreviewableLogo(file: File): boolean {
+  const name = file.name.toLowerCase()
+  return (
+    file.type.toLowerCase() === 'image/svg+xml' ||
+    name.endsWith('.jpg') ||
+    name.endsWith('.jpeg') ||
+    name.endsWith('.png') ||
+    name.endsWith('.svg')
+  )
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -205,21 +232,21 @@ function CorporatePartnerFormBody({
       if (!isAllowedImageFile(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: 'JPG, PNG, AI, EPS, SVG 형식의 로고만 등록할 수 있습니다.',
         })
         return
       }
       if (
         isFileSelectTotalSizeExceeded({
           incoming: [file],
-          maxTotalBytes: FILE_SELECT_MAX_TOTAL_BYTES,
+          maxTotalBytes: FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded()
+        notifyFileSelectTotalSizeExceeded(FILE_SELECT_IMAGE_MAX_TOTAL_BYTES)
         return
       }
       try {
-        const dataUrl = await readFileAsDataUrl(file)
+        const dataUrl = isPreviewableLogo(file) ? await readFileAsDataUrl(file) : ''
         setLogoUrl(dataUrl)
         setLogoFile(file)
         setLogoFileName(file.name)
@@ -351,6 +378,7 @@ function CorporatePartnerFormBody({
                     accept={IMAGE_ACCEPT}
                     buttonLabel="파일 추가"
                     fileNames={logoFileName ? [logoFileName] : []}
+                    maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                     onFilesChange={files => {
                       void handleFilesChange(files)
                     }}

@@ -9,16 +9,23 @@ import {
 import { useSaveImpactStorySection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, CmsSelect, CmsTextArea, FileSelectField, useCmsAlert } from '@/shared/ui'
+import {
+  CmsInput,
+  CmsSelect,
+  CmsTextArea,
+  FileSelectField,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './impact-story-section.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE = [
   '- 대표 콘텐츠로 선택한 스토리의 홈 썸네일입니다.',
-  '- 파일은 최대 15MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
 ] as const
-const MAX_BYTES = 15 * 1024 * 1024
+const MAX_BYTES = FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
 
 type Props = {
   data: ImpactStorySection
@@ -113,7 +120,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         return
       }
       if (file.size > MAX_BYTES) {
-        showAlert({ title: '파일 용량', content: '파일은 최대 15MB까지 등록 가능합니다.' })
+        showAlert({ title: '파일 용량', content: '파일은 최대 20MB까지 등록 가능합니다.' })
         return
       }
       setPendingFile(file)
@@ -264,6 +271,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                   accept={IMAGE_ACCEPT}
                   buttonLabel="파일 추가"
                   fileNames={coverNames}
+                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                   guideLines={[...IMAGE_GUIDE]}
                   onFilesChange={files => handleCoverFiles(files)}
                   onRemoveFile={() => {

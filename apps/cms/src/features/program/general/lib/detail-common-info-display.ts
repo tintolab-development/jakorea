@@ -30,7 +30,7 @@ import {
 import {
   countRegularCurriculumSessions,
   extrasFromGeneralProgram,
-} from '@/features/program/general/lib/registration-overlay-sync'
+} from '@/features/program/general/lib/general-registration-overlay-from-program'
 import { applyRegistrationWageOverlayToCommonInfo } from '@/features/program/general/lib/wage-display'
 import {
   buildCurriculumSessionsFromRegistrationOverlay,

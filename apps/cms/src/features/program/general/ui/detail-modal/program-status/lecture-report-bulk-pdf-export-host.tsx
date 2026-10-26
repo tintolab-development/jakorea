@@ -34,7 +34,17 @@ export function LectureReportBulkPdfExportHost({
 
   const draft = useMemo(() => buildLectureReportFilledDraft(context), [context])
   const fileName = useMemo(() => buildLectureReportPreviewFileName(context), [context])
-  const a4Preview = useMemo(() => createLectureReportIssuanceA4Preview(), [])
+  const a4Preview = useMemo(() => {
+    const base = createLectureReportIssuanceA4Preview()
+    return {
+      ...base,
+      paragraphBodyOptions: {
+        ...base.paragraphBodyOptions,
+        lectureReportProgramLinkedPreview: true,
+        lectureReportFiles: context.content?.files ?? [],
+      },
+    }
+  }, [context.content?.files])
   const previewParagraphs = useMemo(
     () => getA4PreviewParagraphs(draft.paragraphs, a4Preview.a4HiddenParagraphIds),
     [a4Preview.a4HiddenParagraphIds, draft.paragraphs]
