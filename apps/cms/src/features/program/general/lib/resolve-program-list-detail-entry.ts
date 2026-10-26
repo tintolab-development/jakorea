@@ -33,6 +33,7 @@ function resolveProgressPhase(
 
 /**
  * 프로그램 목록에서 상세로 진입할 때의 초기 LNB/tab을 한 곳에서 결정한다.
+ * - 일반 프로그램 목록(`/programs/general`): 진행 상태와 무관하게 공통정보
  * - 진행 중: 신청 목록
  * - 진행 완료: 참여자(진행) 목록
  * - 1사1교: 진행 중·완료 모두 기관 신청 목록
@@ -42,16 +43,17 @@ export function resolveProgramListDetailEntry(
   program: Pick<Program, 'lifecycleStatus'>,
   options: ProgramListDetailEntryOptions = {}
 ): ProgramListDetailEntry {
+  if (options.detailSurface === 'general') {
+    return { lnb: 'info', tab: 'info' }
+  }
+
   const phase = resolveProgressPhase(program, options.statusFilter)
-  const isGeneralDetailSurface = options.detailSurface === 'general'
 
   if (options.programType === 'company_school' && (phase === 'in_progress' || phase === 'completed')) {
     return { lnb: 'applicants', tab: 'institutions' }
   }
   if (phase === 'in_progress') {
-    return isGeneralDetailSurface
-      ? { lnb: 'institution_applications', tab: 'main' }
-      : { lnb: 'applicants', tab: 'institutions' }
+    return { lnb: 'applicants', tab: 'institutions' }
   }
   if (phase === 'completed') return { lnb: 'progress', tab: 'institutions' }
   return { lnb: 'info', tab: 'info' }
