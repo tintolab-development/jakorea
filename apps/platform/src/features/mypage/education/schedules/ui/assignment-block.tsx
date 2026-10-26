@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useMemo, useState } from 'react'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import type { EducationScheduleAssignment, EducationScheduleAssignmentFile } from '../model/types'
 import {
@@ -7,8 +7,6 @@ import {
 } from '../lib/schedule-rules'
 import attachFileUrl from '../image/icon/attach-file-24.svg'
 import portalBlackUrl from '@/shared/assets/icons/portal-black.svg'
-import closeDarkMintUrl from '@/shared/assets/icons/close-dark-mint.svg'
-import closeBlackUrl from '@/shared/assets/icons/close-black.svg'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import {
   MemberFileConfirmError,
@@ -28,9 +26,14 @@ import {
   useScheduleAssignmentFilesMutation,
 } from '../api/assignment-hooks'
 import { EducationAssignmentFeedbackModal } from './assignment-feedback-modal'
+import {
+  EducationAssignmentSubmitModal,
+  type AssignmentSubmitModalInput,
+} from './assignment-submit-modal'
 import styles from './assignment-block.module.css'
 
 const ASSIGNMENT_UPLOAD_FAILED_MESSAGE = '과제 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+const EMPTY_ASSIGNMENT_FILES: readonly EducationScheduleAssignmentFile[] = []
 
 const UPLOAD_ERROR_CLASSES = [
   AssignmentFileCountExceededError,
@@ -60,19 +63,6 @@ type EducationScheduleAssignmentBlockProps = {
   applicationId?: string | null
 }
 
-function keptFileObjectIds(
-  files: readonly EducationScheduleAssignmentFile[],
-  excludeFileObjectId?: number,
-): number[] {
-  return files.flatMap(file =>
-    file.kind === 'file' &&
-    file.fileObjectId != null &&
-    file.fileObjectId !== excludeFileObjectId
-      ? [file.fileObjectId]
-      : [],
-  )
-}
-
 export function EducationScheduleAssignmentBlock({
   assignment,
   scheduleId,
@@ -80,8 +70,8 @@ export function EducationScheduleAssignmentBlock({
   applicationType,
   applicationId,
 }: EducationScheduleAssignmentBlockProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [submitOpen, setSubmitOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const filesMutation = useScheduleAssignmentFilesMutation(applicationType, applicationId)
 
@@ -99,11 +89,10 @@ export function EducationScheduleAssignmentBlock({
     scheduleId > 0 &&
     canSubmitEducationAssignment(assignment, isRevision ? 'revise' : 'submit')
   const uploading = filesMutation.isPending
-  const files = assignment.files ?? []
+  const files = assignment.files ?? EMPTY_ASSIGNMENT_FILES
   const hasFiles = files.length > 0
   const blockVariant =
     assignment.status === 'feedback' ? 'feedback' : isSubmitted ? 'submitted' : 'default'
-  const canRemoveFiles = isRevision && canSubmitFiles && !uploading
 
   const remoteFeedbackText = useMemo(() => {
     const items = feedbackQuery.data?.feedbacks ?? []
@@ -137,26 +126,13 @@ export function EducationScheduleAssignmentBlock({
     )
   }
 
-  const openFilePicker = () => {
-    if (!canSubmitFiles || uploading) return
-    fileInputRef.current?.click()
-  }
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(event.target.files ?? [])
-    event.target.value = ''
-    if (selected.length === 0) return
-    submitFiles(isRevision ? keptFileObjectIds(files) : [], selected)
-  }
-
-  const removeFile = (file: EducationScheduleAssignmentFile) => {
-    if (!canRemoveFiles || file.fileObjectId == null) return
-    const remaining = keptFileObjectIds(files, file.fileObjectId)
-    if (remaining.length === 0) {
-      setErrorMessage('제출한 과제 파일은 1개 이상 남아 있어야 합니다.')
+  const handleSubmit = ({ newFiles, keepFileObjectIds, links }: AssignmentSubmitModalInput) => {
+    if (links.length > 0) {
+      setErrorMessage('링크 제출은 백엔드 제출 계약이 확정된 후 이용할 수 있어요.')
       return
     }
-    submitFiles(remaining, [])
+    setSubmitOpen(false)
+    submitFiles(keepFileObjectIds, newFiles)
   }
 
   return (
@@ -179,22 +155,13 @@ export function EducationScheduleAssignmentBlock({
                 피드백 확인
               </PFButton>
             ) : null}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className={styles.fileInput}
-              tabIndex={-1}
-              aria-hidden="true"
-              onChange={handleFileChange}
-            />
             <PFButton
               type="button"
               variant="primary"
               size="large"
               disabled={!canSubmitFiles || uploading}
               aria-busy={uploading}
-              onClick={openFilePicker}
+              onClick={() => setSubmitOpen(true)}
             >
               {uploading ? '업로드 중' : guide.submitLabel}
             </PFButton>
@@ -207,7 +174,6 @@ export function EducationScheduleAssignmentBlock({
           <ul className={styles.files}>
             {files.map(file => {
               const isUrl = file.kind === 'url'
-              const removable = canRemoveFiles && !isUrl && file.fileObjectId != null
               return (
                 <li
                   key={file.id}
@@ -243,22 +209,6 @@ export function EducationScheduleAssignmentBlock({
                       {file.fileName}
                     </PFText>
                   </span>
-                  {removable ? (
-                    <button
-                      type="button"
-                      className={styles.chipRemove}
-                      aria-label={`${file.fileName} 삭제`}
-                      onClick={() => removeFile(file)}
-                    >
-                      <img
-                        src={isUrl ? closeBlackUrl : closeDarkMintUrl}
-                        alt=""
-                        width={20}
-                        height={20}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  ) : null}
                 </li>
               )
             })}
@@ -279,9 +229,19 @@ export function EducationScheduleAssignmentBlock({
         onClose={() => setFeedbackOpen(false)}
         onRevise={() => {
           setFeedbackOpen(false)
-          openFilePicker()
+          setSubmitOpen(true)
         }}
       />
+      {submitOpen ? (
+        <EducationAssignmentSubmitModal
+          open
+          sessionHeading={sessionHeading}
+          initialFiles={files}
+          submitting={uploading}
+          onClose={() => setSubmitOpen(false)}
+          onSubmit={handleSubmit}
+        />
+      ) : null}
     </>
   )
 }
