@@ -43,7 +43,7 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
                 },
               ],
               links: [
-                { url: 'https://www.jakorea.org' },
+                { url: 'https://www.jakorea.org', displayName: 'JA Korea 과제 링크' },
                 { url: 'https://www.naver.com' },
               ],
             },
@@ -53,6 +53,8 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
               submissionStatus: 'NOT_SUBMITTED',
               remarkKind: 'NONE',
               files: [],
+              surveyResponse: { templateVersionId: 12, formResponseId: 3401 },
+              satisfactionResponse: null,
             },
             {
               participantId: 1003,
@@ -95,12 +97,18 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
         { kind: 'file', fileName: '과제_제출.pdf' },
         { kind: 'file', fileName: '과제_보충.pdf' },
         { kind: 'file', fileName: '과제_추가.pdf' },
-        { kind: 'link', fileName: 'https://www.jakorea.org', href: 'https://www.jakorea.org' },
+        { kind: 'link', fileName: 'JA Korea 과제 링크', href: 'https://www.jakorea.org' },
         { kind: 'link', fileName: 'https://www.naver.com', href: 'https://www.naver.com' },
       ],
     })
     expect(sessions[0]?.participants[0]?.genderBirthLabel).toContain('남')
+    expect(sessions[0]?.participants[0]?.surveyResponse).toBeUndefined()
     expect(sessions[0]?.participants[1]?.submission).toEqual({ kind: 'not_submitted' })
+    expect(sessions[0]?.participants[1]?.surveyResponse).toEqual({
+      templateVersionId: 12,
+      formResponseId: 3401,
+    })
+    expect(sessions[0]?.participants[1]?.satisfactionResponse).toBeUndefined()
     expect(sessions[0]?.participants[2]?.submission).toEqual({ kind: 'scheduled' })
   })
 

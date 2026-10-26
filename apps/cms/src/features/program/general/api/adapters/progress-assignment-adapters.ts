@@ -149,7 +149,8 @@ function mapSubmission(
       ...mappedFiles.map(file => ({ ...file, kind: 'file' as const })),
       ...links.flatMap(link => {
         const url = link.url?.trim()
-        return url ? [{ kind: 'link' as const, fileName: url, href: url }] : []
+        if (!url) return []
+        return [{ kind: 'link' as const, fileName: link.displayName?.trim() || url, href: url }]
       }),
     ]
     const [first, second] = mappedFiles

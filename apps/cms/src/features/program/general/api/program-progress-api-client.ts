@@ -572,6 +572,7 @@ export type GeneralAssignmentSubmissionFileDto = {
 
 export type GeneralAssignmentSubmissionLinkDto = {
   url?: string | null
+  displayName?: string | null
 }
 
 export type GeneralAssignmentSubmissionParticipantDto = {
