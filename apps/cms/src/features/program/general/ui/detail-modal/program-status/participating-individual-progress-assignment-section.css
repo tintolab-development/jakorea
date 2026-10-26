@@ -73,23 +73,3 @@
 .participating-individual-progress-assignment-table__submission-link:hover {
   color: #005bb5;
 }
-
-.participating-individual-progress-assignment-section__survey-answers {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin: 0;
-}
-
-.participating-individual-progress-assignment-section__survey-row dt {
-  margin: 0 0 4px;
-  color: #333;
-  font-weight: 600;
-}
-
-.participating-individual-progress-assignment-section__survey-row dd,
-.participating-individual-progress-assignment-section__survey-empty {
-  margin: 0;
-  color: #555;
-  white-space: pre-wrap;
-}

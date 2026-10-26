@@ -6,7 +6,7 @@ import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import { resolveProgressAssignmentRemark } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
-import type { ParticipatingIndividualSurveyViewKey } from '@/features/program/general/model/participating-individual-participants'
+import { GENERAL_SATISFACTION_NAV_TAB } from '@/features/program/general/lib/survey-audience'
 import type {
   ParticipatingIndividualProgressAssignmentParticipantRow,
   ParticipatingIndividualProgressAssignmentSubmissionItem,
@@ -14,19 +14,16 @@ import type {
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
+export type ProgressAssignmentSurveyNavTab = 'survey' | typeof GENERAL_SATISFACTION_NAV_TAB
+
 export const PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_TABLE_SCROLL_X = 1100
 
 function SubmissionCell({
   row,
   onViewSurveyResponse,
-  surveyViewLoading,
 }: {
   row: ParticipatingIndividualProgressAssignmentParticipantRow
-  onViewSurveyResponse: (
-    title: string,
-    response: ParticipatingIndividualSurveyViewKey
-  ) => void
-  surveyViewLoading: boolean
+  onViewSurveyResponse: (tab: ProgressAssignmentSurveyNavTab) => void
 }) {
   const { showAlert } = useCmsAlert()
   const { submission } = row
@@ -120,17 +117,13 @@ function SubmissionCell({
         )
       ))}
       {row.surveyResponse ? (
-        <AssignmentSubmissionCellActionButton
-          loading={surveyViewLoading}
-          onClick={() => onViewSurveyResponse('설문조사 보기', row.surveyResponse!)}
-        >
+        <AssignmentSubmissionCellActionButton onClick={() => onViewSurveyResponse('survey')}>
           설문조사 보기
         </AssignmentSubmissionCellActionButton>
       ) : null}
       {row.satisfactionResponse ? (
         <AssignmentSubmissionCellActionButton
-          loading={surveyViewLoading}
-          onClick={() => onViewSurveyResponse('만족도조사 보기', row.satisfactionResponse!)}
+          onClick={() => onViewSurveyResponse(GENERAL_SATISFACTION_NAV_TAB)}
         >
           만족도조사 보기
         </AssignmentSubmissionCellActionButton>
@@ -142,14 +135,9 @@ function SubmissionCell({
 export function ParticipatingIndividualProgressAssignmentTable({
   rows,
   onViewSurveyResponse,
-  surveyViewLoading,
 }: {
   rows: ParticipatingIndividualProgressAssignmentParticipantRow[]
-  onViewSurveyResponse: (
-    title: string,
-    response: ParticipatingIndividualSurveyViewKey
-  ) => void
-  surveyViewLoading: boolean
+  onViewSurveyResponse: (tab: ProgressAssignmentSurveyNavTab) => void
 }) {
   const tableData = useMemo(() => {
     const total = rows.length
@@ -200,11 +188,7 @@ export function ParticipatingIndividualProgressAssignmentTable({
         align: 'center',
         className: 'participating-individual-progress-assignment-table__submission-column',
         render: (_value, record) => (
-          <SubmissionCell
-            row={record}
-            onViewSurveyResponse={onViewSurveyResponse}
-            surveyViewLoading={surveyViewLoading}
-          />
+          <SubmissionCell row={record} onViewSurveyResponse={onViewSurveyResponse} />
         ),
       },
       {
@@ -216,7 +200,7 @@ export function ParticipatingIndividualProgressAssignmentTable({
         render: (_value, record) => resolveProgressAssignmentRemark(record),
       },
     ],
-    [onViewSurveyResponse, surveyViewLoading]
+    [onViewSurveyResponse]
   )
 
   return (
