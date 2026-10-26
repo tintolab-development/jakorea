@@ -34,3 +34,4 @@ export function validateNoticeAttachmentFile(file: File): string | null {
 }
 
 export const PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE = 'PROGRAM_POST_ATTACHMENT'
+export const PORTAL_PROGRAM_POST_INLINE_IMAGE_FILE_PURPOSE = 'PROGRAM_POST_INLINE_IMAGE'

@@ -10,7 +10,7 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import { EducationApplicationInfoModal } from '../../applications/ui/application-info-modal'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
 import { useDebouncedValue } from '@/shared/hooks'
-import type { EducationInProgressFile } from '../model/types'
+import type { EducationInProgressFile, EducationInProgressNotice } from '../model/types'
 import {
   downloadEducationNoticeFile,
   downloadRemoteEducationNoticeFile,
@@ -43,7 +43,7 @@ type EducationInProgressNoticePanelProps = {
   leading?: ReactNode
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
-  /** 교사·기관 프로그램 — 안내사항 작성 모달 */
+  /** 안내사항 게시글 작성 — `canWriteEducationNotice` (사전 안내와 별개) */
   noticeWriteEnabled?: boolean
   noticeWriteAuthorDisplayName?: string
 }
@@ -62,6 +62,7 @@ export function EducationInProgressNoticePanel({
   noticeWriteAuthorDisplayName = '담당교사님',
 }: EducationInProgressNoticePanelProps) {
   const [isNoticeWriteOpen, setIsNoticeWriteOpen] = useState(false)
+  const [editingNotice, setEditingNotice] = useState<EducationInProgressNotice | null>(null)
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
   const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
   const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
@@ -145,6 +146,13 @@ export function EducationInProgressNoticePanel({
 
   const openComingSoon = () => {
     setIsComingSoonOpen(true)
+  }
+
+  const openNoticeEdit = (noticeId: string) => {
+    const target = modalNotices.find(notice => notice.id === noticeId)
+    if (!target) return
+    setEditingNotice(target)
+    closeNoticeDetail()
   }
 
   const openNoticeDetail = (noticeId: string) => {
@@ -294,6 +302,7 @@ export function EducationInProgressNoticePanel({
         commentId={selectedCommentId}
         onClose={closeNoticeDetail}
         onNoticeChange={openNoticeDetail}
+        onEdit={openNoticeEdit}
         onDelete={deleteNotice}
         applicationType={applicationType}
         applicationId={applicationId}
@@ -319,12 +328,16 @@ export function EducationInProgressNoticePanel({
 
       {noticeWriteEnabled && applicationType && applicationId ? (
         <EducationProgramNoticeWriteModal
-          open={isNoticeWriteOpen}
-          onClose={() => setIsNoticeWriteOpen(false)}
+          open={isNoticeWriteOpen || editingNotice != null}
+          onClose={() => {
+            setIsNoticeWriteOpen(false)
+            setEditingNotice(null)
+          }}
           applicationType={applicationType}
           applicationId={applicationId}
           program={program}
           authorDisplayName={noticeWriteAuthorDisplayName}
+          notice={editingNotice}
         />
       ) : null}
 

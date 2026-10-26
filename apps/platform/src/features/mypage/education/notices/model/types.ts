@@ -14,6 +14,14 @@ export type EducationInProgressNotice = {
   isAuthor?: boolean
   /** 원격 목록 `attachmentCount` */
   attachmentCount?: number
+  visibilityType?: string
+  inlineImages?: EducationNoticeInlineImage[]
+}
+
+export type EducationNoticeInlineImage = {
+  fileObjectId: number
+  referenceToken: string
+  contentPath?: string
 }
 
 export type EducationNoticeReactionSummary = {

@@ -34,6 +34,7 @@ import {
   createApplicationNotice,
   createApplicationNoticeComment,
   putApplicationNoticeAttachments,
+  putApplicationNoticeInlineImages,
   deleteApplicationNoticeComment,
   deleteApplicationNoticeReaction,
   fetchApplicationForms,
@@ -41,6 +42,7 @@ import {
   fetchApplicationNoticeDetail,
   fetchApplicationNoticeReactions,
   fetchApplicationNotices,
+  updateApplicationNotice,
   updateApplicationNoticeComment,
   upsertApplicationNoticeReaction,
   fetchApplicationSchedules,
@@ -59,6 +61,7 @@ import {
   type PortalNoticeAttachmentListItem,
   type PortalNoticeComment,
   type PortalNoticeDetail,
+  type PortalNoticeInlineImage,
   type PortalNoticeListItem,
   type PortalNoticeReactionState,
   type PortalAbsenceReasonSubmissionInput,
@@ -148,6 +151,8 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
     notice: {
       title: detail.title,
       content: detail.content ?? '',
+      visibilityType: detail.visibilityType,
+      inlineImages: mapNoticeInlineImages(detail.inlineImages),
       authorName: author.authorName,
       authorIsStaff: author.authorIsStaff,
       isAuthor: author.isAuthor,
@@ -184,6 +189,21 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
       ]
     }),
   }
+}
+
+function mapNoticeInlineImages(
+  images: PortalNoticeInlineImage[] | undefined
+): EducationInProgressNotice['inlineImages'] {
+  return (images ?? []).flatMap(image => {
+    if (image.fileObjectId == null) return []
+    return [
+      {
+        fileObjectId: image.fileObjectId,
+        referenceToken: image.referenceToken ?? `file-object:${image.fileObjectId}`,
+        contentPath: image.contentPath,
+      },
+    ]
+  })
 }
 
 function mapNoticeReactions(
@@ -394,6 +414,7 @@ export type CreateApplicationNoticeInput = {
   visibilityType: string
   organizationApplicationId?: number
   attachmentFiles?: File[]
+  inlineImageFileObjectIds?: number[]
 }
 
 export function useCreateApplicationNoticeMutation(
@@ -429,6 +450,14 @@ export function useCreateApplicationNoticeMutation(
       if (postId == null) {
         throw new Error('PORTAL_NOTICE_CREATE_MISSING_POST_ID')
       }
+      if (input.inlineImageFileObjectIds) {
+        await putApplicationNoticeInlineImages(
+          applicationType,
+          applicationId,
+          String(postId),
+          input.inlineImageFileObjectIds
+        )
+      }
       if (fileObjectIds.length > 0) {
         await putApplicationNoticeAttachments(
           applicationType,
@@ -455,6 +484,55 @@ export function useCreateApplicationNoticeMutation(
           applicationType,
           applicationId,
         ],
+      })
+    },
+  })
+}
+
+export type UpdateApplicationNoticeInput = {
+  postId: string
+  content: string
+  inlineImageFileObjectIds: number[]
+}
+
+export function useUpdateApplicationNoticeMutation(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: UpdateApplicationNoticeInput) => {
+      if (!applicationType || !applicationId) {
+        throw new Error('application scope is required')
+      }
+      const updated = await updateApplicationNotice(applicationType, applicationId, input.postId, {
+        title: null,
+        content: input.content,
+        visibilityType: null,
+      })
+      await putApplicationNoticeInlineImages(
+        applicationType,
+        applicationId,
+        input.postId,
+        input.inlineImageFileObjectIds
+      )
+      return updated
+    },
+    onSuccess: (_data, input) => {
+      if (!applicationType || !applicationId) return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.noticeDetail(
+          applicationType,
+          applicationId,
+          input.postId
+        ),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.notices(
+          applicationType,
+          applicationId
+        ),
+        exact: true,
       })
     },
   })
