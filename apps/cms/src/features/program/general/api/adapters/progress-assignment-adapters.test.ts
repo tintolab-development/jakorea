@@ -36,6 +36,15 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
                   originalFileName: '과제_보충.pdf',
                   downloadable: true,
                 },
+                {
+                  fileObjectId: 9003,
+                  originalFileName: '과제_추가.pdf',
+                  downloadable: true,
+                },
+              ],
+              links: [
+                { url: 'https://www.jakorea.org' },
+                { url: 'https://www.naver.com' },
               ],
             },
             {
@@ -74,6 +83,21 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
         secondaryFileName: '과제_보충.pdf',
         secondaryFileObjectId: 9002,
       },
+    })
+    expect(sessions[0]?.participants[0]?.submission).toMatchObject({
+      kind: 'submitted',
+      files: [
+        { fileObjectId: 9001, fileName: '과제_제출.pdf' },
+        { fileObjectId: 9002, fileName: '과제_보충.pdf' },
+        { fileObjectId: 9003, fileName: '과제_추가.pdf' },
+      ],
+      items: [
+        { kind: 'file', fileName: '과제_제출.pdf' },
+        { kind: 'file', fileName: '과제_보충.pdf' },
+        { kind: 'file', fileName: '과제_추가.pdf' },
+        { kind: 'link', fileName: 'https://www.jakorea.org', href: 'https://www.jakorea.org' },
+        { kind: 'link', fileName: 'https://www.naver.com', href: 'https://www.naver.com' },
+      ],
     })
     expect(sessions[0]?.participants[0]?.genderBirthLabel).toContain('남')
     expect(sessions[0]?.participants[1]?.submission).toEqual({ kind: 'not_submitted' })

@@ -570,6 +570,10 @@ export type GeneralAssignmentSubmissionFileDto = {
   downloadable?: boolean
 }
 
+export type GeneralAssignmentSubmissionLinkDto = {
+  url?: string | null
+}
+
 export type GeneralAssignmentSubmissionParticipantDto = {
   participantId?: number
   memberId?: number
@@ -583,6 +587,7 @@ export type GeneralAssignmentSubmissionParticipantDto = {
   remarkKind?: string | null
   remarkAt?: string | null
   files?: GeneralAssignmentSubmissionFileDto[] | null
+  links?: GeneralAssignmentSubmissionLinkDto[] | null
   surveyResponse?: { templateVersionId?: number; formResponseId?: number } | null
   satisfactionResponse?: { templateVersionId?: number; formResponseId?: number } | null
   giveUpAt?: string | null

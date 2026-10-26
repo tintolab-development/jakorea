@@ -4,8 +4,13 @@ import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
+import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import { resolveProgressAssignmentRemark } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
-import type { ParticipatingIndividualProgressAssignmentParticipantRow } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
+import type { ParticipatingIndividualSurveyViewKey } from '@/features/program/general/model/participating-individual-participants'
+import type {
+  ParticipatingIndividualProgressAssignmentParticipantRow,
+  ParticipatingIndividualProgressAssignmentSubmissionItem,
+} from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
@@ -13,23 +18,18 @@ export const PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_TABLE_SCROLL_X = 1100
 
 function SubmissionCell({
   row,
+  onViewSurveyResponse,
+  surveyViewLoading,
 }: {
   row: ParticipatingIndividualProgressAssignmentParticipantRow
+  onViewSurveyResponse: (
+    title: string,
+    response: ParticipatingIndividualSurveyViewKey
+  ) => void
+  surveyViewLoading: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const { submission } = row
-
-  if (submission.kind === 'not_submitted') {
-    return <span className="participating-individual-progress-assignment-table__not-submitted">미제출</span>
-  }
-
-  if (submission.kind === 'scheduled') {
-    return (
-      <span className="participating-individual-progress-assignment-table__scheduled">
-        교육 진행 예정
-      </span>
-    )
-  }
 
   const downloadFile = async (fileObjectId?: number, fileName?: string, downloadable?: boolean) => {
     if (fileObjectId == null || downloadable !== true) {
@@ -46,31 +46,94 @@ function SubmissionCell({
     }
   }
 
+  const hasSurveyActions = row.surveyResponse != null || row.satisfactionResponse != null
+  const submissionItems: ParticipatingIndividualProgressAssignmentSubmissionItem[] =
+    submission.kind === 'submitted'
+      ? submission.items?.length
+        ? submission.items
+        : [
+            {
+              kind: 'file' as const,
+              fileName: submission.fileName,
+              href: submission.href,
+              fileObjectId: submission.fileObjectId,
+              downloadable: submission.downloadable,
+            },
+            ...(submission.secondaryFileName
+              ? [
+                  {
+                    kind: 'file' as const,
+                    fileName: submission.secondaryFileName,
+                    href: submission.secondaryHref ?? '#',
+                    fileObjectId: submission.secondaryFileObjectId,
+                    downloadable: submission.secondaryDownloadable,
+                  },
+                ]
+              : []),
+          ]
+      : []
+
+  if (!hasSurveyActions && submission.kind === 'not_submitted') {
+    return <span className="participating-individual-progress-assignment-table__not-submitted">미제출</span>
+  }
+
+  if (!hasSurveyActions && submission.kind === 'scheduled') {
+    return (
+      <span className="participating-individual-progress-assignment-table__scheduled">
+        교육 진행 예정
+      </span>
+    )
+  }
+
   return (
     <div className="participating-individual-progress-assignment-table__submission-links">
-      <button
-        type="button"
-        className="participating-individual-progress-assignment-table__submission-link"
-        onClick={() =>
-          void downloadFile(submission.fileObjectId, submission.fileName, submission.downloadable)
-        }
-      >
-        {submission.fileName}
-      </button>
-      {submission.secondaryFileName ? (
-        <button
-          type="button"
-          className="participating-individual-progress-assignment-table__submission-link"
-          onClick={() =>
-            void downloadFile(
-              submission.secondaryFileObjectId,
-              submission.secondaryFileName,
-              submission.secondaryDownloadable
-            )
-          }
+      {submission.kind === 'not_submitted' ? (
+        <span className="participating-individual-progress-assignment-table__not-submitted">
+          미제출
+        </span>
+      ) : null}
+      {submission.kind === 'scheduled' ? (
+        <span className="participating-individual-progress-assignment-table__scheduled">
+          교육 진행 예정
+        </span>
+      ) : null}
+      {submissionItems.map((item, index) => (
+        item.kind === 'link' ? (
+          <a
+            key={`${item.href}-${index}`}
+            className="participating-individual-progress-assignment-table__submission-link"
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {item.fileName}
+          </a>
+        ) : (
+          <button
+            key={`${item.fileObjectId ?? item.fileName}-${index}`}
+            type="button"
+            className="participating-individual-progress-assignment-table__submission-link"
+            onClick={() => void downloadFile(item.fileObjectId, item.fileName, item.downloadable)}
+          >
+            {item.fileName}
+          </button>
+        )
+      ))}
+      {row.surveyResponse ? (
+        <AssignmentSubmissionCellActionButton
+          loading={surveyViewLoading}
+          onClick={() => onViewSurveyResponse('설문조사 보기', row.surveyResponse!)}
         >
-          {submission.secondaryFileName}
-        </button>
+          설문조사 보기
+        </AssignmentSubmissionCellActionButton>
+      ) : null}
+      {row.satisfactionResponse ? (
+        <AssignmentSubmissionCellActionButton
+          loading={surveyViewLoading}
+          onClick={() => onViewSurveyResponse('만족도조사 보기', row.satisfactionResponse!)}
+        >
+          만족도조사 보기
+        </AssignmentSubmissionCellActionButton>
       ) : null}
     </div>
   )
@@ -78,8 +141,15 @@ function SubmissionCell({
 
 export function ParticipatingIndividualProgressAssignmentTable({
   rows,
+  onViewSurveyResponse,
+  surveyViewLoading,
 }: {
   rows: ParticipatingIndividualProgressAssignmentParticipantRow[]
+  onViewSurveyResponse: (
+    title: string,
+    response: ParticipatingIndividualSurveyViewKey
+  ) => void
+  surveyViewLoading: boolean
 }) {
   const tableData = useMemo(() => {
     const total = rows.length
@@ -128,7 +198,14 @@ export function ParticipatingIndividualProgressAssignmentTable({
         key: 'submission',
         width: 260,
         align: 'center',
-        render: (_value, record) => <SubmissionCell row={record} />,
+        className: 'participating-individual-progress-assignment-table__submission-column',
+        render: (_value, record) => (
+          <SubmissionCell
+            row={record}
+            onViewSurveyResponse={onViewSurveyResponse}
+            surveyViewLoading={surveyViewLoading}
+          />
+        ),
       },
       {
         title: '비고',
@@ -139,7 +216,7 @@ export function ParticipatingIndividualProgressAssignmentTable({
         render: (_value, record) => resolveProgressAssignmentRemark(record),
       },
     ],
-    []
+    [onViewSurveyResponse, surveyViewLoading]
   )
 
   return (

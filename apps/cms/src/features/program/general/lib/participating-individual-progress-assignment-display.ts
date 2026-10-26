@@ -46,6 +46,12 @@ export function resolveProgressAssignmentSubmissionExportLabel(
 ): string {
   if (submission.kind === 'not_submitted') return '미제출'
   if (submission.kind === 'scheduled') return '교육 진행 예정'
+  if (submission.items?.length) {
+    return submission.items.map(item => item.fileName).join(', ')
+  }
+  if (submission.files?.length) {
+    return submission.files.map(file => file.fileName).join(', ')
+  }
   if (submission.secondaryFileName) {
     return `${submission.fileName}, ${submission.secondaryFileName}`
   }
