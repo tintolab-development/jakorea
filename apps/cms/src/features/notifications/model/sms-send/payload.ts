@@ -84,23 +84,34 @@ export function resolveSmsSendProgramId(programId: string | undefined): number |
   return parseNotificationSendProgramId(programId) ?? null
 }
 
+/**
+ * 문자 발송 Create body.
+ * - templateId 있음: 기존 계약 그대로
+ * - templateId 없음(템플릿 미선택 = 템플릿 사용 안 함): templateId 생략 + messageType 추가.
+ *   BE가 SMS 한정으로 templateId optional 처리 예정(keonhee). messageType 필드명은 BE 확정 전 가정값.
+ */
+export type SmsSendCreateRequest = Omit<CreateRequest, 'templateId'> & {
+  templateId?: number
+  messageType?: SmsSendDraft['messageType']
+}
+
 export function buildSmsSendCreateRequest(input: {
   draft: SmsSendDraft
-  templateId: number
+  templateId: number | null
   senderKey?: string
   senderProfileId?: number
   placeholderKeys?: Iterable<string>
   variableCatalog?: AlimtalkVariableCatalogEntry[] | null
-}): CreateRequest {
+}): SmsSendCreateRequest {
   const { draft, templateId, senderKey, senderProfileId } = input
   const programId = resolveSmsSendProgramId(draft.programId)
   if (!isNotificationSendWithoutProgram(draft.programId) && programId == null) {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 
-  const body: CreateRequest = {
+  const body: SmsSendCreateRequest = {
     batchName: (draft.subject || draft.bodyText).trim().slice(0, 200) || '문자 발송',
-    templateId,
+    ...(templateId != null ? { templateId } : { messageType: draft.messageType }),
     scheduledAt: resolveScheduledAtForCreateRequest({
       sendTiming: draft.sendTiming,
       scheduledAt: draft.scheduledAt,
@@ -132,7 +143,6 @@ export function buildSmsSendPayload(draft: SmsSendDraft): SmsSendDraft {
 }
 
 export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
-  if (!draft.templateId?.trim()) return '템플릿을 선택하세요.'
   if (!draft.senderPhone.trim()) return '발신 번호를 입력하세요.'
   if (!isValidKoreanPhoneNumber(draft.senderPhone)) {
     return '발신 번호 형식이 올바르지 않습니다.'

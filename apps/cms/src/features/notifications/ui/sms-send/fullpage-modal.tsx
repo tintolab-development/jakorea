@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { CmsButton, CmsPhoneInput, CmsRadio, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsRadio, CmsSelect, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
 import {
   fetchAllSmsRecipientCandidates,
@@ -29,6 +29,7 @@ import {
   listNotificationSendTemplateDisabledKeysForProgram,
 } from '@/features/notifications/model/shared/template-usable-for-program'
 import { SMS_SEND_PICKER_PAGE_SIZE } from '@/features/notifications/model/sms-send/types'
+import { buildSmsSenderPhoneOptions } from '@/features/notifications/model/sms-template/sender-phone'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
 import {
@@ -163,6 +164,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     })
   }, [open, programsQuery.error, programsQuery.isError, remote, showAlert])
 
+  // NHN 사전 등록 발신번호만 노출 (orphan 미포함)
+  const senderOptions = useMemo(
+    () => buildSmsSenderPhoneOptions(senderProfilesQuery.data),
+    [senderProfilesQuery.data]
+  )
   const resolvedSenderProfileId = useMemo(() => {
     return resolveSmsSenderProfileId(senderProfilesQuery.data ?? [], form.senderPhone)
   }, [form.senderPhone, senderProfilesQuery.data])
@@ -387,7 +393,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       if (!resolvedSenderProfileId) {
         showAlert({
           title: '필수 입력 안내',
-          content: 'NHN에 등록된 발신 번호를 입력하세요.',
+          content: 'NHN에 등록된 발신 번호를 선택하세요.',
         })
         return
       }
@@ -499,7 +505,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     sending ||
                     form.composeBlocking ||
                     form.recipients.length === 0 ||
-                    !form.templateId?.trim() ||
                     !form.senderPhone.trim() ||
                     (form.sendTiming === 'scheduled' && !form.scheduledAt)
                   }
@@ -537,7 +542,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     <DetailInfoForm.Row type="double">
                       <DetailInfoForm.Field
                         label="템플릿"
-                        required
                         view=""
                         edit={
                           <TemplateSelectField
@@ -601,13 +605,15 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         required
                         view={form.senderPhone}
                         edit={
-                          <CmsPhoneInput
+                          <CmsSelect
                             inputSize="small"
                             width="100%"
-                            allowClear={false}
-                            placeholder="발신 번호를 입력하세요"
-                            value={form.senderPhone}
-                            onChange={event => form.setSenderPhone(event.target.value)}
+                            withAllOption={false}
+                            loading={senderProfilesQuery.isLoading}
+                            placeholder="발신 번호를 선택해 주세요"
+                            options={senderOptions}
+                            value={form.senderPhone || undefined}
+                            onChange={value => form.setSenderPhone(String(value ?? ''))}
                           />
                         }
                       />
@@ -618,6 +624,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         edit={
                           <CmsRadio.Group
                             size="medium"
+                            disabled={Boolean(form.templateId?.trim())}
                             value={form.messageType}
                             onChange={event =>
                               form.applyMessageType(

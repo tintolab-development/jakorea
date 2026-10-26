@@ -28,6 +28,7 @@ import {
   smsComposeInlineMessage,
 } from '@/features/notifications/model/sms-send/text-bytes'
 import { SMS_MMS_ATTACHMENT_GUIDE_LINES } from '@/features/notifications/model/sms-template/attachments'
+import { buildSmsSenderPhoneOptions } from '@/features/notifications/model/sms-template/sender-phone'
 import { SMS_TEMPLATE_NAME_PLACEHOLDER } from '@/features/notifications/model/sms-template/template-name'
 import type {
   SmsCategory,
@@ -150,23 +151,15 @@ export function FormModal({
   const headerTitle = form.templateName.trim() || SMS_TEMPLATE_NAME_PLACEHOLDER
   const [titleEditing, setTitleEditing] = useState(false)
 
-  const senderOptions = useMemo(() => {
-    const fromApi = (senderProfilesQuery.data ?? []).map(profile => {
-      // senderKey = NHN 발신번호 문자열 그대로 (하이픈 정규화 금지)
-      const phone = profile.senderKey.trim()
-      const label = profile.displayName.trim() || phone
-      return { label, value: phone }
-    })
-    // edit: harvest에 없어도 표시용 orphan 유지. create: orphan 넣지 않음 (BE NOT_HARVESTED 유도)
-    if (
-      mode === 'edit' &&
-      form.senderPhone &&
-      !fromApi.some(option => option.value === form.senderPhone)
-    ) {
-      return [{ label: form.senderPhone, value: form.senderPhone }, ...fromApi]
-    }
-    return fromApi
-  }, [form.senderPhone, mode, senderProfilesQuery.data])
+  // edit: harvest에 없어도 표시용 orphan 유지. create: orphan 넣지 않음 (BE NOT_HARVESTED 유도)
+  const senderOptions = useMemo(
+    () =>
+      buildSmsSenderPhoneOptions(
+        senderProfilesQuery.data,
+        mode === 'edit' ? form.senderPhone : undefined
+      ),
+    [form.senderPhone, mode, senderProfilesQuery.data]
+  )
 
   const harvestedSenderKeys = useMemo(
     () => (senderProfilesQuery.data ?? []).map(profile => profile.senderKey.trim()).filter(Boolean),

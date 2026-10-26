@@ -199,6 +199,21 @@ describe('buildSmsSendCreateRequest', () => {
     expect(request.templateId).toBe(101)
   })
 
+  it('omits templateId and sends messageType when no template is selected', () => {
+    const request = buildSmsSendCreateRequest({
+      draft: draft({ templateId: undefined, messageType: 'LMS' }),
+      templateId: null,
+    })
+    expect(request).not.toHaveProperty('templateId')
+    expect(request.messageType).toBe('LMS')
+  })
+
+  it('keeps templateId and omits messageType when a template is selected', () => {
+    const request = buildSmsSendCreateRequest({ draft: draft(), templateId: 101 })
+    expect(request.templateId).toBe(101)
+    expect(request).not.toHaveProperty('messageType')
+  })
+
   it('rejects non-numeric program id', () => {
     expect(() =>
       buildSmsSendCreateRequest({
@@ -382,7 +397,9 @@ describe('validateSmsSendDraft', () => {
         })
       )
     ).toBeNull()
-    expect(validateSmsSendDraft(draft({ templateId: '' }))).toBe('템플릿을 선택하세요.')
+    // 템플릿 미선택 = 템플릿 사용 안 함 → 템플릿 없이도 발송 가능
+    expect(validateSmsSendDraft(draft({ templateId: undefined }))).toBeNull()
+    expect(validateSmsSendDraft(draft({ templateId: '' }))).toBeNull()
     expect(validateSmsSendDraft(draft({ senderPhone: '  ' }))).toBe('발신 번호를 입력하세요.')
     expect(validateSmsSendDraft(draft({ senderPhone: '1234' }))).toBe(
       '발신 번호 형식이 올바르지 않습니다.'
