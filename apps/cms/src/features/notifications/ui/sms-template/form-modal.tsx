@@ -36,6 +36,7 @@ import type {
 import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
 import { useSmsTemplateForm, type SmsTemplateFormDraft, type SmsTemplateFormMode } from './use-form'
 import { SmsVariableTextField } from './variable-text-field'
+import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './form-modal.css'
 
 type BasicSettingsFieldsProps = {
@@ -218,11 +219,11 @@ export function FormModal({
         title={headerTitle}
         size="full"
         hideHeader
-        className="sms-template-form-modal teal-header-modal--full"
+        className="notification-fullpage-modal sms-template-form-modal teal-header-modal--full"
       >
-        <div className="sms-template-form-modal__shell">
-          <header className="sms-template-form-modal__title-row">
-            <div className="sms-template-form-modal__title-edit">
+        <div className="notification-fullpage-modal__shell">
+          <header className="notification-fullpage-modal__title-row">
+            <div className="notification-fullpage-modal__title-edit">
               <CmsInputIconClick
                 value={form.templateName}
                 editing={titleEditing}
@@ -232,15 +233,15 @@ export function FormModal({
                 onCommitEdit={() => setTitleEditing(false)}
                 inputAriaLabel={SMS_TEMPLATE_NAME_PLACEHOLDER}
                 editButtonAriaLabel="템플릿명 수정"
-                containerClassName="sms-template-form-modal__title-edit-row"
-                inputClassName="sms-template-form-modal__title-input sms-template-form-modal__title-input--editing"
-                textClassName="sms-template-form-modal__title-text"
-                editButtonClassName="sms-template-form-modal__title-edit-btn"
+                containerClassName="notification-fullpage-modal__title-edit-row"
+                inputClassName="notification-fullpage-modal__title-input notification-fullpage-modal__title-input--editing"
+                textClassName="notification-fullpage-modal__title-text"
+                editButtonClassName="notification-fullpage-modal__title-edit-btn"
               />
             </div>
             <button
               type="button"
-              className="sms-template-form-modal__title-close"
+              className="notification-fullpage-modal__title-close"
               onClick={onClose}
               aria-label="닫기"
             >
@@ -248,9 +249,9 @@ export function FormModal({
             </button>
           </header>
 
-          <div className="sms-template-form-modal__body">
-            <div className="sms-template-form-modal__notice">
-              <div className="sms-template-form-modal__notice-actions">
+          <div className="notification-fullpage-modal__body">
+            <div className="notification-fullpage-modal__notice">
+              <div className="notification-fullpage-modal__notice-actions">
                 {isEdit ? (
                   <>
                     <CmsButton
@@ -309,9 +310,9 @@ export function FormModal({
               </div>
             </div>
 
-            <div className="sms-template-form-modal__layout">
-              <div className="sms-template-form-modal__main">
-                <section className="sms-template-form-modal__widget">
+            <div className="notification-fullpage-modal__layout">
+              <div className="notification-fullpage-modal__main">
+                <section className="notification-fullpage-modal__widget">
                   <div className="sms-template-form-modal__section-head">
                     <h3 className="info-section-title detail-info-form__title sms-template-form-modal__section-title">
                       기본 설정
@@ -345,7 +346,7 @@ export function FormModal({
                   />
                 </section>
 
-                <section className="sms-template-form-modal__widget sms-template-form-modal__widget--compose">
+                <section className="notification-fullpage-modal__widget sms-template-form-modal__widget--compose">
                   <div className="sms-template-form-modal__section-head">
                     <h3 className="sms-template-form-modal__section-title">문자 작성</h3>
                   </div>

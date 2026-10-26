@@ -19,7 +19,10 @@ import {
   useMailSenderProfilesQuery,
   useMailTemplateVariablesQuery,
 } from '@/features/notifications/hooks/use-mail-send-queries'
-import { MAIL_SENDER_PROFILES_EMPTY_MESSAGE } from '@/features/notifications/model/mail-template/sender-email'
+import {
+  MAIL_SENDER_NAME_EMPTY_HINT,
+  MAIL_SENDER_PROFILES_EMPTY_MESSAGE,
+} from '@/features/notifications/model/mail-template/sender-email'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import { MAIL_TEMPLATE_NAME_PLACEHOLDER } from '@/features/notifications/model/mail-template/template-name'
 import type { MailTemplateItem } from '@/features/notifications/model/mail-template/types'
@@ -32,6 +35,7 @@ import {
   type MailTemplateFormMode,
 } from './use-form'
 import { VariablesPanel } from './variables-panel'
+import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './form-modal.css'
 
 type BasicSettingsFieldsProps = {
@@ -327,11 +331,11 @@ export function FormModal({
         title={headerTitle}
         size="full"
         hideHeader
-        className="mail-template-form-modal teal-header-modal--full"
+        className="notification-fullpage-modal mail-template-form-modal teal-header-modal--full"
       >
-        <div className="mail-template-form-modal__shell">
-          <header className="mail-template-form-modal__title-row">
-            <div className="mail-template-form-modal__title-edit">
+        <div className="notification-fullpage-modal__shell">
+          <header className="notification-fullpage-modal__title-row">
+            <div className="notification-fullpage-modal__title-edit">
               <CmsInputIconClick
                 value={form.templateName}
                 editing={titleEditing}
@@ -341,15 +345,15 @@ export function FormModal({
                 onCommitEdit={() => setTitleEditing(false)}
                 inputAriaLabel={MAIL_TEMPLATE_NAME_PLACEHOLDER}
                 editButtonAriaLabel="템플릿명 수정"
-                containerClassName="mail-template-form-modal__title-edit-row"
-                inputClassName="mail-template-form-modal__title-input mail-template-form-modal__title-input--editing"
-                textClassName="mail-template-form-modal__title-text"
-                editButtonClassName="mail-template-form-modal__title-edit-btn"
+                containerClassName="notification-fullpage-modal__title-edit-row"
+                inputClassName="notification-fullpage-modal__title-input notification-fullpage-modal__title-input--editing"
+                textClassName="notification-fullpage-modal__title-text"
+                editButtonClassName="notification-fullpage-modal__title-edit-btn"
               />
             </div>
             <button
               type="button"
-              className="mail-template-form-modal__title-close"
+              className="notification-fullpage-modal__title-close"
               onClick={onClose}
               aria-label="닫기"
             >
@@ -357,9 +361,9 @@ export function FormModal({
             </button>
           </header>
 
-          <div className="mail-template-form-modal__body">
-            <div className="mail-template-form-modal__notice">
-              <div className="mail-template-form-modal__notice-actions">
+          <div className="notification-fullpage-modal__body">
+            <div className="notification-fullpage-modal__notice">
+              <div className="notification-fullpage-modal__notice-actions">
                 {isEdit ? (
                   <>
                     <CmsButton
@@ -438,9 +442,9 @@ export function FormModal({
               </div>
             </div>
 
-            <div className="mail-template-form-modal__layout">
-              <div className="mail-template-form-modal__main">
-                <section className="mail-template-form-modal__widget">
+            <div className="notification-fullpage-modal__layout">
+              <div className="notification-fullpage-modal__main">
+                <section className="notification-fullpage-modal__widget">
                   <div className="mail-template-form-modal__section-head">
                     <div className="mail-template-form-modal__section-title-row">
                       <h3 className="mail-template-form-modal__section-title">기본 설정</h3>
@@ -461,7 +465,7 @@ export function FormModal({
                       ) : null}
                     </div>
                     <p className="mail-template-form-modal__section-hint">
-                      발신자명 미기재 시, 이메일을 받는 사람에게 이메일 주소 형식만 표시됩니다.
+                      {MAIL_SENDER_NAME_EMPTY_HINT}
                     </p>
                   </div>
                   <BasicSettingsFields
@@ -476,7 +480,7 @@ export function FormModal({
                   />
                 </section>
 
-                <section className="mail-template-form-modal__widget">
+                <section className="notification-fullpage-modal__widget">
                   <h3 className="mail-template-form-modal__section-title">템플릿 작성</h3>
                   <DetailInfoForm
                     title="템플릿 작성"

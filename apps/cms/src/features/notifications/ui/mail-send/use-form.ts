@@ -44,6 +44,7 @@ export function useMailSendForm(open: boolean) {
   }, [])
 
   const replaceSenderName = useCallback((value: string) => {
+    if (senderNameRef.current === value) return
     senderNameRef.current = value
     setSenderNameSeed(value)
     setSenderNameEpoch(key => key + 1)

@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { CmsButton, CmsInput, CmsSelect, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import {
   findHarvestedMailSenderKey,
   MAIL_SENDER_DISPLAY_NAME_READONLY_HINT,
+  MAIL_SENDER_NAME_EMPTY_HINT,
   MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL,
 } from '@/features/notifications/model/mail-template/sender-email'
 import { ComposeFields } from '@/features/notifications/ui/mail-template/compose-fields'
@@ -76,6 +77,7 @@ import { showNotificationSendRequestFailedAlert } from '@/features/notifications
 import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
 import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
+import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './fullpage-modal.css'
 
 type SenderNameFieldProps = {
@@ -172,15 +174,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     () => findHarvestedMailSenderKey(MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL, harvestedSenderKeys),
     [harvestedSenderKeys]
   )
-  const senderEmailOptions = useMemo(
-    () =>
-      (senderProfilesQuery.data ?? []).map(profile => {
-        const email = profile.senderKey.trim()
-        return { label: email, value: email }
-      }),
-    [senderProfilesQuery.data]
-  )
-
   const senderProfilesReady =
     remote &&
     !senderProfilesQuery.isFetching &&
@@ -214,19 +207,25 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     form.setSenderEmail,
   ])
 
-  /** Hub: 선택 From의 harvest displayName을 발신자명 SSOT로 유지 */
+  /** Hub: 발신 메일 입력에 맞는 harvest displayName은 세션당 동일 키 1회만 */
+  const harvestNameSyncKeyRef = useRef<string | null>(null)
   useEffect(() => {
-    if (!open || !remote || !senderProfilesReady) return
+    if (!open) {
+      harvestNameSyncKeyRef.current = null
+      return
+    }
+    if (!remote || !senderProfilesReady) return
     const email = form.senderEmail.trim()
     if (!email) return
     const displayName = resolveHarvestDisplayName(email)
     if (!displayName) return
-    if (form.senderNameSeed.trim() === displayName) return
+    const syncKey = `${email.toLowerCase()}:${displayName}`
+    if (harvestNameSyncKeyRef.current === syncKey) return
+    harvestNameSyncKeyRef.current = syncKey
     form.replaceSenderName(displayName)
   }, [
     form.replaceSenderName,
     form.senderEmail,
-    form.senderNameSeed,
     open,
     remote,
     resolveHarvestDisplayName,
@@ -471,28 +470,24 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         title="메일 발송"
         size="full"
         hideHeader
-        className="mail-send-fullpage-modal teal-header-modal--full"
+        className="notification-fullpage-modal mail-send-fullpage-modal teal-header-modal--full"
       >
-        <div className="mail-send-fullpage-modal__shell">
-          <header className="mail-send-fullpage-modal__title-row">
-            <span className="mail-send-fullpage-modal__title-text">메일 발송</span>
+        <div className="notification-fullpage-modal__shell">
+          <header className="notification-fullpage-modal__title-row">
+            <span className="notification-fullpage-modal__title-text">메일 발송</span>
             <button
               type="button"
-              className="mail-send-fullpage-modal__title-close"
+              className="notification-fullpage-modal__title-close"
               onClick={handleClose}
               aria-label="닫기"
             >
-              <ModalCloseIcon tone="white" />
+              <ModalCloseIcon />
             </button>
           </header>
 
-          <div className="mail-send-fullpage-modal__body">
-            <div className="mail-send-fullpage-modal__notice">
-              <p className="mail-send-fullpage-modal__notice-text">
-                * 프로그램은 현재 운영 중인 프로그램만 선택 가능합니다. 발송·수신자 조회에는
-                프로그램 선택이 필요합니다. 제목·본문·첨부는 선택한 템플릿 기준으로 발송됩니다.
-              </p>
-              <div className="mail-send-fullpage-modal__notice-actions">
+          <div className="notification-fullpage-modal__body">
+            <div className="notification-fullpage-modal__notice">
+              <div className="notification-fullpage-modal__notice-actions">
                 <CmsButton
                   variant="cancel"
                   size="large"
@@ -523,10 +518,13 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
               </div>
             </div>
 
-            <div className="mail-send-fullpage-modal__layout">
-              <div className="mail-send-fullpage-modal__main">
-                <section className="mail-send-fullpage__widget">
-                  <h3 className="mail-send-fullpage__section-title">1. 기본 설정</h3>
+            <div className="notification-fullpage-modal__layout">
+              <div className="notification-fullpage-modal__main">
+                <section className="notification-fullpage-modal__widget">
+                  <div className="mail-send-fullpage__section-intro">
+                    <h3 className="mail-send-fullpage__section-title">1. 기본 설정</h3>
+                    <p className="mail-send-fullpage__section-hint">{MAIL_SENDER_NAME_EMPTY_HINT}</p>
+                  </div>
                   <DetailInfoForm title="기본 설정" hideHeader mode="edit">
                     <DetailInfoForm.Row type="single">
                       <DetailInfoForm.Field
@@ -618,37 +616,26 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         required
                         view={form.senderEmail}
                         edit={
-                          remote && senderEmailOptions.length > 0 ? (
-                            <CmsSelect
-                              inputSize="small"
-                              width="100%"
-                              withAllOption={false}
-                              placeholder="발신 메일을 선택하세요"
-                              value={form.senderEmail || undefined}
-                              options={senderEmailOptions}
-                              onChange={value => {
-                                const email = typeof value === 'string' ? value : ''
-                                form.setSenderEmail(email)
-                                form.replaceSenderName(resolveHarvestDisplayName(email))
-                              }}
-                            />
-                          ) : (
-                            <CmsInput
-                              inputSize="small"
-                              width="100%"
-                              allowClear={false}
-                              placeholder="발신 메일을 입력하세요"
-                              value={form.senderEmail}
-                              onChange={event => form.setSenderEmail(event.target.value)}
-                            />
-                          )
+                          <CmsInput
+                            inputSize="small"
+                            width="100%"
+                            allowClear={false}
+                            placeholder="발신 메일을 입력하세요"
+                            value={form.senderEmail}
+                            onChange={event => {
+                              const email = event.target.value
+                              form.setSenderEmail(email)
+                              if (!remote) return
+                              form.replaceSenderName(resolveHarvestDisplayName(email))
+                            }}
+                          />
                         }
                       />
                     </DetailInfoForm.Row>
                   </DetailInfoForm>
                 </section>
 
-                <section className="mail-send-fullpage__widget mail-send-fullpage__widget--recipients">
+                <section className="notification-fullpage-modal__widget mail-send-fullpage__widget--recipients">
                   <div className="mail-send-fullpage__section-head">
                     <h3 className="mail-send-fullpage__section-title">
                       2. 수신자 설정
@@ -691,7 +678,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                   />
                 </section>
 
-                <section className="mail-send-fullpage__widget">
+                <section className="notification-fullpage-modal__widget">
                   <h3 className="mail-send-fullpage__section-title">3. 메일 작성</h3>
                   <DetailInfoForm
                     title="메일 작성"
