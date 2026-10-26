@@ -5,6 +5,7 @@ import {
   mapAdminProgramCalendarItemsToEvents,
   resolveProgramCalendarColorKey,
   resolveProgramCalendarParticipantScope,
+  resolveGeneralProgramMonthEventLabel,
   resolveProgramCalendarDisplayColors,
 } from './program-calendar-events'
 
@@ -345,7 +346,7 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
     expect(events[0]?.scheduleContent).toBe('참여자 모집 시작')
   })
 
-  it('uses the program name as the week time-card title and keeps all-day milestones on their own label', () => {
+  it('uses the program name as the week grid card title for education and all-day milestones alike', () => {
     const events = mapAdminProgramCalendarItemsToEvents([
       item({
         eventId: 'EDUCATION:1:PROGRAM',
@@ -371,7 +372,11 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
     expect(byId.get('EDUCATION:1:PROGRAM')?.timeGridLabel).toBe(
       '디즈니가 후원하는 청소년 콘텐츠 역량 강화 교육'
     )
-    expect(byId.get('BUSINESS_START:1')?.timeGridLabel).toBeUndefined()
+    expect(byId.get('BUSINESS_START:1')?.timeGridLabel).toBe(
+      '디즈니가 후원하는 청소년 콘텐츠 역량 강화 교육'
+    )
+    // 우측 목록·Hover용 일정명은 유지
+    expect(byId.get('BUSINESS_START:1')?.scheduleContent).toBe('운영 시작')
     expect(byId.get('BUSINESS_START:1')?.title).toBe('운영 시작')
   })
 
@@ -452,6 +457,18 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
     ])
 
     expect(events[0]?.originalItem.lifecycleStatus).toBe('in_progress')
+  })
+})
+
+describe('resolveGeneralProgramMonthEventLabel', () => {
+  it('shows the program name first in month cells, schedule name only as fallback', () => {
+    expect(
+      resolveGeneralProgramMonthEventLabel({ programTitle: '지급조서테스트', scheduleContent: '운영 시작' })
+    ).toBe('지급조서테스트')
+    expect(
+      resolveGeneralProgramMonthEventLabel({ programTitle: '  ', scheduleContent: '운영 시작' })
+    ).toBe('운영 시작')
+    expect(resolveGeneralProgramMonthEventLabel(null, '원본 제목')).toBe('원본 제목')
   })
 })
 

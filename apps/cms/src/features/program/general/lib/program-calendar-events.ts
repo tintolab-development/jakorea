@@ -271,8 +271,9 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
     programTitle,
     scheduleContent: scheduleName,
     timeLabel: formatCalendarEventTimeLabel(startTime, endTime),
-    // 주간 시간 카드 제목은 프로그램명(Figma). 종일 줄 칩은 일정명(운영 시작 등) 유지.
-    timeGridLabel: startTime && programTitle ? programTitle : undefined,
+    // 주간 격자 카드 제목은 항상 프로그램명(Figma). 종일·마일스톤도 일정명을 쓰지 않는다.
+    // 우측 목록·Hover는 scheduleContent(일정명)를 그대로 쓴다.
+    timeGridLabel: programTitle || undefined,
     operationPeriodLabel: '',
     kind: kindFromEventType(eventType),
     colorKey,
@@ -317,6 +318,14 @@ export function mapAdminProgramCalendarItemsToEvents(
     if (dateDiff !== 0) return dateDiff
     return String(a.programTitle).localeCompare(String(b.programTitle), 'ko')
   })
+}
+
+/** 월간 칸 라벨: 주간 격자와 같이 프로그램명 우선, 비어 있을 때만 일정명 */
+export function resolveGeneralProgramMonthEventLabel(
+  event: Pick<GeneralProgramCalendarEvent, 'programTitle' | 'scheduleContent'> | null | undefined,
+  fallbackTitle?: string
+): string {
+  return event?.programTitle?.trim() || event?.scheduleContent?.trim() || fallbackTitle || ''
 }
 
 export function getGeneralProgramCalendarEventFromCalendarItem(

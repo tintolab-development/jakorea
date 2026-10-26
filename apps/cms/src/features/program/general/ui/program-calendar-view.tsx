@@ -23,6 +23,7 @@ import type { AdminProgramCalendarQuery } from '../api/program-calendar-api-clie
 import {
   getGeneralProgramCalendarEventFromCalendarItem,
   mapAdminProgramCalendarItemsToEvents,
+  resolveGeneralProgramMonthEventLabel,
   resolveProgramCalendarDisplayColors,
 } from '../lib/program-calendar-events'
 import {
@@ -58,7 +59,7 @@ function renderGeneralProgramMonthEventContent({
   const event = getGeneralProgramCalendarEventFromCalendarItem(row.sourceEvent)
   return (
     <span className="calendar-event-title">
-      {event?.scheduleContent ?? event?.programTitle ?? row.sourceEvent.title}
+      {resolveGeneralProgramMonthEventLabel(event, row.sourceEvent.title)}
     </span>
   )
 }
