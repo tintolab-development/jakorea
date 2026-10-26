@@ -54,7 +54,7 @@ export async function requestAssignedInstructorConsentDownload(input: {
 }): Promise<AssignedInstructorConsentDownload> {
   const { data } = await axiosClient.post(
     `/api/portal/me/program-applications/ORGANIZATION/${input.applicationId}/assigned-instructors/${input.instructorMemberId}/consents/${input.documentId}/download-requests`,
-    { purpose: '학교 배정 강사 동의서 확인' }
+    { purpose: '교육 상세 강사 동의서 확인' }
   )
   return unwrap<AssignedInstructorConsentDownload>(data)
 }

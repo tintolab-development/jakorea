@@ -91,6 +91,51 @@ assert.equal(mapped.title, '신청 상세 API 제목')
 assert.equal(mapped.detailCase, 'ujat-volunteer')
 assert.equal(mapped.ujatPortalBannerState, undefined)
 
+const teacherOrganization = mapPortalProgramApplicationDetail({
+  applicationId: 1691483,
+  applicationType: 'ORGANIZATION',
+  programId: 186310,
+  programTitle: '교사 ORGANIZATION 신청',
+  programGroup: 'GENERAL',
+  applicationStatus: 'APPROVED',
+  displayStatus: '진행 중',
+  teacherAssignment: {
+    textbook: {
+      textbookId: 12345,
+      title: '교육 교재',
+      kitCount: 1,
+      volumeCount: 1,
+      kitCountLabel: '1키트',
+      volumeCountLabel: '1권',
+      deliveryStatus: 'PREPARING',
+    },
+  },
+})
+assert.ok(teacherOrganization?.teacherAssignment)
+assert.deepEqual(teacherOrganization.teacherAssignment?.textbook, {
+  title: '교육 교재',
+  kitCountLabel: '1키트',
+  volumeCountLabel: '1권',
+  deliveryStatus: 'before',
+})
+
+const volunteerTeacherAssignment = mapPortalProgramApplicationDetail({
+  applicationId: 1691622,
+  applicationType: 'VOLUNTEER',
+  programId: 186310,
+  programTitle: '봉사 신청',
+  programGroup: 'UJAT',
+  applicationStatus: 'APPROVED',
+  teacherAssignment: {
+    textbook: {
+      textbookId: 12345,
+      title: '잘못 연결된 교재',
+      deliveryStatus: 'DELIVERED',
+    },
+  },
+})
+assert.equal(volunteerTeacherAssignment?.teacherAssignment, undefined)
+
 const ujatOrg = mapPortalProgramApplicationDetail({
   applicationId: 1691621,
   applicationType: 'ORGANIZATION',
