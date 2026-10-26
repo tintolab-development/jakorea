@@ -47,6 +47,8 @@ export interface GeminiApprovedTrainingDetailResponse {
   trainingTimeText?: string | null;
   /** 희망 일정 마지막 순위(3지망) 날짜. 확정 trainingDate와 분리 */
   lastPreferredDate?: string | null;
+  /** 기관 신청 희망 일정 1~3지망 후보. preferenceRank 오름차순. 확정 trainingDate와 분리. 희망 일정이 없으면 []. null이 아니다 */
+  trainingDateCandidates?: GeminiTrainingDateCandidate[];
   studentCount?: number;
   classCount?: number;
   requestedScheduleMemo?: string;
@@ -93,6 +95,4 @@ export interface GeminiApprovedTrainingDetailResponse {
   submittedAt?: string;
   approvedAt?: string;
   updatedAt?: string;
-  /** 기관 신청 희망 일정 1~3지망 후보. preferenceRank 오름차순. 확정 trainingDate와 분리. 희망 일정이 없으면 []. null이 아니다 */
-  trainingDateCandidates?: GeminiTrainingDateCandidate[];
 }

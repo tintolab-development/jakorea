@@ -12,4 +12,6 @@ export interface EducationScheduleAssignmentSubmission {
   kind?: EducationScheduleAssignmentSubmissionKind;
   fileName?: string;
   url?: string | null;
+  /** FILE 항목의 file_object.id. 수정 제출 시 유지할 파일을 fileObjectIds에 다시 보낸다. URL 항목은 생략. */
+  fileObjectId?: number | null;
 }

@@ -11,7 +11,7 @@
  */
 export interface SettlementExportRequest {
   /**
-     * 지급 상태 필터. 대량이체·세금신고는 PAID만 허용합니다. 미지급(WAITING_PAYMENT/FAILED)은 발급 불가입니다.
+     * 지급 상태 필터. 대량이체는 WAITING_PAYMENT만, 세금신고는 PAID만 허용합니다.
      * @minLength 0
      * @maxLength 80
      */
@@ -57,12 +57,19 @@ export interface SettlementExportRequest {
      */
   approvalReference?: string;
   /**
-     * 화면에서 선택한 정산 ID. 지정하면 필터 결과 중 해당 정산만 발급하며, 미지급/누락/권한 밖 ID가 섞이면 발급하지 않습니다.
+     * 화면에서 선택한 정산 ID(settlement.id). 지정하면 필터 결과 중 해당 정산만 발급하며, 미지급/누락/권한 밖 ID가 섞이면 발급하지 않습니다. 계좌 지급 ID(account_payment.id)를 넣으면 안 됩니다.
      * @minItems 0
      * @maxItems 5000
      * @items.minimum 1
      */
   settlementIds?: number[];
+  /**
+     * 정산과 연결되지 않은 직접 계좌 지급 ID(account_payment.id, 예: Gemini 교육 보고서 지급). 대량이체에서만 허용하며 settlement 연결 지급 ID가 섞이면 발급하지 않습니다. 미지정 시 빈 배열입니다.
+     * @minItems 0
+     * @maxItems 5000
+     * @items.minimum 1
+     */
+  accountPaymentIds?: number[];
   dateRangeValid?: boolean;
   rawPrivacyApprovalValid?: boolean;
 }

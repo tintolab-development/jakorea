@@ -31,4 +31,8 @@ export interface StudentRosterItemResponse {
   portraitConsentUpdatedAt?: string;
   /** 프로그램에 만족도조사가 없으면 null. 있으면 제출 완료 여부 */
   satisfactionSurveyCompleted?: boolean | null;
+  /** Raw contact phone in owner-scoped Portal or dedicated CMS privacy-detail responses; omitted from CMS default roster reads. maskedPhone is always masked. */
+  phone?: string | null;
+  /** Raw email in owner-scoped Portal or dedicated CMS privacy-detail responses; omitted from CMS default roster reads. maskedEmail is always masked. */
+  email?: string | null;
 }

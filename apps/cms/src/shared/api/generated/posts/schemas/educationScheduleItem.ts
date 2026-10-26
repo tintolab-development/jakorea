@@ -7,6 +7,7 @@
  */
 import type { EducationScheduleAssignment } from './educationScheduleAssignment';
 import type { EducationScheduleItemBlockKind } from './educationScheduleItemBlockKind';
+import type { EducationScheduleItemTeamRole } from './educationScheduleItemTeamRole';
 import type { ScheduleGroupTime } from './scheduleGroupTime';
 
 export interface EducationScheduleItem {
@@ -30,7 +31,7 @@ export interface EducationScheduleItem {
   surveyCount?: number;
   satisfactionCount?: number;
   availableActions?: string[];
-  /** 커리큘럼 행 라벨. 예: 1차시 / 1회차. */
+  /** 커리큘럼 행 라벨. CMS 공통정보 curriculumSessions[].sessionLabel 원문. 예: 1차시 / 1회차. 저장값이 없거나 정의와 매칭되지 않으면 null이며 합성하지 않는다. */
   sessionLabel?: string | null;
   /** 단원명. title과 같으면 생략 가능. */
   unitName?: string | null;
@@ -38,7 +39,7 @@ export interface EducationScheduleItem {
   content?: string | null;
   /** 일정형 행 라벨. 예: 세부 일정 01 / 행사 일정 01. */
   scheduleLabel?: string | null;
-  /** 일정명. title과 같으면 생략 가능. */
+  /** 일정형 일정명. CMS 공통정보 scheduleDetails[].name 원문. 예: 오리엔테이션 / 개회식. 저장값이 없거나 정의와 매칭되지 않으면 null이며 scheduleLabel·운영 슬롯 제목으로 채우지 않는다. */
   scheduleName?: string | null;
   /** 일정형만. PRE_EDUCATION | SUB | EVENT. */
   blockKind?: EducationScheduleItemBlockKind;
@@ -46,4 +47,8 @@ export interface EducationScheduleItem {
   groupTimes?: ScheduleGroupTime[] | null;
   /** 과제 블록. 없거나 enabled=false면 FE가 과제 UI만 숨긴다. */
   assignment?: EducationScheduleAssignment | null;
+  /** 해당 회차 기준 본인 팀 역할. 팀 프로그램의 회차 응답 스냅샷을 우선하고, 없으면 현재 참여자 또는 신청 팀 정보를 사용합니다. 비팀 프로그램·미확인 팀은 null. */
+  teamRole?: EducationScheduleItemTeamRole;
+  /** 해당 회차 기준 본인 팀명. INDIVIDUAL·비팀 프로그램·미확인 팀이면 null이며 다른 회차 값으로 합성하지 않습니다. */
+  teamName?: string | null;
 }

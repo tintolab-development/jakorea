@@ -16,6 +16,7 @@ import type {
   ApiResponseVoid,
   BudgetSummaryParams,
   ClientGeneratedDownloadLogRequest,
+  GetAccountPaymentParams,
   ListAccountPaymentsParams,
   ListCorrectionRequestsParams,
   ListExportHistoriesParams,
@@ -285,7 +286,7 @@ const recalculate = (
 
 /**
  * ### 이 API가 하는 일
- * - 강사 지급조서 요청 및 반려 후 재신청(재신청 기한 초과 시 409 SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED)
+ * - POST /api/admin/settlements/{settlementId}/payment-statement/request
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -304,12 +305,12 @@ const recalculate = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -326,8 +327,8 @@ const recalculate = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: REJECTED 재신청은 KST 반려일+14일과 program.business_end_date 중 빠른 날까지 허용(마지막 날 포함); 일반 영수증/GEMINI 별도 경로 제외
- * @summary 강사 지급조서 요청 및 반려 후 재신청(재신청 기한 초과 시 409 SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED)
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/{settlementId}/payment-statement/request
  */
 const requestPaymentStatement = (
     settlementId: number,
@@ -1035,7 +1036,7 @@ const rejectCorrection = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 정정 승인 및 반려 후 REAPPLICATION 생성(기한 초과 시 409 SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED)
+ * - 정산/계좌지급 부분 수정
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 정산 관리 (`null`)
  * - 프론트 담당 영역: 정산 (`settlement`)
@@ -1054,12 +1055,12 @@ const rejectCorrection = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1076,8 +1077,8 @@ const rejectCorrection = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: REJECTED 원본은 KST 반려일+14일과 program.business_end_date 중 빠른 날까지 허용(마지막 날 포함)
- * @summary 정산 정정 승인 및 반려 후 REAPPLICATION 생성(기한 초과 시 409 SETTLEMENT_REAPPLICATION_DEADLINE_EXPIRED)
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 부분 수정
  */
 const approveCorrection = (
     correctionRequestId: number,
@@ -2356,9 +2357,11 @@ const listAccountPayments = (
  */
 const getAccountPayment = (
     paymentId: number,
+    params: GetAccountPaymentParams,
  options?: SecondParameter<typeof customInstance<AccountPaymentDetailResponse>>,) => {
       return customInstance<AccountPaymentDetailResponse>(
-      {url: `/api/admin/account-payments/${paymentId}`, method: 'GET'
+      {url: `/api/admin/account-payments/${paymentId}`, method: 'GET',
+        params
     },
       options);
     }
