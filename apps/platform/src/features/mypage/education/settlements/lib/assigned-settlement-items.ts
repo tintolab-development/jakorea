@@ -36,6 +36,7 @@ import {
   readSettlementDeadlineAt,
   readSettlementScheduleJoinId,
 } from './settlement-join.ts'
+import { toDisplayEducationScheduleName } from '../../../../../shared/lib/education-schedule-name.ts'
 
 export type SettlementLectureReportJoin = {
   scheduleId: number
@@ -135,9 +136,9 @@ function educationItemFromIndividual(
     scheduleId,
     sessionNumber: 0,
     heldAt: row.startAt ?? row.endAt ?? '',
-    title: row.scheduleName?.trim() || '-',
+    title: toDisplayEducationScheduleName(row.scheduleName) || '-',
     attendanceStatus: mapIndividualAttendance(row.attendanceStatus),
-    sessionLabel: row.scheduleName?.trim() || undefined,
+    sessionLabel: toDisplayEducationScheduleName(row.scheduleName),
   }
 }
 

@@ -679,6 +679,16 @@ function mergeAnswerIntoParagraph(
       selectedPreviewMultipleIds: answer.selectedPreviewMultipleIds as string[],
     }
   }
+  if (next.kind === 'single_item' && next.variant === 'horizontal_table') {
+    if (
+      Array.isArray(answer.dataRows) &&
+      answer.dataRows.every(
+        row => Array.isArray(row) && row.every(cell => typeof cell === 'string'),
+      )
+    ) {
+      next = { ...next, dataRows: answer.dataRows as string[][] }
+    }
+  }
   if (next.kind === 'single_item' && next.variant === 'vertical_table') {
     const extraRows = Array.isArray(answer.rows) ? answer.rows : undefined
     if (extraRows != null || 'bottomConsent' in answer) {

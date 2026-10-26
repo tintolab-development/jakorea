@@ -18,6 +18,24 @@ export type CmsDateInput = Date | string | number | Dayjs | null | undefined
 export const CMS_WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 const defaultLocale = 'ko-KR'
+const SEOUL_TIME_ZONE = 'Asia/Seoul'
+
+const SEOUL_CALENDAR_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: SEOUL_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** 주어진 시각의 KST 달력일을 `YYYY-MM-DD`로 반환한다. */
+export function getSeoulCalendarDate(value: Date = new Date()): string {
+  return SEOUL_CALENDAR_DATE_FORMATTER.format(value)
+}
+
+/** 지급 예정일 DatePicker용: KST 오늘보다 이전인 달력일인지 판정한다. */
+export function isBeforeSeoulToday(value: Dayjs | null | undefined, now: Date = new Date()): boolean {
+  return value != null && value.format('YYYY-MM-DD') < getSeoulCalendarDate(now)
+}
 
 function parseDisplayDate(value: Date | string | number | Dayjs) {
   if (dayjs.isDayjs(value)) return value

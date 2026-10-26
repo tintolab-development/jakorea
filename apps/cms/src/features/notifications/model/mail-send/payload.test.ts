@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { buildMailSendPayload, containsMailVariableTokens, validateMailSendDraft } from './payload'
+import {
+  buildMailSendPayload,
+  containsMailVariableTokens,
+  resolveMailSenderDisplayNameForSend,
+  sanitizeMailSenderDisplayNameInput,
+  validateMailSendDraft,
+} from './payload'
 import { MAIL_SEND_ALL_PROGRAM_ID, MAIL_SEND_PURPOSE, type MailSendDraft } from './types'
 
 function draft(overrides: Partial<MailSendDraft> = {}): MailSendDraft {
@@ -146,5 +152,18 @@ describe('validateMailSendDraft', () => {
 
   it('accepts a complete immediate send', () => {
     expect(validateMailSendDraft(draft())).toBeNull()
+  })
+})
+
+describe('mail sender display name (senderProfileDisplayName)', () => {
+  it('blocks newline/control chars and angle brackets, max 255', () => {
+    expect(sanitizeMailSenderDisplayNameInput('JA\nKorea<운영>\t팀')).toBe('JAKorea운영팀')
+    expect(sanitizeMailSenderDisplayNameInput('가'.repeat(300))).toHaveLength(255)
+  })
+
+  it('trims for send and omits when empty', () => {
+    expect(resolveMailSenderDisplayNameForSend('  JA Korea 운영팀  ')).toBe('JA Korea 운영팀')
+    expect(resolveMailSenderDisplayNameForSend('   ')).toBeUndefined()
+    expect(resolveMailSenderDisplayNameForSend(undefined)).toBeUndefined()
   })
 })

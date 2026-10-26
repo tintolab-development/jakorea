@@ -1055,8 +1055,8 @@ const download1 = (
     memberId: number,
     applicationId: number,
     params: Download1Params,
- options?: SecondParameter<typeof customInstance<unknown>>,) => {
-      return customInstance<unknown>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/users/${memberId}/applications/${applicationId}/assignment-files/download`, method: 'POST',
         params
     },
@@ -3255,8 +3255,8 @@ const resetAdminPassword = (
 const reset = (
     adminAccountId: number,
     resetRequest: ResetRequest,
- options?: SecondParameter<typeof customInstance<unknown>>,) => {
-      return customInstance<unknown>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/admin-accounts/${adminAccountId}/mfa/reset`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: resetRequest
@@ -3640,8 +3640,8 @@ const upsertExternalIdentifier = (
 const deleteMemberComment = (
     memberId: number,
     commentId: number,
- options?: SecondParameter<typeof customInstance<unknown>>,) => {
-      return customInstance<unknown>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/users/${memberId}/comments/${commentId}`, method: 'DELETE'
     },
       options);
@@ -4191,8 +4191,8 @@ const changeAdminRole = (
 const deleteComment = (
     adminAccountId: number,
     commentId: number,
- options?: SecondParameter<typeof customInstance<unknown>>,) => {
-      return customInstance<unknown>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/admin-accounts/${adminAccountId}/comments/${commentId}`, method: 'DELETE'
     },
       options);
@@ -6287,8 +6287,8 @@ const deleteApplicationHistory = (
     memberId: number,
     applicationId: number,
     params?: DeleteApplicationHistoryParams,
- options?: SecondParameter<typeof customInstance<unknown>>,) => {
-      return customInstance<unknown>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/users/${memberId}/applications/${applicationId}`, method: 'DELETE',
         params
     },
@@ -6341,8 +6341,8 @@ const deleteApplicationHistory = (
 const deleteProgramRole = (
     adminAccountId: number,
     programId: number,
- options?: SecondParameter<typeof customInstance<unknown>>,) => {
-      return customInstance<unknown>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/admin-accounts/${adminAccountId}/program-roles/${programId}`, method: 'DELETE'
     },
       options);

@@ -432,7 +432,7 @@ export function UjatBasicInfoRHFParagraph({
                 withAllOption={false}
                 inputSize="small"
                 placeholder="사업 분야를 선택하세요"
-                width={240}
+                width="100%"
                 options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                 value={String(formValues.businessArea ?? '')}
                 onChange={value => setField(infoForm, 'businessArea', String(value ?? ''))}
@@ -452,7 +452,7 @@ export function UjatBasicInfoRHFParagraph({
                 withAllOption
                 inputSize="small"
                 placeholder="후원사를 선택하세요"
-                width={240}
+                width="100%"
                 options={sponsorOptions}
                 value={sponsorId}
                 loading={sponsorOptionsLoading}
@@ -478,7 +478,7 @@ export function UjatBasicInfoRHFParagraph({
                 withAllOption={false}
                 inputSize="small"
                 placeholder="후원사 담당자를 선택하세요"
-                width={240}
+                width="100%"
                 showSearch
                 optionFilterProp="label"
                 options={managerOptions}
@@ -489,6 +489,45 @@ export function UjatBasicInfoRHFParagraph({
                 onChange={value =>
                   applySponsorContactIds(Array.isArray(value) ? value.map(String) : [])
                 }
+              />
+            </div>
+          }
+          view="-"
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="교육 장소"
+          validationKey="basicInfo.educationVenueDetail"
+          fullRow
+          edit={
+            <div className="detail-info-form-inputs-wrapper">
+              <CmsRadioGroup
+                size="medium"
+                value={formValues.venueKind ?? 'inside'}
+                onChange={event =>
+                  setField(
+                    infoForm,
+                    'venueKind',
+                    event.target.value as 'inside' | 'outside' | 'other'
+                  )
+                }
+              >
+                <CmsRadio size="medium" value="inside">기관 안</CmsRadio>
+                <CmsRadio size="medium" value="outside">기관 밖</CmsRadio>
+                <CmsRadio size="medium" value="other">기타(직접입력)</CmsRadio>
+              </CmsRadioGroup>
+              <DetailInfoForm.InputsSeparator />
+              <CmsInput
+                inputSize="small"
+                placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                width="100%"
+                style={{ flex: '1 1 0', minWidth: 0 }}
+                value={String(formValues.venueDetail ?? formValues.venue ?? '')}
+                onChange={event => {
+                  setField(infoForm, 'venueDetail', event.target.value)
+                  setField(infoForm, 'venue', event.target.value)
+                }}
               />
             </div>
           }
@@ -525,7 +564,7 @@ export function UjatBasicInfoRHFParagraph({
               withAllOption={false}
               inputSize="small"
               placeholder="교육 과정을 선택하세요"
-              width={240}
+              width="100%"
               options={educationCourseSelectOptions}
               value={String(formValues.educationProcess ?? '')}
               onChange={value => setField(infoForm, 'educationProcess', String(value ?? ''))}
@@ -540,7 +579,7 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
-              width={240}
+              width="100%"
               options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
               value={selectValue(formValues.ipOwned)}
               onChange={value => setSelectValue('ipOwned', value)}
@@ -557,7 +596,7 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
-              width={240}
+              width="100%"
               options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
               value={selectValue(formValues.courseDeliveredBy)}
               onChange={value => setSelectValue('courseDeliveredBy', value)}

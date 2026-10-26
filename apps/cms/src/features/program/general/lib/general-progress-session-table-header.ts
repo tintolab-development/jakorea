@@ -1,4 +1,5 @@
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { isDefaultEducationSlotName } from '@/shared/lib/education-schedule-name'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import type { Program } from '@/types/domain'
 
@@ -10,7 +11,7 @@ function isGenericProgressScheduleName(value: string, round: number): boolean {
   const trimmed = value.trim()
   if (!trimmed) return true
   if (trimmed === `${round}회차` || trimmed === `${round}차시`) return true
-  if (/^공통 교육 예정\s*\d+$/u.test(trimmed)) return true
+  if (isDefaultEducationSlotName(trimmed)) return true
   if (/^세부 일정\s*\d+$/u.test(trimmed)) return true
   return false
 }

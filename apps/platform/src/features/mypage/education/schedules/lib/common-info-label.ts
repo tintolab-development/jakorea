@@ -2,10 +2,9 @@ import type {
   PortalEducationStructure,
   PortalSessionRound,
 } from '../../applications/api/activity-client'
+import { isDefaultEducationSlotName } from '../../../../../shared/lib/education-schedule-name.ts'
 
 export const EDUCATION_SCHEDULE_EMPTY_LABEL = '-'
-
-const OPERATIONAL_SLOT_TITLE_RE = /^공통 교육 예정/
 
 export type EducationScheduleCommonInfoLabelInput = {
   educationStructure?: PortalEducationStructure | null
@@ -21,8 +20,9 @@ function optionalText(value: string | null | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
+/** 백엔드 자동 기본명(`공통 교육 예정 N`) — `shared/lib/education-schedule-name` SSOT */
 function isOperationalSlotTitle(value: string): boolean {
-  return OPERATIONAL_SLOT_TITLE_RE.test(value)
+  return isDefaultEducationSlotName(value)
 }
 
 /** 운영 슬롯 기본명(공통 교육 예정…)은 공통정보가 아니다. */
@@ -55,8 +55,8 @@ export type EducationScheduleRowLabelInput = {
  * 커리큘럼형: 회차명(`sessionLabel`), 일정형: 일정명(`scheduleName`). 없으면 `-`.
  */
 export function resolveEducationScheduleRowLabel(input: EducationScheduleRowLabelInput): string {
-  const sessionLabel = optionalText(input.sessionLabel)
-  const scheduleName = optionalText(input.scheduleName)
+  const sessionLabel = asCommonInfoText(input.sessionLabel)
+  const scheduleName = asCommonInfoText(input.scheduleName)
   if (input.educationStructure === 'CURRICULUM') {
     return sessionLabel ?? EDUCATION_SCHEDULE_EMPTY_LABEL
   }

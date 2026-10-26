@@ -1,3 +1,4 @@
+import type { CreateRequest } from '@/shared/api/generated/notifications/schemas'
 import { normalizeKoreanPhoneDigits } from '@/shared/utils/phone-validation'
 import {
   mapSenderProfileOptions,
@@ -200,8 +201,7 @@ export async function submitSmsSend(input: {
     draft.templateId && /^\d+$/.test(draft.templateId.trim())
       ? Number(draft.templateId.trim())
       : null
-
-  if (numericTemplateId == null) {
+  if (draft.templateId?.trim() && numericTemplateId == null) {
     throw new Error('문자 발송에는 서버에 등록된 템플릿이 필요합니다.')
   }
 
@@ -225,7 +225,8 @@ export async function submitSmsSend(input: {
   const batchVariables = pickNonEmptySendVariables(variables)
   if (batchVariables) body.variables = batchVariables
 
-  applyNotificationSendBodySnapshot(body, {
+  // 템플릿 미선택이면 baseline 없음 → 제목/본문 스냅샷이 항상 실린다.
+  applyNotificationSendBodySnapshot(body as CreateRequest, {
     channel: 'SMS',
     title: draft.messageType === 'SMS' ? '' : draft.subject,
     content: draft.bodyText,
@@ -245,5 +246,6 @@ export async function submitSmsSend(input: {
     body.titleTemplate = draft.subject.trim()
   }
 
-  await createSendBatchRemote(body, idempotencyKey)
+  // templateId 생략·messageType은 BE PR #43 계약. OpenAPI 재생성 전까지 생성 타입과 다르다.
+  await createSendBatchRemote(body as CreateRequest, idempotencyKey)
 }

@@ -82,4 +82,27 @@ describe('useTableExcelExport viewer guard', () => {
     expect(exportTableToExcel).toHaveBeenCalledTimes(1)
     expect(cmsAlertModal.show).not.toHaveBeenCalled()
   })
+
+  it('resolveData가 있으면 화면에 로드된 데이터 대신 해석된 전체 데이터를 exporter에 전달한다', async () => {
+    useAuthStore.setState({ user: masterUser })
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+    const resolveData = vi.fn().mockResolvedValue([{ name: '전체 회원' }])
+
+    const { result } = renderHook(() =>
+      useTableExcelExport({
+        columns,
+        data: [],
+        resolveData,
+        filename: '목록',
+      })
+    )
+
+    await act(async () => {
+      await result.current.exportExcel()
+    })
+
+    expect(resolveData).toHaveBeenCalledTimes(1)
+    expect(exportTableToExcel).toHaveBeenCalledWith(columns, [{ name: '전체 회원' }], '목록')
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+  })
 })

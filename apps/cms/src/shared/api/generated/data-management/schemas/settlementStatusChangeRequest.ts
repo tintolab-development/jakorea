@@ -21,8 +21,8 @@ export interface SettlementStatusChangeRequest {
   notificationType?: SettlementStatusChangeRequestNotificationType;
   /** MANUAL일 때 필수 ISO datetime */
   scheduledNotificationAt?: string;
-  /** 지급조서 확인 시 강의비 이체 예정일 */
+  /** 지급조서 확인 시 강의비 이체 예정일. KST 기준 오늘 또는 이후 날짜만 허용됩니다. */
   lectureFeePaymentScheduledDate?: string;
-  /** lectureFeePaymentScheduledDate와 동일. FE 호환 필드명 */
+  /** lectureFeePaymentScheduledDate와 동일. FE 호환 필드명이며 KST 기준 오늘 또는 이후 날짜만 허용됩니다. */
   scheduledPaymentDate?: string;
 }

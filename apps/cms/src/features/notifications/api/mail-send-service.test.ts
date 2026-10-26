@@ -87,6 +87,31 @@ describe('submitMailSend', () => {
     expect(updateMailTemplate).not.toHaveBeenCalled()
   })
 
+  it('sends trimmed senderProfileDisplayName for this send only', async () => {
+    await submitMailSend({
+      draft: draft({ senderName: '  JA Korea 운영팀  ' }),
+      templateBaseline: { subject: '테스트 메일', bodyHtml: '<p>본문</p>' },
+      idempotencyKey: 'idem-sender-name',
+      senderProfileId: 7,
+    })
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).toMatchObject({
+      templateId: 33,
+      senderProfileDisplayName: 'JA Korea 운영팀',
+    })
+  })
+
+  it('omits senderProfileDisplayName when sender name is empty', async () => {
+    await submitMailSend({
+      draft: draft({ senderName: '  ' }),
+      templateBaseline: { subject: '테스트 메일', bodyHtml: '<p>본문</p>' },
+      idempotencyKey: 'idem-sender-name-empty',
+      senderProfileId: 7,
+    })
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).not.toHaveProperty(
+      'senderProfileDisplayName'
+    )
+  })
+
   it('sends compose snapshot as contentTemplate when body is edited on send screen', async () => {
     await submitMailSend({
       draft: draft({

@@ -11,6 +11,7 @@ import type { User, UserListRowMetrics } from '@/types/user'
 function buildAdminAccountListMetrics(item: {
   roleCode?: string
   managedProgramCount?: number
+  hasProgramAssignmentHistory?: boolean
 }): UserListRowMetrics | undefined {
   const metrics: UserListRowMetrics = {}
   const permissionVariant = roleCodeToAdminPermissionVariant(item.roleCode)
@@ -19,6 +20,9 @@ function buildAdminAccountListMetrics(item: {
   }
   if (item.managedProgramCount != null && !Number.isNaN(item.managedProgramCount)) {
     metrics.managedProgramCount = item.managedProgramCount
+  }
+  if (typeof item.hasProgramAssignmentHistory === 'boolean') {
+    metrics.hasProgramAssignmentHistory = item.hasProgramAssignmentHistory
   }
   return Object.keys(metrics).length > 0 ? metrics : undefined
 }

@@ -24,6 +24,10 @@ type EducationScheduleChangeTitleActionProps = {
   onApply?: (nextLines: string[]) => void
   overlayKeyPrefix?: string
   educationScheduleMode?: ProgramRegistrationEducationScheduleMode
+  /** 있으면 「교육 진행 일정 선택」과 같은 데이트피커를 쓴다. */
+  educationStructure?: 'curriculum' | 'schedule'
+  participantOrganization?: boolean
+  sessionRound?: 'single' | 'multi'
   autoFillFromScheduleGroupTimes?: boolean
   lockCalendarTogglesToScheduleMode?: boolean
   operationStart?: DateValue | null
@@ -37,6 +41,9 @@ function EducationScheduleChangeOverlayTitleAction({
   programId,
   overlayKeyPrefix,
   educationScheduleMode,
+  educationStructure,
+  participantOrganization,
+  sessionRound,
   autoFillFromScheduleGroupTimes,
   lockCalendarTogglesToScheduleMode,
   operationStart,
@@ -47,6 +54,9 @@ function EducationScheduleChangeOverlayTitleAction({
   programId?: string | null
   overlayKeyPrefix: string
   educationScheduleMode?: ProgramRegistrationEducationScheduleMode
+  educationStructure?: 'curriculum' | 'schedule'
+  participantOrganization?: boolean
+  sessionRound?: 'single' | 'multi'
   autoFillFromScheduleGroupTimes?: boolean
   lockCalendarTogglesToScheduleMode?: boolean
   operationStart?: DateValue | null
@@ -68,6 +78,9 @@ function EducationScheduleChangeOverlayTitleAction({
       scheduleLines={lines}
       onApply={setLines}
       educationScheduleMode={educationScheduleMode}
+      educationStructure={educationStructure}
+      participantOrganization={participantOrganization}
+      sessionRound={sessionRound}
       autoFillFromScheduleGroupTimes={autoFillFromScheduleGroupTimes}
       lockCalendarTogglesToScheduleMode={lockCalendarTogglesToScheduleMode}
       operationStart={operationRangeSeal?.start ?? operationStart}
@@ -95,6 +108,9 @@ function EducationScheduleChangeTitleActionView({
   scheduleRowLabels,
   onApply,
   educationScheduleMode,
+  educationStructure,
+  participantOrganization,
+  sessionRound,
   operationStart,
   operationEnd,
   persistedOperationStart,
@@ -118,6 +134,9 @@ function EducationScheduleChangeTitleActionView({
         scheduleLines={scheduleLines}
         scheduleRowLabels={scheduleRowLabels}
         educationScheduleMode={educationScheduleMode}
+        educationStructure={educationStructure}
+        participantOrganization={participantOrganization}
+        sessionRound={sessionRound}
         operationStart={operationStart}
         operationEnd={operationEnd}
         submitting={submitting}
@@ -178,6 +197,9 @@ export function EducationScheduleChangeTitleAction({
   scheduleRowLabels,
   onApply,
   educationScheduleMode,
+  educationStructure,
+  participantOrganization,
+  sessionRound,
   autoFillFromScheduleGroupTimes,
   lockCalendarTogglesToScheduleMode,
   operationStart,
@@ -191,6 +213,9 @@ export function EducationScheduleChangeTitleAction({
         programId={programId}
         overlayKeyPrefix={overlayKeyPrefix}
         educationScheduleMode={educationScheduleMode}
+        educationStructure={educationStructure}
+        participantOrganization={participantOrganization}
+        sessionRound={sessionRound}
         autoFillFromScheduleGroupTimes={autoFillFromScheduleGroupTimes}
         lockCalendarTogglesToScheduleMode={lockCalendarTogglesToScheduleMode}
         operationStart={operationStart}
@@ -207,6 +232,9 @@ export function EducationScheduleChangeTitleAction({
       scheduleRowLabels={scheduleRowLabels}
       onApply={onApply}
       educationScheduleMode={educationScheduleMode}
+      educationStructure={educationStructure}
+      participantOrganization={participantOrganization}
+      sessionRound={sessionRound}
       autoFillFromScheduleGroupTimes={autoFillFromScheduleGroupTimes}
       lockCalendarTogglesToScheduleMode={lockCalendarTogglesToScheduleMode}
       operationStart={operationStart}

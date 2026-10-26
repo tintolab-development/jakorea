@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
-import { buildUjatAssignmentSessionsFromRemote } from '@/features/program/ujat/api/assignment-submissions-adapters'
 import { fetchUjatAssignmentSubmissions } from '@/features/program/ujat/api/education-execution-api'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
@@ -14,6 +13,7 @@ import {
   filterVisibleAssignmentVolunteers,
   resolveAssignmentSubmissionStatus,
 } from './assignment-display'
+import { buildUjatAssignmentSessionsFromResponse } from './assignment-submissions-adapter'
 import { buildUjatAssignmentFilterFields } from './filter-fields'
 import {
   EMPTY_UJAT_ASSIGNMENT_FILTERS,
@@ -124,8 +124,8 @@ export function useUjatEducationProgressAssignments(
 
   const remoteSessions = useMemo(() => {
     if (!remoteEnabled || remoteQuery.data == null || remoteQuery.isError) return []
-    return buildUjatAssignmentSessionsFromRemote({
-      data: remoteQuery.data,
+    return buildUjatAssignmentSessionsFromResponse({
+      response: remoteQuery.data,
       half,
       regionKey,
     })

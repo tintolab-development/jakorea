@@ -16,6 +16,12 @@ import { listSmsSendPlaceholderKeys } from '@/features/notifications/model/sms-s
 import { SmsVariableTextField } from '@/features/notifications/ui/sms-template/variable-text-field'
 import './fullpage-modal.css'
 
+/**
+ * 수동 발송 API는 MMS 이미지 첨부를 받지 않는다(BE PR #43 범위 밖, 템플릿 MMS도 미지원).
+ * BE 첨부 계약이 생기기 전까지 발송 화면 첨부 UI를 노출하지 않는다.
+ */
+const SMS_SEND_ATTACHMENT_UI_ENABLED = false
+
 type SmsSendComposeFieldsProps = {
   /** applyTemplate / open reset 시만 증가 — 타이핑으로는 올리지 않음 */
   composeVersion: number
@@ -109,7 +115,8 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   }
 
   const showSubject = messageType !== 'SMS' || subject.trim().length > 0
-  const showAttachments = messageType === 'MMS' || attachmentFileNames.length > 0
+  const showAttachments =
+    SMS_SEND_ATTACHMENT_UI_ENABLED && (messageType === 'MMS' || attachmentFileNames.length > 0)
   const attachmentsEnabled = messageType === 'MMS'
   const subjectRequired = messageType !== 'SMS'
 

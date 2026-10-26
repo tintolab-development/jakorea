@@ -46,6 +46,7 @@ import {
   formatDisplayDateRange,
   normalizeScheduleDisplayLabel,
 } from '../../../shared/lib/format-display-date.ts'
+import { toDisplayEducationScheduleName } from '../../../shared/lib/education-schedule-name.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -469,7 +470,7 @@ function mapEventSchedules(program: CmsProgramLike): ProgramEventSchedule[] {
     const scheduleLabel = isMultiRound
       ? rawScheduleLabel.replace(/^세부\s*일정/, '행사 일정')
       : rawScheduleLabel
-    const name = detail.name?.trim() || ''
+    const name = toDisplayEducationScheduleName(detail.name) ?? ''
     const dateParts = [detail.scheduleDateLabel?.trim(), detail.progressTimeSummary?.trim()].filter(
       Boolean
     )
@@ -566,7 +567,7 @@ function mapUjatPublicEventSchedules(program: CmsProgramLike): ProgramEventSched
       const term = schedule.term?.trim().toUpperCase()
       const kindLabel = kind ? UJAT_SCHEDULE_KIND_LABEL[kind] : undefined
       const termLabel = term ? UJAT_TERM_LABEL[term] : undefined
-      const fallbackName = schedule.scheduleName?.trim() ?? ''
+      const fallbackName = toDisplayEducationScheduleName(schedule.scheduleName) ?? ''
       const scheduleLabel = termLabel ?? kindLabel ?? '일정'
       const name = termLabel ? (kindLabel ?? fallbackName) : kindLabel ? '' : fallbackName
       const dateLabel = formatDisplayDateRange(

@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+import { hasProgramAssignmentHistory } from '@/features/user/shared/lib/has-program-assignment-history'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   canAccessAdminCommentInAdminDetail,
@@ -53,6 +54,8 @@ export function PermissionHeaderActions({
     displayUser.permissionApprovalStatus,
     permissionRole === 'instructor' && isInstructorPermissionRevoked(displayUser)
   )
+  const approvalCancelBlocked =
+    permissionRole === 'admin' && hasProgramAssignmentHistory(displayUser)
 
   const isCommentEditing =
     pageShell.basicInfoEditing && pageShell.basicInfoEditScope === 'comment'
@@ -127,7 +130,14 @@ export function PermissionHeaderActions({
           variant="delete"
           className="cms-button--action"
           width={CMS_ACTION_BUTTON_WIDTH}
+          disabled={approvalCancelBlocked}
+          title={
+            approvalCancelBlocked
+              ? '프로그램 담당 이력이 있어 승인을 취소할 수 없습니다.'
+              : undefined
+          }
           onClick={() => {
+            if (approvalCancelBlocked) return
             onPermissionResetToPending?.({
               userId: displayUser.id,
               permissionRole,

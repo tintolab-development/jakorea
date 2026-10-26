@@ -96,4 +96,9 @@ export {
   normalizeScheduleDisplayLabel,
   parseScheduleDisplayLabel,
 } from './format-display-date'
+export {
+  isDefaultEducationSlotName,
+  stripDefaultEducationSlotNameFromLabel,
+  toDisplayEducationScheduleName,
+} from './education-schedule-name'
 export type { DisplayDateTimeParts, FormatDisplayRangeOptions } from './format-display-date'

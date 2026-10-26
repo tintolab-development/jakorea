@@ -4,3 +4,10 @@
   width: 100%;
   gap: 8px;
 }
+
+.education-schedule-change-modal__empty {
+  margin: 0;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--color-text-tertiary, #8a8f98);
+}

@@ -2,6 +2,10 @@ import type {
   ApplicantApprovalStatusKey,
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
+import {
+  stripDefaultEducationSlotNameFromLabel,
+  toDisplayEducationScheduleName,
+} from '@/shared/lib/education-schedule-name'
 import { formatApplicantSchoolApprovalNotificationSentAt } from '@/features/program/shared/model/applicant-institution'
 import type {
   ApplicantInstructorLectureFeeBasisType,
@@ -191,7 +195,7 @@ function formatOrganizationResultNotificationSentAt(iso?: string | null): string
 }
 
 function readOrganizationApplicationListGrade(
-  dto: OrganizationApplicationListItemResponse,
+  dto: OrganizationApplicationListItemResponse
 ): string {
   const extended = dto as OrganizationApplicationListItemResponse & {
     requestedGrade?: string | null
@@ -248,15 +252,35 @@ function isBlankOrMidnightClock(value: string | null | undefined): boolean {
   return /^(?:00|0|24):00(?::00)?$/.test(trimmed)
 }
 
-/** 저장된 기간형 희망 행. resolvedScheduleId가 없어도 원본 일정으로 남긴다. */
-export function isStoredPeriodRequestedScheduleRow(
+/** 저장 id와 YYYY-MM-DD 희망일이 있는 `/requested-schedules` 행 */
+function isDatedRequestedScheduleRow(
   row: RequestedScheduleResponse | null | undefined
-): boolean {
+): row is RequestedScheduleResponse {
   if (row == null || typeof row.id !== 'number' || !Number.isInteger(row.id) || row.id <= 0) {
     return false
   }
   const requestedDate = row.requestedDate?.trim() ?? ''
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) return false
+  return /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
+}
+
+/** 일정 ID 행의 sessionTimes(KST) → "HH:mm ~ HH:mm". 종일·기간형은 '-' */
+function requestedScheduleRowTimeRange(row: RequestedScheduleResponse): string {
+  const times = (row.sessionTimes ?? []).filter(
+    time => !(isBlankOrMidnightClock(time.startTime) && isBlankOrMidnightClock(time.endTime))
+  )
+  if (times.length === 0) return '-'
+  const hhmm = (value: string | null | undefined) => (value?.trim() ?? '').slice(0, 5)
+  const start = hhmm(times[0]?.startTime)
+  const end = hhmm(times[times.length - 1]?.endTime)
+  if (start && end) return `${start} ~ ${end}`
+  return start || '-'
+}
+
+/** 저장된 기간형 희망 행. resolvedScheduleId가 없어도 원본 일정으로 남긴다. */
+export function isStoredPeriodRequestedScheduleRow(
+  row: RequestedScheduleResponse | null | undefined
+): boolean {
+  if (!isDatedRequestedScheduleRow(row)) return false
   return (row.sessionTimes ?? []).every(
     time => isBlankOrMidnightClock(time.startTime) && isBlankOrMidnightClock(time.endTime)
   )
@@ -268,13 +292,17 @@ export function isStoredPeriodRequestedScheduleRow(
 export function mapStoredPeriodRequestedSchedulesToHopeSessions(
   schedules: readonly RequestedScheduleResponse[] | null | undefined
 ): ParticipatingSchoolSession[] {
-  const rows = [...(schedules ?? [])]
-    .filter(isStoredPeriodRequestedScheduleRow)
-    .sort(
-      (left, right) =>
-        (left.preferenceOrder ?? 99) - (right.preferenceOrder ?? 99) ||
-        (left.id ?? 0) - (right.id ?? 0)
-    )
+  const datedRows = [...(schedules ?? [])].filter(isDatedRequestedScheduleRow)
+  /**
+   * 종일/기간형 행이 하나도 없으면 기존처럼 다른 경로(preferred 등)에 맡긴다.
+   * 있으면 같은 신청의 시간 지정 행(같은 날 다른 시간대 포함)도 빠뜨리지 않고 함께 표시한다.
+   */
+  if (!datedRows.some(isStoredPeriodRequestedScheduleRow)) return []
+  const rows = datedRows.sort(
+    (left, right) =>
+      (left.preferenceOrder ?? 99) - (right.preferenceOrder ?? 99) ||
+      (left.id ?? 0) - (right.id ?? 0)
+  )
   return rows.map((row, index) => {
     const order = row.preferenceOrder ?? index + 1
     const requestedDate = row.requestedDate?.trim() ?? ''
@@ -302,7 +330,7 @@ export function mapStoredPeriodRequestedSchedulesToHopeSessions(
       duration: hopedSessionCount != null ? `${hopedSessionCount}차시` : '-',
       format: '-',
       classNum: `${order}지망`,
-      timeRange: '-',
+      timeRange: requestedScheduleRowTimeRange(row),
       status: 'pending',
       scheduleLabel,
       requestedScheduleId: row.id ?? undefined,
@@ -470,7 +498,7 @@ export function mapOrganizationApplicationDetailOperationalSessions(
       round,
       ...dateParts,
       duration,
-      format: session.scheduleName?.trim() || '-',
+      format: toDisplayEducationScheduleName(session.scheduleName) || '-',
       classNum: `${round}교시`,
       timeRange,
       deliveryScheduleStatus: session.assignmentStatus?.trim() || undefined,
@@ -495,11 +523,7 @@ export function applyRequestedSchedulesToApplicantSchoolRow(
     sessions: [],
     preferredEducationSchedules: [],
   }
-  const sessions = resolveOrganizationApplicationHopeSessions(
-    dto,
-    preferred,
-    requestedSchedules
-  )
+  const sessions = resolveOrganizationApplicationHopeSessions(dto, preferred, requestedSchedules)
   const desiredEducationPeriod =
     formatRequestedSchedulesPeriodLabel(requestedSchedules) ?? row.desiredEducationPeriod
   return { ...row, sessions, desiredEducationPeriod }
@@ -592,7 +616,7 @@ export function readOrganizationApplicationDetailExtendFields(
   const textbookId = toId(dto.textbookId) || undefined
   const textbookName = dto.textbookName?.trim() || undefined
   const teacherTel = Object.prototype.hasOwnProperty.call(dto, 'teacherTel')
-    ? dto.teacherTel?.trim() ?? ''
+    ? (dto.teacherTel?.trim() ?? '')
     : undefined
   const teacherPhone = dto.teacherPhone?.trim() || undefined
   const teacherEmail = dto.teacherEmail?.trim() || undefined
@@ -908,9 +932,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
             mapInstructorFeeBasisType(dto.feePolicy.basisType) ??
               base.lectureFeeBasisType ??
               'special_lecture',
-            mapInstructorFeeMeasureFromApi(dto.feePolicy.measure) ??
-              base.lectureFeeMeasure ??
-              '',
+            mapInstructorFeeMeasureFromApi(dto.feePolicy.measure) ?? base.lectureFeeMeasure ?? '',
             dto.feePolicy.amount != null
               ? String(dto.feePolicy.amount)
               : (base.lectureFeeAmount ?? '')
@@ -954,7 +976,9 @@ function mapInstructorResumeFromDetail(
   base: ApplicantInstructorRow
 ): Partial<ApplicantInstructorRow> {
   const profile = normalizeInstructorCmsProfileFromApi(
-    (dto.instructorCmsProfile ?? undefined) as Parameters<typeof normalizeInstructorCmsProfileFromApi>[0]
+    (dto.instructorCmsProfile ?? undefined) as Parameters<
+      typeof normalizeInstructorCmsProfileFromApi
+    >[0]
   )
   if (!profile) return {}
   const resume = instructorCmsProfileToApplicantInstructorRowPartial(profile)
@@ -1059,7 +1083,9 @@ function formatPreferredScheduleDate(date: Date): { date: string; dayOfWeek: str
 }
 
 function preferredScheduleLabel(schedule: PreferredEducationSchedule): string {
-  return typeof schedule.label === 'string' ? schedule.label.trim() : ''
+  return stripDefaultEducationSlotNameFromLabel(
+    typeof schedule.label === 'string' ? schedule.label : '',
+  )
 }
 
 /**
@@ -1107,8 +1133,7 @@ export function mapPreferredEducationSchedulesToSessions(
         ? '-'
         : `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
     const scheduleId = schedule.scheduleId
-    const hasResolvedSchedule =
-      scheduleId != null && Number.isFinite(scheduleId) && scheduleId > 0
+    const hasResolvedSchedule = scheduleId != null && Number.isFinite(scheduleId) && scheduleId > 0
     const label = scheduleLabel || undefined
     const scheduleUnresolved = !hasResolvedSchedule && Boolean(label)
     const round = schedule.round ?? index + 1
@@ -1139,7 +1164,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       return byStart || (a.sessionNo ?? 0) - (b.sessionNo ?? 0)
     })
     .map((session, index) => {
-      const scheduleName = session.scheduleName?.trim() || ''
+      const scheduleName = toDisplayEducationScheduleName(session.scheduleName) || ''
       const start = session.startAt ? new Date(session.startAt) : null
       const end = session.endAt ? new Date(session.endAt) : null
       const validStart = start != null && !Number.isNaN(start.getTime())

@@ -38,6 +38,7 @@ export type AccountPaymentCompleteSuccessContext =
       kind: 'bulk'
       recipientName: string
       otherRecipientCount: number
+      completedRows: AccountPaymentRow[]
     }
 
 export function buildAccountPaymentCompleteSuccessContext(
@@ -52,6 +53,7 @@ export function buildAccountPaymentCompleteSuccessContext(
     kind: 'bulk',
     recipientName,
     otherRecipientCount: rows.length - 1,
+    completedRows: rows,
   }
 }
 
@@ -59,12 +61,14 @@ export interface AccountPaymentCompleteSuccessModalProps {
   open: boolean
   context: AccountPaymentCompleteSuccessContext | null
   onCancel: () => void
+  onIssueBulkTransfer: () => void
 }
 
 export function AccountPaymentCompleteSuccessModal({
   open,
   context,
   onCancel,
+  onIssueBulkTransfer,
 }: AccountPaymentCompleteSuccessModalProps) {
   const canShow = open && context !== null
   const isBulk = context?.kind === 'bulk'
@@ -88,9 +92,14 @@ export function AccountPaymentCompleteSuccessModal({
       modalStyles={ACCOUNT_PAYMENT_COMPLETE_SUCCESS_MODAL_STYLES}
       footer={
         isBulk ? (
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
-            닫기
-          </CmsButton>
+          <>
+            <CmsButton variant="secondary" size="large" onClick={onCancel}>
+              닫기
+            </CmsButton>
+            <CmsButton variant="primary" size="large" onClick={onIssueBulkTransfer}>
+              대량이체 양식 발급
+            </CmsButton>
+          </>
         ) : (
           <CmsButton variant="secondary" size="large" onClick={onCancel}>
             확인

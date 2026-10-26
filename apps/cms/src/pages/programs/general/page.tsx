@@ -22,7 +22,6 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import { resolveProgramListDetailEntry } from '@/features/program/general/lib/resolve-program-list-detail-entry'
-import { canBulkDeletePrograms } from '@/features/program/general/lib/program-list-selection'
 import type { Program } from '@/types/domain'
 import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
 import {
@@ -388,11 +387,7 @@ export function GeneralProgramListPageContent() {
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {showBulkSelection && (
-        <FilterTableToolbarButton
-          variant="delete"
-          onClick={handleBulkDeleteClick}
-          disabled={!canBulkDeletePrograms(viewMode, selectedRowKeys.length)}
-        >
+        <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
           선택 삭제
         </FilterTableToolbarButton>
       )}

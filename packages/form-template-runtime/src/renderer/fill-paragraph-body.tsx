@@ -9,6 +9,7 @@ import { resolveMultipleChoiceBodyDescriptionText } from '@jakorea/form-schema/w
 import type { ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
 import { isFormPreviewReadonlyMode } from '@jakorea/form-schema/surface'
 import { HorizontalTablePreviewBody } from './horizontal-table-preview-body.js'
+import { patchHorizontalTableDataCell } from './horizontal-table-preview.js'
 import { VerticalTablePreviewBody } from './vertical-table-preview-body.js'
 import {
   patchVerticalTableBottomConsent,
@@ -316,6 +317,9 @@ export function FillParagraphBody({
                 onUpdateParagraph?.(paragraph.id, current => {
                   if (current.kind !== 'single_item' || current.variant !== 'horizontal_table') {
                     return current
+                  }
+                  if (current.tableFlavor !== 'field') {
+                    return patchHorizontalTableDataCell(current, rowIndex, colIndex, value)
                   }
                   const fieldDataRows = (current.fieldDataRows ?? []).map((row, ri) =>
                     row.map((cell, ci) => {

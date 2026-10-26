@@ -3,6 +3,7 @@ import {
   isValidElement,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactElement,
@@ -80,6 +81,56 @@ export function SmsVariableTextField({
   const mirrorRef = useRef<HTMLDivElement>(null)
   const valueRef = useRef(value)
   valueRef.current = value
+  /** IME 조합 중에는 selection을 건드리지 않는다 (한글 조합 깨짐 방지) */
+  const composingRef = useRef(false)
+
+  /**
+   * 미러 글자 위치를 실제 input/textarea와 맞춘다.
+   * 입력 글자는 투명이라 미러와 폰트·여백이 다르면 caret·선택·IME 조합 위치가
+   * 보이는 글자와 어긋나 "포커스가 튀는" 것처럼 보인다 (small 14px vs 미러 16px 등).
+   */
+  const syncMirrorMetrics = useCallback(() => {
+    const root = rootRef.current
+    const mirror = mirrorRef.current
+    if (!root || !mirror) return
+    const control = root.querySelector('textarea, input') as TextControl | null
+    if (!control) return
+    const cs = window.getComputedStyle(control)
+    const rootRect = root.getBoundingClientRect()
+    const rect = control.getBoundingClientRect()
+    // 모달 오픈 애니메이션(scale) 중에도 레이아웃 px 기준으로 계산
+    const scale = root.offsetWidth > 0 ? rootRect.width / root.offsetWidth : 1
+    const px = (v: string) => Number.parseFloat(v) || 0
+    const paddingLeft = px(cs.paddingLeft)
+    const paddingRight = px(cs.paddingRight)
+    const left = (rect.left - rootRect.left) / (scale || 1) + control.clientLeft + paddingLeft
+    const contentWidth = control.clientWidth - paddingLeft - paddingRight
+    const right = Math.max(0, root.offsetWidth - left - contentWidth)
+    const style = mirror.style
+    style.fontFamily = cs.fontFamily
+    style.fontSize = cs.fontSize
+    style.fontWeight = cs.fontWeight
+    style.letterSpacing = cs.letterSpacing
+    style.wordSpacing = cs.wordSpacing
+    style.lineHeight = cs.lineHeight
+    style.paddingLeft = `${left}px`
+    style.paddingRight = `${right}px`
+    if (multiline) {
+      const top = (rect.top - rootRect.top) / (scale || 1) + control.clientTop + px(cs.paddingTop)
+      style.paddingTop = `${top}px`
+    }
+  }, [multiline])
+
+  useLayoutEffect(() => {
+    syncMirrorMetrics()
+    const root = rootRef.current
+    if (!root || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => syncMirrorMetrics())
+    observer.observe(root)
+    const control = root.querySelector('textarea, input')
+    if (control) observer.observe(control)
+    return () => observer.disconnect()
+  }, [syncMirrorMetrics])
 
   const syncScrollFromControl = useCallback(() => {
     const root = rootRef.current
@@ -107,6 +158,7 @@ export function SmsVariableTextField({
   }
 
   const snapControlSelection = useCallback((control: TextControl) => {
+    if (composingRef.current) return
     const text = valueRef.current
     const { start, end } = readSelection(control)
     const snapped = snapSelectionOutsideMailVariableAtoms(text, start, end)
@@ -210,10 +262,16 @@ export function SmsVariableTextField({
       if (!onValueChange) return
       const target = event.target
       if (!isTextControl(target)) return
+      // 조합 시작 직전에만 토큰 밖으로 스냅하고, 조합 중에는 selection을 건드리지 않는다.
       snapControlSelection(target)
+      composingRef.current = true
     },
     [onValueChange, snapControlSelection]
   )
+
+  const handleCompositionEndCapture = useCallback(() => {
+    composingRef.current = false
+  }, [])
 
   const control = isValidElement(children)
     ? cloneElement(children as ReactElement<Record<string, unknown>>, {
@@ -252,6 +310,8 @@ export function SmsVariableTextField({
       onKeyDownCapture={handleKeyDownCapture}
       onBeforeInputCapture={handleBeforeInputCapture}
       onCompositionStartCapture={handleCompositionStartCapture}
+      onCompositionEndCapture={handleCompositionEndCapture}
+      onFocusCapture={syncMirrorMetrics}
     >
       <div ref={mirrorRef} className="sms-variable-text-field__mirror" aria-hidden>
         {renderNotificationVariableText(value, {

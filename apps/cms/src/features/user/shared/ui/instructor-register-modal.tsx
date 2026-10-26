@@ -14,7 +14,7 @@ import {
 } from '@jakorea/domain/shared/required-consent-alert'
 import { INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS } from '@jakorea/domain/instructor/consent'
 import { isBirthDateInputIncomplete, isValidBirthDateFormValue } from '@/shared/ui/date-text-input'
-import { CmsButton, ContentModal } from '@/shared/ui'
+import { CmsButton, ContentModal, showRegisterCompletedAlert } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
@@ -124,6 +124,7 @@ export function InstructorRegisterModal({
       }
       form.resetFields()
       onClose()
+      showRegisterCompletedAlert()
     } catch {
       /* 부모에서 에러 처리 시 모달 유지 */
     }

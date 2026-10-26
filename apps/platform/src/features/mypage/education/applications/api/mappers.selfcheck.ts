@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {
+  mapApplicationRecruitmentStatus,
   mapPortalProgramApplicationDetail,
   mapPortalProgramApplicationListItem,
 } from './mappers.ts'
@@ -224,5 +225,42 @@ const missingRootTitle = mapPortalProgramApplicationDetail({
   program: { title: 'nested title fallback 금지' },
 })
 assert.equal(missingRootTitle, null)
+
+// 모집 배지는 신청 상태가 아니라 모집기간 기준
+{
+  const day = (offset: number) => {
+    const d = new Date()
+    d.setDate(d.getDate() + offset)
+    return d.toISOString()
+  }
+  assert.equal(
+    mapApplicationRecruitmentStatus({
+      recruitmentStartAt: day(-1),
+      recruitmentEndAt: day(20),
+      displayStatus: 'completed' as never,
+    }),
+    'recruiting'
+  )
+  assert.equal(
+    mapApplicationRecruitmentStatus({
+      recruitmentStartAt: day(3),
+      recruitmentEndAt: day(20),
+      displayStatus: 'in_progress' as never,
+    }),
+    'scheduled'
+  )
+  assert.equal(
+    mapApplicationRecruitmentStatus({
+      recruitmentStartAt: day(-20),
+      recruitmentEndAt: day(-2),
+      displayStatus: 'in_progress' as never,
+    }),
+    'closed'
+  )
+  assert.equal(
+    mapApplicationRecruitmentStatus({ displayStatus: 'in_progress' as never }),
+    'recruiting'
+  )
+}
 
 console.log('portal application mappers.selfcheck: ok')

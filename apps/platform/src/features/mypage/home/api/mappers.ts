@@ -1,6 +1,7 @@
 import type { MypageProgramStats } from '../../model/types'
 import type { MypageScheduleEvent } from '../model/schedule-types'
 import type { PortalApplicationSummary, PortalScheduleItem } from './client'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 
 const EMPTY_STATS: MypageProgramStats = {
   applied: 0,
@@ -61,7 +62,7 @@ export function mapPortalScheduleItem(item: PortalScheduleItem): MypageScheduleE
   return {
     id: String(item.scheduleId),
     programName: item.programTitle?.trim() || '프로그램',
-    title: item.scheduleName?.trim() || item.locationName?.trim() || '일정',
+    title: toDisplayEducationScheduleName(item.scheduleName) || item.locationName?.trim() || '일정',
     time: formatTimeRange(item),
     type: 'education',
     startDate,

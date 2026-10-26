@@ -43,6 +43,7 @@ import { LectureReportPreviewOverlay } from '@/features/mypage/education/schedul
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 
 type LoadedReport = {
   assignment: LectureReportAssignment
@@ -128,7 +129,8 @@ function reportTitle(
   title: string | undefined,
   assignment: LectureReportAssignment | undefined
 ): string {
-  const programTitle = title?.trim() || assignment?.scheduleName?.trim() || '강의'
+  const programTitle =
+    title?.trim() || toDisplayEducationScheduleName(assignment?.scheduleName) || '강의'
   return `JA KOREA 「${programTitle}」 강의보고서`
 }
 
@@ -437,7 +439,8 @@ export function MypageLectureReportWritePage() {
 
   const pageTitle = reportTitle(program?.title, loaded?.assignment)
   const period = formatPeriod(program?.operatingPeriodStart, program?.operatingPeriodEnd)
-  const formProgramTitle = program?.title || loaded?.assignment.scheduleName || '강의'
+  const formProgramTitle =
+    program?.title || toDisplayEducationScheduleName(loaded?.assignment.scheduleName) || '강의'
 
   if (readOnly) {
     return (

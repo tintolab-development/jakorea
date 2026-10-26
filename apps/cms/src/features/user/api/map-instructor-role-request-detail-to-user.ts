@@ -6,7 +6,10 @@ import {
   normalizeInstructorCmsProfileFromApi,
   normalizeInstructorCmsSettlementFromApi,
 } from '@/features/user/api/map-instructor-cms-profile'
-import { toInstructorFeeGradeDisplayLabel } from '@/features/user/api/map-instructor-activity-display'
+import {
+  toInstructorActivityTypeLabel,
+  toInstructorFeeGradeDisplayLabel,
+} from '@/features/user/api/map-instructor-activity-display'
 import { mapInstructorRoleRequestStatusToApplicationStatus } from '@/features/user/api/lib/map-permission-approval-status'
 import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { User } from '@/types/user'
@@ -73,7 +76,7 @@ export function mapInstructorRoleRequestDetailToUser(
     instructorMemberProfile:
       cmsProfile?.memberType === 'SCHOOL_TEACHER' ? 'school_teacher' : 'instructor_only',
     listMetrics: {
-      permissionApplicationTypeLabel: detail.requestedActivityType?.trim() || undefined,
+      permissionApplicationTypeLabel: toInstructorActivityTypeLabel(detail.requestedActivityType),
       ...(feeGradeLabel ? { instructorFeeGradeLabel: feeGradeLabel } : {}),
       ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
     },

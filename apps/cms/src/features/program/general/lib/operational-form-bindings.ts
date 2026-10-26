@@ -2,6 +2,10 @@ import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-su
 import type { Program } from '@/types/domain'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import {
+  canonicalFormBindingTarget,
+  isCanonicalFormBindingAudience,
+} from '@/features/program/general/lib/resolve-form-binding-target-type'
+import {
   resolveProgramOperationalBindingKind,
   type ProgramOperationalBindingKind,
 } from '@/features/program/general/lib/program-operational-binding-profile'
@@ -391,9 +395,7 @@ export function programForApplicationFormEditor(
   variant: ProgramParticipantApplicationEditorVariant
 ): Program {
   const audience = applicationAudienceForEditorVariant(variant)
-  return audience != null
-    ? programWithApplicationFormRecruitmentScope(program, audience)
-    : program
+  return audience != null ? programWithApplicationFormRecruitmentScope(program, audience) : program
 }
 
 export type RowApplicationBindingResolution =
@@ -456,34 +458,22 @@ export function listRecruitmentRowApplicationBindings(
 
 function roleMatches(binding: ProgramFormBindingResponse, targetRole: string | undefined): boolean {
   if (targetRole == null || targetRole === '') return true
-  const targetType = normalizeBindingType(binding.targetType)
-  const targetBindingRole = normalizeBindingType(binding.targetRole)
-  const expected = normalizeBindingType(targetRole)
+  const expected = canonicalFormBindingTarget(targetRole)
+  const targetType = canonicalFormBindingTarget(binding.targetType)
 
-  // targetType가 ORGANIZATION인데 targetRole이 TEACHER인 기관 신청 바인딩은
-  // 강사 신청으로 취급하지 않는다. 강사 매칭은 명시적인 TEACHER/INSTRUCTOR만 허용한다.
-  if (expected === 'INSTRUCTOR') {
-    return targetType === 'TEACHER' || targetBindingRole === 'INSTRUCTOR'
-  }
+  /**
+   * BE는 `target_type`만 정규화해 모집 행과 바인딩을 맞춘다(fan-out·seed·application-options).
+   * 대상 값이 신청 대상으로 읽히면 그것만 본다. 예) INSTRUCTOR+MEMBER(모집 행 fan-out)는 강사,
+   * ORGANIZATION+TEACHER(기관 신청)는 기관, COLLEGE_STUDENT(CMS 생성 봉사자)는 봉사자.
+   */
+  if (isCanonicalFormBindingAudience(targetType)) return targetType === expected
 
-  const role = targetType || targetBindingRole
+  // targetType이 비었거나 신청 대상이 아닌 레거시 행만 targetRole로 판단한다.
+  const role = canonicalFormBindingTarget(binding.targetRole)
   if (!role) return false
   if (role === expected) return true
-  if (expected === 'ORGANIZATION') {
-    return (
-      role === 'ORGANIZATION' ||
-      (targetType === '' && (role === 'SCHOOL' || role === 'INSTITUTION'))
-    )
-  }
-  if (expected === 'INDIVIDUAL') {
-    return (
-      role === 'INDIVIDUAL' || (targetType === '' && (role === 'PARTICIPANT' || role === 'MEMBER'))
-    )
-  }
-  if (expected === 'VOLUNTEER') {
-    return role === 'VOLUNTEER'
-  }
-  return role === expected
+  if (expected === 'INDIVIDUAL') return role === 'PARTICIPANT' || role === 'MEMBER'
+  return false
 }
 
 function nameMatches(binding: ProgramFormBindingResponse, hints: readonly string[]): boolean {

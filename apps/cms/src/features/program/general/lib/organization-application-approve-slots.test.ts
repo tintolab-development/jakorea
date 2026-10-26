@@ -129,7 +129,12 @@ describe('organization-application-approve-slots', () => {
           label: '희망 원문',
         },
       ],
-      [educationSlot(88, { startAt: '2026-10-30T09:00:00+09:00', endAt: '2026-10-30T11:00:00+09:00' })]
+      [
+        educationSlot(88, {
+          startAt: '2026-10-30T09:00:00+09:00',
+          endAt: '2026-10-30T11:00:00+09:00',
+        }),
+      ]
     )
     expect(result.options[0]?.label).toBe('2026.10.30(금)')
     expect(result.options[0]?.confirmableScheduleId).toBe(88)
@@ -248,11 +253,13 @@ describe('organization approval schedule mapping regression', () => {
       expect(option.label).not.toContain('00:00')
       expect(option.label).toMatch(/2026\.11\./)
     }
-    expect(formatOrganizationPreferredScheduleLabel({
-      label: '26년 11월 2일(월) 00:00 ~ 00:00',
-      startAt: '2026-11-02T00:00:00+09:00',
-      endAt: '2026-11-02T00:00:00+09:00',
-    })).toBe('2026.11.02(월)')
+    expect(
+      formatOrganizationPreferredScheduleLabel({
+        label: '26년 11월 2일(월) 00:00 ~ 00:00',
+        startAt: '2026-11-02T00:00:00+09:00',
+        endAt: '2026-11-02T00:00:00+09:00',
+      })
+    ).toBe('2026.11.02(월)')
   })
 
   it('3. 공통 교육 예정 슬롯 2건만 배정 후보가 된다', () => {
@@ -286,7 +293,9 @@ describe('organization approval schedule mapping regression', () => {
   })
 
   it('5. 희망 일정과 공통 슬롯이 불일치하면 신청 기록으로 남기고 OSA를 만들지 않는다', () => {
-    const preferred = [{ scheduleId: 777, label: '다른 일정', startAt: '2026-12-01', endAt: '2026-12-01' }]
+    const preferred = [
+      { scheduleId: 777, label: '다른 일정', startAt: '2026-12-01', endAt: '2026-12-01' },
+    ]
     const result = resolveOrganizationApproveScheduleOptionsFromPreferred(preferred, [slotA, slotB])
     expect(result.invalidReason).toBeNull()
     expect(result.options[0]?.label).toBe('2026.12.01(화)')
@@ -317,8 +326,20 @@ describe('organization approval schedule mapping regression', () => {
 
   it('7. 커리큘럼 복수 회차 날짜 지정은 회차별로 따로 매핑한다', () => {
     const preferred = [
-      { scheduleId: 501, round: 1, label: '1회차 희망', startAt: '2026-11-02T00:00:00+09:00', endAt: '2026-11-02T00:00:00+09:00' },
-      { scheduleId: 502, round: 2, label: '2회차 희망', startAt: '2026-11-02T00:00:00+09:00', endAt: '2026-11-02T00:00:00+09:00' },
+      {
+        scheduleId: 501,
+        round: 1,
+        label: '1회차 희망',
+        startAt: '2026-11-02T00:00:00+09:00',
+        endAt: '2026-11-02T00:00:00+09:00',
+      },
+      {
+        scheduleId: 502,
+        round: 2,
+        label: '2회차 희망',
+        startAt: '2026-11-02T00:00:00+09:00',
+        endAt: '2026-11-02T00:00:00+09:00',
+      },
     ]
     const result = resolveOrganizationApproveScheduleOptionsFromPreferred(preferred, [slotA, slotB])
     expect(result.options.map(option => option.label)).toEqual(['2026.11.02(월)', '2026.11.02(월)'])
@@ -386,7 +407,10 @@ describe('organization approval schedule mapping regression', () => {
   it('11. 레거시 UNKNOWN 일정은 배정 후보가 아니다', () => {
     const unknown = educationSlot(880, { scheduleOrigin: 'UNKNOWN' })
     const preferred = [{ scheduleId: 880, label: '레거시 희망' }]
-    const result = resolveOrganizationApproveScheduleOptionsFromPreferred(preferred, [unknown, slotA])
+    const result = resolveOrganizationApproveScheduleOptionsFromPreferred(preferred, [
+      unknown,
+      slotA,
+    ])
     expect(result.options[0]?.label).toBe('레거시 희망')
     expect(result.options[0]?.confirmableScheduleId).toBeNull()
     expect(result.assignableOptions).toEqual([])
@@ -499,6 +523,51 @@ describe('period organization approval does not use date-slot mapping', () => {
     expect(hopes).toHaveLength(2)
   })
 
+  it('희망 일정 — 종일 행과 같은 날 다른 시간대 일정 ID 행을 모두 시간과 함께 표시한다', () => {
+    const hopes = mapStoredPeriodRequestedSchedulesToHopeSessions([
+      {
+        id: 9001,
+        preferenceOrder: 1,
+        requestedDate: '2026-10-19',
+        resolvedScheduleId: 187364,
+        sessionCount: 1,
+        sessionTimes: [],
+      },
+      {
+        id: 9002,
+        preferenceOrder: 2,
+        requestedDate: '2026-10-26',
+        resolvedScheduleId: 187365,
+        sessionCount: 1,
+        sessionTimes: [{ sessionOrder: 1, period: 1, startTime: '18:45:00', endTime: '19:41:00' }],
+      },
+      {
+        id: 9003,
+        preferenceOrder: 3,
+        requestedDate: '2026-10-26',
+        resolvedScheduleId: 187366,
+        sessionCount: 1,
+        sessionTimes: [{ sessionOrder: 1, period: 1, startTime: '20:45:00', endTime: '21:45:00' }],
+      },
+    ] as never)
+    expect(hopes.map(session => session.resolvedScheduleId)).toEqual([187364, 187365, 187366])
+    expect(hopes.map(session => session.timeRange)).toEqual(['-', '18:45 ~ 19:41', '20:45 ~ 21:45'])
+  })
+
+  it('희망 일정 — 시간 지정 행만 있으면 기존처럼 다른 경로에 맡긴다', () => {
+    const hopes = mapStoredPeriodRequestedSchedulesToHopeSessions([
+      {
+        id: 9002,
+        preferenceOrder: 1,
+        requestedDate: '2026-10-26',
+        resolvedScheduleId: 187365,
+        sessionCount: 1,
+        sessionTimes: [{ sessionOrder: 1, period: 1, startTime: '18:45:00', endTime: '19:41:00' }],
+      },
+    ] as never)
+    expect(hopes).toEqual([])
+  })
+
   it('일정형·단일·기간 — 희망일을 공통 슬롯 누락으로 보지 않고 배정 id를 만들지 않는다', () => {
     const result = resolveOrganizationApproveScheduleOptionsFromPreferred(
       periodPreferred,
@@ -507,10 +576,7 @@ describe('period organization approval does not use date-slot mapping', () => {
     )
     expect(result.invalidReason).toBeNull()
     expect(result.assignmentPolicy).toBe('approve_then_osa')
-    expect(result.options.map(option => option.label)).toEqual([
-      '2026.11.09(월)',
-      '2026.11.11(수)',
-    ])
+    expect(result.options.map(option => option.label)).toEqual(['2026.11.09(월)', '2026.11.11(수)'])
     expect(result.assignableOptions).toEqual([])
     expect(result.options.every(option => option.assignmentNote == null)).toBe(true)
     expect(result.options.every(option => option.confirmableScheduleId == null)).toBe(true)
@@ -590,10 +656,7 @@ describe('period organization approval does not use date-slot mapping', () => {
   })
 
   it('커리큘럼·단일·날짜와 복수 회차·날짜는 회차 슬롯 매핑을 유지한다', () => {
-    const slots = [
-      educationSlot(801, { sessionNo: 1 }),
-      educationSlot(802, { sessionNo: 2 }),
-    ]
+    const slots = [educationSlot(801, { sessionNo: 1 }), educationSlot(802, { sessionNo: 2 })]
     const preferred = [
       { scheduleId: 801, round: 1, label: '1회차' },
       { scheduleId: 802, round: 2, label: '2회차' },
@@ -703,7 +766,7 @@ describe('period organization approval does not use date-slot mapping', () => {
       })
     ).toEqual({
       title: '2026.04.20(월) 09:30 ~ 12:20',
-        detail: '1지망',
+      detail: '1지망',
     })
     expect(
       formatOrganizationApproveScheduleCard({
@@ -854,7 +917,9 @@ describe('general organization approval keeps three schedule sources apart', () 
     expect(result.options).toEqual([])
     expect(result.assignableOptions).toEqual([])
     expect(result.commonSlotOptions.map(option => option.scheduleId)).toEqual([187134, 187135])
-    expect(result.commonSlotOptions.every(option => option.confirmableScheduleId == null)).toBe(true)
+    expect(result.commonSlotOptions.every(option => option.confirmableScheduleId == null)).toBe(
+      true
+    )
     expect(result.commonSlotOptions.map(option => option.label).join(' ')).not.toContain('00:00')
     expect(result.invalidReason).toBe(ABSENT_PREFERRED_SCHEDULE_MESSAGE)
     expect(result.invalidReason).not.toContain('표시할 수 없습니다')
@@ -885,15 +950,18 @@ describe('general organization approval keeps three schedule sources apart', () 
   })
 
   it('requested-schedules는 상세 희망이 없을 때만 쓰고 행 id를 scheduleId로 쓰지 않는다', () => {
-    const fromRequested = selectOrganizationApprovePreferredSchedules([], [
-      {
-        id: 999001,
-        preferenceOrder: 1,
-        requestedDate: '2026-11-09',
-        resolvedScheduleId: undefined,
-        sessionTimes: [{ startTime: '00:00', endTime: '00:00' }],
-      },
-    ])
+    const fromRequested = selectOrganizationApprovePreferredSchedules(
+      [],
+      [
+        {
+          id: 999001,
+          preferenceOrder: 1,
+          requestedDate: '2026-11-09',
+          resolvedScheduleId: undefined,
+          sessionTimes: [{ startTime: '00:00', endTime: '00:00' }],
+        },
+      ]
+    )
     expect(fromRequested[0]?.scheduleId).toBeNull()
     expect(fromRequested[0]?.label).not.toContain('00:00')
     expect(fromRequested[0]?.label).toContain('2026-11-09')
@@ -915,15 +983,18 @@ describe('general organization approval keeps three schedule sources apart', () 
     expect(matched.options[0]?.confirmableScheduleId).toBe(187135)
     expect(matched.options[0]?.label).toBe('2026.11.09(월)')
     expect(matched.options[0]?.label).not.toContain('차시')
-    const requestedPreferred = selectOrganizationApprovePreferredSchedules([], [
-      {
-        id: 42,
-        preferenceOrder: 2,
-        requestedDate: '2026-11-09',
-        resolvedScheduleId: 187135,
-        sessionCount: 2,
-      },
-    ])
+    const requestedPreferred = selectOrganizationApprovePreferredSchedules(
+      [],
+      [
+        {
+          id: 42,
+          preferenceOrder: 2,
+          requestedDate: '2026-11-09',
+          resolvedScheduleId: 187135,
+          sessionCount: 2,
+        },
+      ]
+    )
     expect(requestedPreferred[0]?.label).toContain('2지망')
     expect(
       formatOrganizationApproveScheduleCard({
@@ -935,18 +1006,20 @@ describe('general organization approval keeps three schedule sources apart', () 
     expect(matched.assignableOptions.map(option => option.scheduleId)).toEqual([187135])
     expect(
       buildOrganizationApplicationApproveSchedulePayload({
-        preferred: selectOrganizationApprovePreferredSchedules([], [
-          { id: 42, resolvedScheduleId: 187135, requestedDate: '2026-11-09' },
-        ]),
+        preferred: selectOrganizationApprovePreferredSchedules(
+          [],
+          [{ id: 42, resolvedScheduleId: 187135, requestedDate: '2026-11-09' }]
+        ),
         educationSlots: commonSlots,
         selectedSlotId: 42,
       })
     ).toEqual({})
     expect(
       buildOrganizationApplicationApproveSchedulePayload({
-        preferred: selectOrganizationApprovePreferredSchedules([], [
-          { id: 42, resolvedScheduleId: 187135, requestedDate: '2026-11-09' },
-        ]),
+        preferred: selectOrganizationApprovePreferredSchedules(
+          [],
+          [{ id: 42, resolvedScheduleId: 187135, requestedDate: '2026-11-09' }]
+        ),
         educationSlots: commonSlots,
         selectedSlotId: 187135,
       })
@@ -1035,7 +1108,9 @@ describe('general organization approval keeps three schedule sources apart', () 
         confirmable.push(item.scheduleId)
       }
     }
-    expect(result.assignableOptions.map(option => option.confirmableScheduleId)).toEqual(confirmable)
+    expect(result.assignableOptions.map(option => option.confirmableScheduleId)).toEqual(
+      confirmable
+    )
     if (confirmable.length === 1) {
       expect(
         buildOrganizationApplicationApproveSchedulePayload({

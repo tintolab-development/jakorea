@@ -189,30 +189,16 @@ export function formatMailEmailDuplicateMessage(notices: MailEmailDuplicateNotic
 }
 
 /**
- * 직접 입력 팝업 결과 반영.
- * 팝업에서 지운 행은 발송 목록에 남긴다.
- * 같은 주소의 기존 직접 입력 행은 변수값만 갱신하고, 회원 행의 actorId·변수값은 유지한다.
+ * 직접 입력 팝업 결과 반영. 문자·알림톡과 같이 직접 입력 행을 팝업 결과로 교체한다.
+ * 팝업에서 지운 행은 발송 목록에서도 빠지고, 같은 주소의 회원 행은 actorId·변수값을 유지한다.
  */
 export function applyMailManualEntries(
   current: MailSendRecipient[],
   entries: Array<{ contact: string; variables?: Record<string, string> }>
 ): MailSendRecipient[] {
   const incoming = entries.map(entry => createManualRecipient(entry.contact, entry.variables))
-  const incomingByKey = new Map<string, MailSendRecipient>()
-  for (const item of incoming) {
-    const key = mailSendEmailDedupKey(item.email)
-    if (!key || incomingByKey.has(key)) continue
-    incomingByKey.set(key, item)
-  }
-  const updated = current.map(item => {
-    if (item.source !== 'manual' && item.actorType !== 'DIRECT') return item
-    const key = mailSendEmailDedupKey(item.email)
-    if (!key) return item
-    const edited = incomingByKey.get(key)
-    if (!edited?.variables) return item
-    return { ...item, variables: { ...edited.variables } }
-  })
-  return dedupeMailSendRecipients([...updated, ...incoming])
+  const withoutManual = current.filter(item => item.source !== 'manual')
+  return mergeMailSendRecipients(withoutManual, incoming)
 }
 
 export function filterMailSendRecipients(

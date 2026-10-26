@@ -570,7 +570,7 @@ const requestCorrection = (
  * 확인 가능: WAITING_CONFIRM | REAPPLICATION.
  * 409 PAYMENT_STATEMENT_STATUS_CONFLICT (details.statementId),
  * 404 PAYMENT_STATEMENT_NOT_FOUND,
- * 400 SCHEDULED_PAYMENT_DATE_REQUIRED.
+ * 400 SCHEDULED_PAYMENT_DATE_REQUIRED | SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER.
  * @summary 지급조서 일괄 확인 처리
  */
 const bulkConfirmPaymentStatements = (
@@ -961,7 +961,7 @@ const rejectPaymentStatement = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
+ * - 검토 메모: Auto-synced from implemented controller route 이체 예정일은 KST 기준 오늘 또는 이후 날짜만 허용하며, 위반 시 400 SCHEDULED_PAYMENT_DATE_MUST_BE_TODAY_OR_LATER를 반환합니다.
  * @summary 정산/계좌지급 부분 수정
  */
 const confirmPaymentStatement = (

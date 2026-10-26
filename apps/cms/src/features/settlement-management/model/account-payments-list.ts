@@ -34,6 +34,7 @@ export interface AccountPaymentRow {
   amount: number
   lectureDate?: string
   transferScheduledDate: string
+  paidAt?: string
   bankName?: string
   maskedAccountNo?: string
   accountHolder?: string
@@ -92,6 +93,7 @@ export interface AccountPaymentStatusDetailBasic {
   accountPaymentStatus: AccountPaymentTransferStatus
   accountPaymentStatusLabel: string
   transferScheduledDateDisplay: string
+  paidAtDisplay: string
   lectureFeeStandardTitle: string
   lectureFeeStandardAmount: string
   businessIncomeEarnerLabel: string
@@ -109,4 +111,3 @@ export interface AccountPaymentStatusDetail {
   totalAmount: number
   plainAccountForPaymentConfirm: AccountPaymentPlainAccountForConfirm
 }
-

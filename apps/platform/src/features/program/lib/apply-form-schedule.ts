@@ -16,8 +16,8 @@ import {
   normalizeInstitutionFixedScheduleAnswerTokens as normalizeInstitutionFixedScheduleAnswerTokensFromSchema,
   readApplicationScheduleInputMode,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
-  readInstitutionFixedScheduleChoiceItems,
-  readRuntimeFixedScheduleChoiceItems,
+  readInstitutionFixedScheduleChoiceItems as readInstitutionFixedScheduleChoiceItemsFromSchema,
+  readRuntimeFixedScheduleChoiceItems as readRuntimeFixedScheduleChoiceItemsFromSchema,
   shouldShowApplicationMaxSessionsPerDayField,
   shouldShowApplicationPreferredScheduleSessionSelect,
   isApplicationScheduleParagraphForcedHidden,
@@ -28,6 +28,10 @@ import {
   type ReadInstitutionFixedScheduleChoiceOptions,
   type RuntimeFixedScheduleChoiceItem,
 } from '@jakorea/form-schema/program-application'
+import {
+  replaceDefaultEducationSlotNameWithRound,
+  stripDefaultEducationSlotNameFromLabel,
+} from '../../../shared/lib/education-schedule-name.ts'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
@@ -621,10 +625,64 @@ export {
   isInstitutionApplyScheduleChoiceParagraphId,
   institutionFixedScheduleOptionToken,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
-  readInstitutionFixedScheduleChoiceItems,
-  readRuntimeFixedScheduleChoiceItems,
   type ReadInstitutionFixedScheduleChoiceOptions,
   type RuntimeFixedScheduleChoiceItem,
+}
+
+const DEFAULT_ONLY_SCHEDULE_CHOICE_LABEL = '교육 일정'
+
+function readRuntimeEnumText(runtime: unknown, key: string): string {
+  if (runtime == null || typeof runtime !== 'object') return ''
+  const value = (runtime as Record<string, unknown>)[key]
+  return typeof value === 'string' ? value.trim().toUpperCase() : ''
+}
+
+/**
+ * 커리큘럼·다회차·날짜 고정 일정이면 선택지에 `N회차`를 붙인다.
+ * 서버 기본명 `공통 교육 예정 N`의 N은 교육 진행 예정일 입력 순서(= 회차)다.
+ */
+export function shouldShowRuntimeScheduleChoiceRound(runtime: unknown): boolean {
+  return (
+    readRuntimeEnumText(runtime, 'educationStructure') === 'CURRICULUM' &&
+    readRuntimeEnumText(runtime, 'sessionRound') === 'MULTI'
+  )
+}
+
+/**
+ * 서버 선택지 라벨에서 자동 기본명(`공통 교육 예정 N`)을 제거한다. id는 그대로 둔다.
+ * 커리큘럼·다회차면 제거 대신 `일시 | N회차`로 바꾼다.
+ */
+function withDisplayScheduleChoiceLabels<T extends { label: string }>(
+  items: ReadonlyArray<T> | null,
+  runtime?: unknown
+): ReadonlyArray<T> | null {
+  if (items == null) return items
+  const showRound = shouldShowRuntimeScheduleChoiceRound(runtime)
+  return items.map(item => {
+    const label = showRound
+      ? replaceDefaultEducationSlotNameWithRound(item.label)
+      : stripDefaultEducationSlotNameFromLabel(item.label)
+    if (label === item.label) return item
+    return { ...item, label: label || DEFAULT_ONLY_SCHEDULE_CHOICE_LABEL }
+  })
+}
+
+export function readRuntimeFixedScheduleChoiceItems(
+  ...args: Parameters<typeof readRuntimeFixedScheduleChoiceItemsFromSchema>
+): ReturnType<typeof readRuntimeFixedScheduleChoiceItemsFromSchema> {
+  return withDisplayScheduleChoiceLabels(
+    readRuntimeFixedScheduleChoiceItemsFromSchema(...args),
+    args[0]
+  )
+}
+
+export function readInstitutionFixedScheduleChoiceItems(
+  ...args: Parameters<typeof readInstitutionFixedScheduleChoiceItemsFromSchema>
+): ReturnType<typeof readInstitutionFixedScheduleChoiceItemsFromSchema> {
+  return withDisplayScheduleChoiceLabels(
+    readInstitutionFixedScheduleChoiceItemsFromSchema(...args),
+    args[0]
+  )
 }
 
 const INSTITUTION_SCHEDULE_PREVIEW_SLOT_RE = /^institution-schedule-slot-(\d+)$/i

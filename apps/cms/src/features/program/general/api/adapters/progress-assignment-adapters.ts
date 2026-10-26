@@ -3,6 +3,7 @@ import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/or
 import type { Program } from '@/types/domain'
 import type {
   GeneralAssignmentSubmissionFileDto,
+  GeneralAssignmentSubmissionLinkDto,
   GeneralAssignmentSubmissionListResponse,
   GeneralAssignmentSubmissionParticipantDto,
   GeneralAssignmentSubmissionScheduleDto,
@@ -24,6 +25,7 @@ import type {
   ParticipatingIndividualProgressAssignmentRemarkKind,
   ParticipatingIndividualProgressAssignmentSessionGroup,
   ParticipatingIndividualProgressAssignmentSubmission,
+  ParticipatingIndividualProgressAssignmentSubmissionItem,
 } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 import { parseParticipantSurveyViewKey } from '@/features/program/general/model/participating-individual-participants'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
@@ -131,20 +133,37 @@ function mapRemarkKind(
 
 function mapSubmission(
   status: string | null | undefined,
-  files: GeneralAssignmentSubmissionFileDto[]
+  files: GeneralAssignmentSubmissionFileDto[],
+  links: GeneralAssignmentSubmissionLinkDto[]
 ): ParticipatingIndividualProgressAssignmentSubmission {
   const normalized = (status ?? '').trim().toUpperCase()
   if (normalized === 'SCHEDULED') return { kind: 'scheduled' }
   if (normalized === 'SUBMITTED') {
-    const [first, second] = files
-    const fileName = first?.originalFileName?.trim() || '제출 파일'
+    const mappedFiles = files.map((file, index) => ({
+      fileName: file.originalFileName?.trim() || `제출 파일${index > 0 ? ` ${index + 1}` : ''}`,
+      href: '#',
+      fileObjectId: file.fileObjectId,
+      downloadable: file.downloadable === true,
+    }))
+    const mappedItems: ParticipatingIndividualProgressAssignmentSubmissionItem[] = [
+      ...mappedFiles.map(file => ({ ...file, kind: 'file' as const })),
+      ...links.flatMap(link => {
+        const url = link.url?.trim()
+        if (!url) return []
+        return [{ kind: 'link' as const, fileName: link.displayName?.trim() || url, href: url }]
+      }),
+    ]
+    const [first, second] = mappedFiles
+    const fileName = first?.fileName || '제출 파일'
     return {
       kind: 'submitted',
-      fileName,
-      href: '#',
+      files: mappedFiles,
+      items: mappedItems,
+      fileName: first?.fileName || fileName,
+      href: first?.href || '#',
       fileObjectId: first?.fileObjectId,
       downloadable: first?.downloadable === true,
-      secondaryFileName: second?.originalFileName?.trim() || undefined,
+      secondaryFileName: second?.fileName,
       secondaryHref: second ? '#' : undefined,
       secondaryFileObjectId: second?.fileObjectId,
       secondaryDownloadable: second?.downloadable === true,
@@ -173,7 +192,11 @@ function mapParticipantRow(
     ),
     affiliation,
     educationGrade,
-    submission: mapSubmission(participant.submissionStatus, participant.files ?? []),
+    submission: mapSubmission(
+      participant.submissionStatus,
+      participant.files ?? [],
+      participant.links ?? []
+    ),
     remarkKind: mapRemarkKind(participant.remarkKind),
     remarkDateLabel: formatDateLabel(participant.remarkAt, 'YY.MM.DD') || undefined,
     surveyResponse: parseParticipantSurveyViewKey(participant.surveyResponse),

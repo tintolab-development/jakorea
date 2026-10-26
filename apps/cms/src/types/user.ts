@@ -266,7 +266,7 @@ export interface UserListRowMetrics {
   /** 강사: 강사비 등급 */
   instructorFeeGradeLabel?: string
   /**
-   * 회원·권한 UI 전용 강사 신청/소속 구분 (예: JA 강사단, 특강 강사, 제미나이 강사단).
+   * 회원·권한 UI 전용 강사 신청/소속 구분 (예: JA 강사, 특강 강사, 제미나이 강사단).
    * 정산의 강사비 등급과 별도 — 없으면 클라이언트가 소속·경력 문구로 추론 가능.
    */
   permissionApplicationTypeLabel?: string
@@ -278,6 +278,8 @@ export interface UserListRowMetrics {
   managedProgramCount?: number
   /** 관리자: 담당 프로그램 중 진행 중인 건수 (`managedProgramCount`와 함께 상세·목록에 표기) */
   managedProgramInProgressCount?: number
+  /** 관리자: 현재 또는 과거 프로그램 담당자 배정 이력 (BE `hasProgramAssignmentHistory`) */
+  hasProgramAssignmentHistory?: boolean
   /** 관리자 목록: 권한 유형 태그 (없으면 programRoles로 추론) */
   adminPermissionVariant?: 'manager' | 'partner' | 'viewer'
   /** 일반 교사 상세: 재직 현황 라벨 */
@@ -304,5 +306,4 @@ export interface LoginResponse {
   token: string // JWT 토큰 (Mock)
   expiresAt: DateValue
 }
-
 

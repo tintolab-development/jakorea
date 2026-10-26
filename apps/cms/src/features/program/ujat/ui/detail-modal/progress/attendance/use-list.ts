@@ -202,14 +202,17 @@ export function useUjatEducationProgressAttendance(
       if (!session?.scheduleId || !Number.isFinite(scheduleIdNum)) {
         throw new Error('MISSING_SCHEDULE_ID')
       }
-      await bulkUpsertUjatAttendances(programId, {
-        scheduleId: scheduleIdNum,
-        attendances: params.volunteers.map(row => ({
+      const recordedAttendances = params.volunteers
+        .filter(row => row.status !== 'unprocessed')
+        .map(row => ({
           participantId: Number(row.id),
           status: mapUjatUiAttendanceStatusToApi(row.status),
           absenceReason: row.excusedReason ?? null,
           arrivalTime: toIsoLocalTime(row.checkInTime),
-        })),
+        }))
+      await bulkUpsertUjatAttendances(programId, {
+        scheduleId: scheduleIdNum,
+        attendances: recordedAttendances,
       })
     },
     onSuccess: async (_data, variables) => {

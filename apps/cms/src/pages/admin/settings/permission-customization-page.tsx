@@ -1,6 +1,6 @@
 /**
- * 관리자 권한 설정 — 스크린샷 기준 5열 카테고리 UI (조회 전용, 체크박스 비활성)
- * mock/API 모드 모두 동일 화면. API 카탈로그 정합 전까지 로컬 카탈로그/역할별 체크 상태를 사용한다.
+ * 관리자 권한 설정 — 5열 카테고리 UI (조회 전용, 체크박스 비활성)
+ * 권한 매트릭스 API를 호출하지 않고, 화면 전용 정적 카탈로그만 표시한다.
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -9,45 +9,31 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsCheckbox } from '@/shared/ui'
 import type {
   AdminPermissionFlags,
-  AdminPermissionRoleTab,
+  AdminPermissionSettingsDisplayRole,
 } from '@/types/admin-permission-settings-ui'
-import { ADMIN_PERMISSION_ROLE_TABS } from '@/types/admin-permission-settings-ui'
+import { ADMIN_PERMISSION_SETTINGS_DISPLAY_ROLES } from '@/types/admin-permission-settings-ui'
 import {
   ADMIN_PERMISSION_CATEGORIES,
-  ADMIN_PERMISSION_ROLE_LABELS,
-  PARTNER_UNCHECKED_PERMISSION_IDS,
-  PM_UNCHECKED_PERMISSION_IDS,
+  ADMIN_PERMISSION_SETTINGS_ROLE_LABELS,
   createInitialPermissionsByRole,
-  isValidRoleTab,
+  deriveCategoryCheckboxState,
+  resolveAdminPermissionSettingsRole,
 } from './admin-permission-settings-ui-data'
 import './permission-customization-page.css'
 
 interface CategoryCardsProps {
-  role: AdminPermissionRoleTab
+  role: AdminPermissionSettingsDisplayRole
   flags: AdminPermissionFlags
 }
 
 function CategoryCards({ role, flags }: CategoryCardsProps) {
-  const isMasterRole = role === 'master'
-  const isPmRole = role === 'pm'
-  const isPartnerRole = role === 'partner'
-  const pmUncheckedSet = new Set<string>(PM_UNCHECKED_PERMISSION_IDS)
-  const partnerUncheckedSet = new Set<string>(PARTNER_UNCHECKED_PERMISSION_IDS)
-
-  const isItemChecked = (itemId: string) => {
-    if (isMasterRole) return true
-    if (isPmRole) return !pmUncheckedSet.has(itemId)
-    if (isPartnerRole) return !partnerUncheckedSet.has(itemId)
-    return flags[itemId] ?? false
-  }
+  const isItemChecked = (itemId: string) => flags[itemId] === true
 
   return (
     <div className="permission-customization-page__grid">
       {ADMIN_PERMISSION_CATEGORIES.map(category => {
         const values = category.items.map(item => isItemChecked(item.id))
-        const allChecked = values.length > 0 && values.every(Boolean)
-        const noneChecked = values.every(v => !v)
-        const indeterminate = !allChecked && !noneChecked
+        const headerState = deriveCategoryCheckboxState(values)
         return (
           <div
             key={`${role}-${category.id}`}
@@ -56,8 +42,8 @@ function CategoryCards({ role, flags }: CategoryCardsProps) {
             <div className="permission-customization-page__card-head">
               <CmsCheckbox
                 className="permission-customization-page__card-head-checkbox"
-                checked={allChecked}
-                indeterminate={indeterminate}
+                checked={headerState.checked}
+                indeterminate={headerState.indeterminate}
                 disabled
               />
               <span className="permission-customization-page__card-head-title">
@@ -88,9 +74,8 @@ export function PermissionCustomizationPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [permissionsByRole] = useState(createInitialPermissionsByRole)
 
-  const activeRole = useMemo((): AdminPermissionRoleTab => {
-    const r = searchParams.get('role')
-    return isValidRoleTab(r) ? r : 'master'
+  const activeRole = useMemo((): AdminPermissionSettingsDisplayRole => {
+    return resolveAdminPermissionSettingsRole(searchParams.get('role')) ?? 'master'
   }, [searchParams])
 
   useEffect(() => {
@@ -118,15 +103,15 @@ export function PermissionCustomizationPage() {
   }
 
   return (
-    <div className="permission-customization-page">
+    <div className="permission-customization-page permission-customization-page--admin-settings">
       <CmsTextTabs
         className="permission-customization-page__tabs"
         variant="list"
         activeKey={activeRole}
         onChange={handleTabChange}
-        items={ADMIN_PERMISSION_ROLE_TABS.map(tab => ({
+        items={ADMIN_PERMISSION_SETTINGS_DISPLAY_ROLES.map(tab => ({
           key: tab,
-          label: ADMIN_PERMISSION_ROLE_LABELS[tab],
+          label: ADMIN_PERMISSION_SETTINGS_ROLE_LABELS[tab],
         }))}
       />
 

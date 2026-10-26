@@ -7,7 +7,7 @@
  */
 
 /**
- * 취소 귀책. USER=강사 사유(JA 평가 등급 강의 취소 감점 대상), ADMIN=운영 사유. 생략·null이면 ADMIN으로 처리합니다.
+ * 취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.
  */
 export type InstructorAssignmentCancelRequestFaultParty = typeof InstructorAssignmentCancelRequestFaultParty[keyof typeof InstructorAssignmentCancelRequestFaultParty] | null;
 

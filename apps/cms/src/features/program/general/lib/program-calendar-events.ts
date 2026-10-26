@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
 import type { Program } from '@/types/domain'
@@ -150,7 +151,10 @@ export function isExcludedProgramCalendarItem(item: AdminProgramCalendarItem): b
 }
 
 function buildEducationLabel(item: AdminProgramCalendarItem, fallback: string): string {
-  const scheduleName = item.scheduleName?.trim() || item.displayLabel?.trim() || fallback
+  const scheduleName =
+    toDisplayEducationScheduleName(item.scheduleName) ||
+    toDisplayEducationScheduleName(item.displayLabel) ||
+    fallback
   const organizationName = item.organizationName?.trim()
   if (!organizationName || scheduleName.includes(organizationName)) return scheduleName
   return scheduleName ? `${organizationName} ${scheduleName}` : organizationName

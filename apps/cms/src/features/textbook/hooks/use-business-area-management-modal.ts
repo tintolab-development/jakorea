@@ -46,8 +46,8 @@ export type UseBusinessAreaManagementModalResult = {
   cancelNew: () => void
   submitNew: () => Promise<void>
   openCompose: () => void
-  /** Notion: FE 확인 팝업만 (API 없음) */
-  applySettings: () => void
+  /** 화면에서 만든 변경사항을 저장할 때만 API에 반영 */
+  applySettings: () => Promise<void>
 }
 
 const TEXTBOOK_BUSINESS_AREA_NAME_ALREADY_EXISTS = 'TEXTBOOK_BUSINESS_AREA_NAME_ALREADY_EXISTS'
@@ -84,6 +84,8 @@ export function useBusinessAreaManagementModal({
   const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
   const [duplicateAlertOpen, setDuplicateAlertOpen] = useState(false)
   const [settingsCompleteOpen, setSettingsCompleteOpen] = useState(false)
+  const baselineRowsRef = useRef<TextbookBusinessAreaRow[]>([])
+  const draftIdSequenceRef = useRef(0)
   const newInputRef = useRef<InputRef>(null)
   const editInputRef = useRef<InputRef>(null)
 
@@ -118,12 +120,14 @@ export function useBusinessAreaManagementModal({
     )
     if (cached !== undefined) {
       setRows(cached)
+      baselineRowsRef.current = cached
       return
     }
     setLoading(true)
     try {
       const next = await listTextbookBusinessAreas()
       setRows(next)
+      baselineRowsRef.current = next
       queryClient.setQueryData(dataManagementQueryKeys.textbooks.businessAreas(), next)
     } catch (error) {
       setSaveError(
@@ -169,28 +173,10 @@ export function useBusinessAreaManagementModal({
       setDuplicateAlertOpen(true)
       return
     }
-    setSaving(true)
     setSaveError(null)
-    try {
-      const updated = await updateTextbookBusinessArea(editingId, trimmed)
-      setRows(prev => {
-        const next = prev.map(row => (row.id === editingId ? updated : row))
-        syncBusinessAreasCache(next)
-        return next
-      })
-      cancelEdit()
-      await invalidateTextbookLists()
-      onSaved?.()
-    } catch (error) {
-      if (isBusinessAreaDuplicateError(error)) {
-        setDuplicateAlertOpen(true)
-        return
-      }
-      setSaveError(getDataManagementApiErrorMessage(error, '사업 분야 수정에 실패했습니다.'))
-    } finally {
-      setSaving(false)
-    }
-  }, [cancelEdit, editDraft, editingId, invalidateTextbookLists, onSaved, rows, syncBusinessAreasCache])
+    setRows(prev => prev.map(row => (row.id === editingId ? { ...row, name: trimmed } : row)))
+    cancelEdit()
+  }, [cancelEdit, editDraft, editingId, rows])
 
   const requestDelete = useCallback(
     async (row: TextbookBusinessAreaRow) => {
@@ -198,28 +184,11 @@ export function useBusinessAreaManagementModal({
         setDeleteBlockedOpen(true)
         return
       }
-      setSaving(true)
       setSaveError(null)
-      try {
-        await deleteTextbookBusinessArea(row.id)
-        setRows(prev => {
-          const next = prev.filter(item => item.id !== row.id)
-          syncBusinessAreasCache(next)
-          return next
-        })
-        if (editingId === row.id) cancelEdit()
-        onSaved?.()
-      } catch (error) {
-        if (isBusinessAreaInUseError(error)) {
-          setDeleteBlockedOpen(true)
-          return
-        }
-        setSaveError(getDataManagementApiErrorMessage(error, '사업 분야 삭제에 실패했습니다.'))
-      } finally {
-        setSaving(false)
-      }
+      setRows(prev => prev.filter(item => item.id !== row.id))
+      if (editingId === row.id) cancelEdit()
     },
-    [cancelEdit, editingId, onSaved, syncBusinessAreasCache]
+    [cancelEdit, editingId]
   )
 
   const cancelNew = useCallback(() => {
@@ -234,28 +203,15 @@ export function useBusinessAreaManagementModal({
       setDuplicateAlertOpen(true)
       return
     }
-    setSaving(true)
     setSaveError(null)
-    try {
-      const created = await createTextbookBusinessArea(trimmed)
-      setRows(prev => {
-        const next = [...prev, created]
-        syncBusinessAreasCache(next)
-        return next
-      })
-      setNewDraft('')
-      setComposeOpen(false)
-      onSaved?.()
-    } catch (error) {
-      if (isBusinessAreaDuplicateError(error)) {
-        setDuplicateAlertOpen(true)
-        return
-      }
-      setSaveError(getDataManagementApiErrorMessage(error, '사업 분야 등록에 실패했습니다.'))
-    } finally {
-      setSaving(false)
-    }
-  }, [newDraft, onSaved, rows, syncBusinessAreasCache])
+    const draftId = `draft-business-area-${draftIdSequenceRef.current++}`
+    setRows(prev => [
+      ...prev,
+      { id: draftId, name: trimmed, textbookCount: 0, deletable: true },
+    ])
+    setNewDraft('')
+    setComposeOpen(false)
+  }, [newDraft, rows])
 
   const openCompose = useCallback(() => {
     cancelEdit()
@@ -263,11 +219,59 @@ export function useBusinessAreaManagementModal({
     queueMicrotask(() => newInputRef.current?.focus())
   }, [cancelEdit])
 
-  const applySettings = useCallback(() => {
-    resetEphemeralUi()
-    onClose()
-    setSettingsCompleteOpen(true)
-  }, [onClose, resetEphemeralUi])
+  const applySettings = useCallback(async () => {
+    const baselineById = new Map(baselineRowsRef.current.map(row => [row.id, row]))
+    const draftIds = new Set(rows.map(row => row.id))
+    const deletedRows = baselineRowsRef.current.filter(row => !draftIds.has(row.id))
+    const addedRows = rows.filter(row => !baselineById.has(row.id))
+    const updatedRows = rows.filter(row => {
+      const baseline = baselineById.get(row.id)
+      return baseline != null && baseline.name !== row.name
+    })
+
+    if (deletedRows.length === 0 && addedRows.length === 0 && updatedRows.length === 0) {
+      resetEphemeralUi()
+      onClose()
+      setSettingsCompleteOpen(true)
+      return
+    }
+
+    setSaving(true)
+    setSaveError(null)
+    try {
+      for (const row of updatedRows) {
+        await updateTextbookBusinessArea(row.id, row.name)
+      }
+      for (const row of addedRows) {
+        await createTextbookBusinessArea(row.name)
+      }
+      for (const row of deletedRows) {
+        await deleteTextbookBusinessArea(row.id)
+      }
+
+      const nextRows = await listTextbookBusinessAreas()
+      baselineRowsRef.current = nextRows
+      setRows(nextRows)
+      syncBusinessAreasCache(nextRows)
+      await invalidateTextbookLists()
+      onSaved?.()
+      resetEphemeralUi()
+      onClose()
+      setSettingsCompleteOpen(true)
+    } catch (error) {
+      if (isBusinessAreaDuplicateError(error)) {
+        setDuplicateAlertOpen(true)
+        return
+      }
+      if (isBusinessAreaInUseError(error)) {
+        setDeleteBlockedOpen(true)
+        return
+      }
+      setSaveError(getDataManagementApiErrorMessage(error, '사업 분야 설정 저장에 실패했습니다.'))
+    } finally {
+      setSaving(false)
+    }
+  }, [invalidateTextbookLists, onClose, onSaved, resetEphemeralUi, rows, syncBusinessAreasCache])
 
   return {
     rows,

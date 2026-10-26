@@ -27,7 +27,12 @@ import {
   useSettlementItemSettingLayout,
 } from './settlement-item-setting-detail-source'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CmsNumericInput, type CmsNumericInputProps } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsNumericInput,
+  showSaveCompletedAlert,
+  type CmsNumericInputProps,
+} from '@/shared/ui'
 import { CmsInputIconClick } from '@/shared/ui/cms-input-iconclick'
 import {
   SettlementItemSettingDescriptionEditIcon,
@@ -89,6 +94,12 @@ function parsePercentToNullableNumber(s: string): number | null {
   if (t === '') return null
   const n = Number.parseFloat(t)
   return Number.isFinite(n) ? n : null
+}
+
+function hasZeroNumericSettlementValue(detail: SettlementItemSettingDetail): boolean {
+  return Object.entries(detail).some(
+    ([, value]) => typeof value === 'number' && Number.isFinite(value) && value === 0
+  )
 }
 
 function linesToEditableText(lines: string[]): string {
@@ -1967,6 +1978,10 @@ export function SettlementItemSettingDetailModal({
     if (!item) return
     const snap = snapshotRef.current?.()
     if (snap === null) return
+    if (snap && hasZeroNumericSettlementValue(snap)) {
+      setSaveError({ message: '금액·시간·비율은 0으로 저장할 수 없습니다.' })
+      return
+    }
     if (snap) {
       persistDetail(item.id, snap)
     }
@@ -1991,6 +2006,7 @@ export function SettlementItemSettingDetailModal({
     }
     onSave?.(item.id)
     void onCancel()
+    showSaveCompletedAlert()
   }
 
   const modalTitleForAria =

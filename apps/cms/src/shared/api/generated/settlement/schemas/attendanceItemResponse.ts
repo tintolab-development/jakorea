@@ -12,7 +12,7 @@ export interface AttendanceItemResponse {
   programId?: number;
   scheduleId?: number;
   participantId?: number;
-  /** 출석 코드만: PRESENT|LATE|ABSENT|EXCUSED. 미기록·비출석 값(COMPLETED·SCHEDULED 등)은 null. */
+  /** 출석 코드만 PRESENT|LATE|ABSENT|EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. 미기록·비출석 값(COMPLETED·SCHEDULED 등)도 null. */
   status?: AttendanceItemResponseStatus;
   absenceReason?: string;
   checkedByAdminId?: number;

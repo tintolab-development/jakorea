@@ -20,6 +20,13 @@ export const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = KIT_LEVELS.redu
 
 const createDefaultQuantities = (): TextbookKitQuantityValues => ({ ...DEFAULT_KIT_QUANTITIES })
 
+function isValidKitQuantity(value: string): boolean {
+  const trimmed = value.trim()
+  if (!trimmed) return false
+  const parsed = Number(trimmed)
+  return Number.isInteger(parsed) && parsed >= 1
+}
+
 export interface TextbookKitQuantityModalProps {
   open: boolean
   values?: TextbookKitQuantityValues
@@ -43,6 +50,8 @@ export function TextbookKitQuantityModal({
     }
   }, [open, values])
 
+  const hasInvalidQuantity = KIT_LEVELS.some(level => !isValidKitQuantity(quantities[level.key]))
+
   return (
     <ContentModal
       open={open}
@@ -62,6 +71,7 @@ export function TextbookKitQuantityModal({
             variant="primary"
             size="large"
             type="button"
+            disabled={hasInvalidQuantity}
             onClick={() => onConfirm(quantities)}
           >
             확인
@@ -77,11 +87,17 @@ export function TextbookKitQuantityModal({
               <CmsNumericInput
                 className="textbook-kit-quantity-modal__input"
                 mode="integer"
-                min={0}
                 inputSize="medium"
                 width={'100%'}
                 aria-label={`${level.label} 키트 수량`}
                 value={quantities[level.key]}
+                min={1}
+                error={!isValidKitQuantity(quantities[level.key])}
+                message={
+                  !isValidKitQuantity(quantities[level.key])
+                    ? '수량은 1개 이상 입력해 주세요.'
+                    : undefined
+                }
                 onValueChange={nextValue => {
                   setQuantities(prev => ({ ...prev, [level.key]: nextValue }))
                 }}

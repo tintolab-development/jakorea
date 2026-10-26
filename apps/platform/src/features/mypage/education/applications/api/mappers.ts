@@ -2,6 +2,7 @@ import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-
 import { formatDisplayDateRange } from '@/shared/lib/format-display-date'
 import type { ProgramDetail, ProgramDetailCase } from '@/features/program'
 import { mapPortalCategoryLabel } from '@/features/program/lib/portal-category'
+import { mapApplicationWindowToRecruitmentStatus } from '@/features/program/lib/map-from-cms'
 import {
   formatInterviewAtLabel,
   resolveApplicationContentFromAnswers,
@@ -14,8 +15,6 @@ import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-c
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
-  EducationTeacherAssignment,
-  EducationTeacherAssignmentTextbook,
   EducationUjatTemporarySchedule,
 } from '../model/types'
 import type {
@@ -207,8 +206,25 @@ function formatDateRange(start: string | null | undefined, end: string | null | 
   return formatDisplayDateRange(start, end, { empty: '-' })
 }
 
-function mapRecruitmentStatus(displayStatus: EducationDisplayStatus): RecruitmentStatus {
-  if (displayStatus === 'in_progress') return 'recruiting'
+function parseRecruitmentDate(value: string | null | undefined): Date | null {
+  if (!value?.trim()) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+/**
+ * 모집 배지는 프로그램 모집기간 기준(프로그램 목록과 동일).
+ * 신청 진행 상태(displayStatus)는 내 신청 상태라 모집 상태와 다르다 — 기간이 없을 때만 폴백.
+ */
+export function mapApplicationRecruitmentStatus(input: {
+  recruitmentStartAt?: string | null
+  recruitmentEndAt?: string | null
+  displayStatus: EducationDisplayStatus
+}): RecruitmentStatus {
+  const start = parseRecruitmentDate(input.recruitmentStartAt)
+  const end = parseRecruitmentDate(input.recruitmentEndAt)
+  if (start && end) return mapApplicationWindowToRecruitmentStatus(start, end)
+  if (input.displayStatus === 'in_progress') return 'recruiting'
   return 'closed'
 }
 
@@ -241,7 +257,11 @@ export function mapPortalProgramApplicationListItem(
     title,
     recruitmentPeriodLabel: formatDateRange(row.recruitmentStartAt, row.recruitmentEndAt),
     operatingPeriodLabel: formatDateRange(row.educationStartAt, row.educationEndAt),
-    recruitmentStatus: mapRecruitmentStatus(displayStatus),
+    recruitmentStatus: mapApplicationRecruitmentStatus({
+      recruitmentStartAt: row.recruitmentStartAt,
+      recruitmentEndAt: row.recruitmentEndAt,
+      displayStatus,
+    }),
     educationTargetLabel: '전체',
     educationForm: 'offline',
     educationFormLabel: '오프라인',
@@ -333,44 +353,6 @@ function mapUjatTemporarySchedule(
   }
 }
 
-function mapTeacherAssignment(
-  detail: PortalProgramApplicationDetail,
-): EducationTeacherAssignment | undefined {
-  if (detail.applicationType !== 'ORGANIZATION' || !detail.teacherAssignment) {
-    return undefined
-  }
-
-  const source = detail.teacherAssignment.textbook
-  const deliveryStatus =
-    source?.deliveryStatus === 'PREPARING'
-      ? 'before'
-      : source?.deliveryStatus === 'SHIPPING'
-        ? 'shipping'
-        : source?.deliveryStatus === 'DELIVERED'
-          ? 'completed'
-          : undefined
-
-  const textbook: EducationTeacherAssignmentTextbook | undefined =
-    source?.textbookId != null && deliveryStatus
-      ? {
-          title: source.title?.trim() ?? '',
-          kitCountLabel:
-            source.kitCountLabel?.trim() ??
-            (source.kitCount != null ? `${source.kitCount}키트` : ''),
-          volumeCountLabel:
-            source.volumeCountLabel?.trim() ??
-            (source.volumeCount != null ? `${source.volumeCount}권` : ''),
-          deliveryStatus,
-        }
-      : undefined
-
-  return {
-    ...(textbook ? { textbook } : {}),
-    // 배정 강사는 별도 assigned-instructors API의 현재 신청별 응답을 사용한다.
-    instructors: [],
-  }
-}
-
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
   knownApplicationType?: ProgramApplicationType | null,
@@ -394,11 +376,11 @@ export function mapPortalProgramApplicationDetail(
   })
   if (!mapped) return null
   mapped.displayStatus = displayStatus
-  mapped.recruitmentStatus = mapRecruitmentStatus(displayStatus)
-  const teacherAssignment = mapTeacherAssignment(detail)
-  if (teacherAssignment) {
-    mapped.teacherAssignment = teacherAssignment
-  }
+  mapped.recruitmentStatus = mapApplicationRecruitmentStatus({
+    recruitmentStartAt: detail.recruitmentStartAt ?? detail.program?.recruitmentStartAt,
+    recruitmentEndAt: detail.recruitmentEndAt ?? detail.program?.recruitmentEndAt,
+    displayStatus,
+  })
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
   if (detail.certificateAvailable != null) {
     mapped.certificateAvailable = detail.certificateAvailable

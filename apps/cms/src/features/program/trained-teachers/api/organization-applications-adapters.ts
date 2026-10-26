@@ -2,6 +2,10 @@ import {
   formatRequestedEducationFormat,
   mapApiApplicationStatusToApprovalStatus,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  stripDefaultEducationSlotNameFromLabel,
+  toDisplayEducationScheduleName,
+} from '@/shared/lib/education-schedule-name'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
   formatApplicantSchoolApprovalNotificationSentAt,
@@ -156,7 +160,9 @@ export function mapTrainedTeacherEducationSchedulesToSessions(
         classNum: '',
         timeRange: startTime && endTime ? `${startTime}~${endTime}` : startTime || endTime,
         resolvedScheduleId: schedule.scheduleId,
-        ...(schedule.label?.trim() ? { educationScheduleLabel: schedule.label.trim() } : {}),
+        ...(stripDefaultEducationSlotNameFromLabel(schedule.label)
+          ? { educationScheduleLabel: stripDefaultEducationSlotNameFromLabel(schedule.label) }
+          : {}),
       }
     })
 }
@@ -199,7 +205,7 @@ export function mapProgramSchedulesToPreferredScheduleBlocks(
     startAt: dateSchedules[0]?.startAt ?? null,
     endAt: dateSchedules[dateSchedules.length - 1]?.endAt ?? null,
     round: dateSchedules[0]?.sessionNo ?? null,
-    label: dateSchedules[0]?.scheduleName ?? null,
+    label: toDisplayEducationScheduleName(dateSchedules[0]?.scheduleName) ?? null,
     scheduleStatus: 'ACTIVE',
   }))
 }

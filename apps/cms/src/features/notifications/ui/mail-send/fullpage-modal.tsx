@@ -5,10 +5,13 @@ import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton, CmsInput, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import {
   findHarvestedMailSenderKey,
-  MAIL_SENDER_DISPLAY_NAME_READONLY_HINT,
   MAIL_SENDER_NAME_EMPTY_HINT,
   MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL,
 } from '@/features/notifications/model/mail-template/sender-email'
+import {
+  MAIL_SENDER_DISPLAY_NAME_MAX_LENGTH,
+  sanitizeMailSenderDisplayNameInput,
+} from '@/features/notifications/model/mail-send/payload'
 import { ComposeFields } from '@/features/notifications/ui/mail-template/compose-fields'
 import { PreviewModal } from '@/features/notifications/ui/mail-template/preview-modal'
 import type {
@@ -86,7 +89,7 @@ import { useMailSendForm } from './use-form'
 import { ProgramSelectField } from './program-select-field'
 import { RecipientTable } from './recipient-table'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
-import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
+import { showNotificationSendErrorAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
 import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
@@ -97,10 +100,10 @@ type SenderNameFieldProps = {
   seed: string
   epoch: number
   onChange: (value: string) => void
-  readOnly?: boolean
 }
 
-function SenderNameField({ seed, epoch, onChange, readOnly = false }: SenderNameFieldProps) {
+/** 이번 발송에만 쓰는 발신자명(senderProfileDisplayName). 기본값은 발신 프로필 표시명. */
+function SenderNameField({ seed, epoch, onChange }: SenderNameFieldProps) {
   const [value, setValue] = useState(seed)
   useEffect(() => {
     setValue(seed)
@@ -110,12 +113,12 @@ function SenderNameField({ seed, epoch, onChange, readOnly = false }: SenderName
       inputSize="small"
       width="100%"
       allowClear={false}
-      readOnly={readOnly}
-      placeholder={readOnly ? MAIL_SENDER_DISPLAY_NAME_READONLY_HINT : '발신자명을 입력하세요'}
+      className="mail-send-fullpage__sender-name"
+      maxLength={MAIL_SENDER_DISPLAY_NAME_MAX_LENGTH}
+      placeholder="발신자명을 입력하세요"
       value={value}
       onChange={event => {
-        if (readOnly) return
-        const next = event.target.value
+        const next = sanitizeMailSenderDisplayNameInput(event.target.value)
         setValue(next)
         onChange(next)
       }}
@@ -541,9 +544,11 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       setSendConfirmOpen(false)
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
-    } catch {
+    } catch (error) {
       setSendConfirmOpen(false)
-      showNotificationSendRequestFailedAlert(showAlert)
+      showNotificationSendErrorAlert(showAlert, error, {
+        senderDisplayName: '.mail-send-fullpage__sender-name input, input.mail-send-fullpage__sender-name',
+      })
     } finally {
       setSending(false)
     }
@@ -696,7 +701,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                             seed={form.senderNameSeed}
                             epoch={form.senderNameEpoch}
                             onChange={form.setSenderName}
-                            readOnly={remote && Boolean(senderProfilesQuery.data?.length)}
                           />
                         }
                       />
@@ -927,7 +931,8 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
           const incoming = entries.map(entry =>
             createManualRecipient(entry.contact, entry.variables)
           )
-          const notices = listMailEmailDuplicateNotices(form.recipients, incoming)
+          const withoutManual = form.recipients.filter(item => item.source !== 'manual')
+          const notices = listMailEmailDuplicateNotices(withoutManual, incoming)
           form.applyManualEntries(entries)
           if (notices.length > 0) {
             showAlert({ title: '안내', content: formatMailEmailDuplicateMessage(notices) })
