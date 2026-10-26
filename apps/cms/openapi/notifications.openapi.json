@@ -1892,7 +1892,7 @@
           {
             "name": "category",
             "in": "query",
-            "description": "카테고리 코드 필터",
+            "description": "카탈로그 카테고리 코드.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1915,7 +1915,7 @@
           {
             "name": "keyword",
             "in": "query",
-            "description": "key/description 부분검색",
+            "description": "key/description 부분 검색.",
             "required": false,
             "schema": {
               "type": "string"
@@ -1924,7 +1924,7 @@
           {
             "name": "programId",
             "in": "query",
-            "description": "대상 프로그램. 없으면 requiresProgram=true 항목 enabled=false",
+            "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -1934,7 +1934,7 @@
           {
             "name": "participantType",
             "in": "query",
-            "description": "참여 유형 필터. 프로그램 선택 시 수신자 유형과 맞춤",
+            "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "required": false,
             "schema": {
               "type": "string",
@@ -1948,7 +1948,7 @@
           {
             "name": "memberType",
             "in": "query",
-            "description": "회원 유형 필터. 프로그램 미선택(전체) 시 주로 사용",
+            "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
             "required": false,
             "schema": {
               "type": "string",
@@ -2026,7 +2026,8 @@
           "500": {
             "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
           }
-        }
+        },
+        "x-jakorea-fe-notes": "enabled=삽입 허용 SSOT(값 존재와 무관). 누락 시 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}]. QA programId=164003 actorId=1799401."
       }
     },
     "/api/admin/notification-send-batches/recipient-candidates": {
@@ -12891,7 +12892,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -13426,7 +13427,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -18233,7 +18234,7 @@
       },
       "InstructorAssignmentCancelRequest": {
         "type": "object",
-        "description": "강사 배정 취소 요청",
+        "description": "강사 배정 취소 요청. 봉사자/UJAT AssignmentCancelRequest와 분리되며 faultParty를 포함한다.",
         "properties": {
           "reason": {
             "type": "string",
@@ -18250,17 +18251,17 @@
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
+            "nullable": true,
             "description": "취소 알림 직접 설정 시 예약 발송 시각. timing=SCHEDULED일 때 필수이며 미래 시각이어야 합니다."
           },
           "faultParty": {
             "type": "string",
-            "description": "취소 귀책. USER=강사 사유(JA 평가 등급 강의 취소 감점 대상), ADMIN=운영 사유. 생략·null이면 ADMIN으로 처리합니다.",
+            "nullable": true,
+            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
             "enum": [
               "USER",
               "ADMIN"
-            ],
-            "example": "USER",
-            "nullable": true
+            ]
           }
         }
       },
@@ -21050,7 +21051,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -21178,7 +21179,7 @@
             "type": "string",
             "format": "password",
             "description": "현재 로그인 관리자 비밀번호. 탈퇴 본인 확인 SoT.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -21876,36 +21877,43 @@
             }
           },
           "fixedEvaluationScore": {
-            "type": "number"
+            "type": "number",
+            "description": "4개 항목 합 ×5 (20~100). 평가 전 null",
+            "nullable": true
           },
           "administrativeAdjustmentScore": {
             "type": "number",
-            "description": "행정능력 자동 감점 합계(cancellationAdjustmentScore + lateReportAdjustmentScore). 0 이하."
+            "description": "취소·보고서 감점의 합 (0 이하)"
           },
           "cancellationAdjustmentScore": {
             "type": "number",
-            "description": "CMS에서 강사 사유(faultParty=USER)로 처리한 취소 감점. 2회당 -5점."
+            "description": "강사 사유 취소 감점 (0, -5, -10 …). projection 없으면 null",
+            "nullable": true
           },
           "lateReportAdjustmentScore": {
             "type": "number",
-            "description": "강의보고서 제출기한 미준수 감점. 2회당 -5점. 취소 건수와 합산하지 않습니다."
+            "description": "강의보고서 기한 미준수 감점 (0, -5, -10 …). projection 없으면 null",
+            "nullable": true
           },
           "lateSettlementAdjustmentScore": {
             "type": "number",
-            "description": "호환용 필드. 정산 신청 기한 미준수는 JA 평가 등급 감점 대상이 아니므로 산정 결과는 항상 0입니다."
+            "description": "호환용. 항상 0. 화면에서 행 제거/숨김."
           },
           "totalScore": {
-            "type": "number"
+            "type": "number",
+            "description": "fixed + administrative. 음수 가능. FE에서 0으로 clamp하지 않음.",
+            "nullable": true
           },
           "currentGrade": {
             "type": "string",
-            "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음).",
+            "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). 평가 전 null.",
             "enum": [
               "A",
               "B",
               "C",
               "D"
-            ]
+            ],
+            "nullable": true
           },
           "evaluatedAt": {
             "type": "string",
@@ -21921,11 +21929,12 @@
           },
           "policyVersion": {
             "type": "string",
-            "description": "활성 정책 버전. 정책 미초기화면 null."
+            "nullable": true,
+            "description": "활성 정책 버전. 고객사 최종은 CLIENT_FINAL_2026-10-20. 평가 이력 없으면 활성 정책 버전, 미초기화면 null."
           },
           "policyReady": {
             "type": "boolean",
-            "description": "false면 전역 JA 등급 정책 미초기화. POST 평가 완료 불가. GET은 200으로 이 플래그만 확인."
+            "description": "true면 평가 가능. false일 때만 정책 미확정 안내. 정책 버전 문자열로 판단하지 않음."
           }
         }
       },
@@ -26478,7 +26487,7 @@
           "password": {
             "type": "string",
             "description": "관리자 비밀번호. 서버 비밀번호 정책을 통과해야 합니다.",
-            "example": "admin1234!",
+            "example": "admin12341!",
             "maxLength": 255,
             "minLength": 0
           },
@@ -29009,17 +29018,17 @@
       },
       "ProgramBusinessPeriodExtendRequest": {
         "type": "object",
-        "description": "종료된 프로그램의 사업 종료일 연장 요청",
+        "description": "종료된 프로그램의 사업 종료일 연장 요청. CMS 프론트는 Vite DEV에서만 호출합니다.",
         "properties": {
           "businessEndDate": {
             "type": "string",
             "format": "date",
-            "description": "연장할 사업 종료일. KST 달력일 기준으로 기존 종료일보다 늦어야 합니다.",
+            "description": "연장할 사업 종료일. KST 달력일이며 기존 종료일보다 늦어야 하고, 오늘(KST) 이전일 수 없습니다.",
             "example": "2026-11-30"
           },
           "reason": {
             "type": "string",
-            "description": "연장 사유",
+            "description": "연장 사유. trim 후 빈 문자열이면 null 저장",
             "example": "강의 보고서 및 정산 제출 기간 연장",
             "maxLength": 500,
             "minLength": 0,
@@ -29057,9 +29066,42 @@
           }
         }
       },
+      "ProgramBusinessPeriodHistoryItem": {
+        "type": "object",
+        "description": "사업 종료일 연장 1건. PATCH 성공 응답에만 포함되며 프로그램 상세 GET에는 없습니다.",
+        "properties": {
+          "previousBusinessEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "연장 전 사업 종료일",
+            "nullable": true
+          },
+          "businessEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "연장 후 사업 종료일"
+          },
+          "reason": {
+            "type": "string",
+            "description": "연장 사유",
+            "nullable": true
+          },
+          "changedByName": {
+            "type": "string",
+            "description": "변경한 관리자 이름",
+            "nullable": true
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "변경 시각",
+            "nullable": true
+          }
+        }
+      },
       "ProgramBusinessPeriodResponse": {
         "type": "object",
-        "description": "프로그램 사업 종료일 연장 결과",
+        "description": "프로그램 사업 종료일 연장 결과. 이력은 이번 PATCH 1건만 포함하며 프로그램 상세 GET에는 businessPeriodHistories가 없습니다.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -29088,6 +29130,29 @@
             "type": "string",
             "format": "date-time",
             "description": "변경 시각"
+          },
+          "reason": {
+            "type": "string",
+            "description": "연장 사유. blank trim 시 null",
+            "nullable": true
+          },
+          "changedByName": {
+            "type": "string",
+            "description": "변경한 관리자 이름",
+            "nullable": true
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "변경 시각. updatedAt과 동일",
+            "nullable": true
+          },
+          "businessPeriodHistories": {
+            "type": "array",
+            "description": "이번 연장 1건. 상세 GET 재조회에는 없음",
+            "items": {
+              "$ref": "#/components/schemas/ProgramBusinessPeriodHistoryItem"
+            }
           }
         }
       },
@@ -42800,6 +42865,27 @@
             "description": "program_schedule.schedule_status. 교육·기간 이벤트가 아니면 null.",
             "nullable": true
           },
+          "scheduleOrigin": {
+            "type": "string",
+            "description": "PROGRAM_DEFINED | APPLICATION_MATERIALIZED | UNKNOWN. 교육 이벤트가 아니면 null.",
+            "nullable": true
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|CLOSING|SESSION. 기간 행·비교육 이벤트는 null.",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "description": "기관 OSA는 TEMP_ASSIGNED|CONFIRMED. 1사1교 강사 배정은 ASSIGNED 등. 배정이 없으면 null.",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기관형 배정 이벤트의 program_organization_application.id. 없으면 null.",
+            "nullable": true
+          },
           "eventId": {
             "type": "string",
             "description": "이벤트 고유 ID. eventKey와 동일하다."
@@ -44478,12 +44564,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨",
+            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰",
+            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -44493,11 +44579,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
+            "description": "true이면 programId 없이 enabled=false."
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
+            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
           },
           "programGroups": {
             "type": "array",
@@ -44515,14 +44601,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
               "type": "string"
             }
@@ -45021,15 +45107,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -48002,6 +48088,7 @@
       },
       "ApplicationCountResponse": {
         "type": "object",
+        "description": "프로그램·모집·신청유형별 신청 건수. recruitmentId가 null이면 해당 유형의 고유 모집 행을 찾을 수 없는 레거시/모호 신청이다.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -48009,7 +48096,9 @@
           },
           "recruitmentId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "신청에 저장된 recruitment_id. 없으면 프로그램에서 해당 targetType으로 유일하게 매칭되는 program_recruitment.id(1사1교 기관=ORGANIZATION, 강사=INSTRUCTOR, 교육받은 교사 기관=ORGANIZATION). 매칭 행이 없거나 같은 유형 모집이 2건 이상이면 null. null을 0이나 다른 모집 id로 바꾸지 않는다.\n",
+            "nullable": true
           },
           "targetType": {
             "type": "string"
@@ -48836,6 +48925,30 @@
           }
         }
       },
+      "InstructorApplicationApprovalCancellationRequest": {
+        "type": "object",
+        "description": "강사 신청 승인 취소 요청. 승인 취소 1건 = JA 감점 1건. 연쇄 배정 취소는 별도 집계하지 않는다.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "example": "강사 개인 사정"
+          },
+          "notification": {
+            "$ref": "#/components/schemas/Notification"
+          },
+          "faultParty": {
+            "type": "string",
+            "nullable": true,
+            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
+          }
+        }
+      },
       "RecipientRequest": {
         "type": "object",
         "properties": {
@@ -49094,7 +49207,7 @@
     "examples": {
       "AdminLoginRequest": {
         "summary": "관리자 로그인 요청",
-        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin1234!\"}"
+        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin12341!\"}"
       },
       "AdminMfaVerifyRequest": {
         "summary": "관리자 MFA 검증 요청",
@@ -49102,7 +49215,7 @@
       },
       "LocalDemoAdminAccount": {
         "summary": "로컬 데모 관리자 계정",
-        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin1234!\",\"mfaCode\":\"000000\",\"profile\":\"local only\"}"
+        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin12341!\",\"mfaCode\":\"000000\",\"profile\":\"local only\"}"
       },
       "LocalDemoMemberAccount": {
         "summary": "로컬 데모 회원 계정",

@@ -11721,7 +11721,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -12256,7 +12256,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -19880,7 +19880,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -20008,7 +20008,7 @@
             "type": "string",
             "format": "password",
             "description": "현재 로그인 관리자 비밀번호. 탈퇴 본인 확인 SoT.",
-            "example": "test1234!",
+            "example": "admin12341!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -25316,7 +25316,7 @@
           "password": {
             "type": "string",
             "description": "관리자 비밀번호. 서버 비밀번호 정책을 통과해야 합니다.",
-            "example": "admin1234!",
+            "example": "admin12341!",
             "maxLength": 255,
             "minLength": 0
           },
@@ -27847,17 +27847,17 @@
       },
       "ProgramBusinessPeriodExtendRequest": {
         "type": "object",
-        "description": "종료된 프로그램의 사업 종료일 연장 요청",
+        "description": "종료된 프로그램의 사업 종료일 연장 요청. CMS 프론트는 Vite DEV에서만 호출합니다.",
         "properties": {
           "businessEndDate": {
             "type": "string",
             "format": "date",
-            "description": "연장할 사업 종료일. KST 달력일 기준으로 기존 종료일보다 늦어야 합니다.",
+            "description": "연장할 사업 종료일. KST 달력일이며 기존 종료일보다 늦어야 하고, 오늘(KST) 이전일 수 없습니다.",
             "example": "2026-11-30"
           },
           "reason": {
             "type": "string",
-            "description": "연장 사유",
+            "description": "연장 사유. trim 후 빈 문자열이면 null 저장",
             "example": "강의 보고서 및 정산 제출 기간 연장",
             "maxLength": 500,
             "minLength": 0,
@@ -27895,9 +27895,42 @@
           }
         }
       },
+      "ProgramBusinessPeriodHistoryItem": {
+        "type": "object",
+        "description": "사업 종료일 연장 1건. PATCH 성공 응답에만 포함되며 프로그램 상세 GET에는 없습니다.",
+        "properties": {
+          "previousBusinessEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "연장 전 사업 종료일",
+            "nullable": true
+          },
+          "businessEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "연장 후 사업 종료일"
+          },
+          "reason": {
+            "type": "string",
+            "description": "연장 사유",
+            "nullable": true
+          },
+          "changedByName": {
+            "type": "string",
+            "description": "변경한 관리자 이름",
+            "nullable": true
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "변경 시각",
+            "nullable": true
+          }
+        }
+      },
       "ProgramBusinessPeriodResponse": {
         "type": "object",
-        "description": "프로그램 사업 종료일 연장 결과",
+        "description": "프로그램 사업 종료일 연장 결과. 이력은 이번 PATCH 1건만 포함하며 프로그램 상세 GET에는 businessPeriodHistories가 없습니다.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -27926,6 +27959,29 @@
             "type": "string",
             "format": "date-time",
             "description": "변경 시각"
+          },
+          "reason": {
+            "type": "string",
+            "description": "연장 사유. blank trim 시 null",
+            "nullable": true
+          },
+          "changedByName": {
+            "type": "string",
+            "description": "변경한 관리자 이름",
+            "nullable": true
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "변경 시각. updatedAt과 동일",
+            "nullable": true
+          },
+          "businessPeriodHistories": {
+            "type": "array",
+            "description": "이번 연장 1건. 상세 GET 재조회에는 없음",
+            "items": {
+              "$ref": "#/components/schemas/ProgramBusinessPeriodHistoryItem"
+            }
           }
         }
       },
@@ -41638,6 +41694,27 @@
             "description": "program_schedule.schedule_status. 교육·기간 이벤트가 아니면 null.",
             "nullable": true
           },
+          "scheduleOrigin": {
+            "type": "string",
+            "description": "PROGRAM_DEFINED | APPLICATION_MATERIALIZED | UNKNOWN. 교육 이벤트가 아니면 null.",
+            "nullable": true
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "program_schedule.schedule_kind. PRE_EDUCATION|EDUCATION|CLOSING|SESSION. 기간 행·비교육 이벤트는 null.",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "description": "기관 OSA는 TEMP_ASSIGNED|CONFIRMED. 1사1교 강사 배정은 ASSIGNED 등. 배정이 없으면 null.",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "기관형 배정 이벤트의 program_organization_application.id. 없으면 null.",
+            "nullable": true
+          },
           "eventId": {
             "type": "string",
             "description": "이벤트 고유 ID. eventKey와 동일하다."
@@ -43859,15 +43936,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -46840,6 +46917,7 @@
       },
       "ApplicationCountResponse": {
         "type": "object",
+        "description": "프로그램·모집·신청유형별 신청 건수. recruitmentId가 null이면 해당 유형의 고유 모집 행을 찾을 수 없는 레거시/모호 신청이다.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -46847,7 +46925,9 @@
           },
           "recruitmentId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "신청에 저장된 recruitment_id. 없으면 프로그램에서 해당 targetType으로 유일하게 매칭되는 program_recruitment.id(1사1교 기관=ORGANIZATION, 강사=INSTRUCTOR, 교육받은 교사 기관=ORGANIZATION). 매칭 행이 없거나 같은 유형 모집이 2건 이상이면 null. null을 0이나 다른 모집 id로 바꾸지 않는다.\n",
+            "nullable": true
           },
           "targetType": {
             "type": "string"
@@ -47926,7 +48006,7 @@
     "examples": {
       "AdminLoginRequest": {
         "summary": "관리자 로그인 요청",
-        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin1234!\"}"
+        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin12341!\"}"
       },
       "AdminMfaVerifyRequest": {
         "summary": "관리자 MFA 검증 요청",
@@ -47934,7 +48014,7 @@
       },
       "LocalDemoAdminAccount": {
         "summary": "로컬 데모 관리자 계정",
-        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin1234!\",\"mfaCode\":\"000000\",\"profile\":\"local only\"}"
+        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin12341!\",\"mfaCode\":\"000000\",\"profile\":\"local only\"}"
       },
       "LocalDemoMemberAccount": {
         "summary": "로컬 데모 회원 계정",
