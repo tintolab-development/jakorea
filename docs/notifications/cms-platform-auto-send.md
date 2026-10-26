@@ -15,7 +15,7 @@
 |----|----------------|--------------|
 | **자동발송** | JABACK. 도메인 이벤트 → catalog 채널 ON → outbox → NHN(알림톡·메일·문자) 및 WEB | path·스케줄러·템플릿 bind를 **만들지 않는다** |
 | **CMS 수동 발송** | 관리자가 알림톡·메일·문자 화면에서 고른 수신자에게 발송 | `apps/cms/src/features/notifications/**` |
-| **WEB 인박스** | 같은 `eventType`의 인앱 알림 | CMS 대시보드 인박스만 연동. Platform 인박스는 헤더 버튼만 있고 목록·라벨 맵 없음 |
+| **WEB 인박스** | 같은 `eventType`의 인앱 알림 | CMS 대시보드 인박스 · Platform 헤더 알림 패널(`apps/platform/src/features/notification`) 연동 |
 
 수동 발송 피커(Option A): SYSTEM·자동발송 전용 변수는 `enabled=false`. 프로그램 지정 시 「템플릿 사용」이 꺼진다. 자동발송 템플릿을 수동 피커에서 쓰게 만들지 않는다.
 
@@ -147,7 +147,7 @@ CMS 「알림 재발송」은 새 이벤트가 아니다. 승인/반려 결과�
 
 - 프로그램 신청 플로우를 붙여도 알림 발송 API를 Platform에 만들지 않는다. 신청·취소 API가 백엔드 이벤트를 만들면, 수신 확인은 인박스(미구현)와 NHN이다.
 - 인박스를 열 때는 CMS `NOTIFICATION_EVENT_TYPE_LABELS` 의 키를 그대로 쓴다. 없는 코드는 raw를 보여주지 않고 `알림` 으로 떨어뜨린다.
-- 헤더 「알림」 버튼(`header-config.ts`)은 인박스가 아니다.
+- 헤더 「알림」 버튼은 `features/notification` 인박스 패널을 연다 (`GET /api/portal/me/notifications`, 카드 클릭 시 `PATCH …/{recipientId}/clicked`로 읽음). 카테고리 탭 코드·라벨은 JABACK `MemberNotificationCategory`와 같고, 카드 제목·카테고리 라벨은 서버 응답(`title`, `notificationCategoryLabel`)을 그대로 쓴다.
 
 ## CMS에서 이 문서를 쓸 때
 

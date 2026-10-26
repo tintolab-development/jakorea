@@ -88,6 +88,16 @@ export const platformQueryKeys = {
     detail: (id: string) => [...platformQueryKeys.impactStory.all(), 'detail', id] as const,
   },
 
+  notification: {
+    all: () => [...platformQueryKeys.all, 'notification'] as const,
+    /** 내 알림 목록 — GET /api/portal/me/notifications (Class E + member scoped, infinite) */
+    list: (params: { category: string; size: number }) =>
+      [...platformQueryKeys.notification.listPrefix(), params.category, params.size] as const,
+    listPrefix: () => [...platformQueryKeys.notification.all(), 'list'] as const,
+    /** 미확인 알림 수 — GET /api/portal/me/notifications/unread-count (Class E) */
+    unreadCount: () => [...platformQueryKeys.notification.all(), 'unread-count'] as const,
+  },
+
   newsletter: {
     all: () => [...platformQueryKeys.all, 'newsletter'] as const,
     /** 내 구독 상태 — GET /api/portal/me/newsletter/subscription (Class F) */
