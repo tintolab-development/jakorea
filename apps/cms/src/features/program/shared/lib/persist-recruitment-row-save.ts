@@ -16,6 +16,7 @@ import {
   volunteerInterviewRequiredFromOverlay,
   type RecruitmentInterviewConfig,
 } from '@/features/program/shared/lib/volunteer-interview-config'
+import { normalizeVolunteerTargetList } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { DateValue } from '@/types'
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
 
@@ -250,6 +251,43 @@ function volunteerInterviewPeriodForRowSave(
   return volunteerInterviewBackfillSource(baseline, field)
 }
 
+function normalizedVolunteerCodes(
+  value: readonly string[] | null | undefined
+): string[] {
+  if (!value?.length) return []
+  return normalizeVolunteerTargetList(value)
+}
+
+function sameVolunteerCodes(
+  left: readonly string[] | null | undefined,
+  right: readonly string[] | null | undefined
+): boolean {
+  const a = normalizedVolunteerCodes(left)
+  const b = normalizedVolunteerCodes(right)
+  if (a.length !== b.length) return false
+  return a.every((code, index) => code === b[index])
+}
+
+/**
+ * 일반 봉사 탭은 폼 `volunteerTargets`를 행에 복사하지 않는다.
+ * 행을 이번 저장에서 바꾸지 않았고 폼이 행과 다르면 폼 값을 보낸다.
+ * UJAT는 저장 전에 행을 매핑해 두므로 그 행 값을 유지한다.
+ */
+function volunteerTargetsForRowSave(args: {
+  row: ProgramRecruitmentWindow
+  baseline: Program
+  patch: Partial<Program>
+  volunteerHalf?: 'h1' | 'h2'
+}): ProgramRecruitmentWindow['volunteerTargets'] {
+  const baselineRow = pickRecruitmentCopyRow(args.baseline, 'volunteer', args.volunteerHalf)
+  const rowUntouched = sameVolunteerCodes(args.row.volunteerTargets, baselineRow?.volunteerTargets)
+  const formTargets = args.patch.volunteerTargets
+  const formDiffersFromRow =
+    formTargets !== undefined && !sameVolunteerCodes(formTargets, args.row.volunteerTargets)
+  if (rowUntouched && formDiffersFromRow) return formTargets
+  return args.row.volunteerTargets
+}
+
 export function buildProgramRecruitmentRowSaveRequest(args: {
   baseline: Program
   draft: Program
@@ -386,8 +424,14 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
     if (row.noticeExposureTiming !== undefined) {
       typedBody.noticeExposureTiming = row.noticeExposureTiming
     }
-    if (row.volunteerTargets !== undefined) {
-      typedBody.volunteerTargets = row.volunteerTargets
+    const volunteerTargets = volunteerTargetsForRowSave({
+      row,
+      baseline,
+      patch,
+      volunteerHalf,
+    })
+    if (volunteerTargets !== undefined) {
+      typedBody.volunteerTargets = volunteerTargets
     }
     // 일반 봉사 행 interviewConfig 는 overlay+저장 typed 합본만 보낸다(객체 단위 교체).
     // UJAT·반기는 행 값을 유지한다.
@@ -641,6 +685,13 @@ function audienceScalarPatch(
       : {}),
     ...(patch.generalParticipantInterviewEnabled !== undefined
       ? { generalParticipantInterviewEnabled: patch.generalParticipantInterviewEnabled }
+      : {}),
+    // 재조회 컬럼이 옛 targetLevels면 다음 편집 시드가 방금 저장한 교육 대상을 되돌린다.
+    ...(Object.prototype.hasOwnProperty.call(patch, 'targetLevels')
+      ? {
+          targetLevels: Array.isArray(patch.targetLevels) ? patch.targetLevels : [],
+          targetLevel: Array.isArray(patch.targetLevels) ? patch.targetLevels[0] : undefined,
+        }
       : {}),
   }
 }

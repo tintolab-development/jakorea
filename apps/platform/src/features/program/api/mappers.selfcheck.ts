@@ -164,7 +164,7 @@ assert.ok(listed)
 assert.equal(listed.id, '186012')
 assert.equal(listed.recruitmentStatus, 'recruiting')
 assert.equal(listed.educationTargetLabel, '대학(원)생')
-assert.equal(listed.recruitmentPeriodLabel, '2026년 9월 17일 ~ 9월 18일')
+assert.equal(listed.recruitmentPeriodLabel, '2026년 9월 17일(목) ~ 2026년 9월 18일(금)')
 
 const recruitingAlias = mapPortalProgramListItem({
   programId: 3,
@@ -994,8 +994,14 @@ const geminiTraining = mapPortalProgramDetail({
 assert.ok(geminiTraining)
 assert.equal(geminiTraining.detailCase, 'gemini')
 assert.equal(geminiTraining.category, 'institution')
-assert.equal(geminiTraining.recruitmentPhases[0]?.value, '2026년 8월 1일 ~ 8월 31일')
-assert.equal(geminiTraining.geminiTrainingRequestPeriodLabel, '2026년 9월 1일 ~ 9월 30일')
+assert.equal(
+  geminiTraining.recruitmentPhases[0]?.value,
+  '2026년 8월 1일(토) ~ 2026년 8월 31일(월)',
+)
+assert.equal(
+  geminiTraining.geminiTrainingRequestPeriodLabel,
+  '2026년 9월 1일(화) ~ 2026년 9월 30일(수)',
+)
 
 const geminiWithoutTrainingRequestPeriod = mapPortalProgramDetail({
   programId: 185004,
@@ -1191,7 +1197,7 @@ assert.deepEqual(focusedVolunteerRecruitment.focusedRecruitmentIds, [186674])
 assert.equal(focusedVolunteerRecruitment.applicationType, 'VOLUNTEER')
 assert.equal(
   focusedVolunteerRecruitment.recruitmentPhases[0]?.value,
-  '2026년 7월 12일 ~ 2027년 1월 1일',
+  '2026년 7월 12일(일) ~ 2027년 1월 1일(금)',
 )
 assert.equal(
   focusedVolunteerRecruitment.extraSections.find(section => section.title === '모집 안내')?.body,

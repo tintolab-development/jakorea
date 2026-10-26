@@ -482,6 +482,7 @@ export const EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE =
 /**
  * 커리큘럼형 + 복수 회차 + 날짜 지정 — 회차 수와 교육 진행 예정일 줄 수가 다른지.
  * 예정일이 비어 있으면 필수 검사가 담당하므로 여기서는 보지 않는다.
+ * 사전교육 진행 일정은 별도 필드이므로 교육 진행 예정일 줄 수와 비교하지 않는다.
  */
 export function hasCurriculumMultiDateScheduleCountMismatch(
   overlay: Record<string, unknown>,

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { canApplyToProgram } from '../../lib/badge-config'
 import type { ProgramDetail } from '../../model/types'
 import { ProgramInfoAside } from './program-info-aside'
 import { ProgramInfoDetail } from './program-info-detail'
@@ -15,9 +14,6 @@ type ProgramInfoBodyProps = {
   showCancelCta?: boolean
   onApply?: () => void
   applyChecking?: boolean
-  applyBlockedReason?: string | null
-  /** 이미 신청한 기관도 신청 내역 안내 모달에 진입할 수 있도록 CTA 허용 */
-  allowApplyWhenBlockedReason?: boolean
   onCancel?: () => void
   showTopFab?: boolean
   className?: string
@@ -31,8 +27,6 @@ export function ProgramInfoBody({
   showCancelCta = false,
   onApply,
   applyChecking,
-  applyBlockedReason,
-  allowApplyWhenBlockedReason = false,
   onCancel,
   showTopFab = true,
   className,
@@ -51,13 +45,7 @@ export function ProgramInfoBody({
         detailImageUrl={program.detailImageUrl}
         thumbnailUrl={program.thumbnailUrl}
         attachments={program.attachments}
-        canApply={
-          canApplyToProgram(program.recruitmentStatus) &&
-          !program.recruitmentSelectionAmbiguous &&
-          (!applyBlockedReason || allowApplyWhenBlockedReason)
-        }
         applicationPeriodLabel={program.applicationPeriodLabel}
-        applyBlockedReason={applyBlockedReason}
         showApplyCta={showApplyCta}
         showCancelCta={showCancelCta}
         onApply={onApply}

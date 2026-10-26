@@ -201,6 +201,14 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setRecipients([])
   }, [])
 
+  const updateRecipientVariable = useCallback((recipientId: string, key: string, value: string) => {
+    setRecipients(prev =>
+      prev.map(item =>
+        item.id === recipientId ? { ...item, variables: { ...item.variables, [key]: value } } : item
+      )
+    )
+  }, [])
+
   const getDraft = useCallback((): SmsSendDraft => {
     return buildSmsSendPayload({
       programId,
@@ -315,6 +323,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     replaceManualRecipients,
     removeRecipients,
     clearRecipients,
+    updateRecipientVariable,
     getDraft,
     validateRequired,
     readComposeSnapshot,

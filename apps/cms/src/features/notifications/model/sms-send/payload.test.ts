@@ -233,6 +233,116 @@ describe('buildSmsSendCreateRequest', () => {
     expect(request.recipients[0]).not.toHaveProperty('actorId')
     expect(request.recipients[0]).not.toHaveProperty('variables')
   })
+
+  it('프로그램 미선택 수신자의 수기 변수만 recipients[].variables로 싣고 빈 값·예약 키는 뺀다', () => {
+    const request = buildSmsSendCreateRequest({
+      draft: draft({
+        programId: '',
+        bodyText: '#{방문 안내}#{프로그램명}',
+        recipients: [
+          {
+            id: 'actor-MEMBER-1',
+            participationType: '',
+            memberType: 'general',
+            name: '회원',
+            phone: '010-1111-2222',
+            source: 'program',
+            actorType: 'MEMBER',
+            actorId: 1,
+            variables: {
+              '방문 안내': '  오전  ',
+              프로그램명: '임의',
+              '다른 안내': '제외',
+            },
+          },
+          {
+            id: 'manual-1',
+            participationType: '',
+            memberType: '',
+            name: '직접',
+            phone: '010-3333-4444',
+            source: 'manual',
+            actorType: 'DIRECT',
+            variables: { '방문 안내': '' },
+          },
+        ],
+      }),
+      templateId: 101,
+      placeholderKeys: ['방문 안내', '프로그램명'],
+      variableCatalog: [
+        { key: '방문 안내', enabled: true },
+        { key: '프로그램명', enabled: true, requiresProgram: true },
+      ],
+    })
+    expect(request.recipients[0]).toEqual({
+      actorType: 'MEMBER',
+      actorId: 1,
+      variables: { '방문 안내': '오전' },
+    })
+    expect(request.recipients[1]).toEqual({
+      actorType: 'DIRECT',
+      recipientContact: '01033334444',
+      recipientName: '직접',
+    })
+    expect(request.recipients[1]).not.toHaveProperty('variables')
+  })
+
+  it('프로그램 선택 시 회원 자동 매칭 변수는 payload에 넣지 않는다', () => {
+    const request = buildSmsSendCreateRequest({
+      draft: draft({
+        programId: '77',
+        recipients: [
+          {
+            id: 'actor-MEMBER-1',
+            participationType: 'participant',
+            memberType: 'general',
+            name: '회원',
+            phone: '010-1111-2222',
+            source: 'program',
+            actorType: 'MEMBER',
+            actorId: 1,
+            variables: { '방문 안내': '덮어쓰면 안 됨' },
+          },
+        ],
+      }),
+      templateId: 101,
+      placeholderKeys: ['방문 안내'],
+      variableCatalog: [{ key: '방문 안내', enabled: true }],
+    })
+    expect(request.recipients[0]).toEqual({ actorType: 'MEMBER', actorId: 1 })
+    expect(request.recipients[0]).not.toHaveProperty('variables')
+  })
+
+  it('payload를 만들기 직전에 같은 휴대폰 번호를 한 건으로 줄인다', () => {
+    const request = buildSmsSendCreateRequest({
+      draft: draft({
+        recipients: [
+          {
+            id: 'actor-MEMBER-1',
+            participationType: 'participant',
+            memberType: 'general',
+            name: '먼저',
+            phone: '010-1111-2222',
+            source: 'program',
+            actorType: 'MEMBER',
+            actorId: 1,
+          },
+          {
+            id: 'actor-MEMBER-2',
+            participationType: 'participant',
+            memberType: 'general',
+            name: '나중',
+            phone: '01011112222',
+            source: 'program',
+            actorType: 'MEMBER',
+            actorId: 2,
+          },
+        ],
+      }),
+      templateId: 101,
+    })
+    expect(request.recipients).toEqual([{ actorType: 'MEMBER', actorId: 1 }])
+  })
 })
 
 describe('validateSmsSendDraft', () => {

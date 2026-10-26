@@ -1,8 +1,13 @@
 import type { CreateRequest, RecipientRequest } from '@/shared/api/generated/notifications/schemas'
 import {
+  pickAlimtalkRecipientSendVariables,
+  type AlimtalkVariableCatalogEntry,
+} from '@/features/notifications/model/alimtalk-send/recipient-variables'
+import {
   isValidKoreanPhoneNumber,
   normalizeKoreanPhoneDigits,
 } from '@/shared/utils/phone-validation'
+import { dedupeSmsSendRecipients } from './recipients'
 import type { SmsSendDraft, SmsSendRecipient } from './types'
 import {
   isNotificationSendWithoutProgram,
@@ -13,10 +18,7 @@ import {
   validateNotificationScheduledAt,
 } from '@/features/notifications/model/send-scheduled-at'
 import { normalizeNotificationPlaceholderMarkup } from '@/features/notifications/model/shared/notification-placeholder-markup'
-import {
-  collectSmsComposeFieldIssues,
-  firstSmsComposeIssueMessage,
-} from './text-bytes'
+import { collectSmsComposeFieldIssues, firstSmsComposeIssueMessage } from './text-bytes'
 
 export {
   SMS_SEND_BODY_BYTE_LIMIT,
@@ -43,20 +45,37 @@ function resolveSmsSendActorId(recipient: SmsSendRecipient): number | undefined 
   return Number.isFinite(parsedActorId) ? parsedActorId : undefined
 }
 
-function buildSmsSendRecipients(recipients: SmsSendRecipient[]): RecipientRequest[] {
-  return recipients.map(recipient => {
+function buildSmsSendRecipients(
+  recipients: SmsSendRecipient[],
+  variableContext?: {
+    keys: Iterable<string>
+    catalog: AlimtalkVariableCatalogEntry[] | null | undefined
+    programSelected: boolean
+  }
+): RecipientRequest[] {
+  return dedupeSmsSendRecipients(recipients).map(recipient => {
+    const variables = variableContext
+      ? pickAlimtalkRecipientSendVariables({
+          recipient,
+          keys: variableContext.keys,
+          catalog: variableContext.catalog,
+          programSelected: variableContext.programSelected,
+        })
+      : undefined
     if (recipient.source === 'manual' || recipient.actorType === 'DIRECT') {
       const contact = normalizeKoreanPhoneDigits(recipient.phone) || recipient.phone.trim()
       return {
         actorType: 'DIRECT',
         recipientContact: contact,
         recipientName: recipient.name.trim() || undefined,
+        ...(variables ? { variables } : {}),
       }
     }
 
     return {
       actorType: recipient.actorType || 'MEMBER',
       actorId: resolveSmsSendActorId(recipient),
+      ...(variables ? { variables } : {}),
     }
   })
 }
@@ -70,6 +89,8 @@ export function buildSmsSendCreateRequest(input: {
   templateId: number
   senderKey?: string
   senderProfileId?: number
+  placeholderKeys?: Iterable<string>
+  variableCatalog?: AlimtalkVariableCatalogEntry[] | null
 }): CreateRequest {
   const { draft, templateId, senderKey, senderProfileId } = input
   const programId = resolveSmsSendProgramId(draft.programId)
@@ -86,7 +107,16 @@ export function buildSmsSendCreateRequest(input: {
     }),
     senderKey: senderKey?.trim() || undefined,
     senderProfileId,
-    recipients: buildSmsSendRecipients(draft.recipients),
+    recipients: buildSmsSendRecipients(
+      draft.recipients,
+      input.placeholderKeys
+        ? {
+            keys: input.placeholderKeys,
+            catalog: input.variableCatalog ?? null,
+            programSelected: programId != null,
+          }
+        : undefined
+    ),
   }
   if (programId != null) body.programId = programId
   return body

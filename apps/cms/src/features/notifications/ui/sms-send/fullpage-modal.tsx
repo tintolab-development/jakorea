@@ -32,6 +32,16 @@ import { SMS_SEND_PICKER_PAGE_SIZE } from '@/features/notifications/model/sms-se
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import { isNotificationCatalogVariableDisabled } from '@/features/notifications/model/shared/catalog-variable-disabled'
 import {
+  classifyAlimtalkPlaceholderKey,
+  listAlimtalkManualVariableKeys,
+} from '@/features/notifications/model/alimtalk-send/recipient-variables'
+import {
+  SMS_SEND_CONFIRM_MESSAGE,
+  listSmsSendPlaceholderKeys,
+  validateSmsSendVariables,
+  type SmsSendVariableValidationResult,
+} from '@/features/notifications/model/sms-send/validate-send'
+import {
   buildNotificationTemplateVariablesQuery,
   inferUniqueRecipientTypeValue,
 } from '@/features/notifications/model/shared/template-variables-query'
@@ -40,6 +50,8 @@ import {
   SMS_SEND_PARTICIPATION_TYPE_OPTIONS,
   createManualRecipient,
   filterSmsSendRecipients,
+  formatSmsPhoneDuplicateMessage,
+  listSmsPhoneDuplicateNotices,
   normalizeSmsSendPhone,
   resolveSmsSendRecipientTypeMode,
   smsSendRecipientTypeColumnTitle,
@@ -99,6 +111,15 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const [previewAt, setPreviewAt] = useState<string | undefined>()
   const [recipientSelectOpen, setRecipientSelectOpen] = useState(false)
   const [recipientManualOpen, setRecipientManualOpen] = useState(false)
+  const [usedVariableKeys, setUsedVariableKeys] = useState<string[]>([])
+  const handleUsedVariableKeysChange = useCallback((keys: string[]) => {
+    setUsedVariableKeys(prev => {
+      if (prev.length === keys.length && prev.every((key, index) => key === keys[index])) {
+        return prev
+      }
+      return keys
+    })
+  }, [])
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([])
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false)
   const [sendRequestCompletedOpen, setSendRequestCompletedOpen] = useState(false)
@@ -192,6 +213,68 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     open && remote && canLoadProgramScoped
   )
   const variablesCatalog = variablesQuery.data?.variables
+  const variableCatalogState = variablesQuery.isError
+    ? 'error'
+    : variablesQuery.isSuccess && variablesCatalog != null
+      ? 'ready'
+      : 'pending'
+  const programSelected = programNumericId != null
+  const directManualKeys = useMemo(
+    () =>
+      listAlimtalkManualVariableKeys({
+        keys: usedVariableKeys,
+        catalog: variablesCatalog,
+        recipient: { source: 'manual', actorType: 'DIRECT' },
+        programSelected,
+      }),
+    [programSelected, usedVariableKeys, variablesCatalog]
+  )
+  const manualKeysByRecipientId = useMemo(() => {
+    const next: Record<string, string[]> = {}
+    for (const recipient of form.recipients) {
+      next[recipient.id] = listAlimtalkManualVariableKeys({
+        keys: usedVariableKeys,
+        catalog: variablesCatalog,
+        recipient,
+        programSelected,
+      })
+    }
+    return next
+  }, [form.recipients, programSelected, usedVariableKeys, variablesCatalog])
+  const blockedKeysByRecipientId = useMemo(() => {
+    const next: Record<string, string[]> = {}
+    if (variablesCatalog == null) return next
+    for (const recipient of form.recipients) {
+      const blocked: string[] = []
+      for (const key of usedVariableKeys) {
+        if (
+          classifyAlimtalkPlaceholderKey({
+            key,
+            catalog: variablesCatalog,
+            recipient,
+            programSelected,
+          }) === 'blocked'
+        ) {
+          blocked.push(key)
+        }
+      }
+      next[recipient.id] = blocked
+    }
+    return next
+  }, [form.recipients, programSelected, usedVariableKeys, variablesCatalog])
+  const readVariableCheck = (): SmsSendVariableValidationResult => {
+    const draft = form.getDraft()
+    return validateSmsSendVariables({
+      programId: draft.programId,
+      messageType: draft.messageType,
+      subject: draft.subject,
+      bodyText: draft.bodyText,
+      recipients: draft.recipients,
+      catalog: variablesCatalog ?? null,
+      catalogState: variableCatalogState,
+    })
+  }
+  const variableCheck = readVariableCheck()
   const variableGroups = useMemo(
     () => groupMailTemplateVariablesFromCatalog(variablesCatalog ?? []),
     [variablesCatalog]
@@ -310,6 +393,12 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       }
     }
 
+    const variableResult = readVariableCheck()
+    if (!variableResult.ok) {
+      showAlert({ title: variableResult.title, content: variableResult.alert })
+      return
+    }
+
     setSendConfirmOpen(true)
   }
 
@@ -321,11 +410,19 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       showAlert({ title: '필수 입력 안내', content: error })
       return
     }
+    const variableResult = readVariableCheck()
+    if (!variableResult.ok) {
+      setSendConfirmOpen(false)
+      showAlert({ title: variableResult.title, content: variableResult.alert })
+      return
+    }
     setSending(true)
     try {
       const draft = form.getDraft()
       await submitSmsSend({
-        draft,
+        draft: { ...draft, recipients: variableResult.validRecipients },
+        placeholderKeys: listSmsSendPlaceholderKeys(draft),
+        variableCatalog: variablesCatalog ?? null,
         templateDisplayName: selectedTemplate?.templateName,
         templateCategoryId: selectedTemplate?.categoryId,
         templateBaseline: selectedTemplate
@@ -581,17 +678,25 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       </CmsButton>
                     </div>
                   </div>
+                  {directManualKeys.length > 0 ? (
+                    <p className="mail-send-fullpage__section-hint">
+                      사용하는 변수값은 수신자마다 입력합니다. 값이 없으면 해당 수신자는 발송되지
+                      않습니다.
+                    </p>
+                  ) : null}
                   <RecipientTable
                     recipients={form.recipients}
                     selectedIds={selectedRecipientIds}
                     onSelectedIdsChange={setSelectedRecipientIds}
                     typeColumnTitle={typeColumnTitle}
                     typeMode={recipientTypeMode}
+                    manualKeysByRecipientId={manualKeysByRecipientId}
+                    blockedKeysByRecipientId={blockedKeysByRecipientId}
+                    onVariableChange={form.updateRecipientVariable}
                   />
                 </section>
 
-                <section className="notification-fullpage-modal__widget">
-                  <h3 className="mail-send-fullpage__section-title">3. 문자 작성</h3>
+                <section className="notification-fullpage-modal__widget sms-send-fullpage__widget--compose">
                   <SmsSendComposeFields
                     composeVersion={form.composeVersion}
                     initialSubject={form.composeSeed.subject}
@@ -600,11 +705,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     attachmentFileNames={form.attachmentFileNames}
                     subjectRef={form.subjectRef}
                     bodyTextRef={form.bodyTextRef}
+                    senderPhone={form.senderPhone}
                     onRememberSubjectRange={form.rememberSubjectRange}
                     onRememberBodyRange={form.rememberBodyRange}
                     onRemoveAttachment={form.removeAttachmentAt}
                     onAddAttachments={form.addAttachments}
                     onBlockingChange={form.setComposeBlocking}
+                    onUsedVariableKeysChange={handleUsedVariableKeysChange}
                   />
                 </section>
               </div>
@@ -700,7 +807,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         }
         onClose={() => setRecipientSelectOpen(false)}
         onConfirm={recipients => {
+          const notices = listSmsPhoneDuplicateNotices(form.recipients, recipients)
           form.addRecipients(recipients)
+          if (notices.length > 0) {
+            showAlert({ title: '안내', content: formatSmsPhoneDuplicateMessage(notices) })
+          }
           setRecipientSelectOpen(false)
         }}
       />
@@ -710,22 +821,29 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         contact="phone"
         values={form.recipients
           .filter(item => item.source === 'manual')
-          .map(item => ({ contact: item.phone }))}
+          .map(item => ({ contact: item.phone, variables: item.variables }))}
+        variableKeys={directManualKeys}
         normalize={normalizeSmsSendPhone}
         isValid={isValidKoreanPhoneNumber}
         invalidMessage="올바른 휴대폰 번호를 입력하세요."
         onClose={() => setRecipientManualOpen(false)}
         onConfirm={entries => {
-          form.replaceManualRecipients(
-            entries.map(entry => createManualRecipient(entry.contact))
+          const manual = entries.map(entry =>
+            createManualRecipient(entry.contact, '', entry.variables)
           )
+          const withoutManual = form.recipients.filter(item => item.source !== 'manual')
+          const notices = listSmsPhoneDuplicateNotices(withoutManual, manual)
+          form.replaceManualRecipients(manual)
+          if (notices.length > 0) {
+            showAlert({ title: '안내', content: formatSmsPhoneDuplicateMessage(notices) })
+          }
           setRecipientManualOpen(false)
         }}
       />
       <ConfirmModal
         open={sendConfirmOpen}
         title="문자 발송 확인"
-        content="해당 내용으로 문자를 발송하시겠습니까?"
+        content={variableCheck.ok ? variableCheck.confirmMessage : SMS_SEND_CONFIRM_MESSAGE}
         confirmText="발송"
         cancelText="취소"
         confirmLoading={sending}

@@ -45,7 +45,6 @@ import {
 import {
   formatDisplayDate,
   formatDisplayDateRange,
-  formatDisplayDateRangeCompact,
   normalizeScheduleDisplayLabel,
   parseScheduleDisplayLabel,
 } from '../../../shared/lib/format-display-date.ts'
@@ -222,10 +221,6 @@ function formatYmd(date: Date): string {
 
 function formatRange(start: Date | null, end: Date | null): string {
   return formatDisplayDateRange(start, end, { empty: '-' })
-}
-
-function formatCompactRange(start: Date | null, end: Date | null): string {
-  return formatDisplayDateRangeCompact(start, end, { empty: '-' })
 }
 
 function mapEducationForm(value: string | undefined): EducationForm {
@@ -623,7 +618,7 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
       ? [
           {
             label: periodLabel,
-            value: formatCompactRange(recruitmentStart, recruitmentEnd),
+            value: formatRange(recruitmentStart, recruitmentEnd),
           },
         ]
       : []
@@ -646,7 +641,7 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
       if (interviewStart || interviewEnd) {
         phases.push({
           label: selectionLabel('면접 기간'),
-          value: formatCompactRange(interviewStart, interviewEnd),
+          value: formatRange(interviewStart, interviewEnd),
         })
       }
     }
@@ -1295,12 +1290,12 @@ export function mapPortalProgramDetail(
         })
       : eventSchedules.map(item => item.dateLabel).filter(label => label !== '-')
   ).map(line => normalizeScheduleDisplayLabel(line))
-  const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
+  const recruitmentPeriodLabel = formatRange(appStart, appEnd)
   const geminiTrainingRequestStart = toDate(remote.trainingRequestStartDate ?? undefined)
   const geminiTrainingRequestEnd = toDate(remote.trainingRequestEndDate ?? undefined)
   const geminiTrainingRequestPeriodLabel =
     detailCase === 'gemini' && (geminiTrainingRequestStart || geminiTrainingRequestEnd)
-      ? formatCompactRange(geminiTrainingRequestStart, geminiTrainingRequestEnd)
+      ? formatRange(geminiTrainingRequestStart, geminiTrainingRequestEnd)
       : ''
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
@@ -1504,7 +1499,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
     operatingPeriodEnd: opEnd ? formatYmd(opEnd) : '1970-01-01',
     applicationStartDate: appStart ? formatYmd(appStart) : null,
     applicationEndDate: appEnd ? formatYmd(appEnd) : null,
-    recruitmentPeriodLabel: formatCompactRange(appStart, appEnd),
+    recruitmentPeriodLabel: formatRange(appStart, appEnd),
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetKeys: targets.keys,
