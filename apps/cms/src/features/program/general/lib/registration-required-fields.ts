@@ -480,27 +480,9 @@ export const EDUCATION_SCHEDULE_COUNT_MISMATCH_ALERT_MESSAGE =
   '교육 진행 예정일과 교육 진행 회차의 수가 일치하지 않습니다.\n회차 수에 맞게 진행 예정일을 등록해 주세요.'
 
 /**
- * 날짜 지정 예정일과 맞출 슬롯 수.
- * 일반 사전교육(prepend)은 별도 블록이므로 일반 회차에 1칸을 더한다.
- * 교육받은 교사(replaceFirst)는 첫 회차를 연수로 바꾸므로 추가하지 않는다.
- */
-export function curriculumMultiDateScheduleSlotCount(
-  ctx: Pick<
-    GeneralProgramRegistrationRequiredFieldContext,
-    'curriculumSessionCount' | 'scheduleCurriculumPreEducation' | 'preEducationDisplayMode'
-  >
-): number {
-  const regularCount = Math.max(1, ctx.curriculumSessionCount)
-  if (ctx.scheduleCurriculumPreEducation && ctx.preEducationDisplayMode !== 'replaceFirst') {
-    return regularCount + 1
-  }
-  return regularCount
-}
-
-/**
  * 커리큘럼형 + 복수 회차 + 날짜 지정 — 회차 수와 교육 진행 예정일 줄 수가 다른지.
  * 예정일이 비어 있으면 필수 검사가 담당하므로 여기서는 보지 않는다.
- * 사전교육 블록도 교육 진행 일정 칸에 포함한다.
+ * 사전교육 진행 일정은 별도 필드이므로 교육 진행 예정일 줄 수와 비교하지 않는다.
  */
 export function hasCurriculumMultiDateScheduleCountMismatch(
   overlay: Record<string, unknown>,
@@ -511,7 +493,7 @@ export function hasCurriculumMultiDateScheduleCountMismatch(
   if (ctx.educationScheduleMode !== 'date') return false
   const lineCount = countNonEmptyEducationScheduleLines(overlay)
   if (lineCount === 0) return false
-  return lineCount !== curriculumMultiDateScheduleSlotCount(ctx)
+  return lineCount !== Math.max(1, ctx.curriculumSessionCount)
 }
 
 function findIncompleteEducationScheduleSettingsReasons(

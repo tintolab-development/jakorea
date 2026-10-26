@@ -74,21 +74,6 @@ describe('registration-wizard-required-fields', () => {
     ).toBe(true)
   })
 
-  it('사전교육이 켜진 복수 회차는 사전교육 칸을 포함해 예정일 수와 맞춘다', () => {
-    const values = createDefaultRegistrationWizardUiValues()
-    values.scheduleLines = ['2026-06-10 10:00', '2026-06-11 10:00', '2026-06-12 10:00']
-    const ctx = {
-      ...orgCtx,
-      sessionRoundType: 'multi' as const,
-      curriculumSessionCount: 2,
-      educationScheduleMode: 'date' as const,
-      scheduleCurriculumPreEducation: true,
-    }
-    expect(hasRegistrationWizardCurriculumScheduleCountMismatch(values, ctx)).toBe(false)
-    values.scheduleLines = ['2026-06-10 10:00', '2026-06-11 10:00']
-    expect(hasRegistrationWizardCurriculumScheduleCountMismatch(values, ctx)).toBe(true)
-  })
-
   it('테스트 비교용 overlay inspector와 빈 폼 키가 같다', () => {
     const values = createDefaultRegistrationWizardUiValues({
       participant: orgCtx.participant,

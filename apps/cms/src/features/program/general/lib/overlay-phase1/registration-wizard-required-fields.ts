@@ -11,7 +11,6 @@ import {
   DEFAULT_REGISTRATION_PARTICIPATION,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
-  curriculumMultiDateScheduleSlotCount,
   listIncompleteGeneralProgramRegistrationRequiredFields,
   type GeneralProgramRegistrationRequiredFieldContext,
 } from '@/features/program/general/lib/registration-required-fields'
@@ -325,7 +324,7 @@ export function hasRegistrationWizardCurriculumScheduleCountMismatch(
   if (ctx.educationScheduleMode !== 'date') return false
   const lineCount = values.scheduleLines.filter(line => typeof line === 'string' && line.trim()).length
   if (lineCount === 0) return false
-  return lineCount !== curriculumMultiDateScheduleSlotCount(ctx)
+  return lineCount !== Math.max(1, ctx.curriculumSessionCount)
 }
 
 /** 테스트 비교용 — UI 값을 overlay KV로 투영한 뒤 기존 검사와 키를 대조한다. 제품 저장 경로는 쓰지 않는다. */

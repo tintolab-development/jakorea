@@ -316,7 +316,7 @@ describe('일반 상세 공통정보 RHF 필수 검증', () => {
     expect(curriculumRegularSessionContentValidationKeys(2)).toEqual(
       expect.arrayContaining(['curriculum.unitContent[2]', 'curriculum.roundContent[2]'])
     )
-    expect(hasRhfCurriculumMultiDateScheduleCountMismatch(values)).toBe(true)
+    expect(hasRhfCurriculumMultiDateScheduleCountMismatch(values)).toBe(false)
   })
 
   it('VAL-08 일반 1차시 내용 비움', () => {
@@ -401,54 +401,6 @@ describe('일반 상세 공통정보 RHF 필수 검증', () => {
       content: '사업 운영기간 안에 교육 진행 일정을 입력해주세요',
     })
     expect(hasRhfCurriculumMultiDateScheduleCountMismatch(validValues())).toBe(false)
-  })
-
-  it('사전교육과 일반 2회차, 예정일 3줄이면 일치이다', () => {
-    expect(
-      hasRhfCurriculumMultiDateScheduleCountMismatch(
-        validValues({
-          sessionRound: 'multi',
-          scheduleCurriculumPreEducation: true,
-          educationScheduleMode: 'date',
-          educationScheduleLines: [
-            '26년 10월 26일(월) 16:16 ~ 16:20',
-            '26년 10월 26일(월) 16:20 ~ 16:25',
-            '26년 10월 26일(월) 16:25 ~ 17:30',
-          ],
-          curriculumSessions: [
-            {
-              sessionLabel: PRE_EDUCATION_SCHEDULE_LABEL,
-              title: '사전 교육',
-              description: '',
-              scheduleDate: '26년 10월 26일(월) 16:16 ~ 16:20',
-            },
-            { sessionLabel: '1회차', title: '1차시', description: '본문1' },
-            { sessionLabel: '2회차', title: '2차시', description: '본문2' },
-          ],
-        })
-      )
-    ).toBe(false)
-  })
-
-  it('사전교육을 빼면 예정일 3줄과 일반 2회차는 불일치이다', () => {
-    expect(
-      hasRhfCurriculumMultiDateScheduleCountMismatch(
-        validValues({
-          sessionRound: 'multi',
-          scheduleCurriculumPreEducation: false,
-          educationScheduleMode: 'date',
-          educationScheduleLines: [
-            '26년 10월 26일(월) 16:16 ~ 16:20',
-            '26년 10월 26일(월) 16:20 ~ 16:25',
-            '26년 10월 26일(월) 16:25 ~ 17:30',
-          ],
-          curriculumSessions: [
-            { sessionLabel: '1회차', title: '1차시', description: '본문1' },
-            { sessionLabel: '2회차', title: '2차시', description: '본문2' },
-          ],
-        })
-      )
-    ).toBe(true)
   })
 
   it('VAL-10 회차 수와 예정일 개수 불일치는 전용 안내 대상이다', () => {
