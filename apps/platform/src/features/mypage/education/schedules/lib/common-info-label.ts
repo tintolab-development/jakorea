@@ -44,6 +44,28 @@ function formatProgressSession(value: string | null | undefined): string | undef
   return `${n}차시`
 }
 
+export type EducationScheduleRowLabelInput = {
+  educationStructure?: PortalEducationStructure | null
+  sessionLabel?: string | null
+  scheduleName?: string | null
+}
+
+/**
+ * 교육일정 카드 회차/일정 라벨 — CMS `resolveSchoolDetailAttendanceSessionLeadLabel` 기준.
+ * 커리큘럼형: 회차명(`sessionLabel`), 일정형: 일정명(`scheduleName`). 없으면 `-`.
+ */
+export function resolveEducationScheduleRowLabel(input: EducationScheduleRowLabelInput): string {
+  const sessionLabel = optionalText(input.sessionLabel)
+  const scheduleName = optionalText(input.scheduleName)
+  if (input.educationStructure === 'CURRICULUM') {
+    return sessionLabel ?? EDUCATION_SCHEDULE_EMPTY_LABEL
+  }
+  if (input.educationStructure === 'SCHEDULE') {
+    return scheduleName ?? EDUCATION_SCHEDULE_EMPTY_LABEL
+  }
+  return sessionLabel ?? scheduleName ?? EDUCATION_SCHEDULE_EMPTY_LABEL
+}
+
 /**
  * 교육현황 일정 카드 청록 라벨 — 프로그램 공통정보.
  * 커리큘럼 복수: 차시, 커리큘럼 단일: 단원명, 일정형: 일정명.

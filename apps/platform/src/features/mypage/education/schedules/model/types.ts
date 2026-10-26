@@ -29,6 +29,8 @@ export type EducationScheduleAssignmentFile = {
   fileName: string
   /** 제출 형식 — 칩 스타일 분기 */
   kind: EducationScheduleAssignmentSubmissionKind
+  /** FILE 제출물 fileObjectId — 있어야 수정 제출 시 개별 삭제 가능 */
+  fileObjectId?: number
 }
 
 export type EducationScheduleAssignment = {
@@ -39,6 +41,10 @@ export type EducationScheduleAssignment = {
   /** 화면용 기한 라벨 (예: 2026년 04월 03일(금) 15:00 ~ 2026년 04월 10일(금) 18:00) */
   periodLabel: string
   status: EducationAssignmentSubmitStatus
+  /** 서버 최초 제출 가능 여부. 없으면 상태·기한 안내 규칙으로 판단 */
+  canSubmit?: boolean
+  /** 서버 수정 제출 가능 여부. 없으면 상태·기한 안내 규칙으로 판단 */
+  canResubmit?: boolean
   files?: EducationScheduleAssignmentFile[]
   /** mock/로컬 미리보기용 — remote GET이 우선 */
   feedback?: string
@@ -54,8 +60,10 @@ export type EducationScheduleItem = {
   sessionNumber: number
   /** 교육 진행일 (ISO date or datetime). 없으면 빈 문자열 — 날짜 폴백은 Row */
   heldAt: string
-  /** 카드 청록 라벨 — 공통정보 차시/단원명/일정명. 없으면 '-' */
+  /** 공통정보 차시/단원명/일정명. 없으면 '-' (정산·UJAT 등 공용) */
   title: string
+  /** 교육일정 카드 라벨 — 커리큘럼형 회차명, 일정형 일정명. 없으면 '-' */
+  rowLabel?: string
   attendanceStatus: EducationScheduleAttendanceStatus | null
   /** 사유 불참 시 사유 */
   absenceReason?: string
@@ -76,6 +84,15 @@ export type EducationScheduleItem = {
   scheduleStatus?: string | null
   classLabel?: string
   locationName?: string
+  /** 팀 프로그램 회차 정보 — teamRole 이 있을 때만 카드에 역할·팀명 노출 */
+  team?: EducationScheduleTeamInfo
+}
+
+export type EducationScheduleTeamInfo = {
+  /** 팀장 / 팀원 / 개인 (알 수 없는 코드는 원문) */
+  roleLabel: string
+  /** 팀명. 없으면 '-' */
+  teamName: string
 }
 
 export const EDUCATION_SCHEDULE_PAGE_SIZE = 7

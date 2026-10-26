@@ -5,7 +5,10 @@ import type {
   PortalEducationStructure,
   PortalSessionRound,
 } from '../../applications/api/activity-client'
-import { resolveEducationScheduleCommonInfoLabel } from './common-info-label.ts'
+import {
+  resolveEducationScheduleCommonInfoLabel,
+  resolveEducationScheduleRowLabel,
+} from './common-info-label.ts'
 import {
   formatDisplayDateTimeRange,
   normalizeScheduleDisplayLabel,
@@ -16,7 +19,26 @@ import type {
   EducationScheduleAssignmentFile,
   EducationScheduleAttendanceStatus,
   EducationScheduleItem,
+  EducationScheduleTeamInfo,
 } from '../model/types'
+
+const TEAM_ROLE_LABEL: Record<string, string> = {
+  LEADER: '팀장',
+  MEMBER: '팀원',
+  INDIVIDUAL: '개인',
+}
+
+function mapTeamInfo(
+  teamRole: string | null | undefined,
+  teamName: string | null | undefined,
+): EducationScheduleTeamInfo | undefined {
+  const role = optionalText(teamRole ?? undefined)?.toUpperCase()
+  if (!role) return undefined
+  return {
+    roleLabel: TEAM_ROLE_LABEL[role] ?? role,
+    teamName: optionalText(teamName ?? undefined) ?? '-',
+  }
+}
 
 function optionalText(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim()
@@ -88,11 +110,16 @@ function mapSubmissions(
     const fileName = optionalText(row.fileName) ?? optionalText(row.url)
     if (!fileName) return []
     const kind = (row.kind ?? '').toUpperCase() === 'URL' ? ('url' as const) : ('file' as const)
+    const fileObjectId =
+      kind === 'file' && typeof row.fileObjectId === 'number' && row.fileObjectId > 0
+        ? row.fileObjectId
+        : undefined
     return [
       {
         id: row.id != null ? String(row.id) : `submission-${index}`,
         fileName,
         kind,
+        ...(fileObjectId != null ? { fileObjectId } : {}),
       } satisfies EducationScheduleAssignmentFile,
     ]
   })
@@ -115,6 +142,10 @@ function mapAssignment(
     submitEndAt,
     periodLabel,
     status: mapAssignmentStatus(assignment.status),
+    ...(typeof assignment.canSubmit === 'boolean' ? { canSubmit: assignment.canSubmit } : {}),
+    ...(typeof assignment.canResubmit === 'boolean'
+      ? { canResubmit: assignment.canResubmit }
+      : {}),
     ...(assignment.formResponseId != null ? { formResponseId: assignment.formResponseId } : {}),
     ...(files ? { files } : {}),
   }
@@ -146,6 +177,11 @@ export function mapPortalEducationSchedule(
     title: item.title,
     sessionLabel: item.sessionLabel,
   })
+  const rowLabel = resolveEducationScheduleRowLabel({
+    educationStructure: meta?.educationStructure,
+    sessionLabel: item.sessionLabel,
+    scheduleName: item.scheduleName,
+  })
   const heldAt = optionalText(item.startAt ?? undefined) ?? ''
   const progressTimeLabel =
     (optionalText(item.progressTimeLabel)
@@ -161,6 +197,7 @@ export function mapPortalEducationSchedule(
   const scheduleStatus = optionalText(item.scheduleStatus)
   const classLabel = optionalText(item.classLabel)
   const locationName = optionalText(item.locationName)
+  const team = mapTeamInfo(item.teamRole, item.teamName)
 
   return {
     id,
@@ -172,6 +209,7 @@ export function mapPortalEducationSchedule(
     sessionNumber,
     heldAt,
     title,
+    rowLabel,
     attendanceStatus: mapAttendance(item.attendanceStatus),
     ...(optionalText(item.absenceReason) ? { absenceReason: item.absenceReason!.trim() } : {}),
     ...(sessionLabel ? { sessionLabel } : {}),
@@ -184,5 +222,6 @@ export function mapPortalEducationSchedule(
     ...(scheduleStatus ? { scheduleStatus } : {}),
     ...(classLabel ? { classLabel } : {}),
     ...(locationName ? { locationName } : {}),
+    ...(team ? { team } : {}),
   }
 }

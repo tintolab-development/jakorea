@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PFButton, PFMetaBadge, PFPagination, PFStateBadge, PFText } from '@/shared/ui'
+import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { EducationSessionCard, EducationSessionCardHeader } from '../../shared'
 import lectureTeachingMintUrl from '@/widgets/mypage-layout/image/icon/lecture-teaching-mint-24.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
@@ -95,13 +96,13 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
     setLoading(true)
     setPageNo(next)
   }
-  return <section className={styles.panel} aria-labelledby="lecture-report-title">
+  if (loading && !page) return <EducationSessionListSkeleton statusMessage="강의보고서 목록을 불러오는 중입니다." />
+  return <section className={styles.panel} aria-labelledby="lecture-report-title" aria-busy={loading}>
     <div className={styles.heading}>
       <h2 id="lecture-report-title" className={styles.headingTitle}>
         강의보고서 <span className={styles.headingCount}>{page?.totalElements ?? 0}건</span>
       </h2>
     </div>
-    {loading ? <p role="status">강의보고서 목록을 불러오는 중입니다.</p> : null}
     {error ? <p role="alert">{error}</p> : null}
     {!loading && page?.totalElements === 0 ? <p>제출할 강의보고서가 없습니다.</p> : null}
     {page && page.items.length > 0 ? <>

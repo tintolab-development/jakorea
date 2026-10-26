@@ -72,9 +72,11 @@ const assignmentOn = mapPortalEducationSchedule(
       submitStartAt: '2026-04-03T15:00:00',
       submitEndAt: '2026-04-10T18:00:00',
       status: 'FEEDBACK',
+      canSubmit: false,
+      canResubmit: true,
       formResponseId: 88,
       submissions: [
-        { id: 1, kind: 'FILE', fileName: '과제.pdf' },
+        { id: 1, kind: 'FILE', fileName: '과제.pdf', fileObjectId: 501 },
         { id: 2, kind: 'URL', fileName: '과제_링크', url: 'https://example.com' },
       ],
     },
@@ -86,6 +88,11 @@ assert.equal(assignmentOn.assignment.status, 'feedback')
 assert.equal(assignmentOn.assignment.formResponseId, 88)
 assert.equal(assignmentOn.assignment.files?.length, 2)
 assert.equal(assignmentOn.assignment.files?.[1]?.kind, 'url')
+assert.equal(assignmentOn.assignment.files?.[0]?.fileObjectId, 501)
+assert.equal(assignmentOn.assignment.files?.[1]?.fileObjectId, undefined)
+assert.equal(assignmentOn.assignment.canSubmit, false)
+assert.equal(assignmentOn.assignment.canResubmit, true)
+assert.equal(assignmentOff.assignment, undefined)
 assert.ok(assignmentOn.assignment.periodLabel.includes('~'))
 
 const scheduleLabel = mapPortalEducationSchedule(
@@ -129,6 +136,7 @@ const curriculumMultiSession = mapPortalEducationSchedule(
   { educationStructure: 'CURRICULUM', sessionRound: 'MULTI' },
 )
 assert.equal(curriculumMultiSession.title, '1차시')
+assert.equal(curriculumMultiSession.rowLabel, '1회차')
 
 const scheduleNameOverSlotTitle = mapPortalEducationSchedule(
   {
@@ -141,6 +149,7 @@ const scheduleNameOverSlotTitle = mapPortalEducationSchedule(
   { educationStructure: 'SCHEDULE', sessionRound: 'SINGLE' },
 )
 assert.equal(scheduleNameOverSlotTitle.title, '개회식')
+assert.equal(scheduleNameOverSlotTitle.rowLabel, '개회식')
 
 const emptyCommonInfo = mapPortalEducationSchedule(
   {
@@ -179,5 +188,20 @@ assert.deepEqual(availableActions.availableActions, ['VIEW_ATTENDANCE'])
 assert.equal(availableActions.assignmentStatus, 'ASSIGNED')
 assert.equal(availableActions.classLabel, '1학년 3반')
 assert.equal(availableActions.attendanceStatus, 'absent')
+
+const teamLeader = mapPortalEducationSchedule(
+  { scheduleId: 20, teamRole: 'LEADER', teamName: '글로벌챌린저스' },
+  0,
+)
+assert.deepEqual(teamLeader.team, { roleLabel: '팀장', teamName: '글로벌챌린저스' })
+
+const teamIndividual = mapPortalEducationSchedule(
+  { scheduleId: 21, teamRole: 'INDIVIDUAL', teamName: null },
+  0,
+)
+assert.deepEqual(teamIndividual.team, { roleLabel: '개인', teamName: '-' })
+
+const nonTeamProgram = mapPortalEducationSchedule({ scheduleId: 22, teamName: '무시' }, 0)
+assert.equal(nonTeamProgram.team, undefined)
 
 console.log('map-from-portal.selfcheck: ok')

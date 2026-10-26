@@ -127,6 +127,8 @@ export type PortalEducationScheduleAssignmentSubmission = {
   kind?: PortalAssignmentSubmissionKind | string
   fileName?: string
   url?: string
+  /** FILE 제출물 — 수정 제출 시 유지·제외 판단에 쓴다 */
+  fileObjectId?: number | null
 }
 
 export type PortalEducationScheduleAssignment = {
@@ -135,6 +137,10 @@ export type PortalEducationScheduleAssignment = {
   submitEndAt?: string | null
   periodLabel?: string
   status?: PortalAssignmentStatus | string
+  /** 최초 제출 가능 여부 (서버 판단) */
+  canSubmit?: boolean
+  /** 수정 제출 가능 여부 (서버 판단) */
+  canResubmit?: boolean
   formResponseId?: number
   submissions?: PortalEducationScheduleAssignmentSubmission[]
 }
@@ -168,6 +174,10 @@ export type PortalEducationSchedule = {
   surveyCount?: number
   absenceReasonStatus?: string
   availableActions?: string[]
+  /** 팀 프로그램 회차별 역할 LEADER | MEMBER | INDIVIDUAL. 팀 프로그램이 아니면 null */
+  teamRole?: string | null
+  /** 팀 프로그램 회차별 팀명. 개인 참여면 null */
+  teamName?: string | null
 }
 
 export type PortalScheduleAttendanceDetail = {

@@ -100,7 +100,7 @@ export function resolveEducationAssignmentGuide(
 
   if (status === 'feedback') {
     return {
-      message: '담당자의 과제 피드백이 있어요',
+      message: '담당자의 피드백이 있어요',
       tone: 'feedback',
       submitLabel: '수정 제출하기',
       submitDisabled: false,
@@ -135,7 +135,7 @@ export function resolveEducationAssignmentGuide(
     return {
       statusLabel: '과제 제출 완료',
       statusTone: 'submitted',
-      message: '제출한 과제는 마감 전까지는 수정 제출이 가능해요',
+      message: '제출한 과제는 마감 전까지는 수정이 가능해요',
       tone: 'default',
       submitLabel: '과제 제출하기',
       submitDisabled: false,

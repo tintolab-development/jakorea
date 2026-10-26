@@ -368,7 +368,6 @@ export function MypageLectureDetailPage() {
     if (active === 'schedule') {
       return (
         <EducationSchedulePanel
-          programId={program.id}
           applicationType={routeApplicationType}
           applicationId={application.id}
           lastParticipatedSession={

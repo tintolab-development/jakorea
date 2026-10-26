@@ -733,7 +733,6 @@ export function MypageEducationDetailPage() {
       }
       return (
         <EducationSchedulePanel
-          programId={program.id}
           applicationType={routeApplicationType}
           applicationId={application.id}
           lastParticipatedSession={
