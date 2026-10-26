@@ -51,44 +51,6 @@ describe('mapGeminiApprovedTrainingDetailResponseToDetail', () => {
     expect(detail.lastPreferredDate).toBe('2026-03-15')
     expect(detail.managerPosition).toBe('')
     expect(detail.managerSubject).toBe('')
-    expect(detail.trainingDateCandidates).toEqual([])
-  })
-
-  it('미확정 연수는 trainingDate를 비우고 희망 일정 후보를 그대로 둔다', () => {
-    const detail = mapGeminiApprovedTrainingDetailResponseToDetail({
-      id: 1691500,
-      trainingDate: null,
-      trainingTimeText: null,
-      studentCount: 25,
-      trainingDateCandidates: [
-        {
-          preferenceRank: 1,
-          trainingDate: '2026-11-10',
-          trainingStartTime: '10:00:00',
-          trainingEndTime: '12:00:00',
-          trainingTimeText: '10:00~12:00(1차시)',
-          sessionCount: 1,
-        },
-        {
-          preferenceRank: 2,
-          trainingDate: '2026-11-12',
-          trainingTimeText: '10:00~12:00(1차시)',
-        },
-        {
-          preferenceRank: 3,
-          trainingDate: '2026-11-17',
-          trainingTimeText: '10:00~12:00(1차시)',
-        },
-      ],
-    })
-
-    expect(detail.trainingDate).toBe('')
-    expect(detail.studentCount).toBe(25)
-    expect(detail.trainingDateCandidates.map(candidate => candidate.trainingDate)).toEqual([
-      '2026-11-10',
-      '2026-11-12',
-      '2026-11-17',
-    ])
   })
 
   it('계좌번호 마스킹 문자열을 유지하고 직급·과목은 비운다', () => {

@@ -26,7 +26,6 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { GEMINI_VISITING_TRAINING_PROGRAM_TYPE } from './capabilities'
 import { resolveGeminiPreferredLectureSchedule } from './preferred-lecture-schedule'
-import { mapGeminiTrainingDateCandidates } from '@/features/program/gemini/lib/approved/training-date-candidates'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
@@ -505,7 +504,7 @@ export function mapGeminiRecruitmentItemToApprovedRow(
     instructorAssigned,
     trainingDate,
     trainingTimeText,
-    trainingDateCandidates: mapGeminiTrainingDateCandidates(dto.trainingDateCandidates),
+    trainingDateCandidates: [],
     studentCount: dto.studentCount ?? 0,
     instructorName,
     managerName: dto.managerName?.trim() || '-',
