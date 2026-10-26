@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildMemberListDeleteGuideLines,
+  buildMemberSingleDeleteGuideLines,
+  MEMBER_BULK_DELETE_IMPACT_LINE,
   buildMemberWithdrawMessageLines,
   buildSchoolDeleteMessageLines,
   buildSelfWithdrawMessageLines,
@@ -32,14 +34,40 @@ describe('member-withdraw-delete-guide', () => {
     expect(lines).toHaveLength(3)
   })
 
+  it('buildMemberSingleDeleteGuideLines — 단건·상세 본문', () => {
+    expect(buildMemberSingleDeleteGuideLines('홍길동')).toEqual([
+      '**[홍길동] 님**을 삭제하시겠습니까?',
+      MEMBER_BULK_DELETE_IMPACT_LINE,
+    ])
+    expect(buildMemberSingleDeleteGuideLines('  ')).toEqual([])
+  })
+
   it('buildMemberListDeleteGuideLines — 회원 단일', () => {
-    const lines = buildMemberListDeleteGuideLines(['홍길동'], 'all')
+    expect(buildMemberListDeleteGuideLines(['홍길동'], 'all')).toEqual(
+      buildMemberSingleDeleteGuideLines('홍길동')
+    )
+  })
+
+  it('buildMemberListDeleteGuideLines — 강사 단일은 기존 탈퇴 경고를 유지', () => {
+    const lines = buildMemberListDeleteGuideLines(['홍길동'], 'instructors')
     expect(lines[0]).toBe('**[홍길동] 님**을 삭제하시겠습니까?')
+    expect(lines).toHaveLength(3)
+    expect(lines[1]).toContain('활동 내역')
   })
 
   it('buildMemberListDeleteGuideLines — 회원 복수', () => {
     const lines = buildMemberListDeleteGuideLines(['김틴토', 'B', 'C'], 'all')
-    expect(lines[0]).toBe('**[김틴토] 님 외 2명**을 삭제하시겠습니까?')
+    expect(lines).toEqual([
+      '**[김틴토] 님 외 2명**을 삭제하시겠습니까?',
+      MEMBER_BULK_DELETE_IMPACT_LINE,
+    ])
+  })
+
+  it('buildMemberListDeleteGuideLines — 강사 복수는 기존 탈퇴 경고를 유지', () => {
+    const lines = buildMemberListDeleteGuideLines(['김틴토', 'B'], 'instructors')
+    expect(lines[0]).toBe('**[김틴토] 님 외 1명**을 삭제하시겠습니까?')
+    expect(lines).toHaveLength(3)
+    expect(lines[1]).toContain('활동 내역')
   })
 
   it('buildMemberListDeleteGuideLines — 학교 단일은 school delete와 동일', () => {
