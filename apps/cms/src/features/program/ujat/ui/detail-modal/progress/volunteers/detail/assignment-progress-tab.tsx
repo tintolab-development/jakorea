@@ -405,8 +405,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             <CmsButton
               type="button"
               variant="delete"
-              size="large"
-              width={140}
+              size="h40"
               onClick={openCancelModal}
             >
               배정 취소
@@ -414,8 +413,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             <CmsButton
               type="button"
               variant="secondary"
-              size="large"
-              width={140}
+              size="h40"
               onClick={openAttendanceCorrectionModal}
             >
               출결 정정
@@ -423,8 +421,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             <CmsButton
               type="button"
               variant="primary"
-              size="large"
-              width={180}
+              size="h40"
               onClick={openAssignModal}
             >
               파트너 및 교육 배정

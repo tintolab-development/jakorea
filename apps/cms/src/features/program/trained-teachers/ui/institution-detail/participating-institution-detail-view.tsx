@@ -711,14 +711,15 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
             <>
               <CmsButton
                 variant="delete"
-                size="large"
-                width={140}
+                size="h40"
                 disabled={isActivityWithdrawn || isApplicationInfoEditing}
                 onClick={handleRequestActivityWithdraw}
               >
                 활동 포기
               </CmsButton>
               <ProgramEditInfoActions
+                size="h40"
+                width={false}
                 isEditing={isApplicationInfoEditing}
                 idleVariant="secondary"
                 disabled={
@@ -736,8 +737,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"
-                  size="large"
-                  width={140}
+                  size="h40"
                   disabled={isApplicationInfoEditing}
                   onClick={handleAdminCommentEditEnter}
                 >
@@ -747,7 +747,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               <PersonalInfoRevealButton
                 labelMode="toggle"
                 revealed={personalInfoRevealed}
-                style={{ minWidth: 180 }}
+                cmsSize="h40"
+                width="auto"
                 onClick={handlePrivacyToggleClick}
               />
             </>

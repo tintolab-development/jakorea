@@ -2225,8 +2225,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               {showActivityWithdrawButton ? (
                 <CmsButton
                   variant="delete"
-                  size="large"
-                  width={140}
+                  size="h40"
                   disabled={
                     !canRequestActivityWithdraw ||
                     isApplicationInfoEditing ||
@@ -2238,6 +2237,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 </CmsButton>
               ) : null}
               <ProgramEditInfoActions
+                size="h40"
+                width={false}
                 isEditing={isApplicationInfoEditing}
                 idleVariant="secondary"
                 onEdit={requestStartApplicationInfoEdit}
@@ -2253,8 +2254,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"
-                  size="large"
-                  width={140}
+                  size="h40"
                   disabled={isApplicationInfoEditing}
                   onClick={handleAdminCommentEditEnter}
                 >
@@ -2264,7 +2264,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               <PersonalInfoRevealButton
                 labelMode="toggle"
                 revealed={personalInfoRevealed}
-                style={{ minWidth: 180 }}
+                cmsSize="h40"
+                width="auto"
                 onClick={handlePrivacyToggleClick}
               />
             </>
@@ -2428,12 +2429,12 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   </span>
                 </div>
                 <div className="info-section-buttons--wrapper">
-                  <CmsButton variant="delete" size="large" onClick={handleUnassignClick}>
+                  <CmsButton variant="delete" size="h40" onClick={handleUnassignClick}>
                     배정 취소
                   </CmsButton>
                   <CmsButton
                     variant="secondary"
-                    size="large"
+                    size="h40"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (currentAssignedCount >= requiredInstructorCount) {
@@ -2480,7 +2481,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 <div className="info-section-buttons--wrapper">
                   <CmsButton
                     variant="secondary"
-                    size="large"
+                    size="h40"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={handleSelectAssignClick}
                   >

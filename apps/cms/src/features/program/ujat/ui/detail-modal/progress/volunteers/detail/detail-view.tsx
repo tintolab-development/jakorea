@@ -224,8 +224,7 @@ export function UjatEducationProgressVolunteerDetailView({
       <CmsButton
         type="button"
         variant="delete"
-        size="large"
-        width={140}
+        size="h40"
         disabled={activityWithdrawScheduleOptions.length === 0}
         onClick={handleRequestActivityWithdraw}
       >
@@ -234,8 +233,7 @@ export function UjatEducationProgressVolunteerDetailView({
       <CmsButton
         type="button"
         variant="secondary"
-        size="large"
-        width={180}
+        size="h40"
         icon={<ButtonDownloadIcon />}
         onClick={() => setActivityCertPreviewOpen(true)}
       >
@@ -244,7 +242,7 @@ export function UjatEducationProgressVolunteerDetailView({
       <CmsButton
         type="button"
         variant="secondary"
-        size="large"
+        size="h40"
         icon={<ButtonDownloadIcon />}
         disabled={studentCertificateExportActive}
         onClick={() => setStudentCertificateIssueModalOpen(true)}
@@ -252,6 +250,8 @@ export function UjatEducationProgressVolunteerDetailView({
         수료증/참여인증서 발급
       </CmsButton>
       <ProgramEditInfoActions
+        size="h40"
+        width={false}
         isEditing={isEditing}
         onEdit={handleEnterEdit}
         onCancel={handleCancelEdit}
@@ -260,8 +260,7 @@ export function UjatEducationProgressVolunteerDetailView({
       <CmsButton
         type="button"
         variant="primary"
-        size="large"
-        width={160}
+        size="h40"
         disabled={isEditing}
         onClick={handleAdminCommentEditEnter}
       >
@@ -271,7 +270,8 @@ export function UjatEducationProgressVolunteerDetailView({
         labelMode="stickyReveal"
         revealed={personalInfoRevealed}
         onClick={openPersonalInfoRevealConfirm}
-        width={180}
+        cmsSize="h40"
+        width="auto"
       />
     </>
   )

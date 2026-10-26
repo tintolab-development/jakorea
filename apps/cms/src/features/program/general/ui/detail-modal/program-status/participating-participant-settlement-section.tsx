@@ -104,8 +104,7 @@ export function ParticipatingParticipantSettlementSection({
           <div className="participating-instructor-settlement-section__payment-statement-cell-inner">
             <CmsButton
               variant="default"
-              size="medium"
-              width={88}
+              size="h40"
               disabled={!record.canOpenDetail || !remoteEnabled}
               onClick={() => setDetailApplicationId(record.settlementApplicationId)}
             >
