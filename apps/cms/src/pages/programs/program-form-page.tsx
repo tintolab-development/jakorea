@@ -25,7 +25,8 @@ export function ProgramFormPage() {
 
   const handleSubmit = async (data: ProgramFormData) => {
     try {
-      // GENERAL 레거시 rounds 전송 중단 — 폼 내부 rounds(data.rounds)는 두고 outbound에서만 제외
+      // GENERAL 레거시 rounds는 일정 교체 입력 — 폼 내부는 두고 remote create/update에는 보내지 않는다.
+
       const { rounds: _legacyRounds, ...programData } = data
       void _legacyRounds
 
@@ -55,4 +56,3 @@ export function ProgramFormPage() {
     </div>
   )
 }
-

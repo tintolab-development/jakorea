@@ -11,6 +11,10 @@ export const queryKeys = {
   list: (scope: 'remote' | 'local', params: ListParams) =>
     [...queryKeys.lists(), scope, params] as const,
   details: () => [...queryKeys.all, 'detail'] as const,
+  directAssignmentCandidatesRoot: (programId: string) =>
+    [...queryKeys.all, 'direct-assignment-candidates', programId] as const,
+  directAssignmentCandidates: (programId: string, educationSlotId: string) =>
+    [...queryKeys.directAssignmentCandidatesRoot(programId), educationSlotId] as const,
   detail: (scope: 'remote' | 'local', programId: string) =>
     [...queryKeys.details(), scope, programId] as const,
   applications: () => [...queryKeys.all, 'applications'] as const,

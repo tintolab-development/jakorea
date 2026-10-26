@@ -9,7 +9,13 @@
 import { useEffect } from 'react'
 import { Form, Space } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
-import { CmsButton, CmsInput, ContentModal, SchoolSearch } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsInput,
+  ContentModal,
+  SchoolSearch,
+  showRegisterCompletedAlert,
+} from '@/shared/ui'
 import type { SchoolSearchSelection, SchoolSearchSelectMeta } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
@@ -132,6 +138,7 @@ export function SchoolRegisterModal({
       }
       form.resetFields()
       onClose()
+      showRegisterCompletedAlert()
     } catch {
       /* onSubmit 실패 시 모달 유지 — 부모에서 메시지 처리 */
     }

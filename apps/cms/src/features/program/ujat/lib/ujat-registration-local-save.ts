@@ -206,6 +206,16 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
       (overlayString(overlay, 'ujat.basicInfo.partnerInvolvement') === 'yes'),
     generalParticipantTypes: participantTypes as Program['generalParticipantTypes'],
     generalSurveyMenuKeys: surveyKeys as Program['generalSurveyMenuKeys'],
+    venue:
+      args.basicInfo?.venueDetail?.trim() ||
+      args.basicInfo?.venue?.trim() ||
+      undefined,
+    institutionType:
+      args.basicInfo?.venueKind === 'outside'
+        ? 'outside_school'
+        : args.basicInfo?.venueKind === 'inside'
+          ? 'inside_school'
+          : undefined,
     generalCommonInfo: {
       sponsorManagerContactIds: args.basicInfo?.sponsorManagerContactIds,
       sponsorManagerContactId: args.basicInfo?.sponsorManagerContactId,
@@ -214,6 +224,13 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
       ipOwned: args.basicInfo?.ipOwned,
       courseDeliveredBy: args.basicInfo?.courseDeliveredBy,
       partnerInvolvement: args.basicInfo?.partnerInvolvement,
+      venueKind:
+        args.basicInfo?.venueKind === 'inside' ||
+        args.basicInfo?.venueKind === 'outside' ||
+        args.basicInfo?.venueKind === 'other'
+          ? args.basicInfo.venueKind
+          : undefined,
+      venueDetail: args.basicInfo?.venueDetail?.trim() || args.basicInfo?.venue?.trim() || undefined,
     },
     createdAt: now,
     updatedAt: now,
@@ -259,6 +276,8 @@ function applyUjatRegistrationCreateOverlaysToProgram(
       pickUjatRecruitVolunteerOverlay(overlay)
     ),
     ujatRegistrationOverlay: overlay,
+    venue: withRegistration.venue ?? withVolunteer.venue,
+    institutionType: withRegistration.institutionType ?? withVolunteer.institutionType,
     generalCommonInfo: {
       ...withVolunteer.generalCommonInfo,
       detailedProgramName: withRegistration.generalCommonInfo?.detailedProgramName,
@@ -267,6 +286,12 @@ function applyUjatRegistrationCreateOverlaysToProgram(
       paymentItems: withRegistration.generalCommonInfo?.paymentItems,
       deductionItems: withRegistration.generalCommonInfo?.deductionItems,
       sponsorManagerLine: withRegistration.generalCommonInfo?.sponsorManagerLine,
+      venueKind:
+        withRegistration.generalCommonInfo?.venueKind ??
+        withVolunteer.generalCommonInfo?.venueKind,
+      venueDetail:
+        withRegistration.generalCommonInfo?.venueDetail ??
+        withVolunteer.generalCommonInfo?.venueDetail,
     },
   }
 }

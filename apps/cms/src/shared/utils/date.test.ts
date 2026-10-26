@@ -10,12 +10,26 @@ import {
   formatDateTimeDot,
   formatDateTimeDotWithWeekday,
   formatDateTimeSecondsDot,
+  getSeoulCalendarDate,
+  isBeforeSeoulToday,
 } from './date'
+import dayjs from 'dayjs'
 
 describe('formatDate', () => {
   it('잘못된 날짜가 들어와도 예외 대신 -를 반환한다', () => {
     expect(formatDate('not-a-date')).toBe('-')
     expect(formatDate(null)).toBe('-')
+  })
+})
+
+describe('isBeforeSeoulToday', () => {
+  it('KST 자정 경계에서 어제만 비활성화하고 오늘은 허용한다', () => {
+    const now = new Date('2026-10-25T15:00:00.000Z') // 2026-10-26 00:00 KST
+
+    expect(getSeoulCalendarDate(now)).toBe('2026-10-26')
+    expect(isBeforeSeoulToday(dayjs('2026-10-25'), now)).toBe(true)
+    expect(isBeforeSeoulToday(dayjs('2026-10-26'), now)).toBe(false)
+    expect(isBeforeSeoulToday(dayjs('2026-10-27'), now)).toBe(false)
   })
 })
 

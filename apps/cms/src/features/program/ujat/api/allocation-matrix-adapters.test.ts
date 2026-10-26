@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildUjatAttendanceSessionsFromMatrix,
+  collectUnavailableScheduleIds,
   mapAllocationMatrixToRegionTableData,
   mapApiAttendanceStatusToUjatUi,
 } from './allocation-matrix-adapters'
@@ -72,6 +73,75 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     expect(table.rows[1]?.isWithdrawnVolunteer).toBe(true)
     expect(table.rows[1]?.cells[0]).toMatchObject({ kind: 'empty', blockedEmpty: true })
   })
+
+  it('배정 불가 셀에 BE unavailability 대체자 이름을 붙인다', () => {
+    const matrix: UjatAllocationMatrixResponse = {
+      ...MATRIX,
+      volunteers: [
+        MATRIX.volunteers![0]!,
+        {
+          participantId: 202,
+          volunteerName: '이불가',
+          cells: [{ columnKey: '10:100', scheduleId: 10, unavailable: true }],
+        },
+      ],
+    }
+    expect(collectUnavailableScheduleIds(matrix)).toEqual(['10'])
+
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix,
+      regionKey: 'seoul',
+      unavailabilityByScheduleId: {
+        '10': [{ scheduleId: 10, participantId: 202, replacementParticipantId: 201 }],
+      },
+    })
+    expect(table.rows[1]?.cells[0]).toEqual({
+      kind: 'empty',
+      blockedEmpty: true,
+      substituteName: '김봉사',
+    })
+  })
+
+  it('같은 날 다른 일정의 활동 불가 행 대체자는 이 셀에 붙이지 않는다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          MATRIX.volunteers![0]!,
+          {
+            participantId: 202,
+            volunteerName: '이불가',
+            cells: [{ columnKey: '10:100', scheduleId: 10, unavailable: true }],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+      unavailabilityByScheduleId: {
+        '10': [{ scheduleId: 11, participantId: 202, replacementParticipantId: 201 }],
+      },
+    })
+    expect(table.rows[1]?.cells[0]).toEqual({ kind: 'empty', blockedEmpty: true })
+  })
+
+  it('대체자가 없으면 불가 표시만 남긴다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          {
+            participantId: 202,
+            volunteerName: '이불가',
+            cells: [{ columnKey: '10:100', scheduleId: 10, unavailable: true }],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+      unavailabilityByScheduleId: {
+        '10': [{ scheduleId: 10, participantId: 202, replacementParticipantId: null }],
+      },
+    })
+    expect(table.rows[0]?.cells[0]).toEqual({ kind: 'empty', blockedEmpty: true })
+  })
 })
 
 describe('buildUjatAttendanceSessionsFromMatrix', () => {
@@ -93,8 +163,17 @@ describe('buildUjatAttendanceSessionsFromMatrix', () => {
 })
 
 describe('mapApiAttendanceStatusToUjatUi', () => {
-  it('maps known statuses', () => {
+  it('maps each recorded API status without changing its meaning', () => {
     expect(mapApiAttendanceStatusToUjatUi('PRESENT')).toBe('present')
+    expect(mapApiAttendanceStatusToUjatUi('LATE')).toBe('late')
+    expect(mapApiAttendanceStatusToUjatUi('ABSENT')).toBe('absent')
     expect(mapApiAttendanceStatusToUjatUi('EXCUSED')).toBe('excused_absence')
+  })
+
+  it('maps null, undefined, and non-attendance progress values to 미처리', () => {
+    expect(mapApiAttendanceStatusToUjatUi(null)).toBe('unprocessed')
+    expect(mapApiAttendanceStatusToUjatUi(undefined)).toBe('unprocessed')
+    expect(mapApiAttendanceStatusToUjatUi('SCHEDULED')).toBe('unprocessed')
+    expect(mapApiAttendanceStatusToUjatUi('COMPLETED')).toBe('unprocessed')
   })
 })

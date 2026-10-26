@@ -6,6 +6,15 @@ const PAYMENT_STATEMENT_CONFLICT_FALLBACK =
 
 export const SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED =
   'SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED'
+export const FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED = 'FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED'
+export const SENSITIVE_FILE_RELAY_REQUIRED = 'SENSITIVE_FILE_RELAY_REQUIRED'
+
+export const SETTLEMENT_EXPORT_ALREADY_DOWNLOADED_MESSAGE =
+  '이미 다운로드한 정산 양식은 다시 받을 수 없습니다. 양식을 새로 발급해 주세요.'
+export const FILE_DOWNLOAD_TOKEN_INVALID_MESSAGE =
+  '다운로드 토큰이 만료되었거나 유효하지 않습니다. 양식을 새로 발급해 주세요.'
+export const SENSITIVE_FILE_RELAY_REQUIRED_MESSAGE =
+  '민감 정산 파일은 일반 다운로드 주소로 받을 수 없습니다. 미리보기에서 엑셀 다운로드를 다시 시도해 주세요.'
 export const SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE =
   'SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE'
 export const SETTLEMENT_CORRECTION_RESTORE_STATUS_UNAVAILABLE =
@@ -21,8 +30,9 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
   PAYMENT_STATEMENT_IDS_REQUIRED: '확인할 지급조서를 선택해 주세요.',
   PAYMENT_STATEMENT_NOT_FOUND: '지급조서를 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
   [PAYMENT_STATEMENT_STATUS_CONFLICT]: PAYMENT_STATEMENT_CONFLICT_FALLBACK,
-  [SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED]:
-    '이미 전달된 정산 파일은 다시 다운로드할 수 없습니다. 새 파일을 발급한 뒤 다시 다운로드해 주세요. 기존 발급 이력은 유지됩니다.',
+  [SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED]: SETTLEMENT_EXPORT_ALREADY_DOWNLOADED_MESSAGE,
+  [FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED]: FILE_DOWNLOAD_TOKEN_INVALID_MESSAGE,
+  [SENSITIVE_FILE_RELAY_REQUIRED]: SENSITIVE_FILE_RELAY_REQUIRED_MESSAGE,
   [SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE]:
     '이미 지급 완료된 정산은 원상 복구할 수 없어 정정 반려할 수 없습니다.',
   [SETTLEMENT_CORRECTION_RESTORE_STATUS_UNAVAILABLE]:
@@ -56,6 +66,13 @@ export function getSettlementApiErrorMessage(error: unknown, fallback: string): 
     const code = readErrorCode(response.data)
     const mapped = code ? SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES[code] : undefined
     if (mapped) {
+      if (
+        code === SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED ||
+        code === FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED ||
+        code === SENSITIVE_FILE_RELAY_REQUIRED
+      ) {
+        return mapped
+      }
       const msg = extractApiErrorMessage(response.data, {
         httpStatus: response.status,
         fallback: mapped,
@@ -84,6 +101,16 @@ export function getSettlementApiErrorCode(error: unknown): string | undefined {
 export function isSettlementExportAlreadyDownloadedError(error: unknown): boolean {
   const response = readAxiosResponse(error)
   return response?.status === 409 && getSettlementApiErrorCode(error) === SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED
+}
+
+export function isSettlementExportReissueRequiredError(error: unknown): boolean {
+  const code = getSettlementApiErrorCode(error)
+  if (code === SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED) {
+    return isSettlementExportAlreadyDownloadedError(error)
+  }
+  if (code !== FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED) return false
+  const status = readAxiosResponse(error)?.status
+  return status === 400 || status === 401 || status === 403 || status === 409 || status === 410
 }
 
 export function getSettlementConfigErrorField(

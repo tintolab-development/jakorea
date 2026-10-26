@@ -18,6 +18,9 @@ const BUSINESS_START_LOCK_PATTERN =
 
 const SPONSOR_INVALID_PATTERN = /sponsor|후원사|program_sponsor|sponsorId/i
 
+const PUBLIC_SURVEY_FILE_QUESTION_NOT_SUPPORTED_MESSAGE =
+  '파일 첨부 문항이 있는 설문은 비로그인 공유 링크를 만들 수 없습니다. 파일 문항을 빼고 다시 공유해 주세요.'
+
 /** Portal 희망 교육 일정 서버 검증 — BE 회신 2026-09-18 */
 const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   PARTICIPANT_TYPE_UNSUPPORTED: '이 경로로는 강사 참여자만 등록할 수 있습니다.',
@@ -163,6 +166,9 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (organizationAssignmentMessage) return organizationAssignmentMessage
 
   const code = extractApiErrorCode(error)
+  if (code === 'PUBLIC_SURVEY_FILE_QUESTION_NOT_SUPPORTED') {
+    return PUBLIC_SURVEY_FILE_QUESTION_NOT_SUPPORTED_MESSAGE
+  }
   if (isProgramEducationStructureGuardCode(code)) {
     return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
   }

@@ -39,6 +39,27 @@ function formatTransferDateDisplay(iso: string): string {
   return `${y}. ${String(m).padStart(2, '0')}. ${String(d).padStart(2, '0')}(${dow})`
 }
 
+function formatPaidAtDisplay(iso: string | undefined): string {
+  if (!iso) return '-'
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]))
+  const year = Number(values.year)
+  const month = Number(values.month)
+  const day = Number(values.day)
+  if (!year || !month || !day) return '-'
+
+  const dow = KO_WEEKDAY[new Date(Date.UTC(year, month - 1, day)).getUTCDay()]
+  return `${year}. ${String(month).padStart(2, '0')}. ${String(day).padStart(2, '0')}(${dow})`
+}
+
 function formatLectureDateDisplay(iso: string | undefined): string {
   if (!iso) return '-'
   return formatTransferDateDisplay(iso)
@@ -266,6 +287,7 @@ function buildAccountPaymentStatusDetail(
     businessIncomeEarnerLabel?: string
     accountPaymentStatus?: AccountPaymentStatusDetail['basic']['accountPaymentStatus']
     transferScheduledDate?: string
+    paidAt?: string
   }
 ): AccountPaymentStatusDetail {
   const bankAndNumber = [row.bankName, row.maskedAccountNo].filter(Boolean).join(' ') || '-'
@@ -293,6 +315,10 @@ function buildAccountPaymentStatusDetail(
       transferScheduledDateDisplay: formatTransferDateDisplay(
         extras?.transferScheduledDate ?? row.transferScheduledDate
       ),
+      paidAtDisplay:
+        accountPaymentStatus === 'account_paid'
+          ? formatPaidAtDisplay(extras?.paidAt ?? row.paidAt)
+          : '-',
       lectureFeeStandardTitle: extras?.lectureFeeStandardTitle ?? '-',
       lectureFeeStandardAmount:
         extras?.lectureFeeStandardAmount ??
@@ -331,6 +357,7 @@ export function mapAccountPaymentDetailRemote(
     businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
       settlement.businessIncomeEarnerLabel
     ),
+    paidAt: settlement.paidAt ?? row.paidAt,
   })
 }
 
@@ -372,6 +399,7 @@ export function mapAccountPaymentDetailFromGetApi(
     amount: payment?.netPaymentAmount ?? row.amount,
     transferScheduledDate:
       payment?.scheduledPaymentDate ?? settlement?.expectedTransferDate ?? row.transferScheduledDate,
+    paidAt: payment?.paidAt ?? settlement?.paidAt ?? row.paidAt,
     bankName:
       sensitiveAccount?.bankName?.trim() ||
       payment?.bankName ||
@@ -402,6 +430,7 @@ export function mapAccountPaymentDetailFromGetApi(
           programName: mergedRow.programName,
           accountPaymentStatus: mergedRow.accountPaymentStatus,
           transferScheduledDate: mergedRow.transferScheduledDate,
+          paidAt: mergedRow.paidAt,
         }
       )
 

@@ -12,7 +12,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
-import { FILE_SELECT_MAX_TOTAL_BYTES, sumFileBytes } from '@/shared/ui/file-select-field-limits'
+import { FILE_SELECT_MAX_FILE_BYTES } from '@/shared/ui/file-select-field-limits'
 import type { Program, ProgramPost } from '@/types/domain'
 import {
   addProgramFiles,
@@ -97,7 +97,6 @@ export function PostWriteModal({
   const loadedAttachmentIdsRef = useRef<number[] | null>(null)
 
   const fileNames = [...existingAttachments.map(item => item.name), ...files.map(f => f.name)]
-  const existingAttachmentBytes = existingAttachments.reduce((sum, item) => sum + item.fileSize, 0)
   const audienceOptions = useMemo(() => buildPostWriteAudienceOptions(program), [program])
 
   const editorResetKey = useMemo(
@@ -235,7 +234,13 @@ export function PostWriteModal({
       const audienceForSave = audience.includes('all')
         ? (['all'] as string[])
         : audience.filter(key => key !== 'all')
-      const title = trimmed.replace(/[#*_`>\-[\]()]/g, '').slice(0, 40) || '게시글'
+      const title =
+        trimmed
+          .replace(/<img\b[^>]*>/gi, '')
+          .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+          .replace(/[#*_`>\-[\]()]/g, '')
+          .trim()
+          .slice(0, 40) || '게시글'
       const inlineImageIds = collectFileObjectIdsFromHtml(trimmed)
 
       if (isEditMode && editingPost) {
@@ -395,13 +400,13 @@ export function PostWriteModal({
                   <FileSelectField
                     accept=".jpg,.jpeg,.png"
                     fileNames={fileNames}
-                    currentTotalBytes={existingAttachmentBytes + sumFileBytes(files)}
-                    maxTotalBytes={FILE_SELECT_MAX_TOTAL_BYTES}
+                    maxFileBytes={FILE_SELECT_MAX_FILE_BYTES}
+                    maxTotalBytes={0}
                     onFilesChange={handleFilesChange}
                     onRemoveFile={handleRemoveFile}
                     uploading={loading}
                     guideLines={[
-                      `- 파일은 총 최대 15MB까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
+                      `- 파일당 최대 20MB까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
                       '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
                     ]}
                     className="post-write-modal__file-field file-select-field--edit"

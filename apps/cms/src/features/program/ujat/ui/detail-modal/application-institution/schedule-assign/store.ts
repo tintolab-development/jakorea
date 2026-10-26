@@ -226,4 +226,33 @@ export function patchUjatScheduleAssignMaxClassesPerDay(
   })
 }
 
+function withoutInstitutionRows(
+  state: UjatScheduleAssignRegionState,
+  institutionIds: ReadonlySet<string>
+): UjatScheduleAssignRegionState {
+  const days: UjatScheduleAssignRegionState['days'] = {}
+  for (const [isoDate, day] of Object.entries(state.days)) {
+    const rows = day.rows.filter(
+      row => !row.institutionRowId || !institutionIds.has(row.institutionRowId)
+    )
+    days[isoDate] = { ...day, rows: rows.length > 0 ? rows : [createEmptyRow()] }
+  }
+  return { ...state, days }
+}
+
+/**
+ * 임시 일정 해제(PUT slots=[]) 성공 기관의 배정 행을 저장·편집 상태에서 제거한다.
+ * remote hydrate는 슬롯이 있는 날짜만 덮어쓰므로 해제된 기관 행이 남지 않게 한다.
+ */
+export function removeUjatScheduleAssignInstitutionRows(institutionIds: readonly string[]): void {
+  if (institutionIds.length === 0) return
+  const ids = new Set(institutionIds)
+  for (const [regionKey, state] of savedRegionState) {
+    savedRegionState.set(regionKey, withoutInstitutionRows(state, ids))
+  }
+  for (const [regionKey, state] of draftRegionState) {
+    draftRegionState.set(regionKey, withoutInstitutionRows(state, ids))
+  }
+}
+
 export { createEmptyRow, createRowId }

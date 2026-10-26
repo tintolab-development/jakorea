@@ -5,6 +5,7 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { Button } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { TableFilterGroup, type FilterFieldConfig } from '@/shared/components/table-filter-group'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
@@ -15,6 +16,7 @@ import {
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
   getInstructorSettlementStatusLabel,
   isInstructorSettlementEligibleForPaymentStatementIssue,
+  isInstructorSettlementInactive,
 } from '@/shared/constants/instructor-settlement-status'
 import type { InstructorSettlementListRow } from '@/features/user/detail/model/instructor-settlement-types'
 import {
@@ -48,6 +50,11 @@ import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scro
 import '@/shared/components/filter-table-layout.css'
 import './instructor-payment-tab.css'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  PAYMENT_ORDERS_DETAIL_KEY_PARAM,
+  PAYMENT_ORDERS_DETAIL_TYPE_PARAM,
+  PAYMENT_ORDERS_EXPOSURE_PARAM_KEY,
+} from '@/pages/settlement-management/payment-orders-table.config'
 
 import {
   ButtonCalendarIcon,
@@ -98,6 +105,7 @@ export function InstructorPaymentTab({
   instructorMemberId,
 }: InstructorPaymentTabProps) {
   const { showAlert } = useCmsAlert()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const settlementsRemote = isMemberInstructorSettlementsRemoteEnabled()
   const manualFetch = settlementsRemote
@@ -197,10 +205,26 @@ export function InstructorPaymentTab({
   }, [instructorMemberId, queryClient])
 
   const openInvoice = useCallback((row: InstructorSettlementListRow) => {
-    if (row.status === 'none') return
+    if (row.status === 'none' || isInstructorSettlementInactive(row.status)) return
     setInvoiceData(row)
     setInvoiceOpen(true)
   }, [])
+
+  const openSettlementDetail = useCallback(
+    (row: InstructorSettlementListRow) => {
+      if (row.status === 'none' || isInstructorSettlementInactive(row.status)) return
+      if (instructorMemberId == null) {
+        showAlert({ title: '안내', content: '정산 상세 조회에 필요한 회원 정보가 없습니다.' })
+        return
+      }
+      const params = new URLSearchParams()
+      params.set(PAYMENT_ORDERS_EXPOSURE_PARAM_KEY, 'instructor')
+      params.set(PAYMENT_ORDERS_DETAIL_TYPE_PARAM, 'instructor')
+      params.set(PAYMENT_ORDERS_DETAIL_KEY_PARAM, String(instructorMemberId))
+      navigate(`/settlement-management/payment-orders?${params.toString()}`)
+    },
+    [instructorMemberId, navigate, showAlert]
+  )
 
   const handleBulkDownload = useCallback(async () => {
     if (!settlementsRemote) return
@@ -290,7 +314,7 @@ export function InstructorPaymentTab({
             <CmsButton
               variant="default"
               size="medium"
-              disabled={record.status === 'none'}
+              disabled={record.status === 'none' || isInstructorSettlementInactive(record.status)}
               onClick={() => openInvoice(record)}
             >
               상세 보기
@@ -481,9 +505,17 @@ export function InstructorPaymentTab({
                 pagination={false}
                 scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
                 className="cms-data-table cms-data-table--fluid cms-data-table--fit-scroll"
+                rowClassName={record =>
+                  isInstructorSettlementInactive(record.status)
+                    ? 'cms-data-table__row--disabled instructor-payment-tab__row--inactive'
+                    : ''
+                }
                 rowSelection={{
                   columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                   selectedRowKeys,
+                  getCheckboxProps: record => ({
+                    disabled: isInstructorSettlementInactive(record.status),
+                  }),
                   onChange: keys => setSelectedRowKeys(keys),
                 }}
               />
@@ -498,7 +530,7 @@ export function InstructorPaymentTab({
                 onSelectedDateChange={setCalendarSelectedDate}
                 selectedRowKeys={selectedRowKeys}
                 onSelectionChange={setSelectedRowKeys}
-                onSettlementClick={openInvoice}
+                onSettlementClick={openSettlementDetail}
               />
             </div>
           )}

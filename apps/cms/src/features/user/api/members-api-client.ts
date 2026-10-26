@@ -99,7 +99,6 @@ import type { MemberEnrollmentSummaryResponse } from '@/shared/api/generated/mem
 import type { MemberAssignmentSubmissionResponse } from '@/shared/api/generated/members/schemas/memberAssignmentSubmissionResponse'
 import type { GetApplicationEnrollmentSummaryParams } from '@/shared/api/generated/members/schemas/getApplicationEnrollmentSummaryParams'
 import type { ListAssignmentSubmissionsParams } from '@/shared/api/generated/members/schemas/listAssignmentSubmissionsParams'
-
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
 export async function fetchMembersPageRemote(params: ListMembersParams): Promise<PageResponse> {

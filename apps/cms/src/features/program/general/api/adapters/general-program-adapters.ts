@@ -644,6 +644,7 @@ function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['roun
   }))
 }
 
+
 /**
  * BE canonical `recruitments[]` — 참여자 유형별 ACTIVE 모집 row.
  * `generalParticipantTypes`에 volunteer가 있으면 VOLUNTEER ACTIVE 필수
@@ -1054,6 +1055,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     ...(shouldSendLegacyProgramRounds(program)
       ? { rounds: mapProgramRoundsToUpdateRequest(program) }
       : {}),
+
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
   }
   assignProgramPaymentItemsToWriteRequest({ body, program })
@@ -1427,6 +1429,7 @@ function mapProgramPatchFieldsToRequest(
   if (has('rounds') && shouldSendLegacyProgramRounds(merged)) {
     body.rounds = mapProgramRoundsToUpdateRequest(merged)
   }
+
 
   const detailSource =
     has('generalProgramAudience') || has('generalParticipantTypes')

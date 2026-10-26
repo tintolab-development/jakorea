@@ -15,16 +15,21 @@ import type {
   ParticipatingIndividualProgressAssignmentParticipantRow,
   ParticipatingIndividualProgressAssignmentSessionGroup,
 } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
-import { ParticipatingIndividualProgressAssignmentTable } from './participating-individual-progress-assignment-table'
+import {
+  ParticipatingIndividualProgressAssignmentTable,
+  type ProgressAssignmentSurveyNavTab,
+} from './participating-individual-progress-assignment-table'
 
 export function ParticipatingIndividualProgressAssignmentSessionPanel({
   session,
   appliedFilters,
   getSessionParticipants,
+  onViewSurveyResponse,
 }: {
   session: ParticipatingIndividualProgressAssignmentSessionGroup
   appliedFilters: ParticipatingIndividualProgressAssignmentFilters
   getSessionParticipants: (sessionId: string) => ParticipatingIndividualProgressAssignmentParticipantRow[]
+  onViewSurveyResponse: (tab: ProgressAssignmentSurveyNavTab) => void
 }) {
   const participants = useMemo(() => {
     const rows = cloneProgressAssignmentParticipantRows(getSessionParticipants(session.id))
@@ -66,7 +71,10 @@ export function ParticipatingIndividualProgressAssignmentSessionPanel({
         </div>
       </div>
       <div className="school-detail-attendance-session__table-wrap">
-        <ParticipatingIndividualProgressAssignmentTable rows={participants} />
+        <ParticipatingIndividualProgressAssignmentTable
+          rows={participants}
+          onViewSurveyResponse={onViewSurveyResponse}
+        />
       </div>
     </section>
   )

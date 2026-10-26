@@ -11,7 +11,14 @@ export function portalPublicFileDownloadUrl(fileObjectId: number): string {
 const STORED_FILE_SRC_RE =
   /(?:https?:\/\/[^"'\\\s)]+)?\/api\/(?:admin|portal\/public)\/files\/(\d+)\/(?:content|download)(?:\?[^"'\\\s)]*)?/g
 
+const FILE_OBJECT_REFERENCE_RE = /^file-object:(\d+)$/
+
 export function fileObjectIdFromStoredFileUrl(src: string): number | null {
+  const referenceMatch = src.trim().match(FILE_OBJECT_REFERENCE_RE)
+  if (referenceMatch) {
+    const referenceId = Number(referenceMatch[1])
+    return Number.isSafeInteger(referenceId) && referenceId > 0 ? referenceId : null
+  }
   const match = src.match(
     /\/api\/(?:admin|portal\/public)\/files\/(\d+)\/(?:content|download)(?:[/?#]|$)/
   )

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import {
   fileObjectIdFromAdminFileUrl,
+  hydrateAxiosBlobError,
   sameOriginRawDownloadPath,
   toSameOriginApiPath,
 } from '@/shared/lib/admin-file-upload/attachments'
@@ -38,5 +40,27 @@ describe('sameOriginRawDownloadPath', () => {
         ''
       )
     ).toBeNull()
+  })
+})
+
+describe('hydrateAxiosBlobError', () => {
+  it('blob 오류 JSON에서 error.code를 꺼낸다', async () => {
+    const error = new AxiosError('Request failed')
+    error.response = {
+      status: 409,
+      statusText: 'Conflict',
+      headers: {},
+      config: { headers: {} } as InternalAxiosRequestConfig,
+      data: new Blob(
+        [JSON.stringify({ error: { code: 'SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED' } })],
+        { type: 'application/json' }
+      ),
+    }
+
+    const hydrated = await hydrateAxiosBlobError(error)
+    expect(hydrated).toBe(error)
+    expect(error.response?.data).toEqual({
+      error: { code: 'SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED' },
+    })
   })
 })

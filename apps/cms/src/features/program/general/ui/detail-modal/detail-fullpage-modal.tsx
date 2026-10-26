@@ -55,7 +55,10 @@ import {
   type GeneralProgressMenuItem,
   type GeneralSurveyMenuItem,
 } from '@/features/program/general/lib/detail-meta'
-import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import {
+  GENERAL_SATISFACTION_NAV_TAB,
+  isGeneralIndividualProgram,
+} from '@/features/program/general/lib/survey-audience'
 import { seedGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
 import {
   prepareRecruitOperationalEditFromProgram,
@@ -1985,6 +1988,20 @@ export function GeneralProgramDetailFullPageModal({
     [programId, setSearchParams, showAlert, surveyItems.length]
   )
 
+  const handleProgressAssignmentSurveyNavigate = useCallback(
+    (tab: 'survey' | typeof GENERAL_SATISFACTION_NAV_TAB) => {
+      if (!surveyKeys.includes(tab)) {
+        void showAlert({
+          title: '안내',
+          content: GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE,
+        })
+        return
+      }
+      setLnbTab('survey', tab)
+    },
+    [setLnbTab, showAlert, surveyKeys]
+  )
+
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
   const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
   const [volunteerDetailTitle, setVolunteerDetailTitle] = useState<string | null>(null)
@@ -2493,7 +2510,10 @@ export function GeneralProgramDetailFullPageModal({
                 className="program-detail-fullpage-modal__info-tab general-detail-fullpage-modal__main"
                 aria-label="과제 관리"
               >
-                <ParticipatingIndividualProgressAssignmentSection program={displayProgram} />
+                <ParticipatingIndividualProgressAssignmentSection
+                  program={displayProgram}
+                  onNavigateToSurveyCategory={handleProgressAssignmentSurveyNavigate}
+                />
               </div>
             ) : activeLnb === 'progress' && activeTab === 'progress_posts' ? (
               <div

@@ -26,10 +26,11 @@ import type {
   UjatAllocationMatrixResponse,
   UjatAllocationVolunteerRowDto,
   UjatAttendanceItemDto,
+  UjatVolunteerUnavailabilityResponse,
 } from '@/features/program/ujat/api/education-execution-api'
 import type { UjatOrganizationScheduleSlotResponse as OrgSlot } from '@/features/program/ujat/api/temporary-schedule-api'
 
-const UI_TO_API_STATUS: Record<UjatAttendanceStatus, string> = {
+const UI_TO_API_STATUS: Record<Exclude<UjatAttendanceStatus, 'unprocessed'>, string> = {
   present: 'PRESENT',
   late: 'LATE',
   absent: 'ABSENT',
@@ -54,10 +55,11 @@ export function mapApiAttendanceStatusToUjatUi(
   if (lower === 'late') return 'late'
   if (lower === 'absent') return 'absent'
   if (lower === 'excused_absence' || lower === 'excused') return 'excused_absence'
-  return 'present'
+  return 'unprocessed'
 }
 
 export function mapUjatUiAttendanceStatusToApi(status: UjatAttendanceStatus): string {
+  if (status === 'unprocessed') return ''
   return UI_TO_API_STATUS[status]
 }
 
@@ -80,10 +82,15 @@ function formatTimeRange(iso: string | null | undefined): string {
   return `${d.format('HH:mm')}~`
 }
 
-function mapCell(cell: UjatAllocationCellDto | undefined): RegionAssignmentCell {
+function mapCell(
+  cell: UjatAllocationCellDto | undefined,
+  substituteName?: string
+): RegionAssignmentCell {
   if (!cell) return { kind: 'empty' }
   if (cell.unavailable) {
-    return { kind: 'empty', blockedEmpty: true }
+    return substituteName
+      ? { kind: 'empty', blockedEmpty: true, substituteName }
+      : { kind: 'empty', blockedEmpty: true }
   }
   const label = cell.classLabel?.trim()
   if (!label) return { kind: 'empty' }
@@ -144,14 +151,52 @@ function buildClassSlotsForColumn(
   }))
 }
 
+/** 배정 불가 셀이 있는 scheduleId — 대체자 조회(GET unavailability) 대상 */
+export function collectUnavailableScheduleIds(matrix: UjatAllocationMatrixResponse): string[] {
+  const ids = new Set<string>()
+  for (const volunteer of matrix.volunteers ?? []) {
+    for (const cell of volunteer.cells ?? []) {
+      if (cell.unavailable && cell.scheduleId != null) ids.add(String(cell.scheduleId))
+    }
+  }
+  return [...ids]
+}
+
+function volunteerDisplayName(volunteer: UjatAllocationVolunteerRowDto): string {
+  return volunteer.volunteerName?.trim() || `봉사자 ${volunteer.participantId ?? ''}`
+}
+
 export function mapAllocationMatrixToRegionTableData(params: {
   matrix: UjatAllocationMatrixResponse
   regionKey: UjatInstitutionApplicationRegionKey
   orgSlots?: OrgSlot[]
+  unavailabilityByScheduleId?: Record<string, UjatVolunteerUnavailabilityResponse[]>
 }): RegionAssignmentTableData {
-  const { matrix, regionKey, orgSlots = [] } = params
+  const { matrix, regionKey, orgSlots = [], unavailabilityByScheduleId = {} } = params
   const columnsDto = matrix.columns ?? []
   const volunteersDto = matrix.volunteers ?? []
+  const nameByParticipantId = new Map(
+    volunteersDto
+      .filter(volunteer => volunteer.participantId != null)
+      .map(volunteer => [String(volunteer.participantId), volunteerDisplayName(volunteer)] as const)
+  )
+
+  const resolveSubstituteName = (
+    participantId: string,
+    cell: UjatAllocationCellDto | undefined
+  ): string | undefined => {
+    if (!cell?.unavailable || cell.scheduleId == null) return undefined
+    const scheduleId = String(cell.scheduleId)
+    // 같은 서울 날짜의 다른 일정 활동 불가 행도 섞여 오므로 행의 실제 scheduleId로 맞춘다.
+    const record = unavailabilityByScheduleId[scheduleId]?.find(
+      item =>
+        String(item.participantId ?? '') === participantId &&
+        String(item.scheduleId ?? scheduleId) === scheduleId
+    )
+    const replacementId = record?.replacementParticipantId
+    if (replacementId == null) return undefined
+    return nameByParticipantId.get(String(replacementId)) ?? `봉사자 ${replacementId}`
+  }
 
   const columns: RegionAssignmentColumn[] = columnsDto.map(col => {
     const columnKey =
@@ -179,10 +224,13 @@ export function mapAllocationMatrixToRegionTableData(params: {
         .filter(c => c.columnKey)
         .map(c => [String(c.columnKey), c] as const)
     )
-    const cells = columns.map(column => mapCell(cellsByKey.get(column.id)))
+    const cells = columns.map(column => {
+      const cell = cellsByKey.get(column.id)
+      return mapCell(cell, resolveSubstituteName(participantId, cell))
+    })
     return {
       id: participantId,
-      name: volunteer.volunteerName?.trim() || `봉사자 ${participantId}`,
+      name: volunteerDisplayName(volunteer),
       totalAssignedDays: volunteer.totalAssignedDays ?? 0,
       isWithdrawnVolunteer: volunteer.giveUp === true,
       cells,

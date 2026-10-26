@@ -148,7 +148,12 @@ function TypedSemesterScheduleTableBlock({
     enabled: mode === 'edit' && educationScheduleRangeComplete,
   })
 
+  const isNonFriday = (date: Dayjs) => date.day() !== 5
+
+  const disableEducationScheduleDate = (date: Dayjs) => isNonFriday(date)
+
   const disableUnavailableDate = (date: Dayjs) => {
+    if (isNonFriday(date)) return true
     if (rangeStart == null || rangeEnd == null) return true
     const start = rangeStart.isBefore(rangeEnd, 'day') ? rangeStart : rangeEnd
     const end = rangeStart.isBefore(rangeEnd, 'day') ? rangeEnd : rangeStart
@@ -199,7 +204,8 @@ function TypedSemesterScheduleTableBlock({
                   mode="range"
                   value={range}
                   onChange={updateRange}
-                  placeholder={['시간을 선택해 주세요', '시간을 선택해 주세요']}
+                  disabledDate={disableEducationScheduleDate}
+                  placeholder={['일정을 선택해 주세요', '일정을 선택해 주세요']}
                   className="ujat-education-schedule-settings__range-picker"
                 />
               ) : undefined

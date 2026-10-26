@@ -561,7 +561,7 @@ describe('resolveSurveyShareClipboardUrl', () => {
       accessMode: 'PUBLIC_ANONYMOUS',
       formPath: '/api/portal/public/surveys/abc',
       submitPath: '/api/portal/public/surveys/abc/responses',
-    }
+    } as const
     expect(
       resolveSurveyShareClipboardUrl(backendResponse, 'https://platform.example.com')
     ).toBeNull()

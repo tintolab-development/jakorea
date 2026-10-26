@@ -64,8 +64,11 @@ import {
   resolveEducationApplicationProgramFocus,
   shouldShowTeacherInstitutionGuidanceEditLink,
   shouldShowTeacherInstitutionGuidanceOnApplicationTab,
-  shouldShowTeacherInstitutionGuidanceWrite,
 } from '@/features/mypage/education/applications/lib/teacher-institution-guidance'
+import {
+  canWriteEducationNotice,
+  resolveEducationNoticeAuthorDisplayName,
+} from '@/features/mypage/education/notices'
 import { buildTeacherApplicationContentFromPortal } from '@/features/mypage/education/applications/lib/teacher-application-content-from-portal'
 import {
   isOrganizationEducationApplication,
@@ -659,16 +662,12 @@ export function MypageEducationDetailPage() {
     schedules: program.eventSchedules,
   })
 
-  const showTeacherNoticeWrite = shouldShowTeacherInstitutionGuidanceWrite({
-    isTeacher,
-    application,
-    program,
-    displayStatus: application.displayStatus,
-  })
+  const showNoticeWrite = canWriteEducationNotice(member.profile, application.displayStatus)
 
-  const noticeWriteAuthorDisplayName = member.displayName
-    ? `${member.displayName} 담당교사님`
-    : '담당교사님'
+  const noticeWriteAuthorDisplayName = resolveEducationNoticeAuthorDisplayName(
+    member.displayName,
+    isTeacher ? 'teacher' : 'instructor',
+  )
 
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
@@ -717,7 +716,7 @@ export function MypageEducationDetailPage() {
           applicationInfoBody={applicationInfoBody}
           applicationType={routeApplicationType}
           applicationId={application.id}
-          noticeWriteEnabled={showTeacherNoticeWrite}
+          noticeWriteEnabled={showNoticeWrite}
           noticeWriteAuthorDisplayName={noticeWriteAuthorDisplayName}
         />
       )

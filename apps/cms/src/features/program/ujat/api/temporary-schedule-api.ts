@@ -14,7 +14,9 @@ export type UjatTemporaryScheduleSlotRequest = {
 }
 
 export type UjatTemporaryScheduleSaveRequest = {
-  educationRegionCode: string
+  /** 해제(slots=[]) 요청에서는 생략 가능 */
+  educationRegionCode?: string
+  /** 빈 배열이면 임시 일정 해제 (409 UJAT_TEMPORARY_SCHEDULE_HAS_VOLUNTEER_ASSIGNMENTS 가능) */
   slots: UjatTemporaryScheduleSlotRequest[]
 }
 

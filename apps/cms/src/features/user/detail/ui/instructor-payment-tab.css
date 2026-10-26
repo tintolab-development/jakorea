@@ -134,6 +134,11 @@
   width: 100%;
 }
 
+.instructor-payment-tab__row--inactive > td {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
 .instructor-payment-schedule-list__open {
   border: none;
   background: transparent;

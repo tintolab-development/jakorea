@@ -9,9 +9,10 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
-import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
-import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import {
+  downloadIssuedSettlementExportFile,
+  notifySettlementExportDownloadError,
+} from '@/features/settlement-management/api/account-payments/download-issued-export-file'
 import {
   TAX_FILING_SHEET_COLUMN_COUNT,
   buildTaxFilingFortuneSheet,
@@ -38,22 +39,25 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
   const handleDownload = useCallback(async () => {
     try {
       if (serverExport?.deliveryMethod === 'SERVER_FILE') {
-        if (!serverExport.downloadUrl) {
-          throw new Error('서버에서 정산 파일을 생성 중입니다. export 이력을 확인해 주세요.')
-        }
-        await downloadFromBulkEndpoint(serverExport.downloadUrl, '세금신고', 'xlsx')
+        await downloadIssuedSettlementExportFile({
+          serverExport,
+          filenamePrefix: '세금신고',
+          reason: '세금신고 양식 다운로드',
+        })
         return
       }
       const { exportTaxFilingExcel } =
         await import('@/pages/settlement-management/tax-filing-excel')
       await exportTaxFilingExcel(rows)
     } catch (error) {
-      cmsAlertModal.show({
-        title: '다운로드 불가',
-        content: getSettlementApiErrorMessage(error, '세금신고 파일 다운로드에 실패했습니다.'),
+      notifySettlementExportDownloadError({
+        error,
+        fallback: '세금신고 파일 다운로드에 실패했습니다.',
+        issueButtonLabel: '세금 신고 양식 발급',
+        onAlreadyDownloaded: onCancel,
       })
     }
-  }, [rows, serverExport])
+  }, [onCancel, rows, serverExport])
 
   return (
     <ContentModal

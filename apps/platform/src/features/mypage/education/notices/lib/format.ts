@@ -50,6 +50,8 @@ export function toEducationNoticePlainText(value: string): string {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
     .replace(/<[^>]+>/g, '')
+    // 서버 제목은 HTML 앞부분을 잘라 저장되어 `<img src="…` 처럼 닫히지 않은 태그로 끝날 수 있다
+    .replace(/<[a-z!/][^>]*$/i, '')
     .replace(/\[([^\]]*)]\([^)]*\)/g, '$1')
     .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '')
     .replace(/(\*\*|__|~~|`)/g, '')
@@ -63,5 +65,5 @@ export function resolveEducationNoticeTitle(title: string, content: string): str
   const trimmedTitle = toEducationNoticePlainText(title).split(/\n/)[0]?.trim() ?? ''
   if (trimmedTitle.length > 0) return trimmedTitle
   const firstLine = toEducationNoticePlainText(content).split(/\n/)[0]?.trim() ?? ''
-  return firstLine
+  return firstLine || '-'
 }

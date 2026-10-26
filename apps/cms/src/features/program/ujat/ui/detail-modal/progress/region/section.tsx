@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useRegionAssignment } from './use-region-assignment'
 import { CmsButton } from '@/shared/ui'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
@@ -13,14 +14,19 @@ import {
   type RegionAttendanceManagerAssignments,
 } from './attendance-manager'
 import { RegionAttendanceManagerModal } from './attendance-manager-modal'
+import {
+  AUTO_ASSIGN_RERUN_CONFIRM_MESSAGE,
+  hasExistingRegionAssignments,
+} from './auto-assign-result'
 import { RegionBlockedDateModal } from './blocked-date-modal'
 import {
   getRegionBlockedDateSubstituteVolunteerOptionsFromData,
   getRegionBlockedDateVolunteerOptions,
-  getRegionDirectAssignClassOptions,
-  getRegionDirectAssignVolunteerOptions,
+  getRegionDirectAssignClassOptionsFromData,
   getRegionEducationDateOptions,
 } from './region-assignment-options'
+import { useDirectAssignCandidates } from './use-direct-assign-candidates'
+import { RegionAutoAssignResultBanner } from './auto-assign-result-banner'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
 
@@ -38,10 +44,14 @@ export function UjatEducationProgressRegionAssignmentSection({
   const [blockedDateModalOpen, setBlockedDateModalOpen] = useState(false)
   const [attendanceManagerModalOpen, setAttendanceManagerModalOpen] = useState(false)
   const [downloadModalOpen, setDownloadModalOpen] = useState(false)
+  const [autoAssignConfirmOpen, setAutoAssignConfirmOpen] = useState(false)
 
   const {
     tableData,
     tableVersion,
+    isRemote,
+    autoAssignResultSummary,
+    dismissAutoAssignResult,
     runAutoAssign,
     confirmDirectAssign,
     confirmBlockedDate,
@@ -49,15 +59,19 @@ export function UjatEducationProgressRegionAssignmentSection({
     isMutating,
   } = useRegionAssignment(programId, half, activeRegion)
 
+  const [directAssignClassSlotId, setDirectAssignClassSlotId] = useState<string | undefined>()
+
   const directAssignClassOptions = useMemo(
-    () => getRegionDirectAssignClassOptions(activeRegion),
-    [activeRegion, tableVersion]
+    () => getRegionDirectAssignClassOptionsFromData(tableData),
+    [tableData]
   )
 
-  const getDirectAssignVolunteerOptions = useCallback(
-    (classSlotId: string) => getRegionDirectAssignVolunteerOptions(activeRegion, classSlotId),
-    [activeRegion, tableVersion]
-  )
+  const directAssignCandidates = useDirectAssignCandidates({
+    programId,
+    classSlotId: directAssignClassSlotId,
+    enabled: directAssignModalOpen && isRemote,
+    tableData,
+  })
 
   const blockedDateVolunteerOptions = useMemo(
     () => getRegionBlockedDateVolunteerOptions(activeRegion),
@@ -129,8 +143,21 @@ export function UjatEducationProgressRegionAssignmentSection({
   )
 
   const handleAutoAssign = useCallback(() => {
+    if (hasExistingRegionAssignments(tableData)) {
+      setAutoAssignConfirmOpen(true)
+      return
+    }
+    runAutoAssign()
+  }, [runAutoAssign, tableData])
+
+  const handleConfirmAutoAssign = useCallback(() => {
+    setAutoAssignConfirmOpen(false)
     runAutoAssign()
   }, [runAutoAssign])
+
+  const handleCancelAutoAssign = useCallback(() => {
+    setAutoAssignConfirmOpen(false)
+  }, [])
 
   const handleOpenAttendanceManagerModal = useCallback(() => {
     setAttendanceManagerModalOpen(true)
@@ -210,6 +237,13 @@ export function UjatEducationProgressRegionAssignmentSection({
         </div>
       </div>
 
+      {autoAssignResultSummary ? (
+        <RegionAutoAssignResultBanner
+          summary={autoAssignResultSummary}
+          onClose={dismissAutoAssignResult}
+        />
+      ) : null}
+
       <RegionAssignmentTable data={tableData} />
 
       <RegionAssignmentDownloadModal
@@ -222,7 +256,11 @@ export function UjatEducationProgressRegionAssignmentSection({
         variant="region_direct"
         open={directAssignModalOpen}
         classOptions={directAssignClassOptions}
-        getVolunteerOptions={getDirectAssignVolunteerOptions}
+        volunteerOptions={directAssignCandidates.volunteerOptions}
+        volunteerOptionsLoading={directAssignCandidates.loading}
+        volunteerOptionsError={directAssignCandidates.errorMessage}
+        existingPrimaryVolunteerName={directAssignCandidates.existingPrimaryVolunteerName}
+        onClassSlotChange={setDirectAssignClassSlotId}
         onCancel={handleCloseDirectAssignModal}
         onConfirm={handleConfirmDirectAssign}
       />
@@ -234,6 +272,15 @@ export function UjatEducationProgressRegionAssignmentSection({
         getSubstituteVolunteerOptions={getBlockedDateSubstituteVolunteerOptions}
         onCancel={handleCloseBlockedDateModal}
         onConfirm={handleConfirmBlockedDate}
+      />
+
+      <ConfirmModal
+        open={autoAssignConfirmOpen}
+        title="교육일 자동 배정"
+        content={AUTO_ASSIGN_RERUN_CONFIRM_MESSAGE}
+        confirmText="자동 배정"
+        onConfirm={handleConfirmAutoAssign}
+        onCancel={handleCancelAutoAssign}
       />
 
       <RegionAttendanceManagerModal

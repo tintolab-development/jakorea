@@ -1,3 +1,4 @@
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import type { FileAttachmentCreateRequest } from '@/shared/api/generated/posts/schemas/fileAttachmentCreateRequest'
 import type { FileAttachmentResponse } from '@/shared/api/generated/posts/schemas/fileAttachmentResponse'
 import type { FileDownloadResolveResponse } from '@/shared/api/generated/posts/schemas/fileDownloadResolveResponse'
@@ -201,6 +202,34 @@ type SensitiveRelayClaim = {
   streamUrl?: string | null
 }
 
+/** responseType blob 오류 본문(JSON Blob)을 error.response.data 객체로 복원한다. */
+export async function hydrateAxiosBlobError(error: unknown): Promise<unknown> {
+  if (!axios.isAxiosError(error) || error.response == null) return error
+  const data = error.response.data
+  if (!(data instanceof Blob)) return error
+  try {
+    const text = await data.text()
+    if (!text.trim()) return error
+    error.response.data = JSON.parse(text) as unknown
+  } catch {
+    return error
+  }
+  return error
+}
+
+async function throwIfSensitiveStreamJsonError(payload: Blob): Promise<void> {
+  if (!payload.type.includes('json')) return
+  const error = new AxiosError('민감 파일을 불러오지 못했습니다.')
+  error.response = {
+    data: payload,
+    status: 409,
+    statusText: 'Conflict',
+    headers: {},
+    config: error.config ?? ({ headers: {} } as InternalAxiosRequestConfig),
+  }
+  throw await hydrateAxiosBlobError(error)
+}
+
 /**
  * 민감 파일은 claim(`POST .../sensitive-downloads`)으로 relayToken을 받은 뒤
  * stream에 reason과 토큰을 함께 실어야 바이트가 온다.
@@ -230,18 +259,24 @@ export async function loadSensitiveAdminFileBlob(input: {
     claim.streamUrl?.trim() ||
     `/api/admin/files/${input.fileObjectId}/sensitive-downloads/stream`
   const streamUrl = toSameOriginApiPath(rawStreamUrl, getApiBaseUrl()) ?? rawStreamUrl
-  const payload = await customInstance<Blob>(
-    {
-      url: streamUrl,
-      method: 'POST',
-      data: { reason: input.reason, relayToken },
-      responseType: 'blob',
-    },
-    { skipGlobalErrorAlert: true }
-  )
-  if (!(payload instanceof Blob) || payload.size < 1 || payload.type === 'application/json') {
+  let payload: Blob
+  try {
+    payload = await customInstance<Blob>(
+      {
+        url: streamUrl,
+        method: 'POST',
+        data: { reason: input.reason, relayToken },
+        responseType: 'blob',
+      },
+      { skipGlobalErrorAlert: true }
+    )
+  } catch (error) {
+    throw await hydrateAxiosBlobError(error)
+  }
+  if (!(payload instanceof Blob) || payload.size < 1) {
     throw new Error('민감 파일을 불러오지 못했습니다.')
   }
+  await throwIfSensitiveStreamJsonError(payload)
   return payload
 }
 

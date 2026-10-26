@@ -10,6 +10,7 @@ import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detai
 import type { BasicInfoEditScope } from '@/features/user/detail/lib/use-user-detail-controller'
 import type { UserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
+import type { InstructorPermissionRevokeChannelType } from '@/features/user/detail/lib/instructor-permission-revoke-channel'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 export interface UserDetailFullpageShellValue {
@@ -93,6 +94,8 @@ export interface UserDetailFullpageShellValue {
   onConfirmInstructorPermissionRevoke: (payload: {
     reason: string
     notifyTiming: InstructorPermissionRevokeNotifyTiming
+    channelType?: InstructorPermissionRevokeChannelType
+    scheduledAt?: string
   }) => void | Promise<void>
   onPermissionResendNotification?: (ctx: {
     userId: string

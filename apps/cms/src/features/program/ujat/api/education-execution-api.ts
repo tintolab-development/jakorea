@@ -10,6 +10,7 @@ import {
   fetchProgramAttendancesBulkRemote,
 } from '@/features/program/general/api/program-progress-api-client'
 import customInstance from '@/shared/api/orval-mutator'
+import type { UjatCapacityWarning } from './temporary-schedule-api'
 
 function executionUjatPath(programId: string, suffix: string): string {
   return `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/ujat${suffix}`
@@ -85,14 +86,31 @@ export type UjatAutoAssignmentSlotResult = {
   reason?: string | null
 }
 
+/** results[].result — ASSIGNED_PAIR | ASSIGNED_SINGLE | UNASSIGNED | SECONDARY_ADDED | SECONDARY_UNAVAILABLE */
+export type UjatAutoAssignmentResult =
+  | 'ASSIGNED_PAIR'
+  | 'ASSIGNED_SINGLE'
+  | 'UNASSIGNED'
+  | 'SECONDARY_ADDED'
+  | 'SECONDARY_UNAVAILABLE'
+
+/** capacityWarnings[].capacityType — VOLUNTEER_SHORTAGE: maxCount=필요 인원, currentCount=배정 인원 */
+export const UJAT_CAPACITY_WARNING_VOLUNTEER_SHORTAGE = 'VOLUNTEER_SHORTAGE'
+
 export type UjatAutoAssignmentResponse = {
   programId?: number | null
   educationRegionCode?: string | null
+  /** 빈 슬롯 수 + 보강 대상 1인 슬롯 수 */
   targetSlotCount?: number | null
   pairAssignedCount?: number | null
   singleAssignedCount?: number | null
   unassignedCount?: number | null
+  /** 기존 1인 슬롯에 두 번째 봉사자를 추가한 수 (SECONDARY_ADDED) */
+  secondaryAddedCount?: number | null
+  /** 기존 1인 슬롯을 보강하지 못한 수 (SECONDARY_UNAVAILABLE) */
+  secondaryUnfilledCount?: number | null
   results?: UjatAutoAssignmentSlotResult[] | null
+  capacityWarnings?: UjatCapacityWarning[] | null
 }
 
 export type UjatDirectAssignmentRequest = {
@@ -118,6 +136,8 @@ export type UjatDirectAssignmentCandidatesResponse = {
   educationRegionCode?: string | null
   reallocationRequired?: boolean | null
   candidates?: UjatDirectAssignmentCandidate[] | null
+  /** 1인 슬롯이면 기존 배정 봉사자 participantId(선택 후보는 SECONDARY로 추가), 빈 슬롯이면 null */
+  existingPrimaryParticipantId?: number | null
 }
 
 export type UjatDirectAssignmentResponse = {
@@ -125,6 +145,8 @@ export type UjatDirectAssignmentResponse = {
   educationSlotId?: number | null
   movedParticipantId?: number | null
   movedFromExistingPair?: boolean | null
+  /** 1인 슬롯 기존 조에 두 번째 봉사자로 추가되면 true */
+  addedAsSecondary?: boolean | null
 }
 
 export type UjatAttendanceManagerUpdateRequest = {
@@ -490,43 +512,6 @@ export async function bulkUpsertUjatAttendances(
   )
 }
 
-export type UjatAssignmentSubmissionDocumentDto = {
-  status?: string | null
-  submittedAt?: string | null
-  feedbackDeliveredAt?: string | null
-  formResponseId?: number | null
-}
-
-export type UjatAssignmentSubmissionVolunteerDto = {
-  participantId?: number | null
-  memberId?: number | null
-  memberName?: string | null
-  organizationApplicationId?: number | null
-  institutionName?: string | null
-  assignedClass?: string | null
-  educationSlotId?: number | null
-  isDropout?: boolean | null
-  hasProgressHistory?: boolean | null
-  plan?: UjatAssignmentSubmissionDocumentDto | null
-  log?: UjatAssignmentSubmissionDocumentDto | null
-}
-
-export type UjatAssignmentSubmissionDayDto = {
-  scheduleId?: number | null
-  isoDate?: string | null
-  planSubmissionPeriodStart?: string | null
-  planSubmissionPeriodEnd?: string | null
-  logSubmissionPeriodStart?: string | null
-  logSubmissionPeriodEnd?: string | null
-  volunteers?: UjatAssignmentSubmissionVolunteerDto[] | null
-}
-
-export type UjatAssignmentSubmissionListResponse = {
-  semesterType?: string | null
-  educationRegionCode?: string | null
-  items?: UjatAssignmentSubmissionDayDto[] | null
-}
-
 /** GET /api/admin/program-execution/programs/{programId}/ujat/assignment-submissions */
 export async function fetchUjatAssignmentSubmissions(
   programId: string,
@@ -535,7 +520,7 @@ export async function fetchUjatAssignmentSubmissions(
     educationRegionCode: string
     isoDate?: string
   }
-): Promise<UjatAssignmentSubmissionListResponse> {
+): Promise<UjatAssignmentSubmissionsResponse> {
   return unwrapApiBody(
     await customInstance({
       url: executionUjatPath(programId, '/assignment-submissions'),

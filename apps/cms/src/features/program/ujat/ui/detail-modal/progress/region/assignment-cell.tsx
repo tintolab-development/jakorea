@@ -2,6 +2,18 @@ import type { RegionAssignmentCell } from './types'
 
 export function RegionAssignmentCellContent({ cell }: { cell: RegionAssignmentCell }) {
   if (cell.kind === 'empty') {
+    if (cell.blockedEmpty) {
+      return (
+        <span className="ujat-region-assignment-table__assignment">
+          <span className="ujat-region-assignment-table__unavailable-badge">불가</span>
+          {cell.substituteName ? (
+            <span className="ujat-region-assignment-table__substitute">
+              대체 {cell.substituteName}
+            </span>
+          ) : null}
+        </span>
+      )
+    }
     return <span className="ujat-region-assignment-table__empty">-</span>
   }
 

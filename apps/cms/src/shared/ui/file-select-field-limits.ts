@@ -3,6 +3,9 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 /** 파일 업로드 공통 — 첨부 파일 합계 최대 용량 */
 export const FILE_SELECT_MAX_TOTAL_BYTES = 15 * 1024 * 1024
 
+/** 게시글 첨부 등 단일 파일 정책 — 파일마다 최대 20MB */
+export const FILE_SELECT_MAX_FILE_BYTES = 20 * 1024 * 1024
+
 /** 용량 안내 문구 (확장자 안내는 케이스별 guideLines에 별도) */
 export const FILE_SELECT_TOTAL_SIZE_GUIDE_LINE =
   '- 파일은 총 최대 15MB까지 업로드 가능합니다.'

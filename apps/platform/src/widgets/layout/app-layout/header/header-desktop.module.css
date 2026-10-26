@@ -360,3 +360,25 @@
   width: 32px;
   height: 32px;
 }
+
+.headerInverse .actionIconActive {
+  filter: none;
+}
+
+.iconActionButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.notificationAnchor {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Figma: 벨 하단 +20px, 패널 우측이 벨 우측보다 44px 바깥 */
+.notificationPopover {
+  position: absolute;
+  top: calc(100% + var(--spacing-20));
+  right: -44px;
+  z-index: 3;
+}

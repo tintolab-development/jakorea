@@ -6,6 +6,8 @@
  * OpenAPI spec version: v9
  */
 
+import type { SurveyShareAccessMode } from './surveyShareLinkResponse';
+
 export interface ProgramSurveyResponse {
   bindingId?: number;
   templateId?: number;
@@ -13,10 +15,10 @@ export interface ProgramSurveyResponse {
   templateName?: string;
   versionLabel?: string;
   targetScope?: string;
-  targetScopeId?: number;
-  shareAccessMode?: string;
+  targetScopeId?: number | null;
+  shareAccessMode?: SurveyShareAccessMode;
   shareActive?: boolean;
-  sharePath?: string;
+  sharePath?: string | null;
   responseCount?: number;
   lastSubmittedAt?: string;
   submittedCount?: number;

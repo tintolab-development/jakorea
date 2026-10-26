@@ -381,6 +381,7 @@ describe('general-program-adapters', () => {
     expect(create.targetLevels).toEqual(['elementary'])
     // GENERAL 레거시 rounds 전송 중단 — 키 자체 생략 (`rounds: []` 금지)
     expect(create).not.toHaveProperty('rounds')
+
     // audience 미설정 → ORGANIZATION → GENERAL_ORGANIZATION
     expect(create.programType).toBe('GENERAL_ORGANIZATION')
     expect(create.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
@@ -478,11 +479,12 @@ describe('general-program-adapters', () => {
 
     const patch = mapGeneralProgramToUpdateRequest(
       sampleProgram,
-      { title: '제목만' },
+      { title: '제목만', rounds: sampleProgram.rounds },
       sampleProgram
     ) as unknown as Record<string, unknown>
     expect(patch.featuredOnHome).toBeUndefined()
     expect(patch.homeDisplayOrder).toBeUndefined()
+    expect(patch.rounds).toBeUndefined()
   })
 
   it('does not hydrate featuredOnHome from admin GET', () => {

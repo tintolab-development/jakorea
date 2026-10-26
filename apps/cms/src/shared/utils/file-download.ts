@@ -27,7 +27,7 @@ function readRuntimeAuthUser(): RuntimeAuthUser | null {
   }
 }
 
-async function trackDownload(filename: string): Promise<void> {
+export async function recordDownloadAccessLog(filename: string): Promise<void> {
   const user = readRuntimeAuthUser()
   // ipAddress 생략 — 서버가 요청 IP를 기록 (가짜 IP 전송 시 검증 실패 가능)
   await recordFileDownload({
@@ -47,7 +47,7 @@ export async function downloadBlob(
 ): Promise<void> {
   if (!guardAdminDownload()) return
   if (!options?.skipAccessLog) {
-    await trackDownload(filename)
+    await recordDownloadAccessLog(filename)
   }
   saveAs(blob, filename)
 }

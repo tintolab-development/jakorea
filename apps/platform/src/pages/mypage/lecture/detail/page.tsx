@@ -26,6 +26,7 @@ import {
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  useMypageMember,
   EducationApplicationDetailLoading,
   type EducationActivitySection,
   type EducationDisplayStatus,
@@ -34,6 +35,10 @@ import {
 import { resolveInstructorAvailableScheduleLines } from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
 import { LectureReportPanel } from '@/features/mypage/education/schedules/ui/lecture-report-panel'
 import { programDetailToPreferredScheduleLookup } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
+import {
+  canWriteEducationNotice,
+  resolveEducationNoticeAuthorDisplayName,
+} from '@/features/mypage/education/notices'
 import { resolveLectureListBackPath } from '@/features/mypage/lecture'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
@@ -121,6 +126,11 @@ export function MypageLectureDetailPage() {
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const cancelMutation = useCancelMyProgramApplicationMutation()
+  const member = useMypageMember()
+  const noticeWriteAuthorDisplayName = resolveEducationNoticeAuthorDisplayName(
+    member.displayName,
+    'instructor',
+  )
 
   const remoteApplicationQuery = useMyProgramApplicationDetail(routeApplicationType, applicationId)
   const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
@@ -362,6 +372,8 @@ export function MypageLectureDetailPage() {
           preferredEducationScheduleLabel={preferredEducationScheduleLabel}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          noticeWriteEnabled={canWriteEducationNotice(member.profile, application.displayStatus)}
+          noticeWriteAuthorDisplayName={noticeWriteAuthorDisplayName}
         />
       )
     }

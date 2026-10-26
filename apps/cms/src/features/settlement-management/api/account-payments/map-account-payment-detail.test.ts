@@ -41,6 +41,7 @@ function emptyDetailBasic(): AccountPaymentStatusDetail {
       accountPaymentStatus: 'awaiting_confirmation',
       accountPaymentStatusLabel: '확인 대기 중',
       transferScheduledDateDisplay: '-',
+      paidAtDisplay: '-',
       lectureFeeStandardTitle: '-',
       lectureFeeStandardAmount: '-',
       businessIncomeEarnerLabel: '해당 없음',
@@ -126,6 +127,8 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         sourceType: 'GEMINI_TRAINING_REPORT',
         netPaymentAmount: 100_000,
         scheduledPaymentDate: '2026-10-15',
+        paidAt: '2026-10-15T15:00:00.000Z',
+        paymentStatus: 'PAID',
       },
       settlement: {
         instructorId: '190001',
@@ -166,6 +169,26 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
     expect(mapped.blocks[0]?.institutionName).toBe('서울 성동고등학교')
     expect(mapped.totalAmount).toBe(100_000)
+    expect(mapped.basic.paidAtDisplay).toBe('2026. 10. 16(금)')
+  })
+
+  it('미지급 상태에서는 paidAt가 있어도 이체 완료일을 -로 표시한다', () => {
+    const detail: AccountPaymentDetailResponse = {
+      payment: {
+        accountPaymentId: 185956,
+        instructorName: '이건희',
+        paymentStatus: 'WAITING_PAYMENT',
+        paidAt: '2026-10-15T15:00:00.000Z',
+      },
+    }
+
+    const mapped = mapAccountPaymentDetailFromGetApi(
+      { ...baseRow, paidAt: '2026-10-15T15:00:00.000Z' },
+      detail,
+      null
+    )
+
+    expect(mapped.basic.paidAtDisplay).toBe('-')
   })
 
   it('settlement == null이어도 instructor PII는 채운다', () => {
