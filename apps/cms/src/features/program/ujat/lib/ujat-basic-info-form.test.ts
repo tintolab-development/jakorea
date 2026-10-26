@@ -64,5 +64,7 @@ describe('UJAT basic-info RHF migration boundary', () => {
     expect(defaults.surveyVolunteerSatisfaction).toBe(true)
     expect(defaults.surveySchoolSatisfaction).toBe(true)
     expect(defaults.surveyLectureEvaluation).toBe(true)
+    expect(defaults.venueKind).toBe('inside')
+    expect(defaults.venueDetail).toBe('')
   })
 })

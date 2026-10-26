@@ -2,6 +2,10 @@
   height: auto;
   max-height: none;
   overflow: visible;
+  /* Figma popup_medium 카드 그림자 */
+  box-shadow:
+    0 2px 10px 0 rgb(19 59 75 / 3%),
+    0 4px 27px 0 rgb(13 35 44 / 5%);
 }
 
 .body {
@@ -10,7 +14,7 @@
   min-width: 0;
   flex-direction: column;
   gap: var(--spacing-28);
-  margin-top: var(--spacing-28);
+  margin-top: var(--spacing-16);
 }
 
 .guide,
@@ -21,7 +25,7 @@
 }
 
 .guide {
-  line-height: 1.6;
+  line-height: 150%;
 }
 
 .sessionCard {
@@ -76,16 +80,30 @@
 }
 
 .policy {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  display: block;
   margin: 8px 0 0;
   padding-left: 22px;
-  color: var(--color-neutral-cool-500);
-  font-family: var(--font-family-base);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 1.5;
+  color: var(--color-neutral-cool-600);
+  font-family: "42dot Sans", var(--font-family-base);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  list-style: disc;
+  list-style-position: outside;
+  opacity: 0.6;
+}
+
+.policy li {
+  margin: 0;
+}
+
+.itemListViewport {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 8px 0 0;
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+  overflow-x: hidden;
 }
 
 .itemList {
@@ -94,12 +112,17 @@
   flex-direction: column;
   gap: var(--spacing-16);
   box-sizing: border-box;
-  overflow: visible;
-  margin: 8px 0 0;
+  margin: 0;
   padding: 20px 28px;
-  border-radius: var(--radius-16);
-  background: var(--color-neutral-cool-50);
   list-style: none;
+}
+
+.itemListScrollable {
+  /* item 2개(상하 padding 20px + 행 32px 2개 + 간격 16px)만 보이는 높이 */
+  max-height: 120px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .emptyItemSpace {
@@ -112,6 +135,7 @@
   display: flex;
   width: 100%;
   min-width: 0;
+  min-height: 32px;
   align-items: center;
   gap: var(--spacing-8);
 }
@@ -162,13 +186,36 @@
   flex: 1 1 auto;
 }
 
+.linkInput :global(.pf-text-input__field) {
+  /* Figma Textfield/xlarge */
+  box-sizing: border-box;
+}
+
+.linkInput :global(.pf-text-input__input) {
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: -0.18px;
+  line-height: 150%;
+}
+
+.linkInput :global(.pf-text-input__input)::placeholder {
+  color: var(--color-neutral-warm-500);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.18px;
+  opacity: 1;
+}
+
 .actions {
   display: flex;
   width: 100%;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--spacing-12);
+  gap: var(--spacing-16);
 }
 
 @media (--bp-below-pc) {
@@ -179,7 +226,7 @@
   }
 
   .policy {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .sessionCard {
@@ -193,6 +240,12 @@
 
   .linkRow {
     flex-direction: column;
+  }
+
+  .linkInput :global(.pf-text-input__input),
+  .linkInput :global(.pf-text-input__input)::placeholder {
+    font-size: 16px;
+    letter-spacing: -0.16px;
   }
 
   .linkRow > button {

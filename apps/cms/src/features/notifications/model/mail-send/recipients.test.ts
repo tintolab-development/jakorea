@@ -158,9 +158,9 @@ describe('mergeMailSendRecipients', () => {
 })
 
 describe('applyMailManualEntries', () => {
-  it('팝업에서 지운 행은 남기고, 남은 직접 입력의 변수값만 갱신한다', () => {
+  it('팝업에서 지운 직접 입력 행은 발송 목록에서도 빠지고, 남은 행의 변수값은 갱신한다', () => {
     const kept = createManualRecipient('keep@example.com', { '방문 안내': '오전' })
-    const removedInModal = createManualRecipient('stay@example.com', { '방문 안내': '유지' })
+    const removedInModal = createManualRecipient('removed@example.com', { '방문 안내': '삭제' })
     const member: MailSendRecipient = {
       id: 'actor-MEMBER-3',
       participationType: '',
@@ -178,15 +178,26 @@ describe('applyMailManualEntries', () => {
         { contact: 'member@example.com', variables: { '방문 안내': '덮어쓰면 안 됨' } },
       ]
     )
-    expect(next.map(item => item.email)).toEqual([
-      'keep@example.com',
-      'stay@example.com',
-      'member@example.com',
+    expect(next.map(item => item.email)).toEqual(['member@example.com', 'keep@example.com'])
+    expect(next[0]?.actorId).toBe(3)
+    expect(next[0]?.variables).toEqual({ '방문 안내': '회원값' })
+    expect(next[1]?.variables).toEqual({ '방문 안내': '수정' })
+  })
+
+  it('팝업에서 마지막 직접 입력 행까지 지우면 직접 입력 수신자가 모두 빠진다', () => {
+    const manual = createManualRecipient('only@example.com')
+    const member: MailSendRecipient = {
+      id: 'actor-MEMBER-4',
+      participationType: '',
+      name: '회원',
+      email: 'm4@example.com',
+      source: 'program',
+      actorType: 'MEMBER',
+      actorId: 4,
+    }
+    expect(applyMailManualEntries([manual, member], []).map(item => item.id)).toEqual([
+      'actor-MEMBER-4',
     ])
-    expect(next[0]?.variables).toEqual({ '방문 안내': '수정' })
-    expect(next[1]?.variables).toEqual({ '방문 안내': '유지' })
-    expect(next[2]?.actorId).toBe(3)
-    expect(next[2]?.variables).toEqual({ '방문 안내': '회원값' })
   })
 })
 

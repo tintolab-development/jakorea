@@ -48,3 +48,25 @@ export function validateSmsSenderPhone(
   }
   return null
 }
+
+export type SmsSenderPhoneOption = { label: string; value: string }
+
+/**
+ * NHN 등록 발신번호(sender-profiles SMS) → 셀렉 옵션.
+ * - value = senderKey 그대로 (하이픈 정규화 금지)
+ * - orphanValue: 목록에 없어도 표시용으로 앞에 유지할 값 (템플릿 수정 화면 전용)
+ */
+export function buildSmsSenderPhoneOptions(
+  profiles: ReadonlyArray<{ senderKey: string; displayName: string }> | undefined,
+  orphanValue?: string
+): SmsSenderPhoneOption[] {
+  const fromApi = (profiles ?? []).map(profile => {
+    const phone = profile.senderKey.trim()
+    const label = profile.displayName.trim() || phone
+    return { label, value: phone }
+  })
+  if (orphanValue && !fromApi.some(option => option.value === orphanValue)) {
+    return [{ label: orphanValue, value: orphanValue }, ...fromApi]
+  }
+  return fromApi
+}

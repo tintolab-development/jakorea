@@ -4,7 +4,7 @@
 export const UJAT_REGISTRATION_SECTION_META = {
   basic: {
     title: '기본 정보',
-    description: '',
+    description: '참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.',
   },
   businessKpi: {
     title: '사업 KPI 목표',

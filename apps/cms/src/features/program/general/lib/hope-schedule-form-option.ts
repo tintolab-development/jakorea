@@ -108,5 +108,5 @@ export function formatHopeScheduleFormOptionLine(
 ): string | null {
   const label = resolveHopeScheduleFormOptionLabel(session, bridge)
   if (!label) return null
-  return formatCmsScheduleDisplayLabel(label)
+  return formatCmsScheduleDisplayLabel(label) || null
 }

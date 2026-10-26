@@ -42,7 +42,7 @@ function sessionScheduleLabel(session: ParticipatingSchoolSession): string {
 
 function applicationScheduleLabel(item: IndividualSettlementReviewListItem): string {
   const name = item.scheduleName?.trim()
-  if (name) return formatCmsScheduleDisplayLabel(name)
+  if (name) return formatCmsScheduleDisplayLabel(name) || '-'
   return '-'
 }
 

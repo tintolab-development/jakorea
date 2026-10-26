@@ -36,6 +36,8 @@ export type FormTemplateRendererProps = {
   renderParagraphTitleTrailing?: (
     paragraph: WritingFormParagraph
   ) => ReactNode | null | undefined
+  /** 문단 id → 제출 오류 문구 */
+  paragraphErrorMessages?: Readonly<Record<string, string>>
 }
 
 function resolveParagraphDisplayTitle(paragraph: WritingFormParagraph): string {
@@ -101,6 +103,7 @@ export function FormTemplateRenderer({
   fillOptions,
   renderParagraphSlot,
   renderParagraphTitleTrailing,
+  paragraphErrorMessages,
 }: FormTemplateRendererProps) {
   const rootClass = ['form-template-renderer', className].filter(Boolean).join(' ')
   let numberedIndex = 0
@@ -154,10 +157,12 @@ export function FormTemplateRenderer({
           draft.formSettings.titleNumbering,
         )
         const titleTrailing = renderParagraphTitleTrailing?.(paragraph)
+        const errorMessage = paragraphErrorMessages?.[paragraph.id]?.trim() || undefined
         return (
           <ParagraphCard
             key={paragraph.id}
             dataParagraphId={paragraph.id}
+            errorMessage={errorMessage}
             editableHeading={
               titleTrailing != null
                 ? { ...editableHeading, titleTrailing }

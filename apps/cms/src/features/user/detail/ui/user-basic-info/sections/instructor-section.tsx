@@ -26,6 +26,7 @@ import {
 } from '../display'
 import { InstructorJaEvaluationGradeField } from '../instructor-ja-grade-field'
 import {
+  activityChangeCountView,
   PermissionApprovalStatusWithResend,
   settlementStatusView,
 } from '../status'
@@ -173,6 +174,9 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
           readOnlyDisplay
           view={<span>{socialView(user)}</span>}
         />
+      </EditableRow>
+      <EditableRow type="single">
+        <EditableField label="활동 변경 횟수" readOnlyDisplay view={activityChangeCountView(user)} />
       </EditableRow>
     </>
   )

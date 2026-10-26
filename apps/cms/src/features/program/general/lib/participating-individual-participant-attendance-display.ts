@@ -1,4 +1,5 @@
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import type { Program } from '@/types/domain'
@@ -79,7 +80,7 @@ export function resolveParticipatingIndividualParticipantAbsenceDateLabel(input:
     const formatted = formatParticipatingIndividualParticipantAttendanceShortDateLabel(trimmed)
     if (MONTH_DAY_LABEL_PATTERN.test(formatted)) return formatted
   }
-  const first = [input.scheduleLabel, input.scheduleStartAt, input.scheduleName]
+  const first = [input.scheduleLabel, input.scheduleStartAt, toDisplayEducationScheduleName(input.scheduleName)]
     .map(value => value?.trim())
     .find(Boolean)
   return first

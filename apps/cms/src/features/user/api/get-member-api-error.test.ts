@@ -73,6 +73,24 @@ describe('getMemberApiErrorMessage', () => {
     expect(getMemberApiErrorMessage(error, 'fallback')).toContain('참여 중인 프로그램')
   })
 
+  it('maps ADMIN_APPROVAL_CANCEL_HAS_PROGRAM_ASSIGNMENT_HISTORY over generic 409 message', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          message: '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.',
+          error: {
+            code: 'ADMIN_APPROVAL_CANCEL_HAS_PROGRAM_ASSIGNMENT_HISTORY',
+            message: '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.',
+          },
+        },
+      },
+    }
+
+    expect(getMemberApiErrorMessage(error, 'fallback')).toContain('담당 이력')
+  })
+
   it('maps CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID', () => {
     const error = {
       response: {

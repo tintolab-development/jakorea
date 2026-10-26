@@ -3,6 +3,7 @@ import type { UserListRowMetrics as ApiUserListRowMetrics } from '@/shared/api/g
 import { roleCodeToAdminPermissionVariant } from '@/features/user/api/admin-approval-role'
 import {
   resolveInstructorPublicTextField,
+  toInstructorActivityTypeLabel,
   toInstructorFeeGradeDisplayLabel,
 } from '@/features/user/api/map-instructor-activity-display'
 
@@ -28,8 +29,9 @@ export function mapApiUserListRowMetrics(
   if (feeGradeLabel) {
     mapped.instructorFeeGradeLabel = feeGradeLabel
   }
-  if (metrics.permissionApplicationTypeLabel?.trim()) {
-    mapped.permissionApplicationTypeLabel = metrics.permissionApplicationTypeLabel.trim()
+  const applicationTypeLabel = toInstructorActivityTypeLabel(metrics.permissionApplicationTypeLabel)
+  if (applicationTypeLabel) {
+    mapped.permissionApplicationTypeLabel = applicationTypeLabel
   }
   if (metrics.jaEvaluationGrade?.trim()) {
     mapped.jaEvaluationGrade = metrics.jaEvaluationGrade.trim()

@@ -32,7 +32,7 @@ const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   SCHOOL_TEACHER: '교사 회원',
   UJAT: 'UJAT',
   GEMINI: '제미나이 강사단',
-  JA: 'JA 강사단',
+  JA: 'JA 강사',
   SPECIAL: '특강 강사',
   SPECIAL_LECTURE: '특강 강사',
 }
@@ -40,6 +40,7 @@ const ACTIVITY_TYPE_LABELS: Record<string, string> = {
 export function toInstructorActivityTypeLabel(raw: string | undefined | null): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed || isInstructorMaskedPlaceholder(trimmed)) return undefined
+  if (/^JA\s*강사단$/.test(trimmed)) return 'JA 강사'
   if (/[가-힣]/.test(trimmed)) return trimmed
   return ACTIVITY_TYPE_LABELS[trimmed.toUpperCase()] ?? trimmed
 }

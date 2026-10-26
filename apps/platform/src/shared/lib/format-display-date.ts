@@ -1,5 +1,7 @@
 /** Platform 기간·일정 표시 SSOT. 게시일·입력값 포맷과 분리한다. */
 
+import { stripDefaultEducationSlotNameFromLabel } from './education-schedule-name.ts'
+
 export const DISPLAY_DATE_TIMEZONE = 'Asia/Seoul'
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -395,7 +397,8 @@ export function normalizeScheduleDisplayLabel(
   raw: string | null | undefined,
   options: { dateOnly?: boolean } = {},
 ): string {
-  const trimmed = raw?.trim() ?? ''
+  // 백엔드 자동 기본명(`공통 교육 예정 N`)은 일정 라벨에서 제거한다.
+  const trimmed = stripDefaultEducationSlotNameFromLabel(raw)
   if (!trimmed) return ''
   const dateOnly = options.dateOnly === true
   const segments = trimmed.split(/\s*\|\s*/)

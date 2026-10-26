@@ -277,7 +277,6 @@ describe('gemini visiting-training adapters', () => {
     expect(unmatched.trainingDate).toBe('')
     expect(unmatched.trainingTimeText).toBe('')
     expect(unmatched.lastPreferredDate).toBe('')
-    expect(unmatched.trainingDateCandidates).toEqual([])
 
     const matched = mapGeminiRecruitmentItemToApprovedRow(
       {
@@ -295,42 +294,6 @@ describe('gemini visiting-training adapters', () => {
     expect(matched.trainingDate).toBe('2026-06-01')
     expect(matched.lastPreferredDate).toBe('2026-05-20')
     expect(matched.officialDocumentRequired).toBe(false)
-  })
-
-  it('maps approved list trainingDateCandidates in server order', () => {
-    const row = mapGeminiRecruitmentItemToApprovedRow(
-      {
-        id: 1691500,
-        institutionName: '서울공항초등학교',
-        trainingDate: null,
-        studentCount: 25,
-        trainingDateCandidates: [
-          {
-            preferenceRank: 1,
-            trainingDate: '2026-11-10',
-            trainingStartTime: '10:00:00',
-            trainingEndTime: '12:00:00',
-            trainingTimeText: '10:00~12:00(1차시)',
-            sessionCount: 1,
-          },
-          {
-            preferenceRank: 2,
-            trainingDate: '2026-11-12',
-            trainingStartTime: null,
-            trainingEndTime: null,
-            trainingTimeText: null,
-            sessionCount: null,
-          },
-        ],
-      },
-      0
-    )
-    expect(row.trainingDate).toBe('')
-    expect(row.studentCount).toBe(25)
-    expect(row.trainingDateCandidates).toEqual([
-      { preferenceRank: 1, trainingDate: '2026-11-10', trainingTimeText: '10:00~12:00(1차시)' },
-      { preferenceRank: 2, trainingDate: '2026-11-12', trainingTimeText: '' },
-    ])
   })
 
   it('maps create request and numeric ids', () => {

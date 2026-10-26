@@ -11,6 +11,17 @@
   background: color-mix(in srgb, var(--color-mint-01, #01a1af) 6%, #fff) !important;
 }
 
+/* 공통 테이블의 52px 고정 행 높이는 복수 제출 파일을 잘라내므로 이 표만 내용 높이를 따른다. */
+.participating-individual-progress-assignment-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.participating-individual-progress-assignment-table__submission-column {
+  height: auto !important;
+  min-height: 52px !important;
+  white-space: normal;
+  overflow: visible;
+}
+
 /* 성별·생년월일 / 소속·학년 — pipe 세그먼트 wrap이 block flex라 td text-align이 안 먹음 */
 .participating-individual-progress-assignment-table .program-detail-td-segment-wrap {
   justify-content: center;

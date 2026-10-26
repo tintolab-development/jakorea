@@ -43,7 +43,7 @@ const tanstackColumns: ColumnDef<MemberPermissionApplicationRow>[] = [
   { accessorKey: 'id', header: 'id' },
 ]
 
-function filterRowsBySearchParams(
+export function filterRowsBySearchParams(
   data: MemberPermissionApplicationRow[],
   searchParams: URLSearchParams,
   memberType: MembersPermissionTableContext['memberType'],

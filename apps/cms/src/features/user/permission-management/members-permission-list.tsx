@@ -21,6 +21,7 @@ import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/f
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import {
   membersPermissionTablePageConfig,
+  filterRowsBySearchParams,
   type MembersPermissionTableContext,
 } from './members-permission-table.config'
 import type {
@@ -29,6 +30,12 @@ import type {
 } from '@/types/member-permission-application'
 import { useInstructorRoleRequestsQuery } from '@/features/user/api/hooks/use-instructor-role-requests-query'
 import { useAdminApprovalRequestsQuery } from '@/features/user/api/hooks/use-admin-approval-requests-query'
+import {
+  fetchInstructorRoleRequestsPageRemote,
+  fetchAdminApprovalRequestsPageRemote,
+} from '@/features/user/api/members-api-client'
+import { mapInstructorRoleRequestToRow } from '@/features/user/api/map-instructor-role-request-row'
+import { mapAdminApprovalRequestToRow } from '@/features/user/api/map-admin-approval-request-row'
 import {
   parseAdminApprovalRequestListParams,
   parseInstructorRoleRequestListParams,
@@ -105,7 +112,7 @@ export interface MembersPermissionListProps {
       | { mode: 'single'; userId: string; requestId?: number; displayName: string }
       | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
   ) => void
-  /** 강사 탭: 행 선택 후 [승인 반려] — 승인 대기·승인 완료·신청 반려 모두 재반려 가능 */
+  /** 강사 탭: 행 선택 후 [승인 반려] — 승인 대기 행만 대상 */
   onInstructorRejectRequest?: (
     ctx:
       | { mode: 'single'; userId: string; requestId?: number; displayName: string }
@@ -312,19 +319,14 @@ export const MembersPermissionList = forwardRef<
     return out
   }, [])
 
-  /** [승인 반려]: 승인 완료·신청 반려인 경우도 다시 반려 처리 가능 */
+  /** [승인 반려]: 승인 대기(PENDING) 행만 반려 처리 대상 */
   const resolveRejectableRowsForKeys = useCallback((keys: string[]) => {
     if (keys.length === 0) return []
     const byId = new Map(rowsRef.current.map(r => [String(r.id), r]))
     const out: MemberPermissionApplicationRow[] = []
     for (const k of keys) {
       const r = byId.get(String(k))
-      if (
-        r != null &&
-        (r.approvalStatus === 'PENDING' ||
-          r.approvalStatus === 'APPROVED' ||
-          r.approvalStatus === 'REJECTED')
-      ) {
+      if (r != null && r.approvalStatus === 'PENDING') {
         out.push(r)
       }
     }
@@ -335,6 +337,57 @@ export const MembersPermissionList = forwardRef<
     () => [...new Set([...selectedRowKeysRef.current, ...selectedRowKeys].map(k => String(k)))],
     [selectedRowKeys]
   )
+
+  const selectedRowsForExcel = useMemo(
+    () => tableData.filter(row => selectedRowKeys.some(key => String(key) === String(row.id))),
+    [selectedRowKeys, tableData]
+  )
+
+  const resolvePermissionExcelData = useCallback(async () => {
+    if (selectedRowsForExcel.length > 0) return selectedRowsForExcel
+    if (!instructorRemote && !adminRemote) return tableData
+
+    const allRows: MemberPermissionApplicationRow[] = []
+    const pageSize = 20
+    let pageNumber = 0
+    let totalPages = 1
+
+    while (pageNumber < totalPages) {
+      if (memberType === 'instructor') {
+        const page = await fetchInstructorRoleRequestsPageRemote({
+          ...instructorListParams,
+          page: pageNumber,
+          size: pageSize,
+        })
+        const items = page.items ?? []
+        allRows.push(...items.map(mapInstructorRoleRequestToRow))
+        totalPages =
+          page.totalPages ?? (items.length >= pageSize ? pageNumber + 2 : pageNumber + 1)
+      } else {
+        const page = await fetchAdminApprovalRequestsPageRemote({
+          ...adminListParams,
+          page: pageNumber,
+          size: pageSize,
+        })
+        const items = page.items ?? []
+        allRows.push(...items.map(mapAdminApprovalRequestToRow))
+        totalPages =
+          page.totalPages ?? (items.length >= pageSize ? pageNumber + 2 : pageNumber + 1)
+      }
+      pageNumber += 1
+    }
+
+    return filterRowsBySearchParams(allRows, searchParams, memberType, true)
+  }, [
+    adminListParams,
+    adminRemote,
+    instructorListParams,
+    instructorRemote,
+    memberType,
+    searchParams,
+    selectedRowsForExcel,
+    tableData,
+  ])
 
   const guardListApproveAction = useCallback(() => {
     if (memberType === 'admin') {
@@ -426,8 +479,7 @@ export const MembersPermissionList = forwardRef<
     }
     if (!guardListApproveAction()) return
 
-    const rejectableRows = resolveRejectableRowsForKeys(keys)
-    const pendingRows = rejectableRows.filter(r => r.approvalStatus === 'PENDING')
+    const pendingRows = resolveRejectableRowsForKeys(keys)
     const hasNonPendingInSelection = pendingRows.length !== keys.length
     const isBulkSelection = keys.length >= 2
 
@@ -665,7 +717,11 @@ export const MembersPermissionList = forwardRef<
         }
         excelExport={{
           columns,
-          data: tableData,
+          data: selectedRowsForExcel,
+          resolveData: resolvePermissionExcelData,
+          alertOnEmpty: true,
+          emptyAlertTitle: '항목 선택 안내',
+          emptyAlertContent: '엑셀로 내보낼 항목을 선택해 주세요.',
         }}
       >
         <CmsDataTable<MemberPermissionApplicationRow>
@@ -684,6 +740,7 @@ export const MembersPermissionList = forwardRef<
           rowSelection={{
             columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
+            getCheckboxProps: record => ({ disabled: record.approvalStatus !== 'PENDING' }),
             onChange: keys => {
               const next = keys.map(k => String(k))
               selectedRowKeysRef.current = next

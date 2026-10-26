@@ -5,7 +5,9 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FormResponseRef } from './formResponseRef';
 import type { SubmissionFile } from './submissionFile';
+import type { SubmissionLink } from './submissionLink';
 
 export interface ParticipantRow {
   participantId?: number;
@@ -23,4 +25,7 @@ export interface ParticipantRow {
   remarkKind?: string;
   remarkAt?: string;
   files?: SubmissionFile[];
+  links?: SubmissionLink[];
+  surveyResponse?: FormResponseRef;
+  satisfactionResponse?: FormResponseRef;
 }

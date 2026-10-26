@@ -29,7 +29,7 @@ import type {
 } from '@/features/program/ujat/api/education-execution-api'
 import type { UjatOrganizationScheduleSlotResponse as OrgSlot } from '@/features/program/ujat/api/temporary-schedule-api'
 
-const UI_TO_API_STATUS: Record<UjatAttendanceStatus, string> = {
+const UI_TO_API_STATUS: Record<Exclude<UjatAttendanceStatus, 'unprocessed'>, string> = {
   present: 'PRESENT',
   late: 'LATE',
   absent: 'ABSENT',
@@ -54,10 +54,11 @@ export function mapApiAttendanceStatusToUjatUi(
   if (lower === 'late') return 'late'
   if (lower === 'absent') return 'absent'
   if (lower === 'excused_absence' || lower === 'excused') return 'excused_absence'
-  return 'present'
+  return 'unprocessed'
 }
 
 export function mapUjatUiAttendanceStatusToApi(status: UjatAttendanceStatus): string {
+  if (status === 'unprocessed') return ''
   return UI_TO_API_STATUS[status]
 }
 

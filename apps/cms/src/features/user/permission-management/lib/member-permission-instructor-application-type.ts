@@ -1,4 +1,5 @@
 import type { User } from '@/types/user'
+import { toInstructorActivityTypeLabel } from '@/features/user/api/map-instructor-activity-display'
 
 type UserRow = Omit<User, 'password'>
 
@@ -7,7 +8,7 @@ type UserRow = Omit<User, 'password'>
  * API가 `listMetrics.permissionApplicationTypeLabel`을 주면 그대로 사용한다.
  */
 export function getMemberPermissionInstructorApplicationTypeLabel(user: UserRow): string {
-  const explicit = user.listMetrics?.permissionApplicationTypeLabel?.trim()
+  const explicit = toInstructorActivityTypeLabel(user.listMetrics?.permissionApplicationTypeLabel)
   if (explicit) return explicit
 
   const parts: string[] = []
@@ -19,7 +20,7 @@ export function getMemberPermissionInstructorApplicationTypeLabel(user: UserRow)
 
   if (/제미나이/.test(haystack)) return '제미나이 강사단'
   if (/특강|일회성|자유강사/.test(haystack)) return '특강 강사'
-  if (/JA\s*강사단|JA\s*강사/.test(haystack)) return 'JA 강사단'
+  if (/JA\s*강사단|JA\s*강사/.test(haystack)) return 'JA 강사'
 
   return '-'
 }

@@ -7,6 +7,7 @@ import {
   appendCurriculumSingleDateFixedScheduleSessionSuffix,
   shouldShowApplicationPreferredScheduleSessionSelect,
 } from '@jakorea/form-schema/program-application'
+import { stripDefaultEducationSlotNameFromLabel } from '@/shared/lib/education-schedule-name'
 
 type SeoulClock = {
   year: number
@@ -275,7 +276,8 @@ function formatCmsScheduleLabelWith(
   label: string,
   formatDate: (point: ScheduleDisplayPoint) => string
 ): string {
-  const trimmed = label.trim()
+  // 백엔드 자동 기본명(`| 공통 교육 예정 N`)은 표시하지 않는다.
+  const trimmed = stripDefaultEducationSlotNameFromLabel(label)
   if (!trimmed) return trimmed
   const suffixMatch = /(\s*\|[\s\S]*)$/u.exec(trimmed)
   const suffix = suffixMatch?.[1] ?? ''

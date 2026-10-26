@@ -164,7 +164,7 @@ function ConsentDocumentFieldEdit({
         |
       </span>
       <CmsButton variant="secondary" size="h32" type="button" onClick={onWrite}>
-        동의서 작성
+        {value === 'agree' ? '동의서 보기' : '동의서 작성'}
       </CmsButton>
     </span>
   )

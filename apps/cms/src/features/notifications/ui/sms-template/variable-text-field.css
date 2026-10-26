@@ -25,7 +25,8 @@
   word-break: keep-all;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
+  /* 실제 값은 variable-text-field.tsx에서 컨트롤 computed style로 동기화. 아래는 small 기본값 */
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   scrollbar-width: none;

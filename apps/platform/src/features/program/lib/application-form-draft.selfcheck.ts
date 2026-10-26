@@ -241,6 +241,46 @@ assert.equal(
     (trainedTeachersFixedScheduleAnswer[trainedTeachersPreferredScheduleKey] as object),
   false,
 )
+const officialDocumentKey = 'gemini-vt-instructor-seed-official-document'
+const officialDocumentDraft = writingFormDraftFromApplicationForm(
+  {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'none' },
+    paragraphs: [
+      {
+        id: officialDocumentKey,
+        kind: 'single_item',
+        variant: 'horizontal_table',
+        requiredMark: true,
+        answerRequired: true,
+        tableFlavor: 'text',
+        columnHeaders: ['항목', '내용'],
+        dataRows: [['', '']],
+        columnFields: [],
+        fieldDataRows: [],
+      },
+    ],
+  },
+  {
+    [officialDocumentKey]: {
+      dataRows: [['공문 필요 여부', '이름, 소속(학교)']],
+    },
+  },
+)
+assert.ok(officialDocumentDraft)
+const officialDocumentParagraph = officialDocumentDraft!.paragraphs[0]
+assert.equal(
+  officialDocumentParagraph && officialDocumentParagraph.variant === 'horizontal_table'
+    ? officialDocumentParagraph.dataRows[0]?.[1]
+    : '',
+  '이름, 소속(학교)',
+)
+const officialDocumentAnswers = buildApplicationAnswersFromDraft(officialDocumentDraft!)
+assert.deepEqual(
+  (officialDocumentAnswers[officialDocumentKey] as { dataRows?: string[][] }).dataRows,
+  [['공문 필요 여부', '이름, 소속(학교)']],
+)
+
 const trainedTeachersHiddenScheduleAnswer = buildApplicationAnswersFromDraft(
   trainedTeachersScheduleDraft!,
   { omitParagraphIds: new Set([trainedTeachersPreferredScheduleKey]) },

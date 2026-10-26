@@ -84,28 +84,42 @@ export function resolveSmsSendProgramId(programId: string | undefined): number |
   return parseNotificationSendProgramId(programId) ?? null
 }
 
+/**
+ * 문자 발송 Create body (BE JABACK PR #43).
+ * - templateId 있음: 기존 계약 그대로
+ * - templateId 없음(템플릿 미선택 = 템플릿 사용 안 함): templateId 생략(null/0/'' 금지) + messageType 필수.
+ *   발신번호는 senderProfileId 우선, 없을 때만 senderKey. 발송 목적·senderProfileType·
+ *   senderProfileDisplayName은 보내지 않는다(BE가 NORMAL 저장).
+ */
+export type SmsSendCreateRequest = Omit<CreateRequest, 'templateId'> & {
+  templateId?: number
+  messageType?: SmsSendDraft['messageType']
+}
+
 export function buildSmsSendCreateRequest(input: {
   draft: SmsSendDraft
-  templateId: number
+  templateId: number | null
   senderKey?: string
   senderProfileId?: number
   placeholderKeys?: Iterable<string>
   variableCatalog?: AlimtalkVariableCatalogEntry[] | null
-}): CreateRequest {
+}): SmsSendCreateRequest {
   const { draft, templateId, senderKey, senderProfileId } = input
   const programId = resolveSmsSendProgramId(draft.programId)
   if (!isNotificationSendWithoutProgram(draft.programId) && programId == null) {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 
-  const body: CreateRequest = {
+  const body: SmsSendCreateRequest = {
     batchName: (draft.subject || draft.bodyText).trim().slice(0, 200) || '문자 발송',
-    templateId,
+    ...(templateId != null ? { templateId } : { messageType: draft.messageType }),
     scheduledAt: resolveScheduledAtForCreateRequest({
       sendTiming: draft.sendTiming,
       scheduledAt: draft.scheduledAt,
     }),
-    senderKey: senderKey?.trim() || undefined,
+    // 템플릿 미선택: senderProfileId가 있으면 senderKey 생략(둘 다 보내면 BE가 일치 검증)
+    senderKey:
+      templateId == null && senderProfileId != null ? undefined : senderKey?.trim() || undefined,
     senderProfileId,
     recipients: buildSmsSendRecipients(
       draft.recipients,
@@ -131,8 +145,16 @@ export function buildSmsSendPayload(draft: SmsSendDraft): SmsSendDraft {
   }
 }
 
+/** BE contentTemplate 한도: UTF-8 2,000byte (화면 카운터의 NHN 바이트와 별개) */
+export const SMS_SEND_CONTENT_UTF8_BYTE_LIMIT = 2000
+export const SMS_SEND_CONTENT_UTF8_OVER_MESSAGE =
+  '본문은 UTF-8 기준 최대 2,000byte까지 발송할 수 있습니다. 내용을 줄여 주세요.'
+
+export function estimateUtf8Bytes(text: string): number {
+  return new TextEncoder().encode(text).length
+}
+
 export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
-  if (!draft.templateId?.trim()) return '템플릿을 선택하세요.'
   if (!draft.senderPhone.trim()) return '발신 번호를 입력하세요.'
   if (!isValidKoreanPhoneNumber(draft.senderPhone)) {
     return '발신 번호 형식이 올바르지 않습니다.'
@@ -165,6 +187,9 @@ export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
     })
   )
   if (composeError) return composeError
+  if (estimateUtf8Bytes(draft.bodyText) > SMS_SEND_CONTENT_UTF8_BYTE_LIMIT) {
+    return SMS_SEND_CONTENT_UTF8_OVER_MESSAGE
+  }
 
   return null
 }

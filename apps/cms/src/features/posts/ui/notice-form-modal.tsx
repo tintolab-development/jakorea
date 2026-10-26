@@ -21,7 +21,6 @@ import {
 } from '@/features/posts/api/notices/notice-attachments'
 import { dedupeFileObjectIds } from '@/features/posts/api/notices/notice-file-ids'
 import { RichTextEditor } from '@/shared/rich-text'
-import { sumFileBytes } from '@/shared/ui/file-select-field-limits'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -160,13 +159,6 @@ export function NoticeFormModal({
     () => [...existingAttachments.map(item => item.name), ...newFiles.map(f => f.name)],
     [existingAttachments, newFiles]
   )
-  const attachmentTotalBytes = useMemo(
-    () =>
-      existingAttachments.reduce((sum, item) => sum + (item.fileSize ?? 0), 0) +
-      sumFileBytes(newFiles),
-    [existingAttachments, newFiles]
-  )
-
   /** API 카테고리만 — label=name, value=id. 하드코딩 폴백 없음 */
   const categorySelectOptions = useMemo(
     () =>
@@ -492,16 +484,18 @@ export function NoticeFormModal({
                       multiple
                       accept={NOTICE_ATTACHMENT_ACCEPT}
                       fileNames={attachmentDisplayNames}
-                      currentTotalBytes={attachmentTotalBytes}
-                      maxTotalBytes={NOTICE_ATTACHMENT_MAX_BYTES}
+                      maxTotalBytes={0}
+                      maxFileBytes={NOTICE_ATTACHMENT_MAX_BYTES}
                       uploading={uploadingAttachments}
                       onFilesChange={handleAttachmentAdd}
                       onRemoveFile={handleAttachmentRemove}
                       guideLines={[
-                        '최대 20MB까지 업로드 가능하며,',
+                        '파일별 최대 20MB까지 업로드 가능하며,',
                         'JPG, PNG, Excel, PDF, Word 형식만 지원됩니다.',
                       ]}
-                      sizeExceededMessage="최대 20MB까지 업로드 가능합니다."
+                      sizeExceededMessage={file =>
+                        `${file?.name ?? '선택한 파일'}은(는) 파일별 최대 20MB를 초과했습니다.`
+                      }
                     />
                     {attachmentError ? (
                       <p className="notice-register-modal__error" role="alert">

@@ -71,6 +71,12 @@ export function HorizontalTablePreviewBody({
     isFieldTable &&
     onFieldCellChange != null &&
     !isFormPreviewReadonlyMode(interactionMode)
+  const textInputEnabled =
+    !isFieldTable &&
+    paragraph.showBottomConsent !== true &&
+    onFieldCellChange != null &&
+    !isFormPreviewReadonlyMode(interactionMode)
+  const tableReadonly = !fieldInputEnabled && !textInputEnabled
   const preConsentWrapClass = resolvePaymentPreConsentHorizontalTableWrapClass(paragraph.id)
 
   return (
@@ -79,7 +85,11 @@ export function HorizontalTablePreviewBody({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="form-template-horizontal-table" role="grid" aria-readonly>
+      <div
+        className="form-template-horizontal-table"
+        role="grid"
+        aria-readonly={tableReadonly || undefined}
+      >
         <div
           className="form-template-horizontal-table__row form-template-horizontal-table__row--header"
           role="row"
@@ -102,12 +112,15 @@ export function HorizontalTablePreviewBody({
               const fieldCell = paragraph.fieldDataRows?.[rowIndex]?.[colIndex]
               const showSubjectiveInput =
                 fieldInputEnabled && fieldCell?.kind === 'subjective'
+              const showTextInput = textInputEnabled
               return (
                 <div
                   key={`cell-${rowIndex}-${colIndex}`}
                   className={[
                     'form-template-horizontal-table__td',
-                    isFieldTable ? 'form-template-horizontal-table__td--field' : '',
+                    isFieldTable || showTextInput
+                      ? 'form-template-horizontal-table__td--field'
+                      : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -121,6 +134,18 @@ export function HorizontalTablePreviewBody({
                       autoSize={{ minRows: 2, maxRows: 6 }}
                       value={fieldCell.kind === 'subjective' ? fieldCell.value : cellValue}
                       placeholder="답변을 입력해 주세요"
+                      maxLength={SHORT_ESSAY_MAX_LENGTH}
+                      onChange={event =>
+                        onFieldCellChange?.(rowIndex, colIndex, event.target.value)
+                      }
+                    />
+                  ) : showTextInput ? (
+                    <Input.TextArea
+                      className="form-template-horizontal-table__td-input"
+                      size="large"
+                      autoSize={{ minRows: 1, maxRows: 6 }}
+                      value={cellValue}
+                      placeholder="입력해 주세요"
                       maxLength={SHORT_ESSAY_MAX_LENGTH}
                       onChange={event =>
                         onFieldCellChange?.(rowIndex, colIndex, event.target.value)

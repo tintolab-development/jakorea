@@ -1,4 +1,5 @@
 import type { ActivityWithdrawScheduleOption } from '@/features/program/shared/lib/activity-withdraw-schedule'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 
 function pad2(value: number): string {
@@ -17,7 +18,7 @@ export function formatTrainedTeacherProgramScheduleOptionLabel(
   schedule: ProgramScheduleResponse,
   index: number
 ): string {
-  const name = schedule.scheduleName?.trim()
+  const name = toDisplayEducationScheduleName(schedule.scheduleName)
   const sessionNo =
     typeof schedule.sessionNo === 'number' && Number.isFinite(schedule.sessionNo)
       ? schedule.sessionNo

@@ -5,7 +5,9 @@ import {
   isAlimtalkTemplateDeleteRejectedByNhnError,
   isCategoryHasChildrenError,
   isCategoryNeedsSyncError,
+  resolveNotificationSendFieldError,
 } from './get-notifications-api-error'
+import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 
 function apiError(status: number, code: string, message?: string) {
   return {
@@ -293,5 +295,50 @@ describe('get-notifications-api-error', () => {
         'fallback'
       )
     ).toBe('예약 시간은 현재 이후여야 합니다. 예약 발송 시각을 다시 확인해 주세요.')
+  })
+})
+
+describe('resolveNotificationSendFieldError', () => {
+  it('BE 발송 검증 코드는 BE 문구 그대로 + 포커스 필드', () => {
+    expect(
+      resolveNotificationSendFieldError(
+        apiError(400, 'NOTIFICATION_SMS_SENDER_PROFILE_MISMATCH', '발신번호가 일치하지 않습니다.')
+      )
+    ).toEqual({
+      code: 'NOTIFICATION_SMS_SENDER_PROFILE_MISMATCH',
+      field: 'sender',
+      message: '발신번호가 일치하지 않습니다.',
+    })
+    expect(
+      resolveNotificationSendFieldError(
+        apiError(400, 'NOTIFICATION_SMS_CONTENT_REQUIRED', '본문을 입력하세요.')
+      )?.field
+    ).toBe('content')
+    expect(
+      resolveNotificationSendFieldError(
+        apiError(400, 'NOTIFICATION_SENDER_DISPLAY_NAME_INVALID', '발신자명 형식 오류')
+      )?.field
+    ).toBe('senderDisplayName')
+  })
+
+  it('CODE:{키} 접두어도 매칭하고, 그 외 코드는 null', () => {
+    expect(
+      resolveNotificationSendFieldError(
+        apiError(400, 'NOTIFICATION_SERVER_RESERVED_VARIABLE:회원명', '예약 변수 오류')
+      )
+    ).toMatchObject({ code: 'NOTIFICATION_SERVER_RESERVED_VARIABLE', field: null })
+    expect(resolveNotificationSendFieldError(apiError(503, 'PROVIDER_UNAVAILABLE'))).toBeNull()
+    expect(resolveNotificationSendFieldError(new Error('local'))).toBeNull()
+  })
+})
+
+describe('formatNotificationFailedReason', () => {
+  it('변수 누락 failureCode(VARIABLE_RESOLUTION_FAILED 접두어)를 안내 문구로 바꾼다', () => {
+    expect(formatNotificationFailedReason('NOTIFICATION_TEMPLATE_VARIABLE_RESOLUTION_FAILED')).toBe(
+      '자동입력 변수값이 없어 발송되지 않았습니다.'
+    )
+    expect(
+      formatNotificationFailedReason('NOTIFICATION_TEMPLATE_VARIABLE_RESOLUTION_FAILED:회원명')
+    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 회원명')
   })
 })

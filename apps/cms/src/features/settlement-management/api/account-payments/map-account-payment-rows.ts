@@ -29,6 +29,7 @@ export function mapAccountPaymentListItemToRow(
     amount: item.netPaymentAmount ?? 0,
     lectureDate: item.lectureDate ?? undefined,
     transferScheduledDate: item.scheduledPaymentDate ?? '',
+    paidAt: item.paidAt,
     bankName: item.bankName,
     maskedAccountNo: item.maskedAccountNo,
     accountHolder: item.accountHolder,

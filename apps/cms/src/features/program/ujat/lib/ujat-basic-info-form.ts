@@ -83,6 +83,9 @@ export function createUjatBasicInfoFormDefaults(
     courseDeliveredBy: 'JA',
     partnerInvolvement: false,
     ipsCategory: 'prepare',
+    venueKind: 'inside',
+    venueDetail: '',
+    venue: '',
     generalParticipantTypes: ['school_institution', 'volunteer'],
     surveySurvey: UJAT_SURVEY_ITEMS_DEFAULT.survey,
     surveyVolunteerSatisfaction: UJAT_SURVEY_ITEMS_DEFAULT.volunteer_satisfaction,
@@ -147,6 +150,20 @@ export function ujatBasicInfoFormValuesFromLegacyOverlay(
     ) as UjatBasicInfoFormValues['courseDeliveredBy'],
     partnerInvolvement: overlay['ujat.basicInfo.partnerInvolvement'] === 'yes',
     ipsCategory: text(overlay['ujat.basicInfo.ipsCategory'], String(defaults.ipsCategory ?? 'prepare')),
+    venueKind:
+      overlay['ujat.basicInfo.educationVenueKind'] === 'outside' ||
+      overlay['ujat.basicInfo.educationVenueKind'] === 'other' ||
+      overlay['ujat.basicInfo.educationVenueKind'] === 'inside'
+        ? overlay['ujat.basicInfo.educationVenueKind']
+        : defaults.venueKind ?? 'inside',
+    venueDetail: text(
+      overlay['ujat.basicInfo.educationVenueDetail'],
+      String(defaults.venueDetail ?? '')
+    ),
+    venue: text(
+      overlay['ujat.basicInfo.educationVenueDetail'],
+      String(defaults.venue ?? '')
+    ),
     generalParticipantTypes: participantTypesFromOverlay(overlay),
     surveySurvey: survey.survey,
     surveyVolunteerSatisfaction: survey.volunteer_satisfaction,

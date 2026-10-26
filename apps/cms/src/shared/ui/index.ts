@@ -97,6 +97,7 @@ export type { BreadcrumbItem } from '@/shared/config/menu-config'
 export { FileSelectField } from './file-select-field'
 export type { FileSelectFieldProps } from './file-select-field'
 export {
+  FILE_SELECT_MAX_FILE_BYTES,
   FILE_SELECT_MAX_TOTAL_BYTES,
   FILE_SELECT_TOTAL_SIZE_GUIDE_LINE,
   sumFileBytes,

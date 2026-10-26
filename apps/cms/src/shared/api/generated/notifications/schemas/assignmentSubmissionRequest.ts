@@ -7,12 +7,19 @@
  */
 
 /**
- * 회차 과제 파일 제출. fileObjectIds는 본인이 filePurpose=ASSIGNMENT_ATTACHMENT로 업로드·confirm하고 검사가 끝난(CLEAN) 파일 1~20개. 수정 제출(PUT)에서는 수정 후 최종 파일 집합이다.
+ * 회차 과제 제출. fileObjectIds와 urls 중 하나 이상은 필수이며, 둘을 합쳐 최대 20개. fileObjectIds는 최대 10개·파일 전체 용량 최대 100MB·파일당 최대 20MB, urls는 최대 20개입니다. fileObjectIds는 본인이 filePurpose=ASSIGNMENT_ATTACHMENT로 업로드·confirm하고 검사가 끝난(CLEAN) 파일. urls는 https:// 만 허용(trim, 최대 4096자, userinfo 거부, 중복은 첫 등장만 유지). 수정 제출(PUT)에서는 전달한 목록이 최종 제출 집합이다.
  */
 export interface AssignmentSubmissionRequest {
   /**
-     * @minItems 0
-     * @maxItems 20
+     * 선택. 파일당 최대 20MB, 전체 파일 용량 최대 100MB. 10개 초과는 ASSIGNMENT_FILE_COUNT_EXCEEDED.
+     * @maxItems 10
      */
-  fileObjectIds: number[];
+  fileObjectIds?: number[];
+  /**
+     * 선택. https:// URL 최대 20개.
+     * @maxItems 20
+     * @items.minLength 0
+     * @items.maxLength 4096
+     */
+  urls?: string[];
 }

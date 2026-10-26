@@ -54,8 +54,10 @@ export interface FileSelectFieldProps {
   currentTotalBytes?: number
   /** 첨부 합계 상한(byte). 기본 15MB. `0`이면 용량 검사 생략 */
   maxTotalBytes?: number
-  /** 합계 초과 안내. 썸네일은 썸네일 문구를 넘긴다. */
-  sizeExceededMessage?: string
+  /** 용량 초과 안내. 파일별 검사 시 초과 파일을 받아 파일명을 포함할 수 있다. */
+  sizeExceededMessage?: string | ((file?: File) => string)
+  /** 단일 파일 상한(byte). 전달하면 이번 선택분의 각 파일을 검사한다. */
+  maxFileBytes?: number
 }
 
 export function FileSelectField({
@@ -72,8 +74,12 @@ export function FileSelectField({
   currentTotalBytes = 0,
   maxTotalBytes = FILE_SELECT_MAX_TOTAL_BYTES,
   sizeExceededMessage,
+  maxFileBytes,
 }: FileSelectFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const resolveSizeExceededMessage = (file?: File) =>
+    typeof sizeExceededMessage === 'function' ? sizeExceededMessage(file) : sizeExceededMessage
 
   useEffect(() => {
     if (!uploading) return
@@ -84,7 +90,15 @@ export function FileSelectField({
     const files = e.target.files
     if (files?.length) {
       const incoming = Array.from(files)
-      if (
+      const tooLargeFile =
+        maxFileBytes != null &&
+        maxFileBytes > 0 &&
+        incoming.find(file => file.size > maxFileBytes)
+      if (tooLargeFile) {
+        notifyFileSelectTotalSizeExceeded(
+          resolveSizeExceededMessage(tooLargeFile) ?? '파일당 최대 20MB까지 업로드 가능합니다.'
+        )
+      } else if (
         maxTotalBytes > 0 &&
         isFileSelectTotalSizeExceeded({
           incoming,
@@ -92,7 +106,7 @@ export function FileSelectField({
           maxTotalBytes,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded(sizeExceededMessage)
+        notifyFileSelectTotalSizeExceeded(resolveSizeExceededMessage())
       } else {
         onFilesChange?.(incoming)
       }

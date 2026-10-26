@@ -15,6 +15,7 @@ import {
   normalizeInstructorJaEvaluationGradeToken,
 } from '@/entities/user/lib/matches-instructor-list-filters'
 import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import type { InstructorPermissionRevokeChannelType } from '@/features/user/detail/lib/instructor-permission-revoke-channel'
 import {
   isInstructorPermissionRevoked,
   matchesAllTabRoleFilter,
@@ -1563,7 +1564,12 @@ export async function updateUserProgramRole(
  */
 export async function revokeInstructorPermission(
   userId: UUID,
-  payload: { reason: string; revokeReason?: string },
+  payload: {
+    reason: string
+    revokeReason?: string
+    channelType?: InstructorPermissionRevokeChannelType
+    scheduledAt?: string
+  },
   options?: { memberId?: number }
 ): Promise<Omit<User, 'password'>> {
   if (isMembersRemoteEnabled()) {
@@ -1571,6 +1577,8 @@ export async function revokeInstructorPermission(
     await revokeInstructorPermissionRemote(memberId, {
       reason: payload.reason,
       revokeReason: payload.revokeReason ?? payload.reason,
+      channelType: payload.channelType,
+      scheduledAt: payload.scheduledAt,
     })
     const refreshed = await getUserById(userId, { memberId })
     if (!refreshed) {

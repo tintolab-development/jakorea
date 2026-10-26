@@ -4,6 +4,11 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { ContentModal } from '@/shared/ui/content-modal'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
+import {
+  DEFAULT_INSTRUCTOR_PERMISSION_REVOKE_CHANNEL,
+  INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS,
+  type InstructorPermissionRevokeChannelType,
+} from '@/features/user/detail/lib/instructor-permission-revoke-channel'
 import './instructor-permission-revoke-modal.css'
 
 export interface InstructorPermissionRevokeModalProps {
@@ -13,6 +18,8 @@ export interface InstructorPermissionRevokeModalProps {
   onConfirm: (payload: {
     reason: string
     notifyTiming: InstructorPermissionRevokeNotifyTiming
+    channelType?: InstructorPermissionRevokeChannelType
+    scheduledAt?: string
   }) => void | Promise<void>
 }
 
@@ -24,25 +31,48 @@ export function InstructorPermissionRevokeModal({
 }: InstructorPermissionRevokeModalProps) {
   const [notifyTiming, setNotifyTiming] =
     useState<InstructorPermissionRevokeNotifyTiming>('immediate')
+  const [channelType, setChannelType] = useState<InstructorPermissionRevokeChannelType | undefined>(
+    DEFAULT_INSTRUCTOR_PERMISSION_REVOKE_CHANNEL
+  )
+  const [scheduledAt, setScheduledAt] = useState('')
   const [reason, setReason] = useState('')
   const [confirmLoading, setConfirmLoading] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setNotifyTiming('immediate')
+    setChannelType(DEFAULT_INSTRUCTOR_PERMISSION_REVOKE_CHANNEL)
+    setScheduledAt('')
     setReason('')
     setConfirmLoading(false)
   }, [open])
 
   const trimmedReason = reason.trim()
-  const canConfirm = trimmedReason.length > 0 && !confirmLoading
+  const now = new Date()
+  now.setSeconds(0, 0)
+  const pad = (value: number) => String(value).padStart(2, '0')
+  const scheduledAtMin = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(
+    now.getHours()
+  )}:${pad(now.getMinutes())}`
+  const isManualScheduleValid =
+    notifyTiming !== 'manual' ||
+    (scheduledAt !== '' && new Date(scheduledAt).getTime() > Date.now())
+  const canConfirm = trimmedReason.length > 0 && isManualScheduleValid && !confirmLoading
   const displayName = instructorName.trim() || '강사'
 
   const handleConfirm = async () => {
     if (!trimmedReason || confirmLoading) return
     setConfirmLoading(true)
     try {
-      await onConfirm({ reason: trimmedReason, notifyTiming })
+      await onConfirm({
+        reason: trimmedReason,
+        notifyTiming,
+        channelType,
+        scheduledAt:
+          notifyTiming === 'manual' && scheduledAt
+            ? new Date(scheduledAt).toISOString()
+            : undefined,
+      })
     } finally {
       setConfirmLoading(false)
     }
@@ -102,6 +132,39 @@ export function InstructorPermissionRevokeModal({
           >
             <CmsRadio value="immediate">즉시</CmsRadio>
             <CmsRadio value="manual">직접 설정</CmsRadio>
+          </CmsRadio.Group>
+          {notifyTiming === 'manual' ? (
+            <input
+              className="instructor-permission-revoke-modal__scheduled-at"
+              type="datetime-local"
+              value={scheduledAt}
+              min={scheduledAtMin}
+              onChange={e => setScheduledAt(e.target.value)}
+              disabled={confirmLoading}
+              aria-label="알림 발송 예약 시각"
+            />
+          ) : null}
+        </div>
+
+        <div className="instructor-permission-revoke-modal__field">
+          <span className="instructor-permission-revoke-modal__label">알림 방식</span>
+          <CmsRadio.Group
+            size="large"
+            value={channelType ?? 'POLICY'}
+            onChange={e => {
+              const value = e.target.value as InstructorPermissionRevokeChannelType | 'POLICY'
+              setChannelType(value === 'POLICY' ? undefined : value)
+            }}
+            disabled={confirmLoading}
+          >
+            <CmsRadio value="POLICY">기존 채널 정책</CmsRadio>
+            <CmsRadio value="ALIMTALK">
+              {INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS.ALIMTALK}
+            </CmsRadio>
+            <CmsRadio value="SMS">{INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS.SMS}</CmsRadio>
+            <CmsRadio value="EMAIL">
+              {INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS.EMAIL}
+            </CmsRadio>
           </CmsRadio.Group>
         </div>
 

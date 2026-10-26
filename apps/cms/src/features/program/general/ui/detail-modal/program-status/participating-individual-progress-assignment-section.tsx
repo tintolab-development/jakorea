@@ -3,11 +3,18 @@ import { Spin } from 'antd'
 import type { Program } from '@/types/domain'
 import { useParticipatingIndividualProgressAssignment } from '@/features/program/general/hooks/use-participating-individual-progress-assignment'
 import { ParticipatingIndividualProgressAssignmentSessionPanel } from './participating-individual-progress-assignment-session-panel'
+import type { ProgressAssignmentSurveyNavTab } from './participating-individual-progress-assignment-table'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './school-detail-attendance-section.css'
 import './participating-individual-progress-assignment-section.css'
 
-export function ParticipatingIndividualProgressAssignmentSection({ program }: { program: Program }) {
+export function ParticipatingIndividualProgressAssignmentSection({
+  program,
+  onNavigateToSurveyCategory,
+}: {
+  program: Program
+  onNavigateToSurveyCategory: (tab: ProgressAssignmentSurveyNavTab) => void
+}) {
   const {
     pendingFilters,
     appliedFilters,
@@ -50,6 +57,7 @@ export function ParticipatingIndividualProgressAssignmentSection({ program }: { 
                 session={session}
                 appliedFilters={appliedFilters}
                 getSessionParticipants={getSessionParticipants}
+                onViewSurveyResponse={onNavigateToSurveyCategory}
               />
             ))}
           </div>

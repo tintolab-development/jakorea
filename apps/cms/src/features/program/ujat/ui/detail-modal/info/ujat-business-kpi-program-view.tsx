@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Controller, type UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -19,6 +20,21 @@ function KpiNumber({ value }: { value: number | null }) {
 
 function NotApplicableText() {
   return <span className="detail-info-form--text">{UJAT_BUSINESS_KPI_INSTRUCTOR_NOT_APPLICABLE}</span>
+}
+
+function KpiValueWithUnit({
+  children,
+  unit,
+}: {
+  children: ReactNode
+  unit: string
+}) {
+  return (
+    <div className="detail-info-form-inputs-wrapper">
+      {children}
+      <span className="detail-info-form--text">{unit}</span>
+    </div>
+  )
 }
 
 /** 빈 값은 null — RHF Controller는 undefined면 defaultValues(이전 KPI)를 다시 보여 준다. */
@@ -68,25 +84,31 @@ export function UjatBusinessKpiProgramView({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="참여자 최종 인원"
-          view={<KpiNumber value={display.finalParticipants} />}
+          view={
+            <KpiValueWithUnit unit="명">
+              <KpiNumber value={display.finalParticipants} />
+            </KpiValueWithUnit>
+          }
           edit={
             isFormEdit ? (
-              <Controller
-                name="kpiFinalParticipants"
-                control={form.control}
-                render={({ field }) => (
-                  <CmsNumericInput
-                    inputSize="small"
-                    placeholder="목표값 입력"
-                    width={120}
-                    mode="integer"
-                    min={0}
-                    value={field.value == null ? '' : String(field.value)}
-                    onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
-                    status={form.formState.errors.kpiFinalParticipants ? 'error' : undefined}
-                  />
-                )}
-              />
+              <KpiValueWithUnit unit="명">
+                <Controller
+                  name="kpiFinalParticipants"
+                  control={form.control}
+                  render={({ field }) => (
+                    <CmsNumericInput
+                      inputSize="small"
+                      placeholder="목표값 입력"
+                      width={120}
+                      mode="integer"
+                      min={0}
+                      value={field.value == null ? '' : String(field.value)}
+                      onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
+                      status={form.formState.errors.kpiFinalParticipants ? 'error' : undefined}
+                    />
+                  )}
+                />
+              </KpiValueWithUnit>
             ) : undefined
           }
         />
@@ -102,7 +124,9 @@ export function UjatBusinessKpiProgramView({
               <div className="program-registration-paragraph__instructor-kpi-group">
                 <span className="detail-info-form--text">봉사자</span>
                 {hasVolunteerRecruitment ? (
-                  <KpiNumber value={display.volunteerCount} />
+                  <KpiValueWithUnit unit="명">
+                    <KpiNumber value={display.volunteerCount} />
+                  </KpiValueWithUnit>
                 ) : (
                   <NotApplicableText />
                 )}
@@ -126,22 +150,24 @@ export function UjatBusinessKpiProgramView({
                 <div className="program-registration-paragraph__instructor-kpi-group">
                   <span className="detail-info-form--text">봉사자</span>
                   {hasVolunteerRecruitment ? (
-                    <Controller
-                      name="kpiVolunteerCount"
-                      control={form.control}
-                      render={({ field }) => (
-                        <CmsNumericInput
-                          inputSize="small"
-                          placeholder="목표값 입력"
-                          width={120}
-                          mode="integer"
-                          min={0}
-                          value={field.value == null ? '' : String(field.value)}
-                          onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
-                          status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
-                        />
-                      )}
-                    />
+                    <KpiValueWithUnit unit="명">
+                      <Controller
+                        name="kpiVolunteerCount"
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsNumericInput
+                            inputSize="small"
+                            placeholder="목표값 입력"
+                            width={120}
+                            mode="integer"
+                            min={0}
+                            value={field.value == null ? '' : String(field.value)}
+                            onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
+                            status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
+                          />
+                        )}
+                      />
+                    </KpiValueWithUnit>
                   ) : (
                     <CmsInput
                       disabled
@@ -160,49 +186,61 @@ export function UjatBusinessKpiProgramView({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최종 파견 학교 수"
-          view={<KpiNumber value={display.finalSchools} />}
+          view={
+            <KpiValueWithUnit unit="개">
+              <KpiNumber value={display.finalSchools} />
+            </KpiValueWithUnit>
+          }
           edit={
             isFormEdit ? (
-              <Controller
-                name="kpiFinalSchools"
-                control={form.control}
-                render={({ field }) => (
-                  <CmsNumericInput
-                    inputSize="small"
-                    placeholder="목표값 입력"
-                    width={120}
-                    mode="integer"
-                    min={0}
-                    value={field.value == null ? '' : String(field.value)}
-                    onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
-                    status={form.formState.errors.kpiFinalSchools ? 'error' : undefined}
-                  />
-                )}
-              />
+              <KpiValueWithUnit unit="개">
+                <Controller
+                  name="kpiFinalSchools"
+                  control={form.control}
+                  render={({ field }) => (
+                    <CmsNumericInput
+                      inputSize="small"
+                      placeholder="목표값 입력"
+                      width={120}
+                      mode="integer"
+                      min={0}
+                      value={field.value == null ? '' : String(field.value)}
+                      onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
+                      status={form.formState.errors.kpiFinalSchools ? 'error' : undefined}
+                    />
+                  )}
+                />
+              </KpiValueWithUnit>
             ) : undefined
           }
         />
         <DetailInfoForm.Field
           label="최종 파견 학급 수"
-          view={<KpiNumber value={display.finalClasses} />}
+          view={
+            <KpiValueWithUnit unit="개">
+              <KpiNumber value={display.finalClasses} />
+            </KpiValueWithUnit>
+          }
           edit={
             isFormEdit ? (
-              <Controller
-                name="kpiFinalClasses"
-                control={form.control}
-                render={({ field }) => (
-                  <CmsNumericInput
-                    inputSize="small"
-                    placeholder="목표값 입력"
-                    width={120}
-                    mode="integer"
-                    min={0}
-                    value={field.value == null ? '' : String(field.value)}
-                    onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
-                    status={form.formState.errors.kpiFinalClasses ? 'error' : undefined}
-                  />
-                )}
-              />
+              <KpiValueWithUnit unit="개">
+                <Controller
+                  name="kpiFinalClasses"
+                  control={form.control}
+                  render={({ field }) => (
+                    <CmsNumericInput
+                      inputSize="small"
+                      placeholder="목표값 입력"
+                      width={120}
+                      mode="integer"
+                      min={0}
+                      value={field.value == null ? '' : String(field.value)}
+                      onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
+                      status={form.formState.errors.kpiFinalClasses ? 'error' : undefined}
+                    />
+                  )}
+                />
+              </KpiValueWithUnit>
             ) : undefined
           }
         />

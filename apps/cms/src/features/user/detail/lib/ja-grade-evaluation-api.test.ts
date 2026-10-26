@@ -71,6 +71,7 @@ describe('ja-grade-evaluation-api', () => {
     expect(resolveJaEvaluationDisplayGrade({ currentGrade: 'A' })).toBe('A')
     expect(resolveJaEvaluationDisplayGrade({ currentGrade: 'D' })).toBe('D')
     expect(resolveJaEvaluationDisplayGrade({})).toBeNull()
+    expect(resolveJaEvaluationDisplayGrade({ currentGrade: null })).toBeNull()
     expect(resolveJaEvaluationDisplayGrade({}, 'C')).toBe('C')
   })
 

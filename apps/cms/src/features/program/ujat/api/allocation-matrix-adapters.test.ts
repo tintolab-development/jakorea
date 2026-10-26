@@ -93,8 +93,17 @@ describe('buildUjatAttendanceSessionsFromMatrix', () => {
 })
 
 describe('mapApiAttendanceStatusToUjatUi', () => {
-  it('maps known statuses', () => {
+  it('maps each recorded API status without changing its meaning', () => {
     expect(mapApiAttendanceStatusToUjatUi('PRESENT')).toBe('present')
+    expect(mapApiAttendanceStatusToUjatUi('LATE')).toBe('late')
+    expect(mapApiAttendanceStatusToUjatUi('ABSENT')).toBe('absent')
     expect(mapApiAttendanceStatusToUjatUi('EXCUSED')).toBe('excused_absence')
+  })
+
+  it('maps null, undefined, and non-attendance progress values to 미처리', () => {
+    expect(mapApiAttendanceStatusToUjatUi(null)).toBe('unprocessed')
+    expect(mapApiAttendanceStatusToUjatUi(undefined)).toBe('unprocessed')
+    expect(mapApiAttendanceStatusToUjatUi('SCHEDULED')).toBe('unprocessed')
+    expect(mapApiAttendanceStatusToUjatUi('COMPLETED')).toBe('unprocessed')
   })
 })

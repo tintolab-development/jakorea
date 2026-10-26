@@ -155,6 +155,12 @@ export function isInstructorSettlementEligibleForPaymentStatementIssue(
   return INSTRUCTOR_SETTLEMENT_STATUSES_ELIGIBLE_FOR_PAYMENT_STATEMENT_ISSUE.includes(status)
 }
 
+export function isInstructorSettlementInactive(
+  status: InstructorSettlementUiStatus
+): boolean {
+  return status === 'application_rejected' || status === 'payment_correction_requested'
+}
+
 export function getInstructorSettlementStatusLabel(
   status: InstructorSettlementUiStatus
 ): string {

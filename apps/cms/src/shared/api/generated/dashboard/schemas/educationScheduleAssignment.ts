@@ -20,7 +20,7 @@ export interface EducationScheduleAssignment {
   status?: EducationScheduleAssignmentStatus;
   /** 과제 제출 ID(form_response.id). 피드백이 있으면 피드백이 달린 제출본 ID이며 GET /api/portal/me/form-responses/{formResponseId}/feedback 키로 쓴다. 미제출이면 null. */
   formResponseId?: number | null;
-  /** 최신 제출본 파일·링크. 미제출이면 null. */
+  /** 최신 제출본 파일·링크만 반환하며 이전 revision 이력은 포함하지 않습니다. 미제출이면 null. */
   submissions?: EducationScheduleAssignmentSubmission[] | null;
   /** 최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. 현재 정책상 submitEndAt 이후 미제출 최초 제출은 허용하지 않습니다. */
   canSubmit?: boolean;

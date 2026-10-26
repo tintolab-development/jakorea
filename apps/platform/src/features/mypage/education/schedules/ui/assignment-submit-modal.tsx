@@ -8,7 +8,6 @@ import {
 } from '@/shared/lib/file-upload-policy'
 import { PORTAL_ASSIGNMENT_MAX_SUBMISSION_ITEMS } from '../api/assignment-client'
 import closeFileUrl from '@/shared/assets/icons/close-black.svg'
-import attachFileUrl from '../image/icon/attach-file-24.svg'
 import styles from './assignment-submit-modal.module.css'
 
 const ACCEPTED_FILE_EXTENSIONS = [
@@ -221,6 +220,9 @@ export function EducationAssignmentSubmitModal({
     })
   }
 
+  const fileItems = items.filter(item => item.kind === 'file')
+  const linkItems = items.filter(item => item.kind === 'url')
+
   return (
     <PFModal
       open={open}
@@ -233,7 +235,7 @@ export function EducationAssignmentSubmitModal({
       className={styles.modal}
     >
       <div className={styles.body}>
-        <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600" className={styles.guide}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-warm-600" className={styles.guide}>
           과제 파일 또는 업로드 링크를 첨부해 제출해 주세요.
           <br />
           제출한 과제는 마감 전까지 수정할 수 있어요.
@@ -258,8 +260,8 @@ export function EducationAssignmentSubmitModal({
           <PFText
             as="h2"
             id="assignment-file-label"
-            typo="bd-md-sb"
-            color="neutral-cool-600"
+            typo="bd-md-rg"
+            color="neutral-warm-600"
             className={styles.sectionTitle}
           >
             과제 파일을 첨부해 주세요.
@@ -288,13 +290,15 @@ export function EducationAssignmentSubmitModal({
             <li>{ASSIGNMENT_FILE_HINT}</li>
             <li>첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.</li>
           </ul>
-          {items.some(item => item.kind === 'file') ? (
-            <ul className={styles.itemList} aria-label="첨부한 과제 파일">
-              {items
-                .filter(item => item.kind === 'file')
-                .map(item => (
+          {fileItems.length > 0 ? (
+            <div
+              className={[styles.itemListViewport, fileItems.length >= 2 ? styles.itemListScrollable : undefined]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <ul className={styles.itemList} aria-label="첨부한 과제 파일">
+                {fileItems.map(item => (
                   <li key={item.id} className={styles.item}>
-                    <img src={attachFileUrl} alt="" width={24} height={24} aria-hidden="true" />
                     <PFText as="span" typo="bd-lg-rg" color="black" className={styles.itemLabel}>
                       {item.label}
                     </PFText>
@@ -309,7 +313,8 @@ export function EducationAssignmentSubmitModal({
                     </button>
                   </li>
                 ))}
-            </ul>
+              </ul>
+            </div>
           ) : (
             <div className={styles.emptyItemSpace} aria-hidden="true" />
           )}
@@ -321,8 +326,8 @@ export function EducationAssignmentSubmitModal({
           <PFText
             as="h2"
             id="assignment-link-label"
-            typo="bd-md-sb"
-            color="neutral-cool-600"
+            typo="bd-md-rg"
+            color="neutral-warm-600"
             className={styles.sectionTitle}
           >
             링크를 첨부해 주세요.
@@ -353,11 +358,14 @@ export function EducationAssignmentSubmitModal({
               <li key={hint}>{hint}</li>
             ))}
           </ul>
-          {items.some(item => item.kind === 'url') ? (
-            <ul className={styles.itemList} aria-label="첨부한 과제 링크">
-              {items
-                .filter(item => item.kind === 'url')
-                .map(item => (
+          {linkItems.length > 0 ? (
+            <div
+              className={[styles.itemListViewport, linkItems.length >= 2 ? styles.itemListScrollable : undefined]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <ul className={styles.itemList} aria-label="첨부한 과제 링크">
+                {linkItems.map(item => (
                   <li key={item.id} className={styles.item}>
                     <PFText as="span" typo="bd-lg-rg" color="black" className={styles.itemLabel}>
                       {item.label}
@@ -373,7 +381,8 @@ export function EducationAssignmentSubmitModal({
                     </button>
                   </li>
                 ))}
-            </ul>
+              </ul>
+            </div>
           ) : (
             <div className={styles.emptyItemSpace} aria-hidden="true" />
           )}

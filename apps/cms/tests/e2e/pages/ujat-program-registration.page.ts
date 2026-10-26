@@ -192,7 +192,7 @@ export class UjatProgramRegistrationPage {
     await checkRadioIfVisible(this.page, '날짜 지정')
     await fillAllParagraphDatesByPlaceholder(
       this.page,
-      '일정을 선택하세요',
+      '일정을 선택해 주세요',
       'single',
       OPERATION_DATE_OPTS
     )

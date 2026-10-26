@@ -48,6 +48,7 @@ import {
   normalizeScheduleDisplayLabel,
   parseScheduleDisplayLabel,
 } from '../../../shared/lib/format-display-date.ts'
+import { toDisplayEducationScheduleName } from '../../../shared/lib/education-schedule-name.ts'
 
 function mapPortalMaxPreferredScheduleCount(
   remote: PortalProgramDetail,
@@ -507,7 +508,7 @@ function scheduleTitle(schedule: PortalSchedule): string {
   const kindLabel = kind ? SCHEDULE_KIND_LABEL[kind] : undefined
   const term = readString(schedule.term)?.toUpperCase()
   const termLabel = term ? TERM_LABEL[term] : undefined
-  const name = readString(schedule.scheduleName)
+  const name = toDisplayEducationScheduleName(schedule.scheduleName)
   const parts = [kindLabel, termLabel, name].filter((value): value is string => Boolean(value))
   return parts.join(' ')
 }
@@ -558,7 +559,7 @@ function mapUjatPublicEventSchedules(schedules: PortalSchedule[] | undefined) {
       const term = readString(schedule.term)?.toUpperCase()
       const kindLabel = kind ? SCHEDULE_KIND_LABEL[kind] : undefined
       const termLabel = term ? TERM_LABEL[term] : undefined
-      const fallbackName = readString(schedule.scheduleName) ?? ''
+      const fallbackName = toDisplayEducationScheduleName(schedule.scheduleName) ?? ''
       const scheduleLabel = termLabel ?? kindLabel ?? '일정'
       const name = termLabel ? (kindLabel ?? fallbackName) : kindLabel ? '' : fallbackName
       const formatted = formatRange(toDate(schedule.startAt), toDate(schedule.endAt))
@@ -859,7 +860,7 @@ function mapPortalScheduleDetails(
     const assignmentPeriod = rows.showAssignmentPeriod
       ? optionalText(detail.assignmentPeriod)
       : undefined
-    const name = detail.name?.trim() ?? ''
+    const name = toDisplayEducationScheduleName(detail.name) ?? ''
     if (
       !name &&
       !dateLabel &&

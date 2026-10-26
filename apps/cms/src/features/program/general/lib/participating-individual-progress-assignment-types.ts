@@ -2,10 +2,23 @@ export const PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL = 'all'
 
 export type ParticipatingIndividualProgressAssignmentSubmissionFilter = 'not_submitted' | 'submitted'
 
+export type ParticipatingIndividualProgressAssignmentSubmissionFile = {
+  fileName: string
+  href: string
+  fileObjectId?: number
+  downloadable?: boolean
+}
+
+export type ParticipatingIndividualProgressAssignmentSubmissionItem =
+  | (ParticipatingIndividualProgressAssignmentSubmissionFile & { kind: 'file' })
+  | { kind: 'link'; fileName: string; href: string }
+
 export type ParticipatingIndividualProgressAssignmentSubmission =
   | { kind: 'not_submitted' }
   | {
       kind: 'submitted'
+      files?: ParticipatingIndividualProgressAssignmentSubmissionFile[]
+      items?: ParticipatingIndividualProgressAssignmentSubmissionItem[]
       fileName: string
       href: string
       fileObjectId?: number
