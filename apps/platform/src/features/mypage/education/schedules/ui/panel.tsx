@@ -50,17 +50,9 @@ export function EducationSchedulePanel({
 
   const allItems = useMemo(() => {
     const items: EducationScheduleItem[] = remoteSchedules.enabled ? remoteSchedules.items : []
-    const assigned = filterEducationSchedulesForMemberAssignment(
-      items,
-      remoteSchedules.scopeStatus,
-    )
+    const assigned = filterEducationSchedulesForMemberAssignment(items)
     return filterItemsUpToLastParticipatedSession(assigned, lastParticipatedSession)
-  }, [
-    lastParticipatedSession,
-    remoteSchedules.enabled,
-    remoteSchedules.items,
-    remoteSchedules.scopeStatus,
-  ])
+  }, [lastParticipatedSession, remoteSchedules.enabled, remoteSchedules.items])
 
   const totalElements = allItems.length
   const totalPages = Math.max(1, Math.ceil(totalElements / EDUCATION_SCHEDULE_PAGE_SIZE))
