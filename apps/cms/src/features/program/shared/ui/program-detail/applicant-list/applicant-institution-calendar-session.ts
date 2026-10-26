@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { stripDefaultEducationSlotNameFromLabel } from '@/shared/lib/education-schedule-name'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
 
@@ -172,7 +173,7 @@ export function formatInstitutionCalendarSessionTimeDisplay(
   fallbackPeriod?: string
 ): string {
   if (session) {
-    const label = session.scheduleLabel?.trim()
+    const label = stripDefaultEducationSlotNameFromLabel(session.scheduleLabel)
     if (label) return label
     const timeDisplay = parseSessionTimeDisplay(session.timeRange)
     const roundLabel = tryResolveInstitutionSessionRound(session)
@@ -203,7 +204,7 @@ export function formatInstitutionCalendarSessionTimesCommaList(
     .map(session => {
       const timeOnly = parseSessionTimeDisplay(session.timeRange)
       if (timeOnly) return timeOnly
-      const label = session.scheduleLabel?.trim()
+      const label = stripDefaultEducationSlotNameFromLabel(session.scheduleLabel)
       if (label) return label
       const roundLabel = tryResolveInstitutionSessionRound(session)
       const timeDisplay = parseSessionTimeDisplay(session.timeRange)

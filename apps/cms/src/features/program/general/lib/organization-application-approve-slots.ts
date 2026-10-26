@@ -1,4 +1,5 @@
 import type { SlotRequest } from '@/shared/api/generated/dashboard/schemas/slotRequest'
+import { stripDefaultEducationSlotNameFromLabel } from '@/shared/lib/education-schedule-name'
 import type { PreferredEducationSchedule } from '@/features/program/general/api/individual-application-screening-api-types'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
@@ -264,7 +265,8 @@ function requestedScheduleToPreferred(
   row: RequestedScheduleResponse
 ): PreferredEducationSchedule | null {
   const scheduleId = parseOrganizationPreferredScheduleId(row.resolvedScheduleId)
-  const explicitLabel = row.label?.trim() || ''
+  // 백엔드 자동 기본명(`| 공통 교육 예정 N`)은 승인 모달 라벨에 노출하지 않는다.
+  const explicitLabel = stripDefaultEducationSlotNameFromLabel(row.label)
   const requestedDate = row.requestedDate?.trim() || ''
   const periodStart = row.periodStartDate?.trim() || ''
   const periodEnd = row.periodEndDate?.trim() || ''

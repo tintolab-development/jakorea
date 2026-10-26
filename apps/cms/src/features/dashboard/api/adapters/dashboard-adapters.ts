@@ -2,6 +2,7 @@
  * Orval DTO → 대시보드 UI 타입 어댑터
  */
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type {
   DashboardHomeResponse,
   DashboardKpiProgressListResponse,
@@ -475,7 +476,7 @@ export function mapScheduleItem(item: DashboardProgramScheduleResponse): Dashboa
   return {
     id: String(item.scheduleId),
     type: mapScheduleType(item),
-    title: item.scheduleName ?? item.programNameKo ?? '일정',
+    title: toDisplayEducationScheduleName(item.scheduleName) ?? item.programNameKo ?? '일정',
     time: formatScheduleTime(item.startAt, item.allDay),
     programId: String(item.programId),
     programTitle: item.programNameKo ?? item.programCode ?? String(item.programId),

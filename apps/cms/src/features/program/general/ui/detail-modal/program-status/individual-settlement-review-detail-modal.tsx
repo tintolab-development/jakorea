@@ -44,7 +44,7 @@ export type IndividualSettlementReviewDetailModalProps = {
 function scheduleLabel(name: string | undefined): string {
   const trimmed = name?.trim()
   if (!trimmed) return '-'
-  return formatCmsScheduleDisplayLabel(trimmed)
+  return formatCmsScheduleDisplayLabel(trimmed) || '-'
 }
 
 export function IndividualSettlementReviewDetailModal({

@@ -19,6 +19,7 @@ import {
   formatDisplayClockLabel,
   normalizeScheduleDisplayLabel,
 } from '@/shared/lib/format-display-date'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 
 const SELF_INTRO_ANSWER_KEYS = [
   PROGRAM_PARTICIPANT_APPLICATION_IDS.selfIntro,
@@ -385,17 +386,17 @@ function formatScheduleRangeLabel(input: {
   const ready = readTrimmedString(input.dateLabel)
   if (ready && !isOpaqueScheduleOptionToken(ready)) {
     const normalized = normalizeScheduleDisplayLabel(ready)
-    const name = readTrimmedString(input.scheduleName)
+    const name = toDisplayEducationScheduleName(input.scheduleName)
     return name && !normalized.includes(name) ? `${normalized} | ${name}` : normalized
   }
   if (!input.startAt?.trim()) {
-    return readTrimmedString(input.scheduleName)
+    return toDisplayEducationScheduleName(input.scheduleName)
   }
   const range = input.endAt?.trim()
     ? formatDisplayDateTimeRange(input.startAt, input.endAt)
     : formatDisplayDateTime(input.startAt)
-  if (!range) return readTrimmedString(input.scheduleName)
-  const name = readTrimmedString(input.scheduleName)
+  if (!range) return toDisplayEducationScheduleName(input.scheduleName)
+  const name = toDisplayEducationScheduleName(input.scheduleName)
   return name ? `${range} | ${name}` : range
 }
 

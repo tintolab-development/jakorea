@@ -1,4 +1,5 @@
 import type { ParticipatingInstructorEducationScheduleRow } from '@/features/program/general/model/participating-instructors'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
 import { normalizeDashboardScheduleDeliveryStatus } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 
@@ -14,7 +15,8 @@ function mapSessionProgressStatus(
 function formatSessionProgressLabel(session: SessionProgress, index: number): string {
   const parts: string[] = []
   if (session.sessionNo != null) parts.push(`${session.sessionNo}차시`)
-  if (session.scheduleName?.trim()) parts.push(session.scheduleName.trim())
+  const scheduleName = toDisplayEducationScheduleName(session.scheduleName)
+  if (scheduleName) parts.push(scheduleName)
   if (session.startAt?.trim()) {
     const date = session.startAt.slice(0, 10).replace(/-/g, '.')
     parts.push(date)
