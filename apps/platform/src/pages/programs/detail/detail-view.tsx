@@ -15,6 +15,7 @@ type ProgramDetailViewProps = {
   onApply: () => void
   applyChecking?: boolean
   applyBlockedReason?: string | null
+  allowApplyWhenBlockedReason?: boolean
 }
 
 /** 참여하기 프로그램 상세 본문 — 실제 상세 페이지와 CMS 모집 미리보기 번들이 함께 쓴다. */
@@ -24,6 +25,7 @@ export function ProgramDetailView({
   onApply,
   applyChecking,
   applyBlockedReason,
+  allowApplyWhenBlockedReason,
 }: ProgramDetailViewProps) {
   return (
     <section className={[shell.page, styles.page].join(' ')}>
@@ -38,6 +40,7 @@ export function ProgramDetailView({
           onApply={onApply}
           applyChecking={applyChecking}
           applyBlockedReason={applyBlockedReason}
+          allowApplyWhenBlockedReason={allowApplyWhenBlockedReason}
           header={
             <header className={styles.header}>
               <div className={styles.headerMain}>

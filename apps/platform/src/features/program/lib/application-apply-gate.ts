@@ -49,6 +49,18 @@ const ALL_PORTAL_APPLICATION_BLOCKED_REASONS = new Set<PortalApplicationBlockedR
   'ALREADY_APPLIED',
 ])
 
+/** application-options와 form-bindings GET에서 표현이 다른 기존 신청 코드 통합 */
+export function isAlreadyAppliedApplicationReason(
+  reason: string | null | undefined,
+): boolean {
+  const key = reason?.trim().toUpperCase()
+  return (
+    key === 'ALREADY_APPLIED' ||
+    key === 'APPLICATION_ALREADY_SUBMITTED' ||
+    key === 'UJAT_ORGANIZATION_ALREADY_APPLIED'
+  )
+}
+
 export function isPortalApplicationBlockedReason(
   value: string,
 ): value is PortalApplicationBlockedReason {
@@ -70,7 +82,7 @@ export function resolveProgramApplyGateModal(
 ): ProgramApplyGateModalKind | 'proceed' {
   if (canApply === true) return 'proceed'
   const key = normalizePortalApplicationBlockedReason(blockedReason)
-  if (key === 'ALREADY_APPLIED') return 'already-applied'
+  if (isAlreadyAppliedApplicationReason(key)) return 'already-applied'
   if (key && NOT_ELIGIBLE_BLOCKED_REASONS.has(key)) return 'not-eligible'
   if (canApply !== false || !key) return 'proceed'
   if (PROCEED_TO_APPLY_PAGE_REASONS.has(key)) return 'proceed'

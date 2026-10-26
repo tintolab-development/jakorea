@@ -55,6 +55,8 @@ export type ProgramApplicationFormQuery = {
  *
  * BE (portal-apply-form-before-recruitment-frontend-handoff-2026-10-02):
  * - form-bindings GET 은 모집 시작 전·종료 후에도 200 + 발행 양식.
+ * - 이미 제출한 신청 건을 직접 재조회하는 stale URL은
+ *   `APPLICATION_ALREADY_SUBMITTED` (409)로 반환될 수 있으며, 신청 내역 안내 모달로 분기한다.
  * - options 는 모집 전 `canApply=false` + `RECRUITMENT_NOT_STARTED`,
  *   종료 후 `RECRUITMENT_CLOSED`. formBindingId 는 유지.
  * - 제출/임시저장만 모집 window 로 409 (`RECRUITMENT_NOT_STARTED` / `RECRUITMENT_ENDED`).

@@ -16,6 +16,8 @@ type ProgramInfoBodyProps = {
   onApply?: () => void
   applyChecking?: boolean
   applyBlockedReason?: string | null
+  /** 이미 신청한 기관도 신청 내역 안내 모달에 진입할 수 있도록 CTA 허용 */
+  allowApplyWhenBlockedReason?: boolean
   onCancel?: () => void
   showTopFab?: boolean
   className?: string
@@ -30,6 +32,7 @@ export function ProgramInfoBody({
   onApply,
   applyChecking,
   applyBlockedReason,
+  allowApplyWhenBlockedReason = false,
   onCancel,
   showTopFab = true,
   className,
@@ -51,7 +54,7 @@ export function ProgramInfoBody({
         canApply={
           canApplyToProgram(program.recruitmentStatus) &&
           !program.recruitmentSelectionAmbiguous &&
-          !applyBlockedReason
+          (!applyBlockedReason || allowApplyWhenBlockedReason)
         }
         applicationPeriodLabel={program.applicationPeriodLabel}
         applyBlockedReason={applyBlockedReason}

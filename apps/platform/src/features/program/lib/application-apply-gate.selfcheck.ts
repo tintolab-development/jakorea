@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {
+  isAlreadyAppliedApplicationReason,
   resolveProgramApplyGateModal,
   shouldHideApplyPageBlockedBanner,
 } from './application-apply-gate.ts'
@@ -30,6 +31,12 @@ assert.equal(resolveProgramApplyGateModal(undefined, 'RECRUITMENT_CLOSED'), 'pro
 assert.equal(resolveProgramApplyGateModal(false, 'COLLEGE_STUDENT_REQUIRED'), 'not-eligible')
 assert.equal(resolveProgramApplyGateModal(false, 'APPROVED_INSTRUCTOR_REQUIRED'), 'not-eligible')
 assert.equal(resolveProgramApplyGateModal(false, 'ALREADY_APPLIED'), 'already-applied')
+assert.equal(
+  resolveProgramApplyGateModal(undefined, 'APPLICATION_ALREADY_SUBMITTED'),
+  'already-applied',
+)
+assert.equal(isAlreadyAppliedApplicationReason('UJAT_ORGANIZATION_ALREADY_APPLIED'), true)
+assert.equal(isAlreadyAppliedApplicationReason('RECRUITMENT_CLOSED'), false)
 assert.equal(resolveProgramApplyGateModal(false, 'RECRUITMENT_NOT_STARTED'), 'proceed')
 assert.equal(resolveProgramApplyGateModal(false, 'RECRUITMENT_CLOSED'), 'proceed')
 assert.equal(resolveProgramApplyGateModal(false, 'CAPACITY_FULL'), 'proceed')

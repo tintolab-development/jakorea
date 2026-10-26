@@ -4,6 +4,7 @@ import {
   programApplyRequiredPath,
   PROGRAMS_PATH,
   ProgramApplyGateModals,
+  isAlreadyAppliedApplicationReason,
   programApplyGateApplicationsPathForType,
   programApplyGateMemberSettingsPath,
   readPortalRecruitmentFocus,
@@ -94,7 +95,13 @@ export function ProgramDetailPage() {
   }
 
   const handleApply = () => {
-    if (program.recruitmentSelectionAmbiguous || applyOptionQuery.blockedMessage) {
+    const canOpenExistingApplicationGate = isAlreadyAppliedApplicationReason(
+      applyOptionQuery.blockedReason,
+    )
+    if (
+      program.recruitmentSelectionAmbiguous ||
+      (applyOptionQuery.blockedMessage && !canOpenExistingApplicationGate)
+    ) {
       return
     }
     const nextFocus = applySelection
@@ -117,6 +124,9 @@ export function ProgramDetailPage() {
         onApply={handleApply}
         applyChecking={isChecking || applyOptionQuery.isLoading}
         applyBlockedReason={applyOptionQuery.blockedMessage}
+        allowApplyWhenBlockedReason={isAlreadyAppliedApplicationReason(
+          applyOptionQuery.blockedReason,
+        )}
       />
       <ProgramApplyGateModals
         kind={gateModal}
