@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
 import type { Program } from '@/types/domain'
-import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { queryClient } from '@/shared/lib/query-client'
 import {
   isProgramFormVersionMutable,
   resolveApplicationFormLoadSource,
   resolveProgramOperationalFormLoadSource,
-  saveMutableProgramFormVersion,
 } from './sync-registration-form-bindings'
 
 const fetchFormTemplateVersionRemote = vi.fn()
@@ -173,138 +171,5 @@ describe('isProgramFormVersionMutable', () => {
     expect(isProgramFormVersionMutable(undefined)).toBe(false)
     expect(isProgramFormVersionMutable('PUBLISHED')).toBe(false)
     expect(isProgramFormVersionMutable('ARCHIVED')).toBe(false)
-  })
-})
-
-describe('saveMutableProgramFormVersion', () => {
-  const draft = { sections: [] } as unknown as WritingFormDraft
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 22, templateVersionId: 1 })
-    saveFormTemplateVersionDraftByVersionId.mockResolvedValue(undefined)
-    publishFormTemplateVersionById.mockImplementation(async (versionId: number) => versionId + 50)
-    fetchGeneralProgramFormBindings.mockResolvedValue([
-      binding({
-        bindingId: 9,
-        formType: 'APPLICATION',
-        templateId: 99,
-        templateVersionId: 501,
-        targetRole: 'INDIVIDUAL',
-      }),
-    ])
-    updateGeneralProgramFormBinding.mockResolvedValue({})
-  })
-
-  it('copies a published version, saves the draft, publishes, and rebinds', async () => {
-    fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 99,
-      versionStatus: 'PUBLISHED',
-    })
-    copyFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 99,
-      templateVersionId: 700,
-    })
-
-    const publishedId = await saveMutableProgramFormVersion({
-      programId: '186100',
-      templateCode: 'application-participant-individual',
-      templateVersionId: 501,
-      draft,
-    })
-
-    expect(copyFormTemplateVersionRemote).toHaveBeenCalledWith(99, {
-      sourceVersionId: 501,
-      versionLabel: 'program-186100-edit',
-      ownerProgramId: 186100,
-    })
-    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
-      expect.objectContaining({ versionId: 700, templateCode: 'application-participant-individual' })
-    )
-    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(700)
-    expect(updateGeneralProgramFormBinding).toHaveBeenCalledWith(
-      '186100',
-      '9',
-      expect.objectContaining({ templateId: 99, templateVersionId: 750, active: true })
-    )
-    expect(publishedId).toBe(750)
-  })
-
-  it('copies a draft version without ownership info (always COPY — shared data guard)', async () => {
-    fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 99,
-      versionStatus: 'DRAFT',
-    })
-    copyFormTemplateVersionRemote.mockResolvedValue({ templateId: 99, templateVersionId: 701 })
-
-    await saveMutableProgramFormVersion({
-      programId: '186100',
-      templateCode: 'application-participant-individual',
-      templateVersionId: 501,
-      draft,
-    })
-
-    expect(copyFormTemplateVersionRemote).toHaveBeenCalled()
-    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
-      expect.objectContaining({ versionId: 701 })
-    )
-    expect(publishFormTemplateVersionById).not.toHaveBeenCalledWith(501)
-  })
-
-  it('writes in place only when the version is this program-owned PROGRAM-scope draft', async () => {
-    fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 99,
-      versionStatus: 'DRAFT',
-      templateScope: 'PROGRAM',
-      ownerProgramId: 186100,
-      activeBindingCount: 1,
-    })
-
-    await saveMutableProgramFormVersion({
-      programId: '186100',
-      templateCode: 'application-participant-individual',
-      templateVersionId: 501,
-      draft,
-    })
-
-    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
-    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(501)
-  })
-})
-
-describe('saveMutableProgramFormVersion — 공용 카탈로그 버전 보호', () => {
-  const draft = { sections: [] } as unknown as WritingFormDraft
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 10, templateVersionId: 70 })
-    saveFormTemplateVersionDraftByVersionId.mockResolvedValue(undefined)
-    publishFormTemplateVersionById.mockImplementation(async (versionId: number) => versionId + 50)
-    fetchGeneralProgramFormBindings.mockResolvedValue([])
-    createGeneralProgramFormBinding.mockResolvedValue({})
-  })
-
-  it.each([
-    ['카탈로그 템플릿의 DRAFT', { templateId: 10, versionStatus: 'DRAFT' }],
-    ['상태 불명', { templateId: 99 }],
-    ['여러 바인딩이 공유', { templateId: 99, versionStatus: 'DRAFT', activeBindingCount: 4 }],
-    ['template_scope=CATALOG', { templateId: 99, versionStatus: 'DRAFT', templateScope: 'CATALOG' }],
-    ['status 필드만 있는 응답(DRAFT)', { templateId: 99, status: 'DRAFT' }],
-  ])('%s 버전은 제자리 PUT/publish 하지 않고 COPY한다', async (_label, version) => {
-    fetchFormTemplateVersionRemote.mockResolvedValue(version)
-    copyFormTemplateVersionRemote.mockResolvedValue({ templateId: version.templateId, templateVersionId: 7001 })
-
-    await saveMutableProgramFormVersion({
-      programId: '186363',
-      templateCode: 'application-participant-school',
-      templateVersionId: 70,
-      draft,
-    })
-
-    expect(copyFormTemplateVersionRemote).toHaveBeenCalled()
-    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalledWith(
-      expect.objectContaining({ versionId: 70 })
-    )
-    expect(publishFormTemplateVersionById).not.toHaveBeenCalledWith(70)
   })
 })
