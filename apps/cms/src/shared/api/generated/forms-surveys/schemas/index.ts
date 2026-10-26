@@ -857,6 +857,8 @@ export * from './organizationApplicationListItemResponseRequestedEducationFormat
 export * from './organizationApplicationListItemResponseScheduleConfirmStatus';
 export * from './organizationApplicationNotificationResendRequest';
 export * from './organizationApplicationRejectRequest';
+export * from './organizationApplicationSession';
+export * from './organizationApplicationSessionResponse';
 export * from './organizationApplicationUpdateRequest';
 export * from './organizationGuidanceAnswersPatchRequest';
 export * from './organizationGuidanceAnswersPatchRequestAnswers';
@@ -1033,6 +1035,7 @@ export * from './programApplicationSupplement';
 export * from './programAttachmentResponse';
 export * from './programAttachmentUpdateRequest';
 export * from './programBusinessPeriodExtendRequest';
+export * from './programBusinessPeriodHistoryItem';
 export * from './programBusinessPeriodResponse';
 export * from './programBusinessYearsResponse';
 export * from './programCalendarItemResponse';
