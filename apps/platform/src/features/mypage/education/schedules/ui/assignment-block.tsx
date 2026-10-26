@@ -1,24 +1,85 @@
 import { useMemo, useState } from 'react'
-import type { EducationScheduleAssignment } from '../model/types'
-import { resolveEducationAssignmentGuide } from '../lib/schedule-rules'
-import clipDarkMintUrl from '@/shared/assets/icons/clip-dark-mint.svg'
+import type { ProgramApplicationType } from '../../applications/api/types'
+import type { EducationScheduleAssignment, EducationScheduleAssignmentFile } from '../model/types'
+import {
+  canSubmitEducationAssignment,
+  resolveEducationAssignmentGuide,
+} from '../lib/schedule-rules'
+import attachFileUrl from '../image/icon/attach-file-24.svg'
 import portalBlackUrl from '@/shared/assets/icons/portal-black.svg'
-import closeDarkMintUrl from '@/shared/assets/icons/close-dark-mint.svg'
-import closeBlackUrl from '@/shared/assets/icons/close-black.svg'
+import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
+import {
+  MemberFileConfirmError,
+  MemberFileEmptyError,
+  MemberFileRejectedError,
+  MemberFileScanTimeoutError,
+  MemberFileStatusCheckError,
+  MemberFileStorageUploadError,
+  MemberFileTooLargeError,
+  MemberFileUploadRequestError,
+} from '@/features/mypage/instructor-apply/api/member-file-upload'
 import { EducationSessionGuideBlock } from '../../shared'
 import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { usePortalFormResponseFeedbackQuery } from '../api/use-portal-form-response-feedback-query'
+import {
+  AssignmentFileCountExceededError,
+  AssignmentSubmissionLimitExceededError,
+  AssignmentSubmissionRequiredError,
+  AssignmentUploadPolicyError,
+  useScheduleAssignmentFilesMutation,
+} from '../api/assignment-hooks'
+import { EducationAssignmentFeedbackModal } from './assignment-feedback-modal'
+import {
+  EducationAssignmentSubmitModal,
+  type AssignmentSubmitModalInput,
+} from './assignment-submit-modal'
 import styles from './assignment-block.module.css'
+
+const ASSIGNMENT_UPLOAD_FAILED_MESSAGE = '과제 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+const EMPTY_ASSIGNMENT_FILES: readonly EducationScheduleAssignmentFile[] = []
+
+const UPLOAD_ERROR_CLASSES = [
+  AssignmentFileCountExceededError,
+  AssignmentSubmissionLimitExceededError,
+  AssignmentSubmissionRequiredError,
+  AssignmentUploadPolicyError,
+  MemberFileTooLargeError,
+  MemberFileEmptyError,
+  MemberFileRejectedError,
+  MemberFileScanTimeoutError,
+  MemberFileUploadRequestError,
+  MemberFileStorageUploadError,
+  MemberFileConfirmError,
+  MemberFileStatusCheckError,
+] as const
+
+function assignmentSubmitErrorMessage(error: unknown): string {
+  if (UPLOAD_ERROR_CLASSES.some(ErrorClass => error instanceof ErrorClass)) {
+    return (error as Error).message
+  }
+  return getProgramApplicationApiErrorMessage(error, ASSIGNMENT_UPLOAD_FAILED_MESSAGE)
+}
 
 type EducationScheduleAssignmentBlockProps = {
   assignment: EducationScheduleAssignment
+  scheduleId: number | null
+  /** 피드백 팝업 상단 — `2026년 04월 03일(금), 1차 교육` */
+  sessionHeading: string
+  applicationType?: ProgramApplicationType | null
+  applicationId?: string | null
 }
 
 export function EducationScheduleAssignmentBlock({
   assignment,
+  scheduleId,
+  sessionHeading,
+  applicationType,
+  applicationId,
 }: EducationScheduleAssignmentBlockProps) {
-  const [comingSoonOpen, setComingSoonOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [submitOpen, setSubmitOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const filesMutation = useScheduleAssignmentFilesMutation(applicationType, applicationId)
 
   const feedbackQuery = usePortalFormResponseFeedbackQuery({
     formResponseId: assignment.formResponseId,
@@ -26,14 +87,19 @@ export function EducationScheduleAssignmentBlock({
   })
 
   const guide = resolveEducationAssignmentGuide(assignment.status, assignment.submitEndAt)
-  const deadlineOpen = new Date().getTime() <= new Date(assignment.submitEndAt).getTime()
-  const showFileRemove =
-    (assignment.status === 'submitted' || assignment.status === 'feedback') && deadlineOpen
+  const isRevision = assignment.status === 'submitted' || assignment.status === 'feedback'
   const isSubmitted =
     assignment.status === 'submitted' || assignment.status === 'revision_submitted'
-  const files = assignment.files ?? []
-  const hasFiles = files.length > 0
-  const showSubmittedDivider = isSubmitted && hasFiles
+  const canSubmitFiles =
+    scheduleId != null &&
+    scheduleId > 0 &&
+    canSubmitEducationAssignment(assignment, isRevision ? 'revise' : 'submit')
+  const uploading = filesMutation.isPending
+  // 제출물은 신청 일정 GET 응답의 submissions만 사용한다. 예시·로컬 파일은 여기서 만들지 않는다.
+  const remoteFiles = assignment.files ?? EMPTY_ASSIGNMENT_FILES
+  const hasRemoteFiles = remoteFiles.length > 0
+  const blockVariant =
+    assignment.status === 'feedback' ? 'feedback' : isSubmitted ? 'submitted' : 'default'
 
   const remoteFeedbackText = useMemo(() => {
     const items = feedbackQuery.data?.feedbacks ?? []
@@ -43,17 +109,39 @@ export function EducationScheduleAssignmentBlock({
 
   const feedbackBody =
     remoteFeedbackText?.trim() ||
-    assignment.feedback?.trim() ||
     (feedbackQuery.isFetching ? (
       <PFLoadingSpinner label="피드백을 불러오는 중" />
     ) : (
       '등록된 피드백이 없습니다.'
     ))
 
+  const submitFiles = (keepFileObjectIds: number[], newFiles: File[], urls: string[]) => {
+    if (scheduleId == null || scheduleId <= 0) return
+    filesMutation.mutate(
+      {
+        scheduleId,
+        mode: isRevision ? 'revise' : 'submit',
+        keepFileObjectIds,
+        newFiles,
+        urls,
+      },
+      {
+        onError: error => {
+          setErrorMessage(assignmentSubmitErrorMessage(error))
+        },
+      },
+    )
+  }
+
+  const handleSubmit = ({ newFiles, keepFileObjectIds, urls }: AssignmentSubmitModalInput) => {
+    setSubmitOpen(false)
+    submitFiles(keepFileObjectIds, newFiles, urls)
+  }
+
   return (
     <>
       <EducationSessionGuideBlock
-        variant={isSubmitted ? 'submitted' : 'default'}
+        variant={blockVariant}
         statusLabel={guide.statusLabel}
         statusTone={guide.statusTone}
         message={guide.message}
@@ -74,57 +162,57 @@ export function EducationScheduleAssignmentBlock({
               type="button"
               variant="primary"
               size="large"
-              disabled={guide.submitDisabled}
-              onClick={() => setComingSoonOpen(true)}
+              disabled={!canSubmitFiles || uploading}
+              aria-busy={uploading}
+              onClick={() => setSubmitOpen(true)}
             >
-              {guide.submitLabel}
+              {uploading ? '업로드 중' : guide.submitLabel}
             </PFButton>
           </div>
         }
       >
-        {showSubmittedDivider ? <div className={styles.divider} aria-hidden="true" /> : null}
+        {hasRemoteFiles ? <div className={styles.divider} aria-hidden="true" /> : null}
 
-        {hasFiles ? (
+        {hasRemoteFiles ? (
           <ul className={styles.files}>
-            {files.map(file => {
+            {remoteFiles.map(file => {
               const isUrl = file.kind === 'url'
+              const label = isUrl ? file.url : file.fileName
               return (
                 <li
                   key={file.id}
                   className={[styles.chip, isUrl ? styles.chipUrl : styles.chipFile].join(' ')}
                 >
-                  <img
-                    className={styles.chipIcon}
-                    src={isUrl ? portalBlackUrl : clipDarkMintUrl}
-                    alt=""
-                    width={20}
-                    height={20}
-                    aria-hidden="true"
-                  />
-                  <PFText
-                    as="span"
-                    typo="bd-sm-sb"
-                    color={isUrl ? 'black' : 'primary-700'}
-                    className={styles.chipLabel}
-                  >
-                    {file.fileName}
-                  </PFText>
-                  {showFileRemove ? (
-                    <button
-                      type="button"
-                      className={styles.chipRemove}
-                      aria-label={`${file.fileName} 삭제`}
-                      onClick={() => setComingSoonOpen(true)}
-                    >
+                  <span className={styles.chipBody}>
+                    {isUrl ? (
                       <img
-                        src={isUrl ? closeBlackUrl : closeDarkMintUrl}
+                        className={styles.chipIcon}
+                        src={portalBlackUrl}
                         alt=""
                         width={20}
                         height={20}
                         aria-hidden="true"
                       />
-                    </button>
-                  ) : null}
+                    ) : (
+                      <img
+                        className={styles.chipIconFile}
+                        src={attachFileUrl}
+                        alt=""
+                        width={24}
+                        height={24}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <PFText
+                      as="span"
+                      typo="bd-sm-sb"
+                      color={isUrl ? 'black' : 'primary-700'}
+                      className={styles.chipLabel}
+                      title={label}
+                    >
+                      {label}
+                    </PFText>
+                  </span>
                 </li>
               )
             })}
@@ -132,16 +220,34 @@ export function EducationScheduleAssignmentBlock({
         ) : null}
       </EducationSessionGuideBlock>
       <PFAlertModal
-        open={comingSoonOpen}
-        title="준비 중"
-        onConfirm={() => setComingSoonOpen(false)}
+        open={errorMessage != null}
+        title="과제 제출 안내"
+        description={errorMessage ?? ''}
+        onConfirm={() => setErrorMessage(null)}
       />
-      <PFAlertModal
+      <EducationAssignmentFeedbackModal
         open={feedbackOpen}
-        title="피드백 확인"
-        description={feedbackBody}
-        onConfirm={() => setFeedbackOpen(false)}
+        sessionHeading={sessionHeading}
+        body={feedbackBody}
+        canRevise={isRevision && canSubmitFiles && !uploading}
+        onClose={() => setFeedbackOpen(false)}
+        onRevise={() => {
+          setFeedbackOpen(false)
+          setSubmitOpen(true)
+        }}
       />
+      {submitOpen ? (
+        <EducationAssignmentSubmitModal
+          open
+          sessionHeading={sessionHeading}
+          periodLabel={assignment.periodLabel}
+          mode={isRevision ? 'revise' : 'submit'}
+          initialFiles={remoteFiles}
+          submitting={uploading}
+          onClose={() => setSubmitOpen(false)}
+          onSubmit={handleSubmit}
+        />
+      ) : null}
     </>
   )
 }

@@ -1,12 +1,12 @@
 import { GEMINI_VISITING_TRAINING_RECRUIT_FORM_IDS } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
-  GEMINI_RECRUIT_OVERLAY_KEYS,
-  getGeminiRecruitOverlayRecord,
-  replaceGeminiRecruitOverlayExact,
-  seedGeminiRecruitOverlayFromDetail,
-} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
-import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+  GEMINI_RECRUIT_FIELD_KEYS,
+  getGeminiRecruitFormRecord,
+  replaceGeminiRecruitFormExact,
+  seedGeminiRecruitFieldsFromDetail,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
+import { getRecruitDetailInfoRecord } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 import { recruitDetailAdditionalContentOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   RECRUIT_DETAIL_INFO_OVERLAY_PREFIX,
@@ -36,7 +36,12 @@ function readString(record: Record<string, unknown>, key: string, fallback = '')
 function readNullableString(record: Record<string, unknown>, key: string): string | null {
   const raw = record[key]
   if (raw == null) return null
-  return typeof raw === 'string' ? raw : null
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (!trimmed || trimmed.toLowerCase() === 'null' || trimmed.toLowerCase() === 'undefined') {
+    return null
+  }
+  return trimmed
 }
 
 function readStringArray(record: Record<string, unknown>, key: string): string[] {
@@ -52,7 +57,7 @@ function readNumberOrNull(record: Record<string, unknown>, key: string): number 
 }
 
 function readEducationForm(record: Record<string, unknown>): GeminiRecruitmentEducationForm {
-  return record[GEMINI_RECRUIT_OVERLAY_KEYS.educationForm] === 'offline' ? 'offline' : 'online'
+  return record[GEMINI_RECRUIT_FIELD_KEYS.educationForm] === 'offline' ? 'offline' : 'online'
 }
 
 function paragraphDescription(draft: WritingFormDraft | null | undefined, id: string): string {
@@ -63,44 +68,44 @@ function paragraphDescription(draft: WritingFormDraft | null | undefined, id: st
 export function buildGeminiRecruitmentSnapshotFromOverlay(
   draft?: WritingFormDraft | null
 ): GeminiRecruitmentAddFormSnapshot {
-  const institution = getGeminiRecruitOverlayRecord()
-  const detail = getGeneralRecruitOverlayRecord()
+  const institution = getGeminiRecruitFormRecord()
+  const detail = getRecruitDetailInfoRecord()
   const thumbFileObjectId = readNumberOrNull(detail, recruitDetailThumbFileObjectIdKey(DETAIL_PREFIX))
   return normalizeGeminiRecruitmentAddFormSnapshot({
-    title: readString(institution, GEMINI_RECRUIT_OVERLAY_KEYS.title),
+    title: readString(institution, GEMINI_RECRUIT_FIELD_KEYS.title),
     announcementPublished: (readString(
       institution,
-      GEMINI_RECRUIT_OVERLAY_KEYS.announcementPublished,
+      GEMINI_RECRUIT_FIELD_KEYS.announcementPublished,
       'published'
     ) || 'published') as ParticipantRecruitmentAnnouncementPublishedValue,
     educationTargetLevels: readStringArray(
       institution,
-      GEMINI_RECRUIT_OVERLAY_KEYS.educationTargetLevels
+      GEMINI_RECRUIT_FIELD_KEYS.educationTargetLevels
     ),
-    educationTargetDetail: readString(institution, GEMINI_RECRUIT_OVERLAY_KEYS.educationTargetDetail),
+    educationTargetDetail: readString(institution, GEMINI_RECRUIT_FIELD_KEYS.educationTargetDetail),
     applicationPeriodStart: readNullableString(
       institution,
-      GEMINI_RECRUIT_OVERLAY_KEYS.applicationPeriodStart
+      GEMINI_RECRUIT_FIELD_KEYS.applicationPeriodStart
     ),
     applicationPeriodEnd: readNullableString(
       institution,
-      GEMINI_RECRUIT_OVERLAY_KEYS.applicationPeriodEnd
+      GEMINI_RECRUIT_FIELD_KEYS.applicationPeriodEnd
     ),
     trainingRequestPeriodStart: readNullableString(
       institution,
-      GEMINI_RECRUIT_OVERLAY_KEYS.trainingRequestPeriodStart
+      GEMINI_RECRUIT_FIELD_KEYS.trainingRequestPeriodStart
     ),
     trainingRequestPeriodEnd: readNullableString(
       institution,
-      GEMINI_RECRUIT_OVERLAY_KEYS.trainingRequestPeriodEnd
+      GEMINI_RECRUIT_FIELD_KEYS.trainingRequestPeriodEnd
     ),
-    minStudentCount: readNumberOrNull(institution, GEMINI_RECRUIT_OVERLAY_KEYS.minStudentCount),
+    minStudentCount: readNumberOrNull(institution, GEMINI_RECRUIT_FIELD_KEYS.minStudentCount),
     educationForm: readEducationForm(institution),
-    inquiryContactName: readString(institution, GEMINI_RECRUIT_OVERLAY_KEYS.inquiryContactName),
-    inquiryTel: readString(institution, GEMINI_RECRUIT_OVERLAY_KEYS.inquiryTel),
-    inquiryEmail: readString(institution, GEMINI_RECRUIT_OVERLAY_KEYS.inquiryEmail),
-    notesNotApplicable: institution[GEMINI_RECRUIT_OVERLAY_KEYS.notesNotApplicable] === true,
-    notes: readString(institution, GEMINI_RECRUIT_OVERLAY_KEYS.notes),
+    inquiryContactName: readString(institution, GEMINI_RECRUIT_FIELD_KEYS.inquiryContactName),
+    inquiryTel: readString(institution, GEMINI_RECRUIT_FIELD_KEYS.inquiryTel),
+    inquiryEmail: readString(institution, GEMINI_RECRUIT_FIELD_KEYS.inquiryEmail),
+    notesNotApplicable: institution[GEMINI_RECRUIT_FIELD_KEYS.notesNotApplicable] === true,
+    notes: readString(institution, GEMINI_RECRUIT_FIELD_KEYS.notes),
     thumbnailFileName: readNullableString(detail, recruitDetailThumbFileNameKey(DETAIL_PREFIX)),
     ...(thumbFileObjectId != null ? { thumbnailFileObjectId: thumbFileObjectId } : {}),
     programDescription: readString(
@@ -139,7 +144,7 @@ export function seedGeminiRecruitmentOverlaysFromSnapshot(
   snapshot: GeminiRecruitmentAddFormSnapshot,
   templateCode?: string | null
 ): void {
-  replaceGeminiRecruitOverlayExact(seedGeminiRecruitOverlayFromDetail(snapshot))
+  replaceGeminiRecruitFormExact(seedGeminiRecruitFieldsFromDetail(snapshot))
   replaceRecruitDetailInfoIntoGeneralStore(
     {
       [resolveRecruitDetailTextFieldOverlayKey(DETAIL_PREFIX, '프로그램 설명')]:

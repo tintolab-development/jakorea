@@ -1,5 +1,6 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import {
+  excludeCompanySchoolOnlyPaymentItemOptions,
   normalizeProgramPaymentItemSelection,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
   resolveProgramWageDeductionLabel,
@@ -75,7 +76,11 @@ const WagePaymentItemsField = memo(function WagePaymentItemsField() {
     []
   )
   const paymentCatalog = useProgramWagePaymentItemOptionsState()
-  const paymentItemOptions = paymentCatalog.options
+  // R14: 일반 등록에서는 1사1교 전용 지급 항목을 옵션에서 제외(이미 선택된 값은 유지)
+  const paymentItemOptions = useMemo(
+    () => excludeCompanySchoolOnlyPaymentItemOptions(paymentCatalog.options, paymentItemValues),
+    [paymentCatalog.options, paymentItemValues]
+  )
   const applyPaymentItemIds = useCallback(
     (ids: string[]) => {
       setPaymentItemValues(ids)

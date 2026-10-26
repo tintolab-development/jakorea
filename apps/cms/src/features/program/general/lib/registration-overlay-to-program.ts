@@ -67,7 +67,7 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY,
-} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-keys'
 
 const BASIC = 'generalRegistration.basicInfo' as const
 const KPI = 'generalRegistration.kpi' as const

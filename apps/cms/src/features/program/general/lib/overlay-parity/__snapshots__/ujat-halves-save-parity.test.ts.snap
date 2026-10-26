@@ -1,0 +1,238 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`UJAT 반기 parity (part4 step7) > 생성 요청 — serviceDetailJson(ujatTypedDetail 제외)과 본문 > create-body 1`] = `
+{
+  "additionalContentHtml": undefined,
+  "applicationEndDate": undefined,
+  "applicationPathId": undefined,
+  "applicationStartDate": undefined,
+  "attachmentFileNames": undefined,
+  "autoApplyDefaultFormBindings": true,
+  "businessArea": undefined,
+  "businessEndDate": "2027-12-31T23:59:59.999Z",
+  "businessStartDate": "2027-01-01T00:00:00.000Z",
+  "category": "school",
+  "contactEmail": undefined,
+  "contactPhone": undefined,
+  "courseDeliveredBy": undefined,
+  "curriculum": undefined,
+  "description": undefined,
+  "detailedProgramId": undefined,
+  "district": undefined,
+  "educatedTeachers": undefined,
+  "educationProcess": undefined,
+  "educationStructure": "SCHEDULE",
+  "educationTime": undefined,
+  "endDate": "2027-12-31T23:59:59.999Z",
+  "femaleParticipants": undefined,
+  "format": "course",
+  "generalTeachers": undefined,
+  "generalVolunteers": undefined,
+  "institutionType": undefined,
+  "instructors": undefined,
+  "ipOwned": undefined,
+  "ips": undefined,
+  "keyVisualImage": undefined,
+  "learningSupportContent": undefined,
+  "mainTitle": undefined,
+  "maleParticipants": undefined,
+  "managerName": undefined,
+  "oneLineIntroduction": undefined,
+  "partnerInvolvement": undefined,
+  "programCategory": undefined,
+  "programChannel": undefined,
+  "programType": "UJAT",
+  "recruitmentGuide": undefined,
+  "recruitments": [
+    {
+      "additionalContentHtml": undefined,
+      "announcementTitle": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "ORGANIZATION",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "learningSupportContent": undefined,
+      "programDescription": undefined,
+      "recruitmentGuide": undefined,
+      "recruitmentType": "PARTICIPANT",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "status": "ACTIVE",
+      "targetType": "ORGANIZATION",
+    },
+    {
+      "additionalContentHtml": undefined,
+      "announcementTitle": undefined,
+      "applicationMethod": undefined,
+      "applicationType": "VOLUNTEER",
+      "contactEmail": undefined,
+      "contactName": undefined,
+      "contactPhone": undefined,
+      "interviewEnabled": true,
+      "learningSupportContent": undefined,
+      "programDescription": undefined,
+      "recruitTerm": "FIRST_HALF",
+      "recruitmentGuide": undefined,
+      "recruitmentType": "VOLUNTEER",
+      "remarks": undefined,
+      "selectionMethod": "ADMIN_REVIEW",
+      "status": "ACTIVE",
+      "targetType": "COLLEGE_STUDENT",
+    },
+  ],
+  "returningVolunteers": undefined,
+  "rounds": [],
+  "schoolId": undefined,
+  "settlementRuleId": undefined,
+  "sponsorId": "sponsor-1",
+  "sponsors": [
+    {
+      "sponsorId": "sponsor-1",
+    },
+  ],
+  "staffVolunteers": undefined,
+  "startDate": "2027-01-01T00:00:00.000Z",
+  "targetLevel": "elementary",
+  "targetLevels": [
+    "elementary",
+  ],
+  "teamDivision": undefined,
+  "textbookName": undefined,
+  "textbookNameEn": undefined,
+  "title": "[BOT-TEST-UJAT] parity",
+  "titleEn": undefined,
+  "totalParticipants": undefined,
+  "type": "offline",
+  "venue": undefined,
+}
+`;
+
+exports[`UJAT 반기 parity (part4 step7) > 생성 요청 — serviceDetailJson(ujatTypedDetail 제외)과 본문 > create-detail 1`] = `
+{
+  "program": {
+    "targetLevels": [
+      "elementary",
+    ],
+    "ujatProgressStatus": "VOLUNTEER_RECRUITING",
+  },
+  "registration": {
+    "draft": {
+      "formSettings": {
+        "titleNumbering": "number",
+      },
+      "paragraphs": [],
+      "title": "UJAT 등록",
+    },
+    "overlay": {},
+  },
+  "version": 1,
+}
+`;
+
+exports[`UJAT 반기 parity (part4 step7) > 수정 요청 — 반기 일정 수정 PATCH 본문 > update-body 1`] = `
+{
+  "targetLevel": "elementary",
+  "targetLevels": [
+    "elementary",
+  ],
+}
+`;
+
+exports[`UJAT 반기 parity (part4 step7) > 수정 요청 — 반기 일정 수정 PATCH 본문 > update-detail 1`] = `
+{
+  "program": {
+    "targetLevels": [
+      "elementary",
+    ],
+    "ujatProgressStatus": "VOLUNTEER_RECRUITING",
+  },
+  "registration": {
+    "overlay": {},
+  },
+  "version": 1,
+}
+`;
+
+exports[`UJAT 반기 parity (part4 step7) > 조회 — typed 없는 기존 프로그램 overlay 그대로 > detail-overlay-legacy 1`] = `
+{
+  "ujat.basicInfo.operationRangeSeal": {
+    "end": "2027-12-31",
+    "start": "2027-01-01",
+  },
+  "ujat.basicInfo.participant.individual": false,
+  "ujat.basicInfo.participant.organization": true,
+  "ujat.basicInfo.participant.teacher": false,
+  "ujat.basicInfo.participant.volunteer": true,
+  "ujat.basicInfo.programManagementName": "[BOT-TEST-UJAT] parity",
+  "ujat.basicInfo.surveyItems": {
+    "lecture_evaluation": true,
+    "school_satisfaction": false,
+    "survey": true,
+    "volunteer_satisfaction": true,
+  },
+  "ujat.h1.closing.delivery": "online",
+  "ujat.h1.closing.multi": {
+    "dateByRow": {
+      "0": "2027-07-01T15:00:00.000Z",
+    },
+    "regionByRow": {
+      "0": [],
+    },
+    "rowIds": [
+      0,
+    ],
+  },
+  "ujat.h1.closing.name": "상반기 해단식",
+  "ujat.h1.eduSchedule.exclusion": {
+    "excludeHoliday": true,
+    "excludeNone": false,
+    "excludeSaturday": true,
+    "excludeSunday": true,
+  },
+  "ujat.h1.eduSchedule.unavailableDates": [
+    "2027-05-05",
+    "2027-05-06T15:00:00.000Z",
+  ],
+  "ujat.h1.event.delivery": "offline",
+  "ujat.h1.event.name": "상반기 학교 경제교육",
+  "ujat.h1.event.range": {
+    "end": "2027-06-17T15:00:00.000Z",
+    "start": "2027-04-01T15:00:00.000Z",
+  },
+  "ujat.h1.pre.delivery": "online",
+  "ujat.h1.pre.multi": {
+    "dateByRow": {
+      "0": "2027-02-24T15:00:00.000Z",
+      "1": "2027-02-26T15:00:00.000Z",
+    },
+    "regionByRow": {
+      "0": [
+        "seoul",
+      ],
+      "1": [
+        "busan",
+      ],
+    },
+    "rowIds": [
+      0,
+      1,
+    ],
+  },
+  "ujat.h1.pre.name": "상반기 사전교육(발대식)",
+  "ujat.h1.pre.textbookMode": "ja",
+  "ujat.h2.eduSchedule.exclusion": {
+    "excludeHoliday": true,
+    "excludeNone": true,
+    "excludeSaturday": false,
+    "excludeSunday": false,
+  },
+  "ujat.h2.eduSchedule.unavailableDates": [],
+  "ujat.h2.event.delivery": "hybrid",
+  "ujat.h2.event.name": "하반기 학교 경제교육",
+  "ujat.h2.event.range": {
+    "end": "2027-11-18T15:00:00.000Z",
+    "start": "2027-09-09T15:00:00.000Z",
+  },
+}
+`;

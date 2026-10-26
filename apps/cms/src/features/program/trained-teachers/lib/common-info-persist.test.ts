@@ -240,6 +240,29 @@ describe('TT persist nested SSOT', () => {
 })
 
 describe('resolveTrainedTeachersCanonicalCommonInfo', () => {
+  it('API type·ips 만 있을 때 프로그램 유형 설정 표시값을 보강한다', () => {
+    const resolved = resolveTrainedTeachersCanonicalCommonInfo({
+      id: '186342',
+      sponsorId: '1',
+      title: 'TT',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [],
+      startDate: '2026-04-01',
+      endDate: '2026-12-31',
+      status: 'pending',
+      ips: 'Prepare',
+      backendProgramType: 'TRAINED_TEACHER',
+      generalCommonInfo: {},
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    })
+    expect(resolved.educationFormLabel).toBe('오프라인')
+    expect(resolved.ipsTypeSummary).toBe('일정 공통 | Prepare | 해당없음')
+  })
+
   it('canonical 값이 있으면 overlay 후원사·세부프로그램·일정을 쓰지 않는다', () => {
     const resolved = resolveTrainedTeachersCanonicalCommonInfo({
       id: '186312',

@@ -64,10 +64,7 @@ export type GeneralProgramParticipantType =
   | 'volunteer'
 
 /** 일반 프로그램 등록 폼 — 설문 진행 항목 키 (등록 양식·상세 LNB 공통 3종) */
-export type GeneralProgramSurveyMenuKey =
-  | 'survey'
-  | 'satisfaction'
-  | 'lecture_evaluation'
+export type GeneralProgramSurveyMenuKey = 'survey' | 'satisfaction' | 'lecture_evaluation'
 
 /** 일반 프로그램 대분류 — 등록 폼 참여자 유형 [기관] / [개인] */
 export type GeneralProgramAudienceKind = 'organization' | 'individual'
@@ -361,6 +358,28 @@ export interface GeneralProgramVolunteerInterviewScheduleInfo {
   periodEndDate?: string
 }
 
+/** 봉사 모집 행 typed 면접 설정 — `features/program/shared/lib/volunteer-interview-config` RecruitmentInterviewConfig 와 같은 모양 */
+export interface ProgramVolunteerInterviewConfig {
+  schemaVersion?: number | null
+  selectedSlotKeys?: string[] | null
+  timeUnit?: number | null
+  interviewTimeRange?: string[] | null
+  /** 직접 지정 불가일(KST `YYYY-MM-DD`) */
+  specificUnavailableDates?: string[] | null
+  /** 적용 불가일(KST `YYYY-MM-DD`) — CMS 수정 화면이 쓰는 배열 */
+  appliedUnavailableDates?: string[] | null
+  exclusionState?: {
+    excludeSaturday?: boolean | null
+    excludeSunday?: boolean | null
+    excludeHoliday?: boolean | null
+  } | null
+  exceptions?: Array<{
+    id?: string | null
+    exceptionDate?: string | null
+    selectedSlotKeys?: string[] | null
+  }> | null
+}
+
 // IPS 분류
 export type IPSClassification = 'Prepare' | 'Succeed' | 'Inspire'
 
@@ -430,6 +449,34 @@ export interface ProgramRecruitmentAttachment {
   displayOrder?: number
 }
 
+export type RecruitmentNoticeExposureTiming =
+  | 'start-day'
+  | 'one-day-before'
+  | 'one-week-before'
+
+export type RecruitmentInterviewExclusionState = {
+  excludeSaturday?: boolean
+  excludeSunday?: boolean
+  excludeHoliday?: boolean
+}
+
+export type RecruitmentInterviewException = {
+  id?: string
+  exceptionDate?: string | null
+  selectedSlotKeys?: string[]
+}
+
+export type RecruitmentInterviewConfig = {
+  schemaVersion?: 1
+  selectedSlotKeys?: string[]
+  timeUnit?: number | null
+  interviewTimeRange?: string[]
+  specificUnavailableDates?: string[]
+  appliedUnavailableDates?: string[]
+  exclusionState?: RecruitmentInterviewExclusionState
+  exceptions?: RecruitmentInterviewException[]
+}
+
 export interface ProgramRecruitmentWindow {
   /** 모집 행 id. 저장 시 기존 행은 이 id로 고친다. */
   id?: number
@@ -462,6 +509,14 @@ export interface ProgramRecruitmentWindow {
   interviewEnabled?: boolean | null
   interviewStartAt?: string | null
   interviewEndAt?: string | null
+  announcementPublished?: boolean | null
+  documentPassAnnouncementAt?: string | null
+  finalPassAnnouncementAt?: string | null
+  noticeExposureTiming?: RecruitmentNoticeExposureTiming | null
+  volunteerTargets?: string[] | null
+  remarksNotApplicable?: boolean | null
+  interviewConfig?: RecruitmentInterviewConfig | null
+  contentRevision?: number
   /** 이 모집 대표 이미지. 프로그램 대표 이미지로 대체하지 않는다. */
   thumbnailFileObjectId?: number | null
   attachments?: ProgramRecruitmentAttachment[]
@@ -652,21 +707,55 @@ export interface Program {
   generalProgramSessionRound?: GeneralProgramSessionRoundKind
   /** 일반 프로그램 상세 공통 정보 확장 필드 */
   generalCommonInfo?: GeneralProgramCommonInfoExtension
+  /**
+   * 프로그램 GET `serviceDetailJson.generalCommonInfo.volunteerInterviewScheduleInfo` 원본 — 상세 「면접 진행 가능 일정」 표시 SSOT.
+   * BE가 봉사 행 typed `interviewConfig`(typed 없으면 overlay)로 만든다. `null` = 서버 응답에 객체 없음.
+   * `undefined` = 서버 조회가 아닌 Program(등록 중 미리보기·mock) — 이때만 overlay 계산 표시를 쓴다.
+   */
+  volunteerInterviewScheduleInfoFromServer?: GeneralProgramVolunteerInterviewScheduleInfo | null
+  /**
+   * 반기 아닌 봉사 모집 행 1개의 typed `interviewConfig`(BE RecruitmentInterviewConfig, V80) — CMS 면접 일정
+   * 표시·수정 초기값·배정 캘린더 SSOT(part7). `null` = 행에 typed 없음(구 프로그램 → 서버 표시 객체·overlay),
+   * `undefined` = 서버 조회가 아닌 Program 또는 UJAT·봉사 행 여러 개.
+   */
+  volunteerInterviewConfigFromServer?: ProgramVolunteerInterviewConfig | null
   /** UJAT 등록 폼 overlay — 상세 화면 SSOT (`serviceDetailJson.registration.overlay`) */
   ujatRegistrationOverlay?: Record<string, unknown>
-  /** 일반·1사1교·TT 등록 폼 overlay — 공고용명 등 SSOT (`serviceDetailJson.registration.overlay`) */
+  /**
+   * UJAT 지역별 정원 화면 상태. GET/PUT `/ujat/region-capacities` 정본.
+   * 프로그램 PATCH 본문에는 실리지 않는다.
+   */
+  ujatRegionCapacity?: {
+    h1: Record<string, { classCount?: string; volunteerCount?: string }>
+    h2: Record<string, { classCount?: string; volunteerCount?: string }>
+  }
+  /**
+   * 화면·RHF용 overlay 메모리 필드.
+   * JSON 정본은 `serviceDetailJson.registration.overlay`.
+   * `serviceDetailJson.registrationOverlay` 루트 키는 레거시 조회 호환용이며 신규 저장에 보내지 않는다.
+   */
   registrationOverlay?: Record<string, unknown>
   /** 일반 프로그램 캘린더 — 시간대 사용 여부 (false면 종일) */
   scheduleTimeEnabled?: boolean
   /** 일반 프로그램 캘린더 — 일정 시작·종료 시각 (HH:mm) */
   startTime?: string
   endTime?: string
+  /** TT B GET typed 값과 configJson 불일치 — 화면 경고용. PATCH에 실리지 않는다. */
+  trainedTeacherInfoDetailWarnings?: string[]
   createdAt: DateValue
   updatedAt: DateValue
   /** 등록자 표시명 (목록/상세 표시용, API·mock에서 채움) */
   createdByName?: string
   /** 최종 수정자 표시명 (목록/상세 표시용, API·mock에서 채움) */
   updatedByName?: string
+  /** PATCH/GET이 내려주는 사업 종료일 연장 이력. 없으면 표시하지 않는다. */
+  businessPeriodHistories?: Array<{
+    previousBusinessEndDate?: string | null
+    businessEndDate?: string | null
+    reason?: string | null
+    changedByName?: string | null
+    changedAt?: string | null
+  }>
 }
 
 // 회차별 진행 방식 (교육 커리큘럼 수정용)

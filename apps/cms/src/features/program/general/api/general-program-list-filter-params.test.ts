@@ -35,6 +35,38 @@ describe('general-program-list-filter-params', () => {
     })
   })
 
+  it('forwards server-supported overview filters to the API query', () => {
+    expect(
+      generalProgramListParamsFromFilters(null, {
+        lifecycleStatus: 'in_progress',
+        participantType: 'school',
+        targetLevel: 'middle',
+        operationStartDate: '2026-04-01',
+        operationEndDate: '2026-04-30',
+      })
+    ).toMatchObject({
+      participantType: 'school',
+      progressPhase: 'in_progress',
+      targetLevel: 'middle',
+      operationStartDate: '2026-04-01',
+      operationEndDate: '2026-04-30',
+    })
+    expect(
+      generalProgramListParamsFromFilters(null, {
+        lifecycleStatus: 'education_in_progress',
+      })
+    ).toHaveProperty('progressPhase', undefined)
+  })
+
+  it.each(['school', 'individual', 'instructor', 'volunteer'])(
+    'forwards participantType=%s without client-side remapping',
+    participantType => {
+      expect(
+        generalProgramListParamsFromFilters(null, { participantType })
+      ).toHaveProperty('participantType', participantType)
+    }
+  )
+
   it('filters programs by target level on the client', () => {
     const programs = [
       baseProgram,

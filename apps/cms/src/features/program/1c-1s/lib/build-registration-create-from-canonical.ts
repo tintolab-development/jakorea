@@ -97,10 +97,36 @@ function seoulCalendarDate(value: string | undefined): string | null {
   return `${year}-${month}-${day}`
 }
 
-function rangeToIso(range: CompanySchoolDateRange | null, fallbackYear: number): {
+/**
+ * C11: 사업 운영 기간이 없으면 CREATE를 만들지 않는다(예전: 올해 1/1~12/31로 조용히 대체).
+ * 미리보기(`requireOperationRange: false`)만 화면 표시용 대체값을 쓴다.
+ */
+export class CompanySchoolOperationRangeRequiredError extends Error {
+  readonly reasonKey = 'basicInfo.operationRangeSeal'
+  constructor() {
+    super('사업 운영 기간을 입력해 주세요.')
+    this.name = 'CompanySchoolOperationRangeRequiredError'
+  }
+}
+
+export function hasCompanySchoolOperationRange(range: CompanySchoolDateRange | null): boolean {
+  if (range == null) return false
+  const start = seoulCalendarDate(range.start) ?? range.start
+  const end = seoulCalendarDate(range.end) ?? range.end
+  return Boolean(start?.trim()) && Boolean(end?.trim()) && dayjs(start).isValid() && dayjs(end).isValid()
+}
+
+function rangeToIso(
+  range: CompanySchoolDateRange | null,
+  fallbackYear: number,
+  requireOperationRange: boolean
+): {
   startDate: string
   endDate: string
 } {
+  if (requireOperationRange && !hasCompanySchoolOperationRange(range)) {
+    throw new CompanySchoolOperationRangeRequiredError()
+  }
   if (!range) {
     return {
       startDate: dayjs(`${fallbackYear}-01-01`).startOf('day').toISOString(),
@@ -154,11 +180,13 @@ export function buildCompanySchoolCanonicalFromRhf(args: {
 export function buildCompanySchoolProgramFromCanonical(args: {
   id: string
   canonical: CompanySchoolRegistrationCanonical
+  /** CREATE 경로는 true — 운영 기간이 없으면 CompanySchoolOperationRangeRequiredError */
+  requireOperationRange?: boolean
 }): Program {
   const common = args.canonical.common
   const now = new Date().toISOString()
   const y = dayjs().year()
-  const period = rangeToIso(common.operationRange, y)
+  const period = rangeToIso(common.operationRange, y, args.requireOperationRange === true)
   const sponsorId = skipUnselected(common.sponsorId)
   const managerContactIds = common.managerContactIds
     .map(id => id.trim())
@@ -298,10 +326,12 @@ export function buildCompanySchoolProgramFromCanonical(args: {
 export function buildCompanySchoolProgramFromRhf(args: {
   id: string
   values: CompanySchoolRegistrationRhfValues
+  requireOperationRange?: boolean
 }): Program {
   return buildCompanySchoolProgramFromCanonical({
     id: args.id,
     canonical: buildCompanySchoolCanonicalFromRhf(args),
+    requireOperationRange: args.requireOperationRange,
   })
 }
 

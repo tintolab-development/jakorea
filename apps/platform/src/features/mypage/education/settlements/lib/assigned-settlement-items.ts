@@ -32,9 +32,25 @@ import {
   readReceiptDeadlineAt,
   readReceiptScheduleJoinId,
   readScheduleJoinId,
+  readSettlementAssignmentJoinId,
   readSettlementDeadlineAt,
   readSettlementScheduleJoinId,
 } from './settlement-join.ts'
+
+export type SettlementLectureReportJoin = {
+  scheduleId: number
+  assignmentId?: number
+  reportStatus?: string | null
+  lectureStatus?: string | null
+  institutionName?: string | null
+  grade?: string | null
+  startAt?: string | null
+  endAt?: string | null
+  sessionNo?: number | null
+}
+
+const COMPLETED_LECTURE = new Set(['COMPLETED', 'DONE', 'HELD', 'FINISHED'])
+const UPCOMING_LECTURE = new Set(['UPCOMING', 'SCHEDULED', 'PLANNED', 'READY'])
 
 function readAssignedScheduleJoinId(schedule: EducationScheduleItem): number | null {
   if (schedule.scheduleId != null && Number.isSafeInteger(schedule.scheduleId) && schedule.scheduleId > 0) {
@@ -75,6 +91,7 @@ export type BuildAssignedSettlementItemsInput = {
   deadlinePolicy?: SettlementDeadlinePolicy
   /** true이면 일정별 정산 API `schedules`가 카드 목록 SSOT */
   preferIndividualSchedules?: boolean
+  lectureReports?: readonly SettlementLectureReportJoin[]
 }
 
 function mapIndividualAttendance(
@@ -94,6 +111,21 @@ function mapIndividualAttendance(
   }
 }
 
+function educationItemFromLecture(row: SettlementLectureReportJoin): EducationScheduleItem {
+  const sessionNumber = row.sessionNo != null && row.sessionNo > 0 ? row.sessionNo : 0
+  return {
+    id: String(row.scheduleId),
+    scheduleId: row.scheduleId,
+    sessionNumber,
+    heldAt: row.startAt ?? row.endAt ?? '',
+    title: '-',
+    attendanceStatus: null,
+    sessionLabel: sessionNumber > 0 ? `${sessionNumber}차시` : undefined,
+    progressTimeLabel: formatLectureTimeRange(row.startAt, row.endAt) || undefined,
+    locationName: row.institutionName?.trim() || undefined,
+  }
+}
+
 function educationItemFromIndividual(
   row: PortalIndividualScheduleSettlement,
 ): EducationScheduleItem {
@@ -109,10 +141,79 @@ function educationItemFromIndividual(
   }
 }
 
-function formatSettlementSessionMeta(item: EducationScheduleItem): string {
-  const time = item.progressTimeLabel?.trim() ?? ''
-  const session = item.sessionLabel?.trim() || (item.sessionNumber > 0 ? `${item.sessionNumber}차시` : '')
+function formatClock(iso: string | null | undefined): string {
+  const trimmed = iso?.trim()
+  if (!trimmed) return ''
+  const date = new Date(trimmed)
+  if (Number.isNaN(date.getTime())) return ''
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Seoul',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date)
+  const hour = parts.find(part => part.type === 'hour')?.value
+  const minute = parts.find(part => part.type === 'minute')?.value
+  if (!hour || !minute) return ''
+  return `${hour}:${minute}`
+}
+
+function formatLectureTimeRange(
+  startAt: string | null | undefined,
+  endAt: string | null | undefined,
+): string {
+  const start = formatClock(startAt)
+  const end = formatClock(endAt)
+  if (start && end) return `${start}~${end}`
+  return start || end
+}
+
+function formatSettlementSessionMeta(
+  item: EducationScheduleItem,
+  lecture?: SettlementLectureReportJoin,
+): string {
+  const time =
+    item.progressTimeLabel?.trim() ||
+    formatLectureTimeRange(lecture?.startAt, lecture?.endAt)
+  const sessionNumber = lecture?.sessionNo && lecture.sessionNo > 0 ? lecture.sessionNo : item.sessionNumber
+  const session =
+    item.sessionLabel?.trim() || (sessionNumber > 0 ? `${sessionNumber}차시` : '')
   return [time, session].filter(Boolean).join(' ')
+}
+
+function formatInstitutionLabel(
+  lecture: SettlementLectureReportJoin | undefined,
+  schedule: EducationScheduleItem,
+): string | undefined {
+  const institution = lecture?.institutionName?.trim() || schedule.locationName?.trim()
+  const grade = lecture?.grade?.trim()
+  const label = [institution, grade].filter(Boolean).join(' · ')
+  return label || undefined
+}
+
+function isLectureReportSubmitted(status: string | null | undefined): boolean | null {
+  const normalized = (status ?? '').trim().toUpperCase()
+  if (!normalized) return null
+  if (normalized === 'SUBMITTED') return true
+  return false
+}
+
+function resolveProgressWithLecture(
+  schedule: EducationScheduleItem,
+  lecture: SettlementLectureReportJoin | undefined,
+  now: Date,
+): EducationSettlementItem['progress'] {
+  const lectureStatus = (lecture?.lectureStatus ?? '').trim().toUpperCase()
+  if (UPCOMING_LECTURE.has(lectureStatus)) return 'upcoming'
+  if (COMPLETED_LECTURE.has(lectureStatus)) return 'completed'
+  return resolveSettlementEducationProgress(
+    {
+      heldAt: schedule.heldAt || lecture?.startAt || '',
+      scheduleStatus: schedule.scheduleStatus,
+      attendanceStatus: schedule.attendanceStatus,
+    },
+    now,
+  )
 }
 
 function indexLatestByScheduleId<T>(
@@ -159,16 +260,30 @@ export function buildAssignedSettlementItems(
     if (id == null) continue
     educationByScheduleId.set(id, item)
   }
+  const lectureByScheduleIdEarly = new Map<number, SettlementLectureReportJoin>()
+  for (const row of input.lectureReports ?? []) {
+    if (!Number.isSafeInteger(row.scheduleId) || row.scheduleId <= 0) continue
+    lectureByScheduleIdEarly.set(row.scheduleId, row)
+  }
+  const assignedFromLecture = [...lectureByScheduleIdEarly.values()]
+    .map(educationItemFromLecture)
+    .sort(compareAssignedSettlementSchedules)
   const assigned =
     input.preferIndividualSchedules === true && input.individualSchedules
       ? input.individualSchedules
           .map(row => {
             const id = readScheduleJoinId(row)
-            return (id != null ? educationByScheduleId.get(id) : undefined) ?? educationItemFromIndividual(row)
+            return (
+              (id != null ? educationByScheduleId.get(id) : undefined) ??
+              (id != null ? assignedFromLecture.find(item => item.scheduleId === id) : undefined) ??
+              educationItemFromIndividual(row)
+            )
           })
           .slice()
           .sort(compareAssignedSettlementSchedules)
-      : assignedFromEducation
+      : assignedFromEducation.length > 0
+        ? assignedFromEducation
+        : assignedFromLecture
 
   const settlements = (input.settlements ?? []).filter(item =>
     matchesSettlementProgram(item, input.programId),
@@ -176,6 +291,11 @@ export function buildAssignedSettlementItems(
   const settlementByScheduleId = indexLatestByScheduleId(
     settlements,
     readSettlementScheduleJoinId,
+    isNewerSettlementRecord,
+  )
+  const settlementByAssignmentId = indexLatestByScheduleId(
+    settlements,
+    readSettlementAssignmentJoinId,
     isNewerSettlementRecord,
   )
   const receiptByScheduleId = indexLatestByScheduleId(
@@ -189,19 +309,23 @@ export function buildAssignedSettlementItems(
     if (joinedId == null) continue
     individualByScheduleId.set(joinedId, row)
   }
+  const lectureByScheduleId = lectureByScheduleIdEarly
 
   return assigned.map(schedule => {
     const scheduleId = readAssignedScheduleJoinId(schedule)
-    const settlement = scheduleId != null ? settlementByScheduleId.get(scheduleId) : undefined
+    const lecture = scheduleId != null ? lectureByScheduleId.get(scheduleId) : undefined
+    const settlement =
+      (scheduleId != null ? settlementByScheduleId.get(scheduleId) : undefined) ??
+      (lecture?.assignmentId != null ? settlementByAssignmentId.get(lecture.assignmentId) : undefined)
     const receipt = scheduleId != null ? receiptByScheduleId.get(scheduleId) : undefined
     const individual = scheduleId != null ? individualByScheduleId.get(scheduleId) : undefined
-    const progress = resolveSettlementEducationProgress(
+    const progress = resolveProgressWithLecture(
       {
-        heldAt: schedule.heldAt,
-        scheduleStatus: schedule.scheduleStatus,
+        ...schedule,
         attendanceStatus:
           schedule.attendanceStatus ?? mapIndividualAttendance(individual?.attendanceStatus),
       },
+      lecture,
       now,
     )
     const reviewStatus =
@@ -227,6 +351,7 @@ export function buildAssignedSettlementItems(
       deadlinePolicy: input.deadlinePolicy,
       isResubmitted: isResubmittedSettlement(settlement) || isResubmittedReceipt(receipt),
       hasSubmission: submitted,
+      lectureReportSubmitted: lecture ? isLectureReportSubmitted(lecture.reportStatus) : null,
       now,
     })
     const status = resolved.status
@@ -257,17 +382,16 @@ export function buildAssignedSettlementItems(
       scheduleId,
       sessionNumber: schedule.sessionNumber,
       heldAt: schedule.heldAt,
-      sessionMeta: formatSettlementSessionMeta(schedule),
+      sessionMeta: formatSettlementSessionMeta(schedule, lecture),
+      ...(formatInstitutionLabel(lecture, schedule)
+        ? { institutionLabel: formatInstitutionLabel(lecture, schedule) }
+        : {}),
       progress,
       status,
       ...(deadlineAt ? { deadlineAt } : {}),
       ...(submittedAt ? { submittedAt } : {}),
       ...(amount != null ? { amount } : {}),
-      ...(ineligibleMessage
-        ? { submitBlockedReason: ineligibleMessage }
-        : individual?.ineligibleReason?.trim()
-          ? { submitBlockedReason: individual.ineligibleReason.trim() }
-          : {}),
+      ...(ineligibleMessage ? { submitBlockedReason: ineligibleMessage } : {}),
       ...(individual?.eligible != null ? { eligible: individual.eligible } : {}),
       ...(evidencePolicyUnconfigured ? { evidencePolicyUnconfigured: true } : {}),
       ...(individual?.submittedItems?.length ? { submittedItems: [...individual.submittedItems] } : {}),

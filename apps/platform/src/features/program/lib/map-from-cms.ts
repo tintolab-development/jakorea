@@ -524,9 +524,64 @@ function mapMaxPreferredScheduleCount(program: CmsProgramLike): number {
   return Math.min(raw, 10)
 }
 
+const UJAT_SCHEDULE_KIND_LABEL: Record<string, string> = {
+  PRE_EDUCATION: '봉사자 사전교육',
+  EDUCATION: '교육 진행',
+  CLOSING: '해단식',
+  SESSION: '기관',
+}
+
+const UJAT_TERM_LABEL: Record<string, string> = {
+  FIRST_HALF: '상반기',
+  SECOND_HALF: '하반기',
+}
+
+const UJAT_KIND_ORDER: Record<string, number> = {
+  SESSION: 0,
+  PRE_EDUCATION: 1,
+  EDUCATION: 2,
+  CLOSING: 3,
+}
+
+const UJAT_TERM_ORDER: Record<string, number> = {
+  FIRST_HALF: 0,
+  SECOND_HALF: 1,
+}
+
+function mapUjatPublicEventSchedules(program: CmsProgramLike): ProgramEventSchedule[] {
+  return (program.schedules ?? [])
+    .filter(schedule => schedule.publiclyVisible !== false)
+    .slice()
+    .sort((left, right) => {
+      const leftTerm = left.term?.trim().toUpperCase() ?? ''
+      const rightTerm = right.term?.trim().toUpperCase() ?? ''
+      const termDiff = (UJAT_TERM_ORDER[leftTerm] ?? 99) - (UJAT_TERM_ORDER[rightTerm] ?? 99)
+      if (termDiff !== 0) return termDiff
+      const leftKind = left.scheduleKind?.trim().toUpperCase() ?? ''
+      const rightKind = right.scheduleKind?.trim().toUpperCase() ?? ''
+      return (UJAT_KIND_ORDER[leftKind] ?? 99) - (UJAT_KIND_ORDER[rightKind] ?? 99)
+    })
+    .flatMap(schedule => {
+      const kind = schedule.scheduleKind?.trim().toUpperCase()
+      const term = schedule.term?.trim().toUpperCase()
+      const kindLabel = kind ? UJAT_SCHEDULE_KIND_LABEL[kind] : undefined
+      const termLabel = term ? UJAT_TERM_LABEL[term] : undefined
+      const fallbackName = schedule.scheduleName?.trim() ?? ''
+      const scheduleLabel = termLabel ?? kindLabel ?? '일정'
+      const name = termLabel ? (kindLabel ?? fallbackName) : kindLabel ? '' : fallbackName
+      const dateLabel = formatDisplayDateRange(
+        toDate(schedule.startAt ?? undefined),
+        toDate(schedule.endAt ?? undefined),
+        { empty: '일정 미정' },
+      )
+      if (!scheduleLabel && !name) return []
+      return [{ scheduleLabel, name, dateLabel }]
+    })
+}
+
 /**
  * 세부내용 「교육 일정」 카드.
- * - UJAT: ujatPublicEducationSchedules 우선 (기관 상·하반기 / 봉사 사전교육·진행·해단식)
+ * - UJAT: backend schedules[]의 공개 물리 일정만 사용 (기관 상·하반기 / 봉사 사전교육·진행·해단식)
  * - 일정형 + 복수회차: 비노출 (기획 SSOT — 일정은 기본정보 행사·세부 일정으로만)
  * - educationScheduleLines — 불가일 필터 후 사용
  * - 커리큘럼형: lines 없으면 운영 기간 1줄 폴백
@@ -536,14 +591,8 @@ function mapEducationSchedules(
   program: CmsProgramLike,
   detailCase: ProgramDetailCase
 ): ProgramLabeledValue[] {
-  const ujatRows = program.ujatPublicEducationSchedules?.filter(
-    row => row.label.trim() && row.value.trim() && !isUnavailableScheduleLine(row.value)
-  )
-  if (ujatRows?.length && (detailCase === 'ujat-volunteer' || detailCase === 'ujat-participant')) {
-    return ujatRows.map(row => ({
-      label: row.label.trim(),
-      value: normalizeScheduleDisplayLabel(row.value.trim()),
-    }))
+  if (detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer') {
+    return []
   }
 
   // 기획: 일정형 + 복수회차 → 세부내용 「교육 일정」 비노출
@@ -562,17 +611,6 @@ function mapEducationSchedules(
   if (lines.length) {
     const scheduleMode = mapEducationScheduleMode(program)
     return lines.map((line, index) => {
-      // UJAT 기관: "상반기: …" 형태면 label 분리
-      if (detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer') {
-        const colon = line.indexOf(':')
-        if (colon > 0 && colon < 24) {
-          const label = line.slice(0, colon).trim()
-          const value = line.slice(colon + 1).trim()
-          if (label && value) {
-            return { label, value: formatEducationScheduleLineForDetailCard(value, scheduleMode) }
-          }
-        }
-      }
       return {
         label: educationScheduleDetailCardLabel(index, lines.length),
         value: formatEducationScheduleLineForDetailCard(line, scheduleMode),
@@ -819,7 +857,10 @@ export function mapCmsProgramToPlatformDetail(
     maxPreferredScheduleCount: mapMaxPreferredScheduleCount(program),
     maxSessionsPerDay: mapMaxSessionsPerDay(program),
     sessions: mapSessions(program),
-    eventSchedules: mapEventSchedules(program),
+    eventSchedules:
+      detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer'
+        ? mapUjatPublicEventSchedules(program)
+        : mapEventSchedules(program),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(program, detailCase, appStart, appEnd),
     educationSchedules: mapEducationSchedules(program, detailCase),

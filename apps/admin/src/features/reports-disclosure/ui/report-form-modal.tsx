@@ -24,7 +24,8 @@ import './report-form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const PDF_ACCEPT = '.pdf,application/pdf'
-const MAX_BYTES = 15 * 1024 * 1024
+const IMAGE_MAX_BYTES = 20 * 1024 * 1024
+const PDF_MAX_BYTES = 15 * 1024 * 1024
 
 const KIND_META = {
   annual: {
@@ -32,8 +33,8 @@ const KIND_META = {
     description:
       '연차보고서 제목 작성 및 썸네일 이미지와 첨부파일을 업로드 해주세요.\n썸네일 이미지는 A4 비율로 반영 및 노출됩니다.',
     thumbGuide: [
-      '- 파일은 최대 15MB까지 JPG, PNG 형식만 등록 가능합니다.',
-      '- 권장 썸네일 사이즈는 328*463입니다.',
+      '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+      '- 권장 썸네일 사이즈는 328 × 463px입니다.',
     ],
     previewClass: 'rd-form-modal__preview--a4',
   },
@@ -42,8 +43,8 @@ const KIND_META = {
     description:
       '회계감사 보고서 제목 작성 및 썸네일 이미지와 첨부파일을 업로드 해주세요.\n썸네일 이미지는 16:9 비율로 반영 및 노출됩니다.',
     thumbGuide: [
-      '- 파일은 최대 15MB까지 JPG, PNG 형식만 등록 가능합니다.',
-      '- 권장 썸네일 사이즈는 461*256입니다.',
+      '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+      '- 권장 썸네일 사이즈는 461 × 256px입니다.',
     ],
     previewClass: 'rd-form-modal__preview--wide',
   },
@@ -147,10 +148,10 @@ export function ReportFormModal({
       })
       return
     }
-    if (file.size > MAX_BYTES) {
+    if (file.size > IMAGE_MAX_BYTES) {
       showAlert({
         title: '용량 초과',
-        content: '파일은 최대 15MB까지 등록 가능합니다.',
+        content: '파일은 최대 20MB까지 등록 가능합니다.',
       })
       return
     }
@@ -178,7 +179,7 @@ export function ReportFormModal({
       })
       return
     }
-    if (file.size > MAX_BYTES) {
+    if (file.size > PDF_MAX_BYTES) {
       showAlert({
         title: '용량 초과',
         content: '파일은 최대 15MB까지 등록 가능합니다.',
@@ -342,6 +343,7 @@ export function ReportFormModal({
                       accept={IMAGE_ACCEPT}
                       buttonLabel="파일 추가"
                       fileNames={thumbnailFileName ? [thumbnailFileName] : []}
+                      maxTotalBytes={IMAGE_MAX_BYTES}
                       guideLines={meta.thumbGuide}
                       onFilesChange={files => {
                         void handleThumbFiles(files)

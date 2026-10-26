@@ -9,10 +9,20 @@ const segmenter =
     ? new Intl.Segmenter('ko', { granularity: 'grapheme' })
     : null
 
+/**
+ * 화면에 보이는 글자 수(grapheme 단위, Intl.Segmenter 없으면 code point 단위).
+ * 배열로 펼치지 않고 반복자로만 센다 — V8은 세그먼트 객체마다 입력 문자열 사본을 만들 수 있어
+ * `[...segmenter.segment(text)]`는 5만 자 문서에서 수 GB를 잡고 OOM이 난다.
+ */
 export function countRichTextCharacters(text: string): number {
   if (!text) return 0
-  if (segmenter) return [...segmenter.segment(text)].length
-  return Array.from(text).length
+  let count = 0
+  if (segmenter) {
+    for (const _segment of segmenter.segment(text)) count += 1
+    return count
+  }
+  for (const _codePoint of text) count += 1
+  return count
 }
 
 export function countRichTextDocumentCharacters(doc: ProseMirrorNode): number {

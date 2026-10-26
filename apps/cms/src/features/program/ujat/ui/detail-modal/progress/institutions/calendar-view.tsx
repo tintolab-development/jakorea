@@ -44,34 +44,36 @@ function extractInstitutionFromCalendarItem(
 
 function renderEducationProgressInstitutionPreviewTooltipContent({
   events,
-  colorMap,
 }: {
   events: CalendarItem[]
   colorMap: Map<string | number, ScheduleColorPair>
 }): ReactNode {
   return (
-    <div className="program-preview">
+    <div className="calendar-preview-popover">
       {events.map(ev => {
         const institution = extractInstitutionFromCalendarItem(ev)
-        const colors = colorMap.get(ev.id) ?? SCHEDULE_COLORS[0]
         const title = institution?.institutionName ?? String(ev.title ?? '-')
         const totalClassSummary = institution?.calendarTotalClassSummary
         const scheduleDetail = institution?.calendarScheduleDetail
 
         return (
-          <div key={String(ev.id)} className="program-preview-item program-preview-item--stack">
-            <span className="program-preview-item__title" style={{ color: colors.text }}>
-              {title}
-            </span>
+          <div key={String(ev.id)} className="calendar-preview-popover__entry">
+            <span className="calendar-preview-popover__title">{title}</span>
             {totalClassSummary ? (
-              <div className="ujat-institution-preview__meta">
-                <span className="ujat-institution-preview__meta-total">{totalClassSummary}</span>
+              <div className="calendar-preview-popover__meta">
+                <span className="calendar-preview-popover__meta-part">
+                  {totalClassSummary}
+                </span>
                 {scheduleDetail ? (
                   <>
-                    <span className="program-preview-item__sep" aria-hidden>
-                      |
-                    </span>
-                    <span className="ujat-institution-preview__meta-detail" title={scheduleDetail}>
+                    <span
+                      className="calendar-preview-popover__meta-sep"
+                      aria-hidden
+                    />
+                    <span
+                      className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session"
+                      title={scheduleDetail}
+                    >
                       {scheduleDetail}
                     </span>
                   </>

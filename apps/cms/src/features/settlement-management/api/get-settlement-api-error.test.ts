@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getSettlementConfigErrorField,
   getSettlementApiErrorMessage,
+  isSettlementExportAlreadyDownloadedError,
   isPaymentStatementStatusConflictError,
 } from './get-settlement-api-error'
 
@@ -72,5 +74,33 @@ describe('getSettlementApiErrorMessage', () => {
       },
     }
     expect(getSettlementApiErrorMessage(error, 'fallback')).toContain('선택')
+  })
+
+  it('정산 파일 중복 다운로드는 신규 발급 안내로 매핑한다', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: { error: { code: 'SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED' } },
+      },
+    }
+    expect(isSettlementExportAlreadyDownloadedError(error)).toBe(true)
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toContain('새 파일을 발급')
+  })
+
+  it('원천징수 설정 오류를 입력 영역으로 분류한다', () => {
+    const rateError = {
+      response: {
+        status: 400,
+        data: { error: { code: 'SETTLEMENT_CONFIG_WITHHOLDING_RATE_INVALID' } },
+      },
+    }
+    const amountError = {
+      response: {
+        status: 400,
+        data: { error: { code: 'SETTLEMENT_CONFIG_WITHHOLDING_AMOUNT_INVALID' } },
+      },
+    }
+    expect(getSettlementConfigErrorField(rateError)).toBe('withholdingRate')
+    expect(getSettlementConfigErrorField(amountError)).toBe('withholdingAmount')
   })
 })

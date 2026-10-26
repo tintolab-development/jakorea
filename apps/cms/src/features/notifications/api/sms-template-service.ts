@@ -300,9 +300,11 @@ export async function createSmsTemplate(input: {
   if (templateId == null || !Number.isFinite(templateId)) {
     throw new Error('템플릿 생성 응답에 ID가 없습니다.')
   }
-  if (input.newFiles && input.newFiles.length > 0) {
+  const persistFiles =
+    input.messageType.trim().toUpperCase() === 'MMS' ? input.newFiles : undefined
+  if (persistFiles && persistFiles.length > 0) {
     try {
-      await uploadAndBindSmsTemplateAttachments(templateId, input.newFiles)
+      await uploadAndBindSmsTemplateAttachments(templateId, persistFiles)
     } catch (error) {
       return rethrowAfterRollback(error, () => deleteNotificationTemplateRemote(templateId))
     }
@@ -323,7 +325,9 @@ export async function updateSmsTemplate(input: {
   assertSmsTemplatesRemoteReady()
   const templateId = Number(input.templateId)
   if (!Number.isFinite(templateId)) throw new Error('템플릿 ID가 올바르지 않습니다.')
-  const previous = input.newFiles && input.newFiles.length > 0
+  const persistFiles =
+    input.messageType.trim().toUpperCase() === 'MMS' ? input.newFiles : undefined
+  const previous = persistFiles && persistFiles.length > 0
     ? await getSmsTemplateDetail(input.templateId)
     : null
   await updateNotificationTemplateRemote(
@@ -337,9 +341,9 @@ export async function updateSmsTemplate(input: {
       categoryId: input.categoryId,
     })
   )
-  if (input.newFiles && input.newFiles.length > 0) {
+  if (persistFiles && persistFiles.length > 0) {
     try {
-      await uploadAndBindSmsTemplateAttachments(templateId, input.newFiles)
+      await uploadAndBindSmsTemplateAttachments(templateId, persistFiles)
     } catch (error) {
       return rethrowAfterRollback(error, async () => {
         if (!previous) return

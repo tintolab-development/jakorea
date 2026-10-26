@@ -18,10 +18,13 @@ import {
   fetchSenderProfilesRemote,
   fetchTemplateVariablesRemote,
 } from '@/features/notifications/api/notifications-api-client'
+import type { AlimtalkVariableCatalogEntry } from '@/features/notifications/model/alimtalk-send/recipient-variables'
 import {
   buildSmsSendCreateRequest,
   buildSmsSendPayload,
+  validateSmsSendDraft,
 } from '@/features/notifications/model/sms-send/payload'
+import { validateSmsSendVariables } from '@/features/notifications/model/sms-send/validate-send'
 import type { SmsSendDraft, SmsSendRecipient } from '@/features/notifications/model/sms-send/types'
 import { applyNotificationSendBodySnapshot } from '@/features/notifications/model/shared/send-body-snapshot'
 import { NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT } from '@/features/notifications/model/send-program-id'
@@ -158,6 +161,8 @@ export async function submitSmsSend(input: {
   idempotencyKey: string
   senderProfileId?: number
   variables?: Record<string, unknown>
+  placeholderKeys?: Iterable<string>
+  variableCatalog?: AlimtalkVariableCatalogEntry[] | null
 }): Promise<void> {
   const {
     templateDisplayName,
@@ -165,9 +170,32 @@ export async function submitSmsSend(input: {
     idempotencyKey,
     senderProfileId,
     variables,
+    placeholderKeys,
+    variableCatalog,
   } = input
-  assertSmsSendRemoteReady()
   const draft = buildSmsSendPayload(input.draft)
+  const validationError = validateSmsSendDraft(draft)
+  if (validationError) {
+    throw new Error(validationError)
+  }
+  let sendDraft = draft
+  if (placeholderKeys != null) {
+    const variableCheck = validateSmsSendVariables({
+      programId: draft.programId,
+      messageType: draft.messageType,
+      subject: draft.subject,
+      bodyText: draft.bodyText,
+      recipients: draft.recipients,
+      placeholderKeys,
+      catalog: variableCatalog ?? null,
+      catalogState: variableCatalog == null ? 'pending' : 'ready',
+    })
+    if (!variableCheck.ok) {
+      throw new Error(variableCheck.alert)
+    }
+    sendDraft = { ...draft, recipients: variableCheck.validRecipients }
+  }
+  assertSmsSendRemoteReady()
   const numericTemplateId =
     draft.templateId && /^\d+$/.test(draft.templateId.trim())
       ? Number(draft.templateId.trim())
@@ -184,10 +212,12 @@ export async function submitSmsSend(input: {
   }
 
   const body = buildSmsSendCreateRequest({
-    draft,
+    draft: sendDraft,
     templateId: numericTemplateId,
     senderKey: normalizeKoreanPhoneDigits(draft.senderPhone) || draft.senderPhone.trim(),
     senderProfileId: resolvedSenderProfileId,
+    placeholderKeys,
+    variableCatalog,
   })
   if (templateDisplayName?.trim()) {
     body.batchName = templateDisplayName.trim().slice(0, 200)
@@ -212,7 +242,7 @@ export async function submitSmsSend(input: {
     body.contentTemplate = draft.bodyText
   }
   if (draft.messageType !== 'SMS' && draft.subject.trim()) {
-    body.titleTemplate = draft.subject.trim().slice(0, 40)
+    body.titleTemplate = draft.subject.trim()
   }
 
   await createSendBatchRemote(body, idempotencyKey)

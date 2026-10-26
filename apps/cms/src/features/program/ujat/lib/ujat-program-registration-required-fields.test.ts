@@ -7,6 +7,8 @@ import {
   hasIncompleteUjatProgramRegistrationRequiredFields,
   listIncompleteUjatProgramRegistrationRequiredFields,
 } from './ujat-program-registration-required-fields'
+import { ujatBasicInfoFormValuesFromLegacyOverlay } from './ujat-basic-info-form'
+import { typedDetailFromUjatOverlay } from '@/features/program/ujat/api/typed-detail-client'
 import {
   replaceUjatRecruitInstitutionOverlay,
   resetUjatRecruitInstitutionOverlay,
@@ -22,6 +24,7 @@ import {
 import { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS as IK } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS as VK } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import { snapshotVolunteerHalfFromLegacy } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import { UJAT_WAGE_OVERLAY_PAYMENT_KEY } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import {
   replaceGeneralRecruitOverlay,
   resetGeneralRecruitOverlay,
@@ -141,6 +144,13 @@ function setupCompleteRecruitment(): void {
   replaceGeneralRecruitOverlay(filledVolunteerInterviewSchedules())
 }
 
+function typedFromOverlay(overlay: Record<string, unknown>) {
+  return {
+    basicInfo: ujatBasicInfoFormValuesFromLegacyOverlay(overlay),
+    typedDetail: typedDetailFromUjatOverlay(overlay),
+  }
+}
+
 describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
   beforeEach(() => {
     resetUjatProgramRegistrationOverlay()
@@ -151,7 +161,9 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
   })
 
   it('필수 채우면 완료', () => {
-    expect(hasIncompleteUjatProgramRegistrationRequiredFields(filledRegistration())).toBe(false)
+    const overlay = filledRegistration()
+    const typed = typedFromOverlay(overlay)
+    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).toBe(false)
   })
 
   it('설문 진행 항목을 하나도 고르지 않아도 완료이다', () => {
@@ -162,8 +174,9 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
       school_satisfaction: false,
       lecture_evaluation: false,
     }
-    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay)).toBe(false)
-    expect(listIncompleteUjatProgramRegistrationRequiredFields(overlay)).not.toContain(
+    const typed = typedFromOverlay(overlay)
+    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).toBe(false)
+    expect(listIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).not.toContain(
       'basicInfo.surveyItems'
     )
   })
@@ -175,8 +188,28 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
       regionByRow: { '0': ['seoul'] },
       dateByRow: { '0': null },
     }
-    expect(describeIncompleteUjatProgramRegistrationRequiredFields(overlay)).toBe('h1.pre.schedule')
-    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay)).toBe(true)
+    const typed = typedFromOverlay(overlay)
+    expect(describeIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).toBe('h1.pre.schedule')
+    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).toBe(true)
+  })
+
+  it('Typed RHF 0/false/[]는 오래된 Overlay 값을 쓰지 않는다', () => {
+    const overlay = filledRegistration()
+    overlay['ujat.kpi.participantCount'] = 10
+    overlay['ujat.basicInfo.partnerInvolvement'] = 'yes'
+    overlay[UJAT_WAGE_OVERLAY_PAYMENT_KEY] = ['stale']
+    const typed = typedFromOverlay(overlay)
+    typed.basicInfo.kpiFinalParticipants = 0
+    typed.basicInfo.partnerInvolvement = false
+    typed.basicInfo.wagePaymentItemIds = []
+    const incomplete = listIncompleteUjatProgramRegistrationRequiredFields(
+      overlay,
+      typed.basicInfo,
+      typed.typedDetail
+    )
+    expect(incomplete).not.toContain('kpi.participantCount')
+    expect(incomplete).not.toContain('basicInfo.partnerInvolvement')
+    expect(incomplete).not.toContain('wage.paymentItemValues')
   })
 })
 

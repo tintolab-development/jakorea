@@ -3,8 +3,7 @@
  *
  * - **마스터**: `admin1@jakorea.org` — MFA `000000`
  * - **PM/Partner/Viewer**: `pm1` / `partner1` / `viewer1@jakorea.org`
- * - 마스터 비밀번호: `admin1234!`
- * - PM/Partner/Viewer 비밀번호: `test1234!`
+ * - 모든 권한별 로그인 버튼의 공통 비밀번호: `admin1234!`
  */
 export type DevLoginQaAccount = {
   key: 'master' | 'pm' | 'partner' | 'viewer'
@@ -15,33 +14,33 @@ export type DevLoginQaAccount = {
   apiReady?: boolean
 }
 
-/** @deprecated 계정별 `password` 사용 — 하위 호환용 */
-export const DEV_LOGIN_QA_PASSWORD = 'test1234!'
+/** 권한별 로그인 버튼이 공통으로 폼에 입력하는 QA 비밀번호 */
+export const DEV_LOGIN_QA_PASSWORD = 'admin1234!'
 
 export const DEV_LOGIN_QA_ACCOUNTS: readonly DevLoginQaAccount[] = [
   {
     key: 'master',
     label: '마스터',
     email: 'admin1@jakorea.org',
-    password: 'admin1234!',
+    password: DEV_LOGIN_QA_PASSWORD,
     apiReady: true,
   },
   {
     key: 'pm',
     label: 'PM',
     email: 'pm1@jakorea.org',
-    password: 'test1234!',
+    password: DEV_LOGIN_QA_PASSWORD,
   },
   {
     key: 'partner',
     label: 'Partner',
     email: 'partner1@jakorea.org',
-    password: 'test1234!',
+    password: DEV_LOGIN_QA_PASSWORD,
   },
   {
     key: 'viewer',
     label: 'Viewer',
     email: 'viewer1@jakorea.org',
-    password: 'test1234!',
+    password: DEV_LOGIN_QA_PASSWORD,
   },
 ]

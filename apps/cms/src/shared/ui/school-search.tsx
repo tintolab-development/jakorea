@@ -15,7 +15,7 @@ import {
   filterCareerNetUniversitiesBySigungu,
   type CareerNetUniversityItem,
 } from '@jakorea/location/career-net'
-import { filterNeisSchoolsByRegion } from '@jakorea/location/neis'
+import { filterNeisSchoolsByRegion, sortNeisSchools } from '@jakorea/location/neis'
 import { getSidoOptions, getSigunguOptions } from '@jakorea/location/sido-sigungu'
 import {
   getCmsCareerNetMissingKeyMessage,
@@ -34,7 +34,7 @@ import type { CmsInputProps } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import './school-search.css'
 
-const SCHOOL_SEARCH_PAGE_SIZE = 5
+export const SCHOOL_SEARCH_PAGE_SIZE = 10
 const MODAL_KEYWORD_PLACEHOLDER = '예) JA초등학교'
 const GUIDE_TEXT = '학교급과 지역을 선택한 후 학교명을 입력해 검색하세요.'
 
@@ -156,6 +156,8 @@ export function SchoolSearch({
   const [keyword, setKeyword] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [schoolLevelValidationError, setSchoolLevelValidationError] = useState<string | null>(null)
+  const [keywordValidationError, setKeywordValidationError] = useState<string | null>(null)
 
   const neisApiKey = apiKeyProp ?? readNeisApiKeyFromEnv()
   const careerNetApiKey = careerNetApiKeyProp ?? readCareerNetApiKeyFromEnv()
@@ -193,7 +195,7 @@ export function SchoolSearch({
   const filteredSchools = useMemo(() => {
     if (!isK12Level(schoolLevel)) return []
     const byRegion = filterNeisSchoolsByRegion(schools, sido, sigungu)
-    return byRegion.filter(school => school.schulKndScNm.trim() === schoolLevel)
+    return sortNeisSchools(byRegion.filter(school => school.schulKndScNm.trim() === schoolLevel))
   }, [schools, sido, sigungu, schoolLevel])
 
   const filteredUniversities = useMemo(
@@ -223,7 +225,6 @@ export function SchoolSearch({
   const loading = isHigherEd ? careerNetLoading : neisLoading
   const error = isHigherEd ? careerNetError : neisError
   const hasResults = filteredTotalCount > 0
-  const canSearch = Boolean(schoolLevel && trimmedKeyword)
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -239,6 +240,8 @@ export function SchoolSearch({
     setKeyword('')
     setHasSearched(false)
     setCurrentPage(1)
+    setSchoolLevelValidationError(null)
+    setKeywordValidationError(null)
     resetResults()
   }, [lockedLevel, resetResults])
 
@@ -250,12 +253,16 @@ export function SchoolSearch({
     setSigungu('')
     setHasSearched(false)
     setCurrentPage(1)
+    setSchoolLevelValidationError(null)
+    setKeywordValidationError(null)
     resetResults()
     setOpen(true)
   }, [disabled, lockedLevel, resetResults, value])
 
   const handleSchoolLevelChange = (next: string) => {
     setSchoolLevel(next)
+    setSchoolLevelValidationError(null)
+    setKeywordValidationError(null)
     setHasSearched(false)
     setCurrentPage(1)
     resetResults()
@@ -264,23 +271,45 @@ export function SchoolSearch({
   const handleSidoChange = (next: string) => {
     setSido(next)
     setSigungu('')
+    setSchoolLevelValidationError(null)
+    setKeywordValidationError(null)
     setHasSearched(false)
     setCurrentPage(1)
     resetResults()
   }
 
   const handleSearch = () => {
-    if (!canSearch || loading) return
+    if (loading) return
     setHasSearched(true)
     setCurrentPage(1)
+    if (!schoolLevel) {
+      setHasSearched(false)
+      setSchoolLevelValidationError('학교급을 선택해 주세요.')
+      setKeywordValidationError(trimmedKeyword ? null : '검색어를 입력해 주세요.')
+      resetResults()
+      return
+    }
+    if (!trimmedKeyword) {
+      setHasSearched(false)
+      setSchoolLevelValidationError(null)
+      setKeywordValidationError('검색어를 입력해 주세요.')
+      resetResults()
+      return
+    }
+    setSchoolLevelValidationError(null)
+    setKeywordValidationError(null)
     if (isHigherEdLevel(schoolLevel)) {
       void searchCareerNet(trimmedKeyword, {
         regionSido: sido || undefined,
         sch1: careerNetSch1ForLevel(schoolLevel),
+      }).catch(() => {
+        // API 오류는 검색 결과 영역에서 사용자에게 표시한다.
       })
       return
     }
-    void searchNeis(trimmedKeyword, sido || undefined)
+    void searchNeis(trimmedKeyword, sido || undefined).catch(() => {
+      // API 오류는 검색 결과 영역에서 사용자에게 표시한다.
+    })
   }
 
   const handlePageChange = (page: number) => {
@@ -289,6 +318,8 @@ export function SchoolSearch({
 
   const handleSigunguChange = (next: string) => {
     setSigungu(next)
+    setSchoolLevelValidationError(null)
+    setKeywordValidationError(null)
     setCurrentPage(1)
   }
 
@@ -469,6 +500,8 @@ export function SchoolSearch({
               width={120}
               disabled={Boolean(lockedLevel)}
               withAllOption={false}
+              error={Boolean(schoolLevelValidationError)}
+              message={schoolLevelValidationError ?? undefined}
             />
             <CmsSelect
               placeholder="시/도"
@@ -495,16 +528,17 @@ export function SchoolSearch({
                 onChange={event => {
                   const next = event.target.value
                   setKeyword(next)
+                  setKeywordValidationError(null)
                   setHasSearched(false)
                   setCurrentPage(1)
-                  if (!next.trim()) {
-                    resetResults()
-                  }
+                  resetResults()
                 }}
                 onPressEnter={handleSearch}
                 placeholder={MODAL_KEYWORD_PLACEHOLDER}
                 inputSize="medium"
                 width="100%"
+                error={Boolean(keywordValidationError)}
+                message={keywordValidationError ?? undefined}
               />
             </span>
             <CmsButton
@@ -512,7 +546,7 @@ export function SchoolSearch({
               variant="primary"
               size="medium"
               className="school-search__search-btn"
-              disabled={!canSearch || loading}
+              disabled={loading}
               onClick={handleSearch}
             >
               검색

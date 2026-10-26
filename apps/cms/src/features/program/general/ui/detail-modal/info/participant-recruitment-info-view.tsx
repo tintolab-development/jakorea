@@ -16,7 +16,6 @@ import {
   parseTargetLevelsSelectValue,
   TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS } from '@jakorea/form-schema/paragraph-ids/applicant-recruit-form-individual-draft'
 import { APPLICANT_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/applicant-recruit-form-institution-draft'
 import { ECONOMY_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/economy-recruit-form-institution-draft'
@@ -201,7 +200,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
     <span
       className={`program-detail-info-tab__lifecycle-status-text program-detail-info-tab__lifecycle-status-text--${lifecycle.replace(/_/g, '-')}`}
     >
-      {display.recruitmentStatusLabel || getProgramLifecycleLabel(lifecycle)}
+      {display.recruitmentStatusLabel}
     </span>
   ) : (
     display.recruitmentStatusLabel

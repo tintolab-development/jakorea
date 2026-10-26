@@ -38,8 +38,10 @@ export type InstructorRoleRequestProfile = {
     freeWrite3?: string
     freeWrite4?: string
   }
-  /** 조회 전용 — 포탈/Cms 프로필 */
+  /** 조회 전용 — 포탈/CMS 프로필. 응답 코드는 response-codes mapper에서 표시 라벨로 변환한다. */
+  /** API `GRADE_1` | `GRADE_2` | `GRADE_3` 또는 이미 변환된 표시 라벨 */
   defaultFeeGrade?: string
+  /** API `A` | `B` | `C` | `D` 또는 이미 변환된 표시 라벨 */
   defaultJaGrade?: string
 }
 

@@ -48,13 +48,18 @@ import { buildGeneralProgramCreateFromWizardRhf } from '@/features/program/gener
 import {
   buildTrainedTeachersCanonicalFromRhf,
   buildTrainedTeachersProgramFromRhf,
+  trainedTeachersWizardDraftSettingsJson,
 } from '@/features/program/trained-teachers/lib/build-registration-create-from-canonical'
-import { importLegacyOverlayToTrainedTeachersCanonical } from '@/features/program/trained-teachers/lib/import-legacy-registration-overlay'
+import {
+  applyLegacyProgramTitleKoFallback,
+  importLegacyOverlayToTrainedTeachersCanonical,
+} from '@/features/program/trained-teachers/lib/import-legacy-registration-overlay'
 import { TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY } from '@/features/program/trained-teachers/lib/registration-canonical-types'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import {
   buildCompanySchoolCanonicalFromRhf,
   buildCompanySchoolProgramFromRhf,
+  CompanySchoolOperationRangeRequiredError,
 } from '@/features/program/1c-1s/lib/build-registration-create-from-canonical'
 import { importLegacyOverlayToCompanySchoolCanonical } from '@/features/program/1c-1s/lib/import-legacy-registration-overlay'
 import { COMPANY_SCHOOL_REGISTRATION_SETTINGS_KEY } from '@/features/program/1c-1s/lib/registration-canonical-types'
@@ -65,16 +70,20 @@ import {
   listIncompleteCompanySchoolRegistrationRhfRequiredFields,
 } from '@/features/program/1c-1s/lib/registration-rhf-required-fields'
 import { serializeCompanySchoolRegistrationForFormVersion } from '@/features/program/1c-1s/lib/serialize-registration-overlay-from-canonical'
+import { resolveRegistrationFormVersionOverlay } from '@/features/program/general/lib/resolve-registration-form-version-overlay'
 import {
+  createDefaultCompanySchoolRegistrationRhfValues,
   isCompanySchoolRegistrationCanonicalSnapshot,
   omitCompanySchoolCommonInfoOverlayKeys,
   rhfValuesFromCompanySchoolCanonical,
 } from '@/features/program/1c-1s/lib/registration-rhf-values'
 import {
+  emptyCompanySchoolRecruitFormState,
   omitCompanySchoolRecruitmentOverlayKeys,
   serializeCompanySchoolRecruitmentForFormVersion,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 import {
+  emptyCompanySchoolApplicationFormState,
   omitCompanySchoolApplicationOverlayKeys,
   serializeCompanySchoolApplicationForFormVersion,
 } from '@/features/program/1c-1s/lib/registration-rhf-application'
@@ -82,6 +91,7 @@ import { companySchoolRecruitEditorState } from '@/features/program/1c-1s/lib/re
 import { companySchoolApplicationEditorState } from '@/features/program/1c-1s/lib/application-form-state'
 import { importLegacyTrainedTeachersApplicationOverlay } from '@/features/program/trained-teachers/lib/registration-rhf-application'
 import {
+  createDefaultTrainedTeachersRegistrationRhfValues,
   isTrainedTeachersRegistrationCanonicalSnapshot,
   omitTrainedTeachersCommonInfoOverlayKeys,
   rhfValuesFromTrainedTeachersCanonicalCommon,
@@ -493,10 +503,14 @@ export function useProgramRegistrationEditor(
   )
 
   const buildCompanySchoolWizardCreateProgram = useCallback(
-    (id: string) => {
+    (id: string, options?: { requireOperationRange?: boolean }) => {
       const rhf = peekCompanySchoolRegistrationRhf()
       if (programRegistrationFormVariant !== 'economy' || rhf == null) return null
-      return buildCompanySchoolProgramFromRhf({ id, values: rhf.getValues() })
+      return buildCompanySchoolProgramFromRhf({
+        id,
+        values: rhf.getValues(),
+        requireOperationRange: options?.requireOperationRange,
+      })
     },
     [programRegistrationFormVariant]
   )
@@ -696,7 +710,11 @@ export function useProgramRegistrationEditor(
       setProgramTitleKo(state.programTitleKo ?? '')
       // 일반 위저드 제목 SSOT는 RHF. 빈 editorState로 overlay/RHF를 지우면
       // 임시저장 settingsJson 복원 전에 국문 대표명이 사라진다.
-      if (programRegistrationFormVariant !== 'general') {
+      // TT 제목 정본은 canonical snapshot — 레거시 programTitleKo로 mainTitle을 덮지 않는다.
+      if (
+        programRegistrationFormVariant !== 'general' &&
+        programRegistrationFormVariant !== 'trainedTeachers'
+      ) {
         patchRegistrationOverlayProgramTitleKo(
           programRegistrationFormVariant,
           state.programTitleKo ?? ''
@@ -725,6 +743,19 @@ export function useProgramRegistrationEditor(
         peekGeneralRegistrationWizardRhf()?.reset(createDefaultRegistrationWizardUiValues(), {
           keepDirty: false,
         })
+      }
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        peekTrainedTeachersRegistrationRhf()?.reset(
+          createDefaultTrainedTeachersRegistrationRhfValues(),
+          { keepDirty: false }
+        )
+      }
+      // C4: 1사1교 RHF도 seed 초기화 시 기본값으로 reset (이전 draft 값 잔류 방지)
+      if (programRegistrationFormVariant === 'economy') {
+        peekCompanySchoolRegistrationRhf()?.reset(
+          createDefaultCompanySchoolRegistrationRhfValues(),
+          { keepDirty: false }
+        )
       }
     })
   }, [applyEditorStateSnapshot, programRegistrationFormVariant, seedParagraphIds])
@@ -829,8 +860,11 @@ export function useProgramRegistrationEditor(
                     rhfValuesFromCompanySchoolCanonical(
                       typed.common,
                       typed.sidecar,
-                      typed.recruit ?? rhf.getValues().recruitment,
-                      typed.application ?? imported.application ?? rhf.getValues().application
+                      // C4: 이전 세션의 RHF 값이 새 draft로 새지 않도록 빈 상태로 fallback
+                      typed.recruit ?? emptyCompanySchoolRecruitFormState(),
+                      typed.application ??
+                        imported.application ??
+                        emptyCompanySchoolApplicationFormState()
                     ),
                     { keepDirty: false }
                   )
@@ -842,8 +876,8 @@ export function useProgramRegistrationEditor(
                     rhfValuesFromCompanySchoolCanonical(
                       imported.common,
                       imported.sidecar,
-                      imported.recruit ?? rhf.getValues().recruitment,
-                      imported.application ?? rhf.getValues().application
+                      imported.recruit ?? emptyCompanySchoolRecruitFormState(),
+                      imported.application ?? emptyCompanySchoolApplicationFormState()
                     ),
                     { keepDirty: false }
                   )
@@ -886,7 +920,10 @@ export function useProgramRegistrationEditor(
                   })
                   rhf.reset(
                     rhfValuesFromTrainedTeachersCanonicalCommon(
-                      imported.common,
+                      applyLegacyProgramTitleKoFallback(
+                        imported.common,
+                        restored.programTitleKo
+                      ),
                       imported.editor,
                       undefined,
                       imported.recruit,
@@ -1668,17 +1705,7 @@ export function useProgramRegistrationEditor(
                 },
               }
             : programRegistrationFormVariant === 'trainedTeachers'
-              ? (() => {
-                  const ttRhf = peekTrainedTeachersRegistrationRhf()
-                  if (ttRhf == null) return undefined
-                  return {
-                    [TRAINED_TEACHERS_REGISTRATION_SETTINGS_KEY]:
-                      buildTrainedTeachersCanonicalFromRhf({
-                        id: registrationPendingSnapshotId('trainedTeachers'),
-                        values: ttRhf.getValues(),
-                      }),
-                  }
-                })()
+              ? trainedTeachersWizardDraftSettingsJson(getProgramRegistrationOverlayRecord())
               : programRegistrationFormVariant === 'economy'
                 ? (() => {
                     const csRhf = peekCompanySchoolRegistrationRhf()
@@ -1692,14 +1719,6 @@ export function useProgramRegistrationEditor(
                   })()
                 : undefined,
       })
-      if (programRegistrationFormVariant === 'economy' && registrationWizardProgramType) {
-        const { persistCompanySchoolRegistrationDraftRemote } = await import(
-          '@/features/program/general/lib/registration-program-draft-session'
-        )
-        await persistCompanySchoolRegistrationDraftRemote({
-          programTitleKo: resolvedProgramTitleKo,
-        })
-      }
     } else {
       await persistWritingFormTemplateDraft({
         templateId: templateCode,
@@ -2130,7 +2149,10 @@ export function useProgramRegistrationEditor(
               return fromRhf
             }
             if (programRegistrationFormVariant === 'economy') {
-              const fromRhf = buildCompanySchoolWizardCreateProgram(registrationSnapshotArgs.id)
+              // C11: CREATE는 운영 기간 없이 만들지 않는다(1/1~12/31 대체 금지).
+              const fromRhf = buildCompanySchoolWizardCreateProgram(registrationSnapshotArgs.id, {
+                requireOperationRange: true,
+              })
               if (fromRhf == null) {
                 throw new Error('companySchool registration RHF is not mounted')
               }
@@ -2144,17 +2166,22 @@ export function useProgramRegistrationEditor(
 
           if (usesRemoteFormBindings && templateCode) {
             const program = snapshotFromRegistration()
-            const overlay =
-              programRegistrationFormVariant === 'trainedTeachers'
-                ? undefined
-                : programRegistrationFormVariant === 'economy'
-                  ? (() => {
-                      const csRhf = peekCompanySchoolRegistrationRhf()
-                      return csRhf
-                        ? serializeCompanySchoolRegistrationForFormVersion(csRhf.getValues())
-                        : { ...getProgramRegistrationOverlayRecord() }
-                    })()
-                  : { ...getProgramRegistrationOverlayRecord() }
+            // R2: 일반은 CREATE 빌더와 같은 overlay 객체, 1사1교는 RHF 직렬화, TT는 없음
+            const csRhfForFormVersion =
+              programRegistrationFormVariant === 'economy'
+                ? peekCompanySchoolRegistrationRhf()
+                : null
+            const overlay = resolveRegistrationFormVersionOverlay({
+              variant: programRegistrationFormVariant,
+              createProgramOverlay:
+                programRegistrationFormVariant === 'general'
+                  ? program.registrationOverlay
+                  : undefined,
+              companySchoolOverlay: csRhfForFormVersion
+                ? serializeCompanySchoolRegistrationForFormVersion(csRhfForFormVersion.getValues())
+                : null,
+              readStoreOverlay: getProgramRegistrationOverlayRecord,
+            })
             const editorState = buildProgramRegistrationEditorState({
               participant,
               programType,
@@ -2220,6 +2247,7 @@ export function useProgramRegistrationEditor(
                       teacherTrainingEnabled: trainedTeachersTeacherTrainingEnabled,
                       participant,
                     },
+                    overlay: getProgramRegistrationOverlayRecord(),
                   })
               const recruitSaved = registrationWizardProgramType
                 ? await loadRegistrationWizardFormDraft({
@@ -2323,13 +2351,8 @@ export function useProgramRegistrationEditor(
               operationalOverrides,
             })
           } else {
+            // 로컬(비 remote) 등록 — 서버 draft-owned 양식 PUT 없이 템플릿 초안만 저장한다.
             await persistTemplateDraftIfNeeded()
-            if (usesRegistrationWizardDraft && registrationWizardProgramType) {
-              const program = snapshotFromRegistration()
-              const { persistRegistrationOperationalOverlaySnapshots } =
-                await import('@/features/program/general/lib/registration-operational-form-drafts')
-              await persistRegistrationOperationalOverlaySnapshots(program)
-            }
           }
 
           const programForCreate = snapshotFromRegistration()
@@ -2365,10 +2388,13 @@ export function useProgramRegistrationEditor(
         } catch (error) {
           showAlert({
             title: '등록 실패',
-            content: getGeneralProgramApiErrorMessage(
-              error,
-              '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
-            ),
+            content:
+              error instanceof CompanySchoolOperationRangeRequiredError
+                ? error.message
+                : getGeneralProgramApiErrorMessage(
+                    error,
+                    '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
+                  ),
           })
         } finally {
           endOverlay()

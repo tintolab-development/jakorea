@@ -8,20 +8,40 @@ const CALENDAR_CHIP_TEXT = 'var(--Netural-black, #3D3D3D)'
 const CALENDAR_CHIP_BORDER = 'var(--Border-alpha-06, rgba(61, 61, 61, 0.06))'
 
 export const SCHEDULE_COLORS = [
-  { name: 'green', text: CALENDAR_CHIP_TEXT, border: CALENDAR_CHIP_BORDER, bg: 'var(--Tag-green, #E1F7D9)' },
-  { name: 'pink', text: CALENDAR_CHIP_TEXT, border: CALENDAR_CHIP_BORDER, bg: 'var(--Tag-red, #FFEBEB)' },
-  { name: 'sky', text: CALENDAR_CHIP_TEXT, border: CALENDAR_CHIP_BORDER, bg: 'var(--Tag-sky, #D0EFFF)' },
+  {
+    name: 'green',
+    text: CALENDAR_CHIP_TEXT,
+    border: CALENDAR_CHIP_BORDER,
+    bg: 'var(--Tag-green, #E1F7D9)',
+    accent: 'var(--Status-green-main, #1E8C29)',
+  },
+  {
+    name: 'pink',
+    text: CALENDAR_CHIP_TEXT,
+    border: CALENDAR_CHIP_BORDER,
+    bg: 'var(--Tag-red, #FFEBEB)',
+    accent: 'var(--Status-red-main, #C32F4A)',
+  },
+  {
+    name: 'sky',
+    text: CALENDAR_CHIP_TEXT,
+    border: CALENDAR_CHIP_BORDER,
+    bg: 'var(--Tag-sky, #D0EFFF)',
+    accent: 'var(--Status-blue-main, #017EAF)',
+  },
   {
     name: 'purple',
     text: CALENDAR_CHIP_TEXT,
     border: CALENDAR_CHIP_BORDER,
     bg: 'var(--Tag-purple, #EBDFF9)',
+    accent: 'var(--Status-purple-main, #8457CE)',
   },
   {
     name: 'yellow',
     text: CALENDAR_CHIP_TEXT,
     border: CALENDAR_CHIP_BORDER,
     bg: 'var(--Tag-yellow, #FFF2D2)',
+    accent: 'var(--Status-orange-main, #F07917)',
   },
 ] as const satisfies readonly ScheduleColorPair[]
 
@@ -31,6 +51,7 @@ export type ScheduleColorPair = {
   readonly text: string
   readonly border: string
   readonly bg: string
+  readonly accent?: string
 }
 
 export function hashProgramId(programId: string): number {

@@ -547,16 +547,42 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
 })
 
 describe('resolveSurveyShareClipboardUrl', () => {
-  it('prefers formPath over hardcoded platform URLs', () => {
-    expect(
-      resolveSurveyShareClipboardUrl({ formPath: '/forms/share/abc' }, 'https://cms.example.com')
-    ).toBe('https://cms.example.com/forms/share/abc')
+  it('builds the Platform UI URL from a PUBLIC_ANONYMOUS share token', () => {
     expect(
       resolveSurveyShareClipboardUrl(
-        { formPath: 'https://platform.example.com/s/abc' },
-        'https://cms.example.com'
+        { accessMode: 'PUBLIC_ANONYMOUS', shareToken: 'abc' },
+        'https://platform.example.com'
       )
-    ).toBe('https://platform.example.com/s/abc')
+    ).toBe('https://platform.example.com/surveys/share/abc')
+  })
+
+  it('does not expose backend formPath or submitPath as a shared UI URL', () => {
+    const backendResponse = {
+      accessMode: 'PUBLIC_ANONYMOUS',
+      formPath: '/api/portal/public/surveys/abc',
+      submitPath: '/api/portal/public/surveys/abc/responses',
+    }
+    expect(
+      resolveSurveyShareClipboardUrl(backendResponse, 'https://platform.example.com')
+    ).toBeNull()
+  })
+
+  it('rejects member-authenticated shares and invalid origin/token data', () => {
+    expect(
+      resolveSurveyShareClipboardUrl(
+        { accessMode: 'MEMBER_AUTHENTICATED', shareToken: 'abc' },
+        'https://platform.example.com'
+      )
+    ).toBeNull()
+    expect(
+      resolveSurveyShareClipboardUrl({ accessMode: 'PUBLIC_ANONYMOUS', shareToken: 'abc' }, null)
+    ).toBeNull()
+    expect(
+      resolveSurveyShareClipboardUrl(
+        { accessMode: 'PUBLIC_ANONYMOUS', shareToken: '' },
+        'https://platform.example.com'
+      )
+    ).toBeNull()
   })
 })
 

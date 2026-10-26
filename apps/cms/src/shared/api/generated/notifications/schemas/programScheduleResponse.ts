@@ -26,6 +26,8 @@ export interface ProgramScheduleResponse {
   scheduleStatus?: string;
   publiclyVisible?: boolean;
   scheduleOrigin?: string;
+  ujatEducationStage?: string;
+  ujatPlanRowId?: string;
   startDate?: string;
   endDate?: string;
 }

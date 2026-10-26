@@ -10,7 +10,37 @@ import {
   ujatVolunteerRecruitInterviewNamespace,
   ujatVolunteerRecruitInterviewRangeSealKey,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import { useUjatRecruitTemplateInterviewBridge } from '@/features/program/ujat/lib/ujat-recruit-template-typed-state'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
+
+function UjatRecruitVolunteerTypedInterviewSchedule({
+  templateCode,
+  half,
+  exceptionScheduleCount,
+  commonScheduleSeed,
+  onCommonExclusionChange,
+  freezeUnavailableCalendar,
+}: {
+  templateCode: string
+  half: 'h1' | 'h2'
+  exceptionScheduleCount: number
+  commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
+  onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
+  freezeUnavailableCalendar: boolean
+}) {
+  useUjatRecruitTemplateInterviewBridge({ templateCode, volunteerHalf: half })
+  return (
+    <RecruitFormVolunteerInterviewScheduleParagraph
+      exceptionScheduleCount={exceptionScheduleCount}
+      commonScheduleSeed={commonScheduleSeed}
+      onCommonExclusionChange={onCommonExclusionChange}
+      freezeUnavailableCalendar={freezeUnavailableCalendar}
+      typedTemplateAuthoring
+      overlayNamespace={ujatVolunteerRecruitInterviewNamespace(half)}
+      interviewRangeSealKey={ujatVolunteerRecruitInterviewRangeSealKey(half)}
+    />
+  )
+}
 
 /** UJAT 프로그램 봉사자 모집 폼 — 면접 진행 가능 일정 */
 export function UjatRecruitVolunteerInterviewScheduleParagraph({
@@ -40,6 +70,18 @@ export function UjatRecruitVolunteerInterviewScheduleParagraph({
   }
 
   const half = props.volunteerHalf ?? 'h1'
+  if (props.templateAuthoring && props.templateCode) {
+    return (
+      <UjatRecruitVolunteerTypedInterviewSchedule
+        templateCode={props.templateCode}
+        half={half}
+        exceptionScheduleCount={exceptionScheduleCount}
+        commonScheduleSeed={commonScheduleSeed}
+        onCommonExclusionChange={onCommonExclusionChange}
+        freezeUnavailableCalendar={freezeUnavailableCalendar}
+      />
+    )
+  }
   return (
     <RecruitFormVolunteerInterviewScheduleParagraph
       exceptionScheduleCount={exceptionScheduleCount}

@@ -5,7 +5,13 @@ import {
   type MypageScheduleEvent,
 } from '@/features/mypage'
 import { SkeletonBlock } from '@/shared/ui/skeleton-block'
-import { CALENDAR_EVENT_COLORS, PFCalendar, PFText, type PFCalendarEvent } from '@/shared/ui'
+import {
+  CALENDAR_EVENT_COLORS,
+  PFCalendar,
+  PFEmptyState,
+  PFText,
+  type PFCalendarEvent,
+} from '@/shared/ui'
 import styles from './schedule-section.module.css'
 
 /** mock 일정 데모용 초기 월(실 API 세션은 오늘 기준) */
@@ -139,19 +145,17 @@ export function ScheduleSection({
           </div>
         ) : (
           <div className={styles.empty}>
-            <PFText as="p" typo="bd-md-bd" color="black" className={styles.emptyTitle}>
-              예정된 프로그램 일정이 없어요
-            </PFText>
-            <PFText
-              as="p"
-              typo="bd-sm-rg"
-              color="neutral-cool-500"
-              className={styles.emptyDescription}
-            >
-              신청한 프로그램 일정이 생기면
-              <br />
-              캘린더에서 확인할 수 있어요.
-            </PFText>
+            <PFEmptyState
+              variant="inline"
+              title="예정된 프로그램 일정이 없어요"
+              description={
+                <>
+                  신청한 프로그램 일정이 생기면
+                  <br />
+                  캘린더에서 확인할 수 있어요.
+                </>
+              }
+            />
           </div>
         )}
       </aside>

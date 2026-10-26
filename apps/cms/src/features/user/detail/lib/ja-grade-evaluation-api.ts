@@ -97,6 +97,8 @@ export function applyJaEvaluationResponseToDraft(
 ): WritingFormDraft {
   if (response == null) return draft
   const scores = criteriaScoreByQuestion(response.criteria)
+  const hasCriteria = Object.keys(scores).length > 0
+  if (!hasCriteria) return draft
   return applyJaGradeEvaluationRecordToDraft(draft, {
     memberId: response.instructorMemberId ?? 0,
     storageKey: 'server',

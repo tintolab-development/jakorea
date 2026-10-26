@@ -16,7 +16,7 @@ import type { UjatRecruitParagraphProps } from './ujat-recruit-paragraph-props'
 import { resolveUjatRecruitParagraphMode } from './ujat-recruit-paragraph-props'
 import { volunteerHalfFromRecruitTab, volunteerRecruitInfoSectionTitle, type UjatRecruitTabKey } from './ujat-program-detail-recruitment-tabs'
 import {
-  resolveUjatRecruitDisplayProgram,
+  resolveUjatRecruitCanonicalDisplayProgram,
   ujatRecruitDisplayKindFromVolunteerHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
@@ -83,7 +83,7 @@ export function UjatProgramRecruitmentPanels({
   registerVolunteersAdditionalHtml?: (getter: () => string) => void
 }) {
   const volunteerHalf = volunteerHalfFromRecruitTab(activeRecruitTab)
-  const recruitDisplayProgram = resolveUjatRecruitDisplayProgram(
+  const recruitDisplayProgram = resolveUjatRecruitCanonicalDisplayProgram(
     program,
     activeRecruitTab === 'recruit_participant'
       ? 'institution'

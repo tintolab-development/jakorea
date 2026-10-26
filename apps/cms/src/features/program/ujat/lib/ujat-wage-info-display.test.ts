@@ -33,10 +33,10 @@ describe('UJAT 지급 항목 — 명시적 빈값', () => {
     expect(resolveUjatPaymentItemIdsFromProgram(programWith({}))).toEqual([])
   })
 
-  it('프로그램 라벨이 있어도 overlay []가 우선한다', () => {
+  it('프로그램 지급항목 라벨이 정본이며 overlay []로 덮지 않는다', () => {
     const overlay = { [UJAT_WAGE_OVERLAY_PAYMENT_KEY]: [] }
     expect(
       resolveUjatPaymentItemIdsFromProgram(programWith(overlay, '강사 교통비'), overlay)
-    ).toEqual([])
+    ).toEqual(expect.arrayContaining(['p-1']))
   })
 })

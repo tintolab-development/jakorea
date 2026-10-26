@@ -1,0 +1,440 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > TT 모집 state fallback(TT RHF 미마운트) → 기관·일반 모집 스토어 병합 > tt-recruit-fallback 1`] = `
+{
+  "additionalContentHtml": "",
+  "announcementPublished": "",
+  "applicationMethod": "",
+  "finalAnnounceIso": null,
+  "finalAnnounceMethod": "",
+  "inquiryContact": "TT 담당",
+  "inquiryEmail": "",
+  "inquiryTel": "",
+  "learningSupportContent": "",
+  "notes": "",
+  "notesNotApplicable": false,
+  "otherNotes": "",
+  "programAnchorIso": null,
+  "programDescription": "<p>TT</p>",
+  "programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruitAnchorIso": null,
+  "recruitRangeSeal": null,
+  "recruitmentGuide": "",
+  "studentListRequired": "",
+  "targetLevelDetail": "",
+  "targetLevels": [],
+  "thumbFileObjectId": 81,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > fixedScheduleSelected: 기관·개인 신청 입력 → collect > individual-app-active 1`] = `
+{
+  "application.individual.fixedScheduleSelected": [],
+  "application.individual.teamInfo.teamName": "팀",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > fixedScheduleSelected: 기관·개인 신청 입력 → collect > individual-app-collect 1`] = `
+{
+  "application.individual.fixedScheduleSelected": [],
+  "application.individual.teamInfo.teamName": "팀",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > fixedScheduleSelected: 기관·개인 신청 입력 → collect > school-app-collect 1`] = `
+{
+  "application.institution.basicInfo.schoolName": "학교",
+  "application.institution.fixedScheduleSelected": [
+    "s1",
+    "s2",
+  ],
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: UJAT 기관·봉사 prefix(공용 단락) > ujat-school-collect 1`] = `
+{
+  "ujatRecruit.detailInfo.programDescription": "<p>UJAT</p>",
+  "ujatRecruit.detailInfo.thumbFileObjectId": 71,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: UJAT 기관·봉사 prefix(공용 단락) > ujat-vol-collect 1`] = `
+{
+  "recruit.volunteer.h1.notes": "h1 비고",
+  "recruitVolunteer.h1.detailInfo.programDescription": "<p>h1</p>",
+  "recruitVolunteer.h2.detailInfo.otherNotes": "<p>h2</p>",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: UJAT 기관·봉사 prefix(공용 단락) > ujat-vol-sidecar 1`] = `
+{
+  "recruit.volunteer.h1.notes": "h1 비고",
+  "recruitVolunteer.h1.detailInfo.programDescription": "<p>h1</p>",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 기관 양식 prefix 교체·복원·병합, 미디어 세션 sidecar > media-session-restore-patch 1`] = `
+{
+  "recruit.detailInfo.attachmentFileNames": [
+    "a.pdf",
+    "b.pdf",
+  ],
+  "recruit.detailInfo.attachmentFileObjectIds": [
+    21,
+    22,
+  ],
+  "recruit.detailInfo.thumbContentUrl": "/api/admin/files/11/content",
+  "recruit.detailInfo.thumbFileName": "a.png",
+  "recruit.detailInfo.thumbFileObjectId": 11,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 기관 양식 prefix 교체·복원·병합, 미디어 세션 sidecar > school-after-replace 1`] = `
+{
+  "recruit.detailInfo.programDescription": "<p>교체</p>",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 기관 양식 prefix 교체·복원·병합, 미디어 세션 sidecar > school-after-restore 1`] = `
+{
+  "recruit.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruit.detailInfo.attachmentFileNames": [
+    "a.pdf",
+    "b.pdf",
+  ],
+  "recruit.detailInfo.attachmentFileObjectIds": [
+    21,
+    22,
+  ],
+  "recruit.detailInfo.programDescription": "<p>교체</p>",
+  "recruit.detailInfo.thumbContentUrl": "https://cdn.example/a.png",
+  "recruit.detailInfo.thumbFileName": "a.png",
+  "recruit.detailInfo.thumbFileObjectId": 11,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 기관 양식 prefix 교체·복원·병합, 미디어 세션 sidecar > school-collect 1`] = `
+{
+  "recruit.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruit.detailInfo.attachmentFileNames": [
+    "a.pdf",
+    "b.pdf",
+  ],
+  "recruit.detailInfo.attachmentFileObjectIds": [
+    21,
+    22,
+  ],
+  "recruit.detailInfo.programDescription": "<p>개인 소개</p>",
+  "recruit.detailInfo.thumbContentUrl": "https://cdn.example/a.png",
+  "recruit.detailInfo.thumbFileName": "a.png",
+  "recruit.detailInfo.thumbFileObjectId": 11,
+  "recruit.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 기관 양식 prefix 교체·복원·병합, 미디어 세션 sidecar > school-merge 1`] = `
+{
+  "recruit.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruit.detailInfo.attachmentFileNames": [
+    "a.pdf",
+    "b.pdf",
+  ],
+  "recruit.detailInfo.attachmentFileObjectIds": [
+    21,
+    22,
+  ],
+  "recruit.detailInfo.programDescription": "<p>교체</p>",
+  "recruit.detailInfo.thumbContentUrl": "https://cdn.example/a.png",
+  "recruit.detailInfo.thumbFileName": "a.png",
+  "recruit.detailInfo.thumbFileObjectId": 11,
+  "recruit.x": 1,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 단락 입력(patch·updateKey·훅·리치텍스트 flush) → collect > detail-input-active 1`] = `
+{
+  "recruit.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruit.detailInfo.attachmentFileNames": [
+    "a.pdf",
+    "b.pdf",
+    "c.pdf",
+  ],
+  "recruit.detailInfo.attachmentFileObjectIds": [
+    21,
+    22,
+    23,
+  ],
+  "recruit.detailInfo.otherNotes": "<p>기타</p>",
+  "recruit.detailInfo.programDescription": "<p>개인 소개</p>",
+  "recruit.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruit.detailInfo.thumbContentUrl": "https://cdn.example/a.png",
+  "recruit.detailInfo.thumbFileName": "b.png",
+  "recruit.detailInfo.thumbFileObjectId": 11,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 단락 입력(patch·updateKey·훅·리치텍스트 flush) → collect > detail-input-collect 1`] = `
+{
+  "recruit.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruit.detailInfo.attachmentFileNames": [
+    "a.pdf",
+    "b.pdf",
+    "c.pdf",
+  ],
+  "recruit.detailInfo.attachmentFileObjectIds": [
+    21,
+    22,
+    23,
+  ],
+  "recruit.detailInfo.otherNotes": "<p>기타</p>",
+  "recruit.detailInfo.programDescription": "<p>개인 소개</p>",
+  "recruit.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruit.detailInfo.thumbContentUrl": "https://cdn.example/a.png",
+  "recruit.detailInfo.thumbFileName": "b.png",
+  "recruit.detailInfo.thumbFileObjectId": 11,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 양식 불러오기(개인·강사·Gemini) → collect·peek·미디어 읽기 > collect-recruitment-gemini-visiting-training 1`] = `
+{
+  "geminiRecruit.detailInfo.attachmentFileNames": [
+    "g.pdf",
+  ],
+  "geminiRecruit.detailInfo.attachmentFileObjectIds": [
+    61,
+  ],
+  "geminiRecruit.detailInfo.programDescription": "<p>제미니</p>",
+  "geminiRecruit.detailInfo.thumbFileName": "g.png",
+  "geminiRecruit.detailInfo.thumbFileObjectId": 51,
+  "geminiRecruit.title": "제미니 모집",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 양식 불러오기(개인·강사·Gemini) → collect·peek·미디어 읽기 > collect-recruitment-instructor 1`] = `
+{
+  "recruit.instructor.notes": "강사",
+  "recruitInstructor.detailInfo.attachmentFileNames": [
+    "i.pdf",
+  ],
+  "recruitInstructor.detailInfo.attachmentFileObjectIds": [
+    41,
+  ],
+  "recruitInstructor.detailInfo.programDescription": "<p>강사</p>",
+  "recruitInstructor.detailInfo.thumbFileName": "i.png",
+  "recruitInstructor.detailInfo.thumbFileObjectId": 31,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 양식 불러오기(개인·강사·Gemini) → collect·peek·미디어 읽기 > collect-recruitment-participant-individual 1`] = `
+{
+  "recruit.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruit.detailInfo.attachmentFileNames": [
+    "a.pdf",
+    "b.pdf",
+  ],
+  "recruit.detailInfo.attachmentFileObjectIds": [
+    21,
+    22,
+  ],
+  "recruit.detailInfo.programDescription": "<p>개인 소개</p>",
+  "recruit.detailInfo.thumbContentUrl": "https://cdn.example/a.png",
+  "recruit.detailInfo.thumbFileName": "a.png",
+  "recruit.detailInfo.thumbFileObjectId": 11,
+  "recruit.individual.notes": "개인",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 양식 불러오기(개인·강사·Gemini) → collect·peek·미디어 읽기 > gemini-snapshot 1`] = `
+{
+  "additionalContentMarkdown": "",
+  "announcementPublished": "published",
+  "applicationMethod": "",
+  "applicationPeriodEnd": null,
+  "applicationPeriodStart": null,
+  "attachmentFileNames": [
+    "g.pdf",
+  ],
+  "detailSectionDescription": "",
+  "educationForm": "online",
+  "educationStructure": "SCHEDULE",
+  "educationTargetDetail": "",
+  "educationTargetLevels": [],
+  "inquiryContactName": "",
+  "inquiryEmail": "",
+  "inquiryTel": "",
+  "institutionSectionDescription": "",
+  "learningSupportContent": "",
+  "minStudentCount": 15,
+  "notes": "",
+  "notesNotApplicable": false,
+  "programDescription": "<p>제미니</p>",
+  "recruitmentGuide": "",
+  "thumbnailFileName": "g.png",
+  "thumbnailFileObjectId": 51,
+  "title": "제미니 모집",
+  "trainingRequestPeriodEnd": null,
+  "trainingRequestPeriodStart": null,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 양식 불러오기(개인·강사·Gemini) → collect·peek·미디어 읽기 > media-instructor-active 1`] = `
+{
+  "attachmentFileNames": [
+    "i.pdf",
+  ],
+  "attachmentFileObjectIds": [
+    41,
+  ],
+  "thumbFileName": "i.png",
+  "thumbFileObjectId": 31,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 양식 불러오기(개인·강사·Gemini) → collect·peek·미디어 읽기 > peek-recruitment-gemini-visiting-training 1`] = `
+{
+  "geminiRecruit.detailInfo.attachmentFileNames": [
+    "g.pdf",
+  ],
+  "geminiRecruit.detailInfo.attachmentFileObjectIds": [
+    61,
+  ],
+  "geminiRecruit.detailInfo.programDescription": "<p>제미니</p>",
+  "geminiRecruit.detailInfo.thumbFileName": "g.png",
+  "geminiRecruit.detailInfo.thumbFileObjectId": 51,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 양식 불러오기(개인·강사·Gemini) → collect·peek·미디어 읽기 > peek-recruitment-instructor 1`] = `
+{
+  "recruit.instructor.notes": "강사",
+  "recruitInstructor.detailInfo.attachmentFileNames": [
+    "i.pdf",
+  ],
+  "recruitInstructor.detailInfo.attachmentFileObjectIds": [
+    41,
+  ],
+  "recruitInstructor.detailInfo.programDescription": "<p>강사</p>",
+  "recruitInstructor.detailInfo.thumbFileName": "i.png",
+  "recruitInstructor.detailInfo.thumbFileObjectId": 31,
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 모집 상세정보: 양식 불러오기(개인·강사·Gemini) → collect·peek·미디어 읽기 > peek-recruitment-participant-individual 1`] = `
+{
+  "recruit.detailInfo.additionalContentHtml": "<p>추가</p>",
+  "recruit.detailInfo.attachmentFileNames": [
+    "a.pdf",
+    "b.pdf",
+  ],
+  "recruit.detailInfo.attachmentFileObjectIds": [
+    21,
+    22,
+  ],
+  "recruit.detailInfo.programDescription": "<p>개인 소개</p>",
+  "recruit.detailInfo.thumbContentUrl": "https://cdn.example/a.png",
+  "recruit.detailInfo.thumbFileName": "a.png",
+  "recruit.detailInfo.thumbFileObjectId": 11,
+  "recruit.individual.notes": "개인",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 봉사자 모집: 평면 키·면접 키 입력 → collect (슬롯·예외 블록 포함 결과) > volunteer-active 1`] = `
+{
+  "recruit.volunteer.announcementPublished": "published",
+  "recruit.volunteer.interview.exception.10.exceptionDate": "2026-11-22",
+  "recruit.volunteer.interview.selectedSlotKeys": [
+    "2026-11-21T10:00",
+  ],
+  "recruit.volunteer.interview.timeUnit": 30,
+  "recruit.volunteer.interviewAnchorIso": "2026-11-21",
+  "recruit.volunteer.interviewMethod": "온라인",
+  "recruit.volunteer.interviewRangeSeal": {
+    "end": "2026-11-24T15:00:00.000Z",
+    "start": "2026-11-22T15:00:00.000Z",
+  },
+  "recruit.volunteer.interviewRequired": "no",
+  "recruit.volunteer.notes": "봉사",
+  "recruit.volunteer.volunteerTargets": [
+    "univ",
+  ],
+  "recruitVolunteer.detailInfo.programDescription": "<p>봉사 소개</p>",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 봉사자 모집: 평면 키·면접 키 입력 → collect (슬롯·예외 블록 포함 결과) > volunteer-collect 1`] = `
+{
+  "recruit.volunteer.announcementPublished": "published",
+  "recruit.volunteer.interview.exception.10.exceptionDate": "2026-11-22",
+  "recruit.volunteer.interview.selectedSlotKeys": [
+    "2026-11-21T10:00",
+  ],
+  "recruit.volunteer.interview.timeUnit": 30,
+  "recruit.volunteer.interviewAnchorIso": "2026-11-21",
+  "recruit.volunteer.interviewMethod": "온라인",
+  "recruit.volunteer.interviewRangeSeal": {
+    "end": "2026-11-24T15:00:00.000Z",
+    "start": "2026-11-22T15:00:00.000Z",
+  },
+  "recruit.volunteer.interviewRequired": "no",
+  "recruit.volunteer.notes": "봉사",
+  "recruit.volunteer.volunteerTargets": [
+    "univ",
+  ],
+  "recruitVolunteer.detailInfo.programDescription": "<p>봉사 소개</p>",
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 봉사자 모집: 평면 키·면접 키 입력 → collect (슬롯·예외 블록 포함 결과) > volunteer-reset 1`] = `{}`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 일반 등록 scheduleLines(V27 형식 문자열) → 레코드·모드 전환·조회 > after-swap-date 1`] = `
+{
+  "generalRegistration.basicInfo.localProgramTitleKo": "일반",
+  "generalRegistration.educationScheduleCurriculum.groupTimesByDetail": {
+    "d1": [
+      "10:00~12:00",
+    ],
+  },
+  "generalRegistration.educationScheduleSettings.scheduleLines": [
+    "2026.12.01(화) 10:00~12:00",
+    "2026.12.08(화) 10:00~12:00",
+  ],
+  "generalRegistration.educationScheduleSettings.scheduleLinesByDate": [
+    "2026.12.01(화) 10:00~12:00",
+    "2026.12.08(화) 10:00~12:00",
+  ],
+  "generalRegistration.educationScheduleSettings.scheduleLinesByPeriod": [
+    "2026.12.01 ~ 2026.12.31",
+  ],
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 일반 등록 scheduleLines(V27 형식 문자열) → 레코드·모드 전환·조회 > after-swap-period 1`] = `
+{
+  "generalRegistration.basicInfo.localProgramTitleKo": "일반",
+  "generalRegistration.educationScheduleCurriculum.groupTimesByDetail": {
+    "d1": [
+      "10:00~12:00",
+    ],
+  },
+  "generalRegistration.educationScheduleSettings.scheduleLines": [],
+  "generalRegistration.educationScheduleSettings.scheduleLinesByDate": [
+    "2026.12.01(화) 10:00~12:00",
+    "2026.12.08(화) 10:00~12:00",
+  ],
+}
+`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 일반 등록 scheduleLines(V27 형식 문자열) → 레코드·모드 전환·조회 > group-time-slots 1`] = `[]`;
+
+exports[`일반 단체·공통 overlay save parity (part3 step5) > 일반 등록 scheduleLines(V27 형식 문자열) → 레코드·모드 전환·조회 > lines-read 1`] = `
+[
+  "2026.12.01(화) 10:00~12:00",
+  "2026.12.08(화) 10:00~12:00",
+]
+`;

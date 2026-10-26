@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createGeminiVisitingTrainingRecruitFormDraft } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
-import { resetGeminiRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+import { resetGeminiRecruitForm } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import { GEMINI_RECRUITMENT_DEFAULT_TEMPLATE_CODE } from './add-template'
@@ -13,7 +13,7 @@ import { createDefaultGeminiRecruitmentAddFormSnapshot } from './add-local-save'
 
 describe('gemini recruitment snapshot from overlay', () => {
   beforeEach(() => {
-    resetGeminiRecruitOverlay()
+    resetGeminiRecruitForm()
     resetGeneralRecruitOverlay()
     setOperationalOverlayScope(GEMINI_RECRUITMENT_DEFAULT_TEMPLATE_CODE)
   })

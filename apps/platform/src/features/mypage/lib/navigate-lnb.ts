@@ -5,6 +5,7 @@ import {
   MYPAGE_INQUIRIES_PATH,
   MYPAGE_LECTURE_PATH,
   MYPAGE_PATH,
+  MYPAGE_SETTLEMENT_PATH,
   MYPAGE_VOLUNTEER_PATH,
 } from './constants'
 
@@ -15,6 +16,9 @@ export function navigateMypageLnb(navigate: NavigateFunction, key: MypageLnbItem
       return
     case 'lectures':
       navigate(MYPAGE_LECTURE_PATH)
+      return
+    case 'settlement':
+      navigate(MYPAGE_SETTLEMENT_PATH)
       return
     case 'education':
       navigate(MYPAGE_EDUCATION_PATH)

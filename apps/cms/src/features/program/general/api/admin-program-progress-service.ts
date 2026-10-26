@@ -32,6 +32,9 @@ import {
   createProgramSubmissionTeamRemote,
   type ProgramParticipantsListQuery,
 } from '@/features/program/general/api/program-progress-api-client'
+import { fetchAdminProgramLectureReportContentRemote } from '@/features/program/general/api/programs-api-client'
+import type { LectureReportPreviewContent } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
+import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import {
@@ -179,9 +182,7 @@ function attachPreferredEducationSchedulesToParticipatingSchools(
       preferredEducationSchedules: preferred,
       hopeEducationSessions,
       lectureRound:
-        hopeEducationSessions.length > 0
-          ? String(hopeEducationSessions.length)
-          : row.lectureRound,
+        hopeEducationSessions.length > 0 ? String(hopeEducationSessions.length) : row.lectureRound,
     }
   })
 }
@@ -309,26 +310,11 @@ export async function saveGeneralScheduleAttendances(
   await putScheduleAttendancesRemote(scheduleId, { attendances })
 }
 
-/**
- * dashboard program-schedules + schedule attendances + participants.
- * mock/null 폴백 없음.
- */
-export async function fetchGeneralProgressAttendanceBundle(programId: string): Promise<{
-  schedules: import('@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse').DashboardProgramScheduleResponse[]
-  participants: import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse[]
-  attendancesByScheduleId: Record<
-    string,
-    import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
-  >
-}> {
-  assertProgramProgressRemoteReady()
-  const [schedules, firstParticipantsPage] = await Promise.all([
-    fetchProgramSchedulesViaDashboardRemote(programId),
-    fetchProgramParticipantsRemote(programId, {
-      page: 0,
-      size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
-    }),
-  ])
+export async function fetchAllProgramProgressParticipants(programId: string) {
+  const firstParticipantsPage = await fetchProgramParticipantsRemote(programId, {
+    page: 0,
+    size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
+  })
   const participantItems = [...(firstParticipantsPage.items ?? [])]
   const participantTotalPages =
     firstParticipantsPage.totalPages ??
@@ -343,6 +329,26 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
     })
     participantItems.push(...(nextPage.items ?? []))
   }
+  return participantItems
+}
+
+/**
+ * dashboard program-schedules + schedule attendances + participants.
+ * mock/null 폴백 없음.
+ */
+export async function fetchGeneralProgressAttendanceBundle(programId: string): Promise<{
+  schedules: import('@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse').DashboardProgramScheduleResponse[]
+  participants: import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse[]
+  attendancesByScheduleId: Record<
+    string,
+    import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
+  >
+}> {
+  assertProgramProgressRemoteReady()
+  const [schedules, participantItems] = await Promise.all([
+    fetchProgramSchedulesViaDashboardRemote(programId),
+    fetchAllProgramProgressParticipants(programId),
+  ])
   const scheduleIdList = schedules
     .map(s => s.scheduleId)
     .filter((id): id is number => id != null && Number.isFinite(Number(id)) && Number(id) > 0)
@@ -362,12 +368,14 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
 /** 일반 개인 진행 현황 · 과제 관리. mock/null 폴백 없음. */
 export async function fetchGeneralProgressAssignmentBundle(programId: string) {
   assertProgramProgressRemoteReady()
-  return fetchProgramAssignmentSubmissionsRemote(programId)
+  const [submissions, giveUpParticipants] = await Promise.all([
+    fetchProgramAssignmentSubmissionsRemote(programId),
+    fetchAllProgramProgressParticipants(programId),
+  ])
+  return { ...submissions, giveUpParticipants }
 }
 
-export async function fetchGeneralProgramLectureReports(
-  programId: string
-): Promise<unknown[]> {
+export async function fetchGeneralProgramLectureReports(programId: string): Promise<unknown[]> {
   return (await fetchGeneralProgramLectureReportsPage(programId)).rows
 }
 
@@ -377,9 +385,8 @@ export async function fetchGeneralProgramLectureReportsPage(
   options?: { instructorMemberId?: number }
 ): Promise<GeneralProgramProgressListPage<unknown>> {
   assertProgramProgressRemoteReady()
-  const { fetchProgramLectureReportsRemote } = await import(
-    '@/features/program/general/api/program-progress-api-client'
-  )
+  const { fetchProgramLectureReportsRemote } =
+    await import('@/features/program/general/api/program-progress-api-client')
   const page = await fetchProgramLectureReportsRemote(programId, {
     page: pageParam,
     size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
@@ -388,18 +395,41 @@ export async function fetchGeneralProgramLectureReportsPage(
   return resolveProgressListPage(page.items ?? [], page, pageParam)
 }
 
+/** 관리자 강의보고서 답변·양식·첨부 API를 미리보기 데이터로 변환한다. */
+export async function fetchGeneralProgramLectureReportPreviewContent(
+  _programId: string,
+  row: ParticipatingInstructorLectureReportRow
+): Promise<LectureReportPreviewContent> {
+  assertProgramProgressRemoteReady()
+  if (row.reportId == null || row.reportId <= 0) {
+    throw new Error('강의보고서 ID가 목록 응답에 없습니다.')
+  }
+
+  const detail = await fetchAdminProgramLectureReportContentRemote(row.reportId)
+
+  return {
+    formResponseId: detail.formResponseId,
+    templateVersionId: detail.templateVersionId,
+    form: detail.form,
+    answers: detail.answers,
+    files: (detail.files ?? [])
+      .filter(file => typeof file.fileObjectId === 'number' && Number.isFinite(file.fileObjectId))
+      .map(file => ({
+        fileObjectId: file.fileObjectId!,
+        originalFileName: file.originalFileName,
+      })),
+  }
+}
+
 /** 프로그램(또는 강사 스코프) 강의보고서 ZIP 다운로드 */
 export async function downloadGeneralProgramLectureReports(
   programId: string,
   options?: { instructorMemberId?: number }
 ): Promise<void> {
   assertProgramProgressRemoteReady()
-  const { downloadProgramLectureReportsRemote } = await import(
-    '@/features/program/general/api/program-progress-api-client'
-  )
-  const { downloadFromBulkEndpoint } = await import(
-    '@/features/user/api/download-bulk-endpoint'
-  )
+  const { downloadProgramLectureReportsRemote } =
+    await import('@/features/program/general/api/program-progress-api-client')
+  const { downloadFromBulkEndpoint } = await import('@/features/user/api/download-bulk-endpoint')
   const { downloadAdminFile } = await import('@/shared/lib/admin-file-upload')
   const { generateFilename } = await import('@/shared/utils/file-download')
 
@@ -493,9 +523,8 @@ export async function registerGeneralVolunteerParticipant(
   payload: import('@/features/program/general/api/program-progress-api-client').VolunteerParticipantRegisterRequest
 ) {
   assertProgramProgressRemoteReady()
-  const { registerVolunteerParticipantRemote } = await import(
-    '@/features/program/general/api/program-progress-api-client'
-  )
+  const { registerVolunteerParticipantRemote } =
+    await import('@/features/program/general/api/program-progress-api-client')
   return registerVolunteerParticipantRemote(programId, payload)
 }
 
@@ -504,9 +533,8 @@ export async function fetchGeneralEmployeeVolunteerCounts(
   organizationApplicationId?: number
 ) {
   assertProgramProgressRemoteReady()
-  const { fetchEmployeeVolunteerCountsRemote } = await import(
-    '@/features/program/general/api/program-progress-api-client'
-  )
+  const { fetchEmployeeVolunteerCountsRemote } =
+    await import('@/features/program/general/api/program-progress-api-client')
   return fetchEmployeeVolunteerCountsRemote(programId, organizationApplicationId)
 }
 
@@ -515,9 +543,8 @@ export async function saveGeneralEmployeeVolunteerCounts(
   payload: import('@/shared/api/generated/program-progress/schemas/employeeVolunteerCountReplaceRequest').EmployeeVolunteerCountReplaceRequest
 ) {
   assertProgramProgressRemoteReady()
-  const { putEmployeeVolunteerCountsRemote } = await import(
-    '@/features/program/general/api/program-progress-api-client'
-  )
+  const { putEmployeeVolunteerCountsRemote } =
+    await import('@/features/program/general/api/program-progress-api-client')
   return putEmployeeVolunteerCountsRemote(programId, payload)
 }
 
@@ -601,10 +628,7 @@ export async function fetchGeneralProgramSubmissionTeams(programId: string) {
   return fetchProgramSubmissionTeamsRemote(programId)
 }
 
-export async function createGeneralProgramSubmissionTeam(
-  programId: string,
-  teamName: string
-) {
+export async function createGeneralProgramSubmissionTeam(programId: string, teamName: string) {
   assertProgramProgressRemoteReady()
   return createProgramSubmissionTeamRemote(programId, { teamName })
 }

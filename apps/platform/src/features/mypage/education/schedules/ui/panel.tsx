@@ -17,7 +17,6 @@ import { EducationAbsenceReasonModal } from './absence-reason-modal'
 import styles from './panel.module.css'
 
 type EducationSchedulePanelProps = {
-  programId: string
   /** 활동 포기(진행 중) 시 마지막 참여 회차 — 이후 일정 비노출 */
   lastParticipatedSession?: number
   /** 탭 타이틀 (교육일정 / 배정현황 / …) */
@@ -29,8 +28,8 @@ type EducationSchedulePanelProps = {
 }
 
 /**
- * 교육일정 탭 — remote면 신청 GET .../schedules만 SSOT.
- * mock 로그인 세션에서만 mock 시드. 프로그램 상세 일정은 사용하지 않는다.
+ * 교육일정 탭 — 신청 GET .../schedules 응답만 SSOT.
+ * 프로그램 상세 일정이나 로컬 시드/목업 데이터는 사용하지 않는다.
  */
 export function EducationSchedulePanel({
   lastParticipatedSession,
@@ -43,6 +42,8 @@ export function EducationSchedulePanel({
   const [absenceReasonScheduleId, setAbsenceReasonScheduleId] = useState<number | null>(null)
   const [absenceReasonOpenKey, setAbsenceReasonOpenKey] = useState(0)
   const remoteSchedules = useApplicationSchedulesQuery(applicationType, applicationId)
+  // 과제는 참여자(개인·기관) 대상. 강사는 강의보고서만 제출한다.
+  const assignmentVisible = applicationType !== 'INSTRUCTOR' && applicationType !== 'VOLUNTEER'
 
   const allItems = useMemo(() => {
     const items: EducationScheduleItem[] = remoteSchedules.enabled ? remoteSchedules.items : []
@@ -65,7 +66,8 @@ export function EducationSchedulePanel({
           item.scheduleId != null &&
           canSubmitEducationAbsenceReason(
             resolveEducationScheduleProgressStatus(item.heldAt),
-            item.attendanceStatus
+            item.attendanceStatus,
+            item.availableActions
           )
       ),
     [allItems]
@@ -105,8 +107,8 @@ export function EducationSchedulePanel({
   const emptyMessage = remoteSchedules.enabled
     ? resolveEducationScheduleEmptyMessage(remoteSchedules.scopeStatus, listTitle)
     : listTitle === '배정현황'
-      ? '등록된 배정 일정이 없어요.'
-      : '등록된 교육일정이 없어요.'
+      ? '등록된 배정 일정이 없어요'
+      : '등록된 교육일정이 없어요'
 
   return (
     <>
@@ -117,12 +119,20 @@ export function EducationSchedulePanel({
         totalPages={totalPages}
         onPageChange={setPage}
         emptyMessage={emptyMessage}
+        emptyDescription={
+          listTitle === '배정현황'
+            ? '배정된 일정이 생기면 이곳에서 확인할 수 있어요.'
+            : '교육 일정이 생기면 이곳에서 확인할 수 있어요.'
+        }
         alwaysShowPagination
       >
         {pageItems.map((item: EducationScheduleItem) => (
           <EducationScheduleRow
             key={item.id}
             item={item}
+            applicationType={applicationType}
+            applicationId={applicationId}
+            showAssignment={assignmentVisible}
             showAbsenceReason={absenceReasonEnabled}
             onAbsenceReasonSubmit={
               absenceReasonEnabled

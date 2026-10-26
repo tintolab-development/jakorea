@@ -13,6 +13,12 @@ import {
   updateCurrentSettlementConfigRemote,
 } from '@/features/settlement-management/api/settlement-api-client'
 import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
+import {
+  getSettlementApiErrorCode,
+  getSettlementApiErrorMessage,
+  SETTLEMENT_CONFIG_WITHHOLDING_AMOUNT_INVALID,
+  SETTLEMENT_CONFIG_WITHHOLDING_RATE_INVALID,
+} from '@/features/settlement-management/api/get-settlement-api-error'
 import type { SettlementConfigResponse } from '@/shared/api/generated/settlement/schemas'
 
 const SETTLEMENT_CONFIG_ITEM_KIND_LOCKED = 'SETTLEMENT_CONFIG_ITEM_KIND_LOCKED'
@@ -22,6 +28,13 @@ const SETTLEMENT_CONFIG_ITEM_NOT_FOUND_MESSAGE =
   '현재 정산 설정에서 대상 지급 항목을 찾을 수 없습니다.'
 
 export function resolveSettlementConfigMutationError(error: unknown): string {
+  const code = getSettlementApiErrorCode(error)
+  if (
+    code === SETTLEMENT_CONFIG_WITHHOLDING_RATE_INVALID ||
+    code === SETTLEMENT_CONFIG_WITHHOLDING_AMOUNT_INVALID
+  ) {
+    return getSettlementApiErrorMessage(error, '원천징수 설정 입력값을 확인해 주세요.')
+  }
   if (typeof error === 'object' && error !== null) {
     const err = error as {
       response?: { data?: { message?: string; error?: { code?: string; message?: string } } }

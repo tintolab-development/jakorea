@@ -10,7 +10,7 @@ import {
 import {
   GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY,
   GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
-} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-keys'
 
 const TT_BASIC = 'trainedTeachersRegistration.basicInfo'
 const TT_CURRICULUM = 'trainedTeachersRegistration.educationCurriculum'

@@ -116,6 +116,11 @@
   margin-top: var(--spacing-28);
 }
 
+.submitError {
+  margin: var(--spacing-16) 0 0;
+  color: var(--color-border-error-strong);
+}
+
 @media (--bp-below-pc) {
   .actions {
     flex-direction: column-reverse;

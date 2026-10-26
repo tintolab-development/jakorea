@@ -6,12 +6,8 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
-import {
-  calendarItemForScheduleSource,
-  resolveItemColor,
-  type CalendarItem,
-} from '../lib/calendar-helpers'
-import './preview-tooltip/program-preview.css'
+import { resolveItemColor, type CalendarItem } from '../lib/calendar-helpers'
+import '../styles/calendar-preview-popover-content.css'
 import { CalendarPreviewTooltip } from './preview-tooltip/calendar-preview-tooltip'
 export function CalendarItemList({
   items,
@@ -57,40 +53,32 @@ export function CalendarItemList({
 export function CalendarCellSchedulePreview({
   date,
   items,
-  colorMap,
 }: {
   date: Dayjs
   items: Program[]
   colorMap: Map<string | number, ScheduleColorPair>
 }) {
   return (
-    <div className="program-preview">
+    <div className="calendar-preview-popover">
       {items.map(entity => {
-        const { statusLabel } = getProgramDayScheduleLine(entity, date)
-        const startTime =
-          typeof (entity as { startTime?: unknown }).startTime === 'string'
-            ? (entity as { startTime?: string }).startTime
-            : undefined
-        const time = startTime?.trim() ? startTime : '종일'
+        const { statusLabel, time } = getProgramDayScheduleLine(entity, date)
         const title = entity.title ?? ''
-        const colorPair = resolveItemColor(
-          calendarItemForScheduleSource(entity),
-          colorMap,
-          SCHEDULE_COLORS[0]
-        )
         return (
-          <button
+          <div
             key={entity.id}
-            type="button"
-            className="program-preview-item program-preview-item--stack"
+            className="calendar-preview-popover__entry"
           >
-            <span className="program-preview-item__title" style={{ color: colorPair.text }}>
-              [{title}]
-            </span>
-            <span className="program-preview-item__desc">
-              {statusLabel} | {time}
-            </span>
-          </button>
+            <span className="calendar-preview-popover__title">[{title}]</span>
+            <div className="calendar-preview-popover__meta">
+              <span className="calendar-preview-popover__meta-part">
+                {statusLabel}
+              </span>
+              <span className="calendar-preview-popover__meta-sep" aria-hidden />
+              <span className="calendar-preview-popover__meta-part">
+                {time}
+              </span>
+            </div>
+          </div>
         )
       })}
     </div>

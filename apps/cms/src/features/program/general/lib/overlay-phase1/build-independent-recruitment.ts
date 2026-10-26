@@ -6,7 +6,7 @@ import {
   keyMatchesOperationalOverlayPrefixes,
   operationalOverlayKeyPrefixesForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
-import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import { applyIndependentRecruitmentFormValues } from './recruitment-domain'
 import { orderOverlayKeys } from './common-info-domain'
 import type {

@@ -291,7 +291,9 @@ export function listRegistrationFormTemplateCodeForProgram(program: Program): st
   return 'registration-general'
 }
 
-export function getRegistrationFormSpec(templateCode: string): RegistrationCreateFormSpec | undefined {
+export function getRegistrationFormSpec(
+  templateCode: string
+): RegistrationCreateFormSpec | undefined {
   return REGISTRATION_SPEC_BY_CODE.get(templateCode)
 }
 
@@ -309,6 +311,8 @@ const RECRUITMENT_ROW_PROGRAM_TYPES = new Set([
   'GENERAL_INDIVIDUAL',
   'GENERAL_ORGANIZATION',
   'UJAT',
+  'COMPANY_SCHOOL',
+  'TRAINED_TEACHER',
 ])
 
 function normalizeBindingType(value: string | undefined): string {
@@ -381,6 +385,17 @@ export function programWithApplicationFormRecruitmentScope(
   return { ...program, activeRecruitmentId: row.id }
 }
 
+/** 신청 양식 진입·저장이 같은 모집 행(`activeRecruitmentId`)을 쓰도록 맞춘다. */
+export function programForApplicationFormEditor(
+  program: Program,
+  variant: ProgramParticipantApplicationEditorVariant
+): Program {
+  const audience = applicationAudienceForEditorVariant(variant)
+  return audience != null
+    ? programWithApplicationFormRecruitmentScope(program, audience)
+    : program
+}
+
 export type RowApplicationBindingResolution =
   | { kind: 'unscoped' }
   | { kind: 'missing' }
@@ -400,14 +415,10 @@ export function resolveRowApplicationBinding(
   if (scope == null) {
     return { kind: 'unscoped' }
   }
-  const row = program.programRecruitments?.find(
-    item => item.id === program.activeRecruitmentId
-  )
+  const row = program.programRecruitments?.find(item => item.id === program.activeRecruitmentId)
   const bindingId = row?.applicationFormBindingId
   if (bindingId != null) {
-    const binding = bindings.find(
-      item => item.bindingId === bindingId && item.active !== false
-    )
+    const binding = bindings.find(item => item.bindingId === bindingId && item.active !== false)
     if (binding != null) return { kind: 'binding', binding }
   }
   const byScope = bindings.find(item => {
@@ -421,25 +432,58 @@ export function resolveRowApplicationBinding(
   return { kind: 'missing' }
 }
 
+/**
+ * CREATE 후 BE `fanOutProgramBindings`가 만든 모집 행(RECRUITMENT scope) 신청 바인딩 중
+ * spec 역할과 맞는 활성 바인딩 목록. 행마다 독립 양식이므로 CREATE 후 양식 적용은 행 단위로 한다.
+ */
+export function listRecruitmentRowApplicationBindings(
+  program: Pick<Program, 'backendProgramType'>,
+  bindings: readonly ProgramFormBindingResponse[],
+  spec: Pick<OperationalFormSpec, 'formType' | 'targetRole'>
+): ProgramFormBindingResponse[] {
+  if (normalizeBindingType(spec.formType) !== 'APPLICATION') return []
+  const programType = program.backendProgramType?.trim().toUpperCase()
+  if (programType == null || !RECRUITMENT_ROW_PROGRAM_TYPES.has(programType)) return []
+  return bindings.filter(
+    item =>
+      item.active !== false &&
+      normalizeBindingType(item.formType) === 'APPLICATION' &&
+      (item.targetScope ?? '').toUpperCase() === 'RECRUITMENT' &&
+      item.targetScopeId != null &&
+      roleMatches(item, spec.targetRole)
+  )
+}
+
 function roleMatches(binding: ProgramFormBindingResponse, targetRole: string | undefined): boolean {
   if (targetRole == null || targetRole === '') return true
-  const role = normalizeBindingType(binding.targetRole || binding.targetType)
-  const expected = targetRole.toUpperCase()
+  const targetType = normalizeBindingType(binding.targetType)
+  const targetBindingRole = normalizeBindingType(binding.targetRole)
+  const expected = normalizeBindingType(targetRole)
+
+  // targetType가 ORGANIZATION인데 targetRole이 TEACHER인 기관 신청 바인딩은
+  // 강사 신청으로 취급하지 않는다. 강사 매칭은 명시적인 TEACHER/INSTRUCTOR만 허용한다.
+  if (expected === 'INSTRUCTOR') {
+    return targetType === 'TEACHER' || targetBindingRole === 'INSTRUCTOR'
+  }
+
+  const role = targetType || targetBindingRole
   if (!role) return false
   if (role === expected) return true
   if (expected === 'ORGANIZATION') {
-    return role.includes('ORGANIZATION') || role.includes('SCHOOL') || role.includes('INSTITUTION')
+    return (
+      role === 'ORGANIZATION' ||
+      (targetType === '' && (role === 'SCHOOL' || role === 'INSTITUTION'))
+    )
   }
   if (expected === 'INDIVIDUAL') {
-    return role.includes('INDIVIDUAL') || role.includes('PARTICIPANT') || role.includes('MEMBER')
-  }
-  if (expected === 'INSTRUCTOR') {
-    return role.includes('INSTRUCTOR') || role.includes('TEACHER')
+    return (
+      role === 'INDIVIDUAL' || (targetType === '' && (role === 'PARTICIPANT' || role === 'MEMBER'))
+    )
   }
   if (expected === 'VOLUNTEER') {
-    return role.includes('VOLUNTEER')
+    return role === 'VOLUNTEER'
   }
-  return role.includes(expected)
+  return role === expected
 }
 
 function nameMatches(binding: ProgramFormBindingResponse, hints: readonly string[]): boolean {
@@ -462,34 +506,47 @@ export function pickOperationalFormBinding(
   bindings: readonly ProgramFormBindingResponse[],
   spec: Pick<OperationalFormSpec, 'formType' | 'targetRole' | 'nameHints'> & {
     catalogTemplateId?: number
-  }
+  },
+  options?: { claimedBindingIds?: ReadonlySet<number> }
 ): ProgramFormBindingResponse | undefined {
+  const verifySelection = (binding: ProgramFormBindingResponse | undefined) => {
+    const bindingId = binding?.bindingId
+    if (bindingId != null && options?.claimedBindingIds?.has(Number(bindingId))) {
+      throw new Error(
+        `서로 다른 양식 스펙에 같은 운영 바인딩을 선택할 수 없습니다: ${String(bindingId)}`
+      )
+    }
+    return binding
+  }
+
   const ofType = bindings.filter(
-    binding =>
-      binding.active !== false && normalizeBindingType(binding.formType) === spec.formType
+    binding => binding.active !== false && normalizeBindingType(binding.formType) === spec.formType
   )
   if (ofType.length === 0) return undefined
 
-  const roleOrName = ofType.filter(
-    binding => roleMatches(binding, spec.targetRole) || nameMatches(binding, spec.nameHints)
-  )
-  const pool = roleOrName.length > 0 ? roleOrName : ofType
+  const roleMatched = ofType.filter(binding => roleMatches(binding, spec.targetRole))
+  const nameMatched =
+    spec.targetRole === 'INSTRUCTOR'
+      ? []
+      : ofType.filter(binding => nameMatches(binding, spec.nameHints))
+  const roleOrName = roleMatched.length > 0 ? roleMatched : nameMatched
+  const pool = roleOrName.length > 0 ? roleOrName : spec.targetRole ? [] : ofType
 
   if (spec.catalogTemplateId != null) {
     const scoped = pool.filter(binding =>
       isProgramScopedOperationalBinding(binding, spec.catalogTemplateId)
     )
-    if (scoped.length > 0) return scoped[0]
+    if (scoped.length > 0) return verifySelection(scoped[0])
     const byCatalogId = pool.find(binding => binding.templateId === spec.catalogTemplateId)
-    if (byCatalogId) return byCatalogId
+    if (byCatalogId) return verifySelection(byCatalogId)
   }
 
-  if (roleOrName.length === 1) return roleOrName[0]
+  if (roleOrName.length === 1) return verifySelection(roleOrName[0])
   if (roleOrName.length > 1) {
     const byName = roleOrName.find(binding => nameMatches(binding, spec.nameHints))
-    if (byName) return byName
-    return roleOrName[0]
+    if (byName) return verifySelection(byName)
+    return verifySelection(roleOrName[0])
   }
 
-  return ofType.length === 1 ? ofType[0] : undefined
+  return ofType.length === 1 ? verifySelection(ofType[0]) : undefined
 }

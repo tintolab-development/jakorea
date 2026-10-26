@@ -2,7 +2,7 @@
  * 참여 강사 상세 — 강의보고서 관리 탭 (기관형)
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -12,6 +12,7 @@ import { CmsButton, ExcelButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useProgramLectureReports } from '@/features/program/general/hooks/use-program-lecture-reports'
+import { useLectureReportPreview } from '@/features/program/general/hooks/use-lecture-report-preview'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -25,6 +26,11 @@ import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/p
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import {
+  buildLectureReportPreviewContext,
+  type LectureReportPreviewContext,
+} from '@/features/program/general/lib/build-lecture-report-issuance-preview'
+import { LectureReportIssuancePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/lecture-report-issuance-preview-modal'
 
 const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
 const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
@@ -94,7 +100,38 @@ export function ParticipatingInstructorLectureReportsSection({
       : []
 
   const [viewDownloadingId, setViewDownloadingId] = useState<string | null>(null)
+  const [previewRow, setPreviewRow] = useState<ParticipatingInstructorLectureReportRow | null>(null)
   const [bulkDownloading, setBulkDownloading] = useState(false)
+  const previewQuery = useLectureReportPreview(program?.id, previewRow)
+  const previewContext = useMemo<LectureReportPreviewContext | null>(() => {
+    if (previewRow == null || previewQuery.data == null) return null
+    return buildLectureReportPreviewContext(
+      instructor,
+      program,
+      {
+        id: previewRow.id,
+        no: previewRow.no,
+        reportId: previewRow.reportId,
+        scheduleId: previewRow.scheduleId,
+        schoolName: previewRow.schoolName,
+        educationGrade: previewRow.educationGrade,
+        educationScheduleLabel: previewRow.educationScheduleLabel,
+      },
+      previewQuery.data
+    )
+  }, [instructor, previewQuery.data, previewRow, program])
+
+  useEffect(() => {
+    if (previewQuery.error == null) return
+    showAlert({
+      title: '안내',
+      content: getGeneralProgramApiErrorMessage(
+        previewQuery.error,
+        '강의보고서 응답 상세를 불러오지 못했습니다.'
+      ),
+    })
+    setPreviewRow(null)
+  }, [previewQuery.error, showAlert])
 
   const submittedRows = useMemo(
     () => rows.filter(row => row.submissionStatusLabel === '제출 완료' && row.canViewReport),
@@ -115,6 +152,10 @@ export function ParticipatingInstructorLectureReportsSection({
           'general-lecture-report-view',
           '일반 프로그램 · 강의보고서 보기'
         )
+        return
+      }
+      if (row.reportId != null) {
+        setPreviewRow(row)
         return
       }
       if (row.fileObjectIds.length === 0) {
@@ -139,7 +180,7 @@ export function ParticipatingInstructorLectureReportsSection({
         setViewDownloadingId(null)
       }
     },
-    [instructor.instructorName, program?.id, remoteEnabled, showAlert]
+    [program?.id, remoteEnabled, showAlert]
   )
 
   const handleBulkDownload = useCallback(async () => {
@@ -174,7 +215,6 @@ export function ParticipatingInstructorLectureReportsSection({
     }
   }, [
     bulkDownloading,
-    instructor.instructorName,
     instructorMemberId,
     program?.id,
     remoteEnabled,
@@ -252,8 +292,15 @@ export function ParticipatingInstructorLectureReportsSection({
               variant="default"
               size="medium"
               width={140}
-              disabled={!record.canViewReport || viewDownloadingId === record.id}
-              loading={viewDownloadingId === record.id}
+              disabled={
+                !record.canViewReport ||
+                viewDownloadingId === record.id ||
+                (previewRow?.id === record.id && previewQuery.isFetching)
+              }
+              loading={
+                viewDownloadingId === record.id ||
+                (previewRow?.id === record.id && previewQuery.isFetching)
+              }
               onClick={() => {
                 void handleViewReport(record)
               }}
@@ -264,7 +311,7 @@ export function ParticipatingInstructorLectureReportsSection({
         ),
       },
     ],
-    [handleViewReport, viewDownloadingId]
+    [handleViewReport, previewQuery.isFetching, previewRow?.id, viewDownloadingId]
   )
 
   if (lectureReports.loading) {
@@ -288,7 +335,8 @@ export function ParticipatingInstructorLectureReportsSection({
           <CmsButton
             variant="secondary"
             size="large"
-            width={220}
+            width="max-content"
+            className="cms-button--no-label-ellipsis"
             icon={<ButtonDownloadIcon />}
             disabled={bulkDownloading || submittedRows.length === 0}
             loading={bulkDownloading}
@@ -313,6 +361,11 @@ export function ParticipatingInstructorLectureReportsSection({
         />
       </div>
       <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+      <LectureReportIssuancePreviewModal
+        open={previewContext != null}
+        context={previewContext}
+        onClose={() => setPreviewRow(null)}
+      />
     </div>
   )
 }

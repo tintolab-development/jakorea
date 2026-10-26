@@ -9,8 +9,8 @@ import type {
   Program,
   TargetLevel,
 } from '@/types/domain'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import {
-  APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
   getApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { formatAnnouncementLabel } from '@/features/program/shared/lib/announcement-label'

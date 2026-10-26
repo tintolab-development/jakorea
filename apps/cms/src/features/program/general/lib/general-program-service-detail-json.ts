@@ -6,7 +6,7 @@ import { buildRegistrationOverlayForPersist } from '@/features/program/shared/li
 import {
   buildGeneralRegistrationOverlayFromProgram,
   mergeRegistrationOverlayNestedSsot,
-} from '@/features/program/general/lib/registration-overlay-sync'
+} from '@/features/program/general/lib/general-registration-overlay-from-program'
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
 import {
   parseEducationScheduleLineForCms,
@@ -14,7 +14,7 @@ import {
   serializeEducationScheduleLineForServer,
   serializeEducationScheduleLinesForServer,
 } from '@/features/template/lib/format-education-schedule-line'
-import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-keys'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
@@ -25,6 +25,10 @@ import {
 import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import {
+  omitRootRegistrationOverlay,
+  resolvedRegistrationOverlayOrUndefined,
+} from '@/features/program/shared/lib/resolve-registration-overlay'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -49,6 +53,7 @@ export function sanitizeGeneralProgramServiceDetailPersistValue(value: unknown):
     const next: Record<string, unknown> = {}
     for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
       if (key === SPONSOR_MANAGER_CONTACT_NAMES_KEY) continue
+      if (key === 'registrationOverlay') continue
       next[key] = sanitizeGeneralProgramServiceDetailPersistValue(nested)
     }
     return next
@@ -164,9 +169,12 @@ export interface GeneralProgramServiceDetailJsonV1 {
   studentListRequired?: Program['studentListRequired']
   generalParticipantInterviewEnabled?: Program['generalParticipantInterviewEnabled']
   generalVolunteerInterviewEnabled?: Program['generalVolunteerInterviewEnabled']
-  /** 등록 폼 overlay — 공고용명 등 BE가 title로 덮어쓴 announcementTitle 복원 */
+  /** 등록 폼 overlay 정본 — 공고용명 등 (`serviceDetailJson.registration.overlay`) */
   registration?: { overlay?: Record<string, unknown> }
-  /** BE GET echo — DB SSOT는 `registration.overlay`. 파싱 시 overlay와 병합(루트 우선). */
+  /**
+   * 레거시 JSON 루트. 읽지도 보내지도 않는다(타입 호환용).
+   * 신규 persist에는 넣지 않는다.
+   */
   registrationOverlay?: Record<string, unknown>
   /** TT / Primary seed alias — nested로 승격 */
   participantRecruitment?: NonNullable<Program['generalCommonInfo']>['participantRecruitmentInfo']
@@ -430,6 +438,50 @@ export function toKstDateKey(value: string | Date | undefined | null): string | 
   return new Date(time + KST_OFFSET_MS).toISOString().slice(0, 10)
 }
 
+const VOLUNTEER_INTERVIEW_PERIOD_KEYS = ['interviewStartDate', 'interviewEndDate'] as const
+const SCHEDULE_PERIOD_KEYS = ['periodStartDate', 'periodEndDate'] as const
+
+function isEmptyPeriodValue(value: unknown): boolean {
+  return value === null || (typeof value === 'string' && value.trim() === '')
+}
+
+function withoutEmptyKeys<T extends object>(
+  record: T | undefined,
+  keys: readonly string[]
+): T | undefined {
+  if (!record) return record
+  const source = record as Record<string, unknown>
+  if (!keys.some(key => key in source && isEmptyPeriodValue(source[key]))) return record
+  const kept = { ...source }
+  for (const key of keys) if (key in kept && isEmptyPeriodValue(kept[key])) delete kept[key]
+  return kept as T
+}
+
+/**
+ * 저장 본문 nested 면접 기간 — null·'' 는 키째 뺀다(keonhee 2026-10-25).
+ * BE 상세 PATCH 는 deep merge 라 생략하면 저장된 기간이 남고, 명시적 null 은 지운다.
+ * 구 GENERAL 봉사 행은 행 면접 기간이 null 이라 nested 가 유일한 기간이다(BE backfill 전 임시 방어).
+ */
+export function omitEmptyVolunteerInterviewPeriod(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const volunteerRecruitmentInfo = withoutEmptyKeys(
+    common.volunteerRecruitmentInfo,
+    VOLUNTEER_INTERVIEW_PERIOD_KEYS
+  )
+  const volunteerInterviewScheduleInfo = withoutEmptyKeys(
+    common.volunteerInterviewScheduleInfo,
+    SCHEDULE_PERIOD_KEYS
+  )
+  if (
+    volunteerRecruitmentInfo === common.volunteerRecruitmentInfo &&
+    volunteerInterviewScheduleInfo === common.volunteerInterviewScheduleInfo
+  )
+    return common
+  return { ...common, volunteerRecruitmentInfo, volunteerInterviewScheduleInfo }
+}
+
 /** BE 면접 선택지 펼침 기간 — 봉사자 「2차 면접 심사」 기간을 그대로 쓴다. */
 export function withVolunteerInterviewSchedulePeriod(
   program: Program,
@@ -439,9 +491,9 @@ export function withVolunteerInterviewSchedulePeriod(
   if (!common || !schedule) return common
   const volunteerInfo = common.volunteerRecruitmentInfo
   const periodStartDate = toKstDateKey(
-    program.interviewStartDate ?? volunteerInfo?.interviewStartDate
+    program.interviewStartDate || volunteerInfo?.interviewStartDate
   )
-  const periodEndDate = toKstDateKey(program.interviewEndDate ?? volunteerInfo?.interviewEndDate)
+  const periodEndDate = toKstDateKey(program.interviewEndDate || volunteerInfo?.interviewEndDate)
   const { periodStartDate: _start, periodEndDate: _end, ...rest } = schedule
   return {
     ...common,
@@ -570,11 +622,13 @@ export function serializeGeneralProgramServiceDetailJson(
     !isTrainedTeachersDetailProgram(program)
       ? omitMirroredDetailedProgramMasterIdFromCommonInfo(withAudienceRule)
       : withAudienceRule
-  const generalCommonInfo = commonInfoWithServerEducationScheduleLines(
-    omitColumnTargetLevelsFromCommonInfo(
-      options?.omitRecruitmentWindow && !options?.keepNestedRecruitmentInfo
-        ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
-        : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
+  const generalCommonInfo = omitEmptyVolunteerInterviewPeriod(
+    commonInfoWithServerEducationScheduleLines(
+      omitColumnTargetLevelsFromCommonInfo(
+        options?.omitRecruitmentWindow && !options?.keepNestedRecruitmentInfo
+          ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
+          : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
+      )
     )
   )
   const nestedProgram: Program = {
@@ -643,7 +697,6 @@ export function serializeGeneralProgramServiceDetailJson(
     ...(registrationOverlay
       ? {
           registration: { overlay: registrationOverlay },
-          registrationOverlay: { ...registrationOverlay },
         }
       : {}),
   }
@@ -662,27 +715,22 @@ export function serializeGeneralProgramServiceDetailJson(
   })
 
   if (!hasContent) return undefined
-  return JSON.stringify(sanitizeGeneralProgramServiceDetailPersistValue(payload))
+  return JSON.stringify(
+    sanitizeGeneralProgramServiceDetailPersistValue(
+      omitRootRegistrationOverlay(payload as GeneralProgramServiceDetailJsonV1 & Record<string, unknown>)
+    )
+  )
 }
 
 function isServiceDetailRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
-/** `registration.overlay`(DB) + 루트 `registrationOverlay`(GET echo). 루트 키가 우선한다. */
+/** `registration.overlay` 정본. 루트 `registrationOverlay`는 읽지 않는다. */
 export function mergeServiceDetailRegistrationOverlay(
   parsed: Record<string, unknown>
 ): Record<string, unknown> | undefined {
-  const fromNested =
-    isServiceDetailRecord(parsed.registration) &&
-    isServiceDetailRecord(parsed.registration.overlay)
-      ? parsed.registration.overlay
-      : undefined
-  const fromRoot = isServiceDetailRecord(parsed.registrationOverlay)
-    ? parsed.registrationOverlay
-    : undefined
-  if (!fromNested && !fromRoot) return undefined
-  return { ...(fromNested ?? {}), ...(fromRoot ?? {}) }
+  return resolvedRegistrationOverlayOrUndefined(parsed)
 }
 
 function unwrapGeneralServiceDetailRoot(
@@ -752,4 +800,31 @@ export function parseGeneralProgramServiceDetailJson(
   } catch {
     return {}
   }
+}
+
+/**
+ * P5-f R8b: 모집 탭 저장용 최소 serviceDetailJson patch.
+ * BE `ProgramServiceDetailCommandService.mergeObjectPatch`는 키 단위 deep merge(빠진 키 유지)이므로,
+ * 공통정보 전체(마지막 GET 값)를 다시 보내지 않고 nested 모집 정보만 보낸다.
+ * overlay·paymentItems 등은 싣지 않는다(동시 수정 덮어쓰기·지급항목 재치환 방지).
+ */
+export function serializeGeneralRecruitmentNestedServiceDetailPatch(
+  program: Program
+): string | undefined {
+  const full = serializeGeneralProgramServiceDetailJson(program, {
+    omitRecruitmentWindow: true,
+    keepNestedRecruitmentInfo: true,
+  })
+  if (!full) return undefined
+  const parsed = JSON.parse(full) as GeneralProgramServiceDetailJsonV1 & Record<string, unknown>
+  const common = isServiceDetailRecord(parsed.generalCommonInfo) ? parsed.generalCommonInfo : {}
+  const picked: Record<string, unknown> = {}
+  for (const key of NESTED_RECRUITMENT_INFO_KEYS) {
+    if (common[key] !== undefined) picked[key] = common[key]
+  }
+  if (Object.keys(picked).length === 0) return undefined
+  return JSON.stringify({
+    schemaVersion: parsed.schemaVersion ?? GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
+    generalCommonInfo: picked,
+  })
 }

@@ -36,8 +36,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
-/** TT: 기관 참여자만 · 강사/봉사 모집 블록·봉사 축 OFF */
-function trainedTeacherConstraints(partial: Partial<Program>): Partial<Program> {
+/** TT 조회: 봉사 모집 축 OFF. 참여자 유형은 서버 정본을 유지한다. */
+function trainedTeacherReadConstraints(partial: Partial<Program>): Partial<Program> {
   const common = partial.generalCommonInfo
   const {
     instructorRecruitmentInfo: _instructor,
@@ -49,7 +49,6 @@ function trainedTeacherConstraints(partial: Partial<Program>): Partial<Program> 
 
   return {
     ...partial,
-    generalParticipantTypes: ['school_institution'],
     generalVolunteerInterviewEnabled: false,
     volunteerApplicationStartDate: undefined,
     volunteerApplicationEndDate: undefined,
@@ -62,9 +61,16 @@ function trainedTeacherConstraints(partial: Partial<Program>): Partial<Program> 
     generalCommonInfo: common
       ? {
           ...restCommon,
-          // 미시드가 정상 — 빈 그리드용 객체를 만들지 않음
         }
       : undefined,
+  }
+}
+
+/** TT CREATE/PATCH write: 학교/기관 고정 모집 정책. */
+function trainedTeacherWriteConstraints(partial: Partial<Program>): Partial<Program> {
+  return {
+    ...trainedTeacherReadConstraints(partial),
+    generalParticipantTypes: ['school_institution'],
   }
 }
 
@@ -228,7 +234,7 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
       ? program.generalProgramSessionRound
       : undefined
   const generalSurveyMenuKeys = trainedTeacherSurveyMenuKeys(program.generalSurveyMenuKeys)
-  return trainedTeacherConstraints({
+  return trainedTeacherWriteConstraints({
     ...(businessArea ? { businessArea } : {}),
     posterImage: program.posterImage,
     targetLevels: resolvePersistedProgramTargetLevels(program),
@@ -315,7 +321,7 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
       ) {
         return {}
       }
-      const programPartial = trainedTeacherConstraints(parsed.program as Partial<Program>)
+      const programPartial = trainedTeacherReadConstraints(parsed.program as Partial<Program>)
       const generalSurveyMenuKeys = resolveStoredTrainedTeacherSurveyMenuKeys({
         rootKeys: parsed.generalSurveyMenuKeys,
         programKeys: programPartial.generalSurveyMenuKeys,
@@ -341,7 +347,7 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
     const normalized = normalizeGeneralProgramServiceDetailParsed(
       parsed as Parameters<typeof normalizeGeneralProgramServiceDetailParsed>[0]
     )
-    const constrained = trainedTeacherConstraints(normalized)
+    const constrained = trainedTeacherReadConstraints(normalized)
     const generalSurveyMenuKeys = resolveStoredTrainedTeacherSurveyMenuKeys({
       rootKeys: parsed.generalSurveyMenuKeys,
       programKeys: constrained.generalSurveyMenuKeys,

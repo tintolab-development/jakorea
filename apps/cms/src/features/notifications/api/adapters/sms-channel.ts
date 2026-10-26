@@ -17,3 +17,18 @@ export type SmsSenderNumberType = (typeof SMS_SENDER_NUMBER_TYPE_OPTIONS)[number
 export const SMS_MESSAGE_TYPE_OPTIONS = ['SMS', 'LMS', 'MMS'] as const
 
 export type SmsMessageType = (typeof SMS_MESSAGE_TYPE_OPTIONS)[number]
+
+export const SMS_MESSAGE_TYPE_LABELS: Record<SmsMessageType, string> = {
+  SMS: '단문',
+  LMS: '장문',
+  MMS: '멀티미디어',
+}
+
+export function formatSmsMessageTypeLabel(value: string | null | undefined): string {
+  const trimmed = value?.trim().toUpperCase()
+  if (!trimmed) return '-'
+  if (trimmed in SMS_MESSAGE_TYPE_LABELS) {
+    return SMS_MESSAGE_TYPE_LABELS[trimmed as SmsMessageType]
+  }
+  return /^[A-Z][A-Z0-9_]*$/.test(trimmed) ? '-' : value?.trim() || '-'
+}

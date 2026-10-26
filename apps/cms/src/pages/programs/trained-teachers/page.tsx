@@ -30,6 +30,7 @@ import {
   clearGeneralProgramDetailQueryParams,
   patchGeneralProgramDetailLnbTab,
 } from '@/features/program/general/lib/general-program-detail-route'
+import { buildTrainedTeachersSearchParamsAfterRegistrationComplete } from '@/features/program/trained-teachers/lib/post-registration-search-params'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
 import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
@@ -255,10 +256,21 @@ function TrainedTeachersProgramPageContent() {
     )
   }, [closeWritingUserPreview, normalizedPath, setSearchParams])
 
-  const handleRegistrationSaved = useCallback(() => {
-    refetchPrograms()
-    handleCloseRegistrationFullpage()
-  }, [handleCloseRegistrationFullpage, refetchPrograms])
+  const handleRegistrationSaved = useCallback(
+    (createdProgram?: Program) => {
+      void refetchPrograms()
+      closeWritingUserPreview()
+      const createdId = createdProgram?.id?.trim()
+      if (createdId) {
+        setSelectedProgramForFullPageModal(createdProgram ?? ({ id: createdId } as Program))
+      }
+      setSearchParams(
+        prev => buildTrainedTeachersSearchParamsAfterRegistrationComplete(prev, createdProgram),
+        { replace: true }
+      )
+    },
+    [closeWritingUserPreview, refetchPrograms, setSearchParams]
+  )
 
   const openNewRegistration = useCallback(
     (mode?: 'continue' | 'fresh') => {

@@ -12,7 +12,7 @@ import {
   putProgramRecruitmentThumbnail,
 } from '@/features/program/shared/api/program-recruitment-rows'
 import type { Program } from '@/types/domain'
-import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { getRecruitDetailInfoRecord } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 import { RECRUIT_DETAIL_INFO_OVERLAY_PREFIX } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 
 /**
@@ -182,7 +182,7 @@ export function readRecruitDetailMediaFromOverlay(
  */
 export async function bindRecruitDetailMediaAfterProgramCreate(
   programId: string,
-  overlay: Record<string, unknown> = getGeneralRecruitOverlayRecord()
+  overlay: Record<string, unknown> = getRecruitDetailInfoRecord()
 ): Promise<void> {
   const numericId = parseFileObjectId(programId)
   if (numericId == null) return

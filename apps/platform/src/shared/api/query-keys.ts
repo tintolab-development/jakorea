@@ -47,6 +47,12 @@ export const platformQueryKeys = {
     publicMain: () => [...platformQueryKeys.home.all(), 'public-main'] as const,
   },
 
+  publicSurvey: {
+    all: () => [...platformQueryKeys.all, 'public-survey'] as const,
+    form: (shareToken: string) =>
+      [...platformQueryKeys.publicSurvey.all(), 'form', shareToken] as const,
+  },
+
   site: {
     all: () => [...platformQueryKeys.all, 'site'] as const,
     /** GET /api/public/site/settings — Class B-shell */
@@ -93,10 +99,12 @@ export const platformQueryKeys = {
     /** 공개 목록 — GET /api/portal/programs (Class C, CMS 8080) */
     list: (params: {
       keyword: string
-      portalTab: string
-      recruitmentStatus: string
-      educationTargets: string
-      educationMethod: string
+      portalTab: readonly string[]
+      programType: readonly string[]
+      recruitmentStatus: readonly string[]
+      recruitmentTarget: readonly string[]
+      educationTarget: readonly string[]
+      educationMethod: readonly string[]
       operatingFrom: string
       operatingTo: string
       sort: string
@@ -108,8 +116,10 @@ export const platformQueryKeys = {
         'list',
         params.keyword,
         params.portalTab,
+        params.programType,
         params.recruitmentStatus,
-        params.educationTargets,
+        params.recruitmentTarget,
+        params.educationTarget,
         params.educationMethod,
         params.operatingFrom,
         params.operatingTo,
@@ -293,6 +303,9 @@ export const platformQueryKeys = {
     /** 내 동의 유형 상세 — GET /api/portal/me/consents/{consentType} */
     consent: (consentType: string) =>
       [...platformQueryKeys.mypage.consents(), consentType] as const,
+    /** 제출 동의서 상세 — GET /api/portal/me/consents/documents/{documentId} (Class D, PII) */
+    consentDocument: (documentId: number) =>
+      [...platformQueryKeys.mypage.consents(), 'documents', documentId] as const,
     /** 마이페이지 일정 — GET /api/portal/me/calendar (Class C, member scoped) */
     calendar: (from: string, to: string) =>
       [...platformQueryKeys.mypage.all(), 'calendar', from, to] as const,
@@ -456,6 +469,22 @@ export const platformQueryKeys = {
           scheduleId,
         ] as const,
       /**
+       * 일정 출결 참여자 현황 — GET .../schedules/{scheduleId}/attendance/participants (Class D)
+       */
+      scheduleAttendanceParticipants: (
+        applicationType: string,
+        applicationId: string,
+        scheduleId: number,
+      ) =>
+        [
+          ...platformQueryKeys.mypage.programApplications.scheduleAttendance(
+            applicationType,
+            applicationId,
+            scheduleId,
+          ),
+          'participants',
+        ] as const,
+      /**
        * UJAT 봉사자 교육계획서·교육일지 목록
        * GET .../education-documents (Class C, applicationId 스코프 — H1/H2 분리)
        */
@@ -528,6 +557,11 @@ export const platformQueryKeys = {
     /** 정산 신청 목록 — GET /api/portal/me/settlement-applications (Class C) */
     settlementApplications: () =>
       [...platformQueryKeys.mypage.all(), 'settlement-applications'] as const,
+    /**
+     * 강의보고서 배정 목록 — GET /api/portal/me/programs/{programId}/lecture-report-assignments (Class C)
+     */
+    lectureReportAssignments: (programId: string) =>
+      [...platformQueryKeys.mypage.all(), 'lecture-report-assignments', programId] as const,
     /**
      * 일반회원 일정 정산 — GET /api/portal/me/individual-settlements/applications/{id}/schedules (Class C)
      */

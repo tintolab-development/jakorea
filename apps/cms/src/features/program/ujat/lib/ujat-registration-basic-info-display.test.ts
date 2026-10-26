@@ -166,9 +166,9 @@ describe('UJAT 상세 공통정보 overlay 시드', () => {
         'ujat.kpi.volunteer': 1,
       }
     )
-    expect(overlay['ujat.kpi.participantCount']).toBe(20)
-    expect(overlay['ujat.kpi.volunteer']).toBe(8)
-    expect(overlay['ujat.kpi.dispatchedClass']).toBe(6)
+    expect(overlay['ujat.kpi.participantCount']).toBeUndefined()
+    expect(overlay['ujat.kpi.volunteer']).toBeUndefined()
+    expect(overlay['ujat.kpi.dispatchedClass']).toBeUndefined()
   })
 })
 
@@ -299,7 +299,7 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
     expect(overlay['ujat.basicInfo.participant.individual']).toBe(false)
     expect(overlay['ujat.basicInfo.participant.organization']).toBe(true)
     expect(overlay['ujat.basicInfo.participant.volunteer']).toBe(true)
-    expect(overlay['ujat.kpi.instructor']).toBe(7)
+    expect(overlay['ujat.kpi.instructor']).toBeUndefined()
   })
 
   it('기관 모집 leftover 기간이 중첩 기간보다 이기지 않는다', () => {
@@ -460,8 +460,8 @@ describe('UJAT 공통 저장 overlay/KPI roundtrip', () => {
       },
       { 'ujat.kpi.participantCount': 12, 'ujat.kpi.volunteer': 4 }
     )
-    expect(overlay['ujat.kpi.participantCount']).toBe(null)
-    expect(overlay['ujat.kpi.volunteer']).toBe(null)
+    expect(overlay['ujat.kpi.participantCount']).toBeUndefined()
+    expect(overlay['ujat.kpi.volunteer']).toBeUndefined()
     const display = resolveUjatBusinessKpiDisplay({
       ...baseProgram(),
       generalCommonInfo: {

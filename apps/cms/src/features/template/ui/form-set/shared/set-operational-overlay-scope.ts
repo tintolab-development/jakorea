@@ -11,9 +11,9 @@ import {
   setUjatApplicationVolunteerOverlayScope,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
-  resetAllGeminiRecruitOverlay,
-  setGeminiRecruitOverlayScope,
-} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-overlay-sync'
+  resetAllGeminiRecruitForms,
+  setGeminiRecruitFormScope,
+} from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import {
   resetAllApplicantRecruitInstitutionOverlay,
   setApplicantRecruitInstitutionOverlayScope,
@@ -42,7 +42,7 @@ export function setOperationalOverlayScope(templateCode: string | undefined | nu
   setApplicantRecruitInstitutionOverlayScope(templateCode)
   setUjatRecruitInstitutionOverlayScope(templateCode)
   setUjatRecruitVolunteerOverlayScope(templateCode)
-  setGeminiRecruitOverlayScope(templateCode)
+  setGeminiRecruitFormScope(templateCode)
   setGeneralApplicationOverlayScope(templateCode)
   setUjatApplicationInstitutionOverlayScope(templateCode)
   setUjatApplicationVolunteerOverlayScope(templateCode)
@@ -54,7 +54,7 @@ export function resetAllOperationalOverlayStores(): void {
   resetAllApplicantRecruitInstitutionOverlay()
   resetAllUjatRecruitInstitutionOverlay()
   resetAllUjatRecruitVolunteerOverlay()
-  resetAllGeminiRecruitOverlay()
+  resetAllGeminiRecruitForms()
   resetAllGeneralApplicationOverlay()
   resetAllUjatApplicationInstitutionOverlay()
   resetAllUjatApplicationVolunteerOverlay()

@@ -76,6 +76,17 @@ describe('submitSmsSend', () => {
     })
   })
 
+  it('does not call send API when compose is invalid', async () => {
+    await expect(
+      submitSmsSend({
+        draft: draft({ messageType: 'SMS', subject: '제목', bodyText: '본문' }),
+        idempotencyKey: 'idem-sms-block',
+        senderProfileId: 9,
+      })
+    ).rejects.toThrow('SMS에서는 제목을 사용할 수 없습니다.')
+    expect(createSendBatchRemote).not.toHaveBeenCalled()
+  })
+
   it('still sends contentTemplate when compose equals registered template', async () => {
     await submitSmsSend({
       draft: draft(),

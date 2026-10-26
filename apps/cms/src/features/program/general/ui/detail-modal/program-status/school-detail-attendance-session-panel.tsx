@@ -104,11 +104,17 @@ export function SchoolDetailAttendanceSessionPanel({
       <div className="table-header-actions">
         <div className="table-header-title--wrapper school-detail-attendance-session__title-row">
           <span className="table-title">{session.headerTitle}</span>
-          <div className="school-detail-attendance-session__header-meta">
-            <span>{session.headerScheduleSummary}</span>
-            <span className="detail-info-form-inputs-separator" aria-hidden />
-            <span>{session.headerPeriodRangeLabel}</span>
-          </div>
+          {session.headerScheduleSummary || session.headerPeriodRangeLabel ? (
+            <div className="school-detail-attendance-session__header-meta">
+              {session.headerScheduleSummary ? <span>{session.headerScheduleSummary}</span> : null}
+              {session.headerScheduleSummary && session.headerPeriodRangeLabel ? (
+                <span className="detail-info-form-inputs-separator" aria-hidden />
+              ) : null}
+              {session.headerPeriodRangeLabel ? (
+                <span>{session.headerPeriodRangeLabel}</span>
+              ) : null}
+            </div>
+          ) : null}
           <span className="table-description">총 {displayRows.length}건</span>
         </div>
         <div className="info-section-buttons--wrapper">

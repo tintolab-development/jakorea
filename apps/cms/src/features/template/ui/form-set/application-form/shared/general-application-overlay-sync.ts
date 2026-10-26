@@ -1,6 +1,11 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import { composeOverlayStoreWithFieldForms } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
+import { individualTeamInfoFieldForm } from '@/features/template/ui/form-set/application-form/individual/individual-team-info-form-rhf'
+import { fixedScheduleFieldForm } from '@/features/template/ui/form-set/application-form/shared/fixed-schedule-form-rhf'
+import { instructorApplicationFieldForm } from '@/features/template/ui/form-set/application-form/instructor/instructor-application-form-rhf'
+import { trainedTeachersApplicationFieldForm } from '@/features/template/ui/form-set/application-form/trained-teachers/trained-teachers-application-form-rhf'
 import {
   beginWizardApplicationRhfProjection,
   endWizardApplicationRhfProjection,
@@ -40,14 +45,19 @@ import {
  * templateCode 버킷으로 양식 인스턴스를 가른다.
  */
 
-const store = createScopedOverlayStore()
+/**
+ * Part3: 키 묶음 일부는 RHF 필드 폼이 소유한다(합성). 소유 키는 스토어 버킷에 남지 않는다.
+ * 나머지 키는 아직 스코프 overlay 스토어.
+ */
+const store = composeOverlayStoreWithFieldForms(createScopedOverlayStore(), [
+  individualTeamInfoFieldForm,
+  trainedTeachersApplicationFieldForm,
+  instructorApplicationFieldForm,
+  fixedScheduleFieldForm,
+])
 
 export function setGeneralApplicationOverlayScope(templateCode: string | undefined | null): void {
   store.setScope(templateCode)
-}
-
-export function getGeneralApplicationOverlayScope(): string {
-  return store.getScope()
 }
 
 export function subscribeGeneralApplicationOverlay(listener: () => void): () => void {
@@ -59,10 +69,6 @@ export function subscribeGeneralApplicationOverlayKey(
   listener: () => void
 ): () => void {
   return store.subscribeKey(key, listener)
-}
-
-export function getGeneralApplicationOverlayVersion(): number {
-  return store.getVersion()
 }
 
 export function getGeneralApplicationOverlayRecord(): Record<string, unknown> {
@@ -106,12 +112,6 @@ export function replaceGeneralApplicationOverlayForScope(
   } finally {
     endWizardApplicationRhfProjection()
   }
-}
-
-export function resetGeneralApplicationOverlayForScope(
-  templateCode: string | undefined | null
-): void {
-  store.resetFor(templateCode)
 }
 
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {

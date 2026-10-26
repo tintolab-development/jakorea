@@ -3,7 +3,8 @@ import type { WritingFormDraft } from '@/features/template/model/writing-form-dr
 import type { Program } from '@/types/domain'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import { fromDetail, toUpdateRequest } from '@/features/program/ujat/api/adapters'
-import { resolveUjatEducationScheduleSettingsSemesterDisplay } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
+import { resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 import { ujatEducationScheduleSettingsOverlayKeys } from '@/features/program/ujat/lib/ujat-education-schedule-settings-types'
 import { ujatHalfScheduleOverlayKeys } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 import { UJAT_REGION_CAPACITY_OVERLAY_KEY } from '@/features/program/ujat/lib/ujat-region-capacity-types'
@@ -112,14 +113,36 @@ describe('UJAT 공통정보 저장 왕복', () => {
     const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
       registration?: { overlay?: Record<string, unknown> }
     }
-    expect(detail.registration?.overlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toEqual(capacity)
-    expect(detail.registration?.overlay?.['ujat.h1.event.name']).toBe('상반기 본행사')
-    expect(detail.registration?.overlay?.['ujat.h1.eduSchedule.unavailableDates']).toEqual([
-      '2026-05-15',
-    ])
+    expect(detail.registration?.overlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toBeUndefined()
+    expect(detail.registration?.overlay?.['ujat.h1.event.name']).toBeUndefined()
+    expect(detail.registration?.overlay?.['ujat.h1.eduSchedule.unavailableDates']).toBeUndefined()
 
     const persisted = JSON.parse(request.serviceDetailJson ?? '{}') as Record<string, unknown>
     persisted.ujatRegionCapacities = canonicalRegionCapacities
+    const typedDetail: UjatTypedDetail = {
+      schemaVersion: 1,
+      common: null,
+      halfPlans: [
+        {
+          semesterType: 'FIRST_HALF',
+          stages: [
+            {
+              stage: 'MAIN_EDUCATION',
+              rows: [
+                {
+                  rowId: 'h1-main-1',
+                  educationName: '상반기 본행사',
+                  startDate: '2026-04-03',
+                  endDate: '2026-06-19',
+                  excludedDates: ['2026-05-15'],
+                  exclusion: { excludeNone: false },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
     const mapped = fromDetail({
       id: program.id,
       title: program.title,
@@ -127,15 +150,16 @@ describe('UJAT 공통정보 저장 왕복', () => {
       ips: 'Inspire',
       educationStructure: 'CURRICULUM',
       serviceDetailJson: JSON.stringify(persisted),
-    } as ProgramResponse)
+    } as ProgramResponse, typedDetail)
 
     expect(mapped.ips).toBe('Inspire')
     expect(mapped.generalProgramEducationStructure).toBe('curriculum')
-    expect(mapped.ujatRegistrationOverlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toEqual(capacity)
+    expect(mapped.ujatRegistrationOverlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toBeUndefined()
+    expect(mapped.ujatRegionCapacity).toEqual(capacity)
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.ipsCategory']).toBe('inspire')
-    const schedule = resolveUjatEducationScheduleSettingsSemesterDisplay(
+    const schedule = resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail(
       'h1',
-      mapped.ujatRegistrationOverlay
+      typedDetail
     )
     expect(schedule.scheduleRangeText).not.toBe('-')
     expect(schedule.unavailableDates).toEqual(['2026-05-15'])
@@ -165,7 +189,8 @@ describe('UJAT 공통정보 저장 왕복', () => {
       serviceDetailJson: JSON.stringify(persisted),
     } as ProgramResponse)
     expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.ipsCategory']).toBe('succeed')
-    expect(mapped.ujatRegistrationOverlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toEqual(capacity)
+    expect(mapped.ujatRegistrationOverlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toBeUndefined()
+    expect(mapped.ujatRegionCapacity).toEqual(capacity)
   })
 
   it('registration draft가 없는 레거시 상세도 편집 overlay를 보존한다', () => {
@@ -179,7 +204,7 @@ describe('UJAT 공통정보 저장 왕복', () => {
       registration?: { draft?: unknown; overlay?: Record<string, unknown> }
     }
     expect(detail.registration?.draft).toBeUndefined()
-    expect(detail.registration?.overlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toEqual(capacity)
-    expect(detail.registration?.overlay?.['ujat.h1.event.name']).toBe('상반기 본행사')
+    expect(detail.registration?.overlay?.[UJAT_REGION_CAPACITY_OVERLAY_KEY]).toBeUndefined()
+    expect(detail.registration?.overlay?.['ujat.h1.event.name']).toBeUndefined()
   })
 })

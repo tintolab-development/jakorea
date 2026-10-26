@@ -64,7 +64,7 @@ function resolveTrainingRequestPeriodBounds(
   }
 }
 
-function filterRowsBySearchParams(
+export function filterGeminiRecruitmentRowsBySearchParams(
   data: GeminiRecruitmentRow[],
   searchParams: URLSearchParams,
   todayKey: string
@@ -72,7 +72,7 @@ function filterRowsBySearchParams(
   const referenceDate = dayjs(todayKey)
   const titleQ = (searchParams.get(`${URL_PREFIX}_title`) ?? '').trim().toLowerCase()
   const status = parseStatus(searchParams.get(`${URL_PREFIX}_status`))
-  const { from, to } = resolveTrainingRequestPeriodBounds(searchParams, todayKey)
+  const { from, to, usedDefault } = resolveTrainingRequestPeriodBounds(searchParams, todayKey)
 
   let list = [...data]
   if (titleQ) {
@@ -87,15 +87,19 @@ function filterRowsBySearchParams(
         resolveRecruitmentDisplayStatus(r, referenceDate) === status
     )
   }
-  list = list.filter(r => {
-    if (r.isDraft) return true
-    const start = dayjs(r.trainingRequestPeriodStart)
-    const end = dayjs(r.trainingRequestPeriodEnd)
-    if (!start.isValid() || !end.isValid()) return false
-    if (from && end.isBefore(from, 'day')) return false
-    if (to && start.isAfter(to, 'day')) return false
-    return true
-  })
+  // URL에 기간이 없을 때의 기본값(연초~오늘)은 필터 칸 초안일 뿐, 응답 행을 다시 걸러내지 않는다.
+  // 목록 GET은 기간 쿼리를 쓰지 않으므로, 화면에서만 기본 기간을 적용하면 건수와 표가 어긋난다.
+  if (!usedDefault && (from != null || to != null)) {
+    list = list.filter(r => {
+      if (r.isDraft) return true
+      const start = dayjs(r.trainingRequestPeriodStart)
+      const end = dayjs(r.trainingRequestPeriodEnd)
+      if (!start.isValid() || !end.isValid()) return false
+      if (from && end.isBefore(from, 'day')) return false
+      if (to && start.isAfter(to, 'day')) return false
+      return true
+    })
+  }
 
   return list.sort((a, b) => b.displayNo - a.displayNo)
 }
@@ -210,7 +214,11 @@ export const geminiRecruitmentTablePageConfig: TablePageConfig<
   },
 
   filterFn: ({ context, data, searchParams }) => {
-    const filtered = filterRowsBySearchParams(data, searchParams, context.todayKey)
+    const filtered = filterGeminiRecruitmentRowsBySearchParams(
+      data,
+      searchParams,
+      context.todayKey
+    )
     return { dataForTable: filtered, filteredData: filtered }
   },
 

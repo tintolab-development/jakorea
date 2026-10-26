@@ -21,6 +21,7 @@ import {
   useSetRecruitPostingPublic,
   useUpdateRecruitPosting,
 } from '@/features/recruit-posting/api/hooks'
+import { getRecruitPostingService } from '@/features/recruit-posting/api/service'
 import { recruitPostingQueryKeys } from '@/features/recruit-posting/api/query-keys'
 import { RECRUIT_POSTINGS_CHANGED_EVENT } from '@/features/recruit-posting/api/store'
 import {
@@ -294,6 +295,9 @@ export function RecruitPostingsPage() {
     setFormMode('edit')
     setEditing(row)
     setFormOpen(true)
+    void getRecruitPostingService(row.id).then(detail => {
+      if (detail) setEditing(detail)
+    })
   }, [])
 
   const goDetail = useCallback(

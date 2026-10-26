@@ -29,8 +29,6 @@ const HEADER_FG = '#FFFFFF'
 const DEPOSIT_LABEL = 'JA코리아'
 const DASH = '-'
 
-const MOCK_BANKS = ['하나은행', '국민은행', '기업은행', '우리은행', '농협은행'] as const
-
 export type BulkTransferSheetRow = {
   depositBank: string
   depositAccount: string
@@ -43,32 +41,12 @@ export type BulkTransferSheetRow = {
   mobile: string
 }
 
-function simpleHash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i += 1) {
-    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
-  }
-  return Math.abs(h)
-}
-
-function mockPayoutMeta(instructorName: string, rowId: string) {
-  const h = simpleHash(instructorName)
-  const h2 = simpleHash(`${instructorName}|${rowId}`)
-  const bank = MOCK_BANKS[h % MOCK_BANKS.length]
-  const acctNum = String(1_000_000_000_000 + (h2 % 899_999_999_999)).slice(0, 12)
-  const mobile = `010${String(10_000_000 + (simpleHash(rowId) % 89_999_999)).padStart(8, '0').slice(0, 8)}`
-  return { bank, acctNum, mobile }
-}
-
 function payoutMetaFromRow(row: AccountPaymentRow) {
-  if (row.bankName && row.depositAccountNumber) {
-    return {
-      bank: row.bankName,
-      acctNum: row.depositAccountNumber,
-      mobile: row.recipientMobile ?? mockPayoutMeta(row.instructorName, row.id).mobile,
-    }
+  return {
+    bank: row.bankName ?? '',
+    acctNum: row.depositAccountNumber ?? '',
+    mobile: row.recipientMobile ?? '',
   }
-  return mockPayoutMeta(row.instructorName, row.id)
 }
 
 function compareItems(a: AccountPaymentRow, b: AccountPaymentRow): number {
@@ -79,11 +57,32 @@ function compareItems(a: AccountPaymentRow, b: AccountPaymentRow): number {
   return a.id.localeCompare(b.id, 'ko')
 }
 
-/** 계좌 지급 완료만, 강사명 → 강사 내 항목 순으로 정렬 */
+/** 세금신고용 계좌 지급 완료만, 강사명 → 강사 내 항목 순으로 정렬 */
 export function getCompletedRowsOrderedForBulkTransfer(rows: AccountPaymentRow[]): AccountPaymentRow[] {
   const completed = rows.filter(r => r.accountPaymentStatus === 'account_paid')
   const byInstructor = new Map<string, AccountPaymentRow[]>()
   for (const row of completed) {
+    const list = byInstructor.get(row.instructorName) ?? []
+    list.push(row)
+    byInstructor.set(row.instructorName, list)
+  }
+  const names = [...byInstructor.keys()].sort((a, b) => a.localeCompare(b, 'ko'))
+  const out: AccountPaymentRow[] = []
+  for (const name of names) {
+    const list = byInstructor.get(name) ?? []
+    list.sort(compareItems)
+    out.push(...list)
+  }
+  return out
+}
+
+/** 대량이체 export는 CONFIRMED + WAITING_PAYMENT만 대상으로 한다. */
+export function getWaitingPaymentRowsOrderedForBulkTransfer(
+  rows: AccountPaymentRow[]
+): AccountPaymentRow[] {
+  const waiting = rows.filter(r => r.accountPaymentStatus === 'awaiting_confirmation')
+  const byInstructor = new Map<string, AccountPaymentRow[]>()
+  for (const row of waiting) {
     const list = byInstructor.get(row.instructorName) ?? []
     list.push(row)
     byInstructor.set(row.instructorName, list)
@@ -115,9 +114,9 @@ function dataCell(text: string | number): Cell {
   return { v: m, m, ht: 0, vt: 0 }
 }
 
-/** 미리보기·엑셀 공통: 계좌 지급 완료 목록 행당 이체 1행 */
+/** 미리보기·엑셀 공통: 지급 대기 목록 행당 이체 1행 */
 export function buildBulkTransferSheetRows(rows: AccountPaymentRow[]): BulkTransferSheetRow[] {
-  const ordered = getCompletedRowsOrderedForBulkTransfer(rows)
+  const ordered = getWaitingPaymentRowsOrderedForBulkTransfer(rows)
   const lines: BulkTransferSheetRow[] = []
   for (const row of ordered) {
     const { bank, acctNum, mobile } = payoutMetaFromRow(row)

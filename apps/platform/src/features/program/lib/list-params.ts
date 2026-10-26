@@ -94,18 +94,87 @@ function parseRecruitmentStatusFilter(value: string | null): string {
   return DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentStatus
 }
 
+const VALID_EDUCATION_FORMS = new Set(['all', 'online', 'offline', 'hybrid', 'participant_choice'])
+
+function parseEducationFormFilter(value: string | null): string {
+  return value && VALID_EDUCATION_FORMS.has(value)
+    ? value
+    : DEFAULT_PROGRAMS_LIST_PARAMS.educationForm
+}
+
+function readRepeatedFilter(
+  params: URLSearchParams,
+  key: string,
+  parse: (value: string | null) => string,
+  defaultValue: string,
+): { value: string; values?: string[] } {
+  const values = [...new Set(params.getAll(key).map(item => parse(item)).filter(item => item !== defaultValue))]
+  if (values.length > 1) {
+    return { value: values[0], values }
+  }
+  return { value: values[0] ?? defaultValue }
+}
+
+function appendFilterValues(
+  params: URLSearchParams,
+  key: string,
+  scalar: string,
+  values: readonly string[] | undefined,
+  defaultValue: string,
+) {
+  const selected = values && values.length > 0 ? values : [scalar]
+  for (const value of [...new Set(selected)]) {
+    if (value && value !== defaultValue) params.append(key, value)
+  }
+}
+
 export function readProgramsListParams(search = window.location.search): ProgramsListParams {
   const params = new URLSearchParams(search)
+  const programType = readRepeatedFilter(
+    params,
+    'programType',
+    parseProgramTypeFilter,
+    DEFAULT_PROGRAMS_LIST_PARAMS.programType,
+  )
+  const recruitmentTarget = readRepeatedFilter(
+    params,
+    'recruitmentTarget',
+    parseEducationTargetFilter,
+    DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget,
+  )
+  const recruitmentStatus = readRepeatedFilter(
+    params,
+    'recruitmentStatus',
+    parseRecruitmentStatusFilter,
+    DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentStatus,
+  )
+  const educationTarget = readRepeatedFilter(
+    params,
+    'educationTarget',
+    parseEducationTargetFilter,
+    DEFAULT_PROGRAMS_LIST_PARAMS.educationTarget,
+  )
+  const educationForm = readRepeatedFilter(
+    params,
+    'educationForm',
+    parseEducationFormFilter,
+    DEFAULT_PROGRAMS_LIST_PARAMS.educationForm,
+  )
 
   return {
     category: parseCategory(params.get('category')),
     q: params.get('q') ?? DEFAULT_PROGRAMS_LIST_PARAMS.q,
-    programType: parseProgramTypeFilter(params.get('programType')),
-    recruitmentTarget: parseEducationTargetFilter(params.get('recruitmentTarget')),
-    recruitmentStatus: parseRecruitmentStatusFilter(params.get('recruitmentStatus')),
+    programType: programType.value,
+    ...(programType.values ? { programTypeValues: programType.values } : {}),
+    recruitmentTarget: recruitmentTarget.value,
+    ...(recruitmentTarget.values ? { recruitmentTargetValues: recruitmentTarget.values } : {}),
+    recruitmentStatus: recruitmentStatus.value,
+    ...(recruitmentStatus.values ? { recruitmentStatusValues: recruitmentStatus.values } : {}),
     operatingPeriod: parseOperatingPeriodFilter(params.get('operatingPeriod')),
-    educationTarget: parseEducationTargetFilter(params.get('educationTarget')),
-    educationForm: params.get('educationForm') ?? DEFAULT_PROGRAMS_LIST_PARAMS.educationForm,
+    educationTarget: educationTarget.value,
+    ...(educationTarget.values ? { educationTargetValues: educationTarget.values } : {}),
+    educationForm: educationForm.value,
+    ...(educationForm.values ? { educationFormValues: educationForm.values } : {}),
     sort: parseSort(params.get('sort')),
     page: parsePositiveInt(params.get('page'), DEFAULT_PROGRAMS_LIST_PARAMS.page),
   }
@@ -120,24 +189,44 @@ export function buildProgramsListPath(params: ProgramsListParams) {
   if (params.q) {
     searchParams.set('q', params.q)
   }
-  if (params.programType !== DEFAULT_PROGRAMS_LIST_PARAMS.programType) {
-    searchParams.set('programType', params.programType)
-  }
-  if (params.recruitmentTarget !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget) {
-    searchParams.set('recruitmentTarget', params.recruitmentTarget)
-  }
-  if (params.recruitmentStatus !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentStatus) {
-    searchParams.set('recruitmentStatus', params.recruitmentStatus)
-  }
+  appendFilterValues(
+    searchParams,
+    'programType',
+    params.programType,
+    params.programTypeValues,
+    DEFAULT_PROGRAMS_LIST_PARAMS.programType,
+  )
+  appendFilterValues(
+    searchParams,
+    'recruitmentTarget',
+    params.recruitmentTarget,
+    params.recruitmentTargetValues,
+    DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget,
+  )
+  appendFilterValues(
+    searchParams,
+    'recruitmentStatus',
+    params.recruitmentStatus,
+    params.recruitmentStatusValues,
+    DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentStatus,
+  )
   if (params.operatingPeriod !== DEFAULT_PROGRAMS_LIST_PARAMS.operatingPeriod) {
     searchParams.set('operatingPeriod', params.operatingPeriod)
   }
-  if (params.educationTarget !== DEFAULT_PROGRAMS_LIST_PARAMS.educationTarget) {
-    searchParams.set('educationTarget', params.educationTarget)
-  }
-  if (params.educationForm !== DEFAULT_PROGRAMS_LIST_PARAMS.educationForm) {
-    searchParams.set('educationForm', params.educationForm)
-  }
+  appendFilterValues(
+    searchParams,
+    'educationTarget',
+    params.educationTarget,
+    params.educationTargetValues,
+    DEFAULT_PROGRAMS_LIST_PARAMS.educationTarget,
+  )
+  appendFilterValues(
+    searchParams,
+    'educationForm',
+    params.educationForm,
+    params.educationFormValues,
+    DEFAULT_PROGRAMS_LIST_PARAMS.educationForm,
+  )
   if (params.sort !== DEFAULT_PROGRAMS_LIST_PARAMS.sort) {
     searchParams.set('sort', params.sort)
   }

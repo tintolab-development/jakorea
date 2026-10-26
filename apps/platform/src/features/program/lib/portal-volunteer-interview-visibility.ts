@@ -13,6 +13,7 @@ import {
   resolvePortalApplicationFormRuntimeContext,
 } from './application-form-draft.ts'
 import {
+  isDynamicVolunteerActivityScheduleParagraph,
   isDynamicVolunteerInterviewParagraph,
   isInstructorAvailableScheduleParagraphId,
   isVolunteerInterviewScheduleParagraphId,
@@ -43,6 +44,7 @@ function resolveVolunteerDynamicQuestionEnabledForHidden(
   },
   questionKey: string,
   paragraphMatcher: (paragraph: unknown) => boolean,
+  options?: { hideWhenOptionCountZero?: boolean },
 ): boolean | undefined {
   const interviewId = questionKey
   const document = input.formBinding != null
@@ -59,7 +61,8 @@ function resolveVolunteerDynamicQuestionEnabledForHidden(
     if (hiddenKeys.has(interviewId)) return false
 
     const optionCount = readDynamicQuestionOptionCount(runtimeContext, interviewId)
-    if (optionCount === 0) return false
+    const hideWhenOptionCountZero = options?.hideWhenOptionCountZero !== false
+    if (optionCount === 0 && hideWhenOptionCountZero) return false
     if (optionCount != null && optionCount > 0) return true
 
     const paragraphs = document?.paragraphs
@@ -157,23 +160,24 @@ export function resolveVolunteerPortalInterviewEnabledForHidden(input: {
   )
 }
 
-/** 봉사 진행 가능 일정 — 면접 optionCount와 독립 */
+/** 봉사 진행 가능 일정 — 면접 optionCount와 독립. optionCount 0만으로 숨기지 않는다. */
 export function resolveVolunteerPortalActivityScheduleEnabledForHidden(input: {
   formBinding?: unknown
   runtimeContext?: unknown
 }): boolean | undefined {
   const activityId = PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule
-  const runtimeContext =
-    coerceApplicationFormDocument(input.formBinding)?.runtimeContext ??
-    input.runtimeContext ??
-    resolvePortalApplicationFormRuntimeContext(input.formBinding)
-  const optionCount = readDynamicQuestionOptionCount(runtimeContext, activityId)
-  if (optionCount === 0) return false
-  if (optionCount != null && optionCount > 0) return true
-  return undefined
+  return resolveVolunteerDynamicQuestionEnabledForHidden(
+    input,
+    activityId,
+    paragraph =>
+      isDynamicVolunteerActivityScheduleParagraph(paragraph) ||
+      (typeof (paragraph as { id?: unknown }).id === 'string' &&
+        (paragraph as { id: string }).id === activityId),
+    { hideWhenOptionCountZero: false },
+  )
 }
 
-/** 강사 강의 진행 가능 일정 — OSA optionCount 0 / hiddenQuestionKeys 이면 숨김 */
+/** 강사 강의 진행 가능 일정 — hiddenQuestionKeys / runtimeHidden 만 숨김. optionCount 0은 노출 후 제출 차단. */
 export function resolveInstructorPortalAvailableScheduleEnabledForHidden(input: {
   formBinding?: unknown
   runtimeContext?: unknown
@@ -186,5 +190,6 @@ export function resolveInstructorPortalAvailableScheduleEnabledForHidden(input: 
       isInstructorAvailableScheduleParagraphId(
         String((paragraph as { id?: string }).id ?? ''),
       ),
+    { hideWhenOptionCountZero: false },
   )
 }

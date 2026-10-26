@@ -3,6 +3,9 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 /** 파일 업로드 공통 — 첨부 파일 합계 최대 용량 */
 export const FILE_SELECT_MAX_TOTAL_BYTES = 15 * 1024 * 1024
 
+/** 이미지 업로드 공통 — 첨부 파일 합계 최대 용량 */
+export const FILE_SELECT_IMAGE_MAX_TOTAL_BYTES = 20 * 1024 * 1024
+
 /** 용량 안내 문구 (확장자 안내는 케이스별 guideLines에 별도) */
 export const FILE_SELECT_TOTAL_SIZE_GUIDE_LINE =
   '- 파일은 총 최대 15MB까지 업로드 가능합니다.'
@@ -23,9 +26,12 @@ export function isFileSelectTotalSizeExceeded(params: {
   return current + sumFileBytes(params.incoming) > max
 }
 
-export function notifyFileSelectTotalSizeExceeded(): void {
+export function notifyFileSelectTotalSizeExceeded(
+  maxTotalBytes = FILE_SELECT_MAX_TOTAL_BYTES
+): void {
+  const maxMegabytes = Math.round(maxTotalBytes / (1024 * 1024))
   cmsAlertModal.show({
     title: '안내',
-    content: '파일은 총 최대 15MB까지 업로드 가능합니다.',
+    content: `파일은 총 최대 ${maxMegabytes}MB까지 업로드 가능합니다.`,
   })
 }

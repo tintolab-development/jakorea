@@ -54,6 +54,7 @@ import {
   resolveSponsorContactIdsForEdit,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
+import { normalizeTrainedTeacherEducationFormFromApiType } from '@/features/program/trained-teachers/lib/resolve-type-settings-from-api'
 import {
   PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS,
   PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
@@ -64,10 +65,12 @@ import {
   resolveProgramSurveyMenuKeys,
   syncSurveyItemsIntoRegistrationOverlay,
 } from '@/features/program/general/lib/general-survey-menu-keys'
-import { resolveUjatPersistedSurveyMenuKeysForSave } from '@/features/program/ujat/lib/registration-survey-items'
+import {
+  resolveUjatPersistedSurveyMenuKeysForSave,
+} from '@/features/program/ujat/lib/registration-survey-items'
 import {
   generalParticipantTypesFromUjatFlags,
-  ujatParticipantFlagsFromOverlaySave,
+  resolveUjatParticipantTypeFlags,
 } from '@/features/program/ujat/lib/participant-type-flags'
 import {
   looksLikeTrainedTeacherProgramId,
@@ -77,6 +80,7 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { educationScheduleRangeFromPeriodLines } from '@/features/template/lib/format-education-schedule-line'
 import {
   normalizeCourseDeliveredByFormValue,
+  normalizeEducationProcessFormValue,
   normalizeIpOwnedSelectValue,
 } from '@/features/program/shared/lib/program-enum-normalize'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
@@ -399,6 +403,8 @@ const programDetailEditSchemaBase = z.object({
     .optional(),
   /** UJAT 봉사자 모집 비고 — 해당 없음 선택 시 공고 비노출 */
   volunteerRecruitmentNotesNotApplicable: z.enum(['applicable', 'not_applicable']).optional(),
+  /** UJAT 봉사자 모집 행 interviewConfig. Overlay KV가 아니라 모집 행 SSOT. */
+  volunteerInterviewConfig: z.unknown().optional(),
   applicationMethod: z
     .string()
     .optional()
@@ -436,7 +442,12 @@ const programDetailEditSchemaBase = z.object({
   programChannel: z.string().optional(),
   surveySurvey: optionalBoolean,
   surveySatisfaction: optionalBoolean,
+  /** UJAT 설문 진행 항목 — 봉사단/학교 만족도를 합치지 않는다. */
+  surveyVolunteerSatisfaction: optionalBoolean,
+  surveySchoolSatisfaction: optionalBoolean,
   surveyLectureEvaluation: optionalBoolean,
+  /** UJAT 공통정보 Typed participant settings — 기관/봉사자 고정값 포함 */
+  generalParticipantTypes: z.array(z.string()).optional(),
   // 임금 정보
   wageType: z.string().optional(),
   wagePricingTimeUnit: z.string().optional(),
@@ -457,6 +468,13 @@ const programDetailEditSchemaBase = z.object({
   wagePaymentItems: z.string().optional(),
   wagePaymentItemIds: z.array(z.string()).optional(),
   wageDeductionItems: z.string().optional(),
+  /** UJAT 지역별 정원 — GET/PUT region-capacities. 다른 프로그램 유형은 미사용. */
+  ujatRegionCapacity: z
+    .object({
+      h1: z.record(z.object({ classCount: z.string().optional(), volunteerCount: z.string().optional() })),
+      h2: z.record(z.object({ classCount: z.string().optional(), volunteerCount: z.string().optional() })),
+    })
+    .optional(),
   // KPI — BE Integer(int32); 초과 시 MALFORMED_REQUEST
   kpiFinalParticipants: optionalNonNegJavaInt,
   kpiInstructorCount: optionalNonNegJavaInt,
@@ -1170,6 +1188,8 @@ export function programToDetailEditValues(
     titleEn: program.titleEn ?? undefined,
     announcementTitle: isTrainedTeacherForm
       ? program.title?.trim() || undefined
+      : isUjatDetailEditProgram(program)
+        ? program.mainTitle?.trim() || program.title?.trim() || undefined
       : (program.backendProgramType === 'COMPANY_SCHOOL' || isCompanySchoolProgram(program)) &&
           program.generalCommonInfo != null &&
           Object.prototype.hasOwnProperty.call(program.generalCommonInfo, 'announcementTitle')
@@ -1193,23 +1213,39 @@ export function programToDetailEditValues(
       if (raw === 'single' || raw === 'multi') return raw
       return undefined
     })(),
-    educationForm: educationFormValueFromLabel(
-      resolveStoredEducationFormLabel({
-        educationFormLabel: program.generalCommonInfo?.educationFormLabel,
-        scheduleDetails: program.generalCommonInfo?.scheduleDetails,
-        curriculumSessions: program.generalCommonInfo?.curriculumSessions,
-      })
-    ),
-    educationFormScheduleDetail:
-      program.generalCommonInfo?.educationFormScheduleDetail ?? 'common',
-    ipsScheduleDetail: program.generalCommonInfo?.ipsScheduleDetail ?? (() => {
-      const summary = resolveStoredIpsTypeSummary({
-        ipsTypeSummary: program.generalCommonInfo?.ipsTypeSummary,
-        scheduleDetails: program.generalCommonInfo?.scheduleDetails,
-        curriculumSessions: program.generalCommonInfo?.curriculumSessions,
-      })
-      return summary.includes('별') ? 'perSchedule' : 'common'
+    educationForm: (() => {
+      const fromLabel = educationFormValueFromLabel(
+        resolveStoredEducationFormLabel({
+          educationFormLabel: program.generalCommonInfo?.educationFormLabel,
+          scheduleDetails: program.generalCommonInfo?.scheduleDetails,
+          curriculumSessions: program.generalCommonInfo?.curriculumSessions,
+        })
+      )
+      if (!isTrainedTeacherForm) return fromLabel
+      if (fromLabel) return fromLabel
+      if (
+        program.type === 'online' ||
+        program.type === 'offline' ||
+        program.type === 'hybrid'
+      ) {
+        return program.type
+      }
+      return normalizeTrainedTeacherEducationFormFromApiType(program.type)
     })(),
+    educationFormScheduleDetail: isTrainedTeacherForm
+      ? program.generalCommonInfo?.educationFormScheduleDetail
+      : (program.generalCommonInfo?.educationFormScheduleDetail ?? 'common'),
+    ipsScheduleDetail: isTrainedTeacherForm
+      ? program.generalCommonInfo?.ipsScheduleDetail
+      : program.generalCommonInfo?.ipsScheduleDetail ??
+        (() => {
+          const summary = resolveStoredIpsTypeSummary({
+            ipsTypeSummary: program.generalCommonInfo?.ipsTypeSummary,
+            scheduleDetails: program.generalCommonInfo?.scheduleDetails,
+            curriculumSessions: program.generalCommonInfo?.curriculumSessions,
+          })
+          return summary.includes('별') ? 'perSchedule' : 'common'
+        })(),
     ipsCategory: (() => {
       const summary = resolveStoredIpsTypeSummary({
         ipsTypeSummary: program.generalCommonInfo?.ipsTypeSummary,
@@ -1237,7 +1273,9 @@ export function programToDetailEditValues(
       return undefined
     })(),
     teamDivision: program.teamDivision ?? undefined,
-    educationProcess: program.educationProcess ?? undefined,
+    educationProcess: isTrainedTeacherForm
+      ? normalizeEducationProcessFormValue(program.educationProcess)
+      : program.educationProcess ?? undefined,
     ipOwned: normalizeIpOwnedSelectValue(program.ipOwned),
     courseDeliveredBy: normalizeCourseDeliveredByFormValue(program.courseDeliveredBy),
     partnerInvolvement: isTrainedTeacherForm
@@ -1250,7 +1288,13 @@ export function programToDetailEditValues(
       const isTrainedTeacherSeed =
         program.backendProgramType === 'TRAINED_TEACHER' ||
         looksLikeTrainedTeacherProgramId(program.id)
-      const keys = isTrainedTeacherSeed
+      const isUjatProgram = isUjatDetailEditProgram(program)
+      const keys: readonly string[] = isUjatProgram
+        ? resolveUjatPersistedSurveyMenuKeysForSave(
+            program.generalParticipantTypes == null ? program.ujatRegistrationOverlay : undefined,
+            program.generalSurveyMenuKeys
+          ) ?? []
+        : isTrainedTeacherSeed
         ? program.generalSurveyMenuKeys === undefined
           ? []
           : normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys)
@@ -1258,7 +1302,10 @@ export function programToDetailEditValues(
       return {
         surveySurvey: keys.includes('survey'),
         surveySatisfaction: keys.includes('satisfaction'),
+        surveyVolunteerSatisfaction: keys.includes('volunteer_satisfaction'),
+        surveySchoolSatisfaction: keys.includes('school_satisfaction'),
         surveyLectureEvaluation: keys.includes('lecture_evaluation'),
+        generalParticipantTypes: program.generalParticipantTypes,
       }
     })(),
     wageType: undefined,
@@ -1271,6 +1318,12 @@ export function programToDetailEditValues(
     wagePaymentItems: undefined,
     ...wageKpi,
     wageDeductionItems: undefined,
+    ujatRegionCapacity: program.ujatRegionCapacity
+      ? {
+          h1: { ...program.ujatRegionCapacity.h1 },
+          h2: { ...program.ujatRegionCapacity.h2 },
+        }
+      : undefined,
     kpiVolunteerCount:
       clampJavaInt(program.generalCommonInfo?.kpi?.volunteerCount) ??
       clampJavaInt(program.generalVolunteers) ??
@@ -1458,13 +1511,31 @@ export function detailEditValuesToProgramPatch(
   const surveyKeysTouched =
     values.surveySurvey != null ||
     values.surveySatisfaction != null ||
+    values.surveyVolunteerSatisfaction != null ||
+    values.surveySchoolSatisfaction != null ||
     values.surveyLectureEvaluation != null
   const isUjatProgram = isUjatDetailEditProgram(existing)
+  const ujatSurveyFieldsTouched =
+    values.surveySurvey != null ||
+    values.surveyVolunteerSatisfaction != null ||
+    values.surveySchoolSatisfaction != null ||
+    values.surveyLectureEvaluation != null
   const ujatSurveyMenuKeys = isUjatProgram
-    ? resolveUjatPersistedSurveyMenuKeysForSave(
-        existing.ujatRegistrationOverlay,
-        existing.generalSurveyMenuKeys
-      )
+    ? ujatSurveyFieldsTouched
+      ? ([
+          ...(values.surveySurvey ? (['survey'] as const) : []),
+          ...(values.surveyVolunteerSatisfaction
+            ? (['volunteer_satisfaction'] as const)
+            : values.surveySatisfaction
+              ? (['satisfaction'] as const)
+              : []),
+          ...(values.surveySchoolSatisfaction ? (['school_satisfaction'] as const) : []),
+          ...(values.surveyLectureEvaluation ? (['lecture_evaluation'] as const) : []),
+        ] as GeneralProgramSurveyMenuKey[])
+      : resolveUjatPersistedSurveyMenuKeysForSave(
+          existing.generalParticipantTypes == null ? existing.ujatRegistrationOverlay : undefined,
+          existing.generalSurveyMenuKeys
+        )
     : undefined
   // 체크된 항목만 keys에 실음. 전부 해제 시 [] — LNB가 keys를 SSOT로 따른다.
   // UJAT는 overlay 4종을 유지한다. 일반 3종 `satisfaction`으로 접지 않는다.
@@ -1482,9 +1553,14 @@ export function detailEditValuesToProgramPatch(
     isTrainedTeacherProgram && surveyKeysTouched
       ? syncSurveyItemsIntoRegistrationOverlay({}, generalSurveyMenuKeys)
       : undefined
-  const ujatParticipantFlags = isUjatProgram
-    ? ujatParticipantFlagsFromOverlaySave(existing.ujatRegistrationOverlay)
-    : null
+  const ujatParticipantTypes = isUjatProgram
+    ? existing.generalParticipantTypes ??
+      (existing.ujatRegistrationOverlay != null
+        ? generalParticipantTypesFromUjatFlags(
+            resolveUjatParticipantTypeFlags(existing, existing.ujatRegistrationOverlay)
+          )
+        : undefined)
+    : undefined
   const volunteerContactEmail = recruitAudienceScalar(
     values.volunteerContactEmail,
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail,
@@ -1494,8 +1570,11 @@ export function detailEditValuesToProgramPatch(
 
   return {
     title:
-      (isTrainedTeacherProgram ? values.announcementTitle?.trim() : values.title?.trim()) ||
-      existing.title,
+      (isUjatProgram
+        ? values.title?.trim()
+        : isTrainedTeacherProgram
+          ? values.announcementTitle?.trim()
+          : values.title?.trim()) || existing.title,
     textbookName: isTrainedTeacherProgram
       ? values.textbookName !== undefined
         ? values.textbookName
@@ -1570,9 +1649,17 @@ export function detailEditValuesToProgramPatch(
     participatingSchoolCount: clampJavaInt(
       values.kpiFinalSchools ?? existing.participatingSchoolCount
     ),
+    ...(values.ujatRegionCapacity != null
+      ? {
+          ujatRegionCapacity: {
+            h1: { ...(values.ujatRegionCapacity.h1 ?? {}) },
+            h2: { ...(values.ujatRegionCapacity.h2 ?? {}) },
+          },
+        }
+      : {}),
     generalSurveyMenuKeys,
-    ...(ujatParticipantFlags
-      ? { generalParticipantTypes: generalParticipantTypesFromUjatFlags(ujatParticipantFlags) }
+    ...(ujatParticipantTypes !== undefined
+      ? { generalParticipantTypes: ujatParticipantTypes }
       : {}),
     ...(registrationOverlay ? { registrationOverlay } : {}),
     generalCommonInfo: {
@@ -1918,6 +2005,14 @@ export function detailEditValuesToProgramPatch(
             : values.volunteerRecruitmentInterviewEnabled === 'no'
               ? false
               : existing.generalCommonInfo?.volunteerRecruitmentInfo?.generalVolunteerInterviewEnabled,
+        // 면접 여부 표시 라벨도 함께(part9) — 끄기 뒤 nested 에 「면접 있음」 이 남지 않게
+        ...(values.volunteerRecruitmentInterviewEnabled === 'yes' ||
+        values.volunteerRecruitmentInterviewEnabled === 'no'
+          ? {
+              volunteerInterviewEnabledLabel:
+                values.volunteerRecruitmentInterviewEnabled === 'yes' ? '면접 있음' : '면접 없음',
+            }
+          : {}),
         ...finalPassAnnouncementPatch(
           values,
           existing,

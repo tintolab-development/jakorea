@@ -44,7 +44,6 @@ function approvalStatusModifier(status: ApprovalStatusKey | undefined): Approval
 
 export function renderGeneralInstitutionCalendarPreviewTooltipContent({
   events,
-  colorMap,
 }: {
   events: CalendarItem[]
   colorMap: Map<string | number, ScheduleColorPair>
@@ -52,7 +51,7 @@ export function renderGeneralInstitutionCalendarPreviewTooltipContent({
   const seenInstitutionIds = new Set<string>()
 
   return (
-    <div className="participating-institutions-calendar-popover">
+    <div className="calendar-preview-popover">
       {events.map(item => {
         const resolved = resolveInstitutionFromCalendarItem(item)
         if (resolved == null) return null
@@ -66,7 +65,6 @@ export function renderGeneralInstitutionCalendarPreviewTooltipContent({
         seenInstitutionIds.add(institutionKey)
 
         const sessions = findInstitutionSessionsForDate(institution, dateKey)
-        const titleColor = colorMap.get(item.id)?.text
         const metaLine = formatInstitutionCalendarHoverMetaLine(
           institution,
           sessions,
@@ -77,18 +75,15 @@ export function renderGeneralInstitutionCalendarPreviewTooltipContent({
         )
 
         return (
-          <div key={institutionKey} className="participating-institutions-calendar-popover__entry">
-            <div className="participating-institutions-calendar-popover__title-row">
-              <span
-                className="participating-institutions-calendar-popover__title"
-                style={titleColor ? { color: titleColor } : undefined}
-              >
+          <div key={institutionKey} className="calendar-preview-popover__entry">
+            <div className="calendar-preview-popover__title-row">
+              <span className="calendar-preview-popover__title">
                 {institution.schoolName.trim() || '-'}
               </span>
               <CalendarApprovalStatusBadge status={approvalStatus} />
             </div>
-            <div className="participating-institutions-calendar-popover__meta">
-              <span className="participating-institutions-calendar-popover__meta-part participating-institutions-calendar-popover__meta-part--session">
+            <div className="calendar-preview-popover__meta">
+              <span className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session">
                 {metaLine}
               </span>
             </div>

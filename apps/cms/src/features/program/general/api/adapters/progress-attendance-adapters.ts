@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
+import type { Program } from '@/types/domain'
 import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
 import type { AttendanceItemRequest } from '@/shared/api/generated/dashboard/schemas/attendanceItemRequest'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
@@ -25,6 +25,10 @@ import {
 import { mapApiGenderToStudentGenderKey } from '@/features/program/general/api/adapters/student-roster-adapters'
 import { STUDENT_GENDER_LABELS } from '@/features/program/general/model/school-detail-types'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { isGeneralProgressEducationSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
+import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
+import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
+import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
 
 const UI_TO_API_STATUS: Record<ParticipatingIndividualProgressAttendanceStatus, string> = {
   present: 'PRESENT',
@@ -102,51 +106,42 @@ function mapBirthLabel(birthDate?: string | null): string {
   return formatDateLabel(birthDate, 'YYYY.MM.DD') || '-'
 }
 
-function formatScheduleHeader(schedule: DashboardProgramScheduleResponse, index: number): {
+function formatScheduleHeader(
+  schedule: DashboardProgramScheduleResponse,
+  index: number,
+  program?: Program | null
+): {
   round: number
   filterValue: string
   filterLabel: string
   headerTitle: string
+  headerDateLabel: string
   headerScheduleSummary: string
   headerPeriodRangeLabel: string
   headerPrefix: string
 } {
   const round = schedule.sessionNo ?? index + 1
-  const start = schedule.startAt ? dayjs(schedule.startAt) : null
-  const end = schedule.endAt ? dayjs(schedule.endAt) : null
-  const isAllDay =
-    start?.isValid() === true &&
-    end?.isValid() === true &&
-    start.format('HH:mm') === '00:00' &&
-    end.format('HH:mm') === '00:00'
-  const dateLabel =
-    start?.isValid() === true
-      ? formatCmsScheduleDisplayLabel(
-          isAllDay || end?.isValid() !== true
-            ? start.format('YYYY-MM-DD')
-            : end.isSame(start, 'day')
-              ? `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('HH:mm')}`
-              : `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('YYYY-MM-DD HH:mm')}`
-        )
-      : (schedule.scheduleName ?? `${round}회차`)
-  const periodLabel =
-    start?.isValid() === true
-      ? formatCmsScheduleDisplayLabel(
-          end?.isValid() === true && !start.isSame(end, 'day')
-            ? `${start.format('YYYY-MM-DD')} ~ ${end.format('YYYY-MM-DD')}`
-            : start.format('YYYY-MM-DD')
-        )
-      : dateLabel
-  const filterValue = String(schedule.scheduleId ?? round)
-  const filterLabel = `${round}회차 · ${dateLabel}`
+  const leadLabel = program
+    ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
+    : `${round}회차`
+  const built = buildGeneralProgressSessionTableHeader({
+    round,
+    leadLabel,
+    scheduleName: schedule.scheduleName,
+    startAt: schedule.startAt,
+    endAt: schedule.endAt,
+    allDay: schedule.allDay,
+    program,
+  })
   return {
     round,
-    filterValue,
-    filterLabel,
-    headerTitle: `${round}회차 출석`,
-    headerScheduleSummary: filterLabel,
-    headerPeriodRangeLabel: periodLabel,
-    headerPrefix: `${round}회차`,
+    filterValue: String(schedule.scheduleId ?? round),
+    filterLabel: built.filterLabel,
+    headerTitle: built.headerTitle,
+    headerDateLabel: built.dateLabel,
+    headerScheduleSummary: built.headerScheduleSummary,
+    headerPeriodRangeLabel: built.headerPeriodRangeLabel,
+    headerPrefix: built.headerPrefix,
   }
 }
 
@@ -223,6 +218,7 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
   schedules: DashboardProgramScheduleResponse[]
   participants: ProgressAttendanceParticipantInput[]
   attendancesByScheduleId: Record<string, AttendanceItemResponse[]>
+  program?: Program | null
 }): ParticipatingIndividualProgressAttendanceSessionGroup[] {
   const individuals = params.participants.filter(p => {
     const type = (p.participantType ?? '').toUpperCase()
@@ -231,7 +227,7 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
   const roster = individuals.length > 0 ? individuals : params.participants
 
   return params.schedules
-    .filter(s => s.scheduleId != null)
+    .filter(isGeneralProgressEducationSessionSchedule)
     .map((schedule, index) => {
       const scheduleId = String(schedule.scheduleId)
       const attendances = params.attendancesByScheduleId[scheduleId] ?? []
@@ -240,7 +236,7 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
           .filter(a => a.participantId != null)
           .map(a => [String(a.participantId), a] as const)
       )
-      const header = formatScheduleHeader(schedule, index)
+      const header = formatScheduleHeader(schedule, index, params.program)
       const attendanceRecordingOpen = isScheduleAttendanceOpenForDisplay(schedule)
       return {
         id: scheduleId,
@@ -256,6 +252,14 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
               scheduleId,
               byParticipant.has(String(p.participantId))
             )
+          )
+          .filter(
+            p =>
+              !shouldHideGiveUpParticipantFromSchedule({
+                giveUpAt: p.giveUpAt,
+                participantStatus: p.participantStatus,
+                scheduleStartAt: schedule.startAt,
+              })
           )
           .map(p =>
             mapParticipantRow(p, byParticipant.get(String(p.participantId)), schedule)

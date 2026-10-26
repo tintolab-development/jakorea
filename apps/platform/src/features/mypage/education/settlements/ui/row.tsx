@@ -12,9 +12,11 @@ import {
   type SettlementStatusAction,
 } from '../lib/settlement-status-ui'
 import { buildReceiptSubmitPath, buildReceiptViewPath } from '../lib/receipt-path'
-import { buildSettlementPaymentConsentPath } from '../lib/consent-path'
-import { buildSettlementWritePath, type SettlementArea } from '../lib/write-path'
-import { payableItemEvidenceCaption } from '../lib/payment-items'
+import {
+  buildSettlementConfirmPath,
+  buildSettlementWritePath,
+  type SettlementArea,
+} from '../lib/write-path'
 import {
   EducationSessionCard,
   EducationSessionCardHeader,
@@ -25,17 +27,19 @@ import {
 import checkMintUrl from '@/shared/assets/icons/check-mint-small.svg'
 import clockGrayUrl from '@/shared/assets/icons/clock-gray.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
-import { PFAlertModal, PFButton, PFStateBadge, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFCategoryBadge, PFStateBadge, PFText } from '@/shared/ui'
 import styles from './row.module.css'
 
 type EducationSettlementRowProps = {
   item: EducationSettlementItem
   applicationId: string
+  applicationType?: string
   documentKind?: SettlementDocumentKind
   area?: SettlementArea
   operationEndAt?: string
   initialRejectOpen?: boolean
   hideInstructorWrite?: boolean
+  onReceiptWrite?: (path: string) => void
 }
 
 const MARK_ICON = {
@@ -54,54 +58,76 @@ const UNSUBMITTED_DEADLINE_STATUSES = new Set([
 export function EducationSettlementRow({
   item,
   applicationId,
+  applicationType,
   documentKind = 'receipt',
   area = 'education',
   operationEndAt,
   initialRejectOpen = false,
   hideInstructorWrite = false,
+  onReceiptWrite,
 }: EducationSettlementRowProps) {
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
   const config = resolveSettlementStatusUi(item.status, documentKind)
   const sessionId = item.id
-  const writePath = buildSettlementWritePath({ applicationId, sessionId, area })
-  const receiptSubmitPath = buildReceiptSubmitPath({ applicationId, sessionId, area })
+  const writePath = buildSettlementWritePath({
+    applicationId,
+    sessionId,
+    area,
+    applicationType,
+  })
+  const receiptSubmitPath = buildReceiptSubmitPath({
+    applicationId,
+    sessionId,
+    area,
+    applicationType,
+  })
   const receiptViewPath = buildReceiptViewPath({
     applicationId,
     sessionId,
     area,
+    applicationType,
     receiptId: item.receiptId,
     settlementApplicationId: item.settlementApplicationId,
   })
-  const instructorViewPath = buildSettlementPaymentConsentPath({ applicationId, mode: 'view' })
+  const instructorViewPath = buildSettlementConfirmPath({
+    applicationId,
+    sessionId,
+    area,
+    applicationType,
+    mode: 'view',
+  })
   const closeRejectReason = () => {
     setRejectOpen(false)
     const params = new URLSearchParams(window.location.search)
     if (params.get('modal') !== 'reject-reason') return
     params.delete('modal')
     params.delete('sessionId')
-    navigate(
-      { search: params.toString() ? `?${params.toString()}` : '' },
-      { replace: true },
-    )
+    navigate({ search: params.toString() ? `?${params.toString()}` : '' }, { replace: true })
   }
   const amount = item.amount
-  const showAmount = amount != null && config.amountKind != null
+  const showStruckOnly =
+    documentKind === 'payment_statement' &&
+    item.status === 'rejected' &&
+    amount != null
+  const showAmount = amount != null && config.amountKind != null && !showStruckOnly
   const showPreviousAmount =
     documentKind === 'payment_statement' &&
-    item.status === 'correction_completed' &&
-    item.previousAmount != null
+    ((item.status === 'correction_completed' && item.previousAmount != null) ||
+      showStruckOnly)
   const guideMessage =
     item.submitBlockedReason ??
     (documentKind === 'payment_statement' && item.deadlineNotice === 'operation_ended'
       ? PAYMENT_STATEMENT_OPERATION_ENDED_MESSAGE
       : config.message)
   const geminiUnsubmitted =
-    hideInstructorWrite && documentKind === 'payment_statement' && (config.actions ?? []).includes('write')
+    hideInstructorWrite &&
+    documentKind === 'payment_statement' &&
+    (config.actions ?? []).includes('write')
   const showGuide = Boolean(guideMessage) && !geminiUnsubmitted
   const showUnsubmittedDeadline = UNSUBMITTED_DEADLINE_STATUSES.has(item.status)
   const relatedDateIso = showUnsubmittedDeadline
-    ? item.deadlineAt ?? operationEndAt
+    ? (item.deadlineAt ?? operationEndAt)
     : item.submittedAt
   const relatedDatePrefix = showUnsubmittedDeadline ? '제출 마감일' : '제출일'
   const relatedDate = formatDisplayDate(relatedDateIso)
@@ -123,8 +149,24 @@ export function EducationSettlementRow({
     status: item.status,
   })
   const viewPath =
-    documentKind === 'payment_statement' ? instructorViewPath : receiptViewPath
+    documentKind === 'payment_statement'
+      ? item.settlementApplicationId != null
+        ? instructorViewPath
+        : null
+      : receiptViewPath
   const viewDisabled = !viewPath
+  const amountKindLabel =
+    documentKind === 'payment_statement'
+      ? config.amountKind === 'completed'
+        ? '지급 완료 금액'
+        : '정산 신청 금액'
+      : config.amountKind === 'expected'
+        ? '정산 예정금액'
+        : '정산 완료금액'
+  const headline =
+    documentKind === 'payment_statement' && item.sessionMeta
+      ? `${formatEducationSessionDate(item.heldAt)} ${item.sessionMeta}`
+      : formatEducationSessionDate(item.heldAt)
   const reapplyDisabled = isSettlementDeadlinePassed(item.deadlineAt)
 
   const renderAction = (action: SettlementStatusAction) => {
@@ -144,7 +186,12 @@ export function EducationSettlementRow({
               navigate(writePath)
               return
             }
-            if (receiptSubmitPath) navigate(receiptSubmitPath)
+            if (!receiptSubmitPath) return
+            if (onReceiptWrite) {
+              onReceiptWrite(receiptSubmitPath)
+              return
+            }
+            navigate(receiptSubmitPath)
           }}
         >
           {config.writeLabel ?? '영수증 작성하기'}
@@ -213,6 +260,10 @@ export function EducationSettlementRow({
         disabled={reapplyDisabled || reapplyUnavailable}
         onClick={() => {
           if (reapplyDisabled || reapplyUnavailable) return
+          if (documentKind === 'receipt' && onReceiptWrite) {
+            onReceiptWrite(reapplyPath)
+            return
+          }
           navigate(reapplyPath)
         }}
       >
@@ -233,9 +284,13 @@ export function EducationSettlementRow({
               {EDUCATION_SETTLEMENT_PROGRESS_LABEL[item.progress]}
             </PFStateBadge>
           }
-          date={formatEducationSessionDate(item.heldAt)}
+          date={headline}
           subtitle={
-            item.sessionMeta ? (
+            documentKind === 'payment_statement' && item.institutionLabel ? (
+              <PFCategoryBadge size="small" variant="secondary">
+                {item.institutionLabel}
+              </PFCategoryBadge>
+            ) : item.sessionMeta && documentKind !== 'payment_statement' ? (
               <PFText as="span" typo="bd-lg-rg">
                 {item.sessionMeta}
               </PFText>
@@ -252,16 +307,6 @@ export function EducationSettlementRow({
           }
         />
 
-        {documentKind === 'receipt' && (item.payableItems ?? []).length > 0 ? (
-          <div className={styles.payableItems}>
-            {(item.payableItems ?? []).map(payable => (
-              <PFText key={payable.itemType} as="p" typo="bd-sm-rg" color="neutral-cool-600">
-                {payableItemEvidenceCaption(payable)}
-              </PFText>
-            ))}
-          </div>
-        ) : null}
-
         {showGuide && guideMessage ? (
           <EducationSessionGuideBlock
             variant={config.guideVariant ?? 'default'}
@@ -270,12 +315,12 @@ export function EducationSettlementRow({
             message={guideMessage ?? ''}
             description={description}
             actions={
-              actionHint || showAmount || actions.length > 0 ? (
+              actionHint || showAmount || showPreviousAmount || actions.length > 0 ? (
                 <div className={styles.buttons}>
-                  {showAmount ? (
+                  {showAmount || showPreviousAmount ? (
                     <div className={styles.amountContainer}>
                       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-                        {config.amountKind === 'expected' ? '정산 예정금액' : '정산 완료금액'}
+                        {amountKindLabel}
                       </PFText>
                       {showPreviousAmount ? (
                         <PFText
@@ -284,12 +329,14 @@ export function EducationSettlementRow({
                           color="neutral-cool-500"
                           className={styles.amountStruck}
                         >
-                          {item.previousAmount?.toLocaleString('ko-KR')}원
+                          {(item.previousAmount ?? amount)?.toLocaleString('ko-KR')}원
                         </PFText>
                       ) : null}
-                      <PFText as="p" typo="hl-lg" color="black" className={styles.amount}>
-                        {amount.toLocaleString('ko-KR')}원
-                      </PFText>
+                      {showAmount && amount != null ? (
+                        <PFText as="p" typo="hl-lg" color="black" className={styles.amount}>
+                          {amount.toLocaleString('ko-KR')}원
+                        </PFText>
+                      ) : null}
                     </div>
                   ) : null}
 

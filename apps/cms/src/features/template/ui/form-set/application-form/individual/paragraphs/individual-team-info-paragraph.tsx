@@ -1,5 +1,5 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { useIndividualTeamInfoField } from '@/features/template/ui/form-set/application-form/individual/individual-team-info-form-rhf'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -23,19 +23,19 @@ const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 
 
 /** 프로그램 참여자 신청 폼 (개인·팀) — 팀 정보 단락 */
 export function ProgramApplicationFormIndividualTeamInfoParagraph() {
-  const [teamName, setTeamName] = useGeneralApplicationOverlayKv<string>(
+  const [teamName, setTeamName] = useIndividualTeamInfoField<string>(
     'application.individual.teamInfo.teamName',
     ''
   )
-  const [memberCountSelect, setMemberCountSelect] = useGeneralApplicationOverlayKv<string>(
+  const [memberCountSelect, setMemberCountSelect] = useIndividualTeamInfoField<string>(
     'application.individual.teamInfo.memberCountSelect',
     ''
   )
-  const [customMemberCount, setCustomMemberCount] = useGeneralApplicationOverlayKv<string>(
+  const [customMemberCount, setCustomMemberCount] = useIndividualTeamInfoField<string>(
     'application.individual.teamInfo.customMemberCount',
     ''
   )
-  const [teamRole, setTeamRole] = useGeneralApplicationOverlayKv<string>(
+  const [teamRole, setTeamRole] = useIndividualTeamInfoField<string>(
     'application.individual.teamInfo.teamRole',
     TEAM_ROLE_OPTIONS[0]?.value ?? 'leader'
   )

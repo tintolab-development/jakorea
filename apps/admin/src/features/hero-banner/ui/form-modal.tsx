@@ -8,6 +8,7 @@ import {
   CmsRadioGroup,
   ContentModal,
   FileSelectField,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   useCmsAlert,
 } from '@/shared/ui'
 import type { HeroBanner, HeroBannerCreateInput } from '@/entities/hero-banner/model/types'
@@ -20,8 +21,8 @@ import './form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 권장 배너 사이즈는 1920*1080입니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 권장 배너 사이즈는 1920 × 968px입니다.',
 ]
 
 const MODAL_DESCRIPTION =
@@ -293,6 +294,7 @@ function HeroBannerFormBody({
                   accept={IMAGE_ACCEPT}
                   buttonLabel="파일 추가"
                   fileNames={imageFileName ? [imageFileName] : []}
+                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                   onFilesChange={files => {
                     void handleFilesChange(files)
                   }}

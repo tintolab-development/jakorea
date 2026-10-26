@@ -36,25 +36,43 @@ export interface DeleteGuideModalProps {
   confirmLoading?: boolean
 }
 
+/**
+ * `**…**` 한 구간을 굵게 한다.
+ * 마스킹 이름(`한****자`) 안의 `*`도 구분자로 보지 않도록, 줄의 첫 `**`와 마지막 `**`를 한 쌍으로 본다.
+ */
+function splitBracketEmphasis(line: string): Array<{ text: string; bold: boolean }> {
+  return line
+    .split(/(\[[^\]]+\])/g)
+    .filter(part => part !== '')
+    .map(part =>
+      /^\[[^\]]+\]$/.test(part) ? { text: part, bold: true } : { text: part, bold: false }
+    )
+}
+
+export function splitDeleteGuideEmphasis(line: string): Array<{ text: string; bold: boolean }> {
+  const open = line.indexOf('**')
+  const close = line.lastIndexOf('**')
+  if (open < 0 || close <= open) return splitBracketEmphasis(line)
+
+  const parts: Array<{ text: string; bold: boolean }> = []
+  if (open > 0) parts.push({ text: line.slice(0, open), bold: false })
+  const boldText = line.slice(open + 2, close)
+  if (boldText) parts.push({ text: boldText, bold: true })
+  const rest = line.slice(close + 2)
+  if (rest) parts.push(...splitBracketEmphasis(rest))
+  return parts
+}
+
 function renderLineWithEmphasis(line: string) {
-  const parts = line.split(/(\*\*[^*]+\*\*|\[[^\]]+\])/g)
-  return parts.map((part, i) => {
-    if (part === '') return null
-    if (/^\*\*.+\*\*$/.test(part)) {
+  return splitDeleteGuideEmphasis(line).map((part, i) => {
+    if (part.bold) {
       return (
         <strong key={i} className="delete-guide-modal__bold">
-          {part.slice(2, -2)}
+          {part.text}
         </strong>
       )
     }
-    if (/^\[.+\]$/.test(part)) {
-      return (
-        <strong key={i} className="delete-guide-modal__bold">
-          {part}
-        </strong>
-      )
-    }
-    return <span key={i}>{part}</span>
+    return <span key={i}>{part.text}</span>
   })
 }
 

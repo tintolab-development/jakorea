@@ -14,6 +14,7 @@ import {
   isTeacherSettingsProfile,
 } from '../lib/consent-visibility'
 import { buildConsentItemsFromSummaries } from '../lib/map-consents'
+import { ensurePinnedPaymentStatementConsentItem } from '../lib/payment-statement-consent-status'
 
 const CONSENTS_STALE_MS = 30_000
 
@@ -50,7 +51,7 @@ export function useSettingsConsents(): {
       isLoading: false,
       isError: false,
       basicItems: getBasicConsentItems(audience),
-      documentItems: DOCUMENT_CONSENT_ITEMS,
+      documentItems: ensurePinnedPaymentStatementConsentItem(DOCUMENT_CONSENT_ITEMS),
     }
   }
 
@@ -61,6 +62,6 @@ export function useSettingsConsents(): {
     isLoading: query.isPending,
     isError: query.isError && !query.data,
     basicItems: filterBasicConsentItemsByAudience(built.basicItems, audience),
-    documentItems: built.documentItems,
+    documentItems: ensurePinnedPaymentStatementConsentItem(built.documentItems),
   }
 }

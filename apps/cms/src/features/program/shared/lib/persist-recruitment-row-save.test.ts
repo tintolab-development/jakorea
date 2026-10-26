@@ -283,6 +283,93 @@ describe('persist-recruitment-row-save', () => {
     ).toBe('2026-10-16T15:00:00.000Z')
   })
 
+  it('재조회 targetLevels가 옛 컬럼이어도 저장한 참여자 교육 대상을 남긴다', () => {
+    const program = orgProgram()
+    const next = applySavedRecruitmentOntoProgram({
+      fetched: {
+        ...program,
+        targetLevels: ['high', 'university'],
+        targetLevel: 'high',
+      },
+      draft: program,
+      patch: {
+        targetLevels: ['elementary', 'middle', 'high', 'university', 'adult'],
+        targetLevel: 'elementary',
+      },
+      audience: 'participant',
+    })
+    expect(next.targetLevels).toEqual(['elementary', 'middle', 'high', 'university', 'adult'])
+    expect(next.targetLevel).toBe('elementary')
+  })
+
+  it('강사 탭 저장은 참여자 targetLevels 컬럼을 폼 값으로 바꾸지 않는다', () => {
+    const program = orgProgram()
+    const next = applySavedRecruitmentOntoProgram({
+      fetched: { ...program, targetLevels: ['high', 'university'], targetLevel: 'high' },
+      draft: program,
+      patch: { targetLevels: ['adult'], instructorTargets: ['adult'] },
+      audience: 'instructor',
+    })
+    expect(next.targetLevels).toEqual(['high', 'university'])
+    expect(next.instructorTargets).toEqual(['adult'])
+  })
+
+  it('봉사자 모집 대상을 폼에서 바꾸면 행 PATCH에 그 값을 넣는다', () => {
+    const program = orgProgram()
+    const row = program.programRecruitments?.find(item => item.recruitmentType === 'VOLUNTEER')
+    const withTargets = {
+      ...program,
+      volunteerTargets: ['university'],
+      programRecruitments: program.programRecruitments?.map(item =>
+        item === row ? { ...item, volunteerTargets: ['university'] } : item
+      ),
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: withTargets,
+      draft: withTargets,
+      patch: { volunteerTargets: ['high', 'adult'] },
+      audience: 'volunteer',
+    })
+    expect(body?.volunteerTargets).toEqual(['high', 'adult'])
+  })
+
+  it('봉사자 모집 대상이 그대로면 행에 있던 값을 유지한다', () => {
+    const program = orgProgram()
+    const withTargets = {
+      ...program,
+      volunteerTargets: ['university'],
+      programRecruitments: program.programRecruitments?.map(item =>
+        item.recruitmentType === 'VOLUNTEER' ? { ...item, volunteerTargets: ['university'] } : item
+      ),
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: withTargets,
+      draft: withTargets,
+      patch: { volunteerTargets: ['university'] },
+      audience: 'volunteer',
+    })
+    expect(body?.volunteerTargets).toEqual(['university'])
+  })
+
+  it('UJAT가 행에 기록한 봉사자 모집 대상은 폼 원문으로 바꾸지 않는다', () => {
+    const program = orgProgram()
+    const draft = {
+      ...program,
+      programRecruitments: program.programRecruitments?.map(item =>
+        item.recruitmentType === 'VOLUNTEER'
+          ? { ...item, volunteerTargets: ['university', 'adult'] }
+          : item
+      ),
+    }
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: program,
+      draft,
+      patch: { volunteerTargets: ['대학생', '성인'] },
+      audience: 'volunteer',
+    })
+    expect(body?.volunteerTargets).toEqual(['university', 'adult'])
+  })
+
   it('재조회 nested가 옛값이면 저장한 참여자·참여 기관 모집 정보를 화면에 남긴다', () => {
     const program = orgProgram()
     const next = applySavedRecruitmentOntoProgram({

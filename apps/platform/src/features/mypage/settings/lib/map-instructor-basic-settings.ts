@@ -1,5 +1,9 @@
 import type { InstructorRoleRequestProfile } from '@/features/mypage/instructor-apply/api/types'
 import type { InstructorRoleRequestSettlement } from '@/features/mypage/instructor-apply/api/types'
+import {
+  mapInstructorFeeGradeLabel,
+  mapInstructorJaGradeLabel,
+} from '@/features/mypage/instructor-apply/api/response-codes'
 import { EMPTY_SETTINGS_VALUE } from './constants'
 import {
   formatSettingsDateDot,
@@ -82,9 +86,9 @@ function formatFeeGradeLabel(
   cms: InstructorRoleRequestProfile | undefined,
   profile: SettingsProfileInput,
 ): string {
-  const fromMetrics = profile.listMetrics?.instructorFeeGradeLabel?.trim()
+  const fromMetrics = mapInstructorFeeGradeLabel(profile.listMetrics?.instructorFeeGradeLabel)
   if (fromMetrics) return fromMetrics
-  const fromProfile = cms?.defaultFeeGrade?.trim()
+  const fromProfile = mapInstructorFeeGradeLabel(cms?.defaultFeeGrade)
   return fromProfile || EMPTY_SETTINGS_VALUE
 }
 
@@ -92,9 +96,9 @@ function formatJaGradeLabel(
   cms: InstructorRoleRequestProfile | undefined,
   profile: SettingsProfileInput,
 ): string {
-  const fromMetrics = profile.listMetrics?.jaEvaluationGrade?.trim()
+  const fromMetrics = mapInstructorJaGradeLabel(profile.listMetrics?.jaEvaluationGrade)
   if (fromMetrics) return fromMetrics
-  const fromProfile = cms?.defaultJaGrade?.trim()
+  const fromProfile = mapInstructorJaGradeLabel(cms?.defaultJaGrade)
   return fromProfile || EMPTY_SETTINGS_VALUE
 }
 

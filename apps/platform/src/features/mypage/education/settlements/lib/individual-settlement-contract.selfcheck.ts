@@ -13,7 +13,7 @@ import {
 assert.equal(isIndividualScheduleSettlementAudience('INDIVIDUAL'), true)
 assert.equal(isIndividualScheduleSettlementAudience('individual'), true)
 assert.equal(isIndividualScheduleSettlementAudience('VOLUNTEER'), false)
-assert.equal(isIndividualScheduleSettlementAudience('INSTRUCTOR'), false)
+assert.equal(isIndividualScheduleSettlementAudience('INSTRUCTOR'), true)
 assert.equal(isIndividualScheduleSettlementAudience('ORGANIZATION'), false)
 
 assert.equal(

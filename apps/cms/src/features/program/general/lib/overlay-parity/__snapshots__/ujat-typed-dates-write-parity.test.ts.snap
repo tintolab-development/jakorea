@@ -1,0 +1,132 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`UJAT typed 날짜 쓰기 parity (part6) > 레거시 배열 날짜가 있는 typed-detail GET → 반기 PUT 본문 1`] = `
+[
+  [
+    990100,
+    "FIRST_HALF",
+    {
+      "expectedRevision": 3,
+      "halfPlan": {
+        "semesterType": "FIRST_HALF",
+        "stages": [
+          {
+            "rows": [
+              {
+                "dates": [],
+                "displayOrder": 1,
+                "educationMethod": "online",
+                "educationName": "상반기 사전교육(발대식)",
+                "endDate": null,
+                "excludedDates": [],
+                "exclusion": null,
+                "regionCode": null,
+                "rowId": "legacy-FIRST_HALF-PRE_EDUCATION",
+                "scheduleIds": [],
+                "startDate": null,
+                "textbook": null,
+              },
+            ],
+            "stage": "PRE_EDUCATION",
+          },
+          {
+            "rows": [
+              {
+                "dates": [
+                  "2027-04-09",
+                ],
+                "displayOrder": 1,
+                "educationMethod": "offline",
+                "educationName": "상반기 학교 경제교육",
+                "endDate": "2027-06-18",
+                "excludedDates": [
+                  "2027-05-05",
+                  "2027-05-07",
+                ],
+                "exclusion": {
+                  "excludeNone": false,
+                  "excludePublicHoliday": true,
+                  "excludeSaturday": true,
+                  "excludeSunday": true,
+                },
+                "rowId": "legacy-FIRST_HALF-MAIN_EDUCATION",
+                "scheduleIds": [],
+                "startDate": "2027-04-02",
+              },
+              {
+                "dates": [
+                  "2027-04-09",
+                ],
+                "displayOrder": 2,
+                "educationMethod": "OFFLINE",
+                "educationName": "도구 행",
+                "endDate": "2027-04-30",
+                "excludedDates": [],
+                "rowId": "row-tool-1",
+                "scheduleIds": [],
+                "startDate": "2027-04-02",
+              },
+            ],
+            "stage": "MAIN_EDUCATION",
+          },
+          {
+            "rows": [
+              {
+                "dates": [],
+                "displayOrder": 1,
+                "educationMethod": "online",
+                "educationName": "상반기 해단식",
+                "endDate": null,
+                "excludedDates": [],
+                "exclusion": null,
+                "regionCode": null,
+                "rowId": "legacy-FIRST_HALF-POST_EDUCATION",
+                "scheduleIds": [],
+                "startDate": null,
+                "textbook": null,
+              },
+            ],
+            "stage": "POST_EDUCATION",
+          },
+        ],
+      },
+    },
+  ],
+  [
+    990100,
+    "SECOND_HALF",
+    {
+      "expectedRevision": 4,
+      "halfPlan": {
+        "semesterType": "SECOND_HALF",
+        "stages": [
+          {
+            "rows": [
+              {
+                "dates": [],
+                "displayOrder": 1,
+                "educationMethod": "hybrid",
+                "educationName": "하반기 학교 경제교육",
+                "endDate": "2027-11-19",
+                "excludedDates": [],
+                "exclusion": {
+                  "excludeNone": true,
+                  "excludePublicHoliday": false,
+                  "excludeSaturday": false,
+                  "excludeSunday": false,
+                },
+                "regionCode": null,
+                "rowId": "legacy-SECOND_HALF-MAIN_EDUCATION",
+                "scheduleIds": [],
+                "startDate": "2027-09-10",
+                "textbook": null,
+              },
+            ],
+            "stage": "MAIN_EDUCATION",
+          },
+        ],
+      },
+    },
+  ],
+]
+`;

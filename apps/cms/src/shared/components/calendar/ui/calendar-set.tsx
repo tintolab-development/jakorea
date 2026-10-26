@@ -153,8 +153,8 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
     calendarProgramSelection
   )
   const programScheduleColorMap = useMemo(
-    () => buildResolvedScheduleColorMapForPrograms(filteredByCalendar),
-    [filteredByCalendar]
+    () => buildResolvedScheduleColorMapForPrograms(items),
+    [items]
   )
   if (loading) {
     return (
@@ -186,6 +186,7 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
       <div className="calendar-main-container">
         <CalendarMain
           items={filteredByCalendar}
+          scheduleColorMap={programScheduleColorMap}
           selectedDate={selectedDate}
           currentMonth={currentMonth}
           mode={calendarMode}

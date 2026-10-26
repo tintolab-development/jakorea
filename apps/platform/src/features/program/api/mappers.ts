@@ -15,6 +15,7 @@ import type {
   ProgramVolunteerInterviewSchedule,
 } from '../model/types'
 import { PROGRAM_TAB_LABEL, programTabLabels } from '../lib/constants.ts'
+import { fallbackPortalTab, isUjatProgramType, mapPortalTabs } from '../lib/portal-category.ts'
 import {
   programTabFromPortalTab,
   selectRecruitmentsForFocus,
@@ -44,7 +45,6 @@ import {
 import {
   formatDisplayDate,
   formatDisplayDateRange,
-  formatDisplayDateRangeCompact,
   normalizeScheduleDisplayLabel,
   parseScheduleDisplayLabel,
 } from '../../../shared/lib/format-display-date.ts'
@@ -102,15 +102,6 @@ const RECRUITMENT_STATUS = {
   recruiting: 'recruiting',
   closed: 'closed',
 } as const satisfies Record<string, RecruitmentStatus>
-
-const PORTAL_CATEGORY_CODE: Record<string, ProgramTab> = {
-  INSTRUCTOR: 'instructor',
-  ORGANIZATION: 'institution',
-  YOUTH_YOUNG: 'youth',
-}
-
-/** 코드 오름차순: INSTRUCTOR, ORGANIZATION, YOUTH_YOUNG */
-const PORTAL_CATEGORY_ORDER = ['INSTRUCTOR', 'ORGANIZATION', 'YOUTH_YOUNG'] as const
 
 const EDUCATION_FORM_LABEL: Record<EducationForm, string> = {
   online: '온라인',
@@ -232,10 +223,6 @@ function formatRange(start: Date | null, end: Date | null): string {
   return formatDisplayDateRange(start, end, { empty: '-' })
 }
 
-function formatCompactRange(start: Date | null, end: Date | null): string {
-  return formatDisplayDateRangeCompact(start, end, { empty: '-' })
-}
-
 function mapEducationForm(value: string | undefined): EducationForm {
   switch ((value ?? '').trim().toUpperCase()) {
     case 'ONLINE':
@@ -318,54 +305,13 @@ function mapEducationTargets(remote: { educationTarget?: string; educationTarget
   }
 }
 
-function fallbackTab(programType: string | undefined): ProgramTab {
-  switch ((programType ?? '').trim().toUpperCase()) {
-    case 'TRAINED_TEACHER':
-      return 'institution'
-    case 'GENERAL_ORGANIZATION':
-    case 'GEMINI':
-    case 'GEMINI_TRAINING':
-    case 'COMPANY_SCHOOL':
-    case 'ECONOMY':
-      return 'institution'
-    default:
-      return 'youth'
-  }
-}
-
 /**
  * 공개 모집 탭 배지.
  * `portalCategories`가 오면 그 배열 전체를 쓴다. 진행 중 행 하나만 남기지 않는다.
  * 필드가 없는 구 응답만 programType으로 탭 하나를 만든다.
  */
-function isUjatProgramType(programType: string | undefined): boolean {
-  const type = (programType ?? '').trim().toUpperCase()
-  return type === 'UJAT' || type === 'UJAT_PROGRAM'
-}
-
-function publicPortalCategoryCodes(
-  categories: string[] | undefined,
-  programType: string | undefined,
-): string[] {
-  const codes = (categories ?? []).map(item => item.trim().toUpperCase()).filter(Boolean)
-  if (!isUjatProgramType(programType)) return codes
-  return codes.filter(code => code !== 'INSTRUCTOR')
-}
-
-function mapPortalTabs(
-  categories: string[] | undefined,
-  programType: string | undefined
-): ProgramTab[] {
-  if (categories == null) return [fallbackTab(programType)]
-  const codes = new Set(publicPortalCategoryCodes(categories, programType))
-  return PORTAL_CATEGORY_ORDER.flatMap(code => {
-    const tab = PORTAL_CATEGORY_CODE[code]
-    return codes.has(code) && tab ? [tab] : []
-  })
-}
-
 function mapCategory(categories: string[] | undefined, programType: string | undefined): ProgramTab {
-  return mapPortalTabs(categories, programType)[0] ?? fallbackTab(programType)
+  return mapPortalTabs(categories, programType)[0] ?? fallbackPortalTab(programType)
 }
 
 const KNOWN_RECRUITMENT_STATUS = new Set([
@@ -527,16 +473,30 @@ function recruitmentTypeKey(value: string | undefined): string {
 }
 
 const SCHEDULE_KIND_LABEL: Record<string, string> = {
-  PRE_EDUCATION: '사전교육',
-  EDUCATION: '교육',
-  CLOSING: '수료·폐회',
-  SESSION: '회차',
+  PRE_EDUCATION: '봉사자 사전교육',
+  EDUCATION: '교육 진행',
+  CLOSING: '해단식',
+  SESSION: '기관',
 }
 
 const TERM_LABEL: Record<string, string> = {
-  FIRST_HALF: '전반',
-  SECOND_HALF: '후반',
+  FIRST_HALF: '상반기',
+  SECOND_HALF: '하반기',
 }
+
+const UJAT_KIND_ORDER: Record<string, number> = {
+  SESSION: 0,
+  PRE_EDUCATION: 1,
+  EDUCATION: 2,
+  CLOSING: 3,
+}
+
+const UJAT_TERM_ORDER: Record<string, number> = {
+  FIRST_HALF: 0,
+  SECOND_HALF: 1,
+}
+
+const UNCONFIRMED_SCHEDULE_DATE_LABEL = '일정 미정'
 
 function visibleSchedules(schedules: PortalSchedule[] | undefined): PortalSchedule[] {
   return (schedules ?? []).filter(row => row.publiclyVisible !== false)
@@ -581,6 +541,43 @@ function mapEventSchedules(schedules: PortalSchedule[] | undefined) {
   })
 }
 
+function mapUjatPublicEventSchedules(schedules: PortalSchedule[] | undefined) {
+  return visibleSchedules(schedules)
+    .slice()
+    .sort((left, right) => {
+      const leftTerm = readString(left.term)?.toUpperCase() ?? ''
+      const rightTerm = readString(right.term)?.toUpperCase() ?? ''
+      const termDiff = (UJAT_TERM_ORDER[leftTerm] ?? 99) - (UJAT_TERM_ORDER[rightTerm] ?? 99)
+      if (termDiff !== 0) return termDiff
+      const leftKind = readString(left.scheduleKind)?.toUpperCase() ?? ''
+      const rightKind = readString(right.scheduleKind)?.toUpperCase() ?? ''
+      return (UJAT_KIND_ORDER[leftKind] ?? 99) - (UJAT_KIND_ORDER[rightKind] ?? 99)
+    })
+    .flatMap(schedule => {
+      const kind = readString(schedule.scheduleKind)?.toUpperCase()
+      const term = readString(schedule.term)?.toUpperCase()
+      const kindLabel = kind ? SCHEDULE_KIND_LABEL[kind] : undefined
+      const termLabel = term ? TERM_LABEL[term] : undefined
+      const fallbackName = readString(schedule.scheduleName) ?? ''
+      const scheduleLabel = termLabel ?? kindLabel ?? '일정'
+      const name = termLabel ? (kindLabel ?? fallbackName) : kindLabel ? '' : fallbackName
+      const formatted = formatRange(toDate(schedule.startAt), toDate(schedule.endAt))
+      const dateLabel = formatted === '-' ? UNCONFIRMED_SCHEDULE_DATE_LABEL : formatted
+      if (!scheduleLabel && !name) return []
+
+      return [
+        {
+          scheduleLabel,
+          name,
+          dateLabel,
+          ...(schedule.scheduleId != null ? { scheduleId: schedule.scheduleId } : {}),
+          ...(readString(schedule.startAt) ? { startAt: readString(schedule.startAt)! } : {}),
+          ...(readString(schedule.endAt) ? { endAt: readString(schedule.endAt)! } : {}),
+        },
+      ]
+    })
+}
+
 function venueFromSchedules(schedules: PortalSchedule[] | undefined): string {
   const first = visibleSchedules(schedules).find(
     row => readString(row.locationName) || readString(row.address)
@@ -621,7 +618,7 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
       ? [
           {
             label: periodLabel,
-            value: formatCompactRange(recruitmentStart, recruitmentEnd),
+            value: formatRange(recruitmentStart, recruitmentEnd),
           },
         ]
       : []
@@ -644,7 +641,7 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
       if (interviewStart || interviewEnd) {
         phases.push({
           label: selectionLabel('면접 기간'),
-          value: formatCompactRange(interviewStart, interviewEnd),
+          value: formatRange(interviewStart, interviewEnd),
         })
       }
     }
@@ -847,15 +844,14 @@ function mapPortalScheduleDetails(
     const scheduleDateHasTime = Boolean(
       scheduleDateLabel && parseScheduleDisplayLabel(scheduleDateLabel).timeRange
     )
-    const combined =
-      isMultiSessionRound(sessionRound)
-        ? scheduleDateHasTime
-          ? scheduleDateLabel
-          : [scheduleDateLabel, timeSummary]
-              .filter((part): part is string => Boolean(part))
-              .join(' ')
-        : (timeSummary ?? scheduleDateLabel ?? '')
-    const dateLabel = combined ? normalizeScheduleDisplayLabel(combined) : ''
+    // A date-only schedule still needs its canonical date and its group/time
+    // summary. Only a date label that already contains a time is authoritative
+    // for the time portion, for both single- and multi-round schedules.
+    const dateLabel = (scheduleDateHasTime ? [scheduleDateLabel] : [scheduleDateLabel, timeSummary])
+      .filter((part): part is string => Boolean(part))
+      .map(part => normalizeScheduleDisplayLabel(part))
+      .filter(Boolean)
+      .join(' ')
     const educationFormLabel = rows.showEducationForm
       ? optionalText(detail.educationFormLabel)
       : undefined
@@ -944,6 +940,23 @@ function mapPortalEducationScheduleCards(
     label: educationScheduleDetailCardLabel(index, lines.length),
     value,
   }))
+}
+
+function mapEventScheduleCards(
+  eventSchedules: readonly ProgramEventSchedule[],
+): ProgramLabeledValue[] {
+  return eventSchedules.flatMap((item, index) => {
+    const name = item.name.trim()
+    const dateLabel = item.dateLabel.trim() && item.dateLabel !== '-' ? item.dateLabel.trim() : ''
+    const value = [name, dateLabel].filter(Boolean).join(' · ')
+    if (!value) return []
+    return [
+      {
+        label: educationScheduleDetailCardLabel(index, eventSchedules.length),
+        value,
+      },
+    ]
+  })
 }
 
 /**
@@ -1218,6 +1231,8 @@ export function mapPortalProgramDetail(
     hasProjectedEducationProgress(remote) || isGeneralEducationProgressProgram(programType)
   const legacySessions = mapSessions(remote.curricula)
   const legacyEventSchedules = legacySessions.length > 0 ? [] : mapEventSchedules(remote.schedules)
+  const isUjatDetailCase = detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer'
+  const ujatRuntimeSchedules = isUjatDetailCase ? mapUjatPublicEventSchedules(remote.schedules) : []
   const rowVisibility: EducationProgressRowVisibility = {
     showEducationForm: perScheduleEducationForm || !optionalText(remote.educationFormLabel),
     showAssignmentPeriod: isTrainedTeacher,
@@ -1229,7 +1244,7 @@ export function mapPortalProgramDetail(
         rowVisibility
       )
     : legacySessions
-  const eventSchedules = usesEducationProgressFields
+  const projectedScheduleDetails = usesEducationProgressFields
     ? mapPortalScheduleDetails(
         remote.scheduleDetails,
         remote.educationStructure,
@@ -1237,6 +1252,15 @@ export function mapPortalProgramDetail(
         rowVisibility
       )
     : legacyEventSchedules
+  // UJAT's published schedule rows are the canonical half/pre-education/closing
+  // schedule source. A projected common-info structure may be present as well,
+  // but it must not hide the actual program_schedule rows returned by the portal API.
+  const eventSchedules =
+    isUjatDetailCase && ujatRuntimeSchedules.length > 0
+      ? ujatRuntimeSchedules
+      : projectedScheduleDetails.length > 0
+        ? projectedScheduleDetails
+        : legacyEventSchedules
   const educationStructure = usesEducationProgressFields
     ? remote.educationStructure === 'schedule'
       ? 'schedule'
@@ -1266,7 +1290,13 @@ export function mapPortalProgramDetail(
         })
       : eventSchedules.map(item => item.dateLabel).filter(label => label !== '-')
   ).map(line => normalizeScheduleDisplayLabel(line))
-  const recruitmentPeriodLabel = formatCompactRange(appStart, appEnd)
+  const recruitmentPeriodLabel = formatRange(appStart, appEnd)
+  const geminiTrainingRequestStart = toDate(remote.trainingRequestStartDate ?? undefined)
+  const geminiTrainingRequestEnd = toDate(remote.trainingRequestEndDate ?? undefined)
+  const geminiTrainingRequestPeriodLabel =
+    detailCase === 'gemini' && (geminiTrainingRequestStart || geminiTrainingRequestEnd)
+      ? formatRange(geminiTrainingRequestStart, geminiTrainingRequestEnd)
+      : ''
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
   const programDescription = visibleCopy(
@@ -1318,6 +1348,9 @@ export function mapPortalProgramDetail(
     applicationEndDate: appEnd ? formatYmd(appEnd) : null,
     recruitmentPeriodLabel,
     applicationPeriodLabel: recruitmentPeriodLabel,
+    ...(geminiTrainingRequestPeriodLabel
+      ? { geminiTrainingRequestPeriodLabel }
+      : {}),
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetKeys: targets.keys,
@@ -1386,7 +1419,8 @@ export function mapPortalProgramDetail(
     ),
     sessions,
     eventSchedules,
-    recruitmentPhaseGroupLabel: '모집 및 선별 기간',
+    recruitmentPhaseGroupLabel:
+      detailCase === 'gemini' ? '신청 및 연수 기간' : '모집 및 선별 기간',
     recruitmentPhases: mapRecruitmentPhases(
       selected?.ambiguous
         ? undefined
@@ -1394,21 +1428,12 @@ export function mapPortalProgramDetail(
           ? recruitmentRows
           : remote.recruitments,
     ),
-    educationSchedules: usesEducationProgressFields
-      ? mapPortalEducationScheduleCards(remote, educationScheduleLines)
-      : eventSchedules.flatMap((item, index) => {
-          const name = item.name.trim()
-          const dateLabel =
-            item.dateLabel.trim() && item.dateLabel !== '-' ? item.dateLabel.trim() : ''
-          const value = [name, dateLabel].filter(Boolean).join(' · ')
-          if (!value) return []
-          return [
-            {
-              label: educationScheduleDetailCardLabel(index, eventSchedules.length),
-              value,
-            },
-          ]
-        }),
+    educationSchedules:
+      isUjatDetailCase
+        ? []
+        : usesEducationProgressFields
+          ? mapPortalEducationScheduleCards(remote, educationScheduleLines)
+          : mapEventScheduleCards(eventSchedules),
     ...(volunteerInterviewSchedule ? { volunteerInterviewSchedule } : {}),
     extraSections,
     contactValue: contactValue(
@@ -1474,7 +1499,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
     operatingPeriodEnd: opEnd ? formatYmd(opEnd) : '1970-01-01',
     applicationStartDate: appStart ? formatYmd(appStart) : null,
     applicationEndDate: appEnd ? formatYmd(appEnd) : null,
-    recruitmentPeriodLabel: formatCompactRange(appStart, appEnd),
+    recruitmentPeriodLabel: formatRange(appStart, appEnd),
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetKeys: targets.keys,

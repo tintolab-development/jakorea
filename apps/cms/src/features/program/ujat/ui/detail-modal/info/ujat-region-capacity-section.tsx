@@ -9,17 +9,15 @@ import {
 } from '@/features/program/ujat/lib/ujat-region-capacity-display'
 import {
   EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER,
-  UJAT_REGION_CAPACITY_OVERLAY_KEY,
   UJAT_REGION_CAPACITY_SEMESTER_LABEL,
   type UjatRegionCapacityBySemesterState,
   type UjatRegionCapacityField,
   type UjatRegionCapacityRegionName,
   type UjatRegionCapacitySemesterKey,
 } from '@/features/program/ujat/lib/ujat-region-capacity-types'
-import {
-  updateUjatProgramRegistrationOverlayKey,
-  useUjatProgramRegistrationOverlayKv,
-} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import type { UseFormReturn } from 'react-hook-form'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { cloneUjatRegionCapacityState } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-class-capacity-by-region-paragraph.css'
@@ -146,16 +144,17 @@ function SemesterRegionCapacityTableConnected({
   mode,
   fallbackValues,
   regionRows,
+  form,
 }: {
   half: UjatRegionCapacitySemesterKey
   mode: 'view' | 'edit'
   fallbackValues: UjatRegionCapacitySemesterValues
   regionRows: Array<{ left: string; right: string }>
+  form?: UseFormReturn<ProgramDetailEditFormValues>
 }) {
-  const [valuesBySemester] = useUjatProgramRegistrationOverlayKv<UjatRegionCapacityBySemesterState>(
-    UJAT_REGION_CAPACITY_OVERLAY_KEY,
+  const valuesBySemester =
+    (form?.watch('ujatRegionCapacity') as UjatRegionCapacityBySemesterState | undefined) ??
     EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER
-  )
   const values = { ...fallbackValues, ...valuesBySemester[half] }
 
   const updateValue = (
@@ -163,21 +162,21 @@ function SemesterRegionCapacityTableConnected({
     field: UjatRegionCapacityField,
     value: string
   ) => {
-    updateUjatProgramRegistrationOverlayKey<UjatRegionCapacityBySemesterState>(
-      UJAT_REGION_CAPACITY_OVERLAY_KEY,
-      prev => {
-        const p = prev ?? EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER
-        return {
-          ...p,
-          [half]: {
-            ...p[half],
-            [region]: {
-              ...p[half][region],
-              [field]: value,
-            },
+    if (form == null) return
+    const current = cloneUjatRegionCapacityState(form.getValues('ujatRegionCapacity'))
+    form.setValue(
+      'ujatRegionCapacity',
+      {
+        ...current,
+        [half]: {
+          ...current[half],
+          [region]: {
+            ...current[half]?.[region],
+            [field]: value,
           },
-        }
-      }
+        },
+      },
+      { shouldDirty: true, shouldValidate: true }
     )
   }
 
@@ -196,10 +195,12 @@ export function UjatRegionCapacitySection({
   mode,
   h1Values,
   h2Values,
+  form,
 }: {
   mode: 'view' | 'edit'
   h1Values: UjatRegionCapacitySemesterValues
   h2Values: UjatRegionCapacitySemesterValues
+  form?: UseFormReturn<ProgramDetailEditFormValues>
 }) {
   const { labels } = useUjatEducationRegions()
   const regionRows = useMemo(() => buildUjatRegionCapacityPairRows(), [labels])
@@ -211,12 +212,14 @@ export function UjatRegionCapacitySection({
         mode={mode}
         fallbackValues={h1Values}
         regionRows={regionRows}
+        form={form}
       />
       <SemesterRegionCapacityTableConnected
         half="h2"
         mode={mode}
         fallbackValues={h2Values}
         regionRows={regionRows}
+        form={form}
       />
     </div>
   )

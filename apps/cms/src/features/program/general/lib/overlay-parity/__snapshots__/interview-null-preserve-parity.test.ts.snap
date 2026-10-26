@@ -1,0 +1,204 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`interviewConfig 객체 parity (part8) > 모집 행 PATCH — overlay 에 면접 설정 키 없음(저장 typed 있음) 1`] = `undefined`;
+
+exports[`interviewConfig 객체 parity (part8) > 모집 행 PATCH — overlay 에 불가일 키만 있음 1`] = `
+{
+  "appliedUnavailableDates": [
+    "2026-12-11",
+  ],
+  "exceptions": [
+    {
+      "exceptionDate": "2026-12-08",
+      "id": "1793000000000",
+      "selectedSlotKeys": [
+        "1796691600000-1796693400000",
+      ],
+    },
+  ],
+  "exclusionState": {
+    "excludeHoliday": true,
+    "excludeSaturday": true,
+    "excludeSunday": true,
+  },
+  "interviewTimeRange": [
+    "2026-12-07T01:00:00Z",
+    "2026-12-07T03:00:00Z",
+  ],
+  "schemaVersion": 1,
+  "selectedSlotKeys": [
+    "1796605200000-1796607000000",
+    "1796607000000-1796608800000",
+  ],
+  "specificUnavailableDates": [
+    "2026-12-15",
+  ],
+  "timeUnit": 30,
+}
+`;
+
+exports[`interviewConfig 객체 parity (part8) > 모집 행 PATCH — typed 없는 구 프로그램(legacy 접두사 없는 overlay) + 불가일만 변경 1`] = `
+{
+  "appliedUnavailableDates": [
+    "2026-12-11",
+  ],
+  "exceptions": [],
+  "exclusionState": null,
+  "interviewTimeRange": [],
+  "schemaVersion": 1,
+  "selectedSlotKeys": [
+    "1796605200000-1796607000000",
+  ],
+  "specificUnavailableDates": [],
+  "timeUnit": 30,
+}
+`;
+
+exports[`interviewConfig 객체 parity (part8) > 모집 행 PATCH — 조회 overlay 전체(typed 반영) + 불가일 변경 1`] = `
+{
+  "appliedUnavailableDates": [
+    "2026-12-10",
+    "2026-12-11",
+  ],
+  "exceptions": [
+    {
+      "exceptionDate": "2026-12-08",
+      "id": "1793000000000",
+      "selectedSlotKeys": [
+        "1796691600000-1796693400000",
+      ],
+    },
+  ],
+  "exclusionState": {
+    "excludeHoliday": true,
+    "excludeSaturday": true,
+    "excludeSunday": true,
+  },
+  "interviewTimeRange": [
+    "2026-12-07T01:00:00.000Z",
+    "2026-12-07T03:00:00.000Z",
+  ],
+  "schemaVersion": 1,
+  "selectedSlotKeys": [
+    "1796605200000-1796607000000",
+    "1796607000000-1796608800000",
+  ],
+  "specificUnavailableDates": [
+    "2026-12-15",
+  ],
+  "timeUnit": 30,
+}
+`;
+
+exports[`interviewConfig 객체 parity (part8) > 생성 — 면접 ON/OFF 봉사 행 interviewConfig 1`] = `
+{
+  "off": {
+    "appliedUnavailableDates": [],
+    "exceptions": [],
+    "exclusionState": null,
+    "interviewTimeRange": [],
+    "schemaVersion": 1,
+    "selectedSlotKeys": [],
+    "specificUnavailableDates": [],
+    "timeUnit": null,
+  },
+  "on": {
+    "appliedUnavailableDates": [],
+    "exceptions": [],
+    "exclusionState": null,
+    "interviewTimeRange": [],
+    "schemaVersion": 1,
+    "selectedSlotKeys": [
+      "1796605200000-1796607000000",
+    ],
+    "specificUnavailableDates": [],
+    "timeUnit": 30,
+  },
+}
+`;
+
+exports[`면접 기간 null 보존 parity (part8) — 구 GENERAL 모양(행 null, nested 기간 있음) > 공통정보형 PATCH 1`] = `
+{
+  "hasEnd": false,
+  "hasStart": false,
+  "interviewEndDate": undefined,
+  "interviewStartDate": undefined,
+  "schedulePeriod": undefined,
+  "seal": {
+    "end": "2026-12-20T14:59:59.999Z",
+    "start": "2026-12-06T15:00:00.000Z",
+  },
+}
+`;
+
+exports[`면접 기간 null 보존 parity (part8) — 구 GENERAL 모양(행 null, nested 기간 있음) > 모집 탭 뒤 nested 스냅샷 PATCH 1`] = `
+{
+  "hasEnd": true,
+  "hasStart": true,
+  "interviewEndDate": "2026-12-20T14:59:59.999Z",
+  "interviewStartDate": "2026-12-06T15:00:00.000Z",
+  "schedulePeriod": undefined,
+  "seal": undefined,
+}
+`;
+
+exports[`면접 기간 null 보존 parity (part8) — 구 GENERAL 모양(행 null, nested 기간 있음) > 모집 탭 행 PATCH — patch 에 면접 기간 없음 1`] = `
+{
+  "clearFields": [
+    "operationStartDate",
+    "operationEndDate",
+  ],
+  "has": {
+    "interviewConfig": false,
+    "interviewEndAt": false,
+    "interviewStartAt": false,
+  },
+  "interviewConfig": undefined,
+  "interviewEndAt": undefined,
+  "interviewStartAt": undefined,
+}
+`;
+
+exports[`면접 기간 null 보존 parity (part8) — 구 GENERAL 모양(행 null, nested 기간 있음) > 모집 탭 행 PATCH — 폼이 '' 기간을 보냄 1`] = `
+{
+  "clearFields": [
+    "operationStartDate",
+    "operationEndDate",
+  ],
+  "has": {
+    "interviewConfig": false,
+    "interviewEndAt": false,
+    "interviewStartAt": false,
+  },
+  "interviewConfig": undefined,
+  "interviewEndAt": undefined,
+  "interviewStartAt": undefined,
+}
+`;
+
+exports[`면접 기간 null 보존 parity (part8) — 구 GENERAL 모양(행 null, nested 기간 있음) > 전체 PATCH(patch 없음) 1`] = `
+{
+  "hasEnd": true,
+  "hasStart": true,
+  "interviewEndDate": "2026-12-20T14:59:59.999Z",
+  "interviewStartDate": "2026-12-06T15:00:00.000Z",
+  "schedulePeriod": undefined,
+  "seal": {
+    "end": "2026-12-20T14:59:59.999Z",
+    "start": "2026-12-06T15:00:00.000Z",
+  },
+}
+`;
+
+exports[`면접 기간 null 보존 parity (part8) — 구 GENERAL 모양(행 null, nested 기간 있음) > 조회 Program — nested 기간·Program 면접 기간 1`] = `
+{
+  "nested": [
+    "2026-12-06T15:00:00.000Z",
+    "2026-12-20T14:59:59.999Z",
+  ],
+  "program": [
+    undefined,
+    undefined,
+  ],
+}
+`;

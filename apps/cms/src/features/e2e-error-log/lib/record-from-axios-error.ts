@@ -9,6 +9,10 @@
 import type { AxiosError } from 'axios'
 import { createE2eErrorLogSync } from '@/features/e2e-error-log/api/e2e-error-log-mock-api'
 import { getCurrentRouteContext } from '@/features/e2e-error-log/lib/describe-situation'
+import {
+  previewForE2eErrorLog,
+  redactSensitivePreview,
+} from '@/features/e2e-error-log/lib/sanitize-e2e-error-log'
 
 const PREVIEW_MAX = 800
 /** 네트워크/타임아웃 버스트 — 이 구간 안 추가 NETWORK_ERROR 는 버림 */
@@ -33,13 +37,7 @@ function truncate(value: string, max = PREVIEW_MAX): string {
 }
 
 function safeJsonPreview(value: unknown): string | undefined {
-  if (value == null) return undefined
-  try {
-    if (typeof value === 'string') return truncate(value)
-    return truncate(JSON.stringify(value))
-  } catch {
-    return undefined
-  }
+  return redactSensitivePreview(value) ?? (value == null ? undefined : truncate(String(value)))
 }
 
 function extractErrorMeta(data: unknown): {
@@ -144,7 +142,10 @@ export function recordBackendErrorForE2e(error: AxiosError): void {
         errorCode: 'NETWORK_ERROR',
         message: `${message} — 동일 원인으로 ${NETWORK_ERROR_COOLDOWN_MS / 1000}초간 추가 타임아웃 로그는 생략합니다. BE/ngrok 상태를 확인하세요.`,
         traceId: undefined,
-        requestBodyPreview: safeJsonPreview(config?.data),
+        requestBodyPreview: previewForE2eErrorLog({
+          requestPath,
+          body: config?.data,
+        }),
       })
       return
     }
@@ -158,7 +159,10 @@ export function recordBackendErrorForE2e(error: AxiosError): void {
       errorCode: finalCode,
       message,
       traceId,
-      requestBodyPreview: safeJsonPreview(config?.data),
+      requestBodyPreview: previewForE2eErrorLog({
+        requestPath,
+        body: config?.data,
+      }),
       responseBodyPreview: safeJsonPreview(response?.data),
     })
   } catch {

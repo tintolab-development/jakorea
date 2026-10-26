@@ -1,0 +1,33 @@
+.pageTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.pageIconWrap {
+  display: flex;
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pageIcon {
+  display: block;
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+@media (--bp-below-pc) {
+  .pageTitleRow {
+    display: none;
+  }
+}

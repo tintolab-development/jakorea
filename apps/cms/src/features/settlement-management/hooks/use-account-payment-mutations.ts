@@ -39,17 +39,16 @@ export function useMarkAccountPaymentFailedMutation() {
   })
 }
 
-/** P1 export — 발급 시 status: PAID 로 감사·서버 생성 요청 */
+/** R2 bulk-transfer export — 지급 대기(WAITING_PAYMENT) 기준 서버 생성 요청 */
 export function useBulkTransferExportMutation() {
   return useMutation({
     mutationFn: (body: SettlementExportRequest) => requestBulkTransferExportRemote(body),
   })
 }
 
-/** P1 export — 발급 시 status: PAID 로 감사·서버 생성 요청 */
+/** R2 tax-report export — 지급 완료(PAID) 기준 서버 생성 요청 */
 export function useTaxReportExportMutation() {
   return useMutation({
     mutationFn: (body: SettlementExportRequest) => requestTaxReportExportRemote(body),
   })
 }
-

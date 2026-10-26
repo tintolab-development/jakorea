@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { hasIncompleteApplicationFormThirdPartyRecipient } from '@jakorea/form-schema/paragraph-ids/application-form-third-party-recipient'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
@@ -65,6 +64,8 @@ import {
   isApplicationBasicInfoParagraphId,
   isApplicationGuidanceParagraphId,
   isApplicationPreferredScheduleParagraphId,
+  isGeminiInstitutionContactPersonParagraphId,
+  isGeminiInstitutionTrainingInfoParagraphId,
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
@@ -86,9 +87,24 @@ import {
   isUjatVolunteerBasicInfoParagraphId,
   isUjatVolunteerFreeTextItemsParagraphId,
   isUjatVolunteerPreviousTermParagraphId,
+  resolveUjatVolunteerHiddenParagraphIds,
   shouldLockTeacherMobileEmailOnBasicInfo,
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
+import {
+  ApplyGeminiInstitutionContact,
+  ApplyGeminiInstitutionTrainingInfo,
+  emptyGeminiInstitutionContact,
+  emptyGeminiInstitutionTrainingInfo,
+  findIncompleteGeminiInstitutionContactMessage,
+  findIncompleteGeminiInstitutionTrainingInfoMessage,
+  geminiInstitutionContactAnswerFromValues,
+  geminiInstitutionContactValuesFromDraftAnswer,
+  geminiInstitutionTrainingInfoAnswerFromValues,
+  geminiInstitutionTrainingInfoValuesFromDraftAnswer,
+  type ApplyGeminiInstitutionContactValues,
+  type ApplyGeminiInstitutionTrainingInfoValues,
+} from '@/features/program/ui/apply-gemini-institution-info/apply-gemini-institution-info'
 import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/lib/application-form-program-link'
 import { readApplyScheduleMetaFromProgram } from '@/features/program/lib/apply-form-schedule-meta'
 import { resolvePortalApplicationHiddenParagraphIds } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
@@ -198,18 +214,17 @@ import {
 } from '@/features/program/ui/apply-instructor-crime-record/apply-instructor-crime-record'
 import {
   ApplyInstructorAvailableSchedule,
-  buildInstructorApplyScheduleSlots,
   emptyInstructorAvailableSchedule,
   findIncompleteInstructorAvailableScheduleMessage,
   findIncompleteInterviewScheduleMessage,
   findIncompleteVolunteerActivityScheduleMessage,
   INDIVIDUAL_INTERVIEW_SCHEDULE_COPY,
   VOLUNTEER_ACTIVITY_SCHEDULE_COPY,
-  instructorAvailableScheduleAnswerFromValues,
   instructorAvailableScheduleOptionValues,
   instructorAvailableScheduleValuesFromDraftAnswer,
   readPortalApplicationBindingOptionSlots,
   readRuntimeInstructorScheduleSlots,
+  resolveApplyAvailableScheduleSlots,
   type ApplyInstructorAvailableScheduleValues,
 } from '@/features/program/ui/apply-instructor-available-schedule/apply-instructor-available-schedule'
 import {
@@ -484,6 +499,11 @@ export function ProgramApplyPage() {
   const [preferredBlocks, setPreferredBlocks] = useState<ApplyPreferredScheduleBlock[]>([
     createEmptyPreferredBlock(),
   ])
+  const [geminiTrainingInfo, setGeminiTrainingInfo] =
+    useState<ApplyGeminiInstitutionTrainingInfoValues>(emptyGeminiInstitutionTrainingInfo)
+  const [geminiContact, setGeminiContact] = useState<ApplyGeminiInstitutionContactValues>(
+    emptyGeminiInstitutionContact,
+  )
   const [trainedTeachersFixedSelectedIds, setTrainedTeachersFixedSelectedIds] = useState<string[]>(
     []
   )
@@ -551,6 +571,7 @@ export function ProgramApplyPage() {
     applyCase === 'trained-teachers' ||
     program?.registrationKind === 'trainedTeachers' ||
     program?.programType === 'TRAINED_TEACHER'
+  const showGeminiInstitutionApply = applyCase === 'institution-gemini'
   const profileDefaults = useMemo(
     () => trainedTeachersProfileDefaults(profileQuery.data),
     [profileQuery.data]
@@ -745,12 +766,14 @@ export function ProgramApplyPage() {
   const showPreferredScheduleInput =
     showTrainedTeachersPreferredSchedule ||
     showGeneralPreferredSchedule ||
-    showEconomyPreferredSchedule
+    showEconomyPreferredSchedule ||
+    showGeminiInstitutionApply
   const institutionPreferredSessionSelect = useMemo(() => {
-    if (!program || !showGeneralPreferredSchedule) {
+    if (!program || (!showGeneralPreferredSchedule && !showGeminiInstitutionApply)) {
       return { show: false, options: [] as { value: string; label: string }[] }
     }
-    const show = shouldShowApplyPreferredScheduleSessionSelect(program)
+    const show =
+      showGeminiInstitutionApply || shouldShowApplyPreferredScheduleSessionSelect(program)
     const maxSessionsPerDay = resolveApplyPreferredMaxSessionsPerDay(
       program,
       applicationFormRuntimeContext
@@ -759,7 +782,12 @@ export function ProgramApplyPage() {
       show,
       options: show ? buildApplyPreferredSessionSelectOptions(maxSessionsPerDay) : [],
     }
-  }, [program, showGeneralPreferredSchedule, applicationFormRuntimeContext])
+  }, [
+    applicationFormRuntimeContext,
+    program,
+    showGeminiInstitutionApply,
+    showGeneralPreferredSchedule,
+  ])
   const institutionDateOnlyPreferred = useMemo(() => {
     if (!program || !showGeneralPreferredSchedule) return false
     return shouldShowApplySchedulePeriodDateOnlyPreferred(program)
@@ -772,8 +800,9 @@ export function ProgramApplyPage() {
   )
   const preferredScheduleMaxBlocks = useMemo(() => {
     if (!program) return 1
+    if (showGeminiInstitutionApply) return 3
     return resolveApplyPreferredScheduleMaxBlocks(program, applicationFormRuntimeContext)
-  }, [applicationFormRuntimeContext, program])
+  }, [applicationFormRuntimeContext, program, showGeminiInstitutionApply])
   const preferredScheduleMapOptions = useMemo(
     () =>
       institutionDateOnlyPreferred || trainedTeachersDateOnlyPreferred
@@ -852,18 +881,20 @@ export function ProgramApplyPage() {
     )
     return readRuntimeInstructorScheduleSlots(scheduleParagraph)
   }, [applicationFormDocument])
-  const instructorScheduleSlots = useMemo(() => {
-    if (usesOsaAvailableSchedule) return runtimeInstructorScheduleSlots ?? []
-    return (
-      runtimeInstructorScheduleSlots ??
-      (program
-        ? buildInstructorApplyScheduleSlots({
-            educationScheduleLines: program.educationScheduleLines,
-            educationSchedules: program.educationSchedules,
-          })
-        : [])
-    )
-  }, [program, runtimeInstructorScheduleSlots, usesOsaAvailableSchedule])
+  const instructorScheduleSlots = useMemo(
+    () =>
+      resolveApplyAvailableScheduleSlots({
+        runtimeSlots: runtimeInstructorScheduleSlots,
+        allowProgramDisplayFallback: !remoteApplyEnabled && !usesOsaAvailableSchedule,
+        program,
+      }),
+    [
+      program,
+      remoteApplyEnabled,
+      runtimeInstructorScheduleSlots,
+      usesOsaAvailableSchedule,
+    ]
+  )
   const interviewBindingParagraph = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
@@ -892,17 +923,12 @@ export function ProgramApplyPage() {
   }, [applicationFormDocument])
   const volunteerActivitySlots = useMemo(() => {
     const runtimeVolunteer = readRuntimeInstructorScheduleSlots(volunteerActivityBindingParagraph)
-    if (usesOsaAvailableSchedule) return runtimeVolunteer ?? []
-    return (
-      runtimeVolunteer ??
-      (program
-        ? buildInstructorApplyScheduleSlots({
-            educationScheduleLines: program.educationScheduleLines,
-            educationSchedules: program.educationSchedules,
-          })
-        : [])
-    )
-  }, [program, usesOsaAvailableSchedule, volunteerActivityBindingParagraph])
+    return resolveApplyAvailableScheduleSlots({
+      runtimeSlots: runtimeVolunteer,
+      allowProgramDisplayFallback: !remoteApplyEnabled && !usesOsaAvailableSchedule,
+      program,
+    })
+  }, [program, remoteApplyEnabled, usesOsaAvailableSchedule, volunteerActivityBindingParagraph])
   useEffect(() => {
     const currentIds = instructorScheduleSlots.map(slot => slot.id)
     setInstructorSchedule(prev => {
@@ -1018,6 +1044,8 @@ export function ProgramApplyPage() {
                 ? createEmptyApplyPreferredScheduleBlocks(
                     resolveApplyPreferredScheduleInitialBlockCount(program)
                   )
+                : applyCaseForDraft === 'institution-gemini'
+                  ? createEmptyApplyPreferredScheduleBlocks(3)
                 : [createEmptyPreferredBlock()])
           )
           setTrainedTeachersFixedSelectedIds(
@@ -1044,6 +1072,24 @@ export function ProgramApplyPage() {
               fromBasic ?? emptyTrainedTeachersBasicInfo(),
               profileDefaults
             )
+          )
+          const geminiTrainingInfoParagraph = findDraftParagraph(
+            programLinkedDraft,
+            isGeminiInstitutionTrainingInfoParagraphId,
+          )
+          setGeminiTrainingInfo(
+            geminiInstitutionTrainingInfoValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, geminiTrainingInfoParagraph),
+            ) ?? emptyGeminiInstitutionTrainingInfo(),
+          )
+          const geminiContactParagraph = findDraftParagraph(
+            programLinkedDraft,
+            isGeminiInstitutionContactPersonParagraphId,
+          )
+          setGeminiContact(
+            geminiInstitutionContactValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, geminiContactParagraph),
+            ) ?? emptyGeminiInstitutionContact(),
           )
           const teamParagraph = findDraftParagraph(remoteDraft, isApplicationTeamInfoParagraphId)
           setTeamInfo(
@@ -1193,7 +1239,13 @@ export function ProgramApplyPage() {
       if (hydratedFormKeyRef.current === remoteMissKey) return
       hydratedFormKeyRef.current = remoteMissKey
       setDraft(null)
-      setPreferredBlocks([createEmptyPreferredBlock()])
+      setPreferredBlocks(
+        applyCase === 'institution-gemini'
+          ? createEmptyApplyPreferredScheduleBlocks(3)
+          : [createEmptyPreferredBlock()],
+      )
+      setGeminiTrainingInfo(emptyGeminiInstitutionTrainingInfo())
+      setGeminiContact(emptyGeminiInstitutionContact())
       setBasicInfo(
         fillTrainedTeachersBasicInfoFromProfile(emptyTrainedTeachersBasicInfo(), profileDefaults)
       )
@@ -1229,7 +1281,13 @@ export function ProgramApplyPage() {
         })
       )
     )
-    setPreferredBlocks([createEmptyPreferredBlock()])
+    setPreferredBlocks(
+      applyCase === 'institution-gemini'
+        ? createEmptyApplyPreferredScheduleBlocks(3)
+        : [createEmptyPreferredBlock()],
+    )
+    setGeminiTrainingInfo(emptyGeminiInstitutionTrainingInfo())
+    setGeminiContact(emptyGeminiInstitutionContact())
     setBasicInfo(emptyTrainedTeachersBasicInfo())
     setTeamInfo(emptyIndividualTeamInfo())
     setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
@@ -1299,6 +1357,19 @@ export function ProgramApplyPage() {
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {
       if (program == null) return undefined
+
+      if (isGeminiInstitutionTrainingInfoParagraphId(paragraph.id)) {
+        return (
+          <ApplyGeminiInstitutionTrainingInfo
+            value={geminiTrainingInfo}
+            onChange={setGeminiTrainingInfo}
+          />
+        )
+      }
+
+      if (isGeminiInstitutionContactPersonParagraphId(paragraph.id)) {
+        return <ApplyGeminiInstitutionContact value={geminiContact} onChange={setGeminiContact} />
+      }
 
       if (isApplicationBasicInfoParagraphId(paragraph.id)) {
         return (
@@ -1611,10 +1682,13 @@ export function ProgramApplyPage() {
             }
             disabled={trainedTeachersScheduleNotConfigured}
             showSessionSelect={
-              showGeneralPreferredSchedule && institutionPreferredSessionSelect.show
+              (showGeneralPreferredSchedule || showGeminiInstitutionApply) &&
+              institutionPreferredSessionSelect.show
             }
             sessionOptions={
-              showGeneralPreferredSchedule ? institutionPreferredSessionSelect.options : []
+              showGeneralPreferredSchedule || showGeminiInstitutionApply
+                ? institutionPreferredSessionSelect.options
+                : []
             }
             dateOnlyPreferred={
               useInstitutionScheduleBounds
@@ -1794,6 +1868,8 @@ export function ProgramApplyPage() {
     [
       program,
       preferredBlocks,
+      geminiContact,
+      geminiTrainingInfo,
       basicInfo,
       teamInfo,
       guidanceAnswers,
@@ -1822,7 +1898,9 @@ export function ProgramApplyPage() {
       useTrainedTeachersOperatingPeriod,
       showTrainedTeachersPreferredSchedule,
       showGeneralPreferredSchedule,
+      showGeminiInstitutionApply,
       showPreferredScheduleInput,
+      institutionPreferredSessionSelect,
       showPreferredEducationForm,
       institutionScheduleDateBounds.minScheduleDate,
       institutionScheduleDateBounds.maxScheduleDate,
@@ -1983,15 +2061,11 @@ export function ProgramApplyPage() {
       }
     }
     if (displayDraft) {
-      const ujatApplicationType = ujatVolunteerBasicInfo.applicationType
+      const ujatHiddenParagraphIds = resolveUjatVolunteerHiddenParagraphIds(
+        ujatVolunteerBasicInfo.applicationType,
+      )
       for (const paragraph of displayDraft.paragraphs) {
-        if (
-          (ujatApplicationType === 'new' && isUjatVolunteerPreviousTermParagraphId(paragraph.id)) ||
-          (ujatApplicationType === 'ujat-graduate' &&
-            isUjatVolunteerFreeTextItemsParagraphId(paragraph.id))
-        ) {
-          hidden.add(paragraph.id)
-        }
+        if (ujatHiddenParagraphIds.has(paragraph.id)) hidden.add(paragraph.id)
       }
     }
     if (
@@ -2090,10 +2164,7 @@ export function ProgramApplyPage() {
       setSubmitAlert({ description: blockedMessage })
       return
     }
-    if (hasIncompleteApplicationFormThirdPartyRecipient(displayDraft)) {
-      setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
-      return
-    }
+    // 「제공받는 곳」은 CMS 양식 작성 칸이다. 포털 신청 화면에 입력 UI가 없어 필수로 보지 않는다.
     if (showTrainedTeachersApply) {
       const missingConsentId = findMissingRequiredBottomConsentId(displayDraft)
       if (missingConsentId) {
@@ -2297,12 +2368,25 @@ export function ProgramApplyPage() {
         : showPreferredScheduleInput && !skipPreferredScheduleInput
           ? toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
           : null
-      if (
+      const applyScheduleChoiceParagraphId =
+        applyScheduleChoiceParagraph &&
+        typeof applyScheduleChoiceParagraph === 'object' &&
+        'id' in applyScheduleChoiceParagraph
+          ? String((applyScheduleChoiceParagraph as { id?: unknown }).id ?? '').trim()
+          : ''
+      const preferredScheduleParagraphId =
+        trainedTeachersScheduleParagraph?.id ??
+        (applyScheduleChoiceParagraphId ||
+          institutionScheduleParagraph?.id ||
+          'preferredScheduleBlocks')
+      const preferredScheduleVisible =
         showPreferredScheduleInput &&
         !skipPreferredScheduleInput &&
-        !preferredAnswer &&
-        !isTrainedTeachersFixedScheduleTarget
-      ) {
+        !isTrainedTeachersFixedScheduleTarget &&
+        (preferredScheduleParagraphId === 'preferredScheduleBlocks' ||
+          !hiddenParagraphIds.has(preferredScheduleParagraphId))
+      if (preferredScheduleVisible && !preferredAnswer) {
+        setSubmitErrorField(preferredScheduleParagraphId)
         setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
         return
       }
@@ -2324,12 +2408,17 @@ export function ProgramApplyPage() {
           scheduleParagraph.kind === 'single_item' &&
           scheduleParagraph.variant === 'multiple_choice'
         ) {
+          const selectableCount = Math.max(
+            scheduleParagraph.items.length,
+            institutionRuntimeFixedScheduleChoices?.length ?? 0
+          )
           const selected = normalizeInstitutionFixedScheduleAnswerTokens(
             scheduleParagraph.selectedPreviewMultipleIds ?? [],
             applicationFormDocument?.runtimeContext,
             institutionScheduleParagraph
           )
-          if (selected.length === 0) {
+          if (selectableCount > 0 && selected.length === 0) {
+            setSubmitErrorField(scheduleParagraph.id)
             setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
             return
           }
@@ -2339,23 +2428,28 @@ export function ProgramApplyPage() {
       const existingBasicAnswer = basicParagraph
         ? draftAnswerForParagraph(remoteForm?.draftAnswers, basicParagraph)
         : undefined
+      const basicInfoForSubmit = fillTrainedTeachersBasicInfoFromProfile(
+        basicInfo,
+        profileDefaults,
+      )
       const basicAnswer = basicParagraph
-        ? basicInfoAnswerFromValues(basicInfo, {
+        ? basicInfoAnswerFromValues(basicInfoForSubmit, {
             includePreferredEducationFields: showPreferredEducationForm,
             existingAnswer: existingBasicAnswer,
           })
         : null
       if (basicParagraph) {
         const basicIncomplete = resolveGeneralBasicInfoApplyIncomplete(
-          basicInfo,
+          basicInfoForSubmit,
           basicParagraph.id,
         )
         if (basicIncomplete) {
           pendingApplyIncompleteRef.current = basicIncomplete
+          setSubmitErrorField(basicIncomplete.paragraphId)
           setSubmitAlert({ description: basicIncomplete.message })
           return
         }
-        const requestedClassCount = Number.parseInt(basicInfo.classCount, 10)
+        const requestedClassCount = Number.parseInt(basicInfoForSubmit.classCount, 10)
         const maxClassCount = applicationRecruitmentLimits.maxClassCount
         if (
           Number.isFinite(requestedClassCount) &&
@@ -2368,6 +2462,36 @@ export function ProgramApplyPage() {
           return
         }
         if (!basicAnswer) {
+          setSubmitErrorField(basicParagraph.id)
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+      }
+      const geminiTrainingInfoParagraph = findDraftParagraph(
+        displayDraft,
+        isGeminiInstitutionTrainingInfoParagraphId,
+      )
+      const geminiTrainingInfoVisible =
+        geminiTrainingInfoParagraph != null &&
+        !hiddenParagraphIds.has(geminiTrainingInfoParagraph.id)
+      if (geminiTrainingInfoVisible && isRequiredParagraph(geminiTrainingInfoParagraph)) {
+        const trainingInfoError = findIncompleteGeminiInstitutionTrainingInfoMessage(
+          geminiTrainingInfo,
+        )
+        if (trainingInfoError) {
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+      }
+      const geminiContactParagraph = findDraftParagraph(
+        displayDraft,
+        isGeminiInstitutionContactPersonParagraphId,
+      )
+      const geminiContactVisible =
+        geminiContactParagraph != null && !hiddenParagraphIds.has(geminiContactParagraph.id)
+      if (geminiContactVisible && isRequiredParagraph(geminiContactParagraph)) {
+        const contactError = findIncompleteGeminiInstitutionContactMessage(geminiContact)
+        if (contactError) {
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
@@ -2431,7 +2555,7 @@ export function ProgramApplyPage() {
           instructorScheduleSlots
         )
         if (scheduleError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          setSubmitAlert({ description: scheduleError })
           return
         }
       }
@@ -2497,7 +2621,7 @@ export function ProgramApplyPage() {
           volunteerActivitySlots
         )
         if (activityError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          setSubmitAlert({ description: activityError })
           return
         }
       }
@@ -2607,6 +2731,18 @@ export function ProgramApplyPage() {
       if (basicAnswer != null && basicParagraph) {
         overrides[resolveApplicationAnswerKey(basicParagraph)] = basicAnswer
       }
+      if (geminiTrainingInfoVisible && geminiTrainingInfoParagraph) {
+        const trainingInfoAnswer = geminiInstitutionTrainingInfoAnswerFromValues(geminiTrainingInfo)
+        if (trainingInfoAnswer) {
+          overrides[resolveApplicationAnswerKey(geminiTrainingInfoParagraph)] = trainingInfoAnswer
+        }
+      }
+      if (geminiContactVisible && geminiContactParagraph) {
+        const contactAnswer = geminiInstitutionContactAnswerFromValues(geminiContact)
+        if (contactAnswer) {
+          overrides[resolveApplicationAnswerKey(geminiContactParagraph)] = contactAnswer
+        }
+      }
       if (hiddenScheduleAutoSubmitIds && applyScheduleChoiceAnswerKey) {
         overrides[applyScheduleChoiceAnswerKey] = hiddenScheduleAutoSubmitIds
       }
@@ -2638,12 +2774,7 @@ export function ProgramApplyPage() {
       }
       if (instructorScheduleParagraph && instructorScheduleSlots.length > 0) {
         overrides[resolveApplicationAnswerKey(instructorScheduleParagraph)] =
-          runtimeInstructorScheduleSlots != null || usesOsaAvailableSchedule
-            ? instructorAvailableScheduleOptionValues(instructorSchedule, instructorScheduleSlots)
-            : instructorAvailableScheduleAnswerFromValues(
-                instructorSchedule,
-                instructorScheduleSlots
-              )
+          instructorAvailableScheduleOptionValues(instructorSchedule, instructorScheduleSlots)
       }
       if (interviewSubmitVisible && interviewBindingParagraph) {
         const interviewAnswerKey = resolveApplicationAnswerKey(

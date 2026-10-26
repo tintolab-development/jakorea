@@ -464,9 +464,14 @@ export async function saveFormTemplateVersionDraft(args: {
   try {
     await updateFormTemplateVersionRemote(versionId, body)
   } catch (error) {
-    if (getApiErrorCode(error) !== 'FORM_VERSION_IMMUTABLE') throw error
+    if (!isFormVersionCopyOnPutError(error)) throw error
     await createDraftVersionFromImmutable(args.templateCode, versionId, body)
   }
+}
+
+function isFormVersionCopyOnPutError(error: unknown): boolean {
+  const code = getApiErrorCode(error)
+  return code === 'FORM_VERSION_IMMUTABLE' || code === 'FORM_CATALOG_VERSION_IMMUTABLE'
 }
 
 /**

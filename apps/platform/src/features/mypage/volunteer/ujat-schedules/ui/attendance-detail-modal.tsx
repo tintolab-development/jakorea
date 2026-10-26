@@ -1,60 +1,74 @@
 import { PFButton, PFModal, PFText } from '@/shared/ui'
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
-import { useApplicationScheduleAttendanceQuery } from '@/features/mypage/education/applications/api/activity-hooks'
+import { useApplicationScheduleAttendanceParticipantsQuery } from '@/features/mypage/education/applications/api/activity-hooks'
 import { VolunteerAssignmentPanelSkeleton } from '@/features/mypage/shared/ui'
+import type { EducationScheduleItem } from '@/features/mypage/education/schedules/model/types'
 import {
+  formatUjatAttendanceRosterDate,
   resolveScheduleAttendanceQueryErrorMessage,
 } from '../lib/history'
-import { mapPortalScheduleAttendanceDetail } from '../lib/map-attendance'
+import {
+  mapPortalAttendanceParticipantList,
+  type UjatAttendanceRosterVolunteer,
+} from '../lib/map-attendance'
 import styles from './attendance-detail-modal.module.css'
 
 type UjatAttendanceDetailModalProps = {
   open: boolean
+  item: EducationScheduleItem | null
   applicationType: ProgramApplicationType | null | undefined
   applicationId: string | null | undefined
-  scheduleId: number | null
   canViewAttendance: boolean
   onClose: () => void
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function VolunteerCell({ volunteer }: { volunteer: UjatAttendanceRosterVolunteer }) {
   return (
-    <div className={styles.row}>
-      <PFText as="dt" typo="bd-md-rg" color="neutral-cool-500">
-        {label}
-      </PFText>
-      <PFText as="dd" typo="bd-md-md" color="black">
-        {value}
-      </PFText>
-    </div>
+    <PFText as="span" typo="bd-md-md" color="black">
+      {volunteer.name}
+    </PFText>
+  )
+}
+
+function StatusCell({ volunteer }: { volunteer: UjatAttendanceRosterVolunteer }) {
+  return (
+    <PFText
+      as="span"
+      typo="bd-md-md"
+      color={volunteer.attendanceTone === 'absent' ? 'error' : 'black'}
+    >
+      {volunteer.attendanceLabel}
+    </PFText>
   )
 }
 
 export function UjatAttendanceDetailModal({
   open,
+  item,
   applicationType,
   applicationId,
-  scheduleId,
   canViewAttendance,
   onClose,
 }: UjatAttendanceDetailModalProps) {
-  const query = useApplicationScheduleAttendanceQuery(
+  const scheduleId = item?.scheduleId ?? null
+  const query = useApplicationScheduleAttendanceParticipantsQuery(
     applicationType,
     applicationId,
     scheduleId,
     { enabled: open && canViewAttendance },
   )
-  const detail = query.data ? mapPortalScheduleAttendanceDetail(query.data) : null
+  const roster = query.data ? mapPortalAttendanceParticipantList(query.data) : null
+  const dateLabel = item?.heldAt ? formatUjatAttendanceRosterDate(item.heldAt) : null
 
   return (
-    <PFModal open={open} onClose={onClose} title="출결 상세" size="sm">
+    <PFModal open={open} onClose={onClose} title="출석현황 보기" size="lg">
       <div className={styles.body}>
         {!canViewAttendance ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            출결 상세를 조회할 수 없는 일정입니다.
+            출석현황을 조회할 수 없는 일정입니다.
           </PFText>
         ) : query.isLoading ? (
-          <VolunteerAssignmentPanelSkeleton statusMessage="출결 상세를 불러오는 중입니다." />
+          <VolunteerAssignmentPanelSkeleton statusMessage="출석현황을 불러오는 중입니다." />
         ) : query.isError ? (
           <>
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
@@ -64,17 +78,104 @@ export function UjatAttendanceDetailModal({
               다시 시도
             </PFButton>
           </>
-        ) : detail ? (
-          <dl className={styles.list}>
-            <DetailRow label="출결 상태" value={detail.attendanceLabel} />
-            <DetailRow label="배정 학급" value={detail.classLabel} />
-            <DetailRow label="배정 상태" value={detail.assignmentStatusLabel} />
-            <DetailRow label="기관" value={detail.locationName} />
-            <DetailRow label="결석 사유" value={detail.absenceReason} />
-          </dl>
+        ) : roster ? (
+          <>
+            <div className={styles.toolbar}>
+              <PFText as="p" typo="bd-md-bd" color="primary-500" className={styles.date}>
+                {dateLabel || '-'}
+              </PFText>
+              <span className={styles.meta}>
+                <PFText as="span" typo="bd-sm-md" color="neutral-cool-600">
+                  출석 담당자 {roster.managerName}
+                </PFText>
+                <span className={styles.metaDivider} aria-hidden="true" />
+                <PFText as="span" typo="bd-sm-md" color="neutral-cool-600">
+                  {roster.classCountLabel}
+                </PFText>
+              </span>
+            </div>
+            <div className={styles.tableFrame}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>
+                      <PFText as="span" typo="bd-md-bd" color="black">
+                        교육 학년
+                      </PFText>
+                    </th>
+                    <th>
+                      <PFText as="span" typo="bd-md-bd" color="black">
+                        교육 학급
+                      </PFText>
+                    </th>
+                    <th>
+                      <PFText as="span" typo="bd-md-bd" color="black">
+                        봉사자 A
+                      </PFText>
+                    </th>
+                    <th>
+                      <PFText as="span" typo="bd-md-bd" color="black">
+                        출석 현황
+                      </PFText>
+                    </th>
+                    <th>
+                      <PFText as="span" typo="bd-md-bd" color="black">
+                        봉사자 B
+                      </PFText>
+                    </th>
+                    <th>
+                      <PFText as="span" typo="bd-md-bd" color="black">
+                        출석 현황
+                      </PFText>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roster.rows.length === 0 ? (
+                    <tr>
+                      <td className={styles.emptyCell} colSpan={6}>
+                        <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
+                          조회할 출석현황이 없어요.
+                        </PFText>
+                      </td>
+                    </tr>
+                  ) : (
+                    roster.rows.map(row => (
+                      <tr key={row.key}>
+                        {row.showGrade ? (
+                          <td rowSpan={row.gradeRowSpan}>
+                            <PFText as="span" typo="bd-md-md" color="black">
+                              {row.gradeLabel}
+                            </PFText>
+                          </td>
+                        ) : null}
+                        <td>
+                          <PFText as="span" typo="bd-md-md" color="black">
+                            {row.classLabel}
+                          </PFText>
+                        </td>
+                        <td>
+                          <VolunteerCell volunteer={row.volunteerA} />
+                        </td>
+                        <td>
+                          <StatusCell volunteer={row.volunteerA} />
+                        </td>
+                        <td>
+                          <VolunteerCell volunteer={row.volunteerB} />
+                        </td>
+                        <td>
+                          <StatusCell volunteer={row.volunteerB} />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            출결 상세가 없습니다.
+            출석현황이 없습니다.
           </PFText>
         )}
       </div>

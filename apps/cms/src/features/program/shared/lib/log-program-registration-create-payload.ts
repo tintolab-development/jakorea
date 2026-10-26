@@ -55,7 +55,7 @@ export function logRegistrationStepTransitionPayload(args: {
   console.log(`[program registration create] ${args.stepLabel}`, request)
 }
 
-/** 등록 완료 — formBindings 포함 enriched create request */
+/** 등록 완료 — enriched create request(서버 임시저장 ID 없음) + CREATE 후 적용할 양식 코드 */
 export async function logProgramRegistrationCreatePayload(args: {
   program: Program
   variant: RegistrationCreatePayloadVariant
@@ -68,13 +68,10 @@ export async function logProgramRegistrationCreatePayload(args: {
     args.variant,
     args.ujatBaseRequest
   )
-  const request = await enrichProgramCreateRequestWithRegistrationFormBindings(
-    args.program,
-    base,
-    args.preparedFormBindings ?? null
-  )
+  const request = enrichProgramCreateRequestWithRegistrationFormBindings(args.program, base)
+  const formsAfterCreate = (args.preparedFormBindings?.forms ?? []).map(item => item.templateCode)
   const prefix = args.stepLabel
     ? `[program registration create] ${args.stepLabel}`
     : '[program registration create]'
-  console.log(prefix, request)
+  console.log(prefix, request, { formsAfterCreate })
 }

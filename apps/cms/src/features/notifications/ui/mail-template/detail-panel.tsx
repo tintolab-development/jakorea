@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import { formatMailPreviewPerson } from '@/features/notifications/model/mail-template/preview'
@@ -14,8 +15,13 @@ type DetailPanelProps = {
 export function DetailPanel({ template, categoryName, onPreview, loading }: DetailPanelProps) {
   if (loading) {
     return (
-      <div className="mail-template-detail mail-template-detail--empty" aria-busy="true">
-        불러오는 중…
+      <div
+        className="mail-template-detail mail-template-detail--empty page-content-loading"
+        role="status"
+        aria-label="로딩 중"
+        aria-busy="true"
+      >
+        <Spin size="large" />
       </div>
     )
   }

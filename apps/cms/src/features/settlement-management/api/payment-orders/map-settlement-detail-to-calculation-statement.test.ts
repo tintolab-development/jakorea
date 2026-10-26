@@ -96,6 +96,92 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
     expect(mapped.blocks[0]?.lines[0]?.basisDetail).toBeUndefined()
   })
 
+  it('교통비 calculationDetail이 없어도 거리 스냅샷을 basisDetail로 연결한다', () => {
+    const mapped = mapSettlementDetailToProgramCalculationStatement(
+      lineRow,
+      settlement({
+        items: [{ type: 'transportation', description: '교통비', amount: 51000 }],
+      }),
+      'JA 경제교실',
+      '홍길동',
+      {
+        settlementId: 1001,
+        provider: 'NAVER_MAPS',
+        oneWayDistanceKm: 36.5,
+        roundTripDistanceKm: 73,
+        tollAmount: 1000,
+        fuelType: '휘발유',
+        calculatedTransportAmount: 51000,
+      }
+    )
+
+    expect(mapped.blocks[0]?.lines[0]?.basisDetail).toMatchObject({
+      layout: 'transportSnapshot',
+      calculatedTransportAmount: 51000,
+    })
+  })
+
+  it('교통비 basisJson에 총액이 없으면 정산 행 amount를 총액으로 사용한다', () => {
+    const mapped = mapSettlementDetailToProgramCalculationStatement(
+      lineRow,
+      settlement({
+        items: [
+          {
+            type: 'transportation',
+            description: '교통비',
+            amount: 199052,
+            calculationDetail: {
+              basisJson: JSON.stringify({
+                itemType: 'TRANSPORTATION',
+                provider: 'NAVER_MAPS',
+                oneWayDistanceKm: 417.74,
+                roundTripDistanceKm: 835.48,
+                tollFeeWon: 44000,
+                fuelType: 'GASOLINE',
+                fuelCostWon: 155052,
+              }),
+            },
+          },
+        ],
+      }),
+      'JA 경제교실',
+      '홍길동'
+    )
+
+    expect(mapped.blocks[0]?.lines[0]?.basisDetail).toMatchObject({
+      layout: 'transportSnapshot',
+      fuelCostWon: 155052,
+      tollAmount: 44000,
+      calculatedTransportAmount: 199052,
+    })
+  })
+
+  it('교통비 snapshot fallback도 fuelCostWon이 아니라 calculatedTransportAmount를 총액으로 사용한다', () => {
+    const mapped = mapSettlementDetailToProgramCalculationStatement(
+      lineRow,
+      settlement({
+        items: [{ type: 'transportation', description: '교통비', amount: 199052 }],
+      }),
+      'JA 경제교실',
+      '홍길동',
+      {
+        settlementId: 1001,
+        provider: 'NAVER_MAPS',
+        oneWayDistanceKm: 417.74,
+        roundTripDistanceKm: 835.48,
+        tollAmount: 44000,
+        fuelType: 'GASOLINE',
+        calculatedTransportAmount: 199052,
+        snapshotAt: '2026-10-24T13:09:52.882808Z',
+      }
+    )
+
+    expect(mapped.blocks[0]?.lines[0]?.basisDetail).toMatchObject({
+      layout: 'transportSnapshot',
+      calculatedTransportAmount: 199052,
+    })
+  })
+
   it('meal / activity kind 매핑', () => {
     const mapped = mapSettlementDetailToProgramCalculationStatement(
       lineRow,
@@ -129,5 +215,30 @@ describe('mapSettlementDetailToInstructorPageCalculationStatement', () => {
     expect(mapped.basic.lectureFeeStandardAmount).toBe('1,200,000원')
     expect(mapped.basic.phoneDisplay).toBe('-')
     expect(mapped.basic.genderBirthDisplay).toBe('-')
+  })
+
+  it('강사 상세 경로도 교통비 스냅샷을 산정 기준 상세로 연결한다', () => {
+    const mapped = mapSettlementDetailToInstructorPageCalculationStatement(
+      lineRow,
+      settlement({
+        items: [{ type: 'transportation', description: '교통비', amount: 51000 }],
+      }),
+      instructorIdentityFromLine('홍길동'),
+      'JA 경제교실',
+      {
+        settlementId: 1001,
+        provider: 'NAVER_MAPS',
+        oneWayDistanceKm: 36.5,
+        roundTripDistanceKm: 73,
+        tollAmount: 1000,
+        fuelType: '휘발유',
+        calculatedTransportAmount: 51000,
+      }
+    )
+
+    expect(mapped.blocks[0]?.lines[0]?.basisDetail).toMatchObject({
+      layout: 'transportSnapshot',
+      calculatedTransportAmount: 51000,
+    })
   })
 })

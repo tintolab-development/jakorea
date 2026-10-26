@@ -15,6 +15,9 @@ export type UjatDocumentAttachedFile = {
   questionKey: string
   fileObjectId: number
   fileName: string
+  downloadable?: boolean
+  /** 이번 화면에서 올린 파일만 알 수 있다. 서버에서 복원한 파일은 없음 */
+  fileSize?: number
 }
 
 export function buildUjatDocumentAnswers(

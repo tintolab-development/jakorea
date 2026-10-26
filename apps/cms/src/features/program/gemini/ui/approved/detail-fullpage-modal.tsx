@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import { Result } from 'antd'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import {
@@ -7,7 +8,11 @@ import {
   type GeminiApprovedTrainingPrivacyUnmasked,
 } from '../../api/visiting-training/service'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import { DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
+import {
+  getApiErrorHttpStatus,
+  readApiErrorAlertMessage,
+} from '@/shared/lib/extract-api-error-message'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
@@ -35,7 +40,7 @@ import {
   parseGeminiApprovedTrainingDetailLnb,
   type GeminiApprovedTrainingDetailLnbKey,
 } from '../../lib/approved/detail-url'
-import { formatTrainingDatetimeDisplay } from '../../lib/approved/format-display'
+import { formatConfirmedTrainingDatetimeDisplay } from '../../lib/approved/format-display'
 import { GeminiApprovedTrainingDetailInstructorApplicationTab } from './detail-instructor-application-tab'
 import { GeminiApprovedTrainingDetailProgramInfoTab } from './detail-program-info-tab'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
@@ -60,7 +65,14 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     searchParams.get(GEMINI_APPROVED_TRAINING_LNB_PARAM)
   )
   const todayKey = useToday()
-  const { detail, isLoading } = useGeminiApprovedTrainingDetail(approvedTrainingId)
+  const {
+    detail,
+    isLoading,
+    isError: isDetailError,
+    error: detailError,
+    isRefetching: isDetailRefetching,
+    refetch: refetchDetail,
+  } = useGeminiApprovedTrainingDetail(approvedTrainingId)
   const [unmasked, setUnmasked] = useState<GeminiApprovedTrainingPrivacyUnmasked | null>(null)
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
@@ -107,7 +119,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     }
   }, [detail, personalInfoRevealed, unmasked])
 
-  const trainingDatetimeLabel = detail ? formatTrainingDatetimeDisplay(detail) : '-'
+  const trainingDatetimeLabel = detail ? formatConfirmedTrainingDatetimeDisplay(detail) : '-'
   const detailTitle = detail
     ? detail.instructorAssigned && trainingDatetimeLabel !== '-'
       ? `${detail.institutionName} (${trainingDatetimeLabel})`
@@ -184,13 +196,36 @@ export function GeminiApprovedTrainingDetailFullPageModal({
 
   const deleteGuide = resolveGeminiDeleteGuideModalCopy('연수', 1)
 
+  const detailBodyError =
+    isLoading || detail
+      ? null
+      : isDetailError && getApiErrorHttpStatus(detailError) !== 404
+        ? (
+            <Result
+              status="error"
+              title="승인 연수 정보를 불러오지 못했습니다."
+              subTitle={readApiErrorAlertMessage(detailError, '잠시 후 다시 시도해 주세요.')}
+              extra={
+                <CmsButton
+                  variant="secondary"
+                  size="large"
+                  loading={isDetailRefetching}
+                  onClick={refetchDetail}
+                >
+                  다시 시도
+                </CmsButton>
+              }
+            />
+          )
+        : '승인 연수 정보를 찾을 수 없습니다.'
+
   return (
     <DetailFullPageModal
       open={Boolean(approvedTrainingId)}
       onClose={onClose}
       title={detailTitle}
       loading={isLoading}
-      error={!isLoading && !detail ? '승인 연수 정보를 찾을 수 없습니다.' : null}
+      error={detailBodyError}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="program-detail-fullpage-modal gemini-recruitment-detail-fullpage-modal"
       sidebar={

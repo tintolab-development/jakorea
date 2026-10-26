@@ -16,6 +16,8 @@ import {
   COMPANY_SCHOOL_FIXED_CURRICULUM_SESSIONS,
   COMPANY_SCHOOL_UNSELECTED,
   createDefaultCompanySchoolRegistrationRhfValues,
+  isCompanySchoolCommonInfoOverlayKey,
+  isKnownCompanySchoolCommonInfoOverlayKey,
 } from './registration-rhf-values'
 import { importLegacyCompanySchoolRecruitmentOverlay } from './registration-rhf-recruitment'
 import { importLegacyCompanySchoolApplicationOverlay } from './registration-rhf-application'
@@ -96,6 +98,31 @@ function readSession(
     title: readText(overlay, titleKey, fallback.title),
     description: readText(overlay, descriptionKey, fallback.description),
   }
+}
+
+const SCHEDULE_LINES_KEY = 'economyRegistration.educationScheduleSettings.scheduleLines'
+
+/** C10: legacy overlay의 일정 줄(문자열 배열)을 읽는다. 없거나 형식이 다르면 []. */
+function readScheduleLines(overlay: Record<string, unknown>): string[] {
+  const raw = overlay[SCHEDULE_LINES_KEY]
+  if (!Array.isArray(raw)) return []
+  return raw.filter((line): line is string => typeof line === 'string')
+}
+
+/**
+ * C10: 공통정보 prefix 중 명시 RHF 필드가 아닌 키(`kpi.volunteer`, `kpi.educationProgress.*`,
+ * 일정 UI 키 등)는 sidecar로 보존한다. 이전에는 import 시 유실됐다.
+ */
+export function extractCompanySchoolLegacySidecar(
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  const sidecar: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(overlay)) {
+    if (!isCompanySchoolCommonInfoOverlayKey(key)) continue
+    if (isKnownCompanySchoolCommonInfoOverlayKey(key)) continue
+    sidecar[key] = value
+  }
+  return sidecar
 }
 
 function extractCommon(
@@ -189,7 +216,12 @@ function extractCommon(
       ? asDateRange(overlay['economyRegistration.educationScheduleSettings.dateRangeSeal'])
       : null,
     educationScheduleMode: 'period',
-    educationScheduleLines: [],
+    educationScheduleLines: readScheduleLines(overlay),
+    operationAnchorIso: hasOwn(overlay, 'economyRegistration.basicInfo.operationAnchorIso')
+      ? typeof overlay['economyRegistration.basicInfo.operationAnchorIso'] === 'string'
+        ? (overlay['economyRegistration.basicInfo.operationAnchorIso'] as string)
+        : null
+      : null,
     generalSurveyMenuKeys: hasOwn(overlay, 'economyRegistration.basicInfo.surveyItems')
       ? (surveyMenuKeysFromRegistrationOverlay(overlay) ?? [])
       : defaults.generalSurveyMenuKeys,
@@ -203,6 +235,7 @@ export function importLegacyOverlayToCompanySchoolCanonical(args: {
   return {
     schemaVersion: COMPANY_SCHOOL_REGISTRATION_CANONICAL_VERSION,
     common: extractCommon(overlay),
+    sidecar: extractCompanySchoolLegacySidecar(overlay),
     recruit: importLegacyCompanySchoolRecruitmentOverlay(overlay),
     application: importLegacyCompanySchoolApplicationOverlay(overlay),
   }

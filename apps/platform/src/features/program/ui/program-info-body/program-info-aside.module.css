@@ -50,6 +50,12 @@
   object-position: 50% 50%;
 }
 
+.applyBlock {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
 .applyButton {
   display: flex;
   width: 100%;

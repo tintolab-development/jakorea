@@ -2,7 +2,6 @@
  * 프로그램 상세 정보 탭 - 상수, 라벨 맵, 날짜 포맷 유틸
  */
 
-import dayjs from 'dayjs'
 import type { DateValue } from '@/types'
 import type { Program, ProgramLifecycleStatus, TargetLevel } from '@/types/domain'
 import {
@@ -36,20 +35,63 @@ export function formatDateRange(start: DateValue | undefined, end: DateValue | u
 
 // ─── 모집 상태 ─────────────────────────────────────────────
 
-/** 모집 기간 기준 상태 (날짜 없으면 null, 목록·상세 공통) */
-export function getRecruitmentStatus(
-  program: Program
-): 'scheduled' | 'recruiting' | 'closed' | null {
-  const start = program.applicationStartDate
-  const end = program.applicationEndDate
-  if (!start || !end) return null
-  const now = dayjs()
-  const startDate = dayjs(start)
-  const endDate = dayjs(end)
-  if (!startDate.isValid() || !endDate.isValid()) return null
-  if (now.isBefore(startDate, 'day')) return 'scheduled'
-  if (!now.isBefore(startDate, 'day') && !now.isAfter(endDate, 'day')) return 'recruiting'
+export type RecruitmentStatus = 'scheduled' | 'recruiting' | 'closed'
+
+const KST_DATE_PARTS = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** ISO/date-only 값을 Asia/Seoul 기준 달력일로 정규화한다. */
+function kstDateKey(value: DateValue | undefined): string | null {
+  if (!value) return null
+
+  if (value instanceof Date && Number.isNaN(value.getTime())) return null
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    const dateOnly = /^(\d{4})[.-](\d{1,2})[.-](\d{1,2})$/.exec(trimmed)
+    if (dateOnly) {
+      return `${dateOnly[1]}-${dateOnly[2].padStart(2, '0')}-${dateOnly[3].padStart(2, '0')}`
+    }
+
+    // timezone 없는 API/폼 값은 KST로 저장된 값으로 취급한다.
+    const hasTimezone = /(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(trimmed)
+    const parsed = new Date(hasTimezone ? trimmed : `${trimmed}+09:00`)
+    if (Number.isNaN(parsed.getTime())) return null
+    value = parsed
+  }
+
+  const parts = KST_DATE_PARTS.formatToParts(value)
+  const year = parts.find(part => part.type === 'year')?.value
+  const month = parts.find(part => part.type === 'month')?.value
+  const day = parts.find(part => part.type === 'day')?.value
+  return year && month && day ? `${year}-${month}-${day}` : null
+}
+
+/** 모집 기간 기준 상태. 시작일·종료일은 양 끝을 포함하며, 날짜가 없으면 null이다. */
+export function getRecruitmentStatusFromDates(
+  start: DateValue | undefined,
+  end: DateValue | undefined,
+  now: DateValue = new Date()
+): RecruitmentStatus | null {
+  const startDate = kstDateKey(start)
+  const endDate = kstDateKey(end)
+  const today = kstDateKey(now)
+  if (!startDate || !endDate || !today) return null
+  if (today < startDate) return 'scheduled'
+  if (today <= endDate) return 'recruiting'
   return 'closed'
+}
+
+/** 참여자 모집 기간 기준 상태 (날짜 없으면 null, 목록·상세 공통) */
+export function getRecruitmentStatus(
+  program: Program,
+  now?: DateValue
+): RecruitmentStatus | null {
+  return getRecruitmentStatusFromDates(program.applicationStartDate, program.applicationEndDate, now)
 }
 
 /** 신청 기간 기준 참여자(수강자) 모집 현황 → lifecycle 키 (td 색상·라벨: 참여자 정보 탭·공통 정보 공통) */
@@ -67,10 +109,17 @@ export function getParticipantRecruitmentLifecycle(
   program: Program,
   overrides?: Pick<Program, 'applicationStartDate' | 'applicationEndDate'>
 ): ProgramLifecycleStatus | null {
-  const effective = overrides ? { ...program, ...overrides } : program
-  const s = getRecruitmentStatus(effective)
+  const s = getParticipantRecruitmentStatus(program, overrides)
   if (s == null) return null
   return PARTICIPANT_RECRUITMENT_STATUS_TO_LIFECYCLE[s]
+}
+
+export function getParticipantRecruitmentStatus(
+  program: Program,
+  overrides?: Pick<Program, 'applicationStartDate' | 'applicationEndDate'>
+): RecruitmentStatus | null {
+  const effective = overrides ? { ...program, ...overrides } : program
+  return getRecruitmentStatus(effective)
 }
 
 /** @deprecated getRecruitmentStatus 사용 (null 처리 통일) */
@@ -97,19 +146,36 @@ export const INTERVIEW_METHOD_OPTIONS = [
 
 export function getRecruitmentStatusLabel(program: Program): string {
   const v = getRecruitmentStatusValue(program)
-  const opt = RECRUITMENT_RADIO_OPTIONS.find(o => o.value === v)
-  return opt?.label ?? '-'
+  return getRecruitmentStatusLabelForStatus(v)
 }
 
-/** 강사 모집 현황: lifecycleStatus를 모집 예정/모집 중/모집 마감 세 가지로 매핑 (RecruitmentStatusBadge 공통) */
+/** 모집 현황 상태를 모집 탭 전용 라벨로 변환한다. lifecycle 라벨과 섞지 않는다. */
+export function getRecruitmentStatusLabelForStatus(
+  status: RecruitmentStatus | null,
+  audience?: 'participant' | 'instructor' | 'volunteer'
+): string {
+  if (!status) return '-'
+  const label = RECRUITMENT_RADIO_OPTIONS.find(option => option.value === status)?.label
+  if (!label) return '-'
+  const prefix =
+    audience === 'participant'
+      ? '참여자'
+      : audience === 'instructor'
+        ? '강사'
+        : audience === 'volunteer'
+          ? '봉사자'
+          : undefined
+  return prefix ? `${prefix} ${label}` : label
+}
+
+/** 강사 모집 기간 기준 상태 */
 export function getInstructorRecruitmentStatus(
   program: Program
-): 'scheduled' | 'recruiting' | 'closed' | null {
-  const status = program.lifecycleStatus
-  if (!status) return null
-  if (status === 'recruiting_instructors') return 'recruiting'
-  if (status === 'planned' || status === 'recruiting_students') return 'scheduled'
-  return 'closed'
+): RecruitmentStatus | null {
+  return getRecruitmentStatusFromDates(
+    program.instructorApplicationStartDate,
+    program.instructorApplicationEndDate
+  )
 }
 
 /** 봉사자 모집 현황 → lifecycle 키 (봉사자 모집 정보 탭) */
@@ -128,31 +194,19 @@ export function getVolunteerRecruitmentLifecycle(
   overrides?: Pick<Program, 'volunteerApplicationStartDate' | 'volunteerApplicationEndDate'>
 ): ProgramLifecycleStatus | null {
   const effective = overrides ? { ...program, ...overrides } : program
-  const start = effective.volunteerApplicationStartDate ?? effective.applicationStartDate
-  const end = effective.volunteerApplicationEndDate ?? effective.applicationEndDate
-  if (!start || !end) {
-    const status = getVolunteerRecruitmentStatus(program)
-    return status != null ? VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[status] : null
-  }
-  const s = getRecruitmentStatus({ ...effective, applicationStartDate: start, applicationEndDate: end })
+  const s = getVolunteerRecruitmentStatus(effective)
   if (s == null) return null
   return VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[s]
 }
 
-/** 봉사자 모집 현황: lifecycleStatus를 모집 예정/모집 중/모집 마감 세 가지로 매핑 */
+/** 봉사자 모집 기간 기준 상태 */
 export function getVolunteerRecruitmentStatus(
   program: Program
-): 'scheduled' | 'recruiting' | 'closed' | null {
-  const status = program.lifecycleStatus
-  if (!status) return null
-  if (status === 'recruiting_volunteers') return 'recruiting'
-  if (
-    status === 'volunteer_recruitment_planned' ||
-    status === 'planned' ||
-    status === 'recruiting_students'
+): RecruitmentStatus | null {
+  return getRecruitmentStatusFromDates(
+    program.volunteerApplicationStartDate,
+    program.volunteerApplicationEndDate
   )
-    return 'scheduled'
-  return 'closed'
 }
 
 // ─── 라벨 맵 ──────────────────────────────────────────────

@@ -4,6 +4,7 @@
  */
 
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
@@ -37,7 +38,13 @@ const GUIDANCE_IDS = new Set<string>([
 const PREFERRED_SCHEDULE_IDS = new Set<string>([
   PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
   PROGRAM_APPLICATION_FORM_ECONOMY_IDS.preferredSchedule,
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
 ])
+
+const GEMINI_TRAINING_INFO_ID =
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.trainingInfo
+const GEMINI_CONTACT_PERSON_ID =
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.contactPerson
 
 const INSTRUCTOR_CRIME_RECORD_IDS = new Set<string>([
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord,
@@ -80,6 +87,14 @@ export function isApplicationGuidanceParagraphId(id: string): boolean {
 
 export function isApplicationPreferredScheduleParagraphId(id: string): boolean {
   return PREFERRED_SCHEDULE_IDS.has(id)
+}
+
+export function isGeminiInstitutionTrainingInfoParagraphId(id: string): boolean {
+  return id === GEMINI_TRAINING_INFO_ID
+}
+
+export function isGeminiInstitutionContactPersonParagraphId(id: string): boolean {
+  return id === GEMINI_CONTACT_PERSON_ID
 }
 
 /** 강사 신청 — 성범죄경력 조회 동의서 제출 방법 안내 (CMS InstructorCrimeRecordParagraph) */
@@ -153,6 +168,26 @@ export function isUjatVolunteerFreeTextItemsParagraphId(id: string): boolean {
   return id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems
 }
 
+/**
+ * UJAT 지원 형태별 조건부 단락 가시성.
+ *
+ * 백엔드 conditionalQuestions와 같은 규칙을 Platform sidecar에서도 적용한다.
+ * 지원 형태가 아직 선택되지 않은 경우에는 양쪽 단락을 모두 보여 주어
+ * 기본 정보 검증이 먼저 동작하도록 한다.
+ */
+export function resolveUjatVolunteerHiddenParagraphIds(
+  applicationType: string,
+): ReadonlySet<string> {
+  const normalized = applicationType.trim().toLowerCase()
+  if (normalized === 'new') {
+    return new Set([UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm])
+  }
+  if (normalized === 'ujat-graduate') {
+    return new Set([UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems])
+  }
+  return new Set()
+}
+
 const VOLUNTEER_INTERVIEW_SCHEDULE_IDS = new Set<string>([
   PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
@@ -163,6 +198,7 @@ const PORTAL_DYNAMIC_OPTION_ARRAY_PARAGRAPH_IDS = new Set<string>([
   ...VOLUNTEER_INTERVIEW_SCHEDULE_IDS,
   PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule,
   ...INDIVIDUAL_INTERVIEW_SCHEDULE_IDS,
+  ...INSTRUCTOR_AVAILABLE_SCHEDULE_IDS,
 ])
 
 function isVisibleApplicationParagraphRow(row: Record<string, unknown>): boolean {

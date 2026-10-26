@@ -13,7 +13,7 @@ import {
 import {
   peekRegistrationProgramDraftPayload,
   syncRegistrationProgramDraftSession,
-} from '@/features/program/general/lib/registration-program-draft-session'
+} from '@/features/program/general/lib/registration-wizard-draft-session'
 
 describe('clearRegistrationDraftForFreshStart', () => {
   beforeEach(() => {

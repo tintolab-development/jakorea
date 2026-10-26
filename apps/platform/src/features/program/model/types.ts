@@ -171,6 +171,8 @@ export type ProgramDetail = ProgramListItem & {
   /** 빈 문자열이면 상세에서 비노출 */
   summary: string
   applicationPeriodLabel: string
+  /** Gemini 전용 연수 요청 가능 기간. 기관 모집 기간과 별도이며 미설정이면 비어 있다. */
+  geminiTrainingRequestPeriodLabel?: string
   isRecruiting: boolean
   businessFieldLabel: string
   educationTargetGroupLabel: string
@@ -276,13 +278,19 @@ export type ProgramsListParams = {
   q: string
   /** 원장 프로그램 유형 필터 (예: UJAT) */
   programType: string
+  /** URL/API에 반복값으로 복원된 프로그램 유형 필터. 기존 단일 선택 UI는 programType을 사용한다. */
+  programTypeValues?: string[]
   /** 모집대상 필터 — 초등~성인 (탭과 분리) */
   recruitmentTarget: string
+  recruitmentTargetValues?: string[]
   recruitmentStatus: string
+  recruitmentStatusValues?: string[]
   /** 운영 기간 (`all` | `YYYY-MM-DD~YYYY-MM-DD`, 단일·레거시 `YYYY` 허용) */
   operatingPeriod: string
   educationTarget: string
+  educationTargetValues?: string[]
   educationForm: string
+  educationFormValues?: string[]
   sort: ProgramSort
   page: number
 }

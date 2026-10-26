@@ -24,6 +24,9 @@ export type CareerPostingDetail = CareerJobListItem & {
   recruitPeriodLabel: string
   viewCount: number | null
   attachments: CareerPostingAttachment[]
+  /** 비어 있으면 상세 하단 버튼을 그리지 않는다. */
+  buttonLabel: string
+  linkUrl: string
 }
 
 export type CareerPostingDetailStatus =

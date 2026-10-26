@@ -1,24 +1,121 @@
 .sms-send-fullpage__body-field {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .sms-send-fullpage__byte-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  font-size: var(--font-size-14, 14px);
-  line-height: var(--line-height-150, 150%);
-  color: var(--color-text-subtle, #666);
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.sms-send-fullpage__byte-meter {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.sms-send-fullpage__byte-label {
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .sms-send-fullpage__byte-count {
-  color: var(--color-text-body, #111);
-  font-weight: var(--font-weight-600, 600);
+  color: var(--Brand-500, #00a0af);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .sms-send-fullpage__byte-count--danger {
-  color: var(--color-danger, #d92d20);
+  color: var(--Status-red-main, #c32f4a);
+}
+
+.sms-send-fullpage__subject-field {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.sms-send-fullpage__subject-field .sms-variable-text-field {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.sms-send-fullpage__subject-field .sms-send-fullpage__byte-row {
+  width: auto;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.sms-send-fullpage__subject-field .sms-send-fullpage__byte-count,
+.sms-send-fullpage__subject-field .sms-send-fullpage__byte-label {
+  font-size: 16px;
+}
+
+.mail-send-fullpage-modal
+  .detail-info-form__field-content--edit
+  > .sms-send-fullpage__subject-field {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.sms-send-fullpage__attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.sms-send-fullpage__attachments--error {
+  border: 1px solid var(--Status-red-main, #c32f4a);
+  border-radius: var(--radius-8, 8px);
+  padding: 12px;
+}
+
+/* 알림톡 발송 모달과 같은 자리: 작성 영역 오른쪽 상시 휴대폰 */
+.sms-send-fullpage__widget--compose {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.sms-send-fullpage__widget--compose > .sms-send-fullpage__compose-main {
+  display: flex;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 16px;
+}
+
+.sms-send-fullpage__widget--compose > .sms-send-fullpage__phone {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  width: 383px;
+  max-width: 383px;
+  flex: 0 0 383px;
+  align-self: flex-start;
 }

@@ -45,7 +45,8 @@ export function CalendarSearch({
           const pair =
             programColorMap.get(String(opt.id)) ?? getScheduleColorPair(String(opt.id))
           const rowStyle = {
-            ['--calendar-search-checkbox-fill']: pair.text,
+            ['--calendar-search-checkbox-fill']: pair.bg,
+            ['--calendar-search-checkbox-check']: pair.text,
           } as CSSProperties
 
           return (

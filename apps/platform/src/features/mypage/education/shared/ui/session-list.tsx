@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { PFPagination, PFText } from '@/shared/ui'
+import { PFEmptyState, PFPagination, PFText } from '@/shared/ui'
 import styles from './session-list.module.css'
 
 type EducationSessionListProps = {
@@ -9,10 +9,13 @@ type EducationSessionListProps = {
   totalPages: number
   onPageChange: (page: number) => void
   emptyMessage: string
+  emptyDescription?: string
   children: ReactNode
   paginationAriaLabel?: string
   /** 1페이지뿐이어도 페이지네이션 노출 (기본: 2페이지 이상일 때만) */
   alwaysShowPagination?: boolean
+  /** 건수 헤더 숨김 (월 아코디언 등 자체 헤더가 있을 때) */
+  hideHeader?: boolean
 }
 
 export function EducationSessionList({
@@ -22,30 +25,40 @@ export function EducationSessionList({
   totalPages,
   onPageChange,
   emptyMessage,
+  emptyDescription,
   children,
   paginationAriaLabel,
   alwaysShowPagination = false,
+  hideHeader = false,
 }: EducationSessionListProps) {
   const showPagination = alwaysShowPagination || totalPages > 1
 
   if (totalCount === 0) {
     return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-        {emptyMessage}
-      </PFText>
+      <div className={styles.empty}>
+        <PFEmptyState
+          variant="inline"
+          title={emptyMessage}
+          description={
+            emptyDescription ?? '관련 일정이 생기면 이곳에서 확인할 수 있어요.'
+          }
+        />
+      </div>
     )
   }
 
   return (
     <div className={styles.shell}>
-      <div className={styles.header}>
-        <PFText as="h2" typo="hl-sm" color="black" className={styles.count}>
-          {`${title} `}
-        </PFText>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.count}>
-          {totalCount}건
-        </PFText>
-      </div>
+      {hideHeader ? null : (
+        <div className={styles.header}>
+          <PFText as="h2" typo="hl-sm" color="black" className={styles.count}>
+            {`${title} `}
+          </PFText>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.count}>
+            {totalCount}건
+          </PFText>
+        </div>
+      )}
 
       <div className={styles.list}>{children}</div>
 

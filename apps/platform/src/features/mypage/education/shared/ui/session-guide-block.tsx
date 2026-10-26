@@ -3,7 +3,7 @@ import { PFText } from '@/shared/ui'
 import styles from './session-guide-block.module.css'
 
 type EducationSessionGuideBlockProps = {
-  variant?: 'default' | 'submitted'
+  variant?: 'default' | 'submitted' | 'feedback'
   statusLabel?: string
   statusTone?: 'submitted' | 'unsubmitted'
   message: string
@@ -21,7 +21,11 @@ export function EducationSessionGuideBlock({
   actions,
   children,
 }: EducationSessionGuideBlockProps) {
-  const blockClassName = [styles.block, variant === 'submitted' ? styles.submitted : undefined]
+  const blockClassName = [
+    styles.block,
+    variant === 'submitted' ? styles.submitted : undefined,
+    variant === 'feedback' ? styles.feedback : undefined,
+  ]
     .filter(Boolean)
     .join(' ')
 

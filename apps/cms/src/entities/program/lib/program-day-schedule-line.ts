@@ -5,6 +5,7 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
+import { formatCalendarEventTimeLabel } from '@/shared/components/calendar/lib/format-calendar-event-time-label'
 
 export type ProgramDayScheduleEventStatus =
   | 'recruiting_start'
@@ -65,20 +66,11 @@ export function getProgramDayScheduleEventStatus(
   return 'education_ongoing'
 }
 
-export function getProgramDayScheduleEventTime(program: Program, date: Dayjs): string {
-  if (program.applicationStartDate && date.isSame(dayjs(program.applicationStartDate), 'day')) {
-    return '00:00'
+export function getProgramDayScheduleEventTime(program: Program, _date: Dayjs): string {
+  if (program.scheduleTimeEnabled === false) {
+    return formatCalendarEventTimeLabel()
   }
-
-  if (program.applicationEndDate && date.isSame(dayjs(program.applicationEndDate), 'day')) {
-    return '24:00'
-  }
-
-  if (date.isSame(dayjs(program.startDate), 'day')) {
-    return '15:00'
-  }
-
-  return '00:00'
+  return formatCalendarEventTimeLabel(program.startTime, program.endTime)
 }
 
 /** 캘린더 셀 호버 미리보기, 우측 리스트 등에서 동일 문구 사용 */

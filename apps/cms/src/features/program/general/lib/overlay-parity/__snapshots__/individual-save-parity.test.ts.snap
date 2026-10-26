@@ -1,0 +1,153 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`일반 개인 overlay save parity (part3 step2) > 모집: 다른 양식 스코프와 섞이지 않는다 > instructor-collect 1`] = `
+{
+  "recruit.instructor.notes": "강사",
+}
+`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 모집: 다른 양식 스코프와 섞이지 않는다 > recruit-collect-after-other 1`] = `
+{
+  "recruit.detailInfo.programDescription": "설명",
+  "recruit.detailInfo.thumbFileName": "x.png",
+  "recruit.individual.announcementPublished": "published",
+  "recruit.individual.inquiryContact": "담당",
+  "recruit.individual.inquiryEmail": "a@b.c",
+  "recruit.individual.inquiryTel": "02-0000-0000",
+  "recruit.individual.notes": null,
+  "recruit.individual.notesNotApplicable": false,
+  "recruit.individual.programAnchorIso": "2026-12-01",
+  "recruit.individual.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.individual.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.individual.targetLevelDetail": "성인",
+  "recruit.individual.targetLevels": [
+    "adult",
+  ],
+}
+`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 모집: 단락 입력(patch·updateKey·훅) → collect·활성 레코드 > recruit-active 1`] = `
+{
+  "recruit.detailInfo.programDescription": "설명2",
+  "recruit.individual.inquiryTel": "010-1111-2222",
+  "recruit.individual.notes": "비고",
+  "recruit.individual.targetLevels": [
+    "adult",
+    "senior",
+    "youth",
+  ],
+}
+`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 모집: 단락 입력(patch·updateKey·훅) → collect·활성 레코드 > recruit-input 1`] = `
+{
+  "recruit.detailInfo.programDescription": "설명2",
+  "recruit.individual.inquiryTel": "010-1111-2222",
+  "recruit.individual.notes": "비고",
+  "recruit.individual.targetLevels": [
+    "adult",
+    "senior",
+    "youth",
+  ],
+}
+`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 모집: 불러오기 후 reset(시드 억제) → collect 비움 > recruit-reset 1`] = `{}`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 모집: 불러오기 후 reset(시드 억제) → collect 비움 > recruit-reset-default 1`] = `""`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 모집: 양식 불러오기 → collect > recruit-apply 1`] = `
+{
+  "recruit.detailInfo.programDescription": "설명",
+  "recruit.detailInfo.thumbFileName": "x.png",
+  "recruit.individual.announcementPublished": "published",
+  "recruit.individual.inquiryContact": "담당",
+  "recruit.individual.inquiryEmail": "a@b.c",
+  "recruit.individual.inquiryTel": "02-0000-0000",
+  "recruit.individual.notes": null,
+  "recruit.individual.notesNotApplicable": false,
+  "recruit.individual.programAnchorIso": "2026-12-01",
+  "recruit.individual.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.individual.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.individual.targetLevelDetail": "성인",
+  "recruit.individual.targetLevels": [
+    "adult",
+  ],
+}
+`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 모집: 양식 불러오기 → collect > recruit-peek 1`] = `
+{
+  "recruit.detailInfo.programDescription": "설명",
+  "recruit.detailInfo.thumbFileName": "x.png",
+  "recruit.individual.announcementPublished": "published",
+  "recruit.individual.inquiryContact": "담당",
+  "recruit.individual.inquiryEmail": "a@b.c",
+  "recruit.individual.inquiryTel": "02-0000-0000",
+  "recruit.individual.notes": null,
+  "recruit.individual.notesNotApplicable": false,
+  "recruit.individual.programAnchorIso": "2026-12-01",
+  "recruit.individual.programRangeSeal": {
+    "end": "2026-12-31",
+    "start": "2026-12-01",
+  },
+  "recruit.individual.recruitRangeSeal": {
+    "end": "2026-11-20",
+    "start": "2026-11-01",
+  },
+  "recruit.individual.targetLevelDetail": "성인",
+  "recruit.individual.targetLevels": [
+    "adult",
+  ],
+}
+`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 신청: 불러오기·입력 → collect > application-active 1`] = `
+{
+  "application.individual.fixedScheduleSelected": [
+    "a",
+  ],
+  "application.individual.teamInfo.customMemberCount": "7",
+  "application.individual.teamInfo.memberCountSelect": "custom",
+  "application.individual.teamInfo.teamName": "새 팀",
+  "application.individual.teamInfo.teamRole": "leader",
+}
+`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 신청: 불러오기·입력 → collect > application-apply 1`] = `
+{
+  "application.individual.fixedScheduleSelected": [
+    "a",
+  ],
+  "application.individual.teamInfo.customMemberCount": "7",
+  "application.individual.teamInfo.memberCountSelect": "custom",
+  "application.individual.teamInfo.teamName": "팀",
+  "application.individual.teamInfo.teamRole": "member",
+}
+`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 신청: 불러오기·입력 → collect > application-input 1`] = `
+{
+  "application.individual.fixedScheduleSelected": [
+    "a",
+  ],
+  "application.individual.teamInfo.customMemberCount": "7",
+  "application.individual.teamInfo.memberCountSelect": "custom",
+  "application.individual.teamInfo.teamName": "새 팀",
+  "application.individual.teamInfo.teamRole": "leader",
+}
+`;
+
+exports[`일반 개인 overlay save parity (part3 step2) > 신청: 불러오기·입력 → collect > application-reset 1`] = `{}`;

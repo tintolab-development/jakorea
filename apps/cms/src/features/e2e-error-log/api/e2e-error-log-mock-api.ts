@@ -12,6 +12,7 @@ import type {
   E2eErrorLogEntry,
   E2eErrorLogListResponse,
 } from '@/features/e2e-error-log/model/types'
+import { scrubE2eErrorLogEntries, scrubE2eErrorLogEntry } from '@/features/e2e-error-log/lib/sanitize-e2e-error-log'
 
 export const E2E_ERROR_LOG_STORAGE_KEY = 'cms.jakorea.e2eErrorLogs.v1'
 export const E2E_ERROR_LOG_MOCK_API_PATH = '/__dev__/e2e-error-logs'
@@ -35,7 +36,10 @@ function readLocal(): StorageFile {
     if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.items)) {
       return { version: 1, items: [] }
     }
-    return parsed
+    const { items, changed } = scrubE2eErrorLogEntries(parsed.items)
+    const file: StorageFile = { version: 1, items }
+    if (changed) writeLocal(file)
+    return file
   } catch {
     return { version: 1, items: [] }
   }
@@ -63,7 +67,7 @@ function buildByErrorCode(items: E2eErrorLogEntry[]): Record<string, number> {
 }
 
 function toEntry(input: E2eErrorLogCreateRequest): E2eErrorLogEntry {
-  return {
+  return scrubE2eErrorLogEntry({
     id: input.id ?? newId(),
     occurredAt: input.occurredAt ?? new Date().toISOString(),
     situation: input.situation,
@@ -76,7 +80,7 @@ function toEntry(input: E2eErrorLogCreateRequest): E2eErrorLogEntry {
     traceId: input.traceId,
     requestBodyPreview: input.requestBodyPreview,
     responseBodyPreview: input.responseBodyPreview,
-  }
+  })
 }
 
 function persistLocal(entry: E2eErrorLogEntry): E2eErrorLogEntry {

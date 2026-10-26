@@ -5,8 +5,11 @@
  */
 
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import { getInstructorRecruitmentStatus } from '@/features/program/shared/lib/program-detail-info-constants'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
+import {
+  getRecruitmentStatusFromDates,
+  getRecruitmentStatusLabelForStatus,
+  type RecruitmentStatus,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveAnnouncement } from '@/features/program/shared/lib/announcement-label'
 import {
   labelBool,
@@ -63,8 +66,9 @@ export type GeneralProgramInstructorRecruitmentDisplay = {
   notes: string
 }
 
-function resolveInstructorRecruitmentLifecycle(program: Program): ProgramLifecycleStatus | null {
-  const status = getInstructorRecruitmentStatus(program)
+function resolveInstructorRecruitmentLifecycle(
+  status: RecruitmentStatus | null
+): ProgramLifecycleStatus | null {
   if (status == null) return null
   return INSTRUCTOR_RECRUITMENT_STATUS_TO_LIFECYCLE[status]
 }
@@ -76,7 +80,11 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
   const info = common?.instructorRecruitmentInfo as InstructorRecruitmentInfoLoose | undefined
   const row = pickAudienceRecruitmentWindow(program, 'instructor')
   const useRow = hasRecruitmentWindows(program)
-  const lifecycle = resolveInstructorRecruitmentLifecycle(program)
+  const recruitmentStatus = getRecruitmentStatusFromDates(
+    useRow ? row?.startAt ?? undefined : program.instructorApplicationStartDate,
+    useRow ? row?.endAt ?? undefined : program.instructorApplicationEndDate
+  )
+  const lifecycle = resolveInstructorRecruitmentLifecycle(recruitmentStatus)
 
   const finalAnnouncement = resolveAnnouncement({
     labels: [info?.finalAnnouncementLabel, info?.resultAnnouncementLabel],
@@ -96,7 +104,7 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
       audienceOperationPeriodLabelFromRecruitmentRow(program, 'instructor'),
       useRow ? undefined : info?.operationPeriodLabel
     ),
-    recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
+    recruitmentStatusLabel: getRecruitmentStatusLabelForStatus(recruitmentStatus, 'instructor'),
     recruitmentStatusLifecycle: lifecycle,
     instructorTargetLabel: pickDisplayString(info?.recruitmentTarget),
     instructorTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),

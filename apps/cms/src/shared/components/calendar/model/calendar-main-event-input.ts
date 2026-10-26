@@ -10,4 +10,6 @@ export type CalendarMainEventInput = {
   endTime?: string
   timeGridLabel?: string
   weekGridSurface?: { bg: string; border: string; text: string }
+  /** 주간 종일 집약 대표 선정 — 프로그램 운영 시작일(YYYY-MM-DD) */
+  programOperationStartDate?: string
 }

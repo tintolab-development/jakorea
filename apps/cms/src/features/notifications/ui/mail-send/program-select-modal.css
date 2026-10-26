@@ -99,21 +99,32 @@
   padding: 40px;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   align-self: stretch;
   box-sizing: border-box;
-  border-radius: var(--radius-8, 8px);
-  border: 1px solid var(--disabled-txt, rgba(61, 61, 61, 0.5));
-  background: rgba(61, 61, 61, 0.04);
-  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  border-radius: var(--Radius-8, 8px);
+  border: 1px solid var(--Border-default, #e0e0e0);
+  background: var(--White, #fff);
   text-align: center;
-  font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  white-space: pre-line;
 }
 
-.mail-send-program-select-modal .content-modal__footer-actions {
-  justify-content: flex-end;
+.mail-send-program-select-modal__empty-title,
+.mail-send-program-select-modal__empty-description {
+  margin: 0;
+  color: var(--Neutral-black, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-style: normal;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.mail-send-program-select-modal__empty-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.mail-send-program-select-modal__empty-description {
+  font-size: 14px;
+  font-weight: 400;
 }

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -14,9 +14,18 @@ import {
   ujatVolunteerRecruitInterviewRangeSealKey,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import {
+  getRecruitTypedInterviewRecord,
   hydrateMissingVolunteerInterviewOverlay,
   listFilledVolunteerInterviewExceptionBlockIds,
+  setRecruitTypedInterviewRecordBridge,
 } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import { pickUjatVolunteerRecruitmentRow } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import {
+  interviewConfigFromLegacyOverlay,
+  interviewConfigToLegacyOverlayRecord,
+  overlayRecordToInterviewConfig,
+  parseRecruitmentInterviewConfig,
+} from '@/features/program/ujat/lib/recruitment-typed-contract'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { CmsButton } from '@/shared/ui'
@@ -48,9 +57,11 @@ export function UjatRecruitInterviewScheduleProgramView({
 }) {
   const display = resolveUjatVolunteerInterviewScheduleDisplay(program, volunteerHalf, {
     allowMockFallback: !isTemplateAuthoring,
+    allowOverlayFallback: isTemplateAuthoring,
   })
   const editSeed = resolveUjatVolunteerInterviewScheduleEditSeed(program, volunteerHalf, {
     allowMockFallback: !isTemplateAuthoring,
+    allowOverlayFallback: isTemplateAuthoring,
   })
   const interviewNamespace = volunteerHalf
     ? ujatVolunteerRecruitInterviewNamespace(volunteerHalf)
@@ -62,41 +73,81 @@ export function UjatRecruitInterviewScheduleProgramView({
   const [exceptionScheduleAddDisabled, setExceptionScheduleAddDisabled] = useState(
     () => editSeed?.excludeNone ?? false
   )
+  const programRef = useRef(program)
+  programRef.current = program
   useLayoutEffect(() => {
-    const registrationOverlay =
-      program.ujatRegistrationOverlay != null &&
-      typeof program.ujatRegistrationOverlay === 'object' &&
-      !Array.isArray(program.ujatRegistrationOverlay)
-        ? program.ujatRegistrationOverlay
-        : {}
-    const savedOverlay =
-      program.registrationOverlay != null &&
-      typeof program.registrationOverlay === 'object' &&
-      !Array.isArray(program.registrationOverlay)
-        ? program.registrationOverlay
-        : {}
-    const source = { ...savedOverlay, ...registrationOverlay }
-    hydrateMissingVolunteerInterviewOverlay({
-      source,
-      store: 'recruit',
-      namespace: interviewNamespace,
-      additionalKeys: [interviewRangeSealKey],
-    })
+    const programSnapshot = programRef.current
+    if (isTemplateAuthoring) {
+      const registrationOverlay =
+        programSnapshot.ujatRegistrationOverlay != null &&
+        typeof programSnapshot.ujatRegistrationOverlay === 'object' &&
+        !Array.isArray(programSnapshot.ujatRegistrationOverlay)
+          ? programSnapshot.ujatRegistrationOverlay
+          : {}
+      const savedOverlay =
+        programSnapshot.registrationOverlay != null &&
+        typeof programSnapshot.registrationOverlay === 'object' &&
+        !Array.isArray(programSnapshot.registrationOverlay)
+          ? programSnapshot.registrationOverlay
+          : {}
+      const source = { ...savedOverlay, ...registrationOverlay }
+      hydrateMissingVolunteerInterviewOverlay({
+        source,
+        store: 'recruit',
+        namespace: interviewNamespace,
+        additionalKeys: [interviewRangeSealKey],
+      })
+      setExceptionBlockKeys(prev => {
+        if (prev.length > 0) return prev
+        const ids = listFilledVolunteerInterviewExceptionBlockIds(
+          source,
+          'recruit',
+          interviewNamespace
+        )
+        return ids.length > 0 ? ids : prev
+      })
+      return
+    }
+
+    if (!isEdit || !form) {
+      setRecruitTypedInterviewRecordBridge(null)
+      return
+    }
+
+    const ns = interviewNamespace ?? 'recruit.volunteer.interview'
+    const fromForm = parseRecruitmentInterviewConfig(form.getValues('volunteerInterviewConfig'))
+    const row = volunteerHalf
+      ? pickUjatVolunteerRecruitmentRow(programSnapshot, volunteerHalf)
+      : undefined
+    const fromRow = row?.interviewConfig
+    const fromLegacy =
+      row && !Object.prototype.hasOwnProperty.call(row, 'interviewConfig')
+        ? interviewConfigFromLegacyOverlay(programSnapshot.ujatRegistrationOverlay, ns)
+        : null
+    const seed = fromForm ?? fromRow ?? fromLegacy
+    const record = interviewConfigToLegacyOverlayRecord(seed, ns)
+    setRecruitTypedInterviewRecordBridge(record)
     setExceptionBlockKeys(prev => {
       if (prev.length > 0) return prev
-      const ids = listFilledVolunteerInterviewExceptionBlockIds(
-        source,
-        'recruit',
-        interviewNamespace
-      )
+      const ids = listFilledVolunteerInterviewExceptionBlockIds(record, 'recruit', ns)
       return ids.length > 0 ? ids : prev
     })
+    return () => {
+      const live = getRecruitTypedInterviewRecord()
+      if (live) {
+        form.setValue('volunteerInterviewConfig', overlayRecordToInterviewConfig(live, ns), {
+          shouldDirty: true,
+        })
+      }
+      setRecruitTypedInterviewRecordBridge(null)
+    }
   }, [
+    form,
     interviewNamespace,
     interviewRangeSealKey,
-    program.id,
-    program.registrationOverlay,
-    program.ujatRegistrationOverlay,
+    isEdit,
+    isTemplateAuthoring,
+    volunteerHalf,
   ])
 
   const isFormEdit = Boolean(isEdit && form)

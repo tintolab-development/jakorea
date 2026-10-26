@@ -2,7 +2,7 @@ import { clearAllRecruitDetailDraftMedia } from '@/features/template/ui/form-set
 import type { OperationalFormFlushOverride } from '@/features/program/general/lib/prepare-registration-create-form-bindings'
 import { isRecruitmentOrApplicationWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import { stripUjatApplicationVolunteerProgramOnlyFields } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
+import { stripUjatApplicationVolunteerProgramOnlyFields } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-keys'
 
 /**
  * 등록 위저드에서 탭을 떠난 모집·신청 양식 draft.

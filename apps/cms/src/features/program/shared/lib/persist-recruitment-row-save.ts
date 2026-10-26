@@ -11,6 +11,12 @@ import type { ProgramRecruitmentResponse } from '@/shared/api/generated/dashboar
 import { ProgramRecruitmentRequestApplicationType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestApplicationType'
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
 import { ProgramRecruitmentRequestRecruitTerm } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitTerm'
+import {
+  buildVolunteerInterviewConfigForRowSave,
+  volunteerInterviewRequiredFromOverlay,
+  type RecruitmentInterviewConfig,
+} from '@/features/program/shared/lib/volunteer-interview-config'
+import { normalizeVolunteerTargetList } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { DateValue } from '@/types'
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
 
@@ -165,13 +171,130 @@ function assignOptionalDate(
   body[key] = value
 }
 
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000
+
+/** ISO·날짜 문자열 → KST 달력 날짜(YYYY-MM-DD). 읽을 수 없으면 undefined. */
+function kstDateKey(value: string | null | undefined): string | undefined {
+  const text = value?.trim()
+  if (!text) return undefined
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text
+  const ms = Date.parse(text)
+  if (Number.isNaN(ms)) return undefined
+  return new Date(ms + KST_OFFSET_MS).toISOString().slice(0, 10)
+}
+
+/** 행 면접 기간 형식 — 시작 KST 00:00:00.000, 끝 KST 23:59:59.999(UTC ISO). */
+function kstDateToRowIso(dateKey: string, edge: 'start' | 'end'): string {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const ms =
+    edge === 'start'
+      ? Date.UTC(y, m - 1, d, 0, 0, 0, 0) - KST_OFFSET_MS
+      : Date.UTC(y, m - 1, d, 23, 59, 59, 999) - KST_OFFSET_MS
+  return new Date(ms).toISOString()
+}
+
+type InterviewPeriodField = 'interviewStartDate' | 'interviewEndDate'
+
+/**
+ * 구 GENERAL 봉사 행(행 면접 기간 null) backfill 출처 — BE SQL backfill 과 같은 순서(keonhee 2026-10-25 23:1x):
+ * 1. 조회 nested `volunteerInterviewScheduleInfo.periodStartDate/EndDate`(KST 날짜 → 행 형식)
+ * 2. 없으면 nested `volunteerRecruitmentInfo.interviewStartDate/EndDate`
+ * 둘 다 없으면 undefined — 화면 기본값 등으로 날짜를 새로 만들지 않는다.
+ */
+function volunteerInterviewBackfillSource(
+  baseline: Program,
+  field: InterviewPeriodField
+): string | undefined {
+  const schedule =
+    baseline.volunteerInterviewScheduleInfoFromServer ??
+    baseline.generalCommonInfo?.volunteerInterviewScheduleInfo
+  const scheduleKey = kstDateKey(
+    field === 'interviewStartDate' ? schedule?.periodStartDate : schedule?.periodEndDate
+  )
+  if (scheduleKey)
+    return kstDateToRowIso(scheduleKey, field === 'interviewStartDate' ? 'start' : 'end')
+  const info = baseline.generalCommonInfo?.volunteerRecruitmentInfo as
+    | Partial<Record<InterviewPeriodField, string>>
+    | undefined
+  const nested = info?.[field]
+  return typeof nested === 'string' && nested.trim() ? nested.trim() : undefined
+}
+
+/**
+ * 행 PATCH 면접 기간. patch 에 값이 있으면 그 값, 없으면 행 값(null 은 생략 = BE 유지).
+ * 일반 봉사 행이 비어 있을 때(구 GENERAL, 기간은 nested 에만 — keonhee 2026-10-25):
+ * - 폼 기간이 비어 있으면('' / null) 보내지 않는다.
+ * - 폼 기간이 조회 nested 값(폼 초기값) 그대로면 BE backfill 과 같은 출처(`volunteerInterviewBackfillSource`)로 채운다.
+ * - 폼에서 날짜를 바꿨으면 그 값을 보낸다(사용자 입력).
+ * 행에 값이 있을 때 비우면 '' 로 지운다.
+ */
+function volunteerInterviewPeriodForRowSave(
+  audience: RecruitmentCopyAudience,
+  patch: Partial<Program>,
+  field: InterviewPeriodField,
+  rowValue: string | null | undefined,
+  isGeneralVolunteerRow: boolean,
+  baseline: Program
+): string | null | undefined {
+  if (audience !== 'volunteer' || !Object.prototype.hasOwnProperty.call(patch, field)) {
+    return rowValue ?? undefined
+  }
+  const next = optionalDateToApiString(patch[field]) ?? null
+  if (!isGeneralVolunteerRow || rowValue?.trim()) return next
+  if (next === null) return undefined
+  const seeded = (
+    baseline.generalCommonInfo?.volunteerRecruitmentInfo as
+      | Partial<Record<InterviewPeriodField, string>>
+      | undefined
+  )?.[field]
+  if (kstDateKey(next) !== kstDateKey(seeded)) return next
+  return volunteerInterviewBackfillSource(baseline, field)
+}
+
+function normalizedVolunteerCodes(
+  value: readonly string[] | null | undefined
+): string[] {
+  if (!value?.length) return []
+  return normalizeVolunteerTargetList(value)
+}
+
+function sameVolunteerCodes(
+  left: readonly string[] | null | undefined,
+  right: readonly string[] | null | undefined
+): boolean {
+  const a = normalizedVolunteerCodes(left)
+  const b = normalizedVolunteerCodes(right)
+  if (a.length !== b.length) return false
+  return a.every((code, index) => code === b[index])
+}
+
+/**
+ * 일반 봉사 탭은 폼 `volunteerTargets`를 행에 복사하지 않는다.
+ * 행을 이번 저장에서 바꾸지 않았고 폼이 행과 다르면 폼 값을 보낸다.
+ * UJAT는 저장 전에 행을 매핑해 두므로 그 행 값을 유지한다.
+ */
+function volunteerTargetsForRowSave(args: {
+  row: ProgramRecruitmentWindow
+  baseline: Program
+  patch: Partial<Program>
+  volunteerHalf?: 'h1' | 'h2'
+}): ProgramRecruitmentWindow['volunteerTargets'] {
+  const baselineRow = pickRecruitmentCopyRow(args.baseline, 'volunteer', args.volunteerHalf)
+  const rowUntouched = sameVolunteerCodes(args.row.volunteerTargets, baselineRow?.volunteerTargets)
+  const formTargets = args.patch.volunteerTargets
+  const formDiffersFromRow =
+    formTargets !== undefined && !sameVolunteerCodes(formTargets, args.row.volunteerTargets)
+  if (rowUntouched && formDiffersFromRow) return formTargets
+  return args.row.volunteerTargets
+}
+
 export function buildProgramRecruitmentRowSaveRequest(args: {
   baseline: Program
   draft: Program
   patch: Partial<Program>
   audience: RecruitmentCopyAudience
   volunteerHalf?: 'h1' | 'h2'
-}): ProgramRecruitmentRequest | null {
+}): ProgramRecruitmentRowSaveRequest | null {
   const { baseline, draft, patch, audience, volunteerHalf } = args
   const source: Program = {
     ...baseline,
@@ -193,24 +316,46 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
 
   const startAt = windowStartForAudience(audience, patch, row)
   const endAt = windowEndForAudience(audience, patch, row)
-  const interviewStartAt =
+  // 면접 ON/OFF → 행 interviewEnabled. 폼 값이 patch 에 없으면 이번 저장 overlay 의 면접 여부(일반 봉사만, UJAT 반기 행은 제외).
+  const isGeneralVolunteerRow =
+    audience === 'volunteer' &&
+    volunteerHalf == null &&
+    (source.backendProgramType ?? '').toUpperCase() !== 'UJAT' &&
+    row.recruitTerm !== ProgramRecruitmentRequestRecruitTerm.FIRST_HALF &&
+    row.recruitTerm !== ProgramRecruitmentRequestRecruitTerm.SECOND_HALF
+  const interviewStartAt = volunteerInterviewPeriodForRowSave(
+    audience,
+    patch,
+    'interviewStartDate',
+    row.interviewStartAt,
+    isGeneralVolunteerRow,
+    baseline
+  )
+  const interviewEndAt = volunteerInterviewPeriodForRowSave(
+    audience,
+    patch,
+    'interviewEndDate',
+    row.interviewEndAt,
+    isGeneralVolunteerRow,
+    baseline
+  )
+  const requestedInterviewEnabled =
     audience === 'volunteer'
-      ? Object.prototype.hasOwnProperty.call(patch, 'interviewStartDate')
-        ? (optionalDateToApiString(patch.interviewStartDate) ?? null)
-        : (row.interviewStartAt ?? undefined)
-      : (row.interviewStartAt ?? undefined)
-  const interviewEndAt =
-    audience === 'volunteer'
-      ? Object.prototype.hasOwnProperty.call(patch, 'interviewEndDate')
-        ? (optionalDateToApiString(patch.interviewEndDate) ?? null)
-        : (row.interviewEndAt ?? undefined)
-      : (row.interviewEndAt ?? undefined)
-  const interviewEnabled =
-    audience === 'volunteer'
-      ? (patch.generalVolunteerInterviewEnabled ?? row.interviewEnabled)
+      ? (patch.generalVolunteerInterviewEnabled ??
+        (isGeneralVolunteerRow
+          ? volunteerInterviewRequiredFromOverlay(patch.registrationOverlay)
+          : undefined) ??
+        row.interviewEnabled)
       : row.interviewEnabled
+  // UJAT 봉사 운영 행은 면접을 끌 수 없다(keonhee 2026-10-25, BE UJAT_VOLUNTEER_INTERVIEW_REQUIRED) — false 는 행 값 유지.
+  const interviewEnabled =
+    audience === 'volunteer' &&
+    requestedInterviewEnabled === false &&
+    (source.backendProgramType ?? '').toUpperCase() === 'UJAT'
+      ? row.interviewEnabled
+      : requestedInterviewEnabled
 
-  const body: ProgramRecruitmentRequest = {
+  const body: ProgramRecruitmentRowSaveRequest = {
     id: row.id,
     recruitmentType,
   }
@@ -259,8 +404,90 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   }
   assignOptionalString(body, 'interviewStartAt', interviewStartAt)
   assignOptionalString(body, 'interviewEndAt', interviewEndAt)
+  const typedBody = body as ProgramRecruitmentRequest & Record<string, unknown>
+  if (row.announcementPublished != null) {
+    typedBody.announcementPublished = row.announcementPublished
+  }
+  if (row.remarksNotApplicable != null) {
+    typedBody.remarksNotApplicable = row.remarksNotApplicable
+  }
+  if (typeof row.contentRevision === 'number') {
+    typedBody.expectedRevision = row.contentRevision
+  }
+  if (audience === 'volunteer') {
+    if (row.documentPassAnnouncementAt !== undefined) {
+      typedBody.documentPassAnnouncementAt = row.documentPassAnnouncementAt
+    }
+    if (row.finalPassAnnouncementAt !== undefined) {
+      typedBody.finalPassAnnouncementAt = row.finalPassAnnouncementAt
+    }
+    if (row.noticeExposureTiming !== undefined) {
+      typedBody.noticeExposureTiming = row.noticeExposureTiming
+    }
+    const volunteerTargets = volunteerTargetsForRowSave({
+      row,
+      baseline,
+      patch,
+      volunteerHalf,
+    })
+    if (volunteerTargets !== undefined) {
+      typedBody.volunteerTargets = volunteerTargets
+    }
+    // 일반 봉사 행 interviewConfig 는 overlay+저장 typed 합본만 보낸다(객체 단위 교체).
+    // UJAT·반기는 행 값을 유지한다.
+    if (row.interviewConfig !== undefined && !isGeneralVolunteerRow) {
+      const interviewConfig = row.interviewConfig
+      typedBody.interviewConfig =
+        interviewConfig == null
+          ? null
+          : {
+              ...interviewConfig,
+              exclusionState: interviewConfig.exclusionState ?? undefined,
+            }
+    }
+  }
+  const overlayInterviewConfig = volunteerInterviewConfigForRowSave({
+    source,
+    row,
+    patch,
+    audience,
+    volunteerHalf,
+    recruitmentType,
+  })
+  if (overlayInterviewConfig) typedBody.interviewConfig = overlayInterviewConfig
   if (clearFields.length > 0) body.clearFields = clearFields
   return body
+}
+
+/** 생성 타입에 아직 없는 BE V80 `interviewConfig`(봉사 행 전용)를 더한 행 PATCH 본문 */
+export type ProgramRecruitmentRowSaveRequest = ProgramRecruitmentRequest & {
+  interviewConfig?: RecruitmentInterviewConfig
+}
+
+/**
+ * 일반 봉사 행 저장 — 저장된 typed(`volunteerInterviewConfigFromServer`)에 이번 저장 overlay 의 면접 키를 합친 전체
+ * interviewConfig 를 함께 보낸다. UJAT 반기 행·overlay 가 없거나 면접 키가 없는 저장에는 넣지 않는다(서버 typed 값 유지).
+ */
+function volunteerInterviewConfigForRowSave(args: {
+  source: Program
+  row: ProgramRecruitmentWindow
+  patch: Partial<Program>
+  audience: RecruitmentCopyAudience
+  volunteerHalf?: 'h1' | 'h2'
+  recruitmentType: string
+}): RecruitmentInterviewConfig | undefined {
+  if (args.audience !== 'volunteer' || args.volunteerHalf) return undefined
+  if (args.recruitmentType !== ProgramRecruitmentRequestRecruitmentType.VOLUNTEER) return undefined
+  if (args.row.recruitTerm === 'FIRST_HALF' || args.row.recruitTerm === 'SECOND_HALF')
+    return undefined
+  if ((args.source.backendProgramType ?? '').toUpperCase() === 'UJAT') return undefined
+  const overlay = args.patch.registrationOverlay
+  if (!overlay || typeof overlay !== 'object') return undefined
+  // 저장 typed + 폼 변경을 합친 전체 객체(BE 는 객체 단위 교체). overlay 에 면접 키가 없으면 보내지 않는다.
+  return buildVolunteerInterviewConfigForRowSave(
+    overlay as Record<string, unknown>,
+    args.source.volunteerInterviewConfigFromServer as RecruitmentInterviewConfig | null | undefined
+  )
 }
 
 const AUDIENCE_ROW_KEYS = [
@@ -283,6 +510,14 @@ const AUDIENCE_ROW_KEYS = [
   'interviewEnabled',
   'interviewStartAt',
   'interviewEndAt',
+  'announcementPublished',
+  'documentPassAnnouncementAt',
+  'finalPassAnnouncementAt',
+  'noticeExposureTiming',
+  'volunteerTargets',
+  'remarksNotApplicable',
+  'interviewConfig',
+  'contentRevision',
 ] as const satisfies ReadonlyArray<keyof ProgramRecruitmentWindow>
 
 function nestedInfoKey(
@@ -451,6 +686,13 @@ function audienceScalarPatch(
     ...(patch.generalParticipantInterviewEnabled !== undefined
       ? { generalParticipantInterviewEnabled: patch.generalParticipantInterviewEnabled }
       : {}),
+    // 재조회 컬럼이 옛 targetLevels면 다음 편집 시드가 방금 저장한 교육 대상을 되돌린다.
+    ...(Object.prototype.hasOwnProperty.call(patch, 'targetLevels')
+      ? {
+          targetLevels: Array.isArray(patch.targetLevels) ? patch.targetLevels : [],
+          targetLevel: Array.isArray(patch.targetLevels) ? patch.targetLevels[0] : undefined,
+        }
+      : {}),
   }
 }
 
@@ -481,11 +723,8 @@ export function applySavedRecruitmentOntoProgram(args: {
           },
         }
       : {}),
-    ...(audience === 'volunteer' &&
-    patchCommon &&
-    Object.prototype.hasOwnProperty.call(patchCommon, 'volunteerInterviewScheduleInfo')
-      ? { volunteerInterviewScheduleInfo: patchCommon.volunteerInterviewScheduleInfo }
-      : {}),
+    // 면접 일정 표시 객체는 재조회한 프로그램 GET 값이 정본(BE가 typed interviewConfig 로 만든다).
+    // patch 의 overlay 계산 값으로 덮지 않는다.
   } as Program['generalCommonInfo']
 
   return {

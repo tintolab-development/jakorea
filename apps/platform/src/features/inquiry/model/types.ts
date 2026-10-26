@@ -25,6 +25,7 @@ export type OneToOneInquiryItem = {
   title: string
   status: OneToOneInquiryStatus
   createdAt: string
+  answeredAt?: string
   programName: string
   question: string
   answer?: string

@@ -3,7 +3,7 @@ import {
   readCurriculumPreferredScheduleDailySessionCountForCopy,
 } from '@jakorea/form-schema/program-application'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { extrasFromGeneralProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import { extrasFromGeneralProgram } from '@/features/program/general/lib/general-registration-overlay-from-program'
 import type { Program } from '@/types/domain'
 
 const PROGRESS_SESSION_BY_ROUND_KEY =

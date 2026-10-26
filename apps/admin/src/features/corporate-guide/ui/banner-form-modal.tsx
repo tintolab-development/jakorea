@@ -14,7 +14,7 @@ import {
   CmsTextArea,
   ContentModal,
   FileSelectField,
-  FILE_SELECT_MAX_TOTAL_BYTES,
+  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
   useCmsAlert,
@@ -24,8 +24,8 @@ import './banner-form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 권장 배너 사이즈는 1113*1083',
+  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 권장 배너 사이즈는 1113 × 1083px입니다.',
 ]
 
 const MODAL_DESCRIPTION = '기업후원의 상단 배너 이미지와 문구를 설정해 주세요.'
@@ -104,10 +104,10 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
       if (
         isFileSelectTotalSizeExceeded({
           incoming: [file],
-          maxTotalBytes: FILE_SELECT_MAX_TOTAL_BYTES,
+          maxTotalBytes: FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
         })
       ) {
-        notifyFileSelectTotalSizeExceeded()
+        notifyFileSelectTotalSizeExceeded(FILE_SELECT_IMAGE_MAX_TOTAL_BYTES)
         return
       }
       try {
@@ -229,6 +229,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                     accept={IMAGE_ACCEPT}
                     buttonLabel="파일 추가"
                     fileNames={imageFileName ? [imageFileName] : []}
+                    maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                     onFilesChange={files => {
                       void handleFilesChange(files)
                     }}

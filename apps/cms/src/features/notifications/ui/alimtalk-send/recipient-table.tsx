@@ -4,6 +4,7 @@ import { alimtalkSendRecipientTypeLabel } from '@/features/notifications/model/a
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
 import './recipient-table.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { CmsInput } from '@/shared/ui'
 
 const TABLE_MAX_HEIGHT = 400
 const TABLE_HEADER_HEIGHT = 54
@@ -15,6 +16,10 @@ type RecipientTableProps = {
   onSelectedIdsChange: (ids: string[]) => void
   /** 대상 프로그램 선택 시 참여 유형, 미선택/전체 시 회원 유형 */
   typeColumnTitle: string
+  /** 수신자별 직접 입력 변수. 서버 치환 키는 포함하지 않는다. */
+  manualKeysByRecipientId?: Record<string, string[]>
+  blockedKeysByRecipientId?: Record<string, string[]>
+  onVariableChange?: (recipientId: string, key: string, value: string) => void
 }
 
 export function RecipientTable({
@@ -22,9 +27,18 @@ export function RecipientTable({
   selectedIds,
   onSelectedIdsChange,
   typeColumnTitle,
+  manualKeysByRecipientId,
+  blockedKeysByRecipientId,
+  onVariableChange,
 }: RecipientTableProps) {
   const needScroll =
     recipients.length * TABLE_ROW_HEIGHT + TABLE_HEADER_HEIGHT > TABLE_MAX_HEIGHT
+
+  const showVariableColumn = recipients.some(recipient => {
+    const manualCount = manualKeysByRecipientId?.[recipient.id]?.length ?? 0
+    const blockedCount = blockedKeysByRecipientId?.[recipient.id]?.length ?? 0
+    return manualCount > 0 || blockedCount > 0
+  })
 
   const columns: ColumnsType<AlimtalkSendRecipient> = [
     {
@@ -59,6 +73,43 @@ export function RecipientTable({
       ellipsis: true,
     },
   ]
+
+  if (showVariableColumn) {
+    columns.push({
+      title: '변수값',
+      key: 'variables',
+      width: 280,
+      render: (_value, record) => {
+        const manualKeys = manualKeysByRecipientId?.[record.id] ?? []
+        const blockedKeys = blockedKeysByRecipientId?.[record.id] ?? []
+        if (manualKeys.length === 0 && blockedKeys.length === 0) {
+          return '자동 입력'
+        }
+        return (
+          <div className="alimtalk-send-recipient-table__variables">
+            {blockedKeys.map(key => (
+              <p key={key} className="alimtalk-send-recipient-table__variable-blocked">
+                {key}: 서버 전용
+              </p>
+            ))}
+            {manualKeys.map(key => (
+              <label key={key} className="alimtalk-send-recipient-table__variable">
+                <span className="alimtalk-send-recipient-table__variable-label">{key}</span>
+                <CmsInput
+                  inputSize="small"
+                  width="100%"
+                  allowClear={false}
+                  value={record.variables?.[key] ?? ''}
+                  placeholder="변수값을 입력하세요"
+                  onChange={event => onVariableChange?.(record.id, key, event.target.value)}
+                />
+              </label>
+            ))}
+          </div>
+        )
+      },
+    })
+  }
 
   return (
     <CmsDataTable

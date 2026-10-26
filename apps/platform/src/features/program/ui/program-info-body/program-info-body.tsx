@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { canApplyToProgram } from '../../lib/badge-config'
 import type { ProgramDetail } from '../../model/types'
 import { ProgramInfoAside } from './program-info-aside'
 import { ProgramInfoDetail } from './program-info-detail'
@@ -46,9 +45,6 @@ export function ProgramInfoBody({
         detailImageUrl={program.detailImageUrl}
         thumbnailUrl={program.thumbnailUrl}
         attachments={program.attachments}
-        canApply={
-          canApplyToProgram(program.recruitmentStatus) && !program.recruitmentSelectionAmbiguous
-        }
         applicationPeriodLabel={program.applicationPeriodLabel}
         showApplyCta={showApplyCta}
         showCancelCta={showCancelCta}

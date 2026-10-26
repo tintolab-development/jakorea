@@ -35,7 +35,6 @@ export function UjatScheduleConfirmRevisionRequestModal({
 
   const handleConfirm = useCallback(() => {
     onConfirm({ message: message.trim() })
-    setMessage('')
   }, [message, onConfirm])
 
   return (

@@ -1,11 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useReceiptPaymentStatementConsent } from '../hooks/use-receipt-payment-statement-consent'
+import { PaymentStatementPreConsentModal } from './payment-statement-pre-consent-modal'
 import { resolveSettlementAreaFromPathname } from '../lib/write-path'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE } from '@/features/program/lib/application-api-error'
 import { PFButton, PFText } from '@/shared/ui'
+import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { useApplicationSettlementsQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
+import {
+  readInstructorBusinessIncomeLabel,
+  readInstructorFeeGradeLabel,
+} from '../lib/instructor-settlement-summary'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SETTLEMENT_PAGE_SIZE } from '../model/types'
@@ -49,6 +56,7 @@ export function EducationSettlementPanel({
 }: EducationSettlementPanelProps) {
   const location = useLocation()
   const [page, setPage] = useState(1)
+  const profileQuery = usePortalProfileQuery({ enabled: applicationType === 'INSTRUCTOR' })
   const remoteSettlements = useApplicationSettlementsQuery(
     applicationType,
     applicationId,
@@ -93,6 +101,9 @@ export function EducationSettlementPanel({
   })
   const area = resolveSettlementAreaFromPathname(location.pathname)
   const operationEnd = readProgramOperationEndAt(operationEndAt)
+  const receiptConsent = useReceiptPaymentStatementConsent()
+  const handleReceiptWrite =
+    documentKind === 'receipt' ? receiptConsent.tryWriteReceipt : undefined
 
   const pageItems = useMemo(() => {
     const start = (currentPage - 1) * EDUCATION_SETTLEMENT_PAGE_SIZE
@@ -164,6 +175,16 @@ export function EducationSettlementPanel({
         processLabel={processLabel}
         completedCount={completedCount}
         totalCount={totalElements}
+        feeGradeLabel={
+          documentKind === 'payment_statement'
+            ? readInstructorFeeGradeLabel(profileQuery.data)
+            : undefined
+        }
+        businessIncomeLabel={
+          documentKind === 'payment_statement'
+            ? readInstructorBusinessIncomeLabel(profileQuery.data)
+            : undefined
+        }
       />
       <EducationSessionList
         title="정산 현황"
@@ -174,18 +195,21 @@ export function EducationSettlementPanel({
         emptyMessage={
           remoteSettlements.individualEmpty
             ? INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE
-            : '정산 현황이 없어요.'
+            : '정산 현황이 없어요'
         }
+        emptyDescription="정산 대상 일정이 생기면 이곳에서 확인할 수 있어요."
       >
         {pageItems.map(item => (
           <EducationSettlementRow
             key={item.id}
             item={item}
             applicationId={applicationId}
+            applicationType={applicationType ?? undefined}
             documentKind={documentKind}
             area={area}
             operationEndAt={operationEnd}
             hideInstructorWrite={isGemini}
+            onReceiptWrite={handleReceiptWrite}
             initialRejectOpen={
               shouldOpenRejectReason &&
               item.status === 'rejected' &&
@@ -194,6 +218,11 @@ export function EducationSettlementPanel({
           />
         ))}
       </EducationSessionList>
+      <PaymentStatementPreConsentModal
+        open={receiptConsent.modalOpen}
+        onCancel={receiptConsent.closeModal}
+        onWriteConsent={receiptConsent.goToConsents}
+      />
     </div>
   )
 }

@@ -21,6 +21,8 @@ import {
   resolveGeneralProgramForDetail,
 } from '@/features/program/general/lib/detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import { resolveProgramListDetailEntry } from '@/features/program/general/lib/resolve-program-list-detail-entry'
+import { canBulkDeletePrograms } from '@/features/program/general/lib/program-list-selection'
 import type { Program } from '@/types/domain'
 import { DeleteGuideModal, showDeleteCompletedAlert, FilterTableToolbarButton } from '@/shared/ui'
 import {
@@ -81,6 +83,7 @@ export function GeneralProgramListPageContent() {
 
   const {
     filteredPrograms,
+    totalElements,
     headerTitle,
     programListConfig,
     statusFilter,
@@ -357,8 +360,12 @@ export function GeneralProgramListPageContent() {
       prev => {
         const nextParams = new URLSearchParams(prev)
         nextParams.set('programId', program.id)
-        if (!nextParams.get('lnb')) nextParams.set('lnb', 'info')
-        if (!nextParams.get('tab')) nextParams.set('tab', 'info')
+        const entry = resolveProgramListDetailEntry(program, {
+          statusFilter,
+          detailSurface: 'general',
+        })
+        nextParams.set('lnb', entry.lnb)
+        nextParams.set('tab', entry.tab)
         return nextParams
       },
       { replace: false }
@@ -381,7 +388,11 @@ export function GeneralProgramListPageContent() {
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {showBulkSelection && (
-        <FilterTableToolbarButton variant="delete" onClick={handleBulkDeleteClick}>
+        <FilterTableToolbarButton
+          variant="delete"
+          onClick={handleBulkDeleteClick}
+          disabled={!canBulkDeletePrograms(viewMode, selectedRowKeys.length)}
+        >
           선택 삭제
         </FilterTableToolbarButton>
       )}
@@ -422,6 +433,7 @@ export function GeneralProgramListPageContent() {
         data={filteredPrograms}
         loading={listLoading && (filteredPrograms.length === 0 || isListPlaceholderData)}
         headerTitle={headerTitle}
+        headerCount={isRemoteDataSource ? totalElements : undefined}
         onView={handleView}
         searchParams={searchParams}
         setSearchParams={setSearchParams}
@@ -438,7 +450,20 @@ export function GeneralProgramListPageContent() {
       >
         {programListToolbarActions}
       </ProgramList>
-      {isRemoteDataSource ? <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} /> : null}
+      {isRemoteDataSource ? (
+        <div className="program-list-page__load-more">
+          {hasNextPage ? (
+            <FilterTableToolbarButton
+              variant="secondary"
+              onClick={() => void fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? '불러오는 중...' : '다음 페이지'}
+            </FilterTableToolbarButton>
+          ) : null}
+          <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+        </div>
+      ) : null}
 
       <ProgramModalWhenOpen open={generalDetailModalOpen}>
         <LazyGeneralProgramDetailFullPageModal

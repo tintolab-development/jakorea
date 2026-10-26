@@ -12,6 +12,8 @@ interface ImportMetaEnv {
   /** Admin SSO callback용 백엔드 public origin (ngrok 등). `redirectUri` body·IdP 등록에 사용 */
   readonly VITE_OAUTH_BACKEND_ORIGIN?: string
   readonly VITE_API_BASE_URL?: string
+  /** 비로그인 설문 공유 링크 대상 Platform 오리진 (예: http://localhost:5173) */
+  readonly VITE_PLATFORM_PUBLIC_ORIGIN?: string
   /**
    * 로컬 dev: `vite.config`에서 `/api` 프록시 타깃(배포 API·ngrok 오리진). `VITE_API_BASE_URL` 비울 때 클라이언트도 상대 `/api` 사용.
    */

@@ -584,6 +584,7 @@ assert.deepEqual(
 
 const ujatBasicKey = 'ujat-program-application-volunteer-seed-basic-info'
 const ujatPreviousTermKey = 'ujat-program-application-volunteer-seed-previous-term'
+const ujatFreeTextItemsKey = 'ujat-program-application-volunteer-seed-free-text-items'
 const ujatConditionals = collectRuntimeConditionalQuestions({
   schemaVersion: 1,
   formSettings: { titleNumbering: 'none' },
@@ -596,6 +597,13 @@ const ujatConditionals = collectRuntimeConditionalQuestions({
           operator: 'in',
           visibleValues: ['UJAT-GRADUATE'],
           hiddenValues: ['NEW'],
+        },
+        [ujatFreeTextItemsKey]: {
+          dependsOnQuestionKey: ujatBasicKey,
+          dependsOnField: 'applicationType',
+          operator: 'in',
+          visibleValues: ['NEW'],
+          hiddenValues: ['UJAT-GRADUATE'],
         },
       },
     },
@@ -616,6 +624,17 @@ assert.equal(
 assert.equal(
   typeof omitRuntimeHiddenAnswers(
     {
+      [ujatBasicKey]: { applicationType: 'new' },
+      [ujatFreeTextItemsKey]: { items: [] },
+    },
+    new Set(),
+    ujatConditionals,
+  )[ujatFreeTextItemsKey],
+  'object',
+)
+assert.equal(
+  typeof omitRuntimeHiddenAnswers(
+    {
       [ujatBasicKey]: { applicationType: 'ujat-graduate' },
       [ujatPreviousTermKey]: { activityTerm: '3' },
     },
@@ -623,6 +642,17 @@ assert.equal(
     ujatConditionals,
   )[ujatPreviousTermKey],
   'object',
+)
+assert.equal(
+  omitRuntimeHiddenAnswers(
+    {
+      [ujatBasicKey]: { applicationType: 'ujat-graduate' },
+      [ujatFreeTextItemsKey]: { items: [] },
+    },
+    new Set(),
+    ujatConditionals,
+  )[ujatFreeTextItemsKey],
+  undefined,
 )
 
 /** 단일 선택은 `selectedPreviewSingleId` 하나를 제출하고, 저장값을 다시 라디오로 복원한다 */

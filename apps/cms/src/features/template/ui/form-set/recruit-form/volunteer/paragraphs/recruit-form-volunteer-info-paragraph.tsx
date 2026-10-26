@@ -10,7 +10,7 @@ import {
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
-import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { useVolunteerRecruitField } from '@/features/template/ui/form-set/recruit-form/volunteer/volunteer-recruit-form-rhf'
 import {
   RecruitInquiryContactRow,
   RecruitNotesRow,
@@ -37,20 +37,20 @@ type RangeSeal = { start: string; end: string } | null
 /** 프로그램 봉사자 모집 폼 — 봉사자 모집 정보 */
 export function RecruitFormVolunteerInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
-    useGeneralRecruitOverlayKv<ParticipantRecruitmentAnnouncementPublishedValue>(
+    useVolunteerRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
       'recruit.volunteer.announcementPublished',
       'published'
     )
-  const [interviewRequired, setInterviewRequired] = useGeneralRecruitOverlayKv<string>(
+  const [interviewRequired, setInterviewRequired] = useVolunteerRecruitField<string>(
     'recruit.volunteer.interviewRequired',
     'yes'
   )
 
-  const [programAnchorIso, setProgramAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [programAnchorIso, setProgramAnchorIso] = useVolunteerRecruitField<string | null>(
     'recruit.volunteer.programAnchorIso',
     null
   )
-  const [programRangeSeal, setProgramRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+  const [programRangeSeal, setProgramRangeSeal] = useVolunteerRecruitField<RangeSeal>(
     'recruit.volunteer.programRangeSeal',
     null
   )
@@ -74,11 +74,11 @@ export function RecruitFormVolunteerInfoParagraph() {
     [programRange]
   )
 
-  const [recruitAnchorIso, setRecruitAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [recruitAnchorIso, setRecruitAnchorIso] = useVolunteerRecruitField<string | null>(
     'recruit.volunteer.recruitAnchorIso',
     null
   )
-  const [recruitRangeSeal, setRecruitRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+  const [recruitRangeSeal, setRecruitRangeSeal] = useVolunteerRecruitField<RangeSeal>(
     'recruit.volunteer.recruitRangeSeal',
     null
   )
@@ -98,7 +98,7 @@ export function RecruitFormVolunteerInfoParagraph() {
     setRecruitRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
 
-  const [docDeadlineIso, setDocDeadlineIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [docDeadlineIso, setDocDeadlineIso] = useVolunteerRecruitField<string | null>(
     'recruit.volunteer.docDeadlineIso',
     null
   )
@@ -106,16 +106,16 @@ export function RecruitFormVolunteerInfoParagraph() {
   const setDocDeadlineDate = (next: Dayjs | null) => {
     setDocDeadlineIso(next == null ? null : next.toISOString())
   }
-  const [docAnnounceMethod, setDocAnnounceMethod] = useGeneralRecruitOverlayKv<string>(
+  const [docAnnounceMethod, setDocAnnounceMethod] = useVolunteerRecruitField<string>(
     'recruit.volunteer.docAnnounceMethod',
     ''
   )
 
-  const [interviewAnchorIso, setInterviewAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [interviewAnchorIso, setInterviewAnchorIso] = useVolunteerRecruitField<string | null>(
     'recruit.volunteer.interviewAnchorIso',
     null
   )
-  const [interviewRangeSeal, setInterviewRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+  const [interviewRangeSeal, setInterviewRangeSeal] = useVolunteerRecruitField<RangeSeal>(
     'recruit.volunteer.interviewRangeSeal',
     null
   )
@@ -141,12 +141,12 @@ export function RecruitFormVolunteerInfoParagraph() {
         : dateRangeUsesClockTime(interviewRange[0], interviewRange[1]),
     [interviewRange]
   )
-  const [interviewMethod, setInterviewMethod] = useGeneralRecruitOverlayKv<string>(
+  const [interviewMethod, setInterviewMethod] = useVolunteerRecruitField<string>(
     'recruit.volunteer.interviewMethod',
     ''
   )
 
-  const [finalAnnounceIso, setFinalAnnounceIso] = useGeneralRecruitOverlayKv<string | null>(
+  const [finalAnnounceIso, setFinalAnnounceIso] = useVolunteerRecruitField<string | null>(
     'recruit.volunteer.finalAnnounceIso',
     null
   )
@@ -154,36 +154,36 @@ export function RecruitFormVolunteerInfoParagraph() {
   const setFinalAnnounceDate = (next: Dayjs | null) => {
     setFinalAnnounceIso(next == null ? null : next.toISOString())
   }
-  const [finalAnnounceMethod, setFinalAnnounceMethod] = useGeneralRecruitOverlayKv<string>(
+  const [finalAnnounceMethod, setFinalAnnounceMethod] = useVolunteerRecruitField<string>(
     'recruit.volunteer.finalAnnounceMethod',
     ''
   )
 
-  const [volunteerTargets, setVolunteerTargets] = useGeneralRecruitOverlayKv<string[]>(
+  const [volunteerTargets, setVolunteerTargets] = useVolunteerRecruitField<string[]>(
     'recruit.volunteer.volunteerTargets',
     []
   )
-  const [volunteerTargetDetail, setVolunteerTargetDetail] = useGeneralRecruitOverlayKv<string>(
+  const [volunteerTargetDetail, setVolunteerTargetDetail] = useVolunteerRecruitField<string>(
     'recruit.volunteer.volunteerTargetDetail',
     ''
   )
-  const [inquiryContact, setInquiryContact] = useGeneralRecruitOverlayKv<string>(
+  const [inquiryContact, setInquiryContact] = useVolunteerRecruitField<string>(
     'recruit.volunteer.inquiryContact',
     ''
   )
-  const [inquiryTel, setInquiryTel] = useGeneralRecruitOverlayKv<string>(
+  const [inquiryTel, setInquiryTel] = useVolunteerRecruitField<string>(
     'recruit.volunteer.inquiryTel',
     ''
   )
-  const [inquiryEmail, setInquiryEmail] = useGeneralRecruitOverlayKv<string>(
+  const [inquiryEmail, setInquiryEmail] = useVolunteerRecruitField<string>(
     'recruit.volunteer.inquiryEmail',
     ''
   )
-  const [notesNotApplicable, setNotesNotApplicable] = useGeneralRecruitOverlayKv<boolean>(
+  const [notesNotApplicable, setNotesNotApplicable] = useVolunteerRecruitField<boolean>(
     'recruit.volunteer.notesNotApplicable',
     false
   )
-  const [notes, setNotes] = useGeneralRecruitOverlayKv<string>('recruit.volunteer.notes', '')
+  const [notes, setNotes] = useVolunteerRecruitField<string>('recruit.volunteer.notes', '')
 
   const interviewEnabled = interviewRequired === 'yes'
 

@@ -4,18 +4,45 @@ import {
   programApplyRequiredPath,
   PROGRAMS_PATH,
   ProgramApplyGateModals,
+  isAlreadyAppliedApplicationReason,
   programApplyGateApplicationsPathForType,
   programApplyGateMemberSettingsPath,
   readPortalRecruitmentFocus,
+  usePortalApplicationOption,
   useProgramApplyGate,
   useProgramDetail,
 } from '@/features/program'
 import { getDevAuthLoggedIn } from '@/shared/lib'
-import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ProgramDetailView } from './detail-view'
+
+type ApplyBlockedAlert = {
+  title: string
+  description: string
+}
+
+function applyBlockedAlertFor(
+  blockedReason: string | null,
+  blockedMessage: string
+): ApplyBlockedAlert {
+  if (blockedReason === 'RECRUITMENT_CLOSED' || blockedReason === 'RECRUITMENT_ENDED') {
+    return {
+      title: '프로그램 모집기간이 종료되었어요.',
+      description: '모집기간이 종료된 프로그램은 신청서를 제출할 수 없어요.',
+    }
+  }
+  if (blockedReason === 'RECRUITMENT_NOT_STARTED') {
+    return {
+      title: '프로그램 모집기간이 시작되지 않았어요.',
+      description: '모집기간이 시작되지 않은 프로그램은\n신청서를 제출할 수 없어요.',
+    }
+  }
+  return { title: '안내', description: blockedMessage }
+}
 
 function ProgramDetailLoading() {
   return (
@@ -47,6 +74,7 @@ function ProgramDetailLoading() {
 export function ProgramDetailPage() {
   const navigate = useNavigate()
   const { search } = useLocation()
+  const [applyBlockedAlert, setApplyBlockedAlert] = useState<ApplyBlockedAlert | null>(null)
   const programId = getProgramIdFromPath()
   const focus = readPortalRecruitmentFocus(search)
   const { program, isLoading } = useProgramDetail(programId, { focus })
@@ -65,8 +93,9 @@ export function ProgramDetailPage() {
         }
   const { gateModal, closeGateModal, isChecking, runApplyGate } = useProgramApplyGate(
     programId,
-    applySelection,
+    applySelection
   )
+  const applyOptionQuery = usePortalApplicationOption(programId, applySelection)
 
   if (isLoading && !program) {
     return <ProgramDetailLoading />
@@ -92,7 +121,20 @@ export function ProgramDetailPage() {
   }
 
   const handleApply = () => {
+    const canOpenExistingApplicationGate = isAlreadyAppliedApplicationReason(
+      applyOptionQuery.blockedReason,
+    )
     if (program.recruitmentSelectionAmbiguous) {
+      setApplyBlockedAlert({
+        title: '신청 대상을 확인해 주세요.',
+        description: '프로그램의 모집 대상을 선택한 뒤 신청해 주세요.',
+      })
+      return
+    }
+    if (applyOptionQuery.blockedMessage && !canOpenExistingApplicationGate) {
+      setApplyBlockedAlert(
+        applyBlockedAlertFor(applyOptionQuery.blockedReason, applyOptionQuery.blockedMessage),
+      )
       return
     }
     const nextFocus = applySelection
@@ -113,7 +155,7 @@ export function ProgramDetailPage() {
         program={program}
         onBackToList={handleBackToList}
         onApply={handleApply}
-        applyChecking={isChecking}
+        applyChecking={isChecking || applyOptionQuery.isLoading}
       />
       <ProgramApplyGateModals
         kind={gateModal}
@@ -130,6 +172,12 @@ export function ProgramDetailPage() {
               : program.applicationType
           navigate(programApplyGateApplicationsPathForType(applicationType))
         }}
+      />
+      <PFAlertModal
+        open={applyBlockedAlert != null}
+        title={applyBlockedAlert?.title ?? ''}
+        description={applyBlockedAlert?.description}
+        onConfirm={() => setApplyBlockedAlert(null)}
       />
     </>
   )

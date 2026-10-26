@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { MAIL_SEND_PURPOSE, type MailSendDraft } from '@/features/notifications/model/mail-send/types'
+import {
+  MAIL_SEND_PURPOSE,
+  type MailSendDraft,
+} from '@/features/notifications/model/mail-send/types'
 
 vi.mock('@/entities/user/api/auth-service', () => ({
   hasRemoteAdminJwt: vi.fn(() => true),
@@ -103,9 +106,7 @@ describe('submitMailSend', () => {
   it('normalizes HTML-entity placeholders in the snapshot', async () => {
     await submitMailSend({
       draft: draft({
-        bodyHtml: '<p>#{회원명}</p>'.replace(/[{}]/g, ch =>
-          ch === '{' ? '&#123;' : '&#125;'
-        ),
+        bodyHtml: '<p>#{회원명}</p>'.replace(/[{}]/g, ch => (ch === '{' ? '&#123;' : '&#125;')),
       }),
       templateBaseline: { subject: '테스트 메일', bodyHtml: '<p>본문</p>' },
       idempotencyKey: 'idem-entity',
@@ -231,6 +232,106 @@ describe('buildMailSendRecipients', () => {
         actorId: 12,
       },
     ])
+  })
+
+  it('maps per-recipient manual variables and drops blank or reserved keys', () => {
+    expect(
+      buildMailSendRecipients(
+        [
+          {
+            id: 'actor-MEMBER-4',
+            participationType: '',
+            name: '회원',
+            email: 'member@example.com',
+            source: 'program',
+            actorType: 'MEMBER',
+            actorId: 4,
+            variables: {
+              '방문 안내': '  오전 ',
+              프로그램명: '임의',
+              '다른 안내': '제외',
+            },
+          },
+          {
+            id: 'manual-direct@example.com',
+            participationType: '',
+            name: '직접',
+            email: 'direct@example.com',
+            source: 'manual',
+            actorType: 'DIRECT',
+            variables: { '방문 안내': '' },
+          },
+        ],
+        {
+          keys: ['방문 안내', '프로그램명'],
+          catalog: [
+            { key: '방문 안내', enabled: true },
+            { key: '프로그램명', enabled: true, requiresProgram: true },
+          ],
+          programSelected: false,
+        }
+      )
+    ).toEqual([
+      {
+        actorType: 'MEMBER',
+        actorId: 4,
+        variables: { '방문 안내': '오전' },
+      },
+      {
+        actorType: 'DIRECT',
+        recipientContact: 'direct@example.com',
+        recipientName: '직접',
+      },
+    ])
+  })
+
+  it('omits auto-matched variables when a program is selected', () => {
+    expect(
+      buildMailSendRecipients(
+        [
+          {
+            id: 'actor-MEMBER-4',
+            participationType: 'participant',
+            name: '회원',
+            email: 'member@example.com',
+            source: 'program',
+            actorType: 'MEMBER',
+            actorId: 4,
+            variables: { '방문 안내': '덮어쓰면 안 됨' },
+          },
+        ],
+        {
+          keys: ['방문 안내'],
+          catalog: [{ key: '방문 안내', enabled: true }],
+          programSelected: true,
+        }
+      )
+    ).toEqual([{ actorType: 'MEMBER', actorId: 4 }])
+  })
+
+  it('dedupes the same email before building the payload', () => {
+    expect(
+      buildMailSendRecipients([
+        {
+          id: 'actor-MEMBER-1',
+          participationType: '',
+          name: '먼저',
+          email: 'User@Example.com',
+          source: 'program',
+          actorType: 'MEMBER',
+          actorId: 1,
+        },
+        {
+          id: 'actor-MEMBER-2',
+          participationType: '',
+          name: '나중',
+          email: 'user@example.com',
+          source: 'program',
+          actorType: 'MEMBER',
+          actorId: 2,
+        },
+      ]).map(item => item.actorId)
+    ).toEqual([1])
   })
 
   it('skips masked PII in recipient variables', () => {

@@ -3,8 +3,14 @@ import type { Program } from '@/types/domain'
 import type { GeneralInterviewSlotListItem } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
-import { resolveGeneralProgramVolunteerInterviewScheduleDisplay } from '@/features/program/general/lib/volunteer-interview-schedule-display'
-import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK, GENERAL_INTERVIEW_MOCK_RANGE } from '@/features/program/general/model/volunteer-interview-schedule'
+import {
+  resolveGeneralProgramVolunteerInterviewScheduleDisplay,
+  typedVolunteerInterviewUnavailableDateIsos,
+} from '@/features/program/general/lib/volunteer-interview-schedule-display'
+import {
+  DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
+  GENERAL_INTERVIEW_MOCK_RANGE,
+} from '@/features/program/general/model/volunteer-interview-schedule'
 import {
   formatDisplayTimeRange,
   getPublicHolidayDateKeysForSchedule,
@@ -274,9 +280,7 @@ export function mergeApplicantAvailabilityIntoSchedule(
     const date = parseInterviewDisplayDateLabel(day.dateLabel)
     if (!date) continue
     const slots = new Set(
-      day.slots
-        .filter(raw => /\d{2}:\d{2}/.test(raw))
-        .map(normalizeTimeRangeKey)
+      day.slots.filter(raw => /\d{2}:\d{2}/.test(raw)).map(normalizeTimeRangeKey)
     )
     if (slots.size > 0) availabilityByDate.set(date.format('YYYY-MM-DD'), slots)
   }
@@ -315,14 +319,22 @@ export function parseGeneralInterviewScheduleFromDefaultMock(): ParsedInterviewS
 
 /**
  * 프로그램에 등록된 면접 가능/불가 일정으로 배정 캘린더를 만든다.
- * 기간·불가일·시간대 SSOT = `volunteerInterviewScheduleInfo`(없으면 모집 면접 기간·DEFAULT mock).
+ * 불가일·시간대 = 상세 표시와 같은 소스(봉사 행 typed → GET `volunteerInterviewScheduleInfo` → overlay).
+ * 기간은 `volunteerInterviewScheduleInfo`(없으면 모집 면접 기간·DEFAULT mock).
  */
 export function parseGeneralInterviewScheduleFromProgram(
   program: Program,
   publicHolidayDateKeys?: ReadonlySet<string>
 ): ParsedInterviewSchedule {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
-  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+  // 표시와 같은 소스 — typed 가 있으면 specific ∪ applied(BE allowsSlot 과 같은 차단), 없으면 GET 표시 객체
+  const typed = program.volunteerInterviewConfigFromServer
+  const info =
+    typed != null
+      ? { specificUnavailableDateIsos: typedVolunteerInterviewUnavailableDateIsos(typed) }
+      : program.volunteerInterviewScheduleInfoFromServer !== undefined
+        ? (program.volunteerInterviewScheduleInfoFromServer ?? undefined)
+        : program.generalCommonInfo?.volunteerInterviewScheduleInfo
   const parsedSlots = parseTimeSlotsString(
     display.availableTimeSlots === '-' ? '' : display.availableTimeSlots
   )

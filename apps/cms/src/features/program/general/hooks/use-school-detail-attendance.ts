@@ -174,6 +174,7 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       rosterStudents: remoteQuery.data.rosterStudents,
       attendancesByScheduleId: remoteQuery.data.attendancesByScheduleId,
       includeSessionsWithoutAttendance: trainedTeacherAttendanceRemoteEnabled,
+      giveUpParticipants: remoteQuery.data.giveUpParticipants,
     })
   }, [program, remoteEnabled, remoteQuery.data, row, trainedTeacherAttendanceRemoteEnabled])
 

@@ -1,4 +1,5 @@
 import type { Program } from '@/types/domain'
+import { resolveRegistrationOverlay } from '@/features/program/shared/lib/resolve-registration-overlay'
 
 export const PUBLIC_PROGRAM_TITLE_OVERLAY_KEYS = [
   'ujat.basicInfo.publicProgramTitle',
@@ -54,10 +55,8 @@ export function parseRegistrationOverlayFromServiceDetailJson(
   raw?: unknown
 ): Record<string, unknown> {
   const parsed = coerceServiceDetailObject(raw)
-  if (!parsed || !isRecord(parsed.registration) || !isRecord(parsed.registration.overlay)) {
-    return {}
-  }
-  return parsed.registration.overlay
+  if (!parsed) return {}
+  return resolveRegistrationOverlay(parsed)
 }
 
 function readAnnouncementTitleFromCommon(common: unknown): string | undefined {

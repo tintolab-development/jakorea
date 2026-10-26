@@ -1,10 +1,12 @@
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
-  LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS,
   createLectureReportIssuanceDraft,
   normalizeWritingFormDraft,
   type LectureReportProgramProgressParagraph,
-  type SessionPlanShortEssayParagraph,
+  type MultipleChoiceParagraph,
+  type ScaleTypeParagraph,
+  type ShortEssayParagraph,
+  type StarRateParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -15,59 +17,80 @@ export const LECTURE_REPORT_DOCUMENT_TITLE = '강의보고서'
 export interface LectureReportPreviewRowContext {
   id: string
   no: number
+  reportId?: number
+  scheduleId?: number
   schoolName: string
   educationGrade: string
   educationScheduleLabel: string
+}
+
+export interface LectureReportPreviewFile {
+  fileObjectId: number
+  originalFileName?: string
+}
+
+/** 관리자 강의보고서 미리보기용 공통 응답 데이터. */
+export interface LectureReportPreviewContent {
+  formResponseId?: number
+  templateVersionId?: number
+  form?: Record<string, unknown>
+  answers?: Record<string, unknown>
+  files?: LectureReportPreviewFile[]
 }
 
 export interface LectureReportPreviewContext {
   instructor: ParticipatingInstructorRow
   program?: Program | null
   row: LectureReportPreviewRowContext
+  content?: LectureReportPreviewContent | null
 }
 
 export function buildLectureReportPreviewContext(
   instructor: ParticipatingInstructorRow,
   program: Program | null | undefined,
-  row: LectureReportPreviewRowContext
+  row: LectureReportPreviewRowContext,
+  content?: LectureReportPreviewContent | null
 ): LectureReportPreviewContext {
-  return { instructor, program, row }
+  return { instructor, program, row, content }
 }
 
-const EDUCATION_CONTENT_MOCK = [
-  '경제의 기본 개념인 수요와 공급, 가격 결정 원리를 중심으로 학습했습니다. 학생들이 일상 속 경제 사례와 연결해 이해할 수 있도록 설명했습니다.',
-  '교재 활동과 모의 경제 게임, 시각 자료를 활용해 강의를 진행했습니다. 그룹 토론과 질의응답 시간을 통해 학습 내용을 실습으로 연결했습니다.',
-]
-
-const EDUCATION_OPERATION_MOCK = [
-  '학생들이 전반적으로 적극적으로 참여했으며, 질문과 토론에도 성실히 응했습니다.',
-  '교육 콘텐츠 난이도는 학년 수준에 적합했으며, 일부 학생에게는 보충 설명이 도움이 되었습니다.',
-  '특이사항 없이 원활하게 진행되었습니다.',
-]
-
-const OVERALL_EVALUATION_MOCK =
-  '학생들의 참여도가 높았고, 경제 개념을 일상 사례와 연결한 설명이 효과적이었습니다. 다음에는 시각 자료를 더 다양하게 활용하고, 그룹 활동 시간을 조금 더 확보하면 좋겠습니다.'
+const LECTURE_REPORT_PROGRESS_KEYS = [
+  'programName',
+  'textbookName',
+  'progressUnit',
+  'institutionName',
+  'institutionLocation',
+  'educationDate',
+  'sessionTime',
+  'sessionIndex',
+  'educationTarget',
+  'classLabel',
+  'studentCount',
+] as const
 
 function resolveProgramTitle(program?: Program | null): string {
-  return program?.mainTitle?.trim() || program?.title?.trim() || 'JA Korea 경제교육 프로그램'
+  return program?.mainTitle?.trim() || program?.title?.trim() || ''
 }
 
 function parseEducationScheduleLabel(label: string): {
   startDateLabel: string
-  endDateLabel: string
-  sessionLabel: string
   sessionIndex: string
+  timeLabel: string
 } {
   const pipeParts = label.split('|').map(part => part.trim())
-  const sessionLabel = pipeParts[1] ?? '1회차'
-  const sessionIndex = sessionLabel.replace(/회차$/, '').trim() || '1'
+  const sessionLabel = pipeParts.find(part => /\d+\s*회차/.test(part)) ?? ''
+  const sessionIndex = sessionLabel.replace(/회차$/, '').trim()
   const rangePart = pipeParts[0]?.trim() ?? label
-  const [startDateLabel = '-', endDateLabel = '-'] = rangePart.split('~').map(part => part.trim())
-  return { startDateLabel, endDateLabel, sessionLabel, sessionIndex }
+  const [startDateLabel = ''] = rangePart.split('~').map(part => part.trim())
+  const timeLabel = pipeParts.find(part => /\d{1,2}:\d{2}/.test(part)) ?? ''
+  return { startDateLabel, sessionIndex, timeLabel }
 }
 
 function toIsoDateFromLabel(dateLabel: string): string {
-  const normalized = dateLabel.replace(/\([^)]*\)/g, '').replace(/\./g, '-').replace(/\s+/g, '')
+  const normalized = dateLabel
+    .replace(/\([^)]*\)/g, '')
+    .replace(/\./g, '-')
+    .replace(/\s+/g, '')
   const match = normalized.match(/(\d{4})-(\d{2})-(\d{2})/)
   if (!match) return ''
   return `${match[1]}-${match[2]}-${match[3]}`
@@ -82,7 +105,9 @@ function fillSurveyTitleParagraph(
   }
   return {
     ...paragraph,
-    surveyTitle: `JA KOREA 「${programTitle}」 ${LECTURE_REPORT_DOCUMENT_TITLE}`,
+    surveyTitle: programTitle
+      ? `JA KOREA 「${programTitle}」 ${LECTURE_REPORT_DOCUMENT_TITLE}`
+      : `JA KOREA ${LECTURE_REPORT_DOCUMENT_TITLE}`,
   }
 }
 
@@ -93,73 +118,131 @@ function fillProgramProgressParagraph(
   if (paragraph.kind !== 'single_item' || paragraph.variant !== 'lecture_report_program_progress') {
     return paragraph
   }
-  const { startDateLabel, sessionIndex } = parseEducationScheduleLabel(
+  const { startDateLabel, sessionIndex, timeLabel } = parseEducationScheduleLabel(
     ctx.row.educationScheduleLabel
   )
   const p = paragraph as LectureReportProgramProgressParagraph
   return {
     ...p,
     programName: resolveProgramTitle(ctx.program),
-    textbookName: ctx.program?.textbookName?.trim() || '경제교육 교재',
-    progressUnit: '1단원',
+    textbookName: ctx.program?.textbookName?.trim() || '',
+    progressUnit: '',
     institutionName: ctx.row.schoolName,
-    institutionLocation: ctx.instructor.region ?? '-',
+    institutionLocation: '',
     educationDate: toIsoDateFromLabel(startDateLabel) || startDateLabel,
-    sessionTime: '09:00 ~ 11:00',
-    sessionIndex: `${sessionIndex}회차`,
-    educationTarget: ctx.row.educationGrade,
-    classLabel: ctx.row.educationGrade,
-    studentCount: '24명',
+    sessionTime: timeLabel,
+    sessionIndex: sessionIndex ? `${sessionIndex}회차` : '',
+    educationTarget: ctx.row.educationGrade === '-' ? '' : ctx.row.educationGrade,
+    classLabel: '',
+    studentCount: '',
   }
 }
 
-function fillSessionPlanParagraph(
-  paragraph: WritingFormParagraph,
-  _sessionIndex: number
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function readAnswer(answers: Record<string, unknown> | undefined, key: string): unknown {
+  return answers != null && key in answers ? answers[key] : undefined
+}
+
+function answerText(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
+function applyShortEssayAnswer(
+  paragraph:
+    | ShortEssayParagraph
+    | Extract<WritingFormParagraph, { variant: 'session_plan_short_essay' }>,
+  value: unknown,
+  answers: Record<string, unknown> | undefined
 ): WritingFormParagraph {
-  if (paragraph.kind !== 'single_item' || paragraph.variant !== 'session_plan_short_essay') {
-    return paragraph
+  const record = isRecord(value) ? value : undefined
+  const answerItems = Array.isArray(record?.items) ? record.items : []
+  const items = paragraph.items?.map((item, index) => {
+    const directValue = readAnswer(answers, item.id)
+    const answerItem =
+      answerItems.find(candidate => isRecord(candidate) && candidate.id === item.id) ??
+      answerItems[index]
+    const itemValue =
+      answerText(directValue) ??
+      (isRecord(answerItem) ? answerText(answerItem.bodyText) : undefined)
+    return itemValue != null ? { ...item, bodyText: itemValue } : item
+  })
+  const bodyText = answerText(value) ?? (record ? answerText(record.bodyText) : undefined)
+  return {
+    ...paragraph,
+    ...(bodyText != null ? { bodyText } : {}),
+    ...(items != null ? { items } : {}),
   }
-  const p = paragraph as SessionPlanShortEssayParagraph
+}
 
-  if (p.id === LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.educationOperation) {
-    const updatedItems = (p.items ?? []).map((item, index) => ({
-      ...item,
-      bodyText: EDUCATION_OPERATION_MOCK[index] ?? EDUCATION_OPERATION_MOCK[0]!,
-    }))
-    return { ...p, items: updatedItems }
+function applyLectureReportAnswer(
+  paragraph: WritingFormParagraph,
+  answers: Record<string, unknown> | undefined
+): WritingFormParagraph {
+  if (paragraph.kind !== 'single_item') return paragraph
+  const value = readAnswer(answers, paragraph.id)
+
+  if (paragraph.variant === 'lecture_report_program_progress' && isRecord(value)) {
+    return {
+      ...paragraph,
+      ...Object.fromEntries(
+        LECTURE_REPORT_PROGRESS_KEYS.map(key => [key, answerText(value[key]) ?? paragraph[key]])
+      ),
+    } as LectureReportProgramProgressParagraph
   }
 
-  if (p.id === LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.educationContent) {
-    const updatedItems = (p.items ?? []).map((item, index) => ({
-      ...item,
-      bodyText: EDUCATION_CONTENT_MOCK[index] ?? EDUCATION_CONTENT_MOCK[0]!,
-    }))
-    return { ...p, items: updatedItems, bodyText: EDUCATION_CONTENT_MOCK[0]! }
+  if (paragraph.variant === 'short_essay' || paragraph.variant === 'session_plan_short_essay') {
+    return applyShortEssayAnswer(paragraph, value, answers)
   }
 
-  if (p.id === LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.overallEvaluation) {
-    const updatedItems = (p.items ?? []).map(item => ({
-      ...item,
-      bodyText: OVERALL_EVALUATION_MOCK,
-    }))
-    return { ...p, items: updatedItems, bodyText: OVERALL_EVALUATION_MOCK }
+  if (paragraph.variant === 'multiple_choice') {
+    if (paragraph.allowMultiple === true && Array.isArray(value)) {
+      return {
+        ...paragraph,
+        selectedPreviewMultipleIds: value.filter(
+          (item): item is string => typeof item === 'string'
+        ),
+      } as MultipleChoiceParagraph
+    }
+    if (typeof value === 'string') {
+      return { ...paragraph, selectedPreviewSingleId: value } as MultipleChoiceParagraph
+    }
   }
 
-  return p
+  if (paragraph.variant === 'scale_type' && typeof value === 'string') {
+    return { ...paragraph, selectedPreviewItemId: value } as ScaleTypeParagraph
+  }
+
+  if (paragraph.variant === 'star_rate' && typeof value === 'number') {
+    return { ...paragraph, selectedPreviewStars: value } as StarRateParagraph
+  }
+
+  return paragraph
 }
 
 export function buildLectureReportFilledDraft(ctx: LectureReportPreviewContext): WritingFormDraft {
   const programTitle = resolveProgramTitle(ctx.program)
 
-  const base = normalizeWritingFormDraft(createLectureReportIssuanceDraft())
-  return {
+  const responseForm = ctx.content?.form
+  const base = normalizeWritingFormDraft(
+    isRecord(responseForm) && Array.isArray(responseForm.paragraphs)
+      ? (responseForm as unknown as WritingFormDraft)
+      : createLectureReportIssuanceDraft()
+  )
+  const filled = {
     ...base,
     paragraphs: base.paragraphs.map(paragraph => {
       const withTitle = fillSurveyTitleParagraph(paragraph, programTitle)
-      const withProgress = fillProgramProgressParagraph(withTitle, ctx)
-      return fillSessionPlanParagraph(withProgress, 0)
+      return fillProgramProgressParagraph(withTitle, ctx)
     }),
+  }
+  return {
+    ...filled,
+    paragraphs: filled.paragraphs.map(paragraph =>
+      applyLectureReportAnswer(paragraph, ctx.content?.answers)
+    ),
   }
 }
 

@@ -14,7 +14,7 @@ import { isGeneralIndividualProgram } from '@/features/program/general/lib/surve
 import { getVolunteerApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/volunteer-application-form-visibility'
 import {
   isGeneralProgramVolunteerInterviewScheduleVisible,
-  resolveGeneralProgramVolunteerInterviewScheduleEditSeed,
+  resolveGeneralProgramVolunteerInterviewSchedulePreviewSeed,
 } from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import type { ProgramParticipantApplicationEditorViewModel } from '@/features/template/hooks/use-program-participant-application-editor'
 import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
@@ -134,7 +134,8 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
           ...vm.programApplicationFormVolunteerOptions,
           ...(program
             ? {
-                commonScheduleSeed: resolveGeneralProgramVolunteerInterviewScheduleEditSeed(program),
+                commonScheduleSeed:
+                  resolveGeneralProgramVolunteerInterviewSchedulePreviewSeed(program),
                 activityScheduleSlots:
                   instructorScheduleSlots ?? buildVolunteerActivityAvailableScheduleSlots(program),
                 ...(isGeneralIndividualProgram(program)

@@ -31,6 +31,17 @@ describe('settlement mutation invalidate prefixes', () => {
     ])
   })
 
+  it('individual settlement review list is not under paymentOrders settlementId', () => {
+    const individualAll = settlementQueryKeys.individualSettlementReviews.all()
+    expect(individualAll).toEqual(['cms', 'settlement', 'individualSettlementReviews'])
+    expect(isPrefixedBy(settlementQueryKeys.individualSettlementReviews.list('payment-orders'), individualAll)).toBe(
+      true
+    )
+    expect(settlementQueryKeys.paymentOrders.settlement(1)).not.toEqual(
+      settlementQueryKeys.individualSettlementReviews.list('1')
+    )
+  })
+
   it('paymentOrders.all() prefixes list, detail, and settlement calc', () => {
     const all = settlementQueryKeys.paymentOrders.all()
     expect(isPrefixedBy(settlementQueryKeys.paymentOrders.list('program', 'q'), all)).toBe(true)

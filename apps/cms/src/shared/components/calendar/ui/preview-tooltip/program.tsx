@@ -1,12 +1,9 @@
 import type { ReactNode } from 'react'
-import {
-  SCHEDULE_COLORS,
-  type ScheduleColorPair,
-} from '@/features/program/shared/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '../../model/calendar-item'
 import { getInstructorTooltipSessionLabel } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-calendar-session'
 
-import './program-preview.css'
+import '../../styles/calendar-preview-popover-content.css'
 
 function calendarItemsToPopoverRows(
   items: CalendarItem[]
@@ -76,58 +73,49 @@ export type ProgramPreviewTooltipEventRow = {
 type ProgramPreviewTooltipBodyProps = {
   events: ProgramPreviewTooltipEventRow[]
   colorMap: Map<string | number, ScheduleColorPair>
-  /** 있으면 해당 id 행에 `program-preview-item--selected` 적용 */
-  selectedIds?: ReadonlySet<string | number>
 }
 
 /** `CalendarMain` 툴팁 본문 — 신청자 일정 요약 행 */
 export function ProgramPreviewTooltipBody({
   events,
-  colorMap,
-  selectedIds,
 }: ProgramPreviewTooltipBodyProps): ReactNode {
   return (
-    <div className="program-preview">
+    <div className="calendar-preview-popover">
       {events.map(ev => {
-        const colors = colorMap.get(ev.id) ?? SCHEDULE_COLORS[0]
         const parts = getProgramPreviewRowParts(ev.originalItem as Record<string, unknown> | undefined)
         const fallbackTitle = String(ev.title ?? '').replace(/^\[.*?\]\s*/, '')
-        const selected = selectedIds?.has(ev.id) ?? false
-        const itemClass = ['program-preview-item', selected ? 'program-preview-item--selected' : '']
-          .filter(Boolean)
-          .join(' ')
 
         if (!parts) {
           return (
-            <div key={String(ev.id)} className={itemClass}>
-              <span className="program-preview-item__title" style={{ color: colors.text }}>
-                {fallbackTitle || '-'}
-              </span>
+            <div key={String(ev.id)} className="calendar-preview-popover__entry">
+              <span className="calendar-preview-popover__title">{fallbackTitle || '-'}</span>
             </div>
           )
         }
 
         return (
-          <div key={String(ev.id)} className={itemClass}>
-            <span className="program-preview-item__title" style={{ color: colors.text }}>
-              {parts.title}
-            </span>
-            <span className="program-preview-item__sep" aria-hidden>
-              |
-            </span>
-            <span className="program-preview-item__text">{parts.location}</span>
-            <span className="program-preview-item__sep" aria-hidden>
-              |
-            </span>
-            <span className="program-preview-item__text">{parts.countLabel}</span>
-            {parts.sessionLabel ? (
-              <>
-                <span className="program-preview-item__sep" aria-hidden>
-                  |
-                </span>
-                <span className="program-preview-item__text">{parts.sessionLabel}</span>
-              </>
-            ) : null}
+          <div key={String(ev.id)} className="calendar-preview-popover__entry">
+            <span className="calendar-preview-popover__title">{parts.title}</span>
+            <div className="calendar-preview-popover__meta">
+              <span className="calendar-preview-popover__meta-part">
+                {parts.location}
+              </span>
+              <span className="calendar-preview-popover__meta-sep" aria-hidden />
+              <span className="calendar-preview-popover__meta-part">
+                {parts.countLabel}
+              </span>
+              {parts.sessionLabel ? (
+                <>
+                  <span
+                    className="calendar-preview-popover__meta-sep"
+                    aria-hidden
+                  />
+                  <span className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session">
+                    {parts.sessionLabel}
+                  </span>
+                </>
+              ) : null}
+            </div>
           </div>
         )
       })}
@@ -198,38 +186,34 @@ function resolveGeneralProgramCalendarPreviewRow(
 /** 일반 프로그램 목록 캘린더 — 이벤트 모드 셀 툴팁 (제목 + 일정 내용 | 시간) */
 export function renderGeneralProgramCalendarPreviewTooltipContent({
   events,
-  colorMap,
 }: {
   events: CalendarItem[]
   colorMap: Map<string | number, ScheduleColorPair>
 }): ReactNode {
   return (
-    <div className="program-preview">
+    <div className="calendar-preview-popover">
       {events.map(item => {
         const event = resolveGeneralProgramCalendarPreviewRow(item)
-        const colors = colorMap.get(item.id) ?? SCHEDULE_COLORS[0]
         if (!event) {
           return (
-            <div key={String(item.id)} className="program-preview-item program-preview-item--stack">
-              <span className="program-preview-item__title" style={{ color: colors.text }}>
-                {item.title ?? '-'}
-              </span>
+            <div key={String(item.id)} className="calendar-preview-popover__entry">
+              <span className="calendar-preview-popover__title">{item.title ?? '-'}</span>
             </div>
           )
         }
         return (
-          <button
-            key={String(item.id)}
-            type="button"
-            className="program-preview-item program-preview-item--stack"
-          >
-            <span className="program-preview-item__title" style={{ color: colors.text }}>
-              {event.programTitle}
-            </span>
-            <span className="program-preview-item__desc">
-              {event.scheduleContent} | {event.timeLabel}
-            </span>
-          </button>
+          <div key={String(item.id)} className="calendar-preview-popover__entry">
+            <span className="calendar-preview-popover__title">{event.programTitle}</span>
+            <div className="calendar-preview-popover__meta">
+              <span className="calendar-preview-popover__meta-part calendar-preview-popover__meta-part--session">
+                {event.scheduleContent}
+              </span>
+              <span className="calendar-preview-popover__meta-sep" aria-hidden />
+              <span className="calendar-preview-popover__meta-part">
+                {event.timeLabel}
+              </span>
+            </div>
+          </div>
         )
       })}
     </div>

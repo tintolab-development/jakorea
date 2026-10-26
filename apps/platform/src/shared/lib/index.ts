@@ -70,6 +70,19 @@ export {
   subscribeFileUploadOverlay,
 } from './file-upload-overlay'
 export {
+  FILE_UPLOAD_COUNT_EXCEEDED_MESSAGE,
+  FILE_UPLOAD_MAX_BYTES,
+  FILE_UPLOAD_MAX_COUNT,
+  FILE_UPLOAD_MAX_TOTAL_BYTES,
+  FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE,
+  FILE_UPLOAD_TOTAL_EXCEEDED_MESSAGE,
+  formatMultiFileUploadHint,
+  formatSingleFileUploadHint,
+  sumUploadFileBytes,
+  validateUploadBatch,
+  validateUploadFileSize,
+} from './file-upload-policy'
+export {
   DISPLAY_DATE_TIMEZONE,
   formatDisplayClock,
   formatDisplayClockLabel,

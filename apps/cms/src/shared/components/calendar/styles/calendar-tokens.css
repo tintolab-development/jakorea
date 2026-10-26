@@ -9,12 +9,15 @@
 .calendar-main {
   --calendar-cell-min-width: 116px;
   --calendar-cell-min-height: 124px;
-  --calendar-week-hour-px: 56px;
+  /* Figma 주간 격자 프레임 14931:749823 · 월간 날짜 그리드 외곽 */
+  --calendar-grid-radius: var(--radius-8, 8px);
+  --calendar-week-hour-px: 65px;
   --calendar-week-total-px: calc(24 * var(--calendar-week-hour-px));
-  /* 시간 라벨(오전/오후 + N시) 좌측 정렬 — header-title 좌측과 맞춤 */
-  --calendar-week-gutter-width: 72px;
-  --calendar-week-gutter-gap: 20px;
-  --calendar-week-columns-min-width: calc(var(--calendar-cell-min-width) * 7);
+  /* Figma 1141:230335 — 시간축 40px, 격자까지 8px, 요일 열 min 108px */
+  --calendar-week-gutter-width: 40px;
+  --calendar-week-gutter-gap: 8px;
+  --calendar-week-column-min-width: 108px;
+  --calendar-week-columns-min-width: calc(var(--calendar-week-column-min-width) * 7);
   --calendar-week-time-grid-min-width: calc(
     var(--calendar-week-gutter-width) + var(--calendar-week-gutter-gap) +
       var(--calendar-week-columns-min-width)
@@ -27,7 +30,7 @@
   --calendar-main-header-body-gap: 10px;
   --calendar-main-horizontal-padding: 40px;
   --calendar-main-vertical-padding: 32px;
-  --calendar-week-time-grid-header-min-height: 40px;
+  --calendar-week-time-grid-header-min-height: 21px;
   /* calendar-main·split-card shell 좌우 border 합 — 콘텐츠 박스가 격자 min-width를 수용하도록 */
   --calendar-shell-horizontal-border-width: 2px;
   --calendar-main-content-horizontal-inset: calc(
@@ -51,7 +54,7 @@
   );
   /* 3열 calendar-set · 2열 split-card — 가로 축소 시 열 겹침 방지용 합산 min-width */
   --calendar-sub-left-width: 300px;
-  --calendar-set-column-gap: var(--spacing-24, 24px);
+  --calendar-set-column-gap: 20px;
   --calendar-split-card-column-gap: 16px;
   --calendar-set-min-width-3col-month: calc(
     var(--calendar-sub-left-width) + var(--calendar-set-column-gap) +

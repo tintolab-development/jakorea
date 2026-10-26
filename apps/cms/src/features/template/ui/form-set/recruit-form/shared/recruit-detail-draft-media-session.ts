@@ -5,7 +5,7 @@
  */
 
 import { contentUrlForFileObjectId } from '@/shared/lib/admin-file-upload'
-import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { peekRecruitDetailInfoRecord } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 import {
   recruitDetailAttachmentFileNamesKey,
   recruitDetailAttachmentFileObjectIdsKey,
@@ -135,7 +135,7 @@ export function persistRecruitDetailDraftMedia(
 export function persistRecruitDetailDraftMediaFromOverlay(
   scope: string,
   prefix: string,
-  overlay: Record<string, unknown> = peekGeneralRecruitOverlayRecord(scope)
+  overlay: Record<string, unknown> = peekRecruitDetailInfoRecord(scope)
 ): void {
   persistRecruitDetailDraftMedia(scope, prefix, {
     thumbFileObjectId: resolveRecruitDetailThumbFileObjectId(
@@ -165,7 +165,7 @@ export function clearAllRecruitDetailDraftMedia(): void {
 export function recruitDetailDraftMediaRestorePatch(
   scope: string,
   prefix: string,
-  overlay: Record<string, unknown> = peekGeneralRecruitOverlayRecord(scope)
+  overlay: Record<string, unknown> = peekRecruitDetailInfoRecord(scope)
 ): Record<string, unknown> | null {
   const stored = peekRecruitDetailDraftMedia(scope, prefix)
   if (stored == null) return null

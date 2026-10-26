@@ -1,6 +1,5 @@
 import type { Program } from '@/types/domain'
 import type { DateValue } from '@/types'
-import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import {
   isUjatVolunteerNoticeExposureValue,
@@ -8,6 +7,7 @@ import {
 } from '@/features/template/lib/ujat-volunteer-notice-exposure'
 import { loadUjatRecruitVolunteerTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 
 export { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS }
 
@@ -304,7 +304,21 @@ export function applyUjatRecruitVolunteerTemplateDefaults(
   extraOverlay?: Record<string, unknown>
 ): Program {
   const saved = loadUjatRecruitVolunteerTemplateSave()
-  const overlay = { ...(extraOverlay ?? {}), ...(saved?.overlay ?? {}) }
+  const typed = saved?.settingsJson?.ujatRecruitment
+  const typedRecruitment =
+    typed != null && typeof typed === 'object' && !Array.isArray(typed)
+      ? (typed as {
+          volunteerH1?: Partial<ProgramDetailEditFormValues>
+          volunteerH2?: Partial<ProgramDetailEditFormValues>
+        })
+      : undefined
+  const typedValues = typedRecruitment?.volunteerH2 ?? typedRecruitment?.volunteerH1
+  const typedOverlay = typedValues
+    ? buildUjatRecruitVolunteerOverlayFromDetailEditValues(
+        typedValues as ProgramDetailEditFormValues
+      )
+    : {}
+  const overlay = { ...(extraOverlay ?? {}), ...(saved?.overlay ?? {}), ...typedOverlay }
   if (Object.keys(overlay).length === 0) return program
   const programRange = readRangeSeal(overlay, KEYS.programRange)
   const recruitRange = readRangeSeal(overlay, KEYS.recruitRange)

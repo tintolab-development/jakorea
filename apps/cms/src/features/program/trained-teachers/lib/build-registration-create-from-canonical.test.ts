@@ -204,6 +204,94 @@ describe('TRAINED_TEACHER 등록 canonical CREATE', () => {
     expect(json.program?.generalCommonInfo?.educationScheduleRange).toBeNull()
   })
 
+  it('editor 선택 모드를 generalCommonInfo에 싣고 차시 IPS는 독립 유지한다', () => {
+    const source = canonical({
+      ips: 'Prepare',
+      curriculumSessions: [
+        {
+          sessionLabel: '교육 연수',
+          title: 'ㅋㅋ',
+          description: 'ㅋ233',
+          ipsTypeSummary: 'Prepare | 해당없음',
+        },
+        {
+          sessionLabel: '2차시',
+          title: 'ㅋㅋ4',
+          description: 'ㅋㅋ3',
+          ipsTypeSummary: 'Succeed | Award (시상)',
+        },
+      ],
+    })
+    source.editor = editor({
+      educationFormScheduleDetail: 'common',
+      ipsScheduleDetail: 'perSchedule',
+      participationScheduleDetail: 'common',
+    })
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: source,
+    })
+    expect(program.generalCommonInfo?.educationFormScheduleDetail).toBe('common')
+    expect(program.generalCommonInfo?.ipsScheduleDetail).toBe('perSchedule')
+    expect(program.generalCommonInfo?.participationScheduleDetail).toBe('common')
+    expect(program.generalCommonInfo?.educationFormLabel).toBe('오프라인')
+    expect(program.generalCommonInfo?.curriculumSessions?.[0]?.ipsTypeSummary).toBe(
+      'Prepare | 해당없음'
+    )
+    expect(program.generalCommonInfo?.curriculumSessions?.[1]?.ipsTypeSummary).toBe(
+      'Succeed | Award (시상)'
+    )
+    const json = JSON.parse(String(mapTrainedTeacherToCreateRequest(program).serviceDetailJson)) as {
+      program?: {
+        generalCommonInfo?: {
+          educationFormScheduleDetail?: string
+          ipsScheduleDetail?: string
+          participationScheduleDetail?: string
+          educationFormLabel?: string
+          curriculumSessions?: Array<{ ipsTypeSummary?: string }>
+        }
+      }
+    }
+    const common = json.program?.generalCommonInfo
+    expect(common?.educationFormScheduleDetail).toBe('common')
+    expect(common?.ipsScheduleDetail).toBe('perSchedule')
+    expect(common?.participationScheduleDetail).toBe('common')
+    expect(common?.educationFormLabel).toBe('오프라인')
+    expect(common?.curriculumSessions?.map(row => row.ipsTypeSummary)).toEqual([
+      'Prepare | 해당없음',
+      'Succeed | Award (시상)',
+    ])
+  })
+
+  it('반대 모드 조합도 CREATE JSON에 유지한다', () => {
+    const source = canonical()
+    source.editor = editor({
+      educationFormScheduleDetail: 'perSchedule',
+      ipsScheduleDetail: 'common',
+      participationScheduleDetail: 'perSchedule',
+    })
+    const program = buildTrainedTeacherProgramFromCanonical({
+      id: 'tt-create',
+      canonical: source,
+    })
+    expect(program.generalCommonInfo?.educationFormScheduleDetail).toBe('perSchedule')
+    expect(program.generalCommonInfo?.ipsScheduleDetail).toBe('common')
+    expect(program.generalCommonInfo?.participationScheduleDetail).toBe('perSchedule')
+    expect(program.generalCommonInfo?.educationFormLabel).toBeUndefined()
+    const json = JSON.parse(String(mapTrainedTeacherToCreateRequest(program).serviceDetailJson)) as {
+      program?: {
+        generalCommonInfo?: {
+          educationFormScheduleDetail?: string
+          ipsScheduleDetail?: string
+          participationScheduleDetail?: string
+        }
+      }
+    }
+    expect(json.program?.generalCommonInfo?.educationFormScheduleDetail).toBe('perSchedule')
+    expect(json.program?.generalCommonInfo?.ipsScheduleDetail).toBe('common')
+    expect(json.program?.generalCommonInfo?.participationScheduleDetail).toBe('perSchedule')
+  })
+
   it('공고명과 대표명을 서로 파생하지 않고 공통 IPS와 차시 IPS를 분리한다', () => {
     const program = buildTrainedTeacherProgramFromCanonical({
       id: 'tt-create',

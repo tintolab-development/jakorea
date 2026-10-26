@@ -6,7 +6,7 @@ import {
   INSTRUCTOR_CRIME_RECORD_GUIDE_INTRO,
   INSTRUCTOR_CRIME_RECORD_GUIDE_ITEMS,
 } from '@jakorea/form-schema/program-application'
-import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { useInstructorApplicationField } from '@/features/template/ui/form-set/application-form/instructor/instructor-application-form-rhf'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 
 const CONFIRMED_VALUE = 'confirmed'
@@ -19,7 +19,7 @@ export function InstructorCrimeRecordParagraph({
   isTemplateAuthoringMode?: boolean
   readOnlyPreview?: boolean
 }) {
-  const [confirmed, setConfirmed] = useGeneralApplicationOverlayKv<boolean>(
+  const [confirmed, setConfirmed] = useInstructorApplicationField<boolean>(
     'application.instructor.crimeRecordConfirmed',
     false
   )

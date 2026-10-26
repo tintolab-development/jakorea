@@ -124,6 +124,40 @@ const WAGE_FIELD_BY_SUFFIX: Record<
   grade3DistanceFee: 'grade3DistanceFee',
 }
 
+/**
+ * C1: 1사1교 공통정보 RHF 명시 필드에 대응하는 정확한 overlay 키(화이트리스트).
+ * prefix 판별(isCompanySchoolCommonInfoOverlayKey)은 legacy·sidecar 보존용으로 유지하고,
+ * 화이트리스트 밖 키는 sidecar로 보존하면서 dev 경고를 남긴다.
+ */
+export const COMPANY_SCHOOL_COMMON_INFO_EXACT_KEYS: ReadonlySet<string> = new Set([
+  ...Object.keys(BASIC_FIELD_BY_SUFFIX).map(suffix => `economyRegistration.basicInfo.${suffix}`),
+  'economyRegistration.basicInfo.partnerInvolvement',
+  'economyRegistration.basicInfo.sponsorId',
+  'economyRegistration.basicInfo.managerContactIds',
+  'economyRegistration.basicInfo.managerContactId',
+  'economyRegistration.basicInfo.operationRangeSeal',
+  'economyRegistration.basicInfo.surveyItems',
+  ...Object.keys(KPI_FIELD_BY_SUFFIX).map(suffix => `economyRegistration.kpi.${suffix}`),
+  'economyRegistration.educationCurriculum.session1.title',
+  'economyRegistration.educationCurriculum.session1.description',
+  'economyRegistration.educationCurriculum.session2.title',
+  'economyRegistration.educationCurriculum.session2.description',
+  'economyRegistration.educationScheduleSettings.dateRangeSeal',
+  ...Object.keys(WAGE_FIELD_BY_SUFFIX).map(suffix => `economyRegistration.wageInfo.${suffix}`),
+  'economyRegistration.wageInfo.paymentItemValues',
+])
+
+export function isKnownCompanySchoolCommonInfoOverlayKey(key: string): boolean {
+  return COMPANY_SCHOOL_COMMON_INFO_EXACT_KEYS.has(key)
+}
+
+const warnedUnknownCompanySchoolKeys = new Set<string>()
+function warnUnknownCompanySchoolCommonInfoKey(key: string): void {
+  if (!import.meta.env.DEV || warnedUnknownCompanySchoolKeys.has(key)) return
+  warnedUnknownCompanySchoolKeys.add(key)
+  console.warn('[company-school-rhf] 화이트리스트 밖 공통정보 키 — sidecar로 보존', key)
+}
+
 export function isCompanySchoolCommonInfoOverlayKey(key: string): boolean {
   return COMMON_INFO_PREFIXES.some(prefix => key.startsWith(prefix))
 }
@@ -285,6 +319,7 @@ export function rhfValuesFromCompanySchoolCanonical(
     paymentItemValues:
       common.paymentItemValues === undefined ? undefined : [...common.paymentItemValues],
     operationRange: common.operationRange ? { ...common.operationRange } : null,
+    operationAnchorIso: common.operationAnchorIso ?? null,
     educationScheduleRange: common.educationScheduleRange
       ? { ...common.educationScheduleRange }
       : null,
@@ -434,6 +469,7 @@ export function writeCompanySchoolRhfOverlayValue(
       next[field] = asNullableNumber(value)
       return next
     }
+    warnUnknownCompanySchoolCommonInfoKey(key)
     next.sidecar[key] = value
     return next
   }
@@ -452,6 +488,7 @@ export function writeCompanySchoolRhfOverlayValue(
       return next
     }
   }
+  if (!isKnownCompanySchoolCommonInfoOverlayKey(key)) warnUnknownCompanySchoolCommonInfoKey(key)
   next.sidecar[key] = value
   return next
 }

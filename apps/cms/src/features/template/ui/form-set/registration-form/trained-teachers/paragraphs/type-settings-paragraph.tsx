@@ -15,9 +15,9 @@ import {
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import {
-  getProgramRegistrationOverlayRecord,
-  useProgramRegistrationOverlayKv,
-} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+  readTrainedTeachersRegistrationRecordValue,
+  useTrainedTeachersRegistrationField,
+} from '@/features/template/ui/form-set/registration-form/trained-teachers/trained-teachers-registration-form-rhf'
 import { TYPE_SETTINGS_PER_SCHEDULE_HINT } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -98,15 +98,15 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
   ipsScheduleDetail,
   onIpsScheduleDetailChange,
 }: TrainedTeachersRegistrationTypeSettingsParagraphProps) {
-  const [educationForm, setEducationForm] = useProgramRegistrationOverlayKv(
+  const [educationForm, setEducationForm] = useTrainedTeachersRegistrationField(
     'trainedTeachersRegistration.typeSettings.educationForm',
     'online'
   )
-  const [multiCommonEducationForm, setMultiCommonEducationForm] = useProgramRegistrationOverlayKv(
+  const [multiCommonEducationForm, setMultiCommonEducationForm] = useTrainedTeachersRegistrationField(
     'trainedTeachersRegistration.typeSettings.multiCommonEducationForm',
     'online'
   )
-  const [ipsType, setIpsType] = useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
+  const [ipsType, setIpsType] = useTrainedTeachersRegistrationField<ProgramRegistrationIpsTypeValue>(
     'trainedTeachersRegistration.typeSettings.ipsType',
     EMPTY_IPS_TYPE
   )
@@ -133,9 +133,9 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
   useEffect(() => {
     if (sessionRoundType !== 'multi' || educationFormScheduleDetail !== 'common') return
     if (
-      getProgramRegistrationOverlayRecord()[
+      readTrainedTeachersRegistrationRecordValue(
         'trainedTeachersRegistration.typeSettings.multiCommonEducationForm'
-      ] !== undefined
+      ) !== undefined
     ) {
       return
     }

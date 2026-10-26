@@ -12,6 +12,12 @@ import {
   type UjatDevAutofillValidationIssue,
 } from '@/features/program/ujat/lib/dev-autofill-validate'
 import { listIncompleteUjatProgramRegistrationWizardRequiredFields } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
+import type { TypedRecruitmentValidationInput } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
+import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
+import { overlayRecordToInterviewConfig } from '@/features/program/ujat/lib/recruitment-typed-contract'
+import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import { UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-institution-recruit-template-preview-program'
+import type { Program } from '@/types/domain'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import { resolveUjatDefaultPaymentItemValues } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { getPublicHolidayDateKeysForSchedule } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
@@ -37,9 +43,12 @@ import {
 } from '@/features/template/lib/template-registration-payment-item-options'
 import { UJAT_SPONSOR_ALL_VALUE } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import {
-  getUjatProgramRegistrationOverlayRecord,
-  replaceUjatProgramRegistrationOverlay,
-} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+  typedDetailFromUjatOverlay,
+  type UjatTypedDetail,
+} from '@/features/program/ujat/api/typed-detail-client'
+import { ujatBasicInfoFormValuesFromLegacyOverlay } from '@/features/program/ujat/lib/ujat-basic-info-form'
+import type { DefaultValues } from 'react-hook-form'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   peekUjatRecruitInstitutionOverlayRecord,
   replaceUjatRecruitInstitutionOverlayForScope,
@@ -66,16 +75,6 @@ import {
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 
 /** 이전 프리셋 잔류를 막기 위해 교체 전 지우는 UJAT 소유 키 prefix */
-const REGISTRATION_OWNED_PREFIXES = ['ujat.'] as const
-const RECRUIT_INSTITUTION_OWNED_PREFIXES = ['ujat.recruit.institution.'] as const
-const RECRUIT_VOLUNTEER_OWNED_PREFIXES = ['ujat.recruit.volunteer.'] as const
-const RECRUIT_GENERAL_OWNED_PREFIXES = [
-  'ujatRecruit.',
-  'recruitVolunteer.h1.',
-  'recruitVolunteer.h2.',
-  'recruit.volunteer.h1.',
-  'recruit.volunteer.h2.',
-] as const
 const APPLICATION_INSTITUTION_OWNED_PREFIXES = ['ujatApplication.'] as const
 const APPLICATION_GENERAL_OWNED_PREFIXES = ['application.ujat.inst.'] as const
 const APPLICATION_VOLUNTEER_OWNED_PREFIXES = ['ujatVolunteerApplication.'] as const
@@ -122,6 +121,10 @@ export type UjatDevAutofillResult = {
   manualInputRequired: string[]
   /** 적용 후 제품 필수값 검증 결과 (빈 배열이어야 등록 가능) */
   incompleteRequiredFields: string[]
+  /** 교육 일정은 등록 Overlay가 아닌 Typed RHF에 직접 주입한다. */
+  typedEducationSchedule: UjatTypedDetail
+  typedBasicInfo: DefaultValues<ProgramDetailEditFormValues>
+  typedRecruitment: Required<TypedRecruitmentValidationInput>
 }
 
 function omitPrefixes(
@@ -234,7 +237,6 @@ export function resolveUjatDevAutofillTargets(): UjatDevAutofillTargets {
 type StoreSnapshot = () => void
 
 function snapshotStores(targets: UjatDevAutofillTargets): StoreSnapshot {
-  const registration = { ...getUjatProgramRegistrationOverlayRecord() }
   const recruitCodes = [...targets.recruitInstitution, ...targets.recruitVolunteer]
   const recruitInstitution = targets.recruitInstitution.map(code => [code, peekUjatRecruitInstitutionOverlayRecord(code)] as const)
   const recruitVolunteer = targets.recruitVolunteer.map(code => [code, peekUjatRecruitVolunteerOverlayRecord(code)] as const)
@@ -243,7 +245,6 @@ function snapshotStores(targets: UjatDevAutofillTargets): StoreSnapshot {
   const appGeneral = peekGeneralApplicationOverlayRecord(targets.applicationInstitution)
   const appVolunteer = peekUjatApplicationVolunteerOverlayRecord(targets.applicationVolunteer)
   return () => {
-    replaceUjatProgramRegistrationOverlay(registration)
     for (const [code, record] of recruitInstitution) replaceUjatRecruitInstitutionOverlayForScope(code, record)
     for (const [code, record] of recruitVolunteer) replaceUjatRecruitVolunteerOverlayForScope(code, record)
     for (const [code, record] of recruitGeneral) replaceGeneralRecruitOverlayForScope(code, record)
@@ -253,29 +254,41 @@ function snapshotStores(targets: UjatDevAutofillTargets): StoreSnapshot {
   }
 }
 
+function typedRecruitmentFromAutofillFixture(
+  fixture: UjatDevAutofillFixture
+): Required<TypedRecruitmentValidationInput> {
+  const sourceOverlay = {
+    ...fixture.recruitInstitution,
+    ...fixture.recruitVolunteer,
+    ...fixture.recruitGeneral,
+  }
+  const shell = {
+    ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+    id: 'ujat-dev-autofill-recruit',
+    ujatRegistrationOverlay: sourceOverlay,
+    programRecruitments: [],
+  } as Program
+  const options = { sourceOverlay }
+  return {
+    institution: programToUjatRecruitTemplateFormValues(shell, 'institution', undefined, options),
+    volunteerH1: {
+      ...programToUjatRecruitTemplateFormValues(shell, 'volunteer', 'h1', options),
+      volunteerInterviewConfig: overlayRecordToInterviewConfig(
+        sourceOverlay,
+        ujatVolunteerRecruitInterviewNamespace('h1')
+      ),
+    },
+    volunteerH2: {
+      ...programToUjatRecruitTemplateFormValues(shell, 'volunteer', 'h2', options),
+      volunteerInterviewConfig: overlayRecordToInterviewConfig(
+        sourceOverlay,
+        ujatVolunteerRecruitInterviewNamespace('h2')
+      ),
+    },
+  }
+}
+
 function applyOverlays(fixture: UjatDevAutofillFixture, targets: UjatDevAutofillTargets): void {
-  replaceUjatProgramRegistrationOverlay({
-    ...omitPrefixes(getUjatProgramRegistrationOverlayRecord(), REGISTRATION_OWNED_PREFIXES),
-    ...fixture.registration,
-  })
-  for (const code of new Set(targets.recruitInstitution)) {
-    replaceUjatRecruitInstitutionOverlayForScope(code, {
-      ...omitPrefixes(peekUjatRecruitInstitutionOverlayRecord(code), RECRUIT_INSTITUTION_OWNED_PREFIXES),
-      ...fixture.recruitInstitution,
-    })
-  }
-  for (const code of new Set(targets.recruitVolunteer)) {
-    replaceUjatRecruitVolunteerOverlayForScope(code, {
-      ...omitPrefixes(peekUjatRecruitVolunteerOverlayRecord(code), RECRUIT_VOLUNTEER_OWNED_PREFIXES),
-      ...fixture.recruitVolunteer,
-    })
-  }
-  for (const code of new Set([...targets.recruitInstitution, ...targets.recruitVolunteer])) {
-    replaceGeneralRecruitOverlayForScope(code, {
-      ...omitPrefixes(peekGeneralRecruitOverlayRecord(code), RECRUIT_GENERAL_OWNED_PREFIXES),
-      ...fixture.recruitGeneral,
-    })
-  }
   const institutionCode = targets.applicationInstitution
   replaceUjatApplicationInstitutionOverlayForScope(institutionCode, {
     ...omitPrefixes(
@@ -384,6 +397,9 @@ export async function applyUjatDevAutofillCase(options: {
     }
 
     const targets = resolveUjatDevAutofillTargets()
+    const typedEducationSchedule = typedDetailFromUjatOverlay(fixture.registration)
+    const typedBasicInfo = ujatBasicInfoFormValuesFromLegacyOverlay(fixture.registration)
+    const typedRecruitment = typedRecruitmentFromAutofillFixture(fixture)
     const restore = snapshotStores(targets)
     try {
       applyOverlays(fixture, targets)
@@ -406,7 +422,14 @@ export async function applyUjatDevAutofillCase(options: {
       sponsorContactId: String(fixture.registration['ujat.basicInfo.sponsorContactId']),
       targets,
       manualInputRequired,
-      incompleteRequiredFields: listIncompleteUjatProgramRegistrationWizardRequiredFields(),
+      incompleteRequiredFields: listIncompleteUjatProgramRegistrationWizardRequiredFields(
+        typedBasicInfo,
+        typedEducationSchedule,
+        typedRecruitment
+      ),
+      typedEducationSchedule,
+      typedBasicInfo,
+      typedRecruitment,
     }
   } finally {
     running = false

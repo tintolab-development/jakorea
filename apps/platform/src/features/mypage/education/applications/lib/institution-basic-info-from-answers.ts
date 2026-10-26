@@ -13,12 +13,18 @@ const EDUCATION_FORMAT_LABELS: Record<string, string> = {
   online: '온라인',
   offline: '오프라인',
   hybrid: '온/오프라인',
+  ONLINE: '온라인',
+  OFFLINE: '오프라인',
+  HYBRID: '온/오프라인',
 }
 
 const EDUCATION_PLACE_LABELS: Record<string, string> = {
   inside: '기관 안',
   outside: '기관 밖',
   custom: '기타(직접입력)',
+  INSIDE: '기관 안',
+  OUTSIDE: '기관 밖',
+  CUSTOM: '기타(직접입력)',
 }
 
 /**

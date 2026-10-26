@@ -41,9 +41,10 @@ test.describe('TT P4-B 8조합 브라우저 등록', () => {
       await expect
         .poll(() => log.createProgram, { timeout: 60_000 })
         .not.toBeNull()
+      // 방안 C: 양식 COPY·PUT·publish는 CREATE 응답 이후 순차로 나간다 → 모두 끝날 때까지 기다린다.
+      await expect(() => assertFormVersionSplit(log)).toPass({ timeout: 30_000 })
       assertIsolatedNetwork(log)
       assertCreatePayloadParity(log.createProgram?.body, variant)
-      assertFormVersionSplit(log)
       assertPutBeforePublish(log)
     })
   }

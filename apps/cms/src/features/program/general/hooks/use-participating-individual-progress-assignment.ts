@@ -69,8 +69,11 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
 
   const remoteSessions = useMemo(() => {
     if (!remoteEnabled || remoteQuery.data == null) return null
-    return buildProgressAssignmentSessionsFromRemote(remoteQuery.data)
-  }, [remoteEnabled, remoteQuery.data])
+    return buildProgressAssignmentSessionsFromRemote(remoteQuery.data, {
+      program,
+      giveUpParticipants: remoteQuery.data.giveUpParticipants,
+    })
+  }, [program, remoteEnabled, remoteQuery.data])
 
   const isRemoteDataSource = remoteEnabled && remoteSessions != null && !remoteQuery.isError
 

@@ -193,29 +193,34 @@ export function SmsTemplateList() {
     setSearchParams(prev => applySmsFiltersToSearchParams(prev, cleared), { replace: true })
   }, [setSearchParams])
 
-  const runSmsSync = useCallback(async () => {
-    // isPending만으로는 리렌더 전 동시 클릭을 막지 못함 → sync 과호출 방지
-    if (!remote || syncInFlightRef.current) return
-    syncInFlightRef.current = true
-    try {
-      // tree는 mutation onSuccess invalidate로만 갱신 (refetch 중복 금지)
-      const result = await syncCatalogMutateAsync()
-      showAlert({
-        title: '안내',
-        content: smsSyncSuccessMessage(result.templates),
-      })
-    } catch (error) {
-      showAlert({
-        title: '연동 실패',
-        content: getNotificationsApiErrorMessage(
-          error,
-          '문자 템플릿 연동에 실패했습니다. 다시 시도해 주세요.'
-        ),
-      })
-    } finally {
-      syncInFlightRef.current = false
-    }
-  }, [remote, showAlert, syncCatalogMutateAsync])
+  const runSmsSync = useCallback(
+    async (options?: { notifySuccess?: boolean }) => {
+      // isPending만으로는 리렌더 전 동시 호출을 막지 못함 → sync 과호출 방지
+      if (!remote || syncInFlightRef.current) return
+      syncInFlightRef.current = true
+      try {
+        // tree는 mutation onSuccess invalidate로만 갱신 (refetch 중복 금지)
+        const result = await syncCatalogMutateAsync()
+        if (options?.notifySuccess) {
+          showAlert({
+            title: '안내',
+            content: smsSyncSuccessMessage(result.templates),
+          })
+        }
+      } catch (error) {
+        showAlert({
+          title: '연동 실패',
+          content: getNotificationsApiErrorMessage(
+            error,
+            '문자 템플릿 연동에 실패했습니다. 다시 시도해 주세요.'
+          ),
+        })
+      } finally {
+        syncInFlightRef.current = false
+      }
+    },
+    [remote, showAlert, syncCatalogMutateAsync]
+  )
 
   const offerSyncOnError = useCallback(
     (title: string, error: unknown, fallback: string) => {
@@ -225,7 +230,7 @@ export function SmsTemplateList() {
           content: getNotificationsApiErrorMessage(error, fallback),
           confirmLabel: '동기화',
           onConfirm: () => {
-            void runSmsSync()
+            void runSmsSync({ notifySuccess: true })
           },
         })
         return
@@ -715,6 +720,7 @@ export function SmsTemplateList() {
         bordered={false}
         filterResponsiveWrap={false}
         hideExcelDownload
+        contentLoading={Boolean(treeLoading && !treeError)}
         fields={SMS_TEMPLATE_FILTER_FIELDS}
         filters={{
           categoryName: pendingFilters.categoryName,
@@ -725,16 +731,6 @@ export function SmsTemplateList() {
         title="문자 템플릿"
         actions={
           <>
-            {remote ? (
-              <FilterTableToolbarButton
-                variant="secondary"
-                type="button"
-                disabled={busy}
-                onClick={() => void runSmsSync()}
-              >
-                {isSyncing ? '동기화 중…' : '동기화'}
-              </FilterTableToolbarButton>
-            ) : null}
             <FilterTableToolbarButton
               variant="delete"
               type="button"
@@ -791,10 +787,6 @@ export function SmsTemplateList() {
             >
               다시 시도
             </CmsButton>
-          </div>
-        ) : treeLoading ? (
-          <div className="sms-template-tree-status" aria-busy="true">
-            불러오는 중…
           </div>
         ) : (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>

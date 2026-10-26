@@ -13,73 +13,77 @@
 }
 
 .calendar-main:has(.calendar-week--time-grid) {
-  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
+  min-width: var(--calendar-main-week-min-width, calc(40px + 8px + 108px * 7 + 42px));
   min-height: var(
     --calendar-main-week-min-height,
-    calc(1344px + 40px + 50px + 32px)
+    calc(1560px + 21px + 43px + 32px)
   );
   flex-shrink: 0;
   max-width: none;
-  align-items: flex-start;
-}
-
-.calendar-main:has(.calendar-week--time-grid) .calendar-header {
-  width: 100%;
-  align-self: stretch;
-  box-sizing: border-box;
+  gap: 8px;
+  padding: 16px 20px;
 }
 
 .calendar-main:has(.calendar-week--time-grid) .calendar-week--time-grid {
-  overflow: hidden;
+  overflow: visible;
 }
 
-/* header */
+/*
+ * 월간·주간 공통 헤더 — Figma 14931:749773 (Tab / Toggle 14931:749780).
+ * 뷰별 헤더 치수 재정의 금지. 활성 탭 색만 바뀐다.
+ */
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0 0;
+  gap: 16px;
+  width: 100%;
+  min-height: 43px;
+  padding: 0;
   margin-bottom: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .calendar-header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  min-width: max-content;
 }
 
 .calendar-header-title {
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 500;
+  line-height: 130%;
   text-align: left;
   white-space: nowrap;
-  margin-right: 8px;
+  margin-right: 0;
   font-family: var(--font-family-number);
-}
-.calendar-header-title {
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.calendar-today-btn {
-  width: 60px;
-  height: 34px;
+  color: var(--Neutral-black, #3d3d3d);
+  flex-shrink: 0;
 }
 
 .calendar-nav {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .calendar-nav .calendar-nav-btn {
   display: flex;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 38px;
+  min-width: 40px;
+  min-height: 38px;
+  padding: 7px;
   justify-content: center;
   align-items: center;
-  aspect-ratio: 1/1;
-  border-radius: var(--8, 8px);
+  aspect-ratio: auto;
+  border-radius: var(--radius-8, 8px);
   border: 1px solid var(--table-line, #e0e0e0);
   background: var(--main-WT, #fff);
 }
@@ -90,22 +94,24 @@
 }
 
 .calendar-today-btn {
-  width: 60px;
+  width: auto;
   height: 34px;
-  min-width: 60px;
+  min-width: 56px;
   min-height: 34px;
+  padding: 8px 14px;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  flex-shrink: 0;
+  border-radius: var(--radius-6, 6px);
   border: 1px solid var(--JA-mint-01, #01a1af);
   background: var(--default-WT, #fff);
   color: var(--JA-mint-01, #01a1af);
   font-size: 16px;
-  font-weight: 600;
-  line-height: 150%;
-  /* 21px */
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .calendar-today-btn:hover {
@@ -117,6 +123,36 @@
 .calendar-header-right {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  min-width: max-content;
+}
+
+.calendar-header-right .segmented-tab {
+  flex-shrink: 0;
+  width: max-content;
+}
+
+.calendar-header-right .segmented-tab--medium {
+  box-sizing: border-box;
+  min-width: 120px;
+  width: max-content;
+  height: 43px;
+  padding: 4px;
+  border-radius: var(--radius-8, 8px);
+  background: #f2f3f5;
+  border: 1px solid rgba(61, 61, 61, 0.1);
+}
+
+.calendar-header-right .segmented-tab--medium .segmented-tab__btn {
+  flex: 1 0 auto;
+  min-width: max-content;
+  height: 35px;
+  padding: 8px 14px;
+  border-radius: var(--radius-6, 6px);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 /* 월간 고정 라벨 — 지급조서 캘린더 `program-calendar-month-only-badge`와 동일 톤 */

@@ -130,7 +130,7 @@ function ImageFieldControl({ isEditing, image, slot, sortOrder, onChange }: Imag
       if (file.size > PROGRAM_INTRO_IMAGE_MAX_BYTES) {
         showAlert({
           title: '파일 용량',
-          content: '파일은 최대 15MB까지 등록 가능합니다.',
+          content: '파일은 최대 20MB까지 등록 가능합니다.',
         })
         return
       }
@@ -166,6 +166,7 @@ function ImageFieldControl({ isEditing, image, slot, sortOrder, onChange }: Imag
       accept={PROGRAM_INTRO_IMAGE_ACCEPT}
       buttonLabel="파일 추가"
       fileNames={image ? [image.fileName] : []}
+      maxTotalBytes={PROGRAM_INTRO_IMAGE_MAX_BYTES}
       guideLines={slot.guideLines}
       onFilesChange={files => {
         void handleFilesChange(files)

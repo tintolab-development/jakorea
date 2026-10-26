@@ -1,4 +1,4 @@
-import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import { formatKoreanPhoneNumberPreservingMask } from '@jakorea/domain/shared/korean-phone'
 import type { ApplyTrainedTeachersBasicInfoValues } from './apply-trained-teachers-basic-info'
 
 /** 포털 프로필에서 기본정보에 미리 넣을 수 있는 값 */
@@ -70,7 +70,7 @@ export function trainedTeachersProfileDefaults(
     regionLabel: institutionRegionLabelFromProfile(source),
     addressDetail: org?.addressDetail?.trim() || source.addressDetail?.trim() || '',
     teacherName: source.name?.trim() || '',
-    teacherMobile: formatKoreanPhoneNumber(source.phone?.trim() || ''),
+    teacherMobile: formatKoreanPhoneNumberPreservingMask(source.phone ?? ''),
     teacherEmail: source.email?.trim() || '',
   }
 }

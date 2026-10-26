@@ -41,7 +41,13 @@ export {
   WEEK_TIME_GRID_HOUR_PX,
   WEEK_TIME_GRID_HOURS,
   WEEK_TIME_GRID_TOTAL_PX,
+  shouldShowWeekEventTimeText,
+  computeWeekEventCardHeight,
 } from './lib/week-time-grid-layout'
+export {
+  CALENDAR_ALL_DAY_TIME_LABEL,
+  formatCalendarEventTimeLabel,
+} from './lib/format-calendar-event-time-label'
 export { useCalendarNavigationState } from './lib/use-calendar-navigation-state'
 export { countMiniCalendarWeekRows } from './lib/calendar-mini-layout'
 export {

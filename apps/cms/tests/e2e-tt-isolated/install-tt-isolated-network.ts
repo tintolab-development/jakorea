@@ -3,6 +3,11 @@ import {
   createProgramApplicationFormTrainedTeachersDraft,
   PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS,
 } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
+import {
+  canonicalizeServiceDetailJson,
+  mergeServiceDetailForProgramPatch,
+  noteRootRegistrationOverlay,
+} from '../e2e-isolated/service-detail-overlay-merge'
 
 export type IsolatedCapturedMutation = {
   method: string
@@ -24,6 +29,9 @@ export type IsolatedNetworkLog = {
   programPatches: IsolatedCapturedMutation[]
   infoDetailPatches: IsolatedCapturedMutation[]
   realMutations: number
+  rootRegistrationOverlayHits: number
+  /** `/api/admin/program-draft` 요청(어떤 메서드든) — 서버 draft 제거 후 0이어야 한다 */
+  programDraftRequests: string[]
 }
 
 export type IsolatedFailMode = 'none' | 'put' | 'publish' | 'create' | 'portalPost'
@@ -269,6 +277,12 @@ function persistCreateBody(store: IsolatedProgramStore, body: Record<string, unk
       serviceDetailJson: JSON.stringify(service),
     }
   }
+  if (body.serviceDetailJson != null) {
+    body = {
+      ...body,
+      serviceDetailJson: canonicalizeServiceDetailJson(body.serviceDetailJson),
+    }
+  }
   store.program = {
     ...body,
     id: PROGRAM_ID,
@@ -318,12 +332,20 @@ function persistCreateBody(store: IsolatedProgramStore, body: Record<string, unk
 }
 
 function persistProgramPatch(store: IsolatedProgramStore, body: Record<string, unknown>) {
-  store.program = {
-    ...(store.program ?? {}),
+  const prev = store.program ?? {}
+  const next: Record<string, unknown> = {
+    ...prev,
     ...body,
     id: PROGRAM_ID,
     programType: 'TRAINED_TEACHER',
   }
+  if (body.serviceDetailJson != null) {
+    next.serviceDetailJson = mergeServiceDetailForProgramPatch(
+      prev.serviceDetailJson,
+      body.serviceDetailJson
+    )
+  }
+  store.program = next
 }
 
 function persistInfoDetailPatch(store: IsolatedProgramStore, body: Record<string, unknown>) {
@@ -352,7 +374,6 @@ function isAllowedGet(pathname: string): boolean {
   if (pathname === '/api/admin/me') return true
   if (pathname === '/api/admin/programs') return true
   if (pathname === '/api/admin/programs/overview-stages') return true
-  if (pathname === '/api/admin/program-draft') return true
   if (pathname === '/api/admin/sponsors') return true
   if (pathname === '/api/admin/detailed-programs') return true
   if (pathname === '/api/admin/form-templates') return true
@@ -380,8 +401,6 @@ function isAllowedGet(pathname: string): boolean {
 }
 
 function isAllowedMutation(method: string, pathname: string): boolean {
-  if (method === 'PUT' && pathname === '/api/admin/program-draft') return true
-  if (method === 'DELETE' && pathname === '/api/admin/program-draft') return true
   if (method === 'PUT' && /^\/api\/admin\/form-template-versions\/\d+$/.test(pathname)) return true
   if (method === 'POST' && /^\/api\/admin\/form-template-versions\/\d+\/publish$/.test(pathname)) {
     return true
@@ -391,6 +410,7 @@ function isAllowedMutation(method: string, pathname: string): boolean {
   }
   if (method === 'POST' && pathname === '/api/admin/programs') return true
   if (method === 'POST' && /^\/api\/admin\/programs\/\d+\/form-bindings$/.test(pathname)) return true
+  if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+\/form-bindings\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/form-templates\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+\/trained-teacher\/detail$/.test(pathname)) {
@@ -423,6 +443,8 @@ export async function installTtIsolatedNetwork(
     programPatches: [],
     infoDetailPatches: [],
     realMutations: 0,
+    rootRegistrationOverlayHits: 0,
+    programDraftRequests: [],
   }
 
   const copiedVersions = new Map<number, ReturnType<typeof versionResponse>>()
@@ -492,6 +514,13 @@ export async function installTtIsolatedNetwork(
 
     log.api.push({ method, path: pathname })
 
+    // 서버 program-draft는 모든 유형에서 제거됨 — 어떤 메서드든 회귀로 기록하고 차단한다.
+    if (pathname === '/api/admin/program-draft') {
+      log.programDraftRequests.push(method)
+      await route.fulfill(json({ success: false }, 410))
+      return
+    }
+
     if (method === 'GET' && pathname === '/api/admin/me') {
       await route.fulfill(
         json({
@@ -552,10 +581,6 @@ export async function installTtIsolatedNetwork(
       await route.fulfill(
         json({ total: store.program ? 1 : 0, scheduled: 0, inProgress: 0, completed: 0 })
       )
-      return
-    }
-    if (method === 'GET' && pathname === '/api/admin/program-draft') {
-      await route.fulfill(json({ success: false }, 404))
       return
     }
     if (method === 'GET' && pathname === '/api/admin/sponsors') {
@@ -740,14 +765,6 @@ export async function installTtIsolatedNetwork(
         return
       }
 
-      if (method === 'PUT' && pathname === '/api/admin/program-draft') {
-        await route.fulfill(json({ draftId: 99011, programType: 'TRAINED_TEACHER', saved: true }))
-        return
-      }
-      if (method === 'DELETE' && pathname === '/api/admin/program-draft') {
-        await route.fulfill(json({ deleted: true }))
-        return
-      }
       if (method === 'POST' && pathname.endsWith('/versions/copy')) {
         const templateId = Number(pathname.split('/')[4])
         const versionId = nextCopiedVersionId
@@ -786,12 +803,18 @@ export async function installTtIsolatedNetwork(
       if (method === 'POST' && pathname === '/api/admin/programs') {
         log.createProgram = mutation
         const body = (mutation.body ?? {}) as Record<string, unknown>
+        noteRootRegistrationOverlay(log, body)
         if (Array.isArray(body.formBindings)) {
           log.formBindings = body.formBindings
           createdBindings = body.formBindings
         }
         persistCreateBody(store, body)
         await route.fulfill(json(store.program))
+        return
+      }
+      if (method === 'PATCH' && /\/form-bindings\/\d+$/.test(pathname)) {
+        log.formBindings = [...log.formBindings, mutation.body]
+        await route.fulfill(json({ id: Number(pathname.split('/').at(-1)) }))
         return
       }
       if (method === 'POST' && pathname.endsWith('/form-bindings')) {
@@ -802,7 +825,9 @@ export async function installTtIsolatedNetwork(
       }
       if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) {
         log.programPatches.push(mutation)
-        persistProgramPatch(store, (mutation.body ?? {}) as Record<string, unknown>)
+        const patchBody = (mutation.body ?? {}) as Record<string, unknown>
+        noteRootRegistrationOverlay(log, patchBody)
+        persistProgramPatch(store, patchBody)
         await route.fulfill(json(store.program))
         return
       }
@@ -859,6 +884,15 @@ export function assertIsolatedNetwork(log: IsolatedNetworkLog) {
   }
   if (log.realMutations !== 0) {
     throw new Error(`실제 네트워크 mutation 발생: ${log.realMutations}`)
+  }
+  if (log.programDraftRequests.length > 0) {
+    throw new Error(`program-draft 요청이 발생함: ${log.programDraftRequests.join(', ')}`)
+  }
+  if (log.createProgram != null) {
+    const body = log.createProgram.body as Record<string, unknown> | null
+    if (body != null && ('programDraftId' in body || 'formBindings' in body)) {
+      throw new Error('CREATE에 programDraftId/formBindings가 실렸습니다')
+    }
   }
 }
 

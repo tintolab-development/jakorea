@@ -1,10 +1,8 @@
 import dayjs from 'dayjs'
 import type { GeneralProgramVolunteerInterviewScheduleException } from '@/types/domain'
 import { formatDateOnly } from '@/features/program/shared/lib/program-detail-info-constants'
-import {
-  readVolunteerInterviewExceptionOverlayBlocks,
-  type VolunteerInterviewOverlayStore,
-} from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
+import { readVolunteerInterviewExceptionOverlayBlocks } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-exception-overlay-blocks'
+import type { VolunteerInterviewOverlayStore } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-keys'
 
 function formatAvailableTimeSlotsFromSelectedKeys(keys: unknown): string | undefined {
   if (!Array.isArray(keys) || keys.length === 0) return undefined

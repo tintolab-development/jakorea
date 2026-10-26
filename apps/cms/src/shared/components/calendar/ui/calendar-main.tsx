@@ -94,6 +94,8 @@ export type CalendarMainItemsProps = CalendarMainSharedProps & {
   onItemClick: (item: Program) => void
   events?: undefined
   selectedRowKeys?: undefined
+  /** 검색 체크박스와 동일 팔레트. 없으면 `items`로 재계산 */
+  scheduleColorMap?: Map<string, ScheduleColorPair>
 }
 
 export type CalendarMainScheduleProps = CalendarMainItemsProps
@@ -104,6 +106,7 @@ export type CalendarMainProgramProps = CalendarMainItemsProps
 export type CalendarMainEventsProps = CalendarMainSharedProps & {
   events: CalendarMainEventInput[]
   selectedRowKeys?: React.Key[]
+  onEventClick?: (item: CalendarItem) => void
   previewTooltipContent?: (args: {
     events: CalendarItem[]
     colorMap: Map<string | number, ScheduleColorPair>
@@ -112,6 +115,8 @@ export type CalendarMainEventsProps = CalendarMainSharedProps & {
   resolveEventColors?: (item: CalendarItem) => ScheduleColorPair | undefined
   eventsTooltipScope?: 'trigger-only' | 'full-day'
   formatEventsOverflowText?: (hiddenCount: number) => string
+  /** 주간 시간 격자 겹침 묶음 문구. 미지정 시 `외 N개의 항목` */
+  formatWeekEventsOverflowText?: (hiddenCount: number) => string
   eventsTooltipTrigger?: 'event-strip' | 'cell'
   /** 월간 셀 strip 목록 — 페이지별 (UJAT 지원자·슬롯 묶음 등) */
   buildMonthCellRows?: BuildCalendarMonthCellRows
@@ -340,22 +345,29 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
       if (isEventsProps(props)) {
         return props.overrideEventColorMap?.(items) ?? buildResolvedColorMap(items)
       }
-      return buildResolvedScheduleColorMapForPrograms((props as CalendarMainItemsProps).items)
+      const scheduleProps = props as CalendarMainItemsProps
+      return (
+        scheduleProps.scheduleColorMap ??
+        buildResolvedScheduleColorMapForPrograms(scheduleProps.items)
+      )
     }, [
       buildResolvedColorMap,
       isEventsMode,
       items,
       isEventsMode ? (props as CalendarMainEventsProps).overrideEventColorMap : undefined,
+      isEventsMode ? undefined : (props as CalendarMainItemsProps).scheduleColorMap,
     ])
 
     const eventsConfig: CalendarEventsConfig | undefined = isEventsMode
       ? {
           selectedRowKeys: props.selectedRowKeys ?? [],
+          onEventClick: props.onEventClick,
           previewTooltipContent: props.previewTooltipContent,
           overrideEventColorMap: props.overrideEventColorMap,
           resolveEventColors: props.resolveEventColors,
           eventsTooltipScope: props.eventsTooltipScope ?? 'trigger-only',
           formatEventsOverflowText: props.formatEventsOverflowText,
+          formatWeekEventsOverflowText: props.formatWeekEventsOverflowText,
           eventsTooltipTrigger: props.eventsTooltipTrigger ?? 'event-strip',
           buildMonthCellRows: props.buildMonthCellRows,
           renderMonthEventContent: props.renderMonthEventContent,

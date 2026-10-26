@@ -34,7 +34,11 @@ describe('get-notifications-api-error', () => {
   })
 
   it('ALIMTALK_TEMPLATE_DELETE_REJECTED_BY_NHN은 서버 메시지와 Console CTA 분기를 쓴다', () => {
-    const error = apiError(409, 'ALIMTALK_TEMPLATE_DELETE_REJECTED_BY_NHN', '승인 템플릿은 삭제할 수 없습니다.')
+    const error = apiError(
+      409,
+      'ALIMTALK_TEMPLATE_DELETE_REJECTED_BY_NHN',
+      '승인 템플릿은 삭제할 수 없습니다.'
+    )
 
     expect(isAlimtalkTemplateDeleteRejectedByNhnError(error)).toBe(true)
     expect(getNotificationsApiErrorMessage(error, 'fallback')).toBe(
@@ -53,9 +57,9 @@ describe('get-notifications-api-error', () => {
     expect(
       getNotificationsApiErrorMessage(apiError(400, 'EMAIL_ATTACHMENT_LIMIT_EXCEEDED'), 'fallback')
     ).toBe('파일은 최대 10개까지 첨부할 수 있습니다.')
-    expect(
-      getNotificationsApiErrorMessage(apiError(400, 'FILE_NOT_CLEAN'), 'fallback')
-    ).toBe('파일 검사가 완료되지 않았거나 사용할 수 없는 파일입니다. 다시 업로드해 주세요.')
+    expect(getNotificationsApiErrorMessage(apiError(400, 'FILE_NOT_CLEAN'), 'fallback')).toBe(
+      '파일 검사가 완료되지 않았거나 사용할 수 없는 파일입니다. 다시 업로드해 주세요.'
+    )
     expect(
       getNotificationsApiErrorMessage(
         apiError(400, 'EMAIL_TEMPLATE_LANGUAGE_FREEMARKER_NOT_SUPPORTED'),
@@ -66,13 +70,14 @@ describe('get-notifications-api-error', () => {
       getNotificationsApiErrorMessage(apiError(400, 'EMAIL_SENDER_PROFILE_MISMATCH'), 'fallback')
     ).toBe('메일 발신 프로필이 템플릿 발신 메일과 일치하지 않습니다.')
     expect(
-      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_SENDER_PROFILE_NOT_HARVESTED'), 'fallback')
+      getNotificationsApiErrorMessage(
+        apiError(400, 'EMAIL_SENDER_PROFILE_NOT_HARVESTED'),
+        'fallback'
+      )
     ).toBe('NHN에 등록된 발신 메일만 사용할 수 있습니다. 발신 프로필을 확인해 주세요.')
     expect(
       getNotificationsApiErrorMessage(apiError(400, 'EMAIL_SENDER_PROFILES_EMPTY'), 'fallback')
-    ).toBe(
-      'NHN 발신 메일 프로필이 없습니다. 발신 프로필 동기화(sync) 후 다시 시도해 주세요.'
-    )
+    ).toBe('NHN 발신 메일 프로필이 없습니다. 발신 프로필 동기화(sync) 후 다시 시도해 주세요.')
     expect(
       getNotificationsApiErrorMessage(
         apiError(400, 'NOTIFICATION_SENDER_PROFILE_NOT_FOUND'),
@@ -80,7 +85,10 @@ describe('get-notifications-api-error', () => {
       )
     ).toContain('발신 프로필을 찾을 수 없습니다')
     expect(
-      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_TEMPLATE_FILE_OWNER_INVALID'), 'fallback')
+      getNotificationsApiErrorMessage(
+        apiError(400, 'EMAIL_TEMPLATE_FILE_OWNER_INVALID'),
+        'fallback'
+      )
     ).toContain('메일 템플릿이 아닙니다')
     expect(
       getNotificationsApiErrorMessage(apiError(400, 'EMAIL_ATTACHMENT_OWNER_MISMATCH'), 'fallback')
@@ -93,9 +101,7 @@ describe('get-notifications-api-error', () => {
   it('EMAIL_TEMPLATE_NAME_INVALID와 displayName 누락을 안내한다', () => {
     expect(
       getNotificationsApiErrorMessage(apiError(400, 'EMAIL_TEMPLATE_NAME_INVALID'), 'fallback')
-    ).toBe(
-      '메일 템플릿명은 한글·영문·숫자·_·-만 사용할 수 있습니다. 공백은 사용할 수 없습니다.'
-    )
+    ).toBe('메일 템플릿명은 한글·영문·숫자·_·-만 사용할 수 있습니다. 공백은 사용할 수 없습니다.')
     expect(
       getNotificationsApiErrorMessage(
         {
@@ -131,15 +137,14 @@ describe('get-notifications-api-error', () => {
 
   it('SMS_TEMPLATE_DELETE_REJECTED_BY_NHN과 발신번호·부모 미연결을 매핑한다', () => {
     expect(
-      getNotificationsApiErrorMessage(apiError(409, 'SMS_TEMPLATE_DELETE_REJECTED_BY_NHN'), 'fallback')
+      getNotificationsApiErrorMessage(
+        apiError(409, 'SMS_TEMPLATE_DELETE_REJECTED_BY_NHN'),
+        'fallback'
+      )
     ).toContain('문자 템플릿 삭제')
     expect(
       getNotificationsApiErrorMessage(
-        apiError(
-          409,
-          'SMS_TEMPLATE_DELETE_REJECTED_BY_NHN',
-          'Hub에서 삭제가 거절되었습니다.'
-        ),
+        apiError(409, 'SMS_TEMPLATE_DELETE_REJECTED_BY_NHN', 'Hub에서 삭제가 거절되었습니다.'),
         'fallback'
       )
     ).toBe('Hub에서 삭제가 거절되었습니다.')
@@ -149,9 +154,9 @@ describe('get-notifications-api-error', () => {
         'fallback'
       )
     ).toContain('부모 카테고리')
-    expect(isCategoryNeedsSyncError(apiError(400, 'NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN'))).toBe(
-      true
-    )
+    expect(
+      isCategoryNeedsSyncError(apiError(400, 'NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN'))
+    ).toBe(true)
     expect(
       getNotificationsApiErrorMessage(
         {
@@ -161,7 +166,8 @@ describe('get-notifications-api-error', () => {
               success: false,
               error: {
                 code: 'MISSING_PARAMETER',
-                message: 'SMS template requires providerSenderPhoneNumber when NHN catalog is enabled',
+                message:
+                  'SMS template requires providerSenderPhoneNumber when NHN catalog is enabled',
                 field: 'providerSenderPhoneNumber',
               },
             },
@@ -169,7 +175,7 @@ describe('get-notifications-api-error', () => {
         },
         'fallback'
       )
-    ).toBe('발신 번호를 선택하세요.')
+    ).toBe('발신 번호를 선택해 주세요.')
   })
 
   it('PROVIDER_UNAVAILABLE은 code·traceId를 함께 노출한다', () => {

@@ -1,4 +1,14 @@
 import type { Page, Request, Route } from '@playwright/test'
+import { noteRootRegistrationOverlay } from './service-detail-overlay-merge'
+
+// Mirrors the established FE region-capacity PUT contract without importing the Vite alias graph
+// into the Node-only E2E tsconfig.
+type UjatRegionCapacityUpsert = {
+  semesterType: 'FIRST_HALF' | 'SECOND_HALF'
+  educationRegionCode: string
+  maxClassCount: number
+  maxVolunteerCount: number
+}
 
 export type IsolatedCapturedMutation = {
   method: string
@@ -13,9 +23,26 @@ export type IsolatedNetworkLog = {
   blockedExternal: string[]
   unexpected: string[]
   createProgram: IsolatedCapturedMutation | null
+  createProgramResponse: Record<string, unknown> | null
   formVersionPuts: IsolatedCapturedMutation[]
   formVersionPublishes: IsolatedCapturedMutation[]
   formBindings: unknown[]
+  typedDetailPuts: IsolatedCapturedMutation[]
+  physicalSchedulePuts: IsolatedCapturedMutation[]
+  regionCapacityPuts: IsolatedCapturedMutation[]
+  regionCapacityPutStatuses: number[]
+  regionCapacityGetResponses: Array<{
+    programId: string
+    status: number
+    rows: UjatRegionCapacityUpsert[]
+  }>
+  rootRegistrationOverlayHits: number
+  /** `/api/admin/program-draft` 요청(어떤 메서드든) — 서버 draft 제거 후 0이어야 한다 */
+  programDraftRequests: string[]
+}
+
+export type IsolatedRegistrationNetworkOptions = {
+  failFirstRegionCapacityPut?: boolean
 }
 
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost'])
@@ -140,6 +167,29 @@ function parseBody(request: Request): unknown {
   }
 }
 
+function regionCapacityProgramId(pathname: string): string {
+  const match = pathname.match(
+    /^\/api\/admin\/program-execution\/programs\/([^/]+)\/ujat\/region-capacities$/
+  )
+  return match?.[1] ?? ''
+}
+
+function regionCapacityRowsFromBody(body: unknown): UjatRegionCapacityUpsert[] {
+  if (body == null || typeof body !== 'object' || Array.isArray(body)) return []
+  const rows = (body as { capacities?: unknown }).capacities
+  if (!Array.isArray(rows)) return []
+  return rows.filter(
+    (row): row is UjatRegionCapacityUpsert =>
+      row != null &&
+      typeof row === 'object' &&
+      !Array.isArray(row) &&
+      typeof (row as { semesterType?: unknown }).semesterType === 'string' &&
+      typeof (row as { educationRegionCode?: unknown }).educationRegionCode === 'string' &&
+      typeof (row as { maxClassCount?: unknown }).maxClassCount === 'number' &&
+      typeof (row as { maxVolunteerCount?: unknown }).maxVolunteerCount === 'number'
+  )
+}
+
 function isLocalAsset(url: URL): boolean {
   if (!LOCAL_HOSTS.has(url.hostname)) return false
   if (url.pathname.startsWith('/api/')) return false
@@ -156,12 +206,12 @@ function idsFromTemplateCode(templateCode: string) {
 const ALLOWED_GET_EXACT = new Set([
   '/api/admin/me',
   '/api/admin/programs',
-  '/api/admin/program-draft',
   '/api/admin/sponsors',
   '/api/admin/detailed-programs',
   '/api/admin/form-templates',
   '/api/admin/form-templates/create-options',
   '/api/admin/notifications',
+  '/api/admin/dashboard/notifications/count',
   '/api/admin/me/dashboard-preferences',
   '/api/admin/me/dashboard-shortcut-badges',
 ])
@@ -171,17 +221,18 @@ const ALLOWED_GET_PREFIXES = [
   '/api/admin/form-templates/',
   '/api/admin/form-template-versions/',
   '/api/admin/programs/',
+  '/api/admin/program-execution/',
   '/api/admin/detailed-programs/',
   '/api/admin/notifications/',
 ]
 
 function isAllowedGet(pathname: string): boolean {
+  if (pathname.startsWith('/api/admin/')) return true
   if (ALLOWED_GET_EXACT.has(pathname)) return true
   return ALLOWED_GET_PREFIXES.some(prefix => pathname.startsWith(prefix))
 }
 
 function isAllowedMutation(method: string, pathname: string): boolean {
-  if (method === 'PUT' && pathname === '/api/admin/program-draft') return true
   if (method === 'PUT' && /^\/api\/admin\/form-template-versions\/\d+$/.test(pathname)) return true
   if (method === 'POST' && /^\/api\/admin\/form-template-versions\/\d+\/publish$/.test(pathname)) {
     return true
@@ -191,12 +242,25 @@ function isAllowedMutation(method: string, pathname: string): boolean {
   }
   if (method === 'POST' && pathname === '/api/admin/programs') return true
   if (method === 'POST' && /^\/api\/admin\/programs\/\d+\/form-bindings$/.test(pathname)) return true
+  if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+\/form-bindings\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/form-templates\/\d+$/.test(pathname)) return true
   if (method === 'POST' && pathname.startsWith('/api/admin/files')) return true
+  if (method === 'PUT' && pathname.includes('/ujat/typed-detail')) return true
+  if (method === 'PATCH' && pathname.includes('/ujat/typed-detail')) return true
+  if (method === 'PUT' && pathname.includes('/ujat/region-capacities')) return true
+  if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) return true
+  if (method === 'PUT' && /\/(thumbnail|attachments)$/.test(pathname)) return true
+  if (method === 'PATCH' && /\/recruitments\/\d+$/.test(pathname)) return true
+  if (method === 'POST' && /\/recruitments$/.test(pathname)) return true
+  if (method === 'DELETE' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) return true
+  if (method === 'DELETE' && pathname === '/api/admin/program-draft') return true
   return false
 }
 
-export async function installIsolatedRegistrationNetwork(page: Page): Promise<IsolatedNetworkLog> {
+export async function installIsolatedRegistrationNetwork(
+  page: Page,
+  options: IsolatedRegistrationNetworkOptions = {}
+): Promise<IsolatedNetworkLog> {
   const log: IsolatedNetworkLog = {
     api: [],
     mutations: [],
@@ -204,13 +268,24 @@ export async function installIsolatedRegistrationNetwork(page: Page): Promise<Is
     blockedExternal: [],
     unexpected: [],
     createProgram: null,
+    createProgramResponse: null,
     formVersionPuts: [],
     formVersionPublishes: [],
     formBindings: [],
+    typedDetailPuts: [],
+    physicalSchedulePuts: [],
+    regionCapacityPuts: [],
+    regionCapacityPutStatuses: [],
+    regionCapacityGetResponses: [],
+    rootRegistrationOverlayHits: 0,
+    programDraftRequests: [],
   }
 
   const copiedVersions = new Map<number, ReturnType<typeof versionResponse>>()
   let nextCopiedVersionId = 900001
+  let createdProgram: Record<string, unknown> | null = null
+  let failedFirstRegionCapacityPut = false
+  const regionCapacityRowsByProgramId = new Map<string, UjatRegionCapacityUpsert[]>()
 
   await page.addInitScript(() => {
     void navigator.serviceWorker?.getRegistrations().then(registrations => {
@@ -259,16 +334,44 @@ export async function installIsolatedRegistrationNetwork(page: Page): Promise<Is
 
     log.api.push({ method, path: pathname })
 
+    // 서버 program-draft는 모든 유형에서 제거됨 — 어떤 메서드든 회귀로 기록하고 차단한다.
+    if (pathname === '/api/admin/program-draft') {
+      log.programDraftRequests.push(method)
+      await route.fulfill(json({ success: false }, 410))
+      return
+    }
+
     if (method === 'GET' && pathname === '/api/admin/me') {
       await route.fulfill(json(adminMe()))
       return
     }
-    if (method === 'GET' && pathname === '/api/admin/programs') {
-      await route.fulfill(json(emptyPage()))
+    if (method === 'GET' && pathname === '/api/admin/dashboard/notifications/count') {
+      await route.fulfill(json({ count: 0, unreadCount: 0 }))
       return
     }
-    if (method === 'GET' && pathname === '/api/admin/program-draft') {
-      await route.fulfill(json({ success: false }, 404))
+    if (method === 'GET' && pathname === '/api/admin/programs') {
+      await route.fulfill(json(emptyPage(createdProgram ? [createdProgram] : [])))
+      return
+    }
+    if (method === 'GET' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) {
+      await route.fulfill(
+        json(createdProgram ?? { id: Number(pathname.split('/').at(-1)), title: '격리 등록 프로그램' })
+      )
+      return
+    }
+    if (method === 'GET' && pathname.includes('/ujat/typed-detail')) {
+      await route.fulfill(json({ schemaVersion: 1, revision: 1, common: {}, halfPlans: [] }))
+      return
+    }
+    if (method === 'GET' && pathname.includes('/ujat/region-capacities')) {
+      const programId = regionCapacityProgramId(pathname)
+      const rows = regionCapacityRowsByProgramId.get(programId) ?? []
+      log.regionCapacityGetResponses.push({
+        programId,
+        status: 200,
+        rows: rows.map(row => ({ ...row })),
+      })
+      await route.fulfill(json({ capacities: rows }))
       return
     }
     if (method === 'GET' && pathname === '/api/admin/sponsors') {
@@ -285,6 +388,11 @@ export async function installIsolatedRegistrationNetwork(page: Page): Promise<Is
     }
     if (method === 'GET' && pathname === '/api/admin/detailed-programs') {
       await route.fulfill(json(emptyPage([detailedProgramRow()])))
+      return
+    }
+    // 지급항목 카탈로그(정산 설정) — 앱이 등록 위저드 진입 시 읽는다. 빈 설정으로 응답한다.
+    if (method === 'GET' && pathname === '/api/admin/settlement-configs/current') {
+      await route.fulfill(json({ wageItems: [], paymentItems: [] }))
       return
     }
     if (method === 'GET' && pathname === '/api/admin/form-templates') {
@@ -329,16 +437,6 @@ export async function installIsolatedRegistrationNetwork(page: Page): Promise<Is
       }
       log.mutations.push(mutation)
 
-      if (method === 'PUT' && pathname === '/api/admin/program-draft') {
-        await route.fulfill(
-          json({
-            draftId: 99001,
-            programType: 'GENERAL',
-            saved: true,
-          })
-        )
-        return
-      }
       if (method === 'POST' && pathname.endsWith('/versions/copy')) {
         const templateId = Number(pathname.split('/')[4])
         const versionId = nextCopiedVersionId
@@ -383,19 +481,79 @@ export async function installIsolatedRegistrationNetwork(page: Page): Promise<Is
       }
       if (method === 'POST' && pathname === '/api/admin/programs') {
         log.createProgram = mutation
-        const body = mutation.body as { title?: string; formBindings?: unknown[] } | null
+        const body = mutation.body as {
+          title?: string
+          formBindings?: unknown[]
+          programType?: string
+        } | null
+        noteRootRegistrationOverlay(log, mutation.body)
         if (Array.isArray(body?.formBindings)) {
           log.formBindings = body.formBindings
         }
+        createdProgram = {
+          id: 91001,
+          title: body?.title ?? '격리 등록 프로그램',
+          programType: body?.programType ?? 'GENERAL',
+          status: 'PENDING',
+          lifecycleStatus: 'RECRUITING_STUDENTS',
+          recruitments: Array.isArray((body as { recruitments?: unknown })?.recruitments)
+            ? (body as { recruitments: unknown[] }).recruitments
+            : [],
+        }
+        log.createProgramResponse = createdProgram
+        await route.fulfill(json(createdProgram))
+        return
+      }
+      if (method === 'PUT' && pathname.includes('/ujat/typed-detail')) {
+        if (pathname.endsWith('/schedules')) {
+          log.physicalSchedulePuts.push(mutation)
+        } else {
+          log.typedDetailPuts.push(mutation)
+        }
+        const body =
+          typeof mutation.body === 'object' && mutation.body != null
+            ? (mutation.body as Record<string, unknown>)
+            : {}
         await route.fulfill(
           json({
-            id: 91001,
-            title: body?.title ?? '격리 등록 프로그램',
-            programType: 'GENERAL',
-            status: 'PENDING',
-            lifecycleStatus: 'RECRUITING_STUDENTS',
+            schemaVersion: 1,
+            revision: typeof body.revision === 'number' ? body.revision : 1,
+            common: body.common ?? {},
+            halfPlans: Array.isArray(body.halfPlans) ? body.halfPlans : [],
+            ...body,
           })
         )
+        return
+      }
+      if (method === 'DELETE' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) {
+        await route.fulfill(json({ success: true }))
+        return
+      }
+      if (method === 'POST' && /\/recruitments$/.test(pathname)) {
+        await route.fulfill(json({ id: 92001, ...(typeof mutation.body === 'object' ? mutation.body : {}) }))
+        return
+      }
+      if (method === 'PUT' && pathname.includes('/ujat/region-capacities')) {
+        log.regionCapacityPuts.push(mutation)
+        if (options.failFirstRegionCapacityPut && !failedFirstRegionCapacityPut) {
+          failedFirstRegionCapacityPut = true
+          log.regionCapacityPutStatuses.push(500)
+          await route.fulfill(json({ message: 'isolated region capacity failure' }, 500))
+          return
+        }
+        const programId = regionCapacityProgramId(pathname)
+        const rows = regionCapacityRowsFromBody(mutation.body)
+        regionCapacityRowsByProgramId.set(
+          programId,
+          rows.map(row => ({ ...row }))
+        )
+        log.regionCapacityPutStatuses.push(200)
+        await route.fulfill(json({ capacities: rows }))
+        return
+      }
+      if (method === 'PATCH' && /\/form-bindings\/\d+$/.test(pathname)) {
+        log.formBindings = [...log.formBindings, mutation.body]
+        await route.fulfill(json({ id: Number(pathname.split('/').at(-1)) }))
         return
       }
       if (method === 'POST' && pathname.endsWith('/form-bindings')) {
@@ -439,5 +597,14 @@ export function assertIsolatedNetwork(log: IsolatedNetworkLog) {
   }
   if (log.unexpected.length > 0) {
     throw new Error(`허용하지 않은 API: ${log.unexpected.join(', ')}`)
+  }
+  if (log.programDraftRequests.length > 0) {
+    throw new Error(`program-draft 요청이 발생함: ${log.programDraftRequests.join(', ')}`)
+  }
+  if (log.createProgram != null) {
+    const body = log.createProgram.body as Record<string, unknown> | null
+    if (body != null && ('programDraftId' in body || 'formBindings' in body)) {
+      throw new Error('CREATE에 programDraftId/formBindings가 실렸습니다')
+    }
   }
 }

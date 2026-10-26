@@ -5,6 +5,7 @@ export type UjatEducationDocumentKind = 'PLAN' | 'JOURNAL'
 export type UjatEducationDocumentStatus =
   | 'NOT_SUBMITTED'
   | 'SUBMITTED'
+  | 'APPROVED'
   | 'DEADLINE_MISSED'
   | 'REVISED'
 
@@ -23,6 +24,17 @@ export type UjatEducationDocumentTemplateSetup = {
   unavailableReason: UjatEducationDocumentUnavailableReason
 }
 
+export type UjatEducationDocumentFile = {
+  formSubmissionFileId: number
+  questionKey: string | null
+  fileObjectId: number
+  originalFileName: string
+  contentType: string | null
+  fileSize: number | null
+  downloadable: boolean
+  retentionExpiresAt: string | null
+}
+
 export type UjatEducationDocumentSlot = {
   documentKind: UjatEducationDocumentKind
   status: UjatEducationDocumentStatus
@@ -37,6 +49,8 @@ export type UjatEducationDocumentSlot = {
   contextType: string | null
   contextId: number | null
   submittedAt: string | null
+  answers: Record<string, unknown>
+  files: UjatEducationDocumentFile[]
 }
 
 export type UjatEducationDayDocuments = {
@@ -107,6 +121,7 @@ function parseStatus(value: unknown): UjatEducationDocumentStatus | null {
   if (
     code === 'NOT_SUBMITTED' ||
     code === 'SUBMITTED' ||
+    code === 'APPROVED' ||
     code === 'DEADLINE_MISSED' ||
     code === 'REVISED'
   ) {
@@ -131,6 +146,35 @@ function parseUnavailableReason(value: unknown): UjatEducationDocumentUnavailabl
     return code
   }
   return null
+}
+
+function parseAnswers(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {}
+}
+
+function parseFiles(value: unknown): UjatEducationDocumentFile[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap(item => {
+    if (!isRecord(item)) return []
+    const fileObjectId = optionalNumber(item.fileObjectId)
+    if (fileObjectId == null || fileObjectId <= 0) return []
+    const originalFileName =
+      typeof item.originalFileName === 'string' && item.originalFileName.length > 0
+        ? item.originalFileName
+        : `첨부_${fileObjectId}`
+    return [
+      {
+        formSubmissionFileId: optionalNumber(item.formSubmissionFileId) ?? 0,
+        questionKey: optionalString(item.questionKey),
+        fileObjectId,
+        originalFileName,
+        contentType: optionalString(item.contentType),
+        fileSize: optionalNumber(item.fileSize),
+        downloadable: optionalBoolean(item.downloadable),
+        retentionExpiresAt: optionalString(item.retentionExpiresAt),
+      },
+    ]
+  })
 }
 
 export function parseUjatEducationDocumentSetup(
@@ -168,6 +212,8 @@ export function parseUjatEducationDocumentSlot(
     contextType: optionalString(value.contextType),
     contextId: optionalNumber(value.contextId),
     submittedAt: optionalString(value.submittedAt),
+    answers: parseAnswers(value.answers),
+    files: parseFiles(value.files),
   }
 }
 
@@ -220,6 +266,8 @@ export function ujatEducationDocumentStatusLabel(status: UjatEducationDocumentSt
   switch (status) {
     case 'SUBMITTED':
       return '제출 완료'
+    case 'APPROVED':
+      return '승인 완료'
     case 'DEADLINE_MISSED':
       return '기한 미준수'
     case 'REVISED':
@@ -232,7 +280,9 @@ export function ujatEducationDocumentStatusLabel(status: UjatEducationDocumentSt
 export function ujatEducationDocumentStatusTone(
   status: UjatEducationDocumentStatus,
 ): 'submitted' | 'unsubmitted' {
-  return status === 'SUBMITTED' || status === 'REVISED' ? 'submitted' : 'unsubmitted'
+  return status === 'SUBMITTED' || status === 'APPROVED' || status === 'REVISED'
+    ? 'submitted'
+    : 'unsubmitted'
 }
 
 export function formatUjatEducationDocumentDeadline(
@@ -276,25 +326,68 @@ export function ujatEducationDocumentSetupMessage(
   return `${title} 양식이 아직 준비되지 않았습니다.`
 }
 
+export type UjatEducationDocumentGuide = {
+  statusLabel?: string
+  statusTone?: 'submitted' | 'unsubmitted'
+  message: string
+}
+
+export function resolveUjatEducationDocumentGuide(
+  kind: UjatEducationDocumentKind,
+  slot: UjatEducationDocumentSlot,
+  setup: UjatEducationDocumentTemplateSetup | null,
+): UjatEducationDocumentGuide {
+  const title = ujatEducationDocumentTitle(kind)
+  if (!canEnterUjatEducationDocumentWrite(slot) && !slot.formResponseId) {
+    const reason = setup?.unavailableReason
+    if (reason || slot.programFormBindingId == null || slot.templateVersionId == null) {
+      return {
+        message: ujatEducationDocumentSetupMessage(kind, reason ?? setup?.unavailableReason ?? null),
+      }
+    }
+  }
+  if (slot.hasFeedback) {
+    return { message: '담당자의 피드백이 있어요' }
+  }
+  if (slot.status === 'REVISED') {
+    return {
+      statusLabel: `${title} 제출 완료`,
+      statusTone: 'submitted',
+      message: `${title} 수정 제출이 완료되었어요`,
+    }
+  }
+  if (slot.status === 'SUBMITTED') {
+    return {
+      statusLabel: `${title} 제출 완료`,
+      statusTone: 'submitted',
+      message: canEnterUjatEducationDocumentRevise(slot)
+        ? `제출한 ${title}는 마감 전까지는 수정이 가능해요`
+        : `${title} 제출 기한이 마감되었어요`,
+    }
+  }
+  if (slot.status === 'APPROVED') {
+    return {
+      statusLabel: `${title} 승인 완료`,
+      statusTone: 'submitted',
+      message: `${title} 승인이 완료되었어요`,
+    }
+  }
+  if (slot.status === 'DEADLINE_MISSED' && slot.formResponseId == null) {
+    return {
+      statusLabel: '미제출',
+      statusTone: 'unsubmitted',
+      message: `${title} 제출 기한이 마감되었어요`,
+    }
+  }
+  return { message: `기한 내에 ${title}를 제출해 주세요` }
+}
+
 export function ujatEducationDocumentGuideMessage(
   kind: UjatEducationDocumentKind,
   slot: UjatEducationDocumentSlot,
   setup: UjatEducationDocumentTemplateSetup | null,
 ): string {
-  const title = ujatEducationDocumentTitle(kind)
-  if (!canEnterUjatEducationDocumentWrite(slot) && !slot.formResponseId) {
-    const reason = setup?.unavailableReason
-    if (reason || slot.programFormBindingId == null || slot.templateVersionId == null) {
-      return ujatEducationDocumentSetupMessage(kind, reason ?? setup?.unavailableReason ?? null)
-    }
-  }
-  if (slot.hasFeedback) return `담당자의 ${title} 피드백이 있어요`
-  if (slot.status === 'REVISED') return `${title} 수정 제출이 완료되었어요`
-  if (slot.status === 'SUBMITTED') return `${title} 제출이 완료되었어요`
-  if (slot.status === 'DEADLINE_MISSED' && slot.formResponseId == null) {
-    return `${title} 제출 기한이 지났어요. 최초 제출은 가능하면 버튼이 활성화됩니다.`
-  }
-  return `${title}를 제출해 주세요.`
+  return resolveUjatEducationDocumentGuide(kind, slot, setup).message
 }
 
 export function canEnterUjatEducationDocumentWrite(slot: UjatEducationDocumentSlot): boolean {
@@ -328,4 +421,3 @@ export function indexUjatEducationDocumentsByScheduleId(
   }
   return map
 }
-

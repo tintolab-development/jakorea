@@ -87,6 +87,11 @@ const contractErrorCases = [
     'TRAINED_TEACHER_APPLICATION_TARGET_REQUIRED',
     '교육받은 교사 프로그램은 학교·기관 신청만 가능합니다.',
   ],
+  ['ASSIGNMENT_SUBMISSION_NOT_STARTED', '과제 제출 기간이 아직 시작되지 않았습니다.'],
+  ['ASSIGNMENT_SUBMISSION_CLOSED', '과제 제출 기간이 종료되었습니다.'],
+  ['ASSIGNMENT_SUBMISSION_NOT_ALLOWED', '해당 회차에는 과제를 제출할 수 없습니다.'],
+  ['ASSIGNMENT_ALREADY_SUBMITTED', '이미 과제를 제출했습니다.'],
+  ['ASSIGNMENT_RESUBMIT_NOT_ALLOWED', '과제 수정 제출이 허용되지 않습니다.'],
 ] as const
 
 for (const [code, message] of contractErrorCases) {

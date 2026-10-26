@@ -14,22 +14,29 @@ import {
   SmsPhonePreview,
   useCmsAlert,
 } from '@/shared/ui'
-import {
-  SMS_NHN_SENDER_NUMBER_CONSOLE_URL,
-} from '@/features/notifications/api/adapters/sms-channel'
+import { SMS_NHN_SENDER_NUMBER_CONSOLE_URL } from '@/features/notifications/api/adapters/sms-channel'
 import { shouldUseSmsTemplatesRemoteApi } from '@/features/notifications/api/sms-template-service'
-import { useSmsSenderProfilesQuery, useSmsTemplateVariablesQuery } from '@/features/notifications/hooks/use-sms-send-queries'
+import {
+  useSmsSenderProfilesQuery,
+  useSmsTemplateVariablesQuery,
+} from '@/features/notifications/hooks/use-sms-send-queries'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
+import {
+  collectSmsComposeFieldIssues,
+  estimateSmsTextBytes,
+  SMS_SUBJECT_BYTE_LIMIT,
+  smsComposeInlineMessage,
+} from '@/features/notifications/model/sms-send/text-bytes'
 import { SMS_MMS_ATTACHMENT_GUIDE_LINES } from '@/features/notifications/model/sms-template/attachments'
 import { SMS_TEMPLATE_NAME_PLACEHOLDER } from '@/features/notifications/model/sms-template/template-name'
-import type { SmsCategory, SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
+import type {
+  SmsCategory,
+  SmsTemplateItem,
+} from '@/features/notifications/model/sms-template/types'
 import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
-import {
-  useSmsTemplateForm,
-  type SmsTemplateFormDraft,
-  type SmsTemplateFormMode,
-} from './use-form'
+import { useSmsTemplateForm, type SmsTemplateFormDraft, type SmsTemplateFormMode } from './use-form'
 import { SmsVariableTextField } from './variable-text-field'
+import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './form-modal.css'
 
 type BasicSettingsFieldsProps = {
@@ -94,7 +101,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
               width="100%"
               withAllOption={false}
               loading={senderLoading}
-              placeholder="발신 번호를 선택하세요"
+              placeholder="발신 번호를 선택해 주세요"
               options={senderOptions}
               value={senderPhone || undefined}
               onChange={value => onSenderPhoneChange(String(value ?? ''))}
@@ -189,15 +196,20 @@ export function FormModal({
     onSubmit(form.getDraft())
   }
 
-  function handleAttachmentAdd(files: File[]) {
-    const result = form.handleAttachmentAdd(files)
+  async function handleAttachmentAdd(files: File[]) {
+    const result = await form.handleAttachmentAdd(files)
     if (!result.ok) {
       showAlert({ title: '안내', content: result.message })
     }
   }
 
-  const previewSubjectPlaceholder = form.subject.trim() || '제목을 작성하세요'
-  const previewBodyPlaceholder = form.bodyText.trim() || '내용을 작성하세요'
+  const composeIssues = collectSmsComposeFieldIssues({
+    messageType: form.messageType,
+    subject: form.subject,
+    bodyText: form.bodyText,
+    attachmentCount: form.attachmentFileNames.length,
+  })
+  const subjectByteLength = estimateSmsTextBytes(form.subject)
 
   return (
     <>
@@ -207,11 +219,11 @@ export function FormModal({
         title={headerTitle}
         size="full"
         hideHeader
-        className="sms-template-form-modal teal-header-modal--full"
+        className="notification-fullpage-modal sms-template-form-modal teal-header-modal--full"
       >
-        <div className="sms-template-form-modal__shell">
-          <header className="sms-template-form-modal__title-row">
-            <div className="sms-template-form-modal__title-edit">
+        <div className="notification-fullpage-modal__shell">
+          <header className="notification-fullpage-modal__title-row">
+            <div className="notification-fullpage-modal__title-edit">
               <CmsInputIconClick
                 value={form.templateName}
                 editing={titleEditing}
@@ -221,71 +233,86 @@ export function FormModal({
                 onCommitEdit={() => setTitleEditing(false)}
                 inputAriaLabel={SMS_TEMPLATE_NAME_PLACEHOLDER}
                 editButtonAriaLabel="템플릿명 수정"
-                containerClassName="sms-template-form-modal__title-edit-row"
-                inputClassName="sms-template-form-modal__title-input sms-template-form-modal__title-input--editing"
-                textClassName="sms-template-form-modal__title-text"
-                editButtonClassName="sms-template-form-modal__title-edit-btn"
+                containerClassName="notification-fullpage-modal__title-edit-row"
+                inputClassName="notification-fullpage-modal__title-input notification-fullpage-modal__title-input--editing"
+                textClassName="notification-fullpage-modal__title-text"
+                editButtonClassName="notification-fullpage-modal__title-edit-btn"
               />
             </div>
-            <div className="sms-template-form-modal__title-actions">
-              {isEdit ? (
-                <>
-                  <CmsButton variant="cancel" size="large" width={140} type="button" onClick={onClose}>
-                    닫기
-                  </CmsButton>
-                  <CmsButton
-                    variant="delete"
-                    size="large"
-                    width={140}
-                    type="button"
-                    disabled={submitting}
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    템플릿 삭제
-                  </CmsButton>
-                  <CmsButton
-                    variant="primary"
-                    size="large"
-                    width={140}
-                    type="button"
-                    disabled={submitting}
-                    onClick={handleSubmit}
-                  >
-                    수정
-                  </CmsButton>
-                </>
-              ) : (
-                <>
-                  <CmsButton variant="cancel" size="large" width={140} type="button" onClick={onClose}>
-                    취소
-                  </CmsButton>
-                  <CmsButton
-                    variant="primary"
-                    size="large"
-                    width={140}
-                    type="button"
-                    disabled={submitting}
-                    onClick={handleSubmit}
-                  >
-                    등록
-                  </CmsButton>
-                </>
-              )}
-              <button
-                type="button"
-                className="sms-template-form-modal__title-close"
-                onClick={onClose}
-                aria-label="닫기"
-              >
-                <ModalCloseIcon />
-              </button>
-            </div>
+            <button
+              type="button"
+              className="notification-fullpage-modal__title-close"
+              onClick={onClose}
+              aria-label="닫기"
+            >
+              <ModalCloseIcon />
+            </button>
           </header>
 
-          <div className="sms-template-form-modal__body">
-            <div className="sms-template-form-modal__layout">
-              <div className="sms-template-form-modal__main">
-                <section className="sms-template-form-modal__widget">
+          <div className="notification-fullpage-modal__body">
+            <div className="notification-fullpage-modal__notice">
+              <div className="notification-fullpage-modal__notice-actions">
+                {isEdit ? (
+                  <>
+                    <CmsButton
+                      variant="cancel"
+                      size="large"
+                      width={140}
+                      type="button"
+                      onClick={onClose}
+                    >
+                      닫기
+                    </CmsButton>
+                    <CmsButton
+                      variant="delete"
+                      size="large"
+                      width={140}
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => setDeleteOpen(true)}
+                    >
+                      삭제
+                    </CmsButton>
+                    <CmsButton
+                      variant="primary"
+                      size="large"
+                      width={140}
+                      type="button"
+                      disabled={submitting}
+                      onClick={handleSubmit}
+                    >
+                      수정
+                    </CmsButton>
+                  </>
+                ) : (
+                  <>
+                    <CmsButton
+                      variant="cancel"
+                      size="large"
+                      width={140}
+                      type="button"
+                      onClick={onClose}
+                    >
+                      취소
+                    </CmsButton>
+                    <CmsButton
+                      variant="primary"
+                      size="large"
+                      width={140}
+                      type="button"
+                      disabled={submitting}
+                      onClick={handleSubmit}
+                    >
+                      등록
+                    </CmsButton>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="notification-fullpage-modal__layout">
+              <div className="notification-fullpage-modal__main">
+                <section className="notification-fullpage-modal__widget">
                   <div className="sms-template-form-modal__section-head">
                     <h3 className="info-section-title detail-info-form__title sms-template-form-modal__section-title">
                       기본 설정
@@ -305,7 +332,7 @@ export function FormModal({
                       </a>
                       에서 사전 등록된 번호만 사용 가능합니다.
                       {senderListEmpty
-                        ? ' 목록이 비어 있으면 문자 템플릿 화면에서 「동기화」를 먼저 실행해 주세요.'
+                        ? ' 목록이 비어 있으면 NHN Cloud에 발신 번호가 등록돼 있는지 확인한 뒤 문자 관리 화면을 다시 열어 주세요.'
                         : null}
                     </p>
                   </div>
@@ -319,13 +346,13 @@ export function FormModal({
                   />
                 </section>
 
-                <section className="sms-template-form-modal__widget sms-template-form-modal__widget--compose">
+                <section className="notification-fullpage-modal__widget sms-template-form-modal__widget--compose">
                   <div className="sms-template-form-modal__section-head">
-                    <h3 className="sms-template-form-modal__section-title">템플릿 작성</h3>
+                    <h3 className="sms-template-form-modal__section-title">문자 작성</h3>
                   </div>
                   <div className="sms-template-form-modal__compose-row">
                     <DetailInfoForm
-                      title="템플릿 작성"
+                      title="문자 작성"
                       hideHeader
                       mode="edit"
                       className="sms-template-form-modal__compose"
@@ -337,15 +364,22 @@ export function FormModal({
                           fullRow
                           view={form.messageType}
                           edit={
-                            <CmsRadio.Group size="medium"
+                            <CmsRadio.Group
+                              size="medium"
                               value={form.messageType}
                               onChange={event =>
                                 form.handleMessageTypeChange(String(event.target.value))
                               }
                             >
-                              <CmsRadio size="medium" value="SMS">SMS</CmsRadio>
-                              <CmsRadio size="medium" value="LMS">LMS</CmsRadio>
-                              <CmsRadio size="medium" value="MMS">MMS</CmsRadio>
+                              <CmsRadio size="medium" value="SMS">
+                                SMS
+                              </CmsRadio>
+                              <CmsRadio size="medium" value="LMS">
+                                LMS
+                              </CmsRadio>
+                              <CmsRadio size="medium" value="MMS">
+                                MMS
+                              </CmsRadio>
                             </CmsRadio.Group>
                           }
                         />
@@ -361,7 +395,6 @@ export function FormModal({
                               <div className="sms-template-form-modal__subject-field">
                                 <SmsVariableTextField
                                   value={form.subject}
-                                  maxLength={form.subjectMaxLength}
                                   onValueChange={form.setSubject}
                                 >
                                   <CmsInput
@@ -369,20 +402,40 @@ export function FormModal({
                                     inputSize="small"
                                     width="100%"
                                     allowClear={false}
-                                    maxLength={form.subjectMaxLength}
-                                    placeholder="제목을 작성하세요"
+                                    error={Boolean(
+                                      smsComposeInlineMessage(composeIssues.subjectError)
+                                    )}
                                     value={form.subject}
                                     onChange={event => form.setSubject(event.target.value)}
-                                    onFocus={event => form.rememberSubjectRange(event.currentTarget)}
+                                    onFocus={event =>
+                                      form.rememberSubjectRange(event.currentTarget)
+                                    }
                                     onBlur={event => form.rememberSubjectRange(event.currentTarget)}
-                                    onSelect={event => form.rememberSubjectRange(event.currentTarget)}
-                                    onClick={event => form.rememberSubjectRange(event.currentTarget)}
-                                    onKeyUp={event => form.rememberSubjectRange(event.currentTarget)}
+                                    onSelect={event =>
+                                      form.rememberSubjectRange(event.currentTarget)
+                                    }
+                                    onClick={event =>
+                                      form.rememberSubjectRange(event.currentTarget)
+                                    }
+                                    onKeyUp={event =>
+                                      form.rememberSubjectRange(event.currentTarget)
+                                    }
                                   />
                                 </SmsVariableTextField>
-                                <span className="sms-template-form-modal__subject-count">
-                                  {form.subject.length}/{form.subjectMaxLength}
-                                </span>
+                                <div className="sms-template-form-modal__byte-row">
+                                  <span
+                                    className={
+                                      subjectByteLength > SMS_SUBJECT_BYTE_LIMIT
+                                        ? 'sms-template-form-modal__byte-count sms-template-form-modal__byte-count--danger'
+                                        : 'sms-template-form-modal__byte-count'
+                                    }
+                                  >
+                                    {subjectByteLength}
+                                  </span>
+                                  <span className="sms-template-form-modal__byte-label">
+                                    / {SMS_SUBJECT_BYTE_LIMIT}byte
+                                  </span>
+                                </div>
                               </div>
                             }
                           />
@@ -406,7 +459,7 @@ export function FormModal({
                                   inputSize="small"
                                   width="100%"
                                   rows={8}
-                                  placeholder="내용을 작성하세요"
+                                  error={Boolean(smsComposeInlineMessage(composeIssues.bodyError))}
                                   value={form.bodyText}
                                   onChange={event => form.setBodyText(event.target.value)}
                                   onFocus={event => form.rememberBodyRange(event.currentTarget)}
@@ -420,14 +473,19 @@ export function FormModal({
                                 <span className="sms-template-form-modal__byte-label">
                                   {form.bodyCounterLabel}
                                 </span>
-                                <span
-                                  className={
-                                    form.bodyByteLength > form.bodyByteLimit
-                                      ? 'sms-template-form-modal__byte-count sms-template-form-modal__byte-count--danger'
-                                      : 'sms-template-form-modal__byte-count'
-                                  }
-                                >
-                                  {form.bodyByteLength} / {form.bodyByteLimit}byte
+                                <span className="sms-template-form-modal__byte-meter">
+                                  <span
+                                    className={
+                                      form.bodyByteLength > form.bodyByteLimit
+                                        ? 'sms-template-form-modal__byte-count sms-template-form-modal__byte-count--danger'
+                                        : 'sms-template-form-modal__byte-count'
+                                    }
+                                  >
+                                    {form.bodyByteLength}
+                                  </span>
+                                  <span className="sms-template-form-modal__byte-label">
+                                    / {form.bodyByteLimit}byte
+                                  </span>
                                 </span>
                               </div>
                             </div>
@@ -441,15 +499,30 @@ export function FormModal({
                             fullRow
                             view=""
                             edit={
-                              <FileSelectField
-                                className="sms-template-form-modal__file-field"
-                                multiple
-                                accept=".jpg,.jpeg"
-                                fileNames={form.attachmentsEnabled ? form.attachmentFileNames : []}
-                                guideLines={[...SMS_MMS_ATTACHMENT_GUIDE_LINES]}
-                                onFilesChange={handleAttachmentAdd}
-                                onRemoveFile={form.handleAttachmentRemove}
-                              />
+                              <div
+                                className={
+                                  composeIssues.attachmentError
+                                    ? 'sms-template-form-modal__file-wrap sms-template-form-modal__file-wrap--error'
+                                    : 'sms-template-form-modal__file-wrap'
+                                }
+                              >
+                                <FileSelectField
+                                  className="sms-template-form-modal__file-field"
+                                  multiple
+                                  accept=".jpg,.jpeg"
+                                  fileNames={form.attachmentFileNames}
+                                  guideLines={[...SMS_MMS_ATTACHMENT_GUIDE_LINES]}
+                                  onFilesChange={files => {
+                                    void handleAttachmentAdd(files)
+                                  }}
+                                  onRemoveFile={form.handleAttachmentRemove}
+                                />
+                                {composeIssues.attachmentError ? (
+                                  <p className="cms-field__message cms-field__message--error">
+                                    {composeIssues.attachmentError}
+                                  </p>
+                                ) : null}
+                              </div>
                             }
                           />
                         </DetailInfoForm.Row>
@@ -459,8 +532,8 @@ export function FormModal({
                     <SmsPhonePreview
                       className="sms-template-form-modal__phone"
                       senderPhone={form.senderPhone}
-                      subject={previewSubjectPlaceholder}
-                      bodyText={previewBodyPlaceholder}
+                      subject={form.subject}
+                      bodyText={form.bodyText}
                       showSubject={form.showSubject}
                     />
                   </div>

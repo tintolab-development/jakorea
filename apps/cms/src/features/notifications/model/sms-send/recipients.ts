@@ -1,4 +1,5 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import { alimtalkSendPhoneDedupKey } from '@/features/notifications/model/alimtalk-send/recipients'
 import type {
   SmsSendMemberType,
   SmsSendParticipationType,
@@ -63,26 +64,106 @@ export function smsSendRecipientTypeColumnTitle(mode: SmsSendRecipientTypeMode):
   return mode === 'member' ? '회원 유형' : '참여 유형'
 }
 
-export function smsSendRecipientTypeLabel(recipient: SmsSendRecipient): string {
+export function smsSendRecipientTypeLabel(
+  recipient: SmsSendRecipient,
+  mode: SmsSendRecipientTypeMode = 'member'
+): string {
+  if (mode === 'participation') {
+    if (recipient.participationType) {
+      return SMS_SEND_PARTICIPATION_TYPE_LABEL[recipient.participationType]
+    }
+  } else if (recipient.memberType) {
+    return SMS_SEND_MEMBER_TYPE_LABEL[recipient.memberType]
+  }
   return recipient.typeLabel?.trim() || ''
 }
 
 export function normalizeSmsSendPhone(value: string): string {
-  return formatKoreanPhoneNumber(value.trim())
+  const trimmed = value.trim()
+  if (!trimmed || trimmed === '-') return trimmed
+  if (trimmed.includes('*')) return trimmed
+  return formatKoreanPhoneNumber(trimmed) || trimmed
+}
+
+/** 알림톡과 같은 휴대폰 비교 키. 마스킹·미완성 번호는 중복으로 보지 않는다. */
+export function smsSendPhoneDedupKey(phone: string): string | null {
+  return alimtalkSendPhoneDedupKey(phone)
+}
+
+export const SMS_DUPLICATE_PHONE_MESSAGE = '같은 휴대폰 번호는 1건만 발송 대상에 포함됩니다.'
+
+export type SmsPhoneDuplicateNotice = {
+  kept: SmsSendRecipient
+  skipped: SmsSendRecipient
+}
+
+function describeSmsDuplicateRecipient(recipient: SmsSendRecipient): string {
+  const kind =
+    recipient.source === 'manual' || recipient.actorType === 'DIRECT' ? '직접 입력' : '회원'
+  const name = recipient.name?.trim()
+  const named = name && name !== '-' ? `${kind} ${name}` : kind
+  return recipient.actorId != null ? `${named} (actorId ${recipient.actorId})` : named
+}
+
+/**
+ * 수신자 ID가 달라도 같은 휴대폰 번호는 먼저 들어온 1건만 남긴다.
+ * actorId·변수값은 합치지 않는다.
+ */
+export function dedupeSmsSendRecipients(recipients: SmsSendRecipient[]): SmsSendRecipient[] {
+  const next: SmsSendRecipient[] = []
+  const seenIds = new Set<string>()
+  const seenPhones = new Set<string>()
+  for (const recipient of recipients) {
+    if (seenIds.has(recipient.id)) continue
+    const phoneKey = smsSendPhoneDedupKey(recipient.phone)
+    if (phoneKey && seenPhones.has(phoneKey)) continue
+    seenIds.add(recipient.id)
+    if (phoneKey) seenPhones.add(phoneKey)
+    next.push(recipient)
+  }
+  return next
 }
 
 export function mergeSmsSendRecipients(
   current: SmsSendRecipient[],
   incoming: SmsSendRecipient[]
 ): SmsSendRecipient[] {
-  const next = [...current]
-  const seen = new Set(current.map(item => item.id))
-  for (const recipient of incoming) {
-    if (seen.has(recipient.id)) continue
-    seen.add(recipient.id)
-    next.push(recipient)
+  return dedupeSmsSendRecipients([...current, ...incoming])
+}
+
+/** 같은 번호는 먼저 있던 수신자를 유지한다. 변수값·actorId는 합치지 않는다. */
+export function listSmsPhoneDuplicateNotices(
+  current: SmsSendRecipient[],
+  incoming: SmsSendRecipient[]
+): SmsPhoneDuplicateNotice[] {
+  const keptByPhone = new Map<string, SmsSendRecipient>()
+  const notices: SmsPhoneDuplicateNotice[] = []
+  for (const recipient of [...current, ...incoming]) {
+    const phoneKey = smsSendPhoneDedupKey(recipient.phone)
+    if (!phoneKey) continue
+    const kept = keptByPhone.get(phoneKey)
+    if (!kept) {
+      keptByPhone.set(phoneKey, recipient)
+      continue
+    }
+    if (kept.id === recipient.id) continue
+    notices.push({ kept, skipped: recipient })
   }
-  return next
+  return notices
+}
+
+export function formatSmsPhoneDuplicateMessage(notices: SmsPhoneDuplicateNotice[]): string {
+  if (notices.length === 0) return SMS_DUPLICATE_PHONE_MESSAGE
+  const lines = [
+    '같은 휴대폰 번호는 1건만 발송합니다. 이미 있는 수신자를 유지하고, 새로 고른 같은 번호는 추가하지 않습니다.',
+  ]
+  for (const notice of notices.slice(0, 8)) {
+    lines.push(
+      `${notice.kept.phone}: 유지 ${describeSmsDuplicateRecipient(notice.kept)} / 제외 ${describeSmsDuplicateRecipient(notice.skipped)}`
+    )
+  }
+  if (notices.length > 8) lines.push(`외 ${notices.length - 8}건`)
+  return lines.join('\n')
 }
 
 export function filterSmsSendRecipients(
@@ -114,7 +195,11 @@ export function manualRecipientId(phone: string): string {
   return `manual-${normalizeSmsSendPhone(phone).replace(/\D/g, '')}`
 }
 
-export function createManualRecipient(phone: string, name = ''): SmsSendRecipient {
+export function createManualRecipient(
+  phone: string,
+  name = '',
+  variables?: Record<string, string>
+): SmsSendRecipient {
   const normalized = normalizeSmsSendPhone(phone)
   return {
     id: manualRecipientId(normalized),
@@ -124,6 +209,7 @@ export function createManualRecipient(phone: string, name = ''): SmsSendRecipien
     phone: normalized,
     source: 'manual',
     actorType: 'DIRECT',
+    ...(variables ? { variables: { ...variables } } : {}),
   }
 }
 

@@ -33,6 +33,11 @@ export function mergeSchoolDetailAttendanceRemoteData(input: {
   rosterStudents: SchoolDetailStudentRow[]
   attendancesByScheduleId: Record<string, AttendanceItemResponse[]>
   includeSessionsWithoutAttendance?: boolean
+  giveUpParticipants?: Array<{
+    participantId?: number
+    giveUpAt?: string | null
+    participantStatus?: string | null
+  }> | null
 }): SchoolDetailAttendanceSessionGroup[] {
   return buildSchoolDetailAttendanceSessionGroups({
     schoolId: input.row.id,
@@ -41,6 +46,7 @@ export function mergeSchoolDetailAttendanceRemoteData(input: {
     rosterStudents: input.rosterStudents,
     attendancesByScheduleId: input.attendancesByScheduleId,
     includeSessionsWithoutAttendance: input.includeSessionsWithoutAttendance,
+    giveUpParticipants: input.giveUpParticipants,
   })
 }
 

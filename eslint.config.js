@@ -5,6 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import unusedImports from 'eslint-plugin-unused-imports'
 import tseslint from 'typescript-eslint'
 import prettier from 'eslint-config-prettier'
+import jakoreaOverlay from './tools/eslint/no-overlay-sync-import.js'
 
 export default tseslint.config(
   {
@@ -148,6 +149,89 @@ export default tseslint.config(
             'getGeneralRecruitOverlayRecord() is UI/active-scope only; not for persist in save hooks. See program-detail-overlay-save-ssot.mdc.',
         },
       ],
+    },
+  },
+  {
+    files: [
+      'apps/cms/src/features/template/hooks/use-program-participant-application-editor.ts',
+      'apps/cms/src/features/template/hooks/use-program-registration-editor.ts',
+      'apps/cms/src/features/program/general/lib/registration-local-save.ts',
+      'apps/cms/src/features/program/general/lib/general-recruit-overlay-to-program.ts',
+      'apps/cms/src/features/program/trained-teachers/lib/recruit-form-state.ts',
+      'apps/cms/src/features/program/gemini/lib/recruitment/snapshot-from-overlay.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'warn',
+        {
+          paths: [
+            {
+              name: '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync',
+              importNames: ['getGeneralRecruitOverlayRecord'],
+              message:
+                'Do not use active-scope getGeneralRecruitOverlayRecord() in program persist paths. Use peekGeneralRecruitOverlayRecord / buildMergedRegistrationOverlayForRecruitSave (program-detail-overlay-save-ssot.mdc).',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: "CallExpression[callee.name='getGeneralRecruitOverlayRecord']",
+          message:
+            'getGeneralRecruitOverlayRecord() is UI/active-scope only; not for persist. See program-detail-overlay-save-ssot.mdc.',
+        },
+      ],
+    },
+  },
+  // 공용 양식 버전 제자리 쓰기(PUT/publish) 차단 — 2026-10-25 공용 카탈로그 덮어쓰기 사고 후속.
+  // 프로그램 흐름은 COPY(ownerProgramId) 후 쓰기만 허용한다(program-form-version-write-guard.ts).
+  // 별도 규칙명(@typescript-eslint/no-restricted-imports)이라 위 no-restricted-imports 블록과 겹치지 않는다.
+  {
+    files: ['apps/cms/src/**/*.{ts,tsx}'],
+    ignores: [
+      'apps/cms/src/**/*.test.ts',
+      'apps/cms/src/**/*.test.tsx',
+      'apps/cms/src/features/template/api/**',
+      // allowlist: 쓰기 전에 COPY 또는 canWriteProgramFormVersionInPlace 가드를 거치는 모듈
+      'apps/cms/src/features/program/general/lib/sync-registration-form-bindings.ts',
+      'apps/cms/src/features/program/shared/lib/survey-management/save-program-survey-form-edit.ts',
+      'apps/cms/src/features/template/lib/writing-form-template-local-save.ts',
+    ],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/features/template/api/form-templates-api-client',
+              importNames: ['updateFormTemplateVersionRemote', 'publishFormTemplateVersionRemote'],
+              message:
+                'Form version in-place PUT/publish is restricted. COPY with ownerProgramId first and use canWriteProgramFormVersionInPlace (features/template/lib/program-form-version-write-guard.ts).',
+            },
+            {
+              name: '@/features/template/api/admin-form-templates-service',
+              importNames: [
+                'publishFormTemplateVersion',
+                'publishFormTemplateVersionById',
+                'saveFormTemplateVersionDraft',
+                'saveFormTemplateVersionDraftByVersionId',
+              ],
+              message:
+                'Form version in-place PUT/publish is restricted. COPY with ownerProgramId first and use canWriteProgramFormVersionInPlace (features/template/lib/program-form-version-write-guard.ts).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // P8: overlay 동기화 모듈·scoped-overlay-store 신규 import 금지(ratchet). 기존 사용처는 allowlist 고정.
+  {
+    files: ['apps/cms/src/**/*.{ts,tsx}'],
+    ignores: ['apps/cms/src/**/*.test.ts', 'apps/cms/src/**/*.test.tsx'],
+    plugins: { 'jakorea-overlay': jakoreaOverlay },
+    rules: {
+      'jakorea-overlay/no-overlay-sync-import': 'error',
     },
   },
   {

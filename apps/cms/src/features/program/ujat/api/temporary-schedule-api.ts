@@ -158,6 +158,7 @@ export async function fetchProgramSchedulesLoose(
     await customInstance({
       url: programPath(programId, '/schedules'),
       method: 'GET',
+      params: { materializePreferredEducationDays: false },
     })
   )
   if (Array.isArray(raw)) return raw as ProgramScheduleListItem[]

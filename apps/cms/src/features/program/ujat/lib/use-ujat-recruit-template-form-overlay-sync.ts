@@ -7,6 +7,7 @@ import { normalizeVolunteerTargetList } from '@/features/program/shared/lib/prog
 import { pickRecruitmentCopyRow } from '@/features/program/shared/lib/recruitment-row-copy'
 import { pickUjatVolunteerRecruitmentRow } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import {
+  applyUjatRecruitInstitutionOverlayOntoProgram,
   buildUjatRecruitInstitutionOverlayFromDetailEditValues,
   pickUjatRecruitInstitutionOverlay,
 } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
@@ -189,18 +190,21 @@ function readOverlayRange(overlay: Record<string, unknown>, key: string) {
 export function programToUjatRecruitTemplateFormValues(
   program: Program,
   kind: 'institution' | 'volunteer',
-  volunteerHalf?: UjatVolunteerRecruitHalf
+  volunteerHalf?: UjatVolunteerRecruitHalf,
+  options?: { sourceOverlay?: Record<string, unknown> }
 ): ProgramDetailEditFormValues {
-  const persisted = program.ujatRegistrationOverlay ?? {}
+  const persisted = options?.sourceOverlay ?? program.ujatRegistrationOverlay ?? {}
+  const liveInstitution = options?.sourceOverlay ? {} : getUjatRecruitInstitutionOverlayRecord()
+  const liveVolunteer = options?.sourceOverlay ? {} : getUjatRecruitVolunteerOverlayRecord()
   const overlay =
     kind === 'institution'
       ? {
           ...pickUjatRecruitInstitutionOverlay(persisted),
-          ...getUjatRecruitInstitutionOverlayRecord(),
+          ...liveInstitution,
         }
       : resolveVolunteerOverlayForHalf(
           {
-            ...getUjatRecruitVolunteerOverlayRecord(),
+            ...liveVolunteer,
             ...pickUjatRecruitVolunteerOverlay(persisted),
           },
           volunteerHalf ?? 'h1'
@@ -216,7 +220,11 @@ export function programToUjatRecruitTemplateFormValues(
           overlay,
           { preferOverlay: volunteerRow == null }
         )
-      : program
+      : options?.sourceOverlay
+        ? applyUjatRecruitInstitutionOverlayOntoProgram(program, overlay, {
+            preferOverlay: true,
+          })
+        : program
   )
   const publicTitleKey =
     kind === 'institution' ? INSTITUTION_KEYS.publicTitle : VOLUNTEER_KEYS.publicTitle

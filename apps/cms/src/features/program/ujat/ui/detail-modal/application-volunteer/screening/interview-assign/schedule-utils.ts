@@ -101,7 +101,7 @@ export type ParsedInterviewSchedule = {
   scheduleMonth: Dayjs
 }
 
-/** 프로그램 overlay·상세의 면접 가능 일정만으로 배정 캘린더를 만든다. */
+/** 모집 행 interviewConfig 표시값으로 배정 캘린더를 만든다. */
 export function parseInterviewScheduleFromDisplay(
   data: UjatVolunteerInterviewScheduleData,
   range?: { startIso?: string | Date | null; endIso?: string | Date | null },

@@ -2,19 +2,12 @@ import { useCallback, useSyncExternalStore } from 'react'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
 
-export const UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS = {
-  preferredRegion: 'ujatVolunteerApplication.preferredRegion',
-  universityName: 'ujatVolunteerApplication.universityName',
-  grade: 'ujatVolunteerApplication.grade',
-  major: 'ujatVolunteerApplication.major',
-  applicationRoute: 'ujatVolunteerApplication.applicationRoute',
-  applicationRouteOther: 'ujatVolunteerApplication.applicationRouteOther',
-  id1365: 'ujatVolunteerApplication.id1365',
-  previousTerm: 'ujatVolunteerApplication.previousTerm',
-  previousYear: 'ujatVolunteerApplication.previousYear',
-  previousTermFileNames: 'ujatVolunteerApplication.previousTermFileNames',
-  hasExperience: 'ujatVolunteerApplication.hasExperience',
-} as const
+import { UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS } from './ujat-application-volunteer-overlay-keys'
+
+export {
+  UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
+  stripUjatApplicationVolunteerProgramOnlyFields,
+} from './ujat-application-volunteer-overlay-keys'
 
 const store = createScopedOverlayStore()
 
@@ -47,13 +40,6 @@ export function getUjatApplicationVolunteerProgramOverlayRecord(): Record<string
   return next
 }
 
-export function stripUjatApplicationVolunteerProgramOnlyFields(
-  record: Record<string, unknown>
-): Record<string, unknown> {
-  const next = { ...record }
-  delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]
-  return next
-}
 
 export function peekUjatApplicationVolunteerOverlayRecord(
   templateCode: string | undefined | null

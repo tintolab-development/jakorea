@@ -13,6 +13,7 @@ import {
 import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { buildRecurringUnavailableLabel } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { createDefaultUnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 
 export type UjatEducationScheduleSettingsSemesterDisplay = {
   semesterLabel: string
@@ -110,6 +111,40 @@ export function resolveUjatEducationScheduleSettingsSemesterDisplay(
     scheduleRangeText: formatUjatEventRangeLabel(eventRange),
     unavailableDatesText,
     unavailableRecurringText,
+    exclusion,
+    unavailableDates,
+    eventRange,
+  }
+}
+
+/** Canonical Typed detail projection. This display path never reads registration.overlay. */
+export function resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail(
+  half: UjatHalfSemesterKey,
+  detail: UjatTypedDetail | null | undefined
+): UjatEducationScheduleSettingsSemesterDisplay {
+  const semesterType = half === 'h1' ? 'FIRST_HALF' : 'SECOND_HALF'
+  const row = detail?.halfPlans
+    ?.find(item => item.semesterType === semesterType)
+    ?.stages?.find(item => item.stage === 'MAIN_EDUCATION')?.rows?.[0]
+  const eventRange = {
+    start: row?.startDate ?? null,
+    end: row?.endDate ?? null,
+  }
+  const unavailableDates = row?.excludedDates ?? []
+  const exclusion: UjatEducationScheduleSettingsExclusionOverlay = {
+    excludeNone: row?.exclusion?.excludeNone === true,
+    excludeSaturday: row?.exclusion?.excludeSaturday === true,
+    excludeSunday: row?.exclusion?.excludeSunday === true,
+    excludeHoliday: row?.exclusion?.excludePublicHoliday === true,
+  }
+  const unavailableDatesText = exclusion.excludeNone
+    ? '진행 불가일 없음'
+    : unavailableDates.map(iso => formatScheduleDateLabel(iso)).filter(Boolean).join(', ') || '-'
+  return {
+    semesterLabel: half === 'h1' ? '상반기 (1학기)' : '하반기 (2학기)',
+    scheduleRangeText: formatUjatEventRangeLabel(eventRange),
+    unavailableDatesText,
+    unavailableRecurringText: buildRecurringUnavailableLabel(exclusion),
     exclusion,
     unavailableDates,
     eventRange,
