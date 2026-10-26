@@ -490,43 +490,6 @@ export async function bulkUpsertUjatAttendances(
   )
 }
 
-export type UjatAssignmentSubmissionDocumentDto = {
-  status?: string | null
-  submittedAt?: string | null
-  feedbackDeliveredAt?: string | null
-  formResponseId?: number | null
-}
-
-export type UjatAssignmentSubmissionVolunteerDto = {
-  participantId?: number | null
-  memberId?: number | null
-  memberName?: string | null
-  organizationApplicationId?: number | null
-  institutionName?: string | null
-  assignedClass?: string | null
-  educationSlotId?: number | null
-  isDropout?: boolean | null
-  hasProgressHistory?: boolean | null
-  plan?: UjatAssignmentSubmissionDocumentDto | null
-  log?: UjatAssignmentSubmissionDocumentDto | null
-}
-
-export type UjatAssignmentSubmissionDayDto = {
-  scheduleId?: number | null
-  isoDate?: string | null
-  planSubmissionPeriodStart?: string | null
-  planSubmissionPeriodEnd?: string | null
-  logSubmissionPeriodStart?: string | null
-  logSubmissionPeriodEnd?: string | null
-  volunteers?: UjatAssignmentSubmissionVolunteerDto[] | null
-}
-
-export type UjatAssignmentSubmissionListResponse = {
-  semesterType?: string | null
-  educationRegionCode?: string | null
-  items?: UjatAssignmentSubmissionDayDto[] | null
-}
-
 /** GET /api/admin/program-execution/programs/{programId}/ujat/assignment-submissions */
 export async function fetchUjatAssignmentSubmissions(
   programId: string,
@@ -535,7 +498,7 @@ export async function fetchUjatAssignmentSubmissions(
     educationRegionCode: string
     isoDate?: string
   }
-): Promise<UjatAssignmentSubmissionListResponse> {
+): Promise<UjatAssignmentSubmissionsResponse> {
   return unwrapApiBody(
     await customInstance({
       url: executionUjatPath(programId, '/assignment-submissions'),

@@ -1,16 +1,25 @@
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type { EducationProgressHalfKey } from '../tabs'
 
-export type UjatAttendanceStatus = 'present' | 'late' | 'absent' | 'excused_absence'
+export type UjatAttendanceStatus =
+  | 'present'
+  | 'late'
+  | 'absent'
+  | 'excused_absence'
+  | 'unprocessed'
 
 export const UJAT_ATTENDANCE_STATUS_LABEL: Record<UjatAttendanceStatus, string> = {
   present: '출석',
   late: '지각',
   absent: '결석',
   excused_absence: '불참',
+  unprocessed: '미처리',
 } as const
 
-export const UJAT_ATTENDANCE_STATUS_ORDER: readonly UjatAttendanceStatus[] = [
+export const UJAT_ATTENDANCE_STATUS_ORDER: readonly Exclude<
+  UjatAttendanceStatus,
+  'unprocessed'
+>[] = [
   'present',
   'late',
   'absent',
