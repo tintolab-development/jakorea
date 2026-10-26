@@ -724,7 +724,12 @@ export function GeneralProgramDetailFullPageModal({
             remoteResponsePriority: strictRemoteRecruitment,
             beforeRefetch: strictRemoteRecruitment
               ? undefined
-              : () => persistGeneralRecruitmentNestedSnapshot(draft, { audience }),
+              : () =>
+                  persistGeneralRecruitmentNestedSnapshot(draft, {
+                    audience,
+                    persisted: displayProgram ?? baseline,
+                    baseline,
+                  }),
           })
           if (result.mode === 'row') {
             clearGeneralProgramDetailSession(draft.id)
