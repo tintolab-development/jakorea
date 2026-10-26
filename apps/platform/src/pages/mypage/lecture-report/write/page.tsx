@@ -54,7 +54,7 @@ type LoadedReport = {
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
+    ? (value as Record<string, unknown>)
     : {}
 }
 
@@ -76,7 +76,58 @@ function formatPeriod(start: string | null | undefined, end: string | null | und
   return startLabel && endLabel ? `${startLabel} ~ ${endLabel}` : startLabel || endLabel
 }
 
-function reportTitle(title: string | undefined, assignment: LectureReportAssignment | undefined): string {
+function formatTime(value: string | null | undefined): string {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Seoul',
+  }).format(date)
+}
+
+function applyLectureReportAssignmentContext(
+  draft: WritingFormDraft,
+  assignment: LectureReportAssignment,
+  program: { title?: string; educationTargetDetailLabel?: string } | null | undefined
+): WritingFormDraft {
+  const educationDate = assignment.startAt?.slice(0, 10)
+  const sessionTime = [formatTime(assignment.startAt), formatTime(assignment.endAt)]
+    .filter(Boolean)
+    .join(' ~ ')
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.map(paragraph => {
+      if (
+        paragraph.kind !== 'single_item' ||
+        paragraph.variant !== 'lecture_report_program_progress'
+      ) {
+        return paragraph
+      }
+      return {
+        ...paragraph,
+        programName: program?.title?.trim() || paragraph.programName,
+        institutionName: assignment.institutionName?.trim() || paragraph.institutionName,
+        educationDate: educationDate || paragraph.educationDate,
+        sessionTime: sessionTime || paragraph.sessionTime,
+        sessionIndex:
+          assignment.sessionNo != null ? `${assignment.sessionNo}차시` : paragraph.sessionIndex,
+        educationTarget:
+          program?.educationTargetDetailLabel?.trim() ||
+          assignment.grade?.trim() ||
+          paragraph.educationTarget,
+        classLabel: assignment.grade?.trim() || paragraph.classLabel,
+      }
+    }),
+  }
+}
+
+function reportTitle(
+  title: string | undefined,
+  assignment: LectureReportAssignment | undefined
+): string {
   const programTitle = title?.trim() || assignment?.scheduleName?.trim() || '강의'
   return `JA KOREA 「${programTitle}」 강의보고서`
 }
@@ -95,7 +146,9 @@ export function MypageLectureReportWritePage() {
   const [loaded, setLoaded] = useState<LoadedReport | null>(null)
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [sidecar, setSidecar] = useState<SurveySidecarState>(EMPTY_SURVEY_SIDECAR)
-  const [fileObjectIdsByQuestion, setFileObjectIdsByQuestion] = useState<Record<string, number[]>>({})
+  const [fileObjectIdsByQuestion, setFileObjectIdsByQuestion] = useState<Record<string, number[]>>(
+    {}
+  )
   const [uploadingFile, setUploadingFile] = useState(false)
   const [fileUploadError, setFileUploadError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -103,7 +156,7 @@ export function MypageLectureReportWritePage() {
   const [busy, setBusy] = useState(false)
   const programQuery = useProgramDetail(
     loaded?.state.programId == null ? null : String(loaded.state.programId),
-    { fresh: true },
+    { fresh: true }
   )
   const program = programQuery.program
 
@@ -133,7 +186,10 @@ export function MypageLectureReportWritePage() {
       const assignments = await getAllLectureReportAssignments(state.programId)
       const assignment = assignments.find(item => item.assignmentId === assignmentId)
       if (!assignment) throw new Error('강의보고서 일정 정보를 찾을 수 없습니다.')
-      if (assignment.programId !== state.programId || assignment.scheduleId !== state.programScheduleId) {
+      if (
+        assignment.programId !== state.programId ||
+        assignment.scheduleId !== state.programScheduleId
+      ) {
         throw new Error('강의보고서 일정 정보가 현재 강의와 일치하지 않습니다.')
       }
 
@@ -158,7 +214,7 @@ export function MypageLectureReportWritePage() {
         throw new Error(
           state.reportStatus === 'BUSINESS_ENDED'
             ? '사업 운영이 종료되어 제출할 수 없습니다.'
-            : '현재 강의보고서를 작성할 수 없습니다.',
+            : '현재 강의보고서를 작성할 수 없습니다.'
         )
       }
       if (state.bindingId == null) {
@@ -176,10 +232,12 @@ export function MypageLectureReportWritePage() {
       ) {
         throw new Error('강의보고서 양식 정보가 일정과 일치하지 않습니다.')
       }
-      if (!isValidLectureReportBindingContext({
-        ...binding,
-        instructorApplicationId: assignment.instructorApplicationId,
-      })) {
+      if (
+        !isValidLectureReportBindingContext({
+          ...binding,
+          instructorApplicationId: assignment.instructorApplicationId,
+        })
+      ) {
         throw new Error(INVALID_LECTURE_REPORT_BINDING_MESSAGE)
       }
       const form = await renderLectureReport(binding.programId, binding.bindingId)
@@ -197,15 +255,21 @@ export function MypageLectureReportWritePage() {
         if (!alive) return
         setLoaded(result)
         setDraft(
-          writingFormDraftFromLoadedReport(result),
+          applyLectureReportAssignmentContext(
+            writingFormDraftFromLoadedReport(result),
+            result.assignment,
+            null
+          )
         )
       })
       .catch(cause => {
         if (!alive) return
-        setError(getLectureReportApiErrorMessage(
-          cause,
-          cause instanceof Error ? cause.message : '강의보고서를 불러오지 못했습니다.',
-        ))
+        setError(
+          getLectureReportApiErrorMessage(
+            cause,
+            cause instanceof Error ? cause.message : '강의보고서를 불러오지 못했습니다.'
+          )
+        )
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -216,8 +280,15 @@ export function MypageLectureReportWritePage() {
     }
   }, [applicationId, applicationType, assignmentId, readOnly])
 
-  function onFileChange(paragraphId: string, file: File | null, questionKey: string) {
-    if (!file) {
+  useEffect(() => {
+    if (readOnly || !program || !loaded) return
+    setDraft(current =>
+      current ? applyLectureReportAssignmentContext(current, loaded.assignment, program) : current
+    )
+  }, [loaded, program, readOnly])
+
+  function onFileChange(paragraphId: string, files: File[], questionKey: string) {
+    if (files.length === 0) {
       setFileObjectIdsByQuestion(previous => {
         const next = { ...previous }
         delete next[questionKey]
@@ -228,9 +299,11 @@ export function MypageLectureReportWritePage() {
 
     setUploadingFile(true)
     setFileUploadError('')
-    void uploadMemberPortalFile({ file, filePurpose: 'ASSIGNMENT_ATTACHMENT' })
-      .then(fileObjectId => {
-        setFileObjectIdsByQuestion(previous => ({ ...previous, [questionKey]: [fileObjectId] }))
+    void Promise.all(
+      files.map(file => uploadMemberPortalFile({ file, filePurpose: 'ASSIGNMENT_ATTACHMENT' }))
+    )
+      .then(fileObjectIds => {
+        setFileObjectIdsByQuestion(previous => ({ ...previous, [questionKey]: fileObjectIds }))
       })
       .catch(() => {
         setFileObjectIdsByQuestion(previous => {
@@ -240,7 +313,7 @@ export function MypageLectureReportWritePage() {
         })
         setSidecar(previous => ({
           ...previous,
-          fileNames: { ...previous.fileNames, [paragraphId]: null },
+          fileNames: { ...previous.fileNames, [paragraphId]: [] },
         }))
         setFileUploadError('파일 업로드에 실패했습니다. 파일을 다시 선택해 주세요.')
       })
@@ -255,7 +328,8 @@ export function MypageLectureReportWritePage() {
       loaded.binding.programScheduleId !== loaded.state.programScheduleId ||
       loaded.binding.programScheduleId !== loaded.assignment.scheduleId ||
       (loaded.state.bindingId != null && loaded.state.bindingId !== loaded.binding.bindingId) ||
-      (loaded.state.templateVersionId != null && loaded.state.templateVersionId !== loaded.binding.templateVersionId) ||
+      (loaded.state.templateVersionId != null &&
+        loaded.state.templateVersionId !== loaded.binding.templateVersionId) ||
       !isValidLectureReportBindingContext({
         ...loaded.binding,
         instructorApplicationId: loaded.assignment.instructorApplicationId,
@@ -277,7 +351,10 @@ export function MypageLectureReportWritePage() {
 
   async function handleSubmit() {
     if (!loaded?.binding || !draft || busy || uploadingFile) return
-    const validation = validateEducationSurveyFill(draft, sidecar)
+    const validation = validateEducationSurveyFill(draft, sidecar, {
+      fileObjectIdsByQuestion,
+      minimumFilesPerAttachment: 2,
+    })
     if (!validation.ok) {
       setError(validation.message)
       return
@@ -290,10 +367,41 @@ export function MypageLectureReportWritePage() {
       if (created.formResponseId == null) {
         throw new Error('양식 응답 ID를 받지 못했습니다. 최종 제출을 진행하지 않았습니다.')
       }
-      await submitLectureReport(loaded.assignment.assignmentId, {
+      const linkInput = {
         templateVersionId: loaded.binding.templateVersionId,
         formResponseId: created.formResponseId,
-      })
+      }
+      try {
+        await submitLectureReport(loaded.assignment.assignmentId, linkInput)
+      } catch {
+        let alreadyLinked = false
+        try {
+          const afterFirstLinkFailure = await getLectureReportState(loaded.assignment.assignmentId)
+          alreadyLinked =
+            afterFirstLinkFailure.reportStatus === 'SUBMITTED' &&
+            afterFirstLinkFailure.formResponseId === created.formResponseId
+        } catch {
+          // 상태 조회 실패 시에도 동일 formResponseId로 한 번만 재연결한다.
+        }
+        if (!alreadyLinked) {
+          try {
+            await submitLectureReport(loaded.assignment.assignmentId, linkInput)
+          } catch (retryLinkError) {
+            let retryWasAlreadyApplied = false
+            try {
+              const afterRetryLinkFailure = await getLectureReportState(
+                loaded.assignment.assignmentId
+              )
+              retryWasAlreadyApplied =
+                afterRetryLinkFailure.reportStatus === 'SUBMITTED' &&
+                afterRetryLinkFailure.formResponseId === created.formResponseId
+            } catch {
+              // 재시도 결과를 확인할 수 없으면 원래 연결 오류를 유지한다.
+            }
+            if (!retryWasAlreadyApplied) throw retryLinkError
+          }
+        }
+      }
       const latest = await getLectureReportState(loaded.assignment.assignmentId)
       if (
         latest.reportStatus !== 'SUBMITTED' ||
@@ -316,10 +424,12 @@ export function MypageLectureReportWritePage() {
         state: { lectureReportSubmitted: true, formResponseId: content.formResponseId },
       })
     } catch (cause) {
-      setError(getLectureReportApiErrorMessage(
-        cause,
-        cause instanceof Error ? cause.message : '강의보고서 제출에 실패했습니다.',
-      ))
+      setError(
+        getLectureReportApiErrorMessage(
+          cause,
+          cause instanceof Error ? cause.message : '강의보고서 제출에 실패했습니다.'
+        )
+      )
     } finally {
       setBusy(false)
     }
@@ -350,27 +460,55 @@ export function MypageLectureReportWritePage() {
       back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
       title={pageTitle}
       description="JA Korea의 더 나은 변화를 위해 여러분의 의견을 들려주세요."
-      titleAside={period ? <PFText as="p" typo="bd-lg-sb" color="primary-500" className={styles.period}>{period}</PFText> : null}
+      titleAside={
+        period ? (
+          <PFText as="p" typo="bd-lg-sb" color="primary-500" className={styles.period}>
+            {period}
+          </PFText>
+        ) : null
+      }
     >
       {loading ? <PFLoadingSpinner centered label="강의보고서를 불러오는 중" /> : null}
-      {!loading && error ? <PFText as="p" role="alert" typo="bd-md-rg" color="error" className={styles.error}>{error}</PFText> : null}
+      {!loading && error ? (
+        <PFText as="p" role="alert" typo="bd-md-rg" color="error" className={styles.error}>
+          {error}
+        </PFText>
+      ) : null}
       {!loading && !error && loaded && draft ? (
         <>
           {loaded.state.reportStatus === 'OVERDUE' && !readOnly ? (
-            <PFText as="p" role="status" typo="bd-md-rg" color="neutral-cool-600" className={styles.notice}>
+            <PFText
+              as="p"
+              role="status"
+              typo="bd-md-rg"
+              color="neutral-cool-600"
+              className={styles.notice}
+            >
               제출 기한이 지났습니다. 사업 운영 종료 전까지 지각 제출할 수 있습니다.
             </PFText>
           ) : null}
-          {fileUploadError ? <PFText as="p" role="alert" typo="bd-md-rg" color="error" className={styles.error}>{fileUploadError}</PFText> : null}
+          {fileUploadError ? (
+            <PFText as="p" role="alert" typo="bd-md-rg" color="error" className={styles.error}>
+              {fileUploadError}
+            </PFText>
+          ) : null}
           <EducationSurveyFormBody
             draft={draft}
             programTitle={formProgramTitle}
-            onUpdateParagraph={((id, updater) => {
-              setDraft(current => current ? {
-                ...current,
-                paragraphs: current.paragraphs.map(paragraph => paragraph.id === id ? updater(paragraph) : paragraph),
-              } : current)
-            }) as FormUpdateParagraph}
+            onUpdateParagraph={
+              ((id, updater) => {
+                setDraft(current =>
+                  current
+                    ? {
+                        ...current,
+                        paragraphs: current.paragraphs.map(paragraph =>
+                          paragraph.id === id ? updater(paragraph) : paragraph
+                        ),
+                      }
+                    : current
+                )
+              }) as FormUpdateParagraph
+            }
             sidecar={sidecar}
             onSidecarChange={setSidecar}
             onFileChange={onFileChange}
@@ -397,10 +535,7 @@ export function MypageLectureReportWritePage() {
 
 function writingFormDraftFromLoadedReport(report: LoadedReport): WritingFormDraft {
   const answers = report.content?.answers ?? record(report.form.answers)
-  const draft = writingFormDraftFromApplicationForm(
-    report.form,
-    answers,
-  )
+  const draft = writingFormDraftFromApplicationForm(report.form, answers)
   if (!draft) throw new Error('강의보고서 양식을 화면에 표시할 수 없습니다.')
   return applyEducationSurveyAnswersToDraft(draft, answers)
 }

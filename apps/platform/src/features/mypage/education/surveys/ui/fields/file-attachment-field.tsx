@@ -5,16 +5,16 @@ import styles from '../survey-fields.module.css'
 
 type SurveyFileAttachmentFieldProps = {
   paragraph: FileAttachmentParagraph
-  fileName: string | null
-  onFileNameChange: (next: string | null) => void
-  onFileChange?: (next: File | null) => void
+  fileNames: string[]
+  onFileNamesChange: (next: string[]) => void
+  onFileChange?: (next: File[]) => void
   disabled?: boolean
 }
 
 export function SurveyFileAttachmentField({
   paragraph: _paragraph,
-  fileName,
-  onFileNameChange,
+  fileNames,
+  onFileNamesChange,
   onFileChange,
   disabled = false,
 }: SurveyFileAttachmentFieldProps) {
@@ -28,11 +28,13 @@ export function SurveyFileAttachmentField({
         id={inputId}
         className={styles.fileInput}
         type="file"
+        multiple
         disabled={disabled}
         onChange={event => {
-          const file = event.target.files?.[0]
-          onFileNameChange(file?.name ?? null)
-          onFileChange?.(file ?? null)
+          const files = Array.from(event.target.files ?? [])
+          onFileNamesChange(files.map(file => file.name))
+          onFileChange?.(files)
+          event.target.value = ''
         }}
       />
       <PFButton
@@ -44,9 +46,9 @@ export function SurveyFileAttachmentField({
       >
         파일 선택
       </PFButton>
-      {fileName ? (
+      {fileNames.length > 0 ? (
         <PFText as="span" typo="bd-md-md" color="neutral-cool-600" className={styles.fileName}>
-          {fileName}
+          {fileNames.join(', ')}
         </PFText>
       ) : (
         <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.fileName}>
