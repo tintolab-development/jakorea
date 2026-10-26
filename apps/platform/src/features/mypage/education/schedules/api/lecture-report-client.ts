@@ -19,7 +19,7 @@ export type LectureReportState = {
   assignmentId: number; instructorApplicationId: number | null; programId: number; programScheduleId: number
   reportId: number | null; submitted: boolean; submittedAt: string | null; formResponseId: number | null
   templateVersionId: number | null; attachmentGroupId: number | null; reportStatus: LectureReportStatus
-  scheduleStatus: string; canSubmit: boolean; bindingId: number | null
+  scheduleStatus: string; submitDueAt: string | null; canSubmit: boolean; bindingId: number | null
 }
 export type LectureReportContent = {
   assignmentId: number; reportId: number; formResponseId: number; programId: number; scheduleId: number
@@ -72,13 +72,11 @@ export async function renderLectureReport(programId: number, bindingId: number):
   const { data } = await axiosClient.get(`/api/portal/me/programs/${programId}/form-bindings/${bindingId}/render`)
   return unwrap(data)
 }
-export async function saveLectureReportDraft(input: LectureReportFormResponseInput): Promise<{ formResponseId: number }> {
-  const { data } = await axiosClient.post('/api/portal/me/form-responses/draft', buildLectureReportFormResponseBody(input))
-  return unwrap(data)
-}
-
 export async function submitLectureReportResponse(input: LectureReportFormResponseInput): Promise<{ formResponseId: number }> {
-  const { data } = await axiosClient.post('/api/portal/me/form-responses/submit', buildLectureReportFormResponseBody(input))
+  const { data } = await axiosClient.post(
+    `/api/portal/me/programs/${input.programId}/form-bindings/${input.programFormBindingId}/responses`,
+    buildLectureReportFormResponseBody(input),
+  )
   return unwrap(data)
 }
 export async function submitLectureReport(assignmentId: number, input: { templateVersionId: number; formResponseId: number }): Promise<unknown> {

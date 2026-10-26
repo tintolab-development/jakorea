@@ -46,6 +46,7 @@ import {
   MypageVolunteerDetailPage,
   MypageLecturePage,
   MypageLectureDetailPage,
+  MypageLectureReportWritePage,
   MypageSettlementPage,
   MypageSettingsPage,
   MypageSettingsConsentPage,
@@ -236,6 +237,14 @@ export const router = createBrowserRouter([
       { path: '/mypage/volunteer/:applicationId', element: <MypageVolunteerDetailPage /> },
       { path: '/mypage/lectures/:applicationType/:applicationId', element: <MypageLectureDetailPage /> },
       { path: '/mypage/lectures/:applicationId', element: <MypageLectureDetailPage /> },
+      {
+        path: '/mypage/lectures/:applicationType/:applicationId/lecture-report/write',
+        element: <MypageLectureReportWritePage />,
+      },
+      {
+        path: '/mypage/lectures/:applicationId/lecture-report/write',
+        element: <MypageLectureReportWritePage />,
+      },
       {
         path: '/mypage/lectures/:applicationType/:applicationId/settlement/write',
         element: <MypageEducationSettlementWritePage />,

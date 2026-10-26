@@ -1,0 +1,175 @@
+.body {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 36px;
+  color: #3d3d3d;
+  font-family: Pretendard, sans-serif;
+}
+
+.section {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  color: #3d3d3d;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.sectionHeader p {
+  width: 100%;
+  margin: 4px 0 0;
+  color: #8b9599;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+}
+
+.required {
+  color: #ec5a55;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.sectionBody {
+  min-width: 0;
+}
+
+.questionList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.questionCard {
+  overflow: hidden;
+  border: 1px solid #dfe4e6;
+  border-radius: 10px;
+}
+
+.questionHeader {
+  display: flex;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  align-items: baseline;
+  gap: 8px;
+  background: #f0f2f3;
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.questionHeader strong {
+  font-weight: 700;
+}
+
+.questionHeader span {
+  color: #8b9599;
+  font-size: 14px;
+}
+
+.answerText {
+  box-sizing: border-box;
+  min-height: 48px;
+  margin: 0;
+  padding: 14px 16px;
+  color: #3d3d3d;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.infoTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid #dfe4e6;
+  border-radius: 10px;
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.infoTable th,
+.infoTable td {
+  box-sizing: border-box;
+  height: 56px;
+  padding: 12px 16px;
+  border-right: 1px solid #dfe4e6;
+  border-bottom: 1px solid #dfe4e6;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.infoTable tr:last-child th,
+.infoTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.infoTable th:nth-last-child(1),
+.infoTable td:nth-last-child(1) {
+  border-right: 0;
+}
+
+.infoTable th {
+  width: 16%;
+  background: #eef2f3;
+  font-weight: 700;
+  text-align: center;
+}
+
+.infoTable td {
+  width: 34%;
+}
+
+.userInfoList {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  margin: 0;
+  border: 1px solid #dfe4e6;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.userInfoList div {
+  display: contents;
+}
+
+.userInfoList dt,
+.userInfoList dd {
+  margin: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid #dfe4e6;
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.userInfoList dt {
+  background: #eef2f3;
+  font-weight: 700;
+  text-align: center;
+}
+
+.userInfoList dd {
+  border-left: 1px solid #dfe4e6;
+}
+
+.userInfoList dt:last-of-type,
+.userInfoList dd:last-of-type {
+  border-bottom: 0;
+}
