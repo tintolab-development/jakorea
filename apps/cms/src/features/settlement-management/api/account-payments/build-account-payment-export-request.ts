@@ -1,8 +1,7 @@
 import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 
-/** 대량이체는 지급 대기 건만, 세금신고는 지급 완료 건만 서버가 허용한다. */
-export const ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT = 'WAITING_PAYMENT' as const
+/** 대량이체·세금신고 모두 지급 완료 건만 서버가 허용한다. */
 export const ACCOUNT_PAYMENT_EXPORT_STATUS_PAID = 'PAID' as const
 
 const EXPORT_REASON = '계좌 지급 확인 — 양식 발급'
@@ -53,10 +52,7 @@ export function buildAccountPaymentExportRequest(
   const selectedIds =
     input.selection.kind === 'selected' ? resolveSelectedIds(input.selection.rows) : undefined
   return {
-    status:
-      input.kind === 'bulk-transfer'
-        ? ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT
-        : ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
+    status: ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
     reason: `${EXPORT_REASON} (${label})`,
     businessPurpose: EXPORT_BUSINESS_PURPOSE,
     settlementIds: selectedIds?.settlementIds ?? [],

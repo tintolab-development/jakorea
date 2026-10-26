@@ -5,7 +5,7 @@ import {
 } from './build-account-payment-export-request'
 
 describe('buildAccountPaymentExportRequest', () => {
-  it('대량이체는 WAITING_PAYMENT와 settlement/accountPayment ID를 분리해 전송한다', () => {
+  it('대량이체는 PAID와 settlement/accountPayment ID를 분리해 전송한다', () => {
     const body = buildAccountPaymentExportRequest({
       kind: 'bulk-transfer',
       selection: {
@@ -18,7 +18,7 @@ describe('buildAccountPaymentExportRequest', () => {
         ],
       },
     })
-    expect(body.status).toBe('WAITING_PAYMENT')
+    expect(body.status).toBe(ACCOUNT_PAYMENT_EXPORT_STATUS_PAID)
     expect(body.settlementIds).toEqual([101])
     expect(body.accountPaymentIds).toEqual([2001])
   })
