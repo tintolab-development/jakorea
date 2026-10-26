@@ -8,10 +8,15 @@
 
 export interface AdminIdentityContactResponse {
   adminAccountId?: number;
+  /** Name for the authenticated administrator's own account. */
   name?: string;
+  /** Original phone number for the authenticated administrator's own account. */
   phone?: string;
+  /** Partially masked form of phone. */
   maskedPhone?: string;
+  /** Birth date for the authenticated administrator's own account, formatted as yyyy-MM-dd. */
   birthDate?: string;
+  /** Gender for the authenticated administrator's own account. */
   gender?: string;
   identityVerifiedAt?: string;
   verificationStatus?: string;

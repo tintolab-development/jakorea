@@ -134,8 +134,8 @@ export function applyPrivacyUnmaskResponseToUser(
     }
 
     if (role === 'INSTRUCTOR') {
-      // 순수 교사: legacy `…/privacy/unmask` → MemberDetailResponse.
-      // BE가 TeacherMemberDetailResponse(organizationName)를 내려주면 교사 매퍼로 소속 원문 반영.
+      // 순수 교사: `…/teacher/privacy/unmask` → TeacherMemberDetailResponse(교사 매퍼로 소속 원문 반영).
+      // MemberDetailResponse 형태(legacy member unmask)도 계속 수용한다.
       if (resolveInstructorMemberProfile(current) === 'school_teacher') {
         const mapped = isTeacherMemberDetailUnmaskPayload(unmaskPayload as object)
           ? mapTeacherMemberDetailToUser(unmaskPayload as TeacherMemberDetailResponse, {

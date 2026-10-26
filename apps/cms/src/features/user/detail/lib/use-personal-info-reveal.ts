@@ -43,7 +43,7 @@ export interface UsePersonalInfoRevealOptions {
   /** 회원 관리 역할별 unmask path 분기 */
   resolveMemberRole?: () => UserRole | undefined
   /**
-   * INSTRUCTOR 세부 프로필 — 상세 GET과 동일하게 `school_teacher`면 instructor unmask 회피.
+   * INSTRUCTOR 세부 프로필 — 상세 GET과 동일하게 `school_teacher`면 teacher unmask 사용.
    */
   resolveInstructorMemberProfile?: () => InstructorMemberProfile | null | undefined
   /** ADMIN unmask — `adminAccountId`(숫자). `User.id`의 `admin-account-*`와 별개 */

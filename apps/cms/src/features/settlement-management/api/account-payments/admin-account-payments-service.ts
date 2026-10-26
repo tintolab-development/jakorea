@@ -17,7 +17,7 @@ import type { InstructorMemberDetailResponse } from '@/shared/api/generated/memb
 
 /**
  * 계좌 지급 확인 현황 상세는 마스킹 UI가 없다.
- * 진입 시 강사 PII 원문 조회 + 개인정보조회 이력을 이 고정 목적으로 남긴다.
+ * 진입 시 계좌 원문(상세 GET `reason`)·강사 PII 원문 조회 + 개인정보조회 이력을 이 고정 목적으로 남긴다.
  */
 export const ACCOUNT_PAYMENT_DETAIL_PRIVACY_ACCESS_PURPOSE = '정산금 지급 처리를 위함'
 
@@ -36,7 +36,11 @@ export async function getAccountPaymentDetailRemote(
     throw new Error('계좌 지급 상세에 필요한 accountPaymentId가 없습니다.')
   }
 
-  const detail = await fetchAccountPaymentDetailRemote(paymentId)
+  const detail = await fetchAccountPaymentDetailRemote(
+    paymentId,
+    ACCOUNT_PAYMENT_DETAIL_PRIVACY_ACCESS_PURPOSE
+  )
+  void queryClient.invalidateQueries({ queryKey: logsQueryKeys.privacyAccessAll() })
   const memberId = resolveAccountPaymentMemberId(detail, row)
 
   let instructorDetail: InstructorMemberDetailResponse | null = null

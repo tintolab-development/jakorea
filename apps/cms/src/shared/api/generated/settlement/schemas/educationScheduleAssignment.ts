@@ -22,7 +22,7 @@ export interface EducationScheduleAssignment {
   formResponseId?: number | null;
   /** 최신 제출본 파일·링크. 미제출이면 null. */
   submissions?: EducationScheduleAssignmentSubmission[] | null;
-  /** 최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. */
+  /** 최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. 현재 정책상 submitEndAt 이후 미제출 최초 제출은 허용하지 않습니다. */
   canSubmit?: boolean;
   /** 수정 제출 가능. 제출 이력 있음, 마감 전, 본인 제출, status SUBMITTED 또는 FEEDBACK일 때 true. */
   canResubmit?: boolean;

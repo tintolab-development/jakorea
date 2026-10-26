@@ -90,9 +90,10 @@ export async function fetchSettlementAggregatesRemote(
 }
 
 export async function fetchAccountPaymentDetailRemote(
-  paymentId: number
+  paymentId: number,
+  reason: string
 ): Promise<AccountPaymentDetailResponse> {
-  return unwrapApiBody(await settlementApi.getAccountPayment(paymentId))
+  return unwrapApiBody(await settlementApi.getAccountPayment(paymentId, { reason }))
 }
 
 export async function downloadPaymentStatementRemote(

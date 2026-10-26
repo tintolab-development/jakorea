@@ -16,6 +16,7 @@ import type {
   ApiResponseVoid,
   BudgetSummaryParams,
   ClientGeneratedDownloadLogRequest,
+  GetAccountPaymentParams,
   ListAccountPaymentsParams,
   ListCorrectionRequestsParams,
   ListExportHistoriesParams,
@@ -2356,9 +2357,11 @@ const listAccountPayments = (
  */
 const getAccountPayment = (
     paymentId: number,
+    params: GetAccountPaymentParams,
  options?: SecondParameter<typeof customInstance<AccountPaymentDetailResponse>>,) => {
       return customInstance<AccountPaymentDetailResponse>(
-      {url: `/api/admin/account-payments/${paymentId}`, method: 'GET'
+      {url: `/api/admin/account-payments/${paymentId}`, method: 'GET',
+        params
     },
       options);
     }

@@ -7,6 +7,7 @@
  */
 import type { EducationScheduleAssignment } from './educationScheduleAssignment';
 import type { EducationScheduleItemBlockKind } from './educationScheduleItemBlockKind';
+import type { EducationScheduleItemTeamRole } from './educationScheduleItemTeamRole';
 import type { ScheduleGroupTime } from './scheduleGroupTime';
 
 export interface EducationScheduleItem {
@@ -46,4 +47,8 @@ export interface EducationScheduleItem {
   groupTimes?: ScheduleGroupTime[] | null;
   /** 과제 블록. 없거나 enabled=false면 FE가 과제 UI만 숨긴다. */
   assignment?: EducationScheduleAssignment | null;
+  /** 해당 회차 기준 본인 팀 역할. 팀 프로그램의 회차 응답 스냅샷을 우선하고, 없으면 현재 참여자 또는 신청 팀 정보를 사용합니다. 비팀 프로그램·미확인 팀은 null. */
+  teamRole?: EducationScheduleItemTeamRole;
+  /** 해당 회차 기준 본인 팀명. INDIVIDUAL·비팀 프로그램·미확인 팀이면 null이며 다른 회차 값으로 합성하지 않습니다. */
+  teamName?: string | null;
 }

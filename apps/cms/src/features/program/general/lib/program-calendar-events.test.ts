@@ -117,8 +117,6 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
         eventDate: '2026-10-01',
         startAt: '2026-09-30T15:00:00Z',
         endAt: '2026-12-01T15:00:00Z',
-        scheduleRole: null,
-        scheduleOrigin: 'PROGRAM_DEFINED',
       }),
     ])
 
@@ -151,10 +149,6 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
       eventType: 'EDUCATION',
       allDay: false,
       eventDate: null,
-      scheduleOrigin: 'PROGRAM_DEFINED',
-      scheduleRole: 'EDUCATION',
-      assignmentStatus: null,
-      organizationApplicationId: null,
       organizationName: null,
     } satisfies AdminProgramCalendarItem
     const timed = (scheduleId: number, startAt: string, endAt: string) =>
@@ -176,7 +170,6 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
         eventDate: '2026-10-24',
         startAt: '2026-10-23T15:00:00Z',
         endAt: '2026-12-24T15:00:00Z',
-        scheduleRole: null,
       }),
       timed(187271, '2026-10-24T07:00:00Z', '2026-10-24T07:02:00Z'),
       timed(187272, '2026-10-24T07:05:00Z', '2026-10-24T07:06:00Z'),
@@ -234,9 +227,7 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
         programId: 1,
         programType: 'GENERAL_ORGANIZATION',
         scheduleId: 1411,
-        organizationApplicationId: 41,
         organizationName: '서울초등학교',
-        assignmentStatus: 'TEMP_ASSIGNED',
         scheduleName: '1회차 교육',
         startAt: '2026-10-20T01:00:00Z',
         endAt: '2026-10-20T02:00:00Z',
@@ -248,9 +239,7 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
         programId: 1,
         programType: 'GENERAL_ORGANIZATION',
         scheduleId: 1411,
-        organizationApplicationId: 42,
         organizationName: '부산중학교',
-        assignmentStatus: 'CONFIRMED',
         scheduleName: '1회차 교육',
         startAt: '2026-10-20T01:00:00Z',
         endAt: '2026-10-20T02:00:00Z',
@@ -267,8 +256,6 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
       '서울초등학교 1회차 교육',
       '부산중학교 1회차 교육',
     ])
-    expect(events.map(event => event.organizationApplicationId)).toEqual([41, 42])
-    expect(events.map(event => event.assignmentStatus)).toEqual(['TEMP_ASSIGNED', 'CONFIRMED'])
     expect(events.every(event => event.participantScope === 'organization')).toBe(true)
   })
 
@@ -282,9 +269,7 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
         scheduleId: 187239,
         programId: 186317,
         programType: 'COMPANY_SCHOOL',
-        organizationApplicationId: 1691461,
         organizationName: 'GROK_E2E_CS_학교A',
-        assignmentStatus: 'ASSIGNED',
         startAt: '2026-09-08T00:00:00Z',
         endAt: '2026-09-08T03:00:00Z',
         allDay: false,
@@ -297,9 +282,7 @@ describe('mapAdminProgramCalendarItemsToEvents', () => {
         scheduleId: 187239,
         programId: 186317,
         programType: 'COMPANY_SCHOOL',
-        organizationApplicationId: 1691461,
         organizationName: 'GROK_E2E_CS_학교A',
-        assignmentStatus: 'COMPLETED',
         startAt: '2026-09-08T00:00:00Z',
         endAt: '2026-09-08T03:00:00Z',
         allDay: false,

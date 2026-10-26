@@ -7,12 +7,11 @@
  */
 
 /**
- * Gemini 승인 연수 기관 신청 희망 일정 후보(1~3지망). 확정 trainingDate와 분리.
+ * 승인 연수 희망 일정 후보 1건. 기관 신청 preferred_schedule_blocks_jsonb 투영
  */
 export interface GeminiTrainingDateCandidate {
   /** 희망 순위. 1=1지망 */
   preferenceRank?: number;
-  /** 희망 날짜(YYYY-MM-DD) */
   trainingDate?: string;
   /** 첫 차시 시작 시각 */
   trainingStartTime?: string | null;

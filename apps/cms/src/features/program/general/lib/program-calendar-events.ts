@@ -45,13 +45,7 @@ export type GeneralProgramCalendarEvent = CalendarMainEventInput & {
   participantScope?: GeneralProgramCalendarParticipantScope
   scheduleId?: number
   sourceType?: string
-  scheduleOrigin?: string | null
-  scheduleRole?: string | null
-  /** TEMP_ASSIGNED·CONFIRMED(기관·교육받은 교사), ASSIGNED·COMPLETED(1사1교). 필터하지 않고 그대로 둔다. */
-  assignmentStatus?: string | null
   organizationName?: string | null
-  /** 기관 배정 이벤트의 신청 id. 상세 이동·기관 범위 식별용 */
-  organizationApplicationId?: number | null
 }
 
 function toSeoul(iso: string | null | undefined) {
@@ -288,11 +282,7 @@ function mapCalendarItemToEvent(item: AdminProgramCalendarItem): GeneralProgramC
     participantScope: resolveProgramCalendarParticipantScope(programType),
     scheduleId: item.scheduleId ?? undefined,
     sourceType: item.sourceType?.trim() || undefined,
-    scheduleOrigin: item.scheduleOrigin ?? null,
-    scheduleRole: item.scheduleRole ?? null,
-    assignmentStatus: item.assignmentStatus ?? null,
     organizationName: item.organizationName?.trim() || null,
-    organizationApplicationId: item.organizationApplicationId ?? null,
   }
 }
 

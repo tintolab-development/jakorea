@@ -10,10 +10,15 @@ import type { AdminTermsAgreementResponse } from './adminTermsAgreementResponse'
 export interface AdminMeResponse {
   adminAccountId?: number;
   uuid?: string;
+  /** Email address for the authenticated administrator's own account. */
   email?: string;
+  /** Name for the authenticated administrator's own account. */
   name?: string;
+  /** Phone number for the authenticated administrator's own account. */
   phone?: string;
+  /** Gender for the authenticated administrator's own account. */
   gender?: string;
+  /** Birth date for the authenticated administrator's own account, formatted as yyyy-MM-dd. */
   birthDate?: string;
   status?: string;
   roleCode?: string;
