@@ -1157,6 +1157,7 @@ function coreRequest(
     targetLevel: targetLevels?.[0],
     targetLevels,
     institutionType: program.institutionType,
+    venueKind: program.generalCommonInfo?.venueKind,
     ipOwned: program.ipOwned,
     courseDeliveredBy: program.courseDeliveredBy,
     partnerInvolvement: program.partnerInvolvement,
@@ -1299,6 +1300,9 @@ function patchRequest(
     body.targetLevel = targetLevels[0]
   }
   if (has('institutionType')) body.institutionType = merged.institutionType
+  if (has('venue') || has('generalCommonInfo')) {
+    body.venueKind = merged.generalCommonInfo?.venueKind
+  }
   if (has('ipOwned')) body.ipOwned = merged.ipOwned
   if (has('courseDeliveredBy')) body.courseDeliveredBy = merged.courseDeliveredBy
   if (has('partnerInvolvement')) body.partnerInvolvement = merged.partnerInvolvement

@@ -321,6 +321,13 @@ function UjatBasicInfoLegacyParagraph({
     'ujat.basicInfo.businessField',
     'economy_finance'
   )
+  const [educationVenueKind, setEducationVenueKind] = useUjatProgramRegistrationOverlayKv<
+    'inside' | 'outside' | 'other'
+  >('ujat.basicInfo.educationVenueKind', 'inside')
+  const [educationVenueDetail, setEducationVenueDetail] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.educationVenueDetail',
+    ''
+  )
 
   const [sponsorId, setSponsorId] = useUjatBasicInfoValue<string>(
     infoForm,
@@ -746,7 +753,7 @@ function UjatBasicInfoLegacyParagraph({
                   withAllOption={false}
                   inputSize="small"
                   placeholder="사업 분야를 선택하세요"
-                  width={240}
+                  width="100%"
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={businessField}
                   onChange={v => setBusinessField(String(v ?? ''))}
@@ -766,7 +773,7 @@ function UjatBasicInfoLegacyParagraph({
                   withAllOption
                   inputSize="small"
                   placeholder="후원사를 선택하세요"
-                  width={240}
+                  width="100%"
                   options={sponsorOptions}
                   value={sponsorId}
                   loading={sponsorOptionsLoading}
@@ -799,7 +806,7 @@ function UjatBasicInfoLegacyParagraph({
                   withAllOption={false}
                   inputSize="small"
                   placeholder="후원사 담당자를 선택하세요"
-                  width={240}
+                  width="100%"
                   showSearch
                   optionFilterProp="label"
                   options={managerOptions}
@@ -811,6 +818,38 @@ function UjatBasicInfoLegacyParagraph({
                     const next = Array.isArray(v) ? v.map(String) : []
                     applySponsorContactIds(next)
                   }}
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="교육 장소"
+            validationKey="basicInfo.educationVenueDetail"
+            fullRow
+            edit={
+              <div className="detail-info-form-inputs-wrapper">
+                <CmsRadioGroup
+                  size="medium"
+                  value={educationVenueKind}
+                  onChange={event =>
+                    setEducationVenueKind(event.target.value as 'inside' | 'outside' | 'other')
+                  }
+                >
+                  <CmsRadio size="medium" value="inside">기관 안</CmsRadio>
+                  <CmsRadio size="medium" value="outside">기관 밖</CmsRadio>
+                  <CmsRadio size="medium" value="other">기타(직접입력)</CmsRadio>
+                </CmsRadioGroup>
+                <DetailInfoForm.InputsSeparator />
+                <CmsInput
+                  inputSize="small"
+                  placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  value={educationVenueDetail}
+                  onChange={event => setEducationVenueDetail(event.target.value)}
                 />
               </div>
             }
@@ -848,7 +887,7 @@ function UjatBasicInfoLegacyParagraph({
                 withAllOption={false}
                 inputSize="small"
                 placeholder="교육 과정을 선택하세요"
-                width={240}
+                width="100%"
                 options={educationCourseSelectOptions}
                 value={educationCourse}
                 onChange={v => setEducationCourse(String(v ?? ''))}
@@ -863,7 +902,7 @@ function UjatBasicInfoLegacyParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                width={240}
+                width="100%"
                 options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
                 value={selectValue(ipOwned)}
                 onChange={v => setSelectValue(setIpOwned, v, 'ipOwned')}
@@ -880,7 +919,7 @@ function UjatBasicInfoLegacyParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                width={240}
+                width="100%"
                 options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
                 value={selectValue(courseDeliveredBy)}
                 onChange={v => setSelectValue(setCourseDeliveredBy, v, 'courseDeliveredBy')}

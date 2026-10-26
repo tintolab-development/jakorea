@@ -46,8 +46,6 @@ import {
 export const UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE = 'registration-ujat' as const
 
 /** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
-const LEGACY_UJAT_BASIC_INFO_LOCK_NOTICE =
-  '참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.'
 
 const EMPTY_UJAT_TYPED_DETAIL: UjatTypedDetail = {
   schemaVersion: 1,
@@ -62,7 +60,7 @@ function withForcedUjatRegistrationSeedTitleRequired(draft: WritingFormDraft): W
     let next = paragraph
     if (
       paragraph.id === UJAT_PROGRAM_REGISTRATION_IDS[0] &&
-      paragraph.paragraphDescription.trim() === LEGACY_UJAT_BASIC_INFO_LOCK_NOTICE
+      paragraph.paragraphDescription.trim() === ''
     ) {
       next = { ...next, paragraphDescription: UJAT_REGISTRATION_SECTION_META.basic.description }
     }
@@ -350,11 +348,9 @@ export function useUjatProgramRegistrationEditor(
   const paragraphBodyOptions = useMemo(
     () => ({
       ujatProgramRegistration: true,
-      ujatProgramRegistrationBasicInfoForm: usesRegistrationWizardDraft ? basicInfoForm : undefined,
+      ujatProgramRegistrationBasicInfoForm: basicInfoForm,
       ujatProgramRegistrationBasicInfoOverlayFree: usesRegistrationWizardDraft,
-      ujatProgramRegistrationEducationScheduleForm: usesRegistrationWizardDraft
-        ? educationScheduleForm
-        : undefined,
+      ujatProgramRegistrationEducationScheduleForm: educationScheduleForm,
       structureLockedAuthoringChoicePreview: true,
     }),
     [basicInfoForm, educationScheduleForm, usesRegistrationWizardDraft]

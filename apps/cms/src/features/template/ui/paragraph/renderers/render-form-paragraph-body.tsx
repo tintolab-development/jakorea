@@ -534,6 +534,9 @@ export function renderFormParagraphBody(
           ujatProgramRegistrationBasicInfoOverlayFree={
             options?.ujatProgramRegistrationBasicInfoOverlayFree
           }
+          ujatProgramRegistrationEducationScheduleForm={
+            options?.ujatProgramRegistrationEducationScheduleForm
+          }
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
           programLinkedInstitutionApplicationForm={options?.programLinkedInstitutionApplicationForm}
           programApplicationFormEconomyInstitution={

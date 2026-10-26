@@ -166,4 +166,20 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
     expect(program.ujatRegistrationOverlay?.['ujat.recruit.volunteer.h1.activityTerm']).toBe('3')
     expect(program.ujatRegistrationOverlay?.['ujat.recruit.volunteer.h2.activityTerm']).toBe('4')
   })
+
+  it('RHF 교육 장소를 venue·institutionType에 반영한다', () => {
+    const program = buildUjatProgramListRowFromRegistrationSnapshot({
+      id: 'ujat-create-venue',
+      overlay: {},
+      basicInfo: {
+        venueKind: 'outside',
+        venueDetail: '강남구 교육장',
+      },
+    })
+
+    expect(program.venue).toBe('강남구 교육장')
+    expect(program.institutionType).toBe('outside_school')
+    expect(program.generalCommonInfo?.venueKind).toBe('outside')
+    expect(program.generalCommonInfo?.venueDetail).toBe('강남구 교육장')
+  })
 })

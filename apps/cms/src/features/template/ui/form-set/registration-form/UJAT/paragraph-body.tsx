@@ -24,7 +24,11 @@ export function renderUjatProgramRegistrationParagraphBody(
     case UJAT_PROGRAM_REGISTRATION_IDS[0]:
       return (
         <UjatBasicInfoParagraph
-          infoForm={options?.ujatProgramRegistrationBasicInfoForm}
+          infoForm={
+            options?.ujatProgramRegistrationBasicInfoOverlayFree
+              ? options.ujatProgramRegistrationBasicInfoForm
+              : undefined
+          }
           overlayFree={options?.ujatProgramRegistrationBasicInfoOverlayFree}
         />
       )
