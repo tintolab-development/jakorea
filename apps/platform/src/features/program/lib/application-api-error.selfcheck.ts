@@ -11,6 +11,10 @@ import {
   messageForApplicationBlockedReason,
 } from './application-api-error.ts'
 import { readApplicationApiErrorEnvelope } from './summarize-portal-application-submit.ts'
+import {
+  collectApplicationSubmitParagraphErrors,
+  isApplicationAnswerValidationErrorCode,
+} from './application-submit-field-errors.ts'
 
 const MISMATCH = '모집 대상과 회원 구분이 일치하지 않아 신청할 수 없습니다.'
 
@@ -241,6 +245,57 @@ assert.equal(
     error: { code: 'UJAT_ORGANIZATION_ALREADY_APPLIED', message: 'UJAT_ORGANIZATION_ALREADY_APPLIED' },
   }),
   '같은 UJAT 프로그램에 이미 신청한 학교입니다.',
+)
+
+assert.equal(isApplicationAnswerValidationErrorCode('FORM_ANSWER_REQUIRED'), true)
+assert.equal(isApplicationAnswerValidationErrorCode('RUNTIME_SCHEDULE_STALE'), false)
+
+const officialDocumentDraft = {
+  schemaVersion: 1 as const,
+  formSettings: { titleNumbering: 'none' as const },
+  paragraphs: [
+    {
+      id: 'gemini-vt-instructor-seed-official-document',
+      kind: 'single_item' as const,
+      variant: 'horizontal_table' as const,
+    },
+  ],
+}
+assert.deepEqual(
+  collectApplicationSubmitParagraphErrors(
+    {
+      field: null,
+      message: '필수 입력값을 입력해 주세요.',
+      details: {
+        'gemini-vt-instructor-seed-official-document': '필수 입력값을 입력해 주세요.',
+      },
+    },
+    officialDocumentDraft as never,
+    '입력값 또는 요청 조건을 확인해 주세요.',
+  ),
+  {
+    'gemini-vt-instructor-seed-official-document': '필수 입력값을 입력해 주세요.',
+  },
+)
+assert.deepEqual(
+  collectApplicationSubmitParagraphErrors(
+    readApplicationApiErrorEnvelope(fieldError),
+    {
+      schemaVersion: 1,
+      formSettings: { titleNumbering: 'none' },
+      paragraphs: [
+        {
+          id: 'program-application-trained-teachers-seed-basic-info',
+          kind: 'single_item',
+          variant: 'horizontal_table',
+        },
+      ],
+    } as never,
+    '필수 입력값을 입력해 주세요.',
+  ),
+  {
+    'program-application-trained-teachers-seed-basic-info': '필수 입력값을 입력해 주세요.',
+  },
 )
 
 console.log('application-api-error.selfcheck: ok')

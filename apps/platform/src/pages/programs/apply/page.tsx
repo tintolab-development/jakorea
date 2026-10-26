@@ -36,6 +36,11 @@ import {
   isIndividualApplicationEnrolledGradeRequiredError,
 } from '@/features/program/lib/application-api-error'
 import {
+  collectApplicationSubmitParagraphErrors,
+  isApplicationAnswerValidationErrorCode,
+  resolveApplicationErrorParagraphId,
+} from '@/features/program/lib/application-submit-field-errors'
+import {
   readApplicationApiErrorEnvelope,
   summarizePortalApplicationSubmit,
 } from '@/features/program/lib/summarize-portal-application-submit'
@@ -371,29 +376,6 @@ function isAnyVolunteerFreeTextItemsParagraphId(id: string): boolean {
   return isVolunteerFreeTextItemsParagraphId(id) || isUjatVolunteerFreeTextItemsParagraphId(id)
 }
 
-function resolveApplicationErrorParagraphId(
-  field: unknown,
-  draft: WritingFormDraft | null
-): string | null {
-  if (typeof field !== 'string') return null
-  const fieldKey = field.trim()
-  if (!fieldKey) return null
-
-  const matchedParagraph = draft?.paragraphs.find(
-    paragraph => paragraph.id === fieldKey || resolveApplicationAnswerKey(paragraph) === fieldKey
-  )
-  if (matchedParagraph) return matchedParagraph.id
-
-  if (fieldKey === 'preferredScheduleBlocks') {
-    return (
-      draft?.paragraphs.find(paragraph => isApplicationPreferredScheduleParagraphId(paragraph.id))
-        ?.id ?? null
-    )
-  }
-
-  return null
-}
-
 export function ProgramApplyPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -552,6 +534,7 @@ export function ProgramApplyPage() {
     promptSettingsGrade?: boolean
   } | null>(null)
   const [submitErrorField, setSubmitErrorField] = useState<string | null>(null)
+  const [submitErrorMessages, setSubmitErrorMessages] = useState<Record<string, string>>({})
   const formRef = useRef<HTMLDivElement>(null)
   const pendingApplyIncompleteRef = useRef<ApplicationIncompleteField | null>(null)
   /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
@@ -1326,6 +1309,13 @@ export function ProgramApplyPage() {
   }, [profileDefaults])
 
   const updateParagraph = useCallback<FormUpdateParagraph>((id, updater) => {
+    setSubmitErrorField(prev => (prev === id ? null : prev))
+    setSubmitErrorMessages(prev => {
+      if (!(id in prev)) return prev
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
     setDraft(prev => {
       if (prev == null) return prev
       return {
@@ -1992,7 +1982,10 @@ export function ProgramApplyPage() {
   const displayDraft = draft
 
   useEffect(() => {
-    const paragraphId = resolveApplicationErrorParagraphId(submitErrorField, displayDraft)
+    const paragraphId =
+      resolveApplicationErrorParagraphId(submitErrorField, displayDraft) ??
+      Object.keys(submitErrorMessages)[0] ??
+      null
     if (!paragraphId || !formRef.current) return
 
     const target = Array.from(
@@ -2012,7 +2005,7 @@ export function ProgramApplyPage() {
     return () => {
       delete target.dataset.applicationError
     }
-  }, [displayDraft, submitErrorField])
+  }, [displayDraft, submitErrorField, submitErrorMessages])
 
   const hiddenParagraphIds = useMemo(() => {
     const hidden = new Set(
@@ -2153,6 +2146,7 @@ export function ProgramApplyPage() {
     pendingApplyIncompleteRef.current = null
     setSubmitAlert(null)
     setSubmitErrorField(null)
+    setSubmitErrorMessages({})
     if (displayDraft == null) {
       setSubmitAlert({
         description:
@@ -2971,6 +2965,7 @@ export function ProgramApplyPage() {
         })
         submittedSuccessfullyProgramIdRef.current = programId
         setSubmitErrorField(null)
+        setSubmitErrorMessages({})
         setGateModal(null)
         setCompleteModalOpen(true)
       } catch (error) {
@@ -2980,7 +2975,22 @@ export function ProgramApplyPage() {
         const validationFailed = errorCode === 'VALIDATION_FAILED'
         const invalidValue = errorCode === 'INVALID_VALUE'
         const errorEnvelope = readApplicationApiErrorEnvelope(error)
-        setSubmitErrorField(typeof errorEnvelope.field === 'string' ? errorEnvelope.field : null)
+        const paragraphErrors = collectApplicationSubmitParagraphErrors(
+          errorEnvelope,
+          displayDraft,
+          message
+        )
+        const firstParagraphId =
+          Object.keys(paragraphErrors)[0] ??
+          resolveApplicationErrorParagraphId(errorEnvelope.field, displayDraft)
+        setSubmitErrorMessages(paragraphErrors)
+        setSubmitErrorField(firstParagraphId)
+        if (firstParagraphId) {
+          pendingApplyIncompleteRef.current = {
+            message: paragraphErrors[firstParagraphId] ?? message,
+            paragraphId: firstParagraphId,
+          }
+        }
         console.info('[portal-application-submit-error]', {
           ...submitDebug,
           error: errorEnvelope,
@@ -2993,8 +3003,13 @@ export function ProgramApplyPage() {
           return
         }
         // 런타임 선택지(면접·OSA 일정 등)가 렌더 이후 바뀌면 400. 최신 선택지로 다시 불러온다.
-        // INVALID_VALUE 는 문항을 단정하지 않고 POST 를 반복하지 않는다.
-        if (!promptSettingsGrade && !validationFailed && !invalidValue) {
+        // 문항 검증(FORM_ANSWER_* / INVALID_VALUE)은 입력값을 유지하고 문단에 오류를 표시한다.
+        if (
+          !promptSettingsGrade &&
+          !validationFailed &&
+          !invalidValue &&
+          !isApplicationAnswerValidationErrorCode(errorCode)
+        ) {
           const option = applicationFormQuery.bundle?.option
           if (
             numericProgramId != null &&
@@ -3084,6 +3099,7 @@ export function ProgramApplyPage() {
                 fillOptions={{ consentFillReadOnlyBody: true }}
                 renderParagraphSlot={renderParagraphSlot}
                 renderParagraphTitleTrailing={renderParagraphTitleTrailing}
+                paragraphErrorMessages={submitErrorMessages}
               />
             </FormTemplateHost>
           ) : null}
