@@ -25,6 +25,11 @@
   overflow: visible;
 }
 
+.mainPublic {
+  composes: main;
+  min-height: 100vh;
+}
+
 /* 홈 — 모바일은 헤더 아래 배치, PC만 투명 헤더가 히어로 위에 겹침 */
 .mainHome {
   composes: main;

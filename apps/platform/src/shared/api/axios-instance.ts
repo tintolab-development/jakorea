@@ -49,6 +49,7 @@ type RetryableRequest = InternalAxiosRequestConfig & {
 const HOMEPAGE_AUTH_PREFIX = '/api/homepage/auth'
 const PORTAL_AUTH_PREFIX = '/api/portal/auth'
 const PORTAL_ORGANIZATIONS_SCHOOLS = '/api/portal/organizations/schools'
+const PORTAL_PUBLIC_SURVEYS_PREFIX = '/api/portal/public/surveys/'
 const AUTH_VERIFICATION_SESSIONS_PREFIX = '/api/auth/verification-sessions'
 const DEFAULT_REFRESH_PATH = `${PORTAL_AUTH_PREFIX}/refresh`
 
@@ -115,6 +116,7 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
     path.includes(`${PORTAL_AUTH_PREFIX}/email/check`) ||
     path.includes(`${PORTAL_AUTH_PREFIX}/password-reset`) ||
     path.includes(PORTAL_ORGANIZATIONS_SCHOOLS) ||
+    path.includes(PORTAL_PUBLIC_SURVEYS_PREFIX) ||
     path.includes(AUTH_VERIFICATION_SESSIONS_PREFIX)
   )
 }
