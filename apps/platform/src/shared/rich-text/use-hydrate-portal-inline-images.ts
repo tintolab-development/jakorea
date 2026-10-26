@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { Editor } from '@tiptap/react'
-import { fileObjectIdFromStoredFileUrl } from '@/shared/lib/portal-public-file-url'
+import { getApiBaseUrlForPath } from '@/shared/lib/api-remote-env'
+import {
+  PORTAL_INLINE_IMAGE_PREVIEW_FAILURE_MESSAGE,
+  fileObjectIdFromStoredFileUrl,
+  portalPublicFileContentUrl,
+  portalPublicInlineImageUrl,
+} from '@/shared/lib/portal-public-file-url'
 import { resolvePortalPublicImageSrc } from '@/shared/lib/resolve-portal-public-image-src'
 
 export type PortalInlineImageResolver = (fileObjectId: number) => Promise<string>
@@ -11,9 +17,37 @@ function preloadImage(src: string): Promise<void> {
   return image.decode().catch(() => undefined)
 }
 
+function commitImageSrc(
+  editor: Editor,
+  pos: number,
+  nextSrc: string,
+  persistSrc: string,
+): void {
+  const current = editor.state.doc.nodeAt(pos)
+  if (current?.type.name !== 'image') return
+  const currentSrc = typeof current.attrs.src === 'string' ? current.attrs.src : ''
+  if (currentSrc === nextSrc) return
+  const nodeDom = editor.view.nodeDOM(pos)
+  const img =
+    nodeDom instanceof HTMLImageElement
+      ? nodeDom
+      : nodeDom instanceof HTMLElement
+        ? nodeDom.querySelector('img')
+        : null
+  if (img) img.src = nextSrc
+  const tr = editor.state.tr.setNodeMarkup(pos, undefined, {
+    ...current.attrs,
+    src: nextSrc,
+    persistSrc,
+  })
+  editor.view.dispatch(tr)
+}
+
 /**
  * 저장된 `/api/admin|portal/public/files/{id}/content` 는 img src로 안 열리는 경우가 있다.
  * 공개 API(또는 주입한 resolver)에서 서명 URL/바이트를 받아 미리보기를 채운다.
+ * 바이트 조회가 실패하면(S3 리다이렉트에 CORS가 없는 경우 등) 공개 content 절대 URL을
+ * `<img>`에 남겨 브라우저가 302를 따라가게 한다.
  * 반환값은 교체할 이미지를 받아 오는 중인지 여부.
  */
 export function useHydratePortalInlineImages(
@@ -27,6 +61,7 @@ export function useHydratePortalInlineImages(
     if (editor == null) return
     let cancelled = false
     const previewUrls: string[] = []
+    const allowPublicFallback = resolveImage === resolvePortalPublicImageSrc
 
     const hydrate = async () => {
       if (editor.isDestroyed) return
@@ -55,24 +90,27 @@ export function useHydratePortalInlineImages(
             if (nextSrc.startsWith('blob:')) previewUrls.push(nextSrc)
             await preloadImage(nextSrc)
             if (cancelled || editor.isDestroyed) return
-            const current = editor.state.doc.nodeAt(target.pos)
-            if (current?.type.name !== 'image') continue
-            const nodeDom = editor.view.nodeDOM(target.pos)
-            const img =
-              nodeDom instanceof HTMLImageElement
-                ? nodeDom
-                : nodeDom instanceof HTMLElement
-                  ? nodeDom.querySelector('img')
-                  : null
-            if (img) img.src = nextSrc
-            const tr = editor.state.tr.setNodeMarkup(target.pos, undefined, {
-              ...current.attrs,
-              src: nextSrc,
-              persistSrc: target.persistSrc,
-            })
-            editor.view.dispatch(tr)
-          } catch {
-            /* 미리보기만 실패. 저장 URL은 유지 */
+            commitImageSrc(editor, target.pos, nextSrc, target.persistSrc)
+          } catch (error) {
+            if (cancelled || editor.isDestroyed) return
+            const fallback = allowPublicFallback
+              ? portalPublicInlineImageUrl(
+                  target.fileObjectId,
+                  getApiBaseUrlForPath(portalPublicFileContentUrl(target.fileObjectId)),
+                )
+              : ''
+            console.warn(
+              allowPublicFallback
+                ? PORTAL_INLINE_IMAGE_PREVIEW_FAILURE_MESSAGE
+                : '[portal-inline-image] 인라인 이미지 미리보기에 실패했습니다.',
+              {
+                fileObjectId: target.fileObjectId,
+                ...(fallback ? { fallback } : {}),
+                error,
+              },
+            )
+            if (!fallback) continue
+            commitImageSrc(editor, target.pos, fallback, target.persistSrc)
           }
         }
       } finally {
