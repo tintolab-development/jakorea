@@ -16,6 +16,7 @@ function row(id: string): GeminiApprovedTrainingRow {
     instructorAssigned: false,
     trainingDate: '2026-05-01',
     trainingTimeText: '',
+    trainingDateCandidates: [],
     studentCount: 18,
     instructorName: '미지정',
     managerName: '김담당',

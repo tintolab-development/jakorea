@@ -575,6 +575,7 @@ export * from './geminiRecruitmentDetailResponse';
 export * from './geminiRecruitmentDetailResponseEducationForm';
 export * from './geminiRecruitmentItem';
 export * from './geminiRecruitmentListResponse';
+export * from './geminiTrainingDateCandidate';
 export * from './geminiTrainingReportImportRequest';
 export * from './geminiTrainingReportImportResponse';
 export * from './geminiTrainingReportImportResult';

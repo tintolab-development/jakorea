@@ -29265,6 +29265,13 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "trainingDateCandidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeminiTrainingDateCandidate"
+            },
+            "description": "기관 신청 희망 일정 1~3지망 후보. preferenceRank 오름차순. 확정 trainingDate와 분리. 희망 일정이 없으면 []. null이 아니다"
           }
         }
       },
@@ -51758,6 +51765,13 @@
           },
           "recruitmentTitle": {
             "type": "string"
+          },
+          "trainingDateCandidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeminiTrainingDateCandidate"
+            },
+            "description": "기관 신청 희망 일정 1~3지망 후보. preferenceRank 오름차순. 확정 trainingDate와 분리. 희망 일정이 없으면 []. null이 아니다"
           }
         }
       },
@@ -54098,6 +54112,46 @@
               "USER",
               "ADMIN"
             ]
+          }
+        }
+      },
+      "GeminiTrainingDateCandidate": {
+        "type": "object",
+        "description": "Gemini 승인 연수 기관 신청 희망 일정 후보(1~3지망). 확정 trainingDate와 분리.",
+        "properties": {
+          "preferenceRank": {
+            "type": "integer",
+            "format": "int32",
+            "description": "희망 순위. 1=1지망"
+          },
+          "trainingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "희망 날짜(YYYY-MM-DD)"
+          },
+          "trainingStartTime": {
+            "type": "string",
+            "format": "time",
+            "description": "첫 차시 시작 시각",
+            "nullable": true
+          },
+          "trainingEndTime": {
+            "type": "string",
+            "format": "time",
+            "description": "마지막 차시 종료 시각",
+            "nullable": true
+          },
+          "trainingTimeText": {
+            "type": "string",
+            "description": "시간·차시 표시. 시작/종료 시각이 없으면 null",
+            "example": "10:00~12:00(1차시)",
+            "nullable": true
+          },
+          "sessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "희망 차시 수",
+            "nullable": true
           }
         }
       }
