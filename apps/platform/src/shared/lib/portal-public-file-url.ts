@@ -1,3 +1,5 @@
+import { applyPortalPublicFileImageOrigin } from './apply-portal-public-file-image-origin.ts'
+
 export function portalPublicFileContentUrl(fileObjectId: number): string {
   return `/api/portal/public/files/${fileObjectId}/content`
 }
@@ -18,9 +20,28 @@ export function fileObjectIdFromStoredFileUrl(src: string): number | null {
   return Number.isSafeInteger(id) && id > 0 ? id : null
 }
 
-/** CMS 본문 이미지 src를 공개 content URL로 바꾼다. 미리보기는 `inline=1`. */
-export function rewriteAdminFileContentSrcsForPortal(content: string): string {
+/**
+ * 공개 인라인 이미지 주소.
+ * `apiOrigin`이 있으면 플랫폼 호스트가 아닌 API 오리진을 붙인다.
+ * 로컬 Vite 프록시처럼 오리진이 비어 있으면 상대 경로를 유지한다.
+ */
+export function portalPublicInlineImageUrl(fileObjectId: number, apiOrigin = ''): string {
+  return applyPortalPublicFileImageOrigin(
+    `${portalPublicFileContentUrl(fileObjectId)}?inline=1`,
+    apiOrigin,
+  )
+}
+
+export const PORTAL_INLINE_IMAGE_PREVIEW_FAILURE_MESSAGE =
+  '[portal-inline-image] 인라인 이미지 미리보기에 실패해 공개 URL로 표시합니다.'
+
+/**
+ * CMS 본문의 admin/공개 파일 URL을 공개 content URL(`?inline=1`)로 바꾼다.
+ * 이미지 `src`와 같은 본문에 있는 download 링크도 포함한다.
+ * 배포 환경에서는 `apiOrigin`으로 절대 URL을 만들어 `<img>`·링크가 플랫폼 호스트로 가지 않게 한다.
+ */
+export function rewriteAdminFileContentSrcsForPortal(content: string, apiOrigin = ''): string {
   return content.replace(STORED_FILE_SRC_RE, (_match, fileObjectId: string) =>
-    `${portalPublicFileContentUrl(Number(fileObjectId))}?inline=1`
+    portalPublicInlineImageUrl(Number(fileObjectId), apiOrigin),
   )
 }
