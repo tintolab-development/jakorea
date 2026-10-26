@@ -1,4 +1,5 @@
 import type {
+  BatchDetailResponse,
   NotificationDeliveryDetailResponse,
   NotificationDeliveryResponse,
 } from '@/shared/api/generated/notifications/schemas'
@@ -260,6 +261,8 @@ export function mapSmsDeliveryToSendHistoryRow(
     failedReason: failedReason || undefined,
     attachmentFileNames: attachments.map(item => item.fileName),
     attachments,
+    batchId:
+      typeof item.batchId === 'number' && Number.isFinite(item.batchId) ? item.batchId : null,
   }
 }
 
@@ -277,4 +280,26 @@ export function mapSmsDeliveryDetailResponse(
   const delivery = detail?.delivery
   if (!delivery) return null
   return mapSmsDeliveryToSendHistoryRow(delivery, detail?.preview)
+}
+
+/**
+ * 발송 배치 상세의 MMS 첨부 스냅샷 (`bodySnapshot.attachments`).
+ * 배치 생성 시 확정된 fileObjectId·fileName이며 예약 발송도 동일. 항상 배열(없으면 []).
+ */
+export function mapBatchBodySnapshotAttachments(
+  dto: BatchDetailResponse | null | undefined
+): SmsSendHistoryAttachment[] {
+  const items = dto?.bodySnapshot?.attachments
+  if (!Array.isArray(items)) return []
+  const result: SmsSendHistoryAttachment[] = []
+  for (const item of items) {
+    const fileName = item?.fileName?.trim()
+    if (!fileName) continue
+    const mapped: SmsSendHistoryAttachment = { fileName }
+    if (typeof item.fileObjectId === 'number' && Number.isFinite(item.fileObjectId)) {
+      mapped.fileObjectId = item.fileObjectId
+    }
+    result.push(mapped)
+  }
+  return result
 }

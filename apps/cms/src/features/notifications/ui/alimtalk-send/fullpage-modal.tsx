@@ -85,7 +85,7 @@ import { ProgramSelectField } from '@/features/notifications/ui/mail-send/progra
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { ContentPanel } from './content-panel'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
-import { showNotificationSendRequestFailedAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
+import { showNotificationSendErrorAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
 import { RecipientSelectModal } from '@/features/notifications/ui/shared/recipient-select-modal'
 import { TemplateSelectField } from '@/features/notifications/ui/shared/template-select-field'
@@ -577,8 +577,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       idempotencyKeyRef.current = createIdempotencyKey()
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
-    } catch {
-      showNotificationSendRequestFailedAlert(showAlert)
+    } catch (error) {
+      showNotificationSendErrorAlert(showAlert, error)
     } finally {
       sendingRef.current = false
       setSending(false)

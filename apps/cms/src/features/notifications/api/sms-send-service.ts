@@ -1,4 +1,3 @@
-import type { CreateRequest } from '@/shared/api/generated/notifications/schemas'
 import { normalizeKoreanPhoneDigits } from '@/shared/utils/phone-validation'
 import {
   mapSenderProfileOptions,
@@ -226,7 +225,7 @@ export async function submitSmsSend(input: {
   if (batchVariables) body.variables = batchVariables
 
   // 템플릿 미선택이면 baseline 없음 → 제목/본문 스냅샷이 항상 실린다.
-  applyNotificationSendBodySnapshot(body as CreateRequest, {
+  applyNotificationSendBodySnapshot(body, {
     channel: 'SMS',
     title: draft.messageType === 'SMS' ? '' : draft.subject,
     content: draft.bodyText,
@@ -246,6 +245,5 @@ export async function submitSmsSend(input: {
     body.titleTemplate = draft.subject.trim()
   }
 
-  // templateId 생략·messageType은 BE PR #43 계약. OpenAPI 재생성 전까지 생성 타입과 다르다.
-  await createSendBatchRemote(body as CreateRequest, idempotencyKey)
+  await createSendBatchRemote(body, idempotencyKey)
 }

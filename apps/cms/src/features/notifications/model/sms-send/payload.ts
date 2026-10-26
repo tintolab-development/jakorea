@@ -85,15 +85,33 @@ export function resolveSmsSendProgramId(programId: string | undefined): number |
 }
 
 /**
- * 문자 발송 Create body (BE JABACK PR #43).
- * - templateId 있음: 기존 계약 그대로
+ * 문자 발송 Create body (BE JABACK PR #43 + MMS 첨부).
+ * - templateId 있음: 기존 계약 그대로(messageType은 보내지 않고 템플릿 유형 사용)
  * - templateId 없음(템플릿 미선택 = 템플릿 사용 안 함): templateId 생략(null/0/'' 금지) + messageType 필수.
  *   발신번호는 senderProfileId 우선, 없을 때만 senderKey. 발송 목적·senderProfileType·
  *   senderProfileDisplayName은 보내지 않는다(BE가 NORMAL 저장).
+ * - attachmentFileIds: MMS에서 요청 첨부가 있을 때만(중복 제거, 선택 순서 유지). 그 외 생략.
  */
-export type SmsSendCreateRequest = Omit<CreateRequest, 'templateId'> & {
-  templateId?: number
-  messageType?: SmsSendDraft['messageType']
+export type SmsSendCreateRequest = CreateRequest
+
+export const SMS_SEND_ATTACHMENT_PENDING_MESSAGE =
+  '첨부파일 업로드·보안 검사가 끝난 뒤 발송할 수 있습니다. 잠시 후 다시 시도해 주세요.'
+
+/**
+ * 발송 요청에 실을 MMS 첨부 fileObjectId.
+ * draft.messageType은 템플릿 선택 시 템플릿의 문자 유형이다(발송 유형 라디오 잠금).
+ * MMS가 아니거나 요청 첨부가 없으면 undefined(필드 생략) → 템플릿 MMS는 템플릿 첨부 사용.
+ */
+export function resolveSmsSendAttachmentFileIds(
+  draft: Pick<SmsSendDraft, 'messageType' | 'attachmentFileIds'>
+): number[] | undefined {
+  if (draft.messageType !== 'MMS') return undefined
+  const ids: number[] = []
+  for (const id of draft.attachmentFileIds ?? []) {
+    if (!Number.isInteger(id) || id < 1 || ids.includes(id)) continue
+    ids.push(id)
+  }
+  return ids.length > 0 ? ids : undefined
 }
 
 export function buildSmsSendCreateRequest(input: {
@@ -133,6 +151,8 @@ export function buildSmsSendCreateRequest(input: {
     ),
   }
   if (programId != null) body.programId = programId
+  const attachmentFileIds = resolveSmsSendAttachmentFileIds(draft)
+  if (attachmentFileIds) body.attachmentFileIds = attachmentFileIds
   return body
 }
 
@@ -165,6 +185,7 @@ export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
   })
   if (scheduleError) return scheduleError
   if (draft.recipients.length === 0) return '수신자를 설정하세요.'
+  if (draft.attachmentUploadPending) return SMS_SEND_ATTACHMENT_PENDING_MESSAGE
   if (
     !isNotificationSendWithoutProgram(draft.programId) &&
     parseNotificationSendProgramId(draft.programId) == null

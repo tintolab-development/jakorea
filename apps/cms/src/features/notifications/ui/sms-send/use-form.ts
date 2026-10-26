@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import type { SmsMessageType } from '@/features/notifications/api/adapters/sms-channel'
 import {
@@ -23,13 +23,37 @@ import {
   type SmsSendTiming,
 } from '@/features/notifications/model/sms-send/types'
 import type { SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
+import {
+  smsMmsBatchFileOwner,
+  smsMmsUploadErrorMessage,
+  uploadSmsMmsImage,
+} from '@/features/notifications/api/sms-template-attachments'
+import {
+  resolveSmsSendAttachmentView,
+  type SmsSendRequestAttachment,
+} from '@/features/notifications/model/sms-send/attachments'
+
+let requestAttachmentSeq = 0
+function nextRequestAttachmentKey(): string {
+  requestAttachmentSeq += 1
+  return `mms-${Date.now()}-${requestAttachmentSeq}`
+}
+
+function templateAttachmentNames(template: SmsTemplateItem): string[] {
+  return template.attachments?.length
+    ? template.attachments.map(item => item.fileName)
+    : [...template.attachmentFileNames]
+}
 
 export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
   const [programId, setProgramId] = useState(SMS_SEND_DEFAULT_PROGRAM_ID)
   const [templateId, setTemplateId] = useState<string | undefined>(initialTemplateId)
   const [senderPhone, setSenderPhone] = useState('')
   const [messageType, setMessageType] = useState<SmsTemplateItem['messageType']>('SMS')
-  const [attachmentFileNames, setAttachmentFileNames] = useState<string[]>([])
+  /** 발송 요청 첨부(MMS_BATCH 업로드). 템플릿 첨부보다 우선, 병합하지 않음 */
+  const [requestAttachments, setRequestAttachments] = useState<SmsSendRequestAttachment[]>([])
+  /** 선택한 템플릿에 등록된 첨부 파일명 (요청 첨부가 없을 때 발송됨) */
+  const [templateAttachmentFileNames, setTemplateAttachmentFileNames] = useState<string[]>([])
   const [sendTiming, setSendTiming] = useState<SmsSendTiming>('immediate')
   const [scheduledAt, setScheduledAt] = useState<Dayjs | null>(null)
   const [recipients, setRecipients] = useState<SmsSendRecipient[]>([])
@@ -41,8 +65,20 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
   const subjectRef = useRef('')
   const bodyTextRef = useRef('')
   const messageTypeRef = useRef<SmsMessageType>('SMS')
+  const requestAttachmentsRef = useRef<SmsSendRequestAttachment[]>([])
+
+  const attachmentView = useMemo(
+    () =>
+      resolveSmsSendAttachmentView({
+        messageType,
+        templateSelected: Boolean(templateId?.trim()),
+        templateAttachmentFileNames,
+        requestAttachments,
+      }),
+    [messageType, requestAttachments, templateAttachmentFileNames, templateId]
+  )
+  const attachmentFileNames = attachmentView.fileNames
   const attachmentFileNamesRef = useRef<string[]>([])
-  const newFilesRef = useRef<File[]>([])
 
   useEffect(() => {
     messageTypeRef.current = messageType
@@ -51,6 +87,15 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
   useEffect(() => {
     attachmentFileNamesRef.current = attachmentFileNames
   }, [attachmentFileNames])
+
+  const replaceRequestAttachments = useCallback(
+    (update: (prev: SmsSendRequestAttachment[]) => SmsSendRequestAttachment[]) => {
+      const next = update(requestAttachmentsRef.current)
+      requestAttachmentsRef.current = next
+      setRequestAttachments(next)
+    },
+    []
+  )
 
   const lastComposeTargetRef = useRef<'subject' | 'body'>('body')
   const subjectRangeRef = useRef({ start: 0, end: 0 })
@@ -63,9 +108,9 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setSenderPhone('')
     setMessageType('SMS')
     messageTypeRef.current = 'SMS'
-    setAttachmentFileNames([])
-    attachmentFileNamesRef.current = []
-    newFilesRef.current = []
+    requestAttachmentsRef.current = []
+    setRequestAttachments([])
+    setTemplateAttachmentFileNames([])
     setSendTiming('immediate')
     setScheduledAt(null)
     setRecipients([])
@@ -79,27 +124,33 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setComposeVersion(version => version + 1)
   }, [initialTemplateId, open])
 
-  const applyMessageType = useCallback((next: SmsMessageType) => {
-    if (next === messageTypeRef.current) return
-    setMessageType(next)
-    messageTypeRef.current = next
-    const issues = collectSmsComposeFieldIssues({
-      messageType: next,
-      subject: subjectRef.current,
-      bodyText: bodyTextRef.current,
-      attachmentCount: attachmentFileNamesRef.current.length,
-    })
-    setComposeBlocking(smsComposeBlocksSend(issues))
-  }, [])
+  const applyMessageType = useCallback(
+    (next: SmsMessageType) => {
+      if (next === messageTypeRef.current) return
+      setMessageType(next)
+      messageTypeRef.current = next
+      // MMS가 아니면 요청 첨부를 비운다(attachmentFileIds 미전송)
+      if (next !== 'MMS') replaceRequestAttachments(() => [])
+      const issues = collectSmsComposeFieldIssues({
+        messageType: next,
+        subject: subjectRef.current,
+        bodyText: bodyTextRef.current,
+        attachmentCount: next === 'MMS' ? requestAttachmentsRef.current.length : 0,
+      })
+      setComposeBlocking(smsComposeBlocksSend(issues))
+    },
+    [replaceRequestAttachments]
+  )
 
   const applyTemplate = useCallback((template: SmsTemplateItem) => {
     setTemplateId(template.id)
     setSenderPhone(template.senderPhone)
     setMessageType(template.messageType)
     messageTypeRef.current = template.messageType
-    setAttachmentFileNames([...template.attachmentFileNames])
-    attachmentFileNamesRef.current = [...template.attachmentFileNames]
-    newFilesRef.current = []
+    replaceRequestAttachments(() => [])
+    setTemplateAttachmentFileNames(
+      template.messageType === 'MMS' ? templateAttachmentNames(template) : []
+    )
     subjectRef.current = template.subject
     bodyTextRef.current = template.bodyText
     setComposeSeed({ subject: template.subject, bodyText: template.bodyText })
@@ -107,79 +158,93 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
       messageType: template.messageType,
       subject: template.subject,
       bodyText: template.bodyText,
-      attachmentCount: template.attachmentFileNames.length,
+      attachmentCount:
+        template.messageType === 'MMS' ? templateAttachmentNames(template).length : 0,
     })
     setComposeBlocking(smsComposeBlocksSend(issues))
     setComposeVersion(version => version + 1)
-  }, [])
+  }, [replaceRequestAttachments])
 
   const clearTemplate = useCallback(() => {
     setTemplateId(undefined)
     setMessageType('SMS')
     messageTypeRef.current = 'SMS'
-    setAttachmentFileNames([])
-    attachmentFileNamesRef.current = []
-    newFilesRef.current = []
+    replaceRequestAttachments(() => [])
+    setTemplateAttachmentFileNames([])
     subjectRef.current = ''
     bodyTextRef.current = ''
     setComposeSeed({ subject: '', bodyText: '' })
     setComposeBlocking(true)
     setComposeVersion(version => version + 1)
-  }, [])
+  }, [replaceRequestAttachments])
 
-  const addAttachments = useCallback(async (files: File[]) => {
-    if (messageTypeRef.current !== 'MMS') {
-      return {
-        ok: false as const,
-        message: '첨부파일은 MMS 유형에서만 추가할 수 있습니다.',
+  /**
+   * 요청 첨부 추가: 사전 검증 → 파일마다 upload-requests(MMS_BATCH) → PUT → confirm → CLEAN/AVAILABLE.
+   * 업로드·검사 중에는 attachmentUploadPending=true로 발송을 막는다. 실패 파일은 목록에서 빼고 재업로드 안내.
+   */
+  const addAttachments = useCallback(
+    async (files: File[]): Promise<{ ok: boolean; message?: string }> => {
+      if (messageTypeRef.current !== 'MMS') {
+        return { ok: false, message: '첨부파일은 MMS 유형에서만 추가할 수 있습니다.' }
       }
-    }
-    const result = await rejectSmsMmsAttachments({
-      incoming: files,
-      currentCount: attachmentFileNamesRef.current.length,
-      currentTotalBytes: newFilesRef.current.reduce((sum, file) => sum + file.size, 0),
-    })
-    if (result.reason) {
-      return { ok: false as const, message: smsMmsAttachmentRejectMessage(result.reason) }
-    }
-    if (result.accepted.length === 0) return { ok: true as const }
-    newFilesRef.current = [...newFilesRef.current, ...result.accepted]
-    setAttachmentFileNames(prev => {
-      const next = [...prev, ...result.accepted.map(file => file.name)]
-      attachmentFileNamesRef.current = next
-      const issues = collectSmsComposeFieldIssues({
-        messageType: messageTypeRef.current,
-        subject: subjectRef.current,
-        bodyText: bodyTextRef.current,
-        attachmentCount: next.length,
+      if (requestAttachmentsRef.current.some(item => item.status !== 'ready')) {
+        return { ok: false, message: '첨부파일 업로드가 끝난 뒤 다시 추가해 주세요.' }
+      }
+      const current = requestAttachmentsRef.current
+      const result = await rejectSmsMmsAttachments({
+        incoming: files,
+        currentCount: current.length,
+        currentTotalBytes: current.reduce((sum, item) => sum + item.fileSize, 0),
       })
-      setComposeBlocking(smsComposeBlocksSend(issues))
-      return next
-    })
-    return { ok: true as const }
-  }, [])
+      if (result.reason) {
+        return { ok: false, message: smsMmsAttachmentRejectMessage(result.reason) }
+      }
+      if (result.accepted.length === 0) return { ok: true }
 
-  const removeAttachmentAt = useCallback((index: number) => {
-    setAttachmentFileNames(prev => {
-      const name = prev[index]
-      if (name) {
-        const fileIndex = newFilesRef.current.findIndex(file => file.name === name)
-        if (fileIndex >= 0) {
-          newFilesRef.current = newFilesRef.current.filter((_, i) => i !== fileIndex)
+      const pending = result.accepted.map(file => ({
+        file,
+        entry: {
+          key: nextRequestAttachmentKey(),
+          fileName: file.name.trim(),
+          fileSize: file.size,
+          fileObjectId: null,
+          status: 'uploading' as const,
+        } satisfies SmsSendRequestAttachment,
+      }))
+      replaceRequestAttachments(prev => [...prev, ...pending.map(item => item.entry)])
+
+      const owner = smsMmsBatchFileOwner()
+      for (const { file, entry } of pending) {
+        try {
+          const uploaded = await uploadSmsMmsImage({ file, owner })
+          replaceRequestAttachments(prev =>
+            prev.map(item =>
+              item.key === entry.key
+                ? { ...item, fileObjectId: uploaded.fileObjectId, status: 'ready' as const }
+                : item
+            )
+          )
+        } catch (error) {
+          const batchKeys = new Set(pending.map(item => item.entry.key))
+          // 실패 파일과 아직 올리지 않은 같은 선택분은 빼고, 이미 검사 끝난 파일은 유지한다
+          replaceRequestAttachments(prev =>
+            prev.filter(item => !(batchKeys.has(item.key) && item.status !== 'ready'))
+          )
+          return { ok: false, message: smsMmsUploadErrorMessage(error) }
         }
       }
-      const next = prev.filter((_, fileIndex) => fileIndex !== index)
-      attachmentFileNamesRef.current = next
-      const issues = collectSmsComposeFieldIssues({
-        messageType: messageTypeRef.current,
-        subject: subjectRef.current,
-        bodyText: bodyTextRef.current,
-        attachmentCount: next.length,
-      })
-      setComposeBlocking(smsComposeBlocksSend(issues))
-      return next
-    })
-  }, [])
+      return { ok: true }
+    },
+    [replaceRequestAttachments]
+  )
+
+  /** 요청 첨부만 삭제할 수 있다. 템플릿 첨부는 발송 화면에서 지우지 않는다. */
+  const removeAttachmentAt = useCallback(
+    (index: number) => {
+      replaceRequestAttachments(prev => prev.filter((_, itemIndex) => itemIndex !== index))
+    },
+    [replaceRequestAttachments]
+  )
 
   const addRecipients = useCallback((incoming: SmsSendRecipient[]) => {
     setRecipients(prev => mergeSmsSendRecipients(prev, incoming))
@@ -218,12 +283,16 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
       subject: subjectRef.current,
       bodyText: bodyTextRef.current,
       attachmentFileNames,
+      attachmentFileIds: attachmentView.attachmentFileIds,
+      attachmentUploadPending: attachmentView.uploadPending,
       sendTiming,
       scheduledAt: scheduledAt ? scheduledAt.toISOString() : null,
       recipients,
     })
   }, [
     attachmentFileNames,
+    attachmentView.attachmentFileIds,
+    attachmentView.uploadPending,
     messageType,
     programId,
     recipients,
@@ -237,7 +306,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
 
   const bodyByteLimit = smsBodyByteLimit(messageType)
   const showSubject = messageType !== 'SMS' || subjectRef.current.trim().length > 0
-  const showAttachments = messageType === 'MMS' || attachmentFileNames.length > 0
+  const showAttachments = messageType === 'MMS'
 
   const readComposeSnapshot = useCallback(
     () => ({
@@ -297,6 +366,9 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     senderPhone,
     messageType,
     attachmentFileNames,
+    attachmentSource: attachmentView.source,
+    attachmentUploadPending: attachmentView.uploadPending,
+    templateAttachmentFileNames,
     sendTiming,
     scheduledAt,
     recipients,

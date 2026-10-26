@@ -21,7 +21,12 @@ import {
   runRichTextTableCommand,
   NodeSelection,
   promptLinkUrl,
+  RICH_TEXT_IMAGE_MAX_COUNT,
   RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
+  RICH_TEXT_INLINE_IMAGE_COUNT_MESSAGE,
+  RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
+  RICH_TEXT_INLINE_IMAGE_SIZE_MESSAGE,
+  RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE,
   RICH_TEXT_MAX_TEXT_CHARACTERS,
   setLinkFromUrl,
   stripTrailingEmptyMarkdown,
@@ -282,36 +287,80 @@ describe('mail template editor toolbar commands', () => {
     alertSpy.mockRestore()
   })
 
-  it('allows one editor image up to 20MB and blocks total image size above 20MB', async () => {
+  it('blocks an editor image larger than 20MB', () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
     const instance = createEditor('<p>본문</p>')
-    const firstFile = {
-      name: 'big.png',
-      type: 'image/png',
-      size: RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
-    } as File
-    const secondFile = {
-      name: 'too-much.png',
-      type: 'image/png',
-      size: 1,
-    } as File
+    const resolveSrc = vi.fn(async () => 'https://example.com/huge.png')
+    insertImageFromFile(
+      instance,
+      { name: 'huge.png', type: 'image/png', size: RICH_TEXT_INLINE_IMAGE_MAX_BYTES + 1 } as File,
+      resolveSrc
+    )
+    expect(alertSpy).toHaveBeenCalledWith(RICH_TEXT_INLINE_IMAGE_SIZE_MESSAGE)
+    expect(resolveSrc).not.toHaveBeenCalled()
+    expect(instance.getHTML()).not.toContain('huge.png')
+    alertSpy.mockRestore()
+  })
+
+  it('allows editor images up to 100MB in total and blocks the next byte', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    const instance = createEditor('<p>본문</p>')
     const resolveSrc = vi.fn(async (file: File) => ({
       src: `https://example.com/${file.name}`,
-      persistSrc: `/api/admin/files/${file.name === 'big.png' ? 1 : 2}/content`,
+      persistSrc: '/api/admin/files/1/content',
     }))
+    const fileCount = RICH_TEXT_IMAGE_MAX_TOTAL_BYTES / RICH_TEXT_INLINE_IMAGE_MAX_BYTES
 
-    insertImageFromFile(instance, firstFile, resolveSrc)
-    await vi.waitFor(() => {
-      expect(instance.getHTML()).toContain('data-file-size="20971520"')
-    })
+    for (let index = 0; index < fileCount; index += 1) {
+      const file = {
+        name: `big-${index}.png`,
+        type: 'image/png',
+        size: RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
+      } as File
+      insertImageFromFile(instance, file, resolveSrc)
+      await vi.waitFor(() => {
+        expect(instance.getHTML()).toContain(`big-${index}.png`)
+      })
+    }
     expect(createRichTextEditorApi(instance).getImageTotalBytes()).toBe(RICH_TEXT_IMAGE_MAX_TOTAL_BYTES)
 
-    insertImageFromFile(instance, secondFile, resolveSrc)
+    insertImageFromFile(
+      instance,
+      { name: 'too-much.png', type: 'image/png', size: 1 } as File,
+      resolveSrc
+    )
     await vi.waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith('에디터 이미지는 총 20MB까지 업로드 가능합니다.')
+      expect(alertSpy).toHaveBeenCalledWith(RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE)
     })
     expect(instance.getHTML()).not.toContain('too-much.png')
-    expect(resolveSrc).toHaveBeenCalledTimes(1)
+    alertSpy.mockRestore()
+  })
+
+  it('blocks the 11th editor image', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    const instance = createEditor('<p>본문</p>')
+    const resolveSrc = vi.fn(async (file: File) => `https://example.com/${file.name}`)
+
+    for (let index = 0; index < RICH_TEXT_IMAGE_MAX_COUNT; index += 1) {
+      insertImageFromFile(
+        instance,
+        { name: `pic-${index}.png`, type: 'image/png', size: 8 } as File,
+        resolveSrc
+      )
+      await vi.waitFor(() => {
+        expect(instance.getHTML()).toContain(`pic-${index}.png`)
+      })
+    }
+
+    insertImageFromFile(
+      instance,
+      { name: 'pic-extra.png', type: 'image/png', size: 8 } as File,
+      resolveSrc
+    )
+    await vi.waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(RICH_TEXT_INLINE_IMAGE_COUNT_MESSAGE)
+    })
+    expect(instance.getHTML()).not.toContain('pic-extra.png')
     alertSpy.mockRestore()
   })
 

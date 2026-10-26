@@ -311,8 +311,8 @@ export async function submitMailSend(input: {
       )
     )
   )
-  // senderProfileDisplayName: BE PR #43 메일 전용 선택 필드. OpenAPI 재생성 전까지 생성 타입에 없다.
-  const body: CreateRequest & { senderProfileDisplayName?: string } = {
+  // senderProfileDisplayName: BE PR #43 메일 전용 선택 필드. attachmentFileIds는 메일에서 보내지 않는다.
+  const body: CreateRequest = {
     batchName: (templateDisplayName || subject).slice(0, 200).trim() || '메일 발송',
     templateId: numericTemplateId,
     scheduledAt: resolveScheduledAtForCreateRequest({

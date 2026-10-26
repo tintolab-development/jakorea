@@ -21,7 +21,11 @@ import {
   MAIL_TEMPLATE_NAME_REQUIRED_MESSAGE,
 } from '@/features/notifications/model/mail-template/template-name'
 import { SCHEDULED_AT_MUST_BE_FUTURE_MESSAGE } from '@/features/notifications/model/send-scheduled-at'
-import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
+import {
+  formatNotificationFailedReason,
+  formatNotificationMissingVariablesMessage,
+  parseNotificationMissingVariableKeys,
+} from '@/features/notifications/model/shared/format-notification-failed-reason'
 import { NOTIFICATION_REQUIRED_VARIABLE_MISSING_HINT } from '@/features/notifications/model/shared/send-ux-copy'
 
 const ERROR_CODE_MESSAGES: Record<string, string> = {
@@ -77,7 +81,38 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
     '발신 프로필을 찾을 수 없습니다. 발신 프로필 동기화 후 다시 시도해 주세요.',
   EMAIL_TEMPLATE_NAME_INVALID: MAIL_TEMPLATE_NAME_INVALID_MESSAGE,
   EMAIL_CATEGORY_NOT_LINKED_TO_NHN: '카테고리 동기화 후 다시 시도해 주세요.',
+  // MMS 첨부 (BE error.message 우선, 없을 때만 아래 문구)
+  NOTIFICATION_ATTACHMENT_ONLY_MMS: '첨부 파일은 MMS 발송에서만 사용할 수 있습니다.',
+  NOTIFICATION_MMS_ATTACHMENT_FORMAT_INVALID:
+    'MMS 첨부는 JPG/JPEG 이미지이며 파일명은 40자 이내, 공백 없이 입력해 주세요.',
+  NOTIFICATION_MMS_ATTACHMENT_SIZE_INVALID:
+    'MMS 첨부 이미지는 파일당 300KiB 이하이며 합계 600KiB 이하여야 합니다.',
+  NOTIFICATION_MMS_ATTACHMENT_COUNT_INVALID: 'MMS 첨부는 최대 2개까지 등록할 수 있습니다.',
+  NOTIFICATION_MMS_ATTACHMENT_RESOLUTION_INVALID:
+    'MMS 첨부 이미지는 가로 1500px, 세로 1440px 이하만 등록할 수 있습니다.',
+  NOTIFICATION_MMS_ATTACHMENT_NOT_FOUND: 'MMS 첨부 파일을 찾을 수 없습니다.',
+  NOTIFICATION_MMS_ATTACHMENT_NOT_AVAILABLE:
+    'MMS 첨부 파일이 아직 준비되지 않았거나 만료·삭제되었습니다. 파일을 다시 등록해 주세요.',
+  NOTIFICATION_MMS_ATTACHMENT_OWNER_MISMATCH:
+    'MMS 첨부 파일의 업로드 용도 또는 소유자가 올바르지 않습니다.',
+  NOTIFICATION_MMS_ATTACHMENT_DUPLICATE: '같은 MMS 첨부 파일을 중복해서 등록할 수 없습니다.',
+  NOTIFICATION_MMS_ATTACHMENT_UPLOAD_FAILED:
+    'MMS 첨부를 발송 서비스에 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.',
 }
+
+/** MMS 첨부 오류 코드 — 발송 화면에서 첨부 영역으로 안내 */
+export const NOTIFICATION_MMS_ATTACHMENT_ERROR_CODES = [
+  'NOTIFICATION_ATTACHMENT_ONLY_MMS',
+  'NOTIFICATION_MMS_ATTACHMENT_FORMAT_INVALID',
+  'NOTIFICATION_MMS_ATTACHMENT_SIZE_INVALID',
+  'NOTIFICATION_MMS_ATTACHMENT_COUNT_INVALID',
+  'NOTIFICATION_MMS_ATTACHMENT_RESOLUTION_INVALID',
+  'NOTIFICATION_MMS_ATTACHMENT_NOT_FOUND',
+  'NOTIFICATION_MMS_ATTACHMENT_NOT_AVAILABLE',
+  'NOTIFICATION_MMS_ATTACHMENT_OWNER_MISMATCH',
+  'NOTIFICATION_MMS_ATTACHMENT_DUPLICATE',
+  'NOTIFICATION_MMS_ATTACHMENT_UPLOAD_FAILED',
+] as const
 
 const PROVIDER_UNAVAILABLE_HINT =
   'CMS→BE 호출은 정상입니다. BE·NHN 연동(AppKey/네트워크/JA_NOTIFICATION_MODE)을 확인해 주세요.'
@@ -183,6 +218,33 @@ function looksLikeSenderPhoneRequired(message: string, field?: string): boolean 
     text.includes('providersenderphonenumber') ||
     (text.includes('sms template requires') && text.includes('sender'))
   )
+}
+
+const PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES = 'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES'
+
+function parseCodeSuffixKeys(raw: string | undefined, prefix: string): string[] {
+  const text = raw?.trim() ?? ''
+  if (!text.startsWith(`${prefix}:`)) return []
+  return text
+    .slice(prefix.length + 1)
+    .split(',')
+    .map(key => key.trim())
+    .filter(Boolean)
+}
+
+/** 400 `NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:{키}` — 프로그램 필요 변수 키 안내 */
+function formatProgramRequiredForTemplateVariablesMessage(
+  code: string | undefined,
+  serverMessage: string
+): string {
+  const base = ERROR_CODE_MESSAGES[PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES]
+  const keys = parseCodeSuffixKeys(code, PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES)
+  const resolved =
+    keys.length > 0
+      ? keys
+      : parseCodeSuffixKeys(serverMessage, PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES)
+  if (resolved.length === 0) return base
+  return `${base.replace(/\.$/, '')}: ${resolved.join(', ')}`
 }
 
 export function getNotificationsApiErrorMessage(error: unknown, fallback: string): string {
@@ -297,18 +359,27 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     return ERROR_CODE_MESSAGES.ALIMTALK_TEMPLATE_MANAGED_BY_NHN
   }
   if (
+    code === PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES ||
+    code?.startsWith(`${PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES}:`)
+  ) {
+    return formatProgramRequiredForTemplateVariablesMessage(code, serverMessage)
+  }
+  if (
     code === 'DIRECT_RECIPIENT_AD_CONSENT_UNSUPPORTED' ||
     code === 'NOTIFICATION_PROGRAM_REQUIRED_FOR_RECIPIENTS' ||
-    code === 'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES' ||
     code === 'NOTIFICATION_RECIPIENT_NOT_IN_PROGRAM' ||
     code === 'NOTIFICATION_ADMIN_RECIPIENT_NOT_IN_PROGRAM'
   ) {
     return ERROR_CODE_MESSAGES[code] || serverMessage
   }
-  if (code === 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING') {
-    const formatted = formatNotificationFailedReason(serverMessage || code)
-    const main =
-      formatted || ERROR_CODE_MESSAGES.NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING
+  if (
+    code === 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING' ||
+    code?.startsWith('NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:')
+  ) {
+    const keys = parseNotificationMissingVariableKeys(code)
+    const main = formatNotificationMissingVariablesMessage(
+      keys.length > 0 ? keys : parseNotificationMissingVariableKeys(serverMessage)
+    )
     return `${main}\n${NOTIFICATION_REQUIRED_VARIABLE_MISSING_HINT}`
   }
   if (code === 'NOTIFICATION_SERVER_RESERVED_VARIABLE') {
@@ -346,7 +417,7 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     return appendTraceId(withHint, error, true)
   }
 
-  if (code && ERROR_CODE_MESSAGES[code] && !serverMessage) {
+  if (code && ERROR_CODE_MESSAGES[code] && (!serverMessage || serverMessage === code)) {
     return ERROR_CODE_MESSAGES[code]
   }
   if (code && ERROR_CODE_MESSAGES[code] && serverMessage) {
@@ -414,6 +485,8 @@ export type NotificationSendErrorField =
   | 'content'
   | 'sender'
   | 'senderDisplayName'
+  | 'attachments'
+  | 'program'
   | null
 
 const NOTIFICATION_SEND_FIELD_ERROR_CODES: Record<string, NotificationSendErrorField> = {
@@ -425,8 +498,11 @@ const NOTIFICATION_SEND_FIELD_ERROR_CODES: Record<string, NotificationSendErrorF
   NOTIFICATION_SMS_SENDER_PROFILE_MISMATCH: 'sender',
   NOTIFICATION_SENDER_DISPLAY_NAME_INVALID: 'senderDisplayName',
   NOTIFICATION_SENDER_DISPLAY_NAME_EMAIL_ONLY: 'senderDisplayName',
-  NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES: null,
+  NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES: 'program',
   NOTIFICATION_SERVER_RESERVED_VARIABLE: null,
+  ...Object.fromEntries(
+    NOTIFICATION_MMS_ATTACHMENT_ERROR_CODES.map(code => [code, 'attachments' as const])
+  ),
 }
 
 /**
@@ -445,8 +521,9 @@ export function resolveNotificationSendFieldError(
     data != null
       ? extractApiErrorMessage(data, { httpStatus: getApiErrorHttpStatus(error), fallback: '' })
       : ''
+  // 프로그램 필요 변수는 BE message 대신 code의 {키}를 FE 문구로 노출
   const message =
-    serverMessage && serverMessage !== rawCode
+    code !== PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES && serverMessage && serverMessage !== rawCode
       ? serverMessage
       : getNotificationsApiErrorMessage(error, '입력값을 확인하세요.')
   return { code, field: NOTIFICATION_SEND_FIELD_ERROR_CODES[code] ?? null, message }

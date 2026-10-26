@@ -179,7 +179,7 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
       }
     )
     expect(failed?.sendStatus).toBe('발송 실패')
-    expect(failed?.failedReason).toBe('템플릿 필수 변수가 없습니다: 동의 항목, 만료일시')
+    expect(failed?.failedReason).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 동의 항목, 만료일시')
     // preview에 #{…} 잔존 = 치환 전 실패(정상)
     expect(failed?.bodyHtml).toContain('#{동의 항목}')
   })

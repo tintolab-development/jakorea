@@ -85,6 +85,10 @@ describe('submitMailSend', () => {
       'contentTemplate'
     )
     expect(updateMailTemplate).not.toHaveBeenCalled()
+    // 메일은 MMS 첨부 ID를 보내지 않는다
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).not.toHaveProperty(
+      'attachmentFileIds'
+    )
   })
 
   it('sends trimmed senderProfileDisplayName for this send only', async () => {

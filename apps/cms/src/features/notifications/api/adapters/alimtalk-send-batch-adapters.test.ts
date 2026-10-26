@@ -79,7 +79,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
       formatAlimtalkFailedReason(
         'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:사용자 아이디(이메일)'
       )
-    ).toBe('템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)')
+    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 사용자 아이디(이메일)')
   })
 
   it('빈 문자열 variables는 생략하고 값이 있는 항목만 남긴다', () => {
@@ -314,3 +314,15 @@ describe('toTemplateVariablesRequestParams', () => {
     })
   })
 })
+
+describe('buildCreateSendBatchRequest MMS 첨부 회귀', () => {
+  it('알림톡 발송 요청에는 attachmentFileIds가 없다', () => {
+    const body = buildCreateSendBatchRequest({
+      batchName: '알림톡',
+      templateId: 1,
+      recipients: [],
+    })
+    expect(body).not.toHaveProperty('attachmentFileIds')
+  })
+})
+
