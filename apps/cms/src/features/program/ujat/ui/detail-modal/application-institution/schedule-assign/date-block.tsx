@@ -3,11 +3,15 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import type { UjatInstitutionApplicationRow } from '../list/types'
+import {
+  UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL,
+  type UjatInstitutionApplicationRow,
+} from '../list/types'
 import type { UjatScheduleAssignDayState } from './types'
 import {
   buildGradeOptionsForInstitution,
   formatScheduleAssignSchoolLabel,
+  isScheduleAssignBlockedInstitution,
   sumSelectedGradeClassCount,
 } from './utils'
 
@@ -37,10 +41,15 @@ export function UjatInstitutionScheduleAssignDateBlock({
 
   const schoolSelectOptions = useMemo(
     () => {
-      const options = schoolOptions.map(row => ({
-        value: row.id,
-        label: row.institutionName,
-      }))
+      const options = schoolOptions.map(row =>
+        isScheduleAssignBlockedInstitution(row)
+          ? {
+              value: row.id,
+              label: `${row.institutionName} (${UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL[row.tempAssignmentStatus]})`,
+              disabled: true,
+            }
+          : { value: row.id, label: row.institutionName }
+      )
       const knownIds = new Set(options.map(option => option.value))
 
       for (const row of day.rows) {
@@ -81,6 +90,9 @@ export function UjatInstitutionScheduleAssignDateBlock({
                 ? schoolOptions.find(s => s.id === row.institutionRowId)
                 : undefined
             const gradeOptions = institution ? buildGradeOptionsForInstitution(institution) : []
+            const institutionBlocked = institution
+              ? isScheduleAssignBlockedInstitution(institution)
+              : false
             const rowTotal = sumSelectedGradeClassCount(row.gradeValues)
             const hasTotalValue = Boolean(row.institutionRowId && row.gradeValues.length > 0)
             const totalDisplay = hasTotalValue ? `${rowTotal}학급` : TOTAL_PLACEHOLDER
@@ -116,7 +128,7 @@ export function UjatInstitutionScheduleAssignDateBlock({
                             placeholder="배정 학급을 선택하세요"
                             options={gradeOptions}
                             value={row.gradeValues}
-                            disabled={!row.institutionRowId}
+                            disabled={!row.institutionRowId || institutionBlocked}
                             onChange={values => {
                               onUpdateRow(row.id, {
                                 gradeValues: Array.isArray(values)

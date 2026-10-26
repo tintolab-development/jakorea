@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { UjatVolunteerAssignmentAssignModalMode } from '../volunteers/detail/volunteer-assign-modal-data'
@@ -9,6 +17,7 @@ const MODAL_Z_INDEX = 1100
 export type UjatAssignmentAssignSelectOption = {
   value: string
   label: string
+  disabled?: boolean
 }
 
 const VOLUNTEER_MODAL_TITLE: Record<UjatVolunteerAssignmentAssignModalMode, string> = {
@@ -33,7 +42,13 @@ export type UjatRegionDirectAssignModalProps = {
   variant: 'region_direct'
   open: boolean
   classOptions: ReadonlyArray<UjatAssignmentAssignSelectOption>
-  getVolunteerOptions: (classSlotId: string) => ReadonlyArray<UjatAssignmentAssignSelectOption>
+  /** 선택한 학급 슬롯의 서버 후보 (GET direct-assignment-candidates) */
+  volunteerOptions: ReadonlyArray<UjatAssignmentAssignSelectOption>
+  volunteerOptionsLoading?: boolean
+  volunteerOptionsError?: string | null
+  /** 1인 슬롯이면 기존 배정 봉사자 이름 — 두 번째 봉사자 배정 안내 */
+  existingPrimaryVolunteerName?: string | null
+  onClassSlotChange: (classSlotId: string | undefined) => void
   onCancel: () => void
   onConfirm: (payload: { classSlotId: string; volunteerId: string }) => void
 }
@@ -163,58 +178,77 @@ function UjatVolunteerAssignModalContent({
   )
 }
 
+function resolveRegionDirectVolunteerPlaceholder(input: {
+  classSlotId: string | undefined
+  loading: boolean
+  optionCount: number
+}): string {
+  if (!input.classSlotId) return '교육 학급을 먼저 선택해 주세요'
+  if (input.loading) return '배정 가능한 봉사자를 불러오는 중입니다'
+  if (input.optionCount === 0) return '배정 가능한 봉사자가 없습니다'
+  return '배정할 봉사자명을 선택해 주세요'
+}
+
 function UjatRegionDirectAssignModalContent({
   open,
   classOptions,
-  getVolunteerOptions,
+  volunteerOptions,
+  volunteerOptionsLoading = false,
+  volunteerOptionsError = null,
+  existingPrimaryVolunteerName = null,
+  onClassSlotChange,
   onCancel,
   onConfirm,
 }: Omit<UjatRegionDirectAssignModalProps, 'variant'>) {
   const [classSlotId, setClassSlotId] = useState<string | undefined>(undefined)
   const [volunteerId, setVolunteerId] = useState<string | undefined>(undefined)
+  const onClassSlotChangeRef = useRef(onClassSlotChange)
+  useLayoutEffect(() => {
+    onClassSlotChangeRef.current = onClassSlotChange
+  }, [onClassSlotChange])
 
-  const volunteerOptions = useMemo(() => {
-    if (!classSlotId) return []
-    return getVolunteerOptions(classSlotId)
-  }, [classSlotId, getVolunteerOptions])
+  const selectClassSlot = useCallback((next: string | undefined) => {
+    setClassSlotId(next)
+    setVolunteerId(undefined)
+    onClassSlotChangeRef.current(next)
+  }, [])
 
   useEffect(() => {
     if (!open) return
-    setClassSlotId(undefined)
-    setVolunteerId(undefined)
-  }, [open])
+    selectClassSlot(undefined)
+  }, [open, selectClassSlot])
 
-  useEffect(() => {
-    setVolunteerId(undefined)
-  }, [classSlotId])
+  const isSecondaryAssign = Boolean(classSlotId && existingPrimaryVolunteerName)
 
   const canConfirm = useMemo(() => {
-    if (!classSlotId || !volunteerId) return false
+    if (!classSlotId || !volunteerId || volunteerOptionsLoading) return false
     return (
-      classOptions.some(option => option.value === classSlotId) &&
+      classOptions.some(option => option.value === classSlotId && !option.disabled) &&
       volunteerOptions.some(option => option.value === volunteerId)
     )
-  }, [classOptions, classSlotId, volunteerId, volunteerOptions])
+  }, [classOptions, classSlotId, volunteerId, volunteerOptions, volunteerOptionsLoading])
 
   const handleCancel = useCallback(() => {
-    setClassSlotId(undefined)
-    setVolunteerId(undefined)
+    selectClassSlot(undefined)
     onCancel()
-  }, [onCancel])
+  }, [onCancel, selectClassSlot])
 
   const handleConfirm = useCallback(() => {
     if (!canConfirm || !classSlotId || !volunteerId) return
     onConfirm({ classSlotId, volunteerId })
-    setClassSlotId(undefined)
-    setVolunteerId(undefined)
-  }, [canConfirm, classSlotId, onConfirm, volunteerId])
+    selectClassSlot(undefined)
+  }, [canConfirm, classSlotId, onConfirm, selectClassSlot, volunteerId])
 
   return (
     <AssignModalShell
       open={open}
       title="교육일 직접 배정"
-      description="직접 배정할 교육 학급을 선택 후 봉사자를 배정해 주세요."
-      confirmLabel="직접 배정"
+      description={
+        isSecondaryAssign
+          ? `**[${existingPrimaryVolunteerName}]** 봉사자 1인이 배정된 학급입니다. 함께 진행할 두 번째 봉사자를 선택해 주세요.`
+          : '직접 배정할 교육 학급을 선택 후 봉사자를 배정해 주세요.'
+      }
+      confirmLabel={isSecondaryAssign ? '두 번째 봉사자 배정' : '직접 배정'}
       canConfirm={canConfirm}
       onCancel={handleCancel}
       onConfirm={handleConfirm}
@@ -227,30 +261,32 @@ function UjatRegionDirectAssignModalContent({
           placeholder="직접 배정할 교육 학급을 선택해 주세요"
           value={classSlotId}
           disabled={classOptions.length === 0}
-          onChange={value => {
-            setClassSlotId(value == null ? undefined : String(value))
-            setVolunteerId(undefined)
-          }}
+          onChange={value => selectClassSlot(value == null ? undefined : String(value))}
           options={[...classOptions]}
           aria-label="교육 학급"
         />
       </AssignModalField>
-      <AssignModalField label="봉사자명">
+      <AssignModalField label={isSecondaryAssign ? '두 번째 봉사자' : '봉사자명'}>
         <CmsSelect
           inputSize="large"
           width="100%"
           withAllOption={false}
-          placeholder={
-            classSlotId
-              ? '배정할 봉사자명을 선택해 주세요'
-              : '교육 학급을 먼저 선택해 주세요'
-          }
+          placeholder={resolveRegionDirectVolunteerPlaceholder({
+            classSlotId,
+            loading: volunteerOptionsLoading,
+            optionCount: volunteerOptions.length,
+          })}
           value={volunteerId}
-          disabled={!classSlotId || volunteerOptions.length === 0}
+          disabled={!classSlotId || volunteerOptionsLoading || volunteerOptions.length === 0}
           onChange={value => setVolunteerId(value == null ? undefined : String(value))}
           options={[...volunteerOptions]}
-          aria-label="봉사자명"
+          aria-label={isSecondaryAssign ? '두 번째 봉사자' : '봉사자명'}
         />
+        {classSlotId && volunteerOptionsError ? (
+          <span className="ujat-assignment-assign-modal__error" role="alert">
+            {volunteerOptionsError}
+          </span>
+        ) : null}
       </AssignModalField>
     </AssignModalShell>
   )
