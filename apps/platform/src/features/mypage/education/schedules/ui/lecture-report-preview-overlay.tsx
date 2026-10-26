@@ -68,10 +68,20 @@ export function LectureReportPreviewOverlay({
 
   useEffect(() => {
     if (!open) return
+    const body = document.body
     const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const previousPaddingRight = body.style.paddingRight
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    const currentPaddingRight = Number.parseFloat(window.getComputedStyle(body).paddingRight) || 0
+
+    body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${currentPaddingRight + scrollbarWidth}px`
+    }
+
     return () => {
-      document.body.style.overflow = previousOverflow
+      body.style.overflow = previousOverflow
+      body.style.paddingRight = previousPaddingRight
     }
   }, [open])
 

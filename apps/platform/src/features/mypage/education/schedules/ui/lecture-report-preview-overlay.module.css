@@ -90,6 +90,29 @@
   pointer-events: auto;
 }
 
+/* Figma preview chrome: the compact pager uses outlined square controls. */
+.pagination :global(button) {
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-default, #dfe4e6);
+  background: var(--color-neutral-white, #fff);
+}
+
+.pagination :global(button:hover:not(:disabled)) {
+  border-color: var(--color-primary-500, #01a1af);
+  background: var(--color-neutral-white, #fff);
+}
+
+.pagination :global(button:disabled) {
+  background: var(--color-neutral-white, #fff);
+}
+
+@media (--bp-pc-up) {
+  .pagination :global(button) {
+    width: 36px;
+    height: 36px;
+  }
+}
+
 .state {
   padding-top: 80px;
 }
