@@ -1,5 +1,6 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
+import { FILE_UPLOAD_MAX_BYTES } from '@/shared/lib/file-upload-policy'
 import { resolvePortalPresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 import { isAxiosError } from 'axios'
 
@@ -48,7 +49,6 @@ const FAILED_SCAN_STATUSES = new Set(['INFECTED', 'FAILED'])
 const TERMINAL_FILE_STATUSES = new Set(['DELETED', 'EXPIRED', 'REMOVED', 'PURGED'])
 
 export const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-const VOLUNTEER_EVIDENCE_MAX_BYTES = 15 * 1024 * 1024
 
 function fileExtension(fileName: string): string {
   const name = fileName.trim().toLowerCase()
@@ -111,7 +111,7 @@ export class MemberFileEmptyError extends Error {
 export class MemberFileTooLargeError extends Error {
   readonly maxBytes: number
 
-  constructor(maxBytes = VOLUNTEER_EVIDENCE_MAX_BYTES) {
+  constructor(maxBytes = FILE_UPLOAD_MAX_BYTES) {
     const maxMegabytes = maxBytes / (1024 * 1024)
     super(`파일은 ${maxMegabytes}MB 이하만 첨부할 수 있습니다.`)
     this.name = 'MemberFileTooLargeError'
@@ -265,14 +265,9 @@ export async function uploadMemberPortalFile(input: {
   if (!Number.isFinite(fileSize) || fileSize <= 0) {
     throw new MemberFileEmptyError()
   }
-  if (
-    input.filePurpose === 'VOLUNTEER_APPLICATION_EVIDENCE' &&
-    fileSize > VOLUNTEER_EVIDENCE_MAX_BYTES
-  ) {
-    throw new MemberFileTooLargeError()
-  }
-  if (input.policy?.maxBytes != null && fileSize > input.policy.maxBytes) {
-    throw new MemberFileTooLargeError(input.policy.maxBytes)
+  const maxBytes = input.policy?.maxBytes ?? FILE_UPLOAD_MAX_BYTES
+  if (fileSize > maxBytes) {
+    throw new MemberFileTooLargeError(maxBytes)
   }
   const contentType = input.policy
     ? resolvePolicyFileType(input.file, input.policy)

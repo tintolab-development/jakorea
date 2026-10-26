@@ -17,6 +17,7 @@ import {
   PFTextInput,
   PFToggle,
 } from '@/shared/ui'
+import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
 import { useCreatePublicCareerTalentApplication } from '../api/hooks'
 import { CAREERS_PATH } from '../lib/constants'
 import {
@@ -169,6 +170,11 @@ export function TalentApplyForm() {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null
     event.target.value = ''
+    const sizeError = file ? validateUploadFileSize(file) : null
+    if (sizeError) {
+      setAlert({ title: '안내', description: sizeError })
+      return
+    }
     setAttachedFile(file)
     setAttachedFileName(file?.name ?? '')
   }

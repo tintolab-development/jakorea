@@ -1,6 +1,7 @@
 /** BE `student-roster-import-contract`와 동일한 Portal 업로드 제한 */
+import { FILE_UPLOAD_MAX_BYTES } from '../../../../../shared/lib/file-upload-policy.ts'
 
-export const STUDENT_ROSTER_UPLOAD_MAX_BYTES = 20 * 1024 * 1024
+export const STUDENT_ROSTER_UPLOAD_MAX_BYTES = FILE_UPLOAD_MAX_BYTES
 export const STUDENT_ROSTER_UPLOAD_MAX_ROWS = 500
 
 export const STUDENT_ROSTER_FILE_ACCEPT =

@@ -7,6 +7,7 @@ import {
   PORTAL_SURVEY_FORM_TYPE_QUERIES,
 } from '../lib/portal-form-list'
 import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
+import { FILE_UPLOAD_MAX_COUNT } from '@/shared/lib/file-upload-policy'
 import type { ProgramApplicationType } from './types'
 
 const APPLICATIONS_PATH = '/api/portal/me/program-applications'
@@ -281,7 +282,8 @@ export type PortalAbsenceReasonSubmissionInput = {
 }
 
 export const PORTAL_ABSENCE_REASON_MAX_LENGTH = 2_000
-export const PORTAL_ABSENCE_REASON_MAX_FILE_COUNT = 20
+/** Platform 업로드 정책(10개). 서버 한도(20개)보다 좁다. */
+export const PORTAL_ABSENCE_REASON_MAX_FILE_COUNT = FILE_UPLOAD_MAX_COUNT
 
 function normalizePortalEducationScheduleScopeStatus(
   value: string | null | undefined

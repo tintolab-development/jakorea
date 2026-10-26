@@ -30,6 +30,14 @@ import {
   PFText,
   PFTextarea,
 } from '@/shared/ui'
+import {
+  FILE_UPLOAD_MAX_BYTES,
+  FILE_UPLOAD_MAX_TOTAL_BYTES,
+  FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE,
+  FILE_UPLOAD_TOTAL_EXCEEDED_MESSAGE,
+  formatMultiFileUploadHint,
+  sumUploadFileBytes,
+} from '@/shared/lib/file-upload-policy'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import {
   PORTAL_ABSENCE_REASON_MAX_FILE_COUNT,
@@ -42,12 +50,11 @@ import styles from './absence-reason-modal.module.css'
 
 const ABSENCE_REASON_FILE_PURPOSE = 'ABSENCE_EVIDENCE'
 const ABSENCE_REASON_ACCEPT = '.jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf'
-const ABSENCE_REASON_MAX_BYTES = 20 * 1024 * 1024
 const ABSENCE_REASON_MAX_FILES = PORTAL_ABSENCE_REASON_MAX_FILE_COUNT
 const ABSENCE_REASON_FILE_TYPES_LABEL = 'JPG, JPEG, PNG, PDF'
 
 const ABSENCE_REASON_FILE_POLICY: MemberFileUploadPolicy = {
-  maxBytes: ABSENCE_REASON_MAX_BYTES,
+  maxBytes: FILE_UPLOAD_MAX_BYTES,
   allowedFileTypes: [
     { extensions: ['jpg', 'jpeg'], contentType: 'image/jpeg' },
     { extensions: ['png'], contentType: 'image/png' },
@@ -127,7 +134,7 @@ function uploadErrorMessage(error: unknown): string {
     case 'MEMBER_FILE_TYPE_NOT_ALLOWED':
       return `${ABSENCE_REASON_FILE_TYPES_LABEL} 파일만 첨부할 수 있습니다.`
     case 'MEMBER_FILE_SIZE_EXCEEDED':
-      return '파일은 20MB 이하만 첨부할 수 있습니다.'
+      return FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE
     case 'MEMBER_FILE_CONFIRM_NOT_ALLOWED':
       return '파일 업로드 확정에 실패했습니다. 다시 첨부해 주세요.'
     case 'MEMBER_FILE_NOT_OWNED':
@@ -157,7 +164,7 @@ function uploadErrorMessage(error: unknown): string {
     return '보안 정책상 등록할 수 없는 파일입니다. 다른 파일로 다시 시도해 주세요.'
   }
   if (error instanceof MemberFileTooLargeError) {
-    return '파일은 20MB 이하만 첨부할 수 있습니다.'
+    return FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE
   }
   if (error instanceof MemberFileEmptyError) {
     return '빈 파일은 업로드할 수 없습니다. 파일을 다시 선택해 주세요.'
@@ -363,6 +370,7 @@ export function EducationAbsenceReasonModal({
     const rejectedMessages = new Set<string>()
     let duplicateCount = 0
     let overflowCount = 0
+    let totalBytes = sumUploadFileBytes(files.map(item => ({ size: item.fileSize })))
 
     for (const file of selectedFiles) {
       const identity = fileIdentity(file)
@@ -379,6 +387,11 @@ export function EducationAbsenceReasonModal({
         rejectedMessages.add(invalidMessage)
         continue
       }
+      if (totalBytes + file.size > FILE_UPLOAD_MAX_TOTAL_BYTES) {
+        rejectedMessages.add(FILE_UPLOAD_TOTAL_EXCEEDED_MESSAGE)
+        continue
+      }
+      totalBytes += file.size
       incomingFileIdentities.add(identity)
       filesToUpload.push(file)
     }
@@ -537,7 +550,7 @@ export function EducationAbsenceReasonModal({
             </PFButton>
             <PFDescriptionList
               items={[
-                `파일은 최대 20MB까지 ${ABSENCE_REASON_FILE_TYPES_LABEL} 형식만 등록 가능합니다.`,
+                formatMultiFileUploadHint(ABSENCE_REASON_FILE_TYPES_LABEL),
                 '첨부파일명에 특수문자가 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
               ]}
             />

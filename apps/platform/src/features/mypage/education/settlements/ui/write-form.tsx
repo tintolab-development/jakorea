@@ -62,6 +62,7 @@ import {
   useIndividualSettlementSchedulesQuery,
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { isInstructorMypageProfile } from '@/features/mypage/lib/member-profile'
+import { validateUploadBatch } from '@/shared/lib/file-upload-policy'
 import {
   MemberFileTooLargeError,
   MemberFileTypeNotAllowedError,
@@ -86,11 +87,6 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import styles from './write-form.module.css'
-
-const INSTRUCTOR_RECEIPT_HINTS = [
-  '파일은 최대 15M까지 JPG, PNG, Excel, PDF, Word 형식만 등록 가능합니다.',
-  '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-] as const
 
 type TripType = 'one_way' | 'round_trip'
 
@@ -202,7 +198,7 @@ function ReceiptUpload({
   const visibleNames = uploadEnabled
     ? (attachments ?? []).map(item => item.fileName)
     : fileNames
-  const hints = uploadEnabled ? RECEIPT_UPLOAD_HINTS : INSTRUCTOR_RECEIPT_HINTS
+  const hints = RECEIPT_UPLOAD_HINTS
 
   const removeName = (index: number) => {
     if (uploadEnabled) {
@@ -243,6 +239,15 @@ function ReceiptUpload({
             const files = Array.from(event.target.files ?? [])
             event.target.value = ''
             if (files.length === 0) return
+            const policyError = validateUploadBatch({
+              currentCount: visibleNames.length,
+              currentTotalBytes: 0,
+              incoming: files,
+            })
+            if (policyError) {
+              onError(policyError)
+              return
+            }
             if (!uploadEnabled) {
               onFileNamesChange([...fileNames, ...files.map(file => file.name)])
               return

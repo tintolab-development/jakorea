@@ -19,6 +19,12 @@ import {
 } from '@/features/mypage/education/surveys/lib/survey-section-title'
 import type { SurveySidecarState } from '@/features/mypage/education/surveys/lib/survey-sidecar'
 import { PlatformSurveyParagraphBody } from '@/features/mypage/education/surveys/ui/platform-survey-paragraph-body'
+import {
+  FILE_UPLOAD_MAX_COUNT,
+  FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE,
+  sumUploadFileBytes,
+  validateUploadBatch,
+} from '@/shared/lib/file-upload-policy'
 import { PFButton, PFFormSection, PFText } from '@/shared/ui'
 import {
   fileQuestionKey,
@@ -248,18 +254,30 @@ function DocumentFileField({
   const handleSelect = (fileList: FileList | null) => {
     const file = fileList?.[0]
     if (!file || disabled) return
+    const policyError = validateUploadBatch({
+      currentCount: ownFiles.length,
+      currentTotalBytes: sumUploadFileBytes(ownFiles.map(item => ({ size: item.fileSize ?? 0 }))),
+      incoming: [file],
+    })
+    if (policyError) {
+      setUploadError(policyError)
+      return
+    }
     setUploadError(null)
     setUploading(true)
     void uploadMemberPortalFile({ file, filePurpose: 'ASSIGNMENT_ATTACHMENT' })
       .then(fileObjectId => {
-        onFilesChange([...files, { questionKey, fileObjectId, fileName: file.name }])
+        onFilesChange([
+          ...files,
+          { questionKey, fileObjectId, fileName: file.name, fileSize: file.size },
+        ])
       })
       .catch((error: unknown) => {
         setUploadError(
           error instanceof MemberFileRejectedError
             ? '보안 정책상 등록할 수 없는 파일입니다. 다른 파일로 다시 시도해 주세요.'
             : error instanceof MemberFileTooLargeError
-              ? '파일이 너무 큽니다. 다른 파일로 다시 시도해 주세요.'
+              ? FILE_UPLOAD_SIZE_EXCEEDED_MESSAGE
               : error instanceof MemberFileEmptyError || isMemberFileSizeUploadError(error)
                 ? '빈 파일은 업로드할 수 없습니다. 파일을 다시 선택해 주세요.'
                 : '파일 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
@@ -275,7 +293,7 @@ function DocumentFileField({
           <input
             className={styles.fileInput}
             type="file"
-            disabled={uploading}
+            disabled={uploading || ownFiles.length >= FILE_UPLOAD_MAX_COUNT}
             onChange={event => {
               handleSelect(event.target.files)
               event.target.value = ''
@@ -285,7 +303,7 @@ function DocumentFileField({
             type="button"
             variant="secondary"
             size="medium"
-            disabled={uploading}
+            disabled={uploading || ownFiles.length >= FILE_UPLOAD_MAX_COUNT}
             onClick={event => {
               const input = event.currentTarget.parentElement?.querySelector('input[type="file"]')
               if (input instanceof HTMLInputElement) input.click()
