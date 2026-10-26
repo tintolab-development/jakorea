@@ -9,6 +9,9 @@ export type PortalStudentRosterItem = {
   grade?: string | null
   className?: string | null
   studentNo?: number | null
+  /** 소유 기관 Portal 조회에서만 원문. 화면 표시는 maskedPhone/maskedEmail 기준 */
+  phone?: string | null
+  email?: string | null
   maskedPhone?: string | null
   maskedEmail?: string | null
   notes?: string | null
