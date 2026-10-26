@@ -1450,15 +1450,33 @@ export function useUserDetailController({
   }, [])
 
   const confirmInstructorPermissionRevoke = useCallback(
-    async (payload: { reason: string; notifyTiming: InstructorPermissionRevokeNotifyTiming }) => {
+    async (payload: {
+      reason: string
+      notifyTiming: InstructorPermissionRevokeNotifyTiming
+      scheduledAt?: string
+    }) => {
       if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
       const reason = payload.reason.trim()
       if (!reason) return
+      if (
+        payload.notifyTiming === 'manual' &&
+        (!payload.scheduledAt || new Date(payload.scheduledAt).getTime() <= Date.now())
+      ) {
+        showAlert({
+          title: '안내',
+          content: '직접 설정 알림은 현재 시각 이후의 예약 시각을 입력해 주세요.',
+        })
+        return
+      }
 
       try {
         const revoked = await revokeInstructorPermission(
           displayUser.id,
-          { reason, revokeReason: reason },
+          {
+            reason,
+            revokeReason: reason,
+            scheduledAt: payload.notifyTiming === 'manual' ? payload.scheduledAt : undefined,
+          },
           { memberId: displayUser.memberId }
         )
         if (isMembersRemoteEnabled()) {
@@ -1475,13 +1493,17 @@ export function useUserDetailController({
         }
         onMemberBasicInfoSaved?.(revoked)
         setInstructorPermissionRevokeOpen(false)
+        showAlert({
+          title: '권한 박탈 완료',
+          content: '강사 권한 박탈이 완료되었습니다.',
+        })
       } catch (error) {
         handleError(error, {
           defaultMessage: getMemberApiErrorMessage(error, '강사 권한 박탈에 실패했습니다.'),
         })
       }
     },
-    [displayUser, onMemberBasicInfoSaved, queryClient]
+    [displayUser, onMemberBasicInfoSaved, queryClient, showAlert]
   )
 
   const openJaGradeEvaluation = useCallback(() => {

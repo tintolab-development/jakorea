@@ -29,15 +29,21 @@ import {
 } from './constants'
 import type { BasicInfoSectionContext } from './types'
 import { formatDate } from '@/shared/utils'
+import { activityChangeCountView } from '../status'
 
 /** 개인 회원 — 가입일·소셜 (상단 분리 카드) */
 export function AllUsersMetaSection(ctx: BasicInfoSectionContext) {
   const { user } = ctx
   return (
-    <EditableRow type="double">
-      <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
-    </EditableRow>
+    <>
+      <EditableRow type="double">
+        <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
+        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
+      </EditableRow>
+      <EditableRow type="single">
+        <EditableField label="활동 변경 횟수" readOnlyDisplay view={activityChangeCountView(user)} />
+      </EditableRow>
+    </>
   )
 }
 

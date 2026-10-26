@@ -38,6 +38,18 @@
   gap: 32px;
 }
 
+.instructor-permission-revoke-modal__scheduled-at {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  padding: 0 12px;
+  border: 1px solid var(--border-line, #d9d9d9);
+  border-radius: 6px;
+  color: var(--main-bk, #3d3d3d);
+  font: inherit;
+  box-sizing: border-box;
+}
+
 .instructor-permission-revoke-modal__footer {
   display: flex;
   justify-content: flex-end;

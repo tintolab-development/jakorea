@@ -93,6 +93,7 @@ export interface UserDetailFullpageShellValue {
   onConfirmInstructorPermissionRevoke: (payload: {
     reason: string
     notifyTiming: InstructorPermissionRevokeNotifyTiming
+    scheduledAt?: string
   }) => void | Promise<void>
   onPermissionResendNotification?: (ctx: {
     userId: string

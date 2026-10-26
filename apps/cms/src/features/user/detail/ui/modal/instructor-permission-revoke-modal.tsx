@@ -13,6 +13,7 @@ export interface InstructorPermissionRevokeModalProps {
   onConfirm: (payload: {
     reason: string
     notifyTiming: InstructorPermissionRevokeNotifyTiming
+    scheduledAt?: string
   }) => void | Promise<void>
 }
 
@@ -24,25 +25,43 @@ export function InstructorPermissionRevokeModal({
 }: InstructorPermissionRevokeModalProps) {
   const [notifyTiming, setNotifyTiming] =
     useState<InstructorPermissionRevokeNotifyTiming>('immediate')
+  const [scheduledAt, setScheduledAt] = useState('')
   const [reason, setReason] = useState('')
   const [confirmLoading, setConfirmLoading] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setNotifyTiming('immediate')
+    setScheduledAt('')
     setReason('')
     setConfirmLoading(false)
   }, [open])
 
   const trimmedReason = reason.trim()
-  const canConfirm = trimmedReason.length > 0 && !confirmLoading
+  const now = new Date()
+  now.setSeconds(0, 0)
+  const pad = (value: number) => String(value).padStart(2, '0')
+  const scheduledAtMin = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(
+    now.getHours()
+  )}:${pad(now.getMinutes())}`
+  const isManualScheduleValid =
+    notifyTiming !== 'manual' ||
+    (scheduledAt !== '' && new Date(scheduledAt).getTime() > Date.now())
+  const canConfirm = trimmedReason.length > 0 && isManualScheduleValid && !confirmLoading
   const displayName = instructorName.trim() || '강사'
 
   const handleConfirm = async () => {
     if (!trimmedReason || confirmLoading) return
     setConfirmLoading(true)
     try {
-      await onConfirm({ reason: trimmedReason, notifyTiming })
+      await onConfirm({
+        reason: trimmedReason,
+        notifyTiming,
+        scheduledAt:
+          notifyTiming === 'manual' && scheduledAt
+            ? new Date(scheduledAt).toISOString()
+            : undefined,
+      })
     } finally {
       setConfirmLoading(false)
     }
@@ -103,6 +122,17 @@ export function InstructorPermissionRevokeModal({
             <CmsRadio value="immediate">즉시</CmsRadio>
             <CmsRadio value="manual">직접 설정</CmsRadio>
           </CmsRadio.Group>
+          {notifyTiming === 'manual' ? (
+            <input
+              className="instructor-permission-revoke-modal__scheduled-at"
+              type="datetime-local"
+              value={scheduledAt}
+              min={scheduledAtMin}
+              onChange={e => setScheduledAt(e.target.value)}
+              disabled={confirmLoading}
+              aria-label="알림 발송 예약 시각"
+            />
+          ) : null}
         </div>
 
         <div className="instructor-permission-revoke-modal__field">

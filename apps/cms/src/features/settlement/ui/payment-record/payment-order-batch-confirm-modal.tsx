@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { type Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
@@ -86,6 +86,7 @@ export function PaymentOrderBatchConfirmModal({
             className="payment-order-batch-confirm-modal__datepicker"
             value={scheduledDate}
             onChange={d => setScheduledDate(d)}
+            disabledDate={current => current != null && current.isBefore(dayjs().startOf('day'))}
             inputSize="medium"
             allowClear={false}
           />

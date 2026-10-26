@@ -1563,7 +1563,7 @@ export async function updateUserProgramRole(
  */
 export async function revokeInstructorPermission(
   userId: UUID,
-  payload: { reason: string; revokeReason?: string },
+  payload: { reason: string; revokeReason?: string; scheduledAt?: string },
   options?: { memberId?: number }
 ): Promise<Omit<User, 'password'>> {
   if (isMembersRemoteEnabled()) {
@@ -1571,6 +1571,7 @@ export async function revokeInstructorPermission(
     await revokeInstructorPermissionRemote(memberId, {
       reason: payload.reason,
       revokeReason: payload.revokeReason ?? payload.reason,
+      scheduledAt: payload.scheduledAt,
     })
     const refreshed = await getUserById(userId, { memberId })
     if (!refreshed) {

@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { type Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
@@ -101,6 +101,7 @@ export function PaymentOrderPaymentConfirmationModal({
               className="payment-order-payment-confirm__date-picker"
               value={expectedDate}
               onChange={d => d && setExpectedDate(d)}
+              disabledDate={current => current.isBefore(dayjs().startOf('day'))}
               format={formatKoreanDateWithWeekday}
               suffixIcon={<CalendarOutlined />}
               allowClear={false}

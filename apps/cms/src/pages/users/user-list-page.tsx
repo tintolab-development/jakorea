@@ -370,14 +370,19 @@ export function UserListPage() {
     []
   )
 
+  const selectedUsersForExcel = useMemo(
+    () => resolveSelectedListUsers(listUsers, selectedRowKeys, selectedRowsSnapshot),
+    [listUsers, selectedRowKeys, selectedRowsSnapshot]
+  )
+
   const userExcelData = useMemo(
     () =>
-      listUsers.map(user => ({
+      selectedUsersForExcel.map(user => ({
         name: user.name,
         email: user.email,
         phone: user.phone ?? '',
       })),
-    [listUsers]
+    [selectedUsersForExcel]
   )
 
   /**
@@ -1314,6 +1319,9 @@ export function UserListPage() {
         excelExport={{
           columns: userExcelColumns,
           data: userExcelData,
+          alertOnEmpty: true,
+          emptyAlertTitle: '항목 선택 안내',
+          emptyAlertContent: '엑셀로 내보낼 항목을 선택해 주세요.',
         }}
       >
         <UserList

@@ -105,7 +105,7 @@ export interface MembersPermissionListProps {
       | { mode: 'single'; userId: string; requestId?: number; displayName: string }
       | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
   ) => void
-  /** 강사 탭: 행 선택 후 [승인 반려] — 승인 대기·승인 완료·신청 반려 모두 재반려 가능 */
+  /** 강사 탭: 행 선택 후 [승인 반려] — 승인 대기 행만 대상 */
   onInstructorRejectRequest?: (
     ctx:
       | { mode: 'single'; userId: string; requestId?: number; displayName: string }
@@ -312,19 +312,14 @@ export const MembersPermissionList = forwardRef<
     return out
   }, [])
 
-  /** [승인 반려]: 승인 완료·신청 반려인 경우도 다시 반려 처리 가능 */
+  /** [승인 반려]: 승인 대기(PENDING) 행만 반려 처리 대상 */
   const resolveRejectableRowsForKeys = useCallback((keys: string[]) => {
     if (keys.length === 0) return []
     const byId = new Map(rowsRef.current.map(r => [String(r.id), r]))
     const out: MemberPermissionApplicationRow[] = []
     for (const k of keys) {
       const r = byId.get(String(k))
-      if (
-        r != null &&
-        (r.approvalStatus === 'PENDING' ||
-          r.approvalStatus === 'APPROVED' ||
-          r.approvalStatus === 'REJECTED')
-      ) {
+      if (r != null && r.approvalStatus === 'PENDING') {
         out.push(r)
       }
     }
@@ -426,8 +421,7 @@ export const MembersPermissionList = forwardRef<
     }
     if (!guardListApproveAction()) return
 
-    const rejectableRows = resolveRejectableRowsForKeys(keys)
-    const pendingRows = rejectableRows.filter(r => r.approvalStatus === 'PENDING')
+    const pendingRows = resolveRejectableRowsForKeys(keys)
     const hasNonPendingInSelection = pendingRows.length !== keys.length
     const isBulkSelection = keys.length >= 2
 
@@ -665,7 +659,10 @@ export const MembersPermissionList = forwardRef<
         }
         excelExport={{
           columns,
-          data: tableData,
+          data: tableData.filter(row => selectedRowKeys.some(key => String(key) === String(row.id))),
+          alertOnEmpty: true,
+          emptyAlertTitle: '항목 선택 안내',
+          emptyAlertContent: '엑셀로 내보낼 항목을 선택해 주세요.',
         }}
       >
         <CmsDataTable<MemberPermissionApplicationRow>
@@ -684,6 +681,7 @@ export const MembersPermissionList = forwardRef<
           rowSelection={{
             columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
+            getCheckboxProps: record => ({ disabled: record.approvalStatus !== 'PENDING' }),
             onChange: keys => {
               const next = keys.map(k => String(k))
               selectedRowKeysRef.current = next
