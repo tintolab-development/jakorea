@@ -15,25 +15,23 @@ export interface InstructorJaEvaluationResponse {
   instructorMemberId?: number;
   evaluationId?: number;
   criteria?: CriteriaScore[];
-  /** 4개 항목 합 ×5 (20~100). 평가 전 null */
-  fixedEvaluationScore?: number | null;
-  /** 취소·보고서 감점의 합 (0 이하) */
+  fixedEvaluationScore?: number;
+  /** 행정능력 자동 감점 합계(cancellationAdjustmentScore + lateReportAdjustmentScore). 0 이하. */
   administrativeAdjustmentScore?: number;
-  /** 강사 사유 취소 감점 (0, -5, -10 …). projection 없으면 null */
-  cancellationAdjustmentScore?: number | null;
-  /** 강의보고서 기한 미준수 감점 (0, -5, -10 …). projection 없으면 null */
-  lateReportAdjustmentScore?: number | null;
-  /** 호환용. 항상 0. 화면에서 행 제거/숨김. */
+  /** CMS에서 강사 사유(faultParty=USER)로 처리한 취소 감점. 2회당 -5점. */
+  cancellationAdjustmentScore?: number;
+  /** 강의보고서 제출기한 미준수 감점. 2회당 -5점. 취소 건수와 합산하지 않습니다. */
+  lateReportAdjustmentScore?: number;
+  /** 호환용 필드. 정산 신청 기한 미준수는 JA 평가 등급 감점 대상이 아니므로 산정 결과는 항상 0입니다. */
   lateSettlementAdjustmentScore?: number;
-  /** fixed + administrative. 음수 가능. FE에서 0으로 clamp하지 않음. */
-  totalScore?: number | null;
-  /** 서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). 평가 전 null. */
+  totalScore?: number;
+  /** 서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). */
   currentGrade?: InstructorJaEvaluationResponseCurrentGrade;
   evaluatedAt?: string;
   calculatedAt?: string;
   gradeChangedAt?: string;
-  /** 활성 정책 버전. 고객사 최종은 CLIENT_FINAL_2026-10-20. 평가 이력 없으면 활성 정책 버전, 미초기화면 null. */
-  policyVersion?: string | null;
-  /** true면 평가 가능. false일 때만 정책 미확정 안내. 정책 버전 문자열로 판단하지 않음. */
+  /** 활성 정책 버전. 정책 미초기화면 null. */
+  policyVersion?: string;
+  /** false면 전역 JA 등급 정책 미초기화. POST 평가 완료 불가. GET은 200으로 이 플래그만 확인. */
   policyReady?: boolean;
 }

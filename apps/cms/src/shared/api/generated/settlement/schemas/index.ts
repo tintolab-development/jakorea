@@ -637,8 +637,6 @@ export * from './inquiryResponseStatus';
 export * from './institutionScheduleConfirmRequest';
 export * from './instructorActivityTypeResponse';
 export * from './instructorActivityTypeUpsertRequest';
-export * from './instructorApplicationApprovalCancellationRequest';
-export * from './instructorApplicationApprovalCancellationRequestFaultParty';
 export * from './instructorApplicationDetailResponse';
 export * from './instructorApplicationListItemResponse';
 export * from './instructorAssignmentCalendarResponse';
@@ -877,8 +875,6 @@ export * from './organizationApplicationListItemResponseRequestedEducationFormat
 export * from './organizationApplicationListItemResponseScheduleConfirmStatus';
 export * from './organizationApplicationNotificationResendRequest';
 export * from './organizationApplicationRejectRequest';
-export * from './organizationApplicationSession';
-export * from './organizationApplicationSessionResponse';
 export * from './organizationApplicationUpdateRequest';
 export * from './organizationGuidanceAnswersPatchRequest';
 export * from './organizationGuidanceAnswersPatchRequestAnswers';
