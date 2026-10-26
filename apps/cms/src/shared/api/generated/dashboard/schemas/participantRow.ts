@@ -17,6 +17,8 @@ export interface ParticipantRow {
   affiliation?: string;
   organizationName?: string;
   grade?: string;
+  teamRole?: string;
+  teamName?: string;
   submissionStatus?: string;
   remarkKind?: string;
   remarkAt?: string;

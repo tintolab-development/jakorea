@@ -1,4 +1,5 @@
 import type { EducationScheduleItem } from '../model/types'
+import type { ProgramApplicationType } from '../../applications/api/types'
 import {
   canSubmitEducationAbsenceReason,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
@@ -15,9 +16,14 @@ import {
 } from '../../shared'
 import { EducationScheduleAssignmentBlock } from './assignment-block'
 import { PFButton, PFStateBadge, PFText } from '@/shared/ui'
+import styles from './row.module.css'
 
 type EducationScheduleRowProps = {
   item: EducationScheduleItem
+  applicationType?: ProgramApplicationType | null
+  applicationId?: string | null
+  /** 과제 블록 노출 — 강사 신청은 false */
+  showAssignment?: boolean
   onAbsenceReasonSubmit?: (item: EducationScheduleItem) => void
   /** 결석 사유 텍스트 노출 (교육받은 교사 신청 건은 false) */
   showAbsenceReason?: boolean
@@ -25,20 +31,23 @@ type EducationScheduleRowProps = {
 
 export function EducationScheduleRow({
   item,
+  applicationType,
+  applicationId,
+  showAssignment: assignmentAllowed = true,
   onAbsenceReasonSubmit,
   showAbsenceReason = true,
 }: EducationScheduleRowProps) {
   const progress = resolveEducationScheduleProgressStatus(item.heldAt)
   const heldLabel = resolveEducationScheduleDateLabel(item)
-  const showAssignment = shouldShowEducationAssignment(item)
+  const showAssignment = assignmentAllowed && shouldShowEducationAssignment(item)
   const hasOperationalSchedule = item.scheduleId !== null
   const showAbsenceSubmit =
     onAbsenceReasonSubmit != null &&
     hasOperationalSchedule &&
     canSubmitEducationAbsenceReason(progress, item.attendanceStatus, item.availableActions)
   const attendance = hasOperationalSchedule ? item.attendanceStatus : null
-  const rowLabel = item.sessionLabel?.trim() || item.scheduleLabel?.trim()
-  const subtitle = rowLabel && rowLabel !== item.title ? `${rowLabel} ${item.title}` : item.title
+  const subtitle = item.rowLabel?.trim() || '-'
+  const sessionHeading = subtitle === '-' ? heldLabel : `${heldLabel}, ${subtitle}`
   const absenceReason =
     showAbsenceReason && hasOperationalSchedule ? item.absenceReason?.trim() : undefined
 
@@ -53,12 +62,36 @@ export function EducationScheduleRow({
           }
           date={heldLabel}
           subtitle={
-            <PFText as="span" typo="bd-lg-sb" color="primary-500">
-              {subtitle}
-            </PFText>
+            <>
+              <PFText as="span" typo="bd-lg-sb" color="primary-500">
+                {subtitle}
+              </PFText>
+              {item.team ? (
+                <span className={styles.teamInfo}>
+                  <span className={styles.teamDivider} aria-hidden="true" />
+                  <span className={styles.teamField}>
+                    <PFText as="span" typo="bd-lg-rg" color="neutral-cool-500">
+                      역할
+                    </PFText>
+                    <PFText as="span" typo="bd-lg-rg" color="black">
+                      {item.team.roleLabel}
+                    </PFText>
+                  </span>
+                  <span className={styles.teamDivider} aria-hidden="true" />
+                  <span className={styles.teamField}>
+                    <PFText as="span" typo="bd-lg-rg" color="neutral-cool-500">
+                      팀명
+                    </PFText>
+                    <PFText as="span" typo="bd-lg-rg" color="black">
+                      {item.team.teamName}
+                    </PFText>
+                  </span>
+                </span>
+              ) : null}
+            </>
           }
           aside={
-            <>
+            <span className={styles.aside}>
               {showAbsenceSubmit ? (
                 <PFButton
                   type="button"
@@ -82,18 +115,18 @@ export function EducationScheduleRow({
                   iconSrc={attendance === 'present' ? checkOnSmallUrl : undefined}
                   extra={
                     absenceReason ? (
-                      <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
+                      <PFText as="span" typo="bd-md-rg" color="neutral-cool-500">
                         {absenceReason}
                       </PFText>
                     ) : null
                   }
                 />
               ) : absenceReason ? (
-                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500">
+                <PFText as="span" typo="bd-md-rg" color="neutral-cool-500">
                   {absenceReason}
                 </PFText>
               ) : null}
-            </>
+            </span>
           }
         />
 
@@ -104,7 +137,13 @@ export function EducationScheduleRow({
         ) : null}
 
         {showAssignment && item.assignment ? (
-          <EducationScheduleAssignmentBlock assignment={item.assignment} />
+          <EducationScheduleAssignmentBlock
+            assignment={item.assignment}
+            scheduleId={item.scheduleId ?? null}
+            sessionHeading={sessionHeading}
+            applicationType={applicationType}
+            applicationId={applicationId}
+          />
         ) : null}
       </EducationSessionCard>
     </>

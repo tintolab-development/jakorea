@@ -11,6 +11,7 @@ import type { MemberPortalApplicationDetailAnswers } from './memberPortalApplica
 import type { MemberPortalApplicationDetailDisplayStatus } from './memberPortalApplicationDetailDisplayStatus';
 import type { MemberPortalApplicationDetailRecruitTerm } from './memberPortalApplicationDetailRecruitTerm';
 import type { MemberPortalProgramSummary } from './memberPortalProgramSummary';
+import type { MemberPortalTeacherAssignment } from './memberPortalTeacherAssignment';
 import type { ParticipationSummary } from './participationSummary';
 import type { PreferredScheduleBlock } from './preferredScheduleBlock';
 import type { ProgramApplicationSupplement } from './programApplicationSupplement';
@@ -57,4 +58,6 @@ export interface MemberPortalApplicationDetail {
   supplement?: ProgramApplicationSupplement;
   /** 회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. */
   displayStatus?: MemberPortalApplicationDetailDisplayStatus;
+  /** 교사 회원의 ORGANIZATION 교육 상세에서만 제공됩니다. 강사 카드는 assigned-instructors 응답을 사용하고, 교재 카드만 이 객체의 textbook을 사용합니다. VOLUNTEER·INSTRUCTOR·INDIVIDUAL·비교사 회원은 null입니다. */
+  teacherAssignment?: MemberPortalTeacherAssignment | null;
 }

@@ -15,6 +15,10 @@
   background: var(--color-element-hover, rgba(1, 161, 175, 0.06));
 }
 
+.feedback {
+  background: var(--color-status-error-bg, rgba(252, 215, 215, 0.4));
+}
+
 .top {
   display: flex;
   width: 100%;

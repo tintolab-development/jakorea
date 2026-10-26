@@ -21,6 +21,7 @@ import type {
   SettlementCorrectionRequest,
   SettlementDocumentDownloadResponse,
   SettlementExportRequest,
+  SettlementExportHistoryResponse,
   SettlementFrontendResponse,
   SettlementStatusChangeRequest,
   SettlementAggregateResponse,
@@ -89,9 +90,10 @@ export async function fetchSettlementAggregatesRemote(
 }
 
 export async function fetchAccountPaymentDetailRemote(
-  paymentId: number
+  paymentId: number,
+  reason: string
 ): Promise<AccountPaymentDetailResponse> {
-  return unwrapApiBody(await settlementApi.getAccountPayment(paymentId))
+  return unwrapApiBody(await settlementApi.getAccountPayment(paymentId, { reason }))
 }
 
 export async function downloadPaymentStatementRemote(
@@ -184,12 +186,46 @@ export async function markAccountPaymentFailedRemote(
 
 export async function requestBulkTransferExportRemote(
   body: SettlementExportRequest
-): Promise<void> {
-  await settlementApi.requestBulkTransferExport(body)
+): Promise<SettlementExportHistoryResponse> {
+  return unwrapApiBody<SettlementExportHistoryResponse>(
+    await settlementApi.requestBulkTransferExport(body)
+  )
 }
 
-export async function requestTaxReportExportRemote(body: SettlementExportRequest): Promise<void> {
-  await settlementApi.requestTaxReportExport(body)
+export async function requestTaxReportExportRemote(
+  body: SettlementExportRequest
+): Promise<SettlementExportHistoryResponse> {
+  return unwrapApiBody<SettlementExportHistoryResponse>(
+    await settlementApi.requestTaxReportExport(body)
+  )
+}
+
+/** 비동기 Worker export가 준비될 때까지 이력의 동일 export만 재조회한다. */
+export async function waitForSettlementExportDownload(
+  requested: SettlementExportHistoryResponse,
+  options: { attempts?: number; intervalMs?: number } = {}
+): Promise<SettlementExportHistoryResponse> {
+  if (requested.downloadUrl || requested.deliveryMethod !== 'SERVER_FILE') return requested
+  if (requested.exportHistoryId == null) return requested
+
+  const attempts = options.attempts ?? 10
+  const intervalMs = options.intervalMs ?? 500
+  let latest = requested
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, intervalMs))
+    const page = await fetchSettlementExportHistoriesRemote({
+      exportType: requested.exportType,
+      page: 0,
+      size: 20,
+    })
+    const found = page.items?.find(item => item.exportHistoryId === requested.exportHistoryId)
+    if (!found) continue
+    latest = found
+    if (found.downloadUrl || found.pollingStatus === 'FAILED' || found.exportStatus === 'FAILED') {
+      return found
+    }
+  }
+  return latest
 }
 
 export async function fetchSettlementExportHistoriesRemote(

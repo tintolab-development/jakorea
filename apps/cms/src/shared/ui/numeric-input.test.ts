@@ -80,6 +80,39 @@ describe('CmsNumericInput', () => {
     expect(onValueChange).toHaveBeenLastCalledWith('1234.5')
   })
 
+  it('groupThousands=false이면 소수 입력에 천단위 콤마를 표시하지 않는다', () => {
+    render(
+      createElement(CmsNumericInput, {
+        mode: 'decimal',
+        groupThousands: false,
+        precision: 2,
+        'aria-label': '퍼센트',
+      })
+    )
+
+    const input = screen.getByRole('textbox', { name: '퍼센트' })
+    fireEvent.change(input, { target: { value: '1234.5' } })
+
+    expect(input).toHaveValue('1234.5')
+  })
+
+  it('소수점이 포함된 금액 입력을 정수로 변환하지 않고 원문을 유지한다', () => {
+    const onValueChange = vi.fn()
+    render(
+      createElement(CmsNumericInput, {
+        mode: 'decimal',
+        'aria-label': '금액',
+        onValueChange,
+      })
+    )
+
+    const input = screen.getByRole('textbox', { name: '금액' })
+    fireEvent.change(input, { target: { value: '3.333' } })
+
+    expect(input).toHaveValue('3.333')
+    expect(onValueChange).toHaveBeenLastCalledWith('3.333')
+  })
+
   it('빈값과 decimal 중간 상태를 보존하고 precision을 적용한다', () => {
     const onValueChange = vi.fn()
     render(

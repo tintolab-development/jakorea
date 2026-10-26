@@ -1,0 +1,30 @@
+.teamInfo {
+  display: inline-flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.teamDivider {
+  display: block;
+  width: 1px;
+  height: 14px;
+  flex-shrink: 0;
+  background: var(--color-neutral-cool-400);
+}
+
+.teamField {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.aside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-24);
+}

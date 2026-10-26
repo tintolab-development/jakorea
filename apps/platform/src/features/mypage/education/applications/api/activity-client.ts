@@ -1,11 +1,13 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import { fetchBlobOnce, readDownloadUrlFromJsonBlob } from '@/shared/lib/download-attachment'
 import {
+  PORTAL_ASSIGNMENT_FORM_TYPE_QUERIES,
   dedupePortalFormListItems,
   PORTAL_SATISFACTION_FORM_TYPE_QUERIES,
   PORTAL_SURVEY_FORM_TYPE_QUERIES,
 } from '../lib/portal-form-list'
 import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
+import { FILE_UPLOAD_MAX_COUNT } from '@/shared/lib/file-upload-policy'
 import type { ProgramApplicationType } from './types'
 
 const APPLICATIONS_PATH = '/api/portal/me/program-applications'
@@ -126,6 +128,8 @@ export type PortalEducationScheduleAssignmentSubmission = {
   kind?: PortalAssignmentSubmissionKind | string
   fileName?: string
   url?: string
+  /** FILE 제출물 — 수정 제출 시 유지·제외 판단에 쓴다 */
+  fileObjectId?: number | null
 }
 
 export type PortalEducationScheduleAssignment = {
@@ -134,6 +138,10 @@ export type PortalEducationScheduleAssignment = {
   submitEndAt?: string | null
   periodLabel?: string
   status?: PortalAssignmentStatus | string
+  /** 최초 제출 가능 여부 (서버 판단) */
+  canSubmit?: boolean
+  /** 수정 제출 가능 여부 (서버 판단) */
+  canResubmit?: boolean
   formResponseId?: number
   submissions?: PortalEducationScheduleAssignmentSubmission[]
 }
@@ -167,6 +175,10 @@ export type PortalEducationSchedule = {
   surveyCount?: number
   absenceReasonStatus?: string
   availableActions?: string[]
+  /** 팀 프로그램 회차별 역할 LEADER | MEMBER | INDIVIDUAL. 팀 프로그램이 아니면 null */
+  teamRole?: string | null
+  /** 팀 프로그램 회차별 팀명. 개인 참여면 null */
+  teamName?: string | null
 }
 
 export type PortalScheduleAttendanceDetail = {
@@ -270,7 +282,8 @@ export type PortalAbsenceReasonSubmissionInput = {
 }
 
 export const PORTAL_ABSENCE_REASON_MAX_LENGTH = 2_000
-export const PORTAL_ABSENCE_REASON_MAX_FILE_COUNT = 20
+/** Platform 업로드 정책(10개). 서버 한도(20개)보다 좁다. */
+export const PORTAL_ABSENCE_REASON_MAX_FILE_COUNT = FILE_UPLOAD_MAX_COUNT
 
 function normalizePortalEducationScheduleScopeStatus(
   value: string | null | undefined
@@ -305,22 +318,29 @@ function normalizePortalSessionRound(value: string | null | undefined): PortalSe
 export type PortalFormResponseStatus = 'NOT_SUBMITTED' | 'SUBMITTED' | 'COMPLETED' | 'DONE'
 
 export type PortalFormListItem = {
+  /** Canonical BE `MemberPortalFormListItem.bindingId`. Assignment match/submit uses this only. */
   bindingId?: number
-  programFormBindingId?: number
-  id?: number
-  formBindingId?: number
-  title?: string
-  formType?: string
-  targetScope?: string
-  targetScopeId?: number | null
-  status?: PortalFormResponseStatus | string
-  submissionStartAt?: string
-  submissionEndAt?: string
-  required?: boolean
   templateVersionId?: number
-  form?: Record<string, unknown> | null
-  formResponseId?: number
+  formType?: string
+  title?: string
+  targetScope?: string
+  scheduleId?: number | null
+  required?: boolean
+  submissionStartAt?: string | null
+  submissionEndAt?: string | null
+  status?: PortalFormResponseStatus | string
   latestFormResponseId?: number | null
+  revisionNo?: number
+  canSubmit?: boolean
+  canResubmit?: boolean
+  retentionExpiresAt?: string | null
+  /** Read-only compatibility aliases. Do not use for new assignment match/submit. */
+  programFormBindingId?: number
+  formBindingId?: number
+  id?: number
+  formResponseId?: number
+  targetScopeId?: number | null
+  form?: Record<string, unknown> | null
   answers?: Record<string, unknown> | null
   draftAnswers?: Record<string, unknown> | null
 }
@@ -652,7 +672,7 @@ export async function fetchApplicationSchedules(
 function scheduleAttendancePath(
   applicationType: ProgramApplicationType,
   applicationId: string,
-  scheduleId: number,
+  scheduleId: number
 ): string {
   return `${applicationPath(applicationType, applicationId)}/schedules/${encodeURIComponent(String(scheduleId))}/attendance`
 }
@@ -662,11 +682,11 @@ export async function fetchApplicationScheduleAttendance(
   applicationType: ProgramApplicationType,
   applicationId: string,
   scheduleId: number,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalScheduleAttendanceDetail> {
   const { data } = await axiosClient.get<unknown>(
     scheduleAttendancePath(applicationType, applicationId, scheduleId),
-    { signal },
+    { signal }
   )
   return unwrapEnvelope<PortalScheduleAttendanceDetail>(data) ?? {}
 }
@@ -676,13 +696,15 @@ export async function fetchApplicationScheduleAttendanceParticipants(
   applicationType: ProgramApplicationType,
   applicationId: string,
   scheduleId: number,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<PortalAttendanceParticipantList> {
   const { data } = await axiosClient.get<unknown>(
     `${scheduleAttendancePath(applicationType, applicationId, scheduleId)}/participants`,
-    { signal },
+    { signal }
   )
-  const unwrapped = unwrapEnvelope<PortalAttendanceParticipantList | PortalAttendanceParticipant[]>(data)
+  const unwrapped = unwrapEnvelope<PortalAttendanceParticipantList | PortalAttendanceParticipant[]>(
+    data
+  )
   if (Array.isArray(unwrapped)) {
     return { items: unwrapped, totalCount: unwrapped.length }
   }
@@ -693,11 +715,11 @@ export async function fetchApplicationScheduleAttendanceParticipants(
 export async function submitApplicationScheduleCheckIn(
   applicationType: ProgramApplicationType,
   applicationId: string,
-  scheduleId: number,
+  scheduleId: number
 ): Promise<PortalAttendanceCheckInResult> {
   const { data } = await axiosClient.post<unknown>(
     `${scheduleAttendancePath(applicationType, applicationId, scheduleId)}/check-in`,
-    {},
+    {}
   )
   return unwrapEnvelope<PortalAttendanceCheckInResult>(data) ?? {}
 }
@@ -748,20 +770,25 @@ async function fetchApplicationFormsOnce(
 }
 
 /**
- * 교육현황 설문·만족도 목록 SSOT (`formType=SURVEY` | `SATISFACTION`).
+ * 교육현황 과제·설문·만족도 목록 SSOT (`formType=ASSIGNMENT` | `SURVEY` | `SATISFACTION`).
  * Admin `/programs/{id}/surveys` 는 사용하지 않는다.
  * `items: []` 는 정상 empty(오류 아님). formType 조회가 비면 전체 forms로 다시 채우지 않는다.
  */
 export async function fetchApplicationForms(
   applicationType: ProgramApplicationType,
   applicationId: string,
-  formType: 'SURVEY' | 'SATISFACTION',
+  formType: 'ASSIGNMENT' | 'HOMEWORK' | 'SURVEY' | 'SATISFACTION',
   signal?: AbortSignal
 ): Promise<PortalFormListItem[]> {
   const queries =
-    formType === 'SURVEY' ? PORTAL_SURVEY_FORM_TYPE_QUERIES : PORTAL_SATISFACTION_FORM_TYPE_QUERIES
+    formType === 'ASSIGNMENT' || formType === 'HOMEWORK'
+      ? PORTAL_ASSIGNMENT_FORM_TYPE_QUERIES
+      : formType === 'SURVEY'
+        ? PORTAL_SURVEY_FORM_TYPE_QUERIES
+        : PORTAL_SATISFACTION_FORM_TYPE_QUERIES
 
   let merged: PortalFormListItem[] = []
+  const fetchAllAssignmentTypes = formType === 'ASSIGNMENT' || formType === 'HOMEWORK'
   for (const queryFormType of queries) {
     const batch = await fetchApplicationFormsOnce(
       applicationType,
@@ -770,7 +797,9 @@ export async function fetchApplicationForms(
       signal
     )
     merged = dedupePortalFormListItems([...merged, ...batch])
-    if (merged.length > 0) return merged
+    // Assignment: always query ASSIGNMENT and HOMEWORK. Other types may stop after the first hit.
+    // Never fall back to unfiltered `/forms` when a typed query returns items: [].
+    if (!fetchAllAssignmentTypes && merged.length > 0) return merged
   }
 
   return merged

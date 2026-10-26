@@ -20,7 +20,7 @@ export type EducationSurveyFormBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
-  onFileChange?: (paragraphId: string, file: File | null, questionKey: string) => void
+  onFileChange?: (paragraphId: string, files: File[], questionKey: string) => void
   /** 설문자 정보 fieldKey → 표시값 */
   userInfoValues?: Record<string, string>
   readOnly?: boolean

@@ -609,9 +609,10 @@ export function useApplicationSchedulesQuery(
         mapPortalEducationSchedule(item, index, {
           educationStructure: query.data?.educationStructure,
           sessionRound: query.data?.sessionRound,
+          applicationType,
         }),
       ),
-    [query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
+    [applicationType, query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
   )
   return {
     enabled,
@@ -789,7 +790,7 @@ export function useSubmitApplicationAbsenceReason(
 export function useApplicationFormsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
-  formType: 'SURVEY' | 'SATISFACTION'
+  formType: 'ASSIGNMENT' | 'HOMEWORK' | 'SURVEY' | 'SATISFACTION'
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
   const query = useQuery({
@@ -815,7 +816,9 @@ export function useApplicationFormsQuery(
     enabled,
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
+    isSuccess: enabled && query.isSuccess,
     items,
+    rawItems: query.data ?? [],
   }
 }
 

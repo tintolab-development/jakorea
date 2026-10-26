@@ -100,6 +100,11 @@
   min-width: 0;
 }
 
+.fileError {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
 @media (--bp-below-pc) {
   .scaleBar {
     flex-direction: column;

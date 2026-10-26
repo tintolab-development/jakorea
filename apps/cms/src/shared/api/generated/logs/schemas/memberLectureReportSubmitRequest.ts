@@ -5,9 +5,13 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberLectureReportSubmitRequestAnswers } from './memberLectureReportSubmitRequestAnswers';
+import type { MemberLectureReportSubmitRequestFileObjectIdsByQuestion } from './memberLectureReportSubmitRequestFileObjectIdsByQuestion';
 
 export interface MemberLectureReportSubmitRequest {
   templateVersionId?: number;
   formResponseId?: number;
   attachmentGroupId?: number;
+  answers?: MemberLectureReportSubmitRequestAnswers;
+  fileObjectIdsByQuestion?: MemberLectureReportSubmitRequestFileObjectIdsByQuestion;
 }

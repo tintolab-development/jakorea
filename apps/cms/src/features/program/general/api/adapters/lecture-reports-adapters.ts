@@ -10,6 +10,9 @@ export type ParticipatingInstructorLectureReportRow = {
   id: string
   no: number
   reportId?: number
+  formResponseId?: number
+  templateVersionId?: number
+  scheduleId?: number
   instructorMemberId?: number
   schoolName: string
   educationGrade: string
@@ -71,14 +74,22 @@ export function mapLectureReportDtoToInstructorRow(
   const row = dto as LectureReportListItemResponse & Record<string, unknown>
   const reportId =
     typeof row.reportId === 'number' && Number.isFinite(row.reportId) ? row.reportId : undefined
+  const formResponseId =
+    typeof row.formResponseId === 'number' && Number.isFinite(row.formResponseId)
+      ? row.formResponseId
+      : undefined
+  const templateVersionId =
+    typeof row.templateVersionId === 'number' && Number.isFinite(row.templateVersionId)
+      ? row.templateVersionId
+      : undefined
+  const scheduleId =
+    typeof row.scheduleId === 'number' && Number.isFinite(row.scheduleId)
+      ? row.scheduleId
+      : undefined
   const id = String(reportId ?? row.id ?? index + 1)
   const due = row.submitDueAt ? dayjs(row.submitDueAt) : null
-  const submissionPeriodLabel =
-    due?.isValid() === true ? `${formatDateDot(due)}까지` : '-'
-  const submissionStatusLabel = mapSubmissionLabel(
-    row.reportStatus,
-    row.submittedAt ?? undefined
-  )
+  const submissionPeriodLabel = due?.isValid() === true ? `${formatDateDot(due)}까지` : '-'
+  const submissionStatusLabel = mapSubmissionLabel(row.reportStatus, row.submittedAt ?? undefined)
   const lectureProgressLabel = mapProgressLabel(row.lectureProgressStatus, submissionStatusLabel)
   const fileObjectIds = (row.fileObjectIds ?? []).filter(
     (id): id is number => typeof id === 'number' && Number.isFinite(id)
@@ -92,6 +103,9 @@ export function mapLectureReportDtoToInstructorRow(
     id,
     no: index + 1,
     reportId,
+    formResponseId,
+    templateVersionId,
+    scheduleId,
     instructorMemberId:
       typeof row.instructorMemberId === 'number' && Number.isFinite(row.instructorMemberId)
         ? row.instructorMemberId

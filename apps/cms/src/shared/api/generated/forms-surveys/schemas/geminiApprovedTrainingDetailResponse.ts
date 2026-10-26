@@ -8,6 +8,7 @@
 import type { GeminiApprovedTrainingDetailResponseProgressStatus } from './geminiApprovedTrainingDetailResponseProgressStatus';
 import type { GeminiApprovedTrainingDetailResponseTeacherEmploymentStatus } from './geminiApprovedTrainingDetailResponseTeacherEmploymentStatus';
 import type { GeminiAssignedInstructor } from './geminiAssignedInstructor';
+import type { GeminiTrainingDateCandidate } from './geminiTrainingDateCandidate';
 
 /**
  * Gemini 승인 연수 상세. id=organizationApplicationId. 전화·이메일·계좌·상세주소는 목록에 넣지 않는다. 없는 값은 null.
@@ -46,6 +47,8 @@ export interface GeminiApprovedTrainingDetailResponse {
   trainingTimeText?: string | null;
   /** 희망 일정 마지막 순위(3지망) 날짜. 확정 trainingDate와 분리 */
   lastPreferredDate?: string | null;
+  /** 기관 신청 희망 일정 1~3지망 후보. preferenceRank 오름차순. 확정 trainingDate와 분리. 희망 일정이 없으면 []. null이 아니다 */
+  trainingDateCandidates?: GeminiTrainingDateCandidate[];
   studentCount?: number;
   classCount?: number;
   requestedScheduleMemo?: string;

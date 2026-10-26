@@ -185,6 +185,10 @@
       "description": "교사 회원의 UJAT 임시배정 일정 확인/답변 API"
     },
     {
+      "name": "기타 API",
+      "description": "교사회원이 배정 강사와 서명 완료 동의서를 조회합니다."
+    },
+    {
       "name": "CMS 콘텐츠",
       "description": "CMS 공지사항, FAQ, 카테고리 관리 API"
     },
@@ -247,10 +251,6 @@
     {
       "name": "콘텐츠/고객지원",
       "description": "문의 카테고리 관리 API"
-    },
-    {
-      "name": "기타 API",
-      "description": "교사회원이 배정 강사의 서명 완료 동의서를 조회합니다."
     },
     {
       "name": "기타 API",

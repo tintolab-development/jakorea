@@ -15,6 +15,7 @@ import { openFilePicker } from '@/shared/lib/open-file-picker'
 import '@/shared/ui/file-upload-picker.css'
 import {
   CmsButton,
+  ConfirmModal,
   DeleteGuideModal,
   ExcelButton,
   showDeleteCompletedAlert,
@@ -155,6 +156,8 @@ export function GeminiPerformanceList() {
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(createInitialFilters)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false)
+  const [importConfirmOpen, setImportConfirmOpen] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [pendingImportRows, setPendingImportRows] = useState<GeminiPerformanceRow[]>([])
   const [pendingRemoteImportRows, setPendingRemoteImportRows] = useState<
     GeminiTrainingReportImportRow[] | undefined
@@ -207,13 +210,13 @@ export function GeminiPerformanceList() {
       try {
         const { importedRows, duplicateKeys, remoteImportRows } =
           await geminiPerformanceService.prepareImport(file)
+        setPendingImportRows(importedRows)
+        setPendingRemoteImportRows(remoteImportRows)
         if (duplicateKeys.length > 0) {
-          setPendingImportRows(importedRows)
-          setPendingRemoteImportRows(remoteImportRows)
           setDuplicateModalOpen(true)
           return
         }
-        await geminiPerformanceService.applyImport(importedRows, 'append', remoteImportRows)
+        setImportConfirmOpen(true)
       } catch (error) {
         const message =
           error instanceof Error && error.message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
@@ -237,6 +240,42 @@ export function GeminiPerformanceList() {
     setDuplicateModalOpen(false)
     clearPendingImport()
   }, [clearPendingImport])
+
+  const handleImportConfirmCancel = useCallback(() => {
+    if (importing) return
+    setImportConfirmOpen(false)
+    clearPendingImport()
+  }, [clearPendingImport, importing])
+
+  const handleImportConfirm = useCallback(() => {
+    if (importing) return
+    void (async () => {
+      setImporting(true)
+      try {
+        await geminiPerformanceService.applyImport(
+          pendingImportRows,
+          'append',
+          pendingRemoteImportRows
+        )
+        setImportConfirmOpen(false)
+        clearPendingImport()
+        showAlert({
+          title: '데이터 추가 완료',
+          content: '데이터가 추가되었습니다.',
+        })
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content:
+            error instanceof Error
+              ? error.message
+              : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        setImporting(false)
+      }
+    })()
+  }, [clearPendingImport, importing, pendingImportRows, pendingRemoteImportRows, showAlert])
 
   const handleDuplicateOverwrite = useCallback(() => {
     void (async () => {
@@ -515,6 +554,15 @@ export function GeminiPerformanceList() {
           onCancel={() => setDeleteModalOpen(false)}
         />
       ) : null}
+      <ConfirmModal
+        open={importConfirmOpen}
+        title="연수 보고서 등록"
+        content={`${pendingImportRows.length.toLocaleString()}건의 연수 보고서를 등록하시겠습니까?`}
+        confirmText="등록"
+        confirmLoading={importing}
+        onConfirm={handleImportConfirm}
+        onCancel={handleImportConfirmCancel}
+      />
       <UploadDuplicateModal
         open={duplicateModalOpen}
         onCancel={handleDuplicateCancel}

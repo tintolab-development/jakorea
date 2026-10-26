@@ -9,7 +9,9 @@ const common = {
   templateVersionId: 606,
   programId: 101,
   programFormBindingId: 505,
+  programScheduleId: 707,
   answers: { 'question-42': '수업 답변' },
+  fileObjectIdsByQuestion: {},
 }
 
 assert.deepEqual(
@@ -82,5 +84,9 @@ assert.equal(
 
 assert.match(getLectureReportApiErrorMessage({ response: { status: 400 } }), /응답과 강사 배정 정보가 일치하지 않아 제출할 수 없습니다/)
 assert.match(getLectureReportApiErrorMessage({ response: { status: 403 } }), /접근하거나 제출할 권한이 없습니다/)
+assert.match(
+  getLectureReportApiErrorMessage({ response: { status: 404, data: { code: 'LECTURE_REPORT_FORM_BINDING_NOT_FOUND' } } }),
+  /현재 활성화된 강의보고서 양식을 사용할 수 없습니다/,
+)
 
 console.log('lecture-report-contract.selfcheck: ok')

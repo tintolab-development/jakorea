@@ -1,6 +1,7 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
 import { withFileUploadOverlay } from '@/shared/lib/file-upload-overlay'
+import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
 import { resolveHomepagePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 import type {
   PublicCareerGuideResponse,
@@ -42,8 +43,6 @@ const SKIP_AUTH: SkipAuthConfig = {
 } as SkipAuthConfig
 
 const ALLOWED_ATTACHMENT_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png'])
-const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024
-
 function resolveAttachmentContentType(file: File): string {
   const type = (file.type || '').toLowerCase().trim()
   if (ALLOWED_ATTACHMENT_TYPES.has(type)) return type
@@ -58,9 +57,8 @@ function assertAttachmentAllowed(file: File): string {
   if (file.size <= 0) {
     throw new Error('첨부 파일이 비어 있습니다.')
   }
-  if (file.size > MAX_ATTACHMENT_BYTES) {
-    throw new Error('증빙서류는 15MB 이하만 첨부할 수 있습니다.')
-  }
+  const sizeError = validateUploadFileSize(file)
+  if (sizeError) throw new Error(sizeError)
   return resolveAttachmentContentType(file)
 }
 

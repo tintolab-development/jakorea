@@ -131,6 +131,20 @@ export type PortalProgramApplicationListPage = {
   totalPages?: number
 }
 
+export type PortalTeacherAssignmentTextbook = {
+  textbookId?: number | null
+  title?: string | null
+  kitCount?: number | null
+  volumeCount?: number | null
+  kitCountLabel?: string | null
+  volumeCountLabel?: string | null
+  deliveryStatus?: 'PREPARING' | 'SHIPPING' | 'DELIVERED' | null
+}
+
+export type PortalTeacherAssignment = {
+  textbook?: PortalTeacherAssignmentTextbook | null
+}
+
 /**
  * `MemberPortalApplicationDetail` (Portal me program-application detail).
  * @see JABACK `docs/frontend/mypage-application-content-interview-banner-frontend-handoff-2026-10-09.md`
@@ -156,6 +170,8 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
   hasInterview?: boolean | null
   /** 없으면 BE `[]` — answers에 일정 키 없을 때 fallback */
   preferredScheduleBlocks?: PortalPreferredScheduleBlock[] | null
+  /** 교사 ORGANIZATION 신청 전용 교재·배송 정보. 그 외 신청은 `null`. */
+  teacherAssignment?: PortalTeacherAssignment | null
   program?: {
     programId?: number
     title?: string

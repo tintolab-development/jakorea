@@ -1,0 +1,27 @@
+.page {
+  background: linear-gradient(180deg, #f5f7f7 0%, #f5f7f7 100%);
+}
+
+.period {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.error,
+.notice {
+  width: 100%;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding-top: var(--spacing-16);
+}
+
+@media (--bp-below-pc) {
+  .period {
+    white-space: normal;
+  }
+}

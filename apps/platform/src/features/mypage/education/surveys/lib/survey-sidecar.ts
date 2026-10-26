@@ -1,7 +1,7 @@
 export type SurveySidecarState = {
   dateValues: Record<string, string>
   timeValues: Record<string, string>
-  fileNames: Record<string, string | null>
+  fileNames: Record<string, string[]>
   userInfoAnswers: Record<string, Record<string, string>>
 }
 

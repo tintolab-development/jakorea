@@ -21,13 +21,20 @@ export interface CmsNumericInputProps
   value?: string
   defaultValue?: string
   allowNegative?: boolean
+  /** 정수부 천단위 구분을 표시할지 여부. 퍼센트 입력처럼 원문 표시가 필요한 경우 false. */
+  groupThousands?: boolean
   min?: number
   max?: number
   precision?: number
   onValueChange?: (value: string) => void
 }
 
-function formatNumericInputDisplay(raw: string, mode: NumericInputMode): string {
+function formatNumericInputDisplay(
+  raw: string,
+  mode: NumericInputMode,
+  groupThousands: boolean
+): string {
+  if (!groupThousands) return raw
   if (mode === 'currency') return formatCurrencyInput(raw)
   if (mode === 'integer') return formatGroupedDigits(raw)
   if (mode === 'decimal') return formatDecimalInputDisplay(raw)
@@ -52,6 +59,7 @@ export const CmsNumericInput = forwardRef<InputRef, CmsNumericInputProps>(
       defaultValue = '',
       pattern,
       allowNegative = false,
+      groupThousands = true,
       min,
       max,
       precision,
@@ -73,8 +81,9 @@ export const CmsNumericInput = forwardRef<InputRef, CmsNumericInputProps>(
     )
     const isControlled = value !== undefined
     const rawValue = isControlled ? sanitizeNumericInput(value, options) : internalValue
-    const displayValue = formatNumericInputDisplay(rawValue, mode)
-    const groupsThousands = mode === 'currency' || mode === 'integer' || mode === 'decimal'
+    const displayValue = formatNumericInputDisplay(rawValue, mode, groupThousands)
+    const groupsThousands =
+      groupThousands && (mode === 'currency' || mode === 'integer' || mode === 'decimal')
 
     const updateValue = (nextValue: string) => {
       if (!isControlled) setInternalValue(nextValue)
@@ -94,7 +103,7 @@ export const CmsNumericInput = forwardRef<InputRef, CmsNumericInputProps>(
       if (groupsThousands && rawBeforeCaret != null) {
         requestAnimationFrame(() => {
           if (!input.isConnected) return
-          const nextDisplay = formatNumericInputDisplay(nextValue, mode)
+          const nextDisplay = formatNumericInputDisplay(nextValue, mode, groupThousands)
           const nextCaret = restoreGroupedCaret(nextDisplay, rawBeforeCaret)
           input.setSelectionRange(nextCaret, nextCaret)
         })

@@ -4,6 +4,7 @@ import {
   programApplyRequiredPath,
   PROGRAMS_PATH,
   ProgramApplyGateModals,
+  isAlreadyAppliedApplicationReason,
   programApplyGateApplicationsPathForType,
   programApplyGateMemberSettingsPath,
   readPortalRecruitmentFocus,
@@ -120,6 +121,9 @@ export function ProgramDetailPage() {
   }
 
   const handleApply = () => {
+    const canOpenExistingApplicationGate = isAlreadyAppliedApplicationReason(
+      applyOptionQuery.blockedReason,
+    )
     if (program.recruitmentSelectionAmbiguous) {
       setApplyBlockedAlert({
         title: '신청 대상을 확인해 주세요.',
@@ -127,9 +131,9 @@ export function ProgramDetailPage() {
       })
       return
     }
-    if (applyOptionQuery.blockedMessage) {
+    if (applyOptionQuery.blockedMessage && !canOpenExistingApplicationGate) {
       setApplyBlockedAlert(
-        applyBlockedAlertFor(applyOptionQuery.blockedReason, applyOptionQuery.blockedMessage)
+        applyBlockedAlertFor(applyOptionQuery.blockedReason, applyOptionQuery.blockedMessage),
       )
       return
     }

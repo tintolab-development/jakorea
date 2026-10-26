@@ -9,7 +9,7 @@ import type { EducationScheduleAssignmentStatus } from './educationScheduleAssig
 import type { EducationScheduleAssignmentSubmission } from './educationScheduleAssignmentSubmission';
 
 /**
- * 교육일정 회차 과제 블록.
+ * 교육일정 회차 과제 블록. CMS 공통정보 회차별 과제 설정(assignmentEnabled·과제 제출 기간)이 ON인 회차에만 내려간다. INDIVIDUAL·ORGANIZATION 신청만 대상이며 INSTRUCTOR·VOLUNTEER는 항상 null. 과제 양식(form-binding)과 무관하다.
  */
 export interface EducationScheduleAssignment {
   enabled?: boolean;
@@ -18,7 +18,12 @@ export interface EducationScheduleAssignment {
   periodLabel?: string | null;
   /** NOT_SUBMITTED | SUBMITTED | FEEDBACK | REVISION_SUBMITTED */
   status?: EducationScheduleAssignmentStatus;
-  /** FEEDBACK 상태일 때 피드백 GET 키. */
+  /** 과제 제출 ID(form_response.id). 피드백이 있으면 피드백이 달린 제출본 ID이며 GET /api/portal/me/form-responses/{formResponseId}/feedback 키로 쓴다. 미제출이면 null. */
   formResponseId?: number | null;
+  /** 최신 제출본 파일·링크. 미제출이면 null. */
   submissions?: EducationScheduleAssignmentSubmission[] | null;
+  /** 최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. 현재 정책상 submitEndAt 이후 미제출 최초 제출은 허용하지 않습니다. */
+  canSubmit?: boolean;
+  /** 수정 제출 가능. 제출 이력 있음, 마감 전, 본인 제출, status SUBMITTED 또는 FEEDBACK일 때 true. */
+  canResubmit?: boolean;
 }

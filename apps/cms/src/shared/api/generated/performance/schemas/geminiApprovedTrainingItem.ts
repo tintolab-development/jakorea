@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { GeminiApprovedTrainingItemProgressStatus } from './geminiApprovedTrainingItemProgressStatus';
+import type { GeminiTrainingDateCandidate } from './geminiTrainingDateCandidate';
 
 export interface GeminiApprovedTrainingItem {
   id?: number;
@@ -27,4 +28,6 @@ export interface GeminiApprovedTrainingItem {
   managerName?: string;
   officialDocumentRequired?: boolean;
   recruitmentTitle?: string;
+  /** 기관 신청 희망 일정 1~3지망 후보. preferenceRank 오름차순. 확정 trainingDate와 분리. 희망 일정이 없으면 []. null이 아니다 */
+  trainingDateCandidates?: GeminiTrainingDateCandidate[];
 }

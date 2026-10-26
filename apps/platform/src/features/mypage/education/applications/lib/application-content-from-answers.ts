@@ -133,7 +133,7 @@ function formatPreferredScheduleBlock(block: Record<string, unknown>): string | 
 
 /**
  * 제출 option_value — 사람이 읽는 라벨이 아님.
- * 예: `schedule:186626`, `line:0`, `interview-slot:…`, 순수 scheduleId 숫자 문자열
+ * 예: `schedule:186626`, `gemini-preferred:organization-application:1:rank:1`, `line:0`, `interview-slot:…`, 순수 scheduleId 숫자 문자열
  */
 export function isOpaqueScheduleOptionToken(value: string): boolean {
   const trimmed = value.trim()
@@ -144,6 +144,7 @@ export function isOpaqueScheduleOptionToken(value: string): boolean {
     return true
   }
   if (/^schedule:\d+(?::organization-application:\d+)?$/i.test(trimmed)) return true
+  if (/^gemini-preferred:organization-application:\d+:rank:\d+$/i.test(trimmed)) return true
   if (/^line:\d+$/i.test(trimmed)) return true
   if (/^interview-slot:/i.test(trimmed)) return true
   if (/^\d{4,}$/.test(trimmed)) return true

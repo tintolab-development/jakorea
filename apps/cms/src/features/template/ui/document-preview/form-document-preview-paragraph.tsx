@@ -115,9 +115,7 @@ function readOnlyTitleBlock(
   }
 }
 
-function multipleChoiceAllowMultipleTitleHint(
-  paragraph: WritingFormParagraph
-): ReactNode {
+function multipleChoiceAllowMultipleTitleHint(paragraph: WritingFormParagraph): ReactNode {
   if (
     paragraph.kind !== 'single_item' ||
     paragraph.variant !== 'multiple_choice' ||
@@ -210,8 +208,7 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
   )
 }
 
-const UJAT_JOURNAL_CONTENT_FEEDBACK_PREVIEW_SAMPLE =
-  '작성된 교육 내용 피드백 내용 노출'
+const UJAT_JOURNAL_CONTENT_FEEDBACK_PREVIEW_SAMPLE = '작성된 교육 내용 피드백 내용 노출'
 
 const UJAT_EDUCATION_SESSION_PARAGRAPH_IDS = new Set<string>([
   UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session1,
@@ -231,8 +228,7 @@ function DocumentUjatJournalContentFeedbackReadonly({
 }: {
   paragraph: ShortEssayParagraph
 }) {
-  const written =
-    safeTrim(paragraph.items?.[0]?.bodyText) || safeTrim(paragraph.bodyText)
+  const written = safeTrim(paragraph.items?.[0]?.bodyText) || safeTrim(paragraph.bodyText)
   const filled = written.length > 0
   return (
     <div className="form-editor-body explanation-text">
@@ -407,7 +403,12 @@ function renderBody(
 ): ReactNode {
   if (p.kind === 'single_item' && p.variant === 'file_attachment') {
     if (renderMode === 'contentOnly') {
-      return <DocumentEducationPhotosReadonly paragraph={p as FileAttachmentParagraph} />
+      return (
+        <DocumentEducationPhotosReadonly
+          paragraph={p as FileAttachmentParagraph}
+          files={paragraphBodyOptions?.lectureReportFiles}
+        />
+      )
     }
     return <FileAttachment paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
   }
@@ -436,8 +437,7 @@ function renderBody(
       }
       const ph = safeTrim(p.bodyPlaceholder) || '텍스트를 작성해 주세요'
       const body = safeTrim(p.bodyText)
-      const isNoticeInstitutionEmpty =
-        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution && !body
+      const isNoticeInstitutionEmpty = p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution && !body
       /** 작성(card) 시트만 disabled pill. A4 contentOnly는 확인 문구 우측정렬 규격 */
       const isPaymentPreConsentSheetBar =
         renderMode !== 'contentOnly' &&
@@ -551,9 +551,7 @@ function renderBody(
           paragraph={p as LectureReportProgramProgressParagraph}
           onChange={noopOnParagraphChange}
           isEditMode={false}
-          isTemplateAuthoringMode={
-            paragraphBodyOptions?.lectureReportProgramLinkedPreview !== true
-          }
+          isTemplateAuthoringMode={paragraphBodyOptions?.lectureReportProgramLinkedPreview !== true}
         />
       )
     case 'vertical_table':
@@ -862,8 +860,7 @@ export function FormDocumentPreviewParagraph({
     const noticeConfirmationClosingVisible = allParagraphs.some(
       p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
     )
-    const isNoticeStackDivider =
-      paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
+    const isNoticeStackDivider = paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing
     /** 구버전(confirmationClosing 없음)만 날짜 단락에서 대체 구분선 */
     const isNoticeDateWithDivider =
       paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate &&
@@ -886,9 +883,7 @@ export function FormDocumentPreviewParagraph({
           isUjatJournalContentFeedback
             ? 'form-document-preview-paragraph--ujat-journal-feedback'
             : '',
-          isNoticeStackDivider
-            ? 'form-document-preview-paragraph--content-only-stack-divider'
-            : '',
+          isNoticeStackDivider ? 'form-document-preview-paragraph--content-only-stack-divider' : '',
           isNoticeDateWithDivider
             ? 'form-document-preview-paragraph--content-only-stack-divider form-document-preview-paragraph--notice-date-stack'
             : '',
@@ -899,9 +894,7 @@ export function FormDocumentPreviewParagraph({
           viewModel.isClosingSignature
             ? 'form-document-preview-paragraph--content-only-closing-signature'
             : '',
-          useConfirmRuleChrome
-            ? 'form-document-preview-paragraph--content-only-confirm-rule'
-            : '',
+          useConfirmRuleChrome ? 'form-document-preview-paragraph--content-only-confirm-rule' : '',
           overflow ? 'form-document-preview-paragraph--overflow' : '',
           isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
         ]

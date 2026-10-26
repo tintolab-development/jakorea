@@ -1,14 +1,13 @@
 /**
  * 정산 관리 > 계좌 지급 확인 —「계좌 지급 완료」처리 후 완료 안내 모달
  * - 단건: 확인만
- * - 다건: 닫기 + 대량이체 양식 발급
+ * - 다건: 닫기
  */
 
 import type { ModalProps } from 'antd'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './account-payment-complete-success-modal.css'
 
 /** 인라인 적용 — teal-header-modal·content-modal 전역 CSS보다 우선 */
@@ -39,13 +38,7 @@ export type AccountPaymentCompleteSuccessContext =
       kind: 'bulk'
       recipientName: string
       otherRecipientCount: number
-      /** 일괄 지급 완료 직후 대량이체 양식 — 이번에 처리한 건만 */
-      completedRows: AccountPaymentRow[]
     }
-
-function mapRowsToAccountPaid(rows: AccountPaymentRow[]): AccountPaymentRow[] {
-  return rows.map(row => ({ ...row, accountPaymentStatus: 'account_paid' }))
-}
 
 export function buildAccountPaymentCompleteSuccessContext(
   rows: AccountPaymentRow[]
@@ -59,7 +52,6 @@ export function buildAccountPaymentCompleteSuccessContext(
     kind: 'bulk',
     recipientName,
     otherRecipientCount: rows.length - 1,
-    completedRows: mapRowsToAccountPaid(rows),
   }
 }
 
@@ -67,15 +59,12 @@ export interface AccountPaymentCompleteSuccessModalProps {
   open: boolean
   context: AccountPaymentCompleteSuccessContext | null
   onCancel: () => void
-  /** 다건 완료 모달 — 대량이체 양식 발급 */
-  onIssueBulkTransfer: () => void
 }
 
 export function AccountPaymentCompleteSuccessModal({
   open,
   context,
   onCancel,
-  onIssueBulkTransfer,
 }: AccountPaymentCompleteSuccessModalProps) {
   const canShow = open && context !== null
   const isBulk = context?.kind === 'bulk'
@@ -99,21 +88,9 @@ export function AccountPaymentCompleteSuccessModal({
       modalStyles={ACCOUNT_PAYMENT_COMPLETE_SUCCESS_MODAL_STYLES}
       footer={
         isBulk ? (
-          <>
-            <CmsButton variant="secondary" size="large" onClick={onCancel}>
-              닫기
-            </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="large"
-              width="auto"
-              className="cms-button--footer-auto cms-button--no-label-ellipsis"
-              icon={<ButtonDownloadIcon />}
-              onClick={onIssueBulkTransfer}
-            >
-              대량이체 양식 발급
-            </CmsButton>
-          </>
+          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+            닫기
+          </CmsButton>
         ) : (
           <CmsButton variant="secondary" size="large" onClick={onCancel}>
             확인

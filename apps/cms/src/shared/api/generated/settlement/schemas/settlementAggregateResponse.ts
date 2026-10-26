@@ -20,7 +20,7 @@ export interface SettlementAggregateResponse {
   participationCount?: number;
   /** WAITING_CONFIRM+REAPPLICATION 건수 */
   pendingPaymentSettlementItemCount?: number;
-  /** 총액. REJECTED·CORRECTION_REQUESTED 제외 */
+  /** 총액. REJECTED 제외. CORRECTION_REQUESTED는 기존 정산금액을 유지한다. */
   estimatedAmount?: number;
   settlementRelevantAttendanceDates?: string[];
   /** CONFIRMED | WAITING_CONFIRM | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED */

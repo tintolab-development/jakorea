@@ -368,7 +368,6 @@ export function MypageLectureDetailPage() {
     if (active === 'schedule') {
       return (
         <EducationSchedulePanel
-          programId={program.id}
           applicationType={routeApplicationType}
           applicationId={application.id}
           lastParticipatedSession={
@@ -379,7 +378,7 @@ export function MypageLectureDetailPage() {
       )
     }
     if (active === 'lecture-report' && routeApplicationType === 'INSTRUCTOR') {
-      return <LectureReportPanel programId={Number(program.id)} instructorProgram={program.programAudience === 'organization'} />
+      return <LectureReportPanel applicationId={applicationId} programId={Number(program.id)} instructorProgram={program.programAudience === 'organization'} />
     }
     if (active === 'survey') {
       return (

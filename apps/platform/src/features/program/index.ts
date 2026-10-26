@@ -76,6 +76,7 @@ export {
 } from './api/application-hooks'
 export { useProgramApplyGate } from './hooks/use-program-apply-gate'
 export {
+  isAlreadyAppliedApplicationReason,
   normalizePortalApplicationBlockedReason,
   resolveProgramApplyGateModal,
   shouldHideApplyPageBlockedBanner,
