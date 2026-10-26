@@ -27,7 +27,10 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
-import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  ProgramDetailTdSegmentWrap,
+  renderDetailInfoPipeSeparated,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
 import { useEducationScheduleModeLineStash } from '@/features/program/shared/lib/education-schedule-mode-lines'
@@ -153,7 +156,6 @@ import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/feat
 import { CmsButton } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
-import { BusinessPeriodExtendHistoryRows } from '@/features/program/shared/ui/business-period-extend-history-rows'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -620,7 +622,6 @@ function BasicInfoSection({
             }
           />
         </DetailInfoForm.Row>
-        <BusinessPeriodExtendHistoryRows program={program} />
       </DetailInfoForm>
       <DetailInfoForm
         title="기본 정보"
@@ -1339,11 +1340,11 @@ function WageGradeAmountView({
   const amount = parseWageGradeAmount(pricing)
   if (amount == null) return '-'
   return (
-    <>
+    <ProgramDetailTdSegmentWrap>
       1시간 당
       <DetailInfoForm.InputsSeparator />
       {formatNumberDisplay(amount)}원 (최대 {maxHint}원)
-    </>
+    </ProgramDetailTdSegmentWrap>
   )
 }
 

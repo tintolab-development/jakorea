@@ -24,6 +24,8 @@ import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/sche
 import type { ProgramUpdateRequestRoundsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestRoundsItem'
 import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
 import { omitNullRecordValues } from '@/shared/lib/openapi-null'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
 import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
 import {
@@ -599,6 +601,29 @@ export function filterGeneralProgramsByOverviewStatus(
   return programs.filter(program => programMatchesProgressPhase(program, statusFilter))
 }
 
+const LEGACY_ROUNDS_PROGRAM_TYPES = new Set([
+  'UJAT',
+  'COMPANY_SCHOOL',
+  'ONE_COMPANY_ONE_SCHOOL',
+  'TRAINED_TEACHER',
+  'TRAINED_TEACHER_PROGRAM',
+  'EDUCATED_TEACHER',
+  'EDUCATED_TEACHER_PROGRAM',
+])
+
+/**
+ * 일반(GENERAL) 레거시 `rounds` 전송 중단 — create/update/PATCH 본문에서 키 자체를 생략한다
+ * (`rounds: []`도 보내지 않음). 내부 Program/RHF 상태의 rounds는 그대로 둔다.
+ * 이 adapter를 같이 타는 1사1교·UJAT·교육받은 교사는 기존처럼 rounds를 보낸다.
+ */
+function shouldSendLegacyProgramRounds(program: Program): boolean {
+  const type = program.backendProgramType?.trim().toUpperCase() ?? ''
+  if (LEGACY_ROUNDS_PROGRAM_TYPES.has(type)) return true
+  if (isCompanySchoolProgram(program)) return true
+  const id = program.id != null ? String(program.id) : ''
+  return looksLikeTrainedTeacherProgramId(id) || id.startsWith('trained-teachers-local-')
+}
+
 function mapProgramRoundsToUpdateRequest(
   program: Program
 ): ProgramUpdateRequestRoundsItem[] | undefined {
@@ -1026,7 +1051,9 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     attachmentFileNames: program.attachmentFileNames,
     // BE 필수 — serviceDetailJson 앞쪽에 둬 로깅·디버깅 시 잘리지 않게
     applicationTargetMode,
-    rounds: mapProgramRoundsToUpdateRequest(program),
+    ...(shouldSendLegacyProgramRounds(program)
+      ? { rounds: mapProgramRoundsToUpdateRequest(program) }
+      : {}),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
   }
   assignProgramPaymentItemsToWriteRequest({ body, program })
@@ -1397,7 +1424,9 @@ function mapProgramPatchFieldsToRequest(
     body.learningSupportContent = merged.learningSupportContent
   }
   if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
-  if (has('rounds')) body.rounds = mapProgramRoundsToUpdateRequest(merged)
+  if (has('rounds') && shouldSendLegacyProgramRounds(merged)) {
+    body.rounds = mapProgramRoundsToUpdateRequest(merged)
+  }
 
   const detailSource =
     has('generalProgramAudience') || has('generalParticipantTypes')

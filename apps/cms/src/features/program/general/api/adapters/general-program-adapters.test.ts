@@ -379,7 +379,8 @@ describe('general-program-adapters', () => {
     expect(create.type).toBe('offline')
     expect(create.targetLevel).toBe('elementary')
     expect(create.targetLevels).toEqual(['elementary'])
-    expect(create.rounds).toHaveLength(1)
+    // GENERAL 레거시 rounds 전송 중단 — 키 자체 생략 (`rounds: []` 금지)
+    expect(create).not.toHaveProperty('rounds')
     // audience 미설정 → ORGANIZATION → GENERAL_ORGANIZATION
     expect(create.programType).toBe('GENERAL_ORGANIZATION')
     expect(create.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
@@ -395,6 +396,76 @@ describe('general-program-adapters', () => {
       }),
     ])
     expect(create.sponsors).toEqual([{ sponsorId: 'sponsor-1', sponsorContactIds: [] }])
+  })
+
+  it('omits legacy rounds key for GENERAL create, full update and rounds PATCH', () => {
+    const roundsInJson = (req: unknown) => 'rounds' in JSON.parse(JSON.stringify(req))
+
+    const create = mapGeneralProgramToCreateRequest(sampleProgram)
+    expect(create.rounds).toBeUndefined()
+    expect(roundsInJson(create)).toBe(false)
+
+    const full = mapGeneralProgramToUpdateRequest(sampleProgram)
+    expect(full).not.toHaveProperty('rounds')
+    expect(roundsInJson(full)).toBe(false)
+
+    const patch = mapGeneralProgramToUpdateRequest(
+      sampleProgram,
+      { rounds: sampleProgram.rounds },
+      sampleProgram
+    )
+    expect(patch).not.toHaveProperty('rounds')
+    expect(roundsInJson(patch)).toBe(false)
+
+    const emptyPatch = mapGeneralProgramToUpdateRequest(sampleProgram, { rounds: [] }, sampleProgram)
+    expect(emptyPatch).not.toHaveProperty('rounds')
+    expect(roundsInJson(emptyPatch)).toBe(false)
+  })
+
+  it('keeps other GENERAL outbound fields unchanged when rounds are omitted', () => {
+    const withoutRounds: Program = { ...sampleProgram, rounds: [] }
+
+    const create = mapGeneralProgramToCreateRequest(sampleProgram)
+    expect(create).toEqual(mapGeneralProgramToCreateRequest(withoutRounds))
+    expect(create.programType).toBe('GENERAL_ORGANIZATION')
+    expect(typeof create.serviceDetailJson).toBe('string')
+    expect(create.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
+    expect(create.businessEndDate).toBe('2026-12-31T00:00:00.000Z')
+    expect(create.recruitments).toEqual([
+      expect.objectContaining({
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'ORGANIZATION',
+        status: 'ACTIVE',
+      }),
+    ])
+
+    const full = mapGeneralProgramToUpdateRequest(sampleProgram)
+    expect(full).toEqual(mapGeneralProgramToUpdateRequest(withoutRounds))
+    expect(full.serviceDetailJson).toBe(create.serviceDetailJson)
+
+    const patch = mapGeneralProgramToUpdateRequest(
+      sampleProgram,
+      { title: '제목 변경', rounds: sampleProgram.rounds },
+      sampleProgram
+    )
+    expect(patch).toEqual(
+      mapGeneralProgramToUpdateRequest(sampleProgram, { title: '제목 변경' }, sampleProgram)
+    )
+    expect(patch.title).toBe('제목 변경')
+  })
+
+  it.each([
+    ['UJAT', { backendProgramType: 'UJAT' }],
+    ['1사1교 (COMPANY_SCHOOL)', { backendProgramType: 'COMPANY_SCHOOL' }],
+    ['1사1교 (id prefix)', { id: 'company-school-prog-1' }],
+    ['교육받은 교사 (TRAINED_TEACHER)', { backendProgramType: 'TRAINED_TEACHER' }],
+    ['교육받은 교사 (id prefix)', { id: 'trained-teachers-prog-1' }],
+  ] as const)('keeps legacy rounds for %s routed through general adapter', (_label, extra) => {
+    const program: Program = { ...sampleProgram, ...extra }
+    expect(mapGeneralProgramToCreateRequest(program).rounds).toHaveLength(1)
+    expect(mapGeneralProgramToUpdateRequest(program).rounds).toHaveLength(1)
+    const patch = mapGeneralProgramToUpdateRequest(program, { rounds: program.rounds }, program)
+    expect(patch.rounds).toHaveLength(1)
   })
 
   it('does not send featuredOnHome or homeDisplayOrder on create or PATCH', () => {

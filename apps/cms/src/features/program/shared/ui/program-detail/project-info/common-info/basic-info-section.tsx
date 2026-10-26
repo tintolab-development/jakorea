@@ -71,7 +71,6 @@ import {
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
-import { BusinessPeriodExtendHistoryRows } from '@/features/program/shared/ui/business-period-extend-history-rows'
 import {
   participantTypeChecked,
   trainedTeacherOptionLabel,
@@ -525,7 +524,6 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
-          <BusinessPeriodExtendHistoryRows program={program} />
         </DetailInfoForm>
 
         <DetailInfoForm title="기본 정보" hideHeader mode={commonInfoFormEdit ? 'edit' : 'view'}>
@@ -1212,7 +1210,6 @@ export function BasicInfoSection({
           }
         />
       </DetailInfoForm.Row>
-      <BusinessPeriodExtendHistoryRows program={program} />
 
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field

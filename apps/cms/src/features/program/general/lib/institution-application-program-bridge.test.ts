@@ -262,12 +262,12 @@ describe('institution recruit limits field visibility', () => {
     }
   })
 
-  it('커리큘럼 기간 지망 — 단일·복수 모두 희망 차시 셀렉, 일정형 단일은 제외', () => {
+  it('커리큘럼 기간 지망 — 희망 차시 셀렉은 복수 회차만 (②), 일정형 단일은 제외', () => {
     expect(
       shouldShowInstitutionApplicationPreferredScheduleSessionSelect(
         bridge({ educationStructure: 'curriculum', sessionRound: 'single', ...period })
       )
-    ).toBe(true)
+    ).toBe(false)
     expect(
       shouldShowInstitutionApplicationPreferredScheduleSessionSelect(
         bridge({ educationStructure: 'curriculum', sessionRound: 'multi', ...period })

@@ -24,6 +24,7 @@ import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import type { Program } from '@/types/domain'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { ProgramDetailTdSegmentWrap } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   paymentItemSelectPlaceholder,
   usePaymentItemCatalogState,
@@ -111,11 +112,11 @@ function remapCompanySchoolPaymentItemOptions(
 function companySchoolWageView(amount: string | undefined, maxText: string) {
   if (!amount?.trim()) return '-'
   return (
-    <>
+    <ProgramDetailTdSegmentWrap>
       1시간 당
       <DetailInfoForm.InputsSeparator />
       {amount}원 ({maxText})
-    </>
+    </ProgramDetailTdSegmentWrap>
   )
 }
 
@@ -192,14 +193,14 @@ function WageValueParts({ text }: { text: string }) {
   const parts = text.split(/\s*\|\s*/)
   if (parts.length <= 1) return <>{text}</>
   return (
-    <>
+    <ProgramDetailTdSegmentWrap>
       {parts.map((p, i) => (
         <span key={i}>
           {i > 0 ? <DetailInfoForm.InputsSeparator /> : null}
           {p}
         </span>
       ))}
-    </>
+    </ProgramDetailTdSegmentWrap>
   )
 }
 

@@ -25,17 +25,9 @@ export function ProgramFormPage() {
 
   const handleSubmit = async (data: ProgramFormData) => {
     try {
-      // ProgramFormData를 Program 타입으로 변환 (rounds에 id, programId 추가)
-      const programData = {
-        ...data,
-        rounds: data.rounds.map((round, index) => ({
-          ...round,
-          id: isEdit && selectedProgram
-            ? selectedProgram.rounds[index]?.id || `round-${index + 1}`
-            : `round-${index + 1}`,
-          programId: isEdit && id ? id : '', // create 시에는 서비스에서 처리
-        })),
-      }
+      // GENERAL 레거시 rounds 전송 중단 — 폼 내부 rounds(data.rounds)는 두고 outbound에서만 제외
+      const { rounds: _legacyRounds, ...programData } = data
+      void _legacyRounds
 
       if (isEdit && id) {
         await updateProgram(id, programData)

@@ -786,7 +786,7 @@ describe('period organization approval does not use date-slot mapping', () => {
         endAt: '2026-04-20T12:20:00+09:00',
         educationScheduleMode: 'period',
         educationStructure: 'curriculum',
-        sessionRound: 'single',
+        sessionRound: 'multi',
         preferenceOrder: 2,
         sessionCount: 2,
       })
@@ -794,6 +794,19 @@ describe('period organization approval does not use date-slot mapping', () => {
       title: '2026.04.20(월) 09:30 ~ 12:20',
       detail: '2지망 | 2차시',
     })
+    // ② 커리큘럼·단일·기간은 희망 차시 칸 없음 → sessionCount 미노출
+    expect(
+      formatOrganizationApproveScheduleCard({
+        label: '2026-04-20',
+        startAt: '2026-04-20T09:30:00+09:00',
+        endAt: '2026-04-20T12:20:00+09:00',
+        educationScheduleMode: 'period',
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        preferenceOrder: 2,
+        sessionCount: 2,
+      }).detail
+    ).toBe('2지망')
     expect(
       formatOrganizationApproveScheduleCard({
         label: '3차시',
@@ -801,14 +814,14 @@ describe('period organization approval does not use date-slot mapping', () => {
         endAt: '2026-04-20T12:20:00+09:00',
         educationScheduleMode: 'period',
         educationStructure: 'curriculum',
-        sessionRound: 'single',
+        sessionRound: 'multi',
         preferenceOrder: 1,
         sessionCount: 2,
       }).detail
     ).toBe('1지망 | 3차시')
   })
 
-  it('커리큘럼 단일 날짜는 프로그램 일일 차시를 붙인다', () => {
+  it('커리큘럼 단일 날짜는 라벨에 있는 차시만 쓰고 총 차시를 붙이지 않는다', () => {
     expect(
       formatOrganizationApproveScheduleCard({
         label: '26년 4월 20일(월) 09:30 ~ 12:20',
@@ -821,7 +834,8 @@ describe('period organization approval does not use date-slot mapping', () => {
       })
     ).toEqual({
       title: '2026.04.20(월) 09:30 ~ 12:20',
-      detail: '2차시',
+      // ① 줄별 차시(입력순)는 줄 위치를 알아야 하므로, 위치 없이 총 차시를 붙이지 않는다
+      detail: '',
     })
     expect(
       formatOrganizationApproveScheduleCard({
