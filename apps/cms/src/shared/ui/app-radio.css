@@ -277,3 +277,136 @@
 .app-radio--medium.ant-radio-wrapper span.ant-radio {
   padding: 0 !important;
 }
+
+/* ----- small: 원 16px, 본문 14px/125%, 원–텍스트 4px ----- */
+.app-radio-group--small.ant-radio-group {
+  font-size: 14px;
+}
+
+.app-radio-group--small .ant-radio-wrapper,
+.app-radio--small.ant-radio-wrapper {
+  display: inline-flex;
+  align-items: center !important;
+  gap: 4px !important;
+  margin-inline-end: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 125%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.app-radio-group--small .ant-radio-wrapper .ant-radio,
+.app-radio--small.ant-radio-wrapper .ant-radio {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  align-self: center;
+  aspect-ratio: 1 / 1;
+  top: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.app-radio-group--small .ant-radio-wrapper .ant-radio .ant-radio-inner,
+.app-radio--small.ant-radio-wrapper .ant-radio .ant-radio-inner {
+  width: 16px !important;
+  height: 16px !important;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+
+.app-radio-group--small .ant-radio-wrapper .ant-radio-inner::after,
+.app-radio--small.ant-radio-wrapper .ant-radio-inner::after {
+  width: 8px !important;
+  height: 8px !important;
+  margin-block-start: 0 !important;
+  margin-inline-start: 0 !important;
+  inset-block-start: 50% !important;
+  inset-inline-start: 50% !important;
+  transform: translate(-50%, -50%) scale(0) !important;
+  opacity: 0 !important;
+}
+
+.app-radio-group--small .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
+.app-radio--small.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
+  transform: translate(-50%, -50%) scale(1) !important;
+  opacity: 1 !important;
+  background-color: var(--Brand-500, #00a0af);
+}
+
+.app-radio-group--small .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-inner,
+.app-radio--small.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-inner,
+.app-radio-group--small .ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-inner,
+.app-radio--small.ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-inner {
+  border-radius: var(--Radius-100, 100px);
+  border: 1px solid var(--Border-default, #e0e0e0);
+  background: var(--White, #fff);
+}
+
+.app-radio-group--small .ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner,
+.app-radio--small.ant-radio-wrapper:not(.ant-radio-wrapper-disabled) .ant-radio-checked .ant-radio-inner,
+.app-radio-group--small .ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-checked .ant-radio-inner,
+.app-radio--small.ant-radio-wrapper:not(.ant-radio-wrapper-disabled):hover .ant-radio-checked .ant-radio-inner {
+  border-radius: var(--Radius-50, 50px);
+  border: 1px solid var(--Brand-500, #00a0af);
+  background: var(--White, #fff);
+}
+
+.app-radio-group--small .ant-radio-wrapper .ant-radio::after,
+.app-radio--small.ant-radio-wrapper .ant-radio::after {
+  display: none !important;
+}
+
+.app-radio-group--small .ant-radio-wrapper-checked,
+.app-radio--small.ant-radio-wrapper-checked,
+.app-radio-group--small .ant-radio-wrapper-checked:hover,
+.app-radio--small.ant-radio-wrapper-checked:hover {
+  color: var(--JA-mint-01, #01a1af) !important;
+}
+
+.app-radio-group--small .ant-radio-wrapper-disabled,
+.app-radio--small.ant-radio-wrapper-disabled,
+.app-radio-group--small .ant-radio-wrapper-disabled.ant-radio-wrapper-checked,
+.app-radio--small.ant-radio-wrapper-disabled.ant-radio-wrapper-checked,
+.app-radio-group--small .ant-radio-wrapper-disabled:hover.ant-radio-wrapper-checked,
+.app-radio--small.ant-radio-wrapper-disabled:hover.ant-radio-wrapper-checked {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5)) !important;
+}
+
+.app-radio-group--small .ant-radio-wrapper-disabled .ant-radio-inner,
+.app-radio--small.ant-radio-wrapper-disabled .ant-radio-inner {
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
+    #fff
+  );
+}
+
+.app-radio-group--small .ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner,
+.app-radio--small.ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner {
+  border: 1px solid var(--disabled-select-stroke, rgba(34, 64, 75, 0.2));
+  background: var(
+    --disabled-select-bg,
+    linear-gradient(0deg, rgba(34, 64, 75, 0.2) 0%, rgba(34, 64, 75, 0.2) 100%),
+    #fff
+  );
+}
+
+.app-radio-group--small .ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner::after,
+.app-radio--small.ant-radio-wrapper-disabled .ant-radio-checked .ant-radio-inner::after {
+  background-color: var(--disabled-select-stroke, rgba(34, 64, 75, 0.2));
+}
+
+.app-radio-group--small .ant-radio-wrapper span.ant-radio + *,
+.app-radio--small.ant-radio-wrapper span.ant-radio + * {
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+  margin-inline-start: 0 !important;
+}
+
+.app-radio-group--small .ant-radio-wrapper span.ant-radio,
+.app-radio--small.ant-radio-wrapper span.ant-radio {
+  padding: 0 !important;
+}

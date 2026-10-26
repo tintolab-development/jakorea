@@ -41,7 +41,7 @@ const DEMO_TIME = dayjs('2026-01-01 09:30')
 
 const CHECKBOX_SIZES: CmsCheckboxSize[] = ['large', 'medium']
 
-const RADIO_SIZES: CmsRadioSize[] = ['large', 'medium']
+const RADIO_SIZES: CmsRadioSize[] = ['large', 'medium', 'small']
 
 const TOGGLE_SIZES: CmsToggleSize[] = ['large', 'medium']
 

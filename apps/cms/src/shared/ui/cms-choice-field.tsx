@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react'
 import './cms-choice-field.css'
 
-export type CmsChoiceFieldSize = 'large' | 'medium'
+export type CmsChoiceFieldSize = 'large' | 'medium' | 'small'
 
 export type CmsChoiceFieldProps = {
   label: ReactNode
