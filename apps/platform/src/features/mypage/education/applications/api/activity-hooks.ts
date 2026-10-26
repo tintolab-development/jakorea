@@ -609,9 +609,10 @@ export function useApplicationSchedulesQuery(
         mapPortalEducationSchedule(item, index, {
           educationStructure: query.data?.educationStructure,
           sessionRound: query.data?.sessionRound,
+          applicationType,
         }),
       ),
-    [query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
+    [applicationType, query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
   )
   return {
     enabled,

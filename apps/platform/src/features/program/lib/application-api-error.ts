@@ -149,6 +149,11 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   FORM_BINDING_NOT_FOUND: '교육 문서 양식이 아직 준비되지 않았습니다.',
   FORM_TEMPLATE_DISABLED: '교육 문서 양식을 사용할 수 없습니다.',
   SCHEDULE_NOT_FOUND: '해당 교육일의 문서를 조회할 수 없습니다.',
+  ASSIGNMENT_SUBMISSION_NOT_STARTED: '과제 제출 기간이 아직 시작되지 않았습니다.',
+  ASSIGNMENT_SUBMISSION_CLOSED: '과제 제출 기간이 종료되었습니다.',
+  ASSIGNMENT_SUBMISSION_NOT_ALLOWED: '해당 회차에는 과제를 제출할 수 없습니다.',
+  ASSIGNMENT_ALREADY_SUBMITTED: '이미 과제를 제출했습니다.',
+  ASSIGNMENT_RESUBMIT_NOT_ALLOWED: '과제 수정 제출이 허용되지 않습니다.',
 }
 
 export const INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE =

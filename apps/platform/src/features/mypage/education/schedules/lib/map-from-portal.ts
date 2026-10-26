@@ -5,6 +5,7 @@ import type {
   PortalEducationStructure,
   PortalSessionRound,
 } from '../../applications/api/activity-client'
+import type { ProgramApplicationType } from '../../applications/api/types'
 import {
   resolveEducationScheduleCommonInfoLabel,
   resolveEducationScheduleRowLabel,
@@ -154,6 +155,7 @@ function mapAssignment(
 export type MapPortalEducationScheduleMeta = {
   educationStructure?: PortalEducationStructure | null
   sessionRound?: PortalSessionRound | null
+  applicationType?: ProgramApplicationType | null
 }
 
 /**
@@ -191,7 +193,9 @@ export function mapPortalEducationSchedule(
     formatPeriodLabel(item.startAt, item.endAt)
   const id =
     item.scheduleId != null ? String(item.scheduleId) : `schedule-${sessionNumber}-${index}`
-  const assignment = mapAssignment(item.assignment)
+  const assignmentAllowed =
+    meta?.applicationType !== 'INSTRUCTOR' && meta?.applicationType !== 'VOLUNTEER'
+  const assignment = assignmentAllowed ? mapAssignment(item.assignment) : undefined
   const availableActions = mapAvailableActions(item.availableActions)
   const assignmentStatus = optionalText(item.assignmentStatus ?? undefined)
   const scheduleStatus = optionalText(item.scheduleStatus)

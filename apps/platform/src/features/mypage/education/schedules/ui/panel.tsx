@@ -43,7 +43,7 @@ export function EducationSchedulePanel({
   const [absenceReasonOpenKey, setAbsenceReasonOpenKey] = useState(0)
   const remoteSchedules = useApplicationSchedulesQuery(applicationType, applicationId)
   // 과제는 참여자(개인·기관) 대상. 강사는 강의보고서만 제출한다.
-  const assignmentVisible = applicationType !== 'INSTRUCTOR'
+  const assignmentVisible = applicationType !== 'INSTRUCTOR' && applicationType !== 'VOLUNTEER'
 
   const allItems = useMemo(() => {
     const items: EducationScheduleItem[] = remoteSchedules.enabled ? remoteSchedules.items : []

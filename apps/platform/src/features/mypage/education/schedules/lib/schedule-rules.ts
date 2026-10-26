@@ -1,6 +1,7 @@
 import type {
   EducationAssignmentSubmitStatus,
   EducationScheduleAttendanceStatus,
+  EducationScheduleAssignment,
   EducationScheduleItem,
   EducationScheduleProgressStatus,
 } from '../model/types'
@@ -79,6 +80,17 @@ export type EducationAssignmentGuide = {
   submitLabel: string
   submitDisabled: boolean
   showFeedbackButton: boolean
+}
+
+/**
+ * 과제 제출 버튼 활성화 여부는 제출 기간을 FE에서 재계산하지 않고
+ * 교육일정 API가 내려준 canSubmit/canResubmit만 신뢰한다.
+ */
+export function canSubmitEducationAssignment(
+  assignment: Pick<EducationScheduleAssignment, 'canSubmit' | 'canResubmit'>,
+  mode: 'submit' | 'revise',
+): boolean {
+  return mode === 'revise' ? assignment.canResubmit === true : assignment.canSubmit === true
 }
 
 function isDeadlinePassed(submitEndAt: string, now: Date): boolean {

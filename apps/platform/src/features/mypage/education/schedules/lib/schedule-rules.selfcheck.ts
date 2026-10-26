@@ -1,8 +1,16 @@
 import assert from 'node:assert/strict'
 import {
+  canSubmitEducationAssignment,
   canSubmitEducationAbsenceReason,
   resolveEducationAssignmentGuide,
 } from './schedule-rules.ts'
+
+assert.equal(canSubmitEducationAssignment({ canSubmit: true }, 'submit'), true)
+assert.equal(canSubmitEducationAssignment({ canSubmit: false }, 'submit'), false)
+assert.equal(canSubmitEducationAssignment({}, 'submit'), false)
+assert.equal(canSubmitEducationAssignment({ canResubmit: true }, 'revise'), true)
+assert.equal(canSubmitEducationAssignment({ canResubmit: false }, 'revise'), false)
+assert.equal(canSubmitEducationAssignment({}, 'revise'), false)
 
 assert.equal(canSubmitEducationAbsenceReason('scheduled', null), true)
 assert.equal(canSubmitEducationAbsenceReason('scheduled', 'absent'), true)

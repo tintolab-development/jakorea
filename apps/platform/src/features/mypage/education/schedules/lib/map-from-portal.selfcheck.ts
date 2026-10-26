@@ -204,4 +204,18 @@ assert.deepEqual(teamIndividual.team, { roleLabel: '개인', teamName: '-' })
 const nonTeamProgram = mapPortalEducationSchedule({ scheduleId: 22, teamName: '무시' }, 0)
 assert.equal(nonTeamProgram.team, undefined)
 
+const volunteerAssignment = mapPortalEducationSchedule(
+  { scheduleId: 23, assignment: { enabled: true, canSubmit: true } },
+  0,
+  { applicationType: 'VOLUNTEER' },
+)
+assert.equal(volunteerAssignment.assignment, undefined)
+
+const instructorAssignment = mapPortalEducationSchedule(
+  { scheduleId: 24, assignment: { enabled: true, canSubmit: true } },
+  0,
+  { applicationType: 'INSTRUCTOR' },
+)
+assert.equal(instructorAssignment.assignment, undefined)
+
 console.log('map-from-portal.selfcheck: ok')

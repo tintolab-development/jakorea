@@ -1,20 +1,55 @@
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import type { EducationScheduleAssignment, EducationScheduleAssignmentFile } from '../model/types'
-import { resolveEducationAssignmentGuide } from '../lib/schedule-rules'
+import {
+  canSubmitEducationAssignment,
+  resolveEducationAssignmentGuide,
+} from '../lib/schedule-rules'
 import attachFileUrl from '../image/icon/attach-file-24.svg'
 import portalBlackUrl from '@/shared/assets/icons/portal-black.svg'
 import closeDarkMintUrl from '@/shared/assets/icons/close-dark-mint.svg'
 import closeBlackUrl from '@/shared/assets/icons/close-black.svg'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
+import {
+  MemberFileConfirmError,
+  MemberFileEmptyError,
+  MemberFileRejectedError,
+  MemberFileScanTimeoutError,
+  MemberFileStatusCheckError,
+  MemberFileStorageUploadError,
+  MemberFileTooLargeError,
+  MemberFileUploadRequestError,
+} from '@/features/mypage/instructor-apply/api/member-file-upload'
 import { EducationSessionGuideBlock } from '../../shared'
 import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { usePortalFormResponseFeedbackQuery } from '../api/use-portal-form-response-feedback-query'
-import { useScheduleAssignmentFilesMutation } from '../api/assignment-hooks'
+import {
+  AssignmentFileCountExceededError,
+  useScheduleAssignmentFilesMutation,
+} from '../api/assignment-hooks'
 import { EducationAssignmentFeedbackModal } from './assignment-feedback-modal'
 import styles from './assignment-block.module.css'
 
 const ASSIGNMENT_UPLOAD_FAILED_MESSAGE = '과제 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+
+const UPLOAD_ERROR_CLASSES = [
+  AssignmentFileCountExceededError,
+  MemberFileTooLargeError,
+  MemberFileEmptyError,
+  MemberFileRejectedError,
+  MemberFileScanTimeoutError,
+  MemberFileUploadRequestError,
+  MemberFileStorageUploadError,
+  MemberFileConfirmError,
+  MemberFileStatusCheckError,
+] as const
+
+function assignmentSubmitErrorMessage(error: unknown): string {
+  if (UPLOAD_ERROR_CLASSES.some(ErrorClass => error instanceof ErrorClass)) {
+    return (error as Error).message
+  }
+  return getProgramApplicationApiErrorMessage(error, ASSIGNMENT_UPLOAD_FAILED_MESSAGE)
+}
 
 type EducationScheduleAssignmentBlockProps = {
   assignment: EducationScheduleAssignment
@@ -59,9 +94,10 @@ export function EducationScheduleAssignmentBlock({
   const isRevision = assignment.status === 'submitted' || assignment.status === 'feedback'
   const isSubmitted =
     assignment.status === 'submitted' || assignment.status === 'revision_submitted'
-  const serverAllowed = isRevision ? assignment.canResubmit : assignment.canSubmit
   const canSubmitFiles =
-    scheduleId != null && scheduleId > 0 && (serverAllowed ?? !guide.submitDisabled)
+    scheduleId != null &&
+    scheduleId > 0 &&
+    canSubmitEducationAssignment(assignment, isRevision ? 'revise' : 'submit')
   const uploading = filesMutation.isPending
   const files = assignment.files ?? []
   const hasFiles = files.length > 0
@@ -95,9 +131,7 @@ export function EducationScheduleAssignmentBlock({
       },
       {
         onError: error => {
-          setErrorMessage(
-            getProgramApplicationApiErrorMessage(error, ASSIGNMENT_UPLOAD_FAILED_MESSAGE),
-          )
+          setErrorMessage(assignmentSubmitErrorMessage(error))
         },
       },
     )

@@ -4,6 +4,10 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 /** 과제 첨부 업로드 `filePurpose` — 회원 파일 API로 올린 뒤 fileObjectId 만 제출한다. */
 export const PORTAL_ASSIGNMENT_FILE_PURPOSE = 'ASSIGNMENT_ATTACHMENT'
 
+/** 서버 `MemberPortalAssignmentSubmissionService` 제한과 같아야 한다. */
+export const PORTAL_ASSIGNMENT_MAX_FILE_COUNT = 20
+export const PORTAL_ASSIGNMENT_MAX_FILE_BYTES = 50 * 1024 * 1024
+
 export type PortalScheduleAssignmentSubmissionBody = {
   /** 제출(또는 수정 후 최종) 파일 집합. 1개 이상. */
   fileObjectIds: number[]
