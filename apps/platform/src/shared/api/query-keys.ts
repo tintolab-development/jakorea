@@ -47,6 +47,12 @@ export const platformQueryKeys = {
     publicMain: () => [...platformQueryKeys.home.all(), 'public-main'] as const,
   },
 
+  publicSurvey: {
+    all: () => [...platformQueryKeys.all, 'public-survey'] as const,
+    form: (shareToken: string) =>
+      [...platformQueryKeys.publicSurvey.all(), 'form', shareToken] as const,
+  },
+
   site: {
     all: () => [...platformQueryKeys.all, 'site'] as const,
     /** GET /api/public/site/settings — Class B-shell */

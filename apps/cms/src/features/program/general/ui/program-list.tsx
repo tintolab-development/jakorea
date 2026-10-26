@@ -161,6 +161,8 @@ export function ProgramList({
   }, [displayedCount, hasActiveFilters, onDisplayCountChange])
 
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<React.Key[]>([])
+  // 캘린더 우측 목록의 선택 표시용 상태. 목록 행 일괄 삭제 선택과 분리한다.
+  const [calendarSelectedProgramIds, setCalendarSelectedProgramIds] = useState<React.Key[]>([])
   const [internalViewMode] = useState<'list' | 'calendar'>('list')
   const viewMode = externalViewMode ?? internalViewMode
   const isOverviewTable = tableContext.mode === 'overview'
@@ -209,12 +211,9 @@ export function ProgramList({
   )
   const handleCalendarProgramSelectionChange = useCallback(
     (programIds: React.Key[]) => {
-      const selectedIds = new Set(programIds.map(String))
-      handleSelectionChange(
-        data.filter(program => selectedIds.has(String(program.id))).map(program => program.id)
-      )
+      setCalendarSelectedProgramIds(programIds)
     },
-    [data, handleSelectionChange]
+    []
   )
   const filterFieldsOverride = config?.filterFields
   const filterFieldsForLayout = useMemo(() => {
@@ -340,7 +339,7 @@ export function ProgramList({
                   </div>
                 </div>
               }
-              selectedProgramIds={showRowSelection ? effectiveSelectedRowKeys : undefined}
+              selectedProgramIds={showRowSelection ? calendarSelectedProgramIds : undefined}
               onProgramSelectionChange={
                 showRowSelection ? handleCalendarProgramSelectionChange : undefined
               }

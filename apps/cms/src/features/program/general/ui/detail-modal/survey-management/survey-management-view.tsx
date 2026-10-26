@@ -136,6 +136,7 @@ import {
   resolveSurveyResultsParticipantTotal,
   resolveSurveyShareClipboardUrl,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
+import { getPlatformPublicOrigin } from '@/features/program/general/lib/public-survey-origin'
 import {
   getGeneralProgramApiErrorMessage,
   getProgramFormBindingErrorMessage,
@@ -1004,7 +1005,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       try {
         const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
           : null
         if (!url) {
           notifyProgramApiUnavailable(
@@ -1040,7 +1041,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       try {
         const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
           : null
         if (!url) {
           notifyProgramApiUnavailable(

@@ -23,6 +23,7 @@ import {
   pickApplicationOption,
   type ProgramApplicationSelection,
 } from './pick-application-option'
+import { shouldFetchPortalApplicationOptions } from './application-option-query'
 
 export type { ProgramApplicationSelection } from './pick-application-option'
 export { pickApplicationOption } from './pick-application-option'
@@ -254,7 +255,7 @@ export function usePortalApplicationOption(
 ): PortalApplicationOptionQuery {
   const remote = isRemoteApiConfigured()
   const numericId = parsePortalProgramId(programId)
-  const enabled = remote && numericId != null
+  const enabled = shouldFetchPortalApplicationOptions(numericId, remote, Boolean(getAccessToken()))
 
   const optionsQuery = useQuery({
     queryKey: platformQueryKeys.program.applicationOptions(String(numericId ?? '')),

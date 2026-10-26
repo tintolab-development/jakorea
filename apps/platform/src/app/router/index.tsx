@@ -70,6 +70,7 @@ import { IntroductionPage } from '@/pages/about/introduction'
 import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
+import { PublicSurveyPage } from '@/pages/surveys'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { CorporateDonationPage } from '@/pages/support/corporate'
 import { CorporateDonationInquiryPage } from '@/pages/support/corporate/inquiry'
@@ -90,6 +91,10 @@ import { ABOUT_HISTORY_PATH } from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
 
 export const router = createBrowserRouter([
+  {
+    element: <AppLayoutRoute layout="public-form" />,
+    children: [{ path: '/surveys/share/:shareToken', element: <PublicSurveyPage /> }],
+  },
   {
     element: <AppLayoutRoute layout="home" />,
     children: [{ path: '/', element: <HomePage /> }],

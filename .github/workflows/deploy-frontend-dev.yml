@@ -129,6 +129,7 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ env.JABACK_ORIGIN }}
           VITE_OAUTH_BACKEND_ORIGIN: ${{ env.JABACK_ORIGIN }}
+          VITE_PLATFORM_PUBLIC_ORIGIN: ${{ env.PLATFORM_ORIGIN }}
           VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
           VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
           VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}

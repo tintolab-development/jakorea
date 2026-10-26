@@ -278,6 +278,7 @@ import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
 import { resolveSurveyShareClipboardUrl } from '@/features/program/general/api/adapters/program-survey-adapters'
+import { getPlatformPublicOrigin } from '@/features/program/general/lib/public-survey-origin'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   createGeneralProgramSurveyShareLink,
@@ -2069,9 +2070,10 @@ export function UjatProgramDetailFullPageModal({
   const handleShareRegisteredSurvey = useCallback(() => {
     if (!activeRegisteredSurvey || programId == null) return
     if (!surveysRemote) {
-      const shareUrl = `${window.location.origin}/programs/ujat/survey?programId=${programId}&surveyId=${activeRegisteredSurvey.id}`
-      void copyText(shareUrl)
-      showShareCopyToast(UJAT_SURVEY_POLL_SHARE_TOAST_COPY)
+      void showAlert({
+        title: '공유',
+        content: '공개 설문 공유를 사용하려면 설문 API 연결이 필요합니다.',
+      })
       return
     }
     const bindingId = activeRegisteredSurvey.bindingId?.trim()
@@ -2086,7 +2088,7 @@ export function UjatProgramDetailFullPageModal({
       try {
         const response = await createGeneralProgramSurveyShareLink(programId, bindingId)
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
           : null
         if (!url) {
           void showAlert({
@@ -2279,9 +2281,10 @@ export function UjatProgramDetailFullPageModal({
   const handleShareSatisfactionSurvey = useCallback(() => {
     if (!activeSatisfactionSurvey || programId == null) return
     if (!surveysRemote) {
-      const shareUrl = `${window.location.origin}/programs/ujat/satisfaction?programId=${programId}&audience=${activeSatisfactionAudience}`
-      void copyText(shareUrl)
-      showShareCopyToast()
+      void showAlert({
+        title: '공유',
+        content: '공개 만족도조사 공유를 사용하려면 설문 API 연결이 필요합니다.',
+      })
       return
     }
     const bindingId = activeSatisfactionSurvey.bindingId?.trim()
@@ -2296,7 +2299,7 @@ export function UjatProgramDetailFullPageModal({
       try {
         const response = await createGeneralProgramSurveyShareLink(programId, bindingId)
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
           : null
         if (!url) {
           void showAlert({

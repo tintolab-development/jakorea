@@ -88,24 +88,16 @@ export function isProgramSurveyManagementFormBinding(binding: ProgramFormBinding
 
 export function resolveSurveyShareClipboardUrl(
   response: {
-    formPath?: string | null
-    submitPath?: string | null
     shareToken?: string | null
+    accessMode?: string | null
   },
-  origin: string
+  platformOrigin: string | null | undefined
 ): string | null {
-  const absoluteOrJoin = (path: string) => {
-    if (/^https?:\/\//i.test(path)) return path
-    const normalizedOrigin = origin.replace(/\/$/, '')
-    return `${normalizedOrigin}${path.startsWith('/') ? '' : '/'}${path}`
-  }
-  const formPath = response.formPath?.trim()
-  if (formPath) return absoluteOrJoin(formPath)
-  const submitPath = response.submitPath?.trim()
-  if (submitPath) return absoluteOrJoin(submitPath)
+  if (response.accessMode?.trim().toUpperCase() !== 'PUBLIC_ANONYMOUS') return null
   const token = response.shareToken?.trim()
-  if (token) return `${origin.replace(/\/$/, '')}/surveys/share/${encodeURIComponent(token)}`
-  return null
+  const origin = platformOrigin?.trim().replace(/\/$/, '')
+  if (!origin || !token) return null
+  return `${origin}/surveys/share/${encodeURIComponent(token)}`
 }
 
 type SurveyExpectedRespondentSource = {
