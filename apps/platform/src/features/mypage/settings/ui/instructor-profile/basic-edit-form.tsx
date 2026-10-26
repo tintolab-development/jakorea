@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-income'
-import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
@@ -12,22 +11,16 @@ import {
 import {
   getLoginApiErrorMessage,
   usePortalPhoneIdentityConfirmMutation,
-  usePortalProfileUpdateMutation,
-  type PortalProfileResponse,
 } from '@/features/auth/sign-in'
-import { AddressSearchModal } from '@/features/auth/sign-up'
+import { AddressSearchModal, SchoolSearchModal, type SelectedSchool } from '@/features/auth/sign-up'
 import {
   mapInstructorFormValuesToCmsProfile,
   mapInstructorFormValuesToPortalSettlement,
 } from '@/features/mypage/instructor-apply/api/map-create-request'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFAlertModal, PFButton, PFText, PFTextInput } from '@/shared/ui'
+import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import { EMPTY_SETTINGS_VALUE } from '../../lib/constants'
-import {
-  mapInstructorBasicSettingsToPortalProfileUpdate,
-  type InstructorBasicSettingsAddressMeta,
-} from '../../lib/map-instructor-basic-profile-update'
-import { buildInstructorSettingsFormValues } from '../../lib/map-instructor-settings-form'
+import type { InstructorBasicSettingsAddressMeta } from '../../lib/map-instructor-basic-profile-update'
 import {
   SETTINGS_TEACHER_EMPLOYMENT_OPTIONS,
   toSettingsGender,
@@ -40,47 +33,37 @@ import {
 } from '../../lib/map-view'
 import styles from '../edit-form.module.css'
 
-const REQUIRED_INCOMPLETE = '필수 항목을 모두 작성해주세요'
-
-function validateInstructorBasicEdit(values: InstructorSharedProfileFormValues): string | null {
-  const result = collectInstructorRegisterValidation(values, {}, { requiredConsentAgreeKeys: [] })
-  if (result.missingRequired) return REQUIRED_INCOMPLETE
-  if (result.formatMessages[0]) return result.formatMessages[0]
-  return null
-}
-
-export type SettingsInstructorBasicEditFormProps = {
+export type SettingsInstructorBasicFieldsProps = {
   profile: SettingsProfileInput
-  initialValues: InstructorSharedProfileFormValues
-  onCancel: () => void
-  onSaved: (next: InstructorSharedProfileFormValues) => void
-  /** 회원정보 설정 — 기본 정보 섹션만 교체 */
-  embedded?: boolean
+  values: InstructorSharedProfileFormValues
+  onPatch: (partial: Partial<InstructorSharedProfileFormValues>) => void
+  onAddressMetaChange: (meta: InstructorBasicSettingsAddressMeta) => void
+  /** 휴대폰 재인증 진행 여부 — 저장 버튼 잠금용 */
+  onReverifyingChange?: (busy: boolean) => void
+  /**
+   * 교사 겸 강사 — 소속/학교 검색. 교사 가입 + 강사 신청이므로 부모가 `memberType=school_teacher`로
+   * 넘기며, 재직 현황은 교사 경로로 표시됨 (자유 입력 소속 없음)
+   */
+  isDual?: boolean
+  onSchoolSelect?: (school: SelectedSchool) => void
 }
 
-export function SettingsInstructorBasicEditForm({
+/** 강사 회원정보 설정 — 기본 정보 필드 (값은 부모가 소유) */
+export function SettingsInstructorBasicFields({
   profile,
-  initialValues,
-  onCancel,
-  onSaved,
-  embedded = false,
-}: SettingsInstructorBasicEditFormProps) {
-  const [values, setValues] = useState(initialValues)
+  values,
+  onPatch: patch,
+  onAddressMetaChange,
+  onReverifyingChange,
+  isDual = false,
+  onSchoolSelect,
+}: SettingsInstructorBasicFieldsProps) {
   const [phone, setPhone] = useState(profile.phone?.trim() ?? '')
-  const [postalCode, setPostalCode] = useState(profile.postalCode?.trim() ?? '')
-  const [regionSido, setRegionSido] = useState(profile.regionSido?.trim() ?? '')
-  const [regionSigungu, setRegionSigungu] = useState(profile.regionSigungu?.trim() ?? '')
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [isSchoolSearchOpen, setIsSchoolSearchOpen] = useState(false)
   const [phoneError, setPhoneError] = useState<string | undefined>()
-  const [alertMessage, setAlertMessage] = useState<string | null>(null)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const profileUpdateMutation = usePortalProfileUpdateMutation()
   const { mutateAsync: confirmPhone, isPending: isConfirmingPhone } =
     usePortalPhoneIdentityConfirmMutation()
-
-  const patch = useCallback((partial: Partial<InstructorSharedProfileFormValues>) => {
-    setValues(prev => ({ ...prev, ...partial }))
-  }, [])
 
   const handleIdentitySuccess = useCallback(
     (result: IdentityChallengeCompleteResult) => {
@@ -156,13 +139,10 @@ export function SettingsInstructorBasicEditForm({
   const displayGender = toSettingsGender(profile.gender)
   const identityError = phoneError ?? errorMessage ?? undefined
   const isReverifying = isVerifying || isConfirmingPhone
-  const isValid = useMemo(() => validateInstructorBasicEdit(values) === null, [values])
 
-  const addressMeta: InstructorBasicSettingsAddressMeta = {
-    postalCode,
-    regionSido,
-    regionSigungu,
-  }
+  useEffect(() => {
+    onReverifyingChange?.(isReverifying)
+  }, [isReverifying, onReverifyingChange])
 
   const handleReverify = () => {
     if (isReverifying) return
@@ -174,59 +154,26 @@ export function SettingsInstructorBasicEditForm({
     void verify()
   }
 
-  const handleSave = async () => {
-    if (!isValid || profileUpdateMutation.isPending || isReverifying) return
-    setSubmitError(null)
-    const validationError = validateInstructorBasicEdit(values)
-    if (validationError) {
-      setAlertMessage(validationError)
-      return
-    }
-
-    if (!isRemoteApiConfigured()) {
-      onSaved(values)
-      return
-    }
-
-    try {
-      const updated = await profileUpdateMutation.mutateAsync(
-        mapInstructorBasicSettingsToPortalProfileUpdate(values, addressMeta),
-      )
-      onSaved(buildInstructorSettingsFormValues(updated as PortalProfileResponse))
-    } catch (error) {
-      setSubmitError(
-        getLoginApiErrorMessage(error, '회원 정보를 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.'),
-      )
-    }
-  }
-
-  const handleCancel = () => {
-    clearMypagePhoneIdentityConfirmPending()
-    onCancel()
-  }
-
   const isSchoolTeacher = values.memberType === 'school_teacher'
 
-  const formContent = (
+  return (
     <>
         <div className={styles.fields}>
           <PFTextInput
             size="xlarge"
             label="이름"
             value={displayName === EMPTY_SETTINGS_VALUE ? '' : displayName}
-            required
             disabled
           />
 
           <div className={styles.addressField}>
             <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
-              휴대폰 번호 <span className={styles.inlineRequiredMark}>*</span>
+              휴대폰 번호
             </PFText>
             <div className={styles.inlineRow}>
               <PFTextInput
                 size="xlarge"
                 value={displayPhone === EMPTY_SETTINGS_VALUE ? '' : displayPhone}
-                required
                 readOnly
               />
               <PFButton
@@ -250,7 +197,6 @@ export function SettingsInstructorBasicEditForm({
             size="xlarge"
             label="생년월일"
             value={displayBirth === EMPTY_SETTINGS_VALUE ? '' : displayBirth}
-            required
             disabled
           />
 
@@ -286,19 +232,37 @@ export function SettingsInstructorBasicEditForm({
             size="xlarge"
             label="이메일"
             value={displayEmail === EMPTY_SETTINGS_VALUE ? '' : displayEmail}
-            required
             disabled
           />
 
+          {isDual ? (
+            <div className={styles.addressField}>
+              <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                소속/학교 <span className={styles.inlineRequiredMark}>*</span>
+              </PFText>
+              <div className={styles.inlineRow}>
+                <PFTextInput
+                  size="xlarge"
+                  placeholder="검색으로 학교를 선택해 주세요"
+                  value={values.schoolName}
+                  readOnly
+                  onClick={() => setIsSchoolSearchOpen(true)}
+                />
+                <PFButton
+                  size="xlarge"
+                  variant="secondary"
+                  type="button"
+                  onClick={() => setIsSchoolSearchOpen(true)}
+                >
+                  검색
+                </PFButton>
+              </div>
+            </div>
+          ) : isSchoolTeacher ? (
+            <PFTextInput size="xlarge" label="소속" value={values.schoolName} disabled />
+          ) : null}
           {isSchoolTeacher ? (
             <>
-              <PFTextInput
-                size="xlarge"
-                label="소속"
-                value={values.schoolName}
-                required
-                disabled
-              />
               <div className={styles.schoolStatusField}>
                 <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
                   재직 현황 <span className={styles.inlineRequiredMark}>*</span>
@@ -429,27 +393,6 @@ export function SettingsInstructorBasicEditForm({
           />
         </div>
 
-      <div className={styles.actions}>
-        {submitError ? (
-          <PFText as="p" typo="bd-sm-md" color="error" className={styles.submitError}>
-            {submitError}
-          </PFText>
-        ) : null}
-        <PFButton
-          size="xlarge"
-          width="100%"
-          disabled={!isValid || profileUpdateMutation.isPending || isReverifying}
-          onClick={() => {
-            void handleSave()
-          }}
-        >
-          {profileUpdateMutation.isPending ? '수정 중…' : '수정 완료하기'}
-        </PFButton>
-        <PFButton size="xlarge" variant="tertiary" width="100%" onClick={handleCancel}>
-          이전
-        </PFButton>
-      </div>
-
       <AddressSearchModal
         open={isAddressModalOpen}
         onClose={() => setIsAddressModalOpen(false)}
@@ -458,35 +401,27 @@ export function SettingsInstructorBasicEditForm({
             homeAddress: selection.address,
             homeAddressDetail: values.homeAddressDetail,
           })
-          setPostalCode(selection.postalCode ?? '')
-          setRegionSido(selection.regionSido ?? '')
-          setRegionSigungu(selection.regionSigungu ?? '')
+          onAddressMetaChange({
+            postalCode: selection.postalCode ?? '',
+            regionSido: selection.regionSido ?? '',
+            regionSigungu: selection.regionSigungu ?? '',
+          })
           setIsAddressModalOpen(false)
         }}
       />
 
-      <PFAlertModal
-        open={alertMessage != null}
-        title="안내"
-        description={alertMessage ?? undefined}
-        onConfirm={() => setAlertMessage(null)}
-      />
+      {isDual ? (
+        <SchoolSearchModal
+          open={isSchoolSearchOpen}
+          onClose={() => setIsSchoolSearchOpen(false)}
+          onSelect={school => {
+            patch({ schoolName: school.name })
+            onSchoolSelect?.(school)
+            setIsSchoolSearchOpen(false)
+          }}
+        />
+      ) : null}
     </>
-  )
-
-  if (embedded) {
-    return <div className={styles.inlineEdit}>{formContent}</div>
-  }
-
-  return (
-    <div className={styles.page}>
-      <section className={styles.section}>
-        <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
-          기본 정보
-        </PFText>
-        {formContent}
-      </section>
-    </div>
   )
 }
 

@@ -1,4 +1,6 @@
 import type { UpdatePortalProfileRequest } from '@/features/auth/sign-in/api/types'
+import { buildSchoolSelection } from '@/features/auth/sign-up/lib/build-school-selection'
+import type { SelectedSchool } from '@/features/auth/sign-up'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import {
   mapInstructorFormValuesToPortalEditableProfile,
@@ -11,8 +13,48 @@ export type InstructorBasicSettingsAddressMeta = {
   regionSigungu?: string
 }
 
-/** 강사 회원정보 설정 — 기본 정보 저장 PATCH */
+export type InstructorBasicSettingsUpdateOptions = {
+  /**
+   * 교사 겸 강사 — 항상 교사 가입 + 강사 신청이므로 교사 회원과 동일하게 저장
+   * (`schoolName`·`affiliationName`=학교명·`teacherEmploymentStatus`).
+   * `selectedSchool`은 이번 수정에서 학교 검색으로 새로 고른 경우에만 넘김.
+   */
+  dualTeacher?: {
+    selectedSchool?: SelectedSchool | null
+  }
+}
+
+function mapDualTeacherSchoolSelection(
+  selectedSchool: SelectedSchool | null | undefined,
+): UpdatePortalProfileRequest {
+  if (!selectedSchool) return {}
+  if (selectedSchool.organizationId != null) {
+    return { schoolOrganizationId: selectedSchool.organizationId }
+  }
+  const schoolSelection = buildSchoolSelection({
+    schoolName: selectedSchool.name,
+    schoolNeisCode: selectedSchool.neisCode,
+    schoolEducationOfficeCode: selectedSchool.educationOfficeCode,
+    schoolAddress: selectedSchool.address,
+    source: selectedSchool.source ?? (selectedSchool.neisCode ? 'neis' : undefined),
+  })
+  return schoolSelection ? { schoolSelection } : {}
+}
+
+/** 강사 회원정보 설정 — 기본 정보(+ 전체 수정) 저장 PATCH */
 export function mapInstructorBasicSettingsToPortalProfileUpdate(
+  values: InstructorSharedProfileFormValues,
+  addressMeta?: InstructorBasicSettingsAddressMeta,
+  options?: InstructorBasicSettingsUpdateOptions,
+): UpdatePortalProfileRequest {
+  if (!options?.dualTeacher) return mapInstructorBasicSettingsCore(values, addressMeta)
+  return {
+    ...mapInstructorBasicSettingsCore({ ...values, memberType: 'school_teacher' }, addressMeta),
+    ...mapDualTeacherSchoolSelection(options.dualTeacher.selectedSchool),
+  }
+}
+
+function mapInstructorBasicSettingsCore(
   values: InstructorSharedProfileFormValues,
   addressMeta?: InstructorBasicSettingsAddressMeta,
 ): UpdatePortalProfileRequest {
