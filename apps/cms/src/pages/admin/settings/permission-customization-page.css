@@ -115,3 +115,77 @@
   background-color: #20b2aa;
   border-color: #20b2aa;
 }
+
+/* 관리자 권한 설정 화면만. 프로그램 담당자 권한 설정은 기존 그리드를 유지한다. */
+.permission-customization-page--admin-settings .permission-customization-page__grid {
+  align-items: start;
+  gap: 24px;
+}
+
+.permission-customization-page--admin-settings .permission-customization-page__card-head {
+  height: 52px;
+  min-height: 52px;
+  padding: 0 24px;
+}
+
+.permission-customization-page--admin-settings
+  .permission-customization-page__card-head-checkbox
+  .ant-checkbox-disabled.ant-checkbox-checked
+  .ant-checkbox-inner {
+  background-color: #20b2aa;
+  border-color: #20b2aa;
+}
+
+.permission-customization-page--admin-settings
+  .permission-customization-page__card-head-checkbox
+  .ant-checkbox-disabled.ant-checkbox-checked
+  .ant-checkbox-inner::after {
+  border-color: #fff;
+  opacity: 1;
+}
+
+.permission-customization-page--admin-settings
+  .permission-customization-page__card-head-checkbox
+  .ant-checkbox-disabled.ant-checkbox-indeterminate
+  .ant-checkbox-inner {
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+.permission-customization-page--admin-settings
+  .permission-customization-page__card-head-checkbox
+  .ant-checkbox-disabled.ant-checkbox-indeterminate
+  .ant-checkbox-inner::after {
+  width: 10px;
+  height: 2px;
+  background-color: #fff;
+  border: 0;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  top: 50%;
+  inset-inline-start: 50%;
+}
+
+.permission-customization-page--admin-settings
+  .permission-customization-page__item-checkbox.ant-checkbox-wrapper {
+  align-items: flex-start;
+  height: auto;
+}
+
+.permission-customization-page--admin-settings
+  .permission-customization-page__item-checkbox
+  .ant-checkbox-label {
+  display: block;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  word-break: keep-all;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  line-clamp: unset;
+}
+
+.permission-customization-page--admin-settings .permission-customization-page__card-body {
+  height: auto;
+  overflow: visible;
+}
