@@ -6,7 +6,10 @@ import {
   canSubmitEducationAbsenceReason,
   resolveEducationScheduleProgressStatus,
 } from '../lib/schedule-rules'
-import { resolveEducationScheduleEmptyMessage } from '../lib/scope-status'
+import {
+  filterEducationSchedulesForMemberAssignment,
+  resolveEducationScheduleEmptyMessage,
+} from '../lib/scope-status'
 import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
@@ -47,8 +50,17 @@ export function EducationSchedulePanel({
 
   const allItems = useMemo(() => {
     const items: EducationScheduleItem[] = remoteSchedules.enabled ? remoteSchedules.items : []
-    return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
-  }, [lastParticipatedSession, remoteSchedules.enabled, remoteSchedules.items])
+    const assigned = filterEducationSchedulesForMemberAssignment(
+      items,
+      remoteSchedules.scopeStatus,
+    )
+    return filterItemsUpToLastParticipatedSession(assigned, lastParticipatedSession)
+  }, [
+    lastParticipatedSession,
+    remoteSchedules.enabled,
+    remoteSchedules.items,
+    remoteSchedules.scopeStatus,
+  ])
 
   const totalElements = allItems.length
   const totalPages = Math.max(1, Math.ceil(totalElements / EDUCATION_SCHEDULE_PAGE_SIZE))
