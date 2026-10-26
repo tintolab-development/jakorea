@@ -14,8 +14,6 @@ import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-c
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
-  EducationTeacherAssignment,
-  EducationTeacherAssignmentTextbook,
   EducationUjatTemporarySchedule,
 } from '../model/types'
 import type {
@@ -333,44 +331,6 @@ function mapUjatTemporarySchedule(
   }
 }
 
-function mapTeacherAssignment(
-  detail: PortalProgramApplicationDetail,
-): EducationTeacherAssignment | undefined {
-  if (detail.applicationType !== 'ORGANIZATION' || !detail.teacherAssignment) {
-    return undefined
-  }
-
-  const source = detail.teacherAssignment.textbook
-  const deliveryStatus =
-    source?.deliveryStatus === 'PREPARING'
-      ? 'before'
-      : source?.deliveryStatus === 'SHIPPING'
-        ? 'shipping'
-        : source?.deliveryStatus === 'DELIVERED'
-          ? 'completed'
-          : undefined
-
-  const textbook: EducationTeacherAssignmentTextbook | undefined =
-    source?.textbookId != null && deliveryStatus
-      ? {
-          title: source.title?.trim() ?? '',
-          kitCountLabel:
-            source.kitCountLabel?.trim() ??
-            (source.kitCount != null ? `${source.kitCount}키트` : ''),
-          volumeCountLabel:
-            source.volumeCountLabel?.trim() ??
-            (source.volumeCount != null ? `${source.volumeCount}권` : ''),
-          deliveryStatus,
-        }
-      : undefined
-
-  return {
-    ...(textbook ? { textbook } : {}),
-    // 배정 강사는 별도 assigned-instructors API의 현재 신청별 응답을 사용한다.
-    instructors: [],
-  }
-}
-
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
   knownApplicationType?: ProgramApplicationType | null,
@@ -395,10 +355,6 @@ export function mapPortalProgramApplicationDetail(
   if (!mapped) return null
   mapped.displayStatus = displayStatus
   mapped.recruitmentStatus = mapRecruitmentStatus(displayStatus)
-  const teacherAssignment = mapTeacherAssignment(detail)
-  if (teacherAssignment) {
-    mapped.teacherAssignment = teacherAssignment
-  }
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
   if (detail.certificateAvailable != null) {
     mapped.certificateAvailable = detail.certificateAvailable
