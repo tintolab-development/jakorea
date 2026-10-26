@@ -285,6 +285,11 @@ export type RenderFormParagraphBodyOptions = {
   surveyPeriodReadonly?: boolean
   /** 강의보고서 프로그램 진행 정보 — 프로그램·배정 연동 미리보기(템플릿 안내 대신 실값) */
   lectureReportProgramLinkedPreview?: boolean
+  /** 제출 강의보고서 미리보기 — 실제 첨부 파일 메타데이터 */
+  lectureReportFiles?: readonly {
+    fileObjectId: number
+    originalFileName?: string
+  }[]
   /** 회원 동의 작성(fill) — 제목형「작성 기간」본문 슬롯 숨김 */
   hideSurveyWritingPeriod?: boolean
 }
@@ -491,9 +496,7 @@ export function renderFormParagraphBody(
       const tableCanvasInteractive =
         !structureLocked &&
         paragraphInteractionMode === 'authoring' &&
-        (hp.tableFlavor === 'field' ||
-          hp.tableFlavor === 'text' ||
-          isParagraphSelected)
+        (hp.tableFlavor === 'field' || hp.tableFlavor === 'text' || isParagraphSelected)
       const lockedBodyColumnIndexes = structureLockedPartialTextEdit
         ? getStructureLockedPartialLockedBodyColumnIndexes(hp.id, hp.columnHeaders.length)
         : undefined
@@ -532,9 +535,7 @@ export function renderFormParagraphBody(
             options?.ujatProgramRegistrationBasicInfoOverlayFree
           }
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
-          programLinkedInstitutionApplicationForm={
-            options?.programLinkedInstitutionApplicationForm
-          }
+          programLinkedInstitutionApplicationForm={options?.programLinkedInstitutionApplicationForm}
           programApplicationFormEconomyInstitution={
             options?.programApplicationFormEconomyInstitution
           }
@@ -560,9 +561,7 @@ export function renderFormParagraphBody(
             options?.applicantRecruitInstitutionTemplateAuthoringMode
           }
           economyRecruitFormInstitution={options?.economyRecruitFormInstitution}
-          trainedTeachersRecruitFormInstitution={
-            options?.trainedTeachersRecruitFormInstitution
-          }
+          trainedTeachersRecruitFormInstitution={options?.trainedTeachersRecruitFormInstitution}
           ujatRecruitFormInstitution={options?.ujatRecruitFormInstitution}
           applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}
           recruitFormInstructor={options?.recruitFormInstructor}
@@ -575,15 +574,14 @@ export function renderFormParagraphBody(
               ? undefined
               : {
                   ...options.programApplicationFormInstructor,
-                  isTemplateAuthoringMode: resolveProgramApplicationFormScheduleIsTemplateAuthoringMode(
-                    {
+                  isTemplateAuthoringMode:
+                    resolveProgramApplicationFormScheduleIsTemplateAuthoringMode({
                       paragraphInteractionMode,
                       programLinkedPreview:
                         options.programApplicationFormInstructor.programLinkedPreview,
                       registrationWizardApplicationSchedulePlaceholder:
                         options.registrationWizardApplicationSchedulePlaceholder,
-                    }
-                  ),
+                    }),
                   readOnlyPreview: isPreviewReadonly,
                 }
           }
@@ -592,15 +590,14 @@ export function renderFormParagraphBody(
               ? undefined
               : {
                   ...options.programApplicationFormVolunteer,
-                  isTemplateAuthoringMode: resolveProgramApplicationFormScheduleIsTemplateAuthoringMode(
-                    {
+                  isTemplateAuthoringMode:
+                    resolveProgramApplicationFormScheduleIsTemplateAuthoringMode({
                       paragraphInteractionMode,
                       programLinkedPreview:
                         options.programApplicationFormVolunteer.programLinkedPreview,
                       registrationWizardApplicationSchedulePlaceholder:
                         options.registrationWizardApplicationSchedulePlaceholder,
-                    }
-                  ),
+                    }),
                   readOnlyPreview: isPreviewReadonly,
                 }
           }
@@ -658,8 +655,7 @@ export function renderFormParagraphBody(
         !isPreviewReadonly &&
         !structureLocked
       const dateTimeCellsInteractive = isBodyInteractive || lockedAuthoringChoicePreview
-      const tableCanvasInteractive =
-        !structureLocked && paragraphInteractionMode === 'authoring'
+      const tableCanvasInteractive = !structureLocked && paragraphInteractionMode === 'authoring'
       const verticalTableEditMode = isVerticalTextTableAuthoringEdit || isBodyInteractive
       return (
         <VerticalTableParagraphBody
@@ -721,10 +717,7 @@ export function renderFormParagraphBody(
       if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
       return <StaticDescriptionLines paragraph={p} />
     case 'short_essay': {
-      if (
-        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject &&
-        paragraphInteractionMode === 'user'
-      ) {
+      if (p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject && paragraphInteractionMode === 'user') {
         return (
           <AgreementNoticeSubjectFillFields
             paragraph={p}
@@ -835,10 +828,8 @@ export function renderFormParagraphBody(
               )
           : undefined
       const suppressMcItemsEditor =
-        structureLocked ||
-        isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(p.id)
-      const usesMcItemsFocus =
-        !suppressMcItemsEditor && options?.onSelectSingleItemListItem != null
+        structureLocked || isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(p.id)
+      const usesMcItemsFocus = !suppressMcItemsEditor && options?.onSelectSingleItemListItem != null
       const itemsEditActive = suppressMcItemsEditor
         ? false
         : usesMcItemsFocus
@@ -928,12 +919,11 @@ export function renderFormParagraphBody(
        * 구조 잠금 시드(UJAT 봉사자 정보 등)도 authoring에서 노출 필드 칩 토글 허용.
        * (카드 미선택이어도 가능 — 미리보기·저장의 selectedUserFieldKeys 연동)
        */
-      const isUserInfoFieldSelectEditMode =
-        isPreviewReadonly
-          ? false
-          : structureLocked && paragraphInteractionMode === 'authoring'
-            ? true
-            : isBodyInteractive
+      const isUserInfoFieldSelectEditMode = isPreviewReadonly
+        ? false
+        : structureLocked && paragraphInteractionMode === 'authoring'
+          ? true
+          : isBodyInteractive
       return (
         <UserInfo
           paragraph={p}

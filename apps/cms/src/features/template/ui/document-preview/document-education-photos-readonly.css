@@ -53,9 +53,18 @@
 }
 
 .document-education-photos-readonly__slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-height: 220px;
   aspect-ratio: 4 / 3;
   border-radius: var(--8, 8px);
   background: #eee;
+}
+
+.document-education-photos-readonly__file-label {
+  color: #7a7a7a;
+  font-size: 14px;
+  font-weight: 600;
 }

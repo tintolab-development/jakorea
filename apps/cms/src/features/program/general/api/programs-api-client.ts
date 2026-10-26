@@ -587,6 +587,47 @@ export async function fetchAdminProgramSurveyResponseDetailRemote(
   )
 }
 
+/** GET /api/admin/program-execution/lecture-reports/{reportId}/content */
+export type AdminLectureReportContentResponse = {
+  reportId?: number
+  programId?: number
+  scheduleId?: number
+  instructorAssignmentId?: number
+  instructorMemberId?: number
+  formResponseId?: number
+  bindingId?: number
+  templateVersionId?: number
+  contextType?: string
+  contextId?: number
+  formType?: string
+  templateName?: string
+  responseStatus?: string
+  submittedAt?: string
+  form?: Record<string, unknown>
+  answers?: Record<string, unknown>
+  files?: Array<{
+    sourceId?: number
+    sourceType?: string
+    questionKey?: string | null
+    fileObjectId?: number
+    originalFileName?: string
+    contentType?: string
+    fileSize?: number
+    downloadable?: boolean
+  }>
+}
+
+export async function fetchAdminProgramLectureReportContentRemote(
+  reportId: string | number
+): Promise<AdminLectureReportContentResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/program-execution/lecture-reports/${encodeURIComponent(String(reportId))}/content`,
+      method: 'GET',
+    })
+  )
+}
+
 /** GET /api/admin/programs/{programId}/form-bindings */
 export async function fetchAdminProgramFormBindingsRemote(
   programId: string
