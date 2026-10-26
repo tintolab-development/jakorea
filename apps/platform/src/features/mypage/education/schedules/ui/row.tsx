@@ -1,4 +1,6 @@
 import type { EducationScheduleItem } from '../model/types'
+import type { ProgramApplicationType } from '../../applications/api/types'
+import type { EducationSurveyListEntry } from '../../surveys/lib/survey-list-types'
 import {
   canSubmitEducationAbsenceReason,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
@@ -18,6 +20,13 @@ import { PFButton, PFStateBadge, PFText } from '@/shared/ui'
 
 type EducationScheduleRowProps = {
   item: EducationScheduleItem
+  programId: string
+  applicationType?: ProgramApplicationType | null
+  applicationId?: string | null
+  assignmentForm?: EducationSurveyListEntry | null
+  assignmentFormLoading?: boolean
+  assignmentFormError?: boolean
+  assignmentFormsLoaded?: boolean
   onAbsenceReasonSubmit?: (item: EducationScheduleItem) => void
   /** 결석 사유 텍스트 노출 (교육받은 교사 신청 건은 false) */
   showAbsenceReason?: boolean
@@ -25,6 +34,13 @@ type EducationScheduleRowProps = {
 
 export function EducationScheduleRow({
   item,
+  programId,
+  applicationType,
+  applicationId,
+  assignmentForm,
+  assignmentFormLoading = false,
+  assignmentFormError = false,
+  assignmentFormsLoaded = false,
   onAbsenceReasonSubmit,
   showAbsenceReason = true,
 }: EducationScheduleRowProps) {
@@ -104,7 +120,17 @@ export function EducationScheduleRow({
         ) : null}
 
         {showAssignment && item.assignment ? (
-          <EducationScheduleAssignmentBlock assignment={item.assignment} />
+          <EducationScheduleAssignmentBlock
+            assignment={item.assignment}
+            programId={programId}
+            scheduleId={item.scheduleId ?? null}
+            applicationType={applicationType}
+            applicationId={applicationId}
+            assignmentForm={assignmentForm}
+            assignmentFormLoading={assignmentFormLoading}
+            assignmentFormError={assignmentFormError}
+            assignmentFormsLoaded={assignmentFormsLoaded}
+          />
         ) : null}
       </EducationSessionCard>
     </>

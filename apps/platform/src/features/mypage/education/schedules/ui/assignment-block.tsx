@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import type { ProgramApplicationType } from '../../applications/api/types'
+import type { EducationSurveyListEntry } from '../../surveys/lib/survey-list-types'
 import type { EducationScheduleAssignment } from '../model/types'
 import { resolveEducationAssignmentGuide } from '../lib/schedule-rules'
 import clipDarkMintUrl from '@/shared/assets/icons/clip-dark-mint.svg'
@@ -8,16 +10,34 @@ import closeBlackUrl from '@/shared/assets/icons/close-black.svg'
 import { EducationSessionGuideBlock } from '../../shared'
 import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { usePortalFormResponseFeedbackQuery } from '../api/use-portal-form-response-feedback-query'
+import { EducationAssignmentFillModal } from './assignment-fill-modal'
 import styles from './assignment-block.module.css'
 
 type EducationScheduleAssignmentBlockProps = {
   assignment: EducationScheduleAssignment
+  programId: string
+  scheduleId: number | null
+  applicationType?: ProgramApplicationType | null
+  applicationId?: string | null
+  assignmentForm?: EducationSurveyListEntry | null
+  assignmentFormLoading?: boolean
+  assignmentFormError?: boolean
+  assignmentFormsLoaded?: boolean
 }
 
 export function EducationScheduleAssignmentBlock({
   assignment,
+  programId,
+  scheduleId,
+  applicationType,
+  applicationId,
+  assignmentForm = null,
+  assignmentFormLoading = false,
+  assignmentFormError = false,
+  assignmentFormsLoaded = false,
 }: EducationScheduleAssignmentBlockProps) {
-  const [comingSoonOpen, setComingSoonOpen] = useState(false)
+  const [submitOpen, setSubmitOpen] = useState(false)
+  const [formUnavailableOpen, setFormUnavailableOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   const feedbackQuery = usePortalFormResponseFeedbackQuery({
@@ -50,6 +70,37 @@ export function EducationScheduleAssignmentBlock({
       '등록된 피드백이 없습니다.'
     ))
 
+  const hasMatchingForm =
+    assignmentForm != null &&
+    assignmentForm.bindingId != null &&
+    assignmentForm.bindingId > 0 &&
+    scheduleId != null &&
+    scheduleId > 0
+  const isRevision =
+    assignment.status === 'submitted' || assignment.status === 'feedback'
+  const allowedByForm = hasMatchingForm
+    ? isRevision
+      ? assignmentForm.canResubmit === true
+      : assignmentForm.canSubmit === true
+    : false
+  const formsReadyEmpty = assignmentFormsLoaded && !hasMatchingForm && !assignmentFormError
+  const showSubmitButton = !formsReadyEmpty
+  const submitDisabled =
+    guide.submitDisabled ||
+    assignmentFormLoading ||
+    (hasMatchingForm ? !allowedByForm : !assignmentFormError)
+
+  const openAssignmentForm = () => {
+    if (assignmentFormLoading) return
+    if (!hasMatchingForm) {
+      if (formsReadyEmpty) return
+      setFormUnavailableOpen(true)
+      return
+    }
+    if (!allowedByForm) return
+    setSubmitOpen(true)
+  }
+
   return (
     <>
       <EducationSessionGuideBlock
@@ -70,19 +121,27 @@ export function EducationScheduleAssignmentBlock({
                 피드백 확인
               </PFButton>
             ) : null}
-            <PFButton
-              type="button"
-              variant="primary"
-              size="large"
-              disabled={guide.submitDisabled}
-              onClick={() => setComingSoonOpen(true)}
-            >
-              {guide.submitLabel}
-            </PFButton>
+            {showSubmitButton ? (
+              <PFButton
+                type="button"
+                variant="primary"
+                size="large"
+                disabled={submitDisabled}
+                onClick={openAssignmentForm}
+              >
+                {guide.submitLabel}
+              </PFButton>
+            ) : null}
           </div>
         }
       >
         {showSubmittedDivider ? <div className={styles.divider} aria-hidden="true" /> : null}
+
+        {formsReadyEmpty ? (
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            이 일정에 연결된 과제 양식이 없습니다.
+          </PFText>
+        ) : null}
 
         {hasFiles ? (
           <ul className={styles.files}>
@@ -114,7 +173,7 @@ export function EducationScheduleAssignmentBlock({
                       type="button"
                       className={styles.chipRemove}
                       aria-label={`${file.fileName} 삭제`}
-                      onClick={() => setComingSoonOpen(true)}
+                      onClick={openAssignmentForm}
                     >
                       <img
                         src={isUrl ? closeBlackUrl : closeDarkMintUrl}
@@ -131,10 +190,21 @@ export function EducationScheduleAssignmentBlock({
           </ul>
         ) : null}
       </EducationSessionGuideBlock>
+      <EducationAssignmentFillModal
+        open={submitOpen}
+        assignment={assignment}
+        formEntry={assignmentForm}
+        programId={programId}
+        scheduleId={scheduleId}
+        applicationType={applicationType}
+        applicationId={applicationId}
+        onClose={() => setSubmitOpen(false)}
+      />
       <PFAlertModal
-        open={comingSoonOpen}
-        title="준비 중"
-        onConfirm={() => setComingSoonOpen(false)}
+        open={formUnavailableOpen}
+        title="과제 양식 확인"
+        description="연결된 과제 양식을 찾을 수 없습니다."
+        onConfirm={() => setFormUnavailableOpen(false)}
       />
       <PFAlertModal
         open={feedbackOpen}

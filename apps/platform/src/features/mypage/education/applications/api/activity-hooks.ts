@@ -789,7 +789,7 @@ export function useSubmitApplicationAbsenceReason(
 export function useApplicationFormsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
-  formType: 'SURVEY' | 'SATISFACTION'
+  formType: 'ASSIGNMENT' | 'HOMEWORK' | 'SURVEY' | 'SATISFACTION'
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
   const query = useQuery({
@@ -815,7 +815,9 @@ export function useApplicationFormsQuery(
     enabled,
     isLoading: enabled && query.isPending,
     isError: enabled && query.isError,
+    isSuccess: enabled && query.isSuccess,
     items,
+    rawItems: query.data ?? [],
   }
 }
 

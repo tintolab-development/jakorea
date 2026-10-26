@@ -7,9 +7,14 @@ import {
   resolveEducationScheduleProgressStatus,
 } from '../lib/schedule-rules'
 import { resolveEducationScheduleEmptyMessage } from '../lib/scope-status'
-import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
+import {
+  useApplicationFormsQuery,
+  useApplicationSchedulesQuery,
+} from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
+import { indexScheduleAssignmentFormsByScheduleId } from '../../applications/lib/portal-form-list'
+import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SCHEDULE_PAGE_SIZE, type EducationScheduleItem } from '../model/types'
 import { EducationScheduleRow } from './row'
@@ -33,6 +38,7 @@ type EducationSchedulePanelProps = {
  * mock 로그인 세션에서만 mock 시드. 프로그램 상세 일정은 사용하지 않는다.
  */
 export function EducationSchedulePanel({
+  programId,
   lastParticipatedSession,
   listTitle = '교육일정',
   applicationType,
@@ -43,6 +49,12 @@ export function EducationSchedulePanel({
   const [absenceReasonScheduleId, setAbsenceReasonScheduleId] = useState<number | null>(null)
   const [absenceReasonOpenKey, setAbsenceReasonOpenKey] = useState(0)
   const remoteSchedules = useApplicationSchedulesQuery(applicationType, applicationId)
+  const remoteAssignmentForms = useApplicationFormsQuery(
+    applicationType,
+    applicationId,
+    'ASSIGNMENT'
+  )
+  const assignmentFormItems = remoteAssignmentForms.rawItems
 
   const allItems = useMemo(() => {
     const items: EducationScheduleItem[] = remoteSchedules.enabled ? remoteSchedules.items : []
@@ -66,10 +78,15 @@ export function EducationSchedulePanel({
           canSubmitEducationAbsenceReason(
             resolveEducationScheduleProgressStatus(item.heldAt),
             item.attendanceStatus,
-            item.availableActions,
+            item.availableActions
           )
       ),
     [allItems]
+  )
+
+  const assignmentFormByScheduleId = useMemo(
+    () => indexScheduleAssignmentFormsByScheduleId(assignmentFormItems),
+    [assignmentFormItems],
   )
 
   if (remoteSchedules.isLoading) {
@@ -125,21 +142,38 @@ export function EducationSchedulePanel({
         }
         alwaysShowPagination
       >
-        {pageItems.map((item: EducationScheduleItem) => (
-          <EducationScheduleRow
-            key={item.id}
-            item={item}
-            showAbsenceReason={absenceReasonEnabled}
-            onAbsenceReasonSubmit={
-              absenceReasonEnabled
-                ? selectedItem => {
-                    setAbsenceReasonScheduleId(selectedItem.scheduleId ?? null)
-                    setAbsenceReasonOpenKey(key => key + 1)
-                  }
-                : undefined
-            }
-          />
-        ))}
+        {pageItems.map((item: EducationScheduleItem) => {
+          const matchedAssignmentForm =
+            item.scheduleId != null
+              ? assignmentFormByScheduleId.get(item.scheduleId)
+              : undefined
+          return (
+            <EducationScheduleRow
+              key={item.id}
+              item={item}
+              programId={programId}
+              applicationType={applicationType}
+              applicationId={applicationId}
+              assignmentForm={
+                matchedAssignmentForm ? mapPortalFormListItem(matchedAssignmentForm) : null
+              }
+              assignmentFormLoading={remoteAssignmentForms.isLoading}
+              assignmentFormError={remoteAssignmentForms.isError}
+              assignmentFormsLoaded={
+                !remoteAssignmentForms.isLoading && !remoteAssignmentForms.isError
+              }
+              showAbsenceReason={absenceReasonEnabled}
+              onAbsenceReasonSubmit={
+                absenceReasonEnabled
+                  ? selectedItem => {
+                      setAbsenceReasonScheduleId(selectedItem.scheduleId ?? null)
+                      setAbsenceReasonOpenKey(key => key + 1)
+                    }
+                  : undefined
+              }
+            />
+          )
+        })}
       </EducationSessionList>
       {absenceReasonEnabled ? (
         <EducationAbsenceReasonModal
