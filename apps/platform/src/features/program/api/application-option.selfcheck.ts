@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { shouldFetchPortalApplicationOptions } from './application-option-query.ts'
 import { applicationOptionKey, pickApplicationOption } from './pick-application-option.ts'
 import {
   focusFromListItem,
@@ -51,6 +52,10 @@ assert.equal(
 assert.equal(pickApplicationOption(options, { applicationTypes: ['VOLUNTEER'] }), null)
 assert.equal(applicationOptionKey(options[1]!), '1002:INSTRUCTOR')
 assert.equal(applicationOptionKey({ recruitmentId: 1002 }), null)
+assert.equal(shouldFetchPortalApplicationOptions(186383, true, true), true)
+assert.equal(shouldFetchPortalApplicationOptions(186383, true, false), false)
+assert.equal(shouldFetchPortalApplicationOptions(186383, false, true), false)
+assert.equal(shouldFetchPortalApplicationOptions(null, true, true), false)
 
 assert.deepEqual(
   rowApplicationTypes({
