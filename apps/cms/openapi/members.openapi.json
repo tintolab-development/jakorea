@@ -499,7 +499,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -552,7 +552,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -669,7 +669,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -723,7 +723,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -782,7 +782,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -924,7 +924,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -983,7 +983,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1042,7 +1042,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1101,7 +1101,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1199,7 +1199,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1306,7 +1306,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "image/png": {
                 "schema": {
@@ -1397,7 +1397,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1455,7 +1455,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1512,7 +1512,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1580,10 +1580,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
-            "content": {
-              "application/json": {}
-            }
+            "description": "OK"
           },
           "400": {
             "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
@@ -1620,7 +1617,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1667,7 +1664,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1726,7 +1723,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1773,7 +1770,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1881,7 +1878,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1923,7 +1920,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -1970,7 +1967,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2017,7 +2014,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2064,7 +2061,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2113,7 +2110,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2170,7 +2167,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2229,7 +2226,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2278,7 +2275,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2335,7 +2332,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2384,7 +2381,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2521,7 +2518,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2570,7 +2567,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2626,7 +2623,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2685,7 +2682,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2744,7 +2741,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2803,7 +2800,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2850,7 +2847,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -2897,7 +2894,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3001,7 +2998,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3060,7 +3057,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3109,7 +3106,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3165,7 +3162,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3224,7 +3221,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3283,7 +3280,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3330,7 +3327,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3377,7 +3374,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3485,7 +3482,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3527,7 +3524,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3586,7 +3583,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3645,7 +3642,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3704,7 +3701,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3763,7 +3760,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3822,10 +3819,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
-            "content": {
-              "application/json": {}
-            }
+            "description": "OK"
           },
           "400": {
             "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
@@ -3877,7 +3871,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3935,7 +3929,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -3992,7 +3986,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4039,7 +4033,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4098,7 +4092,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4166,7 +4160,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4225,10 +4219,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
-            "content": {
-              "application/json": {}
-            }
+            "description": "OK"
           },
           "400": {
             "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
@@ -4285,7 +4276,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4354,7 +4345,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4403,7 +4394,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4456,7 +4447,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4510,7 +4501,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4579,7 +4570,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4648,7 +4639,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4707,7 +4698,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4766,7 +4757,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4825,10 +4816,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
-            "content": {
-              "application/json": {}
-            }
+            "description": "OK"
           },
           "400": {
             "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
@@ -4885,7 +4873,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -4944,7 +4932,7 @@
         },
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5209,7 +5197,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5323,7 +5311,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5379,7 +5367,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5425,7 +5413,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5471,7 +5459,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5517,7 +5505,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5573,7 +5561,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5619,7 +5607,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5665,7 +5653,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5714,7 +5702,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5763,7 +5751,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5834,7 +5822,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5899,7 +5887,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -5967,7 +5955,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6032,7 +6020,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6097,7 +6085,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6146,7 +6134,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6183,7 +6171,7 @@
         "operationId": "listPreRegisterConflicts",
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6232,7 +6220,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6340,7 +6328,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6463,7 +6451,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6677,7 +6665,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6794,7 +6782,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6840,7 +6828,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6874,7 +6862,7 @@
         "operationId": "listRoles",
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -6922,7 +6910,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -7003,7 +6991,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -7108,7 +7096,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -7154,7 +7142,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -7200,7 +7188,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -7253,7 +7241,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -7299,7 +7287,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -7345,7 +7333,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -7382,7 +7370,7 @@
         "operationId": "listProgramRoleOptions",
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
@@ -7450,10 +7438,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
-            "content": {
-              "application/json": {}
-            }
+            "description": "OK"
           },
           "400": {
             "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
@@ -7502,10 +7487,7 @@
         ],
         "responses": {
           "200": {
-            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
-            "content": {
-              "application/json": {}
-            }
+            "description": "OK"
           },
           "400": {
             "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
@@ -7711,7 +7693,7 @@
                 "format": "int64"
               }
             },
-            "description": "문항별 첨부 fileObjectId. 키는 answers와 같은 질문 키입니다. 본인이 올린 CLEAN·사용 가능 파일만 허용합니다. 봉사자 신청은 program-volunteer-application-seed-previous-ja-program(일반), ujat-program-application-volunteer-seed-previous-term(UJAT) 문항에만 첨부할 수 있고 filePurpose=VOLUNTEER_APPLICATION_EVIDENCE(JPG·PNG·PDF, 파일당 15MB) 파일만 받습니다. 숨겨진 문항(일반: JA 경험 「없음」, UJAT: 지원 형태 「신규」)에 첨부하면 400입니다. 생략하거나 {}이면 첨부 없음입니다. 임시저장마다 새 응답을 만들기 때문에 제출 요청에도 첨부를 다시 보내야 합니다.",
+            "description": "문항별 첨부 fileObjectId. 키는 answers와 같은 질문 키입니다. 본인이 올린 CLEAN·사용 가능 파일만 허용합니다. 봉사자 신청은 program-volunteer-application-seed-previous-ja-program(일반), ujat-program-application-volunteer-seed-previous-term(UJAT) 문항에만 첨부할 수 있고 filePurpose=VOLUNTEER_APPLICATION_EVIDENCE(JPG·PNG·PDF, 파일당 20MB) 파일만 받습니다. 숨겨진 문항(일반: JA 경험 「없음」, UJAT: 지원 형태 「신규」)에 첨부하면 400입니다. 생략하거나 {}이면 첨부 없음입니다. 임시저장마다 새 응답을 만들기 때문에 제출 요청에도 첨부를 다시 보내야 합니다.",
             "nullable": true
           }
         },
@@ -7813,21 +7795,28 @@
       },
       "AssignmentSubmissionRequest": {
         "type": "object",
-        "description": "회차 과제 파일 제출. fileObjectIds는 본인이 filePurpose=ASSIGNMENT_ATTACHMENT로 업로드·confirm하고 검사가 끝난(CLEAN) 파일 1~20개. 수정 제출(PUT)에서는 수정 후 최종 파일 집합이다.",
+        "description": "회차 과제 제출. fileObjectIds와 urls 중 하나 이상은 필수이며, 둘을 합쳐 최대 20개. fileObjectIds는 최대 10개·파일 전체 용량 최대 100MB·파일당 최대 20MB, urls는 최대 20개입니다. fileObjectIds는 본인이 filePurpose=ASSIGNMENT_ATTACHMENT로 업로드·confirm하고 검사가 끝난(CLEAN) 파일. urls는 https:// 만 허용(trim, 최대 4096자, userinfo 거부, 중복은 첫 등장만 유지). 수정 제출(PUT)에서는 전달한 목록이 최종 제출 집합이다.",
         "properties": {
           "fileObjectIds": {
             "type": "array",
+            "description": "선택. 파일당 최대 20MB, 전체 파일 용량 최대 100MB. 10개 초과는 ASSIGNMENT_FILE_COUNT_EXCEEDED.",
             "items": {
               "type": "integer",
               "format": "int64"
             },
-            "maxItems": 20,
-            "minItems": 0
+            "maxItems": 10
+          },
+          "urls": {
+            "type": "array",
+            "description": "선택. https:// URL 최대 20개.",
+            "items": {
+              "type": "string",
+              "maxLength": 4096,
+              "minLength": 0
+            },
+            "maxItems": 20
           }
-        },
-        "required": [
-          "fileObjectIds"
-        ]
+        }
       },
       "EducationScheduleAssignment": {
         "type": "object",
@@ -7868,7 +7857,7 @@
           },
           "submissions": {
             "type": "array",
-            "description": "최신 제출본 파일·링크. 미제출이면 null.",
+            "description": "최신 제출본 파일·링크만 반환하며 이전 revision 이력은 포함하지 않습니다. 미제출이면 null.",
             "items": {
               "$ref": "#/components/schemas/EducationScheduleAssignmentSubmission"
             },
@@ -7887,19 +7876,25 @@
       "EducationScheduleAssignmentSubmission": {
         "type": "object",
         "properties": {
-          "id": {},
+          "id": {
+            "description": "안정적인 제출물 항목 ID. FILE은 실제 file_object.id, URL은 실제 form_response_answer.id입니다."
+          },
           "kind": {
             "type": "string",
+            "description": "제출물 유형.",
             "enum": [
               "FILE",
               "URL"
             ]
           },
           "fileName": {
-            "type": "string"
+            "type": "string",
+            "description": "FILE만 반환하는 실제 원본 파일명.",
+            "nullable": true
           },
           "url": {
             "type": "string",
+            "description": "URL만 반환하는 저장된 URL. 신규 제출은 https://만 허용합니다.",
             "nullable": true
           },
           "fileObjectId": {
@@ -7984,11 +7979,13 @@
         "properties": {
           "fileObjectIds": {
             "type": "array",
-            "description": "연결할 fileObjectId 목록. 빈 배열이면 모든 첨부를 제거합니다.",
+            "description": "연결할 fileObjectId 목록. 게시글당 최대 10개이며, 파일당 20MB·합계 100MB입니다. 빈 배열이면 모든 첨부를 제거합니다.",
             "items": {
               "type": "integer",
               "format": "int64"
-            }
+            },
+            "maxItems": 10,
+            "minItems": 0
           }
         }
       },
@@ -10953,7 +10950,7 @@
           },
           "status": {
             "type": "string",
-            "description": "출석 코드만: PRESENT|LATE|ABSENT|EXCUSED. 미기록·비출석 값(COMPLETED·SCHEDULED 등)은 null.",
+            "description": "출석 코드만 PRESENT|LATE|ABSENT|EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. 미기록·비출석 값(COMPLETED·SCHEDULED 등)도 null.",
             "enum": [
               "PRESENT",
               "LATE",
@@ -15218,7 +15215,7 @@
         "properties": {
           "filePurpose": {
             "type": "string",
-            "description": "파일 용도. STUDENT_ROSTER는 학생 명단(CSV/XLSX, 20MB). PORTRAIT_CONSENT는 학생 초상권 동의서(PDF/JPG/JPEG/PNG/WEBP/DOCX, 20MB). CRIMINAL_HISTORY_EVIDENCE는 성범죄 경력 증빙(PDF/JPG/JPEG/PNG/WEBP, 20MB). EDUCATION_JOURNAL은 교육일지(일반 첨부, 50MB). ELECTRONIC_SIGNATURE와 MEMBER_ELECTRONIC_SIGNATURE는 동등한 회원 서명 용도이며 서버는 ELECTRONIC_SIGNATURE로 저장합니다(PNG/JPEG/WebP, 5MB). ABSENCE_EVIDENCE는 결석 사유 증빙(JPG/JPEG/PNG, 20MB).",
+            "description": "파일 용도. STUDENT_ROSTER는 학생 명단(CSV/XLSX, 20MB). PORTRAIT_CONSENT는 학생 초상권 동의서(PDF/JPG/JPEG/PNG/WEBP/DOCX, 20MB). CRIMINAL_HISTORY_EVIDENCE는 성범죄 경력 증빙(PDF/JPG/JPEG/PNG/WEBP, 20MB). EDUCATION_JOURNAL은 교육일지(일반 첨부, 50MB). ELECTRONIC_SIGNATURE와 MEMBER_ELECTRONIC_SIGNATURE는 동등한 회원 서명 용도이며 서버는 ELECTRONIC_SIGNATURE로 저장합니다(PNG/JPEG/WebP, 5MB). ABSENCE_EVIDENCE는 결석 사유 증빙(JPG/JPEG/PNG, 20MB). VOLUNTEER_APPLICATION_EVIDENCE는 봉사자 신청 증빙(JPG/JPEG/PNG/PDF, 20MB). PROGRAM_POST_ATTACHMENT는 포털 안내사항 첨부(JPG/PNG, 파일당 20MB; 게시글당 최대 10개, 합계 100MB)입니다. PROGRAM_POST_INLINE_IMAGE는 본문 이미지(JPG/PNG, 15MB)입니다.",
             "enum": [
               "ASSIGNMENT_ATTACHMENT",
               "SURVEY_ATTACHMENT",
@@ -18182,7 +18179,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "admin12341!",
+            "example": "test1234!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -18717,7 +18714,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "admin12341!",
+            "example": "test1234!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -19796,13 +19793,13 @@
           "lectureFeePaymentScheduledDate": {
             "type": "string",
             "format": "date",
-            "description": "지급조서 확인 시 강의비 이체 예정일",
+            "description": "지급조서 확인 시 강의비 이체 예정일. KST 기준 오늘 또는 이후 날짜만 허용됩니다.",
             "example": "2026-09-15"
           },
           "scheduledPaymentDate": {
             "type": "string",
             "format": "date",
-            "description": "lectureFeePaymentScheduledDate와 동일. FE 호환 필드명",
+            "description": "lectureFeePaymentScheduledDate와 동일. FE 호환 필드명이며 KST 기준 오늘 또는 이후 날짜만 허용됩니다.",
             "example": "2026-09-15"
           }
         },
@@ -19972,13 +19969,13 @@
           "scheduledPaymentDate": {
             "type": "string",
             "format": "date",
-            "description": "강의비 지급 예정일. lectureFeePaymentScheduledDate와 동일 처리.",
+            "description": "강의비 지급 예정일. lectureFeePaymentScheduledDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다.",
             "example": "2026-06-30"
           },
           "lectureFeePaymentScheduledDate": {
             "type": "string",
             "format": "date",
-            "description": "FE UI 호환 강의비 지급 예정일. scheduledPaymentDate와 동일 처리.",
+            "description": "FE UI 호환 강의비 지급 예정일. scheduledPaymentDate와 동일 처리하며 KST 기준 오늘 또는 이후 날짜만 허용합니다.",
             "example": "2026-06-30"
           },
           "reason": {
@@ -20156,7 +20153,7 @@
           "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -23535,7 +23532,7 @@
       },
       "InstructorAssignmentCancelRequest": {
         "type": "object",
-        "description": "강사 배정 취소 요청",
+        "description": "강사 배정 취소 요청. 봉사자/UJAT AssignmentCancelRequest와 분리되며 faultParty를 포함한다.",
         "properties": {
           "reason": {
             "type": "string",
@@ -23552,17 +23549,17 @@
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
+            "nullable": true,
             "description": "취소 알림 직접 설정 시 예약 발송 시각. timing=SCHEDULED일 때 필수이며 미래 시각이어야 합니다."
           },
           "faultParty": {
             "type": "string",
-            "description": "취소 귀책. USER=강사 사유(JA 평가 등급 강의 취소 감점 대상), ADMIN=운영 사유. 생략·null이면 ADMIN으로 처리합니다.",
+            "nullable": true,
+            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
             "enum": [
               "USER",
               "ADMIN"
-            ],
-            "example": "USER",
-            "nullable": true
+            ]
           }
         }
       },
@@ -26352,7 +26349,7 @@
           "currentPassword": {
             "type": "string",
             "description": "현재 로그인 관리자 비밀번호. 값이 있으면 이 비밀번호로 확인합니다.",
-            "example": "admin12341!",
+            "example": "test1234!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -26480,7 +26477,7 @@
             "type": "string",
             "format": "password",
             "description": "현재 로그인 관리자 비밀번호. 탈퇴 본인 확인 SoT.",
-            "example": "admin12341!",
+            "example": "test1234!",
             "maxLength": 200,
             "minLength": 0
           },
@@ -27074,6 +27071,15 @@
           "reason": {
             "type": "string"
           },
+          "channelType": {
+            "type": "string",
+            "description": "강사 권한 박탈 알림 채널. ALIMTALK | SMS | EMAIL. 생략하면 기존 채널 정책을 따릅니다.",
+            "enum": [
+              "ALIMTALK",
+              "SMS",
+              "EMAIL"
+            ]
+          },
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
@@ -27178,36 +27184,43 @@
             }
           },
           "fixedEvaluationScore": {
-            "type": "number"
+            "type": "number",
+            "description": "4개 항목 합 ×5 (20~100). 평가 전 null",
+            "nullable": true
           },
           "administrativeAdjustmentScore": {
             "type": "number",
-            "description": "행정능력 자동 감점 합계(cancellationAdjustmentScore + lateReportAdjustmentScore). 0 이하."
+            "description": "취소·보고서 감점의 합 (0 이하)"
           },
           "cancellationAdjustmentScore": {
             "type": "number",
-            "description": "CMS에서 강사 사유(faultParty=USER)로 처리한 취소 감점. 2회당 -5점."
+            "description": "강사 사유 취소 감점 (0, -5, -10 …). projection 없으면 null",
+            "nullable": true
           },
           "lateReportAdjustmentScore": {
             "type": "number",
-            "description": "강의보고서 제출기한 미준수 감점. 2회당 -5점. 취소 건수와 합산하지 않습니다."
+            "description": "강의보고서 기한 미준수 감점 (0, -5, -10 …). projection 없으면 null",
+            "nullable": true
           },
           "lateSettlementAdjustmentScore": {
             "type": "number",
-            "description": "호환용 필드. 정산 신청 기한 미준수는 JA 평가 등급 감점 대상이 아니므로 산정 결과는 항상 0입니다."
+            "description": "호환용. 항상 0. 화면에서 행 제거/숨김."
           },
           "totalScore": {
-            "type": "number"
+            "type": "number",
+            "description": "fixed + administrative. 음수 가능. FE에서 0으로 clamp하지 않음.",
+            "nullable": true
           },
           "currentGrade": {
             "type": "string",
-            "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음).",
+            "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). 평가 전 null.",
             "enum": [
               "A",
               "B",
               "C",
               "D"
-            ]
+            ],
+            "nullable": true
           },
           "evaluatedAt": {
             "type": "string",
@@ -27223,11 +27236,12 @@
           },
           "policyVersion": {
             "type": "string",
-            "description": "활성 정책 버전. 정책 미초기화면 null."
+            "nullable": true,
+            "description": "활성 정책 버전. 고객사 최종은 CLIENT_FINAL_2026-10-20. 평가 이력 없으면 활성 정책 버전, 미초기화면 null."
           },
           "policyReady": {
             "type": "boolean",
-            "description": "false면 전역 JA 등급 정책 미초기화. POST 평가 완료 불가. GET은 200으로 이 플래그만 확인."
+            "description": "true면 평가 가능. false일 때만 정책 미확정 안내. 정책 버전 문자열로 판단하지 않음."
           }
         }
       },
@@ -29507,13 +29521,6 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "trainingDateCandidates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GeminiTrainingDateCandidate"
-            },
-            "description": "기관 신청 희망 일정 1~3지망 후보. preferenceRank 오름차순. 확정 trainingDate와 분리. 희망 일정이 없으면 []. null이 아니다"
           }
         }
       },
@@ -31829,7 +31836,7 @@
           "password": {
             "type": "string",
             "description": "관리자 비밀번호. 서버 비밀번호 정책을 통과해야 합니다.",
-            "example": "admin12341!",
+            "example": "admin1234!",
             "maxLength": 255,
             "minLength": 0
           },
@@ -47105,6 +47112,18 @@
             "items": {
               "$ref": "#/components/schemas/SubmissionFile"
             }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionLink"
+            }
+          },
+          "surveyResponse": {
+            "$ref": "#/components/schemas/FormResponseRef"
+          },
+          "satisfactionResponse": {
+            "$ref": "#/components/schemas/FormResponseRef"
           }
         }
       },
@@ -49891,6 +49910,54 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "templateUsed": {
+            "type": "boolean",
+            "description": "false = 템플릿 없이 발송한 SMS. 이때 templateId·templateCode는 null."
+          },
+          "messagePurpose": {
+            "type": "string",
+            "description": "발송 목적 NORMAL|AD|AUTH. 템플릿 없는 SMS는 항상 NORMAL."
+          },
+          "smsMessageType": {
+            "type": "string",
+            "description": "SMS 채널 문자 유형 SMS|LMS|MMS. SMS 외 채널은 null."
+          }
+        }
+      },
+      "AttachmentSnapshotResponse": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileName": {
+            "type": "string"
+          }
+        }
+      },
+      "BatchBodySnapshotResponse": {
+        "type": "object",
+        "description": "발송 시점 스냅샷. titleTemplate/contentTemplate null = 등록 템플릿 본문 사용(템플릿 발송) 또는 보존기간 만료 파기.\nsenderKey는 템플릿 없는 SMS 발신번호, senderDisplayName은 EMAIL 발신자명 덮어쓰기 값(없으면 null).\nattachments는 배치 생성 시 확정된 MMS fileObjectId/fileName 스냅샷이며 예약 발송에도 동일하게 유지됩니다.\n",
+        "properties": {
+          "titleTemplate": {
+            "type": "string"
+          },
+          "contentTemplate": {
+            "type": "string"
+          },
+          "senderKey": {
+            "type": "string"
+          },
+          "senderDisplayName": {
+            "type": "string"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentSnapshotResponse"
+            }
           }
         }
       },
@@ -49905,6 +49972,9 @@
             "items": {
               "$ref": "#/components/schemas/RecipientResponse"
             }
+          },
+          "bodySnapshot": {
+            "$ref": "#/components/schemas/BatchBodySnapshotResponse"
           }
         }
       },
@@ -49979,12 +50049,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨",
+            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰",
+            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -49994,11 +50064,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
+            "description": "true이면 programId 없이 enabled=false."
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
+            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
           },
           "programGroups": {
             "type": "array",
@@ -50016,14 +50086,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
               "type": "string"
             }
@@ -53680,6 +53750,10 @@
           "managedProgramCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "hasProgramAssignmentHistory": {
+            "type": "boolean",
+            "description": "현재 또는 과거에 프로그램 담당자로 배정된 이력이 있는지 여부"
           }
         }
       },
@@ -53809,6 +53883,10 @@
             "type": "integer",
             "format": "int32",
             "description": "과거 포함 전체 담당 프로그램 수"
+          },
+          "hasProgramAssignmentHistory": {
+            "type": "boolean",
+            "description": "현재 또는 과거에 프로그램 담당자로 배정된 이력이 있는지 여부"
           },
           "notificationResentAt": {
             "type": "string",
@@ -54345,6 +54423,126 @@
             "type": "string"
           }
         }
+      },
+      "OrganizationApplicationSession": {
+        "type": "object",
+        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "className": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrganizationApplicationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "resolvedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleUnresolved": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "InstructorApplicationApprovalCancellationRequest": {
+        "type": "object",
+        "description": "강사 신청 승인 취소 요청. 승인 취소 1건 = JA 감점 1건. 연쇄 배정 취소는 별도 집계하지 않는다.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "example": "강사 개인 사정"
+          },
+          "notification": {
+            "$ref": "#/components/schemas/Notification"
+          },
+          "faultParty": {
+            "type": "string",
+            "nullable": true,
+            "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
+          }
+        }
       }
     },
     "responses": {
@@ -54574,7 +54772,7 @@
     "examples": {
       "AdminLoginRequest": {
         "summary": "관리자 로그인 요청",
-        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin12341!\"}"
+        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin1234!\"}"
       },
       "AdminMfaVerifyRequest": {
         "summary": "관리자 MFA 검증 요청",
@@ -54582,7 +54780,7 @@
       },
       "LocalDemoAdminAccount": {
         "summary": "로컬 데모 관리자 계정",
-        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin12341!\",\"mfaCode\":\"000000\",\"profile\":\"local only\"}"
+        "value": "{\"email\":\"admin1@jakorea.org\",\"password\":\"admin1234!\",\"mfaCode\":\"000000\",\"profile\":\"local only\"}"
       },
       "LocalDemoMemberAccount": {
         "summary": "로컬 데모 회원 계정",

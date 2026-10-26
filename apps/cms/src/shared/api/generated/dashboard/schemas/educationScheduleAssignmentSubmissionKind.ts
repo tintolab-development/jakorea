@@ -6,6 +6,9 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 제출물 유형.
+ */
 export type EducationScheduleAssignmentSubmissionKind = typeof EducationScheduleAssignmentSubmissionKind[keyof typeof EducationScheduleAssignmentSubmissionKind];
 
 

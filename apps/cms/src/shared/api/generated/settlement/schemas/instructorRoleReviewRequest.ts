@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorRoleReviewRequestChannelType } from './instructorRoleReviewRequestChannelType';
 
 export interface InstructorRoleReviewRequest {
   activityType?: string;
@@ -13,6 +14,8 @@ export interface InstructorRoleReviewRequest {
   rejectReason?: string;
   revokeReason?: string;
   reason?: string;
+  /** 강사 권한 박탈 알림 채널. ALIMTALK | SMS | EMAIL. 생략하면 기존 채널 정책을 따릅니다. */
+  channelType?: InstructorRoleReviewRequestChannelType;
   /** 알림 직접 설정 시 발송 예약 시각. null이면 즉시 발송 */
   scheduledAt?: string;
 }

@@ -26,4 +26,6 @@ export interface AdminAccountListItemResponse {
   createdAt?: string;
   requestedAt?: string;
   managedProgramCount?: number;
+  /** 현재 또는 과거에 프로그램 담당자로 배정된 이력이 있는지 여부 */
+  hasProgramAssignmentHistory?: boolean;
 }
