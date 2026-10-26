@@ -234,7 +234,13 @@ export function PostWriteModal({
       const audienceForSave = audience.includes('all')
         ? (['all'] as string[])
         : audience.filter(key => key !== 'all')
-      const title = trimmed.replace(/[#*_`>\-[\]()]/g, '').slice(0, 40) || '게시글'
+      const title =
+        trimmed
+          .replace(/<img\b[^>]*>/gi, '')
+          .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+          .replace(/[#*_`>\-[\]()]/g, '')
+          .trim()
+          .slice(0, 40) || '게시글'
       const inlineImageIds = collectFileObjectIdsFromHtml(trimmed)
 
       if (isEditMode && editingPost) {
