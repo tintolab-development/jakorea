@@ -1,5 +1,3 @@
-import type { AlimtalkSendRecipient } from './types'
-
 /**
  * MEMBER actorId가 있을 때 서버가 채우는 본문 토큰.
  * DIRECT에는 enrich가 없다.
@@ -69,7 +67,12 @@ export type AlimtalkVariableCatalogEntry = {
   requiresProgram?: boolean
 }
 
-export type AlimtalkPlaceholderDisposition = 'server' | 'manual' | 'blocked' | 'needs-program' | 'pending'
+export type AlimtalkPlaceholderDisposition =
+  | 'server'
+  | 'manual'
+  | 'blocked'
+  | 'needs-program'
+  | 'pending'
 
 type RecipientLike = {
   actorType?: string
@@ -77,12 +80,17 @@ type RecipientLike = {
   source?: string
   name?: string
   phone?: string
+  email?: string
   variables?: Record<string, string> | null
 }
 
+type VariableRecipient = RecipientLike & { id: string }
+
 export function isDirectAlimtalkRecipient(recipient: RecipientLike): boolean {
   const actorType = (recipient.actorType || '').trim().toUpperCase()
-  return recipient.source === 'manual' || actorType === 'DIRECT' || !Number.isFinite(recipient.actorId)
+  return (
+    recipient.source === 'manual' || actorType === 'DIRECT' || !Number.isFinite(recipient.actorId)
+  )
 }
 
 export function isAlimtalkSystemVariableKey(
@@ -156,7 +164,10 @@ export function classifyAlimtalkPlaceholderKey(input: {
   return 'manual'
 }
 
-function hasManualValue(variables: Record<string, string> | null | undefined, key: string): boolean {
+function hasManualValue(
+  variables: Record<string, string> | null | undefined,
+  key: string
+): boolean {
   const value = variables?.[key]
   return typeof value === 'string' && value.trim().length > 0
 }
@@ -207,19 +218,19 @@ export type AlimtalkRecipientVariableGap = {
   needsProgram: string[]
 }
 
-function gapLabel(recipient: AlimtalkSendRecipient): string {
+function gapLabel(recipient: VariableRecipient): string {
   const name = recipient.name?.trim()
-  const phone = recipient.phone?.trim()
+  const contact = recipient.phone?.trim() || recipient.email?.trim()
   if (name && name !== '-') {
-    return phone && phone !== '-' ? `${name} (${phone})` : name
+    return contact && contact !== '-' ? `${name} (${contact})` : name
   }
-  return phone && phone !== '-' ? phone : recipient.id
+  return contact && contact !== '-' ? contact : recipient.id
 }
 
-export function collectAlimtalkRecipientVariableGaps(input: {
+export function collectAlimtalkRecipientVariableGaps<T extends VariableRecipient>(input: {
   keys: Iterable<string>
   catalog: AlimtalkVariableCatalogEntry[] | null | undefined
-  recipients: AlimtalkSendRecipient[]
+  recipients: readonly T[]
   programSelected: boolean
 }): AlimtalkRecipientVariableGap[] {
   const keys = [...input.keys].map(key => key.trim()).filter(Boolean)
@@ -259,12 +270,12 @@ export function collectAlimtalkRecipientVariableGaps(input: {
   return gaps
 }
 
-export function partitionAlimtalkRecipientsByVariables(input: {
+export function partitionAlimtalkRecipientsByVariables<T extends VariableRecipient>(input: {
   keys: Iterable<string>
   catalog: AlimtalkVariableCatalogEntry[] | null | undefined
-  recipients: AlimtalkSendRecipient[]
+  recipients: readonly T[]
   programSelected: boolean
-}): { valid: AlimtalkSendRecipient[]; gaps: AlimtalkRecipientVariableGap[] } {
+}): { valid: T[]; gaps: AlimtalkRecipientVariableGap[] } {
   const gaps = collectAlimtalkRecipientVariableGaps(input)
   const invalidIds = new Set(gaps.map(gap => gap.id))
   return {
@@ -348,7 +359,7 @@ export function listAlimtalkManualVariableKeys(input: {
 
 /** 수신자 variables에 실을 수동 값. 빈 문자열·예약·SYSTEM 키는 생략한다. */
 export function pickAlimtalkRecipientSendVariables(input: {
-  recipient: AlimtalkSendRecipient
+  recipient: RecipientLike
   keys: Iterable<string>
   catalog: AlimtalkVariableCatalogEntry[] | null | undefined
   programSelected: boolean
