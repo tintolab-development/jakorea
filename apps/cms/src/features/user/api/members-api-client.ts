@@ -764,6 +764,14 @@ export async function unmaskInstructorMemberPrivacyRemote(
   return unwrapApiBody(await membersApi.unmaskInstructorMemberPrivacy(memberId, body))
 }
 
+/** `POST /api/admin/users/{memberId}/teacher/privacy/unmask` — 순수 교사(`school_teacher`) 원문 */
+export async function unmaskTeacherMemberPrivacyRemote(
+  memberId: number,
+  body: AdminPrivacyUnmaskRequest
+): Promise<TeacherMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.unmaskTeacherMemberDetail(memberId, body))
+}
+
 /** SCHOOL 전용 unmask path 없음 — legacy member unmask */
 export async function unmaskMemberPrivacyRemote(
   memberId: number,

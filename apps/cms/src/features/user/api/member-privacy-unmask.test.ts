@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 const unmaskInstructorMemberPrivacyRemote = vi.fn()
 const unmaskIndividualMemberPrivacyRemote = vi.fn()
 const unmaskMemberPrivacyRemote = vi.fn()
+const unmaskTeacherMemberPrivacyRemote = vi.fn()
 
 vi.mock('@/features/user/api/members-api-client', () => ({
   unmaskAdminAccountPrivacyRemote: vi.fn(),
@@ -12,6 +13,8 @@ vi.mock('@/features/user/api/members-api-client', () => ({
     unmaskInstructorMemberPrivacyRemote(...args),
   unmaskInstructorRoleRequestPrivacyRemote: vi.fn(),
   unmaskMemberPrivacyRemote: (...args: unknown[]) => unmaskMemberPrivacyRemote(...args),
+  unmaskTeacherMemberPrivacyRemote: (...args: unknown[]) =>
+    unmaskTeacherMemberPrivacyRemote(...args),
 }))
 
 import { fetchMemberRolePrivacyUnmask } from './member-privacy-unmask'
@@ -21,18 +24,21 @@ describe('fetchMemberRolePrivacyUnmask', () => {
     unmaskInstructorMemberPrivacyRemote.mockReset()
     unmaskIndividualMemberPrivacyRemote.mockReset()
     unmaskMemberPrivacyRemote.mockReset()
+    unmaskTeacherMemberPrivacyRemote.mockReset()
     unmaskInstructorMemberPrivacyRemote.mockResolvedValue({ member: { memberId: 1 } })
     unmaskIndividualMemberPrivacyRemote.mockResolvedValue({ member: { memberId: 1 } })
     unmaskMemberPrivacyRemote.mockResolvedValue({ memberId: 1 })
+    unmaskTeacherMemberPrivacyRemote.mockResolvedValue({ member: { memberId: 1 } })
   })
 
-  it('순수 교사는 instructor unmask가 아니라 legacy member unmask를 호출한다', async () => {
+  it('순수 교사는 teacher unmask를 호출한다', async () => {
     await fetchMemberRolePrivacyUnmask(190001, '열람', 'INSTRUCTOR', {
       instructorMemberProfile: 'school_teacher',
     })
 
-    expect(unmaskMemberPrivacyRemote).toHaveBeenCalledWith(190001, { reason: '열람' })
+    expect(unmaskTeacherMemberPrivacyRemote).toHaveBeenCalledWith(190001, { reason: '열람' })
     expect(unmaskInstructorMemberPrivacyRemote).not.toHaveBeenCalled()
+    expect(unmaskMemberPrivacyRemote).not.toHaveBeenCalled()
   })
 
   it('강사·겸직은 instructor unmask를 호출한다', async () => {
