@@ -3,6 +3,7 @@ import {
   getSettlementConfigErrorField,
   getSettlementApiErrorMessage,
   isSettlementExportAlreadyDownloadedError,
+  isSettlementExportReissueRequiredError,
   isPaymentStatementStatusConflictError,
 } from './get-settlement-api-error'
 
@@ -84,7 +85,34 @@ describe('getSettlementApiErrorMessage', () => {
       },
     }
     expect(isSettlementExportAlreadyDownloadedError(error)).toBe(true)
-    expect(getSettlementApiErrorMessage(error, 'fallback')).toContain('새 파일을 발급')
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '이미 다운로드한 정산 양식은 다시 받을 수 없습니다. 양식을 새로 발급해 주세요.'
+    )
+  })
+
+  it('409 SENSITIVE_FILE_RELAY_REQUIRED → 전용 문구', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: { error: { code: 'SENSITIVE_FILE_RELAY_REQUIRED' } },
+      },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '민감 정산 파일은 일반 다운로드 주소로 받을 수 없습니다. 미리보기에서 엑셀 다운로드를 다시 시도해 주세요.'
+    )
+  })
+
+  it('409 FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED → 재발급 안내', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: { error: { code: 'FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED' } },
+      },
+    }
+    expect(isSettlementExportReissueRequiredError(error)).toBe(true)
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '다운로드 토큰이 만료되었거나 유효하지 않습니다. 양식을 새로 발급해 주세요.'
+    )
   })
 
   it('원천징수 설정 오류를 입력 영역으로 분류한다', () => {
