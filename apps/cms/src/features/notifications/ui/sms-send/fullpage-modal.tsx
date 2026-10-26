@@ -696,8 +696,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   />
                 </section>
 
-                <section className="notification-fullpage-modal__widget">
-                  <h3 className="mail-send-fullpage__section-title">3. 문자 작성</h3>
+                <section className="notification-fullpage-modal__widget sms-send-fullpage__widget--compose">
                   <SmsSendComposeFields
                     composeVersion={form.composeVersion}
                     initialSubject={form.composeSeed.subject}
@@ -706,6 +705,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     attachmentFileNames={form.attachmentFileNames}
                     subjectRef={form.subjectRef}
                     bodyTextRef={form.bodyTextRef}
+                    senderPhone={form.senderPhone}
                     onRememberSubjectRange={form.rememberSubjectRange}
                     onRememberBodyRange={form.rememberBodyRange}
                     onRemoveAttachment={form.removeAttachmentAt}
