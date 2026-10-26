@@ -10,11 +10,7 @@ type ProgramInfoAsideProps = {
   detailImageUrl?: string
   thumbnailUrl?: string
   attachments: ProgramAttachment[]
-  isRecruiting?: boolean
-  /** 신청하기 활성 — 모집 중·모집 예정이고 신청 옵션이 막히지 않음 */
-  canApply?: boolean
   applicationPeriodLabel?: string
-  applyBlockedReason?: string | null
   showApplyCta?: boolean
   showCancelCta?: boolean
   onApply?: () => void
@@ -28,10 +24,7 @@ export function ProgramInfoAside({
   detailImageUrl,
   thumbnailUrl,
   attachments,
-  isRecruiting = false,
-  canApply = isRecruiting,
   applicationPeriodLabel = '',
-  applyBlockedReason = null,
   showApplyCta = false,
   showCancelCta = false,
   onApply,
@@ -72,7 +65,7 @@ export function ProgramInfoAside({
           <button
             type="button"
             className={styles.applyButton}
-            disabled={!canApply || applyChecking}
+            disabled={applyChecking}
             aria-busy={applyChecking}
             onClick={onApply}
           >
@@ -92,11 +85,6 @@ export function ProgramInfoAside({
               height={16}
             />
           </button>
-          {!canApply && applyBlockedReason ? (
-            <PFText as="p" typo="bd-sm-rg" color="neutral-cool-700" className={styles.applyHint}>
-              {applyBlockedReason}
-            </PFText>
-          ) : null}
         </div>
       ) : null}
 

@@ -285,7 +285,7 @@
 
 /* 추가 내용 에디터 — 행간·단락 여백은 뷰어와 동일 토큰 */
 .program-detail-info-tab__editor-host {
-  --rt-content-font-size: 16px;
+  --rt-content-font-size: 14px;
   --rt-content-line-height: 1.6;
   --rt-content-paragraph-margin: 0.5em;
 
@@ -332,7 +332,7 @@
 
 /* 추가 내용 뷰어 — 행간·단락 여백은 @jakorea/rich-text content.css SSOT */
 .program-detail-info-tab__editor-content {
-  --rt-content-font-size: 16px;
+  --rt-content-font-size: 14px;
   --rt-content-line-height: 1.6;
   --rt-content-paragraph-margin: 0.5em;
 

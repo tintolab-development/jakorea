@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
 import { RichTextViewer, type Editor, type RichTextViewerProps } from '@jakorea/rich-text/react'
-import { rewriteAdminFileContentSrcsForPortal } from '@/shared/lib/portal-public-file-url'
+import { getApiBaseUrlForPath } from '@/shared/lib/api-remote-env'
+import {
+  portalPublicFileContentUrl,
+  rewriteAdminFileContentSrcsForPortal,
+} from '@/shared/lib/portal-public-file-url'
 import {
   useHydratePortalInlineImages,
   type PortalInlineImageResolver,
 } from './use-hydrate-portal-inline-images'
+
+function rewritePortalRichTextForDisplay(value: string): string {
+  return rewriteAdminFileContentSrcsForPortal(
+    value,
+    getApiBaseUrlForPath(portalPublicFileContentUrl(1)),
+  )
+}
 
 export type PfRichTextViewerProps = RichTextViewerProps & {
   /**
@@ -26,7 +37,7 @@ export function PfRichTextViewer({
   ...rest
 }: PfRichTextViewerProps) {
   const [editor, setEditor] = useState<Editor | null>(null)
-  const rewrite = resolveInlineImage ? (value: string) => value : rewriteAdminFileContentSrcsForPortal
+  const rewrite = resolveInlineImage ? (value: string) => value : rewritePortalRichTextForDisplay
   const nextContent = content == null ? content : rewrite(content)
   const nextMarkdown = markdown == null ? markdown : rewrite(markdown)
   const resetKey = nextMarkdown ?? nextContent ?? ''

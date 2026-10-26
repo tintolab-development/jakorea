@@ -284,7 +284,10 @@ export function parseGeneralCommonInfoRhfValidation(
   }
 }
 
-/** 커리큘럼형 복수 회차 + 날짜 지정 — 회차 수와 예정일 줄 수 불일치 */
+/**
+ * 커리큘럼형 복수 회차 + 날짜 지정 — 회차 수와 예정일 줄 수 불일치.
+ * 사전교육 블록도 교육 진행 일정 칸에 포함한다.
+ */
 export function hasRhfCurriculumMultiDateScheduleCountMismatch(
   values: GeneralProgramCommonInfoEditFormValues
 ): boolean {
@@ -293,9 +296,6 @@ export function hasRhfCurriculumMultiDateScheduleCountMismatch(
   if (values.educationScheduleMode !== 'date') return false
   const lineCount = values.educationScheduleLines.filter(line => line.trim() !== '').length
   if (lineCount === 0) return false
-  const regularCount = Math.max(
-    1,
-    values.curriculumSessions.filter(session => !isPreEducationCurriculumSession(session)).length
-  )
-  return lineCount !== regularCount
+  const sessions = trimTrailingBlankRegularCurriculumSessions(values.curriculumSessions ?? [])
+  return lineCount !== Math.max(1, sessions.length)
 }
