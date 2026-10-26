@@ -42,6 +42,10 @@ import {
   ModalSpecTableRow,
   type ModalSpecTableRadioOption,
 } from '@/shared/ui/modal-spec-table'
+import {
+  getSettlementConfigErrorField,
+} from '@/features/settlement-management/api/get-settlement-api-error'
+import { resolveSettlementConfigMutationError } from '@/features/settlement-management/hooks/use-settlement-config-mutations'
 
 const BASIS_UNIT_OPTIONS_SIMPLE = [{ value: '전체', label: '전체' }]
 
@@ -1868,6 +1872,7 @@ export function SettlementItemSettingDetailModal({
   const [headerEmoji, setHeaderEmoji] = useState<string | null>(null)
   const [titleEditing, setTitleEditing] = useState(false)
   const [descriptionEditing, setDescriptionEditing] = useState(false)
+  const [saveError, setSaveError] = useState<{ field?: string; message: string } | null>(null)
 
   useEffect(() => {
     if (!show || item == null) return
@@ -1876,6 +1881,7 @@ export function SettlementItemSettingDetailModal({
     setHeaderEmoji(item.emojiOverride ?? null)
     setTitleEditing(false)
     setDescriptionEditing(false)
+    setSaveError(null)
   }, [show, item?.id, item?.title, item?.description, item?.emojiOverride])
 
   const handleSave = async () => {
@@ -1893,7 +1899,11 @@ export function SettlementItemSettingDetailModal({
     if (onSaveRemote && snap) {
       try {
         await onSaveRemote(item, snap, meta)
-      } catch {
+      } catch (error) {
+        setSaveError({
+          field: getSettlementConfigErrorField(error),
+          message: resolveSettlementConfigMutationError(error),
+        })
         return
       }
     } else {
@@ -2012,6 +2022,13 @@ export function SettlementItemSettingDetailModal({
         </div>
       ) : null}
       <SettlementDetailSnapshotRefContext.Provider value={snapshotRef}>
+        {saveError ? (
+          <div className="page-content-error" role="alert" aria-live="polite">
+            {saveError.field === 'withholdingRate' ? '소득세율 입력 오류: ' : ''}
+            {saveError.field === 'withholdingAmount' ? '원천징수 금액 입력 오류: ' : ''}
+            {saveError.message || '저장할 수 없습니다.'}
+          </div>
+        ) : null}
         {item ? <SettlementItemSettingDetailModalBody key={item.id} itemId={item.id} /> : null}
       </SettlementDetailSnapshotRefContext.Provider>
     </ContentModal>
