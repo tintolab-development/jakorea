@@ -252,83 +252,9 @@
   width: 100%;
 }
 
-/*
- * 참여 학생 목록 컬럼 min-width: 48,64,160,170,130,170,255,255,200,110(px)
- * 합계 1617 — TS `STUDENT_LIST_TABLE_SCROLL_X` 와 동기화
- */
 .school-detail-modal__student-table {
   width: 100%;
   table-layout: fixed;
-}
-
-.school-detail-modal__student-table col:nth-child(1),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(1),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(1) {
-  width: 48px !important;
-  min-width: 48px !important;
-}
-
-.school-detail-modal__student-table col:nth-child(2),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(2),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(2) {
-  width: var(--table-no-column-width, 80px) !important;
-  min-width: var(--table-no-column-width, 80px) !important;
-}
-
-.school-detail-modal__student-table col:nth-child(3),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(3),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(3) {
-  width: 160px !important;
-  min-width: 160px !important;
-}
-
-.school-detail-modal__student-table col:nth-child(4),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(4),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(4) {
-  width: 170px !important;
-  min-width: 170px !important;
-}
-
-.school-detail-modal__student-table col:nth-child(5),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(5),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(5) {
-  width: 130px !important;
-  min-width: 130px !important;
-}
-
-.school-detail-modal__student-table col:nth-child(6),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(6),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(6) {
-  width: 170px !important;
-  min-width: 170px !important;
-}
-
-.school-detail-modal__student-table col:nth-child(7),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(7),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(7) {
-  width: 255px !important;
-  min-width: 255px !important;
-}
-
-.school-detail-modal__student-table col:nth-child(8),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(8),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(8) {
-  width: 255px !important;
-  min-width: 255px !important;
-}
-
-.school-detail-modal__student-table col:nth-child(9),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(9),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(9) {
-  width: 200px !important;
-  min-width: 200px !important;
-}
-
-.school-detail-modal__student-table col:nth-child(10),
-.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(10),
-.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(10) {
-  width: 110px !important;
-  min-width: 110px !important;
 }
 
 .school-detail-modal__student-table .school-detail-modal__student-table-gender-select {
