@@ -11,6 +11,7 @@ import {
   type LectureReportStatus,
   type LectureReportPage, type LectureReportState,
 } from '../api/lecture-report-client'
+import { getLectureReportApiErrorMessage } from '../lib/lecture-report-contract'
 import { lectureReportWritePath } from '../lib/lecture-report-path'
 import styles from './lecture-report-panel.module.css'
 import { clampLectureReportPage, resolveLectureReportAction } from '../lib/lecture-report-policy'
@@ -76,10 +77,12 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
   const [states, setStates] = useState<Record<number, LectureReportState>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadToken, setReloadToken] = useState(0)
 
   useEffect(() => {
     let alive = true
-    getLectureReportAssignments(programId, pageNo).then(async result => {
+    const controller = new AbortController()
+    getLectureReportAssignments(programId, pageNo, controller.signal).then(async result => {
       if (!alive) return
       if (result.totalPages > 0 && pageNo >= result.totalPages) { setPageNo(clampLectureReportPage(pageNo, result.totalPages)); return }
       setPage(result)
@@ -87,14 +90,28 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
         try { return [row.assignmentId, await getLectureReportState(row.assignmentId)] as const } catch { return null }
       }))
       if (alive) setStates(previous => ({ ...previous, ...Object.fromEntries(fetched.filter((x): x is NonNullable<typeof x> => x != null)) }))
-    }).catch(() => { if (alive) setError('강의보고서 목록을 불러오지 못했습니다.') }).finally(() => { if (alive) setLoading(false) })
-    return () => { alive = false }
-  }, [programId, pageNo])
+    }).catch(cause => {
+      if (!alive) return
+      setPage(null)
+      setStates({})
+      setError(getLectureReportApiErrorMessage(cause, '강의보고서 목록을 불러오지 못했습니다.'))
+    }).finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false; controller.abort() }
+  }, [programId, pageNo, reloadToken])
 
   function goToPage(next: number) {
     setError('')
     setLoading(true)
+    setPage(null)
+    setStates({})
     setPageNo(next)
+  }
+  function retry() {
+    setError('')
+    setLoading(true)
+    setPage(null)
+    setStates({})
+    setReloadToken(value => value + 1)
   }
   if (loading && !page) return <EducationSessionListSkeleton statusMessage="강의보고서 목록을 불러오는 중입니다." />
   return <section className={styles.panel} aria-labelledby="lecture-report-title" aria-busy={loading}>
@@ -103,13 +120,20 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
         강의보고서 <span className={styles.headingCount}>{page?.totalElements ?? 0}건</span>
       </h2>
     </div>
-    {error ? <p role="alert">{error}</p> : null}
-    {!loading && page?.totalElements === 0 ? <p>제출할 강의보고서가 없습니다.</p> : null}
+    {error ? (
+      <div className={styles.errorState} role="alert">
+        <p className={styles.errorMessage}>{error}</p>
+        <PFButton type="button" variant="tertiary" size="large" onClick={retry} disabled={loading}>
+          다시 시도
+        </PFButton>
+      </div>
+    ) : null}
+    {!loading && !error && page?.items.length === 0 ? <p>제출할 강의보고서가 없습니다.</p> : null}
     {page && page.items.length > 0 ? <>
       <div className={styles.rows}>{page.items.map(row => {
         const state = states[row.assignmentId]
         const reportStatus = resolveReportStatus(state, row)
-        const action = resolveLectureReportAction(reportStatus, state?.canSubmit === true)
+        const action = resolveLectureReportAction(reportStatus, state?.canSubmit ?? row.canSubmit)
         const submitted = reportStatus === 'SUBMITTED'
         const lectureStatus = lectureStatusPresentation(row.lectureStatus)
         const statusLoaded = state != null || row.reportStatus != null

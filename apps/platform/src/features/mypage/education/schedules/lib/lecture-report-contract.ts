@@ -2,6 +2,8 @@ export type LectureReportContextType = 'INSTRUCTOR_APPLICATION' | 'INSTRUCTOR_AS
 
 export const INVALID_LECTURE_REPORT_BINDING_MESSAGE = '강의보고서 양식 정보가 올바르지 않습니다.'
 export const LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE = '현재 활성화된 강의보고서 양식을 사용할 수 없습니다.'
+export const LECTURE_REPORT_CANONICAL_TEMPLATE_UNAVAILABLE_MESSAGE =
+  '강의보고서 양식을 준비 중입니다. 잠시 후 다시 시도해 주세요.'
 
 export type LectureReportFormBinding = {
   assignmentId: number
@@ -74,7 +76,12 @@ export function getLectureReportApiErrorMessage(
   const status = typeof response?.status === 'number' ? response.status : undefined
   const data = response?.data
   const body = data && typeof data === 'object'
-    ? data as { code?: unknown; message?: unknown; error?: { code?: unknown; message?: unknown } }
+    ? data as {
+        success?: unknown
+        code?: unknown
+        message?: unknown
+        error?: { code?: unknown; message?: unknown }
+      }
     : undefined
   const serverCode =
     typeof body?.error?.code === 'string' && body.error.code.trim()
@@ -89,6 +96,8 @@ export function getLectureReportApiErrorMessage(
         ? body.message.trim()
         : undefined
   switch (serverCode) {
+    case 'LECTURE_REPORT_CANONICAL_TEMPLATE_UNAVAILABLE':
+      return LECTURE_REPORT_CANONICAL_TEMPLATE_UNAVAILABLE_MESSAGE
     case 'LECTURE_REPORT_FORM_BINDING_NOT_FOUND':
     case 'LECTURE_REPORT_CONTENT_NOT_FOUND':
       return LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE
@@ -105,6 +114,7 @@ export function getLectureReportApiErrorMessage(
     default:
       break
   }
+  if (data !== undefined && !serverCode) return fallback
   if (status === 400) return serverMessage ?? '양식 응답과 강사 배정 정보가 일치하지 않아 제출할 수 없습니다.'
   if (status === 403) return serverMessage ?? '강의보고서에 접근하거나 제출할 권한이 없습니다.'
   if (serverMessage) return serverMessage

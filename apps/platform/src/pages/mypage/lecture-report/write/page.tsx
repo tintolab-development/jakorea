@@ -219,7 +219,7 @@ export function MypageLectureReportWritePage() {
             : '현재 강의보고서를 작성할 수 없습니다.'
         )
       }
-      if (state.bindingId == null) {
+      if (state.bindingId == null || state.templateVersionId == null) {
         throw new Error(LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE)
       }
 
@@ -230,7 +230,7 @@ export function MypageLectureReportWritePage() {
         binding.programScheduleId !== state.programScheduleId ||
         binding.programScheduleId !== assignment.scheduleId ||
         binding.bindingId !== state.bindingId ||
-        (state.templateVersionId != null && binding.templateVersionId !== state.templateVersionId)
+        binding.templateVersionId !== state.templateVersionId
       ) {
         throw new Error('강의보고서 양식 정보가 일정과 일치하지 않습니다.')
       }
@@ -329,9 +329,8 @@ export function MypageLectureReportWritePage() {
       loaded.binding.programId !== loaded.state.programId ||
       loaded.binding.programScheduleId !== loaded.state.programScheduleId ||
       loaded.binding.programScheduleId !== loaded.assignment.scheduleId ||
-      (loaded.state.bindingId != null && loaded.state.bindingId !== loaded.binding.bindingId) ||
-      (loaded.state.templateVersionId != null &&
-        loaded.state.templateVersionId !== loaded.binding.templateVersionId) ||
+      loaded.state.bindingId !== loaded.binding.bindingId ||
+      loaded.state.templateVersionId !== loaded.binding.templateVersionId ||
       !isValidLectureReportBindingContext({
         ...loaded.binding,
         instructorApplicationId: loaded.assignment.instructorApplicationId,
