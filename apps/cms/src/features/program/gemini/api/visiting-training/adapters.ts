@@ -279,8 +279,35 @@ function wireGeminiOptionalDate(
   clearFields.push(apiField)
 }
 
+/**
+ * 일반 프로그램 `participantLocked` 와 동일.
+ * 모집 시작 후 참여자 모집 창을 PATCH에 넣으면 BE가 recruitments 충돌로 거절한다.
+ */
+function omitLockedParticipantRecruitmentWindow(
+  body: ProgramUpdateRequest,
+  persist: ReturnType<typeof buildGeminiRecruitmentPersistSnapshot>
+): ProgramUpdateRequest {
+  const {
+    applicationStartDate: _applicationStartDate,
+    applicationEndDate: _applicationEndDate,
+    businessStartDate: _businessStartDate,
+    businessEndDate: _businessEndDate,
+    ...rest
+  } = body
+  const {
+    applicationPeriodStart: _applicationPeriodStart,
+    applicationPeriodEnd: _applicationPeriodEnd,
+    ...persistRest
+  } = persist
+  return {
+    ...rest,
+    serviceDetailJson: JSON.stringify({ geminiRecruitment: persistRest }),
+  }
+}
+
 export function mapGeminiRecruitmentDetailToUpdateRequest(
-  draft: GeminiRecruitmentInfoEditDraft
+  draft: GeminiRecruitmentInfoEditDraft,
+  options?: { recruitmentWindowLocked?: boolean }
 ): ProgramUpdateRequest {
   const persist = buildGeminiRecruitmentPersistSnapshot(draft)
   const contactName = persist.inquiryContactName.trim() || undefined
@@ -351,6 +378,9 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
   )
   if (!targetLevel) clearFields.push('targetLevel')
   if (clearFields.length > 0) body.clearFields = clearFields
+  if (options?.recruitmentWindowLocked) {
+    return omitLockedParticipantRecruitmentWindow(body, persist)
+  }
   return body
 }
 

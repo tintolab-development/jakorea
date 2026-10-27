@@ -7,7 +7,7 @@ import {
   resolveRecruitmentAnnouncementDisplayLabel,
   resolveRecruitmentProgramProgressLabel,
 } from '../../lib/recruitment/resolve-recruitment-display'
-import { formatRecruitmentAuditDate } from '../../lib/recruitment/format-period'
+import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/program-detail/registration-audit-value'
 import type { GeminiRecruitmentDetail } from '../../model/recruitment/detail-types'
 import type {
   GeminiRecruitmentRichTextGetter,
@@ -15,6 +15,7 @@ import type {
 } from '../../lib/recruitment/add-form-options'
 import type { GeminiRecruitmentInfoEditDraft } from '../../model/recruitment/info-edit-draft'
 import { toDateRangeValue } from '../../model/recruitment/info-edit-draft'
+import { canGeminiRecruitmentInfoEdit } from '../../lib/recruitment/info-edit-policy'
 import { GeminiRecruitmentInstitutionFields } from '../recruitment/gemini-recruitment-institution-fields'
 import { GeminiRecruitmentDetailFields } from '../recruitment/gemini-recruitment-detail-fields'
 import '@/features/posts/ui/notice-register-modal.css'
@@ -104,6 +105,9 @@ export function GeminiRecruitmentInfoTab({
     : null
 
   const contentMode = isEditMode && draft != null && onDraftChange != null ? 'edit' : 'view'
+  const recruitmentWindowLocked = !canGeminiRecruitmentInfoEdit(detail.applicationPeriodStart)
+  const recruitmentSectionMode =
+    contentMode === 'edit' && !recruitmentWindowLocked ? 'edit' : 'view'
 
   const handleMinStudentCountChange = useCallback(
     (value: string) => {
@@ -120,38 +124,30 @@ export function GeminiRecruitmentInfoTab({
       <div className="gemini-recruitment-info-tab__recruitment-section">
         <DetailInfoForm
           title="모집 정보"
-          mode={contentMode}
+          mode={recruitmentSectionMode}
           className="program-registration-paragraph"
         >
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="최초 등록일"
               view={
-                <>
-                  {formatRecruitmentAuditDate(detail.createdAt)}
-                  <DetailInfoForm.InputsSeparator />
-                  {detail.createdByName || '-'}
-                </>
+                <ProgramRegistrationAuditValue at={detail.createdAt} name={detail.createdByName} />
               }
             />
             <DetailInfoForm.Field
               label="마지막 수정일"
               view={
-                <>
-                  {formatRecruitmentAuditDate(detail.updatedAt)}
-                  <DetailInfoForm.InputsSeparator />
-                  {detail.updatedByName || '-'}
-                </>
+                <ProgramRegistrationAuditValue at={detail.updatedAt} name={detail.updatedByName} />
               }
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="공고 게시 여부"
-              readOnlyDisplay={contentMode === 'view'}
+              readOnlyDisplay={recruitmentSectionMode === 'view'}
               view={announcementDisplayLabel}
               edit={
-                draft != null && onDraftChange != null ? (
+                recruitmentSectionMode === 'edit' && draft != null && onDraftChange != null ? (
                   <ParticipantRecruitmentAnnouncementPublishedRadios
                     value={draft.announcementPublished}
                     onChange={next => onDraftChange({ announcementPublished: next })}
@@ -176,10 +172,10 @@ export function GeminiRecruitmentInfoTab({
         <DetailInfoForm
           title="모집 정보"
           hideHeader
-          mode={contentMode}
+          mode={recruitmentSectionMode}
           className="program-registration-paragraph"
         >
-          {contentMode === 'edit' && draft != null && onDraftChange != null ? (
+          {recruitmentSectionMode === 'edit' && draft != null && onDraftChange != null ? (
             <GeminiRecruitmentInstitutionFields
               mode="edit"
               values={fieldValues}
