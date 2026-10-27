@@ -58,14 +58,8 @@
   .table-filter-group__fields-inner
   .ant-col
   .labeled-search-input,
-.gemini-performance-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col
-  .cms-select,
-.gemini-performance-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col
-  .ant-select,
+.gemini-performance-list.filter-table-layout .table-filter-group__fields-inner .ant-col .cms-select,
+.gemini-performance-list.filter-table-layout .table-filter-group__fields-inner .ant-col .ant-select,
 .gemini-performance-list.filter-table-layout
   .table-filter-group__fields-inner
   .ant-col
