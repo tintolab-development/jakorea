@@ -137,6 +137,10 @@ export function pickRecruitmentCopyRow(
       : audience === 'instructor'
         ? 'INSTRUCTOR'
         : 'VOLUNTEER'
+  if (program.activeRecruitmentId != null) {
+    const active = rows.find(row => row.id === program.activeRecruitmentId)
+    if (active && (active.recruitmentType ?? '').toUpperCase() === type) return active
+  }
   const byRecruitmentType = rows.find(row => (row.recruitmentType ?? '').toUpperCase() === type)
   if (byRecruitmentType) return byRecruitmentType
   if (audience === 'volunteer') {

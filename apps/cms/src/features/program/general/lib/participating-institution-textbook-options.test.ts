@@ -6,7 +6,9 @@ import {
   buildCombinedClassTextbookSelectOptions,
   buildParticipatingInstitutionTextbookSelectOptions,
   ensureTextbookNotUsedSelectOption,
+  formatParticipatingInstitutionKitQuantity,
   programOffersParticipatingTextbookSelect,
+  resolveAssignedBooksPerKit,
 } from './participating-institution-textbook'
 
 const program = {
@@ -121,6 +123,70 @@ describe('ensureTextbookNotUsedSelectOption', () => {
         textbookName: '해당 없음',
       },
     ])
+  })
+})
+
+describe('formatParticipatingInstitutionKitQuantity', () => {
+  it('서버 키트·권수를 표시하고 0은 숨긴다', () => {
+    expect(formatParticipatingInstitutionKitQuantity(3, 72)).toBe('3키트 (72권)')
+    expect(formatParticipatingInstitutionKitQuantity(3, null)).toBe('3키트')
+    expect(formatParticipatingInstitutionKitQuantity(0, 0)).toBe('-')
+    expect(formatParticipatingInstitutionKitQuantity(null, null)).toBe('-')
+  })
+
+  it('기관 응답이 없으면 프로그램 배정 스냅샷과 학생 수로 산출한다', () => {
+    expect(
+      formatParticipatingInstitutionKitQuantity(null, null, {
+        studentCount: 50,
+        booksPerKit: 24,
+      })
+    ).toBe('3키트 (72권)')
+    expect(
+      formatParticipatingInstitutionKitQuantity(null, null, {
+        studentCount: 2,
+        booksPerKit: 24,
+      })
+    ).toBe('1키트 (24권)')
+    expect(
+      formatParticipatingInstitutionKitQuantity(null, null, {
+        studentCount: 2,
+        booksPerKit: null,
+      })
+    ).toBe('-')
+  })
+
+  it('서버 키트 수가 있으면 전역/스냅샷으로 덮지 않는다', () => {
+    expect(
+      formatParticipatingInstitutionKitQuantity(2, 48, {
+        studentCount: 50,
+        booksPerKit: 24,
+      })
+    ).toBe('2키트 (48권)')
+  })
+})
+
+describe('resolveAssignedBooksPerKit', () => {
+  it('프로그램 배정 스냅샷에서 해당 교재의 1키트당 권수를 고른다', () => {
+    expect(
+      resolveAssignedBooksPerKit({
+        items: [
+          { textbookId: 10, textbookNameKo: '다른 교재', booksPerKitSnapshot: 32 },
+          { textbookId: 20, textbookNameKo: 'JA MY Business', booksPerKitSnapshot: 24 },
+        ],
+        textbookId: '20',
+        textbookName: 'JA MY Business 중학교',
+      })
+    ).toBe(24)
+  })
+
+  it('id가 달라도 배정이 1건이면 스냅샷 권수를 쓴다', () => {
+    expect(
+      resolveAssignedBooksPerKit({
+        items: [{ textbookId: 99, textbookNameKo: 'JA MY Business', bookCountPerKit: 24 }],
+        textbookId: '20',
+        textbookName: '다른 라벨',
+      })
+    ).toBe(24)
   })
 })
 

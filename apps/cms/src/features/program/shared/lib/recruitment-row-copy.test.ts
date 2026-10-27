@@ -171,6 +171,19 @@ describe('applyRecruitmentRowCopy', () => {
   })
 })
 
+describe('pickRecruitmentCopyRow 활성 행', () => {
+  it('참여자 행이 둘이면 activeRecruitmentId 행을 쓴다', () => {
+    const program = baseProgram({
+      activeRecruitmentId: 22,
+      programRecruitments: [
+        { id: 11, recruitmentType: 'PARTICIPANT', applicationType: 'ORGANIZATION' },
+        { id: 22, recruitmentType: 'PARTICIPANT', applicationType: 'INDIVIDUAL' },
+      ],
+    })
+    expect(pickRecruitmentCopyRow(program, 'participant')?.id).toBe(22)
+  })
+})
+
 describe('pickRecruitmentCopyRow 봉사자 반기', () => {
   it('recruitTerm이 있으면 시작일 순서보다 recruitTerm을 우선한다', () => {
     const program = baseProgram({
