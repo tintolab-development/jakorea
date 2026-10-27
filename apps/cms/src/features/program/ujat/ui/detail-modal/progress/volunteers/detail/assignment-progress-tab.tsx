@@ -16,6 +16,7 @@ import {
   getUjatVolunteerAssignmentAssignModalData,
 } from './volunteer-assign-modal-data'
 import { mergeVolunteerActivityWithdrawnRows, sortVolunteerAssignmentRows } from './volunteer-assignment-data'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import {
   isVolunteerAssignmentClassWithdrawn,
   type UjatVolunteerAssignmentAbsenceReason,
@@ -52,7 +53,7 @@ function resolveClassLabel(
 ): string {
   if (classDisplay.kind === 'dash') return '-'
   if (classDisplay.kind === 'withdrawn') return '활동 포기'
-  return classDisplay.label
+  return formatUjatGradeClassDisplayLabel(classDisplay.label)
 }
 
 function resolveAttendanceLabel(

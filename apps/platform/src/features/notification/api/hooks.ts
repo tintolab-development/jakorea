@@ -3,7 +3,6 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
-  type InfiniteData,
 } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -14,7 +13,8 @@ import {
   fetchMyNotificationUnreadCount,
   fetchMyNotifications,
   markMyNotificationClicked,
-  type MemberNotificationPageResponse,
+  markMyNotificationRead,
+  markMyNotificationsReadAll,
 } from './client'
 
 const PAGE_SIZE = 20
@@ -26,23 +26,34 @@ function remoteSessionEnabled(enabled: boolean): boolean {
   return enabled && isRemoteApiConfigured() && Boolean(getAccessToken())
 }
 
-export function useMyNotificationsInfiniteQuery(category: string, enabled: boolean) {
+export function useMyNotificationsInfiniteQuery(
+  category: string,
+  enabled: boolean,
+  unreadOnly = false,
+) {
   const queryEnabled = remoteSessionEnabled(enabled)
+  const categoryParam = category === NOTIFICATION_CATEGORY_ALL ? undefined : category
   const query = useInfiniteQuery({
-    queryKey: platformQueryKeys.notification.list({ category, size: PAGE_SIZE }),
+    queryKey: platformQueryKeys.notification.list({
+      page: 0,
+      size: PAGE_SIZE,
+      unreadOnly,
+      category: categoryParam,
+    }),
     queryFn: ({ pageParam, signal }) =>
       fetchMyNotifications(
         {
           page: pageParam,
           size: PAGE_SIZE,
-          category: category === NOTIFICATION_CATEGORY_ALL ? undefined : category,
+          category: categoryParam,
+          unreadOnly: unreadOnly || undefined,
         },
         signal,
       ),
     initialPageParam: 0,
     getNextPageParam: lastPage => {
-      const page = lastPage.page ?? 0
-      const totalPages = lastPage.totalPages ?? 0
+      const page = lastPage.page
+      const totalPages = lastPage.totalPages
       return page + 1 < totalPages ? page + 1 : undefined
     },
     enabled: queryEnabled,
@@ -55,20 +66,22 @@ export function useMyNotificationsInfiniteQuery(category: string, enabled: boole
   })
 
   return {
-    items: query.data?.pages.flatMap(page => page.items ?? []) ?? [],
+    items: query.data?.pages.flatMap(page => page.items) ?? [],
     isLoading: queryEnabled && query.isPending,
     isError: query.isError,
+    isRefetching: query.isRefetching,
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,
+    refetch: query.refetch,
   }
 }
 
 /** 헤더 알림 아이콘 활성 여부 — 로그인 회원 scope, 포커스 복귀 시 재조회 */
-export function useMyNotificationUnreadCountQuery(enabled: boolean): number {
+export function useMyNotificationUnreadCountQuery(enabled: boolean, category?: string): number {
   const query = useQuery({
-    queryKey: platformQueryKeys.notification.unreadCount(),
-    queryFn: ({ signal }) => fetchMyNotificationUnreadCount(signal),
+    queryKey: platformQueryKeys.notification.unreadCount(category),
+    queryFn: ({ signal }) => fetchMyNotificationUnreadCount(category, signal),
     enabled: remoteSessionEnabled(enabled),
     staleTime: UNREAD_COUNT_STALE_MS,
     gcTime: GC_MS,
@@ -81,27 +94,36 @@ export function useMyNotificationUnreadCountQuery(enabled: boolean): number {
   return query.data ?? 0
 }
 
+async function syncNotificationQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: platformQueryKeys.notification.listPrefix() }),
+    queryClient.invalidateQueries({ queryKey: platformQueryKeys.notification.unreadCountPrefix() }),
+  ])
+}
+
 export function useMarkMyNotificationClickedMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (recipientId: number) => markMyNotificationClicked(recipientId),
-    onSuccess: (_data, recipientId) => {
-      const readAt = new Date().toISOString()
-      queryClient.setQueriesData<InfiniteData<MemberNotificationPageResponse>>(
-        { queryKey: platformQueryKeys.notification.listPrefix() },
-        data =>
-          data && {
-            ...data,
-            pages: data.pages.map(page => ({
-              ...page,
-              items: page.items?.map(item =>
-                item.recipientId === recipientId && !item.readAt ? { ...item, readAt } : item,
-              ),
-            })),
-          },
-      )
-      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.notification.all() })
-    },
+    onSuccess: () => syncNotificationQueries(queryClient),
+  })
+}
+
+export function useMarkMyNotificationReadMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (recipientId: number) => markMyNotificationRead(recipientId),
+    onSuccess: () => syncNotificationQueries(queryClient),
+  })
+}
+
+export function useMarkMyNotificationsReadAllMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => markMyNotificationsReadAll(),
+    onSuccess: () => syncNotificationQueries(queryClient),
   })
 }

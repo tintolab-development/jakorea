@@ -150,6 +150,13 @@
   line-height: 150%;
 }
 
+.ujat-region-assignment-table__class-label {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .ujat-region-assignment-table__class-label--solo {
   color: var(--color-mint-01, #01a1af);
   text-align: center;

@@ -9,6 +9,7 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { UjatDocumentViewerTarget } from './ujat-document-viewer-types'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 
 function fillSessionParagraph(
   paragraph: WritingFormParagraph,
@@ -36,7 +37,9 @@ function fillJournalEducationInfoParagraph(
     return paragraph
   }
   const p = paragraph as UjatJournalEducationInfoParagraph
-  const classParts = target.assignedClass.match(/(\d+)학년\s*(\d+)반/)
+  const classParts = formatUjatGradeClassDisplayLabel(target.assignedClass).match(
+    /(\d+)학년\s*(\d+)반/
+  )
   return {
     ...p,
     schoolDisplayFallback: target.institutionName,

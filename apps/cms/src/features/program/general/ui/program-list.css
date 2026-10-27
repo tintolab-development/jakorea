@@ -82,6 +82,146 @@
   margin-bottom: 0;
 }
 
+/* 프로그램 개요 목록은 현재 화면 폭 안에서 열을 재분배한다. 가로 스크롤은 사용하지 않는다. */
+.program-list-table-fit-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.program-list-table-fit-wrap .cms-data-table--program-list-overview {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.program-list-table-fit-wrap
+  .cms-data-table--program-list-overview
+  .ant-table-container,
+.program-list-table-fit-wrap
+  .cms-data-table--program-list-overview
+  table.ant-table {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden;
+}
+
+.program-list-table-fit-wrap
+  .cms-data-table--program-list-overview
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-selection-column):not(.cms-table-col--no),
+.program-list-table-fit-wrap
+  .cms-data-table--program-list-overview
+  .ant-table-tbody
+  > tr
+  > td:not(.ant-table-selection-column):not(.cms-table-col--no) {
+  min-width: 0 !important;
+}
+
+/* 전체/예정/진행·완료 뷰별 비율. 선택·No. 열(각 80px)을 제외한 나머지를 화면에 맞춘다. */
+.program-list-card--program-list-all-programs
+  .program-list-table__col-title {
+  width: 36% !important;
+}
+
+.program-list-card--program-list-all-programs
+  .program-list-table__col-progress {
+  width: 11% !important;
+}
+
+.program-list-card--program-list-all-programs
+  .program-list-table__col-recruitment {
+  width: 10% !important;
+}
+
+.program-list-card--program-list-all-programs
+  .program-list-table__col-participant-type {
+  width: 10% !important;
+}
+
+.program-list-card--program-list-all-programs
+  .program-list-table__col-target {
+  width: 16% !important;
+}
+
+.program-list-card--program-list-period-columns
+  .program-list-table__col-title {
+  width: 30% !important;
+}
+
+.program-list-card--program-list-period-columns
+  .program-list-table__col-recruitment {
+  width: 10% !important;
+}
+
+.program-list-card--program-list-period-columns
+  .program-list-table__col-participant-type {
+  width: 10% !important;
+}
+
+.program-list-card--program-list-period-columns
+  .program-list-table__col-target {
+  width: 15% !important;
+}
+
+.program-list-card--program-list-period-columns
+  .program-list-table__col-period {
+  width: 15% !important;
+}
+
+:is(
+  .program-list-card--program-list-in-progress,
+  .program-list-card--program-list-completed
+)
+  .program-list-table__col-title {
+  width: 22% !important;
+}
+
+:is(
+  .program-list-card--program-list-in-progress,
+  .program-list-card--program-list-completed
+)
+  .program-list-table__col-recruitment,
+:is(
+  .program-list-card--program-list-in-progress,
+  .program-list-card--program-list-completed
+)
+  .program-list-table__col-instructor-recruit,
+:is(
+  .program-list-card--program-list-in-progress,
+  .program-list-card--program-list-completed
+)
+  .program-list-table__col-volunteer-recruit,
+:is(
+  .program-list-card--program-list-in-progress,
+  .program-list-card--program-list-completed
+)
+  .program-list-table__col-school-count,
+:is(
+  .program-list-card--program-list-in-progress,
+  .program-list-card--program-list-completed
+)
+  .program-list-table__col-student-count {
+  width: 8% !important;
+}
+
+:is(
+  .program-list-card--program-list-in-progress,
+  .program-list-card--program-list-completed
+)
+  .program-list-table__col-participant-type {
+  width: 9% !important;
+}
+
+:is(
+  .program-list-card--program-list-in-progress,
+  .program-list-card--program-list-completed
+)
+  .program-list-table__col-target {
+  width: 13% !important;
+}
+
 .program-filter-wrapper {
   width: 100%;
   margin-bottom: var(--spacing-16);

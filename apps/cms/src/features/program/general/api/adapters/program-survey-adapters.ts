@@ -43,33 +43,14 @@ const PROGRAM_OPERATIONAL_FORM_BINDING_TYPES = new Set([
   'APPLICATION',
   'AGREEMENT',
   'ISSUANCE',
+  // 강의보고서는 설문 관리 목록이 아닌 강의보고서 전용 화면에서 관리한다.
+  'LECTURE_REPORT',
   'CERTIFICATE',
   'PROGRAM',
 ])
 
 function normalizeProgramFormBindingType(formType: string | undefined): string {
   return formType?.trim().toUpperCase() ?? ''
-}
-
-function isOperationalFormBindingByTemplateName(templateName: string | undefined): boolean {
-  const name = (templateName ?? '').trim().toLowerCase()
-  if (!name) return false
-  if (name.includes('만족도') || name.includes('satisfaction')) return false
-  if (name.includes('강의평가') || name.includes('lecture eval')) return false
-  if (name.includes('설문조사') || name.includes('survey-default')) return false
-
-  return (
-    name.includes('등록') ||
-    name.includes('registration') ||
-    name.includes('모집') ||
-    name.includes('recruitment') ||
-    name.includes('신청') ||
-    name.includes('application') ||
-    name.includes('동의') ||
-    name.includes('agreement') ||
-    name.includes('발급') ||
-    name.includes('issuance')
-  )
 }
 
 /** 설문 관리(설문조사·만족도·강의평가) 대상 binding인지 */
@@ -81,10 +62,8 @@ export function isProgramSurveyManagementFormBinding(binding: ProgramFormBinding
   if (formType && PROGRAM_OPERATIONAL_FORM_BINDING_TYPES.has(formType)) {
     return false
   }
-  if (isOperationalFormBindingByTemplateName(binding.templateName)) {
-    return false
-  }
-  return true
+  // 서버가 제공한 formType이 없거나 알 수 없는 값이면 설문으로 추정하지 않는다.
+  return false
 }
 
 export function resolveSurveyShareClipboardUrl(
@@ -483,16 +462,6 @@ export function isSurveyTemplateOptionForKind(
   return resolveSurveyTemplateOptionKind(row) === kind
 }
 
-export function isDedicatedSurveyManagementTabTitle(title: string): boolean {
-  const name = title.toLowerCase()
-  return (
-    name.includes('강의평가') ||
-    name.includes('lecture eval') ||
-    name.includes('만족도') ||
-    name.includes('satisfaction')
-  )
-}
-
 export function resolveLectureEvalSubmitContext(input: {
   binding?: ProgramFormBindingResponse | null
   surveyDto?: ProgramSurveyResponse | null
@@ -552,20 +521,8 @@ export function mergeSurveysWithBindings(
         (dto.templateId != null ? bindingByTemplate.get(String(dto.templateId)) : undefined)
       return mapProgramSurveyToRegisteredSurvey(dto, index, binding)
     })
-    .filter(row => !isOperationalFormBindingByTemplateName(row.title))
 
-  // surveys에 없고 binding만 있는 poll 항목 보강
-  const seenVersions = new Set(fromSurveys.map(s => s.id))
-  const seenTemplates = new Set(fromSurveys.map(s => s.templateId).filter(Boolean))
-  const extras: RegisteredSurvey[] = []
-  for (const classified of classifyProgramFormBindings(surveyBindings)) {
-    if (classified.kind !== 'poll') continue
-    const versionId = String(classified.binding.templateVersionId ?? '')
-    const templateId = String(classified.binding.templateId ?? '')
-    if (versionId && seenVersions.has(versionId)) continue
-    if (templateId && seenTemplates.has(templateId)) continue
-    extras.push(classified.survey)
-  }
-
-  return [...fromSurveys, ...extras]
+  // 설문 목록은 /surveys 응답을 단일 원천으로 사용한다.
+  // /form-bindings에만 존재하는 운영 바인딩을 설문 목록으로 보강하지 않는다.
+  return fromSurveys
 }

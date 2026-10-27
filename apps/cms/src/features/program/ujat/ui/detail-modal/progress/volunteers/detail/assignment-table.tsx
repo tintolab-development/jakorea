@@ -21,6 +21,7 @@ import {
 import { UjatAssignmentDocumentViewerModal } from '../../assignments/document-viewer/ujat-assignment-document-viewer-modal'
 import type { UjatDocumentViewerTarget } from '../../assignments/document-viewer/ujat-document-viewer-types'
 import { ProgramAttendanceStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import './assignment.css'
 
 const PLAN_LOG_CELL_CLASSNAME = 'ujat-volunteer-assignment-table__plan-log-cell'
@@ -81,7 +82,7 @@ function renderClass(classDisplay: UjatVolunteerClassDisplay) {
       </span>
     )
   }
-  return classDisplay.label
+  return formatUjatGradeClassDisplayLabel(classDisplay.label)
 }
 
 function renderAttendance(attendance: UjatVolunteerAttendanceDisplay) {
@@ -163,7 +164,10 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         volunteerName,
         regionLabel,
         institutionName: getInstitutionName(record),
-        assignedClass: record.classDisplay.kind === 'class' ? record.classDisplay.label : '',
+        assignedClass:
+          record.classDisplay.kind === 'class'
+            ? formatUjatGradeClassDisplayLabel(record.classDisplay.label)
+            : '',
         submittedDateLabel: '260403',
         formResponseId: record.educationPlanFormResponseId,
       })
@@ -178,7 +182,10 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         volunteerName,
         regionLabel,
         institutionName: getInstitutionName(record),
-        assignedClass: record.classDisplay.kind === 'class' ? record.classDisplay.label : '',
+        assignedClass:
+          record.classDisplay.kind === 'class'
+            ? formatUjatGradeClassDisplayLabel(record.classDisplay.label)
+            : '',
         submittedDateLabel: '260410',
         formResponseId: record.educationLogFormResponseId,
       })

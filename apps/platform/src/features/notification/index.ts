@@ -1,3 +1,8 @@
 export { NotificationInboxPanel } from './ui/inbox-panel'
 export type { NotificationInboxPanelVariant } from './ui/inbox-panel'
-export { useMyNotificationUnreadCountQuery } from './api/hooks'
+export {
+  useMarkMyNotificationClickedMutation,
+  useMarkMyNotificationReadMutation,
+  useMarkMyNotificationsReadAllMutation,
+  useMyNotificationUnreadCountQuery,
+} from './api/hooks'

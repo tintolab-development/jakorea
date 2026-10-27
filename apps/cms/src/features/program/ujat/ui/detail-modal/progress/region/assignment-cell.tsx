@@ -1,4 +1,5 @@
 import type { RegionAssignmentCell } from './types'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 
 export function RegionAssignmentCellContent({ cell }: { cell: RegionAssignmentCell }) {
   if (cell.kind === 'empty') {
@@ -31,7 +32,7 @@ export function RegionAssignmentCellContent({ cell }: { cell: RegionAssignmentCe
           .filter(Boolean)
           .join(' ')}
       >
-        {cell.classLabel}
+        {formatUjatGradeClassDisplayLabel(cell.classLabel)}
       </span>
     </span>
   )

@@ -390,7 +390,7 @@ export function MypageLectureDetailPage() {
       )
     }
     if (active === 'lecture-report' && routeApplicationType === 'INSTRUCTOR') {
-      return <LectureReportPanel applicationId={applicationId} programId={Number(program.id)} instructorProgram={program.programAudience === 'organization'} />
+      return <LectureReportPanel key={`lecture-report-${applicationId}-${program.id}`} applicationId={applicationId} programId={Number(program.id)} instructorProgram={program.programAudience === 'organization'} />
     }
     if (active === 'survey') {
       return (
@@ -533,6 +533,7 @@ export function MypageLectureDetailPage() {
         pending={cancelMutation.isPending}
         error={cancelMutation.error}
       />
+
     </section>
   )
 }

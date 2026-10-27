@@ -111,6 +111,8 @@ export function mapPortalFormListItemToSurveyEntry(
     status: submitted ? 'submitted' : 'in_progress',
     startAt: item.submissionStartAt?.slice(0, 10),
     endAt: item.submissionEndAt?.slice(0, 10),
+    submissionStartAt: item.submissionStartAt ?? undefined,
+    submissionEndAt: item.submissionEndAt ?? undefined,
     createdAt: item.submissionStartAt ?? undefined,
     templateVersionId: item.templateVersionId,
     formType: item.formType,

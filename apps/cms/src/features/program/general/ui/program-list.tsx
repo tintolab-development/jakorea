@@ -26,9 +26,7 @@ import type {
   ProgramListView,
 } from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/ui'
-import type { ColumnsType } from 'antd/es/table'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -243,17 +241,8 @@ export function ProgramList({
     filename: headerTitle ?? '프로그램 목록',
   })
 
-  const overviewFitScrollEnabled = isOverviewTable
   const overviewRowSelectionActive =
     showRowSelection && (onBulkDelete != null || onSelectionChange != null)
-  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
-    antdColumns as ColumnsType<unknown>,
-    {
-      enabled: overviewFitScrollEnabled,
-      includeSelection: overviewRowSelectionActive,
-      selectionWidth: TABLE_COLUMN_WIDTHS.checkbox,
-    }
-  )
 
   return (
     <>
@@ -279,7 +268,7 @@ export function ProgramList({
             data: filteredRows,
           }}
         >
-          <div ref={tableWrapRef}>
+          <div className="program-list-table-fit-wrap">
             <CmsDataTable
               className={tableClassName}
               rowSelection={
@@ -298,8 +287,7 @@ export function ProgramList({
               columns={antdColumns}
               rowKey="id"
               loading={loading}
-              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
-              tableLayout={isOverviewTable ? 'auto' : undefined}
+              tableLayout={isOverviewTable ? 'fixed' : undefined}
               onRow={record => ({
                 onClick: () => onView(record),
                 style: { cursor: 'pointer' },

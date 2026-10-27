@@ -14,6 +14,7 @@ import type { UjatAssignmentVolunteerRow } from './types'
 import { UjatAssignmentDocumentViewerModal } from './document-viewer/ujat-assignment-document-viewer-modal'
 import type { UjatDocumentViewerTarget } from './document-viewer/ujat-document-viewer-types'
 import { parseSubmittedDate } from './document-viewer/ujat-document-viewer-types'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import '../volunteers/detail/assignment.css'
 import './section.css'
 
@@ -79,7 +80,7 @@ export function UjatEducationProgressAssignmentTable({
         volunteerName: record.name,
         regionLabel,
         institutionName: record.institutionName,
-        assignedClass: record.assignedClass,
+        assignedClass: formatUjatGradeClassDisplayLabel(record.assignedClass),
         submittedDateLabel: parseSubmittedDate(record.plan.submittedDateLabel),
         formResponseId: record.plan.formResponseId,
       })
@@ -94,7 +95,7 @@ export function UjatEducationProgressAssignmentTable({
         volunteerName: record.name,
         regionLabel,
         institutionName: record.institutionName,
-        assignedClass: record.assignedClass,
+        assignedClass: formatUjatGradeClassDisplayLabel(record.assignedClass),
         submittedDateLabel: parseSubmittedDate(record.log.submittedDateLabel),
         formResponseId: record.log.formResponseId,
       })
@@ -140,6 +141,7 @@ export function UjatEducationProgressAssignmentTable({
         key: 'assignedClass',
         width: 120,
         align: 'center',
+        render: (assignedClass: string) => formatUjatGradeClassDisplayLabel(assignedClass),
       },
       {
         title: '제출 현황',

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
-import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import type { TitleWithPeriodParagraph, WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton, useProgramDetail } from '@/features/program'
 import { writingFormDraftFromApplicationForm } from '@/features/program/lib/application-form-draft'
 import { EducationSurveyFormBody } from '@/features/mypage/education/surveys/ui/survey-form-body'
+import { resolveEducationSurveyPeriodLabel } from '@/features/mypage/education/surveys/ui/survey-header'
 import {
   EMPTY_SURVEY_SIDECAR,
   type SurveySidecarState,
@@ -20,7 +21,6 @@ import {
   getLectureReportApiErrorMessage,
   getAllLectureReportAssignments,
   getLectureReportBinding,
-  getLectureReportContent,
   getLectureReportState,
   renderLectureReport,
   submitLectureReport,
@@ -37,12 +37,18 @@ import {
 } from '@/features/mypage/education/schedules/lib/lecture-report-contract'
 import {
   lectureReportBackPath,
-  lectureReportWritePath,
+  lectureReportPreviewPath,
 } from '@/features/mypage/education/schedules/lib/lecture-report-path'
-import { LectureReportPreviewOverlay } from '@/features/mypage/education/schedules/ui/lecture-report-preview-overlay'
+import { LectureReportSubmitCompleteModal } from '@/features/mypage/education/schedules/ui/lecture-report-submit-complete-modal'
+import { buildSettlementWritePath } from '@/features/mypage/education/settlements/lib/write-path'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
+import {
+  buildLectureReportPageTitle,
+  resolveLectureReportLectureName,
+} from '@/features/mypage/education/schedules/lib/lecture-report-display'
+import { resolveEducationSurveySectionDescription } from '@/features/mypage/education/surveys/lib/survey-section-title'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 
 type LoadedReport = {
@@ -63,18 +69,6 @@ function parsePositiveInteger(value: string | null): number | null {
   if (!value || !/^\d+$/.test(value)) return null
   const parsed = Number(value)
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
-}
-
-function formatDateLabel(value: string | null | undefined): string {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return ''
-  const [year, month, day] = value.split('-')
-  return `${year}년 ${month}월 ${day}일`
-}
-
-function formatPeriod(start: string | null | undefined, end: string | null | undefined): string {
-  const startLabel = formatDateLabel(start)
-  const endLabel = formatDateLabel(end)
-  return startLabel && endLabel ? `${startLabel} ~ ${endLabel}` : startLabel || endLabel
 }
 
 function formatTime(value: string | null | undefined): string {
@@ -125,15 +119,6 @@ function applyLectureReportAssignmentContext(
   }
 }
 
-function reportTitle(
-  title: string | undefined,
-  assignment: LectureReportAssignment | undefined
-): string {
-  const programTitle =
-    title?.trim() || toDisplayEducationScheduleName(assignment?.scheduleName) || '강의'
-  return `JA KOREA 「${programTitle}」 강의보고서`
-}
-
 export function MypageLectureReportWritePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -143,7 +128,8 @@ export function MypageLectureReportWritePage() {
   }>()
   const [searchParams] = useSearchParams()
   const assignmentId = parsePositiveInteger(searchParams.get('assignmentId'))
-  const readOnly = searchParams.get('mode') === 'read' || searchParams.get('mode') === 'preview'
+  const legacyPreviewRoute =
+    searchParams.get('mode') === 'read' || searchParams.get('mode') === 'preview'
   const backPath = lectureReportBackPath(applicationId)
   const [loaded, setLoaded] = useState<LoadedReport | null>(null)
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
@@ -156,6 +142,8 @@ export function MypageLectureReportWritePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [submitCompleteOpen, setSubmitCompleteOpen] = useState(false)
+  const [settlementSessionId, setSettlementSessionId] = useState('')
   const programQuery = useProgramDetail(
     loaded?.state.programId == null ? null : String(loaded.state.programId),
     { fresh: true }
@@ -163,6 +151,12 @@ export function MypageLectureReportWritePage() {
   const program = programQuery.program
 
   useEffect(() => {
+    if (!legacyPreviewRoute || !assignmentId || !applicationId) return
+    navigate(lectureReportPreviewPath(applicationId, assignmentId), { replace: true })
+  }, [legacyPreviewRoute, assignmentId, applicationId, navigate])
+
+  useEffect(() => {
+    if (legacyPreviewRoute) return
     let alive = true
 
     async function load() {
@@ -195,20 +189,6 @@ export function MypageLectureReportWritePage() {
         throw new Error('강의보고서 일정 정보가 현재 강의와 일치하지 않습니다.')
       }
 
-      if (readOnly) {
-        if (state.reportStatus !== 'SUBMITTED') {
-          throw new Error('아직 제출된 강의보고서가 없습니다.')
-        }
-        const content = await getLectureReportContent(assignmentId)
-        return {
-          assignment,
-          state,
-          binding: null,
-          form: content.form,
-          content,
-        } satisfies LoadedReport
-      }
-
       if (state.reportStatus === 'SUBMITTED') {
         throw new Error('이미 제출된 강의보고서입니다. 확인하기를 이용해 주세요.')
       }
@@ -219,7 +199,7 @@ export function MypageLectureReportWritePage() {
             : '현재 강의보고서를 작성할 수 없습니다.'
         )
       }
-      if (state.bindingId == null) {
+      if (state.bindingId == null || state.templateVersionId == null) {
         throw new Error(LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE)
       }
 
@@ -230,7 +210,7 @@ export function MypageLectureReportWritePage() {
         binding.programScheduleId !== state.programScheduleId ||
         binding.programScheduleId !== assignment.scheduleId ||
         binding.bindingId !== state.bindingId ||
-        (state.templateVersionId != null && binding.templateVersionId !== state.templateVersionId)
+        binding.templateVersionId !== state.templateVersionId
       ) {
         throw new Error('강의보고서 양식 정보가 일정과 일치하지 않습니다.')
       }
@@ -280,24 +260,17 @@ export function MypageLectureReportWritePage() {
     return () => {
       alive = false
     }
-  }, [applicationId, applicationType, assignmentId, readOnly])
+  }, [applicationId, applicationType, assignmentId, legacyPreviewRoute])
 
   useEffect(() => {
-    if (readOnly || !program || !loaded) return
+    if (!program || !loaded) return
     setDraft(current =>
       current ? applyLectureReportAssignmentContext(current, loaded.assignment, program) : current
     )
-  }, [loaded, program, readOnly])
+  }, [loaded, program])
 
-  function onFileChange(paragraphId: string, files: File[], questionKey: string) {
-    if (files.length === 0) {
-      setFileObjectIdsByQuestion(previous => {
-        const next = { ...previous }
-        delete next[questionKey]
-        return next
-      })
-      return
-    }
+  function onFileAdd(paragraphId: string, files: File[], questionKey: string) {
+    if (files.length === 0) return
 
     setUploadingFile(true)
     setFileUploadError('')
@@ -305,21 +278,49 @@ export function MypageLectureReportWritePage() {
       files.map(file => uploadMemberPortalFile({ file, filePurpose: 'ASSIGNMENT_ATTACHMENT' }))
     )
       .then(fileObjectIds => {
-        setFileObjectIdsByQuestion(previous => ({ ...previous, [questionKey]: fileObjectIds }))
-      })
-      .catch(() => {
-        setFileObjectIdsByQuestion(previous => {
-          const next = { ...previous }
-          delete next[questionKey]
-          return next
-        })
+        setFileObjectIdsByQuestion(previous => ({
+          ...previous,
+          [questionKey]: [...(previous[questionKey] ?? []), ...fileObjectIds],
+        }))
         setSidecar(previous => ({
           ...previous,
-          fileNames: { ...previous.fileNames, [paragraphId]: [] },
+          fileNames: {
+            ...previous.fileNames,
+            [paragraphId]: [
+              ...(previous.fileNames[paragraphId] ?? []),
+              ...files.map(file => file.name),
+            ],
+          },
         }))
+      })
+      .catch(() => {
         setFileUploadError('파일 업로드에 실패했습니다. 파일을 다시 선택해 주세요.')
       })
       .finally(() => setUploadingFile(false))
+  }
+
+  function onFileRemove(paragraphId: string, index: number, questionKey: string) {
+    setSidecar(previous => {
+      const names = previous.fileNames[paragraphId] ?? []
+      return {
+        ...previous,
+        fileNames: {
+          ...previous.fileNames,
+          [paragraphId]: names.filter((_, i) => i !== index),
+        },
+      }
+    })
+    setFileObjectIdsByQuestion(previous => {
+      const ids = previous[questionKey] ?? []
+      const nextIds = ids.filter((_, i) => i !== index)
+      if (nextIds.length === 0) {
+        const next = { ...previous }
+        delete next[questionKey]
+        return next
+      }
+      return { ...previous, [questionKey]: nextIds }
+    })
+    setFileUploadError('')
   }
 
   function buildResponseInput() {
@@ -329,9 +330,8 @@ export function MypageLectureReportWritePage() {
       loaded.binding.programId !== loaded.state.programId ||
       loaded.binding.programScheduleId !== loaded.state.programScheduleId ||
       loaded.binding.programScheduleId !== loaded.assignment.scheduleId ||
-      (loaded.state.bindingId != null && loaded.state.bindingId !== loaded.binding.bindingId) ||
-      (loaded.state.templateVersionId != null &&
-        loaded.state.templateVersionId !== loaded.binding.templateVersionId) ||
+      loaded.state.bindingId !== loaded.binding.bindingId ||
+      loaded.state.templateVersionId !== loaded.binding.templateVersionId ||
       !isValidLectureReportBindingContext({
         ...loaded.binding,
         instructorApplicationId: loaded.assignment.instructorApplicationId,
@@ -414,17 +414,11 @@ export function MypageLectureReportWritePage() {
       ) {
         throw new Error('제출 요청 후 완료 상태를 확인하지 못했습니다.')
       }
-      const content = await getLectureReportContent(loaded.assignment.assignmentId)
-      if (!Array.isArray(content.files)) {
-        throw new Error('제출된 강의보고서 첨부파일 정보를 확인하지 못했습니다.')
-      }
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.lectureReportAssignments(String(loaded.state.programId)),
       })
-      navigate(lectureReportWritePath(applicationId, loaded.assignment.assignmentId, 'preview'), {
-        replace: true,
-        state: { lectureReportSubmitted: true, formResponseId: content.formResponseId },
-      })
+      setSettlementSessionId(String(loaded.assignment.scheduleId))
+      setSubmitCompleteOpen(true)
     } catch (cause) {
       setError(
         getLectureReportApiErrorMessage(
@@ -437,35 +431,48 @@ export function MypageLectureReportWritePage() {
     }
   }
 
-  const pageTitle = reportTitle(program?.title, loaded?.assignment)
-  const period = formatPeriod(program?.operatingPeriodStart, program?.operatingPeriodEnd)
+  const titleParagraph = draft?.paragraphs.find(
+    (paragraph): paragraph is TitleWithPeriodParagraph =>
+      paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period',
+  )
+  const lectureName = resolveLectureReportLectureName(program, loaded?.assignment)
+  const pageTitle = buildLectureReportPageTitle(lectureName)
+  const pageDescription = resolveEducationSurveySectionDescription(titleParagraph?.surveyDescription)
+  const period = titleParagraph?.showWritingPeriodOnForm
+    ? resolveEducationSurveyPeriodLabel(titleParagraph, loaded?.assignment.startAt)
+    : ''
   const formProgramTitle =
     program?.title || toDisplayEducationScheduleName(loaded?.assignment.scheduleName) || '강의'
 
-  if (readOnly) {
-    return (
-      <LectureReportPreviewOverlay
-        open
-        title={pageTitle}
-        draft={draft}
-        content={loaded?.content ?? null}
-        loading={loading}
-        error={error}
-        onClose={() => navigate(backPath)}
-      />
-    )
+  if (legacyPreviewRoute) {
+    return <PFLoadingSpinner centered label="강의보고서 확인 화면으로 이동 중" />
   }
 
   return (
     <PFFormPage
-      aria-label={readOnly ? '강의보고서 확인' : '강의보고서 작성'}
+      aria-label="강의보고서 작성"
       className={styles.page}
       back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
-      title={pageTitle}
-      description="JA Korea의 더 나은 변화를 위해 여러분의 의견을 들려주세요."
+      title={
+        <PFText as="h1" typo="hd-sm" color="black" className={styles.pageTitle}>
+          {pageTitle}
+        </PFText>
+      }
+      description={
+        pageDescription ? (
+          <PFText
+            as="p"
+            typo="bd-lg-rg"
+            color="neutral-cool-500"
+            className={styles.pageDescription}
+          >
+            {pageDescription}
+          </PFText>
+        ) : undefined
+      }
       titleAside={
         period ? (
-          <PFText as="p" typo="bd-lg-sb" color="primary-500" className={styles.period}>
+          <PFText as="p" typo="hl-lg" color="primary-700" className={styles.period}>
             {period}
           </PFText>
         ) : null
@@ -479,7 +486,7 @@ export function MypageLectureReportWritePage() {
       ) : null}
       {!loading && !error && loaded && draft ? (
         <>
-          {loaded.state.reportStatus === 'OVERDUE' && !readOnly ? (
+          {loaded.state.reportStatus === 'OVERDUE' ? (
             <PFText
               as="p"
               role="status"
@@ -514,10 +521,12 @@ export function MypageLectureReportWritePage() {
             }
             sidecar={sidecar}
             onSidecarChange={setSidecar}
-            onFileChange={onFileChange}
-            readOnly={readOnly}
+            onFileAdd={onFileAdd}
+            onFileRemove={onFileRemove}
+            uploadingFile={uploadingFile}
+            readOnly={false}
           />
-          {!readOnly ? (
+          {!submitCompleteOpen ? (
             <div className={styles.actions}>
               <PFButton
                 type="button"
@@ -532,6 +541,30 @@ export function MypageLectureReportWritePage() {
           ) : null}
         </>
       ) : null}
+
+      <LectureReportSubmitCompleteModal
+        open={submitCompleteOpen}
+        onLater={() => {
+          setSubmitCompleteOpen(false)
+          navigate(backPath, { replace: true })
+        }}
+        onWritePaymentStatement={() => {
+          const sessionId = settlementSessionId.trim()
+          setSubmitCompleteOpen(false)
+          if (!sessionId) {
+            navigate(backPath, { replace: true })
+            return
+          }
+          navigate(
+            buildSettlementWritePath({
+              applicationId,
+              sessionId,
+              area: 'lecture',
+              applicationType: 'INSTRUCTOR',
+            }),
+          )
+        }}
+      />
     </PFFormPage>
   )
 }

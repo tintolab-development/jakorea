@@ -814,6 +814,8 @@ export function MypageEducationDetailPage() {
           applicationType={routeApplicationType}
           applicationId={application.id}
           operationEndAt={program.operatingPeriodEnd}
+          programType={program.programType}
+          detailCase={program.detailCase}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
           }

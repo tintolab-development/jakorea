@@ -88,5 +88,24 @@ assert.match(
   getLectureReportApiErrorMessage({ response: { status: 404, data: { code: 'LECTURE_REPORT_FORM_BINDING_NOT_FOUND' } } }),
   /현재 활성화된 강의보고서 양식을 사용할 수 없습니다/,
 )
+assert.match(
+  getLectureReportApiErrorMessage({
+    response: {
+      status: 409,
+      data: {
+        success: false,
+        data: null,
+        error: { code: 'LECTURE_REPORT_CANONICAL_TEMPLATE_UNAVAILABLE' },
+      },
+    },
+  }),
+  /강의보고서 양식을 준비 중입니다\. 잠시 후 다시 시도해 주세요\./,
+)
+assert.match(
+  getLectureReportApiErrorMessage({
+    response: { status: 500, data: { success: false, data: null, error: { message: '서버 오류' } } },
+  }),
+  /요청 처리에 실패했습니다\. 잠시 후 다시 시도해 주세요\./,
+)
 
 console.log('lecture-report-contract.selfcheck: ok')
