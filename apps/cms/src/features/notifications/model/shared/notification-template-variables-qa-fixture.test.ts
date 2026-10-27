@@ -11,8 +11,7 @@ describe('QA fixture contract (template-variables enabled SSOT)', () => {
     expect(
       buildNotificationTemplateVariablesQuery({
         programId,
-        recipientTypeMode: 'participation',
-        typeValue: 'participant',
+        participantTypeValue: 'participant',
         toParticipantTypeApi: value =>
           value === 'participant' ? 'PARTICIPANT' : undefined,
         toMemberTypeApi: () => undefined,
