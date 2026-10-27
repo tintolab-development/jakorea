@@ -138,7 +138,11 @@ import { shouldShowInstitutionApplicationEducationFormatField } from '@/features
 import { isCombinedClassProgramEligible } from '@/features/program/general/lib/combined-class-edit-policy'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
-import { ensureTextbookNotUsedSelectOption } from '@/features/program/general/lib/participating-institution-textbook'
+import {
+  ensureTextbookNotUsedSelectOption,
+  formatParticipatingInstitutionKitQuantity,
+  resolveAssignedBooksPerKit,
+} from '@/features/program/general/lib/participating-institution-textbook'
 import { buildCombinedClassLeadTeacherCandidatesFromParticipating } from '@/features/program/general/lib/combined-class-lead-teacher'
 import { retainMatchingCombinedClassPartnerIds } from '@/features/program/general/lib/combined-class-education-dates'
 import { COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT } from '@/features/program/general/lib/combined-class-copy'
@@ -192,6 +196,8 @@ import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/g
 import { mapStoredPeriodRequestedSchedulesToHopeSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { organizationRequestedSchedulesQueryOptions } from '@/features/program/general/api/organization-requested-schedules-query'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { fetchProgramMaterials } from '@/features/program/general/api/program-materials-api-client'
+import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import {
   mapOrganizationScheduleAssignmentSlotsToAssignedSessions,
   organizationScheduleAssignmentsQueryKey,
@@ -581,6 +587,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     ...(adminCommentQuery.data ? { adminComment: remoteAdminComment } : {}),
     ...savedBasicPatches[detail.id],
   }
+  const programMaterialsQuery = useQuery({
+    queryKey: generalProgramQueryKeys.materials(programId),
+    queryFn: () => fetchProgramMaterials(programId),
+    enabled: shouldUseGeneralProgramsRemoteApi() && Boolean(programId),
+    staleTime: 30_000,
+    retry: false,
+  })
   const participantSessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
   const availableActions = mergedDetail.availableActions ?? row.availableActions
@@ -2113,10 +2126,21 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     )
 
   const textbookNameView = textbookDisplay.textbookName?.trim() || '-'
-  const kitsAndQty =
-    hasSelectedTextbook && textbookDisplay.textbookKits != null && textbookDisplay.textbookKits > 0
-      ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
-      : '-'
+  const assignedBooksPerKit = resolveAssignedBooksPerKit({
+    items: programMaterialsQuery.data?.items ?? [],
+    textbookId: textbookDisplay.textbookId ?? mergedDetail.textbookId,
+    textbookName: textbookDisplay.textbookName ?? mergedDetail.textbookName,
+  })
+  const kitsAndQty = hasSelectedTextbook
+    ? formatParticipatingInstitutionKitQuantity(
+        textbookDisplay.textbookKits,
+        textbookDisplay.textbookQuantity,
+        {
+          studentCount: mergedDetail.studentCount,
+          booksPerKit: assignedBooksPerKit,
+        }
+      )
+    : '-'
 
   const textbookSelectOptions = ensureTextbookNotUsedSelectOption(textbookOptions)
   const textbookSelectEditCell =

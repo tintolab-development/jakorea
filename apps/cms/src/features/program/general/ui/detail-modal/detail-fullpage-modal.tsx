@@ -172,6 +172,7 @@ import {
   normalizeGeneralRecruitTab,
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
+import { previewAudienceFromGeneralRecruitTab } from '@/features/program/general/lib/platform-preview-payload'
 import {
   normalizeGeneralApplicationTab,
   resolveGeneralApplicationEditorVariant,
@@ -2598,7 +2599,11 @@ export function GeneralProgramDetailFullPageModal({
           onClose={handleCloseRecruitmentPreview}
           program={displayProgram}
           sponsorName={sponsorName}
-          audience={recruitmentPreviewAudience ?? 'institutions'}
+          audience={
+            recruitmentPreviewAudience
+              ? previewAudienceFromGeneralRecruitTab(recruitmentPreviewAudience, displayProgram)
+              : 'institutions'
+          }
         />
       ) : null}
       <ProgramDetailSponsorDetailOverlay />

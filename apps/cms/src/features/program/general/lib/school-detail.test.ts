@@ -61,6 +61,21 @@ describe('mergeOrganizationApplicationDetailOntoSchoolDetail', () => {
     expect(merged.teacherMobile).toBeUndefined()
   })
 
+  it('nested textbook.kits·quantity와 문자열 수량을 읽는다', () => {
+    const nested = mergeOrganizationApplicationDetailOntoSchoolDetail(baseDetail, {
+      textbook: { kits: '3', quantity: '72' },
+    } as unknown as import('@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse').OrganizationApplicationDetailResponse)
+    expect(nested.textbookKits).toBe(3)
+    expect(nested.textbookQuantity).toBe(72)
+
+    const topLevel = mergeOrganizationApplicationDetailOntoSchoolDetail(baseDetail, {
+      textbookKits: 2,
+      textbookQuantity: 48,
+    })
+    expect(topLevel.textbookKits).toBe(2)
+    expect(topLevel.textbookQuantity).toBe(48)
+  })
+
   it('teacherTel은 Tel, teacherPhone은 휴대폰으로 나눈다', () => {
     const merged = mergeOrganizationApplicationDetailOntoSchoolDetail(baseDetail, {
       teacherName: '김교사',

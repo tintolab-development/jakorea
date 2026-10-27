@@ -1,5 +1,5 @@
 import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
-import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
+import type { ProgramPreviewAudience } from '@/features/program/shared/lib/platform-preview/preview-audience'
 
 /** 일반 프로그램 전용 — UJAT·1사1교·Gemini 템플릿 제외 */
 export const GENERAL_PROGRAM_REGISTRATION_STEP_KEYS = [
@@ -290,12 +290,13 @@ export function isParticipantRegistrationStep(
   return key !== 'program'
 }
 
-/** 등록 위저드 모집 탭 → 상세와 동일한 사용자 플랫폼 미리보기 audience */
+/** 등록 위저드 모집 탭 → 사용자 플랫폼 미리보기 audience (참여기관·참여자·강사·봉사자 분리) */
 export function recruitmentPreviewAudienceFromRegistrationStep(
   step: GeneralProgramRegistrationStepKey
-): GeneralRecruitTabKey {
+): ProgramPreviewAudience {
   if (step === 'recruit-instructor') return 'instructors'
   if (step === 'recruit-volunteer') return 'volunteers'
+  if (step === 'recruit-participant-individual') return 'individuals'
   return 'institutions'
 }
 

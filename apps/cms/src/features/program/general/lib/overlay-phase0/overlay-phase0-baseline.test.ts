@@ -7,15 +7,6 @@ vi.mock('@/features/program/shared/api/program-thumbnail', () => ({
 vi.mock('@/features/program/shared/api/program-attachments', () => ({
   putProgramAttachments: vi.fn().mockResolvedValue([]),
 }))
-vi.mock('@/features/program/shared/api/program-recruitment-rows', async importOriginal => {
-  const actual =
-    await importOriginal<typeof import('@/features/program/shared/api/program-recruitment-rows')>()
-  return {
-    ...actual,
-    putProgramRecruitmentThumbnail: vi.fn().mockResolvedValue(undefined),
-    putProgramRecruitmentAttachments: vi.fn().mockResolvedValue([]),
-  }
-})
 vi.mock('@/shared/lib/admin-file-upload', async importOriginal => {
   const actual = await importOriginal<typeof import('@/shared/lib/admin-file-upload')>()
   return {
@@ -50,17 +41,12 @@ import {
   setGeneralRecruitOverlayScope,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import {
-  bindGeneralRecruitDetailMediaToRows,
   bindRecruitDetailMediaAfterProgramCreate,
   isEphemeralThumbPreviewUrl,
   readRecruitDetailMediaFromOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { putProgramAttachments } from '@/features/program/shared/api/program-attachments'
 import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
-import {
-  putProgramRecruitmentAttachments,
-  putProgramRecruitmentThumbnail,
-} from '@/features/program/shared/api/program-recruitment-rows'
 import { EDITOR_EXTRAS_CURRICULUM_SINGLE, EDITOR_EXTRAS_SCHEDULE_SINGLE } from './editor-extras-fixtures'
 import { OVERLAY_PHASE0_KNOWN_DIFFS } from './overlay-phase0-known-diff'
 
@@ -390,21 +376,21 @@ describe('8. 미디어 업로드 전후', () => {
     expect(putProgramAttachments).toHaveBeenCalledWith(186234, [101])
   })
 
-  it('일반 프로그램은 모집 행이 있으면 행 단위 PUT을 쓴다', async () => {
-    vi.mocked(putProgramRecruitmentThumbnail).mockClear()
-    vi.mocked(putProgramRecruitmentAttachments).mockClear()
-    await bindGeneralRecruitDetailMediaToRows(
-      {
-        id: '186234',
-        programRecruitments: [{ id: 9, recruitmentType: 'PARTICIPANT' }],
-      },
-      {
+  it('일반 신규 등록은 모집 행 미디어를 create recruitments[]에 싣고 후속 PUT을 쓰지 않는다', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...baseProgram(),
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      registrationOverlay: {
         'recruit.detailInfo.thumbFileObjectId': 42,
         'recruit.detailInfo.attachmentFileObjectIds': [8],
-      }
-    )
-    expect(putProgramRecruitmentThumbnail).toHaveBeenCalledWith(186234, 9, 42)
-    expect(putProgramRecruitmentAttachments).toHaveBeenCalledWith(186234, 9, [8])
+      },
+    })
+    expect(request.recruitments?.[0]).toMatchObject({
+      recruitmentType: 'PARTICIPANT',
+      thumbnailFileObjectId: 42,
+      attachmentFileObjectIds: [8],
+    })
   })
 })
 

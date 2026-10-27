@@ -109,6 +109,36 @@
   margin-left: 8px;
 }
 
+/*
+ * 배정된 기관 목록 — 역할 StatusDropdown.
+ * `.participating-institutions-section__table-wrap` 의 overflow-x:auto 는
+ * overflow-y 도 auto 로 계산되어 열림 패널이 표 밖으로 새고 다음 섹션 제목을 가림.
+ * 가로 스크롤은 Ant Table scroll.x 가 담당한다.
+ */
+.participating-instructor-fullpage-view
+  .school-detail-fullpage-view__instructor-section:not(
+    .school-detail-fullpage-view__instructor-section--waiting
+  )
+  .participating-institutions-section__table-wrap {
+  overflow: clip;
+}
+
+.participating-instructor-fullpage-view
+  .school-detail-fullpage-view__instructor-section:not(
+    .school-detail-fullpage-view__instructor-section--waiting
+  )
+  .participating-institutions-section__table-wrap
+  .cms-data-table {
+  overflow: clip;
+}
+
+.participating-instructor-fullpage-view
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status--tag-100)
+  > td.status-dropdown-cell__cell-status--tag-100 {
+  overflow: clip;
+}
+
 /* 배정 대기 기관 목록 — 테이블 영역 개별 스크롤, 최대 높이 365px */
 .participating-instructor-fullpage-view
   .participating-instructor-fullpage-view__waiting-table-scroll:has(.cms-data-table) {

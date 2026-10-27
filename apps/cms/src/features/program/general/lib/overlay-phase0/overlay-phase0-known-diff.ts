@@ -122,10 +122,10 @@ export const OVERLAY_PHASE0_KNOWN_DIFFS: readonly OverlayPhase0KnownDiff[] = [
   {
     id: 'media-canonical-file-object-id',
     current:
-      '미리보기 blob URL은 persist/create payload에 안 넣는다. canonical은 thumbFileObjectId / attachmentFileObjectIds → PUT thumbnail·attachments',
+      '미리보기 blob URL은 persist/create payload에 안 넣는다. canonical은 thumbFileObjectId / attachmentFileObjectIds → 신규 등록 recruitments[] 미디어 필드, 기존 프로그램 수정 PUT',
     expectedIfChanged: '동일',
     change: 'keep_current',
-    evidence: 'recruit-detail-info-media.ts bindRecruitDetailMediaAfterProgramCreate',
-    verifyTest: 'blob은 keyVisualImage에서 제외, objectId PUT',
+    evidence: 'recruit-detail-info-media.ts recruitmentCreateMediaFieldsFromOverlay',
+    verifyTest: 'blob은 keyVisualImage에서 제외, create recruitments[]에 objectId',
   },
 ]

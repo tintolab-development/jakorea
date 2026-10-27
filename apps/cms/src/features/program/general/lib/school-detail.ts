@@ -40,6 +40,33 @@ import {
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
 
+function readFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+  return undefined
+}
+
+/** 기관 상세의 키트/권수. 최상위 필드와 nested textbook.kits|quantity를 모두 읽는다. */
+export function readOrganizationTextbookKitFields(
+  dto: OrganizationApplicationDetailResponse
+): { textbookKits?: number; textbookQuantity?: number } {
+  const nested = (
+    dto as OrganizationApplicationDetailResponse & {
+      textbook?: { kits?: unknown; quantity?: unknown }
+    }
+  ).textbook
+  const textbookKits = readFiniteNumber(dto.textbookKits) ?? readFiniteNumber(nested?.kits)
+  const textbookQuantity =
+    readFiniteNumber(dto.textbookQuantity) ?? readFiniteNumber(nested?.quantity)
+  return {
+    ...(textbookKits != null ? { textbookKits } : {}),
+    ...(textbookQuantity != null ? { textbookQuantity } : {}),
+  }
+}
+
 /**
  * 참여 강사 행 → 학교 상세 모달용 강사 행 (모달·테이블 연동 시 재사용)
  */
@@ -332,8 +359,7 @@ export function mergeOrganizationApplicationDetailOntoSchoolDetail(
     textbookId: dto.textbookId != null ? String(dto.textbookId) : undefined,
     textbookName,
     textbookGrade,
-    textbookKits: dto.textbookKits ?? undefined,
-    textbookQuantity: dto.textbookQuantity ?? undefined,
+    ...readOrganizationTextbookKitFields(dto),
     waitingRoomAvailable: dto.waitingRoomAvailable ?? undefined,
     participationAppliedAt: dto.submittedAt ?? undefined,
     gradeBlocks: dto.gradeBlocks ?? undefined,
