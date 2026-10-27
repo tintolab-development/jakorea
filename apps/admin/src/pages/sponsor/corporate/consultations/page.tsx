@@ -284,10 +284,26 @@ export function CorporateConsultationsPage() {
     setSelectedRowKeys([])
   }, [applySearch])
 
+  const replaceSearchParams = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(location.search)
+      mutate(params)
+      const next = params.toString()
+      const current = location.search.startsWith('?') ? location.search.slice(1) : location.search
+      if (next === current) return
+      navigate({ search: next ? `?${next}` : '' }, { replace: true })
+    },
+    [location.search, navigate]
+  )
+
   const openDetail = useCallback(
     (row: CorporateConsultation) => {
       setDetailRow(row)
       setDetailOpen(true)
+      replaceSearchParams(params => {
+        params.set('applicationId', row.id)
+        params.delete('consultationId')
+      })
       // 상세 진입 시 원문 연락처 조회 + 개인정보 감사 로그
       void getCorporateConsultationService(row.id, DEFAULT_CONFIRM_ACTOR)
         .then(item => {
@@ -297,25 +313,25 @@ export function CorporateConsultationsPage() {
           /* 목록 행 데이터로 표시 유지 */
         })
     },
-    []
+    [replaceSearchParams]
   )
 
   const closeDetail = useCallback(() => {
     setDetailOpen(false)
     setDetailRow(null)
-    const params = new URLSearchParams(location.search)
-    params.delete('consultationId')
-    navigate(
-      { search: params.toString() ? `?${params.toString()}` : '' },
-      { replace: true },
-    )
-  }, [location.search, navigate])
+    replaceSearchParams(params => {
+      params.delete('applicationId')
+      params.delete('consultationId')
+    })
+  }, [replaceSearchParams])
 
   useEffect(() => {
-    const consultationId = new URLSearchParams(location.search).get('consultationId')?.trim()
-    if (!consultationId || detailOpen || listQuery.isLoading || listQuery.isFetching) return
+    const params = new URLSearchParams(location.search)
+    const deepLinkId =
+      params.get('applicationId')?.trim() || params.get('consultationId')?.trim()
+    if (!deepLinkId || detailOpen || listQuery.isLoading || listQuery.isFetching) return
 
-    const row = rows.find(item => item.id === consultationId)
+    const row = rows.find(item => item.id === deepLinkId)
     if (row) {
       let cancelled = false
       queueMicrotask(() => {
@@ -327,11 +343,15 @@ export function CorporateConsultationsPage() {
     }
 
     let cancelled = false
-    void getCorporateConsultationService(consultationId, DEFAULT_CONFIRM_ACTOR)
+    void getCorporateConsultationService(deepLinkId, DEFAULT_CONFIRM_ACTOR)
       .then(item => {
         if (cancelled || !item) return
         setDetailRow(item)
         setDetailOpen(true)
+        replaceSearchParams(nextParams => {
+          nextParams.set('applicationId', item.id)
+          nextParams.delete('consultationId')
+        })
       })
       .catch(() => {
         /* 목록에 없는 상세 ID는 기존 목록 화면을 유지 */
@@ -340,7 +360,15 @@ export function CorporateConsultationsPage() {
     return () => {
       cancelled = true
     }
-  }, [detailOpen, listQuery.isFetching, listQuery.isLoading, location.search, openDetail, rows])
+  }, [
+    detailOpen,
+    listQuery.isFetching,
+    listQuery.isLoading,
+    location.search,
+    openDetail,
+    replaceSearchParams,
+    rows,
+  ])
 
   const refreshDetailFromList = useCallback(
     async (id: string) => {
