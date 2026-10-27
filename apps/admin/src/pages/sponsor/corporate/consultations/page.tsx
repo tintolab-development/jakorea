@@ -91,6 +91,22 @@ const COL = {
   confirmed: 160,
 } as const
 
+/**
+ * 상담 목록의 최소 테이블 폭.
+ * 기업명 열은 이 폭을 기준으로 화면의 잔여 폭을 사용하고,
+ * 나머지 열은 신청 확인 전후에도 같은 폭을 유지한다.
+ */
+const TABLE_MIN_WIDTH =
+  COL.checkbox +
+  COL.no +
+  COL.status +
+  COL.company +
+  COL.contact +
+  COL.department +
+  COL.phone +
+  COL.applied +
+  COL.confirmed
+
 function parseStatus(raw: string | null): StatusPending {
   if (raw === 'pending' || raw === 'confirmed') return raw
   return ''
@@ -696,7 +712,7 @@ export function CorporateConsultationsPage() {
               },
               style: { cursor: 'pointer' },
             })}
-            scroll={{ x: true }}
+            scroll={{ x: TABLE_MIN_WIDTH }}
           />
         </div>
       </div>

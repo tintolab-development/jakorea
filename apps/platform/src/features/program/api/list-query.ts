@@ -104,6 +104,7 @@ export function toPortalProgramListQuery(
   return {
     keyword: omitAll(params.q),
     portalTab,
+    applicationType: params.applicationType,
     programType,
     recruitmentStatus,
     recruitmentTarget: recruitmentTargetFilter,

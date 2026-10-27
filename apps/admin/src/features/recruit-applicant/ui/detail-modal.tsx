@@ -16,6 +16,7 @@ import type {
 } from '@/entities/recruit-applicant/model/types'
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
 import { downloadRecruitApplicantAttachmentService } from '@/features/recruit-applicant/api/service'
+import { PublicApplicationNotificationStatusPanel } from '@/features/public-application-notification/ui/status-panel'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 
@@ -81,12 +82,7 @@ function FileIcon({ className }: { className?: string }) {
         strokeWidth="1.4"
         strokeLinejoin="round"
       />
-      <path
-        d="M11.5 2.5V5.8H14.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
+      <path d="M11.5 2.5V5.8H14.5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -225,6 +221,11 @@ export function RecruitApplicantDetailModal({
           <p className="recruit-applicant-detail-modal__loading">신청 정보를 불러오는 중입니다.</p>
         ) : data ? (
           <div className="recruit-applicant-detail-modal__scroll">
+            <PublicApplicationNotificationStatusPanel
+              open={open}
+              notificationType="CAREER_TALENT_APPLICATION"
+              aggregateId={data.id}
+            />
             <section
               className="recruit-applicant-detail-modal__section"
               aria-labelledby="recruit-applicant-basic-heading"

@@ -86,6 +86,8 @@ export type PortalProgramListFilterValue = string | readonly string[]
 export type PortalProgramListQuery = {
   keyword?: string
   portalTab?: PortalProgramListFilterValue
+  /** 모집 유형 직접 조회. 전체 목록의 모집 행이 필요한 경우 서버 계약과 함께 사용한다. */
+  applicationType?: PortalProgramListFilterValue
   programType?: PortalProgramListFilterValue
   recruitmentStatus?: PortalProgramListFilterValue
   /** 모집 대상 필터. 같은 필터의 여러 값은 OR, 다른 필터와는 AND로 적용한다. */

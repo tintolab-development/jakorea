@@ -22,6 +22,7 @@ import {
   mailAttachmentRejectMessage,
   rejectMailAttachments,
 } from '@/features/notifications/model/mail-template/attachments'
+import { ensureMailTemplateLayoutMarker } from '@/features/notifications/model/mail-template/talent-donation-layout'
 import type { MailTemplateAttachment } from '@/features/notifications/model/mail-template/types'
 
 export const MAIL_COMPOSE_SUBJECT_MAX_LENGTH = 1000
@@ -57,6 +58,11 @@ export function useMailCompose(
   const newFilesRef = useRef<File[]>([])
   const existingAttachmentsRef = useRef<MailTemplateAttachment[]>([])
   const removedAttachmentIdsRef = useRef<number[]>([])
+  /**
+   * 일반 TipTap 직렬화는 mail-client용 inline style을 모두 보존하지 않을 수 있다.
+   * 원문이 존재하는 동안에는 이를 SSOT로 사용하고, 본문을 실제로 편집하면 editor HTML로 전환한다.
+   */
+  const rawBodyHtmlRef = useRef<string | null>(initial.bodyHtml.trim() ? initial.bodyHtml : null)
   const initialRef = useRef(initial)
   initialRef.current = initial
 
@@ -111,10 +117,22 @@ export function useMailCompose(
     setNewFiles([])
     setRemovedAttachmentIds([])
     existingAttachmentsRef.current = [...(next.existingAttachments ?? [])]
+    rawBodyHtmlRef.current = next.bodyHtml.trim() ? next.bodyHtml : null
     lastTargetRef.current = 'body'
     subjectRangeRef.current = { start: 0, end: 0 }
     bodyRangeRef.current = null
   }, [open, resetKey])
+
+  useEffect(() => {
+    if (!editor) return
+    const clearRawBodyAfterEdit = () => {
+      rawBodyHtmlRef.current = null
+    }
+    editor.on('update', clearRawBodyAfterEdit)
+    return () => {
+      editor.off('update', clearRawBodyAfterEdit)
+    }
+  }, [editor])
 
   useEffect(() => {
     if (!editor) return
@@ -220,10 +238,12 @@ export function useMailCompose(
   }, [])
 
   const getBodyHtml = useCallback(() => {
+    if (rawBodyHtmlRef.current != null) return rawBodyHtmlRef.current
     const bodyHtml = apiRef.current?.getHTML() ?? api?.getHTML() ?? ''
-    const plainText = editor?.getText() ?? ''
-    return isMailEditorEmpty(bodyHtml, plainText) ? '' : bodyHtml
-  }, [api, editor])
+    const plainText = apiRef.current?.getText() ?? api?.getText() ?? ''
+    if (isMailEditorEmpty(bodyHtml, plainText)) return ''
+    return ensureMailTemplateLayoutMarker(templateId, bodyHtml)
+  }, [api, templateId])
 
   const getSubject = useCallback(() => subjectRef.current, [])
 

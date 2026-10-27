@@ -108,11 +108,15 @@ export function readDownloadUrlFromJsonBlob(blob: Blob): Promise<string | null> 
   })
 }
 
-export async function fetchBlobOnce(url: string): Promise<Blob> {
+export async function fetchBlobOnce(
+  url: string,
+  requiredHeaders?: Record<string, string>,
+): Promise<Blob> {
   const proxied = toProxiedApiPath(url) ?? toSameOriginApiPath(url, getApiBaseUrl())
   if (proxied) {
     const { data } = await axiosClient.get<Blob>(proxied, {
       responseType: 'blob',
+      headers: requiredHeaders,
       skipAuth: true,
       skipRefresh: true,
     } as SkipAuthConfig)
@@ -121,6 +125,7 @@ export async function fetchBlobOnce(url: string): Promise<Blob> {
 
   const response = await fetch(url, {
     method: 'GET',
+    headers: requiredHeaders,
     credentials: 'omit',
     mode: 'cors',
   })
@@ -130,11 +135,14 @@ export async function fetchBlobOnce(url: string): Promise<Blob> {
   return response.blob()
 }
 
-async function fetchAttachmentBlob(url: string): Promise<Blob> {
-  const first = await fetchBlobOnce(url)
+async function fetchAttachmentBlob(
+  url: string,
+  requiredHeaders?: Record<string, string>,
+): Promise<Blob> {
+  const first = await fetchBlobOnce(url, requiredHeaders)
   const signedUrl = await readDownloadUrlFromJsonBlob(first)
   if (!signedUrl) return first
-  return fetchBlobOnce(signedUrl)
+  return fetchBlobOnce(signedUrl, requiredHeaders)
 }
 
 /**
@@ -142,7 +150,11 @@ async function fetchAttachmentBlob(url: string): Promise<Blob> {
  * 없거나 `#`이면 확장자에 맞는 MIME의 빈 Blob을 저장한다.
  * 실패해도 페이지를 이동하거나 새 창을 열지 않는다.
  */
-export async function downloadAttachment(fileName: string, url?: string): Promise<void> {
+export async function downloadAttachment(
+  fileName: string,
+  url?: string,
+  requiredHeaders?: Record<string, string>,
+): Promise<void> {
   const name = fileName.trim() || 'attachment'
   if (typeof document === 'undefined') return
 
@@ -151,7 +163,7 @@ export async function downloadAttachment(fileName: string, url?: string): Promis
       saveBlob(name, new Blob([], { type: getEmptyAttachmentMimeType(name) }))
       return
     }
-    const blob = await fetchAttachmentBlob(url!.trim())
+    const blob = await fetchAttachmentBlob(url!.trim(), requiredHeaders)
     // JSON 메타만 남은 경우(서명 URL 해석 실패)는 빈 파일로 속이지 않는다.
     if (/\bjson\b/i.test(blob.type)) {
       throw new Error('첨부파일 다운로드에 실패했습니다.')

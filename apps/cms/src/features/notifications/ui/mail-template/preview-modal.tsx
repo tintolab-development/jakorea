@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { RichTextViewer } from '@/shared/rich-text'
+import { MAIL_VARIABLE_EXTENSIONS } from '@/features/notifications/model/mail-template/variable-node'
 import {
   applyMailPreviewBody,
   applyMailPreviewTokens,
@@ -48,6 +49,7 @@ export function PreviewModal({
   const previewHtml = useMemo(() => applyMailPreviewBody(bodyHtml), [bodyHtml])
   const sender = formatMailPreviewPerson(senderName, senderEmail)
   const attachmentLines = attachments.map(formatMailPreviewAttachment).filter(Boolean)
+  const hasRecipient = recipient != null
   const showListActions = onEdit != null || onDelete != null
 
   return (
@@ -89,10 +91,12 @@ export function PreviewModal({
               <dt>보낸 사람</dt>
               <dd>{sender}</dd>
             </div>
-            <div className="mail-template-preview__meta-row">
-              <dt>받는 사람</dt>
-              <dd>{formatMailPreviewRecipient(recipient)}</dd>
-            </div>
+            {hasRecipient ? (
+              <div className="mail-template-preview__meta-row">
+                <dt>받는 사람</dt>
+                <dd>{formatMailPreviewRecipient(recipient)}</dd>
+              </div>
+            ) : null}
             <div className="mail-template-preview__meta-row">
               <dt>첨부파일</dt>
               <dd>
@@ -111,12 +115,33 @@ export function PreviewModal({
             </div>
           </dl>
           <hr className="mail-template-preview__divider" />
-          <RichTextViewer
-            className="mail-template-preview__body"
-            content={previewHtml}
-            contentFormat="html"
-            maxHeight="none"
-          />
+          <div
+            className="mail-template-preview__body-shell"
+            onClickCapture={event => {
+              if (event.target instanceof Element && event.target.closest('a')) {
+                event.preventDefault()
+                event.stopPropagation()
+              }
+            }}
+            onKeyDownCapture={event => {
+              if (
+                (event.key === 'Enter' || event.key === ' ') &&
+                event.target instanceof Element &&
+                event.target.closest('a')
+              ) {
+                event.preventDefault()
+                event.stopPropagation()
+              }
+            }}
+          >
+            <RichTextViewer
+              className="mail-template-preview__body mail-template-rich-body"
+              content={previewHtml}
+              contentFormat="html"
+              extraExtensions={MAIL_VARIABLE_EXTENSIONS}
+              maxHeight="none"
+            />
+          </div>
         </div>
       </div>
     </ContentModal>

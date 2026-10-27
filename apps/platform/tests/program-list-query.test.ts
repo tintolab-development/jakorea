@@ -89,6 +89,25 @@ describe('portal program list contract', () => {
     expect(requestParams.toString()).not.toContain('educationTarget%5B%5D')
   })
 
+  it('sends a direct volunteer application type filter without changing the audience tab', async () => {
+    const query = toPortalProgramListQuery(
+      {
+        ...DEFAULT_PROGRAMS_LIST_PARAMS,
+        q: 'DEV-UJAT-REG05-2027-샘플01',
+        applicationType: 'VOLUNTEER',
+      },
+      10,
+    )
+    get.mockResolvedValueOnce({ data: { items: [], totalElements: 0, totalPages: 0 } })
+
+    await fetchPortalPrograms(query)
+
+    const requestParams = get.mock.calls[0]?.[1]?.params as URLSearchParams
+    expect(requestParams.get('keyword')).toBe('DEV-UJAT-REG05-2027-샘플01')
+    expect(requestParams.get('applicationType')).toBe('VOLUNTEER')
+    expect(requestParams.get('portalTab')).toBeNull()
+  })
+
   it('keeps single-value requests compatible and normalizes query-key order', () => {
     const single = toPortalProgramListQuery(
       {
@@ -103,6 +122,7 @@ describe('portal program list contract', () => {
     const first = platformQueryKeys.program.list({
       keyword: '금융',
       portalTab: [],
+      applicationType: [],
       programType: [],
       recruitmentStatus: [],
       recruitmentTarget: normalizePortalProgramFilterValues(['high', 'middle']),
@@ -117,6 +137,7 @@ describe('portal program list contract', () => {
     const second = platformQueryKeys.program.list({
       keyword: '금융',
       portalTab: [],
+      applicationType: [],
       programType: [],
       recruitmentStatus: [],
       recruitmentTarget: normalizePortalProgramFilterValues(['middle', 'high']),
@@ -133,14 +154,15 @@ describe('portal program list contract', () => {
 
   it('round-trips date filters and page state through the URL', () => {
     const params = readProgramsListParams(
-      '?q=%EA%B8%88%EC%9C%B5&operatingPeriod=2026-09-01~2026-12-31&page=3&educationTarget=university',
+      '?q=%EA%B8%88%EC%9C%B5&applicationType=volunteer&operatingPeriod=2026-09-01~2026-12-31&page=3&educationTarget=university',
     )
 
+    expect(params.applicationType).toBe('VOLUNTEER')
     expect(params.operatingPeriod).toBe('2026-09-01~2026-12-31')
     expect(params.page).toBe(3)
     expect(params.educationTarget).toBe('university')
     expect(buildProgramsListPath(params)).toBe(
-      '/programs?q=%EA%B8%88%EC%9C%B5&operatingPeriod=2026-09-01%7E2026-12-31&educationTarget=university&page=3',
+      '/programs?q=%EA%B8%88%EC%9C%B5&applicationType=VOLUNTEER&operatingPeriod=2026-09-01%7E2026-12-31&educationTarget=university&page=3',
     )
   })
 

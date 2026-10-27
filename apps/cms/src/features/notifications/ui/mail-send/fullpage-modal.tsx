@@ -18,6 +18,7 @@ import type {
   MailPreviewAttachment,
   MailPreviewRecipient,
 } from '@/features/notifications/model/mail-template/preview'
+import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/talent-donation-layout'
 import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import {
@@ -491,7 +492,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const handlePreview = () => {
     const draft = form.getDraft()
     setPreviewSubject(draft.subject)
-    setPreviewBodyHtml(draft.bodyHtml)
+    setPreviewBodyHtml(resolveMailTemplateBodyHtml(form.templateId, draft.bodyHtml))
     setPreviewSenderName(draft.senderName)
     setPreviewSenderEmail(draft.senderEmail)
     setPreviewAttachments(form.getPreviewAttachments())
@@ -663,7 +664,10 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                                 open={open}
                                 zIndex={zIndex}
                                 subject={template?.subject ?? ''}
-                                bodyHtml={template?.bodyHtml ?? ''}
+                                bodyHtml={resolveMailTemplateBodyHtml(
+                                  template?.id,
+                                  template?.bodyHtml ?? ''
+                                )}
                                 senderName={template?.senderName}
                                 senderEmail={template?.senderEmail}
                                 attachments={template?.attachmentFileNames.map(name => ({

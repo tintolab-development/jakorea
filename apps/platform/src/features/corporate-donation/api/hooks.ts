@@ -18,6 +18,7 @@ import {
   createPublicCorporateConsultation,
   fetchPublicCorporateSponsorship,
   fetchPublicCorporateSponsors,
+  uploadPublicCorporateConsultationAttachment,
 } from './client'
 import type { PublicCorporateConsultationCreateRequest } from './types'
 
@@ -110,8 +111,24 @@ export function usePublicCorporatePartnerRows(): {
 
 export function useCreatePublicCorporateConsultation() {
   return useMutation({
-    mutationFn: (body: PublicCorporateConsultationCreateRequest) =>
-      createPublicCorporateConsultation(body),
+    mutationFn: async (body: PublicCorporateConsultationCreateRequest) => {
+      if (!isHomepageApiConfigured()) {
+        throw new Error('문의 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+      }
+      return createPublicCorporateConsultation(body)
+    },
+    retry: false,
+  })
+}
+
+export function useUploadPublicCorporateConsultationAttachment() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      if (!isHomepageApiConfigured()) {
+        throw new Error('파일 업로드 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+      }
+      return uploadPublicCorporateConsultationAttachment(file)
+    },
     retry: false,
   })
 }
