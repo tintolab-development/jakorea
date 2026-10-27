@@ -142,6 +142,24 @@ describe('validateAlimtalkSendRequest', () => {
     expect(result.ok).toBe(false)
   })
 
+  it('FE-VAR-15 예약 발송은 미래 시각이 있으면 통과한다', () => {
+    const result = validateAlimtalkSendRequest(
+      input({
+        sendTiming: 'scheduled',
+        scheduledAt: '2099-01-01T00:00:00.000Z',
+        nowMs: Date.parse('2026-09-09T00:00:00.000Z'),
+      })
+    )
+    expect(result.ok).toBe(true)
+  })
+
+  it('FE-VAR-13 카탈로그 pending이면 발송하지 않는다', () => {
+    const result = validateAlimtalkSendRequest(input({ catalogState: 'pending', catalog: null }))
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.alert).toContain('변수 목록을 확인한 뒤 발송할 수 있습니다.')
+  })
+
   it('제외 대상의 입력값이 바뀌면 이전 확인 지문으로 발송할 수 없다', () => {
     const withGap = [
       recipient('1', { '방문 안내': '오전' }),

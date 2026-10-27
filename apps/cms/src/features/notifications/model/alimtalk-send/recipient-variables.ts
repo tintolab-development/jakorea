@@ -44,7 +44,6 @@ export const NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS = new Set([
   'UJAT 프로그램 기관 일정 확인 현황',
   'UJAT 프로그램 기관 일정 수정사항',
   'UJAT 봉사자 출석 현황',
-  '프로그램 수료 현황',
   '피드백 내용',
 ])
 
@@ -56,8 +55,6 @@ export const NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS = new Set([
   '소속명',
   '담당교사명',
 ])
-
-const PROGRAM_CONTEXT_KEYS = new Set(['프로그램명', '소속명', '담당교사명'])
 
 export type AlimtalkVariableCatalogEntry = {
   key: string
@@ -81,6 +78,8 @@ type RecipientLike = {
   name?: string
   phone?: string
   email?: string
+  memberType?: string
+  participationType?: string
   variables?: Record<string, string> | null
 }
 
@@ -98,9 +97,9 @@ export function isAlimtalkSystemVariableKey(
   catalog?: AlimtalkVariableCatalogEntry[] | null
 ): boolean {
   const trimmed = key.trim()
-  if (NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS.has(trimmed)) return true
   const item = findCatalogEntry(catalog, trimmed)
-  return item?.categoryCode?.trim().toUpperCase() === 'SYSTEM'
+  if (item) return item.categoryCode?.trim().toUpperCase() === 'SYSTEM'
+  return NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS.has(trimmed)
 }
 
 export function isAlimtalkReservedVariableKey(key: string): boolean {
@@ -126,11 +125,9 @@ function isMemberWithActor(recipient: RecipientLike): boolean {
 /**
  * 템플릿 `#{키}` 하나를 서버 치환 / 수신자 직접 입력 / 발송 불가로 나눈다.
  *
- * 프로그램 미선택: 일반 변수는 회원·직접 입력 모두 수기 입력.
- * `enabled`·`requiresProgram`만으로 막지 않는다.
- * 특정 프로그램 선택: 카탈로그에서 허용된 변수만 서버 자동 매칭.
- * SYSTEM·서버 예약 키는 payload에 넣지 않고, 값 존재를 성공으로 보지 않는다.
- * 회원 actorId로 채우는 신원 키(회원명·이메일·휴대폰)만 프로그램 없이도 서버 치환이다.
+ * 카탈로그 미로드는 pending. BE `enabled`가 프로그램·역할 전용 변수의 SSOT다.
+ * SYSTEM은 categoryCode를 우선하고, 카탈로그에 없을 때만 하드코딩 목록을 쓴다.
+ * 회원 actorId 신원 키(회원명·이메일·휴대폰)만 프로그램 없이도 서버 치환이다.
  */
 export function classifyAlimtalkPlaceholderKey(input: {
   key: string
@@ -140,27 +137,27 @@ export function classifyAlimtalkPlaceholderKey(input: {
 }): AlimtalkPlaceholderDisposition {
   const key = input.key.trim()
   if (!key) return 'blocked'
+  if (input.catalog == null) return 'pending'
+
   const item = findCatalogEntry(input.catalog, key)
   const member = isMemberWithActor(input.recipient)
   const system = isAlimtalkSystemVariableKey(key, input.catalog)
   const reserved = isAlimtalkReservedVariableKey(key)
 
+  if (system) return 'blocked'
+  if (member && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) return 'server'
+
   if (!input.programSelected) {
-    if (member && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) return 'server'
-    if (system || reserved) return 'blocked'
-    if (input.catalog == null) return 'pending'
+    if (item?.requiresProgram === true) return 'needs-program'
+    if (reserved) return 'blocked'
     return 'manual'
   }
 
-  if (system) return 'blocked'
-  if (member && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) return 'server'
-  if (member && PROGRAM_CONTEXT_KEYS.has(key)) return 'server'
-  if (item?.requiresProgram === true && item.enabled === true) return 'server'
-  if (item?.requiresProgram === true && item.enabled !== true) return 'blocked'
-  if (item && item.enabled === true && member) return 'server'
+  if (item?.enabled === true && item.requiresProgram === true) return 'server'
+  if (item?.enabled === true && member) return 'server'
   if (item && item.enabled !== true) return 'blocked'
   if (reserved) return 'blocked'
-  if (input.catalog == null) return 'pending'
+  if (!item) return 'blocked'
   return 'manual'
 }
 

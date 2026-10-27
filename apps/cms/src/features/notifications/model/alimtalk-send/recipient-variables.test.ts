@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   classifyAlimtalkPlaceholderKey,
   collectAlimtalkRecipientVariableGaps,
+  isAlimtalkSystemVariableKey,
   pickAlimtalkRecipientSendVariables,
 } from './recipient-variables'
 import type { AlimtalkSendRecipient } from './types'
@@ -52,7 +53,7 @@ describe('classifyAlimtalkPlaceholderKey', () => {
     ).toBe('manual')
   })
 
-  it('AT-03 프로그램 미선택의 requiresProgram 일반 변수는 수기 입력이다', () => {
+  it('FE-VAR-14 프로그램 미선택의 requiresProgram 변수는 needs-program이다', () => {
     expect(
       classifyAlimtalkPlaceholderKey({
         key: '교육 진행 수업 시간',
@@ -66,7 +67,7 @@ describe('classifyAlimtalkPlaceholderKey', () => {
         recipient: member,
         programSelected: false,
       })
-    ).toBe('manual')
+    ).toBe('needs-program')
     expect(
       classifyAlimtalkPlaceholderKey({
         key: '교육 진행 수업 시간',
@@ -80,10 +81,10 @@ describe('classifyAlimtalkPlaceholderKey', () => {
         recipient: direct,
         programSelected: false,
       })
-    ).toBe('manual')
+    ).toBe('needs-program')
   })
 
-  it('AT-04 프로그램 미선택의 서버 예약 변수는 수기 전송 대상이 아니다', () => {
+  it('AT-04 프로그램 미선택의 서버 예약·SYSTEM 변수는 수기 전송 대상이 아니다', () => {
     expect(
       classifyAlimtalkPlaceholderKey({
         key: '프로그램명',
@@ -91,7 +92,7 @@ describe('classifyAlimtalkPlaceholderKey', () => {
         recipient: member,
         programSelected: false,
       })
-    ).toBe('blocked')
+    ).toBe('needs-program')
     expect(
       classifyAlimtalkPlaceholderKey({
         key: '휴면 전환일시',
@@ -132,7 +133,7 @@ describe('classifyAlimtalkPlaceholderKey', () => {
     ).toBeUndefined()
   })
 
-  it('카탈로그에 없는 키는 직접 입력이다', () => {
+  it('카탈로그에 없는 키는 프로그램 미선택에서 직접 입력이다', () => {
     expect(
       classifyAlimtalkPlaceholderKey({
         key: '안내문',
@@ -160,6 +161,122 @@ describe('classifyAlimtalkPlaceholderKey', () => {
         programSelected: false,
       })
     ).toBeUndefined()
+  })
+
+  it('FE-VAR-13 카탈로그 미로드는 pending이다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '방문 안내',
+        catalog: null,
+        recipient: member,
+        programSelected: true,
+      })
+    ).toBe('pending')
+  })
+
+  it('FE-VAR-09 enabled=false 프로그램 문맥 변수는 우회하지 않는다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '프로그램명',
+        catalog: [{ key: '프로그램명', enabled: false, requiresProgram: true }],
+        recipient: member,
+        programSelected: true,
+      })
+    ).toBe('blocked')
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '담당교사명',
+        catalog: [{ key: '담당교사명', enabled: false, requiresProgram: true }],
+        recipient: member,
+        programSelected: true,
+      })
+    ).toBe('blocked')
+  })
+
+  it('FE-VAR-04 개인 참여자에서 교사 전용 변수는 차단한다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '담당교사명',
+        catalog: [{ key: '담당교사명', enabled: false, requiresProgram: true }],
+        recipient: { ...member, participationType: 'participant', memberType: 'general' },
+        programSelected: true,
+      })
+    ).toBe('blocked')
+  })
+
+  it('FE-VAR-05 교사 회원에서 허용된 담당교사 변수는 서버 치환이다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '담당교사명',
+        catalog: [{ key: '담당교사명', enabled: true, requiresProgram: true }],
+        recipient: { ...member, memberType: 'school_teacher' },
+        programSelected: true,
+      })
+    ).toBe('server')
+  })
+
+  it('FE-VAR-06 UJAT 상반기·하반기는 catalog.enabled만 따른다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: 'UJAT 상반기 봉사자 모집 기간',
+        catalog: [
+          { key: 'UJAT 상반기 봉사자 모집 기간', enabled: true, requiresProgram: true },
+          { key: 'UJAT 하반기 봉사자 모집 기간', enabled: false, requiresProgram: true },
+        ],
+        recipient: member,
+        programSelected: true,
+      })
+    ).toBe('server')
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: 'UJAT 하반기 봉사자 모집 기간',
+        catalog: [
+          { key: 'UJAT 상반기 봉사자 모집 기간', enabled: true, requiresProgram: true },
+          { key: 'UJAT 하반기 봉사자 모집 기간', enabled: false, requiresProgram: true },
+        ],
+        recipient: member,
+        programSelected: true,
+      })
+    ).toBe('blocked')
+  })
+
+  it('FE-VAR-07 SYSTEM 변수는 차단한다', () => {
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '휴면 전환일시',
+        catalog: [{ key: '휴면 전환일시', categoryCode: 'SYSTEM', enabled: false }],
+        recipient: member,
+        programSelected: true,
+      })
+    ).toBe('blocked')
+    expect(
+      isAlimtalkSystemVariableKey('휴면 전환일시', [
+        { key: '휴면 전환일시', categoryCode: 'SYSTEM' },
+      ])
+    ).toBe(true)
+  })
+
+  it('FE-VAR-08 프로그램 수료 현황 STATUS는 사용 가능하다', () => {
+    expect(
+      isAlimtalkSystemVariableKey('프로그램 수료 현황', [
+        { key: '프로그램 수료 현황', categoryCode: 'STATUS', enabled: true },
+      ])
+    ).toBe(false)
+    expect(
+      classifyAlimtalkPlaceholderKey({
+        key: '프로그램 수료 현황',
+        catalog: [
+          {
+            key: '프로그램 수료 현황',
+            categoryCode: 'STATUS',
+            enabled: true,
+            requiresProgram: true,
+          },
+        ],
+        recipient: member,
+        programSelected: true,
+      })
+    ).toBe('server')
   })
 })
 

@@ -27,9 +27,23 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
     ).toBe(0)
   })
 
+  it('FE-VAR-12 버튼 URL·퀵리플라이·헤더 변수를 추출한다', () => {
+    const keys = collectTemplatePlaceholderKeys({
+      content: '본문',
+      templateHeader: '#{프로그램명}',
+      buttons: [{ name: '#{버튼명}', destinations: { mobile: 'https://x/#{담당교사명}' } }],
+      quickLinks: [{ name: '퀵', destinations: { pc: 'https://q/#{소속명}' } }],
+    })
+    expect([...keys].sort()).toEqual(['담당교사명', '버튼명', '소속명', '프로그램명'].sort())
+  })
+
   it('DIRECT + phone만이면 필수 변수 누락', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['사용자 아이디(이메일)', '휴면 전환일시'],
+      catalog: [
+        { key: '사용자 아이디(이메일)', enabled: true },
+        { key: '휴면 전환일시', categoryCode: 'SYSTEM', enabled: false },
+      ],
       recipients: [{ actorType: 'DIRECT', source: 'manual' }],
     })
     expect(missing).toEqual(['사용자 아이디(이메일)', '휴면 전환일시'])
@@ -41,6 +55,10 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
   it('MEMBER+actorId는 신원 키만 서버 치환으로 보고 SYSTEM 값은 있다고 보지 않는다', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['사용자 아이디(이메일)', '휴면 전환일시'],
+      catalog: [
+        { key: '사용자 아이디(이메일)', enabled: true },
+        { key: '휴면 전환일시', categoryCode: 'SYSTEM', enabled: false },
+      ],
       recipients: [{ actorType: 'MEMBER', actorId: 12 }],
     })
     expect(missing).toEqual(['휴면 전환일시'])
@@ -49,6 +67,10 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
   it('DIRECT는 예약·SYSTEM 키를 batch variables로 충족하지 않는다', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['사용자 아이디(이메일)', '휴면 전환일시'],
+      catalog: [
+        { key: '사용자 아이디(이메일)', enabled: true },
+        { key: '휴면 전환일시', categoryCode: 'SYSTEM', enabled: false },
+      ],
       batchVariables: {
         '사용자 아이디(이메일)': 'user@example.com',
         '휴면 전환일시': '2026-09-08 12:00',

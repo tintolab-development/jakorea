@@ -130,6 +130,8 @@ export type AlimtalkTemplateItem = {
   approvalStatus?: KakaoApprovalStatus
   senderKey?: string
   nhnConsoleTemplateUrl?: string
+  /** 목록/트리에 알림톡 메타(버튼·헤더 등)가 실려 있으면 true. 없으면 피커 사용을 확정하지 않음. */
+  hasAlimtalkMetadata?: boolean
 }
 
 export type AlimtalkTemplatePendingFilters = {
