@@ -25,15 +25,12 @@
 .affiliation {
   margin: 0;
   min-width: 0;
-  flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .nameRow {
   display: flex;
   align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -49,6 +46,21 @@
     line-height: 144%;
     letter-spacing: 0;
   }
+
+  .affiliation {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .employmentBadgeMobile {
+    display: inline-flex;
+  }
+
+  .employmentBadgePc {
+    display: none;
+  }
 }
 
 .instructorHonorific {
@@ -56,7 +68,7 @@
 }
 
 .employmentBadge {
-  display: inline-flex;
+  display: none;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -71,6 +83,11 @@
   font-weight: 600;
   line-height: 1;
   white-space: nowrap;
+}
+
+.employmentBadgePc {
+  display: inline-flex;
+  height: 35px;
 }
 
 .settingsButton {

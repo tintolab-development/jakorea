@@ -379,7 +379,10 @@
   }
 
   .lnbMobileDropdown .ctaWrap {
-    margin-top: var(--spacing-12);
+    box-sizing: border-box;
+    margin-top: var(--spacing-20);
+    padding-left: calc(var(--page-padding-x) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--page-padding-x) + env(safe-area-inset-right, 0px));
   }
 
   .lnbCategory {
