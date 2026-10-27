@@ -1,6 +1,6 @@
 import { type ChangeEvent, type FormEvent, useRef, useState } from 'react'
 import axios from 'axios'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { getSidoOptions, getSigunguOptions } from '@jakorea/location/sido-sigungu'
 import {
   buildRequiredConsentDisagreeAlertMessage,
@@ -133,12 +133,13 @@ function JaParticipationRadioGroup({
 }
 
 export function TalentDonationApplyForm() {
+  const navigate = useNavigate()
   const [values, setValues] = useState<TalentApplyFormValues>(EMPTY_TALENT_APPLY_FORM_VALUES)
   const [errors, setErrors] = useState<TalentApplyFieldErrors>({})
   const [alert, setAlert] = useState<AlertState>(null)
+  const [successOpen, setSuccessOpen] = useState(false)
   const [attachedFileName, setAttachedFileName] = useState('')
   const [attachedFile, setAttachedFile] = useState<File | null>(null)
-  const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mutation = useCreatePublicTalentApplication()
 
@@ -236,26 +237,13 @@ export function TalentDonationApplyForm() {
         attachmentFile: attachedFile,
       },
       {
-        onSuccess: () => setSubmitted(true),
+        onSuccess: () => setSuccessOpen(true),
         onError: error =>
           setAlert({
             title: '안내',
             description: messageFromError(error),
           }),
       },
-    )
-  }
-
-  if (submitted) {
-    return (
-      <div className={styles.success}>
-        <PFText as="p" typo="bd-lg-rg" color="black">
-          재능기부 신청이 접수되었습니다.
-        </PFText>
-        <Link to={TALENT_DONATION_PATH} className={styles.backLink}>
-          재능기부로 돌아가기
-        </Link>
-      </div>
     )
   }
 
@@ -672,6 +660,15 @@ export function TalentDonationApplyForm() {
         title={alert?.title ?? ''}
         description={alert?.description}
         onConfirm={() => setAlert(null)}
+      />
+
+      <PFAlertModal
+        open={successOpen}
+        title="신청 완료되었습니다"
+        onConfirm={() => {
+          setSuccessOpen(false)
+          navigate(TALENT_DONATION_PATH)
+        }}
       />
     </>
   )

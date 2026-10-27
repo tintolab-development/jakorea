@@ -106,7 +106,7 @@ export function UjatRecruitVolunteerInfoProgramView({
   isEdit,
   volunteerHalf,
   showNoticeExposure,
-  sectionTitle = '봉사자 모집 정보',
+  sectionTitle,
   highlightParagraphId,
   hideSectionHeader = false,
   isTemplateAuthoring = false,
@@ -248,9 +248,9 @@ export function UjatRecruitVolunteerInfoProgramView({
 
   return (
     <div className="ujat-recruit-volunteer-info-program">
-      {!hideSectionHeader ? (
+      {!hideSectionHeader && sectionTitle?.trim() ? (
         <UjatRecruitSectionDescriptionHeader
-          title={sectionTitle}
+          title={sectionTitle.trim()}
           highlightParagraphId={highlightParagraphId}
         />
       ) : null}

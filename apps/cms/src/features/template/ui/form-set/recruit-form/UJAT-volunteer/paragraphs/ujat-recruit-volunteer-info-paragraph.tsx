@@ -139,6 +139,7 @@ export function UjatRecruitVolunteerInfoParagraph(props: UjatRecruitParagraphPro
         showNoticeExposure={half === 'h2'}
         sectionTitle={props.sectionTitle}
         highlightParagraphId={props.highlightParagraphId}
+        hideSectionHeader={props.hideSectionHeader}
       />
     )
   }

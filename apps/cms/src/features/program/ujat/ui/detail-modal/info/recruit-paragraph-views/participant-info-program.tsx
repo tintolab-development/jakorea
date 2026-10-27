@@ -75,7 +75,7 @@ export function UjatRecruitParticipantInfoProgramView({
   program,
   form,
   isEdit,
-  sectionTitle = '참여 기관 모집 정보',
+  sectionTitle,
   highlightParagraphId,
   hideSectionHeader = false,
   isTemplateAuthoring = false,
@@ -140,9 +140,9 @@ export function UjatRecruitParticipantInfoProgramView({
 
   return (
     <div className="ujat-recruit-participant-info-program">
-      {!hideSectionHeader ? (
+      {!hideSectionHeader && sectionTitle?.trim() ? (
         <UjatRecruitSectionDescriptionHeader
-          title={sectionTitle}
+          title={sectionTitle.trim()}
           highlightParagraphId={highlightParagraphId}
         />
       ) : null}

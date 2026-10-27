@@ -65,6 +65,8 @@ export function UjatRecruitVolunteerInterviewScheduleParagraph({
         volunteerHalf={props.volunteerHalf}
         sectionTitle={props.sectionTitle}
         highlightParagraphId={props.highlightParagraphId}
+        hideSectionHeader={props.hideSectionHeader}
+        exceptionScheduleCount={exceptionScheduleCount}
       />
     )
   }

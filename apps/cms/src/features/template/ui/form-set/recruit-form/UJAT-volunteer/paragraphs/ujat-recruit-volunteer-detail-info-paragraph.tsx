@@ -53,6 +53,7 @@ export function UjatRecruitVolunteerDetailInfoParagraph(props: UjatRecruitParagr
         onRegisterGetAdditionalContentHtml={props.onRegisterGetAdditionalContentHtml}
         sectionTitle={props.sectionTitle}
         sectionTitleOnly
+        hideFormHeader={props.hideSectionHeader}
       />
     )
   }
