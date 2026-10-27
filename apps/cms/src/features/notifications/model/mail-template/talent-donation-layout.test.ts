@@ -29,6 +29,8 @@ describe('talent donation mail layout', () => {
     expect(html).toContain('white-space:nowrap')
     expect(html).toContain('padding:9px 10px')
     expect(html).toContain('padding:9px 12px')
+    expect(html).toContain('vertical-align:top')
+    expect(html).not.toContain('첨부파일')
     expect(html).toContain('font-size:12px')
     expect(html).toContain('background:linear-gradient(0deg,rgba(231,235,239,0.6) 0%,rgba(231,235,239,0.6) 100%),#fff')
     expect(html).toContain('height="52"')

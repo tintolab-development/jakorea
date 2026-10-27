@@ -45,6 +45,7 @@ const cellStyle =
   'border:0;vertical-align:middle;color:#3d3d3d;font-family:Pretendard,Arial,sans-serif;font-size:12px;line-height:1.5;'
 const labelCellStyle = `${cellStyle}width:${LABEL_COL_WIDTH_PX}px;min-width:${LABEL_COL_WIDTH_PX}px;max-width:${LABEL_COL_WIDTH_PX}px;padding:9px 10px;background:linear-gradient(0deg,rgba(231,235,239,0.6) 0%,rgba(231,235,239,0.6) 100%),#fff;text-align:center;font-weight:700;white-space:nowrap;`
 const valueCellStyle = `${cellStyle}padding:9px 12px;background:#ffffff;text-align:left;font-weight:500;word-break:break-word;`
+const longTextValueCellStyle = `${cellStyle}vertical-align:top;padding:9px 12px;background:#ffffff;text-align:left;font-weight:500;word-break:break-word;`
 const labelCellAttributes = `colwidth="${LABEL_COL_WIDTH_PX}"`
 
 function sectionHeading(label: string): string {
@@ -125,19 +126,23 @@ function applicantInfoTable(): string {
   `)
 }
 
+function additionalInfoValueCell(label: string): string {
+  return `<td style="${longTextValueCellStyle}">${variable(label)}</td>`
+}
+
 function additionalInfoTable(): string {
   return tableShell(`
     <tr>
       ${labelCell('간단한 약력 소개')}
-      ${valueCell('간단한 약력 소개')}
+      ${additionalInfoValueCell('간단한 약력 소개')}
     </tr>
     <tr>
       ${labelCell('기부 가능한 재능 소개')}
-      ${valueCell('기부 가능한 재능 소개')}
+      ${additionalInfoValueCell('기부 가능한 재능 소개')}
     </tr>
     <tr>
       ${labelCell('참여 동기')}
-      ${valueCell('참여 동기')}
+      ${additionalInfoValueCell('참여 동기')}
     </tr>
   `)
 }

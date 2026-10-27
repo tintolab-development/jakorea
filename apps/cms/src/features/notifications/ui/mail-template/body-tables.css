@@ -3,6 +3,12 @@
  * TipTap은 colgroup을 버리므로 th colwidth=140 + 이 CSS가 수정 화면·미리보기 SSOT다.
  */
 
+.mail-template-rich-body .rich-text-content {
+  width: 100%;
+  max-width: 1400px;
+  box-sizing: border-box;
+}
+
 .mail-template-rich-body .rich-text-content .tableWrapper {
   width: 100%;
   margin: 0;
@@ -96,6 +102,20 @@
 .mail-template-rich-body .rich-text-content table:not(:has(td a)):has(tr:first-child > :nth-child(4)) th,
 .mail-template-rich-body .rich-text-content table:not(:has(td a)):has(tr:first-child > :nth-child(4)) td {
   height: 36px;
+}
+
+/* 추가 정보(2열) — 약력·재능·동기: 36px 고정·세로 가운데 정렬 제외 */
+.mail-template-rich-body
+  .rich-text-content
+  table:not(:has(td a)):not(:has(tr:first-child > :nth-child(4)))
+  th,
+.mail-template-rich-body
+  .rich-text-content
+  table:not(:has(td a)):not(:has(tr:first-child > :nth-child(4)))
+  td {
+  height: auto;
+  max-height: none;
+  vertical-align: top;
 }
 
 .mail-template-rich-body .rich-text-content table:not(:has(td a)) tr:first-child > :first-child {
