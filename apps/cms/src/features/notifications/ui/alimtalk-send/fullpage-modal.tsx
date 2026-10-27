@@ -56,6 +56,7 @@ import {
   listNotificationSendTemplateDisabledKeysForProgram,
 } from '@/features/notifications/model/shared/template-usable-for-program'
 import { alimtalkSendStateAfterProgramChange } from '@/features/notifications/model/alimtalk-send/program-change'
+import { alimtalkSendTemplateContentEmptyTitle } from '@/features/notifications/model/alimtalk-send/content-empty'
 import {
   buildNotificationTemplateVariablesQuery,
   inferUniqueRecipientTypeValue,
@@ -101,10 +102,16 @@ const EMPTY_SECTION_DESCRIPTION = '항목이 선택되면 이곳에 목록이 �
 const UNSELECTED_CONTENT =
   '알림톡은 미리 승인 받은 템플릿만 사용 가능합니다. 템플릿 제목을 선택하면 내용이 표시됩니다.'
 
-function AlimtalkSendEmptyHint({ className }: { className?: string }) {
+function AlimtalkSendEmptyHint({
+  className,
+  title = EMPTY_SECTION_TITLE,
+}: {
+  className?: string
+  title?: string
+}) {
   return (
     <div className={className} role="status">
-      <p className="alimtalk-send-fullpage__empty-title">{EMPTY_SECTION_TITLE}</p>
+      <p className="alimtalk-send-fullpage__empty-title">{title}</p>
       <p className="alimtalk-send-fullpage__empty-description">{EMPTY_SECTION_DESCRIPTION}</p>
     </div>
   )
@@ -872,7 +879,15 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     {selectedTemplate ? (
                       <ContentPanel template={selectedTemplate} />
                     ) : (
-                      <AlimtalkSendEmptyHint className="alimtalk-send-fullpage__empty alimtalk-send-fullpage__empty--fill" />
+                      <AlimtalkSendEmptyHint
+                        className="alimtalk-send-fullpage__empty alimtalk-send-fullpage__empty--fill"
+                        title={
+                          alimtalkSendTemplateContentEmptyTitle({
+                            senderSelected: Boolean(selectedSender),
+                            templateSelected: false,
+                          }) ?? undefined
+                        }
+                      />
                     )}
                   </div>
                   <AlimtalkPhonePreview
