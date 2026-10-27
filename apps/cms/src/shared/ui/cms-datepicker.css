@@ -39,7 +39,7 @@
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
-  font-size: var(--cms-control-font, 16px);
+  font-size: var(--cms-control-font, 16px) !important;
 }
 
 .cms-datepicker .ant-picker.cms-datepicker__picker.ant-picker-focused {
@@ -61,7 +61,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: var(--cms-control-font, 16px);
+  font-size: var(--cms-control-font, 16px) !important;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;

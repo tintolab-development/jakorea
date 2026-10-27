@@ -42,6 +42,7 @@ import type {
   MailSendDraft,
   MailSendRecipient,
 } from '@/features/notifications/model/mail-send/types'
+import { isMailEditorBodyUntouchedFromPlainTemplate } from '@/features/notifications/model/shared/mail-body-display-html'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -333,7 +334,16 @@ export async function submitMailSend(input: {
     title: subject,
     content: bodyHtml,
     baseline: templateBaseline
-      ? { title: templateBaseline.subject, content: templateBaseline.bodyHtml }
+      ? {
+          title: templateBaseline.subject,
+          // 평문 템플릿을 에디터가 <p>로 변환만 한 경우는 사용자 변경이 아님 → override 생략(등록 평문 사용)
+          content: isMailEditorBodyUntouchedFromPlainTemplate(
+            normalizeNotificationPlaceholderMarkup(draft.bodyHtml),
+            normalizeNotificationPlaceholderMarkup(templateBaseline.bodyHtml)
+          )
+            ? bodyHtml
+            : templateBaseline.bodyHtml,
+        }
       : null,
   })
 

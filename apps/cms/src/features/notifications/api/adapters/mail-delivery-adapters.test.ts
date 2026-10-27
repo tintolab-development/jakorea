@@ -183,4 +183,32 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
     // preview에 #{…} 잔존 = 치환 전 실패(정상)
     expect(failed?.bodyHtml).toContain('#{동의 항목}')
   })
+
+  it('detail body prefers renderedContent as-is (no double escape) over contentTemplate', () => {
+    const row = mapMailDeliveryToSendHistoryRow(
+      { deliveryId: 20, sendStatus: 'SENT' },
+      {
+        renderedTitle: '렌더 제목',
+        renderedContent: '안녕하세요 홍길동님<br>&lt;b&gt;&amp;',
+        contentTemplate: '안녕하세요 #{회원명}님\n#{값}',
+      }
+    )
+    expect(row?.bodyHtml).toBe('안녕하세요 홍길동님<br>&lt;b&gt;&amp;')
+    expect(row?.subject).toBe('렌더 제목')
+  })
+
+  it('falls back to plain contentTemplate with line breaks, HTML contentTemplate unchanged', () => {
+    const plain = mapMailDeliveryToSendHistoryRow(
+      { deliveryId: 21, sendStatus: 'FAILED' },
+      { titleTemplate: '원문 제목\n그대로', contentTemplate: '안녕 #{회원명}\n<b>' }
+    )
+    expect(plain?.bodyHtml).toBe('안녕 #{회원명}<br>&lt;b&gt;')
+    expect(plain?.subject).toBe('원문 제목\n그대로')
+
+    const html = mapMailDeliveryToSendHistoryRow(
+      { deliveryId: 22, sendStatus: 'FAILED' },
+      { contentTemplate: '<p>#{회원명}님</p>' }
+    )
+    expect(html?.bodyHtml).toBe('<p>#{회원명}님</p>')
+  })
 })

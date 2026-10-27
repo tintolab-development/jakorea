@@ -28,7 +28,7 @@
   min-width: 0;
   height: 100%;
   position: relative;
-  font-size: var(--cms-control-font, 16px);
+  font-size: var(--cms-control-font, 16px) !important;
 }
 
 .cms-select {
@@ -103,7 +103,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: pre;
-  font-size: var(--cms-control-font, 16px);
+  font-size: var(--cms-control-font, 16px) !important;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -121,7 +121,7 @@
 }
 
 .cms-select .ant-select-selection-search-input {
-  font-size: var(--cms-control-font, 16px);
+  font-size: var(--cms-control-font, 16px) !important;
 }
 
 .cms-select .ant-select-selection-search-input::placeholder {
@@ -175,7 +175,7 @@
   cursor: pointer;
   text-align: left;
   font: inherit;
-  font-size: var(--cms-control-font, 16px);
+  font-size: var(--cms-control-font, 16px) !important;
 }
 
 .cms-select-multi__trigger.cms-field__box--disabled {
@@ -189,7 +189,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--cms-control-font, 16px);
+  font-size: var(--cms-control-font, 16px) !important;
   font-weight: 500;
   line-height: 150%;
   color: var(--Netural-black, #3d3d3d);
