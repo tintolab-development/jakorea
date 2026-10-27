@@ -11,7 +11,6 @@ import type { TalentDonationApplication } from '@/entities/talent-donation-appli
 import { shouldUseTalentDonationApplicationRemoteApi } from '@/features/talent-donation-application/api/capabilities'
 import { downloadTalentDonationApplicationAttachmentService } from '@/features/talent-donation-application/api/service'
 import { DEFAULT_CONFIRM_ACTOR } from '@/features/talent-donation-application/api/store'
-import { PublicApplicationNotificationStatusPanel } from '@/features/public-application-notification/ui/status-panel'
 import {
   formatDateDot,
   formatDateRangeDot,
@@ -216,11 +215,6 @@ export function TalentDonationApplicationDetailModal({
       >
         {data ? (
           <div className="talent-app-detail-modal__scroll">
-            <PublicApplicationNotificationStatusPanel
-              open={open}
-              notificationType="TALENT_APPLICATION"
-              aggregateId={data.id}
-            />
             <section
               className="talent-app-detail-modal__section"
               aria-labelledby="talent-app-basic-heading"

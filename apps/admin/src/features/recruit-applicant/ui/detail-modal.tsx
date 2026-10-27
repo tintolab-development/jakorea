@@ -16,7 +16,6 @@ import type {
 } from '@/entities/recruit-applicant/model/types'
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
 import { downloadRecruitApplicantAttachmentService } from '@/features/recruit-applicant/api/service'
-import { PublicApplicationNotificationStatusPanel } from '@/features/public-application-notification/ui/status-panel'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 
@@ -221,11 +220,6 @@ export function RecruitApplicantDetailModal({
           <p className="recruit-applicant-detail-modal__loading">신청 정보를 불러오는 중입니다.</p>
         ) : data ? (
           <div className="recruit-applicant-detail-modal__scroll">
-            <PublicApplicationNotificationStatusPanel
-              open={open}
-              notificationType="CAREER_TALENT_APPLICATION"
-              aggregateId={data.id}
-            />
             <section
               className="recruit-applicant-detail-modal__section"
               aria-labelledby="recruit-applicant-basic-heading"

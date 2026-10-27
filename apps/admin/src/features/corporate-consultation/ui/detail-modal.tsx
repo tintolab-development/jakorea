@@ -11,7 +11,6 @@ import type { CorporateConsultation } from '@/entities/corporate-consultation/mo
 import { shouldUseCorporateConsultationRemoteApi } from '@/features/corporate-consultation/api/capabilities'
 import { downloadCorporateConsultationAttachmentService } from '@/features/corporate-consultation/api/service'
 import { DEFAULT_CONFIRM_ACTOR } from '@/features/corporate-consultation/api/store'
-import { PublicApplicationNotificationStatusPanel } from '@/features/public-application-notification/ui/status-panel'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 
@@ -197,11 +196,6 @@ export function CorporateConsultationDetailModal({
       >
         {data ? (
           <div className="corp-consult-detail-modal__scroll">
-            <PublicApplicationNotificationStatusPanel
-              open={open}
-              notificationType="CORPORATE_CONSULTATION"
-              aggregateId={data.id}
-            />
             <section
               className="corp-consult-detail-modal__section"
               aria-labelledby="corp-consult-apply-heading"
