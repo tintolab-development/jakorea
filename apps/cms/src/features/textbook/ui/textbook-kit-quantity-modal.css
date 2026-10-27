@@ -111,6 +111,13 @@
   overflow-x: hidden;
 }
 
+.textbook-kit-quantity-modal__loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+}
+
 .textbook-kit-quantity-modal__table {
   display: flex;
   width: 100%;

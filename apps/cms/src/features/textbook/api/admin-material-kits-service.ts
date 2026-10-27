@@ -3,8 +3,9 @@ import {
   putGlobalMaterialKitCurrentConfigRemote,
 } from '@/features/textbook/api/material-kits-api-client'
 import { shouldUseTextbooksRemoteApi } from '@/features/textbook/api/admin-textbooks-service'
+import { parseKitQuantityInput } from '@/features/textbook/lib/kit-quantity'
 import {
-  DEFAULT_KIT_QUANTITIES,
+  EMPTY_KIT_QUANTITIES,
   type TextbookKitQuantityValues,
 } from '@/features/textbook/ui/textbook-kit-quantity-modal'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -51,10 +52,10 @@ function readLevelCount(
 export function materialKitCurrentConfigToQuantities(
   config: MaterialKitCurrentConfigResponse
 ): TextbookKitQuantityValues {
-  const values: TextbookKitQuantityValues = { ...DEFAULT_KIT_QUANTITIES }
+  const values: TextbookKitQuantityValues = { ...EMPTY_KIT_QUANTITIES }
   for (const level of MATERIAL_KIT_TARGET_LEVELS) {
     const count = readLevelCount(config, level)
-    if (count != null && count >= 0) {
+    if (count != null && Number.isFinite(count)) {
       values[level] = String(count)
     }
   }
@@ -65,13 +66,7 @@ export function quantitiesToMaterialKitCurrentConfigRequest(
   values: TextbookKitQuantityValues,
   options?: { effectiveFrom?: string }
 ): MaterialKitCurrentConfigRequest {
-  const parsed = (level: keyof TextbookKitQuantityValues) => {
-    const n = Number.parseInt(values[level], 10)
-    if (Number.isNaN(n) || n < 0) {
-      throw new Error('키트 수량은 0 이상의 숫자로 입력해 주세요.')
-    }
-    return n
-  }
+  const parsed = (level: keyof TextbookKitQuantityValues) => parseKitQuantityInput(values[level])
   return {
     infant: parsed('kindergarten'),
     elementary: parsed('elementary'),
@@ -90,11 +85,12 @@ export async function getMaterialKitQuantities(): Promise<TextbookKitQuantityVal
 
 export async function saveMaterialKitQuantities(
   values: TextbookKitQuantityValues
-): Promise<void> {
+): Promise<TextbookKitQuantityValues> {
   assertMaterialKitsRemoteReady()
   const current = await fetchGlobalMaterialKitCurrentConfigRemote()
   const body = quantitiesToMaterialKitCurrentConfigRequest(values, {
     effectiveFrom: current.effectiveFrom,
   })
-  await putGlobalMaterialKitCurrentConfigRemote(body)
+  const saved = await putGlobalMaterialKitCurrentConfigRemote(body)
+  return materialKitCurrentConfigToQuantities(saved)
 }
