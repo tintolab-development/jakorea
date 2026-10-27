@@ -11,6 +11,7 @@ import type { TalentDonationApplication } from '@/entities/talent-donation-appli
 import { shouldUseTalentDonationApplicationRemoteApi } from '@/features/talent-donation-application/api/capabilities'
 import { downloadTalentDonationApplicationAttachmentService } from '@/features/talent-donation-application/api/service'
 import { DEFAULT_CONFIRM_ACTOR } from '@/features/talent-donation-application/api/store'
+import { PublicApplicationNotificationStatusPanel } from '@/features/public-application-notification/ui/status-panel'
 import {
   formatDateDot,
   formatDateRangeDot,
@@ -66,12 +67,7 @@ function FileIcon({ className }: { className?: string }) {
         strokeWidth="1.4"
         strokeLinejoin="round"
       />
-      <path
-        d="M11.5 2.5V5.8H14.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
+      <path d="M11.5 2.5V5.8H14.5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -125,53 +121,52 @@ export function TalentDonationApplicationDetailModal({
     )
   })()
 
-  const attachmentView =
-    data?.attachmentFileName ? (
-      shouldUseTalentDonationApplicationRemoteApi() ? (
-        <button
-          type="button"
-          className="talent-app-detail-modal__attachment"
-          onClick={() => {
-            if (!data?.id) return
-            void downloadTalentDonationApplicationAttachmentService(data.id)
-              .then(result => {
-                if (!result?.downloadUrl) {
-                  showAlert({
-                    title: '다운로드 실패',
-                    content: '첨부파일을 불러오지 못했습니다.',
-                  })
-                  return
-                }
-                window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
-              })
-              .catch(() => {
+  const attachmentView = data?.attachmentFileName ? (
+    shouldUseTalentDonationApplicationRemoteApi() ? (
+      <button
+        type="button"
+        className="talent-app-detail-modal__attachment"
+        onClick={() => {
+          if (!data?.id) return
+          void downloadTalentDonationApplicationAttachmentService(data.id)
+            .then(result => {
+              if (!result?.downloadUrl) {
                 showAlert({
                   title: '다운로드 실패',
-                  content: '첨부파일 다운로드에 실패했습니다.',
+                  content: '첨부파일을 불러오지 못했습니다.',
                 })
+                return
+              }
+              window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
+            })
+            .catch(() => {
+              showAlert({
+                title: '다운로드 실패',
+                content: '첨부파일 다운로드에 실패했습니다.',
               })
-          }}
-        >
-          <FileIcon className="talent-app-detail-modal__file-icon" />
-          <span>{data.attachmentFileName}</span>
-        </button>
-      ) : data.attachmentUrl ? (
-        <a
-          className="talent-app-detail-modal__attachment"
-          href={data.attachmentUrl}
-          download={data.attachmentFileName}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <FileIcon className="talent-app-detail-modal__file-icon" />
-          <span>{data.attachmentFileName}</span>
-        </a>
-      ) : (
+            })
+        }}
+      >
+        <FileIcon className="talent-app-detail-modal__file-icon" />
         <span>{data.attachmentFileName}</span>
-      )
+      </button>
+    ) : data.attachmentUrl ? (
+      <a
+        className="talent-app-detail-modal__attachment"
+        href={data.attachmentUrl}
+        download={data.attachmentFileName}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <FileIcon className="talent-app-detail-modal__file-icon" />
+        <span>{data.attachmentFileName}</span>
+      </a>
     ) : (
-      <span>-</span>
+      <span>{data.attachmentFileName}</span>
     )
+  ) : (
+    <span>-</span>
+  )
 
   const footer = (
     <div className="talent-app-detail-modal__footer">
@@ -221,6 +216,11 @@ export function TalentDonationApplicationDetailModal({
       >
         {data ? (
           <div className="talent-app-detail-modal__scroll">
+            <PublicApplicationNotificationStatusPanel
+              open={open}
+              notificationType="TALENT_APPLICATION"
+              aggregateId={data.id}
+            />
             <section
               className="talent-app-detail-modal__section"
               aria-labelledby="talent-app-basic-heading"
@@ -317,9 +317,7 @@ export function TalentDonationApplicationDetailModal({
                 <DetailInfoForm.Row type="single">
                   <DetailInfoForm.Field
                     label="재능 기부 가능 기간"
-                    view={
-                      <span>{formatDateRangeDot(data.availableFrom, data.availableTo)}</span>
-                    }
+                    view={<span>{formatDateRangeDot(data.availableFrom, data.availableTo)}</span>}
                     edit={null}
                     readOnlyDisplay
                   />

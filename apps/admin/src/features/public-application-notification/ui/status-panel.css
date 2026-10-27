@@ -1,0 +1,118 @@
+.public-application-notification-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.public-application-notification-panel__header,
+.public-application-notification-panel__actions,
+.public-application-notification-panel__status-row {
+  display: flex;
+  align-items: center;
+}
+
+.public-application-notification-panel__header {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.public-application-notification-panel__title {
+  margin: 0;
+  color: #3d3d3d;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.public-application-notification-panel__status-row {
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #3d3d3d;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.public-application-notification-panel__label {
+  color: #777;
+}
+
+.public-application-notification-panel__status {
+  font-weight: 700;
+}
+
+.public-application-notification-panel__status--sent {
+  color: #008b9a;
+}
+
+.public-application-notification-panel__status--failed {
+  color: #d43838;
+}
+
+.public-application-notification-panel__status--pending,
+.public-application-notification-panel__status--retrying {
+  color: #c77700;
+}
+
+.public-application-notification-panel__message {
+  margin: 0;
+  color: #777;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.public-application-notification-panel__details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 20px;
+  margin: 0;
+  color: #3d3d3d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.public-application-notification-panel__detail {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.public-application-notification-panel__detail dt {
+  color: #777;
+  flex: 0 0 auto;
+}
+
+.public-application-notification-panel__detail dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.public-application-notification-panel__error {
+  color: #d43838;
+}
+
+.public-application-notification-panel__actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.public-application-notification-panel__link {
+  color: #008b9a;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+@media (max-width: 700px) {
+  .public-application-notification-panel__details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
