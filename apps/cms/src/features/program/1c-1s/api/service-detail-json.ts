@@ -153,8 +153,6 @@ function companySchoolDetails(program: Program): Partial<Program> {
     scheduleTimeEnabled: program.scheduleTimeEnabled,
     startTime: program.startTime,
     endTime: program.endTime,
-    createdByName: program.createdByName,
-    updatedByName: program.updatedByName,
   })
 }
 
@@ -311,8 +309,6 @@ const SERVICE_DETAIL_PROGRAM_SLICE_KEYS = [
   'scheduleTimeEnabled',
   'startTime',
   'endTime',
-  'createdByName',
-  'updatedByName',
   'generalVolunteers',
   'staffVolunteers',
   'returningVolunteers',

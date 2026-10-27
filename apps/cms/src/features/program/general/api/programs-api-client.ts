@@ -13,6 +13,9 @@ import { axiosClient } from '@/shared/instance/axios-instance'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 
+/** GET/POST/PATCH /api/admin/programs 본문. createdByName / updatedByName 포함. */
+export type AdminProgramResponseDto = ProgramResponse
+
 export type AdminProgramsListQuery = {
   keyword?: string
   programType?: string
@@ -97,6 +100,8 @@ export interface AdminProgramListItemDto {
   participatingStudentCount?: number | null
   createdAt?: string
   updatedAt?: string
+  createdByName?: string | null
+  updatedByName?: string | null
 }
 
 export interface AdminProgramsPageDto {
@@ -119,8 +124,8 @@ export async function fetchAdminProgramsRemote(
   )
 }
 
-export async function fetchAdminProgramByIdRemote(programId: string): Promise<ProgramResponse> {
-  return unwrapApiBody<ProgramResponse>(
+export async function fetchAdminProgramByIdRemote(programId: string): Promise<AdminProgramResponseDto> {
+  return unwrapApiBody<AdminProgramResponseDto>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}`,
       method: 'GET',
@@ -159,8 +164,8 @@ export async function fetchAdminProgramSponsorsRemote(
 
 export async function createAdminProgramRemote(
   payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
-): Promise<ProgramResponse> {
-  const created = unwrapApiBody<ProgramResponse>(
+): Promise<AdminProgramResponseDto> {
+  const created = unwrapApiBody<AdminProgramResponseDto>(
     await customInstance({
       url: '/api/admin/programs',
       method: 'POST',
@@ -177,9 +182,9 @@ export async function createAdminProgramRemote(
 export async function updateAdminProgramRemote(
   programId: string,
   payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest
-): Promise<ProgramResponse> {
+): Promise<AdminProgramResponseDto> {
   const safePayload = omitSchedulesFromProgramUpdateRequest(payload)
-  const updated = unwrapApiBody<ProgramResponse>(
+  const updated = unwrapApiBody<AdminProgramResponseDto>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}`,
       method: 'PATCH',

@@ -89,7 +89,7 @@ function formatEducationInstructorTargets(
   if (showVolunteerKpi) {
     if (isFormEdit) return undefined
     return formatKpiValueWithBoldNumbers(
-      `강사: ${targets?.instructors ?? 0} 봉사자: ${targets?.volunteers ?? 0}`
+      `강사: ${targets?.instructors ?? '-'} 봉사자: ${targets?.volunteers ?? '-'}`
     )
   }
 
@@ -98,7 +98,7 @@ function formatEducationInstructorTargets(
       <span>
         강사:{' '}
         <span style={{ fontWeight: 'bold' }}>
-          {formatNumberDisplay(targets?.instructors ?? 0)}
+          {targets?.instructors == null ? '-' : formatNumberDisplay(targets.instructors)}
         </span>
       </span>
       <DetailInfoForm.InputsSeparator />
@@ -183,8 +183,8 @@ export function ProgramKpiTargetSection({
     kpiItem?.educationInstructorTargets ??
     (programKpi.instructorCount != null || programKpi.volunteerCount != null
       ? {
-          instructors: programKpi.instructorCount ?? 0,
-          volunteers: programKpi.volunteerCount ?? 0,
+          instructors: programKpi.instructorCount ?? null,
+          volunteers: programKpi.volunteerCount ?? null,
         }
       : undefined)
   const instructorDisplay = formatEducationInstructorTargets(

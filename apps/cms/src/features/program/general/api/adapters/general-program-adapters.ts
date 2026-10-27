@@ -77,6 +77,10 @@ import {
   type RecruitmentCopyAudience,
 } from '@/features/program/shared/lib/recruitment-row-copy'
 import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
+import {
+  omitProgramAuditNameFields,
+  readProgramAuditNames,
+} from '@/features/program/shared/lib/program-audit-names'
 import { resolveAudienceProgramOperationIsoRange } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
@@ -336,6 +340,7 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
     participatingStudentCount: toOptionalNumber(dto.participatingStudentCount),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    ...readProgramAuditNames(dto),
     ...(listVolunteerKpi != null
       ? {
           generalCommonInfo: {
@@ -557,7 +562,8 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
-    ...serviceDetail,
+    ...omitProgramAuditNameFields(serviceDetail),
+    ...readProgramAuditNames(dto),
     generalCommonInfo,
     detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     targetLevel: detailTargetLevels[0],

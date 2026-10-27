@@ -31,6 +31,7 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
+import { resolveProgramOperationalBindingKind } from '@/features/program/general/lib/program-operational-binding-profile'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import { resolveAudienceProgramOperationIsoRange } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
@@ -144,13 +145,21 @@ export function resolveGeneralPreviewProgramType(
   audience?: ProgramPreviewAudience
 ): string {
   if (audience === 'individuals') return 'GENERAL_INDIVIDUAL'
+  const bindingKind = resolveProgramOperationalBindingKind(program)
   const stored = trimmedOrUndefined(program.backendProgramType)?.toUpperCase()
   if (audience === 'institutions') {
     if (stored === 'COMPANY_SCHOOL' || stored === 'TRAINED_TEACHER' || stored === 'UJAT') {
       return stored
     }
+    if (bindingKind === 'COMPANY_SCHOOL') return 'COMPANY_SCHOOL'
+    if (bindingKind === 'TRAINED_TEACHER') return 'TRAINED_TEACHER'
     if (isCompanySchoolProgram(program)) return 'COMPANY_SCHOOL'
     return 'GENERAL_ORGANIZATION'
+  }
+  if (audience === 'instructors' || audience === 'volunteers') {
+    if (bindingKind === 'COMPANY_SCHOOL') return 'COMPANY_SCHOOL'
+    if (bindingKind === 'TRAINED_TEACHER') return 'TRAINED_TEACHER'
+    if (stored) return stored
   }
   if (stored) return stored
   const id = String(program.id)
@@ -165,15 +174,22 @@ export function resolveGeneralPreviewProgramType(
   if (audience == null) {
     return isGeneralIndividualProgram(program) ? 'GENERAL_INDIVIDUAL' : 'GENERAL_ORGANIZATION'
   }
+  if (audience === 'instructors' || audience === 'volunteers') {
+    return isGeneralIndividualProgram(program) ? 'GENERAL_INDIVIDUAL' : 'GENERAL_ORGANIZATION'
+  }
   return isIndividualPreview(program, audience) ? 'GENERAL_INDIVIDUAL' : 'GENERAL_ORGANIZATION'
 }
 
+/**
+ * Platform `mapPortalTabs` / 참여하기 목록·상세 탭 배지 SSOT.
+ * 봉사자 모집 상세는 ORGANIZATION이 아니라 YOUTH_YOUNG(청소년·청년)이다.
+ */
 function portalCategoriesFor(
   program: Program,
   audience: ProgramPreviewAudience
 ): string[] | undefined {
   if (audience === 'instructors') return ['INSTRUCTOR']
-  if (audience === 'volunteers') return undefined
+  if (audience === 'volunteers') return ['YOUTH_YOUNG']
   return [isIndividualPreview(program, audience) ? 'YOUTH_YOUNG' : 'ORGANIZATION']
 }
 
@@ -446,7 +462,10 @@ export function buildProgramPortalPreviewDetail(
       toPortalOperationMethod(common?.educationFormLabel) ?? toPortalOperationMethod(program.type),
     businessStartDate: toPortalDateTime(program.startDate),
     businessEndDate: toPortalDateTime(program.endDate),
-    applicationTargetMode: isIndividualPreview(program, audience) ? 'INDIVIDUAL' : 'ORGANIZATION',
+    applicationTargetMode:
+      audience === 'individuals' || (audience !== 'institutions' && isGeneralIndividualProgram(program))
+        ? 'INDIVIDUAL'
+        : 'ORGANIZATION',
     participationMethod: common?.participationMethod,
     businessField: normalizeProgramBusinessAreaValue(program.businessArea) || undefined,
     venue: buildVenue(program),

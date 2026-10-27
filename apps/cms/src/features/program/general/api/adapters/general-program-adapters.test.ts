@@ -1592,4 +1592,42 @@ describe('general-program-adapters', () => {
     expect(request.remarks).toBeUndefined()
     expect(request.clearFields).toEqual(expect.arrayContaining(['applicationMethod', 'remarks']))
   })
+
+  it('maps createdByName and updatedByName from list and detail JSON', () => {
+    const listed = mapAdminProgramListItemToProgram({
+      id: 186401,
+      title: '감사',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as AdminProgramListItemDto)
+    const detail = mapAdminProgramDetailToProgram({
+      id: '186401',
+      title: '감사',
+      createdAt: '2026-12-08T00:15:00.000Z',
+      updatedAt: '2026-12-09T01:00:00.000Z',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as ProgramResponse)
+
+    expect(listed.createdByName).toBe('곽도규')
+    expect(listed.updatedByName).toBe('김도영')
+    expect(detail.createdByName).toBe('곽도규')
+    expect(detail.updatedByName).toBe('김도영')
+  })
+
+  it('does not take createdByName from serviceDetailJson', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '186401',
+      title: '감사',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+      serviceDetailJson: JSON.stringify({
+        createdByName: 'JSON등록자',
+        updatedByName: 'JSON수정자',
+      }),
+    } as ProgramResponse)
+
+    expect(program.createdByName).toBe('곽도규')
+    expect(program.updatedByName).toBe('김도영')
+  })
 })

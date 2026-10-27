@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 import type { Program } from '@/types/domain'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
-import { formatDate } from '@/features/program/shared/lib/program-detail-info-constants'
+import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/program-detail/registration-audit-value'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './common-info-edit-section.css'
 
@@ -68,31 +68,11 @@ export function ProgramCommonInfoEditRegistrationAuditForm({ program }: { progra
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최초 등록일"
-          view={
-            <>
-              {formatDate(program.createdAt)}
-              {program.createdByName ? (
-                <>
-                  <DetailInfoForm.InputsSeparator />
-                  {program.createdByName}
-                </>
-              ) : null}
-            </>
-          }
+          view={<ProgramRegistrationAuditValue at={program.createdAt} name={program.createdByName} />}
         />
         <DetailInfoForm.Field
           label="마지막 수정일"
-          view={
-            <>
-              {formatDate(program.updatedAt)}
-              {program.updatedByName ? (
-                <>
-                  <DetailInfoForm.InputsSeparator />
-                  {program.updatedByName}
-                </>
-              ) : null}
-            </>
-          }
+          view={<ProgramRegistrationAuditValue at={program.updatedAt} name={program.updatedByName} />}
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

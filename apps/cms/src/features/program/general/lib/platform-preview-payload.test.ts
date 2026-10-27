@@ -43,6 +43,15 @@ describe('resolveGeneralPreviewProgramType', () => {
     )
     expect(resolveGeneralPreviewProgramType(makeProgram())).toBe('GENERAL_ORGANIZATION')
   })
+
+  it('keeps company school program type on volunteer preview', () => {
+    const program = makeProgram({
+      id: '186416',
+      backendProgramType: 'COMPANY_SCHOOL',
+      generalParticipantTypes: ['school_institution', 'volunteer'],
+    })
+    expect(resolveGeneralPreviewProgramType(program, 'volunteers')).toBe('COMPANY_SCHOOL')
+  })
 })
 
 describe('buildGeneralProgramPortalPreview', () => {
@@ -247,6 +256,20 @@ describe('buildGeneralProgramPortalPreview', () => {
       }),
     })
     expect(detail.otherMatters).toBe('행 기타사항')
+  })
+
+  it('shows institution portal category on volunteer preview for organization programs', () => {
+    const detail = buildGeneralProgramPortalPreview({
+      audience: 'volunteers',
+      program: makeProgram({
+        id: '186416',
+        backendProgramType: 'COMPANY_SCHOOL',
+        generalParticipantTypes: ['school_institution', 'volunteer'],
+      }),
+    })
+    expect(detail.programType).toBe('COMPANY_SCHOOL')
+    expect(detail.portalCategories).toEqual(['YOUTH_YOUNG'])
+    expect(detail.applicationTargetMode).toBe('ORGANIZATION')
   })
 
   it('maps the volunteer tab with interview dates and hides notes marked not applicable', () => {

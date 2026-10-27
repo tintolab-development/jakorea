@@ -11,9 +11,14 @@ import {
   pickAudienceLiveOverlay,
   pickPreviewRecruitmentRow,
   previewCopyAudienceForTab,
-  recruitmentPreviewCatalogCode,
+  recruitmentPreviewCatalogCodes,
   type ProgramPreviewAudience,
 } from '@/features/program/shared/lib/platform-preview/preview-audience'
+import {
+  collectOperationalOverlayForCatalogId,
+  keyMatchesOperationalOverlayPrefixes,
+  operationalOverlayKeyPrefixesForCatalogId,
+} from '@/features/program/general/lib/registration-operational-form-drafts'
 
 export type PreviewRecruitAudience = ProgramPreviewAudience
 export { previewCopyAudienceForTab }
@@ -62,18 +67,39 @@ export function resolvePreviewPosterSeed(input: {
   return { displayUrl, fileObjectId }
 }
 
+function peekRecruitPreviewCatalogOverlays(
+  catalogTemplateCodes: readonly string[]
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = {}
+  for (const catalogId of catalogTemplateCodes) {
+    const collected = collectOperationalOverlayForCatalogId(catalogId)
+    if (collected != null) {
+      Object.assign(merged, collected)
+      continue
+    }
+    const prefixes = operationalOverlayKeyPrefixesForCatalogId(catalogId)
+    const peeked = peekGeneralRecruitOverlayRecord(catalogId)
+    for (const [key, value] of Object.entries(peeked)) {
+      if (keyMatchesOperationalOverlayPrefixes(key, prefixes)) merged[key] = value
+    }
+  }
+  return merged
+}
+
 /** 모집 미리보기용 live overlay (catalog peek + registrationOverlay·기관 양식). */
 export function liveRecruitPreviewOverlay(
   program: Program,
   audience: PreviewRecruitAudience,
   extraOverlay?: Record<string, unknown>
 ): Record<string, unknown> {
-  const catalog = recruitmentPreviewCatalogCode(program, audience)
+  const catalogOverlays = peekRecruitPreviewCatalogOverlays(
+    recruitmentPreviewCatalogCodes(program, audience)
+  )
   return pickAudienceLiveOverlay(
     {
       ...(program.registrationOverlay ?? {}),
       ...(audience === 'institutions' ? getApplicantRecruitInstitutionOverlayRecord() : {}),
-      ...peekGeneralRecruitOverlayRecord(catalog),
+      ...catalogOverlays,
       ...extraOverlay,
     },
     audience

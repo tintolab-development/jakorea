@@ -35,6 +35,30 @@ describe('programDetailCacheAfterSave', () => {
     expect(next.generalCommonInfo?.announcementTitle).toBe('구 공고')
   })
 
+  it('keeps PATCH echo audit names over the in-memory draft', () => {
+    const echoed = {
+      id: '186401',
+      title: '예시',
+      createdAt: '2026-12-08T00:15:00.000Z',
+      updatedAt: '2026-12-09T01:00:00.000Z',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as Program
+    const next = programDetailCacheAfterSave('186401', echoed, {
+      title: '예시',
+      createdByName: '세션사용자',
+      updatedByName: '세션사용자',
+      createdAt: '2020-01-01T00:00:00.000Z',
+      updatedAt: '2020-01-01T00:00:00.000Z',
+    })
+
+    expect(next.createdByName).toBe('곽도규')
+    expect(next.updatedByName).toBe('김도영')
+    expect(next.createdAt).toBe('2026-12-08T00:15:00.000Z')
+    expect(next.updatedAt).toBe('2026-12-09T01:00:00.000Z')
+    expect(next.title).toBe('예시')
+  })
+
   it('keeps the UJAT draft overlay when the echo omits it', () => {
     const echoed = { id: '1', title: '구 제목' } as Program
     const draft = {

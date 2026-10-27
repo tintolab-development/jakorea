@@ -327,6 +327,33 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
     ]
   )
 
+  const excelColumns: ColumnsType<ProgramManagerRow> = useMemo(
+    () => [
+      { title: 'No.', dataIndex: 'no', key: 'no' },
+      { title: '담당자명', dataIndex: 'name', key: 'name' },
+      {
+        title: '권한',
+        dataIndex: 'role',
+        key: 'role',
+        render: (role: ProgramRole) => PROGRAM_ROLE_LABELS[role] ?? '-',
+      },
+      {
+        title: '연락처',
+        dataIndex: 'phone',
+        key: 'phone',
+        render: (phone: string) => displayServerPiiAsIs(phone),
+      },
+      {
+        title: '이메일',
+        dataIndex: 'email',
+        key: 'email',
+        render: (email: string) => displayServerPiiAsIs(email),
+      },
+      { title: '등록일시', dataIndex: 'registeredAt', key: 'registeredAt' },
+    ],
+    []
+  )
+
   if (loading && managerList.length === 0) {
     return (
       <div className="program-managers-tab program-managers-tab--loading" role="status">
@@ -340,13 +367,16 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
       <FilterTableLayout
         className="program-managers-tab__filter-layout"
         bordered={false}
-        hideExcelDownload
         fields={managerFilterFields}
         filters={filterValues}
         onFilterChange={handleFilterChange}
         onSearch={handleFilterSearch}
         title="담당자 목록"
         description={`${filteredManagers.length}건`}
+        excelExport={{
+          columns: excelColumns,
+          data: filteredManagers,
+        }}
         actions={
           <>
             <FilterTableToolbarButton

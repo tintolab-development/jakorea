@@ -12,6 +12,7 @@ import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hoo
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/program-detail/registration-audit-value'
 import {
   programToDetailEditValues,
   resolveStoredEducationFormLabel,
@@ -20,7 +21,6 @@ import {
   BUSINESS_AREA_OPTIONS,
   COURSE_DELIVERED_BY_OPTIONS,
   EDUCATION_PROCESS_OPTIONS,
-  formatDate,
   formatDateRange,
   IP_OWNED_OPTIONS,
   PARTNER_INVOLVEMENT_OPTIONS,
@@ -583,31 +583,11 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="최초 등록일"
-            view={
-              <>
-                {formatDate(program.createdAt)}
-                {program.createdByName ? (
-                  <>
-                    <DetailInfoForm.InputsSeparator />
-                    {program.createdByName}
-                  </>
-                ) : null}
-              </>
-            }
+            view={<ProgramRegistrationAuditValue at={program.createdAt} name={program.createdByName} />}
           />
           <DetailInfoForm.Field
             label="마지막 수정일"
-            view={
-              <>
-                {formatDate(program.updatedAt)}
-                {program.updatedByName ? (
-                  <>
-                    <DetailInfoForm.InputsSeparator />
-                    {program.updatedByName}
-                  </>
-                ) : null}
-              </>
-            }
+            view={<ProgramRegistrationAuditValue at={program.updatedAt} name={program.updatedByName} />}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>

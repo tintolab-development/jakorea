@@ -43,6 +43,10 @@ import { stripRegistrationOverlayDebugKeys } from '@/features/program/shared/lib
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
+import {
+  omitProgramAuditNameFields,
+  readProgramAuditNames,
+} from '@/features/program/shared/lib/program-audit-names'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
@@ -720,7 +724,8 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     instructors: instructorCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
-    ...fromJson,
+    ...omitProgramAuditNameFields(fromJson),
+    ...readProgramAuditNames(dto),
     // serviceDetailJson·Primary id fallback이 목록 진행 현황을 덮지 못하게 한다.
     ujatProgressStatus,
     ...(Object.keys(registrationOverlay).length > 0
@@ -890,7 +895,7 @@ export function fromDetail(
   const mapped = applyResolvedAnnouncementTitle(
     {
     ...baseProgram({
-      ...details,
+      ...omitProgramAuditNameFields(details),
       generalCommonInfo,
       id,
       backendProgramType: dto.programType ?? 'UJAT',
@@ -982,6 +987,7 @@ export function fromDetail(
             : undefined,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
+      ...readProgramAuditNames(dto),
     }),
     ujatRegistrationOverlay: overlayForProgram,
     ...(resolvedTypedDetail ? { ujatTypedDetail: resolvedTypedDetail } : {}),

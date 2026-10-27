@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { Program } from '@/types/domain'
+import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
@@ -205,6 +207,32 @@ describe('UJAT program adapters', () => {
     expect(mapped.ujatFirstHalfVolunteerCount).toBe(120)
     expect(mapped.volunteerTargets).toEqual(['대학생'])
     expect(mapped.startTime).toBe('09:00')
+  })
+
+  it('maps createdByName and updatedByName from detail JSON', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      title: program.title,
+      createdAt: '2026-12-08T00:15:00.000Z',
+      updatedAt: '2026-12-09T01:00:00.000Z',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as ProgramResponse)
+
+    expect(mapped.createdByName).toBe('곽도규')
+    expect(mapped.updatedByName).toBe('김도영')
+  })
+
+  it('maps createdByName and updatedByName from list JSON', () => {
+    const mapped = fromListItem({
+      id: 186100,
+      title: 'UJAT',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as AdminProgramListItemDto)
+
+    expect(mapped.createdByName).toBe('곽도규')
+    expect(mapped.updatedByName).toBe('김도영')
   })
 
   it('Create는 숙박비·장거리 교통비를 paymentItems로 보낸다', () => {

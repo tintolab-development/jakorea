@@ -7,7 +7,6 @@ import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { formatDate } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveUjatRegistrationBasicInfoDisplay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { UjatBusinessKpiProgramView } from './ujat-business-kpi-program-view'
@@ -17,7 +16,7 @@ import { UjatHalfEducationScheduleProgramView } from './ujat-half-education-sche
 import { UjatEducationScheduleSettingsProgramView } from './ujat-education-schedule-settings-program-view'
 import { UjatRegionCapacityProgramView } from './ujat-region-capacity-program-view'
 import { UjatBasicInfoReadonlyView } from './ujat-basic-info-readonly-view'
-import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
+import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/program-detail/registration-audit-value'
 import { UJAT_PROGRAM_REGISTRATION_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { UJAT_REGISTRATION_SECTION_META } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-meta'
@@ -52,19 +51,11 @@ function UjatBasicInfoRegistrationAuditRow({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최초 등록일"
-          view={
-            <UjatInlineDividedSegments
-              segments={[formatDate(program.createdAt), program.createdByName]}
-            />
-          }
+          view={<ProgramRegistrationAuditValue at={program.createdAt} name={program.createdByName} />}
         />
         <DetailInfoForm.Field
           label="마지막 수정일"
-          view={
-            <UjatInlineDividedSegments
-              segments={[formatDate(program.updatedAt), program.updatedByName]}
-            />
-          }
+          view={<ProgramRegistrationAuditValue at={program.updatedAt} name={program.updatedByName} />}
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

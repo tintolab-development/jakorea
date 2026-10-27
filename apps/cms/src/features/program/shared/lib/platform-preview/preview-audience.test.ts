@@ -4,6 +4,7 @@ import {
   isPreviewAudienceOverlayKey,
   pickPreviewRecruitmentRow,
   recruitmentPreviewCatalogCode,
+  recruitmentPreviewCatalogCodes,
 } from './preview-audience'
 
 function makeProgram(overrides: Partial<Program> = {}): Program {
@@ -26,7 +27,10 @@ function makeProgram(overrides: Partial<Program> = {}): Program {
 
 describe('recruitmentPreviewCatalogCode', () => {
   it('keeps instructor, volunteer, school, and individual catalogs apart', () => {
-    const program = makeProgram()
+    const program = makeProgram({
+      id: '4021',
+      generalParticipantTypes: ['school_institution', 'individual', 'volunteer', 'teacher_instructor'],
+    })
     expect(recruitmentPreviewCatalogCode(program, 'instructors')).toBe('recruitment-instructor')
     expect(recruitmentPreviewCatalogCode(program, 'volunteers')).toBe('recruitment-volunteer')
     expect(recruitmentPreviewCatalogCode(program, 'institutions')).toBe(
@@ -35,6 +39,15 @@ describe('recruitmentPreviewCatalogCode', () => {
     expect(recruitmentPreviewCatalogCode(program, 'individuals')).toBe(
       'recruitment-participant-individual'
     )
+  })
+
+  it('maps institution preview to economy and trained-teachers catalogs by program kind', () => {
+    expect(
+      recruitmentPreviewCatalogCodes(makeProgram({ id: '170001' }), 'institutions')
+    ).toEqual(['recruitment-economy'])
+    expect(
+      recruitmentPreviewCatalogCodes(makeProgram({ id: '186001' }), 'institutions')
+    ).toEqual(['recruitment-trained-teachers'])
   })
 })
 
