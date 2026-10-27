@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { PFEmptyState, PFLoadingSpinner, PFTabs, PFText } from '@/shared/ui'
+import { PFButton, PFEmptyState, PFLoadingSpinner, PFTabs, PFText } from '@/shared/ui'
 import type { MemberNotificationResponse } from '../api/client'
 import {
   useMarkMyNotificationClickedMutation,
@@ -21,6 +21,7 @@ type NotificationInboxPanelProps = {
   /** `popover`: PC 헤더 드롭다운(420×500). `embedded`: 모달 본문을 채운다 */
   variant?: NotificationInboxPanelVariant
   className?: string
+  unreadOnly?: boolean
 }
 
 function NotificationInboxItem({
@@ -30,7 +31,7 @@ function NotificationInboxItem({
   item: MemberNotificationResponse
   onSelect: (item: MemberNotificationResponse) => void
 }) {
-  const isRead = Boolean(item.readAt)
+  const isRead = item.readAt !== null
   const categoryLabel = item.notificationCategoryLabel?.trim()
 
   return (
@@ -77,12 +78,21 @@ function NotificationInboxItem({
 export function NotificationInboxPanel({
   variant = 'popover',
   className,
+  unreadOnly = false,
 }: NotificationInboxPanelProps) {
   const [category, setCategory] = useState<NotificationCategoryTabKey>(NOTIFICATION_CATEGORY_ALL)
   const listRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
-  const { items, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useMyNotificationsInfiniteQuery(category, true)
+  const {
+    items,
+    isLoading,
+    isError,
+    isRefetching,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+  } = useMyNotificationsInfiniteQuery(category, true, unreadOnly)
   const markClicked = useMarkMyNotificationClickedMutation()
 
   useEffect(() => {
@@ -107,7 +117,7 @@ export function NotificationInboxPanel({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, items.length])
 
   const handleSelect = (item: MemberNotificationResponse) => {
-    if (item.recipientId == null || markClicked.isPending) return
+    if (markClicked.isPending) return
     markClicked.mutate(item.recipientId)
   }
 
@@ -118,10 +128,19 @@ export function NotificationInboxPanel({
         <PFLoadingSpinner label="알림을 불러오는 중" />
       </div>
     )
-  } else if (isError && items.length === 0) {
+  } else if (isError) {
     content = (
       <div className={styles.status}>
         <PFEmptyState variant="inline" title="알림을 불러오지 못했습니다." />
+        <PFButton
+          type="button"
+          variant="tertiary"
+          size="medium"
+          disabled={isRefetching}
+          onClick={() => void refetch()}
+        >
+          다시 시도
+        </PFButton>
       </div>
     )
   } else if (items.length === 0) {
@@ -136,7 +155,7 @@ export function NotificationInboxPanel({
         <ul className={styles.items}>
           {items.map(item => (
             <NotificationInboxItem
-              key={item.recipientId ?? `${item.eventId}-${item.createdAt}`}
+              key={item.recipientId}
               item={item}
               onSelect={handleSelect}
             />
@@ -159,7 +178,7 @@ export function NotificationInboxPanel({
         className,
       ]
         .filter(Boolean)
-        .join(' ')}
+      .join(' ')}
     >
       <div className={styles.tabBar}>
         <PFTabs

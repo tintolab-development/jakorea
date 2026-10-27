@@ -119,6 +119,8 @@
   flex: 1 1 auto;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-12);
   padding-block: var(--spacing-40);
 }
 

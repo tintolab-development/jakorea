@@ -91,11 +91,13 @@ export const platformQueryKeys = {
   notification: {
     all: () => [...platformQueryKeys.all, 'notification'] as const,
     /** 내 알림 목록 — GET /api/portal/me/notifications (Class E + member scoped, infinite) */
-    list: (params: { category: string; size: number }) =>
-      [...platformQueryKeys.notification.listPrefix(), params.category, params.size] as const,
+    list: (params: { page: number; size: number; unreadOnly: boolean; category?: string }) =>
+      [...platformQueryKeys.notification.listPrefix(), params] as const,
     listPrefix: () => [...platformQueryKeys.notification.all(), 'list'] as const,
     /** 미확인 알림 수 — GET /api/portal/me/notifications/unread-count (Class E) */
-    unreadCount: () => [...platformQueryKeys.notification.all(), 'unread-count'] as const,
+    unreadCountPrefix: () => [...platformQueryKeys.notification.all(), 'unread-count'] as const,
+    unreadCount: (category?: string) =>
+      [...platformQueryKeys.notification.unreadCountPrefix(), { category }] as const,
   },
 
   newsletter: {
