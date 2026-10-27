@@ -1,5 +1,4 @@
 import type { Dayjs } from 'dayjs'
-import { toInstructorApplicationNotificationRequest } from '@/features/program/general/lib/instructor-application-notification'
 import type { PermissionModalNotifyTiming } from '@/shared/components/permission-modal'
 import {
   INSTRUCTOR_JA_FAULT_PARTY_HINT,
@@ -27,14 +26,11 @@ export function toInstructorAssignmentCancelRequest(input: {
   manualNotifyAt?: Dayjs | null
   faultParty: InstructorCancelFaultParty
 }): InstructorAssignmentCancelRequest {
-  const notification = toInstructorApplicationNotificationRequest(
-    input.notifyTiming,
-    input.manualNotifyAt
-  )
+  const isScheduled = input.notifyTiming === 'manual'
   return {
     reason: input.reason,
-    timing: notification.timing,
-    scheduledAt: notification.scheduledAt,
+    timing: isScheduled ? 'SCHEDULED' : 'IMMEDIATE',
+    scheduledAt: isScheduled ? (input.manualNotifyAt?.toISOString() ?? null) : null,
     faultParty: input.faultParty,
   }
 }

@@ -23,17 +23,30 @@ describe('resolveOrganizationMergeErrorMessage', () => {
     errorSpy.mockRestore()
   })
 
-  it('maps same-education-date merge errors', () => {
+  it('maps the confirmed-assignment-required merge error', () => {
     expect(
       resolveOrganizationMergeErrorMessage({
-        error: { code: 'GENERAL_ORGANIZATION_MERGE_SAME_EDUCATION_DATE_REQUIRED' },
+        error: { code: 'GENERAL_ORGANIZATION_MERGE_CONFIRMED_ASSIGNMENT_REQUIRED' },
       })
-    ).toBe('같은 교육일의 학급만 합반할 수 있습니다.')
+    ).toBe('같은 기관의 확정 배정 학급이 2건 이상이어야 합반할 수 있습니다.')
+  })
+
+  it('no longer maps the removed same-education-date codes', () => {
     expect(
-      resolveOrganizationMergeErrorMessage({
-        error: { code: 'GENERAL_ORGANIZATION_MERGE_EDUCATION_DATE_MISSING' },
-      })
-    ).toBe('합반 대상 학급의 교육 일정을 확인할 수 없습니다.')
+      resolveOrganizationMergeErrorMessage(
+        { error: { code: 'GENERAL_ORGANIZATION_MERGE_SAME_EDUCATION_DATE_REQUIRED' } },
+        { fallback: '저장에 실패했습니다.' }
+      )
+    ).not.toContain('교육일')
+  })
+
+  it('maps CLASS_MERGE_CANCEL_NOT_ALLOWED (DELETE 409) to the cancel-not-allowed message', () => {
+    expect(
+      resolveOrganizationMergeErrorMessage(
+        { error: { code: 'CLASS_MERGE_CANCEL_NOT_ALLOWED', message: '서버 문구' } },
+        { httpStatus: 409 }
+      )
+    ).toBe('합반 확정 후에는 취소할 수 없습니다.')
   })
 
   it('keeps the common message for an unknown code', () => {

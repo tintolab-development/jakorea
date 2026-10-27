@@ -22,6 +22,7 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import { ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/general/lib/organization-application-approve-slots'
 import { formatOrganizationApproveScheduleCard } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import '@/features/program/shared/ui/detail-modal/components/institution-approve-modal.css'
@@ -375,6 +376,7 @@ export function IndividualApproveScopeModal({
       onCancel={onCancel}
       onConfirm={handleConfirm}
       width={600}
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
     >
       <PermissionModalMessage text={buildIndividualApproveMessage(participantName)} />
       <div className="institution-approve-modal__schedule-section">
@@ -532,6 +534,7 @@ export function IndividualBulkApproveScopeModal({
       onCancel={onCancel}
       onConfirm={handleConfirm}
       width={640}
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
     >
       <PermissionModalMessage
         text={`선택한 ${applicants.length}명의 참여자를 각자 확인한 교육 일정으로 승인합니다.\n한 일정을 모든 신청자에게 복사하지 않습니다.`}

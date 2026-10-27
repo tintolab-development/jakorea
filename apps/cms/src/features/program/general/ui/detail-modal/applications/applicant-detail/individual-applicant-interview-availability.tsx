@@ -19,7 +19,7 @@ export function IndividualApplicantInterviewAvailabilitySection({
       <DetailInfoForm title="면접 진행 가능 일정" mode="view">
         {days.length === 0 ? (
           <DetailInfoForm.Row type="custom">
-            <div className="instructor-resume-free-writing-card">
+            <div className="instructor-resume-card">
               <p className="instructor-resume-free-writing-text">-</p>
             </div>
           </DetailInfoForm.Row>

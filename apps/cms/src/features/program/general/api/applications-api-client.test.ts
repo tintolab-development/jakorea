@@ -28,6 +28,12 @@ import {
   updateIndividualDocumentEvaluationRemote,
   updateInstructorApplication,
   updateVolunteerDocumentEvaluationRemote,
+  approveIndividualApplicationWithEducationScopeRemote,
+  bulkApproveIndividualApplicationsWithEducationScopeRemote,
+  rejectIndividualApplicationRemote,
+  bulkRejectIndividualApplicationsRemote,
+  bulkApproveOrganizationApplicationsRemote,
+  rejectOrganizationApplicationRemote,
 } from './applications-api-client'
 
 describe('updateIndividualApplication', () => {
@@ -435,6 +441,35 @@ describe('cancelIndividualApplicationApprovalRemote', () => {
       data: { reason: '일정 중복으로 승인 취소' },
     })
   })
+
+  it('직접 설정이면 nested notification을 함께 보낸다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 1690625,
+      applicationType: 'INDIVIDUAL',
+      fromStatus: 'APPROVED',
+      toStatus: 'REJECTED',
+    })
+
+    await cancelIndividualApplicationApprovalRemote('1690625', {
+      reason: '일정 중복으로 승인 취소',
+      notification: {
+        timing: 'SCHEDULED',
+        scheduledAt: '2026-11-01T01:00:00.000Z',
+      },
+    })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/1690625/cancel-approval',
+      method: 'POST',
+      data: {
+        reason: '일정 중복으로 승인 취소',
+        notification: {
+          timing: 'SCHEDULED',
+          scheduledAt: '2026-11-01T01:00:00.000Z',
+        },
+      },
+    })
+  })
 })
 
 describe('approveOrganizationApplicationRemote', () => {
@@ -626,5 +661,114 @@ describe('normalizeApplicationsPageDto', () => {
     })
     expect(page.items).toHaveLength(1)
     expect(page.items?.[0]).toEqual({ id: 2 })
+  })
+})
+
+describe('individual scope approve/reject notify payload', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+    vi.mocked(customInstance).mockResolvedValue({ applicationId: 1 })
+  })
+
+  it('단건 일정 확정 승인은 예약 시점을 봉투에 붙인다', async () => {
+    await approveIndividualApplicationWithEducationScopeRemote('11', {
+      confirmedScheduleIds: [1],
+      expectedScopeRevision: 0,
+      reason: '확정',
+      timing: 'SCHEDULED',
+      scheduledAt: '2026-11-01T00:00:00Z',
+    })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/11/approve-with-education-scope',
+      method: 'POST',
+      data: {
+        confirmedScheduleIds: [1],
+        expectedScopeRevision: 0,
+        reason: '확정',
+        timing: 'SCHEDULED',
+        scheduledAt: '2026-11-01T00:00:00Z',
+      },
+    })
+  })
+
+  it('단건 일정 확정 발표일에는 scheduledAt이 없다', async () => {
+    await approveIndividualApplicationWithEducationScopeRemote('11', {
+      confirmedScheduleIds: [1],
+      expectedScopeRevision: 0,
+      reason: '확정',
+      timing: 'ON_ANNOUNCEMENT',
+    })
+    expect(customInstance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.not.objectContaining({ scheduledAt: expect.anything() }),
+      })
+    )
+    expect(vi.mocked(customInstance).mock.calls[0]?.[0].data.timing).toBe('ON_ANNOUNCEMENT')
+  })
+
+  it('일괄 일정 확정 시점 필드는 target 안이 아니라 봉투에 둔다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({ successCount: 1, failureCount: 0 })
+    await bulkApproveIndividualApplicationsWithEducationScopeRemote({
+      reason: '확정',
+      targets: [{ applicationId: 11, confirmedScheduleIds: [1], expectedScopeRevision: 0 }],
+      timing: 'ON_ANNOUNCEMENT',
+    })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/bulk-approve-with-education-scope',
+      method: 'POST',
+      data: {
+        reason: '확정',
+        targets: [{ applicationId: 11, confirmedScheduleIds: [1], expectedScopeRevision: 0 }],
+        timing: 'ON_ANNOUNCEMENT',
+      },
+    })
+  })
+
+  it('단건/일괄 최종 반려에 예약·발표일을 전달한다', async () => {
+    await rejectIndividualApplicationRemote('11', {
+      reason: '반려',
+      timing: 'SCHEDULED',
+      scheduledAt: '2026-11-01T00:00:00Z',
+    })
+    expect(customInstance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/admin/individual-applications/11/reject',
+        data: {
+          reason: '반려',
+          timing: 'SCHEDULED',
+          scheduledAt: '2026-11-01T00:00:00Z',
+        },
+      })
+    )
+
+    vi.mocked(customInstance).mockResolvedValue({ successCount: 2, failureCount: 0 })
+    await bulkRejectIndividualApplicationsRemote([11, 12], '반려', {
+      timing: 'ON_ANNOUNCEMENT',
+    })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/bulk-reject',
+      method: 'POST',
+      data: { ids: [11, 12], reason: '반려', timing: 'ON_ANNOUNCEMENT' },
+    })
+  })
+
+  it('기관 일괄 승인과 단건 반려에 발표일을 전달한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({ successCount: 2, failureCount: 0 })
+    await bulkApproveOrganizationApplicationsRemote([101, 102], { timing: 'ON_ANNOUNCEMENT' })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/organization-applications/bulk-approve',
+      method: 'POST',
+      data: { ids: [101, 102], timing: 'ON_ANNOUNCEMENT' },
+    })
+
+    await rejectOrganizationApplicationRemote('101', {
+      reason: '반려',
+      timing: 'ON_ANNOUNCEMENT',
+    })
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/organization-applications/101/reject',
+      method: 'POST',
+      data: { reason: '반려', timing: 'ON_ANNOUNCEMENT' },
+    })
   })
 })

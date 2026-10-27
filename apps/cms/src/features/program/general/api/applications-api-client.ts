@@ -9,7 +9,7 @@ import type { IndividualApprovalWithScopeBulkTarget } from '@/shared/api/generat
 import type { IndividualApprovalWithScopeRequest } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeRequest'
 import type { Result as IndividualApprovalWithScopeResult } from '@/shared/api/generated/dashboard/schemas/result'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
-import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
+import type { TimedBulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/timedBulkIdsRequest'
 import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas/bulkResultRequest'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
@@ -153,11 +153,11 @@ export type InstructorApplicationUpdatePayload = {
   businessIncomeEarnerStatus?: '해당' | '해당 없음' | string
 }
 
-/** 기관 승인·반려 / 강사 일괄 — 평탄 timing. 생략 시 즉시 발송. IMMEDIATE·ON_ANNOUNCEMENT에 scheduledAt 금지. */
-export type OrganizationDecisionNotifyRequest = {
-  timing?: 'IMMEDIATE' | 'SCHEDULED' | 'ON_ANNOUNCEMENT'
-  scheduledAt?: string
-}
+/** 기관 승인·반려 / 강사 일괄 — generated BulkDecisionRequest의 평탄 timing 필드. */
+export type OrganizationDecisionNotifyRequest = Pick<
+  BulkDecisionRequest,
+  'timing' | 'scheduledAt'
+>
 
 /** OpenAPI `SlotRequest` — 레거시 slots 호환 입력 */
 export type OrganizationApplicationApproveSlotRequest = SlotRequest
@@ -495,7 +495,7 @@ export async function approveOrganizationApplicationRemote(
 
 export async function rejectOrganizationApplicationRemote(
   applicationId: string,
-  payload: ApplicationRejectRequest & OrganizationDecisionNotifyRequest
+  payload: ApplicationRejectRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
@@ -631,7 +631,7 @@ export async function bulkApproveOrganizationApplicationsRemote(
   ids: number[],
   notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
-  const body: BulkIdsRequest & OrganizationDecisionNotifyRequest = {
+  const body: TimedBulkIdsRequest = {
     ids,
     ...(notify?.timing ? { timing: notify.timing } : {}),
     ...(notify?.scheduledAt ? { scheduledAt: notify.scheduledAt } : {}),
@@ -651,7 +651,7 @@ export async function bulkRejectOrganizationApplicationsRemote(
   reason: string,
   notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
-  const body: BulkDecisionRequest & OrganizationDecisionNotifyRequest = {
+  const body: BulkDecisionRequest = {
     ids,
     reason,
     ...(notify?.timing ? { timing: notify.timing } : {}),
@@ -671,7 +671,7 @@ export async function bulkApproveInstructorApplicationsRemote(
   ids: number[],
   notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
-  const body: BulkIdsRequest & OrganizationDecisionNotifyRequest = {
+  const body: TimedBulkIdsRequest = {
     ids,
     ...(notify?.timing ? { timing: notify.timing } : {}),
     ...(notify?.scheduledAt ? { scheduledAt: notify.scheduledAt } : {}),
@@ -691,7 +691,7 @@ export async function bulkRejectInstructorApplicationsRemote(
   reason: string,
   notify?: OrganizationDecisionNotifyRequest
 ): Promise<BulkActionResponse> {
-  const body: BulkDecisionRequest & OrganizationDecisionNotifyRequest = {
+  const body: BulkDecisionRequest = {
     ids,
     reason,
     ...(notify?.timing ? { timing: notify.timing } : {}),
@@ -746,7 +746,7 @@ export async function approveIndividualApplicationWithEducationScopeRemote(
 export async function bulkApproveIndividualApplicationsWithEducationScopeRemote(payload: {
   reason: string
   targets: IndividualApprovalWithScopeBulkTarget[]
-}): Promise<BulkActionResponse> {
+} & OrganizationDecisionNotifyRequest): Promise<BulkActionResponse> {
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: '/api/admin/individual-applications/bulk-approve-with-education-scope',
@@ -769,6 +769,26 @@ export async function rejectIndividualApplicationRemote(
   )
 }
 
+export async function bulkRejectIndividualApplicationsRemote(
+  ids: number[],
+  reason: string,
+  notify?: OrganizationDecisionNotifyRequest
+): Promise<BulkActionResponse> {
+  const body: BulkDecisionRequest = {
+    ids,
+    reason,
+    ...(notify?.timing ? { timing: notify.timing } : {}),
+    ...(notify?.scheduledAt ? { scheduledAt: notify.scheduledAt } : {}),
+  }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: '/api/admin/individual-applications/bulk-reject',
+      method: 'POST',
+      data: body,
+    })
+  )
+}
+
 export async function cancelIndividualApplicationRejectionRemote(
   applicationId: string,
   payload: ApplicationDecisionCancelRequestWithNotification
@@ -784,7 +804,7 @@ export async function cancelIndividualApplicationRejectionRemote(
 
 export async function cancelIndividualApplicationApprovalRemote(
   applicationId: string,
-  payload: ApplicationDecisionCancelRequest
+  payload: ApplicationDecisionCancelRequestWithNotification
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({

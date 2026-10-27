@@ -20,6 +20,7 @@ import {
   fetchGeneralInstructorApplicationsPage,
   fetchGeneralOrganizationApplicationsPage,
   rejectGeneralIndividualApplication,
+  bulkRejectGeneralIndividualApplications,
   rejectGeneralInstructorApplication,
   rejectGeneralOrganizationApplication,
   resendGeneralInstructorApplicationNotification,
@@ -191,6 +192,7 @@ export function useGeneralProgramApplicationsRemoteSync({
     bulkApproveIndividualWithEducationScope:
       bulkApproveGeneralIndividualApplicationsWithEducationScope,
     rejectIndividual: rejectGeneralIndividualApplication,
+    bulkRejectIndividual: bulkRejectGeneralIndividualApplications,
     cancelIndividualApproval: cancelGeneralIndividualApplicationApproval,
     cancelIndividualRejection: cancelGeneralIndividualApplicationRejection,
     submitIndividualDocumentResult: submitGeneralIndividualDocumentResult,

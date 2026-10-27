@@ -22,6 +22,7 @@ import {
   approveIndividualApplicationRemote,
   approveIndividualApplicationWithEducationScopeRemote,
   bulkApproveIndividualApplicationsWithEducationScopeRemote,
+  bulkRejectIndividualApplicationsRemote,
   approveInstructorApplicationRemote,
   approveOrganizationApplicationRemote,
   bulkApproveInstructorApplicationsRemote,
@@ -349,7 +350,7 @@ export async function approveGeneralOrganizationApplication(
 
 export async function rejectGeneralOrganizationApplication(
   applicationId: string,
-  payload: ApplicationRejectRequest & OrganizationDecisionNotifyRequest
+  payload: ApplicationRejectRequest
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await rejectOrganizationApplicationRemote(applicationId, payload)
@@ -385,7 +386,7 @@ export async function bulkApproveGeneralOrganizationApplications(
 
 export async function bulkRejectGeneralOrganizationApplications(
   applicationIds: string[],
-  payload: ApplicationRejectRequest & OrganizationDecisionNotifyRequest
+  payload: ApplicationRejectRequest
 ): Promise<BulkActionResponse> {
   assertApplicationsRemoteReady()
   const ids = toBulkNumericApplicationIds(applicationIds)
@@ -475,7 +476,7 @@ export async function bulkApproveGeneralInstructorApplications(
 
 export async function bulkRejectGeneralInstructorApplications(
   applicationIds: string[],
-  payload: ApplicationRejectRequest & OrganizationDecisionNotifyRequest
+  payload: ApplicationRejectRequest
 ): Promise<BulkActionResponse> {
   assertApplicationsRemoteReady()
   const ids = toBulkNumericApplicationIds(applicationIds)
@@ -502,10 +503,12 @@ export async function approveGeneralIndividualApplicationWithEducationScope(
   return approveIndividualApplicationWithEducationScopeRemote(applicationId, payload)
 }
 
-export async function bulkApproveGeneralIndividualApplicationsWithEducationScope(payload: {
-  reason: string
-  targets: import('@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeBulkTarget').IndividualApprovalWithScopeBulkTarget[]
-}) {
+export async function bulkApproveGeneralIndividualApplicationsWithEducationScope(
+  payload: {
+    reason: string
+    targets: import('@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeBulkTarget').IndividualApprovalWithScopeBulkTarget[]
+  } & import('@/features/program/general/api/applications-api-client').OrganizationDecisionNotifyRequest
+) {
   assertApplicationsRemoteReady()
   return bulkApproveIndividualApplicationsWithEducationScopeRemote(payload)
 }
@@ -516,6 +519,21 @@ export async function rejectGeneralIndividualApplication(
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await rejectIndividualApplicationRemote(applicationId, payload)
+}
+
+export async function bulkRejectGeneralIndividualApplications(
+  applicationIds: string[],
+  payload: ApplicationRejectRequest
+): Promise<BulkActionResponse> {
+  assertApplicationsRemoteReady()
+  const ids = toBulkNumericApplicationIds(applicationIds)
+  if (!ids?.length) {
+    throw new Error('개인 신청 ID를 확인할 수 없습니다.')
+  }
+  return bulkRejectIndividualApplicationsRemote(ids, payload.reason, {
+    ...(payload.timing ? { timing: payload.timing } : {}),
+    ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
+  })
 }
 
 export async function cancelGeneralIndividualApplicationRejection(
@@ -533,11 +551,13 @@ export async function cancelGeneralIndividualApplicationRejection(
 
 export async function cancelGeneralIndividualApplicationApproval(
   applicationId: string,
-  reason: string
+  reason: string,
+  notification?: InstructorApplicationNotificationRequest
 ): Promise<ApplicationDecisionResponse> {
   assertApplicationsRemoteReady()
   return cancelIndividualApplicationApprovalRemote(applicationId, {
     reason: reason.trim() || '승인 취소',
+    ...(notification ? { notification } : {}),
   })
 }
 

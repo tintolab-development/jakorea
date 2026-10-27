@@ -19,6 +19,7 @@ import {
   formatModalBracketedSubjectName,
 } from '@/features/program/general/lib/modal-message-subject'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
+import type { NotifyTimingCapability } from '@/shared/lib/notify-timing-capability'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import './instructor-bulk-approve-modal.css'
@@ -158,12 +159,14 @@ export function ParticipantBulkApproveModal({
   onCancel,
   onConfirm,
   zIndex = FLOW_MODAL_Z,
+  notifyTimingCapability,
 }: {
   open: boolean
   selectionCount: number
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
+  notifyTimingCapability?: NotifyTimingCapability
 }) {
   return (
     <PermissionModal
@@ -176,6 +179,7 @@ export function ParticipantBulkApproveModal({
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}
+      notifyTimingCapability={notifyTimingCapability}
     />
   )
 }

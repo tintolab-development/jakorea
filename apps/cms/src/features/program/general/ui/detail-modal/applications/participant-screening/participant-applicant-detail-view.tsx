@@ -51,6 +51,7 @@ import {
 } from '@/shared/ui'
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import {
   ApplicantsDetailContents,
 } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-contents'
@@ -74,7 +75,11 @@ import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extr
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { formatApplicationDecisionCancelConflictMessage } from '@/features/program/shared/lib/application-decision-cancel-conflict'
 import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
-import { toNestedDecisionNotification, toScreeningNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
+import {
+  toNestedDecisionNotification,
+  toScreeningNotifyFields,
+  toTimedBulkNotifyTiming,
+} from '@/features/program/general/lib/application-decision-notify-timing'
 import type { VolunteerInterview2CancelFailConfirmPayload } from '@/features/program/general/lib/volunteer-interview2-cancel-fail'
 import { GeneralVolunteerInterview2CancelPassModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-cancel-pass-modal'
 import { GeneralVolunteerInterview2CancelFailModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-cancel-fail-modal'
@@ -721,6 +726,7 @@ export function GeneralParticipantApplicantDetailView({
                   confirmedScheduleIds: payload.confirmedScheduleIds,
                   expectedScopeRevision: payload.expectedScopeRevision,
                   reason: payload.reason,
+                  ...toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt),
                 }
               )
               await invalidateIndividualApprovalScopeQueries(queryClient, {
@@ -789,7 +795,10 @@ export function GeneralParticipantApplicantDetailView({
             if (useRemote) {
               setDecisionBusy(true)
               try {
-                await submitGeneralIndividualDocumentResult(applicant.id, { result: 'PASS' })
+                await submitGeneralIndividualDocumentResult(applicant.id, {
+                  result: 'PASS',
+                  ...toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt),
+                })
                 await invalidateIndividualApplications()
               } catch (error) {
                 notifyDecisionFailure(error)
@@ -815,6 +824,7 @@ export function GeneralParticipantApplicantDetailView({
         variant="single"
         subjectName={rejectTarget?.name ?? ''}
         zIndex={2500}
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
         onCancel={() => {
           if (decisionBusy) return
           setRejectTarget(null)
@@ -834,10 +844,12 @@ export function GeneralParticipantApplicantDetailView({
                   await submitGeneralIndividualDocumentResult(applicant.id, {
                     result: 'FAIL',
                     reason: payload.reason.trim() || '반려',
+                    ...toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt),
                   })
                 } else {
                   await rejectGeneralIndividualApplication(applicant.id, {
                     reason: payload.reason.trim() || '반려',
+                    ...toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt),
                   })
                 }
                 await invalidateIndividualApplications()
@@ -883,7 +895,12 @@ export function GeneralParticipantApplicantDetailView({
             if (useRemote) {
               setDecisionBusy(true)
               try {
-                await cancelGeneralIndividualApplicationApproval(applicant.id, payload.reason)
+                await cancelGeneralIndividualApplicationApproval(
+                  applicant.id,
+                  payload.reason,
+                  toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)
+                    ?.notification
+                )
                 await invalidateIndividualApplications()
                 await detailQuery.refetch()
               } catch (error) {

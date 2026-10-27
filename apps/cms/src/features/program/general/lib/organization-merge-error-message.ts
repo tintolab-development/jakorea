@@ -1,3 +1,4 @@
+import { COMBINED_CLASS_CANCEL_NOT_ALLOWED_MESSAGE } from '@/features/program/general/lib/combined-class-copy'
 import {
   extractApiErrorCode,
   extractApiErrorMessage,
@@ -18,10 +19,9 @@ export const ORGANIZATION_MERGE_ERROR_MESSAGES: Record<string, string> = {
   GENERAL_ORGANIZATION_MERGE_NEXT_SCHEDULE_REQUIRED:
     '합반을 적용할 다음 교육 일정이 없습니다. 교육 일정을 확인해 주세요.',
   GENERAL_ORGANIZATION_MERGE_SINGLE_SESSION_ONLY: '단일 회차 프로그램만 합반할 수 있습니다.',
-  GENERAL_ORGANIZATION_MERGE_SAME_EDUCATION_DATE_REQUIRED:
-    '같은 교육일의 학급만 합반할 수 있습니다.',
-  GENERAL_ORGANIZATION_MERGE_EDUCATION_DATE_MISSING:
-    '합반 대상 학급의 교육 일정을 확인할 수 없습니다.',
+  GENERAL_ORGANIZATION_MERGE_CONFIRMED_ASSIGNMENT_REQUIRED:
+    '같은 기관의 확정 배정 학급이 2건 이상이어야 합반할 수 있습니다.',
+  CLASS_MERGE_CANCEL_NOT_ALLOWED: COMBINED_CLASS_CANCEL_NOT_ALLOWED_MESSAGE,
 }
 
 function readTraceId(data: unknown): string | undefined {
