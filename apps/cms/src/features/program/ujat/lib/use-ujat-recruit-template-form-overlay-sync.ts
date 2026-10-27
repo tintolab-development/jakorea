@@ -29,9 +29,7 @@ import {
   ujatVolunteerRecruitInterviewRangeSealKey,
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
-import {
-  coalesceUjatRecruitOverlay,
-} from '@/features/program/ujat/lib/ujat-recruit-overlay-coalesce'
+import { coalesceUjatRecruitOverlay } from '@/features/program/ujat/lib/ujat-recruit-overlay-coalesce'
 import { patchGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import {
   getUjatRecruitInstitutionOverlayRecord,
@@ -89,10 +87,7 @@ const VOLUNTEER_DIRTY_FIELD_KEYS: Record<string, readonly string[]> = {
   volunteerRecruitmentNoticeExposure: [VOLUNTEER_KEYS.noticeExposure],
 }
 
-function remapVolunteerDirtyKeyToHalf(
-  key: string,
-  half: UjatVolunteerRecruitHalf
-): string {
+function remapVolunteerDirtyKeyToHalf(key: string, half: UjatVolunteerRecruitHalf): string {
   const fieldByLegacy = Object.entries({
     publicTitle: VOLUNTEER_KEYS.publicTitle,
     announcementPublished: VOLUNTEER_KEYS.announcementPublished,
@@ -173,10 +168,15 @@ function readOverlayContact(overlay: Record<string, unknown>, key: string) {
   return value as { name?: string; phone?: string; email?: string }
 }
 
-function readOverlayStringList(overlay: Record<string, unknown>, key: string): string[] | undefined {
+function readOverlayStringList(
+  overlay: Record<string, unknown>,
+  key: string
+): string[] | undefined {
   const value = overlay[key]
   if (!Array.isArray(value)) return undefined
-  const list = value.filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+  const list = value.filter(
+    (item): item is string => typeof item === 'string' && item.trim() !== ''
+  )
   return list.length > 0 ? list : undefined
 }
 
@@ -482,8 +482,7 @@ export function useUjatRecruitTemplateFormOverlaySync(
     const subscription = form.watch((values, info) => {
       if (!readyRef.current) return
       if (info.name == null && info.type == null) return
-      const dirtyFormField =
-        info.type === 'change' || info.type === 'blur' ? info.name : undefined
+      const dirtyFormField = info.type === 'change' || info.type === 'blur' ? info.name : undefined
       patchRecruitOverlayFromForm(
         kind,
         values as ProgramDetailEditFormValues,
@@ -502,10 +501,9 @@ export function useUjatRecruitTemplateFormOverlaySync(
   useEffect(() => {
     const handleDevAutofillComplete = () => {
       readyRef.current = false
-      form.reset(
-        programToUjatRecruitTemplateFormValues(programRef.current, kind, volunteerHalf),
-        { keepDefaultValues: false }
-      )
+      form.reset(programToUjatRecruitTemplateFormValues(programRef.current, kind, volunteerHalf), {
+        keepDefaultValues: false,
+      })
       readyRef.current = true
     }
 
