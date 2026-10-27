@@ -33,7 +33,7 @@ function resolveSurveyStartLabel(
 }
 
 /** 설문 제목형 — 기간 항상 노출. 마감 없음은 종료일 생략(`YYYY년 M월 D일 ~`) */
-function resolveEducationSurveyPeriodLabel(
+export function resolveEducationSurveyPeriodLabel(
   paragraph: TitleWithPeriodParagraph,
   surveyCreatedAt?: string | null
 ): string {

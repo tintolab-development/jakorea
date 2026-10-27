@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
-import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import type { TitleWithPeriodParagraph, WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton, useProgramDetail } from '@/features/program'
 import { writingFormDraftFromApplicationForm } from '@/features/program/lib/application-form-draft'
 import { EducationSurveyFormBody } from '@/features/mypage/education/surveys/ui/survey-form-body'
+import { resolveEducationSurveyPeriodLabel } from '@/features/mypage/education/surveys/ui/survey-header'
 import {
   EMPTY_SURVEY_SIDECAR,
   type SurveySidecarState,
@@ -63,18 +64,6 @@ function parsePositiveInteger(value: string | null): number | null {
   if (!value || !/^\d+$/.test(value)) return null
   const parsed = Number(value)
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
-}
-
-function formatDateLabel(value: string | null | undefined): string {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return ''
-  const [year, month, day] = value.split('-')
-  return `${year}년 ${month}월 ${day}일`
-}
-
-function formatPeriod(start: string | null | undefined, end: string | null | undefined): string {
-  const startLabel = formatDateLabel(start)
-  const endLabel = formatDateLabel(end)
-  return startLabel && endLabel ? `${startLabel} ~ ${endLabel}` : startLabel || endLabel
 }
 
 function formatTime(value: string | null | undefined): string {
@@ -436,8 +425,15 @@ export function MypageLectureReportWritePage() {
     }
   }
 
-  const pageTitle = reportTitle(program?.title, loaded?.assignment)
-  const period = formatPeriod(program?.operatingPeriodStart, program?.operatingPeriodEnd)
+  const titleParagraph = draft?.paragraphs.find(
+    (paragraph): paragraph is TitleWithPeriodParagraph =>
+      paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period',
+  )
+  const pageTitle = titleParagraph?.surveyTitle?.trim() || reportTitle(program?.title, loaded?.assignment)
+  const pageDescription = titleParagraph?.surveyDescription?.trim() || undefined
+  const period = titleParagraph?.showWritingPeriodOnForm
+    ? resolveEducationSurveyPeriodLabel(titleParagraph, loaded?.assignment.startAt)
+    : ''
   const formProgramTitle =
     program?.title || toDisplayEducationScheduleName(loaded?.assignment.scheduleName) || '강의'
 
@@ -461,7 +457,7 @@ export function MypageLectureReportWritePage() {
       className={styles.page}
       back={<ProgramBackButton size="small" label="이전으로" onClick={() => navigate(backPath)} />}
       title={pageTitle}
-      description="JA Korea의 더 나은 변화를 위해 여러분의 의견을 들려주세요."
+      description={pageDescription}
       titleAside={
         period ? (
           <PFText as="p" typo="bd-lg-sb" color="primary-500" className={styles.period}>

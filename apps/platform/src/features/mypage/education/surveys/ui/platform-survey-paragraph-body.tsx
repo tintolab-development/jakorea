@@ -4,6 +4,7 @@ import type {
   LectureReportProgramProgressParagraph,
   MultipleChoiceParagraph,
   ScaleTypeParagraph,
+  SessionPlanShortEssayParagraph,
   ShortEssayParagraph,
   StarRateParagraph,
   TimeParagraph,
@@ -31,7 +32,7 @@ import { SurveyTimeField } from './fields/time-field'
 import { SurveyUserInfoField } from './fields/user-info-field'
 import type { SurveySidecarState } from '../lib/survey-sidecar'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
-import reportPreviewStyles from '@/features/mypage/education/schedules/ui/lecture-report-preview-body.module.css'
+import surveyFieldStyles from './survey-fields.module.css'
 
 export type { SurveySidecarState }
 
@@ -82,10 +83,13 @@ export function PlatformSurveyParagraphBody({
     )
   }
 
-  if (paragraph.kind === 'single_item' && paragraph.variant === 'short_essay') {
+  if (
+    paragraph.kind === 'single_item' &&
+    (paragraph.variant === 'short_essay' || paragraph.variant === 'session_plan_short_essay')
+  ) {
     return (
       <SurveyShortEssayField
-        paragraph={paragraph as ShortEssayParagraph}
+        paragraph={paragraph as ShortEssayParagraph | SessionPlanShortEssayParagraph}
         onUpdateParagraph={onUpdateParagraph}
         disabled={readOnly}
       />
@@ -262,7 +266,7 @@ function LectureReportProgramProgressField({
   ]
 
   return (
-    <table className={reportPreviewStyles.infoTable}>
+    <table className={surveyFieldStyles.infoTable}>
       <tbody>
         {rows.map(row => (
           <tr key={row[0]}>
