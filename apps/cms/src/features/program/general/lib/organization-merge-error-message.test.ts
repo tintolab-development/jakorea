@@ -60,4 +60,17 @@ describe('resolveOrganizationMergeErrorMessage', () => {
       )
     ).toBe('서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.')
   })
+
+  it('maps PATCH lead-teacher errors (NOT_ACTIVE, LEAD_TEACHER_MUST_BE_MEMBER_TEACHER)', () => {
+    expect(
+      resolveOrganizationMergeErrorMessage({
+        error: { code: 'GENERAL_ORGANIZATION_MERGE_NOT_ACTIVE' },
+      })
+    ).toContain('유효하지 않은 합반')
+    expect(
+      resolveOrganizationMergeErrorMessage({
+        error: { code: 'GENERAL_ORGANIZATION_MERGE_LEAD_TEACHER_MUST_BE_MEMBER_TEACHER' },
+      })
+    ).toContain('대표 담당 교사')
+  })
 })
