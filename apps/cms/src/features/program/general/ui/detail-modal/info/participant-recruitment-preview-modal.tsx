@@ -42,6 +42,7 @@ export function ParticipantRecruitmentPreviewModal({
   sponsorName,
   audience = 'institutions',
   programKind = 'general',
+  extraOverlay,
 }: {
   open: boolean
   onClose: () => void
@@ -50,6 +51,8 @@ export function ParticipantRecruitmentPreviewModal({
   audience?: RecruitmentUserPreviewAudience
   /** UJAT 등록·상세는 `ujat` — 학교/봉사단 모집 매핑 */
   programKind?: 'general' | 'ujat'
+  /** 상세 수정 미리보기 — 폼 overlay. 저장본·peek보다 나중에 덮는다. */
+  extraOverlay?: Record<string, unknown>
 }) {
   const posterUrl = usePreviewPosterUrl(program, open, audience)
 
@@ -62,14 +65,19 @@ export function ParticipantRecruitmentPreviewModal({
             sponsorName,
             audience: audience === 'volunteers' ? 'volunteers' : 'institutions',
           })
-        : buildGeneralProgramPortalPreview({ program, sponsorName, audience })
+        : buildGeneralProgramPortalPreview({
+            program,
+            sponsorName,
+            audience,
+            extraOverlay,
+          })
     return buildPlatformPreviewMessage(detail, {
       thumbnailUrl: posterUrl,
       attachments: toPreviewAttachments(
         resolveAudiencePreviewAttachmentNames({ program, audience })
       ),
     })
-  }, [open, program, sponsorName, audience, programKind, posterUrl])
+  }, [open, program, sponsorName, audience, programKind, posterUrl, extraOverlay])
 
   return (
     <PlatformPreviewModal

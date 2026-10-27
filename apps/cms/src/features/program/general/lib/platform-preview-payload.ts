@@ -66,7 +66,8 @@ export function previewAudienceFromGeneralRecruitTab(
 /** 해당 탭 catalog overlay + 모집 행. 다른 탭 양식·프로그램 공통 문구로 채우지 않는다. */
 export function resolveRecruitmentPreviewProgram(
   program: Program,
-  audience: ProgramPreviewAudience
+  audience: ProgramPreviewAudience,
+  extraOverlay?: Record<string, unknown>
 ): Program {
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
   const row = pickPreviewRecruitmentRow(program, audience)
@@ -74,7 +75,7 @@ export function resolveRecruitmentPreviewProgram(
     row?.id != null && program.activeRecruitmentId !== row.id
       ? { ...program, activeRecruitmentId: row.id }
       : program
-  const live = liveRecruitPreviewOverlay(focused, audience)
+  const live = liveRecruitPreviewOverlay(focused, audience, extraOverlay)
   const withLive =
     Object.keys(live).length > 0
       ? applyGeneralRecruitOverlayToProgram(focused, live, { preferOverlay: true })
@@ -86,6 +87,8 @@ export type ProgramPortalPreviewInput = {
   program: Program
   sponsorName?: string
   audience: ProgramPreviewAudience
+  /** 상세 수정 미리보기 — 폼에서 만든 overlay. peek store보다 나중에 덮는다. */
+  extraOverlay?: Record<string, unknown>
 }
 
 type RecruitmentInfo = Partial<
@@ -410,7 +413,11 @@ function buildVenue(program: Program): string | undefined {
 export function buildProgramPortalPreviewDetail(
   input: ProgramPortalPreviewInput & { programType: string; portalCategories?: string[] }
 ): PortalProgramDetail {
-  const program = resolveRecruitmentPreviewProgram(input.program, input.audience)
+  const program = resolveRecruitmentPreviewProgram(
+    input.program,
+    input.audience,
+    input.extraOverlay
+  )
   const { sponsorName, audience, programType, portalCategories } = input
   const common = program.generalCommonInfo
   const info = recruitmentInfoFor(program, audience)

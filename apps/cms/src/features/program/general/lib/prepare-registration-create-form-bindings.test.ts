@@ -41,6 +41,12 @@ vi.mock('@/features/program/general/lib/registration-wizard-form-draft', () => (
   loadRegistrationWizardFormDraft: (...args: unknown[]) => loadRegistrationWizardFormDraft(...args),
 }))
 
+const resolveProgramOperationalBindingKind = vi.fn(() => 'GENERAL')
+vi.mock('@/features/program/general/lib/program-operational-binding-profile', () => ({
+  resolveProgramOperationalBindingKind: (...args: unknown[]) =>
+    resolveProgramOperationalBindingKind(...(args as [])),
+}))
+
 vi.mock('@/features/program/general/lib/resolve-program-api-type-for-draft', () => ({
   resolveRegistrationProgramDraftProgramType: () => 'GENERAL',
 }))
@@ -83,6 +89,7 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
     createSeedDraftForOperationalCatalogId.mockReturnValue(createProgramRegistrationDraft())
     listAllRegistrationCreateFormSpecs.mockReturnValue(individualProgramBindingSpecs)
     loadRegistrationWizardFormDraft.mockResolvedValue(null)
+    resolveProgramOperationalBindingKind.mockReturnValue('GENERAL')
   })
 
   it('서버 호출 없이 순수 데이터만 반환하고 programDraftId·formBindings가 없다', async () => {
@@ -107,10 +114,12 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
         overlay: { 'program.titleKo': '테스트' },
         editorState: undefined,
       },
+      // GENERAL 신청 양식은 수정이 없어도 항상 COPY 대상이다(본문은 적용 단계가 바인딩 버전에서 채운다).
+      { templateCode: 'application-participant-individual', formType: 'APPLICATION', draft: null },
     ])
   })
 
-  it('overlay나 로컬 초안이 있는 운영 양식만 포함하고 나머지는 기본 바인딩에 맡긴다', async () => {
+  it('overlay나 로컬 초안이 있는 모집 양식만 포함하고 나머지 모집·등록은 기본 바인딩에 맡긴다(신청 양식은 항상 포함)', async () => {
     collectOperationalOverlayForCatalogId.mockImplementation((code: string) =>
       code === 'recruitment-participant-individual' ? { 'recruit.foo': 'bar' } : null
     )
@@ -159,6 +168,8 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
         draft: overrideDraft,
         overlay: { x: 1 },
       }),
+      // 수정 없는 GENERAL 신청 양식은 draft null로 항상 포함한다.
+      { templateCode: 'application-participant-individual', formType: 'APPLICATION', draft: null },
     ])
   })
 
@@ -176,5 +187,61 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
       'recruitment-economy',
       'application-economy',
     ])
+  })
+
+  describe('GENERAL 신청 양식은 수정하지 않아도 항상 COPY 대상으로 포함한다', () => {
+    const generalAllSpecs = [
+      { templateCode: 'registration-general', formType: 'REGISTRATION', nameHints: [] },
+      { templateCode: 'recruitment-participant-individual', formType: 'RECRUITMENT', targetRole: 'INDIVIDUAL', nameHints: [] },
+      { templateCode: 'recruitment-instructor', formType: 'RECRUITMENT', targetRole: 'INSTRUCTOR', nameHints: [] },
+      { templateCode: 'application-participant-individual', formType: 'APPLICATION', targetRole: 'INDIVIDUAL', nameHints: [] },
+      { templateCode: 'application-participant-school', formType: 'APPLICATION', targetRole: 'ORGANIZATION', nameHints: [] },
+      { templateCode: 'application-instructor', formType: 'APPLICATION', targetRole: 'INSTRUCTOR', nameHints: [] },
+      { templateCode: 'application-volunteer', formType: 'APPLICATION', targetRole: 'VOLUNTEER', nameHints: [] },
+    ]
+
+    it('draft·overlay 없는 개인/기관/강사/봉사자 신청을 draft null로 포함하고 모집·등록은 건너뛴다', async () => {
+      listAllRegistrationCreateFormSpecs.mockReturnValue(generalAllSpecs)
+      const result = await prepareRegistrationCreateFormBindings({ program })
+      expect(result?.forms).toEqual([
+        { templateCode: 'application-participant-individual', formType: 'APPLICATION', draft: null },
+        { templateCode: 'application-participant-school', formType: 'APPLICATION', draft: null },
+        { templateCode: 'application-instructor', formType: 'APPLICATION', draft: null },
+        { templateCode: 'application-volunteer', formType: 'APPLICATION', draft: null },
+      ])
+    })
+
+    it('수정한 신청 양식은 기존처럼 위저드 본문·overlay를 그대로 쓴다(덮어쓰지 않음)', async () => {
+      listAllRegistrationCreateFormSpecs.mockReturnValue(generalAllSpecs)
+      const appDraft = createProgramRegistrationDraft()
+      loadRegistrationWizardFormDraft.mockImplementation(
+        async (args: { templateCode: string }) =>
+          args.templateCode === 'application-instructor' ? { draft: appDraft } : null
+      )
+      const result = await prepareRegistrationCreateFormBindings({ program })
+      const instructor = result?.forms.find(item => item.templateCode === 'application-instructor')
+      expect(instructor?.draft).toBe(appDraft)
+      expect(result?.forms.map(item => item.templateCode)).toEqual([
+        'application-participant-individual',
+        'application-participant-school',
+        'application-instructor',
+        'application-volunteer',
+      ])
+    })
+
+    it.each(['UJAT', 'TRAINED_TEACHER', 'COMPANY_SCHOOL'])(
+      '%s는 기존 동작: 수정 없는 신청 양식은 포함하지 않는다',
+      async kind => {
+        resolveProgramOperationalBindingKind.mockReturnValue(kind)
+        listAllRegistrationCreateFormSpecs.mockReturnValue([
+          { templateCode: 'application-ujat-school', formType: 'APPLICATION', targetRole: 'ORGANIZATION', nameHints: [] },
+          { templateCode: 'application-ujat-volunteer', formType: 'APPLICATION', targetRole: 'VOLUNTEER', nameHints: [] },
+          { templateCode: 'application-trained-teachers', formType: 'APPLICATION', targetRole: 'ORGANIZATION', nameHints: [] },
+          { templateCode: 'application-economy', formType: 'APPLICATION', targetRole: 'ORGANIZATION', nameHints: [] },
+        ])
+        const result = await prepareRegistrationCreateFormBindings({ program })
+        expect(result?.forms).toEqual([])
+      }
+    )
   })
 })
