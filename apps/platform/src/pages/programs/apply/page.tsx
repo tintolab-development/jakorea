@@ -3199,7 +3199,14 @@ export function ProgramApplyPage() {
 
       <ProgramApplyGateModals
         kind={gateModal}
-        onClose={closeGateModal}
+        onClose={() => {
+          const wasRequiredConsent = gateModal === 'required-consent'
+          closeGateModal()
+          // 필수 동의 모달 취소/닫기 → 상세로 복귀 (replace: 뒤로가기로 신청서→모달 재진입 루프 방지)
+          if (wasRequiredConsent && program) {
+            navigate(programDetailPath(program.id, fromPath, focus), { replace: true })
+          }
+        }}
         missingConsentTypes={missingConsents}
         onOpenConsents={() => {
           closeGateModal()
