@@ -74,6 +74,10 @@ import { ensureSurveyCreateSubmissionPeriod } from '@/features/program/shared/li
 import { resolveLectureEvalBindingTargetForCreate } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
 import {
+  SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
+  isSurveyPollBindingTargetScheduleAlreadyRegistered,
+} from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
+import {
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
   shouldShowSurveyPollScheduleSelectField,
 } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
@@ -323,7 +327,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const surveyPollCreateModalOpen = createModalKind === 'survey'
   const surveyScheduleOptionsQuery = useProgramSurveyScheduleOptions(
     program,
-    surveyPollCreateModalOpen
+    surveyPollCreateModalOpen,
+    classifiedBindings
   )
   const showSurveyPollScheduleSelectField = useMemo(
     () => shouldShowSurveyPollScheduleSelectField(program),
@@ -333,7 +338,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   useEffect(() => {
     if (!surveyPollCreateModalOpen || !showSurveyPollScheduleSelectField) return
     const options = surveyScheduleOptionsQuery.options ?? []
-    if (options.length === 1 && options[0]?.value) {
+    if (options.length === 1 && options[0]?.value && !options[0].disabled) {
       setSelectedSurveyScheduleValue(String(options[0].value))
     }
   }, [
@@ -841,6 +846,13 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               })
               return
             }
+            if (isSurveyPollBindingTargetScheduleAlreadyRegistered(surveyTarget, classifiedBindings)) {
+              void showAlert({
+                title: '등록 실패',
+                content: SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
+              })
+              return
+            }
             payload.targetScope = surveyTarget.targetScope
             if (surveyTarget.targetScopeId != null) {
               payload.targetScopeId = surveyTarget.targetScopeId
@@ -902,6 +914,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       setSubmitting(false)
     }
   }, [
+    classifiedBindings,
     createBinding,
     createModalKind,
     invalidateSurveyCaches,
@@ -1430,7 +1443,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           <div className="survey-management-loading" role="status">
             <Spin size="large" />
           </div>
-        ) : activeRegisteredSurvey != null && activeRegisteredSurvey.status === 'before_start' ? (
+        ) : activeRegisteredSurvey != null &&
+          (activeRegisteredSurvey.status === 'before_start' ||
+            (activeRegisteredSurvey.status === 'finished' &&
+              activeRegisteredSurvey.responseCount === 0)) ? (
           <SurveyNoResponseState
             title={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.title}
             description={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.description}

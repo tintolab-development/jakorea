@@ -11,9 +11,10 @@ const mocks = vi.hoisted(() => ({
   toCreateRequest: vi.fn(),
   buildPendingProgram: vi.fn(),
   collectOverlay: vi.fn(),
+  collectRecruitOverlays: vi.fn(),
   shouldUseRemoteApi: vi.fn(),
   awaitMediaUploads: vi.fn(),
-  bindMedia: vi.fn(),
+  pickMediaOverlay: vi.fn(),
   fetchProgram: vi.fn(),
   updateProgram: vi.fn(),
   fetchSponsors: vi.fn(),
@@ -78,9 +79,14 @@ vi.mock('@/features/program/shared/lib/merge-program-sponsor-assignments', () =>
   withFetchedProgramSponsorAssignments: async (program: Program) => program,
 }))
 
+vi.mock('@/features/program/general/lib/registration-operational-form-drafts', () => ({
+  collectSelectedRecruitOverlaysForProgram: (...args: unknown[]) =>
+    mocks.collectRecruitOverlays(...args),
+}))
+
 vi.mock('@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media', () => ({
   awaitRecruitDetailMediaUploads: (...args: unknown[]) => mocks.awaitMediaUploads(...args),
-  bindUjatRecruitDetailMediaToRows: (...args: unknown[]) => mocks.bindMedia(...args),
+  pickRecruitmentCreateMediaOverlay: (...args: unknown[]) => mocks.pickMediaOverlay(...args),
 }))
 
 vi.mock('./ujat-typed-detail-sync', () => ({
@@ -120,7 +126,10 @@ describe('UJAT create media binding', () => {
     mocks.createWithForms.mockResolvedValue({ id: created.id })
     mocks.fromDetail.mockReturnValue(created)
     mocks.awaitMediaUploads.mockResolvedValue(undefined)
-    mocks.bindMedia.mockResolvedValue(undefined)
+    mocks.collectRecruitOverlays.mockReturnValue({})
+    mocks.pickMediaOverlay.mockReturnValue({
+      'ujatRecruit.detailInfo.thumbFileObjectId': 501,
+    })
     mocks.deleteProgram.mockResolvedValue(undefined)
     mocks.fetchProgram.mockResolvedValue({ id: '186300', title: 'server detail' })
     mocks.updateProgram.mockResolvedValue({ id: '186300', title: 'patch echo' })
@@ -129,27 +138,23 @@ describe('UJAT create media binding', () => {
     mocks.replaceTypedDetail.mockResolvedValue({ schemaVersion: 1, halfPlans: [], common: null })
   })
 
-  it('업로드 완료를 기다린 뒤 생성하고 UJAT 모집 row 미디어를 연결한다', async () => {
+  it('업로드 완료를 기다린 뒤 생성 요청에 모집 행 미디어 overlay를 싣는다', async () => {
     await expect(create(input())).resolves.toBe(created)
 
     expect(mocks.awaitMediaUploads).toHaveBeenCalledOnce()
     expect(mocks.createWithForms).toHaveBeenCalledOnce()
-    expect(mocks.bindMedia).toHaveBeenCalledWith(created, overlay)
+    expect(mocks.toCreateRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ujatRegistrationOverlay: expect.objectContaining({
+          'ujatRecruit.detailInfo.thumbFileObjectId': 501,
+        }),
+      }),
+      expect.anything()
+    )
     expect(mocks.awaitMediaUploads.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.createWithForms.mock.invocationCallOrder[0]
     )
-    expect(mocks.createWithForms.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.bindMedia.mock.invocationCallOrder[0]
-    )
     expect(mocks.deleteProgram).not.toHaveBeenCalled()
-  })
-
-  it('row 미디어 연결이 실패하면 방금 생성한 프로그램을 삭제하고 원래 오류를 전달한다', async () => {
-    const error = new Error('row media binding failed')
-    mocks.bindMedia.mockRejectedValue(error)
-
-    await expect(create(input())).rejects.toBe(error)
-    expect(mocks.deleteProgram).toHaveBeenCalledWith(created.id)
   })
 
   it('Typed common-info input removes stale basic-info and schedule overlay keys', async () => {
@@ -179,9 +184,6 @@ describe('UJAT create media binding', () => {
         },
       })
     )
-    expect(mocks.bindMedia).toHaveBeenCalledWith(created, {
-      'ujat.recruit.institution.publicTitle': '기관 모집',
-    })
   })
 })
 

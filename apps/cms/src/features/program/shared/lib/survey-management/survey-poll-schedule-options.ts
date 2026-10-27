@@ -1,5 +1,8 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
+import {
+  appendEducationRoundSuffix,
+  toDisplayEducationScheduleName,
+} from '@/shared/lib/education-schedule-name'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { normalizeEducationScheduleLineForView } from '@/features/program/general/lib/education-schedule-lines-display'
 import {
@@ -25,6 +28,57 @@ export const SURVEY_POLL_TARGET_ALL_VALUE = 'PROGRAM'
 export type SurveyPollScheduleSelectOption = {
   label: string
   value: string
+  /** 이미 설문이 연결된 일정 — 회색 비활성(선택 불가) */
+  disabled?: boolean
+}
+
+/** 서버 form-binding 중 일정 사용 여부 판단에 필요한 필드 */
+export type SurveyPollScheduleBindingRef = {
+  binding: {
+    formType?: string | null
+    targetScope?: string | null
+    targetScopeId?: number | null
+    active?: boolean | null
+  }
+}
+
+/** 활성 SURVEY + SCHEDULE 바인딩이 이미 있는 scheduleId 집합 (서버 데이터만). */
+export function collectSurveyPollUsedScheduleIds(
+  bindings: ReadonlyArray<SurveyPollScheduleBindingRef> | null | undefined
+): Set<string> {
+  const used = new Set<string>()
+  for (const { binding } of bindings ?? []) {
+    if (binding.active === false) continue
+    if (binding.formType?.trim().toUpperCase() !== 'SURVEY') continue
+    if (binding.targetScope?.trim().toUpperCase() !== 'SCHEDULE') continue
+    const id = binding.targetScopeId
+    if (typeof id !== 'number' || !Number.isFinite(id) || id < 1) continue
+    used.add(String(Math.trunc(id)))
+  }
+  return used
+}
+
+export const SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE = '이미 설문이 등록된 일정입니다.'
+
+/** 일정 필드가 숨겨진 자동 바인딩 대상이 이미 설문이 있는 SCHEDULE이면 true. PROGRAM 범위는 false. */
+export function isSurveyPollBindingTargetScheduleAlreadyRegistered(
+  target: { targetScope?: string | null; targetScopeId?: number | null } | null | undefined,
+  bindings: ReadonlyArray<SurveyPollScheduleBindingRef> | null | undefined
+): boolean {
+  if (target?.targetScope?.trim().toUpperCase() !== 'SCHEDULE') return false
+  const id = target.targetScopeId
+  if (typeof id !== 'number' || !Number.isFinite(id) || id < 1) return false
+  return collectSurveyPollUsedScheduleIds(bindings).has(String(Math.trunc(id)))
+}
+
+/** 이미 설문이 있는 일정은 노출은 유지하고 disabled만 켠다. 라벨·value는 그대로. */
+export function disableSurveyPollScheduleOptionsWithSurvey(
+  options: ReadonlyArray<SurveyPollScheduleSelectOption>,
+  bindings: ReadonlyArray<SurveyPollScheduleBindingRef> | null | undefined
+): SurveyPollScheduleSelectOption[] {
+  const used = collectSurveyPollUsedScheduleIds(bindings)
+  if (used.size === 0) return [...options]
+  return options.map(option => (used.has(option.value) ? { ...option, disabled: true } : option))
 }
 
 /** TCH 행사별 — scheduleDetails 행사명 라벨 매칭 대상 (후보 소스는 education-slots만). */
@@ -37,6 +91,23 @@ export function isTrainedTeacherEventScheduleProgram(
     program?.generalProgramEducationStructure === 'schedule' &&
     program?.generalProgramSessionRound === 'multi'
   )
+}
+
+const GENERAL_PROGRAM_BACKEND_TYPES: ReadonlySet<string> = new Set([
+  'GENERAL',
+  'GENERAL_ORGANIZATION',
+  'GENERAL_INDIVIDUAL',
+])
+
+/**
+ * 일반 프로그램만 — BE programType 허용 목록. TT(TRAINED_TEACHER)·UJAT·1사1교·Gemini 등과
+ * programType 미확인은 제외한다.
+ */
+export function isGeneralProgramForSurveyRoundLabel(
+  program: Program | null | undefined
+): boolean {
+  const backendType = program?.backendProgramType?.trim().toUpperCase()
+  return backendType != null && GENERAL_PROGRAM_BACKEND_TYPES.has(backendType)
 }
 
 function readPositiveScheduleId(schedule: ProgramScheduleResponse): number | null {
@@ -127,6 +198,20 @@ export function formatSurveyPollScheduleOptionLabel(
   return toDisplayEducationScheduleName(schedule.scheduleName) || `${sessionNo}회차`
 }
 
+/**
+ * 일반 프로그램 설문 옵션 — `일시 | N회차`. N은 일정에 저장된 sessionNo(목록 순서 아님).
+ * sessionNo가 없거나 일시를 만들 수 없으면 기존 라벨 그대로.
+ */
+function withStoredSessionRoundSuffix(
+  schedule: ProgramScheduleResponse,
+  label: string
+): string {
+  if (!formatAdminScheduleAsCommonInfoEducationLine(schedule)) return label
+  const sessionNo = schedule.sessionNo
+  if (typeof sessionNo !== 'number' || !Number.isInteger(sessionNo) || sessionNo < 1) return label
+  return appendEducationRoundSuffix(label, sessionNo)
+}
+
 function rangeMinuteKey(range: [Dayjs, Dayjs]): string {
   return `${range[0].valueOf()}:${range[1].valueOf()}`
 }
@@ -192,7 +277,9 @@ export function buildSurveyPollScheduleSelectOptionsForProgram(
   program: Program,
   apiSchedules: ReadonlyArray<ProgramScheduleResponse>
 ): SurveyPollScheduleSelectOption[] {
-  const options = buildSurveyPollScheduleSelectOptions(apiSchedules)
+  const options = buildSurveyPollScheduleSelectOptions(apiSchedules, {
+    appendStoredRoundSuffix: isGeneralProgramForSurveyRoundLabel(program),
+  })
   if (!isTrainedTeacherEventScheduleProgram(program)) return options
   const details = program.generalCommonInfo?.scheduleDetails ?? []
   if (details.length === 0) return options
@@ -215,7 +302,8 @@ export function buildSurveyPollScheduleSelectOptionsForProgram(
 
 /** education-slots 응답만으로 옵션 구성 */
 export function buildSurveyPollScheduleSelectOptions(
-  schedules: ReadonlyArray<ProgramScheduleResponse>
+  schedules: ReadonlyArray<ProgramScheduleResponse>,
+  options: { appendStoredRoundSuffix?: boolean } = {}
 ): SurveyPollScheduleSelectOption[] {
   const sorted = sortSchedulesForSurveyPoll(filterSurveyPollEducationSlotCandidates(schedules))
   const sessionOptions: SurveyPollScheduleSelectOption[] = []
@@ -223,9 +311,10 @@ export function buildSurveyPollScheduleSelectOptions(
     const schedule = sorted[index]
     const id = readPositiveScheduleId(schedule)
     if (id == null) continue
+    const label = formatSurveyPollScheduleOptionLabel(schedule, index)
     sessionOptions.push({
       value: String(id),
-      label: formatSurveyPollScheduleOptionLabel(schedule, index),
+      label: options.appendStoredRoundSuffix ? withStoredSessionRoundSuffix(schedule, label) : label,
     })
   }
   return sessionOptions
