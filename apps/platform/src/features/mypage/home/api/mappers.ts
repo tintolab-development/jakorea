@@ -1,7 +1,40 @@
+import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
 import type { MypageProgramStats } from '../../model/types'
-import type { MypageScheduleEvent } from '../model/schedule-types'
+import type { MypageScheduleEvent, MypageScheduleEventType } from '../model/schedule-types'
 import type { PortalApplicationSummary, PortalScheduleItem } from './client'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
+
+const CALENDAR_EVENT_TYPES = new Set<MypageScheduleEventType>([
+  'assignment',
+  'satisfaction',
+  'survey',
+  'receipt',
+  'education',
+  'program',
+])
+
+const APPLICATION_TYPE_SET = new Set<ProgramApplicationType>([
+  'INDIVIDUAL',
+  'ORGANIZATION',
+  'INSTRUCTOR',
+  'VOLUNTEER',
+])
+
+function readProgramApplicationType(value: string | undefined): ProgramApplicationType | undefined {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized && APPLICATION_TYPE_SET.has(normalized as ProgramApplicationType)) {
+    return normalized as ProgramApplicationType
+  }
+  return undefined
+}
+
+function mapPortalScheduleEventType(item: PortalScheduleItem): MypageScheduleEventType {
+  const normalized = item.eventType?.trim().toLowerCase()
+  if (normalized && CALENDAR_EVENT_TYPES.has(normalized as MypageScheduleEventType)) {
+    return normalized as MypageScheduleEventType
+  }
+  return 'education'
+}
 
 const EMPTY_STATS: MypageProgramStats = {
   applied: 0,
@@ -59,14 +92,21 @@ export function mapPortalScheduleItem(item: PortalScheduleItem): MypageScheduleE
   const startDate = toDateKey(item.startAt)
   if (!startDate || item.scheduleId == null) return null
   const endDate = toDateKey(item.endAt) ?? startDate
+  const applicationType =
+    readProgramApplicationType(item.applicationType) ??
+    readProgramApplicationType(item.participationRole)
+
   return {
     id: String(item.scheduleId),
     programName: item.programTitle?.trim() || '프로그램',
     title: toDisplayEducationScheduleName(item.scheduleName) || item.locationName?.trim() || '일정',
     time: formatTimeRange(item),
-    type: 'education',
+    type: mapPortalScheduleEventType(item),
     startDate,
     endDate,
+    ...(item.programId != null ? { programId: String(item.programId) } : {}),
+    ...(item.applicationId != null ? { applicationId: String(item.applicationId) } : {}),
+    ...(applicationType ? { applicationType } : {}),
   }
 }
 

@@ -85,15 +85,37 @@
 
 .listItem {
   display: flex;
+  align-self: stretch;
+  min-width: 0;
+}
+
+.listItemButton {
+  display: flex;
   box-sizing: border-box;
+  width: 100%;
   flex-direction: column;
   align-items: flex-start;
-  align-self: stretch;
   padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) var(--spacing-20);
+  border: 0;
   border-left: 6px solid transparent;
   background: var(--color-neutral-white);
   box-shadow: var(--shadow-card-sm);
   min-width: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.listItemButton:hover:not(:disabled) {
+  background: var(--color-neutral-cool-50);
+}
+
+.listItemButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.listItemButton:disabled {
+  cursor: default;
 }
 
 .listProgram,
@@ -165,5 +187,45 @@
     max-width: none;
     width: 100%;
     min-height: 240px;
+  }
+
+  /* Figma: Body/Medium/medium · 16px / 500 / 150% · neutral-cool-500 */
+  .listLead {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+  }
+
+  /* Figma: Headline/Large · 24px / 600 / 150% · neutral-black */
+  .listCount {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.24px;
+  }
+
+  /* Figma: Label/Medium */
+  .listProgram {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 140%;
+    letter-spacing: 0;
+  }
+
+  /* Figma: Body/Medium/semibold */
+  .listTitle {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+  }
+
+  /* Figma: Body/Small/regular */
+  .listTime {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 160%;
+    letter-spacing: 0;
   }
 }

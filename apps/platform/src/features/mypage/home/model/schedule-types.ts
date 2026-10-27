@@ -1,3 +1,5 @@
+import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
+
 export type MypageScheduleEventType =
   | 'assignment'
   | 'satisfaction'
@@ -18,4 +20,7 @@ export type MypageScheduleEvent = {
   startDate: string
   /** YYYY-MM-DD */
   endDate: string
+  programId?: string
+  applicationId?: string
+  applicationType?: ProgramApplicationType
 }

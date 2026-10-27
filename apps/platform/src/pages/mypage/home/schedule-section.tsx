@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import {
   getMypageScheduleEventsOnDate,
+  resolveMypageScheduleEventDetailPath,
   syncSelectedDateToMonth,
   type MypageScheduleEvent,
 } from '@/features/mypage'
@@ -53,6 +56,8 @@ export function ScheduleSection({
   useMockDemoMonth = false,
   onViewMonthChange,
 }: ScheduleSectionProps) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [selectedDate, setSelectedDate] = useState(() =>
     useMockDemoMonth ? MOCK_DEMO_SELECTED : toDayStart(new Date()),
   )
@@ -75,6 +80,16 @@ export function ScheduleSection({
   }
 
   /** 월 이동 시 선택일을 보이는 달로 맞춤 → 우측 목록과 캘린더가 같은 날짜 기준 */
+  const handleScheduleClick = (event: MypageScheduleEvent) => {
+    const path = resolveMypageScheduleEventDetailPath(queryClient, event)
+    if (!path) return
+    navigate(path, {
+      state: {
+        mypageHomePath: `${window.location.pathname}${window.location.search}`,
+      },
+    })
+  }
+
   const handleMonthChange = (nextMonth: Date) => {
     const monthStart = toMonthStart(nextMonth)
     setViewMonth(monthStart)
@@ -106,38 +121,45 @@ export function ScheduleSection({
         ) : selectedEvents.length > 0 ? (
           <div className={styles.list}>
             <div className={styles.listHeader}>
-              <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600" className={styles.listLead}>
+              <PFText as="p" typo="bd-md-md" color="neutral-cool-500" className={styles.listLead}>
                 확인이 필요한 일정이에요
               </PFText>
-              <PFText as="h3" typo="hd-sm" color="black" className={styles.listCount}>
+              <PFText as="h3" typo="hl-lg" color="black" className={styles.listCount}>
                 총 {selectedEvents.length}개
               </PFText>
             </div>
             <ul className={styles.listItems}>
               {selectedEvents.map(event => {
                 const colors = CALENDAR_EVENT_COLORS[event.type]
+                const detailPath = resolveMypageScheduleEventDetailPath(queryClient, event)
+                const isNavigable = detailPath != null
                 return (
-                  <li
-                    key={event.id}
-                    className={styles.listItem}
-                    style={{ borderLeftColor: colors.accent }}
-                  >
-                    <PFText
-                      as="p"
-                      typo="bd-sm-rg"
-                      color="neutral-cool-500"
-                      className={styles.listProgram}
+                  <li key={event.id} className={styles.listItem}>
+                    <button
+                      type="button"
+                      className={styles.listItemButton}
+                      style={{ borderLeftColor: colors.accent }}
+                      disabled={!isNavigable}
+                      aria-label={`${event.programName} ${event.title} 일정 상세`}
+                      onClick={() => handleScheduleClick(event)}
                     >
-                      {event.programName}
-                    </PFText>
-                    <div className={styles.listDetail}>
-                      <PFText as="p" typo="bd-lg-sb" color="black" className={styles.listTitle}>
-                        {event.title}
+                      <PFText
+                        as="p"
+                        typo="label-md"
+                        color="neutral-cool-500"
+                        className={styles.listProgram}
+                      >
+                        {event.programName}
                       </PFText>
-                      <PFText as="p" typo="bd-md-rg" color="black" className={styles.listTime}>
-                        {event.time}
-                      </PFText>
-                    </div>
+                      <div className={styles.listDetail}>
+                        <PFText as="p" typo="bd-md-sb" color="black" className={styles.listTitle}>
+                          {event.title}
+                        </PFText>
+                        <PFText as="p" typo="bd-sm-rg" color="black" className={styles.listTime}>
+                          {event.time}
+                        </PFText>
+                      </div>
+                    </button>
                   </li>
                 )
               })}
