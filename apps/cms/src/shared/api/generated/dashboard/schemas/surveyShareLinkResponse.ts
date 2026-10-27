@@ -7,17 +7,15 @@
  */
 
 export interface SurveyShareLinkResponse {
-  shareLinkId?: number | null;
+  shareLinkId?: number;
   programId?: number;
   bindingId?: number;
   templateVersionId?: number;
-  accessMode?: SurveyShareAccessMode;
-  shareToken?: string | null;
+  accessMode?: string;
+  shareToken?: string;
   formPath?: string;
   submitPath?: string;
   active?: boolean;
   submissionCount?: number;
-  createdAt?: string | null;
+  createdAt?: string;
 }
-
-export type SurveyShareAccessMode = 'PUBLIC_ANONYMOUS' | 'MEMBER_AUTHENTICATED';

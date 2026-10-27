@@ -35,7 +35,15 @@ export interface InstructorAssignmentListItemResponse {
   /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
   instructorName?: string;
   organizationName?: string;
+  /** 공식 출강지 명칭. 개인형 배정은 program_schedule.location_name을 사용하며 없으면 null입니다. */
+  lectureLocationName?: string;
+  /** 공식 출강지 주소. 개인형은 일정 주소를 우선하고, 없으면 강사 신청의 공식 출강지 주소 snapshot을 사용합니다. */
+  lecturePlaceAddress?: string;
   distanceKm?: number;
+  /** 강사 자택에서 공식 출강지까지의 저장된 거리 상태. 개인형 주소가 없으면 ADDRESS_UNAVAILABLE입니다. */
+  distanceStatus?: string;
+  distanceProvider?: string;
+  distanceCalculatedAt?: string;
   longDistance?: boolean;
   /** 자택 주소. 동(읍/면/리)까지 + ' *****' (FE blur). 기관/조직 주소(organizationName)와 무관. */
   homeAddress?: string;

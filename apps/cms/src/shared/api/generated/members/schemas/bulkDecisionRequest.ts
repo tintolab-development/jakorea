@@ -7,7 +7,7 @@
  */
 
 /**
- * 다건 승인·반려 요청
+ * 다건 승인·반려 요청. timing을 생략하면 각 건을 즉시 발송합니다.
  */
 export interface BulkDecisionRequest {
   /**
@@ -22,4 +22,8 @@ export interface BulkDecisionRequest {
      * @maxLength 500
      */
   reason?: string;
+  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 일괄 전체에 같은 시점을 적용합니다. */
+  timing?: string;
+  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
 }

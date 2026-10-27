@@ -3778,7 +3778,7 @@
           "프로그램"
         ],
         "summary": "프로그램 교재 배정 목록 조회",
-        "description": "### 이 API가 하는 일\n- 프로그램 교재 배정 목록 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/programs/{programId}/materials`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 기능정의서 0720 프로그램 교재 배정 P0. 해당 없음/교재/키트 배정 표시 계약.",
+        "description": "### 이 API가 하는 일\n- 프로그램 교재 배정 목록 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/programs/{programId}/materials`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 기능정의서 0720 프로그램 교재 배정 P0. 프로그램 생성 시점 키트 버전과 서버 계산 수량을 반환합니다.",
         "operationId": "listMaterials",
         "parameters": [
           {
@@ -3821,7 +3821,7 @@
           "프로그램"
         ],
         "summary": "프로그램 교재 배정 저장",
-        "description": "### 이 API가 하는 일\n- 프로그램 교재 배정 저장\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/programs/{programId}/materials`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 기능정의서 0720 담당자 직접 교재 선택 및 해당 없음 저장.",
+        "description": "### 이 API가 하는 일\n- 프로그램 교재 배정 저장\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/programs/{programId}/materials`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PROGRAM_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 기능정의서 0720 담당자 직접 교재 선택 및 해당 없음 저장. noneYn=true만 명시적 전체 해제이며 빈 일반 요청과 요청에 없는 기존 항목은 보존합니다. 개별 삭제는 DELETE API를 사용합니다.",
         "operationId": "replaceMaterials",
         "parameters": [
           {
@@ -25512,6 +25512,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationResendRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -25531,6 +25540,9 @@
           },
           "403": {
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -33352,6 +33364,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationResendRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -33371,6 +33392,9 @@
           },
           "403": {
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -45119,7 +45143,7 @@
           "기타 API"
         ],
         "summary": "회원 포털 내 프로그램 신청 상세",
-        "description": "### 이 API가 하는 일\n- 회원 포털 내 프로그램 신청 상세\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 관리자 CMS 프로그램·모집·신청폼 원본을 재사용하는 회원 포털 canonical API",
+        "description": "### 이 API가 하는 일\n- 회원 포털 내 프로그램 신청 상세\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 관리자 CMS 프로그램·모집·신청폼 원본을 재사용하는 회원 포털 canonical API. INDIVIDUAL은 동일 회원·동일 프로그램 INSTRUCTOR 신청의 활성 강사 배정을 teacherAssignment.assignments로 제공",
         "operationId": "getMyApplication",
         "parameters": [
           {
@@ -45595,71 +45619,6 @@
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
-          }
-        }
-      }
-    },
-    "/api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}": {
-      "get": {
-        "tags": [
-          "기타 API"
-        ],
-        "summary": "내 프로그램 안내사항 상세 조회",
-        "description": "### 이 API가 하는 일\n- 내 프로그램 안내사항 상세 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: General member portal phase 1 화면 contract",
-        "operationId": "notice_1",
-        "parameters": [
-          {
-            "name": "applicationType",
-            "in": "path",
-            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "applicationId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "postId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/NoticeDetailResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
           }
         }
       }
@@ -68543,7 +68502,7 @@
           "booksPerKitSnapshot": {
             "type": "integer",
             "format": "int32",
-            "minimum": 0
+            "minimum": 1
           },
           "studentCountBasis": {
             "type": "integer",
@@ -72684,6 +72643,9 @@
             "type": "string"
           },
           "message": {
+            "type": "string"
+          },
+          "approvalNotificationCase": {
             "type": "string"
           }
         }
@@ -78417,10 +78379,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -79177,6 +79139,25 @@
             "description": "null 로 비울 필드 이름. 예: [\"maxCount\",\"remarks\",\"interviewConfig\"]",
             "items": {
               "type": "string"
+            }
+          },
+          "thumbnailFileObjectId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "프로그램 신규 등록 시 이 모집 행에 연결할 대표 이미지 fileObjectId. 생성 트랜잭션에서만 사용하며, 기존 모집 수정 API에서는 사용하지 않습니다."
+          },
+          "attachmentFileObjectIds": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "프로그램 신규 등록 시 이 모집 행에 연결할 첨부파일 fileObjectId 목록. 요청 순서가 표시 순서이며, 생성 트랜잭션에서만 사용합니다.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
             }
           }
         },
@@ -80112,7 +80093,7 @@
       },
       "ApplicationRejectRequest": {
         "type": "object",
-        "description": "신청 거절 요청",
+        "description": "신청 거절 요청. timing을 생략하면 반려 알림을 즉시 발송합니다.",
         "properties": {
           "reason": {
             "type": "string",
@@ -80120,6 +80101,16 @@
             "example": "필수 서류 미제출",
             "maxLength": 500,
             "minLength": 2
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
+            "example": "IMMEDIATE"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -81120,6 +81111,16 @@
           },
           "lodgingApprovedYn": {
             "type": "boolean"
+          },
+          "timing": {
+            "type": "string",
+            "description": "배정 완료 알림. IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 승인 알림과 다른 이벤트입니다.",
+            "example": "SCHEDULED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -82037,6 +82038,15 @@
             "type": "boolean",
             "description": "숙박 승인 여부",
             "example": false
+          },
+          "timing": {
+            "type": "string",
+            "description": "배정 완료 알림. IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -83104,7 +83114,7 @@
       },
       "BulkDecisionRequest": {
         "type": "object",
-        "description": "다건 승인·반려 요청",
+        "description": "다건 승인·반려 요청. timing을 생략하면 각 건을 즉시 발송합니다.",
         "properties": {
           "ids": {
             "type": "array",
@@ -83127,6 +83137,15 @@
             "example": "필수 서류 미제출",
             "maxLength": 500,
             "minLength": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 일괄 전체에 같은 시점을 적용합니다."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -83338,7 +83357,7 @@
           },
           "timing": {
             "type": "string",
-            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
             "example": "IMMEDIATE"
           },
           "scheduledAt": {
@@ -83859,7 +83878,7 @@
           },
           "timing": {
             "type": "string",
-            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 일괄 전체에 같은 시점을 적용합니다."
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 대상 프로그램 발표일을 서버가 계산합니다."
           },
           "scheduledAt": {
             "type": "string",
@@ -83891,7 +83910,7 @@
           },
           "timing": {
             "type": "string",
-            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 일괄 전체에 같은 시점을 적용합니다.",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 대상 프로그램 발표일을 서버가 계산합니다.",
             "example": "SCHEDULED"
           },
           "scheduledAt": {
@@ -85807,12 +85826,28 @@
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
-            "description": "승인 취소 결과 알림 예약 시각. null이면 즉시 발송"
+            "description": "결과 알림 예약 시각(ISO-8601). 생략 또는 null이면 즉시 발송. 유효한 미래 시각이면 예약. 최소 60초 이후여야 한다."
           }
         },
         "required": [
           "reason"
         ]
+      },
+      "NotificationResendRequest": {
+        "type": "object",
+        "description": "결과 알림 재발송 요청. body를 생략하면 즉시 재발송합니다. 예약 접수는 발송 완료가 아닙니다.",
+        "properties": {
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE",
+            "example": "SCHEDULED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 Instant"
+          }
+        }
       },
       "InstructorRoleRequestDetailResponse": {
         "type": "object",
@@ -85893,6 +85928,30 @@
             "items": {
               "$ref": "#/components/schemas/MemberLinkedSocialAccountResponse"
             }
+          },
+          "approvalNotificationCase": {
+            "type": "string",
+            "description": "승인 알림 CASE. CASE_1=아직 유효화·발송되지 않음, CASE_2=이미 유효화되었거나 외부 발송 단계 진입, NONE=승인 알림 이력 없음. GET 스냅샷이며 취소 시점의 실제 CASE는 응답 approvalNotificationCase를 따른다."
+          },
+          "approvalNotificationState": {
+            "type": "string",
+            "description": "승인 알림 상태. NONE|SCHEDULED|PENDING|PROCESSING|SENT|UNKNOWN. 여러 이벤트가 있으면 가장 진행된 상태를 반환한다. UNKNOWN은 외부 상태가 확인 불가이며 CASE_2로 취급한다."
+          },
+          "approvalNotificationScheduledAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "아직 도래하지 않은 승인 알림 available_at 중 가장 늦은 시각. 이전이 이미 발송된 재발송 예약이면 CASE_2와 함께 반환될 수 있다."
+          },
+          "approvalNotificationSentAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "승인 알림 외부 발송 sent_at 중 가장 늦은 시각. 없으면 null."
           }
         }
       },
@@ -86754,6 +86813,7 @@
       },
       "IndividualApprovalWithScopeRequest": {
         "type": "object",
+        "description": "개인 신청 승인 및 교육 일정 확정. timing을 생략하면 승인 알림을 즉시 발송합니다.",
         "properties": {
           "confirmedScheduleIds": {
             "type": "array",
@@ -86772,6 +86832,16 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
+            "example": "SCHEDULED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -86793,7 +86863,7 @@
       },
       "IndividualApprovalWithScopeBulkRequest": {
         "type": "object",
-        "description": "확정된 교육 범위를 포함하는 개인 신청 일괄 승인 요청입니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다.",
+        "description": "확정된 교육 범위를 포함하는 개인 신청 일괄 승인 요청입니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다. timing은 모든 대상에 동일하게 적용합니다.",
         "properties": {
           "targets": {
             "type": "array",
@@ -86807,6 +86877,15 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 발표일은 대상 프로그램별로 서버가 계산합니다."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -95611,6 +95690,7 @@
           },
           "availableApplicationTypes": {
             "type": "array",
+            "description": "이 모집 행에 사용할 수 있는 신청 유형 하나. applicationType과 같다.",
             "items": {
               "type": "string"
             }
@@ -95669,7 +95749,7 @@
               "null"
             ],
             "format": "int64",
-            "description": "이 목록 행의 모집 id. 모집 없는 NONE 행이면 null."
+            "description": "이 목록 행의 모집 id. 모집 없는 NONE 행이면 null. programId·recruitmentId·applicationType 복합키로 행을 식별한다."
           },
           "recruitmentType": {
             "type": [
@@ -95695,7 +95775,7 @@
               "string",
               "null"
             ],
-            "description": "이 행의 신청 양식 하나.",
+            "description": "이 행의 신청 양식 하나. 같은 프로그램의 기관·봉사자 모집은 별도 목록 행이다.",
             "enum": [
               "INDIVIDUAL",
               "ORGANIZATION",
@@ -97811,7 +97891,7 @@
             "example": "진행 중"
           },
           "teacherAssignment": {
-            "description": "교사 회원의 ORGANIZATION 교육 상세에서만 제공됩니다. 강사 카드는 assigned-instructors 응답을 사용하고, 교재 카드만 이 객체의 textbook을 사용합니다. VOLUNTEER·INSTRUCTOR·INDIVIDUAL·비교사 회원은 null입니다.",
+            "description": "ORGANIZATION은 신청별 교재를 textbook으로 제공합니다. INDIVIDUAL은 동일 회원·동일 프로그램의 INSTRUCTOR 신청에 연결된 활성 배정이 있을 때 assignments를 제공합니다. 연결된 배정이 없으면 null이며, 개인 신청에는 동의서·교재를 자동으로 포함하지 않습니다. VOLUNTEER·INSTRUCTOR·비교사 회원은 null입니다.",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/MemberPortalTeacherAssignment"
@@ -97900,10 +97980,10 @@
       },
       "MemberPortalTeacherAssignment": {
         "type": "object",
-        "description": "교사 회원의 ORGANIZATION 교육 상세에서만 제공되는 배정·교재 보조 projection. 강사 목록과 동의서는 assigned-instructors API가 정본이며, 교재는 신청별 스냅샷입니다.",
+        "description": "회원 포탈 신청 상세의 강사 배정·교재 보조 projection. ORGANIZATION은 신청별 교재를 유지하며, INDIVIDUAL은 동일 회원·동일 프로그램의 INSTRUCTOR 신청에 연결된 활성 배정을 assignments로 제공합니다. 동의서 원본은 assigned-instructors API 정책을 따르며 개인 신청에는 자동 노출하지 않습니다.",
         "properties": {
           "textbook": {
-            "description": "신청별 교재가 있으면 반환합니다. 없거나 NOT_APPLICABLE이면 null.",
+            "description": "ORGANIZATION 신청에 저장된 교재가 있으면 반환합니다. 개인 신청에는 null이며, 없거나 NOT_APPLICABLE이면 null.",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/MemberPortalTeacherAssignmentTextbook"
@@ -97911,6 +97991,68 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "sourceApplicationType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "개인 신청에서 배정의 원본 신청 유형. CASE_D 연결 시 INSTRUCTOR이며 그 외에는 null.",
+            "enum": [
+              "INSTRUCTOR"
+            ]
+          },
+          "sourceApplicationId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "개인 신청에서 배정의 원본 INSTRUCTOR 신청 ID. 연결된 배정이 없으면 null."
+          },
+          "assignments": {
+            "type": "array",
+            "description": "개인 신청에 연결된 활성 강사 배정 목록. 없으면 빈 배열이며 다른 회원·프로그램·취소·대체·반려 배정은 포함하지 않습니다.",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalTeacherAssignmentItem"
+            }
+          }
+        }
+      },
+      "MemberPortalTeacherAssignmentItem": {
+        "type": "object",
+        "description": "개인 신청 상세에 표시할 강사 배정 1건. 동일 강사가 여러 일정에 배정되면 일정별로 별도 항목입니다.",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "배정 강사명. CASE_D에서는 현재 로그인 회원의 강사 신청에 연결된 이름입니다."
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "description": "활성 배정 상태. 현재 정책상 ASSIGNED 또는 COMPLETED가 반환될 수 있으며 취소·대체·대기·반려 상태는 제외합니다.",
+            "enum": [
+              "ASSIGNED",
+              "COMPLETED"
             ]
           }
         }
@@ -99317,6 +99459,29 @@
           },
           "name": {
             "type": "string"
+          },
+          "assignmentId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "개인 신청 CASE_D에서 직접 연결된 강사 배정 ID. ORGANIZATION 응답에서는 null."
+          },
+          "programScheduleId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "개인 신청 CASE_D에서 직접 연결된 교육 일정 ID. ORGANIZATION 응답에서는 null."
+          },
+          "assignmentStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "직접 연결된 배정 상태. 개인 신청 CASE_D에서는 ASSIGNED만 반환하며 ORGANIZATION 응답에서는 null."
           },
           "consentDocumentsRequested": {
             "type": "boolean"
@@ -107379,8 +107544,27 @@
           "organizationName": {
             "type": "string"
           },
+          "lectureLocationName": {
+            "type": "string",
+            "description": "공식 출강지 명칭. 개인형 배정은 program_schedule.location_name을 사용하며 없으면 null입니다."
+          },
+          "lecturePlaceAddress": {
+            "type": "string",
+            "description": "공식 출강지 주소. 개인형은 일정 주소를 우선하고, 없으면 강사 신청의 공식 출강지 주소 snapshot을 사용합니다."
+          },
           "distanceKm": {
             "type": "number"
+          },
+          "distanceStatus": {
+            "type": "string",
+            "description": "강사 자택에서 공식 출강지까지의 저장된 거리 상태. 개인형 주소가 없으면 ADDRESS_UNAVAILABLE입니다."
+          },
+          "distanceProvider": {
+            "type": "string"
+          },
+          "distanceCalculatedAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "longDistance": {
             "type": "boolean"

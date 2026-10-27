@@ -22,7 +22,7 @@ export interface TimedBulkDecisionRequest {
      * @maxLength 500
      */
   reason?: string;
-  /** IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 일괄 전체에 같은 시점을 적용합니다. */
+  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 대상 프로그램 발표일을 서버가 계산합니다. */
   timing?: string;
   /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
   scheduledAt?: string;

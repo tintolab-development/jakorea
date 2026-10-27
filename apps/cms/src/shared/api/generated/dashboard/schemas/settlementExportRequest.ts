@@ -70,6 +70,6 @@ export interface SettlementExportRequest {
      * @items.minimum 1
      */
   accountPaymentIds?: number[];
-  rawPrivacyApprovalValid?: boolean;
   dateRangeValid?: boolean;
+  rawPrivacyApprovalValid?: boolean;
 }

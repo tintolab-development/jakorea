@@ -5250,7 +5250,7 @@
           "booksPerKitSnapshot": {
             "type": "integer",
             "format": "int32",
-            "minimum": 0
+            "minimum": 1
           },
           "studentCountBasis": {
             "type": "integer",
@@ -9333,6 +9333,9 @@
             "type": "string"
           },
           "message": {
+            "type": "string"
+          },
+          "approvalNotificationCase": {
             "type": "string"
           }
         }
@@ -14966,10 +14969,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -15663,6 +15666,21 @@
             "description": "null 로 비울 필드 이름. 예: [\"maxCount\",\"remarks\",\"interviewConfig\"]",
             "items": {
               "type": "string"
+            },
+            "nullable": true
+          },
+          "thumbnailFileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 신규 등록 시 이 모집 행에 연결할 대표 이미지 fileObjectId. 생성 트랜잭션에서만 사용하며, 기존 모집 수정 API에서는 사용하지 않습니다.",
+            "nullable": true
+          },
+          "attachmentFileObjectIds": {
+            "type": "array",
+            "description": "프로그램 신규 등록 시 이 모집 행에 연결할 첨부파일 fileObjectId 목록. 요청 순서가 표시 순서이며, 생성 트랜잭션에서만 사용합니다.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
             },
             "nullable": true
           }
@@ -16547,7 +16565,7 @@
       },
       "ApplicationRejectRequest": {
         "type": "object",
-        "description": "신청 거절 요청",
+        "description": "신청 거절 요청. timing을 생략하면 반려 알림을 즉시 발송합니다.",
         "properties": {
           "reason": {
             "type": "string",
@@ -16555,6 +16573,16 @@
             "example": "필수 서류 미제출",
             "maxLength": 500,
             "minLength": 2
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
+            "example": "IMMEDIATE"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -17539,6 +17567,16 @@
           },
           "lodgingApprovedYn": {
             "type": "boolean"
+          },
+          "timing": {
+            "type": "string",
+            "description": "배정 완료 알림. IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 승인 알림과 다른 이벤트입니다.",
+            "example": "SCHEDULED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -18444,6 +18482,15 @@
             "type": "boolean",
             "description": "숙박 승인 여부",
             "example": false
+          },
+          "timing": {
+            "type": "string",
+            "description": "배정 완료 알림. IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -19501,7 +19548,7 @@
       },
       "BulkDecisionRequest": {
         "type": "object",
-        "description": "다건 승인·반려 요청",
+        "description": "다건 승인·반려 요청. timing을 생략하면 각 건을 즉시 발송합니다.",
         "properties": {
           "ids": {
             "type": "array",
@@ -19524,6 +19571,15 @@
             "example": "필수 서류 미제출",
             "maxLength": 500,
             "minLength": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 일괄 전체에 같은 시점을 적용합니다."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -19733,7 +19789,7 @@
           },
           "timing": {
             "type": "string",
-            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
             "example": "IMMEDIATE"
           },
           "scheduledAt": {
@@ -20196,7 +20252,7 @@
           },
           "timing": {
             "type": "string",
-            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 일괄 전체에 같은 시점을 적용합니다."
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 대상 프로그램 발표일을 서버가 계산합니다."
           },
           "scheduledAt": {
             "type": "string",
@@ -20228,7 +20284,7 @@
           },
           "timing": {
             "type": "string",
-            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 일괄 전체에 같은 시점을 적용합니다.",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 대상 프로그램 발표일을 서버가 계산합니다.",
             "example": "SCHEDULED"
           },
           "scheduledAt": {
@@ -22104,12 +22160,28 @@
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
-            "description": "승인 취소 결과 알림 예약 시각. null이면 즉시 발송"
+            "description": "결과 알림 예약 시각(ISO-8601). 생략 또는 null이면 즉시 발송. 유효한 미래 시각이면 예약. 최소 60초 이후여야 한다."
           }
         },
         "required": [
           "reason"
         ]
+      },
+      "NotificationResendRequest": {
+        "type": "object",
+        "description": "결과 알림 재발송 요청. body를 생략하면 즉시 재발송합니다. 예약 접수는 발송 완료가 아닙니다.",
+        "properties": {
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE",
+            "example": "SCHEDULED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 Instant"
+          }
+        }
       },
       "InstructorRoleRequestDetailResponse": {
         "type": "object",
@@ -22190,6 +22262,26 @@
             "items": {
               "$ref": "#/components/schemas/MemberLinkedSocialAccountResponse"
             }
+          },
+          "approvalNotificationCase": {
+            "type": "string",
+            "description": "승인 알림 CASE. CASE_1=아직 유효화·발송되지 않음, CASE_2=이미 유효화되었거나 외부 발송 단계 진입, NONE=승인 알림 이력 없음. GET 스냅샷이며 취소 시점의 실제 CASE는 응답 approvalNotificationCase를 따른다."
+          },
+          "approvalNotificationState": {
+            "type": "string",
+            "description": "승인 알림 상태. NONE|SCHEDULED|PENDING|PROCESSING|SENT|UNKNOWN. 여러 이벤트가 있으면 가장 진행된 상태를 반환한다. UNKNOWN은 외부 상태가 확인 불가이며 CASE_2로 취급한다."
+          },
+          "approvalNotificationScheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "아직 도래하지 않은 승인 알림 available_at 중 가장 늦은 시각. 이전이 이미 발송된 재발송 예약이면 CASE_2와 함께 반환될 수 있다.",
+            "nullable": true
+          },
+          "approvalNotificationSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "승인 알림 외부 발송 sent_at 중 가장 늦은 시각. 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -23019,6 +23111,7 @@
       },
       "IndividualApprovalWithScopeRequest": {
         "type": "object",
+        "description": "개인 신청 승인 및 교육 일정 확정. timing을 생략하면 승인 알림을 즉시 발송합니다.",
         "properties": {
           "confirmedScheduleIds": {
             "type": "array",
@@ -23037,6 +23130,16 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
+            "example": "SCHEDULED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -23058,7 +23161,7 @@
       },
       "IndividualApprovalWithScopeBulkRequest": {
         "type": "object",
-        "description": "확정된 교육 범위를 포함하는 개인 신청 일괄 승인 요청입니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다.",
+        "description": "확정된 교육 범위를 포함하는 개인 신청 일괄 승인 요청입니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다. timing은 모든 대상에 동일하게 적용합니다.",
         "properties": {
           "targets": {
             "type": "array",
@@ -23072,6 +23175,15 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 발표일은 대상 프로그램별로 서버가 계산합니다."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -31638,6 +31750,7 @@
           },
           "availableApplicationTypes": {
             "type": "array",
+            "description": "이 모집 행에 사용할 수 있는 신청 유형 하나. applicationType과 같다.",
             "items": {
               "type": "string"
             }
@@ -31689,7 +31802,7 @@
           "recruitmentId": {
             "type": "integer",
             "format": "int64",
-            "description": "이 목록 행의 모집 id. 모집 없는 NONE 행이면 null.",
+            "description": "이 목록 행의 모집 id. 모집 없는 NONE 행이면 null. programId·recruitmentId·applicationType 복합키로 행을 식별한다.",
             "nullable": true
           },
           "recruitmentType": {
@@ -31709,7 +31822,7 @@
           },
           "applicationType": {
             "type": "string",
-            "description": "이 행의 신청 양식 하나.",
+            "description": "이 행의 신청 양식 하나. 같은 프로그램의 기관·봉사자 모집은 별도 목록 행이다.",
             "enum": [
               "INDIVIDUAL",
               "ORGANIZATION",
@@ -33676,7 +33789,7 @@
             "example": "진행 중"
           },
           "teacherAssignment": {
-            "description": "교사 회원의 ORGANIZATION 교육 상세에서만 제공됩니다. 강사 카드는 assigned-instructors 응답을 사용하고, 교재 카드만 이 객체의 textbook을 사용합니다. VOLUNTEER·INSTRUCTOR·INDIVIDUAL·비교사 회원은 null입니다.",
+            "description": "ORGANIZATION은 신청별 교재를 textbook으로 제공합니다. INDIVIDUAL은 동일 회원·동일 프로그램의 INSTRUCTOR 신청에 연결된 활성 배정이 있을 때 assignments를 제공합니다. 연결된 배정이 없으면 null이며, 개인 신청에는 동의서·교재를 자동으로 포함하지 않습니다. VOLUNTEER·INSTRUCTOR·비교사 회원은 null입니다.",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/MemberPortalTeacherAssignment"
@@ -33761,10 +33874,10 @@
       },
       "MemberPortalTeacherAssignment": {
         "type": "object",
-        "description": "교사 회원의 ORGANIZATION 교육 상세에서만 제공되는 배정·교재 보조 projection. 강사 목록과 동의서는 assigned-instructors API가 정본이며, 교재는 신청별 스냅샷입니다.",
+        "description": "회원 포탈 신청 상세의 강사 배정·교재 보조 projection. ORGANIZATION은 신청별 교재를 유지하며, INDIVIDUAL은 동일 회원·동일 프로그램의 INSTRUCTOR 신청에 연결된 활성 배정을 assignments로 제공합니다. 동의서 원본은 assigned-instructors API 정책을 따르며 개인 신청에는 자동 노출하지 않습니다.",
         "properties": {
           "textbook": {
-            "description": "신청별 교재가 있으면 반환합니다. 없거나 NOT_APPLICABLE이면 null.",
+            "description": "ORGANIZATION 신청에 저장된 교재가 있으면 반환합니다. 개인 신청에는 null이며, 없거나 NOT_APPLICABLE이면 null.",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/MemberPortalTeacherAssignmentTextbook"
@@ -33772,6 +33885,62 @@
               {
                 "type": "null"
               }
+            ]
+          },
+          "sourceApplicationType": {
+            "type": "string",
+            "description": "개인 신청에서 배정의 원본 신청 유형. CASE_D 연결 시 INSTRUCTOR이며 그 외에는 null.",
+            "enum": [
+              "INSTRUCTOR"
+            ],
+            "nullable": true
+          },
+          "sourceApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "개인 신청에서 배정의 원본 INSTRUCTOR 신청 ID. 연결된 배정이 없으면 null.",
+            "nullable": true
+          },
+          "assignments": {
+            "type": "array",
+            "description": "개인 신청에 연결된 활성 강사 배정 목록. 없으면 빈 배열이며 다른 회원·프로그램·취소·대체·반려 배정은 포함하지 않습니다.",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalTeacherAssignmentItem"
+            }
+          }
+        }
+      },
+      "MemberPortalTeacherAssignmentItem": {
+        "type": "object",
+        "description": "개인 신청 상세에 표시할 강사 배정 1건. 동일 강사가 여러 일정에 배정되면 일정별로 별도 항목입니다.",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorName": {
+            "type": "string",
+            "description": "배정 강사명. CASE_D에서는 현재 로그인 회원의 강사 신청에 연결된 이름입니다.",
+            "nullable": true
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "description": "활성 배정 상태. 현재 정책상 ASSIGNED 또는 COMPLETED가 반환될 수 있으며 취소·대체·대기·반려 상태는 제외합니다.",
+            "enum": [
+              "ASSIGNED",
+              "COMPLETED"
             ]
           }
         }
@@ -35094,6 +35263,23 @@
           },
           "name": {
             "type": "string"
+          },
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "개인 신청 CASE_D에서 직접 연결된 강사 배정 ID. ORGANIZATION 응답에서는 null.",
+            "nullable": true
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "개인 신청 CASE_D에서 직접 연결된 교육 일정 ID. ORGANIZATION 응답에서는 null.",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "description": "직접 연결된 배정 상태. 개인 신청 CASE_D에서는 ASSIGNED만 반환하며 ORGANIZATION 응답에서는 null.",
+            "nullable": true
           },
           "consentDocumentsRequested": {
             "type": "boolean"
@@ -42988,8 +43174,27 @@
           "organizationName": {
             "type": "string"
           },
+          "lectureLocationName": {
+            "type": "string",
+            "description": "공식 출강지 명칭. 개인형 배정은 program_schedule.location_name을 사용하며 없으면 null입니다."
+          },
+          "lecturePlaceAddress": {
+            "type": "string",
+            "description": "공식 출강지 주소. 개인형은 일정 주소를 우선하고, 없으면 강사 신청의 공식 출강지 주소 snapshot을 사용합니다."
+          },
           "distanceKm": {
             "type": "number"
+          },
+          "distanceStatus": {
+            "type": "string",
+            "description": "강사 자택에서 공식 출강지까지의 저장된 거리 상태. 개인형 주소가 없으면 ADDRESS_UNAVAILABLE입니다."
+          },
+          "distanceProvider": {
+            "type": "string"
+          },
+          "distanceCalculatedAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "longDistance": {
             "type": "boolean"
