@@ -841,6 +841,8 @@ export interface DetailInfoSectionProps {
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
   /** 프로그램 설명·모집 안내 등 — UJAT 참여 기관 모집은 `input` */
   textFieldControl?: 'textarea' | 'input'
+  /** 상위 단락 타이틀이 있을 때 DetailInfoForm `h2` 헤더 숨김 */
+  hideFormHeader?: boolean
 }
 
 export function DetailInfoSection({
@@ -856,6 +858,7 @@ export function DetailInfoSection({
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
   textFieldControl = 'textarea',
+  hideFormHeader = false,
 }: DetailInfoSectionProps) {
   const {
     uploadingThumbnail,
@@ -890,6 +893,7 @@ export function DetailInfoSection({
         title={sectionTitle ?? '상세 정보'}
         description={headerDescription}
         descriptionPlacement="below"
+        hideHeader={hideFormHeader}
         mode={isFormEdit ? 'edit' : 'view'}
         className="project-info-detail-info-section__frame"
       >
@@ -1144,6 +1148,7 @@ export interface VolunteerDetailInfoSectionProps {
   sectionDescription?: string | null
   sectionTitleOnly?: boolean
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
+  hideFormHeader?: boolean
 }
 
 export function VolunteerDetailInfoSection({
@@ -1155,6 +1160,7 @@ export function VolunteerDetailInfoSection({
   sectionDescription,
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
+  hideFormHeader = false,
 }: VolunteerDetailInfoSectionProps) {
   const {
     uploadingThumbnail,
@@ -1194,6 +1200,7 @@ export function VolunteerDetailInfoSection({
         title={sectionTitle ?? '상세 정보'}
         description={headerDescription}
         descriptionPlacement="below"
+        hideHeader={hideFormHeader}
         mode={isFormEdit ? 'edit' : 'view'}
         className="project-info-detail-info-section__frame"
       >
