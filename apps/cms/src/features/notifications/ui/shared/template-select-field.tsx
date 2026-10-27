@@ -30,6 +30,8 @@ export type TemplateSelectFieldProps<T extends SendTemplatePickerItem> = {
   onBeforeUse?: (template: T) => boolean
   useButtonLabel?: string
   extraColumns?: TemplateSelectModalProps<T>['extraColumns']
+  showUnusableReasonInline?: boolean
+  getTemplateUnusableReason?: (template: T) => { summary: string; detail: string } | null
   renderPreview: (args: TemplateSelectFieldPreviewArgs<T>) => ReactNode
 }
 
@@ -44,6 +46,8 @@ export function TemplateSelectField<T extends SendTemplatePickerItem>({
   onBeforeUse,
   useButtonLabel,
   extraColumns,
+  showUnusableReasonInline,
+  getTemplateUnusableReason,
   renderPreview,
 }: TemplateSelectFieldProps<T>) {
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -118,6 +122,8 @@ export function TemplateSelectField<T extends SendTemplatePickerItem>({
           onBeforeUse={onBeforeUse}
           useButtonLabel={useButtonLabel}
           extraColumns={extraColumns}
+          showUnusableReasonInline={showUnusableReasonInline}
+          getTemplateUnusableReason={getTemplateUnusableReason}
           zIndex={PICKER_Z_INDEX}
         />
       ) : null}

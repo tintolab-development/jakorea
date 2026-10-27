@@ -15,6 +15,7 @@ import type {
   AlimtalkSendRecipientSearchParams,
 } from '@/features/notifications/model/alimtalk-send/types'
 import {
+  ALIMTALK_PROGRAM_SELECTED_DIRECT_GUIDANCE,
   ALIMTALK_SEND_MEMBER_TYPE_OPTIONS,
   ALIMTALK_SEND_PARTICIPATION_TYPE_OPTIONS,
   alimtalkSendRecipientTypeColumnTitle,
@@ -52,7 +53,9 @@ import {
 } from '@/features/notifications/model/send-program-id'
 import {
   canUseAlimtalkSendTemplateForManualSend,
+  diagnoseAlimtalkManualSendUnusable,
   formatAlimtalkManualSendUnusableMessage,
+  formatAlimtalkManualSendUnusableReasonView,
   listAlimtalkManualSendUnusableKeys,
 } from '@/features/notifications/model/alimtalk-send/manual-send-usable'
 import { alimtalkSendStateAfterProgramChange } from '@/features/notifications/model/alimtalk-send/program-change'
@@ -282,6 +285,25 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       )
     },
     [programNumericId, variablesCatalog, variablesQuery.isError]
+  )
+
+  const getTemplateUnusableReason = useCallback(
+    (template: AlimtalkTemplateItem) => {
+      const message = getTemplateUnusableMessage(template)
+      if (variablesQuery.isError || variablesCatalog == null || template.hasAlimtalkMetadata !== true) {
+        return message ? { summary: message, detail: message } : null
+      }
+      return (
+        formatAlimtalkManualSendUnusableReasonView(
+          diagnoseAlimtalkManualSendUnusable({
+            usedKeys: collectTemplatePlaceholderKeys(template),
+            catalog: variablesCatalog,
+            programNumericId,
+          })
+        ) ?? (message ? { summary: message, detail: message } : null)
+      )
+    },
+    [getTemplateUnusableMessage, programNumericId, variablesCatalog, variablesQuery.isError]
   )
 
   const candidatesQuery = useAlimtalkRecipientCandidatesQuery(
@@ -583,7 +605,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       await invalidateHistory()
       setSendRequestCompletedOpen(true)
     } catch (error) {
-      showNotificationSendErrorAlert(showAlert, error)
+      showNotificationSendErrorAlert(showAlert, error, {
+        template: '.send-template-select-field__trigger',
+      })
     } finally {
       sendingRef.current = false
       setSending(false)
@@ -716,6 +740,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                             disabled={!canPickTemplate}
                             isTemplateUsable={isTemplateUsable}
                             getTemplateUnusableMessage={getTemplateUnusableMessage}
+                            getTemplateUnusableReason={getTemplateUnusableReason}
+                            showUnusableReasonInline
                             isUseEnabled={isAlimtalkTemplateApproved}
                             useButtonLabel="템플릿 사용"
                             onBeforeUse={template => {
@@ -738,6 +764,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                                 onUse={onUse}
                                 isTemplateUsable={isTemplateUsable}
                                 getTemplateUnusableMessage={getTemplateUnusableMessage}
+                                getTemplateUnusableReason={getTemplateUnusableReason}
+                                showUnusableReasonInline
                                 zIndex={zIndex}
                               />
                             )}
@@ -796,6 +824,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       </CmsButton>
                     </div>
                   </div>
+                  {!isWithoutProgram ? (
+                    <p className="alimtalk-send-fullpage__variable-hint">
+                      {ALIMTALK_PROGRAM_SELECTED_DIRECT_GUIDANCE}
+                    </p>
+                  ) : null}
                   {canConfigureRecipients ? (
                     <>
                       {directManualKeys.length > 0 ? (

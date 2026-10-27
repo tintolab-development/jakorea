@@ -3,6 +3,8 @@ import {
   classifyAlimtalkPlaceholderKey,
   collectAlimtalkRecipientVariableGaps,
   isAlimtalkSystemVariableKey,
+  diagnoseAlimtalkManualLinkValue,
+  formatAlimtalkManualLinkError,
   isUnsafeAlimtalkManualLinkValue,
   pickAlimtalkRecipientSendVariables,
 } from './recipient-variables'
@@ -436,6 +438,44 @@ describe('classifyAlimtalkPlaceholderKey', () => {
     expect(isUnsafeAlimtalkManualLinkValue('javascript:alert(1)')).toBe(true)
     expect(isUnsafeAlimtalkManualLinkValue('data:text/html,x')).toBe(true)
     expect(isUnsafeAlimtalkManualLinkValue('https://evil.example/phish')).toBe(true)
+  })
+
+  it('R8 BE NotificationManualLinkPath와 같은 내부 경로를 허용한다', () => {
+    expect(isUnsafeAlimtalkManualLinkValue('/mypage/activities')).toBe(false)
+    expect(isUnsafeAlimtalkManualLinkValue('/mypage/lectures')).toBe(false)
+    expect(
+      isUnsafeAlimtalkManualLinkValue('/mypage/lectures/INSTRUCTOR/123?section=schedule')
+    ).toBe(false)
+  })
+
+  it('R8 .. 경로 이동과 percent-decode 우회를 차단한다', () => {
+    expect(diagnoseAlimtalkManualLinkValue('/a/../../etc')?.code).toBe('dot-dot')
+    expect(isUnsafeAlimtalkManualLinkValue('/mypage/../admin')).toBe(true)
+    expect(isUnsafeAlimtalkManualLinkValue('/%2e%2e/admin')).toBe(true)
+    expect(isUnsafeAlimtalkManualLinkValue('/%252e%252e/admin')).toBe(true)
+    expect(formatAlimtalkManualLinkError('/a/../../etc')).toContain('상위 경로 이동')
+  })
+
+  it('R8 외부 URL·javascript·data·프로토콜 상대 경로를 차단한다', () => {
+    expect(diagnoseAlimtalkManualLinkValue('https://evil.example')?.code).toBe('external')
+    expect(diagnoseAlimtalkManualLinkValue('javascript:alert(1)')?.code).toBe('external')
+    expect(diagnoseAlimtalkManualLinkValue('data:text/html,abc')?.code).toBe('external')
+    expect(isUnsafeAlimtalkManualLinkValue('//evil.example')).toBe(true)
+    expect(formatAlimtalkManualLinkError('https://evil.example')).toContain('외부 주소')
+  })
+
+  it('R8 길이 200자는 허용하고 201자는 거절한다', () => {
+    const allowed200 = `/${'a'.repeat(181)}?${'b'.repeat(17)}`
+    expect(allowed200).toHaveLength(200)
+    expect(isUnsafeAlimtalkManualLinkValue(allowed200)).toBe(false)
+    expect(isUnsafeAlimtalkManualLinkValue(`${allowed200}c`)).toBe(true)
+    expect(formatAlimtalkManualLinkError(`${allowed200}c`)).toContain('200자')
+  })
+
+  it('R8 역슬래시·제어문자·잘못된 percent encoding을 거절한다', () => {
+    expect(isUnsafeAlimtalkManualLinkValue('/mypage\\admin')).toBe(true)
+    expect(isUnsafeAlimtalkManualLinkValue('/mypage/act ivities')).toBe(true)
+    expect(isUnsafeAlimtalkManualLinkValue('/mypage/%zz')).toBe(true)
   })
 })
 

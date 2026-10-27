@@ -153,10 +153,53 @@ export function isAlimtalkReservedVariableKey(key: string): boolean {
 
 export const ALIMTALK_MANUAL_LINK_PLACEHOLDER_KEY = '알림 링크 경로'
 
-export function isUnsafeAlimtalkManualLinkValue(value: string): boolean {
-  const trimmed = value.trim()
-  if (!trimmed) return true
-  const lower = trimmed.toLowerCase()
+/** BE NotificationManualLinkPath.MAX_LENGTH */
+const ALIMTALK_MANUAL_LINK_MAX_LENGTH = 200
+/** BE NotificationManualLinkPath.SAFE_RAW */
+const ALIMTALK_MANUAL_LINK_SAFE_RAW =
+  /^\/[A-Za-z0-9][A-Za-z0-9._~/-]{0,180}(?:\?[A-Za-z0-9._~=&%-]{1,120})?$/
+
+export type AlimtalkManualLinkErrorCode =
+  | 'empty'
+  | 'external'
+  | 'dot-dot'
+  | 'format'
+  | 'length'
+  | 'encoding'
+
+const ALIMTALK_MANUAL_LINK_ERROR_COPY: Record<AlimtalkManualLinkErrorCode, string> = {
+  empty: '슬래시(/)로 시작하는 올바른 내부 경로를 입력해 주세요.',
+  external: '외부 주소는 사용할 수 없습니다. 사이트 내부 경로를 입력해 주세요.',
+  'dot-dot': '상위 경로 이동(..)을 포함한 주소는 사용할 수 없습니다.',
+  format: '슬래시(/)로 시작하는 올바른 내부 경로를 입력해 주세요.',
+  length: '링크 경로는 200자 이하로 입력해 주세요.',
+  encoding: '허용되지 않는 문자 또는 인코딩이 포함되어 있습니다.',
+}
+
+function hasAsciiControlOrSpace(value: string): boolean {
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i)
+    if (code <= 32 || code === 127) return true
+  }
+  return false
+}
+
+function fullyPercentDecodeAlimtalkManualLink(value: string): string | null {
+  let current = value
+  for (let i = 0; i < 3; i += 1) {
+    try {
+      const decoded = decodeURIComponent(current.replaceAll('+', '%2B'))
+      if (decoded === current) return decoded
+      current = decoded
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
+function looksLikeExternalAlimtalkManualLink(value: string): boolean {
+  const lower = value.toLowerCase()
   if (
     lower.startsWith('javascript:') ||
     lower.startsWith('data:') ||
@@ -164,10 +207,62 @@ export function isUnsafeAlimtalkManualLinkValue(value: string): boolean {
   ) {
     return true
   }
-  if (trimmed.startsWith('//')) return true
-  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return true
-  if (!trimmed.startsWith('/')) return true
+  if (value.startsWith('//')) return true
+  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return true
   return false
+}
+
+/** BE NotificationManualLinkPath.validateOrNull 과 동일한 실패 사유. 값을 정규화해 통과시키지 않는다. */
+export function diagnoseAlimtalkManualLinkValue(value: string): {
+  code: AlimtalkManualLinkErrorCode
+  message: string
+} | null {
+  if (!value || value.trim().length === 0) {
+    return { code: 'empty', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.empty }
+  }
+  if (value.length > ALIMTALK_MANUAL_LINK_MAX_LENGTH) {
+    return { code: 'length', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.length }
+  }
+  if (looksLikeExternalAlimtalkManualLink(value)) {
+    return { code: 'external', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.external }
+  }
+  if (value.includes(':')) {
+    return { code: 'encoding', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.encoding }
+  }
+  if (value.includes('\\') || value.includes('//') || hasAsciiControlOrSpace(value)) {
+    return { code: 'encoding', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.encoding }
+  }
+  if (!ALIMTALK_MANUAL_LINK_SAFE_RAW.test(value)) {
+    return { code: 'format', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.format }
+  }
+  const decoded = fullyPercentDecodeAlimtalkManualLink(value)
+  if (decoded == null) {
+    return { code: 'encoding', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.encoding }
+  }
+  const lowerDecoded = decoded.toLowerCase()
+  if (
+    !decoded.startsWith('/') ||
+    decoded.includes('//') ||
+    decoded.includes('\\') ||
+    decoded.includes(':') ||
+    hasAsciiControlOrSpace(decoded) ||
+    lowerDecoded.includes('javascript') ||
+    lowerDecoded.startsWith('data:')
+  ) {
+    return { code: 'encoding', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.encoding }
+  }
+  if (decoded.includes('..')) {
+    return { code: 'dot-dot', message: ALIMTALK_MANUAL_LINK_ERROR_COPY['dot-dot'] }
+  }
+  return null
+}
+
+export function formatAlimtalkManualLinkError(value: string): string | null {
+  return diagnoseAlimtalkManualLinkValue(value)?.message ?? null
+}
+
+export function isUnsafeAlimtalkManualLinkValue(value: string): boolean {
+  return diagnoseAlimtalkManualLinkValue(value) != null
 }
 
 function findCatalogEntry(
@@ -403,7 +498,7 @@ export function formatAlimtalkRecipientVariableGapMessage(
   }
   const unsafe = gaps.filter(gap => gap.unsafeManual.length > 0)
   if (unsafe.length > 0) {
-    lines.push('허용되지 않는 링크는 사용할 수 없습니다. javascript·data URL은 입력할 수 없습니다.')
+    lines.push('허용되지 않는 링크는 사용할 수 없습니다. 사이트 내부 경로만 입력해 주세요.')
     for (const gap of unsafe.slice(0, 8)) {
       lines.push(`${gap.label}: ${gap.unsafeManual.join(', ')}`)
     }

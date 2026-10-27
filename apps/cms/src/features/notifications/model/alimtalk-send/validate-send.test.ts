@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { collectTemplatePlaceholderKeys } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import type { AlimtalkSendRecipient } from './types'
 import { validateAlimtalkSendRequest, type AlimtalkSendValidationInput } from './validate-send'
 
@@ -191,6 +192,38 @@ describe('validateAlimtalkSendRequest', () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.alert).toContain('허용되지 않는 링크')
+  })
+
+  it('R8 퀵리플라이에서 추출한 링크 변수를 발송 검증에 연결한다', () => {
+    const catalog = [
+      {
+        key: '알림 링크 경로',
+        enabled: true,
+        requiresProgram: false,
+        sourceMode: 'MANUAL_ALLOWED' as const,
+      },
+    ]
+    const placeholderKeys = collectTemplatePlaceholderKeys({
+      content: '본문에는 변수 없음',
+      quickLinks: [{ name: '바로가기', destinations: { pc: '/#{알림 링크 경로}', mobile: '/#{알림 링크 경로}' } }],
+    })
+    expect([...placeholderKeys]).toEqual(['알림 링크 경로'])
+    const ok = validateAlimtalkSendRequest(
+      input({
+        placeholderKeys,
+        catalog,
+        recipients: [recipient('1', { '알림 링크 경로': '/mypage/lectures' })],
+      })
+    )
+    expect(ok.ok).toBe(true)
+    const blocked = validateAlimtalkSendRequest(
+      input({
+        placeholderKeys,
+        catalog,
+        recipients: [recipient('1', { '알림 링크 경로': '/a/../../etc' })],
+      })
+    )
+    expect(blocked.ok).toBe(false)
   })
 
   it('FE-VAR-13 카탈로그 pending이면 발송하지 않는다', () => {
