@@ -113,7 +113,7 @@ export const ComposeFields = memo(function ComposeFields({
           fullRow
           view=""
           edit={
-            <div className="mail-template-compose__editor-host">
+            <div className="mail-template-compose__editor-host mail-template-rich-body">
               <RichTextEditor
                 editor={editor}
                 minHeight={editorMinHeight}

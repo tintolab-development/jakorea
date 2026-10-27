@@ -8,6 +8,7 @@ import {
   sanitizeMailTemplateNameInput,
   validateMailTemplateName,
 } from '@/features/notifications/model/mail-template/template-name'
+import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/talent-donation-layout'
 import { EMPTY_MAIL_COMPOSE, useMailCompose } from './use-compose'
 
 export type { MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'
@@ -39,7 +40,7 @@ export function draftFromTemplate(template: MailTemplateItem | null): MailTempla
     senderName: template.senderName,
     senderEmail: template.senderEmail,
     subject: template.subject,
-    bodyHtml: template.bodyHtml,
+    bodyHtml: resolveMailTemplateBodyHtml(template.id, template.bodyHtml),
     attachmentFileNames: [...template.attachmentFileNames],
     newFiles: [],
     removedAttachmentIds: [],

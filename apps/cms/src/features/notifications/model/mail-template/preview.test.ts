@@ -9,21 +9,24 @@ import {
 } from './preview'
 
 describe('applyMailPreviewTokens', () => {
-  it('replaces design sample variables in the subject', () => {
-    expect(applyMailPreviewTokens('[JA Korea] #{프로그램명} 안내')).toBe('[JA Korea] JA KOREA 안내')
+  it('keeps variables in the subject as tokens', () => {
+    expect(applyMailPreviewTokens('[JA Korea] #{프로그램명} 안내')).toBe(
+      '[JA Korea] #{프로그램명} 안내'
+    )
   })
 })
 
 describe('applyMailPreviewHtml', () => {
-  it('unwraps mint spans and substitutes #{회원명}', () => {
+  it('unwraps mint spans and keeps the 회원명 variable token', () => {
     const html =
       '<p>안녕하세요, <strong><span style="color: #01A1AF; font-size: 15px">#{회원명}</span></strong>님</p>'
-    expect(applyMailPreviewHtml(html)).toBe('<p>안녕하세요, <strong>이가원</strong>님</p>')
+    expect(applyMailPreviewHtml(html)).toBe('<p>안녕하세요, <strong>#{회원명}</strong>님</p>')
   })
 
-  it('substitutes data-mail-variable chips', () => {
-    const html = '<p>안녕 <span class="mail-template-variable" data-mail-variable="회원명">#{회원명}</span></p>'
-    expect(applyMailPreviewHtml(html)).toBe('<p>안녕 이가원</p>')
+  it('keeps data-mail-variable chips as variable tokens', () => {
+    const html =
+      '<p>안녕 <span class="mail-template-variable" data-mail-variable="회원명">#{회원명}</span></p>'
+    expect(applyMailPreviewHtml(html)).toBe('<p>안녕 #{회원명}</p>')
   })
 })
 

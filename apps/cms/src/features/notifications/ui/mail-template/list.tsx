@@ -67,6 +67,7 @@ import {
 import { DetailPanel } from './detail-panel'
 import { FormModal } from './form-modal'
 import { PreviewModal } from './preview-modal'
+import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/talent-donation-layout'
 import type { MailTemplateFormDraft } from './use-form'
 import '@/pages/programs/program-list-page.css'
 import '@/features/notifications/ui/alimtalk-template/list.css'
@@ -914,7 +915,10 @@ export function MailTemplateList() {
       <PreviewModal
         open={previewOpen && previewTemplate != null}
         subject={previewTemplate?.subject ?? ''}
-        bodyHtml={previewTemplate?.bodyHtml ?? ''}
+        bodyHtml={resolveMailTemplateBodyHtml(
+          previewTemplate?.id,
+          previewTemplate?.bodyHtml ?? ''
+        )}
         senderName={previewTemplate?.senderName}
         senderEmail={previewTemplate?.senderEmail}
         attachments={previewTemplate?.attachmentFileNames.map(name => ({

@@ -47,9 +47,9 @@ describe('plain body → <br> (matches BE renderedContent)', () => {
 })
 
 describe('applyMailPreviewBody', () => {
-  it('plain: substitutes sample values, escapes them, keeps line breaks', () => {
+  it('plain: keeps variable tokens, escapes them, and keeps line breaks', () => {
     expect(applyMailPreviewBody('안녕하세요? #{회원명}님,\n\n■ 프로그램명: #{프로그램명}')).toBe(
-      '안녕하세요? 이가원님,<br><br>■ 프로그램명: JA KOREA'
+      '안녕하세요? #{회원명}님,<br><br>■ 프로그램명: #{프로그램명}'
     )
   })
   it('HTML: unchanged behavior (variable chips substituted, no <br> added)', () => {
@@ -57,7 +57,7 @@ describe('applyMailPreviewBody', () => {
       applyMailPreviewBody(
         '<p>안녕 <span class="mail-template-variable" data-mail-variable="회원명">#{회원명}</span></p>\n<p>b</p>'
       )
-    ).toBe('<p>안녕 이가원</p>\n<p>b</p>')
+    ).toBe('<p>안녕 #{회원명}</p>\n<p>b</p>')
   })
 })
 

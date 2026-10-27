@@ -22,13 +22,8 @@ export const MAIL_PREVIEW_SAMPLE_RECIPIENT = {
   extraCount: 914,
 } as const
 
-const VARIABLE_SAMPLE_OVERRIDES: Record<string, string> = {
-  회원명: '이가원',
-  프로그램명: 'JA KOREA',
-}
-
 export function mailPreviewSampleValue(label: string): string {
-  return VARIABLE_SAMPLE_OVERRIDES[label] ?? '예시값'
+  return `#{${label}}`
 }
 
 export function applyMailPreviewTokens(text: string): string {
