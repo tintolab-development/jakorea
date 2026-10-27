@@ -237,7 +237,7 @@ function ProgramDetailTextAreaField({
   rows = 1,
   placeholder,
   readContent,
-  control = 'textarea',
+  control = 'input',
 }: {
   label: string
   showRequiredStar: boolean
@@ -849,7 +849,7 @@ export interface DetailInfoSectionProps {
   sectionTitleOnly?: boolean
   /** 조회 모드 공란 표시 — UJAT: 관리자 상세는 '-' */
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
-  /** 프로그램 설명·모집 안내 등 — UJAT 참여 기관 모집은 `input` */
+  /** 프로그램 설명 등 단줄 필드 — 기본 `input`(h36). 멀티라인이 필요할 때만 `textarea` */
   textFieldControl?: 'textarea' | 'input'
 }
 
@@ -865,7 +865,7 @@ export function DetailInfoSection({
   sectionDescription,
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
-  textFieldControl = 'textarea',
+  textFieldControl = 'input',
 }: DetailInfoSectionProps) {
   const {
     uploadingThumbnail,

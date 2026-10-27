@@ -82,7 +82,7 @@ export type RecruitDetailInfoParagraphProps = {
   afterEditorFields?: RecruitDetailInfoTextField[]
   attachmentAccept?: string
   attachmentGuideLines?: string[]
-  /** 텍스트 필드 컨트롤 — UJAT 참여 기관 모집 등은 `input` */
+  /** 텍스트 필드 컨트롤 — 기본 `input`(h36). 멀티라인이 필요할 때만 `textarea` */
   textFieldControl?: 'textarea' | 'input'
 }
 
@@ -90,7 +90,7 @@ function RecruitDetailInfoTextFieldRow({
   field,
   overlayKeyPrefix,
   wysiwygResetKey,
-  textFieldControl = 'textarea',
+  textFieldControl = 'input',
 }: {
   field: RecruitDetailInfoTextField
   overlayKeyPrefix: string
@@ -155,7 +155,7 @@ function RecruitDetailInfoTextFieldRows({
   fields,
   overlayKeyPrefix,
   wysiwygResetKey,
-  textFieldControl = 'textarea',
+  textFieldControl = 'input',
 }: {
   fields: RecruitDetailInfoTextField[]
   overlayKeyPrefix: string
@@ -316,7 +316,7 @@ export function RecruitDetailInfoParagraph({
   afterEditorFields,
   attachmentAccept = RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
   attachmentGuideLines = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
-  textFieldControl = 'textarea',
+  textFieldControl = 'input',
 }: RecruitDetailInfoParagraphProps) {
   const contentResetGeneration = useRecruitDetailContentResetGeneration()
   const overlayScope = getRecruitDetailInfoScope()
