@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ProgramDetail } from '@/features/program'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import {
@@ -6,7 +6,7 @@ import {
   useUpdateApplicationNoticeMutation,
 } from '../../applications/api/activity-hooks'
 import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/member-file-upload'
-import type { EducationInProgressNotice } from '../model/types'
+import type { EducationInProgressFile, EducationInProgressNotice } from '../model/types'
 import { deriveNoticeTitleFromHtml, isNoticeHtmlContentEmpty } from '../lib/derive-notice-title'
 import {
   NOTICE_ATTACH_ACCEPT,
@@ -43,6 +43,8 @@ type PendingAttachment = {
   file: File
 }
 
+const EMPTY_EXISTING_ATTACHMENTS: readonly EducationInProgressFile[] = []
+
 type EducationProgramNoticeWriteModalProps = {
   open: boolean
   onClose: () => void
@@ -51,6 +53,7 @@ type EducationProgramNoticeWriteModalProps = {
   program: ProgramDetail
   authorDisplayName: string
   notice?: EducationInProgressNotice | null
+  existingAttachments?: readonly EducationInProgressFile[]
   onSaved?: () => void
 }
 
@@ -62,11 +65,15 @@ export function EducationProgramNoticeWriteModal({
   program,
   authorDisplayName: _authorDisplayName,
   notice = null,
+  existingAttachments = EMPTY_EXISTING_ATTACHMENTS,
   onSaved,
 }: EducationProgramNoticeWriteModalProps) {
   const editing = notice != null
   const [audience, setAudience] = useState<PostWriteAudienceApiKey[]>(() =>
     defaultPostWriteAudience(program)
+  )
+  const [existingAttachmentItems, setExistingAttachmentItems] = useState<EducationInProgressFile[]>(
+    []
   )
   const [attachments, setAttachments] = useState<PendingAttachment[]>([])
   const [attachError, setAttachError] = useState<string | null>(null)
@@ -83,20 +90,22 @@ export function EducationProgramNoticeWriteModal({
     ? `education-notice-${editing ? `edit-${noticeId}` : 'write'}-${applicationId}-${editorEpoch}`
     : 'closed'
 
+  const resolveNoticeImageSrc = useCallback(async (file: File) => {
+    const fileObjectId = await uploadMemberPortalFile({
+      file,
+      filePurpose: PORTAL_PROGRAM_POST_INLINE_IMAGE_FILE_PURPOSE,
+    })
+    const referenceToken = `file-object:${fileObjectId}`
+    return { src: referenceToken, persistSrc: referenceToken }
+  }, [])
+
   const { editor, api } = useRichTextEditor({
     enabled: open,
     initialContent: notice?.content ?? '',
     contentFormat: 'html',
     placeholder: '안내사항을 입력해 주세요.',
     resetKey: editorResetKey,
-    resolveImageSrc: async file => {
-      const fileObjectId = await uploadMemberPortalFile({
-        file,
-        filePurpose: PORTAL_PROGRAM_POST_INLINE_IMAGE_FILE_PURPOSE,
-      })
-      const referenceToken = `file-object:${fileObjectId}`
-      return { src: referenceToken, persistSrc: referenceToken }
-    },
+    resolveImageSrc: resolveNoticeImageSrc,
   })
 
   const createMutation = useCreateApplicationNoticeMutation(applicationType, applicationId)
@@ -105,10 +114,11 @@ export function EducationProgramNoticeWriteModal({
   useEffect(() => {
     if (!open) return
     setAudience(defaultPostWriteAudience(program))
+    setExistingAttachmentItems([...existingAttachments])
     setAttachments([])
     setAttachError(null)
     setAlertMessage(null)
-  }, [editing, open, program])
+  }, [editing, existingAttachments, open, program])
 
   const toggleAudience = (value: PostWriteAudienceApiKey, checked: boolean) => {
     setAudience(prev => {
@@ -124,7 +134,10 @@ export function EducationProgramNoticeWriteModal({
       return
     }
     const batchError = validateNoticeAttachmentsBatch(
-      attachments.map(item => item.file),
+      [
+        ...existingAttachmentItems.map(item => ({ size: item.fileSizeBytes })),
+        ...attachments.map(item => item.file),
+      ],
       [file]
     )
     if (batchError) {
@@ -137,6 +150,10 @@ export function EducationProgramNoticeWriteModal({
 
   const handleRemoveFile = (id: string) => {
     setAttachments(prev => prev.filter(item => item.id !== id))
+  }
+
+  const handleRemoveExistingFile = (id: string) => {
+    setExistingAttachmentItems(prev => prev.filter(item => item.id !== id))
   }
 
   const handleSubmit = async () => {
@@ -153,6 +170,17 @@ export function EducationProgramNoticeWriteModal({
     const inlineImageFileObjectIds = collectNoticeInlineImageFileObjectIds(content)
     if (inlineImageFileObjectIds == null) {
       setAlertMessage('본문 이미지는 파일로 삽입해 주세요.')
+      return
+    }
+
+    const attachmentFileObjectIds = existingAttachmentItems.flatMap(file => {
+      const fileObjectId = file.fileObjectId
+      return typeof fileObjectId === 'number' && Number.isInteger(fileObjectId) && fileObjectId > 0
+        ? [fileObjectId]
+        : []
+    })
+    if (editing && attachmentFileObjectIds.length !== existingAttachmentItems.length) {
+      setAlertMessage('기존 첨부파일 정보를 확인하지 못했습니다. 새로고침 후 다시 시도해 주세요.')
       return
     }
 
@@ -176,6 +204,8 @@ export function EducationProgramNoticeWriteModal({
           postId: notice.id,
           content,
           inlineImageFileObjectIds,
+          attachmentFileObjectIds,
+          attachmentFiles: attachments.map(item => item.file),
         })
       } else {
         await createMutation.mutateAsync({
@@ -246,60 +276,75 @@ export function EducationProgramNoticeWriteModal({
           ) : null}
 
           <div className={styles.editorWrap}>
-            <PfRichTextEditor editor={editor} allowImageUrl={false} />
+            <PfRichTextEditor
+              editor={editor}
+              allowImageUrl={false}
+              resolveImageSrc={resolveNoticeImageSrc}
+            />
           </div>
 
-          {!editing ? (
-            <section className={styles.attachSection} aria-label="파일 첨부">
-              <PFText
-                as="p"
-                typo="label-md"
-                color="neutral-warm-600"
-                className={styles.attachLabel}
-              >
-                파일 첨부
-              </PFText>
-              <PFFormFileAttach
-                className={styles.addFileButton}
-                accept={NOTICE_ATTACH_ACCEPT}
-                buttonLabel="파일 추가하기"
-                buttonVariant="tertiary"
-                buttonSize="xlarge"
-                buttonFullWidth
-                disabled={submitting}
-                onFileSelect={handleAddFile}
-                error={attachError}
-              />
-              <PFDescriptionList
-                items={[
-                  NOTICE_ATTACH_HINT,
-                  '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-                ]}
-              />
-              {attachments.length > 0 ? (
-                <ul className={styles.attachList} aria-label="첨부된 파일">
-                  {attachments.map(item => (
-                    <li key={item.id} className={styles.attachListRow}>
-                      <PFText
-                        as="span"
-                        typo="bd-md-md"
-                        color="black"
-                        className={styles.attachFileName}
-                        title={item.file.name}
-                      >
-                        {item.file.name}
-                      </PFText>
-                      <PFItemDeleteButton
-                        aria-label={`${item.file.name} 삭제`}
-                        disabled={submitting}
-                        onClick={() => handleRemoveFile(item.id)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </section>
-          ) : null}
+          <section className={styles.attachSection} aria-label="파일 첨부">
+            <PFText as="p" typo="label-md" color="neutral-warm-600" className={styles.attachLabel}>
+              파일 첨부
+            </PFText>
+            <PFFormFileAttach
+              className={styles.addFileButton}
+              accept={NOTICE_ATTACH_ACCEPT}
+              buttonLabel="파일 추가하기"
+              buttonVariant="tertiary"
+              buttonSize="xlarge"
+              buttonFullWidth
+              disabled={submitting}
+              onFileSelect={handleAddFile}
+              error={attachError}
+            />
+            <PFDescriptionList
+              items={[
+                NOTICE_ATTACH_HINT,
+                '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+              ]}
+            />
+            {existingAttachmentItems.length > 0 || attachments.length > 0 ? (
+              <ul className={styles.attachList} aria-label="첨부된 파일">
+                {existingAttachmentItems.map(file => (
+                  <li key={file.id} className={styles.attachListRow}>
+                    <PFText
+                      as="span"
+                      typo="bd-md-md"
+                      color="black"
+                      className={styles.attachFileName}
+                      title={file.fileName}
+                    >
+                      {file.fileName}
+                    </PFText>
+                    <PFItemDeleteButton
+                      aria-label={`${file.fileName} 삭제`}
+                      disabled={submitting}
+                      onClick={() => handleRemoveExistingFile(file.id)}
+                    />
+                  </li>
+                ))}
+                {attachments.map(item => (
+                  <li key={item.id} className={styles.attachListRow}>
+                    <PFText
+                      as="span"
+                      typo="bd-md-md"
+                      color="black"
+                      className={styles.attachFileName}
+                      title={item.file.name}
+                    >
+                      {item.file.name}
+                    </PFText>
+                    <PFItemDeleteButton
+                      aria-label={`${item.file.name} 삭제`}
+                      disabled={submitting}
+                      onClick={() => handleRemoveFile(item.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
 
           <div className={styles.footer}>
             <PFButton

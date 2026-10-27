@@ -66,7 +66,7 @@ type EducationInProgressNoticeDetailModalProps = {
   commentId?: string | null
   onClose: () => void
   onNoticeChange: (noticeId: string) => void
-  onEdit?: (noticeId: string) => void
+  onEdit?: (noticeId: string, attachments: EducationInProgressFile[]) => void
   onDelete: (noticeId: string) => void
   onReactionCountChange?: (noticeId: string, reactionCount: number) => void
   onCommentCountChange?: (noticeId: string, commentCount: number) => void
@@ -387,7 +387,7 @@ export function EducationInProgressNoticeDetailModal({
       return
     }
     if (value === 'edit' && onEdit) {
-      onEdit(notice.id)
+      onEdit(notice.id, attachments)
       return
     }
     setIsComingSoonOpen(true)

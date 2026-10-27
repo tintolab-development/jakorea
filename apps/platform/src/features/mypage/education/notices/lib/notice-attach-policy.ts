@@ -10,11 +10,12 @@ export const NOTICE_ATTACH_ACCEPT = '.jpg,.jpeg,.png'
 export const NOTICE_ATTACH_HINT = formatMultiFileUploadHint('JPG, PNG')
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png'])
+type SizedNoticeAttachment = { size: number }
 
 /** 이미 첨부한 파일 + 새 파일의 개수·전체 용량 검사 */
 export function validateNoticeAttachmentsBatch(
-  current: readonly File[],
-  incoming: readonly File[]
+  current: readonly SizedNoticeAttachment[],
+  incoming: readonly SizedNoticeAttachment[]
 ): string | null {
   return validateUploadBatch({
     currentCount: current.length,

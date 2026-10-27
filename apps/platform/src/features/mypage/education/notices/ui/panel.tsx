@@ -63,6 +63,9 @@ export function EducationInProgressNoticePanel({
 }: EducationInProgressNoticePanelProps) {
   const [isNoticeWriteOpen, setIsNoticeWriteOpen] = useState(false)
   const [editingNotice, setEditingNotice] = useState<EducationInProgressNotice | null>(null)
+  const [editingNoticeAttachments, setEditingNoticeAttachments] = useState<
+    EducationInProgressFile[]
+  >([])
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false)
   const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
   const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
@@ -148,10 +151,11 @@ export function EducationInProgressNoticePanel({
     setIsComingSoonOpen(true)
   }
 
-  const openNoticeEdit = (noticeId: string) => {
+  const openNoticeEdit = (noticeId: string, noticeAttachments: EducationInProgressFile[]) => {
     const target = modalNotices.find(notice => notice.id === noticeId)
     if (!target) return
     setEditingNotice(target)
+    setEditingNoticeAttachments(noticeAttachments)
     closeNoticeDetail()
   }
 
@@ -332,12 +336,14 @@ export function EducationInProgressNoticePanel({
           onClose={() => {
             setIsNoticeWriteOpen(false)
             setEditingNotice(null)
+            setEditingNoticeAttachments([])
           }}
           applicationType={applicationType}
           applicationId={applicationId}
           program={program}
           authorDisplayName={noticeWriteAuthorDisplayName}
           notice={editingNotice}
+          existingAttachments={editingNoticeAttachments}
         />
       ) : null}
 
