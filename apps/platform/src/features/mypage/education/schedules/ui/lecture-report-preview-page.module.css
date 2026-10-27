@@ -13,7 +13,16 @@
 .frame {
   width: var(--lecture-report-a4-display-width);
   height: calc(var(--lecture-report-a4-display-width) * 92 / 65);
-  overflow: hidden;
+  overflow: visible;
+  flex-shrink: 0;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.frameCompactSheet {
+  box-sizing: border-box;
+  width: var(--lecture-report-a4-display-width);
+  padding: 48px 56px 56px;
   flex-shrink: 0;
   background: #fff;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
@@ -80,7 +89,6 @@
 .content {
   width: 100%;
   min-width: 0;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
+  flex: 0 1 auto;
+  overflow: visible;
 }

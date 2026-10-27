@@ -2,6 +2,13 @@
   background: linear-gradient(180deg, #f5f7f7 0%, #f5f7f7 100%);
 }
 
+.pageTitle,
+.pageDescription {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
 .period {
   margin: 0;
   white-space: nowrap;

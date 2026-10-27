@@ -533,6 +533,7 @@ export function MypageLectureDetailPage() {
         pending={cancelMutation.isPending}
         error={cancelMutation.error}
       />
+
     </section>
   )
 }
