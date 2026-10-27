@@ -74,8 +74,9 @@ import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/m
 import { PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE } from '../../notices/lib/notice-attach-policy'
 import {
   INDIVIDUAL_SETTLEMENT_DISABLED_CODE,
-  isIndividualScheduleSettlementAudience,
+  INDIVIDUAL_SETTLEMENT_NOT_FOUND_CODE,
   readIndividualSettlementErrorCode,
+  shouldUseIndividualSettlementSchedulesApi,
 } from '../../settlements/lib/individual-settlement-contract'
 
 const STALE_MS = 30_000
@@ -916,6 +917,17 @@ export function useIndividualSettlementSchedulesQuery(
     ...queryOptions(),
   })
   const errorCode = query.isError ? readIndividualSettlementErrorCode(query.error) : null
+  if (
+    import.meta.env.DEV &&
+    query.isError &&
+    errorCode === INDIVIDUAL_SETTLEMENT_NOT_FOUND_CODE &&
+    applicationId
+  ) {
+    console.warn(
+      '[individual-settlements] SETTLEMENT_NOT_FOUND — applicationId가 program_individual_application.id인지, programType이 GENERAL_INDIVIDUAL인지 확인하세요.',
+      { applicationId },
+    )
+  }
   return {
     enabled,
     isLoading: enabled && query.isPending,
@@ -932,11 +944,14 @@ export function useApplicationSettlementsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
   programId: string | null | undefined,
-  options?: { operationEndAt?: string | null }
+  options?: { operationEndAt?: string | null; programType?: string | null }
 ) {
   const schedules = useApplicationSchedulesQuery(applicationType, applicationId)
   const enabled = schedules.enabled
-  const individualAudience = isIndividualScheduleSettlementAudience(applicationType)
+  const individualAudience = shouldUseIndividualSettlementSchedulesApi(
+    applicationType,
+    options?.programType,
+  )
   const instructorAudience = applicationType === 'INSTRUCTOR'
   const receipts = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.expenseReceipts(
@@ -1003,10 +1018,7 @@ export function useApplicationSettlementsQuery(
         operationEndAt: options?.operationEndAt,
         deadlinePolicy: applicationType === 'INSTRUCTOR' ? 'payment_statement' : 'receipt',
         preferIndividualSchedules:
-          individualAudience &&
-          individual.isSuccess &&
-          !individual.isDisabled &&
-          (!instructorAudience || individual.schedules.length > 0),
+          individualAudience && individual.isSuccess && !individual.isDisabled,
       }),
     [
       applicationType,
@@ -1044,14 +1056,10 @@ export function useApplicationSettlementsQuery(
     },
     errorCode: schedules.errorCode,
     traceId: schedules.traceId,
-    individualDisabled: individualAudience && !instructorAudience && individual.isDisabled,
-    individualErrorCode:
-      individualAudience && !instructorAudience ? individual.errorCode : null,
+    individualDisabled: individualAudience && individual.isDisabled,
+    individualErrorCode: individualAudience ? individual.errorCode : null,
     individualEmpty:
-      individualAudience &&
-      !instructorAudience &&
-      individual.isSuccess &&
-      individual.schedules.length === 0,
+      individualAudience && individual.isSuccess && individual.schedules.length === 0,
   }
 }
 

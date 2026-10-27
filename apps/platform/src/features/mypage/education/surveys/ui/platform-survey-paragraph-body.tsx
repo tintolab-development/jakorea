@@ -32,8 +32,7 @@ import { SurveyTimeField } from './fields/time-field'
 import { SurveyUserInfoField } from './fields/user-info-field'
 import type { SurveySidecarState } from '../lib/survey-sidecar'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
-import surveyFieldStyles from './survey-fields.module.css'
-
+import { LectureReportProgramProgressField } from '@/features/mypage/education/schedules/ui/lecture-report-program-progress-field'
 export type { SurveySidecarState }
 
 export type PlatformSurveyParagraphBodyProps = {
@@ -42,7 +41,9 @@ export type PlatformSurveyParagraphBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
-  onFileChange?: (paragraphId: string, files: File[], questionKey: string) => void
+  onFileAdd?: (paragraphId: string, files: File[], questionKey: string) => void
+  onFileRemove?: (paragraphId: string, index: number, questionKey: string) => void
+  uploadingFile?: boolean
   /** 설문자 정보 fieldKey → 표시값 (로그인·프로그램 컨텍스트) */
   userInfoValues?: Record<string, string>
   readOnly?: boolean
@@ -53,7 +54,9 @@ export function PlatformSurveyParagraphBody({
   onUpdateParagraph,
   sidecar,
   onSidecarChange,
-  onFileChange,
+  onFileAdd,
+  onFileRemove,
+  uploadingFile = false,
   userInfoValues,
   readOnly = false,
 }: PlatformSurveyParagraphBodyProps) {
@@ -152,11 +155,16 @@ export function PlatformSurveyParagraphBody({
             fileNames: { ...sidecar.fileNames, [paragraph.id]: next },
           })
         }}
-        onFileChange={next => {
+        onFileAdd={next => {
           if (readOnly) return
-          onFileChange?.(paragraph.id, next, resolveApplicationAnswerKey(paragraph))
+          onFileAdd?.(paragraph.id, next, resolveApplicationAnswerKey(paragraph))
+        }}
+        onFileRemove={index => {
+          if (readOnly) return
+          onFileRemove?.(paragraph.id, index, resolveApplicationAnswerKey(paragraph))
         }}
         disabled={readOnly}
+        uploading={uploadingFile}
       />
     )
   }
@@ -165,6 +173,8 @@ export function PlatformSurveyParagraphBody({
     return (
       <LectureReportProgramProgressField
         paragraph={paragraph as LectureReportProgramProgressParagraph}
+        onUpdateParagraph={onUpdateParagraph}
+        readOnly={readOnly}
       />
     )
   }
@@ -231,52 +241,4 @@ export function PlatformSurveyParagraphBody({
   }
 
   return null
-}
-
-function LectureReportProgramProgressField({
-  paragraph,
-}: {
-  paragraph: LectureReportProgramProgressParagraph
-}) {
-  type ProgressField = keyof Pick<
-    LectureReportProgramProgressParagraph,
-    'programName' | 'institutionName' | 'institutionLocation' | 'educationDate' | 'educationTarget'
-  >
-  const value = (key: ProgressField) => paragraph[key].trim() || '-'
-  const rows: Array<[string, string, string, string]> = [
-    [
-      '프로그램명',
-      value('programName'),
-      '사용교재 및 진행단원',
-      [paragraph.textbookName, paragraph.progressUnit].filter(Boolean).join(' | ') || '-',
-    ],
-    ['기관명', value('institutionName'), '기관 소재지', value('institutionLocation')],
-    [
-      '교육 진행일',
-      value('educationDate'),
-      '교육 진행 시간(차시)',
-      [paragraph.sessionTime, paragraph.sessionIndex].filter(Boolean).join(' | ') || '-',
-    ],
-    [
-      '교육 대상',
-      value('educationTarget'),
-      '학급 및 학생 수',
-      [paragraph.classLabel, paragraph.studentCount].filter(Boolean).join(' | ') || '-',
-    ],
-  ]
-
-  return (
-    <table className={surveyFieldStyles.infoTable}>
-      <tbody>
-        {rows.map(row => (
-          <tr key={row[0]}>
-            <th>{row[0]}</th>
-            <td>{row[1]}</td>
-            <th>{row[2]}</th>
-            <td>{row[3]}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
 }

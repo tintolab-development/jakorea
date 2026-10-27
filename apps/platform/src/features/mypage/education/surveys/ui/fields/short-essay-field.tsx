@@ -61,14 +61,15 @@ export function SurveyShortEssayField({
                 {titleHint ? <span>{titleHint}</span> : null}
               </div>
             ) : null}
-            <PFTextarea
-              variant="formPage"
-              rows={rows}
-              aria-label={label || `${paragraph.paragraphTitle || '문항'} ${index + 1}`}
-              placeholder={item.placeholder || placeholder}
-              value={item.bodyText}
-              disabled={disabled}
-              onValueChange={next => {
+            <div className={styles.questionBody}>
+              <PFTextarea
+                variant="formPage"
+                rows={rows}
+                aria-label={label || `${paragraph.paragraphTitle || '문항'} ${index + 1}`}
+                placeholder={item.placeholder || placeholder}
+                value={item.bodyText}
+                disabled={disabled}
+                onValueChange={next => {
                 onUpdateParagraph(paragraph.id, current => {
                   if (
                     current.kind !== 'single_item' ||
@@ -85,7 +86,8 @@ export function SurveyShortEssayField({
                   }
                 })
               }}
-            />
+              />
+            </div>
           </div>
         )
       })}
