@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   classifyFormBindingByTemplateId,
   classifyProgramFormBindings,
-  isDedicatedSurveyManagementTabTitle,
   isProgramSurveyManagementFormBinding,
   mapSurveyAnswersToRecord,
   mapSurveyResponseListItemToPollResponse,
@@ -295,14 +294,6 @@ describe('pickLectureEvalSurveyFromRemote', () => {
   })
 })
 
-describe('isDedicatedSurveyManagementTabTitle', () => {
-  it('keeps generic poll titles on the poll tab', () => {
-    expect(isDedicatedSurveyManagementTabTitle('신규 설문조사 1')).toBe(false)
-    expect(isDedicatedSurveyManagementTabTitle('강의평가')).toBe(true)
-    expect(isDedicatedSurveyManagementTabTitle('만족도조사 (학생용)')).toBe(true)
-  })
-})
-
 describe('classifyFormBindingByTemplateId', () => {
   it('classifies known satisfaction and lecture templates', () => {
     expect(
@@ -369,6 +360,12 @@ describe('isProgramSurveyManagementFormBinding', () => {
     ).toBe(false)
     expect(
       isProgramSurveyManagementFormBinding({
+        formType: 'LECTURE_REPORT',
+        templateName: '강의보고서',
+      })
+    ).toBe(false)
+    expect(
+      isProgramSurveyManagementFormBinding({
         formType: 'RECRUITMENT',
         templateName: '프로그램 참여자 모집 폼 (학교)',
       })
@@ -402,7 +399,7 @@ describe('isProgramSurveyManagementFormBinding', () => {
     ).toBe(true)
   })
 
-  it('falls back to templateName when formType is missing', () => {
+  it('does not infer binding kind from templateName when formType is missing', () => {
     expect(
       isProgramSurveyManagementFormBinding({
         templateName: '일반 프로그램 등록 폼',
@@ -412,14 +409,19 @@ describe('isProgramSurveyManagementFormBinding', () => {
       isProgramSurveyManagementFormBinding({
         templateName: '일반 설문',
       })
-    ).toBe(true)
+    ).toBe(false)
   })
 })
 
 describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
   it('filters inactive and classifies', () => {
     const classified = classifyProgramFormBindings([
-      { bindingId: 1, templateId: 'survey-admin' as unknown as number, active: true },
+      {
+        bindingId: 1,
+        templateId: 'survey-admin' as unknown as number,
+        formType: 'LECTURE_EVALUATION',
+        active: true,
+      },
       { bindingId: 2, templateId: 99, active: false },
     ])
     expect(classified).toHaveLength(1)
@@ -453,7 +455,13 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
 
   it('does not merge operational form bindings into survey poll list', () => {
     const rows = mergeSurveysWithBindings(
-      [],
+      [
+        {
+          templateId: 200,
+          templateVersionId: 2000,
+          templateName: '신규 설문조사 1',
+        },
+      ],
       [
         {
           bindingId: 1,
@@ -497,9 +505,41 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
     })
   })
 
-  it('keeps multiple SURVEY poll bindings (same schedule, different template versions)', () => {
+  it('does not synthesize survey rows from form-bindings-only data', () => {
     const rows = mergeSurveysWithBindings(
       [],
+      [
+        {
+          bindingId: 1,
+          templateId: 49,
+          templateVersionId: 81,
+          formType: 'LECTURE_REPORT',
+          templateName: '강의보고서',
+          targetScope: 'SCHEDULE',
+          targetScopeId: 187393,
+          active: true,
+        },
+      ]
+    )
+    expect(rows).toEqual([])
+  })
+
+  it('keeps multiple SURVEY poll rows returned by /surveys', () => {
+    const rows = mergeSurveysWithBindings(
+      [
+        {
+          bindingId: 1,
+          templateId: 10,
+          templateVersionId: 100,
+          templateName: '설문 A',
+        },
+        {
+          bindingId: 2,
+          templateId: 11,
+          templateVersionId: 101,
+          templateName: '설문 B',
+        },
+      ],
       [
         {
           bindingId: 1,
@@ -529,7 +569,13 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
 
   it('lists a SURVEY binding on the poll tab when the template name looks like satisfaction', () => {
     const rows = mergeSurveysWithBindings(
-      [],
+      [
+        {
+          templateId: 42,
+          templateVersionId: 420,
+          templateName: '만족도조사 (학생용)',
+        },
+      ],
       [
         {
           bindingId: 9,
