@@ -217,6 +217,7 @@ export function TemplateCreateModal({
         <span className="template-create-modal__label">템플릿 유형</span>
         <CmsRadioGroup
           className="template-create-modal__radios"
+          size="medium"
           value={kind}
           onChange={e => handleKindChange(e.target.value as TemplateCreateKind)}
         >

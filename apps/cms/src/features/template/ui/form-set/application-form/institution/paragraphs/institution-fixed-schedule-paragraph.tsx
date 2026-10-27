@@ -81,6 +81,7 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
       {choiceItems.map(item => (
         <div key={item.id} role="presentation" className="multiple-choice-row">
           <CmsCheckbox
+            checkboxSize="medium"
             disabled={readOnlyPreview}
             checked={selectedIds.includes(item.id)}
             onChange={event => toggleOption(item.id, event.target.checked)}

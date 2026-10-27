@@ -43,18 +43,22 @@ import {
   DEFAULT_RECRUITMENT_GUIDE,
   getThumbnailFilename,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
+  RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
+  RECRUIT_DETAIL_FILE_MAX_BYTES,
+  RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE,
+  RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import './project-info-detail-info-section.css'
 
-/** 참여자 정보 탭 등 파일 선택(FileSelectField) 우측 안내 — 썸네일·첨부 공통 */
+/** 프로그램 상세 — 모집양식 썸네일 안내 + 권장 가로 사이즈 */
 const THUMBNAIL_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다. / 가로 사이즈 500px 권장, 세로 사이즈 무관',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  `${RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES[0]} / 가로 사이즈 500px 권장, 세로 사이즈 무관`,
+  RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES[1],
 ]
 
-const ATTACHMENT_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-]
+const ATTACHMENT_GUIDE_LINES = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES
 
 export type DetailInfoEmptyReadDisplay = 'mock-default' | 'dash'
 
@@ -283,6 +287,7 @@ function ProgramDetailTextAreaField({
                             inputSize="small"
                             width="100%"
                             rows={rows}
+                            expandableFromSingleRow={false}
                             placeholder={placeholder}
                             className="text-area-field-row__field"
                             status={fieldState.error ? 'error' : undefined}
@@ -585,6 +590,8 @@ function ThumbnailImageField({
         previewAlt={program.title}
         fileName={thumbnailFilename}
         guideLines={guideLines}
+        maxBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+        sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
         disabled={disabled}
         uploading={uploadingThumbnail}
         onSelectFile={
@@ -707,7 +714,7 @@ function AttachmentDetailField({
   const attachmentField = (
     <>
       <FileSelectField
-        accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+        accept={RECRUIT_DETAIL_ATTACHMENT_ACCEPT}
         multiple
         disabled={!isEditMode || uploading}
         uploading={uploading}
@@ -715,6 +722,9 @@ function AttachmentDetailField({
         fileNames={displayFileNames}
         guideLines={guideLines}
         currentTotalBytes={currentTotalBytes}
+        maxTotalBytes={0}
+        maxFileBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+        sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
         onFilesChange={
           isFormEdit
             ? async files => {
@@ -1121,10 +1131,7 @@ export function InstructorDetailInfoSection({
           isFormEdit={isFormEdit}
           form={f}
           displayFileNames={displayFileNames}
-          guideLines={[
-            '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-            '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-          ]}
+          guideLines={ATTACHMENT_GUIDE_LINES}
           emptyReadDisplay={emptyReadDisplay}
           onNamesChange={setLinkedAttachmentNames}
           currentTotalBytes={linkedAttachmentTotalBytes}

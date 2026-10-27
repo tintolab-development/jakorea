@@ -26,7 +26,7 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentSubmissionPara
       style={choiceDisplayOnly ? { pointerEvents: 'none' } : undefined}
     >
       <CmsRadioGroup
-        size="large"
+        size="medium"
         value={displayValue}
         onChange={event => {
           if (choiceDisplayOnly) return

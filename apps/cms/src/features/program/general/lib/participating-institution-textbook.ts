@@ -163,83 +163,19 @@ function positiveCount(value: number | null | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null
 }
 
-/** 기관 학생 수와 프로그램 배정 스냅샷(1키트당 권수)으로 필요 키트를 산출한다. 전역 최신 설정은 쓰지 않는다. */
-export function calculateInstitutionKitQuantity(input: {
-  studentCount?: number | null
-  booksPerKit?: number | null
-}): { kits: number; quantity: number } | null {
-  const students = positiveCount(input.studentCount)
-  const booksPerKit = positiveCount(input.booksPerKit)
-  if (students == null || booksPerKit == null) return null
-  const kits = Math.ceil(students / booksPerKit)
-  return { kits, quantity: kits * booksPerKit }
-}
-
-function readBooksPerKitSnapshot(item: {
-  booksPerKitSnapshot?: number
-  bookCountPerKit?: number
-}): number | null {
-  return positiveCount(item.booksPerKitSnapshot) ?? positiveCount(item.bookCountPerKit)
-}
-
-function textbookNameMatches(
-  item: { textbookNameKo?: string; textbookNameEn?: string },
-  displayName?: string
-): boolean {
-  const display = displayName?.trim() ?? ''
-  if (!display) return false
-  const names = [item.textbookNameKo, item.textbookNameEn]
-    .map(value => value?.trim() ?? '')
-    .filter(Boolean)
-  return names.some(name => display === name || display.startsWith(name) || name.startsWith(display))
-}
-
-export function resolveAssignedBooksPerKit(input: {
-  items: Array<{
-    textbookId?: number
-    textbookNameKo?: string
-    textbookNameEn?: string
-    booksPerKitSnapshot?: number
-    bookCountPerKit?: number
-  }>
-  textbookId?: string
-  textbookName?: string
-}): number | null {
-  const id = input.textbookId != null && input.textbookId !== '' ? Number(input.textbookId) : NaN
-  const byId = Number.isFinite(id) ? input.items.filter(item => item.textbookId === id) : []
-  const byName = input.items.filter(item => textbookNameMatches(item, input.textbookName))
-  const matched = byId.length > 0 ? byId : byName
-  for (const item of matched) {
-    const booksPerKit = readBooksPerKitSnapshot(item)
-    if (booksPerKit != null) return booksPerKit
-  }
-  if (matched.length === 0 && input.items.length === 1) {
-    return readBooksPerKitSnapshot(input.items[0]!)
-  }
-  return null
-}
-
-/** 기관 상세 키트·권수. 0·null은 미산출. 전역 최신 설정으로 재계산하지 않는다. */
+/**
+ * 기관 상세 GET `textbookKits`·`textbookQuantity`만 표시한다.
+ * 0·null은 미산출. 프로그램 materials·전역 키트 설정으로 재계산하지 않는다.
+ */
 export function formatParticipatingInstitutionKitQuantity(
   kits: number | null | undefined,
-  quantity: number | null | undefined,
-  fallback?: { studentCount?: number | null; booksPerKit?: number | null }
+  quantity: number | null | undefined
 ): string {
   const kitCount = positiveCount(kits)
   const bookCount = positiveCount(quantity)
   if (kitCount != null && bookCount != null) return `${kitCount}키트 (${bookCount}권)`
-  if (kitCount != null) {
-    const booksPerKit = positiveCount(fallback?.booksPerKit)
-    if (booksPerKit != null) return `${kitCount}키트 (${kitCount * booksPerKit}권)`
-    return `${kitCount}키트`
-  }
+  if (kitCount != null) return `${kitCount}키트`
   if (bookCount != null) return `${bookCount}권`
-
-  const calculated = calculateInstitutionKitQuantity({
-    studentCount: fallback?.studentCount,
-    booksPerKit: fallback?.booksPerKit,
-  })
-  if (calculated) return `${calculated.kits}키트 (${calculated.quantity}권)`
   return '-'
 }
 

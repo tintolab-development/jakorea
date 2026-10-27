@@ -33,7 +33,10 @@ import {
   getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage,
 } from '@/features/program/general/lib/participating-institution-application-edit-policy'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
-import { ensureTextbookNotUsedSelectOption } from '@/features/program/general/lib/participating-institution-textbook'
+import {
+  ensureTextbookNotUsedSelectOption,
+  formatParticipatingInstitutionKitQuantity,
+} from '@/features/program/general/lib/participating-institution-textbook'
 import { resolveParticipatingInstitutionActivityWithdrawPatch } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import {
   InstitutionAddressDetailEdit,
@@ -583,10 +586,12 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
       mergedDetail.textbookName?.trim() !== '해당 없음')
   const textbookNameView = !hasSelectedTextbook ? '해당 없음' : textbookDisplay.textbookName
-  const kitsAndQty =
-    hasSelectedTextbook && textbookDisplay.textbookKits != null && textbookDisplay.textbookKits > 0
-      ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
-      : '-'
+  const kitsAndQty = hasSelectedTextbook
+    ? formatParticipatingInstitutionKitQuantity(
+        textbookDisplay.textbookKits,
+        textbookDisplay.textbookQuantity
+      )
+    : '-'
 
   const textbookSelectOptions = ensureTextbookNotUsedSelectOption(textbookOptions)
   const textbookCell =

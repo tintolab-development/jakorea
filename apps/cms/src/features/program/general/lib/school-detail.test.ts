@@ -76,6 +76,19 @@ describe('mergeOrganizationApplicationDetailOntoSchoolDetail', () => {
     expect(topLevel.textbookQuantity).toBe(48)
   })
 
+  it('상세 GET의 키트·권수가 null이면 목록 캐시 수량을 되살리지 않는다', () => {
+    const merged = mergeOrganizationApplicationDetailOntoSchoolDetail(
+      { ...baseDetail, textbookKits: 9, textbookQuantity: 216 },
+      {
+        textbookKits: null,
+        textbookQuantity: null,
+      } as unknown as import('@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse').OrganizationApplicationDetailResponse
+    )
+
+    expect(merged.textbookKits).toBeUndefined()
+    expect(merged.textbookQuantity).toBeUndefined()
+  })
+
   it('teacherTel은 Tel, teacherPhone은 휴대폰으로 나눈다', () => {
     const merged = mergeOrganizationApplicationDetailOntoSchoolDetail(baseDetail, {
       teacherName: '김교사',

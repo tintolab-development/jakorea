@@ -16,6 +16,8 @@ import {
 import {
   RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
   RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
+  RECRUIT_DETAIL_FILE_MAX_BYTES,
+  RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE,
   RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import {
@@ -136,6 +138,7 @@ function RecruitDetailInfoTextFieldRow({
         width="100%"
         placeholder={field.placeholder}
         rows={1}
+        expandableFromSingleRow={false}
         value={value}
         onChange={e => setValue(e.target.value)}
       />
@@ -577,6 +580,8 @@ export function RecruitDetailInfoParagraph({
                 previewUrl={thumbnailPreviewUrl}
                 fileName={thumbFileName}
                 guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
+                maxBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+                sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 uploading={uploadingThumbnail}
                 onSelectFile={file => handleThumbnailFiles([file])}
                 onRemove={handleRemoveThumbnail}
@@ -630,6 +635,9 @@ export function RecruitDetailInfoParagraph({
                 guideLines={attachmentGuideLines}
                 multiple
                 fileNames={attachmentFileNames}
+                maxTotalBytes={0}
+                maxFileBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+                sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 onFilesChange={uploadingAttachments ? undefined : handleAttachmentFiles}
                 onRemoveFile={uploadingAttachments ? undefined : handleRemoveAttachment}
               />

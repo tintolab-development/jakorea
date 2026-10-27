@@ -49,7 +49,7 @@ function readFiniteNumber(value: unknown): number | undefined {
   return undefined
 }
 
-/** 기관 상세의 키트/권수. 최상위 필드와 nested textbook.kits|quantity를 모두 읽는다. */
+/** 기관 상세 GET의 키트/권수. 최상위 필드와 nested textbook.kits|quantity를 모두 읽는다. 목록 캐시로 채우지 않는다. */
 export function readOrganizationTextbookKitFields(
   dto: OrganizationApplicationDetailResponse
 ): { textbookKits?: number; textbookQuantity?: number } {
@@ -58,12 +58,9 @@ export function readOrganizationTextbookKitFields(
       textbook?: { kits?: unknown; quantity?: unknown }
     }
   ).textbook
-  const textbookKits = readFiniteNumber(dto.textbookKits) ?? readFiniteNumber(nested?.kits)
-  const textbookQuantity =
-    readFiniteNumber(dto.textbookQuantity) ?? readFiniteNumber(nested?.quantity)
   return {
-    ...(textbookKits != null ? { textbookKits } : {}),
-    ...(textbookQuantity != null ? { textbookQuantity } : {}),
+    textbookKits: readFiniteNumber(dto.textbookKits) ?? readFiniteNumber(nested?.kits),
+    textbookQuantity: readFiniteNumber(dto.textbookQuantity) ?? readFiniteNumber(nested?.quantity),
   }
 }
 
