@@ -40,11 +40,16 @@ import {
   mapRecruitmentListResponse,
   type DashboardHomeSummary,
   type DashboardProgramOption,
+  type DashboardRecruitmentListView,
   type DashboardScheduleEventDto,
   type ProgramInquiryRow,
 } from '@/features/dashboard/api/adapters/dashboard-adapters'
 import { mapNotificationInboxPage } from '@/features/dashboard/api/adapters/notification-adapters'
 import type { Notification } from '@/features/dashboard/api/notification-service'
+import {
+  ADMIN_NOTIFICATION_INBOX_PAGE_SIZE,
+  type AdminNotificationInboxPage,
+} from '@/features/dashboard/lib/admin-notification-inbox-page'
 export type { DashboardHomeSummary, ProgramInquiryRow, DashboardScheduleEventDto, DashboardProgramOption }
 
 /** dashboard 실 API — 유효 JWT 없으면 mock fallback (403 방지) */
@@ -114,7 +119,8 @@ export interface KpiMetric {
   description: string
   /** null = API 미제공(달성 실적 없음) */
   achieved: number | null
-  target: number
+  /** null = API 미제공(목표 없음). 0은 목표가 0인 값 */
+  target: number | null
   /** false = 개인 대상·교육받은 교사 등 해당 없음(비활성) */
   applicable: boolean
 }
@@ -125,7 +131,7 @@ export interface ProgramKpiItem {
   programTitle: string
   kpis: KpiMetric[]
   /** 프로그램 상세 > 사업 KPI: 교육진행자 목표 (강사·봉사자) */
-  educationInstructorTargets?: { instructors: number; volunteers: number }
+  educationInstructorTargets?: { instructors: number | null; volunteers: number | null }
 }
 
 /**
@@ -259,14 +265,14 @@ export async function getProgramProgressStagesByProgramId(
  */
 export async function getRecruitmentStatusList(options?: {
   programIds?: string[]
-}): Promise<Program[]> {
+}): Promise<DashboardRecruitmentListView> {
   if (shouldUseDashboardRemoteApi()) {
     const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
     const dto = await fetchDashboardRecruitmentsRemote(queryParams)
     return mapRecruitmentListResponse(dto)
   }
   notifyProgramApiUnavailable('dashboard-recruitment-status', '대시보드 · 모집 신청 현황')
-  return []
+  return { rows: [], totalCount: null }
 }
 
 /**
@@ -415,13 +421,13 @@ export async function getDashboardHomeSummary(): Promise<DashboardHomeSummary> {
   notifyProgramApiUnavailable('dashboard-home-summary', '대시보드 · 홈 요약')
   return {
     version: 'mock',
-    programCount: 0,
-    memberCount: 0,
-    unreadNotificationCount: 0,
+    programCount: null,
+    memberCount: null,
+    unreadNotificationCount: null,
   }
 }
 
-/** Swagger: GET /api/admin/dashboard/notifications/count */
+/** Swagger: GET /api/admin/notifications/unread-count */
 export async function getDashboardNotificationCount(): Promise<number> {
   if (shouldUseDashboardRemoteApi()) {
     const dto = await fetchDashboardNotificationCountRemote()
@@ -569,20 +575,37 @@ export async function readDashboardShortcutBadge(shortcutId: string): Promise<vo
 }
 
 /** Swagger: GET /api/admin/notifications */
+export async function getAdminNotificationInboxPage(options?: {
+  page?: number
+  size?: number
+  unreadOnly?: boolean
+}): Promise<AdminNotificationInboxPage> {
+  const page = options?.page ?? 0
+  const size = options?.size ?? ADMIN_NOTIFICATION_INBOX_PAGE_SIZE
+  if (!shouldUseDashboardRemoteApi()) {
+    return { items: [], page, size, totalPages: 0, totalElements: 0 }
+  }
+  const dto = await fetchAdminNotificationsRemote({
+    page,
+    size,
+    unreadOnly: options?.unreadOnly,
+  })
+  return {
+    items: mapNotificationInboxPage(dto.items),
+    page: dto.page ?? page,
+    size: dto.size ?? size,
+    totalPages: dto.totalPages,
+    totalElements: dto.totalElements,
+  }
+}
+
 export async function getAdminNotifications(options?: {
   page?: number
   size?: number
   unreadOnly?: boolean
 }): Promise<Notification[]> {
-  if (!shouldUseDashboardRemoteApi()) {
-    return []
-  }
-  const dto = await fetchAdminNotificationsRemote({
-    page: options?.page ?? 0,
-    size: options?.size ?? 20,
-    unreadOnly: options?.unreadOnly,
-  })
-  return mapNotificationInboxPage(dto.items)
+  const inbox = await getAdminNotificationInboxPage(options)
+  return inbox.items
 }
 
 /** Swagger: PATCH /api/admin/notifications/{recipientId}/read */

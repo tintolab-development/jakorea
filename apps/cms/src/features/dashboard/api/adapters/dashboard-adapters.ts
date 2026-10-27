@@ -1,7 +1,7 @@
 /**
  * Orval DTO → 대시보드 UI 타입 어댑터
  */
-import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import type { ProgramLifecycleStatus } from '@/types/domain'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type {
   DashboardHomeResponse,
@@ -20,19 +20,36 @@ import type { KpiMetric, KpiMetricKey, ProgramKpiItem } from '../admin-dashboard
 
 export interface DashboardHomeSummary {
   version: string
-  programCount: number
-  memberCount: number
-  unreadNotificationCount: number
+  programCount: number | null
+  memberCount: number | null
+  unreadNotificationCount: number | null
 }
 
 export interface ProgramInquiryRow {
   key: string
   programId?: string
   programName: string
-  pending: number
-  answered: number
-  total: number
-  unreadCount: number
+  pending: number | null
+  answered: number | null
+  total: number | null
+  unreadCount: number | null
+}
+
+export interface DashboardRecruitmentRow {
+  id: string
+  title: string
+  programType?: string
+  recruitmentWindowStatus?: string | null
+  participantApplied?: number | null
+  participantCapacity?: number | null
+  volunteerApplied?: number | null
+  volunteerCapacity?: number | null
+}
+
+export interface DashboardRecruitmentListView {
+  rows: DashboardRecruitmentRow[]
+  /** GET /dashboard/recruitments totalCount|totalElements. 없으면 items 길이로 대체하지 않고 null */
+  totalCount: number | null
 }
 
 export interface DashboardScheduleEventDto {
@@ -52,36 +69,36 @@ export interface DashboardProgramOption {
   title: string
 }
 
-const RECRUITMENT_STATUS_TO_LIFECYCLE: Record<string, ProgramLifecycleStatus> = {
-  RECRUITING: 'recruiting_students',
-  RECRUITING_STUDENTS: 'recruiting_students',
-  RECRUITING_INSTRUCTORS: 'recruiting_instructors',
-  RECRUITING_VOLUNTEERS: 'recruiting_instructors',
-  MATCHING_COMPLETED: 'matching_completed',
-  IN_PROGRESS: 'education_after_textbook',
-  COMPLETED: 'education_completed',
-  CLOSED: 'document_processing_completed',
+const RECRUITMENT_WINDOW_STATUS_LABEL: Record<string, string> = {
+  OPEN: '모집 중',
+  RECRUITING: '모집 중',
+  RECRUITING_STUDENTS: '모집 중',
+  RECRUITING_INSTRUCTORS: '모집 중',
+  RECRUITING_VOLUNTEERS: '모집 중',
+  SCHEDULED: '모집 예정',
+  PLANNED: '모집 예정',
+  CLOSED: '모집 마감',
+  MATCHING_COMPLETED: '매칭 완료',
+  IN_PROGRESS: '진행 중',
+  COMPLETED: '완료',
 }
 
-function mapRecruitmentStatus(status: string | undefined): ProgramLifecycleStatus | undefined {
-  if (!status) return undefined
-  const normalized = status.trim().toUpperCase()
-  return RECRUITMENT_STATUS_TO_LIFECYCLE[normalized] ?? (status as ProgramLifecycleStatus)
+export function formatRecruitmentWindowStatus(status?: string | null): string {
+  const normalized = status?.trim()
+  if (!normalized) return '-'
+  const upper = normalized.toUpperCase()
+  if (upper === 'OPEN' || upper === 'RECRUITING' || upper.startsWith('RECRUITING_')) {
+    return '모집 중'
+  }
+  return RECRUITMENT_WINDOW_STATUS_LABEL[upper] ?? normalized
 }
 
-/** BE가 recruitmentStatus를 안 준 경우에만 모집 기간으로 추정 */
-export function recruitmentStatusFromPeriod(
-  startAt?: string,
-  endAt?: string
-): ProgramLifecycleStatus | undefined {
-  if (!startAt || !endAt) return undefined
-  const start = Date.parse(startAt)
-  const end = Date.parse(endAt)
-  if (Number.isNaN(start) || Number.isNaN(end)) return undefined
-  const now = Date.now()
-  if (now < start) return 'planned'
-  if (now <= end) return 'recruiting_students'
-  return 'matching_completed'
+export function formatRecruitmentCount(
+  applied: number | null | undefined,
+  capacity: number | null | undefined
+): string {
+  if (applied == null && capacity == null) return '-'
+  return `${applied ?? '-'} / ${capacity ?? '-'}`
 }
 
 type RecruitmentCountFields = {
@@ -89,114 +106,106 @@ type RecruitmentCountFields = {
   participantCapacity?: number
   volunteerAppliedCount?: number
   volunteerCapacity?: number
-  instructorAppliedCount?: number
-  instructorCapacity?: number
   studentAppliedCount?: number
   studentCapacity?: number
-  approvedStudentCount?: number
 }
 
-function pickCount(...values: Array<number | undefined>): number | undefined {
-  for (const value of values) {
-    if (typeof value === 'number' && Number.isFinite(value)) return value
-  }
-  return undefined
+function nullableNumber(value: number | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+/** counts 맵에 키가 있을 때만 정수. 없으면 undefined (0으로 채우지 않음) */
+export function readCountMapValue(
+  counts: Record<string, number> | undefined,
+  key: string
+): number | undefined {
+  if (!counts || !Object.prototype.hasOwnProperty.call(counts, key)) return undefined
+  const value = counts[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+}
+
+type RecruitmentListTotalsDto = DashboardRecruitmentListResponse & {
+  totalCount?: number
+  totalElements?: number
+}
+
+export function recruitmentListTotalCount(dto: DashboardRecruitmentListResponse): number | null {
+  const extras = dto as RecruitmentListTotalsDto
+  return nullableNumber(extras.totalCount) ?? nullableNumber(extras.totalElements)
 }
 
 function recruitmentCountsFromItem(item: RecruitmentCountFields): {
-  participantApplied?: number
-  participantCapacity?: number
-  volunteerApplied?: number
-  volunteerCapacity?: number
+  participantApplied: number | null
+  participantCapacity: number | null
+  volunteerApplied: number | null
+  volunteerCapacity: number | null
 } {
   return {
-    participantApplied: pickCount(
-      item.participantAppliedCount,
-      item.studentAppliedCount,
-      item.approvedStudentCount
-    ),
-    participantCapacity: pickCount(item.participantCapacity, item.studentCapacity),
-    volunteerApplied: pickCount(item.volunteerAppliedCount, item.instructorAppliedCount),
-    volunteerCapacity: pickCount(item.volunteerCapacity, item.instructorCapacity),
+    participantApplied: nullableNumber(item.participantAppliedCount) ?? nullableNumber(item.studentAppliedCount),
+    participantCapacity: nullableNumber(item.participantCapacity) ?? nullableNumber(item.studentCapacity),
+    volunteerApplied: nullableNumber(item.volunteerAppliedCount),
+    volunteerCapacity: nullableNumber(item.volunteerCapacity),
   }
-}
-
-function capacityRounds(programId: string, capacity: number | undefined): Program['rounds'] {
-  if (capacity == null) return []
-  return [
-    {
-      id: `${programId}-cap`,
-      programId,
-      roundNumber: 1,
-      startDate: '',
-      endDate: '',
-      capacity,
-      status: 'active',
-    },
-  ]
 }
 
 export function mapDashboardHomeResponse(dto: DashboardHomeResponse): DashboardHomeSummary {
   return {
     version: dto.version ?? '',
-    programCount: dto.programCount ?? 0,
-    memberCount: dto.memberCount ?? 0,
-    unreadNotificationCount: dto.unreadNotificationCount ?? 0,
+    programCount: nullableNumber(dto.programCount),
+    memberCount: nullableNumber(dto.memberCount),
+    unreadNotificationCount: nullableNumber(dto.unreadNotificationCount),
   }
 }
 
-export function mapRecruitmentListResponse(dto: DashboardRecruitmentListResponse): Program[] {
+export function mapRecruitmentListResponse(
+  dto: DashboardRecruitmentListResponse
+): DashboardRecruitmentListView {
   const items = dto.items ?? []
-  const byProgram = new Map<number, Program>()
+  const byProgram = new Map<number, DashboardRecruitmentRow>()
 
   for (const item of items) {
     const programId = item.programId
     if (programId == null) continue
     const id = String(programId)
     const counts = recruitmentCountsFromItem(item)
-    const lifecycleStatus =
-      mapRecruitmentStatus(item.recruitmentStatus) ??
-      recruitmentStatusFromPeriod(item.recruitmentStartAt, item.recruitmentEndAt)
     const existing = byProgram.get(programId)
     if (!existing) {
       byProgram.set(programId, {
         id,
         title: item.nameKo ?? item.programCode ?? id,
-        sponsorId: '',
-        type: 'offline',
-        format: 'workshop',
-        category: 'school',
-        rounds: capacityRounds(id, counts.participantCapacity),
-        startDate: item.recruitmentStartAt ?? '',
-        endDate: item.recruitmentEndAt ?? '',
-        status: 'active',
-        lifecycleStatus,
-        approvedStudentCount: counts.participantApplied,
-        instructors: counts.volunteerApplied,
-        instructorCapacity: counts.volunteerCapacity,
-        createdAt: item.createdAt ?? '',
-        updatedAt: item.createdAt ?? '',
+        programType: item.programType,
+        recruitmentWindowStatus: item.recruitmentStatus ?? null,
+        participantApplied: counts.participantApplied,
+        participantCapacity: counts.participantCapacity,
+        volunteerApplied: counts.volunteerApplied,
+        volunteerCapacity: counts.volunteerCapacity,
       })
       continue
     }
-    if (existing.approvedStudentCount == null && counts.participantApplied != null) {
-      existing.approvedStudentCount = counts.participantApplied
+    if (existing.participantApplied == null && counts.participantApplied != null) {
+      existing.participantApplied = counts.participantApplied
     }
-    if (existing.rounds.length === 0 && counts.participantCapacity != null) {
-      existing.rounds = capacityRounds(id, counts.participantCapacity)
+    if (existing.participantCapacity == null && counts.participantCapacity != null) {
+      existing.participantCapacity = counts.participantCapacity
     }
-    if (existing.instructors == null && counts.volunteerApplied != null) {
-      existing.instructors = counts.volunteerApplied
+    if (existing.volunteerApplied == null && counts.volunteerApplied != null) {
+      existing.volunteerApplied = counts.volunteerApplied
     }
-    if (existing.instructorCapacity == null && counts.volunteerCapacity != null) {
-      existing.instructorCapacity = counts.volunteerCapacity
+    if (existing.volunteerCapacity == null && counts.volunteerCapacity != null) {
+      existing.volunteerCapacity = counts.volunteerCapacity
     }
-    if (!existing.lifecycleStatus && lifecycleStatus) {
-      existing.lifecycleStatus = lifecycleStatus
+    if (!existing.recruitmentWindowStatus && item.recruitmentStatus) {
+      existing.recruitmentWindowStatus = item.recruitmentStatus
+    }
+    if (!existing.programType && item.programType) {
+      existing.programType = item.programType
     }
   }
 
-  return [...byProgram.values()]
+  return {
+    rows: [...byProgram.values()],
+    totalCount: recruitmentListTotalCount(dto),
+  }
 }
 
 /** 실적 미제공이면 null → UI에서 '-' 표시 */
@@ -257,7 +266,7 @@ function buildKpiMetricsFromTarget(row: DashboardKpiProgressResponse, title: str
       label: '최종 달성 인원',
       description: '명',
       achieved: kpiAchieved(row.actualParticipantCount),
-      target: row.targetParticipantCount ?? 0,
+      target: kpiAchieved(row.targetParticipantCount),
       applicable: kpiMetricApplicable(row, 'finalParticipants', title),
     },
     {
@@ -265,7 +274,7 @@ function buildKpiMetricsFromTarget(row: DashboardKpiProgressResponse, title: str
       label: '최종 파견 학교 수',
       description: '개',
       achieved: kpiAchieved(row.actualSchoolCount),
-      target: row.targetSchoolCount ?? 0,
+      target: kpiAchieved(row.targetSchoolCount),
       applicable: kpiMetricApplicable(row, 'finalSchools', title),
     },
     {
@@ -273,7 +282,7 @@ function buildKpiMetricsFromTarget(row: DashboardKpiProgressResponse, title: str
       label: '최종 파견 학급 수',
       description: '개',
       achieved: kpiAchieved(row.actualClassCount),
-      target: row.targetClassCount ?? 0,
+      target: kpiAchieved(row.targetClassCount),
       applicable: kpiMetricApplicable(row, 'finalClasses', title),
     },
   ]
@@ -369,8 +378,8 @@ export function mapKpiProgressListResponse(
       programTitle,
       kpis: buildKpiMetricsFromTarget(row, programTitle),
       educationInstructorTargets: {
-        instructors: row.targetInstructorCount ?? 0,
-        volunteers: row.targetVolunteerCount ?? 0,
+        instructors: kpiAchieved(row.targetInstructorCount),
+        volunteers: kpiAchieved(row.targetVolunteerCount),
       },
     }
   })
@@ -388,10 +397,10 @@ export function mapProgramInquiryListResponse(
         key: programId ?? programName ?? String(index),
         programId,
         programName,
-        pending: row.pending ?? 0,
-        answered: row.answered ?? 0,
-        total: row.total ?? 0,
-        unreadCount: row.unreadCount ?? row.pending ?? 0,
+        pending: nullableNumber(row.pending),
+        answered: nullableNumber(row.answered),
+        total: nullableNumber(row.total),
+        unreadCount: nullableNumber(row.unreadCount),
       }
     })
   }

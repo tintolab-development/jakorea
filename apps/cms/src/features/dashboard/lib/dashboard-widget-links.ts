@@ -3,8 +3,7 @@ import type { ProgramScheduleKind } from '@/features/dashboard/model/program-sch
 const ADMIN_POSTS_INQUIRIES_PATH = '/admin/posts/inquiries'
 const EDUCATION_RECORDS_PATH = '/education-records'
 
-export const RECRUITMENT_STATUS_MORE_PATH =
-  '/programs/general?status=in_progress&viewMode=list'
+export const RECRUITMENT_STATUS_MORE_PATH = '/programs/general?viewMode=list'
 
 export function programScheduleMorePath(kind: ProgramScheduleKind): string {
   switch (kind) {
@@ -36,8 +35,26 @@ export function programScheduleEventPath(
   }
 }
 
-export function recruitmentProgramDetailPath(programId: string): string {
-  return `/programs/general?programId=${encodeURIComponent(programId)}`
+function normalizeRecruitmentProgramType(value?: string): string {
+  return (value ?? '').trim().toLowerCase().replace(/-/g, '_')
+}
+
+export function recruitmentProgramDetailPath(
+  programId: string,
+  programType?: string
+): string {
+  const encoded = encodeURIComponent(programId)
+  const type = normalizeRecruitmentProgramType(programType)
+  if (type.includes('company_school') || type.includes('one_company')) {
+    return `/programs/company-school?programId=${encoded}`
+  }
+  if (type.includes('ujat')) {
+    return `/programs/ujat?programId=${encoded}`
+  }
+  if (type.includes('gemini')) {
+    return `/programs/gemini/visiting-training?programId=${encoded}`
+  }
+  return `/programs/general?programId=${encoded}`
 }
 
 export function kpiEducationRecordsPath(mainTitle?: string): string {

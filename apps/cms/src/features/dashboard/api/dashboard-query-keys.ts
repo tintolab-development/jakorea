@@ -10,9 +10,9 @@ export const dashboardQueryKeys = {
   /** Swagger: get_admin_dashboard_home */
   home: (source: DashboardQueryScope) =>
     [...dashboardQueryKeys.scope(source), 'get_admin_dashboard_home'] as const,
-  /** Swagger: get_admin_dashboard_notifications_count */
+  /** Swagger: get_admin_notifications_unread-count */
   notificationCount: (source: DashboardQueryScope) =>
-    [...dashboardQueryKeys.scope(source), 'get_admin_dashboard_notifications_count'] as const,
+    [...dashboardQueryKeys.scope(source), 'get_admin_notifications_unread-count'] as const,
   /** Swagger: get_admin_dashboard_recruitments */
   recruitments: (source: DashboardQueryScope, params: Record<string, string>) =>
     [...dashboardQueryKeys.scope(source), 'get_admin_dashboard_recruitments', params] as const,
