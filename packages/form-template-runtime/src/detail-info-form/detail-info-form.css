@@ -427,14 +427,16 @@
     flex-wrap: nowrap;
   }
 
-  .form-template-host[data-surface='platformUser'] .detail-info-form__row--double
+  .form-template-host[data-surface='platformUser']
+    .detail-info-form__row--double
     > .detail-info-form__field {
     width: 100%;
     flex: 1 1 auto;
     border-right: none;
   }
 
-  .form-template-host[data-surface='platformUser'] .detail-info-form__row--double
+  .form-template-host[data-surface='platformUser']
+    .detail-info-form__row--double
     > .detail-info-form__field:not(:last-child) {
     border-bottom: 1px solid var(--Border-default, var(--table-line, #e0e0e0));
   }
