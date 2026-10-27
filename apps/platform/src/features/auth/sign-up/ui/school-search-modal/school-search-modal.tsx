@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CAREER_NET_UNIV_SCH1 } from '@jakorea/location/career-net'
 import { filterNeisSchoolsByRegion } from '@jakorea/location/neis'
 import { getSidoOptions, getSigunguOptions } from '@jakorea/location/sido-sigungu'
@@ -20,10 +20,8 @@ import {
   getResultLocation,
   type SchoolSearchResultItem,
 } from './school-search-sort'
-import { resolvePortalSchoolOrganizationId } from '../../lib/resolve-portal-school-organization-id'
 import {
   mapSearchResultToSelectedSchool,
-  SCHOOL_NOT_REGISTERED_MESSAGE,
   SCHOOL_SELECTION_INCOMPLETE_MESSAGE,
   type SelectedSchool,
 } from './map-selected-school'
@@ -116,9 +114,6 @@ export function SchoolSearchModal({
   const [keywordRequired, setKeywordRequired] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectError, setSelectError] = useState('')
-  const [isResolvingSelection, setIsResolvingSelection] = useState(false)
-  /** 모달 닫힘·재선택 시 이전 organizationId 조회 결과를 무시하기 위한 요청 번호 */
-  const selectRequestIdRef = useRef(0)
 
   const effectiveSchoolLevel = lockedSchoolLevel || schoolLevel
   const { searchNeis: shouldSearchNeis, searchCareerNet: shouldSearchCareerNet } =
@@ -220,8 +215,6 @@ export function SchoolSearchModal({
   }, [currentPage, totalPages])
 
   const handleClose = useCallback(() => {
-    selectRequestIdRef.current += 1
-    setIsResolvingSelection(false)
     setSchoolLevel(lockedSchoolLevel)
     setSido('')
     setSigungu('')
@@ -285,9 +278,7 @@ export function SchoolSearchModal({
     setCurrentPage(1)
   }
 
-  /** 학교 검색 모달 선택은 항상 CMS `organizationId`가 있는 학교만 허용 */
-  const handleSelectResult = async (result: SchoolSearchResultItem) => {
-    if (isResolvingSelection) return
+  const handleSelectResult = (result: SchoolSearchResultItem) => {
     const selected = mapSearchResultToSelectedSchool(result)
     if (!selected) {
       setSelectError(SCHOOL_SELECTION_INCOMPLETE_MESSAGE)
@@ -295,27 +286,7 @@ export function SchoolSearchModal({
     }
 
     setSelectError('')
-    if (selected.organizationId != null) {
-      onSelect(selected)
-      handleClose()
-      return
-    }
-
-    const requestId = ++selectRequestIdRef.current
-    setIsResolvingSelection(true)
-    const organizationId = await resolvePortalSchoolOrganizationId({
-      schoolName: selected.name,
-      address: selected.address,
-    })
-    if (requestId !== selectRequestIdRef.current) return
-    setIsResolvingSelection(false)
-
-    if (organizationId == null) {
-      setSelectError(SCHOOL_NOT_REGISTERED_MESSAGE)
-      return
-    }
-
-    onSelect({ ...selected, organizationId })
+    onSelect(selected)
     handleClose()
   }
 
@@ -426,15 +397,6 @@ export function SchoolSearchModal({
                 검색 중입니다.
               </PFText>
             ) : null}
-            {isResolvingSelection ? (
-              <PFText
-                typo="bd-sm-rg"
-                color="neutral-warm-500"
-                className={styles.schoolResultStatus}
-              >
-                학교 등록 여부를 확인하고 있습니다.
-              </PFText>
-            ) : null}
             {selectError ? (
               <div className={styles.schoolResultNotice}>
                 <PFText typo="bd-md-sb" color="error">
@@ -480,9 +442,8 @@ export function SchoolSearchModal({
                           <PFButton
                             size="small"
                             variant="secondary"
-                            disabled={isResolvingSelection}
                             onClick={() => {
-                              void handleSelectResult(result)
+                              handleSelectResult(result)
                             }}
                           >
                             선택

@@ -22,6 +22,15 @@ const selectedSchool = {
   source: 'neis' as const,
 }
 
+/** CMS에 아직 없는 NEIS 학교 (organizationId 없음) */
+const neisOnlySchool = {
+  name: '고양고등학교',
+  neisCode: '7010999',
+  educationOfficeCode: 'J10',
+  address: '경기도 고양시 덕양구 1',
+  source: 'neis' as const,
+}
+
 // 1) dual + 재직(ACTIVE) + 새 학교(id) → schoolOrganizationId·affiliation.organizationId 동일, 재직 현황 전송
 {
   const body = mapInstructorBasicSettingsToPortalProfileUpdate(
@@ -74,6 +83,26 @@ for (const employmentStatus of ['TRANSFERRED', 'WITHDRAWN', ''] as const) {
   )
   assert.equal('schoolOrganizationId' in body, false)
   assert.equal('schoolSelection' in body, false)
+  assert.equal('organizationId' in (body.instructorProfile?.profile?.affiliation ?? {}), false)
+  assert.equal(body.teacherEmploymentStatus, 'ACTIVE')
+}
+
+// 4-1) dual + NEIS 선택만(organizationId 없음) → schoolSelection 전송, id 키는 생략 (BE가 조회·등록)
+{
+  const body = mapInstructorBasicSettingsToPortalProfileUpdate(
+    { ...baseValues, employmentStatus: 'ACTIVE' },
+    undefined,
+    { dualTeacher: { selectedSchool: neisOnlySchool } },
+  )
+  assert.deepEqual(body.schoolSelection, {
+    provider: 'NEIS',
+    externalSchoolCode: '7010999',
+    name: '고양고등학교',
+    address: '경기도 고양시 덕양구 1',
+    organizationCategory: 'SCHOOL',
+    educationOfficeCode: 'J10',
+  })
+  assert.equal('schoolOrganizationId' in body, false)
   assert.equal('organizationId' in (body.instructorProfile?.profile?.affiliation ?? {}), false)
   assert.equal(body.teacherEmploymentStatus, 'ACTIVE')
 }

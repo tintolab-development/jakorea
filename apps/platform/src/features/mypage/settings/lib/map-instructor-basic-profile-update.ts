@@ -1,4 +1,5 @@
 import type { UpdatePortalProfileRequest } from '@/features/auth/sign-in/api/types'
+import { resolveSignupSchoolAttachment } from '../../../auth/sign-up/lib/signup-school-attachment.ts'
 import type { SelectedSchool } from '@/features/auth/sign-up'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import {
@@ -16,8 +17,9 @@ export type InstructorBasicSettingsUpdateOptions = {
   /**
    * 교사 겸 강사 — 항상 교사 가입 + 강사 신청이므로 교사 회원과 동일하게 저장
    * (`schoolName`·`affiliationName`=학교명·`teacherEmploymentStatus`).
-   * `selectedSchool`은 이번 수정에서 학교 검색으로 새로 고른 경우에만 넘김
-   * (학교 검색 모달이 `organizationId`를 보장).
+   * `selectedSchool`은 이번 수정에서 학교 검색으로 새로 고른 경우에만 넘김.
+   * CMS 등록 학교면 `organizationId`, 아니면 NEIS 선택 정보(`schoolSelection`)를 보내
+   * BE가 가입과 같은 방식으로 기존 학교를 찾거나 새로 등록한다.
    */
   dualTeacher?: {
     selectedSchool?: SelectedSchool | null
@@ -32,8 +34,9 @@ const DUAL_TEACHER_SAVABLE_EMPLOYMENT_STATUSES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * 교사 겸 강사 — 학교는 검색 모달이 보장하는 `organizationId`만 저장
- * (`schoolOrganizationId` + 강사 JSON `affiliation.organizationId` 동일 값).
+ * 교사 겸 강사 학교 저장 — 두 갈래
+ * - `organizationId` 있음: `schoolOrganizationId` + 강사 JSON `affiliation.organizationId` 동일 값.
+ * - `organizationId` 없음(NEIS 선택만): `schoolSelection`만 전송 (BE가 기존 학교 조회 → 없으면 등록).
  * 재직 현황은 BE 허용값일 때만 보내고, 아니면 `teacherEmploymentStatus`·`affiliation.employmentStatus` 모두 생략.
  */
 function applyDualTeacherOverrides(
@@ -46,6 +49,17 @@ function applyDualTeacherOverrides(
     employmentStatus.toUpperCase(),
   )
   const organizationId = selectedSchool?.organizationId ?? null
+  // 가입과 동일한 헬퍼 — id가 없으면 NEIS/커리어넷 선택 정보(외부 코드·학교명·주소·교육청 코드)만 전송
+  const { schoolSelection } = selectedSchool
+    ? resolveSignupSchoolAttachment({
+        schoolName: selectedSchool.name,
+        schoolOrganizationId: organizationId,
+        schoolNeisCode: selectedSchool.neisCode,
+        schoolEducationOfficeCode: selectedSchool.educationOfficeCode,
+        schoolAddress: selectedSchool.address,
+        source: selectedSchool.source ?? (selectedSchool.neisCode ? 'neis' : undefined),
+      })
+    : {}
 
   const instructorProfile = base.instructorProfile
   const profile = instructorProfile?.profile
@@ -71,6 +85,7 @@ function applyDualTeacherOverrides(
   return {
     ...rest,
     ...(organizationId != null ? { schoolOrganizationId: organizationId } : {}),
+    ...(schoolSelection ? { schoolSelection } : {}),
     ...(isEmploymentSavable ? { teacherEmploymentStatus: employmentStatus } : {}),
     ...(nextInstructorProfile ? { instructorProfile: nextInstructorProfile } : {}),
   }
