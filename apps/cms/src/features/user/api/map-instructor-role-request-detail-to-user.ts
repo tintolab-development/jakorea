@@ -7,21 +7,34 @@ import {
   normalizeInstructorCmsSettlementFromApi,
 } from '@/features/user/api/map-instructor-cms-profile'
 import {
+  toEmploymentStatusDisplayLabel,
   toInstructorActivityTypeLabel,
   toInstructorFeeGradeDisplayLabel,
 } from '@/features/user/api/map-instructor-activity-display'
 import { mapInstructorRoleRequestStatusToApplicationStatus } from '@/features/user/api/lib/map-permission-approval-status'
+import { applyScheduleChangeCancelCountToUser } from '@/features/user/api/resolve-schedule-change-cancel-count'
+import {
+  parseApprovalNotificationCase,
+  parseApprovalNotificationState,
+} from '@/features/user/api/lib/approval-notification-case'
 import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { User } from '@/types/user'
 
 function mapTermsAgreements(rows: TermsAgreement[] | undefined): TermsAgreementRow[] | undefined {
   if (!rows?.length) return undefined
-  return rows.map(row => ({
-    termsType: row.termsType?.trim() || undefined,
-    termsVersion: row.version?.trim() || undefined,
-    required: row.required,
-    agreed: row.agreed,
-  }))
+  return rows.map(row => {
+    const mapped: TermsAgreementRow & { consentRecordId?: number } = {
+      termsType: row.termsType?.trim() || undefined,
+      termsVersion: row.version?.trim() || undefined,
+      required: row.required,
+      agreed: row.agreed,
+      ...(row.agreedAt?.trim() ? { agreedAt: row.agreedAt.trim() } : {}),
+    }
+    if (typeof row.consentRecordId === 'number' && Number.isFinite(row.consentRecordId)) {
+      mapped.consentRecordId = row.consentRecordId
+    }
+    return mapped
+  })
 }
 
 /** `GET /api/admin/instructor-role-requests/{requestId}` → 권한 승인 상세 User */
@@ -57,8 +70,17 @@ export function mapInstructorRoleRequestDetailToUser(
 
   const permissionApprovalHandledAt = detail.decidedAt ?? undefined
   const permissionApprovalStatus = mapInstructorRoleRequestStatusToApplicationStatus(detail.status)
+  const requestStatusUpper = (detail.status ?? '').trim().toUpperCase()
+  const instructorApprovalStatus = requestStatusUpper === 'REVOKED' ? 'REVOKED' : undefined
+  const approvalNotificationCase = parseApprovalNotificationCase(detail.approvalNotificationCase)
+  const approvalNotificationState = parseApprovalNotificationState(detail.approvalNotificationState)
+  const isSchoolTeacherApplicant = cmsProfile?.memberType === 'SCHOOL_TEACHER'
+  const employmentStatusLabel = toEmploymentStatusDisplayLabel(
+    cmsProfile?.affiliation?.employmentStatus
+  )
 
-  return {
+  return applyScheduleChangeCancelCountToUser(
+    {
     id: uuid,
     memberId,
     instructorRoleRequestId: requestId,
@@ -71,14 +93,23 @@ export function mapInstructorRoleRequestDetailToUser(
     isActive: true,
     permissionApprovalStatus,
     permissionApprovalHandledAt,
+    ...(instructorApprovalStatus ? { instructorApprovalStatus } : {}),
+    ...(approvalNotificationCase != null ? { approvalNotificationCase } : {}),
+    ...(approvalNotificationState != null ? { approvalNotificationState } : {}),
+    ...(detail.approvalNotificationScheduledAt !== undefined
+      ? { approvalNotificationScheduledAt: detail.approvalNotificationScheduledAt }
+      : {}),
+    ...(detail.approvalNotificationSentAt !== undefined
+      ? { approvalNotificationSentAt: detail.approvalNotificationSentAt }
+      : {}),
     createdAt: appliedAt,
     updatedAt: detail.decidedAt ?? appliedAt,
-    instructorMemberProfile:
-      cmsProfile?.memberType === 'SCHOOL_TEACHER' ? 'school_teacher' : 'instructor_only',
+    instructorMemberProfile: isSchoolTeacherApplicant ? 'instructor_dual' : 'instructor_only',
     listMetrics: {
       permissionApplicationTypeLabel: toInstructorActivityTypeLabel(detail.requestedActivityType),
       ...(feeGradeLabel ? { instructorFeeGradeLabel: feeGradeLabel } : {}),
       ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
+      ...(employmentStatusLabel ? { employmentStatusLabel } : {}),
     },
     ...(cmsProfile?.oneLineIntro?.trim() ? { bio: cmsProfile.oneLineIntro.trim() } : {}),
     ...(homeLine ? { detailAddress: homeLine } : {}),
@@ -102,5 +133,7 @@ export function mapInstructorRoleRequestDetailToUser(
       ? { instructorSelfIntroduction: cmsProfile.essays.freeWrite1.trim() }
       : {}),
     ...(termsAgreements ? { termsAgreements } : {}),
-  }
+    },
+    detail
+  )
 }

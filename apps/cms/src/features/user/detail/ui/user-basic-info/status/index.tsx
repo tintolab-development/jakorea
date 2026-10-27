@@ -127,7 +127,11 @@ export function PermissionApprovalStatusWithResend({
   const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
   const tone = permissionApprovalStatusListToneView(user)
 
-  if (status === 'PENDING' || isInstructorPermissionRevoked(user)) {
+  if (
+    status === 'PENDING' ||
+    status === 'REJECTED' ||
+    isInstructorPermissionRevoked(user)
+  ) {
     return tone
   }
 

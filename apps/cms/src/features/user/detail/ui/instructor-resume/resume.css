@@ -118,21 +118,6 @@
   font-weight: 700;
 }
 
-.instructor-resume-free-writing-card {
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 6px;
-  background: #fff;
-  padding: 16px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-/* DetailInfoForm __body 가 외곽선·radius 제공 — 이중 테두리 방지 (cross-table.css 동일 패턴) */
-.detail-info-form__body > .detail-info-form__row--custom > .instructor-resume-free-writing-card {
-  border: none;
-  border-radius: 0;
-}
-
 .instructor-resume-free-writing-text {
   margin: 0;
   font-size: 16px;

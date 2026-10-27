@@ -9,16 +9,20 @@ import {
   cancelAdminApprovalRemote,
   resetAdminApprovalRequestPendingRemote,
   resendAdminApprovalNotificationRemote,
+  type NotificationResendRequestBody,
 } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import type { InstructorPermissionApprovePayload } from '@/features/user/permission-management/instructor-permission-approve-modal'
 import type { InstructorPermissionRejectPayload } from '@/features/user/permission-management/instructor-permission-reject-modal'
+import { toInstructorRoleReviewScheduledAt } from '@/features/user/permission-management/lib/instructor-role-review-notify'
 
 function buildApproveBody(payload: InstructorPermissionApprovePayload) {
   const roleCode = adminPermissionFeeGradeToRoleCode(payload.feeGrade)
+  const scheduledAt = toInstructorRoleReviewScheduledAt(payload.notifyTiming, payload.scheduledAt)
   return {
     roleCode,
     reason: `CMS 관리자 권한 승인 (${roleCode})`,
+    ...(scheduledAt ? { scheduledAt } : {}),
   }
 }
 
@@ -29,6 +33,13 @@ function buildApproveReason(payload: InstructorPermissionApprovePayload): string
 
 function buildRejectReason(payload: InstructorPermissionRejectPayload): string {
   return payload.rejectionReason?.trim() || 'CMS 관리자 권한 신청 반려'
+}
+
+function buildAdminScheduledAt(payload: {
+  notifyTiming: InstructorPermissionApprovePayload['notifyTiming']
+  scheduledAt?: string
+}) {
+  return toInstructorRoleReviewScheduledAt(payload.notifyTiming, payload.scheduledAt)
 }
 
 export function useAdminApprovalRequestMutations() {
@@ -60,6 +71,7 @@ export function useAdminApprovalRequestMutations() {
         await approveAdminApprovalRequestRemote(adminId, {
           reason,
           roleCode: roleBody.roleCode,
+          ...(roleBody.scheduledAt ? { scheduledAt: roleBody.scheduledAt } : {}),
         })
         return
       }
@@ -68,6 +80,7 @@ export function useAdminApprovalRequestMutations() {
         ids: input.adminIds,
         roleCode: roleBody.roleCode,
         reason,
+        ...(roleBody.scheduledAt ? { scheduledAt: roleBody.scheduledAt } : {}),
       })
     },
     onSuccess: async (_data, variables) => {
@@ -82,13 +95,18 @@ export function useAdminApprovalRequestMutations() {
       payload: InstructorPermissionRejectPayload
     }) => {
       const reason = buildRejectReason(input.payload)
+      const scheduledAt = buildAdminScheduledAt(input.payload)
       if (input.adminIds.length === 1) {
-        await rejectAdminApprovalRequestRemote(input.adminIds[0], { reason })
+        await rejectAdminApprovalRequestRemote(input.adminIds[0], {
+          reason,
+          ...(scheduledAt ? { scheduledAt } : {}),
+        })
         return
       }
       await bulkRejectAdminApprovalRequestsRemote({
         ids: input.adminIds,
         reason,
+        ...(scheduledAt ? { scheduledAt } : {}),
       })
     },
     onSuccess: async (_data, variables) => {
@@ -124,11 +142,14 @@ export function useAdminApprovalRequestMutations() {
   })
 
   const resendNotificationMutation = useMutation({
-    mutationFn: async (adminAccountId: number) => {
-      await resendAdminApprovalNotificationRemote(adminAccountId)
+    mutationFn: async (input: {
+      adminAccountId: number
+      notify?: NotificationResendRequestBody
+    }) => {
+      await resendAdminApprovalNotificationRemote(input.adminAccountId, input.notify)
     },
-    onSuccess: async (_data, adminAccountId) => {
-      await invalidateDetail(adminAccountId)
+    onSuccess: async (_data, variables) => {
+      await invalidateDetail(variables.adminAccountId)
     },
   })
 

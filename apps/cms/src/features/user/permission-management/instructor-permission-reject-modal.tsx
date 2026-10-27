@@ -3,10 +3,13 @@ import type {
   InstructorPermissionApproveNotifyTiming,
   PermissionApproveModalKind,
 } from '@/features/user/permission-management/instructor-permission-approve-modal'
+import { toInstructorRoleReviewScheduledAt } from '@/features/user/permission-management/lib/instructor-role-review-notify'
 
 export interface InstructorPermissionRejectPayload {
   rejectionReason: string
   notifyTiming: InstructorPermissionApproveNotifyTiming
+  /** 직접 설정일 때만 ISO. 즉시 발송이면 생략 */
+  scheduledAt?: string
 }
 
 type InstructorPermissionRejectModalBaseProps = {
@@ -57,7 +60,11 @@ export function InstructorPermissionRejectModal(props: InstructorPermissionRejec
   const handleConfirm = (payload: PermissionModalPayload) => {
     const notifyTiming: InstructorPermissionApproveNotifyTiming =
       payload.notifyTiming === 'on_announcement' ? 'immediate' : payload.notifyTiming
-    onConfirm({ rejectionReason: payload.reason, notifyTiming })
+    onConfirm({
+      rejectionReason: payload.reason,
+      notifyTiming,
+      scheduledAt: toInstructorRoleReviewScheduledAt(notifyTiming, payload.manualNotifyAt),
+    })
   }
 
   return (

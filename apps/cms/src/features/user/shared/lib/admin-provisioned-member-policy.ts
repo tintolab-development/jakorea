@@ -127,14 +127,15 @@ export function shouldShowAdminCommentSectionForViewer(
 }
 
 /**
- * 관리자 신청 상세(`mode=permission`, 대상 role=ADMIN) — 승인 완료일 때만 관리자 코멘트 노출·작성.
- * 그 외 화면에서는 true(상위 `shouldShowAdminCommentSectionForViewer`와 함께 사용).
+ * 권한 신청 상세(`mode=permission`) — 승인 완료일 때만 관리자 코멘트 노출·작성.
+ * 강사 신청 상세·관리자 신청 상세 공통. 그 외 화면(회원 상세 등)에서는 true
+ * (상위 `shouldShowAdminCommentSectionForViewer`와 함께 사용).
  */
 export function shouldShowAdminCommentForAdminPermissionApplicationDetail(
   mode: 'default' | 'permission',
   targetUser: PermissionApprovalUserLike & { role?: string }
 ): boolean {
-  if (mode !== 'permission' || targetUser.role !== 'ADMIN') {
+  if (mode !== 'permission') {
     return true
   }
   return targetUser.permissionApprovalStatus === 'APPROVED'

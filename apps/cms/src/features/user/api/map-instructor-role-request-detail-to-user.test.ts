@@ -40,6 +40,8 @@ describe('mapInstructorRoleRequestDetailToUser', () => {
             version: '1.0',
             required: false,
             agreed: true,
+            agreedAt: '2026-03-01T09:15:42Z',
+            consentRecordId: 81,
           },
         ],
       },
@@ -67,6 +69,8 @@ describe('mapInstructorRoleRequestDetailToUser', () => {
         termsVersion: '1.0',
         required: false,
         agreed: true,
+        agreedAt: '2026-03-01T09:15:42Z',
+        consentRecordId: 81,
       },
     ])
   })
@@ -153,5 +157,63 @@ describe('mapInstructorRoleRequestDetailToUser', () => {
     expect(user.instructorCmsProfile?.licenses).toHaveLength(1)
     expect(user.termsAgreements).toHaveLength(4)
     expect(user.instructorSelfIntroduction).toBe('지원동기 본문')
+  })
+
+  it('교사 신청자는 강사 신청 상세용 instructor_dual + 재직 현황을 매핑한다', () => {
+    const user = mapInstructorRoleRequestDetailToUser({
+      requestId: 172010,
+      memberId: 172110,
+      status: 'PENDING',
+      name: '김지이',
+      profile: {
+        memberType: 'SCHOOL_TEACHER',
+        affiliation: {
+          schoolName: '제이에초등학교',
+          employmentStatus: 'ACTIVE',
+        },
+      },
+    })
+
+    expect(user.instructorMemberProfile).toBe('instructor_dual')
+    expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
+  })
+
+  it('승인 알림 CASE·상태·시각을 상세 루트에서 매핑한다', () => {
+    const user = mapInstructorRoleRequestDetailToUser({
+      requestId: 180001,
+      memberId: 180101,
+      status: 'APPROVED',
+      name: '김제이',
+      approvalNotificationCase: 'CASE_2',
+      approvalNotificationState: 'UNKNOWN',
+      approvalNotificationScheduledAt: '2026-11-02T01:00:00.000Z',
+      approvalNotificationSentAt: '2026-11-01T01:00:00.000Z',
+    })
+
+    expect(user.approvalNotificationCase).toBe('CASE_2')
+    expect(user.approvalNotificationState).toBe('UNKNOWN')
+    expect(user.approvalNotificationScheduledAt).toBe('2026-11-02T01:00:00.000Z')
+    expect(user.approvalNotificationSentAt).toBe('2026-11-01T01:00:00.000Z')
+  })
+
+  it('승인 알림 CASE가 없으면 필드를 넣지 않는다', () => {
+    const user = mapInstructorRoleRequestDetailToUser({
+      requestId: 180002,
+      memberId: 180102,
+      status: 'APPROVED',
+      name: '김제이',
+    })
+    expect(user.approvalNotificationCase).toBeUndefined()
+  })
+
+  it('REVOKED 신청은 강사 권한 회수 상태로 매핑한다', () => {
+    const user = mapInstructorRoleRequestDetailToUser({
+      requestId: 180003,
+      memberId: 180103,
+      status: 'REVOKED',
+      name: '김제이',
+    })
+    expect(user.permissionApprovalStatus).toBe('REJECTED')
+    expect(user.instructorApprovalStatus).toBe('REVOKED')
   })
 })

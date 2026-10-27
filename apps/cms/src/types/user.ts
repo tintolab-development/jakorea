@@ -88,6 +88,21 @@ export interface User {
   adminAccountId?: number
   /** 강사 권한 신청 requestId — 권한 승인 상세·privacy unmask */
   instructorRoleRequestId?: number
+  /**
+   * GET instructor-role-requests 상세 `approvalNotificationCase`.
+   * 누락이면 모달 CASE를 추정하지 않는다.
+   */
+  approvalNotificationCase?: 'CASE_1' | 'CASE_2' | 'NONE' | null
+  approvalNotificationState?:
+    | 'NONE'
+    | 'SCHEDULED'
+    | 'PENDING'
+    | 'PROCESSING'
+    | 'SENT'
+    | 'UNKNOWN'
+    | null
+  approvalNotificationScheduledAt?: string | null
+  approvalNotificationSentAt?: string | null
   email: string
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string

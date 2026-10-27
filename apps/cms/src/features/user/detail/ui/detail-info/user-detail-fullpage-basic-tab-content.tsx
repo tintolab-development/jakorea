@@ -144,11 +144,12 @@ export function UserDetailFullpageBasicTabContent({
     membersRemote && canShowAdminCommentForTarget && adminCommentResource != null
 
   /** 현재 동의 Summary + 작성본 메타(records) — 관리자 계정은 상세 termsAgreements만 사용 */
-  const shouldLoadMemberCurrentConsents = shouldFetchMemberConsentRecords({
+  const shouldLoadMemberConsentRecords = shouldFetchMemberConsentRecords({
     role: user.role,
     memberId: user.memberId,
     showConsentAgreement: basicTab.showConsentAgreement,
   })
+  const shouldLoadMemberCurrentConsents = shouldLoadMemberConsentRecords
 
   const consentSummariesQuery = useMemberConsentSummariesQuery(
     user.memberId,
@@ -157,19 +158,25 @@ export function UserDetailFullpageBasicTabContent({
   )
   const consentQuery = useMemberConsentRecordsQuery(
     user.memberId,
-    membersRemote && shouldLoadMemberCurrentConsents,
+    membersRemote && shouldLoadMemberConsentRecords,
     { manualFetch: membersRemote }
   )
   const consentRecords = consentQuery.data ?? []
   const consentSummariesError = Boolean(
     membersRemote && shouldLoadMemberCurrentConsents && consentSummariesQuery.isError
   )
+  const hasInstructorPermissionConsentFallback =
+    mode === 'permission' &&
+    permissionRole === 'instructor' &&
+    Boolean(user.termsAgreements?.length)
   const consentLoading = Boolean(
     membersRemote &&
       shouldLoadMemberCurrentConsents &&
-      (consentSummariesQuery.isPending ||
-        consentSummariesQuery.isFetching ||
-        !consentSummariesQuery.isSuccess)
+      !consentSummariesError &&
+      !hasInstructorPermissionConsentFallback &&
+      consentSummariesQuery.data === undefined &&
+      (consentSummariesQuery.isFetching ||
+        (consentSummariesQuery.isPending && consentSummariesQuery.fetchStatus !== 'idle'))
   )
 
   const { data: commentsData } = useMemberCommentsQuery(
@@ -352,12 +359,21 @@ export function UserDetailFullpageBasicTabContent({
       })
     }
 
-    if (!shouldLoadMemberCurrentConsents) return undefined
-
-    if (consentLoading || consentSummariesError) return undefined
-
     const summaries = consentSummariesQuery.data
-    if (summaries === undefined) return undefined
+    const hasSummaries = Array.isArray(summaries) && summaries.length > 0
+
+    if (consentViewVariant === 'permission_instructor') {
+      return applyMemberConsentToSchema(baseSchema, {
+        ...(hasSummaries
+          ? { consentSummaries: summaries }
+          : { termsAgreements: user.termsAgreements }),
+        consentRecords,
+      })
+    }
+
+    if (!shouldLoadMemberCurrentConsents || consentLoading || consentSummariesError || !hasSummaries) {
+      return applyMemberConsentToSchema(baseSchema, {})
+    }
 
     return applyMemberConsentToSchema(baseSchema, {
       consentSummaries: summaries,
@@ -372,6 +388,7 @@ export function UserDetailFullpageBasicTabContent({
     consentLoading,
     consentSummariesError,
     consentSummariesQuery.data,
+    shouldLoadMemberCurrentConsents,
     user.role,
     user.termsAgreements,
   ])
@@ -473,7 +490,9 @@ export function UserDetailFullpageBasicTabContent({
         scheduleChangeCount={scheduleChangeCount}
         onEmploymentStatusChange={membersRemote ? onEmploymentStatusChange : undefined}
       />
-      {basicTab.showConsentAgreement && consentSummariesError ? (
+      {basicTab.showConsentAgreement &&
+      consentSummariesError &&
+      consentViewVariant !== 'permission_instructor' ? (
         <MemberDetailMockDataBanner message="약관·동의 현재 상태 조회에 실패했습니다. 동의 여부를 표시하지 않습니다. 잠시 후 다시 시도해 주세요." />
       ) : null}
       {basicTab.showConsentAgreement ? (

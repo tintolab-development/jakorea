@@ -2,10 +2,32 @@ import type { User } from '@/types/user'
 
 export type AdminPermissionTagVariant = 'manager' | 'partner' | 'viewer'
 
+/**
+ * 관리자 권한 유형 표시명.
+ * 관리자 권한 설정 탭 라벨과 맞춘다.
+ * Accounting Manager는 승인 셀렉트에만 노출하고, 선택은 아직 준비 중이다.
+ */
 export const ADMIN_PERMISSION_TAG_LABEL: Record<AdminPermissionTagVariant, string> = {
-  manager: '마스터 관리자',
-  partner: '중간 관리자',
-  viewer: '뷰어',
+  manager: 'Master',
+  partner: 'Program Manager',
+  viewer: 'Program Viewer',
+}
+
+/** 승인 셀렉트 전용. 아직 API roleCode가 없어 선택 시 준비 중 안내만 한다. */
+export const ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE = 'accounting-manager'
+
+export const ADMIN_PERMISSION_SELECT_OPTIONS: {
+  value: string
+  label: string
+}[] = [
+  { value: 'manager', label: ADMIN_PERMISSION_TAG_LABEL.manager },
+  { value: ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE, label: 'Accounting Manager' },
+  { value: 'partner', label: ADMIN_PERMISSION_TAG_LABEL.partner },
+  { value: 'viewer', label: ADMIN_PERMISSION_TAG_LABEL.viewer },
+]
+
+export function isAdminPermissionSelectComingSoon(value: string | undefined): boolean {
+  return value === ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE
 }
 
 /**

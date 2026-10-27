@@ -165,7 +165,7 @@ describe('fetchMemberDetailBasicTabResources', () => {
     expect(fetchAffiliatedTeachersQuery).not.toHaveBeenCalled()
   })
 
-  it('강사 권한 승인 상세(permission) — 현재 동의 summaries·records + comments · 소속교사 생략', async () => {
+  it('강사 권한 승인 상세(permission) — 현재 동의 summaries·작성본 records · 소속교사 생략', async () => {
     vi.mocked(fetchMemberConsentRecordsQuery).mockClear()
     vi.mocked(fetchMemberConsentSummariesQuery).mockClear()
     vi.mocked(fetchAffiliatedTeachersQuery).mockClear()
@@ -175,7 +175,12 @@ describe('fetchMemberDetailBasicTabResources', () => {
     await fetchMemberDetailBasicTabResources(queryClient, {
       detailTabActive: true,
       membersRemote: true,
-      displayUser: { role: 'INSTRUCTOR', memberId: 42, id: 'member-42' },
+      displayUser: {
+        role: 'INSTRUCTOR',
+        memberId: 42,
+        id: 'member-42',
+        permissionApprovalStatus: 'APPROVED',
+      },
       mode: 'permission',
       showConsentAgreement: true,
       showSchoolAffiliatedTeachers: true,
@@ -232,6 +237,50 @@ describe('fetchMemberDetailBasicTabResources', () => {
         adminAccountId: 7,
         id: 'admin-account-7',
         permissionApprovalStatus: 'PENDING',
+      },
+      mode: 'permission',
+      showConsentAgreement: false,
+      showSchoolAffiliatedTeachers: false,
+      currentUser: { role: 'ADMIN' },
+    })
+
+    expect(fetchMemberCommentsQuery).not.toHaveBeenCalled()
+  })
+
+  it('강사 신청 상세(permission) · 승인 대기 — comments fetch 생략', async () => {
+    vi.mocked(fetchMemberCommentsQuery).mockClear()
+    const queryClient = {} as QueryClient
+
+    await fetchMemberDetailBasicTabResources(queryClient, {
+      detailTabActive: true,
+      membersRemote: true,
+      displayUser: {
+        role: 'INSTRUCTOR',
+        memberId: 42,
+        id: 'member-42',
+        permissionApprovalStatus: 'PENDING',
+      },
+      mode: 'permission',
+      showConsentAgreement: false,
+      showSchoolAffiliatedTeachers: false,
+      currentUser: { role: 'ADMIN' },
+    })
+
+    expect(fetchMemberCommentsQuery).not.toHaveBeenCalled()
+  })
+
+  it('강사 신청 상세(permission) · 신청 반려 — comments fetch 생략', async () => {
+    vi.mocked(fetchMemberCommentsQuery).mockClear()
+    const queryClient = {} as QueryClient
+
+    await fetchMemberDetailBasicTabResources(queryClient, {
+      detailTabActive: true,
+      membersRemote: true,
+      displayUser: {
+        role: 'INSTRUCTOR',
+        memberId: 42,
+        id: 'member-42',
+        permissionApprovalStatus: 'REJECTED',
       },
       mode: 'permission',
       showConsentAgreement: false,
