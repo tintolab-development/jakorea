@@ -1,0 +1,148 @@
+.modal {
+  height: auto;
+  min-height: 200px;
+  max-height: min(1125px, calc(100dvh - 32px));
+  gap: var(--spacing-28);
+  padding: var(--spacing-28);
+}
+
+.form {
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-28);
+}
+
+.body {
+  width: 100%;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.fields {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+  align-self: stretch;
+}
+
+.fileField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.fieldLabel {
+  display: block;
+  margin: 0;
+}
+
+.filePicker {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.fileInput {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.filePicker:focus-within button {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.fileHint {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-neutral-cool-500);
+  font-size: 14px;
+  line-height: 150%;
+}
+
+.fileRow {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+  padding: var(--spacing-16) var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.fileName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.consentRow {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  min-height: 64px;
+  padding: var(--spacing-16) var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.consentRow label {
+  padding: 0;
+}
+
+.consentError {
+  border: 1px solid var(--color-border-error-strong);
+}
+
+.error {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-12);
+  flex-shrink: 0;
+}
+
+@media (--bp-below-pc) {
+  .modal {
+    height: 100%;
+    max-height: 100%;
+    padding: var(--spacing-28) var(--spacing-20);
+  }
+
+  .fields {
+    margin-top: var(--spacing-20);
+  }
+
+  .form,
+  .body {
+    flex: 1 1 auto;
+  }
+
+  .actions {
+    gap: var(--spacing-8);
+  }
+}

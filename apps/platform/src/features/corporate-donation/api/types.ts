@@ -37,10 +37,14 @@ export type PublicCorporateConsultationCreateRequest = {
   departmentTitle: string
   contactPhone: string
   consultationContent: string
+  linkUrl?: string
+  attachmentAssetId?: number
+  attachmentUploadToken?: string
   privacyConsent: true
 }
 
 export type PublicCorporateConsultationCreateResponse = {
   id?: number
   status?: string
+  createdAt?: string
 }
