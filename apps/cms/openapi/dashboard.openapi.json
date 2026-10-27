@@ -25735,9 +25735,19 @@
             "type": "string",
             "format": "date-time"
           },
+          "createdByName": {
+            "type": "string",
+            "nullable": true,
+            "description": "최초 등록한 CMS 관리자의 화면 표시명(admin_account.name). program.created_by_admin_id 조인. 이력 없거나 이름 없으면 null. 빈 문자열을 쓰지 않는다. managerName/sponsor 담당자와 같지 않다."
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "updatedByName": {
+            "type": "string",
+            "nullable": true,
+            "description": "마지막으로 프로그램을 수정한 CMS 관리자의 화면 표시명. program.updated_by_admin_id → admin_account.name. 생성 직후는 createdByName과 같다(INSERT 시 updated_by_admin_id=created_by_admin_id). PATCH /api/admin/programs/{id}마다 저장 관리자로만 갱신하고 createdByName은 유지. 이력 없으면 null."
           },
           "businessStartDate": {
             "type": "string"
@@ -25749,6 +25759,15 @@
             "type": "integer",
             "format": "int32"
           }
+        },
+        "example": {
+          "id": "186401",
+          "programType": "GENERAL_ORGANIZATION",
+          "title": "예시 프로그램",
+          "createdAt": "2026-12-08T00:15:00.000Z",
+          "createdByName": "곽도규",
+          "updatedAt": "2026-12-09T01:00:00.000Z",
+          "updatedByName": "김도영"
         }
       },
       "ProgramRoundResponse": {
@@ -46832,6 +46851,11 @@
       },
       "NotificationCatalogCategory": {
         "type": "object",
+        "required": [
+          "categoryCode",
+          "categoryLabel",
+          "variables"
+        ],
         "properties": {
           "categoryCode": {
             "type": "string",
@@ -46852,6 +46876,16 @@
       "NotificationCatalogVariableItem": {
         "type": "object",
         "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
+        "required": [
+          "key",
+          "token",
+          "requiresProgram",
+          "enabled",
+          "programGroups",
+          "recruitmentTypes",
+          "participantTypes",
+          "memberTypes"
+        ],
         "properties": {
           "key": {
             "type": "string",
@@ -46865,8 +46899,8 @@
           },
           "description": {
             "type": "string",
-            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null",
-            "nullable": true
+            "nullable": true,
+            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
           },
           "requiresProgram": {
             "type": "boolean",
@@ -46878,36 +46912,63 @@
           },
           "programGroups": {
             "type": "array",
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
           },
           "recruitmentTypes": {
             "type": "array",
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "PARTICIPANT",
+                "INSTRUCTOR",
+                "VOLUNTEER"
+              ]
+            },
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "GENERAL",
+                "SCHOOL_TEACHER",
+                "INSTRUCTOR",
+                "TEACHER_AND_INSTRUCTOR",
+                "ADMIN"
+              ]
+            },
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
+          },
+          "sourceMode": {
+            "type": "string",
+            "nullable": true,
+            "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
+            "enum": [
+              "SERVER_RESOLVED",
+              "MANUAL_ALLOWED",
+              "EVENT_ONLY"
+            ]
           }
         }
       },
       "NotificationTemplateVariableCatalogResponse": {
         "type": "object",
+        "required": [
+          "totalCount",
+          "categories",
+          "systemManualSendQaEnabled"
+        ],
         "properties": {
           "totalCount": {
             "type": "integer",

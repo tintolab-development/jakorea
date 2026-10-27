@@ -87776,9 +87776,19 @@
             "type": "string",
             "format": "date-time"
           },
+          "createdByName": {
+            "type": "string",
+            "nullable": true,
+            "description": "최초 등록한 CMS 관리자의 화면 표시명(admin_account.name). program.created_by_admin_id 조인. 이력 없거나 이름 없으면 null. 빈 문자열을 쓰지 않는다. managerName/sponsor 담당자와 같지 않다."
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "updatedByName": {
+            "type": "string",
+            "nullable": true,
+            "description": "마지막으로 프로그램을 수정한 CMS 관리자의 화면 표시명. program.updated_by_admin_id → admin_account.name. 생성 직후는 createdByName과 같다(INSERT 시 updated_by_admin_id=created_by_admin_id). PATCH /api/admin/programs/{id}마다 저장 관리자로만 갱신하고 createdByName은 유지. 이력 없으면 null."
           },
           "businessStartDate": {
             "type": "string"
@@ -87790,6 +87800,15 @@
             "type": "integer",
             "format": "int32"
           }
+        },
+        "example": {
+          "id": "186401",
+          "programType": "GENERAL_ORGANIZATION",
+          "title": "예시 프로그램",
+          "createdAt": "2026-12-08T00:15:00.000Z",
+          "createdByName": "곽도규",
+          "updatedAt": "2026-12-09T01:00:00.000Z",
+          "updatedByName": "김도영"
         }
       },
       "ProgramRoundResponse": {
