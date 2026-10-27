@@ -272,25 +272,20 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     })
   }, [open, programsQuery.error, programsQuery.isError, remote, showAlert])
 
-  const variablesTypeValue = useMemo(() => {
-    // 후보 모달 검색 필터(recipientSearch)는 목록에만 사용.
-    // 여기 넣으면 필터만 바꿔도 catalog가 바뀌고 선택 템플릿이 clear되는 회귀가 난다.
-    if (recipientTypeMode === 'participation') {
-      return inferUniqueRecipientTypeValue(form.recipients.map(item => item.participationType))
-    }
-    return inferUniqueRecipientTypeValue(form.recipients.map(item => item.memberType))
-  }, [form.recipients, recipientTypeMode])
-
   const templateVariablesQuery = useMemo(
     () =>
       buildNotificationTemplateVariablesQuery({
         programId: programNumericId,
-        recipientTypeMode,
-        typeValue: variablesTypeValue,
+        participantTypeValue: inferUniqueRecipientTypeValue(
+          form.recipients.map(item => item.participationType)
+        ),
+        memberTypeValue: inferUniqueRecipientTypeValue(
+          form.recipients.map(item => item.memberType)
+        ),
         toParticipantTypeApi: toMailSendParticipantTypeApi,
         toMemberTypeApi: toMailSendMemberTypeApi,
       }),
-    [programNumericId, recipientTypeMode, variablesTypeValue]
+    [form.recipients, programNumericId]
   )
 
   const candidatesQuery = useMailRecipientCandidatesQuery(

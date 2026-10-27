@@ -190,24 +190,20 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const recipientTypeMode = resolveSmsSendRecipientTypeMode(form.programId)
   const typeColumnTitle = smsSendRecipientTypeColumnTitle(recipientTypeMode)
 
-  const variablesTypeValue = useMemo(() => {
-    // 후보 모달 검색 필터는 목록에만 사용 — 확정 수신자만 변수 카탈로그 문맥에 반영
-    if (recipientTypeMode === 'participation') {
-      return inferUniqueRecipientTypeValue(form.recipients.map(item => item.participationType))
-    }
-    return inferUniqueRecipientTypeValue(form.recipients.map(item => item.memberType))
-  }, [form.recipients, recipientTypeMode])
-
   const templateVariablesQuery = useMemo(
     () =>
       buildNotificationTemplateVariablesQuery({
         programId: programNumericId,
-        recipientTypeMode,
-        typeValue: variablesTypeValue,
+        participantTypeValue: inferUniqueRecipientTypeValue(
+          form.recipients.map(item => item.participationType)
+        ),
+        memberTypeValue: inferUniqueRecipientTypeValue(
+          form.recipients.map(item => item.memberType)
+        ),
         toParticipantTypeApi: toSmsSendParticipantTypeApi,
         toMemberTypeApi: toSmsSendMemberTypeApi,
       }),
-    [programNumericId, recipientTypeMode, variablesTypeValue]
+    [form.recipients, programNumericId]
   )
 
   const candidatesQuery = useSmsRecipientCandidatesQuery(
