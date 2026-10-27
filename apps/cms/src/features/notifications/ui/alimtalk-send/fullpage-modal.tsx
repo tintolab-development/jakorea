@@ -51,10 +51,10 @@ import {
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
 import {
-  canUseNotificationSendTemplateForProgram,
-  formatNotificationSendTemplateDisabledKeysWarning,
-  listNotificationSendTemplateDisabledKeysForProgram,
-} from '@/features/notifications/model/shared/template-usable-for-program'
+  canUseAlimtalkSendTemplateForManualSend,
+  formatAlimtalkManualSendUnusableMessage,
+  listAlimtalkManualSendUnusableKeys,
+} from '@/features/notifications/model/alimtalk-send/manual-send-usable'
 import { alimtalkSendStateAfterProgramChange } from '@/features/notifications/model/alimtalk-send/program-change'
 import { alimtalkSendTemplateContentEmptyTitle } from '@/features/notifications/model/alimtalk-send/content-empty'
 import {
@@ -251,34 +251,37 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   const isTemplateUsable = useCallback(
     (template: AlimtalkTemplateItem) => {
-      if (variablesCatalog == null) return false
+      if (variablesQuery.isError || variablesCatalog == null) return false
       if (template.hasAlimtalkMetadata !== true) return false
-      return canUseNotificationSendTemplateForProgram({
+      return canUseAlimtalkSendTemplateForManualSend({
         usedKeys: collectTemplatePlaceholderKeys(template),
         catalog: variablesCatalog,
         programNumericId,
       })
     },
-    [programNumericId, variablesCatalog]
+    [programNumericId, variablesCatalog, variablesQuery.isError]
   )
 
   const getTemplateUnusableMessage = useCallback(
     (template: AlimtalkTemplateItem) => {
+      if (variablesQuery.isError) {
+        return '변수 목록을 불러오지 못했습니다. 다시 시도해 주세요.'
+      }
       if (variablesCatalog == null) {
         return '변수 목록을 확인한 뒤 템플릿을 사용할 수 있습니다.'
       }
       if (template.hasAlimtalkMetadata !== true) {
         return '템플릿 상세를 불러온 뒤 사용할 수 있습니다. 미리보기에서 다시 확인해 주세요.'
       }
-      return formatNotificationSendTemplateDisabledKeysWarning(
-        listNotificationSendTemplateDisabledKeysForProgram({
+      return formatAlimtalkManualSendUnusableMessage(
+        listAlimtalkManualSendUnusableKeys({
           usedKeys: collectTemplatePlaceholderKeys(template),
           catalog: variablesCatalog,
           programNumericId,
         })
       )
     },
-    [programNumericId, variablesCatalog]
+    [programNumericId, variablesCatalog, variablesQuery.isError]
   )
 
   const candidatesQuery = useAlimtalkRecipientCandidatesQuery(

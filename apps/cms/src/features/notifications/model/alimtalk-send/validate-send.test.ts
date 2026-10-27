@@ -28,7 +28,7 @@ function input(overrides: Partial<AlimtalkSendValidationInput> = {}): AlimtalkSe
     scheduledAt: null,
     recipients: [recipient('1', { '방문 안내': '오전' })],
     placeholderKeys: ['방문 안내'],
-    catalog: [{ key: '방문 안내', enabled: true }],
+    catalog: [{ key: '방문 안내', enabled: true, sourceMode: 'MANUAL_ALLOWED' }],
     catalogState: 'ready',
     ...overrides,
   }
@@ -151,6 +151,46 @@ describe('validateAlimtalkSendRequest', () => {
       })
     )
     expect(result.ok).toBe(true)
+  })
+
+  it('R7-FE-11 알림 링크 경로 값이 없으면 발송하지 않는다', () => {
+    const result = validateAlimtalkSendRequest(
+      input({
+        placeholderKeys: ['알림 링크 경로'],
+        catalog: [
+          {
+            key: '알림 링크 경로',
+            enabled: true,
+            requiresProgram: false,
+            sourceMode: 'MANUAL_ALLOWED',
+          },
+        ],
+        recipients: [recipient('1')],
+      })
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.alert).toContain('알림 링크 경로')
+  })
+
+  it('R7-FE-11 허용되지 않는 링크는 발송하지 않는다', () => {
+    const result = validateAlimtalkSendRequest(
+      input({
+        placeholderKeys: ['알림 링크 경로'],
+        catalog: [
+          {
+            key: '알림 링크 경로',
+            enabled: true,
+            requiresProgram: false,
+            sourceMode: 'MANUAL_ALLOWED',
+          },
+        ],
+        recipients: [recipient('1', { '알림 링크 경로': 'javascript:alert(1)' })],
+      })
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.alert).toContain('허용되지 않는 링크')
   })
 
   it('FE-VAR-13 카탈로그 pending이면 발송하지 않는다', () => {

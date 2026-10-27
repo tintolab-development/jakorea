@@ -7,7 +7,7 @@ import {
 } from './content-empty'
 
 describe('alimtalkSendTemplateContentEmptyTitle', () => {
-  it('발신 프로필·템플릿 미선택이면 발신 프로필 안내', () => {
+  it('R7-FE-13 발신 프로필·템플릿 미선택이면 발신 프로필 안내', () => {
     expect(
       alimtalkSendTemplateContentEmptyTitle({
         senderSelected: false,

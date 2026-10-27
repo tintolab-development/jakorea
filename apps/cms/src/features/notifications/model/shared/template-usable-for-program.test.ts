@@ -85,6 +85,16 @@ describe('canUseNotificationSendTemplateForProgram (메일·문자·알림톡 �
     ).toBe(true)
   })
 
+  it('R7-FE-01 카탈로그에 없는 키는 프로그램 미지정도 false', () => {
+    expect(
+      canUseNotificationSendTemplateForProgram({
+        texts: ['#{알 수 없는 키}'],
+        catalog,
+        programNumericId: undefined,
+      })
+    ).toBe(false)
+  })
+
   it('카탈로그에 없는 키는 프로그램 지정 시 false', () => {
     expect(
       canUseNotificationSendTemplateForProgram({
@@ -154,14 +164,14 @@ describe('listNotificationSendTemplateDisabledKeysForProgram', () => {
     ).toEqual(['배정 기관명', '커스텀'])
   })
 
-  it('프로그램 미선택에서는 requiresProgram 키만 나열한다', () => {
+  it('프로그램 미선택에서는 requiresProgram·미등록 키를 나열한다', () => {
     expect(
       listNotificationSendTemplateDisabledKeysForProgram({
         texts: ['#{교육 진행 수업 시간} #{커스텀}'],
         catalog,
         programNumericId: undefined,
       })
-    ).toEqual(['교육 진행 수업 시간'])
+    ).toEqual(['교육 진행 수업 시간', '커스텀'])
   })
 
   it('formats warning copy with keys preserved', () => {
