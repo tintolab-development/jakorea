@@ -35,6 +35,8 @@ describe('mapApplicantDataToCalendarEvents', () => {
     const events = mapApplicantDataToCalendarEvents([row], 'individual-applications')
     expect(events).toHaveLength(1)
     expect(events[0]?.startDate).toBe('2026-06-05T09:20:00')
+    expect(events[0]?.startTime).toBe('09:20')
+    expect(events[0]?.endTime).toBe('11:10')
     expect(events[0]?.title).toContain('홍길동')
   })
 
@@ -65,7 +67,42 @@ describe('mapApplicantDataToCalendarEvents', () => {
     const events = mapApplicantDataToCalendarEvents([row], 'institutions')
     expect(events).toHaveLength(1)
     expect(events[0]?.startDate).toBe('2026-06-08T10:00:00')
+    expect(events[0]?.startTime).toBe('10:00')
+    expect(events[0]?.endTime).toBe('11:00')
     expect(events[0]?.title).toContain('마포초등학교')
+  })
+
+  it('maps institution week-grid times from scheduleLabel when date is date-only', () => {
+    const row: ApplicantSchoolRow = {
+      id: 'sch-week',
+      no: 1,
+      schoolName: '새싹초등학교',
+      region: '부산광역시',
+      educationGrade: '2학년',
+      classCount: 1,
+      studentCount: 20,
+      teacherName: '김교사',
+      approvalStatus: 'pending',
+      sessions: [
+        {
+          round: 3,
+          date: '2026.10.27',
+          dayOfWeek: '화',
+          duration: '-',
+          format: '-',
+          classNum: '3차시',
+          timeRange: '-',
+          status: 'pending',
+          scheduleLabel: '3차시 (03:55 ~ 04:50)',
+        },
+      ],
+    }
+    const events = mapApplicantDataToCalendarEvents([row], 'institutions')
+    expect(events).toHaveLength(1)
+    expect(events[0]?.startDate).toBe('2026-10-27T03:55:00')
+    expect(events[0]?.endDate).toBe('2026-10-27T04:50:00')
+    expect(events[0]?.startTime).toBe('03:55')
+    expect(events[0]?.endTime).toBe('04:50')
   })
 
   it('maps individual applications from scheduleLabel when date is unresolved', () => {
@@ -107,6 +144,7 @@ describe('mapApplicantDataToCalendarEvents', () => {
     const events = mapApplicantDataToCalendarEvents([row], 'individual-applications')
     expect(events).toHaveLength(2)
     expect(events.map(e => e.startDate.slice(0, 10)).sort()).toEqual(['2026-10-26', '2026-11-02'])
+    expect(events.every(e => e.startTime === '13:30' && e.endTime === '15:30')).toBe(true)
   })
 
   it('maps institution applications from requested-schedules hybrid rows', () => {
@@ -163,6 +201,11 @@ describe('mapApplicantDataToCalendarEvents', () => {
     const row = applyRequestedSchedulesToApplicantSchoolRow(base, requested as never)
     const events = mapApplicantDataToCalendarEvents([row], 'institutions')
     expect(events.map(e => e.startDate.slice(0, 10)).sort()).toEqual(['2026-10-26', '2026-11-02'])
+    const byDate = [...events].sort((a, b) => a.startDate.localeCompare(b.startDate))
+    expect(byDate[0]?.startTime).toBe('10:00')
+    expect(byDate[0]?.endTime).toBe('12:00')
+    expect(byDate[1]?.startTime).toBe('13:30')
+    expect(byDate[1]?.endTime).toBe('16:00')
     expect(mapRequestedSchedulesToSessions(requested as never)?.[0]?.scheduleLabel).toContain(
       '10:00'
     )
@@ -197,6 +240,8 @@ describe('mapApplicantDataToCalendarEvents', () => {
     const events = mapApplicantDataToCalendarEvents([row], 'institutions')
     expect(events).toHaveLength(1)
     expect(events[0]?.startDate).toBe('2026-10-28T09:00:00')
+    expect(events[0]?.startTime).toBe('09:00')
+    expect(events[0]?.endTime).toBe('11:00')
   })
 
   it('maps instructor calendar from confirmed institution sessions and scheduleId match', () => {
@@ -250,6 +295,8 @@ describe('mapApplicantDataToCalendarEvents', () => {
     })
     expect(events).toHaveLength(1)
     expect(events[0]?.title).toBe('동탄초등학교 | 경기도 화성시')
+    expect(events[0]?.startTime).toBe('09:20')
+    expect(events[0]?.endTime).toBe('11:20')
     const item = events[0]?.originalItem as {
       calendarInstitutionInstructors?: ApplicantInstructorRow[]
       calendarInstitutionSummary?: { applicantCount: number }

@@ -6,30 +6,19 @@ function hasAssignedScheduleId(item: Pick<EducationScheduleItem, 'scheduleId'>):
 }
 
 /**
- * ASSIGNMENT_SCOPED / RECORDED_ONLY: CMS가 확정한 본인 배정만.
- * items에 커리큘럼 정의 행(scheduleId 없음)이 같이 와도 숨긴다.
- * PROGRAM_SCHEDULE 등 미리보기는 기존처럼 전체 행을 둔다.
+ * 마이페이지 교육일정 — 본인에게 배정된 운영 일정만.
+ * 커리큘럼 정의 행(scheduleId 없음)은 숨긴다.
  */
 export function isMemberAssignedEducationScheduleItem(
   item: Pick<EducationScheduleItem, 'scheduleId'>,
-  scopeStatus: PortalEducationScheduleScopeStatus | null | undefined,
 ): boolean {
-  switch ((scopeStatus ?? '').trim().toUpperCase()) {
-    case 'ASSIGNMENT_SCOPED':
-    case 'RECORDED_ONLY':
-      return hasAssignedScheduleId(item)
-    default:
-      return true
-  }
+  return hasAssignedScheduleId(item)
 }
 
 export function filterEducationSchedulesForMemberAssignment<
   T extends Pick<EducationScheduleItem, 'scheduleId'>,
->(
-  items: readonly T[],
-  scopeStatus: PortalEducationScheduleScopeStatus | null | undefined,
-): T[] {
-  return items.filter(item => isMemberAssignedEducationScheduleItem(item, scopeStatus))
+>(items: readonly T[]): T[] {
+  return items.filter(item => isMemberAssignedEducationScheduleItem(item))
 }
 
 export function resolveEducationScheduleEmptyMessage(

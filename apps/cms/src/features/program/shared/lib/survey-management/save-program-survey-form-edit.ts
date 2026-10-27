@@ -7,6 +7,7 @@ import {
   isSameSeoulCalendarDay,
   resolveSurveyBindingPeriodForFormSave,
   seoulStartOfNextCalendarDayIso,
+  SURVEY_OPEN_ENDED_END_AT,
 } from '@/features/program/shared/lib/survey-management/survey-binding-period'
 import { validateSurveyWritingDraft } from '@/features/program/shared/lib/survey-management/survey-writing-draft'
 import { writingFormDraftToSchemaJson } from '@/features/template/api/adapters/form-template-draft-adapters'
@@ -93,13 +94,14 @@ function bindingAlreadyReboundToEditedTemplate(
  * 등록 직후 최초 양식 저장만 기간을 열어 준다.
  * SATISFACTION·LECTURE_EVALUATION은 기간 null + IN_PROGRESS.
  * SURVEY는 서버가 submissionStartAt을 채워 IN_PROGRESS가 되므로, 응답 0건·시작일·생성일이 Asia/Seoul 오늘인 경우만 동일하게 본다.
- * 이미 시작된 과거 기간(IN_PROGRESS)과, 최초 저장으로 version이 바뀐 바인딩은 열지 않는다.
+ * 임시 종료일(다음날 하루) 때문에 FINISHED가 된 응답 0건 설문은 날짜를 다시 열 수 있다.
+ * 이미 시작된 과거 기간(IN_PROGRESS)과, 최초 저장으로 version이 바뀐 바인딩은 양식 교체를 열지 않는다.
  */
 function canUnlockBindingPeriodForFirstSurveyFormSave(
   binding: ProgramFormBindingResponse
 ): boolean {
   if ((binding.submittedCount ?? 0) > 0) return false
-  if (binding.progressStatus === 'FINISHED') return false
+  if (binding.progressStatus === 'FINISHED') return true
   if (!bindingHasSubmissionPeriod(binding)) return true
 
   const startRaw = binding.submissionStartAt?.trim()
@@ -161,6 +163,7 @@ type PreparedSurveyFormBinding =
   | {
       ok: true
       binding: ProgramFormBindingResponse
+      periodOnly?: boolean
       periodUnlock?: { previous: { submissionStartAt?: string; submissionEndAt?: string } }
     }
   | { ok: false; message: string; refetchBindings: boolean }
@@ -185,15 +188,15 @@ async function prepareBindingForSurveyFormSave(
   }
   if (
     binding != null &&
-    bindingAlreadyReboundToEditedTemplate(binding, sourceVersionId)
+    bindingAlreadyReboundToEditedTemplate(binding, sourceVersionId) &&
+    binding.progressStatus !== 'FINISHED'
   ) {
-    return {
-      ok: false,
-      message: resolveProgramSurveyFormSaveBlockedMessage(binding),
-      refetchBindings: true,
-    }
+    return { ok: true, binding, periodOnly: true }
   }
   if (binding == null || !canUnlockBindingPeriodForFirstSurveyFormSave(binding)) {
+    if (binding != null) {
+      return { ok: true, binding, periodOnly: true }
+    }
     return {
       ok: false,
       message: resolveProgramSurveyFormSaveBlockedMessage(binding),
@@ -201,22 +204,20 @@ async function prepareBindingForSurveyFormSave(
     }
   }
 
-  // 등록 직후: 기간 null이거나 SURVEY 서버 기본 오늘 시작이면 IN_PROGRESS라 양식 교체가 막힌다.
-  // 진행 상태 정책은 유지하고, 최초 1회만 기간을 미래로 열어 UPDATE_TEMPLATE을 탄다.
+  // 등록 직후·종료일만 지난 응답 0건: 종료일이 남아 있으면 FINISHED가 풀리지 않으므로
+  // 시작과 열린 종료를 함께 넣어 BEFORE_START로 연다.
   const previous = snapshotBindingSubmissionPeriod(binding)
   const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
   const period = readSurveySubmissionPeriodFromSchema(schemaJson)
   const draftStart = period.submissionStartAt ? dayjs(period.submissionStartAt) : null
   const draftStartIsFuture =
     draftStart?.isValid() === true && dayjs().isBefore(draftStart)
-  const periodPayload = draftStartIsFuture
-    ? {
-        submissionStartAt: period.submissionStartAt!,
-        ...(period.submissionEndAt != null ? { submissionEndAt: period.submissionEndAt } : {}),
-      }
-    : {
-        submissionStartAt: seoulStartOfNextCalendarDayIso(),
-      }
+  const periodPayload = {
+    submissionStartAt: draftStartIsFuture
+      ? period.submissionStartAt!
+      : seoulStartOfNextCalendarDayIso(),
+    submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
+  }
 
   try {
     await updateAdminProgramFormBindingRemote(programId, bindingId, periodPayload)
@@ -224,6 +225,9 @@ async function prepareBindingForSurveyFormSave(
     binding = bindings.find(item => String(item.bindingId) === bindingId)
     if (canSwapProgramSurveyFormBinding(binding)) {
       return { ok: true, binding: binding!, periodUnlock: { previous } }
+    }
+    if (binding != null) {
+      return { ok: true, binding, periodOnly: true, periodUnlock: { previous } }
     }
     await restoreBindingSubmissionPeriod(programId, bindingId, previous)
     return {
@@ -237,11 +241,11 @@ async function prepareBindingForSurveyFormSave(
   }
 }
 
-/** 목록 행 기준 「양식 수정」 노출 — 진행 전 + 응답 0건 */
+/** 목록 행 기준 「양식 수정」 — 응답 0건이면 종료된 설문의 날짜 수정도 연다 */
 export function canEditRegisteredSurveyForm(
   survey: { status: string; responseCount: number }
 ): boolean {
-  return survey.status === 'before_start' && survey.responseCount === 0
+  return survey.responseCount === 0
 }
 
 export type ProgramSurveyFormEditFailure = {
@@ -321,6 +325,18 @@ export async function saveProgramSurveyFormEdit(
       : Promise.resolve()
 
   try {
+    if (prepared.periodOnly) {
+      const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
+      await updateAdminProgramFormBindingRemote(target.programId, target.bindingId, {
+        ...resolveSurveyBindingPeriodForFormSave(readSurveySubmissionPeriodFromSchema(schemaJson)),
+      })
+      return {
+        ok: true,
+        templateId: prepared.binding.templateId ?? 0,
+        templateVersionId: prepared.binding.templateVersionId ?? target.sourceVersionId,
+      }
+    }
+
     const source = await fetchFormTemplateVersionRemote(target.sourceVersionId)
     if (source.templateId == null) {
       await restoreUnlockPeriod()

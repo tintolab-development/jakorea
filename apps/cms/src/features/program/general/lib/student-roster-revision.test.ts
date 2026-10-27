@@ -85,6 +85,25 @@ describe('student-roster-revision', () => {
     )
   })
 
+  it('shows the server message for add and save failures other than INVALID_VALUE', () => {
+    const badRequest = {
+      response: {
+        status: 400,
+        data: {
+          message: '입력값을 확인해 주세요.',
+          error: { code: 'BAD_REQUEST', message: '입력값을 확인해 주세요.' },
+        },
+      },
+    }
+    expect(resolveStudentRosterManualCommitFailureAlert(badRequest).content).toBe(
+      '입력값을 확인해 주세요.'
+    )
+    expect(
+      resolveStudentRosterManualCommitFailureAlert(new Error('생년월일 형식이 올바르지 않습니다.'))
+        .content
+    ).toBe('생년월일 형식이 올바르지 않습니다.')
+  })
+
   it('FE-REV-08: student add commit includes expectedRevisionNo and full rows', () => {
     const baseline = [rosterRow('1'), rosterRow('2')]
     const commit = [

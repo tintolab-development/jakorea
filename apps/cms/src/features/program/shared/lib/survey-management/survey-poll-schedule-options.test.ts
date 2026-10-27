@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   buildSurveyPollScheduleSelectOptions,
   buildSurveyPollScheduleSelectOptionsForProgram,
+  collectSurveyPollUsedScheduleIds,
+  disableSurveyPollScheduleOptionsWithSurvey,
+  isSurveyPollBindingTargetScheduleAlreadyRegistered,
+  SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
   formatSurveyPollScheduleOptionLabel,
   isTrainedTeacherEventScheduleProgram,
   resolveSurveyPollScheduleCandidatesFromSources,
@@ -264,7 +268,7 @@ describe('buildSurveyPollScheduleSelectOptionsForProgram', () => {
         endAt: '2026-04-03T12:20:00+09:00',
       }),
     ])
-    expect(options[0]?.label).toBe('2026.04.03(금) 09:30 ~ 12:20')
+    expect(options[0]?.label).toBe('2026.04.03(금) 09:30 ~ 12:20 | 1회차')
   })
 
   it('does not invent options from scheduleDetails when education-slots are empty', () => {
@@ -380,5 +384,201 @@ describe('formatSurveyPollScheduleOptionLabel', () => {
     )
     expect(label).toBe('2026.03.01(일) 10:00 ~ 12:00')
     expect(label).not.toContain('본 교육')
+  })
+})
+
+describe('survey schedule option round suffix (GENERAL only)', () => {
+  const slots = [
+    slot({ id: 31, sessionNo: 3, startAt: '2026-10-27T03:50:00+09:00', endAt: '2026-10-27T03:55:00+09:00' }),
+    slot({ id: 32, sessionNo: 7, startAt: '2026-10-28T04:00:00+09:00', endAt: '2026-10-28T05:00:00+09:00' }),
+  ]
+
+  it.each(['GENERAL', 'GENERAL_ORGANIZATION', 'GENERAL_INDIVIDUAL'])(
+    '%s uses stored sessionNo, not list order',
+    backendProgramType => {
+      const options = buildSurveyPollScheduleSelectOptionsForProgram(
+        baseProgram({ backendProgramType }),
+        slots
+      )
+      expect(options).toEqual([
+        { value: '31', label: '2026.10.27(화) 03:50 ~ 03:55 | 3회차' },
+        { value: '32', label: '2026.10.28(수) 04:00 ~ 05:00 | 7회차' },
+      ])
+    }
+  )
+
+  it('GENERAL without sessionNo shows date only (no list-index fallback)', () => {
+    const options = buildSurveyPollScheduleSelectOptionsForProgram(
+      baseProgram({ backendProgramType: 'GENERAL_ORGANIZATION' }),
+      [
+        slot({ id: 41, startAt: '2026-10-27T03:50:00+09:00', endAt: '2026-10-27T03:55:00+09:00' }),
+        slot({ id: 42, sessionNo: null as unknown as number, startAt: '2026-10-28T04:00:00+09:00', endAt: '2026-10-28T05:00:00+09:00' }),
+      ]
+    )
+    expect(options).toEqual([
+      { value: '41', label: '2026.10.27(화) 03:50 ~ 03:55' },
+      { value: '42', label: '2026.10.28(수) 04:00 ~ 05:00' },
+    ])
+  })
+
+  it.each(['UJAT', 'UJAT_DGBONG', 'COMPANY_SCHOOL', 'GEMINI', undefined])(
+    '%s stays unchanged',
+    backendProgramType => {
+      const options = buildSurveyPollScheduleSelectOptionsForProgram(
+        baseProgram({ backendProgramType }),
+        slots
+      )
+      expect(options.map(o => o.label)).toEqual([
+        '2026.10.27(화) 03:50 ~ 03:55',
+        '2026.10.28(수) 04:00 ~ 05:00',
+      ])
+    }
+  )
+
+  it('TT (GENERAL-based schedule multi) stays unchanged, incl. event-name labels', () => {
+    const program = baseProgram({
+      backendProgramType: 'TRAINED_TEACHER',
+      generalProgramSessionRound: 'multi',
+      generalProgramEducationStructure: 'schedule',
+      generalCommonInfo: {
+        scheduleDetails: [
+          {
+            scheduleLabel: '행사 일정 01',
+            name: '행사 A',
+            scheduleDateLabel: '26년 10월 27일(화) 3:50 ~ 3:55',
+          },
+        ],
+      },
+    })
+    const options = buildSurveyPollScheduleSelectOptionsForProgram(program, slots)
+    expect(options).toEqual([
+      { value: '31', label: '행사 A' },
+      { value: '32', label: '2026.10.28(수) 04:00 ~ 05:00' },
+    ])
+  })
+
+  it('TT without schedule-multi shape also has no suffix', () => {
+    const options = buildSurveyPollScheduleSelectOptionsForProgram(
+      baseProgram({ backendProgramType: 'TRAINED_TEACHER' }),
+      slots
+    )
+    expect(options.every(o => !o.label.includes('회차'))).toBe(true)
+  })
+
+  it('does not change the raw label formatter or option values', () => {
+    const options = buildSurveyPollScheduleSelectOptions(slots)
+    expect(options.map(o => o.value)).toEqual(['31', '32'])
+    expect(options[0]?.label).toBe('2026.10.27(화) 03:50 ~ 03:55')
+  })
+})
+
+describe('one survey per schedule — disable used schedules', () => {
+  const slots = [
+    slot({ id: 31, sessionNo: 1, startAt: '2026-10-27T03:50:00+09:00', endAt: '2026-10-27T03:55:00+09:00' }),
+    slot({ id: 32, sessionNo: 2, startAt: '2026-10-28T04:00:00+09:00', endAt: '2026-10-28T05:00:00+09:00' }),
+    slot({ id: 33, sessionNo: 3, startAt: '2026-10-29T04:00:00+09:00', endAt: '2026-10-29T05:00:00+09:00' }),
+  ]
+  const ref = (
+    binding: Partial<{ formType: string; targetScope: string; targetScopeId: number; active: boolean }>
+  ) => ({ binding: { formType: 'SURVEY', targetScope: 'SCHEDULE', active: true, ...binding } })
+
+  it('collects only active SURVEY+SCHEDULE binding scheduleIds', () => {
+    const used = collectSurveyPollUsedScheduleIds([
+      ref({ targetScopeId: 31 }),
+      ref({ targetScopeId: 32, active: false }),
+      ref({ targetScopeId: 33, formType: 'SATISFACTION' }),
+      ref({ targetScopeId: 34, targetScope: 'PROGRAM' }),
+      ref({ targetScopeId: undefined }),
+      ref({ targetScopeId: 35, targetScope: ' schedule ', formType: 'survey' }),
+    ])
+    expect([...used].sort()).toEqual(['31', '35'])
+    expect(collectSurveyPollUsedScheduleIds(null).size).toBe(0)
+  })
+
+  it('keeps used schedules visible but disabled, labels and values unchanged', () => {
+    const base = buildSurveyPollScheduleSelectOptionsForProgram(
+      baseProgram({ backendProgramType: 'GENERAL_ORGANIZATION' }),
+      slots
+    )
+    const options = disableSurveyPollScheduleOptionsWithSurvey(base, [ref({ targetScopeId: 32 })])
+    expect(options).toHaveLength(3)
+    expect(options.map(o => o.value)).toEqual(['31', '32', '33'])
+    expect(options.map(o => o.label)).toEqual(base.map(o => o.label))
+    expect(options.map(o => o.disabled === true)).toEqual([false, true, false])
+    expect(options[0]).not.toHaveProperty('disabled')
+    expect(options[1]?.label).toBe('2026.10.28(수) 04:00 ~ 05:00 | 2회차')
+  })
+
+  it('without bindings nothing is disabled (no mock/stale data)', () => {
+    const base = buildSurveyPollScheduleSelectOptions(slots)
+    expect(disableSurveyPollScheduleOptionsWithSurvey(base, null)).toEqual(base)
+    expect(disableSurveyPollScheduleOptionsWithSurvey(base, [])).toEqual(base)
+  })
+
+  it.each(['GENERAL_ORGANIZATION', 'UJAT', 'TRAINED_TEACHER'])(
+    '%s: used schedule disabled, TT/UJAT labels unchanged',
+    backendProgramType => {
+      const base = buildSurveyPollScheduleSelectOptionsForProgram(
+        baseProgram({ backendProgramType }),
+        slots
+      )
+      const options = disableSurveyPollScheduleOptionsWithSurvey(base, [
+        ref({ targetScopeId: 31 }),
+        ref({ targetScopeId: 33 }),
+      ])
+      expect(options.map(o => o.disabled === true)).toEqual([true, false, true])
+      if (backendProgramType !== 'GENERAL_ORGANIZATION') {
+        expect(options.every(o => !o.label.includes('회차'))).toBe(true)
+      }
+    }
+  )
+
+  it('all schedules used → every option disabled', () => {
+    const base = buildSurveyPollScheduleSelectOptions(slots)
+    const options = disableSurveyPollScheduleOptionsWithSurvey(
+      base,
+      [31, 32, 33].map(id => ref({ targetScopeId: id }))
+    )
+    expect(options.every(o => o.disabled === true)).toBe(true)
+  })
+})
+
+describe('hidden schedule field — already registered guard', () => {
+  const ref = (targetScopeId: number, extra: Record<string, unknown> = {}) => ({
+    binding: { formType: 'SURVEY', targetScope: 'SCHEDULE', active: true, targetScopeId, ...extra },
+  })
+
+  it('uses the exact message', () => {
+    expect(SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE).toBe('이미 설문이 등록된 일정입니다.')
+  })
+
+  it('blocks when the auto-bound schedule already has an active survey', () => {
+    expect(
+      isSurveyPollBindingTargetScheduleAlreadyRegistered(
+        { targetScope: 'SCHEDULE', targetScopeId: 100 },
+        [ref(100)]
+      )
+    ).toBe(true)
+  })
+
+  it('does not block other schedules, inactive bindings or non-survey bindings', () => {
+    const target = { targetScope: 'SCHEDULE', targetScopeId: 100 }
+    expect(isSurveyPollBindingTargetScheduleAlreadyRegistered(target, [ref(101)])).toBe(false)
+    expect(isSurveyPollBindingTargetScheduleAlreadyRegistered(target, [ref(100, { active: false })])).toBe(false)
+    expect(isSurveyPollBindingTargetScheduleAlreadyRegistered(target, [ref(100, { formType: 'SATISFACTION' })])).toBe(false)
+    expect(isSurveyPollBindingTargetScheduleAlreadyRegistered(target, null)).toBe(false)
+  })
+
+  it('never blocks PROGRAM scope (period programs) or a missing target', () => {
+    expect(
+      isSurveyPollBindingTargetScheduleAlreadyRegistered({ targetScope: 'PROGRAM' }, [ref(100)])
+    ).toBe(false)
+    expect(
+      isSurveyPollBindingTargetScheduleAlreadyRegistered(
+        { targetScope: 'PROGRAM', targetScopeId: 100 },
+        [ref(100)]
+      )
+    ).toBe(false)
+    expect(isSurveyPollBindingTargetScheduleAlreadyRegistered(null, [ref(100)])).toBe(false)
   })
 })

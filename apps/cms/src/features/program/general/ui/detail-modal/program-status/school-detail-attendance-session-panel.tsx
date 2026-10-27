@@ -1,21 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
-import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import {
-  SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS,
-  buildSchoolDetailAttendanceSessionExcelRows,
-  resolveSchoolDetailAttendanceSessionExcelFilename,
-} from '../../../lib/school-detail-attendance-export'
+import { collectChangedSchoolDetailAttendances } from '../../../api/school-detail-attendance-api'
+import { SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES } from '@/features/program/general/lib/school-detail-attendance'
 import {
   attendanceStudentRowsEqual,
   cloneAttendanceStudentRows,
   filterAttendanceStudentsForDisplay,
+  hasSchoolDetailAttendanceStudentFilters,
 } from '../../../lib/school-detail-attendance-display'
 import type {
   SchoolDetailAttendanceFilters,
   SchoolDetailAttendanceSessionGroup,
   SchoolDetailAttendanceStudentRow,
-  SchoolSessionAttendanceStatusKey,
+  SchoolSessionAttendanceEditableStatusKey,
 } from '../../../model/school-detail-types'
 import { SchoolDetailAttendanceTable } from './school-detail-attendance-table'
 
@@ -26,6 +23,9 @@ export function SchoolDetailAttendanceSessionPanel({
   onSave,
   saving = false,
   scopeBlocked = false,
+  onExportAll,
+  exporting = false,
+  exportDisabled = false,
 }: {
   session: SchoolDetailAttendanceSessionGroup
   appliedFilters: SchoolDetailAttendanceFilters
@@ -33,6 +33,9 @@ export function SchoolDetailAttendanceSessionPanel({
   onSave: (sessionId: string, students: SchoolDetailAttendanceStudentRow[]) => Promise<void>
   saving?: boolean
   scopeBlocked?: boolean
+  onExportAll: () => void
+  exporting?: boolean
+  exportDisabled?: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const [savedRows, setSavedRows] = useState<SchoolDetailAttendanceStudentRow[]>(() =>
@@ -42,11 +45,18 @@ export function SchoolDetailAttendanceSessionPanel({
     cloneAttendanceStudentRows(getSessionStudents(session.id))
   )
   const [isSavingLocal, setIsSavingLocal] = useState(false)
+  const savedRowsRef = useRef(savedRows)
+  const workingRowsRef = useRef(workingRows)
+  savedRowsRef.current = savedRows
+  workingRowsRef.current = workingRows
 
   useEffect(() => {
-    const rows = cloneAttendanceStudentRows(getSessionStudents(session.id))
-    setSavedRows(rows)
-    setWorkingRows(rows)
+    const next = cloneAttendanceStudentRows(getSessionStudents(session.id))
+    const dirty = !attendanceStudentRowsEqual(workingRowsRef.current, savedRowsRef.current)
+    setSavedRows(next)
+    if (!dirty) {
+      setWorkingRows(next)
+    }
   }, [getSessionStudents, session.id])
 
   const displayRows = useMemo(
@@ -54,32 +64,22 @@ export function SchoolDetailAttendanceSessionPanel({
     [appliedFilters, workingRows]
   )
 
-  const excelRows = useMemo(
-    () => buildSchoolDetailAttendanceSessionExcelRows(session.headerPrefix, displayRows),
-    [displayRows, session.headerPrefix]
-  )
-
-  const { exportExcel, isExporting } = useTableExcelExport({
-    columns: SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS,
-    data: excelRows,
-    filename: resolveSchoolDetailAttendanceSessionExcelFilename(session),
-  })
-
-  const hasChanges = useMemo(
-    () => !attendanceStudentRowsEqual(workingRows, savedRows),
+  const changedRows = useMemo(
+    () => collectChangedSchoolDetailAttendances(workingRows, savedRows),
     [savedRows, workingRows]
   )
 
   const canSave =
-    hasChanges &&
+    changedRows.length > 0 &&
     !saving &&
     !isSavingLocal &&
     !scopeBlocked &&
+    !session.scheduleIdUnresolved &&
     typeof session.scheduleId === 'number' &&
     session.scheduleId > 0
 
   const handleStatusChange = useCallback(
-    (studentId: string, status: SchoolSessionAttendanceStatusKey) => {
+    (studentId: string, status: SchoolSessionAttendanceEditableStatusKey) => {
       setWorkingRows(prev => prev.map(row => (row.id === studentId ? { ...row, status } : row)))
     },
     []
@@ -89,15 +89,29 @@ export function SchoolDetailAttendanceSessionPanel({
     if (!canSave) return
     setIsSavingLocal(true)
     try {
-      await onSave(session.id, workingRows)
+      await onSave(session.id, changedRows)
       setSavedRows(cloneAttendanceStudentRows(workingRows))
-      showAlert({ title: '안내', content: '출결 정보가 저장되었습니다.' })
     } catch {
-      // handleError already surfaced in hook
+      // handleError already surfaced in hook. Keep workingRows.
     } finally {
       setIsSavingLocal(false)
     }
-  }, [canSave, onSave, session.id, showAlert, workingRows])
+  }, [canSave, changedRows, onSave, session.id, workingRows])
+
+  const handleExport = useCallback(() => {
+    if (exportDisabled) {
+      showAlert({
+        title: '다운로드 안내',
+        content: '전체 교육 일정 출석 정보를 확인한 뒤 다시 시도해 주세요.',
+      })
+      return
+    }
+    onExportAll()
+  }, [exportDisabled, onExportAll, showAlert])
+
+  const emptyTitle = hasSchoolDetailAttendanceStudentFilters(appliedFilters)
+    ? SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES.noFilterMatch
+    : SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES.noStudents
 
   return (
     <section className="school-detail-attendance-session">
@@ -115,14 +129,13 @@ export function SchoolDetailAttendanceSessionPanel({
               ) : null}
             </div>
           ) : null}
-          <span className="table-description">총 {displayRows.length}건</span>
+          <span className="table-description">총 {workingRows.length}건</span>
         </div>
         <div className="info-section-buttons--wrapper">
           <CmsButton
             type="button"
             variant="secondary"
-            size="large"
-            width={120}
+            size="h40"
             disabled={!canSave}
             loading={isSavingLocal || saving}
             onClick={() => {
@@ -131,11 +144,20 @@ export function SchoolDetailAttendanceSessionPanel({
           >
             저장
           </CmsButton>
-          <ExcelButton loading={isExporting} onClick={exportExcel} />
+          <ExcelButton loading={exporting} disabled={exportDisabled} onClick={handleExport} />
         </div>
       </div>
+      {session.scheduleIdUnresolved ? (
+        <p className="school-detail-attendance-session__notice">
+          교육 일정 ID를 확인할 수 없어 이 회차의 출석을 저장할 수 없습니다.
+        </p>
+      ) : null}
       <div className="school-detail-attendance-session__table-wrap">
-        <SchoolDetailAttendanceTable rows={displayRows} onStatusChange={handleStatusChange} />
+        <SchoolDetailAttendanceTable
+          rows={displayRows}
+          emptyTitle={emptyTitle}
+          onStatusChange={handleStatusChange}
+        />
       </div>
     </section>
   )

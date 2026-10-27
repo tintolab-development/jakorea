@@ -2,6 +2,7 @@ import type { Program } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { listAllRegistrationCreateFormSpecs } from '@/features/program/general/lib/operational-form-bindings'
+import { resolveProgramOperationalBindingKind } from '@/features/program/general/lib/program-operational-binding-profile'
 import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import type {
@@ -10,6 +11,11 @@ import type {
 } from '@/features/program/general/lib/build-registration-create-form-bindings'
 import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
+
+/** 수정하지 않은 신청 양식도 프로그램 전용 COPY로 발행해야 하는 프로그램 유형(GENERAL만). */
+function shouldAlwaysApplyApplicationForms(program: Program): boolean {
+  return resolveProgramOperationalBindingKind(program) === 'GENERAL'
+}
 
 export type RegistrationFormFlushInput = {
   templateCode: string
@@ -35,6 +41,10 @@ export type CompleteRegistrationBindingOptions = {
  * CREATE는 `autoApplyDefaultFormBindings: true`로 카탈로그 기본 양식을 붙이고,
  * 여기서 모은 양식은 `applyRegistrationFormsAfterCreate`가 CREATE 직후 적용한다.
  * 변경이 없는 양식(로컬 초안·overlay·override 없음)은 기본 바인딩을 그대로 쓴다.
+ * 단 GENERAL 프로그램의 APPLICATION 양식(개인·기관·강사·봉사자)은 수정 여부와 상관없이 항상 포함한다.
+ * BE 자동 적용이 카탈로그 DRAFT 버전(v148 sync)을 그대로 바인딩할 수 있고, 포털 resolver는 PUBLISHED만 읽기 때문에
+ * 프로그램 전용 COPY로 발행해 두지 않으면 신청 양식이 "미설정"(APPLICATION_FORM_NOT_CONFIGURED)이 된다.
+ * UJAT·1사1교·교육받은 교사는 기존 동작(수정한 양식만)을 유지한다.
  */
 export async function prepareRegistrationCreateFormBindings(args: {
   program: Program
@@ -53,6 +63,7 @@ export async function prepareRegistrationCreateFormBindings(args: {
     (args.operationalOverrides ?? []).map(item => [item.templateCode, item])
   )
   const forms: RegistrationFormApplyItem[] = []
+  const alwaysApplyApplicationForms = shouldAlwaysApplyApplicationForms(args.program)
   // 같은 templateCode가 여러 단계에 매핑되면(1사1교: 기관·강사 탭 → recruitment/application-economy)
   // 내용(templateCode 기준 초안·overlay)이 같으므로 한 번만 적용한다. 중복 COPY·바인딩 덮어쓰기 방지.
   const seenTemplateCodes = new Set<string>()
@@ -97,7 +108,14 @@ export async function prepareRegistrationCreateFormBindings(args: {
     const hasWizardOperationalDraft =
       wizardSaved?.draft != null && wizardSaved.draft.paragraphs.length > 0
     const hasOverlay = overlay != null && Object.keys(overlay).length > 0
-    if (!hasWizardOperationalDraft && !hasOverlay) continue
+    if (!hasWizardOperationalDraft && !hasOverlay) {
+      // 수정하지 않은 GENERAL 신청 양식: 본문 없이 담아 두면 `applyOne`이 바인딩된 카탈로그 버전 본문을
+      // (loadFormTemplateVersionDraftByVersionId → createSeedDraftForOperationalCatalogId 순) 채워 COPY·발행한다.
+      if (alwaysApplyApplicationForms && spec.formType === 'APPLICATION') {
+        forms.push({ templateCode: spec.templateCode, formType: spec.formType, draft: null })
+      }
+      continue
+    }
 
     forms.push({
       templateCode: spec.templateCode,

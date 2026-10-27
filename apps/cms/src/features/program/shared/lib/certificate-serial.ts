@@ -63,6 +63,9 @@ export type CertificateSerialIssuanceSource = CertificateSerialAllocateRequestIs
 export type CertificateSerialSubject = {
   programId?: string | number | null
   subjectId?: string | number | null
+  /** 기관 학생 명단 발급 — `POST …/serial/roster`. participantId가 아니다. */
+  applicationId?: string | number | null
+  rosterId?: string | number | null
   certificateType: string
   /** 양식 관리 샘플 다운로드. 프로그램/참가자 ID 없이 시퀀스만 발급 */
   issuanceSource?: CertificateSerialIssuanceSource
@@ -72,4 +75,12 @@ export function isFormTemplateCertificateSerialSubject(
   subject: CertificateSerialSubject
 ): boolean {
   return subject.issuanceSource === CERTIFICATE_SERIAL_ISSUANCE_FORM_TEMPLATE
+}
+
+/** 기관 학생 명단 행 기준 발급. applicationId+rosterId가 있으면 participant 경로를 쓰지 않는다. */
+export function isRosterCertificateSerialSubject(subject: CertificateSerialSubject): boolean {
+  return (
+    parseCertificateSerialInt64(subject.applicationId) != null &&
+    parseCertificateSerialInt64(subject.rosterId) != null
+  )
 }

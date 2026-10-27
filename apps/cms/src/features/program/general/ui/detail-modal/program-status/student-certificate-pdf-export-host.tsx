@@ -97,6 +97,10 @@ export function StudentCertificatePdfExportHost({
             programId: context.programId,
             subjectId: context.student.id,
             certificateType,
+            ...(context.organizationApplicationId != null
+              ? { applicationId: context.organizationApplicationId }
+              : {}),
+            ...(context.rosterId != null ? { rosterId: context.rosterId } : {}),
           },
           applySerial: setPdfSerialNumber,
           exportRoot: pdfExportCanvasRef.current,
@@ -123,7 +127,9 @@ export function StudentCertificatePdfExportHost({
     captureMounted,
     certificateType,
     context.certificateKind,
+    context.organizationApplicationId,
     context.programId,
+    context.rosterId,
     context.student.id,
     downloadPdf,
     onComplete,

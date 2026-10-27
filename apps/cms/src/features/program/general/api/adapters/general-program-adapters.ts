@@ -17,6 +17,7 @@ import type { Status } from '@/types/index'
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
+import { withRecruitmentCreateMedia } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
@@ -99,6 +100,12 @@ export type ProgramApplicationTargetMode = 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH
 
 export type ProgramCreateRequestBody = ProgramCreateRequest & {
   applicationTargetMode?: ProgramApplicationTargetMode
+  recruitments?: Array<
+    ProgramRecruitmentRequest & {
+      thumbnailFileObjectId?: number | null
+      attachmentFileObjectIds?: number[] | null
+    }
+  >
 }
 
 export type ProgramUpdateRequestBody = ProgramUpdateRequest & {
@@ -829,12 +836,19 @@ function copyAudienceOf(row: ProgramRecruitmentRequest): RecruitmentCopyAudience
   return 'participant'
 }
 
-/** 생성 시 모집 탭별 문구·담당자를 각 행에 담는다. 이후 읽기는 행 값만 쓴다. */
+function overlayForGeneralCreateMedia(program: Program): Record<string, unknown> {
+  return {
+    ...(program.registrationOverlay ?? {}),
+    ...(program.ujatRegistrationOverlay ?? {}),
+  }
+}
+
+/** 생성 시 모집 탭별 문구·담당자·미디어를 각 행에 담는다. 이후 읽기는 행 값만 쓴다. */
 function withGeneralCreateRowCopy(
   rows: ProgramRecruitmentRequest[] | undefined,
   program: Program
-): ProgramRecruitmentRequest[] | undefined {
-  return rows?.map(row => {
+): ProgramCreateRequestBody['recruitments'] {
+  const copied = rows?.map(row => {
     const audience = copyAudienceOf(row)
     const display = resolveGeneralRecruitDetailDisplayProgram(program, audience)
     const contact = createRowContactOf(program, audience)
@@ -848,6 +862,7 @@ function withGeneralCreateRowCopy(
       ...contact,
     }
   })
+  return withRecruitmentCreateMedia(copied, overlayForGeneralCreateMedia(program), 'general')
 }
 
 /** 담당자·비고는 각 모집 탭 `*RecruitmentInfo`에서만 읽는다. 프로그램 `managerName`·기타사항을 비고로 쓰지 않는다. */

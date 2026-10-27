@@ -12,12 +12,10 @@ import {
   keyMatchesOperationalOverlayPrefixes,
   operationalOverlayKeyPrefixesForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
-import { RECRUIT_DETAIL_INFO_OVERLAY_PREFIX } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 import {
   isEphemeralThumbPreviewUrl,
   readRecruitDetailMediaFromOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
-import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import type {
   ApplicationBindingCatalogId,
   ApplicationBindingDraft,
@@ -38,12 +36,6 @@ import {
   APPLICATION_BINDING_CATALOG_IDS,
   DEFAULT_RECRUITMENT_CATALOG_IDS,
 } from './program-edit-snapshot.types'
-
-const GENERAL_ROW_DETAIL_INFO_PREFIX: Record<string, string> = {
-  PARTICIPANT: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution,
-  INSTRUCTOR: 'recruitInstructor.detailInfo',
-  VOLUNTEER: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer,
-}
 
 export function pickOverlayKeysByPrefixes(
   record: SnapshotInputOverlay,
@@ -156,60 +148,11 @@ export function buildMediaSidecar(input: BuildMediaSidecarInput): MediaSidecar {
 }
 
 export function mediaBindCallsFromCreated(
-  created: Pick<Program, 'id' | 'programRecruitments'>,
-  overlay: SnapshotInputOverlay
+  _created: Pick<Program, 'id' | 'programRecruitments'>,
+  _overlay: SnapshotInputOverlay
 ): MediaBindCall[] {
-  const programId = parseFileObjectId(created.id)
-  if (programId == null) return []
-  const rows = (created.programRecruitments ?? []).filter(row => row.id != null)
-  if (rows.length === 0) {
-    return programBindCalls(programId, overlay)
-  }
-  const calls: MediaBindCall[] = []
-  for (const row of rows) {
-    const prefix = GENERAL_ROW_DETAIL_INFO_PREFIX[(row.recruitmentType ?? '').toUpperCase()]
-    if (!prefix) continue
-    const media = readRecruitDetailMediaFromOverlay(overlay, [prefix])
-    if (media.thumbFileObjectId != null) {
-      calls.push({
-        kind: 'putProgramRecruitmentThumbnail',
-        programId,
-        recruitmentId: row.id,
-        fileObjectId: media.thumbFileObjectId,
-      })
-    }
-    const attachmentIds = media.attachmentFileObjectIds ?? []
-    if (attachmentIds.length > 0) {
-      calls.push({
-        kind: 'putProgramRecruitmentAttachments',
-        programId,
-        recruitmentId: row.id,
-        fileObjectIds: attachmentIds,
-      })
-    }
-  }
-  return calls
-}
-
-function programBindCalls(programId: number, overlay: SnapshotInputOverlay): MediaBindCall[] {
-  const media = readRecruitDetailMediaFromOverlay(overlay)
-  const calls: MediaBindCall[] = []
-  if (media.thumbFileObjectId != null) {
-    calls.push({
-      kind: 'putProgramThumbnail',
-      programId,
-      fileObjectId: media.thumbFileObjectId,
-    })
-  }
-  const attachmentIds = media.attachmentFileObjectIds ?? []
-  if (attachmentIds.length > 0) {
-    calls.push({
-      kind: 'putProgramAttachments',
-      programId,
-      fileObjectIds: attachmentIds,
-    })
-  }
-  return calls
+  // 신규 등록 미디어는 POST recruitments[] 필드. 생성 직후 모집 행 PUT은 쓰지 않는다.
+  return []
 }
 
 export function mergeRegistrationAndRecruitOverlay(

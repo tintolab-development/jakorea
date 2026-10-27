@@ -6,6 +6,7 @@ import {
   buildCombinedClassTextbookSelectOptions,
   buildParticipatingInstitutionTextbookSelectOptions,
   ensureTextbookNotUsedSelectOption,
+  formatParticipatingInstitutionKitQuantity,
   programOffersParticipatingTextbookSelect,
 } from './participating-institution-textbook'
 
@@ -121,6 +122,21 @@ describe('ensureTextbookNotUsedSelectOption', () => {
         textbookName: '해당 없음',
       },
     ])
+  })
+})
+
+describe('formatParticipatingInstitutionKitQuantity', () => {
+  it('기관 GET 키트·권수만 표시하고 0·null은 미산출로 둔다', () => {
+    expect(formatParticipatingInstitutionKitQuantity(1, 24)).toBe('1키트 (24권)')
+    expect(formatParticipatingInstitutionKitQuantity(3, 72)).toBe('3키트 (72권)')
+    expect(formatParticipatingInstitutionKitQuantity(3, null)).toBe('3키트')
+    expect(formatParticipatingInstitutionKitQuantity(null, 24)).toBe('24권')
+    expect(formatParticipatingInstitutionKitQuantity(0, 0)).toBe('-')
+    expect(formatParticipatingInstitutionKitQuantity(null, null)).toBe('-')
+  })
+
+  it('학생 수·프로그램 materials로 클라이언트 재계산하지 않는다', () => {
+    expect(formatParticipatingInstitutionKitQuantity(null, null)).toBe('-')
   })
 })
 

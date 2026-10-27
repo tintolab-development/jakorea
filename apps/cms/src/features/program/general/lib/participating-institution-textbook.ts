@@ -159,6 +159,26 @@ export function resolveTextbookFieldsFromSelection(textbook: TextbookRow): {
   }
 }
 
+function positiveCount(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null
+}
+
+/**
+ * 기관 상세 GET `textbookKits`·`textbookQuantity`만 표시한다.
+ * 0·null은 미산출. 프로그램 materials·전역 키트 설정으로 재계산하지 않는다.
+ */
+export function formatParticipatingInstitutionKitQuantity(
+  kits: number | null | undefined,
+  quantity: number | null | undefined
+): string {
+  const kitCount = positiveCount(kits)
+  const bookCount = positiveCount(quantity)
+  if (kitCount != null && bookCount != null) return `${kitCount}키트 (${bookCount}권)`
+  if (kitCount != null) return `${kitCount}키트`
+  if (bookCount != null) return `${bookCount}권`
+  return '-'
+}
+
 /** 저장·조회용 교재 표시값 — 교재 수량은 서버 응답값만 표시 */
 export function resolveParticipatingInstitutionTextbookDisplay(params: {
   textbookId?: string

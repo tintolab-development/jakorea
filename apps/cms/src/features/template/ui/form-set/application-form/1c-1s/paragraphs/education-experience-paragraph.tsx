@@ -20,6 +20,7 @@ export function EconomyProgramApplicationEducationExperienceParagraph() {
       <div className="multiple-choice-body">
         <CmsRadioGroup
           className="multiple-choice-radio-group"
+          size="medium"
           value={value === '' ? undefined : value}
           onChange={event => setValue(event.target.value)}
         >

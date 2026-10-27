@@ -23,6 +23,7 @@ import type {
   EducationNoticeReactionUser,
 } from '../../notices/model/types'
 import { mapPortalEducationSchedule } from '../../schedules/lib/map-from-portal'
+import { filterEducationSchedulesForMemberAssignment } from '../../schedules/lib/scope-status'
 import {
   getEducationSchedulesQueryErrorCode,
   getEducationSchedulesQueryTraceId,
@@ -712,12 +713,14 @@ export function useApplicationSchedulesQuery(
   })
   const items = useMemo(
     () =>
-      (query.data?.items ?? []).map((item, index) =>
-        mapPortalEducationSchedule(item, index, {
-          educationStructure: query.data?.educationStructure,
-          sessionRound: query.data?.sessionRound,
-          applicationType,
-        }),
+      filterEducationSchedulesForMemberAssignment(
+        (query.data?.items ?? []).map((item, index) =>
+          mapPortalEducationSchedule(item, index, {
+            educationStructure: query.data?.educationStructure,
+            sessionRound: query.data?.sessionRound,
+            applicationType,
+          }),
+        ),
       ),
     [applicationType, query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
   )

@@ -28,6 +28,7 @@ describe('dashboard-schedule-delivery-status', () => {
 
   it('blocks attendance display before session start or while scheduled', () => {
     const beforeStart = new Date('2026-10-11T12:00:00+09:00')
+    const afterStart = new Date('2026-10-27T05:37:00+09:00')
     expect(
       isScheduleAttendanceOpenForDisplay(
         { scheduleStatus: 'SCHEDULED', startAt: '2026-10-15T10:00:00+09:00' },
@@ -46,5 +47,17 @@ describe('dashboard-schedule-delivery-status', () => {
         beforeStart
       )
     ).toBe(true)
+    expect(
+      isScheduleAttendanceOpenForDisplay(
+        { scheduleStatus: 'SCHEDULED', startAt: '2026-10-27T03:55:00+09:00' },
+        afterStart
+      )
+    ).toBe(true)
+    expect(
+      isScheduleAttendanceOpenForDisplay(
+        { scheduleStatus: 'CANCELLED', startAt: '2026-10-27T03:55:00+09:00' },
+        afterStart
+      )
+    ).toBe(false)
   })
 })

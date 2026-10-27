@@ -18,7 +18,7 @@ export function UjatProgramApplicationVolunteerPreferredRegionParagraph() {
     <div className="multiple-choice-body">
       <CmsRadioGroup
         className="multiple-choice-radio-group multiple-choice-radio-group--inline-wrap"
-        size="large"
+        size="medium"
         value={region || undefined}
         onChange={e => setRegion(e.target.value)}
       >

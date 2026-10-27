@@ -290,8 +290,7 @@ export function ParticipatingInstructorLectureReportsSection({
           <div className="participating-instructor-lecture-reports-section__report-cell-inner">
             <CmsButton
               variant="default"
-              size="medium"
-              width={140}
+              size="h40"
               disabled={
                 !record.canViewReport ||
                 viewDownloadingId === record.id ||
@@ -334,8 +333,7 @@ export function ParticipatingInstructorLectureReportsSection({
         <div className="info-section-buttons--wrapper">
           <CmsButton
             variant="secondary"
-            size="large"
-            width="max-content"
+            size="h40"
             className="cms-button--no-label-ellipsis"
             icon={<ButtonDownloadIcon />}
             disabled={bulkDownloading || submittedRows.length === 0}

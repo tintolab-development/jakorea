@@ -42,8 +42,7 @@ function renderJournalViewButton(enabled: boolean, onView: () => void) {
       <CmsButton
         type="button"
         variant="default"
-        size="medium"
-        width={140}
+        size="h40"
         disabled={!enabled}
         onClick={enabled ? onView : undefined}
       >
@@ -300,8 +299,7 @@ export function TrainedTeachersEducationJournalSection({
         <div className="info-section-buttons--wrapper">
           <CmsButton
             variant="secondary"
-            size="large"
-            width="max-content"
+            size="h40"
             icon={<ButtonDownloadIcon />}
             className="trained-teachers-education-journal-section__bulk-download-button"
             loading={createZipJobMutation.isPending || bulkJobId != null}

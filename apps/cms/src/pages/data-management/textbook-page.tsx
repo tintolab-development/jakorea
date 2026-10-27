@@ -39,6 +39,7 @@ import {
 import {
   TextbookKitQuantityModal,
   DEFAULT_KIT_QUANTITIES,
+  EMPTY_KIT_QUANTITIES,
   type TextbookKitQuantityValues,
 } from '@/features/textbook/ui/textbook-kit-quantity-modal'
 import { TextbookDetailFullPageModal } from '@/features/textbook/ui/textbook-detail-fullpage-modal'
@@ -109,8 +110,16 @@ export default function TextbookPage() {
   const [localKitQuantities, setLocalKitQuantities] =
     useState<TextbookKitQuantityValues>(DEFAULT_KIT_QUANTITIES)
   const kitQuantities = remoteKitEnabled
-    ? (kitQuantitiesQuery.data ?? DEFAULT_KIT_QUANTITIES)
+    ? (kitQuantitiesQuery.data ?? EMPTY_KIT_QUANTITIES)
     : localKitQuantities
+  const kitQuantityLoadError = remoteKitEnabled
+    ? kitQuantitiesQuery.error
+      ? getDataManagementApiErrorMessage(
+          kitQuantitiesQuery.error,
+          '키트 수량을 불러오지 못했습니다.'
+        )
+      : null
+    : null
   const [pendingKitQuantities, setPendingKitQuantities] =
     useState<TextbookKitQuantityValues | null>(null)
   const [kitSaveError, setKitSaveError] = useState<string | null>(null)
@@ -352,13 +361,19 @@ export default function TextbookPage() {
         )
         return
       }
+      try {
+        await kitQuantitiesQuery.refetch()
+      } catch {
+        // 저장은 완료됨. 다음 팝업 오픈 시 GET으로 재조회한다.
+      }
     } else {
       setLocalKitQuantities(pendingKitQuantities)
     }
     setPendingKitQuantities(null)
     setKitQuantityChangeConfirmOpen(false)
     setKitQuantityModalOpen(false)
-  }, [kitQuantitiesMutation, pendingKitQuantities, remoteKitEnabled])
+    showUpdateCompletedAlert()
+  }, [kitQuantitiesMutation, kitQuantitiesQuery, pendingKitQuantities, remoteKitEnabled])
 
   const deleteConfirmCopy = useMemo(() => {
     const n = selectedRowKeys.length
@@ -514,8 +529,13 @@ export default function TextbookPage() {
       />
       <TextbookKitQuantityModal
         open={kitQuantityModalOpen}
-        onCancel={() => setKitQuantityModalOpen(false)}
+        onCancel={() => {
+          setKitQuantityModalOpen(false)
+          setPendingKitQuantities(null)
+        }}
         values={pendingKitQuantities ?? kitQuantities}
+        loading={remoteKitEnabled && kitQuantitiesQuery.isPending}
+        loadError={kitQuantityLoadError}
         onConfirm={handleKitQuantityConfirm}
       />
       <ContentModal

@@ -243,6 +243,96 @@ describe('applyRegistrationFormsAfterCreate', () => {
       expect.objectContaining({ draft: baseline, overlay: { r: 1 } })
     )
   })
+
+  it('수정 없는 강사·봉사자 신청(draft null)은 DRAFT 카탈로그 버전 본문으로 모집 행마다 COPY·교체한다', async () => {
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      {
+        bindingId: 189631,
+        formType: 'APPLICATION',
+        targetType: 'INSTRUCTOR',
+        targetRole: 'INSTRUCTOR',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 186879,
+        templateId: 12,
+        templateVersionId: 68,
+        active: true,
+      },
+      {
+        bindingId: 189632,
+        formType: 'APPLICATION',
+        targetType: 'VOLUNTEER',
+        targetRole: 'VOLUNTEER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 186880,
+        templateId: 13,
+        templateVersionId: 74,
+        active: true,
+      },
+    ])
+    const instructorBody = createProgramRegistrationDraft()
+    const volunteerBody = createProgramRegistrationDraft()
+    loadFormTemplateVersionDraftByVersionId.mockImplementation(
+      async (_code: string, versionId: number) => ({
+        draft: versionId === 68 ? instructorBody : volunteerBody,
+      })
+    )
+    const result = await applyRegistrationFormsAfterCreate({
+      program: generalProgram,
+      forms: [
+        { templateCode: 'application-instructor', formType: 'APPLICATION', draft: null },
+        { templateCode: 'application-volunteer', formType: 'APPLICATION', draft: null },
+      ],
+    })
+    expect(result.failed).toEqual([])
+    expect(result.applied).toEqual([
+      { templateCode: 'application-instructor', recruitmentId: 186879 },
+      { templateCode: 'application-volunteer', recruitmentId: 186880 },
+    ])
+    const calls = saveProgramScopedOperationalFormVersion.mock.calls.map(
+      c =>
+        c[0] as {
+          templateCode: string
+          versionId: number
+          draft: unknown
+          ownerProgramId: number
+          program: Program
+        }
+    )
+    expect(calls.map(c => [c.templateCode, c.versionId, c.ownerProgramId])).toEqual([
+      ['application-instructor', 68, 186400],
+      ['application-volunteer', 74, 186400],
+    ])
+    expect(calls[0]?.draft).toBe(instructorBody)
+    expect(calls[1]?.draft).toBe(volunteerBody)
+    // 모집 행 scope(RECRUITMENT)로 바인딩을 교체하도록 행 id가 program.activeRecruitmentId에 실린다.
+    expect(calls.map(c => c.program.activeRecruitmentId)).toEqual([186879, 186880])
+  })
+
+  it('버전 본문 조회가 비면 seed 초안으로 적용하고, seed도 없으면 해당 양식만 실패한다', async () => {
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      {
+        bindingId: 189630,
+        formType: 'APPLICATION',
+        targetType: 'INDIVIDUAL',
+        targetRole: 'INDIVIDUAL',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 186878,
+        templateVersionId: 69,
+        active: true,
+      },
+    ])
+    loadFormTemplateVersionDraftByVersionId.mockResolvedValue(null)
+    const result = await applyRegistrationFormsAfterCreate({
+      program: generalProgram,
+      forms: [
+        { templateCode: 'application-participant-individual', formType: 'APPLICATION', draft: null },
+      ],
+    })
+    expect(saveProgramScopedOperationalFormVersion).not.toHaveBeenCalled()
+    expect(result.failed).toEqual([
+      expect.objectContaining({ templateCode: 'application-participant-individual' }),
+    ])
+  })
 })
 
 describe('applyPreparedRegistrationFormsAfterCreate (부분 실패 → 안내·재시도)', () => {

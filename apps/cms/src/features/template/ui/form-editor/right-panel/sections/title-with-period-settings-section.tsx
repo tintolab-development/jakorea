@@ -843,6 +843,7 @@ function DefaultTitleWithPeriodSettings({
     <>
       <Form.Item label="작성 시작일">
         <CmsRadioGroup
+          size="medium"
           value={startMode}
           onChange={e =>
             updateParagraph(active.id, cur => {
@@ -945,6 +946,7 @@ function DefaultTitleWithPeriodSettings({
 
       <Form.Item label="작성 종료일">
         <CmsRadioGroup
+          size="medium"
           value={endMode}
           onChange={e =>
             updateParagraph(active.id, cur => {

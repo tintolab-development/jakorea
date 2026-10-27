@@ -476,7 +476,11 @@ describe('P0 Builder 통합 · 유형 Matrix', () => {
     })
     const createBody = mapGeneralProgramToCreateRequest({
       ...recruit.programDraft,
-      registrationOverlay: { ...common.persistOverlay, ...recruit.persistOverlay },
+      registrationOverlay: {
+        ...common.persistOverlay,
+        ...recruit.persistOverlay,
+        ...uploadedMediaOverlay,
+      },
     })
     expect(createBody.programType).toBe('GENERAL_ORGANIZATION')
     expect(recruit.programDraft.title).toBeTruthy()
@@ -486,7 +490,12 @@ describe('P0 Builder 통합 · 유형 Matrix', () => {
     expect(buildIndependentApplicationFormVersionPutOverlay(application.overlay).overlay).toEqual(
       application.overlay
     )
-    expect(media.bindCalls.some(call => call.kind === 'putProgramRecruitmentThumbnail')).toBe(true)
+    expect(media.bindCalls).toEqual([])
+    expect(
+      createBody.recruitments?.some(
+        row => 'thumbnailFileObjectId' in row && (row as { thumbnailFileObjectId?: number }).thumbnailFileObjectId === 77
+      )
+    ).toBe(true)
     expect(media.state.thumbFileObjectId).toBe(77)
     expect(String(media.state.keyVisualImage ?? '')).not.toMatch(/^blob:/)
   })

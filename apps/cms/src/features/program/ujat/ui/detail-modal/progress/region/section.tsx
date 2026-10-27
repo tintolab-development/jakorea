@@ -192,7 +192,7 @@ export function UjatEducationProgressRegionAssignmentSection({
           <CmsButton
             type="button"
             variant="secondary"
-            size="large"
+            size="h40"
             icon={<ButtonDownloadIcon />}
             onClick={handleOpenDownloadModal}
           >
@@ -201,7 +201,7 @@ export function UjatEducationProgressRegionAssignmentSection({
           <CmsButton
             type="button"
             variant="delete"
-            size="large"
+            size="h40"
             disabled={isMutating}
             onClick={handleOpenBlockedDateModal}
           >
@@ -210,7 +210,7 @@ export function UjatEducationProgressRegionAssignmentSection({
           <CmsButton
             type="button"
             variant="secondary"
-            size="large"
+            size="h40"
             disabled={isMutating}
             onClick={handleOpenAttendanceManagerModal}
           >
@@ -219,7 +219,7 @@ export function UjatEducationProgressRegionAssignmentSection({
           <CmsButton
             type="button"
             variant="primary"
-            size="large"
+            size="h40"
             disabled={isMutating}
             onClick={handleOpenDirectAssignModal}
           >
@@ -228,7 +228,7 @@ export function UjatEducationProgressRegionAssignmentSection({
           <CmsButton
             type="button"
             variant="primary"
-            size="large"
+            size="h40"
             disabled={isMutating}
             onClick={handleAutoAssign}
           >

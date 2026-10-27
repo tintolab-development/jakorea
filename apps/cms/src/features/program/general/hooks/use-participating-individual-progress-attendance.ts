@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
-import { formatAttendanceRecordingNotOpenMessage } from '@/features/program/general/lib/attendance-recording-not-open'
-import { useCmsAlert } from '@/shared/ui'
+import { isAttendanceRecordingNotOpenError } from '@/features/program/general/lib/attendance-recording-not-open'
 import { handleError } from '@/shared/utils/error-handler'
 import {
   fetchGeneralProgressAttendanceBundle,
@@ -60,7 +59,6 @@ export function getProgressAttendanceViewState(params: {
 }
 
 export function useParticipatingIndividualProgressAttendance(program: Program) {
-  const { showAlert } = useCmsAlert()
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
 
   useNotifyProgramApiUnavailableOnce(
@@ -171,11 +169,7 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
       }
     },
     onError: error => {
-      const notOpenMessage = formatAttendanceRecordingNotOpenMessage(error)
-      if (notOpenMessage) {
-        showAlert({ title: '안내', content: notOpenMessage })
-        return
-      }
+      if (isAttendanceRecordingNotOpenError(error)) return
       handleError(error, { context: 'saveGeneralScheduleAttendances' })
     },
   })

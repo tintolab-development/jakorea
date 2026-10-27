@@ -152,6 +152,7 @@ export function MultipleChoice({
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
             <CmsCheckbox
+              checkboxSize="medium"
               disabled={controlDisabled}
               checked={multiIds.includes(item.id)}
               onChange={e => toggleMulti(item.id, e.target.checked)}
@@ -184,6 +185,7 @@ export function MultipleChoice({
         ]
           .filter(Boolean)
           .join(' ')}
+        size="medium"
         disabled={controlDisabled}
         value={singleId}
         onChange={e => patch({ selectedPreviewSingleId: e.target.value })}

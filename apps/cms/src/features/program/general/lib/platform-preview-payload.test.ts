@@ -125,7 +125,7 @@ describe('buildGeneralProgramPortalPreview', () => {
     })
   })
 
-  it('keeps program education targets on instructor and volunteer preview', () => {
+  it('does not put participant education targets on instructor or volunteer preview', () => {
     const program = makeProgram({
       targetLevels: ['elementary'],
       educationTargetDetail: '프로그램 컬럼 상세',
@@ -143,14 +143,94 @@ describe('buildGeneralProgramPortalPreview', () => {
     })
 
     const instructor = buildGeneralProgramPortalPreview({ audience: 'instructors', program })
-    expect(instructor.educationTargets).toEqual(['elementary'])
-    expect(instructor.educationTargetDetail).toBe('초등학생 4~6학년')
+    expect(instructor.educationTargets).toBeUndefined()
+    expect(instructor.educationTargetDetail).toBeUndefined()
     expect(instructor.recruitmentTarget).toBe('성인')
 
     const volunteer = buildGeneralProgramPortalPreview({ audience: 'volunteers', program })
-    expect(volunteer.educationTargets).toEqual(['elementary'])
-    expect(volunteer.educationTargetDetail).toBe('초등학생 4~6학년')
+    expect(volunteer.educationTargets).toBeUndefined()
+    expect(volunteer.educationTargetDetail).toBeUndefined()
     expect(volunteer.recruitmentTarget).toBe('대학(원)생')
+  })
+
+  it('does not fill instructor copy from the participant program description', () => {
+    const detail = buildGeneralProgramPortalPreview({
+      audience: 'instructors',
+      program: makeProgram({
+        description: '참여자 프로그램 소개',
+        additionalContentHtml: '참여자 추가내용',
+        generalCommonInfo: {
+          participantRecruitmentInfo: { programDescription: '참여자 소개' },
+          instructorRecruitmentInfo: { recruitmentGuide: '강사 안내' },
+        },
+        programRecruitments: [
+          {
+            id: 11,
+            recruitmentType: 'PARTICIPANT',
+            applicationType: 'ORGANIZATION',
+            programDescription: '기관 행 소개',
+          },
+          {
+            id: 22,
+            recruitmentType: 'INSTRUCTOR',
+            programDescription: '강사 행 소개',
+          },
+        ],
+      }),
+    })
+    expect(detail.summary).toBe('강사 행 소개')
+    expect(detail.recruitmentGuide).toBe('강사 안내')
+    expect(detail.additionalContentHtml).toBeUndefined()
+    expect(detail.recruitments?.[0]).toMatchObject({
+      recruitmentType: 'INSTRUCTOR',
+      programDescription: '강사 행 소개',
+    })
+  })
+
+  it('maps 참여자 and 참여기관 recruitment rows separately', () => {
+    const program = makeProgram({
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'individual'],
+      description: '프로그램 공통 소개',
+      programRecruitments: [
+        {
+          id: 11,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          programDescription: '기관 모집 소개',
+          thumbnailFileObjectId: 301,
+        },
+        {
+          id: 22,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'INDIVIDUAL',
+          programDescription: '개인 모집 소개',
+          thumbnailFileObjectId: 302,
+        },
+      ],
+    })
+
+    const institution = buildGeneralProgramPortalPreview({ audience: 'institutions', program })
+    expect(institution.programType).toBe('GENERAL_ORGANIZATION')
+    expect(institution.applicationTargetMode).toBe('ORGANIZATION')
+    expect(institution.summary).toBe('기관 모집 소개')
+    expect(institution.recruitments?.[0]).toMatchObject({
+      recruitmentId: 11,
+      applicationType: 'ORGANIZATION',
+      programDescription: '기관 모집 소개',
+      thumbnailFileObjectId: 301,
+    })
+
+    const individual = buildGeneralProgramPortalPreview({ audience: 'individuals', program })
+    expect(individual.programType).toBe('GENERAL_INDIVIDUAL')
+    expect(individual.applicationTargetMode).toBe('INDIVIDUAL')
+    expect(individual.summary).toBe('개인 모집 소개')
+    expect(individual.recruitments?.[0]).toMatchObject({
+      recruitmentId: 22,
+      applicationType: 'INDIVIDUAL',
+      programDescription: '개인 모집 소개',
+      thumbnailFileObjectId: 302,
+    })
   })
 
   it('maps volunteer otherMatters from the volunteer row, not program otherNotes', () => {

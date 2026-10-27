@@ -2,10 +2,9 @@ import type { ColumnsType } from 'antd/es/table'
 import { formatSchoolDetailAttendanceClassLabel } from '@/features/program/general/lib/school-detail-attendance-display'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
+  formatStudentGenderLabel,
   SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS,
-  STUDENT_GENDER_LABELS,
   type SchoolDetailAttendanceSessionGroup,
-  type SchoolSessionAttendanceStatusKey,
 } from '../model/school-detail-types'
 
 export type SchoolDetailAttendanceExcelRow = {
@@ -51,14 +50,12 @@ export function buildSchoolDetailAttendanceSessionExcelRows(
     sessionLabel,
     no: total - index,
     name: student.name,
-    genderLabel: student.gender ? (STUDENT_GENDER_LABELS[student.gender] ?? '') : '',
+    genderLabel: formatStudentGenderLabel(student.gender, student.genderMask, ''),
     birthDate: student.birthDate ?? '',
     gradeClass: formatSchoolDetailAttendanceClassLabel(student.gradeClass),
     contact: maskContact(student.contact),
     email: maskEmail(student.email),
-    statusLabel:
-      SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS[student.status as SchoolSessionAttendanceStatusKey] ??
-      '',
+    statusLabel: SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS[student.status] ?? '미기록',
   }))
 }
 
@@ -74,5 +71,14 @@ export function resolveSchoolDetailAttendanceSessionExcelFilename(
   session: Pick<SchoolDetailAttendanceSessionGroup, 'headerPrefix'>
 ): string {
   const label = session.headerPrefix.split('|')[0]?.trim() ?? session.headerPrefix
-  return label.replace(/[\\/:*?"<>|]/g, '').trim() || '출석관리'
+  return sanitizeAttendanceExcelFilename(label) || '출석관리'
+}
+
+export function resolveSchoolDetailAttendanceWorkbookFilename(schoolName?: string | null): string {
+  const name = schoolName?.trim() ? `${schoolName.trim()} 출석관리` : '출석관리'
+  return sanitizeAttendanceExcelFilename(name) || '출석관리'
+}
+
+function sanitizeAttendanceExcelFilename(value: string): string {
+  return value.replace(/[\\/:*?"<>|]/g, '').trim()
 }

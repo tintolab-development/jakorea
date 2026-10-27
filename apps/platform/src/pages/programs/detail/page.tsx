@@ -5,6 +5,7 @@ import {
   PROGRAMS_PATH,
   ProgramApplyGateModals,
   programApplyGateApplicationsPathForType,
+  programApplyGateConsentsPath,
   programApplyGateMemberSettingsPath,
   resolveProgramApplyGateModal,
   readPortalRecruitmentFocus,
@@ -91,7 +92,7 @@ export function ProgramDetailPage() {
           ...focus,
           programType: program?.programType,
         }
-  const { gateModal, closeGateModal, isChecking, runApplyGate } = useProgramApplyGate(
+  const { gateModal, closeGateModal, isChecking, runApplyGate, missingConsents } = useProgramApplyGate(
     programId,
     applySelection
   )
@@ -161,6 +162,11 @@ export function ProgramDetailPage() {
       <ProgramApplyGateModals
         kind={gateModal}
         onClose={closeGateModal}
+        missingConsentTypes={missingConsents}
+        onOpenConsents={() => {
+          closeGateModal()
+          navigate(programApplyGateConsentsPath)
+        }}
         onEditMemberInfo={() => {
           closeGateModal()
           navigate(programApplyGateMemberSettingsPath)

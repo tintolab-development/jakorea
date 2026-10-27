@@ -66,7 +66,8 @@
   box-shadow: none !important;
   background: transparent !important;
   font-family: Pretendard, sans-serif;
-  font-size: var(--cms-control-font, 16px);
+  /* Ant CSS-in-JS size 토큰보다 `--cms-control-font`(small=14px)가 이기게 한다. */
+  font-size: var(--cms-control-font, 16px) !important;
   font-weight: 500;
   line-height: 150%;
   color: var(--Netural-black, #3d3d3d);
@@ -136,7 +137,22 @@
   white-space: normal;
 }
 
+.cms-textarea--rows-1-single-line .cms-textarea__control {
+  overflow: hidden;
+}
+
+.cms-textarea--rows-1-single-line .cms-textarea__control.cms-field__box {
+  height: var(--cms-control-h, 44px);
+  min-height: var(--cms-control-h, 44px);
+  padding: var(--cms-control-pt, 10px) var(--cms-control-pr, 12px) var(--cms-control-pb, 10px)
+    var(--cms-control-pl, 16px);
+}
+
 .cms-textarea--rows-1-single-line .cms-textarea__inner textarea.ant-input {
+  height: auto;
+  min-height: 0;
+  padding: 0 !important;
+  line-height: 150%;
   resize: none;
   overflow: hidden;
   white-space: nowrap;
@@ -144,6 +160,7 @@
 }
 
 .cms-textarea--rows-1-single-line .cms-textarea__inner textarea.ant-input::placeholder {
+  line-height: 150%;
   white-space: nowrap;
 }
 

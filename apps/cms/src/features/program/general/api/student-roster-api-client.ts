@@ -3,6 +3,7 @@
  * - GET   /api/admin/organization-applications/{applicationId}/student-roster
  * - PUT   /api/admin/organization-applications/{applicationId}/student-roster (수동 수정 — sourceFileObjectId 생략)
  * - POST  /api/admin/organization-applications/{applicationId}/student-roster/import
+ * - POST  /api/admin/organization-applications/{applicationId}/student-roster/privacy-detail
  */
 
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
@@ -40,6 +41,21 @@ export async function commitOrganizationStudentRosterRemote(
       method: 'PUT',
       data: body,
       headers: { 'Content-Type': 'application/json' },
+    })
+  )
+}
+
+/** POST — 학생명단 개인정보 원문 조회. `reason`은 감사 로그에 남는다. */
+export async function fetchOrganizationStudentRosterPrivacyDetail(
+  applicationId: string | number,
+  reason: string
+): Promise<StudentRosterResponse> {
+  return unwrapApiBody<StudentRosterResponse>(
+    await customInstance({
+      url: `${rosterUrl(applicationId)}/privacy-detail`,
+      method: 'POST',
+      params: { reason },
+      headers: { 'Cache-Control': 'no-store' },
     })
   )
 }

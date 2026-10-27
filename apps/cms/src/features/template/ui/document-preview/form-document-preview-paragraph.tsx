@@ -193,7 +193,7 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
       ) : null}
       <CmsRadioGroup
         className="form-editor-table-bottom-consent"
-        size="large"
+        size="medium"
         value={singleId ?? undefined}
         disabled
         style={{ pointerEvents: 'none' }}
@@ -464,7 +464,7 @@ function renderBody(
           {p.showBottomConsent === true ? (
             <CmsRadioGroup
               className="form-editor-table-bottom-consent"
-              size="large"
+              size="medium"
               value={p.bottomConsent ?? 'agree'}
               disabled={false}
               style={{ pointerEvents: 'none' }}

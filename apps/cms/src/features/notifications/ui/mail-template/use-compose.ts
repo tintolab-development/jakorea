@@ -16,6 +16,7 @@ import {
   insertMailVariableInText,
   isMailEditorEmpty,
 } from '@/features/notifications/model/mail-template/insert-variable'
+import { mailBodyToEditorHtml } from '@/features/notifications/model/shared/mail-body-display-html'
 import { MailVariable } from '@/features/notifications/model/mail-template/variable-node'
 import {
   mailAttachmentRejectMessage,
@@ -73,6 +74,8 @@ export function useMailCompose(
   newFilesRef.current = newFiles
   removedAttachmentIdsRef.current = removedAttachmentIds
 
+  /** 평문(\n) 템플릿은 에디터에서 줄바꿈이 사라지므로 <p> HTML로 변환해 로드 (저장 baseline은 원문 유지) */
+  const initialEditorHtml = useMemo(() => mailBodyToEditorHtml(initial.bodyHtml), [initial.bodyHtml])
   const mailVariableExtensions = useMemo(() => [MailVariable], [])
   const fileUploadOwner = useMemo(
     () => mailTemplateInlineImageOwner(parseFileObjectId(templateId)),
@@ -82,7 +85,7 @@ export function useMailCompose(
 
   const { editor, api } = useRichTextEditor({
     enabled: open,
-    initialContent: initial.bodyHtml,
+    initialContent: initialEditorHtml,
     contentFormat: 'html',
     resetKey,
     placeholder: '내용을 작성하세요',

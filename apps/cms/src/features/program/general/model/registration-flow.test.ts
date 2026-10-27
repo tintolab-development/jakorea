@@ -76,7 +76,7 @@ describe('recruitmentPreviewAudienceFromRegistrationStep', () => {
       'institutions'
     )
     expect(recruitmentPreviewAudienceFromRegistrationStep('recruit-participant-individual')).toBe(
-      'institutions'
+      'individuals'
     )
     expect(recruitmentPreviewAudienceFromRegistrationStep('recruit-instructor')).toBe(
       'instructors'

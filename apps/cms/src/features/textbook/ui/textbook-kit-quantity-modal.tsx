@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Alert, Spin } from 'antd'
 import { CmsButton, CmsNumericInput, ContentModal } from '@/shared/ui'
+import { isValidKitQuantityInput } from '@/features/textbook/lib/kit-quantity'
 import './textbook-kit-quantity-modal.css'
 
 const KIT_LEVELS = [
@@ -18,18 +20,25 @@ export const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = KIT_LEVELS.redu
   return acc
 }, {} as TextbookKitQuantityValues)
 
-const createDefaultQuantities = (): TextbookKitQuantityValues => ({ ...DEFAULT_KIT_QUANTITIES })
+export const EMPTY_KIT_QUANTITIES: TextbookKitQuantityValues = {
+  kindergarten: '',
+  elementary: '',
+  middle: '',
+  high: '',
+  university: '',
+}
+
+const createDefaultQuantities = (): TextbookKitQuantityValues => ({ ...EMPTY_KIT_QUANTITIES })
 
 function isValidKitQuantity(value: string): boolean {
-  const trimmed = value.trim()
-  if (!trimmed) return false
-  const parsed = Number(trimmed)
-  return Number.isInteger(parsed) && parsed >= 1
+  return isValidKitQuantityInput(value)
 }
 
 export interface TextbookKitQuantityModalProps {
   open: boolean
   values?: TextbookKitQuantityValues
+  loading?: boolean
+  loadError?: string | null
   onCancel: () => void
   onConfirm: (values: TextbookKitQuantityValues) => void
 }
@@ -37,6 +46,8 @@ export interface TextbookKitQuantityModalProps {
 export function TextbookKitQuantityModal({
   open,
   values,
+  loading = false,
+  loadError = null,
   onCancel,
   onConfirm,
 }: TextbookKitQuantityModalProps) {
@@ -50,7 +61,10 @@ export function TextbookKitQuantityModal({
     }
   }, [open, values])
 
-  const hasInvalidQuantity = KIT_LEVELS.some(level => !isValidKitQuantity(quantities[level.key]))
+  const hasInvalidQuantity =
+    loading ||
+    Boolean(loadError) ||
+    KIT_LEVELS.some(level => !isValidKitQuantity(quantities[level.key]))
 
   return (
     <ContentModal
@@ -79,6 +93,12 @@ export function TextbookKitQuantityModal({
         </div>
       }
     >
+      {loading ? (
+        <div className="textbook-kit-quantity-modal__loading">
+          <Spin size="small" /> 키트 수량을 불러오는 중입니다.
+        </div>
+      ) : null}
+      {loadError ? <Alert type="error" showIcon message={loadError} /> : null}
       <div className="textbook-kit-quantity-modal__table">
         {KIT_LEVELS.map(level => (
           <div className="textbook-kit-quantity-modal__row" key={level.key}>

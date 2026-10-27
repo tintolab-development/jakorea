@@ -4,7 +4,7 @@ export type ApplicantRecruitDetailInfoParagraphProps = {
   /** 학교·개인 모집 폼 등 템플릿 전환 시 에디터 인스턴스 구분용 */
   wysiwygResetKey?: string
   overlayKeyPrefix?: string
-  /** 텍스트 필드 컨트롤 — UJAT 참여 기관 모집 등은 `input` */
+  /** 텍스트 필드 컨트롤 — 기본 `input`(h36). 멀티라인이 필요할 때만 `textarea` */
   textFieldControl?: 'textarea' | 'input'
 }
 
@@ -12,7 +12,7 @@ export type ApplicantRecruitDetailInfoParagraphProps = {
 export function ApplicantRecruitDetailInfoParagraph({
   wysiwygResetKey = 'applicant-recruit-institution-extra-body',
   overlayKeyPrefix = 'recruit.detailInfo',
-  textFieldControl = 'textarea',
+  textFieldControl = 'input',
 }: ApplicantRecruitDetailInfoParagraphProps = {}) {
   return (
     <RecruitDetailInfoParagraph

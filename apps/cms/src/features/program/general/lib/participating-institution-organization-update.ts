@@ -31,12 +31,10 @@ export function buildParticipatingInstitutionOrganizationUpdateRequest(params: {
   draft: ParticipatingInstitutionEditDraft
   teacherOptions: InstitutionAffiliatedTeacherOption[]
   fallbackTeacherMemberId?: number | null
-  textbookQuantity?: number
-  textbookKits?: number
   textbookGrade?: string
   /** 저장 전 교육 형태. 같으면 PATCH에서 뺀다. */
   baselineEducationFormat?: string | null
-  /** 교재를 실제로 변경한 경우에만 textbookId/수량 필드를 전송한다. */
+  /** 교재를 실제로 변경한 경우에만 textbookId를 전송한다. 키트·권수는 서버 자동 산출을 위해 omit. */
   includeTextbookFields?: boolean
   /**
    * 프로그램 교육형태가 참여자 선택일 때만 true.

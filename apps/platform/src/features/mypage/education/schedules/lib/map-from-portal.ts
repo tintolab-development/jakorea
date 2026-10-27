@@ -183,7 +183,7 @@ export type MapPortalEducationScheduleMeta = {
 
 /**
  * 신청 GET .../schedules → 교육일정 탭 행.
- * startAt이 없어도 매핑은 유지한다. ASSIGNMENT_SCOPED 화면은 scheduleId 있는 배정만 노출한다.
+ * startAt이 없어도 매핑은 유지한다. 화면은 scheduleId 있는 배정 일정만 노출한다.
  * assignment.enabled가 true가 아니면 과제 블록 omit.
  * 카드 청록 라벨은 공통정보(차시/단원명/일정명)만 쓴다.
  */

@@ -43,6 +43,7 @@ import {
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
   mergeOrganizationApplicationDetailOntoSchoolDetail,
+  readOrganizationTextbookKitFields,
   type WaitingInstructorRowMock,
 } from '../../../lib/school-detail'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
@@ -138,7 +139,10 @@ import { shouldShowInstitutionApplicationEducationFormatField } from '@/features
 import { isCombinedClassProgramEligible } from '@/features/program/general/lib/combined-class-edit-policy'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
-import { ensureTextbookNotUsedSelectOption } from '@/features/program/general/lib/participating-institution-textbook'
+import {
+  ensureTextbookNotUsedSelectOption,
+  formatParticipatingInstitutionKitQuantity,
+} from '@/features/program/general/lib/participating-institution-textbook'
 import { buildCombinedClassLeadTeacherCandidatesFromParticipating } from '@/features/program/general/lib/combined-class-lead-teacher'
 import { retainMatchingCombinedClassPartnerIds } from '@/features/program/general/lib/combined-class-education-dates'
 import { COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT } from '@/features/program/general/lib/combined-class-copy'
@@ -574,12 +578,16 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       organizationApplicationIdForDetail.length > 0,
     staleTime: 30_000,
   })
+  const organizationKitFields = organizationDetailQuery.data
+    ? readOrganizationTextbookKitFields(organizationDetailQuery.data)
+    : undefined
   const mergedDetail = {
     ...(organizationDetailQuery.data
       ? mergeOrganizationApplicationDetailOntoSchoolDetail(detail, organizationDetailQuery.data)
       : detail),
     ...(adminCommentQuery.data ? { adminComment: remoteAdminComment } : {}),
     ...savedBasicPatches[detail.id],
+    ...(organizationKitFields ?? {}),
   }
   const participantSessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
@@ -2113,10 +2121,12 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     )
 
   const textbookNameView = textbookDisplay.textbookName?.trim() || '-'
-  const kitsAndQty =
-    hasSelectedTextbook && textbookDisplay.textbookKits != null && textbookDisplay.textbookKits > 0
-      ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
-      : '-'
+  const kitsAndQty = hasSelectedTextbook
+    ? formatParticipatingInstitutionKitQuantity(
+        textbookDisplay.textbookKits,
+        textbookDisplay.textbookQuantity
+      )
+    : '-'
 
   const textbookSelectOptions = ensureTextbookNotUsedSelectOption(textbookOptions)
   const textbookSelectEditCell =
@@ -2225,8 +2235,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               {showActivityWithdrawButton ? (
                 <CmsButton
                   variant="delete"
-                  size="large"
-                  width={140}
+                  size="h40"
                   disabled={
                     !canRequestActivityWithdraw ||
                     isApplicationInfoEditing ||
@@ -2238,6 +2247,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 </CmsButton>
               ) : null}
               <ProgramEditInfoActions
+                size="h40"
+                width={false}
                 isEditing={isApplicationInfoEditing}
                 idleVariant="secondary"
                 onEdit={requestStartApplicationInfoEdit}
@@ -2253,8 +2264,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"
-                  size="large"
-                  width={140}
+                  size="h40"
                   disabled={isApplicationInfoEditing}
                   onClick={handleAdminCommentEditEnter}
                 >
@@ -2264,7 +2274,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               <PersonalInfoRevealButton
                 labelMode="toggle"
                 revealed={personalInfoRevealed}
-                style={{ minWidth: 180 }}
+                cmsSize="h40"
+                width="auto"
                 onClick={handlePrivacyToggleClick}
               />
             </>
@@ -2428,12 +2439,12 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   </span>
                 </div>
                 <div className="info-section-buttons--wrapper">
-                  <CmsButton variant="delete" size="large" onClick={handleUnassignClick}>
+                  <CmsButton variant="delete" size="h40" onClick={handleUnassignClick}>
                     배정 취소
                   </CmsButton>
                   <CmsButton
                     variant="secondary"
-                    size="large"
+                    size="h40"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (currentAssignedCount >= requiredInstructorCount) {
@@ -2480,7 +2491,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 <div className="info-section-buttons--wrapper">
                   <CmsButton
                     variant="secondary"
-                    size="large"
+                    size="h40"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={handleSelectAssignClick}
                   >

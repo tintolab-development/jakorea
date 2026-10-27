@@ -218,8 +218,7 @@ export function ParticipatingInstructorSettlementSection({
           <div className="participating-instructor-settlement-section__payment-statement-cell-inner">
             <CmsButton
               variant="default"
-              size="medium"
-              width={140}
+              size="h40"
               disabled={!record.canViewPaymentStatement || !remoteEnabled}
               onClick={() => paymentStatementView.handleOpen(record)}
             >

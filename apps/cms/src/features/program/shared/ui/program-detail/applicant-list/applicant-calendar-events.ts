@@ -7,6 +7,7 @@ import type { GeneralIndividualApplicantRow } from '@/features/program/general/m
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { ApplicantListMenu } from './applicant-list-menu'
 import {
+  resolveSessionCalendarClockTimes,
   resolveSessionCalendarDateKey,
   resolveSessionCalendarIsoRange,
 } from './applicant-institution-calendar-session'
@@ -14,6 +15,7 @@ import {
   mapPreferredEducationSchedulesToSessions,
   readOrganizationApplicationConfirmedSessionsForInstructorCalendar,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import type { CalendarMainEventInput } from '@/shared/components/calendar'
 import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
 
 dayjs.extend(isSameOrAfter)
@@ -51,7 +53,7 @@ export function resolveInstructorCalendarInstitutionName(
   return INSTRUCTOR_CALENDAR_INSTITUTION_FALLBACK_LABEL
 }
 
-export type ApplicantCalendarEvent = {
+export type ApplicantCalendarEvent = CalendarMainEventInput & {
   id: string
   title: string
   startDate: string
@@ -61,6 +63,14 @@ export type ApplicantCalendarEvent = {
     | ApplicantInstructorRow
     | GeneralIndividualApplicantRow
     | ApplicantInstructorCalendarEventItem
+}
+
+function sessionClockFields(
+  session: ParticipatingSchoolSession
+): Pick<CalendarMainEventInput, 'startTime' | 'endTime'> {
+  const clocks = resolveSessionCalendarClockTimes(session)
+  if (!clocks) return {}
+  return { startTime: clocks.startTime, endTime: clocks.endTime }
 }
 
 export type MapApplicantCalendarEventsOptions = {
@@ -238,6 +248,7 @@ export function buildInstructorInstitutionCalendarEvents(
         title: buildInstructorCalendarTitleFromParts(titleParts),
         startDate: resolved.startDate,
         endDate: resolved.endDate,
+        ...sessionClockFields(session),
         originalItem,
       })
     }
@@ -272,6 +283,7 @@ function buildSessionBasedCalendarEvents<
         title: `${titlePrefix} ${getLabel(row)}`.trim(),
         startDate,
         endDate,
+        ...sessionClockFields(session),
         originalItem: row as unknown as ApplicantCalendarEvent['originalItem'],
       })
     })
@@ -288,6 +300,8 @@ function mapSchoolLikePeriodToEvent(
   let title = ''
   let startDate: string | null = null
   let endDate: string | null = null
+  let periodStartTime: string | undefined
+  let periodEndTime: string | undefined
   const id = item.id || String(item.no ?? index)
   const label =
     'schoolName' in item
@@ -305,10 +319,10 @@ function mapSchoolLikePeriodToEvent(
 
     if (dateTimeMatch) {
       const datePart = dateTimeMatch[1]
-      const startTime = dateTimeMatch[2]
-      const endTime = dateTimeMatch[3]
-      startDate = `${datePart}T${startTime}:00`
-      endDate = `${datePart}T${endTime}:00`
+      periodStartTime = dateTimeMatch[2]
+      periodEndTime = dateTimeMatch[3]
+      startDate = `${datePart}T${periodStartTime}:00`
+      endDate = `${datePart}T${periodEndTime}:00`
     } else {
       const rangeMatch = period.match(
         /^(\d{2})\.(\d{2})\.(\d{2})\(.*\)\s*~\s*(\d{2})\.(\d{2})\.(\d{2})\(.*\)/
@@ -327,6 +341,9 @@ function mapSchoolLikePeriodToEvent(
     title,
     startDate,
     endDate,
+    ...(periodStartTime && periodEndTime
+      ? { startTime: periodStartTime, endTime: periodEndTime }
+      : {}),
     originalItem: item,
   }
 }

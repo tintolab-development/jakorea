@@ -254,6 +254,33 @@ describe('progress-attendance-adapters', () => {
     expect(row?.attendanceStatus).toBe('present')
   })
 
+  it('keeps a masked participant gender as returned', () => {
+    const sessions = buildProgressAttendanceSessionsFromRemote({
+      schedules: [
+        {
+          scheduleId: 9001,
+          sessionNo: 1,
+          scheduleStatus: 'IN_PROGRESS',
+          startAt: '2026-10-01T10:00:00+09:00',
+        },
+      ],
+      participants: [
+        {
+          participantId: 1694746,
+          memberName: '마스킹',
+          participantType: 'INDIVIDUAL',
+          gender: '*',
+          birthDate: null,
+        },
+      ],
+      attendancesByScheduleId: {
+        '9001': [{ participantId: 1694746, status: 'PRESENT' }],
+      },
+    })
+
+    expect(sessions[0]?.participants[0]?.genderBirthLabel.startsWith('*')).toBe(true)
+  })
+
   it('hides attendance before the session starts even when API returns PRESENT', () => {
     const sessions = buildProgressAttendanceSessionsFromRemote({
       schedules: [
@@ -261,7 +288,7 @@ describe('progress-attendance-adapters', () => {
           scheduleId: 9001,
           sessionNo: 1,
           scheduleStatus: 'SCHEDULED',
-          startAt: '2026-10-15T10:00:00+09:00',
+          startAt: '2099-10-15T10:00:00+09:00',
         },
       ],
       participants: [{ participantId: 1, memberName: '일반회원2', participantType: 'INDIVIDUAL' }],
@@ -274,6 +301,26 @@ describe('progress-attendance-adapters', () => {
     expect(row?.attendanceRecorded).toBe(false)
     expect(row?.attendanceStatus).toBeUndefined()
     expect(sessions[0]?.attendanceRecordingOpen).toBe(false)
+  })
+
+  it('opens attendance after start time even when schedule status is still SCHEDULED', () => {
+    const sessions = buildProgressAttendanceSessionsFromRemote({
+      schedules: [
+        {
+          scheduleId: 9002,
+          sessionNo: 2,
+          scheduleStatus: 'SCHEDULED',
+          startAt: '2026-10-27T03:55:00+09:00',
+        },
+      ],
+      participants: [{ participantId: 1, memberName: '일반회원2', participantType: 'INDIVIDUAL' }],
+      attendancesByScheduleId: {
+        '9002': [{ participantId: 1, status: 'PRESENT' }],
+      },
+    })
+
+    expect(sessions[0]?.attendanceRecordingOpen).toBe(true)
+    expect(sessions[0]?.participants[0]?.attendanceRecorded).toBe(true)
   })
 
   it('treats attendance row with null status as unrecorded when recording is open', () => {

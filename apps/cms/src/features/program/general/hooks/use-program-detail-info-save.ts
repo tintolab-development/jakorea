@@ -84,11 +84,16 @@ export function useProgramDetailInfoSave({
 }: UseProgramDetailInfoSaveOptions) {
   const savingRef = useRef(false)
   const saveFailureRef = useRef<'validation' | 'api' | null>(null)
-  const getAdditionalContentHtmlRef = useRef<() => string>(() => '')
+  const getAdditionalContentHtmlRef = useRef<(() => string) | null>(null)
 
   const registerGetAdditionalContentHtml = useCallback((getter: () => string) => {
     getAdditionalContentHtmlRef.current = getter
   }, [])
+
+  const getAdditionalContentHtml = useCallback(
+    () => getAdditionalContentHtmlRef.current?.(),
+    []
+  )
 
   const takeSaveFailure = useCallback(() => {
     const kind = saveFailureRef.current
@@ -330,5 +335,11 @@ export function useProgramDetailInfoSave({
     }
   }, [form, mapToValues, program])
 
-  return { triggerSave, resetToProgram, registerGetAdditionalContentHtml, takeSaveFailure }
+  return {
+    triggerSave,
+    resetToProgram,
+    registerGetAdditionalContentHtml,
+    getAdditionalContentHtml,
+    takeSaveFailure,
+  }
 }

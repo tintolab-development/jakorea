@@ -19,6 +19,10 @@ export type SelectedSchool = {
 export const SCHOOL_SELECTION_INCOMPLETE_MESSAGE =
   '선택한 학교 정보가 올바르지 않습니다. 학교를 다시 선택해 주세요.'
 
+/** CMS에 등록된 학교(`organizationId`)를 찾지 못했을 때 — 학교 검색 모달 선택 차단 */
+export const SCHOOL_NOT_REGISTERED_MESSAGE =
+  '아직 등록되지 않은 학교예요. 고객센터로 학교 등록을 요청해 주세요.'
+
 export function mapSearchResultToSelectedSchool(
   result: SchoolSearchResultItem,
 ): SelectedSchool | null {

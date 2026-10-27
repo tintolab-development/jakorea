@@ -1,6 +1,5 @@
 import type { SlotResponse } from '@/shared/api/generated/dashboard/schemas/slotResponse'
 import type { SchoolDetailAttendanceStudentRow } from '@/features/program/general/model/school-detail-types'
-import { parseStudentGradeClassForRosterApi } from '@/features/program/general/lib/student-registered-grade-class-options'
 import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 
 export const GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED =
@@ -16,36 +15,12 @@ export const ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_HINT =
 
 const ALLOWED_ASSIGNMENT_STATUSES = new Set(['TEMP_ASSIGNED', 'CONFIRMED'])
 
-/** 레거시 OSA row — OpenAPI `SlotResponse`에 grade/class가 없을 수 있음 */
-type LegacyOrganizationAssignmentSlotFields = {
-  grade?: string | null
-  className?: string | null
-  classLabel?: string | null
-}
-
-type OrganizationAssignmentSlot = SlotResponse & LegacyOrganizationAssignmentSlotFields
-
-function asOrganizationAssignmentSlot(slot: SlotResponse): OrganizationAssignmentSlot {
-  return slot as OrganizationAssignmentSlot
-}
-
 export type OrganizationAttendanceScopeMissingStep = 'SCHEDULE_ASSIGNMENT'
-
-export type OrganizationAttendanceScopeGradeClassSummary = {
-  grade: string
-  className: string
-  studentCount: number
-}
 
 export type OrganizationAttendanceScopeReadiness = {
   ready: boolean
   missingStep?: OrganizationAttendanceScopeMissingStep
   unassignedStudentCount: number
-  missingByGradeClass: OrganizationAttendanceScopeGradeClassSummary[]
-}
-
-export function normalizeOrganizationAttendanceScopeLabel(value: string): string {
-  return value.trim().toLowerCase()
 }
 
 function resolveSlotProgramScheduleId(slot: SlotResponse): number | null {
@@ -59,23 +34,6 @@ function resolveSlotProgramScheduleId(slot: SlotResponse): number | null {
 function resolveSlotActiveYn(slot: SlotResponse): boolean {
   const raw = (slot as SlotResponse & { activeYn?: boolean | null }).activeYn ?? slot.active
   return raw === true
-}
-
-function resolveSlotClassName(slot: OrganizationAssignmentSlot): string {
-  return (slot.className ?? slot.classLabel ?? '').trim()
-}
-
-function isPlaceholderAssignmentLabel(value: string): boolean {
-  const normalized = value.trim()
-  return !normalized || normalized === '미지정'
-}
-
-/** GENERAL schedule-only OSA — grade/class 없음 또는 미지정 placeholder */
-function isScheduleOnlyOrganizationAssignmentSlot(slot: SlotResponse): boolean {
-  const legacy = asOrganizationAssignmentSlot(slot)
-  const grade = (legacy.grade ?? '').trim()
-  const className = resolveSlotClassName(legacy)
-  return isPlaceholderAssignmentLabel(grade) && isPlaceholderAssignmentLabel(className)
 }
 
 function isSlotEligibleForAttendanceRecord(
@@ -104,71 +62,16 @@ function isSlotEligibleForAttendanceRecord(
   return true
 }
 
-function studentMatchesAssignmentSlot(
-  studentGrade: string,
-  studentClassName: string,
-  slot: SlotResponse
-): boolean {
-  if (isScheduleOnlyOrganizationAssignmentSlot(slot)) {
-    return true
-  }
-  const legacy = asOrganizationAssignmentSlot(slot)
-  const slotGrade = (legacy.grade ?? '').trim()
-  const slotClassName = resolveSlotClassName(legacy)
-  if (!slotGrade || !studentClassName.trim() || !slotClassName) return false
-
-  return (
-    normalizeOrganizationAttendanceScopeLabel(studentGrade) ===
-      normalizeOrganizationAttendanceScopeLabel(slotGrade) &&
-    normalizeOrganizationAttendanceScopeLabel(studentClassName) ===
-      normalizeOrganizationAttendanceScopeLabel(slotClassName)
-  )
-}
-
-function studentHasAttendanceAssignmentScope(
-  studentGrade: string,
-  studentClassName: string,
-  slots: SlotResponse[],
-  scopeInput: {
-    programId: string
-    organizationApplicationId: string
-    scheduleId: number
-  }
-): boolean {
-  return slots.some(
-    slot =>
-      isSlotEligibleForAttendanceRecord(slot, scopeInput) &&
-      studentMatchesAssignmentSlot(studentGrade, studentClassName, slot)
-  )
-}
-
-function summarizeMissingStudents(
-  missingStudents: Array<{ grade: string; className: string }>
-): OrganizationAttendanceScopeGradeClassSummary[] {
-  const counts = new Map<string, OrganizationAttendanceScopeGradeClassSummary>()
-  for (const student of missingStudents) {
-    const grade = student.grade.trim() || '-'
-    const className = student.className.trim() || '-'
-    const key = `${grade}\u0000${className}`
-    const existing = counts.get(key)
-    if (existing) {
-      existing.studentCount += 1
-    } else {
-      counts.set(key, { grade, className, studentCount: 1 })
-    }
-  }
-  return [...counts.values()].sort((a, b) =>
-    `${a.grade}${a.className}`.localeCompare(`${b.grade}${b.className}`, 'ko')
-  )
-}
-
-/** GENERAL_ORGANIZATION 회차 출석 저장 전 학급 일정 배정 scope 충족 여부 */
+/**
+ * GENERAL_ORGANIZATION 회차 출석 저장 전 기관 일정 배정 scope 충족 여부.
+ * 일반 기관 일정 배정은 scheduleId 단위(학년·학급 미연결)이므로 학생/배정의 grade·class_name은 보지 않는다.
+ * 최종 판정(명단 소속·배정 상태)은 서버 bulk-upsert 응답이 SSOT.
+ */
 export function evaluateOrganizationAttendanceScopeReadiness(input: {
   programId: string
   organizationApplicationId: string
   scheduleId: number
-  educationGrade?: string | null
-  rosterStudents: Array<Pick<SchoolDetailAttendanceStudentRow, 'participantId' | 'gradeClass'>>
+  rosterStudents: Array<Pick<SchoolDetailAttendanceStudentRow, 'participantId'>>
   assignmentSlots: SlotResponse[]
 }): OrganizationAttendanceScopeReadiness {
   const scopeInput = {
@@ -177,53 +80,36 @@ export function evaluateOrganizationAttendanceScopeReadiness(input: {
     scheduleId: input.scheduleId,
   }
 
-  const studentsForScope = input.rosterStudents.filter(
+  const rosterStudentCount = input.rosterStudents.filter(
     student =>
       student.participantId != null &&
       Number.isFinite(Number(student.participantId)) &&
       Number(student.participantId) > 0
-  )
+  ).length
 
-  if (studentsForScope.length === 0) {
+  if (rosterStudentCount === 0) {
     return {
       ready: false,
       missingStep: 'SCHEDULE_ASSIGNMENT',
       unassignedStudentCount: 0,
-      missingByGradeClass: [],
     }
   }
 
-  const missingStudents: Array<{ grade: string; className: string }> = []
+  const hasScheduleAssignment = input.assignmentSlots.some(slot =>
+    isSlotEligibleForAttendanceRecord(slot, scopeInput)
+  )
 
-  for (const student of studentsForScope) {
-    const { grade, className } = parseStudentGradeClassForRosterApi(
-      student.gradeClass ?? '',
-      input.educationGrade
-    )
-    const hasScope = studentHasAttendanceAssignmentScope(
-      grade,
-      className,
-      input.assignmentSlots,
-      scopeInput
-    )
-    if (!hasScope) {
-      missingStudents.push({ grade, className })
-    }
-  }
-
-  if (missingStudents.length === 0) {
+  if (hasScheduleAssignment) {
     return {
       ready: true,
       unassignedStudentCount: 0,
-      missingByGradeClass: [],
     }
   }
 
   return {
     ready: false,
     missingStep: 'SCHEDULE_ASSIGNMENT',
-    unassignedStudentCount: missingStudents.length,
-    missingByGradeClass: summarizeMissingStudents(missingStudents),
+    unassignedStudentCount: rosterStudentCount,
   }
 }
 
@@ -238,27 +124,19 @@ export function formatOrganizationAttendanceScopeBlockedDescription(
   if (readiness.unassignedStudentCount > 0) {
     lines.push(`미배정 학생 수: ${readiness.unassignedStudentCount}명`)
   }
-  if (readiness.missingByGradeClass.length > 0) {
-    const gradeClassLines = readiness.missingByGradeClass
-      .slice(0, 8)
-      .map(
-        item =>
-          `${item.grade} ${item.className} (${item.studentCount}명)`.trim()
-      )
-    lines.push(`미배정 학년·반: ${gradeClassLines.join(', ')}`)
-    if (readiness.missingByGradeClass.length > 8) {
-      lines.push(`외 ${readiness.missingByGradeClass.length - 8}개 학급`)
-    }
-  }
   if (readiness.missingStep) {
     lines.push(`선행 절차: ${readiness.missingStep}`)
   }
   return lines.join('\n')
 }
 
+/** 서버 code가 `GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED[:<participantId>]` 형태일 수 있어 prefix로 판정 */
 export function isGeneralOrganizationAttendanceScopeRequiredError(error: unknown): boolean {
+  const code = getApiErrorCode(error)
+  if (!code) return false
   return (
-    getApiErrorCode(error) === GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED
+    code === GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED ||
+    code.startsWith(`${GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED}:`)
   )
 }
 

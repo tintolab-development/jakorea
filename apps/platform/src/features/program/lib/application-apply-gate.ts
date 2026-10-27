@@ -5,12 +5,13 @@
  * `blockedReason` — HomepageProgramQueryService#blockedReason (Java enum 없음, 문자열 리터럴)
  *
  * 연간 참여 동의 3종(FACILITATOR_PLEDGE 등)은 options에 없음 — 배정 단계 409 / GET /me/consents.
- * `required-consent` 모달은 options 게이트에서 쓰지 않는다.
+ * `required-consent` 모달은 options 게이트(resolveProgramApplyGateModal)에서 쓰지 않고,
+ * GET /me/consents 기반 FE 가드(application-consent-guard.ts, use-program-apply-gate.ts)가 연다.
  */
 
 import type { PortalApplicationBlockedReason } from '../api/application-types'
 
-export type ProgramApplyGateModalKind = 'not-eligible' | 'already-applied'
+export type ProgramApplyGateModalKind = 'not-eligible' | 'already-applied' | 'required-consent'
 
 /**
  * Figma 「신청 대상이 아닙니다」 — 모집 대상·회원 유형·소속·강사 승인.

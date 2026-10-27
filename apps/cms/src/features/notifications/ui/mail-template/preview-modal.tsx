@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { RichTextViewer } from '@/shared/rich-text'
 import {
-  applyMailPreviewHtml,
+  applyMailPreviewBody,
   applyMailPreviewTokens,
   formatMailPreviewAttachment,
   formatMailPreviewDateTime,
@@ -45,7 +45,7 @@ export function PreviewModal({
   zIndex,
 }: PreviewModalProps) {
   const previewSubject = useMemo(() => applyMailPreviewTokens(subject), [subject])
-  const previewHtml = useMemo(() => applyMailPreviewHtml(bodyHtml), [bodyHtml])
+  const previewHtml = useMemo(() => applyMailPreviewBody(bodyHtml), [bodyHtml])
   const sender = formatMailPreviewPerson(senderName, senderEmail)
   const attachmentLines = attachments.map(formatMailPreviewAttachment).filter(Boolean)
   const showListActions = onEdit != null || onDelete != null

@@ -3,7 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { fetchProgramPlannedEducationSlots } from '@/features/program/general/lib/program-planned-education-slots'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
-import { buildSurveyPollScheduleSelectOptionsForProgram } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
+import {
+  buildSurveyPollScheduleSelectOptionsForProgram,
+  disableSurveyPollScheduleOptionsWithSurvey,
+  type SurveyPollScheduleBindingRef,
+} from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import type { Program } from '@/types/domain'
 
 /**
@@ -12,7 +16,9 @@ import type { Program } from '@/types/domain'
  */
 export function useProgramSurveyScheduleOptions(
   program: Program | null | undefined,
-  enabled: boolean
+  enabled: boolean,
+  /** 서버 form-binding 목록(classifiedBindings). 이미 설문이 있는 일정을 비활성화한다. */
+  existingBindings?: ReadonlyArray<SurveyPollScheduleBindingRef> | null
 ) {
   const programId = program?.id != null ? String(program.id) : undefined
   const query = useQuery({
@@ -25,8 +31,11 @@ export function useProgramSurveyScheduleOptions(
     if (program == null) {
       return []
     }
-    return buildSurveyPollScheduleSelectOptionsForProgram(program, query.data ?? [])
-  }, [program, query.data])
+    return disableSurveyPollScheduleOptionsWithSurvey(
+      buildSurveyPollScheduleSelectOptionsForProgram(program, query.data ?? []),
+      existingBindings
+    )
+  }, [program, query.data, existingBindings])
 
   useEffect(() => {
     if (!enabled || program == null || query.isLoading || query.isError || !import.meta.env.DEV) {

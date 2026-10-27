@@ -151,6 +151,7 @@ describe('saveProgramSurveyFormEdit', () => {
 
       expect(updateBinding).toHaveBeenNthCalledWith(1, '186051', '900', {
         submissionStartAt: '2026-10-20T00:00:00.000Z',
+        submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
       })
       expect(copyVersion).toHaveBeenCalled()
     } finally {
@@ -174,6 +175,7 @@ describe('saveProgramSurveyFormEdit', () => {
 
       expect(updateBinding).toHaveBeenNthCalledWith(1, '186051', '900', {
         submissionStartAt: '2026-10-20T00:00:00.000Z',
+        submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
       })
       expect(updateBinding).toHaveBeenLastCalledWith('186051', '900', {
         templateId: 2001,
@@ -187,12 +189,14 @@ describe('saveProgramSurveyFormEdit', () => {
     }
   })
 
-  it('시작일이 오늘이어도 생성일이 다른 IN_PROGRESS 설문은 양식 교체를 막는다', async () => {
+  it('시작일이 오늘이어도 생성일이 다른 IN_PROGRESS 설문은 양식 교체 없이 기간만 저장한다', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-10-19T09:00:00.000Z'))
     listBindings.mockResolvedValue([
       {
         bindingId: 900,
+        templateId: 1995,
+        templateVersionId: 352,
         progressStatus: 'IN_PROGRESS',
         submittedCount: 0,
         submissionStartAt: '2026-10-19T00:00:00.000Z',
@@ -201,52 +205,100 @@ describe('saveProgramSurveyFormEdit', () => {
     ])
 
     try {
-      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toMatchObject({
-        ok: false,
-        refetchBindings: true,
+      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+        ok: true,
+        templateId: 1995,
+        templateVersionId: 352,
       })
       expect(copyVersion).not.toHaveBeenCalled()
-      expect(updateBinding).not.toHaveBeenCalled()
+      expect(updateBinding).toHaveBeenCalledTimes(1)
+      expect(updateBinding).toHaveBeenCalledWith('186051', '900', {
+        submissionStartAt: '2026-10-20T00:00:00.000Z',
+        submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
+      })
     } finally {
       vi.useRealTimers()
     }
   })
 
-  it('최초 저장으로 version이 바뀐 당일 IN_PROGRESS 설문은 다시 잠금 해제하지 않는다', async () => {
+  it('최초 저장으로 version이 바뀐 당일 IN_PROGRESS 설문은 기간만 저장한다', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-10-19T09:00:00.000Z'))
     listBindings.mockResolvedValue([
       {
         ...TODAY_SURVEY_BINDING,
+        templateId: 1995,
         templateVersionId: 400,
       },
     ])
 
     try {
-      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toMatchObject({
-        ok: false,
-        refetchBindings: true,
+      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+        ok: true,
+        templateId: 1995,
+        templateVersionId: 400,
       })
-      expect(updateBinding).not.toHaveBeenCalled()
       expect(copyVersion).not.toHaveBeenCalled()
+      expect(updateBinding).toHaveBeenCalledWith('186051', '900', {
+        submissionStartAt: '2026-10-20T00:00:00.000Z',
+        submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
+      })
     } finally {
       vi.useRealTimers()
     }
   })
 
-  it('UTC 날짜가 같아도 Asia/Seoul 달력이 다르면 잠금 해제하지 않는다', async () => {
+  it('UTC 날짜가 같아도 Asia/Seoul 달력이 다르면 양식 교체 없이 기간만 저장한다', async () => {
     vi.useFakeTimers()
     // 2026-10-19T16:30Z = KST 10/20 01:30. start 10/19 09:00 KST.
     vi.setSystemTime(new Date('2026-10-19T16:30:00.000Z'))
-    listBindings.mockResolvedValue([TODAY_SURVEY_BINDING])
+    listBindings.mockResolvedValue([{ ...TODAY_SURVEY_BINDING, templateId: 1995 }])
 
     try {
-      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toMatchObject({
-        ok: false,
-        refetchBindings: true,
+      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+        ok: true,
+        templateId: 1995,
+        templateVersionId: 352,
       })
-      expect(updateBinding).not.toHaveBeenCalled()
       expect(copyVersion).not.toHaveBeenCalled()
+      expect(updateBinding).toHaveBeenCalledWith('186051', '900', {
+        submissionStartAt: '2026-10-20T00:00:00.000Z',
+        submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('응답 0건인 종료 설문은 기간을 다시 연 뒤 저장한다', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-27T00:00:00.000Z'))
+    listBindings
+      .mockResolvedValueOnce([
+        {
+          bindingId: 900,
+          formType: 'SURVEY',
+          templateVersionId: 352,
+          progressStatus: 'FINISHED',
+          submittedCount: 0,
+          submissionStartAt: '2026-10-24T15:00:00.000Z',
+          submissionEndAt: '2026-10-25T14:59:59.999Z',
+          createdAt: '2026-10-24T08:00:00.000Z',
+        },
+      ])
+      .mockResolvedValueOnce([UNLOCKED_BINDING])
+
+    try {
+      await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+        ok: true,
+        templateId: 2001,
+        templateVersionId: 400,
+      })
+      expect(updateBinding).toHaveBeenNthCalledWith(1, '186051', '900', {
+        submissionStartAt: '2026-10-28T00:00:00.000+09:00',
+        submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
+      })
+      expect(copyVersion).toHaveBeenCalled()
     } finally {
       vi.useRealTimers()
     }
@@ -318,17 +370,41 @@ describe('saveProgramSurveyFormEdit', () => {
     }
   })
 
-  it.each([
-    { progressStatus: 'IN_PROGRESS', submittedCount: 0, submissionStartAt: '2020-01-01T00:00:00.000Z' },
-    { progressStatus: 'BEFORE_START', submittedCount: 2 },
-  ])('does not copy when the binding is no longer swappable (%o)', async binding => {
-    listBindings.mockResolvedValue([{ bindingId: 900, ...binding }])
+  it('응답이 있는 설문은 복사하지 않는다', async () => {
+    listBindings.mockResolvedValue([
+      { bindingId: 900, progressStatus: 'BEFORE_START', submittedCount: 2 },
+    ])
 
     await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toMatchObject({
       ok: false,
       refetchBindings: true,
     })
     expect(copyVersion).not.toHaveBeenCalled()
+    expect(updateBinding).not.toHaveBeenCalled()
+  })
+
+  it('과거부터 진행 중인 응답 0건 설문은 기간만 저장한다', async () => {
+    listBindings.mockResolvedValue([
+      {
+        bindingId: 900,
+        templateId: 1995,
+        templateVersionId: 352,
+        progressStatus: 'IN_PROGRESS',
+        submittedCount: 0,
+        submissionStartAt: '2020-01-01T00:00:00.000Z',
+      },
+    ])
+
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+      ok: true,
+      templateId: 1995,
+      templateVersionId: 352,
+    })
+    expect(copyVersion).not.toHaveBeenCalled()
+    expect(updateBinding).toHaveBeenCalledWith('186051', '900', {
+      submissionStartAt: '2026-10-20T00:00:00.000Z',
+      submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
+    })
   })
 })
 

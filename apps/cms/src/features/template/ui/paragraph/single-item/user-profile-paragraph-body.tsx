@@ -31,7 +31,7 @@ export function UserProfileParagraphBody({
         {paragraph.fields.map(f => (
           <label key={f.key} className="form-editor-user-grid__cell">
             <CmsCheckbox
-              checkboxSize="large"
+              checkboxSize="medium"
               checked={f.enabled}
               onChange={e => {
                 if (!isEditMode) return

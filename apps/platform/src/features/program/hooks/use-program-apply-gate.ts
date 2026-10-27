@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import { fetchPortalConsents } from '@/features/mypage/settings/api/consents'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import {
@@ -17,6 +18,11 @@ import {
   resolveProgramApplyGateModal,
   type ProgramApplyGateModalKind,
 } from '../lib/application-apply-gate'
+import {
+  findMissingApplyConsents,
+  resolveRequiredApplyConsentTypes,
+  type RequiredApplyConsentType,
+} from '../lib/application-consent-guard'
 import { parsePortalProgramId } from '../api/mappers'
 
 export function useProgramApplyGate(
@@ -26,6 +32,7 @@ export function useProgramApplyGate(
   const queryClient = useQueryClient()
   const [gateModal, setGateModal] = useState<ProgramApplyGateModalKind | null>(null)
   const [isChecking, setIsChecking] = useState(false)
+  const [missingConsents, setMissingConsents] = useState<RequiredApplyConsentType[]>([])
 
   const readGateModalForOptions = useCallback(
     (canApply?: boolean, blockedReason?: string | null) => {
@@ -94,6 +101,33 @@ export function useProgramApplyGate(
     [programId, queryClient, readGateModalForOptions],
   )
 
+  /**
+   * 필수 동의(초상권, UJAT 는 서약·동의 4종) 미완료 항목. 조회 실패는 막지 않는다(fail-open).
+   * 이미 동의했는데 마이페이지에서 방금 작성한 경우를 위해 항상 서버에서 다시 읽는다.
+   */
+  const findMissingRequiredConsents = useCallback(async (): Promise<
+    RequiredApplyConsentType[]
+  > => {
+    try {
+      const summaries = await queryClient.fetchQuery({
+        queryKey: platformQueryKeys.mypage.consents(),
+        queryFn: ({ signal }) => fetchPortalConsents(signal),
+        staleTime: 0,
+      })
+      return findMissingApplyConsents(
+        summaries,
+        resolveRequiredApplyConsentTypes({ programType: selection?.programType }),
+      )
+    } catch {
+      return []
+    }
+  }, [queryClient, selection?.programType])
+
+  const openRequiredConsentModal = useCallback((missing: RequiredApplyConsentType[]) => {
+    setMissingConsents(missing)
+    setGateModal('required-consent')
+  }, [])
+
   const runApplyGate = useCallback(
     async (onProceed: () => void) => {
       const remote = isRemoteApiConfigured()
@@ -118,12 +152,28 @@ export function useProgramApplyGate(
           return
         }
 
+        // 모집 전·마감 등 canApply=false 는 신청서 배너에 맡기고, 신청 가능한 경우에만 동의를 확인한다.
+        if (option?.canApply !== false) {
+          const missing = await findMissingRequiredConsents()
+          if (missing.length > 0) {
+            openRequiredConsentModal(missing)
+            return
+          }
+        }
+
         onProceed()
       } finally {
         setIsChecking(false)
       }
     },
-    [fetchSelectedOption, preflightSelectedForm, programId, readGateModalForOptions],
+    [
+      fetchSelectedOption,
+      findMissingRequiredConsents,
+      openRequiredConsentModal,
+      preflightSelectedForm,
+      programId,
+      readGateModalForOptions,
+    ],
   )
 
   const closeGateModal = useCallback(() => {
@@ -137,5 +187,8 @@ export function useProgramApplyGate(
     isChecking,
     runApplyGate,
     readGateModalForOptions,
+    missingConsents,
+    findMissingRequiredConsents,
+    openRequiredConsentModal,
   }
 }

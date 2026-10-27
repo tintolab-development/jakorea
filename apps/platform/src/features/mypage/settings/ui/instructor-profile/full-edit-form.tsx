@@ -91,7 +91,8 @@ function validateInstructorFullEdit(values: InstructorSharedProfileFormValues): 
 
 /**
  * 교사 겸 강사 — 항상 교사 가입 + 강사 신청이므로 교사 회원과 동일하게 다룸
- * (`memberType=school_teacher`, 강사 프로필에 학교가 없으면 포털 교사 소속으로 채움)
+ * (`memberType=school_teacher`, 학교·재직 현황은 포털 교사 소속(teacher_profile) 우선,
+ * 없으면 강사 프로필 JSON으로 채움)
  */
 function buildInitialValues(
   profile: SettingsProfileInput,
@@ -102,10 +103,10 @@ function buildInitialValues(
   return {
     ...initialValues,
     memberType: 'school_teacher',
-    schoolName: initialValues.schoolName.trim() || profile.schoolName?.trim() || '',
+    schoolName: profile.schoolName?.trim() || initialValues.schoolName.trim() || '',
     employmentStatus:
-      initialValues.employmentStatus ||
-      toInstructorFormEmploymentStatus(profile.teacherEmploymentStatus),
+      toInstructorFormEmploymentStatus(profile.teacherEmploymentStatus) ||
+      initialValues.employmentStatus,
   }
 }
 

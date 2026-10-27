@@ -171,6 +171,7 @@ export function IdTypeWithInputBody({
         ]
           .filter(Boolean)
           .join(' ')}
+        size="medium"
         value={selectedId ?? undefined}
         onChange={e => {
           if (!isEditMode || lockResidentIdType) return

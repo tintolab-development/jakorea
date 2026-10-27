@@ -106,6 +106,18 @@ export const STUDENT_GENDER_LABELS: Record<StudentGenderKey, string> = {
   female: '여',
 }
 
+/** 학생 명단·출석 성별. 남/여는 한글, 마스킹 값은 서버 원문. */
+export function formatStudentGenderLabel(
+  gender?: StudentGenderKey | null,
+  genderMask?: string | null,
+  empty = '-'
+): string {
+  if (gender && STUDENT_GENDER_LABELS[gender]) return STUDENT_GENDER_LABELS[gender]
+  const mask = genderMask?.trim()
+  if (mask) return mask
+  return empty
+}
+
 export interface SchoolDetailStudentRow {
   /** 화면 행 키. 서버 학생 식별자가 아니다. */
   id: string
@@ -120,8 +132,10 @@ export interface SchoolDetailStudentRow {
   participantId?: number
   no: number
   name: string
-  /** 성별: '남' | '여' 표시용 */
+  /** 성별: '남' | '여' 표시용. 마스킹 값은 `genderMask`. */
   gender?: StudentGenderKey
+  /** 조회 응답 성별이 `*`처럼 마스킹된 경우 원문 그대로 */
+  genderMask?: string
   /** 예: 2010. 07. 15. */
   birthDate?: string
   gradeClass: string
@@ -186,6 +200,11 @@ export interface LectureAttendanceSession {
   status: LectureAttendanceStatusKey
   /** 진행 출석 정정용 schedule PK */
   scheduleId?: number
+  /**
+   * 강의 시작 시각이 지나 출석을 기록할 수 있는 회차.
+   * 기록이 없어도 정정 모드에서 출석/결석/지각을 고를 수 있다.
+   */
+  recordingOpen?: boolean
 }
 
 export interface LectureAttendanceDetail {
@@ -268,7 +287,18 @@ export const ASSIGNMENT_SUBMISSION_ROW_STATUS_LABELS: Record<
 }
 
 /** 학교 상세 > 출석 관리 탭 — 회차별 출결 상태 */
-export type SchoolSessionAttendanceStatusKey = 'present' | 'absent' | 'late'
+export type SchoolSessionAttendanceEditableStatusKey = 'present' | 'absent' | 'late'
+
+export type SchoolSessionAttendanceStatusKey =
+  | SchoolSessionAttendanceEditableStatusKey
+  | 'excused'
+  | 'unrecorded'
+
+export const SCHOOL_SESSION_ATTENDANCE_EDITABLE_STATUS_KEYS = [
+  'present',
+  'absent',
+  'late',
+] as const satisfies readonly SchoolSessionAttendanceEditableStatusKey[]
 
 export const SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS: Record<
   SchoolSessionAttendanceStatusKey,
@@ -277,6 +307,8 @@ export const SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS: Record<
   present: '출석',
   absent: '결석',
   late: '지각',
+  excused: '사유 불참',
+  unrecorded: '미기록',
 }
 
 export const SCHOOL_ATTENDANCE_FILTER_ALL = 'all'
@@ -294,11 +326,17 @@ export interface SchoolDetailAttendanceStudentRow {
   no: number
   name: string
   gender?: StudentGenderKey
+  /** 조회 성별이 `*`처럼 마스킹된 경우 원문 */
+  genderMask?: string
   birthDate?: string
   gradeClass: string
   contact?: string
   email?: string
   status: SchoolSessionAttendanceStatusKey
+  /** 서버 원본 출결 코드. 화면 편집값(`status`)과 분리한다. */
+  recordedApiStatus?: string | null
+  /** 서버에 실제 출결이 기록되어 있는지. 미기록 기본 선택과 구분한다. */
+  attendanceRecorded: boolean
   /** schedule attendances / bulk-upsert 키 — roster `participantId` */
   participantId?: number | null
 }
@@ -310,6 +348,10 @@ export interface SchoolDetailAttendanceSessionGroup {
   filterValue: string
   /** program_schedule id — 없으면 출석 GET/저장 불가 */
   scheduleId?: number | null
+  /** scheduleId가 없어 저장할 수 없는 회차 */
+  scheduleIdUnresolved: boolean
+  /** 서버가 출석 입력을 받을 수 있는 일정인지(시작 전 등은 false) */
+  attendanceRecordingOpen: boolean
   /** 회차/일정 선행 라벨 (커리큘럼: 1회차·1차시, 일정형: 일정명) */
   sessionLeadLabel: string
   /** 회차 헤더 — table-title (예: 1회차 : 2026. 01. 09(금)) */

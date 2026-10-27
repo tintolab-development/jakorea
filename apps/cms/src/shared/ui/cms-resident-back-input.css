@@ -31,7 +31,7 @@
   background: transparent;
   color: inherit;
   font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: var(--cms-control-font, 16px);
+  font-size: var(--cms-control-font, 16px) !important;
   font-weight: 500;
   line-height: 150%;
 }

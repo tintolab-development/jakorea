@@ -9,15 +9,16 @@ const items = [
 ] as const
 
 assert.deepEqual(
-  filterEducationSchedulesForMemberAssignment(items, 'ASSIGNMENT_SCOPED').map(item => item.id),
+  filterEducationSchedulesForMemberAssignment(items).map(item => item.id),
   ['187394'],
 )
 assert.deepEqual(
-  filterEducationSchedulesForMemberAssignment(items, 'RECORDED_ONLY').map(item => item.id),
-  ['187394'],
+  filterEducationSchedulesForMemberAssignment([
+    { id: 'null', scheduleId: null },
+    { id: 'zero', scheduleId: 0 },
+    { id: 'ok', scheduleId: 1 },
+  ]).map(item => item.id),
+  ['ok'],
 )
-assert.equal(filterEducationSchedulesForMemberAssignment(items, 'PROGRAM_SCHEDULE').length, 4)
-assert.equal(filterEducationSchedulesForMemberAssignment(items, 'NO_SCOPE_EVIDENCE').length, 4)
-assert.equal(filterEducationSchedulesForMemberAssignment(items, null).length, 4)
 
 console.log('scope-status.selfcheck: ok')

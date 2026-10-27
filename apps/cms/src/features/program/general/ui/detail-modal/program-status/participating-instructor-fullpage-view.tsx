@@ -1355,8 +1355,7 @@ export function ParticipatingInstructorFullpageView({
             <>
               <CmsButton
                 variant="delete"
-                size="large"
-                width={140}
+                size="h40"
                 disabled={
                   isActivityWithdrawn ||
                   applicationInfoEdit.isEditing ||
@@ -1368,14 +1367,15 @@ export function ParticipatingInstructorFullpageView({
               </CmsButton>
               <CmsButton
                 variant="secondary"
-                size="large"
-                width={180}
+                size="h40"
                 icon={<ButtonDownloadIcon />}
                 onClick={handleActivityCertificateIssueClick}
               >
                 활동인증서 발급
               </CmsButton>
               <ProgramEditInfoActions
+                size="h40"
+                width={false}
                 isEditing={applicationInfoEdit.isEditing}
                 idleVariant="secondary"
                 onEdit={applicationInfoEdit.enterEdit}
@@ -1386,8 +1386,7 @@ export function ParticipatingInstructorFullpageView({
               />
               <CmsButton
                 variant="primary"
-                size="large"
-                width={140}
+                size="h40"
                 disabled={applicationInfoEdit.isEditing}
                 onClick={handleAdminCommentEditEnter}
               >
@@ -1396,7 +1395,8 @@ export function ParticipatingInstructorFullpageView({
               <PersonalInfoRevealButton
                 labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
-                width={180}
+                cmsSize="h40"
+                width="auto"
                 onClick={handlePrivacyToggleClick}
               />
             </>
@@ -1427,12 +1427,12 @@ export function ParticipatingInstructorFullpageView({
                   <span className="table-description">{assignedSchools.length}건</span>
                 </div>
                 <div className="info-section-buttons--wrapper">
-                  <CmsButton variant="delete" size="large" onClick={handleUnassignClick}>
+                  <CmsButton variant="delete" size="h40" onClick={handleUnassignClick}>
                     배정 취소
                   </CmsButton>
                   <CmsButton
                     variant="secondary"
-                    size="large"
+                    size="h40"
                     disabled={addAssignOptions.length === 0}
                     onClick={() => {
                       if (addAssignOptions.length === 0) {
@@ -1489,7 +1489,7 @@ export function ParticipatingInstructorFullpageView({
                   <span className="table-description">{waitingSchools.length}건</span>
                 </div>
                 <div className="info-section-buttons--wrapper">
-                  <CmsButton variant="secondary" size="large" onClick={handleSelectAssignClick}>
+                  <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
                     선택 배정
                   </CmsButton>
                   <ExcelButton

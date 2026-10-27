@@ -3,6 +3,7 @@ import type {
   NotificationDeliveryResponse,
 } from '@/shared/api/generated/notifications/schemas'
 import { formatMailPreviewPerson } from '@/features/notifications/model/mail-template/preview'
+import { mailBodyToDisplayHtml } from '@/features/notifications/model/shared/mail-body-display-html'
 import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 import type {
   MailBroadcastTiming,
@@ -170,14 +171,14 @@ export function mapMailDeliveryToSendHistoryRow(
     'titleTemplate',
   ])
   const subject = subjectFromPreview || subjectFromItem || '-'
-  // 본문: renderedContent || contentTemplate (failedReason을 본문에 넣지 않음)
-  const bodyHtml = previewString(previewRecord, [
-    'renderedContent',
-    'contentTemplate',
-    'bodyHtml',
-    'content',
-    'body',
-  ])
+  // 본문: renderedContent(BE가 이미 HTML 변환·이스케이프한 발송 스냅샷, 그대로 사용) → contentTemplate.
+  // contentTemplate(등록 원문)이 평문이면 줄바꿈이 보이도록 이스케이프 + <br> (failedReason 금지)
+  const renderedContent = previewString(previewRecord, ['renderedContent'])
+  const bodyHtml =
+    renderedContent ||
+    mailBodyToDisplayHtml(
+      previewString(previewRecord, ['contentTemplate', 'bodyHtml', 'content', 'body'])
+    )
 
   const sendStatus = mapSendStatus(item.sendStatus)
   const failedReasonRaw = item.failedReason?.trim() || ''

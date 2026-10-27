@@ -3,12 +3,19 @@
  * — program schedules + schedule attendances 로 조회/정정
  */
 
+import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
+import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
+import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import type {
   LectureAttendanceDetail,
   LectureAttendanceSession,
   LectureAttendanceStatusKey,
 } from '@/features/program/general/model/school-detail-types'
 import { countLectureAttendanceHeldAndAttended } from '@/features/program/general/lib/lecture-attendance-count'
+import { isScheduleAttendanceOpenForDisplay } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
+import { isGeneralProgressEducationSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
+import { mapOrganizationScheduleAssignmentSlotsToAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
 import {
   bulkUpsertProgramAttendancesRemote,
   fetchAttendancesByScheduleIdsRemote,
@@ -41,40 +48,148 @@ function mapLectureStatusToApi(
   return null
 }
 
+type LectureRoundRow = {
+  scheduleId: number
+  roundNumber: number
+  schedule?: DashboardProgramScheduleResponse
+}
+
+function dashboardScheduleById(
+  schedules: readonly DashboardProgramScheduleResponse[]
+): Map<number, DashboardProgramScheduleResponse> {
+  const byId = new Map<number, DashboardProgramScheduleResponse>()
+  for (const schedule of schedules) {
+    const id = schedule.scheduleId
+    if (id == null || !Number.isFinite(id) || id <= 0) continue
+    byId.set(Math.trunc(id), schedule)
+  }
+  return byId
+}
+
+function toProgramSchedule(schedule: DashboardProgramScheduleResponse): ProgramScheduleResponse | null {
+  const id = schedule.scheduleId
+  if (id == null || !Number.isFinite(id) || id <= 0) return null
+  return {
+    id: Math.trunc(id),
+    sessionNo: schedule.sessionNo,
+    scheduleName: schedule.scheduleName,
+    startAt: schedule.startAt,
+    endAt: schedule.endAt,
+    allDay: schedule.allDay,
+    scheduleStatus: schedule.scheduleStatus,
+  }
+}
+
+/** 기관 배정이 없을 때 프로그램 교육 회차. 운영 기간 창은 회차가 아니다. */
+function educationSessionRoundRows(
+  schedules: readonly DashboardProgramScheduleResponse[]
+): LectureRoundRow[] {
+  return schedules
+    .filter(isGeneralProgressEducationSessionSchedule)
+    .flatMap((schedule, index) => {
+      const scheduleId = schedule.scheduleId
+      if (scheduleId == null || !Number.isFinite(scheduleId) || scheduleId <= 0) return []
+      return [
+        {
+          schedule,
+          scheduleId: Math.trunc(scheduleId),
+          roundNumber: schedule.sessionNo ?? index + 1,
+        },
+      ]
+    })
+    .sort((a, b) => a.roundNumber - b.roundNumber)
+}
+
+function assignedRoundRows(
+  schedules: readonly DashboardProgramScheduleResponse[],
+  slots: Awaited<ReturnType<typeof fetchOrganizationScheduleAssignmentsRemote>>,
+  scope: { programId: string; organizationApplicationId: string }
+): LectureRoundRow[] {
+  const scheduleById = dashboardScheduleById(schedules)
+  const programSchedules = schedules.flatMap(schedule => {
+    const mapped = toProgramSchedule(schedule)
+    return mapped ? [mapped] : []
+  })
+  const assigned = mapOrganizationScheduleAssignmentSlotsToAssignedSessions(
+    slots,
+    programSchedules,
+    scope
+  )
+  const seen = new Set<number>()
+  const rows: LectureRoundRow[] = []
+  for (const session of assigned) {
+    const scheduleId = session.resolvedScheduleId
+    if (scheduleId == null || seen.has(scheduleId)) continue
+    seen.add(scheduleId)
+    rows.push({
+      scheduleId,
+      roundNumber: session.round,
+      schedule: scheduleById.get(scheduleId),
+    })
+  }
+  return rows
+}
+
+function isLectureRecordingOpen(schedule?: DashboardProgramScheduleResponse): boolean {
+  if (!schedule || !isScheduleAttendanceOpenForDisplay(schedule)) return false
+  if (schedule.startAt?.trim()) return true
+  const status = (schedule.scheduleStatus ?? '').trim().toUpperCase()
+  return (
+    status === 'IN_PROGRESS' ||
+    status === 'ONGOING' ||
+    status === 'COMPLETED' ||
+    status === 'DONE' ||
+    status === 'FINISHED'
+  )
+}
+
+function toLectureSession(
+  row: LectureRoundRow,
+  items: readonly AttendanceItemResponse[] | undefined,
+  participantId: number
+): LectureAttendanceSession {
+  const mine = items?.find(item => Number(item.participantId) === participantId)
+  return {
+    roundNumber: row.roundNumber,
+    scheduleId: row.scheduleId,
+    status: mine ? mapApiStatusToLecture(mine.status) : 'not_held',
+    ...(isLectureRecordingOpen(row.schedule) ? { recordingOpen: true } : {}),
+  }
+}
+
 export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
   programId: string
   participantId: number
   studentName: string
+  organizationApplicationId?: string | null
 }): Promise<LectureAttendanceDetail> {
+  const organizationApplicationId = input.organizationApplicationId?.trim() ?? ''
   const schedules = await fetchProgramSchedulesViaDashboardRemote(input.programId)
-  const withIds = schedules
-    .map((schedule, index) => ({
-      schedule,
-      scheduleId: schedule.scheduleId,
-      roundNumber: schedule.sessionNo ?? index + 1,
-    }))
-    .filter(
-      (row): row is typeof row & { scheduleId: number } =>
-        row.scheduleId != null && Number.isFinite(Number(row.scheduleId))
-    )
-    .sort((a, b) => a.roundNumber - b.roundNumber)
+  const assignedSlots = organizationApplicationId
+    ? await fetchOrganizationScheduleAssignmentsRemote(input.programId, organizationApplicationId)
+    : null
+  const assignedRows =
+    assignedSlots == null
+      ? []
+      : assignedRoundRows(schedules, assignedSlots, {
+          programId: input.programId,
+          organizationApplicationId,
+        })
+  const roundRows = assignedRows.length > 0 ? assignedRows : educationSessionRoundRows(schedules)
 
-  const scheduleIdList = withIds.map(row => row.scheduleId)
   const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
     input.programId,
-    scheduleIdList
+    roundRows.map(row => row.scheduleId),
+    organizationApplicationId ? { organizationApplicationId } : {}
   )
 
-  const sessions: LectureAttendanceSession[] = withIds.flatMap(row => {
-    const items = attendancesByScheduleId[String(row.scheduleId)]
-    if (!Array.isArray(items) || items.length === 0) return []
-    const mine = items.find(item => Number(item.participantId) === input.participantId)
-    return [{
-      roundNumber: row.roundNumber,
-      scheduleId: row.scheduleId,
-      status: mine ? mapApiStatusToLecture(mine.status) : 'not_held',
-    }]
-  })
+  const sessions: LectureAttendanceSession[] = roundRows.map(row =>
+    toLectureSession(
+      row,
+      attendancesByScheduleId[String(row.scheduleId)],
+      input.participantId
+    )
+  )
 
   const { attended, held } = countLectureAttendanceHeldAndAttended(sessions)
   return {

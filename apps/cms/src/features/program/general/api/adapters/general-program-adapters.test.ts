@@ -849,6 +849,43 @@ describe('general-program-adapters', () => {
     ).toBe('GENERAL')
   })
 
+  it('신규 등록 recruitments[]에 모집 행별 썸네일·첨부 fileObjectId를 싣고 수정 요청에는 넣지 않는다', () => {
+    const overlay = {
+      'recruit.detailInfo.thumbFileObjectId': 186900,
+      'recruit.detailInfo.attachmentFileObjectIds': [186901, 186902],
+      'recruitInstructor.detailInfo.thumbFileObjectId': 186910,
+      'recruitInstructor.detailInfo.attachmentFileObjectIds': [186911],
+    }
+    const program: Program = {
+      ...sampleProgram,
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+      instructorApplicationStartDate: '2026-03-01T00:00:00.000Z',
+      instructorApplicationEndDate: '2026-03-31T00:00:00.000Z',
+      registrationOverlay: overlay,
+    }
+    const create = mapGeneralProgramToCreateRequest(program)
+    const participant = create.recruitments?.find(
+      row => row.recruitmentType === 'PARTICIPANT' && row.targetType === 'ORGANIZATION'
+    )
+    const instructor = create.recruitments?.find(row => row.recruitmentType === 'INSTRUCTOR')
+    expect(participant).toMatchObject({
+      recruitmentType: 'PARTICIPANT',
+      targetType: 'ORGANIZATION',
+      thumbnailFileObjectId: 186900,
+      attachmentFileObjectIds: [186901, 186902],
+    })
+    expect(instructor).toMatchObject({
+      recruitmentType: 'INSTRUCTOR',
+      thumbnailFileObjectId: 186910,
+      attachmentFileObjectIds: [186911],
+    })
+
+    const update = mapGeneralProgramToUpdateRequest(program)
+    expect(update.recruitments?.some(row => 'thumbnailFileObjectId' in row)).toBe(false)
+    expect(update.recruitments?.some(row => 'attachmentFileObjectIds' in row)).toBe(false)
+  })
+
   it('does not put create-only fields on update request', () => {
     const request = mapGeneralProgramToUpdateRequest(sampleProgram)
     expect(request).not.toHaveProperty('programType')

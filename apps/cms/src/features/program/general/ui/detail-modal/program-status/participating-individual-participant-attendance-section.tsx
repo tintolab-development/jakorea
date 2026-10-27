@@ -64,7 +64,7 @@ import {
 import { handleError } from '@/shared/utils/error-handler'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
-import { formatAttendanceRecordingNotOpenMessage } from '@/features/program/general/lib/attendance-recording-not-open'
+import { isAttendanceRecordingNotOpenError } from '@/features/program/general/lib/attendance-recording-not-open'
 import {
   ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
   isInvalidAttendanceArrivalTimeError,
@@ -282,11 +282,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       })
     },
     onError: error => {
-      const notOpenMessage = formatAttendanceRecordingNotOpenMessage(error)
-      if (notOpenMessage) {
-        showAlert({ title: '안내', content: notOpenMessage })
-        return
-      }
+      if (isAttendanceRecordingNotOpenError(error)) return
       if (isInvalidAttendanceArrivalTimeError(error)) {
         showAlert({ title: '안내', content: ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE })
         return
@@ -360,7 +356,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         },
         error => {
           if (isGlobalApiErrorAlertShown(error)) return
-          if (formatAttendanceRecordingNotOpenMessage(error)) return
+          if (isAttendanceRecordingNotOpenError(error)) return
           if (isInvalidAttendanceArrivalTimeError(error)) return
           showAlert({
             title: '안내',

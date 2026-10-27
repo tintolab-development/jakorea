@@ -245,6 +245,86 @@ describe('student-roster-adapters', () => {
     })
   }
 
+  it('uses raw phone and email from privacy-detail and keeps masked values otherwise', () => {
+    const revealed = mapStudentRosterItemToRow(
+      {
+        rosterId: 1691662,
+        studentName: '홍길동',
+        gender: 'male',
+        birthDate: '1997-09-19',
+        grade: '1학년',
+        className: '2반',
+        studentNo: 1,
+        maskedPhone: '010-****-2222',
+        maskedEmail: 'ho*@example.com',
+        phone: '010-1111-2222',
+        email: 'hong@example.com',
+      },
+      0
+    )
+    expect(revealed.contact).toBe('010-1111-2222')
+    expect(revealed.email).toBe('hong@example.com')
+    expect(revealed.name).toBe('홍길동')
+    expect(revealed.serverRosterId).toBe(1691662)
+
+    const masked = mapStudentRosterItemToRow(
+      {
+        rosterId: 1691662,
+        studentName: '홍*동',
+        gender: '*',
+        birthDate: undefined,
+        birthYear: 1997,
+        maskedPhone: '010-****-2222',
+        maskedEmail: 'ho*@example.com',
+      },
+      0
+    )
+    expect(masked.contact).toBe('010-****-2222')
+    expect(masked.email).toBe('ho*@example.com')
+    expect(masked.gender).toBeUndefined()
+    expect(masked.genderMask).toBe('*')
+    expect(masked.birthDate).toBeUndefined()
+  })
+
+  it('keeps stored birthDate and gender when an existing masked row is sent with a new student', () => {
+    const body = mapStudentRowsToRosterCommitRequest({
+      expectedRevisionNo: 2,
+      educationGrade: '1학년',
+      rows: [
+        {
+          id: '1691662',
+          serverRosterId: 1691662,
+          no: 1,
+          name: '홍*동',
+          gradeClass: '1학년 2반',
+          contact: '010-****-2222',
+          email: 'ho*@example.com',
+        },
+        {
+          id: 'draft-student-11111111-2222-3333-4444-555555555555',
+          no: 2,
+          name: '신규학생',
+          gender: 'female',
+          birthDate: '2010. 04. 04.',
+          gradeClass: '1학년 2반',
+          contact: '010-1111-2222',
+          email: 'new@example.com',
+        },
+      ],
+    })
+    expect(body.rows[0]).toEqual({
+      rosterId: 1691662,
+      studentName: '홍*동',
+      className: '2반',
+      studentNo: 1,
+      grade: '1학년',
+    })
+    expect(body.rows[1]?.rosterId).toBeUndefined()
+    expect(body.rows[1]?.gender).toBe('female')
+    expect(body.rows[1]?.birthDate).toBe('2010-04-04')
+    expect(body.rows[1]?.phone).toBe('010-1111-2222')
+  })
+
   it('T01/T02: new rows omit rosterId even when the temp id starts with digits', () => {
     const uuidLike = '67243e8a-4f2b-4c1d-9a10-aabbccddeeff'
     expect(Number.parseInt(uuidLike, 10)).toBe(67243)
