@@ -67,7 +67,7 @@ import {
 import { DetailPanel } from './detail-panel'
 import { FormModal } from './form-modal'
 import { PreviewModal } from './preview-modal'
-import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/talent-donation-layout'
+import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/resolve-body'
 import type { MailTemplateFormDraft } from './use-form'
 import '@/pages/programs/program-list-page.css'
 import '@/features/notifications/ui/alimtalk-template/list.css'

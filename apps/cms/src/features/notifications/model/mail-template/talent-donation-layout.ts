@@ -12,7 +12,22 @@
  * 4칸(140 / flex / 140 / flex)이어야 아래 신청자 표와 열이 맞는다.
  */
 
-export const TALENT_DONATION_MAIL_LAYOUT_VERSION = 'talent-donation-v10'
+import {
+  ensurePresetLayoutMarker,
+  mailDetailButton,
+  mailFirstRowSpanRestLock,
+  mailGreetingParagraphs,
+  mailLabelCell,
+  mailLongTextValueCell,
+  mailSectionHeading,
+  mailTableShell,
+  mailValueCell,
+  mailVariable,
+  resolvePresetBodyHtml,
+  wrapMailLayoutHtml,
+} from './layout-html'
+
+export const TALENT_DONATION_MAIL_LAYOUT_VERSION = 'talent-donation-v11'
 
 /** 현재 재능기부 신청 알림 메일 템플릿의 CMS template id. */
 export const TALENT_DONATION_MAIL_TEMPLATE_ID = '237'
@@ -33,165 +48,127 @@ export const TALENT_DONATION_MAIL_DATA_VARIABLE_LABELS = [
   '간단한 약력 소개',
   '기부 가능한 재능 소개',
   '참여 동기',
+  'JA 프로그램 참여 이력',
+  '자유 제출 파일',
 ] as const
 
 export const TALENT_DONATION_MAIL_DETAIL_LINK_VARIABLE_LABEL = '알림 링크 경로'
 
-const LABEL_COL_WIDTH_PX = 140
-
-const variable = (label: string) => `<span data-mail-variable="${label}">#{${label}}</span>`
-
-const cellStyle =
-  'border:0;vertical-align:middle;color:#3d3d3d;font-family:Pretendard,Arial,sans-serif;font-size:12px;line-height:1.5;'
-const labelCellStyle = `${cellStyle}width:${LABEL_COL_WIDTH_PX}px;min-width:${LABEL_COL_WIDTH_PX}px;max-width:${LABEL_COL_WIDTH_PX}px;padding:9px 10px;background:linear-gradient(0deg,rgba(231,235,239,0.6) 0%,rgba(231,235,239,0.6) 100%),#fff;text-align:center;font-weight:700;white-space:nowrap;`
-const valueCellStyle = `${cellStyle}padding:9px 12px;background:#ffffff;text-align:left;font-weight:500;word-break:break-word;`
-const longTextValueCellStyle = `${cellStyle}vertical-align:top;padding:9px 12px;background:#ffffff;text-align:left;font-weight:500;word-break:break-word;`
-const labelCellAttributes = `colwidth="${LABEL_COL_WIDTH_PX}"`
-
-function sectionHeading(label: string): string {
-  return `<h3 style="margin:0 0 6px 0;color:#3d3d3d;font-family:Pretendard,Arial,sans-serif;font-size:14px;line-height:1.4;font-weight:700;">${label}</h3>`
-}
-
 function introduction(): string {
-  const paragraphStyle =
-    'margin:0 0 24px 0;color:#3d3d3d;font-family:Pretendard,Arial,sans-serif;font-size:14px;line-height:1.5;'
-
-  return `
-    <p style="${paragraphStyle}">안녕하세요? ${variable('회원명')}님,<br />JA Korea 입니다.</p>
-    <p style="${paragraphStyle}">신규 접수된 재능기부 신청 건이 있습니다.<br />신청 내용을 확인해 주세요.</p>
-    <p style="margin:0 0 24px 0;color:#3d3d3d;font-family:Pretendard,Arial,sans-serif;font-size:14px;line-height:1.5;">감사합니다.<br />JA Korea 드림.</p>
-  `
+  return mailGreetingParagraphs([
+    `안녕하세요? ${mailVariable('회원명')}님,<br />JA Korea 입니다.`,
+    '신규 접수된 재능기부 신청 건이 있습니다.<br />신청 내용을 확인해 주세요.',
+    '감사합니다.<br />JA Korea 드림.',
+  ])
 }
 
-function tableShell(rows: string): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;background:#ffffff;">${rows}</table>`
-}
-
-function labelCell(label: string): string {
-  return `<th ${labelCellAttributes} style="${labelCellStyle}">${label}</th>`
-}
-
-function valueCell(label: string, colspan?: number): string {
-  const span = colspan && colspan > 1 ? ` colspan="${colspan}"` : ''
-  return `<td${span} style="${valueCellStyle}">${variable(label)}</td>`
-}
-
-/** 첫 행 열 폭을 140/flex/140/flex 로 잠그고, 값은 한 칸처럼 보이게 나머지 칸을 비운다. */
-function firstRowSpanRestLock(): string {
-  return `<td ${labelCellAttributes} style="${valueCellStyle}width:${LABEL_COL_WIDTH_PX}px;min-width:${LABEL_COL_WIDTH_PX}px;max-width:${LABEL_COL_WIDTH_PX}px;">&nbsp;</td><td style="${valueCellStyle}">&nbsp;</td>`
-}
-
-/** 시안 첫 카드: 신청일시 + 처리 상태. 한 테이블이라 보더가 겹치지 않는다. */
 function statusInfoTable(): string {
-  return tableShell(`
+  return mailTableShell(`
     <tr>
-      ${labelCell('신청일시')}
-      ${valueCell('신청일시')}
-      ${firstRowSpanRestLock()}
+      ${mailLabelCell('신청일시')}
+      ${mailValueCell('신청일시')}
+      ${mailFirstRowSpanRestLock()}
     </tr>
     <tr>
-      ${labelCell('처리 상태')}
-      ${valueCell('처리 상태')}
-      ${labelCell('개인정보 수집·이용 동의')}
-      ${valueCell('개인정보 수집·이용 동의')}
+      ${mailLabelCell('처리 상태')}
+      ${mailValueCell('처리 상태')}
+      ${mailLabelCell('개인정보 수집·이용 동의')}
+      ${mailValueCell('개인정보 수집·이용 동의')}
     </tr>
   `)
 }
 
-/** 시안: 처리 상태 표 아래 12px 간격으로 분리된 신청자 정보 표 */
 function applicantInfoTable(): string {
-  return tableShell(`
+  return mailTableShell(`
     <tr>
-      ${labelCell('신청자명')}
-      ${valueCell('신청자명')}
-      ${labelCell('성별 및 생년월일')}
-      ${valueCell('성별 및 생년월일')}
+      ${mailLabelCell('신청자명')}
+      ${mailValueCell('신청자명')}
+      ${mailLabelCell('성별 및 생년월일')}
+      ${mailValueCell('성별 및 생년월일')}
     </tr>
     <tr>
-      ${labelCell('연락처')}
-      ${valueCell('연락처')}
-      ${labelCell('이메일')}
-      ${valueCell('이메일')}
+      ${mailLabelCell('연락처')}
+      ${mailValueCell('연락처')}
+      ${mailLabelCell('이메일')}
+      ${mailValueCell('이메일')}
     </tr>
     <tr>
-      ${labelCell('소속')}
-      ${valueCell('소속')}
-      ${labelCell('자택 주소')}
-      ${valueCell('자택 주소')}
+      ${mailLabelCell('소속')}
+      ${mailValueCell('소속')}
+      ${mailLabelCell('자택 주소')}
+      ${mailValueCell('자택 주소')}
     </tr>
     <tr>
-      ${labelCell('재능기부 가능 기간')}
-      ${valueCell('재능기부 가능 기간', 3)}
+      ${mailLabelCell('재능기부 가능 기간')}
+      ${mailValueCell('재능기부 가능 기간', 3)}
     </tr>
   `)
-}
-
-function additionalInfoValueCell(label: string): string {
-  return `<td style="${longTextValueCellStyle}">${variable(label)}</td>`
 }
 
 function additionalInfoTable(): string {
-  return tableShell(`
+  return mailTableShell(`
     <tr>
-      ${labelCell('간단한 약력 소개')}
-      ${additionalInfoValueCell('간단한 약력 소개')}
+      ${mailLabelCell('간단한 약력 소개')}
+      ${mailLongTextValueCell('간단한 약력 소개')}
     </tr>
     <tr>
-      ${labelCell('기부 가능한 재능 소개')}
-      ${additionalInfoValueCell('기부 가능한 재능 소개')}
+      ${mailLabelCell('기부 가능한 재능 소개')}
+      ${mailLongTextValueCell('기부 가능한 재능 소개')}
     </tr>
     <tr>
-      ${labelCell('참여 동기')}
-      ${additionalInfoValueCell('참여 동기')}
+      ${mailLabelCell('참여 동기')}
+      ${mailLongTextValueCell('참여 동기')}
+    </tr>
+    <tr>
+      ${mailLabelCell('JA 프로그램 참여 이력')}
+      ${mailValueCell('JA 프로그램 참여 이력')}
+    </tr>
+    <tr>
+      ${mailLabelCell('자유 제출 파일')}
+      ${mailValueCell('자유 제출 파일')}
     </tr>
   `)
 }
 
-function detailButton(): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;"><tr><td align="center" height="52" bgcolor="#01a1af" style="height:52px;border-radius:8px;background:#01a1af;text-align:center;"><a href="#{${TALENT_DONATION_MAIL_DETAIL_LINK_VARIABLE_LABEL}}" target="_blank" rel="noopener noreferrer" style="display:block;height:52px;box-sizing:border-box;padding:8px 20px;color:#ffffff;font-family:Pretendard,Arial,sans-serif;font-size:16px;line-height:36px;font-weight:600;text-decoration:none;">재능기부 신청 상세보기</a></td></tr></table>`
-}
-
-/** CMS 편집기에 기본 적용하고 저장하는 메일 본문 원문 HTML. */
 export function buildTalentDonationMailLayoutHtml(): string {
-  return `<!-- ja-mail-layout:${TALENT_DONATION_MAIL_LAYOUT_VERSION} -->
-<div style="width:100%;max-width:100%;margin:0 auto;padding:0;background:#ffffff;">
+  return wrapMailLayoutHtml(
+    TALENT_DONATION_MAIL_LAYOUT_VERSION,
+    `
   ${introduction()}
-  ${sectionHeading('기본 정보')}
+  ${mailSectionHeading('기본 정보')}
   ${statusInfoTable()}
   ${applicantInfoTable()}
-  ${sectionHeading('추가 정보')}
+  ${mailSectionHeading('추가 정보')}
   ${additionalInfoTable()}
-  ${detailButton()}
-</div>`
+  ${mailDetailButton('재능기부 신청 상세보기', TALENT_DONATION_MAIL_DETAIL_LINK_VARIABLE_LABEL)}
+`
+  )
 }
 
-/**
- * 재능기부 신청 알림 템플릿을 열 때만 메인 시안을 기본 본문으로 사용한다.
- * 다른 메일 템플릿의 원격 본문은 변경하지 않는다.
- */
-export function resolveMailTemplateBodyHtml(
+export function resolveTalentDonationMailTemplateBodyHtml(
   templateId: string | number | null | undefined,
   bodyHtml: string
 ): string {
-  if (String(templateId) !== TALENT_DONATION_MAIL_TEMPLATE_ID) return bodyHtml
-  if (bodyHtml.includes(`ja-mail-layout:${TALENT_DONATION_MAIL_LAYOUT_VERSION}`)) return bodyHtml
-  return buildTalentDonationMailLayoutHtml()
+  return resolvePresetBodyHtml(
+    templateId,
+    TALENT_DONATION_MAIL_TEMPLATE_ID,
+    TALENT_DONATION_MAIL_LAYOUT_VERSION,
+    bodyHtml,
+    buildTalentDonationMailLayoutHtml
+  )
 }
 
-/**
- * TipTap이 본문을 다시 직렬화하면 HTML 주석이 사라질 수 있으므로,
- * 사용자가 본문을 수정해 저장할 때 현재 레이아웃 버전을 다시 남긴다.
- * 이 표식은 메일 본문에 보이지 않으며, 다음 조회에서 사용자 수정 본문을
- * 기본 시안으로 오인해 덮어쓰지 않게 하는 저장용 메타데이터다.
- */
-export function ensureMailTemplateLayoutMarker(
+export function ensureTalentDonationMailTemplateLayoutMarker(
   templateId: string | number | null | undefined,
   bodyHtml: string
 ): string {
-  if (String(templateId) !== TALENT_DONATION_MAIL_TEMPLATE_ID || !bodyHtml.trim()) {
-    return bodyHtml
-  }
-  const marker = 'ja-mail-layout:' + TALENT_DONATION_MAIL_LAYOUT_VERSION
-  if (bodyHtml.includes(marker)) return bodyHtml
-  return '<!-- ' + marker + ' -->\n' + bodyHtml
+  return ensurePresetLayoutMarker(
+    templateId,
+    TALENT_DONATION_MAIL_TEMPLATE_ID,
+    TALENT_DONATION_MAIL_LAYOUT_VERSION,
+    bodyHtml
+  )
 }
+
+export const resolveMailTemplateBodyHtml = resolveTalentDonationMailTemplateBodyHtml
+export const ensureMailTemplateLayoutMarker = ensureTalentDonationMailTemplateLayoutMarker

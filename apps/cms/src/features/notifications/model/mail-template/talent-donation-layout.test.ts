@@ -30,6 +30,8 @@ describe('talent donation mail layout', () => {
     expect(html).toContain('padding:9px 10px')
     expect(html).toContain('padding:9px 12px')
     expect(html).toContain('vertical-align:top')
+    expect(html).toContain('JA 프로그램 참여 이력')
+    expect(html).toContain('자유 제출 파일')
     expect(html).not.toContain('첨부파일')
     expect(html).toContain('font-size:12px')
     expect(html).toContain('background:linear-gradient(0deg,rgba(231,235,239,0.6) 0%,rgba(231,235,239,0.6) 100%),#fff')
@@ -40,7 +42,7 @@ describe('talent donation mail layout', () => {
     expect(html).toContain('line-height:36px')
     expect(html).not.toContain('<colgroup')
     expect(html).toMatch(
-      /기본 정보<\/h3>\s*<table[^>]*>.*?신청일시.*?처리 상태.*?개인정보 수집·이용 동의.*?<\/table>\s*<table[^>]*>.*?신청자명.*?재능기부 가능 기간.*?<\/table>\s*<h3[^>]*>추가 정보<\/h3>\s*<table[^>]*>.*?참여 동기.*?<\/table>/s
+      /기본 정보<\/h3>\s*<table[^>]*>.*?신청일시.*?처리 상태.*?개인정보 수집·이용 동의.*?<\/table>\s*<table[^>]*>.*?신청자명.*?재능기부 가능 기간.*?<\/table>\s*<h3[^>]*>추가 정보<\/h3>\s*<table[^>]*>.*?참여 동기.*?JA 프로그램 참여 이력.*?자유 제출 파일.*?<\/table>/s
     )
     expect(html).toMatch(
       /<th colwidth="140"[^>]*>신청일시<\/th>\s*<td[^>]*>[\s\S]*?<\/td>\s*<td colwidth="140"[^>]*>&nbsp;<\/td>\s*<td[^>]*>&nbsp;<\/td>/

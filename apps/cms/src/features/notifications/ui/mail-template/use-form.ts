@@ -8,7 +8,7 @@ import {
   sanitizeMailTemplateNameInput,
   validateMailTemplateName,
 } from '@/features/notifications/model/mail-template/template-name'
-import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/talent-donation-layout'
+import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/resolve-body'
 import { EMPTY_MAIL_COMPOSE, useMailCompose } from './use-compose'
 
 export type { MailTemplateFormMode } from '@/features/notifications/model/mail-template/types'

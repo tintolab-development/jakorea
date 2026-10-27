@@ -104,7 +104,7 @@
   height: 36px;
 }
 
-/* 추가 정보(2열) — 약력·재능·동기: 36px 고정·세로 가운데 정렬 제외 */
+/* 2열 표(추가 정보·학력·경력) — 긴 본문 행은 36px 고정 높이를 쓰지 않는다. */
 .mail-template-rich-body
   .rich-text-content
   table:not(:has(td a)):not(:has(tr:first-child > :nth-child(4)))
@@ -116,6 +116,20 @@
   height: auto;
   max-height: none;
   vertical-align: top;
+}
+
+/* 긴 라벨(JA 프로그램 참여 이력 등)은 140px 안에서 줄바꿈 */
+.mail-template-rich-body
+  .rich-text-content
+  table:not(:has(td a)):not(:has(tr:first-child > :nth-child(4)))
+  th,
+.mail-template-rich-body
+  .rich-text-content
+  table:not(:has(td a)):not(:has(tr:first-child > :nth-child(4)))
+  th
+  > p {
+  white-space: normal;
+  overflow: visible;
 }
 
 .mail-template-rich-body .rich-text-content table:not(:has(td a)) tr:first-child > :first-child {

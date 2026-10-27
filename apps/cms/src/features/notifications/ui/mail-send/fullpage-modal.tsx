@@ -18,7 +18,7 @@ import type {
   MailPreviewAttachment,
   MailPreviewRecipient,
 } from '@/features/notifications/model/mail-template/preview'
-import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/talent-donation-layout'
+import { resolveMailTemplateBodyHtml } from '@/features/notifications/model/mail-template/resolve-body'
 import { VariablesPanel } from '@/features/notifications/ui/mail-template/variables-panel'
 import { groupMailTemplateVariablesFromCatalog } from '@/features/notifications/model/mail-template/variables'
 import {

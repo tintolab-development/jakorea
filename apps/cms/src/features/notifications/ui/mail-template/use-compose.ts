@@ -22,7 +22,7 @@ import {
   mailAttachmentRejectMessage,
   rejectMailAttachments,
 } from '@/features/notifications/model/mail-template/attachments'
-import { ensureMailTemplateLayoutMarker } from '@/features/notifications/model/mail-template/talent-donation-layout'
+import { ensureMailTemplateLayoutMarker } from '@/features/notifications/model/mail-template/resolve-body'
 import type { MailTemplateAttachment } from '@/features/notifications/model/mail-template/types'
 
 export const MAIL_COMPOSE_SUBJECT_MAX_LENGTH = 1000
