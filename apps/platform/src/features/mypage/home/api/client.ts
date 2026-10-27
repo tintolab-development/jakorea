@@ -27,6 +27,10 @@ export type PortalApplicationSummary = {
 
 export type PortalScheduleItem = {
   scheduleId?: number
+  applicationId?: number
+  applicationType?: string
+  /** BE 캘린더 이벤트 유형(과제·설문·교육 일정 등). 없으면 교육 일정으로 처리 */
+  eventType?: string
   programId?: number
   programTitle?: string
   scheduleName?: string

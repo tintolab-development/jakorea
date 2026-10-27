@@ -29,10 +29,13 @@ export function buildActivityCertificateVolunteerFromUjatDetail(
 ): ParticipatingVolunteerDetailRow {
   const { applicant, row } = detail
 
+  const memberId = Number(applicant.memberId ?? row.memberId)
+
   return {
     id: detail.volunteerId,
     no: row.no,
     volunteerName: applicant.name,
+    memberId: Number.isSafeInteger(memberId) && memberId > 0 ? memberId : undefined,
     id1365: applicant.id1365,
     assignedInstitutionNames: resolveAssignedInstitutionNames(detail.volunteerId),
     sessions: [],

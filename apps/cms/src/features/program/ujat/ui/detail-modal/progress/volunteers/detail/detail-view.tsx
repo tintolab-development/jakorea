@@ -22,6 +22,8 @@ import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/moda
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { StudentCertificatePdfExportHost } from '@/features/program/general/ui/detail-modal/program-status/student-certificate-pdf-export-host'
+import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
@@ -191,17 +193,39 @@ export function UjatEducationProgressVolunteerDetailView({
   )
 
   const handleStudentCertificateIssueConfirm = useCallback(
-    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
-      setStudentCertificateExportContext(
-        buildStudentCertificateContextFromUjatVolunteer({
-          detail,
-          program,
-          issuanceReasonLabel: reasonLabel,
-        })
-      )
+    async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      let context = buildStudentCertificateContextFromUjatVolunteer({
+        detail,
+        program,
+        issuanceReasonLabel: reasonLabel,
+      })
+      const memberId = Number(detail.applicant.memberId ?? detail.row.memberId)
+      if (Number.isSafeInteger(memberId) && memberId > 0) {
+        try {
+          const person = await unmaskMemberForCertificateIssue(memberId)
+          context = {
+            ...context,
+            student: {
+              ...context.student,
+              name: person.name || context.student.name,
+              birthDate: person.birthDate || context.student.birthDate,
+            },
+          }
+        } catch (error) {
+          showAlert({
+            title: '열람 실패',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              '개인정보 원문 조회에 실패했습니다.'
+            ),
+          })
+          return
+        }
+      }
+      setStudentCertificateExportContext(context)
       setStudentCertificateExportActive(true)
     },
-    [detail, program]
+    [detail, program, showAlert]
   )
 
   const handleStudentCertificateExportComplete = useCallback(

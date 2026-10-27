@@ -35,18 +35,6 @@ export function shouldShowTeacherStudentDocumentDependentTabs(
   return isPortalStudentDocumentsSupported(policy)
 }
 
-/** `studentDocumentsSupported === true`일 때만 호출 */
-export function resolveRosterUploadBlockedMessage(
-  policy: PortalStudentDocumentPolicy | null | undefined,
-): string | null {
-  if (!isPortalStudentDocumentsSupported(policy)) return null
-  if (policy?.studentRosterUploadAllowed !== false) return null
-  if (!policy.firstEducationDate?.trim()) {
-    return '교육 일정이 배정되면 학생 명단을 제출할 수 있습니다.'
-  }
-  return '학생 명단 제출 및 수정 기한이 지났습니다.'
-}
-
 /** 「업로드 취소」: 현재 제출 있음 + 기한 내(`portraitConsentUploadAllowed === true`) + 미승인 */
 export function canCancelOrganizationPortraitConsent(
   consent: PortalOrganizationPortraitConsent | null | undefined,

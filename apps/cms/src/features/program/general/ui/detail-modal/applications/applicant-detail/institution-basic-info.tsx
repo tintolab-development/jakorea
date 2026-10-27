@@ -21,8 +21,6 @@ import type {
   SameSchoolGradeOption,
   TextbookSelectOption,
 } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
-import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
-import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   formatInstitutionApplicationGradeDisplay,
   type InstitutionAffiliatedTeacherOption,
@@ -230,9 +228,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
   isCombinedClassApplyRadioDisabled = true,
   combinedClassReadOnly = false,
   hideCombinedClass = false,
-  textbookOptions = [],
-  textbookDisplayLabel,
-  isTextbookCatalogLoading = false,
+  textbookOptions: _textbookOptions = [],
+  textbookDisplayLabel: _textbookDisplayLabel,
+  isTextbookCatalogLoading: _isTextbookCatalogLoading = false,
   validationErrors,
   onResendNotificationClick,
   program = null,
@@ -256,7 +254,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const showGuidanceSection =
     institutionApplicationBridge == null ||
     shouldShowInstitutionApplicationGuidanceParagraph(institutionApplicationBridge)
-  /** 합반 신청 — 승인 완료 시 노출 */
+  /** 합반 신청 — 승인 완료 시 노출 (교재명은 참여 기관 상세에서만 노출) */
   const showCombinedClass = institution.approvalStatus === 'approved' && !hideCombinedClass
   const classAndCount: ReactNode =
     isEditMode && draft && onDraftChange ? (
@@ -348,55 +346,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
     shouldShowInstitutionApplicationDetailScheduleSection(institutionApplicationBridge, institution)
 
   const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
-
-  const textbookSelectOptions =
-    textbookOptions.length > 0
-      ? textbookOptions
-      : [
-          {
-            value: TEXTBOOK_NOT_USED_OPTION_VALUE,
-            label: '해당 없음',
-            textbookName: '해당 없음',
-          },
-        ]
-  const textbookViewValue = textbookDisplayLabel?.trim() || '해당 없음'
-  const textbookEditCell =
-    isEditMode && draft && onDraftChange ? (
-      <div className="institution-basic-info__field-stack institution-basic-info__textbook-select-only">
-        <CmsSelect
-          className="institution-basic-info__full-width-control"
-          inputSize="small"
-          placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
-          loading={isTextbookCatalogLoading}
-          withAllOption={false}
-          value={draft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
-          options={textbookSelectOptions.map(option => ({
-            label: option.label,
-            value: option.value,
-          }))}
-          onChange={value => {
-            const selected = textbookSelectOptions.find(option => option.value === value)
-            const isNotUsed = value === TEXTBOOK_NOT_USED_OPTION_VALUE
-            onDraftChange({
-              textbookId: isNotUsed ? TEXTBOOK_NOT_USED_OPTION_VALUE : String(value ?? ''),
-              textbookName: isNotUsed ? '해당 없음' : (selected?.textbookName ?? ''),
-            })
-          }}
-          error={Boolean(validationErrors?.textbookId || validationErrors?.textbookName)}
-          message={validationErrors?.textbookId ?? validationErrors?.textbookName}
-        />
-      </div>
-    ) : undefined
-
-  const textbookField = (
-    <DetailInfoForm.Field
-      label="교재명"
-      fullRow={!showCombinedClass}
-      readOnlyDisplay={!isEditMode}
-      view={textbookViewValue}
-      edit={textbookEditCell}
-    />
-  )
 
   const addressDetailValue =
     isEditMode && draft && onDraftChange ? (
@@ -522,18 +471,16 @@ export function ApplicantGeneralInstitutionBasicInfo({
             />
           </DetailInfoForm.Row>
           {showCombinedClass ? (
-            <DetailInfoForm.Row type="double">
-              {textbookField}
+            <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="합반 신청 여부"
+                fullRow
                 readOnlyDisplay={!isEditMode || combinedClassReadOnly}
                 view={combinedClassViewValue}
                 edit={combinedClassEditValue}
               />
             </DetailInfoForm.Row>
-          ) : (
-            <DetailInfoForm.Row type="single">{textbookField}</DetailInfoForm.Row>
-          )}
+          ) : null}
         </DetailInfoForm>
         <DetailInfoForm title="기본 정보" hideHeader mode={basicInfoFormMode}>
           <DetailInfoForm.Row type="double">

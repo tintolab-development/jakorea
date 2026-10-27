@@ -271,9 +271,13 @@ export function ParticipatingParticipantsSection({
         handleError(error, {
           context: 'participatingParticipantsSection.certificateAttendanceHydrate',
         })
+        showAlert({
+          title: '열람 실패',
+          content: '개인정보 원문 조회에 실패했습니다.',
+        })
       }
     },
-    [filteredParticipants, hasStudentSatisfactionSurvey, program, selectedRowKeys]
+    [filteredParticipants, hasStudentSatisfactionSurvey, program, selectedRowKeys, showAlert]
   )
 
   const handleCertificateExportComplete = useCallback((success: boolean) => {

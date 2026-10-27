@@ -14,14 +14,26 @@
   gap: var(--spacing-4);
 }
 
+.metaRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
 .affiliation {
   margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nameRow {
   display: flex;
   align-items: center;
-  gap: 10px;
   min-width: 0;
 }
 

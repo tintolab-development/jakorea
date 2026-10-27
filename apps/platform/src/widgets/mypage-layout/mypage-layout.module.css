@@ -254,6 +254,7 @@
   .layoutMenuOpen .sidebar {
     position: relative;
     z-index: 6;
+    overflow: visible;
   }
 
   .layoutMenuOpen .content {
