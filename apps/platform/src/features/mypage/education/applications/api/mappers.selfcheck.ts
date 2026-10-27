@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {
   mapApplicationRecruitmentStatus,
+  mapTeacherAssignedInstructors,
   mapPortalProgramApplicationDetail,
   mapPortalProgramApplicationListItem,
 } from './mappers.ts'
@@ -174,6 +175,44 @@ assert.deepEqual(individualCaseD?.teacherAssignment?.instructors, [
     name: '이건희',
   },
 ])
+
+assert.deepEqual(
+  mapTeacherAssignedInstructors([
+    {
+      assignmentId: 1694860,
+      instructorMemberId: 190001,
+      instructorName: '이건희',
+      programScheduleId: 187274,
+      assignmentStatus: 'ASSIGNED',
+    },
+    {
+      assignmentId: 1694861,
+      instructorMemberId: 190001,
+      instructorName: '이건희',
+      programScheduleId: 187310,
+      assignmentStatus: 'COMPLETED',
+    },
+    {
+      assignmentId: 1694862,
+      instructorMemberId: 190002,
+      instructorName: '김땡땡',
+      programScheduleId: 187311,
+      assignmentStatus: 'ASSIGNED',
+    },
+    {
+      assignmentId: 1694863,
+      instructorMemberId: 190003,
+      instructorName: '박땡땡',
+      programScheduleId: 187312,
+      assignmentStatus: 'COMPLETED',
+    },
+  ]),
+  [
+    { id: '190001', instructorMemberId: 190001, name: '이건희' },
+    { id: '190002', instructorMemberId: 190002, name: '김땡땡' },
+    { id: '190003', instructorMemberId: 190003, name: '박땡땡' },
+  ],
+)
 
 const ujatOrg = mapPortalProgramApplicationDetail({
   applicationId: 1691621,

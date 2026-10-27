@@ -45,9 +45,10 @@ export type EducationTeacherAssignmentTextbook = {
 
 export type EducationTeacherAssignmentConsent = {
   id: string
+  consentType?: 'CRIMINAL_HISTORY_CHECK_CONSENT' | 'ADMINISTRATIVE_INFO_CONSENT'
   title: string
   fileUrl?: string
-  documentId?: number
+  documentId?: number | null
   originalFileName?: string
 }
 

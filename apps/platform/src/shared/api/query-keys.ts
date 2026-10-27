@@ -346,11 +346,11 @@ export const platformQueryKeys = {
     formResponseDetail: (formResponseId: number) =>
       [...platformQueryKeys.mypage.all(), 'form-response', formResponseId] as const,
     /** 교사 회원 배정 강사 동의서 — GET .../assigned-instructors (Class D) */
-    assignedInstructors: (applicationId: number) =>
+    assignedInstructors: (applicationType: 'INDIVIDUAL' | 'ORGANIZATION', applicationId: number) =>
       [
         ...platformQueryKeys.mypage.all(),
         'assigned-instructors',
-        'ORGANIZATION',
+        applicationType,
         applicationId,
       ] as const,
     /** 기관 신청 — 학생 명단·초상권 (Class D) */

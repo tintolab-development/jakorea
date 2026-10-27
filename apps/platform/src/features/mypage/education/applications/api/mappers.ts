@@ -376,22 +376,30 @@ function mapTeacherDeliveryStatus(
  * 상세 응답의 teacherAssignment는 교재와 강사 카드 조회 가능 여부만 제공한다.
  * 실제 강사 목록·동의서는 assigned-instructors API 응답을 사용한다.
  */
+export function mapTeacherAssignedInstructors(
+  assignments: PortalTeacherAssignmentItem[] | null | undefined,
+): EducationTeacherAssignedInstructor[] {
+  const instructorByMemberId = new Map<number, EducationTeacherAssignedInstructor>()
+  for (const assignment of assignments ?? []) {
+    const instructor = mapTeacherAssignedInstructor(assignment)
+    if (instructor && instructor.instructorMemberId != null) {
+      // 한 강사가 여러 교육 일정에 배정돼도 카드에는 한 번만 표시한다.
+      // API가 전달한 첫 배정 순서는 Figma의 좌우 탐색 순서로 유지한다.
+      instructorByMemberId.set(instructor.instructorMemberId, instructor)
+    }
+  }
+  return [...instructorByMemberId.values()]
+}
+
 function mapTeacherAssignment(
   detail: PortalProgramApplicationDetail,
 ): EducationTeacherAssignment | undefined {
   if (!detail.teacherAssignment) return undefined
 
   const textbook = detail.teacherAssignment.textbook
-  const instructorByMemberId = new Map<number, EducationTeacherAssignedInstructor>()
-  for (const assignment of detail.teacherAssignment.assignments ?? []) {
-    const instructor = mapTeacherAssignedInstructor(assignment)
-    if (instructor && instructor.instructorMemberId != null) {
-      instructorByMemberId.set(instructor.instructorMemberId, instructor)
-    }
-  }
 
   return {
-    instructors: [...instructorByMemberId.values()],
+    instructors: mapTeacherAssignedInstructors(detail.teacherAssignment.assignments),
     ...(textbook
       ? {
           textbook: {
