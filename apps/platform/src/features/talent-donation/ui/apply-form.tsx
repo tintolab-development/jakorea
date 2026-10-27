@@ -15,6 +15,7 @@ import {
   PFDivider,
   PFFormPeriodPair,
   PFFormPeriodTilde,
+  PFAttachedFileList,
   PFSelect,
   PFText,
   PFTextInput,
@@ -173,8 +174,7 @@ export function TalentDonationApplyForm() {
   const [errors, setErrors] = useState<TalentApplyFieldErrors>({})
   const [alert, setAlert] = useState<AlertState>(null)
   const [successOpen, setSuccessOpen] = useState(false)
-  const [attachedFileName, setAttachedFileName] = useState('')
-  const [attachedFile, setAttachedFile] = useState<File | null>(null)
+  const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File }>>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mutation = useCreatePublicTalentApplication()
 
@@ -215,15 +215,23 @@ export function TalentDonationApplyForm() {
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null
+    const selected = Array.from(event.target.files ?? [])
     event.target.value = ''
-    const sizeError = file ? validateUploadFileSize(file) : null
-    if (sizeError) {
-      setAlert({ title: '안내', description: sizeError })
-      return
+    if (selected.length === 0) return
+    for (const file of selected) {
+      const sizeError = validateUploadFileSize(file)
+      if (sizeError) {
+        setAlert({ title: '안내', description: sizeError })
+        return
+      }
     }
-    setAttachedFile(file)
-    setAttachedFileName(file?.name ?? '')
+    setAttachedFiles(prev => [
+      ...prev,
+      ...selected.map(file => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+        file,
+      })),
+    ])
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -269,7 +277,7 @@ export function TalentDonationApplyForm() {
           jaParticipation: values.jaParticipation as 'yes' | 'no',
           privacyAgreed: true,
         },
-        attachmentFile: attachedFile,
+        attachmentFiles: attachedFiles.map(item => item.file),
       },
       {
         onSuccess: () => setSuccessOpen(true),
@@ -553,19 +561,27 @@ export function TalentDonationApplyForm() {
                 >
                   파일찾기
                 </PFButton>
-                <div className={styles.fileGuideBox}>
-                  <PFText
-                    as="p"
-                    typo="bd-md-rg"
-                    color={attachedFileName ? 'black' : 'neutral-warm-500'}
-                    className={styles.fileGuide}
-                  >
-                    {attachedFileName || TALENT_APPLY_FILE_GUIDE}
-                  </PFText>
-                </div>
+                {attachedFiles.length === 0 ? (
+                  <div className={styles.fileGuideBox}>
+                    <PFText
+                      as="p"
+                      typo="bd-md-rg"
+                      color="neutral-warm-500"
+                      className={styles.fileGuide}
+                    >
+                      {TALENT_APPLY_FILE_GUIDE}
+                    </PFText>
+                  </div>
+                ) : (
+                  <PFAttachedFileList
+                    files={attachedFiles.map(item => ({ id: item.id, name: item.file.name }))}
+                    onRemove={id => setAttachedFiles(prev => prev.filter(item => item.id !== id))}
+                  />
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
+                  multiple
                   className={styles.visuallyHiddenFile}
                   onChange={handleFileChange}
                 />

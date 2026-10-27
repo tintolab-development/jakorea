@@ -142,3 +142,16 @@ export async function uploadPublicCorporateConsultationAttachment(
 ): Promise<{ assetId: number; uploadToken: string }> {
   return withFileUploadOverlay(() => uploadPreparedCorporateConsultationAttachment(file))
 }
+
+export async function uploadPublicCorporateConsultationAttachments(
+  files: File[],
+): Promise<Array<{ assetId: number; uploadToken: string }>> {
+  if (files.length === 0) return []
+  return withFileUploadOverlay(async () => {
+    const uploaded: Array<{ assetId: number; uploadToken: string }> = []
+    for (const file of files) {
+      uploaded.push(await uploadPreparedCorporateConsultationAttachment(file))
+    }
+    return uploaded
+  })
+}

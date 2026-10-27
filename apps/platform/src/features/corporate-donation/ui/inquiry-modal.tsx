@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { type ChangeEvent, useRef, useState } from 'react'
 import axios from 'axios'
 import { Controller, useForm, type SubmitHandler } from 'react-hook-form'
 import {
   PFAlertModal,
+  PFAttachedFileList,
   PFButton,
   PFCheckbox,
-  PFItemDeleteButton,
   PFModal,
   PFText,
   PFTextInput,
@@ -14,7 +14,7 @@ import {
 import { validateUploadFileSize } from '@/shared/lib/file-upload-policy'
 import {
   useCreatePublicCorporateConsultation,
-  useUploadPublicCorporateConsultationAttachment,
+  useUploadPublicCorporateConsultationAttachments,
 } from '../api/hooks'
 import type { PublicCorporateConsultationCreateRequest } from '../api/types'
 import styles from './inquiry-modal.module.css'
@@ -27,12 +27,6 @@ type InquiryValues = {
   consultationContent: string
   linkUrl: string
   privacyConsent: boolean
-}
-
-type UploadedAttachment = {
-  name: string
-  assetId: number
-  uploadToken: string
 }
 
 type CorporateDonationInquiryModalProps = {
@@ -131,7 +125,7 @@ function attachmentValidationMessage(file: File): string | null {
 
 function buildRequest(
   values: InquiryValues,
-  attachment: UploadedAttachment | null,
+  attachments: Array<{ assetId: number; uploadToken: string }>,
 ): PublicCorporateConsultationCreateRequest {
   const request: PublicCorporateConsultationCreateRequest = {
     companyName: values.companyName.trim(),
@@ -144,9 +138,13 @@ function buildRequest(
 
   const linkUrl = values.linkUrl.trim()
   if (linkUrl) request.linkUrl = linkUrl
-  if (attachment) {
-    request.attachmentAssetId = attachment.assetId
-    request.attachmentUploadToken = attachment.uploadToken
+  if (attachments.length > 0) {
+    const ids = attachments.map(item => item.assetId)
+    const tokens = attachments.map(item => item.uploadToken)
+    request.attachmentAssetId = ids[0]
+    request.attachmentAssetIds = ids
+    request.attachmentUploadToken = tokens[0]
+    request.attachmentUploadTokens = tokens
   }
 
   return request
@@ -156,10 +154,11 @@ export function CorporateDonationInquiryModal({
   open,
   onClose,
 }: CorporateDonationInquiryModalProps) {
-  const [attachment, setAttachment] = useState<UploadedAttachment | null>(null)
+  const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File }>>([])
   const [formError, setFormError] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [successOpen, setSuccessOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const {
     control,
     clearErrors,
@@ -172,14 +171,14 @@ export function CorporateDonationInquiryModal({
     reValidateMode: 'onChange',
   })
   const consultationMutation = useCreatePublicCorporateConsultation()
-  const attachmentMutation = useUploadPublicCorporateConsultationAttachment()
+  const attachmentsMutation = useUploadPublicCorporateConsultationAttachments()
 
-  const isBusy = consultationMutation.isPending || attachmentMutation.isPending || isSubmitting
+  const isBusy = consultationMutation.isPending || attachmentsMutation.isPending || isSubmitting
 
   const resetDraft = () => {
     reset(EMPTY_VALUES)
     clearErrors()
-    setAttachment(null)
+    setAttachedFiles([])
     setFormError(null)
     setUploadError(null)
   }
@@ -190,27 +189,30 @@ export function CorporateDonationInquiryModal({
     onClose()
   }
 
-  const handleFileSelect = async (file: File) => {
-    const validationError = attachmentValidationMessage(file)
-    if (validationError) {
-      setUploadError(validationError)
-      return
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(event.target.files ?? [])
+    event.target.value = ''
+    if (selected.length === 0) return
+    for (const file of selected) {
+      const validationError = attachmentValidationMessage(file)
+      if (validationError) {
+        setUploadError(validationError)
+        return
+      }
     }
-
     setUploadError(null)
     setFormError(null)
-    setAttachment(null)
-
-    try {
-      const uploaded = await attachmentMutation.mutateAsync(file)
-      setAttachment({ name: file.name, ...uploaded })
-    } catch (error) {
-      setUploadError(messageFromError(error))
-    }
+    setAttachedFiles(prev => [
+      ...prev,
+      ...selected.map(file => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+        file,
+      })),
+    ])
   }
 
   const handleSubmit: SubmitHandler<InquiryValues> = async values => {
-    if (attachmentMutation.isPending) {
+    if (attachmentsMutation.isPending) {
       setFormError('첨부파일 업로드가 끝난 후 등록해 주세요.')
       return
     }
@@ -221,7 +223,8 @@ export function CorporateDonationInquiryModal({
 
     setFormError(null)
     try {
-      await consultationMutation.mutateAsync(buildRequest(values, attachment))
+      const uploaded = await attachmentsMutation.mutateAsync(attachedFiles.map(item => item.file))
+      await consultationMutation.mutateAsync(buildRequest(values, uploaded))
       resetDraft()
       onClose()
       setSuccessOpen(true)
@@ -450,47 +453,39 @@ export function CorporateDonationInquiryModal({
                 <PFText as="label" typo="label-md" color="black" className={styles.fieldLabel}>
                   파일 첨부
                 </PFText>
-                <label className={styles.filePicker}>
-                  <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                    className={styles.fileInput}
-                    disabled={isBusy}
-                    onChange={event => {
-                      const file = event.target.files?.[0]
-                      event.target.value = ''
-                      if (file) void handleFileSelect(file)
-                    }}
-                  />
+                <div className={styles.filePicker}>
                   <PFButton
                     type="button"
                     variant="tertiary"
                     size="xlarge"
                     width="100%"
                     disabled={isBusy}
+                    onClick={() => fileInputRef.current?.click()}
                   >
-                    {attachmentMutation.isPending ? '업로드 중…' : '파일 추가하기'}
+                    {attachmentsMutation.isPending ? '업로드 중…' : '파일 추가하기'}
                   </PFButton>
-                </label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                    className={styles.fileInput}
+                    disabled={isBusy}
+                    onChange={handleFileChange}
+                  />
+                </div>
                 <ul className={styles.fileHint}>
                   <li>파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.</li>
                   <li>첨부파일명에 특수문자가 포함된 경우, 등록 시 오류가 발생할 수 있습니다.</li>
                 </ul>
-                {attachment ? (
-                  <div className={styles.fileRow}>
-                    <PFText as="span" typo="bd-md-md" color="black" className={styles.fileName}>
-                      {attachment.name}
-                    </PFText>
-                    <PFItemDeleteButton
-                      aria-label={`${attachment.name} 삭제`}
-                      disabled={isBusy}
-                      onClick={() => {
-                        setAttachment(null)
-                        setUploadError(null)
-                      }}
-                    />
-                  </div>
-                ) : null}
+                <PFAttachedFileList
+                  files={attachedFiles.map(item => ({ id: item.id, name: item.file.name }))}
+                  disabled={isBusy}
+                  onRemove={id => {
+                    setAttachedFiles(prev => prev.filter(item => item.id !== id))
+                    setUploadError(null)
+                  }}
+                />
                 {uploadError ? (
                   <PFText as="p" typo="bd-sm-rg" color="error" className={styles.error}>
                     {uploadError}

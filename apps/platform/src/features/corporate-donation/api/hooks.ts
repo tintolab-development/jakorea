@@ -19,6 +19,7 @@ import {
   fetchPublicCorporateSponsorship,
   fetchPublicCorporateSponsors,
   uploadPublicCorporateConsultationAttachment,
+  uploadPublicCorporateConsultationAttachments,
 } from './client'
 import type { PublicCorporateConsultationCreateRequest } from './types'
 
@@ -128,6 +129,18 @@ export function useUploadPublicCorporateConsultationAttachment() {
         throw new Error('파일 업로드 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
       }
       return uploadPublicCorporateConsultationAttachment(file)
+    },
+    retry: false,
+  })
+}
+
+export function useUploadPublicCorporateConsultationAttachments() {
+  return useMutation({
+    mutationFn: async (files: File[]) => {
+      if (!isHomepageApiConfigured()) {
+        throw new Error('파일 업로드 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+      }
+      return uploadPublicCorporateConsultationAttachments(files)
     },
     retry: false,
   })

@@ -39,7 +39,9 @@ export type PublicCorporateConsultationCreateRequest = {
   consultationContent: string
   linkUrl?: string
   attachmentAssetId?: number
+  attachmentAssetIds?: number[]
   attachmentUploadToken?: string
+  attachmentUploadTokens?: string[]
   privacyConsent: true
 }
 

@@ -79,6 +79,17 @@ export async function uploadTalentApplicationAttachment(file: File): Promise<num
   return withFileUploadOverlay(() => uploadPreparedTalentApplicationAttachment(file))
 }
 
+export async function uploadTalentApplicationAttachments(files: File[]): Promise<number[]> {
+  if (files.length === 0) return []
+  return withFileUploadOverlay(async () => {
+    const ids: number[] = []
+    for (const file of files) {
+      ids.push(await uploadPreparedTalentApplicationAttachment(file))
+    }
+    return ids
+  })
+}
+
 async function uploadPreparedTalentApplicationAttachment(file: File): Promise<number> {
   const prepared = await prepareTalentAttachment(file)
   const assetId = prepared.assetId

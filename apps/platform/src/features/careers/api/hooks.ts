@@ -23,7 +23,7 @@ import {
   fetchPublicCareerPostingDetail,
   fetchPublicCareerPostings,
   fetchPublicCareerPostingsForAdjacent,
-  uploadCareerTalentApplicationAttachment,
+  uploadCareerTalentApplicationAttachments,
 } from './client'
 import {
   mapPublicCareerGuide,
@@ -320,17 +320,16 @@ export function useCreatePublicCareerTalentApplication() {
   return useMutation({
     mutationFn: async (input: {
       values: CareersTalentApplySchemaValues
-      attachmentFile?: File | null
+      attachmentFiles?: File[]
     }) => {
       if (!isHomepageApiConfigured()) {
         throw new Error('신청 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
       }
-      let attachmentAssetId: number | undefined
-      if (input.attachmentFile) {
-        attachmentAssetId = await uploadCareerTalentApplicationAttachment(input.attachmentFile)
-      }
+      const attachmentAssetIds = await uploadCareerTalentApplicationAttachments(
+        input.attachmentFiles ?? []
+      )
       return createPublicCareerTalentApplication(
-        toPublicCareerTalentApplicationCreateRequest(input.values, attachmentAssetId)
+        toPublicCareerTalentApplicationCreateRequest(input.values, attachmentAssetIds)
       )
     },
     retry: false,

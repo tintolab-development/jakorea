@@ -392,8 +392,9 @@ function optionalTrimmed(value: string | undefined): string | undefined {
 /** 폼 값 → 공개 지원 POST body. privacyAgreed는 항상 true. */
 export function toPublicCareerTalentApplicationCreateRequest(
   values: CareersTalentApplySchemaValues,
-  attachmentAssetId?: number
+  attachmentAssetIds?: number[]
 ): PublicCareerTalentApplicationCreateRequest {
+  const ids = (attachmentAssetIds ?? []).filter(id => Number.isFinite(id))
   return {
     jobInterest: JOB_INTEREST_TO_API[values.jobInterest],
     name: values.name.trim(),
@@ -408,6 +409,7 @@ export function toPublicCareerTalentApplicationCreateRequest(
     careerType: CAREER_TYPE_TO_API[values.careerType],
     careerInfo: optionalTrimmed(values.careerInfo),
     privacyAgreed: true,
-    ...(attachmentAssetId != null ? { attachmentAssetId } : {}),
+    ...(ids[0] != null ? { attachmentAssetId: ids[0] } : {}),
+    ...(ids.length > 0 ? { attachmentAssetIds: ids } : {}),
   }
 }
