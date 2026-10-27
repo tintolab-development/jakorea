@@ -40,6 +40,7 @@ import type {
 import type { GeminiTrainingReportImportRow } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportRow'
 import { UploadDuplicateModal } from './upload-duplicate-modal'
 import '@/pages/programs/program-list-page.css'
+import '../page.css'
 import './list.css'
 
 type PendingFilters = {
@@ -451,8 +452,7 @@ export function GeminiPerformanceList() {
 
       <FilterTableLayout
         bordered={false}
-        className="gemini-performance-list"
-        filterResponsiveWrap={false}
+        className="gemini-list-filter gemini-performance-list"
         fields={GEMINI_PERFORMANCE_FILTER_FIELDS}
         filters={{
           instructorName: pendingFilters.instructorName,

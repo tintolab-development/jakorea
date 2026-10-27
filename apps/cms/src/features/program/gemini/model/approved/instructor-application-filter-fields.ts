@@ -1,4 +1,5 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { createHomeAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 
 export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = [
@@ -7,7 +8,7 @@ export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = 
     type: 'search',
     label: '신청 강사명',
     placeholder: '강사명을 입력하세요',
-    width: '18%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   createHomeAddressRegionFilterField({ label: '자택 주소지' }),
   {
@@ -15,7 +16,7 @@ export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = 
     type: 'select',
     label: 'JA 강의 경력',
     placeholder: '전체',
-    width: '18%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
       { label: '1년', value: '1' },
@@ -31,7 +32,7 @@ export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = 
     type: 'select',
     label: 'JA 평가 등급',
     placeholder: '전체',
-    width: '18%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
       { label: 'A등급', value: 'A등급' },
@@ -44,7 +45,7 @@ export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = 
     type: 'select',
     label: '프로그램 승인 현황',
     placeholder: '전체',
-    width: '22%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
       { label: '승인 대기', value: 'PENDING' },

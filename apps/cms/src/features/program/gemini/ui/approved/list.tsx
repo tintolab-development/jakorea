@@ -46,6 +46,7 @@ import type {
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { useGeminiApprovedTrainingDetailUrl } from './approved-training-detail-url'
 import '@/pages/programs/program-list-page.css'
+import '../page.css'
 import './list.css'
 
 type PendingFilters = {
@@ -295,10 +296,11 @@ export function GeminiApprovedTrainingList() {
       ) : null}
       <FilterTableLayout
         bordered={false}
-        className="gemini-approved-training-list"
-        filterResponsiveWrap={false}
+        className="gemini-list-filter gemini-approved-training-list"
+        filterResponsiveWrap
         multiRowGridMode="responsive"
         multiRowResponsiveLayout="merged-auto-fill"
+        mergedAutoFillInlineSearch
         mergedAutoFillTrailingFieldKeys={GEMINI_APPROVED_TRAINING_TRAILING_FILTER_KEYS}
         fields={GEMINI_APPROVED_TRAINING_FILTER_FIELDS}
         filters={pendingFilters}
