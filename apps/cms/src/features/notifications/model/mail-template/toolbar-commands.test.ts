@@ -446,9 +446,20 @@ describe('mail template editor toolbar commands', () => {
 
   it('serializes two paragraphs with a single blank line', () => {
     const instance = createEditor('<p>문단1</p><p>문단2</p>')
-    const markdown = createRichTextEditorApi(instance).getMarkdown()
+    const api = createRichTextEditorApi(instance)
+    expect(api.getText()).toBe('문단1\n\n문단2')
+    const markdown = api.getMarkdown()
     expect(markdown).toBe('문단1\n\n문단2')
     expect(markdown).not.toMatch(/\n{3,}/)
+  })
+
+  it('returns an empty text value after the editor is destroyed', () => {
+    const instance = createEditor('<p>본문</p>')
+    const api = createRichTextEditorApi(instance)
+
+    instance.destroy()
+
+    expect(api.getText()).toBe('')
   })
 
   it('does not grow empty paragraphs after markdown save and reopen', () => {

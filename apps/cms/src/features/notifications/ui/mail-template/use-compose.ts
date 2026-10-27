@@ -221,9 +221,9 @@ export function useMailCompose(
 
   const getBodyHtml = useCallback(() => {
     const bodyHtml = apiRef.current?.getHTML() ?? api?.getHTML() ?? ''
-    const plainText = editor?.getText() ?? ''
+    const plainText = apiRef.current?.getText() ?? api?.getText() ?? ''
     return isMailEditorEmpty(bodyHtml, plainText) ? '' : bodyHtml
-  }, [api, editor])
+  }, [api])
 
   const getSubject = useCallback(() => subjectRef.current, [])
 
