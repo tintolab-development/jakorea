@@ -18,7 +18,6 @@ type StudentsPanelStepRosterProps = {
   isLoading: boolean
   rosterCount: number
   rows: PortalStudentRosterItem[]
-  uploadBlockedMessage?: string | null
   certificateButtonEnabled: boolean
   isDownloadingTemplate: boolean
   isImporting: boolean
@@ -31,7 +30,6 @@ export function StudentsPanelStepRoster({
   isLoading,
   rosterCount,
   rows,
-  uploadBlockedMessage,
   certificateButtonEnabled,
   isDownloadingTemplate,
   isImporting,
@@ -45,10 +43,6 @@ export function StudentsPanelStepRoster({
   const isCertificateDisabled = !certificateButtonEnabled
 
   const handlePickExcel = () => {
-    if (uploadBlockedMessage) {
-      setAlertMessage(uploadBlockedMessage)
-      return
-    }
     fileInputRef.current?.click()
   }
 
@@ -102,7 +96,7 @@ export function StudentsPanelStepRoster({
             type="button"
             size="large"
             variant="tertiary"
-            disabled={isImporting || Boolean(uploadBlockedMessage)}
+            disabled={isImporting}
             onClick={handlePickExcel}
           >
             <span className={styles.buttonInner}>
@@ -128,12 +122,6 @@ export function StudentsPanelStepRoster({
           />
         </PFButton>
       </div>
-
-      {uploadBlockedMessage ? (
-        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-          {uploadBlockedMessage}
-        </PFText>
-      ) : null}
 
       <input
         ref={fileInputRef}
