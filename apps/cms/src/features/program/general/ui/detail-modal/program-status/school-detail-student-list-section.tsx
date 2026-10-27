@@ -59,6 +59,7 @@ import {
   type StudentEditTableRow,
 } from '../../../lib/school-detail-student-list-form'
 import {
+  readCommittedRosterId,
   validateStudentRosterCommit,
   validateStudentRosterEditEntry,
 } from '../../../lib/student-roster-commit-safety'
@@ -117,8 +118,10 @@ import {
   resolveStudentCertificateKind,
 } from '../../../lib/resolve-student-certificate-kind'
 import { resolveOrganizationPortraitConsentDownload } from '../../../lib/student-portrait-consent'
-import { fetchOrganizationPortraitConsentRemote } from '../../../api/portrait-consent-api-client'
-import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
+import {
+  downloadOrganizationPortraitConsentFile,
+  fetchOrganizationPortraitConsentRemote,
+} from '../../../api/portrait-consent-api-client'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import './school-detail-modal.css'
 import './school-detail-student-list-section.css'
@@ -342,6 +345,14 @@ export function SchoolDetailStudentListSection({
       const selectedId = String(selectedStudentKeys[0])
       const student = mergedStudentList.find(row => row.id === selectedId)
       if (student == null) return
+      const rosterId = readCommittedRosterId(student)
+      if (!organizationApplicationKey || rosterId == null) {
+        showAlert({
+          title: '안내',
+          content: '학생 명단 정보가 없어 인증서를 발급할 수 없습니다.',
+        })
+        return
+      }
 
       const sessions = getStudentLectureAttendanceSessions(
         student,
@@ -365,6 +376,8 @@ export function SchoolDetailStudentListSection({
           programEndDate,
           issuanceReasonLabel: reasonLabel,
           ...(programId != null ? { programId } : {}),
+          organizationApplicationId: organizationApplicationKey,
+          rosterId,
         })
       )
       setCertificateExportActive(true)
@@ -374,6 +387,7 @@ export function SchoolDetailStudentListSection({
       educationGrade,
       hasStudentSatisfactionSurvey,
       mergedStudentList,
+      organizationApplicationKey,
       programEndDate,
       programId,
       programStartDate,
@@ -381,6 +395,7 @@ export function SchoolDetailStudentListSection({
       schoolId,
       schoolName,
       selectedStudentKeys,
+      showAlert,
     ]
   )
 
@@ -417,7 +432,7 @@ export function SchoolDetailStudentListSection({
           })
           return
         }
-        await downloadAdminFile(download)
+        await downloadOrganizationPortraitConsentFile(download)
       } catch (error) {
         handleError(error, {
           context: 'schoolDetailStudentListSection.portraitConsentFileDownload',

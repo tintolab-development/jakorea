@@ -26,4 +26,16 @@ describe('resolveOrganizationPortraitConsentDownload', () => {
       fileName: '초상권동의서',
     })
   })
+
+  it('문자열 fileObjectId도 다운로드 대상으로 받는다', () => {
+    expect(
+      resolveOrganizationPortraitConsentDownload({
+        fileObjectId: '88001' as unknown as number,
+        originalFileName: '초상권.docx',
+      })
+    ).toEqual({
+      fileObjectId: 88001,
+      fileName: '초상권.docx',
+    })
+  })
 })

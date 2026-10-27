@@ -826,6 +826,7 @@ export function SchoolDetailModal({
           classCount={detail.classCount}
           schoolName={detail.schoolName ?? ''}
           educationGrade={detail.educationGrade ?? ''}
+          organizationApplicationId={participatingRow?.organizationApplicationId}
           programId={programId}
           participationAppliedAt={detail.participationAppliedAt}
           onSaveEdit={() => {}}

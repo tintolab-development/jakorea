@@ -1,4 +1,5 @@
 import type { PortraitConsentResponse } from '@/shared/api/generated/dashboard/schemas/portraitConsentResponse'
+import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import type { SchoolDetailStudentRow } from '../model/school-detail-types'
 
 /** 동의 양식 템플릿 — `agreement-portrait` (초상권 수집·이용 동의서) */
@@ -24,14 +25,12 @@ export function hasStudentPortraitConsentSubmission(
   )
 }
 
-/** 기관 단위 제출 1건. 학생 행·테이블 체크와 무관. */
+/** 기관 단위 제출 1건. 학생 행·테이블 체크와 무관. PDF 생성 없이 업로드 원본 fileObjectId만 쓴다. */
 export function resolveOrganizationPortraitConsentDownload(
   consent: PortraitConsentResponse | null | undefined
 ): { fileObjectId: number; fileName: string } | null {
-  const fileObjectId = consent?.fileObjectId
-  if (typeof fileObjectId !== 'number' || !Number.isFinite(fileObjectId) || fileObjectId <= 0) {
-    return null
-  }
+  const fileObjectId = parseFileObjectId(consent?.fileObjectId)
+  if (fileObjectId == null) return null
   const original = consent?.originalFileName?.trim()
   return {
     fileObjectId,
