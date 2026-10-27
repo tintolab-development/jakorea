@@ -37,6 +37,9 @@ function focusAfterAlertClosed(selector: string): void {
 /** 대상 프로그램 선택 필드(알림톡·문자·메일 공통 `ProgramSelectField`) */
 const PROGRAM_FIELD_FOCUS_SELECTOR = '.mail-send-program-select-field__trigger'
 
+/** 템플릿 선택 필드(알림톡·문자·메일 공통 `TemplateSelectField`) */
+const TEMPLATE_FIELD_FOCUS_SELECTOR = '.send-template-select-field__trigger'
+
 /**
  * 발송 배치 POST 실패 처리.
  * - BE 검증 오류(error.code로 분기)는 BE 문구를 그대로 보여 주고 해당 필드로 포커스
@@ -52,7 +55,11 @@ export function showNotificationSendErrorAlert(
     showNotificationSendRequestFailedAlert(showAlert)
     return
   }
-  const selectors = { program: PROGRAM_FIELD_FOCUS_SELECTOR, ...focusSelectors }
+  const selectors = {
+    program: PROGRAM_FIELD_FOCUS_SELECTOR,
+    template: TEMPLATE_FIELD_FOCUS_SELECTOR,
+    ...focusSelectors,
+  }
   const selector = fieldError.field ? selectors[fieldError.field] : undefined
   if (selector) focusAfterAlertClosed(selector)
   showAlert({ title: '안내', content: fieldError.message })

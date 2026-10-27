@@ -36,6 +36,8 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   ALIMTALK_TEMPLATE_NOT_APPROVED: '카카오 승인이 완료되지 않은 템플릿은 발송할 수 없습니다.',
   ALIMTALK_SENDER_PROFILE_MISMATCH: '선택한 발신 프로필이 템플릿과 일치하지 않습니다.',
   NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING: '템플릿 필수 변수가 없습니다.',
+  NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED:
+    '선택한 템플릿에 현재 프로그램 또는 수신자 유형에서 사용할 수 없는 변수가 포함되어 있습니다. 템플릿과 수신자 설정을 다시 확인해 주세요.',
   NOTIFICATION_SERVER_RESERVED_VARIABLE:
     '서버가 채우는 예약 변수는 발송 요청에 넣을 수 없습니다.',
   ALIMTALK_TEMPLATE_MANAGED_BY_NHN:
@@ -221,6 +223,7 @@ function looksLikeSenderPhoneRequired(message: string, field?: string): boolean 
 }
 
 const PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES = 'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES'
+const TEMPLATE_VARIABLE_SCOPE_DISABLED = 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED'
 
 function parseCodeSuffixKeys(raw: string | undefined, prefix: string): string[] {
   const text = raw?.trim() ?? ''
@@ -230,6 +233,46 @@ function parseCodeSuffixKeys(raw: string | undefined, prefix: string): string[] 
     .split(',')
     .map(key => key.trim())
     .filter(Boolean)
+}
+
+/** 서버가 붙인 변수명만 노출. 문장·에러코드·디버그 접미사는 버린다. */
+function isSafeNotificationVariableName(name: string): boolean {
+  const trimmed = name.trim()
+  if (!trimmed || trimmed.length > 80) return false
+  if (/[=;\n]/.test(trimmed)) return false
+  if (trimmed.includes('NOTIFICATION_')) return false
+  if (/[.!?]$/.test(trimmed)) return false
+  if (/(요|다)$/.test(trimmed)) return false
+  return true
+}
+
+function parseScopeDisabledVariableNames(
+  code: string | undefined,
+  serverMessage: string
+): string[] {
+  const fromCode = parseCodeSuffixKeys(code, TEMPLATE_VARIABLE_SCOPE_DISABLED)
+  const fromMessage = parseCodeSuffixKeys(serverMessage, TEMPLATE_VARIABLE_SCOPE_DISABLED)
+  const fromPlainMessage =
+    fromMessage.length === 0 &&
+    serverMessage &&
+    serverMessage !== TEMPLATE_VARIABLE_SCOPE_DISABLED &&
+    !serverMessage.startsWith(`${TEMPLATE_VARIABLE_SCOPE_DISABLED}:`)
+      ? [serverMessage.trim()]
+      : []
+  const keys = (fromCode.length > 0 ? fromCode : fromMessage.length > 0 ? fromMessage : fromPlainMessage)
+    .map(key => key.trim())
+    .filter(isSafeNotificationVariableName)
+  return [...new Set(keys)]
+}
+
+function formatTemplateVariableScopeDisabledMessage(
+  code: string | undefined,
+  serverMessage: string
+): string {
+  const base = ERROR_CODE_MESSAGES[TEMPLATE_VARIABLE_SCOPE_DISABLED]
+  const names = parseScopeDisabledVariableNames(code, serverMessage)
+  if (names.length === 0) return base
+  return `${base}\n사용할 수 없는 변수: ${names.join(', ')}`
 }
 
 /** 400 `NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:{키}` — 프로그램 필요 변수 키 안내 */
@@ -363,6 +406,12 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     code?.startsWith(`${PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES}:`)
   ) {
     return formatProgramRequiredForTemplateVariablesMessage(code, serverMessage)
+  }
+  if (
+    code === TEMPLATE_VARIABLE_SCOPE_DISABLED ||
+    code?.startsWith(`${TEMPLATE_VARIABLE_SCOPE_DISABLED}:`)
+  ) {
+    return formatTemplateVariableScopeDisabledMessage(code, serverMessage)
   }
   if (
     code === 'DIRECT_RECIPIENT_AD_CONSENT_UNSUPPORTED' ||
@@ -499,6 +548,7 @@ const NOTIFICATION_SEND_FIELD_ERROR_CODES: Record<string, NotificationSendErrorF
   NOTIFICATION_SENDER_DISPLAY_NAME_INVALID: 'senderDisplayName',
   NOTIFICATION_SENDER_DISPLAY_NAME_EMAIL_ONLY: 'senderDisplayName',
   NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES: 'program',
+  NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED: 'template',
   NOTIFICATION_SERVER_RESERVED_VARIABLE: null,
   ...Object.fromEntries(
     NOTIFICATION_MMS_ATTACHMENT_ERROR_CODES.map(code => [code, 'attachments' as const])
@@ -521,9 +571,12 @@ export function resolveNotificationSendFieldError(
     data != null
       ? extractApiErrorMessage(data, { httpStatus: getApiErrorHttpStatus(error), fallback: '' })
       : ''
-  // 프로그램 필요 변수는 BE message 대신 code의 {키}를 FE 문구로 노출
+  // 프로그램 필요 변수·스코프 차단은 BE message 대신 FE 문구(+안전한 변수명)를 노출
+  const useMappedMessage =
+    code === PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES ||
+    code === TEMPLATE_VARIABLE_SCOPE_DISABLED
   const message =
-    code !== PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES && serverMessage && serverMessage !== rawCode
+    !useMappedMessage && serverMessage && serverMessage !== rawCode
       ? serverMessage
       : getNotificationsApiErrorMessage(error, '입력값을 확인하세요.')
   return { code, field: NOTIFICATION_SEND_FIELD_ERROR_CODES[code] ?? null, message }
