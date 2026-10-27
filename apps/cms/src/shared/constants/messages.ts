@@ -47,9 +47,9 @@ export const STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE =
 export const STUDENT_PORTRAIT_CONSENT_SELECT_ONE_ALERT_MESSAGE =
   '초상권 동의서를 확인할 학생을 1명 이상 선택해 주세요.'
 
-/** 참여 학생 목록 — 초상권 동의 확인: 선택 행 전원 미제출 시 AlertModal 본문 */
+/** 참여 학생 목록 — 초상권 동의 확인: 기관 단위 제출 파일 없음 */
 export const STUDENT_PORTRAIT_CONSENT_NOT_SUBMITTED_ALERT_MESSAGE =
-  '선택한 학생 중 교사가 제출한 초상권 동의서가 없습니다.'
+  '교사가 제출한 초상권 동의서가 없습니다.'
 
 /** 참여 학생 목록 — 초상권 동의 PDF 생성 실패 */
 export const STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE =

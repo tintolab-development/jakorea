@@ -41,6 +41,10 @@ export interface ParticipatingSchoolSession {
   osaAssignmentId?: number
   /** 원본 시작 시각(ISO). 합반 교육일 비교용. 표시 라벨을 파싱하지 않는다. */
   startAt?: string | null
+  /** 원본 종료 시각(ISO). 강사 기관 배정 모달 시간 범위 표기용. */
+  endAt?: string | null
+  /** 목록 sessions[].sessionNo 원본(program_schedule.session_no). round처럼 index 등으로 대체하지 않는다. */
+  sessionNo?: number | null
   /** 서버 일정명 (TT `educationSchedules[].label`) — 있으면 출석 회차 제목으로 우선 사용 */
   educationScheduleLabel?: string
 }

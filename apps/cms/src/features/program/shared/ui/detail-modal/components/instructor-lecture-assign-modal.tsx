@@ -274,8 +274,8 @@ export function InstructorLectureAssignModal({
       >
         {showNoApprovedOrganizationBanner ? (
           <p className="instructor-lecture-assign-modal__org-empty-notice" role="status">
-            승인된 참여기관이 없어 기관 단위 배정 일정을 표시할 수 없습니다. 강사가 선택한 가능
-            구간은 아래와 같습니다.
+            배정된 일정이 있는 승인 기관이 없어 기관 단위 배정 일정을 표시할 수 없습니다. 강사가
+            선택한 가능 구간은 아래와 같습니다.
           </p>
         ) : null}
         {!useSlotListLayout ? (
