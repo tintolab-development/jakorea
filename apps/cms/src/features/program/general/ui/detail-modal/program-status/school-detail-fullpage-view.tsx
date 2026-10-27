@@ -6,7 +6,7 @@
  */
 
 import type { ReactNode } from 'react'
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnsType } from 'antd/es/table'
@@ -106,6 +106,7 @@ import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-ass
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
 import { SchoolDetailNewAssignGuideModal } from './school-detail-new-assign-guide-modal'
@@ -144,7 +145,6 @@ import {
   formatParticipatingInstitutionKitQuantity,
 } from '@/features/program/general/lib/participating-institution-textbook'
 import { buildCombinedClassLeadTeacherCandidatesFromParticipating } from '@/features/program/general/lib/combined-class-lead-teacher'
-import { retainMatchingCombinedClassPartnerIds } from '@/features/program/general/lib/combined-class-education-dates'
 import { COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT } from '@/features/program/general/lib/combined-class-copy'
 import { useCombinedClassProcess } from '@/features/program/general/hooks/use-combined-class-process'
 import {
@@ -483,6 +483,16 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const [addAssignOverflowOpen, setAddAssignOverflowOpen] = useState(false)
   const [addModalOpenedFromOverflow, setAddModalOpenedFromOverflow] = useState(false)
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
+  const pendingAssignNotifyRef = useRef<PermissionModalPayload | null>(null)
+  const [addAssignNotifyOpen, setAddAssignNotifyOpen] = useState(false)
+  const [addAssignNotifyInstructorName, setAddAssignNotifyInstructorName] = useState('')
+  const [assignSubmitting, setAssignSubmitting] = useState(false)
+  const assignInFlightRef = useRef(false)
+  const pendingAddAssignRef = useRef<{
+    role: InstructorRoleKey
+    option: SchoolAddInstructorAssignOption
+    meta?: { isNewApproval?: boolean; sessionIds?: string[] }
+  } | null>(null)
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
   const [unassignCompleteModal, setUnassignCompleteModal] = useState<{
     instructorNames: string[]
@@ -892,51 +902,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         })
         updateApplicationInfoDraft({
           combinedClassApplication: '신청',
-          combinedClassPartnerSchoolIds: retainMatchingCombinedClassPartnerIds(
-            row,
-            participatingSchoolList,
-            partnerIds
-          ),
-        })
-        return false
-      }
-    },
-    onCancelMerge: async mergeGroupId => {
-      if (!mergeGroupsAllowed || !shouldUseOrganizationMergeGroupsRemoteApi() || !progressRemoteEnabled) {
-        notifyProgramApiUnavailable(
-          'general-org-merge-lead-teacher-progress',
-          '일반 프로그램 · 합반 취소'
-        )
-        return false
-      }
-      try {
-        await saveOrganizationCombinedClassRemote({
-          programId,
-          programType: program.backendProgramType,
-          leadRow: row,
-          allRows: participatingSchoolList,
-          combinedClassApplication: '미신청',
-          partnerRowIds: [],
-          existingMergeGroups: mergeGroupsQuery.data,
-          mergeGroupId,
-        })
-        await queryClient.invalidateQueries({
-          queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
-        })
-        return true
-      } catch (error) {
-        const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
-        const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
-        void showAlert({
-          title: '처리 실패',
-          content: axios.isAxiosError(error)
-            ? resolveOrganizationMergeErrorMessage(responseData, {
-                httpStatus,
-                fallback: '합반을 취소하지 못했습니다. 다시 시도해 주세요.',
-              })
-            : error instanceof Error && error.message.trim()
-              ? error.message
-              : '합반을 취소하지 못했습니다. 다시 시도해 주세요.',
+          combinedClassPartnerSchoolIds: partnerIds,
         })
         return false
       }
@@ -1422,6 +1388,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           return
         }
 
+        if (assignInFlightRef.current) return
+        assignInFlightRef.current = true
+        setAssignSubmitting(true)
         try {
           let leadAssigned = currentAssignedCount > 0 && assignedRows.some(i => i.role === 'lead')
           for (const waitingRow of rows) {
@@ -1468,6 +1437,10 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             }
             const applicationIdRaw = (waitingRow as { instructorApplicationId?: string })
               .instructorApplicationId
+            const assignmentNotify = toScheduledOnlyNotifyTiming(
+              pendingAssignNotifyRef.current?.notifyTiming,
+              pendingAssignNotifyRef.current?.manualNotifyAt
+            )
             await createInstructorAssignmentRemote(programId, {
               instructorMemberId: memberId,
               ...(scheduleId != null ? { scheduleId } : {}),
@@ -1475,6 +1448,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               organizationApplicationId: Number(orgAppId),
               instructorApplicationId: applicationIdRaw ? Number(applicationIdRaw) : undefined,
               scheduleLead: !leadAssigned,
+              ...assignmentNotify,
             })
             leadAssigned = true
           }
@@ -1513,6 +1487,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 getParticipationConsentRequiredMessage(error) ??
                 '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'),
           })
+        } finally {
+          assignInFlightRef.current = false
+          setAssignSubmitting(false)
         }
         return
       }
@@ -1619,6 +1596,147 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const handleSelectAssignConfirm = useCallback(() => {
     finalizeSelectAssign(selectedWaitingRows, false)
   }, [finalizeSelectAssign, selectedWaitingRows])
+
+  const executeRemoteAddAssign = useCallback(
+    async (payload: PermissionModalPayload) => {
+      const pending = pendingAddAssignRef.current
+      if (!pending || !assignmentBoardRemoteEnabled) return
+      const { role, option, meta } = pending
+      const orgAppId = row.organizationApplicationId
+      if (!orgAppId) {
+        showAlert({
+          title: '안내',
+          content:
+            '기관 신청 ID가 없어 배정할 수 없습니다. 참여 기관 API에 organizationApplicationId(sourceApplicationId) 매핑이 필요합니다.',
+        })
+        return
+      }
+      if (!assignmentBoard) {
+        showAlert({
+          title: '안내',
+          content: '배정 데이터를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.',
+        })
+        return
+      }
+      const memberId = Number(option.value)
+      if (!Number.isFinite(memberId) || memberId <= 0) {
+        showAlert({
+          title: '안내',
+          content: `강사 memberId가 없어 배정할 수 없습니다. (${option.label})`,
+        })
+        return
+      }
+      const sessionIds = meta?.sessionIds ?? []
+      const selectedSessions = instructorAssignScheduleSessions.filter(session =>
+        sessionIds.includes(buildSchoolAddInstructorSessionSlotKey(row.id, session))
+      )
+      if (selectedSessions.length === 0) {
+        showAlert({
+          title: '안내',
+          content: '배정할 교육 일정을 선택해 주세요.',
+        })
+        return
+      }
+      const applicationIdRaw = assignmentBoard.approvedInstructorApplications.find(
+        app =>
+          app.instructorMemberId != null && String(app.instructorMemberId) === String(memberId)
+      )?.id
+      if (assignInFlightRef.current) return
+      assignInFlightRef.current = true
+      setAssignSubmitting(true)
+      pendingAssignNotifyRef.current = payload
+      try {
+        const assignmentNotify = toScheduledOnlyNotifyTiming(
+          payload.notifyTiming,
+          payload.manualNotifyAt
+        )
+        let leadAssigned = currentAssignedCount > 0 && assignedRows.some(i => i.role === 'lead')
+        const wantLead = role === 'lead' || currentAssignedCount === 0
+        for (const session of selectedSessions) {
+          if (session.scheduleUnresolved) {
+            showAlert({
+              title: '안내',
+              content: `희망일에 대응하는 program schedule이 없습니다. (일정 미생성)`,
+            })
+            return
+          }
+          const requestedScheduleId = session.requestedScheduleId
+          const scheduleId =
+            resolveInstructorAssignmentScheduleId({
+              schedules: assignmentBoard.schedules,
+              resolvedScheduleId: session.resolvedScheduleId,
+              hopeDateOrLine: session.date,
+              timeRangeLabel: session.timeRange,
+            }) ?? undefined
+          if (scheduleId == null && requestedScheduleId == null) {
+            showAlert({
+              title: '안내',
+              content:
+                '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.',
+            })
+            return
+          }
+          await createInstructorAssignmentRemote(programId, {
+            instructorMemberId: memberId,
+            ...(scheduleId != null ? { scheduleId } : {}),
+            ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+            organizationApplicationId: Number(orgAppId),
+            instructorApplicationId:
+              applicationIdRaw != null ? Number(applicationIdRaw) : undefined,
+            scheduleLead: wantLead && !leadAssigned,
+            ...assignmentNotify,
+          })
+          leadAssigned = true
+        }
+        await invalidateAssignmentBoard()
+        pendingAddAssignRef.current = null
+        setAddAssignNotifyInstructorName('')
+        setAddAssignNotifyOpen(false)
+        setAddAssignModalOpen(false)
+        setAddModalOpenedFromOverflow(false)
+        setAssignCompleteModal({
+          instructorName: option.label,
+          schoolName: row.schoolName,
+          currentCount: currentAssignedCount + 1,
+          showApprovalAlarmSection: meta?.isNewApproval ?? false,
+        })
+      } catch (error) {
+        const code =
+          error && typeof error === 'object' && 'response' in error
+            ? String(
+                (error as { response?: { data?: { error?: { code?: string }; code?: string } } })
+                  .response?.data?.error?.code ??
+                  (error as { response?: { data?: { code?: string } } }).response?.data?.code ??
+                  ''
+              )
+            : ''
+        showAlert({
+          title: '배정 실패',
+          content: isOneSchoolPerDayConflictErrorCode(code)
+            ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
+            : (formatInstructorOrganizationScheduleScopeMessage(error) ??
+              getParticipationConsentRequiredMessage(error) ??
+              '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'),
+        })
+      } finally {
+        assignInFlightRef.current = false
+        setAssignSubmitting(false)
+      }
+    },
+    [
+      assignedRows,
+      assignmentBoard,
+      assignmentBoardRemoteEnabled,
+      currentAssignedCount,
+      instructorAssignScheduleSessions,
+      invalidateAssignmentBoard,
+      programId,
+      row.id,
+      row.organizationApplicationId,
+      row.schoolName,
+      showAlert,
+    ]
+  )
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
@@ -2600,85 +2718,10 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                       return
                     }
 
-                    const applicationIdRaw = assignmentBoard.approvedInstructorApplications.find(
-                      app =>
-                        app.instructorMemberId != null &&
-                        String(app.instructorMemberId) === String(memberId)
-                    )?.id
-
-                    try {
-                      let leadAssigned =
-                        currentAssignedCount > 0 && assignedRows.some(i => i.role === 'lead')
-                      const wantLead = role === 'lead' || currentAssignedCount === 0
-                      for (const session of selectedSessions) {
-                        if (session.scheduleUnresolved) {
-                          showAlert({
-                            title: '안내',
-                            content: `희망일에 대응하는 program schedule이 없습니다. (일정 미생성)`,
-                          })
-                          return
-                        }
-                        const requestedScheduleId = session.requestedScheduleId
-                        const scheduleId =
-                          resolveInstructorAssignmentScheduleId({
-                            schedules: assignmentBoard.schedules,
-                            resolvedScheduleId: session.resolvedScheduleId,
-                            hopeDateOrLine: session.date,
-                            timeRangeLabel: session.timeRange,
-                          }) ?? undefined
-                        if (scheduleId == null && requestedScheduleId == null) {
-                          showAlert({
-                            title: '안내',
-                            content:
-                              '교육 일정을 program schedule과 명확히 연결할 수 없습니다. resolvedScheduleId·requestedScheduleId 또는 희망 시간 정보를 확인해 주세요.',
-                          })
-                          return
-                        }
-                        await createInstructorAssignmentRemote(programId, {
-                          instructorMemberId: memberId,
-                          ...(scheduleId != null ? { scheduleId } : {}),
-                          ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
-                          organizationApplicationId: Number(orgAppId),
-                          instructorApplicationId:
-                            applicationIdRaw != null ? Number(applicationIdRaw) : undefined,
-                          scheduleLead: wantLead && !leadAssigned,
-                        })
-                        leadAssigned = true
-                      }
-                      await invalidateAssignmentBoard()
-                      setAddAssignModalOpen(false)
-                      setAddModalOpenedFromOverflow(false)
-                      setAssignCompleteModal({
-                        instructorName: option.label,
-                        schoolName: row.schoolName,
-                        currentCount: currentAssignedCount + 1,
-                        showApprovalAlarmSection: _meta?.isNewApproval ?? false,
-                      })
-                    } catch (error) {
-                      const code =
-                        error && typeof error === 'object' && 'response' in error
-                          ? String(
-                              (
-                                error as {
-                                  response?: {
-                                    data?: { error?: { code?: string }; code?: string }
-                                  }
-                                }
-                              ).response?.data?.error?.code ??
-                                (error as { response?: { data?: { code?: string } } }).response
-                                  ?.data?.code ??
-                                ''
-                            )
-                          : ''
-                      showAlert({
-                        title: '배정 실패',
-                        content: isOneSchoolPerDayConflictErrorCode(code)
-                          ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
-                          : (formatInstructorOrganizationScheduleScopeMessage(error) ??
-                            getParticipationConsentRequiredMessage(error) ??
-                            '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'),
-                      })
-                    }
+                    pendingAddAssignRef.current = { role, option, meta: _meta }
+                    setAddAssignNotifyInstructorName(option.label)
+                    setAddAssignModalOpen(false)
+                    setAddAssignNotifyOpen(true)
                     return
                   }
 
@@ -2733,19 +2776,41 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             <SchoolDetailSelectAssignConfirmModal
               open={selectAssignConfirmOpen}
               onCancel={() => {
+                pendingAssignNotifyRef.current = null
                 setSelectAssignConfirmOpen(false)
               }}
               schoolName={row.schoolName}
               instructorNames={selectedWaitingRows.map(r => r.instructorName)}
               currentCount={currentAssignedCount}
               requiredCount={requiredInstructorCount}
-              onConfirm={() => {
+              confirmLoading={assignSubmitting}
+              onConfirm={payload => {
+                pendingAssignNotifyRef.current = payload
                 if (currentAssignedCount + selectedWaitingRows.length > requiredInstructorCount) {
                   setSelectAssignConfirmOpen(false)
                   setSelectAssignOverflowOpen(true)
                 } else {
                   handleSelectAssignConfirm()
                 }
+              }}
+            />
+            <SchoolDetailSelectAssignConfirmModal
+              open={addAssignNotifyOpen}
+              onCancel={() => {
+                if (assignSubmitting) return
+                pendingAddAssignRef.current = null
+                setAddAssignNotifyInstructorName('')
+                setAddAssignNotifyOpen(false)
+              }}
+              schoolName={row.schoolName}
+              instructorNames={
+                addAssignNotifyInstructorName ? [addAssignNotifyInstructorName] : []
+              }
+              currentCount={currentAssignedCount}
+              requiredCount={requiredInstructorCount}
+              confirmLoading={assignSubmitting}
+              onConfirm={payload => {
+                void executeRemoteAddAssign(payload)
               }}
             />
             <SchoolDetailNewAssignGuideModal

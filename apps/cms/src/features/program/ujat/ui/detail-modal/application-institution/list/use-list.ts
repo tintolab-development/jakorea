@@ -39,6 +39,10 @@ import {
   resolveUjatInstitutionCalendarFocusIso,
 } from './calendar-query'
 import { UJAT_INSTITUTION_CALENDAR_DATE_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
+import { bulkRejectGeneralOrganizationApplications } from '@/features/program/general/api/admin-applications-service'
+import { toTimedBulkNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
 
 /** 필터 조건은 모두 서버 query로 보낸다. 응답이 다른 지역 코드를 섞어 보낼 때만 탭 기준으로 거른다. */
 function filterRowsByRegion(
@@ -299,10 +303,37 @@ export function useUjatInstitutionApplicationList(
     setPendingApplicationRejectModal(false)
   }, [])
 
-  const confirmApplicationRejectModal = useCallback(() => {
-    patchSelectedStatus('application_rejected')
-    setPendingApplicationRejectModal(false)
-  }, [patchSelectedStatus])
+  const confirmApplicationRejectModal = useCallback(
+    async (payload: PermissionModalPayload) => {
+      const ids = selectedApplications.map(row => row.id)
+      if (remoteEnabled) {
+        try {
+          const result = await bulkRejectGeneralOrganizationApplications(ids, {
+            reason: payload.reason.trim() || 'CMS UJAT 신청기관 신청 반려',
+            ...toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt),
+          })
+          if ((result.failureCount ?? 0) > 0) {
+            showAlert({
+              title: '처리 실패',
+              content: `선택한 신청 중 ${result.failureCount}건을 처리하지 못했습니다.`,
+            })
+            return
+          }
+        } catch (error) {
+          showAlert({
+            title: '안내',
+            content:
+              getNotificationTimingApiErrorMessage(error) ??
+              (error instanceof Error ? error.message : '신청기관 반려에 실패했습니다.'),
+          })
+          return
+        }
+      }
+      patchSelectedStatus('application_rejected')
+      setPendingApplicationRejectModal(false)
+    },
+    [patchSelectedStatus, remoteEnabled, selectedApplications, showAlert]
+  )
 
   const resetRegionState = useCallback(() => {
     setPendingFilters({ ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS })

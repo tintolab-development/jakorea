@@ -232,7 +232,9 @@ export function UjatInstitutionApplicationList({
           institutionName={selectedApplications[0]?.institutionName}
           selectionCount={selectedApplications.length}
           onCancel={closeApplicationRejectModal}
-          onConfirm={() => confirmApplicationRejectModal()}
+          onConfirm={payload => {
+            void confirmApplicationRejectModal(payload)
+          }}
         />
       ) : null}
     </div>

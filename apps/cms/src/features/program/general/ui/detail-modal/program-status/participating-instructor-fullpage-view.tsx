@@ -3,7 +3,7 @@
  * 프로그램 진행 현황 > 참여 강사 — instructorId 쿼리 시 목록 대신 표시
  */
 
-import { useState, useEffect, useMemo, useCallback, type Key } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef, type Key } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
@@ -81,9 +81,7 @@ import {
 } from '@/features/program/general/api/instructor-assignments-api-client'
 import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
-import {
-  mapParticipatingSessionsToInstructorAssignOptions,
-} from '@/features/program/general/lib/instructor-assign-session-options'
+import { mapParticipatingSessionsToInstructorAssignOptions } from '@/features/program/general/lib/instructor-assign-session-options'
 import {
   hasAssignableOrganizationInstructorSchedule,
   resolveAssignableSchedulePayloadFromSession,
@@ -96,6 +94,8 @@ import {
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { AssignGuideModal } from './assign-guide-modal'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
 import { ParticipatingInstructorApplicationInfo } from './participating-instructor-application-info'
 import { useParticipatingInstructorDetailEdit } from '@/features/program/general/hooks/use-participating-instructor-detail-edit'
 import { getParticipatingInstructorActivityWithdrawScheduleOptions } from '@/features/program/general/lib/participating-instructor-activity-withdraw'
@@ -110,7 +110,6 @@ import { ParticipatingIndividualInstructorSettlementSection } from './participat
 import { ParticipatingIndividualInstructorAssignmentSection } from './participating-individual-instructor-assignment-section'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
-import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 import './instructor-assignment-status-text.css'
@@ -204,7 +203,7 @@ const TAB_LABELS: Record<InstructorDetailTabKey, string> = {
   settlement: '정산 현황',
 }
 
-const NO_DATA = '데이터 없음'
+const NO_DATA = '-'
 
 function getEducationLevelBadge(educationLevel?: string, schoolType?: string): string {
   const raw = schoolType ?? educationLevel ?? ''
@@ -305,6 +304,8 @@ export function ParticipatingInstructorFullpageView({
   const [assignGuideSchoolId, setAssignGuideSchoolId] = useState<string | null>(null)
   const [assignGuideRole, setAssignGuideRole] = useState<InstructorRoleKey>('assistant')
   const [assignGuideSessionIds, setAssignGuideSessionIds] = useState<string[]>([])
+  const [assignGuideSubmitting, setAssignGuideSubmitting] = useState(false)
+  const assignGuideInFlightRef = useRef(false)
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [savedAdminComment, setSavedAdminComment] = useState('')
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
@@ -376,10 +377,7 @@ export function ParticipatingInstructorFullpageView({
           reason,
           Number.isFinite(programIdNumber) ? programIdNumber : undefined
         )
-        queryClient.setQueryData(
-          generalApplicationsQueryKeys.instructorDetail(applicationId),
-          dto
-        )
+        queryClient.setQueryData(generalApplicationsQueryKeys.instructorDetail(applicationId), dto)
         const mapped = mapInstructorApplicationDetailToParticipatingRow(
           dto,
           mergedInstructor,
@@ -478,11 +476,7 @@ export function ParticipatingInstructorFullpageView({
     setAssignGuideSchoolId(null)
     setAssignGuideRole('assistant')
     setAssignGuideSessionIds([])
-  }, [
-    d.id,
-    institutionAssignment.assignedSchools,
-    institutionAssignment.waitingSchools,
-  ])
+  }, [d.id, institutionAssignment.assignedSchools, institutionAssignment.waitingSchools])
 
   useEffect(() => {
     setSavedAdminComment(baseInstructor.adminComment ?? '')
@@ -549,13 +543,7 @@ export function ParticipatingInstructorFullpageView({
         })
       }
     },
-    [
-      assignedSchools,
-      institutionAssignment,
-      mergedInstructor.memberId,
-      program.id,
-      showAlert,
-    ]
+    [assignedSchools, institutionAssignment, mergedInstructor.memberId, program.id, showAlert]
   )
 
   const assignedSchoolColumns: ColumnsType<InstructorAssignedSchoolRow> = useMemo(
@@ -860,8 +848,9 @@ export function ParticipatingInstructorFullpageView({
     setAssignGuideSessionIds([])
   }, [])
 
-  const handleAssignGuideConfirm = useCallback(async () => {
+  const handleAssignGuideConfirm = useCallback(async (payload: PermissionModalPayload) => {
     if (!assignGuideMode || !assignGuideSchoolId) return
+    if (assignGuideInFlightRef.current) return
 
     const memberId = Number(mergedInstructor.memberId)
     if (!Number.isFinite(memberId) || memberId <= 0) {
@@ -890,7 +879,13 @@ export function ParticipatingInstructorFullpageView({
       return
     }
 
+    assignGuideInFlightRef.current = true
+    setAssignGuideSubmitting(true)
     try {
+      const assignmentNotify = toScheduledOnlyNotifyTiming(
+        payload.notifyTiming,
+        payload.manualNotifyAt
+      )
       let leadAssigned = assignedSchools.some(row => row.role === 'lead')
       const selectedSessionKeys = new Set(assignGuideSessionIds)
 
@@ -920,10 +915,7 @@ export function ParticipatingInstructorFullpageView({
           return
         }
 
-        const targetSessions = listAssignableSessionsForWaitingRow(
-          waitingRow,
-          selectedSessionKeys
-        )
+        const targetSessions = listAssignableSessionsForWaitingRow(waitingRow, selectedSessionKeys)
 
         if (targetSessions.length === 0) {
           showAlert({
@@ -953,6 +945,7 @@ export function ParticipatingInstructorFullpageView({
                 ? Number(mergedInstructor.instructorApplicationId)
                 : undefined,
             scheduleLead: !leadAssigned && assignGuideRole === 'lead',
+            ...assignmentNotify,
           })
           if (assignGuideRole === 'lead') leadAssigned = true
         }
@@ -975,6 +968,9 @@ export function ParticipatingInstructorFullpageView({
           ? error.message
           : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
       showAlert({ title: '배정 실패', content: message })
+    } finally {
+      assignGuideInFlightRef.current = false
+      setAssignGuideSubmitting(false)
     }
   }, [
     assignGuideMode,
@@ -1321,16 +1317,18 @@ export function ParticipatingInstructorFullpageView({
         >
           <div className="instructor-resume-card">
             {(mergedInstructor.qualifications?.length ?? 0) > 0 ? (
-              mergedInstructor.qualifications!.map((q: ParticipatingInstructorQualification, idx: number) => (
-                <div key={idx} className="instructor-resume-row">
-                  <span className="instructor-resume-row-left instructor-resume-row-left--single-year">
-                    {q.year ?? '-'}
-                  </span>
-                  <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
-                    <span className="instructor-resume-emphasis">{q.name ?? '-'}</span>
-                  </span>
-                </div>
-              ))
+              mergedInstructor.qualifications!.map(
+                (q: ParticipatingInstructorQualification, idx: number) => (
+                  <div key={idx} className="instructor-resume-row">
+                    <span className="instructor-resume-row-left instructor-resume-row-left--single-year">
+                      {q.year ?? '-'}
+                    </span>
+                    <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
+                      <span className="instructor-resume-emphasis">{q.name ?? '-'}</span>
+                    </span>
+                  </div>
+                )
+              )
             ) : (
               <p className="instructor-resume-empty">{NO_DATA}</p>
             )}
@@ -1357,9 +1355,7 @@ export function ParticipatingInstructorFullpageView({
                 variant="delete"
                 size="h40"
                 disabled={
-                  isActivityWithdrawn ||
-                  applicationInfoEdit.isEditing ||
-                  activityWithdrawSubmitting
+                  isActivityWithdrawn || applicationInfoEdit.isEditing || activityWithdrawSubmitting
                 }
                 onClick={handleRequestActivityWithdraw}
               >
@@ -1419,144 +1415,145 @@ export function ParticipatingInstructorFullpageView({
               />
             </div>
           ) : (
-          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
-            <div className="school-detail-fullpage-view__instructor-section">
-              <div className="table-header-actions">
-                <div className="table-header-title--wrapper">
-                  <span className="table-title">배정된 기관 목록</span>
-                  <span className="table-description">{assignedSchools.length}건</span>
+            <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
+              <div className="school-detail-fullpage-view__instructor-section">
+                <div className="table-header-actions">
+                  <div className="table-header-title--wrapper">
+                    <span className="table-title">배정된 기관 목록</span>
+                    <span className="table-description">{assignedSchools.length}건</span>
+                  </div>
+                  <div className="info-section-buttons--wrapper">
+                    <CmsButton variant="delete" size="h40" onClick={handleUnassignClick}>
+                      배정 취소
+                    </CmsButton>
+                    <CmsButton
+                      variant="secondary"
+                      size="h40"
+                      disabled={addAssignOptions.length === 0}
+                      onClick={() => {
+                        if (addAssignOptions.length === 0) {
+                          return
+                        }
+                        setAssignGuideMode('add')
+                        setAssignGuideSchoolId(addAssignOptions[0]?.value ?? null)
+                        setAssignGuideRole(
+                          assignedSchools.some(row => row.role === 'lead') ? 'assistant' : 'lead'
+                        )
+                        setAssignGuideSessionIds([])
+                      }}
+                    >
+                      추가 배정
+                    </CmsButton>
+                    <ExcelButton
+                      onClick={exportAssignedSchoolsExcel}
+                      loading={isAssignedSchoolsExcelExporting}
+                    />
+                  </div>
                 </div>
-                <div className="info-section-buttons--wrapper">
-                  <CmsButton variant="delete" size="h40" onClick={handleUnassignClick}>
-                    배정 취소
-                  </CmsButton>
-                  <CmsButton
-                    variant="secondary"
-                    size="h40"
-                    disabled={addAssignOptions.length === 0}
-                    onClick={() => {
-                      if (addAssignOptions.length === 0) {
-                        return
-                      }
-                      setAssignGuideMode('add')
-                      setAssignGuideSchoolId(addAssignOptions[0]?.value ?? null)
-                      setAssignGuideRole(
-                        assignedSchools.some(row => row.role === 'lead') ? 'assistant' : 'lead'
-                      )
-                      setAssignGuideSessionIds([])
-                    }}
-                  >
-                    추가 배정
-                  </CmsButton>
-                  <ExcelButton
-                    onClick={exportAssignedSchoolsExcel}
-                    loading={isAssignedSchoolsExcelExporting}
-                  />
+                <div className="participating-institutions-section__table-wrap">
+                  {assignedSchools.length === 0 ? (
+                    <div
+                      className="school-detail-fullpage-view__instructor-list-empty"
+                      role="status"
+                      aria-label="배정된 학교 없음"
+                    >
+                      배정된 학교가 없습니다.
+                    </div>
+                  ) : (
+                    <CmsDataTable<InstructorAssignedSchoolRow>
+                      className="participating-institutions-section__table cms-data-table"
+                      rowKey="id"
+                      size="middle"
+                      pagination={false}
+                      scroll={{ x: 1200 }}
+                      rowSelection={{
+                        columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                        selectedRowKeys: selectedAssignedSchoolKeys,
+                        onChange: keys => setSelectedAssignedSchoolKeys(keys),
+                      }}
+                      columns={assignedSchoolColumns}
+                      dataSource={assignedSchools}
+                    />
+                  )}
                 </div>
               </div>
-              <div className="participating-institutions-section__table-wrap">
-                {assignedSchools.length === 0 ? (
-                  <div
-                    className="school-detail-fullpage-view__instructor-list-empty"
-                    role="status"
-                    aria-label="배정된 학교 없음"
-                  >
-                    배정된 학교가 없습니다.
+
+              <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
+                <div className="table-header-actions">
+                  <div className="table-header-title--wrapper">
+                    <span className="table-title">배정 대기 기관 목록</span>
+                    <span className="table-description">{waitingSchools.length}건</span>
                   </div>
-                ) : (
-                  <CmsDataTable<InstructorAssignedSchoolRow>
+                  <div className="info-section-buttons--wrapper">
+                    <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
+                      선택 배정
+                    </CmsButton>
+                    <ExcelButton
+                      onClick={exportWaitingSchoolsExcel}
+                      loading={isWaitingSchoolsExcelExporting}
+                    />
+                  </div>
+                </div>
+                <div className="participating-institutions-section__table-wrap participating-instructor-fullpage-view__waiting-table-scroll">
+                  <CmsDataTable<InstructorWaitingSchoolRow>
                     className="participating-institutions-section__table cms-data-table"
                     rowKey="id"
                     size="middle"
                     pagination={false}
-                    scroll={{ x: 1200 }}
+                    scroll={{ x: 1300 }}
                     rowSelection={{
                       columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                      selectedRowKeys: selectedAssignedSchoolKeys,
-                      onChange: keys => setSelectedAssignedSchoolKeys(keys),
+                      selectedRowKeys: selectedWaitingSchoolKeys,
+                      onChange: keys => setSelectedWaitingSchoolKeys(keys),
+                      getCheckboxProps: record => ({
+                        disabled: record.assignmentStatus !== 'waiting',
+                      }),
                     }}
-                    columns={assignedSchoolColumns}
-                    dataSource={assignedSchools}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
-              <div className="table-header-actions">
-                <div className="table-header-title--wrapper">
-                  <span className="table-title">배정 대기 기관 목록</span>
-                  <span className="table-description">{waitingSchools.length}건</span>
-                </div>
-                <div className="info-section-buttons--wrapper">
-                  <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
-                    선택 배정
-                  </CmsButton>
-                  <ExcelButton
-                    onClick={exportWaitingSchoolsExcel}
-                    loading={isWaitingSchoolsExcelExporting}
+                    columns={waitingSchoolColumns}
+                    dataSource={waitingSchools}
+                    locale={{ emptyText: renderWaitingTableEmpty() }}
+                    rowClassName={record =>
+                      record.assignmentStatus === 'assigned' ||
+                      record.assignmentStatus === 'no_assignable_schedule' ||
+                      record.assignmentStatus === 'cancelled'
+                        ? 'school-detail-fullpage-view__waiting-row--assigned'
+                        : ''
+                    }
                   />
                 </div>
               </div>
-              <div className="participating-institutions-section__table-wrap participating-instructor-fullpage-view__waiting-table-scroll">
-                <CmsDataTable<InstructorWaitingSchoolRow>
-                  className="participating-institutions-section__table cms-data-table"
-                  rowKey="id"
-                  size="middle"
-                  pagination={false}
-                  scroll={{ x: 1300 }}
-                  rowSelection={{
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys: selectedWaitingSchoolKeys,
-                    onChange: keys => setSelectedWaitingSchoolKeys(keys),
-                    getCheckboxProps: record => ({
-                      disabled: record.assignmentStatus !== 'waiting',
-                    }),
-                  }}
-                  columns={waitingSchoolColumns}
-                  dataSource={waitingSchools}
-                  locale={{ emptyText: renderWaitingTableEmpty() }}
-                  rowClassName={record =>
-                    record.assignmentStatus === 'assigned' ||
-                    record.assignmentStatus === 'no_assignable_schedule' ||
-                    record.assignmentStatus === 'cancelled'
-                      ? 'school-detail-fullpage-view__waiting-row--assigned'
-                      : ''
-                  }
-                />
-              </div>
+
+              <SchoolDetailUnassignConfirmModal
+                open={unassignConfirmOpen}
+                onCancel={() => setUnassignConfirmOpen(false)}
+                instructorNames={[d.instructorName]}
+                targetNames={unassignSchoolNames}
+                onConfirm={handleUnassignConfirm}
+              />
+              <SchoolDetailUnassignCompleteModal
+                open={unassignCompleteModal != null}
+                onClose={() => setUnassignCompleteModal(null)}
+                instructorNames={unassignCompleteModal?.instructorNames ?? []}
+                targetNames={unassignCompleteModal?.targetNames ?? []}
+                reason={unassignCompleteModal?.reason ?? ''}
+              />
+
+              <AssignGuideModal
+                open={assignGuideMode != null}
+                instructorName={d.instructorName}
+                institutionOptions={assignGuideInstitutionOptions}
+                selectedInstitutionId={assignGuideSchoolId}
+                role={assignGuideRole}
+                sessionOptions={assignGuideSessionOptions}
+                selectedSessionIds={assignGuideSessionIds}
+                onInstitutionChange={setAssignGuideSchoolId}
+                onRoleChange={setAssignGuideRole}
+                onSessionIdsChange={setAssignGuideSessionIds}
+                onCancel={closeAssignGuideModal}
+                onConfirm={handleAssignGuideConfirm}
+                confirmLoading={assignGuideSubmitting}
+              />
             </div>
-
-            <SchoolDetailUnassignConfirmModal
-              open={unassignConfirmOpen}
-              onCancel={() => setUnassignConfirmOpen(false)}
-              instructorNames={[d.instructorName]}
-              targetNames={unassignSchoolNames}
-              onConfirm={handleUnassignConfirm}
-            />
-            <SchoolDetailUnassignCompleteModal
-              open={unassignCompleteModal != null}
-              onClose={() => setUnassignCompleteModal(null)}
-              instructorNames={unassignCompleteModal?.instructorNames ?? []}
-              targetNames={unassignCompleteModal?.targetNames ?? []}
-              reason={unassignCompleteModal?.reason ?? ''}
-            />
-
-            <AssignGuideModal
-              open={assignGuideMode != null}
-              instructorName={d.instructorName}
-              institutionOptions={assignGuideInstitutionOptions}
-              selectedInstitutionId={assignGuideSchoolId}
-              role={assignGuideRole}
-              sessionOptions={assignGuideSessionOptions}
-              selectedSessionIds={assignGuideSessionIds}
-              onInstitutionChange={setAssignGuideSchoolId}
-              onRoleChange={setAssignGuideRole}
-              onSessionIdsChange={setAssignGuideSessionIds}
-              onCancel={closeAssignGuideModal}
-              onConfirm={handleAssignGuideConfirm}
-            />
-          </div>
           ))}
         {effectiveTab === 'lectureReports' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">

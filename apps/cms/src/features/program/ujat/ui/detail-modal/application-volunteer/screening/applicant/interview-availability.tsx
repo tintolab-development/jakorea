@@ -20,7 +20,7 @@ export function InterviewAvailabilitySection({
       <DetailInfoForm title="면접 진행 가능 일정" mode="view">
         {days.length === 0 ? (
           <DetailInfoForm.Row type="custom">
-            <div className="instructor-resume-free-writing-card">
+            <div className="instructor-resume-card">
               <p className="instructor-resume-free-writing-text">등록된 일정이 없습니다.</p>
             </div>
           </DetailInfoForm.Row>

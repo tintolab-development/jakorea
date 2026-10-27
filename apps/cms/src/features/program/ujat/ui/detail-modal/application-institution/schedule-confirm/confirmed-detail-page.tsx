@@ -10,6 +10,11 @@ import { shouldShowScheduleConfirmGuidanceNotes } from './types'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { UjatInstitutionApplicationActionModal } from '../list/action-modal'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import {
+  toOrganizationApproveNotifyTiming,
+  toTimedBulkNotifyTiming,
+} from '@/features/program/general/lib/application-decision-notify-timing'
 import { buildUjatScheduleConfirmConfirmedDetail } from './build-confirmed-detail'
 import { UjatScheduleConfirmConfirmedDetailView } from './confirmed-detail-view'
 import {
@@ -90,12 +95,15 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   })
 
   const handleRejectConfirm = useCallback(
-    (reason?: string) => {
+    (payload: PermissionModalPayload) => {
       if (!row) return
       void (async () => {
         setActionLoading(true)
         try {
-          await rejectRemote(reason ?? 'CMS UJAT 임시 배정 기관 신청 반려')
+          await rejectRemote(
+            payload.reason.trim() || 'CMS UJAT 임시 배정 기관 신청 반려',
+            toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+          )
           onStatusUpdated()
           onBack()
           setPendingReject(false)
@@ -112,7 +120,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
     [onBack, onStatusUpdated, rejectRemote, row, showAlert]
   )
 
-  const handleApproveConfirm = useCallback(() => {
+  const handleApproveConfirm = useCallback((payload: PermissionModalPayload) => {
     if (!row || !workflow.canFinalApprove) {
       setPendingApprove(false)
       showAlert({
@@ -124,7 +132,9 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
     void (async () => {
       setActionLoading(true)
       try {
-        await approveRemote()
+        await approveRemote(
+          toOrganizationApproveNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+        )
         onStatusUpdated()
         setPendingApprove(false)
         showAlert({
@@ -285,7 +295,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
           institutionName={row.institutionName}
           selectionCount={1}
           onCancel={() => setPendingReject(false)}
-          onConfirm={payload => handleRejectConfirm(payload.reason)}
+          onConfirm={payload => handleRejectConfirm(payload)}
         />
       ) : null}
       {pendingApprove ? (

@@ -4,6 +4,7 @@ import {
   type PermissionModalVariant,
 } from '@/shared/components/permission-modal'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 
 /** 목록·신청 기관 상세 일괄/단건 반려 */
 export type UjatInstitutionApplicationRejectModalAction =
@@ -123,6 +124,7 @@ export function UjatInstitutionApplicationActionModal({
         selectionCount={selectionCount}
         onCancel={onCancel}
         onConfirm={onConfirm}
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
       />
     )
   }
@@ -143,6 +145,11 @@ export function UjatInstitutionApplicationActionModal({
       reasonLabel={copy.reasonLabel}
       reasonPlaceholder={copy.reasonPlaceholder}
       reasonRequiredMessage={copy.reasonRequiredMessage}
+      notifyTimingCapability={
+        action === 'temp_reject'
+          ? NOTIFY_TIMING_CAPABILITY.immediateOnly
+          : NOTIFY_TIMING_CAPABILITY.timedBulk
+      }
     />
   )
 }

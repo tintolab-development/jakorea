@@ -1,5 +1,10 @@
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsRadio, CmsSelect, useCmsAlert } from '@/shared/ui'
+import {
+  PermissionModal,
+  type PermissionModalPayload,
+} from '@/shared/components/permission-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import { useEffect, useState, type ReactNode } from 'react'
 import {
   INSTRUCTOR_ROLE_LABELS,
@@ -84,7 +89,8 @@ export interface AssignGuideModalProps {
   onRoleChange: (role: InstructorRoleKey) => void
   onSessionIdsChange: (ids: string[]) => void
   onCancel: () => void
-  onConfirm: () => void
+  onConfirm: (payload: PermissionModalPayload) => void
+  confirmLoading?: boolean
 }
 
 export function AssignGuideModal({
@@ -100,6 +106,7 @@ export function AssignGuideModal({
   onSessionIdsChange,
   onCancel,
   onConfirm,
+  confirmLoading = false,
 }: AssignGuideModalProps) {
   const { showAlert } = useCmsAlert()
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -126,9 +133,10 @@ export function AssignGuideModal({
     setConfirmOpen(true)
   }
 
-  const handleFinalConfirm = () => {
+  const handleFinalConfirm = (payload: PermissionModalPayload) => {
+    if (confirmLoading) return
     setConfirmOpen(false)
-    onConfirm()
+    onConfirm(payload)
   }
 
   return (
@@ -200,26 +208,20 @@ export function AssignGuideModal({
         </div>
       </ContentModal>
 
-      <ContentModal
+      <PermissionModal
         open={confirmOpen}
         onCancel={() => setConfirmOpen(false)}
         title="강사 배정 안내"
-        width={800}
-        footer={
-          <>
-            <CmsButton variant="secondary" size="medium" onClick={() => setConfirmOpen(false)}>
-              취소
-            </CmsButton>
-            <CmsButton variant="primary" size="medium" onClick={handleFinalConfirm}>
-              강사 배정
-            </CmsButton>
-          </>
-        }
-      >
-        <p>
-          선택하신 기관 일정에 [<strong>{instructorName}</strong>] 강사님을 새로 배정하시겠습니까?
-        </p>
-      </ContentModal>
+        variant="approve"
+        width={600}
+        message={`선택하신 기관 일정에 [**${instructorName}**] 강사님을 새로 배정하시겠습니까?`}
+        confirmLabel="강사 배정"
+        requireReason={false}
+        notifyTimingOptions="two"
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+        confirmLoading={confirmLoading}
+        onConfirm={handleFinalConfirm}
+      />
     </>
   )
 }

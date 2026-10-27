@@ -12,6 +12,10 @@ import {
 } from '../list/action-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import {
+  toOrganizationApproveNotifyTiming,
+  toTimedBulkNotifyTiming,
+} from '@/features/program/general/lib/application-decision-notify-timing'
 import './detail-page.css'
 
 export function UjatInstitutionApplicationDetailPage({
@@ -65,41 +69,48 @@ export function UjatInstitutionApplicationDetailPage({
     }
   }, [onOpenScheduleAssign, workflow.primaryAction, workflow.primaryDisabled, workflowReady])
 
-  const handleFinalApprove = useCallback(() => {
-    if (!workflow.canFinalApprove) {
-      setPendingAction(null)
-      showAlert({
-        title: '안내',
-        content: '먼저 임시 일정을 배정하고 기관 확인을 완료해 주세요.',
-      })
-      return
-    }
-    void (async () => {
-      setActionLoading(true)
-      try {
-        await approveRemote()
+  const handleFinalApprove = useCallback(
+    (payload?: PermissionModalPayload) => {
+      if (!workflow.canFinalApprove) {
         setPendingAction(null)
-        onStatusUpdated()
-        onBack()
-        showAlert({
-          title: '최종 승인',
-          content: '기관 확인이 완료된 신청을 최종 승인했습니다.',
-        })
-      } catch (error) {
         showAlert({
           title: '안내',
-          content: readApiErrorAlertMessage(error, '최종 승인에 실패했습니다.'),
+          content: '먼저 임시 일정을 배정하고 기관 확인을 완료해 주세요.',
         })
-      } finally {
-        setActionLoading(false)
+        return
       }
-    })()
-  }, [approveRemote, onBack, onStatusUpdated, showAlert, workflow.canFinalApprove])
+      void (async () => {
+        setActionLoading(true)
+        try {
+          await approveRemote(
+            payload
+              ? toOrganizationApproveNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+              : undefined
+          )
+          setPendingAction(null)
+          onStatusUpdated()
+          onBack()
+          showAlert({
+            title: '최종 승인',
+            content: '기관 확인이 완료된 신청을 최종 승인했습니다.',
+          })
+        } catch (error) {
+          showAlert({
+            title: '안내',
+            content: readApiErrorAlertMessage(error, '최종 승인에 실패했습니다.'),
+          })
+        } finally {
+          setActionLoading(false)
+        }
+      })()
+    },
+    [approveRemote, onBack, onStatusUpdated, showAlert, workflow.canFinalApprove]
+  )
 
   const handleActionConfirm = (payload: PermissionModalPayload) => {
     if (!pendingAction || !row) return
     if (pendingAction === 'application_approve') {
-      handleFinalApprove()
+      handleFinalApprove(payload)
       return
     }
     void (async () => {
@@ -108,7 +119,10 @@ export function UjatInstitutionApplicationDetailPage({
         if (pendingAction === 'temp_reject') {
           await tempRejectRemote(payload.reason ?? 'CMS UJAT 신청기관 임시 반려')
         } else {
-          await rejectRemote(payload.reason ?? 'CMS UJAT 신청기관 신청 반려')
+          await rejectRemote(
+            payload.reason ?? 'CMS UJAT 신청기관 신청 반려',
+            toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+          )
         }
         setPendingAction(null)
         onStatusUpdated()
