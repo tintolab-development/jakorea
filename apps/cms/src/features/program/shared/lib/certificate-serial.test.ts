@@ -7,6 +7,7 @@ import {
   isCertificateSerialPlaceholder,
   isFormTemplateCertificateSerialSubject,
   isIssuedCertificateSerial,
+  isRosterCertificateSerialSubject,
   parseCertificateIssueId,
   parseCertificateSerialInt64,
   parseIssuedCertificateSerial,
@@ -71,6 +72,27 @@ describe('isAllowedCertificateSerialType', () => {
     expect(isAllowedCertificateSerialType('COMPLETION')).toBe(false)
     expect(isAllowedCertificateSerialType('ACTIVITY')).toBe(false)
     expect(isAllowedCertificateSerialType('PARTICIPATION')).toBe(false)
+  })
+})
+
+describe('isRosterCertificateSerialSubject', () => {
+  it('is true only when applicationId and rosterId are numeric', () => {
+    expect(
+      isRosterCertificateSerialSubject({
+        programId: 5001,
+        subjectId: 12,
+        applicationId: 1691524,
+        rosterId: 88,
+        certificateType: 'document-3',
+      })
+    ).toBe(true)
+    expect(
+      isRosterCertificateSerialSubject({
+        programId: 5001,
+        subjectId: 12,
+        certificateType: 'document-3',
+      })
+    ).toBe(false)
   })
 })
 
