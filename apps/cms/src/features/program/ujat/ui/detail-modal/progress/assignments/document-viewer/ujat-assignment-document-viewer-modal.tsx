@@ -28,6 +28,7 @@ import {
 } from './ujat-document-viewer-types'
 import { createVolunteerFilledDraft } from './ujat-document-volunteer-draft'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import './ujat-assignment-document-viewer-modal.css'
 
@@ -110,7 +111,7 @@ function buildVolunteerUserInfoPreviewValues(
     institutionName: target.institutionName,
     institutionRegion: target.regionLabel,
     educationTarget: getEducationTargetLabel(target.institutionName),
-    educationGrade: target.assignedClass,
+    educationGrade: formatUjatGradeClassDisplayLabel(target.assignedClass),
     teamName: '-',
     teamPartnerName: '-',
   }

@@ -66,16 +66,16 @@ describe('getRegionDirectAssignClassOptionsFromData', () => {
     ])
     const options = getRegionDirectAssignClassOptionsFromData(data)
     expect(options.find(option => option.value === '501')).toMatchObject({
-      label: '4/3 ｜ 3-1 (A초) · 배정 완료',
+      label: '4/3 ｜ 3학년 1반 (A초) · 배정 완료',
       disabled: true,
     })
     expect(options.find(option => option.value === '502')).toEqual({
       value: '502',
-      label: '4/3 ｜ 3-2 (A초) · 두 번째 봉사자 배정',
+      label: '4/3 ｜ 3학년 2반 (A초) · 두 번째 봉사자 배정',
     })
     expect(options.find(option => option.value === '503')).toEqual({
       value: '503',
-      label: '4/3 ｜ 3-3 (A초)',
+      label: '4/3 ｜ 3학년 3반 (A초)',
     })
   })
 })
@@ -97,7 +97,7 @@ describe('mapRegionDirectAssignCandidateOptions', () => {
       })
     ).toEqual([
       { value: '9', label: '최미배정' },
-      { value: '4', label: '정이동 (5-2 2인조에서 이동)' },
+      { value: '4', label: '정이동 (5학년 2반 2인조에서 이동)' },
     ])
     expect(mapRegionDirectAssignCandidateOptions(undefined)).toEqual([])
   })

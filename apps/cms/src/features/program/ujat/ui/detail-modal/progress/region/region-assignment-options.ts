@@ -1,4 +1,5 @@
 import type { UjatDirectAssignmentCandidatesResponse } from '@/features/program/ujat/api/education-execution-api'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { formatRegionAssignmentInstitutionLabel } from './format-institution-label'
 import { getRegionAssignmentTableDataFromStore } from './region-assignment-store'
@@ -92,7 +93,7 @@ export function getRegionDirectAssignClassOptionsFromData(
     column.classSlots.map(slot => {
       const label = formatRegionDirectAssignClassOptionLabel(
         column.dateLabel,
-        slot.classLabel,
+        formatUjatGradeClassDisplayLabel(slot.classLabel),
         column.institutionName
       )
       const assignees = countRegionClassSlotAssignees(column, slot.classLabel, rows, columnIndex)
@@ -123,10 +124,10 @@ export function mapRegionDirectAssignCandidateOptions(
   return (response?.candidates ?? []).flatMap(candidate => {
     if (candidate.participantId == null) return []
     const name = candidate.volunteerName?.trim() || `봉사자 ${candidate.participantId}`
-    const sourceClass = candidate.sourceClassLabel?.trim()
+    const sourceClass = formatUjatGradeClassDisplayLabel(candidate.sourceClassLabel)
     const label =
       candidate.sourceAssignmentGroupId != null
-        ? `${name} (${sourceClass || '기존'} 2인조에서 이동)`
+        ? `${name} (${sourceClass === '-' ? '기존' : sourceClass} 2인조에서 이동)`
         : name
     return [{ value: String(candidate.participantId), label }]
   })

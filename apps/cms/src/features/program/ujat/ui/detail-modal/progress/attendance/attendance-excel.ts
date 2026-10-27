@@ -6,6 +6,7 @@ import {
   maskAttendanceEmail,
 } from './attendance-display'
 import type { UjatAttendanceSessionGroup, UjatAttendanceVolunteerRow } from './types'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 
 export type UjatAttendanceSessionExcelRow = {
   no: number
@@ -34,7 +35,7 @@ export function buildUjatAttendanceSessionExcelRows(
   return volunteers.map((volunteer, index) => ({
     no: total - index,
     name: volunteer.name,
-    assignedClass: volunteer.assignedClass,
+    assignedClass: formatUjatGradeClassDisplayLabel(volunteer.assignedClass),
     contact: maskAttendanceContact(volunteer.contact),
     email: maskAttendanceEmail(volunteer.email),
     statusLabel: attendanceStatusLabel(volunteer.status),

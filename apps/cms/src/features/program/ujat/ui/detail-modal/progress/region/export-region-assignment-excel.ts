@@ -1,5 +1,6 @@
 import ExcelJS from '@zurmokeeper/exceljs'
 import { downloadExcel } from '@/shared/utils/file-download'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import { getRegionAssignmentInstitutionHeaderLabel } from './region-assignment-options'
 import type {
   RegionAssignmentCell,
@@ -78,7 +79,8 @@ function applyBodyStyle(
 
 function formatAssignmentCell(cell: RegionAssignmentCell | undefined): string {
   if (!cell || cell.kind === 'empty') return '-'
-  return cell.isAttendanceManager ? `출결 / ${cell.classLabel}` : cell.classLabel
+  const classLabel = formatUjatGradeClassDisplayLabel(cell.classLabel)
+  return cell.isAttendanceManager ? `출결 / ${classLabel}` : classLabel
 }
 
 function selectedAssignedCount(cells: Array<RegionAssignmentCell | undefined>): number {
