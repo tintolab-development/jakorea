@@ -111,6 +111,7 @@ import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { handleError } from '@/shared/utils/error-handler'
+import { unmaskRosterStudentForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { buildStudentCertificateDownloadContext } from '../../../lib/build-student-certificate-issuance'
 import type { StudentCertificateDownloadContext } from '../../../lib/build-student-certificate-issuance'
 import {
@@ -341,7 +342,7 @@ export function SchoolDetailStudentListSection({
   }, [])
 
   const handleCertificateIssueConfirm = useCallback(
-    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+    async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
       const selectedId = String(selectedStudentKeys[0])
       const student = mergedStudentList.find(row => row.id === selectedId)
       if (student == null) return
@@ -354,20 +355,39 @@ export function SchoolDetailStudentListSection({
         return
       }
 
+      let unmaskedStudent = student
+      try {
+        const unmasked = await unmaskRosterStudentForCertificateIssue({
+          applicationId: organizationApplicationKey,
+          rosterId,
+        })
+        unmaskedStudent = {
+          ...student,
+          name: unmasked.name || student.name,
+          birthDate: unmasked.birthDate || student.birthDate,
+        }
+      } catch (error) {
+        showAlert({
+          title: '열람 실패',
+          content: getGeneralProgramApiErrorMessage(error, '개인정보 원문 조회에 실패했습니다.'),
+        })
+        return
+      }
+
       const sessions = getStudentLectureAttendanceSessions(
-        student,
+        unmaskedStudent,
         schoolId,
         attendanceSessionsByStudentId[student.id]
       )
       const certificateKind = resolveStudentCertificateKind({
         sessions,
         satisfactionSurveyRequired: hasStudentSatisfactionSurvey,
-        satisfactionSurveyCompleted: student.satisfactionSurveyCompleted === true,
+        satisfactionSurveyCompleted: unmaskedStudent.satisfactionSurveyCompleted === true,
       })
 
       setCertificateExportContext(
         buildStudentCertificateDownloadContext({
-          student,
+          student: unmaskedStudent,
           certificateKind,
           schoolName,
           educationGrade,

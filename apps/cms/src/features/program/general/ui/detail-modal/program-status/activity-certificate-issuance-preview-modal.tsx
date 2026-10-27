@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
@@ -13,6 +13,8 @@ import {
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
 import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
+import { unmaskInstructorForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -46,10 +48,46 @@ export function ActivityCertificateIssuancePreviewModal({
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const [isAllocatingSerial, setIsAllocatingSerial] = useState(false)
   const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
+  const [unmaskedInstructor, setUnmaskedInstructor] = useState(instructor)
+  const [isUnmasking, setIsUnmasking] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    setUnmaskedInstructor(instructor)
+    setIsUnmasking(true)
+    void unmaskInstructorForCertificateIssue(instructor, program?.id)
+      .then(next => {
+        if (!cancelled) setUnmaskedInstructor(next)
+      })
+      .catch(error => {
+        if (cancelled) return
+        showAlert({
+          title: '열람 실패',
+          content: getGeneralProgramApiErrorMessage(error, '개인정보 원문 조회에 실패했습니다.'),
+        })
+        onClose()
+      })
+      .finally(() => {
+        if (!cancelled) setIsUnmasking(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [
+    instructor,
+    instructor.id,
+    instructor.instructorApplicationId,
+    instructor.memberId,
+    onClose,
+    open,
+    program?.id,
+    showAlert,
+  ])
 
   const runtimeStringValues = useMemo(
-    () => buildActivityCertificateInitialStringValues(instructor, program),
-    [instructor, program]
+    () => buildActivityCertificateInitialStringValues(unmaskedInstructor, program),
+    [program, unmaskedInstructor]
   )
 
   const modalState = useCertificateTemplateModalState({
@@ -63,8 +101,8 @@ export function ActivityCertificateIssuancePreviewModal({
     useFormCertificatePreviewProps(modalState, undefined, pdfSerialNumber)
 
   const fileName = useMemo(
-    () => buildActivityCertificateFileName(instructor.instructorName),
-    [instructor.instructorName]
+    () => buildActivityCertificateFileName(unmaskedInstructor.instructorName),
+    [unmaskedInstructor.instructorName]
   )
 
   const buildPdfFilename = useCallback(() => `${fileName}.pdf`, [fileName])
@@ -79,13 +117,13 @@ export function ActivityCertificateIssuancePreviewModal({
   }, [onClose])
 
   const handleDownloadPdf = useCallback(async () => {
-    if (isAllocatingSerial || isPdfDownloading) return
+    if (isAllocatingSerial || isPdfDownloading || isUnmasking) return
     setIsAllocatingSerial(true)
     try {
       await downloadIssuedCertificatePdf({
         subject: {
           programId: program?.id,
-          subjectId: instructor.id,
+          subjectId: unmaskedInstructor.id,
           certificateType: INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
         },
         applySerial: setPdfSerialNumber,
@@ -101,7 +139,15 @@ export function ActivityCertificateIssuancePreviewModal({
     } finally {
       setIsAllocatingSerial(false)
     }
-  }, [downloadPdf, instructor.id, isAllocatingSerial, isPdfDownloading, program?.id, showAlert])
+  }, [
+    downloadPdf,
+    isAllocatingSerial,
+    isPdfDownloading,
+    isUnmasking,
+    program?.id,
+    showAlert,
+    unmaskedInstructor.id,
+  ])
 
   const actionButtons = (
     <div className="full-page-modal__actions activity-cert-issuance-preview-modal__actions">
@@ -113,7 +159,7 @@ export function ActivityCertificateIssuancePreviewModal({
         size="medium"
         width={140}
         icon={<ButtonDownloadIcon />}
-        disabled={isPdfDownloading || isAllocatingSerial}
+        disabled={isPdfDownloading || isAllocatingSerial || isUnmasking}
         onClick={() => void handleDownloadPdf()}
       >
         파일 다운로드
@@ -123,7 +169,7 @@ export function ActivityCertificateIssuancePreviewModal({
 
   return (
     <>
-      <FormCertificatePdfExportOverlay visible={isPdfDownloading || isAllocatingSerial} />
+      <FormCertificatePdfExportOverlay visible={isPdfDownloading || isAllocatingSerial || isUnmasking} />
 
       <TealHeaderModal
         open={open}

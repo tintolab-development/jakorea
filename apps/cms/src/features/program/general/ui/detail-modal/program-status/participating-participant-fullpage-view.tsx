@@ -519,9 +519,13 @@ export function ParticipatingParticipantFullpageView({
         handleError(error, {
           context: 'participatingParticipantFullpageView.certificateAttendanceHydrate',
         })
+        showAlert({
+          title: '열람 실패',
+          content: '개인정보 원문 조회에 실패했습니다.',
+        })
       }
     },
-    [hasStudentSatisfactionSurvey, mergedParticipant, program, progressRemoteEnabled]
+    [hasStudentSatisfactionSurvey, mergedParticipant, program, progressRemoteEnabled, showAlert]
   )
 
   const handleCertificateExportComplete = useCallback((success: boolean) => {
