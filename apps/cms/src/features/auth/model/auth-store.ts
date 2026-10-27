@@ -29,6 +29,14 @@ import { clearNotificationsQueryCache } from '@/features/notifications/api/clear
 import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pending-links'
 import { fetchAdminMe } from '@/features/auth/api/fetch-admin-me'
 import { registerAdminSessionSyncPendingReader } from '@/features/auth/lib/admin-session-sync-state'
+import {
+  REFRESH_TOKEN_STORAGE_KEY,
+  clearTokenIssuedAt,
+  getLastUserActivityAt,
+  readTokenIssuedAt,
+  recordTokenIssuedAt,
+  shouldProactivelyRefresh,
+} from '@/features/auth/lib/session-keepalive'
 import { applyAccessTokenRoleToSessionUser } from '@/features/auth/lib/admin-session-user'
 import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -110,6 +118,7 @@ function persistAuthTokens(
     localStorage.setItem('auth_user', JSON.stringify(user))
     localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, tokens.refreshToken)
   }
+  recordTokenIssuedAt()
 
   return { token: accessToken, expiresAt }
 }
@@ -131,8 +140,11 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
   const userStr = localStorage.getItem('auth_user')
 
   if (token && expiresAt && userStr) {
-    // 만료 확인
-    if (new Date(expiresAt) > new Date()) {
+    // 만료 확인. access가 만료됐어도 refresh token이 있으면 세션을 복원하고,
+    // AuthProvider 초기화(checkAuth)가 refresh를 시도한다 (실패하면 그때 logout).
+    // 순환 import(TDZ)를 피하려고 axios-instance의 상수 대신 session-keepalive의 키를 쓴다.
+    const hasRefreshToken = !!localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY)
+    if (new Date(expiresAt) > new Date() || hasRefreshToken) {
       try {
         const user = JSON.parse(userStr)
         const normalizedUser = withSessionAdminRole(user)
@@ -407,6 +419,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
         localStorage.removeItem(PASSWORD_CHANGE_REQUIRED_STORAGE_KEY)
       }
+      clearTokenIssuedAt()
       set({
         passwordChangeRequired: false,
         user: null,
@@ -643,36 +656,50 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
     },
 
-    // Phase 0.5: 세션 만료 확인 — 만료 시 refresh 시도 후 실패하면 logout
+    /**
+     * 세션 keep-alive 점검 (AuthProvider가 60초마다 호출). 만료만 보고 바로 logout하지 않는다.
+     * 1) access 만료 임박(30초 버퍼): refresh를 먼저 시도하고, 실패할 때만 logout.
+     *    (활동이 없어 BE idle 30분을 넘긴 세션은 BE가 거절 → 여기서 logout)
+     * 2) 아직 여유가 있어도, 사용자가 최근 30분 내 활동했고 마지막 발급 후 20분이 지났으면 선제 refresh.
+     *    선제 refresh 실패는 logout하지 않는다 (access가 아직 유효하므로 다음 tick/401 처리에 맡김).
+     * 만료 시각은 다른 탭이 refresh한 결과를 보도록 localStorage를 우선 사용한다.
+     * 동기 API라 refresh는 fire-and-forget. 반환값: 이 호출에서 즉시 logout했으면 true.
+     */
     checkSessionExpiry: (): boolean => {
       const state = get()
-      if (!state.expiresAt) {
+      const hasStorage = typeof window !== 'undefined' && !!window.localStorage
+      const expiresAt = (hasStorage ? localStorage.getItem(TOKEN_EXPIRY_KEY) : null) ?? state.expiresAt
+      if (!expiresAt) {
         return true // 만료된 것으로 간주
       }
 
-      const now = new Date()
-      const expiryTime = new Date(state.expiresAt)
-
-      if (shouldRefreshAccessToken(expiryTime.getTime(), now.getTime())) {
-        const refreshToken =
-          typeof window !== 'undefined' && window.localStorage
-            ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
-            : null
-
-        if (refreshToken) {
-          // 동기 API라 refresh는 fire-and-forget; 실패 시 logout
-          void get()
-            .refreshToken()
-            .then(ok => {
-              if (!ok) get().logout()
-            })
-          return false
-        }
-
-        get().logout()
-        return true
+      const nowMs = Date.now()
+      const nearExpiry = shouldRefreshAccessToken(new Date(expiresAt).getTime(), nowMs)
+      const proactive =
+        !nearExpiry &&
+        shouldProactivelyRefresh({
+          nowMs,
+          lastIssuedAtMs: readTokenIssuedAt(),
+          lastActivityAtMs: getLastUserActivityAt(),
+        })
+      if (!nearExpiry && !proactive) {
+        return false
       }
 
+      const refreshToken = hasStorage ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY) : null
+      if (!refreshToken) {
+        if (nearExpiry) {
+          get().logout()
+          return true
+        }
+        return false
+      }
+
+      void get()
+        .refreshToken()
+        .then(ok => {
+          if (!ok && nearExpiry) get().logout()
+        })
       return false
     },
   }
