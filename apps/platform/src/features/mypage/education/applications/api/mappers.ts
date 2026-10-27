@@ -15,12 +15,17 @@ import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-c
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
+  EducationTeacherAssignment,
+  EducationTeacherAssignedInstructor,
+  EducationTeacherDeliveryStatus,
   EducationUjatTemporarySchedule,
 } from '../model/types'
 import type {
   PortalProgramApplicationDetail,
   PortalProgramApplicationListItem,
   ProgramApplicationType,
+  PortalTeacherAssignmentItem,
+  PortalTeacherAssignmentTextbook,
 } from './types'
 
 const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
@@ -353,6 +358,67 @@ function mapUjatTemporarySchedule(
   }
 }
 
+function mapTeacherDeliveryStatus(
+  status: PortalTeacherAssignmentTextbook['deliveryStatus'],
+): EducationTeacherDeliveryStatus {
+  switch (status) {
+    case 'SHIPPING':
+      return 'shipping'
+    case 'DELIVERED':
+      return 'completed'
+    case 'PREPARING':
+    default:
+      return 'before'
+  }
+}
+
+/**
+ * 상세 응답의 teacherAssignment는 교재와 강사 카드 조회 가능 여부만 제공한다.
+ * 실제 강사 목록·동의서는 assigned-instructors API 응답을 사용한다.
+ */
+function mapTeacherAssignment(
+  detail: PortalProgramApplicationDetail,
+): EducationTeacherAssignment | undefined {
+  if (!detail.teacherAssignment) return undefined
+
+  const textbook = detail.teacherAssignment.textbook
+  const instructorByMemberId = new Map<number, EducationTeacherAssignedInstructor>()
+  for (const assignment of detail.teacherAssignment.assignments ?? []) {
+    const instructor = mapTeacherAssignedInstructor(assignment)
+    if (instructor && instructor.instructorMemberId != null) {
+      instructorByMemberId.set(instructor.instructorMemberId, instructor)
+    }
+  }
+
+  return {
+    instructors: [...instructorByMemberId.values()],
+    ...(textbook
+      ? {
+          textbook: {
+            title: textbook.title?.trim() ?? '',
+            kitCountLabel: textbook.kitCountLabel?.trim() ?? '',
+            volumeCountLabel: textbook.volumeCountLabel?.trim() ?? '',
+            deliveryStatus: mapTeacherDeliveryStatus(textbook.deliveryStatus),
+          },
+        }
+      : {}),
+  }
+}
+
+function mapTeacherAssignedInstructor(
+  assignment: PortalTeacherAssignmentItem,
+): EducationTeacherAssignedInstructor | undefined {
+  const name = assignment.instructorName?.trim()
+  const instructorMemberId = assignment.instructorMemberId
+  if (!name || instructorMemberId == null) return undefined
+
+  return {
+    id: String(instructorMemberId),
+    instructorMemberId,
+    name,
+  }
+}
+
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
   knownApplicationType?: ProgramApplicationType | null,
@@ -444,6 +510,10 @@ export function mapPortalProgramApplicationDetail(
   const applicationType =
     readApplicationType(detail.applicationType) ??
     (knownApplicationType ? readApplicationType(knownApplicationType) ?? knownApplicationType : null)
+  if (applicationType === 'ORGANIZATION' || applicationType === 'INDIVIDUAL') {
+    const teacherAssignment = mapTeacherAssignment(detail)
+    if (teacherAssignment) mapped.teacherAssignment = teacherAssignment
+  }
   const nestedProgram = detail.program as
     | Pick<
         ProgramDetail,

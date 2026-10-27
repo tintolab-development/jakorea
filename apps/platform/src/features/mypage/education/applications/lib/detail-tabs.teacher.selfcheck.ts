@@ -5,6 +5,7 @@ import {
   buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
   EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+  INSTRUCTOR_ASSIGNMENT_TAB_LABEL,
   UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
   resolveVolunteerActivityDetailCase,
   shouldShowSettlementTab,
@@ -26,6 +27,22 @@ assert.deepEqual(
   general.map(item => item.key),
   ['notice', 'schedule', 'survey', 'satisfaction', 'settlement'],
 )
+
+const instructorWithAssignments = buildInProgressDetailTabItems({
+  ...options,
+  detailCase: 'instructor',
+  lectureReportVisible: true,
+  instructorAssignmentVisible: true,
+})
+assert.deepEqual(
+  instructorWithAssignments.map(item => item.key),
+  ['schedule', 'notice', 'lecture-report', 'settlement'],
+)
+assert.deepEqual(
+  instructorWithAssignments.map(item => item.label),
+  ['배정 현황', '안내사항', '강의보고서', '정산 현황'],
+)
+assert.equal(instructorWithAssignments[0]?.label, INSTRUCTOR_ASSIGNMENT_TAB_LABEL)
 
 assert.equal(resolveVolunteerActivityDetailCase('general'), 'volunteer')
 assert.equal(resolveVolunteerActivityDetailCase('volunteer'), 'volunteer')

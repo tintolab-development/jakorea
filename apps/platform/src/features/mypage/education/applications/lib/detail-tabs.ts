@@ -22,6 +22,9 @@ export const EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL = '교육 일정'
 /** UJAT 기관(교사) 진행중 — 일정 탭 대신 학급·봉사자 배정 표 */
 export const UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL = '봉사자 배정 현황'
 
+/** 강의현황 상세 — 본인 배정 일정이 있을 때만 노출하는 탭 */
+export const INSTRUCTOR_ASSIGNMENT_TAB_LABEL = '배정 현황'
+
 /**
  * 교육 일정 탭 라벨.
  * - 봉사: 배정현황
@@ -81,6 +84,8 @@ type ActivityTabOptions = {
   schoolTeacherMember?: boolean
   /** Instructor applications only: expose the independent lecture report tab. */
   lectureReportVisible?: boolean
+  /** Instructor applications only: expose the Figma assignment overview tab. */
+  instructorAssignmentVisible?: boolean
 }
 
 function resolveActivityScheduleTabLabel(options: ActivityTabOptions): string {
@@ -162,6 +167,20 @@ function appendSettlementTab(items: EducationDetailTabItem[], options: ActivityT
 export function buildInProgressDetailTabItems(
   options: ActivityTabOptions
 ): EducationDetailTabItem[] {
+  if (options.instructorAssignmentVisible === true) {
+    const items: EducationDetailTabItem[] = [
+      { key: 'schedule', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL },
+      { key: 'notice', label: '안내사항' },
+    ]
+    if (options.lectureReportVisible === true) {
+      items.push({ key: 'lecture-report', label: '강의보고서' })
+    }
+    if (shouldShowSettlementTab(options)) {
+      items.push({ key: 'settlement', label: '정산 현황' })
+    }
+    return items
+  }
+
   const items: EducationDetailTabItem[] = [
     { key: 'notice', label: '안내사항' },
     { key: 'schedule', label: resolveActivityScheduleTabLabel(options) },

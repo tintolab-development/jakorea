@@ -125,6 +125,7 @@ function mapNoticeAttachmentListItem(
   if (item.attachmentId == null || item.postId == null) return null
   return {
     id: String(item.attachmentId),
+    fileObjectId: item.fileObjectId,
     fileName: item.originalFileName?.trim() || '첨부파일',
     uploadedAt: item.createdAt ?? '',
     fileSizeBytes: item.fileSize ?? 0,
@@ -168,6 +169,7 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
       return [
         {
           id: String(file.attachmentId),
+          fileObjectId: file.fileObjectId,
           fileName: file.originalFileName?.trim() || '첨부파일',
           uploadedAt: file.createdAt ?? detail.createdAt ?? '',
           fileSizeBytes: file.fileSize ?? 0,
@@ -494,6 +496,8 @@ export type UpdateApplicationNoticeInput = {
   postId: string
   content: string
   inlineImageFileObjectIds: number[]
+  attachmentFileObjectIds: number[]
+  attachmentFiles?: File[]
 }
 
 export function useUpdateApplicationNoticeMutation(
@@ -506,6 +510,18 @@ export function useUpdateApplicationNoticeMutation(
       if (!applicationType || !applicationId) {
         throw new Error('application scope is required')
       }
+      const files = input.attachmentFiles ?? []
+      const newAttachmentFileObjectIds =
+        files.length > 0
+          ? await Promise.all(
+              files.map(file =>
+                uploadMemberPortalFile({
+                  file,
+                  filePurpose: PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE,
+                })
+              )
+            )
+          : []
       const updated = await updateApplicationNotice(applicationType, applicationId, input.postId, {
         title: null,
         content: input.content,
@@ -517,6 +533,10 @@ export function useUpdateApplicationNoticeMutation(
         input.postId,
         input.inlineImageFileObjectIds
       )
+      await putApplicationNoticeAttachments(applicationType, applicationId, input.postId, [
+        ...input.attachmentFileObjectIds,
+        ...newAttachmentFileObjectIds,
+      ])
       return updated
     },
     onSuccess: (_data, input) => {
@@ -534,6 +554,14 @@ export function useUpdateApplicationNoticeMutation(
           applicationId
         ),
         exact: true,
+      })
+      void queryClient.invalidateQueries({
+        queryKey: [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notice-attachments',
+          applicationType,
+          applicationId,
+        ],
       })
     },
   })

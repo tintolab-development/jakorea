@@ -137,6 +137,44 @@ const volunteerTeacherAssignment = mapPortalProgramApplicationDetail({
 })
 assert.equal(volunteerTeacherAssignment?.teacherAssignment, undefined)
 
+const individualCaseD = mapPortalProgramApplicationDetail({
+  applicationId: 1694691,
+  applicationType: 'INDIVIDUAL',
+  programId: 186339,
+  programTitle: '개인 참여 신청',
+  applicationStatus: 'APPROVED',
+  teacherAssignment: {
+    textbook: null,
+    sourceApplicationType: 'INSTRUCTOR',
+    sourceApplicationId: 1694773,
+    assignments: [
+      {
+        assignmentId: 1694860,
+        instructorMemberId: 190001,
+        instructorName: '이건희',
+        programId: 186339,
+        programScheduleId: 187274,
+        assignmentStatus: 'ASSIGNED',
+      },
+      {
+        assignmentId: 1694861,
+        instructorMemberId: 190001,
+        instructorName: '이건희',
+        programId: 186339,
+        programScheduleId: 187310,
+        assignmentStatus: 'COMPLETED',
+      },
+    ],
+  },
+})
+assert.deepEqual(individualCaseD?.teacherAssignment?.instructors, [
+  {
+    id: '190001',
+    instructorMemberId: 190001,
+    name: '이건희',
+  },
+])
+
 const ujatOrg = mapPortalProgramApplicationDetail({
   applicationId: 1691621,
   applicationType: 'ORGANIZATION',
