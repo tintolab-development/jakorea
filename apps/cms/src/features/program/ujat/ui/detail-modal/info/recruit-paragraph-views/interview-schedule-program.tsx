@@ -42,14 +42,19 @@ export function UjatRecruitInterviewScheduleProgramView({
   form,
   isEdit,
   volunteerHalf,
-  sectionTitle = '면접 진행 가능 일정',
+  sectionTitle,
   highlightParagraphId,
+  hideSectionHeader = false,
+  exceptionScheduleCount = 0,
   isTemplateAuthoring = false,
 }: {
   program: Program
   volunteerHalf?: UjatVolunteerRecruitHalf
   sectionTitle?: string
   highlightParagraphId?: string
+  hideSectionHeader?: boolean
+  /** 등록 위저드 단락 헤더「예외 일정 추가」와 연동 */
+  exceptionScheduleCount?: number
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
   /** 양식 작성 화면 — mock·미리보기 선택값을 넣지 않음 */
@@ -151,17 +156,23 @@ export function UjatRecruitInterviewScheduleProgramView({
   ])
 
   const isFormEdit = Boolean(isEdit && form)
+  const resolvedSectionTitle = sectionTitle?.trim() || '면접 진행 가능 일정'
+  const useParagraphHeadingExceptionControl = hideSectionHeader && isFormEdit
 
   return (
-    <section className="ujat-recruit-interview-schedule-program-view" aria-label={sectionTitle}>
-      <FormParagraphSectionHeader
-        title={sectionTitle}
-        surface="responseEntry"
-        titleAligned
-        required
-        highlightParagraphId={highlightParagraphId}
-        description={isFormEdit ? INTERVIEW_SCHEDULE_EDIT_DESCRIPTION : undefined}
-        titleTrailing={
+    <section
+      className="ujat-recruit-interview-schedule-program-view"
+      aria-label={resolvedSectionTitle}
+    >
+      {!hideSectionHeader && sectionTitle?.trim() ? (
+        <FormParagraphSectionHeader
+          title={sectionTitle.trim()}
+          surface="responseEntry"
+          titleAligned
+          required
+          highlightParagraphId={highlightParagraphId}
+          description={isFormEdit ? INTERVIEW_SCHEDULE_EDIT_DESCRIPTION : undefined}
+          titleTrailing={
           isFormEdit ? (
             <div className="volunteer-interview-available-schedule__card-title-actions">
               <CmsButton
@@ -178,12 +189,20 @@ export function UjatRecruitInterviewScheduleProgramView({
             </div>
           ) : undefined
         }
-      />
+        />
+      ) : null}
       {isFormEdit && form ? (
         <RecruitFormVolunteerInterviewScheduleParagraph
-          exceptionBlockKeys={exceptionBlockKeys}
-          onRemoveExceptionBlock={key =>
-            setExceptionBlockKeys(prev => prev.filter(blockKey => blockKey !== key))
+          exceptionScheduleCount={
+            useParagraphHeadingExceptionControl ? exceptionScheduleCount : 0
+          }
+          exceptionBlockKeys={
+            useParagraphHeadingExceptionControl ? undefined : exceptionBlockKeys
+          }
+          onRemoveExceptionBlock={
+            useParagraphHeadingExceptionControl
+              ? undefined
+              : key => setExceptionBlockKeys(prev => prev.filter(blockKey => blockKey !== key))
           }
           commonScheduleSeed={editSeed}
           onCommonExclusionChange={(state: UnavailableDatesExclusionState) =>

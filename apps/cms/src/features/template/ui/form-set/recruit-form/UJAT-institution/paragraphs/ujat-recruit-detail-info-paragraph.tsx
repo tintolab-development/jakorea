@@ -62,6 +62,7 @@ export function UjatRecruitDetailInfoParagraph(props: UjatRecruitParagraphProps 
         sectionDescription={UJAT_PARTICIPANT_DETAIL_INFO_DESCRIPTION}
         emptyReadDisplay="dash"
         textFieldControl="input"
+        hideFormHeader={props.hideSectionHeader}
       />
     )
   }

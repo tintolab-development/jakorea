@@ -94,7 +94,6 @@ import {
   normalizeUjatProgramRegistrationStepKey,
   UJAT_PROGRAM_REGISTRATION_STEPS,
   volunteerHalfFromRegistrationStep,
-  volunteerRecruitSectionTitleFromRegistrationStep,
   type UjatProgramRegistrationPhaseKey,
   type UjatProgramRegistrationStepKey,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
@@ -559,6 +558,7 @@ export function useUjatProgramRegistrationFlow(
         mode: 'edit' as const,
         program: registrationWizardLinkedProgram,
         form: institutionRecruitmentForm,
+        hideSectionHeader: true,
       }
     }
     if (half == null) return undefined
@@ -567,7 +567,7 @@ export function useUjatProgramRegistrationFlow(
       program: registrationWizardLinkedProgram,
       form: half === 'h1' ? volunteerH1RecruitmentForm : volunteerH2RecruitmentForm,
       volunteerHalf: half,
-      sectionTitle: volunteerRecruitSectionTitleFromRegistrationStep(activeStep),
+      hideSectionHeader: true,
     }
   }, [
     activeStep,

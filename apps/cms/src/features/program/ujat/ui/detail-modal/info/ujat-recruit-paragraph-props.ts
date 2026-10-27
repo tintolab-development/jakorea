@@ -13,9 +13,12 @@ export type UjatRecruitParagraphProps = {
   form?: UseFormReturn<ProgramDetailEditFormValues>
   volunteerHalf?: UjatVolunteerRecruitHalf
   onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
+  /** 면접 일정 — 단락 헤더「예외 일정 추가」와 연동 */
   exceptionScheduleCount?: number
   /** draft `paragraphTitle` — 프로그램 상세에서만 노출 (`paragraphDescription`은 미노출) */
   sectionTitle?: string
+  /** 양식 편집기·등록 위저드 단락 타이틀이 있을 때 내부 테이블 헤더 중복 제거 */
+  hideSectionHeader?: boolean
   /** 등록 시드 단락 id — 상세 수정 필수 누락 제목 강조 */
   highlightParagraphId?: string
   /** 독립 Template Authoring — Form Version settingsJson의 typed 상태 키 */
