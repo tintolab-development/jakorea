@@ -378,6 +378,7 @@ const CONFIRMED_ORGANIZATION_LIST_SESSION_STATUSES = new Set(['CONFIRMED', 'TEMP
 export type OrganizationApplicationListSession = Session & {
   assignmentStatus?: string | null
   sessionNo?: number | null
+  endAt?: string | null
 }
 
 function isConfirmedOrganizationListSessionStatus(status: string | undefined | null): boolean {
@@ -439,6 +440,11 @@ export function mapOrganizationApplicationListSessionsToConfirmedSessions(
       status: 'pending',
       resolvedScheduleId: Math.trunc(scheduleId),
       startAt: startRaw,
+      ...(session.endAt?.trim() ? { endAt: session.endAt.trim() } : {}),
+      sessionNo:
+        typeof session.sessionNo === 'number' && Number.isFinite(session.sessionNo)
+          ? session.sessionNo
+          : null,
     })
   }
 
