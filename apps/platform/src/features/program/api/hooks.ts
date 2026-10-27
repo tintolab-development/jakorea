@@ -34,6 +34,7 @@ function listKeyParams(query: PortalProgramListQuery) {
   return {
     keyword: query.keyword ?? '',
     portalTab: normalizePortalProgramFilterValues(query.portalTab),
+    applicationType: normalizePortalProgramFilterValues(query.applicationType),
     programType: normalizePortalProgramFilterValues(query.programType),
     recruitmentStatus: normalizePortalProgramFilterValues(query.recruitmentStatus),
     recruitmentTarget: normalizePortalProgramFilterValues(query.recruitmentTarget),

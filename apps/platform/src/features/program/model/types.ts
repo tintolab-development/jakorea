@@ -1,5 +1,6 @@
 import type { EducationTarget } from '@jakorea/domain/recruitment/education-target'
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
+import type { PortalApplicationType } from '../api/application-types'
 
 export type ProgramCategory = 'all' | 'youth' | 'institution' | 'instructor'
 
@@ -276,6 +277,8 @@ export type ProgramsListParams = {
   /** 상단 탭 — 프로그램 유형 (청소년·기관·강사) */
   category: ProgramCategory
   q: string
+  /** 모집 유형 직접 조회용 URL 상태. 기본 목록에서는 생략한다. */
+  applicationType?: PortalApplicationType
   /** 원장 프로그램 유형 필터 (예: UJAT) */
   programType: string
   /** URL/API에 반복값으로 복원된 프로그램 유형 필터. 기존 단일 선택 UI는 programType을 사용한다. */

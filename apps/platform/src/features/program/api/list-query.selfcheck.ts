@@ -11,6 +11,7 @@ const all = toPortalProgramListQuery({ ...DEFAULT_PROGRAMS_LIST_PARAMS }, 10)
 assert.equal(all.page, 0)
 assert.equal(all.size, 10)
 assert.equal(all.portalTab, undefined)
+assert.equal(all.applicationType, undefined)
 assert.equal(all.keyword, undefined)
 assert.equal(all.programType, undefined)
 assert.equal(all.sort, 'LATEST')
@@ -71,5 +72,12 @@ assert.equal(filtered.operatingFrom, '2026-09-01')
 assert.equal(filtered.operatingTo, '2026-12-31')
 assert.equal(filtered.sort, 'CLOSING_SOON')
 assert.equal(filtered.page, 2)
+
+const volunteer = toPortalProgramListQuery(
+  { ...DEFAULT_PROGRAMS_LIST_PARAMS, q: 'DEV-UJAT-REG05-2027-샘플01', applicationType: 'VOLUNTEER' },
+  10,
+)
+assert.equal(volunteer.applicationType, 'VOLUNTEER')
+assert.equal(volunteer.portalTab, undefined)
 
 console.log('program portal list-query.selfcheck: ok')

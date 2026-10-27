@@ -112,6 +112,7 @@ export const platformQueryKeys = {
     list: (params: {
       keyword: string
       portalTab: readonly string[]
+      applicationType: readonly string[]
       programType: readonly string[]
       recruitmentStatus: readonly string[]
       recruitmentTarget: readonly string[]
@@ -128,6 +129,7 @@ export const platformQueryKeys = {
         'list',
         params.keyword,
         params.portalTab,
+        params.applicationType,
         params.programType,
         params.recruitmentStatus,
         params.recruitmentTarget,
