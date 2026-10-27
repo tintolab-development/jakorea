@@ -29,9 +29,11 @@ import {
   JA_PARTICIPATION_OPTIONS,
   TALENT_APPLY_FILE_GUIDE,
   TALENT_APPLY_PLACEHOLDERS as PH,
+  TALENT_APPLY_LONG_TEXT_MAX_LENGTH,
   TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE,
   TALENT_APPLY_STEP_TITLES,
   TALENT_APPLY_SUBMIT_LABEL,
+  trimTalentApplyLongText,
   type TalentApplyFieldKey,
   type TalentApplyFormValues,
   type TalentApplyGender,
@@ -91,6 +93,39 @@ function FieldLabel({
         </PFText>
       ) : null}
     </label>
+  )
+}
+
+function TalentApplyLongTextField({
+  id,
+  label,
+  value,
+  error,
+  onChange,
+}: {
+  id: string
+  label: string
+  value: string
+  error: boolean
+  onChange: (next: string) => void
+}) {
+  return (
+    <div className={styles.field}>
+      <FieldLabel htmlFor={id} required>
+        {label}
+      </FieldLabel>
+      <textarea
+        id={id}
+        className={[styles.textarea, error ? styles.textareaError : undefined].filter(Boolean).join(' ')}
+        value={value}
+        maxLength={TALENT_APPLY_LONG_TEXT_MAX_LENGTH}
+        aria-invalid={error || undefined}
+        onChange={event => onChange(event.target.value)}
+      />
+      <PFText as="p" typo="bd-sm-rg" color="neutral-cool-500" className={styles.textareaCharCount}>
+        {value.length}/{TALENT_APPLY_LONG_TEXT_MAX_LENGTH}
+      </PFText>
+    </div>
   )
 }
 
@@ -228,9 +263,9 @@ export function TalentDonationApplyForm() {
           sigungu: values.sigungu.trim(),
           periodStart: toApiDate(values.periodStart),
           periodEnd: toApiDate(values.periodEnd),
-          bio: values.bio.trim(),
-          talentIntro: values.talentIntro.trim(),
-          motivation: values.motivation.trim(),
+          bio: trimTalentApplyLongText(values.bio),
+          talentIntro: trimTalentApplyLongText(values.talentIntro),
+          motivation: trimTalentApplyLongText(values.motivation),
           jaParticipation: values.jaParticipation as 'yes' | 'no',
           privacyAgreed: true,
         },
@@ -451,53 +486,29 @@ export function TalentDonationApplyForm() {
           </div>
 
           <div className={styles.fields}>
-            <div className={styles.field}>
-              <FieldLabel htmlFor="talent-apply-bio" required>
-                간단한 약력 소개
-              </FieldLabel>
-              <textarea
-                id="talent-apply-bio"
-                className={[styles.textarea, errors.bio ? styles.textareaError : undefined]
-                  .filter(Boolean)
-                  .join(' ')}
-                value={values.bio}
-                onChange={event => patch('bio', event.target.value)}
-              />
-            </div>
+            <TalentApplyLongTextField
+              id="talent-apply-bio"
+              label="간단한 약력 소개"
+              value={values.bio}
+              error={Boolean(errors.bio)}
+              onChange={next => patch('bio', next)}
+            />
 
-            <div className={styles.field}>
-              <FieldLabel htmlFor="talent-apply-talent-intro" required>
-                기부 가능한 재능 소개
-              </FieldLabel>
-              <textarea
-                id="talent-apply-talent-intro"
-                className={[
-                  styles.textarea,
-                  errors.talentIntro ? styles.textareaError : undefined,
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                value={values.talentIntro}
-                onChange={event => patch('talentIntro', event.target.value)}
-              />
-            </div>
+            <TalentApplyLongTextField
+              id="talent-apply-talent-intro"
+              label="기부 가능한 재능 소개"
+              value={values.talentIntro}
+              error={Boolean(errors.talentIntro)}
+              onChange={next => patch('talentIntro', next)}
+            />
 
-            <div className={styles.field}>
-              <FieldLabel htmlFor="talent-apply-motivation" required>
-                참여 동기
-              </FieldLabel>
-              <textarea
-                id="talent-apply-motivation"
-                className={[
-                  styles.textarea,
-                  errors.motivation ? styles.textareaError : undefined,
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                value={values.motivation}
-                onChange={event => patch('motivation', event.target.value)}
-              />
-            </div>
+            <TalentApplyLongTextField
+              id="talent-apply-motivation"
+              label="참여 동기"
+              value={values.motivation}
+              error={Boolean(errors.motivation)}
+              onChange={next => patch('motivation', next)}
+            />
 
             <div className={styles.field}>
               <FieldLabel required>JA 프로그램 참여 여부</FieldLabel>

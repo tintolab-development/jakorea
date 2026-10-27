@@ -107,15 +107,31 @@
   width: 100%;
   min-width: 0;
   min-height: 174px;
+  max-height: none;
   padding: var(--spacing-12) var(--spacing-16);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-8);
-  resize: none;
+  resize: vertical;
+  overflow: auto;
   font-family: var(--font-family-base);
   font-size: 16px;
   line-height: 150%;
   color: var(--color-neutral-black);
   background: var(--color-neutral-white);
+}
+
+@supports (field-sizing: content) {
+  .textarea {
+    field-sizing: content;
+    resize: none;
+    overflow: hidden;
+  }
+}
+
+.textareaCharCount {
+  margin: 0;
+  padding: 0 var(--spacing-8);
+  text-align: right;
 }
 
 .textarea:focus {
