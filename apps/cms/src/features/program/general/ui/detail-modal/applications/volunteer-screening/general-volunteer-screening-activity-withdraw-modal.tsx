@@ -102,44 +102,37 @@ export function GeneralVolunteerScreeningActivityWithdrawModal({
       description={buildGeneralVolunteerScreeningActivityWithdrawDescription(volunteerName)}
     >
       <div className="activity-withdraw-schedule-modal__form">
-        <div className="activity-withdraw-schedule-modal__field">
-          <span className="activity-withdraw-schedule-modal__label">
-            교육 일정<span className="activity-withdraw-schedule-modal__required">*</span>
-          </span>
-          <CmsSelect
-            inputSize="large"
-            width="100%"
-            withAllOption={false}
-            placeholder="활동 포기 처리할 일정을 선택해 주세요."
-            value={stopSessionKey}
-            disabled={!hasScheduleOptions || confirming}
-            onChange={value => setStopSessionKey(value == null ? undefined : String(value))}
-            options={[...scheduleOptions]}
-            aria-label="교육 일정"
-          />
-        </div>
-        <div className="activity-withdraw-schedule-modal__field">
-          <span className="activity-withdraw-schedule-modal__label">
-            귀책 사유<span className="activity-withdraw-schedule-modal__required">*</span>
-          </span>
-          <CmsRadio.Group
-            size="medium"
-            value={faultParty}
-            disabled={confirming}
-            onChange={event => {
-              const next = event.target.value
-              if (next !== FaultParty.USER && next !== FaultParty.ADMIN) return
-              setFaultParty(next)
-            }}
-          >
-            <CmsRadio value={FaultParty.USER} size="medium">
-              사용자 귀책
-            </CmsRadio>
-            <CmsRadio value={FaultParty.ADMIN} size="medium">
-              관리자 귀책
-            </CmsRadio>
-          </CmsRadio.Group>
-        </div>
+        <CmsSelect
+          label="교육 일정"
+          required
+          inputSize="large"
+          width="100%"
+          withAllOption={false}
+          placeholder="활동 포기 처리할 일정을 선택해 주세요."
+          value={stopSessionKey}
+          disabled={!hasScheduleOptions || confirming}
+          onChange={value => setStopSessionKey(value == null ? undefined : String(value))}
+          options={[...scheduleOptions]}
+        />
+        <CmsRadio.Group
+          label="귀책 사유"
+          required
+          size="medium"
+          value={faultParty}
+          disabled={confirming}
+          onChange={event => {
+            const next = event.target.value
+            if (next !== FaultParty.USER && next !== FaultParty.ADMIN) return
+            setFaultParty(next)
+          }}
+        >
+          <CmsRadio value={FaultParty.USER} size="medium">
+            사용자 귀책
+          </CmsRadio>
+          <CmsRadio value={FaultParty.ADMIN} size="medium">
+            관리자 귀책
+          </CmsRadio>
+        </CmsRadio.Group>
       </div>
     </ContentModal>
   )

@@ -39,4 +39,33 @@ describe('renderContentModalDescription', () => {
 
     expect(container.querySelector('p')).toHaveClass('cms-modal__content')
   })
+
+  it('대괄호 안 이름 볼드 마커를 남기지 않는다', () => {
+    const { container } = render(
+      renderContentModalDescription('[**일원**] 님의 프로그램 활동을 포기 처리하시겠습니까?'),
+    )
+
+    expect(container.textContent).toBe('[일원] 님의 프로그램 활동을 포기 처리하시겠습니까?')
+    expect(container.textContent).not.toContain('*')
+    expect(container.querySelector('strong')?.textContent).toBe('일원')
+  })
+
+  it('마스킹 ** 가 들어 있는 이름도 볼드 구간을 닫지 않는다', () => {
+    const inner = render(renderContentModalDescription('[**일**원**] 님의 프로그램'))
+    expect(inner.container.textContent).toBe('[일**원] 님의 프로그램')
+    expect(inner.container.querySelector('strong')?.textContent).toBe('일**원')
+
+    const wrap = render(renderContentModalDescription('**[일**원]** 님의 프로그램'))
+    expect(wrap.container.textContent).toBe('[일**원] 님의 프로그램')
+    expect(wrap.container.querySelector('strong')?.textContent).toBe('[일**원]')
+  })
+
+  it('한 줄에 볼드 구간이 둘이면 각각 유지한다', () => {
+    const { container } = render(
+      renderContentModalDescription('**[일**원]** 봉사자의 **[4월 1일]** 교육'),
+    )
+    expect(container.textContent).toBe('[일**원] 봉사자의 [4월 1일] 교육')
+    const strongs = [...container.querySelectorAll('strong')].map(node => node.textContent)
+    expect(strongs).toEqual(['[일**원]', '[4월 1일]'])
+  })
 })

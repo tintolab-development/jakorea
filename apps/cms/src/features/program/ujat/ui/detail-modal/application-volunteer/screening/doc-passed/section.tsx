@@ -128,6 +128,8 @@ export function DocPassedSection({
       scheduleOptions={activityWithdrawScheduleOptions}
       onCancel={cancelWithdrawActivity}
       onConfirm={confirmWithdrawActivity}
+      subjectName={withdrawTarget?.name ?? ''}
+      subjectKind="person"
     />
   )
 

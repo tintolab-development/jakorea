@@ -4,6 +4,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { parseContentModalDescriptionLine } from '@/shared/ui/content-modal-description'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import {
@@ -25,9 +26,6 @@ import './permission-modal.css'
 const DEFAULT_PERMISSION_MODAL_Z = 2500
 const DATE_TIME_PICKER_Z_OFFSET = 100
 
-/** ContentModal `description` 과 동일 — 마스킹 이름(`이*연`) 등 내부 `*` 허용 */
-const MESSAGE_BOLD_PATTERN = /(\*\*.+?\*\*)/g
-
 function PermissionModalFieldLabel({
   children,
   required,
@@ -48,15 +46,7 @@ function PermissionModalFieldLabel({
 }
 
 function parsePermissionModalMessageLine(line: string): ReactNode[] {
-  return line
-    .split(MESSAGE_BOLD_PATTERN)
-    .filter(Boolean)
-    .map((part, index) => {
-      if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
-        return <strong key={index}>{part.slice(2, -2)}</strong>
-      }
-      return <Fragment key={index}>{part}</Fragment>
-    })
+  return parseContentModalDescriptionLine(line)
 }
 
 /** `\n`으로 줄바꿈. `**텍스트**`는 굵게 표시 */

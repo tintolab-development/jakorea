@@ -2893,6 +2893,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}
         confirming={activityWithdrawSubmitting}
+        subjectName={mergedDetail.schoolName ?? row.schoolName ?? ''}
+        subjectKind="institution"
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
       />

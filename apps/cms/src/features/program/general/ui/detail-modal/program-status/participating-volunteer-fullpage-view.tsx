@@ -465,6 +465,8 @@ export function ParticipatingVolunteerFullpageView({
         onCancel={() => setActivityWithdrawModalOpen(false)}
         onConfirm={handleConfirmActivityWithdraw}
         confirming={activityWithdrawSubmitting}
+        subjectName={mergedVolunteer.volunteerName ?? ''}
+        subjectKind="person"
       />
       <ParticipatingVolunteerActivityCertificatePreviewModal
         open={activityCertPreviewOpen}

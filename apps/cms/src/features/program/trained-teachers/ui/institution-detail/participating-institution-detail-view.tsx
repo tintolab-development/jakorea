@@ -907,9 +907,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}
         confirming={activityWithdrawSubmitting}
-        faultPartyRequired
-        reasonMinLength={1}
-        reasonMaxLength={1000}
+        subjectName={mergedDetail.schoolName ?? row.schoolName ?? ''}
+        subjectKind="institution"
         onCancel={() => {
           if (activityWithdrawSubmitting) return
           setActivityWithdrawModalOpen(false)

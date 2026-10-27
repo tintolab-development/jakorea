@@ -1,5 +1,18 @@
+import { isGeneralInterviewTotalScoreUnevaluated } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+
+const INTERVIEW_EVALUATION_REQUIRED_ALERT = {
+  title: '면접 평가 진행 안내',
+  content: '면접 평가 진행 후 합격 혹은 불합격 처리가 가능합니다.',
+  confirmLabel: '닫기',
+} as const
+
+function guardGeneralVolunteerInterview2Evaluated(row: GeneralVolunteerApplicantRow): boolean {
+  if (!isGeneralInterviewTotalScoreUnevaluated(row)) return true
+  cmsAlertModal.show({ ...INTERVIEW_EVALUATION_REQUIRED_ALERT })
+  return false
+}
 
 export function guardGeneralVolunteerWithdrawActivity(row: GeneralVolunteerApplicantRow): boolean {
   if (row.interviewAssignmentStatus !== 'withdrawn') return true
@@ -54,7 +67,7 @@ export function guardGeneralVolunteerInterview2Fail(row: GeneralVolunteerApplica
     })
     return false
   }
-  return true
+  return guardGeneralVolunteerInterview2Evaluated(row)
 }
 
 export function guardGeneralVolunteerInterview2Pass(row: GeneralVolunteerApplicantRow): boolean {
@@ -73,7 +86,7 @@ export function guardGeneralVolunteerInterview2Pass(row: GeneralVolunteerApplica
     })
     return false
   }
-  return true
+  return guardGeneralVolunteerInterview2Evaluated(row)
 }
 
 export function guardGeneralVolunteerInterview2Evaluation(row: GeneralVolunteerApplicantRow): boolean {

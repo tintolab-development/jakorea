@@ -1,22 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Radio } from 'antd'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { CmsTextArea } from '@/shared/ui/cms-textarea'
-import type { ActivityWithdrawScheduleOption } from '@/features/program/shared/lib/activity-withdraw-schedule'
+import { CmsRadio } from '@/shared/ui/cms-radio'
 import {
-  APPLICATION_GIVE_UP_REASON_MAX_LENGTH,
-  APPLICATION_GIVE_UP_REASON_MIN_LENGTH,
-  validateApplicationGiveUpReason,
-} from '@/features/program/shared/lib/application-give-up'
+  buildActivityWithdrawGeneratedReason,
+  buildActivityWithdrawGuideDescription,
+  type ActivityWithdrawGuideSubjectKind,
+  type ActivityWithdrawScheduleOption,
+} from '@/features/program/shared/lib/activity-withdraw-schedule'
 import type { ApplicationGiveUpRequestFaultParty } from '@/shared/api/generated/dashboard/schemas/applicationGiveUpRequestFaultParty'
 import { ApplicationGiveUpRequestFaultParty as FaultParty } from '@/shared/api/generated/dashboard/schemas/applicationGiveUpRequestFaultParty'
 import './activity-withdraw-schedule-modal.css'
 
 const MODAL_Z_INDEX = 1100
-
-const ACTIVITY_WITHDRAW_DESCRIPTION =
-  '선택한 교육 일정을 기준으로 해당 일정부터 활동 포기 처리됩니다.\n활동 포기 처리 후에는 되돌릴 수 없으며, 이전 활동 실적은 정책에 따라 인정됩니다.'
 
 export type ActivityWithdrawScheduleModalPayload = {
   stopSessionKey: string
@@ -32,12 +28,10 @@ export type ActivityWithdrawScheduleModalProps = {
   onConfirm: (payload: ActivityWithdrawScheduleModalPayload) => void | Promise<void>
   /** 확인 API 진행 중 — 중복 제출·취소 차단 */
   confirming?: boolean
-  /** TT 기관 활동 포기처럼 귀책 주체를 반드시 선택해야 하는 경우 */
-  faultPartyRequired?: boolean
-  /** 강사 participant 활동 포기 시 JA 감점 안내 */
-  faultPartyHint?: string
-  reasonMinLength?: number
-  reasonMaxLength?: number
+  /** 본문 `[이름] 님의` / `[기관명]의` */
+  subjectName?: string
+  subjectKind?: ActivityWithdrawGuideSubjectKind
+  zIndex?: number
 }
 
 export function ActivityWithdrawScheduleModal({
@@ -46,27 +40,18 @@ export function ActivityWithdrawScheduleModal({
   onCancel,
   onConfirm,
   confirming = false,
-  faultPartyRequired = false,
-  faultPartyHint,
-  reasonMinLength = APPLICATION_GIVE_UP_REASON_MIN_LENGTH,
-  reasonMaxLength = APPLICATION_GIVE_UP_REASON_MAX_LENGTH,
+  subjectName = '',
+  subjectKind = 'person',
+  zIndex = MODAL_Z_INDEX,
 }: ActivityWithdrawScheduleModalProps) {
   const [stopSessionKey, setStopSessionKey] = useState<string | undefined>(undefined)
-  const [reason, setReason] = useState('')
-  const [reasonError, setReasonError] = useState<string | null>(null)
-  const [faultParty, setFaultParty] = useState<ApplicationGiveUpRequestFaultParty | undefined>(
-    faultPartyRequired ? undefined : FaultParty.USER
-  )
-  const [faultPartyError, setFaultPartyError] = useState<string | null>(null)
+  const [faultParty, setFaultParty] = useState<ApplicationGiveUpRequestFaultParty>(FaultParty.USER)
 
   useEffect(() => {
     if (!open) return
     setStopSessionKey(undefined)
-    setReason('')
-    setReasonError(null)
-    setFaultParty(faultPartyRequired ? undefined : FaultParty.USER)
-    setFaultPartyError(null)
-  }, [faultPartyRequired, open])
+    setFaultParty(FaultParty.USER)
+  }, [open])
 
   const hasScheduleOptions = scheduleOptions.length > 0
 
@@ -75,13 +60,7 @@ export function ActivityWithdrawScheduleModal({
     [scheduleOptions, stopSessionKey]
   )
 
-  const canConfirm =
-    selectedOption != null &&
-    reason.trim().length >= reasonMinLength &&
-    reason.trim().length <= reasonMaxLength &&
-    (!faultPartyRequired || faultParty != null) &&
-    !confirming &&
-    hasScheduleOptions
+  const canConfirm = selectedOption != null && hasScheduleOptions && !confirming
 
   const handleCancel = useCallback(() => {
     if (confirming) return
@@ -91,35 +70,13 @@ export function ActivityWithdrawScheduleModal({
 
   const handleConfirm = useCallback(() => {
     if (!selectedOption || confirming) return
-    const validation = validateApplicationGiveUpReason(reason, {
-      minLength: reasonMinLength,
-      maxLength: reasonMaxLength,
-    })
-    if (validation) {
-      setReasonError(validation)
-      return
-    }
-    if (faultPartyRequired && faultParty == null) {
-      setFaultPartyError('귀책 유형을 선택해 주세요.')
-      return
-    }
-    const selectedFaultParty = faultParty ?? FaultParty.USER
     void onConfirm({
       stopSessionKey: selectedOption.value,
       stopScheduleLabel: selectedOption.label,
-      reason: reason.trim(),
-      faultParty: selectedFaultParty,
+      reason: buildActivityWithdrawGeneratedReason(selectedOption.label),
+      faultParty,
     })
-  }, [
-    confirming,
-    faultParty,
-    faultPartyRequired,
-    onConfirm,
-    reason,
-    reasonMaxLength,
-    reasonMinLength,
-    selectedOption,
-  ])
+  }, [confirming, faultParty, onConfirm, selectedOption])
 
   const footer = (
     <div className="activity-withdraw-schedule-modal__footer">
@@ -148,69 +105,46 @@ export function ActivityWithdrawScheduleModal({
     <ContentModal
       open={open}
       onCancel={handleCancel}
-      title="활동 포기"
+      title="활동 포기 안내"
       width={600}
-      zIndex={MODAL_Z_INDEX}
+      zIndex={zIndex}
       className="activity-withdraw-schedule-modal"
       wrapClassName="activity-withdraw-schedule-modal-wrap"
       footer={footer}
-      description={ACTIVITY_WITHDRAW_DESCRIPTION}
+      description={buildActivityWithdrawGuideDescription(subjectName, subjectKind)}
     >
       <div className="activity-withdraw-schedule-modal__form">
-        <div className="activity-withdraw-schedule-modal__field">
-          <span className="activity-withdraw-schedule-modal__label">교육 일정</span>
-          <CmsSelect
-            inputSize="large"
-            width="100%"
-            withAllOption={false}
-            placeholder="활동 포기 처리할 일정을 선택해 주세요."
-            value={stopSessionKey}
-            disabled={!hasScheduleOptions}
-            onChange={value => setStopSessionKey(value == null ? undefined : String(value))}
-            options={[...scheduleOptions]}
-            aria-label="교육 일정"
-          />
-        </div>
-        <div className="activity-withdraw-schedule-modal__field">
-          <span className="activity-withdraw-schedule-modal__label">귀책</span>
-          <Radio.Group
-            value={faultParty}
-            onChange={event => {
-              const next = event.target.value
-              if (next !== FaultParty.USER && next !== FaultParty.ADMIN) return
-              setFaultParty(next)
-              setFaultPartyError(null)
-            }}
-            disabled={confirming}
-          >
-            <Radio value={FaultParty.USER}>사용자 귀책</Radio>
-            <Radio value={FaultParty.ADMIN}>관리자 귀책</Radio>
-          </Radio.Group>
-          {faultPartyHint ? (
-            <p className="activity-withdraw-schedule-modal__hint">{faultPartyHint}</p>
-          ) : null}
-          {faultPartyError ? (
-            <span className="activity-withdraw-schedule-modal__error" role="alert">
-              {faultPartyError}
-            </span>
-          ) : null}
-        </div>
-        <CmsTextArea
-          label="활동 포기 사유"
+        <CmsSelect
+          label="교육 일정"
           required
-          value={reason}
-          onChange={event => {
-            setReason(event.target.value)
-            if (reasonError) setReasonError(null)
-          }}
-          maxLength={reasonMaxLength}
-          placeholder="활동 포기 사유를 입력해 주세요."
-          error={reasonError != null}
-          message={reasonError ?? `${reasonMaxLength}자 이내`}
-          rows={4}
+          inputSize="large"
           width="100%"
-          disabled={confirming}
+          withAllOption={false}
+          placeholder="활동 포기 처리할 일정을 선택해 주세요."
+          value={stopSessionKey}
+          disabled={!hasScheduleOptions || confirming}
+          onChange={value => setStopSessionKey(value == null ? undefined : String(value))}
+          options={[...scheduleOptions]}
         />
+        <CmsRadio.Group
+          label="귀책 사유"
+          required
+          size="medium"
+          value={faultParty}
+          disabled={confirming}
+          onChange={event => {
+            const next = event.target.value
+            if (next !== FaultParty.USER && next !== FaultParty.ADMIN) return
+            setFaultParty(next)
+          }}
+        >
+          <CmsRadio value={FaultParty.USER} size="medium">
+            사용자 귀책
+          </CmsRadio>
+          <CmsRadio value={FaultParty.ADMIN} size="medium">
+            관리자 귀책
+          </CmsRadio>
+        </CmsRadio.Group>
       </div>
     </ContentModal>
   )
