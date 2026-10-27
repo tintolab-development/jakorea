@@ -122,9 +122,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   }
   const interviewRangeWithTime = useMemo(
     () =>
-      interviewRange == null
-        ? false
-        : dateRangeUsesClockTime(interviewRange[0], interviewRange[1]),
+      interviewRange == null ? false : dateRangeUsesClockTime(interviewRange[0], interviewRange[1]),
     [interviewRange]
   )
   const [interviewMethod, setInterviewMethod] = useIndividualRecruitField<string>(
@@ -197,7 +195,8 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
             validationKey="recruit.individual.programRangeSeal"
             edit={
               <div className={MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={programAnchor}

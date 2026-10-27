@@ -35,13 +35,7 @@ import type {
   VolunteerRecruitmentValues,
 } from './recruitment-form-values'
 
-const TARGET_LEVEL_VALUES = new Set<string>([
-  'elementary',
-  'middle',
-  'high',
-  'university',
-  'adult',
-])
+const TARGET_LEVEL_VALUES = new Set<string>(['elementary', 'middle', 'high', 'university', 'adult'])
 
 function coalesceString(
   programVal: string | undefined,
@@ -147,7 +141,10 @@ function formatAvailableTimeSlotsFromInterviewTimeRange(
 
 function countVolunteerInterviewTimeSlotLabels(value: string | undefined): number {
   if (!value?.trim()) return 0
-  return value.split(',').map(part => part.trim()).filter(Boolean).length
+  return value
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean).length
 }
 
 function pickRicherAvailableTimeSlots(nested?: string, fromOverlay?: string): string | undefined {
@@ -155,7 +152,9 @@ function pickRicherAvailableTimeSlots(nested?: string, fromOverlay?: string): st
   const o = fromOverlay?.trim()
   if (!n) return o
   if (!o) return n
-  return countVolunteerInterviewTimeSlotLabels(o) >= countVolunteerInterviewTimeSlotLabels(n) ? o : n
+  return countVolunteerInterviewTimeSlotLabels(o) >= countVolunteerInterviewTimeSlotLabels(n)
+    ? o
+    : n
 }
 
 function pickNonEmptyScheduleString(nested?: string, fromOverlay?: string): string | undefined {
@@ -238,7 +237,10 @@ function interviewScheduleFromValues(
     Array.isArray(interview.selectedSlotKeys) && interview.selectedSlotKeys.length > 0
   const availableTimeSlots = hasSelectedKeys
     ? formatAvailableTimeSlotsFromSelectedKeys(interview.selectedSlotKeys)
-    : formatAvailableTimeSlotsFromInterviewTimeRange(interview.interviewTimeRange, interview.timeUnit)
+    : formatAvailableTimeSlotsFromInterviewTimeRange(
+        interview.interviewTimeRange,
+        interview.timeUnit
+      )
   const specificUnavailableDates = formatSpecificUnavailableDateLabel(specificUnavailableDateIsos)
   const exceptions = interview.exceptions ?? []
   if (
@@ -259,11 +261,7 @@ function interviewScheduleFromValues(
   }
 }
 
-function assignIf(
-  info: Record<string, unknown>,
-  key: string,
-  next: string | undefined
-): void {
+function assignIf(info: Record<string, unknown>, key: string, next: string | undefined): void {
   if (next) info[key] = next
 }
 
@@ -278,7 +276,11 @@ export function applyIndependentRecruitmentFormValues(
   const instructor = values.instructor
   const volunteer = values.volunteer
   const hasAny =
-    institution != null || individual != null || instructor != null || volunteer != null || sidecars?.media != null
+    institution != null ||
+    individual != null ||
+    instructor != null ||
+    volunteer != null ||
+    sidecars?.media != null
   if (!hasAny) return program
 
   const keepRecruitmentRows = (program.programRecruitments?.length ?? 0) > 0
@@ -327,10 +329,22 @@ export function applyIndependentRecruitmentFormValues(
   const volunteerTel = keepRecruitmentRows ? undefined : volunteer?.inquiryTel
   const volunteerEmail = keepRecruitmentRows ? undefined : volunteer?.inquiryEmail
 
-  const html = firstHtml(institution?.detailHtml ?? individual?.detailHtml, instructor?.detailHtml, volunteer?.detailHtml)
+  const html = firstHtml(
+    institution?.detailHtml ?? individual?.detailHtml,
+    instructor?.detailHtml,
+    volunteer?.detailHtml
+  )
   const description = coalesceString(program.description, html.programDescription, preferOverlay)
-  const recruitmentGuide = coalesceString(program.recruitmentGuide, html.recruitmentGuide, preferOverlay)
-  const applicationMethod = coalesceString(program.applicationMethod, html.applicationMethod, preferOverlay)
+  const recruitmentGuide = coalesceString(
+    program.recruitmentGuide,
+    html.recruitmentGuide,
+    preferOverlay
+  )
+  const applicationMethod = coalesceString(
+    program.applicationMethod,
+    html.applicationMethod,
+    preferOverlay
+  )
   const learningSupportContent = coalesceString(
     program.learningSupportContent,
     html.learningSupportContent,
@@ -366,8 +380,9 @@ export function applyIndependentRecruitmentFormValues(
   const instructorInfo = { ...(common.instructorRecruitmentInfo ?? {}) }
   const volunteerInfo = { ...(common.volunteerRecruitmentInfo ?? {}) }
 
-  const participantTargetLabel =
-    targetLevels?.length ? formatTargetLevelsLabel(targetLevels) : undefined
+  const participantTargetLabel = targetLevels?.length
+    ? formatTargetLevelsLabel(targetLevels)
+    : undefined
   if (participantTargetLabel && participantTargetLabel !== '-') {
     const nextTarget = coalesceString(
       participantInfo.educationTarget ?? participantInfo.recruitmentTarget,
@@ -430,8 +445,7 @@ export function applyIndependentRecruitmentFormValues(
   const participantDescription = participantHtml?.programDescription
   const participantGuide = participantHtml?.recruitmentGuide
   const participantMethod = participantHtml?.applicationMethod
-  const participantRemarks =
-    institution?.notes ?? individual?.notes ?? participantHtml?.otherNotes
+  const participantRemarks = institution?.notes ?? individual?.notes ?? participantHtml?.otherNotes
   if (participantDescription) {
     participantInfo.programDescription = coalesceString(
       participantInfo.programDescription,
@@ -468,7 +482,11 @@ export function applyIndependentRecruitmentFormValues(
     )
   }
   if (participantRemarks) {
-    participantInfo.remarks = coalesceString(participantInfo.remarks, participantRemarks, preferOverlay)
+    participantInfo.remarks = coalesceString(
+      participantInfo.remarks,
+      participantRemarks,
+      preferOverlay
+    )
   }
 
   const institutionAnnouncementPublished =
@@ -564,7 +582,8 @@ export function applyIndependentRecruitmentFormValues(
       participantInfo.resultAnnouncementLabel = nextFinal
     }
   }
-  const overlayParticipantNotesNA = institution?.notesNotApplicable ?? individual?.notesNotApplicable
+  const overlayParticipantNotesNA =
+    institution?.notesNotApplicable ?? individual?.notesNotApplicable
   if (overlayParticipantNotesNA !== undefined) {
     const nextNotesNA = coalesceBool(
       participantInfo.notesNotApplicable,
@@ -634,7 +653,9 @@ export function applyIndependentRecruitmentFormValues(
             ? (program.registrationOverlay as Record<string, unknown>)
             : {}),
           ...persistEcho,
-          ...(institution?.targetLevels ? { 'recruit.targetLevels': institution.targetLevels } : {}),
+          ...(institution?.targetLevels
+            ? { 'recruit.targetLevels': institution.targetLevels }
+            : {}),
           ...(individual?.targetLevels
             ? { 'recruit.individual.targetLevels': individual.targetLevels }
             : {}),
@@ -855,8 +876,9 @@ function fillInstructorInfo(
     instructor,
     preferOverlay,
   } = args
-  const instructorTargetLabel =
-    instructorTargets?.length ? formatInstructorTargetsLabel(instructorTargets) : undefined
+  const instructorTargetLabel = instructorTargets?.length
+    ? formatInstructorTargetsLabel(instructorTargets)
+    : undefined
   if (instructorTargetLabel && instructorTargetLabel !== '-') {
     instructorInfo.recruitmentTarget = coalesceString(
       instructorInfo.recruitmentTarget,
@@ -1010,8 +1032,9 @@ function fillVolunteerInfo(
     keepRecruitmentRows,
     preferOverlay,
   } = args
-  const volunteerTargetLabel =
-    volunteerTargets?.length ? formatVolunteerTargetsLabel(volunteerTargets) : undefined
+  const volunteerTargetLabel = volunteerTargets?.length
+    ? formatVolunteerTargetsLabel(volunteerTargets)
+    : undefined
   if (volunteerTargetLabel && volunteerTargetLabel !== '-') {
     volunteerInfo.recruitmentTarget = coalesceString(
       volunteerInfo.recruitmentTarget,

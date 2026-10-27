@@ -163,16 +163,24 @@ function positiveCount(value: number | null | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null
 }
 
+function nonNegativeCount(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
+}
+
 /**
  * 기관 상세 GET `textbookKits`·`textbookQuantity`만 표시한다.
- * 0·null은 미산출. 프로그램 materials·전역 키트 설정으로 재계산하지 않는다.
+ * null은 미산출('-'). 프로그램 materials·전역 키트 설정으로 재계산하지 않는다.
+ * `showZero`가 true면 서버가 내려준 0을 산출된 0으로 그대로 표시한다(일반 프로그램 기관 상세).
+ * 기본값(false)은 기존 동작(0·null 모두 미산출)을 유지한다.
  */
 export function formatParticipatingInstitutionKitQuantity(
   kits: number | null | undefined,
-  quantity: number | null | undefined
+  quantity: number | null | undefined,
+  options?: { showZero?: boolean }
 ): string {
-  const kitCount = positiveCount(kits)
-  const bookCount = positiveCount(quantity)
+  const toCount = options?.showZero ? nonNegativeCount : positiveCount
+  const kitCount = toCount(kits)
+  const bookCount = toCount(quantity)
   if (kitCount != null && bookCount != null) return `${kitCount}키트 (${bookCount}권)`
   if (kitCount != null) return `${kitCount}키트`
   if (bookCount != null) return `${bookCount}권`

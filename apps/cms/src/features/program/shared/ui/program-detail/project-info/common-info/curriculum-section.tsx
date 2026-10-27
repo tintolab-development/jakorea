@@ -289,13 +289,15 @@ export function CurriculumSection({
                 edit={
                   isFormEdit ? (
                     <div className="detail-info-form-inputs-wrapper">
-                      <CmsRadio.Group size="medium"
+                      <CmsRadio.Group
+                        size="medium"
                         value={round.deliveryType ?? 'offline'}
                         options={ROUND_DELIVERY_OPTIONS}
                         onChange={e => updateRoundDeliveryType(roundIndex, e.target.value)}
                       />
                       <DetailInfoForm.InputsSeparator />
-                      <CmsInput inputSize="small"
+                      <CmsInput
+                        inputSize="small"
                         value={duration}
                         onChange={e =>
                           updateRoundCurriculum(roundIndex, e.target.value, description)
@@ -303,7 +305,8 @@ export function CurriculumSection({
                         placeholder="1시간"
                       />
                       <DetailInfoForm.InputsSeparator />
-                      <CmsInput inputSize="small"
+                      <CmsInput
+                        inputSize="small"
                         value={description}
                         onChange={e => updateRoundCurriculum(roundIndex, duration, e.target.value)}
                         placeholder="비고"
@@ -369,7 +372,8 @@ export function EducationScheduleSettingsSection({
           view={<EducationSchedulePreviewLines lines={lines} />}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
-              <ParagraphDatePicker inputSize="small"
+              <ParagraphDatePicker
+                inputSize="small"
                 mode="single"
                 presetMode="period"
                 customizable={false}
@@ -377,9 +381,7 @@ export function EducationScheduleSettingsSection({
                 suppressAutoTodayWhenEmpty
                 value={scheduleRange[0]}
                 appliedSurfaceRange={
-                  scheduleRange[0] && scheduleRange[1]
-                    ? [scheduleRange[0], scheduleRange[1]]
-                    : null
+                  scheduleRange[0] && scheduleRange[1] ? [scheduleRange[0], scheduleRange[1]] : null
                 }
                 appliedSurfaceWithTime={false}
                 width={320}

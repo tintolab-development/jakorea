@@ -251,9 +251,7 @@ function volunteerInterviewPeriodForRowSave(
   return volunteerInterviewBackfillSource(baseline, field)
 }
 
-function normalizedVolunteerCodes(
-  value: readonly string[] | null | undefined
-): string[] {
+function normalizedVolunteerCodes(value: readonly string[] | null | undefined): string[] {
   if (!value?.length) return []
   return normalizeVolunteerTargetList(value)
 }

@@ -622,10 +622,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       organizationApplicationIdForDetail || '__none__'
     ),
     queryFn: () =>
-      fetchOrganizationScheduleAssignmentsRemote(
-        programId,
-        organizationApplicationIdForDetail
-      ),
+      fetchOrganizationScheduleAssignmentsRemote(programId, organizationApplicationIdForDetail),
     enabled: organizationScheduleAssignmentsEnabled,
     staleTime: 15_000,
     retry: false,
@@ -731,11 +728,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       return assignedEducationSessions
     }
     return participantSessions
-  }, [
-    assignedEducationSessions,
-    isGeneralOrgProgram,
-    participantSessions,
-  ])
+  }, [assignedEducationSessions, isGeneralOrgProgram, participantSessions])
   const companySchoolAssignmentConflictsEnabled =
     isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
   /** 1사1교 conflicts ON 또는 일반 progress remote ON */
@@ -796,8 +789,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   }, [assignmentBoard, assignmentBoardRemoteEnabled, row.organizationApplicationId])
 
   const activityWithdrawScheduleOptions = useMemo(
-    () =>
-      getParticipatingInstitutionActivityWithdrawScheduleOptions(program, participantSessions),
+    () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, participantSessions),
     [program, participantSessions]
   )
 
@@ -836,9 +828,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
 
   const combinedClassProcess = useCombinedClassProcess({
     active:
-      isApplicationInfoEditing &&
-      isCombinedClassProgramEligibleFlag &&
-      !combinedClassReadOnly,
+      isApplicationInfoEditing && isCombinedClassProgramEligibleFlag && !combinedClassReadOnly,
     resetKey: detail.id,
     schoolName: mergedDetail.schoolName ?? row.schoolName ?? '',
     leadGrade: row.educationGrade ?? mergedDetail.educationGrade ?? '',
@@ -858,7 +848,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         participatingSchoolList.filter(item => partnerIds.includes(item.id))
       ),
     onProcess: async ({ partnerIds, leadTeacherMemberId }) => {
-      if (!mergeGroupsAllowed || !shouldUseOrganizationMergeGroupsRemoteApi() || !progressRemoteEnabled) {
+      if (
+        !mergeGroupsAllowed ||
+        !shouldUseOrganizationMergeGroupsRemoteApi() ||
+        !progressRemoteEnabled
+      ) {
         notifyProgramApiUnavailable(
           'general-org-merge-lead-teacher-progress',
           '일반 프로그램 · 합반 담당 교사 지정'
@@ -1638,8 +1632,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         return
       }
       const applicationIdRaw = assignmentBoard.approvedInstructorApplications.find(
-        app =>
-          app.instructorMemberId != null && String(app.instructorMemberId) === String(memberId)
+        app => app.instructorMemberId != null && String(app.instructorMemberId) === String(memberId)
       )?.id
       if (assignInFlightRef.current) return
       assignInFlightRef.current = true
@@ -2242,7 +2235,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const kitsAndQty = hasSelectedTextbook
     ? formatParticipatingInstitutionKitQuantity(
         textbookDisplay.textbookKits,
-        textbookDisplay.textbookQuantity
+        textbookDisplay.textbookQuantity,
+        { showZero: true }
       )
     : '-'
 
@@ -2803,9 +2797,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 setAddAssignNotifyOpen(false)
               }}
               schoolName={row.schoolName}
-              instructorNames={
-                addAssignNotifyInstructorName ? [addAssignNotifyInstructorName] : []
-              }
+              instructorNames={addAssignNotifyInstructorName ? [addAssignNotifyInstructorName] : []}
               currentCount={currentAssignedCount}
               requiredCount={requiredInstructorCount}
               confirmLoading={assignSubmitting}

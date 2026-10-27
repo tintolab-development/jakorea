@@ -719,7 +719,8 @@ export function SchoolDetailModal({
                     label="교재 준비 수량"
                     view={formatParticipatingInstitutionKitQuantity(
                       detail.textbookKits,
-                      detail.textbookQuantity
+                      detail.textbookQuantity,
+                      { showZero: true }
                     )}
                     readOnlyDisplay
                   />
