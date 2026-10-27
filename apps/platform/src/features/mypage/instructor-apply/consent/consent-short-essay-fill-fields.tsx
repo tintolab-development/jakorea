@@ -26,6 +26,9 @@ function resolveTextareaRows(paragraph: ConsentShortEssayParagraph): 1 | 4 | 5 {
   return 5
 }
 
+/** 행정정보 ⑤ 대상자 본인 — 시안 라벨 앞 '・' (스키마 시드 문자열이 아니라 렌더 단계에서만 부여) */
+const SUBJECT_LABEL_BULLET = '・'
+
 function isShortEssayVariant(
   current: { kind: string; variant: string },
 ): current is ConsentShortEssayParagraph {
@@ -94,8 +97,12 @@ export function ConsentShortEssayFillFields({
   return (
     <div className={styles.consentShortEssayStack}>
       {items.map(item => {
-        const label =
+        const baseLabel =
           showItemTitle && (item.label?.trim() ?? '') ? item.label!.trim() : undefined
+        const label =
+          baseLabel && paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject
+            ? `${SUBJECT_LABEL_BULLET}${baseLabel}`
+            : baseLabel
         const placeholder = item.placeholder?.trim() || fallbackPlaceholder
         const isPhone = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
         const isBirth = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth
@@ -124,8 +131,8 @@ export function ConsentShortEssayFillFields({
           commitItemBodyText(paragraph.id, item.id, next, onUpdateParagraph)
         }
 
-        const handleChange = isPhone
-          ? (event: ChangeEvent<HTMLTextAreaElement>) => {
+        const handlePhoneChange = isPhone
+          ? (event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
               const nextValue = applyKoreanPhoneInputChange(
                 item.bodyText,
                 event.target.value,
@@ -135,6 +142,33 @@ export function ConsentShortEssayFillFields({
               commitItemBodyText(paragraph.id, item.id, nextValue, onUpdateParagraph)
             }
           : undefined
+
+        // 단일행(itemInputRows 1) — 시안 field/h44: PFTextInput(large = h44 · radius 12)
+        if (rows === 1) {
+          return (
+            <PFTextInput
+              key={item.id}
+              variant="formPage"
+              size="large"
+              label={label}
+              placeholder={placeholder}
+              value={item.bodyText}
+              maxLength={isBirth ? 10 : isPhone ? 13 : maxLength}
+              inputMode={isBirth || isPhone ? 'numeric' : undefined}
+              autoComplete={isPhone ? 'tel' : undefined}
+              width="100%"
+              onValueChange={
+                isPhone
+                  ? value => {
+                      // 입력 지우기 버튼 — 전화번호는 onChange로 포맷하므로 빈 값만 반영
+                      if (value === '') commitItemBodyText(paragraph.id, item.id, '', onUpdateParagraph)
+                    }
+                  : handleValueChange
+              }
+              onChange={handlePhoneChange}
+            />
+          )
+        }
 
         return (
           <PFTextarea
@@ -149,7 +183,7 @@ export function ConsentShortEssayFillFields({
             inputMode={isBirth || isPhone ? 'numeric' : undefined}
             autoComplete={isPhone ? 'tel' : undefined}
             onValueChange={isPhone ? undefined : handleValueChange}
-            onChange={handleChange}
+            onChange={handlePhoneChange}
           />
         )
       })}

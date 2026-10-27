@@ -1,3 +1,4 @@
+import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 
 const LEAVE_CONFIRM_TITLE = '작성 취소 안내'
@@ -25,6 +26,7 @@ export function RegistrationWizardLeaveConfirmModal({
       confirmText="저장 안 함"
       cancelText="돌아가기"
       danger
+      zIndex={CMS_ALERT_MODAL_Z_INDEX}
       onConfirm={onConfirm}
       onCancel={onCancel}
     />

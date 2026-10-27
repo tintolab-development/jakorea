@@ -28,9 +28,7 @@ import {
   pickRecruitmentCopyRow,
   writeRecruitmentRowCopy,
 } from '@/features/program/shared/lib/recruitment-row-copy'
-import {
-  typedFieldsFromRecruitmentFormValues,
-} from '@/features/program/ujat/lib/recruitment-typed-contract'
+import { typedFieldsFromRecruitmentFormValues } from '@/features/program/ujat/lib/recruitment-typed-contract'
 import { announcementPublishedToFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 
 export type UjatRecruitDisplayKind = 'institution' | 'volunteer' | 'volunteer_h1' | 'volunteer_h2'
@@ -63,8 +61,7 @@ export function pickUjatVolunteerRecruitmentRow(
 ): ProgramRecruitmentWindow | undefined {
   const term = half === 'h1' ? 'FIRST_HALF' : 'SECOND_HALF'
   return (program.programRecruitments ?? []).find(
-    row =>
-      (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' && row.recruitTerm === term
+    row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER' && row.recruitTerm === term
   )
 }
 
@@ -85,9 +82,15 @@ function applyUjatRecruitmentRowCanonicalFields(
   const endAt = rowString(row, 'endAt')
   const volunteerInfo = {
     ...(program.generalCommonInfo?.volunteerRecruitmentInfo ?? {}),
-    ...(contactName ? { contactOrganizationName: contactName, contactName } : { contactOrganizationName: '', contactName: '' }),
-    ...(contactPhone ? { inquiryTel: contactPhone, contactPhone } : { inquiryTel: '', contactPhone: '' }),
-    ...(contactEmail ? { inquiryEmail: contactEmail, contactEmail } : { inquiryEmail: '', contactEmail: '' }),
+    ...(contactName
+      ? { contactOrganizationName: contactName, contactName }
+      : { contactOrganizationName: '', contactName: '' }),
+    ...(contactPhone
+      ? { inquiryTel: contactPhone, contactPhone }
+      : { inquiryTel: '', contactPhone: '' }),
+    ...(contactEmail
+      ? { inquiryEmail: contactEmail, contactEmail }
+      : { inquiryEmail: '', contactEmail: '' }),
     ...(interviewStart ? { interviewStartDate: interviewStart } : { interviewStartDate: '' }),
     ...(interviewEnd ? { interviewEndDate: interviewEnd } : { interviewEndDate: '' }),
     ...(hasOwnField(row, 'announcementPublished')
@@ -102,9 +105,15 @@ function applyUjatRecruitmentRowCanonicalFields(
   }
   const participantInfo = {
     ...(program.generalCommonInfo?.participantRecruitmentInfo ?? {}),
-    ...(contactName ? { contactOrganizationName: contactName, contactName } : { contactOrganizationName: '', contactName: '' }),
-    ...(contactPhone ? { inquiryTel: contactPhone, contactPhone } : { inquiryTel: '', contactPhone: '' }),
-    ...(contactEmail ? { inquiryEmail: contactEmail, contactEmail } : { inquiryEmail: '', contactEmail: '' }),
+    ...(contactName
+      ? { contactOrganizationName: contactName, contactName }
+      : { contactOrganizationName: '', contactName: '' }),
+    ...(contactPhone
+      ? { inquiryTel: contactPhone, contactPhone }
+      : { inquiryTel: '', contactPhone: '' }),
+    ...(contactEmail
+      ? { inquiryEmail: contactEmail, contactEmail }
+      : { inquiryEmail: '', contactEmail: '' }),
     ...(hasOwnField(row, 'announcementPublished')
       ? { announcementPublished: row.announcementPublished ?? undefined }
       : {}),
@@ -294,8 +303,7 @@ export function programToUjatRecruitCanonicalFormValues(
         : pickRecruitmentCopyRow(canonical, 'volunteer')
   if (!row) return values
 
-  const volunteerRoundIndex =
-    kind === 'volunteer_h1' ? 0 : kind === 'volunteer_h2' ? 1 : null
+  const volunteerRoundIndex = kind === 'volunteer_h1' ? 0 : kind === 'volunteer_h2' ? 1 : null
   const rounds =
     volunteerRoundIndex != null && (hasOwnField(row, 'startAt') || hasOwnField(row, 'endAt'))
       ? values.rounds.map((round, index) =>
@@ -344,9 +352,7 @@ export function programToUjatRecruitCanonicalFormValues(
           ...(hasOwnField(row, 'startAt')
             ? { volunteerApplicationStartDate: row.startAt ?? '' }
             : {}),
-          ...(hasOwnField(row, 'endAt')
-            ? { volunteerApplicationEndDate: row.endAt ?? '' }
-            : {}),
+          ...(hasOwnField(row, 'endAt') ? { volunteerApplicationEndDate: row.endAt ?? '' } : {}),
           ...(hasOwnField(row, 'announcementPublished')
             ? {
                 volunteerRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
@@ -492,17 +498,13 @@ function volunteerHalfPeriod(
   }
 }
 
-function rowAnnouncementTitle(
-  program: Program,
-  kind: UjatRecruitDisplayKind
-): string | undefined {
+function rowAnnouncementTitle(program: Program, kind: UjatRecruitDisplayKind): string | undefined {
   const audience = kind === 'institution' ? 'participant' : 'volunteer'
   const half = volunteerHalfFromRecruitDisplayKind(kind) ?? undefined
   const row =
-    (audience === 'volunteer' && half
+    audience === 'volunteer' && half
       ? pickUjatVolunteerRecruitmentRow(program, half)
       : pickRecruitmentCopyRow(program, audience, half)
-    )
   if (!row || !hasOwnField(row, 'announcementTitle') || row.announcementTitle === undefined) {
     return undefined
   }
@@ -520,22 +522,18 @@ export function resolveUjatRecruitAnnouncementTitle(
   if (options?.allowOverlayFallback === false) return '-'
   if (kind === 'institution') {
     return (
-      overlayString(mergedInstitutionOverlay(program), UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.publicTitle) ||
-      '-'
+      overlayString(
+        mergedInstitutionOverlay(program),
+        UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS.publicTitle
+      ) || '-'
     )
   }
   const overlay = mergedVolunteerOverlay(program)
   const half = volunteerHalfFromRecruitDisplayKind(kind)
   if (half) {
-    return (
-      overlayString(overlay, ujatVolunteerHalfOverlayKey(half, 'publicTitle')) ||
-      '-'
-    )
+    return overlayString(overlay, ujatVolunteerHalfOverlayKey(half, 'publicTitle')) || '-'
   }
-  return (
-    overlayString(overlay, UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.publicTitle) ||
-    '-'
-  )
+  return overlayString(overlay, UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS.publicTitle) || '-'
 }
 
 export function ujatRecruitPublicTitleOverlayKey(kind: UjatRecruitDisplayKind): string {
@@ -574,28 +572,28 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
     otherHalf != null ? snapshotVolunteerHalfFromLegacy(existingOverlay, otherHalf) : {}
   const rowCopy = args.values
     ? {
-          ...(args.title !== undefined ? { announcementTitle: args.title.trim() || null } : {}),
-          programDescription: args.values.description?.trim() || null,
-          recruitmentGuide: args.values.recruitmentGuide?.trim() || null,
-          applicationMethod: args.values.applicationMethod?.trim() || null,
-          learningSupportContent: args.values.learningSupportContent?.trim() || null,
-          additionalContentHtml:
-            (typeof institutionHtml === 'string'
-              ? institutionHtml
-              : args.values.additionalContentHtml
-            )?.trim() || null,
-          ...(args.kind === 'institution'
-            ? { remarks: args.values.oneLineIntroduction?.trim() || null }
-            : { otherMatters: args.values.otherNotes?.trim() || null }),
-          contactName:
-            (args.kind === 'institution'
-              ? args.values.recruitmentContactOrganizationName
-              : args.values.volunteerRecruitmentContactOrganizationName
-            )?.trim() || null,
-          contactPhone: args.values.contactPhone?.trim() || null,
-          contactEmail: args.values.contactEmail?.trim() || null,
-          ...(half ? volunteerHalfPeriod(args.values, half) : {}),
-        }
+        ...(args.title !== undefined ? { announcementTitle: args.title.trim() || null } : {}),
+        programDescription: args.values.description?.trim() || null,
+        recruitmentGuide: args.values.recruitmentGuide?.trim() || null,
+        applicationMethod: args.values.applicationMethod?.trim() || null,
+        learningSupportContent: args.values.learningSupportContent?.trim() || null,
+        additionalContentHtml:
+          (typeof institutionHtml === 'string'
+            ? institutionHtml
+            : args.values.additionalContentHtml
+          )?.trim() || null,
+        ...(args.kind === 'institution'
+          ? { remarks: args.values.oneLineIntroduction?.trim() || null }
+          : { otherMatters: args.values.otherNotes?.trim() || null }),
+        contactName:
+          (args.kind === 'institution'
+            ? args.values.recruitmentContactOrganizationName
+            : args.values.volunteerRecruitmentContactOrganizationName
+          )?.trim() || null,
+        contactPhone: args.values.contactPhone?.trim() || null,
+        contactEmail: args.values.contactEmail?.trim() || null,
+        ...(half ? volunteerHalfPeriod(args.values, half) : {}),
+      }
     : undefined
   const audience = args.kind === 'institution' ? 'participant' : 'volunteer'
   const writtenRows = rowCopy

@@ -135,6 +135,15 @@ describe('formatParticipatingInstitutionKitQuantity', () => {
     expect(formatParticipatingInstitutionKitQuantity(null, null)).toBe('-')
   })
 
+  it('showZero면 서버 0은 0으로, null은 미산출로 구분한다', () => {
+    const opt = { showZero: true }
+    expect(formatParticipatingInstitutionKitQuantity(0, 0, opt)).toBe('0키트 (0권)')
+    expect(formatParticipatingInstitutionKitQuantity(1, 24, opt)).toBe('1키트 (24권)')
+    expect(formatParticipatingInstitutionKitQuantity(null, null, opt)).toBe('-')
+    expect(formatParticipatingInstitutionKitQuantity(undefined, undefined, opt)).toBe('-')
+    expect(formatParticipatingInstitutionKitQuantity(-1, null, opt)).toBe('-')
+  })
+
   it('학생 수·프로그램 materials로 클라이언트 재계산하지 않는다', () => {
     expect(formatParticipatingInstitutionKitQuantity(null, null)).toBe('-')
   })

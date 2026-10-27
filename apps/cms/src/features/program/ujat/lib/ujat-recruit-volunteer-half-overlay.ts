@@ -147,7 +147,8 @@ export function buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues(
     [`${prefix}notes`]: shared[KEYS.notes],
     [`${prefix}description`]: values.description?.trim() ?? shared[KEYS.description],
     [`${prefix}recruitmentGuide`]: values.recruitmentGuide?.trim() ?? shared[KEYS.recruitmentGuide],
-    [`${prefix}applicationMethod`]: values.applicationMethod?.trim() ?? shared[KEYS.applicationMethod],
+    [`${prefix}applicationMethod`]:
+      values.applicationMethod?.trim() ?? shared[KEYS.applicationMethod],
     [`${prefix}otherNotes`]:
       values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
         ? ''

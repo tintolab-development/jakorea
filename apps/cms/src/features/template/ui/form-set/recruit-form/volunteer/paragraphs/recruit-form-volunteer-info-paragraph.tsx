@@ -136,9 +136,7 @@ export function RecruitFormVolunteerInfoParagraph() {
   }
   const interviewRangeWithTime = useMemo(
     () =>
-      interviewRange == null
-        ? false
-        : dateRangeUsesClockTime(interviewRange[0], interviewRange[1]),
+      interviewRange == null ? false : dateRangeUsesClockTime(interviewRange[0], interviewRange[1]),
     [interviewRange]
   )
   const [interviewMethod, setInterviewMethod] = useVolunteerRecruitField<string>(
@@ -231,7 +229,8 @@ export function RecruitFormVolunteerInfoParagraph() {
             validationKey="recruit.volunteer.programRangeSeal"
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={programAnchor}

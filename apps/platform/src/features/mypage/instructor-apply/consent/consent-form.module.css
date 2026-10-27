@@ -89,6 +89,17 @@
   accent-color: #85969d;
 }
 
+/* 식별번호 종류 고정(주민등록번호) — 시안 비활성 톤 */
+.radioOptionLocked {
+  color: var(--color-neutral-warm-400, #bdbdbd);
+  cursor: default;
+}
+
+.radioOptionLocked input {
+  accent-color: var(--color-neutral-warm-400, #bdbdbd);
+  cursor: default;
+}
+
 .idTypeWithInput {
   display: flex;
   width: 100%;
@@ -238,8 +249,8 @@
   width: 100%;
   min-width: 0;
   overflow: hidden;
-  border-radius: 16px;
-  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-24, 24px);
+  border: 1px solid var(--color-border-default, #d9d9d9);
   background: var(--main-WT, #fff);
 }
 
@@ -251,16 +262,22 @@
 
 .infoTable th,
 .infoTable td {
+  height: 54px;
   padding: 12px 20px;
-  border: 1px solid var(--table-line, #e0e0e0);
+  border: 1px solid var(--color-border-default, #d9d9d9);
   text-align: center;
   vertical-align: middle;
   word-break: keep-all;
 }
 
 .infoTable th {
-  background:
-    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff;
+  background: var(--color-neutral-cool-80, #eef3f4);
+}
+
+/* 연번·행정정보명 4열 표 — 연번 100px / 행정정보명 flex / 연번 100px / 행정정보명 flex */
+.infoTable thead th:first-child:nth-last-child(4),
+.infoTable thead th:nth-child(3):nth-last-child(2) {
+  width: 100px;
 }
 
 .infoTable th:first-child,

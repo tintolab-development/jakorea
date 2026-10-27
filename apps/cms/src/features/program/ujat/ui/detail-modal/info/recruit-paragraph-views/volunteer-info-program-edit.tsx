@@ -36,7 +36,8 @@ export function UjatRecruitVolunteerInfoProgramEdit({
   form,
   volunteerHalf,
   showNoticeExposure,
-  sectionTitle }: {
+  sectionTitle,
+}: {
   program: Program
   form: UseFormReturn<ProgramDetailEditFormValues>
   volunteerHalf: UjatVolunteerRecruitHalf
@@ -66,7 +67,8 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <>
-                      <CmsRadioGroup size="medium"
+                      <CmsRadioGroup
+                        size="medium"
                         value={
                           isUjatVolunteerNoticeExposureValue(field.value) ? field.value : undefined
                         }
@@ -146,7 +148,9 @@ export function UjatRecruitVolunteerInfoProgramEdit({
             label="봉사자 모집 현황"
             readOnlyDisplay
             view={
-              <span className="form-editor-template-field-hint-text">{UJAT_RECRUIT_PROGRESS_HINT}</span>
+              <span className="form-editor-template-field-hint-text">
+                {UJAT_RECRUIT_PROGRESS_HINT}
+              </span>
             }
           />
         </DetailInfoForm.Row>
@@ -168,7 +172,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                         ? field.value
                         : resolveProgramVolunteerTargets(program).length
                           ? resolveProgramVolunteerTargets(program)
-                          : field.value ?? null
+                          : (field.value ?? null)
                     )}
                     onChange={next => field.onChange(recruitmentTargetOptionValuesToStored(next))}
                     placeholder="모집 대상을 선택하세요"

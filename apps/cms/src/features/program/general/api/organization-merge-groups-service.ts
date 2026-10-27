@@ -14,6 +14,7 @@ import {
   type OrganizationApplicationRowRef,
   resolveOrganizationApplicationId,
 } from '@/features/program/general/lib/organization-merge-groups-mapper'
+import { COMBINED_CLASS_MEMBER_CHANGE_NOT_ALLOWED_MESSAGE } from '@/features/program/general/lib/combined-class-copy'
 import { isGeneralOrganizationProgramType } from '@/features/program/general/lib/organization-merge-program-type'
 import type { MergeGroupResponse } from '@/shared/api/generated/dashboard/schemas/mergeGroupResponse'
 
@@ -105,24 +106,18 @@ export async function saveOrganizationCombinedClassRemote(
     params.leadTeacherMemberId != null &&
     params.leadTeacherMemberId !== existingLeadGroup?.leadTeacherMemberId
 
-  if (existingLeadGroup && partnersUnchanged && !leadTeacherChanged) {
-    return existingLeadGroup
-  }
-
-  if (
-    existingLeadGroup?.id != null &&
-    existingLeadGroup.status?.trim().toUpperCase() === 'EFFECTIVE' &&
-    partnersUnchanged &&
-    leadTeacherChanged &&
-    params.leadTeacherMemberId != null
-  ) {
+  if (existingLeadGroup?.id != null) {
+    // 합반(ACTIVE) 구성(멤버·학년) 변경은 허용하지 않는다. DELETE+POST 재생성으로 우회하지 않는다.
+    if (!partnersUnchanged) {
+      throw new Error(COMBINED_CLASS_MEMBER_CHANGE_NOT_ALLOWED_MESSAGE)
+    }
+    if (!leadTeacherChanged || params.leadTeacherMemberId == null) {
+      return existingLeadGroup
+    }
+    // ACTIVE 합반의 담당 교사 변경은 PATCH만 사용한다.
     return patchOrganizationMergeGroupRemote(params.programId, existingLeadGroup.id, {
       leadTeacherMemberId: params.leadTeacherMemberId,
     })
-  }
-
-  if (existingLeadGroup?.id != null) {
-    await cancelOrganizationMergeGroupRemote(params.programId, existingLeadGroup.id)
   }
 
   const rowTeacherMemberId = params.leadRow.teacherMemberId

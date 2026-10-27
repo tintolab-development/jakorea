@@ -33,9 +33,7 @@ import {
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { UJAT_WAGE_OVERLAY_PAYMENT_KEY } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { toCreateRequest } from '@/features/program/ujat/api/adapters'
-import {
-  buildUjatProgramListRowFromRegistrationSnapshot,
-} from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import {
   applyUjatRecruitFormValuesToProgram,
   programToUjatRecruitCanonicalFormValues,
@@ -189,10 +187,7 @@ export function useUjatProgramRegistrationFlow(
       const payload = await hydrateRegistrationProgramDraft(programType)
       await hydrateRegistrationOperationalOverlaysFromLocalDrafts(programType, 'ujat')
       if (payload?.selectedOperationalTemplates != null) {
-        hydrateRegistrationStepTemplateSelections(
-          programType,
-          payload.selectedOperationalTemplates
-        )
+        hydrateRegistrationStepTemplateSelections(programType, payload.selectedOperationalTemplates)
         setStepTemplateByKey(payload.selectedOperationalTemplates)
       }
       if (payload?.activeStep == null) return
@@ -224,7 +219,9 @@ export function useUjatProgramRegistrationFlow(
   const phase = useMemo(() => getUjatProgramRegistrationPhase(activeStep), [activeStep])
 
   const currentStepDef = useMemo(
-    () => UJAT_PROGRAM_REGISTRATION_STEPS.find(s => s.key === activeStep) ?? UJAT_PROGRAM_REGISTRATION_STEPS[0],
+    () =>
+      UJAT_PROGRAM_REGISTRATION_STEPS.find(s => s.key === activeStep) ??
+      UJAT_PROGRAM_REGISTRATION_STEPS[0],
     [activeStep]
   )
 
@@ -235,10 +232,7 @@ export function useUjatProgramRegistrationFlow(
         : activeStep
     ] ?? getSelectedOperationalTemplateCode(programType, activeStep, currentStepDef.templateId)
 
-  const programTemplateName = useMemo(
-    () => resolveStepTemplateName('registration-ujat'),
-    []
-  )
+  const programTemplateName = useMemo(() => resolveStepTemplateName('registration-ujat'), [])
 
   const participantTemplateName = useMemo(
     () => resolveStepTemplateName(selectedTemplateCode),
@@ -269,11 +263,7 @@ export function useUjatProgramRegistrationFlow(
       overlay: {},
       basicInfo: registrationVm.basicInfoValues,
     })
-  }, [
-    open,
-    registrationVm.basicInfoValues,
-    wizardDraftRevision,
-  ])
+  }, [open, registrationVm.basicInfoValues, wizardDraftRevision])
 
   useEffect(() => {
     if (!open || skipDraftRestore) return
@@ -337,18 +327,12 @@ export function useUjatProgramRegistrationFlow(
       institutionRecruitmentValues,
       { createMissing: true }
     )
-    next = applyUjatRecruitFormValuesToProgram(
-      next,
-      'volunteer_h1',
-      volunteerH1RecruitmentValues,
-      { createMissing: true }
-    )
-    return applyUjatRecruitFormValuesToProgram(
-      next,
-      'volunteer_h2',
-      volunteerH2RecruitmentValues,
-      { createMissing: true }
-    )
+    next = applyUjatRecruitFormValuesToProgram(next, 'volunteer_h1', volunteerH1RecruitmentValues, {
+      createMissing: true,
+    })
+    return applyUjatRecruitFormValuesToProgram(next, 'volunteer_h2', volunteerH2RecruitmentValues, {
+      createMissing: true,
+    })
   }, [
     institutionRecruitmentValues,
     registrationWizardBaseProgram,
@@ -472,72 +456,74 @@ export function useUjatProgramRegistrationFlow(
     void loadRegistrationWizardFormDraft({
       programType,
       templateCode: UJAT_RECRUITMENT_TYPED_DRAFT_TEMPLATE,
-    }).then(saved => {
-      if (cancelled) return
-      typedRecruitmentDraftHydratedRef.current = true
-      const savedForms = saved?.settingsJson as
-        | {
-            recruitments?: unknown
-            institution?: ProgramDetailEditFormValues
-            volunteerH1?: ProgramDetailEditFormValues
-            volunteerH2?: ProgramDetailEditFormValues
-          }
-        | undefined
-      if (
-        savedForms?.institution != null &&
-        savedForms.volunteerH1 != null &&
-        savedForms.volunteerH2 != null
-      ) {
-        institutionRecruitmentForm.reset(savedForms.institution)
-        volunteerH1RecruitmentForm.reset(savedForms.volunteerH1)
-        volunteerH2RecruitmentForm.reset(savedForms.volunteerH2)
-        setWizardDraftRevision(value => value + 1)
-        return
-      }
-      const payloadRecruitments = peekRegistrationProgramDraftPayload(programType)?.recruitments
-      const savedRecruitments = savedForms?.recruitments
-      const recruitments =
-        Array.isArray(payloadRecruitments) && payloadRecruitments.length > 0
-          ? payloadRecruitments
-          : Array.isArray(savedRecruitments) && savedRecruitments.length > 0
-            ? savedRecruitments
-            : null
-      if (recruitments != null) {
-        const snapshot = {
-          id: 'ujat-registration-draft',
-          programRecruitments: recruitments,
-        } as Program
-        institutionRecruitmentForm.reset(
-          mapUjatRegistrationRecruitmentFormValues(snapshot, 'institution')
-        )
-        volunteerH1RecruitmentForm.reset(
-          mapUjatRegistrationRecruitmentFormValues(snapshot, 'volunteer_h1')
-        )
-        volunteerH2RecruitmentForm.reset(
-          mapUjatRegistrationRecruitmentFormValues(snapshot, 'volunteer_h2')
-        )
-        setWizardDraftRevision(value => value + 1)
-        return
-      }
-      const raw = saved?.settingsJson?.ujatRecruitment
-      if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return
-      const values = raw as {
-        institution?: Partial<ProgramDetailEditFormValues>
-        volunteerH1?: Partial<ProgramDetailEditFormValues>
-        volunteerH2?: Partial<ProgramDetailEditFormValues>
-      }
-      if (!institutionRecruitmentForm.formState.isDirty && values.institution != null) {
-        institutionRecruitmentForm.reset(values.institution as ProgramDetailEditFormValues)
-      }
-      if (!volunteerH1RecruitmentForm.formState.isDirty && values.volunteerH1 != null) {
-        volunteerH1RecruitmentForm.reset(values.volunteerH1 as ProgramDetailEditFormValues)
-      }
-      if (!volunteerH2RecruitmentForm.formState.isDirty && values.volunteerH2 != null) {
-        volunteerH2RecruitmentForm.reset(values.volunteerH2 as ProgramDetailEditFormValues)
-      }
-    }).catch(error => {
-      console.warn('[registration-recruitment-typed-draft] hydrate failed', error)
     })
+      .then(saved => {
+        if (cancelled) return
+        typedRecruitmentDraftHydratedRef.current = true
+        const savedForms = saved?.settingsJson as
+          | {
+              recruitments?: unknown
+              institution?: ProgramDetailEditFormValues
+              volunteerH1?: ProgramDetailEditFormValues
+              volunteerH2?: ProgramDetailEditFormValues
+            }
+          | undefined
+        if (
+          savedForms?.institution != null &&
+          savedForms.volunteerH1 != null &&
+          savedForms.volunteerH2 != null
+        ) {
+          institutionRecruitmentForm.reset(savedForms.institution)
+          volunteerH1RecruitmentForm.reset(savedForms.volunteerH1)
+          volunteerH2RecruitmentForm.reset(savedForms.volunteerH2)
+          setWizardDraftRevision(value => value + 1)
+          return
+        }
+        const payloadRecruitments = peekRegistrationProgramDraftPayload(programType)?.recruitments
+        const savedRecruitments = savedForms?.recruitments
+        const recruitments =
+          Array.isArray(payloadRecruitments) && payloadRecruitments.length > 0
+            ? payloadRecruitments
+            : Array.isArray(savedRecruitments) && savedRecruitments.length > 0
+              ? savedRecruitments
+              : null
+        if (recruitments != null) {
+          const snapshot = {
+            id: 'ujat-registration-draft',
+            programRecruitments: recruitments,
+          } as Program
+          institutionRecruitmentForm.reset(
+            mapUjatRegistrationRecruitmentFormValues(snapshot, 'institution')
+          )
+          volunteerH1RecruitmentForm.reset(
+            mapUjatRegistrationRecruitmentFormValues(snapshot, 'volunteer_h1')
+          )
+          volunteerH2RecruitmentForm.reset(
+            mapUjatRegistrationRecruitmentFormValues(snapshot, 'volunteer_h2')
+          )
+          setWizardDraftRevision(value => value + 1)
+          return
+        }
+        const raw = saved?.settingsJson?.ujatRecruitment
+        if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return
+        const values = raw as {
+          institution?: Partial<ProgramDetailEditFormValues>
+          volunteerH1?: Partial<ProgramDetailEditFormValues>
+          volunteerH2?: Partial<ProgramDetailEditFormValues>
+        }
+        if (!institutionRecruitmentForm.formState.isDirty && values.institution != null) {
+          institutionRecruitmentForm.reset(values.institution as ProgramDetailEditFormValues)
+        }
+        if (!volunteerH1RecruitmentForm.formState.isDirty && values.volunteerH1 != null) {
+          volunteerH1RecruitmentForm.reset(values.volunteerH1 as ProgramDetailEditFormValues)
+        }
+        if (!volunteerH2RecruitmentForm.formState.isDirty && values.volunteerH2 != null) {
+          volunteerH2RecruitmentForm.reset(values.volunteerH2 as ProgramDetailEditFormValues)
+        }
+      })
+      .catch(error => {
+        console.warn('[registration-recruitment-typed-draft] hydrate failed', error)
+      })
     return () => {
       cancelled = true
     }
@@ -649,10 +635,7 @@ export function useUjatProgramRegistrationFlow(
       if (key === activeStep) return
       const fromPhase = getUjatProgramRegistrationPhase(activeStep)
       const toPhase = getUjatProgramRegistrationPhase(key)
-      const validationTarget = getUjatProgramRegistrationPhaseValidationTarget(
-        fromPhase,
-        toPhase
-      )
+      const validationTarget = getUjatProgramRegistrationPhaseValidationTarget(fromPhase, toPhase)
       // RHF reset 직후에도 useWatch snapshot이 한 렌더 늦을 수 있다.
       // 단계 이동은 화면에 보이는 최신 RHF 값을 직접 읽어 검증한다.
       const currentBasicInfo = registrationVm.basicInfoForm.getValues()
@@ -666,10 +649,7 @@ export function useUjatProgramRegistrationFlow(
           : []
       if (incompleteKeys.length > 0) {
         options?.reportValidationIncomplete?.(incompleteKeys)
-        console.debug(
-          '[registration] UJAT 공통정보 필수항목 미입력:',
-          incompleteKeys
-        )
+        console.debug('[registration] UJAT 공통정보 필수항목 미입력:', incompleteKeys)
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -690,10 +670,7 @@ export function useUjatProgramRegistrationFlow(
           volunteerH2: volunteerH2RecruitmentForm.getValues(),
         })
         options?.reportValidationIncomplete?.(incompleteKeys)
-        console.debug(
-          '[registration] UJAT 모집정보 필수항목 미입력:',
-          incompleteKeys[0]
-        )
+        console.debug('[registration] UJAT 모집정보 필수항목 미입력:', incompleteKeys[0])
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -814,7 +791,7 @@ export function useUjatProgramRegistrationFlow(
         ? {
             templateCode: selectedTemplateCode,
             draft: participantVm.draft,
-        }
+          }
         : undefined
     const applicationProgram =
       registrationWizardLinkedProgram ??
@@ -836,10 +813,7 @@ export function useUjatProgramRegistrationFlow(
           })
     if (applicationRecipientReason != null) {
       options?.reportValidationIncomplete?.(applicationIncompleteKeys)
-      console.debug(
-        '[registration] UJAT 신청 양식 제공받는 곳 미입력:',
-        applicationRecipientReason
-      )
+      console.debug('[registration] UJAT 신청 양식 제공받는 곳 미입력:', applicationRecipientReason)
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -943,27 +917,23 @@ export function useUjatProgramRegistrationFlow(
                   draft: participantVm.draft,
                   editorState: buildParticipantApplicationEditorState({
                     variant: participantVariant,
-                    volunteerExceptionScheduleCount:
-                      participantVm.volunteerExceptionScheduleCount,
+                    volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
                     ujatVolunteerApplicationType: participantVm.ujatVolunteerApplicationType,
                     ujatGradeApplicationBlockIds:
-                      participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ??
-                      [],
+                      participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ?? [],
                     ujatApplicationGradeByBlockId:
-                      participantVm.ujatProgramApplicationGradeInfo
-                        ?.applicationGradeByBlockId ?? {},
+                      participantVm.ujatProgramApplicationGradeInfo?.applicationGradeByBlockId ??
+                      {},
                     ujatGradeClassTimeBlockIds:
-                      participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ??
-                      [],
+                      participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ?? [],
                   }),
                 }
               : undefined,
             overlayForTemplateCode: collectOperationalOverlayForCatalogId,
           })
 
-          const { prepareRegistrationCreateFormBindings } = await import(
-            '@/features/program/general/lib/prepare-registration-create-form-bindings'
-          )
+          const { prepareRegistrationCreateFormBindings } =
+            await import('@/features/program/general/lib/prepare-registration-create-form-bindings')
           const preparedFormBindings = await prepareRegistrationCreateFormBindings({
             program,
             registration: {
@@ -1047,7 +1017,12 @@ export function useUjatProgramRegistrationFlow(
   ])
 
   const selectStepTemplate = useCallback(
-    async (next: { id: string; latestVersionId?: number; baseTemplateCode?: string; apiTemplateId?: number }) => {
+    async (next: {
+      id: string
+      latestVersionId?: number
+      baseTemplateCode?: string
+      apiTemplateId?: number
+    }) => {
       const result = await applyRegistrationStepTemplateChange({
         programType,
         stepKey: activeStep,

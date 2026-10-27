@@ -47,7 +47,6 @@ import {
 import { UjatRegistrationRequiredFieldsIncompleteError } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
-import { getUjatProgramRegistrationOverlayVersion } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { useRegistrationWizardLeaveGuard } from '@/features/program/shared/lib/registration-wizard-leave-guard'
 import { RegistrationWizardLeaveConfirmModal } from '@/features/program/shared/ui/registration/registration-wizard-leave-confirm-modal'
 
@@ -55,8 +54,7 @@ const UJAT_REGISTRATION_MODAL_TITLE = 'UJAT 프로그램 등록'
 
 const DRAFT_SAVE_FAILURE_QUOTA_MESSAGE =
   '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
-const DRAFT_SAVE_FAILURE_GENERIC_MESSAGE =
-  '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
+const DRAFT_SAVE_FAILURE_GENERIC_MESSAGE = '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
 
 function draftSaveFailureMessage(error: unknown): string {
   return isLocalStorageQuotaExceededError(error)
@@ -70,7 +68,9 @@ export type UjatProgramRegistrationFullpageModalProps = {
   onProgramRegistrationSaved?: (program: Program) => void
 }
 
-export function UjatProgramRegistrationFullpageModal(props: UjatProgramRegistrationFullpageModalProps) {
+export function UjatProgramRegistrationFullpageModal(
+  props: UjatProgramRegistrationFullpageModalProps
+) {
   return (
     <RegistrationWizardValidationHighlightProvider variant="ujat">
       <UjatProgramRegistrationFullpageModalInner {...props} />
@@ -87,12 +87,15 @@ function UjatProgramRegistrationFullpageModalInner({
   const [searchParams, setSearchParams] = useSearchParams()
   const { showAlert } = useCmsAlert()
   const { reportIncomplete } = useRegistrationWizardValidationHighlight()
-  const reportValidationIncomplete = useCallback((keys: readonly string[]) => {
-    reportIncomplete(keys)
-    scrollToFirstRegistrationWizardIncompleteParagraph(
-      resolveRegistrationWizardIncompleteParagraphIds(keys, 'ujat')
-    )
-  }, [reportIncomplete])
+  const reportValidationIncomplete = useCallback(
+    (keys: readonly string[]) => {
+      reportIncomplete(keys)
+      scrollToFirstRegistrationWizardIncompleteParagraph(
+        resolveRegistrationWizardIncompleteParagraphIds(keys, 'ujat')
+      )
+    },
+    [reportIncomplete]
+  )
 
   const [overwriteOpen, setOverwriteOpen] = useState(false)
   const [overwriteTitle, setOverwriteTitle] = useState('')
@@ -114,10 +117,9 @@ function UjatProgramRegistrationFullpageModalInner({
   const skipDraftRestore = shouldSkipRegistrationDraftRestore(
     searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
   )
-  const shouldRemoveSavedDraftAfterCompletion =
-    shouldRemoveRegistrationDraftAfterCompletion(
-      searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
-    )
+  const shouldRemoveSavedDraftAfterCompletion = shouldRemoveRegistrationDraftAfterCompletion(
+    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+  )
 
   const initialStep = useMemo(() => {
     const raw = searchParams.get(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
@@ -197,18 +199,13 @@ function UjatProgramRegistrationFullpageModalInner({
     onClose()
   }, [onClose, searchParams, setSearchParams])
 
-  const {
-    leaveConfirmOpen,
-    requestLeave,
-    confirmLeave,
-    cancelLeave,
-    markLeaveBaseline,
-  } = useRegistrationWizardLeaveGuard({
-    open,
-    programType: 'UJAT',
-    getOverlayVersion: getUjatProgramRegistrationOverlayVersion,
-    onLeave: handleClose,
-  })
+  const { leaveConfirmOpen, requestLeave, confirmLeave, cancelLeave, markLeaveBaseline } =
+    useRegistrationWizardLeaveGuard({
+      open,
+      programType: 'UJAT',
+      isDirtyOverride: () => true,
+      onLeave: handleClose,
+    })
 
   const handlePreview = useCallback(() => {
     if (flow.phase === 'recruitment') {

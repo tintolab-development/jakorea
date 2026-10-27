@@ -21,6 +21,10 @@ export const ORGANIZATION_MERGE_ERROR_MESSAGES: Record<string, string> = {
   GENERAL_ORGANIZATION_MERGE_SINGLE_SESSION_ONLY: '단일 회차 프로그램만 합반할 수 있습니다.',
   GENERAL_ORGANIZATION_MERGE_CONFIRMED_ASSIGNMENT_REQUIRED:
     '같은 기관의 확정 배정 학급이 2건 이상이어야 합반할 수 있습니다.',
+  GENERAL_ORGANIZATION_MERGE_NOT_ACTIVE:
+    '이미 취소되었거나 유효하지 않은 합반입니다. 새로고침 후 다시 시도해 주세요.',
+  GENERAL_ORGANIZATION_MERGE_LEAD_TEACHER_MUST_BE_MEMBER_TEACHER:
+    '합반 대상 학급의 담당 교사만 대표 담당 교사로 지정할 수 있습니다.',
   CLASS_MERGE_CANCEL_NOT_ALLOWED: COMBINED_CLASS_CANCEL_NOT_ALLOWED_MESSAGE,
 }
 

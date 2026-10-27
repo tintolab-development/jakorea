@@ -163,10 +163,7 @@ export function GeminiPerformanceList() {
     GeminiTrainingReportImportRow[] | undefined
   >(undefined)
 
-  const filteredRows = useMemo(
-    () => filterRows(allRows, appliedFilters),
-    [allRows, appliedFilters]
-  )
+  const filteredRows = useMemo(() => filterRows(allRows, appliedFilters), [allRows, appliedFilters])
 
   const showNoSelectionAlert = useCallback(() => {
     showAlert({
@@ -434,14 +431,10 @@ export function GeminiPerformanceList() {
     ? TABLE_SCROLL_X - TABLE_COLUMN_WIDTHS.checkbox
     : TABLE_SCROLL_X
 
-  const performanceDeleteGuide = resolveGeminiDeleteGuideModalCopy(
-    '실적',
-    selectedRowKeys.length
-  )
+  const performanceDeleteGuide = resolveGeminiDeleteGuideModalCopy('실적', selectedRowKeys.length)
 
   return (
     <div className="program-list-page">
-
       {remoteEnabled && isError ? (
         <Alert
           type="error"
@@ -471,7 +464,9 @@ export function GeminiPerformanceList() {
           if (key === 'trainingMethod') {
             setPendingFilters(prev => ({
               ...prev,
-              trainingMethod: (value == null ? 'ALL' : String(value)) as PendingFilters['trainingMethod'],
+              trainingMethod: (value == null
+                ? 'ALL'
+                : String(value)) as PendingFilters['trainingMethod'],
             }))
             return
           }

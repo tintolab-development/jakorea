@@ -60,7 +60,6 @@ import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib
 import { TrainedTeachersRegistrationWizardFormProvider } from '@/features/program/trained-teachers/ui/registration/registration-wizard-form-provider'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import { CompanySchoolRegistrationWizardFormProvider } from '@/features/program/1c-1s/ui/registration/registration-wizard-form-provider'
-import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -262,14 +261,7 @@ function GeneralProgramRegistrationFullpageModalInner({
     programType: wizardProgramType,
     getOverlayVersion:
       registrationFormVariant === 'general' ? undefined : getProgramRegistrationOverlayVersion,
-    isDirtyOverride:
-      registrationFormVariant === 'general'
-        ? () => peekGeneralRegistrationWizardRhf()?.isDirty() === true
-        : registrationFormVariant === 'trainedTeachers'
-          ? () => peekTrainedTeachersRegistrationRhf()?.isDirty() === true
-          : registrationFormVariant === 'economy'
-            ? () => peekCompanySchoolRegistrationRhf()?.isDirty() === true
-            : undefined,
+    isDirtyOverride: () => true,
     onLeave: handleClose,
   })
 

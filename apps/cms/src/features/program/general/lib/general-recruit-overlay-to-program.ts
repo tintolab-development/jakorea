@@ -10,9 +10,7 @@ import type {
   TargetLevel,
 } from '@/types/domain'
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
-import {
-  getApplicantRecruitInstitutionOverlayRecord,
-} from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { formatAnnouncementLabel } from '@/features/program/shared/lib/announcement-label'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
@@ -46,13 +44,7 @@ import {
 
 type RangeSeal = { start?: string | null; end?: string | null }
 
-const TARGET_LEVEL_VALUES = new Set<string>([
-  'elementary',
-  'middle',
-  'high',
-  'university',
-  'adult',
-])
+const TARGET_LEVEL_VALUES = new Set<string>(['elementary', 'middle', 'high', 'university', 'adult'])
 
 /** 개인·강사·봉사자 모집 overlay 키 */
 export const GENERAL_RECRUIT_OVERLAY_KEYS = {
@@ -161,7 +153,10 @@ function overlayParticipantDetailString(
 function overlayStringArray(overlay: Record<string, unknown>, key: string): string[] | undefined {
   const v = overlay[key]
   if (!Array.isArray(v)) return undefined
-  const out = v.map(String).map(s => s.trim()).filter(Boolean)
+  const out = v
+    .map(String)
+    .map(s => s.trim())
+    .filter(Boolean)
   return out.length > 0 ? out : undefined
 }
 
@@ -240,10 +235,7 @@ function overlayAnnouncementPublished(
   return undefined
 }
 
-function overlayYesNoBool(
-  overlay: Record<string, unknown>,
-  key: string
-): boolean | undefined {
+function overlayYesNoBool(overlay: Record<string, unknown>, key: string): boolean | undefined {
   const raw = overlay[key]
   if (raw === 'yes') return true
   if (raw === 'no') return false
@@ -252,10 +244,7 @@ function overlayYesNoBool(
 }
 
 /** 기관 모집 — `need` / `none` → boolean */
-function overlayNeedNoneBool(
-  overlay: Record<string, unknown>,
-  key: string
-): boolean | undefined {
+function overlayNeedNoneBool(overlay: Record<string, unknown>, key: string): boolean | undefined {
   const raw = overlay[key]
   if (raw === 'need') return true
   if (raw === 'none') return false
@@ -273,10 +262,7 @@ function overlayStudentListRequired(
   return undefined
 }
 
-function overlayFiniteNumber(
-  overlay: Record<string, unknown>,
-  key: string
-): number | undefined {
+function overlayFiniteNumber(overlay: Record<string, unknown>, key: string): number | undefined {
   const raw = overlay[key]
   if (typeof raw === 'number' && Number.isFinite(raw)) return raw
   if (typeof raw === 'string' && raw.trim()) {
@@ -361,7 +347,10 @@ export function resolveVolunteerInterviewAvailableTimeSlotsFromOverlay(
 
 export function countVolunteerInterviewTimeSlotLabels(value: string | undefined): number {
   if (!value?.trim()) return 0
-  return value.split(',').map(part => part.trim()).filter(Boolean).length
+  return value
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean).length
 }
 
 export function volunteerInterviewHasSelectedSlotKeys(
@@ -402,10 +391,7 @@ export function resolveVolunteerInterviewAvailableTimeSlotsForDisplay(
   return fromRange
 }
 
-function pickRicherAvailableTimeSlots(
-  nested?: string,
-  fromOverlay?: string
-): string | undefined {
+function pickRicherAvailableTimeSlots(nested?: string, fromOverlay?: string): string | undefined {
   const n = nested?.trim()
   const o = fromOverlay?.trim()
   if (!n) return o
@@ -446,17 +432,16 @@ function buildVolunteerInterviewScheduleFromOverlay(
   const exclusion = readExclusionState(overlay, key('exclusionState'))
   const appliedDatesRaw = overlay[key('appliedUnavailableDates')]
   const specificUnavailableDateIsos = Array.isArray(appliedDatesRaw)
-    ? appliedDatesRaw.map(String).map(s => s.trim()).filter(Boolean)
+    ? appliedDatesRaw
+        .map(String)
+        .map(s => s.trim())
+        .filter(Boolean)
     : []
-  const recurringUnavailable = exclusion
-    ? buildRecurringUnavailableLabel(exclusion)
-    : undefined
+  const recurringUnavailable = exclusion ? buildRecurringUnavailableLabel(exclusion) : undefined
   const availableTimeSlots = volunteerInterviewHasSelectedSlotKeys(overlay, 'recruit')
     ? formatAvailableTimeSlotsFromSelectedKeys(overlay[key('selectedSlotKeys')])
     : resolveVolunteerInterviewAvailableTimeSlotsFromOverlay(overlay, 'recruit')
-  const specificUnavailableDates = formatSpecificUnavailableDateLabel(
-    specificUnavailableDateIsos
-  )
+  const specificUnavailableDates = formatSpecificUnavailableDateLabel(specificUnavailableDateIsos)
   const exceptions = mapVolunteerInterviewExceptionsFromOverlay(overlay, 'recruit')
 
   if (
@@ -492,10 +477,7 @@ export function alignVolunteerInterviewScheduleInfoWithSelectedSlotKeys(
   return { ...schedule, availableTimeSlots: fromKeys }
 }
 
-function pickNonEmptyScheduleString(
-  nested?: string,
-  fromOverlay?: string
-): string | undefined {
+function pickNonEmptyScheduleString(nested?: string, fromOverlay?: string): string | undefined {
   const nestedTrim = nested?.trim()
   if (nestedTrim) return nested
   const overlayTrim = fromOverlay?.trim()
@@ -651,11 +633,7 @@ export function applyGeneralRecruitOverlayToProgram(
   )
   const recruitmentGuide = coalesceString(
     program.recruitmentGuide,
-    overlayParticipantDetailString(
-      overlay,
-      'recruitmentGuide',
-      keys.detailInfo.participantGuide
-    ) ??
+    overlayParticipantDetailString(overlay, 'recruitmentGuide', keys.detailInfo.participantGuide) ??
       overlayString(overlay, keys.detailInfo.instructorGuide) ??
       overlayString(overlay, keys.detailInfo.volunteerGuide),
     preferOverlay
@@ -719,8 +697,9 @@ export function applyGeneralRecruitOverlayToProgram(
   const instructorInfo = { ...(common.instructorRecruitmentInfo ?? {}) }
   const volunteerInfo = { ...(common.volunteerRecruitmentInfo ?? {}) }
 
-  const participantTargetLabel =
-    targetLevels?.length ? formatTargetLevelsLabel(targetLevels) : undefined
+  const participantTargetLabel = targetLevels?.length
+    ? formatTargetLevelsLabel(targetLevels)
+    : undefined
   if (participantTargetLabel && participantTargetLabel !== '-') {
     const nextTarget = coalesceString(
       participantInfo.educationTarget ?? participantInfo.recruitmentTarget,
@@ -843,7 +822,11 @@ export function applyGeneralRecruitOverlayToProgram(
     )
   }
   if (participantRemarks) {
-    participantInfo.remarks = coalesceString(participantInfo.remarks, participantRemarks, preferOverlay)
+    participantInfo.remarks = coalesceString(
+      participantInfo.remarks,
+      participantRemarks,
+      preferOverlay
+    )
   }
 
   const individualFinalAnnounceIso = overlayString(overlay, keys.individual.finalAnnounceIso)
@@ -873,8 +856,7 @@ export function applyGeneralRecruitOverlayToProgram(
         : undefined
   const institutionFinalAnnounceIso = overlayString(overlay, inst.finalAnnounceIso)
   const institutionFinalAnnounceMethod = overlayString(overlay, inst.finalAnnounceMethod)
-  const participantFinalAnnounceIso =
-    institutionFinalAnnounceIso ?? individualFinalAnnounceIso
+  const participantFinalAnnounceIso = institutionFinalAnnounceIso ?? individualFinalAnnounceIso
   const participantFinalAnnounceMethod =
     institutionFinalAnnounceMethod ?? individualFinalAnnounceMethod
   const participantFinalAnnouncementLabel = formatAnnouncementLabel(
@@ -967,7 +949,8 @@ export function applyGeneralRecruitOverlayToProgram(
     }
   }
   const overlayParticipantNotesNA =
-    overlay[inst.notesNotApplicable] === true || overlay[keys.individual.notesNotApplicable] === true
+    overlay[inst.notesNotApplicable] === true ||
+    overlay[keys.individual.notesNotApplicable] === true
       ? true
       : overlay[inst.notesNotApplicable] === false ||
           overlay[keys.individual.notesNotApplicable] === false
@@ -984,8 +967,9 @@ export function applyGeneralRecruitOverlayToProgram(
     }
   }
 
-  const instructorTargetLabel =
-    instructorTargets?.length ? formatInstructorTargetsLabel(instructorTargets) : undefined
+  const instructorTargetLabel = instructorTargets?.length
+    ? formatInstructorTargetsLabel(instructorTargets)
+    : undefined
   if (instructorTargetLabel && instructorTargetLabel !== '-') {
     instructorInfo.recruitmentTarget = coalesceString(
       instructorInfo.recruitmentTarget,
@@ -1106,10 +1090,7 @@ export function applyGeneralRecruitOverlayToProgram(
   }
 
   const instructorFinalAnnounceIso = overlayString(overlay, keys.instructor.finalAnnounceIso)
-  const instructorFinalAnnounceMethod = overlayString(
-    overlay,
-    keys.instructor.finalAnnounceMethod
-  )
+  const instructorFinalAnnounceMethod = overlayString(overlay, keys.instructor.finalAnnounceMethod)
   const instructorFinalAnnouncementLabel = formatAnnouncementLabel(
     instructorFinalAnnounceIso,
     instructorFinalAnnounceMethod
@@ -1126,8 +1107,9 @@ export function applyGeneralRecruitOverlayToProgram(
     }
   }
 
-  const volunteerTargetLabel =
-    volunteerTargets?.length ? formatVolunteerTargetsLabel(volunteerTargets) : undefined
+  const volunteerTargetLabel = volunteerTargets?.length
+    ? formatVolunteerTargetsLabel(volunteerTargets)
+    : undefined
   if (volunteerTargetLabel && volunteerTargetLabel !== '-') {
     volunteerInfo.recruitmentTarget = coalesceString(
       volunteerInfo.recruitmentTarget,
@@ -1610,7 +1592,7 @@ export function resolveGeneralRecruitDetailDisplayProgram(
   options?: { strictRemote?: boolean }
 ): Program {
   const common = program.generalCommonInfo
-  const overlay = options?.strictRemote ? {} : program.registrationOverlay ?? {}
+  const overlay = options?.strictRemote ? {} : (program.registrationOverlay ?? {})
   const keys = GENERAL_RECRUIT_OVERLAY_KEYS.detailInfo
   const info =
     audience === 'participant'
@@ -1623,7 +1605,11 @@ export function resolveGeneralRecruitDetailDisplayProgram(
     audience === 'participant'
       ? firstRecruitDetailText(
           info?.programDescription,
-          overlayParticipantDetailString(overlay, 'programDescription', keys.participantDescription),
+          overlayParticipantDetailString(
+            overlay,
+            'programDescription',
+            keys.participantDescription
+          ),
           program.description
         )
       : firstRecruitDetailText(
