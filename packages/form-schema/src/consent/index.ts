@@ -6,6 +6,7 @@ export * from './payment-statement-basic-info.js'
 export * from './payment-statement-resident-number.js'
 export {
   applyResidentBackMaskedDisplayChange,
+  formatResidentBackDisplayForInput,
   formatResidentBackMaskedDisplay,
   formatResidentNumberForPreview,
   formatResidentNumberRawForPreview,

@@ -18,6 +18,22 @@ export function formatResidentBackMaskedDisplay(
   return `${digits.slice(0, 1)}${'*'.repeat(digits.length - 1)}`
 }
 
+/** 인풋 표시용 — 서버·동의서에 `*`가 포함된 마스킹 값은 숫자만 추출하지 않는다. */
+export function formatResidentBackDisplayForInput(
+  raw: string | undefined,
+  revealed = false
+): string {
+  const trimmed = (raw ?? '').trim()
+  if (!trimmed) return ''
+  if (trimmed.includes('*')) {
+    if (revealed) return sanitizeResidentBackDigits(trimmed)
+    const first = sanitizeResidentBackDigits(trimmed).slice(0, 1)
+    if (!first) return trimmed.replace(/[^0-9*]/g, '').slice(0, 7)
+    return `${first}${'*'.repeat(6)}`
+  }
+  return formatResidentBackMaskedDisplay(trimmed, revealed)
+}
+
 /** 서버가 이미 `*`로 가렸으면 그대로, 평문이면 첫 자리만 남긴다. */
 export function maskResidentBackForPreview(back: string | undefined): string {
   const raw = (back ?? '').trim()

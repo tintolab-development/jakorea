@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {
   applyResidentBackMaskedDisplayChange,
+  formatResidentBackDisplayForInput,
   formatResidentBackMaskedDisplay,
   formatResidentNumberForPreview,
   formatResidentNumberRawForPreview,
@@ -32,5 +33,11 @@ assert.equal(formatResidentNumberRawForPreview('970721-1******'), '970721-1*****
 assert.equal(formatResidentNumberRawForPreview(''), '')
 assert.equal(maskResidentBackForPreview('1234567'), '1******')
 assert.equal(maskResidentBackForPreview('1******'), '1******')
+
+assert.equal(formatResidentBackDisplayForInput('2******'), '2******')
+assert.equal(formatResidentBackDisplayForInput('2******', true), '2')
+assert.equal(formatResidentBackDisplayForInput('1234567'), '1******')
+assert.equal(formatResidentBackDisplayForInput('1234567', true), '1234567')
+assert.equal(formatResidentBackDisplayForInput('2'), '2')
 
 console.log('resident-back-mask.test.ts: ok')
