@@ -32,6 +32,8 @@ export type PFModalProps = {
   closeOnBackdropClick?: boolean
   /** false면 Escape로 닫지 않음. 기본 true */
   closeOnEscape?: boolean
+  /** false면 우측 상단 닫기(X) 버튼을 그리지 않음. 기본 true */
+  showCloseButton?: boolean
   className?: string
   children: ReactNode
 }
@@ -88,6 +90,7 @@ export function PFModal({
   ariaDescribedBy,
   closeOnBackdropClick = true,
   closeOnEscape = true,
+  showCloseButton = true,
   className,
   children,
 }: PFModalProps) {
@@ -195,18 +198,20 @@ export function PFModal({
         {isBottomSheetMobile ? (
           <div className={styles.handle} aria-hidden="true" />
         ) : null}
-        <button
-          className={styles.closeButton}
-          type="button"
-          aria-label="닫기"
-          onPointerDown={event => {
-            event.preventDefault()
-            event.stopPropagation()
-            handleClose()
-          }}
-        >
-          <img className={styles.closeIcon} src={closeIconUrl} alt="" aria-hidden="true" />
-        </button>
+        {showCloseButton ? (
+          <button
+            className={styles.closeButton}
+            type="button"
+            aria-label="닫기"
+            onPointerDown={event => {
+              event.preventDefault()
+              event.stopPropagation()
+              handleClose()
+            }}
+          >
+            <img className={styles.closeIcon} src={closeIconUrl} alt="" aria-hidden="true" />
+          </button>
+        ) : null}
         {title ? (
           <PFText as="div" typo="hl-lg" color="black" id={titleId} className={styles.title}>
             {title}
