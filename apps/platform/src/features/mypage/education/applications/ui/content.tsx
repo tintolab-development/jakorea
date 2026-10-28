@@ -12,6 +12,8 @@ type EducationApplicationContentProps = {
   alwaysShowPreferredSchedule?: boolean
   /** 강사 프로그램 신청 — `강의 진행 가능일` (성범죄 등 다른 신청 정보는 제외) */
   instructorAvailableScheduleLines?: readonly string[]
+  /** 제출 일정 id는 있으나 표시 문구 매핑 실패 — 빈 신청으로 오인하지 않음 */
+  instructorAvailableScheduleUnresolved?: boolean
 }
 
 function resolvePreferredScheduleLines(label: string | undefined): string[] {
@@ -29,10 +31,11 @@ export function EducationApplicationContent({
   preferredEducationScheduleLines,
   alwaysShowPreferredSchedule = false,
   instructorAvailableScheduleLines,
+  instructorAvailableScheduleUnresolved = false,
 }: EducationApplicationContentProps) {
   const intro = selfIntroMotivation?.trim() ?? ''
   const instructorLines = instructorAvailableScheduleLines ?? []
-  const scheduleLines = instructorLines.length > 0
+  const scheduleLines = instructorLines.length > 0 || instructorAvailableScheduleUnresolved
     ? []
     : preferredEducationScheduleLines && preferredEducationScheduleLines.length > 0
       ? [...preferredEducationScheduleLines]
@@ -40,7 +43,7 @@ export function EducationApplicationContent({
   const displayScheduleLines =
     alwaysShowPreferredSchedule && scheduleLines.length === 0 ? ['-'] : scheduleLines
   const hasIntro = intro.length > 0
-  const hasInstructorSchedule = instructorLines.length > 0
+  const hasInstructorSchedule = instructorLines.length > 0 || instructorAvailableScheduleUnresolved
   const hasSchedule = alwaysShowPreferredSchedule || displayScheduleLines.length > 0
 
   if (!hasIntro && !hasSchedule && !hasInstructorSchedule) {
@@ -65,7 +68,10 @@ export function EducationApplicationContent({
       ) : null}
 
       {hasInstructorSchedule ? (
-        <InstructorAvailableSchedulesSection lines={instructorLines} />
+        <InstructorAvailableSchedulesSection
+          lines={instructorLines}
+          unresolvedPlaceholder={instructorLines.length === 0 && instructorAvailableScheduleUnresolved}
+        />
       ) : null}
 
       {hasSchedule ? (

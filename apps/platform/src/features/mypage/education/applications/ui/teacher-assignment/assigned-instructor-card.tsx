@@ -11,6 +11,7 @@ import {
   SEX_OFFENSE_INSTRUCTOR_CARD_ONLINE_MESSAGE,
   type SexOffenseInquiryCase,
 } from '@jakorea/form-schema/program-application'
+import { resolveAssignedInstructorCardBody } from '../../lib/teacher-assignment-aside'
 import { PFPageButton, PFText } from '@/shared/ui'
 import styles from './assigned-instructor-card.module.css'
 
@@ -188,14 +189,14 @@ export function TeacherAssignedInstructorCard({
 
   const safeIndex = Math.min(index, total - 1)
   const instructor = instructors[safeIndex]!
-  const applyInquiryCase = sexOffenseInquiryCase !== undefined
-  const showConsentDocuments = !applyInquiryCase || sexOffenseInquiryCase === 'ja_system'
+  const cardBody = resolveAssignedInstructorCardBody(sexOffenseInquiryCase)
   const siteMessage =
-    sexOffenseInquiryCase === 'site_direct'
+    cardBody === 'site_direct'
       ? SEX_OFFENSE_INSTRUCTOR_CARD_DIRECT_MESSAGE
-      : sexOffenseInquiryCase === 'site_online'
+      : cardBody === 'site_online'
         ? SEX_OFFENSE_INSTRUCTOR_CARD_ONLINE_MESSAGE
         : null
+  const showConsentDocuments = cardBody === 'consents'
 
   return (
     <div className={styles.card}>
