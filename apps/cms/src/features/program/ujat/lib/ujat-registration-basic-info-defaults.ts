@@ -18,12 +18,17 @@ export const UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT =
 export const UJAT_DETAILED_PROGRAM_UJAT_VALUE = '__ujat_volunteer_core__' as const
 export const UJAT_DETAILED_PROGRAM_UJAT_LABEL = '대학생경제교육봉사단'
 
+/** 목록 필터 전용. 등록·수정 폼 옵션에 넣지 않는다. */
 export const UJAT_SPONSOR_ALL_VALUE = '__all__' as const
+export const UJAT_SPONSOR_FILTER_ALL_OPTION = {
+  value: UJAT_SPONSOR_ALL_VALUE,
+  label: '전체',
+} as const
 
-export const UJAT_DEFAULT_SPONSOR_ID = UJAT_SPONSOR_ALL_VALUE
+export const UJAT_DEFAULT_SPONSOR_ID = ''
 
-export function resolveUjatDefaultSponsorId(sponsors: readonly SponsorManagementRow[]): string {
-  return sponsors.find(s => s.name === '제이에이코리아')?.id ?? UJAT_SPONSOR_ALL_VALUE
+export function resolveUjatDefaultSponsorId(_sponsors: readonly SponsorManagementRow[] = []): string {
+  return ''
 }
 
 export const UJAT_SURVEY_ITEMS_DEFAULT = createUjatSurveyItemsDefault()
@@ -44,10 +49,10 @@ export type UjatRegistrationBasicInfoOverlayDefaults = {
   sponsorManagerName: string
   ipOwned: string
   courseDeliveredBy: string
-  ipsCategory: ProgramRegistrationIpsCategory
+  ipsCategory: ProgramRegistrationIpsCategory | ''
   surveyItems: Record<UjatSurveyRowId, boolean>
   educationCourse: string
-  partnerInvolvement: 'yes' | 'no'
+  partnerInvolvement: 'yes' | 'no' | ''
 }
 
 export function createUjatRegistrationBasicInfoOverlayDefaults(
@@ -57,21 +62,21 @@ export function createUjatRegistrationBasicInfoOverlayDefaults(
     repKo: UJAT_BASIC_INFO_REP_KO_DEFAULT,
     repEn: UJAT_BASIC_INFO_REP_EN_DEFAULT,
     programManagementName: UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
-    detailedProgramId: UJAT_DETAILED_PROGRAM_UJAT_VALUE,
+    detailedProgramId: '',
     operationRangeSeal: null,
     participantIndividual: false,
     participantOrganization: true,
     participantTeacher: false,
     participantVolunteer: true,
-    businessField: 'economy_finance',
+    businessField: '',
     sponsorId: resolveUjatDefaultSponsorId(sponsors),
-    sponsorContactId: UJAT_SPONSOR_ALL_VALUE,
+    sponsorContactId: '',
     sponsorManagerName: '',
-    ipOwned: 'ja',
-    courseDeliveredBy: 'ja',
-    ipsCategory: 'prepare',
+    ipOwned: '',
+    courseDeliveredBy: '',
+    ipsCategory: '',
     surveyItems: createUjatSurveyItemsDefault(),
     educationCourse: '',
-    partnerInvolvement: 'no',
+    partnerInvolvement: '',
   }
 }

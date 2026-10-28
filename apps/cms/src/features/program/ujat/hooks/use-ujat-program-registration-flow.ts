@@ -40,6 +40,7 @@ import {
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import {
   formatRegistrationStepTransitionLabel,
@@ -430,13 +431,28 @@ export function useUjatProgramRegistrationFlow(
           : null
       const typedRecruitment = detail?.typedRecruitment
       if (typedRecruitment?.institution) {
-        institutionRecruitmentForm.reset(typedRecruitment.institution)
+        institutionRecruitmentForm.reset(
+          mergeDevAutofillSparse(
+            institutionRecruitmentForm.getValues() as Record<string, unknown>,
+            typedRecruitment.institution as Record<string, unknown>
+          ) as ProgramDetailEditFormValues
+        )
       }
       if (typedRecruitment?.volunteerH1) {
-        volunteerH1RecruitmentForm.reset(typedRecruitment.volunteerH1)
+        volunteerH1RecruitmentForm.reset(
+          mergeDevAutofillSparse(
+            volunteerH1RecruitmentForm.getValues() as Record<string, unknown>,
+            typedRecruitment.volunteerH1 as Record<string, unknown>
+          ) as ProgramDetailEditFormValues
+        )
       }
       if (typedRecruitment?.volunteerH2) {
-        volunteerH2RecruitmentForm.reset(typedRecruitment.volunteerH2)
+        volunteerH2RecruitmentForm.reset(
+          mergeDevAutofillSparse(
+            volunteerH2RecruitmentForm.getValues() as Record<string, unknown>,
+            typedRecruitment.volunteerH2 as Record<string, unknown>
+          ) as ProgramDetailEditFormValues
+        )
       }
       typedRecruitmentDraftHydratedRef.current = true
       void persistTypedRecruitmentDraft()

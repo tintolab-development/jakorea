@@ -7,6 +7,7 @@ import { resolveVolunteerRecruitmentInterviewEnabled } from '@/features/program/
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { isAnnouncementUnpublished } from '@/features/program/shared/lib/participant-recruitment-form-options'
 
 export type DetailRecruitmentHighlightAudience = 'participant' | 'instructor' | 'volunteer'
 
@@ -43,6 +44,7 @@ function listParticipant(program: Program, values: ProgramDetailEditFormValues):
   const showMaxSchedule = display.showMaxScheduleCountField
   const showMaxSessions = display.showMaxSessionsPerDayField
 
+  const skipSchedule = isAnnouncementUnpublished(values.participantRecruitmentAnnouncementPublished)
   push(keys, blankText(values.participantRecruitmentAnnouncementPublished), `${prefix}.announcementPublished`)
   if (isTrainedTeachers || isGeneralOrg) {
     push(keys, blankText(values.studentListRequired), `${prefix}.studentListRequired`)
@@ -78,21 +80,25 @@ function listParticipant(program: Program, values: ProgramDetailEditFormValues):
       )
     }
   }
-  push(
-    keys,
-    blankText(values.participantProgramOperationStartDate) ||
-      blankText(values.participantProgramOperationEndDate),
-    `${prefix}.programRangeSeal`
-  )
+  if (!skipSchedule) {
+    push(
+      keys,
+      blankText(values.participantProgramOperationStartDate) ||
+        blankText(values.participantProgramOperationEndDate),
+      `${prefix}.programRangeSeal`
+    )
+  }
   push(keys, blankList(values.targetLevels), `${prefix}.targetLevels`)
   push(keys, blankText(values.educationTargetDetail), `${prefix}.targetLevelDetail`)
-  push(
-    keys,
-    blankText(values.applicationStartDate) || blankText(values.applicationEndDate),
-    `${prefix}.recruitRangeSeal`
-  )
-  push(keys, blankText(values.resultAnnouncementDate), `${prefix}.finalAnnounceIso`)
-  push(keys, blankText(values.resultAnnouncementMethod), `${prefix}.finalAnnounceMethod`)
+  if (!skipSchedule) {
+    push(
+      keys,
+      blankText(values.applicationStartDate) || blankText(values.applicationEndDate),
+      `${prefix}.recruitRangeSeal`
+    )
+    push(keys, blankText(values.resultAnnouncementDate), `${prefix}.finalAnnounceIso`)
+    push(keys, blankText(values.resultAnnouncementMethod), `${prefix}.finalAnnounceMethod`)
+  }
   push(keys, blankText(values.recruitmentContactOrganizationName), `${prefix}.inquiryContact`)
   push(keys, blankText(values.contactPhone), `${prefix}.inquiryTel`)
   push(keys, blankText(values.contactEmail), `${prefix}.inquiryEmail`)
@@ -105,22 +111,27 @@ function listParticipant(program: Program, values: ProgramDetailEditFormValues):
 function listInstructor(values: ProgramDetailEditFormValues): string[] {
   const keys: string[] = []
   const prefix = 'recruit.instructor'
+  const skipSchedule = isAnnouncementUnpublished(values.instructorRecruitmentAnnouncementPublished)
   push(keys, blankText(values.instructorRecruitmentAnnouncementPublished), `${prefix}.announcementPublished`)
-  push(
-    keys,
-    blankText(values.instructorProgramOperationStartDate) ||
-      blankText(values.instructorProgramOperationEndDate),
-    `${prefix}.programRangeSeal`
-  )
+  if (!skipSchedule) {
+    push(
+      keys,
+      blankText(values.instructorProgramOperationStartDate) ||
+        blankText(values.instructorProgramOperationEndDate),
+      `${prefix}.programRangeSeal`
+    )
+  }
   push(keys, blankList(values.instructorTargets), `${prefix}.recruitTargets`)
   push(keys, blankText(values.instructorTargetDetail), `${prefix}.recruitTargetDetail`)
-  push(
-    keys,
-    blankText(values.instructorApplicationStartDate) || blankText(values.instructorApplicationEndDate),
-    `${prefix}.recruitRangeSeal`
-  )
-  push(keys, blankText(values.finalPassAnnouncementDate), `${prefix}.finalAnnounceIso`)
-  push(keys, blankText(values.finalPassAnnouncementMethod), `${prefix}.finalAnnounceMethod`)
+  if (!skipSchedule) {
+    push(
+      keys,
+      blankText(values.instructorApplicationStartDate) || blankText(values.instructorApplicationEndDate),
+      `${prefix}.recruitRangeSeal`
+    )
+    push(keys, blankText(values.finalPassAnnouncementDate), `${prefix}.finalAnnounceIso`)
+    push(keys, blankText(values.finalPassAnnouncementMethod), `${prefix}.finalAnnounceMethod`)
+  }
   push(keys, blankText(values.instructorRecruitmentContactOrganizationName), `${prefix}.inquiryContact`)
   push(keys, blankText(values.instructorContactPhone), `${prefix}.inquiryTel`)
   push(keys, blankText(values.instructorContactEmail), `${prefix}.inquiryEmail`)
@@ -135,22 +146,27 @@ function listVolunteer(program: Program, values: ProgramDetailEditFormValues): s
     program,
     values.volunteerRecruitmentInterviewEnabled
   )
+  const skipSchedule = isAnnouncementUnpublished(values.volunteerRecruitmentAnnouncementPublished)
   push(keys, blankText(values.volunteerRecruitmentAnnouncementPublished), `${prefix}.announcementPublished`)
   push(keys, blankText(values.volunteerRecruitmentInterviewEnabled), `${prefix}.interviewRequired`)
-  push(
-    keys,
-    blankText(values.volunteerProgramOperationStartDate) ||
-      blankText(values.volunteerProgramOperationEndDate),
-    `${prefix}.programRangeSeal`
-  )
+  if (!skipSchedule) {
+    push(
+      keys,
+      blankText(values.volunteerProgramOperationStartDate) ||
+        blankText(values.volunteerProgramOperationEndDate),
+      `${prefix}.programRangeSeal`
+    )
+  }
   push(keys, blankList(values.volunteerTargets), `${prefix}.volunteerTargets`)
   push(keys, blankText(values.volunteerTargetDetail), `${prefix}.volunteerTargetDetail`)
-  push(
-    keys,
-    blankText(values.volunteerApplicationStartDate) || blankText(values.volunteerApplicationEndDate),
-    `${prefix}.recruitRangeSeal`
-  )
-  if (interviewOn) {
+  if (!skipSchedule) {
+    push(
+      keys,
+      blankText(values.volunteerApplicationStartDate) || blankText(values.volunteerApplicationEndDate),
+      `${prefix}.recruitRangeSeal`
+    )
+  }
+  if (!skipSchedule && interviewOn) {
     push(keys, blankText(values.documentPassAnnouncementDate), `${prefix}.docDeadlineIso`)
     push(keys, blankText(values.documentPassAnnouncementMethod), `${prefix}.docAnnounceMethod`)
     push(
@@ -165,8 +181,10 @@ function listVolunteer(program: Program, values: ProgramDetailEditFormValues): s
     push(keys, isInterviewTimeRangeIncomplete(overlay[rangeKey]), `${prefix}.interview.interviewTimeRange`)
     push(keys, blankList(overlay[slotsKey]), `${prefix}.interview.selectedSlotKeys`)
   }
-  push(keys, blankText(values.finalPassAnnouncementDate), `${prefix}.finalAnnounceIso`)
-  push(keys, blankText(values.finalPassAnnouncementMethod), `${prefix}.finalAnnounceMethod`)
+  if (!skipSchedule) {
+    push(keys, blankText(values.finalPassAnnouncementDate), `${prefix}.finalAnnounceIso`)
+    push(keys, blankText(values.finalPassAnnouncementMethod), `${prefix}.finalAnnounceMethod`)
+  }
   push(keys, blankText(values.volunteerRecruitmentContactOrganizationName), `${prefix}.inquiryContact`)
   push(keys, blankText(values.volunteerContactPhone), `${prefix}.inquiryTel`)
   push(keys, blankText(values.volunteerContactEmail), `${prefix}.inquiryEmail`)

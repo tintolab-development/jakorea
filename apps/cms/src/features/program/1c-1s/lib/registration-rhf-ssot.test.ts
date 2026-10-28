@@ -296,7 +296,7 @@ describe('1사1교 등록 공통정보 RHF SSOT', () => {
     expect(imported.common.managerContactIds).toEqual([])
     expect(imported.common.participantCount).toBe(0)
     expect(imported.common.curriculumSessions[0]?.title).toBe('')
-    expect(imported.common.repKo).toBe('1사1교 경제금융교육')
+    expect(imported.common.repKo).toBe('')
 
     const typed = rhfValuesFromCompanySchoolCanonical({
       ...collectCompanySchoolRegistrationCommonState(filledRhf()),

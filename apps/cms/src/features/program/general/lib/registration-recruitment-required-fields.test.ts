@@ -311,4 +311,25 @@ describe('hasIncompleteGeneralProgramRecruitmentRequiredFields', () => {
       )
     ).toContain('recruit.instructor.programRangeSeal')
   })
+
+  it('게시인데 모집 기간이 비면 미완료이다', () => {
+    const row = filledInstitution()
+    row[K.recruitRangeSeal] = null
+    replaceApplicantRecruitInstitutionOverlayForScope(INSTITUTION_CODE, row)
+    expect(
+      listIncompleteGeneralProgramRecruitmentRequiredFields(ctx())
+    ).toContain('recruit.institution.recruitRangeSeal')
+  })
+
+  it('미게시이면 모집 기간·발표일이 비어도 완료이다', () => {
+    replaceApplicantRecruitInstitutionOverlayForScope(INSTITUTION_CODE, {
+      ...filledInstitution(),
+      [K.announcementPublished]: 'unpublished',
+      [K.programRangeSeal]: null,
+      [K.recruitRangeSeal]: null,
+      [K.finalAnnounceIso]: '',
+      [K.finalAnnounceMethod]: '',
+    })
+    expect(hasIncompleteGeneralProgramRecruitmentRequiredFields(ctx())).toBe(false)
+  })
 })

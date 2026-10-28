@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import {
+  isAnnouncementUnpublished,
+  type ParticipantRecruitmentAnnouncementPublishedValue,
+} from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
 import { resetAllGeminiRecruitForms } from '@/features/template/ui/form-set/recruit-form/gemini/gemini-recruit-form-rhf'
 import type { GeminiRecruitmentEducationForm } from '../lib/recruitment/add-form-options'
 import {
@@ -89,6 +93,7 @@ function hasFilledText(value: string): boolean {
  */
 function isInstitutionRecruitmentComplete(input: {
   title: string
+  announcementPublished: ParticipantRecruitmentAnnouncementPublishedValue | ''
   educationTargetLevels: string[]
   educationTargetDetail: string
   applicationPeriod: [Dayjs | null, Dayjs | null] | null
@@ -102,12 +107,15 @@ function isInstitutionRecruitmentComplete(input: {
   notes: string
 }): boolean {
   const count = input.minStudentCount ?? 0
+  const skipPeriods = isAnnouncementUnpublished(input.announcementPublished)
   return (
     hasFilledText(input.title) &&
+    (input.announcementPublished === 'published' ||
+      input.announcementPublished === 'unpublished') &&
     input.educationTargetLevels.length > 0 &&
     hasFilledText(input.educationTargetDetail) &&
-    isPeriodComplete(input.applicationPeriod) &&
-    isPeriodComplete(input.trainingRequestPeriod) &&
+    (skipPeriods || isPeriodComplete(input.applicationPeriod)) &&
+    (skipPeriods || isPeriodComplete(input.trainingRequestPeriod)) &&
     count >= 1 &&
     (input.educationForm === 'online' || input.educationForm === 'offline') &&
     hasFilledText(input.inquiryContactName) &&
@@ -125,7 +133,7 @@ export function useGeminiRecruitmentAddForm(
   const [hydrated, setHydrated] = useState(false)
   const [title, setTitle] = useState('')
   const [announcementPublished, setAnnouncementPublished] =
-    useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
+    useState<ParticipantRecruitmentAnnouncementPublishedValue | ''>('')
   const [educationTargetLevels, setEducationTargetLevels] = useState<string[]>([])
   const [educationTargetDetail, setEducationTargetDetail] = useState('')
   const [applicationPeriod, setApplicationPeriod] = useState<[Dayjs | null, Dayjs | null] | null>(
@@ -186,33 +194,6 @@ export function useGeminiRecruitmentAddForm(
     setDetailSectionDescription(next.detailSectionDescription)
     baselineRef.current = JSON.stringify(normalizeGeminiRecruitmentAddFormSnapshot(snapshot))
     setRichTextTouched(false)
-  }, [])
-
-  /** 개발용 — 텍스트·기간·케이스만 채운다. 이미 올린 썸네일·첨부는 유지한다. */
-  const applyDevAutofill = useCallback(() => {
-    if (!import.meta.env.DEV) return
-    const snapshot = buildGeminiRecruitmentDevAutofillSnapshot()
-    const next = snapshotToFormState(snapshot)
-    setTitle(next.title)
-    setAnnouncementPublished(next.announcementPublished)
-    setEducationTargetLevels(next.educationTargetLevels)
-    setEducationTargetDetail(next.educationTargetDetail)
-    setApplicationPeriod(next.applicationPeriod)
-    setTrainingRequestPeriod(next.trainingRequestPeriod)
-    setMinStudentCount(next.minStudentCount)
-    setEducationForm(next.educationForm)
-    setInquiryContactName(next.inquiryContactName)
-    setInquiryTel(next.inquiryTel)
-    setInquiryEmail(next.inquiryEmail)
-    setNotesNotApplicable(next.notesNotApplicable)
-    setNotes(next.notes)
-    setProgramDescription(next.programDescription)
-    setRecruitmentGuide(next.recruitmentGuide)
-    setApplicationMethod(next.applicationMethod)
-    setLearningSupportContent(next.learningSupportContent)
-    setAdditionalContentMarkdown(next.additionalContentMarkdown)
-    setInstitutionSectionDescription(next.institutionSectionDescription)
-    setDetailSectionDescription(next.detailSectionDescription)
   }, [])
 
   useEffect(() => {
@@ -310,6 +291,7 @@ export function useGeminiRecruitmentAddForm(
       hydrated &&
       isInstitutionRecruitmentComplete({
         title,
+        announcementPublished,
         educationTargetLevels,
         educationTargetDetail,
         applicationPeriod,
@@ -323,6 +305,7 @@ export function useGeminiRecruitmentAddForm(
         notes,
       }),
     [
+      announcementPublished,
       applicationPeriod,
       educationForm,
       educationTargetDetail,
@@ -343,6 +326,17 @@ export function useGeminiRecruitmentAddForm(
     baselineRef.current = JSON.stringify(buildSaveSnapshot())
     setRichTextTouched(false)
   }, [buildSaveSnapshot])
+
+  /** 개발용 — 비어 있는 필드만 채운다. 이미 고른 공고 게시 여부는 유지한다. */
+  const applyDevAutofill = useCallback(() => {
+    if (!import.meta.env.DEV) return
+    const filled = buildGeminiRecruitmentDevAutofillSnapshot()
+    const merged = mergeDevAutofillSparse(
+      buildSaveSnapshot() as unknown as Record<string, unknown>,
+      filled as unknown as Record<string, unknown>
+    ) as GeminiRecruitmentAddFormSnapshot
+    applyFormState(merged)
+  }, [applyFormState, buildSaveSnapshot])
 
   return {
     hydrated,

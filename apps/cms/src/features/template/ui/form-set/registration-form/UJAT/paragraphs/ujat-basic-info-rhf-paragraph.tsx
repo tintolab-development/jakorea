@@ -41,13 +41,8 @@ import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-fo
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
-  UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
-  UJAT_BASIC_INFO_REP_EN_DEFAULT,
-  UJAT_BASIC_INFO_REP_KO_DEFAULT,
-  UJAT_DEFAULT_SPONSOR_ID,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
-  UJAT_SPONSOR_ALL_VALUE,
   UJAT_SURVEY_ITEMS_DEFAULT,
   type UjatSurveyRowId,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
@@ -94,12 +89,12 @@ export function UjatBasicInfoRHFParagraph({
   const { catalogReady, onSelectOpenChange } = useRegistrationCatalogReady()
   const sponsorCatalogQuery = useSponsorSelectOptions(catalogReady)
   const contactsQuery = useSponsorContactsQuery(
-    formValues.sponsorId === UJAT_SPONSOR_ALL_VALUE ? null : String(formValues.sponsorId ?? ''),
-    formValues.sponsorId !== UJAT_SPONSOR_ALL_VALUE && Boolean(formValues.sponsorId)
+    String(formValues.sponsorId ?? ''),
+    Boolean(formValues.sponsorId)
   )
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(catalogReady)
 
-  const sponsorId = String(formValues.sponsorId ?? UJAT_DEFAULT_SPONSOR_ID)
+  const sponsorId = String(formValues.sponsorId ?? '')
   const sponsorContactId = String(formValues.sponsorManagerContactId ?? '')
   const sponsorContactIds = useMemo(
     () =>
@@ -109,9 +104,7 @@ export function UjatBasicInfoRHFParagraph({
     [formValues.sponsorManagerContactIds]
   )
   const sponsorManagerName = String(formValues.managerName ?? '')
-  const detailedProgramId = String(
-    formValues.detailedProgramId ?? UJAT_DETAILED_PROGRAM_UJAT_VALUE
-  )
+  const detailedProgramId = String(formValues.detailedProgramId ?? '')
   const operationAnchorIso = String(formValues.startDate ?? '').trim()
   const operationEndIso = String(formValues.endDate ?? '').trim()
   const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
@@ -139,16 +132,13 @@ export function UjatBasicInfoRHFParagraph({
   const volunteerChecked = participantTypes.has('volunteer')
 
   const sponsorOptions = useMemo(
-    () => [{ value: UJAT_SPONSOR_ALL_VALUE, label: '전체' }, ...sponsorCatalogQuery.options],
+    () => [...sponsorCatalogQuery.options],
     [sponsorCatalogQuery.options]
   )
   const sponsorOptionsLoading =
     catalogReady && sponsorCatalogQuery.isLoading && sponsorCatalogQuery.options.length === 0
 
   const managerOptions = useMemo(() => {
-    if (sponsorId === UJAT_SPONSOR_ALL_VALUE) {
-      return withSponsorContactUnselectedOption([{ value: UJAT_SPONSOR_ALL_VALUE, label: '전체' }])
-    }
     if (!sponsorId) return []
     return withSponsorContactUnselectedOption(
       (contactsQuery.data ?? []).map(contact => ({
@@ -178,12 +168,9 @@ export function UjatBasicInfoRHFParagraph({
     if (isSponsorContactUnselectedLabel(sponsorManagerName)) {
       return [SPONSOR_CONTACT_UNSELECTED_VALUE]
     }
-    if (stored.length > 0 && stored.every(id => id !== UJAT_SPONSOR_ALL_VALUE)) return stored
-    if (sponsorContactId && sponsorContactId !== UJAT_SPONSOR_ALL_VALUE) return [sponsorContactId]
-    if (sponsorContactId === UJAT_SPONSOR_ALL_VALUE && sponsorId === UJAT_SPONSOR_ALL_VALUE) {
-      return [UJAT_SPONSOR_ALL_VALUE]
-    }
-    if (sponsorId && sponsorId !== UJAT_SPONSOR_ALL_VALUE) {
+    if (stored.length > 0) return stored
+    if (sponsorContactId) return [sponsorContactId]
+    if (sponsorId) {
       return [SPONSOR_CONTACT_UNSELECTED_VALUE]
     }
     return []
@@ -191,10 +178,9 @@ export function UjatBasicInfoRHFParagraph({
 
   const applySponsorContactIds = (next: string[]) => {
     const unique = normalizeSponsorContactUnselectedSelection(next, selectedSponsorContactIds)
-    const primary =
-      unique[0] ?? (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
+    const primary = unique[0] ?? ''
     const labels = unique
-      .filter(id => id !== UJAT_SPONSOR_ALL_VALUE && !isSponsorContactUnselected(id))
+      .filter(id => !isSponsorContactUnselected(id))
       .map(id => managerOptions.find(option => option.value === id)?.label ?? '')
       .filter(Boolean)
     const nextManagerName =
@@ -311,7 +297,7 @@ export function UjatBasicInfoRHFParagraph({
           edit={
             <CmsInput
               inputSize="small"
-              value={String(formValues.mainTitle ?? UJAT_BASIC_INFO_REP_KO_DEFAULT)}
+              value={String(formValues.mainTitle ?? '')}
               onChange={event => setField(infoForm, 'mainTitle', event.target.value)}
               placeholder="대표 프로그램명을 입력하세요"
               width="100%"
@@ -325,7 +311,7 @@ export function UjatBasicInfoRHFParagraph({
           edit={
             <CmsInput
               inputSize="small"
-              value={String(formValues.titleEn ?? UJAT_BASIC_INFO_REP_EN_DEFAULT)}
+              value={String(formValues.titleEn ?? '')}
               onChange={event => setField(infoForm, 'titleEn', event.target.value)}
               placeholder="대표 프로그램명을 입력하세요"
               width="100%"
@@ -341,7 +327,7 @@ export function UjatBasicInfoRHFParagraph({
           edit={
             <CmsInput
               inputSize="small"
-              value={String(formValues.title ?? UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT)}
+              value={String(formValues.title ?? '')}
               onChange={event => setField(infoForm, 'title', event.target.value)}
               placeholder="대표 프로그램명을 입력하세요"
               width="100%"
@@ -357,7 +343,7 @@ export function UjatBasicInfoRHFParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="세부 프로그램명을 선택하세요"
+                placeholder="선택하세요"
                 width="100%"
                 options={detailedProgramOptions}
                 value={detailedProgramSelectValue}
@@ -431,7 +417,7 @@ export function UjatBasicInfoRHFParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="사업 분야를 선택하세요"
+                placeholder="선택하세요"
                 width="100%"
                 options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                 value={String(formValues.businessArea ?? '')}
@@ -449,9 +435,9 @@ export function UjatBasicInfoRHFParagraph({
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect
-                withAllOption
+                withAllOption={false}
                 inputSize="small"
-                placeholder="후원사를 선택하세요"
+                placeholder="선택하세요"
                 width="100%"
                 options={sponsorOptions}
                 value={sponsorId}
@@ -461,7 +447,7 @@ export function UjatBasicInfoRHFParagraph({
                   const next = String(value ?? '')
                   setField(infoForm, 'sponsorId', next)
                   setField(infoForm, 'sponsorManagementIds', next ? [next] : [])
-                  applySponsorContactIds(next === UJAT_SPONSOR_ALL_VALUE ? [UJAT_SPONSOR_ALL_VALUE] : [])
+                  applySponsorContactIds([])
                 }}
               />
             </div>
@@ -477,7 +463,7 @@ export function UjatBasicInfoRHFParagraph({
                 mode="multiple"
                 withAllOption={false}
                 inputSize="small"
-                placeholder="후원사 담당자를 선택하세요"
+                placeholder="선택하세요"
                 width="100%"
                 showSearch
                 optionFilterProp="label"
@@ -563,7 +549,7 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
-              placeholder="교육 과정을 선택하세요"
+              placeholder="선택하세요"
               width="100%"
               options={educationCourseSelectOptions}
               value={String(formValues.educationProcess ?? '')}
@@ -579,6 +565,7 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
+              placeholder="선택하세요"
               width="100%"
               options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
               value={selectValue(formValues.ipOwned)}
@@ -596,6 +583,7 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
+              placeholder="선택하세요"
               width="100%"
               options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
               value={selectValue(formValues.courseDeliveredBy)}
@@ -610,7 +598,13 @@ export function UjatBasicInfoRHFParagraph({
           edit={
             <CmsRadioGroup
               size="medium"
-              value={formValues.partnerInvolvement === true ? 'yes' : 'no'}
+              value={
+                formValues.partnerInvolvement === true
+                  ? 'yes'
+                  : formValues.partnerInvolvement === false
+                    ? 'no'
+                    : undefined
+              }
               onChange={event => setField(infoForm, 'partnerInvolvement', event.target.value === 'yes')}
             >
               <CmsRadio size="medium" value="yes">Yes</CmsRadio>
@@ -629,10 +623,10 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
-              placeholder="IPS 유형을 선택하세요"
+              placeholder="선택하세요"
               width={240}
               options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
-              value={String(formValues.ipsCategory ?? 'prepare')}
+              value={String(formValues.ipsCategory ?? '')}
               onChange={value => setField(infoForm, 'ipsCategory', String(value ?? ''))}
             />
           }

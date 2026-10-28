@@ -11,7 +11,7 @@ export function ParticipantRecruitmentAnnouncementPublishedRadios({
   onChange,
   size = 'large',
 }: {
-  value: ParticipantRecruitmentAnnouncementPublishedValue | undefined
+  value: ParticipantRecruitmentAnnouncementPublishedValue | '' | undefined
   onChange: (next: ParticipantRecruitmentAnnouncementPublishedValue) => void
   /** 참여 기관 모집 정보는 학생 명단 제출 여부와 같은 medium. 그 외 화면은 large. */
   size?: CmsRadioSize

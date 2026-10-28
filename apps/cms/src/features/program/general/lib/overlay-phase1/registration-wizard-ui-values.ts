@@ -9,10 +9,6 @@ import type {
   ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import {
-  DEFAULT_REGISTRATION_EDUCATION_FORM,
-  DEFAULT_REGISTRATION_PARTICIPATION,
-} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import { PRE_EDUCATION_SCHEDULE_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 import { emptyCurriculumMaps, emptyScheduleMaps } from './common-info-domain'
 import type {
@@ -121,8 +117,8 @@ export function createDefaultRegistrationWizardUiValues(
     detailedProgramId: '',
     detailedProgramName: '',
     businessField: '',
-    partnerInvolvement: 'yes',
-    educationVenueKind: 'inside',
+    partnerInvolvement: '',
+    educationVenueKind: '',
     educationVenueDetail: '',
     educationCourse: '',
     ipOwned: '',
@@ -145,16 +141,16 @@ export function createDefaultRegistrationWizardUiValues(
     wageGrade3Fee: undefined,
     paymentItemValues: [],
     paymentItemLabels: '',
-    singleEducationForm: DEFAULT_REGISTRATION_EDUCATION_FORM,
+    singleEducationForm: '',
     multiCommonEducationForm: '',
     legacyEducationForm: '',
-    singleParticipation: DEFAULT_REGISTRATION_PARTICIPATION,
+    singleParticipation: '',
     multiCommonParticipation: '',
     ipsType: { category: '', detail: '' },
     scheduleLines: [],
     singleDateIso: null,
     periodDateIso: null,
-    footerIpsType: { category: 'prepare', detail: 'none' },
+    footerIpsType: { category: '', detail: '' },
     curriculum: {
       ...emptyCurriculumMaps(),
       preEducationScheduleName: PRE_EDUCATION_SCHEDULE_LABEL,

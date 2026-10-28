@@ -27,6 +27,7 @@ import { completeTrainedTeachersDevAutofillOverlay } from '@/features/program/tr
 import type { TrainedTeachersRegistrationRequiredFieldContext } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import { applyDevAutofillRecruitOverlayPartials } from '@/features/program/shared/lib/dev-autofill-recruit-overlay'
+import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
 import { getDetailedProgramOptionsList } from '@/features/detailed-program/api/admin-detailed-programs-service'
 import {
   getSponsorContacts,
@@ -2007,7 +2008,9 @@ export async function applyDevProgramRegistrationAutofill(
     const ujatOverlay = stripUjatKpiWageCapacityOverlay(
       buildUjatOverlay(sample, { ...resolved, contactId: contactSelectId })
     )
-    patchUjatProgramRegistrationOverlay(ujatOverlay)
+    patchUjatProgramRegistrationOverlay(
+      mergeDevAutofillSparse(getUjatProgramRegistrationOverlayRecord(), ujatOverlay)
+    )
     const interviewUnavailable = buildInterviewUnavailableSelection(
       dayjs(sample.recruitDates.interview.start),
       dayjs(sample.recruitDates.interview.end)

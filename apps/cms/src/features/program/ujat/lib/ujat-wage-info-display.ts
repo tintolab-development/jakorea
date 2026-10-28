@@ -106,7 +106,7 @@ export function readUjatWagePaymentItemValuesFromOverlay(
 ): string[] {
   return (
     readPaymentItemIdsFromOverlay(overlay) ??
-    (options?.fillDefaults === false ? [] : resolveUjatDefaultPaymentItemValues())
+    (options?.fillDefaults === true ? resolveUjatDefaultPaymentItemValues() : [])
   )
 }
 

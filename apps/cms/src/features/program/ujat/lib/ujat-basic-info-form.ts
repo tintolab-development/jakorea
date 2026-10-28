@@ -1,17 +1,8 @@
 import type { DefaultValues } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import {
-  UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
-  UJAT_BASIC_INFO_REP_EN_DEFAULT,
-  UJAT_BASIC_INFO_REP_KO_DEFAULT,
-  UJAT_DETAILED_PROGRAM_UJAT_LABEL,
-  UJAT_DETAILED_PROGRAM_UJAT_VALUE,
-  UJAT_SPONSOR_ALL_VALUE,
-  UJAT_SURVEY_ITEMS_DEFAULT,
-} from './ujat-registration-basic-info-defaults'
+import { UJAT_SURVEY_ITEMS_DEFAULT } from './ujat-registration-basic-info-defaults'
 import { readUjatSurveyItems } from './registration-survey-items'
 import { ujatKpiWageCapacityFromLegacyOverlay } from './ujat-kpi-wage-capacity-typed'
-import { resolveUjatDefaultPaymentItemValues } from './ujat-wage-info-display'
 import { EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER } from './ujat-region-capacity-types'
 
 export type UjatBasicInfoFormValues = ProgramDetailEditFormValues
@@ -30,7 +21,10 @@ function text(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback
 }
 
-function canonicalSelectValue(value: unknown, fallback: 'JA' | 'Partner' | 'Jointly'): string {
+function canonicalSelectValue(
+  value: unknown,
+  fallback?: 'JA' | 'Partner' | 'Jointly'
+): string | undefined {
   const normalized = text(value).trim().toLowerCase()
   if (normalized === 'ja') return 'JA'
   if (normalized === 'partner') return 'Partner'
@@ -60,29 +54,29 @@ function participantTypesFromOverlay(overlay: Record<string, unknown>): string[]
 }
 
 export function createUjatBasicInfoFormDefaults(
-  sponsorId = UJAT_SPONSOR_ALL_VALUE
+  sponsorId = ''
 ): DefaultValues<UjatBasicInfoFormValues> {
   return {
-    title: UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
-    mainTitle: UJAT_BASIC_INFO_REP_KO_DEFAULT,
-    titleEn: UJAT_BASIC_INFO_REP_EN_DEFAULT,
+    title: undefined,
+    mainTitle: undefined,
+    titleEn: undefined,
     startDate: '',
     endDate: '',
     category: 'school',
     type: 'offline',
-    businessArea: 'economy_finance',
-    detailedProgramId: UJAT_DETAILED_PROGRAM_UJAT_VALUE,
-    detailedProgramName: UJAT_DETAILED_PROGRAM_UJAT_LABEL,
+    businessArea: undefined,
+    detailedProgramId: undefined,
+    detailedProgramName: undefined,
     sponsorId,
     sponsorManagementIds: sponsorId ? [sponsorId] : [],
     sponsorManagerContactIds: [],
-    sponsorManagerContactId: UJAT_SPONSOR_ALL_VALUE,
+    sponsorManagerContactId: undefined,
     managerName: '',
     educationProcess: '',
-    ipOwned: 'JA',
-    courseDeliveredBy: 'JA',
-    partnerInvolvement: false,
-    ipsCategory: 'prepare',
+    ipOwned: undefined,
+    courseDeliveredBy: undefined,
+    partnerInvolvement: undefined,
+    ipsCategory: undefined,
     venueKind: 'inside',
     venueDetail: '',
     venue: '',
@@ -91,7 +85,7 @@ export function createUjatBasicInfoFormDefaults(
     surveyVolunteerSatisfaction: UJAT_SURVEY_ITEMS_DEFAULT.volunteer_satisfaction,
     surveySchoolSatisfaction: UJAT_SURVEY_ITEMS_DEFAULT.school_satisfaction,
     surveyLectureEvaluation: UJAT_SURVEY_ITEMS_DEFAULT.lecture_evaluation,
-    wagePaymentItemIds: resolveUjatDefaultPaymentItemValues(),
+    wagePaymentItemIds: [],
     ujatRegionCapacity: EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER,
   }
 }
@@ -128,11 +122,11 @@ export function ujatBasicInfoFormValuesFromLegacyOverlay(
     ),
     detailedProgramId: text(
       overlay['ujat.basicInfo.detailedProgramId'],
-      String(defaults.detailedProgramId ?? UJAT_DETAILED_PROGRAM_UJAT_VALUE)
+      String(defaults.detailedProgramId ?? '')
     ),
     detailedProgramName: text(
       overlay['ujat.basicInfo.detailedProgramName'],
-      String(defaults.detailedProgramName ?? UJAT_DETAILED_PROGRAM_UJAT_LABEL)
+      String(defaults.detailedProgramName ?? '')
     ),
     startDate: range.start,
     endDate: range.end,
@@ -143,13 +137,21 @@ export function ujatBasicInfoFormValuesFromLegacyOverlay(
     sponsorManagerContactId: primaryContactId,
     managerName: text(overlay['ujat.basicInfo.sponsorManagerName']),
     educationProcess: text(overlay['ujat.basicInfo.educationCourse']),
-    ipOwned: canonicalSelectValue(overlay['ujat.basicInfo.ipOwned'], 'JA'),
+    ipOwned: canonicalSelectValue(
+      overlay['ujat.basicInfo.ipOwned'],
+      defaults.ipOwned as 'JA' | 'Partner' | 'Jointly' | undefined
+    ),
     courseDeliveredBy: canonicalSelectValue(
       overlay['ujat.basicInfo.courseDeliveredBy'],
-      'JA'
+      defaults.courseDeliveredBy as 'JA' | 'Partner' | 'Jointly' | undefined
     ) as UjatBasicInfoFormValues['courseDeliveredBy'],
-    partnerInvolvement: overlay['ujat.basicInfo.partnerInvolvement'] === 'yes',
-    ipsCategory: text(overlay['ujat.basicInfo.ipsCategory'], String(defaults.ipsCategory ?? 'prepare')),
+    partnerInvolvement:
+      overlay['ujat.basicInfo.partnerInvolvement'] === 'yes'
+        ? true
+        : overlay['ujat.basicInfo.partnerInvolvement'] === 'no'
+          ? false
+          : defaults.partnerInvolvement,
+    ipsCategory: text(overlay['ujat.basicInfo.ipsCategory'], String(defaults.ipsCategory ?? '')),
     venueKind:
       overlay['ujat.basicInfo.educationVenueKind'] === 'outside' ||
       overlay['ujat.basicInfo.educationVenueKind'] === 'other' ||

@@ -54,7 +54,8 @@ function filledRegistration(): Record<string, unknown> {
     'ujat.basicInfo.participant.organization': true,
     'ujat.basicInfo.participant.volunteer': true,
     'ujat.basicInfo.businessField': 'economy_finance',
-    'ujat.basicInfo.sponsorId': '__all__',
+    'ujat.basicInfo.sponsorId': 'sponsor-1',
+    'ujat.basicInfo.sponsorContactId': 'contact-1',
     'ujat.basicInfo.surveyItems': {
       survey: true,
       satisfaction: true,
@@ -100,7 +101,8 @@ function filledVolunteerBothHalves(): Record<string, unknown> {
     [VK.activityTermH1]: '1',
     [VK.activityTermH2]: '2',
     [VK.docAnnounce]: { date: '2026-09-05T00:00:00.000Z', method: '홈페이지' },
-    [VK.interviewMethod]: 'no',
+    [VK.interviewRange]: RANGE,
+    [VK.interviewMethod]: 'offline',
     [VK.finalAnnounce]: { date: '2026-10-01T00:00:00.000Z', method: '이메일' },
     [VK.contact]: { name: '담당', phone: '010-0000-0000', email: 'a@b.com' },
     [VK.notes]: '-',
@@ -158,6 +160,30 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
 
   it('빈 overlay면 미완료', () => {
     expect(hasIncompleteUjatProgramRegistrationRequiredFields({})).toBe(true)
+  })
+
+  it('대표명·관리명이 비어 있으면 필드명과 함께 미완료이다', () => {
+    const overlay = filledRegistration()
+    overlay['ujat.basicInfo.repKo'] = ''
+    overlay['ujat.basicInfo.repEn'] = ''
+    overlay['ujat.basicInfo.programManagementName'] = ''
+    const typed = typedFromOverlay(overlay)
+    typed.basicInfo.mainTitle = ''
+    typed.basicInfo.titleEn = ''
+    typed.basicInfo.title = ''
+    expect(
+      listIncompleteUjatProgramRegistrationRequiredFields(
+        overlay,
+        typed.basicInfo,
+        typed.typedDetail
+      )
+    ).toEqual(
+      expect.arrayContaining([
+        'basicInfo.repKo',
+        'basicInfo.repEn',
+        'basicInfo.programManagementName',
+      ])
+    )
   })
 
   it('필수 채우면 완료', () => {
@@ -429,6 +455,31 @@ describe('listIncompleteUjatProgramRecruitmentTypedRequiredFields', () => {
     expect(
       listIncompleteUjatProgramRecruitmentTypedRequiredFields({ institution })
     ).toContain('recruit.institution.announcementPublished')
+  })
+
+  it('게시인데 모집 기간이 비면 미완료이다', () => {
+    const institution = filledTypedInstitution('published')
+    institution.applicationStartDate = ''
+    institution.applicationEndDate = ''
+    expect(
+      listIncompleteUjatProgramRecruitmentTypedRequiredFields({ institution })
+    ).toContain('recruit.institution.recruitRangeSeal')
+  })
+
+  it('미게시이면 모집 기간·발표일이 비어도 완료이다', () => {
+    const institution = filledTypedInstitution('unpublished')
+    institution.applicationStartDate = ''
+    institution.applicationEndDate = ''
+    institution.resultAnnouncementDate = ''
+    institution.startDate = ''
+    institution.endDate = ''
+    expect(
+      listIncompleteUjatProgramRecruitmentTypedRequiredFields({
+        institution,
+        volunteerH1: filledTypedVolunteer('unpublished'),
+        volunteerH2: filledTypedVolunteer('unpublished'),
+      })
+    ).toEqual([])
   })
 
   it.each(['published', 'unpublished'] as const)(

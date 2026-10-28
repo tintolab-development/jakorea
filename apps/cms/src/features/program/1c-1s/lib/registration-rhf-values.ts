@@ -240,21 +240,21 @@ function curriculumSessionIndex(key: string): { index: number; field: 'title' | 
 
 export function createDefaultCompanySchoolRegistrationRhfValues(): CompanySchoolRegistrationRhfValues {
   return {
-    repKo: COMPANY_SCHOOL_DEFAULT_REP_KO,
-    repEn: COMPANY_SCHOOL_DEFAULT_REP_EN,
+    repKo: '',
+    repEn: '',
     publicProgramTitle: '',
     detailedProgramId: '',
     detailedProgramName: '',
     operationRange: null,
     operationAnchorIso: null,
-    businessField: 'economy_finance',
+    businessField: '',
     sponsorId: '',
     managerContactIds: [],
-    ipOwned: 'ja',
-    courseDeliveredBy: 'ja',
-    partnerInvolvement: 'no',
-    ipsCategory: 'prepare',
-    educationCourse: COMPANY_SCHOOL_UNSELECTED,
+    ipOwned: '',
+    courseDeliveredBy: '',
+    partnerInvolvement: '',
+    ipsCategory: '',
+    educationCourse: '',
     participantCount: null,
     instructor: null,
     dispatchedSchool: null,
@@ -450,7 +450,7 @@ export function writeCompanySchoolRhfOverlayValue(
       return next
     }
     if (suffix === 'partnerInvolvement') {
-      next.partnerInvolvement = value === 'yes' ? 'yes' : 'no'
+      next.partnerInvolvement = value === 'yes' ? 'yes' : value === 'no' ? 'no' : ''
       return next
     }
     const field = BASIC_FIELD_BY_SUFFIX[suffix]

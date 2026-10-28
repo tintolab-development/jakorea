@@ -11,9 +11,10 @@ import {
   useProgramWagePaymentItemOptionsState,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { paymentItemSelectPlaceholder } from '@/features/template/lib/template-registration-payment-item-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { resolveUjatDefaultPaymentItemValues } from '@/features/program/ujat/lib/ujat-wage-info-display'
 
 export function UjatWageInfoFields({
   mode,
@@ -69,11 +70,23 @@ export function UjatWageInfoFields({
                     }}
                     options={paymentItemOptions}
                     disabled={!paymentCatalog.ready}
-                    placeholder={paymentItemSelectPlaceholder(paymentCatalog)}
+                    placeholder="선택하세요"
                     style={{ width: '100%', minWidth: 0 }}
                   />
                 )}
               />
+              {editPaymentIds.length === 0 ? (
+                <CmsButton
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  onClick={() =>
+                    setPaymentItemValues(resolveUjatDefaultPaymentItemValues())
+                  }
+                >
+                  기본 항목 추가
+                </CmsButton>
+              ) : null}
             </div>
           ) : undefined
         }
