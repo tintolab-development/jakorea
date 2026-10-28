@@ -47,6 +47,7 @@ import {
   dateRangeUsesClockTime,
 } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { resolveSurveyTitlePeriodDisabledDate } from '@/features/template/lib/survey-title-period-policy'
 import {
   patchSurveyTitleWritingPeriodCustomEndDate,
   patchSurveyTitleWritingPeriodCustomRange,
@@ -838,6 +839,10 @@ function DefaultTitleWithPeriodSettings({
   const combinedAnchorDate = useMemo(() => combinedPickerValue ?? dayjs(), [combinedPickerValue])
 
   const endPickerPlaceholder = active.endPeriodPresetLabel?.trim() || '마감일을 선택하세요'
+  const surveyStartDisabledDate = useMemo(
+    () => resolveSurveyTitlePeriodDisabledDate(active.id),
+    [active.id]
+  )
 
   return (
     <>
@@ -886,6 +891,7 @@ function DefaultTitleWithPeriodSettings({
             suppressAutoTodayWhenEmpty
             value={active.startAt ? startAnchorDate : null}
             placeholder="시작일을 선택하세요"
+            disabledDate={surveyStartDisabledDate}
             presetDisplayText={
               !active.startAt ? active.startPeriodPresetLabel ?? undefined : undefined
             }
@@ -914,6 +920,7 @@ function DefaultTitleWithPeriodSettings({
             dualPeriodTrigger
             dualStartPlaceholder="시작일"
             dualEndPlaceholder="마감일"
+            disabledDate={surveyStartDisabledDate}
             onCommitRange={range => {
               updateParagraph(active.id, cur => {
                 if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') {

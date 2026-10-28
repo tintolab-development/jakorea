@@ -292,6 +292,8 @@ export type RenderFormParagraphBodyOptions = {
   }[]
   /** 회원 동의 작성(fill) — 제목형「작성 기간」본문 슬롯 숨김 */
   hideSurveyWritingPeriod?: boolean
+  /** 프로그램 > 설문조사 수정 — 제목 단락「작성 기간」토글 ON 고정(카드 하단 토글 disabled) */
+  lockSurveyWritingPeriodToggleOn?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -353,7 +355,7 @@ export function renderFormParagraphBody(
     paragraphInteractionMode === 'authoring'
   switch (p.variant) {
     case 'survey_title_with_period':
-      if (!isCardSelected && !isUserLikeVisible) return null
+      /* 작성 기간 ON이면 단락 비선택(포커스 해제) 상태에서도 기간 입력란 노출 — 비선택은 읽기 전용 */
       if (options?.hideSurveyWritingPeriod === true) return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
       if (options?.surveyPeriodReadonly) {
@@ -367,7 +369,7 @@ export function renderFormParagraphBody(
           />
         )
       }
-      const titlePeriodEditMode = isUserLikeVisible || isParagraphSelected
+      const titlePeriodEditMode = isUserLikeVisible || isCardSelected
       return (
         <ExplanationTitle
           paragraph={p}
