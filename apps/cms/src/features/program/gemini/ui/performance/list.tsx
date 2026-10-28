@@ -29,6 +29,7 @@ import {
 } from '../../api/performance-service'
 import { resolveGeminiDeleteGuideModalCopy } from '../../lib/delete-guide'
 import { formatGeminiApiError } from '../../lib/gemini-api-error'
+import { downloadGeminiPerformanceUploadTemplate } from '../../lib/performance/download-upload-template'
 import {
   useGeminiPerformanceRows,
   useGeminiPerformanceRowsQueryState,
@@ -423,13 +424,14 @@ export function GeminiPerformanceList() {
     []
   )
 
+  const showBulkDelete = canWrite && !remoteEnabled
+
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     columns,
     data: filteredRows,
     filename: resolveFilterTableExcelFilename('Gemini 실적'),
+    selectedRowKeys: showBulkDelete ? selectedRowKeys : undefined,
   })
-
-  const showBulkDelete = canWrite && !remoteEnabled
   const tableScrollX = remoteEnabled
     ? TABLE_SCROLL_X - TABLE_COLUMN_WIDTHS.checkbox
     : TABLE_SCROLL_X
@@ -495,6 +497,12 @@ export function GeminiPerformanceList() {
               </FilterTableToolbarButton>
             ) : null}
             <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
+            <FilterTableToolbarButton
+              variant="secondary"
+              onClick={() => void downloadGeminiPerformanceUploadTemplate()}
+            >
+              업로드 양식 다운로드
+            </FilterTableToolbarButton>
             <span className="file-upload-picker">
               {canWrite ? (
                 <input

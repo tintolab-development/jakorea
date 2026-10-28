@@ -193,7 +193,7 @@ describe('mapGeminiInstructorApplicationItemToRow', () => {
     expect(row.grade).toBe('A등급')
   })
 
-  it('maps GRADE_2 snapshot to 2급 강사비', () => {
+  it('maps GRADE_2 snapshot to 2급', () => {
     const row = mapGeminiInstructorApplicationItemToRow(
       {
         applicationId: 1,
@@ -203,6 +203,6 @@ describe('mapGeminiInstructorApplicationItemToRow', () => {
       '1',
       0
     )
-    expect(row.grade).toBe('2급 강사비')
+    expect(row.grade).toBe('2급')
   })
 })

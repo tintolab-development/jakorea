@@ -336,6 +336,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
         excelExport={{
           columns,
           data: rows,
+          selectedRowKeys: canWrite ? selectedRowKeys : undefined,
         }}
       >
         <CmsDataTable<GeminiInstructorApplicationRow>

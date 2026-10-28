@@ -81,6 +81,7 @@ export function GeminiRecruitmentInfoTab({
       learningSupportContent: resolvedDetail.learningSupportContent,
       additionalContentMarkdown: resolvedDetail.additionalContentMarkdown,
       attachmentFileNames: resolvedDetail.attachmentFileNames,
+      attachmentFileObjectIds: resolvedDetail.attachmentFileObjectIds,
     }),
     [resolvedDetail]
   )

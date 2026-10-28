@@ -5,7 +5,9 @@ import {
 
 /** Gemini Admin API 오류 코드 → 사용자 문구. 코드 원문은 화면에 넣지 않는다. */
 export const GEMINI_API_ERROR_MESSAGES: Record<string, string> = {
-  GEMINI_TRAINING_END_TIME_NOT_AFTER_START: '종료 시간은 시작 시간 이후여야 합니다.',
+  GEMINI_TRAINING_END_TIME_NOT_AFTER_START: '종료 시각이 시작 시각보다 늦어야 합니다.',
+  GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS: '동일 이름·연락처 강사가 여러 명입니다.',
+  GEMINI_INSTRUCTOR_NOT_MATCHED: '강사명과 연락처가 일치하는 강사 회원을 찾지 못했습니다.',
 }
 
 function looksLikeErrorCode(value: string): boolean {
@@ -22,5 +24,8 @@ export function formatGeminiApiError(error: unknown, fallback: string): string {
   }
   const firstLine = message.split('\n')[0]?.trim() ?? ''
   if (looksLikeErrorCode(firstLine)) return fallback
+  if (/request failed with status code \d+/i.test(message) || /status code \d+/i.test(firstLine)) {
+    return fallback
+  }
   return message || fallback
 }

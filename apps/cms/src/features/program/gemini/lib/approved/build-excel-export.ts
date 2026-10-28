@@ -10,6 +10,7 @@ import {
 import type { GeminiApprovedTrainingRow } from '../../model/approved/types'
 
 export type GeminiApprovedTrainingExcelRow = {
+  id: string
   no: number
   institutionName: string
   region: string
@@ -26,6 +27,7 @@ export function buildApprovedTrainingExcelRows(
 ): GeminiApprovedTrainingExcelRow[] {
   const referenceDate = dayjs(todayKey)
   return rows.map(row => ({
+    id: row.id,
     no: row.no,
     institutionName: row.institutionName,
     region: formatRegionDisplay(row),

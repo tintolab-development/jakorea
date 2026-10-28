@@ -474,6 +474,7 @@ export function GeminiInstitutionApplicationTab({
         excelExport={{
           columns,
           data: filteredRows,
+          selectedRowKeys: canWrite ? selectedRowKeys : undefined,
         }}
       >
         <CmsDataTable<GeminiInstitutionApplicationRow>
