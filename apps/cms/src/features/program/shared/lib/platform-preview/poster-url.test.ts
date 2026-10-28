@@ -15,6 +15,13 @@ vi.mock(
   })
 )
 
+vi.mock(
+  '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf',
+  () => ({
+    getRecruitDetailInfoRecord: () => ({}),
+  })
+)
+
 import {
   fileObjectIdFromAdminFileUrl,
   readablePosterUrl,
@@ -123,6 +130,17 @@ describe('resolveAudiencePreviewPosterSeed', () => {
       },
     })
     expect(seed.fileObjectId).toBe(301)
+  })
+
+  it('uses extraOverlay thumbnail over the saved recruitment row', () => {
+    const seed = resolveAudiencePreviewPosterSeed({
+      program,
+      audience: 'institutions',
+      overlay: {
+        'recruit.detailInfo.thumbFileObjectId': 909,
+      },
+    })
+    expect(seed.fileObjectId).toBe(909)
   })
 })
 
