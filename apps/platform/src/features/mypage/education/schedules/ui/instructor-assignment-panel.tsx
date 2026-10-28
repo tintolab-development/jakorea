@@ -1,5 +1,9 @@
 import type { LectureReportAssignment } from '../api/lecture-report-client'
 import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
+import {
+  asAssignmentDisplayText,
+  displayAssignmentValueOrDash,
+} from '../lib/instructor-assignment-support'
 import { PFText } from '@/shared/ui'
 import styles from './instructor-assignment-panel.module.css'
 
@@ -18,13 +22,9 @@ type AssignmentTableRow = {
   scheduleLines: string[]
 }
 
-function displayOrDash(value: string | null | undefined): string {
-  const trimmed = value?.trim() ?? ''
-  return trimmed || '-'
-}
-
-function formatInstructorRole(raw: string | null | undefined): string {
-  const value = (raw ?? '').trim().toUpperCase()
+function formatInstructorRole(raw: unknown): string {
+  const display = asAssignmentDisplayText(raw)
+  const value = display.toUpperCase()
   if (!value) return '-'
   if (
     value === 'LEAD' ||
@@ -38,7 +38,7 @@ function formatInstructorRole(raw: string | null | undefined): string {
   if (value === 'GENERAL' || value === 'MEMBER' || value === '일반 강사' || value.includes('GENERAL')) {
     return '일반 강사'
   }
-  return raw?.trim() || '-'
+  return display || '-'
 }
 
 function parseDisplayDateTime(value: string | null): { date: string; time: string } | null {
@@ -65,7 +65,7 @@ function buildRows(items: readonly LectureReportAssignment[]): AssignmentTableRo
   const groups = new Map<string, LectureReportAssignment[]>()
   items.forEach(item => {
     // 기관 정보가 없는 개인 일정은 서로 다른 배정으로 유지한다.
-    const key = item.institutionName?.trim() || `assignment:${item.assignmentId}`
+    const key = asAssignmentDisplayText(item.institutionName) || `assignment:${item.assignmentId}`
     const current = groups.get(key)
     if (current) current.push(item)
     else groups.set(key, [item])
@@ -80,12 +80,14 @@ function buildRows(items: readonly LectureReportAssignment[]): AssignmentTableRo
     .map(([key, originalItems]) => ({
       id: key,
       role: formatInstructorRole(originalItems[0]?.instructorRole),
-      institutionName: originalItems[0]?.institutionName?.trim() || '-',
+      institutionName: asAssignmentDisplayText(originalItems[0]?.institutionName) || '-',
       grade: Array.from(
-        new Set(originalItems.map(item => item.grade?.trim()).filter(Boolean)),
+        new Set(
+          originalItems.map(item => asAssignmentDisplayText(item.grade)).filter(Boolean),
+        ),
       ).join(', ') || '-',
-      location: displayOrDash(originalItems[0]?.institutionAddress),
-      distance: displayOrDash(originalItems[0]?.distanceFromHome),
+      location: displayAssignmentValueOrDash(originalItems[0]?.institutionAddress),
+      distance: displayAssignmentValueOrDash(originalItems[0]?.distanceFromHome),
       scheduleLines: originalItems.map(formatScheduleLine),
     }))
 }

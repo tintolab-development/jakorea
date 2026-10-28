@@ -16,3 +16,14 @@ export function supportsInstructorInstitutionAssignment(
 ): boolean {
   return INSTITUTION_ASSIGNMENT_PROGRAM_TYPES.has(programType?.trim().toUpperCase() ?? '')
 }
+
+/** API가 숫자·문자 혼용으로 내려도 화면이 깨지지 않게 표시 문자열만 만든다. */
+export function asAssignmentDisplayText(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return ''
+}
+
+export function displayAssignmentValueOrDash(value: unknown): string {
+  return asAssignmentDisplayText(value) || '-'
+}
