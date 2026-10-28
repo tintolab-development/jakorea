@@ -3,17 +3,9 @@ import type { EducationApplicationListItem } from '../model/types'
 export type ApplicationRole = 'participant' | 'volunteer' | 'instructor'
 
 /**
- * Gemini 강사 모집 프로그램 id 패턴 — `apply-form-case.ts`의 `isGeminiInstructorProgramId`와
- * 동일 기준. 강의현황 범위에서는 Gemini 강사 모집을 제외한다(별도 기획 예정).
- */
-function isGeminiInstructorProgramId(programId: string): boolean {
-  return programId.includes('gemini-prog-instructor')
-}
-
-/**
  * 신청 건의 역할 판정.
  * - `volunteer`: 일반 봉사 + UJAT 봉사
- * - `instructor`: 강사 모집(Gemini 강사 모집은 이번 범위에서 제외)
+ * - `instructor`: 강사 모집(제미나이 강사 포함)
  * - `participant`: 그 외 전부(일반 참여자, 기관/교사, UJAT 기관 등)
  */
 export function resolveApplicationRole(item: EducationApplicationListItem): ApplicationRole {
@@ -26,7 +18,7 @@ export function resolveApplicationRole(item: EducationApplicationListItem): Appl
   if (item.detailCase === 'volunteer' || item.detailCase === 'ujat-volunteer') {
     return 'volunteer'
   }
-  if (item.detailCase === 'instructor' && !isGeminiInstructorProgramId(item.programId)) {
+  if (item.detailCase === 'instructor') {
     return 'instructor'
   }
   return 'participant'
@@ -42,7 +34,7 @@ export function isVolunteerRoleApplication(item: EducationApplicationListItem): 
   return resolveApplicationRole(item) === 'volunteer'
 }
 
-/** 강의현황 대상. 강사 역할 신청(Gemini 강사 모집 제외) */
+/** 강의현황 대상. 강사 역할 신청(제미나이 강사 포함) */
 export function isInstructorRoleApplication(item: EducationApplicationListItem): boolean {
   return resolveApplicationRole(item) === 'instructor'
 }
@@ -64,7 +56,7 @@ export function filterVolunteerStatusApplications(
   return items.filter(isVolunteerRoleApplication)
 }
 
-/** 강의현황(신규) — 강사 역할 신청(Gemini 강사 모집 제외) */
+/** 강의현황 — 강사 역할 신청(제미나이 강사 포함) */
 export function filterLectureStatusApplications(
   items: EducationApplicationListItem[],
 ): EducationApplicationListItem[] {
