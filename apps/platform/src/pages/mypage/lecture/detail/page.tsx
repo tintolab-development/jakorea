@@ -8,6 +8,7 @@ import {
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
+  EducationApplicationInfoModal,
   resolvePreferredEducationScheduleDisplayLabel,
   EducationCancelConfirm,
   EducationDetailBack,
@@ -33,6 +34,7 @@ import {
   type ProgramApplicationType,
 } from '@/features/mypage'
 import { resolveInstructorAvailableScheduleLines } from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
+import { resolveGeminiOfficialDocumentFromAnswers } from '@/features/mypage/education/applications/lib/official-document-from-answers'
 import { LectureReportPanel } from '@/features/mypage/education/schedules/ui/lecture-report-panel'
 import { InstructorAssignmentPanel } from '@/features/mypage/education/schedules/ui/instructor-assignment-panel'
 import { useLectureReportAssignmentsQuery } from '@/features/mypage/education/schedules/api/use-lecture-report-assignments-query'
@@ -43,6 +45,8 @@ import {
   resolveEducationNoticeAuthorDisplayName,
 } from '@/features/mypage/education/notices'
 import { resolveLectureListBackPath } from '@/features/mypage/lecture'
+import { EducationProgramInfoModal } from '@/features/mypage/education/notices/ui/program-info-modal'
+import { isGeminiTrainingProgram } from '@/features/program/lib/is-gemini-training'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
   getAccessToken,
@@ -127,6 +131,8 @@ export function MypageLectureDetailPage() {
   const [isAuthReady, setIsAuthReady] = useState(false)
   const section = readSection(location.search)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
+  const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
+  const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const cancelMutation = useCancelMyProgramApplicationMutation()
   const member = useMypageMember()
@@ -172,26 +178,32 @@ export function MypageLectureDetailPage() {
   const isActivityStatus = application
     ? ACTIVITY_STATUSES.has(application.displayStatus)
     : false
+  const isGeminiProgram = isGeminiTrainingProgram(program)
   const institutionAssignmentProgram = supportsInstructorInstitutionAssignment(program?.programType)
 
   const instructorAssignmentQuery = useLectureReportAssignmentsQuery(
     program?.id,
-    routeApplicationType === 'INSTRUCTOR' && isActivityStatus && institutionAssignmentProgram,
+    routeApplicationType === 'INSTRUCTOR' &&
+      (isActivityStatus || isWithdrawnDuring) &&
+      (institutionAssignmentProgram || isGeminiProgram),
   )
-  const instructorAssignmentVisible = institutionAssignmentProgram && instructorAssignmentQuery.hasAssignment
+  const instructorAssignmentVisible =
+    isGeminiProgram || (institutionAssignmentProgram && instructorAssignmentQuery.hasAssignment)
 
   const activityTabOptions = useMemo(
     () =>
       program
         ? {
             detailCase: program.detailCase,
+            programType: program.programType,
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
-            lectureReportVisible: routeApplicationType === 'INSTRUCTOR',
+            lectureReportVisible: routeApplicationType === 'INSTRUCTOR' && !isGeminiProgram,
             instructorAssignmentVisible,
+            geminiInstructorActivityTabs: isGeminiProgram,
           }
         : null,
-    [instructorAssignmentVisible, program, routeApplicationType],
+    [instructorAssignmentVisible, isGeminiProgram, program, routeApplicationType],
   )
 
   const inProgressTabItems = useMemo(
@@ -306,6 +318,13 @@ export function MypageLectureDetailPage() {
       program,
     ],
   )
+  const geminiOfficialDocument = useMemo(
+    () =>
+      isGeminiProgram
+        ? resolveGeminiOfficialDocumentFromAnswers(application?.applicationAnswers)
+        : null,
+    [application?.applicationAnswers, isGeminiProgram],
+  )
 
   if (isDetailLoading) {
     return (
@@ -375,6 +394,8 @@ export function MypageLectureDetailPage() {
         selfIntroMotivation={application.selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
         instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+        availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
+        officialDocument={geminiOfficialDocument}
       />
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
@@ -389,6 +410,9 @@ export function MypageLectureDetailPage() {
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+          instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+          availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
+          officialDocument={geminiOfficialDocument}
           applicationType={routeApplicationType}
           applicationId={application.id}
           noticeWriteEnabled={canWriteEducationNotice(member.profile, application.displayStatus)}
@@ -398,7 +422,12 @@ export function MypageLectureDetailPage() {
     }
     if (active === 'schedule') {
       if (instructorAssignmentVisible) {
-        return <InstructorAssignmentPanel items={instructorAssignmentQuery.items} />
+        return (
+          <InstructorAssignmentPanel
+            items={instructorAssignmentQuery.items}
+            hideWaitingList={isGeminiProgram}
+          />
+        )
       }
       return (
         <EducationSchedulePanel
@@ -483,6 +512,17 @@ export function MypageLectureDetailPage() {
         educationForm={program.educationForm}
         educationFormLabel={program.educationFormLabel}
       />
+      {isGeminiProgram && isActivityStatus ? (
+        <div className={styles.headerActions}>
+          <PFButton variant="text" onClick={() => setIsProgramInfoOpen(true)}>
+            프로그램 정보
+          </PFButton>
+          <span className={styles.actionDivider} aria-hidden="true" />
+          <PFButton variant="text" onClick={() => setIsApplicationInfoOpen(true)}>
+            신청 정보
+          </PFButton>
+        </div>
+      ) : null}
 
       {showBanner ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
@@ -543,6 +583,21 @@ export function MypageLectureDetailPage() {
           해당 진행 상태의 상세 탭은 준비 중입니다.
         </PFText>
       )}
+
+      <EducationProgramInfoModal
+        open={isProgramInfoOpen}
+        program={program}
+        onClose={() => setIsProgramInfoOpen(false)}
+      />
+      <EducationApplicationInfoModal
+        open={isApplicationInfoOpen}
+        selfIntroMotivation={application.selfIntroMotivation}
+        preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+        instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+        availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
+        officialDocument={geminiOfficialDocument}
+        onClose={() => setIsApplicationInfoOpen(false)}
+      />
 
       <EducationCancelConfirm
         open={isCancelConfirmOpen}

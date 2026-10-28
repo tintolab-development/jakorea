@@ -26,6 +26,8 @@ export function TeacherEducationAssignmentAside({
         id: String(instructor.instructorMemberId),
         instructorMemberId: instructor.instructorMemberId,
         name: instructor.name,
+        ...(instructor.phone?.trim() ? { phone: instructor.phone.trim() } : {}),
+        ...(instructor.email?.trim() ? { email: instructor.email.trim() } : {}),
         consentDocumentsRequested: instructor.consentDocumentsRequested,
         consents: instructor.consents.map(consent => ({
           id: consent.documentId != null ? String(consent.documentId) : consent.consentType,

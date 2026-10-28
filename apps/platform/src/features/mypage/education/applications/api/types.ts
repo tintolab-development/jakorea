@@ -145,6 +145,8 @@ export type PortalTeacherAssignmentItem = {
   assignmentId?: number | null
   instructorMemberId?: number | null
   instructorName?: string | null
+  instructorPhone?: string | null
+  instructorEmail?: string | null
   programId?: number | null
   programScheduleId?: number | null
   assignmentStatus?: 'ASSIGNED' | 'COMPLETED' | string | null

@@ -16,6 +16,8 @@ export type AssignedInstructorConsent = {
 export type AssignedInstructor = {
   instructorMemberId: number
   name: string
+  phone?: string | null
+  email?: string | null
   consentDocumentsRequested: boolean
   consents: AssignedInstructorConsent[]
 }

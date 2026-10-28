@@ -13,6 +13,9 @@ export type LectureReportAssignment = {
   startAt: string | null; endAt: string | null; scheduleName: string | null; sessionNo: number | null
   institutionName: string | null; grade: string | null; lectureStatus: string; reportStatus: string | null
   submitDueAt: string | null; canSubmit: boolean; reportId: number | null
+  instructorRole?: string | null
+  institutionAddress?: string | null
+  distanceFromHome?: string | null
 }
 export type LectureReportPage = { items: LectureReportAssignment[]; page: number; size: number; totalElements: number; totalPages: number }
 export type LectureReportState = {

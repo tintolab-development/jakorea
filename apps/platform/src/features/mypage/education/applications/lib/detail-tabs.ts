@@ -86,6 +86,11 @@ type ActivityTabOptions = {
   lectureReportVisible?: boolean
   /** Instructor applications only: expose the Figma assignment overview tab. */
   instructorAssignmentVisible?: boolean
+  /**
+   * 제미나이 강의현황 진행 중·완료.
+   * 배정 현황·정산 현황만 두고 안내사항·강의보고서는 제공하지 않는다.
+   */
+  geminiInstructorActivityTabs?: boolean
 }
 
 function resolveActivityScheduleTabLabel(options: ActivityTabOptions): string {
@@ -124,6 +129,15 @@ function appendTeacherEducationJournalTab(
   }
 }
 
+function isGeminiTraining(options: ActivityTabOptions): boolean {
+  return (
+    options.detailCase === 'gemini' ||
+    options.programType?.trim().toUpperCase() === 'GEMINI_TRAINING' ||
+    options.programType?.trim().toUpperCase() === 'GEMINI' ||
+    options.programType?.trim().toUpperCase() === 'VISITING_TRAINING'
+  )
+}
+
 function appendSurveySatisfactionTabs(
   items: EducationDetailTabItem[],
   options: ActivityTabOptions
@@ -131,6 +145,7 @@ function appendSurveySatisfactionTabs(
   if (isTrainedTeacher(options) ? options.surveyConfigured === true : isConfigured(options.surveyConfigured)) {
     items.push({ key: 'survey', label: '설문조사' })
   }
+  if (isGeminiTraining(options)) return
   if (
     isTrainedTeacher(options)
       ? options.satisfactionConfigured === true
@@ -167,6 +182,16 @@ function appendSettlementTab(items: EducationDetailTabItem[], options: ActivityT
 export function buildInProgressDetailTabItems(
   options: ActivityTabOptions
 ): EducationDetailTabItem[] {
+  if (options.geminiInstructorActivityTabs === true) {
+    const items: EducationDetailTabItem[] = [
+      { key: 'schedule', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL },
+    ]
+    if (shouldShowSettlementTab(options)) {
+      items.push({ key: 'settlement', label: '정산 현황' })
+    }
+    return items
+  }
+
   if (options.instructorAssignmentVisible === true) {
     const items: EducationDetailTabItem[] = [
       { key: 'schedule', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL },

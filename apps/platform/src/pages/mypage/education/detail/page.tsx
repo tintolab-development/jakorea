@@ -52,6 +52,7 @@ import {
   type EducationDisplayStatus,
   type ProgramApplicationType,
 } from '@/features/mypage'
+import { isGeminiTrainingProgram } from '@/features/program/lib/is-gemini-training'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
   getAccessToken,
@@ -401,6 +402,7 @@ export function MypageEducationDetailPage() {
           program.educationForm === 'participant_choice' ||
           isTrainedTeachersEducationProgram(program)
         }
+        readOnly={isGeminiTrainingProgram(program)}
       />
     )
   }, [
@@ -692,6 +694,7 @@ export function MypageEducationDetailPage() {
             program.educationForm === 'participant_choice' ||
             isTrainedTeachersEducationProgram(program)
           }
+          readOnly={isGeminiTrainingProgram(program)}
         />
       ) : (
         <EducationApplicationContent
@@ -787,6 +790,9 @@ export function MypageEducationDetailPage() {
     }
     if (active === 'satisfaction') {
       if (program.programType?.toUpperCase() === 'TRAINED_TEACHER') {
+        return null
+      }
+      if (isGeminiTrainingProgram(program)) {
         return null
       }
       return (

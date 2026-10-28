@@ -4,18 +4,20 @@ import styles from './content.module.css'
 
 type InstructorAvailableSchedulesSectionProps = {
   lines: readonly string[]
+  title?: string
 }
 
 export function InstructorAvailableSchedulesSection({
   lines,
+  title = '강의 진행 가능일',
 }: InstructorAvailableSchedulesSectionProps) {
   if (lines.length === 0) return null
 
   return (
-    <section className={styles.scheduleList} aria-label="강의 진행 가능일">
+    <section className={styles.scheduleList} aria-label={title}>
       <div className={styles.scheduleCard}>
         <PFText as="h2" typo="bd-md-sb" color="black" className={styles.scheduleCardTitle}>
-          강의 진행 가능일
+          {title}
         </PFText>
         <div className={styles.instructorScheduleLines}>
           {lines.map((line, lineIndex) => (

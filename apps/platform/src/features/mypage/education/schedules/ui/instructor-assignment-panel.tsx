@@ -5,13 +5,40 @@ import styles from './instructor-assignment-panel.module.css'
 
 type InstructorAssignmentPanelProps = {
   items: readonly LectureReportAssignment[]
+  hideWaitingList?: boolean
 }
 
 type AssignmentTableRow = {
   id: string
+  role: string
   institutionName: string
   grade: string
+  location: string
+  distance: string
   scheduleLines: string[]
+}
+
+function displayOrDash(value: string | null | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  return trimmed || '-'
+}
+
+function formatInstructorRole(raw: string | null | undefined): string {
+  const value = (raw ?? '').trim().toUpperCase()
+  if (!value) return '-'
+  if (
+    value === 'LEAD' ||
+    value === 'MAIN' ||
+    value === 'REPRESENTATIVE' ||
+    value === '대표 강사' ||
+    value.includes('LEAD')
+  ) {
+    return '대표 강사'
+  }
+  if (value === 'GENERAL' || value === 'MEMBER' || value === '일반 강사' || value.includes('GENERAL')) {
+    return '일반 강사'
+  }
+  return raw?.trim() || '-'
 }
 
 function parseDisplayDateTime(value: string | null): { date: string; time: string } | null {
@@ -52,10 +79,13 @@ function buildRows(items: readonly LectureReportAssignment[]): AssignmentTableRo
     })
     .map(([key, originalItems]) => ({
       id: key,
+      role: formatInstructorRole(originalItems[0]?.instructorRole),
       institutionName: originalItems[0]?.institutionName?.trim() || '-',
       grade: Array.from(
         new Set(originalItems.map(item => item.grade?.trim()).filter(Boolean)),
       ).join(', ') || '-',
+      location: displayOrDash(originalItems[0]?.institutionAddress),
+      distance: displayOrDash(originalItems[0]?.distanceFromHome),
       scheduleLines: originalItems.map(formatScheduleLine),
     }))
 }
@@ -91,11 +121,11 @@ function AssignedInstitutionTable({ rows }: { rows: readonly AssignmentTableRow[
           {rows.map((row, index) => (
             <tr key={row.id}>
               <td>{rows.length - index}</td>
-              <td>-</td>
+              <td>{row.role}</td>
               <td>{row.institutionName}</td>
               <td>{row.grade}</td>
-              <td>-</td>
-              <td>-</td>
+              <td>{row.location}</td>
+              <td>{row.distance}</td>
               <td>
                 <div className={styles.scheduleLines}>
                   {row.scheduleLines.map((line, lineIndex) => (
@@ -150,7 +180,7 @@ function WaitingInstitutionTable() {
   )
 }
 
-export function InstructorAssignmentPanel({ items }: InstructorAssignmentPanelProps) {
+export function InstructorAssignmentPanel({ items, hideWaitingList = false }: InstructorAssignmentPanelProps) {
   const rows = buildRows(items)
 
   return (
@@ -167,12 +197,14 @@ export function InstructorAssignmentPanel({ items }: InstructorAssignmentPanelPr
           </PFText>
         )}
       </div>
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          배정된 대기 기관 목록 <span>0건</span>
-        </h2>
-        <WaitingInstitutionTable />
-      </div>
+      {hideWaitingList ? null : (
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            배정된 대기 기관 목록 <span>0건</span>
+          </h2>
+          <WaitingInstitutionTable />
+        </div>
+      )}
     </section>
   )
 }

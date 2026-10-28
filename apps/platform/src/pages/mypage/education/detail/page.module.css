@@ -13,6 +13,19 @@
   overflow: visible;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-16);
+}
+
+.actionDivider {
+  width: 1px;
+  height: 12px;
+  background: var(--color-neutral-cool-200);
+}
+
 .tabs {
   margin-top: var(--spacing-48);
   margin-bottom: var(--spacing-56);
