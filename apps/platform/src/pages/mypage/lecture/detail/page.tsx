@@ -43,7 +43,10 @@ import { resolveGeminiOfficialDocumentFromAnswers } from '@/features/mypage/educ
 import { LectureReportPanel } from '@/features/mypage/education/schedules/ui/lecture-report-panel'
 import { InstructorAssignmentPanel } from '@/features/mypage/education/schedules/ui/instructor-assignment-panel'
 import { useLectureReportAssignmentsQuery } from '@/features/mypage/education/schedules/api/use-lecture-report-assignments-query'
-import { supportsInstructorInstitutionAssignment } from '@/features/mypage/education/schedules/lib/instructor-assignment-support'
+import {
+  supportsInstructorIndividualAssignment,
+  supportsInstructorInstitutionAssignment,
+} from '@/features/mypage/education/schedules/lib/instructor-assignment-support'
 import { programDetailToPreferredScheduleLookup } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
 import {
   canWriteEducationNotice,
@@ -86,6 +89,7 @@ function isActivitySection(value: string): value is EducationActivitySection {
   return (
     value === 'notice' ||
     value === 'schedule' ||
+    value === 'assignment' ||
     value === 'lecture-report' ||
     value === 'survey' ||
     value === 'satisfaction' ||
@@ -192,15 +196,20 @@ export function MypageLectureDetailPage() {
     : false
   const isGeminiProgram = isGeminiTrainingProgram(program)
   const institutionAssignmentProgram = supportsInstructorInstitutionAssignment(program?.programType)
+  const individualAssignmentProgram = supportsInstructorIndividualAssignment(program?.programType)
 
   const instructorAssignmentQuery = useLectureReportAssignmentsQuery(
     program?.id,
     routeApplicationType === 'INSTRUCTOR' &&
       (isActivityStatus || isWithdrawnDuring) &&
-      (institutionAssignmentProgram || isGeminiProgram),
+      (institutionAssignmentProgram || individualAssignmentProgram || isGeminiProgram),
   )
   const instructorAssignmentVisible =
-    isGeminiProgram || (institutionAssignmentProgram && instructorAssignmentQuery.hasAssignment)
+    isGeminiProgram ||
+    ((institutionAssignmentProgram || individualAssignmentProgram) &&
+      instructorAssignmentQuery.hasAssignment)
+  /** 일반 개인형은 강의 일정 탭을 유지하고 배정 현황을 별도 탭으로 둔다. */
+  const instructorAssignmentKeepsScheduleTab = individualAssignmentProgram && !isGeminiProgram
 
   const activityTabOptions = useMemo(
     () =>
@@ -212,10 +221,17 @@ export function MypageLectureDetailPage() {
             satisfactionConfigured: program.satisfactionConfigured,
             lectureReportVisible: routeApplicationType === 'INSTRUCTOR' && !isGeminiProgram,
             instructorAssignmentVisible,
+            instructorAssignmentKeepsScheduleTab,
             geminiInstructorActivityTabs: isGeminiProgram,
           }
         : null,
-    [instructorAssignmentVisible, isGeminiProgram, program, routeApplicationType],
+    [
+      instructorAssignmentKeepsScheduleTab,
+      instructorAssignmentVisible,
+      isGeminiProgram,
+      program,
+      routeApplicationType,
+    ],
   )
 
   const inProgressTabItems = useMemo(
@@ -461,8 +477,19 @@ export function MypageLectureDetailPage() {
         />
       )
     }
+    if (active === 'assignment' && instructorAssignmentVisible) {
+      return (
+        <InstructorAssignmentPanel
+          items={instructorAssignmentQuery.items}
+          individual
+          useScheduleName={
+            program.educationStructure === 'schedule' && program.sessionRound === 'multi'
+          }
+        />
+      )
+    }
     if (active === 'schedule') {
-      if (instructorAssignmentVisible) {
+      if (instructorAssignmentVisible && !instructorAssignmentKeepsScheduleTab) {
         return (
           <InstructorAssignmentPanel
             items={instructorAssignmentQuery.items}

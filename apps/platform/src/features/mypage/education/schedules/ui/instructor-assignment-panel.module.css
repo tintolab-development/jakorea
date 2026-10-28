@@ -84,13 +84,24 @@
   border-bottom: none;
 }
 
+/* Figma Badge Category(역할): 셀 폭이 좁아도 배지 글자가 두 줄로 꺾이지 않게 한다 */
+.roleBadge {
+  flex-shrink: 0;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.table td:has(> .roleBadge) {
+  padding-inline: var(--spacing-8);
+}
+
 /* Figma node 11001-286932: 1440px table width */
 .assignedTable .numberColumn {
   width: 6.875%;
 }
 
 .assignedTable .roleColumn {
-  width: 7.674%;
+  width: 8.7%; /* 역할 배지(약 76px)가 PC 최소 표 폭 1080px에서도 셀 안에 들어가도록 넓힘 (기존 7.674%) */
 }
 
 .assignedTable .institutionColumn {
@@ -110,7 +121,7 @@
 }
 
 .assignedTable col:last-child {
-  width: 32.639%;
+  width: 31.613%; /* 역할 열에 넘긴 1.026%만큼 줄임 (기존 32.639%) */
 }
 
 /*

@@ -4,6 +4,7 @@ import type { ProgramDetailCase } from '@/features/program'
 export type EducationActivitySection =
   | 'notice'
   | 'schedule'
+  | 'assignment'
   | 'lecture-report'
   | 'educationJournal'
   | 'students'
@@ -86,6 +87,11 @@ type ActivityTabOptions = {
   lectureReportVisible?: boolean
   /** Instructor applications only: expose the Figma assignment overview tab. */
   instructorAssignmentVisible?: boolean
+  /**
+   * 일반 개인형 강의현황: 기존 강의 일정 탭을 유지하고 배정 현황을 별도 탭(`assignment`)으로 맨 앞에 추가한다.
+   * `instructorAssignmentVisible`과 함께 true일 때만 적용된다.
+   */
+  instructorAssignmentKeepsScheduleTab?: boolean
   /**
    * 제미나이 강의현황 진행 중·완료.
    * 배정 현황·정산 현황만 두고 안내사항·강의보고서는 제공하지 않는다.
@@ -192,7 +198,10 @@ export function buildInProgressDetailTabItems(
     return items
   }
 
-  if (options.instructorAssignmentVisible === true) {
+  if (
+    options.instructorAssignmentVisible === true &&
+    options.instructorAssignmentKeepsScheduleTab !== true
+  ) {
     const items: EducationDetailTabItem[] = [
       { key: 'schedule', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL },
       { key: 'notice', label: '안내사항' },
@@ -206,10 +215,15 @@ export function buildInProgressDetailTabItems(
     return items
   }
 
-  const items: EducationDetailTabItem[] = [
+  // 일반 개인형도 기관형처럼 배정 현황 탭을 맨 앞에 두고, 강의 일정 탭은 기존 위치에 유지한다.
+  const items: EducationDetailTabItem[] =
+    options.instructorAssignmentVisible === true
+      ? [{ key: 'assignment', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL }]
+      : []
+  items.push(
     { key: 'notice', label: '안내사항' },
     { key: 'schedule', label: resolveActivityScheduleTabLabel(options) },
-  ]
+  )
   if (options.lectureReportVisible === true) {
     items.push({ key: 'lecture-report', label: '강의보고서' })
   }
