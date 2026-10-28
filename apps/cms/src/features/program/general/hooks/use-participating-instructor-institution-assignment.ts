@@ -35,6 +35,8 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   instructorList: ParticipatingInstructorRow[]
   isCompanySchool: boolean
   enabled?: boolean
+  /** program participantRecruitmentInfo.maxAssignableInstructors (참여 기관 상세 배정 인원 분모와 동일 출처) */
+  maxAssignableInstructors?: number | null
 }): {
   remoteEnabled: boolean
   isLoading: boolean
@@ -109,6 +111,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       isCompanySchool: input.isCompanySchool,
       assignments: board.assignments,
       instructorMemberId,
+      maxAssignableInstructors: input.maxAssignableInstructors,
     })
     const assignedSchedules = buildParticipatingInstructorAssignedScheduleRowsFromBoard({
       assignments: board.assignments,
@@ -118,11 +121,11 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     })
     const waitingSchedules = buildParticipatingInstructorWaitingScheduleRowsFromBoard({
       instructor: input.instructor,
-      schoolRows: input.schoolRows,
-      instructorList: input.instructorList,
-      assignedSchoolIds,
+      schedules: board.schedules,
+      scheduleLabelById: board.scheduleLabelById,
       assignments: board.assignments,
       instructorMemberId,
+      maxAssignableInstructors: input.maxAssignableInstructors,
     })
     return {
       assignedSchools,
@@ -136,6 +139,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     input.instructor,
     input.instructorList,
     input.isCompanySchool,
+    input.maxAssignableInstructors,
     input.schoolRows,
     instructorMemberId,
     remoteEnabled,

@@ -24,6 +24,10 @@ export type InstructorWaitingAssignmentStatus =
   | 'assigned'
   /** 승인 희망일·requested/OSA 등 BE 인정 배정 근거 없음 */
   | 'no_assignable_schedule'
+  /** 기관형 — 강사 정원 도달 또는 동일 기관 다른 일정에 이미 배정됨(배정 불가, 선택 불가) */
+  | 'unavailable'
+  /** 기관형 — 이 강사의 해당 기관·일정 배정이 취소됨(배정 취소, 선택 불가) */
+  | 'assignment_cancelled'
 
 /** 배정 완료 행은 No.와 무관하게 목록 하단에 노출 */
 export function sortWaitingRowsAssignedToBottom<

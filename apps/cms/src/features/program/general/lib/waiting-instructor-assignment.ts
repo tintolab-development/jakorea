@@ -99,7 +99,8 @@ export function resolveWaitingInstructorAssignmentStatus(
 
 /** 배정 불가 행은 목록 하단에 노출 (스크린샷 정렬) */
 export function sortWaitingInstructorRowsUnavailableToBottom<
-  T extends { no: number; assignmentStatus: WaitingInstructorAssignmentStatus },
+  /** 개인형 확장 상태(assignment_cancelled 등)도 허용 — 정렬 기준은 unavailable/no_assignable_schedule 그대로 */
+  T extends { no: number; assignmentStatus: WaitingInstructorAssignmentStatus | (string & {}) },
 >(rows: T[]): T[] {
   return [...rows].sort((a, b) => {
     const aUnavailable =

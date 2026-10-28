@@ -43,11 +43,13 @@ import {
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_SCHEDULE_EXCEL_COLUMNS,
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-export'
-import type {
-  ParticipatingIndividualInstructorAssignedScheduleRow,
-  ParticipatingIndividualInstructorWaitingScheduleRow,
+import {
+  PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS,
+  type ParticipatingIndividualInstructorAssignedScheduleRow,
+  type ParticipatingIndividualInstructorWaitingScheduleRow,
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { useParticipatingInstructorInstitutionAssignment } from '@/features/program/general/hooks/use-participating-instructor-institution-assignment'
+import { resolveRequiredAssignableInstructorCount } from '@/features/program/general/lib/institution-select-assign'
 import { getParticipationConsentRequiredMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
@@ -58,7 +60,6 @@ import {
 import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
-import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
@@ -122,6 +123,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     instructorList,
     isCompanySchool: false,
     enabled: true,
+
+    maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
   })
 
   useEffect(() => {
@@ -151,26 +154,24 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       }
       const target = assignedSchedules.find(row => row.id === rowId)
       const memberId = Number(target?.instructorMemberId ?? instructor.memberId)
-      const orgAppId = Number(target?.organizationApplicationId)
       const scheduleId = Number(target?.scheduleId)
+      // 개인형은 기관 맥락 미지원(BE: orgAppId 전송 시 400) — scheduleId 범위로만 대표 강사 지정
       if (
         !Number.isFinite(memberId) ||
         memberId <= 0 ||
-        !Number.isFinite(orgAppId) ||
-        orgAppId <= 0
+        !Number.isFinite(scheduleId) ||
+        scheduleId <= 0
       ) {
         showAlert({
           title: '안내',
-          content:
-            '대표 강사 변경에 필요한 instructorMemberId / organizationApplicationId가 없습니다.',
+          content: '대표 강사 변경에 필요한 instructorMemberId / scheduleId가 없습니다.',
         })
         return
       }
       try {
         await putRepresentativeInstructorRemote(program.id, {
           instructorMemberId: memberId,
-          organizationApplicationId: orgAppId,
-          ...(Number.isFinite(scheduleId) && scheduleId > 0 ? { scheduleId } : {}),
+          scheduleId,
         })
         await assignment.invalidate()
       } catch {
@@ -276,9 +277,9 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           align: 'center',
           render: (status: ParticipatingIndividualInstructorWaitingScheduleRow['assignmentStatus']) => (
             <span
-              className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status === 'unavailable' ? 'cancelled' : status}`}
+              className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status === 'unavailable' || status === 'assignment_cancelled' ? 'cancelled' : status}`}
             >
-              {WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status]}
+              {PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS[status]}
             </span>
           ),
         },
@@ -312,7 +313,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         lectureLocation: row.lectureLocation,
         distanceFromHome: row.distanceFromHome,
         scheduleLabel: row.scheduleLabel,
-        assignmentStatus: WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[row.assignmentStatus],
+        assignmentStatus: PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS[row.assignmentStatus],
         assignedInstructorCountLabel: row.assignedInstructorCountLabel,
       })),
     [waitingSchedules]
@@ -388,14 +389,6 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             })
             return false
           }
-          const orgAppId = Number(waitingRow.organizationApplicationId)
-          if (!Number.isFinite(orgAppId) || orgAppId <= 0) {
-            showAlert({
-              title: '안내',
-              content: `${waitingRow.lectureLocation} — organizationApplicationId가 없어 배정할 수 없습니다.`,
-            })
-            return false
-          }
           const session =
             waitingRow.sessions?.find(
               item => resolveAssignableSchedulePayloadFromSession(item) != null
@@ -417,7 +410,6 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           await createInstructorAssignmentRemote(program.id, {
             instructorMemberId: memberId,
             ...schedulePayload,
-            organizationApplicationId: orgAppId,
             instructorApplicationId: waitingRow.instructorApplicationId
               ? Number(waitingRow.instructorApplicationId)
               : instructor.instructorApplicationId
@@ -604,7 +596,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <ExcelButton onClick={exportAssignedExcel} loading={isAssignedExcelExporting} />
           </div>
         </div>
-        <div className="participating-institutions-section__table-wrap">
+        <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
           <CmsDataTable<ParticipatingIndividualInstructorAssignedScheduleRow>
             className="participating-institutions-section__table cms-data-table"
             rowKey="id"
@@ -657,7 +649,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             emptyTitle={WAITING_EMPTY_TEXT}
             emptyDescription={null}
             rowClassName={record =>
-              record.assignmentStatus === 'unavailable'
+              record.assignmentStatus === 'unavailable' ||
+              record.assignmentStatus === 'assignment_cancelled'
                 ? 'school-detail-fullpage-view__waiting-row--unavailable'
                 : ''
             }
