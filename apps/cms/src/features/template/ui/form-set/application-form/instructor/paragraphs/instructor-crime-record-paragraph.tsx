@@ -44,7 +44,7 @@ export function InstructorCrimeRecordParagraph({
         ]
           .filter(Boolean)
           .join(' ')}
-        size="large"
+        size="medium"
         value={!displayOnly && confirmed ? CONFIRMED_VALUE : undefined}
         onChange={e => {
           if (displayOnly) return

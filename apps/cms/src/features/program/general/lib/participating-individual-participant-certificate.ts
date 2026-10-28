@@ -8,10 +8,7 @@ import { resolveStudentCertificateKind } from '@/features/program/general/lib/re
 import type { Program } from '@/types/domain'
 import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { mapApiBirthDateToDisplay } from '@/features/program/general/api/adapters/student-roster-adapters'
-import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
-import { fetchIndividualApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
-import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { queryClient } from '@/shared/lib/query-client'
+import { unmaskIndividualParticipantForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 
 export function toParticipatingParticipantCertificateStudent(
   participant: ParticipatingIndividualParticipantRow
@@ -28,37 +25,12 @@ export function toParticipatingParticipantCertificateStudent(
 }
 
 /**
- * 목록 응답 `birthDate`가 없을 때(백엔드 미배포 환경)만 개인 신청 상세(`profile`)에서 보강한다.
- * 상세 조회 실패 시 원본 행을 그대로 쓴다.
+ * 발급 직전 개인정보 원문 조회. 조회 이력 목적은 `증명서 발급`.
  */
 export async function hydrateParticipatingParticipantCertificateProfile(
   participant: ParticipatingIndividualParticipantRow
 ): Promise<ParticipatingIndividualParticipantRow> {
-  if (participant.detail?.birthDate?.trim()) return participant
-  const applicationId = participant.individualApplicationId?.trim()
-  if (!applicationId) return participant
-
-  try {
-    const dto = await queryClient.fetchQuery({
-      queryKey: generalApplicationsQueryKeys.individualDetail(applicationId),
-      queryFn: () => fetchIndividualApplicationDetailRemote(applicationId),
-      staleTime: 30_000,
-      retry: false,
-    })
-    const birthDate = dto.profile?.birthDate?.trim()
-    const gender = toGenderLabelOrRaw(dto.profile?.gender)
-    if (!birthDate && !gender) return participant
-    return {
-      ...participant,
-      detail: {
-        ...participant.detail,
-        birthDate: birthDate || participant.detail?.birthDate,
-        gender: participant.detail?.gender || gender,
-      },
-    }
-  } catch {
-    return participant
-  }
+  return unmaskIndividualParticipantForCertificateIssue(participant)
 }
 
 export function buildParticipatingParticipantCertificateContext(input: {

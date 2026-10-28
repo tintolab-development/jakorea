@@ -2,7 +2,10 @@ import type { Editor } from '@tiptap/core'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 
 export const RICH_TEXT_MAX_TEXT_CHARACTERS = 50_000
-export const RICH_TEXT_IMAGE_MAX_TOTAL_BYTES = 20 * 1024 * 1024
+/** 에디터 본문에 들어간 이미지 용량 합계 */
+export const RICH_TEXT_IMAGE_MAX_TOTAL_BYTES = 100 * 1024 * 1024
+/** 에디터 본문에 넣을 수 있는 이미지 수 */
+export const RICH_TEXT_IMAGE_MAX_COUNT = 10
 
 const segmenter =
   typeof Intl !== 'undefined' && 'Segmenter' in Intl
@@ -50,6 +53,14 @@ export function getRichTextImageTotalBytes(editor: Editor): number {
     total += getRichTextImageFileSize(node)
   })
   return total
+}
+
+export function getRichTextImageCount(editor: Editor): number {
+  let count = 0
+  editor.state.doc.descendants(node => {
+    if (node.type.name === 'image') count += 1
+  })
+  return count
 }
 
 export function formatRichTextBytes(bytes: number): string {

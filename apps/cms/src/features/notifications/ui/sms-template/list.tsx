@@ -622,6 +622,8 @@ export function SmsTemplateList() {
               subject: draft.subject,
               bodyText: draft.bodyText,
               newFiles: draft.newFiles,
+              removedAttachmentIds: draft.removedAttachmentIds,
+              remainingAttachments: draft.remainingAttachments,
             })
             clearTreeSearchAfterMutation()
           }

@@ -3,7 +3,10 @@ import { Spin } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { downloadSmsSendHistoryAttachment } from '@/features/notifications/model/sms-send-history/download-attachment'
-import type { SmsSendHistoryRow } from '@/features/notifications/model/sms-send-history/types'
+import type {
+  SmsSendHistoryAttachment,
+  SmsSendHistoryRow,
+} from '@/features/notifications/model/sms-send-history/types'
 import { NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT } from '@/features/notifications/model/shared/send-ux-copy'
 import { formatSmsMessageTypeLabel } from '@/features/notifications/api/adapters/sms-channel'
 import './detail-modal.css'
@@ -58,7 +61,7 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
   const templateName = row?.templateName.trim() ? row.templateName : '미사용'
   const showSubject = row != null && row.messageType !== 'SMS'
   const showAttachments = row?.messageType === 'MMS'
-  const attachments =
+  const attachments: SmsSendHistoryAttachment[] =
     row?.attachments && row.attachments.length > 0
       ? row.attachments
       : (row?.attachmentFileNames ?? []).map(fileName => ({ fileName }))
@@ -138,8 +141,8 @@ export function DetailModal({ open, row, loading, onClose }: DetailModalProps) {
                 <span className="sms-send-history-detail-modal__attachments-label">첨부파일</span>
                 {attachments.length > 0 ? (
                   <ul className="sms-send-history-detail-modal__attachment-list">
-                    {attachments.map(item => (
-                      <li key={item.fileName}>
+                    {attachments.map((item, index) => (
+                      <li key={`${item.fileName}-${index}`}>
                         <button
                           type="button"
                           className="sms-send-history-detail-modal__attachment-link"

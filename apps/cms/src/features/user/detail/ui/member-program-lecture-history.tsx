@@ -589,15 +589,6 @@ export function MemberProgramLectureHistory({
     }
   )
 
-  const emptyTableText =
-    mode === 'schoolProgramParticipation'
-      ? '프로젝트 수강 이력이 없습니다.'
-      : mode === 'studentEnrollment'
-        ? '프로그램 수강 이력이 없습니다.'
-        : mode === 'volunteerProgram'
-          ? '봉사 프로그램 참여 이력이 없습니다.'
-          : '프로그램 강의 이력이 없습니다.'
-
   const tableDataSource: (Application | UserHistory)[] = tableData as (Application | UserHistory)[]
 
   const tableOnRow = useMemo((): TableProps<Application | UserHistory>['onRow'] => {
@@ -747,9 +738,6 @@ export function MemberProgramLectureHistory({
             columns={columns as ColumnsType<Application | UserHistory>}
             rowKey="id"
             pagination={false}
-            locale={{
-              emptyText: loading ? undefined : emptyTableText,
-            }}
             onRow={tableOnRow}
           />
         </div>

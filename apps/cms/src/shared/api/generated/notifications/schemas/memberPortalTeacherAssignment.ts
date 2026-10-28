@@ -5,12 +5,20 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberPortalTeacherAssignmentItem } from './memberPortalTeacherAssignmentItem';
+import type { MemberPortalTeacherAssignmentSourceApplicationType } from './memberPortalTeacherAssignmentSourceApplicationType';
 import type { MemberPortalTeacherAssignmentTextbook } from './memberPortalTeacherAssignmentTextbook';
 
 /**
- * 교사 회원의 ORGANIZATION 교육 상세에서만 제공되는 배정·교재 보조 projection. 강사 목록과 동의서는 assigned-instructors API가 정본이며, 교재는 신청별 스냅샷입니다.
+ * 회원 포탈 신청 상세의 강사 배정·교재 보조 projection. ORGANIZATION은 신청별 교재를 유지하며, INDIVIDUAL은 동일 회원·동일 프로그램의 INSTRUCTOR 신청에 연결된 활성 배정을 assignments로 제공합니다. 동의서 원본은 assigned-instructors API 정책을 따르며 개인 신청에는 자동 노출하지 않습니다.
  */
 export interface MemberPortalTeacherAssignment {
-  /** 신청별 교재가 있으면 반환합니다. 없거나 NOT_APPLICABLE이면 null. */
+  /** ORGANIZATION 신청에 저장된 교재가 있으면 반환합니다. 개인 신청에는 null이며, 없거나 NOT_APPLICABLE이면 null. */
   textbook?: MemberPortalTeacherAssignmentTextbook | null;
+  /** 개인 신청에서 배정의 원본 신청 유형. CASE_D 연결 시 INSTRUCTOR이며 그 외에는 null. */
+  sourceApplicationType?: MemberPortalTeacherAssignmentSourceApplicationType;
+  /** 개인 신청에서 배정의 원본 INSTRUCTOR 신청 ID. 연결된 배정이 없으면 null. */
+  sourceApplicationId?: number | null;
+  /** 개인 신청에 연결된 활성 강사 배정 목록. 없으면 빈 배열이며 다른 회원·프로그램·취소·대체·반려 배정은 포함하지 않습니다. */
+  assignments?: MemberPortalTeacherAssignmentItem[];
 }

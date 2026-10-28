@@ -43,6 +43,8 @@ export const ADMIN_FILE_OWNER = {
   PROGRAM: { ownerDomain: 'PROGRAM', ownerType: 'PROGRAM' },
   PROGRAM_APPLICATION: { ownerDomain: 'PROGRAM', ownerType: 'APPLICATION' },
   SMS_TEMPLATE: { ownerDomain: 'NOTIFICATION', ownerType: 'SMS_TEMPLATE' },
+  /** 문자 발송 화면 MMS 요청 첨부 — ownerId null (배치 생성 전 업로드) */
+  MMS_BATCH: { ownerDomain: 'NOTIFICATION', ownerType: 'MMS_BATCH' },
   SETTLEMENT: { ownerDomain: 'SETTLEMENT', ownerType: 'SUBMISSION' },
   CERTIFICATE_TEMPLATE: { ownerDomain: 'CONTENT', ownerType: 'CERTIFICATE_TEMPLATE' },
   INSTRUCTOR_APPLICATION: { ownerDomain: 'PROGRAM', ownerType: 'INSTRUCTOR_APPLICATION' },
@@ -67,7 +69,8 @@ export function buildAdminFileOwner(
  * OpenAPI `FileUploadPrepareRequest.ownerId` — upload-first draft null 허용 조합.
  * CONTENT/NOTICE + NOTICE_ATTACHMENT|NOTICE_INLINE_IMAGE,
  * CONTENT/FAQ + FAQ_INLINE_IMAGE,
- * PROGRAM_CONTENT/PROGRAM + PROGRAM_THUMBNAIL|PROGRAM_DETAIL_ATTACHMENT|PROGRAM_INLINE_IMAGE
+ * PROGRAM_CONTENT/PROGRAM + PROGRAM_THUMBNAIL|PROGRAM_DETAIL_ATTACHMENT|PROGRAM_INLINE_IMAGE,
+ * NOTIFICATION/MMS_BATCH + MMS_IMAGE (문자 발송 요청 첨부)
  */
 export function adminFileUploadAllowsNullOwnerId(owner: Pick<
   AdminFileUploadOwner,
@@ -85,6 +88,13 @@ export function adminFileUploadAllowsNullOwnerId(owner: Pick<
     return true
   }
   if (domain === 'CONTENT' && type === 'FAQ' && purpose === ADMIN_FILE_PURPOSE.FAQ_INLINE_IMAGE) {
+    return true
+  }
+  if (
+    domain === ADMIN_FILE_OWNER.MMS_BATCH.ownerDomain &&
+    type === ADMIN_FILE_OWNER.MMS_BATCH.ownerType &&
+    purpose === ADMIN_FILE_PURPOSE.MMS_IMAGE
+  ) {
     return true
   }
   return (

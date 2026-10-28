@@ -34,4 +34,8 @@ export interface InstructorAssignRequest {
   lectureFeeAmountSnapshot?: number;
   /** 숙박 승인 여부 */
   lodgingApprovedYn?: boolean;
+  /** 배정 완료 알림. IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE */
+  timing?: string;
+  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
 }

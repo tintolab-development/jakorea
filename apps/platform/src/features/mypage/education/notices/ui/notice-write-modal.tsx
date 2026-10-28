@@ -1,16 +1,22 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ProgramDetail } from '@/features/program'
 import type { ProgramApplicationType } from '../../applications/api/types'
-import { useCreateApplicationNoticeMutation } from '../../applications/api/activity-hooks'
+import {
+  useCreateApplicationNoticeMutation,
+  useUpdateApplicationNoticeMutation,
+} from '../../applications/api/activity-hooks'
+import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/member-file-upload'
+import type { EducationInProgressFile, EducationInProgressNotice } from '../model/types'
 import { deriveNoticeTitleFromHtml, isNoticeHtmlContentEmpty } from '../lib/derive-notice-title'
 import {
   NOTICE_ATTACH_ACCEPT,
   NOTICE_ATTACH_HINT,
   validateNoticeAttachmentFile,
   validateNoticeAttachmentsBatch,
+  PORTAL_PROGRAM_POST_INLINE_IMAGE_FILE_PURPOSE,
 } from '../lib/notice-attach-policy'
 import { resolvePortalNoticeWriteErrorMessage } from '../lib/notice-write-errors'
-import { noticeContentHasInlineImage } from '../lib/validate-notice-content'
+import { collectNoticeInlineImageFileObjectIds } from '../lib/validate-notice-content'
 import {
   buildPostWriteAudienceOptions,
   buildPostWriteVisibilityType,
@@ -37,6 +43,8 @@ type PendingAttachment = {
   file: File
 }
 
+const EMPTY_EXISTING_ATTACHMENTS: readonly EducationInProgressFile[] = []
+
 type EducationProgramNoticeWriteModalProps = {
   open: boolean
   onClose: () => void
@@ -44,7 +52,9 @@ type EducationProgramNoticeWriteModalProps = {
   applicationId: string
   program: ProgramDetail
   authorDisplayName: string
-  onCreated?: () => void
+  notice?: EducationInProgressNotice | null
+  existingAttachments?: readonly EducationInProgressFile[]
+  onSaved?: () => void
 }
 
 export function EducationProgramNoticeWriteModal({
@@ -54,10 +64,16 @@ export function EducationProgramNoticeWriteModal({
   applicationId,
   program,
   authorDisplayName: _authorDisplayName,
-  onCreated,
+  notice = null,
+  existingAttachments = EMPTY_EXISTING_ATTACHMENTS,
+  onSaved,
 }: EducationProgramNoticeWriteModalProps) {
+  const editing = notice != null
   const [audience, setAudience] = useState<PostWriteAudienceApiKey[]>(() =>
     defaultPostWriteAudience(program)
+  )
+  const [existingAttachmentItems, setExistingAttachmentItems] = useState<EducationInProgressFile[]>(
+    []
   )
   const [attachments, setAttachments] = useState<PendingAttachment[]>([])
   const [attachError, setAttachError] = useState<string | null>(null)
@@ -69,28 +85,40 @@ export function EducationProgramNoticeWriteModal({
     if (open) setEditorEpoch(epoch => epoch + 1)
   }, [open])
 
-  const editorResetKey = useMemo(
-    () => (open ? `education-notice-write-${applicationId}-${editorEpoch}` : 'closed'),
-    [open, applicationId, editorEpoch]
-  )
+  const noticeId = notice?.id ?? ''
+  const editorResetKey = open
+    ? `education-notice-${editing ? `edit-${noticeId}` : 'write'}-${applicationId}-${editorEpoch}`
+    : 'closed'
+
+  const resolveNoticeImageSrc = useCallback(async (file: File) => {
+    const fileObjectId = await uploadMemberPortalFile({
+      file,
+      filePurpose: PORTAL_PROGRAM_POST_INLINE_IMAGE_FILE_PURPOSE,
+    })
+    const referenceToken = `file-object:${fileObjectId}`
+    return { src: referenceToken, persistSrc: referenceToken }
+  }, [])
 
   const { editor, api } = useRichTextEditor({
     enabled: open,
-    initialContent: '',
+    initialContent: notice?.content ?? '',
     contentFormat: 'html',
     placeholder: '안내사항을 입력해 주세요.',
     resetKey: editorResetKey,
+    resolveImageSrc: resolveNoticeImageSrc,
   })
 
   const createMutation = useCreateApplicationNoticeMutation(applicationType, applicationId)
+  const updateMutation = useUpdateApplicationNoticeMutation(applicationType, applicationId)
 
   useEffect(() => {
     if (!open) return
     setAudience(defaultPostWriteAudience(program))
+    setExistingAttachmentItems([...existingAttachments])
     setAttachments([])
     setAttachError(null)
     setAlertMessage(null)
-  }, [open, program])
+  }, [editing, existingAttachments, open, program])
 
   const toggleAudience = (value: PostWriteAudienceApiKey, checked: boolean) => {
     setAudience(prev => {
@@ -106,7 +134,10 @@ export function EducationProgramNoticeWriteModal({
       return
     }
     const batchError = validateNoticeAttachmentsBatch(
-      attachments.map(item => item.file),
+      [
+        ...existingAttachmentItems.map(item => ({ size: item.fileSizeBytes })),
+        ...attachments.map(item => item.file),
+      ],
       [file]
     )
     if (batchError) {
@@ -121,6 +152,10 @@ export function EducationProgramNoticeWriteModal({
     setAttachments(prev => prev.filter(item => item.id !== id))
   }
 
+  const handleRemoveExistingFile = (id: string) => {
+    setExistingAttachmentItems(prev => prev.filter(item => item.id !== id))
+  }
+
   const handleSubmit = async () => {
     if (audience.length === 0) {
       setAlertMessage('게시글 공개 범위를 선택해 주세요.')
@@ -132,8 +167,20 @@ export function EducationProgramNoticeWriteModal({
       setAlertMessage('안내사항 내용을 입력해 주세요.')
       return
     }
-    if (noticeContentHasInlineImage(content)) {
-      setAlertMessage('본문에 이미지를 넣을 수 없습니다. 파일 첨부를 이용해 주세요.')
+    const inlineImageFileObjectIds = collectNoticeInlineImageFileObjectIds(content)
+    if (inlineImageFileObjectIds == null) {
+      setAlertMessage('본문 이미지는 파일로 삽입해 주세요.')
+      return
+    }
+
+    const attachmentFileObjectIds = existingAttachmentItems.flatMap(file => {
+      const fileObjectId = file.fileObjectId
+      return typeof fileObjectId === 'number' && Number.isInteger(fileObjectId) && fileObjectId > 0
+        ? [fileObjectId]
+        : []
+    })
+    if (editing && attachmentFileObjectIds.length !== existingAttachmentItems.length) {
+      setAlertMessage('기존 첨부파일 정보를 확인하지 못했습니다. 새로고침 후 다시 시도해 주세요.')
       return
     }
 
@@ -152,71 +199,88 @@ export function EducationProgramNoticeWriteModal({
     }
 
     try {
-      await createMutation.mutateAsync({
-        title,
-        content,
-        visibilityType,
-        organizationApplicationId: orgId,
-        attachmentFiles: attachments.map(item => item.file),
-      })
-      onCreated?.()
+      if (editing) {
+        await updateMutation.mutateAsync({
+          postId: notice.id,
+          content,
+          inlineImageFileObjectIds,
+          attachmentFileObjectIds,
+          attachmentFiles: attachments.map(item => item.file),
+        })
+      } else {
+        await createMutation.mutateAsync({
+          title,
+          content,
+          visibilityType,
+          organizationApplicationId: orgId,
+          attachmentFiles: attachments.map(item => item.file),
+          inlineImageFileObjectIds,
+        })
+      }
+      onSaved?.()
       onClose()
     } catch (error) {
       setAlertMessage(resolvePortalNoticeWriteErrorMessage(error))
     }
   }
 
-  const submitting = createMutation.isPending
+  const submitting = createMutation.isPending || updateMutation.isPending
 
   return (
     <>
       <PFModal
         open={open}
         onClose={submitting ? () => {} : onClose}
-        title="안내사항 작성하기"
+        title={editing ? '안내사항 수정하기' : '안내사항 작성하기'}
         size="lg"
         mobilePlacement="full"
         className={styles.modal}
         closeOnBackdropClick={!submitting}
       >
         <div className={styles.body}>
-          <div className={styles.audienceField}>
-            <div className={styles.audienceLabel}>
-              <PFText
-                as="span"
-                typo="label-md"
-                color="neutral-warm-600"
-                className={styles.audienceLabelText}
-              >
-                게시글 공개 범위
-              </PFText>
-              <PFText
-                as="span"
-                typo="bd-lg-sb"
-                color="error"
-                className={styles.audienceLabelRequired}
-                aria-hidden
-              >
-                *
-              </PFText>
-            </div>
-            <div className={styles.audienceChecks}>
-              {audienceOptions.map(option => (
-                <PFCheckbox
-                  className={styles.audienceCheck}
-                  key={option.value}
-                  size="large"
-                  checked={audience.includes(option.value)}
-                  onChange={event => toggleAudience(option.value, event.target.checked)}
+          {!editing ? (
+            <div className={styles.audienceField}>
+              <div className={styles.audienceLabel}>
+                <PFText
+                  as="span"
+                  typo="label-md"
+                  color="neutral-warm-600"
+                  className={styles.audienceLabelText}
                 >
-                  {option.label}
-                </PFCheckbox>
-              ))}
+                  게시글 공개 범위
+                </PFText>
+                <PFText
+                  as="span"
+                  typo="bd-lg-sb"
+                  color="error"
+                  className={styles.audienceLabelRequired}
+                  aria-hidden
+                >
+                  *
+                </PFText>
+              </div>
+              <div className={styles.audienceChecks}>
+                {audienceOptions.map(option => (
+                  <PFCheckbox
+                    className={styles.audienceCheck}
+                    key={option.value}
+                    size="large"
+                    checked={audience.includes(option.value)}
+                    onChange={event => toggleAudience(option.value, event.target.checked)}
+                  >
+                    {option.label}
+                  </PFCheckbox>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <div className={styles.editorWrap}>
-            <PfRichTextEditor editor={editor} />
+            <PfRichTextEditor
+              editor={editor}
+              allowImageUrl={false}
+              resolveImageSrc={resolveNoticeImageSrc}
+            />
           </div>
 
           <section className={styles.attachSection} aria-label="파일 첨부">
@@ -240,8 +304,26 @@ export function EducationProgramNoticeWriteModal({
                 '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
               ]}
             />
-            {attachments.length > 0 ? (
+            {existingAttachmentItems.length > 0 || attachments.length > 0 ? (
               <ul className={styles.attachList} aria-label="첨부된 파일">
+                {existingAttachmentItems.map(file => (
+                  <li key={file.id} className={styles.attachListRow}>
+                    <PFText
+                      as="span"
+                      typo="bd-md-md"
+                      color="black"
+                      className={styles.attachFileName}
+                      title={file.fileName}
+                    >
+                      {file.fileName}
+                    </PFText>
+                    <PFItemDeleteButton
+                      aria-label={`${file.fileName} 삭제`}
+                      disabled={submitting}
+                      onClick={() => handleRemoveExistingFile(file.id)}
+                    />
+                  </li>
+                ))}
                 {attachments.map(item => (
                   <li key={item.id} className={styles.attachListRow}>
                     <PFText
@@ -283,7 +365,7 @@ export function EducationProgramNoticeWriteModal({
               disabled={submitting}
               onClick={() => void handleSubmit()}
             >
-              {submitting ? '등록 중…' : '등록'}
+              {submitting ? (editing ? '수정 중…' : '등록 중…') : editing ? '수정' : '등록'}
             </PFButton>
           </div>
         </div>

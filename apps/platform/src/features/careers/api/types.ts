@@ -147,6 +147,7 @@ export type PublicCareerTalentApplicationCreateRequest = {
   privacyAgreed: true
   /** confirm 완료된 careers 첨부 asset. 없으면 키 생략 */
   attachmentAssetId?: number
+  attachmentAssetIds?: number[]
 }
 
 export type PublicCareerTalentApplicationCreateResponse = {

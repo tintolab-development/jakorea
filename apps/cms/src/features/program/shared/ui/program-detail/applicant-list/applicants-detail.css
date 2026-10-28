@@ -62,8 +62,16 @@
 }
 
 /* 교육받은 교사·1사1교 기관 목록 — 일정 한 줄이 말줄임되지 않게 열 폭을 고정 */
-.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-sessions--schedule,
-.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-sessions--schedule {
+.applicant-details
+  .cms-data-table
+  .ant-table-thead
+  > tr
+  > th.applicant-details__th-sessions--schedule,
+.applicant-details
+  .cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.applicant-details__td-sessions--schedule {
   width: 400px !important;
   min-width: 400px !important;
   max-width: none !important;
@@ -71,8 +79,16 @@
 }
 
 /* 일반 프로그램 기관 신청 목록 — legacy 일정 열 480px */
-.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-sessions--general-detail,
-.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-sessions--general-detail {
+.applicant-details
+  .cms-data-table
+  .ant-table-thead
+  > tr
+  > th.applicant-details__th-sessions--general-detail,
+.applicant-details
+  .cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.applicant-details__td-sessions--general-detail {
   width: 480px !important;
   min-width: 480px !important;
   max-width: none !important;
@@ -81,7 +97,9 @@
 
 .applicant-details__td-sessions--schedule .applicant-details__sessions-cell,
 .applicant-details__td-sessions--schedule .applicant-details__session-line--nowrap,
-.applicant-details__td-sessions--schedule .applicant-details__session-line--nowrap .program-detail-td-segment-wrap,
+.applicant-details__td-sessions--schedule
+  .applicant-details__session-line--nowrap
+  .program-detail-td-segment-wrap,
 .applicant-details__td-sessions--schedule
   .applicant-details__session-line--nowrap
   .program-detail-td-segment-wrap
@@ -89,7 +107,9 @@
 .applicant-details__td-sessions--general-detail .applicant-details__sessions-cell,
 .applicant-details__td-sessions--general-detail .applicant-details__session-line,
 .applicant-details__td-sessions--general-detail .general-detail-session-line,
-.applicant-details__td-sessions--general-detail .applicant-details__session-line .program-detail-td-segment-wrap,
+.applicant-details__td-sessions--general-detail
+  .applicant-details__session-line
+  .program-detail-td-segment-wrap,
 .applicant-details__td-sessions--general-detail
   .applicant-details__session-line
   .program-detail-td-segment-wrap
@@ -125,12 +145,20 @@
   text-align: center;
 }
 
-.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions--center .applicant-details__sessions-cell {
+.applicant-details
+  .ant-table-tbody
+  > tr
+  > td.applicant-details__td-sessions--center
+  .applicant-details__sessions-cell {
   align-items: center;
   text-align: center;
 }
 
-.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions--center .applicant-details__session-line {
+.applicant-details
+  .ant-table-tbody
+  > tr
+  > td.applicant-details__td-sessions--center
+  .applicant-details__session-line {
   justify-content: center;
 }
 
@@ -155,7 +183,7 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);

@@ -9,6 +9,7 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -53,7 +54,7 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'search',
     label: '신청 기관명',
     placeholder: '기관명을 입력하세요',
-    width: '25%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   createInstitutionAddressRegionFilterField(),
   {
@@ -61,7 +62,7 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'select',
     label: '승인 현황',
     placeholder: '전체',
-    width: '25%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
       { label: '승인', value: 'APPROVED' },
@@ -74,7 +75,7 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'search',
     label: '담당 교사명',
     placeholder: '교사명을 입력하세요',
-    width: '25%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
 ]
 

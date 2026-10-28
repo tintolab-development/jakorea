@@ -21,7 +21,7 @@ import {
 } from './timeline-row'
 import './resume.css'
 
-export const INSTRUCTOR_RESUME_NO_DATA = '데이터 없음'
+export const INSTRUCTOR_RESUME_NO_DATA = '-'
 /** 카드 본문·필드 빈 값 표시 */
 export { INSTRUCTOR_RESUME_EMPTY_DISPLAY }
 
@@ -87,10 +87,7 @@ function resolveFinalSchoolName(
 }
 
 /** 학교 구분만 — 졸업·재학 등 상태 제외 */
-export function getEducationSchoolTypeLabel(
-  educationLevel?: string,
-  schoolType?: string
-): string {
+export function getEducationSchoolTypeLabel(educationLevel?: string, schoolType?: string): string {
   if (schoolType?.trim()) {
     return getEducationLevelBadge(undefined, schoolType.trim())
   }
@@ -109,7 +106,9 @@ export type FinalEducationDisplay = {
 }
 
 /** 학력 카드 — 최종 학교 1행 (학교명·기간·전공, 상태 미노출) */
-export function resolveFinalEducationDisplay(d: ApplicantInstructorRow): FinalEducationDisplay | null {
+export function resolveFinalEducationDisplay(
+  d: ApplicantInstructorRow
+): FinalEducationDisplay | null {
   const final = resolveFinalEducationItem(d)
   const schoolName = resolveFinalSchoolName(d, final)
   if (!schoolName) return null
@@ -183,9 +182,7 @@ export function formatCareerPeriod(item: ApplicantInstructorCareerDetail): strin
   return `${start} ~ ${end}${durationLabel}`
 }
 
-export function getTotalCareerMonths(
-  items: ApplicantInstructorCareerDetail[] | undefined
-): number {
+export function getTotalCareerMonths(items: ApplicantInstructorCareerDetail[] | undefined): number {
   if (!items?.length) return 0
   const today = dayjs()
   let totalMonths = 0
@@ -268,7 +265,9 @@ export function instructorAwardsSectionDescription(d: ApplicantInstructorRow): s
 }
 
 export function InstructorResumeEducationCardBody({ d }: { d: ApplicantInstructorRow }) {
-  const items = (d.educations ?? []).filter(item => item.schoolName?.trim() || item.schoolType?.trim())
+  const items = (d.educations ?? []).filter(
+    item => item.schoolName?.trim() || item.schoolType?.trim()
+  )
 
   if (items.length > 1) {
     return (
@@ -431,7 +430,7 @@ export function InstructorResumeFreeWritingSections({ d }: { d: ApplicantInstruc
             className="instructor-resume-section instructor-resume-section--free-writing"
           >
             <div className="info-section-title">{spec.title}</div>
-            <div className="instructor-resume-free-writing-card">
+            <div className="instructor-resume-card">
               <p className="instructor-resume-free-writing-text">{text}</p>
             </div>
           </section>

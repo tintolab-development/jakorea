@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import type { Program } from '@/types/domain'
 import {
@@ -29,6 +30,25 @@ describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
     expect(
       mapTrainedTeacherListItemToProgram({ id: 186001, periodStatus: 'COMPLETED' }).lifecycleStatus
     ).toBe('completed')
+  })
+
+  it('maps createdByName and updatedByName from list and detail JSON', () => {
+    const listed = mapTrainedTeacherListItemToProgram({
+      id: 186034,
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as AdminProgramListItemDto)
+    const detail = mapTrainedTeacherDetailToProgram({
+      id: '186034',
+      title: '교육받은 교사',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as ProgramResponse)
+
+    expect(listed.createdByName).toBe('곽도규')
+    expect(listed.updatedByName).toBe('김도영')
+    expect(detail.createdByName).toBe('곽도규')
+    expect(detail.updatedByName).toBe('김도영')
   })
 
   it('echoes detail textbookName / managerName / venue from list GET', () => {

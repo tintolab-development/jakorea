@@ -15,7 +15,7 @@ export function UjatProgramApplicationVolunteerEducationExperienceParagraph() {
     <div className="multiple-choice-body">
       <CmsRadioGroup
         className="multiple-choice-radio-group multiple-choice-radio-group--inline"
-        size="large"
+        size="medium"
         value={hasExperience}
         onChange={e => setHasExperience(e.target.value as 'no' | 'yes')}
       >

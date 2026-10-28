@@ -44,8 +44,10 @@ export const NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS = new Set([
   'UJAT 프로그램 기관 일정 확인 현황',
   'UJAT 프로그램 기관 일정 수정사항',
   'UJAT 봉사자 출석 현황',
-  '프로그램 수료 현황',
   '피드백 내용',
+  '탈퇴 처리일시',
+  '강사 권한 반려일시',
+  '신청 반려 사유',
 ])
 
 /** Create.variables / 수신자 variables에 넣으면 NOTIFICATION_SERVER_RESERVED_VARIABLE */
@@ -57,7 +59,7 @@ export const NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS = new Set([
   '담당교사명',
 ])
 
-const PROGRAM_CONTEXT_KEYS = new Set(['프로그램명', '소속명', '담당교사명'])
+export type AlimtalkCatalogSourceMode = 'SERVER_RESOLVED' | 'MANUAL_ALLOWED' | 'EVENT_ONLY'
 
 export type AlimtalkVariableCatalogEntry = {
   key: string
@@ -65,6 +67,7 @@ export type AlimtalkVariableCatalogEntry = {
   categoryCode?: string
   enabled?: boolean
   requiresProgram?: boolean
+  sourceMode?: AlimtalkCatalogSourceMode | null
 }
 
 export type AlimtalkPlaceholderDisposition =
@@ -81,6 +84,8 @@ type RecipientLike = {
   name?: string
   phone?: string
   email?: string
+  memberType?: string
+  participationType?: string
   variables?: Record<string, string> | null
 }
 
@@ -93,18 +98,171 @@ export function isDirectAlimtalkRecipient(recipient: RecipientLike): boolean {
   )
 }
 
+export function normalizeAlimtalkCatalogSourceMode(
+  raw: string | null | undefined
+): AlimtalkCatalogSourceMode | null {
+  const value = raw?.trim().toUpperCase()
+  if (value === 'SERVER_RESOLVED' || value === 'MANUAL_ALLOWED' || value === 'EVENT_ONLY') {
+    return value
+  }
+  return null
+}
+
+/**
+ * 카탈로그 항목의 값 소스. sourceMode가 있으면 SSOT.
+ * 구버전(필드 없음)만 categoryCode=SYSTEM → EVENT_ONLY.
+ * 그 외 누락·알 수 없는 값은 null(fail-closed). MANUAL_ALLOWED로 추정하지 않는다.
+ */
+export function resolveAlimtalkCatalogSourceMode(
+  item: AlimtalkVariableCatalogEntry | null | undefined
+): AlimtalkCatalogSourceMode | null {
+  if (!item) return null
+  const fromField = normalizeAlimtalkCatalogSourceMode(item.sourceMode)
+  if (fromField) return fromField
+  if (item.categoryCode?.trim().toUpperCase() === 'SYSTEM') return 'EVENT_ONLY'
+  return null
+}
+
 export function isAlimtalkSystemVariableKey(
   key: string,
   catalog?: AlimtalkVariableCatalogEntry[] | null
 ): boolean {
   const trimmed = key.trim()
-  if (NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS.has(trimmed)) return true
   const item = findCatalogEntry(catalog, trimmed)
-  return item?.categoryCode?.trim().toUpperCase() === 'SYSTEM'
+  if (item) {
+    if (resolveAlimtalkCatalogSourceMode(item) === 'EVENT_ONLY') return true
+    return item.categoryCode?.trim().toUpperCase() === 'SYSTEM'
+  }
+  return NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS.has(trimmed)
+}
+
+/** CMS 수동 발송 불가. sourceMode=EVENT_ONLY가 SSOT. */
+export function isAlimtalkEventOnlyVariableKey(
+  key: string,
+  catalog?: AlimtalkVariableCatalogEntry[] | null
+): boolean {
+  const trimmed = key.trim()
+  const item = findCatalogEntry(catalog, trimmed)
+  if (item) return resolveAlimtalkCatalogSourceMode(item) === 'EVENT_ONLY'
+  return isAlimtalkSystemVariableKey(trimmed, catalog)
 }
 
 export function isAlimtalkReservedVariableKey(key: string): boolean {
   return NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS.has(key.trim())
+}
+
+export const ALIMTALK_MANUAL_LINK_PLACEHOLDER_KEY = '알림 링크 경로'
+
+/** BE NotificationManualLinkPath.MAX_LENGTH */
+const ALIMTALK_MANUAL_LINK_MAX_LENGTH = 200
+/** BE NotificationManualLinkPath.SAFE_RAW */
+const ALIMTALK_MANUAL_LINK_SAFE_RAW =
+  /^\/[A-Za-z0-9][A-Za-z0-9._~/-]{0,180}(?:\?[A-Za-z0-9._~=&%-]{1,120})?$/
+
+export type AlimtalkManualLinkErrorCode =
+  | 'empty'
+  | 'external'
+  | 'dot-dot'
+  | 'format'
+  | 'length'
+  | 'encoding'
+
+const ALIMTALK_MANUAL_LINK_ERROR_COPY: Record<AlimtalkManualLinkErrorCode, string> = {
+  empty: '슬래시(/)로 시작하는 올바른 내부 경로를 입력해 주세요.',
+  external: '외부 주소는 사용할 수 없습니다. 사이트 내부 경로를 입력해 주세요.',
+  'dot-dot': '상위 경로 이동(..)을 포함한 주소는 사용할 수 없습니다.',
+  format: '슬래시(/)로 시작하는 올바른 내부 경로를 입력해 주세요.',
+  length: '링크 경로는 200자 이하로 입력해 주세요.',
+  encoding: '허용되지 않는 문자 또는 인코딩이 포함되어 있습니다.',
+}
+
+function hasAsciiControlOrSpace(value: string): boolean {
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i)
+    if (code <= 32 || code === 127) return true
+  }
+  return false
+}
+
+function fullyPercentDecodeAlimtalkManualLink(value: string): string | null {
+  let current = value
+  for (let i = 0; i < 3; i += 1) {
+    try {
+      const decoded = decodeURIComponent(current.replaceAll('+', '%2B'))
+      if (decoded === current) return decoded
+      current = decoded
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
+function looksLikeExternalAlimtalkManualLink(value: string): boolean {
+  const lower = value.toLowerCase()
+  if (
+    lower.startsWith('javascript:') ||
+    lower.startsWith('data:') ||
+    lower.startsWith('vbscript:')
+  ) {
+    return true
+  }
+  if (value.startsWith('//')) return true
+  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return true
+  return false
+}
+
+/** BE NotificationManualLinkPath.validateOrNull 과 동일한 실패 사유. 값을 정규화해 통과시키지 않는다. */
+export function diagnoseAlimtalkManualLinkValue(value: string): {
+  code: AlimtalkManualLinkErrorCode
+  message: string
+} | null {
+  if (!value || value.trim().length === 0) {
+    return { code: 'empty', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.empty }
+  }
+  if (value.length > ALIMTALK_MANUAL_LINK_MAX_LENGTH) {
+    return { code: 'length', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.length }
+  }
+  if (looksLikeExternalAlimtalkManualLink(value)) {
+    return { code: 'external', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.external }
+  }
+  if (value.includes(':')) {
+    return { code: 'encoding', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.encoding }
+  }
+  if (value.includes('\\') || value.includes('//') || hasAsciiControlOrSpace(value)) {
+    return { code: 'encoding', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.encoding }
+  }
+  if (!ALIMTALK_MANUAL_LINK_SAFE_RAW.test(value)) {
+    return { code: 'format', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.format }
+  }
+  const decoded = fullyPercentDecodeAlimtalkManualLink(value)
+  if (decoded == null) {
+    return { code: 'encoding', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.encoding }
+  }
+  const lowerDecoded = decoded.toLowerCase()
+  if (
+    !decoded.startsWith('/') ||
+    decoded.includes('//') ||
+    decoded.includes('\\') ||
+    decoded.includes(':') ||
+    hasAsciiControlOrSpace(decoded) ||
+    lowerDecoded.includes('javascript') ||
+    lowerDecoded.startsWith('data:')
+  ) {
+    return { code: 'encoding', message: ALIMTALK_MANUAL_LINK_ERROR_COPY.encoding }
+  }
+  if (decoded.includes('..')) {
+    return { code: 'dot-dot', message: ALIMTALK_MANUAL_LINK_ERROR_COPY['dot-dot'] }
+  }
+  return null
+}
+
+export function formatAlimtalkManualLinkError(value: string): string | null {
+  return diagnoseAlimtalkManualLinkValue(value)?.message ?? null
+}
+
+export function isUnsafeAlimtalkManualLinkValue(value: string): boolean {
+  return diagnoseAlimtalkManualLinkValue(value) != null
 }
 
 function findCatalogEntry(
@@ -126,11 +284,10 @@ function isMemberWithActor(recipient: RecipientLike): boolean {
 /**
  * 템플릿 `#{키}` 하나를 서버 치환 / 수신자 직접 입력 / 발송 불가로 나눈다.
  *
- * 프로그램 미선택: 일반 변수는 회원·직접 입력 모두 수기 입력.
- * `enabled`·`requiresProgram`만으로 막지 않는다.
- * 특정 프로그램 선택: 카탈로그에서 허용된 변수만 서버 자동 매칭.
- * SYSTEM·서버 예약 키는 payload에 넣지 않고, 값 존재를 성공으로 보지 않는다.
- * 회원 actorId로 채우는 신원 키(회원명·이메일·휴대폰)만 프로그램 없이도 서버 치환이다.
+ * 카탈로그 미로드는 pending. 미등록 키는 프로그램 유무와 관계없이 blocked.
+ * sourceMode=EVENT_ONLY는 enabled(local QA)와 무관하게 blocked.
+ * MANUAL_ALLOWED만 수기 입력. SERVER_RESOLVED는 서버 공급(신원은 actorId 필요).
+ * sourceMode 누락은 SYSTEM 레거시 외 fail-closed.
  */
 export function classifyAlimtalkPlaceholderKey(input: {
   key: string
@@ -140,28 +297,28 @@ export function classifyAlimtalkPlaceholderKey(input: {
 }): AlimtalkPlaceholderDisposition {
   const key = input.key.trim()
   if (!key) return 'blocked'
-  const item = findCatalogEntry(input.catalog, key)
-  const member = isMemberWithActor(input.recipient)
-  const system = isAlimtalkSystemVariableKey(key, input.catalog)
-  const reserved = isAlimtalkReservedVariableKey(key)
+  if (input.catalog == null) return 'pending'
 
-  if (!input.programSelected) {
-    if (member && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) return 'server'
-    if (system || reserved) return 'blocked'
-    if (input.catalog == null) return 'pending'
+  const item = findCatalogEntry(input.catalog, key)
+  if (!item) return 'blocked'
+
+  const sourceMode = resolveAlimtalkCatalogSourceMode(item)
+  if (sourceMode === 'EVENT_ONLY') return 'blocked'
+  if (sourceMode == null) return 'blocked'
+
+  if (sourceMode === 'MANUAL_ALLOWED') {
+    if (item.enabled !== true) return 'blocked'
+    if (item.requiresProgram === true && !input.programSelected) return 'needs-program'
     return 'manual'
   }
 
-  if (system) return 'blocked'
-  if (member && ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) return 'server'
-  if (member && PROGRAM_CONTEXT_KEYS.has(key)) return 'server'
-  if (item?.requiresProgram === true && item.enabled === true) return 'server'
-  if (item?.requiresProgram === true && item.enabled !== true) return 'blocked'
-  if (item && item.enabled === true && member) return 'server'
-  if (item && item.enabled !== true) return 'blocked'
-  if (reserved) return 'blocked'
-  if (input.catalog == null) return 'pending'
-  return 'manual'
+  const member = isMemberWithActor(input.recipient)
+  if (ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS.has(key)) {
+    return member ? 'server' : 'blocked'
+  }
+  if (!input.programSelected && item.requiresProgram === true) return 'needs-program'
+  if (item.enabled !== true) return 'blocked'
+  return 'server'
 }
 
 function hasManualValue(
@@ -169,7 +326,11 @@ function hasManualValue(
   key: string
 ): boolean {
   const value = variables?.[key]
-  return typeof value === 'string' && value.trim().length > 0
+  if (typeof value !== 'string' || value.trim().length === 0) return false
+  if (key.trim() === ALIMTALK_MANUAL_LINK_PLACEHOLDER_KEY) {
+    return !isUnsafeAlimtalkManualLinkValue(value)
+  }
+  return true
 }
 
 export function alimtalkRecipientCoversPlaceholder(input: {
@@ -214,6 +375,7 @@ export type AlimtalkRecipientVariableGap = {
   id: string
   label: string
   manualMissing: string[]
+  unsafeManual: string[]
   blocked: string[]
   needsProgram: string[]
 }
@@ -237,6 +399,7 @@ export function collectAlimtalkRecipientVariableGaps<T extends VariableRecipient
   const gaps: AlimtalkRecipientVariableGap[] = []
   for (const recipient of input.recipients) {
     const manualMissing: string[] = []
+    const unsafeManual: string[] = []
     const blocked: string[] = []
     const needsProgram: string[] = []
     for (const key of keys) {
@@ -254,15 +417,33 @@ export function collectAlimtalkRecipientVariableGaps<T extends VariableRecipient
         blocked.push(key)
         continue
       }
-      if (disposition === 'manual' && !hasManualValue(recipient.variables, key)) {
-        manualMissing.push(key)
+      if (disposition === 'manual') {
+        const raw = recipient.variables?.[key]
+        if (
+          key === ALIMTALK_MANUAL_LINK_PLACEHOLDER_KEY &&
+          typeof raw === 'string' &&
+          raw.trim() &&
+          isUnsafeAlimtalkManualLinkValue(raw)
+        ) {
+          unsafeManual.push(key)
+          continue
+        }
+        if (!hasManualValue(recipient.variables, key)) manualMissing.push(key)
       }
     }
-    if (manualMissing.length === 0 && blocked.length === 0 && needsProgram.length === 0) continue
+    if (
+      manualMissing.length === 0 &&
+      unsafeManual.length === 0 &&
+      blocked.length === 0 &&
+      needsProgram.length === 0
+    ) {
+      continue
+    }
     gaps.push({
       id: recipient.id,
       label: gapLabel(recipient),
       manualMissing,
+      unsafeManual,
       blocked,
       needsProgram,
     })
@@ -296,6 +477,7 @@ export function formatAlimtalkPartialSendConfirm(input: {
   for (const gap of input.gaps.slice(0, 8)) {
     const reasons: string[] = []
     if (gap.manualMissing.length > 0) reasons.push(`값 없음: ${gap.manualMissing.join(', ')}`)
+    if (gap.unsafeManual.length > 0) reasons.push(`허용되지 않는 링크: ${gap.unsafeManual.join(', ')}`)
     if (gap.blocked.length > 0) reasons.push(`서버 전용 변수: ${gap.blocked.join(', ')}`)
     if (gap.needsProgram.length > 0) reasons.push(`프로그램 변수: ${gap.needsProgram.join(', ')}`)
     lines.push(`${gap.label} — ${reasons.join(' / ')}`)
@@ -313,6 +495,14 @@ export function formatAlimtalkRecipientVariableGapMessage(
   if (needsProgram.length > 0) {
     lines.push('프로그램 필수 변수가 있어 프로그램을 선택하세요.')
     lines.push(needsProgram.join(', '))
+  }
+  const unsafe = gaps.filter(gap => gap.unsafeManual.length > 0)
+  if (unsafe.length > 0) {
+    lines.push('허용되지 않는 링크는 사용할 수 없습니다. 사이트 내부 경로만 입력해 주세요.')
+    for (const gap of unsafe.slice(0, 8)) {
+      lines.push(`${gap.label}: ${gap.unsafeManual.join(', ')}`)
+    }
+    if (unsafe.length > 8) lines.push(`외 ${unsafe.length - 8}명`)
   }
   const blocked = gaps.filter(gap => gap.blocked.length > 0)
   if (blocked.length > 0) {
@@ -379,13 +569,19 @@ export function pickAlimtalkRecipientSendVariables(input: {
     ) {
       continue
     }
-    if (isAlimtalkReservedVariableKey(key) || isAlimtalkSystemVariableKey(key, input.catalog)) {
+    if (isAlimtalkEventOnlyVariableKey(key, input.catalog)) {
       continue
     }
     const value = input.recipient.variables?.[key]
     if (typeof value !== 'string') continue
     const trimmed = value.trim()
     if (!trimmed) continue
+    if (
+      key === ALIMTALK_MANUAL_LINK_PLACEHOLDER_KEY &&
+      isUnsafeAlimtalkManualLinkValue(trimmed)
+    ) {
+      continue
+    }
     next[key] = trimmed
   }
   return Object.keys(next).length > 0 ? next : undefined

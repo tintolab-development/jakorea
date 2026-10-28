@@ -27,6 +27,9 @@ export type TemplateSelectModalProps<T extends SendTemplatePickerItem> = {
   useButtonLabel?: string
   extraColumns?: ColumnsType<T>
   zIndex?: number
+  /** 알림톡만. 메일·문자 피커는 기본 false — 비활성 사유를 행에 상시 표시 */
+  showUnusableReasonInline?: boolean
+  getTemplateUnusableReason?: (template: T) => { summary: string; detail: string } | null
 }
 
 function matchesTemplateName(template: SendTemplatePickerItem, keyword: string): boolean {
@@ -51,6 +54,8 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
   useButtonLabel = '사용하기',
   extraColumns,
   zIndex,
+  showUnusableReasonInline = false,
+  getTemplateUnusableReason,
 }: TemplateSelectModalProps<T>) {
   const { showAlert } = useCmsAlert()
   const [keyword, setKeyword] = useState('')
@@ -112,38 +117,60 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
       render: (_, record) => {
         const canUse =
           (isUseEnabled?.(record) ?? true) && isTemplateUsable?.(record) !== false
+        const fallbackMessage =
+          showUnusableReasonInline && !canUse ? getTemplateUnusableMessage?.(record) : null
+        const reason =
+          showUnusableReasonInline && !canUse
+            ? (getTemplateUnusableReason?.(record) ??
+              (fallbackMessage
+                ? { summary: fallbackMessage, detail: fallbackMessage }
+                : null))
+            : null
+        const reasonId = reason ? `send-template-unusable-${record.id}` : undefined
         return (
           <div
             className="send-template-select-modal__row-actions"
             onClick={event => event.stopPropagation()}
           >
-            <CmsButton
-              type="button"
-              variant="default"
-              size="small"
-              width={80}
-              className="send-template-select-modal__action-btn send-template-select-modal__action-btn--preview"
-              onClick={event => {
-                event.stopPropagation()
-                onPreview(record)
-              }}
-            >
-              미리보기
-            </CmsButton>
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="small"
-              width={80}
-              className="send-template-select-modal__action-btn send-template-select-modal__action-btn--use"
-              disabled={!canUse}
-              onClick={event => {
-                event.stopPropagation()
-                handleUse(record)
-              }}
-            >
-              {useButtonLabel}
-            </CmsButton>
+            <div className="send-template-select-modal__row-actions-buttons">
+              <CmsButton
+                type="button"
+                variant="default"
+                size="small"
+                width={80}
+                className="send-template-select-modal__action-btn send-template-select-modal__action-btn--preview"
+                onClick={event => {
+                  event.stopPropagation()
+                  onPreview(record)
+                }}
+              >
+                미리보기
+              </CmsButton>
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="small"
+                width={80}
+                className="send-template-select-modal__action-btn send-template-select-modal__action-btn--use"
+                disabled={!canUse}
+                aria-describedby={reasonId}
+                onClick={event => {
+                  event.stopPropagation()
+                  handleUse(record)
+                }}
+              >
+                {useButtonLabel}
+              </CmsButton>
+            </div>
+            {reason ? (
+              <p
+                id={reasonId}
+                className="send-template-select-modal__unusable-reason"
+                title={reason.detail}
+              >
+                {reason.summary}
+              </p>
+            ) : null}
           </div>
         )
       },

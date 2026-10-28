@@ -99,6 +99,7 @@ import type {
   MemberLectureReportResponse,
   MemberPortalConsentSummary,
   MemberWorkflowResponse,
+  NotificationResendRequest,
   PageResponse,
   PageResponseAccountDirectoryItemResponse,
   PageResponseAdminAccountListItemResponse,
@@ -2046,9 +2047,12 @@ const resetPending = (
  */
 const resendNotification = (
     requestId: number,
+    notificationResendRequest?: NotificationResendRequest,
  options?: SecondParameter<typeof customInstance<InstructorRoleWorkflowResponse>>,) => {
       return customInstance<InstructorRoleWorkflowResponse>(
-      {url: `/api/admin/instructor-role-requests/${requestId}/resend-notification`, method: 'POST'
+      {url: `/api/admin/instructor-role-requests/${requestId}/resend-notification`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: notificationResendRequest
     },
       options);
     }
@@ -2597,9 +2601,12 @@ const resetAdminApprovalToPending = (
  */
 const resendAdminApprovalNotification = (
     adminAccountId: number,
+    notificationResendRequest?: NotificationResendRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminPermissionRequestNotificationResponse>>,) => {
       return customInstance<ApiResponseAdminPermissionRequestNotificationResponse>(
-      {url: `/api/admin/admin-approval-requests/${adminAccountId}/resend-notification`, method: 'POST'
+      {url: `/api/admin/admin-approval-requests/${adminAccountId}/resend-notification`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: notificationResendRequest
     },
       options);
     }

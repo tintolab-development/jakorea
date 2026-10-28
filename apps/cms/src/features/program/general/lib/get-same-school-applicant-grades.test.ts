@@ -19,7 +19,7 @@ function row(
 }
 
 describe('getSameSchoolApplicantGrades', () => {
-  it('같은 교육일의 다른 학년만 남긴다', () => {
+  it('교육일이 달라도 같은 기관의 승인된 다른 학년은 모두 남긴다', () => {
     const lead = row({
       id: '1691433',
       educationGrade: '1학년',
@@ -48,6 +48,6 @@ describe('getSameSchoolApplicantGrades', () => {
         '1691433',
         '1학년'
       ).map(item => item.id)
-    ).toEqual(['1691432'])
+    ).toEqual(['1691432', '1691431', '1691430'])
   })
 })

@@ -887,6 +887,8 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
     '승인된 기관 신청에만 교육 일정을 배정할 수 있습니다.',
   INVALID_NOTIFICATION_SCHEDULE:
     '알림 예약 일시가 올바르지 않습니다. 현재 시각 이후의 일시를 선택해 주세요.',
+  APPLICATION_ANNOUNCEMENT_DATE_NOT_CONFIGURED:
+    '프로그램 발표일이 설정되지 않아 발표일 발송을 예약할 수 없습니다. 발표일을 설정하거나 다른 발송 시점을 선택해 주세요.',
   TRAINED_TEACHER_ORGANIZATION_APPLICATION_NOT_FOUND:
     '교육받은 교사 기관 신청을 찾을 수 없습니다. 목록을 새로고침한 후 다시 시도해 주세요.',
   TRAINED_TEACHER_ORGANIZATION_APPLICATION_STATUS_CONFLICT:

@@ -20,6 +20,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-12);
+  padding-left: var(--spacing-8);
 }
 
 .sectionTitle {
@@ -51,12 +52,14 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-12);
+  gap: var(--spacing-8);
 }
 
+/** 시안 — 그룹 간 24px 간격 + strong 1px 구분선 */
 .basicInfoRowDivider {
-  border-top-width: 2px;
-  border-top-color: var(--color-border-default);
+  margin-top: var(--spacing-24);
+  border-top-width: 1px;
+  border-top-color: var(--color-border-strong);
 }
 
 .basicInfoValueMultiline {

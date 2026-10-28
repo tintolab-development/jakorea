@@ -45,6 +45,10 @@ import {
 import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
+  omitProgramAuditNameFields,
+  readProgramAuditNames,
+} from '@/features/program/shared/lib/program-audit-names'
+import {
   applyParticipantRecruitmentColumnsFromResponse,
   applyProgramMissingCommonStringFieldsToUpdateRequest,
   applyRecruitmentParticipantColumnFieldsToUpdateRequest,
@@ -134,6 +138,7 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
     participatingSchoolCount: dto.organizationApplicationCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    ...readProgramAuditNames(dto),
     backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
   })
 }
@@ -243,7 +248,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   })
 
   const mapped = baseProgram({
-    ...detailFields,
+    ...omitProgramAuditNameFields(detailFields),
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
     title,
@@ -328,6 +333,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     registrationOverlay: details.registrationOverlay,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    ...readProgramAuditNames(dto),
     backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
@@ -403,8 +409,6 @@ const SERVICE_DETAIL_PROGRAM_KEYS = [
   'scheduleTimeEnabled',
   'startTime',
   'endTime',
-  'createdByName',
-  'updatedByName',
   'generalVolunteers',
   'staffVolunteers',
   'returningVolunteers',

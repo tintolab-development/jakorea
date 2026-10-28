@@ -1,7 +1,10 @@
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
+import { UnsupportedNotifyTimingError } from '@/shared/lib/notify-timing-capability'
 import {
   toFlatDecisionNotifyTiming,
+  toTimedBulkNotifyTiming,
+  toScheduledOnlyNotifyTiming,
   toOrganizationApproveNotifyTiming,
   toTrainedTeacherApproveNotifyTiming,
   toInterviewAssignNotifyFields,
@@ -29,6 +32,25 @@ describe('toFlatDecisionNotifyTiming', () => {
   })
 })
 
+describe('toTimedBulkNotifyTiming', () => {
+  it('즉시 발송은 payload를 생략한다', () => {
+    expect(toTimedBulkNotifyTiming('immediate')).toBeUndefined()
+  })
+
+  it('직접 설정은 SCHEDULED를 유지한다', () => {
+    expect(toTimedBulkNotifyTiming('manual', scheduled)).toEqual({
+      timing: 'SCHEDULED',
+      scheduledAt: scheduled.toISOString(),
+    })
+  })
+
+  it('발표일을 ON_ANNOUNCEMENT로 전달하고 scheduledAt을 붙이지 않는다', () => {
+    expect(toTimedBulkNotifyTiming('on_announcement', scheduled)).toEqual({
+      timing: 'ON_ANNOUNCEMENT',
+    })
+  })
+})
+
 describe('toOrganizationApproveNotifyTiming', () => {
   it('즉시 승인에는 IMMEDIATE를 명시한다', () => {
     expect(toOrganizationApproveNotifyTiming('immediate')).toEqual({ timing: 'IMMEDIATE' })
@@ -38,6 +60,12 @@ describe('toOrganizationApproveNotifyTiming', () => {
     expect(toOrganizationApproveNotifyTiming('manual', scheduled)).toEqual({
       timing: 'SCHEDULED',
       scheduledAt: scheduled.toISOString(),
+    })
+  })
+
+  it('발표일 승인을 ON_ANNOUNCEMENT로 전달하고 IMMEDIATE로 바꾸지 않는다', () => {
+    expect(toOrganizationApproveNotifyTiming('on_announcement', scheduled)).toEqual({
+      timing: 'ON_ANNOUNCEMENT',
     })
   })
 })
@@ -103,5 +131,21 @@ describe('toInterviewAssignNotifyFields', () => {
       scheduledAt: scheduled.toISOString(),
     })
     expect(toInterviewAssignNotifyFields('immediate')).toEqual({ notifyTiming: 'IMMEDIATE' })
+  })
+})
+
+describe('toScheduledOnlyNotifyTiming', () => {
+  it('직접 설정만 SCHEDULED를 반환한다', () => {
+    expect(toScheduledOnlyNotifyTiming('manual', scheduled)).toEqual({
+      timing: 'SCHEDULED',
+      scheduledAt: scheduled.toISOString(),
+    })
+    expect(toScheduledOnlyNotifyTiming('immediate')).toBeUndefined()
+  })
+
+  it('발표일을 즉시로 바꾸지 않고 막는다', () => {
+    expect(() => toScheduledOnlyNotifyTiming('on_announcement')).toThrow(
+      UnsupportedNotifyTimingError
+    )
   })
 })

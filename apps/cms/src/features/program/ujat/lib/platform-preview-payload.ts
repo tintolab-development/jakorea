@@ -18,7 +18,8 @@ export function buildUjatProgramPortalPreview(input: {
     sponsorName: input.sponsorName,
     audience: input.audience,
     programType: 'UJAT',
-    portalCategories: input.audience === 'institutions' ? ['ORGANIZATION'] : undefined,
+    portalCategories:
+      input.audience === 'institutions' ? ['ORGANIZATION'] : ['YOUTH_YOUNG'],
   })
   return { ...detail, applicationTargetMode: 'ORGANIZATION', participationMethod: undefined }
 }

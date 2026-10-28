@@ -5,16 +5,25 @@ import {
   individualIneligibleMessage,
   individualSettlementApiErrorMessage,
   isEvidencePolicyUnconfigured,
+  isGeneralIndividualProgramType,
   isIndividualScheduleSettlementAudience,
   normalizeIndividualIneligibleReason,
   readIndividualSettlementErrorCode,
+  shouldUseIndividualSettlementSchedulesApi,
 } from './individual-settlement-contract.ts'
 
 assert.equal(isIndividualScheduleSettlementAudience('INDIVIDUAL'), true)
 assert.equal(isIndividualScheduleSettlementAudience('individual'), true)
 assert.equal(isIndividualScheduleSettlementAudience('VOLUNTEER'), false)
-assert.equal(isIndividualScheduleSettlementAudience('INSTRUCTOR'), true)
+assert.equal(isIndividualScheduleSettlementAudience('INSTRUCTOR'), false)
 assert.equal(isIndividualScheduleSettlementAudience('ORGANIZATION'), false)
+
+assert.equal(isGeneralIndividualProgramType('GENERAL_INDIVIDUAL'), true)
+assert.equal(isGeneralIndividualProgramType('GENERAL_ORGANIZATION'), false)
+assert.equal(shouldUseIndividualSettlementSchedulesApi('INDIVIDUAL', 'GENERAL_INDIVIDUAL'), true)
+assert.equal(shouldUseIndividualSettlementSchedulesApi('INSTRUCTOR', 'GENERAL_ORGANIZATION'), false)
+assert.equal(shouldUseIndividualSettlementSchedulesApi('INSTRUCTOR', 'GENERAL_INDIVIDUAL'), false)
+assert.equal(shouldUseIndividualSettlementSchedulesApi('INDIVIDUAL', 'GENERAL_ORGANIZATION'), false)
 
 assert.equal(
   individualIneligibleMessage('EVIDENCE_POLICY_UNCONFIGURED'),

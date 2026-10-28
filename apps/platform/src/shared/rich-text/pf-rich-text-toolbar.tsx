@@ -23,6 +23,7 @@ import {
   promptYoutubeUrl,
   RICH_TEXT_IMAGE_ACCEPT,
 } from '@jakorea/rich-text'
+import type { ResolvedRichTextImageSrc } from '@jakorea/rich-text'
 import {
   FONT_FAMILY_OPTIONS,
   FONT_SIZE_OPTIONS,
@@ -60,6 +61,8 @@ import styles from './pf-rich-text-toolbar.module.css'
 
 export type PfRichTextToolbarProps = {
   editor: Editor | null
+  resolveImageSrc?: (file: File) => Promise<ResolvedRichTextImageSrc>
+  allowImageUrl?: boolean
 }
 
 const EMPTY_TOOLBAR_STATE = {
@@ -109,7 +112,11 @@ function getActiveTextAlign(editor: Editor): TextAlignValue {
   return 'left'
 }
 
-export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
+export function PfRichTextToolbar({
+  editor,
+  resolveImageSrc,
+  allowImageUrl = true,
+}: PfRichTextToolbarProps) {
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const state =
     useEditorState({
@@ -282,14 +289,18 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
 
   const insertMenuItems = useMemo(
     () => [
-      {
-        key: 'image-url',
-        label: '이미지 (URL)',
-        onClick: () => {
-          const src = promptImageUrl()
-          if (src) run(ed => insertImageFromUrl(ed, src))
-        },
-      },
+      ...(allowImageUrl
+        ? [
+            {
+              key: 'image-url',
+              label: '이미지 (URL)',
+              onClick: () => {
+                const src = promptImageUrl()
+                if (src) run(ed => insertImageFromUrl(ed, src))
+              },
+            },
+          ]
+        : []),
       {
         key: 'image-file',
         label: '이미지 (파일)',
@@ -314,7 +325,7 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
         onClick: () => run(ed => ed.chain().focus().toggleBlockquote().run()),
       },
     ],
-    [run]
+    [allowImageUrl, run]
   )
 
   const handleImageFileChange = useCallback(
@@ -322,9 +333,9 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
       const file = event.target.files?.[0]
       event.target.value = ''
       if (!file || !editor) return
-      insertImageFromFile(editor, file)
+      insertImageFromFile(editor, file, resolveImageSrc)
     },
-    [editor]
+    [editor, resolveImageSrc]
   )
 
   if (!editor) return null

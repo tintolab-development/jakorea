@@ -510,8 +510,6 @@ export function useParticipatingInstitutionDetailEdit({
             teacherOptions,
             fallbackTeacherMemberId: row.teacherMemberId,
             textbookGrade: patch.textbookGrade,
-            textbookKits: patch.textbookKits,
-            textbookQuantity: patch.textbookQuantity,
             baselineEducationFormat: baseline.educationFormat,
             includeTextbookFields: textbookChanged,
             allowEducationFormatChange:

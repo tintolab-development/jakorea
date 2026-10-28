@@ -268,8 +268,8 @@ export function useGeneralVolunteerInterview2({
   )
 
   const openPassModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
-    if (!isGeneralVolunteerInterview2SelectableForResult(applicant)) return
     if (!guardGeneralVolunteerInterview2Pass(applicant)) return
+    if (!isGeneralVolunteerInterview2SelectableForResult(applicant)) return
     setPassModalVolunteer(applicant)
   }, [])
 
@@ -278,8 +278,8 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const openFailModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
-    if (!isGeneralVolunteerInterview2SelectableForResult(applicant)) return
     if (!guardGeneralVolunteerInterview2Fail(applicant)) return
+    if (!isGeneralVolunteerInterview2SelectableForResult(applicant)) return
     setFailModalVolunteer(applicant)
   }, [])
 

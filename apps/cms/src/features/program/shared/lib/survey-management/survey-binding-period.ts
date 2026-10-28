@@ -30,10 +30,6 @@ function seoulStartOfCalendarDayIso(ymd: string): string {
   return `${ymd}T00:00:00.000+09:00`
 }
 
-function seoulEndOfCalendarDayIso(ymd: string): string {
-  return `${ymd}T23:59:59.999+09:00`
-}
-
 export function seoulStartOfTodayIso(now = new Date()): string {
   const ymd = seoulCalendarYmd(now)
   if (ymd == null) return new Date(now.getTime() - 1000).toISOString()
@@ -59,12 +55,9 @@ export function ensureSurveyCreateSubmissionPeriod(
   const submissionStartAt = start || seoulStartOfNextCalendarDayIso(now)
   if (end) return { submissionStartAt, submissionEndAt: end }
 
-  const startYmd = seoulCalendarYmd(submissionStartAt) ?? seoulCalendarYmd(now)
   return {
     submissionStartAt,
-    submissionEndAt: startYmd
-      ? seoulEndOfCalendarDayIso(startYmd)
-      : seoulEndOfCalendarDayIso(seoulStartOfNextCalendarDayIso(now).slice(0, 10)),
+    submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
   }
 }
 

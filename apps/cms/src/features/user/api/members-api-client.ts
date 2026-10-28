@@ -61,6 +61,7 @@ import type { AdminCommentUpdateRequest } from '@/shared/api/generated/members/s
 import type { AdminMemberDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberDeleteRequest'
 import type { AdminCommentResponse } from '@/shared/api/generated/members/schemas/adminCommentResponse'
 import type { UserResponse } from '@/shared/api/generated/members/schemas/userResponse'
+import type { NotificationResendRequest as NotificationResendRequestBody } from '@/shared/api/generated/members/schemas/notificationResendRequest'
 import type { ListMemberApplicationsParams } from '@/shared/api/generated/members/schemas/listMemberApplicationsParams'
 import type {
   BulkActionResponse,
@@ -404,8 +405,17 @@ export async function deleteAdminAccountProgramRoleRemote(
   await membersApi.deleteProgramRole(adminAccountId, programId)
 }
 
-export async function resendInstructorRoleNotificationRemote(requestId: number): Promise<void> {
-  await membersApi.resendNotification(requestId)
+export type { NotificationResendRequestBody }
+
+export async function resendInstructorRoleNotificationRemote(
+  requestId: number,
+  body?: NotificationResendRequestBody
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/instructor-role-requests/${requestId}/resend-notification`,
+    method: 'POST',
+    ...(body && (body.timing || body.scheduledAt) ? { data: body } : {}),
+  })
 }
 
 export async function createAdminAccountRemote(
@@ -878,8 +888,15 @@ export async function cancelAdminApprovalRemote(
   await membersApi.cancelAdminApproval(adminAccountId, body)
 }
 
-export async function resendAdminApprovalNotificationRemote(adminAccountId: number): Promise<void> {
-  await membersApi.resendAdminApprovalNotification(adminAccountId)
+export async function resendAdminApprovalNotificationRemote(
+  adminAccountId: number,
+  body?: NotificationResendRequestBody
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/admin-approval-requests/${adminAccountId}/resend-notification`,
+    method: 'POST',
+    ...(body && (body.timing || body.scheduledAt) ? { data: body } : {}),
+  })
 }
 
 export async function bulkApproveAdminApprovalRequestsRemote(

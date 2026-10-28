@@ -34,9 +34,9 @@ function buildDefaultOverlay(
   const now = dayjs().toISOString()
   return {
     createdAt: now,
-    createdByName: '관리자',
+    createdByName: '-',
     updatedAt: now,
-    updatedByName: '관리자',
+    updatedByName: '-',
     announcementPublished: deriveAnnouncementPublished(row, referenceDate),
     educationTargetLevels: [],
     educationTargetDetail: '',

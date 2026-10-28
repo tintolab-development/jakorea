@@ -12,6 +12,7 @@ import {
   PermissionModal,
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 
 export type PermissionNotificationResendModalProps = {
   open: boolean
@@ -21,6 +22,7 @@ export type PermissionNotificationResendModalProps = {
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
+  confirmLoading?: boolean
 }
 
 export function PermissionNotificationResendModal({
@@ -31,6 +33,7 @@ export function PermissionNotificationResendModal({
   onCancel,
   onConfirm,
   zIndex,
+  confirmLoading = false,
 }: PermissionNotificationResendModalProps) {
   return (
     <PermissionModal
@@ -43,7 +46,9 @@ export function PermissionNotificationResendModal({
         approvalStatus
       )}
       confirmLabel="재발송"
+      confirmLoading={confirmLoading}
       notifyTimingOptions="two"
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}

@@ -18,9 +18,7 @@ export function renderProgramDetailPipeSeparated(text: string | undefined | null
   if (parts.length === 0) return '-'
   if (parts.length === 1) return parts[0]
   return (
-    <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider(parts)}
-    </ProgramDetailTdSegmentWrap>
+    <ProgramDetailTdSegmentWrap>{withProgramDetailTdDivider(parts)}</ProgramDetailTdSegmentWrap>
   )
 }
 

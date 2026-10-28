@@ -108,6 +108,7 @@ export function ProgramsPage() {
       ...Object.fromEntries(
         PROGRAM_FILTER_KEYS.map(key => [key, DEFAULT_PROGRAMS_LIST_PARAMS[key]])
       ),
+      applicationType: undefined,
       category: DEFAULT_PROGRAMS_LIST_PARAMS.category,
       page: 1,
     })

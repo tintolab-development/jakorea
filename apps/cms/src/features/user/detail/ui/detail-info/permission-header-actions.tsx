@@ -76,9 +76,7 @@ export function PermissionHeaderActions({
 
   const showCommentEditStart =
     !isCommentEditing &&
-    (permissionRole === 'admin'
-      ? approvalStatus === 'APPROVED'
-      : approvalStatus !== 'PENDING') &&
+    approvalStatus === 'APPROVED' &&
     shouldShowAdminCommentSectionForViewer(currentUser, displayUser) &&
     shouldShowAdminCommentForAdminPermissionApplicationDetail('permission', displayUser) &&
     canEditCommentBody

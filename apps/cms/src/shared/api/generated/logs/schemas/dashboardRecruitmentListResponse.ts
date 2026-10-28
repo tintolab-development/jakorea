@@ -12,4 +12,8 @@ export interface DashboardRecruitmentListResponse {
   items?: DashboardRecruitmentResponse[];
   statusPriority?: string[];
   params?: DashboardRecruitmentListResponseParams;
+  /** 필터 적용 후 전체 프로그램 수. page/size로 items를 잘라도 이 값이 전체다. 조용히 50건에서 자르지 않는다. */
+  totalCount?: number;
+  /** totalCount와 동일. 목록 API totalElements와 같은 의미. */
+  totalElements?: number;
 }

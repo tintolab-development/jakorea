@@ -31,9 +31,16 @@ export function MypageHomeHeader({
       {showIdentityBlock ? (
         <div className={styles.instructorIdentity}>
           {affiliationLabel ? (
-            <PFText as="p" typo="bd-sm-md" color="black" className={styles.affiliation}>
-              {affiliationLabel}
-            </PFText>
+            <div className={styles.metaRow}>
+              {employmentStatusLabel ? (
+                <span className={[styles.employmentBadge, styles.employmentBadgeMobile].join(' ')}>
+                  {employmentStatusLabel}
+                </span>
+              ) : null}
+              <PFText as="p" typo="bd-sm-md" color="black" className={styles.affiliation}>
+                {affiliationLabel}
+              </PFText>
+            </div>
           ) : null}
           <div className={styles.nameRow}>
             <PFText as="h1" typo="page-title" color="black" className={styles.displayName}>
@@ -48,7 +55,9 @@ export function MypageHomeHeader({
               )}
             </PFText>
             {employmentStatusLabel ? (
-              <span className={styles.employmentBadge}>{employmentStatusLabel}</span>
+              <span className={[styles.employmentBadge, styles.employmentBadgePc].join(' ')}>
+                {employmentStatusLabel}
+              </span>
             ) : null}
           </div>
         </div>

@@ -134,6 +134,7 @@ export {
   formatMypageScheduleBarLabel,
   getMypageScheduleDatesInMonth,
   getMypageScheduleEventsOnDate,
+  resolveMypageScheduleEventDetailPath,
   syncSelectedDateToMonth,
   toDateKey,
 } from './home'

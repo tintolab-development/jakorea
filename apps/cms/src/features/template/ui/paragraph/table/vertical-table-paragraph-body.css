@@ -210,9 +210,9 @@
 .form-editor-vertical-table .form-editor-horizontal-table__field-checks .ant-checkbox-wrapper {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 6px !important;
   margin: 0 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
   font-weight: 500;
   line-height: 150%;
 }
@@ -236,7 +236,7 @@
   padding-inline-start: 0 !important;
   padding-inline-end: 0 !important;
   margin-inline-start: 0 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 .form-editor-vertical-table__cell-input-shell--header .ant-input {

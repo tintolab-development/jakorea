@@ -33,7 +33,7 @@ import {
 import { buildUserDetailSidebarItems } from '../ui/detail-info/user-detail-fullpage-sidebar-items'
 import { fetchMemberDetailBasicTabResources } from './fetch-member-detail-basic-tab-resources'
 import { fetchMemberDetailSettlementTabResources } from './fetch-member-detail-settlement-tab-resources'
-import { roleStrategyMap } from '../strategies'
+import { resolveUserDetailBasicTabFetchSections } from './resolve-user-detail-basic-tab-sections'
 import { useUserDetailApplications } from './use-user-detail-applications'
 import {
   resolveActiveProgramHistoryTabLoading,
@@ -151,6 +151,7 @@ import { updateTeacherMemberEmploymentStatusAndRefresh } from '@/features/user/a
 import { invalidateMemberDetailHistoryQueries } from '@/features/user/api/invalidate-member-detail-history-queries'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
@@ -240,25 +241,10 @@ export function useUserDetailController({
     return displayUser.organizationId ?? parseOrganizationIdFromUserId(displayUser.id) ?? undefined
   }, [displayUser, isSchoolDetail])
 
-  const basicTabSections = useMemo(() => {
-    if (!displayUser || mode === 'permission') {
-      return {
-        showConsentAgreement: false,
-        showSchoolAffiliatedTeachers: false,
-        showInstructorPayment: false,
-      }
-    }
-    const sections = roleStrategyMap[displayUser.role].getSections({
-      displayUser,
-      applications: [],
-      enrollmentApplications: [],
-    })
-    return {
-      showConsentAgreement: sections.basicTab.showConsentAgreement,
-      showSchoolAffiliatedTeachers: sections.basicTab.showSchoolAffiliatedTeachers,
-      showInstructorPayment: sections.settlement.showInstructorPayment,
-    }
-  }, [displayUser, mode])
+  const basicTabSections = useMemo(
+    () => resolveUserDetailBasicTabFetchSections({ displayUser, mode }),
+    [displayUser, mode]
+  )
 
   const adminCommentResource = useMemo(
     () => resolveAdminCommentResource(displayUser),
@@ -791,6 +777,9 @@ export function useUserDetailController({
         return
       }
       try {
+        if (displayUser?.memberId != null) {
+          await unmaskMemberForCertificateIssue(displayUser.memberId, displayUser.role)
+        }
         const issueBody = {
           participantIds,
           certificateType,
@@ -826,7 +815,7 @@ export function useUserDetailController({
         })
       }
     },
-    [membersRemote, refetchApplications, showAlert]
+    [displayUser, membersRemote, refetchApplications, showAlert]
   )
 
   const handleStudentCertificateBulkIssue = useCallback(
@@ -1069,14 +1058,6 @@ export function useUserDetailController({
     if (!displayUser) return
     if (!shouldShowAdminCommentSectionForViewer(currentUser, displayUser)) return
     if (!shouldShowAdminCommentForAdminPermissionApplicationDetail(mode, displayUser)) return
-    // 강사 권한 승인 상세 · 승인 대기: 코멘트 작성 진입 불가
-    if (
-      mode === 'permission' &&
-      displayUser.role !== 'ADMIN' &&
-      (displayUser.permissionApprovalStatus === 'PENDING' || !displayUser.permissionApprovalStatus)
-    ) {
-      return
-    }
 
     const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
     const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)

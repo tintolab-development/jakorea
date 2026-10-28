@@ -33,7 +33,10 @@ import {
   getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage,
 } from '@/features/program/general/lib/participating-institution-application-edit-policy'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
-import { ensureTextbookNotUsedSelectOption } from '@/features/program/general/lib/participating-institution-textbook'
+import {
+  ensureTextbookNotUsedSelectOption,
+  formatParticipatingInstitutionKitQuantity,
+} from '@/features/program/general/lib/participating-institution-textbook'
 import { resolveParticipatingInstitutionActivityWithdrawPatch } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import {
   InstitutionAddressDetailEdit,
@@ -583,10 +586,12 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
       mergedDetail.textbookName?.trim() !== '해당 없음')
   const textbookNameView = !hasSelectedTextbook ? '해당 없음' : textbookDisplay.textbookName
-  const kitsAndQty =
-    hasSelectedTextbook && textbookDisplay.textbookKits != null && textbookDisplay.textbookKits > 0
-      ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
-      : '-'
+  const kitsAndQty = hasSelectedTextbook
+    ? formatParticipatingInstitutionKitQuantity(
+        textbookDisplay.textbookKits,
+        textbookDisplay.textbookQuantity
+      )
+    : '-'
 
   const textbookSelectOptions = ensureTextbookNotUsedSelectOption(textbookOptions)
   const textbookCell =
@@ -711,14 +716,15 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
             <>
               <CmsButton
                 variant="delete"
-                size="large"
-                width={140}
+                size="h40"
                 disabled={isActivityWithdrawn || isApplicationInfoEditing}
                 onClick={handleRequestActivityWithdraw}
               >
                 활동 포기
               </CmsButton>
               <ProgramEditInfoActions
+                size="h40"
+                width={false}
                 isEditing={isApplicationInfoEditing}
                 idleVariant="secondary"
                 disabled={
@@ -736,8 +742,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"
-                  size="large"
-                  width={140}
+                  size="h40"
                   disabled={isApplicationInfoEditing}
                   onClick={handleAdminCommentEditEnter}
                 >
@@ -747,7 +752,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               <PersonalInfoRevealButton
                 labelMode="toggle"
                 revealed={personalInfoRevealed}
-                style={{ minWidth: 180 }}
+                cmsSize="h40"
+                width="auto"
                 onClick={handlePrivacyToggleClick}
               />
             </>
@@ -901,9 +907,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}
         confirming={activityWithdrawSubmitting}
-        faultPartyRequired
-        reasonMinLength={1}
-        reasonMaxLength={1000}
+        subjectName={mergedDetail.schoolName ?? row.schoolName ?? ''}
+        subjectKind="institution"
         onCancel={() => {
           if (activityWithdrawSubmitting) return
           setActivityWithdrawModalOpen(false)

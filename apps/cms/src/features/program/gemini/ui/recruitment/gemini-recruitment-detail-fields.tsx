@@ -25,8 +25,12 @@ import {
   loadProgramThumbnailPreviewUrl,
   rememberProgramThumbnailPreviewBlob,
 } from '@/features/program/shared/api/program-thumbnail'
-import { FILE_SELECT_TOTAL_SIZE_GUIDE_LINE } from '@/shared/ui/file-select-field-limits'
 import { ThumbnailUploadField } from '@/shared/ui/thumbnail-upload-field'
+import {
+  RECRUIT_DETAIL_FILE_MAX_BYTES,
+  RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE,
+  RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import { useCmsAlert } from '@/shared/ui'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../../api/visiting-training/capabilities'
 import { GeminiDeferredCmsInput } from './gemini-recruitment-deferred-text-input'
@@ -36,19 +40,15 @@ import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './gemini-recruitment-detail-fields.css'
 
-const THUMBNAIL_GUIDE_LINES = [
-  FILE_SELECT_TOTAL_SIZE_GUIDE_LINE,
-  '- JPG, PNG 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-]
+const THUMBNAIL_GUIDE_LINES = RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES
 
 function revokeBlobUrl(url: string | null) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
 }
 
 const ATTACHMENT_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG, PDF, HWP 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  '- 파일은 최대 20MB까지 JPG, PNG, PDF, HWP 형식만 등록 가능합니다.',
+  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 const HTML_TAG_RE = /<\/?[a-z][^>]*>/i
@@ -226,6 +226,8 @@ export function GeminiRecruitmentDetailFields({
                 previewUrl={thumbnailPreviewUrl}
                 fileName={thumbnailFileName}
                 guideLines={THUMBNAIL_GUIDE_LINES}
+                maxBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+                sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 disabled={readOnlyUpload}
                 uploading={uploadingThumbnail}
                 onSelectFile={file => void handleThumbnailFile(file)}
@@ -308,6 +310,9 @@ export function GeminiRecruitmentDetailFields({
                 multiple
                 disabled={readOnlyUpload}
                 guideLines={ATTACHMENT_GUIDE_LINES}
+                maxTotalBytes={0}
+                maxFileBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+                sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 fileNames={values.attachmentFileNames}
                 onFilesChange={files => {
                   onChange({

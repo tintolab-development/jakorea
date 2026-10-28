@@ -1,3 +1,5 @@
+@import './body-tables.css';
+
 .mail-template-compose__subject {
   position: relative;
   width: 100%;
@@ -79,9 +81,7 @@
 
 .mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content,
 .mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content p,
-.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content li,
-.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content td,
-.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content th {
+.mail-template-compose__editor-host .cms-rich-text-editor .rich-text-content li {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 15px;

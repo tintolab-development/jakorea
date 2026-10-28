@@ -162,10 +162,3 @@ export function applyBusinessPeriodHistoriesFromDto<T extends Program>(
   if (histories.length === 0) return program
   return { ...program, businessPeriodHistories: histories }
 }
-
-export function getProgramBusinessPeriodHistories(
-  program: Program | null | undefined
-): ProgramBusinessPeriodHistoryItem[] {
-  if (!program?.businessPeriodHistories?.length) return []
-  return program.businessPeriodHistories
-}

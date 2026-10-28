@@ -20,6 +20,7 @@ import {
   isAccessTokenUnauthorizedCode,
   parseAuthTokenResponse,
 } from '@/features/auth/lib/parse-auth-token-response'
+import { recordTokenIssuedAt } from '@/features/auth/lib/session-keepalive'
 import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
@@ -197,6 +198,8 @@ function persistAccessToken(accessToken: string, expiresAtIso?: string) {
     localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
     localStorage.setItem(AUTH_EXPIRY_KEY, expires)
   }
+  // 다음 선제 refresh(발급 후 20분) 기준 시각 — 탭/새로고침 간 공유
+  recordTokenIssuedAt()
 
   useAuthStore.setState({
     token: accessToken,
@@ -244,6 +247,75 @@ function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
   })
 }
 
+const REFRESH_LOCK_NAME = 'jakorea-admin-refresh'
+/** auth-store의 ACCESS_TOKEN_EXPIRY_BUFFER_MS와 같은 값 (순환 import 방지용 사본) */
+const ADOPT_EXPIRY_BUFFER_MS = 30 * 1000
+
+/**
+ * 다른 탭이 이미 refresh해서 localStorage에 새 토큰을 써 둔 경우 그 access token을 채택한다.
+ * (refresh token은 매번 rotate되므로, 같은 토큰으로 다시 /refresh 하면 409/전체 revoke 위험)
+ * 저장된 refresh token이 이 탭이 시작할 때 쓰던 것(usedRefreshToken)과 다르고
+ * access token이 아직 유효할 때만 채택한다. 채택하면 access token, 아니면 null.
+ */
+function adoptTokensRotatedByAnotherTab(usedRefreshToken: string): string | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null
+  const storedRefresh = readRefreshToken()
+  if (!storedRefresh || storedRefresh === usedRefreshToken) return null
+
+  const storedAccess = localStorage.getItem(AUTH_TOKEN_KEY)
+  const storedExpiry = localStorage.getItem(AUTH_EXPIRY_KEY)
+  if (!storedAccess || !storedExpiry) return null
+  const expiryMs = new Date(storedExpiry).getTime()
+  if (!Number.isFinite(expiryMs) || expiryMs <= Date.now() + ADOPT_EXPIRY_BUFFER_MS) return null
+
+  useAuthStore.setState({ token: storedAccess, expiresAt: storedExpiry })
+  return storedAccess
+}
+
+async function postRefreshAndPersist(refreshToken: string): Promise<string> {
+  const res = await postAuthenticationRefreshToken(refreshToken)
+  const parsed = parseAuthTokenResponse(res.data)
+  if (!parsed) {
+    throw new Error('Invalid refresh response: missing access or refresh token')
+  }
+
+  persistAccessToken(parsed.accessToken, expiresAtIsoFromExpiresInSeconds(parsed.expiresInSeconds))
+  persistRefreshToken(parsed.refreshToken)
+
+  return parsed.accessToken
+}
+
+async function refreshWithAdoption(startedWithRefreshToken: string): Promise<string> {
+  // 락을 기다리는 사이 다른 탭이 rotate했다면 /refresh를 다시 부르지 않고 그 결과를 채택
+  const adoptedBefore = adoptTokensRotatedByAnotherTab(startedWithRefreshToken)
+  if (adoptedBefore) return adoptedBefore
+
+  // 채택 불가면 저장소의 최신 refresh token으로 요청 (없으면 이 탭이 들고 있던 것)
+  const tokenToUse = readRefreshToken() ?? startedWithRefreshToken
+  try {
+    return await postRefreshAndPersist(tokenToUse)
+  } catch (err) {
+    // 락 미지원 환경 등에서 동시 refresh에 진 경우(409 REFRESH_TOKEN_ALREADY_ROTATED):
+    // 승자의 새 토큰이 저장돼 있으면 logout(=새 토큰 revoke) 대신 채택
+    if (axios.isAxiosError(err) && err.response?.status === 409) {
+      const adopted = adoptTokensRotatedByAnotherTab(tokenToUse)
+      if (adopted) return adopted
+    }
+    throw err
+  }
+}
+
+/** 탭 간 refresh 직렬화 (Web Locks). 미지원 환경은 기존 동작(탭 내 single-flight만). */
+async function refreshAcrossTabs(startedWithRefreshToken: string): Promise<string> {
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined
+  if (locks && typeof locks.request === 'function') {
+    return await locks.request(REFRESH_LOCK_NAME, () =>
+      refreshWithAdoption(startedWithRefreshToken),
+    )
+  }
+  return refreshWithAdoption(startedWithRefreshToken)
+}
+
 async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
   if (refreshPromise) {
     return refreshPromise
@@ -251,19 +323,7 @@ async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
 
   refreshPromise = (async () => {
     try {
-      const res = await postAuthenticationRefreshToken(refreshToken)
-      const parsed = parseAuthTokenResponse(res.data)
-      if (!parsed) {
-        throw new Error('Invalid refresh response: missing access or refresh token')
-      }
-
-      persistAccessToken(
-        parsed.accessToken,
-        expiresAtIsoFromExpiresInSeconds(parsed.expiresInSeconds)
-      )
-      persistRefreshToken(parsed.refreshToken)
-
-      return parsed.accessToken
+      return await refreshAcrossTabs(refreshToken)
     } finally {
       refreshPromise = null
     }

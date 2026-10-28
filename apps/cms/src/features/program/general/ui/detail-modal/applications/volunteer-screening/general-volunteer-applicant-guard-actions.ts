@@ -1,5 +1,34 @@
+import {
+  isGeneralInterviewTotalScoreUnevaluated,
+  resolveGeneralEffectiveSecondInterviewStatus,
+} from '@/features/program/general/lib/general-volunteer-interview2-display'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+
+const INTERVIEW_EVALUATION_REQUIRED_ALERT = {
+  title: '면접 평가 진행 안내',
+  content: '면접 평가 진행 후 합격 혹은 불합격 처리가 가능합니다.',
+  confirmLabel: '닫기',
+} as const
+
+export const INTERVIEW_RESULT_NOT_ENDED_ALERT = {
+  title: '면접 결과 처리 안내',
+  content:
+    '면접이 아직 종료되지 않았습니다.\n면접 종료 후 담당자 평가가 완료되면 합격·불합격 처리가 가능합니다.',
+} as const
+
+function guardGeneralVolunteerInterview2Evaluated(row: GeneralVolunteerApplicantRow): boolean {
+  if (!isGeneralInterviewTotalScoreUnevaluated(row)) return true
+  cmsAlertModal.show({ ...INTERVIEW_EVALUATION_REQUIRED_ALERT })
+  return false
+}
+
+/** 배정 면접 종료 전(면접 진행 대기) — 합격·불합격·평가 모두 차단 */
+function guardGeneralVolunteerInterview2NotEnded(row: GeneralVolunteerApplicantRow): boolean {
+  if (resolveGeneralEffectiveSecondInterviewStatus(row) !== 'waiting') return true
+  cmsAlertModal.show({ ...INTERVIEW_RESULT_NOT_ENDED_ALERT })
+  return false
+}
 
 export function guardGeneralVolunteerWithdrawActivity(row: GeneralVolunteerApplicantRow): boolean {
   if (row.interviewAssignmentStatus !== 'withdrawn') return true
@@ -54,7 +83,8 @@ export function guardGeneralVolunteerInterview2Fail(row: GeneralVolunteerApplica
     })
     return false
   }
-  return true
+  if (!guardGeneralVolunteerInterview2NotEnded(row)) return false
+  return guardGeneralVolunteerInterview2Evaluated(row)
 }
 
 export function guardGeneralVolunteerInterview2Pass(row: GeneralVolunteerApplicantRow): boolean {
@@ -73,7 +103,8 @@ export function guardGeneralVolunteerInterview2Pass(row: GeneralVolunteerApplica
     })
     return false
   }
-  return true
+  if (!guardGeneralVolunteerInterview2NotEnded(row)) return false
+  return guardGeneralVolunteerInterview2Evaluated(row)
 }
 
 export function guardGeneralVolunteerInterview2Evaluation(row: GeneralVolunteerApplicantRow): boolean {
@@ -92,7 +123,7 @@ export function guardGeneralVolunteerInterview2Evaluation(row: GeneralVolunteerA
     })
     return false
   }
-  return true
+  return guardGeneralVolunteerInterview2NotEnded(row)
 }
 
 export function alertGeneralVolunteerInterview2BulkPassTypeRequired(): void {

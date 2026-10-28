@@ -6,8 +6,11 @@ import {
   resolveEmployeeVolunteerSessionRows,
   type EmployeeVolunteerSessionRowId,
 } from '@/features/program/general/lib/employee-volunteer-session-rows'
-import type { ActivityWithdrawScheduleOption } from '@/features/program/shared/lib/activity-withdraw-schedule'
 import type { AdminProgramScheduleResponse } from '@/features/program/shared/api/admin-program-schedule-response'
+import {
+  buildActivityWithdrawGuideDescription,
+  type ActivityWithdrawScheduleOption,
+} from '@/features/program/shared/lib/activity-withdraw-schedule'
 import type { Program } from '@/types/domain'
 
 export type GeneralVolunteerActivityWithdrawScheduleOption = ActivityWithdrawScheduleOption
@@ -25,8 +28,7 @@ export function getGeneralVolunteerActivityWithdrawScheduleOptions(
 export function buildGeneralVolunteerScreeningActivityWithdrawDescription(
   volunteerName: string
 ): string {
-  const name = volunteerName.trim() || '신청자'
-  return `**[${name}]** 님의 프로그램 활동을 포기 처리하시겠습니까?\n포기 시 재참여가 불가하며, 선택한 교육 일정 이전의 활동까지만 실적에 반영됩니다.\n활동 포기 처리 후에는 되돌릴 수 없습니다.`
+  return buildActivityWithdrawGuideDescription(volunteerName, 'person')
 }
 
 export function buildGeneralVolunteerScreeningActivityWithdrawCompleteDescription(

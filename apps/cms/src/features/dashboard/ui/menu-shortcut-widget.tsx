@@ -49,6 +49,7 @@ import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
 import { useDashboardShortcutBadges } from '../hooks/use-dashboard-shortcut-badges'
 import { resolveDashboardShortcutItems } from '../lib/resolve-dashboard-shortcut-items'
+import { readCountMapValue } from '../api/adapters/dashboard-adapters'
 import './menu-shortcut-widget.css'
 
 /** 배지 표시용: 99 초과 시 "99+" */
@@ -129,8 +130,12 @@ export function MenuShortcutWidget() {
       <div className="menu-shortcut-widget__body">
         <div className="menu-shortcut-widget__grid">
           {visibleItems.map(item => {
-            const live = liveBadgeCounts[item.id] ?? 0
-            const count = useRemoteShortcuts ? live : badgeCounts[item.id] === 0 ? 0 : live
+            const live = readCountMapValue(liveBadgeCounts, item.id)
+            const count = useRemoteShortcuts
+              ? live
+              : badgeCounts[item.id] === 0
+                ? 0
+                : live
             return (
               <button
                 key={item.id}
@@ -153,7 +158,7 @@ export function MenuShortcutWidget() {
                     </span>
                     <span className="menu-shortcut-widget__label">{item.label}</span>
                   </span>
-                  {count > 0 && (
+                  {count != null && count > 0 && (
                     <span className="menu-shortcut-widget__badge">{formatBadgeCount(count)}</span>
                   )}
                 </span>

@@ -12,6 +12,6 @@ export interface ApprovalResetRequest {
      * @maxLength 1000
      */
   reason: string;
-  /** 승인 취소 결과 알림 예약 시각. null이면 즉시 발송 */
+  /** 결과 알림 예약 시각(ISO-8601). 생략 또는 null이면 즉시 발송. 유효한 미래 시각이면 예약. 최소 60초 이후여야 한다. */
   scheduledAt?: string;
 }

@@ -23,6 +23,7 @@ export function SurveyMultipleChoiceField({
         {paragraph.items.map(item => (
           <PFCheckbox
             key={item.id}
+            className={styles.choiceItem}
             checked={selectedIds.includes(item.id)}
             disabled={disabled}
             onCheckedChange={checked => {
@@ -51,6 +52,7 @@ export function SurveyMultipleChoiceField({
       {paragraph.items.map(item => (
         <PFCheckbox
           key={item.id}
+          className={styles.choiceItem}
           checked={paragraph.selectedPreviewSingleId === item.id}
           disabled={disabled}
           onCheckedChange={checked => {

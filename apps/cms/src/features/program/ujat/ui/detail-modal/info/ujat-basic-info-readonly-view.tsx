@@ -2,9 +2,8 @@ import { useMemo } from 'react'
 import type { Program } from '@/types/domain'
 import type { UjatRegistrationBasicInfoDisplay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { formatDate } from '@/features/program/shared/lib/program-detail-info-constants'
 import { UjatProgramListProgressCell } from '@/features/program/ujat/ui/list/ujat-program-list-progress-cell'
-import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
+import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/program-detail/registration-audit-value'
 import {
   SponsorManagerContactsView,
   SponsorManagerLinesStackView,
@@ -81,19 +80,11 @@ export function UjatBasicInfoReadonlyView({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="최초 등록일"
-              view={
-                <UjatInlineDividedSegments
-                  segments={[formatDate(program.createdAt), program.createdByName]}
-                />
-              }
+              view={<ProgramRegistrationAuditValue at={program.createdAt} name={program.createdByName} />}
             />
             <DetailInfoForm.Field
               label="마지막 수정일"
-              view={
-                <UjatInlineDividedSegments
-                  segments={[formatDate(program.updatedAt), program.updatedByName]}
-                />
-              }
+              view={<ProgramRegistrationAuditValue at={program.updatedAt} name={program.updatedByName} />}
             />
           </DetailInfoForm.Row>
         </DetailInfoForm>

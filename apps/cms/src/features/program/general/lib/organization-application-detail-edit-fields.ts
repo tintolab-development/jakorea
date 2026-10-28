@@ -1,6 +1,7 @@
 import { formatRequestedEducationFormat } from '@/features/program/general/api/adapters/general-applications-adapters'
 import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
+import { readOrganizationTextbookKitFields } from '@/features/program/general/lib/school-detail'
 
 /**
  * 기관 신청 상세 GET → 진행 현황 상세 편집 draft에 넣을 필드.
@@ -23,14 +24,7 @@ export function mapOrganizationApplicationDetailToParticipatingEditFields(
   const textbookId =
     dto.textbookId != null && Number.isFinite(dto.textbookId) ? String(dto.textbookId) : undefined
   const textbookGrade = dto.textbookGrade?.trim() || undefined
-  const textbookKits =
-    typeof dto.textbookKits === 'number' && Number.isFinite(dto.textbookKits)
-      ? dto.textbookKits
-      : undefined
-  const textbookQuantity =
-    typeof dto.textbookQuantity === 'number' && Number.isFinite(dto.textbookQuantity)
-      ? dto.textbookQuantity
-      : undefined
+  const { textbookKits, textbookQuantity } = readOrganizationTextbookKitFields(dto)
   const classCount =
     typeof dto.requestedClassCount === 'number' && Number.isFinite(dto.requestedClassCount)
       ? dto.requestedClassCount

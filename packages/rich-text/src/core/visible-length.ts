@@ -2,8 +2,11 @@
 export const RICH_TEXT_MAX_VISIBLE_CHARACTERS = 50_000
 export const RICH_TEXT_VISIBLE_LENGTH_MESSAGE = '본문은 최대 50,000자까지 입력할 수 있습니다.'
 export const RICH_TEXT_INLINE_IMAGE_MAX_BYTES = 20 * 1024 * 1024
+export const RICH_TEXT_INLINE_IMAGE_SIZE_MESSAGE =
+  '파일은 1개당 최대 20MB까지 첨부할 수 있습니다.'
 export const RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE =
-  '에디터 이미지는 총 20MB까지 업로드 가능합니다.'
+  '한 번에 첨부할 수 있는 전체 용량은 최대 100MB입니다.'
+export const RICH_TEXT_INLINE_IMAGE_COUNT_MESSAGE = '파일은 최대 10개까지 첨부할 수 있습니다.'
 
 const HTML_COMMENT = /<!--[\s\S]*?-->/g
 const HTML_TAG = /<[^>]*>/g

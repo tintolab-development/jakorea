@@ -36,6 +36,7 @@ const keys = {
     recruitRangeSeal: 'recruit.individual.recruitRangeSeal',
     programRangeSeal: 'recruit.individual.programRangeSeal',
     announcementPublished: 'recruit.individual.announcementPublished',
+    interviewRequired: 'recruit.individual.interviewRequired',
     targetLevels: 'recruit.individual.targetLevels',
     targetLevelDetail: 'recruit.individual.targetLevelDetail',
     docDeadlineIso: 'recruit.individual.docDeadlineIso',
@@ -104,9 +105,10 @@ const keys = {
   },
 } as const
 
-function parseDisplayPeriodLabelToIsoRange(
-  label: string | undefined
-): { start?: string; end?: string } {
+function parseDisplayPeriodLabelToIsoRange(label: string | undefined): {
+  start?: string
+  end?: string
+} {
   if (!label?.trim() || label.trim() === '-') return {}
   const parts = label
     .split(/\s*[~\-–—]\s*/)
@@ -170,9 +172,7 @@ function audienceProgramRangeSeal(
 }
 
 /** 중첩·컬럼에서 모집 overlay 키를 채운다. 빈 값도 leftover를 덮는다. */
-export function buildGeneralRecruitOverlayFromProgram(
-  program: Program
-): Record<string, unknown> {
+export function buildGeneralRecruitOverlayFromProgram(program: Program): Record<string, unknown> {
   const common = program.generalCommonInfo
   const participant = common?.participantRecruitmentInfo
   const instructor = common?.instructorRecruitmentInfo
@@ -247,18 +247,19 @@ export function buildGeneralRecruitOverlayFromProgram(
     [keys.individual.notes]: participant?.remarks?.trim() || '',
     [inst.notesNotApplicable]: participant?.notesNotApplicable === true,
     [keys.individual.notesNotApplicable]: participant?.notesNotApplicable === true,
+    [keys.individual.interviewRequired]: yesNo(
+      program.generalParticipantInterviewEnabled ?? participant?.interviewEnabled
+    ),
     [keys.detailInfo.participantDescription]: participant?.programDescription?.trim() || '',
     [keys.detailInfo.participantGuide]: participant?.recruitmentGuide?.trim() || '',
     [keys.detailInfo.participantMethod]: participant?.applicationMethod?.trim() || '',
-    [keys.detailInfo.participantLearningSupport]:
-      participant?.learningSupportContent?.trim() || '',
+    [keys.detailInfo.participantLearningSupport]: participant?.learningSupportContent?.trim() || '',
     [keys.detailInfo.participantAdditionalHtml]: participant?.additionalContentHtml?.trim() || '',
     [keys.detailInfo.participantOtherNotes]: participant?.remarks?.trim() || '',
     [keys.instructor.recruitTargets]: instructorTargets,
     [keys.instructor.recruitTargetDetail]:
       program.instructorTargetDetail?.trim() || instructor?.recruitmentTargetDetail?.trim() || '',
-    [keys.instructor.inquiryContact]:
-      instructor?.contactOrganizationName?.trim() || '',
+    [keys.instructor.inquiryContact]: instructor?.contactOrganizationName?.trim() || '',
     [keys.instructor.inquiryTel]: instructor?.inquiryTel?.trim() || '',
     [keys.instructor.inquiryEmail]: instructor?.inquiryEmail?.trim() || '',
     [keys.instructor.notes]: instructor?.remarks?.trim() || '',
@@ -344,8 +345,7 @@ export function buildGeneralRecruitOverlayFromProgram(
   )
   if (volunteerFinalIso) overlay[keys.volunteer.finalAnnounceIso] = volunteerFinalIso
   const volunteerFinalMethod =
-    volunteer?.finalPassAnnouncementMethod?.trim() ||
-    program.finalPassAnnouncementMethod?.trim()
+    volunteer?.finalPassAnnouncementMethod?.trim() || program.finalPassAnnouncementMethod?.trim()
   if (volunteerFinalMethod) overlay[keys.volunteer.finalAnnounceMethod] = volunteerFinalMethod
 
   const participantFinalResolved = resolveAnnouncement({
@@ -367,9 +367,7 @@ export function buildGeneralRecruitOverlayFromProgram(
   }
 
   if (program.documentPassAnnouncementDate) {
-    overlay[keys.individual.docDeadlineIso] = isoOrUndefined(
-      program.documentPassAnnouncementDate
-    )
+    overlay[keys.individual.docDeadlineIso] = isoOrUndefined(program.documentPassAnnouncementDate)
   }
   if (program.documentPassAnnouncementMethod?.trim()) {
     overlay[keys.individual.docAnnounceMethod] = program.documentPassAnnouncementMethod.trim()

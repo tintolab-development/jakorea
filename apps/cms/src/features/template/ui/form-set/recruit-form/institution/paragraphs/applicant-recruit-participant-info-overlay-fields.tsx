@@ -83,54 +83,59 @@ function NeedOrNotRadioGroup({
   )
 }
 
-export const ApplicantRecruitInstitutionBridgeSync = memo(function ApplicantRecruitInstitutionBridgeSync({
-  isTrainedTeachers,
-}: {
-  isTrainedTeachers: boolean
-}) {
-  const [preguidanceRequired] = useApplicantRecruitInstitutionOverlayKv<string>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.preguidanceRequired,
-    'need'
-  )
-  const [maxInstructors] = useApplicantRecruitInstitutionOverlayKv<number | undefined>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxAssignableInstructors,
-    undefined
-  )
-  const [maxClassCount] = useApplicantRecruitInstitutionOverlayKv<number | undefined>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxClassCount,
-    undefined
-  )
-  const [maxScheduleCount] = useApplicantRecruitInstitutionOverlayKv<number | undefined>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxScheduleCount,
-    undefined
-  )
-  const [maxSessionsPerDay] = useApplicantRecruitInstitutionOverlayKv<number | undefined>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxSessionsPerDay,
-    undefined
-  )
-
-  useEffect(() => {
-    syncInstitutionApplicationBridgeFromApplicantRecruitOverlay(undefined, {
-      preEducationNoticeRequired: isTrainedTeachers ? false : preguidanceRequired === 'need',
-      maxAssignableInstructors: isTrainedTeachers ? 0 : maxInstructors,
-    })
-  }, [
+export const ApplicantRecruitInstitutionBridgeSync = memo(
+  function ApplicantRecruitInstitutionBridgeSync({
     isTrainedTeachers,
-    preguidanceRequired,
-    maxInstructors,
-    maxClassCount,
-    maxScheduleCount,
-    maxSessionsPerDay,
-  ])
+  }: {
+    isTrainedTeachers: boolean
+  }) {
+    const [preguidanceRequired] = useApplicantRecruitInstitutionOverlayKv<string>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.preguidanceRequired,
+      'need'
+    )
+    const [maxInstructors] = useApplicantRecruitInstitutionOverlayKv<number | undefined>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxAssignableInstructors,
+      undefined
+    )
+    const [maxClassCount] = useApplicantRecruitInstitutionOverlayKv<number | undefined>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxClassCount,
+      undefined
+    )
+    const [maxScheduleCount] = useApplicantRecruitInstitutionOverlayKv<number | undefined>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxScheduleCount,
+      undefined
+    )
+    const [maxSessionsPerDay] = useApplicantRecruitInstitutionOverlayKv<number | undefined>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxSessionsPerDay,
+      undefined
+    )
 
-  return null
-})
+    useEffect(() => {
+      syncInstitutionApplicationBridgeFromApplicantRecruitOverlay(undefined, {
+        preEducationNoticeRequired: isTrainedTeachers ? false : preguidanceRequired === 'need',
+        maxAssignableInstructors: isTrainedTeachers ? 0 : maxInstructors,
+      })
+    }, [
+      isTrainedTeachers,
+      preguidanceRequired,
+      maxInstructors,
+      maxClassCount,
+      maxScheduleCount,
+      maxSessionsPerDay,
+    ])
+
+    return null
+  }
+)
 
 export const ApplicantRecruitAnnouncementPublishedField = memo(
   function ApplicantRecruitAnnouncementPublishedField({
     fullRow = false,
+    size = 'medium',
   }: {
     fullRow?: boolean
+    /** 학생 명단 제출 여부와 같은 medium. 학생 명단이 없는 1사1교 레이아웃만 large. */
+    size?: 'large' | 'medium'
   }) {
     const [announcementPublished, setAnnouncementPublished] =
       useApplicantRecruitInstitutionOverlayKv<ParticipantRecruitmentAnnouncementPublishedValue>(
@@ -146,6 +151,7 @@ export const ApplicantRecruitAnnouncementPublishedField = memo(
           <ParticipantRecruitmentAnnouncementPublishedRadios
             value={announcementPublished}
             onChange={setAnnouncementPublished}
+            size={size}
           />
         }
         view="-"
@@ -169,9 +175,7 @@ export const ApplicantRecruitStudentListRequiredField = memo(
       <DetailInfoForm.Field
         label="학생 명단 제출 여부"
         validationKey="recruit.institution.studentListRequired"
-        edit={
-          <NeedOrNotRadioGroup value={studentListRequired} onChange={setStudentListRequired} />
-        }
+        edit={<NeedOrNotRadioGroup value={studentListRequired} onChange={setStudentListRequired} />}
         view="-"
       />
     )
@@ -193,40 +197,36 @@ export const ApplicantRecruitPreguidanceRequiredField = memo(
       <DetailInfoForm.Field
         label="사전 안내 사항 작성 여부"
         validationKey="recruit.institution.preguidanceRequired"
-        edit={
-          <NeedOrNotRadioGroup value={preguidanceRequired} onChange={setPreguidanceRequired} />
-        }
+        edit={<NeedOrNotRadioGroup value={preguidanceRequired} onChange={setPreguidanceRequired} />}
         view="-"
       />
     )
   }
 )
 
-export const ApplicantRecruitMaxInstructorsField = memo(function ApplicantRecruitMaxInstructorsField({
-  defaultValue,
-}: {
-  defaultValue?: number
-}) {
-  const [maxInstructors, setMaxInstructors] = useApplicantRecruitInstitutionOverlayKv<
-    number | undefined
-  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxAssignableInstructors, defaultValue)
-  const maxInstructorsInput = maxInstructors != null ? String(maxInstructors) : ''
-  return (
-    <DetailInfoForm.Field
-      label="배정 가능 최대 강사 수"
-      validationKey="recruit.institution.maxAssignableInstructors"
-      edit={
-        <NumberWithSuffixRow
-          placeholder="최대값 입력"
-          suffix="명"
-          value={maxInstructorsInput}
-          onChange={setMaxInstructors}
-        />
-      }
-      view="-"
-    />
-  )
-})
+export const ApplicantRecruitMaxInstructorsField = memo(
+  function ApplicantRecruitMaxInstructorsField({ defaultValue }: { defaultValue?: number }) {
+    const [maxInstructors, setMaxInstructors] = useApplicantRecruitInstitutionOverlayKv<
+      number | undefined
+    >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxAssignableInstructors, defaultValue)
+    const maxInstructorsInput = maxInstructors != null ? String(maxInstructors) : ''
+    return (
+      <DetailInfoForm.Field
+        label="배정 가능 최대 강사 수"
+        validationKey="recruit.institution.maxAssignableInstructors"
+        edit={
+          <NumberWithSuffixRow
+            placeholder="최대값 입력"
+            suffix="명"
+            value={maxInstructorsInput}
+            onChange={setMaxInstructors}
+          />
+        }
+        view="-"
+      />
+    )
+  }
+)
 
 export const ApplicantRecruitMaxClassCountField = memo(function ApplicantRecruitMaxClassCountField({
   defaultValue,
@@ -323,162 +323,175 @@ export const ApplicantRecruitMaxSessionsPerDayField = memo(
   }
 )
 
-export const ApplicantRecruitProgramPeriodField = memo(function ApplicantRecruitProgramPeriodField() {
-  const [programAnchorIso, setProgramAnchorIso] = useApplicantRecruitInstitutionOverlayKv<
-    string | null
-  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programAnchorIso, null)
-  const [programRangeSeal, setProgramRangeSeal] = useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programRangeSeal,
-    null
-  )
-  const programAnchor = programAnchorIso ? dayjs(programAnchorIso) : null
-  const setProgramAnchor = (next: Dayjs | null) => {
-    setProgramAnchorIso(next == null ? null : next.toISOString())
-  }
-  const programRange: [Dayjs, Dayjs] | null = useMemo(() => {
-    if (programRangeSeal == null) return null
-    return [dayjs(programRangeSeal.start), dayjs(programRangeSeal.end)]
-  }, [programRangeSeal])
-  const setProgramRange = (next: [Dayjs, Dayjs] | null) => {
-    if (next == null) {
-      setProgramRangeSeal(null)
-      return
+export const ApplicantRecruitProgramPeriodField = memo(
+  function ApplicantRecruitProgramPeriodField() {
+    const [programAnchorIso, setProgramAnchorIso] = useApplicantRecruitInstitutionOverlayKv<
+      string | null
+    >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programAnchorIso, null)
+    const [programRangeSeal, setProgramRangeSeal] =
+      useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
+        APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programRangeSeal,
+        null
+      )
+    const programAnchor = programAnchorIso ? dayjs(programAnchorIso) : null
+    const setProgramAnchor = (next: Dayjs | null) => {
+      setProgramAnchorIso(next == null ? null : next.toISOString())
     }
-    setProgramRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
-  }
-  const programRangeWithTime = useMemo(
-    () => (programRange == null ? false : dateRangeUsesClockTime(programRange[0], programRange[1])),
-    [programRange]
-  )
-
-  return (
-    <DetailInfoForm.Field
-      label="프로그램 운영 기간"
-      validationKey="recruit.institution.programRangeSeal"
-      edit={
-        <div className={MAX_SUFFIX_CLASS}>
-          <ParagraphDatePicker inputSize="small"
-            mode="single"
-            presetMode="period"
-            value={programAnchor}
-            width="100%"
-            placeholder="운영 기간을 선택하세요"
-            preferPeriodModeInPopover
-            suppressAutoTodayWhenEmpty
-            appliedSurfaceRange={programRange}
-            appliedSurfaceWithTime={programRangeWithTime}
-            onRangeChange={range => setProgramRange(range)}
-            onChange={next => {
-              if (next == null) return
-              setProgramAnchor(next)
-            }}
-          />
-        </div>
+    const programRange: [Dayjs, Dayjs] | null = useMemo(() => {
+      if (programRangeSeal == null) return null
+      return [dayjs(programRangeSeal.start), dayjs(programRangeSeal.end)]
+    }, [programRangeSeal])
+    const setProgramRange = (next: [Dayjs, Dayjs] | null) => {
+      if (next == null) {
+        setProgramRangeSeal(null)
+        return
       }
-      view="-"
-    />
-  )
-})
-
-export const ApplicantRecruitRecruitPeriodField = memo(function ApplicantRecruitRecruitPeriodField() {
-  const [recruitAnchorIso, setRecruitAnchorIso] = useApplicantRecruitInstitutionOverlayKv<
-    string | null
-  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitAnchorIso, null)
-  const [recruitRangeSeal, setRecruitRangeSeal] = useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitRangeSeal,
-    null
-  )
-  const recruitAnchor = recruitAnchorIso ? dayjs(recruitAnchorIso) : null
-  const setRecruitAnchor = (next: Dayjs | null) => {
-    setRecruitAnchorIso(next == null ? null : next.toISOString())
-  }
-  const recruitRange: [Dayjs, Dayjs] | null = useMemo(() => {
-    if (recruitRangeSeal == null) return null
-    return [dayjs(recruitRangeSeal.start), dayjs(recruitRangeSeal.end)]
-  }, [recruitRangeSeal])
-  const setRecruitRange = (next: [Dayjs, Dayjs] | null) => {
-    if (next == null) {
-      setRecruitRangeSeal(null)
-      return
+      setProgramRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
     }
-    setRecruitRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+    const programRangeWithTime = useMemo(
+      () =>
+        programRange == null ? false : dateRangeUsesClockTime(programRange[0], programRange[1]),
+      [programRange]
+    )
+
+    return (
+      <DetailInfoForm.Field
+        label="프로그램 운영 기간"
+        validationKey="recruit.institution.programRangeSeal"
+        edit={
+          <div className={MAX_SUFFIX_CLASS}>
+            <ParagraphDatePicker
+              inputSize="small"
+              mode="single"
+              presetMode="period"
+              value={programAnchor}
+              width="100%"
+              placeholder="운영 기간을 선택하세요"
+              preferPeriodModeInPopover
+              suppressAutoTodayWhenEmpty
+              appliedSurfaceRange={programRange}
+              appliedSurfaceWithTime={programRangeWithTime}
+              onRangeChange={range => setProgramRange(range)}
+              onChange={next => {
+                if (next == null) return
+                setProgramAnchor(next)
+              }}
+            />
+          </div>
+        }
+        view="-"
+      />
+    )
   }
+)
 
-  return (
-    <DetailInfoForm.Field
-      label="참여자 모집 기간"
-      validationKey="recruit.institution.recruitRangeSeal"
-      edit={
-        <div className={MAX_SUFFIX_CLASS}>
-          <ParagraphDatePicker inputSize="small"
-            mode="single"
-            presetMode="period"
-            value={recruitAnchor}
-            width="100%"
-            placeholder="모집 기간을 선택하세요"
-            preferPeriodModeInPopover
-            suppressAutoTodayWhenEmpty
-            showTimeToggle={false}
-            appliedSurfaceRange={recruitRange}
-            appliedSurfaceWithTime={false}
-            onRangeChange={range => setRecruitRange(range)}
-            onChange={next => {
-              if (next == null) return
-              setRecruitAnchor(next)
-            }}
-          />
-        </div>
+export const ApplicantRecruitRecruitPeriodField = memo(
+  function ApplicantRecruitRecruitPeriodField() {
+    const [recruitAnchorIso, setRecruitAnchorIso] = useApplicantRecruitInstitutionOverlayKv<
+      string | null
+    >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitAnchorIso, null)
+    const [recruitRangeSeal, setRecruitRangeSeal] =
+      useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
+        APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitRangeSeal,
+        null
+      )
+    const recruitAnchor = recruitAnchorIso ? dayjs(recruitAnchorIso) : null
+    const setRecruitAnchor = (next: Dayjs | null) => {
+      setRecruitAnchorIso(next == null ? null : next.toISOString())
+    }
+    const recruitRange: [Dayjs, Dayjs] | null = useMemo(() => {
+      if (recruitRangeSeal == null) return null
+      return [dayjs(recruitRangeSeal.start), dayjs(recruitRangeSeal.end)]
+    }, [recruitRangeSeal])
+    const setRecruitRange = (next: [Dayjs, Dayjs] | null) => {
+      if (next == null) {
+        setRecruitRangeSeal(null)
+        return
       }
-      view="-"
-    />
-  )
-})
+      setRecruitRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+    }
 
-export const ApplicantRecruitFinalAnnounceField = memo(function ApplicantRecruitFinalAnnounceField() {
-  const [finalAnnounceIso, setFinalAnnounceIso] = useApplicantRecruitInstitutionOverlayKv<
-    string | null
-  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.finalAnnounceIso, null)
-  const [finalAnnounceMethod, setFinalAnnounceMethod] = useApplicantRecruitInstitutionOverlayKv<string>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.finalAnnounceMethod,
-    ''
-  )
-  const finalAnnounceDate = finalAnnounceIso ? dayjs(finalAnnounceIso) : null
-  const setFinalAnnounceDate = (next: Dayjs | null) => {
-    setFinalAnnounceIso(next == null ? null : next.toISOString())
+    return (
+      <DetailInfoForm.Field
+        label="참여자 모집 기간"
+        validationKey="recruit.institution.recruitRangeSeal"
+        edit={
+          <div className={MAX_SUFFIX_CLASS}>
+            <ParagraphDatePicker
+              inputSize="small"
+              mode="single"
+              presetMode="period"
+              value={recruitAnchor}
+              width="100%"
+              placeholder="모집 기간을 선택하세요"
+              preferPeriodModeInPopover
+              suppressAutoTodayWhenEmpty
+              showTimeToggle={false}
+              appliedSurfaceRange={recruitRange}
+              appliedSurfaceWithTime={false}
+              onRangeChange={range => setRecruitRange(range)}
+              onChange={next => {
+                if (next == null) return
+                setRecruitAnchor(next)
+              }}
+            />
+          </div>
+        }
+        view="-"
+      />
+    )
   }
+)
 
-  return (
-    <DetailInfoForm.Field
-      label="최종 합격자 발표"
-      validationKey={[
-        'recruit.institution.finalAnnounceIso',
-        'recruit.institution.finalAnnounceMethod',
-      ]}
-      edit={
-        <div className={MAX_SUFFIX_CLASS}>
-          <ParagraphDatePicker inputSize="small"
-            mode="single"
-            presetMode="date"
-            value={finalAnnounceDate}
-            placeholder="합격자 발표일"
-            suppressAutoTodayWhenEmpty
-            onChange={next => setFinalAnnounceDate(next)}
-          />
-          <DetailInfoForm.InputsSeparator />
-          <CmsInput
-            inputSize="small"
-            width="100%"
-            style={{ flex: '1 1 0', minWidth: 0 }}
-            placeholder="발표 방법 안내"
-            value={finalAnnounceMethod}
-            onChange={e => setFinalAnnounceMethod(e.target.value)}
-          />
-        </div>
-      }
-      view="-"
-    />
-  )
-})
+export const ApplicantRecruitFinalAnnounceField = memo(
+  function ApplicantRecruitFinalAnnounceField() {
+    const [finalAnnounceIso, setFinalAnnounceIso] = useApplicantRecruitInstitutionOverlayKv<
+      string | null
+    >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.finalAnnounceIso, null)
+    const [finalAnnounceMethod, setFinalAnnounceMethod] =
+      useApplicantRecruitInstitutionOverlayKv<string>(
+        APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.finalAnnounceMethod,
+        ''
+      )
+    const finalAnnounceDate = finalAnnounceIso ? dayjs(finalAnnounceIso) : null
+    const setFinalAnnounceDate = (next: Dayjs | null) => {
+      setFinalAnnounceIso(next == null ? null : next.toISOString())
+    }
+
+    return (
+      <DetailInfoForm.Field
+        label="최종 합격자 발표"
+        validationKey={[
+          'recruit.institution.finalAnnounceIso',
+          'recruit.institution.finalAnnounceMethod',
+        ]}
+        edit={
+          <div className={MAX_SUFFIX_CLASS}>
+            <ParagraphDatePicker
+              inputSize="small"
+              mode="single"
+              presetMode="date"
+              value={finalAnnounceDate}
+              placeholder="합격자 발표일"
+              suppressAutoTodayWhenEmpty
+              onChange={next => setFinalAnnounceDate(next)}
+            />
+            <DetailInfoForm.InputsSeparator />
+            <CmsInput
+              inputSize="small"
+              width="100%"
+              style={{ flex: '1 1 0', minWidth: 0 }}
+              placeholder="발표 방법 안내"
+              value={finalAnnounceMethod}
+              onChange={e => setFinalAnnounceMethod(e.target.value)}
+            />
+          </div>
+        }
+        view="-"
+      />
+    )
+  }
+)
 
 export const ApplicantRecruitTargetLevelsField = memo(function ApplicantRecruitTargetLevelsField() {
   const [targetLevels, setTargetLevels] = useApplicantRecruitInstitutionOverlayKv<string[]>(
@@ -508,10 +521,11 @@ export const ApplicantRecruitTargetLevelsField = memo(function ApplicantRecruitT
 
 export const ApplicantRecruitTargetLevelDetailField = memo(
   function ApplicantRecruitTargetLevelDetailField() {
-    const [targetLevelDetail, setTargetLevelDetail] = useApplicantRecruitInstitutionOverlayKv<string>(
-      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.targetLevelDetail,
-      ''
-    )
+    const [targetLevelDetail, setTargetLevelDetail] =
+      useApplicantRecruitInstitutionOverlayKv<string>(
+        APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.targetLevelDetail,
+        ''
+      )
     return (
       <DetailInfoForm.Field
         label="교육 대상 상세"
@@ -531,40 +545,43 @@ export const ApplicantRecruitTargetLevelDetailField = memo(
   }
 )
 
-export const ApplicantRecruitInquiryContactFields = memo(function ApplicantRecruitInquiryContactFields() {
-  const [inquiryContact, setInquiryContact] = useApplicantRecruitInstitutionOverlayKv<string>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.inquiryContact,
-    ''
-  )
-  const [inquiryTel, setInquiryTel] = useApplicantRecruitInstitutionOverlayKv<string>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.inquiryTel,
-    ''
-  )
-  const [inquiryEmail, setInquiryEmail] = useApplicantRecruitInstitutionOverlayKv<string>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.inquiryEmail,
-    ''
-  )
-  return (
-    <RecruitInquiryContactRow
-      inquiryContact={inquiryContact}
-      onInquiryContactChange={setInquiryContact}
-      inquiryTel={inquiryTel}
-      onInquiryTelChange={setInquiryTel}
-      inquiryEmail={inquiryEmail}
-      onInquiryEmailChange={setInquiryEmail}
-    />
-  )
-})
+export const ApplicantRecruitInquiryContactFields = memo(
+  function ApplicantRecruitInquiryContactFields() {
+    const [inquiryContact, setInquiryContact] = useApplicantRecruitInstitutionOverlayKv<string>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.inquiryContact,
+      ''
+    )
+    const [inquiryTel, setInquiryTel] = useApplicantRecruitInstitutionOverlayKv<string>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.inquiryTel,
+      ''
+    )
+    const [inquiryEmail, setInquiryEmail] = useApplicantRecruitInstitutionOverlayKv<string>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.inquiryEmail,
+      ''
+    )
+    return (
+      <RecruitInquiryContactRow
+        inquiryContact={inquiryContact}
+        onInquiryContactChange={setInquiryContact}
+        inquiryTel={inquiryTel}
+        onInquiryTelChange={setInquiryTel}
+        inquiryEmail={inquiryEmail}
+        onInquiryEmailChange={setInquiryEmail}
+      />
+    )
+  }
+)
 
 export const ApplicantRecruitNotesFields = memo(function ApplicantRecruitNotesFields({
   fullRow,
 }: {
   fullRow?: boolean
 }) {
-  const [notesNotApplicable, setNotesNotApplicable] = useApplicantRecruitInstitutionOverlayKv<boolean>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notesNotApplicable,
-    false
-  )
+  const [notesNotApplicable, setNotesNotApplicable] =
+    useApplicantRecruitInstitutionOverlayKv<boolean>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notesNotApplicable,
+      false
+    )
   const [notes, setNotes] = useApplicantRecruitInstitutionOverlayKv<string>(
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notes,
     ''

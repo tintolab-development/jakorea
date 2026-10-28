@@ -149,7 +149,7 @@ export interface DashboardWidgetRenderProps {
   statisticsLoading: boolean
   instructorActivity: InstructorActivitySummary | null
   instructorActivityLoading: boolean
-  instructorCount: number
+  instructorCount: number | null
   /** 관리자 프로그램 일정 위젯 ACL */
   user?: Omit<User, 'password'> | null
 }
@@ -171,7 +171,7 @@ function renderInstructorCountCard(p: DashboardWidgetRenderProps) {
   return (
     <StatisticsCard
       title="등록된 강사"
-      value={p.instructorCount}
+      value={p.instructorCount == null ? '-' : p.instructorCount}
       prefix={<UserOutlined />}
       suffix="명"
       to="/users/list?kind=instructors"

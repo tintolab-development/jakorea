@@ -2,6 +2,12 @@
  * CMS Figma 에디터 chrome — node 5714-10743
  * 본문·툴바 패딩·보더는 @jakorea/rich-text/styles/editor.css + 툴바 CSS와 함께 적용.
  */
+.cms-rich-text-editor,
+.cms-rich-text-viewer {
+  /* CMS 본문 기본 14px. 패키지 fallback 16px·화면별 host(메일 등)가 덮어쓴다. */
+  --rt-content-font-size: 14px;
+}
+
 .cms-rich-text-editor {
   width: 100%;
   max-width: 100%;

@@ -28,7 +28,7 @@ export function mapDashboardScheduleDeliveryToSessionStatus(
 
 /**
  * 출석 관리 목록에 API 출석값을 노출할 수 있는 회차인지.
- * 일정이 진행 대기이거나 시작 시각 전이면 출결은 `-`(미기록)로 본다.
+ * 시작 시각이 있으면 그 시각을 기준으로 하고, 진행 대기 상태는 시각이 없을 때만 막는다.
  */
 export function isScheduleAttendanceOpenForDisplay(
   input: { scheduleStatus?: string | null; startAt?: string | null },
@@ -36,9 +36,6 @@ export function isScheduleAttendanceOpenForDisplay(
 ): boolean {
   const normalized = normalizeDashboardScheduleDeliveryStatus(input.scheduleStatus)
   if (
-    normalized === 'SCHEDULED' ||
-    normalized === 'NOT_STARTED' ||
-    normalized === 'PENDING' ||
     normalized === 'UNSCHEDULED' ||
     normalized === 'NOT_PLANNED' ||
     normalized === 'CANCELLED' ||
@@ -49,9 +46,10 @@ export function isScheduleAttendanceOpenForDisplay(
   const startAt = input.startAt?.trim()
   if (startAt) {
     const start = dayjs(startAt)
-    if (start.isValid() && dayjs(now).isBefore(start)) {
-      return false
-    }
+    if (start.isValid()) return !dayjs(now).isBefore(start)
+  }
+  if (normalized === 'SCHEDULED' || normalized === 'NOT_STARTED' || normalized === 'PENDING') {
+    return false
   }
   return true
 }

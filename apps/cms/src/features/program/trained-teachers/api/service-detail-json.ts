@@ -262,8 +262,6 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
     scheduleTimeEnabled: program.scheduleTimeEnabled,
     startTime: program.startTime,
     endTime: program.endTime,
-    createdByName: program.createdByName,
-    updatedByName: program.updatedByName,
   })
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PFButton, PFMetaBadge, PFPagination, PFStateBadge, PFText } from '@/shared/ui'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
@@ -11,7 +11,13 @@ import {
   type LectureReportStatus,
   type LectureReportPage, type LectureReportState,
 } from '../api/lecture-report-client'
+import { getLectureReportApiErrorMessage } from '../lib/lecture-report-contract'
 import { lectureReportWritePath } from '../lib/lecture-report-path'
+import {
+  readLectureReportPreviewAssignmentIdFromLocation,
+  writeLectureReportPreviewAssignmentIdToLocation,
+} from '../lib/lecture-report-preview-url'
+import { LectureReportPreviewModalContainer } from './lecture-report-preview-modal-container'
 import styles from './lecture-report-panel.module.css'
 import { clampLectureReportPage, resolveLectureReportAction } from '../lib/lecture-report-policy'
 
@@ -71,15 +77,51 @@ function reportMessage(status: LectureReportStatus | undefined): string {
 
 export function LectureReportPanel({ applicationId, programId, instructorProgram }: Props) {
   const navigate = useNavigate()
+  const pushedPreviewEntryRef = useRef(false)
+  const [previewAssignmentId, setPreviewAssignmentId] = useState<number | null>(
+    readLectureReportPreviewAssignmentIdFromLocation,
+  )
   const [pageNo, setPageNo] = useState(0)
   const [page, setPage] = useState<LectureReportPage | null>(null)
   const [states, setStates] = useState<Record<number, LectureReportState>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadToken, setReloadToken] = useState(0)
+
+  useEffect(() => {
+    const handlePopState = () => {
+      pushedPreviewEntryRef.current = false
+      setPreviewAssignmentId(readLectureReportPreviewAssignmentIdFromLocation())
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  function closePreviewModal() {
+    setPreviewAssignmentId(null)
+    if (pushedPreviewEntryRef.current && readLectureReportPreviewAssignmentIdFromLocation()) {
+      pushedPreviewEntryRef.current = false
+      window.history.back()
+      return
+    }
+    pushedPreviewEntryRef.current = false
+    writeLectureReportPreviewAssignmentIdToLocation(null, 'replace')
+  }
+
+  function openPreviewModal(assignmentId: number) {
+    if (previewAssignmentId === null) {
+      writeLectureReportPreviewAssignmentIdToLocation(assignmentId, 'push')
+      pushedPreviewEntryRef.current = true
+    } else {
+      writeLectureReportPreviewAssignmentIdToLocation(assignmentId, 'replace')
+    }
+    setPreviewAssignmentId(assignmentId)
+  }
 
   useEffect(() => {
     let alive = true
-    getLectureReportAssignments(programId, pageNo).then(async result => {
+    const controller = new AbortController()
+    getLectureReportAssignments(programId, pageNo, controller.signal).then(async result => {
       if (!alive) return
       if (result.totalPages > 0 && pageNo >= result.totalPages) { setPageNo(clampLectureReportPage(pageNo, result.totalPages)); return }
       setPage(result)
@@ -87,29 +129,52 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
         try { return [row.assignmentId, await getLectureReportState(row.assignmentId)] as const } catch { return null }
       }))
       if (alive) setStates(previous => ({ ...previous, ...Object.fromEntries(fetched.filter((x): x is NonNullable<typeof x> => x != null)) }))
-    }).catch(() => { if (alive) setError('강의보고서 목록을 불러오지 못했습니다.') }).finally(() => { if (alive) setLoading(false) })
-    return () => { alive = false }
-  }, [programId, pageNo])
+    }).catch(cause => {
+      if (!alive) return
+      setPage(null)
+      setStates({})
+      setError(getLectureReportApiErrorMessage(cause, '강의보고서 목록을 불러오지 못했습니다.'))
+    }).finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false; controller.abort() }
+  }, [programId, pageNo, reloadToken])
 
   function goToPage(next: number) {
     setError('')
     setLoading(true)
+    setPage(null)
+    setStates({})
     setPageNo(next)
   }
+  function retry() {
+    setError('')
+    setLoading(true)
+    setPage(null)
+    setStates({})
+    setReloadToken(value => value + 1)
+  }
   if (loading && !page) return <EducationSessionListSkeleton statusMessage="강의보고서 목록을 불러오는 중입니다." />
-  return <section className={styles.panel} aria-labelledby="lecture-report-title" aria-busy={loading}>
+  return (
+    <>
+    <section className={styles.panel} aria-labelledby="lecture-report-title" aria-busy={loading}>
     <div className={styles.heading}>
       <h2 id="lecture-report-title" className={styles.headingTitle}>
         강의보고서 <span className={styles.headingCount}>{page?.totalElements ?? 0}건</span>
       </h2>
     </div>
-    {error ? <p role="alert">{error}</p> : null}
-    {!loading && page?.totalElements === 0 ? <p>제출할 강의보고서가 없습니다.</p> : null}
+    {error ? (
+      <div className={styles.errorState} role="alert">
+        <p className={styles.errorMessage}>{error}</p>
+        <PFButton type="button" variant="tertiary" size="large" onClick={retry} disabled={loading}>
+          다시 시도
+        </PFButton>
+      </div>
+    ) : null}
+    {!loading && !error && page?.items.length === 0 ? <p>제출할 강의보고서가 없습니다.</p> : null}
     {page && page.items.length > 0 ? <>
       <div className={styles.rows}>{page.items.map(row => {
         const state = states[row.assignmentId]
         const reportStatus = resolveReportStatus(state, row)
-        const action = resolveLectureReportAction(reportStatus, state?.canSubmit === true)
+        const action = resolveLectureReportAction(reportStatus, state?.canSubmit ?? row.canSubmit)
         const submitted = reportStatus === 'SUBMITTED'
         const lectureStatus = lectureStatusPresentation(row.lectureStatus)
         const statusLoaded = state != null || row.reportStatus != null
@@ -152,7 +217,11 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
                 variant={submitted ? 'tertiary' : 'primary'}
                 className={styles.reportActionButton}
                 disabled={submitted ? false : action !== 'write'}
-                onClick={() => navigate(lectureReportWritePath(applicationId, row.assignmentId, submitted ? 'preview' : 'write'))}
+                onClick={() =>
+                  submitted
+                    ? openPreviewModal(row.assignmentId)
+                    : navigate(lectureReportWritePath(applicationId, row.assignmentId, 'write'))
+                }
               >
                 {submitted ? '강의보고서 확인하기' : '강의보고서 작성하기'}
               </PFButton>
@@ -163,4 +232,12 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
       {page.totalPages > 1 ? <div className={styles.pagination}><PFPagination currentPage={pageNo + 1} totalPages={page.totalPages} onPageChange={nextPage => goToPage(nextPage - 1)} ariaLabel="강의보고서 페이지" /></div> : null}
     </> : null}
   </section>
+  <LectureReportPreviewModalContainer
+    open={previewAssignmentId != null}
+    applicationId={applicationId}
+    assignmentId={previewAssignmentId}
+    onClose={closePreviewModal}
+  />
+    </>
+  )
 }

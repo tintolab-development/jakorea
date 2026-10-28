@@ -2,6 +2,7 @@ import {
   PermissionModal,
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
+import type { NotifyTimingCapability } from '@/shared/lib/notify-timing-capability'
 import {
   buildProgramApplicationRejectCopy,
   type ProgramApplicationRejectAudience,
@@ -18,6 +19,8 @@ export type ProgramApplicationRejectModalProps = {
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
+  notifyTimingCapability?: NotifyTimingCapability
+  notifyTimingOptions?: 'two' | 'three'
 }
 
 export function ProgramApplicationRejectModal({
@@ -29,6 +32,8 @@ export function ProgramApplicationRejectModal({
   onCancel,
   onConfirm,
   zIndex,
+  notifyTimingCapability,
+  notifyTimingOptions,
 }: ProgramApplicationRejectModalProps) {
   const copy = buildProgramApplicationRejectCopy({
     audience,
@@ -53,6 +58,8 @@ export function ProgramApplicationRejectModal({
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}
+      notifyTimingCapability={notifyTimingCapability}
+      notifyTimingOptions={notifyTimingOptions}
     />
   )
 }

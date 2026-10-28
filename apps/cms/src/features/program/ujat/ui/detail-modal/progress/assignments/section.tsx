@@ -17,6 +17,7 @@ import {
   UjatAssignmentSessionGroupPanel,
 } from './session-group-panel'
 import { useUjatEducationProgressAssignments } from './use-list'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import './section.css'
 
 type UjatAssignmentExcelRow = {
@@ -76,7 +77,7 @@ export function UjatEducationProgressAssignmentsSection({
           no: total - index,
           name: volunteer.name,
           institutionName: volunteer.institutionName,
-          assignedClass: volunteer.assignedClass,
+          assignedClass: formatUjatGradeClassDisplayLabel(volunteer.assignedClass),
           submissionStatusLabel: assignmentSubmissionStatusLabel(
             resolveAssignmentSubmissionStatus(volunteer)
           ),

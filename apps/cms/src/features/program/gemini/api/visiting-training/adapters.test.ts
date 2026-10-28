@@ -607,6 +607,54 @@ describe('gemini visiting-training adapters', () => {
     expect(snapshot.geminiRecruitment?.thumbnailFileName).toBe('thumb.png')
   })
 
+  it('모집 시작 후에는 참여자 모집 창을 PATCH에서 뺀다', () => {
+    const update = mapGeminiRecruitmentDetailToUpdateRequest(
+      {
+        title: '수정 공고',
+        announcementPublished: 'published',
+        educationTargetLevels: ['adult'],
+        educationTargetDetail: '성인·대학생',
+        applicationPeriodStart: '2026-09-30T15:00:00.000Z',
+        applicationPeriodEnd: '2026-09-30T15:00:00.000Z',
+        trainingRequestPeriodStart: '2026-10-01T15:00:00.000Z',
+        trainingRequestPeriodEnd: '2026-10-29T15:00:00.000Z',
+        minStudentCount: 15,
+        educationForm: 'offline',
+        educationStructure: 'SCHEDULE',
+        inquiryContactName: '연수팀',
+        inquiryTel: '02-1234-5678',
+        inquiryEmail: 'gemini@jakorea.org',
+        notesNotApplicable: false,
+        notes: '비고',
+        thumbnailFileName: null,
+        programDescription: '프로그램 설명',
+        recruitmentGuide: '모집 안내',
+        applicationMethod: '온라인 신청',
+        learningSupportContent: '활동지 제공',
+        additionalContentMarkdown: '<p>추가</p>',
+        attachmentFileNames: [],
+      },
+      { recruitmentWindowLocked: true }
+    )
+    expect(update.applicationStartDate).toBeUndefined()
+    expect(update.applicationEndDate).toBeUndefined()
+    expect(update.businessStartDate).toBeUndefined()
+    expect(update.businessEndDate).toBeUndefined()
+    expect(update.description).toBe('프로그램 설명')
+    expect(update.trainingRequestStartDate).toBe('2026-10-01T15:00:00.000Z')
+    expect(update.trainingRequestEndDate).toBe('2026-10-29T15:00:00.000Z')
+    const snapshot = JSON.parse(update.serviceDetailJson ?? '{}') as {
+      geminiRecruitment?: {
+        applicationPeriodStart?: string
+        applicationPeriodEnd?: string
+        programDescription?: string
+      }
+    }
+    expect(snapshot.geminiRecruitment?.applicationPeriodStart).toBeUndefined()
+    expect(snapshot.geminiRecruitment?.applicationPeriodEnd).toBeUndefined()
+    expect(snapshot.geminiRecruitment?.programDescription).toBe('프로그램 설명')
+  })
+
   it('persist snapshot 정규화는 컬럼과 같고 연수 요청 기간을 모집 기간과 합치지 않는다', () => {
     const persist = buildGeminiRecruitmentPersistSnapshot({
       title: '공고',

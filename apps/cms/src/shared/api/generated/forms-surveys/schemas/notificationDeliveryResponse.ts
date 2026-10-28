@@ -10,6 +10,8 @@ export interface NotificationDeliveryResponse {
   deliveryId?: number;
   notificationEventId?: number;
   templateId?: number;
+  /** CMS 알림 실발송 배치 id. 자동 알림처럼 배치가 없으면 null. */
+  batchId?: number;
   recipientActorType?: string;
   recipientActorId?: number;
   /** 발송 채널 유형(ALIMTALK|SMS|EMAIL) */

@@ -39,6 +39,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react'
+import { CMS_CALENDAR_PREVIEW_TOOLTIP_Z_INDEX } from '@/shared/constants/modal-z-index'
 import './status-dropdown-cell.css'
 
 /** 테이블 컬럼에 지정할 className — 행 높이 고정 등 레이아웃 스타일 적용용 */
@@ -311,7 +312,10 @@ export function StatusDropdownCell<T extends string = string>({
       placement="bottomCenter"
       disabled={isUpdating}
       overlayClassName={overlayClassName}
-      overlayStyle={overlayStyle}
+      overlayStyle={{
+        ...overlayStyle,
+        zIndex: CMS_CALENDAR_PREVIEW_TOOLTIP_Z_INDEX,
+      }}
       getPopupContainer={() => document.body}
       open={controlledOpen}
       destroyOnHidden

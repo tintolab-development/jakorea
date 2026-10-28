@@ -39,6 +39,34 @@ export type SmsTemplateFormDraft = {
   bodyText: string
   attachmentFileNames: string[]
   newFiles: File[]
+  /** 저장 시 DELETE할 기존 템플릿 첨부 attachmentId (MMS가 아니면 기존 첨부 전부) */
+  removedAttachmentIds: number[]
+  /** 삭제 후 남는 기존 첨부 — 신규 첨부 개수·합계 사전 검증용 */
+  remainingAttachments: { count: number; totalBytes: number }
+}
+
+/** 화면에 남은 파일명 기준으로 유지/삭제할 기존 템플릿 첨부를 나눈다. */
+export function splitSmsTemplateExistingAttachments(input: {
+  existing: SmsTemplateAttachment[]
+  attachmentFileNames: string[]
+  messageType: SmsTemplateFormDraft['messageType']
+}): { kept: SmsTemplateAttachment[]; removedAttachmentIds: number[] } {
+  if (input.messageType !== 'MMS') {
+    return { kept: [], removedAttachmentIds: input.existing.map(item => item.attachmentId) }
+  }
+  const remainingNames = [...input.attachmentFileNames]
+  const kept: SmsTemplateAttachment[] = []
+  const removedAttachmentIds: number[] = []
+  for (const item of input.existing) {
+    const index = remainingNames.indexOf(item.fileName)
+    if (index >= 0) {
+      remainingNames.splice(index, 1)
+      kept.push(item)
+    } else {
+      removedAttachmentIds.push(item.attachmentId)
+    }
+  }
+  return { kept, removedAttachmentIds }
 }
 
 type InsertTarget = 'subject' | 'body'
@@ -57,6 +85,8 @@ const EMPTY_DRAFT: SmsTemplateFormDraft = {
   bodyText: '',
   attachmentFileNames: [],
   newFiles: [],
+  removedAttachmentIds: [],
+  remainingAttachments: { count: 0, totalBytes: 0 },
 }
 
 export const SMS_SUBJECT_MAX_LENGTH = SMS_SUBJECT_BYTE_LIMIT
@@ -88,6 +118,11 @@ export function draftFromTemplate(
     bodyText: template.bodyText,
     attachmentFileNames: [...template.attachmentFileNames],
     newFiles: [],
+    removedAttachmentIds: [],
+    remainingAttachments: {
+      count: template.attachments?.length ?? 0,
+      totalBytes: (template.attachments ?? []).reduce((sum, item) => sum + (item.byteSize ?? 0), 0),
+    },
   }
 }
 
@@ -216,10 +251,12 @@ export function useSmsTemplateForm(
           message: '첨부파일은 MMS 유형에서만 추가할 수 있습니다.',
         }
       }
-      const existingBytes = existingAttachmentsRef.current.reduce(
-        (sum, item) => sum + (item.byteSize ?? 0),
-        0
-      )
+      const { kept } = splitSmsTemplateExistingAttachments({
+        existing: existingAttachmentsRef.current,
+        attachmentFileNames: attachmentFileNamesRef.current,
+        messageType: 'MMS',
+      })
+      const existingBytes = kept.reduce((sum, item) => sum + (item.byteSize ?? 0), 0)
       const result = await rejectSmsMmsAttachments({
         incoming: files,
         currentCount: attachmentFileNamesRef.current.length,
@@ -278,6 +315,11 @@ export function useSmsTemplateForm(
   )
 
   const getDraft = useCallback((): SmsTemplateFormDraft => {
+    const { kept, removedAttachmentIds } = splitSmsTemplateExistingAttachments({
+      existing: existingAttachmentsRef.current,
+      attachmentFileNames,
+      messageType,
+    })
     return {
       categoryId: normalizeCategoryId(categoryId),
       templateName: templateName.trim(),
@@ -287,6 +329,11 @@ export function useSmsTemplateForm(
       bodyText,
       attachmentFileNames,
       newFiles: [...newFilesRef.current],
+      removedAttachmentIds,
+      remainingAttachments: {
+        count: kept.length,
+        totalBytes: kept.reduce((sum, item) => sum + (item.byteSize ?? 0), 0),
+      },
     }
   }, [attachmentFileNames, bodyText, categoryId, messageType, senderPhone, subject, templateName])
 

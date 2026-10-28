@@ -11,24 +11,49 @@ const toMember = (value: string) =>
   value === 'general' ? 'GENERAL' : value === 'school_teacher' ? 'SCHOOL_TEACHER' : undefined
 
 describe('buildNotificationTemplateVariablesQuery', () => {
-  it('프로그램 + 참여 유형을 넘긴다', () => {
+  it('FE-VAR-01 프로그램 + 참여 유형을 넘긴다', () => {
     expect(
       buildNotificationTemplateVariablesQuery({
         programId: 162371,
-        recipientTypeMode: 'participation',
-        typeValue: 'participant',
+        participantTypeValue: 'participant',
         toParticipantTypeApi: toParticipant,
         toMemberTypeApi: toMember,
       })
     ).toEqual({ programId: 162371, participantType: 'PARTICIPANT' })
   })
 
+  it('FE-VAR-03 유일 참여·회원 유형을 함께 넘긴다', () => {
+    expect(
+      buildNotificationTemplateVariablesQuery({
+        programId: 162371,
+        participantTypeValue: 'participant',
+        memberTypeValue: 'school_teacher',
+        toParticipantTypeApi: toParticipant,
+        toMemberTypeApi: toMember,
+      })
+    ).toEqual({
+      programId: 162371,
+      participantType: 'PARTICIPANT',
+      memberType: 'SCHOOL_TEACHER',
+    })
+  })
+
+  it('FE-VAR-05 교사 회원만 확정되면 memberType을 넘긴다', () => {
+    expect(
+      buildNotificationTemplateVariablesQuery({
+        programId: 10,
+        memberTypeValue: 'school_teacher',
+        toParticipantTypeApi: toParticipant,
+        toMemberTypeApi: toMember,
+      })
+    ).toEqual({ programId: 10, memberType: 'SCHOOL_TEACHER' })
+  })
+
   it('프로그램 미선택이면 memberType만 넘긴다', () => {
     expect(
       buildNotificationTemplateVariablesQuery({
         programId: undefined,
-        recipientTypeMode: 'member',
-        typeValue: 'general',
+        memberTypeValue: 'general',
         toParticipantTypeApi: toParticipant,
         toMemberTypeApi: toMember,
       })
@@ -39,8 +64,18 @@ describe('buildNotificationTemplateVariablesQuery', () => {
     expect(
       buildNotificationTemplateVariablesQuery({
         programId: 10,
-        recipientTypeMode: 'participation',
-        typeValue: '',
+        toParticipantTypeApi: toParticipant,
+        toMemberTypeApi: toMember,
+      })
+    ).toEqual({ programId: 10 })
+  })
+
+  it('FE-VAR-11 혼합 유형이면 해당 필터를 생략한다', () => {
+    expect(
+      buildNotificationTemplateVariablesQuery({
+        programId: 10,
+        participantTypeValue: inferUniqueRecipientTypeValue(['participant', 'instructor']),
+        memberTypeValue: inferUniqueRecipientTypeValue(['general', 'school_teacher']),
         toParticipantTypeApi: toParticipant,
         toMemberTypeApi: toMember,
       })

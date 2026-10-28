@@ -1,0 +1,205 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-60);
+}
+
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: -0.2px;
+}
+
+.sectionTitle span {
+  color: var(--color-neutral-cool-600);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.16px;
+}
+
+.tableWrap {
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+}
+
+.table {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  line-height: 140%;
+}
+
+.table th,
+.table td {
+  box-sizing: border-box;
+  height: 54px;
+  padding: 0 var(--spacing-20);
+  border-right: 1px solid var(--Color-border-light, rgb(61 61 61 / 10%));
+  border-bottom: 1px solid var(--Color-border-light, rgb(61 61 61 / 10%));
+  vertical-align: middle;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.table th {
+  background: var(--color-neutral-cool-80, #eef3f4);
+  font-weight: 700;
+}
+
+.table td {
+  font-weight: 500;
+}
+
+.table th:last-child,
+.table td:last-child {
+  border-right: none;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Figma node 11001-286932: 1440px table width */
+.assignedTable .numberColumn {
+  width: 6.875%;
+}
+
+.assignedTable .roleColumn {
+  width: 7.674%;
+}
+
+.assignedTable .institutionColumn {
+  width: 16.667%;
+}
+
+.assignedTable .gradeColumn {
+  width: 6.979%;
+}
+
+.assignedTable .locationColumn {
+  width: 19.444%;
+}
+
+.assignedTable .distanceColumn {
+  width: 9.722%;
+}
+
+.assignedTable col:last-child {
+  width: 32.639%;
+}
+
+/* Figma node 11001-286939: 1440px table width */
+.waitingTable .numberColumn {
+  width: 6.875%;
+}
+
+.waitingTable .institutionColumn {
+  width: 23.611%;
+}
+
+.waitingTable .gradeColumn {
+  width: 6.91%;
+}
+
+.waitingTable .locationColumn {
+  width: 19.41%;
+}
+
+.waitingTable .distanceColumn {
+  width: 9.722%;
+}
+
+.waitingTable col:nth-last-child(2) {
+  width: 30.451%;
+}
+
+.waitingTable .statusColumn {
+  width: 9.896%;
+}
+
+.scheduleLines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  align-items: center;
+}
+
+.empty {
+  margin: 0;
+  padding-block: var(--spacing-40);
+  text-align: center;
+}
+
+.emptyCell {
+  height: 72px;
+  color: var(--color-neutral-cool-600);
+  font-weight: 400;
+}
+
+@media (--bp-below-pc) {
+  .root {
+    gap: var(--spacing-40);
+  }
+
+  .section {
+    gap: var(--spacing-12);
+  }
+
+  .sectionTitle {
+    font-size: 18px;
+    letter-spacing: -0.18px;
+  }
+
+  .sectionTitle span {
+    font-size: 14px;
+    letter-spacing: -0.14px;
+  }
+
+  .tableWrap {
+    border-radius: var(--radius-16, 16px);
+  }
+
+  .table {
+    min-width: 960px;
+    font-size: 14px;
+  }
+
+  .table th,
+  .table td {
+    height: 48px;
+    padding: 0 var(--spacing-12);
+  }
+
+  .scheduleLines {
+    gap: 2px;
+  }
+
+  .emptyCell {
+    height: 64px;
+  }
+}

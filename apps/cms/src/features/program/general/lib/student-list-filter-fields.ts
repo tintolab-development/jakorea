@@ -80,6 +80,8 @@ export function mergeStudentClassSelectOptions(
 export type StudentListRowFilterInput = {
   name: string
   gender?: StudentGenderKey | null
+  /** 조회 성별이 `*`인 행. 남/여/미기재 필터에 넣지 않는다. */
+  genderMask?: string | null
   gradeClass?: string | null
 }
 
@@ -98,7 +100,7 @@ export function matchesStudentListFilters(
 
   if (filters.studentGender !== 'all' && filters.studentGender !== '') {
     if (filters.studentGender === STUDENT_LIST_GENDER_FILTER_UNSPECIFIED) {
-      if (row.gender) return false
+      if (row.gender || row.genderMask?.trim()) return false
     } else if (row.gender !== filters.studentGender) {
       return false
     }

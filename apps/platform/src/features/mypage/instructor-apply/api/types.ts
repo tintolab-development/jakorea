@@ -5,6 +5,8 @@ export type InstructorPortalEditableProfile = Omit<InstructorRoleRequestProfile,
 export type InstructorRoleRequestProfile = {
   memberType: 'GENERAL' | 'SCHOOL_TEACHER'
   affiliation: {
+    /** CMS 학교 기관 id — 교사 겸 강사 회원정보 설정 저장 시 `schoolOrganizationId`와 동일 값 */
+    organizationId?: number
     schoolName?: string
     employmentStatus?: 'ACTIVE' | 'LEAVE' | 'TRANSFER' | 'RESIGNED'
     organizationNames?: string[]

@@ -18,6 +18,10 @@ export type EducationSchoolNameFieldProps = {
   modalTitle?: string
   placeholder?: string
   ariaLabel?: string
+  /** 기본 260 — 회원정보 설정은 `100%` */
+  width?: number | string
+  /** 기본 강사 신청 `large`(formPage) — 회원정보 설정은 `xlarge`(시안 54px) */
+  size?: 'large' | 'xlarge'
 }
 
 function resolveLockedSchoolLevel(detailKey: EducationDetailKey): string | undefined {
@@ -37,6 +41,8 @@ export function EducationSchoolNameField({
   modalTitle = '소속/학교 검색',
   placeholder = PH.educationSchoolName,
   ariaLabel = '학교명 검색',
+  width = SCHOOL_NAME_FIELD_WIDTH,
+  size = 'large',
 }: EducationSchoolNameFieldProps) {
   const [open, setOpen] = useState(false)
 
@@ -48,9 +54,9 @@ export function EducationSchoolNameField({
   return (
     <>
       <PFTextInput
-        variant="formPage"
-        size="large"
-        width={SCHOOL_NAME_FIELD_WIDTH}
+        variant={size === 'large' ? 'formPage' : 'default'}
+        size={size}
+        width={width}
         hasIcon
         readOnly
         disabled={disabled}

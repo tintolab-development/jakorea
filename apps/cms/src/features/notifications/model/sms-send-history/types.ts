@@ -65,6 +65,8 @@ export type SmsSendHistoryRow = {
   failedReason?: string
   attachmentFileNames: string[]
   attachments?: SmsSendHistoryAttachment[]
+  /** CMS 실발송 배치 id (자동 알림 등 배치 없으면 null) */
+  batchId?: number | null
 }
 
 export type DateRangeFilterValue = [Dayjs | null, Dayjs | null] | null

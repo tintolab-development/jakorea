@@ -20,5 +20,7 @@ export interface MergeGroupResponse {
   changeReason?: string;
   createdAt?: string;
   cancelledAt?: string;
+  /** 합반 확정 후에는 항상 false. 합반 취소 API는 호출해도 409 CLASS_MERGE_CANCEL_NOT_ALLOWED입니다. */
+  canCancel?: boolean;
   members?: MergeMemberResponse[];
 }

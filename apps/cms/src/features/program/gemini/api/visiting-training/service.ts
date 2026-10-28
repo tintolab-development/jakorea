@@ -26,6 +26,7 @@ import {
 } from './adapters'
 import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
+import { canGeminiRecruitmentInfoEdit } from '../../lib/recruitment/info-edit-policy'
 import {
   approveGeminiInstructorApplicationRemote,
   approveGeminiOrganizationApplicationRemote,
@@ -255,14 +256,22 @@ export async function createGeminiRecruitment(
 
 export async function updateGeminiRecruitment(
   programId: string,
-  draft: GeminiRecruitmentInfoEditDraft
-): Promise<void> {
+  draft: GeminiRecruitmentInfoEditDraft,
+  options?: { existingApplicationPeriodStart?: string | null }
+): Promise<GeminiRecruitmentDetail | null> {
   assertRemoteReady()
-  await updateGeminiRecruitmentRemote(programId, mapGeminiRecruitmentDetailToUpdateRequest(draft))
+  const recruitmentWindowLocked = !canGeminiRecruitmentInfoEdit(
+    options?.existingApplicationPeriodStart ?? draft.applicationPeriodStart
+  )
+  await updateGeminiRecruitmentRemote(
+    programId,
+    mapGeminiRecruitmentDetailToUpdateRequest(draft, { recruitmentWindowLocked })
+  )
   const numericId = Number(programId)
   if (draft.thumbnailFileObjectId !== undefined && Number.isFinite(numericId) && numericId > 0) {
     await putProgramThumbnail(numericId, draft.thumbnailFileObjectId)
   }
+  return getGeminiRecruitmentDetail(programId)
 }
 
 export async function deleteGeminiRecruitments(ids: string[]): Promise<void> {

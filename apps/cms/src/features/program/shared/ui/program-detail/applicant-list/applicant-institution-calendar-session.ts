@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { stripDefaultEducationSlotNameFromLabel } from '@/shared/lib/education-schedule-name'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
 import { parseEducationScheduleLineToRange } from '@/features/template/lib/format-education-schedule-line'
 
 function parseSessionDate(dateStr: string): dayjs.Dayjs {
@@ -59,21 +60,58 @@ function tryResolveInstitutionSessionRound(session: ParticipatingSchoolSession):
   return null
 }
 
-function parseTimeRangeToIso(
-  datePart: string,
-  timeRange: string
-): { startDate: string; endDate: string } {
-  const match = timeRange.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
-  if (match) {
-    return {
-      startDate: `${datePart}T${match[1]}:00`,
-      endDate: `${datePart}T${match[2]}:00`,
-    }
-  }
+export type SessionCalendarClockTimes = { startTime: string; endTime: string }
+
+function padClockToken(raw: string): string {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(raw.trim())
+  if (!match) return raw.trim()
+  return padHourMinute(match[1], match[2])
+}
+
+function isAllDayClockSentinel(startTime: string, endTime: string): boolean {
+  if (startTime !== '00:00') return false
+  return endTime === '00:00' || endTime === '23:59' || endTime === '24:00'
+}
+
+/** `09:20 ~ 11:10`, `3차시 (03:55 ~ 04:50)` 등 문자열에서 HH:mm 구간 추출 */
+function extractClockRangeFromText(
+  text: string | undefined | null
+): SessionCalendarClockTimes | null {
+  const raw = text?.trim()
+  if (!raw || raw === '-') return null
+  const match = raw.match(/(\d{1,2}:\d{2})\s*[~\-–—]\s*(\d{1,2}:\d{2})/)
+  if (!match) return null
+  const startTime = padClockToken(match[1])
+  const endTime = padClockToken(match[2])
+  if (isAllDayClockSentinel(startTime, endTime)) return null
+  return { startTime, endTime }
+}
+
+function clocksFromScheduleLine(
+  line: string | undefined | null
+): SessionCalendarClockTimes | null {
+  const range = parseEducationScheduleLineToRange(line ?? '')
+  if (!range) return extractClockRangeFromText(line)
+  const [start, end] = range
+  if (!dateRangeUsesClockTime(start, end)) return extractClockRangeFromText(line)
   return {
-    startDate: `${datePart}T00:00:00`,
-    endDate: `${datePart}T23:59:59`,
+    startTime: start.format('HH:mm'),
+    endTime: end.format('HH:mm'),
   }
+}
+
+/**
+ * 주간 격자용 HH:mm.
+ * timeRange → scheduleLabel → date(라벨형) 순으로 실제 시각만 반환. 종일·날짜 전용은 null.
+ */
+export function resolveSessionCalendarClockTimes(
+  session: ParticipatingSchoolSession
+): SessionCalendarClockTimes | null {
+  return (
+    extractClockRangeFromText(session.timeRange) ??
+    clocksFromScheduleLine(session.scheduleLabel) ??
+    clocksFromScheduleLine(session.date)
+  )
 }
 
 /** 세션 `date` 또는 `scheduleLabel`(label-only API)에서 캘린더용 YYYY-MM-DD */
@@ -100,37 +138,13 @@ export function resolveSessionCalendarIsoRange(
   const dateKey = resolveSessionCalendarDateKey(session)
   if (!dateKey) return null
 
-  const trimmedDate = session.date?.trim()
-  if (trimmedDate && trimmedDate !== '-') {
-    const parsed = parseSessionDate(trimmedDate)
-    if (parsed.isValid()) {
-      const datePart = parsed.format('YYYY-MM-DD')
-      const timeRange = session.timeRange?.trim()
-      if (timeRange && timeRange !== '-') {
-        return { dateKey, ...parseTimeRangeToIso(datePart, timeRange) }
-      }
-    }
-    const fromDateLine = parseEducationScheduleLineToRange(trimmedDate)
-    if (fromDateLine) {
-      const [start, end] = fromDateLine
-      return {
-        dateKey,
-        startDate: start.format('YYYY-MM-DDTHH:mm:ss'),
-        endDate: end.format('YYYY-MM-DDTHH:mm:ss'),
-      }
-    }
-  }
-
-  const label = session.scheduleLabel?.trim()
-  if (label) {
-    const range = parseEducationScheduleLineToRange(label)
-    if (range) {
-      const [start, end] = range
-      return {
-        dateKey,
-        startDate: start.format('YYYY-MM-DDTHH:mm:ss'),
-        endDate: end.format('YYYY-MM-DDTHH:mm:ss'),
-      }
+  const clocks = resolveSessionCalendarClockTimes(session)
+  if (clocks) {
+    const endIsoClock = clocks.endTime === '24:00' ? '23:59:59' : `${clocks.endTime}:00`
+    return {
+      dateKey,
+      startDate: `${dateKey}T${clocks.startTime}:00`,
+      endDate: `${dateKey}T${endIsoClock}`,
     }
   }
 

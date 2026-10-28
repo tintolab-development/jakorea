@@ -35,6 +35,21 @@ describe('getGeneralProgramApiErrorMessage', () => {
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe('Invalid field')
   })
 
+  it('공개 설문 파일 문항 오류를 전용 안내로 변환한다', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          success: false,
+          error: { code: 'PUBLIC_SURVEY_FILE_QUESTION_NOT_SUPPORTED' },
+        },
+      },
+    }
+    expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe(
+      '파일 첨부 문항이 있는 설문은 비로그인 공유 링크를 만들 수 없습니다. 파일 문항을 빼고 다시 공유해 주세요.'
+    )
+  })
+
   it('sponsor 관련 400을 한글 안내로 변환한다', () => {
     const error = {
       response: {

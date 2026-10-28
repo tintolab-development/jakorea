@@ -10,6 +10,8 @@ import { ujatInstitutionApplicationTableScrollX } from './columns'
 import type { UjatInstitutionApplicationRow } from './types'
 import { useUjatInstitutionApplicationList } from './use-list'
 import { UjatInstitutionApplicationActionModal } from './action-modal'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { getUjatTempReleaseConfirmContent, UJAT_TEMP_RELEASE_CONFIRM_TITLE } from './temp-release'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './list.css'
@@ -41,6 +43,11 @@ export function UjatInstitutionApplicationList({
     handleBulkApplicationReject,
     handleBulkTempReject,
     handleBulkTempAssign,
+    handleBulkTempRelease,
+    pendingTempReleaseModal,
+    tempReleasing,
+    closeTempReleaseModal,
+    confirmTempRelease,
     pendingApplicationRejectModal,
     closeApplicationRejectModal,
     confirmApplicationRejectModal,
@@ -123,6 +130,16 @@ export function UjatInstitutionApplicationList({
             >
               임시 일정 배정
             </FilterTableToolbarButton>
+            <FilterTableToolbarButton
+              type="button"
+              variant="delete"
+              className="cms-button--action"
+              width={180}
+              disabled={tempReleasing}
+              onClick={handleBulkTempRelease}
+            >
+              선택 임시 배정 해제
+            </FilterTableToolbarButton>
             {viewMode === 'table' ? (
               <FilterTableToolbarButton
                 type="button"
@@ -196,6 +213,17 @@ export function UjatInstitutionApplicationList({
         <div className="ujat-institution-application-list__page-bottom-spacer" aria-hidden />
       ) : null}
 
+      <ConfirmModal
+        open={pendingTempReleaseModal}
+        title={UJAT_TEMP_RELEASE_CONFIRM_TITLE}
+        content={getUjatTempReleaseConfirmContent(selectedApplications.length)}
+        confirmText="해제"
+        danger
+        confirmLoading={tempReleasing}
+        onConfirm={() => void confirmTempRelease()}
+        onCancel={closeTempReleaseModal}
+      />
+
       {pendingApplicationRejectModal ? (
         <UjatInstitutionApplicationActionModal
           open
@@ -204,7 +232,9 @@ export function UjatInstitutionApplicationList({
           institutionName={selectedApplications[0]?.institutionName}
           selectionCount={selectedApplications.length}
           onCancel={closeApplicationRejectModal}
-          onConfirm={() => confirmApplicationRejectModal()}
+          onConfirm={payload => {
+            void confirmApplicationRejectModal(payload)
+          }}
         />
       ) : null}
     </div>

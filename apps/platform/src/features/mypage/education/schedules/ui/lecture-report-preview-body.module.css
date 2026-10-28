@@ -81,6 +81,10 @@
   font-size: 14px;
 }
 
+.questionCard .answerText {
+  min-height: 0;
+}
+
 .answerText {
   box-sizing: border-box;
   min-height: 48px;

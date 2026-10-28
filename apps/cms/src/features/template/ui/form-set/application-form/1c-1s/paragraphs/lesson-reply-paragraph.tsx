@@ -54,6 +54,7 @@ export function EconomyProgramApplicationLessonReplyParagraph({
       <div className="multiple-choice-body">
         <CmsRadioGroup
           className="multiple-choice-radio-group"
+          size="medium"
           value={companyType}
           onChange={event => setCompanyType(event.target.value)}
         >

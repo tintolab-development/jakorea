@@ -5,6 +5,7 @@ import {
   resolveTermsTypeToConsentLabel,
 } from './map-member-consent-records'
 import { CONSENT_PRESET_SCHEMA } from '@/features/user/detail/ui/user-consent-agreement-section'
+import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
 
 const individualSchema = CONSENT_PRESET_SCHEMA.individual
 
@@ -176,7 +177,7 @@ describe('applyMemberConsentToSchema', () => {
       consentType: 'PORTRAIT_RIGHTS',
     })
     if (portrait?.type === 'document') {
-      expect(portrait.consentRecordId).toBeUndefined()
+      expect(portrait.consentRecordId).toBe(51)
     } else {
       throw new Error('Expected portrait consent to remain a document value')
     }
@@ -227,6 +228,50 @@ describe('applyMemberConsentToSchema', () => {
     expect(portrait).toMatchObject({
       type: 'document',
       agreed: false,
+    })
+  })
+
+  it('Summary termsType 별칭(TERMS)을 서비스 이용약관 라벨에 매핑한다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentSummaries: [
+        { consentType: 'TERMS', agreed: true, agreedAt: '2026-01-15T09:15:42Z' },
+      ],
+    })
+
+    expect(
+      rows.flatMap(r => r.fields).find(f => f.label === '서비스 이용약관')?.value
+    ).toMatchObject({ type: 'remote_consent', agreed: true })
+  })
+
+  it('신청 스냅샷 consentRecordId와 records 작성본 메타를 동의서 보기에 붙인다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      termsAgreements: [
+        {
+          termsType: 'FACILITATOR_PLEDGE',
+          agreed: true,
+          agreedAt: '2026-03-01T09:15:42Z',
+          consentRecordId: 81,
+        } as TermsAgreementRow & { consentRecordId: number },
+      ],
+      consentRecords: [
+        {
+          consentType: 'FACILITATOR_PLEDGE',
+          consentRecordId: 81,
+          formResponseId: 12,
+          filledDocumentId: 9001,
+          filledDocumentAvailable: true,
+        },
+      ],
+    })
+
+    const pledge = rows.flatMap(r => r.fields).find(f => f.label === '교육진행자 서약서')?.value
+    expect(pledge).toMatchObject({
+      type: 'document',
+      agreed: true,
+      consentRecordId: 81,
+      formResponseId: 12,
+      filledDocumentId: 9001,
+      filledDocumentAvailable: true,
     })
   })
 

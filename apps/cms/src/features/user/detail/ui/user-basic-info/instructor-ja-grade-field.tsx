@@ -23,7 +23,7 @@ export function InstructorJaEvaluationGradeField({
     <CmsButton
       type="button"
       variant="secondary"
-      size="medium"
+      size="h32"
       adminAction="write"
       onClick={() => {
         onOpenJaGradeEvaluation?.()

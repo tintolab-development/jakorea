@@ -61,7 +61,7 @@ export function EducationSettlementPanel({
     applicationType,
     applicationId,
     programId,
-    { operationEndAt },
+    { operationEndAt, programType },
   )
   const settlementSearchParams = useMemo(
     () => new URLSearchParams(location.search),

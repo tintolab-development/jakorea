@@ -1,11 +1,12 @@
 /**
  * 강의 출석 내역 모달
  * 스크린샷: ContentModal 800 · 패딩 26/30/34 · 설명↔표↔푸터 30px
- * 본문: 4열 키-값 표(라벨 회색 / 값 흰색), 회차 2개씩 한 행
+ * 본문: 학생명·출석률은 DetailInfoForm, 회차는 2개씩 한 행
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import type { Application } from '@/types/domain'
@@ -34,7 +35,7 @@ function SessionStatusCell({
   editing: boolean
   onPick: (roundNumber: number, status: EditableAttendanceStatus) => void
 }) {
-  if (session.status === 'not_held') {
+  if (session.status === 'not_held' && !(editing && session.recordingOpen)) {
     return (
       <span
         className="lecture-attendance-modal__status-text lecture-attendance-modal__status-text--not_held"
@@ -59,7 +60,7 @@ function SessionStatusCell({
     <CmsRadioGroup
       className="lecture-attendance-modal__session-radios"
       size="medium"
-      value={session.status}
+      value={session.status === 'not_held' ? undefined : session.status}
       onChange={e => onPick(session.roundNumber, e.target.value as EditableAttendanceStatus)}
     >
       <CmsRadio value="attended" size="medium">
@@ -164,7 +165,7 @@ export function LectureAttendanceModal({
 
   const sessions =
     sessionOverrides ??
-    (savedSessions && savedSessions.length > 0 ? savedSessions : detailBase?.sessions ?? [])
+    (savedSessions && savedSessions.length > 0 ? savedSessions : (detailBase?.sessions ?? []))
   const tableSessions = editing ? sessionDraft : sessions
   const rateSource = editing ? sessionDraft : sessions
   const { attended: attendedDisplay, held: heldDisplay } =
@@ -180,9 +181,7 @@ export function LectureAttendanceModal({
 
   const patchSessionStatus = useCallback(
     (roundNumber: number, status: EditableAttendanceStatus) => {
-      setSessionDraft(prev =>
-        prev.map(s => (s.roundNumber === roundNumber ? { ...s, status } : s))
-      )
+      setSessionDraft(prev => prev.map(s => (s.roundNumber === roundNumber ? { ...s, status } : s)))
     },
     []
   )
@@ -213,47 +212,30 @@ export function LectureAttendanceModal({
     onCancel()
   }, [editing, cancelCorrection, onCancel])
 
-  const footer = summaryAttendanceCounts != null ? (
-    <CmsButton
-      variant="secondary"
-      size="medium"
-      width={120}
-      className="cms-button--footer-auto lecture-attendance-modal__footer-btn lecture-attendance-modal__footer-btn--close"
-      onClick={onCancel}
-    >
-      닫기
-    </CmsButton>
-  ) : editing ? (
-    <>
-      <CmsButton
-        variant="secondary"
-        size="medium"
-        width={120}
-        className="cms-button--footer-auto lecture-attendance-modal__footer-btn lecture-attendance-modal__footer-btn--close"
-        onClick={cancelCorrection}
-      >
-        취소
-      </CmsButton>
-      <CmsButton variant="primary" size="medium" onClick={saveCorrection}>
-        저장
-      </CmsButton>
-    </>
-  ) : (
-    <>
-      <CmsButton
-        variant="secondary"
-        size="medium"
-        width={120}
-        className="cms-button--footer-auto lecture-attendance-modal__footer-btn lecture-attendance-modal__footer-btn--close"
-        onClick={onCancel}
-      >
+  const footer =
+    summaryAttendanceCounts != null ? (
+      <CmsButton variant="secondary" size="medium" onClick={onCancel}>
         닫기
       </CmsButton>
-      <CmsButton variant="primary" size="medium" onClick={startCorrection}>
-        출석 정정
-      </CmsButton>
-    </>
-  )
+    ) : editing ? (
+      <>
+        <CmsButton variant="secondary" size="medium" onClick={cancelCorrection}>
+          취소
+        </CmsButton>
+        <CmsButton variant="primary" size="medium" onClick={saveCorrection}>
+          저장
+        </CmsButton>
+      </>
+    ) : (
+      <>
+        <CmsButton variant="secondary" size="medium" onClick={onCancel}>
+          닫기
+        </CmsButton>
+        <CmsButton variant="primary" size="medium" onClick={startCorrection}>
+          출석 정정
+        </CmsButton>
+      </>
+    )
 
   return (
     <ContentModal
@@ -265,60 +247,51 @@ export function LectureAttendanceModal({
       zIndex={zIndex}
       width={800}
       description={
-        detailBase
-          ? `**[${detailBase.studentName}]** 학생의 강의 출석 내역입니다.`
-          : undefined
+        detailBase ? `**[${detailBase.studentName}]** 학생의 강의 출석 내역입니다.` : undefined
       }
     >
       {remoteDetailLoading ? (
         <div className="lecture-attendance-modal__loading">로딩 중...</div>
       ) : detailBase ? (
-        <div className="lecture-attendance-modal__table-wrap">
-          <table className="lecture-attendance-modal__grid">
-            <colgroup>
-              <col className="lecture-attendance-modal__col-label" />
-              <col className="lecture-attendance-modal__col-value" />
-              <col className="lecture-attendance-modal__col-label" />
-              <col className="lecture-attendance-modal__col-value" />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th scope="row">학생명</th>
-                <td>{detailBase.studentName}</td>
-                <th scope="row">출석률</th>
-                <td>
-                  <AttendanceRateValue attended={attendedDisplay} held={heldDisplay} />
-                </td>
-              </tr>
-              {summaryAttendanceCounts == null
-                ? sessionPairs.map(([left, right], index) => (
-                    <tr key={`session-pair-${index}`}>
-                      <th scope="row">{left ? `${left.roundNumber}회차` : null}</th>
-                      <td>
-                        {left ? (
-                          <SessionStatusCell
-                            session={left}
-                            editing={editing}
-                            onPick={patchSessionStatus}
-                          />
-                        ) : null}
-                      </td>
-                      <th scope="row">{right ? `${right.roundNumber}회차` : null}</th>
-                      <td>
-                        {right ? (
-                          <SessionStatusCell
-                            session={right}
-                            editing={editing}
-                            onPick={patchSessionStatus}
-                          />
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))
-                : null}
-            </tbody>
-          </table>
-        </div>
+        <DetailInfoForm title="강의 출석 내역" hideHeader mode="view">
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field label="학생명" view={detailBase.studentName} />
+            <DetailInfoForm.Field
+              label="출석률"
+              view={<AttendanceRateValue attended={attendedDisplay} held={heldDisplay} />}
+            />
+          </DetailInfoForm.Row>
+          {summaryAttendanceCounts == null
+            ? sessionPairs.map(([left, right], index) => (
+                <DetailInfoForm.Row type="double" key={`session-pair-${index}`}>
+                  <DetailInfoForm.Field
+                    label={left ? `${left.roundNumber}회차` : '\u00a0'}
+                    view={
+                      left ? (
+                        <SessionStatusCell
+                          session={left}
+                          editing={editing}
+                          onPick={patchSessionStatus}
+                        />
+                      ) : null
+                    }
+                  />
+                  <DetailInfoForm.Field
+                    label={right ? `${right.roundNumber}회차` : '\u00a0'}
+                    view={
+                      right ? (
+                        <SessionStatusCell
+                          session={right}
+                          editing={editing}
+                          onPick={patchSessionStatus}
+                        />
+                      ) : null
+                    }
+                  />
+                </DetailInfoForm.Row>
+              ))
+            : null}
+        </DetailInfoForm>
       ) : null}
     </ContentModal>
   )

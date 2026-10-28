@@ -8,7 +8,10 @@
 
 export interface DashboardHomeResponse {
   version?: string;
+  /** GET /api/admin/programs(필터 없음) totalElements과 동일. 삭제되지 않은 프로그램 수(관리자 데이터 범위 적용). */
   programCount?: number;
+  /** member.deleted_at IS NULL인 회원 수. 역할 필터 없음, 관리자 계정(admin_account) 미포함. users-all(사람 회원 디렉터리)과 다를 수 있다. */
   memberCount?: number;
+  /** GET /api/admin/notifications/unread-count와 동일. */
   unreadNotificationCount?: number;
 }

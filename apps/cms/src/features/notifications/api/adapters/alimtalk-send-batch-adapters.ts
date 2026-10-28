@@ -5,10 +5,12 @@ import type {
   ListNotificationTemplateVariablesParams,
   ListNotificationTemplateVariablesParticipantType,
   NotificationCatalogVariableItem,
+  NotificationCatalogVariableItemSourceMode,
   NotificationTemplateVariableCatalogResponse,
   RecipientCandidateResponse,
   RecipientRequest,
 } from '@/shared/api/generated/notifications/schemas'
+import { normalizeAlimtalkCatalogSourceMode } from '@/features/notifications/model/alimtalk-send/recipient-variables'
 import {
   ListNotificationTemplateVariablesCategory as TemplateVariablesCategoryEnum,
   ListNotificationTemplateVariablesMemberType as TemplateVariablesMemberTypeEnum,
@@ -45,6 +47,7 @@ export type AlimtalkTemplateVariable = {
   memberTypes: string[]
   categoryCode?: string
   categoryLabel?: string
+  sourceMode?: NotificationCatalogVariableItemSourceMode
 }
 
 export type NotificationTemplateVariablesQuery = {
@@ -241,6 +244,7 @@ export type AlimtalkRequiredVariableCheckInput = {
     categoryCode?: string
     enabled?: boolean
     requiresProgram?: boolean
+    sourceMode?: 'SERVER_RESOLVED' | 'MANUAL_ALLOWED' | 'EVENT_ONLY' | null
   }> | null
   programSelected?: boolean
 }
@@ -407,6 +411,7 @@ function mapCatalogVariable(
     memberTypes: variable.memberTypes ?? [],
     categoryCode,
     categoryLabel,
+    sourceMode: normalizeAlimtalkCatalogSourceMode(variable.sourceMode ?? undefined) ?? undefined,
   }
 }
 
@@ -420,6 +425,7 @@ export function buildSendBatchRecipients(
       categoryCode?: string
       enabled?: boolean
       requiresProgram?: boolean
+      sourceMode?: 'SERVER_RESOLVED' | 'MANUAL_ALLOWED' | 'EVENT_ONLY' | null
     }> | null
     programSelected: boolean
   }
@@ -465,6 +471,7 @@ export function buildCreateSendBatchRequest(input: {
     categoryCode?: string
     enabled?: boolean
     requiresProgram?: boolean
+    sourceMode?: 'SERVER_RESOLVED' | 'MANUAL_ALLOWED' | 'EVENT_ONLY' | null
   }> | null
 }): CreateRequest {
   const variables = pickNonEmptySendVariables(input.variables)

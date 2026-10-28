@@ -87,6 +87,26 @@ describe('school-detail-student-list-form', () => {
     expect(visible[0]?.id).toBe('7')
   })
 
+  it('keeps serverRosterId through edit and leaves draft rows without it', () => {
+    const existing = row({
+      id: '12',
+      serverRosterId: 12,
+      name: '기존',
+      gradeClass: '1반',
+    })
+    const draft = row({
+      id: 'draft-student-67243e8a-4f2b-4c1d-9a10-aabbccddeeff',
+      name: '신규',
+      gradeClass: '1반',
+    })
+    const form = rowsToFormValues([existing, draft])
+    form.students[0]!.name = '기존-수정'
+    const commitRows = formValuesToRows(form.students)
+    expect(commitRows[0]?.serverRosterId).toBe(12)
+    expect(commitRows[0]?.name).toBe('기존-수정')
+    expect(commitRows[1]?.serverRosterId).toBeUndefined()
+  })
+
   it('TC-05: form index alignment — editing C does not change B', () => {
     const form = rowsToFormValues(fullRoster)
     const visible = buildStudentEditVisibleRows({

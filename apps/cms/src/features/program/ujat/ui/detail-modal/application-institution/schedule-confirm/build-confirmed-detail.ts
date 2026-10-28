@@ -10,6 +10,7 @@ import {
 } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { TextbookDeliveryStatus } from '@/shared/components/delivery-status-badge'
 import { formatUjatPreferredEducationDateDisplay } from '../education-schedule'
+import { formatUjatGradeClassDisplayLabelFromParts } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import type { UjatInstitutionApplicationRow } from '../list/types'
 import type { UjatInstitutionApplicationDetail } from '../detail/detail-types'
 import type {
@@ -77,11 +78,9 @@ function slotClassLabel(slot: {
   className?: string | null
 }): string | null {
   const labeled = slot.classLabel?.trim()
-  if (labeled) return labeled
-  const grade = slot.grade?.trim()
-  const className = slot.className?.trim()
-  if (grade && className) return `${grade} ${className}`
-  return grade || className || null
+  if (labeled) return formatUjatGradeClassDisplayLabelFromParts(labeled, null)
+  const formatted = formatUjatGradeClassDisplayLabelFromParts(slot.grade, slot.className)
+  return formatted === '-' ? null : formatted
 }
 
 function classLabelSortKey(label: string): { grade: number; classNo: number } {

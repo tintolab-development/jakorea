@@ -28,7 +28,7 @@ function patchValues(
   onValuesChange({ ...values, [key]: value })
 }
 
-/** 강사 신청 등 PFForm 테이블 레이아웃용 — 회원정보 설정 수정은 `SettingsInstructorBasicEditForm` */
+/** 강사 신청 등 PFForm 테이블 레이아웃용 — 회원정보 설정 수정은 `SettingsInstructorBasicFields` */
 export function InstructorBasicProfileFields({
   values,
   onValuesChange,

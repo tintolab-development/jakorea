@@ -11,7 +11,7 @@ export interface ProgramMaterialAssignmentItemRequest {
   kitId?: number;
   kitVersionId?: number;
   targetLevel?: string;
-  /** @minimum 0 */
+  /** @minimum 1 */
   booksPerKitSnapshot?: number;
   /** @minimum 0 */
   studentCountBasis?: number;

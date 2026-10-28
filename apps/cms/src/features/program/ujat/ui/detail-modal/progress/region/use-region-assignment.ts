@@ -1,15 +1,20 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import {
   fetchUjatAllocationMatrix,
+  fetchUjatScheduleUnavailability,
   postUjatDirectAssignment,
   postUjatPartnerAssignmentsAuto,
   postUjatScheduleUnavailability,
   putUjatAttendanceManager,
+  type UjatVolunteerUnavailabilityResponse,
 } from '@/features/program/ujat/api/education-execution-api'
-import { mapAllocationMatrixToRegionTableData } from '@/features/program/ujat/api/allocation-matrix-adapters'
+import {
+  collectUnavailableScheduleIds,
+  mapAllocationMatrixToRegionTableData,
+} from '@/features/program/ujat/api/allocation-matrix-adapters'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
 import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
@@ -21,9 +26,19 @@ import type { RegionAttendanceManagerAssignments } from './attendance-manager'
 import { applyRegionAttendanceManagersFromData } from './attendance-manager'
 import type { RegionBlockedDateModalPayload } from './blocked-date-modal'
 import {
+  buildAutoAssignResultAlert,
+  summarizeAutoAssignResult,
+  type AutoAssignResultSummary,
+} from './auto-assign-result'
+import {
+  buildDirectAssignSuccessMessage,
+  resolveRegionAssignmentErrorMessage,
+} from './region-assignment-messages'
+import {
   getRegionAssignmentTableDataFromStore,
   setRegionAssignmentTableData,
 } from './region-assignment-store'
+import { selectRegionUnavailabilityScheduleIds } from './region-assignment-options'
 import type { RegionAssignmentTableData } from './types'
 
 function emptyTable(regionKey: UjatInstitutionApplicationRegionKey): RegionAssignmentTableData {
@@ -55,10 +70,22 @@ export function useRegionAssignment(
         fetchUjatAllocationMatrix(programId, { educationRegionCode, semesterType }),
         fetchUjatOrganizationScheduleAssignments(programId).catch(() => ({ content: [] })),
       ])
+      const unavailabilityEntries = await Promise.all(
+        collectUnavailableScheduleIds(matrix).map(
+          async scheduleId =>
+            [
+              scheduleId,
+              await fetchUjatScheduleUnavailability(programId, scheduleId).catch(
+                (): UjatVolunteerUnavailabilityResponse[] => []
+              ),
+            ] as const
+        )
+      )
       return mapAllocationMatrixToRegionTableData({
         matrix,
         regionKey,
         orgSlots: orgAssignments.content ?? [],
+        unavailabilityByScheduleId: Object.fromEntries(unavailabilityEntries),
       })
     },
   })
@@ -75,23 +102,40 @@ export function useRegionAssignment(
   }, [matrixQuery.data, regionKey])
 
   const invalidateMatrix = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: ujatQueryKeys.allocationMatrix(programId, educationRegionCode, semesterType),
-    })
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.allocationMatrix(programId, educationRegionCode, semesterType),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.directAssignmentCandidatesRoot(programId),
+      }),
+    ])
   }, [educationRegionCode, programId, queryClient, semesterType])
+
+  const showMutationError = useCallback(
+    (error: unknown, fallback: string) => {
+      showAlert({ title: '오류', content: resolveRegionAssignmentErrorMessage(error, fallback) })
+      void invalidateMatrix()
+    },
+    [invalidateMatrix, showAlert]
+  )
+
+  const autoAssignScopeKey = `${programId}:${educationRegionCode}:${semesterType}`
+  const [autoAssignResult, setAutoAssignResult] = useState<{
+    scopeKey: string
+    summary: AutoAssignResultSummary
+  } | null>(null)
 
   const autoAssignMutation = useMutation({
     mutationFn: () =>
       postUjatPartnerAssignmentsAuto(programId, { educationRegionCode, semesterType }),
-    onSuccess: async () => {
+    onSuccess: async response => {
       await invalidateMatrix()
-      showAlert({ title: '안내', content: '교육일이 자동 배정되었습니다.' })
+      setAutoAssignResult({ scopeKey: autoAssignScopeKey, summary: summarizeAutoAssignResult(response) })
+      showAlert(buildAutoAssignResultAlert(response))
     },
-    onError: () => {
-      showAlert({
-        title: '오류',
-        content: '자동 배정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-      })
+    onError: error => {
+      showMutationError(error, '자동 배정에 실패했습니다. 잠시 후 다시 시도해 주세요.')
     },
   })
 
@@ -104,15 +148,12 @@ export function useRegionAssignment(
       }
       return postUjatDirectAssignment(programId, educationSlotId, { participantId })
     },
-    onSuccess: async () => {
+    onSuccess: async response => {
       await invalidateMatrix()
-      showAlert({ title: '안내', content: '교육일이 직접 배정되었습니다.' })
+      showAlert({ title: '안내', content: buildDirectAssignSuccessMessage(response) })
     },
-    onError: () => {
-      showAlert({
-        title: '오류',
-        content: '직접 배정에 실패했습니다. 학급 슬롯·봉사자 상태를 확인해 주세요.',
-      })
+    onError: error => {
+      showMutationError(error, '직접 배정에 실패했습니다. 학급 슬롯·봉사자 상태를 확인해 주세요.')
     },
   })
 
@@ -122,13 +163,11 @@ export function useRegionAssignment(
       const replacementParticipantId = Number(payload.substituteVolunteerId)
       if (!Number.isFinite(participantId)) throw new Error('INVALID_PARTICIPANT')
 
-      const scheduleIds = [
-        ...new Set(
-          tableData.columns
-            .filter(col => payload.blockedDateLabels.includes(col.dateLabel) && col.scheduleId)
-            .map(col => col.scheduleId as string)
-        ),
-      ]
+      const scheduleIds = selectRegionUnavailabilityScheduleIds(
+        tableData,
+        payload.volunteerId,
+        payload.blockedDateLabels
+      )
       if (scheduleIds.length === 0) throw new Error('NO_SCHEDULES_FOR_DATES')
 
       for (const scheduleId of scheduleIds) {
@@ -145,11 +184,8 @@ export function useRegionAssignment(
       await invalidateMatrix()
       showAlert({ title: '안내', content: '배정 불가일이 설정되었습니다.' })
     },
-    onError: () => {
-      showAlert({
-        title: '오류',
-        content: '배정 불가일 설정에 실패했습니다.',
-      })
+    onError: error => {
+      showMutationError(error, '배정 불가일 설정에 실패했습니다.')
     },
   })
 
@@ -170,11 +206,8 @@ export function useRegionAssignment(
       await invalidateMatrix()
       showAlert({ title: '안내', content: '출결 담당자가 저장되었습니다.' })
     },
-    onError: () => {
-      showAlert({
-        title: '오류',
-        content: '출결 담당자 저장에 실패했습니다.',
-      })
+    onError: error => {
+      showMutationError(error, '출결 담당자 저장에 실패했습니다.')
     },
   })
 
@@ -208,11 +241,16 @@ export function useRegionAssignment(
     [attendanceManagerMutation, remoteEnabled]
   )
 
+  const dismissAutoAssignResult = useCallback(() => setAutoAssignResult(null), [])
+
   return {
     tableData,
     tableVersion: matrixQuery.dataUpdatedAt,
     isLoading: remoteEnabled && matrixQuery.isLoading,
     isRemote: remoteEnabled,
+    autoAssignResultSummary:
+      autoAssignResult?.scopeKey === autoAssignScopeKey ? autoAssignResult.summary : null,
+    dismissAutoAssignResult,
     runAutoAssign,
     confirmDirectAssign,
     confirmBlockedDate,

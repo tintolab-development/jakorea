@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { Program } from '@/types/domain'
+import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
 import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
@@ -74,6 +76,68 @@ describe('UJAT program adapters', () => {
     expect(detail.registration?.overlay?.['ujat.basicInfo.sponsorContactId']).toBeUndefined()
   })
 
+  it('신규 등록 recruitments[]에 기관·상반기·하반기 미디어 fileObjectId를 싣고 수정 요청에는 넣지 않는다', () => {
+    const overlay = {
+      'ujatRecruit.detailInfo.thumbFileObjectId': 501,
+      'ujatRecruit.detailInfo.attachmentFileObjectIds': [601],
+      'recruitVolunteer.h1.detailInfo.thumbFileObjectId': 502,
+      'recruitVolunteer.h1.detailInfo.attachmentFileObjectIds': [602],
+      'recruitVolunteer.h2.detailInfo.thumbFileObjectId': 503,
+      'recruitVolunteer.h2.detailInfo.attachmentFileObjectIds': [603, 604],
+    }
+    const pending = {
+      ...program,
+      ujatRegistrationOverlay: overlay,
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT' as const,
+          targetType: 'ORGANIZATION',
+          applicationType: 'ORGANIZATION' as const,
+          startAt: '2026-03-01T00:00:00.000Z',
+          endAt: '2026-03-31T00:00:00.000Z',
+        },
+        {
+          recruitmentType: 'VOLUNTEER' as const,
+          recruitTerm: 'FIRST_HALF' as const,
+          startAt: '2026-03-01T00:00:00.000Z',
+          endAt: '2026-03-31T00:00:00.000Z',
+        },
+        {
+          recruitmentType: 'VOLUNTEER' as const,
+          recruitTerm: 'SECOND_HALF' as const,
+          startAt: '2026-07-01T00:00:00.000Z',
+          endAt: '2026-07-31T00:00:00.000Z',
+        },
+      ],
+    }
+    const request = toCreateRequest(pending, { draft, overlay })
+    const institution = request.recruitments?.find(row => row.recruitmentType === 'PARTICIPANT')
+    const h1 = request.recruitments?.find(row => row.recruitTerm === 'FIRST_HALF')
+    const h2 = request.recruitments?.find(row => row.recruitTerm === 'SECOND_HALF')
+    expect(institution).toMatchObject({
+      recruitmentType: 'PARTICIPANT',
+      targetType: 'ORGANIZATION',
+      thumbnailFileObjectId: 501,
+      attachmentFileObjectIds: [601],
+    })
+    expect(h1).toMatchObject({
+      recruitmentType: 'VOLUNTEER',
+      recruitTerm: 'FIRST_HALF',
+      thumbnailFileObjectId: 502,
+      attachmentFileObjectIds: [602],
+    })
+    expect(h2).toMatchObject({
+      recruitmentType: 'VOLUNTEER',
+      recruitTerm: 'SECOND_HALF',
+      thumbnailFileObjectId: 503,
+      attachmentFileObjectIds: [603, 604],
+    })
+
+    const update = toUpdateRequest(pending)
+    expect(update.recruitments?.some(row => 'thumbnailFileObjectId' in row)).toBe(false)
+    expect(update.recruitments?.some(row => 'attachmentFileObjectIds' in row)).toBe(false)
+  })
+
   it('create 요청은 programType·serviceDetailJson을 body 앞쪽에 둔다', () => {
     const request = toCreateRequest(program, { draft, overlay: {} })
     const keys = Object.keys(request)
@@ -143,6 +207,32 @@ describe('UJAT program adapters', () => {
     expect(mapped.ujatFirstHalfVolunteerCount).toBe(120)
     expect(mapped.volunteerTargets).toEqual(['대학생'])
     expect(mapped.startTime).toBe('09:00')
+  })
+
+  it('maps createdByName and updatedByName from detail JSON', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      title: program.title,
+      createdAt: '2026-12-08T00:15:00.000Z',
+      updatedAt: '2026-12-09T01:00:00.000Z',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as ProgramResponse)
+
+    expect(mapped.createdByName).toBe('곽도규')
+    expect(mapped.updatedByName).toBe('김도영')
+  })
+
+  it('maps createdByName and updatedByName from list JSON', () => {
+    const mapped = fromListItem({
+      id: 186100,
+      title: 'UJAT',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as AdminProgramListItemDto)
+
+    expect(mapped.createdByName).toBe('곽도규')
+    expect(mapped.updatedByName).toBe('김도영')
   })
 
   it('Create는 숙박비·장거리 교통비를 paymentItems로 보낸다', () => {

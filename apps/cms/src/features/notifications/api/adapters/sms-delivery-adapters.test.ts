@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { mapSmsDeliveryToSendHistoryRow } from './sms-delivery-adapters'
+import {
+  mapBatchBodySnapshotAttachments,
+  mapSmsDeliveryToSendHistoryRow,
+} from './sms-delivery-adapters'
 
 describe('mapSmsDeliveryToSendHistoryRow', () => {
   it('uses list renderedContentPreview as content SSOT (no templateDisplayName fallback)', () => {
@@ -39,5 +42,30 @@ describe('mapSmsDeliveryToSendHistoryRow', () => {
     )
     expect(row?.content).toBe('목록 요약')
     expect(row?.bodyText).toBe('상세 본문 전체입니다.')
+  })
+})
+describe('mapBatchBodySnapshotAttachments', () => {
+  it('예약 발송 배치 상세의 첨부 스냅샷(fileObjectId·fileName)을 그대로 보여 준다', () => {
+    expect(
+      mapBatchBodySnapshotAttachments({
+        batch: { batchId: 123, status: 'SCHEDULED', scheduledAt: '2026-10-27T01:00:00Z' },
+        bodySnapshot: {
+          contentTemplate: '교육 안내입니다.',
+          attachments: [
+            { fileObjectId: 30001, fileName: 'notice.jpg' },
+            { fileObjectId: 30002, fileName: 'map.jpg' },
+          ],
+        },
+      })
+    ).toEqual([
+      { fileObjectId: 30001, fileName: 'notice.jpg' },
+      { fileObjectId: 30002, fileName: 'map.jpg' },
+    ])
+  })
+
+  it('첨부 없음(attachments: [])·누락은 빈 배열', () => {
+    expect(mapBatchBodySnapshotAttachments({ bodySnapshot: { attachments: [] } })).toEqual([])
+    expect(mapBatchBodySnapshotAttachments({ bodySnapshot: {} })).toEqual([])
+    expect(mapBatchBodySnapshotAttachments(null)).toEqual([])
   })
 })

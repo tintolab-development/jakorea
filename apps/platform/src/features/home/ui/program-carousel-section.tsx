@@ -11,6 +11,7 @@ import {
   useHomePortalPrograms,
 } from '@/features/program'
 import { RECRUITMENT_STATUS_TONE_MAP } from '@/features/program/lib/badge-config'
+import jaLogoGrayCompactUrl from '@/shared/assets/brand/ja-logo-gray-compact.svg'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { resolvePortalPublicFileImageUrl } from '@/shared/lib/resolve-portal-public-file-image-url'
 import { useMediaQuery } from '@/shared/hooks'
@@ -63,11 +64,21 @@ function ProgramCard({ program }: { program: HomeProgramCard }) {
       to={program.detailPath}
       aria-label={`${program.title} 상세 보기`}
     >
-      <div className={styles.cardMedia}>
+      <div
+        className={[
+          styles.cardMedia,
+          thumbnailSrc ? styles.cardMediaHasImage : styles.cardMediaNoImage,
+        ].join(' ')}
+      >
         {thumbnailSrc ? (
           <img className={styles.cardImage} src={thumbnailSrc} alt="" loading="lazy" />
         ) : (
-          <div className={styles.cardImagePlaceholder} aria-hidden="true" />
+          <img
+            className={styles.cardPlaceholderLogo}
+            src={jaLogoGrayCompactUrl}
+            alt=""
+            aria-hidden="true"
+          />
         )}
       </div>
 

@@ -2182,7 +2182,6 @@ export function TrainedTeachersCommonInfoView({
             forceCompanySchoolLayout
             hideIpsTypeField
             hideEducationPlace
-            auditDateOnly
             hideFormTitles
             fixedParticipantTypeLabel="교사/강사"
             enableTitleEnEdit
@@ -2206,7 +2205,6 @@ export function TrainedTeachersCommonInfoView({
             forceCompanySchoolLayout
             hideIpsTypeField
             hideEducationPlace
-            auditDateOnly
             hideFormTitles
             fixedParticipantTypeLabel="교사/강사"
             enableTitleEnEdit

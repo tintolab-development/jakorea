@@ -32,7 +32,7 @@ export interface NotificationResponse {
   linkType?: string;
   /** 링크 대상 ID */
   linkId?: number;
-  /** 읽음 처리 시각 */
+  /** 읽음 처리 시각. null이면 미읽음, non-null ISO-8601이면 읽음(FE SSOT). clickedAt만 있는 경우는 미읽음. */
   readAt?: string;
   /** 클릭 처리 시각 */
   clickedAt?: string;

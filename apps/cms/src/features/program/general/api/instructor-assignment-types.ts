@@ -1,6 +1,6 @@
 /**
- * 1사1교 강사 배정 Admin API — P0/P1 핸드오프 확장 타입
- * (로컬 OpenAPI codegen 미반영 필드. BE contract 2026-09-15 기준)
+ * 1사1교 강사 배정 Admin API 확장 타입.
+ * timing/scheduledAt은 generated InstructorAssignmentCreateRequest를 사용한다.
  */
 
 import type { InstructorAssignmentCreateRequest } from '@/shared/api/generated/dashboard/schemas/instructorAssignmentCreateRequest'
@@ -8,13 +8,12 @@ import type { InstructorAssignmentListItemResponse } from '@/shared/api/generate
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { RepresentativeInstructorRequest } from '@/shared/api/generated/dashboard/schemas/representativeInstructorRequest'
 
-/** create: scheduleId 또는 requestedScheduleId 중 하나 필수 */
+/** create: scheduleId 또는 requestedScheduleId 중 하나 필수. timing은 generated 계약 그대로. */
 export type InstructorAssignmentCreateBody = Omit<
   InstructorAssignmentCreateRequest,
   'scheduleId'
 > & {
   scheduleId?: number
-  requestedScheduleId?: number
 }
 
 /** list enrich (P0) */

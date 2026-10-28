@@ -14,4 +14,6 @@ export interface DirectAssignmentCandidatesResponse {
   educationRegionCode?: string;
   reallocationRequired?: boolean;
   candidates?: DirectAssignmentCandidate[];
+  /** 1인 배정 슬롯이면 기존 배정 봉사자 participantId. 선택한 후보는 두 번째 봉사자(SECONDARY)로 추가된다. 빈 슬롯이면 null. */
+  existingPrimaryParticipantId?: number | null;
 }

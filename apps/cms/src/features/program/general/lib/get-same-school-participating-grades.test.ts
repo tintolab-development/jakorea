@@ -37,7 +37,7 @@ function row(
 }
 
 describe('getSameSchoolParticipatingGrades', () => {
-  it('OSA 날짜가 같은 학년만 합반 후보로 남긴다', () => {
+  it('교육일(OSA 날짜)이 달라도 다른 학년은 모두 합반 후보로 남긴다', () => {
     const lead = row({
       id: 'p-1',
       educationGrade: '1학년',
@@ -61,6 +61,6 @@ describe('getSameSchoolParticipatingGrades', () => {
         'p-1',
         '1학년'
       ).map(item => item.id)
-    ).toEqual(['p-2'])
+    ).toEqual(['p-2', 'p-3'])
   })
 })

@@ -4,7 +4,10 @@
 
 import type { StudentRosterItemResponse } from '@/shared/api/generated/dashboard/schemas/studentRosterItemResponse'
 import type { StudentRosterResponse } from '@/shared/api/generated/dashboard/schemas/studentRosterResponse'
-import { buildStudentRosterCommitRequestBody } from '@/features/program/general/lib/student-roster-commit-safety'
+import {
+  buildStudentRosterCommitRequestBody,
+  readCommittedRosterId,
+} from '@/features/program/general/lib/student-roster-commit-safety'
 import type {
   OrganizationStudentRosterManualCommitRequest,
   StudentRosterRowCommitPayload,
@@ -67,15 +70,22 @@ export function mapApiBirthDateToDisplay(birthDate?: string | null): string | un
   return birthDate.trim()
 }
 
-/** 화면 생년월일 → API `YYYY-MM-DD` */
-export function mapDisplayBirthDateToApi(birthDate?: string | null): string {
+/** 화면 생년월일 → API `YYYY-MM-DD`. 없거나 형식이 아니면 undefined. */
+export function mapOptionalDisplayBirthDateToApi(birthDate?: string | null): string | undefined {
   const digits = (birthDate ?? '').replace(/\D/g, '')
-  if (digits.length === 8) {
+  if (digits.length >= 8) {
     return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
   }
   if (/^\d{4}-\d{2}-\d{2}/.test((birthDate ?? '').trim())) {
     return (birthDate ?? '').trim().slice(0, 10)
   }
+  return undefined
+}
+
+/** 화면 생년월일 → API `YYYY-MM-DD` */
+export function mapDisplayBirthDateToApi(birthDate?: string | null): string {
+  const mapped = mapOptionalDisplayBirthDateToApi(birthDate)
+  if (mapped) return mapped
   throw new Error('생년월일 형식이 올바르지 않습니다.')
 }
 
@@ -113,6 +123,8 @@ export function mapStudentRosterItemToRow(
   options?: { useShortClassLabel?: boolean }
 ): SchoolDetailStudentRow {
   const rosterId = item.rosterId
+  const serverRosterId =
+    typeof rosterId === 'number' && Number.isInteger(rosterId) && rosterId > 0 ? rosterId : undefined
   const extra = item as StudentRosterItemEnriched
   const fileObjectId = extra.portraitConsentFileObjectId
   const useShort = options?.useShortClassLabel === true
@@ -120,16 +132,25 @@ export function mapStudentRosterItemToRow(
     formatGradeClassSelectDisplay(item.grade ?? '', item.className ?? '', useShort) ||
     formatStudentGradeClass(item.grade, item.className) ||
     '-'
+  const rawPhone = item.phone?.trim() ?? ''
+  const rawEmail = item.email?.trim() ?? ''
+  const rawGender = item.gender?.trim() ?? ''
+  const gender = mapApiGenderToStudentGenderKey(rawGender)
+  const genderMask = !gender && rawGender && /[*•]/.test(rawGender) ? rawGender : undefined
   return {
-    id: rosterId != null ? String(rosterId) : `roster-row-${index + 1}`,
+    id: serverRosterId != null ? String(serverRosterId) : `roster-row-${index + 1}`,
+    serverRosterId,
     memberId: item.memberId ?? undefined,
     no: item.studentNo ?? index + 1,
     name: item.studentName?.trim() || '-',
-    gender: mapApiGenderToStudentGenderKey(item.gender),
+    gender,
+    genderMask,
     birthDate: mapApiBirthDateToDisplay(item.birthDate),
     gradeClass,
-    contact: item.maskedPhone?.trim() || undefined,
-    email: item.maskedEmail?.trim() || undefined,
+    contact:
+      (rawPhone && !isLikelyMaskedPii(rawPhone) ? rawPhone : item.maskedPhone?.trim()) || undefined,
+    email:
+      (rawEmail && !isLikelyMaskedPii(rawEmail) ? rawEmail : item.maskedEmail?.trim()) || undefined,
     participantId: item.participantId,
     portraitConsentSubmission: mapRosterPortraitConsentSubmission(item),
     portraitConsentFileObjectId:
@@ -160,7 +181,9 @@ export type MapStudentRowToRosterRequestOptions = {
 
 /**
  * UI row → PUT row.
- * 마스킹된 연락처·이메일은 원문 덮어쓰기를 막기 위해 생략한다.
+ * rosterId는 GET에서 받은 `serverRosterId`만 보낸다. 행 id를 파싱하지 않는다.
+ * 기존 행은 마스킹으로 비거나 `*`인 성별·생년월일·연락처를 생략해 저장된 원문을 유지한다.
+ * 신규 행은 생년월일이 없으면 저장 요청을 만들지 않는다.
  */
 export function mapStudentRowToRosterRequest(
   row: SchoolDetailStudentRow,
@@ -170,18 +193,22 @@ export function mapStudentRowToRosterRequest(
     row.gradeClass ?? '',
     options.educationGrade
   )
+  const rosterId = readCommittedRosterId(row)
+  const isExistingRow = rosterId != null
   const payload: StudentRosterRowCommitPayload = {
     studentName: row.name.trim(),
-    gender: mapStudentGenderKeyToApi(row.gender) ?? '',
-    birthDate: mapDisplayBirthDateToApi(row.birthDate),
     className,
     studentNo: Math.min(999, Math.max(1, row.no || 1)),
   }
+  const gender = mapStudentGenderKeyToApi(row.gender)
+  if (gender) payload.gender = gender
+  else if (!isExistingRow) payload.gender = ''
+  const birthDate = isExistingRow
+    ? mapOptionalDisplayBirthDateToApi(row.birthDate)
+    : mapDisplayBirthDateToApi(row.birthDate)
+  if (birthDate) payload.birthDate = birthDate
   if (grade !== '-') payload.grade = grade
-  const rosterId = Number.parseInt(row.id, 10)
-  if (Number.isFinite(rosterId) && rosterId > 0) {
-    payload.rosterId = rosterId
-  }
+  if (rosterId != null) payload.rosterId = rosterId
   if (
     row.memberId != null &&
     Number.isFinite(row.memberId) &&

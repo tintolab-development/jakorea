@@ -62,11 +62,10 @@ export function Dashboard() {
   )
   const userRole = user?.role ?? null
 
-  const instructorCount = dashboardHome?.memberCount ?? 0
-  const activeProgramsCount =
-    useRemoteDashboard && dashboardHome?.programCount != null
-      ? dashboardHome.programCount
-      : mockActiveProgramCount
+  const instructorCount = null
+  const activeProgramsCount = useRemoteDashboard
+    ? (dashboardHome?.programCount ?? null)
+    : mockActiveProgramCount
 
   const userRoleLabel = useMemo(() => {
     if (!user) return ''

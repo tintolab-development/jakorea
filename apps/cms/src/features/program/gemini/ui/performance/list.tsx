@@ -40,6 +40,7 @@ import type {
 import type { GeminiTrainingReportImportRow } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportRow'
 import { UploadDuplicateModal } from './upload-duplicate-modal'
 import '@/pages/programs/program-list-page.css'
+import '../page.css'
 import './list.css'
 
 type PendingFilters = {
@@ -163,10 +164,7 @@ export function GeminiPerformanceList() {
     GeminiTrainingReportImportRow[] | undefined
   >(undefined)
 
-  const filteredRows = useMemo(
-    () => filterRows(allRows, appliedFilters),
-    [allRows, appliedFilters]
-  )
+  const filteredRows = useMemo(() => filterRows(allRows, appliedFilters), [allRows, appliedFilters])
 
   const showNoSelectionAlert = useCallback(() => {
     showAlert({
@@ -434,14 +432,10 @@ export function GeminiPerformanceList() {
     ? TABLE_SCROLL_X - TABLE_COLUMN_WIDTHS.checkbox
     : TABLE_SCROLL_X
 
-  const performanceDeleteGuide = resolveGeminiDeleteGuideModalCopy(
-    '실적',
-    selectedRowKeys.length
-  )
+  const performanceDeleteGuide = resolveGeminiDeleteGuideModalCopy('실적', selectedRowKeys.length)
 
   return (
     <div className="program-list-page">
-
       {remoteEnabled && isError ? (
         <Alert
           type="error"
@@ -458,8 +452,7 @@ export function GeminiPerformanceList() {
 
       <FilterTableLayout
         bordered={false}
-        className="gemini-performance-list"
-        filterResponsiveWrap={false}
+        className="gemini-list-filter gemini-performance-list"
         fields={GEMINI_PERFORMANCE_FILTER_FIELDS}
         filters={{
           instructorName: pendingFilters.instructorName,
@@ -471,7 +464,9 @@ export function GeminiPerformanceList() {
           if (key === 'trainingMethod') {
             setPendingFilters(prev => ({
               ...prev,
-              trainingMethod: (value == null ? 'ALL' : String(value)) as PendingFilters['trainingMethod'],
+              trainingMethod: (value == null
+                ? 'ALL'
+                : String(value)) as PendingFilters['trainingMethod'],
             }))
             return
           }

@@ -1,4 +1,5 @@
 import type { ProgramCategory, ProgramSort, ProgramsListParams } from '../model/types'
+import type { PortalApplicationType } from '../api/application-types'
 import { DEFAULT_PROGRAMS_LIST_PARAMS, PROGRAMS_PATH } from './constants'
 
 const PROGRAM_CATEGORY_VALUES = new Set<ProgramCategory>([
@@ -76,12 +77,20 @@ function parseOperatingPeriodFilter(value: string | null): string {
 /** 기간 기반 3단 모집현황 필터 */
 const VALID_RECRUITMENT_STATUS = new Set(['recruiting', 'closed', 'scheduled', 'all'])
 const VALID_PROGRAM_TYPES = new Set(['all', 'UJAT'])
+const VALID_APPLICATION_TYPES = new Set(['INDIVIDUAL', 'ORGANIZATION', 'INSTRUCTOR', 'VOLUNTEER'])
 
 function parseProgramTypeFilter(value: string | null): string {
   const normalized = value?.trim().toUpperCase()
   return normalized && VALID_PROGRAM_TYPES.has(normalized)
     ? normalized
     : DEFAULT_PROGRAMS_LIST_PARAMS.programType
+}
+
+function parseApplicationTypeFilter(value: string | null): PortalApplicationType | undefined {
+  const normalized = value?.trim().toUpperCase()
+  return normalized && VALID_APPLICATION_TYPES.has(normalized)
+    ? (normalized as PortalApplicationType)
+    : undefined
 }
 
 function parseRecruitmentStatusFilter(value: string | null): string {
@@ -130,6 +139,7 @@ function appendFilterValues(
 
 export function readProgramsListParams(search = window.location.search): ProgramsListParams {
   const params = new URLSearchParams(search)
+  const applicationType = parseApplicationTypeFilter(params.get('applicationType'))
   const programType = readRepeatedFilter(
     params,
     'programType',
@@ -164,6 +174,7 @@ export function readProgramsListParams(search = window.location.search): Program
   return {
     category: parseCategory(params.get('category')),
     q: params.get('q') ?? DEFAULT_PROGRAMS_LIST_PARAMS.q,
+    ...(applicationType ? { applicationType } : {}),
     programType: programType.value,
     ...(programType.values ? { programTypeValues: programType.values } : {}),
     recruitmentTarget: recruitmentTarget.value,
@@ -188,6 +199,9 @@ export function buildProgramsListPath(params: ProgramsListParams) {
   }
   if (params.q) {
     searchParams.set('q', params.q)
+  }
+  if (params.applicationType) {
+    searchParams.set('applicationType', params.applicationType)
   }
   appendFilterValues(
     searchParams,

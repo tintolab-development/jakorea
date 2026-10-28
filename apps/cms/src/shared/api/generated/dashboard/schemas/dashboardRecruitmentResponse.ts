@@ -14,22 +14,27 @@ export interface DashboardRecruitmentResponse {
   recruitmentId?: number;
   recruitmentType?: string;
   targetType?: string;
+  /** 참여자 모집 창 SSOT(프로그램 목록 recruitmentStatus와 동일 창). OPEN/RECRUITING=모집 중, SCHEDULED=모집 예정, CLOSED=모집 마감. ACTIVE/OPEN PARTICIPANT 최신 행의 서울 날짜 창. 참여자 모집이 없으면 CLOSED. 프로그램 lifecycle/KPI 실적과 혼용하지 않음. */
   recruitmentStatus?: string;
   participantRecruitmentStatus?: string;
   volunteerRecruitmentStatus?: string;
   recruitmentStartAt?: string;
   recruitmentEndAt?: string;
   createdAt?: string;
-  /** 참여자 신청 수. 해당 유형 모집이 없으면 생략 */
+  /** 참여자 신청(applied) 수. 승인 수·KPI actualParticipantCount와 다름. 참여자 모집 유형이 없으면 생략(0으로 채우지 않음). */
   participantAppliedCount?: number;
-  /** 참여자 정원. 해당 유형 모집이 없으면 생략 */
+  /** 참여자 정원. 참여자 모집 유형이 없으면 생략 */
   participantCapacity?: number;
+  /** participantAppliedCount 별칭. 승인 수가 아님. 참여자 모집이 없으면 생략 */
   studentAppliedCount?: number;
+  /** participantCapacity 별칭. 참여자 모집이 없으면 생략 */
   studentCapacity?: number;
-  /** 봉사자 신청 수. 해당 유형 모집이 없으면 생략 */
+  /** 봉사자 신청 수. instructorAppliedCount로 채우지 않음. 봉사자 모집 유형이 없으면 생략 */
   volunteerAppliedCount?: number;
+  /** 봉사자 정원. 봉사자 모집 유형이 없으면 생략 */
   volunteerCapacity?: number;
-  /** 강사 신청 수. 해당 유형 모집이 없으면 생략 */
+  /** 강사 신청 수. 강사 모집 유형이 없으면 생략 */
   instructorAppliedCount?: number;
+  /** 강사 정원. 강사 모집 유형이 없으면 생략 */
   instructorCapacity?: number;
 }

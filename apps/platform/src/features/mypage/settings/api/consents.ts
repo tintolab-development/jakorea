@@ -26,6 +26,8 @@ export type PortalConsentSummary = {
   participationRestricted?: boolean
   paymentRestricted?: boolean
   reconsentRequired?: boolean
+  /** 약관/문서 버전이 올라가 재동의가 필요한 상태 */
+  policyUpdated?: boolean
   documentId?: number | null
   /** 초상권 — `PARTIAL` | `DISAGREED` (FULL 없음) */
   consentStatus?: string

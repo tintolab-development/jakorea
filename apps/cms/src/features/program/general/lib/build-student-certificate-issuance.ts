@@ -23,6 +23,9 @@ export interface StudentCertificateDownloadContext {
   issuanceReasonLabel: string
   /** 고유번호 발급 키 — 있으면 백엔드 allocate에 전달 */
   programId?: string | number
+  /** 기관 학생 명단 발급 — `…/serial/roster` */
+  organizationApplicationId?: string | number
+  rosterId?: number
 }
 
 function resolveDocumentTitle(kind: StudentCertificateKind): string {
@@ -117,6 +120,8 @@ export function buildStudentCertificateDownloadContext(input: {
   programEndDate?: Date | string | null
   issuanceReasonLabel: string
   programId?: string | number
+  organizationApplicationId?: string | number
+  rosterId?: number
 }): StudentCertificateDownloadContext {
   return {
     student: {
@@ -135,5 +140,9 @@ export function buildStudentCertificateDownloadContext(input: {
     ),
     issuanceReasonLabel: input.issuanceReasonLabel,
     ...(input.programId != null ? { programId: input.programId } : {}),
+    ...(input.organizationApplicationId != null
+      ? { organizationApplicationId: input.organizationApplicationId }
+      : {}),
+    ...(input.rosterId != null ? { rosterId: input.rosterId } : {}),
   }
 }

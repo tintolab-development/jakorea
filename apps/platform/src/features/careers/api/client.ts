@@ -202,6 +202,18 @@ export async function uploadCareerTalentApplicationAttachment(file: File): Promi
   return withFileUploadOverlay(() => uploadPreparedCareerTalentAttachment(file, contentType))
 }
 
+export async function uploadCareerTalentApplicationAttachments(files: File[]): Promise<number[]> {
+  if (files.length === 0) return []
+  return withFileUploadOverlay(async () => {
+    const ids: number[] = []
+    for (const file of files) {
+      const contentType = assertAttachmentAllowed(file)
+      ids.push(await uploadPreparedCareerTalentAttachment(file, contentType))
+    }
+    return ids
+  })
+}
+
 async function uploadPreparedCareerTalentAttachment(
   file: File,
   contentType: string,

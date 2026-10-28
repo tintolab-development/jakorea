@@ -6,30 +6,40 @@ import {
 } from '@/features/mypage/lib/constants'
 import { PFButton, PFModal, PFText } from '@/shared/ui'
 import type { ProgramApplyGateModalKind } from '../../lib/application-apply-gate'
+import {
+  requiredApplyConsentLabels,
+  type RequiredApplyConsentType,
+} from '../../lib/application-consent-guard'
 import styles from './program-apply-gate-modals.module.css'
-
-const PARTICIPATION_CONSENT_ITEM_LABELS = [
-  '교육진행자 서약서',
-  '행정정보 공동이용 동의서',
-  '성범죄 경력 조회 동의서',
-] as const
 
 type ProgramApplyGateModalsProps = {
   kind: ProgramApplyGateModalKind | null
   onClose: () => void
   onEditMemberInfo: () => void
   onViewApplications: () => void
+  /** `required-consent` — 아직 완료되지 않은 필수 동의 항목만 */
+  missingConsentTypes?: readonly RequiredApplyConsentType[]
+  onOpenConsents?: () => void
 }
 
-/** application-options `blockedReason` 기반 (대상 불일치·이미 신청) */
+/** application-options `blockedReason` 기반 (대상 불일치·이미 신청) + 필수 동의 가드 */
 export function ProgramApplyGateModals({
   kind,
   onClose,
   onEditMemberInfo,
   onViewApplications,
+  missingConsentTypes = [],
+  onOpenConsents,
 }: ProgramApplyGateModalsProps) {
   return (
     <>
+      <ProgramApplyRequiredConsentModal
+        open={kind === 'required-consent'}
+        onClose={onClose}
+        onOpenConsents={onOpenConsents ?? onClose}
+        missingConsentTypes={missingConsentTypes}
+      />
+
       <PFModal open={kind === 'not-eligible'} size="sm" onClose={onClose} mobilePlacement="bottom">
         <div className={styles.content}>
           <div className={styles.textBlock}>
@@ -81,16 +91,19 @@ type ProgramApplyRequiredConsentModalProps = {
   open: boolean
   onClose: () => void
   onOpenConsents: () => void
+  /** 미완료 항목만 표시 */
+  missingConsentTypes: readonly RequiredApplyConsentType[]
 }
 
 /**
- * 연간 참여 동의 3종 — application-options 와 무관.
- * GET /api/portal/me/consents 또는 배정 전 409 로 판별 후 호출.
+ * 필수 동의(초상권, UJAT 는 서약·동의 4종) — application-options 와 무관.
+ * GET /api/portal/me/consents 로 판별한 미완료 항목만 보여 준다.
  */
 export function ProgramApplyRequiredConsentModal({
   open,
   onClose,
   onOpenConsents,
+  missingConsentTypes,
 }: ProgramApplyRequiredConsentModalProps) {
   return (
     <PFModal open={open} size="sm" onClose={onClose} mobilePlacement="bottom">
@@ -101,7 +114,7 @@ export function ProgramApplyRequiredConsentModal({
           </PFText>
           <div className={styles.consentListWrap}>
             <ul className={styles.consentList}>
-              {PARTICIPATION_CONSENT_ITEM_LABELS.map(label => (
+              {requiredApplyConsentLabels(missingConsentTypes).map(label => (
                 <li key={label} className={styles.consentListItem}>
                   <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
                     {label}

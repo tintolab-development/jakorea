@@ -51,6 +51,18 @@ describe('resolveBasicInfoLayout — instructor', () => {
       }
     }
   })
+
+  it('강사 신청 상세는 교사 회원이어도 instructor variant', () => {
+    const resolved = resolveBasicInfoLayout({
+      bodyKey: 'instructor',
+      instructorProfile: 'school_teacher',
+      permissionInstructor: true,
+    })
+    expect(resolved.layout).toBe(BasicInfoLayout.SPLIT_CARD)
+    if (resolved.layout === BasicInfoLayout.SPLIT_CARD) {
+      expect(resolved.splitSectionVariant).toBe('instructor')
+    }
+  })
 })
 
 describe('resolveBasicInfoLayout — all_users', () => {

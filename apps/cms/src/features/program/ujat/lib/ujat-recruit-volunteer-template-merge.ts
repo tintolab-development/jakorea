@@ -20,7 +20,10 @@ function overlayString(overlay: Record<string, unknown>, key: string): string | 
   const v = overlay[key]
   return typeof v === 'string' ? v : undefined
 }
-function coalesceString(programVal: string | undefined, templateVal: string | undefined): string | undefined {
+function coalesceString(
+  programVal: string | undefined,
+  templateVal: string | undefined
+): string | undefined {
   const trimmed = programVal?.trim()
   if (trimmed) return programVal
   const t = templateVal?.trim()
@@ -63,8 +66,7 @@ export function buildUjatRecruitVolunteerOverlayFromDetailEditValues(
   const noticeExposure = values.volunteerRecruitmentNoticeExposure
   return {
     [KEYS.announcementPublished]:
-      announcementPublishedFromFormValue(values.volunteerRecruitmentAnnouncementPublished) ??
-      true,
+      announcementPublishedFromFormValue(values.volunteerRecruitmentAnnouncementPublished) ?? true,
     ...(isUjatVolunteerNoticeExposureValue(noticeExposure)
       ? { [KEYS.noticeExposure]: noticeExposure }
       : {}),
@@ -101,9 +103,7 @@ export function buildUjatRecruitVolunteerOverlayFromDetailEditValues(
           ? values.resultAnnouncementDate
           : null,
       method:
-        values.finalPassAnnouncementMethod?.trim() ||
-        values.resultAnnouncementMethod?.trim() ||
-        '',
+        values.finalPassAnnouncementMethod?.trim() || values.resultAnnouncementMethod?.trim() || '',
     },
     [KEYS.contact]: {
       name: values.volunteerRecruitmentContactOrganizationName?.trim() ?? '',
@@ -157,8 +157,7 @@ export function stampUjatVolunteerActivityTermsOnRounds(
   const h1 = overlayString(overlay, KEYS.activityTermH1)
   const h2 = overlayString(overlay, KEYS.activityTermH2)
   return rounds.map((round, index) => {
-    const incoming =
-      round.roundNumber === 2 || (round.roundNumber == null && index === 1) ? h2 : h1
+    const incoming = round.roundNumber === 2 || (round.roundNumber == null && index === 1) ? h2 : h1
     const next =
       preferExisting && round.curriculum?.trim()
         ? round.curriculum
@@ -199,8 +198,7 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
   const volunteerTargets = overlayStringList(overlay, KEYS.volunteerTargets)
   const announcementPublished = overlay[KEYS.announcementPublished]
   const noticeExposure = overlay[KEYS.noticeExposure]
-  const notes =
-    overlayString(overlay, KEYS.notes) ?? overlayString(overlay, KEYS.otherNotes)
+  const notes = overlayString(overlay, KEYS.notes) ?? overlayString(overlay, KEYS.otherNotes)
   return {
     ...program,
     mainTitle: program.mainTitle,
@@ -231,29 +229,21 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
         ? interviewRange.start
         : program.interviewStartDate,
     interviewEndDate:
-      preferOverlay && interviewRange?.end?.trim()
-        ? interviewRange.end
-        : program.interviewEndDate,
-    interviewMethod:
-      overlayString(overlay, KEYS.interviewMethod) ?? program.interviewMethod,
+      preferOverlay && interviewRange?.end?.trim() ? interviewRange.end : program.interviewEndDate,
+    interviewMethod: overlayString(overlay, KEYS.interviewMethod) ?? program.interviewMethod,
     finalPassAnnouncementDate: finalAnnounce?.date?.trim()
       ? finalAnnounce.date
       : program.finalPassAnnouncementDate,
     finalPassAnnouncementMethod: finalAnnounce?.method?.trim()
       ? finalAnnounce.method
       : program.finalPassAnnouncementMethod,
-    managerName:
-      preferOverlay && contact?.name?.trim() ? contact.name : program.managerName,
-    contactPhone:
-      preferOverlay && contact?.phone?.trim() ? contact.phone : program.contactPhone,
-    contactEmail:
-      preferOverlay && contact?.email?.trim() ? contact.email : program.contactEmail,
+    managerName: preferOverlay && contact?.name?.trim() ? contact.name : program.managerName,
+    contactPhone: preferOverlay && contact?.phone?.trim() ? contact.phone : program.contactPhone,
+    contactEmail: preferOverlay && contact?.email?.trim() ? contact.email : program.contactEmail,
     otherNotes: notes ?? program.otherNotes,
     description: overlayString(overlay, KEYS.description) ?? program.description,
-    recruitmentGuide:
-      overlayString(overlay, KEYS.recruitmentGuide) ?? program.recruitmentGuide,
-    applicationMethod:
-      overlayString(overlay, KEYS.applicationMethod) ?? program.applicationMethod,
+    recruitmentGuide: overlayString(overlay, KEYS.recruitmentGuide) ?? program.recruitmentGuide,
+    applicationMethod: overlayString(overlay, KEYS.applicationMethod) ?? program.applicationMethod,
     additionalContentHtml:
       overlayString(overlay, KEYS.additionalContentHtml) ?? program.additionalContentHtml,
     attachmentFileNames: attachmentFileNames ?? program.attachmentFileNames,
@@ -290,7 +280,9 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
     },
   }
 }
-export function getUjatRecruitVolunteerNoticeExposureFromTemplate(): UjatVolunteerNoticeExposureValue | undefined {
+export function getUjatRecruitVolunteerNoticeExposureFromTemplate():
+  | UjatVolunteerNoticeExposureValue
+  | undefined {
   const saved = loadUjatRecruitVolunteerTemplateSave()
   if (!saved?.overlay) return undefined
   const raw = saved.overlay[KEYS.noticeExposure]
@@ -334,12 +326,12 @@ export function applyUjatRecruitVolunteerTemplateDefaults(
     ...program,
     mainTitle: coalesceString(program.mainTitle, overlayString(overlay, KEYS.publicTitle)),
     title: coalesceString(program.title, overlayString(overlay, KEYS.publicTitle)) ?? program.title,
-    startDate: coalesceIsoDate(program.startDate, programRange?.start ?? undefined) ?? program.startDate,
+    startDate:
+      coalesceIsoDate(program.startDate, programRange?.start ?? undefined) ?? program.startDate,
     endDate: coalesceIsoDate(program.endDate, programRange?.end ?? undefined) ?? program.endDate,
-    volunteerTargets:
-      program.volunteerTargets?.length
-        ? program.volunteerTargets
-        : (overlayStringList(overlay, KEYS.volunteerTargets) ?? program.volunteerTargets),
+    volunteerTargets: program.volunteerTargets?.length
+      ? program.volunteerTargets
+      : (overlayStringList(overlay, KEYS.volunteerTargets) ?? program.volunteerTargets),
     volunteerTarget:
       program.volunteerTarget?.trim() ||
       overlayStringList(overlay, KEYS.volunteerTargets)?.join(', ') ||
@@ -400,8 +392,9 @@ export function applyUjatRecruitVolunteerTemplateDefaults(
       program.additionalContentHtml,
       overlayString(overlay, KEYS.additionalContentHtml)
     ),
-    attachmentFileNames:
-      program.attachmentFileNames?.length ? program.attachmentFileNames : attachmentFileNames,
+    attachmentFileNames: program.attachmentFileNames?.length
+      ? program.attachmentFileNames
+      : attachmentFileNames,
     rounds: stampUjatVolunteerActivityTermsOnRounds(program.rounds, overlay, {
       preferExisting: true,
     }),

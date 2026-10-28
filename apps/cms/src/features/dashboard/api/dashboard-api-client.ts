@@ -46,8 +46,9 @@ export async function fetchDashboardHomeRemote(): Promise<DashboardHomeResponse>
   return unwrapBody(await dashboardRemoteApi.dashboardHome())
 }
 
+/** Swagger: GET /api/admin/notifications/unread-count — 인박스 목록과 동일 SSOT */
 export async function fetchDashboardNotificationCountRemote(): Promise<NotificationUnreadCountResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardNotificationCount())
+  return unwrapBody(await dashboardRemoteApi.unreadNotificationCount())
 }
 
 export async function fetchDashboardRecruitmentsRemote(

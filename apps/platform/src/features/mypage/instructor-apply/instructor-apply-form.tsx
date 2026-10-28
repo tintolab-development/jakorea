@@ -429,29 +429,13 @@ export function InstructorApplyForm({
           values.employmentStatus,
           lockedBasic.employmentStatus,
         )
-        createMutation.mutate(
-          {
-            body: { ...mapped, termsAgreements },
-            employmentStatusToSync,
-          },
-          {
-            onSuccess: () => {
-              setSubmitting(false)
-              clearInstructorApplySessionCache()
-              onSubmitSuccess()
-            },
-            onError: error => {
-              setSubmitting(false)
-              setAlert({
-                title: '안내',
-                description: getInstructorApplyApiErrorMessage(
-                  error,
-                  '강사 신청을 제출하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-                ),
-              })
-            },
-          },
-        )
+        await createMutation.mutateAsync({
+          body: { ...mapped, termsAgreements },
+          employmentStatusToSync,
+        })
+        setSubmitting(false)
+        clearInstructorApplySessionCache()
+        onSubmitSuccess()
       } catch (error) {
         setSubmitting(false)
         setAlert({

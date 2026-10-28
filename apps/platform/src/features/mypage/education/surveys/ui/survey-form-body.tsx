@@ -7,6 +7,7 @@ import {
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PFFormSection, PFText } from '@/shared/ui'
 import {
+  resolveEducationSurveySectionDescription,
   resolveEducationSurveySectionRequired,
   resolveEducationSurveySectionTitle,
 } from '../lib/survey-section-title'
@@ -20,7 +21,9 @@ export type EducationSurveyFormBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
-  onFileChange?: (paragraphId: string, files: File[], questionKey: string) => void
+  onFileAdd?: (paragraphId: string, files: File[], questionKey: string) => void
+  onFileRemove?: (paragraphId: string, index: number, questionKey: string) => void
+  uploadingFile?: boolean
   /** 설문자 정보 fieldKey → 표시값 */
   userInfoValues?: Record<string, string>
   readOnly?: boolean
@@ -43,7 +46,9 @@ export function EducationSurveyFormBody({
   onUpdateParagraph,
   sidecar,
   onSidecarChange,
-  onFileChange,
+  onFileAdd,
+  onFileRemove,
+  uploadingFile,
   userInfoValues,
   readOnly = false,
 }: EducationSurveyFormBodyProps) {
@@ -85,7 +90,7 @@ export function EducationSurveyFormBody({
             description={
               isUserInfoParagraph(paragraph)
                 ? undefined
-                : paragraph.paragraphDescription?.trim() || undefined
+                : resolveEducationSurveySectionDescription(paragraph.paragraphDescription)
             }
             required={resolveEducationSurveySectionRequired(paragraph)}
           >
@@ -95,7 +100,9 @@ export function EducationSurveyFormBody({
               onUpdateParagraph={onUpdateParagraph}
               sidecar={sidecar}
               onSidecarChange={onSidecarChange}
-              onFileChange={onFileChange}
+              onFileAdd={onFileAdd}
+              onFileRemove={onFileRemove}
+              uploadingFile={uploadingFile}
               userInfoValues={userInfoValues}
               readOnly={readOnly}
             />

@@ -62,6 +62,11 @@ for (const schemaName of catalogItemSchemaNames) {
     'memberTypes',
     '허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.'
   )
+  setPropDescription(
+    schemaName,
+    'sourceMode',
+    '값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.'
+  )
 }
 
 const templateVariablesPath = paths['/api/admin/notification-send-batches/template-variables']

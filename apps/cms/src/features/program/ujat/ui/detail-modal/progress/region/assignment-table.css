@@ -126,6 +126,37 @@
   line-height: 150%;
 }
 
+.ujat-region-assignment-table__unavailable-badge {
+  display: flex;
+  width: 44px;
+  height: 20px;
+  padding: 2px 0;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 50px;
+  background: var(--color-red, #ff4d4f);
+  color: var(--main-WT, #fff);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.ujat-region-assignment-table__substitute {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-region-assignment-table__class-label {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .ujat-region-assignment-table__class-label--solo {
   color: var(--color-mint-01, #01a1af);
   text-align: center;

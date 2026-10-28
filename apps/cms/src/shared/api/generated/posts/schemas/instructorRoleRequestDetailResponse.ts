@@ -37,4 +37,12 @@ export interface InstructorRoleRequestDetailResponse {
   settlement?: InstructorCmsSettlement;
   termsAgreements?: TermsAgreement[];
   socialAccounts?: MemberLinkedSocialAccountResponse[];
+  /** 승인 알림 CASE. CASE_1=아직 유효화·발송되지 않음, CASE_2=이미 유효화되었거나 외부 발송 단계 진입, NONE=승인 알림 이력 없음. GET 스냅샷이며 취소 시점의 실제 CASE는 응답 approvalNotificationCase를 따른다. */
+  approvalNotificationCase?: string;
+  /** 승인 알림 상태. NONE|SCHEDULED|PENDING|PROCESSING|SENT|UNKNOWN. 여러 이벤트가 있으면 가장 진행된 상태를 반환한다. UNKNOWN은 외부 상태가 확인 불가이며 CASE_2로 취급한다. */
+  approvalNotificationState?: string;
+  /** 아직 도래하지 않은 승인 알림 available_at 중 가장 늦은 시각. 이전이 이미 발송된 재발송 예약이면 CASE_2와 함께 반환될 수 있다. */
+  approvalNotificationScheduledAt?: string | null;
+  /** 승인 알림 외부 발송 sent_at 중 가장 늦은 시각. 없으면 null. */
+  approvalNotificationSentAt?: string | null;
 }

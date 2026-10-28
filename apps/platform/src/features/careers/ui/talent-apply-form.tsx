@@ -11,6 +11,7 @@ import { Controller, useForm, type FieldErrors, type Resolver } from 'react-hook
 import { AddressSearchModal } from '@/features/auth'
 import {
   PFAlertModal,
+  PFAttachedFileList,
   PFButton,
   PFSelect,
   PFText,
@@ -134,8 +135,7 @@ function CareerTypeRadioGroup({
 
 export function TalentApplyForm() {
   const [alert, setAlert] = useState<AlertState>(null)
-  const [attachedFileName, setAttachedFileName] = useState('')
-  const [attachedFile, setAttachedFile] = useState<File | null>(null)
+  const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File }>>([])
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -168,21 +168,29 @@ export function TalentApplyForm() {
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null
+    const selected = Array.from(event.target.files ?? [])
     event.target.value = ''
-    const sizeError = file ? validateUploadFileSize(file) : null
-    if (sizeError) {
-      setAlert({ title: '안내', description: sizeError })
-      return
+    if (selected.length === 0) return
+    for (const file of selected) {
+      const sizeError = validateUploadFileSize(file)
+      if (sizeError) {
+        setAlert({ title: '안내', description: sizeError })
+        return
+      }
     }
-    setAttachedFile(file)
-    setAttachedFileName(file?.name ?? '')
+    setAttachedFiles(prev => [
+      ...prev,
+      ...selected.map(file => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+        file,
+      })),
+    ])
   }
 
   const onValid = (values: CareersTalentApplyFormInput) => {
     const parsed = careersTalentApplyFormSchema.parse(values)
     mutation.mutate(
-      { values: parsed, attachmentFile: attachedFile },
+      { values: parsed, attachmentFiles: attachedFiles.map(item => item.file) },
       {
         onSuccess: () => setSubmitted(true),
         onError: error =>
@@ -611,19 +619,27 @@ export function TalentApplyForm() {
                 >
                   파일찾기
                 </PFButton>
-                <div className={styles.fileGuideBox}>
-                  <PFText
-                    as="p"
-                    typo="bd-md-rg"
-                    color={attachedFileName ? 'black' : 'neutral-warm-500'}
-                    className={styles.fileGuide}
-                  >
-                    {attachedFileName || PH.evidenceFile}
-                  </PFText>
-                </div>
+                {attachedFiles.length === 0 ? (
+                  <div className={styles.fileGuideBox}>
+                    <PFText
+                      as="p"
+                      typo="bd-md-rg"
+                      color="neutral-warm-500"
+                      className={styles.fileGuide}
+                    >
+                      {PH.evidenceFile}
+                    </PFText>
+                  </div>
+                ) : (
+                  <PFAttachedFileList
+                    files={attachedFiles.map(item => ({ id: item.id, name: item.file.name }))}
+                    onRemove={id => setAttachedFiles(prev => prev.filter(item => item.id !== id))}
+                  />
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
+                  multiple
                   accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                   className={styles.visuallyHiddenFile}
                   onChange={handleFileChange}

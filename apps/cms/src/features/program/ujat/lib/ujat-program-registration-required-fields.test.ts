@@ -111,10 +111,7 @@ function filledVolunteerBothHalves(): Record<string, unknown> {
 }
 
 function filledVolunteerInterviewSchedules(): Record<string, unknown> {
-  const timeRange = [
-    new Date('2026-09-18T09:00:00.000Z'),
-    new Date('2026-09-18T12:00:00.000Z'),
-  ]
+  const timeRange = [new Date('2026-09-18T09:00:00.000Z'), new Date('2026-09-18T12:00:00.000Z')]
   return {
     'recruit.volunteer.h1.interview.interviewTimeRange': timeRange,
     'recruit.volunteer.h1.interview.timeUnit': '30',
@@ -163,7 +160,13 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
   it('필수 채우면 완료', () => {
     const overlay = filledRegistration()
     const typed = typedFromOverlay(overlay)
-    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).toBe(false)
+    expect(
+      hasIncompleteUjatProgramRegistrationRequiredFields(
+        overlay,
+        typed.basicInfo,
+        typed.typedDetail
+      )
+    ).toBe(false)
   })
 
   it('설문 진행 항목을 하나도 고르지 않아도 완료이다', () => {
@@ -175,10 +178,20 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
       lecture_evaluation: false,
     }
     const typed = typedFromOverlay(overlay)
-    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).toBe(false)
-    expect(listIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).not.toContain(
-      'basicInfo.surveyItems'
-    )
+    expect(
+      hasIncompleteUjatProgramRegistrationRequiredFields(
+        overlay,
+        typed.basicInfo,
+        typed.typedDetail
+      )
+    ).toBe(false)
+    expect(
+      listIncompleteUjatProgramRegistrationRequiredFields(
+        overlay,
+        typed.basicInfo,
+        typed.typedDetail
+      )
+    ).not.toContain('basicInfo.surveyItems')
   })
 
   it('사전 교육 진행 일정이 없으면 미완료', () => {
@@ -189,8 +202,20 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
       dateByRow: { '0': null },
     }
     const typed = typedFromOverlay(overlay)
-    expect(describeIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).toBe('h1.pre.schedule')
-    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay, typed.basicInfo, typed.typedDetail)).toBe(true)
+    expect(
+      describeIncompleteUjatProgramRegistrationRequiredFields(
+        overlay,
+        typed.basicInfo,
+        typed.typedDetail
+      )
+    ).toBe('h1.pre.schedule')
+    expect(
+      hasIncompleteUjatProgramRegistrationRequiredFields(
+        overlay,
+        typed.basicInfo,
+        typed.typedDetail
+      )
+    ).toBe(true)
   })
 
   it('Typed RHF 0/false/[]는 오래된 Overlay 값을 쓰지 않는다', () => {

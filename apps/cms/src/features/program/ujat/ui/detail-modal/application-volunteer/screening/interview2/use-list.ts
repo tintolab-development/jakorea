@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
@@ -47,6 +47,7 @@ import {
   guardUjatVolunteerWithdrawActivity,
 } from '../applicant/guard-actions'
 import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import { toScreeningNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
 import {
   computeUjatInterviewTotalScore,
   matchesUjatInterview2ScoreFilter,
@@ -140,6 +141,7 @@ export function useUjatVolunteerInterview2({
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
   const [now, setNow] = useState(() => dayjs())
+  const finalResultInFlightRef = useRef(false)
 
   const listQuery = useMemo(
     () => buildUjatVolunteerInterview2ListQuery(appliedFilters, half),
@@ -222,7 +224,14 @@ export function useUjatVolunteerInterview2({
   )
 
   const applySecondInterviewStatus = useCallback(
-    async (ids: string[], status: UjatSecondInterviewScreeningStatus): Promise<boolean> => {
+    async (
+      ids: string[],
+      status: UjatSecondInterviewScreeningStatus,
+      reason?: string,
+      notify?: { notifyTiming?: string; scheduledAt?: string }
+    ): Promise<boolean> => {
+      if (finalResultInFlightRef.current) return false
+      finalResultInFlightRef.current = true
       setList(prev => patchUjatVolunteerSecondInterviewScreeningStatus(prev, ids, status))
       setSelectedRowKeys([])
       if (
@@ -233,10 +242,11 @@ export function useUjatVolunteerInterview2({
         status !== 'reserve3' &&
         status !== 'reserve4'
       ) {
+        finalResultInFlightRef.current = false
         return true
       }
       try {
-        await submitUjatVolunteerFinalResultsRemote(ids, status)
+        await submitUjatVolunteerFinalResultsRemote(ids, status, reason, notify)
         await invalidateVolunteerLists()
         return true
       } catch (error: unknown) {
@@ -248,6 +258,8 @@ export function useUjatVolunteerInterview2({
         })
         await invalidateVolunteerLists()
         return false
+      } finally {
+        finalResultInFlightRef.current = false
       }
     },
     [invalidateVolunteerLists, showAlert]
@@ -284,7 +296,8 @@ export function useUjatVolunteerInterview2({
   const confirmBulkPass = useCallback(
     async (payload: UjatInterview2BulkPassConfirmPayload) => {
       const ids = selectedRowKeys.map(String)
-      const ok = await applySecondInterviewStatus(ids, payload.passType)
+      const notify = toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
+      const ok = await applySecondInterviewStatus(ids, payload.passType, undefined, notify)
       setBulkPassModalOpen(false)
       if (!ok) return
       const passTypeLabel =

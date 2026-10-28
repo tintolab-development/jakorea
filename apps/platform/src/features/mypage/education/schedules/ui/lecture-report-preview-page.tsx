@@ -30,20 +30,28 @@ export function LectureReportPreviewPage({
   pageIndex,
   children,
 }: LectureReportPreviewPageProps) {
+  if (pageIndex > 0) {
+    return (
+      <div className={styles.stage}>
+        <div className={styles.frameCompactSheet}>
+          <div className={styles.content}>{children}</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.stage}>
       <div className={styles.frame}>
         <div className={styles.scaleInner}>
           <section className={styles.sheet}>
-            {pageIndex === 0 ? (
-              <header className={styles.header}>
-                <div className={styles.headerLeft}>
-                  <TitleIcon />
-                  <h1 className={styles.docTitle}>{title}</h1>
-                </div>
-                <img className={styles.brandLogo} src={jaLogoUrl} alt="" aria-hidden />
-              </header>
-            ) : null}
+            <header className={styles.header}>
+              <div className={styles.headerLeft}>
+                <TitleIcon />
+                <h1 className={styles.docTitle}>{title}</h1>
+              </div>
+              <img className={styles.brandLogo} src={jaLogoUrl} alt="" aria-hidden />
+            </header>
             <div className={styles.content}>{children}</div>
           </section>
         </div>

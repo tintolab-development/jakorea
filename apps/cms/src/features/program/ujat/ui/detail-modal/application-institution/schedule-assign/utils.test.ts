@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildGradeOptionsForInstitution, listAssignableSchoolsForDate } from './utils'
+import {
+  buildGradeOptionsForInstitution,
+  computeVolunteerEducationDays,
+  isScheduleAssignBlockedInstitution,
+  listAssignableSchoolsForDate,
+} from './utils'
 import type { UjatInstitutionApplicationRow } from '../list/types'
 
 function row(
@@ -50,5 +55,31 @@ describe('listAssignableSchoolsForDate', () => {
       '2027-04-30'
     )
     expect(schools).toEqual([])
+  })
+})
+
+describe('isScheduleAssignBlockedInstitution', () => {
+  it('신청 반려·임시 반려 기관만 배정 불가로 본다', () => {
+    expect(isScheduleAssignBlockedInstitution({ tempAssignmentStatus: 'application_rejected' })).toBe(
+      true
+    )
+    expect(isScheduleAssignBlockedInstitution({ tempAssignmentStatus: 'temp_rejected' })).toBe(true)
+    expect(isScheduleAssignBlockedInstitution({ tempAssignmentStatus: 'temp_assigned' })).toBe(false)
+    expect(isScheduleAssignBlockedInstitution({ tempAssignmentStatus: 'evaluation_pending' })).toBe(
+      false
+    )
+  })
+})
+
+describe('computeVolunteerEducationDays', () => {
+  it('봉사단 인원 입력이 비어 NaN이면 계산하지 않는다', () => {
+    expect(computeVolunteerEducationDays(10, Number.parseInt('', 10))).toBeNull()
+    expect(computeVolunteerEducationDays(Number.NaN, 3)).toBeNull()
+  })
+
+  it('입력값이 0이면 계산하지 않고, 모두 있으면 일수를 반올림한다', () => {
+    expect(computeVolunteerEducationDays(10, 0)).toBeNull()
+    expect(computeVolunteerEducationDays(0, 3)).toBeNull()
+    expect(computeVolunteerEducationDays(10, 3)).toBe(7)
   })
 })

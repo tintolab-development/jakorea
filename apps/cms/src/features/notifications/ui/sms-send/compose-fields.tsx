@@ -16,12 +16,6 @@ import { listSmsSendPlaceholderKeys } from '@/features/notifications/model/sms-s
 import { SmsVariableTextField } from '@/features/notifications/ui/sms-template/variable-text-field'
 import './fullpage-modal.css'
 
-/**
- * 수동 발송 API는 MMS 이미지 첨부를 받지 않는다(BE PR #43 범위 밖, 템플릿 MMS도 미지원).
- * BE 첨부 계약이 생기기 전까지 발송 화면 첨부 UI를 노출하지 않는다.
- */
-const SMS_SEND_ATTACHMENT_UI_ENABLED = false
-
 type SmsSendComposeFieldsProps = {
   /** applyTemplate / open reset 시만 증가 — 타이핑으로는 올리지 않음 */
   composeVersion: number
@@ -35,6 +29,12 @@ type SmsSendComposeFieldsProps = {
   onRememberBodyRange?: (el: HTMLTextAreaElement | null) => void
   onRemoveAttachment?: (index: number) => void
   onAddAttachments?: (files: File[]) => Promise<{ ok: boolean; message?: string }>
+  /** 요청 첨부만 삭제 가능(템플릿 첨부는 발송 화면에서 지우지 않음) */
+  attachmentRemovable?: boolean
+  /** 템플릿 첨부/요청 첨부 중 무엇이 발송되는지 안내 */
+  attachmentHint?: string | null
+  /** 업로드·보안 검사 중이면 추가 버튼을 잠근다 */
+  attachmentUploading?: boolean
   onBlockingChange?: (blocking: boolean) => void
   /** #{키} 집합이 바뀔 때만 호출. 일반 타이핑으로 부모를 다시 그리지 않는다. */
   onUsedVariableKeysChange?: (keys: string[]) => void
@@ -59,6 +59,9 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   onRememberBodyRange,
   onRemoveAttachment,
   onAddAttachments,
+  attachmentRemovable = true,
+  attachmentHint,
+  attachmentUploading = false,
   onBlockingChange,
   onUsedVariableKeysChange,
   senderPhone,
@@ -115,9 +118,9 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   }
 
   const showSubject = messageType !== 'SMS' || subject.trim().length > 0
-  const showAttachments =
-    SMS_SEND_ATTACHMENT_UI_ENABLED && (messageType === 'MMS' || attachmentFileNames.length > 0)
-  const attachmentsEnabled = messageType === 'MMS'
+  // MMS일 때만 첨부 UI 노출 (SMS/LMS로 바꾸면 요청 첨부는 초기화됨)
+  const showAttachments = messageType === 'MMS'
+  const attachmentsEnabled = messageType === 'MMS' && !attachmentUploading
   const subjectRequired = messageType !== 'SMS'
 
   return (
@@ -254,8 +257,11 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
                           }
                         })()
                       }}
-                      onRemoveFile={onRemoveAttachment}
+                      onRemoveFile={attachmentRemovable ? onRemoveAttachment : undefined}
                     />
+                    {attachmentHint ? (
+                      <p className="mail-send-fullpage__section-hint">{attachmentHint}</p>
+                    ) : null}
                     {issues.attachmentError ? (
                       <p className="cms-field__message cms-field__message--error">
                         {issues.attachmentError}

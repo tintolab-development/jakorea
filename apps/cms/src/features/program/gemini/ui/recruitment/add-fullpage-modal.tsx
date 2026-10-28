@@ -131,12 +131,8 @@ export function GeminiRecruitmentAddFullpageModal({
   }, [onClose])
 
   const handleRequestClose = useCallback(() => {
-    if (form.isDirty) {
-      setCloseConfirmOpen(true)
-      return
-    }
-    onClose()
-  }, [form.isDirty, onClose])
+    setCloseConfirmOpen(true)
+  }, [])
 
   const handleConfirmClose = useCallback(() => {
     setCloseConfirmOpen(false)

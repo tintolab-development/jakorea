@@ -1,4 +1,5 @@
 import type {
+  FileAttachmentParagraph,
   LectureReportProgramProgressParagraph,
   WritingFormDraft,
   WritingFormParagraph,
@@ -10,6 +11,8 @@ import {
 import { FillParagraphBody, FormTemplateHost } from '@jakorea/form-template-runtime'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
 import type { LectureReportContent } from '../api/lecture-report-client'
+import { lectureReportFilesForParagraph } from '../lib/lecture-report-preview-files'
+import { LectureReportEducationPhotosPreview } from './lecture-report-education-photos-preview'
 import styles from './lecture-report-preview-body.module.css'
 
 type LectureReportPreviewBodyProps = {
@@ -189,9 +192,13 @@ function ParagraphBody({ paragraph, content }: { paragraph: WritingFormParagraph
     return <p className={styles.answerText}>{displayValue(answerFor(paragraph, content))}</p>
   }
   if (paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment') {
-    const key = resolveApplicationAnswerKey(paragraph)
-    const files = content?.files.filter(file => file.questionKey === key) ?? []
-    return <p className={styles.answerText}>{displayValue(files.map(file => file.originalFileName).join(', ') || answerFor(paragraph, content))}</p>
+    const files = lectureReportFilesForParagraph(paragraph, content)
+    return (
+      <LectureReportEducationPhotosPreview
+        paragraph={paragraph as FileAttachmentParagraph}
+        files={files}
+      />
+    )
   }
   if (paragraph.kind === 'description') {
     if (paragraph.variant === 'closing') return <p className={styles.answerText}>{displayValue(paragraph.body)}</p>
@@ -218,6 +225,11 @@ export function LectureReportPreviewBody({ draft, content }: LectureReportPrevie
         if (paragraph.kind === 'description' && paragraph.variant === 'system') return null
         if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
           return <ParagraphBody key={paragraph.id} paragraph={paragraph} content={content} />
+        }
+        if (paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment') {
+          return (
+            <ParagraphBody key={paragraph.id} paragraph={paragraph} content={content} />
+          )
         }
         const description = paragraphDescription(paragraph)
         return (

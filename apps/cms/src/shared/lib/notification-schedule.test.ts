@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getDefaultManualNotifyAt,
   getMinimumManualNotifyAt,
+  getNotificationTimingApiErrorMessage,
   isFutureNotificationTime,
 } from './notification-schedule'
 
@@ -22,5 +23,25 @@ describe('notification schedule', () => {
     expect(isFutureNotificationTime(now.add(30, 'second'), now)).toBe(false)
     expect(isFutureNotificationTime(getMinimumManualNotifyAt(now), now)).toBe(true)
     expect(isFutureNotificationTime(now.add(5, 'minute'), now)).toBe(true)
+  })
+
+  it('maps announcement-date and resend 409 codes', () => {
+    expect(
+      getNotificationTimingApiErrorMessage({
+        response: { data: { error: { code: 'APPLICATION_ANNOUNCEMENT_DATE_NOT_CONFIGURED' } } },
+      })
+    ).toContain('발표일이 설정되지 않아')
+    expect(
+      getNotificationTimingApiErrorMessage({
+        response: {
+          data: { error: { code: 'INSTRUCTOR_ROLE_REQUEST_NOTIFICATION_RESEND_REQUIRES_DECIDED' } },
+        },
+      })
+    ).toContain('강사 권한')
+    expect(
+      getNotificationTimingApiErrorMessage({
+        response: { data: { error: { code: 'ADMIN_NOTIFICATION_RESEND_REQUIRES_DECIDED' } } },
+      })
+    ).toContain('관리자')
   })
 })

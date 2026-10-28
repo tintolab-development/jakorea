@@ -26,7 +26,7 @@ import {
 } from '../display'
 import { InstructorJaEvaluationGradeField } from '../instructor-ja-grade-field'
 import {
-  activityChangeCountView,
+  normalizePermissionApprovalStatus,
   PermissionApprovalStatusWithResend,
   settlementStatusView,
 } from '../status'
@@ -69,12 +69,18 @@ function instructorBusinessIncomeView(user: BasicInfoSectionContext['user']) {
  * 소속 — 여러 개면 콤마로 나열.
  * 교사 겸직(instructor_dual)이면 소속 기관명 옆에 재직 현황 태그(변경 가능).
  */
-function InstructorAffiliationView({ user }: { user: BasicInfoSectionContext['user'] }) {
+function InstructorAffiliationView({
+  user,
+  permissionInstructorDetail,
+}: {
+  user: BasicInfoSectionContext['user']
+  permissionInstructorDetail?: boolean
+}) {
   const { schoolName, others } = resolveInstructorAffiliationParts(user)
   const employmentLabel = user.listMetrics?.employmentStatusLabel
   const showEmployment =
     Boolean(schoolName) &&
-    isInstructorDualProfile(user) &&
+    (isInstructorDualProfile(user) || Boolean(permissionInstructorDetail)) &&
     parseSchoolTeacherEmploymentStatus(employmentLabel) != null
 
   if (!schoolName && others.length === 0) {
@@ -116,6 +122,16 @@ function InstructorAffiliationView({ user }: { user: BasicInfoSectionContext['us
   )
 }
 
+function isInstructorPermissionDetailView(ctx: BasicInfoSectionContext) {
+  return ctx.viewContext.permissionView && ctx.viewContext.permissionRole === 'instructor'
+}
+
+/** 강사 신청 상세 · 승인 완료 전(대기·반려) — 스크린샷: JA 평가·신청 유형 비노출 */
+function isInstructorPermissionCompactBasicInfo(ctx: BasicInfoSectionContext) {
+  if (!isInstructorPermissionDetailView(ctx)) return false
+  return normalizePermissionApprovalStatus(ctx.user.permissionApprovalStatus) !== 'APPROVED'
+}
+
 function jaEvaluationGradeField(ctx: BasicInfoSectionContext) {
   const draftGrade = ctx.memberInfoDraft?.jaEvaluationGrade?.trim()
   const userForJa =
@@ -138,31 +154,39 @@ function jaEvaluationGradeField(ctx: BasicInfoSectionContext) {
 }
 
 export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
-  const { user, onPermissionResendNotification, viewContext } = ctx
-  const isInstructorPermissionDetail =
-    viewContext.permissionView && viewContext.permissionRole === 'instructor'
+  const { user, onPermissionResendNotification } = ctx
+  const isInstructorPermissionDetail = isInstructorPermissionDetailView(ctx)
+  const useCompactBasicInfo = isInstructorPermissionCompactBasicInfo(ctx)
   const jaField = jaEvaluationGradeField(ctx)
+  const approvalStatusView = (
+    <PermissionApprovalStatusWithResend
+      user={user}
+      onPermissionResendNotification={onPermissionResendNotification}
+      notifyPermissionRole="instructor"
+    />
+  )
 
   return (
     <>
-      <EditableRow type="double">
-        {isInstructorPermissionDetail ? (
+      {useCompactBasicInfo ? (
+        <EditableRow type="double">
           <EditableField
             label="권한 승인 현황"
+            fullRow
             readOnlyDisplay
-            view={
-              <PermissionApprovalStatusWithResend
-                user={user}
-                onPermissionResendNotification={onPermissionResendNotification}
-                notifyPermissionRole="instructor"
-              />
-            }
+            view={approvalStatusView}
           />
-        ) : (
-          <EditableField label="정산 현황" readOnlyDisplay view={settlementStatusView(user)} />
-        )}
-        <EditableField label="JA 평가 등급" readOnlyDisplay view={jaField} />
-      </EditableRow>
+        </EditableRow>
+      ) : (
+        <EditableRow type="double">
+          {isInstructorPermissionDetail ? (
+            <EditableField label="권한 승인 현황" readOnlyDisplay view={approvalStatusView} />
+          ) : (
+            <EditableField label="정산 현황" readOnlyDisplay view={settlementStatusView(user)} />
+          )}
+          <EditableField label="JA 평가 등급" readOnlyDisplay view={jaField} />
+        </EditableRow>
+      )}
       <EditableRow type="double">
         <EditableField
           label="가입일"
@@ -175,9 +199,6 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
           view={<span>{socialView(user)}</span>}
         />
       </EditableRow>
-      <EditableRow type="single">
-        <EditableField label="활동 변경 횟수" readOnlyDisplay view={activityChangeCountView(user)} />
-      </EditableRow>
     </>
   )
 }
@@ -187,7 +208,6 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
     user,
     scheduleChangeCount,
     personalInfoRevealed,
-    viewContext,
     memberInfoEditing,
     memberInfoDraft,
     onMemberInfoDraftChange,
@@ -195,8 +215,8 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
   } = ctx
   const roleCode = useSessionAdminRoleCode()
   const canRevealAccount = canAdminAction({ roleCode, action: 'piiAccount' })
-  const isInstructorPermissionDetail =
-    viewContext.permissionView && viewContext.permissionRole === 'instructor'
+  const isInstructorPermissionDetail = isInstructorPermissionDetailView(ctx)
+  const useCompactBasicInfo = isInstructorPermissionCompactBasicInfo(ctx)
   const canEditFeeJa = canEditInstructorFeeJaFields(ctx)
   const editing = useBasicInfoEditing({
     memberInfoEditing,
@@ -206,13 +226,12 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
   })
   const d = memberInfoDraft
   const canEdit = editing.canEditBasic && d != null && onMemberInfoDraftChange != null
+  const historyCount = scheduleChangeCount ?? user.scheduleChangeCancelCount ?? 0
 
   const nameWithBadge = (nameNode: ReactNode) => (
     <span className="user-basic-info-section__name-with-badge">
       {nameNode}
-      {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-        <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-      ) : null}
+      {historyCount > 0 ? <ScheduleChangeHistoryBadge count={historyCount} /> : null}
     </span>
   )
 
@@ -225,6 +244,28 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
 
   const genderRadioValue =
     toApiGender(d?.gender) === 'M' ? 'male' : toApiGender(d?.gender) === 'F' ? 'female' : undefined
+
+  const businessIncomeField = (
+    <EditableField
+      label="사업소득자 여부"
+      fullRow={useCompactBasicInfo}
+      readOnlyDisplay={editing.isReadOnlyDisplay}
+      view={instructorBusinessIncomeView(user)}
+      edit={
+        <CmsRadioGroup
+          options={BUSINESS_INCOME_OPTIONS}
+          size="medium"
+          value={businessIncomeRadioValue}
+          onChange={e => {
+            const v = e.target.value
+            onMemberInfoDraftChange?.({
+              instructorBusinessIncome: v === 'yes' ? '해당' : v === 'no' ? '해당 없음' : '',
+            })
+          }}
+        />
+      }
+    />
+  )
 
   return (
     <>
@@ -301,7 +342,12 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="소속"
           readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<InstructorAffiliationView user={user} />}
+          view={
+            <InstructorAffiliationView
+              user={user}
+              permissionInstructorDetail={isInstructorPermissionDetail}
+            />
+          }
           edit={
             isInstructorDualProfile(user) ? (
               <span className="user-basic-info-section__inline-segments">
@@ -437,41 +483,27 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         />
       </EditableRow>
 
-      <EditableRow type="double">
-        {!isInstructorPermissionDetail ? (
-          <EditableField
-            label="강사비 등급"
-            readOnlyDisplay={!canEditFeeJa}
-            view={<span>{instructorFeeGradeLine(user)}</span>}
-            edit={<InstructorFeeGradeSelect ctx={ctx} />}
-          />
-        ) : (
-          <EditableField
-            label="신청 유형"
-            readOnlyDisplay
-            view={<span>{instructorApplicationTypeLine(user)}</span>}
-          />
-        )}
-        <EditableField
-          label="사업소득자 여부"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={instructorBusinessIncomeView(user)}
-          edit={
-            <CmsRadioGroup
-              options={BUSINESS_INCOME_OPTIONS}
-              size="medium"
-              value={businessIncomeRadioValue}
-              onChange={e => {
-                const v = e.target.value
-                onMemberInfoDraftChange?.({
-                  instructorBusinessIncome:
-                    v === 'yes' ? '해당' : v === 'no' ? '해당 없음' : '',
-                })
-              }}
+      {useCompactBasicInfo ? (
+        <EditableRow type="single">{businessIncomeField}</EditableRow>
+      ) : (
+        <EditableRow type="double">
+          {!isInstructorPermissionDetail ? (
+            <EditableField
+              label="강사비 등급"
+              readOnlyDisplay={!canEditFeeJa}
+              view={<span>{instructorFeeGradeLine(user)}</span>}
+              edit={<InstructorFeeGradeSelect ctx={ctx} />}
             />
-          }
-        />
-      </EditableRow>
+          ) : (
+            <EditableField
+              label="신청 유형"
+              readOnlyDisplay
+              view={<span>{instructorApplicationTypeLine(user)}</span>}
+            />
+          )}
+          {businessIncomeField}
+        </EditableRow>
+      )}
 
       <EditableRow type="single">
         <EditableField

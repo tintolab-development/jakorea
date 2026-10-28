@@ -15,4 +15,12 @@ programIds?: string;
  * 프로그램 유형 필터. general | company_school | ujat | gemini 또는 canonical program_type
  */
 programType?: string;
+/**
+ * 0부터 시작하는 페이지. size와 함께 있을 때만 적용
+ */
+page?: number;
+/**
+ * 페이지 크기(최대 200). 생략 시 전체 목록을 반환하고 totalCount로 전체 건수를 알린다
+ */
+size?: number;
 };

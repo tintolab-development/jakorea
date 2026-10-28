@@ -130,17 +130,31 @@ export function studentMatchesAttendanceFilters(
   return true
 }
 
-export function filterAttendanceStudentsForDisplay(
-  students: SchoolDetailAttendanceStudentRow[],
+export function hasSchoolDetailAttendanceStudentFilters(
   filters: SchoolDetailAttendanceFilters
-): SchoolDetailAttendanceStudentRow[] {
-  const hasStudentFilter =
+): boolean {
+  return (
     filters.studentName.trim() !== '' ||
     filters.studentGender !== SCHOOL_ATTENDANCE_FILTER_ALL ||
     filters.studentClass !== SCHOOL_ATTENDANCE_FILTER_ALL ||
     filters.attendanceStatus !== SCHOOL_ATTENDANCE_FILTER_ALL
+  )
+}
 
-  if (!hasStudentFilter) return students
+export function isDefaultSchoolDetailAttendanceFilters(
+  filters: SchoolDetailAttendanceFilters
+): boolean {
+  return (
+    filters.educationSchedule === SCHOOL_ATTENDANCE_FILTER_ALL &&
+    !hasSchoolDetailAttendanceStudentFilters(filters)
+  )
+}
+
+export function filterAttendanceStudentsForDisplay(
+  students: SchoolDetailAttendanceStudentRow[],
+  filters: SchoolDetailAttendanceFilters
+): SchoolDetailAttendanceStudentRow[] {
+  if (!hasSchoolDetailAttendanceStudentFilters(filters)) return students
   return students.filter(row => studentMatchesAttendanceFilters(row, filters))
 }
 
@@ -154,6 +168,8 @@ export function attendanceStudentRowsEqual(
     return (
       row.id === other?.id &&
       row.status === other?.status &&
+      row.attendanceRecorded === other?.attendanceRecorded &&
+      row.participantId === other?.participantId &&
       row.no === other?.no &&
       row.name === other?.name
     )

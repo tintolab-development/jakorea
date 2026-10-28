@@ -1,9 +1,13 @@
 import type { Dayjs } from 'dayjs'
 import type { PermissionModalNotifyTiming } from '@/shared/components/permission-modal'
+import {
+  NOTIFY_TIMING_CAPABILITY,
+  assertNotifyTimingSupported,
+} from '@/shared/lib/notify-timing-capability'
 
 export type FlatDecisionNotifyTiming = {
-  timing: 'SCHEDULED'
-  scheduledAt: string
+  timing: 'SCHEDULED' | 'ON_ANNOUNCEMENT'
+  scheduledAt?: string
 }
 
 export type TrainedTeacherApproveNotifyTiming = {
@@ -28,8 +32,8 @@ function toScheduledAtIso(manualNotifyAt?: Dayjs | null): string | undefined {
 }
 
 /**
- * 기관 승인·반려 / 강사 일괄 — 즉시·발표일은 생략(즉시 발송).
- * 직접설정만 SCHEDULED + scheduledAt. IMMEDIATE에 scheduledAt을 붙이면 400.
+ * 직접설정만 SCHEDULED + scheduledAt. 즉시·발표일은 생략.
+ * TimedBulk 발표일은 `toTimedBulkNotifyTiming`이 ON_ANNOUNCEMENT를 붙인다.
  */
 export function toFlatDecisionNotifyTiming(
   notifyTiming?: PermissionModalNotifyTiming | string | null,
@@ -41,13 +45,43 @@ export function toFlatDecisionNotifyTiming(
   return { timing: 'SCHEDULED', scheduledAt }
 }
 
-/** 기관 신청 승인은 BE 계약상 timing을 항상 명시한다. */
+/**
+ * `TimedBulkIdsRequest` / `TimedBulkDecisionRequest` / 기관 단건 반려 / 개인 일정·최종 반려.
+ * 즉시=생략, 직접설정=SCHEDULED, 발표일=ON_ANNOUNCEMENT. scheduledAt은 SCHEDULED에만.
+ */
+export function toTimedBulkNotifyTiming(
+  notifyTiming?: PermissionModalNotifyTiming | string | null,
+  manualNotifyAt?: Dayjs | null
+): FlatDecisionNotifyTiming | undefined {
+  assertNotifyTimingSupported(notifyTiming, NOTIFY_TIMING_CAPABILITY.timedBulk)
+  if (notifyTiming === 'on_announcement') return { timing: 'ON_ANNOUNCEMENT' }
+  return toFlatDecisionNotifyTiming(notifyTiming, manualNotifyAt)
+}
+
+/** 권한 재발송·강사 배정 create — IMMEDIATE | SCHEDULED. 발표일 차단. */
+export function toScheduledOnlyNotifyTiming(
+  notifyTiming?: PermissionModalNotifyTiming | string | null,
+  manualNotifyAt?: Dayjs | null
+): { timing: 'SCHEDULED'; scheduledAt: string } | undefined {
+  assertNotifyTimingSupported(notifyTiming, NOTIFY_TIMING_CAPABILITY.scheduledOnly)
+  const scheduled = toFlatDecisionNotifyTiming(notifyTiming, manualNotifyAt)
+  if (!scheduled || scheduled.timing !== 'SCHEDULED' || !scheduled.scheduledAt) return undefined
+  return { timing: 'SCHEDULED', scheduledAt: scheduled.scheduledAt }
+}
+
+/**
+ * 기관 단건 승인 `OrganizationApplicationApproveRequest`.
+ * IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 발표일을 IMMEDIATE로 바꾸지 않는다.
+ * 일괄 승인(`TimedBulkIdsRequest`)도 ON_ANNOUNCEMENT를 지원한다.
+ */
 export function toOrganizationApproveNotifyTiming(
   notifyTiming?: PermissionModalNotifyTiming | string | null,
   manualNotifyAt?: Dayjs | null
-): { timing: 'IMMEDIATE' | 'SCHEDULED'; scheduledAt?: string } {
+): { timing: 'IMMEDIATE' | 'SCHEDULED' | 'ON_ANNOUNCEMENT'; scheduledAt?: string } {
   const scheduled = toFlatDecisionNotifyTiming(notifyTiming, manualNotifyAt)
-  return scheduled ?? { timing: 'IMMEDIATE' }
+  if (scheduled) return scheduled
+  if (notifyTiming === 'on_announcement') return { timing: 'ON_ANNOUNCEMENT' }
+  return { timing: 'IMMEDIATE' }
 }
 
 /** TT 기관 승인 — 발표일 알림을 평탄 approval payload로 그대로 전달한다. */

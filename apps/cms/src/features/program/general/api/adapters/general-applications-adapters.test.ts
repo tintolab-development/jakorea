@@ -1810,5 +1810,33 @@ describe('mapOrganizationApplicationListSessionsToConfirmedSessions', () => {
     expect(row.confirmedListAssignmentSessions).toHaveLength(1)
     expect(row.confirmedListAssignmentSessions?.[0]?.resolvedScheduleId).toBe(186907)
     expect(row.confirmedListAssignmentSessions?.[0]?.round).toBe(5)
+    expect(row.confirmedListAssignmentSessions?.[0]?.sessionNo).toBe(5)
+  })
+
+  it('keeps sessionNo/endAt raw and does not invent sessionNo when missing', () => {
+    const sessions = mapOrganizationApplicationListSessionsToConfirmedSessions([
+      {
+        scheduleId: 7,
+        sessionNo: 3,
+        startAt: '2026-10-27T09:00:00+09:00',
+        endAt: '2026-10-27T09:40:00+09:00',
+        assignmentStatus: 'CONFIRMED',
+      },
+      {
+        scheduleId: 8,
+        startAt: '2026-10-28T09:00:00+09:00',
+        assignmentStatus: 'TEMP_ASSIGNED',
+      },
+      {
+        scheduleId: 9,
+        sessionNo: 1,
+        startAt: '2026-10-29T09:00:00+09:00',
+        assignmentStatus: 'CANCELLED',
+      },
+    ] as Parameters<typeof mapOrganizationApplicationListSessionsToConfirmedSessions>[0])
+    expect(sessions).toHaveLength(2)
+    expect(sessions[0]?.sessionNo).toBe(3)
+    expect(sessions[0]?.endAt).toBe('2026-10-27T09:40:00+09:00')
+    expect(sessions[1]?.sessionNo).toBeNull()
   })
 })

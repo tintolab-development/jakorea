@@ -23,17 +23,17 @@ const WIDGET_KEY = 'kpi-achievement-widget'
 const EMPTY_IDS: string[] = []
 
 /** 목표 대비 달성률(%) — achieved null이면 0 (표시는 '-') */
-function getRate(achieved: number | null, target: number): number {
-  if (achieved == null || target <= 0) return 0
+function getRate(achieved: number | null, target: number | null): number {
+  if (achieved == null || target == null || target <= 0) return 0
   return Math.min(100, Math.round((achieved / target) * 100))
 }
 
-function isAchieved(achieved: number | null, target: number): boolean {
-  return achieved != null && target > 0 && achieved >= target
+function isAchieved(achieved: number | null, target: number | null): boolean {
+  return achieved != null && target != null && target > 0 && achieved >= target
 }
 
-function formatAchievedValue(achieved: number | null): string {
-  return achieved == null ? '-' : String(achieved)
+function formatKpiNumber(value: number | null): string {
+  return value == null ? '-' : String(value)
 }
 
 function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
@@ -41,7 +41,7 @@ function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
   const rate = getRate(kpi.achieved, kpi.target)
   const achieved = isAchieved(kpi.achieved, kpi.target)
   const barPercent =
-    !disabled && kpi.achieved != null && kpi.target > 0
+    !disabled && kpi.achieved != null && kpi.target != null && kpi.target > 0
       ? Math.min(100, (kpi.achieved / kpi.target) * 100)
       : 0
 
@@ -70,7 +70,9 @@ function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
         </div>
         <div className="kpi-achievement-widget__values">
           <span className="kpi-achievement-widget__achieved-kpi">
-            {disabled ? '-/-' : `${formatAchievedValue(kpi.achieved)}/${kpi.target}`}
+            {disabled
+              ? '-/-'
+              : `${formatKpiNumber(kpi.achieved)}/${formatKpiNumber(kpi.target)}`}
           </span>
           <span
             className={`kpi-achievement-widget__rate-badge ${achieved ? 'kpi-achievement-widget__rate-badge--achieved' : 'kpi-achievement-widget__rate-badge--under'}`}

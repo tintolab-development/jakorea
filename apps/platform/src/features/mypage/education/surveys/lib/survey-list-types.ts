@@ -7,6 +7,10 @@ export type EducationSurveyListEntry = {
   description?: string
   startAt?: string
   endAt?: string
+  /** BE `submissionStartAt` 원문(시각 포함 시 기간 판정 SSOT) */
+  submissionStartAt?: string | null
+  /** BE `submissionEndAt` 원문(시각 포함 시 기간 판정 SSOT) */
+  submissionEndAt?: string | null
   createdAt?: string
   templateVersionId?: number
   formType?: string

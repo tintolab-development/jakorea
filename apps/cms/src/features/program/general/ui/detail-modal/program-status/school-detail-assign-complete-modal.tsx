@@ -5,12 +5,11 @@
 
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import { ApprovalAlarmSendSection } from '../../approval-alarm-send-section'
+import '@/shared/components/permission-modal.css'
 
 const ASSIGN_COMPLETE_MODAL_WIDTH = 600
 /** 풀페이지 상세 위 중첩 모달(antd 스택 ~2000)보다 위 */
 const ASSIGN_COMPLETE_MODAL_Z_INDEX = 2500
-const DATE_TIME_PICKER_Z_OFFSET = 100
 
 export interface SchoolDetailAssignCompleteModalProps {
   open: boolean
@@ -65,10 +64,10 @@ export function SchoolDetailAssignCompleteModal({
       }
     >
       {showApprovalAlarmSection ? (
-        <ApprovalAlarmSendSection
-          resetWhen={open}
-          dateTimePickerZIndex={ASSIGN_COMPLETE_MODAL_Z_INDEX + DATE_TIME_PICKER_Z_OFFSET}
-        />
+        <p className="permission-modal__hint">
+          승인 알림은 배정 처리와 함께 서버에서 발송됩니다. 이 화면에서는 발송 시점을 변경할 수
+          없습니다.
+        </p>
       ) : null}
     </ContentModal>
   )

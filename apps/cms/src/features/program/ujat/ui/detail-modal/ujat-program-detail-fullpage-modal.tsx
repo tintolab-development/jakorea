@@ -271,6 +271,10 @@ import { ensureSurveyCreateSubmissionPeriod } from '@/features/program/shared/li
 import { resolveLectureEvalBindingTargetForCreate } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { resolveSurveyPollBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-survey-poll-binding-target'
 import {
+  SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
+  isSurveyPollBindingTargetScheduleAlreadyRegistered,
+} from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
+import {
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
   shouldShowSurveyPollScheduleSelectField,
 } from '@/features/program/shared/lib/survey-management/should-show-survey-poll-schedule-field'
@@ -971,7 +975,8 @@ export function UjatProgramDetailFullPageModal({
   const surveyTemplateOptions = useMemo(() => getSurveyWritingTemplateSelectOptions(), [])
   const surveyScheduleOptionsQuery = useProgramSurveyScheduleOptions(
     displayProgram,
-    surveyCreateModalOpen
+    surveyCreateModalOpen,
+    classifiedBindings
   )
   const showSurveyPollScheduleSelectField = useMemo(
     () => shouldShowSurveyPollScheduleSelectField(displayProgram),
@@ -980,7 +985,7 @@ export function UjatProgramDetailFullPageModal({
   useEffect(() => {
     if (!surveyCreateModalOpen || !showSurveyPollScheduleSelectField) return
     const options = surveyScheduleOptionsQuery.options ?? []
-    if (options.length === 1 && options[0]?.value) {
+    if (options.length === 1 && options[0]?.value && !options[0].disabled) {
       setSelectedSurveyScheduleValue(String(options[0].value))
     }
   }, [
@@ -1955,6 +1960,13 @@ export function UjatProgramDetailFullPageModal({
             })
             return
           }
+          if (isSurveyPollBindingTargetScheduleAlreadyRegistered(surveyTarget, classifiedBindings)) {
+            void showAlert({
+              title: '등록 실패',
+              content: SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
+            })
+            return
+          }
           targetScopePayload = surveyTarget
         }
         const payload: ProgramFormBindingRequest = {
@@ -2010,6 +2022,7 @@ export function UjatProgramDetailFullPageModal({
       setSubmittingSurveyTemplate(false)
     }
   }, [
+    classifiedBindings,
     createBinding,
     displayProgram,
     invalidateSurveyCaches,
@@ -3143,7 +3156,10 @@ export function UjatProgramDetailFullPageModal({
                       ) : null
                     }
                   />
-                  {activeRegisteredSurvey != null && activeRegisteredSurvey.status === 'before_start' ? (
+                  {activeRegisteredSurvey != null &&
+                  (activeRegisteredSurvey.status === 'before_start' ||
+                    (activeRegisteredSurvey.status === 'finished' &&
+                      activeRegisteredSurvey.responseCount === 0)) ? (
                     <UjatSurveyNoResponseState
                       title={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.title}
                       description={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.description}

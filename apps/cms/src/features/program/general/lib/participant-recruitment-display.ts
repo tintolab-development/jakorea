@@ -5,7 +5,10 @@
  * 교육받은 교사: nested 라벨이 없으면 컬럼(applicationStartDate 등)으로 조회 복원
  */
 
-import { formatKoreanPhoneNumber, isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import {
+  formatKoreanPhoneNumber,
+  isValidKoreanPhoneNumber,
+} from '@jakorea/domain/shared/korean-phone'
 import type { Program } from '@/types/domain'
 import {
   formatAnnouncementLabel,
@@ -73,7 +76,10 @@ export function formatRecruitmentInquiryContactName(
   if (!org) return person
   if (!person) return org
   if (org === person) return org
-  const orgParts = org.split(/\s*\/\s*/).map(part => part.trim()).filter(Boolean)
+  const orgParts = org
+    .split(/\s*\/\s*/)
+    .map(part => part.trim())
+    .filter(Boolean)
   if (orgParts.includes(person)) return org
   if (looksLikeInquiryPersonName(org) && looksLikeInquiryPersonName(person)) return org
   return `${org} / ${person}`
@@ -175,7 +181,8 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
 function resolveRecruitmentInstitutionLimitsBridge(program: Program) {
   const fromProgram = resolveInstitutionApplicationProgramBridge(program)
   const commonInfo = resolveGeneralProgramCommonInfo(program)
-  const programMode = commonInfo?.educationScheduleMode ?? fromProgram.educationScheduleMode ?? 'date'
+  const programMode =
+    commonInfo?.educationScheduleMode ?? fromProgram.educationScheduleMode ?? 'date'
   const base = buildInstitutionApplicationRecruitLimitVisibilityBridge({
     educationStructure: fromProgram.educationStructure,
     sessionRound: fromProgram.sessionRound,
@@ -211,10 +218,10 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     ...program,
     applicationStartDate:
       options?.applicationStartDate ??
-      (useRow ? row?.startAt ?? undefined : program.applicationStartDate),
+      (useRow ? (row?.startAt ?? undefined) : program.applicationStartDate),
     applicationEndDate:
       options?.applicationEndDate ??
-      (useRow ? row?.endAt ?? undefined : program.applicationEndDate),
+      (useRow ? (row?.endAt ?? undefined) : program.applicationEndDate),
   }
   const recruitmentStatus = getParticipantRecruitmentStatus(effectiveProgram)
   const lifecycle = getParticipantRecruitmentLifecycle(effectiveProgram)
@@ -222,8 +229,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const showInstitutionApplicationLimits = isGeneralProgramSchoolInstitutionTarget(program)
   const bridge = resolveRecruitmentInstitutionLimitsBridge(program)
   const showMaxScheduleCountField =
-    showInstitutionApplicationLimits &&
-    shouldShowInstitutionApplicationMaxScheduleFields(bridge)
+    showInstitutionApplicationLimits && shouldShowInstitutionApplicationMaxScheduleFields(bridge)
   const showMaxSessionsPerDayField =
     showInstitutionApplicationLimits &&
     shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)

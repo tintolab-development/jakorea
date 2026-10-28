@@ -55,6 +55,7 @@ export function resolveInstitutionFixedScheduleDescription(
     educationScheduleLines: bridge.educationScheduleLines,
     educationRoundCount: bridge.educationRoundCount,
     sessionsPerRound: bridge.sessionsPerRound,
+    curriculumChartSessionCount: bridge.curriculumChartSessionCount,
   })
 }
 
@@ -71,6 +72,7 @@ export function resolveInstitutionPreferredScheduleDescription(
     educationScheduleMode: bridge.educationScheduleMode,
     educationScheduleLines: bridge.educationScheduleLines,
     maxScheduleCount: bridge.maxScheduleCount,
+    maxSessionsPerDay: bridge.maxSessionsPerDay,
     sessionsPerRound: bridge.sessionsPerRound,
     educationRoundCount: bridge.educationRoundCount,
     curriculumChartSessionCount: bridge.curriculumChartSessionCount,

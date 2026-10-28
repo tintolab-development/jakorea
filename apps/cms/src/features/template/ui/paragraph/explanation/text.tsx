@@ -44,7 +44,7 @@ export function ExplanationText({
   const consentRadios = showBottomConsent ? (
     <CmsRadioGroup
       className="form-editor-table-bottom-consent"
-      size="large"
+      size="medium"
       value={resolveTableBottomConsentRadioValue(paragraph.bottomConsent, {
         consentFillMode,
         interactive: consentInteractive,

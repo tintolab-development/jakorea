@@ -26,6 +26,7 @@ import {
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  useMypageMember,
   EducationApplicationDetailLoading,
   type EducationActivitySection,
   type EducationDisplayStatus,
@@ -33,7 +34,14 @@ import {
 } from '@/features/mypage'
 import { resolveInstructorAvailableScheduleLines } from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
 import { LectureReportPanel } from '@/features/mypage/education/schedules/ui/lecture-report-panel'
+import { InstructorAssignmentPanel } from '@/features/mypage/education/schedules/ui/instructor-assignment-panel'
+import { useLectureReportAssignmentsQuery } from '@/features/mypage/education/schedules/api/use-lecture-report-assignments-query'
+import { supportsInstructorInstitutionAssignment } from '@/features/mypage/education/schedules/lib/instructor-assignment-support'
 import { programDetailToPreferredScheduleLookup } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
+import {
+  canWriteEducationNotice,
+  resolveEducationNoticeAuthorDisplayName,
+} from '@/features/mypage/education/notices'
 import { resolveLectureListBackPath } from '@/features/mypage/lecture'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
@@ -103,7 +111,7 @@ function buildDetailPath(
   applicationType?: ProgramApplicationType,
 ) {
   const base = lectureApplicationDetailPath(applicationId, applicationType)
-  if (section === 'program' || section === 'notice') return base
+  if (section === 'program') return base
   return `${base}?section=${section}`
 }
 
@@ -121,6 +129,11 @@ export function MypageLectureDetailPage() {
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const cancelMutation = useCancelMyProgramApplicationMutation()
+  const member = useMypageMember()
+  const noticeWriteAuthorDisplayName = resolveEducationNoticeAuthorDisplayName(
+    member.displayName,
+    'instructor',
+  )
 
   const remoteApplicationQuery = useMyProgramApplicationDetail(routeApplicationType, applicationId)
   const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
@@ -159,6 +172,13 @@ export function MypageLectureDetailPage() {
   const isActivityStatus = application
     ? ACTIVITY_STATUSES.has(application.displayStatus)
     : false
+  const institutionAssignmentProgram = supportsInstructorInstitutionAssignment(program?.programType)
+
+  const instructorAssignmentQuery = useLectureReportAssignmentsQuery(
+    program?.id,
+    routeApplicationType === 'INSTRUCTOR' && isActivityStatus && institutionAssignmentProgram,
+  )
+  const instructorAssignmentVisible = institutionAssignmentProgram && instructorAssignmentQuery.hasAssignment
 
   const activityTabOptions = useMemo(
     () =>
@@ -168,9 +188,10 @@ export function MypageLectureDetailPage() {
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
             lectureReportVisible: routeApplicationType === 'INSTRUCTOR',
+            instructorAssignmentVisible,
           }
         : null,
-    [program, routeApplicationType],
+    [instructorAssignmentVisible, program, routeApplicationType],
   )
 
   const inProgressTabItems = useMemo(
@@ -242,7 +263,7 @@ export function MypageLectureDetailPage() {
     const nextPath = buildDetailPath(applicationId, nextSection, application?.applicationType)
     const nextUrl = new URL(nextPath, window.location.origin)
     const nextParams = new URLSearchParams(location.search)
-    if (nextSection === 'program' || nextSection === 'notice') nextParams.delete('section')
+    if (nextSection === 'program') nextParams.delete('section')
     else nextParams.set('section', nextSection)
     nextUrl.search = nextParams.toString()
     navigate(`${nextUrl.pathname}${nextUrl.search}`)
@@ -328,7 +349,15 @@ export function MypageLectureDetailPage() {
     application.cancellable ?? canCancelEducationApplication(application.displayStatus)
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection = isActivitySection(section)
-    ? section
+    ? isWithdrawnDuring
+      ? readActivitySection(
+          location.search,
+          withdrawnDuringKeys,
+          withdrawnDuringKeys[0] ?? 'schedule',
+        )
+      : isActivityStatus
+        ? readActivitySection(location.search, inProgressKeys, inProgressKeys[0] ?? 'notice')
+        : section
     : isWithdrawnDuring
       ? (withdrawnDuringKeys[0] ?? 'schedule')
       : (inProgressKeys[0] ?? 'notice')
@@ -362,10 +391,15 @@ export function MypageLectureDetailPage() {
           preferredEducationScheduleLabel={preferredEducationScheduleLabel}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          noticeWriteEnabled={canWriteEducationNotice(member.profile, application.displayStatus)}
+          noticeWriteAuthorDisplayName={noticeWriteAuthorDisplayName}
         />
       )
     }
     if (active === 'schedule') {
+      if (instructorAssignmentVisible) {
+        return <InstructorAssignmentPanel items={instructorAssignmentQuery.items} />
+      }
       return (
         <EducationSchedulePanel
           applicationType={routeApplicationType}
@@ -378,7 +412,7 @@ export function MypageLectureDetailPage() {
       )
     }
     if (active === 'lecture-report' && routeApplicationType === 'INSTRUCTOR') {
-      return <LectureReportPanel applicationId={applicationId} programId={Number(program.id)} instructorProgram={program.programAudience === 'organization'} />
+      return <LectureReportPanel key={`lecture-report-${applicationId}-${program.id}`} applicationId={applicationId} programId={Number(program.id)} instructorProgram={program.programAudience === 'organization'} />
     }
     if (active === 'survey') {
       return (
@@ -521,6 +555,7 @@ export function MypageLectureDetailPage() {
         pending={cancelMutation.isPending}
         error={cancelMutation.error}
       />
+
     </section>
   )
 }

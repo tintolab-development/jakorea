@@ -391,12 +391,12 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             <span className="table-description">{assignedSchedules.length}건</span>
           </div>
           <div className="info-section-buttons--wrapper">
-            <CmsButton variant="delete" size="large" onClick={handleUnassignClick}>
+            <CmsButton variant="delete" size="h40" onClick={handleUnassignClick}>
               배정 취소
             </CmsButton>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               disabled={addAssignOptions.length === 0}
               onClick={() => {
                 if (addAssignOptions.length === 0) return
@@ -436,7 +436,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             <span className="table-description">{waitingSchedules.length}건</span>
           </div>
           <div className="info-section-buttons--wrapper">
-            <CmsButton variant="secondary" size="large" onClick={handleSelectAssignClick}>
+            <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
               선택 배정
             </CmsButton>
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />

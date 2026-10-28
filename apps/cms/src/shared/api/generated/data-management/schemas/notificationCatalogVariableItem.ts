@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { NotificationCatalogVariableItemSourceMode } from './notificationCatalogVariableItemSourceMode';
 
 /**
  * 카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.
@@ -28,4 +29,6 @@ export interface NotificationCatalogVariableItem {
   participantTypes?: string[];
   /** 허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN. */
   memberTypes?: string[];
+  /** 값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립. */
+  sourceMode?: NotificationCatalogVariableItemSourceMode;
 }

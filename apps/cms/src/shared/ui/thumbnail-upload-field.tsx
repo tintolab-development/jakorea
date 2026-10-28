@@ -38,6 +38,8 @@ export interface ThumbnailUploadFieldProps {
   buttonLabel?: string
   previewAlt?: string
   sizeExceededMessage?: string
+  /** 단일 파일 상한(byte). 기본 15MB. */
+  maxBytes?: number
   onSelectFile?: (file: File) => void
   onRemove?: () => void
   className?: string
@@ -53,6 +55,7 @@ export function ThumbnailUploadField({
   buttonLabel = '파일 추가',
   previewAlt = '',
   sizeExceededMessage = THUMBNAIL_SIZE_EXCEEDED_MESSAGE,
+  maxBytes = FILE_SELECT_MAX_TOTAL_BYTES,
   onSelectFile,
   onRemove,
   className,
@@ -74,7 +77,7 @@ export function ThumbnailUploadField({
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-    if (isFileSelectTotalSizeExceeded({ incoming: [file], maxTotalBytes: FILE_SELECT_MAX_TOTAL_BYTES })) {
+    if (isFileSelectTotalSizeExceeded({ incoming: [file], maxTotalBytes: maxBytes })) {
       notifyFileSelectTotalSizeExceeded(sizeExceededMessage)
       return
     }

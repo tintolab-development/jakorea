@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SchoolDetailStudentRow } from '@/features/program/general/model/school-detail-types'
+import { mapStudentRowsToRosterCommitRequest } from '@/features/program/general/api/adapters/student-roster-adapters'
 import {
   buildStudentRosterCommitRequestBody,
   validateStudentRosterCommit,
@@ -17,7 +18,14 @@ import {
 } from './student-roster-revision'
 
 function rosterRow(id: string): SchoolDetailStudentRow {
-  return { id, no: 1, name: `학생${id}`, gradeClass: '1반' }
+  const serverRosterId = /^[1-9]\d*$/.test(id) ? Number(id) : undefined
+  return {
+    id,
+    ...(serverRosterId != null ? { serverRosterId } : {}),
+    no: 1,
+    name: `학생${id}`,
+    gradeClass: '1반',
+  }
 }
 
 describe('student-roster-revision', () => {
@@ -77,6 +85,25 @@ describe('student-roster-revision', () => {
     )
   })
 
+  it('shows the server message for add and save failures other than INVALID_VALUE', () => {
+    const badRequest = {
+      response: {
+        status: 400,
+        data: {
+          message: '입력값을 확인해 주세요.',
+          error: { code: 'BAD_REQUEST', message: '입력값을 확인해 주세요.' },
+        },
+      },
+    }
+    expect(resolveStudentRosterManualCommitFailureAlert(badRequest).content).toBe(
+      '입력값을 확인해 주세요.'
+    )
+    expect(
+      resolveStudentRosterManualCommitFailureAlert(new Error('생년월일 형식이 올바르지 않습니다.'))
+        .content
+    ).toBe('생년월일 형식이 올바르지 않습니다.')
+  })
+
   it('FE-REV-08: student add commit includes expectedRevisionNo and full rows', () => {
     const baseline = [rosterRow('1'), rosterRow('2')]
     const commit = [
@@ -92,20 +119,19 @@ describe('student-roster-revision', () => {
       disallowExistingRowDrop: true,
     })
     expect(result.ok).toBe(true)
-    const body = buildStudentRosterCommitRequestBody({
+    const body = mapStudentRowsToRosterCommitRequest({
       expectedRevisionNo: 5,
+      educationGrade: '3학년',
       rows: commit.map(row => ({
-        studentName: row.name,
+        ...row,
         gender: 'male',
-        birthDate: '2015-01-01',
-        grade: '3학년',
-        className: '1반',
-        studentNo: row.no,
-        rosterId: Number.parseInt(row.id, 10),
+        birthDate: '2015. 01. 01.',
+        gradeClass: '3학년 1반',
       })),
     })
     expect(body.rows).toHaveLength(3)
     expect(body.expectedRevisionNo).toBe(5)
+    expect(body.rows.map(row => row.rosterId)).toEqual([1, 2, undefined])
   })
 
   it('FE-REV-12: filtered view still commits full roster with revision', () => {

@@ -1,4 +1,25 @@
 import type { PortalEducationScheduleScopeStatus } from '../../applications/api/activity-client'
+import type { EducationScheduleItem } from '../model/types'
+
+function hasAssignedScheduleId(item: Pick<EducationScheduleItem, 'scheduleId'>): boolean {
+  return item.scheduleId != null && Number.isSafeInteger(item.scheduleId) && item.scheduleId > 0
+}
+
+/**
+ * 마이페이지 교육일정 — 본인에게 배정된 운영 일정만.
+ * 커리큘럼 정의 행(scheduleId 없음)은 숨긴다.
+ */
+export function isMemberAssignedEducationScheduleItem(
+  item: Pick<EducationScheduleItem, 'scheduleId'>,
+): boolean {
+  return hasAssignedScheduleId(item)
+}
+
+export function filterEducationSchedulesForMemberAssignment<
+  T extends Pick<EducationScheduleItem, 'scheduleId'>,
+>(items: readonly T[]): T[] {
+  return items.filter(item => isMemberAssignedEducationScheduleItem(item))
+}
 
 export function resolveEducationScheduleEmptyMessage(
   scopeStatus: PortalEducationScheduleScopeStatus | null | undefined,

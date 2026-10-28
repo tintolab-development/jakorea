@@ -5,6 +5,29 @@
   margin-bottom: var(--spacing-16, 16px);
 }
 
+/*
+ * Gemini 목록 필터 — 카드는 뷰포트 폭에 묶고, 칸은 240/500 고정 + flex-wrap.
+ * 테이블 가로 스크롤이 필터 행을 늘리거나 nowrap·shrink 시키지 않게 한다.
+ */
+.gemini-list-filter.filter-table-layout {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  box-sizing: border-box;
+}
+
+.gemini-list-filter.filter-table-layout .filter-table-layout__filter {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.gemini-list-filter.filter-table-layout .table-filter-group__container,
+.gemini-list-filter.filter-table-layout .table-filter-group__fields-container,
+.gemini-list-filter.filter-table-layout .table-filter-group__fields-inner.ant-row {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .gemini-visiting-training-page__tabs.cms-text-tabs .cms-text-tabs__row {
   padding: 0;
 }

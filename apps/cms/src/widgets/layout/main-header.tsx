@@ -36,12 +36,17 @@ export function MainHeader() {
   const location = useLocation()
   const { user, logout, checkAuth } = useAuthStore()
   const useRemoteNotificationCount = user?.role === 'ADMIN' && shouldUseDashboardRemoteApi()
-  const { data: remoteUnreadCount = 0 } = useDashboardNotificationCount(useRemoteNotificationCount)
+  const { data: remoteUnreadCount = 0, refetch: refetchRemoteUnreadCount } =
+    useDashboardNotificationCount(useRemoteNotificationCount)
   const {
     notifications: headerNotifications,
     unreadCount: listUnreadCount,
     markAsRead,
     removeNotification,
+    refresh: refreshNotifications,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = useNotifications()
   const unreadCount = useRemoteNotificationCount ? remoteUnreadCount : listUnreadCount
   const dropdownNotifications = headerNotifications
@@ -251,7 +256,13 @@ export function MainHeader() {
             {/* 알림 — 드롭다운 */}
             <Dropdown
               open={dropdownOpen}
-              onOpenChange={setDropdownOpen}
+              onOpenChange={open => {
+                setDropdownOpen(open)
+                if (open && useRemoteNotificationCount) {
+                  void refreshNotifications()
+                  void refetchRemoteUnreadCount()
+                }
+              }}
               trigger={['click']}
               placement="bottomRight"
               overlayStyle={{ overflow: 'visible' }}
@@ -263,6 +274,11 @@ export function MainHeader() {
                     onNotificationClick={handleNotificationClick}
                     onConfirm={handleConfirm}
                     onClose={() => setDropdownOpen(false)}
+                    hasNextPage={hasNextPage}
+                    isFetchingNextPage={isFetchingNextPage}
+                    fetchNextPage={() => {
+                      void fetchNextPage()
+                    }}
                   />
                 </div>
               )}

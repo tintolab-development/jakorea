@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ALIMTALK_PROGRAM_SELECTED_DIRECT_GUIDANCE,
   countDroppedAlimtalkSendRecipients,
   createManualRecipient,
   formatAlimtalkPhoneDuplicateMessage,
@@ -92,5 +93,13 @@ describe('mergeAlimtalkSendRecipients phone dedupe', () => {
     const incoming = member(2, '010-****-5678')
     expect(listAlimtalkPhoneDuplicateNotices([current], [incoming])).toEqual([])
     expect(mergeAlimtalkSendRecipients([current], [incoming])).toHaveLength(2)
+  })
+})
+
+describe('ALIMTALK_PROGRAM_SELECTED_DIRECT_GUIDANCE', () => {
+  it('프로그램 선택 시 직접 입력 제한 안내 문구를 고정한다', () => {
+    expect(ALIMTALK_PROGRAM_SELECTED_DIRECT_GUIDANCE).toBe(
+      '프로그램을 선택한 경우 해당 프로그램의 등록 회원에게만 발송할 수 있습니다. 직접 입력한 휴대폰 번호로 발송하려면 프로그램을 선택하지 않고 진행해 주세요.'
+    )
   })
 })

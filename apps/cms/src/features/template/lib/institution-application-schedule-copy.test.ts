@@ -128,8 +128,9 @@ describe('institution preferred schedule card copy', () => {
       maxScheduleCount: 4,
       sessionsPerRound: 2,
     }
+    // ④ N = 모집 희망 차시 상한(maxSessionsPerDay), 회차당 차시 아님
     expect(resolveInstitutionPreferredScheduleDescription(bridge)).toBe(
-      '교육을 희망하는 날짜와 수업 시간을 모두 작성해 주세요. 수업은 1일, 2차시 운영됩니다. (최대 4개까지 희망 일정 신청이 가능합니다.)'
+      '교육을 희망하는 날짜와 수업 시간을 모두 작성해 주세요. 수업은 1일, 3차시 운영됩니다. (최대 4개까지 희망 일정 신청이 가능합니다.)'
     )
     expect(resolveInstitutionPreferredScheduleMaxBlocks(bridge)).toBe(4)
     expect(resolveInstitutionPreferredScheduleInitialBlockCount(bridge)).toBe(2)
@@ -183,7 +184,7 @@ describe('institution preferred schedule card copy', () => {
     )
   })
 
-  it('날짜 지정 + 단일 회차는 1타임 배정 안내를 카드 설명으로 쓴다', () => {
+  it('커리큘럼 날짜 지정 + 단일 회차는 1일 N차시 안내를 카드 설명으로 쓴다', () => {
     const bridge: InstitutionApplicationProgramBridge = {
       preEducationNoticeRequired: true,
       educationStructure: 'curriculum',
@@ -197,7 +198,10 @@ describe('institution preferred schedule card copy', () => {
     }
     expect(shouldUseInstitutionFixedScheduleCardCopy(bridge)).toBe(true)
     expect(resolveInstitutionFixedScheduleDescription(bridge)).toBe(
-      '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+      '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, N차시 운영됩니다.'
     )
+    expect(
+      resolveInstitutionFixedScheduleDescription({ ...bridge, curriculumChartSessionCount: 3 })
+    ).toBe('진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, 3차시 운영됩니다.')
   })
 })

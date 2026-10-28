@@ -77,6 +77,19 @@ describe('resolveEducationColumns trainedTeachers preset', () => {
     expect(column?.render?.(undefined, record, 0)).toBe('대학(원)생, 중학교, 고등학교')
   })
 
+  it('교육 대상 컬럼은 다중 대상 표시를 위한 최소 폭과 말줄임을 사용한다', () => {
+    const columns = resolveEducationColumns({
+      isOverviewListPage: true,
+      listView: 'ALL',
+    })
+    const column = columns.find(item => item.key === 'targetLevel') as
+      | { minWidth?: number; ellipsis?: boolean }
+      | undefined
+
+    expect(column?.minWidth).toBe(220)
+    expect(column?.ellipsis).toBe(true)
+  })
+
   it('교육받은 교사도 참여자 모집 인원은 승인 건수와 정원을 함께 표시한다', () => {
     const columns = resolveEducationColumns({
       isOverviewListPage: true,

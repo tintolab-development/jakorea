@@ -560,7 +560,7 @@ export function ParticipatingVolunteerAssignmentSection({
           <div className="info-section-buttons--wrapper">
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               disabled={assignedInstitutions.length === 0}
               onClick={handleUnassignClick}
             >
@@ -568,7 +568,7 @@ export function ParticipatingVolunteerAssignmentSection({
             </CmsButton>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               disabled={addAssignOptions.length === 0}
               onClick={() => {
                 if (addAssignOptions.length === 0) return
@@ -617,7 +617,7 @@ export function ParticipatingVolunteerAssignmentSection({
             <span className="table-description">{waitingInstitutions.length}건</span>
           </div>
           <div className="info-section-buttons--wrapper">
-            <CmsButton variant="secondary" size="large" onClick={handleSelectAssignClick}>
+            <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
               선택 배정
             </CmsButton>
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />

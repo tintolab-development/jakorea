@@ -1,9 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { recordMenuClick } from '@/features/analytics'
+import {
+  NotificationInboxPanel,
+  useMyNotificationUnreadCountQuery,
+} from '@/features/notification'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
 import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
+import notificationsActiveIconUrl from '../image/icon/notifications-active.svg'
 import {
   getActiveNavigationGroupCode,
   getLoggedInActionRoute,
@@ -117,8 +122,12 @@ export function HeaderDesktop({
   const [hoveredGroupCode, setHoveredGroupCode] = useState<string | null>(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [menuPanelBottom, setMenuPanelBottom] = useState<number | null>(null)
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const navigationRef = useRef<HTMLElement | null>(null)
+  const notificationAnchorRef = useRef<HTMLDivElement | null>(null)
+  const notificationButtonRef = useRef<HTMLButtonElement | null>(null)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const unreadNotificationCount = useMyNotificationUnreadCountQuery(isLoggedIn)
 
   const cancelScheduledClose = () => {
     if (closeTimerRef.current == null) return
@@ -150,9 +159,34 @@ export function HeaderDesktop({
   useEffect(() => {
     setActiveGroupCode(getActiveNavigationGroupCode(pathname))
     closeNav()
+    setIsNotificationOpen(false)
   }, [pathname])
 
   useEffect(() => () => cancelScheduledClose(), [])
+
+  const notificationOpen = isLoggedIn && isNotificationOpen
+
+  useEffect(() => {
+    if (!notificationOpen) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const anchor = notificationAnchorRef.current
+      if (anchor && event.target instanceof Node && anchor.contains(event.target)) return
+      setIsNotificationOpen(false)
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setIsNotificationOpen(false)
+      notificationButtonRef.current?.focus()
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [notificationOpen])
 
   useLayoutEffect(() => {
     if (!isNavOpen) return
@@ -276,27 +310,65 @@ export function HeaderDesktop({
 
         {isLoggedIn ? (
           <div className={styles.loggedInActions}>
-            {loggedInActions.map(({ label, iconUrl }) => (
-              <button
-                className={styles.iconActionButton}
-                type="button"
-                aria-label={label}
-                key={label}
-                onClick={() => {
-                  if (label === '로그아웃') {
-                    onLogout?.()
-                    return
-                  }
+            {loggedInActions.map(({ label, iconUrl }) =>
+              label === '알림' ? (
+                <div className={styles.notificationAnchor} ref={notificationAnchorRef} key={label}>
+                  <button
+                    ref={notificationButtonRef}
+                    className={styles.iconActionButton}
+                    type="button"
+                    aria-label={
+                      unreadNotificationCount > 0
+                        ? `${label} (읽지 않은 알림 ${unreadNotificationCount}건)`
+                        : label
+                    }
+                    aria-haspopup="dialog"
+                    aria-expanded={notificationOpen}
+                    onClick={() => {
+                      closeNav()
+                      setIsNotificationOpen(open => !open)
+                    }}
+                  >
+                    <img
+                      className={[
+                        styles.actionIcon,
+                        unreadNotificationCount > 0 ? styles.actionIconActive : undefined,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      src={unreadNotificationCount > 0 ? notificationsActiveIconUrl : iconUrl}
+                      alt=""
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {notificationOpen ? (
+                    <div className={styles.notificationPopover} role="dialog" aria-label="알림">
+                      <NotificationInboxPanel />
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <button
+                  className={styles.iconActionButton}
+                  type="button"
+                  aria-label={label}
+                  key={label}
+                  onClick={() => {
+                    if (label === '로그아웃') {
+                      onLogout?.()
+                      return
+                    }
 
-                  const route = getLoggedInActionRoute(label)
-                  if (route) {
-                    navigate(route)
-                  }
-                }}
-              >
-                <img className={styles.actionIcon} src={iconUrl} alt="" aria-hidden="true" />
-              </button>
-            ))}
+                    const route = getLoggedInActionRoute(label)
+                    if (route) {
+                      navigate(route)
+                    }
+                  }}
+                >
+                  <img className={styles.actionIcon} src={iconUrl} alt="" aria-hidden="true" />
+                </button>
+              ),
+            )}
           </div>
         ) : (
           <div className={styles.userActions}>

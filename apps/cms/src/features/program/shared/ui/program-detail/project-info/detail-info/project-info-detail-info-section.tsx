@@ -43,18 +43,22 @@ import {
   DEFAULT_RECRUITMENT_GUIDE,
   getThumbnailFilename,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
+  RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
+  RECRUIT_DETAIL_FILE_MAX_BYTES,
+  RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE,
+  RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import './project-info-detail-info-section.css'
 
-/** 참여자 정보 탭 등 파일 선택(FileSelectField) 우측 안내 — 썸네일·첨부 공통 */
+/** 프로그램 상세 — 모집양식 썸네일 안내 + 권장 가로 사이즈 */
 const THUMBNAIL_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다. / 가로 사이즈 500px 권장, 세로 사이즈 무관',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  `${RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES[0]} / 가로 사이즈 500px 권장, 세로 사이즈 무관`,
+  RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES[1],
 ]
 
-const ATTACHMENT_GUIDE_LINES = [
-  '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-]
+const ATTACHMENT_GUIDE_LINES = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES
 
 export type DetailInfoEmptyReadDisplay = 'mock-default' | 'dash'
 
@@ -233,7 +237,7 @@ function ProgramDetailTextAreaField({
   rows = 1,
   placeholder,
   readContent,
-  control = 'textarea',
+  control = 'input',
 }: {
   label: string
   showRequiredStar: boolean
@@ -283,6 +287,7 @@ function ProgramDetailTextAreaField({
                             inputSize="small"
                             width="100%"
                             rows={rows}
+                            expandableFromSingleRow={false}
                             placeholder={placeholder}
                             className="text-area-field-row__field"
                             status={fieldState.error ? 'error' : undefined}
@@ -585,6 +590,8 @@ function ThumbnailImageField({
         previewAlt={program.title}
         fileName={thumbnailFilename}
         guideLines={guideLines}
+        maxBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+        sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
         disabled={disabled}
         uploading={uploadingThumbnail}
         onSelectFile={
@@ -707,7 +714,7 @@ function AttachmentDetailField({
   const attachmentField = (
     <>
       <FileSelectField
-        accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+        accept={RECRUIT_DETAIL_ATTACHMENT_ACCEPT}
         multiple
         disabled={!isEditMode || uploading}
         uploading={uploading}
@@ -715,6 +722,9 @@ function AttachmentDetailField({
         fileNames={displayFileNames}
         guideLines={guideLines}
         currentTotalBytes={currentTotalBytes}
+        maxTotalBytes={0}
+        maxFileBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+        sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
         onFilesChange={
           isFormEdit
             ? async files => {
@@ -839,8 +849,10 @@ export interface DetailInfoSectionProps {
   sectionTitleOnly?: boolean
   /** 조회 모드 공란 표시 — UJAT: 관리자 상세는 '-' */
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
-  /** 프로그램 설명·모집 안내 등 — UJAT 참여 기관 모집은 `input` */
+  /** 프로그램 설명 등 단줄 필드 — 기본 `input`(h36). 멀티라인이 필요할 때만 `textarea` */
   textFieldControl?: 'textarea' | 'input'
+  /** 상위 단락 타이틀이 있을 때 DetailInfoForm `h2` 헤더 숨김 */
+  hideFormHeader?: boolean
 }
 
 export function DetailInfoSection({
@@ -855,7 +867,8 @@ export function DetailInfoSection({
   sectionDescription,
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
-  textFieldControl = 'textarea',
+  textFieldControl = 'input',
+  hideFormHeader = false,
 }: DetailInfoSectionProps) {
   const {
     uploadingThumbnail,
@@ -890,6 +903,7 @@ export function DetailInfoSection({
         title={sectionTitle ?? '상세 정보'}
         description={headerDescription}
         descriptionPlacement="below"
+        hideHeader={hideFormHeader}
         mode={isFormEdit ? 'edit' : 'view'}
         className="project-info-detail-info-section__frame"
       >
@@ -1121,10 +1135,7 @@ export function InstructorDetailInfoSection({
           isFormEdit={isFormEdit}
           form={f}
           displayFileNames={displayFileNames}
-          guideLines={[
-            '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-            '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-          ]}
+          guideLines={ATTACHMENT_GUIDE_LINES}
           emptyReadDisplay={emptyReadDisplay}
           onNamesChange={setLinkedAttachmentNames}
           currentTotalBytes={linkedAttachmentTotalBytes}
@@ -1144,6 +1155,7 @@ export interface VolunteerDetailInfoSectionProps {
   sectionDescription?: string | null
   sectionTitleOnly?: boolean
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
+  hideFormHeader?: boolean
 }
 
 export function VolunteerDetailInfoSection({
@@ -1155,6 +1167,7 @@ export function VolunteerDetailInfoSection({
   sectionDescription,
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
+  hideFormHeader = false,
 }: VolunteerDetailInfoSectionProps) {
   const {
     uploadingThumbnail,
@@ -1194,6 +1207,7 @@ export function VolunteerDetailInfoSection({
         title={sectionTitle ?? '상세 정보'}
         description={headerDescription}
         descriptionPlacement="below"
+        hideHeader={hideFormHeader}
         mode={isFormEdit ? 'edit' : 'view'}
         className="project-info-detail-info-section__frame"
       >

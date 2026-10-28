@@ -32,7 +32,7 @@ import {
 import {
   INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
   individualSettlementApiErrorMessage,
-  isIndividualScheduleSettlementAudience,
+  shouldUseIndividualSettlementSchedulesApi,
 } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -62,14 +62,20 @@ export function MypageEducationSettlementConfirmPage() {
     remoteEnabled ? applicationId : null,
   )
   const application = remoteQuery.application
+  const programType = application?.programConfig?.programType ?? null
+  const useIndividualSettlementApi = shouldUseIndividualSettlementSchedulesApi(
+    applicationType,
+    programType,
+  )
   const remoteSettlements = useApplicationSettlementsQuery(
     applicationType,
     applicationId,
     application?.programId ?? '',
+    { programType },
   )
   const submitMutation = useSubmitIndividualSettlementMutation(applicationId)
   const { lockedBasic } = useInstructorApplyLockedBasic()
-  const consentBasicQuery = usePaymentStatementConsentBasicInfo(documentKind === 'receipt')
+  const consentBasicQuery = usePaymentStatementConsentBasicInfo(true)
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
 
@@ -87,7 +93,7 @@ export function MypageEducationSettlementConfirmPage() {
     return loadSettlementWriteDraft(applicationId, sessionId)
   }, [applicationId, location.state, sessionId])
   const detailQuery = useIndividualSettlementDetailQuery(
-    isIndividualScheduleSettlementAudience(applicationType) && (viewMode || storedDraft == null)
+    useIndividualSettlementApi && (viewMode || storedDraft == null)
       ? session?.settlementApplicationId
       : null,
   )
@@ -103,7 +109,7 @@ export function MypageEducationSettlementConfirmPage() {
             homeAddressDetail: lockedBasic.homeAddressDetail,
           })
         : null)
-    if (!mapped || documentKind !== 'receipt') return mapped
+    if (!mapped) return mapped
     return {
       ...mapped,
       basic: overlaySettlementBasicWithPaymentConsent(mapped.basic, consentBasicQuery.basic),
@@ -190,7 +196,7 @@ export function MypageEducationSettlementConfirmPage() {
       setAlertOpen(true)
       return
     }
-    if (!isIndividualScheduleSettlementAudience(applicationType)) {
+    if (!useIndividualSettlementApi) {
       setAlertMessage(
         documentKind === 'receipt'
           ? '이 신청 유형에서는 일정별 정산을 제출할 수 없습니다.'

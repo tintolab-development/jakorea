@@ -9,37 +9,59 @@ import {
   cancelInstructorRoleApprovalRemote,
   resetInstructorRoleRequestPendingRemote,
   resendInstructorRoleNotificationRemote,
+  type NotificationResendRequestBody,
 } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import type { InstructorPermissionApprovePayload } from '@/features/user/permission-management/instructor-permission-approve-modal'
 import type { InstructorPermissionRejectPayload } from '@/features/user/permission-management/instructor-permission-reject-modal'
+import type { InstructorPermissionCancelApprovalPayload } from '@/features/user/permission-management/instructor-permission-cancel-approval-modal'
+import { toInstructorRoleReviewScheduledAt } from '@/features/user/permission-management/lib/instructor-role-review-notify'
+import type { ApprovalResetRequest } from '@/shared/api/generated/members/schemas/approvalResetRequest'
 
-function buildApproveBody(payload: InstructorPermissionApprovePayload) {
+export function buildInstructorRoleApproveBody(payload: InstructorPermissionApprovePayload) {
   const feeGrade = toInstructorRoleApprovalFeeGradeApiValue(payload.feeGrade)
   if (!feeGrade) {
     throw new Error('지원하지 않는 강사비 등급입니다. 1~3급 강사비를 선택해 주세요.')
   }
+  const scheduledAt = toInstructorRoleReviewScheduledAt(payload.notifyTiming, payload.scheduledAt)
   return {
     reason: `CMS 강사 권한 승인 (${feeGrade})`,
     // BE: GRADE_1 · GRADE_2 · GRADE_3 (UI 라벨 `1급 강사비` 등 직접 전송 시 INSTRUCTOR_APPROVAL_FEE_GRADE_UNSUPPORTED)
     feeGrade,
     // 승인 모달은 강사비 등급만 수집. handoff 기본 activityType.
     activityType: 'GENERAL',
+    ...(scheduledAt ? { scheduledAt } : {}),
   }
 }
 
-function buildRejectBody(payload: InstructorPermissionRejectPayload) {
+export function buildInstructorRoleRejectBody(payload: InstructorPermissionRejectPayload) {
   const reason = payload.rejectionReason?.trim() || 'CMS 강사 권한 신청 반려'
+  const scheduledAt = toInstructorRoleReviewScheduledAt(payload.notifyTiming, payload.scheduledAt)
   return {
     reason,
     rejectReason: reason,
+    ...(scheduledAt ? { scheduledAt } : {}),
+  }
+}
+
+export function buildInstructorRoleCancelApprovalBody(
+  payload: InstructorPermissionCancelApprovalPayload
+): ApprovalResetRequest {
+  const reason = payload.cancellationReason.trim()
+  if (!reason) {
+    throw new Error('취소 사유를 입력해 주세요')
+  }
+  const scheduledAt = toInstructorRoleReviewScheduledAt(payload.notifyTiming, payload.scheduledAt)
+  return {
+    reason,
+    ...(scheduledAt ? { scheduledAt } : {}),
   }
 }
 
 function buildBulkBody(
   requestIds: number[],
   reason: string,
-  extra?: { feeGrade?: string; activityType?: string; rejectReason?: string }
+  extra?: { feeGrade?: string; activityType?: string; rejectReason?: string; scheduledAt?: string }
 ) {
   return {
     ids: requestIds,
@@ -63,12 +85,19 @@ export function useInstructorRoleRequestMutations() {
     })
   }
 
+  const invalidateMember = async (memberId?: number) => {
+    await queryClient.invalidateQueries({ queryKey: memberQueryKeys.listAll() })
+    if (memberId != null) {
+      await queryClient.invalidateQueries({ queryKey: memberQueryKeys.detail(memberId) })
+    }
+  }
+
   const approveMutation = useMutation({
     mutationFn: async (input: {
       requestIds: number[]
       payload: InstructorPermissionApprovePayload
     }) => {
-      const body = buildApproveBody(input.payload)
+      const body = buildInstructorRoleApproveBody(input.payload)
       if (input.requestIds.length === 1) {
         await approveInstructorRoleRequestRemote(input.requestIds[0], body)
         return
@@ -77,6 +106,7 @@ export function useInstructorRoleRequestMutations() {
         buildBulkBody(input.requestIds, body.reason, {
           feeGrade: body.feeGrade,
           activityType: body.activityType,
+          ...(body.scheduledAt ? { scheduledAt: body.scheduledAt } : {}),
         })
       )
     },
@@ -91,13 +121,16 @@ export function useInstructorRoleRequestMutations() {
       requestIds: number[]
       payload: InstructorPermissionRejectPayload
     }) => {
-      const body = buildRejectBody(input.payload)
+      const body = buildInstructorRoleRejectBody(input.payload)
       if (input.requestIds.length === 1) {
         await rejectInstructorRoleRequestRemote(input.requestIds[0], body)
         return
       }
       await bulkRejectInstructorRoleRequestsRemote(
-        buildBulkBody(input.requestIds, body.reason, { rejectReason: body.rejectReason })
+        buildBulkBody(input.requestIds, body.reason, {
+          rejectReason: body.rejectReason,
+          ...(body.scheduledAt ? { scheduledAt: body.scheduledAt } : {}),
+        })
       )
     },
     onSuccess: async (_data, variables) => {
@@ -122,18 +155,21 @@ export function useInstructorRoleRequestMutations() {
   const revokeMutation = useMutation({
     mutationFn: async (input: {
       memberId: number
-      reason: string
       requestId?: number
+      payload: InstructorPermissionCancelApprovalPayload
     }) => {
       const requestId = input.requestId
       if (requestId == null) {
         throw new Error('승인 취소할 권한 신청 ID를 찾지 못했습니다.')
       }
-      const reason = input.reason.trim() || 'CMS 강사 권한 승인 취소'
-      await cancelInstructorRoleApprovalRemote(requestId, { reason })
+      await cancelInstructorRoleApprovalRemote(
+        requestId,
+        buildInstructorRoleCancelApprovalBody(input.payload)
+      )
     },
     onSuccess: async (_data, variables) => {
       await invalidateLists()
+      await invalidateMember(variables.memberId)
       if (variables.requestId != null) {
         await invalidateDetail(variables.requestId)
       }
@@ -141,11 +177,11 @@ export function useInstructorRoleRequestMutations() {
   })
 
   const resendNotificationMutation = useMutation({
-    mutationFn: async (requestId: number) => {
-      await resendInstructorRoleNotificationRemote(requestId)
+    mutationFn: async (input: { requestId: number; notify?: NotificationResendRequestBody }) => {
+      await resendInstructorRoleNotificationRemote(input.requestId, input.notify)
     },
-    onSuccess: async (_data, requestId) => {
-      await invalidateDetail(requestId)
+    onSuccess: async (_data, variables) => {
+      await invalidateDetail(variables.requestId)
     },
   })
 

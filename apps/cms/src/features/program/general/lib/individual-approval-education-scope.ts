@@ -23,6 +23,7 @@ import {
   getApiErrorCode,
   getApiErrorHttpStatus,
 } from '@/shared/lib/extract-api-error-message'
+import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
 
 export const INDIVIDUAL_APPROVAL_SCOPE_ERROR_CODES = [
   'EDUCATION_SCOPE_REQUIRED',
@@ -561,6 +562,8 @@ export function parseRejectedEducationScheduleIds(error: unknown): number[] {
 }
 
 export function formatIndividualApprovalScopeErrorMessage(error: unknown): string {
+  const timingMessage = getNotificationTimingApiErrorMessage(error)
+  if (timingMessage) return timingMessage
   const code = getApiErrorCode(error)
   const data =
     error && typeof error === 'object' && 'response' in error

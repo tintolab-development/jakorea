@@ -31,11 +31,17 @@ function overlayString(overlay: Record<string, unknown>, key: string): string | 
 function overlayStringArray(overlay: Record<string, unknown>, key: string): string[] | undefined {
   const v = overlay[key]
   if (!Array.isArray(v)) return undefined
-  const out = v.map(String).map(s => s.trim()).filter(Boolean)
+  const out = v
+    .map(String)
+    .map(s => s.trim())
+    .filter(Boolean)
   return out.length > 0 ? out : undefined
 }
 
-function readRangeSeal(overlay: Record<string, unknown>, key: string): RecruitRangeSeal | undefined {
+function readRangeSeal(
+  overlay: Record<string, unknown>,
+  key: string
+): RecruitRangeSeal | undefined {
   const v = overlay[key]
   if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined
   const start = (v as { start?: unknown }).start
@@ -45,7 +51,10 @@ function readRangeSeal(overlay: Record<string, unknown>, key: string): RecruitRa
   return { start, end }
 }
 
-function overlayAnnouncementPublished(overlay: Record<string, unknown>, key: string): boolean | undefined {
+function overlayAnnouncementPublished(
+  overlay: Record<string, unknown>,
+  key: string
+): boolean | undefined {
   const raw = overlay[key]
   if (raw === 'published' || raw === 'unpublished') {
     return announcementPublishedFromFormValue(raw)
@@ -134,7 +143,9 @@ function readCertificate(overlay: Record<string, unknown>): boolean | undefined 
   return undefined
 }
 
-function institutionFromOverlay(overlay: Record<string, unknown>): InstitutionRecruitmentValues | undefined {
+function institutionFromOverlay(
+  overlay: Record<string, unknown>
+): InstitutionRecruitmentValues | undefined {
   if (!hasAnyInstitution(overlay) && !hasPrefix(overlay, 'recruit.detailInfo')) return undefined
   return {
     maxAssignableInstructors: overlayFiniteNumber(overlay, INST.maxAssignableInstructors),
@@ -167,12 +178,19 @@ function institutionFromOverlay(overlay: Record<string, unknown>): InstitutionRe
   }
 }
 
-function individualFromOverlay(overlay: Record<string, unknown>): IndividualRecruitmentValues | undefined {
-  if (!hasPrefix(overlay, 'recruit.individual') && !hasPrefix(overlay, 'recruit.detailInfo')) return undefined
+function individualFromOverlay(
+  overlay: Record<string, unknown>
+): IndividualRecruitmentValues | undefined {
+  if (!hasPrefix(overlay, 'recruit.individual') && !hasPrefix(overlay, 'recruit.detailInfo'))
+    return undefined
   return {
     recruitRangeSeal: readRangeSeal(overlay, KEYS.individual.recruitRangeSeal),
     programRangeSeal: readRangeSeal(overlay, KEYS.individual.programRangeSeal),
-    announcementPublished: overlayAnnouncementPublished(overlay, KEYS.individual.announcementPublished),
+    announcementPublished: overlayAnnouncementPublished(
+      overlay,
+      KEYS.individual.announcementPublished
+    ),
+    interviewRequired: overlayYesNoBool(overlay, KEYS.individual.interviewRequired),
     targetLevels: overlayStringArray(overlay, KEYS.individual.targetLevels),
     targetLevelDetail: overlayString(overlay, KEYS.individual.targetLevelDetail),
     docDeadlineIso: overlayString(overlay, KEYS.individual.docDeadlineIso),
@@ -197,8 +215,13 @@ function individualFromOverlay(overlay: Record<string, unknown>): IndividualRecr
   }
 }
 
-function instructorFromOverlay(overlay: Record<string, unknown>): InstructorRecruitmentValues | undefined {
-  if (!hasPrefix(overlay, 'recruit.instructor') && !hasPrefix(overlay, 'recruitInstructor.detailInfo')) {
+function instructorFromOverlay(
+  overlay: Record<string, unknown>
+): InstructorRecruitmentValues | undefined {
+  if (
+    !hasPrefix(overlay, 'recruit.instructor') &&
+    !hasPrefix(overlay, 'recruitInstructor.detailInfo')
+  ) {
     return undefined
   }
   return {
@@ -206,7 +229,10 @@ function instructorFromOverlay(overlay: Record<string, unknown>): InstructorRecr
     programRangeSeal: readRangeSeal(overlay, KEYS.instructor.programRangeSeal),
     recruitTargets: overlayStringArray(overlay, KEYS.instructor.recruitTargets),
     recruitTargetDetail: overlayString(overlay, KEYS.instructor.recruitTargetDetail),
-    announcementPublished: overlayAnnouncementPublished(overlay, KEYS.instructor.announcementPublished),
+    announcementPublished: overlayAnnouncementPublished(
+      overlay,
+      KEYS.instructor.announcementPublished
+    ),
     inquiryContact: overlayString(overlay, KEYS.instructor.inquiryContact),
     inquiryTel: overlayString(overlay, KEYS.instructor.inquiryTel),
     inquiryEmail: overlayString(overlay, KEYS.instructor.inquiryEmail),
@@ -224,8 +250,11 @@ function instructorFromOverlay(overlay: Record<string, unknown>): InstructorRecr
   }
 }
 
-function volunteerFromOverlay(overlay: Record<string, unknown>): VolunteerRecruitmentValues | undefined {
-  if (!hasPrefix(overlay, 'recruit.volunteer') && !hasPrefix(overlay, 'recruitVolunteer')) return undefined
+function volunteerFromOverlay(
+  overlay: Record<string, unknown>
+): VolunteerRecruitmentValues | undefined {
+  if (!hasPrefix(overlay, 'recruit.volunteer') && !hasPrefix(overlay, 'recruitVolunteer'))
+    return undefined
   const exclusionRaw = overlay['recruit.volunteer.interview.exclusionState']
   const exclusion =
     exclusionRaw != null && typeof exclusionRaw === 'object' && !Array.isArray(exclusionRaw)
@@ -242,7 +271,10 @@ function volunteerFromOverlay(overlay: Record<string, unknown>): VolunteerRecrui
     programRangeSeal: readRangeSeal(overlay, KEYS.volunteer.programRangeSeal),
     volunteerTargets: overlayStringArray(overlay, KEYS.volunteer.volunteerTargets),
     volunteerTargetDetail: overlayString(overlay, KEYS.volunteer.volunteerTargetDetail),
-    announcementPublished: overlayAnnouncementPublished(overlay, KEYS.volunteer.announcementPublished),
+    announcementPublished: overlayAnnouncementPublished(
+      overlay,
+      KEYS.volunteer.announcementPublished
+    ),
     interviewRequired: overlayYesNoBool(overlay, KEYS.volunteer.interviewRequired),
     docDeadlineIso: overlayString(overlay, KEYS.volunteer.docDeadlineIso),
     docAnnounceMethod: overlayString(overlay, KEYS.volunteer.docAnnounceMethod),
@@ -269,14 +301,19 @@ function volunteerFromOverlay(overlay: Record<string, unknown>): VolunteerRecrui
       timeUnit: overlay['recruit.volunteer.interview.timeUnit'],
       exclusionState: exclusion,
       appliedUnavailableDates: Array.isArray(appliedRaw)
-        ? appliedRaw.map(String).map(s => s.trim()).filter(Boolean)
+        ? appliedRaw
+            .map(String)
+            .map(s => s.trim())
+            .filter(Boolean)
         : undefined,
       exceptions: mapVolunteerInterviewExceptionsFromOverlay(overlay, 'recruit'),
     },
   }
 }
 
-export function overlayKvToRecruitmentFormValues(overlay: Record<string, unknown>): RecruitmentFormValues {
+export function overlayKvToRecruitmentFormValues(
+  overlay: Record<string, unknown>
+): RecruitmentFormValues {
   return {
     institution: institutionFromOverlay(overlay),
     individual: individualFromOverlay(overlay),
@@ -285,7 +322,9 @@ export function overlayKvToRecruitmentFormValues(overlay: Record<string, unknown
   }
 }
 
-export function overlayKvToRecruitmentSidecars(overlay: Record<string, unknown>): RecruitmentSidecars {
+export function overlayKvToRecruitmentSidecars(
+  overlay: Record<string, unknown>
+): RecruitmentSidecars {
   const media = readRecruitDetailMediaFromOverlay(overlay)
   return {
     overlayKeyOrder: Object.keys(overlay),

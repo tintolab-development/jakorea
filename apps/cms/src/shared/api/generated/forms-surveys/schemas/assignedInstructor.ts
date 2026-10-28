@@ -10,6 +10,12 @@ import type { AssignedInstructorConsent } from './assignedInstructorConsent';
 export interface AssignedInstructor {
   instructorMemberId?: number;
   name?: string;
+  /** 개인 신청 CASE_D에서 직접 연결된 강사 배정 ID. ORGANIZATION 응답에서는 null. */
+  assignmentId?: number | null;
+  /** 개인 신청 CASE_D에서 직접 연결된 교육 일정 ID. ORGANIZATION 응답에서는 null. */
+  programScheduleId?: number | null;
+  /** 직접 연결된 배정 상태. 개인 신청 CASE_D에서는 ASSIGNED만 반환하며 ORGANIZATION 응답에서는 null. */
+  assignmentStatus?: string | null;
   consentDocumentsRequested?: boolean;
   consents?: AssignedInstructorConsent[];
 }

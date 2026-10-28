@@ -120,9 +120,10 @@ const patchedSchedule = patched.paragraphs.find(
 assert.ok(patchedSchedule && patchedSchedule.variant === 'multiple_choice')
 const patchedItems = (patchedSchedule as MultipleChoiceParagraph).items
 assert.equal(patchedItems.length, 3)
+// ① 커리큘럼·단일·날짜 — 차시 메타 없으면 N placeholder
 assert.equal(
   patchedSchedule.paragraphDescription,
-  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+  '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, N차시 운영됩니다.'
 )
 
 assert.equal(
@@ -259,7 +260,7 @@ assert.equal(
 )
 assert.equal(
   (multiSchedule as MultipleChoiceParagraph).items[0]?.label,
-  '26년 4월 20일(월) 9:30 ~ 12:20'
+  '26년 4월 20일(월) 9:30 ~ 12:20 | 1회차'
 )
 
 const scheduleSingleDateLines = [
@@ -380,11 +381,12 @@ assert.ok(
 assert.equal((individualScheduleParagraph as MultipleChoiceParagraph).items.length, 2)
 assert.equal(
   individualScheduleParagraph.paragraphDescription,
-  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+  '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, 2차시 운영됩니다.'
 )
+// ① 예정일 줄 i = (i+1)차시
 assert.equal(
   (individualScheduleParagraph as MultipleChoiceParagraph).items[0]?.label,
-  '26년 4월 20일(월) 9:30 ~ 12:20 | 2차시'
+  '26년 4월 20일(월) 9:30 ~ 12:20 | 1차시'
 )
 
 const individualScheduleSingleDatePatched = syncApplicationScheduleChoiceParagraphsInDraft(

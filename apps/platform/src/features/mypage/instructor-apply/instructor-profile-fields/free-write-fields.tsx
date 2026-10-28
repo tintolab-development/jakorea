@@ -4,6 +4,8 @@ import type { InstructorFreeWriteFieldName } from '@jakorea/domain/instructor/fr
 import { PFFormField, PFFormFieldRow } from '@/shared/ui'
 import styles from '../instructor-apply-form.module.css'
 import { InstructorProfileFieldTable } from './profile-field-table'
+import { SettingsField, SettingsFieldStack } from './settings-stacked-rows'
+import settingsStyles from './settings-stacked-fields.module.css'
 import type { InstructorProfileFieldsProps } from './types'
 
 export type InstructorFreeWriteProfileFieldsProps = InstructorProfileFieldsProps & {
@@ -26,6 +28,33 @@ export function InstructorFreeWriteProfileFields({
   }
 
   const hideFieldLabel = surface === 'settings' && onlyField != null
+
+  if (surface === 'settings') {
+    // 회원정보 설정 전용 — 시안 톤(테이블 헤더 없음 · 라벨 13px)
+    return (
+      <SettingsFieldStack>
+        {items.map(item => {
+          const textarea = (
+            <textarea
+              className={[styles.textarea, settingsStyles.textarea].join(' ')}
+              placeholder={PH.freeWrite}
+              aria-label={item.label}
+              value={values[item.name]}
+              maxLength={1000}
+              onChange={event => patch(item.name, event.target.value)}
+            />
+          )
+          return hideFieldLabel ? (
+            <div key={item.name}>{textarea}</div>
+          ) : (
+            <SettingsField key={item.name} label={item.label}>
+              {textarea}
+            </SettingsField>
+          )
+        })}
+      </SettingsFieldStack>
+    )
+  }
 
   return (
     <>

@@ -32,6 +32,13 @@ const BLOCKED_ASSIGN_STATUSES = new Set<UjatInstitutionApplicationRow['tempAssig
   'application_rejected',
 ])
 
+/** 신청 반려·임시 반려 기관 — 신규 배정 불가, 기존 배정 행은 비활성으로만 노출 */
+export function isScheduleAssignBlockedInstitution(
+  row: Pick<UjatInstitutionApplicationRow, 'tempAssignmentStatus'>
+): boolean {
+  return BLOCKED_ASSIGN_STATUSES.has(row.tempAssignmentStatus)
+}
+
 /**
  * 해당 날짜에 배정 가능한 기관.
  * 목록 일괄 「임시 배정」은 상태 PATCH를 하지 않으므로 SUBMITTED(평가 대기)도 포함한다.
@@ -45,7 +52,7 @@ export function listAssignableSchoolsForDate(
   return rows.filter(
     row =>
       row.regionKey === regionKey &&
-      !BLOCKED_ASSIGN_STATUSES.has(row.tempAssignmentStatus) &&
+      !isScheduleAssignBlockedInstitution(row) &&
       row.scheduleSlots[isoDate as UjatInstitutionScheduleSlotKey] === 'O'
   )
 }
@@ -63,6 +70,7 @@ export function computeVolunteerEducationDays(
   expectedClassCount: number,
   expectedVolunteerCount: number
 ): number | null {
+  if (!Number.isFinite(expectedVolunteerCount) || !Number.isFinite(expectedClassCount)) return null
   if (expectedVolunteerCount <= 0 || expectedClassCount <= 0) return null
   return Math.round((expectedClassCount * 2) / expectedVolunteerCount)
 }

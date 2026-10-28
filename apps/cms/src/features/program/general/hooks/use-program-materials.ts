@@ -37,6 +37,7 @@ export function useProgramMaterials(programId: string | undefined, enabled = tru
   const saveMutation = useMutation({
     mutationFn: (request: ProgramMaterialAssignmentRequest) =>
       saveProgramMaterials(normalizedProgramId, request),
+    retry: false,
     onSuccess: async snapshot => {
       queryClient.setQueryData(generalProgramQueryKeys.materials(normalizedProgramId), snapshot)
       await Promise.all([
@@ -58,8 +59,13 @@ export function useProgramMaterials(programId: string | undefined, enabled = tru
     materials: materialsQuery.data,
     candidates: candidatesQuery.data ?? [],
     isLoading: materialsQuery.isPending || candidatesQuery.isPending,
+    isMaterialsLoading: materialsQuery.isPending,
+    isCandidatesLoading: candidatesQuery.isPending,
     isFetching: materialsQuery.isFetching || candidatesQuery.isFetching,
     error: materialsQuery.error ?? candidatesQuery.error ?? null,
+    materialsError: materialsQuery.error ?? null,
+    candidatesError: candidatesQuery.error ?? null,
+    isCandidatesError: candidatesQuery.isError,
     save: saveMutation.mutateAsync,
     isSaving: saveMutation.isPending,
     remoteEnabled,

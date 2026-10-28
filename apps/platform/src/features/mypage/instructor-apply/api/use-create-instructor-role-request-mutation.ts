@@ -35,14 +35,12 @@ export function useCreateInstructorRoleRequestMutation() {
       return response
     },
     retry: false,
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.instructorRoleRequestCurrent(),
-        }),
-        queryClient.invalidateQueries({ queryKey: platformQueryKeys.auth.memberProfile() }),
-        queryClient.invalidateQueries({ queryKey: platformQueryKeys.auth.me() }),
-      ])
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.instructorRoleRequestCurrent(),
+      })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
+      void queryClient.invalidateQueries({ queryKey: platformQueryKeys.auth.me() })
     },
   })
 }

@@ -7,6 +7,8 @@ import {
 import { EMPTY_SETTINGS_VALUE } from './constants'
 import {
   formatSettingsDateDot,
+  formatSettingsEmployment,
+  formatSettingsGender,
   formatSettingsPhone,
   formatSettingsText,
   type SettingsInfoRow,
@@ -43,6 +45,26 @@ function formatInstructorAffiliation(
   const names = cms?.affiliation?.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []
   if (names.length > 0) return names.join(', ')
   return formatSettingsText(profile.affiliationName ?? profile.schoolName)
+}
+
+/** 교사 겸 강사 — 교사 회원과 동일하게 학교명 우선 */
+function formatDualSchoolAffiliation(
+  cms: InstructorRoleRequestProfile | undefined,
+  profile: SettingsProfileInput,
+): string {
+  return formatSettingsText(
+    cms?.affiliation?.schoolName?.trim() || profile.schoolName?.trim() || profile.affiliationName,
+  )
+}
+
+/** 교사 겸 강사 — 재직 현황 (강사 프로필 우선, 없으면 포털 교사 정보) */
+function formatDualEmploymentStatus(
+  cms: InstructorRoleRequestProfile | undefined,
+  profile: SettingsProfileInput,
+): string {
+  const fromCms = formatSettingsEmployment(cms?.affiliation?.employmentStatus)
+  if (fromCms !== EMPTY_SETTINGS_VALUE) return fromCms
+  return formatSettingsEmployment(profile.teacherEmploymentStatus)
 }
 
 function formatInstructorHomeAddress(
@@ -108,6 +130,8 @@ function formatSettlementStatusLabel(profile: SettingsProfileInput): string {
 
 export type MapInstructorBasicSettingsOptions = {
   linkedSocialAccounts?: string[]
+  /** 교사 겸 강사 — 성별·재직 현황 행 추가, `소속` → `소속/학교` */
+  isDual?: boolean
 }
 
 /** 강사 회원 설정 — 기본 정보 조회 행 (시안 순서) */
@@ -119,6 +143,13 @@ export function mapInstructorBasicSettingsRows(
   const settlement = profile.instructorProfile?.settlement
   const social =
     options?.linkedSocialAccounts ?? profile.socialAccounts ?? []
+  const isDual = options?.isDual === true
+  const affiliationRows: SettingsInfoRow[] = isDual
+    ? [
+        { label: '소속/학교', value: formatDualSchoolAffiliation(cms, profile) },
+        { label: '재직 현황', value: formatDualEmploymentStatus(cms, profile) },
+      ]
+    : [{ label: '소속', value: formatInstructorAffiliation(cms, profile) }]
 
   return [
     { label: '정산 현황', value: formatSettlementStatusLabel(profile) },
@@ -131,8 +162,9 @@ export function mapInstructorBasicSettingsRows(
     { label: '이름', value: formatSettingsText(profile.name), dividerBefore: true },
     { label: '휴대폰 번호', value: formatSettingsPhone(profile.phone) },
     { label: '생년월일', value: formatSettingsDateDot(profile.birthDate) },
+    ...(isDual ? [{ label: '성별', value: formatSettingsGender(profile.gender) }] : []),
     { label: '이메일', value: formatSettingsText(profile.email) },
-    { label: '소속', value: formatInstructorAffiliation(cms, profile) },
+    ...affiliationRows,
     { label: '강사 경력', value: formatInstructorCareerSummary(cms) },
     { label: '자택 주소', value: formatInstructorHomeAddress(cms, profile) },
     { label: '정산 계좌 정보', value: formatSettlementAccountDisplay(settlement) },

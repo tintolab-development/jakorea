@@ -3,6 +3,7 @@ import type {
 } from '@/features/program/general/api/programs-api-client'
 import { omitNullRecordValues } from '@/shared/lib/openapi-null'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
+import { withRecruitmentCreateMedia } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
 import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
 import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
@@ -42,6 +43,10 @@ import { stripRegistrationOverlayDebugKeys } from '@/features/program/shared/lib
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
+import {
+  omitProgramAuditNameFields,
+  readProgramAuditNames,
+} from '@/features/program/shared/lib/program-audit-names'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
@@ -573,12 +578,19 @@ function withUjatCreateSecondHalfVolunteerRow(
   ]
 }
 
-/** 생성 시 기관·상반기·하반기 봉사자 탭 문구·담당자·면접 기간을 각 행의 반기 값으로 담는다. */
+function overlayForUjatCreateMedia(program: Program): Record<string, unknown> {
+  return {
+    ...(program.registrationOverlay ?? {}),
+    ...(program.ujatRegistrationOverlay ?? {}),
+  }
+}
+
+/** 생성 시 기관·상반기·하반기 봉사자 탭 문구·담당자·면접 기간·미디어를 각 행의 반기 값으로 담는다. */
 function withUjatCreateRowCopy(
   rows: ProgramRecruitmentRequest[] | undefined,
   program: Program
 ): ProgramRecruitmentRequest[] | undefined {
-  return rows?.map(row => {
+  const copied = rows?.map(row => {
     const kind: UjatRecruitDisplayKind =
       row.recruitmentType !== ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
         ? 'institution'
@@ -615,6 +627,7 @@ function withUjatCreateRowCopy(
       ...(kind === 'institution' ? {} : ujatVolunteerInterviewFields(display)),
     }
   })
+  return withRecruitmentCreateMedia(copied, overlayForUjatCreateMedia(program), 'ujat')
 }
 
 function programIps(value: string | null | undefined): Program['ips'] | undefined {
@@ -711,7 +724,8 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     instructors: instructorCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
-    ...fromJson,
+    ...omitProgramAuditNameFields(fromJson),
+    ...readProgramAuditNames(dto),
     // serviceDetailJson·Primary id fallback이 목록 진행 현황을 덮지 못하게 한다.
     ujatProgressStatus,
     ...(Object.keys(registrationOverlay).length > 0
@@ -881,7 +895,7 @@ export function fromDetail(
   const mapped = applyResolvedAnnouncementTitle(
     {
     ...baseProgram({
-      ...details,
+      ...omitProgramAuditNameFields(details),
       generalCommonInfo,
       id,
       backendProgramType: dto.programType ?? 'UJAT',
@@ -973,6 +987,7 @@ export function fromDetail(
             : undefined,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
+      ...readProgramAuditNames(dto),
     }),
     ujatRegistrationOverlay: overlayForProgram,
     ...(resolvedTypedDetail ? { ujatTypedDetail: resolvedTypedDetail } : {}),

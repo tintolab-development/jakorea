@@ -17,8 +17,10 @@ const COLUMN_HEADERS = [
   '봉사단 교육 진행일 수',
 ] as const
 
-function formatComputedDays(value: number): string {
-  return String(value)
+const EMPTY_COMPUTED_VALUE = '-'
+
+function formatComputedDays(value: number | null): string {
+  return value != null && Number.isFinite(value) ? String(value) : EMPTY_COMPUTED_VALUE
 }
 
 function ComputedCell({
@@ -144,9 +146,9 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                 <td className="cross-table__cell cross-table__cell--data">
                   <ComputedCell
                     filled={volunteerEducationDays[firstSemester.key] != null}
-                    placeholder="예상 봉사단 교육 진행일 수"
+                    placeholder={EMPTY_COMPUTED_VALUE}
                   >
-                    {formatComputedDays(volunteerEducationDays[firstSemester.key]!)}
+                    {formatComputedDays(volunteerEducationDays[firstSemester.key])}
                   </ComputedCell>
                 </td>
               </tr>
@@ -178,9 +180,9 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                 <td className="cross-table__cell cross-table__cell--data">
                   <ComputedCell
                     filled={volunteerEducationDays[secondSemester.key] != null}
-                    placeholder="예상 봉사단 교육 진행일 수"
+                    placeholder={EMPTY_COMPUTED_VALUE}
                   >
-                    {formatComputedDays(volunteerEducationDays[secondSemester.key]!)}
+                    {formatComputedDays(volunteerEducationDays[secondSemester.key])}
                   </ComputedCell>
                 </td>
               </tr>

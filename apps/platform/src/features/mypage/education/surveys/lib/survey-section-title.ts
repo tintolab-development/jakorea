@@ -24,6 +24,15 @@ export function resolveEducationSurveySectionTitle(
   return prefix ? `${prefix}${base}` : base
 }
 
+/** CMS 템플릿 기본 placeholder — 화면에 노출하지 않음 */
+export function resolveEducationSurveySectionDescription(
+  description: string | null | undefined,
+): string | undefined {
+  const trimmed = description?.trim()
+  if (!trimmed || trimmed === '설명 입력') return undefined
+  return trimmed
+}
+
 export function resolveEducationSurveySectionRequired(paragraph: WritingFormParagraph): boolean {
   if (paragraph.kind === 'single_item') {
     return paragraph.answerRequired ?? paragraph.requiredMark

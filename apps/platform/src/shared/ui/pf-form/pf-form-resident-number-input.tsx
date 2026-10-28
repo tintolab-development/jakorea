@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   applyResidentBackMaskedDisplayChange,
-  formatResidentBackMaskedDisplay,
+  formatResidentBackDisplayForInput,
   sanitizeResidentBackDigits,
 } from '@jakorea/form-schema/consent'
 import { PFTextInput } from '../pf-text-input'
@@ -37,7 +37,7 @@ function PFFormResidentBackInput({
 }) {
   const [revealed, setRevealed] = useState(false)
   const digits = sanitizeResidentBackDigits(value)
-  const display = formatResidentBackMaskedDisplay(digits, revealed)
+  const display = formatResidentBackDisplayForInput(value, revealed)
   const displayHasMask = display.includes('*')
 
   const fieldClassName = [

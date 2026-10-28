@@ -100,7 +100,12 @@ export function PlatformIdTypeWithInputFields({
     <div className={styles.idTypeWithInput}>
       <div className={styles.idTypeWithInputRadios} role="radiogroup" aria-label="식별번호 종류">
         {options.map(opt => (
-          <label key={opt.id} className={styles.radioOption}>
+          <label
+            key={opt.id}
+            className={[styles.radioOption, lockResidentIdType ? styles.radioOptionLocked : undefined]
+              .filter(Boolean)
+              .join(' ')}
+          >
             <input
               type="radio"
               name={`id-type-${paragraph.id}`}
@@ -123,7 +128,7 @@ export function PlatformIdTypeWithInputFields({
             <PFText
               as="span"
               typo="bd-md-rg"
-              color={selectedId === opt.id ? 'primary-500' : 'black'}
+              color={lockResidentIdType ? 'inherit' : selectedId === opt.id ? 'primary-500' : 'black'}
             >
               {opt.label}
             </PFText>

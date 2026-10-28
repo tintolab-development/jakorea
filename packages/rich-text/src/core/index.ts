@@ -9,7 +9,9 @@ export {
   countRichTextCharacters,
   countRichTextDocumentCharacters,
   formatRichTextBytes,
+  getRichTextImageCount,
   getRichTextImageTotalBytes,
+  RICH_TEXT_IMAGE_MAX_COUNT,
   RICH_TEXT_IMAGE_MAX_TOTAL_BYTES,
   RICH_TEXT_MAX_TEXT_CHARACTERS,
 } from './limits'
@@ -75,7 +77,9 @@ export type {
 export {
   countVisibleRichTextCharacters,
   referencedInlineFileIds,
+  RICH_TEXT_INLINE_IMAGE_COUNT_MESSAGE,
   RICH_TEXT_INLINE_IMAGE_MAX_BYTES,
+  RICH_TEXT_INLINE_IMAGE_SIZE_MESSAGE,
   RICH_TEXT_INLINE_IMAGE_TOTAL_MESSAGE,
   RICH_TEXT_MAX_VISIBLE_CHARACTERS,
   RICH_TEXT_VISIBLE_LENGTH_MESSAGE,

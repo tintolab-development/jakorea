@@ -6,6 +6,7 @@ import {
   isCategoryHasChildrenError,
   isCategoryNeedsSyncError,
   resolveNotificationSendFieldError,
+  NOTIFICATION_MMS_ATTACHMENT_ERROR_CODES,
 } from './get-notifications-api-error'
 import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
 
@@ -203,6 +204,47 @@ describe('get-notifications-api-error', () => {
     expect(message).toContain('traceId: trace-abc')
   })
 
+  it('NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED는 일반 안내만 표시한다', () => {
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED'),
+        'fallback'
+      )
+    ).toBe(
+      '선택한 템플릿에 현재 프로그램 또는 수신자 유형에서 사용할 수 없는 변수가 포함되어 있습니다. 템플릿과 수신자 설정을 다시 확인해 주세요.'
+    )
+  })
+
+  it('NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED 메시지 변수명을 표시한다', () => {
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(
+          400,
+          'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED',
+          'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED:참여자 모집 문의처명'
+        ),
+        'fallback'
+      )
+    ).toBe(
+      '선택한 템플릿에 현재 프로그램 또는 수신자 유형에서 사용할 수 없는 변수가 포함되어 있습니다. 템플릿과 수신자 설정을 다시 확인해 주세요.\n사용할 수 없는 변수: 참여자 모집 문의처명'
+    )
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED', '참여자 모집 문의처명'),
+        'fallback'
+      )
+    ).toContain('사용할 수 없는 변수: 참여자 모집 문의처명')
+  })
+
+  it('NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED:{변수명} 레거시 코드를 매핑한다', () => {
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED:참여자 모집 문의처명'),
+        'fallback'
+      )
+    ).toContain('사용할 수 없는 변수: 참여자 모집 문의처명')
+  })
+
   it('NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING을 사용자 문구로 변환한다', () => {
     expect(
       getNotificationsApiErrorMessage(
@@ -321,6 +363,29 @@ describe('resolveNotificationSendFieldError', () => {
     ).toBe('senderDisplayName')
   })
 
+  it('MMS 첨부 오류 코드는 BE error.message 그대로 + 첨부 영역 포커스', () => {
+    for (const code of NOTIFICATION_MMS_ATTACHMENT_ERROR_CODES) {
+      expect(resolveNotificationSendFieldError(apiError(400, code, `BE ${code}`))).toEqual({
+        code,
+        field: 'attachments',
+        message: `BE ${code}`,
+      })
+    }
+  })
+
+  it('없는 fileObjectId(NOT_FOUND)·만료(NOT_AVAILABLE)는 BE 문구 없으면 계약 문구', () => {
+    expect(
+      resolveNotificationSendFieldError(apiError(400, 'NOTIFICATION_MMS_ATTACHMENT_NOT_FOUND'))
+        ?.message
+    ).toBe('MMS 첨부 파일을 찾을 수 없습니다.')
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_MMS_ATTACHMENT_NOT_AVAILABLE'),
+        'fallback'
+      )
+    ).toContain('파일을 다시 등록해 주세요.')
+  })
+
   it('CODE:{키} 접두어도 매칭하고, 그 외 코드는 null', () => {
     expect(
       resolveNotificationSendFieldError(
@@ -330,6 +395,52 @@ describe('resolveNotificationSendFieldError', () => {
     expect(resolveNotificationSendFieldError(apiError(503, 'PROVIDER_UNAVAILABLE'))).toBeNull()
     expect(resolveNotificationSendFieldError(new Error('local'))).toBeNull()
   })
+
+  it('NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED는 템플릿 필드로 안내한다', () => {
+    expect(
+      resolveNotificationSendFieldError(apiError(400, 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED'))
+    ).toEqual({
+      code: 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED',
+      field: 'template',
+      message:
+        '선택한 템플릿에 현재 프로그램 또는 수신자 유형에서 사용할 수 없는 변수가 포함되어 있습니다. 템플릿과 수신자 설정을 다시 확인해 주세요.',
+    })
+    expect(
+      resolveNotificationSendFieldError(
+        apiError(400, 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED:참여자 모집 문의처명')
+      )
+    ).toEqual({
+      code: 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED',
+      field: 'template',
+      message:
+        '선택한 템플릿에 현재 프로그램 또는 수신자 유형에서 사용할 수 없는 변수가 포함되어 있습니다. 템플릿과 수신자 설정을 다시 확인해 주세요.\n사용할 수 없는 변수: 참여자 모집 문의처명',
+    })
+  })
+
+  it('EVENT_ONLY·UNREGISTERED API 코드는 발송 필드 오류로 취급하지 않는다', () => {
+    expect(resolveNotificationSendFieldError(apiError(400, 'EVENT_ONLY'))).toBeNull()
+    expect(resolveNotificationSendFieldError(apiError(400, 'UNREGISTERED'))).toBeNull()
+  })
+
+  it('메일·문자 기존 발송 오류 매핑을 유지한다', () => {
+    expect(
+      getNotificationsApiErrorMessage(apiError(400, 'EMAIL_ATTACHMENT_LIMIT_EXCEEDED'), 'fallback')
+    ).toBe('파일은 최대 10개까지 첨부할 수 있습니다.')
+    expect(
+      resolveNotificationSendFieldError(
+        apiError(400, 'NOTIFICATION_MMS_ATTACHMENT_NOT_FOUND', 'MMS 첨부 없음')
+      )
+    ).toEqual({
+      code: 'NOTIFICATION_MMS_ATTACHMENT_NOT_FOUND',
+      field: 'attachments',
+      message: 'MMS 첨부 없음',
+    })
+    expect(
+      resolveNotificationSendFieldError(
+        apiError(400, 'NOTIFICATION_SMS_SENDER_PROFILE_MISMATCH', '발신번호가 일치하지 않습니다.')
+      )?.field
+    ).toBe('sender')
+  })
 })
 
 describe('formatNotificationFailedReason', () => {
@@ -337,8 +448,60 @@ describe('formatNotificationFailedReason', () => {
     expect(formatNotificationFailedReason('NOTIFICATION_TEMPLATE_VARIABLE_RESOLUTION_FAILED')).toBe(
       '자동입력 변수값이 없어 발송되지 않았습니다.'
     )
+    // 구 코드는 상세(;type=… 등)를 노출하지 않는 일반 문구
     expect(
       formatNotificationFailedReason('NOTIFICATION_TEMPLATE_VARIABLE_RESOLUTION_FAILED:회원명')
-    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 회원명')
+    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다.')
+    expect(
+      formatNotificationFailedReason(
+        'NOTIFICATION_TEMPLATE_VARIABLE_RESOLUTION_FAILED: key=회원명;type=MEMBER'
+      )
+    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다.')
+  })
+
+  it('REQUIRED_VARIABLE_MISSING:{키} failedReason을 자동입력 변수 누락 문구로 바꾼다', () => {
+    expect(
+      formatNotificationFailedReason('NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:키1, 키2')
+    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 키1, 키2')
+    expect(formatNotificationFailedReason('NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING')).toBe(
+      '자동입력 변수값이 없어 발송되지 않았습니다.'
+    )
+  })
+})
+
+describe('NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:{키}', () => {
+  it('키를 포함한 안내 문구와 program 포커스 필드를 돌려준다', () => {
+    const error = apiError(
+      400,
+      'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:프로그램명,교육 일시'
+    )
+    expect(getNotificationsApiErrorMessage(error, 'fallback')).toBe(
+      '프로그램 필수 변수가 있어 프로그램을 선택하세요: 프로그램명, 교육 일시'
+    )
+    expect(resolveNotificationSendFieldError(error)).toEqual({
+      code: 'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES',
+      field: 'program',
+      message: '프로그램 필수 변수가 있어 프로그램을 선택하세요: 프로그램명, 교육 일시',
+    })
+  })
+
+  it('BE message가 별도여도 code의 키로 안내한다', () => {
+    const error = apiError(
+      400,
+      'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:프로그램명',
+      'program required'
+    )
+    expect(resolveNotificationSendFieldError(error)?.message).toBe(
+      '프로그램 필수 변수가 있어 프로그램을 선택하세요: 프로그램명'
+    )
+  })
+
+  it('400 REQUIRED_VARIABLE_MISSING:{키} code도 생성 시 문구로 키를 보여 준다', () => {
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:키1,키2'),
+        'fallback'
+      )
+    ).toContain('템플릿 필수 변수가 없습니다: 키1, 키2')
   })
 })

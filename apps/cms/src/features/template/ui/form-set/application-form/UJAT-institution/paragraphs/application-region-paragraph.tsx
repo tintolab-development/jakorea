@@ -40,7 +40,7 @@ export function UjatProgramApplicationApplicationRegionParagraph({
     >
       <CmsRadioGroup
         className="application-region-paragraph__group"
-        size="large"
+        size="medium"
         value={displayValue}
         onChange={e => {
           if (!interactive) return

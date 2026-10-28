@@ -1,6 +1,6 @@
 /**
  * CMS 공통 라디오 (재사용)
- * size: large(기본) | medium — 스타일은 app-radio.css
+ * size: large(기본) | medium | small — 스타일은 app-radio.css
  * 선택 라벨 색: var(--JA-mint-01, #01A1AF)
  * Group에 size를 주면 자식 CmsRadio도 동일 size를 상속한다.
  */
@@ -21,12 +21,12 @@ import './app-radio.css'
 
 type CmsRadioRef = ComponentRef<typeof Radio>
 
-export type CmsRadioSize = 'large' | 'medium'
+export type CmsRadioSize = 'large' | 'medium' | 'small'
 
 const CmsRadioSizeContext = createContext<CmsRadioSize | undefined>(undefined)
 
 export type CmsRadioProps = RadioProps & {
-  /** 기본 large: 원 20px·본문 16px/130%·원–텍스트 8px. medium: 18px / 14px·125% / 6px */
+  /** 기본 large: 원 20px·본문 16px/130%·원–텍스트 8px. medium: 18px / 14px·125% / 6px. small: 16px / 14px·125% / 4px */
   size?: CmsRadioSize
 }
 

@@ -1,4 +1,5 @@
 import {
+  mapBatchBodySnapshotAttachments,
   mapSmsDeliveryDetailResponse,
   mapSmsDeliveryListResponse,
 } from '@/features/notifications/api/adapters/sms-delivery-adapters'
@@ -12,8 +13,12 @@ import {
 import {
   fetchNotificationDeliveriesRemote,
   fetchNotificationDeliveryRemote,
+  fetchSendBatchDetailRemote,
 } from '@/features/notifications/api/notifications-api-client'
-import type { SmsSendHistoryRow } from '@/features/notifications/model/sms-send-history/types'
+import type {
+  SmsSendHistoryAttachment,
+  SmsSendHistoryRow,
+} from '@/features/notifications/model/sms-send-history/types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -43,5 +48,30 @@ export async function getSmsSendHistoryDetail(
   if (!Number.isFinite(id)) return null
 
   const dto = await fetchNotificationDeliveryRemote(id)
-  return mapSmsDeliveryDetailResponse(dto)
+  const row = mapSmsDeliveryDetailResponse(dto)
+  // batchId가 있으면 배치 bodySnapshot 첨부(fileObjectId 확정본)를 사용. null이면 호출하지 않음.
+  if (row?.batchId == null) return row
+  let snapshots: SmsSendHistoryAttachment[]
+  try {
+    snapshots = await getSmsSendBatchAttachmentSnapshots(row.batchId)
+  } catch {
+    // 배치 조회 실패 시 상세는 deliveries preview 첨부로 표시
+    return row
+  }
+  if (snapshots.length === 0) return row
+  return {
+    ...row,
+    attachments: snapshots,
+    attachmentFileNames: snapshots.map(item => item.fileName),
+  }
+}
+
+/**
+ * 발송 배치(즉시·예약)의 MMS 첨부 스냅샷 — `GET /api/admin/notification-send-batches/{batchId}`.
+ */
+export async function getSmsSendBatchAttachmentSnapshots(
+  batchId: number
+): Promise<SmsSendHistoryAttachment[]> {
+  if (!shouldUseSmsSendHistoryRemoteApi() || !Number.isFinite(batchId)) return []
+  return mapBatchBodySnapshotAttachments(await fetchSendBatchDetailRemote(batchId))
 }

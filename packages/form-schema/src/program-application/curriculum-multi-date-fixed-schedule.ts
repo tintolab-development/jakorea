@@ -166,11 +166,15 @@ function hasFixedScheduleLineSessionSuffix(label: string): boolean {
   return FIXED_SCHEDULE_SESSION_SUFFIX_RE.test(label.trim())
 }
 
-/** 커리큘럼·단일·날짜 고정 일정 — 예정일 라벨 우측 `| N차시` (교육 진행 커리큘럼 차시 수) */
+/**
+ * 커리큘럼·단일·날짜 고정 일정 — 예정일 줄 i(입력 순서)는 i+1차시다. 라벨 `일시 | (i+1)차시`.
+ * 차시가 1개면 일시만. lineIndex를 모르면 educationScheduleLines에서 같은 줄을 찾고, 없으면 일시만.
+ */
 export function appendCurriculumSingleDateFixedScheduleSessionSuffix(
   baseLabel: string,
   visibility: ApplicationScheduleVisibilityInput,
-  metaInput: CurriculumMultiDateFixedScheduleMetaInput
+  metaInput: CurriculumMultiDateFixedScheduleMetaInput,
+  lineIndex?: number
 ): string {
   const trimmed = baseLabel.trim()
   if (!trimmed) return baseLabel
@@ -187,8 +191,29 @@ export function appendCurriculumSingleDateFixedScheduleSessionSuffix(
     sessionsPerRound: metaInput.sessionsPerRound,
     educationRoundCount: metaInput.educationRoundCount,
   })
-  if (sessions == null || sessions <= 0) return trimmed
-  return `${trimmed} | ${sessions}차시`
+  if (sessions == null || sessions <= 1) return trimmed
+  const index =
+    lineIndex != null && Number.isInteger(lineIndex) && lineIndex >= 0
+      ? lineIndex
+      : expandEducationScheduleChoiceSlots(visibility.educationScheduleLines).indexOf(trimmed)
+  if (index < 0) return trimmed
+  return `${trimmed} | ${index + 1}차시`
+}
+
+const FIXED_SCHEDULE_ROUND_SUFFIX_RE = /\|\s*\d+\s*회차(?:\s*\(\s*\d+\s*차시\s*\))?\s*$/
+
+/** 커리큘럼·복수·날짜 고정 일정 — 예정일 줄 i(입력 순서)는 i+1회차. 라벨 `일시 | (i+1)회차`. */
+export function appendCurriculumMultiDateFixedScheduleRoundSuffix(
+  baseLabel: string,
+  visibility: ApplicationScheduleVisibilityInput,
+  lineIndex: number
+): string {
+  const trimmed = baseLabel.trim()
+  if (!trimmed) return baseLabel
+  if (!shouldUseCurriculumMultiDateFixedScheduleMatrix(visibility)) return trimmed
+  if (!Number.isInteger(lineIndex) || lineIndex < 0) return trimmed
+  if (FIXED_SCHEDULE_ROUND_SUFFIX_RE.test(trimmed)) return trimmed
+  return `${trimmed} | ${lineIndex + 1}회차`
 }
 
 export function resolveFixedScheduleLinesToChoiceItems(
@@ -199,6 +224,10 @@ export function resolveFixedScheduleLinesToChoiceItems(
   const trimmed = expandEducationScheduleChoiceSlots(lines)
   return trimmed.map((label, index) => ({
     id: `line:${index}`,
-    label: appendCurriculumSingleDateFixedScheduleSessionSuffix(label, visibility, metaInput),
+    label: appendCurriculumMultiDateFixedScheduleRoundSuffix(
+      appendCurriculumSingleDateFixedScheduleSessionSuffix(label, visibility, metaInput, index),
+      visibility,
+      index
+    ),
   }))
 }

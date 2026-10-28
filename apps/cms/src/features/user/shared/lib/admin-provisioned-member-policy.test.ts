@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   isCmsInstructorFeeJaRestrictedEditTarget,
+  shouldShowAdminCommentForAdminPermissionApplicationDetail,
   shouldShowAdminRegisteredSchoolDetailCaption,
   shouldShowCmsBasicProfileFieldsEdit,
   shouldShowCmsMemberInfoEditButton,
@@ -282,6 +283,53 @@ describe('shouldShowAdminRegisteredSchoolDetailCaption', () => {
         schoolInfo: {
           affiliatedTeachers: [{ linkedUserId: 'teacher-uuid' }],
         },
+      })
+    ).toBe(false)
+  })
+})
+
+describe('shouldShowAdminCommentForAdminPermissionApplicationDetail', () => {
+  it('회원 상세(default)는 승인 현황과 무관하게 true', () => {
+    expect(
+      shouldShowAdminCommentForAdminPermissionApplicationDetail('default', {
+        role: 'INSTRUCTOR',
+        permissionApprovalStatus: 'PENDING',
+      })
+    ).toBe(true)
+  })
+
+  it('강사 신청 상세는 승인 완료일 때만 true', () => {
+    expect(
+      shouldShowAdminCommentForAdminPermissionApplicationDetail('permission', {
+        role: 'INSTRUCTOR',
+        permissionApprovalStatus: 'APPROVED',
+      })
+    ).toBe(true)
+    expect(
+      shouldShowAdminCommentForAdminPermissionApplicationDetail('permission', {
+        role: 'INSTRUCTOR',
+        permissionApprovalStatus: 'PENDING',
+      })
+    ).toBe(false)
+    expect(
+      shouldShowAdminCommentForAdminPermissionApplicationDetail('permission', {
+        role: 'INSTRUCTOR',
+        permissionApprovalStatus: 'REJECTED',
+      })
+    ).toBe(false)
+  })
+
+  it('관리자 신청 상세는 승인 완료일 때만 true', () => {
+    expect(
+      shouldShowAdminCommentForAdminPermissionApplicationDetail('permission', {
+        role: 'ADMIN',
+        permissionApprovalStatus: 'APPROVED',
+      })
+    ).toBe(true)
+    expect(
+      shouldShowAdminCommentForAdminPermissionApplicationDetail('permission', {
+        role: 'ADMIN',
+        permissionApprovalStatus: 'PENDING',
       })
     ).toBe(false)
   })

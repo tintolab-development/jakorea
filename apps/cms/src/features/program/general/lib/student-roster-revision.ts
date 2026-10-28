@@ -91,6 +91,19 @@ export function isStudentRosterInvalidValueError(error: unknown): boolean {
   return extractStudentRosterApiErrorCode(error) === 'INVALID_VALUE'
 }
 
+function extractStudentRosterFailureMessage(error: unknown): string | undefined {
+  const data = extractApiErrorPayload(error)
+  if (typeof data?.message === 'string' && data.message.trim()) return data.message.trim()
+  if (typeof data?.error === 'object' && data.error && 'message' in data.error) {
+    const nested = (data.error as { message?: unknown }).message
+    if (typeof nested === 'string' && nested.trim()) return nested.trim()
+  }
+  if (error instanceof Error && error.message.trim() && !('response' in error)) {
+    return error.message.trim()
+  }
+  return undefined
+}
+
 export function resolveStudentRosterManualCommitFailureAlert(error: unknown): {
   title: string
   content: string
@@ -100,7 +113,9 @@ export function resolveStudentRosterManualCommitFailureAlert(error: unknown): {
   }
   return {
     title: '저장 실패',
-    content: '학생 명단 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+    content:
+      extractStudentRosterFailureMessage(error) ??
+      '학생 명단 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
   }
 }
 
