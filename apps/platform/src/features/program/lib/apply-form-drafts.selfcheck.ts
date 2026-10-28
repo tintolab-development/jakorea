@@ -278,6 +278,14 @@ function testInstitutionGemini() {
     titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.portraitConsent],
     '초상권에 대한 동의'
   )
+  assert.equal(
+    titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.trainingInfo],
+    '연수 정보'
+  )
+  assert.equal(
+    titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.contactPerson],
+    '담당 교사 정보'
+  )
   const schedule = geminiDraft!.paragraphs.find(
     paragraph =>
       paragraph.id ===

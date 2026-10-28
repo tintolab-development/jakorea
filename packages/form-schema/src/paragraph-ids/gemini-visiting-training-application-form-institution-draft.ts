@@ -23,8 +23,10 @@ export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAP
 const PERSONAL_INFO_TITLE = '개인 정보수집 및 제공에 대한 동의'
 const THIRD_PARTY_TITLE = '제 3자 정보 제공 동의'
 const PORTRAIT_TITLE = '초상권에 대한 동의'
+const CONTACT_PERSON_TITLE = '담당 교사 정보'
 const PREFERRED_SCHEDULE_DESCRIPTION =
   '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.'
+const LEGACY_CONTACT_PERSON_TITLES = ['담당자 정보'] as const
 
 const LEGACY_PERSONAL_INFO_TITLES = ['개인정보 수집·이용'] as const
 const LEGACY_THIRD_PARTY_TITLES = ['개인정보 제3자 정보 제공·이용 동의'] as const
@@ -206,7 +208,7 @@ export function createGeminiVisitingTrainingApplicationFormInstitutionDraft(): W
     ),
     createSeedHorizontalTable(
       GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.contactPerson,
-      '담당자 정보',
+      CONTACT_PERSON_TITLE,
       ''
     ),
     createSeedHorizontalTable(
@@ -283,6 +285,10 @@ export function migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(
       paragraph.id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.portraitConsent
     ) {
       next = patchParagraphTitleIfLegacy(next, PORTRAIT_TITLE, LEGACY_PORTRAIT_TITLES)
+    } else if (
+      paragraph.id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.contactPerson
+    ) {
+      next = patchParagraphTitleIfLegacy(next, CONTACT_PERSON_TITLE, LEGACY_CONTACT_PERSON_TITLES)
     } else if (
       paragraph.id ===
       GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule

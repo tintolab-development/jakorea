@@ -188,66 +188,72 @@ function PreferenceScheduleFields({
         view="-"
         edit={
           <div className={`detail-info-form-inputs-wrapper-no-gap ${styles.timeInputs}`}>
-            {showSessionSelect && !dateOnlyPreferred ? (
-              <>
-                <PFSelect
-                  variant="formPage"
-                  size="large"
-                  width={showSessionUnit ? 140 : 120}
-                  className={styles.sessionSelect}
-                  placeholder="희망 차시"
-                  options={sessionOptions}
-                  value={block.classPeriod || undefined}
-                  disabled={disabled}
-                  onValueChange={next => onPatch({ classPeriod: next ?? '' })}
-                  aria-label="희망 차시"
-                />
-                {showSessionUnit ? (
+            <div className={styles.sessionRow}>
+              {showSessionSelect && !dateOnlyPreferred ? (
+                <>
+                  <PFSelect
+                    variant="formPage"
+                    size="large"
+                    width={showSessionUnit ? 140 : 120}
+                    className={styles.sessionSelect}
+                    placeholder="희망 차시"
+                    options={sessionOptions}
+                    value={block.classPeriod || undefined}
+                    disabled={disabled}
+                    onValueChange={next => onPatch({ classPeriod: next ?? '' })}
+                    aria-label="희망 차시"
+                  />
+                  {showSessionUnit ? (
+                    <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
+                      교시
+                    </PFText>
+                  ) : null}
+                  <DetailInfoForm.InputsSeparator />
+                </>
+              ) : (
+                <>
+                  <PFTextInput
+                    variant="formPage"
+                    size="large"
+                    width={120}
+                    inputMode="numeric"
+                    placeholder="수업 진행 교시"
+                    value={block.classPeriod}
+                    disabled={disabled}
+                    onValueChange={next =>
+                      onPatch({ classPeriod: next.replace(/[^\d]/g, '') })
+                    }
+                  />
                   <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
                     교시
                   </PFText>
-                ) : null}
-                <DetailInfoForm.InputsSeparator />
-              </>
-            ) : (
-              <>
-                <PFTextInput
-                  variant="formPage"
-                  size="large"
-                  width={120}
-                  inputMode="numeric"
-                  placeholder="수업 진행 교시"
-                  value={block.classPeriod}
-                  disabled={disabled}
-                  onValueChange={next =>
-                    onPatch({ classPeriod: next.replace(/[^\d]/g, '') })
-                  }
-                />
-                <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
-                  교시
-                </PFText>
-                <DetailInfoForm.InputsSeparator />
-              </>
-            )}
-            <PFTimeInput
-              placeholder={showSessionSelect ? '수업 시작' : '시작 시간'}
-              value={startTime}
-              onValueChange={next => onPatch({ startTime: next })}
-              aria-label="시작 시간"
-              disabled={disabled}
-              className={styles.timePicker}
-            />
-            <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.tilde}>
-              ~
-            </PFText>
-            <PFTimeInput
-              placeholder={showSessionSelect ? '수업 종료' : '종료 시간'}
-              value={endTime}
-              onValueChange={next => onPatch({ endTime: next })}
-              aria-label="종료 시간"
-              disabled={disabled}
-              className={styles.timePicker}
-            />
+                  <DetailInfoForm.InputsSeparator />
+                </>
+              )}
+            </div>
+            <div className={styles.timeRange}>
+              <PFTimeInput
+                placeholder={showSessionSelect ? '수업 시작' : '시작 시간'}
+                value={startTime}
+                onValueChange={next => onPatch({ startTime: next })}
+                aria-label="시작 시간"
+                disabled={disabled}
+                width={168}
+                className={styles.timePicker}
+              />
+              <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.tilde}>
+                ~
+              </PFText>
+              <PFTimeInput
+                placeholder={showSessionSelect ? '수업 종료' : '종료 시간'}
+                value={endTime}
+                onValueChange={next => onPatch({ endTime: next })}
+                aria-label="종료 시간"
+                disabled={disabled}
+                width={168}
+                className={styles.timePicker}
+              />
+            </div>
           </div>
         }
       />

@@ -11,6 +11,7 @@ const ANSWER_VALIDATION_CODES = new Set([
   'INVALID_VALUE',
   'VALIDATION_FAILED',
   'OPERATION_NOT_ALLOWED',
+  'PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE',
 ])
 
 export function isApplicationAnswerValidationErrorCode(code: string | null | undefined): boolean {

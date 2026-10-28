@@ -35,6 +35,7 @@ import {
   getApplicationApiErrorCode,
   getProgramApplicationApiErrorMessage,
   isIndividualApplicationEnrolledGradeRequiredError,
+  PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE,
 } from '@/features/program/lib/application-api-error'
 import {
   collectApplicationSubmitParagraphErrors,
@@ -140,7 +141,11 @@ import {
   mergeApplyScheduleVisibilityFields,
   findMissingRequiredBottomConsentId,
   hasPreferredScheduleDateOutsideRuntime,
+  hasPreferredScheduleDateOutsideBounds,
+  filterGeminiInstructorSlotsByTrainingRequestPeriod,
+  isGeminiTrainingRequestPeriodConfigured,
   isRuntimeScheduleNotConfigured,
+  readGeminiTrainingRequestDateBounds,
   isTrainedTeachersOrganizationPeriodDateRequests,
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
@@ -158,8 +163,10 @@ import {
   resolveApplyScheduleChoiceAnswerKey,
   resolveHiddenScheduleAutoSubmitIds,
   buildApplyPreferredSessionSelectOptions,
+  buildGeminiInstitutionSessionSelectOptions,
   createEmptyApplyPreferredScheduleBlocks,
   GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+  geminiInstitutionPreferredScheduleMapOptions,
   padPreferredScheduleBlocks,
   resolveApplyPreferredMaxSessionsPerDay,
   resolveApplyPreferredScheduleInitialBlockCount,
@@ -603,6 +610,14 @@ export function ProgramApplyPage() {
     program?.registrationKind === 'trainedTeachers' ||
     program?.programType === 'TRAINED_TEACHER'
   const showGeminiInstitutionApply = applyCase === 'institution-gemini'
+  const showGeminiInstructorApply = applyCase === 'instructor-gemini'
+  const geminiTrainingRequestDateBounds = useMemo(
+    () => readGeminiTrainingRequestDateBounds(program),
+    [program]
+  )
+  const geminiTrainingRequestPeriodConfigured = isGeminiTrainingRequestPeriodConfigured(
+    geminiTrainingRequestDateBounds
+  )
   const profileDefaults = useMemo(
     () => trainedTeachersProfileDefaults(profileQuery.data),
     [profileQuery.data]
@@ -803,8 +818,13 @@ export function ProgramApplyPage() {
     if (!program || (!showGeneralPreferredSchedule && !showGeminiInstitutionApply)) {
       return { show: false, options: [] as { value: string; label: string }[] }
     }
-    const show =
-      showGeminiInstitutionApply || shouldShowApplyPreferredScheduleSessionSelect(program)
+    if (showGeminiInstitutionApply) {
+      return {
+        show: true,
+        options: buildGeminiInstitutionSessionSelectOptions(),
+      }
+    }
+    const show = shouldShowApplyPreferredScheduleSessionSelect(program)
     const maxSessionsPerDay = resolveApplyPreferredMaxSessionsPerDay(
       program,
       applicationFormRuntimeContext
@@ -837,9 +857,15 @@ export function ProgramApplyPage() {
   const preferredScheduleMapOptions = useMemo(
     () =>
       institutionDateOnlyPreferred || trainedTeachersDateOnlyPreferred
-        ? { dateOnly: true }
-        : undefined,
-    [institutionDateOnlyPreferred, trainedTeachersDateOnlyPreferred]
+        ? { dateOnly: true as const }
+        : showGeminiInstitutionApply
+          ? geminiInstitutionPreferredScheduleMapOptions()
+          : undefined,
+    [
+      institutionDateOnlyPreferred,
+      showGeminiInstitutionApply,
+      trainedTeachersDateOnlyPreferred,
+    ]
   )
   const trainedTeachersEnabledDates = useMemo(() => {
     if (
@@ -912,20 +938,26 @@ export function ProgramApplyPage() {
     )
     return readRuntimeInstructorScheduleSlots(scheduleParagraph)
   }, [applicationFormDocument])
-  const instructorScheduleSlots = useMemo(
-    () =>
-      resolveApplyAvailableScheduleSlots({
-        runtimeSlots: runtimeInstructorScheduleSlots,
-        allowProgramDisplayFallback: !remoteApplyEnabled && !usesOsaAvailableSchedule,
-        program,
-      }),
-    [
+  const instructorScheduleSlots = useMemo(() => {
+    const slots = resolveApplyAvailableScheduleSlots({
+      runtimeSlots: runtimeInstructorScheduleSlots,
+      allowProgramDisplayFallback: !remoteApplyEnabled && !usesOsaAvailableSchedule,
       program,
-      remoteApplyEnabled,
-      runtimeInstructorScheduleSlots,
-      usesOsaAvailableSchedule,
-    ]
-  )
+    })
+    if (!showGeminiInstructorApply) return slots
+    return filterGeminiInstructorSlotsByTrainingRequestPeriod(
+      slots,
+      slot => slot.dateKey,
+      geminiTrainingRequestDateBounds
+    )
+  }, [
+    geminiTrainingRequestDateBounds,
+    program,
+    remoteApplyEnabled,
+    runtimeInstructorScheduleSlots,
+    showGeminiInstructorApply,
+    usesOsaAvailableSchedule,
+  ])
   const interviewBindingParagraph = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
@@ -1504,6 +1536,16 @@ export function ProgramApplyPage() {
             slots={instructorScheduleSlots}
             value={instructorSchedule}
             onChange={setInstructorSchedule}
+            minDate={
+              showGeminiInstructorApply && geminiTrainingRequestPeriodConfigured
+                ? geminiTrainingRequestDateBounds.minScheduleDate
+                : null
+            }
+            maxDate={
+              showGeminiInstructorApply && geminiTrainingRequestPeriodConfigured
+                ? geminiTrainingRequestDateBounds.maxScheduleDate
+                : null
+            }
           />
         )
       }
@@ -1731,18 +1773,26 @@ export function ProgramApplyPage() {
             }
             dateWidth={showGeminiInstitutionApply ? 240 : 220}
             minDate={
-              useInstitutionScheduleBounds
-                ? institutionScheduleDateBounds.minScheduleDate
-                : useTrainedTeachersOperatingPeriod
-                  ? trainedTeachersScheduleDateBounds.minScheduleDate
+              showGeminiInstitutionApply
+                ? geminiTrainingRequestPeriodConfigured
+                  ? geminiTrainingRequestDateBounds.minScheduleDate
                   : null
+                : useInstitutionScheduleBounds
+                  ? institutionScheduleDateBounds.minScheduleDate
+                  : useTrainedTeachersOperatingPeriod
+                    ? trainedTeachersScheduleDateBounds.minScheduleDate
+                    : null
             }
             maxDate={
-              useInstitutionScheduleBounds
-                ? institutionScheduleDateBounds.maxScheduleDate
-                : useTrainedTeachersOperatingPeriod
-                  ? trainedTeachersScheduleDateBounds.maxScheduleDate
+              showGeminiInstitutionApply
+                ? geminiTrainingRequestPeriodConfigured
+                  ? geminiTrainingRequestDateBounds.maxScheduleDate
                   : null
+                : useInstitutionScheduleBounds
+                  ? institutionScheduleDateBounds.maxScheduleDate
+                  : useTrainedTeachersOperatingPeriod
+                    ? trainedTeachersScheduleDateBounds.maxScheduleDate
+                    : null
             }
             enabledDates={
               useInstitutionScheduleBounds
@@ -1753,7 +1803,10 @@ export function ProgramApplyPage() {
                   ? trainedTeachersEnabledDates
                   : null
             }
-            disabled={trainedTeachersScheduleNotConfigured}
+            disabled={
+              trainedTeachersScheduleNotConfigured ||
+              (showGeminiInstitutionApply && !geminiTrainingRequestPeriodConfigured)
+            }
             showSessionSelect={
               (showGeneralPreferredSchedule || showGeminiInstitutionApply) &&
               institutionPreferredSessionSelect.show
@@ -1973,6 +2026,10 @@ export function ProgramApplyPage() {
       showTrainedTeachersPreferredSchedule,
       showGeneralPreferredSchedule,
       showGeminiInstitutionApply,
+      showGeminiInstructorApply,
+      geminiTrainingRequestDateBounds.minScheduleDate,
+      geminiTrainingRequestDateBounds.maxScheduleDate,
+      geminiTrainingRequestPeriodConfigured,
       showPreferredScheduleInput,
       institutionPreferredSessionSelect,
       showPreferredEducationForm,
@@ -2268,14 +2325,16 @@ export function ProgramApplyPage() {
         return
       }
     }
-    // 「제공받는 곳」은 CMS 양식 작성 칸이다. 포털 신청 화면에 입력 UI가 없어 필수로 보지 않는다.
-    if (showTrainedTeachersApply) {
-      const missingConsentId = findMissingRequiredBottomConsentId(displayDraft)
-      if (missingConsentId) {
-        setSubmitErrorField(missingConsentId)
-        setSubmitAlert({ description: '필수 동의 항목을 확인해 주세요.' })
-        return
+    // 하단 동의 라디오는 시드 미리보기 값이 지워지므로, 보이는 동의 단락은 제출 전 다시 확인한다.
+    const missingConsentId = findMissingRequiredBottomConsentId(displayDraft)
+    if (missingConsentId) {
+      pendingApplyIncompleteRef.current = {
+        message: '필수 동의 항목을 확인해 주세요.',
+        paragraphId: missingConsentId,
       }
+      setSubmitErrorField(missingConsentId)
+      setSubmitAlert({ description: '필수 동의 항목을 확인해 주세요.' })
+      return
     }
     const bundle = applicationFormQuery.bundle
     if (
@@ -2454,6 +2513,31 @@ export function ProgramApplyPage() {
             })
             return
           }
+          if (showGeminiInstitutionApply) {
+            const geminiPreferredParagraphId =
+              displayDraft?.paragraphs.find(paragraph =>
+                isApplicationPreferredScheduleParagraphId(paragraph.id)
+              )?.id ?? 'preferredScheduleBlocks'
+            if (!geminiTrainingRequestPeriodConfigured) {
+              setSubmitErrorField(geminiPreferredParagraphId)
+              setSubmitAlert({
+                description: PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE,
+              })
+              return
+            }
+            if (
+              hasPreferredScheduleDateOutsideBounds(
+                preferredBlocks,
+                geminiTrainingRequestDateBounds
+              )
+            ) {
+              setSubmitErrorField(geminiPreferredParagraphId)
+              setSubmitAlert({
+                description: PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE,
+              })
+              return
+            }
+          }
           const preferredError = findIncompletePreferredScheduleMessage(
             preferredBlocks,
             preferredScheduleMapOptions
@@ -2583,7 +2667,12 @@ export function ProgramApplyPage() {
           geminiTrainingInfo,
         )
         if (trainingInfoError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          pendingApplyIncompleteRef.current = {
+            message: trainingInfoError,
+            paragraphId: geminiTrainingInfoParagraph.id,
+          }
+          setSubmitErrorField(geminiTrainingInfoParagraph.id)
+          setSubmitAlert({ description: trainingInfoError })
           return
         }
       }
@@ -2596,7 +2685,12 @@ export function ProgramApplyPage() {
       if (geminiContactVisible && isRequiredParagraph(geminiContactParagraph)) {
         const contactError = findIncompleteGeminiInstitutionContactMessage(geminiContact)
         if (contactError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          pendingApplyIncompleteRef.current = {
+            message: contactError,
+            paragraphId: geminiContactParagraph.id,
+          }
+          setSubmitErrorField(geminiContactParagraph.id)
+          setSubmitAlert({ description: contactError })
           return
         }
       }
