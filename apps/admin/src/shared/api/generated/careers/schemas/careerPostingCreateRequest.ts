@@ -29,16 +29,4 @@ export interface CareerPostingCreateRequest {
      */
   authorName: string;
   attachmentAssetId?: number;
-  /**
-     * 채용 공고 바로가기 버튼명. 미입력·공백은 null로 저장됩니다.
-     * @minLength 0
-     * @maxLength 15
-     */
-  buttonLabel?: string | null;
-  /**
-     * 채용 공고 버튼 링크. http/https만 허용. 미입력·공백은 null로 저장됩니다.
-     * @minLength 0
-     * @maxLength 2048
-     */
-  linkUrl?: string | null;
 }

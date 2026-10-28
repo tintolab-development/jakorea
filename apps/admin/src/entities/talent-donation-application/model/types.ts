@@ -28,6 +28,7 @@ export type TalentDonationApplication = {
   motivation: string
   jaProgramHistory: boolean
   attachmentFileName: string | null
+  attachmentAssetId?: number | null
   attachmentUrl: string | null
   privacyConsent: true
   appliedAt: string

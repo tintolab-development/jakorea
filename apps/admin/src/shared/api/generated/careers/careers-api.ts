@@ -35,7 +35,7 @@ import type {
   ConfirmRequest,
   ConfirmResponse,
   List12Params,
-  List15Params,
+  List16Params,
   PageResponseCareerPostingPublicItem,
   PageResponseCareerTalentApplicationListItem,
   PrepareRequest,
@@ -128,6 +128,10 @@ const create2 = (
       options);
     }
 
+/**
+ * The stored object is revalidated against the declared content type, file signature, and the 20 MiB per-file limit.
+ * @summary Confirm a career talent application attachment upload
+ */
 const confirm2 = (
     assetId: number,
     confirmRequest: ConfirmRequest,
@@ -140,6 +144,10 @@ const confirm2 = (
       options);
     }
 
+/**
+ * Accepts image/jpeg, image/png, and application/pdf. Each file may be up to 20 MiB (20 * 1024 * 1024 bytes).
+ * @summary Prepare a career talent application attachment upload
+ */
 const prepare2 = (
     prepareRequest: PrepareRequest,
  options?: SecondParameter<typeof customInstance<PrepareResponse>>,) => {
@@ -288,8 +296,8 @@ const guide = (
       options);
     }
 
-const list15 = (
-    params?: List15Params,
+const list16 = (
+    params?: List16Params,
  options?: SecondParameter<typeof customInstance<PageResponseCareerTalentApplicationListItem>>,) => {
       return customInstance<PageResponseCareerTalentApplicationListItem>(
       {url: `/api/admin/careers/talent-applications`, method: 'GET',
@@ -318,6 +326,16 @@ const detail9 = (
       options);
     }
 
+const attachmentDownloadByAsset2 = (
+    id: number,
+    assetId: number,
+ options?: SecondParameter<typeof customInstance<CareerTalentApplicationAttachmentDownloadResponse>>,) => {
+      return customInstance<CareerTalentApplicationAttachmentDownloadResponse>(
+      {url: `/api/admin/careers/talent-applications/${id}/attachments/${assetId}/download`, method: 'GET'
+    },
+      options);
+    }
+
 const attachmentDownload2 = (
     id: number,
  options?: SecondParameter<typeof customInstance<CareerTalentApplicationAttachmentDownloadResponse>>,) => {
@@ -336,7 +354,7 @@ const guide1 = (
       options);
     }
 
-return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,bulkDeleteCareerGuideInterviews,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownload2,guide1}};
+return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,bulkDeleteCareerGuideInterviews,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list16,delete4,detail9,attachmentDownloadByAsset2,attachmentDownload2,guide1}};
 export type Detail3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail3']>>>
 export type Update14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['update14']>>>
 export type UpdateCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideInterview']>>>
@@ -359,8 +377,9 @@ export type Detail6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof get
 export type DetailHead2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detailHead2']>>>
 export type List12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list12']>>>
 export type GuideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['guide']>>>
-export type List15Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list15']>>>
+export type List16Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list16']>>>
 export type Delete4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['delete4']>>>
 export type Detail9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail9']>>>
+export type AttachmentDownloadByAsset2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['attachmentDownloadByAsset2']>>>
 export type AttachmentDownload2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['attachmentDownload2']>>>
 export type Guide1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['guide1']>>>

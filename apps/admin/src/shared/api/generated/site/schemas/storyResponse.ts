@@ -16,8 +16,10 @@ export interface StoryResponse {
   categoryName?: string;
   title?: string;
   body?: string;
-  attachment?: AssetResponse;
-  attachmentOriginalName?: string;
+  thumbnail?: AssetResponse | null;
+  thumbnailOriginalName?: string | null;
+  attachment?: AssetResponse | null;
+  attachmentOriginalName?: string | null;
   authorName?: string;
   viewCount?: number;
   createdAt?: string;

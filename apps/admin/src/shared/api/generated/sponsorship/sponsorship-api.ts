@@ -196,6 +196,10 @@ const create = (
       options);
     }
 
+/**
+ * The stored object is revalidated against the declared content type, file signature, and the 20 MiB per-file limit.
+ * @summary Confirm a talent application attachment upload
+ */
 const confirm = (
     assetId: number,
     confirmRequest: ConfirmRequest,
@@ -208,6 +212,10 @@ const confirm = (
       options);
     }
 
+/**
+ * Accepts image/jpeg, image/png, and application/pdf. Each file may be up to 20 MiB (20 * 1024 * 1024 bytes).
+ * @summary Prepare a talent application attachment upload
+ */
 const prepare = (
     prepareRequest: PrepareRequest,
  options?: SecondParameter<typeof customInstance<PrepareResponse>>,) => {
@@ -407,6 +415,16 @@ const detail7 = (
       options);
     }
 
+const attachmentDownloadByAsset = (
+    id: number,
+    assetId: number,
+ options?: SecondParameter<typeof customInstance<TalentApplicationAttachmentDownloadResponse>>,) => {
+      return customInstance<TalentApplicationAttachmentDownloadResponse>(
+      {url: `/api/admin/sponsorship/talent-applications/${id}/attachments/${assetId}/download`, method: 'GET'
+    },
+      options);
+    }
+
 const attachmentDownload = (
     id: number,
  options?: SecondParameter<typeof customInstance<TalentApplicationAttachmentDownloadResponse>>,) => {
@@ -464,6 +482,16 @@ const detail8 = (
       options);
     }
 
+const attachmentDownloadByAsset1 = (
+    id: number,
+    assetId: number,
+ options?: SecondParameter<typeof customInstance<AttachmentDownloadResponse>>,) => {
+      return customInstance<AttachmentDownloadResponse>(
+      {url: `/api/admin/sponsorship/corporate-consultations/${id}/attachments/${assetId}/download`, method: 'GET'
+    },
+      options);
+    }
+
 const attachmentDownload1 = (
     id: number,
  options?: SecondParameter<typeof customInstance<AttachmentDownloadResponse>>,) => {
@@ -473,7 +501,7 @@ const attachmentDownload1 = (
       options);
     }
 
-return {updateInterview,updateHowItems,updateBanner,updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,create1,confirm1,prepare1,list2,create3,delete1,bulkConfirm,updateStatus,toggle,updateStatus1,get5,personal,corporate,list10,get11,list13,delete3,detail7,attachmentDownload,personal1,corporate1,list14,bulkDelete6,detail8,attachmentDownload1}};
+return {updateInterview,updateHowItems,updateBanner,updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,create1,confirm1,prepare1,list2,create3,delete1,bulkConfirm,updateStatus,toggle,updateStatus1,get5,personal,corporate,list10,get11,list13,delete3,detail7,attachmentDownloadByAsset,attachmentDownload,personal1,corporate1,list14,bulkDelete6,detail8,attachmentDownloadByAsset1,attachmentDownload1}};
 export type UpdateInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateInterview']>>>
 export type UpdateHowItemsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateHowItems']>>>
 export type UpdateBannerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateBanner']>>>
@@ -506,10 +534,12 @@ export type Get11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJA
 export type List13Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list13']>>>
 export type Delete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['delete3']>>>
 export type Detail7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['detail7']>>>
+export type AttachmentDownloadByAssetResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownloadByAsset']>>>
 export type AttachmentDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownload']>>>
 export type Personal1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['personal1']>>>
 export type Corporate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['corporate1']>>>
 export type List14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list14']>>>
 export type BulkDelete6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['bulkDelete6']>>>
 export type Detail8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['detail8']>>>
+export type AttachmentDownloadByAsset1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownloadByAsset1']>>>
 export type AttachmentDownload1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownload1']>>>

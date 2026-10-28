@@ -144,7 +144,7 @@ export function RecruitApplicantDetailModal({
         className="recruit-applicant-detail-modal__attachment"
         onClick={() => {
           if (!data?.id) return
-          void downloadRecruitApplicantAttachmentService(data.id)
+          void downloadRecruitApplicantAttachmentService(data.id, data.attachmentAssetId)
             .then(result => {
               if (!result?.downloadUrl) {
                 showAlert({

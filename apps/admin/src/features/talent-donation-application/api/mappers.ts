@@ -9,6 +9,7 @@ import type {
   TalentDonationApplicationListFilter,
 } from '@/entities/talent-donation-application/model/types'
 import type { List13Params } from '@/shared/api/generated/sponsorship/schemas/list13Params'
+import type { ApplicationAttachmentItem } from '@/shared/api/generated/sponsorship/schemas/applicationAttachmentItem'
 import type { TalentApplicationDetailResponse } from '@/shared/api/generated/sponsorship/schemas/talentApplicationDetailResponse'
 import type { TalentApplicationListItem } from '@/shared/api/generated/sponsorship/schemas/talentApplicationListItem'
 import type { TalentApplicationStatusUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/talentApplicationStatusUpdateRequest'
@@ -28,6 +29,20 @@ function toDomainStatus(status: string | undefined): ApplicationStatus {
 
 function toDomainGender(gender: string | undefined): ApplicantGender {
   return gender === 'female' ? 'female' : 'male'
+}
+
+function firstApplicationAttachment(
+  attachments: ApplicationAttachmentItem[] | undefined,
+  originalName?: string | null,
+): { fileName: string | null; assetId?: number } {
+  const first = attachments?.find(
+    item => item.assetId != null || Boolean(item.originalName?.trim()),
+  )
+  const fileName = originalName?.trim() || first?.originalName?.trim() || null
+  return {
+    fileName,
+    ...(first?.assetId != null ? { assetId: first.assetId } : {}),
+  }
 }
 
 export function mapTalentApplicationListItemToDomain(
@@ -62,6 +77,7 @@ export function mapTalentApplicationListItemToDomain(
 export function mapTalentApplicationDetailToDomain(
   row: TalentApplicationDetailResponse,
 ): TalentDonationApplication {
+  const attachment = firstApplicationAttachment(row.attachments, row.attachmentOriginalName)
   return {
     id: row.id != null ? String(row.id) : '',
     status: toDomainStatus(row.status),
@@ -78,9 +94,8 @@ export function mapTalentApplicationDetailToDomain(
     talentIntro: row.talentIntro ?? '',
     motivation: row.motivation ?? '',
     jaProgramHistory: row.jaParticipation === 'yes',
-    attachmentFileName: row.attachmentOriginalName?.trim()
-      ? row.attachmentOriginalName.trim()
-      : null,
+    attachmentFileName: attachment.fileName,
+    attachmentAssetId: attachment.assetId,
     attachmentUrl: null,
     // 서버는 privacyAgreed=true만 저장·반환 (도메인 타입도 true 리터럴)
     privacyConsent: true,

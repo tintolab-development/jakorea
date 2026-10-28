@@ -21,5 +21,7 @@ export interface StoryCreateRequest {
      * @maxLength 100000
      */
   body: string;
+  thumbnailAssetId: number;
   attachmentAssetId?: number;
+  thumbnailDistinctFromAttachment?: boolean;
 }

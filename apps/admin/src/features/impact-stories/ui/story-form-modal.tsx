@@ -261,6 +261,10 @@ export function StoryFormModal({
       })
       return
     }
+    if (shouldUseImpactStoriesRemoteApi() && attachments.length === 0) {
+      showAlert({ title: '입력 확인', content: '섬네일 이미지를 등록해 주세요.' })
+      return
+    }
     onSubmit({
       categoryId,
       title: t,
@@ -420,7 +424,12 @@ export function StoryFormModal({
           </div>
 
           <div className="story-form-modal__attachment">
-            <div className="story-form-modal__attachment-label">첨부 파일</div>
+            <div className="story-form-modal__attachment-label">
+              섬네일 / 첨부 파일
+              <span className="story-form-modal__required" aria-hidden>
+                *
+              </span>
+            </div>
             <div className="story-form-modal__attachment-body">
               <FileSelectField
                 className="story-form-modal__file-field"

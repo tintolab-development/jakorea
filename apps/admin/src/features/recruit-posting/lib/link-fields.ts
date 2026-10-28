@@ -1,10 +1,7 @@
 /**
- * 채용공고 하단 연결 버튼 — 기획 15자, 미설정은 빈 문자열.
- *
- * OpenAPI CareerPostingCreateRequest / UpdateRequest / AdminDetail / PublicDetail
- * 에 buttonLabel·linkUrl (nullable string)이 있다.
- * FE 입력은 둘 다 비움 또는 둘 다 입력만 허용한다 (FE_ONLY_VALIDATION).
- * BE 부분 입력 조회는 빈 문자열로 hydrate 하고 오류를 내지 않는다.
+ * 채용공고 하단 연결 버튼 — 로컬 목 호환용.
+ * 최신 홈페이지 Admin OpenAPI 채용공고 create/update/detail에는
+ * buttonLabel·linkUrl 이 없다. 원격 저장·조회에서는 빈 문자열만 유지한다.
  */
 
 export const CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH = 15

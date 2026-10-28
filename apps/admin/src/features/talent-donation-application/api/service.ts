@@ -62,13 +62,17 @@ export async function getTalentDonationApplicationService(
 
 export async function downloadTalentDonationApplicationAttachmentService(
   id: string,
+  assetId?: number | null,
 ): Promise<{ downloadUrl: string; originalName?: string } | null> {
   if (!shouldUseTalentDonationApplicationRemoteApi()) {
     return null
   }
   const numericId = Number(id)
   if (!Number.isFinite(numericId) || numericId <= 0) return null
-  const response = await sponsorshipApi().attachmentDownload(numericId)
+  const response =
+    assetId != null && assetId > 0
+      ? await sponsorshipApi().attachmentDownloadByAsset(numericId, assetId)
+      : await sponsorshipApi().attachmentDownload(numericId)
   if (!response.downloadUrl) return null
   return {
     downloadUrl: response.downloadUrl,
