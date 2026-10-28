@@ -1,4 +1,5 @@
 import type { LectureReportAssignment } from '../api/lecture-report-client'
+import { formatGeminiInstructorRoleLabel } from '../lib/instructor-role-label'
 import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
 import { PFText } from '@/shared/ui'
 import styles from './instructor-assignment-panel.module.css'
@@ -24,21 +25,7 @@ function displayOrDash(value: string | null | undefined): string {
 }
 
 function formatInstructorRole(raw: string | null | undefined): string {
-  const value = (raw ?? '').trim().toUpperCase()
-  if (!value) return '-'
-  if (
-    value === 'LEAD' ||
-    value === 'MAIN' ||
-    value === 'REPRESENTATIVE' ||
-    value === '대표 강사' ||
-    value.includes('LEAD')
-  ) {
-    return '대표 강사'
-  }
-  if (value === 'GENERAL' || value === 'MEMBER' || value === '일반 강사' || value.includes('GENERAL')) {
-    return '일반 강사'
-  }
-  return raw?.trim() || '-'
+  return formatGeminiInstructorRoleLabel(raw)
 }
 
 function parseDisplayDateTime(value: string | null): { date: string; time: string } | null {
