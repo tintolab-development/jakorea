@@ -120,4 +120,32 @@ assert.equal(ujat!.teacherContact, 'UJAT교사 | 032-123-4567 | 010-2222-3333 | 
 const fallback = mapTeacherInstitutionFromApplicationAnswers(economyOnly, 'general')
 assert.equal(fallback!.name, '경제교육학교')
 
+const geminiAnswers = {
+  'gemini-vt-inst-seed-training-info': { studentCount: 20 },
+  'gemini-vt-inst-seed-contact': { teacherName: '김교사', jobTitle: '교사', subject: '사회' },
+  schoolName: '서울초등학교',
+  applicationGrade: '3',
+  regionLabel: '서울특별시 강서구',
+  addressDetail: '본관',
+}
+const gemini = mapTeacherInstitutionFromApplicationAnswers(geminiAnswers, 'gemini')
+assert.equal(gemini!.name, '서울초등학교')
+assert.equal(gemini!.grade, '3학년')
+assert.equal(gemini!.address, '서울특별시 강서구')
+assert.equal(gemini!.addressDetail, '본관')
+assert.equal(gemini!.jobTitle, '교사')
+assert.equal(gemini!.studentCount, '20명')
+assert.ok(gemini!.teacherContact.includes('김교사'))
+assert.notEqual(gemini!.jobTitle, '김교사')
+
+const geminiShifted = mapTeacherInstitutionFromApplicationAnswers(
+  {
+    'gemini-vt-inst-seed-training-info': { studentCount: 15 },
+    'gemini-vt-inst-seed-contact': { teacherName: '김교사', jobTitle: '김교사' },
+  },
+  'gemini',
+)
+assert.equal(geminiShifted!.jobTitle, undefined)
+assert.ok(geminiShifted!.teacherContact.includes('김교사'))
+
 console.log('institution-basic-info-from-answers.selfcheck: ok')
