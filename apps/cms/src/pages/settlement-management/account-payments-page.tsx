@@ -21,6 +21,9 @@ import {
 } from '@/features/settlement-management/model/account-payments-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
+import { waitForSettlementExportDownload } from '@/features/settlement-management/api/settlement-api-client'
+import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import { pickEligibleAccountPaymentFormIssueRows } from './resolve-toolbar-form-issue-rows'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
 import {
   useBulkTransferExportMutation,
@@ -31,6 +34,9 @@ import { useSettlementBudgetSummaryQuery } from '@/features/settlement-managemen
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canAccessAccountPayments } from '@/shared/lib/account-payments-access'
+import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import { ACCOUNT_PAYMENT_LIST_FILTER_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import {
   FilterTableLayout,
@@ -194,6 +200,8 @@ function useCalendarYear(): number {
 }
 
 export default function AccountPaymentsPage() {
+  const { user } = useAuthStore()
+  const canManageAccountPayments = canAccessAccountPayments(user)
   const [searchParams, setSearchParams] = useSearchParams()
   const calendarYear = useCalendarYear()
   const tabYears = useMemo(
@@ -252,10 +260,12 @@ export default function AccountPaymentsPage() {
   >(null)
   const [bulkTransferPreviewOpen, setBulkTransferPreviewOpen] = useState(false)
   const [taxFilingPreviewOpen, setTaxFilingPreviewOpen] = useState(false)
-  /** 대량이체·세금신고 미리보기에 넘길 행(툴바는 선택 완료 건만, 성공 모달 경로는 조회 결과 완료 건) */
+  /** 대량이체·세금신고 미리보기에 넘길 행 */
   const [issuedFormPreviewRows, setIssuedFormPreviewRows] = useState<AccountPaymentRow[] | null>(
     null
   )
+  const [issuedFormExport, setIssuedFormExport] =
+    useState<SettlementExportHistoryResponse | null>(null)
   const [accountFormIssueBlockedOpen, setAccountFormIssueBlockedOpen] = useState(false)
   const [accountFormIssueBlockedVariant, setAccountFormIssueBlockedVariant] = useState<
     'single' | 'multi'
@@ -568,30 +578,34 @@ export default function AccountPaymentsPage() {
   const total = filteredRows.length
 
   /**
-   * 툴바 양식 발급: 선택한 행만 대상. 선택에 계좌 지급 대기가 있으면 불가 모달.
-   * 성공 시 `AccountPaymentRow[]` (선택분이 모두 완료인 경우).
+   * 툴바 양식 발급: 선택한 행만 대상.
+   * 대량이체 = 지급 대기, 세금신고 = 지급 완료. 조건 불일치면 불가 모달.
    */
-  const resolveToolbarFormIssueRows = useCallback((): AccountPaymentRow[] | null => {
-    if (selectedRowKeys.length === 0) {
-      cmsAlertModal.show({
-        title: '항목 선택 안내',
-        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
-      })
-      return null
-    }
-    const keySet = new Set(selectedRowKeys.map(String))
-    const picked = filteredRows.filter(r => keySet.has(String(r.id)))
-    if (picked.length === 0) {
-      return null
-    }
-    if (picked.some(r => r.accountPaymentStatus !== 'account_paid')) {
-      setAccountFormIssueBlockedVariant(selectedRowKeys.length === 1 ? 'single' : 'multi')
-      setAccountFormIssueBlockedSelectedCount(selectedRowKeys.length)
-      setAccountFormIssueBlockedOpen(true)
-      return null
-    }
-    return picked
-  }, [filteredRows, selectedRowKeys])
+  const resolveToolbarFormIssueRows = useCallback(
+    (kind: 'bulk-transfer' | 'tax-report'): AccountPaymentRow[] | null => {
+      if (selectedRowKeys.length === 0) {
+        cmsAlertModal.show({
+          title: '항목 선택 안내',
+          content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+        })
+        return null
+      }
+      const keySet = new Set(selectedRowKeys.map(String))
+      const picked = filteredRows.filter(r => keySet.has(String(r.id)))
+      if (picked.length === 0) {
+        return null
+      }
+      const eligible = pickEligibleAccountPaymentFormIssueRows(kind, picked)
+      if (eligible == null) {
+        setAccountFormIssueBlockedVariant(selectedRowKeys.length === 1 ? 'single' : 'multi')
+        setAccountFormIssueBlockedSelectedCount(selectedRowKeys.length)
+        setAccountFormIssueBlockedOpen(true)
+        return null
+      }
+      return eligible
+    },
+    [filteredRows, selectedRowKeys]
+  )
 
   const notifyExportError = useCallback((error: unknown, fallback: string) => {
     if (isGlobalApiErrorAlertShown(error)) return
@@ -602,20 +616,22 @@ export default function AccountPaymentsPage() {
   }, [])
 
   const requestExportForKind = useCallback(
-    async (kind: 'bulk-transfer' | 'tax-report') => {
-      if (!accountPaymentsRemote) return
+    async (
+      kind: 'bulk-transfer' | 'tax-report',
+      rows: AccountPaymentRow[]
+    ): Promise<SettlementExportHistoryResponse | null> => {
+      if (!accountPaymentsRemote) return null
       const body = buildAccountPaymentExportRequest({
         kind,
-        selection: { kind: 'all' },
+        selection: { kind: 'selected', rows },
         fromDate: listQueryFilters.fromDate,
         toDate: listQueryFilters.toDate,
       })
       try {
         if (kind === 'bulk-transfer') {
-          await bulkTransferExportMutation.mutateAsync(body)
-        } else {
-          await taxReportExportMutation.mutateAsync(body)
+          return await bulkTransferExportMutation.mutateAsync(body)
         }
+        return await taxReportExportMutation.mutateAsync(body)
       } catch (error) {
         notifyExportError(
           error,
@@ -637,41 +653,57 @@ export default function AccountPaymentsPage() {
   )
 
   const openBulkTransferPreview = useCallback(() => {
-    const rows = resolveToolbarFormIssueRows()
+    const rows = resolveToolbarFormIssueRows('bulk-transfer')
     if (rows === null) return
     void (async () => {
+      let readyExport: SettlementExportHistoryResponse | null = null
       try {
-        await requestExportForKind('bulk-transfer')
-      } catch {
+        const exportResult = await requestExportForKind('bulk-transfer', rows)
+        readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
+        if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
+          throw new Error(readyExport.failureReason || '대량이체 파일 생성에 실패했습니다.')
+        }
+      } catch (error) {
+        notifyExportError(error, '대량이체 파일 생성에 실패했습니다.')
         return
       }
       setIssuedFormPreviewRows(rows)
+      setIssuedFormExport(readyExport)
       setBulkTransferPreviewOpen(true)
     })()
-  }, [requestExportForKind, resolveToolbarFormIssueRows])
+  }, [notifyExportError, requestExportForKind, resolveToolbarFormIssueRows])
 
   const closeBulkTransferPreview = useCallback(() => {
     setBulkTransferPreviewOpen(false)
     setIssuedFormPreviewRows(null)
+    setIssuedFormExport(null)
   }, [])
 
   const openTaxFilingPreview = useCallback(() => {
-    const rows = resolveToolbarFormIssueRows()
+    const rows = resolveToolbarFormIssueRows('tax-report')
     if (rows === null) return
     void (async () => {
+      let readyExport: SettlementExportHistoryResponse | null = null
       try {
-        await requestExportForKind('tax-report')
-      } catch {
+        const exportResult = await requestExportForKind('tax-report', rows)
+        readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
+        if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
+          throw new Error(readyExport.failureReason || '세금신고 파일 생성에 실패했습니다.')
+        }
+      } catch (error) {
+        notifyExportError(error, '세금신고 파일 생성에 실패했습니다.')
         return
       }
       setIssuedFormPreviewRows(rows)
+      setIssuedFormExport(readyExport)
       setTaxFilingPreviewOpen(true)
     })()
-  }, [requestExportForKind, resolveToolbarFormIssueRows])
+  }, [notifyExportError, requestExportForKind, resolveToolbarFormIssueRows])
 
   const closeTaxFilingPreview = useCallback(() => {
     setTaxFilingPreviewOpen(false)
     setIssuedFormPreviewRows(null)
+    setIssuedFormExport(null)
   }, [])
 
   const closeAccountFormIssueBlocked = useCallback(() => {
@@ -691,6 +723,10 @@ export default function AccountPaymentsPage() {
 
   const openAccountPaymentDetail = useCallback(
     (row: AccountPaymentRow) => {
+      if (!canManageAccountPayments) {
+        showAdminAccessDeniedAlert()
+        return
+      }
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
@@ -700,14 +736,15 @@ export default function AccountPaymentsPage() {
         { replace: false }
       )
     },
-    [setSearchParams]
+    [canManageAccountPayments, setSearchParams]
   )
 
   const notifyAccountPaymentPaidError = useCallback((error: unknown) => {
     if (isGlobalApiErrorAlertShown(error)) return
+    const content = getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.')
     cmsAlertModal.show({
-      title: '처리 불가',
-      content: getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.'),
+      title: content.includes('권한이 없습니다') ? '권한 없음' : '처리 불가',
+      content,
     })
   }, [])
 
@@ -740,6 +777,10 @@ export default function AccountPaymentsPage() {
   }, [])
 
   const openAccountPaymentConfirmFromSelection = useCallback(() => {
+    if (!canManageAccountPayments) {
+      showAdminAccessDeniedAlert()
+      return
+    }
     if (selectedRowKeys.length === 0) {
       cmsAlertModal.show({
         title: '항목 선택 안내',
@@ -753,7 +794,7 @@ export default function AccountPaymentsPage() {
       return
     }
     setAccountPayConfirmSelection(picked)
-  }, [filteredRows, selectedRowKeys])
+  }, [canManageAccountPayments, filteredRows, selectedRowKeys])
 
   const accountPaymentsFilterTableActions = useMemo(
     () => (
@@ -807,16 +848,17 @@ export default function AccountPaymentsPage() {
   )
 
   const accountPaymentsAfterActions = useMemo(
-    () => (
-      <FilterTableToolbarButton
-        variant="primary"
-        type="button"
-        onClick={openAccountPaymentConfirmFromSelection}
-      >
-        일괄 지급 처리
-      </FilterTableToolbarButton>
-    ),
-    [openAccountPaymentConfirmFromSelection]
+    () =>
+      canManageAccountPayments ? (
+        <FilterTableToolbarButton
+          variant="primary"
+          type="button"
+          onClick={openAccountPaymentConfirmFromSelection}
+        >
+          일괄 지급 처리
+        </FilterTableToolbarButton>
+      ) : null,
+    [canManageAccountPayments, openAccountPaymentConfirmFromSelection]
   )
 
   const accountPaymentsExcelExport = useMemo((): FilterTableExcelExportConfig => {
@@ -881,15 +923,22 @@ export default function AccountPaymentsPage() {
       return
     }
     void (async () => {
+      let readyExport: SettlementExportHistoryResponse | null = null
       try {
-        await requestExportForKind('bulk-transfer')
-      } catch {
+        const exportResult = await requestExportForKind('bulk-transfer', rowsForPreview)
+        readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
+        if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
+          throw new Error(readyExport.failureReason || '대량이체 파일 생성에 실패했습니다.')
+        }
+      } catch (error) {
+        notifyExportError(error, '대량이체 파일 생성에 실패했습니다.')
         return
       }
       setIssuedFormPreviewRows(rowsForPreview)
+      setIssuedFormExport(readyExport)
       setBulkTransferPreviewOpen(true)
     })()
-  }, [accountPaymentCompleteSuccessContext, requestExportForKind])
+  }, [accountPaymentCompleteSuccessContext, notifyExportError, requestExportForKind])
 
   const filterLayoutClassName = 'account-payments-page__filter-table'
 
@@ -1026,9 +1075,10 @@ export default function AccountPaymentsPage() {
           {viewMode === 'list' ? (
             accountPaymentsRemote && accountPaymentsListQuery.isError ? (
               <div className="page-content-error" role="alert">
-                {accountPaymentsListQuery.error instanceof Error
-                  ? accountPaymentsListQuery.error.message
-                  : '목록을 불러오지 못했습니다.'}
+                {getSettlementApiErrorMessage(
+                  accountPaymentsListQuery.error,
+                  '목록을 불러오지 못했습니다.'
+                )}
               </div>
             ) : (
               <CmsDataTable<AccountPaymentRow>
@@ -1051,9 +1101,10 @@ export default function AccountPaymentsPage() {
             )
           ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
             <div className="page-content-error" role="alert">
-              {accountPaymentsListQuery.error instanceof Error
-                ? accountPaymentsListQuery.error.message
-                : '목록을 불러오지 못했습니다.'}
+              {getSettlementApiErrorMessage(
+                accountPaymentsListQuery.error,
+                '목록을 불러오지 못했습니다.'
+              )}
             </div>
           ) : (
             <AccountPaymentsCalendarView
@@ -1112,6 +1163,7 @@ export default function AccountPaymentsPage() {
             open
             onCancel={closeBulkTransferPreview}
             rows={issuedFormPreviewRows ?? []}
+            serverExport={issuedFormExport}
           />
         </Suspense>
       ) : null}
@@ -1133,6 +1185,7 @@ export default function AccountPaymentsPage() {
             open
             onCancel={closeTaxFilingPreview}
             rows={issuedFormPreviewRows ?? []}
+            serverExport={issuedFormExport}
           />
         </Suspense>
       ) : null}

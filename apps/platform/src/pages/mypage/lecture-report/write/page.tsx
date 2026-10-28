@@ -41,6 +41,7 @@ import {
 } from '@/features/mypage/education/schedules/lib/lecture-report-path'
 import { LectureReportSubmitCompleteModal } from '@/features/mypage/education/schedules/ui/lecture-report-submit-complete-modal'
 import { buildSettlementWritePath } from '@/features/mypage/education/settlements/lib/write-path'
+import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
@@ -544,6 +545,10 @@ export function MypageLectureReportWritePage() {
 
       <LectureReportSubmitCompleteModal
         open={submitCompleteOpen}
+        hidePaymentStatementCta={isGeminiSettlementProgram({
+          programType: program?.programType,
+          detailCase: program?.detailCase,
+        })}
         onLater={() => {
           setSubmitCompleteOpen(false)
           navigate(backPath, { replace: true })

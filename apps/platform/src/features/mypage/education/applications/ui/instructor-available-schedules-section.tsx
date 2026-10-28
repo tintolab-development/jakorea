@@ -6,11 +6,13 @@ type InstructorAvailableSchedulesSectionProps = {
   lines: readonly string[]
   /** 제출 일정은 있으나 표시 문구를 해석하지 못한 경우 `-` */
   unresolvedPlaceholder?: boolean
+  title?: string
 }
 
 export function InstructorAvailableSchedulesSection({
   lines,
   unresolvedPlaceholder = false,
+  title = '강의 진행 가능일',
 }: InstructorAvailableSchedulesSectionProps) {
   const displayLines = lines.length > 0 ? lines : unresolvedPlaceholder ? ['-'] : []
   if (displayLines.length === 0) return null
@@ -22,7 +24,7 @@ export function InstructorAvailableSchedulesSection({
       </PFText>
       <div className={styles.scheduleCard}>
         <PFText as="h3" typo="bd-md-sb" color="black" className={styles.scheduleCardTitle}>
-          강의 진행 가능일
+          {title}
         </PFText>
         <div className={styles.instructorScheduleLines}>
           {displayLines.map((line, lineIndex) => (

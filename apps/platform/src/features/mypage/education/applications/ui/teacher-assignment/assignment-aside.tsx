@@ -35,6 +35,8 @@ function mapAssignedInstructors(
         : instructor.name,
     instructorMemberId: instructor.instructorMemberId ?? undefined,
     name: instructor.name,
+    ...(instructor.phone?.trim() ? { phone: instructor.phone.trim() } : {}),
+    ...(instructor.email?.trim() ? { email: instructor.email.trim() } : {}),
     consentDocumentsRequested: instructor.consentDocumentsRequested,
     consents: instructor.consents.map(consent => ({
       id: consent.documentId != null ? String(consent.documentId) : consent.consentType,

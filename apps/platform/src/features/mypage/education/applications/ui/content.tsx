@@ -1,4 +1,5 @@
-import { PFText } from '@/shared/ui'
+import { PFFormField, PFFormFieldRow, PFFormFieldTable, PFText } from '@/shared/ui'
+import type { GeminiOfficialDocumentDisplay } from '../lib/official-document-from-answers'
 import { InstructorAvailableSchedulesSection } from './instructor-available-schedules-section'
 import { PipeSeparatedInlineText } from './pipe-separated-inline-text'
 import styles from './content.module.css'
@@ -14,6 +15,8 @@ type EducationApplicationContentProps = {
   instructorAvailableScheduleLines?: readonly string[]
   /** 제출 일정 id는 있으나 표시 문구 매핑 실패 — 빈 신청으로 오인하지 않음 */
   instructorAvailableScheduleUnresolved?: boolean
+  availableScheduleTitle?: string
+  officialDocument?: GeminiOfficialDocumentDisplay | null
 }
 
 function resolvePreferredScheduleLines(label: string | undefined): string[] {
@@ -32,6 +35,8 @@ export function EducationApplicationContent({
   alwaysShowPreferredSchedule = false,
   instructorAvailableScheduleLines,
   instructorAvailableScheduleUnresolved = false,
+  availableScheduleTitle,
+  officialDocument,
 }: EducationApplicationContentProps) {
   const intro = selfIntroMotivation?.trim() ?? ''
   const instructorLines = instructorAvailableScheduleLines ?? []
@@ -46,7 +51,9 @@ export function EducationApplicationContent({
   const hasInstructorSchedule = instructorLines.length > 0 || instructorAvailableScheduleUnresolved
   const hasSchedule = alwaysShowPreferredSchedule || displayScheduleLines.length > 0
 
-  if (!hasIntro && !hasSchedule && !hasInstructorSchedule) {
+  const hasOfficialDocument = Boolean(officialDocument)
+
+  if (!hasIntro && !hasSchedule && !hasInstructorSchedule && !hasOfficialDocument) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
         신청 내용이 없습니다.
@@ -56,6 +63,15 @@ export function EducationApplicationContent({
 
   return (
     <div className={styles.root}>
+      {hasOfficialDocument && officialDocument ? (
+        <PFFormFieldTable>
+          <PFFormFieldRow type="double">
+            <PFFormField label="공문 필요 여부">{officialDocument.requiredLabel}</PFFormField>
+            <PFFormField label="공문 필요 정보">{officialDocument.info}</PFFormField>
+          </PFFormFieldRow>
+        </PFFormFieldTable>
+      ) : null}
+
       {hasIntro ? (
         <section className={styles.intro}>
           <PFText as="h2" typo="bd-sm-rg" color="neutral-cool-600" className={styles.introTitle}>
@@ -71,6 +87,7 @@ export function EducationApplicationContent({
         <InstructorAvailableSchedulesSection
           lines={instructorLines}
           unresolvedPlaceholder={instructorLines.length === 0 && instructorAvailableScheduleUnresolved}
+          title={availableScheduleTitle}
         />
       ) : null}
 

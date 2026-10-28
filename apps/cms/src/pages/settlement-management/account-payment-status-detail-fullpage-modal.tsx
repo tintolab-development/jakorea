@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canAccessAccountPayments } from '@/shared/lib/account-payments-access'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -59,6 +61,8 @@ export function AccountPaymentStatusDetailFullPageModal({
 }: AccountPaymentStatusDetailFullPageModalProps) {
   const location = useLocation()
   const [searchParams] = useSearchParams()
+  const { user } = useAuthStore()
+  const canCompleteAccountPayment = canAccessAccountPayments(user)
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
   const detailQuery = useAccountPaymentDetailQuery(row, open && accountPaymentsRemote)
 
@@ -192,7 +196,9 @@ export function AccountPaymentStatusDetailFullPageModal({
                 onBasisDetailClick={handleBasisDetailClick}
                 onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
                 headerActions={
-                  row.accountPaymentStatus === 'account_paid' ? undefined : (
+                  row.accountPaymentStatus === 'account_paid' || !canCompleteAccountPayment
+                    ? undefined
+                    : (
                     <CmsButton
                       variant="primary"
                       size="large"
@@ -210,7 +216,7 @@ export function AccountPaymentStatusDetailFullPageModal({
       </DetailFullPageModal>
 
       <AccountPaymentConfirmationModal
-        open={paymentCompleteConfirmOpen}
+        open={paymentCompleteConfirmOpen && canCompleteAccountPayment}
         onCancel={() => setPaymentCompleteConfirmOpen(false)}
         onConfirm={() => {
           onAccountPaymentCompleted?.(row.id)

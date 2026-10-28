@@ -234,6 +234,16 @@ export function TeacherAssignedInstructorCard({
           />
         </div>
       </div>
+      {instructor.phone?.trim() || instructor.email?.trim() ? (
+        <>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            연락처 {instructor.phone?.trim() || '-'}
+          </PFText>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            이메일 {instructor.email?.trim() || '-'}
+          </PFText>
+        </>
+      ) : null}
 
       {siteMessage ? (
         <SiteSubmissionMessage message={siteMessage} />

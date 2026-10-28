@@ -14,6 +14,8 @@ export type TeacherApplicationContentProps = {
   /** 기관 안내사항 양식이 없는 프로그램(교육받은 교사 등)은 false */
   institutionGuidanceEnabled?: boolean
   showPreferredEducationForm?: boolean
+  /** 제미나이 등 — 제출값 조회 전용 */
+  readOnly?: boolean
   /** 진행 중 + 안내사항 필수 + 조회 방식 데이터가 있을 때만 성범죄경력 행 노출 */
   showSexOffenseMethodRow?: boolean
 }
@@ -25,6 +27,7 @@ export function TeacherApplicationContent({
   showGuidanceWriteLink = false,
   institutionGuidanceEnabled = true,
   showPreferredEducationForm = false,
+  readOnly = false,
   showSexOffenseMethodRow = false,
 }: TeacherApplicationContentProps) {
   const [guidance, setGuidance] = useState(content.guidance)
@@ -48,7 +51,7 @@ export function TeacherApplicationContent({
           applicationId={applicationId}
           applicationType={applicationType}
           guidance={guidance}
-          showWriteLink={showGuidanceWriteLink}
+          showWriteLink={showGuidanceWriteLink && !readOnly}
           showSexOffenseMethodRow={showSexOffenseMethodRow}
         />
       ) : null}

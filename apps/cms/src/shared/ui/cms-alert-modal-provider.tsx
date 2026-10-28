@@ -48,6 +48,9 @@ export function CmsAlertModalProvider({ children }: { children: ReactNode }) {
   const showAlert = useCallback((options: CmsAlertModalShowOptions) => {
     setState(prev => {
       if (prev.open && isAdminAccessDeniedAlert(prev)) {
+        if (!prev.onConfirm && options.onConfirm && isAdminAccessDeniedAlert(options)) {
+          return { ...prev, onConfirm: options.onConfirm }
+        }
         return prev
       }
       return {

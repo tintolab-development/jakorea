@@ -231,6 +231,15 @@ export type PortalProgramDetail = {
   /** GENERAL_*·UJAT 행 대표 이미지. 없으면 null이며 프로그램 썸네일로 채우지 않는다. */
   thumbnailFileObjectId?: number | null
   sponsorNames?: string[]
+  /**
+   * Gemini 공개 상세 연수 요청 가능 기간. 기관 모집 기간과 별도.
+   * 비Gemini·미설정은 null/생략.
+   */
+  trainingRequestStartDate?: string | null
+  trainingRequestEndDate?: string | null
+  /** Gemini 최소 수강 인원. 없으면 `totalParticipants`. */
+  minStudentCount?: number | null
+  totalParticipants?: number | null
   recruitments?: PortalRecruitment[]
   schedules?: PortalSchedule[]
   curricula?: PortalCurriculum[]

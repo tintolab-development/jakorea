@@ -7,6 +7,7 @@ import {
   useApplicationNoticesQuery,
 } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
+import type { GeminiOfficialDocumentDisplay } from '../../applications/lib/official-document-from-answers'
 import { EducationApplicationInfoModal } from '../../applications/ui/application-info-modal'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
 import { useDebouncedValue } from '@/shared/hooks'
@@ -37,6 +38,10 @@ type EducationInProgressNoticePanelProps = {
   preferredEducationScheduleLabel?: string
   preferredEducationScheduleLines?: readonly string[]
   alwaysShowPreferredSchedule?: boolean
+  instructorAvailableScheduleLines?: readonly string[]
+  instructorAvailableScheduleUnresolved?: boolean
+  availableScheduleTitle?: string
+  officialDocument?: GeminiOfficialDocumentDisplay | null
   /** 진행중 「신청 정보」 팝업 — 교사·기관 신청 내용 탭과 동일 */
   applicationInfoBody?: ReactNode
   /** 봉사현황 기관 안내사항 등 — 안내 목록 위 슬롯 */
@@ -54,6 +59,10 @@ export function EducationInProgressNoticePanel({
   preferredEducationScheduleLabel,
   preferredEducationScheduleLines,
   alwaysShowPreferredSchedule,
+  instructorAvailableScheduleLines,
+  instructorAvailableScheduleUnresolved,
+  availableScheduleTitle,
+  officialDocument,
   applicationInfoBody,
   leading,
   applicationType,
@@ -326,6 +335,10 @@ export function EducationInProgressNoticePanel({
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
         preferredEducationScheduleLines={preferredEducationScheduleLines}
         alwaysShowPreferredSchedule={alwaysShowPreferredSchedule}
+        instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+        instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
+        availableScheduleTitle={availableScheduleTitle}
+        officialDocument={officialDocument}
         applicationBody={applicationInfoBody}
         onClose={() => setIsApplicationInfoOpen(false)}
       />

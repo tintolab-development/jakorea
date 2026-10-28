@@ -239,4 +239,27 @@ assert.deepEqual(
 assert.ok(teacherInstructorProgramCase.some(item => item.key === 'lecture-report'))
 assert.ok(!general.some(item => item.key === 'lecture-report'))
 
+const geminiTeacher = buildTeacherInProgressDetailTabItems({
+  ...schoolTeacherOptions,
+  detailCase: 'gemini',
+  programType: 'GEMINI_TRAINING',
+  satisfactionConfigured: true,
+})
+assert.ok(!geminiTeacher.some(item => item.key === 'satisfaction'))
+assert.ok(geminiTeacher.some(item => item.key === 'survey'))
+
+const geminiInstructorTabs = buildInProgressDetailTabItems({
+  detailCase: 'gemini',
+  programType: 'GEMINI_TRAINING',
+  geminiInstructorActivityTabs: true,
+  lectureReportVisible: true,
+  instructorAssignmentVisible: true,
+})
+assert.deepEqual(
+  geminiInstructorTabs.map(item => item.label),
+  ['배정 현황', '정산 현황'],
+)
+assert.ok(!geminiInstructorTabs.some(item => item.key === 'notice'))
+assert.ok(!geminiInstructorTabs.some(item => item.key === 'lecture-report'))
+
 console.log('detail-tabs.teacher.selfcheck: ok')

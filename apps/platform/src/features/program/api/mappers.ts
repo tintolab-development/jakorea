@@ -1002,6 +1002,12 @@ function compactBasicInfoFields(fields: ProgramBasicInfoField[]): ProgramBasicIn
   return fields.filter(field => field.value.trim().length > 0 && field.value !== '-')
 }
 
+function formatGeminiMinStudentCountLabel(remote: PortalProgramDetail): string {
+  const raw = remote.minStudentCount ?? remote.totalParticipants
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) return ''
+  return `${raw}명`
+}
+
 /** 기본정보 그리드 레이아웃 — TRAINED_TEACHER는 강사 모집 카드가 아닌 교육 대상형. */
 function portalBasicInfoLayoutCase(
   programType: string | undefined,
@@ -1046,6 +1052,7 @@ function buildPortalBasicInfoFields(args: {
   recruitmentTargetGroupLabel: string
   recruitmentTargetDetailLabel: string
   educationVenueLabel: string
+  geminiMinStudentCountLabel?: string
 }): ProgramBasicInfoField[] {
   switch (args.detailCase) {
     case 'instructor':
@@ -1094,6 +1101,7 @@ function buildPortalBasicInfoFields(args: {
         { label: '교육 형태', value: args.educationFormLabel },
         { label: '교육 대상', value: args.educationTargetGroupLabel },
         { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
+        { label: '최소 수강 인원', value: args.geminiMinStudentCountLabel ?? '' },
         { label: '교육 장소', value: args.educationVenueLabel },
       ])
     default: {
@@ -1299,6 +1307,8 @@ export function mapPortalProgramDetail(
     detailCase === 'gemini' && (geminiTrainingRequestStart || geminiTrainingRequestEnd)
       ? formatRange(geminiTrainingRequestStart, geminiTrainingRequestEnd)
       : ''
+  const geminiMinStudentCountLabel =
+    detailCase === 'gemini' ? formatGeminiMinStudentCountLabel(remote) : ''
   const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
 
   const programDescription = visibleCopy(
@@ -1353,6 +1363,7 @@ export function mapPortalProgramDetail(
     ...(geminiTrainingRequestPeriodLabel
       ? { geminiTrainingRequestPeriodLabel }
       : {}),
+    ...(geminiMinStudentCountLabel ? { geminiMinStudentCountLabel } : {}),
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetKeys: targets.keys,
@@ -1408,6 +1419,7 @@ export function mapPortalProgramDetail(
       recruitmentTargetGroupLabel,
       recruitmentTargetDetailLabel,
       educationVenueLabel,
+      geminiMinStudentCountLabel,
     }),
     educationStructure,
     sessionRound,
@@ -1429,6 +1441,10 @@ export function mapPortalProgramDetail(
         : recruitmentResolved
           ? recruitmentRows
           : remote.recruitments,
+    ).map(phase =>
+      detailCase === 'gemini' && phase.label === '참여자 모집 기간'
+        ? { ...phase, label: '기관 모집 기간' }
+        : phase,
     ),
     educationSchedules:
       isUjatDetailCase

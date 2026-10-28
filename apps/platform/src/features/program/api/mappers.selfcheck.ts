@@ -1003,6 +1003,7 @@ assert.equal(
   geminiTraining.geminiTrainingRequestPeriodLabel,
   '2026년 9월 1일(화) ~ 2026년 9월 30일(수)',
 )
+assert.equal(geminiTraining.recruitmentPhases[0]?.label, '기관 모집 기간')
 
 const geminiWithoutTrainingRequestPeriod = mapPortalProgramDetail({
   programId: 185004,
