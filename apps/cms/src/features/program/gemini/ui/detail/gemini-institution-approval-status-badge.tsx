@@ -1,13 +1,5 @@
-import { Tag } from 'antd'
-import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import type { GeminiInstitutionApprovalStatus } from '../../model/recruitment/institution-application-types'
-import '@/shared/components/textbook-status-badge.css'
-
-export const GEMINI_INSTITUTION_APPROVAL_STATUS_OPTIONS: GeminiInstitutionApprovalStatus[] = [
-  'PENDING',
-  'APPROVED',
-  'REJECTED',
-]
+import './institution-application-tab.css'
 
 export const GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL: Record<
   GeminiInstitutionApprovalStatus,
@@ -18,7 +10,7 @@ export const GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL: Record<
   REJECTED: '신청 반려',
 }
 
-const STATUS_TO_APPROVAL_KEY: Record<GeminiInstitutionApprovalStatus, ApprovalStatusKey> = {
+const STATUS_MODIFIER: Record<GeminiInstitutionApprovalStatus, string> = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -29,13 +21,11 @@ export function GeminiInstitutionApprovalStatusBadge({
 }: {
   status: GeminiInstitutionApprovalStatus
 }) {
-  const approvalKey = STATUS_TO_APPROVAL_KEY[status]
   return (
-    <Tag
-      className={`app-status-badge textbook-status-badge--${approvalKey}`.trim()}
-      style={{ margin: 0 }}
+    <span
+      className={`gemini-institution-approval-status gemini-institution-approval-status--${STATUS_MODIFIER[status]}`}
     >
       {GEMINI_INSTITUTION_APPROVAL_STATUS_LABEL[status]}
-    </Tag>
+    </span>
   )
 }

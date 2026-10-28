@@ -61,6 +61,7 @@ import {
   updateGeminiRecruitmentRemote,
   type GeminiApprovedTrainingRemoteFilters,
   type GeminiInstructorApplicationRemoteFilters,
+  type GeminiOrganizationApplicationApprovePayload,
   type GeminiOrganizationNotificationResendPayload,
   type GeminiRecruitmentRemoteFilters,
 } from './client'
@@ -372,14 +373,23 @@ export async function deleteGeminiApprovedTrainings(
   }
 }
 
-export async function approveGeminiOrganizationApplications(ids: string[]): Promise<void> {
+export async function approveGeminiOrganizationApplications(
+  ids: string[],
+  payload?: GeminiOrganizationApplicationApprovePayload
+): Promise<void> {
   assertRemoteReady()
   const numericIds = toGeminiNumericIds(ids)
   if (numericIds.length === 0) {
     throw new Error('승인할 신청 ID가 올바르지 않습니다.')
   }
-  if (numericIds.length === 1) {
-    await approveGeminiOrganizationApplicationRemote(String(numericIds[0]))
+  const usesSingleApprovePath =
+    numericIds.length === 1 ||
+    payload?.timing === 'SCHEDULED' ||
+    payload?.timing === 'ON_ANNOUNCEMENT'
+  if (usesSingleApprovePath) {
+    for (const id of numericIds) {
+      await approveGeminiOrganizationApplicationRemote(String(id), payload)
+    }
     return
   }
   await bulkApproveGeminiOrganizationApplicationsRemote(numericIds)
@@ -387,7 +397,7 @@ export async function approveGeminiOrganizationApplications(ids: string[]): Prom
 
 export async function rejectGeminiOrganizationApplications(
   ids: string[],
-  reason?: string
+  payload: { reason: string; timing?: string; scheduledAt?: string }
 ): Promise<void> {
   assertRemoteReady()
   const numericIds = toGeminiNumericIds(ids)
@@ -395,10 +405,10 @@ export async function rejectGeminiOrganizationApplications(
     throw new Error('반려할 신청 ID가 올바르지 않습니다.')
   }
   if (numericIds.length === 1) {
-    await rejectGeminiOrganizationApplicationRemote(String(numericIds[0]), reason)
+    await rejectGeminiOrganizationApplicationRemote(String(numericIds[0]), payload)
     return
   }
-  await bulkRejectGeminiOrganizationApplicationsRemote(numericIds, reason)
+  await bulkRejectGeminiOrganizationApplicationsRemote(numericIds, payload)
 }
 
 export async function resendGeminiOrganizationApplicationNotification(
