@@ -103,10 +103,10 @@ export interface ProgramResponse {
   recruitments?: ProgramRecruitmentResponse[];
   settlementPolicy?: ProgramSettlementPolicyResponse;
   createdAt?: string;
-  /** 최초 등록한 CMS 관리자의 화면 표시명(admin_account.name). program.created_by_admin_id 조인. 이력 없거나 이름 없으면 null. 빈 문자열을 쓰지 않는다. managerName/sponsor 담당자와 같지 않다. */
+  /** 최초 등록한 CMS 관리자 화면 표시명. 이력 없거나 관리자명 없으면 null. 빈 문자열을 쓰지 않는다. */
   createdByName?: string | null;
   updatedAt?: string;
-  /** 마지막으로 프로그램을 수정한 CMS 관리자의 화면 표시명. program.updated_by_admin_id → admin_account.name. 생성 직후는 createdByName과 같다(INSERT 시 updated_by_admin_id=created_by_admin_id). PATCH /api/admin/programs/{id}마다 저장 관리자로만 갱신하고 createdByName은 유지. 이력 없으면 null. */
+  /** 마지막으로 프로그램을 수정한 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. PATCH마다 저장 관리자로 갱신. 이력 없으면 null. */
   updatedByName?: string | null;
   businessStartDate?: string;
   businessEndDate?: string;

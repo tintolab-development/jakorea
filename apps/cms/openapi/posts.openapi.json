@@ -3305,7 +3305,9 @@
           },
           "memberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "정책 확인 전 새 roster 행에 대한 회원 연결은 허용되지 않습니다. 기존 row의 memberId를 그대로 유지하는 용도입니다.",
+            "nullable": true
           },
           "studentName": {
             "type": "string",
@@ -3388,11 +3390,20 @@
           },
           "birthDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "description": "Portal owner 조회 또는 CMS 개인정보 원문 조회에서만 원문 날짜를 반환하며, CMS 기본 조회에서는 null입니다.",
+            "nullable": true
           },
           "birthYear": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "학생명단 저장 생년월일의 연도만 사용합니다. 승인된 회원 연결 정책이 확인될 때까지 회원 정본 연도 fallback은 차단됩니다.",
+            "nullable": true
+          },
+          "maskedBirthDate": {
+            "type": "string",
+            "description": "CMS 기본 학생명단 표시용 생년월일 값(yyyy-**-**). Portal에서는 null이며 저장·수정 요청에 사용할 수 없습니다.",
+            "nullable": true
           },
           "grade": {
             "type": "string"
@@ -24469,9 +24480,19 @@
             "type": "string",
             "format": "date-time"
           },
+          "createdByName": {
+            "type": "string",
+            "description": "최초 등록한 CMS 관리자 화면 표시명. 이력 없거나 관리자명 없으면 null. 빈 문자열을 쓰지 않는다.",
+            "nullable": true
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "updatedByName": {
+            "type": "string",
+            "description": "마지막으로 프로그램을 수정한 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. PATCH마다 저장 관리자로 갱신. 이력 없으면 null.",
+            "nullable": true
           },
           "businessStartDate": {
             "type": "string"
@@ -29562,33 +29583,6 @@
               "DRAFT",
               "PUBLISHED"
             ],
-            "nullable": true
-          }
-        }
-      },
-      "ApiResponseProgramResponse": {
-        "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "요청 처리 성공 여부",
-            "example": false
-          },
-          "data": {
-            "$ref": "#/components/schemas/ProgramResponse",
-            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
-            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
-            "nullable": true
-          },
-          "error": {
-            "$ref": "#/components/schemas/ErrorDetail",
-            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
           }
         }
@@ -45015,7 +45009,7 @@
           "readAt": {
             "type": "string",
             "format": "date-time",
-            "description": "읽음 처리 시각",
+            "description": "읽음 처리 시각. null이면 미읽음, non-null ISO-8601이면 읽음(FE SSOT). clickedAt만 있는 경우는 미읽음.",
             "example": "2026-06-02T09:10:00Z"
           },
           "clickedAt": {
@@ -45637,6 +45631,16 @@
             "items": {
               "type": "string"
             }
+          },
+          "sourceMode": {
+            "type": "string",
+            "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
+            "enum": [
+              "SERVER_RESOLVED",
+              "MANUAL_ALLOWED",
+              "EVENT_ONLY"
+            ],
+            "nullable": true
           }
         }
       },
@@ -46199,7 +46203,8 @@
             "additionalProperties": {
               "type": "integer",
               "format": "int32"
-            }
+            },
+            "description": "바로가기 키별 배지 숫자. FE는 목록을 다시 세지 않고 이 값을 canonical로 표시한다. 누락 키는 0으로 채우지 않음.\nprograms-general-education=GET /api/admin/programs?programType=GENERAL totalElements\nprograms-economy=GET /api/admin/programs?programType=COMPANY_SCHOOL totalElements\nprograms-ujat=GET /api/admin/programs?programType=UJAT totalElements\nprograms-gemini=GET /api/admin/programs?programType=GEMINI totalElements\nprograms-detail=GET /api/admin/programs(유형 필터 없음) totalElements (= home.programCount)\nusers-all=GET /api/admin/users(역할 필터 없음) totalElements. 사람 회원(GENERAL/SCHOOL_TEACHER/INSTRUCTOR 또는 강사 철회). 관리자 계정·순수 학교 셸 제외. home.memberCount(삭제되지 않은 member 전체) 및 GET /api/admin/members/all(회원+관리자 UNION)과 다름.\nusers-school=GET /api/admin/users?role=TEACHER totalElements (SCHOOL_TEACHER)\nusers-instructor=GET /api/admin/users?role=INSTRUCTOR totalElements (철회 강사 제외)\nusers-admin=GET /api/admin/admin-accounts 기본 목록 totalElements (ACTIVE/SUSPENDED, 미삭제)\nnotices=GET /api/admin/content/notices 기본 목록 totalElements (PUBLISHED 공개 전체. isImportant/미읽음 아님)\nfaq=GET /api/admin/content/faqs 기본 목록 totalElements (PUBLISHED 공개 전체)\ninquiries=GET /api/admin/inquiries?status=PENDING totalElements (답변대기 RECEIVED/IN_PROGRESS)\npermission-requests=GET /api/admin/instructor-role-requests?status=PENDING totalElements (강사 권한 신청 대기)\n"
           },
           "calculatedAt": {
             "type": "string",
@@ -47430,7 +47435,7 @@
           },
           "updatedByName": {
             "type": "string",
-            "description": "program에 updated_by 컬럼이 없으면 null",
+            "description": "program.updated_by_admin_id가 가리키는 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. 이력 없으면 null.",
             "nullable": true
           }
         }
@@ -48483,6 +48488,16 @@
             "additionalProperties": {
               "type": "string"
             }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "필터 적용 후 전체 프로그램 수. page/size로 items를 잘라도 이 값이 전체다. 조용히 50건에서 자르지 않는다."
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "description": "totalCount와 동일. 목록 API totalElements와 같은 의미."
           }
         }
       },
@@ -48513,7 +48528,8 @@
             "type": "string"
           },
           "recruitmentStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "참여자 모집 창 SSOT(프로그램 목록 recruitmentStatus와 동일 창). OPEN/RECRUITING=모집 중, SCHEDULED=모집 예정, CLOSED=모집 마감. ACTIVE/OPEN PARTICIPANT 최신 행의 서울 날짜 창. 참여자 모집이 없으면 CLOSED. 프로그램 lifecycle/KPI 실적과 혼용하지 않음."
           },
           "participantRecruitmentStatus": {
             "type": "string"
@@ -48536,38 +48552,42 @@
           "participantAppliedCount": {
             "type": "integer",
             "format": "int32",
-            "description": "참여자 신청 수. 해당 유형 모집이 없으면 생략"
+            "description": "참여자 신청(applied) 수. 승인 수·KPI actualParticipantCount와 다름. 참여자 모집 유형이 없으면 생략(0으로 채우지 않음)."
           },
           "participantCapacity": {
             "type": "integer",
             "format": "int32",
-            "description": "참여자 정원. 해당 유형 모집이 없으면 생략"
+            "description": "참여자 정원. 참여자 모집 유형이 없으면 생략"
           },
           "studentAppliedCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "participantAppliedCount 별칭. 승인 수가 아님. 참여자 모집이 없으면 생략"
           },
           "studentCapacity": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "participantCapacity 별칭. 참여자 모집이 없으면 생략"
           },
           "volunteerAppliedCount": {
             "type": "integer",
             "format": "int32",
-            "description": "봉사자 신청 수. 해당 유형 모집이 없으면 생략"
+            "description": "봉사자 신청 수. instructorAppliedCount로 채우지 않음. 봉사자 모집 유형이 없으면 생략"
           },
           "volunteerCapacity": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "봉사자 정원. 봉사자 모집 유형이 없으면 생략"
           },
           "instructorAppliedCount": {
             "type": "integer",
             "format": "int32",
-            "description": "강사 신청 수. 해당 유형 모집이 없으면 생략"
+            "description": "강사 신청 수. 강사 모집 유형이 없으면 생략"
           },
           "instructorCapacity": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "강사 정원. 강사 모집 유형이 없으면 생략"
           }
         }
       },
@@ -48837,7 +48857,8 @@
           },
           "actualParticipantCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "참여자 KPI 실적. 모집 위젯 participantAppliedCount(신청)와 다른 의미이며 같은 숫자로 강제하지 않음."
           },
           "actualSchoolCount": {
             "type": "integer",
@@ -48888,15 +48909,18 @@
           },
           "programCount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "GET /api/admin/programs(필터 없음) totalElements과 동일. 삭제되지 않은 프로그램 수(관리자 데이터 범위 적용)."
           },
           "memberCount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "member.deleted_at IS NULL인 회원 수. 역할 필터 없음, 관리자 계정(admin_account) 미포함. users-all(사람 회원 디렉터리)과 다를 수 있다."
           },
           "unreadNotificationCount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "GET /api/admin/notifications/unread-count와 동일."
           }
         }
       },

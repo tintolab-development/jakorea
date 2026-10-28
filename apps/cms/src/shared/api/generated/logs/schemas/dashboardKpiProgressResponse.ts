@@ -20,6 +20,7 @@ export interface DashboardKpiProgressResponse {
   targetInstructorCount?: number;
   targetEducationHours?: string;
   targetBudgetAmount?: string;
+  /** 참여자 KPI 실적. 모집 위젯 participantAppliedCount(신청)와 다른 의미이며 같은 숫자로 강제하지 않음. */
   actualParticipantCount?: number;
   actualSchoolCount?: number;
   actualClassCount?: number;
