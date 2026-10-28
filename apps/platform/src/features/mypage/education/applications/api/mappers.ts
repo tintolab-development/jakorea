@@ -164,11 +164,16 @@ export function resolvePortalDisplayStatus(
 function mapDetailCase(
   applicationType: ProgramApplicationType,
   programGroup: string | undefined,
+  programType?: string,
 ): ProgramDetailCase {
+  const type = (programType ?? '').trim().toUpperCase()
+  const isGemini =
+    type === 'GEMINI_TRAINING' || type === 'GEMINI' || type === 'VISITING_TRAINING'
   if (applicationType === 'VOLUNTEER') {
     return (programGroup ?? '').toUpperCase() === 'UJAT' ? 'ujat-volunteer' : 'volunteer'
   }
   if (applicationType === 'INSTRUCTOR') return 'instructor'
+  if (isGemini) return 'gemini'
   if (applicationType === 'ORGANIZATION' && (programGroup ?? '').toUpperCase() === 'UJAT') {
     return 'ujat-participant'
   }
@@ -241,7 +246,7 @@ export function mapPortalProgramApplicationListItem(
   if (!applicationType || row.applicationId == null || row.programId == null || !title) return null
 
   const displayStatus = resolvePortalDisplayStatus(row)
-  const detailCase = mapDetailCase(applicationType, row.programGroup)
+  const detailCase = mapDetailCase(applicationType, row.programGroup, row.programType)
   const thumbnailUrl =
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
   const ujatPortalBannerState = readUjatPortalBannerState(row.supplement)
@@ -424,6 +429,8 @@ function mapTeacherAssignedInstructor(
     id: String(instructorMemberId),
     instructorMemberId,
     name,
+    ...(assignment.instructorPhone?.trim() ? { phone: assignment.instructorPhone.trim() } : {}),
+    ...(assignment.instructorEmail?.trim() ? { email: assignment.instructorEmail.trim() } : {}),
   }
 }
 
@@ -441,7 +448,7 @@ export function mapPortalProgramApplicationDetail(
     // 상세 화면의 식별값·제목은 신청 상세 응답의 루트 필드만 사용한다.
     // nested program 값으로 보정하면 다른 모집행 또는 오래된 projection이
     // 화면에 섞일 수 있다.
-    programType: detail.programType,
+    programType: detail.programType ?? detail.program?.programType,
     programGroup: detail.programGroup,
     portalCategories: detail.portalCategories ?? detail.program?.portalCategories,
     thumbnailFileObjectId: detail.thumbnailFileObjectId ?? detail.program?.thumbnailFileObjectId,

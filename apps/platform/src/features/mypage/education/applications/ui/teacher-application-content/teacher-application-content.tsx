@@ -14,6 +14,8 @@ export type TeacherApplicationContentProps = {
   /** 기관 안내사항 양식이 없는 프로그램(교육받은 교사 등)은 false */
   institutionGuidanceEnabled?: boolean
   showPreferredEducationForm?: boolean
+  /** 제미나이 등 — 제출값 조회 전용 */
+  readOnly?: boolean
 }
 
 export function TeacherApplicationContent({
@@ -23,6 +25,7 @@ export function TeacherApplicationContent({
   showGuidanceWriteLink = false,
   institutionGuidanceEnabled = true,
   showPreferredEducationForm = false,
+  readOnly = false,
 }: TeacherApplicationContentProps) {
   const [guidance, setGuidance] = useState(content.guidance)
 
@@ -45,7 +48,7 @@ export function TeacherApplicationContent({
           applicationId={applicationId}
           applicationType={applicationType}
           guidance={guidance}
-          showWriteLink={showGuidanceWriteLink}
+          showWriteLink={showGuidanceWriteLink && !readOnly}
         />
       ) : null}
       <PreferredSchedules schedules={content.preferredSchedules} />

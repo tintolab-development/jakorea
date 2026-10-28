@@ -2,6 +2,7 @@ import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/parag
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-institution-draft'
 import type { ProgramDetailCase } from '@/features/program'
 import {
   basicInfoValuesFromDraftAnswer,
@@ -43,7 +44,7 @@ function resolveBasicInfoAnswerKey(
   programGroup?: string,
 ): string {
   if (detailCase === 'gemini') {
-    return PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo
+    return GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.trainingInfo
   }
   if (detailCase === 'ujat-participant') {
     return UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
@@ -166,12 +167,40 @@ function institutionFromBasicInfoValues(
   }
 }
 
+function asRecordIfObject(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  return value as Record<string, unknown>
+}
+
+function readGeminiInstitutionExtras(
+  answers: Record<string, unknown>,
+): Pick<EducationTeacherApplicationInstitution, 'studentCount' | 'jobTitle' | 'subject'> {
+  const training = asRecordIfObject(
+    answers[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.trainingInfo],
+  )
+  const contact = asRecordIfObject(
+    answers[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.contactPerson],
+  )
+  const studentCount = training
+    ? readAnswerStringField(training, 'studentCount', 'totalStudents', 'participantCount')
+    : ''
+  const jobTitle = contact ? readAnswerStringField(contact, 'jobTitle', 'position', 'rank') : ''
+  const subject = contact ? readAnswerStringField(contact, 'subject', 'classSubject') : ''
+  return {
+    ...(studentCount ? { studentCount: studentCount.endsWith('명') ? studentCount : `${studentCount}명` } : {}),
+    ...(jobTitle ? { jobTitle } : {}),
+    ...(subject ? { subject } : {}),
+  }
+}
+
 export function mapTeacherInstitutionFromApplicationAnswers(
   answers: Record<string, unknown> | undefined,
   detailCase: ProgramDetailCase | undefined,
   programGroup?: string,
 ): EducationTeacherApplicationInstitution | null {
   if (!answers || Object.keys(answers).length === 0) return null
+
+  const geminiExtras = detailCase === 'gemini' ? readGeminiInstitutionExtras(answers) : {}
 
   for (const key of basicInfoAnswerKeysInPriority(detailCase, programGroup)) {
     const raw = answers[key]
@@ -182,7 +211,24 @@ export function mapTeacherInstitutionFromApplicationAnswers(
         ? (raw as Record<string, unknown>)
         : {}
     const preferredFromAnswers = readPreferredFieldsFromAnswerRow(row, values)
-    return institutionFromBasicInfoValues(values, preferredFromAnswers)
+    return {
+      ...institutionFromBasicInfoValues(values, preferredFromAnswers),
+      ...geminiExtras,
+    }
+  }
+
+  if (detailCase === 'gemini' && (geminiExtras.studentCount || geminiExtras.jobTitle || geminiExtras.subject)) {
+    return {
+      name: '',
+      grade: '',
+      address: '',
+      addressDetail: '',
+      classAndHeadcount: geminiExtras.studentCount ?? '',
+      teacherContact: '',
+      reason: '',
+      otherRequests: '',
+      ...geminiExtras,
+    }
   }
 
   return null
