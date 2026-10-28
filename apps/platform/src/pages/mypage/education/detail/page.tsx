@@ -69,6 +69,7 @@ import {
   resolveEducationNoticeAuthorDisplayName,
 } from '@/features/mypage/education/notices'
 import { buildTeacherApplicationContentFromPortal } from '@/features/mypage/education/applications/lib/teacher-application-content-from-portal'
+import { resolveTeacherSexOffenseInquiryCase } from '@/features/mypage/education/applications/lib/institution-guidance-from-answers'
 import {
   isOrganizationEducationApplication,
   isTrainedTeachersEducationProgram,
@@ -365,6 +366,19 @@ export function MypageEducationDetailPage() {
     [application, program],
   )
 
+  const sexOffenseInquiryCase = useMemo(
+    () =>
+      application
+        ? resolveTeacherSexOffenseInquiryCase(application.applicationAnswers, application.detailCase)
+        : null,
+    [application],
+  )
+
+  const showSexOffenseMethodRow =
+    Boolean(application && application.displayStatus === 'in_progress') &&
+    showTeacherInstitutionGuidanceOnTab &&
+    sexOffenseInquiryCase != null
+
   const showTeacherGuidanceEditLink = useMemo(() => {
     if (!application || !program) return false
     return shouldShowTeacherInstitutionGuidanceEditLink({
@@ -401,6 +415,7 @@ export function MypageEducationDetailPage() {
           program.educationForm === 'participant_choice' ||
           isTrainedTeachersEducationProgram(program)
         }
+        showSexOffenseMethodRow={showSexOffenseMethodRow}
       />
     )
   }, [
@@ -412,6 +427,7 @@ export function MypageEducationDetailPage() {
     program,
     program?.educationForm,
     routeApplicationType,
+    showSexOffenseMethodRow,
     showTeacherGuidanceEditLink,
     showTeacherInstitutionGuidanceOnTab,
     teacherApplicationContent,
@@ -692,6 +708,7 @@ export function MypageEducationDetailPage() {
             program.educationForm === 'participant_choice' ||
             isTrainedTeachersEducationProgram(program)
           }
+          showSexOffenseMethodRow={showSexOffenseMethodRow}
         />
       ) : (
         <EducationApplicationContent
@@ -852,6 +869,9 @@ export function MypageEducationDetailPage() {
               applicationId={application.id}
               applicationType={application.applicationType ?? routeApplicationType ?? undefined}
               assignment={application.teacherAssignment}
+              sexOffenseInquiryCase={
+                application.displayStatus === 'in_progress' ? sexOffenseInquiryCase : undefined
+              }
             />
           ) : undefined
         }

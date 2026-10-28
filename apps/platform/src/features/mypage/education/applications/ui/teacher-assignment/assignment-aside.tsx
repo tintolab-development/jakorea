@@ -1,3 +1,4 @@
+import type { SexOffenseInquiryCase } from '@jakorea/form-schema/program-application'
 import type {
   EducationTeacherAssignedInstructor,
   EducationTeacherAssignment,
@@ -13,12 +14,14 @@ export type TeacherEducationAssignmentAsideProps = {
   applicationId?: string
   applicationType?: ProgramApplicationType
   assignment: EducationTeacherAssignment
+  sexOffenseInquiryCase?: SexOffenseInquiryCase | null
 }
 
 export function TeacherEducationAssignmentAside({
   applicationId,
   applicationType,
   assignment,
+  sexOffenseInquiryCase,
 }: TeacherEducationAssignmentAsideProps) {
   const assignedQuery = useAssignedInstructorsQuery(applicationId, applicationType)
   const instructors: EducationTeacherAssignedInstructor[] = assignedQuery.isSuccess
@@ -58,6 +61,7 @@ export function TeacherEducationAssignmentAside({
           }
           instructors={instructors}
           onRefresh={() => assignedQuery.refetch()}
+          sexOffenseInquiryCase={sexOffenseInquiryCase}
         />
       ) : null}
     </aside>

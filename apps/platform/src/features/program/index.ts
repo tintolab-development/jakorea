@@ -145,7 +145,6 @@ export {
   parseEducationTargetFilter,
   readProgramsListParams,
 } from './lib/list-params'
-export { filterAndSortPrograms } from './lib/filter-programs'
 export {
   getProgramIdFromPath,
   isProgramsPath,
