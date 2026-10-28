@@ -41,6 +41,16 @@ describe('gemini delete-guide', () => {
     ).toBe(false)
   })
 
+  it('임시저장 공고는 신청 카운트가 있어도 삭제할 수 있다', () => {
+    expect(
+      geminiRecruitmentDeleteBlocked({
+        isDraft: true,
+        organizationApplicationCount: 2,
+        approvedOrganizationApplicationCount: 1,
+      })
+    ).toBe(false)
+  })
+
   it('강사가 매핑된 연수는 삭제를 막는다', () => {
     expect(geminiApprovedTrainingDeleteBlocked({ instructorAssigned: true })).toBe(true)
     expect(geminiApprovedTrainingDeleteBlocked({ instructorAssigned: false })).toBe(false)
