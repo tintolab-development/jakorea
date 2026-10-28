@@ -3,7 +3,8 @@
  *
  * SSOT: GET /api/portal/me/consents (MemberPortalConsentSummary). 서버 값을 그대로 판정하고 mock 은 쓰지 않는다.
  * - 모든 프로그램 신청: PORTRAIT_RIGHTS
- * - UJAT 신청: FACILITATOR_PLEDGE · ADMINISTRATIVE_INFO_CONSENT · CRIMINAL_HISTORY_CHECK_CONSENT · PORTRAIT_RIGHTS
+ * - UJAT 신청: FACILITATOR_PLEDGE · CRIMINAL_HISTORY_CHECK_CONSENT · PORTRAIT_RIGHTS
+ *   (ADMINISTRATIVE_INFO_CONSENT 는 2026-10-29 필수 해제 — 마이페이지 작성·조회는 유지)
  * - 서버가 NOT_APPLICABLE(applicable=false) 로 내린 항목(예: 만 14세 미만 성범죄 경력조회)은 건너뛴다.
  * - 이미 동의 완료(만료·재동의·정책 갱신 아님)면 통과.
  * - 조회 실패·행 누락은 막지 않는다(fail-open). 서버 409 가 최종 방어선.
@@ -21,10 +22,9 @@ export type RequiredApplyConsentType =
 
 export const PORTRAIT_RIGHTS_CONSENT_TYPE: RequiredApplyConsentType = 'PORTRAIT_RIGHTS'
 
-/** UJAT 4종 — 마이페이지 동의서·서약서 노출 순서와 같게 둔다. */
+/** UJAT 3종 — 마이페이지 동의서·서약서 노출 순서와 같게 둔다. 행정정보 공동이용은 선택이라 제외. */
 export const UJAT_REQUIRED_APPLY_CONSENT_TYPES: readonly RequiredApplyConsentType[] = [
   'FACILITATOR_PLEDGE',
-  'ADMINISTRATIVE_INFO_CONSENT',
   'CRIMINAL_HISTORY_CHECK_CONSENT',
   'PORTRAIT_RIGHTS',
 ]

@@ -676,6 +676,23 @@ const runtimeFixedItems = readRuntimeFixedScheduleChoiceItems(
 assert.deepEqual(runtimeFixedItems, [{ id: 'schedule:187123', label: '교육 일정' }])
 assert.deepEqual(
   readRuntimeFixedScheduleChoiceItems(
+    {
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleOptions: [
+        { id: '901', value: 'schedule:901', label: '사전 교육' },
+        { id: '187123', value: 'schedule:187123', label: '교육 일정' },
+        { id: '902', value: 'schedule:902', label: '봉사자 사전교육' },
+      ],
+    },
+    { items: [] }
+  ),
+  [
+    { id: 'schedule:187123', label: '교육 일정' },
+    { id: 'schedule:902', label: '봉사자 사전교육' },
+  ]
+)
+assert.deepEqual(
+  readRuntimeFixedScheduleChoiceItems(
     { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [{ scheduleId: 187123 }] },
     { items: [] }
   ),
