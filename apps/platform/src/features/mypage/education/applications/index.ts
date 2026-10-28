@@ -26,6 +26,12 @@ export {
   EDUCATION_TEACHER_DELIVERY_STATUS_LABEL,
   hasTeacherAssignmentAsideContent,
 } from './model/types'
+export {
+  resolveAssignedInstructorCardBody,
+  resolveAssignedInstructorQueryView,
+  shouldMountTeacherEducationAssignmentAside,
+  shouldShowTeacherAssignmentAside,
+} from './lib/teacher-assignment-aside'
 export { EDUCATION_APPLICATION_TAB_ITEMS } from './lib/application-tab-items'
 export {
   educationInstitutionGuidanceWritePath,

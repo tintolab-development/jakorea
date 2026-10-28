@@ -26,16 +26,17 @@
   margin-top: 16px;
   color: var(--main-BK, #3d3d3d);
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
-  line-height: 1.6;
+  line-height: 150%;
 }
 
 .noteList {
   display: flex;
   flex-direction: column;
   margin: 0;
-  padding-left: 20px;
+  padding: 0;
+  list-style: none;
 }
 
 .noteList > li {
@@ -46,20 +47,24 @@
   margin-top: 4px;
 }
 
+.noteList > li::before {
+  content: '• ';
+}
+
 .noteItem {
-  display: list-item;
+  display: block;
   margin: 0;
   color: var(--main-BK, #3d3d3d);
   font-family: var(--font-family-base);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
-  line-height: 1.6;
+  line-height: 150%;
   letter-spacing: -0.16px;
 }
 
 :global(.form-template-host) .notes .noteItem {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
-  line-height: 1.6;
+  line-height: 150%;
   letter-spacing: -0.16px;
 }

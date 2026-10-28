@@ -43,6 +43,7 @@ import {
   UjatScheduleBanner,
   UjatVolunteerAssignmentPanel,
   TeacherEducationAssignmentAside,
+  shouldMountTeacherEducationAssignmentAside,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
   useProbeEducationApplicationType,
@@ -660,8 +661,12 @@ export function MypageEducationDetailPage() {
   }
   const showCancelCta =
     application.cancellable ?? canCancelEducationApplication(application.displayStatus)
-  const showTeacherAssignment =
-    isTeacher && Boolean(application.teacherAssignment)
+  const showTeacherAssignment = shouldMountTeacherEducationAssignmentAside({
+    isTeacher,
+    applicationType:
+      application.applicationType ?? routeApplicationType ?? resolvedApplicationType,
+    hasTeacherAssignment: Boolean(application.teacherAssignment),
+  })
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection =
     isActivitySection(section) &&
@@ -870,11 +875,11 @@ export function MypageEducationDetailPage() {
           />
         }
         aside={
-          showTeacherAssignment && application.teacherAssignment ? (
+          showTeacherAssignment ? (
             <TeacherEducationAssignmentAside
               applicationId={application.id}
               applicationType={application.applicationType ?? routeApplicationType ?? undefined}
-              assignment={application.teacherAssignment}
+              assignment={application.teacherAssignment ?? { instructors: [] }}
               sexOffenseInquiryCase={
                 application.displayStatus === 'in_progress' ? sexOffenseInquiryCase : undefined
               }

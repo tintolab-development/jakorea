@@ -3,23 +3,34 @@
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  min-width: 0;
 }
 
 .program-application-form-instructor__crime-guide-body {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  padding-inline: 8px;
   margin: 0;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 24px */
+  line-height: 150%;
+  text-align: left;
+  overflow-wrap: break-word;
 }
 
 .program-application-form-instructor__crime-guide-body p {
   margin: 0;
+}
+
+.program-application-form-instructor__crime-guide-list {
+  margin: 24px 0;
+  padding-left: 27px;
+  list-style: disc;
+}
+
+.program-application-form-instructor__crime-guide-list > li + li {
+  margin-top: 8px;
 }
 
 .program-application-form-instructor__crime-guide-confirm.app-radio-group {
@@ -27,6 +38,7 @@
   width: auto;
   min-height: 40px;
   align-items: center;
+  padding: 4px;
   white-space: nowrap;
 }
 

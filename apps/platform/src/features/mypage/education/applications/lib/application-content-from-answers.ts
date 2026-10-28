@@ -259,25 +259,32 @@ function mapStoredScheduleLabelToFormOptions(
     .join('\n')
 }
 
+function readAnswerToken(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(Math.trunc(value))
+  }
+  return readTrimmedString(value)
+}
+
 function flattenAnswerStrings(raw: unknown): string[] {
-  if (typeof raw === 'string') {
-    const trimmed = raw.trim()
-    return trimmed ? [trimmed] : []
+  if (typeof raw === 'string' || typeof raw === 'number') {
+    const token = readAnswerToken(raw)
+    return token ? [token] : []
   }
   if (Array.isArray(raw)) {
     const out: string[] = []
     for (const item of raw) {
-      if (typeof item === 'string') {
-        const trimmed = item.trim()
-        if (trimmed) out.push(trimmed)
+      const direct = readAnswerToken(item)
+      if (direct) {
+        out.push(direct)
         continue
       }
       const row = asRecord(item)
       if (!row) continue
       const value =
-        readTrimmedString(row.value) ||
-        readTrimmedString(row.option_value) ||
-        readTrimmedString(row.id) ||
+        readAnswerToken(row.value) ||
+        readAnswerToken(row.option_value) ||
+        readAnswerToken(row.id) ||
         readTrimmedString(row.label) ||
         readTrimmedString(row.displayLabel)
       if (value) out.push(value)
@@ -287,9 +294,9 @@ function flattenAnswerStrings(raw: unknown): string[] {
   const row = asRecord(raw)
   if (!row) return []
   const value =
-    readTrimmedString(row.value) ||
-    readTrimmedString(row.option_value) ||
-    readTrimmedString(row.id)
+    readAnswerToken(row.value) ||
+    readAnswerToken(row.option_value) ||
+    readAnswerToken(row.id)
   return value ? [value] : []
 }
 
@@ -367,7 +374,7 @@ export function collectPreferredScheduleOptionValues(
     ]
     if (selectedIds.length > 0) {
       for (const id of selectedIds) {
-        const token = readTrimmedString(id)
+        const token = readAnswerToken(id)
         if (!token || !isOpaqueScheduleOptionToken(token) || seen.has(token)) continue
         seen.add(token)
         out.push(token)

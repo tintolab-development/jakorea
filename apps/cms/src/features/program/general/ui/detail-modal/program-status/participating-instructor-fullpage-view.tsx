@@ -96,6 +96,10 @@ import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confi
 import { AssignGuideModal } from './assign-guide-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
+import {
+  countAssignedInstructorsForOrganization,
+  resolveRequiredAssignableInstructorCount,
+} from '@/features/program/general/lib/institution-select-assign'
 import { ParticipatingInstructorApplicationInfo } from './participating-instructor-application-info'
 import { useParticipatingInstructorDetailEdit } from '@/features/program/general/hooks/use-participating-instructor-detail-edit'
 import { getParticipatingInstructorActivityWithdrawScheduleOptions } from '@/features/program/general/lib/participating-instructor-activity-withdraw'
@@ -849,8 +853,8 @@ export function ParticipatingInstructorFullpageView({
   }, [])
 
   const handleAssignGuideConfirm = useCallback(async (payload: PermissionModalPayload) => {
-    if (!assignGuideMode || !assignGuideSchoolId) return
-    if (assignGuideInFlightRef.current) return
+    if (!assignGuideMode || !assignGuideSchoolId) return false
+    if (assignGuideInFlightRef.current) return false
 
     const memberId = Number(mergedInstructor.memberId)
     if (!Number.isFinite(memberId) || memberId <= 0) {
@@ -858,25 +862,26 @@ export function ParticipatingInstructorFullpageView({
         title: '안내',
         content: '강사 memberId가 없어 배정할 수 없습니다.',
       })
-      return
+      return false
     }
 
-    const rowsToAssign = waitingSchools.filter(
-      w =>
-        selectedWaitingSchoolKeys.includes(w.id) &&
-        w.assignmentStatus === 'waiting' &&
-        (assignGuideMode === 'select'
-          ? w.schoolId === assignGuideSchoolId || w.id === assignGuideSchoolId
-          : true)
-    )
-    if (rowsToAssign.length === 0) return
+    const rowsToAssign = waitingSchools.filter(w => {
+      if (w.assignmentStatus !== 'waiting') return false
+      const matchesInstitution =
+        w.schoolId === assignGuideSchoolId || w.id === assignGuideSchoolId
+      if (assignGuideMode === 'select') {
+        return selectedWaitingSchoolKeys.includes(w.id) && matchesInstitution
+      }
+      return matchesInstitution
+    })
+    if (rowsToAssign.length === 0) return false
 
     if (!institutionAssignment.remoteEnabled) {
       notifyProgramApiUnavailable(
         'general-participating-instructor-assign',
         '일반 프로그램 · 참여 강사 기관 배정'
       )
-      return
+      return false
     }
 
     assignGuideInFlightRef.current = true
@@ -895,7 +900,7 @@ export function ParticipatingInstructorFullpageView({
             title: '안내',
             content: `${waitingRow.schoolName} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
           })
-          return
+          return false
         }
 
         const orgAppId = Number(waitingRow.organizationApplicationId)
@@ -904,7 +909,7 @@ export function ParticipatingInstructorFullpageView({
             title: '안내',
             content: `${waitingRow.schoolName} 기관의 organizationApplicationId가 없어 배정할 수 없습니다.`,
           })
-          return
+          return false
         }
 
         if (!hasAssignableOrganizationInstructorSchedule(waitingRow.sessions)) {
@@ -912,7 +917,7 @@ export function ParticipatingInstructorFullpageView({
             title: '안내',
             content: `${waitingRow.schoolName} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
           })
-          return
+          return false
         }
 
         const targetSessions = listAssignableSessionsForWaitingRow(waitingRow, selectedSessionKeys)
@@ -922,7 +927,7 @@ export function ParticipatingInstructorFullpageView({
             title: '안내',
             content: '교육 배정일을 선택해 주세요.',
           })
-          return
+          return false
         }
 
         for (const session of targetSessions) {
@@ -932,7 +937,7 @@ export function ParticipatingInstructorFullpageView({
               title: '안내',
               content: `${waitingRow.schoolName} — 배정 가능한 교육 일정이 없습니다. 기관의 교육 일정 확정 후 다시 시도해 주세요.`,
             })
-            return
+            return false
           }
 
           await createInstructorAssignmentRemote(program.id, {
@@ -952,22 +957,32 @@ export function ParticipatingInstructorFullpageView({
       }
 
       await institutionAssignment.invalidate()
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.instructors(program.id),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.instructorList(program.id),
+      })
+      if (hasInstructorApplicationId && instructorApplicationId) {
+        await queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.instructorDetail(instructorApplicationId),
+        })
+      }
       setSelectedWaitingSchoolKeys([])
-      closeAssignGuideModal()
+      return true
     } catch (error) {
       const scopeMessage = formatInstructorOrganizationScheduleScopeMessage(error)
       if (scopeMessage) {
         await institutionAssignment.invalidate()
-        setSelectedWaitingSchoolKeys([])
-        closeAssignGuideModal()
         showAlert({ title: '배정 실패', content: scopeMessage })
-        return
+        return false
       }
       const message =
         error instanceof Error && error.message.trim()
           ? error.message
           : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
       showAlert({ title: '배정 실패', content: message })
+      return false
     } finally {
       assignGuideInFlightRef.current = false
       setAssignGuideSubmitting(false)
@@ -978,13 +993,15 @@ export function ParticipatingInstructorFullpageView({
     assignGuideSchoolId,
     assignGuideSessionIds,
     assignedSchools,
-    closeAssignGuideModal,
+    hasInstructorApplicationId,
     institutionAssignment,
+    instructorApplicationId,
     instructorList,
     mergedInstructor,
     mergedInstructor.instructorApplicationId,
     mergedInstructor.memberId,
     program.id,
+    queryClient,
     schoolRows,
     selectedWaitingSchoolKeys,
     showAlert,
@@ -1029,6 +1046,25 @@ export function ParticipatingInstructorFullpageView({
     () => mapParticipatingSessionsToInstructorAssignOptions(assignGuideSchool?.sessions),
     [assignGuideSchool]
   )
+
+  const assignGuideInstitutionName =
+    assignGuideInstitutionOptions.find(option => option.value === assignGuideSchoolId)?.label ?? ''
+
+  const assignGuideWaitingRow = useMemo(
+    () =>
+      waitingSchools.find(row => (row.schoolId ?? row.id) === assignGuideSchoolId) ??
+      waitingSchools.find(row => row.id === assignGuideSchoolId) ??
+      null,
+    [assignGuideSchoolId, waitingSchools]
+  )
+
+  const assignGuideCurrentCount = countAssignedInstructorsForOrganization({
+    assignments: institutionAssignment.assignments,
+    boardLoaded: institutionAssignment.boardLoaded,
+    organizationApplicationId: assignGuideWaitingRow?.organizationApplicationId,
+    organizationName: assignGuideInstitutionName || assignGuideWaitingRow?.schoolName,
+  })
+  const assignGuideRequiredCount = resolveRequiredAssignableInstructorCount(program)
 
   useEffect(() => {
     setAssignGuideSessionIds([])
@@ -1546,11 +1582,14 @@ export function ParticipatingInstructorFullpageView({
                 role={assignGuideRole}
                 sessionOptions={assignGuideSessionOptions}
                 selectedSessionIds={assignGuideSessionIds}
+                currentCount={assignGuideCurrentCount}
+                requiredCount={assignGuideRequiredCount}
                 onInstitutionChange={setAssignGuideSchoolId}
                 onRoleChange={setAssignGuideRole}
                 onSessionIdsChange={setAssignGuideSessionIds}
                 onCancel={closeAssignGuideModal}
                 onConfirm={handleAssignGuideConfirm}
+                onComplete={closeAssignGuideModal}
                 confirmLoading={assignGuideSubmitting}
               />
             </div>

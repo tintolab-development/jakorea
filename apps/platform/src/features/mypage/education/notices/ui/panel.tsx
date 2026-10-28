@@ -39,6 +39,7 @@ type EducationInProgressNoticePanelProps = {
   preferredEducationScheduleLines?: readonly string[]
   alwaysShowPreferredSchedule?: boolean
   instructorAvailableScheduleLines?: readonly string[]
+  instructorAvailableScheduleUnresolved?: boolean
   availableScheduleTitle?: string
   officialDocument?: GeminiOfficialDocumentDisplay | null
   /** 진행중 「신청 정보」 팝업 — 교사·기관 신청 내용 탭과 동일 */
@@ -59,6 +60,7 @@ export function EducationInProgressNoticePanel({
   preferredEducationScheduleLines,
   alwaysShowPreferredSchedule,
   instructorAvailableScheduleLines,
+  instructorAvailableScheduleUnresolved,
   availableScheduleTitle,
   officialDocument,
   applicationInfoBody,
@@ -334,6 +336,7 @@ export function EducationInProgressNoticePanel({
         preferredEducationScheduleLines={preferredEducationScheduleLines}
         alwaysShowPreferredSchedule={alwaysShowPreferredSchedule}
         instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+        instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
         availableScheduleTitle={availableScheduleTitle}
         officialDocument={officialDocument}
         applicationBody={applicationInfoBody}

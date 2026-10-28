@@ -213,11 +213,11 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
         ) : null}
       </DetailInfoForm>
       <div className="institution-sex-offense-inquiry__notes">
-        <ol className="institution-sex-offense-inquiry__note-list">
+        <ul className="institution-sex-offense-inquiry__note-list">
           {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES.map(note => (
             <li key={note}>{note}</li>
           ))}
-        </ol>
+        </ul>
       </div>
     </div>
   )

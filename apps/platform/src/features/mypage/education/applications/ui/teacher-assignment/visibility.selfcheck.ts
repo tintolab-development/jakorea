@@ -1,26 +1,114 @@
 import assert from 'node:assert/strict'
+import {
+  resolveAssignedInstructorCardBody,
+  resolveAssignedInstructorQueryView,
+  shouldMountTeacherEducationAssignmentAside,
+  shouldShowTeacherAssignmentAside,
+} from '../../lib/teacher-assignment-aside.ts'
 
-type PlatformMemberProfile =
-  | 'individual'
-  | 'school_teacher'
-  | 'instructor_only'
-  | 'instructor_dual'
+assert.equal(
+  shouldMountTeacherEducationAssignmentAside({
+    isTeacher: true,
+    applicationType: 'ORGANIZATION',
+    hasTeacherAssignment: false,
+  }),
+  true,
+)
+assert.equal(
+  shouldMountTeacherEducationAssignmentAside({
+    isTeacher: true,
+    applicationType: 'INDIVIDUAL',
+    hasTeacherAssignment: false,
+  }),
+  true,
+)
+assert.equal(
+  shouldMountTeacherEducationAssignmentAside({
+    isTeacher: true,
+    applicationType: 'VOLUNTEER',
+    hasTeacherAssignment: false,
+  }),
+  false,
+)
+assert.equal(
+  shouldMountTeacherEducationAssignmentAside({
+    isTeacher: false,
+    applicationType: 'ORGANIZATION',
+    hasTeacherAssignment: true,
+  }),
+  false,
+)
 
-function isSchoolTeacherMypageProfile(profile: PlatformMemberProfile) {
-  return profile === 'school_teacher'
-}
+assert.equal(
+  shouldShowTeacherAssignmentAside({
+    hasTextbook: false,
+    instructorView: resolveAssignedInstructorQueryView({
+      enabled: true,
+      isPending: true,
+      isError: false,
+      isSuccess: false,
+      instructorCount: 0,
+    }),
+  }),
+  true,
+)
+assert.equal(
+  shouldShowTeacherAssignmentAside({
+    hasTextbook: false,
+    instructorView: resolveAssignedInstructorQueryView({
+      enabled: true,
+      isPending: false,
+      isError: true,
+      isSuccess: false,
+      instructorCount: 0,
+    }),
+  }),
+  true,
+)
+assert.equal(
+  shouldShowTeacherAssignmentAside({
+    hasTextbook: false,
+    instructorView: resolveAssignedInstructorQueryView({
+      enabled: true,
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      instructorCount: 0,
+    }),
+  }),
+  false,
+)
+assert.equal(
+  shouldShowTeacherAssignmentAside({
+    hasTextbook: true,
+    instructorView: resolveAssignedInstructorQueryView({
+      enabled: true,
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      instructorCount: 0,
+    }),
+  }),
+  true,
+)
+assert.equal(
+  shouldShowTeacherAssignmentAside({
+    hasTextbook: false,
+    instructorView: resolveAssignedInstructorQueryView({
+      enabled: true,
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      instructorCount: 2,
+    }),
+  }),
+  true,
+)
 
-function showTeacherAssignment(
-  profile: PlatformMemberProfile,
-  hasAssignment: boolean,
-): boolean {
-  return isSchoolTeacherMypageProfile(profile) && hasAssignment
-}
-
-assert.equal(showTeacherAssignment('school_teacher', true), true)
-assert.equal(showTeacherAssignment('school_teacher', false), false)
-assert.equal(showTeacherAssignment('individual', true), false)
-assert.equal(showTeacherAssignment('instructor_only', true), false)
-assert.equal(showTeacherAssignment('instructor_dual', true), false)
+assert.equal(resolveAssignedInstructorCardBody(undefined), 'consents')
+assert.equal(resolveAssignedInstructorCardBody('ja_system'), 'consents')
+assert.equal(resolveAssignedInstructorCardBody('site_direct'), 'site_direct')
+assert.equal(resolveAssignedInstructorCardBody('site_online'), 'site_online')
+assert.equal(resolveAssignedInstructorCardBody(null), 'name_only')
 
 console.log('teacher-assignment-visibility.selfcheck: ok')

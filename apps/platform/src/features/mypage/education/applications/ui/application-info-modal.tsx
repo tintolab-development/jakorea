@@ -11,6 +11,7 @@ type EducationApplicationInfoModalProps = {
   preferredEducationScheduleLines?: readonly string[]
   alwaysShowPreferredSchedule?: boolean
   instructorAvailableScheduleLines?: readonly string[]
+  instructorAvailableScheduleUnresolved?: boolean
   availableScheduleTitle?: string
   officialDocument?: GeminiOfficialDocumentDisplay | null
   /** 교사·기관 등 — 신청 내용 탭과 동일 본문(기관 정보·안내사항·신청 일정) */
@@ -25,6 +26,7 @@ export function EducationApplicationInfoModal({
   preferredEducationScheduleLines,
   alwaysShowPreferredSchedule,
   instructorAvailableScheduleLines,
+  instructorAvailableScheduleUnresolved,
   availableScheduleTitle,
   officialDocument,
   applicationBody,
@@ -47,6 +49,7 @@ export function EducationApplicationInfoModal({
             preferredEducationScheduleLines={preferredEducationScheduleLines}
             alwaysShowPreferredSchedule={alwaysShowPreferredSchedule}
             instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+            instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
             availableScheduleTitle={availableScheduleTitle}
             officialDocument={officialDocument}
           />

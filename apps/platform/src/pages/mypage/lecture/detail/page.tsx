@@ -27,13 +27,18 @@ import {
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
+  usePortalMeFormBindingRender,
   useMypageMember,
   EducationApplicationDetailLoading,
   type EducationActivitySection,
   type EducationDisplayStatus,
   type ProgramApplicationType,
 } from '@/features/mypage'
-import { resolveInstructorAvailableScheduleLines } from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
+import {
+  instructorAvailableScheduleHasSubmittedSelection,
+  readInstructorScheduleBindingSlotsFromFormDocument,
+  resolveInstructorAvailableScheduleLines,
+} from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
 import { resolveGeminiOfficialDocumentFromAnswers } from '@/features/mypage/education/applications/lib/official-document-from-answers'
 import { LectureReportPanel } from '@/features/mypage/education/schedules/ui/lecture-report-panel'
 import { InstructorAssignmentPanel } from '@/features/mypage/education/schedules/ui/instructor-assignment-panel'
@@ -143,6 +148,10 @@ export function MypageLectureDetailPage() {
 
   const remoteApplicationQuery = useMyProgramApplicationDetail(routeApplicationType, applicationId)
   const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
+  const formBindingRenderQuery = usePortalMeFormBindingRender(
+    application?.programId,
+    application?.formBindingId,
+  )
   const remoteProgramQuery = useProgramDetail(
     application?.programId ?? null,
     { fresh: true },
@@ -163,11 +172,14 @@ export function MypageLectureDetailPage() {
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
     : false
+  const isFormBindingLoading =
+    Boolean(application?.formBindingId) && formBindingRenderQuery.isLoading
   const isDetailLoading =
     !isAuthReady ||
     isChecking ||
     isRedirecting ||
     isApplicationLoading ||
+    isFormBindingLoading ||
     (Boolean(application) && isProgramLoading && !program)
 
   const isWithdrawnBefore = application ? isWithdrawnBeforeEducation(application) : false
@@ -303,6 +315,10 @@ export function MypageLectureDetailPage() {
     navigate(MYPAGE_LECTURE_PATH, { replace: true })
   }
 
+  const instructorScheduleBindingSlots = useMemo(
+    () => readInstructorScheduleBindingSlotsFromFormDocument(formBindingRenderQuery.document),
+    [formBindingRenderQuery.document],
+  )
   const instructorAvailableScheduleLines = useMemo(
     () =>
       resolveInstructorAvailableScheduleLines({
@@ -311,15 +327,24 @@ export function MypageLectureDetailPage() {
         preferredScheduleOptionValues: application?.preferredScheduleOptionValues,
         preferredScheduleBlocks: application?.preferredScheduleBlocks,
         program: programDetailToPreferredScheduleLookup(program),
+        bindingSlots: instructorScheduleBindingSlots,
       }),
     [
       application?.applicationAnswers,
       application?.preferredEducationScheduleLabel,
       application?.preferredScheduleOptionValues,
       application?.preferredScheduleBlocks,
+      instructorScheduleBindingSlots,
       program,
     ],
   )
+  const instructorAvailableScheduleUnresolved =
+    instructorAvailableScheduleLines.length === 0 &&
+    instructorAvailableScheduleHasSubmittedSelection({
+      answers: application?.applicationAnswers,
+      preferredEducationScheduleLabel: application?.preferredEducationScheduleLabel,
+      preferredScheduleOptionValues: application?.preferredScheduleOptionValues,
+    })
   const geminiOfficialDocument = useMemo(
     () =>
       isGeminiProgram
@@ -334,6 +359,20 @@ export function MypageLectureDetailPage() {
         backLabel="강의현황"
         onBack={handleBack}
       />
+    )
+  }
+
+  if (remoteDetailEnabled && remoteApplicationQuery.isError) {
+    return (
+      <section className={styles.page}>
+        <EducationDetailBack label="강의현황" onClick={handleBack} />
+        <PFText as="p" typo="hd-md" color="black" className={styles.empty}>
+          신청 내용을 불러오지 못했습니다
+        </PFText>
+        <PFButton variant="secondary" onClick={() => navigate(MYPAGE_LECTURE_PATH)}>
+          강의현황으로
+        </PFButton>
+      </section>
     )
   }
 
@@ -396,6 +435,7 @@ export function MypageLectureDetailPage() {
         selfIntroMotivation={application.selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
         instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+        instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
         availableScheduleTitle={isGeminiProgram ? '강의 가능 일정' : undefined}
         officialDocument={geminiOfficialDocument}
       />
@@ -413,6 +453,7 @@ export function MypageLectureDetailPage() {
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLabel={preferredEducationScheduleLabel}
           instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+          instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
           availableScheduleTitle={isGeminiProgram ? '강의 가능 일정' : undefined}
           officialDocument={geminiOfficialDocument}
           applicationType={routeApplicationType}
@@ -596,6 +637,7 @@ export function MypageLectureDetailPage() {
         selfIntroMotivation={application.selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
         instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+        instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
         availableScheduleTitle={isGeminiProgram ? '강의 가능 일정' : undefined}
         officialDocument={geminiOfficialDocument}
         onClose={() => setIsApplicationInfoOpen(false)}
