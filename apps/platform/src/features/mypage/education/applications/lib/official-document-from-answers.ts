@@ -18,24 +18,38 @@ function readTrimmed(value: unknown): string {
 }
 
 function formatRequiredLabel(raw: string): string {
-  const normalized = raw.trim().toLowerCase()
+  const trimmed = raw.trim()
+  const normalized = trimmed.toLowerCase()
+  const compact = normalized.replace(/[\s_-]/g, '')
   if (
-    normalized === 'needed' ||
-    normalized === 'required' ||
-    normalized === 'true' ||
-    raw.trim() === '필요'
+    compact === 'needed' ||
+    compact === 'required' ||
+    compact === 'true' ||
+    compact === 'yes' ||
+    compact === 'y' ||
+    compact === 'receive' ||
+    compact === 'received' ||
+    trimmed === '필요' ||
+    trimmed === '수신'
   ) {
     return '필요'
   }
   if (
-    normalized === 'not_needed' ||
-    normalized === 'not-needed' ||
-    normalized === 'false' ||
-    raw.trim() === '필요 없음'
+    compact === 'notneeded' ||
+    compact === 'unneeded' ||
+    compact === 'unnecessary' ||
+    compact === 'false' ||
+    compact === 'no' ||
+    compact === 'n' ||
+    compact === 'none' ||
+    trimmed === '필요 없음' ||
+    trimmed === '필요없음' ||
+    trimmed === '불필요' ||
+    trimmed === '미수신'
   ) {
-    return '필요 없음'
+    return '불필요'
   }
-  return raw.trim()
+  return trimmed
 }
 
 function readDataRows(raw: unknown): string[][] {

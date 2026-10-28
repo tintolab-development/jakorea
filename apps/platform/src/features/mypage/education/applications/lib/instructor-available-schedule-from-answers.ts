@@ -110,12 +110,23 @@ export function resolveInstructorAvailableScheduleLines(input: {
   answers?: Record<string, unknown> | null
   preferredEducationScheduleLabel?: string
   preferredScheduleOptionValues?: readonly string[]
+  preferredScheduleBlocks?: readonly unknown[] | null
   program?: PreferredScheduleProgramLookup
 }): string[] {
   const row = readSlotPickerScheduleAnswerRow(input.answers ?? undefined)
   if (row) {
     const fromRow = linesFromSlotPickerScheduleAnswerRow(row)
     if (fromRow.length > 0) return fromRow
+  }
+
+  if (input.preferredScheduleBlocks?.length) {
+    const fromBlocks = resolvePreferredScheduleLabelsFromAnswers({
+      answers: { preferredScheduleBlocks: [...input.preferredScheduleBlocks] },
+      preferredScheduleOptionValues: [],
+      educationScheduleLines: input.program?.educationScheduleLines,
+      schedules: input.program?.schedules,
+    })
+    if (fromBlocks.length > 0) return fromBlocks
   }
 
   const stored = input.preferredEducationScheduleLabel?.trim()

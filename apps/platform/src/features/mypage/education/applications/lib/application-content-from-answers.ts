@@ -127,11 +127,31 @@ function formatPreferredScheduleBlock(block: Record<string, unknown>): string | 
       : undefined)
 
   const dateLabel = formatDisplayDate(dateRaw.includes('T') ? dateRaw : dateRaw)
+  let core = ''
   if (dateLabel && timeRange) {
-    return normalizeScheduleDisplayLabel(`${dateLabel} ${timeRange}`)
+    core = normalizeScheduleDisplayLabel(`${dateLabel} ${timeRange}`)
+  } else if (dateLabel) {
+    core = dateLabel
+  } else {
+    core = timeRange ? normalizeScheduleDisplayLabel(`${dateRaw} ${timeRange}`) : dateRaw
   }
-  if (dateLabel) return dateLabel
-  return timeRange ? normalizeScheduleDisplayLabel(`${dateRaw} ${timeRange}`) : dateRaw
+  const org =
+    readTrimmedString(block.organizationName) ||
+    readTrimmedString(block.institutionName) ||
+    readTrimmedString(block.schoolName)
+  const rankRaw = block.preferenceRank
+  const rank =
+    typeof rankRaw === 'number' && Number.isFinite(rankRaw)
+      ? rankRaw
+      : typeof rankRaw === 'string' && /^\d+$/.test(rankRaw.trim())
+        ? Number(rankRaw.trim())
+        : null
+  const parts = [
+    rank != null && rank > 0 ? `${rank}지망` : '',
+    core,
+    org ?? '',
+  ].filter(Boolean)
+  return parts.join(' | ')
 }
 
 /**

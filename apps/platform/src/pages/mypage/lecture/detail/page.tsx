@@ -309,12 +309,14 @@ export function MypageLectureDetailPage() {
         answers: application?.applicationAnswers,
         preferredEducationScheduleLabel: application?.preferredEducationScheduleLabel,
         preferredScheduleOptionValues: application?.preferredScheduleOptionValues,
+        preferredScheduleBlocks: application?.preferredScheduleBlocks,
         program: programDetailToPreferredScheduleLookup(program),
       }),
     [
       application?.applicationAnswers,
       application?.preferredEducationScheduleLabel,
       application?.preferredScheduleOptionValues,
+      application?.preferredScheduleBlocks,
       program,
     ],
   )
@@ -394,7 +396,7 @@ export function MypageLectureDetailPage() {
         selfIntroMotivation={application.selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
         instructorAvailableScheduleLines={instructorAvailableScheduleLines}
-        availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
+        availableScheduleTitle={isGeminiProgram ? '강의 가능 일정' : undefined}
         officialDocument={geminiOfficialDocument}
       />
     ) : (
@@ -411,7 +413,7 @@ export function MypageLectureDetailPage() {
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLabel={preferredEducationScheduleLabel}
           instructorAvailableScheduleLines={instructorAvailableScheduleLines}
-          availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
+          availableScheduleTitle={isGeminiProgram ? '강의 가능 일정' : undefined}
           officialDocument={geminiOfficialDocument}
           applicationType={routeApplicationType}
           applicationId={application.id}
@@ -594,7 +596,7 @@ export function MypageLectureDetailPage() {
         selfIntroMotivation={application.selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
         instructorAvailableScheduleLines={instructorAvailableScheduleLines}
-        availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
+        availableScheduleTitle={isGeminiProgram ? '강의 가능 일정' : undefined}
         officialDocument={geminiOfficialDocument}
         onClose={() => setIsApplicationInfoOpen(false)}
       />

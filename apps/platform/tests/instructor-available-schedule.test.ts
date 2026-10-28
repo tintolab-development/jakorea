@@ -12,6 +12,7 @@ import {
   resolveApplyAvailableScheduleSlots,
   resolveScheduleSlotCardLines,
 } from '../src/features/program/ui/apply-instructor-available-schedule/apply-instructor-available-schedule'
+import { resolveInstructorAvailableScheduleLines } from '../src/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
 
 const instructorKey = PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule
 
@@ -146,6 +147,28 @@ describe('instructor/volunteer available schedule runtime options', () => {
       instructorAvailableScheduleOptionValues({ selectedSlotIds: [geminiValue] }, mapped!),
     ).toEqual([geminiValue])
     expect(mapped![1]!.id).toBe('schedule:186691:organization-application:1691277')
+  })
+
+  it('renders Gemini 1·2지망 preferredScheduleBlocks with institution name', () => {
+    const lines = resolveInstructorAvailableScheduleLines({
+      preferredScheduleBlocks: [
+        {
+          preferenceRank: 1,
+          date: '2026-11-10',
+          organizationName: '서울공항초등학교',
+          sessionTimes: [{ startTime: '10:00', endTime: '12:00' }],
+        },
+        {
+          preferenceRank: 2,
+          date: '2026-11-11',
+          organizationName: '강서초등학교',
+          sessionTimes: [{ startTime: '13:00', endTime: '15:00' }],
+        },
+      ],
+    })
+    expect(lines[0]).toContain('서울공항초등학교')
+    expect(lines[0]).toContain('1지망')
+    expect(lines[1]).toContain('강서초등학교')
   })
 
   it('blocks submit with explicit empty-option copy', () => {
