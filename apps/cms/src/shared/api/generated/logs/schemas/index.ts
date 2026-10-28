@@ -834,6 +834,8 @@ export * from './notificationCaseItem';
 export * from './notificationCasePage';
 export * from './notificationCatalogCategory';
 export * from './notificationCatalogVariableItem';
+export * from './notificationCatalogVariableItemMemberTypesItem';
+export * from './notificationCatalogVariableItemParticipantTypesItem';
 export * from './notificationCatalogVariableItemSourceMode';
 export * from './notificationDeliveryDetailResponse';
 export * from './notificationDeliveryDetailResponsePreview';
