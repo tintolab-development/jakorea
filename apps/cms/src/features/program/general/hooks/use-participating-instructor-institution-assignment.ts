@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
@@ -41,6 +42,8 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   waitingSchools: InstructorWaitingSchoolRow[]
   assignedSchedules: ParticipatingIndividualInstructorAssignedScheduleRow[]
   waitingSchedules: ParticipatingIndividualInstructorWaitingScheduleRow[]
+  assignments: InstructorAssignmentListItemEnriched[]
+  boardLoaded: boolean
   isTempMockDataSource: boolean
   invalidate: () => Promise<void>
 } {
@@ -152,6 +155,8 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     waitingSchools: rows.waitingSchools,
     assignedSchedules: rows.assignedSchedules,
     waitingSchedules: rows.waitingSchedules,
+    assignments: boardQuery.data?.assignments ?? [],
+    boardLoaded: boardQuery.data != null,
     invalidate,
   }
 }
