@@ -7,6 +7,7 @@ import {
   formatAssignmentWaitingStatus,
   formatInstructorRole,
   groupAssignmentsByInstitution,
+  sortAssignmentWaitingItems,
   supportsInstructorIndividualAssignment,
   supportsInstructorInstitutionAssignment,
 } from './instructor-assignment-support.ts'
@@ -121,5 +122,27 @@ assert.equal(formatAssignmentSessionLabel({ sessionNo: 2, scheduleName: '세부 
 assert.equal(formatAssignmentSessionLabel({ sessionNo: null, scheduleName: '세부 일정 01' }, false), '-')
 assert.equal(formatAssignmentSessionLabel({ sessionNo: 2, scheduleName: ' 세부 일정 01 ' }, true), '세부 일정 01')
 assert.equal(formatAssignmentSessionLabel({ sessionNo: 2, scheduleName: null }, true), '-')
+
+// 배정 대기 정렬: 배정 불가는 아래로, 묶음 안 startAt 내림차순, 동률은 서버 순서, startAt 없음은 묶음 끝
+const waitingRow = (id: string, status: string, startAt: string | null) => ({ id, status, startAt })
+const waitingInput = [
+  waitingRow('w-old', 'WAITING', '2026-10-01T09:00:00'),
+  waitingRow('u-mid', 'UNAVAILABLE', '2026-12-01T09:00:00'),
+  waitingRow('w-null', 'WAITING', null),
+  waitingRow('w-new', 'WAITING', '2026-11-20T09:00:00'),
+  waitingRow('c-tie-a', 'CANCELLED', '2026-11-05T09:00:00'),
+  waitingRow('u-null', 'UNAVAILABLE', null),
+  waitingRow('w-tie-b', 'WAITING', '2026-11-05T09:00:00'),
+  waitingRow('u-old', 'UNAVAILABLE', '2026-10-15T09:00:00'),
+  waitingRow('u-new', 'UNAVAILABLE', '2026-12-10T09:00:00'),
+]
+const sortedWaiting = sortAssignmentWaitingItems(waitingInput)
+assert.deepEqual(
+  sortedWaiting.map(item => item.id),
+  ['w-new', 'c-tie-a', 'w-tie-b', 'w-old', 'w-null', 'u-new', 'u-mid', 'u-old', 'u-null'],
+)
+assert.equal(sortedWaiting.length, waitingInput.length)
+assert.deepEqual(waitingInput.map(item => item.id)[1], 'u-mid')
+assert.deepEqual(sortAssignmentWaitingItems([]), [])
 
 console.log('instructor-assignment-support.selfcheck: ok')

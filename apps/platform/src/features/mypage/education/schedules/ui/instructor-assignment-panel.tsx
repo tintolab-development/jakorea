@@ -11,6 +11,7 @@ import {
   formatAssignmentWaitingStatus,
   formatInstructorRole,
   groupAssignmentsByInstitution,
+  sortAssignmentWaitingItems,
   type AssignmentWaitingStatusView,
 } from '../lib/instructor-assignment-support'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
@@ -109,7 +110,7 @@ function buildWaitingRows(
   individual: boolean,
   useScheduleName: boolean,
 ): WaitingTableRow[] {
-  return items.map(item => {
+  return sortAssignmentWaitingItems(items).map(item => {
     const schedule = formatScheduleLine(item, useScheduleName)
     return {
       id: item.rowKey,

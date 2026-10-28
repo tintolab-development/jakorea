@@ -123,6 +123,40 @@ export function formatAssignmentWaitingStatus(status: unknown): AssignmentWaitin
   return { tone: 'waiting', label: '배정 대기', disabled: false }
 }
 
+function waitingStartAtTime(startAt: unknown): number | null {
+  const text = asAssignmentDisplayText(startAt)
+  if (!text) return null
+  const time = Date.parse(text)
+  return Number.isNaN(time) ? null : time
+}
+
+/**
+ * 배정 대기 목록 표시 순서(기획 요청으로 이 목록만 FE 정렬).
+ * 배정 불가(UNAVAILABLE)는 항상 아래로 모으고, 각 묶음 안에서는 startAt 내림차순(최신 일정 먼저).
+ * startAt이 없으면 묶음 맨 끝, 같은 값은 서버 순서 유지(안정 정렬). 행은 제거하지 않는다.
+ */
+export function sortAssignmentWaitingItems<T extends { status: unknown; startAt?: unknown }>(
+  items: readonly T[],
+): T[] {
+  return items
+    .map((item, index) => ({
+      item,
+      index,
+      unavailable: asAssignmentDisplayText(item.status).toUpperCase() === 'UNAVAILABLE',
+      time: waitingStartAtTime(item.startAt),
+    }))
+    .sort((a, b) => {
+      if (a.unavailable !== b.unavailable) return a.unavailable ? 1 : -1
+      if (a.time !== b.time) {
+        if (a.time == null) return 1
+        if (b.time == null) return -1
+        return b.time - a.time
+      }
+      return a.index - b.index
+    })
+    .map(entry => entry.item)
+}
+
 /**
  * 교육 일정 줄의 차시 자리 표시.
  * 일정형 + 복수 회차는 차시/회차 대신 일정명, 그 외는 `N차시`. 값이 없으면 '-'.
