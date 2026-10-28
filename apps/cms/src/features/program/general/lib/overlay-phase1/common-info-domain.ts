@@ -468,7 +468,9 @@ export function buildScheduleDetailsFromMaps(
       scheduleDateLabel: formatScheduleDateLabel(maps.scheduleDateByDetailIso[0]),
       educationFormLabel: preEducationForm
         ? educationFormLabelFromValue(preEducationForm)
-        : undefined,
+        : eduDetail === 'perSchedule'
+          ? educationFormLabelFromValue('online')
+          : undefined,
       ipsTypeSummary:
         isTeacherTraining || ipsDetailKind === 'perSchedule'
           ? buildSessionIpsTypeSummary('prepare', 'none')

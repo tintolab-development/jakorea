@@ -577,7 +577,9 @@ export function buildEnrichedScheduleDetails(
         scheduleDateLabel: formatScheduleDateLabel(dates[0]),
         educationFormLabel: preEducationForm
           ? educationFormLabelFromValue(preEducationForm)
-          : undefined,
+          : eduDetail === 'perSchedule'
+            ? educationFormLabelFromValue('online')
+            : undefined,
         ipsTypeSummary:
           ipsDetailKind === 'perSchedule'
             ? buildSessionIpsTypeSummary('prepare', 'none')

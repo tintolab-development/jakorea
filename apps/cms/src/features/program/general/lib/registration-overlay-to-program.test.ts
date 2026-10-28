@@ -572,6 +572,38 @@ describe('일정형 사전 교육 overlay 교육 형태', () => {
       })
     )
   })
+
+  it('perSchedule이고 educationFormByDetail 0이 없으면 사전 교육 행은 온라인', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.educationScheduleCurriculum.preEducationName': '사전 교육',
+        'generalRegistration.educationScheduleCurriculum.educationFormByDetail': {
+          1: 'offline',
+        },
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '오리엔테이션',
+        },
+      },
+      {
+        programType: 'schedule',
+        sessionRoundType: 'single',
+        scheduleCurriculumPreEducation: true,
+        scheduleCurriculumDetailCount: 1,
+        educationFormScheduleDetail: 'perSchedule',
+      }
+    )
+
+    expect(next.generalCommonInfo?.scheduleDetails?.[0]).toEqual(
+      expect.objectContaining({
+        scheduleLabel: '사전 교육',
+        educationFormLabel: '온라인',
+      })
+    )
+    expect(next.generalCommonInfo?.scheduleDetails?.[1]).toEqual(
+      expect.objectContaining({ educationFormLabel: '오프라인' })
+    )
+  })
 })
 
 describe('empty-public-title-apply-fallback', () => {
