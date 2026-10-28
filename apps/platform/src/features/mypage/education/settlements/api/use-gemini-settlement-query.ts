@@ -3,6 +3,7 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import { platformQueryKeys } from '@/shared/api/query-keys'
+import type { ProgramApplicationType } from '../../applications/api/types'
 import {
   fetchGeminiLectureSchedules,
   fetchGeminiSettlementSummary,
@@ -24,28 +25,31 @@ function queryOptions() {
 }
 
 export function useGeminiSettlementTabQuery(
-  programId: string | null | undefined,
+  applicationType: ProgramApplicationType | string | null | undefined,
+  applicationId: string | null | undefined,
   enabled: boolean,
 ) {
+  const type = (applicationType ?? '').trim().toUpperCase()
+  const id = (applicationId ?? '').trim()
   const remoteEnabled = Boolean(
     enabled &&
       isRemoteApiConfigured() &&
       getAccessToken() &&
-      programId &&
-      Number.isFinite(Number(programId)) &&
-      Number(programId) > 0,
+      type &&
+      id &&
+      Number.isFinite(Number(id)) &&
+      Number(id) > 0,
   )
-  const id = programId ?? ''
 
   const summary = useQuery({
-    queryKey: platformQueryKeys.mypage.geminiSettlementSummary(id),
-    queryFn: ({ signal }) => fetchGeminiSettlementSummary(id, signal),
+    queryKey: platformQueryKeys.mypage.geminiSettlementSummary(type, id),
+    queryFn: ({ signal }) => fetchGeminiSettlementSummary(type, id, signal),
     enabled: remoteEnabled,
     ...queryOptions(),
   })
   const schedules = useQuery({
-    queryKey: platformQueryKeys.mypage.geminiLectureSchedules(id),
-    queryFn: ({ signal }) => fetchGeminiLectureSchedules(id, signal),
+    queryKey: platformQueryKeys.mypage.geminiLectureSchedules(type, id),
+    queryFn: ({ signal }) => fetchGeminiLectureSchedules(type, id, signal),
     enabled: remoteEnabled,
     ...queryOptions(),
   })
@@ -61,6 +65,7 @@ export function useGeminiSettlementTabQuery(
     isRefetching: summary.isRefetching || schedules.isRefetching,
     summary: summary.data,
     items,
+    scheduleItems: schedules.data ?? [],
     refetch: () => {
       void summary.refetch()
       void schedules.refetch()

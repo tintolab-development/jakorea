@@ -434,6 +434,91 @@ function mapTeacherAssignedInstructor(
   }
 }
 
+function readOverlayString(row: Record<string, unknown> | undefined, key: string): string {
+  if (!row) return ''
+  const raw = row[key]
+  if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+  return ''
+}
+
+function asOverlayRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  return value as Record<string, unknown>
+}
+
+function nestedOverlayRecord(
+  row: Record<string, unknown> | undefined,
+  ...path: string[]
+): Record<string, unknown> | undefined {
+  let current: Record<string, unknown> | undefined = row
+  for (const part of path) {
+    current = asOverlayRecord(current?.[part])
+    if (!current) return undefined
+  }
+  return current
+}
+
+function pickGeminiInstitutionOverlay(
+  detail: PortalProgramApplicationDetail,
+): Record<string, unknown> {
+  const row = detail as Record<string, unknown>
+  const program = asOverlayRecord(detail.program)
+  const nestedInst =
+    nestedOverlayRecord(row, 'application', 'gemini', 'inst') ??
+    nestedOverlayRecord(row, 'gemini', 'inst') ??
+    nestedOverlayRecord(row, 'geminiApplication')
+  const overlay: Record<string, unknown> = {}
+  const assign = (target: string, ...keys: string[]) => {
+    if (overlay[target]) return
+    for (const source of [row, nestedInst, program]) {
+      for (const key of keys) {
+        const value = readOverlayString(source, key)
+        if (value) {
+          overlay[target] = value
+          return
+        }
+      }
+    }
+  }
+  assign(
+    'institutionName',
+    'institutionName',
+    'organizationName',
+    'schoolName',
+    'approvedInstitutionName',
+  )
+  assign('applicationGrade', 'applicationGrade', 'grade', 'educationGrade', 'requestedGrade')
+  assign('regionLabel', 'regionLabel', 'institutionAddress', 'address')
+  assign('addressDetail', 'addressDetail', 'detailAddress', 'institutionAddressDetail')
+  assign(
+    'teacherName',
+    'teacherName',
+    'managerName',
+    'contactName',
+    'teacherContactName',
+    'contactTeacherName',
+  )
+  assign('teacherTel', 'teacherTel', 'contactPhone', 'contactTel')
+  assign('teacherMobile', 'teacherMobile', 'contactMobile')
+  assign('teacherEmail', 'teacherEmail', 'contactEmail')
+  assign('officialNeed', 'officialNeed', 'officialDocumentRequired')
+  assign('officialDetail', 'officialDetail', 'officialDocumentRequiredInfo')
+  return overlay
+}
+
+function mergeApplicationAnswers(
+  answers: Record<string, unknown>,
+  overlay: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged = { ...answers }
+  for (const [key, value] of Object.entries(overlay)) {
+    const existing = merged[key]
+    if (existing == null || existing === '') merged[key] = value
+  }
+  return merged
+}
+
 export function mapPortalProgramApplicationDetail(
   detail: PortalProgramApplicationDetail,
   knownApplicationType?: ProgramApplicationType | null,
@@ -481,7 +566,10 @@ export function mapPortalProgramApplicationDetail(
   )
   if (recruitmentLabel !== '-') mapped.recruitmentPeriodLabel = recruitmentLabel
 
-  const answers = normalizeApplicationAnswers(detail.answers)
+  const answers = mergeApplicationAnswers(
+    normalizeApplicationAnswers(detail.answers),
+    pickGeminiInstitutionOverlay(detail),
+  )
   const fromAnswers = resolveApplicationContentFromAnswers(answers)
   const preferredFromBlocks = resolvePreferredEducationScheduleLabelFromAnswers({
     preferredScheduleBlocks: detail.preferredScheduleBlocks ?? [],

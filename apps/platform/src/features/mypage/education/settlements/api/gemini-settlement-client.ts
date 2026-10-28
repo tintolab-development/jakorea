@@ -28,15 +28,34 @@ function readString(row: Record<string, unknown>, key: string): string | null {
   return trimmed ? trimmed : null
 }
 
+function readNumber(row: Record<string, unknown>, ...keys: string[]): number | null {
+  for (const key of keys) {
+    const raw = row[key]
+    if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+    if (typeof raw === 'string' && raw.trim()) {
+      const parsed = Number(raw.trim())
+      if (Number.isFinite(parsed)) return parsed
+    }
+  }
+  return null
+}
+
+function readStringOrNumber(row: Record<string, unknown>, key: string): string | number | null {
+  const raw = row[key]
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  return readString(row, key)
+}
+
 export function parseGeminiSettlementSummary(payload: unknown): GeminiSettlementSummary {
   const row = asRecord(unwrapEnvelope(payload)) ?? {}
   const businessIncome = row.businessIncome
   return {
+    paymentStatementProcessingStatus: readString(row, 'paymentStatementProcessingStatus'),
     paymentStatementProcessingStatusCode: readString(row, 'paymentStatementProcessingStatusCode'),
-    lectureFeeBasis:
-      row.lectureFeeBasis === null
-        ? null
-        : readString(row, 'lectureFeeBasis'),
+    lectureProgressRound: readNumber(row, 'lectureProgressRound'),
+    lectureTotalRound: readNumber(row, 'lectureTotalRound'),
+    lectureFeeBasis: row.lectureFeeBasis === null ? null : readString(row, 'lectureFeeBasis'),
+    businessIncomeLabel: readString(row, 'businessIncomeLabel'),
     businessIncome: typeof businessIncome === 'boolean' ? businessIncome : null,
     accountPaymentStatus: readString(row, 'accountPaymentStatus'),
     settlementStatus: readString(row, 'settlementStatus'),
@@ -61,25 +80,38 @@ export function parseGeminiLectureSchedules(payload: unknown): GeminiLectureSche
       endAt: readString(row, 'endAt'),
       institutionName: readString(row, 'institutionName'),
       grade: readString(row, 'grade'),
-      sessionNo: typeof row.sessionNo === 'number' ? row.sessionNo : null,
+      sessionNo: readNumber(row, 'sessionNo'),
+      recognizedClassCount: readNumber(row, 'recognizedClassCount'),
+      trainingTimeText: readString(row, 'trainingTimeText'),
       lectureStatus: readString(row, 'lectureStatus'),
+      instructorRole: readString(row, 'instructorRole'),
+      institutionAddress: readString(row, 'institutionAddress'),
+      distanceFromHome: readStringOrNumber(row, 'distanceFromHome'),
       accountPaymentStatus: readString(row, 'accountPaymentStatus'),
       settlementStatus: readString(row, 'settlementStatus'),
     }))
 }
 
 export async function fetchGeminiSettlementSummary(
-  programId: string,
+  applicationType: string,
+  applicationId: string,
   signal?: AbortSignal,
 ): Promise<GeminiSettlementSummary> {
-  const { data } = await axiosClient.get(GEMINI_SETTLEMENT_SUMMARY_PATH(programId), { signal })
+  const { data } = await axiosClient.get(
+    GEMINI_SETTLEMENT_SUMMARY_PATH(applicationType, applicationId),
+    { signal },
+  )
   return parseGeminiSettlementSummary(data)
 }
 
 export async function fetchGeminiLectureSchedules(
-  programId: string,
+  applicationType: string,
+  applicationId: string,
   signal?: AbortSignal,
 ): Promise<GeminiLectureScheduleItem[]> {
-  const { data } = await axiosClient.get(GEMINI_LECTURE_SCHEDULES_PATH(programId), { signal })
+  const { data } = await axiosClient.get(
+    GEMINI_LECTURE_SCHEDULES_PATH(applicationType, applicationId),
+    { signal },
+  )
   return parseGeminiLectureSchedules(data)
 }

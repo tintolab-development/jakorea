@@ -171,6 +171,64 @@ describe('instructor/volunteer available schedule runtime options', () => {
     expect(lines[1]).toContain('강서초등학교')
   })
 
+  it('resolves gemini-preferred tokens to date/time/institution from blocks', () => {
+    const token = 'gemini-preferred:organization-application:1691500:rank:1'
+    const lines = resolveInstructorAvailableScheduleLines({
+      answers: {
+        [GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule]: {
+          selectedSlotIds: [token],
+        },
+      },
+      preferredScheduleBlocks: [
+        {
+          organizationApplicationId: 1691500,
+          preferenceRank: 1,
+          date: '2026-11-10',
+          organizationName: '서울공항초등학교',
+          sessionTimes: [{ startTime: '10:00', endTime: '12:00' }],
+        },
+        {
+          organizationApplicationId: 1691501,
+          preferenceRank: 2,
+          date: '2026-11-11',
+          organizationName: '강서초등학교',
+          sessionTimes: [{ startTime: '13:00', endTime: '15:00' }],
+        },
+      ],
+    })
+    expect(lines).toHaveLength(1)
+    expect(lines[0]).toContain('서울공항초등학교')
+    expect(lines[0]).toContain('10:00')
+    expect(lines[0]).not.toContain('강서초등학교')
+  })
+
+  it('falls back to rank index when organizationApplicationId is missing', () => {
+    const token = 'gemini-preferred:organization-application:999:rank:2'
+    const lines = resolveInstructorAvailableScheduleLines({
+      answers: {
+        [GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule]: {
+          selectedSlotIds: [token],
+        },
+      },
+      preferredScheduleBlocks: [
+        {
+          preferenceRank: 1,
+          date: '2026-11-10',
+          organizationName: '서울공항초등학교',
+          sessionTimes: [{ startTime: '10:00', endTime: '12:00' }],
+        },
+        {
+          preferenceRank: 2,
+          date: '2026-11-11',
+          organizationName: '강서초등학교',
+          trainingTimeText: '13:00~15:00',
+        },
+      ],
+    })
+    expect(lines[0]).toContain('강서초등학교')
+    expect(lines[0]).toContain('13:00')
+  })
+
   it('blocks submit with explicit empty-option copy', () => {
     expect(findIncompleteInstructorAvailableScheduleMessage({ selectedSlotIds: [] }, [])).toBe(
       '선택 가능한 강의 일정이 없습니다. 관리자에게 문의해 주세요.',

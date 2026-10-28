@@ -43,6 +43,8 @@ import { resolveGeminiOfficialDocumentFromAnswers } from '@/features/mypage/educ
 import { LectureReportPanel } from '@/features/mypage/education/schedules/ui/lecture-report-panel'
 import { InstructorAssignmentPanel } from '@/features/mypage/education/schedules/ui/instructor-assignment-panel'
 import { useLectureReportAssignmentsQuery } from '@/features/mypage/education/schedules/api/use-lecture-report-assignments-query'
+import { mapGeminiLectureSchedulesToAssignmentSources } from '@/features/mypage/education/schedules/lib/instructor-assignment-display'
+import { useGeminiSettlementTabQuery } from '@/features/mypage/education/settlements/api/use-gemini-settlement-query'
 import { supportsInstructorInstitutionAssignment } from '@/features/mypage/education/schedules/lib/instructor-assignment-support'
 import { programDetailToPreferredScheduleLookup } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
 import {
@@ -197,10 +199,21 @@ export function MypageLectureDetailPage() {
     program?.id,
     routeApplicationType === 'INSTRUCTOR' &&
       (isActivityStatus || isWithdrawnDuring) &&
-      (institutionAssignmentProgram || isGeminiProgram),
+      institutionAssignmentProgram &&
+      !isGeminiProgram,
+  )
+  const geminiLectureSchedulesQuery = useGeminiSettlementTabQuery(
+    routeApplicationType,
+    application?.id ?? applicationId,
+    routeApplicationType === 'INSTRUCTOR' &&
+      (isActivityStatus || isWithdrawnDuring) &&
+      isGeminiProgram,
   )
   const instructorAssignmentVisible =
     isGeminiProgram || (institutionAssignmentProgram && instructorAssignmentQuery.hasAssignment)
+  const instructorAssignmentItems = isGeminiProgram
+    ? mapGeminiLectureSchedulesToAssignmentSources(geminiLectureSchedulesQuery.scheduleItems)
+    : instructorAssignmentQuery.items
 
   const activityTabOptions = useMemo(
     () =>
@@ -467,7 +480,7 @@ export function MypageLectureDetailPage() {
       if (instructorAssignmentVisible) {
         return (
           <InstructorAssignmentPanel
-            items={instructorAssignmentQuery.items}
+            items={instructorAssignmentItems}
             hideWaitingList={isGeminiProgram}
           />
         )

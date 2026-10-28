@@ -6,6 +6,7 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@jako
 import type { ProgramDetailCase } from '@/features/program'
 import {
   basicInfoValuesFromDraftAnswer,
+  emptyTrainedTeachersBasicInfo,
   type ApplyTrainedTeachersBasicInfoValues,
 } from '@/features/program/ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info'
 import type { EducationTeacherApplicationInstitution } from '../model/types'
@@ -102,11 +103,33 @@ function formatVenue(values: ApplyTrainedTeachersBasicInfoValues): string | unde
   return base
 }
 
+function readNestedValue(row: Record<string, unknown>, path: string): unknown {
+  if (path in row) return row[path]
+  const parts = path.split('.')
+  if (parts.length < 2) return undefined
+  let current: unknown = row
+  for (const part of parts) {
+    const next = asRecordIfObject(current)
+    if (!next) return undefined
+    current = next[part]
+  }
+  return current
+}
+
+function stringifyAnswerField(raw: unknown): string {
+  if (typeof raw === 'string') return raw.trim()
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+  return ''
+}
+
 function readAnswerStringField(row: Record<string, unknown>, ...keys: string[]): string {
   for (const key of keys) {
-    const raw = row[key]
-    if (typeof raw === 'string' && raw.trim()) return raw.trim()
-    if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+    const direct = stringifyAnswerField(row[key])
+    if (direct) return direct
+    if (key.includes('.')) {
+      const nested = stringifyAnswerField(readNestedValue(row, key))
+      if (nested) return nested
+    }
   }
   return ''
 }
@@ -169,13 +192,19 @@ function asRecordIfObject(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>
 }
 
+function readLabeledTableCell(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return ''
+}
+
 function readLabeledTableValue(row: Record<string, unknown>, labelIncludes: string[]): string {
   const dataRows = row.dataRows
   if (!Array.isArray(dataRows)) return ''
   for (const item of dataRows) {
     if (!Array.isArray(item)) continue
     const label = typeof item[0] === 'string' ? item[0] : ''
-    const value = typeof item[1] === 'string' ? item[1].trim() : ''
+    const value = readLabeledTableCell(item[1])
     if (value && labelIncludes.some(token => label.includes(token))) return value
   }
   return ''
@@ -201,18 +230,20 @@ function readGeminiInstitutionFromAnswers(
     (contact
       ? readAnswerStringField(contact, 'jobTitle', 'position', 'rank', 'contactJobTitle')
       : '') ||
-    (contact ? readLabeledTableValue(contact, ['직급']) : '') ||
-    readAnswerStringField(overlay, 'application.gemini.inst.contactJobTitle')
+    (contact ? readLabeledTableValue(contact, ['직급', '직위']) : '') ||
+    readAnswerStringField(overlay, 'application.gemini.inst.contactJobTitle', 'contactJobTitle')
   const subject =
     (contact
       ? readAnswerStringField(contact, 'subject', 'classSubject', 'contactSubject')
       : '') ||
     (contact ? readLabeledTableValue(contact, ['과목']) : '') ||
     readAnswerStringField(overlay, 'application.gemini.inst.contactSubject')
-  const teacherName = contact
-    ? readAnswerStringField(contact, 'teacherName', 'name', 'managerName') ||
-      readLabeledTableValue(contact, ['교사명', '성명', '이름'])
-    : ''
+  const teacherName =
+    (contact
+      ? readAnswerStringField(contact, 'teacherName', 'managerName', 'contactName', 'name') ||
+        readLabeledTableValue(contact, ['담당 교사', '교사명', '담당자', '성명', '이름'])
+      : '') ||
+    readAnswerStringField(overlay, 'teacherName', 'managerName', 'contactName', 'teacherContactName')
   const teacherTel = contact
     ? readAnswerStringField(contact, 'teacherTel', 'tel', 'phone')
     : ''
@@ -226,18 +257,29 @@ function readGeminiInstitutionFromAnswers(
   const name =
     readAnswerStringField(
       overlay,
+      'institutionName',
       'schoolName',
       'organizationName',
-      'institutionName',
       'teacherSchoolName',
+      'approvedInstitutionName',
+      'application.gemini.inst.institutionName',
     ) ||
     (training
-      ? readAnswerStringField(training, 'schoolName', 'organizationName', 'institutionName')
+      ? readAnswerStringField(training, 'institutionName', 'schoolName', 'organizationName') ||
+        readLabeledTableValue(training, ['신청 기관명', '기관명', '학교명', '소속', '학교/기관명'])
       : '')
   const grade = formatApplicationGradeLabel(
-    readAnswerStringField(overlay, 'applicationGrade', 'educationGrade', 'grade', 'requestedGrade') ||
+    readAnswerStringField(
+      overlay,
+      'applicationGrade',
+      'educationGrade',
+      'requestedGrade',
+      'grade',
+      'application.gemini.inst.grade',
+    ) ||
       (training
-        ? readAnswerStringField(training, 'applicationGrade', 'educationGrade', 'grade')
+        ? readAnswerStringField(training, 'applicationGrade', 'educationGrade', 'grade') ||
+          readLabeledTableValue(training, ['학년', '담당학년', '신청 학년'])
         : ''),
   )
   const address =
@@ -247,25 +289,48 @@ function readGeminiInstitutionFromAnswers(
       'organizationRegion',
       'institutionAddress',
       'address',
+      'application.gemini.inst.address',
     ) ||
     (training
-      ? readAnswerStringField(training, 'regionLabel', 'organizationRegion', 'institutionAddress')
+      ? readAnswerStringField(training, 'regionLabel', 'organizationRegion', 'institutionAddress', 'address') ||
+        readLabeledTableValue(training, ['소재지', '주소', '지역', '기관 소재지'])
       : '')
   const addressDetail =
-    readAnswerStringField(overlay, 'addressDetail', 'detailAddress', 'institutionAddressDetail') ||
-    (training ? readAnswerStringField(training, 'addressDetail', 'detailAddress') : '')
+    readAnswerStringField(
+      overlay,
+      'addressDetail',
+      'detailAddress',
+      'institutionAddressDetail',
+      'application.gemini.inst.addressDetail',
+    ) ||
+    (training
+      ? readAnswerStringField(training, 'addressDetail', 'detailAddress') ||
+        readLabeledTableValue(training, ['상세주소', '상세 주소'])
+      : '')
+  const classCountRaw =
+    readAnswerStringField(overlay, 'classCount', 'application.gemini.inst.classCount') ||
+    (training
+      ? readAnswerStringField(training, 'classCount', 'classCnt') ||
+        readLabeledTableValue(training, ['학급'])
+      : '')
 
   const teacherContact = [teacherName, teacherTel, teacherMobile, teacherEmail]
     .map(part => part.trim())
     .filter(Boolean)
     .join(' | ')
 
+  const classAndHeadcount = formatClassAndHeadcount({
+    ...emptyTrainedTeachersBasicInfo(),
+    classCount: classCountRaw,
+    studentCount: studentCountRaw,
+  })
+
   return {
     name,
     grade,
     address,
     addressDetail,
-    classAndHeadcount: '',
+    classAndHeadcount,
     teacherContact,
     reason: '',
     otherRequests: '',

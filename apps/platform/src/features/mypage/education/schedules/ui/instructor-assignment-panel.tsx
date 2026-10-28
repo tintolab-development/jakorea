@@ -1,11 +1,16 @@
-import type { LectureReportAssignment } from '../api/lecture-report-client'
-import { formatGeminiInstructorRoleLabel } from '../lib/instructor-role-label'
-import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
+import type { InstructorAssignmentSource } from '../lib/instructor-assignment-display'
+import {
+  displayAssignmentText,
+  displayOrDash,
+  formatAssignmentDistanceKm,
+  formatAssignmentRole,
+  formatAssignmentScheduleLine,
+} from '../lib/instructor-assignment-display'
 import { PFText } from '@/shared/ui'
 import styles from './instructor-assignment-panel.module.css'
 
 type InstructorAssignmentPanelProps = {
-  items: readonly LectureReportAssignment[]
+  items: readonly InstructorAssignmentSource[]
   hideWaitingList?: boolean
 }
 
@@ -19,40 +24,10 @@ type AssignmentTableRow = {
   scheduleLines: string[]
 }
 
-function displayOrDash(value: string | null | undefined): string {
-  const trimmed = value?.trim() ?? ''
-  return trimmed || '-'
-}
-
-function formatInstructorRole(raw: string | null | undefined): string {
-  return formatGeminiInstructorRoleLabel(raw)
-}
-
-function parseDisplayDateTime(value: string | null): { date: string; time: string } | null {
-  if (!value) return null
-  const formatted = formatDisplayDateTime(value)
-  if (!formatted) return null
-  const match = /^(.*) (\d{2}:\d{2})$/.exec(formatted)
-  if (!match) return { date: formatted, time: '' }
-  return { date: match[1], time: match[2] }
-}
-
-function formatScheduleLine(item: LectureReportAssignment): string {
-  const start = parseDisplayDateTime(item.startAt)
-  const end = parseDisplayDateTime(item.endAt)
-  const date = start?.date || end?.date || '-'
-  const time = start?.time && end?.time ? `${start.time}~${end.time}` : start?.time || end?.time || '-'
-  const session = item.sessionNo != null ? `${item.sessionNo}차시` : '-'
-
-  if (!start && !end && item.sessionNo == null) return '-'
-  return `${date} ${time} | ${session}`
-}
-
-function buildRows(items: readonly LectureReportAssignment[]): AssignmentTableRow[] {
-  const groups = new Map<string, LectureReportAssignment[]>()
+function buildRows(items: readonly InstructorAssignmentSource[]): AssignmentTableRow[] {
+  const groups = new Map<string, InstructorAssignmentSource[]>()
   items.forEach(item => {
-    // 기관 정보가 없는 개인 일정은 서로 다른 배정으로 유지한다.
-    const key = item.institutionName?.trim() || `assignment:${item.assignmentId}`
+    const key = displayAssignmentText(item.institutionName) || `assignment:${item.assignmentId}`
     const current = groups.get(key)
     if (current) current.push(item)
     else groups.set(key, [item])
@@ -66,14 +41,15 @@ function buildRows(items: readonly LectureReportAssignment[]): AssignmentTableRo
     })
     .map(([key, originalItems]) => ({
       id: key,
-      role: formatInstructorRole(originalItems[0]?.instructorRole),
-      institutionName: originalItems[0]?.institutionName?.trim() || '-',
-      grade: Array.from(
-        new Set(originalItems.map(item => item.grade?.trim()).filter(Boolean)),
-      ).join(', ') || '-',
+      role: formatAssignmentRole(originalItems[0]?.instructorRole),
+      institutionName: displayOrDash(originalItems[0]?.institutionName),
+      grade:
+        Array.from(
+          new Set(originalItems.map(item => displayAssignmentText(item.grade)).filter(Boolean)),
+        ).join(', ') || '-',
       location: displayOrDash(originalItems[0]?.institutionAddress),
-      distance: displayOrDash(originalItems[0]?.distanceFromHome),
-      scheduleLines: originalItems.map(formatScheduleLine),
+      distance: formatAssignmentDistanceKm(originalItems[0]?.distanceFromHome),
+      scheduleLines: originalItems.map(formatAssignmentScheduleLine),
     }))
 }
 

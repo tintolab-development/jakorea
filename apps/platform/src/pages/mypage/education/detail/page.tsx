@@ -763,6 +763,7 @@ export function MypageEducationDetailPage() {
           }
           listTitle={EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL}
           absenceReasonEnabled={!isOrganizationEducationApplication(application, program)}
+          useGeminiLectureSchedules={isGeminiTrainingProgram(program)}
         />
       )
     }

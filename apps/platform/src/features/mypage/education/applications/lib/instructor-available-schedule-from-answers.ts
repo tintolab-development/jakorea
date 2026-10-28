@@ -225,16 +225,6 @@ export function resolveInstructorAvailableScheduleLines(input: {
     if (fromRow.length > 0) return fromRow
   }
 
-  if (input.preferredScheduleBlocks?.length) {
-    const fromBlocks = resolvePreferredScheduleLabelsFromAnswers({
-      answers: { preferredScheduleBlocks: [...input.preferredScheduleBlocks] },
-      preferredScheduleOptionValues: [],
-      educationScheduleLines: input.program?.educationScheduleLines,
-      schedules: input.program?.schedules,
-    })
-    if (fromBlocks.length > 0) return fromBlocks
-  }
-
   const stored = input.preferredEducationScheduleLabel?.trim()
   if (stored && !isOpaqueScheduleOptionToken(stored)) {
     if (stored.includes(' : ') && stored.includes('년')) {
@@ -255,11 +245,25 @@ export function resolveInstructorAvailableScheduleLines(input: {
   const fromBinding = linesFromBindingSlots(optionValues, input.bindingSlots ?? [])
   if (fromBinding.length > 0) return fromBinding
 
-  const resolved = resolvePreferredScheduleLabelsFromAnswers({
+  const resolvedTokens = resolvePreferredScheduleLabelsFromAnswers({
     answers: input.answers ?? undefined,
     preferredScheduleOptionValues: optionValues,
     educationScheduleLines: input.program?.educationScheduleLines,
+    preferredScheduleBlocks: input.preferredScheduleBlocks,
     schedules: input.program?.schedules,
   })
-  return resolved
+  if (resolvedTokens.length > 0) return resolvedTokens
+
+  if (input.preferredScheduleBlocks?.length) {
+    const fromBlocks = resolvePreferredScheduleLabelsFromAnswers({
+      answers: { preferredScheduleBlocks: [...input.preferredScheduleBlocks] },
+      preferredScheduleOptionValues: [],
+      educationScheduleLines: input.program?.educationScheduleLines,
+      preferredScheduleBlocks: input.preferredScheduleBlocks,
+      schedules: input.program?.schedules,
+    })
+    if (fromBlocks.length > 0) return fromBlocks
+  }
+
+  return []
 }

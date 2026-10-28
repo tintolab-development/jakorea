@@ -14,11 +14,7 @@ import {
   readInstructorBusinessIncomeLabel,
   readInstructorFeeGradeLabel,
 } from '../lib/instructor-settlement-summary'
-import {
-  displayGeminiBusinessIncomeLabel,
-  displayGeminiLectureFeeBasis,
-  mapGeminiPaymentStatementProcessLabel,
-} from '../lib/gemini-settlement-status'
+import { displayGeminiSummaryField } from '../lib/gemini-settlement-status'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SETTLEMENT_PAGE_SIZE } from '../model/types'
@@ -72,7 +68,7 @@ export function EducationSettlementPanel({
     programId,
     { operationEndAt, programType, enabled: !isGemini },
   )
-  const geminiSettlements = useGeminiSettlementTabQuery(programId, isGemini)
+  const geminiSettlements = useGeminiSettlementTabQuery(applicationType, applicationId, isGemini)
   const settlementSearchParams = useMemo(
     () => new URLSearchParams(location.search),
     [location.search],
@@ -109,20 +105,25 @@ export function EducationSettlementPanel({
       ? Math.floor(requestedSessionIndex / EDUCATION_SETTLEMENT_PAGE_SIZE) + 1
       : null
   const currentPage = requestedSessionPage ?? Math.min(page, totalPages)
-  const completedCount = countCompletedSettlementSessions(allItems)
+  const completedCount = isGemini
+    ? displayGeminiSummaryField(geminiSettlements.summary?.lectureProgressRound)
+    : countCompletedSettlementSessions(allItems)
+  const totalCount = isGemini
+    ? displayGeminiSummaryField(geminiSettlements.summary?.lectureTotalRound)
+    : totalElements
   const documentKind = resolveSettlementDocumentKind(applicationType)
   const processLabel = isGemini
-    ? mapGeminiPaymentStatementProcessLabel(geminiSettlements.summary ?? {})
+    ? displayGeminiSummaryField(geminiSettlements.summary?.paymentStatementProcessingStatus)
     : resolvePaymentStatementProcessLabel(allItems, {
         variant: documentKind === 'payment_statement' ? 'payment_statement' : 'receipt',
       })
   const feeGradeLabel = isGemini
-    ? displayGeminiLectureFeeBasis(geminiSettlements.summary?.lectureFeeBasis)
+    ? displayGeminiSummaryField(geminiSettlements.summary?.lectureFeeBasis)
     : documentKind === 'payment_statement'
       ? readInstructorFeeGradeLabel(profileQuery.data)
       : undefined
   const businessIncomeLabel = isGemini
-    ? displayGeminiBusinessIncomeLabel(geminiSettlements.summary?.businessIncome)
+    ? displayGeminiSummaryField(geminiSettlements.summary?.businessIncomeLabel)
     : documentKind === 'payment_statement'
       ? readInstructorBusinessIncomeLabel(profileQuery.data)
       : undefined
@@ -203,7 +204,7 @@ export function EducationSettlementPanel({
       <EducationSettlementSummary
         processLabel={processLabel}
         completedCount={completedCount}
-        totalCount={totalElements}
+        totalCount={totalCount}
         feeGradeLabel={feeGradeLabel}
         businessIncomeLabel={businessIncomeLabel}
       />

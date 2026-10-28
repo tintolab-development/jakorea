@@ -121,6 +121,7 @@ function formatPreferredScheduleBlock(block: Record<string, unknown>): string | 
     readTrimmedString(first?.end) ||
     readTrimmedString(block.endTime)
   const timeRange =
+    readTrimmedString(block.trainingTimeText) ||
     readTrimmedString(first?.timeRange) ||
     (startTime && endTime
       ? `${formatDisplayClockLabel(startTime)} ~ ${formatDisplayClockLabel(endTime)}`
@@ -389,8 +390,59 @@ export function collectPreferredScheduleOptionValues(
   return out
 }
 
+const GEMINI_PREFERRED_ORG_TOKEN_RE =
+  /^gemini-preferred:organization-application:(\d+):rank:(\d+)$/i
+
+export function parseGeminiPreferredOrganizationToken(
+  token: string,
+): { organizationApplicationId: number; rank: number } | null {
+  const match = GEMINI_PREFERRED_ORG_TOKEN_RE.exec(token.trim())
+  if (!match) return null
+  const organizationApplicationId = Number(match[1])
+  const rank = Number(match[2])
+  if (!Number.isFinite(organizationApplicationId) || !Number.isFinite(rank)) return null
+  return { organizationApplicationId, rank }
+}
+
+function readBlockOrganizationApplicationId(row: Record<string, unknown>): number | null {
+  const raw = row.organizationApplicationId ?? row.organizationId ?? row.applicationId
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string' && /^\d+$/.test(raw.trim())) return Number(raw.trim())
+  return null
+}
+
+function readBlockPreferenceRank(row: Record<string, unknown>): number | null {
+  const raw = row.preferenceRank ?? row.rank
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string' && /^\d+$/.test(raw.trim())) return Number(raw.trim())
+  return null
+}
+
+export function resolveGeminiPreferredScheduleLine(
+  token: string,
+  blocks: readonly unknown[] | null | undefined,
+): string | undefined {
+  const parsed = parseGeminiPreferredOrganizationToken(token)
+  if (!parsed || !blocks?.length) return undefined
+  const rows = blocks.map(item => asRecord(item)).filter((row): row is Record<string, unknown> => row != null)
+  const exact = rows.find(row => {
+    const orgId = readBlockOrganizationApplicationId(row)
+    const rank = readBlockPreferenceRank(row)
+    return orgId === parsed.organizationApplicationId && rank === parsed.rank
+  })
+  if (exact) return formatPreferredScheduleBlock(exact)
+  const sameOrg = rows.filter(row => readBlockOrganizationApplicationId(row) === parsed.organizationApplicationId)
+  if (sameOrg.length === 1) return formatPreferredScheduleBlock(sameOrg[0]!)
+  const sameRank = rows.filter(row => readBlockPreferenceRank(row) === parsed.rank)
+  if (sameRank.length === 1) return formatPreferredScheduleBlock(sameRank[0]!)
+  const byIndex = rows[parsed.rank - 1]
+  if (byIndex) return formatPreferredScheduleBlock(byIndex)
+  return undefined
+}
+
 export type PreferredScheduleProgramLookup = {
   educationScheduleLines?: readonly string[]
+  preferredScheduleBlocks?: readonly unknown[] | null
   schedules?: ReadonlyArray<{
     scheduleId?: number
     startAt?: string
@@ -459,6 +511,8 @@ function resolveOneScheduleOptionToken(
   token: string,
   lookup: PreferredScheduleProgramLookup,
 ): string | undefined {
+  const geminiLine = resolveGeminiPreferredScheduleLine(token, lookup.preferredScheduleBlocks)
+  if (geminiLine) return geminiLine
   const lineMatch = token.trim().match(/^line:(\d+)$/i)
   if (lineMatch) {
     const index = Number(lineMatch[1])
@@ -494,10 +548,12 @@ export function resolvePreferredScheduleLabelsFromAnswers(input: {
   answers?: Record<string, unknown> | null
   preferredScheduleOptionValues?: readonly string[]
   educationScheduleLines?: readonly string[]
+  preferredScheduleBlocks?: readonly unknown[] | null
   schedules?: PreferredScheduleProgramLookup['schedules']
 }): string[] {
   const lookup: PreferredScheduleProgramLookup = {
     educationScheduleLines: input.educationScheduleLines,
+    preferredScheduleBlocks: input.preferredScheduleBlocks,
     schedules: input.schedules,
   }
   const optionValues =
