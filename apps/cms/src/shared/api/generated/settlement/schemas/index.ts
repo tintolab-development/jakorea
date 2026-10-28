@@ -744,6 +744,8 @@ export * from './memberBankAccountUpsertRequest';
 export * from './memberConsentRecordResponse';
 export * from './memberDetailResponse';
 export * from './memberEnrollmentSummaryResponse';
+export * from './memberInstructorAssignmentListResponse';
+export * from './memberInstructorAssignmentWaitingResponse';
 export * from './memberLectureAttendanceResponse';
 export * from './memberLectureReportAssignmentItemResponse';
 export * from './memberLectureReportContentResponse';

@@ -47,7 +47,7 @@ export interface ProgramListItemResponse {
   educationTargets?: string[];
   targetGradeFrom?: string;
   targetGradeTo?: string;
-  /** 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. */
+  /** 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다. */
   educationForm?: ProgramListItemResponseEducationForm;
   /** 이 목록 행의 모집 id. 모집 없는 NONE 행이면 null. programId·recruitmentId·applicationType 복합키로 행을 식별한다. */
   recruitmentId?: number | null;

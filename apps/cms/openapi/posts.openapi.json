@@ -32255,7 +32255,7 @@
           },
           "educationForm": {
             "type": "string",
-            "description": "공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice.",
+            "description": "공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다.",
             "enum": [
               "online",
               "offline",
@@ -33710,6 +33710,46 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "MemberInstructorAssignmentListResponse": {
+        "type": "object",
+        "description": "플랫폼 강사 마이페이지 배정 현황 탭의 배정된 목록. 강의보고서 바인딩과 무관하며 활성 ASSIGNED만 반환합니다.",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        }
+      },
+      "MemberInstructorAssignmentWaitingResponse": {
+        "type": "object",
+        "description": "플랫폼 강사 마이페이지 배정 현황 탭의 배정 대기 목록. 이 강사가 신청한 기관·일정만 포함하며 활성 ASSIGNED는 제외합니다.",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
           }
         }
       },
@@ -42484,6 +42524,12 @@
             "type": "integer",
             "format": "int64",
             "description": "program_schedule id.",
+            "nullable": true
+          },
+          "educationPeriodIndex": {
+            "type": "integer",
+            "format": "int32",
+            "description": "기간형 교육 기간 인덱스. 없으면 null.",
             "nullable": true
           },
           "startAt": {
