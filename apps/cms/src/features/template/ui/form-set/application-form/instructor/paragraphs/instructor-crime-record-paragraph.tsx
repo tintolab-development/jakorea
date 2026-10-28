@@ -29,12 +29,14 @@ export function InstructorCrimeRecordParagraph({
     <div className="form-editor-body program-application-form-instructor__crime-guide">
       <div className="program-application-form-instructor__crime-guide-body">
         <p>{INSTRUCTOR_CRIME_RECORD_GUIDE_INTRO}</p>
-        {INSTRUCTOR_CRIME_RECORD_GUIDE_ITEMS.map(item => (
-          <div key={item.title}>
-            <p>{item.title}</p>
-            <p>{item.body}</p>
-          </div>
-        ))}
+        <ul className="program-application-form-instructor__crime-guide-list">
+          {INSTRUCTOR_CRIME_RECORD_GUIDE_ITEMS.map(item => (
+            <li key={item.title}>
+              <p>{item.title}</p>
+              <p>{item.body}</p>
+            </li>
+          ))}
+        </ul>
         <p>{INSTRUCTOR_CRIME_RECORD_GUIDE_CAUTION}</p>
       </div>
       <CmsRadioGroup
