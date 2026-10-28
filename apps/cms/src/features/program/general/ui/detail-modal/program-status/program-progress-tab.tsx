@@ -556,6 +556,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                     value={localTeacherName}
                     onChange={setLocalTeacherName}
                     onBlur={() => setFilter('teacherName', localTeacherName)}
+                    onPressEnter={handleSearch}
                     width="100%"
                     showPrefixIcon={false}
                   />

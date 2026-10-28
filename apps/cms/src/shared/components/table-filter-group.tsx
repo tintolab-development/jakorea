@@ -371,6 +371,7 @@ export function TableFilterGroup({
               prev[field.key] === value ? prev : { ...prev, [field.key]: value }
             )
           }
+          onPressEnter={() => flushSearchToParentAndSearch()}
           width="100%"
         />
       )
