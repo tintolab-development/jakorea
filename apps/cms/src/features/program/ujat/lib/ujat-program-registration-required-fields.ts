@@ -100,8 +100,14 @@ function readText(overlay: Record<string, unknown>, key: string, fallback = ''):
   return typeof raw === 'string' ? raw : ''
 }
 
-function isPublished(value: unknown): boolean {
-  return value === true || value === 'published'
+/** 공고 게시 여부 — 게시/미게시 모두 선택 완료. 미선택은 미완료. */
+function isAnnouncementPublishedChoiceMissing(value: unknown): boolean {
+  return (
+    value !== true &&
+    value !== false &&
+    value !== 'published' &&
+    value !== 'unpublished'
+  )
 }
 
 function typedHalfPlan(detail: UjatTypedDetail | undefined, half: 'h1' | 'h2') {
@@ -363,7 +369,7 @@ function listIncompleteUjatInstitutionRecruit(overlay: Record<string, unknown>):
   const p = 'recruit.institution'
   pushReason(
     reasons,
-    !isPublished(read(overlay, INSTITUTION_KEYS.announcementPublished)),
+    isAnnouncementPublishedChoiceMissing(read(overlay, INSTITUTION_KEYS.announcementPublished)),
     `${p}.announcementPublished`
   )
   pushReason(
@@ -418,7 +424,7 @@ function listIncompleteUjatVolunteerRecruitHalf(
   const resolved = resolveVolunteerOverlayForHalf(overlay, half)
   pushReason(
     reasons,
-    !isPublished(read(resolved, VOLUNTEER_KEYS.announcementPublished)),
+    isAnnouncementPublishedChoiceMissing(read(resolved, VOLUNTEER_KEYS.announcementPublished)),
     `${p}.announcementPublished`
   )
   if (half === 'h2') {
@@ -582,7 +588,7 @@ function listIncompleteTypedInstitutionRecruitment(
   const p = 'recruit.institution'
   pushReason(
     reasons,
-    values.participantRecruitmentAnnouncementPublished !== 'published',
+    isAnnouncementPublishedChoiceMissing(values.participantRecruitmentAnnouncementPublished),
     `${p}.announcementPublished`
   )
   pushReason(
@@ -624,7 +630,7 @@ function listIncompleteTypedVolunteerRecruitment(
   const range = formVolunteerRecruitmentRange(values, half)
   pushReason(
     reasons,
-    values.volunteerRecruitmentAnnouncementPublished !== 'published',
+    isAnnouncementPublishedChoiceMissing(values.volunteerRecruitmentAnnouncementPublished),
     `${p}.announcementPublished`
   )
   if (half === 'h2') {
@@ -784,4 +790,73 @@ export function describeIncompleteUjatProgramRegistrationWizardRequiredFields(
       typedRecruitment
     )[0] ?? null
   )
+}
+
+const UJAT_REQUIRED_FIELD_LABELS: Record<string, string> = {
+  'basicInfo.repKo': '대표 프로그램명 (국문)',
+  'basicInfo.repEn': '대표 프로그램명 (영문)',
+  'basicInfo.programManagementName': '프로그램 관리명',
+  'basicInfo.detailedProgramId': '세부 프로그램명',
+  'basicInfo.operationRangeSeal': '사업 운영 기간',
+  'basicInfo.audience': '참여자 유형',
+  'basicInfo.businessField': '사업 분야',
+  'basicInfo.sponsorId': '후원사',
+  'basicInfo.sponsorContact': '후원사 담당자',
+  'basicInfo.educationCourse': '교육 과정',
+  'basicInfo.ipOwned': 'IP Owned',
+  'basicInfo.courseDeliveredBy': 'Course Delivered By',
+  'basicInfo.partnerInvolvement': '파트너 참여',
+  'basicInfo.ipsCategory': 'IPS 유형',
+  'kpi.participantCount': '참여 인원',
+  'kpi.volunteer': '봉사자 수',
+  'kpi.dispatchedSchool': '파견 학교 수',
+  'kpi.dispatchedClass': '파견 학급 수',
+  'wage.paymentItemValues': '지급 항목',
+  announcementPublished: '공고 게시 여부',
+  programRangeSeal: '프로그램 운영 기간',
+  targetLevels: '교육 대상',
+  targetLevelDetail: '교육 대상 상세',
+  recruitRangeSeal: '모집 기간',
+  finalAnnounceIso: '최종 합격자 발표일',
+  finalAnnounceMethod: '최종 합격자 발표 방법',
+  inquiryContact: '문의처',
+  inquiryTel: '문의처 전화번호',
+  inquiryEmail: '문의처 이메일',
+  notes: '비고',
+  noticeExposure: '모집 공고 노출 시점',
+  volunteerTargets: '모집 대상',
+  volunteerTargetDetail: '모집 대상 상세',
+  activityTerm: '활동 기수',
+  docAnnounce: '1차 서류 합격자 발표',
+  interviewMethod: '면접 방법',
+  interviewRangeSeal: '2차 면접 기간',
+  otherNotes: '기타 안내',
+  interviewSchedule: '면접 진행 가능 일정',
+}
+
+function volunteerHalfPrefix(key: string): string | null {
+  if (key.startsWith('recruit.volunteer.h1.')) return '상반기 봉사자 모집'
+  if (key.startsWith('recruit.volunteer.h2.')) return '하반기 봉사자 모집'
+  if (key.startsWith('recruit.institution.')) return '참여 기관 모집'
+  return null
+}
+
+/** 진단 키를 화면 라벨로 바꾼다. */
+export function formatUjatRegistrationRequiredFieldReason(reason: string): string {
+  const prefix = volunteerHalfPrefix(reason)
+  const leaf = reason.includes('.') ? reason.slice(reason.lastIndexOf('.') + 1) : reason
+  const label = UJAT_REQUIRED_FIELD_LABELS[reason] ?? UJAT_REQUIRED_FIELD_LABELS[leaf] ?? reason
+  return prefix == null ? label : `${prefix} · ${label}`
+}
+
+export function formatUjatRegistrationRequiredFieldReasons(keys: readonly string[]): string[] {
+  const seen = new Set<string>()
+  const labels: string[] = []
+  for (const key of keys) {
+    const label = formatUjatRegistrationRequiredFieldReason(key)
+    if (seen.has(label)) continue
+    seen.add(label)
+    labels.push(label)
+  }
+  return labels
 }

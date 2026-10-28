@@ -138,6 +138,7 @@ import {
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
+  formatUjatRegistrationRequiredFieldReasons,
   listIncompleteUjatProgramRecruitmentInterviewScheduleRequiredFields,
   listIncompleteUjatProgramRecruitmentTypedRequiredFields,
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
@@ -147,6 +148,7 @@ import {
   useDetailEditRequiredHighlightRequest,
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import {
+  buildRequiredFieldsIncompleteAlertContent,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -1820,9 +1822,12 @@ export function UjatProgramDetailFullPageModal({
     const incompleteKeys = [...typedIncompleteKeys, ...interviewIncompleteKeys]
     if (incompleteKeys.length > 0) {
       detailRequiredHighlight.report(incompleteKeys)
+      console.debug('[ujat-detail] 모집정보 필수항목 미입력:', incompleteKeys)
       void showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        content: buildRequiredFieldsIncompleteAlertContent(
+          formatUjatRegistrationRequiredFieldReasons(incompleteKeys)
+        ),
       })
       return
     }
