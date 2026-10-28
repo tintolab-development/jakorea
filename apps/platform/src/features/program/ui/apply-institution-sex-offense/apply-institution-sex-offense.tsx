@@ -146,13 +146,13 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
         ) : null}
       </PFFormFieldTable>
       <div className={styles.notes}>
-        <ol className={styles.noteList}>
+        <ul className={styles.noteList}>
           {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES.map(note => (
             <PFFormFieldValueText key={note} as="li" className={styles.noteItem}>
               {note}
             </PFFormFieldValueText>
           ))}
-        </ol>
+        </ul>
       </div>
     </div>
   )

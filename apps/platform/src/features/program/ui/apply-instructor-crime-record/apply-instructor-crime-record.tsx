@@ -55,26 +55,30 @@ export function ApplyInstructorCrimeRecord({ value, onChange }: ApplyInstructorC
         <PFText as="p" typo="bd-md-md" color="black">
           {INSTRUCTOR_CRIME_RECORD_GUIDE_INTRO}
         </PFText>
-        {INSTRUCTOR_CRIME_RECORD_GUIDE_ITEMS.map(item => (
-          <div key={item.title}>
-            <PFText as="p" typo="bd-md-md" color="black">
-              {item.title}
-            </PFText>
-            <PFText as="p" typo="bd-md-md" color="black">
-              {item.body}
-            </PFText>
-          </div>
-        ))}
+        <ul className={styles.guideList}>
+          {INSTRUCTOR_CRIME_RECORD_GUIDE_ITEMS.map(item => (
+            <li key={item.title}>
+              <PFText as="p" typo="bd-md-md" color="black">
+                {item.title}
+              </PFText>
+              <PFText as="p" typo="bd-md-md" color="black">
+                {item.body}
+              </PFText>
+            </li>
+          ))}
+        </ul>
         <PFText as="p" typo="bd-md-md" color="black">
           {INSTRUCTOR_CRIME_RECORD_GUIDE_CAUTION}
         </PFText>
       </div>
-      <ApplyFormRadioGroup
-        name="apply-instructor-crime-record-confirm"
-        value={value.confirmed ? CONFIRMED_VALUE : ''}
-        options={CONFIRM_OPTIONS}
-        onChange={next => onChange({ confirmed: next === CONFIRMED_VALUE })}
-      />
+      <div className={styles.confirm}>
+        <ApplyFormRadioGroup
+          name="apply-instructor-crime-record-confirm"
+          value={value.confirmed ? CONFIRMED_VALUE : ''}
+          options={CONFIRM_OPTIONS}
+          onChange={next => onChange({ confirmed: next === CONFIRMED_VALUE })}
+        />
+      </div>
     </div>
   )
 }
