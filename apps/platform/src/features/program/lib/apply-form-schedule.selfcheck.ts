@@ -872,8 +872,8 @@ function testPreEducationExcludedFromCurriculumChartSessionCount() {
     }
   )
   assert.equal(items?.length, 1)
-  // ① 예정일 줄 i = (i+1)차시 (총 차시 2 → 접미사 노출)
-  assert.equal(items?.[0]?.label, `${scheduleLine} | 1차시`)
+  // ① 모든 예정일 줄 = 커리큘럼 총 차시 (사전 교육 제외 2 → 접미사 노출)
+  assert.equal(items?.[0]?.label, `${scheduleLine} | 2차시`)
 }
 
 testPreEducationExcludedFromCurriculumChartSessionCount()

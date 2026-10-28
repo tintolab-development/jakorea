@@ -474,7 +474,7 @@ assert.equal(generalCurriculum.sessions[0]?.assignmentPeriod, undefined)
 assert.equal(generalCurriculum.sessions[1]?.title, '')
 assert.equal(generalCurriculum.eventSchedules.length, 0)
 assert.deepEqual(generalCurriculum.educationScheduleLines, [
-  '2026년 10월 13일(화) 10:00 ~ 12:00 | 1차시',
+  '2026년 10월 13일(화) 10:00 ~ 12:00 | 2차시',
   '2026년 10월 20일(화) 13:30 ~ 16:00 | 2차시',
 ])
 assert.deepEqual(
