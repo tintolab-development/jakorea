@@ -24,6 +24,7 @@ import {
   ProgramApplyCompleteModal,
   ProgramApplyGateModals,
   programApplyGateApplicationsPathForType,
+  programApplyGateConsentsPath,
   programApplyGateMemberSettingsPath,
   shouldHideApplyPageBlockedBanner,
   useProgramApplyGate,
@@ -408,12 +409,18 @@ export function ProgramApplyPage() {
     applicationTypes: focus?.applicationTypes,
     programType: program?.programType,
   }
-  const { gateModal, setGateModal, closeGateModal, readGateModalForOptions } = useProgramApplyGate(
-    programId,
-    applicationSelection
-  )
+  const {
+    gateModal,
+    setGateModal,
+    closeGateModal,
+    readGateModalForOptions,
+    missingConsents,
+    findMissingRequiredConsents,
+    openRequiredConsentModal,
+  } = useProgramApplyGate(programId, applicationSelection)
   const [completeModalOpen, setCompleteModalOpen] = useState(false)
   const applyGatePromptedRef = useRef(false)
+  const consentGatePromptedRef = useRef(false)
   const submittedSuccessfullyProgramIdRef = useRef<string | null>(null)
   const applicationTypeForMyPage =
     applicationFormQuery.bundle?.option.applicationType ??
@@ -475,6 +482,34 @@ export function ProgramApplyPage() {
     remoteApplyEnabled,
     setGateModal,
     programId,
+  ])
+
+  // 직접 URL 진입 보호 — 신청서가 열리면 필수 동의(초상권, UJAT 는 4종)를 한 번 확인한다. 조회 실패는 막지 않는다.
+  useEffect(() => {
+    if (
+      consentGatePromptedRef.current ||
+      submittedSuccessfullyProgramIdRef.current === programId ||
+      !isReady ||
+      !remoteApplyEnabled ||
+      program == null ||
+      applicationFormQuery.status !== 'ready' ||
+      applicationFormQuery.bundle?.option.canApply === false
+    ) {
+      return
+    }
+    consentGatePromptedRef.current = true
+    void findMissingRequiredConsents().then(missing => {
+      if (missing.length > 0) openRequiredConsentModal(missing)
+    })
+  }, [
+    applicationFormQuery.bundle?.option.canApply,
+    applicationFormQuery.status,
+    findMissingRequiredConsents,
+    isReady,
+    openRequiredConsentModal,
+    program,
+    programId,
+    remoteApplyEnabled,
   ])
 
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
@@ -2148,6 +2183,14 @@ export function ProgramApplyPage() {
     setSubmitErrorField(null)
     setSubmitErrorMessages({})
     if (displayDraft == null) {
+      const gateKind = readGateModalForOptions(
+        applicationFormQuery.bundle?.option.canApply,
+        applicationFormQuery.blockedReason,
+      )
+      if (gateKind) {
+        setGateModal(gateKind)
+        return
+      }
       setSubmitAlert({
         description:
           blockedMessage ?? '신청 양식을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -2155,8 +2198,24 @@ export function ProgramApplyPage() {
       return
     }
     if (blockedMessage && !canSubmitRemote) {
+      const gateKind = readGateModalForOptions(
+        applicationFormQuery.bundle?.option.canApply,
+        applicationFormQuery.blockedReason,
+      )
+      if (gateKind) {
+        setGateModal(gateKind)
+        return
+      }
       setSubmitAlert({ description: blockedMessage })
       return
+    }
+    // 제출 직전 필수 동의 재확인 — 진입 후 철회·만료된 경우도 막는다. 조회 실패는 서버 응답에 맡긴다.
+    if (remoteApplyEnabled && applicationFormQuery.bundle?.option.canApply !== false) {
+      const missing = await findMissingRequiredConsents()
+      if (missing.length > 0) {
+        openRequiredConsentModal(missing)
+        return
+      }
     }
     // 「제공받는 곳」은 CMS 양식 작성 칸이다. 포털 신청 화면에 입력 UI가 없어 필수로 보지 않는다.
     if (showTrainedTeachersApply) {
@@ -2996,6 +3055,11 @@ export function ProgramApplyPage() {
           error: errorEnvelope,
         })
         if (getQueryRetryHttpStatus(error) !== 400) {
+          const gateKind = readGateModalForOptions(undefined, errorCode)
+          if (gateKind) {
+            setGateModal(gateKind)
+            return
+          }
           setSubmitAlert({
             description: message,
             promptSettingsGrade,
@@ -3035,6 +3099,14 @@ export function ProgramApplyPage() {
       return
     }
     if (remoteApplyEnabled) {
+      const gateKind = readGateModalForOptions(
+        applicationFormQuery.bundle?.option.canApply,
+        applicationFormQuery.blockedReason,
+      )
+      if (gateKind) {
+        setGateModal(gateKind)
+        return
+      }
       setSubmitAlert({
         description:
           blockedMessage ?? '신청을 제출할 수 없습니다. 모집 기간과 회원 자격을 확인해 주세요.',
@@ -3127,7 +3199,19 @@ export function ProgramApplyPage() {
 
       <ProgramApplyGateModals
         kind={gateModal}
-        onClose={closeGateModal}
+        onClose={() => {
+          const wasRequiredConsent = gateModal === 'required-consent'
+          closeGateModal()
+          // 필수 동의 모달 취소/닫기 → 상세로 복귀 (replace: 뒤로가기로 신청서→모달 재진입 루프 방지)
+          if (wasRequiredConsent && program) {
+            navigate(programDetailPath(program.id, fromPath, focus), { replace: true })
+          }
+        }}
+        missingConsentTypes={missingConsents}
+        onOpenConsents={() => {
+          closeGateModal()
+          navigate(programApplyGateConsentsPath)
+        }}
         onEditMemberInfo={() => {
           closeGateModal()
           navigate(programApplyGateMemberSettingsPath)

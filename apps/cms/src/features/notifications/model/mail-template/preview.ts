@@ -1,4 +1,8 @@
 import dayjs from 'dayjs'
+import {
+  isPlainTextMailBody,
+  renderPlainMailBodyAfterSubstitute,
+} from '@/features/notifications/model/shared/mail-body-display-html'
 
 const KO_WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 const MAIL_VARIABLE_TOKEN_RE = /#\{([^{}]+)\}/g
@@ -18,13 +22,8 @@ export const MAIL_PREVIEW_SAMPLE_RECIPIENT = {
   extraCount: 914,
 } as const
 
-const VARIABLE_SAMPLE_OVERRIDES: Record<string, string> = {
-  회원명: '이가원',
-  프로그램명: 'JA KOREA',
-}
-
 export function mailPreviewSampleValue(label: string): string {
-  return VARIABLE_SAMPLE_OVERRIDES[label] ?? '예시값'
+  return `#{${label}}`
 }
 
 export function applyMailPreviewTokens(text: string): string {
@@ -41,6 +40,18 @@ export function applyMailPreviewHtml(html: string): string {
   return fromWrapped.replace(MAIL_VARIABLE_TOKEN_RE, (_, label: string) =>
     escapeHtml(mailPreviewSampleValue(label))
   )
+}
+
+/**
+ * 메일 본문 미리보기 (BE renderedContent와 시각적으로 일치).
+ * 평문 템플릿(블록 태그 없음): 샘플값 치환 후 전체 이스케이프 + `\n` → `<br>`.
+ * HTML 템플릿: 기존 `applyMailPreviewHtml`과 동일.
+ */
+export function applyMailPreviewBody(template: string): string {
+  if (isPlainTextMailBody(template)) {
+    return renderPlainMailBodyAfterSubstitute(applyMailPreviewTokens(template))
+  }
+  return applyMailPreviewHtml(template)
 }
 
 /** 기획: YYYY.MM.DD(요일) HH:mm — 미리보기 시점 기준 */

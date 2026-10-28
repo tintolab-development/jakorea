@@ -30,10 +30,9 @@ import {
 } from '@/features/program/general/api/admin-general-programs-service'
 import {
   classifyProgramFormBindings,
-  isDedicatedSurveyManagementTabTitle,
+  mapProgramSurveyToRegisteredSurvey,
   mapSurveyResponseListItemToPollResponse,
   mapSurveySummaryToQuestionSummaries,
-  mergeSurveysWithBindings,
   surveyResponseNeedsDetail,
   surveySummaryHasPublicTextAnswers,
   type ClassifiedFormBinding,
@@ -488,19 +487,19 @@ export function useGeneralProgramSurveys(
 
   const registeredSurveysBase = useMemo((): RegisteredSurvey[] | null => {
     if (!enabled || !remoteEnabled) return null
-    return mergeSurveysWithBindings(surveysQuery.data ?? [], bindingsQuery.data ?? []).filter(
-      survey => {
-        // 만족도·강의평가 템플릿은 전용 탭에서 처리 — poll 목록에서 제외
+    return (surveysQuery.data ?? [])
+      .map((dto, index) => mapProgramSurveyToRegisteredSurvey(dto, index))
+      .filter(survey => {
+        // 설문 목록의 행은 /surveys 응답만 사용한다.
+        // 일치하는 바인딩이 있는 경우에만 전용 만족도·강의평가 탭 여부를 판별한다.
         const classified = classifyProgramFormBindings(bindingsQuery.data ?? [])
         const hit = classified.find(
           c =>
             String(c.binding.templateVersionId ?? '') === survey.id ||
             String(c.binding.templateId ?? '') === survey.templateId
         )
-        if (!hit) return !isDedicatedSurveyManagementTabTitle(survey.title)
-        return hit.kind === 'poll'
-      }
-    )
+        return hit == null || hit.kind === 'poll'
+      })
   }, [bindingsQuery.data, enabled, remoteEnabled, surveysQuery.data])
 
   const surveyTitleVersionIdsKey = useMemo(() => {

@@ -4,6 +4,7 @@
  */
 
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import './instructor-bulk-approve-modal.css'
 
 export type InstructorBulkApproveModalProps = {
@@ -70,6 +71,7 @@ export function InstructorBulkApproveModal({
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
     />
   )
 }

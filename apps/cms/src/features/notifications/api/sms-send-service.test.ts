@@ -76,6 +76,56 @@ describe('submitSmsSend', () => {
     })
   })
 
+  it('does not call send API while MMS attachment is uploading/scanning', async () => {
+    await expect(
+      submitSmsSend({
+        draft: draft({
+          messageType: 'MMS',
+          attachmentFileNames: ['a.jpg'],
+          attachmentUploadPending: true,
+        }),
+        idempotencyKey: 'idem-mms-pending',
+        senderProfileId: 9,
+      })
+    ).rejects.toThrow()
+    expect(createSendBatchRemote).not.toHaveBeenCalled()
+  })
+
+  it('sends template-less MMS with request attachmentFileIds', async () => {
+    await submitSmsSend({
+      draft: draft({
+        templateId: undefined,
+        messageType: 'MMS',
+        subject: '교육 안내',
+        bodyText: '교육 안내입니다.',
+        attachmentFileNames: ['notice.jpg'],
+        attachmentFileIds: [30001],
+      }),
+      idempotencyKey: 'idem-mms-1',
+      senderProfileId: 12,
+    })
+    const body = vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]
+    expect(body).toMatchObject({
+      messageType: 'MMS',
+      senderProfileId: 12,
+      contentTemplate: '교육 안내입니다.',
+      attachmentFileIds: [30001],
+    })
+    expect(body).not.toHaveProperty('templateId')
+  })
+
+  it('LMS 발송은 attachmentFileIds를 보내지 않는다(회귀)', async () => {
+    await submitSmsSend({
+      draft: draft({ attachmentFileIds: [30001] }),
+      templateBaseline: { subject: '안내', bodyText: '등록본문' },
+      idempotencyKey: 'idem-lms-1',
+      senderProfileId: 9,
+    })
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).not.toHaveProperty(
+      'attachmentFileIds'
+    )
+  })
+
   it('does not call send API when compose is invalid', async () => {
     await expect(
       submitSmsSend({

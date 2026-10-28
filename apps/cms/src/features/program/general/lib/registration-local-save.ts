@@ -41,7 +41,6 @@ import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/gen
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
   awaitRecruitDetailMediaUploads,
-  bindGeneralRecruitDetailMediaToRows,
   bindRecruitDetailMediaAfterProgramCreate,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 
@@ -706,7 +705,7 @@ export async function persistGeneralProgramRegistration(args: {
       editorExtras: args.editorExtras,
     })
 
-  // 생성 요청 전에 스냅샷 — create 후 overlay 초기화돼도 썸네일·첨부 바인딩 가능
+  // 생성 요청 전에 스냅샷 — 일반은 recruitments[] 미디어 필드, 1사1교·교육받은 교사는 생성 후 PUT
   const recruitMediaOverlay = (() => {
     const leftover = collectSelectedRecruitOverlaysForProgram(program)
     if (variant !== 'economy') return leftover
@@ -718,11 +717,19 @@ export async function persistGeneralProgramRegistration(args: {
     }
   })()
 
+  const programForCreate = {
+    ...program,
+    registrationOverlay: {
+      ...(program.registrationOverlay ?? {}),
+      ...recruitMediaOverlay,
+    },
+  }
+
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {
     const { createCompanySchoolProgram } = await import(
       '@/features/program/1c-1s/api/service'
     )
-    const created = await createCompanySchoolProgram(program, args.preparedFormBindings)
+    const created = await createCompanySchoolProgram(programForCreate, args.preparedFormBindings)
     return bindCreatedProgramMediaOrRollback(created, () =>
       bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay)
     )
@@ -732,7 +739,7 @@ export async function persistGeneralProgramRegistration(args: {
     const { createTrainedTeacherProgram } = await import(
       '@/features/program/trained-teachers/api/service'
     )
-    const created = await createTrainedTeacherProgram(program, args.preparedFormBindings)
+    const created = await createTrainedTeacherProgram(programForCreate, args.preparedFormBindings)
     return bindCreatedProgramMediaOrRollback(created, () =>
       bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay)
     )
@@ -743,10 +750,7 @@ export async function persistGeneralProgramRegistration(args: {
     variant !== 'trainedTeachers' &&
     shouldUseGeneralProgramsRemoteApi()
   ) {
-    const created = await createGeneralProgram(program, args.preparedFormBindings)
-    return bindCreatedProgramMediaOrRollback(created, () =>
-      bindGeneralRecruitDetailMediaToRows(created, recruitMediaOverlay)
-    )
+    return createGeneralProgram(programForCreate, args.preparedFormBindings)
   }
 
   return persistGeneralRegistrationFormLocal(args)

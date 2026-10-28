@@ -151,6 +151,18 @@ describe('company-school adapters', () => {
     expect(mapped.backendProgramType).toBe('COMPANY_SCHOOL')
   })
 
+  it('maps createdByName and updatedByName from detail JSON', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186016',
+      title: '1사1교',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as ProgramResponse)
+
+    expect(mapped.createdByName).toBe('곽도규')
+    expect(mapped.updatedByName).toBe('김도영')
+  })
+
   it('serviceDetailJson paymentItems가 id 배열이어도 상세 매핑이 깨지지 않는다', () => {
     const mapped = mapCompanySchoolDetailToProgram({
       id: '186016',

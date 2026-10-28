@@ -28,7 +28,7 @@ describe('formatNotificationFailedReason', () => {
       formatNotificationFailedReason(
         'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:교육 진행 수업 시간'
       )
-    ).toBe('템플릿 필수 변수가 없습니다: 교육 진행 수업 시간')
+    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 교육 진행 수업 시간')
   })
 
   it('복수 키는 쉼표+공백으로 표시한다', () => {
@@ -36,6 +36,6 @@ describe('formatNotificationFailedReason', () => {
       formatNotificationFailedReason(
         'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:교육 진행 수업 시간,배정 기관명'
       )
-    ).toBe('템플릿 필수 변수가 없습니다: 교육 진행 수업 시간, 배정 기관명')
+    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 교육 진행 수업 시간, 배정 기관명')
   })
 })

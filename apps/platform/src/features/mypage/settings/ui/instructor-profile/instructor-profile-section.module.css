@@ -9,15 +9,16 @@
   display: flex;
   width: 100%;
   min-width: 0;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--spacing-12);
   padding-bottom: var(--spacing-16);
+  padding-left: var(--spacing-8);
   border-bottom: 2px solid var(--color-primary-500);
 }
 
 .headerNoStroke {
-  padding-bottom: var(--spacing-12);
+  padding-bottom: var(--spacing-16);
   border-bottom: none;
 }
 
@@ -41,6 +42,7 @@
 
 .teaser {
   margin: 0;
+  font-weight: 700;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -58,9 +60,9 @@
 .listRow {
   display: grid;
   width: 100%;
-  grid-template-columns: minmax(120px, 140px) 1fr;
-  gap: var(--spacing-12);
-  padding: var(--spacing-16) var(--spacing-12);
+  grid-template-columns: minmax(120px, 180px) 1fr;
+  gap: var(--spacing-16);
+  padding: var(--spacing-16) 0 var(--spacing-16) var(--spacing-12);
   border-bottom: 1px solid var(--color-border-default);
 }
 
@@ -87,12 +89,12 @@
 .essayBox {
   box-sizing: border-box;
   width: 100%;
-  min-height: 120px;
-  padding: var(--spacing-16);
+  padding: var(--spacing-16) var(--spacing-20);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-12);
-  background: var(--color-neutral-gray-50);
+  border-radius: var(--radius-8);
+  background: var(--color-neutral-white);
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .emptyLine {

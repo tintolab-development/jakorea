@@ -7,7 +7,7 @@
  */
 
 /**
- * 이 행의 신청 양식 하나.
+ * 이 행의 신청 양식 하나. 같은 프로그램의 기관·봉사자 모집은 별도 목록 행이다.
  */
 export type ProgramListItemResponseApplicationType = typeof ProgramListItemResponseApplicationType[keyof typeof ProgramListItemResponseApplicationType] | null;
 

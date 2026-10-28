@@ -12,4 +12,5 @@ export interface InstructorRoleWorkflowResponse {
   instructorProfileId?: number;
   status?: string;
   message?: string;
+  approvalNotificationCase?: string;
 }

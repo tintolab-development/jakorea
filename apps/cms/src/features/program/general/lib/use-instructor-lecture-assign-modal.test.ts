@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { resolveInstructorLectureAssignLayout } from './use-instructor-lecture-assign-modal'
+import {
+  countOrganizationsWithAssignedSessions,
+  resolveInstructorLectureAssignLayout,
+} from './use-instructor-lecture-assign-modal'
 
 describe('resolveInstructorLectureAssignLayout', () => {
   it('기관 배정은 강사 상세가 성공해도 캘린더 레이아웃을 유지한다', () => {
@@ -45,5 +48,17 @@ describe('resolveInstructorLectureAssignLayout', () => {
       showNoApprovedOrganizationBanner: false,
       useSlotListLayout: true,
     })
+  })
+})
+
+describe('countOrganizationsWithAssignedSessions', () => {
+  it('배정 일정이 있는 승인 신청만 센다', () => {
+    const rows = [
+      { confirmedListAssignmentSessions: [{}] },
+      { confirmedListAssignmentSessions: [] },
+      {},
+    ] as unknown as Parameters<typeof countOrganizationsWithAssignedSessions>[0]
+    expect(countOrganizationsWithAssignedSessions(rows)).toBe(1)
+    expect(countOrganizationsWithAssignedSessions(undefined)).toBe(0)
   })
 })

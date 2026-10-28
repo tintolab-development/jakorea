@@ -7,6 +7,7 @@ import {
   maskAttendanceEmail,
 } from './attendance-display'
 import { ProgramAttendanceStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import {
   UJAT_ATTENDANCE_STATUS_LABEL,
   type UjatAttendanceStatus,
@@ -62,6 +63,7 @@ export function UjatAttendanceTable({
         key: 'assignedClass',
         width: 120,
         align: 'center',
+        render: (assignedClass: string) => formatUjatGradeClassDisplayLabel(assignedClass),
       },
       {
         title: '연락처',

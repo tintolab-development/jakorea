@@ -321,15 +321,18 @@ export async function updateSmsTemplate(input: {
   bodyText: string
   categoryId?: string | null
   newFiles?: File[]
+  /** 편집 화면에서 지운 기존 템플릿 첨부(attachmentId). MMS가 아니면 기존 첨부 전부. */
+  removedAttachmentIds?: number[]
+  /** 삭제 후 남는 기존 첨부(개수·바이트) — 신규 첨부 개수·합계 사전 검증용 */
+  remainingAttachments?: { count: number; totalBytes: number }
 }): Promise<{ templateId: string }> {
   assertSmsTemplatesRemoteReady()
   const templateId = Number(input.templateId)
   if (!Number.isFinite(templateId)) throw new Error('템플릿 ID가 올바르지 않습니다.')
-  const persistFiles =
-    input.messageType.trim().toUpperCase() === 'MMS' ? input.newFiles : undefined
-  const previous = persistFiles && persistFiles.length > 0
-    ? await getSmsTemplateDetail(input.templateId)
-    : null
+  const isMms = input.messageType.trim().toUpperCase() === 'MMS'
+  const persistFiles = isMms ? (input.newFiles ?? []) : []
+  const removedAttachmentIds = input.removedAttachmentIds ?? []
+  const previous = persistFiles.length > 0 ? await getSmsTemplateDetail(input.templateId) : null
   await updateNotificationTemplateRemote(
     templateId,
     buildSmsTemplateUpsertBody({
@@ -341,9 +344,14 @@ export async function updateSmsTemplate(input: {
       categoryId: input.categoryId,
     })
   )
-  if (persistFiles && persistFiles.length > 0) {
+  if (persistFiles.length > 0 || removedAttachmentIds.length > 0) {
     try {
-      await uploadAndBindSmsTemplateAttachments(templateId, persistFiles)
+      await syncSmsTemplateAttachments({
+        templateId,
+        newFiles: persistFiles,
+        removedAttachmentIds,
+        remaining: input.remainingAttachments,
+      })
     } catch (error) {
       return rethrowAfterRollback(error, async () => {
         if (!previous) return

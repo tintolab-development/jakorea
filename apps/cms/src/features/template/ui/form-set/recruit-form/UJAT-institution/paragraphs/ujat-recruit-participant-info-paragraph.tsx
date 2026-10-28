@@ -104,6 +104,7 @@ export function UjatRecruitParticipantInfoParagraph(props: UjatRecruitParagraphP
         isEdit={mode === 'edit'}
         sectionTitle={props.sectionTitle}
         highlightParagraphId={props.highlightParagraphId}
+        hideSectionHeader={props.hideSectionHeader}
       />
     )
   }

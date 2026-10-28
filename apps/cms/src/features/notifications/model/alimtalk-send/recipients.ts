@@ -10,6 +10,10 @@ import type {
 } from './types'
 import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
 
+/** 프로그램 선택 시 직접 입력 버튼을 숨긴 채 표시하는 운영 안내 */
+export const ALIMTALK_PROGRAM_SELECTED_DIRECT_GUIDANCE =
+  '프로그램을 선택한 경우 해당 프로그램의 등록 회원에게만 발송할 수 있습니다. 직접 입력한 휴대폰 번호로 발송하려면 프로그램을 선택하지 않고 진행해 주세요.'
+
 export const ALIMTALK_SEND_PARTICIPATION_TYPE_LABEL: Record<
   Exclude<AlimtalkSendParticipationType, ''>,
   string

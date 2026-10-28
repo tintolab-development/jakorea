@@ -18,19 +18,41 @@ import {
   InstructorProfileFieldTable,
   resolveInstructorProfileFieldLayout,
 } from './profile-field-table'
+import {
+  SettingsField,
+  SettingsFieldStack,
+  SettingsJaRows,
+} from './settings-stacked-rows'
 import type { InstructorProfileFieldsProps } from './types'
 
 export function InstructorJaProfileFields({
   values,
   onValuesChange,
   surface = 'apply',
+  placeholders,
 }: InstructorProfileFieldsProps) {
   const fieldLayout = resolveInstructorProfileFieldLayout(surface)
+  const ph = { ...PH, ...placeholders }
   const patch = <K extends keyof InstructorSharedProfileFormValues>(
     key: K,
     next: InstructorSharedProfileFormValues[K],
   ) => {
     onValuesChange(prev => ({ ...prev, [key]: next }))
+  }
+
+  if (surface === 'settings') {
+    // 회원정보 설정 전용 — 시안 12208:130869
+    return (
+      <SettingsFieldStack>
+        <SettingsField label="활동 이력">
+          <SettingsJaRows
+            rows={values.jaKoreaRows}
+            placeholders={ph}
+            onRowsChange={next => patch('jaKoreaRows', next)}
+          />
+        </SettingsField>
+      </SettingsFieldStack>
+    )
   }
 
   return (

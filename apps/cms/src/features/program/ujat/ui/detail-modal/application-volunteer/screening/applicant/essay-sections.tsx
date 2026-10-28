@@ -40,7 +40,7 @@ export function EssaySections({ applicant }: EssaySectionsProps) {
             className="ujat-volunteer-applicant-essay-sections__item"
           >
             <DetailInfoForm.Row type="custom">
-              <div className="instructor-resume-free-writing-card">
+              <div className="instructor-resume-card">
                 <p className="instructor-resume-free-writing-text">{text}</p>
               </div>
             </DetailInfoForm.Row>

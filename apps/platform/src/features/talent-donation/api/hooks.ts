@@ -11,7 +11,7 @@ import { buildTalentSponsorshipView, type TalentSponsorshipView } from '../lib/o
 import {
   createPublicTalentApplication,
   fetchPublicTalentIntro,
-  uploadTalentApplicationAttachment,
+  uploadTalentApplicationAttachments,
 } from './client'
 import type { PublicTalentApplicationCreateRequest } from './types'
 
@@ -67,18 +67,19 @@ export function useCreatePublicTalentApplication() {
   return useMutation({
     mutationFn: async (input: {
       body: PublicTalentApplicationCreateRequest
-      attachmentFile?: File | null
+      attachmentFiles?: File[]
     }) => {
       if (!isHomepageApiConfigured()) {
         throw new Error('신청 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
       }
-      let attachmentAssetId = input.body.attachmentAssetId
-      if (input.attachmentFile) {
-        attachmentAssetId = await uploadTalentApplicationAttachment(input.attachmentFile)
-      }
+      const uploadedIds = await uploadTalentApplicationAttachments(input.attachmentFiles ?? [])
+      const attachmentAssetIds =
+        uploadedIds.length > 0 ? uploadedIds : input.body.attachmentAssetIds
+      const attachmentAssetId = attachmentAssetIds?.[0] ?? input.body.attachmentAssetId
       return createPublicTalentApplication({
         ...input.body,
         ...(attachmentAssetId != null ? { attachmentAssetId } : {}),
+        ...(attachmentAssetIds && attachmentAssetIds.length > 0 ? { attachmentAssetIds } : {}),
         privacyAgreed: true,
       })
     },

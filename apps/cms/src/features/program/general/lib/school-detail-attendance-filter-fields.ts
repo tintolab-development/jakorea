@@ -5,24 +5,30 @@ import {
   SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS,
   type SchoolSessionAttendanceStatusKey,
 } from '../model/school-detail-types'
-import {
-  STUDENT_GRADE_CLASS_OPTIONS,
-  STUDENT_LIST_GENDER_FILTER_OPTIONS,
-} from './student-list-filter-fields'
+import { STUDENT_LIST_GENDER_FILTER_OPTIONS } from './student-list-filter-fields'
 
 const FILTER_CONTROL_WIDTH = FILTER_CONTROL_MAX_WIDTH_PX
 
+const ATTENDANCE_STATUS_FILTER_ORDER: SchoolSessionAttendanceStatusKey[] = [
+  'present',
+  'absent',
+  'late',
+  'excused',
+  'unrecorded',
+]
+
 const attendanceStatusOptions = [
   { label: '전체', value: SCHOOL_ATTENDANCE_FILTER_ALL },
-  ...(Object.entries(SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS) as [
-    SchoolSessionAttendanceStatusKey,
-    string,
-  ][]).map(([value, label]) => ({ label, value })),
+  ...ATTENDANCE_STATUS_FILTER_ORDER.map(value => ({
+    label: SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS[value],
+    value,
+  })),
 ]
 
 /** 학교 상세 > 출석 관리 탭 필터 (교육 일정·학생명·성별·학급·출결 현황) */
 export function buildSchoolDetailAttendanceFilterFields(
-  educationScheduleOptions: Array<{ label: string; value: string }>
+  educationScheduleOptions: Array<{ label: string; value: string }>,
+  studentClassOptions: Array<{ label: string; value: string }> = []
 ): FilterFieldConfig[] {
   const scheduleOptions = [
     { label: '전체', value: SCHOOL_ATTENDANCE_FILTER_ALL },
@@ -63,7 +69,7 @@ export function buildSchoolDetailAttendanceFilterFields(
       placeholder: '전체',
       options: [
         { label: '전체', value: SCHOOL_ATTENDANCE_FILTER_ALL },
-        ...STUDENT_GRADE_CLASS_OPTIONS,
+        ...studentClassOptions,
       ],
       width: FILTER_CONTROL_WIDTH,
     },

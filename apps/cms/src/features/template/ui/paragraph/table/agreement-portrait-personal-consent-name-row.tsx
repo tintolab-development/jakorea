@@ -73,7 +73,7 @@ export function PortraitAffiliationBody({
       </div>
       <DividerVertical />
       <CmsCheckbox
-        checkboxSize="large"
+        checkboxSize="medium"
         checked={noAffiliation}
         disabled={!interactive}
         onChange={e => {

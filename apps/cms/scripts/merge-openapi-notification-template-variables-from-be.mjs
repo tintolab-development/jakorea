@@ -44,9 +44,7 @@ if (!bePathOp?.get) {
 }
 
 fe.paths = fe.paths ?? {}
-if (!fe.paths[PATH_KEY]) {
-  fe.paths[PATH_KEY] = bePathOp
-}
+fe.paths[PATH_KEY] = bePathOp
 
 fe.components = fe.components ?? {}
 fe.components.schemas = fe.components.schemas ?? {}
@@ -58,7 +56,6 @@ for (const key of SCHEMA_KEYS) {
     console.warn(`BE missing schema ${key}`)
     continue
   }
-  if (fe.components.schemas[key]) continue
   fe.components.schemas[key] = schema
   merged += 1
 }

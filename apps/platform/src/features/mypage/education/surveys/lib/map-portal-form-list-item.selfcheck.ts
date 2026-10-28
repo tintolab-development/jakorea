@@ -6,7 +6,12 @@ import {
   mapPortalFormListItem,
   slicePortalFormDate,
 } from './map-portal-form-list-item.ts'
-import { isPortalFormSubmissionPeriodOpen } from './portal-form-submission-period.ts'
+import {
+  isPortalFormSubmissionPeriodOpen,
+  mergePortalFormSubmissionPeriodFields,
+  resolvePortalFormSubmissionPeriodBlockForEntry,
+  resolvePortalFormSubmissionPeriodBlockReason,
+} from './portal-form-submission-period.ts'
 
 assert.equal(slicePortalFormDate(null), undefined)
 assert.equal(slicePortalFormDate(''), undefined)
@@ -70,5 +75,52 @@ assert.equal(
   false,
 )
 assert.equal(isPortalFormSubmissionPeriodOpen({}, new Date()), true)
+
+assert.equal(
+  resolvePortalFormSubmissionPeriodBlockReason({ startAt: '2026-10-20', endAt: '2026-10-20' }, beforeStart),
+  'not_started',
+)
+assert.equal(
+  resolvePortalFormSubmissionPeriodBlockReason({ startAt: '2026-10-20', endAt: '2026-10-20' }, onStart),
+  null,
+)
+assert.equal(
+  resolvePortalFormSubmissionPeriodBlockReason({ startAt: '2026-10-20', endAt: '2026-10-20' }, afterEnd),
+  'closed',
+)
+assert.equal(
+  resolvePortalFormSubmissionPeriodBlockReason(
+    { submissionEndAt: '2026-10-20T18:00:00+09:00' },
+    new Date('2026-10-20T19:00:00+09:00'),
+  ),
+  'closed',
+)
+assert.equal(
+  resolvePortalFormSubmissionPeriodBlockReason({ canSubmit: false }, new Date()),
+  'closed',
+)
+
+const titleParagraph = {
+  kind: 'description',
+  variant: 'survey_title_with_period',
+  id: 't',
+  surveyTitle: '설문',
+  endPeriodMode: 'custom',
+  endAt: '2026-10-20T23:59:59+09:00',
+} as import('@jakorea/form-schema/writing-form').TitleWithPeriodParagraph
+
+const titleOnlyEnd = mergePortalFormSubmissionPeriodFields({ canSubmit: true }, titleParagraph)
+assert.equal(
+  resolvePortalFormSubmissionPeriodBlockReason(titleOnlyEnd, new Date('2026-10-27T00:00:00+09:00')),
+  'closed',
+)
+assert.equal(
+  resolvePortalFormSubmissionPeriodBlockForEntry(
+    { id: '1', title: 'x', status: 'in_progress', canSubmit: true },
+    titleParagraph,
+    new Date('2026-10-27T00:00:00+09:00'),
+  ),
+  'closed',
+)
 
 console.log('map-portal-form-list-item.selfcheck: ok')

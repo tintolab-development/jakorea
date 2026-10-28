@@ -57,10 +57,21 @@ export function usesInstructorMemberBasicInfoLayout(
 export function resolveBasicInfoLayout({
   bodyKey,
   instructorProfile,
+  permissionInstructor = false,
 }: {
   bodyKey: BasicInfoBodyKey
   instructorProfile: InstructorMemberProfile | null | undefined
+  /** 강사 신청 상세 — 교사 회원이어도 강사 기본정보(권한 승인 현황·경력·계좌) 레이아웃 */
+  permissionInstructor?: boolean
 }): BasicInfoLayoutResolved {
+  if (permissionInstructor) {
+    return {
+      layout: BasicInfoLayout.SPLIT_CARD,
+      sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
+      splitSectionVariant: 'instructor',
+    }
+  }
+
   /** 순수 교사 — 가입일 카드 + 성명·연락처·소속 카드 (2단 split) */
   if (instructorProfile === 'school_teacher') {
     return {

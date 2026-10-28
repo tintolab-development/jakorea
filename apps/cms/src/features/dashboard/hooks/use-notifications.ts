@@ -13,6 +13,7 @@ import {
   markAllAdminNotificationsAsRead,
   shouldUseDashboardRemoteApi,
 } from '../api/admin-dashboard-service'
+import { dashboardQueryKeys } from '../api/dashboard-query-keys'
 import { useAdminNotifications } from '../hooks/use-admin-notifications'
 import {
   applyAllNotificationsRead,
@@ -26,6 +27,9 @@ interface UseNotificationsResult {
   notifications: Notification[]
   loading: boolean
   unreadCount: number
+  hasNextPage: boolean
+  isFetchingNextPage: boolean
+  fetchNextPage: () => Promise<void>
   refresh: () => Promise<void>
   markAsRead: (notificationId: string) => Promise<void>
   removeNotification: (notificationId: string) => Promise<void>
@@ -46,14 +50,23 @@ export function useNotifications(): UseNotificationsResult {
     refresh: refreshStore,
   } = useNotificationStore()
 
-  const { data: remoteNotifications = [], isLoading: remoteLoading, refetch } = useAdminNotifications(
-    useRemoteList
-  )
+  const {
+    notifications: remoteNotifications = [],
+    isLoading: remoteLoading,
+    refetch,
+    hasNextPage: remoteHasNextPage,
+    isFetchingNextPage: remoteFetchingNextPage,
+    fetchNextPage: fetchRemoteNextPage,
+  } = useAdminNotifications(useRemoteList)
+
+  const invalidateUnreadCount = () =>
+    queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.notificationCount('remote') })
 
   const { mutateAsync: markRemoteAsRead } = useMutation({
     mutationFn: (notificationId: string) => markAdminNotificationAsRead(notificationId),
     onSuccess: (_data, notificationId) => {
       applyNotificationRead(queryClient, notificationId)
+      void invalidateUnreadCount()
     },
   })
 
@@ -61,6 +74,7 @@ export function useNotifications(): UseNotificationsResult {
     mutationFn: (notificationId: string) => hideAdminNotification(notificationId),
     onSuccess: (_data, notificationId) => {
       applyNotificationHidden(queryClient, notificationId)
+      void invalidateUnreadCount()
     },
   })
 
@@ -68,6 +82,7 @@ export function useNotifications(): UseNotificationsResult {
     mutationFn: () => markAllAdminNotificationsAsRead(),
     onSuccess: () => {
       applyAllNotificationsRead(queryClient)
+      void invalidateUnreadCount()
     },
   })
 
@@ -121,10 +136,19 @@ export function useNotifications(): UseNotificationsResult {
     await markStoreAllAsRead()
   }
 
+  const fetchNextPage = async () => {
+    if (useRemoteList) {
+      await fetchRemoteNextPage()
+    }
+  }
+
   return {
     notifications,
     loading,
     unreadCount,
+    hasNextPage: useRemoteList ? Boolean(remoteHasNextPage) : false,
+    isFetchingNextPage: useRemoteList ? remoteFetchingNextPage : false,
+    fetchNextPage,
     refresh,
     markAsRead,
     removeNotification,

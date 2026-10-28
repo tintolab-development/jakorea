@@ -22,6 +22,8 @@ import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certific
 import { StudentCertificatePdfExportHost } from '@/features/program/general/ui/detail-modal/program-status/student-certificate-pdf-export-host'
 import type { EducationProgressHalfKey } from '../tabs'
 import { UjatAddVolunteerModal } from './add-volunteer-modal'
+import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
@@ -167,7 +169,7 @@ export function UjatEducationProgressVolunteersSection({
   }, [selectedRowKeys, showAlert, studentCertificateExportActive])
 
   const handleStudentCertificateIssueConfirm = useCallback(
-    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+    async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
       const detail = selectedVolunteerDetail
 
       if (!detail) {
@@ -178,13 +180,36 @@ export function UjatEducationProgressVolunteersSection({
         return
       }
 
-      setStudentCertificateExportContext(
-        buildStudentCertificateContextFromUjatVolunteer({
-          detail,
-          program,
-          issuanceReasonLabel: reasonLabel,
-        })
-      )
+      let context = buildStudentCertificateContextFromUjatVolunteer({
+        detail,
+        program,
+        issuanceReasonLabel: reasonLabel,
+      })
+      const memberId = Number(detail.applicant.memberId ?? detail.row.memberId)
+      if (Number.isSafeInteger(memberId) && memberId > 0) {
+        try {
+          const person = await unmaskMemberForCertificateIssue(memberId)
+          context = {
+            ...context,
+            student: {
+              ...context.student,
+              name: person.name || context.student.name,
+              birthDate: person.birthDate || context.student.birthDate,
+            },
+          }
+        } catch (error) {
+          showAlert({
+            title: '열람 실패',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              '개인정보 원문 조회에 실패했습니다.'
+            ),
+          })
+          return
+        }
+      }
+
+      setStudentCertificateExportContext(context)
       setStudentCertificateExportActive(true)
     },
     [program, selectedVolunteerDetail, showAlert]

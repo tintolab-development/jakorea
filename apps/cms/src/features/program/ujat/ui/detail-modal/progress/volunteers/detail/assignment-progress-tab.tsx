@@ -16,6 +16,7 @@ import {
   getUjatVolunteerAssignmentAssignModalData,
 } from './volunteer-assign-modal-data'
 import { mergeVolunteerActivityWithdrawnRows, sortVolunteerAssignmentRows } from './volunteer-assignment-data'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import {
   isVolunteerAssignmentClassWithdrawn,
   type UjatVolunteerAssignmentAbsenceReason,
@@ -52,7 +53,7 @@ function resolveClassLabel(
 ): string {
   if (classDisplay.kind === 'dash') return '-'
   if (classDisplay.kind === 'withdrawn') return '활동 포기'
-  return classDisplay.label
+  return formatUjatGradeClassDisplayLabel(classDisplay.label)
 }
 
 function resolveAttendanceLabel(
@@ -405,8 +406,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             <CmsButton
               type="button"
               variant="delete"
-              size="large"
-              width={140}
+              size="h40"
               onClick={openCancelModal}
             >
               배정 취소
@@ -414,8 +414,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             <CmsButton
               type="button"
               variant="secondary"
-              size="large"
-              width={140}
+              size="h40"
               onClick={openAttendanceCorrectionModal}
             >
               출결 정정
@@ -423,8 +422,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             <CmsButton
               type="button"
               variant="primary"
-              size="large"
-              width={180}
+              size="h40"
               onClick={openAssignModal}
             >
               파트너 및 교육 배정

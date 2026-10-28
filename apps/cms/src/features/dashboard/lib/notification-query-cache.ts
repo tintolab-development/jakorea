@@ -1,9 +1,15 @@
-import type { QueryClient } from '@tanstack/react-query'
+import type { InfiniteData, QueryClient } from '@tanstack/react-query'
 import { dashboardQueryKeys } from '@/features/dashboard/api/dashboard-query-keys'
 import type { Notification } from '@/features/dashboard/api/notification-service'
+import type { AdminNotificationInboxPage } from '@/features/dashboard/lib/admin-notification-inbox-page'
 
 function isNotificationList(value: unknown): value is Notification[] {
   return Array.isArray(value)
+}
+
+function isInfiniteInbox(value: unknown): value is InfiniteData<AdminNotificationInboxPage> {
+  if (value == null || typeof value !== 'object' || !('pages' in value)) return false
+  return Array.isArray((value as InfiniteData<AdminNotificationInboxPage>).pages)
 }
 
 function isUnreadOnlyKey(queryKey: readonly unknown[]): boolean {
@@ -24,25 +30,49 @@ function bumpUnreadCount(queryClient: QueryClient, delta: number): void {
   })
 }
 
+function findNotification(old: unknown, id: string): Notification | undefined {
+  if (isNotificationList(old)) return old.find(row => row.id === id)
+  if (isInfiniteInbox(old)) {
+    for (const page of old.pages) {
+      const match = page.items.find(row => row.id === id)
+      if (match) return match
+    }
+  }
+  return undefined
+}
+
+function mapInboxCache(
+  old: unknown,
+  mapItems: (items: Notification[]) => Notification[]
+): unknown {
+  if (isNotificationList(old)) return mapItems(old)
+  if (isInfiniteInbox(old)) {
+    return {
+      ...old,
+      pages: old.pages.map(page => ({
+        ...page,
+        items: mapItems(page.items),
+      })),
+    }
+  }
+  return old
+}
+
 export function applyNotificationRead(queryClient: QueryClient, id: string): void {
   let unreadDelta = 0
-  for (const [queryKey, old] of queryClient.getQueriesData<Notification[]>({
+  for (const [queryKey, old] of queryClient.getQueriesData({
     queryKey: dashboardQueryKeys.notificationsAll('remote'),
   })) {
-    if (!isNotificationList(old)) continue
-    const target = old.find(row => row.id === id)
+    const target = findNotification(old, id)
     if (!target || target.read) continue
     unreadDelta = -1
-    if (isUnreadOnlyKey(queryKey)) {
-      queryClient.setQueryData<Notification[]>(
-        queryKey,
-        old.filter(row => row.id !== id)
-      )
-      continue
-    }
-    queryClient.setQueryData<Notification[]>(
+    queryClient.setQueryData(
       queryKey,
-      old.map(row => (row.id === id ? { ...row, read: true } : row))
+      mapInboxCache(old, items =>
+        isUnreadOnlyKey(queryKey)
+          ? items.filter(row => row.id !== id)
+          : items.map(row => (row.id === id ? { ...row, read: true } : row))
+      )
     )
   }
   if (unreadDelta !== 0) bumpUnreadCount(queryClient, unreadDelta)
@@ -50,33 +80,31 @@ export function applyNotificationRead(queryClient: QueryClient, id: string): voi
 
 export function applyNotificationHidden(queryClient: QueryClient, id: string): void {
   let unreadDelta = 0
-  for (const [queryKey, old] of queryClient.getQueriesData<Notification[]>({
+  for (const [queryKey, old] of queryClient.getQueriesData({
     queryKey: dashboardQueryKeys.notificationsAll('remote'),
   })) {
-    if (!isNotificationList(old)) continue
-    const target = old.find(row => row.id === id)
+    const target = findNotification(old, id)
     if (!target) continue
     if (!target.read) unreadDelta = -1
-    queryClient.setQueryData<Notification[]>(
+    queryClient.setQueryData(
       queryKey,
-      old.filter(row => row.id !== id)
+      mapInboxCache(old, items => items.filter(row => row.id !== id))
     )
   }
   if (unreadDelta !== 0) bumpUnreadCount(queryClient, unreadDelta)
 }
 
 export function applyAllNotificationsRead(queryClient: QueryClient): void {
-  for (const [queryKey, old] of queryClient.getQueriesData<Notification[]>({
+  for (const [queryKey, old] of queryClient.getQueriesData({
     queryKey: dashboardQueryKeys.notificationsAll('remote'),
   })) {
-    if (!isNotificationList(old)) continue
-    if (isUnreadOnlyKey(queryKey)) {
-      queryClient.setQueryData<Notification[]>(queryKey, [])
-      continue
-    }
-    queryClient.setQueryData<Notification[]>(
+    queryClient.setQueryData(
       queryKey,
-      old.map(row => (row.read ? row : { ...row, read: true }))
+      mapInboxCache(old, items =>
+        isUnreadOnlyKey(queryKey)
+          ? []
+          : items.map(row => (row.read ? row : { ...row, read: true }))
+      )
     )
   }
   queryClient.setQueryData<number>(dashboardQueryKeys.notificationCount('remote'), 0)

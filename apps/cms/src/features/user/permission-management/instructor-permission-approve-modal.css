@@ -66,3 +66,9 @@
   gap: 8px;
   width: 100%;
 }
+
+.instructor-permission-approve-modal__manual-anchor {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}

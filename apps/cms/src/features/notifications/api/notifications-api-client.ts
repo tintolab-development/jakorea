@@ -9,6 +9,7 @@ import type {
   CategoryTreeParams,
   CategoryTreeResponse,
   CategoryUpdateRequest,
+  BatchDetailResponse,
   CreateRequest,
   CreateResponse,
   EmailAttachmentBindRequest,
@@ -241,4 +242,9 @@ export async function fetchNotificationDeliveryRemote(
   deliveryId: number
 ): Promise<NotificationDeliveryDetailResponse> {
   return unwrapApiBody(await notificationsRemoteApi.getNotificationDelivery(deliveryId))
+}
+
+/** 발송 배치 상세 — `GET /api/admin/notification-send-batches/{batchId}` (bodySnapshot.attachments 포함) */
+export async function fetchSendBatchDetailRemote(batchId: number): Promise<BatchDetailResponse> {
+  return unwrapApiBody(await notificationsRemoteApi.detail3(batchId))
 }

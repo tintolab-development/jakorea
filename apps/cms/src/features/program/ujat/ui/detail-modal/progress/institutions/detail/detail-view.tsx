@@ -246,14 +246,15 @@ export function UjatEducationProgressInstitutionDetailView({
             <CmsButton
               type="button"
               variant="delete"
-              size="large"
-              width={160}
+              size="h40"
               disabled={activityWithdrawn}
               onClick={handleRequestWithdraw}
             >
               활동 포기
             </CmsButton>
             <ProgramEditInfoActions
+              size="h40"
+              width={false}
               isEditing={isApplicationInfoEditing}
               onEdit={handleApplicationInfoButtonClick}
               onCancel={handleApplicationInfoCancel}
@@ -262,8 +263,7 @@ export function UjatEducationProgressInstitutionDetailView({
             <CmsButton
               type="button"
               variant="primary"
-              size="large"
-              width={160}
+              size="h40"
               disabled={isApplicationInfoEditing}
               onClick={handleAdminCommentEditEnter}
             >
@@ -273,8 +273,8 @@ export function UjatEducationProgressInstitutionDetailView({
               labelMode="stickyReveal"
               revealed={personalInfoRevealed}
               cmsVariant="primary"
-              cmsSize="large"
-              width={180}
+              cmsSize="h40"
+              width="auto"
               onClick={openPersonalInfoRevealConfirm}
             />
           </div>

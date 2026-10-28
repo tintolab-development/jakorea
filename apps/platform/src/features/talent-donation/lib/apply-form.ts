@@ -25,6 +25,13 @@ export const TALENT_APPLY_FILE_GUIDE =
 
 export const TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'
 
+/** 메일 본문·API와 동일 — bio / talentIntro / motivation */
+export const TALENT_APPLY_LONG_TEXT_MAX_LENGTH = 1000
+
+export function trimTalentApplyLongText(value: string): string {
+  return value.trim().slice(0, TALENT_APPLY_LONG_TEXT_MAX_LENGTH)
+}
+
 export type TalentApplyGender = 'male' | 'female' | ''
 export type TalentApplyJaParticipation = 'yes' | 'no' | ''
 

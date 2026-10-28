@@ -24,7 +24,12 @@ export type RegionAssignmentColumn = {
 }
 
 export type RegionAssignmentCell =
-  | { kind: 'empty'; blockedEmpty?: boolean }
+  | {
+      kind: 'empty'
+      blockedEmpty?: boolean
+      /** 배정 불가일 대체 봉사자 이름 — BE unavailability `replacementParticipantId` 기준 */
+      substituteName?: string
+    }
   | {
       kind: 'assigned'
       classLabel: string

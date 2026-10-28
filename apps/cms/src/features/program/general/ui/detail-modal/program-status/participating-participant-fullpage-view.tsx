@@ -519,9 +519,13 @@ export function ParticipatingParticipantFullpageView({
         handleError(error, {
           context: 'participatingParticipantFullpageView.certificateAttendanceHydrate',
         })
+        showAlert({
+          title: '열람 실패',
+          content: '개인정보 원문 조회에 실패했습니다.',
+        })
       }
     },
-    [hasStudentSatisfactionSurvey, mergedParticipant, program, progressRemoteEnabled]
+    [hasStudentSatisfactionSurvey, mergedParticipant, program, progressRemoteEnabled, showAlert]
   )
 
   const handleCertificateExportComplete = useCallback((success: boolean) => {
@@ -649,8 +653,7 @@ export function ParticipatingParticipantFullpageView({
             <>
               <CmsButton
                 variant="delete"
-                size="large"
-                width={140}
+                size="h40"
                 disabled={
                   isActivityWithdrawn ||
                   isApplicationInfoEditing ||
@@ -663,7 +666,7 @@ export function ParticipatingParticipantFullpageView({
               </CmsButton>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 icon={<ButtonDownloadIcon />}
                 disabled={
                   certificateExportActive ||
@@ -677,6 +680,8 @@ export function ParticipatingParticipantFullpageView({
                 수료증/참여인증서 발급
               </CmsButton>
               <ProgramEditInfoActions
+                size="h40"
+                width={false}
                 isEditing={isApplicationInfoEditing}
                 onEdit={requestStartApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}
@@ -686,8 +691,7 @@ export function ParticipatingParticipantFullpageView({
               />
               <CmsButton
                 variant="primary"
-                size="large"
-                width={140}
+                size="h40"
                 disabled={isApplicationInfoEditing}
                 onClick={handleAdminCommentEditEnter}
               >
@@ -696,7 +700,8 @@ export function ParticipatingParticipantFullpageView({
               <PersonalInfoRevealButton
                 labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
-                width={180}
+                cmsSize="h40"
+                width="auto"
                 onClick={openPersonalInfoRevealConfirm}
               />
             </>
@@ -704,14 +709,13 @@ export function ParticipatingParticipantFullpageView({
             <>
               <CmsButton
                 variant="secondary"
-                size="h44"
+                size="h40"
                 onClick={() => attendanceSectionRef.current?.openAttendanceCorrectionModal()}
               >
                 출결 정정
               </CmsButton>
               <ExcelButton
-                size="h44"
-                width={160}
+                size="h40"
                 onClick={() => attendanceSectionRef.current?.exportExcel()}
               />
             </>
@@ -812,6 +816,8 @@ export function ParticipatingParticipantFullpageView({
         onCancel={() => setActivityWithdrawModalOpen(false)}
         onConfirm={handleConfirmActivityWithdraw}
         confirming={activityWithdrawSubmitting}
+        subjectName={mergedParticipant.applicantName ?? ''}
+        subjectKind="person"
       />
       <CertificateBulkIssueReasonModal
         open={certificateIssueModalOpen}

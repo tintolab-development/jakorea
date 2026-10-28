@@ -156,11 +156,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
         isEdit
       ),
       maxClassCount: recruitmentLimitForBridge(maxClassField, base.maxClassCount, isEdit),
-      maxScheduleCount: recruitmentLimitForBridge(
-        maxScheduleField,
-        base.maxScheduleCount,
-        isEdit
-      ),
+      maxScheduleCount: recruitmentLimitForBridge(maxScheduleField, base.maxScheduleCount, isEdit),
       maxSessionsPerDay: recruitmentLimitForBridge(
         maxSessionsField,
         base.maxSessionsPerDay,
@@ -243,7 +239,8 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             name="applicationStartDate"
             control={form.control}
             render={({ field }) => (
-              <ParagraphDatePicker inputSize="small"
+              <ParagraphDatePicker
+                inputSize="small"
                 mode="range"
                 value={[
                   toDayjs(field.value as string | Date | undefined),
@@ -267,7 +264,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const finalPassField = (
     <DetailInfoForm.Field
       label="최종 합격자 발표"
-      validationKey={[`${recruitKeyPrefix}.finalAnnounceIso`, `${recruitKeyPrefix}.finalAnnounceMethod`]}
+      validationKey={[
+        `${recruitKeyPrefix}.finalAnnounceIso`,
+        `${recruitKeyPrefix}.finalAnnounceMethod`,
+      ]}
       view={
         isIndividual ? (
           <ProgramDetailDateMethodReadRow
@@ -288,7 +288,8 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               name="resultAnnouncementDate"
               control={form.control}
               render={({ field }) => (
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="date"
                   customizable={false}
@@ -351,6 +352,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       <ParticipantRecruitmentAnnouncementPublishedRadios
                         value={field.value}
                         onChange={field.onChange}
+                        size={isGeneralOrg ? 'medium' : 'large'}
                       />
                     )}
                   />
@@ -492,7 +494,8 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                     name="participantProgramOperationStartDate"
                     control={form.control}
                     render={({ field }) => (
-                      <ParagraphDatePicker inputSize="small"
+                      <ParagraphDatePicker
+                        inputSize="small"
                         mode="range"
                         value={[
                           toDayjs(field.value as string | Date | undefined),

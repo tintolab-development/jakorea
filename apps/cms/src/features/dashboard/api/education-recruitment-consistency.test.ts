@@ -13,7 +13,7 @@ import {
 describe('대시보드 프로그램 집계 (mock 카탈로그 제거)', () => {
   it('remote OFF면 모집 신청 현황은 빈 목록이다', async () => {
     const widgetPrograms = await getRecruitmentStatusList()
-    expect(widgetPrograms).toEqual([])
+    expect(widgetPrograms).toEqual({ rows: [], totalCount: null })
   })
 
   it('getProgramProgressStages(education)는 빈 7단계 집계를 반환한다', async () => {

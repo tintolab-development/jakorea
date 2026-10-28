@@ -2,6 +2,7 @@ import {
   extractApiErrorCode,
   extractApiErrorMessage,
 } from '@/shared/lib/extract-api-error-message'
+import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
 
 /** BE가 code별 구체 메시지 대신 쓰는 공통 409 문구 — FE 매핑이 있으면 이를 덮어쓴다 */
 const GENERIC_CONFLICT_API_MESSAGE =
@@ -60,6 +61,8 @@ export function getMemberDeleteCurrentPasswordInvalidAlertOptions(): {
 }
 
 export function getMemberApiErrorMessage(error: unknown, fallback: string): string {
+  const timingMessage = getNotificationTimingApiErrorMessage(error)
+  if (timingMessage) return timingMessage
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosErr = error as { response?: { status?: number; data?: unknown } }
     if (axiosErr.response?.status === 403) {

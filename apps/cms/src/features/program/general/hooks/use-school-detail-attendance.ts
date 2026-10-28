@@ -9,11 +9,13 @@ import {
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import {
   fetchSchoolDetailAttendanceBundle,
   saveSchoolDetailAttendanceSessionRemote,
 } from '@/features/program/general/api/school-detail-attendance-api'
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
+import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { organizationScheduleAssignmentsQueryKey } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { isParticipatingInstitutionStudentListApplicable } from '@/features/program/general/lib/participating-institution-detail-tabs'
@@ -30,16 +32,22 @@ import {
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
+import { isAttendanceRecordingNotOpenError } from '@/features/program/general/lib/attendance-recording-not-open'
 import { buildSchoolDetailAttendanceFilterFields } from '../lib/school-detail-attendance-filter-fields'
+import { buildStudentClassFilterOptionsFromRows } from '../lib/student-list-filter-fields'
 import {
   cloneAttendanceStudentRows,
   filterAttendanceStudentsForDisplay,
+  hasSchoolDetailAttendanceStudentFilters,
+  isDefaultSchoolDetailAttendanceFilters,
 } from '../lib/school-detail-attendance-display'
 import {
   getSchoolDetailAttendanceEducationScheduleOptions,
   mergeSchoolDetailAttendanceRemoteData,
-  resolveAttendanceSessions,
+  resolveSchoolDetailAttendanceSessions,
+  SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES,
 } from '../lib/school-detail-attendance'
+import { buildSchoolDetailAttendanceExcelRows } from '../lib/school-detail-attendance-export'
 import {
   SCHOOL_ATTENDANCE_FILTER_ALL,
   type SchoolDetailAttendanceFilters,
@@ -56,6 +64,12 @@ export const EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS: SchoolDetailAttendanceFilte
   attendanceStatus: SCHOOL_ATTENDANCE_FILTER_ALL,
 }
 
+export type SchoolDetailAttendanceEmptyKind =
+  | 'none'
+  | 'no_assigned_schedules'
+  | 'no_filter_match'
+  | 'assignment_scope_unavailable'
+
 function filterSessionGroups(
   sessions: SchoolDetailAttendanceSessionGroup[],
   filters: SchoolDetailAttendanceFilters
@@ -65,12 +79,13 @@ function filterSessionGroups(
       ? sessions
       : sessions.filter(session => session.filterValue === filters.educationSchedule)
 
+  const studentFiltersApplied = hasSchoolDetailAttendanceStudentFilters(filters)
   return filteredBySchedule
     .map(session => ({
       ...session,
       students: filterAttendanceStudentsForDisplay(session.students, filters),
     }))
-    .filter(session => session.students.length > 0)
+    .filter(session => !studentFiltersApplied || session.students.length > 0)
 }
 
 function institutionAttendanceQueryKey(
@@ -116,37 +131,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     '참여 기관 · 출석 관리'
   )
 
-  const sessions = useMemo(() => resolveAttendanceSessions(row), [row])
-  const scheduleIdsKey = useMemo(
-    () =>
-      sessions
-        .map(session => session.resolvedScheduleId)
-        .filter(
-          (id): id is number =>
-            typeof id === 'number' && Number.isFinite(id) && id > 0
-        )
-        .sort((a, b) => a - b)
-        .join(','),
-    [sessions]
-  )
-
-  const remoteQuery = useQuery({
-    queryKey: institutionAttendanceQueryKey(
-      programId || '__none__',
-      organizationApplicationId || '__none__',
-      scheduleIdsKey || '__none__'
-    ),
-    enabled: remoteEnabled,
-    queryFn: () =>
-      fetchSchoolDetailAttendanceBundle({
-        programId,
-        organizationApplicationId,
-        sessions,
-      }),
-    staleTime: 15_000,
-    retry: false,
-  })
-
   const assignmentScopeQuery = useQuery({
     queryKey: organizationScheduleAssignmentsQueryKey(
       programId || '__none__',
@@ -159,6 +143,65 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     retry: false,
   })
 
+  const programSchedulesQuery = useQuery({
+    queryKey: generalProgramQueryKeys.schedules(programId || '__none__'),
+    enabled: requiresAssignmentScopeForAttendance,
+    queryFn: () => fetchAdminProgramSchedulesRemote(programId),
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  const assignmentScopeReady =
+    !requiresAssignmentScopeForAttendance || assignmentScopeQuery.isSuccess
+  const assignedSessions = useMemo(
+    () =>
+      resolveSchoolDetailAttendanceSessions({
+        row,
+        isGeneralOrganization: requiresAssignmentScopeForAttendance,
+        assignmentSlots: assignmentScopeQuery.data,
+        programSchedules: programSchedulesQuery.data,
+        assignmentScopeReady,
+      }),
+    [
+      assignmentScopeQuery.data,
+      assignmentScopeReady,
+      programSchedulesQuery.data,
+      requiresAssignmentScopeForAttendance,
+      row,
+    ]
+  )
+  const scheduleIdsKey = useMemo(
+    () =>
+      assignedSessions
+        .map(session => session.resolvedScheduleId)
+        .filter(
+          (id): id is number => typeof id === 'number' && Number.isFinite(id) && id > 0
+        )
+        .sort((a, b) => a - b)
+        .join(','),
+    [assignedSessions]
+  )
+
+  const attendanceQueryEnabled =
+    remoteEnabled && assignmentScopeReady && assignedSessions.length > 0
+
+  const remoteQuery = useQuery({
+    queryKey: institutionAttendanceQueryKey(
+      programId || '__none__',
+      organizationApplicationId || '__none__',
+      scheduleIdsKey || '__none__'
+    ),
+    enabled: attendanceQueryEnabled,
+    queryFn: () =>
+      fetchSchoolDetailAttendanceBundle({
+        programId,
+        organizationApplicationId,
+        sessions: assignedSessions,
+      }),
+    staleTime: 15_000,
+    retry: false,
+  })
+
   const [pendingFilters, setPendingFilters] = useState<SchoolDetailAttendanceFilters>(
     () => ({ ...EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS })
   )
@@ -167,33 +210,38 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
   )
 
   const remoteSessionGroups = useMemo(() => {
-    if (!remoteEnabled || remoteQuery.data == null) return []
+    if (!remoteEnabled) return []
+    if (assignedSessions.length === 0) return []
+    if (remoteQuery.data == null) return []
     return mergeSchoolDetailAttendanceRemoteData({
       row,
       program,
+      sessions: assignedSessions,
       rosterStudents: remoteQuery.data.rosterStudents,
       attendancesByScheduleId: remoteQuery.data.attendancesByScheduleId,
-      includeSessionsWithoutAttendance: trainedTeacherAttendanceRemoteEnabled,
       giveUpParticipants: remoteQuery.data.giveUpParticipants,
     })
-  }, [program, remoteEnabled, remoteQuery.data, row, trainedTeacherAttendanceRemoteEnabled])
+  }, [
+    assignedSessions,
+    program,
+    remoteEnabled,
+    remoteQuery.data,
+    row,
+  ])
 
   const educationScheduleOptions = useMemo(() => {
-    // The program schedule list also contains institution-unassigned rows.
-    // After the attendance response arrives, expose only its canonical groups.
-    if (remoteEnabled) {
-      if (remoteQuery.data == null) return []
-      return remoteSessionGroups.map(session => ({
-        label: session.headerTitle,
-        value: session.filterValue,
-      }))
-    }
-    return getSchoolDetailAttendanceEducationScheduleOptions(row, program)
-  }, [program, remoteEnabled, remoteQuery.data, remoteSessionGroups, row])
+    if (remoteEnabled && !assignmentScopeReady) return []
+    return getSchoolDetailAttendanceEducationScheduleOptions(row, program, assignedSessions)
+  }, [assignedSessions, assignmentScopeReady, program, remoteEnabled, row])
+
+  const studentClassOptions = useMemo(
+    () => buildStudentClassFilterOptionsFromRows(remoteQuery.data?.rosterStudents ?? []),
+    [remoteQuery.data?.rosterStudents]
+  )
 
   const filterFields = useMemo(
-    () => buildSchoolDetailAttendanceFilterFields(educationScheduleOptions),
-    [educationScheduleOptions]
+    () => buildSchoolDetailAttendanceFilterFields(educationScheduleOptions, studentClassOptions),
+    [educationScheduleOptions, studentClassOptions]
   )
 
   const sessionGroups = useMemo(() => {
@@ -220,7 +268,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
               Number.isFinite(Number(student.participantId)) &&
               Number(student.participantId) > 0
           ).length,
-          missingByGradeClass: [],
         }
         continue
       }
@@ -229,7 +276,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
         programId,
         organizationApplicationId,
         scheduleId,
-        educationGrade: row.educationGrade,
         rosterStudents,
         assignmentSlots: assignmentScopeQuery.data,
       })
@@ -243,7 +289,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     remoteQuery.data?.rosterStudents,
     remoteSessionGroups,
     requiresAssignmentScopeForAttendance,
-    row.educationGrade,
   ])
 
   const getSessionScopeReadiness = useCallback(
@@ -276,11 +321,16 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       }
       const session = remoteSessionGroups.find(item => item.id === payload.sessionId)
       const scheduleId = session?.scheduleId
-      if (scheduleId == null || !(scheduleId > 0)) {
-        notifyProgramApiUnavailable(
-          'general-institution-attendance-schedule',
-          '참여 기관 · 출석 관리 (일정 미매핑)'
-        )
+      if (
+        session == null ||
+        session.scheduleIdUnresolved ||
+        scheduleId == null ||
+        !(scheduleId > 0)
+      ) {
+        showAlert({
+          title: '출석 저장 안내',
+          content: '교육 일정 ID를 확인할 수 없어 출석을 저장할 수 없습니다.',
+        })
         throw new Error('scheduleId unresolved')
       }
       if (requiresAssignmentScopeForAttendance) {
@@ -296,7 +346,6 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
           programId,
           organizationApplicationId,
           scheduleId,
-          educationGrade: row.educationGrade,
           rosterStudents: remoteQuery.data?.rosterStudents ?? [],
           assignmentSlots: assignmentScopeQuery.data,
         })
@@ -340,6 +389,7 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       }
     },
     onError: error => {
+      if (isAttendanceRecordingNotOpenError(error)) return
       const scopeMessage = resolveOrganizationAttendanceScopeErrorMessage(error)
       if (scopeMessage) {
         showAlert({
@@ -351,7 +401,8 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       if (
         error instanceof Error &&
         (error.message === 'attendance assignment scope not ready' ||
-          error.message === 'attendance assignment scope pending')
+          error.message === 'attendance assignment scope pending' ||
+          error.message === 'scheduleId unresolved')
       ) {
         return
       }
@@ -374,20 +425,49 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     [remoteSessionGroups]
   )
 
+  const assignmentScopePending =
+    requiresAssignmentScopeForAttendance &&
+    (assignmentScopeQuery.isLoading || assignmentScopeQuery.isPending)
+  const attendancePending = attendanceQueryEnabled && remoteQuery.isLoading
+  const loading = assignmentScopePending || attendancePending
+
+  const emptyKind: SchoolDetailAttendanceEmptyKind = useMemo(() => {
+    if (loading) return 'none'
+    if (requiresAssignmentScopeForAttendance && assignmentScopeQuery.isError) {
+      return 'assignment_scope_unavailable'
+    }
+    if (assignedSessions.length === 0) return 'no_assigned_schedules'
+    if (sessionGroups.length === 0) {
+      return isDefaultSchoolDetailAttendanceFilters(appliedFilters)
+        ? 'no_assigned_schedules'
+        : 'no_filter_match'
+    }
+    return 'none'
+  }, [
+    appliedFilters,
+    assignedSessions.length,
+    assignmentScopeQuery.isError,
+    loading,
+    requiresAssignmentScopeForAttendance,
+    sessionGroups.length,
+  ])
+
   const viewState = useMemo(
     () =>
       getProgressAttendanceViewState({
         remoteEnabled,
-        isLoading: remoteQuery.isLoading,
+        isLoading: loading,
         isError: remoteQuery.isError,
-        hasQueryData: remoteQuery.data != null,
-        sessionGroupCount: sessionGroups.length,
+        hasQueryData: remoteQuery.data != null || assignedSessions.length === 0,
+        sessionGroupCount: emptyKind === 'none' ? Math.max(sessionGroups.length, 1) : 0,
       }),
     [
+      assignedSessions.length,
+      emptyKind,
+      loading,
       remoteEnabled,
       remoteQuery.data,
       remoteQuery.isError,
-      remoteQuery.isLoading,
       sessionGroups.length,
     ]
   )
@@ -396,8 +476,25 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     void remoteQuery.refetch()
     if (requiresAssignmentScopeForAttendance) {
       void assignmentScopeQuery.refetch()
+      void programSchedulesQuery.refetch()
     }
-  }, [assignmentScopeQuery, remoteQuery, requiresAssignmentScopeForAttendance])
+  }, [
+    assignmentScopeQuery,
+    programSchedulesQuery,
+    remoteQuery,
+    requiresAssignmentScopeForAttendance,
+  ])
+
+  const resolveExcelExportRows = useCallback(
+    () => buildSchoolDetailAttendanceExcelRows(remoteSessionGroups),
+    [remoteSessionGroups]
+  )
+
+  const canExportAll =
+    remoteEnabled &&
+    assignedSessions.length > 0 &&
+    remoteQuery.isSuccess &&
+    (!requiresAssignmentScopeForAttendance || assignmentScopeQuery.isSuccess)
 
   return {
     pendingFilters,
@@ -413,6 +510,13 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     backgroundRefetchError:
       viewState.kind === 'content' ? viewState.backgroundRefetchError : false,
     isEmptyResult: viewState.kind === 'empty',
+    emptyKind,
+    emptyMessage:
+      emptyKind === 'no_assigned_schedules'
+        ? SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES.noAssignedSchedules
+        : emptyKind === 'assignment_scope_unavailable'
+          ? SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES.assignmentScopeUnavailable
+          : SCHOOL_DETAIL_ATTENDANCE_EMPTY_MESSAGES.noFilterMatch,
     refetchAttendance,
     isRefetching: remoteQuery.isRefetching,
     isSaving: saveMutation.isPending,
@@ -421,5 +525,7 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     assignmentScopeLoading: assignmentScopeQuery.isLoading,
     assignmentScopeLoadError: assignmentScopeQuery.isError,
     getSessionScopeReadiness,
+    resolveExcelExportRows,
+    canExportAll,
   }
 }

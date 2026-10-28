@@ -1,5 +1,6 @@
 import ExcelJS from '@zurmokeeper/exceljs'
-import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
+import { downloadExcel } from '@/shared/utils/file-download'
+import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import { getRegionAssignmentInstitutionHeaderLabel } from './region-assignment-options'
 import type {
   RegionAssignmentCell,
@@ -19,6 +20,19 @@ const WITHDRAWN_FILL = 'FFFFF0F0'
 const BLOCKED_FILL = 'FFFFF2F2'
 const RED_TEXT = 'FFFF4D4F'
 const MINT_TEXT = 'FF01A1AF'
+
+const KST_YMD_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** `배정표_{지역}_YYYYMMDD.xlsx` — 날짜는 KST 기준 (UTC 자정 전후 하루 밀림 방지) */
+export function buildRegionAssignmentExcelFilename(regionLabel: string, now: Date = new Date()): string {
+  const ymd = KST_YMD_FORMATTER.format(now).replace(/-/g, '')
+  return `배정표_${regionLabel}_${ymd}.xlsx`
+}
 
 function sanitizeSheetName(label: string): string {
   const sanitized = label.replace(/[[\]\\/*?:]/g, '_').trim()
@@ -65,7 +79,8 @@ function applyBodyStyle(
 
 function formatAssignmentCell(cell: RegionAssignmentCell | undefined): string {
   if (!cell || cell.kind === 'empty') return '-'
-  return cell.isAttendanceManager ? `출결 / ${cell.classLabel}` : cell.classLabel
+  const classLabel = formatUjatGradeClassDisplayLabel(cell.classLabel)
+  return cell.isAttendanceManager ? `출결 / ${classLabel}` : classLabel
 }
 
 function selectedAssignedCount(cells: Array<RegionAssignmentCell | undefined>): number {
@@ -164,5 +179,5 @@ export async function exportRegionAssignmentExcel(
   sheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 2 }]
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, generateFilename(`배정표_${data.regionLabel}`, 'xlsx'))
+  await downloadExcel(buffer, buildRegionAssignmentExcelFilename(data.regionLabel))
 }

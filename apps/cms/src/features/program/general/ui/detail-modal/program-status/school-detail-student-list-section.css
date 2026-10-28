@@ -51,7 +51,7 @@
 
 .school-detail-student-list-section--edit-mode
   .school-detail-student-list-section__table-wrap
-  .school-detail-modal__student-table
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
   .ant-table-cell {
   white-space: normal;
 }
@@ -64,13 +64,24 @@
   box-sizing: border-box;
 }
 
-.school-detail-modal__student-table--edit .ant-table-thead > tr > th.ant-table-cell,
-.school-detail-modal__student-table--edit
+.school-detail-modal__student-table--edit .ant-table-thead > tr > th.ant-table-cell {
+  height: auto !important;
+  min-height: 52px !important;
+  max-height: none !important;
+  padding: 6px 8px !important;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table--edit.cms-data-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.ant-table-cell {
   height: auto !important;
-  min-height: 52px !important;
+  min-height: 0 !important;
   max-height: none !important;
   padding: 6px 8px !important;
   vertical-align: middle;
@@ -90,6 +101,8 @@
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
+  height: 36px !important;
+  min-height: 36px !important;
   box-sizing: border-box;
 }
 
@@ -101,6 +114,8 @@
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
+  height: 36px !important;
+  min-height: 36px !important;
   box-sizing: border-box;
 }
 
@@ -123,8 +138,146 @@
   white-space: nowrap;
 }
 
-.school-detail-student-list-section__table-wrap .school-detail-modal__student-table .ant-table-content > table {
-  min-width: 1362px;
+/*
+ * FilterTableLayout이 No. 다음 col을 `width: auto !important`로 덮고,
+ * `.cms-data-table table`은 `width: 100% !important`라 남는 폭이 열에 분배된다.
+ * 학생명단만 배열에서 넘긴 변수로 열·표 너비를 고정한다.
+ */
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  table.ant-table {
+  width: var(--student-list-table-min-width) !important;
+  min-width: var(--student-list-table-min-width) !important;
+  max-width: var(--student-list-table-min-width) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(1) {
+  width: var(--student-list-col-1) !important;
+  min-width: var(--student-list-col-1) !important;
+  max-width: var(--student-list-col-1) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(2) {
+  width: var(--student-list-col-2) !important;
+  min-width: var(--student-list-col-2) !important;
+  max-width: var(--student-list-col-2) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(3) {
+  width: var(--student-list-col-3) !important;
+  min-width: var(--student-list-col-3) !important;
+  max-width: var(--student-list-col-3) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(4) {
+  width: var(--student-list-col-4) !important;
+  min-width: var(--student-list-col-4) !important;
+  max-width: var(--student-list-col-4) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(5) {
+  width: var(--student-list-col-5) !important;
+  min-width: var(--student-list-col-5) !important;
+  max-width: var(--student-list-col-5) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(6) {
+  width: var(--student-list-col-6) !important;
+  min-width: var(--student-list-col-6) !important;
+  max-width: var(--student-list-col-6) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(7) {
+  width: var(--student-list-col-7) !important;
+  min-width: var(--student-list-col-7) !important;
+  max-width: var(--student-list-col-7) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(8) {
+  width: var(--student-list-col-8) !important;
+  min-width: var(--student-list-col-8) !important;
+  max-width: var(--student-list-col-8) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(9) {
+  width: var(--student-list-col-9) !important;
+  min-width: var(--student-list-col-9) !important;
+  max-width: var(--student-list-col-9) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  colgroup
+  > col:nth-child(10) {
+  width: var(--student-list-col-10) !important;
+  min-width: var(--student-list-col-10) !important;
+  max-width: var(--student-list-col-10) !important;
+}
+
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell:not(.ant-table-selection-column),
+.filter-table-layout
+  .filter-table-layout__table
+  .school-detail-student-list-section__table-wrap
+  .ant-table-wrapper.school-detail-modal__student-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell:not(.ant-table-selection-column) {
+  min-width: 0 !important;
 }
 
 /* 아웃라인 보조 액션(초상권·수료증) */

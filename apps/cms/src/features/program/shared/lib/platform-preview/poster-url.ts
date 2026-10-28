@@ -1,13 +1,27 @@
 import { useEffect, useState } from 'react'
 import type { Program } from '@/types/domain'
-import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
-import {
-  fetchProgramThumbnail,
-  loadProgramThumbnailPreviewUrl,
-} from '@/features/program/shared/api/program-thumbnail'
+import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
-import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  readRecruitDetailMediaFromOverlay,
+  recruitDetailInfoPrefixesForPreviewAudience,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+import {
+  pickAudienceLiveOverlay,
+  pickPreviewRecruitmentRow,
+  previewCopyAudienceForTab,
+  recruitmentPreviewCatalogCodes,
+  type ProgramPreviewAudience,
+} from '@/features/program/shared/lib/platform-preview/preview-audience'
+import {
+  collectOperationalOverlayForCatalogId,
+  keyMatchesOperationalOverlayPrefixes,
+  operationalOverlayKeyPrefixesForCatalogId,
+} from '@/features/program/general/lib/registration-operational-form-drafts'
+
+export type PreviewRecruitAudience = ProgramPreviewAudience
+export { previewCopyAudienceForTab }
 
 /** img src로 바로 쓸 수 있는 주소만. `/api/admin/files/…`는 인증 헤더가 필요해 제외 */
 export function readablePosterUrl(value: string | null | undefined): string | undefined {
@@ -53,31 +67,107 @@ export function resolvePreviewPosterSeed(input: {
   return { displayUrl, fileObjectId }
 }
 
-function resolveProgramPosterSeed(program: Program): PreviewPosterSeed {
-  const media = readRecruitDetailMediaFromOverlay({
-    ...getApplicantRecruitInstitutionOverlayRecord(),
-    ...getGeneralRecruitOverlayRecord(),
-  })
+function peekRecruitPreviewCatalogOverlays(
+  catalogTemplateCodes: readonly string[]
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = {}
+  for (const catalogId of catalogTemplateCodes) {
+    const collected = collectOperationalOverlayForCatalogId(catalogId)
+    if (collected != null) {
+      Object.assign(merged, collected)
+      continue
+    }
+    const prefixes = operationalOverlayKeyPrefixesForCatalogId(catalogId)
+    const peeked = peekGeneralRecruitOverlayRecord(catalogId)
+    for (const [key, value] of Object.entries(peeked)) {
+      if (keyMatchesOperationalOverlayPrefixes(key, prefixes)) merged[key] = value
+    }
+  }
+  return merged
+}
+
+/** 모집 미리보기용 live overlay (catalog peek + registrationOverlay·기관 양식). */
+export function liveRecruitPreviewOverlay(
+  program: Program,
+  audience: PreviewRecruitAudience,
+  extraOverlay?: Record<string, unknown>
+): Record<string, unknown> {
+  const catalogOverlays = peekRecruitPreviewCatalogOverlays(
+    recruitmentPreviewCatalogCodes(program, audience)
+  )
+  return pickAudienceLiveOverlay(
+    {
+      ...(program.registrationOverlay ?? {}),
+      ...(audience === 'institutions' ? getApplicantRecruitInstitutionOverlayRecord() : {}),
+      ...catalogOverlays,
+      ...extraOverlay,
+    },
+    audience
+  )
+}
+
+/**
+ * 모집 탭 미리보기 썸네일.
+ * 해당 탭 overlay → 그 모집 행 `thumbnailFileObjectId`. 프로그램 공통 이미지로 채우지 않는다.
+ */
+export function resolveAudiencePreviewPosterSeed(input: {
+  program: Program
+  audience: PreviewRecruitAudience
+  overlay?: Record<string, unknown>
+}): PreviewPosterSeed {
+  const prefixes = recruitDetailInfoPrefixesForPreviewAudience(input.audience)
+  const media = readRecruitDetailMediaFromOverlay(
+    liveRecruitPreviewOverlay(input.program, input.audience, input.overlay),
+    prefixes
+  )
+  const row = pickPreviewRecruitmentRow(input.program, input.audience)
+  const rowThumbId =
+    typeof row?.thumbnailFileObjectId === 'number' && row.thumbnailFileObjectId > 0
+      ? row.thumbnailFileObjectId
+      : undefined
   return resolvePreviewPosterSeed({
     thumbObjectUrl: media.thumbObjectUrl,
-    thumbFileObjectId: media.thumbFileObjectId,
+    thumbFileObjectId: media.thumbFileObjectId ?? rowThumbId,
     overlayKeyVisualImage: media.keyVisualImage,
-    programKeyVisualImage: program.keyVisualImage || program.posterImage,
   })
 }
 
-/** 모집 미리보기 포스터 — 편집 중 업로드(overlay) → 저장된 썸네일 순 */
-export function usePreviewPosterUrl(program: Program | null, enabled: boolean): string | undefined {
+export function resolveAudiencePreviewAttachmentNames(input: {
+  program: Program
+  audience: PreviewRecruitAudience
+  overlay?: Record<string, unknown>
+}): string[] {
+  const prefixes = recruitDetailInfoPrefixesForPreviewAudience(input.audience)
+  const media = readRecruitDetailMediaFromOverlay(
+    liveRecruitPreviewOverlay(input.program, input.audience, input.overlay),
+    prefixes
+  )
+  if (media.attachmentFileNames?.length) return media.attachmentFileNames
+  const row = pickPreviewRecruitmentRow(input.program, input.audience)
+  return (row?.attachments ?? [])
+    .map(file => file.originalFileName?.trim())
+    .filter((name): name is string => Boolean(name))
+}
+
+/** 모집 미리보기 포스터 — 해당 탭 overlay → 모집 행 썸네일 */
+export function usePreviewPosterUrl(
+  program: Program | null,
+  enabled: boolean,
+  audience: PreviewRecruitAudience = 'institutions'
+): string | undefined {
   const [posterUrl, setPosterUrl] = useState<string | undefined>()
   const programId = program?.id
-  const keyVisualImage = program?.keyVisualImage
-  const posterImage = program?.posterImage
+  const seedFileId = program
+    ? resolveAudiencePreviewPosterSeed({ program, audience }).fileObjectId
+    : undefined
 
   useEffect(() => {
-    if (!enabled || program == null) return
-    const seed = resolveProgramPosterSeed(program)
+    if (!enabled || program == null) {
+      setPosterUrl(undefined)
+      return
+    }
+    const seed = resolveAudiencePreviewPosterSeed({ program, audience })
     setPosterUrl(seed.displayUrl)
-    const numericProgramId = parseFileObjectId(program.id)
 
     let cancelled = false
     let objectUrl: string | null = null
@@ -93,14 +183,8 @@ export function usePreviewPosterUrl(program: Program | null, enabled: boolean): 
 
     void (async () => {
       try {
-        if (seed.fileObjectId != null) {
-          apply(await loadProgramThumbnailPreviewUrl(seed.fileObjectId))
-          return
-        }
-        if (seed.displayUrl || numericProgramId == null) return
-        const thumbnail = await fetchProgramThumbnail(numericProgramId)
-        if (cancelled || thumbnail.fileObjectId == null) return
-        apply(await loadProgramThumbnailPreviewUrl(thumbnail.fileObjectId))
+        if (seed.fileObjectId == null) return
+        apply(await loadProgramThumbnailPreviewUrl(seed.fileObjectId))
       } catch {
         if (!cancelled) {
           setPosterUrl(seed.displayUrl?.startsWith('blob:') ? undefined : seed.displayUrl)
@@ -113,7 +197,7 @@ export function usePreviewPosterUrl(program: Program | null, enabled: boolean): 
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- program 객체 대신 식별 필드로 재조회
-  }, [enabled, programId, keyVisualImage, posterImage])
+  }, [enabled, programId, audience, seedFileId])
 
   return posterUrl
 }

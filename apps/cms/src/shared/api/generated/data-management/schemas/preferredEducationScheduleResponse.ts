@@ -7,10 +7,10 @@
  */
 
 /**
- * 신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 정확히 하나의 PROGRAM_DEFINED 교육 슬롯과 일치할 때만 그 program_schedule id를 scheduleId로 반환한다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 고유 매칭이 불가능하면 scheduleId=null과 unresolvedReason을 반환한다.
+ * 신청자가 해당 신청 건에서 선택한 교육 일정. 공통정보 line:N은 그 줄의 PROGRAM_DEFINED 교육 슬롯(education_slot_key=general-common-line:N+1)에 직접 연결한다. 날짜만 있는 희망 일정은 그날 교육 슬롯 전부, 시각이 있는 희망 일정은 시작·종료가 같은 교육 슬롯 전부를 scheduleIds로 반환한다. 신청 파생 일정이나 OSA id는 반환하지 않으며, 연결할 슬롯이 없으면 scheduleId=null, scheduleIds=[]와 unresolvedReason을 반환한다.
  */
 export interface PreferredEducationScheduleResponse {
-  /** 정확히 매칭된 PROGRAM_DEFINED program_schedule id(GET .../education-slots의 scheduleId). 여러 날 기간 창·신청 파생·UNKNOWN 일정이나 고유 매칭이 불가능하면 null이며, 이때 startAt/endAt/label만 신청일로 표시한다. */
+  /** 연결된 첫 PROGRAM_DEFINED program_schedule id(GET .../education-slots의 scheduleId). scheduleIds[0]과 같다. 여러 날 기간 창·신청 파생·UNKNOWN 일정이거나 연결할 슬롯이 없으면 null이며, 이때 startAt/endAt/label만 신청일로 표시한다. */
   scheduleId?: number | null;
   round?: number | null;
   /** 선택 일정의 시작 시각. */
@@ -19,6 +19,8 @@ export interface PreferredEducationScheduleResponse {
   endAt?: string | null;
   /** 공통정보 educationScheduleLines 표시 문자열. program_schedule 선택이면 null. */
   label?: string | null;
-  /** scheduleId가 null인 이유. 고유 매칭이면 null, 모호하면 AMBIGUOUS_SCHEDULE_MATCH, 공통 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH. */
+  /** scheduleId가 null인 이유. 연결되면 null, 연결할 공통 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH. AMBIGUOUS_SCHEDULE_MATCH는 하위 호환을 위해 enum에 남지만 일반(GENERAL) 희망 일정에서는 더 이상 반환하지 않는다. */
   unresolvedReason?: string | null;
+  /** 이 희망 일정이 가리키는 PROGRAM_DEFINED program_schedule id 전체(시작 시각, id 순). 같은 날 슬롯이 여러 개면 모두 포함한다. 연결이 없으면 []이며 null은 반환하지 않는다. */
+  scheduleIds?: number[];
 }

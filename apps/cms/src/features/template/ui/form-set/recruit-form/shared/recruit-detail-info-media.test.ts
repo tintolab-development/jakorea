@@ -35,7 +35,10 @@ import {
   bindRecruitDetailMediaAfterProgramCreate,
   bindUjatRecruitDetailMediaToRows,
   isEphemeralThumbPreviewUrl,
+  pickRecruitmentCreateMediaOverlay,
   readRecruitDetailMediaFromOverlay,
+  recruitDetailInfoPrefixesForPreviewAudience,
+  recruitmentCreateMediaFieldsFromOverlay,
   resolveRecruitDetailThumbFileObjectId,
 } from './recruit-detail-info-media'
 
@@ -90,6 +93,20 @@ describe('readRecruitDetailMediaFromOverlay', () => {
     expect(media.thumbFileObjectId).toBe(77)
     expect(media.keyVisualImage).toBe('/api/admin/files/77/content')
   })
+
+  it('keeps instructor preview prefixes off the participant overlay', () => {
+    expect(recruitDetailInfoPrefixesForPreviewAudience('instructors')).toEqual([
+      'recruitInstructor.detailInfo',
+    ])
+    const media = readRecruitDetailMediaFromOverlay(
+      {
+        'recruit.detailInfo.thumbFileObjectId': 301,
+        'recruitInstructor.detailInfo.thumbFileObjectId': 302,
+      },
+      recruitDetailInfoPrefixesForPreviewAudience('instructors')
+    )
+    expect(media.thumbFileObjectId).toBe(302)
+  })
 })
 
 describe('resolveRecruitDetailThumbFileObjectId', () => {
@@ -109,6 +126,88 @@ describe('resolveRecruitDetailThumbFileObjectId', () => {
     expect(
       resolveRecruitDetailThumbFileObjectId(null, 'blob:http://localhost/preview')
     ).toBeUndefined()
+  })
+})
+
+describe('recruitmentCreateMediaFieldsFromOverlay', () => {
+  it('일반 참여자·강사 행에 확인된 fileObjectId만 싣는다', () => {
+    const overlay = {
+      'recruit.detailInfo.thumbFileObjectId': 301,
+      'recruit.detailInfo.thumbObjectUrl': 'blob:http://localhost/preview',
+      'recruit.detailInfo.attachmentFileObjectIds': [401],
+      'recruitInstructor.detailInfo.thumbFileObjectId': 302,
+      'recruitInstructor.detailInfo.attachmentFileObjectIds': [402, 403],
+    }
+    expect(
+      recruitmentCreateMediaFieldsFromOverlay(
+        overlay,
+        { recruitmentType: 'PARTICIPANT', targetType: 'ORGANIZATION' },
+        'general'
+      )
+    ).toEqual({ thumbnailFileObjectId: 301, attachmentFileObjectIds: [401] })
+    expect(
+      recruitmentCreateMediaFieldsFromOverlay(
+        overlay,
+        { recruitmentType: 'INSTRUCTOR', targetType: 'TEACHER' },
+        'general'
+      )
+    ).toEqual({ thumbnailFileObjectId: 302, attachmentFileObjectIds: [402, 403] })
+  })
+
+  it('UJAT는 recruitmentType·recruitTerm으로 행을 매칭하고 인덱스를 쓰지 않는다', () => {
+    const overlay = {
+      'ujatRecruit.detailInfo.thumbFileObjectId': 501,
+      'ujatRecruit.detailInfo.attachmentFileObjectIds': [601],
+      'recruitVolunteer.h1.detailInfo.thumbFileObjectId': 502,
+      'recruitVolunteer.h2.detailInfo.attachmentFileObjectIds': [603, 604],
+    }
+    expect(
+      recruitmentCreateMediaFieldsFromOverlay(
+        overlay,
+        { recruitmentType: 'PARTICIPANT', targetType: 'ORGANIZATION' },
+        'ujat'
+      )
+    ).toEqual({ thumbnailFileObjectId: 501, attachmentFileObjectIds: [601] })
+    expect(
+      recruitmentCreateMediaFieldsFromOverlay(
+        overlay,
+        { recruitmentType: 'VOLUNTEER', recruitTerm: 'FIRST_HALF' },
+        'ujat'
+      )
+    ).toEqual({ thumbnailFileObjectId: 502 })
+    expect(
+      recruitmentCreateMediaFieldsFromOverlay(
+        overlay,
+        { recruitmentType: 'VOLUNTEER', recruitTerm: 'SECOND_HALF' },
+        'ujat'
+      )
+    ).toEqual({ attachmentFileObjectIds: [603, 604] })
+  })
+
+  it('미완료 blob만 있으면 생성 요청 미디어 필드를 생략한다', () => {
+    expect(
+      recruitmentCreateMediaFieldsFromOverlay(
+        {
+          'recruit.detailInfo.thumbObjectUrl': 'blob:http://localhost/preview',
+          'recruit.detailInfo.thumbContentUrl': 'blob:http://localhost/preview',
+        },
+        { recruitmentType: 'PARTICIPANT', targetType: 'INDIVIDUAL' },
+        'general'
+      )
+    ).toEqual({})
+  })
+
+  it('blob 미리보기 키는 생성 미디어 overlay에서 뺀다', () => {
+    expect(
+      pickRecruitmentCreateMediaOverlay({
+        'recruit.detailInfo.thumbFileObjectId': 77,
+        'recruit.detailInfo.thumbObjectUrl': 'blob:http://localhost/preview',
+        'recruit.detailInfo.thumbContentUrl': 'blob:http://localhost/preview',
+        'ujat.recruit.institution.publicTitle': '기관 모집',
+      })
+    ).toEqual({
+      'recruit.detailInfo.thumbFileObjectId': 77,
+    })
   })
 })
 

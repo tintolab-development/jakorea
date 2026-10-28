@@ -1,11 +1,14 @@
 /**
  * 선택 배정 확인 모달 (강사 배정 안내 컨펌)
  * 배정 대기 강사 목록에서 강사 선택 후 "선택 배정" 클릭 시 노출.
- * 스크린샷 스펙: "[강사명] 강사님을 [학교명]에 새로 배정하시겠습니까?" (현재 배정 인원 : n/m명), 취소/강사 배정
+ * 배정 생성 API에 전달할 알림 시점(즉시/직접 설정)을 여기서 수집한다.
  */
 
-import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import {
+  PermissionModal,
+  type PermissionModalPayload,
+} from '@/shared/components/permission-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 
 const SELECT_ASSIGN_CONFIRM_MODAL_WIDTH = 600
 
@@ -21,7 +24,8 @@ export interface SchoolDetailSelectAssignConfirmModalProps {
   /** 필요 배정 인원 수 (분모) */
   requiredCount: number
   /** "강사 배정" 클릭 시 호출 */
-  onConfirm: () => void
+  onConfirm: (payload: PermissionModalPayload) => void
+  confirmLoading?: boolean
 }
 
 function formatBracketedBoldNames(names: string[]): string {
@@ -50,31 +54,28 @@ export function SchoolDetailSelectAssignConfirmModal({
   currentCount,
   requiredCount,
   onConfirm,
+  confirmLoading = false,
 }: SchoolDetailSelectAssignConfirmModalProps) {
   return (
-    <ContentModal
+    <PermissionModal
       open={open}
       onCancel={onCancel}
+      onConfirm={onConfirm}
+      confirmLoading={confirmLoading}
+      variant="approve"
       title="강사 배정 안내"
       width={SELECT_ASSIGN_CONFIRM_MODAL_WIDTH}
-      description={buildSelectAssignConfirmDescription(
+      message={buildSelectAssignConfirmDescription(
         instructorNames,
         schoolName,
         currentCount,
         requiredCount
       )}
-      footer={
-        <>
-          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
-            취소
-          </CmsButton>
-          <CmsButton variant="primary" size="medium" onClick={onConfirm}>
-            강사 배정
-          </CmsButton>
-        </>
-      }
-    >
-      {null}
-    </ContentModal>
+      confirmLabel="강사 배정"
+      confirmVariant="primary"
+      requireReason={false}
+      notifyTimingOptions="two"
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+    />
   )
 }

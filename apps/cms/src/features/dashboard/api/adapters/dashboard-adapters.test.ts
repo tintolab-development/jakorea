@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   filterRecruitmentListForWidget,
+  formatRecruitmentCount,
+  formatRecruitmentWindowStatus,
+  mapDashboardHomeResponse,
   mapKpiProgressListResponse,
   mapProgramInquiryListResponse,
   mapProgramOptionsForWidget,
   mapRecruitmentListResponse,
-  recruitmentStatusFromPeriod,
+  readCountMapValue,
 } from './dashboard-adapters'
 
 describe('mapKpiProgressListResponse', () => {
@@ -66,9 +69,9 @@ describe('mapKpiProgressListResponse', () => {
       ],
     })
     expect(result[0]?.kpis).toEqual([
-      expect.objectContaining({ key: 'finalParticipants', applicable: true }),
-      expect.objectContaining({ key: 'finalSchools', applicable: false }),
-      expect.objectContaining({ key: 'finalClasses', applicable: false }),
+      expect.objectContaining({ key: 'finalParticipants', applicable: true, target: 50 }),
+      expect.objectContaining({ key: 'finalSchools', applicable: false, target: null }),
+      expect.objectContaining({ key: 'finalClasses', applicable: false, target: null }),
     ])
   })
 
@@ -162,6 +165,18 @@ describe('mapProgramInquiryListResponse', () => {
       },
     ])
   })
+
+  it('summaries 필드가 없으면 0으로 채우지 않고 null을 유지한다', () => {
+    const result = mapProgramInquiryListResponse({
+      summaries: [{ programId: 11, programName: '봉사시간' }],
+    })
+    expect(result[0]).toMatchObject({
+      pending: null,
+      answered: null,
+      total: null,
+      unreadCount: null,
+    })
+  })
 })
 
 describe('mapRecruitmentListResponse', () => {
@@ -179,23 +194,100 @@ describe('mapRecruitmentListResponse', () => {
         },
       ],
     })
-    expect(result[0]).toMatchObject({
+    expect(result.rows[0]).toMatchObject({
       id: '7',
       title: '경제교육',
-      approvedStudentCount: 12,
-      instructors: 4,
-      instructorCapacity: 10,
-      lifecycleStatus: 'recruiting_students',
+      participantApplied: 12,
+      participantCapacity: 30,
+      volunteerApplied: 4,
+      volunteerCapacity: 10,
+      recruitmentWindowStatus: 'RECRUITING',
     })
-    expect(result[0]?.rounds[0]?.capacity).toBe(30)
+  })
+
+  it('CLOSED를 봉사자 모집 완료(lifecycle)로 바꾸지 않는다', () => {
+    const result = mapRecruitmentListResponse({
+      items: [{ programId: 186412, nameKo: 'JOB담', recruitmentStatus: 'CLOSED' }],
+    })
+    expect(result.rows[0]?.recruitmentWindowStatus).toBe('CLOSED')
+    expect(formatRecruitmentWindowStatus(result.rows[0]?.recruitmentWindowStatus)).toBe('모집 마감')
+    expect(formatRecruitmentWindowStatus(result.rows[0]?.recruitmentWindowStatus)).not.toContain(
+      '봉사자 모집 완료'
+    )
+    expect(formatRecruitmentWindowStatus('RECRUITING_CUSTOM')).toBe('모집 중')
+  })
+
+  it('강사 지원 수를 봉사자 지원 수로 별칭하지 않는다', () => {
+    const result = mapRecruitmentListResponse({
+      items: [
+        {
+          programId: 8,
+          nameKo: '별칭 금지',
+          instructorAppliedCount: 9,
+          instructorCapacity: 20,
+        },
+      ],
+    })
+    expect(result.rows[0]?.volunteerApplied).toBeNull()
+    expect(result.rows[0]?.volunteerCapacity).toBeNull()
+    expect(result.rows[0]?.participantApplied).toBeNull()
+  })
+
+  it('카운트가 없으면 null을 유지한다', () => {
+    const result = mapRecruitmentListResponse({
+      items: [{ programId: 9, nameKo: '빈 값', recruitmentStatus: 'OPEN' }],
+    })
+    expect(result.rows[0]?.participantApplied).toBeNull()
+    expect(result.rows[0]?.participantCapacity).toBeNull()
+    expect(formatRecruitmentCount(result.rows[0]?.participantApplied, result.rows[0]?.participantCapacity)).toBe(
+      '-'
+    )
+  })
+
+  it('studentAppliedCount는 참여자 신청 별칭이고 approvedStudentCount는 쓰지 않는다', () => {
+    const result = mapRecruitmentListResponse({
+      items: [
+        {
+          programId: 186410,
+          nameKo: '겨울 워크숍',
+          studentAppliedCount: 4,
+          studentCapacity: 70,
+          approvedStudentCount: 1,
+        } as never,
+      ],
+    })
+    expect(result.rows[0]).toMatchObject({
+      participantApplied: 4,
+      participantCapacity: 70,
+    })
+  })
+
+  it('totalCount를 items.length로 대체하지 않는다', () => {
+    const result = mapRecruitmentListResponse({
+      items: [{ programId: 1, nameKo: '잘린 페이지' }],
+      totalCount: 50,
+      totalElements: 50,
+    } as never)
+    expect(result.rows).toHaveLength(1)
+    expect(result.totalCount).toBe(50)
   })
 })
 
-describe('recruitmentStatusFromPeriod', () => {
-  it('모집 기간 중이면 모집 중으로 본다', () => {
-    expect(
-      recruitmentStatusFromPeriod('2000-01-01T00:00:00Z', '2099-01-01T00:00:00Z')
-    ).toBe('recruiting_students')
+describe('readCountMapValue', () => {
+  it('없는 키를 0으로 채우지 않는다', () => {
+    expect(readCountMapValue({ 'programs-ujat': 9 }, 'programs-gemini')).toBeUndefined()
+    expect(readCountMapValue({ 'programs-ujat': 0 }, 'programs-ujat')).toBe(0)
+  })
+})
+
+describe('mapDashboardHomeResponse', () => {
+  it('홈 카운트가 없으면 0이 아니라 null이다', () => {
+    expect(mapDashboardHomeResponse({})).toEqual({
+      version: '',
+      programCount: null,
+      memberCount: null,
+      unreadNotificationCount: null,
+    })
   })
 })
 

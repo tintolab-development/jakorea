@@ -15,6 +15,7 @@ import { shouldUseGeminiVisitingTrainingRemoteApi } from '../api/visiting-traini
 import { useGeminiRecruitmentDetailQuery } from '../api/visiting-training/hooks'
 import { geminiVisitingTrainingQueryKeys } from '../api/visiting-training/query-keys'
 import { updateGeminiRecruitment } from '../api/visiting-training/service'
+import { canGeminiRecruitmentInfoEdit } from '../lib/recruitment/info-edit-policy'
 import { useGeminiRecruitmentRichTextGetters } from './use-gemini-recruitment-rich-text-getters'
 import {
   GEMINI_RECRUITMENT_EDIT_INFO_VALUE,
@@ -56,7 +57,8 @@ export function useGeminiRecruitmentInfoEdit(
     Boolean(recruitmentId) &&
     activeLnb === 'info' &&
     editTab === GEMINI_RECRUITMENT_EDIT_INFO_VALUE &&
-    detail != null
+    detail != null &&
+    canGeminiRecruitmentInfoEdit(detail.applicationPeriodStart)
 
   const [draft, setDraft] = useState<GeminiRecruitmentInfoEditDraft | null>(null)
 
@@ -99,6 +101,7 @@ export function useGeminiRecruitmentInfoEdit(
 
   const handleEdit = useCallback(() => {
     if (detail == null) return
+    if (!canGeminiRecruitmentInfoEdit(detail.applicationPeriodStart)) return
     resetDraftFromDetail()
     setEditMode(true)
   }, [detail, resetDraftFromDetail, setEditMode])
@@ -114,10 +117,14 @@ export function useGeminiRecruitmentInfoEdit(
     const endOverlay = beginBlockingOverlay()
     try {
       if (remoteEnabled) {
-        await updateGeminiRecruitment(recruitmentId, nextDraft)
+        const saved = await updateGeminiRecruitment(recruitmentId, nextDraft, {
+          existingApplicationPeriodStart: detail.applicationPeriodStart,
+        })
         const detailKey = geminiVisitingTrainingQueryKeys.recruitmentDetail(recruitmentId)
         await queryClient.cancelQueries({ queryKey: detailKey })
-        queryClient.setQueryData(detailKey, applyInfoEditDraft(detail, nextDraft))
+        if (saved) {
+          queryClient.setQueryData(detailKey, saved)
+        }
         await queryClient.invalidateQueries({ queryKey: detailKey })
         await queryClient.invalidateQueries({
           queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
@@ -145,8 +152,19 @@ export function useGeminiRecruitmentInfoEdit(
   const applyDevAutofill = useCallback(() => {
     if (!import.meta.env.DEV) return
     const snapshot = buildGeminiRecruitmentDevAutofillSnapshot()
+    const recruitmentWindowLocked = !canGeminiRecruitmentInfoEdit(detail?.applicationPeriodStart)
     setDraft(prev => {
       if (prev == null) return prev
+      if (recruitmentWindowLocked) {
+        return {
+          ...prev,
+          programDescription: snapshot.programDescription,
+          recruitmentGuide: snapshot.recruitmentGuide,
+          applicationMethod: snapshot.applicationMethod,
+          learningSupportContent: snapshot.learningSupportContent,
+          additionalContentMarkdown: snapshot.additionalContentMarkdown,
+        }
+      }
       return {
         ...prev,
         title: snapshot.title,
@@ -174,7 +192,7 @@ export function useGeminiRecruitmentInfoEdit(
         additionalContentMarkdown: snapshot.additionalContentMarkdown,
       }
     })
-  }, [])
+  }, [detail?.applicationPeriodStart])
 
   // displayDetail는 미리보기/저장 merge용. 수정 타이핑 경로에서는 쓰지 않음.
   const displayDetail = useMemo((): GeminiRecruitmentDetail | null => {

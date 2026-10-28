@@ -474,7 +474,7 @@ assert.equal(generalCurriculum.sessions[0]?.assignmentPeriod, undefined)
 assert.equal(generalCurriculum.sessions[1]?.title, '')
 assert.equal(generalCurriculum.eventSchedules.length, 0)
 assert.deepEqual(generalCurriculum.educationScheduleLines, [
-  '2026년 10월 13일(화) 10:00 ~ 12:00 | 2차시',
+  '2026년 10월 13일(화) 10:00 ~ 12:00 | 1차시',
   '2026년 10월 20일(화) 13:30 ~ 16:00 | 2차시',
 ])
 assert.deepEqual(
@@ -786,9 +786,10 @@ assert.equal(
   trainedTeacherProgress.basicInfoFields.find(field => field.label === '교육 대상 상세')?.value,
   '고등학교 1~2학년, 성인 일반'
 )
+// 총 차시 1 → 일시만 (①)
 assert.deepEqual(trainedTeacherProgress.educationScheduleLines, [
-  '2026년 10월 13일(화) 10:00 ~ 12:00 | 1차시',
-  '2026년 10월 20일(화) 13:30 ~ 16:00 | 1차시',
+  '2026년 10월 13일(화) 10:00 ~ 12:00',
+  '2026년 10월 20일(화) 13:30 ~ 16:00',
 ])
 assert.equal(
   trainedTeacherProgress.extraSections.find(section => section.title === '학습 지원 내용')?.body,

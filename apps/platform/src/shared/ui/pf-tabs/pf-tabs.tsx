@@ -2,7 +2,8 @@ import styles from './pf-tabs.module.css'
 
 export type PFTabsVariant = 'underline' | 'pill' | 'category'
 export type PFTabsUnderlineStyle = 'isolated' | 'bordered'
-export type PFTabsSize = 'large' | 'medium'
+/** pill: large·medium. underline: small만 적용(16px·44px·가로 스크롤) */
+export type PFTabsSize = 'large' | 'medium' | 'small'
 
 export type PFTabItem = {
   key: string
@@ -38,7 +39,7 @@ export function PFTabs({
     styles.tabs,
     styles[variant],
     variant === 'underline' ? styles[underlineStyle] : undefined,
-    variant === 'pill' ? styles[size] : undefined,
+    variant === 'pill' || (variant === 'underline' && size === 'small') ? styles[size] : undefined,
     className,
   ]
     .filter(Boolean)

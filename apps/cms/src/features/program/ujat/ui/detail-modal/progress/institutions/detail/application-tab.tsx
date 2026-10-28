@@ -173,7 +173,7 @@ export function UjatEducationProgressInstitutionApplicationTab({
             <CmsButton
               type="button"
               variant="secondary"
-              size="large"
+              size="h40"
               onClick={() => setAddClassModalOpen(true)}
             >
               학급 추가

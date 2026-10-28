@@ -71,7 +71,7 @@ export interface UserConsentAgreementSectionProps {
 }
 
 const DEFAULT_CAPTION =
-  '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다. (마케팅 제공 동의 항목은 해당 없음)'
+  '초상권 및 교육진행자 관련 동의서에 동의하지 않은 경우 프로그램 신청·참여 또는 교육진행자 활동이 제한될 수 있습니다. 마케팅 정보 수신 동의 여부는 서비스 이용과 무관합니다.'
 
 export function resolveUserConsentAgreementPreset(
   user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>

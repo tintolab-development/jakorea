@@ -37,6 +37,7 @@ vi.mock('@/features/program/general/api/student-roster-api-client', () => ({
 function rosterRow(id: string, rosterId: number): SchoolDetailStudentRow {
   return {
     id: String(rosterId),
+    serverRosterId: rosterId,
     no: 1,
     name: `학생${id}`,
     gradeClass: '1반',
@@ -336,6 +337,55 @@ describe('useOrganizationStudentRosterRemote integration', () => {
 
     await waitFor(() => expect(result.current.revisionNo).toBe(6))
     expect(result.current.students[0]?.id).toBe('201')
+    expect(result.current.students[0]?.serverRosterId).toBe(201)
+  })
+
+  it('T01: empty roster commit omits rosterId for a draft row', async () => {
+    const afterPut = {
+      revisionNo: 1,
+      totalCount: 1,
+      rows: [{ rosterId: 88001, studentName: '테스트학생', studentNo: 1 }],
+    }
+    fetchOrganizationStudentRosterRemote
+      .mockResolvedValueOnce({
+        revisionNo: 0,
+        totalCount: 0,
+        rows: [],
+      })
+      .mockResolvedValue(afterPut)
+    commitOrganizationStudentRosterRemote.mockResolvedValue(afterPut)
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const { result } = renderHook(
+      () => useOrganizationStudentRosterRemote({ organizationApplicationId: appA }),
+      { wrapper: createWrapper(queryClient) }
+    )
+    await waitFor(() => expect(result.current.revisionNo).toBe(0))
+
+    await act(async () => {
+      await result.current.commitRows({
+        expectedRevisionNo: 0,
+        rows: [
+          {
+            id: 'draft-student-67243e8a-4f2b-4c1d-9a10-aabbccddeeff',
+            no: 1,
+            name: '테스트학생',
+            gender: 'female',
+            birthDate: '2010. 04. 04.',
+            gradeClass: '1학년 1',
+            contact: '010-2222-3333',
+            email: 'student@example.com',
+          },
+        ],
+      })
+    })
+
+    const [, body] = commitOrganizationStudentRosterRemote.mock.calls[0]!
+    expect(body.expectedRevisionNo).toBe(0)
+    expect(body.rows).toHaveLength(1)
+    expect(body.rows[0]?.rosterId).toBeUndefined()
+    expect(Object.keys(body.rows[0] ?? {})).not.toContain('rosterId')
+    await waitFor(() => expect(result.current.students[0]?.serverRosterId).toBe(88001))
   })
 
   it('TC-13: duplicate commit while pending is blocked by isCommitting', async () => {

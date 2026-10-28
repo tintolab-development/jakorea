@@ -230,10 +230,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 24px */
+  line-height: 150%;
 }
 
 .template-custom-fields-form__participant-checkbox.ant-checkbox-wrapper {
@@ -241,8 +241,8 @@
 }
 
 .template-custom-fields-form__participant-checkbox .ant-checkbox-inner {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .template-custom-fields-form__participant-checkbox .ant-checkbox {

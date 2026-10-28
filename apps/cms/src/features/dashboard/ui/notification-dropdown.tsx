@@ -4,7 +4,7 @@
  */
 
 import { Typography } from 'antd'
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
 import type { DateValue } from '@/types'
 import { CmsButton, EmptyState } from '@/shared/ui'
@@ -33,7 +33,8 @@ const TYPE_TO_CATEGORY: Record<NotificationType, NotificationCategoryKey> = {
   schedule: 'schedule',
   matching: 'matching',
   settlement: 'settlement',
-  system: 'system' }
+  system: 'system',
+}
 
 function getCategoryLabel(type: NotificationType): string {
   const key = TYPE_TO_CATEGORY[type]
@@ -45,41 +46,119 @@ function formatNotificationDate(createdAt: DateValue): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
+function byNewest(a: Notification, b: Notification): number {
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+}
+
 export interface NotificationDropdownProps {
   notifications: Notification[]
   unreadCount: number
   onNotificationClick: (notification: Notification) => void
   onConfirm?: (notification: Notification) => void
   onClose?: () => void
+  hasNextPage?: boolean
+  isFetchingNextPage?: boolean
+  fetchNextPage?: () => void
+}
+
+function NotificationRow({
+  notification,
+  onActivate,
+}: {
+  notification: Notification
+  onActivate: (notification: Notification) => void
+}) {
+  return (
+    <div
+      className={`notification-dropdown-item${
+        notification.read ? ' notification-dropdown-item--read' : ''
+      }`}
+      role="button"
+      tabIndex={0}
+      onClick={() => onActivate(notification)}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onActivate(notification)
+        }
+      }}
+    >
+      <div className="notification-dropdown-item-title-row">
+        <Text className="notification-dropdown-item-tag">[{getCategoryLabel(notification.type)}]</Text>
+        <Text
+          className="notification-dropdown-item-message"
+          title={notification.body || notification.title}
+        >
+          {notification.body || notification.title}
+        </Text>
+      </div>
+      {notification.programName ? (
+        <Text className="notification-dropdown-item-sub">{notification.programName}</Text>
+      ) : null}
+      <Text className="notification-dropdown-item-date">
+        {formatNotificationDate(notification.createdAt)}
+      </Text>
+    </div>
+  )
 }
 
 export function NotificationDropdown({
   notifications,
-  unreadCount: _unreadCount,
+  unreadCount,
   onNotificationClick,
-  onClose }: NotificationDropdownProps) {
+  onClose,
+  hasNextPage = false,
+  isFetchingNextPage = false,
+  fetchNextPage,
+}: NotificationDropdownProps) {
   const [category, setCategory] = useState<NotificationCategoryKey>('all')
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   const filtered = useMemo(() => {
-    const base =
-      category === 'all'
-        ? notifications
-        : category === 'inquiry'
-          ? [] // 추후 API 확장
-          : notifications.filter(n => n.type === category)
-
-    return [...base].sort((a, b) => {
-      // 1) 미읽음 우선
-      if (a.read !== b.read) return a.read ? 1 : -1
-      // 2) 같은 상태 내에서는 최신순
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    })
+    if (category === 'inquiry') return []
+    if (category === 'all') return notifications
+    return notifications.filter(n => n.type === category)
   }, [notifications, category])
+
+  const unreadItems = useMemo(
+    () => filtered.filter(item => !item.read).sort(byNewest),
+    [filtered]
+  )
+  const readItems = useMemo(
+    () => filtered.filter(item => item.read).sort(byNewest),
+    [filtered]
+  )
+
+  useEffect(() => {
+    if (!fetchNextPage || !hasNextPage || isFetchingNextPage) return
+    if (unreadCount > unreadItems.length) fetchNextPage()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, unreadCount, unreadItems.length])
+
+  useEffect(() => {
+    const root = bodyRef.current
+    const sentinel = sentinelRef.current
+    if (!root || !sentinel || !fetchNextPage) return
+    const observer = new IntersectionObserver(
+      entries => {
+        if (!entries.some(entry => entry.isIntersecting)) return
+        if (!hasNextPage || isFetchingNextPage) return
+        fetchNextPage()
+      },
+      { root, rootMargin: '80px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, filtered.length])
 
   const handleItemClick = async (notification: Notification) => {
     await onNotificationClick(notification)
     if (notification.link) onClose?.()
   }
+
+  const isEmpty = filtered.length === 0 && !hasNextPage && !isFetchingNextPage
+  const unreadLabelCount =
+    category === 'all' && unreadCount > 0 ? unreadCount : unreadItems.length
 
   return (
     <div className="notification-dropdown-panel">
@@ -96,46 +175,43 @@ export function NotificationDropdown({
           </CmsButton>
         ))}
       </div>
-      <div className="notification-dropdown-body">
-        {filtered.length === 0 ? (
+      <div ref={bodyRef} className="notification-dropdown-body">
+        {isEmpty ? (
           <div className="notification-dropdown-empty">
             <EmptyState description="알림이 없습니다" />
           </div>
         ) : (
           <div className="notification-dropdown-list">
-            {filtered.map(notification => (
-              <div
-                key={notification.id}
-                className={`notification-dropdown-item ${notification.read ? 'notification-dropdown-item--read' : ''}`}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleItemClick(notification)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    handleItemClick(notification)
-                  }
-                }}
-              >
-                <div className="notification-dropdown-item-title-row">
-                  <Text className="notification-dropdown-item-tag">
-                    [{getCategoryLabel(notification.type)}]
-                  </Text>
-                  <Text
-                    className="notification-dropdown-item-message"
-                    title={notification.body || notification.title}
-                  >
-                    {notification.body || notification.title}
-                  </Text>
-                </div>
-                {notification.programName && (
-                  <Text className="notification-dropdown-item-sub">{notification.programName}</Text>
-                )}
-                <Text className="notification-dropdown-item-date">
-                  {formatNotificationDate(notification.createdAt)}
+            {unreadItems.length > 0 || (category === 'all' && unreadCount > 0) ? (
+              <div className="notification-dropdown-section">
+                <Text className="notification-dropdown-section-label">
+                  미읽음 {unreadLabelCount}건
                 </Text>
+                {unreadItems.map(notification => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    onActivate={handleItemClick}
+                  />
+                ))}
               </div>
-            ))}
+            ) : null}
+            {readItems.length > 0 ? (
+              <div className="notification-dropdown-section">
+                <Text className="notification-dropdown-section-label">읽음</Text>
+                {readItems.map(notification => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    onActivate={handleItemClick}
+                  />
+                ))}
+              </div>
+            ) : null}
+            <div ref={sentinelRef} className="notification-dropdown-sentinel" aria-hidden />
+            {isFetchingNextPage ? (
+              <Text className="notification-dropdown-loading">알림을 더 불러오는 중</Text>
+            ) : null}
           </div>
         )}
       </div>

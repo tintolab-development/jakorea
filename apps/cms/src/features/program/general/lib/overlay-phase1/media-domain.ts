@@ -2,7 +2,6 @@
  * 일반 프로그램 미디어 Independent 도메인 계산.
  * overlay store / 실제 미디어 PUT 를 호출하지 않는다.
  */
-import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 import {
   isEphemeralThumbPreviewUrl,
   PARTICIPANT_DETAIL_INFO_PREFIXES,
@@ -196,74 +195,13 @@ export function independentMediaStateFromFormValues(
   }
 }
 
-function bindCallsFromMedia(
-  programId: number,
-  media: Pick<IndependentMediaFormValues, 'thumbnail' | 'attachments'>,
-  recruitmentId?: number
-): MediaBindCall[] {
-  const calls: MediaBindCall[] = []
-  if (media.thumbnail?.fileObjectId != null) {
-    calls.push(
-      recruitmentId != null
-        ? {
-            kind: 'putProgramRecruitmentThumbnail',
-            programId,
-            recruitmentId,
-            fileObjectId: media.thumbnail.fileObjectId,
-          }
-        : {
-            kind: 'putProgramThumbnail',
-            programId,
-            fileObjectId: media.thumbnail.fileObjectId,
-          }
-    )
-  }
-  const attachmentIds = media.attachments?.fileObjectIds ?? []
-  if (attachmentIds.length > 0) {
-    calls.push(
-      recruitmentId != null
-        ? {
-            kind: 'putProgramRecruitmentAttachments',
-            programId,
-            recruitmentId,
-            fileObjectIds: attachmentIds,
-          }
-        : {
-            kind: 'putProgramAttachments',
-            programId,
-            fileObjectIds: attachmentIds,
-          }
-    )
-  }
-  return calls
-}
-
 export function independentMediaBindCalls(
-  formValues: IndependentMediaFormValues,
-  created?: Pick<Program, 'id' | 'programRecruitments'>
+  _formValues: IndependentMediaFormValues,
+  _created?: Pick<Program, 'id' | 'programRecruitments'>
 ): MediaBindCall[] {
-  if (!created) return []
-  const programId = parseFileObjectId(created.id)
-  if (programId == null) return []
-  const rows = (created.programRecruitments ?? []).filter(row => row.id != null)
-  if (rows.length === 0) {
-    return bindCallsFromMedia(programId, formValues)
-  }
-  const byPrefix = new Map((formValues.byPrefix ?? []).map(item => [item.prefix, item]))
-  const calls: MediaBindCall[] = []
-  for (const row of rows) {
-    const prefix = GENERAL_MEDIA_ROW_PREFIX[(row.recruitmentType ?? '').toUpperCase()]
-    if (!prefix) continue
-    const scoped = byPrefix.get(prefix)
-    calls.push(
-      ...bindCallsFromMedia(
-        programId,
-        { thumbnail: scoped?.thumbnail, attachments: scoped?.attachments },
-        row.id
-      )
-    )
-  }
-  return calls
+  // 신규 등록 미디어는 POST recruitments[] thumbnailFileObjectId / attachmentFileObjectIds.
+  // 생성 직후 모집 행 PUT은 쓰지 않는다. 기존 프로그램 수정 PUT은 program-media-target.
+  return []
 }
 
 export function persistIndependentMediaOverlay(

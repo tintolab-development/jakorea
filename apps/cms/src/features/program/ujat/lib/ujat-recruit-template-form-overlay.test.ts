@@ -593,9 +593,7 @@ describe('UJAT recruit form overlay', () => {
     expect(savedH1.programRecruitments?.find(row => row.id === 202)?.announcementTitle).toBe(
       'canonical H2'
     )
-    expect(savedH1.programRecruitments?.find(row => row.id === 201)?.recruitTerm).toBe(
-      'FIRST_HALF'
-    )
+    expect(savedH1.programRecruitments?.find(row => row.id === 201)?.recruitTerm).toBe('FIRST_HALF')
     expect(changedPeriod.programRecruitments?.find(row => row.id === 201)?.startAt).toBe(
       '2027-02-01T00:00:00Z'
     )
@@ -739,17 +737,19 @@ describe('UJAT recruit form overlay', () => {
         'ujat.recruit.volunteer.h1.publicTitle': '오래된 H1 overlay',
       },
     }
-    expect(resolveUjatRecruitAnnouncementTitle(program, 'institution', {
-      allowOverlayFallback: false,
-    })).toBe('-')
+    expect(
+      resolveUjatRecruitAnnouncementTitle(program, 'institution', {
+        allowOverlayFallback: false,
+      })
+    ).toBe('-')
     expect(
       resolveUjatRecruitAnnouncementTitle(program, 'volunteer_h1', {
         allowOverlayFallback: false,
       })
     ).toBe('-')
-    expect(programToUjatRecruitCanonicalFormValues(program, 'institution').announcementTitle).not.toBe(
-      '오래된 overlay 공고'
-    )
+    expect(
+      programToUjatRecruitCanonicalFormValues(program, 'institution').announcementTitle
+    ).not.toBe('오래된 overlay 공고')
   })
 
   it('모집 탭 PATCH에서 registrationOverlay를 다시 실을 대상이 아니다', () => {

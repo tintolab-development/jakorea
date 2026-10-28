@@ -23,6 +23,7 @@ import type {
   EducationNoticeReactionUser,
 } from '../../notices/model/types'
 import { mapPortalEducationSchedule } from '../../schedules/lib/map-from-portal'
+import { filterEducationSchedulesForMemberAssignment } from '../../schedules/lib/scope-status'
 import {
   getEducationSchedulesQueryErrorCode,
   getEducationSchedulesQueryTraceId,
@@ -34,6 +35,7 @@ import {
   createApplicationNotice,
   createApplicationNoticeComment,
   putApplicationNoticeAttachments,
+  putApplicationNoticeInlineImages,
   deleteApplicationNoticeComment,
   deleteApplicationNoticeReaction,
   fetchApplicationForms,
@@ -41,6 +43,7 @@ import {
   fetchApplicationNoticeDetail,
   fetchApplicationNoticeReactions,
   fetchApplicationNotices,
+  updateApplicationNotice,
   updateApplicationNoticeComment,
   upsertApplicationNoticeReaction,
   fetchApplicationSchedules,
@@ -59,6 +62,7 @@ import {
   type PortalNoticeAttachmentListItem,
   type PortalNoticeComment,
   type PortalNoticeDetail,
+  type PortalNoticeInlineImage,
   type PortalNoticeListItem,
   type PortalNoticeReactionState,
   type PortalAbsenceReasonSubmissionInput,
@@ -71,8 +75,9 @@ import { uploadMemberPortalFile } from '@/features/mypage/instructor-apply/api/m
 import { PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE } from '../../notices/lib/notice-attach-policy'
 import {
   INDIVIDUAL_SETTLEMENT_DISABLED_CODE,
-  isIndividualScheduleSettlementAudience,
+  INDIVIDUAL_SETTLEMENT_NOT_FOUND_CODE,
   readIndividualSettlementErrorCode,
+  shouldUseIndividualSettlementSchedulesApi,
 } from '../../settlements/lib/individual-settlement-contract'
 
 const STALE_MS = 30_000
@@ -121,6 +126,7 @@ function mapNoticeAttachmentListItem(
   if (item.attachmentId == null || item.postId == null) return null
   return {
     id: String(item.attachmentId),
+    fileObjectId: item.fileObjectId,
     fileName: item.originalFileName?.trim() || '첨부파일',
     uploadedAt: item.createdAt ?? '',
     fileSizeBytes: item.fileSize ?? 0,
@@ -148,6 +154,8 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
     notice: {
       title: detail.title,
       content: detail.content ?? '',
+      visibilityType: detail.visibilityType,
+      inlineImages: mapNoticeInlineImages(detail.inlineImages),
       authorName: author.authorName,
       authorIsStaff: author.authorIsStaff,
       isAuthor: author.isAuthor,
@@ -162,6 +170,7 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
       return [
         {
           id: String(file.attachmentId),
+          fileObjectId: file.fileObjectId,
           fileName: file.originalFileName?.trim() || '첨부파일',
           uploadedAt: file.createdAt ?? detail.createdAt ?? '',
           fileSizeBytes: file.fileSize ?? 0,
@@ -184,6 +193,21 @@ function mapNoticeDetail(detail: PortalNoticeDetail): {
       ]
     }),
   }
+}
+
+function mapNoticeInlineImages(
+  images: PortalNoticeInlineImage[] | undefined
+): EducationInProgressNotice['inlineImages'] {
+  return (images ?? []).flatMap(image => {
+    if (image.fileObjectId == null) return []
+    return [
+      {
+        fileObjectId: image.fileObjectId,
+        referenceToken: image.referenceToken ?? `file-object:${image.fileObjectId}`,
+        contentPath: image.contentPath,
+      },
+    ]
+  })
 }
 
 function mapNoticeReactions(
@@ -394,6 +418,7 @@ export type CreateApplicationNoticeInput = {
   visibilityType: string
   organizationApplicationId?: number
   attachmentFiles?: File[]
+  inlineImageFileObjectIds?: number[]
 }
 
 export function useCreateApplicationNoticeMutation(
@@ -429,6 +454,14 @@ export function useCreateApplicationNoticeMutation(
       if (postId == null) {
         throw new Error('PORTAL_NOTICE_CREATE_MISSING_POST_ID')
       }
+      if (input.inlineImageFileObjectIds) {
+        await putApplicationNoticeInlineImages(
+          applicationType,
+          applicationId,
+          String(postId),
+          input.inlineImageFileObjectIds
+        )
+      }
       if (fileObjectIds.length > 0) {
         await putApplicationNoticeAttachments(
           applicationType,
@@ -441,6 +474,81 @@ export function useCreateApplicationNoticeMutation(
     },
     onSuccess: () => {
       if (!applicationType || !applicationId) return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.notices(
+          applicationType,
+          applicationId
+        ),
+        exact: true,
+      })
+      void queryClient.invalidateQueries({
+        queryKey: [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'notice-attachments',
+          applicationType,
+          applicationId,
+        ],
+      })
+    },
+  })
+}
+
+export type UpdateApplicationNoticeInput = {
+  postId: string
+  content: string
+  inlineImageFileObjectIds: number[]
+  attachmentFileObjectIds: number[]
+  attachmentFiles?: File[]
+}
+
+export function useUpdateApplicationNoticeMutation(
+  applicationType: ProgramApplicationType | null | undefined,
+  applicationId: string | null | undefined
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: UpdateApplicationNoticeInput) => {
+      if (!applicationType || !applicationId) {
+        throw new Error('application scope is required')
+      }
+      const files = input.attachmentFiles ?? []
+      const newAttachmentFileObjectIds =
+        files.length > 0
+          ? await Promise.all(
+              files.map(file =>
+                uploadMemberPortalFile({
+                  file,
+                  filePurpose: PORTAL_PROGRAM_POST_ATTACHMENT_FILE_PURPOSE,
+                })
+              )
+            )
+          : []
+      const updated = await updateApplicationNotice(applicationType, applicationId, input.postId, {
+        title: null,
+        content: input.content,
+        visibilityType: null,
+      })
+      await putApplicationNoticeInlineImages(
+        applicationType,
+        applicationId,
+        input.postId,
+        input.inlineImageFileObjectIds
+      )
+      await putApplicationNoticeAttachments(applicationType, applicationId, input.postId, [
+        ...input.attachmentFileObjectIds,
+        ...newAttachmentFileObjectIds,
+      ])
+      return updated
+    },
+    onSuccess: (_data, input) => {
+      if (!applicationType || !applicationId) return
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.noticeDetail(
+          applicationType,
+          applicationId,
+          input.postId
+        ),
+      })
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.programApplications.notices(
           applicationType,
@@ -605,12 +713,14 @@ export function useApplicationSchedulesQuery(
   })
   const items = useMemo(
     () =>
-      (query.data?.items ?? []).map((item, index) =>
-        mapPortalEducationSchedule(item, index, {
-          educationStructure: query.data?.educationStructure,
-          sessionRound: query.data?.sessionRound,
-          applicationType,
-        }),
+      filterEducationSchedulesForMemberAssignment(
+        (query.data?.items ?? []).map((item, index) =>
+          mapPortalEducationSchedule(item, index, {
+            educationStructure: query.data?.educationStructure,
+            sessionRound: query.data?.sessionRound,
+            applicationType,
+          }),
+        ),
       ),
     [applicationType, query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
   )
@@ -838,6 +948,17 @@ export function useIndividualSettlementSchedulesQuery(
     ...queryOptions(),
   })
   const errorCode = query.isError ? readIndividualSettlementErrorCode(query.error) : null
+  if (
+    import.meta.env.DEV &&
+    query.isError &&
+    errorCode === INDIVIDUAL_SETTLEMENT_NOT_FOUND_CODE &&
+    applicationId
+  ) {
+    console.warn(
+      '[individual-settlements] SETTLEMENT_NOT_FOUND — applicationId가 program_individual_application.id인지, programType이 GENERAL_INDIVIDUAL인지 확인하세요.',
+      { applicationId },
+    )
+  }
   return {
     enabled,
     isLoading: enabled && query.isPending,
@@ -854,11 +975,14 @@ export function useApplicationSettlementsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
   programId: string | null | undefined,
-  options?: { operationEndAt?: string | null }
+  options?: { operationEndAt?: string | null; programType?: string | null }
 ) {
   const schedules = useApplicationSchedulesQuery(applicationType, applicationId)
   const enabled = schedules.enabled
-  const individualAudience = isIndividualScheduleSettlementAudience(applicationType)
+  const individualAudience = shouldUseIndividualSettlementSchedulesApi(
+    applicationType,
+    options?.programType,
+  )
   const instructorAudience = applicationType === 'INSTRUCTOR'
   const receipts = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.expenseReceipts(
@@ -925,10 +1049,7 @@ export function useApplicationSettlementsQuery(
         operationEndAt: options?.operationEndAt,
         deadlinePolicy: applicationType === 'INSTRUCTOR' ? 'payment_statement' : 'receipt',
         preferIndividualSchedules:
-          individualAudience &&
-          individual.isSuccess &&
-          !individual.isDisabled &&
-          (!instructorAudience || individual.schedules.length > 0),
+          individualAudience && individual.isSuccess && !individual.isDisabled,
       }),
     [
       applicationType,
@@ -966,14 +1087,10 @@ export function useApplicationSettlementsQuery(
     },
     errorCode: schedules.errorCode,
     traceId: schedules.traceId,
-    individualDisabled: individualAudience && !instructorAudience && individual.isDisabled,
-    individualErrorCode:
-      individualAudience && !instructorAudience ? individual.errorCode : null,
+    individualDisabled: individualAudience && individual.isDisabled,
+    individualErrorCode: individualAudience ? individual.errorCode : null,
     individualEmpty:
-      individualAudience &&
-      !instructorAudience &&
-      individual.isSuccess &&
-      individual.schedules.length === 0,
+      individualAudience && individual.isSuccess && individual.schedules.length === 0,
   }
 }
 

@@ -21,6 +21,7 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
+import { ProgramRegistrationAuditValue } from '@/features/program/shared/ui/program-detail/registration-audit-value'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
@@ -48,7 +49,6 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { getGeneralSurveyEditFieldsForAudience } from '@/features/program/general/model/common-info-edit-schema'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
-  formatDate,
   formatDateRange,
   CATEGORY_LABEL,
   CATEGORY_OPTIONS,
@@ -71,7 +71,6 @@ import {
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
-import { BusinessPeriodExtendHistoryRows } from '@/features/program/shared/ui/business-period-extend-history-rows'
 import {
   participantTypeChecked,
   trainedTeacherOptionLabel,
@@ -170,8 +169,6 @@ export interface BasicInfoSectionProps {
    * 1사1교·일반 기본정보 IPS 행은 유지.
    */
   hideIpsTypeField?: boolean
-  /** 교육받은 교사 — 등록일/수정일은 날짜만 표시하고 등록자/수정자 정보는 숨김 */
-  auditDateOnly?: boolean
   /** 교육받은 교사 — 참여자 유형을 고정 라벨로 표시 (수정 UI 없음) */
   fixedParticipantTypeLabel?: string
   /** 교육받은 교사 — 대표 프로그램명(영문) Input 편집 */
@@ -248,7 +245,6 @@ export function BasicInfoSection({
   form,
   forceCompanySchoolLayout = false,
   hideIpsTypeField = false,
-  auditDateOnly = false,
   fixedParticipantTypeLabel,
   enableTitleEnEdit = false,
   useDetailedProgramSelect = false,
@@ -499,33 +495,22 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="최초 등록일"
               view={
-                auditDateOnly ? (
-                  formatDate(program.createdAt)
-                ) : (
-                  <>
-                    {formatDate(program.createdAt)}
-                    <DetailInfoForm.InputsSeparator />
-                    {createdByName ?? '-'}
-                  </>
-                )
+                <ProgramRegistrationAuditValue
+                  at={program.createdAt}
+                  name={createdByName ?? program.createdByName}
+                />
               }
             />
             <DetailInfoForm.Field
               label="마지막 수정일"
               view={
-                auditDateOnly ? (
-                  formatDate(program.updatedAt)
-                ) : (
-                  <>
-                    {formatDate(program.updatedAt)}
-                    <DetailInfoForm.InputsSeparator />
-                    {updatedByName ?? '-'}
-                  </>
-                )
+                <ProgramRegistrationAuditValue
+                  at={program.updatedAt}
+                  name={updatedByName ?? program.updatedByName}
+                />
               }
             />
           </DetailInfoForm.Row>
-          <BusinessPeriodExtendHistoryRows program={program} />
         </DetailInfoForm>
 
         <DetailInfoForm title="기본 정보" hideHeader mode={commonInfoFormEdit ? 'edit' : 'view'}>
@@ -1186,33 +1171,22 @@ export function BasicInfoSection({
         <DetailInfoForm.Field
           label="최초 등록일"
           view={
-            auditDateOnly ? (
-              formatDate(program.createdAt)
-            ) : (
-              <>
-                {formatDate(program.createdAt)}
-                <DetailInfoForm.InputsSeparator />
-                {createdByName ?? '-'}
-              </>
-            )
+            <ProgramRegistrationAuditValue
+              at={program.createdAt}
+              name={createdByName ?? program.createdByName}
+            />
           }
         />
         <DetailInfoForm.Field
           label="마지막 수정일"
           view={
-            auditDateOnly ? (
-              formatDate(program.updatedAt)
-            ) : (
-              <>
-                {formatDate(program.updatedAt)}
-                <DetailInfoForm.InputsSeparator />
-                {updatedByName ?? '-'}
-              </>
-            )
+            <ProgramRegistrationAuditValue
+              at={program.updatedAt}
+              name={updatedByName ?? program.updatedByName}
+            />
           }
         />
       </DetailInfoForm.Row>
-      <BusinessPeriodExtendHistoryRows program={program} />
 
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field

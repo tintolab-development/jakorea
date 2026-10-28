@@ -13,7 +13,7 @@ import type { MergeGroupResponse } from '@/shared/api/generated/dashboard/schema
 const activeGroup: MergeGroupResponse = {
   id: 10,
   leadApplicationId: 100,
-  status: 'PENDING',
+  status: 'ACTIVE',
   members: [
     { organizationApplicationId: 100, grade: '5학년', lead: true },
     { organizationApplicationId: 101, grade: '6학년', lead: false },

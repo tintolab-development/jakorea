@@ -44,6 +44,7 @@ export type IndividualRecruitmentValues = {
   recruitRangeSeal?: RecruitRangeSeal
   programRangeSeal?: RecruitRangeSeal
   announcementPublished?: boolean
+  interviewRequired?: boolean
   targetLevels?: string[]
   targetLevelDetail?: string
   docDeadlineIso?: string

@@ -23,20 +23,59 @@ export type LectureReportState = {
 }
 export type LectureReportContent = {
   assignmentId: number; reportId: number; formResponseId: number; programId: number; scheduleId: number
-  bindingId: number; templateVersionId: number; formType: 'LECTURE_REPORT'; title: string
+  bindingId: number; templateVersionId: number; formType: string; title: string | null
   responseStatus: string; submittedAt: string | null; form: Record<string, unknown>
-  answers: Record<string, unknown>; files: Array<{ formSubmissionFileId: number; questionKey: string | null; fileObjectId: number; originalFileName: string; contentType: string; fileSize: number | null; downloadable: boolean }>
+  answers: Record<string, unknown>; files: Array<{ formSubmissionFileId: number; questionKey: string | null; fileObjectId: number; originalFileName: string | null; contentType: string | null; fileSize: number | null; downloadable: boolean }>
 }
 export type { LectureReportContextType, LectureReportFormBinding, LectureReportFormResponseInput }
 
+export class LectureReportApiError extends Error {
+  readonly response: { status: number; data: unknown }
+
+  constructor(data: unknown, status = 200) {
+    super('강의보고서 API 응답을 처리할 수 없습니다.')
+    this.name = 'LectureReportApiError'
+    this.response = { status, data }
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function isSafeNonNegativeInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+}
+
 function unwrap<T>(value: unknown): T {
-  if (value && typeof value === 'object' && 'success' in value && (value as { success?: boolean }).success && 'data' in value) return unwrap<T>((value as { data: unknown }).data)
+  if (isRecord(value) && 'success' in value) {
+    if (value.success !== true || !('data' in value) || value.data == null) {
+      throw new LectureReportApiError(value)
+    }
+    return unwrap<T>(value.data)
+  }
+  if (value == null) throw new LectureReportApiError(value)
   return value as T
+}
+
+function unwrapPage(value: unknown): LectureReportPage {
+  if (
+    !isRecord(value) ||
+    !Array.isArray(value.items) ||
+    !isSafeNonNegativeInteger(value.page) ||
+    !isSafeNonNegativeInteger(value.size) ||
+    value.size <= 0 ||
+    !isSafeNonNegativeInteger(value.totalElements) ||
+    !isSafeNonNegativeInteger(value.totalPages)
+  ) {
+    throw new LectureReportApiError(value)
+  }
+  return value as unknown as LectureReportPage
 }
 
 export async function getLectureReportAssignments(
   programId: number,
-  page: number,
+  page = 0,
   signal?: AbortSignal,
   size = 10,
 ): Promise<LectureReportPage> {
@@ -44,7 +83,7 @@ export async function getLectureReportAssignments(
     params: { page, size },
     signal,
   })
-  return unwrap(data)
+  return unwrapPage(unwrap(data))
 }
 
 export async function getAllLectureReportAssignments(
@@ -79,7 +118,10 @@ export async function submitLectureReportResponse(input: LectureReportFormRespon
   )
   return unwrap(data)
 }
-export async function submitLectureReport(assignmentId: number, input: { templateVersionId: number; formResponseId: number }): Promise<unknown> {
+export async function submitLectureReport(
+  assignmentId: number,
+  input: { templateVersionId: number; formResponseId: number },
+): Promise<{ reportId: number }> {
   const { data } = await axiosClient.post(`/api/portal/me/instructor-assignments/${assignmentId}/lecture-report`, input)
   return unwrap(data)
 }

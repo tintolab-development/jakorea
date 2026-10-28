@@ -91,44 +91,14 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  align-items: flex-start;
-  margin-top: 16px;
+  align-items: stretch;
+  gap: 30px;
+  margin-top: 30px;
 }
 
-.activity-withdraw-schedule-modal__field {
-  display: flex;
+.activity-withdraw-schedule-modal__form > .cms-field,
+.activity-withdraw-schedule-modal__form > .cms-choice-field {
   width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.activity-withdraw-schedule-modal__label {
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.activity-withdraw-schedule-modal__required {
-  margin-left: 2px;
-  color: #d92d20;
-}
-
-.activity-withdraw-schedule-modal__hint {
-  margin: 0;
-  color: var(--color-text-secondary, #6b7280);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.activity-withdraw-schedule-modal__error {
-  color: #d92d20;
-  font-size: 12px;
-  line-height: 150%;
 }
 
 .activity-withdraw-schedule-modal__footer {
@@ -137,8 +107,4 @@
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
-}
-
-.activity-withdraw-schedule-modal__field .cms-select {
-  width: 100%;
 }

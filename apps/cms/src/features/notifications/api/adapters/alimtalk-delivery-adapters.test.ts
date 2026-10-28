@@ -64,7 +64,7 @@ describe('alimtalk-delivery-adapters (4-2)', () => {
     })
 
     expect(row?.sendStatus).toBe('발송 실패')
-    expect(row?.failedReason).toBe('템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)')
+    expect(row?.failedReason).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 사용자 아이디(이메일)')
     expect(row?.sentAt).toBe('')
     expect(row?.receivedAt).toBe('')
     expect(row?.receiverName).toBe('-')

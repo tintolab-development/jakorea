@@ -31,9 +31,28 @@
   gap: 16px;
 }
 
-.alimtalk-template-preview__actions {
+.alimtalk-template-preview__actions-wrap {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.alimtalk-template-preview__actions {
   justify-content: flex-end;
+}
+
+.alimtalk-template-preview__unusable-reason {
+  margin: 0;
+  max-width: 100%;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: right;
+  opacity: 0.72;
 }
 
 .alimtalk-template-preview__hint {

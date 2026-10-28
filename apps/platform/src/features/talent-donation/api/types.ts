@@ -42,6 +42,7 @@ export type PublicTalentApplicationCreateRequest = {
   jaParticipation: 'yes' | 'no'
   privacyAgreed: true
   attachmentAssetId?: number
+  attachmentAssetIds?: number[]
 }
 
 export type PublicTalentApplicationCreateResponse = {

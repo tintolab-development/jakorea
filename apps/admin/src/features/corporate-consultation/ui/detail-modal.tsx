@@ -49,12 +49,7 @@ function FileIcon({ className }: { className?: string }) {
         strokeWidth="1.4"
         strokeLinejoin="round"
       />
-      <path
-        d="M11.5 2.5V5.8H14.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
+      <path d="M11.5 2.5V5.8H14.5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -106,53 +101,52 @@ export function CorporateConsultationDetailModal({
       <span>-</span>
     )
 
-  const attachmentView =
-    data?.attachmentFileName ? (
-      shouldUseCorporateConsultationRemoteApi() ? (
-        <button
-          type="button"
-          className="corp-consult-detail-modal__attachment"
-          onClick={() => {
-            if (!data?.id) return
-            void downloadCorporateConsultationAttachmentService(data.id)
-              .then(result => {
-                if (!result?.downloadUrl) {
-                  showAlert({
-                    title: '다운로드 실패',
-                    content: '첨부파일을 불러오지 못했습니다.',
-                  })
-                  return
-                }
-                window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
-              })
-              .catch(() => {
+  const attachmentView = data?.attachmentFileName ? (
+    shouldUseCorporateConsultationRemoteApi() ? (
+      <button
+        type="button"
+        className="corp-consult-detail-modal__attachment"
+        onClick={() => {
+          if (!data?.id) return
+          void downloadCorporateConsultationAttachmentService(data.id)
+            .then(result => {
+              if (!result?.downloadUrl) {
                 showAlert({
                   title: '다운로드 실패',
-                  content: '첨부파일 다운로드에 실패했습니다.',
+                  content: '첨부파일을 불러오지 못했습니다.',
                 })
+                return
+              }
+              window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
+            })
+            .catch(() => {
+              showAlert({
+                title: '다운로드 실패',
+                content: '첨부파일 다운로드에 실패했습니다.',
               })
-          }}
-        >
-          <FileIcon className="corp-consult-detail-modal__file-icon" />
-          <span>{data.attachmentFileName}</span>
-        </button>
-      ) : data.attachmentUrl ? (
-        <a
-          className="corp-consult-detail-modal__attachment"
-          href={data.attachmentUrl}
-          download={data.attachmentFileName}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <FileIcon className="corp-consult-detail-modal__file-icon" />
-          <span>{data.attachmentFileName}</span>
-        </a>
-      ) : (
+            })
+        }}
+      >
+        <FileIcon className="corp-consult-detail-modal__file-icon" />
         <span>{data.attachmentFileName}</span>
-      )
+      </button>
+    ) : data.attachmentUrl ? (
+      <a
+        className="corp-consult-detail-modal__attachment"
+        href={data.attachmentUrl}
+        download={data.attachmentFileName}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <FileIcon className="corp-consult-detail-modal__file-icon" />
+        <span>{data.attachmentFileName}</span>
+      </a>
     ) : (
-      <span>-</span>
+      <span>{data.attachmentFileName}</span>
     )
+  ) : (
+    <span>-</span>
+  )
 
   const footer = (
     <div className="corp-consult-detail-modal__footer">
@@ -352,9 +346,7 @@ export function CorporateConsultationDetailModal({
       <ConfirmModal
         open={deleteConfirmOpen}
         title="신청 삭제"
-        content={
-          '선택한 상담 신청을 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.'
-        }
+        content={'선택한 상담 신청을 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.'}
         confirmText="삭제"
         cancelText="취소"
         danger

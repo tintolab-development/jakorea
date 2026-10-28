@@ -43,6 +43,7 @@ import { peekGeminiRecruitmentAddDraftOverwrite } from '../../lib/recruitment/ad
 import { useGeminiRecruitmentDetailUrl } from '../detail/recruitment-detail-url'
 import { useGeminiRecruitmentAddUrl } from './recruitment-add-url'
 import '@/pages/programs/program-list-page.css'
+import '../page.css'
 import './list.css'
 
 const RECRUITMENT_STATUS_LABEL: Record<GeminiRecruitmentDisplayStatus, string> = {
@@ -281,7 +282,11 @@ export function GeminiRecruitmentList() {
       <FilterTableLayout
         hasActiveFilters={hasActiveFilters}
         bordered={false}
-        filterResponsiveWrap={false}
+        className="gemini-list-filter gemini-recruitment-list"
+        filterResponsiveWrap
+        multiRowGridMode="responsive"
+        multiRowResponsiveLayout="merged-auto-fill"
+        mergedAutoFillInlineSearch
         fields={GEMINI_RECRUITMENT_FILTER_FIELDS}
         filters={{
           title: pendingFilters.title,

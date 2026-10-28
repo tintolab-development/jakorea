@@ -21,7 +21,7 @@
 | Swagger endpoint | 프론트 query key | 서비스 | UI |
 |------------------|------------------|--------|-----|
 | `GET /home` | `get_admin_dashboard_home` | `getDashboardHomeSummary()` | 툴바 `programCount`, `memberCount` |
-| `GET /notifications/count` | `get_admin_dashboard_notifications_count` | `getDashboardNotificationCount()` | 헤더 알림 badge (ADMIN) |
+| `GET /notifications/unread-count` | `get_admin_notifications_unread-count` | `getDashboardNotificationCount()` | 헤더 알림 badge (ADMIN) |
 | `GET /notifications` | `get_admin_notifications` | `getAdminNotifications()` | 헤더·알림 위젯 목록 (ADMIN remote) |
 | `PATCH /notifications/{recipientId}/read` | `patch_admin_notifications_recipientId_read` | `markAdminNotificationAsRead()` | 알림 읽음 |
 | `PATCH /notifications/read-all` | `patch_admin_notifications_read-all` | `markAllAdminNotificationsAsRead()` | 전체 읽음 |

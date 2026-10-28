@@ -18,11 +18,16 @@ describe('dashboard-widget-links', () => {
     expect(programScheduleMorePath('gemini')).toBe('/programs/gemini/visiting-training')
   })
 
-  it('모집 더보기는 진행 중 리스트뷰다', () => {
-    expect(RECRUITMENT_STATUS_MORE_PATH).toBe(
-      '/programs/general?status=in_progress&viewMode=list'
-    )
+  it('모집 더보기는 일반 프로그램 리스트뷰다', () => {
+    expect(RECRUITMENT_STATUS_MORE_PATH).toBe('/programs/general?viewMode=list')
     expect(recruitmentProgramDetailPath('12')).toBe('/programs/general?programId=12')
+    expect(recruitmentProgramDetailPath('12', 'ujat')).toBe('/programs/ujat?programId=12')
+    expect(recruitmentProgramDetailPath('12', 'company_school')).toBe(
+      '/programs/company-school?programId=12'
+    )
+    expect(recruitmentProgramDetailPath('12', 'gemini')).toBe(
+      '/programs/gemini/visiting-training?programId=12'
+    )
   })
 
   it('KPI 더보기는 대표 프로그램명으로 실적 관리를 필터한다', () => {

@@ -52,7 +52,15 @@ export type SmsSendDraft = {
   messageType: SmsMessageType
   subject: string
   bodyText: string
+  /** 화면 표시용 첨부 파일명(요청 첨부가 있으면 요청 첨부, 없으면 템플릿 첨부) */
   attachmentFileNames: string[]
+  /**
+   * 발송 요청 첨부 fileObjectId (선택 순서, CLEAN·AVAILABLE 확인 완료분만).
+   * MMS일 때만 `attachmentFileIds`로 전송. 템플릿 MMS에서 비어 있으면 템플릿 첨부가 발송된다.
+   */
+  attachmentFileIds?: number[]
+  /** 업로드·보안 검사 중인 요청 첨부가 있으면 true — 발송 차단 */
+  attachmentUploadPending?: boolean
   sendTiming: SmsSendTiming
   scheduledAt: string | null
   recipients: SmsSendRecipient[]

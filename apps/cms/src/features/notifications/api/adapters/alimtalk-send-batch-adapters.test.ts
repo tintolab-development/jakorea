@@ -27,9 +27,23 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
     ).toBe(0)
   })
 
+  it('FE-VAR-12 버튼 URL·퀵리플라이·헤더 변수를 추출한다', () => {
+    const keys = collectTemplatePlaceholderKeys({
+      content: '본문',
+      templateHeader: '#{프로그램명}',
+      buttons: [{ name: '#{버튼명}', destinations: { mobile: 'https://x/#{담당교사명}' } }],
+      quickLinks: [{ name: '퀵', destinations: { pc: 'https://q/#{소속명}' } }],
+    })
+    expect([...keys].sort()).toEqual(['담당교사명', '버튼명', '소속명', '프로그램명'].sort())
+  })
+
   it('DIRECT + phone만이면 필수 변수 누락', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['사용자 아이디(이메일)', '휴면 전환일시'],
+      catalog: [
+        { key: '사용자 아이디(이메일)', enabled: true, sourceMode: 'SERVER_RESOLVED' },
+        { key: '휴면 전환일시', categoryCode: 'SYSTEM', enabled: false, sourceMode: 'EVENT_ONLY' },
+      ],
       recipients: [{ actorType: 'DIRECT', source: 'manual' }],
     })
     expect(missing).toEqual(['사용자 아이디(이메일)', '휴면 전환일시'])
@@ -41,6 +55,10 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
   it('MEMBER+actorId는 신원 키만 서버 치환으로 보고 SYSTEM 값은 있다고 보지 않는다', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['사용자 아이디(이메일)', '휴면 전환일시'],
+      catalog: [
+        { key: '사용자 아이디(이메일)', enabled: true, sourceMode: 'SERVER_RESOLVED' },
+        { key: '휴면 전환일시', categoryCode: 'SYSTEM', enabled: false, sourceMode: 'EVENT_ONLY' },
+      ],
       recipients: [{ actorType: 'MEMBER', actorId: 12 }],
     })
     expect(missing).toEqual(['휴면 전환일시'])
@@ -49,6 +67,10 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
   it('DIRECT는 예약·SYSTEM 키를 batch variables로 충족하지 않는다', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['사용자 아이디(이메일)', '휴면 전환일시'],
+      catalog: [
+        { key: '사용자 아이디(이메일)', enabled: true, sourceMode: 'SERVER_RESOLVED' },
+        { key: '휴면 전환일시', categoryCode: 'SYSTEM', enabled: false, sourceMode: 'EVENT_ONLY' },
+      ],
       batchVariables: {
         '사용자 아이디(이메일)': 'user@example.com',
         '휴면 전환일시': '2026-09-08 12:00',
@@ -61,7 +83,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
   it('수신자 한 명의 커스텀 값이 다른 수신자를 충족시키지 않는다', () => {
     const missing = findMissingAlimtalkTemplateVariableKeys({
       requiredKeys: ['안내문'],
-      catalog: [],
+      catalog: [{ key: '안내문', enabled: true, sourceMode: 'MANUAL_ALLOWED' }],
       recipients: [
         {
           actorType: 'DIRECT',
@@ -79,7 +101,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
       formatAlimtalkFailedReason(
         'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:사용자 아이디(이메일)'
       )
-    ).toBe('템플릿 필수 변수가 없습니다: 사용자 아이디(이메일)')
+    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 사용자 아이디(이메일)')
   })
 
   it('빈 문자열 variables는 생략하고 값이 있는 항목만 남긴다', () => {
@@ -166,7 +188,9 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
       batchName: '알림톡 발송',
       templateId: 11,
       placeholderKeys: ['안내문', '휴면 전환일시', '회원명'],
-      variableCatalog: [],
+      variableCatalog: [
+        { key: '안내문', enabled: true, requiresProgram: false, sourceMode: 'MANUAL_ALLOWED' },
+      ],
       recipients: [
         {
           id: 'manual-1',
@@ -233,7 +257,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
 
   it('enabled를 BE 값 그대로 옮기고 로컬 재계산하지 않는다', () => {
     const mapped = mapTemplateVariablesCatalog({
-      totalCount: 2,
+      totalCount: 4,
       systemManualSendQaEnabled: false,
       categories: [
         {
@@ -250,6 +274,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
               recruitmentTypes: [],
               participantTypes: [],
               memberTypes: ['GENERAL'],
+              sourceMode: 'SERVER_RESOLVED',
             },
             {
               key: '프로그램명',
@@ -261,6 +286,31 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
               recruitmentTypes: [],
               participantTypes: [],
               memberTypes: [],
+              sourceMode: 'SERVER_RESOLVED',
+            },
+            {
+              key: '알림 링크 경로',
+              token: '#{알림 링크 경로}',
+              description: '경로',
+              requiresProgram: false,
+              enabled: true,
+              programGroups: [],
+              recruitmentTypes: [],
+              participantTypes: [],
+              memberTypes: [],
+              sourceMode: 'MANUAL_ALLOWED',
+            },
+            {
+              key: '서비스 탈퇴일시',
+              token: '#{서비스 탈퇴일시}',
+              description: '탈퇴',
+              requiresProgram: false,
+              enabled: true,
+              programGroups: [],
+              recruitmentTypes: [],
+              participantTypes: [],
+              memberTypes: [],
+              sourceMode: 'EVENT_ONLY',
             },
           ],
         },
@@ -274,12 +324,24 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
         requiresProgram: false,
         programGroups: [],
         memberTypes: ['GENERAL'],
+        sourceMode: 'SERVER_RESOLVED',
       }),
       expect.objectContaining({
         key: '프로그램명',
         enabled: false,
         requiresProgram: true,
         programGroups: ['GENERAL'],
+        sourceMode: 'SERVER_RESOLVED',
+      }),
+      expect.objectContaining({
+        key: '알림 링크 경로',
+        sourceMode: 'MANUAL_ALLOWED',
+        enabled: true,
+      }),
+      expect.objectContaining({
+        key: '서비스 탈퇴일시',
+        sourceMode: 'EVENT_ONLY',
+        enabled: true,
       }),
     ])
   })
@@ -314,3 +376,15 @@ describe('toTemplateVariablesRequestParams', () => {
     })
   })
 })
+
+describe('buildCreateSendBatchRequest MMS 첨부 회귀', () => {
+  it('알림톡 발송 요청에는 attachmentFileIds가 없다', () => {
+    const body = buildCreateSendBatchRequest({
+      batchName: '알림톡',
+      templateId: 1,
+      recipients: [],
+    })
+    expect(body).not.toHaveProperty('attachmentFileIds')
+  })
+})
+

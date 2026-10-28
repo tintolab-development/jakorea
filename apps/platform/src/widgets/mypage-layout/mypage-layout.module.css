@@ -205,7 +205,8 @@
     flex: none;
     width: 100%;
     max-width: none;
-    padding-top: var(--spacing-16);
+    /* LNB/CTA → 본문 간격은 row-gap(24)이 전담 (Figma 24). 서브페이지와 동일 리듬 */
+    padding-top: 0;
     padding-bottom: var(--spacing-48);
   }
 
@@ -254,6 +255,7 @@
   .layoutMenuOpen .sidebar {
     position: relative;
     z-index: 6;
+    overflow: visible;
   }
 
   .layoutMenuOpen .content {

@@ -11,8 +11,12 @@ export interface StudentRosterItemResponse {
   memberId?: number;
   studentName?: string;
   gender?: string;
-  birthDate?: string;
-  birthYear?: number;
+  /** Portal owner 조회 또는 CMS 개인정보 원문 조회에서만 원문 날짜를 반환하며, CMS 기본 조회에서는 null입니다. */
+  birthDate?: string | null;
+  /** 학생명단 저장 생년월일의 연도만 사용합니다. 승인된 회원 연결 정책이 확인될 때까지 회원 정본 연도 fallback은 차단됩니다. */
+  birthYear?: number | null;
+  /** CMS 기본 학생명단 표시용 생년월일 값(yyyy-**-**). Portal에서는 null이며 저장·수정 요청에 사용할 수 없습니다. */
+  maskedBirthDate?: string | null;
   grade?: string;
   className?: string;
   studentNo?: number;

@@ -20,6 +20,7 @@ import {
   formatClassCountLabel,
   formatTotalStudentCountLabel,
 } from '@/features/program/general/lib/detail-value-helpers'
+import { formatParticipatingInstitutionKitQuantity } from '@/features/program/general/lib/participating-institution-textbook'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import type {
   SchoolDetailForModal,
@@ -716,7 +717,11 @@ export function SchoolDetailModal({
                   />
                   <DetailInfoForm.Field
                     label="교재 준비 수량"
-                    view={detail.textbookQuantity != null ? `${detail.textbookQuantity}권` : '-'}
+                    view={formatParticipatingInstitutionKitQuantity(
+                      detail.textbookKits,
+                      detail.textbookQuantity,
+                      { showZero: true }
+                    )}
                     readOnlyDisplay
                   />
                 </DetailInfoForm.Row>
@@ -822,6 +827,7 @@ export function SchoolDetailModal({
           classCount={detail.classCount}
           schoolName={detail.schoolName ?? ''}
           educationGrade={detail.educationGrade ?? ''}
+          organizationApplicationId={participatingRow?.organizationApplicationId}
           programId={programId}
           participationAppliedAt={detail.participationAppliedAt}
           onSaveEdit={() => {}}

@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import {
-  Controller,
-  type FieldPath,
-  type PathValue,
-  type UseFormReturn,
-} from 'react-hook-form'
+import { Controller, type FieldPath, type PathValue, type UseFormReturn } from 'react-hook-form'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -26,7 +21,8 @@ const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
   minWidth: 0,
   alignItems: 'center',
-  gap: 8 }
+  gap: 8,
+}
 export function UjatRecruitInquiryContactField({
   label,
   placeholder,
@@ -107,7 +103,8 @@ export function UjatRecruitFormPeriodDatePicker({
   )
   const emit = (d: Dayjs | null) => toIso(d, clearToUndefined)
   return (
-    <ParagraphDatePicker inputSize="small"
+    <ParagraphDatePicker
+      inputSize="small"
       mode="single"
       presetMode="period"
       value={anchor}
@@ -118,10 +115,20 @@ export function UjatRecruitFormPeriodDatePicker({
       appliedSurfaceRange={appliedSurfaceRange}
       appliedSurfaceWithTime={rangeWithTime}
       onRangeChange={range => {
-        form.setValue(startName, emit(range[0]) as PathValue<ProgramDetailEditFormValues, typeof startName>, {
-          shouldDirty: true })
-        form.setValue(endName, emit(range[1]) as PathValue<ProgramDetailEditFormValues, typeof endName>, {
-          shouldDirty: true })
+        form.setValue(
+          startName,
+          emit(range[0]) as PathValue<ProgramDetailEditFormValues, typeof startName>,
+          {
+            shouldDirty: true,
+          }
+        )
+        form.setValue(
+          endName,
+          emit(range[1]) as PathValue<ProgramDetailEditFormValues, typeof endName>,
+          {
+            shouldDirty: true,
+          }
+        )
         setAnchor(range[0])
       }}
       onChange={next => {
@@ -138,7 +145,8 @@ export function UjatRecruitFormSingleDatePicker({
   clearToUndefined = true,
   style,
   className,
-  width }: {
+  width,
+}: {
   form: UseFormReturn<ProgramDetailEditFormValues>
   name: FieldPath<ProgramDetailEditFormValues>
   placeholder?: string
@@ -154,7 +162,8 @@ export function UjatRecruitFormSingleDatePicker({
       name={name}
       control={form.control}
       render={({ field }) => (
-        <ParagraphDatePicker inputSize="small"
+        <ParagraphDatePicker
+          inputSize="small"
           mode="single"
           presetMode="date"
           style={style}
@@ -178,7 +187,8 @@ export function UjatRecruitFormDateMethodRow({
   dateName,
   methodName,
   datePlaceholder = '합격자 발표일',
-  methodPlaceholder = '발표 방법 안내' }: {
+  methodPlaceholder = '발표 방법 안내',
+}: {
   form: UseFormReturn<ProgramDetailEditFormValues>
   dateName: FieldPath<ProgramDetailEditFormValues>
   methodName: FieldPath<ProgramDetailEditFormValues>

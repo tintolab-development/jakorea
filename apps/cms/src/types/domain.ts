@@ -748,7 +748,7 @@ export interface Program {
   createdByName?: string
   /** 최종 수정자 표시명 (목록/상세 표시용, API·mock에서 채움) */
   updatedByName?: string
-  /** PATCH/GET이 내려주는 사업 종료일 연장 이력. 없으면 표시하지 않는다. */
+  /** PATCH 연장 응답에만 실릴 수 있는 사업 종료일 연장 이력. 공통 정보 상세에는 표시하지 않는다. */
   businessPeriodHistories?: Array<{
     previousBusinessEndDate?: string | null
     businessEndDate?: string | null

@@ -6,6 +6,10 @@
  */
 
 import { useEffect, useMemo } from 'react'
+import {
+  REFRESH_TOKEN_STORAGE_KEY,
+  startUserActivityTracking,
+} from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
 import { AuthContextProvider } from '@/shared/lib/auth/auth-context'
@@ -62,8 +66,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
             } catch (error) {
               console.error('Auth check failed in AuthProvider:', error)
             }
+          } else if (localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY)) {
+            // access가 만료됐어도 refresh token이 있으면 refresh-first.
+            // checkAuth가 refresh하고, 실패했을 때만 logout한다.
+            try {
+              await checkAuth()
+            } catch (error) {
+              console.error('Auth check failed in AuthProvider:', error)
+            }
           } else {
-            // 만료되었으면 로그아웃
+            // 만료됐고 refresh 수단도 없으면 로그아웃
             useAuthStore.getState().logout()
           }
         }
@@ -79,23 +91,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return
     }
 
+    // 활동 추적 (선제 refresh 게이트: 최근 30분 내 활동 + 마지막 발급 후 20분 경과)
+    const stopActivityTracking = startUserActivityTracking()
+
+    // 만료만 보고 바로 logout하지 않는다: refresh-first, 실패 시에만 logout (store.checkSessionExpiry)
     const checkSessionExpiry = () => {
-      const expiresAt = localStorage.getItem('auth_expires_at')
-      if (expiresAt) {
-        const expiryTime = new Date(expiresAt).getTime()
-        const now = Date.now()
-        const bufferTime = 30 * 1000 // 30초 버퍼
-        if (expiryTime <= now + bufferTime) {
-          // 세션이 만료되었으면 로그아웃
-          useAuthStore.getState().logout()
-        }
-      }
+      useAuthStore.getState().checkSessionExpiry()
     }
 
     // 주기적으로 세션 만료 확인 (1분마다)
     const interval = setInterval(checkSessionExpiry, 60 * 1000)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      stopActivityTracking()
+    }
   }, [isAuthenticated])
 
   return (

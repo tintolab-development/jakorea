@@ -26,6 +26,12 @@ import {
   getMinimumManualNotifyAt,
 } from '@/shared/lib/notification-schedule'
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
+import { useCmsAlert } from '@/shared/ui'
+import {
+  NOTIFY_TIMING_CAPABILITY,
+  UNSUPPORTED_NOTIFY_TIMING_ALERT_TITLE,
+  getUnsupportedNotifyTimingMessage,
+} from '@/shared/lib/notify-timing-capability'
 import './instructor-fee-approval-modal.css'
 
 const MODAL_WIDTH = 600
@@ -60,6 +66,7 @@ export function InstructorFeeApprovalModal({
   onConfirm,
   submitting = false,
 }: InstructorFeeApprovalModalProps) {
+  const { showAlert } = useCmsAlert()
   const {
     lectureFeeBasisType,
     instructorFeeGrade,
@@ -91,6 +98,17 @@ export function InstructorFeeApprovalModal({
   }, [open, feePolicyError])
 
   const handleConfirm = () => {
+    const unsupportedNotify = getUnsupportedNotifyTimingMessage(
+      notifyTiming,
+      NOTIFY_TIMING_CAPABILITY.scheduledOnly
+    )
+    if (unsupportedNotify) {
+      showAlert({
+        title: UNSUPPORTED_NOTIFY_TIMING_ALERT_TITLE,
+        content: unsupportedNotify,
+      })
+      return
+    }
     const detail = buildConfirmDetail()
     if (!detail) return
     onConfirm(detail)
@@ -212,7 +230,6 @@ export function InstructorFeeApprovalModal({
               onChange={e => handleNotifyTimingChange(e.target.value)}
             >
               <CmsRadio value="immediate">즉시</CmsRadio>
-              <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
               <span
                 ref={manualRadioAnchorRef}
                 className="instructor-fee-approval-modal__manual-anchor"

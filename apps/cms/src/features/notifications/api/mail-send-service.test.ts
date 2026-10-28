@@ -85,6 +85,10 @@ describe('submitMailSend', () => {
       'contentTemplate'
     )
     expect(updateMailTemplate).not.toHaveBeenCalled()
+    // 메일은 MMS 첨부 ID를 보내지 않는다
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).not.toHaveProperty(
+      'attachmentFileIds'
+    )
   })
 
   it('sends trimmed senderProfileDisplayName for this send only', async () => {
@@ -125,6 +129,33 @@ describe('submitMailSend', () => {
     expect(updateMailTemplate).not.toHaveBeenCalled()
     expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).toMatchObject({
       contentTemplate: '<p>#{회원명}</p>',
+    })
+  })
+
+  it('does not send contentTemplate override when a plain template is only converted by the editor', async () => {
+    await submitMailSend({
+      draft: draft({
+        bodyHtml:
+          '<p>안녕 <span class="mail-template-variable" data-mail-variable="회원명" contenteditable="false">#{회원명}</span>님</p><p></p><p>끝 &amp; 끝</p>',
+      }),
+      templateBaseline: { subject: '테스트 메일', bodyHtml: '안녕 #{회원명}님\n\n끝 & 끝' },
+      idempotencyKey: 'idem-plain-untouched',
+      senderProfileId: 7,
+    })
+    const body = vi.mocked(createSendBatchRemote).mock.calls[0]?.[0] as unknown as Record<string, unknown>
+    expect(body.contentTemplate).toBeUndefined()
+    expect(body.titleTemplate).toBeUndefined()
+  })
+
+  it('sends contentTemplate when a plain template is edited on the send screen', async () => {
+    await submitMailSend({
+      draft: draft({ bodyHtml: '<p>안녕 수정</p>' }),
+      templateBaseline: { subject: '테스트 메일', bodyHtml: '안녕\n본문' },
+      idempotencyKey: 'idem-plain-edited',
+      senderProfileId: 7,
+    })
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).toMatchObject({
+      contentTemplate: '<p>안녕 수정</p>',
     })
   })
 

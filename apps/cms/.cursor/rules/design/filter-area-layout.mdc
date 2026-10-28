@@ -46,16 +46,18 @@ category: design
 
 - 래퍼: `program-list-page` (+ overview 위젯 화면은 `program-list-page--overview`)
 - 필드 정의: `program-list-filter-fields.ts` · Gemini `model/*/filter-fields.ts`
-- `FilterTableLayout`: 필드 4개 이상이어도 **`filterResponsiveWrap={false}`** — merged-auto-fill이 Col만 늘리며 갭이 과다해지는 것 방지
+- `FilterTableLayout`: 필드 4개 이상이어도 **`filterResponsiveWrap={false}`** — merged-auto-fill이 Col만 늘리며 갭이 과다해지는 것 방지 (**Gemini 목록은 예외 — 아래 Gemini 절**)
 - **금지:** `program-list.css` 등에서 `%` 열·컨트롤에 `width/max-width: 100%`·`flex: 1 1 0`로 행 전체 stretch
 
 ## Gemini 프로그램 필터
 
-| 화면 | 경로 | 필드 정의 | 필드 구성 (폭) |
-|------|------|-----------|----------------|
-| 실적 관리 | `/programs/gemini/performance` | `gemini/model/performance/filter-fields.ts` | 강사 240 · 연수방식 240 · 연수장소 240 · 연수일 500 |
-| 찾아가는 연수 · 모집 공고 | `/programs/gemini/visiting-training` | `gemini/model/recruitment/filter-fields.ts` | 공고명 240 · 상태 240 · 연수 요청 가능기간 500 |
-| 찾아가는 연수 · 승인 연수 | `?tab=approved` | `gemini/model/approved/filter-fields.ts` | 기관명 240 · 기관 소재지 **235.5** · 진행 현황 240 · 공문 240 · 연수일 500 |
+픽셀 폭 유지 + 카드 너비에 따라 wrap. 칸을 nowrap·`flex-shrink`로 줄이지 않는다. 래퍼 클래스 `gemini-list-filter`.
+
+| 화면 | 경로 | 필드 정의 | 필드 구성 (폭) | wrap |
+|------|------|-----------|----------------|------|
+| 실적 관리 | `/programs/gemini/performance` | `gemini/model/performance/filter-fields.ts` | 강사 240 · 연수방식 240 · 연수장소 240 · 연수일 500 | 4필드 기본 wrap + inline 조회 |
+| 찾아가는 연수 · 모집 공고 | `/programs/gemini/visiting-training` | `gemini/model/recruitment/filter-fields.ts` | 공고명 240 · 상태 240 · 연수 요청 가능기간 500 | 3필드 → `merged-auto-fill` + `mergedAutoFillInlineSearch` |
+| 찾아가는 연수 · 승인 연수 | `?tab=approved` | `gemini/model/approved/filter-fields.ts` | 기관명 240 · 기관 소재지 **235.5** · 진행 현황 240 · 공문 240 · 연수일 500 | `merged-auto-fill` + trailing 연수일·조회 |
 
 ## `addressRegion` (기관 소재지) 필드 규격
 

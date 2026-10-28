@@ -248,6 +248,7 @@ function emptyTemplateItem(id: string): AlimtalkTemplateItem {
     ctaLabel: '',
     buttons: [],
     quickLinks: [],
+    hasAlimtalkMetadata: false,
   }
 }
 
@@ -282,6 +283,7 @@ export function mapNotificationTemplateToItem(
     approvalStatus: mapKakaoApprovalStatus(item.approvalStatus),
     senderKey: item.providerSenderKey,
     nhnConsoleTemplateUrl: undefined,
+    hasAlimtalkMetadata: normalizeAlimtalkMetadata(item.alimtalkMetadata) != null,
   }
 }
 
@@ -322,6 +324,9 @@ export function mapNotificationTemplatePreviewToItem(
       preview?.nhnConsoleTemplateUrl?.trim() ||
       base.nhnConsoleTemplateUrl ||
       NHN_CLOUD_ALIMTALK_TEMPLATE_CONSOLE_URL,
+    hasAlimtalkMetadata:
+      normalizeAlimtalkMetadata(preview?.alimtalkMetadata) != null ||
+      base.hasAlimtalkMetadata === true,
   }
 }
 

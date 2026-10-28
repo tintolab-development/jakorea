@@ -86,18 +86,22 @@ export function CustomerInquiryStatusWidget() {
         key: 'pending',
         width: equalWidth ?? '17%',
         align: 'center',
-        render: (value: number, record: ProgramInquiryRow) =>
-          value > 0 ? (
+        render: (value: number | null, record: ProgramInquiryRow) =>
+          value != null && value > 0 ? (
             <span className="dashboard-widget-table__pending-btn" role="presentation">
               <span className="dashboard-widget-table__pending-inner">
                 <span className="dashboard-widget-table__pending-text">{value}건</span>
-                {!inquiryNotificationReadProgramKeys[record.key] && (record.unreadCount ?? 0) > 0 && (
+                {!inquiryNotificationReadProgramKeys[record.key] &&
+                  record.unreadCount != null &&
+                  record.unreadCount > 0 && (
                   <span className="dashboard-widget-table__pending-dot" aria-hidden />
                 )}
               </span>
             </span>
           ) : (
-            <span className="dashboard-widget-table__count--muted">0건</span>
+            <span className="dashboard-widget-table__count--muted">
+              {value == null ? '-' : '0건'}
+            </span>
           ),
       },
       {
@@ -106,8 +110,10 @@ export function CustomerInquiryStatusWidget() {
         key: 'answered',
         width: equalWidth ?? '17%',
         align: 'center',
-        render: (value: number) => (
-          <span className="dashboard-widget-table__count--muted">{value}건</span>
+        render: (value: number | null) => (
+          <span className="dashboard-widget-table__count--muted">
+            {value == null ? '-' : `${value}건`}
+          </span>
         ),
       },
       {
@@ -116,8 +122,10 @@ export function CustomerInquiryStatusWidget() {
         key: 'total',
         width: equalWidth ?? '16%',
         align: 'center',
-        render: (value: number) => (
-          <span className="dashboard-widget-table__count--muted">{value}건</span>
+        render: (value: number | null) => (
+          <span className="dashboard-widget-table__count--muted">
+            {value == null ? '-' : `${value}건`}
+          </span>
         ),
       },
     ],

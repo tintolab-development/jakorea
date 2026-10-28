@@ -5,32 +5,25 @@ export type NotificationSendRecipientTypeMode = 'participation' | 'member'
 
 /**
  * 발송 맥락 → `GET …/template-variables` 쿼리.
- * - 프로그램 선택 시 `programId` + (있으면) `participantType`
- * - 프로그램 미선택(전체) 시 `memberType`만 (있으면)
- * FE는 enabled를 재계산하지 않고, 맥락 파라미터만 정확히 넘긴다.
+ * 확정 수신자에서 유일하게 추론된 참여 유형·회원 유형만 넘긴다.
+ * 검색창 필터는 넣지 않는다. FE는 enabled를 재계산하지 않는다.
  */
 export function buildNotificationTemplateVariablesQuery(input: {
   programId?: number | null
-  recipientTypeMode: NotificationSendRecipientTypeMode
-  /** 수신자 필터 또는 선택 수신자에서 유추한 UI type value */
-  typeValue?: string
+  participantTypeValue?: string
+  memberTypeValue?: string
   toParticipantTypeApi: (value: string) => string | undefined
   toMemberTypeApi: (value: string) => string | undefined
 }): NotificationTemplateVariablesQuery {
   const programId =
     input.programId != null && Number.isFinite(input.programId) ? input.programId : undefined
-  const typeValue = input.typeValue?.trim() || ''
-
-  if (input.recipientTypeMode === 'participation') {
-    return toTemplateVariablesRequestParams({
-      programId,
-      participantType: typeValue ? input.toParticipantTypeApi(typeValue) : undefined,
-    })
-  }
+  const participantRaw = input.participantTypeValue?.trim() || ''
+  const memberRaw = input.memberTypeValue?.trim() || ''
 
   return toTemplateVariablesRequestParams({
     programId,
-    memberType: typeValue ? input.toMemberTypeApi(typeValue) : undefined,
+    participantType: participantRaw ? input.toParticipantTypeApi(participantRaw) : undefined,
+    memberType: memberRaw ? input.toMemberTypeApi(memberRaw) : undefined,
   })
 }
 

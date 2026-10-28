@@ -58,6 +58,6 @@ export interface MemberPortalApplicationDetail {
   supplement?: ProgramApplicationSupplement;
   /** 회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. */
   displayStatus?: MemberPortalApplicationDetailDisplayStatus;
-  /** 교사 회원의 ORGANIZATION 교육 상세에서만 제공됩니다. 강사 카드는 assigned-instructors 응답을 사용하고, 교재 카드만 이 객체의 textbook을 사용합니다. VOLUNTEER·INSTRUCTOR·INDIVIDUAL·비교사 회원은 null입니다. */
+  /** ORGANIZATION은 신청별 교재를 textbook으로 제공합니다. INDIVIDUAL은 동일 회원·동일 프로그램의 INSTRUCTOR 신청에 연결된 활성 배정이 있을 때 assignments를 제공합니다. 연결된 배정이 없으면 null이며, 개인 신청에는 동의서·교재를 자동으로 포함하지 않습니다. VOLUNTEER·INSTRUCTOR·비교사 회원은 null입니다. */
   teacherAssignment?: MemberPortalTeacherAssignment | null;
 }

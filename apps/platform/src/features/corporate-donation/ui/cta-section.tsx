@@ -1,9 +1,7 @@
 import { Fragment } from 'react'
-import { Link } from 'react-router-dom'
 import jaArrowCtaMintUrl from '@/features/home/image/icon/ja-arrow-cta-mint.svg'
 import { PFText } from '@/shared/ui'
 import {
-  CORPORATE_DONATION_INQUIRY_PATH,
   CTA_SECTION_BUTTON_LABEL,
   CTA_SECTION_EYEBROW,
   CTA_SECTION_TITLE_LINES,
@@ -11,7 +9,7 @@ import {
 import { CTA_PHOTO_IMAGE_URL } from '../lib/cta-images'
 import styles from './cta-section.module.css'
 
-export function CtaSection() {
+export function CtaSection({ onInquiryClick }: { onInquiryClick: () => void }) {
   return (
     <section className={styles.section} aria-labelledby="corporate-donation-cta-title">
       <div className={styles.content}>
@@ -37,7 +35,7 @@ export function CtaSection() {
             </PFText>
           </div>
           <div className={styles.actionButtonWrap}>
-            <Link to={CORPORATE_DONATION_INQUIRY_PATH} className={styles.actionButton}>
+            <button type="button" className={styles.actionButton} onClick={onInquiryClick}>
               <PFText as="span" typo="hl-lg" color="white" className={styles.actionLabel}>
                 {CTA_SECTION_BUTTON_LABEL}
               </PFText>
@@ -49,7 +47,7 @@ export function CtaSection() {
                 width={32}
                 height={32}
               />
-            </Link>
+            </button>
           </div>
         </div>
 

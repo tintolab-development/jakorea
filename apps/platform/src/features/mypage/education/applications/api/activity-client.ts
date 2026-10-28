@@ -69,10 +69,17 @@ export type PortalNoticeComment = {
   updatedAt?: string
 }
 
+export type PortalNoticeInlineImage = {
+  fileObjectId?: number
+  referenceToken?: string
+  contentPath?: string
+}
+
 export type PortalNoticeDetail = {
   postId?: number
   title?: string
   content?: string
+  visibilityType?: string
   unread?: boolean
   createdAt?: string
   updatedAt?: string
@@ -84,6 +91,7 @@ export type PortalNoticeDetail = {
   createdByDisplayName?: string | null
   mine?: boolean
   attachments?: PortalNoticeAttachment[]
+  inlineImages?: PortalNoticeInlineImage[]
   comments?: PortalNoticeComment[]
 }
 
@@ -463,6 +471,16 @@ export type PortalCreateApplicationNoticeResponse = {
   postId?: number
 }
 
+export type PortalUpdateApplicationNoticeRequest = {
+  title?: string | null
+  content: string
+  visibilityType?: string | null
+}
+
+export type PortalUpdateApplicationNoticeResponse = {
+  postId?: number
+}
+
 export async function createApplicationNotice(
   applicationType: ProgramApplicationType,
   applicationId: string,
@@ -484,6 +502,19 @@ export async function createApplicationNotice(
   return unwrapEnvelope<PortalCreateApplicationNoticeResponse>(data)
 }
 
+export async function updateApplicationNotice(
+  applicationType: ProgramApplicationType,
+  applicationId: string,
+  postId: string,
+  body: PortalUpdateApplicationNoticeRequest
+): Promise<PortalUpdateApplicationNoticeResponse> {
+  const { data } = await axiosClient.patch<unknown>(
+    noticePath(applicationType, applicationId, postId),
+    body
+  )
+  return unwrapEnvelope<PortalUpdateApplicationNoticeResponse>(data)
+}
+
 export async function putApplicationNoticeAttachments(
   applicationType: ProgramApplicationType,
   applicationId: string,
@@ -500,10 +531,15 @@ export async function putApplicationNoticeInlineImages(
   applicationId: string,
   postId: string,
   fileObjectIds: number[]
-): Promise<void> {
-  await axiosClient.put(`${noticePath(applicationType, applicationId, postId)}/inline-images`, {
-    fileObjectIds,
-  })
+): Promise<PortalNoticeInlineImage[]> {
+  const { data } = await axiosClient.put<unknown>(
+    `${noticePath(applicationType, applicationId, postId)}/inline-images`,
+    { fileObjectIds }
+  )
+  const unwrapped = unwrapEnvelope<
+    PortalNoticeInlineImage[] | { items?: PortalNoticeInlineImage[] }
+  >(data)
+  return Array.isArray(unwrapped) ? unwrapped : (unwrapped.items ?? [])
 }
 
 export async function createApplicationNoticeComment(
@@ -623,10 +659,12 @@ export async function fetchApplicationNoticeInlineImageSrc(
   applicationType: ProgramApplicationType,
   applicationId: string,
   postId: string,
-  fileObjectId: number
+  fileObjectId: number,
+  contentPath?: string
 ): Promise<string> {
   const { data } = await axiosClient.get<Blob>(
-    `${noticePath(applicationType, applicationId, postId)}/inline-images/${fileObjectId}/content`,
+    contentPath?.trim() ||
+      `${noticePath(applicationType, applicationId, postId)}/inline-images/${fileObjectId}/content`,
     { responseType: 'blob', headers: { Accept: 'image/*,*/*' } }
   )
   const signedUrl = await readDownloadUrlFromJsonBlob(data)

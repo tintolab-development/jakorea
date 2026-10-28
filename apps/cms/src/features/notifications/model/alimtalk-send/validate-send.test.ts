@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { collectTemplatePlaceholderKeys } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import type { AlimtalkSendRecipient } from './types'
 import { validateAlimtalkSendRequest, type AlimtalkSendValidationInput } from './validate-send'
 
@@ -28,7 +29,7 @@ function input(overrides: Partial<AlimtalkSendValidationInput> = {}): AlimtalkSe
     scheduledAt: null,
     recipients: [recipient('1', { '방문 안내': '오전' })],
     placeholderKeys: ['방문 안내'],
-    catalog: [{ key: '방문 안내', enabled: true }],
+    catalog: [{ key: '방문 안내', enabled: true, sourceMode: 'MANUAL_ALLOWED' }],
     catalogState: 'ready',
     ...overrides,
   }
@@ -140,6 +141,96 @@ describe('validateAlimtalkSendRequest', () => {
   it('수신자가 없으면 발송하지 않는다', () => {
     const result = validateAlimtalkSendRequest(input({ recipients: [], placeholderKeys: [] }))
     expect(result.ok).toBe(false)
+  })
+
+  it('FE-VAR-15 예약 발송은 미래 시각이 있으면 통과한다', () => {
+    const result = validateAlimtalkSendRequest(
+      input({
+        sendTiming: 'scheduled',
+        scheduledAt: '2099-01-01T00:00:00.000Z',
+        nowMs: Date.parse('2026-09-09T00:00:00.000Z'),
+      })
+    )
+    expect(result.ok).toBe(true)
+  })
+
+  it('R7-FE-11 알림 링크 경로 값이 없으면 발송하지 않는다', () => {
+    const result = validateAlimtalkSendRequest(
+      input({
+        placeholderKeys: ['알림 링크 경로'],
+        catalog: [
+          {
+            key: '알림 링크 경로',
+            enabled: true,
+            requiresProgram: false,
+            sourceMode: 'MANUAL_ALLOWED',
+          },
+        ],
+        recipients: [recipient('1')],
+      })
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.alert).toContain('알림 링크 경로')
+  })
+
+  it('R7-FE-11 허용되지 않는 링크는 발송하지 않는다', () => {
+    const result = validateAlimtalkSendRequest(
+      input({
+        placeholderKeys: ['알림 링크 경로'],
+        catalog: [
+          {
+            key: '알림 링크 경로',
+            enabled: true,
+            requiresProgram: false,
+            sourceMode: 'MANUAL_ALLOWED',
+          },
+        ],
+        recipients: [recipient('1', { '알림 링크 경로': 'javascript:alert(1)' })],
+      })
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.alert).toContain('허용되지 않는 링크')
+  })
+
+  it('R8 퀵리플라이에서 추출한 링크 변수를 발송 검증에 연결한다', () => {
+    const catalog = [
+      {
+        key: '알림 링크 경로',
+        enabled: true,
+        requiresProgram: false,
+        sourceMode: 'MANUAL_ALLOWED' as const,
+      },
+    ]
+    const placeholderKeys = collectTemplatePlaceholderKeys({
+      content: '본문에는 변수 없음',
+      quickLinks: [{ name: '바로가기', destinations: { pc: '/#{알림 링크 경로}', mobile: '/#{알림 링크 경로}' } }],
+    })
+    expect([...placeholderKeys]).toEqual(['알림 링크 경로'])
+    const ok = validateAlimtalkSendRequest(
+      input({
+        placeholderKeys,
+        catalog,
+        recipients: [recipient('1', { '알림 링크 경로': '/mypage/lectures' })],
+      })
+    )
+    expect(ok.ok).toBe(true)
+    const blocked = validateAlimtalkSendRequest(
+      input({
+        placeholderKeys,
+        catalog,
+        recipients: [recipient('1', { '알림 링크 경로': '/a/../../etc' })],
+      })
+    )
+    expect(blocked.ok).toBe(false)
+  })
+
+  it('FE-VAR-13 카탈로그 pending이면 발송하지 않는다', () => {
+    const result = validateAlimtalkSendRequest(input({ catalogState: 'pending', catalog: null }))
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.alert).toContain('변수 목록을 확인한 뒤 발송할 수 있습니다.')
   })
 
   it('제외 대상의 입력값이 바뀌면 이전 확인 지문으로 발송할 수 없다', () => {

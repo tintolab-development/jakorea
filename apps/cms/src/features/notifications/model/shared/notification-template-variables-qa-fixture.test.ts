@@ -11,8 +11,7 @@ describe('QA fixture contract (template-variables enabled SSOT)', () => {
     expect(
       buildNotificationTemplateVariablesQuery({
         programId,
-        recipientTypeMode: 'participation',
-        typeValue: 'participant',
+        participantTypeValue: 'participant',
         toParticipantTypeApi: value =>
           value === 'participant' ? 'PARTICIPANT' : undefined,
         toMemberTypeApi: () => undefined,
@@ -40,6 +39,6 @@ describe('QA fixture contract (template-variables enabled SSOT)', () => {
       formatNotificationFailedReason(
         `NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:${keys.classTime}`
       )
-    ).toBe(`템플릿 필수 변수가 없습니다: ${keys.classTime}`)
+    ).toBe(`자동입력 변수값이 없어 발송되지 않았습니다: ${keys.classTime}`)
   })
 })

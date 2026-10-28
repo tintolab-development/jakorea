@@ -18,15 +18,15 @@ describe('ensureSurveyCreateSubmissionPeriod', () => {
     })
   })
 
-  it('기간이 없으면 Asia/Seoul 다음 날 시작·종료를 채워 위저드 진입이 가능하게 한다', () => {
+  it('기간이 없으면 Asia/Seoul 다음 날 시작과 열린 종료를 채워 위저드 진입이 가능하게 한다', () => {
     const now = new Date('2026-10-24T12:00:00.000Z')
     expect(ensureSurveyCreateSubmissionPeriod({}, now)).toEqual({
       submissionStartAt: '2026-10-25T00:00:00.000+09:00',
-      submissionEndAt: '2026-10-25T23:59:59.999+09:00',
+      submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
     })
   })
 
-  it('시작일만 있으면 그 Seoul 달력일 종료를 채운다', () => {
+  it('시작일만 있으면 열린 종료를 채운다', () => {
     expect(
       ensureSurveyCreateSubmissionPeriod(
         { submissionStartAt: '2026-12-01T00:00:00.000+09:00' },
@@ -34,7 +34,7 @@ describe('ensureSurveyCreateSubmissionPeriod', () => {
       )
     ).toEqual({
       submissionStartAt: '2026-12-01T00:00:00.000+09:00',
-      submissionEndAt: '2026-12-01T23:59:59.999+09:00',
+      submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
     })
   })
 })

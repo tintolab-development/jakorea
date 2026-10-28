@@ -13,6 +13,7 @@ export type RichTextEditorContentType = RichTextContentFormat
 export type RichTextEditorApi = {
   getMarkdown: () => string
   getHTML: () => string
+  getText: () => string
   getCharacterCount: () => number
   getImageTotalBytes: () => number
   insertText: (text: string) => void

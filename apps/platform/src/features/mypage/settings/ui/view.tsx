@@ -13,15 +13,12 @@ import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
 import pfInfoReviewStyles from '@/shared/ui/pf-info-review/pf-info-review.module.css'
 import { EMPTY_SETTINGS_VALUE, SETTINGS_WITHDRAW_GUIDE, VOLUNTEER_1365_URL } from '../lib/constants'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
-import type { SettingsGuardianView, SettingsInfoRow, SettingsProfileInput } from '../lib/map-view'
+import type { SettingsGuardianView, SettingsInfoRow } from '../lib/map-view'
 import type { InstructorSettingsSectionId } from '../lib/format-instructor-settings-display'
-import { SettingsInstructorBasicEditForm } from './instructor-profile/basic-edit-form'
 import { SettingsInstructorProfileSectionsView } from './instructor-profile/instructor-profile-sections-view'
 import { SettingsChangePasswordModal } from './change-password-modal'
 import { SettingsWithdrawGuideModal } from './withdraw-guide-modal'
 import styles from './view.module.css'
-
-export type InstructorSettingsEditTarget = 'basic' | InstructorSettingsSectionId
 
 export type SettingsViewProps = {
   basicRows: SettingsInfoRow[]
@@ -29,20 +26,14 @@ export type SettingsViewProps = {
   onEditBasic?: () => void
   instructorProfileValues?: InstructorSharedProfileFormValues | null
   onEditInstructorSection?: (section: InstructorSettingsSectionId) => void
-  /** 강사 — 인라인 수정 중인 영역 (null이면 전부 조회) */
-  instructorEditingTarget?: InstructorSettingsEditTarget | null
-  settingsProfile?: SettingsProfileInput
-  onCancelInstructorEdit?: () => void
-  onInstructorBasicSaved?: (next: InstructorSharedProfileFormValues) => void
-  onInstructorSectionSaved?: (next: InstructorSharedProfileFormValues) => void
 }
 
-function EditButton({ onClick, disabled }: { onClick?: () => void; disabled?: boolean }) {
+function EditButton({ onClick }: { onClick?: () => void }) {
   return (
     <PFButton
       size="small"
       variant="primary"
-      disabled={!onClick || disabled}
+      disabled={!onClick}
       className={styles.editButton}
       onClick={onClick}
     >
@@ -112,7 +103,7 @@ function SettingsBasicInfoReview({ rows }: { rows: ReviewRow[] }) {
             .filter(Boolean)
             .join(' ')}
         >
-          <PFText typo="bd-md-md" color="neutral-cool-500" className={pfInfoReviewStyles.label}>
+          <PFText typo="bd-md-rg" color="neutral-cool-500" className={pfInfoReviewStyles.label}>
             {row.label}
           </PFText>
           {typeof row.value === 'string' || typeof row.value === 'number' ? (
@@ -134,18 +125,7 @@ export function SettingsView({
   onEditBasic,
   instructorProfileValues,
   onEditInstructorSection,
-  instructorEditingTarget = null,
-  settingsProfile,
-  onCancelInstructorEdit,
-  onInstructorBasicSaved,
-  onInstructorSectionSaved,
 }: SettingsViewProps) {
-  const instructorEditLocked = instructorEditingTarget != null
-  const isEditingBasic = instructorEditingTarget === 'basic'
-  const editingInstructorSection =
-    instructorEditingTarget != null && instructorEditingTarget !== 'basic'
-      ? instructorEditingTarget
-      : null
   const navigate = useNavigate()
   const withdrawMutation = usePortalWithdrawalMutation()
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
@@ -202,33 +182,18 @@ export function SettingsView({
     <div className={styles.page}>
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
+          <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
             기본 정보
           </PFText>
-          {isEditingBasic ? null : (
-            <EditButton
-              onClick={onEditBasic}
-              disabled={instructorEditLocked && !isEditingBasic}
-            />
-          )}
+          <EditButton onClick={onEditBasic} />
         </div>
-        {isEditingBasic && settingsProfile && instructorProfileValues && onCancelInstructorEdit && onInstructorBasicSaved ? (
-          <SettingsInstructorBasicEditForm
-            embedded
-            profile={settingsProfile}
-            initialValues={instructorProfileValues}
-            onCancel={onCancelInstructorEdit}
-            onSaved={onInstructorBasicSaved}
-          />
-        ) : (
-          <SettingsBasicInfoReview rows={toReviewRows(basicRows)} />
-        )}
+        <SettingsBasicInfoReview rows={toReviewRows(basicRows)} />
       </section>
 
       {guardian ? (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
+            <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
               보호자 정보
             </PFText>
             <EditButton />
@@ -247,10 +212,6 @@ export function SettingsView({
         <SettingsInstructorProfileSectionsView
           values={instructorProfileValues}
           onEditSection={onEditInstructorSection}
-          editingSection={editingInstructorSection}
-          editLocked={instructorEditLocked}
-          onCancelSectionEdit={onCancelInstructorEdit}
-          onSectionSaved={onInstructorSectionSaved}
         />
       ) : null}
 

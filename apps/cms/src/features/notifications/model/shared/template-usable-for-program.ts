@@ -22,37 +22,54 @@ function catalogByKey(
   return byKey
 }
 
+function usedKeysFromInput(input: {
+  texts?: Array<string | null | undefined>
+  usedKeys?: Iterable<string>
+}): Set<string> {
+  if (input.usedKeys) {
+    return new Set(
+      [...input.usedKeys]
+        .map(key => key.trim())
+        .filter(Boolean)
+    )
+  }
+  return extractPlaceholderKeysFromTexts(...(input.texts ?? []))
+}
+
 /**
- * 메일·문자·알림톡 템플릿 피커 usable (Option A).
- * - programNumericId 없음(미선택): 변수 제한 없음 → true
- * - catalog 미로드(null/undefined): true (로딩 중 false로 선택본을 지우지 않음)
- * - 프로그램 지정: 본문 #{키} ⊆ catalog 이고 모두 enabled=true (서버 SSOT, FE 재계산 금지)
- * - 알림톡은 호출부에서 APPROVED 추가 게이트
+ * 메일·문자·알림톡 템플릿 피커 usable (카탈로그 소속·enabled).
+ * - catalog 미로드: false (로딩을 정상 활성으로 표시하지 않음)
+ * - 미등록 키: 프로그램 유무와 관계없이 비활성
+ * - 프로그램 미선택: requiresProgram 키는 비활성 (BE 발송 가드와 동일)
+ * - 프로그램 지정: #{키} ⊆ catalog 이고 모두 enabled=true
+ * 알림톡 EVENT_ONLY/SYSTEM 차단은 채널 어댑터에서 추가한다.
  */
 export function canUseNotificationSendTemplateForProgram(input: {
-  texts: Array<string | null | undefined>
+  texts?: Array<string | null | undefined>
+  usedKeys?: Iterable<string>
   catalog: NotificationSendCatalogVariableLike[] | null | undefined
   programNumericId?: number | null
 }): boolean {
-  if (input.catalog == null) return true
+  if (input.catalog == null) return false
   return listNotificationSendTemplateDisabledKeysForProgram(input).length === 0
 }
 
 /**
- * 현재 문맥에서 enabled=false(또는 카탈로그 미등재)인 본문 키 목록.
+ * 현재 문맥에서 enabled=false(또는 프로그램 지정 시 카탈로그 미등재)인 키 목록.
  * 피커 비활성 사유 카피용. enabled ≠ DB 값 존재.
  */
 export function listNotificationSendTemplateDisabledKeysForProgram(input: {
-  texts: Array<string | null | undefined>
+  texts?: Array<string | null | undefined>
+  usedKeys?: Iterable<string>
   catalog: NotificationSendCatalogVariableLike[] | null | undefined
   programNumericId?: number | null
 }): string[] {
-  const programId = input.programNumericId
-  if (programId == null || !Number.isFinite(programId)) return []
+  if (input.catalog == null) return []
 
-  const usedKeys = extractPlaceholderKeysFromTexts(...input.texts)
+  const usedKeys = usedKeysFromInput(input)
   if (usedKeys.size === 0) return []
 
+  const programId = input.programNumericId
   const byKey = catalogByKey(input.catalog)
   const disabled: string[] = []
   for (const key of usedKeys) {

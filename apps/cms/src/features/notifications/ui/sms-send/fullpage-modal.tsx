@@ -67,6 +67,10 @@ import { PreviewModal } from '@/features/notifications/ui/sms-template/preview-m
 import { ProgramSelectField } from '@/features/notifications/ui/mail-send/program-select-field'
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import { SmsSendComposeFields } from './compose-fields'
+import {
+  SMS_SEND_REQUEST_ATTACHMENT_OVERRIDE_HINT,
+  SMS_SEND_TEMPLATE_ATTACHMENT_HINT,
+} from '@/features/notifications/model/sms-send/attachments'
 import { SendRequestCompletedModal } from '@/features/notifications/ui/shared/send-request-completed-modal'
 import { showNotificationSendErrorAlert } from '@/features/notifications/ui/shared/show-notification-send-request-failed-alert'
 import { RecipientManualModal } from '@/features/notifications/ui/shared/recipient-manual-modal'
@@ -91,6 +95,7 @@ const SMS_SEND_ERROR_FOCUS_SELECTORS = {
   messageType: '.sms-send-fullpage__message-type input:not(:disabled)',
   content: '.sms-send-fullpage__body-field textarea',
   sender: '.sms-send-fullpage__sender-select input',
+  attachments: '.sms-send-fullpage__attachments button:not(:disabled)',
 } as const
 
 function recipientTotalPages(total: number, size: number, totalPages?: number): number {
@@ -185,24 +190,20 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const recipientTypeMode = resolveSmsSendRecipientTypeMode(form.programId)
   const typeColumnTitle = smsSendRecipientTypeColumnTitle(recipientTypeMode)
 
-  const variablesTypeValue = useMemo(() => {
-    // 후보 모달 검색 필터는 목록에만 사용 — 확정 수신자만 변수 카탈로그 문맥에 반영
-    if (recipientTypeMode === 'participation') {
-      return inferUniqueRecipientTypeValue(form.recipients.map(item => item.participationType))
-    }
-    return inferUniqueRecipientTypeValue(form.recipients.map(item => item.memberType))
-  }, [form.recipients, recipientTypeMode])
-
   const templateVariablesQuery = useMemo(
     () =>
       buildNotificationTemplateVariablesQuery({
         programId: programNumericId,
-        recipientTypeMode,
-        typeValue: variablesTypeValue,
+        participantTypeValue: inferUniqueRecipientTypeValue(
+          form.recipients.map(item => item.participationType)
+        ),
+        memberTypeValue: inferUniqueRecipientTypeValue(
+          form.recipients.map(item => item.memberType)
+        ),
         toParticipantTypeApi: toSmsSendParticipantTypeApi,
         toMemberTypeApi: toSmsSendMemberTypeApi,
       }),
-    [programNumericId, recipientTypeMode, variablesTypeValue]
+    [form.recipients, programNumericId]
   )
 
   const candidatesQuery = useSmsRecipientCandidatesQuery(
@@ -511,6 +512,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   type="button"
                   disabled={
                     sending ||
+                    form.attachmentUploadPending ||
                     form.composeBlocking ||
                     form.recipients.length === 0 ||
                     !form.senderPhone.trim() ||
@@ -727,6 +729,16 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     onRememberBodyRange={form.rememberBodyRange}
                     onRemoveAttachment={form.removeAttachmentAt}
                     onAddAttachments={form.addAttachments}
+                    attachmentRemovable={form.attachmentSource === 'request'}
+                    attachmentUploading={form.attachmentUploadPending}
+                    attachmentHint={
+                      form.attachmentSource === 'template'
+                        ? SMS_SEND_TEMPLATE_ATTACHMENT_HINT
+                        : form.attachmentSource === 'request' &&
+                            form.templateAttachmentFileNames.length > 0
+                          ? SMS_SEND_REQUEST_ATTACHMENT_OVERRIDE_HINT
+                          : null
+                    }
                     onBlockingChange={form.setComposeBlocking}
                     onUsedVariableKeysChange={handleUsedVariableKeysChange}
                   />
@@ -755,12 +767,12 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           subject={previewSubject}
           bodyText={previewBodyText}
           attachments={
-            selectedTemplate?.attachments?.length
+            form.attachmentSource === 'template' && selectedTemplate?.attachments?.length
               ? selectedTemplate.attachments.map(item => ({
                   name: item.fileName,
                   sizeBytes: item.byteSize,
                 }))
-              : selectedTemplate?.attachmentFileNames.map(name => ({ name }))
+              : form.attachmentFileNames.map(name => ({ name }))
           }
           previewAt={previewAt}
           onClose={() => setPreviewOpen(false)}

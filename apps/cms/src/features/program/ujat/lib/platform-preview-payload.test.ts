@@ -36,7 +36,7 @@ describe('buildUjatProgramPortalPreview', () => {
 
   it('maps the volunteer tabs to a volunteer recruitment', () => {
     const detail = buildUjatProgramPortalPreview({ program, audience: 'volunteers' })
-    expect(detail.portalCategories).toBeUndefined()
+    expect(detail.portalCategories).toEqual(['YOUTH_YOUNG'])
     expect(detail.recruitments?.[0]).toMatchObject({
       recruitmentType: 'VOLUNTEER',
       startAt: '2026-01-10T00:00:00',

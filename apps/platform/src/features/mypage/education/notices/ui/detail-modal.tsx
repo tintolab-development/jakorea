@@ -66,6 +66,7 @@ type EducationInProgressNoticeDetailModalProps = {
   commentId?: string | null
   onClose: () => void
   onNoticeChange: (noticeId: string) => void
+  onEdit?: (noticeId: string, attachments: EducationInProgressFile[]) => void
   onDelete: (noticeId: string) => void
   onReactionCountChange?: (noticeId: string, reactionCount: number) => void
   onCommentCountChange?: (noticeId: string, commentCount: number) => void
@@ -120,6 +121,7 @@ export function EducationInProgressNoticeDetailModal({
   commentId,
   onClose,
   onNoticeChange,
+  onEdit,
   onDelete,
   onReactionCountChange: _onReactionCountChange,
   onCommentCountChange: _onCommentCountChange,
@@ -173,10 +175,15 @@ export function EducationInProgressNoticeDetailModal({
         applicationType,
         applicationId,
         noticeId,
-        fileObjectId
+        fileObjectId,
+        notice?.inlineImages?.find(
+          image =>
+            image.referenceToken === `file-object:${fileObjectId}` ||
+            image.fileObjectId === fileObjectId
+        )?.contentPath
       )
     },
-    [applicationId, applicationType, noticeId]
+    [applicationId, applicationType, notice?.inlineImages, noticeId]
   )
   const { displayName: memberDisplayName } = useMypageMember()
   const currentUserName = isRemote ? memberDisplayName : MOCK_MYPAGE_USER_NAME
@@ -377,6 +384,10 @@ export function EducationInProgressNoticeDetailModal({
     setIsAuthorMenuOpen(false)
     if (value === 'delete') {
       setIsDeleteConfirmOpen(true)
+      return
+    }
+    if (value === 'edit' && onEdit) {
+      onEdit(notice.id, attachments)
       return
     }
     setIsComingSoonOpen(true)
@@ -713,7 +724,7 @@ export function EducationInProgressNoticeDetailModal({
                   <RichTextViewer
                     key={notice.id}
                     content={notice.content}
-                    contentFormat="markdown"
+                    contentFormat="html"
                     maxHeight="none"
                     className={[
                       styles.richContent,

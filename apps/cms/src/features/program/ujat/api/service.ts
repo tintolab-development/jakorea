@@ -10,9 +10,10 @@ import {
   buildUjatProgramListRowFromRegistrationSnapshot,
   collectUjatRegistrationCreateOverlay,
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import {
   awaitRecruitDetailMediaUploads,
-  bindUjatRecruitDetailMediaToRows,
+  pickRecruitmentCreateMediaOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import type { Program } from '@/types/domain'
 import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
@@ -161,12 +162,24 @@ export async function create(input: CreateInput): Promise<Program> {
   const overlay = stripUjatTypedLegacyOverlay(
     input.basicInfo ? stripUjatBasicInfoOverlay(collectedOverlay) : collectedOverlay
   )
-  const pending = input.program ??
+  const pendingBase = input.program ??
     buildUjatProgramListRowFromRegistrationSnapshot({
       id: `ujat-pending-${input.idempotencyKey}`,
       overlay,
       basicInfo: input.basicInfo,
     })
+  const mediaOverlay = pickRecruitmentCreateMediaOverlay({
+    ...(input.overlay ?? {}),
+    ...collectSelectedRecruitOverlaysForProgram(pendingBase),
+    ...(pendingBase.ujatRegistrationOverlay ?? {}),
+  })
+  const pending = {
+    ...pendingBase,
+    ujatRegistrationOverlay: {
+      ...(pendingBase.ujatRegistrationOverlay ?? {}),
+      ...mediaOverlay,
+    },
+  }
   const created = fromDetail(
     await createAdminProgramRemoteWithRegistrationForms(
       pending,
@@ -184,7 +197,6 @@ export async function create(input: CreateInput): Promise<Program> {
         : typedDetailFromUjatOverlay(overlay))
     const savedTypedDetail = await replaceUjatTypedDetailRemote(created.id, typedDetail)
     await syncUjatTypedDetailPhysicalSchedulesRemote(created.id, savedTypedDetail)
-    await bindUjatRecruitDetailMediaToRows(created, overlay)
     try {
       await replaceUjatRegionCapacitiesRemote(
         created.id,

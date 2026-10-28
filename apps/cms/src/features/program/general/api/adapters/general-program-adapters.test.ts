@@ -379,7 +379,9 @@ describe('general-program-adapters', () => {
     expect(create.type).toBe('offline')
     expect(create.targetLevel).toBe('elementary')
     expect(create.targetLevels).toEqual(['elementary'])
-    expect(create.rounds).toHaveLength(1)
+    // GENERAL 레거시 rounds 전송 중단 — 키 자체 생략 (`rounds: []` 금지)
+    expect(create).not.toHaveProperty('rounds')
+
     // audience 미설정 → ORGANIZATION → GENERAL_ORGANIZATION
     expect(create.programType).toBe('GENERAL_ORGANIZATION')
     expect(create.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
@@ -397,6 +399,76 @@ describe('general-program-adapters', () => {
     expect(create.sponsors).toEqual([{ sponsorId: 'sponsor-1', sponsorContactIds: [] }])
   })
 
+  it('omits legacy rounds key for GENERAL create, full update and rounds PATCH', () => {
+    const roundsInJson = (req: unknown) => 'rounds' in JSON.parse(JSON.stringify(req))
+
+    const create = mapGeneralProgramToCreateRequest(sampleProgram)
+    expect(create.rounds).toBeUndefined()
+    expect(roundsInJson(create)).toBe(false)
+
+    const full = mapGeneralProgramToUpdateRequest(sampleProgram)
+    expect(full).not.toHaveProperty('rounds')
+    expect(roundsInJson(full)).toBe(false)
+
+    const patch = mapGeneralProgramToUpdateRequest(
+      sampleProgram,
+      { rounds: sampleProgram.rounds },
+      sampleProgram
+    )
+    expect(patch).not.toHaveProperty('rounds')
+    expect(roundsInJson(patch)).toBe(false)
+
+    const emptyPatch = mapGeneralProgramToUpdateRequest(sampleProgram, { rounds: [] }, sampleProgram)
+    expect(emptyPatch).not.toHaveProperty('rounds')
+    expect(roundsInJson(emptyPatch)).toBe(false)
+  })
+
+  it('keeps other GENERAL outbound fields unchanged when rounds are omitted', () => {
+    const withoutRounds: Program = { ...sampleProgram, rounds: [] }
+
+    const create = mapGeneralProgramToCreateRequest(sampleProgram)
+    expect(create).toEqual(mapGeneralProgramToCreateRequest(withoutRounds))
+    expect(create.programType).toBe('GENERAL_ORGANIZATION')
+    expect(typeof create.serviceDetailJson).toBe('string')
+    expect(create.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
+    expect(create.businessEndDate).toBe('2026-12-31T00:00:00.000Z')
+    expect(create.recruitments).toEqual([
+      expect.objectContaining({
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'ORGANIZATION',
+        status: 'ACTIVE',
+      }),
+    ])
+
+    const full = mapGeneralProgramToUpdateRequest(sampleProgram)
+    expect(full).toEqual(mapGeneralProgramToUpdateRequest(withoutRounds))
+    expect(full.serviceDetailJson).toBe(create.serviceDetailJson)
+
+    const patch = mapGeneralProgramToUpdateRequest(
+      sampleProgram,
+      { title: '제목 변경', rounds: sampleProgram.rounds },
+      sampleProgram
+    )
+    expect(patch).toEqual(
+      mapGeneralProgramToUpdateRequest(sampleProgram, { title: '제목 변경' }, sampleProgram)
+    )
+    expect(patch.title).toBe('제목 변경')
+  })
+
+  it.each([
+    ['UJAT', { backendProgramType: 'UJAT' }],
+    ['1사1교 (COMPANY_SCHOOL)', { backendProgramType: 'COMPANY_SCHOOL' }],
+    ['1사1교 (id prefix)', { id: 'company-school-prog-1' }],
+    ['교육받은 교사 (TRAINED_TEACHER)', { backendProgramType: 'TRAINED_TEACHER' }],
+    ['교육받은 교사 (id prefix)', { id: 'trained-teachers-prog-1' }],
+  ] as const)('keeps legacy rounds for %s routed through general adapter', (_label, extra) => {
+    const program: Program = { ...sampleProgram, ...extra }
+    expect(mapGeneralProgramToCreateRequest(program).rounds).toHaveLength(1)
+    expect(mapGeneralProgramToUpdateRequest(program).rounds).toHaveLength(1)
+    const patch = mapGeneralProgramToUpdateRequest(program, { rounds: program.rounds }, program)
+    expect(patch.rounds).toHaveLength(1)
+  })
+
   it('does not send featuredOnHome or homeDisplayOrder on create or PATCH', () => {
     const create = mapGeneralProgramToCreateRequest(sampleProgram) as unknown as Record<
       string,
@@ -407,11 +479,12 @@ describe('general-program-adapters', () => {
 
     const patch = mapGeneralProgramToUpdateRequest(
       sampleProgram,
-      { title: '제목만' },
+      { title: '제목만', rounds: sampleProgram.rounds },
       sampleProgram
     ) as unknown as Record<string, unknown>
     expect(patch.featuredOnHome).toBeUndefined()
     expect(patch.homeDisplayOrder).toBeUndefined()
+    expect(patch.rounds).toBeUndefined()
   })
 
   it('does not hydrate featuredOnHome from admin GET', () => {
@@ -774,6 +847,43 @@ describe('general-program-adapters', () => {
         generalParticipantTypes: ['individual', 'school_institution'],
       }).programType
     ).toBe('GENERAL')
+  })
+
+  it('신규 등록 recruitments[]에 모집 행별 썸네일·첨부 fileObjectId를 싣고 수정 요청에는 넣지 않는다', () => {
+    const overlay = {
+      'recruit.detailInfo.thumbFileObjectId': 186900,
+      'recruit.detailInfo.attachmentFileObjectIds': [186901, 186902],
+      'recruitInstructor.detailInfo.thumbFileObjectId': 186910,
+      'recruitInstructor.detailInfo.attachmentFileObjectIds': [186911],
+    }
+    const program: Program = {
+      ...sampleProgram,
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+      instructorApplicationStartDate: '2026-03-01T00:00:00.000Z',
+      instructorApplicationEndDate: '2026-03-31T00:00:00.000Z',
+      registrationOverlay: overlay,
+    }
+    const create = mapGeneralProgramToCreateRequest(program)
+    const participant = create.recruitments?.find(
+      row => row.recruitmentType === 'PARTICIPANT' && row.targetType === 'ORGANIZATION'
+    )
+    const instructor = create.recruitments?.find(row => row.recruitmentType === 'INSTRUCTOR')
+    expect(participant).toMatchObject({
+      recruitmentType: 'PARTICIPANT',
+      targetType: 'ORGANIZATION',
+      thumbnailFileObjectId: 186900,
+      attachmentFileObjectIds: [186901, 186902],
+    })
+    expect(instructor).toMatchObject({
+      recruitmentType: 'INSTRUCTOR',
+      thumbnailFileObjectId: 186910,
+      attachmentFileObjectIds: [186911],
+    })
+
+    const update = mapGeneralProgramToUpdateRequest(program)
+    expect(update.recruitments?.some(row => 'thumbnailFileObjectId' in row)).toBe(false)
+    expect(update.recruitments?.some(row => 'attachmentFileObjectIds' in row)).toBe(false)
   })
 
   it('does not put create-only fields on update request', () => {
@@ -1481,5 +1591,43 @@ describe('general-program-adapters', () => {
     expect(request.applicationMethod).toBeUndefined()
     expect(request.remarks).toBeUndefined()
     expect(request.clearFields).toEqual(expect.arrayContaining(['applicationMethod', 'remarks']))
+  })
+
+  it('maps createdByName and updatedByName from list and detail JSON', () => {
+    const listed = mapAdminProgramListItemToProgram({
+      id: 186401,
+      title: '감사',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as AdminProgramListItemDto)
+    const detail = mapAdminProgramDetailToProgram({
+      id: '186401',
+      title: '감사',
+      createdAt: '2026-12-08T00:15:00.000Z',
+      updatedAt: '2026-12-09T01:00:00.000Z',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+    } as ProgramResponse)
+
+    expect(listed.createdByName).toBe('곽도규')
+    expect(listed.updatedByName).toBe('김도영')
+    expect(detail.createdByName).toBe('곽도규')
+    expect(detail.updatedByName).toBe('김도영')
+  })
+
+  it('does not take createdByName from serviceDetailJson', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '186401',
+      title: '감사',
+      createdByName: '곽도규',
+      updatedByName: '김도영',
+      serviceDetailJson: JSON.stringify({
+        createdByName: 'JSON등록자',
+        updatedByName: 'JSON수정자',
+      }),
+    } as ProgramResponse)
+
+    expect(program.createdByName).toBe('곽도규')
+    expect(program.updatedByName).toBe('김도영')
   })
 })

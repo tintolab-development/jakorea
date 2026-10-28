@@ -12,6 +12,13 @@ export const COMBINED_CLASS_GRADE_REQUIRED_MODAL_MESSAGE =
 
 export const COMBINED_CLASS_CANCEL_MODAL_TITLE = '합반 처리 취소 안내'
 
+/** 임시 정책: 합반 확정 후에는 취소할 수 없다. (BE 합반 취소 409 응답 시에도 동일 문구) */
+export const COMBINED_CLASS_CANCEL_NOT_ALLOWED_MESSAGE = '합반 확정 후에는 취소할 수 없습니다.'
+
+/** 합반 확정(ACTIVE) 후에는 합반 대상 학급(구성) 변경 불가. 담당 교사 변경만 가능. */
+export const COMBINED_CLASS_MEMBER_CHANGE_NOT_ALLOWED_MESSAGE =
+  '합반 확정 후에는 합반 대상 학급을 변경할 수 없습니다. 담당 교사만 변경할 수 있습니다.'
+
 export const COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT = 'combined-class-grade-required' as const
 
 export type InstitutionInfoSaveResult = boolean | typeof COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT

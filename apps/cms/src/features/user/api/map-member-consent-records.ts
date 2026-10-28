@@ -151,35 +151,87 @@ function compareConsentRecordRecency(
   const aTime = a.consentedAt ? dayjs(a.consentedAt).valueOf() : 0
   const bTime = b.consentedAt ? dayjs(b.consentedAt).valueOf() : 0
   if (aTime !== bTime) return aTime - bTime
-  const aId = a.formResponseId ?? a.filledDocumentId ?? 0
-  const bId = b.formResponseId ?? b.filledDocumentId ?? 0
+  const aId = a.consentRecordId ?? a.formResponseId ?? a.filledDocumentId ?? 0
+  const bId = b.consentRecordId ?? b.formResponseId ?? b.filledDocumentId ?? 0
   return aId - bId
+}
+
+function consentRecordHasFilledDocumentMeta(record: MemberConsentRecordResponse): boolean {
+  return (
+    record.filledDocumentAvailable === true ||
+    record.formResponseId != null ||
+    record.filledDocumentId != null ||
+    record.consentRecordId != null
+  )
+}
+
+function compareConsentRecordMetaQuality(
+  a: MemberConsentRecordResponse,
+  b: MemberConsentRecordResponse
+): number {
+  const byDocument =
+    Number(consentRecordHasFilledDocumentMeta(a)) - Number(consentRecordHasFilledDocumentMeta(b))
+  if (byDocument !== 0) return byDocument
+  return compareConsentRecordRecency(a, b)
+}
+
+function consentIndexKeys(consentType: string | undefined, label?: string): string[] {
+  const keys: string[] = []
+  const typeKey = normalizeConsentTypeKey(consentType)
+  if (typeKey) keys.push(typeKey)
+  const resolvedLabel = label?.trim() || resolveTermsTypeToConsentLabel(consentType)
+  if (resolvedLabel) keys.push(`label:${resolvedLabel}`)
+  return [...new Set(keys)]
+}
+
+function lookupConsentIndex<T>(
+  map: Map<string, T>,
+  consentType: string | undefined,
+  label?: string
+): T | undefined {
+  for (const key of consentIndexKeys(consentType, label)) {
+    const hit = map.get(key)
+    if (hit) return hit
+  }
+  return undefined
+}
+
+function toConsentRecordOverlay(record: MemberConsentRecordResponse): AgreementOverlay {
+  return {
+    agreed: false,
+    consentRecordId: record.consentRecordId,
+    formResponseId: record.formResponseId,
+    filledDocumentId: record.filledDocumentId,
+    filledDocumentAvailable: record.filledDocumentAvailable,
+    filledDocumentRevealEndpoint: record.filledDocumentRevealEndpoint,
+    consentType: record.consentType,
+  }
+}
+
+function readTermsConsentRecordId(row: TermsAgreementRow): number | undefined {
+  const value = (row as TermsAgreementRow & { consentRecordId?: number | null }).consentRecordId
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
 /** consent-records — 작성본·이력 메타만 (동의 여부는 Summary 또는 termsAgreements) */
 function buildConsentRecordMetaByTypeMap(
   records: MemberConsentRecordResponse[]
 ): Map<string, AgreementOverlay> {
-  const latestByType = new Map<string, MemberConsentRecordResponse>()
+  const latestByKey = new Map<string, MemberConsentRecordResponse>()
   for (const record of records) {
-    const typeKey = normalizeConsentTypeKey(record.consentType)
-    if (!typeKey) continue
-    const prev = latestByType.get(typeKey)
-    if (!prev || compareConsentRecordRecency(record, prev) > 0) {
-      latestByType.set(typeKey, record)
+    const keys = consentIndexKeys(record.consentType)
+    if (keys.length === 0) continue
+    for (const key of keys) {
+      const prev = latestByKey.get(key)
+      if (!prev || compareConsentRecordMetaQuality(record, prev) > 0) {
+        latestByKey.set(key, record)
+      }
     }
   }
 
   const map = new Map<string, AgreementOverlay>()
-  for (const [typeKey, record] of latestByType) {
-    map.set(typeKey, {
-      agreed: false,
-      formResponseId: record.formResponseId,
-      filledDocumentId: record.filledDocumentId,
-      filledDocumentAvailable: record.filledDocumentAvailable,
-      filledDocumentRevealEndpoint: record.filledDocumentRevealEndpoint,
-      consentType: record.consentType,
-    })
+  for (const [key, record] of latestByKey) {
+    map.set(key, toConsentRecordOverlay(record))
   }
   return map
 }
@@ -189,9 +241,9 @@ function buildConsentSummaryTypeMap(
 ): Map<string, MemberPortalConsentSummary> {
   const map = new Map<string, MemberPortalConsentSummary>()
   for (const row of summaries) {
-    const typeKey = normalizeConsentTypeKey(row.consentType)
-    if (!typeKey) continue
-    map.set(typeKey, row)
+    for (const key of consentIndexKeys(row.consentType)) {
+      map.set(key, row)
+    }
   }
   return map
 }
@@ -206,6 +258,8 @@ function buildTermsAgreementLabelMap(
     map.set(label, {
       agreed: row.agreed === true,
       agreedAt: row.agreedAt,
+      consentRecordId: readTermsConsentRecordId(row),
+      consentType: row.termsType,
     })
   }
   return map
@@ -248,6 +302,18 @@ function overlayAgreementByLabel(
   }))
 }
 
+function lookupRecordMeta(
+  recordMetaByType: Map<string, AgreementOverlay>,
+  label: string,
+  consentType?: string
+): AgreementOverlay | undefined {
+  const typeKey = resolveCanonicalTermsTypeForLabel(label)
+  return (
+    lookupConsentIndex(recordMetaByType, consentType ?? typeKey, label) ??
+    (typeKey ? recordMetaByType.get(typeKey) : undefined)
+  )
+}
+
 function buildLabelMapFromSummaries(
   schema: ConsentRowSchema[],
   summaries: MemberPortalConsentSummary[],
@@ -260,18 +326,21 @@ function buildLabelMapFromSummaries(
     for (const field of row.fields) {
       if (field.value.type === 'empty_half' || !field.label.trim()) continue
       const typeKey = resolveCanonicalTermsTypeForLabel(field.label)
-      if (!typeKey) continue
-      const summary = summaryMap.get(typeKey)
+      const summary = lookupConsentIndex(summaryMap, typeKey, field.label)
       if (!summary) continue
 
       const agreed = summary.agreed === true
       const overlay: AgreementOverlay = {
         agreed,
         agreedAt: agreed ? summary.agreedAt : undefined,
+        consentType: summary.consentType,
       }
       labelMap.set(
         field.label,
-        mergeRecordMetaIntoOverlay(overlay, recordMetaByType.get(typeKey))
+        mergeRecordMetaIntoOverlay(
+          overlay,
+          lookupRecordMeta(recordMetaByType, field.label, summary.consentType)
+        )
       )
     }
   }
@@ -288,11 +357,13 @@ function applyTermsAgreementsWithRecordMeta(
   const termsMap = buildTermsAgreementLabelMap(terms)
 
   for (const [label, termsOverlay] of termsMap) {
-    const typeKey = resolveCanonicalTermsTypeForLabel(label)
-    const merged = typeKey
-      ? mergeRecordMetaIntoOverlay(termsOverlay, recordMetaByType.get(typeKey))
-      : termsOverlay
-    termsMap.set(label, merged)
+    termsMap.set(
+      label,
+      mergeRecordMetaIntoOverlay(
+        termsOverlay,
+        lookupRecordMeta(recordMetaByType, label, termsOverlay.consentType)
+      )
+    )
   }
 
   return overlayAgreementByLabel(result, termsMap)

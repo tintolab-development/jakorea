@@ -53,6 +53,7 @@ export function UjatRecruitVolunteerDetailInfoParagraph(props: UjatRecruitParagr
         onRegisterGetAdditionalContentHtml={props.onRegisterGetAdditionalContentHtml}
         sectionTitle={props.sectionTitle}
         sectionTitleOnly
+        hideFormHeader={props.hideSectionHeader}
       />
     )
   }
@@ -73,8 +74,8 @@ export function UjatRecruitVolunteerDetailInfoParagraph(props: UjatRecruitParagr
         { label: '프로그램 설명', placeholder: '프로그램 설명을 작성하세요' },
         { label: '모집 안내', placeholder: '모집 안내를 작성하세요' },
         { label: '지원 방법', placeholder: '지원 방법을 작성하세요' },
-        { label: '기타사항', placeholder: '기타 안내 사항을 작성하세요' },
       ]}
+      afterEditorFields={[{ label: '기타사항', placeholder: '기타 안내 사항을 작성하세요' }]}
     />
   )
 }

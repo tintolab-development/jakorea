@@ -4,9 +4,10 @@ import {
   programApplyRequiredPath,
   PROGRAMS_PATH,
   ProgramApplyGateModals,
-  isAlreadyAppliedApplicationReason,
   programApplyGateApplicationsPathForType,
+  programApplyGateConsentsPath,
   programApplyGateMemberSettingsPath,
+  resolveProgramApplyGateModal,
   readPortalRecruitmentFocus,
   usePortalApplicationOption,
   useProgramApplyGate,
@@ -91,7 +92,7 @@ export function ProgramDetailPage() {
           ...focus,
           programType: program?.programType,
         }
-  const { gateModal, closeGateModal, isChecking, runApplyGate } = useProgramApplyGate(
+  const { gateModal, closeGateModal, isChecking, runApplyGate, missingConsents } = useProgramApplyGate(
     programId,
     applySelection
   )
@@ -121,9 +122,6 @@ export function ProgramDetailPage() {
   }
 
   const handleApply = () => {
-    const canOpenExistingApplicationGate = isAlreadyAppliedApplicationReason(
-      applyOptionQuery.blockedReason,
-    )
     if (program.recruitmentSelectionAmbiguous) {
       setApplyBlockedAlert({
         title: '신청 대상을 확인해 주세요.',
@@ -131,7 +129,11 @@ export function ProgramDetailPage() {
       })
       return
     }
-    if (applyOptionQuery.blockedMessage && !canOpenExistingApplicationGate) {
+    const applyGateKind = resolveProgramApplyGateModal(
+      applyOptionQuery.option?.canApply,
+      applyOptionQuery.blockedReason,
+    )
+    if (applyOptionQuery.blockedMessage && applyGateKind === 'proceed') {
       setApplyBlockedAlert(
         applyBlockedAlertFor(applyOptionQuery.blockedReason, applyOptionQuery.blockedMessage),
       )
@@ -160,6 +162,11 @@ export function ProgramDetailPage() {
       <ProgramApplyGateModals
         kind={gateModal}
         onClose={closeGateModal}
+        missingConsentTypes={missingConsents}
+        onOpenConsents={() => {
+          closeGateModal()
+          navigate(programApplyGateConsentsPath)
+        }}
         onEditMemberInfo={() => {
           closeGateModal()
           navigate(programApplyGateMemberSettingsPath)

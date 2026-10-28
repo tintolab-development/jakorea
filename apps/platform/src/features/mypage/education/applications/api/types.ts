@@ -141,8 +141,20 @@ export type PortalTeacherAssignmentTextbook = {
   deliveryStatus?: 'PREPARING' | 'SHIPPING' | 'DELIVERED' | null
 }
 
+export type PortalTeacherAssignmentItem = {
+  assignmentId?: number | null
+  instructorMemberId?: number | null
+  instructorName?: string | null
+  programId?: number | null
+  programScheduleId?: number | null
+  assignmentStatus?: 'ASSIGNED' | 'COMPLETED' | string | null
+}
+
 export type PortalTeacherAssignment = {
   textbook?: PortalTeacherAssignmentTextbook | null
+  sourceApplicationType?: 'INSTRUCTOR' | string | null
+  sourceApplicationId?: number | null
+  assignments?: PortalTeacherAssignmentItem[] | null
 }
 
 /**
@@ -170,7 +182,7 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
   hasInterview?: boolean | null
   /** 없으면 BE `[]` — answers에 일정 키 없을 때 fallback */
   preferredScheduleBlocks?: PortalPreferredScheduleBlock[] | null
-  /** 교사 ORGANIZATION 신청 전용 교재·배송 정보. 그 외 신청은 `null`. */
+  /** ORGANIZATION 교재·배송 및 INDIVIDUAL CASE_D 강사 배정 정보. 없으면 `null`. */
   teacherAssignment?: PortalTeacherAssignment | null
   program?: {
     programId?: number

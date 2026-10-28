@@ -1,7 +1,7 @@
 import { useCallback, useId, useState } from 'react'
 import { getLoginApiErrorMessage, usePortalPasswordChangeMutation } from '@/features/auth/sign-in'
 import { isRemoteApiConfigured } from '@/shared/lib'
-import { PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
 import { validateSettingsChangePassword } from '../lib/change-password'
 import styles from './change-password-modal.module.css'
 
@@ -25,6 +25,7 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
   const [currentPasswordError, setCurrentPasswordError] = useState<string>()
   const [newPasswordError, setNewPasswordError] = useState<string>()
   const [confirmPasswordError, setConfirmPasswordError] = useState<string>()
+  const [successOpen, setSuccessOpen] = useState(false)
 
   const isBusy = passwordChangeMutation.isPending
 
@@ -84,98 +85,107 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
       }
     }
 
-    handleClose()
+    resetForm()
+    onClose()
+    setSuccessOpen(true)
   }
 
   return (
-    <PFModal
-      open={open}
-      size="md"
-      title="비밀번호 변경"
-      mobilePlacement="full"
-      ariaDescribedBy={descriptionId}
-      onClose={handleClose}
-    >
-      <div className={styles.guide} id={descriptionId}>
-        <PFText as="p" typo="bd-sm-rg" color="black" className={styles.guideText}>
-          개인정보를 안전하게 보호하기 위해 비밀번호를 주기적(90일)으로 변경해 주세요. <br />
-          비밀번호는 8자 이상의 영문, 숫자, 특수문자를 조합하여 사용 가능합니다.
-        </PFText>{' '}
-      </div>
-      <div className={styles.content}>
-        <div className={styles.fields}>
-          <PFTextInput
-            size="xlarge"
-            label="현재 비밀번호"
-            type="password"
-            placeholder="현재 비밀번호를 입력해 주세요"
-            autoComplete="current-password"
-            required
-            value={currentPassword}
-            onValueChange={value => {
-              setCurrentPassword(value)
-              setCurrentPasswordError(undefined)
-            }}
-            error={Boolean(currentPasswordError)}
-            message={currentPasswordError}
-            messageStatus="error"
-          />
-          <PFTextInput
-            size="xlarge"
-            label="새 비밀번호"
-            type="password"
-            placeholder="변경할 비밀번호를 입력해 주세요"
-            autoComplete="new-password"
-            required
-            value={newPassword}
-            onValueChange={value => {
-              setNewPassword(value)
-              setNewPasswordError(undefined)
-            }}
-            error={Boolean(newPasswordError)}
-            message={newPasswordError}
-            messageStatus="error"
-          />
-          <PFTextInput
-            size="xlarge"
-            label="새 비밀번호 확인"
-            type="password"
-            placeholder="변경할 비밀번호를 확인해 주세요"
-            autoComplete="new-password"
-            required
-            value={confirmPassword}
-            onValueChange={value => {
-              setConfirmPassword(value)
-              setConfirmPasswordError(undefined)
-            }}
-            error={Boolean(confirmPasswordError)}
-            message={confirmPasswordError}
-            messageStatus="error"
-          />
+    <>
+      <PFModal
+        open={open}
+        size="md"
+        title="비밀번호 변경"
+        mobilePlacement="full"
+        ariaDescribedBy={descriptionId}
+        onClose={handleClose}
+      >
+        <div className={styles.guide} id={descriptionId}>
+          <PFText as="p" typo="bd-sm-rg" color="black" className={styles.guideText}>
+            개인정보를 안전하게 보호하기 위해 비밀번호를 주기적(90일)으로 변경해 주세요. <br />
+            비밀번호는 8자 이상의 영문, 숫자, 특수문자를 조합하여 사용 가능합니다.
+          </PFText>{' '}
         </div>
+        <div className={styles.content}>
+          <div className={styles.fields}>
+            <PFTextInput
+              size="xlarge"
+              label="현재 비밀번호"
+              type="password"
+              placeholder="현재 비밀번호를 입력해 주세요"
+              autoComplete="current-password"
+              required
+              value={currentPassword}
+              onValueChange={value => {
+                setCurrentPassword(value)
+                setCurrentPasswordError(undefined)
+              }}
+              error={Boolean(currentPasswordError)}
+              message={currentPasswordError}
+              messageStatus="error"
+            />
+            <PFTextInput
+              size="xlarge"
+              label="새 비밀번호"
+              type="password"
+              placeholder="변경할 비밀번호를 입력해 주세요"
+              autoComplete="new-password"
+              required
+              value={newPassword}
+              onValueChange={value => {
+                setNewPassword(value)
+                setNewPasswordError(undefined)
+              }}
+              error={Boolean(newPasswordError)}
+              message={newPasswordError}
+              messageStatus="error"
+            />
+            <PFTextInput
+              size="xlarge"
+              label="새 비밀번호 확인"
+              type="password"
+              placeholder="변경할 비밀번호를 확인해 주세요"
+              autoComplete="new-password"
+              required
+              value={confirmPassword}
+              onValueChange={value => {
+                setConfirmPassword(value)
+                setConfirmPasswordError(undefined)
+              }}
+              error={Boolean(confirmPasswordError)}
+              message={confirmPasswordError}
+              messageStatus="error"
+            />
+          </div>
 
-        <div className={styles.actions}>
-          <PFButton
-            type="button"
-            variant="secondary"
-            size="xlarge"
-            disabled={isBusy}
-            onClick={handleClose}
-          >
-            취소
-          </PFButton>
-          <PFButton
-            type="button"
-            size="xlarge"
-            disabled={isBusy}
-            onClick={() => {
-              void handleSubmit()
-            }}
-          >
-            수정완료
-          </PFButton>
+          <div className={styles.actions}>
+            <PFButton
+              type="button"
+              variant="secondary"
+              size="xlarge"
+              disabled={isBusy}
+              onClick={handleClose}
+            >
+              취소
+            </PFButton>
+            <PFButton
+              type="button"
+              size="xlarge"
+              disabled={isBusy}
+              onClick={() => {
+                void handleSubmit()
+              }}
+            >
+              수정완료
+            </PFButton>
+          </div>
         </div>
-      </div>
-    </PFModal>
+      </PFModal>
+      <PFAlertModal
+        open={successOpen}
+        title="비밀번호가 변경 되었어요."
+        onConfirm={() => setSuccessOpen(false)}
+      />
+    </>
   )
 }

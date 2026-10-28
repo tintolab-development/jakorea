@@ -18,6 +18,10 @@ import type {
 import type { Status } from '@/types'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
+import {
+  omitProgramAuditNameFields,
+  readProgramAuditNames,
+} from '@/features/program/shared/lib/program-audit-names'
 import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   buildProgramSponsorAssignmentsWire,
@@ -236,6 +240,7 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
       : undefined,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
+    ...readProgramAuditNames(item),
     backendProgramType: item.programType ?? TRAINED_TEACHER_PROGRAM_API_TYPE,
   })
 }
@@ -311,7 +316,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     generalCommonInfo: details.generalCommonInfo,
   })
   const mapped = baseProgram({
-    ...detailFields,
+    ...omitProgramAuditNameFields(detailFields),
     id,
     sponsorId: dto.sponsorId ?? '',
     title,
@@ -421,6 +426,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     }),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    ...readProgramAuditNames(dto),
     backendProgramType: dto.programType ?? TRAINED_TEACHER_PROGRAM_API_TYPE,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
     schedules: mapProgramSchedules(dto.schedules),

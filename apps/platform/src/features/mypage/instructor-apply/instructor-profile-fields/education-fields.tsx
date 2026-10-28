@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { INSTRUCTOR_FORM_PLACEHOLDERS as PH } from '@jakorea/domain/instructor/form-copy'
 import {
   EDUCATION_DEGREE_OPTIONS,
@@ -33,6 +33,16 @@ import {
   InstructorProfileFieldTable,
   resolveInstructorProfileFieldLayout,
 } from './profile-field-table'
+import {
+  SettingsField,
+  SettingsFieldStack,
+  SettingsOptionRow,
+  SettingsStackedEntry,
+  SettingsStackedEntryList,
+  SettingsStackedGrid2,
+  SettingsStackedInlineRow,
+  SettingsStackedShrink,
+} from './settings-stacked-rows'
 import type { InstructorProfileFieldsProps } from './types'
 
 function toSelectOptions(
@@ -45,8 +55,10 @@ export function InstructorEducationProfileFields({
   values,
   onValuesChange,
   surface = 'apply',
+  placeholders,
 }: InstructorProfileFieldsProps) {
   const fieldLayout = resolveInstructorProfileFieldLayout(surface)
+  const ph = { ...PH, ...placeholders }
   const availableEducationKeys = useMemo(
     () => resolveAvailableEducationDetailKeys(values.eduSchoolType),
     [values.eduSchoolType],
@@ -88,6 +100,240 @@ export function InstructorEducationProfileFields({
         educationDetailKeys: orderEducationDetailKeys(nextKeys),
       }
     })
+  }
+
+  if (surface === 'settings') {
+    // 회원정보 설정 전용 — 시안 11199:20878 세로 스택 (강사 신청은 아래 기존 레이아웃)
+    const renderSchoolEntry = ({
+      key,
+      detailKey,
+      row,
+      gradDisabled,
+      onRowChange,
+      degreeSlot,
+      majorRow,
+    }: {
+      key: string
+      detailKey: EducationDetailKey
+      row: { admitYear: string | null; gradYear: string | null; schoolName: string }
+      gradDisabled: boolean
+      onRowChange: (partial: { admitYear?: string | null; gradYear?: string | null; schoolName?: string }) => void
+      degreeSlot?: ReactNode
+      majorRow?: ReactNode
+    }) => (
+      <SettingsStackedEntry key={key}>
+        <SettingsStackedGrid2>
+          <PFDateInput
+            size="xlarge"
+            width="100%"
+            picker="year"
+            placeholder={ph.admitYear}
+            value={row.admitYear ?? ''}
+            onValueChange={value => onRowChange({ admitYear: value || null })}
+          />
+          <PFDateInput
+            size="xlarge"
+            width="100%"
+            picker="year"
+            placeholder={ph.gradYear}
+            disabled={gradDisabled}
+            value={row.gradYear ?? ''}
+            onValueChange={value => onRowChange({ gradYear: value || null })}
+          />
+        </SettingsStackedGrid2>
+        {degreeSlot}
+        <EducationSchoolNameField
+          detailKey={detailKey}
+          width="100%"
+          size="xlarge"
+          placeholder={ph.educationSchoolName}
+          value={row.schoolName}
+          onChange={schoolName => onRowChange({ schoolName })}
+        />
+        {majorRow}
+      </SettingsStackedEntry>
+    )
+
+    const renderMajorRow = ({
+      major,
+      isFirst,
+      onMajorChange,
+      onAdd,
+      onRemove,
+    }: {
+      major: string
+      isFirst: boolean
+      onMajorChange: (major: string) => void
+      onAdd: () => void
+      onRemove: () => void
+    }) => (
+      <SettingsStackedInlineRow
+        main={
+          <PFTextInput
+            size="xlarge"
+            width="100%"
+            placeholder={ph.major}
+            value={major}
+            onValueChange={onMajorChange}
+          />
+        }
+        trailing={
+          <SettingsStackedShrink>
+            <ListRowActions isFirst={isFirst} onAdd={onAdd} onRemove={onRemove} />
+          </SettingsStackedShrink>
+        }
+      />
+    )
+
+    const renderCollegeRows = (
+      detailKey: 'college23' | 'college4',
+      rowsKey: 'college23Rows' | 'college4Rows',
+    ) => (
+      <SettingsStackedEntryList>
+        {values[rowsKey].map((row, index) => {
+          const updateRow = (partial: Partial<typeof row>) => {
+            const next = [...values[rowsKey]]
+            next[index] = { ...row, ...partial }
+            patch(rowsKey, next)
+          }
+          return renderSchoolEntry({
+            key: `${detailKey}-${index}`,
+            detailKey,
+            row,
+            gradDisabled: finalEducationEnrolled && lockedEducationKey === detailKey,
+            onRowChange: updateRow,
+            majorRow: renderMajorRow({
+              major: row.major,
+              isFirst: index === 0,
+              onMajorChange: major => updateRow({ major }),
+              onAdd: () =>
+                patch(rowsKey, [...values[rowsKey], { ...EMPTY_INSTRUCTOR_EDUCATION_SCHOOL_ROW }]),
+              onRemove: () =>
+                patch(
+                  rowsKey,
+                  values[rowsKey].filter((_, i) => i !== index),
+                ),
+            }),
+          })
+        })}
+      </SettingsStackedEntryList>
+    )
+
+    return (
+      <SettingsFieldStack>
+        <SettingsField label="최종 학력" required>
+          <SettingsStackedGrid2>
+            <PFSelect
+              size="xlarge"
+              width="100%"
+              placeholder={ph.eduSchoolType}
+              options={toSelectOptions(EDUCATION_SCHOOL_TYPE_OPTIONS)}
+              value={values.eduSchoolType}
+              onValueChange={handleEduSchoolTypeChange}
+            />
+            <PFSelect
+              size="xlarge"
+              width="100%"
+              placeholder={ph.eduStatus}
+              options={toSelectOptions(EDUCATION_STATUS_OPTIONS)}
+              value={values.eduStatus}
+              onValueChange={value => patch('eduStatus', value)}
+            />
+          </SettingsStackedGrid2>
+        </SettingsField>
+        {/* 시안 — 학력 상세는 항상 노출 (최종 학력 선택 전에는 비활성) */}
+        <SettingsField label="학력 상세" required>
+          <SettingsOptionRow>
+            {EDUCATION_DETAIL_OPTIONS.map(option => (
+              <PFCheckbox
+                key={option.value}
+                size="large"
+                checked={values.educationDetailKeys.includes(option.value)}
+                disabled={
+                  option.value === values.eduSchoolType ||
+                  !availableEducationKeys.includes(option.value)
+                }
+                onCheckedChange={() => toggleEducationDetail(option.value)}
+              >
+                {option.label}
+              </PFCheckbox>
+            ))}
+          </SettingsOptionRow>
+        </SettingsField>
+
+        {values.educationDetailKeys.includes('high') ? (
+          <SettingsField label="고등학교" required>
+            <SettingsStackedEntryList>
+              {renderSchoolEntry({
+                key: 'high',
+                detailKey: 'high',
+                row: values.highSchool,
+                gradDisabled: finalEducationEnrolled && lockedEducationKey === 'high',
+                onRowChange: partial => patch('highSchool', { ...values.highSchool, ...partial }),
+              })}
+            </SettingsStackedEntryList>
+          </SettingsField>
+        ) : null}
+
+        {values.educationDetailKeys.includes('college23') ? (
+          <SettingsField label="대학교 2, 3년제" required>
+            {renderCollegeRows('college23', 'college23Rows')}
+          </SettingsField>
+        ) : null}
+
+        {values.educationDetailKeys.includes('college4') ? (
+          <SettingsField label="대학교 4년제" required>
+            {renderCollegeRows('college4', 'college4Rows')}
+          </SettingsField>
+        ) : null}
+
+        {values.educationDetailKeys.includes('graduate') ? (
+          <SettingsField label="대학원" required>
+            <SettingsStackedEntryList>
+              {values.graduateRows.map((row, index) => {
+                const updateRow = (partial: Partial<typeof row>) => {
+                  const next = [...values.graduateRows]
+                  next[index] = { ...row, ...partial }
+                  patch('graduateRows', next)
+                }
+                return renderSchoolEntry({
+                  key: `graduate-${index}`,
+                  detailKey: 'graduate',
+                  row,
+                  gradDisabled: finalEducationEnrolled && lockedEducationKey === 'graduate',
+                  onRowChange: updateRow,
+                  degreeSlot: (
+                    <PFSelect
+                      size="xlarge"
+                      width="100%"
+                      placeholder={ph.degree}
+                      options={toSelectOptions(EDUCATION_DEGREE_OPTIONS)}
+                      value={row.degree}
+                      onValueChange={degree => updateRow({ degree })}
+                    />
+                  ),
+                  majorRow: renderMajorRow({
+                    major: row.major,
+                    isFirst: index === 0,
+                    onMajorChange: major => updateRow({ major }),
+                    onAdd: () =>
+                      patch('graduateRows', [
+                        ...values.graduateRows,
+                        { ...EMPTY_INSTRUCTOR_EDUCATION_GRADUATE_ROW },
+                      ]),
+                    onRemove: () =>
+                      patch(
+                        'graduateRows',
+                        values.graduateRows.filter((_, i) => i !== index),
+                      ),
+                  }),
+                })
+              })}
+            </SettingsStackedEntryList>
+          </SettingsField>
+        ) : null}
+      </SettingsFieldStack>
+    )
   }
 
   return (

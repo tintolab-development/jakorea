@@ -82,12 +82,14 @@ function resolveVolunteerNotesDisplay(program: Program): string {
   return (program.otherNotes ?? '').trim() || '-'
 }
 
-function dateMethodLine(date: string | Date | undefined, method: string | undefined, fallbackMethod: string) {
+function dateMethodLine(
+  date: string | Date | undefined,
+  method: string | undefined,
+  fallbackMethod: string
+) {
   if (!date) return '-'
   const methodLabel = method?.trim() || fallbackMethod
-  return (
-    <UjatInlineDividedSegments segments={[formatUjatDotDateWithWeekday(date), methodLabel]} />
-  )
+  return <UjatInlineDividedSegments segments={[formatUjatDotDateWithWeekday(date), methodLabel]} />
 }
 
 function resolveInterviewMethodLabel(method: string | undefined): string {
@@ -106,7 +108,7 @@ export function UjatRecruitVolunteerInfoProgramView({
   isEdit,
   volunteerHalf,
   showNoticeExposure,
-  sectionTitle = '봉사자 모집 정보',
+  sectionTitle,
   highlightParagraphId,
   hideSectionHeader = false,
   isTemplateAuthoring = false,
@@ -127,7 +129,10 @@ export function UjatRecruitVolunteerInfoProgramView({
   const recruitKey = (suffix: string) => `recruit.volunteer.${volunteerHalf}.${suffix}`
   const period = getUjatVolunteerRecruitPeriod(program, volunteerHalf)
   const roundIndex = volunteerHalf === 'h1' ? 0 : 1
-  const hasRound = isEdit && form ? form.watch(`rounds.${roundIndex}`) != null : (program.rounds?.[roundIndex] != null)
+  const hasRound =
+    isEdit && form
+      ? form.watch(`rounds.${roundIndex}`) != null
+      : program.rounds?.[roundIndex] != null
   const recruitStartName = (
     hasRound
       ? volunteerHalf === 'h1'
@@ -226,7 +231,8 @@ export function UjatRecruitVolunteerInfoProgramView({
         control={form.control}
         render={({ field, fieldState }) => (
           <>
-            <CmsRadioGroup size="medium"
+            <CmsRadioGroup
+              size="medium"
               value={field.value ?? undefined}
               onChange={e => field.onChange(String(e.target.value))}
             >
@@ -248,9 +254,9 @@ export function UjatRecruitVolunteerInfoProgramView({
 
   return (
     <div className="ujat-recruit-volunteer-info-program">
-      {!hideSectionHeader ? (
+      {!hideSectionHeader && sectionTitle?.trim() ? (
         <UjatRecruitSectionDescriptionHeader
-          title={sectionTitle}
+          title={sectionTitle.trim()}
           highlightParagraphId={highlightParagraphId}
         />
       ) : null}
@@ -313,7 +319,9 @@ export function UjatRecruitVolunteerInfoProgramView({
                   name={`rounds.${roundIndex}.curriculum` as 'rounds.0.curriculum'}
                   control={form.control}
                   render={({ field }) => (
-                    <div className={`${UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS} ujat-recruit-activity-term-field`}>
+                    <div
+                      className={`${UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS} ujat-recruit-activity-term-field`}
+                    >
                       <CmsNumericInput
                         {...field}
                         mode="numericText"
@@ -355,7 +363,9 @@ export function UjatRecruitVolunteerInfoProgramView({
             readOnlyDisplay
             view={
               isTemplateAuthoring ? (
-                <span className="form-editor-template-field-hint-text">{UJAT_RECRUIT_PROGRESS_HINT}</span>
+                <span className="form-editor-template-field-hint-text">
+                  {UJAT_RECRUIT_PROGRESS_HINT}
+                </span>
               ) : (
                 <LifecycleStatusView lifecycle={lifecycle} status={recruitmentStatus} />
               )

@@ -381,8 +381,7 @@ export function ParticipatingVolunteerFullpageView({
             <>
               <CmsButton
                 variant="delete"
-                size="large"
-                width={140}
+                size="h40"
                 disabled={
                   mergedVolunteer.activityWithdrawn ||
                   activityWithdrawSubmitting ||
@@ -394,8 +393,7 @@ export function ParticipatingVolunteerFullpageView({
               </CmsButton>
               <CmsButton
                 variant="secondary"
-                size="large"
-                width={180}
+                size="h40"
                 icon={<ButtonDownloadIcon />}
                 onClick={handleActivityCertificateIssueClick}
               >
@@ -403,8 +401,7 @@ export function ParticipatingVolunteerFullpageView({
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
-                width={140}
+                size="h40"
                 onClick={handleAdminCommentEditEnter}
               >
                 코멘트 작성
@@ -412,7 +409,8 @@ export function ParticipatingVolunteerFullpageView({
               <PersonalInfoRevealButton
                 labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
-                width={180}
+                cmsSize="h40"
+                width="auto"
                 onClick={openPersonalInfoRevealConfirm}
               />
             </>
@@ -467,6 +465,8 @@ export function ParticipatingVolunteerFullpageView({
         onCancel={() => setActivityWithdrawModalOpen(false)}
         onConfirm={handleConfirmActivityWithdraw}
         confirming={activityWithdrawSubmitting}
+        subjectName={mergedVolunteer.volunteerName ?? ''}
+        subjectKind="person"
       />
       <ParticipatingVolunteerActivityCertificatePreviewModal
         open={activityCertPreviewOpen}

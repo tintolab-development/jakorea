@@ -43,10 +43,12 @@ export function MypageEducationSettlementWritePage() {
     remoteEnabled ? applicationId : null,
   )
   const application = remoteQuery.application
+  const programType = application?.programConfig?.programType ?? null
   const remoteSettlements = useApplicationSettlementsQuery(
     applicationType,
     applicationId,
     application?.programId ?? '',
+    { programType },
   )
 
   const session = useMemo(() => {
@@ -130,6 +132,7 @@ export function MypageEducationSettlementWritePage() {
         session={session}
         documentKind={documentKind}
         applicationType={applicationType}
+        programType={programType}
       />
     </PFFormPage>
   )

@@ -1,0 +1,6 @@
+.program-registration-audit-value {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 12px;
+}

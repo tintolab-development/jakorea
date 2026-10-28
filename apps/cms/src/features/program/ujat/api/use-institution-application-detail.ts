@@ -8,6 +8,7 @@ import {
   approveOrganizationApplicationRemote,
   fetchOrganizationApplicationDetailRemote,
   rejectOrganizationApplicationRemote,
+  type OrganizationDecisionNotifyRequest,
 } from '@/features/program/general/api/applications-api-client'
 import { enrichUjatInstitutionDetailFromRemote } from '@/features/program/ujat/api/applications-adapters'
 import { mapOrganizationApplicationDetailToUjatInstitutionRow } from '@/features/program/ujat/api/applications-adapters'
@@ -126,18 +127,21 @@ export function useUjatInstitutionApplicationDetail(input: {
     remoteDetail: detailQuery.data ?? null,
     temporarySchedule: temporaryScheduleQuery.data ?? null,
     invalidate,
-    approveRemote: async () => {
+    approveRemote: async (notify?: OrganizationDecisionNotifyRequest) => {
       const current = resolveUjatInstitutionWorkflow(
         readUjatInstitutionWorkflowInput(detailQuery.data, temporaryScheduleQuery.data)
       )
       if (!current.canFinalApprove) {
         throw new Error(UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE)
       }
-      await approveOrganizationApplicationRemote(institutionId)
+      await approveOrganizationApplicationRemote(institutionId, notify)
       await invalidate()
     },
-    rejectRemote: async (reason: string) => {
-      await rejectOrganizationApplicationRemote(institutionId, { reason })
+    rejectRemote: async (reason: string, notify?: OrganizationDecisionNotifyRequest) => {
+      await rejectOrganizationApplicationRemote(institutionId, {
+        reason,
+        ...notify,
+      })
       await invalidate()
     },
     tempRejectRemote: async (reason: string) => {

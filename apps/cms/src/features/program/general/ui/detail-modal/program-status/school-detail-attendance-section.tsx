@@ -1,9 +1,15 @@
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
+import { showSaveCompletedAlert } from '@/shared/ui/show-save-completed-alert'
+import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { Alert } from 'antd'
 import { useSchoolDetailAttendance } from '../../../hooks/use-school-detail-attendance'
+import {
+  SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS,
+  resolveSchoolDetailAttendanceWorkbookFilename,
+} from '../../../lib/school-detail-attendance-export'
 import { SchoolDetailAttendanceSessionPanel } from './school-detail-attendance-session-panel'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './school-detail-attendance-section.css'
@@ -28,6 +34,7 @@ export function SchoolDetailAttendanceSection({
     loadError,
     backgroundRefetchError,
     isEmptyResult,
+    emptyMessage,
     refetchAttendance,
     isRefetching,
     isSaving,
@@ -35,7 +42,24 @@ export function SchoolDetailAttendanceSection({
     assignmentScopeLoading,
     assignmentScopeLoadError,
     getSessionScopeReadiness,
+    resolveExcelExportRows,
+    canExportAll,
   } = useSchoolDetailAttendance(row, program)
+
+  const { exportExcel, isExporting } = useTableExcelExport({
+    columns: SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS,
+    data: [],
+    resolveData: resolveExcelExportRows,
+    filename: resolveSchoolDetailAttendanceWorkbookFilename(row.schoolName),
+  })
+
+  const handleSaveSession = async (
+    sessionId: string,
+    students: Parameters<typeof saveSessionStudents>[1]
+  ) => {
+    await saveSessionStudents(sessionId, students)
+    showSaveCompletedAlert()
+  }
 
   if (loadError) {
     return (
@@ -111,7 +135,7 @@ export function SchoolDetailAttendanceSection({
         {loading ? (
           <div className="school-detail-attendance-section__empty">출석 정보를 불러오는 중…</div>
         ) : isEmptyResult ? (
-          <div className="school-detail-attendance-section__empty">조회 결과가 없습니다.</div>
+          <div className="school-detail-attendance-section__empty">{emptyMessage}</div>
         ) : (
           <div className="school-detail-attendance-section__groups">
             {sessionGroups.map(session => {
@@ -127,9 +151,12 @@ export function SchoolDetailAttendanceSection({
                   session={session}
                   appliedFilters={appliedFilters}
                   getSessionStudents={getSessionStudents}
-                  onSave={saveSessionStudents}
+                  onSave={handleSaveSession}
                   saving={isSaving}
                   scopeBlocked={scopeBlocked}
+                  onExportAll={exportExcel}
+                  exporting={isExporting}
+                  exportDisabled={!canExportAll}
                 />
               )
             })}

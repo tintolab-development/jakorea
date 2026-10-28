@@ -164,12 +164,13 @@ export function shouldShowApplicationSchedulePeriodDateOnlyPreferred(
   )
 }
 
-/** 커리큘럼 + 기간 지정 지망 — 희망 차시 셀렉 (모집 1일 최대 차시 필드와 별개) */
+/** 커리큘럼 + 복수 회차 + 기간 지정 지망 — 희망 차시 셀렉. 단일 회차는 날짜·시간만 받는다. */
 export function shouldShowApplicationPreferredScheduleSessionSelect(
   input: ApplicationScheduleVisibilityInput
 ): boolean {
   return (
     input.educationStructure === 'curriculum' &&
+    input.sessionRound === 'multi' &&
     input.educationScheduleMode === 'period' &&
     shouldShowApplicationPreferredScheduleParagraph(input)
   )

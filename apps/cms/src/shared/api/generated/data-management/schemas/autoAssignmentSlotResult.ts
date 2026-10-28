@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AutoAssignmentSlotResultResult } from './autoAssignmentSlotResultResult';
 
 export interface AutoAssignmentSlotResult {
   educationSlotId?: number;
@@ -12,7 +13,8 @@ export interface AutoAssignmentSlotResult {
   organizationApplicationId?: number;
   classLabel?: string;
   educationRegionCode?: string;
-  result?: string;
+  /** ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지) */
+  result?: AutoAssignmentSlotResultResult;
   assignmentGroupId?: string;
   primaryParticipantId?: number;
   secondaryParticipantId?: number;

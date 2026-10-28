@@ -13,6 +13,7 @@ export function createRichTextEditorApi(editor: Editor): RichTextEditorApi {
       isRichTextEditorReady(editor) ? serializeEditorContent(editor, 'markdown') : '',
     getHTML: () =>
       isRichTextEditorReady(editor) ? serializeEditorContent(editor, 'html') : '',
+    getText: () => (isRichTextEditorReady(editor) ? editor.getText() : ''),
     getCharacterCount: () =>
       isRichTextEditorReady(editor) ? countRichTextDocumentCharacters(editor.state.doc) : 0,
     getImageTotalBytes: () =>

@@ -48,7 +48,6 @@ export function GeneralProgramRegistrationBodyHeader({
         onChange={(tab: GeneralProgramRecruitTabKey) =>
           onSelectStep(registrationStepFromRecruitTab(tab))
         }
-        wrap
         ariaLabel="일반 프로그램 모집 정보"
         items={visibleRecruitTabKeys.map(key => ({
           key,
@@ -71,7 +70,6 @@ export function GeneralProgramRegistrationBodyHeader({
       variant="list"
       activeKey={activeApplicationTab}
       onChange={onSelectStep}
-      wrap
       ariaLabel="일반 프로그램 신청 정보"
       items={visibleApplicationTabKeys.map(key => ({
         key,

@@ -9,6 +9,10 @@ type ConsentWithdrawConfirmProps = {
   confirmLoading?: boolean
   /** `agree` — 동의 확인(확인 버튼 강조) */
   mode?: 'withdraw' | 'agree'
+  /** 확인 버튼 문구 — 기본값: `동의하기` / `철회하기` (mode 기준) */
+  confirmLabel?: ReactNode
+  /** 취소 버튼 문구 — 기본값: `취소` */
+  cancelLabel?: ReactNode
   onCancel: () => void
   onConfirm: () => void
 }
@@ -19,6 +23,8 @@ export function ConsentWithdrawConfirm({
   description,
   confirmLoading = false,
   mode = 'withdraw',
+  confirmLabel,
+  cancelLabel = '취소',
   onCancel,
   onConfirm,
 }: ConsentWithdrawConfirmProps) {
@@ -42,7 +48,7 @@ export function ConsentWithdrawConfirm({
             disabled={confirmLoading}
             onClick={onCancel}
           >
-            취소
+            {cancelLabel}
           </PFButton>
           <PFButton
             type="button"
@@ -51,7 +57,7 @@ export function ConsentWithdrawConfirm({
             disabled={confirmLoading}
             onClick={onConfirm}
           >
-            {confirmLoading ? '처리 중…' : isAgree ? '동의하기' : '철회하기'}
+            {confirmLoading ? '처리 중…' : (confirmLabel ?? (isAgree ? '동의하기' : '철회하기'))}
           </PFButton>
         </div>
       </div>

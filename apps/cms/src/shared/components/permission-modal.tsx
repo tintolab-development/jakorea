@@ -4,6 +4,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { parseContentModalDescriptionLine } from '@/shared/ui/content-modal-description'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import {
@@ -11,6 +12,12 @@ import {
   getMinimumManualNotifyAt,
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
+import {
+  NOTIFY_TIMING_CAPABILITY,
+  UNSUPPORTED_NOTIFY_TIMING_ALERT_TITLE,
+  getUnsupportedNotifyTimingMessage,
+  type NotifyTimingCapability,
+} from '@/shared/lib/notify-timing-capability'
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import {
   INSTRUCTOR_JA_FAULT_PARTY_HINT,
@@ -24,9 +31,6 @@ import './permission-modal.css'
 /** 풀페이지 상세 위 중첩 모달(antd 스택 ~2000)보다 위 */
 const DEFAULT_PERMISSION_MODAL_Z = 2500
 const DATE_TIME_PICKER_Z_OFFSET = 100
-
-/** ContentModal `description` 과 동일 — 마스킹 이름(`이*연`) 등 내부 `*` 허용 */
-const MESSAGE_BOLD_PATTERN = /(\*\*.+?\*\*)/g
 
 function PermissionModalFieldLabel({
   children,
@@ -48,15 +52,7 @@ function PermissionModalFieldLabel({
 }
 
 function parsePermissionModalMessageLine(line: string): ReactNode[] {
-  return line
-    .split(MESSAGE_BOLD_PATTERN)
-    .filter(Boolean)
-    .map((part, index) => {
-      if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
-        return <strong key={index}>{part.slice(2, -2)}</strong>
-      }
-      return <Fragment key={index}>{part}</Fragment>
-    })
+  return parseContentModalDescriptionLine(line)
 }
 
 /** `\n`으로 줄바꿈. `**텍스트**`는 굵게 표시 */
@@ -115,9 +111,16 @@ export type PermissionModalProps = {
   reasonLabel?: string
   reasonPlaceholder?: string
   reasonRequiredMessage?: string
+  /** 사유 입력 maxLength. 기본 500. 강사 승인 취소 API는 1000 */
+  reasonMaxLength?: number
   showNotifyTiming?: boolean
   /** 기본 three — 즉시 / 발표일에 맞춰서 / 직접 설정 */
   notifyTimingOptions?: 'two' | 'three'
+  /**
+   * 연결된 API가 실제로 받는 시점.
+   * 미지원 옵션은 라디오를 유지하되 확인을 막고 안내한다. 기본값은 세 옵션 모두 지원.
+   */
+  notifyTimingCapability?: NotifyTimingCapability
   /** 본문 메시지와 알림 발송 사이 안내 박스 (일괄 승인 등) */
   infoCallout?: ReactNode
   /** `permission-modal`에 추가로 붙는 클래스 (모달별 스타일 오버라이드) */
@@ -174,8 +177,10 @@ export function PermissionModal({
   reasonLabel: reasonLabelProp,
   reasonPlaceholder: reasonPlaceholderProp,
   reasonRequiredMessage: _reasonRequiredMessageProp,
+  reasonMaxLength = 500,
   showNotifyTiming = true,
   notifyTimingOptions = 'three',
+  notifyTimingCapability = NOTIFY_TIMING_CAPABILITY.full,
   infoCallout,
   className: classNameProp,
   notifyBeforeReason = false,
@@ -241,6 +246,16 @@ export function PermissionModal({
       })
       return
     }
+    const unsupportedNotify = showNotifyTiming
+      ? getUnsupportedNotifyTimingMessage(notifyTiming, notifyTimingCapability)
+      : null
+    if (unsupportedNotify) {
+      showAlert({
+        title: UNSUPPORTED_NOTIFY_TIMING_ALERT_TITLE,
+        content: unsupportedNotify,
+      })
+      return
+    }
     onConfirm({
       reason: trimmed,
       notifyTiming,
@@ -261,6 +276,54 @@ export function PermissionModal({
 
   const resolvedModalZ = zIndex ?? DEFAULT_PERMISSION_MODAL_Z
   const dateTimePickerZ = resolvedModalZ + DATE_TIME_PICKER_Z_OFFSET
+  const unsupportedNotifyMessage = showNotifyTiming
+    ? getUnsupportedNotifyTimingMessage(notifyTiming, notifyTimingCapability)
+    : null
+
+  const notifyTimingField = (
+    <div className="permission-modal__field">
+      <PermissionModalFieldLabel required>알림 발송</PermissionModalFieldLabel>
+      <CmsRadio.Group
+        size="medium"
+        value={notifyTiming}
+        onChange={e => handleNotifyTimingChange(e.target.value as PermissionModalNotifyTiming)}
+      >
+        <CmsRadio value="immediate" size="medium">
+          즉시
+        </CmsRadio>
+        {notifyTimingOptions === 'three' ? (
+          <CmsRadio value="on_announcement" size="medium">
+            발표일에 맞춰서
+          </CmsRadio>
+        ) : null}
+        <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
+          <CmsRadio
+            value="manual"
+            size="medium"
+            onClick={() => {
+              if (notifyTiming === 'manual') {
+                setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
+                setDateTimePickerOpen(true)
+              }
+            }}
+          >
+            직접 설정
+            {notifyTiming === 'manual' && manualNotifyAt != null ? (
+              <span className="permission-modal__manual-summary">
+                {' '}
+                ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
+              </span>
+            ) : null}
+          </CmsRadio>
+        </span>
+      </CmsRadio.Group>
+      {unsupportedNotifyMessage ? (
+        <p className="permission-modal__field-error" role="alert">
+          {unsupportedNotifyMessage}
+        </p>
+      ) : null}
+    </div>
+  )
 
   return (
     <>
@@ -281,7 +344,7 @@ export function PermissionModal({
               size="medium"
               type="button"
               loading={confirmLoading}
-              disabled={confirmLoading || confirmDisabled}
+              disabled={confirmLoading || confirmDisabled || Boolean(unsupportedNotifyMessage)}
               onClick={handleConfirm}
             >
               {confirmLabel}
@@ -316,47 +379,7 @@ export function PermissionModal({
             </div>
           ) : null}
 
-          {notifyBeforeReason && showNotifyTiming ? (
-            <div className="permission-modal__field">
-              <PermissionModalFieldLabel required>알림 발송</PermissionModalFieldLabel>
-              <CmsRadio.Group
-                size="medium"
-                value={notifyTiming}
-                onChange={e =>
-                  handleNotifyTimingChange(e.target.value as PermissionModalNotifyTiming)
-                }
-              >
-                <CmsRadio value="immediate" size="medium">
-                  즉시
-                </CmsRadio>
-                {notifyTimingOptions === 'three' ? (
-                  <CmsRadio value="on_announcement" size="medium">
-                    발표일에 맞춰서
-                  </CmsRadio>
-                ) : null}
-                <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
-                  <CmsRadio
-                    value="manual"
-                    size="medium"
-                    onClick={() => {
-                      if (notifyTiming === 'manual') {
-                        setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
-                        setDateTimePickerOpen(true)
-                      }
-                    }}
-                  >
-                    직접 설정
-                    {notifyTiming === 'manual' && manualNotifyAt != null ? (
-                      <span className="permission-modal__manual-summary">
-                        {' '}
-                        ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
-                      </span>
-                    ) : null}
-                  </CmsRadio>
-                </span>
-              </CmsRadio.Group>
-            </div>
-          ) : null}
+          {notifyBeforeReason && showNotifyTiming ? notifyTimingField : null}
 
           {requireReason ? (
             <div className="permission-modal__field">
@@ -367,52 +390,12 @@ export function PermissionModal({
                 value={reason}
                 onChange={e => setReason(e.target.value)}
                 placeholder={reasonPlaceholder}
-                maxLength={500}
+                maxLength={reasonMaxLength}
               />
             </div>
           ) : null}
 
-          {!notifyBeforeReason && showNotifyTiming ? (
-            <div className="permission-modal__field">
-              <PermissionModalFieldLabel required>알림 발송</PermissionModalFieldLabel>
-              <CmsRadio.Group
-                size="medium"
-                value={notifyTiming}
-                onChange={e =>
-                  handleNotifyTimingChange(e.target.value as PermissionModalNotifyTiming)
-                }
-              >
-                <CmsRadio value="immediate" size="medium">
-                  즉시
-                </CmsRadio>
-                {notifyTimingOptions === 'three' ? (
-                  <CmsRadio value="on_announcement" size="medium">
-                    발표일에 맞춰서
-                  </CmsRadio>
-                ) : null}
-                <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
-                  <CmsRadio
-                    value="manual"
-                    size="medium"
-                    onClick={() => {
-                      if (notifyTiming === 'manual') {
-                        setManualNotifyAt(prev => prev ?? getDefaultManualNotifyAt())
-                        setDateTimePickerOpen(true)
-                      }
-                    }}
-                  >
-                    직접 설정
-                    {notifyTiming === 'manual' && manualNotifyAt != null ? (
-                      <span className="permission-modal__manual-summary">
-                        {' '}
-                        ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
-                      </span>
-                    ) : null}
-                  </CmsRadio>
-                </span>
-              </CmsRadio.Group>
-            </div>
-          ) : null}
+          {!notifyBeforeReason && showNotifyTiming ? notifyTimingField : null}
         </div>
       </ContentModal>
 

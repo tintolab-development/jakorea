@@ -54,6 +54,11 @@ import {
   GEMINI_APPROVED_TRAINING_LNB_PARAM,
 } from '../../lib/approved/detail-url'
 import { formatGeminiRecruitmentSaveError } from '../../lib/recruitment/mutation-error'
+import {
+  canGeminiRecruitmentInfoEdit,
+  getGeminiRecruitmentInfoEditBlockedAlertMessage,
+  getGeminiRecruitmentInfoEditBlockedAlertTitle,
+} from '../../lib/recruitment/info-edit-policy'
 import { GeminiRecruitmentAddPreviewModal } from '../recruitment/add-preview-modal'
 import { GeminiRecruitmentInfoTab } from './recruitment-info-tab'
 import { GeminiInstitutionApplicationTab } from './institution-application-tab'
@@ -207,11 +212,26 @@ export function GeminiRecruitmentDetailFullPageModal({
   }, [])
 
   const handleInfoEditClick = useCallback(() => {
+    if (!canGeminiRecruitmentInfoEdit(detail?.applicationPeriodStart)) {
+      void showAlert({
+        title: getGeminiRecruitmentInfoEditBlockedAlertTitle(),
+        content: getGeminiRecruitmentInfoEditBlockedAlertMessage(),
+      })
+      return
+    }
     handleInfoEdit()
-  }, [handleInfoEdit])
+  }, [detail?.applicationPeriodStart, handleInfoEdit, showAlert])
 
   const handleInfoSaveClick = useCallback(async () => {
     if (!isEditModeInfo || infoDraft == null) return
+    if (!canGeminiRecruitmentInfoEdit(detail?.applicationPeriodStart)) {
+      void showAlert({
+        title: getGeminiRecruitmentInfoEditBlockedAlertTitle(),
+        content: getGeminiRecruitmentInfoEditBlockedAlertMessage(),
+      })
+      handleInfoCancel()
+      return
+    }
     // deferred text commit flush — blur 전에 저장하면 마지막 키가 빠질 수 있음
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur()
@@ -225,7 +245,14 @@ export function GeminiRecruitmentDetailFullPageModal({
         content: formatGeminiRecruitmentSaveError(error),
       })
     }
-  }, [handleInfoSave, infoDraft, isEditModeInfo, showAlert])
+  }, [
+    detail?.applicationPeriodStart,
+    handleInfoCancel,
+    handleInfoSave,
+    infoDraft,
+    isEditModeInfo,
+    showAlert,
+  ])
 
   const handleDeleteClick = useCallback(() => {
     if (detail == null) return

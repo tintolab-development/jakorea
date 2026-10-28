@@ -14,6 +14,9 @@ import {
 const FIXED_SCHEDULE_DESCRIPTION_SINGLE_ROUND =
   '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
 
+const FIXED_SCHEDULE_DESCRIPTION_CURRICULUM_SINGLE_ROUND_PREFIX =
+  '진행 가능한 일정을 모두 선택해 주세요.'
+
 const FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND =
   'N차시*N회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
 
@@ -49,6 +52,11 @@ export function resolveApplicationFixedScheduleParagraphDescription(
   if (input.sessionRound === 'multi') {
     return resolveMultiRoundFixedScheduleDescription(input)
   }
+  if (input.educationStructure === 'curriculum') {
+    // ① 커리큘럼·단일·날짜 — 예정일 줄 = 차시. 「수업은 1일, N차시 운영됩니다」
+    const sessions = countOrN(readCurriculumPreferredScheduleDailySessionCountForCopy(input))
+    return `${FIXED_SCHEDULE_DESCRIPTION_CURRICULUM_SINGLE_ROUND_PREFIX} 수업은 1일, ${sessions}차시 운영됩니다.`
+  }
   return FIXED_SCHEDULE_DESCRIPTION_SINGLE_ROUND
 }
 
@@ -60,7 +68,12 @@ export function resolveApplicationPreferredScheduleParagraphDescription(
   if (shouldShowApplicationSchedulePeriodDateOnlyPreferred(input)) {
     return `교육을 희망하는 날짜를 모두 작성해 주세요. (최대 ${max}개까지 희망 일정 신청이 가능합니다.)`
   }
-  const sessions = countOrN(readCurriculumPreferredScheduleDailySessionCountForCopy(input))
+  // ④ 커리큘럼·복수·기간 — N은 모집 희망 차시 상한(maxSessionsPerDay). 회차당 차시(sessionsPerRound) 아님.
+  const sessions = countOrN(
+    input.sessionRound === 'multi'
+      ? input.maxSessionsPerDay
+      : readCurriculumPreferredScheduleDailySessionCountForCopy(input)
+  )
   return `교육을 희망하는 날짜와 수업 시간을 모두 작성해 주세요. 수업은 1일, ${sessions}차시 운영됩니다. (최대 ${max}개까지 희망 일정 신청이 가능합니다.)`
 }
 

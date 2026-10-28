@@ -29,7 +29,7 @@ import {
   type RuntimeFixedScheduleChoiceItem,
 } from '@jakorea/form-schema/program-application'
 import {
-  replaceDefaultEducationSlotNameWithRound,
+  appendEducationRoundSuffix,
   stripDefaultEducationSlotNameFromLabel,
 } from '../../../shared/lib/education-schedule-name.ts'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
@@ -638,29 +638,44 @@ function readRuntimeEnumText(runtime: unknown, key: string): string {
 }
 
 /**
- * 커리큘럼·다회차·날짜 고정 일정이면 선택지에 `N회차`를 붙인다.
- * 서버 기본명 `공통 교육 예정 N`의 N은 교육 진행 예정일 입력 순서(= 회차)다.
+ * 커리큘럼·다회차·날짜 고정 일정(③)이면 선택지에 `N회차`를 붙인다. 기간 지정(④)은 회차 없음.
+ * N은 교육 진행 예정일 입력 순서(`line:N` → N+1, 아니면 선택지 순서)다. 기본명 번호와 무관.
  */
 export function shouldShowRuntimeScheduleChoiceRound(runtime: unknown): boolean {
+  const mode =
+    readRuntimeEnumText(runtime, 'educationScheduleMode') ||
+    readRuntimeEnumText(runtime, 'scheduleMode')
   return (
     readRuntimeEnumText(runtime, 'educationStructure') === 'CURRICULUM' &&
-    readRuntimeEnumText(runtime, 'sessionRound') === 'MULTI'
+    readRuntimeEnumText(runtime, 'sessionRound') === 'MULTI' &&
+    mode !== 'PERIOD' &&
+    mode !== 'DATE_PERIOD'
   )
+}
+
+const RUNTIME_LINE_CHOICE_ID_RE = /^line:(\d+)$/i
+
+function readRuntimeScheduleChoiceRoundNumber(id: unknown, index: number): number {
+  const match = typeof id === 'string' ? RUNTIME_LINE_CHOICE_ID_RE.exec(id.trim()) : null
+  return match ? Number(match[1]) + 1 : index + 1
 }
 
 /**
  * 서버 선택지 라벨에서 자동 기본명(`공통 교육 예정 N`)을 제거한다. id는 그대로 둔다.
- * 커리큘럼·다회차면 제거 대신 `일시 | N회차`로 바꾼다.
+ * ③이면 제거 후 `일시 | (입력순)회차`를 붙인다.
  */
-function withDisplayScheduleChoiceLabels<T extends { label: string }>(
+function withDisplayScheduleChoiceLabels<T extends { id?: string; label: string }>(
   items: ReadonlyArray<T> | null,
   runtime?: unknown
 ): ReadonlyArray<T> | null {
   if (items == null) return items
   const showRound = shouldShowRuntimeScheduleChoiceRound(runtime)
-  return items.map(item => {
+  return items.map((item, index) => {
     const label = showRound
-      ? replaceDefaultEducationSlotNameWithRound(item.label)
+      ? appendEducationRoundSuffix(
+          stripDefaultEducationSlotNameFromLabel(item.label),
+          readRuntimeScheduleChoiceRoundNumber(item.id, index)
+        )
       : stripDefaultEducationSlotNameFromLabel(item.label)
     if (label === item.label) return item
     return { ...item, label: label || DEFAULT_ONLY_SCHEDULE_CHOICE_LABEL }

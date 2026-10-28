@@ -1,6 +1,11 @@
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsRadio, CmsSelect, useCmsAlert } from '@/shared/ui'
-import { useEffect, useState } from 'react'
+import {
+  PermissionModal,
+  type PermissionModalPayload,
+} from '@/shared/components/permission-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   INSTRUCTOR_ROLE_LABELS,
   type InstructorRoleKey,
@@ -12,6 +17,19 @@ import './school-detail-add-instructor-assign-modal.css'
 type InstitutionOption = {
   value: string
   label: string
+}
+
+const MODAL_WIDTH = 600
+
+function RequiredFieldLabel({ children }: { children: ReactNode }) {
+  return (
+    <>
+      {children}
+      <span className="school-detail-add-instructor-assign-modal__required" aria-hidden>
+        *
+      </span>
+    </>
+  )
 }
 
 function AssignSessionTags({
@@ -71,7 +89,8 @@ export interface AssignGuideModalProps {
   onRoleChange: (role: InstructorRoleKey) => void
   onSessionIdsChange: (ids: string[]) => void
   onCancel: () => void
-  onConfirm: () => void
+  onConfirm: (payload: PermissionModalPayload) => void
+  confirmLoading?: boolean
 }
 
 export function AssignGuideModal({
@@ -87,6 +106,7 @@ export function AssignGuideModal({
   onSessionIdsChange,
   onCancel,
   onConfirm,
+  confirmLoading = false,
 }: AssignGuideModalProps) {
   const { showAlert } = useCmsAlert()
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -96,9 +116,16 @@ export function AssignGuideModal({
   }, [open])
 
   const handleConfirm = () => {
+    if (!selectedInstitutionId) {
+      showAlert({
+        title: '기관 추가 배정 안내',
+        content: '배정할 기관을 선택해 주세요.',
+      })
+      return
+    }
     if (selectedSessionIds.length === 0) {
       showAlert({
-        title: '기관 배정 안내',
+        title: '기관 추가 배정 안내',
         content: '교육 배정일을 선택해 주세요.',
       })
       return
@@ -106,9 +133,10 @@ export function AssignGuideModal({
     setConfirmOpen(true)
   }
 
-  const handleFinalConfirm = () => {
+  const handleFinalConfirm = (payload: PermissionModalPayload) => {
+    if (confirmLoading) return
     setConfirmOpen(false)
-    onConfirm()
+    onConfirm(payload)
   }
 
   return (
@@ -116,28 +144,26 @@ export function AssignGuideModal({
       <ContentModal
         open={open}
         onCancel={onCancel}
-        title="기관 배정 안내"
-        width={800}
+        title="기관 추가 배정 안내"
+        width={MODAL_WIDTH}
+        description={`**[${instructorName}]** 님을 추가 배정할 기관을 선택해 주세요`}
         footer={
           <>
             <CmsButton variant="secondary" size="medium" onClick={onCancel}>
               취소
             </CmsButton>
             <CmsButton variant="primary" size="medium" onClick={handleConfirm}>
-              강사 배정
+              배정
             </CmsButton>
           </>
         }
         className="school-detail-add-instructor-assign-modal"
       >
         <div className="school-detail-add-instructor-assign-modal__body">
-          <p className="school-detail-add-instructor-assign-modal__description">
-            [<strong>{instructorName}</strong>] 강사님을 추가 배정할 기관을 선택해 주세요
-          </p>
           <div className="school-detail-add-instructor-assign-modal__fields">
             <div className="school-detail-add-instructor-assign-modal__field">
               <div className="school-detail-add-instructor-assign-modal__field-label">
-                대표 강사 지정
+                <RequiredFieldLabel>대표 강사 지정</RequiredFieldLabel>
               </div>
               <CmsRadio.Group
                 className="school-detail-add-instructor-assign-modal__role-radios"
@@ -154,7 +180,9 @@ export function AssignGuideModal({
               />
             </div>
             <div className="school-detail-add-instructor-assign-modal__field">
-              <div className="school-detail-add-instructor-assign-modal__field-label">기관명</div>
+              <div className="school-detail-add-instructor-assign-modal__field-label">
+                <RequiredFieldLabel>기관명</RequiredFieldLabel>
+              </div>
               <CmsSelect
                 inputSize="medium"
                 width="100%"
@@ -168,7 +196,7 @@ export function AssignGuideModal({
             </div>
             <div className="school-detail-add-instructor-assign-modal__field school-detail-add-instructor-assign-modal__field--sessions">
               <div className="school-detail-add-instructor-assign-modal__field-label">
-                교육 배정일 선택
+                <RequiredFieldLabel>교육 배정일 선택</RequiredFieldLabel>
               </div>
               <AssignSessionTags
                 value={selectedSessionIds}
@@ -180,26 +208,20 @@ export function AssignGuideModal({
         </div>
       </ContentModal>
 
-      <ContentModal
+      <PermissionModal
         open={confirmOpen}
         onCancel={() => setConfirmOpen(false)}
         title="강사 배정 안내"
-        width={800}
-        footer={
-          <>
-            <CmsButton variant="secondary" size="medium" onClick={() => setConfirmOpen(false)}>
-              취소
-            </CmsButton>
-            <CmsButton variant="primary" size="medium" onClick={handleFinalConfirm}>
-              강사 배정
-            </CmsButton>
-          </>
-        }
-      >
-        <p>
-          선택하신 기관 일정에 [<strong>{instructorName}</strong>] 강사님을 새로 배정하시겠습니까?
-        </p>
-      </ContentModal>
+        variant="approve"
+        width={600}
+        message={`선택하신 기관 일정에 [**${instructorName}**] 강사님을 새로 배정하시겠습니까?`}
+        confirmLabel="강사 배정"
+        requireReason={false}
+        notifyTimingOptions="two"
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+        confirmLoading={confirmLoading}
+        onConfirm={handleFinalConfirm}
+      />
     </>
   )
 }

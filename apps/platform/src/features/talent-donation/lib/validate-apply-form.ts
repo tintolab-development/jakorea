@@ -1,5 +1,14 @@
 import { isValidEmail } from '@/features/auth/sign-up'
-import type { TalentApplyFieldKey, TalentApplyFormValues } from './apply-form'
+import {
+  TALENT_APPLY_LONG_TEXT_MAX_LENGTH,
+  type TalentApplyFieldKey,
+  type TalentApplyFormValues,
+} from './apply-form'
+
+function isRequiredLongTextInvalid(value: string): boolean {
+  const trimmed = value.trim()
+  return trimmed.length === 0 || trimmed.length > TALENT_APPLY_LONG_TEXT_MAX_LENGTH
+}
 
 export type TalentApplyFieldErrors = Partial<Record<TalentApplyFieldKey, boolean>>
 
@@ -20,9 +29,9 @@ export function collectTalentApplyFieldErrors(
     errors.periodStart = true
     errors.periodEnd = true
   }
-  if (!values.bio.trim()) errors.bio = true
-  if (!values.talentIntro.trim()) errors.talentIntro = true
-  if (!values.motivation.trim()) errors.motivation = true
+  if (isRequiredLongTextInvalid(values.bio)) errors.bio = true
+  if (isRequiredLongTextInvalid(values.talentIntro)) errors.talentIntro = true
+  if (isRequiredLongTextInvalid(values.motivation)) errors.motivation = true
   if (!values.jaParticipation) errors.jaParticipation = true
   if (!values.privacyAgreed) errors.privacy = true
 

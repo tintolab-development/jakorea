@@ -1,11 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import { recordMenuClick } from '@/features/analytics'
+import {
+  NotificationInboxPanel,
+  useMyNotificationUnreadCountQuery,
+} from '@/features/notification'
+import { PFModal } from '@/shared/ui'
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import chevronUpBlackUrl from '@/shared/assets/icons/chevron-up-black-32.svg'
 import chevronLeftGrayUrl from '@/shared/assets/icons/chevron-left-gray.svg'
 import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
+import notificationsActiveIconUrl from '../image/icon/notifications-active.svg'
 import notificationsIconUrl from '../image/icon/notifications.svg'
 import {
   getLoggedInActionRoute,
@@ -94,6 +100,20 @@ export function HeaderMobileMenu({
 }: HeaderMobileMenuProps) {
   const navigate = useNavigate()
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [notificationMenuOpen, setNotificationMenuOpen] = useState(open)
+  const isNotificationOpenRef = useRef(false)
+  const unreadNotificationCount = useMyNotificationUnreadCountQuery(isLoggedIn)
+  const notificationOpen = open && isLoggedIn && isNotificationOpen
+
+  if (notificationMenuOpen !== open) {
+    setNotificationMenuOpen(open)
+    setIsNotificationOpen(false)
+  }
+
+  useEffect(() => {
+    isNotificationOpenRef.current = notificationOpen
+  }, [notificationOpen])
 
   useEffect(() => {
     if (!open) return
@@ -106,7 +126,7 @@ export function HeaderMobileMenu({
     document.body.style.overflow = 'hidden'
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !isNotificationOpenRef.current) {
         onClose()
       }
     }
@@ -146,10 +166,21 @@ export function HeaderMobileMenu({
           <img className={styles.backIcon} src={chevronLeftGrayUrl} alt="" aria-hidden="true" />
         </button>
         {isLoggedIn ? (
-          <button className={styles.topBarButton} type="button" aria-label="알림">
+          <button
+            className={styles.topBarButton}
+            type="button"
+            aria-label={
+              unreadNotificationCount > 0
+                ? `알림 (읽지 않은 알림 ${unreadNotificationCount}건)`
+                : '알림'
+            }
+            aria-haspopup="dialog"
+            aria-expanded={notificationOpen}
+            onClick={() => setIsNotificationOpen(true)}
+          >
             <img
               className={styles.notificationIcon}
-              src={notificationsIconUrl}
+              src={unreadNotificationCount > 0 ? notificationsActiveIconUrl : notificationsIconUrl}
               alt=""
               aria-hidden="true"
             />
@@ -256,6 +287,15 @@ export function HeaderMobileMenu({
           })}
         </nav>
       </div>
+
+      <PFModal
+        open={notificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+        title="알림"
+        mobilePlacement="full"
+      >
+        <NotificationInboxPanel variant="embedded" />
+      </PFModal>
     </div>,
     document.body
   )

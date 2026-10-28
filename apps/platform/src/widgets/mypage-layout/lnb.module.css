@@ -232,7 +232,10 @@
 }
 
 .mobilePanel {
-  position: relative;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
   z-index: 22;
   margin-top: 0;
   box-sizing: border-box;
@@ -376,7 +379,10 @@
   }
 
   .lnbMobileDropdown .ctaWrap {
-    margin-top: var(--spacing-12);
+    box-sizing: border-box;
+    margin-top: var(--spacing-20);
+    padding-left: calc(var(--page-padding-x) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--page-padding-x) + env(safe-area-inset-right, 0px));
   }
 
   .lnbCategory {

@@ -47,9 +47,9 @@ function omitTrainedTeachersColumns(columns: ColumnsType<Program>): ColumnsType<
 }
 
 const WIDTH_NO = TABLE_COLUMN_WIDTHS.index
-const WIDTH_PROGRAM_TITLE = 690
+const WIDTH_PROGRAM_TITLE = 640
 const WIDTH_RECRUITMENT_COUNT = 160
-const WIDTH_TARGET_LEVEL = 160
+const WIDTH_TARGET_LEVEL = 220
 const WIDTH_OPERATION_PERIOD = 320
 const WIDTH_PARTICIPATION_COUNT = 160
 const WIDTH_PROGRESS = 180
@@ -174,6 +174,7 @@ function createProgramListAllColumns() {
       title: '교육 대상',
       dataIndex: 'targetLevel',
       key: 'targetLevel',
+      ellipsis: true,
       minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-target',
@@ -319,6 +320,7 @@ function createProgramListInProgressColumns() {
       title: '교육 대상',
       dataIndex: 'targetLevel',
       key: 'targetLevel',
+      ellipsis: true,
       minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-target',

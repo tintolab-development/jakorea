@@ -3,6 +3,7 @@ import {
   CERTIFICATE_DOWNLOAD_LOG_FALLBACK,
   CERTIFICATE_SERIAL_ALLOCATE_FALLBACK,
   CertificateSerialAllocateError,
+  buildCertificateRosterSerialAllocateRequest,
   buildCertificateSerialAllocateRequest,
   getCertificateSerialAllocateErrorMessage,
   logCertificateIssueDownload,
@@ -82,6 +83,52 @@ describe('buildCertificateSerialAllocateRequest', () => {
         certificateType: 'document-3',
       })
     ).toThrow('참가자 정보가 없어 고유번호를 발급할 수 없습니다.')
+  })
+})
+
+describe('buildCertificateRosterSerialAllocateRequest', () => {
+  it('sends programId, applicationId, rosterId — not participantId', () => {
+    expect(
+      buildCertificateRosterSerialAllocateRequest({
+        programId: 5001,
+        subjectId: 12,
+        applicationId: 1691524,
+        rosterId: 88,
+        certificateType: 'document-3',
+      })
+    ).toEqual({
+      programId: 5001,
+      applicationId: 1691524,
+      rosterId: 88,
+      certificateType: 'document-3',
+    })
+  })
+
+  it('requires numeric program, application, and roster ids', () => {
+    expect(() =>
+      buildCertificateRosterSerialAllocateRequest({
+        programId: 'prog-1',
+        applicationId: 1691524,
+        rosterId: 88,
+        certificateType: 'document-3',
+      })
+    ).toThrow('프로그램 정보가 없어 고유번호를 발급할 수 없습니다.')
+
+    expect(() =>
+      buildCertificateRosterSerialAllocateRequest({
+        programId: 5001,
+        rosterId: 88,
+        certificateType: 'document-3',
+      })
+    ).toThrow('기관 신청 정보가 없어 고유번호를 발급할 수 없습니다.')
+
+    expect(() =>
+      buildCertificateRosterSerialAllocateRequest({
+        programId: 5001,
+        applicationId: 1691524,
+        certificateType: 'document-3',
+      })
+    ).toThrow('학생 명단 정보가 없어 고유번호를 발급할 수 없습니다.')
   })
 })
 

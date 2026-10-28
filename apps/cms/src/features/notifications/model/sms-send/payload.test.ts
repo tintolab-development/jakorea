@@ -3,6 +3,7 @@ import {
   buildSmsSendCreateRequest,
   buildSmsSendPayload,
   estimateSmsSendBodyBytes,
+  SMS_SEND_ATTACHMENT_PENDING_MESSAGE,
   SMS_SEND_CONTENT_UTF8_OVER_MESSAGE,
   validateSmsSendDraft,
 } from './payload'
@@ -513,3 +514,73 @@ describe('validateSmsSendDraft', () => {
     ).toBe('직접 입력 수신자의 연락처를 입력하세요.')
   })
 })
+
+describe('buildSmsSendCreateRequest MMS attachmentFileIds', () => {
+  it('MMS 템플릿 첨부만 사용: 요청 첨부가 없으면 attachmentFileIds 생략', () => {
+    const body = buildSmsSendCreateRequest({
+      draft: draft({ messageType: 'MMS', attachmentFileNames: ['tpl.jpg'], attachmentFileIds: [] }),
+      templateId: 1001,
+    })
+    expect(body.templateId).toBe(1001)
+    expect(body).not.toHaveProperty('attachmentFileIds')
+    expect(body).not.toHaveProperty('messageType')
+  })
+
+  it('템플릿 MMS + 요청 첨부: 요청 첨부만 전송(템플릿 첨부보다 우선)', () => {
+    const body = buildSmsSendCreateRequest({
+      draft: draft({ messageType: 'MMS', attachmentFileIds: [30001] }),
+      templateId: 1001,
+    })
+    expect(body).toMatchObject({ templateId: 1001, attachmentFileIds: [30001] })
+    expect(body).not.toHaveProperty('messageType')
+  })
+
+  it('템플릿 없는 MMS + 요청 첨부: messageType MMS + attachmentFileIds', () => {
+    const body = buildSmsSendCreateRequest({
+      draft: draft({ templateId: undefined, messageType: 'MMS', attachmentFileIds: [30001, 30002] }),
+      templateId: null,
+      senderProfileId: 12,
+    })
+    expect(body).not.toHaveProperty('templateId')
+    expect(body).toMatchObject({ messageType: 'MMS', attachmentFileIds: [30001, 30002] })
+  })
+
+  it('템플릿 없는 MMS + 첨부 없음: messageType MMS, attachmentFileIds 생략', () => {
+    const body = buildSmsSendCreateRequest({
+      draft: draft({ templateId: undefined, messageType: 'MMS', attachmentFileIds: [] }),
+      templateId: null,
+      senderProfileId: 12,
+    })
+    expect(body.messageType).toBe('MMS')
+    expect(body).not.toHaveProperty('attachmentFileIds')
+  })
+
+  it.each(['SMS', 'LMS'] as const)('%s에서는 첨부 ID가 있어도 전송하지 않음', messageType => {
+    const body = buildSmsSendCreateRequest({
+      draft: draft({ templateId: undefined, messageType, attachmentFileIds: [30001] }),
+      templateId: null,
+      senderProfileId: 12,
+    })
+    expect(body).not.toHaveProperty('attachmentFileIds')
+  })
+
+  it('중복 ID는 제거하고 선택 순서 유지', () => {
+    const body = buildSmsSendCreateRequest({
+      draft: draft({ templateId: undefined, messageType: 'MMS', attachmentFileIds: [30002, 30001, 30002] }),
+      templateId: null,
+      senderProfileId: 12,
+    })
+    expect(body.attachmentFileIds).toEqual([30002, 30001])
+  })
+})
+
+describe('validateSmsSendDraft MMS 첨부', () => {
+  it('CLEAN/AVAILABLE 전(업로드·검사 중)에는 발송 차단', () => {
+    expect(
+      validateSmsSendDraft(
+        draft({ messageType: 'MMS', attachmentFileNames: ['a.jpg'], attachmentUploadPending: true })
+      )
+    ).toBe(SMS_SEND_ATTACHMENT_PENDING_MESSAGE)
+  })
+})
+

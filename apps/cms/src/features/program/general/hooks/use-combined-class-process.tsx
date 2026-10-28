@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { CombinedClassLeadTeacherCandidate } from '@/features/program/general/lib/combined-class-lead-teacher'
 import {
-  COMBINED_CLASS_CANCEL_COMPLETE_MODAL_TITLE,
-  COMBINED_CLASS_CANCEL_MODAL_TITLE,
-  buildCombinedClassCancelCompleteDescription,
+  COMBINED_CLASS_CANCEL_NOT_ALLOWED_MESSAGE,
   COMBINED_CLASS_GRADE_REQUIRED_MODAL_MESSAGE,
   COMBINED_CLASS_GRADE_REQUIRED_MODAL_TITLE,
-  buildCombinedClassCancelDescription,
   buildCombinedClassProcessDescription,
 } from '@/features/program/general/lib/combined-class-copy'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
@@ -59,7 +56,6 @@ export function useCombinedClassProcess(params: {
     partnerIds: string[]
     leadTeacherMemberId: number
   }) => Promise<boolean | number>
-  onCancelMerge: (mergeGroupId?: number) => Promise<boolean>
 }) {
   const {
     active,
@@ -72,23 +68,15 @@ export function useCombinedClassProcess(params: {
     applySelection,
     buildCandidates,
     onProcess,
-    onCancelMerge,
   } = params
   const { showAlert } = useCmsAlert()
   const [accepted, setAccepted] = useState<CombinedClassProcessSelection | null>(null)
   const [processTarget, setProcessTarget] = useState<ProcessTarget | null>(null)
-  const [cancelTarget, setCancelTarget] = useState<{ partnerGrade: string } | null>(null)
   const [gradeAlertOpen, setGradeAlertOpen] = useState(false)
   const [completeGrades, setCompleteGrades] = useState<{
     leadGrade: string
     partnerGrade: string
   } | null>(null)
-  const [cancelComplete, setCancelComplete] = useState<{
-    schoolName: string
-    leadGrade: string
-    partnerGrade: string
-  } | null>(null)
-  const [activeMergeGroupId, setActiveMergeGroupId] = useState<number | undefined>()
   const [submitting, setSubmitting] = useState(false)
   const ignoreEmptyPartnerChangeRef = useRef(false)
 
@@ -108,11 +96,8 @@ export function useCombinedClassProcess(params: {
   useEffect(() => {
     setAccepted(null)
     setProcessTarget(null)
-    setCancelTarget(null)
     setGradeAlertOpen(false)
     setCompleteGrades(null)
-    setCancelComplete(null)
-    setActiveMergeGroupId(undefined)
   }, [resetKey])
 
   const partnerGradeLabel = useCallback(
@@ -129,24 +114,33 @@ export function useCombinedClassProcess(params: {
     applySelection(effectiveCommitted)
   }, [applySelection, effectiveCommitted])
 
+  const showCancelNotAllowedAlert = useCallback(() => {
+    void showAlert({
+      title: '안내',
+      content: COMBINED_CLASS_CANCEL_NOT_ALLOWED_MESSAGE,
+    })
+  }, [showAlert])
+
   const onApplicationChange = useCallback(
     (next: '신청' | '미신청', partnerIds: string[]) => {
       if (next === '미신청') {
+        // 합반 확정 후에는 취소할 수 없다(서버 canCancel 항상 false, DELETE 는 409).
+        // 취소 확인 모달·API 호출 없이 안내만 띄운다.
+        if (active && effectiveCommitted.application === '신청') {
+          applySelection(effectiveCommitted)
+          showCancelNotAllowedAlert()
+          return
+        }
         ignoreEmptyPartnerChangeRef.current = true
         queueMicrotask(() => {
           ignoreEmptyPartnerChangeRef.current = false
         })
         applySelection({ application: '미신청', partnerIds: [] })
-        if (active && effectiveCommitted.application === '신청') {
-          setCancelTarget({
-            partnerGrade: partnerGradeLabel(effectiveCommitted.partnerIds),
-          })
-        }
         return
       }
       applySelection({ application: '신청', partnerIds })
     },
-    [active, applySelection, effectiveCommitted, partnerGradeLabel]
+    [active, applySelection, effectiveCommitted, showCancelNotAllowedAlert]
   )
 
   const onPartnerIdsChange = useCallback(
@@ -162,6 +156,12 @@ export function useCombinedClassProcess(params: {
         selectionKey(effectiveCommitted) ===
           selectionKey({ application: '신청', partnerIds })
       ) {
+        return
+      }
+      // 임시 정책: 확정된 합반의 구성 변경은 기존 합반 취소 후 재생성이므로 막는다
+      if (effectiveCommitted.application === '신청') {
+        applySelection(effectiveCommitted)
+        showCancelNotAllowedAlert()
         return
       }
       const candidates = buildCandidates(partnerIds)
@@ -186,6 +186,7 @@ export function useCombinedClassProcess(params: {
       effectiveCommitted,
       partnerGradeLabel,
       showAlert,
+      showCancelNotAllowedAlert,
     ]
   )
 
@@ -218,7 +219,6 @@ export function useCombinedClassProcess(params: {
             leadTeacherMemberId,
           })
           if (saved === false) return
-          setActiveMergeGroupId(typeof saved === 'number' ? saved : undefined)
           const next: CombinedClassProcessSelection = {
             application: '신청',
             partnerIds: processTarget.partnerIds,
@@ -238,37 +238,6 @@ export function useCombinedClassProcess(params: {
     [applySelection, leadGrade, onProcess, processTarget, showAlert]
   )
 
-  const closeCancelModal = useCallback(() => {
-    if (submitting) return
-    revertToCommitted()
-    setCancelTarget(null)
-  }, [revertToCommitted, submitting])
-
-  const confirmCancel = useCallback(() => {
-    const target = cancelTarget
-    void (async () => {
-      setSubmitting(true)
-      try {
-        const cancelled = await onCancelMerge(activeMergeGroupId)
-        if (!cancelled) return
-        setActiveMergeGroupId(undefined)
-        const next: CombinedClassProcessSelection = { application: '미신청', partnerIds: [] }
-        setAccepted(next)
-        applySelection(next)
-        setCancelTarget(null)
-        if (target) {
-          setCancelComplete({
-            schoolName,
-            leadGrade: formatGradeLabel(leadGrade),
-            partnerGrade: target.partnerGrade,
-          })
-        }
-      } finally {
-        setSubmitting(false)
-      }
-    })()
-  }, [activeMergeGroupId, applySelection, cancelTarget, leadGrade, onCancelMerge, schoolName])
-
   const formattedLeadGrade = formatGradeLabel(leadGrade)
   const processDescription = processTarget
     ? buildCombinedClassProcessDescription({
@@ -277,14 +246,6 @@ export function useCombinedClassProcess(params: {
         partnerGrade: processTarget.partnerGrade,
       })
     : ''
-  const cancelDescription = cancelTarget
-    ? buildCombinedClassCancelDescription({
-        schoolName,
-        leadGrade: formattedLeadGrade,
-        partnerGrade: cancelTarget.partnerGrade,
-      })
-    : ''
-
   const modals: ReactNode = (
     <>
       <InstitutionCombinedClassLeadTeacherModal
@@ -296,41 +257,6 @@ export function useCombinedClassProcess(params: {
         onCancel={closeProcessModal}
         onConfirm={confirmProcess}
       />
-      <ContentModal
-        open={cancelTarget != null}
-        onCancel={closeCancelModal}
-        title={COMBINED_CLASS_CANCEL_MODAL_TITLE}
-        width={MODAL_WIDTH}
-        zIndex={CMS_ALERT_MODAL_Z_INDEX}
-        description={cancelDescription}
-        footer={
-          <>
-            <CmsButton
-              variant="secondary"
-              size="medium"
-              width={MODAL_BUTTON_WIDTH}
-              type="button"
-              disabled={submitting}
-              onClick={closeCancelModal}
-            >
-              취소
-            </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="medium"
-              width={MODAL_BUTTON_WIDTH}
-              type="button"
-              loading={submitting}
-              disabled={submitting}
-              onClick={confirmCancel}
-            >
-              합반 취소
-            </CmsButton>
-          </>
-        }
-      >
-        {null}
-      </ContentModal>
       <ContentModal
         open={gradeAlertOpen}
         onCancel={() => setGradeAlertOpen(false)}
@@ -347,28 +273,6 @@ export function useCombinedClassProcess(params: {
             onClick={() => setGradeAlertOpen(false)}
           >
             닫기
-          </CmsButton>
-        }
-      >
-        {null}
-      </ContentModal>
-      <ContentModal
-        open={cancelComplete != null}
-        onCancel={() => setCancelComplete(null)}
-        title={COMBINED_CLASS_CANCEL_COMPLETE_MODAL_TITLE}
-        width={MODAL_WIDTH}
-        zIndex={CMS_ALERT_MODAL_Z_INDEX}
-        description={
-          cancelComplete ? buildCombinedClassCancelCompleteDescription(cancelComplete) : ''
-        }
-        footer={
-          <CmsButton
-            variant="secondary"
-            size="medium"
-            type="button"
-            onClick={() => setCancelComplete(null)}
-          >
-            확인
           </CmsButton>
         }
       >

@@ -15,7 +15,7 @@ export interface StatisticsCardTag {
 
 export interface StatisticsCardProps {
   title: string
-  value: number
+  value: number | string
   prefix?: React.ReactNode
   suffix: string
   /** 없으면 태그 행 숨김 (강사 수 등 단순 카드) */

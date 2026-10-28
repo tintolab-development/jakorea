@@ -16,19 +16,42 @@ import {
   InstructorProfileFieldTable,
   resolveInstructorProfileFieldLayout,
 } from './profile-field-table'
+import {
+  SettingsField,
+  SettingsFieldStack,
+  SettingsLicenseOrAwardRows,
+} from './settings-stacked-rows'
 import type { InstructorProfileFieldsProps } from './types'
 
 export function InstructorAwardProfileFields({
   values,
   onValuesChange,
   surface = 'apply',
+  placeholders,
 }: InstructorProfileFieldsProps) {
   const fieldLayout = resolveInstructorProfileFieldLayout(surface)
+  const ph = { ...PH, ...placeholders }
   const patch = <K extends keyof InstructorSharedProfileFormValues>(
     key: K,
     next: InstructorSharedProfileFormValues[K],
   ) => {
     onValuesChange(prev => ({ ...prev, [key]: next }))
+  }
+
+  if (surface === 'settings') {
+    // 회원정보 설정 전용 — 시안 12208:131447
+    return (
+      <SettingsFieldStack>
+        <SettingsField label="수상 및 수료 내역">
+          <SettingsLicenseOrAwardRows
+            rows={values.awardRows}
+            keyPrefix="award"
+            placeholders={{ year: ph.awardYear, title: ph.awardTitle, issuer: ph.awardIssuer }}
+            onRowsChange={next => patch('awardRows', next)}
+          />
+        </SettingsField>
+      </SettingsFieldStack>
+    )
   }
 
   return (

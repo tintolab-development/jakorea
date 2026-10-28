@@ -1,7 +1,8 @@
 /**
- * 모집 상세 정보(썸네일·첨부) overlay 키·생성 후 프로그램 바인딩.
+ * 모집 상세 정보(썸네일·첨부) overlay 키·생성 요청 미디어 필드.
  * 등록 중에는 ownerId=null draft(PROGRAM_THUMBNAIL·PROGRAM_DETAIL_ATTACHMENT)로 업로드하고,
- * 생성 직후 실제 programId 에 연결한다.
+ * 일반·UJAT 신규 등록은 POST recruitments[]에 fileObjectId를 실어 연결한다.
+ * 1사1교·교육받은 교사 신규 등록과 기존 프로그램 수정은 기존 PUT을 유지한다.
  */
 
 import { fileObjectIdFromAdminFileUrl, parseFileObjectId } from '@/shared/lib/admin-file-upload'
@@ -175,9 +176,103 @@ export function readRecruitDetailMediaFromOverlay(
   }
 }
 
+const GENERAL_ROW_DETAIL_INFO_PREFIX: Record<string, string> = {
+  PARTICIPANT: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution,
+  INSTRUCTOR: 'recruitInstructor.detailInfo',
+  VOLUNTEER: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer,
+}
+
+export type RecruitmentCreateMediaFields = {
+  thumbnailFileObjectId?: number | null
+  attachmentFileObjectIds?: number[] | null
+}
+
+export type RecruitmentCreateMediaMatch = {
+  recruitmentType?: string | null
+  targetType?: string | null
+  applicationType?: string | null
+  recruitTerm?: string | null
+}
+
+export type RecruitmentCreateMediaVariant = 'general' | 'ujat'
+
+function overlayPrefixesForRecruitmentCreateMedia(
+  row: RecruitmentCreateMediaMatch,
+  variant: RecruitmentCreateMediaVariant
+): readonly string[] {
+  const recruitmentType = (row.recruitmentType ?? '').toUpperCase()
+  if (variant === 'ujat') {
+    if (recruitmentType === 'PARTICIPANT') {
+      return [RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution]
+    }
+    if (recruitmentType === 'VOLUNTEER') {
+      return row.recruitTerm === 'SECOND_HALF'
+        ? ['recruitVolunteer.h2.detailInfo']
+        : ['recruitVolunteer.h1.detailInfo']
+    }
+    return []
+  }
+  const prefix = GENERAL_ROW_DETAIL_INFO_PREFIX[recruitmentType]
+  return prefix ? [prefix] : []
+}
+
+/** 업로드·confirm이 끝난 fileObjectId만 생성 요청에 싣는다. blob·미완료 id는 제외. */
+export function recruitmentCreateMediaFieldsFromOverlay(
+  overlay: Record<string, unknown>,
+  row: RecruitmentCreateMediaMatch,
+  variant: RecruitmentCreateMediaVariant
+): RecruitmentCreateMediaFields {
+  const prefixes = overlayPrefixesForRecruitmentCreateMedia(row, variant)
+  if (prefixes.length === 0) return {}
+  const media = readRecruitDetailMediaFromOverlay(overlay, prefixes)
+  return {
+    ...(media.thumbFileObjectId != null
+      ? { thumbnailFileObjectId: media.thumbFileObjectId }
+      : {}),
+    ...(media.attachmentFileObjectIds != null
+      ? { attachmentFileObjectIds: media.attachmentFileObjectIds }
+      : {}),
+  }
+}
+
+export function withRecruitmentCreateMedia<T extends RecruitmentCreateMediaMatch>(
+  rows: T[] | undefined,
+  overlay: Record<string, unknown>,
+  variant: RecruitmentCreateMediaVariant
+): Array<T & RecruitmentCreateMediaFields> | undefined {
+  return rows?.map(row => ({
+    ...row,
+    ...recruitmentCreateMediaFieldsFromOverlay(overlay, row, variant),
+  }))
+}
+
+function isRecruitmentCreateMediaOverlayKey(key: string): boolean {
+  return (
+    key.endsWith('.thumbFileObjectId') ||
+    key.endsWith('.attachmentFileObjectIds') ||
+    key.endsWith('.thumbFileName') ||
+    key.endsWith('.thumbContentUrl') ||
+    key.endsWith('.attachmentFileNames')
+  )
+}
+
+/** 생성 요청 매칭용 — blob 미리보기 키는 제외하고 confirm된 미디어 overlay만 남긴다. */
+export function pickRecruitmentCreateMediaOverlay(
+  overlay: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(overlay ?? {})) {
+    if (!isRecruitmentCreateMediaOverlayKey(key)) continue
+    if (typeof value === 'string' && value.startsWith('blob:')) continue
+    out[key] = value
+  }
+  return out
+}
+
 /**
- * 프로그램 생성 직후 — ownerId=null draft 파일을 실제 programId 에 연결.
- * 첨부는 PUT /programs/{id}/attachments (포털 GENERAL 첨부 SSOT).
+ * 1사1교·교육받은 교사 생성 직후 — ownerId=null draft 파일을 실제 programId 에 연결.
+ * 첨부는 PUT /programs/{id}/attachments.
+ * 일반·UJAT 신규 등록은 생성 요청 recruitments[] 미디어 필드를 쓰고 이 후속 PUT을 호출하지 않는다.
  * 실패하면 호출부가 방금 만든 프로그램을 삭제하고 등록을 완료하지 않는다.
  */
 export async function bindRecruitDetailMediaAfterProgramCreate(
@@ -197,10 +292,25 @@ export async function bindRecruitDetailMediaAfterProgramCreate(
   await putProgramAttachments(numericId, attachmentIds)
 }
 
-const GENERAL_ROW_DETAIL_INFO_PREFIX: Record<string, string> = {
-  PARTICIPANT: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution,
-  INSTRUCTOR: 'recruitInstructor.detailInfo',
-  VOLUNTEER: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer,
+/** 모집 미리보기·탭별 미디어 — 다른 탭 overlay를 섞지 않는다. */
+export function recruitDetailInfoPrefixesForPreviewAudience(
+  audience: 'institutions' | 'individuals' | 'instructors' | 'volunteers'
+): readonly string[] {
+  if (audience === 'instructors') return [GENERAL_ROW_DETAIL_INFO_PREFIX.INSTRUCTOR]
+  if (audience === 'volunteers') {
+    return [
+      GENERAL_ROW_DETAIL_INFO_PREFIX.VOLUNTEER,
+      'recruitVolunteer.h1.detailInfo',
+      'recruitVolunteer.h2.detailInfo',
+    ]
+  }
+  return [
+    RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution,
+    RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.economy,
+    RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.trainedTeachers,
+    RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution,
+    RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.gemini,
+  ]
 }
 
 const UJAT_ROW_DETAIL_INFO_BINDINGS = [
@@ -222,9 +332,8 @@ const UJAT_ROW_DETAIL_INFO_BINDINGS = [
 ] as const
 
 /**
- * 일반 프로그램 생성 직후 — 모집 양식별 썸네일·첨부를 해당 모집 행에 연결한다.
- * 같은 유형 행이 여럿이면(기관·개인 참여자) 같은 양식 파일을 각 행에 넣는다.
- * 행 id가 없으면 프로그램 단위로 연결한다.
+ * 일반 프로그램 모집 행 PUT. 신규 등록은 withRecruitmentCreateMedia를 쓰고 호출하지 않는다.
+ * 기존 프로그램 수정 화면의 PUT은 program-media-target을 쓴다.
  */
 export async function bindGeneralRecruitDetailMediaToRows(
   created: Pick<Program, 'id' | 'programRecruitments'>,
@@ -252,7 +361,7 @@ export async function bindGeneralRecruitDetailMediaToRows(
 }
 
 /**
- * UJAT 프로그램 생성 직후 — 기관·봉사자 상반기·하반기 미디어를 각 모집 행에 연결한다.
+ * UJAT 모집 행 PUT. 신규 등록은 withRecruitmentCreateMedia를 쓰고 호출하지 않는다.
  * 봉사자 행은 날짜 정렬이 아니라 `recruitTerm`을 SSOT로 사용한다.
  */
 export async function bindUjatRecruitDetailMediaToRows(

@@ -11,10 +11,25 @@ export function programDetailCacheAfterSave(
   echoed: Program,
   patch?: Partial<Program>
 ): Program {
+  const {
+    createdAt: _patchCreatedAt,
+    updatedAt: _patchUpdatedAt,
+    createdByName: _patchCreatedByName,
+    updatedByName: _patchUpdatedByName,
+    ...patchWithoutAudit
+  } = patch ?? {}
+  void _patchCreatedAt
+  void _patchUpdatedAt
+  void _patchCreatedByName
+  void _patchUpdatedByName
   return {
     ...echoed,
-    ...patch,
+    ...patchWithoutAudit,
     id: programId || echoed.id,
+    createdAt: echoed.createdAt,
+    updatedAt: echoed.updatedAt,
+    createdByName: echoed.createdByName,
+    updatedByName: echoed.updatedByName,
     generalCommonInfo: {
       ...echoed.generalCommonInfo,
       ...patch?.generalCommonInfo,

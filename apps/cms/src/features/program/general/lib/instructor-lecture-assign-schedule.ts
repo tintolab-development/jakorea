@@ -10,7 +10,10 @@ import type { Program } from '@/types/domain'
 export type InstructorLectureAssignSlot = {
   key: string
   dateKey: string
+  /** 기관 신청(application) ID. 승인 API `organizationApplicationId`. */
   schoolId: string
+  /** 기관(organization) ID. 하루 1개 기관 규칙은 이 값 기준(없으면 schoolId). */
+  organizationId?: string
   schoolName: string
   region: string
   sessionRound: number
@@ -28,6 +31,7 @@ export type InstructorLectureAssignItem = {
   slotKey: string
   dateKey: string
   schoolId: string
+  organizationId?: string
   schoolName: string
   sessionLabel: string
   timeRange: string
@@ -135,21 +139,59 @@ function regionDisplay(region: string): string {
   return token
 }
 
+/** 'assigned' = 기관 신청 목록 sessions[]의 실제 배정(TEMP_ASSIGNED/CONFIRMED) 일정. 'hope' = 희망 일정(레거시·mock). */
+export type InstructorLectureAssignSessionSource = 'assigned' | 'hope'
+
+function formatKstClock(raw: string | null | undefined): string | null {
+  const text = raw?.trim()
+  if (!text) return null
+  const date = new Date(text)
+  if (Number.isNaN(date.getTime())) return null
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date)
+  const hour = parts.find(part => part.type === 'hour')?.value ?? '00'
+  const minute = parts.find(part => part.type === 'minute')?.value ?? '00'
+  return `${hour}:${minute}`
+}
+
+/** 배정 일정 차시 라벨 — sessionNo 원본만 사용. 없으면 임의 번호를 만들지 않고 '-'. */
+function assignedSessionLabel(session: ParticipatingSchoolSession): string {
+  const sessionNo = session.sessionNo
+  return typeof sessionNo === 'number' && Number.isFinite(sessionNo) && sessionNo > 0
+    ? `${sessionNo}차시`
+    : '-'
+}
+
+function assignedSessionTimeRange(session: ParticipatingSchoolSession): string {
+  const start = formatKstClock(session.startAt)
+  const end = formatKstClock(session.endAt)
+  if (start && end) return `${start} ~ ${end}`
+  if (start) return start
+  return normalizeTimeRange(session.timeRange)
+}
+
 function slotFromInstitutionSession(
   institution: ApplicantSchoolRow,
-  session: ParticipatingSchoolSession
+  session: ParticipatingSchoolSession,
+  source: InstructorLectureAssignSessionSource = 'hope'
 ): InstructorLectureAssignSlot | null {
   const labelParsed = session.scheduleLabel
     ? parseEducationScheduleLine(session.scheduleLabel)
     : null
   const dateKey = parseSessionDateKey(session.date) ?? labelParsed?.dateKey ?? null
   if (!dateKey) return null
-  const sessionRound = session.round
+  const assigned = source === 'assigned'
+  const sessionRound = assigned ? (session.sessionNo ?? 0) : session.round
   const resolvedScheduleId = session.resolvedScheduleId
   const hasResolvedSchedule =
     resolvedScheduleId != null && Number.isFinite(resolvedScheduleId) && resolvedScheduleId > 0
+  /** 같은 기관이라도 신청(application)이 다르면 다른 카드 — 신청 ID + 일정 ID로 키를 만든다. */
   const key = hasResolvedSchedule
-    ? String(resolvedScheduleId)
+    ? `${institution.id}|${resolvedScheduleId}`
     : buildSlotKey(dateKey, institution.id, sessionRound)
   const remoteScheduleUnresolved =
     session.scheduleUnresolved === true ||
@@ -159,12 +201,16 @@ function slotFromInstitutionSession(
     ...(hasResolvedSchedule ? { scheduleId: resolvedScheduleId } : {}),
     dateKey,
     schoolId: institution.id,
+    ...(institution.organizationId != null
+      ? { organizationId: String(institution.organizationId) }
+      : {}),
     schoolName: institution.schoolName,
     region: regionDisplay(institution.region),
     sessionRound,
-    sessionLabel: sessionLabelFromSession(session),
-    timeRange:
-      session.timeRange && session.timeRange !== '-'
+    sessionLabel: assigned ? assignedSessionLabel(session) : sessionLabelFromSession(session),
+    timeRange: assigned
+      ? assignedSessionTimeRange(session)
+      : session.timeRange && session.timeRange !== '-'
         ? normalizeTimeRange(session.timeRange)
         : labelParsed?.startTime && labelParsed?.endTime
           ? normalizeTimeRange(`${labelParsed.startTime} ~ ${labelParsed.endTime}`)
@@ -215,15 +261,20 @@ export function getApprovedInstitutionLectureScheduleSlots(
 /** 기관 신청 행 → 강의 배정 캘린더. remote 목록을 넘기면 mock 캐시를 쓰지 않는다. */
 export function parseInstructorLectureAssignScheduleFromInstitutions(
   institutions: ApplicantSchoolRow[],
-  options?: { approvedOnly?: boolean }
+  options?: { approvedOnly?: boolean; sessionSource?: InstructorLectureAssignSessionSource }
 ): ParsedInstructorLectureAssignSchedule {
   const approvedOnly = options?.approvedOnly !== false
+  const sessionSource = options?.sessionSource ?? 'hope'
   const slotMap = new Map<string, InstructorLectureAssignSlot>()
 
   for (const institution of institutions) {
     if (approvedOnly && institution.approvalStatus !== 'approved') continue
-    for (const session of institution.sessions ?? []) {
-      const slot = slotFromInstitutionSession(institution, session)
+    const sessions =
+      sessionSource === 'assigned'
+        ? (institution.confirmedListAssignmentSessions ?? [])
+        : (institution.sessions ?? [])
+    for (const session of sessions) {
+      const slot = slotFromInstitutionSession(institution, session, sessionSource)
       if (slot) mergeSlot(slotMap, slot)
     }
   }
@@ -239,7 +290,13 @@ export function parseInstructorLectureAssignScheduleFromInstitutions(
   }
 
   for (const [, slots] of slotsByDateKey) {
-    slots.sort((a, b) => a.schoolName.localeCompare(b.schoolName, 'ko'))
+    slots.sort(
+      (a, b) =>
+        a.schoolName.localeCompare(b.schoolName, 'ko') ||
+        a.timeRange.localeCompare(b.timeRange) ||
+        a.sessionRound - b.sessionRound ||
+        a.schoolId.localeCompare(b.schoolId, undefined, { numeric: true })
+    )
   }
 
   const sortedDateKeys = [...clickableDateKeys].sort()
@@ -316,7 +373,7 @@ export function getSchoolIdForDateFromAssignments(
   dateKey: string
 ): string | null {
   const item = assignedItems.find(entry => entry.dateKey === dateKey)
-  return item?.schoolId ?? null
+  return item ? (item.organizationId ?? item.schoolId) : null
 }
 
 export function isLectureAssignSlotDisabled(
@@ -326,7 +383,7 @@ export function isLectureAssignSlotDisabled(
   if (slot.disabled) return true
   const lockedSchoolId = getSchoolIdForDateFromAssignments(assignedItems, slot.dateKey)
   if (lockedSchoolId == null) return false
-  return lockedSchoolId !== slot.schoolId
+  return lockedSchoolId !== (slot.organizationId ?? slot.schoolId)
 }
 
 export function getSlotsForLectureAssignDate(
@@ -356,6 +413,7 @@ export function toLectureAssignItem(
     slotKey: slot.key,
     dateKey: slot.dateKey,
     schoolId: slot.schoolId,
+    ...(slot.organizationId ? { organizationId: slot.organizationId } : {}),
     schoolName: slot.schoolName,
     sessionLabel: slot.sessionLabel,
     timeRange: slot.timeRange,

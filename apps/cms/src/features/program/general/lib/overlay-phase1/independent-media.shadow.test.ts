@@ -90,7 +90,7 @@ describe('1. blob / uploaded sidecar', () => {
 })
 
 describe('2. bind 의도', () => {
-  it('행이 있으면 모집 행 PUT 의도가 같다', () => {
+  it('신규 등록은 생성 직후 모집 행 PUT bindCalls를 만들지 않는다', () => {
     const created = {
       id: '186234',
       programRecruitments: [{ id: 9, recruitmentType: 'PARTICIPANT' as const }],
@@ -99,47 +99,19 @@ describe('2. bind 의도', () => {
     expect(independent.bindCalls).toEqual(
       buildMediaSidecar({ overlay: uploadedOverlay, created }).bindCalls
     )
-    expect(independent.bindCalls).toEqual([
-      {
-        kind: 'putProgramRecruitmentThumbnail',
-        programId: 186234,
-        recruitmentId: 9,
-        fileObjectId: 77,
-      },
-      {
-        kind: 'putProgramRecruitmentAttachments',
-        programId: 186234,
-        recruitmentId: 9,
-        fileObjectIds: [101],
-      },
-    ])
+    expect(independent.bindCalls).toEqual([])
   })
 
-  it('행이 없으면 프로그램 단위 PUT 의도가 같다', () => {
+  it('행이 없어도 생성 직후 프로그램 단위 PUT bindCalls를 만들지 않는다', () => {
     const created = { id: '186234', programRecruitments: [] }
     const independent = independentFromOverlay(uploadedOverlay, created)
     expect(independent.bindCalls).toEqual(
       buildMediaSidecar({ overlay: uploadedOverlay, created }).bindCalls
     )
-    expect(independent.bindCalls).toEqual([
-      { kind: 'putProgramThumbnail', programId: 186234, fileObjectId: 77 },
-      { kind: 'putProgramAttachments', programId: 186234, fileObjectIds: [101] },
-    ])
-  })
-
-  it('강사 prefix는 PARTICIPANT 행에 연결되지 않는다', () => {
-    const created = {
-      id: '186234',
-      programRecruitments: [{ id: 9, recruitmentType: 'PARTICIPANT' as const }],
-    }
-    const independent = independentFromOverlay(instructorOverlay, created)
-    expect(independent.bindCalls).toEqual(
-      buildMediaSidecar({ overlay: instructorOverlay, created }).bindCalls
-    )
     expect(independent.bindCalls).toEqual([])
   })
 
-  it('강사 행이면 instructor prefix fileObjectId를 쓴다', () => {
+  it('강사 prefix도 생성 직후 PUT bindCalls를 만들지 않는다', () => {
     const created = {
       id: '186234',
       programRecruitments: [{ id: 11, recruitmentType: 'INSTRUCTOR' as const }],
@@ -148,11 +120,7 @@ describe('2. bind 의도', () => {
     expect(independent.bindCalls).toEqual(
       buildMediaSidecar({ overlay: instructorOverlay, created }).bindCalls
     )
-    expect(independent.bindCalls[0]).toMatchObject({
-      kind: 'putProgramRecruitmentThumbnail',
-      recruitmentId: 11,
-      fileObjectId: 42,
-    })
+    expect(independent.bindCalls).toEqual([])
   })
 })
 

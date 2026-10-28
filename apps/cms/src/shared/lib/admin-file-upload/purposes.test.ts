@@ -12,6 +12,23 @@ function uploadFile(name: string, type: string): File {
 }
 
 describe('adminFileUploadAllowsNullOwnerId', () => {
+  it('문자 발송 MMS 요청 첨부는 NOTIFICATION/MMS_BATCH + MMS_IMAGE에서만 ownerId null을 허용한다', () => {
+    expect(
+      adminFileUploadAllowsNullOwnerId({
+        ownerDomain: 'NOTIFICATION',
+        ownerType: 'MMS_BATCH',
+        filePurpose: ADMIN_FILE_PURPOSE.MMS_IMAGE,
+      })
+    ).toBe(true)
+    expect(
+      adminFileUploadAllowsNullOwnerId({
+        ownerDomain: 'NOTIFICATION',
+        ownerType: 'SMS_TEMPLATE',
+        filePurpose: ADMIN_FILE_PURPOSE.MMS_IMAGE,
+      })
+    ).toBe(false)
+  })
+
   it('프로그램 등록 draft purpose는 PROGRAM_CONTENT/PROGRAM + ownerId null을 허용한다', () => {
     expect(
       adminFileUploadAllowsNullOwnerId({

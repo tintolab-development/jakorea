@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { INSTRUCTOR_FORM_SECTION_BASE_TITLES } from '@jakorea/domain/instructor/form-layout'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { displayOrDash } from '@/features/mypage/instructor-apply/lib/format-instructor-apply-display'
@@ -14,24 +13,26 @@ import {
   type InstructorSettingsListRow,
   type InstructorSettingsSectionId,
 } from '../../lib/format-instructor-settings-display'
-import { SettingsInstructorSectionEditForm } from './section-edit-form'
 import pipeDividerStyles from '@/features/mypage/education/applications/ui/pipe-separated-inline-text.module.css'
 import styles from './instructor-profile-section.module.css'
 import viewStyles from '../view.module.css'
 
-function EditButton({
-  onClick,
-  disabled,
-}: {
-  onClick: () => void
-  disabled?: boolean
-}) {
+/** 설정 화면 전용 표기 — 도메인 공용 타이틀(`경력사항`)은 강사 신청 화면에서 그대로 사용 */
+const SETTINGS_CAREER_SECTION_TITLE = '경력 사항'
+/** 시안(조회 11134:9438) — `수상 및 수료 내역` */
+const SETTINGS_AWARD_SECTION_TITLE = '수상 및 수료 내역'
+
+/** 시안 — 건수 요약(`N개`), 비어 있으면 표시하지 않음 */
+function formatSettingsCountTeaser(count: number): string | undefined {
+  return count > 0 ? `${count}개` : undefined
+}
+
+function EditButton({ onClick }: { onClick: () => void }) {
   return (
     <PFButton
       size="small"
       variant="primary"
       className={`${viewStyles.editButton} ${styles.headerEdit}`}
-      disabled={disabled}
       onClick={onClick}
     >
       수정하기
@@ -44,38 +45,30 @@ function ListSection({
   teaser,
   rows,
   sectionId,
-  isEditing,
-  editDisabled,
   onEdit,
-  editForm,
 }: {
   title: string
   teaser?: string
   rows: InstructorSettingsListRow[]
   sectionId: InstructorSettingsSectionId
-  isEditing: boolean
-  editDisabled: boolean
   onEdit: () => void
-  editForm: ReactNode
 }) {
   return (
     <section className={styles.block}>
       <div className={styles.header}>
         <div className={styles.titleRow}>
-          <PFText as="h2" typo="form-section-title" color="black" className={styles.title}>
+          <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
             {title}
           </PFText>
           {teaser ? (
-            <PFText as="p" typo="bd-md-sb" color="primary-500" className={styles.teaser}>
+            <PFText as="p" typo="bd-lg-sb" color="primary-500" className={styles.teaser}>
               {teaser}
             </PFText>
           ) : null}
         </div>
-        {isEditing ? null : <EditButton onClick={onEdit} disabled={editDisabled} />}
+        <EditButton onClick={onEdit} />
       </div>
-      {isEditing ? (
-        editForm
-      ) : rows.length === 0 ? (
+      {rows.length === 0 ? (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.emptyLine}>
           –
         </PFText>
@@ -83,7 +76,7 @@ function ListSection({
         <ul className={styles.list}>
           {rows.map((row, index) => (
             <li key={`${sectionId}-${row.period}-${row.primary}-${index}`} className={styles.listRow}>
-              <PFText as="p" typo="bd-md-md" color="neutral-cool-500" className={styles.period}>
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.period}>
                 {row.period || '–'}
               </PFText>
               <div className={styles.contentLine}>
@@ -110,36 +103,26 @@ function ListSection({
 function EssaySection({
   title,
   body,
-  isEditing,
-  editDisabled,
   onEdit,
-  editForm,
 }: {
   title: string
   body: string
-  isEditing: boolean
-  editDisabled: boolean
   onEdit: () => void
-  editForm: ReactNode
 }) {
   const display = displayOrDash(body)
   return (
     <section className={styles.block}>
       <div className={`${styles.header} ${styles.headerNoStroke}`}>
         <div className={styles.titleRow}>
-          <PFText as="h2" typo="form-section-title" color="black" className={styles.title}>
+          <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
             {title}
           </PFText>
         </div>
-        {isEditing ? null : <EditButton onClick={onEdit} disabled={editDisabled} />}
+        <EditButton onClick={onEdit} />
       </div>
-      {isEditing ? (
-        editForm
-      ) : (
-        <PFText as="div" typo="bd-md-rg" color="black" className={styles.essayBox}>
-          {display}
-        </PFText>
-      )}
+      <PFText as="div" typo="bd-sm-md" color="black" className={styles.essayBox}>
+        {display}
+      </PFText>
     </section>
   )
 }
@@ -147,36 +130,15 @@ function EssaySection({
 export type SettingsInstructorProfileSectionsViewProps = {
   values: InstructorSharedProfileFormValues
   onEditSection: (section: InstructorSettingsSectionId) => void
-  editingSection?: InstructorSettingsSectionId | null
-  editLocked?: boolean
-  onCancelSectionEdit?: () => void
-  onSectionSaved?: (next: InstructorSharedProfileFormValues) => void
 }
 
 export function SettingsInstructorProfileSectionsView({
   values,
   onEditSection,
-  editingSection = null,
-  editLocked = false,
-  onCancelSectionEdit,
-  onSectionSaved,
 }: SettingsInstructorProfileSectionsViewProps) {
-  const renderEditForm = (section: InstructorSettingsSectionId) => {
-    if (!onCancelSectionEdit || !onSectionSaved) return null
-    return (
-      <SettingsInstructorSectionEditForm
-        key={section}
-        embedded
-        section={section}
-        fullValues={values}
-        onCancel={onCancelSectionEdit}
-        onSaved={onSectionSaved}
-      />
-    )
-  }
-
-  const isSectionEditDisabled = (section: InstructorSettingsSectionId) =>
-    editLocked && editingSection !== section
+  const jaRows = mapInstructorJaListRows(values)
+  const licenseRows = mapInstructorLicenseOrAwardListRows(values.licenseRows)
+  const awardRows = mapInstructorLicenseOrAwardListRows(values.awardRows)
 
   return (
     <>
@@ -185,57 +147,42 @@ export function SettingsInstructorProfileSectionsView({
         teaser={formatInstructorEducationHeaderTeaser(values.eduSchoolType)}
         rows={flattenInstructorEducationListRows(values)}
         sectionId="education"
-        isEditing={editingSection === 'education'}
-        editDisabled={isSectionEditDisabled('education')}
         onEdit={() => onEditSection('education')}
-        editForm={renderEditForm('education')}
       />
       <ListSection
-        title={INSTRUCTOR_FORM_SECTION_BASE_TITLES.career}
+        title={SETTINGS_CAREER_SECTION_TITLE}
         teaser={formatInstructorCareerHeaderTeaser(values.instructorCareer)}
         rows={mapInstructorCareerListRows(values)}
         sectionId="career"
-        isEditing={editingSection === 'career'}
-        editDisabled={isSectionEditDisabled('career')}
         onEdit={() => onEditSection('career')}
-        editForm={renderEditForm('career')}
       />
       <ListSection
         title={INSTRUCTOR_FORM_SECTION_BASE_TITLES.ja}
-        rows={mapInstructorJaListRows(values)}
+        teaser={formatSettingsCountTeaser(jaRows.length)}
+        rows={jaRows}
         sectionId="ja"
-        isEditing={editingSection === 'ja'}
-        editDisabled={isSectionEditDisabled('ja')}
         onEdit={() => onEditSection('ja')}
-        editForm={renderEditForm('ja')}
       />
       <ListSection
         title={INSTRUCTOR_FORM_SECTION_BASE_TITLES.license}
-        rows={mapInstructorLicenseOrAwardListRows(values.licenseRows)}
+        teaser={formatSettingsCountTeaser(licenseRows.length)}
+        rows={licenseRows}
         sectionId="license"
-        isEditing={editingSection === 'license'}
-        editDisabled={isSectionEditDisabled('license')}
         onEdit={() => onEditSection('license')}
-        editForm={renderEditForm('license')}
       />
       <ListSection
-        title="수상 및 수료 내역"
-        rows={mapInstructorLicenseOrAwardListRows(values.awardRows)}
+        title={SETTINGS_AWARD_SECTION_TITLE}
+        teaser={formatSettingsCountTeaser(awardRows.length)}
+        rows={awardRows}
         sectionId="award"
-        isEditing={editingSection === 'award'}
-        editDisabled={isSectionEditDisabled('award')}
         onEdit={() => onEditSection('award')}
-        editForm={renderEditForm('award')}
       />
       {INSTRUCTOR_SETTINGS_ESSAY_SECTIONS.map(section => (
         <EssaySection
           key={section.id}
           title={section.title}
           body={values[section.id]}
-          isEditing={editingSection === section.id}
-          editDisabled={isSectionEditDisabled(section.id)}
           onEdit={() => onEditSection(section.id)}
-          editForm={renderEditForm(section.id)}
         />
       ))}
     </>

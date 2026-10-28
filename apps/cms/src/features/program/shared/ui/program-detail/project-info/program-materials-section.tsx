@@ -1,24 +1,23 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Alert, Checkbox, Radio, Spin, Typography } from 'antd'
 import type { ProgramMaterialCandidateResponse } from '@/shared/api/generated/dashboard/schemas/programMaterialCandidateResponse'
 import type { ProgramMaterialResponse } from '@/shared/api/generated/dashboard/schemas/programMaterialResponse'
-import {
-  type ProgramMaterialAssignmentStatus,
-  type ProgramMaterialAssignmentItemRequest,
-} from '@/features/program/general/api/program-materials-api-client'
+import type { ProgramMaterialAssignmentStatus } from '@/features/program/general/api/program-materials-api-client'
 import {
   useProgramMaterialEditorState,
   useProgramMaterials,
 } from '@/features/program/general/hooks/use-program-materials'
+import {
+  buildProgramMaterialSaveRequest,
+  formatProgramMaterialDisplay,
+  logicalMaterialKey,
+  uniqueCandidatesByLogicalKey,
+} from '@/features/program/general/lib/program-material-assignment'
 import { CmsButton } from '@/shared/ui'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import './program-materials-section.css'
 
 type MaterialEditorMode = ProgramMaterialAssignmentStatus
-
-function materialKey(item: { textbookId?: number; kitId?: number; kitVersionId?: number }): string {
-  return `${item.textbookId ?? ''}:${item.kitId ?? ''}:${item.kitVersionId ?? ''}`
-}
 
 function statusLabel(status: ProgramMaterialAssignmentStatus): string {
   if (status === 'NONE') return '교재 없음'
@@ -33,42 +32,6 @@ function candidateLabel(candidate: ProgramMaterialCandidateResponse): string {
   return [name, kit, target].filter(Boolean).join(' · ')
 }
 
-function materialSummary(item: ProgramMaterialResponse): string {
-  const values = [
-    item.targetLevel?.trim(),
-    item.studentCountBasis != null ? `기준 학생 ${item.studentCountBasis}명` : undefined,
-    item.calculatedKitCount != null ? `${item.calculatedKitCount}키트` : undefined,
-    item.booksPerKitSnapshot != null ? `${item.booksPerKitSnapshot}권/키트` : undefined,
-    item.deliveryStatusTag?.trim(),
-  ]
-  return values.filter(Boolean).join(' · ') || '-'
-}
-
-function toRequestItem(
-  candidate: ProgramMaterialCandidateResponse,
-  existing: ProgramMaterialResponse | undefined
-): ProgramMaterialAssignmentItemRequest {
-  return {
-    textbookId: candidate.textbookId,
-    kitId: candidate.kitId,
-    kitVersionId: candidate.kitVersionId,
-    targetLevel: candidate.targetLevel,
-    // 기존 서버 snapshot은 보존하고, 새 항목의 수량은 서버가 산정한다.
-    ...(existing?.booksPerKitSnapshot != null
-      ? { booksPerKitSnapshot: existing.booksPerKitSnapshot }
-      : candidate.bookCountPerKit != null
-        ? { booksPerKitSnapshot: candidate.bookCountPerKit }
-        : {}),
-    ...(existing?.studentCountBasis != null
-      ? { studentCountBasis: existing.studentCountBasis }
-      : {}),
-    ...(existing?.calculatedKitCount != null
-      ? { calculatedKitCount: existing.calculatedKitCount }
-      : {}),
-    autoMatchedYn: existing?.autoMatchedYn ?? false,
-  }
-}
-
 export function ProgramMaterialsSection({
   programId,
   isEditMode,
@@ -76,42 +39,71 @@ export function ProgramMaterialsSection({
   programId: string
   isEditMode: boolean
 }) {
-  const { materials, candidates, isLoading, isSaving, error, save, remoteEnabled } =
-    useProgramMaterials(programId, true)
+  const {
+    materials,
+    candidates,
+    isMaterialsLoading,
+    isCandidatesLoading,
+    isSaving,
+    materialsError,
+    candidatesError,
+    isCandidatesError,
+    save,
+    remoteEnabled,
+  } = useProgramMaterials(programId, true)
+  const [saveError, setSaveError] = useState('')
 
-  const itemKeys = useMemo(() => (materials?.items ?? []).map(materialKey), [materials?.items])
+  const savedItems = materials?.items ?? []
+  const itemKeys = useMemo(() => savedItems.map(logicalMaterialKey).filter(Boolean), [savedItems])
   const editor = useProgramMaterialEditorState(materials?.assignmentStatus, itemKeys)
+  const visibleCandidates = useMemo(
+    () => uniqueCandidatesByLogicalKey(candidates),
+    [candidates]
+  )
 
   const candidateByKey = useMemo(() => {
     const map = new Map<string, ProgramMaterialCandidateResponse>()
-    for (const candidate of candidates) map.set(materialKey(candidate), candidate)
+    for (const candidate of visibleCandidates) map.set(logicalMaterialKey(candidate), candidate)
     return map
-  }, [candidates])
+  }, [visibleCandidates])
   const existingByKey = useMemo(() => {
     const map = new Map<string, ProgramMaterialResponse>()
-    for (const item of materials?.items ?? []) map.set(materialKey(item), item)
+    for (const item of savedItems) {
+      const key = logicalMaterialKey(item)
+      if (key) map.set(key, item)
+    }
     return map
-  }, [materials?.items])
+  }, [savedItems])
 
   if (!remoteEnabled) return null
 
   const saveChanges = async () => {
-    const items =
-      editor.mode === 'ASSIGNED'
-        ? editor.selectedKeys.flatMap(key => {
-            const candidate = candidateByKey.get(key)
-            if (!candidate) return []
-            return [toRequestItem(candidate, existingByKey.get(key))]
-          })
-        : []
-    const assignmentStatus: MaterialEditorMode =
-      editor.mode === 'ASSIGNED' && items.length === 0 ? 'UNDECIDED' : editor.mode
-
-    await save({
-      noneYn: assignmentStatus === 'NONE',
-      items,
+    const built = buildProgramMaterialSaveRequest({
+      mode: editor.mode,
+      selectedKeys: editor.selectedKeys,
+      existingByKey,
+      candidateByKey,
+      previousItems: savedItems,
+      isLoading: isMaterialsLoading || (isEditMode && isCandidatesLoading),
+      candidatesFailed: isCandidatesError,
     })
-    editor.reset()
+    if (!built.ok) {
+      setSaveError(built.message)
+      return
+    }
+
+    setSaveError('')
+    try {
+      await save({
+        noneYn: built.noneYn,
+        items: built.items,
+      })
+      editor.reset()
+    } catch (error) {
+      setSaveError(
+        extractApiErrorMessage(error, { fallback: '교재 설정 저장에 실패했습니다.' })
+      )
+    }
   }
 
   return (
@@ -128,22 +120,34 @@ export function ProgramMaterialsSection({
             size="h40"
             onClick={() => void saveChanges()}
             loading={isSaving}
-            disabled={isLoading}
+            disabled={isMaterialsLoading || isCandidatesLoading}
           >
             교재 설정 저장
           </CmsButton>
         )}
       </div>
 
-      {error && (
+      {materialsError && (
         <Alert
           type="error"
           showIcon
-          message={extractApiErrorMessage(error, { fallback: '교재 설정을 불러오지 못했습니다.' })}
+          message={extractApiErrorMessage(materialsError, {
+            fallback: '교재 설정을 불러오지 못했습니다.',
+          })}
         />
       )}
+      {isEditMode && candidatesError && (
+        <Alert
+          type="warning"
+          showIcon
+          message={extractApiErrorMessage(candidatesError, {
+            fallback: '교재 후보를 불러오지 못했습니다. 기존 배정은 유지됩니다.',
+          })}
+        />
+      )}
+      {saveError ? <Alert type="error" showIcon message={saveError} /> : null}
 
-      {isLoading ? (
+      {isMaterialsLoading ? (
         <div className="program-materials-section__loading">
           <Spin size="small" /> 교재 설정을 불러오는 중입니다.
         </div>
@@ -170,13 +174,15 @@ export function ProgramMaterialsSection({
           {isEditMode && editor.mode === 'ASSIGNED' && (
             <div className="program-materials-section__candidates">
               <div className="program-materials-section__label">교재 후보</div>
-              {candidates.length === 0 ? (
+              {isCandidatesLoading ? (
+                <Typography.Text type="secondary">교재 후보를 불러오는 중입니다.</Typography.Text>
+              ) : visibleCandidates.length === 0 ? (
                 <Typography.Text type="secondary">
                   사용 가능한 교재 후보가 없습니다.
                 </Typography.Text>
               ) : (
-                candidates.map(candidate => {
-                  const key = materialKey(candidate)
+                visibleCandidates.map(candidate => {
+                  const key = logicalMaterialKey(candidate)
                   return (
                     <Checkbox
                       key={key}
@@ -198,17 +204,33 @@ export function ProgramMaterialsSection({
 
           <div className="program-materials-section__items">
             <div className="program-materials-section__label">서버 저장값</div>
-            {(materials?.items ?? []).length === 0 ? (
+            {savedItems.length === 0 ? (
               <Typography.Text type="secondary">저장된 교재가 없습니다.</Typography.Text>
             ) : (
-              (materials?.items ?? []).map(item => (
-                <div className="program-materials-section__item" key={item.id ?? materialKey(item)}>
-                  <span>
-                    {item.textbookNameKo?.trim() || item.textbookNameEn?.trim() || '교재명 없음'}
-                  </span>
-                  <Typography.Text type="secondary">{materialSummary(item)}</Typography.Text>
-                </div>
-              ))
+              savedItems.map(item => {
+                const display = formatProgramMaterialDisplay(item)
+                return (
+                  <div
+                    className="program-materials-section__item"
+                    key={item.id ?? logicalMaterialKey(item)}
+                  >
+                    <span className="program-materials-section__item-title">{display.title}</span>
+                    <Typography.Text
+                      type="secondary"
+                      className="program-materials-section__item-meta"
+                    >
+                      {[
+                        display.booksPerKitLabel,
+                        display.studentCountLabel,
+                        display.kitCountLabel,
+                        display.deliveryLabel,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </Typography.Text>
+                  </div>
+                )
+              })
             )}
           </div>
         </>

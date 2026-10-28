@@ -9,7 +9,8 @@
 export interface StudentRosterRowRequest {
   /** 기존 활성 roster row를 지정하면 전체 교체 후에도 동일 rosterId를 유지합니다. 신규 행은 생략합니다. */
   rosterId?: number | null;
-  memberId?: number;
+  /** 정책 확인 전 새 roster 행에 대한 회원 연결은 허용되지 않습니다. 기존 row의 memberId를 그대로 유지하는 용도입니다. */
+  memberId?: number | null;
   /**
      * @minLength 0
      * @maxLength 100

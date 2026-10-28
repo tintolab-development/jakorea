@@ -23,4 +23,8 @@ export interface InstructorAssignmentCreateRequest {
   /** @minimum 0 */
   lectureFeeAmountSnapshot?: number;
   lodgingApprovedYn?: boolean;
+  /** 배정 완료 알림. IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE. 승인 알림과 다른 이벤트입니다. */
+  timing?: string;
+  /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
+  scheduledAt?: string;
 }

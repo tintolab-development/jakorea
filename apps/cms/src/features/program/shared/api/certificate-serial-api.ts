@@ -4,12 +4,15 @@ import type { CertificateDownloadLogRequest } from '@/shared/api/generated/certi
 import type { CertificateDownloadLogResponse } from '@/shared/api/generated/certificates/schemas/certificateDownloadLogResponse'
 import type { CertificateSerialAllocateRequest } from '@/shared/api/generated/certificates/schemas/certificateSerialAllocateRequest'
 import type { CertificateSerialAllocateResponse } from '@/shared/api/generated/certificates/schemas/certificateSerialAllocateResponse'
+import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
+import type { CertificateRosterSerialAllocateRequest } from '@/shared/api/generated/members/schemas/certificateRosterSerialAllocateRequest'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import {
   CERTIFICATE_SERIAL_ISSUANCE_FORM_TEMPLATE,
   CERTIFICATE_SERIAL_ISSUANCE_PROGRAM,
   isAllowedCertificateSerialType,
   isFormTemplateCertificateSerialSubject,
+  isRosterCertificateSerialSubject,
   parseCertificateIssueId,
   parseCertificateSerialInt64,
   parseIssuedCertificateSerial,
@@ -17,6 +20,7 @@ import {
 } from '@/features/program/shared/lib/certificate-serial'
 
 const certificatesApi = getJAKoreaCMSBackendAPICertificatesSubset()
+const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
 export type { CertificateSerialAllocateRequest, CertificateSerialAllocateResponse }
 
@@ -99,14 +103,50 @@ export function buildCertificateSerialAllocateRequest(
   }
 }
 
+export function buildCertificateRosterSerialAllocateRequest(
+  subject: CertificateSerialSubject
+): CertificateRosterSerialAllocateRequest {
+  if (!isAllowedCertificateSerialType(subject.certificateType)) {
+    throw new CertificateSerialAllocateError('지원하지 않는 인증서 유형입니다.')
+  }
+
+  const programId = parseCertificateSerialInt64(subject.programId)
+  const applicationId = parseCertificateSerialInt64(subject.applicationId)
+  const rosterId = parseCertificateSerialInt64(subject.rosterId)
+  if (programId == null) {
+    throw new CertificateSerialAllocateError('프로그램 정보가 없어 고유번호를 발급할 수 없습니다.')
+  }
+  if (applicationId == null) {
+    throw new CertificateSerialAllocateError('기관 신청 정보가 없어 고유번호를 발급할 수 없습니다.')
+  }
+  if (rosterId == null) {
+    throw new CertificateSerialAllocateError('학생 명단 정보가 없어 고유번호를 발급할 수 없습니다.')
+  }
+
+  return {
+    programId,
+    applicationId,
+    rosterId,
+    certificateType: subject.certificateType as CertificateRosterSerialAllocateRequest['certificateType'],
+  }
+}
+
 export async function allocateCertificateSerial(
   subject: CertificateSerialSubject
 ): Promise<CertificateSerialAllocateResponse & { serialNumber: string; issueId: number }> {
-  const request = buildCertificateSerialAllocateRequest(subject)
-
-  const body = unwrapApiBody<CertificateSerialAllocateResponse>(
-    await certificatesApi.allocateCertificateSerial(request, { skipGlobalErrorAlert: true })
-  )
+  const body = isRosterCertificateSerialSubject(subject)
+    ? unwrapApiBody<CertificateSerialAllocateResponse>(
+        await membersApi.allocateCertificateSerialByRoster(
+          buildCertificateRosterSerialAllocateRequest(subject),
+          { skipGlobalErrorAlert: true }
+        )
+      )
+    : unwrapApiBody<CertificateSerialAllocateResponse>(
+        await certificatesApi.allocateCertificateSerial(
+          buildCertificateSerialAllocateRequest(subject),
+          { skipGlobalErrorAlert: true }
+        )
+      )
 
   const serialNumber = parseIssuedCertificateSerial(body?.serialNumber)
   if (serialNumber == null) {

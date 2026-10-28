@@ -53,6 +53,40 @@ describe('notification-query-cache', () => {
     expect(queryClient.getQueryData<number>(countKey)).toBe(0)
   })
 
+  it('marks a notification read inside infinite inbox pages', () => {
+    const queryClient = new QueryClient()
+    const inboxKey = dashboardQueryKeys.notifications('remote', { size: 20, unreadOnly: false })
+    queryClient.setQueryData(inboxKey, {
+      pages: [
+        {
+          items: [notification({ id: 'n1', read: false })],
+          page: 0,
+          size: 20,
+          totalPages: 2,
+          totalElements: 21,
+        },
+        {
+          items: [notification({ id: 'n2', read: false })],
+          page: 1,
+          size: 20,
+          totalPages: 2,
+          totalElements: 21,
+        },
+      ],
+      pageParams: [0, 1],
+    })
+    queryClient.setQueryData<number>(countKey, 2)
+
+    applyNotificationRead(queryClient, 'n2')
+
+    const cached = queryClient.getQueryData<{
+      pages: Array<{ items: Notification[] }>
+    }>(inboxKey)
+    expect(cached?.pages[0]?.items[0]?.read).toBe(false)
+    expect(cached?.pages[1]?.items[0]?.read).toBe(true)
+    expect(queryClient.getQueryData<number>(countKey)).toBe(1)
+  })
+
   it('marks all notifications read and zeroes unread count', () => {
     const queryClient = new QueryClient()
     queryClient.setQueryData<Notification[]>(inboxKey, [

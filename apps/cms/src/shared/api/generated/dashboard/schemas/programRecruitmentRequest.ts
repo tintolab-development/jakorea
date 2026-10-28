@@ -88,4 +88,8 @@ export interface ProgramRecruitmentRequest {
   expectedRevision?: number | null;
   /** null 로 비울 필드 이름. 예: ["maxCount","remarks","interviewConfig"] */
   clearFields?: string[] | null;
+  /** 프로그램 신규 등록 시 이 모집 행에 연결할 대표 이미지 fileObjectId. 생성 트랜잭션에서만 사용하며, 기존 모집 수정 API에서는 사용하지 않습니다. */
+  thumbnailFileObjectId?: number | null;
+  /** 프로그램 신규 등록 시 이 모집 행에 연결할 첨부파일 fileObjectId 목록. 요청 순서가 표시 순서이며, 생성 트랜잭션에서만 사용합니다. */
+  attachmentFileObjectIds?: number[] | null;
 }

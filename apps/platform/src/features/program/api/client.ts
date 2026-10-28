@@ -53,6 +53,7 @@ export function toPortalProgramListParams(query: PortalProgramListQuery): URLSea
   params.set('size', String(query.size))
   appendFilterValues(params, 'keyword', query.keyword)
   appendFilterValues(params, 'portalTab', query.portalTab)
+  appendFilterValues(params, 'applicationType', query.applicationType)
   appendFilterValues(params, 'programType', query.programType)
   appendFilterValues(params, 'recruitmentStatus', query.recruitmentStatus)
   appendFilterValues(params, 'recruitmentTarget', query.recruitmentTarget)

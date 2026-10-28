@@ -2,7 +2,7 @@
  * 참여 강사 상세 — 교육 배정 현황 탭 (일반 프로그램 · 개인)
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
@@ -17,7 +17,12 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
-import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import {
+  PermissionModal,
+  type PermissionModalPayload,
+} from '@/shared/components/permission-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
 import {
   EditableStatusBadge,
   StatusDropdownCell,
@@ -105,7 +110,10 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   } | null>(null)
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
+  const [addAssignNotifyOpen, setAddAssignNotifyOpen] = useState(false)
   const [addAssignWaitingRowId, setAddAssignWaitingRowId] = useState<string | null>(null)
+  const [assignSubmitting, setAssignSubmitting] = useState(false)
+  const assignInFlightRef = useRef(false)
 
   const assignment = useParticipatingInstructorInstitutionAssignment({
     programId: program.id,
@@ -345,7 +353,10 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   }, [selectedWaitingKeys, waitingSchedules, showAlert])
 
   const createAssignmentsFromWaiting = useCallback(
-    async (selectedRows: ParticipatingIndividualInstructorWaitingScheduleRow[]) => {
+    async (
+      selectedRows: ParticipatingIndividualInstructorWaitingScheduleRow[],
+      notifyPayload?: PermissionModalPayload
+    ) => {
       if (!assignment.remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-individual-instructor-assign',
@@ -361,6 +372,12 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         })
         return false
       }
+      if (assignInFlightRef.current) return false
+      assignInFlightRef.current = true
+      setAssignSubmitting(true)
+      const assignmentNotify = notifyPayload
+        ? toScheduledOnlyNotifyTiming(notifyPayload.notifyTiming, notifyPayload.manualNotifyAt)
+        : undefined
       try {
         let leadAssigned = assignedSchedules.some(row => row.role === 'lead')
         for (const waitingRow of selectedRows) {
@@ -407,6 +424,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
                 ? Number(instructor.instructorApplicationId)
                 : undefined,
             scheduleLead: !leadAssigned,
+            ...assignmentNotify,
           })
           leadAssigned = true
         }
@@ -426,6 +444,9 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.')
         showAlert({ title: '배정 실패', content: message })
         return false
+      } finally {
+        assignInFlightRef.current = false
+        setAssignSubmitting(false)
       }
     },
     [
@@ -489,26 +510,40 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     ]
   )
 
-  const handleSelectAssignConfirm = useCallback(async () => {
-    const selectedRows = waitingSchedules.filter(
-      w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
-    )
-    if (selectedRows.length === 0) return
-    const ok = await createAssignmentsFromWaiting(selectedRows)
-    if (!ok) return
-    setSelectAssignConfirmOpen(false)
-    setSelectedWaitingKeys([])
-  }, [selectedWaitingKeys, waitingSchedules, createAssignmentsFromWaiting])
+  const handleSelectAssignConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      const selectedRows = waitingSchedules.filter(
+        w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
+      )
+      if (selectedRows.length === 0) return
+      const ok = await createAssignmentsFromWaiting(selectedRows, payload)
+      if (!ok) return
+      setSelectAssignConfirmOpen(false)
+      setSelectedWaitingKeys([])
+    },
+    [selectedWaitingKeys, waitingSchedules, createAssignmentsFromWaiting]
+  )
 
-  const handleAddAssignConfirm = useCallback(async () => {
+  const handleAddAssignSchedulePicked = useCallback(() => {
     if (!addAssignWaitingRowId) return
     const waitingRow = waitingSchedules.find(w => w.id === addAssignWaitingRowId)
     if (!waitingRow || waitingRow.assignmentStatus !== 'waiting') return
-    const ok = await createAssignmentsFromWaiting([waitingRow])
-    if (!ok) return
     setAddAssignModalOpen(false)
-    setAddAssignWaitingRowId(null)
-  }, [addAssignWaitingRowId, waitingSchedules, createAssignmentsFromWaiting])
+    setAddAssignNotifyOpen(true)
+  }, [addAssignWaitingRowId, waitingSchedules])
+
+  const handleAddAssignConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!addAssignWaitingRowId) return
+      const waitingRow = waitingSchedules.find(w => w.id === addAssignWaitingRowId)
+      if (!waitingRow || waitingRow.assignmentStatus !== 'waiting') return
+      const ok = await createAssignmentsFromWaiting([waitingRow], payload)
+      if (!ok) return
+      setAddAssignNotifyOpen(false)
+      setAddAssignWaitingRowId(null)
+    },
+    [addAssignWaitingRowId, waitingSchedules, createAssignmentsFromWaiting]
+  )
 
   const addAssignOptions = useMemo(
     () =>
@@ -537,6 +572,11 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     [waitingSchedules, selectedWaitingKeys]
   )
 
+  const addAssignNotifyLabel = useMemo(() => {
+    const waitingRow = waitingSchedules.find(w => w.id === addAssignWaitingRowId)
+    return waitingRow?.scheduleLabel ?? ''
+  }, [addAssignWaitingRowId, waitingSchedules])
+
   return (
     <div className="school-detail-fullpage-view__instructor-tab">
       <div className="school-detail-fullpage-view__instructor-section">
@@ -546,12 +586,12 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <span className="table-description">{assignedSchedules.length}건</span>
           </div>
           <div className="info-section-buttons--wrapper">
-            <CmsButton variant="delete" size="large" onClick={handleUnassignClick}>
+            <CmsButton variant="delete" size="h40" onClick={handleUnassignClick}>
               배정 취소
             </CmsButton>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               disabled={addAssignOptions.length === 0}
               onClick={() => {
                 if (addAssignOptions.length === 0) return
@@ -591,7 +631,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <span className="table-description">{waitingSchedules.length}건</span>
           </div>
           <div className="info-section-buttons--wrapper">
-            <CmsButton variant="secondary" size="large" onClick={handleSelectAssignClick}>
+            <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
               선택 배정
             </CmsButton>
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />
@@ -640,35 +680,24 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         reason={unassignCompleteModal?.reason ?? ''}
       />
 
-      <ContentModal
+      <PermissionModal
         open={selectAssignConfirmOpen}
-        onCancel={() => setSelectAssignConfirmOpen(false)}
+        onCancel={() => {
+          if (assignSubmitting) return
+          setSelectAssignConfirmOpen(false)
+        }}
+        onConfirm={handleSelectAssignConfirm}
+        confirmLoading={assignSubmitting}
+        variant="approve"
         title="교육 일정 배정 안내"
         width={600}
-        footer={
-          <>
-            <CmsButton
-              variant="secondary"
-              size="large"
-              onClick={() => setSelectAssignConfirmOpen(false)}
-            >
-              취소
-            </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
-              배정
-            </CmsButton>
-          </>
-        }
-      >
-        <p>
-          [<strong>{instructor.instructorName}</strong>] 강사님을 다음 교육 일정에 배정하시겠습니까?{' '}
-          {selectAssignLabels.map((label, i) => (
-            <span key={`${label}-${i}`}>
-              [<strong>{label}</strong>]{i < selectAssignLabels.length - 1 ? ', ' : ''}
-            </span>
-          ))}
-        </p>
-      </ContentModal>
+        message={`[**${instructor.instructorName}**] 강사님을 다음 교육 일정에 배정하시겠습니까? ${selectAssignLabels.map(label => `[**${label}**]`).join(', ')}`}
+        confirmLabel="배정"
+        confirmVariant="primary"
+        requireReason={false}
+        notifyTimingOptions="two"
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+      />
 
       <ContentModal
         open={addAssignModalOpen}
@@ -690,7 +719,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             >
               취소
             </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleAddAssignConfirm}>
+            <CmsButton variant="primary" size="large" onClick={handleAddAssignSchedulePicked}>
               배정
             </CmsButton>
           </>
@@ -709,6 +738,24 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           />
         </div>
       </ContentModal>
+      <PermissionModal
+        open={addAssignNotifyOpen}
+        onCancel={() => {
+          if (assignSubmitting) return
+          setAddAssignNotifyOpen(false)
+        }}
+        onConfirm={handleAddAssignConfirm}
+        confirmLoading={assignSubmitting}
+        variant="approve"
+        title="강사 배정 안내"
+        width={600}
+        message={`[**${instructor.instructorName}**] 강사님을 다음 교육 일정에 배정하시겠습니까? ${addAssignNotifyLabel ? `[**${addAssignNotifyLabel}**]` : ''}`}
+        confirmLabel="강사 배정"
+        confirmVariant="primary"
+        requireReason={false}
+        notifyTimingOptions="two"
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+      />
     </div>
   )
 }

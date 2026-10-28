@@ -1,4 +1,8 @@
-export type { InstructorProfileFieldsProps, InstructorProfileFieldSurface } from './types'
+export type {
+  InstructorProfileFieldPlaceholders,
+  InstructorProfileFieldsProps,
+  InstructorProfileFieldSurface,
+} from './types'
 export {
   InstructorProfileFieldTable,
   resolveInstructorProfileFieldLayout,

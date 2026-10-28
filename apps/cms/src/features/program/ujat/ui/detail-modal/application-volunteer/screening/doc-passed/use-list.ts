@@ -11,6 +11,7 @@ import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { giveUpUjatVolunteerApplicationRemote } from '@/features/program/ujat/api/volunteer-mutations'
 import { assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
+import { toInterviewAssignNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
 import { buildInterviewSlotTimesFromAssignPayload } from '@/features/program/general/lib/interview-slot-from-assign-payload'
 import type {
   UjatManagerEvaluation,
@@ -106,6 +107,7 @@ export function useUjatVolunteerDocPassed({
   const [assignFlow, setAssignFlow] = useState<UjatInterviewAssignFlow | null>(null)
   const assignFlowRef = useRef(assignFlow)
   assignFlowRef.current = assignFlow
+  const assignInFlightRef = useRef(false)
 
   const listQuery = useMemo(
     () => buildUjatVolunteerDocPassedListQuery(appliedFilters, half),
@@ -210,12 +212,15 @@ export function useUjatVolunteerDocPassed({
     async (payload: UjatInterviewAssignConfirmPayload) => {
       const flow = assignFlowRef.current
       if (!flow || flow.type !== 'pick') return
+      if (assignInFlightRef.current) return
+      assignInFlightRef.current = true
 
       const { target } = flow
       const wasAssigned = target.interviewAssignmentStatus === 'assigned'
 
       const slotTimes = buildInterviewSlotTimesFromAssignPayload(payload)
       if (!slotTimes) {
+        assignInFlightRef.current = false
         showAlert({
           title: '면접 배정 실패',
           content: '면접 일시 형식을 확인할 수 없습니다. 다시 선택해 주세요.',
@@ -224,10 +229,15 @@ export function useUjatVolunteerDocPassed({
       }
 
       try {
+        const assignNotify = toInterviewAssignNotifyFields(
+          payload.notifyTiming,
+          payload.manualNotifyAt
+        )
         await assignGeneralVolunteerInterview({
           programId,
           applicationId: target.id,
           ...slotTimes,
+          ...assignNotify,
         })
         await invalidateVolunteerLists()
       } catch (error) {
@@ -239,6 +249,8 @@ export function useUjatVolunteerDocPassed({
             scheduleError?.message ?? '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
         })
         return
+      } finally {
+        assignInFlightRef.current = false
       }
 
       updateRow(target.id, {

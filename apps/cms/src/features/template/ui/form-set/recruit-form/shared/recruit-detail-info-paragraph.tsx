@@ -16,6 +16,8 @@ import {
 import {
   RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
   RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
+  RECRUIT_DETAIL_FILE_MAX_BYTES,
+  RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE,
   RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
 import {
@@ -80,7 +82,7 @@ export type RecruitDetailInfoParagraphProps = {
   afterEditorFields?: RecruitDetailInfoTextField[]
   attachmentAccept?: string
   attachmentGuideLines?: string[]
-  /** 텍스트 필드 컨트롤 — UJAT 참여 기관 모집 등은 `input` */
+  /** 텍스트 필드 컨트롤 — 기본 `input`(h36). 멀티라인이 필요할 때만 `textarea` */
   textFieldControl?: 'textarea' | 'input'
 }
 
@@ -88,7 +90,7 @@ function RecruitDetailInfoTextFieldRow({
   field,
   overlayKeyPrefix,
   wysiwygResetKey,
-  textFieldControl = 'textarea',
+  textFieldControl = 'input',
 }: {
   field: RecruitDetailInfoTextField
   overlayKeyPrefix: string
@@ -136,6 +138,7 @@ function RecruitDetailInfoTextFieldRow({
         width="100%"
         placeholder={field.placeholder}
         rows={1}
+        expandableFromSingleRow={false}
         value={value}
         onChange={e => setValue(e.target.value)}
       />
@@ -152,7 +155,7 @@ function RecruitDetailInfoTextFieldRows({
   fields,
   overlayKeyPrefix,
   wysiwygResetKey,
-  textFieldControl = 'textarea',
+  textFieldControl = 'input',
 }: {
   fields: RecruitDetailInfoTextField[]
   overlayKeyPrefix: string
@@ -313,7 +316,7 @@ export function RecruitDetailInfoParagraph({
   afterEditorFields,
   attachmentAccept = RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
   attachmentGuideLines = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
-  textFieldControl = 'textarea',
+  textFieldControl = 'input',
 }: RecruitDetailInfoParagraphProps) {
   const contentResetGeneration = useRecruitDetailContentResetGeneration()
   const overlayScope = getRecruitDetailInfoScope()
@@ -577,6 +580,8 @@ export function RecruitDetailInfoParagraph({
                 previewUrl={thumbnailPreviewUrl}
                 fileName={thumbFileName}
                 guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
+                maxBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+                sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 uploading={uploadingThumbnail}
                 onSelectFile={file => handleThumbnailFiles([file])}
                 onRemove={handleRemoveThumbnail}
@@ -630,6 +635,9 @@ export function RecruitDetailInfoParagraph({
                 guideLines={attachmentGuideLines}
                 multiple
                 fileNames={attachmentFileNames}
+                maxTotalBytes={0}
+                maxFileBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
+                sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 onFilesChange={uploadingAttachments ? undefined : handleAttachmentFiles}
                 onRemoveFile={uploadingAttachments ? undefined : handleRemoveAttachment}
               />

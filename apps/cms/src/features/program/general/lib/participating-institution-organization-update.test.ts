@@ -47,15 +47,12 @@ describe('resolveParticipatingInstitutionApplicationId', () => {
 
 describe('buildParticipatingInstitutionOrganizationUpdateRequest', () => {
   it('PATCH body를 화면 필드에서 만든다', () => {
-    expect(
-      buildParticipatingInstitutionOrganizationUpdateRequest({
-        draft: baseDraft,
-        teacherOptions: [{ value: '1001', label: '김교사', mobile: '', email: '' }],
-        textbookGrade: '3학년',
-        textbookKits: 2,
-        textbookQuantity: 48,
-      })
-    ).toMatchObject({
+    const body = buildParticipatingInstitutionOrganizationUpdateRequest({
+      draft: baseDraft,
+      teacherOptions: [{ value: '1001', label: '김교사', mobile: '', email: '' }],
+      textbookGrade: '3학년',
+    })
+    expect(body).toMatchObject({
       requestedGrade: '3학년',
       organizationAddressDetail: '본관 3층',
       requestedClassCount: 2,
@@ -67,6 +64,8 @@ describe('buildParticipatingInstitutionOrganizationUpdateRequest', () => {
       textbookId: 55,
       textbookGrade: '3학년',
     })
+    expect(body).not.toHaveProperty('textbookKits')
+    expect(body).not.toHaveProperty('textbookQuantity')
   })
 
   it('교육 형태가 그대로면 requestedEducationFormat을 보내지 않는다', () => {
@@ -86,6 +85,19 @@ describe('buildParticipatingInstitutionOrganizationUpdateRequest', () => {
     })
 
     expect(body).not.toHaveProperty('textbookId')
+    expect(body).not.toHaveProperty('textbookKits')
+    expect(body).not.toHaveProperty('textbookQuantity')
+  })
+
+  it('학생 수·교재 변경 PATCH도 키트·권수는 omit하여 서버 자동 산출을 쓴다', () => {
+    const body = buildParticipatingInstitutionOrganizationUpdateRequest({
+      draft: { ...baseDraft, studentCount: '25' },
+      teacherOptions: [],
+      includeTextbookFields: true,
+    })
+
+    expect(body.requestedStudentCount).toBe(25)
+    expect(body.textbookId).toBe(55)
     expect(body).not.toHaveProperty('textbookKits')
     expect(body).not.toHaveProperty('textbookQuantity')
   })

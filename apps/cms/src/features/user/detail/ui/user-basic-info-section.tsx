@@ -88,6 +88,7 @@ export function UserBasicInfoSection({
   const resolvedLayout = resolveBasicInfoLayout({
     bodyKey: bodyKey as BasicInfoBodyKey,
     instructorProfile,
+    permissionInstructor: isInstructorPermissionDetail,
   })
   const cmsMayEditBasicProfileFields = shouldShowCmsBasicProfileFieldsEdit(user)
   const feeJaRestrictedEdit =

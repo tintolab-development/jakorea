@@ -22,11 +22,8 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import {
-  ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE,
-  ORGANIZATION_EDUCATION_MULTIPLE_SCHEDULE_HINT,
-  ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT,
-} from '@/features/program/general/lib/organization-application-approve-slots'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import { ORGANIZATION_APPROVE_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/general/lib/organization-application-approve-slots'
 import { formatOrganizationApproveScheduleCard } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import '@/features/program/shared/ui/detail-modal/components/institution-approve-modal.css'
 import './individual-approve-scope-modal.css'
@@ -64,7 +61,11 @@ export type IndividualBulkApproveScopeConfirmPayload = {
   reason: string
   notifyTiming: PermissionModalPayload['notifyTiming']
   manualNotifyAt?: PermissionModalPayload['manualNotifyAt']
-  targets: Array<{ applicationId: string; confirmedScheduleIds: number[]; expectedScopeRevision: number }>
+  targets: Array<{
+    applicationId: string
+    confirmedScheduleIds: number[]
+    expectedScopeRevision: number
+  }>
 }
 
 /** 기관 승인 안내와 같은 문장 구조. 호칭·수신 대상만 참여자용이다. */
@@ -103,9 +104,7 @@ function preferredOptionsForPlan(
 ): IndividualApprovalScheduleOption[] {
   if (plan.kind !== 'all-program-slots') return plan.options
   const selectableIds = new Set(
-    plannedOptions
-      .map(option => option.scheduleId)
-      .filter((id): id is number => id != null)
+    plannedOptions.map(option => option.scheduleId).filter((id): id is number => id != null)
   )
   return listIndividualPreferredScheduleOptions(preferred, selectableIds)
 }
@@ -147,7 +146,9 @@ function ScheduleCard({
         <span className="institution-approve-modal__schedule-card-detail">{card.detail}</span>
       ) : null}
       {option.blockedReason ? (
-        <span className="institution-approve-modal__schedule-card-note">{option.blockedReason}</span>
+        <span className="institution-approve-modal__schedule-card-note">
+          {option.blockedReason}
+        </span>
       ) : null}
     </button>
   )
@@ -176,20 +177,16 @@ export function IndividualEducationScheduleSections({
 }) {
   const rejected = new Set(rejectedIds ?? [])
   const selectablePreferred = preferredOptions.filter(
-    option => option.selectable && option.scheduleId != null && !assignedLocked && !preferredReadonly
+    option =>
+      option.selectable && option.scheduleId != null && !assignedLocked && !preferredReadonly
   )
-  const assignmentHint =
-    plan.kind === 'preferred-at-least-one'
-      ? ORGANIZATION_EDUCATION_MULTIPLE_SCHEDULE_HINT
-      : ORGANIZATION_EDUCATION_SINGLE_SCHEDULE_HINT
   const assignedIds =
     assignedLocked && plan.kind === 'all-program-slots' ? plan.lockedScheduleIds : selectedIds
 
   return (
     <>
       <div className="individual-approve-scope-modal__section">
-        <p className="individual-approve-scope-modal__section-label">신청일</p>
-        {preferredOptions.length > 0 ? (
+        {preferredOptions.length > 0 && (
           <div className="institution-approve-modal__schedule-cards">
             {preferredOptions.map(option => {
               const selectable =
@@ -212,18 +209,11 @@ export function IndividualEducationScheduleSections({
               )
             })}
           </div>
-        ) : (
-          <p className="institution-approve-modal__notice">신청 희망 교육 일정이 없습니다.</p>
         )}
       </div>
-      {selectablePreferred.length > 0 && !assignedLocked ? (
-        <p className="institution-approve-modal__assignment-hint">{assignmentHint}</p>
-      ) : plan.kind === 'all-program-slots' ? (
-        <p className="institution-approve-modal__assignment-hint">
-          일정형 복수 회차는 프로그램에 정의된 교육 일정 전체를 배정합니다.
-        </p>
-      ) : null}
-      {plan.blockedReason && selectablePreferred.length === 0 && plan.kind !== 'all-program-slots' ? (
+      {plan.blockedReason &&
+      selectablePreferred.length === 0 &&
+      plan.kind !== 'all-program-slots' ? (
         <p className="institution-approve-modal__notice institution-approve-modal__notice--warn">
           {plan.blockedReason}
         </p>
@@ -298,10 +288,7 @@ export function IndividualApproveScopeModal({
   ) => IndividualApproveScopeConfirmResult | Promise<IndividualApproveScopeConfirmResult>
 }) {
   const { showAlert } = useCmsAlert()
-  const programShape = useMemo(
-    () => individualApprovalProgramShapeFromProgram(program),
-    [program]
-  )
+  const programShape = useMemo(() => individualApprovalProgramShapeFromProgram(program), [program])
   const slotsQuery = useQuery({
     queryKey: individualApprovalEducationSlotsQueryKey(programId ?? ''),
     queryFn: () => fetchAdminProgramEducationSlotsRemote(programId!),
@@ -389,6 +376,7 @@ export function IndividualApproveScopeModal({
       onCancel={onCancel}
       onConfirm={handleConfirm}
       width={600}
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
     >
       <PermissionModalMessage text={buildIndividualApproveMessage(participantName)} />
       <div className="institution-approve-modal__schedule-section">
@@ -434,10 +422,7 @@ export function IndividualBulkApproveScopeModal({
   ) => IndividualApproveScopeConfirmResult | Promise<IndividualApproveScopeConfirmResult>
 }) {
   const { showAlert } = useCmsAlert()
-  const programShape = useMemo(
-    () => individualApprovalProgramShapeFromProgram(program),
-    [program]
-  )
+  const programShape = useMemo(() => individualApprovalProgramShapeFromProgram(program), [program])
   const slotsQuery = useQuery({
     queryKey: individualApprovalEducationSlotsQueryKey(programId ?? ''),
     queryFn: () => fetchAdminProgramEducationSlotsRemote(programId!),
@@ -549,6 +534,7 @@ export function IndividualBulkApproveScopeModal({
       onCancel={onCancel}
       onConfirm={handleConfirm}
       width={640}
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.full}
     >
       <PermissionModalMessage
         text={`선택한 ${applicants.length}명의 참여자를 각자 확인한 교육 일정으로 승인합니다.\n한 일정을 모든 신청자에게 복사하지 않습니다.`}

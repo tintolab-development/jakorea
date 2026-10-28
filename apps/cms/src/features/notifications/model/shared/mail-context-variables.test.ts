@@ -31,7 +31,7 @@ describe('mail context variables (BE 2026-09-10)', () => {
       formatNotificationFailedReason(
         'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:동의 항목,만료일시'
       )
-    ).toBe('템플릿 필수 변수가 없습니다: 동의 항목, 만료일시')
+    ).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 동의 항목, 만료일시')
     expect(NOTIFICATION_MAIL_CONTEXT_VARIABLES_HINT).toContain('회원 프로필 자동값이 아닙니다')
   })
 })

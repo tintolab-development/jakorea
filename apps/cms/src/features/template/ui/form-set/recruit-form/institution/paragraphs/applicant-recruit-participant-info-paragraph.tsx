@@ -74,8 +74,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
   }, [institutionApplicationBridge, recruitLimitVisibility])
   const isTrainedTeachers = layoutVariant === 'trainedTeachers'
   /** 등록 위저드는 `recruitLimitVisibility`로 판단 — 양식 관리(미연동)만 authoring 상시 노출 */
-  const templateAuthoringLimitsPreview =
-    isTemplateAuthoringMode && recruitLimitVisibility == null
+  const templateAuthoringLimitsPreview = isTemplateAuthoringMode && recruitLimitVisibility == null
   const showMaxScheduleCountField =
     showInstitutionApplicationLimits &&
     (templateAuthoringLimitsPreview ||
@@ -93,10 +92,12 @@ export function ApplicantRecruitParticipantInfoParagraph({
         <ApplicantRecruitInstitutionBridgeSync isTrainedTeachers={false} />
         <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
           <DetailInfoForm.Row type="single">
-            <ApplicantRecruitAnnouncementPublishedField fullRow />
+            <ApplicantRecruitAnnouncementPublishedField fullRow size="large" />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">
-            <ApplicantRecruitMaxInstructorsField defaultValue={limitDefaults?.maxAssignableInstructors} />
+            <ApplicantRecruitMaxInstructorsField
+              defaultValue={limitDefaults?.maxAssignableInstructors}
+            />
             <ApplicantRecruitMaxClassCountField defaultValue={limitDefaults?.maxClassCount} />
           </DetailInfoForm.Row>
         </DetailInfoForm>

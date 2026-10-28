@@ -120,6 +120,27 @@
   white-space: nowrap !important;
 }
 
+.school-detail-attendance-session__notice {
+  margin: 0;
+  color: var(--color-text-secondary, #666);
+  font-size: 14px;
+  line-height: 150%;
+}
+
+.school-detail-attendance-table__status-control {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.school-detail-attendance-table__recorded-status {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
 .school-detail-attendance-table__status-radios.app-radio-group {
   display: inline-flex;
   flex-wrap: nowrap;

@@ -88,6 +88,18 @@ export const platformQueryKeys = {
     detail: (id: string) => [...platformQueryKeys.impactStory.all(), 'detail', id] as const,
   },
 
+  notification: {
+    all: () => [...platformQueryKeys.all, 'notification'] as const,
+    /** 내 알림 목록 — GET /api/portal/me/notifications (Class E + member scoped, infinite) */
+    list: (params: { page: number; size: number; unreadOnly: boolean; category?: string }) =>
+      [...platformQueryKeys.notification.listPrefix(), params] as const,
+    listPrefix: () => [...platformQueryKeys.notification.all(), 'list'] as const,
+    /** 미확인 알림 수 — GET /api/portal/me/notifications/unread-count (Class E) */
+    unreadCountPrefix: () => [...platformQueryKeys.notification.all(), 'unread-count'] as const,
+    unreadCount: (category?: string) =>
+      [...platformQueryKeys.notification.unreadCountPrefix(), { category }] as const,
+  },
+
   newsletter: {
     all: () => [...platformQueryKeys.all, 'newsletter'] as const,
     /** 내 구독 상태 — GET /api/portal/me/newsletter/subscription (Class F) */
@@ -100,6 +112,7 @@ export const platformQueryKeys = {
     list: (params: {
       keyword: string
       portalTab: readonly string[]
+      applicationType: readonly string[]
       programType: readonly string[]
       recruitmentStatus: readonly string[]
       recruitmentTarget: readonly string[]
@@ -116,6 +129,7 @@ export const platformQueryKeys = {
         'list',
         params.keyword,
         params.portalTab,
+        params.applicationType,
         params.programType,
         params.recruitmentStatus,
         params.recruitmentTarget,
@@ -332,11 +346,11 @@ export const platformQueryKeys = {
     formResponseDetail: (formResponseId: number) =>
       [...platformQueryKeys.mypage.all(), 'form-response', formResponseId] as const,
     /** 교사 회원 배정 강사 동의서 — GET .../assigned-instructors (Class D) */
-    assignedInstructors: (applicationId: number) =>
+    assignedInstructors: (applicationType: 'INDIVIDUAL' | 'ORGANIZATION', applicationId: number) =>
       [
         ...platformQueryKeys.mypage.all(),
         'assigned-instructors',
-        'ORGANIZATION',
+        applicationType,
         applicationId,
       ] as const,
     /** 기관 신청 — 학생 명단·초상권 (Class D) */

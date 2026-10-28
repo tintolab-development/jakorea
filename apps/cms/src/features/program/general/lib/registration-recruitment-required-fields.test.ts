@@ -68,6 +68,7 @@ function filledInstitution(): Record<string, unknown> {
 function filledIndividual(): Record<string, unknown> {
   return {
     'recruit.individual.announcementPublished': 'published',
+    'recruit.individual.interviewRequired': 'no',
     'recruit.individual.programRangeSeal': RANGE,
     'recruit.individual.recruitRangeSeal': RANGE,
     'recruit.individual.targetLevels': ['adult'],

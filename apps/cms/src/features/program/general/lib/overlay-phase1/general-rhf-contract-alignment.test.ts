@@ -356,7 +356,18 @@ describe('Phase 1-D BE 세션 계약 정렬', () => {
         created: { id: '186234', programRecruitments: [{ id: 9, recruitmentType: 'PARTICIPANT' }] },
       },
     })
-    expect(media.bindCalls.some(call => call.kind === 'putProgramRecruitmentThumbnail')).toBe(true)
+    expect(media.bindCalls).toEqual([])
+    const createBody = mapGeneralProgramToCreateRequest({
+      ...baseProgram(),
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      registrationOverlay: { 'recruit.detailInfo.thumbFileObjectId': 77 },
+    })
+    expect(
+      createBody.recruitments?.some(
+        row => 'thumbnailFileObjectId' in row && (row as { thumbnailFileObjectId?: number }).thumbnailFileObjectId === 77
+      )
+    ).toBe(true)
   })
 
   it('Independent extras는 nested 0을 허용하고 Legacy extras는 overlay 맵을 따른다', () => {

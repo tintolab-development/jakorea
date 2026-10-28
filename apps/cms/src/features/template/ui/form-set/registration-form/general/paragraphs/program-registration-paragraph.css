@@ -183,9 +183,7 @@
   min-width: 0;
 }
 
-.program-registration-paragraph
-  .detail-info-form__row--double
-  > .detail-info-form__field--edit {
+.program-registration-paragraph .detail-info-form__row--double > .detail-info-form__field--edit {
   grid-template-rows: minmax(min-content, 1fr);
 }
 

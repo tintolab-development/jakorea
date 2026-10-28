@@ -18,7 +18,7 @@ function IconDashboardEdit() {
 interface DashboardToolbarProps {
   userName?: string
   roleLabel: string
-  activeProgramsCount: number
+  activeProgramsCount: number | null
   onOpenSettings: () => void
 }
 
@@ -34,7 +34,9 @@ export function DashboardToolbar({
         <span className="dashboard-toolbar-title">
           {userName} {roleLabel}님, 반갑습니다!
         </span>
-        <span className="dashboard-toolbar-description">진행 프로젝트 {activeProgramsCount}건</span>
+        <span className="dashboard-toolbar-description">
+          진행 프로젝트 {activeProgramsCount == null ? '-' : activeProgramsCount}건
+        </span>
       </div>
       <div className="dashboard-toolbar-right">
         <CmsButton

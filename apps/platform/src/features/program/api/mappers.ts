@@ -79,7 +79,7 @@ function appendSessionSuffixToEducationScheduleLines(
     sessions: readonly ProgramSession[]
   },
 ): string[] {
-  return lines.map(line =>
+  return lines.map((line, index) =>
     appendCurriculumSingleDateFixedScheduleSessionSuffix(
       line,
       {
@@ -94,6 +94,7 @@ function appendSessionSuffixToEducationScheduleLines(
           title: session.title,
         })),
       },
+      index,
     )
   )
 }

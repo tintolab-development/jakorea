@@ -5,10 +5,7 @@ import type { ApplicantInstructorRow } from '@/features/program/shared/model/app
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import {
-  fetchGeneralOrganizationApplicationsPage,
-  hydrateOrganizationApplicationSchedules,
-} from '@/features/program/general/api/admin-applications-service'
+import { fetchGeneralOrganizationApplicationsPage } from '@/features/program/general/api/admin-applications-service'
 import { fetchInstructorApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
@@ -30,8 +27,9 @@ import {
 const ASSIGN_ORG_PAGE_LIMIT = 40
 
 /**
- * GENERAL 기관 강사 배정 후보 = 승인된 기관의 희망 일정(+ resolvedScheduleId).
- * OSA(`schedule-assignments`) 선배정은 필수가 아니다 (노션 기획).
+ * GENERAL 기관 강사 배정 후보 = 승인된 기관 신청의 실제 배정 일정
+ * (organization-applications `sessions[]` 중 TEMP_ASSIGNED/CONFIRMED → `confirmedListAssignmentSessions`).
+ * 희망 일정(preferredEducationSchedules / requested-schedules)은 후보가 아니다.
  */
 async function fetchApprovedOrganizationApplicationsForLectureAssign(
   programId: string,
@@ -50,8 +48,14 @@ async function fetchApprovedOrganizationApplicationsForLectureAssign(
     page += 1
     if (page > ASSIGN_ORG_PAGE_LIMIT) break
   }
-  const approved = rows.filter(row => row.approvalStatus === 'approved')
-  return hydrateOrganizationApplicationSchedules(approved, queryClient)
+  return rows.filter(row => row.approvalStatus === 'approved')
+}
+
+/** 승인 기관 중 실제 배정 일정(TEMP_ASSIGNED/CONFIRMED)이 1건 이상 있는 신청 수. */
+export function countOrganizationsWithAssignedSessions(
+  rows: ApplicantSchoolRow[] | undefined
+): number {
+  return (rows ?? []).filter(row => (row.confirmedListAssignmentSessions?.length ?? 0) > 0).length
 }
 
 export type InstructorLectureAssignModalVariant = 'organization' | 'individual'
@@ -129,7 +133,9 @@ export function useInstructorLectureAssignModal(params: {
   const schedule = useMemo(
     () =>
       !isIndividual && organizationRemoteEnabled && organizationApplicationsQuery.data
-        ? parseInstructorLectureAssignScheduleFromInstitutions(organizationApplicationsQuery.data)
+        ? parseInstructorLectureAssignScheduleFromInstitutions(organizationApplicationsQuery.data, {
+            sessionSource: 'assigned',
+          })
         : parseInstructorLectureAssignSchedule(programId),
     [isIndividual, organizationApplicationsQuery.data, organizationRemoteEnabled, programId]
   )
@@ -218,7 +224,9 @@ export function useInstructorLectureAssignModal(params: {
       isIndividual,
       organizationRemoteEnabled,
       organizationApplicationsSuccess: organizationApplicationsQuery.isSuccess,
-      approvedOrganizationCount: organizationApplicationsQuery.data?.length ?? 0,
+      approvedOrganizationCount: countOrganizationsWithAssignedSessions(
+        organizationApplicationsQuery.data
+      ),
       instructorDetailReady: useAvailableScheduleSlotsUi,
     })
 
@@ -289,8 +297,7 @@ export function useInstructorLectureAssignModal(params: {
       if (slot.disabled) return
       setAssignedItems(prev => {
         if (prev.some(item => item.slotKey === slot.key)) return prev
-        const usePeriodStyleItem =
-          isIndividual || useSlotListLayout || Boolean(slot.label?.trim())
+        const usePeriodStyleItem = isIndividual || useSlotListLayout || Boolean(slot.label?.trim())
         const nextItem = usePeriodStyleItem
           ? toIndividualLectureAssignItem(slot)
           : toLectureAssignItem(slot)

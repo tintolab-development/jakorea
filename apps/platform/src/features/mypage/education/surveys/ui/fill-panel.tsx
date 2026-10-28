@@ -28,7 +28,13 @@ import {
 } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import type { EducationSurveyListEntry } from '../lib/survey-list-types'
-import { isPortalFormSubmissionPeriodOpen } from '../lib/portal-form-submission-period'
+import {
+  isPortalFormSubmissionPeriodOpen,
+  mergePortalFormSubmissionPeriodFields,
+  resolvePortalFormSubmissionPeriodBlockForEntry,
+  resolvePortalFormSubmissionPeriodBlockFromApiError,
+  type PortalFormSubmissionPeriodBlockReason,
+} from '../lib/portal-form-submission-period'
 import { EducationSurveyEmptyPanel } from './empty-panel'
 import {
   formatEducationPeriodLabel,
@@ -44,6 +50,7 @@ import { EMPTY_SURVEY_SIDECAR, type SurveySidecarState } from '../lib/survey-sid
 import { EducationSurveyFormBody } from './survey-form-body'
 import { EducationSurveyHeader } from './survey-header'
 import { EducationSurveyList } from './survey-list'
+import { EducationSurveyPeriodEndedPanel } from './period-ended-panel'
 import styles from './fill-panel.module.css'
 
 export type EducationSurveyFillPanelProps = {
@@ -97,6 +104,7 @@ export function EducationSurveyFillPanel({
   applicationType,
   applicationId,
   programId,
+  pendingSurveyCount,
 }: EducationSurveyFillPanelProps) {
   const remoteForms = useApplicationFormsQuery(
     applicationType,
@@ -134,9 +142,6 @@ export function EducationSurveyFillPanel({
     canFetchRemoteForm ? selectedEntryId : null,
   )
   const submitMutation = useSubmitEducationSurveyMutation(programId, applicationType, applicationId)
-  const readOnly =
-    selectedEntry?.status === 'submitted' ||
-    (selectedEntry != null && !isPortalFormSubmissionPeriodOpen(selectedEntry))
 
   const remoteFormDocument = listHasForm
     ? {
@@ -265,6 +270,26 @@ export function EducationSurveyFillPanel({
     [draft.paragraphs],
   )
 
+  const surveyCreatedAt =
+    selectedEntry?.createdAt ?? selectedEntry?.startAt ?? EDUCATION_SURVEY_SEED_CREATED_AT
+
+  const periodBlockReason = useMemo(
+    () => resolvePortalFormSubmissionPeriodBlockForEntry(selectedEntry, titleParagraph),
+    [selectedEntry, titleParagraph],
+  )
+
+  const mergedPeriodFields = useMemo(
+    () =>
+      selectedEntry
+        ? mergePortalFormSubmissionPeriodFields(selectedEntry, titleParagraph)
+        : undefined,
+    [selectedEntry, titleParagraph],
+  )
+
+  const readOnly =
+    selectedEntry?.status === 'submitted' ||
+    (mergedPeriodFields != null && !isPortalFormSubmissionPeriodOpen(mergedPeriodFields))
+
   const updateParagraph = useCallback<FormUpdateParagraph>((id, updater) => {
     setDraft(prev => ({
       ...prev,
@@ -338,9 +363,54 @@ export function EducationSurveyFillPanel({
       </PFText>
     )
   }
-  if (remoteForms.enabled && surveyList.length === 0) {
+  const renderPeriodNotice = (reason: PortalFormSubmissionPeriodBlockReason) => {
+    if (showList) {
+      return (
+        <div className={styles.periodNoticeLayout}>
+          <EducationSurveyList
+            items={surveyList}
+            selectedId={selectedEntry?.id ?? selectedId}
+            onSelect={setSelectedId}
+          />
+          <EducationSurveyPeriodEndedPanel reason={reason} layout="inline" />
+        </div>
+      )
+    }
+
+    return <EducationSurveyPeriodEndedPanel reason={reason} />
+  }
+
+  if (!remoteForms.enabled) {
     return <EducationSurveyEmptyPanel kind={kind} />
   }
+
+  if (remoteForms.enabled && surveyList.length === 0) {
+    if (kind === 'survey' && pendingSurveyCount != null && pendingSurveyCount > 0) {
+      return <EducationSurveyEmptyPanel kind={kind} pendingMismatchHint />
+    }
+    return <EducationSurveyEmptyPanel kind={kind} />
+  }
+
+  const formFetchPeriodBlock =
+    selectedEntry?.status === 'submitted'
+      ? null
+      : resolvePortalFormSubmissionPeriodBlockFromApiError(remoteFormQuery.error)
+
+  const effectivePeriodBlockReason = periodBlockReason ?? formFetchPeriodBlock
+
+  if (kind === 'survey' && effectivePeriodBlockReason) {
+    return renderPeriodNotice(effectivePeriodBlockReason)
+  }
+
+  if (
+    kind === 'survey' &&
+    selectedEntry?.status !== 'submitted' &&
+    mergedPeriodFields != null &&
+    !isPortalFormSubmissionPeriodOpen(mergedPeriodFields)
+  ) {
+    return renderPeriodNotice('closed')
+  }
+
   // 실패 시 seed 양식이 대신 보이면 CMS 양식과 다른 설문을 제출하게 된다.
   if (remoteFormQuery.isError) {
     return (
@@ -352,9 +422,6 @@ export function EducationSurveyFillPanel({
       </PFText>
     )
   }
-
-  const surveyCreatedAt =
-    selectedEntry?.createdAt ?? selectedEntry?.startAt ?? EDUCATION_SURVEY_SEED_CREATED_AT
 
   const body = (
     <div className={styles.body}>

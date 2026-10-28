@@ -36,6 +36,7 @@ export interface ProgramListItemResponse {
   recruitmentStartAt?: string;
   recruitmentEndAt?: string;
   applicationTargetMode?: string;
+  /** 이 모집 행에 사용할 수 있는 신청 유형 하나. applicationType과 같다. */
   availableApplicationTypes?: string[];
   canApply?: boolean;
   /** 썸네일 file_object id. 없으면 null. placeholder 금지 */
@@ -48,13 +49,13 @@ export interface ProgramListItemResponse {
   targetGradeTo?: string;
   /** 공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. */
   educationForm?: ProgramListItemResponseEducationForm;
-  /** 이 목록 행의 모집 id. 모집 없는 NONE 행이면 null. */
+  /** 이 목록 행의 모집 id. 모집 없는 NONE 행이면 null. programId·recruitmentId·applicationType 복합키로 행을 식별한다. */
   recruitmentId?: number | null;
   /** 이 행의 모집 유형. */
   recruitmentType?: ProgramListItemResponseRecruitmentType;
   /** 이 행의 모집 대상. 저장된 target_type. */
   targetType?: string | null;
-  /** 이 행의 신청 양식 하나. */
+  /** 이 행의 신청 양식 하나. 같은 프로그램의 기관·봉사자 모집은 별도 목록 행이다. */
   applicationType?: ProgramListItemResponseApplicationType;
   /** UJAT 봉사자 모집 상·하반기. 그 외 목록 행은 null. */
   recruitTerm?: ProgramListItemResponseRecruitTerm;

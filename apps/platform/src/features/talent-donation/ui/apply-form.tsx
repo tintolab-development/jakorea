@@ -1,6 +1,6 @@
 import { type ChangeEvent, type FormEvent, useRef, useState } from 'react'
 import axios from 'axios'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { getSidoOptions, getSigunguOptions } from '@jakorea/location/sido-sigungu'
 import {
   buildRequiredConsentDisagreeAlertMessage,
@@ -15,6 +15,7 @@ import {
   PFDivider,
   PFFormPeriodPair,
   PFFormPeriodTilde,
+  PFAttachedFileList,
   PFSelect,
   PFText,
   PFTextInput,
@@ -29,9 +30,11 @@ import {
   JA_PARTICIPATION_OPTIONS,
   TALENT_APPLY_FILE_GUIDE,
   TALENT_APPLY_PLACEHOLDERS as PH,
+  TALENT_APPLY_LONG_TEXT_MAX_LENGTH,
   TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE,
   TALENT_APPLY_STEP_TITLES,
   TALENT_APPLY_SUBMIT_LABEL,
+  trimTalentApplyLongText,
   type TalentApplyFieldKey,
   type TalentApplyFormValues,
   type TalentApplyGender,
@@ -94,6 +97,39 @@ function FieldLabel({
   )
 }
 
+function TalentApplyLongTextField({
+  id,
+  label,
+  value,
+  error,
+  onChange,
+}: {
+  id: string
+  label: string
+  value: string
+  error: boolean
+  onChange: (next: string) => void
+}) {
+  return (
+    <div className={styles.field}>
+      <FieldLabel htmlFor={id} required>
+        {label}
+      </FieldLabel>
+      <textarea
+        id={id}
+        className={[styles.textarea, error ? styles.textareaError : undefined].filter(Boolean).join(' ')}
+        value={value}
+        maxLength={TALENT_APPLY_LONG_TEXT_MAX_LENGTH}
+        aria-invalid={error || undefined}
+        onChange={event => onChange(event.target.value)}
+      />
+      <PFText as="p" typo="bd-sm-rg" color="neutral-cool-500" className={styles.textareaCharCount}>
+        {value.length}/{TALENT_APPLY_LONG_TEXT_MAX_LENGTH}
+      </PFText>
+    </div>
+  )
+}
+
 function JaParticipationRadioGroup({
   value,
   onChange,
@@ -133,12 +169,12 @@ function JaParticipationRadioGroup({
 }
 
 export function TalentDonationApplyForm() {
+  const navigate = useNavigate()
   const [values, setValues] = useState<TalentApplyFormValues>(EMPTY_TALENT_APPLY_FORM_VALUES)
   const [errors, setErrors] = useState<TalentApplyFieldErrors>({})
   const [alert, setAlert] = useState<AlertState>(null)
-  const [attachedFileName, setAttachedFileName] = useState('')
-  const [attachedFile, setAttachedFile] = useState<File | null>(null)
-  const [submitted, setSubmitted] = useState(false)
+  const [successOpen, setSuccessOpen] = useState(false)
+  const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; file: File }>>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mutation = useCreatePublicTalentApplication()
 
@@ -179,15 +215,23 @@ export function TalentDonationApplyForm() {
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null
+    const selected = Array.from(event.target.files ?? [])
     event.target.value = ''
-    const sizeError = file ? validateUploadFileSize(file) : null
-    if (sizeError) {
-      setAlert({ title: '안내', description: sizeError })
-      return
+    if (selected.length === 0) return
+    for (const file of selected) {
+      const sizeError = validateUploadFileSize(file)
+      if (sizeError) {
+        setAlert({ title: '안내', description: sizeError })
+        return
+      }
     }
-    setAttachedFile(file)
-    setAttachedFileName(file?.name ?? '')
+    setAttachedFiles(prev => [
+      ...prev,
+      ...selected.map(file => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+        file,
+      })),
+    ])
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -227,35 +271,22 @@ export function TalentDonationApplyForm() {
           sigungu: values.sigungu.trim(),
           periodStart: toApiDate(values.periodStart),
           periodEnd: toApiDate(values.periodEnd),
-          bio: values.bio.trim(),
-          talentIntro: values.talentIntro.trim(),
-          motivation: values.motivation.trim(),
+          bio: trimTalentApplyLongText(values.bio),
+          talentIntro: trimTalentApplyLongText(values.talentIntro),
+          motivation: trimTalentApplyLongText(values.motivation),
           jaParticipation: values.jaParticipation as 'yes' | 'no',
           privacyAgreed: true,
         },
-        attachmentFile: attachedFile,
+        attachmentFiles: attachedFiles.map(item => item.file),
       },
       {
-        onSuccess: () => setSubmitted(true),
+        onSuccess: () => setSuccessOpen(true),
         onError: error =>
           setAlert({
             title: '안내',
             description: messageFromError(error),
           }),
       },
-    )
-  }
-
-  if (submitted) {
-    return (
-      <div className={styles.success}>
-        <PFText as="p" typo="bd-lg-rg" color="black">
-          재능기부 신청이 접수되었습니다.
-        </PFText>
-        <Link to={TALENT_DONATION_PATH} className={styles.backLink}>
-          재능기부로 돌아가기
-        </Link>
-      </div>
     )
   }
 
@@ -463,53 +494,29 @@ export function TalentDonationApplyForm() {
           </div>
 
           <div className={styles.fields}>
-            <div className={styles.field}>
-              <FieldLabel htmlFor="talent-apply-bio" required>
-                간단한 약력 소개
-              </FieldLabel>
-              <textarea
-                id="talent-apply-bio"
-                className={[styles.textarea, errors.bio ? styles.textareaError : undefined]
-                  .filter(Boolean)
-                  .join(' ')}
-                value={values.bio}
-                onChange={event => patch('bio', event.target.value)}
-              />
-            </div>
+            <TalentApplyLongTextField
+              id="talent-apply-bio"
+              label="간단한 약력 소개"
+              value={values.bio}
+              error={Boolean(errors.bio)}
+              onChange={next => patch('bio', next)}
+            />
 
-            <div className={styles.field}>
-              <FieldLabel htmlFor="talent-apply-talent-intro" required>
-                기부 가능한 재능 소개
-              </FieldLabel>
-              <textarea
-                id="talent-apply-talent-intro"
-                className={[
-                  styles.textarea,
-                  errors.talentIntro ? styles.textareaError : undefined,
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                value={values.talentIntro}
-                onChange={event => patch('talentIntro', event.target.value)}
-              />
-            </div>
+            <TalentApplyLongTextField
+              id="talent-apply-talent-intro"
+              label="기부 가능한 재능 소개"
+              value={values.talentIntro}
+              error={Boolean(errors.talentIntro)}
+              onChange={next => patch('talentIntro', next)}
+            />
 
-            <div className={styles.field}>
-              <FieldLabel htmlFor="talent-apply-motivation" required>
-                참여 동기
-              </FieldLabel>
-              <textarea
-                id="talent-apply-motivation"
-                className={[
-                  styles.textarea,
-                  errors.motivation ? styles.textareaError : undefined,
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                value={values.motivation}
-                onChange={event => patch('motivation', event.target.value)}
-              />
-            </div>
+            <TalentApplyLongTextField
+              id="talent-apply-motivation"
+              label="참여 동기"
+              value={values.motivation}
+              error={Boolean(errors.motivation)}
+              onChange={next => patch('motivation', next)}
+            />
 
             <div className={styles.field}>
               <FieldLabel required>JA 프로그램 참여 여부</FieldLabel>
@@ -554,19 +561,27 @@ export function TalentDonationApplyForm() {
                 >
                   파일찾기
                 </PFButton>
-                <div className={styles.fileGuideBox}>
-                  <PFText
-                    as="p"
-                    typo="bd-md-rg"
-                    color={attachedFileName ? 'black' : 'neutral-warm-500'}
-                    className={styles.fileGuide}
-                  >
-                    {attachedFileName || TALENT_APPLY_FILE_GUIDE}
-                  </PFText>
-                </div>
+                {attachedFiles.length === 0 ? (
+                  <div className={styles.fileGuideBox}>
+                    <PFText
+                      as="p"
+                      typo="bd-md-rg"
+                      color="neutral-warm-500"
+                      className={styles.fileGuide}
+                    >
+                      {TALENT_APPLY_FILE_GUIDE}
+                    </PFText>
+                  </div>
+                ) : (
+                  <PFAttachedFileList
+                    files={attachedFiles.map(item => ({ id: item.id, name: item.file.name }))}
+                    onRemove={id => setAttachedFiles(prev => prev.filter(item => item.id !== id))}
+                  />
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
+                  multiple
                   className={styles.visuallyHiddenFile}
                   onChange={handleFileChange}
                 />
@@ -672,6 +687,15 @@ export function TalentDonationApplyForm() {
         title={alert?.title ?? ''}
         description={alert?.description}
         onConfirm={() => setAlert(null)}
+      />
+
+      <PFAlertModal
+        open={successOpen}
+        title="신청 완료되었습니다"
+        onConfirm={() => {
+          setSuccessOpen(false)
+          navigate(TALENT_DONATION_PATH)
+        }}
       />
     </>
   )

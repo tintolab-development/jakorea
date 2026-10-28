@@ -17,7 +17,8 @@ export interface RequestedScheduleResponse {
   sessionCount?: number;
   combinedClassYn?: boolean;
   sessionTimes?: RequestedSessionTimeResponse[];
-  resolvedScheduleId?: number;
+  /** 연결된 첫 program_schedule id. resolvedScheduleIds[0]과 같고 연결이 없으면 null. */
+  resolvedScheduleId?: number | null;
   createdByActorType?: string;
   createdByActorId?: number;
   createdAt?: string;
@@ -28,4 +29,6 @@ export interface RequestedScheduleResponse {
   periodStartDate?: string | null;
   /** PERIOD 구간 종료일. 없으면 null. */
   periodEndDate?: string | null;
+  /** 이 희망 일정이 가리키는 program_schedule id 전체(시작 시각, id 순). 일반(GENERAL)은 같은 날 슬롯이 여러 개여도 모두 포함한다. 연결이 없으면 []이며 null은 반환하지 않는다. */
+  resolvedScheduleIds?: number[];
 }

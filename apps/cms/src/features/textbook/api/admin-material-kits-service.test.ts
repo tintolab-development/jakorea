@@ -18,10 +18,11 @@ describe('materialKitCurrentConfigToQuantities', () => {
     expect(values.university).toBe('7')
   })
 
-  it('null 레벨은 기본값을 유지한다', () => {
+  it('없는 레벨을 24·32로 채우지 않는다', () => {
     const values = materialKitCurrentConfigToQuantities({ infant: 0 })
     expect(values.kindergarten).toBe('0')
-    expect(values.elementary).toBeDefined()
+    expect(values.elementary).toBe('')
+    expect(values.high).toBe('')
   })
 })
 
@@ -41,14 +42,31 @@ describe('quantitiesToMaterialKitCurrentConfigRequest', () => {
   it('effectiveFrom을 전달한다', () => {
     const body = quantitiesToMaterialKitCurrentConfigRequest(
       {
-        kindergarten: '0',
-        elementary: '0',
-        middle: '0',
-        high: '0',
-        university: '0',
+        kindergarten: '24',
+        elementary: '24',
+        middle: '24',
+        high: '32',
+        university: '32',
       },
       { effectiveFrom: '2026-01-01' }
     )
     expect(body.effectiveFrom).toBe('2026-01-01')
+  })
+
+  it('0·소수·공란을 거부한다', () => {
+    const invalid = {
+      kindergarten: '0',
+      elementary: '24',
+      middle: '24',
+      high: '32',
+      university: '32',
+    }
+    expect(() => quantitiesToMaterialKitCurrentConfigRequest(invalid)).toThrow(/1 이상의 정수/)
+    expect(() =>
+      quantitiesToMaterialKitCurrentConfigRequest({ ...invalid, kindergarten: '1.5' })
+    ).toThrow(/1 이상의 정수/)
+    expect(() =>
+      quantitiesToMaterialKitCurrentConfigRequest({ ...invalid, kindergarten: '' })
+    ).toThrow(/1 이상의 정수/)
   })
 })

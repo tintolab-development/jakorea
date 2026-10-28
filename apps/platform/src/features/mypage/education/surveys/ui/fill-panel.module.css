@@ -50,6 +50,22 @@
   padding-top: var(--spacing-8);
 }
 
+.periodNoticeLayout {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--spacing-60);
+}
+
+.periodNoticeLayout > :last-child {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
 @media (--bp-below-pc) {
   .shell {
     /* 홈 content와 동일 거터·하단 · page padding-bottom(48)까지 bg 연장 */
@@ -76,6 +92,19 @@
   .inner,
   .body {
     gap: var(--spacing-16);
+  }
+
+  .periodNoticeLayout {
+    flex-direction: column;
+    gap: var(--spacing-16);
+  }
+
+  .periodNoticeLayout > :first-child {
+    display: none;
+  }
+
+  .periodNoticeLayout > :last-child {
+    width: 100%;
   }
 }
 

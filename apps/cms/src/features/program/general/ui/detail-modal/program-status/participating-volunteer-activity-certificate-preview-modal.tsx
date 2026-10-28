@@ -2,7 +2,7 @@
  * 참여 봉사자 — 활동확인서(활동인증서) 발급 미리보기
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import {
   ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
@@ -16,6 +16,8 @@ import {
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
 import { downloadIssuedCertificatePdf } from '@/features/program/shared/lib/apply-allocated-serial-for-pdf-capture'
 import { getCertificateSerialAllocateErrorMessage } from '@/features/program/shared/api/certificate-serial-api'
+import { unmaskVolunteerForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { mapApiBirthDateToDisplay } from '@/features/program/general/api/adapters/student-roster-adapters'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -51,18 +53,59 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const [isAllocatingSerial, setIsAllocatingSerial] = useState(false)
   const [pdfSerialNumber, setPdfSerialNumber] = useState<string | undefined>()
+  const [unmaskedVolunteer, setUnmaskedVolunteer] = useState(volunteer)
+  const [isUnmasking, setIsUnmasking] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    setUnmaskedVolunteer(volunteer)
+    setIsUnmasking(true)
+    void unmaskVolunteerForCertificateIssue(volunteer, program?.id)
+      .then(next => {
+        if (!cancelled) setUnmaskedVolunteer(next)
+      })
+      .catch(error => {
+        if (cancelled) return
+        showAlert({
+          title: '열람 실패',
+          content: getGeneralProgramApiErrorMessage(error, '개인정보 원문 조회에 실패했습니다.'),
+        })
+        onClose()
+      })
+      .finally(() => {
+        if (!cancelled) setIsUnmasking(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [
+    onClose,
+    open,
+    program?.id,
+    showAlert,
+    volunteer,
+    volunteer.id,
+    volunteer.memberId,
+    volunteer.volunteerApplicationId,
+  ])
 
   const runtimeStringValues = useMemo(
     () =>
-      buildActivityCertificateInitialStringValuesForVolunteer(volunteer.volunteerName, {
+      buildActivityCertificateInitialStringValuesForVolunteer(unmaskedVolunteer.volunteerName, {
         birthDate:
-          volunteer.birthDate && volunteer.birthDate !== '-'
-            ? mapApiBirthDateToDisplay(volunteer.birthDate)
+          unmaskedVolunteer.birthDate && unmaskedVolunteer.birthDate !== '-'
+            ? mapApiBirthDateToDisplay(unmaskedVolunteer.birthDate)
             : undefined,
-        institutionName: volunteer.assignedInstitutionNames[0],
+        institutionName: unmaskedVolunteer.assignedInstitutionNames[0],
         program,
       }),
-    [program, volunteer.assignedInstitutionNames, volunteer.birthDate, volunteer.volunteerName]
+    [
+      program,
+      unmaskedVolunteer.assignedInstitutionNames,
+      unmaskedVolunteer.birthDate,
+      unmaskedVolunteer.volunteerName,
+    ]
   )
 
   const modalState = useCertificateTemplateModalState({
@@ -76,8 +119,8 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     useFormCertificatePreviewProps(modalState, undefined, pdfSerialNumber)
 
   const fileName = useMemo(
-    () => buildActivityCertificateFileName(volunteer.volunteerName),
-    [volunteer.volunteerName]
+    () => buildActivityCertificateFileName(unmaskedVolunteer.volunteerName),
+    [unmaskedVolunteer.volunteerName]
   )
 
   const buildPdfFilename = useCallback(() => `${fileName}.pdf`, [fileName])
@@ -92,13 +135,13 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   }, [onClose])
 
   const handleDownloadPdf = useCallback(async () => {
-    if (isAllocatingSerial || isPdfDownloading) return
+    if (isAllocatingSerial || isPdfDownloading || isUnmasking) return
     setIsAllocatingSerial(true)
     try {
       await downloadIssuedCertificatePdf({
         subject: {
           programId: program?.id,
-          subjectId: volunteer.id,
+          subjectId: unmaskedVolunteer.id,
           certificateType: VOLUNTEER_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
         },
         applySerial: setPdfSerialNumber,
@@ -114,7 +157,15 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     } finally {
       setIsAllocatingSerial(false)
     }
-  }, [downloadPdf, isAllocatingSerial, isPdfDownloading, program?.id, showAlert, volunteer.id])
+  }, [
+    downloadPdf,
+    isAllocatingSerial,
+    isPdfDownloading,
+    isUnmasking,
+    program?.id,
+    showAlert,
+    unmaskedVolunteer.id,
+  ])
 
   if (!open) return null
 
@@ -128,7 +179,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
         size="medium"
         width={140}
         icon={<ButtonDownloadIcon />}
-        disabled={isPdfDownloading || isAllocatingSerial}
+        disabled={isPdfDownloading || isAllocatingSerial || isUnmasking}
         onClick={() => void handleDownloadPdf()}
       >
         파일 다운로드
@@ -138,7 +189,9 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
 
   return (
     <>
-      <FormCertificatePdfExportOverlay visible={isPdfDownloading || isAllocatingSerial} />
+      <FormCertificatePdfExportOverlay
+        visible={isPdfDownloading || isAllocatingSerial || isUnmasking}
+      />
       <TealHeaderModal
         open={open}
         onCancel={handleClose}

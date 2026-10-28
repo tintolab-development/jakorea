@@ -9,12 +9,29 @@ function extractApiErrorCode(data: unknown): string | null {
   return null
 }
 
-/** 일정별 정산 API 대상 — 일반 개인·강사 신청. */
+/** Portal `program_individual_application` — 일반 개인 참가 신청 유형만. */
 export function isIndividualScheduleSettlementAudience(
   applicationType: string | null | undefined,
 ): boolean {
-  const normalized = applicationType?.trim().toUpperCase()
-  return normalized === 'INDIVIDUAL' || normalized === 'INSTRUCTOR'
+  return applicationType?.trim().toUpperCase() === 'INDIVIDUAL'
+}
+
+export function isGeneralIndividualProgramType(programType: string | null | undefined): boolean {
+  return programType?.trim().toUpperCase() === 'GENERAL_INDIVIDUAL'
+}
+
+/**
+ * GET individual-settlements/applications/{id}/schedules 호출 여부.
+ * `id`는 `program_individual_application.id`만 허용 — 강사·기관 신청 id 금지.
+ */
+export function shouldUseIndividualSettlementSchedulesApi(
+  applicationType: string | null | undefined,
+  programType?: string | null,
+): boolean {
+  if (!isIndividualScheduleSettlementAudience(applicationType)) return false
+  const normalizedProgramType = programType?.trim()
+  if (!normalizedProgramType) return true
+  return isGeneralIndividualProgramType(normalizedProgramType)
 }
 
 export const INDIVIDUAL_SETTLEMENT_DISABLED_CODE = 'INDIVIDUAL_SETTLEMENT_DISABLED'
@@ -52,7 +69,8 @@ const INELIGIBLE_REASON_MESSAGES: Record<string, string> = {
   LEGACY_RECONCILIATION_REQUIRED:
     '기존 정산 내역 확인이 필요합니다. 관리자에게 문의해 주세요.',
   INDIVIDUAL_SETTLEMENT_DISABLED: INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
-  SETTLEMENT_NOT_FOUND: '정산 정보를 찾을 수 없습니다.',
+  SETTLEMENT_NOT_FOUND:
+    '개인 프로그램 신청 정산만 이 화면에서 조회할 수 있습니다. 강사·기관 프로그램은 강사 배정 정산을 이용해 주세요.',
 }
 
 export function normalizeIndividualIneligibleReason(

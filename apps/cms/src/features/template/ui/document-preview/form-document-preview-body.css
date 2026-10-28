@@ -271,7 +271,7 @@
 /* A4 문서 — 읽기 전용 회색 라디오(실제 선택값은 유지) */
 .form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent .ant-radio-wrapper {
   color: var(--main-BK, #3d3d3d);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .form-document-preview-body--agreement-portrait .form-editor-table-bottom-consent .ant-radio-inner {
@@ -581,7 +581,7 @@
 
 .form-document-preview-body--agreement-notice .id-type-with-input__doc-label,
 .form-document-preview-body--agreement-notice .id-type-with-input .ant-radio-wrapper {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .form-document-preview-body--agreement-notice .form-document-short-essay-table th,

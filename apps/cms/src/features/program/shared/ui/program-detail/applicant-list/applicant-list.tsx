@@ -87,7 +87,7 @@ import {
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import { mapLectureAssignItemsToApprovalAssignments } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import {
-  toFlatDecisionNotifyTiming,
+  toTimedBulkNotifyTiming,
   toOrganizationApproveNotifyTiming,
   toTrainedTeacherApproveNotifyTiming,
   toNestedDecisionNotification,
@@ -125,6 +125,8 @@ import { fetchTrainedTeacherOrganizationApplicationRemote } from '@/features/pro
 import { mapTrainedTeacherOrganizationApplicationToRow } from '@/features/program/trained-teachers/api/organization-applications-adapters'
 import { buildTrainedTeacherApproveRequest } from '@/features/program/trained-teachers/api/trained-teacher-organization-approve-payload'
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
 import { InstitutionCancelApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-complete-modal'
 import {
@@ -508,6 +510,7 @@ export function ApplicantList({
   /** 1차 서류 심사 탭 — 리스트뷰만 (봉사자 doc1과 동일) */
   const isIndividualDoc1Screening =
     menu === 'individual-applications' && individualScreeningStage === 'doc1'
+  const participantRejectNotifyCapability = NOTIFY_TIMING_CAPABILITY.full
   const individualDoc1FilterFields = useMemo(
     () => (isIndividualDoc1Screening ? buildGeneralParticipantDoc1FilterFields() : undefined),
     [isIndividualDoc1Screening]
@@ -763,6 +766,8 @@ export function ApplicantList({
     async (input: {
       reason: string
       targets: Array<{ applicationId: string; confirmedScheduleIds: number[] }>
+      notifyTiming?: PermissionModalPayload['notifyTiming']
+      manualNotifyAt?: PermissionModalPayload['manualNotifyAt']
     }): Promise<{ rejectedScheduleIds?: number[] } | void> => {
       setIndividualScopeSubmitting(true)
       try {
@@ -1298,6 +1303,7 @@ export function ApplicantList({
         variant="bulk"
         subjectName={firstSelectedInstructorName}
         selectionCount={selectedRowKeys.length}
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
         onCancel={() => setInstructorBulkRejectOpen(false)}
         onConfirm={payload => {
           void (async () => {
@@ -1314,6 +1320,7 @@ export function ApplicantList({
         variant="bulk"
         subjectName={firstSelectedInstitutionName}
         selectionCount={selectedRowKeys.length}
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
         onCancel={() => setInstitutionBulkRejectOpen(false)}
         onConfirm={payload => {
           void (async () => {
@@ -1442,6 +1449,7 @@ export function ApplicantList({
         audience="institution"
         variant="single"
         subjectName={institutionRejectTarget?.name ?? ''}
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
         onCancel={() => setInstitutionRejectTarget(null)}
         onConfirm={payload => {
           if (!institutionRejectTarget) return
@@ -1456,7 +1464,7 @@ export function ApplicantList({
               [id],
               'reject',
               payload.reason,
-              toFlatDecisionNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
+              toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
             )
             if (remote === 'error') return
             if (remote === 'skipped') {
@@ -1551,6 +1559,7 @@ export function ApplicantList({
         variant="bulk"
         subjectName={firstSelectedParticipantName}
         selectionCount={selectedRowKeys.length}
+        notifyTimingCapability={participantRejectNotifyCapability}
         onCancel={() => setParticipantBulkRejectOpen(false)}
         onConfirm={payload => {
           void (async () => {
@@ -1564,6 +1573,7 @@ export function ApplicantList({
       <ParticipantBulkApproveModal
         open={participantBulkApproveOpen}
         selectionCount={selectedRowKeys.length}
+        notifyTimingCapability={participantRejectNotifyCapability}
         onCancel={() => setParticipantBulkApproveOpen(false)}
         onConfirm={payload => {
           void (async () => {
@@ -1595,6 +1605,8 @@ export function ApplicantList({
                 confirmedScheduleIds: payload.confirmedScheduleIds,
               },
             ],
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
           })
         }}
       />
@@ -1612,6 +1624,8 @@ export function ApplicantList({
           submitIndividualScopeApproval({
             reason: payload.reason,
             targets: payload.targets,
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
           })
         }
       />
@@ -1692,6 +1706,7 @@ export function ApplicantList({
         audience="member"
         variant="single"
         subjectName={participantRejectTarget?.name ?? ''}
+        notifyTimingCapability={participantRejectNotifyCapability}
         onCancel={() => setParticipantRejectTarget(null)}
         onConfirm={payload => {
           if (!participantRejectTarget) return
@@ -1767,7 +1782,15 @@ export function ApplicantList({
             rejectionReason: payload.reason,
           }
           const run = async () => {
-            const remote = await applyRemoteIndividualCancelApproval(id, payload.reason)
+            const notification = toNestedDecisionNotification(
+              payload.notifyTiming,
+              payload.manualNotifyAt
+            )?.notification
+            const remote = await applyRemoteIndividualCancelApproval(
+              id,
+              payload.reason,
+              notification
+            )
             if (remote !== 'ok') return
             setParticipantCancelApprovalTarget(null)
             setIndividualList(prev => {
@@ -1808,9 +1831,15 @@ export function ApplicantList({
               ? toParticipantCancelRejectionNotifyOptions(payload)
               : undefined
           const run = async () => {
+            const notification =
+              payload.variant === 'alreadySent'
+                ? toNestedDecisionNotification(payload.notifyTiming, payload.manualNotifyAt)
+                    ?.notification
+                : undefined
             const remote = await applyRemoteIndividualCancelRejection(
               id,
-              payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
+              payload.variant === 'alreadySent' ? payload.reason : '반려 취소',
+              notification
             )
             if (remote !== 'ok') return
             setParticipantCancelRejectTarget(null)
@@ -1841,6 +1870,8 @@ export function ApplicantList({
         audience="member"
         variant="single"
         subjectName={instructorRejectTarget?.name ?? ''}
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
+        notifyTimingOptions="two"
         onCancel={() => setInstructorRejectTarget(null)}
         onConfirm={payload => {
           if (!instructorRejectTarget) return
@@ -2248,13 +2279,10 @@ export function ApplicantList({
                 const remote = await applyRemoteInstructorDecision([id], 'approve', undefined, {
                   assignments: remoteAssignments,
                   feePolicy: feePolicy!,
-                  notification: {
-                    timing: detail.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
-                    scheduledAt:
-                      detail.notifyTiming === 'manual'
-                        ? (detail.manualNotifyAt?.toISOString() ?? null)
-                        : null,
-                  },
+                  notification: toInstructorApplicationNotificationRequest(
+                    detail.notifyTiming,
+                    detail.manualNotifyAt
+                  ),
                 })
                 if (remote === 'invalid_fee_policy') {
                   setInstructorFeePolicyError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)

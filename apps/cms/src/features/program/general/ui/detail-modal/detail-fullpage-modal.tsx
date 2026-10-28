@@ -172,6 +172,12 @@ import {
   normalizeGeneralRecruitTab,
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
+import { previewAudienceFromGeneralRecruitTab } from '@/features/program/general/lib/platform-preview-payload'
+import {
+  buildRecruitmentEditPreviewDraft,
+  recruitmentAudienceFromDetailTab,
+  type RecruitmentEditPreviewDraft,
+} from '@/features/program/general/lib/recruitment-edit-preview-draft'
 import {
   normalizeGeneralApplicationTab,
   resolveGeneralApplicationEditorVariant,
@@ -1309,6 +1315,7 @@ export function GeneralProgramDetailFullPageModal({
     triggerSave: institutionsTriggerSave,
     resetToProgram: institutionsResetToProgram,
     registerGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
+    getAdditionalContentHtml: getInstitutionsAdditionalHtml,
     takeSaveFailure: takeInstitutionsSaveFailure,
   } = useProgramDetailInfoSave({
     form: institutionsForm,
@@ -1339,6 +1346,7 @@ export function GeneralProgramDetailFullPageModal({
     triggerSave: instructorsTriggerSave,
     resetToProgram: instructorsResetToProgram,
     registerGetAdditionalContentHtml: registerInstructorsAdditionalHtml,
+    getAdditionalContentHtml: getInstructorsAdditionalHtml,
     takeSaveFailure: takeInstructorsSaveFailure,
   } = useProgramDetailInfoSave({
     form: instructorsForm,
@@ -1370,6 +1378,7 @@ export function GeneralProgramDetailFullPageModal({
     triggerSave: volunteersTriggerSave,
     resetToProgram: volunteersResetToProgram,
     registerGetAdditionalContentHtml: registerVolunteersAdditionalHtml,
+    getAdditionalContentHtml: getVolunteersAdditionalHtml,
     takeSaveFailure: takeVolunteersSaveFailure,
   } = useProgramDetailInfoSave({
     form: volunteersForm,
@@ -1600,16 +1609,20 @@ export function GeneralProgramDetailFullPageModal({
 
   const [recruitmentPreviewAudienceOptimistic, setRecruitmentPreviewAudienceOptimistic] =
     useState<GeneralRecruitTabKey | null>(null)
+  const [recruitmentPreviewDraft, setRecruitmentPreviewDraft] =
+    useState<RecruitmentEditPreviewDraft | null>(null)
 
   useEffect(() => {
     if (!open) {
       setRecruitmentPreviewAudienceOptimistic(null)
+      setRecruitmentPreviewDraft(null)
     }
   }, [open])
 
   useEffect(() => {
     if (!recruitmentPreviewAudienceFromUrl) {
       setRecruitmentPreviewAudienceOptimistic(null)
+      setRecruitmentPreviewDraft(null)
     }
   }, [recruitmentPreviewAudienceFromUrl])
 
@@ -1623,6 +1636,43 @@ export function GeneralProgramDetailFullPageModal({
   const handleOpenRecruitmentPreview = useCallback(
     (audience: GeneralRecruitTabKey) => {
       if (!programId) return
+      const recruitAudience = recruitmentAudienceFromDetailTab(audience)
+      const editing =
+        recruitAudience === 'participant'
+          ? isEditModeInstitutions
+          : recruitAudience === 'instructor'
+            ? isEditModeInstructors
+            : isEditModeVolunteers
+      const form =
+        recruitAudience === 'participant'
+          ? institutionsForm
+          : recruitAudience === 'instructor'
+            ? instructorsForm
+            : volunteersForm
+      const htmlGetter =
+        recruitAudience === 'participant'
+          ? getInstitutionsAdditionalHtml
+          : recruitAudience === 'instructor'
+            ? getInstructorsAdditionalHtml
+            : getVolunteersAdditionalHtml
+      const baseline = recruitmentEditProgram ?? displayProgram
+      if (editing && baseline != null) {
+        const html = htmlGetter()
+        setRecruitmentPreviewDraft(
+          buildRecruitmentEditPreviewDraft({
+            program: baseline,
+            values: {
+              ...form.getValues(),
+              ...(typeof html === 'string' ? { additionalContentHtml: html } : {}),
+            },
+            audience: recruitAudience,
+            recruitmentNotesField:
+              recruitAudience === 'instructor' ? 'instructorRecruitmentRemarks' : undefined,
+          })
+        )
+      } else {
+        setRecruitmentPreviewDraft(null)
+      }
       setRecruitmentPreviewAudienceOptimistic(audience)
       setSearchParams(
         prev => {
@@ -1639,11 +1689,26 @@ export function GeneralProgramDetailFullPageModal({
         { replace: false }
       )
     },
-    [programId, setSearchParams]
+    [
+      displayProgram,
+      getInstitutionsAdditionalHtml,
+      getInstructorsAdditionalHtml,
+      getVolunteersAdditionalHtml,
+      institutionsForm,
+      instructorsForm,
+      isEditModeInstitutions,
+      isEditModeInstructors,
+      isEditModeVolunteers,
+      programId,
+      recruitmentEditProgram,
+      setSearchParams,
+      volunteersForm,
+    ]
   )
 
   const handleCloseRecruitmentPreview = useCallback(() => {
     setRecruitmentPreviewAudienceOptimistic(null)
+    setRecruitmentPreviewDraft(null)
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev)
@@ -2596,9 +2661,14 @@ export function GeneralProgramDetailFullPageModal({
         <ParticipantRecruitmentPreviewModal
           open={recruitmentPreviewOpen}
           onClose={handleCloseRecruitmentPreview}
-          program={displayProgram}
+          program={recruitmentPreviewDraft?.program ?? displayProgram}
+          extraOverlay={recruitmentPreviewDraft?.extraOverlay}
           sponsorName={sponsorName}
-          audience={recruitmentPreviewAudience ?? 'institutions'}
+          audience={
+            recruitmentPreviewAudience
+              ? previewAudienceFromGeneralRecruitTab(recruitmentPreviewAudience, displayProgram)
+              : 'institutions'
+          }
         />
       ) : null}
       <ProgramDetailSponsorDetailOverlay />

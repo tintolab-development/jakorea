@@ -6,7 +6,10 @@ import {
   canSubmitEducationAbsenceReason,
   resolveEducationScheduleProgressStatus,
 } from '../lib/schedule-rules'
-import { resolveEducationScheduleEmptyMessage } from '../lib/scope-status'
+import {
+  filterEducationSchedulesForMemberAssignment,
+  resolveEducationScheduleEmptyMessage,
+} from '../lib/scope-status'
 import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
@@ -47,7 +50,8 @@ export function EducationSchedulePanel({
 
   const allItems = useMemo(() => {
     const items: EducationScheduleItem[] = remoteSchedules.enabled ? remoteSchedules.items : []
-    return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
+    const assigned = filterEducationSchedulesForMemberAssignment(items)
+    return filterItemsUpToLastParticipatedSession(assigned, lastParticipatedSession)
   }, [lastParticipatedSession, remoteSchedules.enabled, remoteSchedules.items])
 
   const totalElements = allItems.length

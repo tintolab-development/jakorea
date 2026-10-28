@@ -14,6 +14,7 @@ import {
   giveUpGeneralVolunteerApplication,
 } from '@/features/program/general/api/admin-applications-service'
 import type { InterviewAssignmentEvaluationPayload } from '@/features/program/general/api/applications-api-client'
+import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -57,10 +58,15 @@ export async function submitUjatVolunteerFinalResultsRemote(
     UjatSecondInterviewScreeningStatus,
     'pass' | 'fail' | 'reserve1' | 'reserve2' | 'reserve3' | 'reserve4'
   >,
-  reason?: string
+  reason?: string,
+  notify?: { notifyTiming?: string; scheduledAt?: string }
 ): Promise<void> {
   assertUjatVolunteerMutationsRemoteReady()
-  const payload = mapSecondInterviewStatusToFinalResultPayload(status, reason)
+  const payload = mapSecondInterviewStatusToFinalResultPayload(
+    status,
+    reason,
+    toScreeningResultNotifyFields(notify)
+  )
   if (applicationIds.length === 1) {
     await submitGeneralVolunteerFinalResult(applicationIds[0]!, payload)
     return

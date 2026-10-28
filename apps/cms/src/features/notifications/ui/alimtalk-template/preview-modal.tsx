@@ -19,10 +19,26 @@ type PreviewModalProps = {
   onClose: () => void
   /** 지정 시 「템플릿 사용」에서 템플릿을 발송 화면에 적용 */
   onUse?: (template: AlimtalkTemplateItem) => void
+  isTemplateUsable?: (template: AlimtalkTemplateItem) => boolean
+  getTemplateUnusableMessage?: (template: AlimtalkTemplateItem) => string | null
+  getTemplateUnusableReason?: (
+    template: AlimtalkTemplateItem
+  ) => { summary: string; detail: string } | null
+  showUnusableReasonInline?: boolean
   zIndex?: number
 }
 
-export function PreviewModal({ open, template, onClose, onUse, zIndex }: PreviewModalProps) {
+export function PreviewModal({
+  open,
+  template,
+  onClose,
+  onUse,
+  isTemplateUsable,
+  getTemplateUnusableMessage,
+  getTemplateUnusableReason,
+  showUnusableReasonInline,
+  zIndex,
+}: PreviewModalProps) {
   const { showAlert } = useCmsAlert()
   const previewQuery = useAlimtalkTemplatePreviewQuery(
     template?.id ?? null,
@@ -30,7 +46,25 @@ export function PreviewModal({ open, template, onClose, onUse, zIndex }: Preview
     open && Boolean(template?.id)
   )
   const resolved = previewQuery.data ?? template
+  const sendPicker = Boolean(isTemplateUsable)
+  const previewReady = !sendPicker || Boolean(previewQuery.data) || previewQuery.isFetched
   const canUseForSend = isAlimtalkTemplateApproved(resolved)
+  const catalogUsable = !sendPicker || (resolved ? isTemplateUsable?.(resolved) !== false : false)
+  const canApply = Boolean(onUse) && canUseForSend && previewReady && catalogUsable
+  const approvalBlockedCopy = '카카오 승인이 완료되지 않은 템플릿은 발송할 수 없습니다.'
+  const messageFallback = resolved ? getTemplateUnusableMessage?.(resolved) : null
+  const unusableReason =
+    showUnusableReasonInline && Boolean(onUse) && resolved && !canApply
+      ? (getTemplateUnusableReason?.(resolved) ??
+        (messageFallback
+          ? { summary: messageFallback, detail: messageFallback }
+          : canUseForSend
+            ? null
+            : { summary: approvalBlockedCopy, detail: approvalBlockedCopy }))
+      : null
+  const unusableReasonId = unusableReason
+    ? `alimtalk-preview-unusable-${resolved?.id ?? 'pending'}`
+    : undefined
 
   const handleUse = () => {
     if (resolved && onUse) {
@@ -38,6 +72,15 @@ export function PreviewModal({ open, template, onClose, onUse, zIndex }: Preview
         showAlert({
           title: '안내',
           content: '카카오 승인이 완료되지 않은 템플릿은 발송할 수 없습니다.',
+        })
+        return
+      }
+      if (!previewReady || isTemplateUsable?.(resolved) === false) {
+        showAlert({
+          title: '안내',
+          content:
+            getTemplateUnusableMessage?.(resolved) ||
+            '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
         })
         return
       }
@@ -100,19 +143,31 @@ export function PreviewModal({ open, template, onClose, onUse, zIndex }: Preview
               <br />
               알림톡 수정 시에는 카카오톡 재심사가 필요합니다.
             </p>
-            <div className="content-modal__footer-actions alimtalk-template-preview__actions">
-              <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
-                닫기
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                type="button"
-                onClick={handleUse}
-                disabled={Boolean(onUse) && !canUseForSend}
-              >
-                템플릿 사용
-              </CmsButton>
+            <div className="alimtalk-template-preview__actions-wrap">
+              <div className="content-modal__footer-actions alimtalk-template-preview__actions">
+                <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
+                  닫기
+                </CmsButton>
+                <CmsButton
+                  variant="primary"
+                  size="large"
+                  type="button"
+                  onClick={handleUse}
+                  disabled={Boolean(onUse) && !canApply}
+                  aria-describedby={unusableReasonId}
+                >
+                  템플릿 사용
+                </CmsButton>
+              </div>
+              {unusableReason ? (
+                <p
+                  id={unusableReasonId}
+                  className="alimtalk-template-preview__unusable-reason"
+                  title={unusableReason.detail}
+                >
+                  {unusableReason.summary}
+                </p>
+              ) : null}
             </div>
           </div>
           <AlimtalkPhonePreview

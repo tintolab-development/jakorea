@@ -9,6 +9,8 @@ export const FINAL_RESULT_NOT_PASSED = 'FINAL_RESULT_NOT_PASSED'
 export const DOCUMENT_STATUS_CONFLICT = 'DOCUMENT_STATUS_CONFLICT'
 export const APPLICATION_DECISION_CONFLICT = 'APPLICATION_DECISION_CONFLICT'
 export const INVALID_NOTIFICATION_SCHEDULE = 'INVALID_NOTIFICATION_SCHEDULE'
+export const APPLICATION_ANNOUNCEMENT_DATE_NOT_CONFIGURED =
+  'APPLICATION_ANNOUNCEMENT_DATE_NOT_CONFIGURED'
 
 const CODE_MESSAGES: Record<string, string> = {
   [FINAL_RESULT_NOT_FAILED]:
@@ -19,6 +21,8 @@ const CODE_MESSAGES: Record<string, string> = {
     '서류·최종 단계와 맞지 않는 취소 요청입니다. 표시된 취소 버튼으로 다시 시도해 주세요.',
   [INVALID_NOTIFICATION_SCHEDULE]:
     '알림 예약 일시가 올바르지 않습니다. 일시를 확인한 뒤 다시 시도해 주세요.',
+  [APPLICATION_ANNOUNCEMENT_DATE_NOT_CONFIGURED]:
+    '프로그램 발표일이 설정되지 않아 발표일 발송을 예약할 수 없습니다. 발표일을 설정하거나 다른 발송 시점을 선택해 주세요.',
   [APPLICATION_DECISION_CONFLICT]:
     '현재 신청 상태에서는 처리할 수 없습니다. 화면을 새로고침한 뒤 다시 시도해 주세요.',
 }

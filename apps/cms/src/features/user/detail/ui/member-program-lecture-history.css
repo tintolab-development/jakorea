@@ -97,6 +97,33 @@
   line-height: 150% !important;
 }
 
+/* 한 줄 emptyText는 scroll 표에서 칸 높이·가운데 정렬이 깨진다. 공통 empty만 전체 폭으로 둔다. */
+.member-program-lecture-history.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr.ant-table-placeholder
+  > td,
+.member-program-lecture-history.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr.ant-table-placeholder:hover
+  > td {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  white-space: normal !important;
+  text-align: center !important;
+  cursor: default !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  background: var(--color-bg-base, #fff) !important;
+}
+
 .member-program-lecture-history__action-cell {
   display: flex;
   align-items: center;

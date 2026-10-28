@@ -160,6 +160,26 @@
   padding-top: var(--spacing-24);
 }
 
+.errorState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-16);
+  padding: var(--spacing-24);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.errorMessage {
+  margin: 0;
+  color: var(--color-palette-red);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  text-align: center;
+}
+
 @media (--bp-below-pc) {
   .headingTitle {
     font-size: 18px;
@@ -188,6 +208,11 @@
 
   .reportActionButton {
     width: 100%;
+  }
+
+  .errorState {
+    align-items: stretch;
+    flex-direction: column;
   }
 
 }

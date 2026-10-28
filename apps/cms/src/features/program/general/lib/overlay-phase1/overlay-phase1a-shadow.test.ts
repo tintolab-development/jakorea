@@ -410,7 +410,7 @@ describe('8. 미디어 연결 shadow', () => {
     expect(uploadedSidecar.state.origin).toBe('uploaded-object-id')
   })
 
-  it('행 단위 bind 의도가 기존 PUT 인자와 같다', () => {
+  it('신규 등록 sidecar는 생성 직후 PUT bindCalls를 만들지 않는다', () => {
     const sidecar = buildMediaSidecar({
       overlay: {
         'recruit.detailInfo.thumbFileObjectId': 42,
@@ -421,23 +421,10 @@ describe('8. 미디어 연결 shadow', () => {
         programRecruitments: [{ id: 9, recruitmentType: 'PARTICIPANT' }],
       },
     })
-    expect(sidecar.bindCalls).toEqual([
-      {
-        kind: 'putProgramRecruitmentThumbnail',
-        programId: 186234,
-        recruitmentId: 9,
-        fileObjectId: 42,
-      },
-      {
-        kind: 'putProgramRecruitmentAttachments',
-        programId: 186234,
-        recruitmentId: 9,
-        fileObjectIds: [8],
-      },
-    ])
+    expect(sidecar.bindCalls).toEqual([])
   })
 
-  it('행이 없으면 프로그램 단위 bind 의도를 만든다', () => {
+  it('행이 없어도 생성 직후 프로그램 단위 PUT bindCalls를 만들지 않는다', () => {
     const sidecar = buildMediaSidecar({
       overlay: {
         'recruit.detailInfo.thumbFileObjectId': 77,
@@ -445,10 +432,7 @@ describe('8. 미디어 연결 shadow', () => {
       },
       created: { id: '186234', programRecruitments: [] },
     })
-    expect(sidecar.bindCalls).toEqual([
-      { kind: 'putProgramThumbnail', programId: 186234, fileObjectId: 77 },
-      { kind: 'putProgramAttachments', programId: 186234, fileObjectIds: [101] },
-    ])
+    expect(sidecar.bindCalls).toEqual([])
   })
 })
 

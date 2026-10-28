@@ -16,7 +16,7 @@ export interface OrganizationApplicationRejectRequest {
      * @maxLength 500
      */
   reason: string;
-  /** IMMEDIATE | SCHEDULED. 생략하면 IMMEDIATE */
+  /** IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다. */
   timing?: string;
   /** timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
   scheduledAt?: string;

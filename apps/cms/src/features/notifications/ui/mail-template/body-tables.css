@@ -1,0 +1,248 @@
+/*
+ * Figma 652:13465 메일 본문 표.
+ * TipTap은 colgroup을 버리므로 th colwidth=140 + 이 CSS가 수정 화면·미리보기 SSOT다.
+ */
+
+.mail-template-rich-body .rich-text-content {
+  width: 100%;
+  max-width: 1400px;
+  box-sizing: border-box;
+}
+
+.mail-template-rich-body .rich-text-content .tableWrapper {
+  width: 100%;
+  margin: 0;
+  overflow: visible;
+}
+
+.mail-template-rich-body .rich-text-content .tableWrapper + .tableWrapper {
+  margin-top: 12px;
+}
+
+.mail-template-rich-body .rich-text-content .tableWrapper:has(td a) {
+  margin-top: 24px;
+}
+
+.mail-template-rich-body .rich-text-content h3 {
+  margin: 0 0 6px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.mail-template-rich-body .rich-text-content .tableWrapper + h3,
+.mail-template-rich-body .rich-text-content table + h3 {
+  margin-top: 24px;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: fixed;
+  border: 1px solid #e0e0e0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) th,
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) td {
+  box-sizing: border-box;
+  border: 0;
+  vertical-align: middle;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  line-height: 150%;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr + tr > th,
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr + tr > td {
+  border-top: 1px solid #e0e0e0;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr > th + th,
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr > th + td,
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr > td + th,
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr > td + td {
+  border-left: 1px solid #e0e0e0;
+}
+
+/* 신청일시처럼 첫 행이 4칸일 때 값 칸을 한 덩어리로 보이게 한다.
+   신청자 표 첫 행은 th-td-th-td 이라 td+td 가 없어 영향 없다. */
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr:first-child > td + td {
+  border-left: 0;
+}
+
+/* table-layout:fixed 열 폭 SSOT. 시안 4열: 140 / (50%-140) / 140 / (50%-140). */
+.mail-template-rich-body .rich-text-content table:not(:has(td a)):has(tr:first-child > :nth-child(4))
+  tr:first-child
+  > :nth-child(1),
+.mail-template-rich-body .rich-text-content table:not(:has(td a)):has(tr:first-child > :nth-child(4))
+  tr:first-child
+  > :nth-child(3) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)):has(tr:first-child > :nth-child(4))
+  tr:first-child
+  > :nth-child(2),
+.mail-template-rich-body .rich-text-content table:not(:has(td a)):has(tr:first-child > :nth-child(4))
+  tr:first-child
+  > :nth-child(4) {
+  width: calc((100% - 280px) / 2);
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)):has(tr:first-child > :nth-child(4)) th,
+.mail-template-rich-body .rich-text-content table:not(:has(td a)):has(tr:first-child > :nth-child(4)) td {
+  height: 36px;
+}
+
+/* 2열 표(추가 정보·학력·경력) — 긴 본문 행은 36px 고정 높이를 쓰지 않는다. */
+.mail-template-rich-body
+  .rich-text-content
+  table:not(:has(td a)):not(:has(tr:first-child > :nth-child(4)))
+  th,
+.mail-template-rich-body
+  .rich-text-content
+  table:not(:has(td a)):not(:has(tr:first-child > :nth-child(4)))
+  td {
+  height: auto;
+  max-height: none;
+  vertical-align: top;
+}
+
+/* 긴 라벨(JA 프로그램 참여 이력 등)은 140px 안에서 줄바꿈 */
+.mail-template-rich-body
+  .rich-text-content
+  table:not(:has(td a)):not(:has(tr:first-child > :nth-child(4)))
+  th,
+.mail-template-rich-body
+  .rich-text-content
+  table:not(:has(td a)):not(:has(tr:first-child > :nth-child(4)))
+  th
+  > p {
+  white-space: normal;
+  overflow: visible;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr:first-child > :first-child {
+  border-top-left-radius: 7px;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr:first-child > :last-child {
+  border-top-right-radius: 7px;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr:last-child > :first-child {
+  border-bottom-left-radius: 7px;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) tr:last-child > :last-child {
+  border-bottom-right-radius: 7px;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) th {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+  padding: 9px 10px;
+  background:
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff;
+  text-align: center;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) td {
+  min-width: 0;
+  padding: 9px 12px;
+  background: #fff;
+  text-align: left;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) th > p,
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) td > p {
+  margin: 0;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  line-height: 150%;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) th > p {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mail-template-rich-body .rich-text-content table:not(:has(td a)) td > p {
+  font-weight: 500;
+}
+
+/* compose/preview 본문 15px 규칙보다 표 셀 12px이 이겨야 행 높이 36px가 유지된다. */
+.mail-template-compose__editor-host.mail-template-rich-body
+  .cms-rich-text-editor
+  .rich-text-content
+  table:not(:has(td a))
+  :is(th, td),
+.mail-template-compose__editor-host.mail-template-rich-body
+  .cms-rich-text-editor
+  .rich-text-content
+  table:not(:has(td a))
+  :is(th, td)
+  > p,
+.mail-template-compose__editor-host.mail-template-rich-body
+  .cms-rich-text-editor
+  .rich-text-content
+  table:not(:has(td a))
+  .mail-template-variable,
+.mail-template-preview__body.mail-template-rich-body .rich-text-content table:not(:has(td a)) :is(th, td),
+.mail-template-preview__body.mail-template-rich-body .rich-text-content table:not(:has(td a)) :is(th, td) > p,
+.mail-template-preview__body.mail-template-rich-body
+  .rich-text-content
+  table:not(:has(td a))
+  :is(.mail-template-variable, [data-mail-variable]) {
+  font-size: 12px;
+  line-height: 150%;
+}
+
+.mail-template-rich-body .rich-text-content table:has(td a) {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.mail-template-rich-body .rich-text-content table:has(td a) td {
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #01a1af;
+  text-align: center;
+}
+
+.mail-template-rich-body .rich-text-content table:has(td a) td > p {
+  margin: 0;
+}
+
+.mail-template-rich-body .rich-text-content table:has(td a) a {
+  display: block;
+  height: 52px;
+  box-sizing: border-box;
+  padding: 8px 20px;
+  color: #fff;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  line-height: 36px;
+  font-weight: 600;
+  text-decoration: none;
+}

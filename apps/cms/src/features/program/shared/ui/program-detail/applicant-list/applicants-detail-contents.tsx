@@ -25,7 +25,6 @@ import {
 import { resolveOrganizationMergeErrorMessage } from '@/features/program/general/lib/organization-merge-error-message'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { buildCombinedClassLeadTeacherCandidatesFromApplicants } from '@/features/program/general/lib/combined-class-lead-teacher'
-import { retainMatchingCombinedClassPartnerIds } from '@/features/program/general/lib/combined-class-education-dates'
 import { COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT } from '@/features/program/general/lib/combined-class-copy'
 import { useCombinedClassProcess } from '@/features/program/general/hooks/use-combined-class-process'
 import {
@@ -847,49 +846,7 @@ export function ApplicantsDetailContents({
         })
         institutionDetailEdit.updateDraft({
           combinedClassApplication: '신청',
-          combinedClassPartnerApplicantIds: retainMatchingCombinedClassPartnerIds(
-            institutionData,
-            institutionList,
-            partnerIds
-          ),
-        })
-        return false
-      }
-    },
-    onCancelMerge: async mergeGroupId => {
-      if (!programId || !institutionData || !mergeGroupsAllowed) return false
-      if (!shouldUseOrganizationMergeGroupsRemoteApi()) {
-        notifyProgramApiUnavailable('general-org-merge-groups', '일반 프로그램 · 합반 취소')
-        return false
-      }
-      try {
-        await saveOrganizationCombinedClassRemote({
-          programId,
-          programType: program?.backendProgramType,
-          leadRow: institutionData,
-          allRows: institutionList,
-          combinedClassApplication: '미신청',
-          partnerRowIds: [],
-          existingMergeGroups: mergeGroupsQuery.data,
-          mergeGroupId,
-        })
-        await queryClient.invalidateQueries({
-          queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
-        })
-        return true
-      } catch (error) {
-        const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
-        const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
-        void showAlert({
-          title: '처리 실패',
-          content: axios.isAxiosError(error)
-            ? resolveOrganizationMergeErrorMessage(responseData, {
-                httpStatus,
-                fallback: '합반을 취소하지 못했습니다. 다시 시도해 주세요.',
-              })
-            : error instanceof Error && error.message.trim()
-              ? error.message
-              : '합반을 취소하지 못했습니다. 다시 시도해 주세요.',
+          combinedClassPartnerApplicantIds: partnerIds,
         })
         return false
       }

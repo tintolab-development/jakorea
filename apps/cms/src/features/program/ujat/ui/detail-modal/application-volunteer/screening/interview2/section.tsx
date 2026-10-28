@@ -193,6 +193,8 @@ export function Interview2Section({
       scheduleOptions={activityWithdrawScheduleOptions}
       onCancel={cancelWithdrawActivity}
       onConfirm={confirmWithdrawActivity}
+      subjectName={withdrawTarget?.name ?? ''}
+      subjectKind="person"
     />
   )
 
