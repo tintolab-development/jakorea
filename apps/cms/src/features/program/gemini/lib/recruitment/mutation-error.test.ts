@@ -13,7 +13,7 @@ describe('formatGeminiRecruitmentSaveError', () => {
       },
     }
     expect(formatGeminiRecruitmentSaveError(error)).toBe(
-      '모집 시작 이후에는 모집 정보를 수정할 수 없습니다.\n(PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED)'
+      '모집 시작 이후에는 모집 정보를 수정할 수 없습니다.'
     )
   })
 })

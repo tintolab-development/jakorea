@@ -28,6 +28,7 @@ import {
   geminiPerformanceService,
 } from '../../api/performance-service'
 import { resolveGeminiDeleteGuideModalCopy } from '../../lib/delete-guide'
+import { formatGeminiApiError } from '../../lib/gemini-api-error'
 import {
   useGeminiPerformanceRows,
   useGeminiPerformanceRowsQueryState,
@@ -219,9 +220,10 @@ export function GeminiPerformanceList() {
         const message =
           error instanceof Error && error.message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
             ? GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
-            : error instanceof Error
-              ? error.message
-              : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
+            : formatGeminiApiError(
+                error,
+                '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+              )
         showAlert({
           title:
             message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
@@ -264,10 +266,10 @@ export function GeminiPerformanceList() {
       } catch (error) {
         showAlert({
           title: '안내',
-          content:
-            error instanceof Error
-              ? error.message
-              : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+          content: formatGeminiApiError(
+            error,
+            '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+          ),
         })
       } finally {
         setImporting(false)
@@ -292,10 +294,10 @@ export function GeminiPerformanceList() {
       } catch (error) {
         showAlert({
           title: '안내',
-          content:
-            error instanceof Error
-              ? error.message
-              : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+          content: formatGeminiApiError(
+            error,
+            '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+          ),
         })
       }
     })()
@@ -318,10 +320,10 @@ export function GeminiPerformanceList() {
       } catch (error) {
         showAlert({
           title: '안내',
-          content:
-            error instanceof Error
-              ? error.message
-              : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+          content: formatGeminiApiError(
+            error,
+            '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+          ),
         })
       }
     })()

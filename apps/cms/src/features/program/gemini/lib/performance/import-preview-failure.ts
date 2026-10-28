@@ -1,6 +1,9 @@
 import type { GeminiTrainingReportImportResult } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportResult'
 
 function describeFailure(message: string): string {
+  if (message.includes('GEMINI_TRAINING_END_TIME_NOT_AFTER_START')) {
+    return '종료 시간은 시작 시간 이후여야 합니다.'
+  }
   if (message.includes('programId is required') || message.includes('not a Gemini training program')) {
     return '연결할 Gemini 모집 공고가 없습니다.'
   }
