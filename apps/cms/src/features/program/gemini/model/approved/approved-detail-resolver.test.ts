@@ -190,5 +190,19 @@ describe('mapGeminiInstructorApplicationItemToRow', () => {
     expect(row.homeSigungu).toBe('해운대구')
     expect(row.approvalStatus).toBe('PENDING')
     expect(row.monthlyAssignmentCount).toBe(1)
+    expect(row.grade).toBe('A등급')
+  })
+
+  it('maps GRADE_2 snapshot to 2급 강사비', () => {
+    const row = mapGeminiInstructorApplicationItemToRow(
+      {
+        applicationId: 1,
+        instructorName: '강사',
+        instructorFeeGradeSnapshot: 'GRADE_2',
+      },
+      '1',
+      0
+    )
+    expect(row.grade).toBe('2급 강사비')
   })
 })
