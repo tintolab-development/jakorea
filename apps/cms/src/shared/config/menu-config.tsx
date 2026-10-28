@@ -5,6 +5,7 @@
  */
 
 import type { AdminLevel, UserRole } from '@/types/user'
+import { canAccessAccountPayments, isAccountPaymentsPath } from '@/shared/lib/account-payments-access'
 import type { MenuProps } from 'antd'
 import { FolderOutlined, FileTextOutlined, CalendarOutlined, TeamOutlined } from '@ant-design/icons'
 import React from 'react'
@@ -573,7 +574,7 @@ const allMenuItems: MenuItemConfig[] = [
         label: '계좌 지급 확인',
         icon: <FolderOutlined />,
         enabled: true,
-        allowedRoles: ['ADMIN', 'INSTRUCTOR', 'INDIVIDUAL', 'SCHOOL'],
+        allowedRoles: ['ADMIN'],
       },
       {
         key: '/settlement-management/item-settings',
@@ -804,6 +805,9 @@ export function filterMenuByRole(
       if (isMenuPathBlockedForAdminLevel(item, userRole, user?.adminLevel)) {
         return false
       }
+      if (item.key && isAccountPaymentsPath(item.key) && !canAccessAccountPayments(user)) {
+        return false
+      }
       // allowedRoles가 없으면 모든 권한 허용
       if (!item.allowedRoles || item.allowedRoles.length === 0) {
         return true
@@ -900,6 +904,7 @@ function isMenuPathBlockedForAdminLevel(
 export type CanAccessPathUser = {
   role: UserRole
   adminLevel?: AdminLevel
+  roleCode?: string | null
 } | null
 
 /**
@@ -1007,9 +1012,8 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
     return false
   }
 
-  // 계좌 지급 확인: 로그인한 모든 역할 URL 접근 허용 (LNB는 메뉴 항목 allowedRoles로 제어)
-  if (normalizedPath === '/settlement-management/account-payments') {
-    return true
+  if (isAccountPaymentsPath(normalizedPath)) {
+    return canAccessAccountPayments(user)
   }
 
   const matches = findAllMenuItemsByPath(allMenuItems, normalizedPath)

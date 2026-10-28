@@ -22,6 +22,7 @@ vi.mock('./alert-modal', async () => {
       title: string
       content: string
       onClose: () => void
+      onConfirm?: () => void
     }) =>
       props.open
         ? react.createElement(
@@ -31,7 +32,13 @@ vi.mock('./alert-modal', async () => {
             react.createElement('p', { 'data-testid': 'cms-alert-content' }, props.content),
             react.createElement(
               'button',
-              { type: 'button', onClick: props.onClose },
+              {
+                type: 'button',
+                onClick: () => {
+                  props.onConfirm?.()
+                  props.onClose()
+                },
+              },
               '확인'
             )
           )
@@ -93,6 +100,48 @@ describe('CmsAlertModalProvider 권한 안내 중복', () => {
     fireEvent.click(screen.getByText('open-denied'))
 
     expect(screen.getAllByTestId('cms-alert')).toHaveLength(1)
+  })
+
+  it('권한 안내가 이미 열려 있으면 비어 있던 onConfirm만 채운다', () => {
+    const onConfirm = vi.fn()
+    function AttachConfirmProbe() {
+      const { showAlert } = useCmsAlert()
+      return createElement(
+        'div',
+        null,
+        createElement(
+          'button',
+          {
+            type: 'button',
+            onClick: () =>
+              showAlert({
+                title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
+                content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+              }),
+          },
+          'open-denied'
+        ),
+        createElement(
+          'button',
+          {
+            type: 'button',
+            onClick: () =>
+              showAlert({
+                title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
+                content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+                onConfirm,
+              }),
+          },
+          'attach-confirm'
+        )
+      )
+    }
+
+    render(createElement(CmsAlertModalProvider, null, createElement(AttachConfirmProbe)))
+    fireEvent.click(screen.getByText('open-denied'))
+    fireEvent.click(screen.getByText('attach-confirm'))
+    fireEvent.click(screen.getByText('확인'))
+    expect(onConfirm).toHaveBeenCalledTimes(1)
   })
 
   it('닫은 뒤에는 다른 Alert를 열 수 있다', () => {

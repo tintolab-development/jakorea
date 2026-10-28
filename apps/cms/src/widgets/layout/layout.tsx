@@ -16,6 +16,7 @@ import { canAccessPath } from '@/shared/config/menu-config'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import {
   canAdminAction,
+  canNavigateBackInAppHistory,
   isPermissionRequestsPath,
   isMemberPermissionSettingsPath,
   isSecurityLogPath,
@@ -23,6 +24,10 @@ import {
   resolveAdminRoleCodeFromUser,
   showAdminAccessDeniedAlert,
 } from '@/shared/lib/admin-role-policy'
+import {
+  canAccessAccountPayments,
+  isAccountPaymentsPath,
+} from '@/shared/lib/account-payments-access'
 import { Sidebar } from './sidebar'
 import { MainHeader } from './main-header'
 import './layout.css'
@@ -51,11 +56,16 @@ function LayoutContent() {
     Boolean(user) &&
     isTemplateManagementPath(location.pathname) &&
     !canAdminAction({ roleCode, action: 'view', screen: 'template-management' })
+  const accountPaymentsBlocked =
+    Boolean(user) &&
+    isAccountPaymentsPath(location.pathname) &&
+    !canAccessAccountPayments(user)
   const screenAccessBlocked =
     securityLogBlocked ||
     permissionSettingsBlocked ||
     permissionRequestsBlocked ||
-    templateManagementBlocked
+    templateManagementBlocked ||
+    accountPaymentsBlocked
   const deniedLogPathRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -65,16 +75,26 @@ function LayoutContent() {
     }
     if (deniedLogPathRef.current === location.pathname) return
     deniedLogPathRef.current = location.pathname
-    showAdminAccessDeniedAlert()
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      navigate(-1)
-      return
+    const leaveBlockedScreen = () => {
+      if (typeof window !== 'undefined' && canNavigateBackInAppHistory(window.history.state)) {
+        navigate(-1)
+        return
+      }
+      navigate('/', { replace: true })
     }
-    navigate('/', { replace: true })
+    const shown = showAdminAccessDeniedAlert({ onConfirm: leaveBlockedScreen })
+    if (!shown) leaveBlockedScreen()
   }, [screenAccessBlocked, navigate, location.pathname])
 
-  const pathActor = user ? { role: user.role, adminLevel: user.adminLevel } : null
-  if (user && location.pathname !== '/' && !canAccessPath(location.pathname, pathActor)) {
+  const pathActor = user
+    ? { role: user.role, adminLevel: user.adminLevel, roleCode: user.roleCode }
+    : null
+  if (
+    user &&
+    location.pathname !== '/' &&
+    !isAccountPaymentsPath(location.pathname) &&
+    !canAccessPath(location.pathname, pathActor)
+  ) {
     return (
       <ComingSoonPage
         title="접근 권한이 없습니다"

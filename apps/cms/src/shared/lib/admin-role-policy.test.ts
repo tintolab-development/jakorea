@@ -15,6 +15,7 @@ import {
   resolveAdminPolicyScreen,
   resolveAdminRoleCodeFromUser,
   showAdminAccessDeniedAlert,
+  canNavigateBackInAppHistory,
   withSessionAdminRole,
 } from './admin-role-policy'
 import type { User } from '@/types/user'
@@ -291,15 +292,34 @@ describe('showAdminAccessDeniedAlert', () => {
 
   it('온보딩 미완료면 권한 안내를 띄우지 않는다', () => {
     onboarding.incomplete = true
-    showAdminAccessDeniedAlert()
+    expect(showAdminAccessDeniedAlert()).toBe(false)
     expect(cmsAlertModal.show).not.toHaveBeenCalled()
   })
 
   it('온보딩이 끝났으면 권한 안내를 띄운다', () => {
-    showAdminAccessDeniedAlert()
+    expect(showAdminAccessDeniedAlert()).toBe(true)
     expect(cmsAlertModal.show).toHaveBeenCalledWith({
       title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
       content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+      onConfirm: undefined,
     })
+  })
+
+  it('확인 콜백을 안내 모달에 넘긴다', () => {
+    const onConfirm = vi.fn()
+    expect(showAdminAccessDeniedAlert({ onConfirm })).toBe(true)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
+      content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+      onConfirm,
+    })
+  })
+})
+
+describe('canNavigateBackInAppHistory', () => {
+  it('React Router idx가 있을 때만 앱 안에서 뒤로 간다', () => {
+    expect(canNavigateBackInAppHistory(undefined)).toBe(false)
+    expect(canNavigateBackInAppHistory({ idx: 0 })).toBe(false)
+    expect(canNavigateBackInAppHistory({ idx: 1 })).toBe(true)
   })
 })

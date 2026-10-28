@@ -220,12 +220,24 @@ export function canAdminAction(input: {
   }
 }
 
-export function showAdminAccessDeniedAlert(): void {
-  if (isAdminFirstLoginOnboardingIncomplete()) return
+/**
+ * React Router가 남긴 `history.state.idx`.
+ * 브라우저 `history.length`는 다른 사이트 방문까지 포함하므로 전체 페이지 로드에서 -1 하면 SPA가 내려간다.
+ */
+export function canNavigateBackInAppHistory(historyState: unknown): boolean {
+  if (!historyState || typeof historyState !== 'object') return false
+  const idx = (historyState as { idx?: unknown }).idx
+  return typeof idx === 'number' && Number.isInteger(idx) && idx > 0
+}
+
+export function showAdminAccessDeniedAlert(options?: { onConfirm?: () => void }): boolean {
+  if (isAdminFirstLoginOnboardingIncomplete()) return false
   cmsAlertModal.show({
     title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
     content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+    onConfirm: options?.onConfirm,
   })
+  return true
 }
 
 export function guardAdminAction(input: {
