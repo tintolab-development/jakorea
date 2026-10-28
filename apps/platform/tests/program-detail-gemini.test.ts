@@ -13,11 +13,14 @@ describe('Gemini portal detail training request period', () => {
       ],
       trainingRequestStartDate: '2026-09-01',
       trainingRequestEndDate: '2026-09-30',
+      totalParticipants: 15,
     })
 
     expect(program?.detailCase).toBe('gemini')
-    expect(program?.recruitmentPhases[0]?.value).toBe('2026년 8월 1일 ~ 8월 31일')
-    expect(program?.geminiTrainingRequestPeriodLabel).toBe('2026년 9월 1일 ~ 9월 30일')
+    expect(program?.recruitmentPhases[0]?.value).toBe('2026년 8월 1일(토) ~ 2026년 8월 31일(월)')
+    expect(program?.geminiTrainingRequestPeriodLabel).toBe('2026년 9월 1일(화) ~ 2026년 9월 30일(수)')
+    expect(program?.recruitmentPhases[0]?.label).toBe('기관 모집 기간')
+    expect(program?.basicInfoFields.find(field => field.label === '최소 수강 인원')?.value).toBe('15명')
   })
 
   it('does not expose the Gemini field for non-Gemini details or null periods', () => {

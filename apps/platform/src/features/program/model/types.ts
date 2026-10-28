@@ -174,6 +174,8 @@ export type ProgramDetail = ProgramListItem & {
   applicationPeriodLabel: string
   /** Gemini 전용 연수 요청 가능 기간. 기관 모집 기간과 별도이며 미설정이면 비어 있다. */
   geminiTrainingRequestPeriodLabel?: string
+  /** Gemini 전용 최소 수강 인원 표시. 미설정이면 비어 있다. */
+  geminiMinStudentCountLabel?: string
   isRecruiting: boolean
   businessFieldLabel: string
   educationTargetGroupLabel: string
