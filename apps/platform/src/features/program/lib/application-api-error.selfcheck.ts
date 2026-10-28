@@ -76,6 +76,10 @@ const contractErrorCases = [
     '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
   ],
   [
+    'PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE',
+    '희망 교육 일정이 연수 요청 가능기간을 벗어났습니다.',
+  ],
+  [
     'PREFERRED_SCHEDULE_EXCEEDS_MAX_SCHEDULE_COUNT',
     '희망 교육 일정 지망 수가 모집 상한을 초과했습니다.',
   ],
@@ -249,6 +253,69 @@ assert.equal(
 
 assert.equal(isApplicationAnswerValidationErrorCode('FORM_ANSWER_REQUIRED'), true)
 assert.equal(isApplicationAnswerValidationErrorCode('RUNTIME_SCHEDULE_STALE'), false)
+assert.equal(
+  isApplicationAnswerValidationErrorCode('PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE'),
+  true,
+)
+
+const geminiPreferredDraft = {
+  schemaVersion: 1 as const,
+  formSettings: { titleNumbering: 'none' as const },
+  paragraphs: [
+    {
+      id: 'gemini-vt-inst-seed-preferred-schedule',
+      kind: 'single_item' as const,
+      variant: 'horizontal_table' as const,
+    },
+    {
+      id: 'gemini-vt-instructor-seed-available-schedule',
+      kind: 'single_item' as const,
+      variant: 'horizontal_table' as const,
+    },
+  ],
+}
+assert.deepEqual(
+  collectApplicationSubmitParagraphErrors(
+    {
+      field: 'preferredScheduleBlocks',
+      message: '희망 교육 일정이 연수 요청 가능기간을 벗어났습니다.',
+      details: {
+        field: 'preferredScheduleBlocks',
+        date: '2026-10-28',
+        minScheduleDate: '2026-11-02',
+        maxScheduleDate: '2026-11-30',
+        reason: 'OUTSIDE_TRAINING_REQUEST_RANGE',
+      },
+    },
+    geminiPreferredDraft as never,
+    '입력값 또는 요청 조건을 확인해 주세요.',
+  ),
+  {
+    'gemini-vt-inst-seed-preferred-schedule':
+      '희망 교육 일정이 연수 요청 가능기간을 벗어났습니다.',
+  },
+)
+assert.deepEqual(
+  collectApplicationSubmitParagraphErrors(
+    {
+      field: 'gemini-vt-instructor-seed-available-schedule',
+      message: '희망 교육 일정이 연수 요청 가능기간을 벗어났습니다.',
+      details: {
+        field: 'gemini-vt-instructor-seed-available-schedule',
+        date: '',
+        minScheduleDate: '',
+        maxScheduleDate: '',
+        reason: 'OUTSIDE_TRAINING_REQUEST_RANGE',
+      },
+    },
+    geminiPreferredDraft as never,
+    '입력값 또는 요청 조건을 확인해 주세요.',
+  ),
+  {
+    'gemini-vt-instructor-seed-available-schedule':
+      '희망 교육 일정이 연수 요청 가능기간을 벗어났습니다.',
+  },
+)
 
 const officialDocumentDraft = {
   schemaVersion: 1 as const,

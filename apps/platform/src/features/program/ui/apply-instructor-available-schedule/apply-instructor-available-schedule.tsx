@@ -691,6 +691,8 @@ type ApplyInstructorAvailableScheduleProps = {
   value: ApplyInstructorAvailableScheduleValues
   onChange: (next: ApplyInstructorAvailableScheduleValues) => void
   copy?: ApplyScheduleSlotPickerCopy
+  minDate?: string | null
+  maxDate?: string | null
 }
 
 function firstSlotDateKey(slots: readonly ApplyInstructorScheduleSlot[]): string | null {
@@ -710,10 +712,12 @@ export function ApplyInstructorAvailableSchedule({
   value,
   onChange,
   copy = INSTRUCTOR_SCHEDULE_COPY,
+  minDate = null,
+  maxDate = null,
 }: ApplyInstructorAvailableScheduleProps) {
   const selected = slots.filter(slot => value.selectedSlotIds.includes(slot.id))
   const showCalendar = slots.length > 0 && slots.every(slot => slot.dateKey != null)
-  const anchorDateKey = firstSlotDateKey(slots)
+  const anchorDateKey = firstSlotDateKey(slots) ?? minDate
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(anchorDateKey)
 
   useEffect(() => {
@@ -757,6 +761,8 @@ export function ApplyInstructorAvailableSchedule({
             initialViewMonth={monthStartOf(anchorDateKey)}
             markedDates={markedDates}
             enabledDates={markedDates}
+            minDate={minDate}
+            maxDate={maxDate}
             onSelectDate={setSelectedDateKey}
           />
         ) : null}

@@ -89,6 +89,63 @@ assert.equal(multiPrefersArray.educationTargetKey, 'middle')
 assert.deepEqual(multiPrefersArray.educationTargetKeys, ['middle', 'high'])
 
 assert.equal(mapped.sponsor, '현대 자동차')
+
+const geminiSponsorFromPortal = mapPortalProgramDetail({
+  programId: 186387,
+  programType: 'GEMINI_TRAINING',
+  title: 'E2E테스트 1025 제미나이 찾아가는 연수',
+  sponsorNames: ['Google for Education'],
+  recruitments: [{ recruitmentId: 186830, recruitmentType: 'INSTRUCTOR', applicationTypes: ['INSTRUCTOR'] }],
+})
+assert.ok(geminiSponsorFromPortal)
+assert.equal(geminiSponsorFromPortal.sponsor, 'Google for Education')
+
+const geminiSponsorEmpty = mapPortalProgramDetail({
+  programId: 186387,
+  programType: 'GEMINI_TRAINING',
+  title: '빈 후원사',
+  sponsorNames: [],
+})
+assert.ok(geminiSponsorEmpty)
+assert.equal(geminiSponsorEmpty.sponsor, '-')
+
+const geminiSponsorFocusKeepsProgramField = mapPortalProgramDetail(
+  {
+    programId: 186387,
+    programType: 'GEMINI_TRAINING',
+    title: '포커스 후원사',
+    sponsorNames: ['Google for Education'],
+    recruitments: [
+      {
+        recruitmentId: 186830,
+        recruitmentType: 'INSTRUCTOR',
+        applicationTypes: ['INSTRUCTOR'],
+        recruitmentGuide: null,
+      },
+    ],
+  },
+  { applicationTypes: ['INSTRUCTOR'], recruitmentIds: [186830] },
+)
+assert.ok(geminiSponsorFocusKeepsProgramField)
+assert.equal(geminiSponsorFocusKeepsProgramField.sponsor, 'Google for Education')
+
+const generalEmptySponsorStaysHidden = mapPortalProgramDetail({
+  programId: 186012,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '후원사 없음',
+  sponsorNames: [],
+})
+assert.ok(generalEmptySponsorStaysHidden)
+assert.equal(generalEmptySponsorStaysHidden.sponsor, '-')
+
+const geminiStoredSponsorUnchanged = mapPortalProgramDetail({
+  programId: 186429,
+  programType: 'GEMINI_TRAINING',
+  title: '저장된 후원사',
+  sponsorNames: ['JA Korea'],
+})
+assert.ok(geminiStoredSponsorUnchanged)
+assert.equal(geminiStoredSponsorUnchanged.sponsor, 'JA Korea')
 assert.equal(mapped.detailCase, 'general')
 assert.equal(mapped.educationStructure, 'curriculum')
 assert.equal(mapped.sessions.length, 0)
@@ -1011,6 +1068,17 @@ const geminiTraining = mapPortalProgramDetail({
 assert.ok(geminiTraining)
 assert.equal(geminiTraining.detailCase, 'gemini')
 assert.equal(geminiTraining.category, 'institution')
+assert.deepEqual(geminiTraining.categories, ['institution'])
+
+const geminiHeaderHidesInstructorWithInstitution = mapPortalProgramDetail({
+  programId: 185011,
+  programType: 'GEMINI_TRAINING',
+  portalCategories: ['ORGANIZATION', 'INSTRUCTOR'],
+  title: '제미나이 이미지',
+})
+assert.ok(geminiHeaderHidesInstructorWithInstitution)
+assert.deepEqual(geminiHeaderHidesInstructorWithInstitution.categories, ['institution'])
+assert.equal(geminiHeaderHidesInstructorWithInstitution.categoryLabel, '기관')
 assert.equal(
   geminiTraining.recruitmentPhases[0]?.value,
   '2026년 8월 1일(토) ~ 2026년 8월 31일(월)',
@@ -1019,6 +1087,8 @@ assert.equal(
   geminiTraining.geminiTrainingRequestPeriodLabel,
   '2026년 9월 1일(화) ~ 2026년 9월 30일(수)',
 )
+assert.equal(geminiTraining.geminiTrainingRequestStartDate, '2026-09-01')
+assert.equal(geminiTraining.geminiTrainingRequestEndDate, '2026-09-30')
 assert.equal(geminiTraining.recruitmentPhases[0]?.label, '기관 모집 기간')
 
 const geminiWithoutTrainingRequestPeriod = mapPortalProgramDetail({
@@ -1030,6 +1100,8 @@ const geminiWithoutTrainingRequestPeriod = mapPortalProgramDetail({
 })
 assert.ok(geminiWithoutTrainingRequestPeriod)
 assert.equal(geminiWithoutTrainingRequestPeriod.geminiTrainingRequestPeriodLabel, undefined)
+assert.equal(geminiWithoutTrainingRequestPeriod.geminiTrainingRequestStartDate, undefined)
+assert.equal(geminiWithoutTrainingRequestPeriod.geminiTrainingRequestEndDate, undefined)
 
 const generalWithGeminiFields = mapPortalProgramDetail({
   programId: 185005,
@@ -1042,6 +1114,8 @@ const generalWithGeminiFields = mapPortalProgramDetail({
 assert.ok(generalWithGeminiFields)
 assert.equal(generalWithGeminiFields.detailCase, 'general')
 assert.equal(generalWithGeminiFields.geminiTrainingRequestPeriodLabel, undefined)
+assert.equal(generalWithGeminiFields.geminiTrainingRequestStartDate, undefined)
+assert.equal(generalWithGeminiFields.geminiTrainingRequestEndDate, undefined)
 
 const geminiTrainingListed = mapPortalProgramListItem({
   programId: 185003,

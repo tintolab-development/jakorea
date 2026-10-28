@@ -15,7 +15,12 @@ import type {
   ProgramVolunteerInterviewSchedule,
 } from '../model/types'
 import { PROGRAM_TAB_LABEL, programTabLabels } from '../lib/constants.ts'
-import { fallbackPortalTab, isUjatProgramType, mapPortalTabs } from '../lib/portal-category.ts'
+import {
+  fallbackPortalTab,
+  isUjatProgramType,
+  mapPortalTabs,
+  resolveProgramDetailCategoryTabs,
+} from '../lib/portal-category.ts'
 import {
   programTabFromPortalTab,
   selectRecruitmentsForFocus,
@@ -33,6 +38,7 @@ import type {
   PortalVolunteerInterviewSchedule,
 } from './types'
 import { extraSection, rewriteAdminFileContentSrcsForPortal } from '../lib/html-body.ts'
+import { mapPortalSponsorDisplay } from '../lib/portal-sponsor-display.ts'
 import {
   recruitmentGuideSectionTitle,
   recruitmentPhaseGroupLabel,
@@ -223,6 +229,23 @@ function formatYmd(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
+}
+
+const SEOUL_YMD_FORMAT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** Portal `trainingRequest*` — 날짜만 있으면 그대로, datetime은 Asia/Seoul 역일. */
+function toIsoDateOnlyFromPortal(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+  const date = toDate(trimmed)
+  if (!date) return null
+  return SEOUL_YMD_FORMAT.format(date)
 }
 
 function formatRange(start: Date | null, end: Date | null): string {
@@ -1152,11 +1175,6 @@ function isIndependentRecruitmentProgram(programType: string | undefined): boole
   return type === 'UJAT' || type === 'GENERAL' || (type?.startsWith('GENERAL_') ?? false)
 }
 
-function isGeminiPortalProgramType(programType: string | undefined): boolean {
-  const type = (programType ?? '').trim().toUpperCase()
-  return type === 'GEMINI_TRAINING' || type === 'GEMINI' || type === 'VISITING_TRAINING'
-}
-
 export function mapPortalProgramDetail(
   remote: PortalProgramDetail,
   focus?: PortalRecruitmentFocus | null,
@@ -1180,22 +1198,19 @@ export function mapPortalProgramDetail(
     : selected?.ambiguous
       ? []
       : remote.recruitments
-  const focusedTab = focus?.portalTab
-  const keepGeminiPortalCategories = isGeminiPortalProgramType(remote.programType)
-  const categories =
-    focusedTab && !keepGeminiPortalCategories
-      ? [programTabFromPortalTab(focusedTab)]
-      : mapPortalTabs(remote.portalCategories, remote.programType)
-  const category =
-    focusedTab && !keepGeminiPortalCategories
-      ? programTabFromPortalTab(focusedTab)
-      : mapCategory(remote.portalCategories, remote.programType)
+  const focusedTab = focus?.portalTab ? programTabFromPortalTab(focus.portalTab) : undefined
   const detailCase =
     recruitmentResolved && selected
       ? detailCaseForFocus(remote.programType, selected.applicationTypes)
       : selected?.ambiguous && selected.applicationTypes.length === 1
         ? detailCaseForFocus(remote.programType, selected.applicationTypes)
         : mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
+  const categories = resolveProgramDetailCategoryTabs({
+    tabs: mapPortalTabs(remote.portalCategories, remote.programType),
+    detailCase,
+    focusedTab,
+  })
+  const category = categories[0] ?? fallbackPortalTab(remote.programType)
   const perScheduleEducationForm = remote.educationFormScheduleDetail === 'perSchedule'
   const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const programType = readString(remote.programType)?.toUpperCase()
@@ -1326,6 +1341,10 @@ export function mapPortalProgramDetail(
   const recruitmentPeriodLabel = formatRange(appStart, appEnd)
   const geminiTrainingRequestStart = toDate(remote.trainingRequestStartDate ?? undefined)
   const geminiTrainingRequestEnd = toDate(remote.trainingRequestEndDate ?? undefined)
+  const geminiTrainingRequestStartDate =
+    detailCase === 'gemini' ? toIsoDateOnlyFromPortal(remote.trainingRequestStartDate) : null
+  const geminiTrainingRequestEndDate =
+    detailCase === 'gemini' ? toIsoDateOnlyFromPortal(remote.trainingRequestEndDate) : null
   const geminiTrainingRequestPeriodLabel =
     detailCase === 'gemini' && (geminiTrainingRequestStart || geminiTrainingRequestEnd)
       ? formatRange(geminiTrainingRequestStart, geminiTrainingRequestEnd)
@@ -1386,6 +1405,10 @@ export function mapPortalProgramDetail(
     ...(geminiTrainingRequestPeriodLabel
       ? { geminiTrainingRequestPeriodLabel }
       : {}),
+    ...(geminiTrainingRequestStartDate
+      ? { geminiTrainingRequestStartDate }
+      : {}),
+    ...(geminiTrainingRequestEndDate ? { geminiTrainingRequestEndDate } : {}),
     ...(geminiMinStudentCountLabel ? { geminiMinStudentCountLabel } : {}),
     recruitmentStatus,
     educationTargetKey: targets.key,
@@ -1395,7 +1418,7 @@ export function mapPortalProgramDetail(
     educationFormLabel: educationFormLabelForDetail,
     thumbnailUrl,
     detailImageUrl: thumbnailUrl,
-    sponsor: (remote.sponsorNames ?? []).map(readString).filter(Boolean).join(', ') || '-',
+    sponsor: mapPortalSponsorDisplay(remote.sponsorNames),
     summary: independentRow
       ? programDescription
       : visibleCopy(readString(remote.description) ?? readString(remote.summary) ?? ''),
