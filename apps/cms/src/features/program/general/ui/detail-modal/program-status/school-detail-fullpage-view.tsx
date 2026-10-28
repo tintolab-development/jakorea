@@ -2165,6 +2165,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const assignedInstructorExportRows = useMemo(
     () =>
       assignedRows.map(row => ({
+        id: row.id,
         no: row.no,
         role: INSTRUCTOR_ROLE_LABELS[row.role],
         instructorName: row.instructorName,
@@ -2179,6 +2180,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const waitingInstructorExportRows = useMemo(
     () =>
       waitingRows.map(row => ({
+        id: row.id,
         no: row.no,
         instructorName: row.instructorName,
         homeAddress: displayServerPiiAsIs(row.homeAddress),
@@ -2196,6 +2198,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     columns: assignedInstructorExportColumns,
     data: assignedInstructorExportRows,
     filename: '배정된 강사 목록',
+    selectedRowKeys: selectedAssignedKeys,
   })
 
   const {
@@ -2205,6 +2208,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     columns: waitingInstructorExportColumns,
     data: waitingInstructorExportRows,
     filename: '배정 대기 강사 목록',
+    selectedRowKeys: selectedWaitingKeys,
   })
 
   /** 기본 정보 — 상단(진행·교재) / 하단(기관·신청) 테이블 분리 (시안) */

@@ -2446,6 +2446,7 @@ export function ApplicantList({
             excelExport={{
               columns,
               data: tableData,
+              selectedRowKeys,
             }}
           >
             {applicationsError ? (

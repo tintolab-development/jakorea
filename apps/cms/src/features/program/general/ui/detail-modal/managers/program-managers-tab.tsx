@@ -376,6 +376,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
         excelExport={{
           columns: excelColumns,
           data: filteredManagers,
+          selectedRowKeys,
         }}
         actions={
           <>

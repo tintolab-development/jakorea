@@ -301,6 +301,7 @@ export function UjatEducationProgressVolunteersSection({
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys,
         }}
       >
         <div ref={tableWrapRef} className="ujat-education-progress-volunteers__table-wrap">

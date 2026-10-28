@@ -662,6 +662,7 @@ export function ParticipatingInstructorFullpageView({
   const assignedSchoolExportRows = useMemo(
     () =>
       assignedSchools.map(row => ({
+        id: row.id,
         no: row.no,
         role: INSTRUCTOR_ROLE_LABELS[row.role],
         schoolName: row.schoolName,
@@ -676,6 +677,7 @@ export function ParticipatingInstructorFullpageView({
   const waitingSchoolExportRows = useMemo(
     () =>
       waitingSchools.map(row => ({
+        id: row.id,
         no: row.no,
         schoolName: row.schoolName,
         desiredGrade: row.desiredGrade,
@@ -693,6 +695,7 @@ export function ParticipatingInstructorFullpageView({
       columns: assignedSchoolExportColumns,
       data: assignedSchoolExportRows,
       filename: '배정된 기관 목록',
+      selectedRowKeys: selectedAssignedSchoolKeys,
     })
 
   const { exportExcel: exportWaitingSchoolsExcel, isExporting: isWaitingSchoolsExcelExporting } =
@@ -700,6 +703,7 @@ export function ParticipatingInstructorFullpageView({
       columns: waitingSchoolExportColumns,
       data: waitingSchoolExportRows,
       filename: '배정 대기 기관 목록',
+      selectedRowKeys: selectedWaitingSchoolKeys,
     })
 
   const waitingSchoolColumns: ColumnsType<InstructorWaitingSchoolRow> = useMemo(

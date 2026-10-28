@@ -25,6 +25,7 @@ import {
 import './assignment.css'
 
 type AssignmentProgressExportRow = {
+  id: string
   no: number
   scheduleLabel: string
   role: string
@@ -78,6 +79,7 @@ function buildAssignmentProgressExportRows(
   rows: readonly UjatVolunteerAssignmentProgressRow[]
 ): AssignmentProgressExportRow[] {
   return rows.map((row, index) => ({
+    id: row.id,
     no: index + 1,
     scheduleLabel: row.scheduleLabel,
     role: resolveRoleLabel(row.role),
@@ -233,6 +235,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
     columns: ASSIGNMENT_PROGRESS_EXPORT_COLUMNS,
     data: exportRows,
     filename: '교육_배정_및_진행_현황',
+    selectedRowKeys,
   })
 
   const assignTargetRow = useMemo(
