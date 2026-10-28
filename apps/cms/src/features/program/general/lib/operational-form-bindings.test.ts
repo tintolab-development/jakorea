@@ -158,7 +158,7 @@ describe('listAllRegistrationCreateFormSpecs', () => {
     ).toEqual([189456])
   })
 
-  it('서로 다른 스펙에 이미 선택된 bindingId를 다시 선택하면 실패한다', () => {
+  it('서로 다른 스펙에 이미 선택된 bindingId는 고르지 않는다', () => {
     const binding: ProgramFormBindingResponse = {
       bindingId: 189454,
       formType: 'APPLICATION',
@@ -166,13 +166,40 @@ describe('listAllRegistrationCreateFormSpecs', () => {
       targetRole: 'ORGANIZATION',
       templateName: '기관 신청',
     }
-    expect(() =>
+    expect(
       pickOperationalFormBinding(
         [binding],
         { formType: 'APPLICATION', targetRole: 'ORGANIZATION', nameHints: ['기관 신청'] },
         { claimedBindingIds: new Set([189454]) }
       )
-    ).toThrow('같은 운영 바인딩')
+    ).toBeUndefined()
+  })
+
+  it('역할이 있는 스펙은 APPLICATION이 하나여도 역할이 다르면 고르지 않는다', () => {
+    const instructorOnly: ProgramFormBindingResponse = {
+      bindingId: 189778,
+      formType: 'APPLICATION',
+      targetType: 'INSTRUCTOR',
+      targetRole: 'INSTRUCTOR',
+      targetScope: 'RECRUITMENT',
+      targetScopeId: 501,
+      templateVersionId: 68,
+      active: true,
+    }
+    expect(
+      pickOperationalFormBinding([instructorOnly], {
+        formType: 'APPLICATION',
+        targetRole: 'ORGANIZATION',
+        nameHints: ['기관 신청', '1사1교 신청'],
+      })
+    ).toBeUndefined()
+    expect(
+      pickOperationalFormBinding([instructorOnly], {
+        formType: 'APPLICATION',
+        targetRole: 'INSTRUCTOR',
+        nameHints: ['강사 신청'],
+      })?.bindingId
+    ).toBe(189778)
   })
 })
 

@@ -46,7 +46,13 @@ describe('createAdminProgramRemote inline-images 실패', () => {
     } as never)
 
     expect(created.id).toBe(186359)
-    expect(syncProgramInlineImagesKeepProgram).toHaveBeenCalledWith(186359, expect.any(Array))
+    expect(syncProgramInlineImagesKeepProgram).toHaveBeenCalledWith(
+      186359,
+      [
+        expect.objectContaining({ description: '<img src="/api/admin/files/1/content">' }),
+        expect.objectContaining({ id: 186359 }),
+      ]
+    )
     const methods = customInstance.mock.calls.map(call => call[0]?.method)
     expect(methods).not.toContain('DELETE')
   })

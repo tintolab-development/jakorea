@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { uploadAdminFileMaybeMock } from '@/shared/lib/admin-file-upload/upload-maybe-mock'
 import {
   faqInlineImageOwner,
@@ -6,7 +6,9 @@ import {
   noticeInlineImageOwner,
   programInlineImageOwner,
   programPostInlineImageOwner,
+  resetProgramInlineImageDraftsForTests,
   resolveRichTextInlineImageSrc,
+  takeProgramInlineImageDraft,
 } from '@/shared/lib/admin-file-upload/inline-image'
 
 vi.mock('@/shared/lib/admin-file-upload/upload-maybe-mock', () => ({
@@ -15,6 +17,18 @@ vi.mock('@/shared/lib/admin-file-upload/upload-maybe-mock', () => ({
 }))
 
 describe('rich-text inline image owners', () => {
+  beforeEach(() => {
+    resetProgramInlineImageDraftsForTests()
+  })
+
+  it('프로그램 등록 draft 본문 이미지는 생성 후 재업로드용으로 보관한다', async () => {
+    resetProgramInlineImageDraftsForTests()
+    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
+    await resolveRichTextInlineImageSrc(file, programInlineImageOwner(null))
+    expect(takeProgramInlineImageDraft(42)?.name).toBe('photo.jpg')
+    expect(takeProgramInlineImageDraft(42)).toBeUndefined()
+  })
+
   it('신규 작성은 ownerId를 null로 둔다', () => {
     expect(noticeInlineImageOwner(null).ownerId).toBeNull()
     expect(faqInlineImageOwner(null).ownerId).toBeNull()

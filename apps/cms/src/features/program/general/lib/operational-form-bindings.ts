@@ -502,9 +502,7 @@ export function pickOperationalFormBinding(
   const verifySelection = (binding: ProgramFormBindingResponse | undefined) => {
     const bindingId = binding?.bindingId
     if (bindingId != null && options?.claimedBindingIds?.has(Number(bindingId))) {
-      throw new Error(
-        `서로 다른 양식 스펙에 같은 운영 바인딩을 선택할 수 없습니다: ${String(bindingId)}`
-      )
+      return undefined
     }
     return binding
   }
@@ -538,5 +536,8 @@ export function pickOperationalFormBinding(
     return verifySelection(roleOrName[0])
   }
 
-  return ofType.length === 1 ? verifySelection(ofType[0]) : undefined
+  // 역할이 있는 스펙은 「APPLICATION이 하나뿐」이라는 이유만으로 그 바인딩을 쓰지 않는다.
+  // 1사1교 기관 신청이 강사 신청 바인딩을 가져가면 등록 후 강사 양식 적용이 실패한다.
+  if (!spec.targetRole && ofType.length === 1) return verifySelection(ofType[0])
+  return undefined
 }
