@@ -332,6 +332,8 @@ describe('gemini visiting-training adapters', () => {
     expect(create.trainingRequestEndDate).toBe('2026-04-30')
     expect(create.applicationStartDate).toBe('2026-03-01')
     expect(create.applicationEndDate).toBe('2026-03-31')
+    expect(create.businessStartDate).toBe('2026-03-01')
+    expect(create.businessEndDate).toBe('2026-04-30')
     expect(create.targetLevels).toEqual(['adult', 'university'])
     expect(create.targetLevel).toBe('adult')
     expect(create.keyVisualImage).toBeUndefined()
@@ -585,7 +587,7 @@ describe('gemini visiting-training adapters', () => {
     expect(update.applicationStartDate).toBe('2026-10-07')
     expect(update.applicationEndDate).toBe('2026-10-28')
     expect(update.businessStartDate).toBe('2026-10-07')
-    expect(update.businessEndDate).toBe('2026-10-28')
+    expect(update.businessEndDate).toBe('2026-12-29')
     expect(update.trainingRequestStartDate).toBe('2026-10-30')
     expect(update.trainingRequestEndDate).toBe('2026-12-29')
     expect(update.totalParticipants).toBe(20)
@@ -691,6 +693,41 @@ describe('gemini visiting-training adapters', () => {
     expect(create.applicationStartDate).toBe('2026-03-01')
     expect(create.trainingRequestStartDate).toBe('2026-04-01')
     expect(create.applicationStartDate).not.toBe(create.trainingRequestStartDate)
+    expect(create.businessStartDate).toBe('2026-03-01')
+    expect(create.businessEndDate).toBe('2026-04-30')
+  })
+
+  it('create business period covers training request so editor image PATCH is not period-ended', () => {
+    const create = mapGeminiRecruitmentSnapshotToCreateRequest({
+      title: '제미나이 이미지',
+      announcementPublished: 'published',
+      educationTargetLevels: ['adult'],
+      educationTargetDetail: '성인 학습 기관',
+      applicationPeriodStart: '2026-09-30T15:00:00.000Z',
+      applicationPeriodEnd: '2026-10-11T15:00:00.000Z',
+      trainingRequestPeriodStart: '2026-10-01T15:00:00.000Z',
+      trainingRequestPeriodEnd: '2026-10-29T15:00:00.000Z',
+      minStudentCount: 15,
+      educationForm: 'offline',
+      educationStructure: 'SCHEDULE',
+      inquiryContactName: 'JA Korea 찾아가는 연수',
+      inquiryTel: '02-1234-5678',
+      inquiryEmail: 'gemini-dev@jakorea.org',
+      notesNotApplicable: false,
+      notes: '희망 연수일은 연수 요청 가능기간 안에서 기관과 조율합니다.',
+      thumbnailFileName: null,
+      programDescription: '설명',
+      recruitmentGuide: '<p><img src="/api/admin/files/2056231/content" /></p>',
+      applicationMethod: '홈페이지에서 신청',
+      learningSupportContent: '활동지',
+      additionalContentMarkdown: '추가',
+      attachmentFileNames: [],
+      institutionSectionDescription: '',
+      detailSectionDescription: '',
+    })
+    expect(create.applicationEndDate).toBe('2026-10-11T15:00:00.000Z')
+    expect(create.businessStartDate).toBe('2026-09-30T15:00:00.000Z')
+    expect(create.businessEndDate).toBe('2026-10-29T15:00:00.000Z')
   })
 
   it('gemini overlay restore는 일반 recruit.* 와 섞이지 않는다', () => {

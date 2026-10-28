@@ -50,6 +50,48 @@ function optionalDate(value: string | null | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
+function pickEarlierIso(a?: string, b?: string): string | undefined {
+  if (!a) return b
+  if (!b) return a
+  const ta = Date.parse(a)
+  const tb = Date.parse(b)
+  if (Number.isNaN(ta)) return b
+  if (Number.isNaN(tb)) return a
+  return ta <= tb ? a : b
+}
+
+function pickLaterIso(a?: string, b?: string): string | undefined {
+  if (!a) return b
+  if (!b) return a
+  const ta = Date.parse(a)
+  const tb = Date.parse(b)
+  if (Number.isNaN(ta)) return b
+  if (Number.isNaN(tb)) return a
+  return ta >= tb ? a : b
+}
+
+/**
+ * Gemini 사업 운영 기간.
+ * 기관 모집 기간만 넣으면 모집 종료 직후 에디터 이미지 PATCH가
+ * PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED 로 거절된다.
+ * 모집·연수 요청 기간을 모두 덮는 구간을 쓴다.
+ */
+function geminiBusinessPeriod(persist: {
+  applicationPeriodStart?: string | null
+  applicationPeriodEnd?: string | null
+  trainingRequestPeriodStart?: string | null
+  trainingRequestPeriodEnd?: string | null
+}): { start?: string; end?: string } {
+  const applicationStart = optionalDate(persist.applicationPeriodStart)
+  const applicationEnd = optionalDate(persist.applicationPeriodEnd)
+  const trainingStart = optionalDate(persist.trainingRequestPeriodStart)
+  const trainingEnd = optionalDate(persist.trainingRequestPeriodEnd)
+  return {
+    start: pickEarlierIso(applicationStart, trainingStart),
+    end: pickLaterIso(applicationEnd, trainingEnd),
+  }
+}
+
 function trimmedOrEmpty(value: string | null | undefined): string {
   return value?.trim() ?? ''
 }
@@ -207,12 +249,13 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
     persist.educationTargetLevels,
     recruitmentTargetDetail
   )
+  const business = geminiBusinessPeriod(persist)
   const requestBody: ProgramCreateRequest = {
     programType: GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
     title: persist.title.trim() || undefined,
     description: persist.programDescription || undefined,
-    businessStartDate: optionalDate(persist.applicationPeriodStart),
-    businessEndDate: optionalDate(persist.applicationPeriodEnd),
+    businessStartDate: business.start,
+    businessEndDate: business.end,
     applicationStartDate: optionalDate(persist.applicationPeriodStart),
     applicationEndDate: optionalDate(persist.applicationPeriodEnd),
     trainingRequestStartDate: optionalDate(persist.trainingRequestPeriodStart),
@@ -337,10 +380,11 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     persist.educationTargetLevels,
     recruitmentTargetDetail
   )
+  const business = geminiBusinessPeriod(persist)
   const body: ProgramUpdateRequest = {
     title: persist.title.trim() || undefined,
-    businessStartDate: optionalDate(persist.applicationPeriodStart),
-    businessEndDate: optionalDate(persist.applicationPeriodEnd),
+    businessStartDate: business.start,
+    businessEndDate: business.end,
     applicationStartDate: optionalDate(persist.applicationPeriodStart),
     applicationEndDate: optionalDate(persist.applicationPeriodEnd),
     ...(educationStructure != null ? { educationStructure } : {}),

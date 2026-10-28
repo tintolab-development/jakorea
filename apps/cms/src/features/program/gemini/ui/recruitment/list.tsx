@@ -310,6 +310,7 @@ export function GeminiRecruitmentList() {
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys: canWrite ? selectedRowKeys : undefined,
         }}
       >
         <CmsDataTable<GeminiRecruitmentRow>

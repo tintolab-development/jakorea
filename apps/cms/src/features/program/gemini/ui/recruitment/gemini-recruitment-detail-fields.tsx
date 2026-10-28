@@ -200,9 +200,7 @@ export function GeminiRecruitmentDetailFields({
     [thumbObjectUrl]
   )
 
-  const thumbnailPreviewUrl =
-    thumbObjectUrl ??
-    (thumbnailFileName && values.thumbnailFileObjectId !== null ? storedThumbUrl : null)
+  const thumbnailPreviewUrl = thumbObjectUrl ?? storedThumbUrl
 
   const programDescription = GEMINI_RECRUITMENT_PROGRAM_DESCRIPTION_FIELD
 
@@ -315,22 +313,35 @@ export function GeminiRecruitmentDetailFields({
                 sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 fileNames={values.attachmentFileNames}
                 onFilesChange={files => {
-                  onChange({
-                    attachmentFileNames: [
-                      ...values.attachmentFileNames,
-                      ...files.map(file => file.name),
-                    ],
-                  })
                   const owner = programDetailAttachmentOwner(programNumericId)
                   void (async () => {
+                    const uploadedIds: number[] = []
+                    const uploadedNames: string[] = []
                     for (const file of files) {
-                      await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                      try {
+                        const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                        uploadedIds.push(uploaded.fileObjectId)
+                        uploadedNames.push(file.name)
+                      } catch {
+                        /* 실패한 파일은 목록에 넣지 않는다 */
+                      }
                     }
+                    if (uploadedNames.length === 0) return
+                    onChange({
+                      attachmentFileNames: [...values.attachmentFileNames, ...uploadedNames],
+                      attachmentFileObjectIds: [
+                        ...(values.attachmentFileObjectIds ?? []),
+                        ...uploadedIds,
+                      ],
+                    })
                   })()
                 }}
                 onRemoveFile={index =>
                   onChange({
                     attachmentFileNames: values.attachmentFileNames.filter((_, i) => i !== index),
+                    attachmentFileObjectIds: (values.attachmentFileObjectIds ?? []).filter(
+                      (_, i) => i !== index
+                    ),
                   })
                 }
               />
