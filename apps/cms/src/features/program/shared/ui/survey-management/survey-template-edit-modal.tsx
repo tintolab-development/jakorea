@@ -12,6 +12,8 @@ import {
   DEFAULT_SURVEY_PARAGRAPH_IDS,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+import { forceSurveyTitleWritingPeriodOn } from '@/features/template/lib/survey-title-period-policy'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
@@ -87,13 +89,19 @@ function SurveyTemplateEditModalInner({
 
   const getInitialDraft = useCallback(
     () =>
-      programEdit?.initialDraft ??
+      (programEdit != null ? forceSurveyTitleWritingPeriodOn(programEdit.initialDraft) : null) ??
       buildDefaultSurveyWritingDraft(templateId, { templateName: templateRow?.templateName }),
     [programEdit, templateId, templateRow?.templateName]
   )
   const getDefaultActiveParagraphId = useCallback(
     (_draft: WritingFormDraft) => DEFAULT_SURVEY_PARAGRAPH_IDS.title,
     []
+  )
+
+  /** 프로그램 > 설문조사 수정 — 제목 단락「작성 기간」토글 ON 고정 */
+  const paragraphBodyOptions = useMemo<RenderFormParagraphBodyOptions | undefined>(
+    () => (programEdit != null ? { lockSurveyWritingPeriodToggleOn: true } : undefined),
+    [programEdit]
   )
 
   const canEdit =
@@ -194,6 +202,7 @@ function SurveyTemplateEditModalInner({
             tableRowSelection.onVerticalTableBodyRowSelectionChange
           }
           middleParagraphActions={editor.middleParagraphActions}
+          paragraphBodyOptions={paragraphBodyOptions}
         />
       }
       rightNavigation={
