@@ -1882,7 +1882,86 @@
     },
     "/api/admin/notification-send-batches/template-variables": {
       "get": {
-        "summary": "자동입력 변수 카탈로그 조회",
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "알림 발송 자동입력 변수 카탈로그",
+        "description": "### 이 API가 하는 일\n- 알림 발송 자동입력 변수 카탈로그\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/notification-send-batches/template-variables`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: NOTIFICATION_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: V78 AlimTalk CMS catalog / Notion alignment",
+        "operationId": "listNotificationTemplateVariables",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "description": "카탈로그 카테고리 코드.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NAME",
+                "EMAIL",
+                "PHONE",
+                "STATUS",
+                "TYPE",
+                "DATE",
+                "TIME",
+                "PLACE",
+                "TARGET",
+                "QUANTITY",
+                "AMOUNT",
+                "SYSTEM"
+              ]
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "key/description 부분 검색.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "participantType",
+            "in": "query",
+            "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PARTICIPANT",
+                "INSTRUCTOR",
+                "VOLUNTEER"
+              ]
+            }
+          },
+          {
+            "name": "memberType",
+            "in": "query",
+            "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GENERAL",
+                "SCHOOL_TEACHER",
+                "INSTRUCTOR",
+                "TEACHER_AND_INSTRUCTOR",
+                "ADMIN"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "카탈로그. CatalogVariableItem.enabled 가 삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT.",
@@ -1893,7 +1972,7 @@
                 },
                 "examples": {
                   "participantContext": {
-                    "summary": "programId+PARTICIPANT — 강사 전용 키 enabled=false",
+                    "description": "participantContext",
                     "value": {
                       "totalCount": 2,
                       "categories": [
@@ -1936,107 +2015,18 @@
             }
           },
           "400": {
-            "description": "participantType/memberType enum 위반 등",
-            "content": {
-              "application/json": {
-                "examples": {
-                  "requiredVariableMissing": {
-                    "summary": "발송 파이프라인 실패 코드(배치/delivery). GET catalog 자체는 아님",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "error": {
-                        "code": "NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING",
-                        "message": "NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:교육 진행 수업 시간"
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
           }
         },
-        "operationId": "listNotificationTemplateVariables",
-        "description": "메일·문자 템플릿 편집/발송 화면 우측 자동입력(변수값) 리스트 + 알림톡 발송 피커 변수 SSOT. Notion 사용 가능 항목과 CMS 수동 발송 불가(시스템 이벤트 전용) 키를 카테고리별로 반환(enabled=false 항목도 목록 유지). enabled=삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT(값 존재와 무관). FE는 enabled를 재계산하지 않는다. 축 분리: 카카오 승인(approved) ≠ CMS 변수 가능(catalog membership + enabled). 알림톡 발송 피커 Option A(프로그램 지정 시): 본문 #{키} ⊆ catalog && 모든 키 enabled=true. 예: 로그인 실패 횟수/마지막 로그인 실패일시 → catalog 등재 + enabled=false. requiresProgram=true 이고 programId 미전달이면 enabled=false. programId/participantType/memberType을 넘기면 enabled가 프로그램·모집·참여·회원 유형에 맞게 계산된다. participantType·memberType 둘 다 없으면 유형 특화 변수는 enabled=false. 실발송(EMAIL/SMS/ALIMTALK) 시 본문 또는 알림톡 메타데이터(버튼 등)의 #{키} 값이 비면 provider 전 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}…] fail-closed(프로바이더 원문「변수처리실패」에 의존하지 않음).",
-        "tags": [
-          "알림 발송 배치"
-        ],
-        "parameters": [
-          {
-            "name": "category",
-            "in": "query",
-            "required": false,
-            "description": "카탈로그 카테고리 코드.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "NAME",
-                "EMAIL",
-                "PHONE",
-                "STATUS",
-                "TYPE",
-                "DATE",
-                "TIME",
-                "PLACE",
-                "TARGET",
-                "QUANTITY",
-                "AMOUNT",
-                "SYSTEM"
-              ]
-            }
-          },
-          {
-            "name": "keyword",
-            "in": "query",
-            "required": false,
-            "description": "key/description 부분 검색.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "programId",
-            "in": "query",
-            "required": false,
-            "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 164003
-          },
-          {
-            "name": "participantType",
-            "in": "query",
-            "required": false,
-            "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
-            },
-            "example": "PARTICIPANT"
-          },
-          {
-            "name": "memberType",
-            "in": "query",
-            "required": false,
-            "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
-            }
-          }
-        ],
         "x-jakorea-fe-notes": "enabled=삽입 허용 SSOT(값 존재와 무관). 누락 시 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}]. QA programId=164003 actorId=1799401."
       }
     },
@@ -2938,7 +2928,9 @@
           },
           "memberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "정책 확인 전 새 roster 행에 대한 회원 연결은 허용되지 않습니다. 기존 row의 memberId를 그대로 유지하는 용도입니다.",
+            "nullable": true
           },
           "studentName": {
             "type": "string",
@@ -3021,11 +3013,20 @@
           },
           "birthDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "description": "Portal owner 조회 또는 CMS 개인정보 원문 조회에서만 원문 날짜를 반환하며, CMS 기본 조회에서는 null입니다.",
+            "nullable": true
           },
           "birthYear": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "학생명단 저장 생년월일의 연도만 사용합니다. 승인된 회원 연결 정책이 확인될 때까지 회원 정본 연도 fallback은 차단됩니다.",
+            "nullable": true
+          },
+          "maskedBirthDate": {
+            "type": "string",
+            "description": "CMS 기본 학생명단 표시용 생년월일 값(yyyy-**-**). Portal에서는 null이며 저장·수정 요청에 사용할 수 없습니다.",
+            "nullable": true
           },
           "grade": {
             "type": "string"
@@ -24163,9 +24164,19 @@
             "type": "string",
             "format": "date-time"
           },
+          "createdByName": {
+            "type": "string",
+            "description": "최초 등록한 CMS 관리자 화면 표시명. 이력 없거나 관리자명 없으면 null. 빈 문자열을 쓰지 않는다.",
+            "nullable": true
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "updatedByName": {
+            "type": "string",
+            "description": "마지막으로 프로그램을 수정한 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. PATCH마다 저장 관리자로 갱신. 이력 없으면 null.",
+            "nullable": true
           },
           "businessStartDate": {
             "type": "string"
@@ -29256,33 +29267,6 @@
               "DRAFT",
               "PUBLISHED"
             ],
-            "nullable": true
-          }
-        }
-      },
-      "ApiResponseProgramResponse": {
-        "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "요청 처리 성공 여부",
-            "example": false
-          },
-          "data": {
-            "$ref": "#/components/schemas/ProgramResponse",
-            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
-            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
-            "nullable": true
-          },
-          "error": {
-            "$ref": "#/components/schemas/ErrorDetail",
-            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
           }
         }
@@ -44709,7 +44693,7 @@
           "readAt": {
             "type": "string",
             "format": "date-time",
-            "description": "읽음 처리 시각",
+            "description": "읽음 처리 시각. null이면 미읽음, non-null ISO-8601이면 읽음(FE SSOT). clickedAt만 있는 경우는 미읽음.",
             "example": "2026-06-02T09:10:00Z"
           },
           "clickedAt": {
@@ -45260,11 +45244,6 @@
       },
       "NotificationCatalogCategory": {
         "type": "object",
-        "required": [
-          "categoryCode",
-          "categoryLabel",
-          "variables"
-        ],
         "properties": {
           "categoryCode": {
             "type": "string",
@@ -45285,16 +45264,6 @@
       "NotificationCatalogVariableItem": {
         "type": "object",
         "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
-        "required": [
-          "key",
-          "token",
-          "requiresProgram",
-          "enabled",
-          "programGroups",
-          "recruitmentTypes",
-          "participantTypes",
-          "memberTypes"
-        ],
         "properties": {
           "key": {
             "type": "string",
@@ -45308,8 +45277,8 @@
           },
           "description": {
             "type": "string",
-            "nullable": true,
-            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
+            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null",
+            "nullable": true
           },
           "requiresProgram": {
             "type": "boolean",
@@ -45321,63 +45290,46 @@
           },
           "programGroups": {
             "type": "array",
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
+            }
           },
           "recruitmentTypes": {
             "type": "array",
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
+            }
           },
           "participantTypes": {
             "type": "array",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
-            },
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
+              "type": "string"
+            }
           },
           "memberTypes": {
             "type": "array",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
-            },
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
+              "type": "string"
+            }
           },
           "sourceMode": {
             "type": "string",
-            "nullable": true,
             "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
             "enum": [
               "SERVER_RESOLVED",
               "MANUAL_ALLOWED",
               "EVENT_ONLY"
-            ]
+            ],
+            "nullable": true
           }
         }
       },
       "NotificationTemplateVariableCatalogResponse": {
         "type": "object",
-        "required": [
-          "totalCount",
-          "categories",
-          "systemManualSendQaEnabled"
-        ],
         "properties": {
           "totalCount": {
             "type": "integer",
@@ -45935,7 +45887,8 @@
             "additionalProperties": {
               "type": "integer",
               "format": "int32"
-            }
+            },
+            "description": "바로가기 키별 배지 숫자. FE는 목록을 다시 세지 않고 이 값을 canonical로 표시한다. 누락 키는 0으로 채우지 않음.\nprograms-general-education=GET /api/admin/programs?programType=GENERAL totalElements\nprograms-economy=GET /api/admin/programs?programType=COMPANY_SCHOOL totalElements\nprograms-ujat=GET /api/admin/programs?programType=UJAT totalElements\nprograms-gemini=GET /api/admin/programs?programType=GEMINI totalElements\nprograms-detail=GET /api/admin/programs(유형 필터 없음) totalElements (= home.programCount)\nusers-all=GET /api/admin/users(역할 필터 없음) totalElements. 사람 회원(GENERAL/SCHOOL_TEACHER/INSTRUCTOR 또는 강사 철회). 관리자 계정·순수 학교 셸 제외. home.memberCount(삭제되지 않은 member 전체) 및 GET /api/admin/members/all(회원+관리자 UNION)과 다름.\nusers-school=GET /api/admin/users?role=TEACHER totalElements (SCHOOL_TEACHER)\nusers-instructor=GET /api/admin/users?role=INSTRUCTOR totalElements (철회 강사 제외)\nusers-admin=GET /api/admin/admin-accounts 기본 목록 totalElements (ACTIVE/SUSPENDED, 미삭제)\nnotices=GET /api/admin/content/notices 기본 목록 totalElements (PUBLISHED 공개 전체. isImportant/미읽음 아님)\nfaq=GET /api/admin/content/faqs 기본 목록 totalElements (PUBLISHED 공개 전체)\ninquiries=GET /api/admin/inquiries?status=PENDING totalElements (답변대기 RECEIVED/IN_PROGRESS)\npermission-requests=GET /api/admin/instructor-role-requests?status=PENDING totalElements (강사 권한 신청 대기)\n"
           },
           "calculatedAt": {
             "type": "string",
@@ -47166,7 +47119,7 @@
           },
           "updatedByName": {
             "type": "string",
-            "description": "program에 updated_by 컬럼이 없으면 null",
+            "description": "program.updated_by_admin_id가 가리키는 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. 이력 없으면 null.",
             "nullable": true
           }
         }
@@ -48219,6 +48172,16 @@
             "additionalProperties": {
               "type": "string"
             }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "필터 적용 후 전체 프로그램 수. page/size로 items를 잘라도 이 값이 전체다. 조용히 50건에서 자르지 않는다."
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "description": "totalCount와 동일. 목록 API totalElements와 같은 의미."
           }
         }
       },
@@ -48249,7 +48212,8 @@
             "type": "string"
           },
           "recruitmentStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "참여자 모집 창 SSOT(프로그램 목록 recruitmentStatus와 동일 창). OPEN/RECRUITING=모집 중, SCHEDULED=모집 예정, CLOSED=모집 마감. ACTIVE/OPEN PARTICIPANT 최신 행의 서울 날짜 창. 참여자 모집이 없으면 CLOSED. 프로그램 lifecycle/KPI 실적과 혼용하지 않음."
           },
           "participantRecruitmentStatus": {
             "type": "string"
@@ -48272,38 +48236,42 @@
           "participantAppliedCount": {
             "type": "integer",
             "format": "int32",
-            "description": "참여자 신청 수. 해당 유형 모집이 없으면 생략"
+            "description": "참여자 신청(applied) 수. 승인 수·KPI actualParticipantCount와 다름. 참여자 모집 유형이 없으면 생략(0으로 채우지 않음)."
           },
           "participantCapacity": {
             "type": "integer",
             "format": "int32",
-            "description": "참여자 정원. 해당 유형 모집이 없으면 생략"
+            "description": "참여자 정원. 참여자 모집 유형이 없으면 생략"
           },
           "studentAppliedCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "participantAppliedCount 별칭. 승인 수가 아님. 참여자 모집이 없으면 생략"
           },
           "studentCapacity": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "participantCapacity 별칭. 참여자 모집이 없으면 생략"
           },
           "volunteerAppliedCount": {
             "type": "integer",
             "format": "int32",
-            "description": "봉사자 신청 수. 해당 유형 모집이 없으면 생략"
+            "description": "봉사자 신청 수. instructorAppliedCount로 채우지 않음. 봉사자 모집 유형이 없으면 생략"
           },
           "volunteerCapacity": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "봉사자 정원. 봉사자 모집 유형이 없으면 생략"
           },
           "instructorAppliedCount": {
             "type": "integer",
             "format": "int32",
-            "description": "강사 신청 수. 해당 유형 모집이 없으면 생략"
+            "description": "강사 신청 수. 강사 모집 유형이 없으면 생략"
           },
           "instructorCapacity": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "강사 정원. 강사 모집 유형이 없으면 생략"
           }
         }
       },
@@ -48573,7 +48541,8 @@
           },
           "actualParticipantCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "참여자 KPI 실적. 모집 위젯 participantAppliedCount(신청)와 다른 의미이며 같은 숫자로 강제하지 않음."
           },
           "actualSchoolCount": {
             "type": "integer",
@@ -48624,15 +48593,18 @@
           },
           "programCount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "GET /api/admin/programs(필터 없음) totalElements과 동일. 삭제되지 않은 프로그램 수(관리자 데이터 범위 적용)."
           },
           "memberCount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "member.deleted_at IS NULL인 회원 수. 역할 필터 없음, 관리자 계정(admin_account) 미포함. users-all(사람 회원 디렉터리)과 다를 수 있다."
           },
           "unreadNotificationCount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "GET /api/admin/notifications/unread-count와 동일."
           }
         }
       },

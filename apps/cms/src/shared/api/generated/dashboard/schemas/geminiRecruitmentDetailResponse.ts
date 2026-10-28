@@ -65,6 +65,6 @@ export interface GeminiRecruitmentDetailResponse {
   createdAt?: string;
   createdByName?: string | null;
   updatedAt?: string;
-  /** program에 updated_by 컬럼이 없으면 null */
+  /** program.updated_by_admin_id가 가리키는 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. 이력 없으면 null. */
   updatedByName?: string | null;
 }

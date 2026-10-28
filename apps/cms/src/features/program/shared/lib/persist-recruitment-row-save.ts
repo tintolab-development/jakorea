@@ -20,6 +20,15 @@ import { normalizeVolunteerTargetList } from '@/features/program/shared/lib/prog
 import type { DateValue } from '@/types'
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
 
+function participantInterviewRequiredFromOverlay(
+  overlay: Record<string, unknown> | null | undefined
+): boolean | undefined {
+  const raw = overlay?.['recruit.individual.interviewRequired']
+  if (raw === 'yes' || raw === true) return true
+  if (raw === 'no' || raw === false) return false
+  return undefined
+}
+
 function optionalDateToApiString(value: DateValue | null | undefined): string | undefined {
   if (value == null) return undefined
   if (typeof value === 'string') {
@@ -344,7 +353,11 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
           ? volunteerInterviewRequiredFromOverlay(patch.registrationOverlay)
           : undefined) ??
         row.interviewEnabled)
-      : row.interviewEnabled
+      : audience === 'participant'
+        ? (patch.generalParticipantInterviewEnabled ??
+          participantInterviewRequiredFromOverlay(patch.registrationOverlay) ??
+          row.interviewEnabled)
+        : row.interviewEnabled
   // UJAT 봉사 운영 행은 면접을 끌 수 없다(keonhee 2026-10-25, BE UJAT_VOLUNTEER_INTERVIEW_REQUIRED) — false 는 행 값 유지.
   const interviewEnabled =
     audience === 'volunteer' &&

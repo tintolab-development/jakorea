@@ -15,12 +15,18 @@ import {
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './applicant-recruit-individual-participant-info-paragraph.css'
 
 const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 const MAX_SUFFIX_CLASS = RECRUIT_FORM_MAX_SUFFIX_CLASS
+const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
+const INTERVIEW_OPTIONS = [
+  { label: '면접 있음', value: 'yes' },
+  { label: '면접 없음', value: 'no' },
+] as const
 
 type RangeSeal = { start: string; end: string } | null
 
@@ -31,6 +37,10 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
       'recruit.individual.announcementPublished',
       'published'
     )
+  const [interviewRequired, setInterviewRequired] = useIndividualRecruitField<string>(
+    'recruit.individual.interviewRequired',
+    'yes'
+  )
 
   const [programAnchorIso, setProgramAnchorIso] = useIndividualRecruitField<string | null>(
     'recruit.individual.programAnchorIso',
@@ -168,20 +178,40 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
     false
   )
   const [notes, setNotes] = useIndividualRecruitField<string>('recruit.individual.notes', '')
+  const interviewEnabled = interviewRequired === 'yes'
 
   return (
     <div className="applicant-recruit-individual-participant-info-paragraph__forms">
       <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
-        <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="공고 게시 여부"
             validationKey="recruit.individual.announcementPublished"
-            fullRow
             edit={
               <ParticipantRecruitmentAnnouncementPublishedRadios
                 value={announcementPublished}
                 onChange={setAnnouncementPublished}
+                size="medium"
               />
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="참여자 면접 유무"
+            validationKey="recruit.individual.interviewRequired"
+            edit={
+              <CmsRadioGroup
+                size="medium"
+                value={interviewRequired}
+                onChange={e => setInterviewRequired(String(e.target.value))}
+                className={RECRUITMENT_RADIO_CLASS}
+              >
+                {INTERVIEW_OPTIONS.map(option => (
+                  <CmsRadio key={option.value} value={option.value} size="medium">
+                    {option.label}
+                  </CmsRadio>
+                ))}
+              </CmsRadioGroup>
             }
             view="-"
           />
@@ -261,7 +291,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
 
         <RecruitInterviewConditionalRows
           recruitPeriodLabel="참여자 모집 기간"
-          interviewEnabled={false}
+          interviewEnabled={interviewEnabled}
           validationKeyPrefix="recruit.individual"
           state={{
             recruitAnchor,
