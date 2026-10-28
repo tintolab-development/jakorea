@@ -7,7 +7,7 @@ import {
   validateSmsSendVariables,
 } from './validate-send'
 
-const catalog = [{ key: '방문 안내', enabled: true, requiresProgram: false }]
+const catalog = [{ key: '방문 안내', sourceMode: 'MANUAL_ALLOWED' as const, enabled: true, requiresProgram: false }]
 
 function recipient(
   id: string,
@@ -73,7 +73,7 @@ describe('validateSmsSendVariables', () => {
       actorType: 'MEMBER',
       actorId: 9,
     })
-    const result = check([member], { programId: '77' })
+    const result = check([member], { programId: '77', catalog: [{ key: '방문 안내', sourceMode: 'SERVER_RESOLVED' as const, enabled: true, requiresProgram: false }] })
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.validRecipients).toEqual([member])
@@ -93,7 +93,7 @@ describe('validateSmsSendVariables', () => {
   it('서버 예약 변수는 수기 값이 있어도 충족으로 보지 않는다', () => {
     const result = check([recipient('1', '010-1111-2222', { 프로그램명: '임의' })], {
       bodyText: '#{프로그램명}',
-      catalog: [{ key: '프로그램명', enabled: true, requiresProgram: true }],
+      catalog: [{ key: '프로그램명', sourceMode: 'SERVER_RESOLVED' as const, enabled: true, requiresProgram: true }],
     })
     expect(result.ok).toBe(false)
   })

@@ -321,8 +321,8 @@ describe('buildMailSendRecipients', () => {
         {
           keys: ['방문 안내', '프로그램명'],
           catalog: [
-            { key: '방문 안내', enabled: true },
-            { key: '프로그램명', enabled: true, requiresProgram: true },
+            { key: '방문 안내', sourceMode: 'MANUAL_ALLOWED' as const, enabled: true },
+            { key: '프로그램명', sourceMode: 'SERVER_RESOLVED' as const, enabled: true, requiresProgram: true },
           ],
           programSelected: false,
         }
@@ -358,7 +358,7 @@ describe('buildMailSendRecipients', () => {
         ],
         {
           keys: ['방문 안내'],
-          catalog: [{ key: '방문 안내', enabled: true }],
+          catalog: [{ key: '방문 안내', sourceMode: 'SERVER_RESOLVED' as const, enabled: true }],
           programSelected: true,
         }
       )
