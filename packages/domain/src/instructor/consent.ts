@@ -57,11 +57,11 @@ export const INSTRUCTOR_CONSENT_DOCUMENT_ITEMS = [
   },
   {
     key: 'consentAdministrativeJoint' as const,
-    label: '행정정보 공동이용 사전동의서',
+    label: '행정정보 공동이용 동의서',
   },
   {
     key: 'consentSexOffenseCheck' as const,
-    label: '성범죄 경력 조회 동의서',
+    label: '성범죄경력 조회 동의서',
   },
 ] as const
 
