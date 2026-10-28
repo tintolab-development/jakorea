@@ -19,12 +19,12 @@ import {
   parseRecruitmentInterviewConfig,
 } from '@/features/program/ujat/lib/recruitment-typed-contract'
 import {
-  UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
-  UJAT_BASIC_INFO_REP_EN_DEFAULT,
-  UJAT_BASIC_INFO_REP_KO_DEFAULT,
-  UJAT_DETAILED_PROGRAM_UJAT_VALUE,
   UJAT_SPONSOR_ALL_VALUE,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
+import {
+  isAnnouncementPublishedChoiceMissing,
+  isAnnouncementUnpublished,
+} from '@/features/program/shared/lib/participant-recruitment-form-options'
 import {
   UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS as INSTITUTION_KEYS,
   pickUjatRecruitInstitutionOverlay,
@@ -100,9 +100,6 @@ function readText(overlay: Record<string, unknown>, key: string, fallback = ''):
   return typeof raw === 'string' ? raw : ''
 }
 
-function isPublished(value: unknown): boolean {
-  return value === true || value === 'published'
-}
 
 function typedHalfPlan(detail: UjatTypedDetail | undefined, half: 'h1' | 'h2') {
   return detail?.halfPlans?.find(item =>
@@ -158,26 +155,22 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
       basicInfo?.generalParticipantTypes != null ? new Set(basicInfo.generalParticipantTypes) : null
     pushReason(
       reasons,
-      isEmptyText(basicText('mainTitle', `${p}.repKo`, UJAT_BASIC_INFO_REP_KO_DEFAULT)),
+      isEmptyText(basicText('mainTitle', `${p}.repKo`)),
       'basicInfo.repKo'
     )
     pushReason(
       reasons,
-      isEmptyText(basicText('titleEn', `${p}.repEn`, UJAT_BASIC_INFO_REP_EN_DEFAULT)),
+      isEmptyText(basicText('titleEn', `${p}.repEn`)),
       'basicInfo.repEn'
     )
     pushReason(
       reasons,
-      isEmptyText(
-        basicText('title', `${p}.programManagementName`, UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT)
-      ),
+      isEmptyText(basicText('title', `${p}.programManagementName`)),
       'basicInfo.programManagementName'
     )
     pushReason(
       reasons,
-      isEmptyText(
-        basicText('detailedProgramId', `${p}.detailedProgramId`, UJAT_DETAILED_PROGRAM_UJAT_VALUE)
-      ),
+      isEmptyText(basicText('detailedProgramId', `${p}.detailedProgramId`)),
       'basicInfo.detailedProgramId'
     )
     pushReason(reasons, isRangeSealIncomplete(basicRange), 'basicInfo.operationRangeSeal')
@@ -190,16 +183,17 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
     pushReason(reasons, !org && !volunteer, 'basicInfo.audience')
     pushReason(
       reasons,
-      isEmptyText(basicText('businessArea', `${p}.businessField`, 'economy_finance')),
+      isEmptyText(basicText('businessArea', `${p}.businessField`)),
       'basicInfo.businessField'
     )
     pushReason(
       reasons,
-      isEmptyText(basicText('sponsorId', `${p}.sponsorId`, UJAT_SPONSOR_ALL_VALUE)),
+      isEmptyText(basicText('sponsorId', `${p}.sponsorId`)) ||
+        basicText('sponsorId', `${p}.sponsorId`) === UJAT_SPONSOR_ALL_VALUE,
       'basicInfo.sponsorId'
     )
-    const sponsorId = basicText('sponsorId', `${p}.sponsorId`, UJAT_SPONSOR_ALL_VALUE)
-    if (useTypedBasic && sponsorId !== UJAT_SPONSOR_ALL_VALUE) {
+    const sponsorId = basicText('sponsorId', `${p}.sponsorId`)
+    if (useTypedBasic && sponsorId && sponsorId !== UJAT_SPONSOR_ALL_VALUE) {
       const managerIdsRaw = basicInfo?.sponsorManagerContactIds
       const managerIds = Array.isArray(managerIdsRaw)
         ? managerIdsRaw
@@ -207,14 +201,11 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
             .map(id => id.trim())
             .filter(Boolean)
         : []
-      const managerPrimary = basicText(
-        'sponsorManagerContactId',
-        `${p}.sponsorContactId`,
-        UJAT_SPONSOR_ALL_VALUE
-      )
+      const managerPrimary = basicText('sponsorManagerContactId', `${p}.sponsorContactId`)
       pushReason(
         reasons,
-        managerIds.length === 0 && isEmptyText(managerPrimary),
+        managerIds.length === 0 &&
+          (isEmptyText(managerPrimary) || managerPrimary === UJAT_SPONSOR_ALL_VALUE),
         'basicInfo.sponsorContact'
       )
     }
@@ -226,12 +217,12 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
     )
     pushReason(
       reasons,
-      isEmptyText(basicText('ipOwned', `${p}.ipOwned`, 'ja')),
+      isEmptyText(basicText('ipOwned', `${p}.ipOwned`)),
       'basicInfo.ipOwned'
     )
     pushReason(
       reasons,
-      isEmptyText(basicText('courseDeliveredBy', `${p}.courseDeliveredBy`, 'ja')),
+      isEmptyText(basicText('courseDeliveredBy', `${p}.courseDeliveredBy`)),
       'basicInfo.courseDeliveredBy'
     )
     pushReason(
@@ -241,7 +232,7 @@ export function listIncompleteUjatProgramRegistrationRequiredFields(
     )
     pushReason(
       reasons,
-      isEmptyText(basicText('ipsCategory', `${p}.ipsCategory`, 'prepare')),
+      isEmptyText(basicText('ipsCategory', `${p}.ipsCategory`)),
       'basicInfo.ipsCategory'
     )
 
@@ -361,16 +352,20 @@ export function getMergedUjatRecruitVolunteerOverlay(
 function listIncompleteUjatInstitutionRecruit(overlay: Record<string, unknown>): string[] {
   const reasons: string[] = []
   const p = 'recruit.institution'
+  const published = read(overlay, INSTITUTION_KEYS.announcementPublished)
   pushReason(
     reasons,
-    !isPublished(read(overlay, INSTITUTION_KEYS.announcementPublished)),
+    isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
-  pushReason(
-    reasons,
-    isRangeSealIncomplete(read(overlay, INSTITUTION_KEYS.programRange)),
-    `${p}.programRangeSeal`
-  )
+  const skipSchedule = isAnnouncementUnpublished(published)
+  if (!skipSchedule) {
+    pushReason(
+      reasons,
+      isRangeSealIncomplete(read(overlay, INSTITUTION_KEYS.programRange)),
+      `${p}.programRangeSeal`
+    )
+  }
   pushReason(
     reasons,
     isEmptyStringList(read(overlay, INSTITUTION_KEYS.targetLevels)),
@@ -381,22 +376,24 @@ function listIncompleteUjatInstitutionRecruit(overlay: Record<string, unknown>):
     isEmptyText(read(overlay, INSTITUTION_KEYS.district)),
     `${p}.targetLevelDetail`
   )
-  pushReason(
-    reasons,
-    isRangeSealIncomplete(read(overlay, INSTITUTION_KEYS.recruitRange)),
-    `${p}.recruitRangeSeal`
-  )
-  const result = read(overlay, INSTITUTION_KEYS.resultAnnounce)
-  const resultRow =
-    result != null && typeof result === 'object'
-      ? (result as { date?: unknown; method?: unknown })
-      : null
-  pushReason(reasons, resultRow == null || isEmptyText(resultRow.date), `${p}.finalAnnounceIso`)
-  pushReason(
-    reasons,
-    resultRow == null || isEmptyText(resultRow.method),
-    `${p}.finalAnnounceMethod`
-  )
+  if (!skipSchedule) {
+    pushReason(
+      reasons,
+      isRangeSealIncomplete(read(overlay, INSTITUTION_KEYS.recruitRange)),
+      `${p}.recruitRangeSeal`
+    )
+    const result = read(overlay, INSTITUTION_KEYS.resultAnnounce)
+    const resultRow =
+      result != null && typeof result === 'object'
+        ? (result as { date?: unknown; method?: unknown })
+        : null
+    pushReason(reasons, resultRow == null || isEmptyText(resultRow.date), `${p}.finalAnnounceIso`)
+    pushReason(
+      reasons,
+      resultRow == null || isEmptyText(resultRow.method),
+      `${p}.finalAnnounceMethod`
+    )
+  }
   const contact = read(overlay, INSTITUTION_KEYS.contact)
   const contactRow =
     contact != null && typeof contact === 'object'
@@ -416,23 +413,27 @@ function listIncompleteUjatVolunteerRecruitHalf(
   const reasons: string[] = []
   const p = `recruit.volunteer.${half}`
   const resolved = resolveVolunteerOverlayForHalf(overlay, half)
+  const published = read(resolved, VOLUNTEER_KEYS.announcementPublished)
   pushReason(
     reasons,
-    !isPublished(read(resolved, VOLUNTEER_KEYS.announcementPublished)),
+    isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
+  const skipSchedule = isAnnouncementUnpublished(published)
   if (half === 'h2') {
     pushReason(
       reasons,
-      isEmptyText(readText(resolved, VOLUNTEER_KEYS.noticeExposure, 'start-day')),
+      isEmptyText(readText(resolved, VOLUNTEER_KEYS.noticeExposure)),
       `${p}.noticeExposure`
     )
   }
-  pushReason(
-    reasons,
-    isRangeSealIncomplete(read(resolved, VOLUNTEER_KEYS.programRange)),
-    `${p}.programRangeSeal`
-  )
+  if (!skipSchedule) {
+    pushReason(
+      reasons,
+      isRangeSealIncomplete(read(resolved, VOLUNTEER_KEYS.programRange)),
+      `${p}.programRangeSeal`
+    )
+  }
   pushReason(
     reasons,
     isEmptyStringList(read(resolved, VOLUNTEER_KEYS.volunteerTargets)),
@@ -446,38 +447,42 @@ function listIncompleteUjatVolunteerRecruitHalf(
   const recruitRangeKey =
     half === 'h1' ? VOLUNTEER_KEYS.recruitRangeH1 : VOLUNTEER_KEYS.recruitRangeH2
   const activityKey = half === 'h1' ? VOLUNTEER_KEYS.activityTermH1 : VOLUNTEER_KEYS.activityTermH2
-  pushReason(
-    reasons,
-    isRangeSealIncomplete(read(resolved, recruitRangeKey)),
-    `${p}.recruitRangeSeal`
-  )
-  pushReason(reasons, isEmptyText(read(resolved, activityKey)), `${p}.activityTerm`)
-  const docAnnounce = read(resolved, VOLUNTEER_KEYS.docAnnounce)
-  const docRow =
-    docAnnounce != null && typeof docAnnounce === 'object'
-      ? (docAnnounce as { date?: unknown; method?: unknown })
-      : null
-  pushReason(
-    reasons,
-    docRow == null || isEmptyText(docRow.date) || isEmptyText(docRow.method),
-    `${p}.docAnnounce`
-  )
-  const interviewMethod = readText(resolved, VOLUNTEER_KEYS.interviewMethod, 'no')
-  pushReason(reasons, isEmptyText(interviewMethod), `${p}.interviewMethod`)
-  if (interviewMethod !== 'no') {
+  if (!skipSchedule) {
     pushReason(
       reasons,
-      isRangeSealIncomplete(read(resolved, VOLUNTEER_KEYS.interviewRange)),
-      `${p}.interviewRangeSeal`
+      isRangeSealIncomplete(read(resolved, recruitRangeKey)),
+      `${p}.recruitRangeSeal`
     )
   }
-  const finalAnnounce = read(resolved, VOLUNTEER_KEYS.finalAnnounce)
-  const finalRow =
-    finalAnnounce != null && typeof finalAnnounce === 'object'
-      ? (finalAnnounce as { date?: unknown; method?: unknown })
-      : null
-  pushReason(reasons, finalRow == null || isEmptyText(finalRow.date), `${p}.finalAnnounceIso`)
-  pushReason(reasons, finalRow == null || isEmptyText(finalRow.method), `${p}.finalAnnounceMethod`)
+  pushReason(reasons, isEmptyText(read(resolved, activityKey)), `${p}.activityTerm`)
+  const interviewMethod = readText(resolved, VOLUNTEER_KEYS.interviewMethod)
+  pushReason(reasons, isEmptyText(interviewMethod), `${p}.interviewMethod`)
+  if (!skipSchedule) {
+    const docAnnounce = read(resolved, VOLUNTEER_KEYS.docAnnounce)
+    const docRow =
+      docAnnounce != null && typeof docAnnounce === 'object'
+        ? (docAnnounce as { date?: unknown; method?: unknown })
+        : null
+    pushReason(
+      reasons,
+      docRow == null || isEmptyText(docRow.date) || isEmptyText(docRow.method),
+      `${p}.docAnnounce`
+    )
+    if (interviewMethod !== 'no') {
+      pushReason(
+        reasons,
+        isRangeSealIncomplete(read(resolved, VOLUNTEER_KEYS.interviewRange)),
+        `${p}.interviewRangeSeal`
+      )
+    }
+    const finalAnnounce = read(resolved, VOLUNTEER_KEYS.finalAnnounce)
+    const finalRow =
+      finalAnnounce != null && typeof finalAnnounce === 'object'
+        ? (finalAnnounce as { date?: unknown; method?: unknown })
+        : null
+    pushReason(reasons, finalRow == null || isEmptyText(finalRow.date), `${p}.finalAnnounceIso`)
+    pushReason(reasons, finalRow == null || isEmptyText(finalRow.method), `${p}.finalAnnounceMethod`)
+  }
   const contact = read(resolved, VOLUNTEER_KEYS.contact)
   const contactRow =
     contact != null && typeof contact === 'object'
@@ -523,7 +528,14 @@ function listIncompleteUjatVolunteerRecruit(overlay: Record<string, unknown>): s
   const reasons: string[] = []
   for (const half of ['h1', 'h2'] as const) {
     reasons.push(...listIncompleteUjatVolunteerRecruitHalf(overlay, half))
-    if (hasIncompleteUjatVolunteerInterviewSchedule(overlay, half)) {
+    const resolved = resolveVolunteerOverlayForHalf(overlay, half)
+    const published = read(resolved, VOLUNTEER_KEYS.announcementPublished)
+    const interviewMethod = readText(resolved, VOLUNTEER_KEYS.interviewMethod)
+    if (
+      !isAnnouncementUnpublished(published) &&
+      interviewMethod !== 'no' &&
+      hasIncompleteUjatVolunteerInterviewSchedule(overlay, half)
+    ) {
       reasons.push(`recruit.volunteer.${half}.interviewSchedule`)
     }
   }
@@ -580,25 +592,31 @@ function listIncompleteTypedInstitutionRecruitment(
 ): string[] {
   const reasons: string[] = []
   const p = 'recruit.institution'
+  const published = values.participantRecruitmentAnnouncementPublished
   pushReason(
     reasons,
-    values.participantRecruitmentAnnouncementPublished !== 'published',
+    isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
-  pushReason(
-    reasons,
-    isEmptyFormText(values.startDate) || isEmptyFormText(values.endDate),
-    `${p}.programRangeSeal`
-  )
+  const skipSchedule = isAnnouncementUnpublished(published)
+  if (!skipSchedule) {
+    pushReason(
+      reasons,
+      isEmptyFormText(values.startDate) || isEmptyFormText(values.endDate),
+      `${p}.programRangeSeal`
+    )
+  }
   pushReason(reasons, isEmptyFormStringList(values.targetLevels), `${p}.targetLevels`)
   pushReason(reasons, isEmptyFormText(values.district), `${p}.targetLevelDetail`)
-  pushReason(
-    reasons,
-    isEmptyFormText(values.applicationStartDate) || isEmptyFormText(values.applicationEndDate),
-    `${p}.recruitRangeSeal`
-  )
-  pushReason(reasons, isEmptyFormText(values.resultAnnouncementDate), `${p}.finalAnnounceIso`)
-  pushReason(reasons, isEmptyFormText(values.resultAnnouncementMethod), `${p}.finalAnnounceMethod`)
+  if (!skipSchedule) {
+    pushReason(
+      reasons,
+      isEmptyFormText(values.applicationStartDate) || isEmptyFormText(values.applicationEndDate),
+      `${p}.recruitRangeSeal`
+    )
+    pushReason(reasons, isEmptyFormText(values.resultAnnouncementDate), `${p}.finalAnnounceIso`)
+    pushReason(reasons, isEmptyFormText(values.resultAnnouncementMethod), `${p}.finalAnnounceMethod`)
+  }
   pushReason(
     reasons,
     isEmptyFormText(values.recruitmentContactOrganizationName),
@@ -622,11 +640,13 @@ function listIncompleteTypedVolunteerRecruitment(
   const reasons: string[] = []
   const p = `recruit.volunteer.${half}`
   const range = formVolunteerRecruitmentRange(values, half)
+  const published = values.volunteerRecruitmentAnnouncementPublished
   pushReason(
     reasons,
-    values.volunteerRecruitmentAnnouncementPublished !== 'published',
+    isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
+  const skipSchedule = isAnnouncementUnpublished(published)
   if (half === 'h2') {
     pushReason(
       reasons,
@@ -634,43 +654,49 @@ function listIncompleteTypedVolunteerRecruitment(
       `${p}.noticeExposure`
     )
   }
-  pushReason(
-    reasons,
-    isEmptyFormText(values.startDate) || isEmptyFormText(values.endDate),
-    `${p}.programRangeSeal`
-  )
+  if (!skipSchedule) {
+    pushReason(
+      reasons,
+      isEmptyFormText(values.startDate) || isEmptyFormText(values.endDate),
+      `${p}.programRangeSeal`
+    )
+  }
   pushReason(reasons, isEmptyFormStringList(values.volunteerTargets), `${p}.volunteerTargets`)
   pushReason(reasons, isEmptyFormText(values.volunteerTargetDetail), `${p}.volunteerTargetDetail`)
-  pushReason(
-    reasons,
-    isEmptyFormText(range.start) || isEmptyFormText(range.end),
-    `${p}.recruitRangeSeal`
-  )
+  if (!skipSchedule) {
+    pushReason(
+      reasons,
+      isEmptyFormText(range.start) || isEmptyFormText(range.end),
+      `${p}.recruitRangeSeal`
+    )
+  }
   pushReason(
     reasons,
     isEmptyFormText(values.rounds?.[half === 'h1' ? 0 : 1]?.curriculum),
     `${p}.activityTerm`
   )
-  pushReason(
-    reasons,
-    isEmptyFormText(values.documentPassAnnouncementDate) ||
-      isEmptyFormText(values.documentPassAnnouncementMethod),
-    `${p}.docAnnounce`
-  )
   pushReason(reasons, isEmptyFormText(values.interviewMethod), `${p}.interviewMethod`)
-  if (!isEmptyFormText(values.interviewMethod)) {
+  if (!skipSchedule) {
     pushReason(
       reasons,
-      isEmptyFormText(values.interviewStartDate) || isEmptyFormText(values.interviewEndDate),
-      `${p}.interviewRangeSeal`
+      isEmptyFormText(values.documentPassAnnouncementDate) ||
+        isEmptyFormText(values.documentPassAnnouncementMethod),
+      `${p}.docAnnounce`
+    )
+    if (!isEmptyFormText(values.interviewMethod) && values.interviewMethod !== 'no') {
+      pushReason(
+        reasons,
+        isEmptyFormText(values.interviewStartDate) || isEmptyFormText(values.interviewEndDate),
+        `${p}.interviewRangeSeal`
+      )
+    }
+    pushReason(reasons, isEmptyFormText(values.finalPassAnnouncementDate), `${p}.finalAnnounceIso`)
+    pushReason(
+      reasons,
+      isEmptyFormText(values.finalPassAnnouncementMethod),
+      `${p}.finalAnnounceMethod`
     )
   }
-  pushReason(reasons, isEmptyFormText(values.finalPassAnnouncementDate), `${p}.finalAnnounceIso`)
-  pushReason(
-    reasons,
-    isEmptyFormText(values.finalPassAnnouncementMethod),
-    `${p}.finalAnnounceMethod`
-  )
   pushReason(
     reasons,
     isEmptyFormText(values.volunteerRecruitmentContactOrganizationName),
@@ -684,7 +710,11 @@ function listIncompleteTypedVolunteerRecruitment(
       isEmptyFormText(values.otherNotes),
     `${p}.otherNotes`
   )
-  if (hasIncompleteTypedVolunteerInterviewSchedule(values)) {
+  if (
+    !skipSchedule &&
+    values.interviewMethod !== 'no' &&
+    hasIncompleteTypedVolunteerInterviewSchedule(values)
+  ) {
     reasons.push(`${p}.interviewSchedule`)
   }
   return reasons
@@ -784,4 +814,73 @@ export function describeIncompleteUjatProgramRegistrationWizardRequiredFields(
       typedRecruitment
     )[0] ?? null
   )
+}
+
+const UJAT_REQUIRED_FIELD_LABELS: Record<string, string> = {
+  'basicInfo.repKo': '대표 프로그램명 (국문)',
+  'basicInfo.repEn': '대표 프로그램명 (영문)',
+  'basicInfo.programManagementName': '프로그램 관리명',
+  'basicInfo.detailedProgramId': '세부 프로그램명',
+  'basicInfo.operationRangeSeal': '사업 운영 기간',
+  'basicInfo.audience': '참여자 유형',
+  'basicInfo.businessField': '사업 분야',
+  'basicInfo.sponsorId': '후원사',
+  'basicInfo.sponsorContact': '후원사 담당자',
+  'basicInfo.educationCourse': '교육 과정',
+  'basicInfo.ipOwned': 'IP Owned',
+  'basicInfo.courseDeliveredBy': 'Course Delivered By',
+  'basicInfo.partnerInvolvement': '파트너 참여',
+  'basicInfo.ipsCategory': 'IPS 유형',
+  'kpi.participantCount': '참여 인원',
+  'kpi.volunteer': '봉사자 수',
+  'kpi.dispatchedSchool': '파견 학교 수',
+  'kpi.dispatchedClass': '파견 학급 수',
+  'wage.paymentItemValues': '지급 항목',
+  announcementPublished: '공고 게시 여부',
+  programRangeSeal: '프로그램 운영 기간',
+  targetLevels: '교육 대상',
+  targetLevelDetail: '교육 대상 상세',
+  recruitRangeSeal: '모집 기간',
+  finalAnnounceIso: '최종 합격자 발표일',
+  finalAnnounceMethod: '최종 합격자 발표 방법',
+  inquiryContact: '문의처',
+  inquiryTel: '문의처 전화번호',
+  inquiryEmail: '문의처 이메일',
+  notes: '비고',
+  noticeExposure: '모집 공고 노출 시점',
+  volunteerTargets: '모집 대상',
+  volunteerTargetDetail: '모집 대상 상세',
+  activityTerm: '활동 기수',
+  docAnnounce: '1차 서류 합격자 발표',
+  interviewMethod: '면접 방법',
+  interviewRangeSeal: '2차 면접 기간',
+  otherNotes: '기타 안내',
+  interviewSchedule: '면접 진행 가능 일정',
+}
+
+function volunteerHalfPrefix(key: string): string | null {
+  if (key.startsWith('recruit.volunteer.h1.')) return '상반기 봉사자 모집'
+  if (key.startsWith('recruit.volunteer.h2.')) return '하반기 봉사자 모집'
+  if (key.startsWith('recruit.institution.')) return '참여 기관 모집'
+  return null
+}
+
+/** 진단 키를 화면 라벨로 바꾼다. */
+export function formatUjatRegistrationRequiredFieldReason(reason: string): string {
+  const prefix = volunteerHalfPrefix(reason)
+  const leaf = reason.includes('.') ? reason.slice(reason.lastIndexOf('.') + 1) : reason
+  const label = UJAT_REQUIRED_FIELD_LABELS[reason] ?? UJAT_REQUIRED_FIELD_LABELS[leaf] ?? reason
+  return prefix == null ? label : `${prefix} · ${label}`
+}
+
+export function formatUjatRegistrationRequiredFieldReasons(keys: readonly string[]): string[] {
+  const seen = new Set<string>()
+  const labels: string[] = []
+  for (const key of keys) {
+    const label = formatUjatRegistrationRequiredFieldReason(key)
+    if (seen.has(label)) continue
+    seen.add(label)
+    labels.push(label)
+  }
+  return labels
 }

@@ -78,17 +78,43 @@ export function isPersistedCategoryId(id: string): boolean {
   return Number.isFinite(n) && n > 0 && String(n) === id.trim()
 }
 
+export function requireThumbnailAssetId(id?: number): number {
+  if (id == null || id <= 0) {
+    throw new Error('섬네일 이미지를 등록해 주세요.')
+  }
+  return id
+}
+
+export function assertDistinctStoryAssetIds(
+  thumbnailAssetId: number,
+  attachmentAssetId?: number,
+): void {
+  if (attachmentAssetId != null && attachmentAssetId === thumbnailAssetId) {
+    throw new Error('섬네일과 첨부 파일은 서로 다른 파일이어야 합니다.')
+  }
+}
+
+function mapAssetAttachment(
+  asset: StoryResponse['thumbnail'] | StoryResponse['attachment'],
+  originalName?: string | null,
+): ImpactStoryAttachment | null {
+  if (asset?.assetId == null) return null
+  return {
+    id: String(asset.assetId),
+    name: originalName ?? asset.originalName ?? 'file',
+    mime: mimeFromContentType(asset.contentType),
+    dataUrl: asset.publicUrl,
+    assetId: asset.assetId,
+  }
+}
+
 function mapAttachmentFromResponse(row: StoryResponse): ImpactStoryAttachment[] {
-  if (row.attachment?.assetId == null) return []
-  return [
-    {
-      id: String(row.attachment.assetId),
-      name: row.attachmentOriginalName ?? row.attachment.originalName ?? 'attachment',
-      mime: mimeFromContentType(row.attachment.contentType),
-      dataUrl: row.attachment.publicUrl,
-      assetId: row.attachment.assetId,
-    },
-  ]
+  const attachment = mapAssetAttachment(row.attachment, row.attachmentOriginalName)
+  return attachment ? [attachment] : []
+}
+
+function mapThumbnailFromResponse(row: StoryResponse): ImpactStoryAttachment | null {
+  return mapAssetAttachment(row.thumbnail, row.thumbnailOriginalName)
 }
 
 export function mapStoryListItemToDomain(row: StoryListItem): ImpactStory {
@@ -105,6 +131,7 @@ export function mapStoryListItemToDomain(row: StoryListItem): ImpactStory {
     createdAt: row.createdAt ?? '',
     updatedAt: row.updatedAt ?? '',
     viewCount: row.viewCount ?? 0,
+    thumbnail: null,
     attachments: [],
     version: row.version ?? 0,
   }
@@ -124,6 +151,7 @@ export function mapStoryResponseToDomain(row: StoryResponse): ImpactStory {
     createdAt: row.createdAt ?? '',
     updatedAt: row.updatedAt ?? '',
     viewCount: row.viewCount ?? 0,
+    thumbnail: mapThumbnailFromResponse(row),
     attachments: mapAttachmentFromResponse(row),
     version: row.version ?? 0,
   }
@@ -173,8 +201,11 @@ export function resolvePrimaryAttachmentAssetId(
 
 export function toStoryCreateRequest(
   input: ImpactStoryCreateInput,
-  attachmentAssetId?: number,
+  attachmentAssetId: number | undefined,
+  thumbnailAssetId: number,
 ): StoryCreateRequest {
+  const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
+  assertDistinctStoryAssetIds(requiredThumbnailAssetId, attachmentAssetId)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
@@ -182,15 +213,21 @@ export function toStoryCreateRequest(
     categoryId: Number(input.categoryId),
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
+    thumbnailAssetId: requiredThumbnailAssetId,
     attachmentAssetId,
+    thumbnailDistinctFromAttachment:
+      attachmentAssetId != null && attachmentAssetId !== requiredThumbnailAssetId,
   }
 }
 
 export function toStoryUpdateRequest(
   input: ImpactStoryUpdateInput,
   version: number,
-  attachmentAssetId?: number,
+  attachmentAssetId: number | undefined,
+  thumbnailAssetId: number,
 ): StoryUpdateRequest {
+  const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
+  assertDistinctStoryAssetIds(requiredThumbnailAssetId, attachmentAssetId)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
@@ -198,7 +235,10 @@ export function toStoryUpdateRequest(
     categoryId: Number(input.categoryId),
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
+    thumbnailAssetId: requiredThumbnailAssetId,
     attachmentAssetId,
+    thumbnailDistinctFromAttachment:
+      attachmentAssetId != null && attachmentAssetId !== requiredThumbnailAssetId,
     version,
   }
 }

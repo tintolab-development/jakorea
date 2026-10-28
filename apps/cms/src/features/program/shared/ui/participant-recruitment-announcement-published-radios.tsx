@@ -11,7 +11,7 @@ export function ParticipantRecruitmentAnnouncementPublishedRadios({
   onChange,
   size = 'medium',
 }: {
-  value: ParticipantRecruitmentAnnouncementPublishedValue | undefined
+  value: ParticipantRecruitmentAnnouncementPublishedValue | '' | undefined
   onChange: (next: ParticipantRecruitmentAnnouncementPublishedValue) => void
   /** 프로그램 상세·모집 양식 수정은 14px(medium). */
   size?: CmsRadioSize

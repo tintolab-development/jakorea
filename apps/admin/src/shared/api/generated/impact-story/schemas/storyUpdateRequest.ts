@@ -21,6 +21,8 @@ export interface StoryUpdateRequest {
      * @maxLength 100000
      */
   body: string;
+  thumbnailAssetId: number;
   attachmentAssetId?: number;
   version: number;
+  thumbnailDistinctFromAttachment?: boolean;
 }

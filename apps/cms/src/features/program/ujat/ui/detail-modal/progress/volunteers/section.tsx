@@ -24,6 +24,7 @@ import type { EducationProgressHalfKey } from '../tabs'
 import { UjatAddVolunteerModal } from './add-volunteer-modal'
 import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
@@ -80,6 +81,7 @@ export function UjatEducationProgressVolunteersSection({
     setSelectedRowKeys,
     resetHalfState,
     memberOptions,
+    loadMemberOptions,
     addVolunteerFromMember,
     syncRowsFromMock,
   } = useUjatEducationProgressVolunteers(program.id, half)
@@ -128,6 +130,22 @@ export function UjatEducationProgressVolunteersSection({
       content: '추가 등록할 회원을 선택해 주세요.',
     })
   }, [showAlert])
+
+  const handleRegisterVolunteerClick = useCallback(() => {
+    void loadMemberOptions()
+      .then(() => {
+        setAddVolunteerModalOpen(true)
+      })
+      .catch(error => {
+        showAlert({
+          title: '봉사자 등록 실패',
+          content: getMemberApiErrorMessage(
+            error,
+            '등록 가능한 회원 목록을 불러오지 못했습니다. 다시 시도해 주세요.'
+          ),
+        })
+      })
+  }, [loadMemberOptions, showAlert])
 
   const handleActivityCertificateIssueClick = useCallback(() => {
     if (selectedRowKeys.length !== 1) {
@@ -274,7 +292,7 @@ export function UjatEducationProgressVolunteersSection({
               type="button"
               variant="primary"
               width={140}
-              onClick={() => setAddVolunteerModalOpen(true)}
+              onClick={handleRegisterVolunteerClick}
             >
               봉사자 등록
             </FilterTableToolbarButton>

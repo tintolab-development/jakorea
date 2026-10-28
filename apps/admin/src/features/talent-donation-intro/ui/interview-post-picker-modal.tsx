@@ -23,7 +23,7 @@ type Props = {
 }
 
 function storyThumbnailUrl(story: ImpactStory): string {
-  return story.attachments[0]?.dataUrl ?? ''
+  return story.thumbnail?.dataUrl ?? ''
 }
 
 function publishedYear(iso: string): string {

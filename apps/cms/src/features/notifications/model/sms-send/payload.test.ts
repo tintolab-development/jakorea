@@ -331,8 +331,13 @@ describe('buildSmsSendCreateRequest', () => {
       templateId: 101,
       placeholderKeys: ['방문 안내', '프로그램명'],
       variableCatalog: [
-        { key: '방문 안내', sourceMode: 'MANUAL_ALLOWED' as const, enabled: true },
-        { key: '프로그램명', sourceMode: 'SERVER_RESOLVED' as const, enabled: true, requiresProgram: true },
+        { key: '방문 안내', enabled: true, sourceMode: 'MANUAL_ALLOWED' },
+        {
+          key: '프로그램명',
+          enabled: true,
+          requiresProgram: true,
+          sourceMode: 'SERVER_RESOLVED',
+        },
       ],
     })
     expect(request.recipients[0]).toEqual({
@@ -368,7 +373,7 @@ describe('buildSmsSendCreateRequest', () => {
       }),
       templateId: 101,
       placeholderKeys: ['방문 안내'],
-      variableCatalog: [{ key: '방문 안내', sourceMode: 'SERVER_RESOLVED' as const, enabled: true }],
+      variableCatalog: [{ key: '방문 안내', enabled: true }],
     })
     expect(request.recipients[0]).toEqual({ actorType: 'MEMBER', actorId: 1 })
     expect(request.recipients[0]).not.toHaveProperty('variables')
@@ -583,4 +588,3 @@ describe('validateSmsSendDraft MMS 첨부', () => {
     ).toBe(SMS_SEND_ATTACHMENT_PENDING_MESSAGE)
   })
 })
-

@@ -13,7 +13,7 @@ export interface PublicStoryListItem {
   categoryId?: number;
   categoryName?: string;
   title?: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   authorName?: string;
   viewCount?: number;
 }

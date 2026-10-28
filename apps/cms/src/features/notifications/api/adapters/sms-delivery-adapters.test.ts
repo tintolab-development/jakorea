@@ -44,7 +44,6 @@ describe('mapSmsDeliveryToSendHistoryRow', () => {
     expect(row?.bodyText).toBe('상세 본문 전체입니다.')
   })
 })
-
 describe('mapBatchBodySnapshotAttachments', () => {
   it('예약 발송 배치 상세의 첨부 스냅샷(fileObjectId·fileName)을 그대로 보여 준다', () => {
     expect(
@@ -70,4 +69,3 @@ describe('mapBatchBodySnapshotAttachments', () => {
     expect(mapBatchBodySnapshotAttachments(null)).toEqual([])
   })
 })
-

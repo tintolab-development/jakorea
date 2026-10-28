@@ -11,5 +11,5 @@ export interface PublicFeaturedStory {
   title?: string;
   categoryName?: string;
   publishAt?: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
 }

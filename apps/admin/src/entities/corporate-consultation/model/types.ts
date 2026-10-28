@@ -20,6 +20,7 @@ export type CorporateConsultation = {
   content: string
   linkUrl: string | null
   attachmentFileName: string | null
+  attachmentAssetId?: number | null
   attachmentUrl: string | null
   /** 신청 접수 ISO */
   appliedAt: string

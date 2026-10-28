@@ -21,6 +21,7 @@ import {
   mapCategoryResponseToDomain,
   mapStoryListItemToDomain,
   mapStoryResponseToDomain,
+  requireThumbnailAssetId,
   resolvePrimaryAttachmentAssetId,
   toBulkDeleteRequest,
   toCategoryCreateRequest,
@@ -42,7 +43,10 @@ import {
   setStoryPublic as setPublicLocal,
   updateStory as updateLocal,
 } from './store'
-import { uploadImpactStoryAttachmentAsset } from './upload-story-attachment'
+import {
+  uploadImpactStoryAttachmentAsset,
+  uploadImpactStoryThumbnailAsset,
+} from './upload-story-attachment'
 
 function impactStoryApi() {
   return getJAKoreaHomepageAdminAPIImpactStorySubset()
@@ -108,6 +112,19 @@ async function resolveAttachmentAssetId(
   }
   const fromExisting = resolvePrimaryAttachmentAssetId(attachments)
   if (fromExisting != null) return fromExisting
+  return fallbackAssetId
+}
+
+async function resolveThumbnailAssetId(
+  thumbnail: ImpactStoryAttachment | null | undefined,
+  fallbackAssetId?: number,
+): Promise<number | undefined> {
+  if (thumbnail?.file instanceof File) {
+    return uploadImpactStoryThumbnailAsset(thumbnail.file)
+  }
+  if (thumbnail?.assetId != null && thumbnail.assetId > 0) {
+    return thumbnail.assetId
+  }
   return fallbackAssetId
 }
 
@@ -205,9 +222,16 @@ export async function createStoryService(
 ): Promise<ImpactStory> {
   if (shouldUseImpactStoriesRemoteApi()) {
     try {
-      const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
+      const [attachmentAssetId, thumbnailAssetId] = await Promise.all([
+        resolveAttachmentAssetId(input.attachments),
+        resolveThumbnailAssetId(input.thumbnail),
+      ])
       const created = await impactStoryApi().create8(
-        toStoryCreateRequest(input, attachmentAssetId),
+        toStoryCreateRequest(
+          input,
+          attachmentAssetId,
+          requireThumbnailAssetId(thumbnailAssetId),
+        ),
       )
       return mapStoryResponseToDomain(created)
     } catch (error) {
@@ -229,13 +253,21 @@ export async function updateStoryService(
       throw new Error(`Impact story not found: ${input.id}`)
     }
     try {
-      const attachmentAssetId = await resolveAttachmentAssetId(
-        input.attachments,
-        current.attachments[0]?.assetId,
-      )
+      const [attachmentAssetId, thumbnailAssetId] = await Promise.all([
+        resolveAttachmentAssetId(
+          input.attachments,
+          current.attachments[0]?.assetId,
+        ),
+        resolveThumbnailAssetId(input.thumbnail, current.thumbnail?.assetId),
+      ])
       const updated = await impactStoryApi().update10(
         Number(input.id),
-        toStoryUpdateRequest(input, current.version ?? 0, attachmentAssetId),
+        toStoryUpdateRequest(
+          input,
+          current.version ?? 0,
+          attachmentAssetId,
+          requireThumbnailAssetId(thumbnailAssetId),
+        ),
       )
       return mapStoryResponseToDomain(updated)
     } catch (error) {

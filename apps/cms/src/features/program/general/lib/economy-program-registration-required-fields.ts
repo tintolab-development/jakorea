@@ -18,6 +18,10 @@ import {
 } from '@/features/program/general/lib/registration-recruitment-required-fields'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
+import {
+  isAnnouncementPublishedChoiceMissing,
+  isAnnouncementUnpublished,
+} from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { serializeCompanySchoolRecruitmentForFormVersion } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 import { serializeCompanySchoolApplicationForFormVersion } from '@/features/program/1c-1s/lib/registration-rhf-application'
 
@@ -252,9 +256,11 @@ export function hasIncompleteEconomyProgramRegistrationRequiredFields(
 function listIncompleteEconomyInstitutionRecruit(overlay: Record<string, unknown>): string[] {
   const reasons: string[] = []
   const p = 'recruit.institution'
+  const published = read(overlay, RK.announcementPublished)
+  const skipSchedule = isAnnouncementUnpublished(published)
   pushReason(
     reasons,
-    isEmptyText(readText(overlay, RK.announcementPublished, 'published')),
+    isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
   const maxI = read(overlay, RK.maxAssignableInstructors)
@@ -269,12 +275,16 @@ function listIncompleteEconomyInstitutionRecruit(overlay: Record<string, unknown
     maxC !== undefined && maxC !== null && isEmptyNumber(maxC),
     `${p}.maxClassCount`
   )
-  pushReason(reasons, isRangeSealIncomplete(read(overlay, RK.programRangeSeal)), `${p}.programRangeSeal`)
+  if (!skipSchedule) {
+    pushReason(reasons, isRangeSealIncomplete(read(overlay, RK.programRangeSeal)), `${p}.programRangeSeal`)
+  }
   pushReason(reasons, isEmptyStringList(read(overlay, RK.targetLevels)), `${p}.targetLevels`)
   pushReason(reasons, isEmptyText(read(overlay, RK.targetLevelDetail)), `${p}.targetLevelDetail`)
-  pushReason(reasons, isRangeSealIncomplete(read(overlay, RK.recruitRangeSeal)), `${p}.recruitRangeSeal`)
-  pushReason(reasons, isEmptyText(read(overlay, RK.finalAnnounceIso)), `${p}.finalAnnounceIso`)
-  pushReason(reasons, isEmptyText(read(overlay, RK.finalAnnounceMethod)), `${p}.finalAnnounceMethod`)
+  if (!skipSchedule) {
+    pushReason(reasons, isRangeSealIncomplete(read(overlay, RK.recruitRangeSeal)), `${p}.recruitRangeSeal`)
+    pushReason(reasons, isEmptyText(read(overlay, RK.finalAnnounceIso)), `${p}.finalAnnounceIso`)
+    pushReason(reasons, isEmptyText(read(overlay, RK.finalAnnounceMethod)), `${p}.finalAnnounceMethod`)
+  }
   pushReason(reasons, isEmptyText(read(overlay, RK.inquiryContact)), `${p}.inquiryContact`)
   pushReason(reasons, isEmptyText(read(overlay, RK.inquiryTel)), `${p}.inquiryTel`)
   pushReason(reasons, isEmptyText(read(overlay, RK.inquiryEmail)), `${p}.inquiryEmail`)

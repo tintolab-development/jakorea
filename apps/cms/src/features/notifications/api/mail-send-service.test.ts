@@ -116,6 +116,31 @@ describe('submitMailSend', () => {
     )
   })
 
+  it('sends trimmed senderProfileDisplayName for this send only', async () => {
+    await submitMailSend({
+      draft: draft({ senderName: '  JA Korea 운영팀  ' }),
+      templateBaseline: { subject: '테스트 메일', bodyHtml: '<p>본문</p>' },
+      idempotencyKey: 'idem-sender-name',
+      senderProfileId: 7,
+    })
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).toMatchObject({
+      templateId: 33,
+      senderProfileDisplayName: 'JA Korea 운영팀',
+    })
+  })
+
+  it('omits senderProfileDisplayName when sender name is empty', async () => {
+    await submitMailSend({
+      draft: draft({ senderName: '  ' }),
+      templateBaseline: { subject: '테스트 메일', bodyHtml: '<p>본문</p>' },
+      idempotencyKey: 'idem-sender-name-empty',
+      senderProfileId: 7,
+    })
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).not.toHaveProperty(
+      'senderProfileDisplayName'
+    )
+  })
+
   it('sends compose snapshot as contentTemplate when body is edited on send screen', async () => {
     await submitMailSend({
       draft: draft({
@@ -321,8 +346,13 @@ describe('buildMailSendRecipients', () => {
         {
           keys: ['방문 안내', '프로그램명'],
           catalog: [
-            { key: '방문 안내', sourceMode: 'MANUAL_ALLOWED' as const, enabled: true },
-            { key: '프로그램명', sourceMode: 'SERVER_RESOLVED' as const, enabled: true, requiresProgram: true },
+            { key: '방문 안내', enabled: true, sourceMode: 'MANUAL_ALLOWED' },
+            {
+              key: '프로그램명',
+              enabled: true,
+              requiresProgram: true,
+              sourceMode: 'SERVER_RESOLVED',
+            },
           ],
           programSelected: false,
         }
@@ -358,7 +388,7 @@ describe('buildMailSendRecipients', () => {
         ],
         {
           keys: ['방문 안내'],
-          catalog: [{ key: '방문 안내', sourceMode: 'SERVER_RESOLVED' as const, enabled: true }],
+          catalog: [{ key: '방문 안내', enabled: true }],
           programSelected: true,
         }
       )

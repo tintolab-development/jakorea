@@ -399,11 +399,11 @@ function recruitmentRow(input: {
  * BE `STRUCTURED_RECRUITMENTS_GENERAL_ONLY` 가 UJAT를 거절하면 서버에서 허용해야 한다.
  */
 export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRecruitmentRequest[] {
-  const institutionStart = dateValue(program.applicationStartDate)
-  const institutionEnd = dateValue(program.applicationEndDate)
   const institution = (program.programRecruitments ?? []).find(
     row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
   )
+  const institutionStart = dateValue(institution?.startAt ?? program.applicationStartDate)
+  const institutionEnd = dateValue(institution?.endAt ?? program.applicationEndDate)
   const volunteers = (program.programRecruitments ?? [])
     .filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
     .slice()

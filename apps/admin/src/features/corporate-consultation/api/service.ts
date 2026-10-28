@@ -71,13 +71,17 @@ export async function getCorporateConsultationService(
 
 export async function downloadCorporateConsultationAttachmentService(
   id: string,
+  assetId?: number | null,
 ): Promise<{ downloadUrl: string; originalName?: string } | null> {
   if (!shouldUseCorporateConsultationRemoteApi()) {
     return null
   }
   const numericId = Number(id)
   if (!Number.isFinite(numericId) || numericId <= 0) return null
-  const response = await sponsorshipApi().attachmentDownload1(numericId)
+  const response =
+    assetId != null && assetId > 0
+      ? await sponsorshipApi().attachmentDownloadByAsset1(numericId, assetId)
+      : await sponsorshipApi().attachmentDownload1(numericId)
   if (!response.downloadUrl) return null
   return {
     downloadUrl: response.downloadUrl,

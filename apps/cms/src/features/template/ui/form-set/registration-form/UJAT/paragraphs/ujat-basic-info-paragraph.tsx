@@ -46,9 +46,6 @@ import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 import {
-  UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
-  UJAT_BASIC_INFO_REP_EN_DEFAULT,
-  UJAT_BASIC_INFO_REP_KO_DEFAULT,
   UJAT_DEFAULT_SPONSOR_ID,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
@@ -215,14 +212,14 @@ function UjatBasicInfoLegacyParagraph({
     formValues,
     'detailedProgramId',
     'ujat.basicInfo.detailedProgramId',
-    UJAT_DETAILED_PROGRAM_UJAT_VALUE
+    ''
   )
   const [, setDetailedProgramName] = useUjatBasicInfoValue<string>(
     infoForm,
     formValues,
     'detailedProgramName',
     'ujat.basicInfo.detailedProgramName',
-    UJAT_DETAILED_PROGRAM_UJAT_LABEL
+    ''
   )
 
   const [overlayOperationAnchorIso, setOverlayOperationAnchorIso] =
@@ -319,7 +316,7 @@ function UjatBasicInfoLegacyParagraph({
     formValues,
     'businessArea',
     'ujat.basicInfo.businessField',
-    'economy_finance'
+    ''
   )
   const [educationVenueKind, setEducationVenueKind] = useUjatProgramRegistrationOverlayKv<
     'inside' | 'outside' | 'other'
@@ -341,7 +338,7 @@ function UjatBasicInfoLegacyParagraph({
     formValues,
     'sponsorManagerContactId',
     'ujat.basicInfo.sponsorContactId',
-    UJAT_SPONSOR_ALL_VALUE
+    ''
   )
   const [sponsorContactIds, setSponsorContactIds] = useUjatBasicInfoValue<string[]>(
     infoForm,
@@ -363,21 +360,21 @@ function UjatBasicInfoLegacyParagraph({
     formValues,
     'ipOwned',
     'ujat.basicInfo.ipOwned',
-    'ja'
+    ''
   )
   const [courseDeliveredBy, setCourseDeliveredBy] = useUjatBasicInfoValue(
     infoForm,
     formValues,
     'courseDeliveredBy',
     'ujat.basicInfo.courseDeliveredBy',
-    'ja'
+    ''
   )
   const [ipsCategory, setIpsCategory] = useUjatBasicInfoValue(
     infoForm,
     formValues,
     'ipsCategory',
     'ujat.basicInfo.ipsCategory',
-    'prepare'
+    ''
   )
 
   const [surveyItemsRaw] = useUjatBasicInfoValue<Record<string, boolean>>(
@@ -440,19 +437,16 @@ function UjatBasicInfoLegacyParagraph({
   const sponsorOptionsLoading =
     catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
   const contactsQuery = useSponsorContactsQuery(
-    sponsorId === UJAT_SPONSOR_ALL_VALUE ? null : sponsorId,
-    sponsorId !== UJAT_SPONSOR_ALL_VALUE && Boolean(sponsorId)
+    sponsorId,
+    Boolean(sponsorId)
   )
 
   const sponsorOptions = useMemo(
-    () => [{ value: UJAT_SPONSOR_ALL_VALUE, label: '전체' }, ...sponsorApiOptions],
+    () => [...sponsorApiOptions],
     [sponsorApiOptions]
   )
 
   const managerOptions = useMemo(() => {
-    if (sponsorId === UJAT_SPONSOR_ALL_VALUE) {
-      return withSponsorContactUnselectedOption([{ value: UJAT_SPONSOR_ALL_VALUE, label: '전체' }])
-    }
     if (!sponsorId) return []
     const contacts = (contactsQuery.data ?? []).map(c => ({
       value: c.id,
@@ -638,7 +632,7 @@ function UjatBasicInfoLegacyParagraph({
             validationKey="basicInfo.repKo"
             overlayKey="ujat.basicInfo.repKo"
             placeholder="대표 프로그램명을 입력하세요"
-            defaultValue={UJAT_BASIC_INFO_REP_KO_DEFAULT}
+            defaultValue=""
             infoForm={infoForm}
             formValues={formValues}
             formKey="mainTitle"
@@ -648,7 +642,7 @@ function UjatBasicInfoLegacyParagraph({
             validationKey="basicInfo.repEn"
             overlayKey="ujat.basicInfo.repEn"
             placeholder="대표 프로그램명을 입력하세요"
-            defaultValue={UJAT_BASIC_INFO_REP_EN_DEFAULT}
+            defaultValue=""
             infoForm={infoForm}
             formValues={formValues}
             formKey="titleEn"
@@ -660,7 +654,7 @@ function UjatBasicInfoLegacyParagraph({
             validationKey="basicInfo.programManagementName"
             overlayKey="ujat.basicInfo.programManagementName"
             placeholder="프로그램 관리명을 입력하세요"
-            defaultValue={UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT}
+            defaultValue=""
             infoForm={infoForm}
             formValues={formValues}
             formKey="title"
@@ -770,9 +764,9 @@ function UjatBasicInfoLegacyParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption
+                  withAllOption={false}
                   inputSize="small"
-                  placeholder="후원사를 선택하세요"
+                  placeholder="선택하세요"
                   width="100%"
                   options={sponsorOptions}
                   value={sponsorId}
@@ -787,9 +781,7 @@ function UjatBasicInfoLegacyParagraph({
                         shouldTouch: true,
                       })
                     }
-                    applySponsorContactIds(
-                      next === UJAT_SPONSOR_ALL_VALUE ? [UJAT_SPONSOR_ALL_VALUE] : []
-                    )
+                    applySponsorContactIds([])
                   }}
                 />
               </div>

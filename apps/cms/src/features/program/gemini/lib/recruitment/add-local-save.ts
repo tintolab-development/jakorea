@@ -28,7 +28,7 @@ type LegacyGeminiRecruitmentAddFormSnapshot = {
 
 export type GeminiRecruitmentAddFormSnapshot = {
   title: string
-  announcementPublished: ParticipantRecruitmentAnnouncementPublishedValue
+  announcementPublished: ParticipantRecruitmentAnnouncementPublishedValue | ''
   educationTargetLevels: string[]
   educationTargetDetail: string
   applicationPeriodStart: string | null
@@ -86,7 +86,7 @@ type LocalSaveFile = {
 export function createDefaultGeminiRecruitmentAddFormSnapshot(): GeminiRecruitmentAddFormSnapshot {
   return {
     title: '',
-    announcementPublished: 'published',
+    announcementPublished: '',
     educationTargetLevels: [],
     educationTargetDetail: '',
     applicationPeriodStart: null,

@@ -34,6 +34,11 @@ import './story-form-modal.css'
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const MAX_BYTES = FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
 
+const THUMB_GUIDE = [
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
+  '- 권장 배너 사이즈는 630 × 355px입니다.',
+] as const
+
 const ATTACH_GUIDE = [
   '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
@@ -109,6 +114,7 @@ export function StoryFormModal({
   const [isPublic, setIsPublic] = useState(true)
   const [isPinned, setIsPinned] = useState(false)
   const [title, setTitle] = useState('')
+  const [thumbnail, setThumbnail] = useState<ImpactStoryAttachment | null>(null)
   const [attachments, setAttachments] = useState<ImpactStoryAttachment[]>([])
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
@@ -154,6 +160,7 @@ export function StoryFormModal({
       setIsPublic(initial.isPublic)
       setIsPinned(initial.isPinned)
       setTitle(initial.title)
+      setThumbnail(initial.thumbnail ? { ...initial.thumbnail } : null)
       setAttachments(initial.attachments.map(a => ({ ...a })))
     } else {
       setPublishedAt(null)
@@ -161,6 +168,7 @@ export function StoryFormModal({
       setIsPublic(true)
       setIsPinned(false)
       setTitle('')
+      setThumbnail(null)
       setAttachments([])
     }
   }, [mode, initial])
@@ -170,48 +178,70 @@ export function StoryFormModal({
   }, [open, resetFromInitial])
 
   const fileNames = useMemo(() => attachments.map(a => a.name), [attachments])
+  const thumbnailNames = useMemo(
+    () => (thumbnail?.name ? [thumbnail.name] : []),
+    [thumbnail],
+  )
+
+  const readAcceptedImage = useCallback(
+    async (file: File, id: string): Promise<ImpactStoryAttachment | null> => {
+      if (!isAllowedImageFile(file)) {
+        showAlert({
+          title: '파일 형식',
+          content: 'JPG, PNG 형식만 등록할 수 있습니다.',
+        })
+        return null
+      }
+      if (file.size > MAX_BYTES) {
+        showAlert({
+          title: '파일 용량',
+          content: '파일은 최대 20MB까지 등록 가능합니다.',
+        })
+        return null
+      }
+      try {
+        const dataUrl = await readFileAsDataUrl(file)
+        return {
+          id,
+          name: file.name,
+          mime: mimeFromFile(file),
+          dataUrl,
+          file: shouldUseImpactStoriesRemoteApi() ? file : undefined,
+        }
+      } catch {
+        showAlert({
+          title: '파일 읽기 실패',
+          content: '파일을 읽지 못했습니다. 다시 시도해 주세요.',
+        })
+        return null
+      }
+    },
+    [showAlert],
+  )
+
+  const handleThumbnailChange = useCallback(
+    async (files: File[]) => {
+      const file = files[0]
+      if (!file) return
+      const next = await readAcceptedImage(file, `thumb-${Date.now()}`)
+      if (next) setThumbnail(next)
+    },
+    [readAcceptedImage],
+  )
 
   const handleFilesChange = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return
       const accepted: ImpactStoryAttachment[] = []
       for (let i = 0; i < files.length; i++) {
-        const file = files[i]!
-        if (!isAllowedImageFile(file)) {
-          showAlert({
-            title: '파일 형식',
-            content: 'JPG, PNG 형식만 등록할 수 있습니다.',
-          })
-          continue
-        }
-        if (file.size > MAX_BYTES) {
-          showAlert({
-            title: '파일 용량',
-            content: '파일은 최대 20MB까지 등록 가능합니다.',
-          })
-          continue
-        }
-        try {
-          const dataUrl = await readFileAsDataUrl(file)
-          accepted.push({
-            id: `new-${Date.now()}-${i}`,
-            name: file.name,
-            mime: mimeFromFile(file),
-            dataUrl,
-            file: shouldUseImpactStoriesRemoteApi() ? file : undefined,
-          })
-        } catch {
-          showAlert({
-            title: '파일 읽기 실패',
-            content: '파일을 읽지 못했습니다. 다시 시도해 주세요.',
-          })
-        }
+        const next = await readAcceptedImage(files[i]!, `new-${Date.now()}-${i}`)
+        if (next) accepted.push(next)
       }
       if (accepted.length > 0) {
         setAttachments(prev => [...prev, ...accepted])
       }
     },
-    [showAlert]
+    [readAcceptedImage],
   )
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -254,6 +284,10 @@ export function StoryFormModal({
         return
       }
     }
+    if (!thumbnail) {
+      showAlert({ title: '입력 확인', content: '섬네일 이미지를 등록해 주세요.' })
+      return
+    }
     if (isPinned && pinnedCountExcludingSelf >= IMPACT_STORY_PIN_MAX) {
       showAlert({
         title: '상단 고정 제한',
@@ -269,6 +303,7 @@ export function StoryFormModal({
       isPinned,
       publishedAt: publishedAt.toISOString(),
       authorName: mode === 'edit' && initial ? initial.authorName : DEFAULT_AUTHOR,
+      thumbnail,
       attachments,
     })
   }, [
@@ -280,6 +315,7 @@ export function StoryFormModal({
     isPublic,
     isPinned,
     pinnedCountExcludingSelf,
+    thumbnail,
     attachments,
     onSubmit,
     showAlert,
@@ -419,22 +455,47 @@ export function StoryFormModal({
             </div>
           </div>
 
-          <div className="story-form-modal__attachment">
-            <div className="story-form-modal__attachment-label">첨부 파일</div>
-            <div className="story-form-modal__attachment-body">
-              <FileSelectField
-                className="story-form-modal__file-field"
-                multiple
-                accept={IMAGE_ACCEPT}
-                buttonLabel="파일 추가"
-                fileNames={fileNames}
-                maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
-                guideLines={ATTACH_GUIDE}
-                onFilesChange={files => {
-                  void handleFilesChange(files)
-                }}
-                onRemoveFile={handleRemoveFile}
-              />
+          <div className="story-form-modal__files">
+            <div className="story-form-modal__attachment">
+              <div className="story-form-modal__attachment-label">
+                <span>섬네일</span>
+                <span className="story-form-modal__required" aria-hidden>
+                  *
+                </span>
+              </div>
+              <div className="story-form-modal__attachment-body">
+                <FileSelectField
+                  className="story-form-modal__file-field"
+                  multiple={false}
+                  accept={IMAGE_ACCEPT}
+                  buttonLabel="파일 추가"
+                  fileNames={thumbnailNames}
+                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
+                  guideLines={THUMB_GUIDE}
+                  onFilesChange={files => {
+                    void handleThumbnailChange(files)
+                  }}
+                  onRemoveFile={() => setThumbnail(null)}
+                />
+              </div>
+            </div>
+            <div className="story-form-modal__attachment">
+              <div className="story-form-modal__attachment-label">첨부 파일</div>
+              <div className="story-form-modal__attachment-body">
+                <FileSelectField
+                  className="story-form-modal__file-field"
+                  multiple
+                  accept={IMAGE_ACCEPT}
+                  buttonLabel="파일 추가"
+                  fileNames={fileNames}
+                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
+                  guideLines={ATTACH_GUIDE}
+                  onFilesChange={files => {
+                    void handleFilesChange(files)
+                  }}
+                  onRemoveFile={handleRemoveFile}
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -337,7 +337,7 @@ export function programToUjatRecruitCanonicalFormValues(
             ? {
                 participantRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
                   row.announcementPublished ?? undefined,
-                  values.participantRecruitmentAnnouncementPublished ?? 'published'
+                  values.participantRecruitmentAnnouncementPublished
                 ),
               }
             : {}),
@@ -357,7 +357,7 @@ export function programToUjatRecruitCanonicalFormValues(
             ? {
                 volunteerRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
                   row.announcementPublished ?? undefined,
-                  values.volunteerRecruitmentAnnouncementPublished ?? 'published'
+                  values.volunteerRecruitmentAnnouncementPublished
                 ),
               }
             : {}),
@@ -410,6 +410,7 @@ export function applyUjatRecruitFormValuesToProgram(
           values.applicationStartDate,
           values.applicationEndDate,
           values.recruitmentContactOrganizationName,
+          values.participantRecruitmentAnnouncementPublished,
         ]
       : [
           values.announcementTitle,
@@ -418,6 +419,7 @@ export function applyUjatRecruitFormValuesToProgram(
           values.volunteerRecruitmentContactOrganizationName,
           values.interviewStartDate,
           values.interviewEndDate,
+          values.volunteerRecruitmentAnnouncementPublished,
         ]
     ).some(value => typeof value === 'string' && value.trim() !== ''))(kind === 'institution')
   if (!existingTarget && (!options?.createMissing || !hasFormValues)) return program

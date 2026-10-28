@@ -3,12 +3,12 @@ import { useWatch } from 'react-hook-form'
 import { useCmsAlert } from '@/shared/ui'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  buildRequiredFieldsIncompleteAlertContent,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { useCreateProgram } from '@/features/program/ujat/api/queries'
 import {
-  describeIncompleteUjatProgramRegistrationWizardRequiredFields,
+  formatUjatRegistrationRequiredFieldReasons,
   listIncompleteUjatProgramRegistrationRequiredFields,
   listIncompleteUjatProgramRecruitmentTypedRequiredFields,
   listIncompleteUjatProgramRegistrationWizardRequiredFields,
@@ -40,6 +40,7 @@ import {
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import {
   formatRegistrationStepTransitionLabel,
@@ -118,6 +119,12 @@ export type UseUjatProgramRegistrationFlowOptions = {
 
 function createRegistrationIdempotencyKey(): string {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function ujatRequiredFieldsIncompleteAlertContent(keys: readonly string[]) {
+  return buildRequiredFieldsIncompleteAlertContent(
+    formatUjatRegistrationRequiredFieldReasons(keys)
+  )
 }
 
 /** 신규 UJAT Wizard의 모집 입력은 GET row/Typed RHF만 읽는다. */
@@ -424,13 +431,28 @@ export function useUjatProgramRegistrationFlow(
           : null
       const typedRecruitment = detail?.typedRecruitment
       if (typedRecruitment?.institution) {
-        institutionRecruitmentForm.reset(typedRecruitment.institution)
+        institutionRecruitmentForm.reset(
+          mergeDevAutofillSparse(
+            institutionRecruitmentForm.getValues() as Record<string, unknown>,
+            typedRecruitment.institution as Record<string, unknown>
+          ) as ProgramDetailEditFormValues
+        )
       }
       if (typedRecruitment?.volunteerH1) {
-        volunteerH1RecruitmentForm.reset(typedRecruitment.volunteerH1)
+        volunteerH1RecruitmentForm.reset(
+          mergeDevAutofillSparse(
+            volunteerH1RecruitmentForm.getValues() as Record<string, unknown>,
+            typedRecruitment.volunteerH1 as Record<string, unknown>
+          ) as ProgramDetailEditFormValues
+        )
       }
       if (typedRecruitment?.volunteerH2) {
-        volunteerH2RecruitmentForm.reset(typedRecruitment.volunteerH2)
+        volunteerH2RecruitmentForm.reset(
+          mergeDevAutofillSparse(
+            volunteerH2RecruitmentForm.getValues() as Record<string, unknown>,
+            typedRecruitment.volunteerH2 as Record<string, unknown>
+          ) as ProgramDetailEditFormValues
+        )
       }
       typedRecruitmentDraftHydratedRef.current = true
       void persistTypedRecruitmentDraft()
@@ -652,30 +674,25 @@ export function useUjatProgramRegistrationFlow(
         console.debug('[registration] UJAT 공통정보 필수항목 미입력:', incompleteKeys)
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          content: ujatRequiredFieldsIncompleteAlertContent(incompleteKeys),
         })
         return
       }
-      if (
-        validationTarget === 'recruitment' &&
-        listIncompleteUjatProgramRecruitmentTypedRequiredFields({
-          institution: institutionRecruitmentForm.getValues(),
-          volunteerH1: volunteerH1RecruitmentForm.getValues(),
-          volunteerH2: volunteerH2RecruitmentForm.getValues(),
-        }).length > 0
-      ) {
-        const incompleteKeys = listIncompleteUjatProgramRecruitmentTypedRequiredFields({
+      if (validationTarget === 'recruitment') {
+        const recruitIncompleteKeys = listIncompleteUjatProgramRecruitmentTypedRequiredFields({
           institution: institutionRecruitmentForm.getValues(),
           volunteerH1: volunteerH1RecruitmentForm.getValues(),
           volunteerH2: volunteerH2RecruitmentForm.getValues(),
         })
-        options?.reportValidationIncomplete?.(incompleteKeys)
-        console.debug('[registration] UJAT 모집정보 필수항목 미입력:', incompleteKeys[0])
-        showAlert({
-          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-        })
-        return
+        if (recruitIncompleteKeys.length > 0) {
+          options?.reportValidationIncomplete?.(recruitIncompleteKeys)
+          console.debug('[registration] UJAT 모집정보 필수항목 미입력:', recruitIncompleteKeys)
+          showAlert({
+            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+            content: ujatRequiredFieldsIncompleteAlertContent(recruitIncompleteKeys),
+          })
+          return
+        }
       }
       if (fromPhase !== toPhase) {
         const registrationOverlay: Record<string, unknown> = {}
@@ -816,7 +833,7 @@ export function useUjatProgramRegistrationFlow(
       console.debug('[registration] UJAT 신청 양식 제공받는 곳 미입력:', applicationRecipientReason)
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        content: ujatRequiredFieldsIncompleteAlertContent(applicationIncompleteKeys),
       })
       return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
     }
@@ -826,31 +843,17 @@ export function useUjatProgramRegistrationFlow(
       volunteerH1: volunteerH1RecruitmentForm.getValues(),
       volunteerH2: volunteerH2RecruitmentForm.getValues(),
     }
-    if (
-      describeIncompleteUjatProgramRegistrationWizardRequiredFields(
-        registrationVm.basicInfoValues,
-        registrationVm.educationScheduleForm.getValues(),
-        typedRecruitment
-      ) != null
-    ) {
-      options?.reportValidationIncomplete?.(
-        listIncompleteUjatProgramRegistrationWizardRequiredFields(
-          registrationVm.basicInfoValues,
-          registrationVm.educationScheduleForm.getValues(),
-          typedRecruitment
-        )
-      )
-      console.debug(
-        '[registration] UJAT 등록 완료 필수항목 미입력:',
-        describeIncompleteUjatProgramRegistrationWizardRequiredFields(
-          registrationVm.basicInfoValues,
-          registrationVm.educationScheduleForm.getValues(),
-          typedRecruitment
-        )
-      )
+    const wizardIncompleteKeys = listIncompleteUjatProgramRegistrationWizardRequiredFields(
+      registrationVm.basicInfoValues,
+      registrationVm.educationScheduleForm.getValues(),
+      typedRecruitment
+    )
+    if (wizardIncompleteKeys.length > 0) {
+      options?.reportValidationIncomplete?.(wizardIncompleteKeys)
+      console.debug('[registration] UJAT 등록 완료 필수항목 미입력:', wizardIncompleteKeys)
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        content: ujatRequiredFieldsIncompleteAlertContent(wizardIncompleteKeys),
       })
       return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
     }

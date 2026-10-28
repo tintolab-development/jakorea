@@ -960,7 +960,9 @@
             "minLength": 0
           },
           "label": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
           },
           "version": {
             "type": "integer",
@@ -1038,6 +1040,7 @@
               "JA_NOTICE_ATTACHMENT",
               "JA_NOTICE_INLINE_IMAGE",
               "IMPACT_STORY_ATTACHMENT",
+              "IMPACT_STORY_THUMBNAIL",
               "IMPACT_STORY_INLINE_IMAGE",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
               "EDUCATION_PROGRAM_INTRO_IMAGE",
@@ -4121,6 +4124,10 @@
             "maxLength": 100000,
             "minLength": 0
           },
+          "thumbnailAssetId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
@@ -4128,6 +4135,9 @@
           "version": {
             "type": "integer",
             "format": "int64"
+          },
+          "thumbnailDistinctFromAttachment": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -4136,6 +4146,7 @@
           "pinned",
           "publishAt",
           "published",
+          "thumbnailAssetId",
           "title",
           "version"
         ]
@@ -4170,11 +4181,21 @@
           "body": {
             "type": "string"
           },
+          "thumbnail": {
+            "$ref": "#/components/schemas/AssetResponse",
+            "nullable": true
+          },
+          "thumbnailOriginalName": {
+            "type": "string",
+            "nullable": true
+          },
           "attachment": {
-            "$ref": "#/components/schemas/AssetResponse"
+            "$ref": "#/components/schemas/AssetResponse",
+            "nullable": true
           },
           "attachmentOriginalName": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "authorName": {
             "type": "string"
@@ -5204,6 +5225,16 @@
             "type": "integer",
             "format": "int64"
           },
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Confirmed talent-application attachment asset ids in request order. Max 10. Omit when empty.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
           "periodOrderValid": {
             "type": "boolean"
           }
@@ -5392,6 +5423,27 @@
             "maxLength": 100,
             "minLength": 0
           },
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Confirmed consultation attachment asset ids in request order. Max 10. Omit when empty.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
+          "attachmentUploadTokens": {
+            "type": "array",
+            "description": "Upload tokens paired by index with attachmentAssetIds. Max 10. Omit when empty.",
+            "items": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
           "privacyConsent": {
             "type": "boolean"
           },
@@ -5511,6 +5563,16 @@
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
+          },
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Confirmed career talent-application attachment asset ids in request order. Max 10. Omit when empty.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
           }
         },
         "required": [
@@ -5624,6 +5686,56 @@
           "id",
           "version"
         ]
+      },
+      "StatusResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventKey": {
+            "type": "string"
+          },
+          "notificationType": {
+            "type": "string",
+            "enum": [
+              "CAREER_TALENT_APPLICATION",
+              "CORPORATE_CONSULTATION",
+              "TALENT_APPLICATION"
+            ]
+          },
+          "aggregateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "attempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "StripCreateRequest": {
         "type": "object",
@@ -6134,9 +6246,16 @@
             "maxLength": 100000,
             "minLength": 0
           },
+          "thumbnailAssetId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
+          },
+          "thumbnailDistinctFromAttachment": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -6145,6 +6264,7 @@
           "pinned",
           "publishAt",
           "published",
+          "thumbnailAssetId",
           "title"
         ]
       },
@@ -6426,6 +6546,7 @@
               "JA_NOTICE_ATTACHMENT",
               "JA_NOTICE_INLINE_IMAGE",
               "IMPACT_STORY_ATTACHMENT",
+              "IMPACT_STORY_THUMBNAIL",
               "IMPACT_STORY_INLINE_IMAGE",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
               "EDUCATION_PROGRAM_INTRO_IMAGE",
@@ -7256,7 +7377,8 @@
             "format": "date-time"
           },
           "imageUrl": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -8111,7 +8233,8 @@
             "type": "string"
           },
           "imageUrl": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "authorName": {
             "type": "string"
@@ -8150,10 +8273,12 @@
             "type": "string"
           },
           "imageUrl": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "attachmentOriginalName": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "authorName": {
             "type": "string"
@@ -8885,6 +9010,25 @@
           }
         }
       },
+      "ApplicationAttachmentItem": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Confirmed attachment asset id"
+          },
+          "originalName": {
+            "type": "string",
+            "description": "Original file name"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Zero-based request order"
+          }
+        }
+      },
       "TalentApplicationDetailResponse": {
         "type": "object",
         "properties": {
@@ -8972,6 +9116,12 @@
           },
           "attachmentOriginalName": {
             "type": "string"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationAttachmentItem"
+            }
           }
         }
       },
@@ -9167,6 +9317,12 @@
           },
           "attachmentOriginalName": {
             "type": "string"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationAttachmentItem"
+            }
           },
           "version": {
             "type": "integer",
@@ -9667,6 +9823,7 @@
               "JA_NOTICE_ATTACHMENT",
               "JA_NOTICE_INLINE_IMAGE",
               "IMPACT_STORY_ATTACHMENT",
+              "IMPACT_STORY_THUMBNAIL",
               "IMPACT_STORY_INLINE_IMAGE",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
               "EDUCATION_PROGRAM_INTRO_IMAGE",
@@ -10185,6 +10342,12 @@
           "attachmentOriginalName": {
             "type": "string",
             "nullable": true
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationAttachmentItem"
+            }
           }
         }
       },

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { EducationProgressHalfKey } from '../tabs'
@@ -157,22 +157,18 @@ export function useUjatEducationProgressVolunteers(
     return [...remoteRows, ...extras]
   }, [localRows, remoteEnabled, remoteRows])
 
-  const registeredVolunteerNames = useMemo(
-    () => allRows.map(r => r.volunteerName),
-    [allRows]
-  )
-
-  useEffect(() => {
-    let cancelled = false
-    void fetchUjatEducationProgressVolunteerMemberCandidates(registeredVolunteerNames).then(
-      options => {
-        if (!cancelled) setMemberOptions(options)
-      }
+  const loadMemberOptions = useCallback(async () => {
+    const excludedNames = allRows.map(r => r.volunteerName)
+    const excludedIds = allRows
+      .map(r => r.memberId?.trim())
+      .filter((id): id is string => Boolean(id))
+    const options = await fetchUjatEducationProgressVolunteerMemberCandidates(
+      excludedNames,
+      excludedIds
     )
-    return () => {
-      cancelled = true
-    }
-  }, [registeredVolunteerNames])
+    setMemberOptions(options)
+    return options
+  }, [allRows])
 
   const tableData = useMemo(
     () => filterRows(allRows, appliedFilters),
@@ -221,6 +217,7 @@ export function useUjatEducationProgressVolunteers(
     setSelectedRowKeys,
     resetHalfState,
     memberOptions,
+    loadMemberOptions,
     addVolunteerFromMember,
     syncRowsFromMock,
   }

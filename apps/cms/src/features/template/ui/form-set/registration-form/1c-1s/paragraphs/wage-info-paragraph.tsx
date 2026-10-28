@@ -120,18 +120,7 @@ export function OneCOneSRegistrationWageInfoParagraph() {
   useEffect(() => {
     if (!paymentCatalog.ready || remotePaymentOptions.length === 0) return
     const raw = getProgramRegistrationOverlayRecord()['economyRegistration.wageInfo.paymentItemValues']
-    // 미기록(undefined)만 기본 지급 항목(교통비·숙박비 1사1교)으로 시드
-    if (raw === undefined) {
-      const transport = remotePaymentOptions.find(
-        opt => opt.label.trim() === PAYMENT_LABEL_TRANSPORT_CATALOG
-      )
-      const lodging = remotePaymentOptions.find(
-        opt => opt.label.trim() === PAYMENT_LABEL_LODGING_CATALOG
-      )
-      const next = [transport?.value, lodging?.value].filter((id): id is string => Boolean(id))
-      if (next.length > 0) setPaymentItemValues(next)
-      return
-    }
+    if (raw === undefined) return
     // 사용자가 []로 비운 값은 유지. 임시저장·템플릿의 예전 mock id는 실제 id로 교정
     if (!Array.isArray(raw)) return
     const current = raw.map(id => String(id ?? '').trim()).filter(Boolean)

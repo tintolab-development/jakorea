@@ -127,7 +127,7 @@ export function TalentDonationApplicationDetailModal({
         className="talent-app-detail-modal__attachment"
         onClick={() => {
           if (!data?.id) return
-          void downloadTalentDonationApplicationAttachmentService(data.id)
+          void downloadTalentDonationApplicationAttachmentService(data.id, data.attachmentAssetId)
             .then(result => {
               if (!result?.downloadUrl) {
                 showAlert({
