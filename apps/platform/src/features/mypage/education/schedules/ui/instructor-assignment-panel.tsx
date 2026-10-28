@@ -120,7 +120,7 @@ function buildWaitingRows(
       ),
       distance: formatAssignmentDistanceKm(item.distanceKm),
       schedule: schedule === '-' ? displayAssignmentValueOrDash(item.dateRangeLabel) : schedule,
-      status: formatAssignmentWaitingStatus(item.status, item.unavailableReason),
+      status: formatAssignmentWaitingStatus(item.status),
     }
   })
 }
@@ -236,7 +236,7 @@ function AssignedScheduleTable({ rows }: { rows: readonly AssignmentTableRow[] }
   )
 }
 
-/** 배정 상태 — 기존 봉사 배정 현황과 같은 텍스트 라벨 스타일. 배정 불가는 사유(일정 충돌/정원 초과)를 함께 둔다. */
+/** 배정 상태 — 기존 봉사 배정 현황과 같은 텍스트 라벨 스타일. 상태 라벨만 표시한다. */
 function renderWaitingStatus(status: AssignmentWaitingStatusView) {
   const toneClass =
     status.tone === 'waiting' ? styles.statusWaiting : styles.statusInactive
@@ -245,11 +245,6 @@ function renderWaitingStatus(status: AssignmentWaitingStatusView) {
       <PFText as="span" typo="bd-md-md" className={toneClass}>
         {status.label}
       </PFText>
-      {status.reason ? (
-        <PFText as="span" typo="bd-sm-rg" className={styles.statusInactive}>
-          {status.reason}
-        </PFText>
-      ) : null}
     </div>
   )
 }

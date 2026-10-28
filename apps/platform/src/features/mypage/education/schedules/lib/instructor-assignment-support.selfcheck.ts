@@ -105,21 +105,15 @@ assert.deepEqual(
 )
 assert.deepEqual(groupAssignmentsByInstitution([]), [])
 
-// 배정 대기 상태: 서버 status·unavailableReason을 라벨로만 바꾼다
-assert.deepEqual(formatAssignmentWaitingStatus('WAITING', null), {
-  tone: 'waiting', label: '배정 대기', reason: null, disabled: false,
+// 배정 대기 상태: 서버 status를 라벨로만 바꾼다(배정 불가 사유는 표시하지 않음)
+assert.deepEqual(formatAssignmentWaitingStatus('WAITING'), {
+  tone: 'waiting', label: '배정 대기', disabled: false,
 })
-assert.deepEqual(formatAssignmentWaitingStatus('UNAVAILABLE', 'SCHEDULE_CONFLICT'), {
-  tone: 'unavailable', label: '배정 불가', reason: '일정 충돌', disabled: true,
+assert.deepEqual(formatAssignmentWaitingStatus('UNAVAILABLE'), {
+  tone: 'unavailable', label: '배정 불가', disabled: true,
 })
-assert.deepEqual(formatAssignmentWaitingStatus('UNAVAILABLE', 'CAPACITY_FULL'), {
-  tone: 'unavailable', label: '배정 불가', reason: '정원 초과', disabled: true,
-})
-assert.deepEqual(formatAssignmentWaitingStatus('UNAVAILABLE', null), {
-  tone: 'unavailable', label: '배정 불가', reason: null, disabled: true,
-})
-assert.deepEqual(formatAssignmentWaitingStatus('CANCELLED', null), {
-  tone: 'cancelled', label: '배정 취소', reason: null, disabled: false,
+assert.deepEqual(formatAssignmentWaitingStatus('CANCELLED'), {
+  tone: 'cancelled', label: '배정 취소', disabled: false,
 })
 
 // 차시 자리: 일정형+복수 회차는 일정명, 그 외 N차시

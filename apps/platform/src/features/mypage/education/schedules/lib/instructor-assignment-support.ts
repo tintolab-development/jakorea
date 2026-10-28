@@ -103,35 +103,24 @@ export function groupAssignmentsByInstitution<
 }
 
 /**
- * 배정 대기 목록 상태 표시 (BE 계약: instructor-assignment-waitings `status`·`unavailableReason`).
- * 서버 값을 그대로 라벨로만 바꾸고 FE에서 재판정하지 않는다.
+ * 배정 대기 목록 상태 표시 (BE 계약: instructor-assignment-waitings `status`).
+ * 서버 값을 그대로 라벨로만 바꾸고 FE에서 재판정하지 않는다. 배정 불가 사유는 표시하지 않는다.
  */
 export type AssignmentWaitingStatusView = {
   tone: 'waiting' | 'unavailable' | 'cancelled'
   label: string
-  reason: string | null
   disabled: boolean
 }
 
-export function formatAssignmentWaitingStatus(
-  status: unknown,
-  unavailableReason: unknown,
-): AssignmentWaitingStatusView {
+export function formatAssignmentWaitingStatus(status: unknown): AssignmentWaitingStatusView {
   const code = asAssignmentDisplayText(status).toUpperCase()
   if (code === 'UNAVAILABLE') {
-    const reasonCode = asAssignmentDisplayText(unavailableReason).toUpperCase()
-    const reason =
-      reasonCode === 'SCHEDULE_CONFLICT'
-        ? '일정 충돌'
-        : reasonCode === 'CAPACITY_FULL'
-          ? '정원 초과'
-          : null
-    return { tone: 'unavailable', label: '배정 불가', reason, disabled: true }
+    return { tone: 'unavailable', label: '배정 불가', disabled: true }
   }
   if (code === 'CANCELLED' || code === 'CANCELED') {
-    return { tone: 'cancelled', label: '배정 취소', reason: null, disabled: false }
+    return { tone: 'cancelled', label: '배정 취소', disabled: false }
   }
-  return { tone: 'waiting', label: '배정 대기', reason: null, disabled: false }
+  return { tone: 'waiting', label: '배정 대기', disabled: false }
 }
 
 /**
