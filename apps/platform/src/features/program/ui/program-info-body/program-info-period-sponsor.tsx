@@ -1,6 +1,7 @@
 import { PFText } from '@/shared/ui'
 import type { ProgramDetail } from '../../model/types'
 import { resolveGeminiProgramOperatingPeriodLabel } from '../../lib/gemini-program-period-label'
+import { isProgramSponsorVisible } from '../../lib/portal-sponsor-display'
 import styles from './program-info-body.module.css'
 
 type ProgramInfoPeriodSponsorProps = {
@@ -29,7 +30,7 @@ export function ProgramInfoPeriodSponsor({
   const operatingPeriodLabel = resolveGeminiProgramOperatingPeriodLabel(program)
   const sponsor = program.sponsor.trim()
   const hasPeriod = isPresent(operatingPeriodLabel)
-  const hasSponsor = isPresent(sponsor)
+  const hasSponsor = isProgramSponsorVisible(sponsor)
 
   if (!hasPeriod && !hasSponsor) {
     return null

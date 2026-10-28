@@ -39,6 +39,8 @@ describe('Gemini portal detail training request period', () => {
     expect(program?.detailCase).toBe('gemini')
     expect(program?.recruitmentPhases[0]?.value).toBe('2026년 8월 1일(토) ~ 2026년 8월 31일(월)')
     expect(program?.geminiTrainingRequestPeriodLabel).toBe('2026년 9월 1일(화) ~ 2026년 9월 30일(수)')
+    expect(program?.geminiTrainingRequestStartDate).toBe('2026-09-01')
+    expect(program?.geminiTrainingRequestEndDate).toBe('2026-09-30')
     expect(program?.recruitmentPhases[0]?.label).toBe('기관 모집 기간')
     expect(program?.recruitmentPhaseGroupLabel).toBe('모집 및 선별 기간')
     expect(program?.basicInfoFields.find(field => field.label === '최소 수강 인원')?.value).toBe('15명')
@@ -91,7 +93,7 @@ describe('Gemini portal detail training request period', () => {
 
     expect(program?.detailCase).toBe('gemini')
     expect(program?.focusedRecruitmentIds).toEqual([186919])
-    expect(program?.categories).toEqual(['instructor', 'institution'])
+    expect(program?.categories).toEqual(['institution'])
     expect(program?.thumbnailUrl).toBeUndefined()
     expect(program?.extraSections.map(section => section.title)).toEqual([
       '모집안내',
@@ -112,7 +114,28 @@ describe('Gemini portal detail training request period', () => {
     )
   })
 
-  it('keeps program copy and both portal tabs when BE returns only the instructor row', () => {
+  it('uses program-level sponsorNames and does not invent a Gemini sponsor', () => {
+    const fromApi = mapPortalProgramDetail({
+      ...GEMINI_PROGRAM_COPY,
+      sponsorNames: ['Google for Education'],
+      recruitments: [
+        {
+          recruitmentId: 186919,
+          recruitmentType: 'INSTRUCTOR',
+          applicationTypes: ['INSTRUCTOR'],
+        },
+      ],
+    }, { recruitmentIds: [186919], applicationTypes: ['INSTRUCTOR'] })
+    const empty = mapPortalProgramDetail({
+      ...GEMINI_PROGRAM_COPY,
+      sponsorNames: [],
+    })
+
+    expect(fromApi?.sponsor).toBe('Google for Education')
+    expect(empty?.sponsor).toBe('-')
+  })
+
+  it('keeps program copy when BE returns only the instructor row and shows one header tab', () => {
     const unfocused = mapPortalProgramDetail({
       ...GEMINI_PROGRAM_COPY,
       recruitments: [
@@ -152,8 +175,9 @@ describe('Gemini portal detail training request period', () => {
       },
     )
 
+    expect(unfocused?.categories).toEqual(['institution'])
     expect(focused?.detailCase).toBe('gemini')
-    expect(focused?.categories).toEqual(['instructor', 'institution'])
+    expect(focused?.categories).toEqual(['instructor'])
     expect(focused?.extraSections.map(section => section.title)).toEqual(
       unfocused?.extraSections.map(section => section.title),
     )
