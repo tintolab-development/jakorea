@@ -20,6 +20,19 @@ export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS = {
 export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS =
   new Set<string>(Object.values(GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS))
 
+const PERSONAL_INFO_TITLE = '개인 정보수집 및 제공에 대한 동의'
+const THIRD_PARTY_TITLE = '제 3자 정보 제공 동의'
+const PORTRAIT_TITLE = '초상권에 대한 동의'
+const PREFERRED_SCHEDULE_DESCRIPTION =
+  '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.'
+
+const LEGACY_PERSONAL_INFO_TITLES = ['개인정보 수집·이용'] as const
+const LEGACY_THIRD_PARTY_TITLES = ['개인정보 제3자 정보 제공·이용 동의'] as const
+const LEGACY_PORTRAIT_TITLES = ['초상권 수집·이용 동의'] as const
+const LEGACY_PREFERRED_SCHEDULE_DESCRIPTIONS = [
+  '1~3순위 희망 날짜 및 희망 교육 시간을 기재해 주세요.',
+] as const
+
 const PERSONAL_INFO_BOTTOM =
   '귀하의 개인 정보 수집 및 이용을 동의하지 않을 권리가 있으며, 동의하지 않을 시 본 프로그램 참여가 불가능합니다.'
 
@@ -43,7 +56,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '개인정보 수집·이용',
+    paragraphTitle: PERSONAL_INFO_TITLE,
     paragraphDescription: '설명 입력',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -81,7 +94,7 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '개인정보 제3자 정보 제공·이용 동의',
+    paragraphTitle: THIRD_PARTY_TITLE,
     paragraphDescription: '설명 입력',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -122,7 +135,7 @@ function createPortraitConsentParagraph(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '초상권 수집·이용 동의',
+    paragraphTitle: PORTRAIT_TITLE,
     paragraphDescription: '설명 입력',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -199,7 +212,7 @@ export function createGeminiVisitingTrainingApplicationFormInstitutionDraft(): W
     createSeedHorizontalTable(
       GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
       '진행 희망 교육 일정',
-      '1~3순위 희망 날짜 및 희망 교육 시간을 기재해 주세요.'
+      PREFERRED_SCHEDULE_DESCRIPTION,
     ),
   ]
   return normalizeWritingFormDraft({
@@ -227,22 +240,61 @@ function patchHorizontalTableTextCell(
   return { ...paragraph, fieldDataRows }
 }
 
+function patchParagraphTitleIfLegacy(
+  paragraph: WritingFormParagraph,
+  nextTitle: string,
+  legacyTitles: readonly string[]
+): WritingFormParagraph {
+  if (!legacyTitles.includes(paragraph.paragraphTitle)) return paragraph
+  return { ...paragraph, paragraphTitle: nextTitle }
+}
+
+function patchParagraphDescriptionIfLegacy(
+  paragraph: WritingFormParagraph,
+  nextDescription: string,
+  legacyDescriptions: readonly string[]
+): WritingFormParagraph {
+  if (!legacyDescriptions.includes(paragraph.paragraphDescription)) return paragraph
+  return { ...paragraph, paragraphDescription: nextDescription }
+}
+
 /** 구 시드 고정 문구 보정 */
 export function migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(
   draft: WritingFormDraft
 ): WritingFormDraft {
   let changed = false
   const paragraphs = draft.paragraphs.map(paragraph => {
+    let next = paragraph
     if (
-      paragraph.id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection &&
-      paragraph.kind === 'single_item' &&
-      paragraph.variant === 'horizontal_table'
+      paragraph.id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection
     ) {
-      const next = patchHorizontalTableTextCell(paragraph, 0, 2, PERSONAL_INFO_RETENTION_CELL)
-      if (next !== paragraph) changed = true
-      return next
+      next = patchParagraphTitleIfLegacy(next, PERSONAL_INFO_TITLE, LEGACY_PERSONAL_INFO_TITLES)
+      if (
+        next.kind === 'single_item' &&
+        next.variant === 'horizontal_table'
+      ) {
+        next = patchHorizontalTableTextCell(next, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+      }
+    } else if (
+      paragraph.id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent
+    ) {
+      next = patchParagraphTitleIfLegacy(next, THIRD_PARTY_TITLE, LEGACY_THIRD_PARTY_TITLES)
+    } else if (
+      paragraph.id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.portraitConsent
+    ) {
+      next = patchParagraphTitleIfLegacy(next, PORTRAIT_TITLE, LEGACY_PORTRAIT_TITLES)
+    } else if (
+      paragraph.id ===
+      GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule
+    ) {
+      next = patchParagraphDescriptionIfLegacy(
+        next,
+        PREFERRED_SCHEDULE_DESCRIPTION,
+        LEGACY_PREFERRED_SCHEDULE_DESCRIPTIONS
+      )
     }
-    return paragraph
+    if (next !== paragraph) changed = true
+    return next
   })
   return changed ? { ...draft, paragraphs } : draft
 }
