@@ -173,6 +173,13 @@ describe('canCancelOrganizationPortraitConsent', () => {
 })
 
 describe('portrait consent cancel error messages', () => {
+  it('PROGRAM_STUDENT_DOCUMENTS_NOT_SUPPORTED는 API 원문 대신 안내 문구를 쓴다', () => {
+    const error = apiError(400, 'PROGRAM_STUDENT_DOCUMENTS_NOT_SUPPORTED', 'Bad Request')
+    expect(resolveStudentDocumentsErrorMessage(error)).toBe(
+      '이 프로그램은 학생 명단 및 초상권 동의서 제출 대상이 아닙니다.',
+    )
+  })
+
   it('서버 message가 있으면 우선 표시한다', () => {
     const error = apiError(409, 'PORTRAIT_CONSENT_REVISION_CONFLICT', '서버 안내 문구')
     expect(readStudentDocumentsErrorCode(error)).toBe('PORTRAIT_CONSENT_REVISION_CONFLICT')

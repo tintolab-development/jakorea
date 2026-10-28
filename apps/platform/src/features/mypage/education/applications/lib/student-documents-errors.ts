@@ -65,6 +65,9 @@ export function resolveStudentDocumentsErrorMessage(
   const mapped = code ? STUDENT_DOCUMENTS_ERROR_MESSAGES[code] : undefined
   const apiMessage = readPortalErrorMessage(responseData)
 
+  if (code === 'PROGRAM_STUDENT_DOCUMENTS_NOT_SUPPORTED') {
+    return STUDENT_DOCUMENTS_ERROR_MESSAGES.PROGRAM_STUDENT_DOCUMENTS_NOT_SUPPORTED
+  }
   if (apiMessage) return apiMessage
   if (mapped) return mapped
   return fallback
