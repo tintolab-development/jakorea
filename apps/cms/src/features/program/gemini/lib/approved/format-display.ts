@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import type {
+  GeminiApprovedTrainingDateCandidate,
   GeminiApprovedTrainingRow,
   GeminiApprovedTrainingStatus,
 } from '../../model/approved/types'
@@ -22,30 +23,59 @@ export function formatRegionDisplay(
   return `${row.institutionSido} ${row.institutionSigungu}`.trim()
 }
 
-/** 강사 매칭으로 확정된 연수일시만. 미확정이면 `-` */
-export function formatConfirmedTrainingDatetimeDisplay(
-  row: Pick<GeminiApprovedTrainingRow, 'instructorAssigned' | 'trainingDate' | 'trainingTimeText'>
-): string {
-  if (!row.instructorAssigned) {
-    return '-'
-  }
-  const x = dayjs(row.trainingDate)
-  if (!x.isValid()) {
-    return '-'
-  }
-  return `${x.format('YYYY.MM.DD')} | ${row.trainingTimeText}`
+function formatDateTimeLabel(date: string | undefined, timeText: string | undefined): string {
+  const x = dayjs(date)
+  if (!x.isValid()) return '-'
+  const dateLabel = x.format('YYYY.MM.DD')
+  const time = timeText?.trim() ?? ''
+  if (!time || time === '-') return dateLabel
+  return `${dateLabel} | ${time}`
 }
 
-/** 확정 연수일시. 미확정이면 기관 신청 희망 일정(1~3지망) */
+function firstPreferredCandidate(
+  candidates: readonly GeminiApprovedTrainingDateCandidate[] | undefined
+): GeminiApprovedTrainingDateCandidate | undefined {
+  if (!candidates?.length) return undefined
+  return [...candidates].sort((a, b) => a.preferenceRank - b.preferenceRank)[0]
+}
+
+/** 승인된 연수일시 한 줄. 강사 미지정이어도 확정일 또는 1지망을 보여 준다. */
+export function formatConfirmedTrainingDatetimeDisplay(
+  row: Pick<
+    GeminiApprovedTrainingRow,
+    'trainingDate' | 'trainingTimeText' | 'trainingDateCandidates'
+  > & {
+    instructorAssigned?: boolean
+  }
+): string {
+  const confirmed = formatDateTimeLabel(row.trainingDate, row.trainingTimeText)
+  if (confirmed !== '-') return confirmed
+  const first = firstPreferredCandidate(row.trainingDateCandidates)
+  if (!first) return '-'
+  return formatDateTimeLabel(first.trainingDate, first.trainingTimeText)
+}
+
+function formatLastPreferredDateDisplay(lastPreferredDate: string | undefined): string {
+  const x = dayjs(lastPreferredDate)
+  return x.isValid() ? x.format('YYYY.MM.DD') : '-'
+}
+
+/** 확정 연수일시. 미확정이면 기관 신청 희망 일정(1~3지망), 없으면 lastPreferredDate */
 export function formatTrainingDatetimeDisplay(
   row: Pick<
     GeminiApprovedTrainingRow,
-    'instructorAssigned' | 'trainingDate' | 'trainingTimeText' | 'trainingDateCandidates'
+    | 'instructorAssigned'
+    | 'trainingDate'
+    | 'trainingTimeText'
+    | 'trainingDateCandidates'
+    | 'lastPreferredDate'
   >
 ): string {
-  const confirmed = formatConfirmedTrainingDatetimeDisplay(row)
+  const confirmed = formatDateTimeLabel(row.trainingDate, row.trainingTimeText)
   if (confirmed !== '-') return confirmed
-  return formatTrainingDateCandidatesDisplay(row.trainingDateCandidates)
+  const candidates = formatTrainingDateCandidatesDisplay(row.trainingDateCandidates)
+  if (candidates !== '-') return candidates
+  return formatLastPreferredDateDisplay(row.lastPreferredDate)
 }
 
 export function formatInstructorDisplay(row: GeminiApprovedTrainingRow): string {

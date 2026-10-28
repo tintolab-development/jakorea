@@ -166,7 +166,7 @@ describe('gemini visiting-training adapters', () => {
         regionSigungu: '강서구',
         teacherName: '김교사',
         preferredLectureScheduleText:
-          '1지망 : 2026.01.09(금) | 15:30~16:40(2차시)',
+          '1지망 : 2026.01.09(금) 15:30 ~ 16:40 | 2차시',
         resultNotificationSentAt: '2026-09-27T05:00:00Z',
         availableActions: ['RESEND_NOTIFICATION'],
       },
@@ -180,10 +180,23 @@ describe('gemini visiting-training adapters', () => {
     expect(app.institutionSigungu).toBe('강서구')
     expect(app.teacherName).toBe('김교사')
     expect(app.preferredLectureSchedule).toBe(
-      '1지망 : 2026.01.09(금) | 15:30~16:40(2차시)'
+      '1지망 : 2026.01.09(금) 15:30 ~ 16:40 | 2차시'
     )
     expect(app.availableActions).toContain('RESEND_NOTIFICATION')
     expect(app.resultNotificationSentAt).toBe('2026-09-27T05:00:00Z')
+
+    expect(
+      mapGeminiOrganizationApplicationToRow(
+        { applicationId: 11, applicationStatus: 'REJECTED' },
+        0
+      ).approvalStatus
+    ).toBe('REJECTED')
+    expect(
+      mapGeminiOrganizationApplicationToRow(
+        { applicationId: 12, applicationStatus: 'REJECTION_CANCELLED' },
+        0
+      ).approvalStatus
+    ).toBe('PENDING')
   })
 
   it('maps preferredScheduleBlocks when preferredLectureScheduleText is absent', () => {
@@ -205,7 +218,7 @@ describe('gemini visiting-training adapters', () => {
       0
     )
     expect(app.preferredLectureSchedule).toBe(
-      '1지망 : 2026.01.09(금) | 15:30~16:40(2차시)'
+      '1지망 : 2026.01.09(금) 15:30 ~ 16:40 | 2차시'
     )
     expect(app.teacherName).toBe('-')
     expect(app.institutionSido).toBe('')
@@ -259,7 +272,7 @@ describe('gemini visiting-training adapters', () => {
     expect(detail.notesNotApplicable).toBe(true)
   })
 
-  it('maps approved list — 미매칭은 확정일/lastPreferredDate를 trainingDate로 위장하지 않는다', () => {
+  it('maps approved list — 강사 미지정이어도 서버 trainingDate를 유지한다', () => {
     const unmatched = mapGeminiRecruitmentItemToApprovedRow(
       {
         id: 185344,
@@ -274,8 +287,8 @@ describe('gemini visiting-training adapters', () => {
     expect(unmatched.id).toBe('185344')
     expect(unmatched.instructorAssigned).toBe(false)
     expect(unmatched.instructorName).toBe('미지정')
-    expect(unmatched.trainingDate).toBe('')
-    expect(unmatched.trainingTimeText).toBe('')
+    expect(unmatched.trainingDate).toBe('2026-05-01')
+    expect(unmatched.trainingTimeText).toBe('10:00~12:00')
     expect(unmatched.lastPreferredDate).toBe('')
 
     const matched = mapGeminiRecruitmentItemToApprovedRow(
@@ -294,6 +307,33 @@ describe('gemini visiting-training adapters', () => {
     expect(matched.trainingDate).toBe('2026-06-01')
     expect(matched.lastPreferredDate).toBe('2026-05-20')
     expect(matched.officialDocumentRequired).toBe(false)
+  })
+
+  it('maps approved list — 희망 일정 후보를 버리고 확정일만 비우지 않는다', () => {
+    const unmatched = mapGeminiRecruitmentItemToApprovedRow(
+      {
+        id: 1,
+        institutionName: 'QA 배정학교',
+        instructorName: '디디딤',
+        trainingDate: null,
+        trainingTimeText: undefined,
+        trainingDateCandidates: [
+          {
+            preferenceRank: 1,
+            trainingDate: '2026-10-29',
+            trainingStartTime: '10:00',
+            trainingEndTime: '12:00',
+          },
+        ],
+      },
+      0
+    )
+    expect(unmatched.instructorAssigned).toBe(true)
+    expect(unmatched.trainingDate).toBe('')
+    expect(unmatched.trainingDateCandidates).toEqual([
+      { preferenceRank: 1, trainingDate: '2026-10-29', trainingTimeText: '10:00~12:00' },
+    ])
+    expect(unmatched.lastPreferredDate).toBe('2026-10-29')
   })
 
   it('maps create request and numeric ids', () => {

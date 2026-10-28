@@ -337,6 +337,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           columns,
           data: rows,
           selectedRowKeys: canWrite ? selectedRowKeys : undefined,
+          getRowKey: row => row.id,
         }}
       >
         <CmsDataTable<GeminiInstructorApplicationRow>

@@ -5,7 +5,7 @@ import {
   formatInstructorDisplay,
   formatRegionDisplay,
   formatStatusLabel,
-  formatTrainingDatetimeDisplay,
+  formatConfirmedTrainingDatetimeDisplay,
 } from './format-display'
 import type { GeminiApprovedTrainingRow } from '../../model/approved/types'
 
@@ -32,7 +32,7 @@ export function buildApprovedTrainingExcelRows(
     institutionName: row.institutionName,
     region: formatRegionDisplay(row),
     status: formatStatusLabel(resolveApprovedTrainingStatus(row, referenceDate)),
-    trainingDatetime: formatTrainingDatetimeDisplay(row),
+    trainingDatetime: formatConfirmedTrainingDatetimeDisplay(row),
     studentCount: `${row.studentCount}명`,
     instructorName: formatInstructorDisplay(row),
     managerName: row.managerName,

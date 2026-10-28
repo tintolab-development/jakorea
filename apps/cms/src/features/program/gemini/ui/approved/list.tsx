@@ -25,10 +25,10 @@ import {
 } from '../../lib/approved/build-excel-export'
 import {
   approvedTrainingStatusModifier,
+  formatConfirmedTrainingDatetimeDisplay,
   formatInstructorDisplay,
   formatRegionDisplay,
   formatStatusLabel,
-  formatTrainingDatetimeDisplay,
 } from '../../lib/approved/format-display'
 import { resolveApprovedTrainingStatus } from '../../lib/approved/resolve-status'
 import {
@@ -105,6 +105,14 @@ function instructorNameText(name: string) {
     )
   }
   return name
+}
+
+function TrainingDatetimeCell({ row }: { row: GeminiApprovedTrainingRow }) {
+  return (
+    <div className="gemini-approved-training-list__training-datetime-cell">
+      {renderProgramDetailPipeSeparated(formatConfirmedTrainingDatetimeDisplay(row))}
+    </div>
+  )
 }
 
 export function GeminiApprovedTrainingList() {
@@ -247,11 +255,7 @@ export function GeminiApprovedTrainingList() {
         key: 'trainingDatetime',
         width: COL.trainingDatetime,
         align: 'center',
-        render: (_: unknown, row) => (
-          <div className="gemini-approved-training-list__training-datetime-cell">
-            {renderProgramDetailPipeSeparated(formatTrainingDatetimeDisplay(row))}
-          </div>
-        ),
+        render: (_: unknown, row) => <TrainingDatetimeCell row={row} />,
       },
       {
         title: '수강 인원',
