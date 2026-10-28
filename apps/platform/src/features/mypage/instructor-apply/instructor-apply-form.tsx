@@ -59,6 +59,7 @@ import {
 import {
   getInstructorApplyConsentPath,
   INSTRUCTOR_APPLY_CONSENT_KEYS,
+  isInstructorApplyOptionalConsentKey,
   type InstructorApplyConsentKey,
 } from './consent/catalog'
 import { formatInstructorConsentAgreedAtLabel } from './lib/format-instructor-apply-datetime'
@@ -85,7 +86,14 @@ const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성
 const FORM_SURFACE = 'platformApply' as const
 const FORM_LAYOUT = getInstructorFormLayout(FORM_SURFACE)
 const CONSENT_DOCUMENT_ITEMS = getInstructorConsentDocumentItems(FORM_SURFACE)
-const REQUIRED_CONSENT_AGREE_KEYS = getInstructorRequiredConsentAgreeKeys(FORM_SURFACE)
+/** 행정정보 공동이용 동의서는 선택 — 제출 검증에서 제외 */
+const REQUIRED_CONSENT_AGREE_KEYS = getInstructorRequiredConsentAgreeKeys(FORM_SURFACE).filter(
+  key => !isInstructorApplyOptionalConsentKey(key)
+)
+/** 선택 동의서가 섞이면 섹션 `*` 대신 항목별 `*` */
+const CONSENT_SECTION_ALL_REQUIRED =
+  FORM_LAYOUT.consent.allItemsRequired &&
+  CONSENT_DOCUMENT_ITEMS.every(item => !isInstructorApplyOptionalConsentKey(item.key))
 
 function chunkPairs<T>(items: readonly T[]): T[][] {
   const rows: T[][] = []
@@ -477,7 +485,7 @@ export function InstructorApplyForm({
           title={SECTION_TITLE.consent}
           description={FORM_LAYOUT.consent.description}
           footer={FORM_LAYOUT.consent.footerText}
-          required={FORM_LAYOUT.consent.allItemsRequired}
+          required={CONSENT_SECTION_ALL_REQUIRED}
         >
           <PFFormFieldTable>
             {CONSENT_DOCUMENT_ROWS.map(row => (
@@ -490,7 +498,11 @@ export function InstructorApplyForm({
                       key={item.key}
                       label={item.label}
                       labelWidth="wide"
-                      required={!FORM_LAYOUT.consent.allItemsRequired && item.required}
+                      required={
+                        !CONSENT_SECTION_ALL_REQUIRED &&
+                        item.required &&
+                        !isInstructorApplyOptionalConsentKey(item.key)
+                      }
                     >
                       <PFFormInlineSeparatedFields>
                         <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>

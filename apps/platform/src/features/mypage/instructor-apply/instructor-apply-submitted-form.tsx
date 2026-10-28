@@ -9,7 +9,7 @@ import { INSTRUCTOR_FREE_WRITE_ITEMS } from '@jakorea/domain/instructor/free-wri
 import type { InstructorConsentDocumentKey } from '@jakorea/domain/instructor/consent'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { InstructorApplySubmittedSnapshot } from './api/map-detail-to-form-values'
-import type { InstructorApplyConsentKey } from './consent/catalog'
+import { isInstructorApplyOptionalConsentKey, type InstructorApplyConsentKey } from './consent/catalog'
 import { ConsentDocumentPreviewOverlay } from '../settings/ui/consent-document-preview-overlay'
 import { useInstructorApplyConsentDocumentPreview } from './lib/use-instructor-apply-consent-document-preview'
 import {
@@ -55,6 +55,10 @@ function chunkPairs<T>(items: readonly T[]): T[][] {
 }
 
 const CONSENT_DOCUMENT_ROWS = chunkPairs(CONSENT_DOCUMENT_ITEMS)
+/** 선택 동의서(행정정보)가 섞이면 섹션 `*` 대신 항목별 `*` — 신청 폼과 동일 */
+const CONSENT_SECTION_ALL_REQUIRED =
+  FORM_LAYOUT.consent.allItemsRequired &&
+  CONSENT_DOCUMENT_ITEMS.every(item => !isInstructorApplyOptionalConsentKey(item.key))
 const SECTION_TITLE = {
   consent: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'consent'),
   basic: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'basic'),
@@ -94,7 +98,7 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
         title={SECTION_TITLE.consent}
         description={FORM_LAYOUT.consent.description}
         footer={FORM_LAYOUT.consent.footerText}
-        required={FORM_LAYOUT.consent.allItemsRequired}
+        required={CONSENT_SECTION_ALL_REQUIRED}
       >
         <PFFormFieldTable>
           {CONSENT_DOCUMENT_ROWS.map(row => (
@@ -107,7 +111,11 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
                     key={item.key}
                     label={item.label}
                     labelWidth="wide"
-                    required={!FORM_LAYOUT.consent.allItemsRequired && item.required}
+                    required={
+                      !CONSENT_SECTION_ALL_REQUIRED &&
+                      item.required &&
+                      !isInstructorApplyOptionalConsentKey(item.key)
+                    }
                   >
                     <PFFormInlineSeparatedFields>
                       <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>

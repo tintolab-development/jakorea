@@ -39,4 +39,16 @@ export function getInstructorApplyConsentPath(key: InstructorConsentDocumentKey)
   return instructorApplyConsentPath(key)
 }
 
+/**
+ * 강사 신청 제출 시 필수에서 빼는 동의서 — 작성·보기·제출(동의 여부 전송)은 그대로 둔다.
+ * 행정정보 공동이용: 2026-10-29 필수 해제. 공용 레이아웃(`@jakorea/domain` form-layout)은 CMS와 같이 쓰므로 앱에서만 덮어쓴다.
+ */
+export const INSTRUCTOR_APPLY_OPTIONAL_CONSENT_KEYS: readonly InstructorConsentDocumentKey[] = [
+  'consentAdministrativeJoint',
+]
+
+export function isInstructorApplyOptionalConsentKey(key: string): boolean {
+  return (INSTRUCTOR_APPLY_OPTIONAL_CONSENT_KEYS as readonly string[]).includes(key)
+}
+
 export const CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
