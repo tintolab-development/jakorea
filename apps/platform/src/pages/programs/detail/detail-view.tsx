@@ -7,6 +7,7 @@ import {
   ProgramStatusBadges,
   type ProgramDetail,
 } from '@/features/program'
+import { resolveGeminiProgramOperatingPeriodLabel } from '@/features/program/lib/gemini-program-period-label'
 import { PFFileDownload, PFText } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
@@ -78,7 +79,7 @@ export function ProgramDetailView({
                       프로그램 운영 기간
                     </PFText>
                     <PFText as="span" typo="hl-sm" color="black" className={styles.metaValue}>
-                      {program.operatingPeriodLabel}
+                      {resolveGeminiProgramOperatingPeriodLabel(program)}
                     </PFText>
                   </div>
                   <div className={styles.metaItem}>

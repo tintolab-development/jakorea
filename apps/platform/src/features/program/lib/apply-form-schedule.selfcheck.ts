@@ -39,6 +39,8 @@ import {
   readApplyFixedScheduleChoiceIds,
   resolveApplyScheduleChoiceAnswerKey,
   resolveHiddenScheduleAutoSubmitIds,
+  GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+  padPreferredScheduleBlocks,
 } from './apply-form-schedule.ts'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
@@ -1105,5 +1107,18 @@ function testEducationScheduleWireContract() {
 }
 
 testEducationScheduleWireContract()
+
+function testGeminiPreferredSchedulePad() {
+  const padded = padPreferredScheduleBlocks(
+    [{ date: '2026-11-10', classPeriod: '1', startTime: '10:00', endTime: '12:00' }],
+    GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT
+  )
+  assert.equal(padded.length, 3)
+  assert.equal(padded[0]?.date, '2026-11-10')
+  assert.equal(padded[1]?.date, '')
+  assert.equal(padded[2]?.classPeriod, '')
+}
+
+testGeminiPreferredSchedulePad()
 
 console.log('apply-form-schedule.selfcheck: ok')

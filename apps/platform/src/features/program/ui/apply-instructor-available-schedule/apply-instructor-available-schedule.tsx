@@ -626,6 +626,10 @@ export type ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: string
   summaryLabel: string
   emptyMessage: string
+  /** 선택지가 없을 때 슬롯 영역 안내. 없으면 `emptyMessage` */
+  emptyHint?: string
+  /** 선택 전 요약 힌트 */
+  summaryEmptyHint?: string
   /** 강의·봉사(lecture) vs 면접(interview) 칩 시안 */
   slotChipStyle?: ApplyScheduleSlotChipStyle
 }
@@ -634,6 +638,9 @@ const INSTRUCTOR_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   calendarAriaLabel: '강의 진행 가능 일정 날짜',
   summaryLabel: '강의 진행 가능일',
   emptyMessage: INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE,
+  emptyHint:
+    '기관 프로그램은 기관이 신청한 희망 일정 중 강의 진행이 가능한 일정을 모두 선택해 주세요.',
+  summaryEmptyHint: '일정을 먼저 선택해 주세요.',
   slotChipStyle: 'lecture',
 }
 
@@ -728,8 +735,11 @@ export function ApplyInstructorAvailableSchedule({
     onChange({ selectedSlotIds: next })
   }
 
-  const emptyMessage =
-    slots.length === 0 ? copy.emptyMessage : '이 날짜에 선택할 수 있는 일정이 없습니다.'
+  const noSlots = slots.length === 0
+  const emptyMessage = noSlots
+    ? (copy.emptyHint ?? copy.emptyMessage)
+    : '이 날짜에 선택할 수 있는 일정이 없습니다.'
+  const summaryEmptyHint = copy.summaryEmptyHint ?? '선택한 일정이 여기에 표시됩니다.'
   const slotChipStyle = copy.slotChipStyle ?? 'lecture'
   const slotChipInterview = slotChipStyle === 'interview'
 
@@ -751,7 +761,11 @@ export function ApplyInstructorAvailableSchedule({
           />
         ) : null}
         <div
-          className={[styles.slotGrid, slotChipInterview ? styles.slotGridInterview : undefined]
+          className={[
+            styles.slotGrid,
+            slotChipInterview ? styles.slotGridInterview : undefined,
+            noSlots ? styles.slotGridEmpty : undefined,
+          ]
             .filter(Boolean)
             .join(' ')}
           role="list"
@@ -797,7 +811,7 @@ export function ApplyInstructorAvailableSchedule({
         <PFFormFieldRow type="single">
           <PFFormField label={copy.summaryLabel}>
             {selected.length === 0 ? (
-              <PFFormFieldHintText as="p">선택한 일정이 여기에 표시됩니다.</PFFormFieldHintText>
+              <PFFormFieldHintText as="p">{summaryEmptyHint}</PFFormFieldHintText>
             ) : (
               <PFFormInlineRow>
                 {selected.map((slot, index) => (

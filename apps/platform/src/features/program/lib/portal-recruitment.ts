@@ -148,11 +148,15 @@ export function selectRecruitmentsForFocus(
       if (row.recruitmentId !== exactId) return false
       if (requested.length === 0) return true
 
-      // 신청 상세에서 전달한 모집 유형은 모집행의 명시적인
-      // applicationTypes와 일치할 때만 확정한다. recruitmentType으로
-      // 유형을 추정하면 다른 모집행의 정보를 잘못 표시할 수 있다.
       const listedTypes = upperList(row.applicationTypes)
-      return requested.every(type => listedTypes.includes(type))
+      if (listedTypes.length > 0) {
+        return requested.every(type => listedTypes.includes(type))
+      }
+      const derived = rowApplicationTypes(row)
+      if (derived.length > 0) {
+        return requested.every(type => derived.includes(type))
+      }
+      return true
     })
     const fromRows = upperList(rows.flatMap(rowApplicationTypes))
     const applicationTypes =
@@ -201,6 +205,20 @@ export function selectRecruitmentsForFocus(
     recruitmentIds,
     ambiguous,
   }
+}
+
+/** 상세 GET query — URL 의 applicationType·recruitmentId 만 실어 보낸다. */
+export function portalProgramDetailRequestQuery(
+  focus?: PortalRecruitmentFocus | null,
+): { recruitmentId?: number; applicationType?: string } | undefined {
+  const recruitmentId = focus?.recruitmentIds?.[0]
+  const applicationType = focus?.applicationTypes?.[0]?.trim()
+  const query: { recruitmentId?: number; applicationType?: string } = {}
+  if (recruitmentId != null && Number.isSafeInteger(recruitmentId) && recruitmentId > 0) {
+    query.recruitmentId = recruitmentId
+  }
+  if (applicationType) query.applicationType = applicationType
+  return query.recruitmentId != null || query.applicationType ? query : undefined
 }
 
 export function writePortalRecruitmentFocus(

@@ -795,6 +795,9 @@ export function resolveApplyPreferredScheduleInitialBlockCount(
   return Math.min(2, maxBlocks)
 }
 
+/** Gemini 기관 신청 — 1~3지망 고정 (추가·삭제 없음) */
+export const GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT = 3
+
 export function createEmptyApplyPreferredScheduleBlocks(
   count: number
 ): ApplyPreferredScheduleBlock[] {
@@ -805,6 +808,23 @@ export function createEmptyApplyPreferredScheduleBlocks(
     startTime: '',
     endTime: '',
   }))
+}
+
+export function padPreferredScheduleBlocks(
+  blocks: readonly ApplyPreferredScheduleBlock[],
+  count: number
+): ApplyPreferredScheduleBlock[] {
+  const n = Math.max(1, Math.min(count, 10))
+  const next = blocks.slice(0, n).map(block => ({ ...block }))
+  while (next.length < n) {
+    next.push({
+      date: '',
+      classPeriod: '',
+      startTime: '',
+      endTime: '',
+    })
+  }
+  return next
 }
 
 export function resolveApplyPreferredMaxSessionsPerDay(

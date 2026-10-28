@@ -1,0 +1,29 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.table {
+  width: 100%;
+}
+
+.notes {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+:global(.form-template-host) .table :global(.typo-bd-md-md),
+:global(.form-template-host) .notes :global(.typo-bd-md-md) {
+  color: var(--main-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}

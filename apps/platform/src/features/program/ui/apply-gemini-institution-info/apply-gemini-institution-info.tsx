@@ -123,7 +123,7 @@ export function ApplyGeminiInstitutionTrainingInfo({
                   <PFTextInput
                     variant="formPage"
                     size="large"
-                    width={160}
+                    width={120}
                     inputMode="numeric"
                     placeholder="총 학생 수"
                     value={value.studentCount}

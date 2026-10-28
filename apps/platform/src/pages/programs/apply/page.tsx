@@ -72,6 +72,7 @@ import {
   isApplicationPreferredScheduleParagraphId,
   isGeminiInstitutionContactPersonParagraphId,
   isGeminiInstitutionTrainingInfoParagraphId,
+  isGeminiInstructorOfficialDocumentParagraphId,
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
@@ -111,6 +112,14 @@ import {
   type ApplyGeminiInstitutionContactValues,
   type ApplyGeminiInstitutionTrainingInfoValues,
 } from '@/features/program/ui/apply-gemini-institution-info/apply-gemini-institution-info'
+import {
+  ApplyGeminiInstructorOfficialDocument,
+  emptyGeminiInstructorOfficialDocument,
+  findIncompleteGeminiInstructorOfficialDocumentMessage,
+  geminiInstructorOfficialDocumentAnswerFromValues,
+  geminiInstructorOfficialDocumentValuesFromDraftAnswer,
+  type ApplyGeminiInstructorOfficialDocumentValues,
+} from '@/features/program/ui/apply-gemini-instructor-official-document/official-document'
 import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/lib/application-form-program-link'
 import { readApplyScheduleMetaFromProgram } from '@/features/program/lib/apply-form-schedule-meta'
 import { resolvePortalApplicationHiddenParagraphIds } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
@@ -150,6 +159,8 @@ import {
   resolveHiddenScheduleAutoSubmitIds,
   buildApplyPreferredSessionSelectOptions,
   createEmptyApplyPreferredScheduleBlocks,
+  GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+  padPreferredScheduleBlocks,
   resolveApplyPreferredMaxSessionsPerDay,
   resolveApplyPreferredScheduleInitialBlockCount,
   resolveApplyPreferredScheduleMaxBlocks,
@@ -521,6 +532,8 @@ export function ProgramApplyPage() {
   const [geminiContact, setGeminiContact] = useState<ApplyGeminiInstitutionContactValues>(
     emptyGeminiInstitutionContact,
   )
+  const [geminiOfficialDocument, setGeminiOfficialDocument] =
+    useState<ApplyGeminiInstructorOfficialDocumentValues>(emptyGeminiInstructorOfficialDocument)
   const [trainedTeachersFixedSelectedIds, setTrainedTeachersFixedSelectedIds] = useState<string[]>(
     []
   )
@@ -818,7 +831,7 @@ export function ProgramApplyPage() {
   )
   const preferredScheduleMaxBlocks = useMemo(() => {
     if (!program) return 1
-    if (showGeminiInstitutionApply) return 3
+    if (showGeminiInstitutionApply) return GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT
     return resolveApplyPreferredScheduleMaxBlocks(program, applicationFormRuntimeContext)
   }, [applicationFormRuntimeContext, program, showGeminiInstitutionApply])
   const preferredScheduleMapOptions = useMemo(
@@ -1022,7 +1035,9 @@ export function ProgramApplyPage() {
             }
           )
           const bindingMergedDraft =
-            isVolunteerApplyFormCase(applyCaseForDraft) || applyCaseForDraft === 'instructor'
+            isVolunteerApplyFormCase(applyCaseForDraft) ||
+            applyCaseForDraft === 'instructor' ||
+            applyCaseForDraft === 'instructor-gemini'
               ? mergeApplicationBindingRuntimeParagraphs(programLinkedDraft, remoteForm)
               : programLinkedDraft
           setDraft(
@@ -1057,14 +1072,17 @@ export function ProgramApplyPage() {
               PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
           )
           setPreferredBlocks(
-            fromPreferred ??
-              (applyCaseForDraft === 'institution-general'
-                ? createEmptyApplyPreferredScheduleBlocks(
-                    resolveApplyPreferredScheduleInitialBlockCount(program)
-                  )
-                : applyCaseForDraft === 'institution-gemini'
-                  ? createEmptyApplyPreferredScheduleBlocks(3)
-                : [createEmptyPreferredBlock()])
+            applyCaseForDraft === 'institution-gemini'
+              ? padPreferredScheduleBlocks(
+                  fromPreferred ?? [],
+                  GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+                )
+              : fromPreferred ??
+                (applyCaseForDraft === 'institution-general'
+                  ? createEmptyApplyPreferredScheduleBlocks(
+                      resolveApplyPreferredScheduleInitialBlockCount(program)
+                    )
+                  : [createEmptyPreferredBlock()])
           )
           setTrainedTeachersFixedSelectedIds(
             selectedFixedScheduleIdsFromDraftAnswer(
@@ -1108,6 +1126,15 @@ export function ProgramApplyPage() {
             geminiInstitutionContactValuesFromDraftAnswer(
               draftAnswerForParagraph(draftAnswers, geminiContactParagraph),
             ) ?? emptyGeminiInstitutionContact(),
+          )
+          const geminiOfficialDocumentParagraph = findDraftParagraph(
+            programLinkedDraft,
+            isGeminiInstructorOfficialDocumentParagraphId,
+          )
+          setGeminiOfficialDocument(
+            geminiInstructorOfficialDocumentValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, geminiOfficialDocumentParagraph),
+            ) ?? emptyGeminiInstructorOfficialDocument(),
           )
           const teamParagraph = findDraftParagraph(remoteDraft, isApplicationTeamInfoParagraphId)
           setTeamInfo(
@@ -1259,11 +1286,14 @@ export function ProgramApplyPage() {
       setDraft(null)
       setPreferredBlocks(
         applyCase === 'institution-gemini'
-          ? createEmptyApplyPreferredScheduleBlocks(3)
+          ? createEmptyApplyPreferredScheduleBlocks(
+              GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+            )
           : [createEmptyPreferredBlock()],
       )
       setGeminiTrainingInfo(emptyGeminiInstitutionTrainingInfo())
       setGeminiContact(emptyGeminiInstitutionContact())
+      setGeminiOfficialDocument(emptyGeminiInstructorOfficialDocument())
       setBasicInfo(
         fillTrainedTeachersBasicInfoFromProfile(emptyTrainedTeachersBasicInfo(), profileDefaults)
       )
@@ -1301,11 +1331,14 @@ export function ProgramApplyPage() {
     )
     setPreferredBlocks(
       applyCase === 'institution-gemini'
-        ? createEmptyApplyPreferredScheduleBlocks(3)
+        ? createEmptyApplyPreferredScheduleBlocks(
+            GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+          )
         : [createEmptyPreferredBlock()],
     )
     setGeminiTrainingInfo(emptyGeminiInstitutionTrainingInfo())
     setGeminiContact(emptyGeminiInstitutionContact())
+    setGeminiOfficialDocument(emptyGeminiInstructorOfficialDocument())
     setBasicInfo(emptyTrainedTeachersBasicInfo())
     setTeamInfo(emptyIndividualTeamInfo())
     setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
@@ -1394,6 +1427,15 @@ export function ProgramApplyPage() {
 
       if (isGeminiInstitutionContactPersonParagraphId(paragraph.id)) {
         return <ApplyGeminiInstitutionContact value={geminiContact} onChange={setGeminiContact} />
+      }
+
+      if (isGeminiInstructorOfficialDocumentParagraphId(paragraph.id)) {
+        return (
+          <ApplyGeminiInstructorOfficialDocument
+            value={geminiOfficialDocument}
+            onChange={setGeminiOfficialDocument}
+          />
+        )
       }
 
       if (isApplicationBasicInfoParagraphId(paragraph.id)) {
@@ -1682,6 +1724,12 @@ export function ProgramApplyPage() {
             maxBlocks={preferredScheduleMaxBlocks}
             value={preferredBlocks}
             onChange={setPreferredBlocks}
+            allowRemove={!showGeminiInstitutionApply}
+            showSessionUnit={!showGeminiInstitutionApply}
+            datePlaceholder={
+              showGeminiInstitutionApply ? '날짜를 선택해 주세요' : '희망 교육 날짜를 선택하세요'
+            }
+            dateWidth={showGeminiInstitutionApply ? 240 : 220}
             minDate={
               useInstitutionScheduleBounds
                 ? institutionScheduleDateBounds.minScheduleDate
@@ -1894,6 +1942,7 @@ export function ProgramApplyPage() {
       program,
       preferredBlocks,
       geminiContact,
+      geminiOfficialDocument,
       geminiTrainingInfo,
       basicInfo,
       teamInfo,
@@ -1981,6 +2030,7 @@ export function ProgramApplyPage() {
       }
 
       if (!isPreferredScheduleSlot || !showPreferredScheduleInput) return null
+      if (showGeminiInstitutionApply) return null
 
       const atPreferredScheduleMax = preferredBlocks.length >= preferredScheduleMaxBlocks
       const scheduleInputDisabled =
@@ -2000,6 +2050,7 @@ export function ProgramApplyPage() {
     },
     [
       showGeneralPreferredSchedule,
+      showGeminiInstitutionApply,
       showTrainedTeachersApply,
       showPreferredScheduleInput,
       preferredBlocks.length,
@@ -2549,6 +2600,21 @@ export function ProgramApplyPage() {
           return
         }
       }
+      const geminiOfficialDocumentParagraph = findDraftParagraph(
+        displayDraft,
+        isGeminiInstructorOfficialDocumentParagraphId,
+      )
+      const geminiOfficialDocumentVisible =
+        geminiOfficialDocumentParagraph != null &&
+        !hiddenParagraphIds.has(geminiOfficialDocumentParagraph.id)
+      if (geminiOfficialDocumentVisible && isRequiredParagraph(geminiOfficialDocumentParagraph)) {
+        const officialDocumentError =
+          findIncompleteGeminiInstructorOfficialDocumentMessage(geminiOfficialDocument)
+        if (officialDocumentError) {
+          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          return
+        }
+      }
       const teamParagraph = findDraftParagraph(displayDraft, isApplicationTeamInfoParagraphId)
       const showTeamInfo = applyCase != null && shouldShowIndividualTeamInfoParagraph(applyCase)
       const teamInfoVisible =
@@ -2794,6 +2860,14 @@ export function ProgramApplyPage() {
         const contactAnswer = geminiInstitutionContactAnswerFromValues(geminiContact)
         if (contactAnswer) {
           overrides[resolveApplicationAnswerKey(geminiContactParagraph)] = contactAnswer
+        }
+      }
+      if (geminiOfficialDocumentVisible && geminiOfficialDocumentParagraph) {
+        const officialDocumentAnswer =
+          geminiInstructorOfficialDocumentAnswerFromValues(geminiOfficialDocument)
+        if (officialDocumentAnswer) {
+          overrides[resolveApplicationAnswerKey(geminiOfficialDocumentParagraph)] =
+            officialDocumentAnswer
         }
       }
       if (hiddenScheduleAutoSubmitIds && applyScheduleChoiceAnswerKey) {

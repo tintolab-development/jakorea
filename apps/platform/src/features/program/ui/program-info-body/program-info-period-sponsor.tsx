@@ -1,9 +1,19 @@
 import { PFText } from '@/shared/ui'
 import type { ProgramDetail } from '../../model/types'
+import { resolveGeminiProgramOperatingPeriodLabel } from '../../lib/gemini-program-period-label'
 import styles from './program-info-body.module.css'
 
 type ProgramInfoPeriodSponsorProps = {
-  program: Pick<ProgramDetail, 'operatingPeriodLabel' | 'sponsor'>
+  program: Pick<
+    ProgramDetail,
+    | 'operatingPeriodLabel'
+    | 'sponsor'
+    | 'detailCase'
+    | 'recruitmentPeriodLabel'
+    | 'geminiTrainingRequestPeriodLabel'
+    | 'educationScheduleLines'
+    | 'eventSchedules'
+  >
   className?: string
 }
 
@@ -16,7 +26,7 @@ export function ProgramInfoPeriodSponsor({
   program,
   className,
 }: ProgramInfoPeriodSponsorProps) {
-  const operatingPeriodLabel = program.operatingPeriodLabel.trim()
+  const operatingPeriodLabel = resolveGeminiProgramOperatingPeriodLabel(program)
   const sponsor = program.sponsor.trim()
   const hasPeriod = isPresent(operatingPeriodLabel)
   const hasSponsor = isPresent(sponsor)

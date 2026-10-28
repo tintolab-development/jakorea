@@ -257,6 +257,37 @@ function testInstitutionGemini() {
     GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.contactPerson,
     GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
   ])
+  const geminiDraft = buildApplyFormSeedDraft(
+    mapCmsProgramToPlatformDetail(
+      GEMINI_RECRUITMENT_FIXTURES.find(f => f.id === PROGRAM_DETAIL_CASE_SSOT_IDS.gemini)!
+    )
+  )
+  assert.ok(geminiDraft)
+  const titles = Object.fromEntries(
+    geminiDraft!.paragraphs.map(paragraph => [paragraph.id, paragraph.paragraphTitle])
+  )
+  assert.equal(
+    titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection],
+    '개인 정보수집 및 제공에 대한 동의'
+  )
+  assert.equal(
+    titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent],
+    '제 3자 정보 제공 동의'
+  )
+  assert.equal(
+    titles[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.portraitConsent],
+    '초상권에 대한 동의'
+  )
+  const schedule = geminiDraft!.paragraphs.find(
+    paragraph =>
+      paragraph.id ===
+      GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule
+  )
+  assert.equal(schedule?.paragraphTitle, '진행 희망 교육 일정')
+  assert.equal(
+    schedule?.paragraphDescription,
+    '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.'
+  )
 }
 
 function testGeminiDetailCaseRouting() {

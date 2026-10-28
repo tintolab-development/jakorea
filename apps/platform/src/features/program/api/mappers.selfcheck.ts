@@ -126,6 +126,22 @@ assert.deepEqual(
   }
 )
 
+const imageOnly = mapPortalProgramDetail({
+  programId: 186088,
+  programType: 'GENERAL_ORGANIZATION',
+  title: '이미지만',
+  additionalContentHtml: '<p><img src="/api/admin/files/91/content" alt="사진" /></p>',
+})
+assert.ok(imageOnly)
+assert.deepEqual(
+  imageOnly.extraSections.find(section => section.title === '추가 내용'),
+  {
+    title: '추가 내용',
+    body: '<p><img src="/api/portal/public/files/91/content?inline=1" alt="사진" /></p>',
+    bodyFormat: 'html',
+  },
+)
+
 const individualOnly = mapPortalProgramDetail({
   programId: 186015,
   title: '개인 참여',

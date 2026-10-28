@@ -56,6 +56,18 @@
   max-width: 100%;
 }
 
+.compactTime .datePicker {
+  flex-basis: 240px;
+  width: 240px;
+}
+
+.compactTime .timeInputs .sessionSelect,
+.compactTime .timeInputs .timePicker {
+  flex: 0 0 120px;
+  width: 120px;
+  min-width: 120px;
+}
+
 .timeInputs {
   display: flex;
   flex-wrap: nowrap;

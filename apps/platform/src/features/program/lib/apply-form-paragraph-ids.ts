@@ -97,6 +97,11 @@ export function isGeminiInstitutionContactPersonParagraphId(id: string): boolean
   return id === GEMINI_CONTACT_PERSON_ID
 }
 
+/** Gemini 찾아가는 연수 강사 신청 — 연수 공문 (CMS GeminiInstructorOfficialDocumentParagraph) */
+export function isGeminiInstructorOfficialDocumentParagraphId(id: string): boolean {
+  return id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.officialDocument
+}
+
 /** 강사 신청 — 성범죄경력 조회 동의서 제출 방법 안내 (CMS InstructorCrimeRecordParagraph) */
 export function isInstructorCrimeRecordParagraphId(id: string): boolean {
   return INSTRUCTOR_CRIME_RECORD_IDS.has(id)

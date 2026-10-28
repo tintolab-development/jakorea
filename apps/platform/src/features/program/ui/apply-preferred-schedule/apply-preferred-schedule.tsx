@@ -91,6 +91,9 @@ type PreferenceScheduleFieldsProps = {
     endTime: string
     session?: string
   }[]
+  showSessionUnit: boolean
+  datePlaceholder: string
+  dateWidth: number
 }
 
 /** CMS `PreferenceScheduleFields` — DetailInfoForm 격자(희망 교육일 | 희망 교육 시간) */
@@ -106,6 +109,9 @@ function PreferenceScheduleFields({
   disabled,
   disabledOptionValues,
   fixedScheduleOptions,
+  showSessionUnit,
+  datePlaceholder,
+  dateWidth,
 }: PreferenceScheduleFieldsProps) {
   const startTime = normalizeHHmm(block.startTime)
   const endTime = normalizeHHmm(block.endTime)
@@ -152,9 +158,9 @@ function PreferenceScheduleFields({
           variant="formPage"
           size="large"
           picker="date"
-          width={220}
+          width={dateWidth}
           className={styles.datePicker}
-          placeholder="희망 교육 날짜를 선택하세요"
+          placeholder={datePlaceholder}
           value={block.date}
           disabled={disabled}
           minDate={minDate}
@@ -187,7 +193,7 @@ function PreferenceScheduleFields({
                 <PFSelect
                   variant="formPage"
                   size="large"
-                  width={140}
+                  width={showSessionUnit ? 140 : 120}
                   className={styles.sessionSelect}
                   placeholder="희망 차시"
                   options={sessionOptions}
@@ -196,9 +202,11 @@ function PreferenceScheduleFields({
                   onValueChange={next => onPatch({ classPeriod: next ?? '' })}
                   aria-label="희망 차시"
                 />
-                <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
-                  교시
-                </PFText>
+                {showSessionUnit ? (
+                  <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
+                    교시
+                  </PFText>
+                ) : null}
                 <DetailInfoForm.InputsSeparator />
               </>
             ) : (
@@ -276,6 +284,12 @@ type ApplyPreferredScheduleProps = {
   }[]
   /** runtime 일정 계약이 없을 때 일정 입력을 fail-closed 한다. */
   disabled?: boolean
+  /** false면 2지망 이후 삭제 버튼을 숨긴다 (고정 지망) */
+  allowRemove?: boolean
+  /** 희망 차시 셀렉트 옆 「교시」 단위. Gemini 기관은 시안상 숨김 */
+  showSessionUnit?: boolean
+  datePlaceholder?: string
+  dateWidth?: number
 }
 
 export function ApplyPreferredSchedule({
@@ -291,6 +305,10 @@ export function ApplyPreferredSchedule({
   fixedScheduleOptions = [],
   showFooterAddButton = false,
   disabled = false,
+  allowRemove = true,
+  showSessionUnit = true,
+  datePlaceholder = '희망 교육 날짜를 선택하세요',
+  dateWidth = 220,
 }: ApplyPreferredScheduleProps) {
   const cap = Math.max(1, Math.min(maxBlocks, 10))
   const [uncontrolled, setUncontrolled] = useState<ApplyPreferredScheduleBlock[]>(() => [
@@ -322,7 +340,7 @@ export function ApplyPreferredSchedule({
   }
 
   return (
-    <div className={styles.root}>
+    <div className={[styles.root, !showSessionUnit ? styles.compactTime : ''].filter(Boolean).join(' ')}>
       {displayBlocks.map((block, index) => {
         const rankTitle = resolvePreferredScheduleBlockTitle(index, displayBlocks.length, cap)
         return (
@@ -356,10 +374,13 @@ export function ApplyPreferredSchedule({
                       .filter((value): value is string => Boolean(value))
                   )}
                   fixedScheduleOptions={fixedScheduleOptions}
+                  showSessionUnit={showSessionUnit}
+                  datePlaceholder={datePlaceholder}
+                  dateWidth={dateWidth}
                 />
               </DetailInfoForm>
             </div>
-            {index > 0 ? (
+            {allowRemove && index > 0 ? (
               <div className={styles.deleteCell}>
                 <PFItemDeleteButton
                   aria-label={`${index + 1}지망 삭제`}

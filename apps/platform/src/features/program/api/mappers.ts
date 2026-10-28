@@ -34,6 +34,10 @@ import type {
 } from './types'
 import { extraSection, rewriteAdminFileContentSrcsForPortal } from '../lib/html-body.ts'
 import {
+  recruitmentGuideSectionTitle,
+  recruitmentPhaseGroupLabel,
+} from '../lib/detail-case.ts'
+import {
   educationScheduleDetailCardLabel,
   formatEducationScheduleRangeForDetailCard,
   formatEducationScheduleLineForDetailCard,
@@ -453,6 +457,8 @@ function recruitmentTypeLabel(value: string | undefined): string {
       return '강사 모집 기간'
     case 'VOLUNTEER':
       return '봉사자 모집 기간'
+    case 'ORGANIZATION':
+      return '기관 모집 기간'
     default:
       return '참여자 모집 기간'
   }
@@ -464,6 +470,8 @@ function recruitmentRoleShort(value: string | undefined): string {
       return '강사'
     case 'VOLUNTEER':
       return '봉사자'
+    case 'ORGANIZATION':
+      return '기관'
     default:
       return '참여자'
   }
@@ -692,19 +700,27 @@ export function formatPortalEducationVenue(
   return detailWithoutKind ? `${kindLabel} | ${detailWithoutKind}` : kindLabel
 }
 
-/** 참여자·기관·Gemini만 학습 지원. 강사·봉사자는 기타사항. */
+/** 참여자·기관·Gemini만 학습 지원. 강사·봉사자는 기타사항. Gemini 비고(notes)도 otherMatters. */
 function showsLearningSupport(detailCase: ProgramDetailCase): boolean {
   return detailCase === 'general' || detailCase === 'ujat-participant' || detailCase === 'gemini'
 }
 
 function showsOtherMatters(detailCase: ProgramDetailCase): boolean {
-  return detailCase === 'instructor' || detailCase === 'volunteer' || detailCase === 'ujat-volunteer'
+  return (
+    detailCase === 'instructor' ||
+    detailCase === 'volunteer' ||
+    detailCase === 'ujat-volunteer' ||
+    detailCase === 'gemini'
+  )
 }
 
-/** 빈 에디터(`<p></p>`, `<p><br></p>`)와 CMS 공란 표식은 섹션을 만들지 않는다. */
+/** 빈 에디터(`<p></p>`, `<p><br></p>`)와 CMS 공란 표식은 섹션을 만들지 않는다. 이미지만 있으면 유지한다. */
 function visibleCopy(value: string): string {
   const trimmed = value.trim()
   if (!trimmed || trimmed === '-' || trimmed === '해당 없음' || trimmed === '해당없음') return ''
+  if (/<img\b/i.test(trimmed) || /!\[[^\]]*]\(/i.test(trimmed) || /file-object:\d+/i.test(trimmed)) {
+    return trimmed
+  }
   const plain = trimmed
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;|&#160;/gi, ' ')
@@ -1102,7 +1118,6 @@ function buildPortalBasicInfoFields(args: {
         { label: '교육 대상', value: args.educationTargetGroupLabel },
         { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
         { label: '최소 수강 인원', value: args.geminiMinStudentCountLabel ?? '' },
-        { label: '교육 장소', value: args.educationVenueLabel },
       ])
     default: {
       const fields: ProgramBasicInfoField[] = [{ label: '사업 분야', value: args.businessFieldLabel }]
@@ -1137,6 +1152,11 @@ function isIndependentRecruitmentProgram(programType: string | undefined): boole
   return type === 'UJAT' || type === 'GENERAL' || (type?.startsWith('GENERAL_') ?? false)
 }
 
+function isGeminiPortalProgramType(programType: string | undefined): boolean {
+  const type = (programType ?? '').trim().toUpperCase()
+  return type === 'GEMINI_TRAINING' || type === 'GEMINI' || type === 'VISITING_TRAINING'
+}
+
 export function mapPortalProgramDetail(
   remote: PortalProgramDetail,
   focus?: PortalRecruitmentFocus | null,
@@ -1161,12 +1181,15 @@ export function mapPortalProgramDetail(
       ? []
       : remote.recruitments
   const focusedTab = focus?.portalTab
-  const categories = focusedTab
-    ? [programTabFromPortalTab(focusedTab)]
-    : mapPortalTabs(remote.portalCategories, remote.programType)
-  const category = focusedTab
-    ? programTabFromPortalTab(focusedTab)
-    : mapCategory(remote.portalCategories, remote.programType)
+  const keepGeminiPortalCategories = isGeminiPortalProgramType(remote.programType)
+  const categories =
+    focusedTab && !keepGeminiPortalCategories
+      ? [programTabFromPortalTab(focusedTab)]
+      : mapPortalTabs(remote.portalCategories, remote.programType)
+  const category =
+    focusedTab && !keepGeminiPortalCategories
+      ? programTabFromPortalTab(focusedTab)
+      : mapCategory(remote.portalCategories, remote.programType)
   const detailCase =
     recruitmentResolved && selected
       ? detailCaseForFocus(remote.programType, selected.applicationTypes)
@@ -1331,8 +1354,8 @@ export function mapPortalProgramDetail(
   const remarks = visibleCopy(readString(independentRow ? independentRow.remarks : remote.remarks) ?? '')
   const preEducationNoticeRequired = readPortalPreEducationNoticeRequired(remote, independentRow)
   const extraSections: ProgramExtraSection[] = [
-    extraSection('모집 안내', recruitmentGuide),
-    { title: '추가 내용', body: additionalContent, bodyFormat: 'html' as const },
+    extraSection(recruitmentGuideSectionTitle(detailCase), recruitmentGuide),
+    extraSection('추가 내용', additionalContent),
     ...(showsLearningSupport(detailCase)
       ? [extraSection('학습 지원 내용', learningSupportContent)]
       : []),
@@ -1433,8 +1456,7 @@ export function mapPortalProgramDetail(
     ),
     sessions,
     eventSchedules,
-    recruitmentPhaseGroupLabel:
-      detailCase === 'gemini' ? '신청 및 연수 기간' : '모집 및 선별 기간',
+    recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(
       selected?.ambiguous
         ? undefined
