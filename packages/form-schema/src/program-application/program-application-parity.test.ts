@@ -383,10 +383,14 @@ assert.equal(
   individualScheduleParagraph.paragraphDescription,
   '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, 2차시 운영됩니다.'
 )
-// ① 예정일 줄 i = (i+1)차시
+// ① 모든 예정일 줄 = 커리큘럼 총 차시
 assert.equal(
   (individualScheduleParagraph as MultipleChoiceParagraph).items[0]?.label,
-  '26년 4월 20일(월) 9:30 ~ 12:20 | 1차시'
+  '26년 4월 20일(월) 9:30 ~ 12:20 | 2차시'
+)
+assert.equal(
+  (individualScheduleParagraph as MultipleChoiceParagraph).items[1]?.label,
+  '26년 4월 27일(월) 13:00 ~ 15:50 | 2차시'
 )
 
 const individualScheduleSingleDatePatched = syncApplicationScheduleChoiceParagraphsInDraft(
