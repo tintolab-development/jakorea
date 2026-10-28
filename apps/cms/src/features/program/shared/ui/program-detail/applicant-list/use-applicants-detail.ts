@@ -147,6 +147,7 @@ export type InstructorApprovalTarget =
       name: string
       step: 'fee'
       assignments: InstructorLectureAssignItem[]
+      skipLectureAssign?: boolean
     }
 
 export type ApplicantListRow =

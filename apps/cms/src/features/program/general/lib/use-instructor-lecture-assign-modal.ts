@@ -31,7 +31,7 @@ const ASSIGN_ORG_PAGE_LIMIT = 40
  * (organization-applications `sessions[]` 중 TEMP_ASSIGNED/CONFIRMED → `confirmedListAssignmentSessions`).
  * 희망 일정(preferredEducationSchedules / requested-schedules)은 후보가 아니다.
  */
-async function fetchApprovedOrganizationApplicationsForLectureAssign(
+export async function fetchApprovedOrganizationApplicationsForLectureAssign(
   programId: string,
   queryClient: QueryClient
 ): Promise<ApplicantSchoolRow[]> {
@@ -56,6 +56,43 @@ export function countOrganizationsWithAssignedSessions(
   rows: ApplicantSchoolRow[] | undefined
 ): number {
   return (rows ?? []).filter(row => (row.confirmedListAssignmentSessions?.length ?? 0) > 0).length
+}
+
+export type OrganizationInstructorApprovalStart =
+  | { step: 'assign' }
+  | { step: 'fee'; assignments: []; skipLectureAssign: true }
+
+/** 기관형 강사 단일 승인: 배정 가능한 기관 일정이 없으면 배정 모달을 건너뛴다. */
+export function resolveOrganizationInstructorApprovalStart(
+  assignedOrganizationCount: number
+): OrganizationInstructorApprovalStart {
+  if (assignedOrganizationCount === 0) {
+    return { step: 'fee', assignments: [], skipLectureAssign: true }
+  }
+  return { step: 'assign' }
+}
+
+export function shouldBlockInstructorApprovalWithoutAssignments(params: {
+  useInstructorAssignFlow: boolean
+  assignmentCount: number
+  skipLectureAssign: boolean
+}): boolean {
+  return (
+    params.useInstructorAssignFlow &&
+    params.assignmentCount === 0 &&
+    !params.skipLectureAssign
+  )
+}
+
+/** skip 시 일정은 이후 배정하므로, 강사비 policy 검증만 통과할 수 있게 1로 둔다. */
+export function instructorFeePolicyAssignmentCountForApproval(params: {
+  skipLectureAssign: boolean
+  assignmentCount: number
+  useInstructorAssignFlow: boolean
+}): number {
+  if (params.skipLectureAssign) return Math.max(params.assignmentCount, 1)
+  if (params.useInstructorAssignFlow) return params.assignmentCount
+  return 1
 }
 
 export type InstructorLectureAssignModalVariant = 'organization' | 'individual'

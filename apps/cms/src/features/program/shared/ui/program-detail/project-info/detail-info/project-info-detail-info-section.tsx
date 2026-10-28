@@ -21,8 +21,14 @@ import {
   programInlineImageOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
-import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
-import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+import {
+  loadProgramThumbnailPreviewUrl,
+  rememberProgramThumbnailPreviewBlob,
+} from '@/features/program/shared/api/program-thumbnail'
+import {
+  applyLiveRecruitmentThumbnailOverlay,
+  readRecruitDetailMediaFromOverlay,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import {
   fetchProgramMediaAttachments,
   fetchProgramMediaThumbnail,
@@ -611,7 +617,13 @@ function ThumbnailImageField({
                       throw new Error('프로그램 번호가 없어 대표 이미지를 저장할 수 없습니다.')
                     }
                     const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                    rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file)
                     await putProgramMediaThumbnail(program, uploaded.fileObjectId)
+                    applyLiveRecruitmentThumbnailOverlay(
+                      program,
+                      uploaded.fileObjectId,
+                      file.name
+                    )
                     let previewUrl = blobUrl
                     try {
                       previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
@@ -654,6 +666,7 @@ function ThumbnailImageField({
                     revokeBlobUrl(prev?.url)
                     return null
                   })
+                  applyLiveRecruitmentThumbnailOverlay(program, null)
                   if (hasProgramMediaTarget(program)) {
                     void putProgramMediaThumbnail(program, null).catch(() => {
                       showAlert({

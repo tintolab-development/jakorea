@@ -116,6 +116,14 @@ import { hydrateOrganizationApplicationSchedules } from '@/features/program/gene
 import { fetchOrganizationApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
 import { mapOrganizationApplicationDetailToApplicantSchoolRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import {
+  countOrganizationsWithAssignedSessions,
+  fetchApprovedOrganizationApplicationsForLectureAssign,
+  instructorFeePolicyAssignmentCountForApproval,
+  resolveOrganizationInstructorApprovalStart,
+  shouldBlockInstructorApprovalWithoutAssignments,
+} from '@/features/program/general/lib/use-instructor-lecture-assign-modal'
 import { resolveInstitutionCancelApprovalNotificationResult } from '@/features/program/general/lib/institution-cancel-approval'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
@@ -263,6 +271,7 @@ export function ApplicantList({
   })
 
   const institutionTableWrapRef = useRef<HTMLDivElement>(null)
+  const instructorApproveOpenInFlightRef = useRef(false)
   const [institutionTableScrollX, setInstitutionTableScrollX] = useState<number | undefined>(
     undefined
   )
@@ -706,6 +715,57 @@ export function ApplicantList({
 
   const openInstructorSingleApprove = useCallback(
     (row: ApplicantInstructorRow) => {
+      if (useOrganizationInstructorAssignFlow && program?.id) {
+        if (instructorApproveOpenInFlightRef.current) return
+        instructorApproveOpenInFlightRef.current = true
+        const programIdForAssign = program.id
+        void (async () => {
+          try {
+            if (shouldUseOrganizationApplicationRemoteApi()) {
+              const rows = await queryClient.fetchQuery({
+                queryKey:
+                  generalApplicationsQueryKeys.instructorLectureAssignInstitutions(
+                    programIdForAssign
+                  ),
+                queryFn: () =>
+                  fetchApprovedOrganizationApplicationsForLectureAssign(
+                    programIdForAssign,
+                    queryClient
+                  ),
+                staleTime: 30_000,
+                retry: false,
+              })
+              const start = resolveOrganizationInstructorApprovalStart(
+                countOrganizationsWithAssignedSessions(rows)
+              )
+              if (start.step === 'fee') {
+                setInstructorApprovalTarget({
+                  id: row.id,
+                  name: row.instructorName,
+                  step: 'fee',
+                  assignments: [],
+                  skipLectureAssign: true,
+                })
+                return
+              }
+            }
+            setInstructorApprovalTarget({
+              id: row.id,
+              name: row.instructorName,
+              step: 'assign',
+            })
+          } catch {
+            setInstructorApprovalTarget({
+              id: row.id,
+              name: row.instructorName,
+              step: 'assign',
+            })
+          } finally {
+            instructorApproveOpenInFlightRef.current = false
+          }
+        })()
+        return
+      }
       if (useInstructorAssignFlow) {
         setInstructorApprovalTarget({ id: row.id, name: row.instructorName, step: 'assign' })
         return
@@ -717,7 +777,13 @@ export function ApplicantList({
         assignments: [],
       })
     },
-    [setInstructorApprovalTarget, useInstructorAssignFlow]
+    [
+      program?.id,
+      queryClient,
+      setInstructorApprovalTarget,
+      useInstructorAssignFlow,
+      useOrganizationInstructorAssignFlow,
+    ]
   )
 
   const firstSelectedInstitutionName = useMemo(() => {
@@ -2190,6 +2256,10 @@ export function ApplicantList({
         feePolicyContext={instructorFeePolicyContext}
         feePolicyError={instructorFeePolicyError}
         submitting={instructorApprovalSubmitting}
+        showNoAssignableInstitutionScheduleNotice={
+          instructorApprovalTarget?.step === 'fee' &&
+          instructorApprovalTarget.skipLectureAssign === true
+        }
         onCancel={() => {
           setInstructorFeePolicyError(null)
           setInstructorApprovalTarget(null)
@@ -2248,7 +2318,14 @@ export function ApplicantList({
           const run = async () => {
             if (instructorRemoteEnabled) {
               const remoteAssignments = mapLectureAssignItemsToApprovalAssignments(assignments)
-              if (useInstructorAssignFlow && remoteAssignments.length === 0) {
+              const skipLectureAssign = instructorApprovalTarget.skipLectureAssign === true
+              if (
+                shouldBlockInstructorApprovalWithoutAssignments({
+                  useInstructorAssignFlow,
+                  assignmentCount: remoteAssignments.length,
+                  skipLectureAssign,
+                })
+              ) {
                 showAlert({
                   title: '강사 배정 필요',
                   content: '배정할 일정을 1개 이상 선택하세요.',
@@ -2268,7 +2345,11 @@ export function ApplicantList({
                 },
                 instructorFeePolicyContext
               )
-              const assignmentCount = useInstructorAssignFlow ? remoteAssignments.length : 1
+              const assignmentCount = instructorFeePolicyAssignmentCountForApproval({
+                skipLectureAssign,
+                assignmentCount: remoteAssignments.length,
+                useInstructorAssignFlow,
+              })
               if (!isInstructorApplicationFeePolicyRequestValid(feePolicy, assignmentCount)) {
                 setInstructorFeePolicyError(INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE)
                 return

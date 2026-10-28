@@ -182,7 +182,7 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.detail?.mealInfo).toBe('급식실 이용 가능')
     expect(hydrated.detail?.otherSpecialNotes).toBe('정문 주차')
     expect(hydrated.detail?.sexOffenseCheckRequest).toBe(
-      '동의서 제출 요청 | JA 시스템 내에서 동의서 확인 | 직접 제출'
+      '동의서 제출 요청 | JA 시스템 내에서 동의서 확인'
     )
   })
 

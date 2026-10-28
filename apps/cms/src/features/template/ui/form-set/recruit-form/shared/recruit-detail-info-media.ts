@@ -5,7 +5,11 @@
  * 1사1교·교육받은 교사 신규 등록과 기존 프로그램 수정은 기존 PUT을 유지한다.
  */
 
-import { fileObjectIdFromAdminFileUrl, parseFileObjectId } from '@/shared/lib/admin-file-upload'
+import {
+  contentUrlForFileObjectId,
+  fileObjectIdFromAdminFileUrl,
+  parseFileObjectId,
+} from '@/shared/lib/admin-file-upload'
 import { putProgramAttachments } from '@/features/program/shared/api/program-attachments'
 import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
 import {
@@ -13,7 +17,10 @@ import {
   putProgramRecruitmentThumbnail,
 } from '@/features/program/shared/api/program-recruitment-rows'
 import type { Program } from '@/types/domain'
-import { getRecruitDetailInfoRecord } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
+import {
+  getRecruitDetailInfoRecord,
+  patchRecruitDetailInfo,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 import { RECRUIT_DETAIL_INFO_OVERLAY_PREFIX } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 
 /**
@@ -180,6 +187,56 @@ const GENERAL_ROW_DETAIL_INFO_PREFIX: Record<string, string> = {
   PARTICIPANT: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution,
   INSTRUCTOR: 'recruitInstructor.detailInfo',
   VOLUNTEER: RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer,
+}
+
+/** 프로그램 상세 모집 탭의 활성 행 기준 상세정보 overlay prefix */
+export function recruitDetailOverlayPrefixForProgram(program: Program): string {
+  const row = (program.programRecruitments ?? []).find(
+    item => item.id != null && item.id === program.activeRecruitmentId
+  )
+  const recruitmentType = (row?.recruitmentType ?? '').toUpperCase()
+  if (recruitmentType === 'INSTRUCTOR') return GENERAL_ROW_DETAIL_INFO_PREFIX.INSTRUCTOR
+  if (recruitmentType === 'VOLUNTEER') {
+    if (row?.recruitTerm === 'FIRST_HALF') return 'recruitVolunteer.h1.detailInfo'
+    if (row?.recruitTerm === 'SECOND_HALF') return 'recruitVolunteer.h2.detailInfo'
+    return GENERAL_ROW_DETAIL_INFO_PREFIX.VOLUNTEER
+  }
+  const backend = program.backendProgramType?.trim().toUpperCase() ?? ''
+  if (backend === 'COMPANY_SCHOOL' || backend.includes('ECONOMY')) {
+    return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.economy
+  }
+  if (backend === 'TRAINED_TEACHER' || backend.includes('TRAINED')) {
+    return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.trainedTeachers
+  }
+  if (backend === 'UJAT') return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution
+  if (backend.includes('GEMINI') || backend.includes('VISITING')) {
+    return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.gemini
+  }
+  return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution
+}
+
+/** 상세 수정 중 썸네일 PUT 결과를 미리보기가 읽는 overlay에 바로 반영한다. */
+export function applyLiveRecruitmentThumbnailOverlay(
+  program: Program,
+  fileObjectId: number | null,
+  fileName?: string | null
+): void {
+  const prefix = recruitDetailOverlayPrefixForProgram(program)
+  if (fileObjectId != null && fileObjectId > 0) {
+    patchRecruitDetailInfo({
+      [recruitDetailThumbFileObjectIdKey(prefix)]: fileObjectId,
+      [recruitDetailThumbContentUrlKey(prefix)]: contentUrlForFileObjectId(fileObjectId),
+      [recruitDetailThumbObjectUrlKey(prefix)]: null,
+      ...(fileName?.trim() ? { [recruitDetailThumbFileNameKey(prefix)]: fileName.trim() } : {}),
+    })
+    return
+  }
+  patchRecruitDetailInfo({
+    [recruitDetailThumbFileObjectIdKey(prefix)]: null,
+    [recruitDetailThumbContentUrlKey(prefix)]: null,
+    [recruitDetailThumbObjectUrlKey(prefix)]: null,
+    [recruitDetailThumbFileNameKey(prefix)]: null,
+  })
 }
 
 export type RecruitmentCreateMediaFields = {

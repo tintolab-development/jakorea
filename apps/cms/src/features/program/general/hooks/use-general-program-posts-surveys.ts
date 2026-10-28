@@ -37,6 +37,7 @@ import {
   surveySummaryHasPublicTextAnswers,
   type ClassifiedFormBinding,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
+import { findProgramSurveyBinding } from '@/features/program/general/lib/find-program-survey-binding'
 import {
   groupProgramPostAttachmentsByPostId,
   mapProgramPostAttachmentToFile,
@@ -488,7 +489,13 @@ export function useGeneralProgramSurveys(
   const registeredSurveysBase = useMemo((): RegisteredSurvey[] | null => {
     if (!enabled || !remoteEnabled) return null
     return (surveysQuery.data ?? [])
-      .map((dto, index) => mapProgramSurveyToRegisteredSurvey(dto, index))
+      .map((dto, index) =>
+        mapProgramSurveyToRegisteredSurvey(
+          dto,
+          index,
+          findProgramSurveyBinding(dto, bindingsQuery.data ?? [])
+        )
+      )
       .filter(survey => {
         // 설문 목록의 행은 /surveys 응답만 사용한다.
         // 일치하는 바인딩이 있는 경우에만 전용 만족도·강의평가 탭 여부를 판별한다.

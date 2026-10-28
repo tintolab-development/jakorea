@@ -5,7 +5,7 @@ import {
   buildInstitutionGuidanceAnswerPatch,
   mapInstitutionGuidanceFromApplicationAnswers,
   teacherGuidanceContentFromFormState,
-} from './institution-guidance-from-answers'
+} from './institution-guidance-from-answers.ts'
 import { emptyInstitutionGuidanceAnswers } from '@/features/program/ui/apply-institution-guidance/apply-institution-guidance'
 import { emptyInstitutionSexOffense } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense-answers.ts'
 
@@ -77,7 +77,33 @@ const content = teacherGuidanceContentFromFormState({
   guidance: emptyInstitutionGuidanceAnswers(),
   sexOffense: { ...emptyInstitutionSexOffense(), submissionRequest: 'no_submit' },
 })
-assert.equal(content.sexOffenseConsentMethod, '동의서 미제출')
+assert.equal(content.sexOffenseConsentMethod, undefined)
+
+const jaSystemContent = teacherGuidanceContentFromFormState({
+  guidance: emptyInstitutionGuidanceAnswers(),
+  sexOffense: {
+    ...emptyInstitutionSexOffense(),
+    submissionRequest: 'request',
+    inquiryMethod: 'ja_system',
+  },
+})
+assert.equal(
+  jaSystemContent.sexOffenseConsentMethod,
+  '기관이 JA 시스템 내에서 동의서 확인 후 직접 조회',
+)
+
+const directContent = teacherGuidanceContentFromFormState({
+  guidance: emptyInstitutionGuidanceAnswers(),
+  sexOffense: {
+    ...emptyInstitutionSexOffense(),
+    submissionRequest: 'request',
+    inquiryMethod: 'criminal_record_site',
+    siteSubmission: 'direct',
+    institutionId: 'org-1',
+    verificationNumber: 'v-9',
+  },
+})
+assert.equal(directContent.sexOffenseConsentMethod, '직접 제출 | ID : org-1 | 검증번호 : v-9')
 
 const ujatGuidanceKey = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance
 const ujatAnswers = {

@@ -36,7 +36,10 @@ import {
   type GeneralRegistrationEditorExtras,
 } from '@/features/program/general/lib/registration-overlay-to-program'
 import { readRegistrationOverlaySponsorId } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import {
+  applyGeneralRecruitOverlayToProgram,
+  withIndividualInterviewRequiredCreateDefault,
+} from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
@@ -442,7 +445,10 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   })
 
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-  const recruitOverlay = collectSelectedRecruitOverlaysForProgram(withRegistration)
+  const recruitOverlay = withIndividualInterviewRequiredCreateDefault(
+    collectSelectedRecruitOverlaysForProgram(withRegistration),
+    !isTrainedTeachers && args.participant.individual === true
+  )
   const withRecruit = applyGeneralRecruitOverlayToProgram(
     withRegistration,
     recruitOverlay,

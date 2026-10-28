@@ -22,50 +22,44 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 12px;
+  gap: 4px;
+  margin-top: 16px;
   color: var(--main-BK, #3d3d3d);
   font-family: var(--font-family-base);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 1.6;
 }
 
 .noteList {
   display: flex;
   flex-direction: column;
   margin: 0;
-  padding: 0;
-  list-style: none;
+  padding-left: 20px;
 }
 
 .noteList > li {
   margin: 0;
 }
 
-.noteList > li::before {
-  content: '• ';
+.noteList > li + li {
+  margin-top: 4px;
 }
 
-.noteItem,
-.caution {
-  display: block;
+.noteItem {
+  display: list-item;
   margin: 0;
   color: var(--main-BK, #3d3d3d);
   font-family: var(--font-family-base);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 1.6;
   letter-spacing: -0.16px;
 }
 
-/*
- * FormTemplateHost 기본 14px + typo-* inherit 보다 우선 — CMS 안내 문구와 동일 16px
- */
-:global(.form-template-host) .notes .noteItem,
-:global(.form-template-host) .notes .caution {
-  font-size: 16px;
+:global(.form-template-host) .notes .noteItem {
+  font-size: 14px;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 1.6;
   letter-spacing: -0.16px;
 }

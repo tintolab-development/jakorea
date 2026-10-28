@@ -134,7 +134,7 @@ export const ApplicantRecruitAnnouncementPublishedField = memo(
     size = 'medium',
   }: {
     fullRow?: boolean
-    /** 학생 명단 제출 여부와 같은 medium. 학생 명단이 없는 1사1교 레이아웃만 large. */
+    /** 프로그램 상세·모집 양식 수정은 14px(medium). */
     size?: 'large' | 'medium'
   }) {
     const [announcementPublished, setAnnouncementPublished] =

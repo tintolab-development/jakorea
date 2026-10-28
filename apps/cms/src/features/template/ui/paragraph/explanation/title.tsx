@@ -11,6 +11,7 @@ import {
   resolveSurveyTitleWritingPeriodAppliedWithTime,
   resolveSurveyTitleWritingPeriodPickerValue,
 } from '@/features/template/lib/survey-title-writing-period'
+import { resolveSurveyTitlePeriodDisabledDate } from '@/features/template/lib/survey-title-period-policy'
 import { WritingFormPeriodDatePickerField } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 
 import './explanation-title-period.css'
@@ -29,6 +30,7 @@ export function ExplanationTitle({
 }: {
   paragraph: TitleWithPeriodParagraph
   onChange: (next: TitleWithPeriodParagraph) => void
+  /** false — 비선택 단락: 기간 입력란은 보이되 읽기 전용 */
   isEditMode: boolean
   /** 기간 입력란 위 라벨 (미지정 시 `작성 기간`) */
   periodLabel?: string
@@ -55,10 +57,10 @@ export function ExplanationTitle({
 
   const dualStartPlaceholder = titlePeriodStartDisplayText(paragraph)
   const dualEndPlaceholder = titlePeriodEndDisplayText(paragraph)
-
-  if (!isEditMode) {
-    return null
-  }
+  const disabledDate = useMemo(
+    () => resolveSurveyTitlePeriodDisabledDate(paragraph.id),
+    [paragraph.id]
+  )
 
   if (!(paragraph.showWritingPeriodOnForm ?? false)) {
     return null
@@ -78,6 +80,8 @@ export function ExplanationTitle({
             dualPeriodTrigger
             dualStartPlaceholder={dualStartPlaceholder}
             dualEndPlaceholder={dualEndPlaceholder}
+            disabledDate={disabledDate}
+            readOnly={!isEditMode}
             onCommitRange={range => {
               onChange(
                 patchSurveyTitleWritingPeriodCustomRange(

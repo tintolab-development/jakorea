@@ -67,4 +67,43 @@ describe('GeneralProgramParticipantRecruitmentInfoView', () => {
     expect(formRef.current?.getValues().participantRecruitmentMaxClassCount).toBeNull()
     expect(input.value).toBe('')
   })
+
+  describe('개인 프로그램 「참여자 면접 유무」', () => {
+    const individualProgram = (interviewEnabled?: boolean) =>
+      ({
+        ...program,
+        category: 'individual',
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+        ...(interviewEnabled === undefined
+          ? {}
+          : { generalParticipantInterviewEnabled: interviewEnabled }),
+      }) as Program
+
+    const viewOf = (p: Program) => {
+      const { container, unmount } = render(
+        <GeneralProgramParticipantRecruitmentInfoView program={p} isEdit={false} />
+      )
+      const label = screen.getByText('참여자 면접 유무', {
+        selector: '.detail-info-form__field-label-text',
+      })
+      const text = label.closest('.detail-info-form__field')?.textContent ?? ''
+      unmount()
+      void container
+      return text
+    }
+
+    it.each([
+      [true, '면접 있음'],
+      [false, '면접 없음'],
+      [undefined, '-'],
+    ] as const)('%s → %s', (value, expected) => {
+      expect(viewOf(individualProgram(value))).toBe(`참여자 면접 유무${expected}`)
+    })
+
+    it('기관 프로그램에는 행이 없다', () => {
+      render(<GeneralProgramParticipantRecruitmentInfoView program={program} isEdit={false} />)
+      expect(screen.queryByText('참여자 면접 유무')).toBeNull()
+    })
+  })
 })

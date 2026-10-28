@@ -15,12 +15,18 @@ import {
 } from '@/features/program/ui/apply-institution-guidance/ujat-institution-guidance-fields'
 import {
   emptyInstitutionSexOffense,
+  resolveApplySexOffenseInquiryCase,
   sexOffenseInquiryAnswerFromValues,
   sexOffenseSubmissionAnswerFromValues,
   sexOffenseValuesFromDraftAnswers,
   shouldShowSexOffenseInquiry,
   type ApplyInstitutionSexOffenseValues,
 } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
+import {
+  formatSexOffenseTeacherGuidanceValue,
+  isSexOffenseInquiryMethod,
+  isSexOffenseSiteSubmission,
+} from '@jakorea/form-schema/program-application'
 import type { EducationTeacherApplicationGuidance } from '../model/types'
 
 export type TeacherInstitutionGuidanceFormState = {
@@ -143,26 +149,21 @@ export function buildInstitutionGuidanceAnswerPatch(
   return patch
 }
 
-function formatSiteSubmissionLabel(value: ApplyInstitutionSexOffenseValues['siteSubmission']): string {
-  return value === 'online' ? '온라인 제출' : '직접 제출'
-}
-
 export function formatSexOffenseConsentMethodDisplay(
   sexOffense: ApplyInstitutionSexOffenseValues,
 ): string | undefined {
-  if (sexOffense.submissionRequest === 'no_submit') {
-    return '동의서 미제출'
-  }
   if (sexOffense.submissionRequest !== 'request') return undefined
-  const parts = [formatSiteSubmissionLabel(sexOffense.siteSubmission)]
-  if (sexOffense.siteSubmission === 'online') {
-    const id = sexOffense.institutionId.trim()
-    const verification = sexOffense.verificationNumber.trim()
-    if (id) parts.push(`ID: ${id}`)
-    if (verification) parts.push(`검증번호: ${verification}`)
-  }
-  const label = parts.filter(Boolean).join(' | ')
-  return label || '동의서 제출 요청'
+  return formatSexOffenseTeacherGuidanceValue(sexOffense)
+}
+
+export function resolveTeacherSexOffenseInquiryCase(
+  answers: Record<string, unknown> | undefined,
+  detailCase: ProgramDetailCase | undefined,
+) {
+  const state = mapInstitutionGuidanceFromApplicationAnswers(answers, detailCase)
+  if (state.sexOffense.submissionRequest !== 'request') return null
+  if (!isSexOffenseInquiryMethod(state.sexOffense.inquiryMethod)) return null
+  return resolveApplySexOffenseInquiryCase(state.sexOffense)
 }
 
 export function teacherGuidanceContentFromFormState(
@@ -182,17 +183,28 @@ export function teacherInstitutionGuidanceFormStateFromTeacherContent(
 ): TeacherInstitutionGuidanceFormState {
   const sexOffense = emptyInstitutionSexOffense()
   const methodLabel = guidance.sexOffenseConsentMethod?.trim() ?? ''
-  if (methodLabel.includes('미제출')) {
-    sexOffense.submissionRequest = 'no_submit'
+  if (methodLabel.includes('JA 시스템')) {
+    sexOffense.submissionRequest = 'request'
+    sexOffense.inquiryMethod = 'ja_system'
+    sexOffense.siteSubmission = ''
   } else if (methodLabel) {
     sexOffense.submissionRequest = 'request'
-    if (methodLabel.includes('직접 제출')) {
+    sexOffense.inquiryMethod = 'criminal_record_site'
+    if (methodLabel.includes('온라인 제출')) {
+      sexOffense.siteSubmission = 'online'
+    } else if (methodLabel.includes('직접 제출')) {
       sexOffense.siteSubmission = 'direct'
     }
-    const idMatch = /ID:\s*([^|]+)/.exec(methodLabel)
-    const verificationMatch = /검증번호:\s*([^|]+)/.exec(methodLabel)
+    const idMatch = /ID\s*:\s*([^|]+)/.exec(methodLabel)
+    const verificationMatch = /검증번호\s*:\s*([^|]+)/.exec(methodLabel)
     if (idMatch?.[1]) sexOffense.institutionId = idMatch[1].trim()
     if (verificationMatch?.[1]) sexOffense.verificationNumber = verificationMatch[1].trim()
+    if (!isSexOffenseInquiryMethod(sexOffense.inquiryMethod)) {
+      sexOffense.inquiryMethod = ''
+    }
+    if (!isSexOffenseSiteSubmission(sexOffense.siteSubmission)) {
+      sexOffense.siteSubmission = ''
+    }
   }
   return {
     guidance: {

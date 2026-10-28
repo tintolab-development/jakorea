@@ -25,11 +25,13 @@
   display: flex;
   min-width: 0;
   flex: 1;
+  flex-wrap: wrap;
   align-items: baseline;
 }
 
 .name {
   margin-right: 8px;
+  overflow-wrap: anywhere;
 }
 
 .carouselControls {
@@ -103,4 +105,17 @@
   display: block;
   width: 20px;
   height: 20px;
+}
+
+.siteMessage {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 96px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: var(--color-neutral-cool-500, #8ba2ad);
+  text-align: center;
+  white-space: pre-line;
 }
