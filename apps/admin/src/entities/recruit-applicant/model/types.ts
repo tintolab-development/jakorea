@@ -47,6 +47,7 @@ export type RecruitApplicantDetail = RecruitApplicant & {
   careerInfo: string
   privacyAgreed: boolean
   attachmentFileName: string | null
+  attachmentAssetId?: number | null
   confirmedByName: string | null
 }
 

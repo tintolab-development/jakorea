@@ -358,7 +358,6 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
     })
   })
 })
-
 describe('toTemplateVariablesRequestParams', () => {
   it('programId 미선택 시 쿼리에서 제외한다', () => {
     expect(
@@ -387,4 +386,3 @@ describe('buildCreateSendBatchRequest MMS 첨부 회귀', () => {
     expect(body).not.toHaveProperty('attachmentFileIds')
   })
 })
-

@@ -3072,6 +3072,8 @@
         "tags": [
           "talent-application-attachment-public-controller"
         ],
+        "summary": "Confirm a talent application attachment upload",
+        "description": "The stored object is revalidated against the declared content type, file signature, and the 20 MiB per-file limit.",
         "operationId": "confirm",
         "parameters": [
           {
@@ -3113,6 +3115,8 @@
         "tags": [
           "talent-application-attachment-public-controller"
         ],
+        "summary": "Prepare a talent application attachment upload",
+        "description": "Accepts image/jpeg, image/png, and application/pdf. Each file may be up to 20 MiB (20 * 1024 * 1024 bytes).",
         "operationId": "prepare",
         "requestBody": {
           "content": {
@@ -3274,6 +3278,8 @@
         "tags": [
           "career-talent-application-attachment-public-controller"
         ],
+        "summary": "Confirm a career talent application attachment upload",
+        "description": "The stored object is revalidated against the declared content type, file signature, and the 20 MiB per-file limit.",
         "operationId": "confirm_2",
         "parameters": [
           {
@@ -3315,6 +3321,8 @@
         "tags": [
           "career-talent-application-attachment-public-controller"
         ],
+        "summary": "Prepare a career talent application attachment upload",
+        "description": "Accepts image/jpeg, image/png, and application/pdf. Each file may be up to 20 MiB (20 * 1024 * 1024 bytes).",
         "operationId": "prepare_2",
         "requestBody": {
           "content": {
@@ -3537,6 +3545,37 @@
         "responses": {
           "204": {
             "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/admin/notifications/public-applications/{id}/retry": {
+      "post": {
+        "tags": [
+          "public-application-notification-admin-controller"
+        ],
+        "operationId": "retry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -5188,8 +5227,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "201": {
+            "description": "Created",
             "content": {
               "*/*": {
                 "schema": {
@@ -7713,6 +7752,46 @@
         }
       }
     },
+    "/api/admin/sponsorship/talent-applications/{id}/attachments/{assetId}/download": {
+      "get": {
+        "tags": [
+          "talent-application-admin-controller"
+        ],
+        "operationId": "attachmentDownloadByAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TalentApplicationAttachmentDownloadResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/sponsorship/talent-applications/{id}/attachment-download": {
       "get": {
         "tags": [
@@ -7950,6 +8029,46 @@
         }
       }
     },
+    "/api/admin/sponsorship/corporate-consultations/{id}/attachments/{assetId}/download": {
+      "get": {
+        "tags": [
+          "corporate-consultation-admin-controller"
+        ],
+        "operationId": "attachmentDownloadByAsset_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentDownloadResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/sponsorship/corporate-consultations/{id}/attachment-download": {
       "get": {
         "tags": [
@@ -7994,6 +8113,41 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/FooterAdminResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/notifications/public-applications": {
+      "get": {
+        "tags": [
+          "public-application-notification-admin-controller"
+        ],
+        "operationId": "list_15",
+        "parameters": [
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatusResponse"
+                  }
                 }
               }
             }
@@ -8393,6 +8547,7 @@
                 "JA_NOTICE_ATTACHMENT",
                 "JA_NOTICE_INLINE_IMAGE",
                 "IMPACT_STORY_ATTACHMENT",
+                "IMPACT_STORY_THUMBNAIL",
                 "IMPACT_STORY_INLINE_IMAGE",
                 "EDUCATION_TEXTBOOK_THUMBNAIL",
                 "EDUCATION_PROGRAM_INTRO_IMAGE",
@@ -8514,6 +8669,7 @@
                 "JA_NOTICE_ATTACHMENT",
                 "JA_NOTICE_INLINE_IMAGE",
                 "IMPACT_STORY_ATTACHMENT",
+                "IMPACT_STORY_THUMBNAIL",
                 "IMPACT_STORY_INLINE_IMAGE",
                 "EDUCATION_TEXTBOOK_THUMBNAIL",
                 "EDUCATION_PROGRAM_INTRO_IMAGE",
@@ -8706,7 +8862,7 @@
         "tags": [
           "career-talent-application-admin-controller"
         ],
-        "operationId": "list_15",
+        "operationId": "list_16",
         "parameters": [
           {
             "name": "status",
@@ -8892,6 +9048,46 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CareerTalentApplicationDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/talent-applications/{id}/attachments/{assetId}/download": {
+      "get": {
+        "tags": [
+          "career-talent-application-admin-controller"
+        ],
+        "operationId": "attachmentDownloadByAsset_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
                 }
               }
             }
@@ -9268,7 +9464,9 @@
             "minLength": 0
           },
           "label": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
           },
           "version": {
             "type": "integer",
@@ -9346,6 +9544,7 @@
               "JA_NOTICE_ATTACHMENT",
               "JA_NOTICE_INLINE_IMAGE",
               "IMPACT_STORY_ATTACHMENT",
+              "IMPACT_STORY_THUMBNAIL",
               "IMPACT_STORY_INLINE_IMAGE",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
               "EDUCATION_PROGRAM_INTRO_IMAGE",
@@ -12431,6 +12630,10 @@
             "maxLength": 100000,
             "minLength": 0
           },
+          "thumbnailAssetId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
@@ -12438,6 +12641,9 @@
           "version": {
             "type": "integer",
             "format": "int64"
+          },
+          "thumbnailDistinctFromAttachment": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -12446,6 +12652,7 @@
           "pinned",
           "publishAt",
           "published",
+          "thumbnailAssetId",
           "title",
           "version"
         ]
@@ -12480,11 +12687,25 @@
           "body": {
             "type": "string"
           },
+          "thumbnail": {
+            "type": "null",
+            "$ref": "#/components/schemas/AssetResponse"
+          },
+          "thumbnailOriginalName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "attachment": {
+            "type": "null",
             "$ref": "#/components/schemas/AssetResponse"
           },
           "attachmentOriginalName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "authorName": {
             "type": "string"
@@ -13126,24 +13347,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "buttonLabel": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "채용 공고 바로가기 버튼명. 미입력·공백은 null로 저장됩니다.",
-            "maxLength": 15,
-            "minLength": 0
-          },
-          "linkUrl": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "채용 공고 버튼 링크. http/https만 허용. 미입력·공백은 null로 저장됩니다.",
-            "maxLength": 2048,
-            "minLength": 0
-          },
           "version": {
             "type": "integer",
             "format": "int64"
@@ -13213,20 +13416,6 @@
           },
           "attachment": {
             "$ref": "#/components/schemas/AssetResponse"
-          },
-          "buttonLabel": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "maxLength": 15
-          },
-          "linkUrl": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "maxLength": 2048
           },
           "updatedAt": {
             "type": "string",
@@ -13558,6 +13747,16 @@
             "type": "integer",
             "format": "int64"
           },
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Confirmed talent-application attachment asset ids in request order. Max 10. Omit when empty.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
           "periodOrderValid": {
             "type": "boolean"
           }
@@ -13746,6 +13945,27 @@
             "maxLength": 100,
             "minLength": 0
           },
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Confirmed consultation attachment asset ids in request order. Max 10. Omit when empty.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
+          "attachmentUploadTokens": {
+            "type": "array",
+            "description": "Upload tokens paired by index with attachmentAssetIds. Max 10. Omit when empty.",
+            "items": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
           "privacyConsent": {
             "type": "boolean"
           },
@@ -13865,6 +14085,16 @@
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
+          },
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Confirmed career talent-application attachment asset ids in request order. Max 10. Omit when empty.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
           }
         },
         "required": [
@@ -13978,6 +14208,56 @@
           "id",
           "version"
         ]
+      },
+      "StatusResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventKey": {
+            "type": "string"
+          },
+          "notificationType": {
+            "type": "string",
+            "enum": [
+              "CAREER_TALENT_APPLICATION",
+              "CORPORATE_CONSULTATION",
+              "TALENT_APPLICATION"
+            ]
+          },
+          "aggregateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "attempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "StripCreateRequest": {
         "type": "object",
@@ -14488,9 +14768,16 @@
             "maxLength": 100000,
             "minLength": 0
           },
+          "thumbnailAssetId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
+          },
+          "thumbnailDistinctFromAttachment": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -14499,6 +14786,7 @@
           "pinned",
           "publishAt",
           "published",
+          "thumbnailAssetId",
           "title"
         ]
       },
@@ -14640,24 +14928,6 @@
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
-          },
-          "buttonLabel": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "채용 공고 바로가기 버튼명. 미입력·공백은 null로 저장됩니다.",
-            "maxLength": 15,
-            "minLength": 0
-          },
-          "linkUrl": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "채용 공고 버튼 링크. http/https만 허용. 미입력·공백은 null로 저장됩니다.",
-            "maxLength": 2048,
-            "minLength": 0
           }
         },
         "required": [
@@ -14798,6 +15068,7 @@
               "JA_NOTICE_ATTACHMENT",
               "JA_NOTICE_INLINE_IMAGE",
               "IMPACT_STORY_ATTACHMENT",
+              "IMPACT_STORY_THUMBNAIL",
               "IMPACT_STORY_INLINE_IMAGE",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
               "EDUCATION_PROGRAM_INTRO_IMAGE",
@@ -15630,7 +15901,10 @@
             "format": "date-time"
           },
           "imageUrl": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -16485,7 +16759,10 @@
             "type": "string"
           },
           "imageUrl": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "authorName": {
             "type": "string"
@@ -16524,10 +16801,16 @@
             "type": "string"
           },
           "imageUrl": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "attachmentOriginalName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "authorName": {
             "type": "string"
@@ -16855,20 +17138,6 @@
           },
           "attachment": {
             "$ref": "#/components/schemas/AssetResponse"
-          },
-          "buttonLabel": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "maxLength": 15
-          },
-          "linkUrl": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "maxLength": 2048
           },
           "viewCount": {
             "type": "integer",
@@ -17281,6 +17550,25 @@
           }
         }
       },
+      "ApplicationAttachmentItem": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Confirmed attachment asset id"
+          },
+          "originalName": {
+            "type": "string",
+            "description": "Original file name"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Zero-based request order"
+          }
+        }
+      },
       "TalentApplicationDetailResponse": {
         "type": "object",
         "properties": {
@@ -17368,6 +17656,12 @@
           },
           "attachmentOriginalName": {
             "type": "string"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationAttachmentItem"
+            }
           }
         }
       },
@@ -17563,6 +17857,12 @@
           },
           "attachmentOriginalName": {
             "type": "string"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationAttachmentItem"
+            }
           },
           "version": {
             "type": "integer",
@@ -18063,6 +18363,7 @@
               "JA_NOTICE_ATTACHMENT",
               "JA_NOTICE_INLINE_IMAGE",
               "IMPACT_STORY_ATTACHMENT",
+              "IMPACT_STORY_THUMBNAIL",
               "IMPACT_STORY_INLINE_IMAGE",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
               "EDUCATION_PROGRAM_INTRO_IMAGE",
@@ -18591,6 +18892,12 @@
               "string",
               "null"
             ]
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationAttachmentItem"
+            }
           }
         }
       },

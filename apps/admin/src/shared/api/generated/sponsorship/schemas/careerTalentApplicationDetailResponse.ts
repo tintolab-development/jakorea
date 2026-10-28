@@ -5,6 +5,7 @@
  * Filtered for Homepage Admin sponsorship Orval codegen.
  * OpenAPI spec version: v1
  */
+import type { ApplicationAttachmentItem } from './applicationAttachmentItem';
 import type { CareerTalentApplicationDetailResponseCareerType } from './careerTalentApplicationDetailResponseCareerType';
 import type { CareerTalentApplicationDetailResponseEducationLevel } from './careerTalentApplicationDetailResponseEducationLevel';
 import type { CareerTalentApplicationDetailResponseJobInterest } from './careerTalentApplicationDetailResponseJobInterest';
@@ -31,4 +32,5 @@ export interface CareerTalentApplicationDetailResponse {
   confirmedAt?: string | null;
   confirmedByName?: string | null;
   attachmentOriginalName?: string | null;
+  attachments?: ApplicationAttachmentItem[];
 }

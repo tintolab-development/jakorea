@@ -5,6 +5,7 @@
  * Filtered for Homepage Admin logs Orval codegen.
  * OpenAPI spec version: v1
  */
+import type { ApplicationAttachmentItem } from './applicationAttachmentItem';
 import type { TalentApplicationDetailResponseGender } from './talentApplicationDetailResponseGender';
 import type { TalentApplicationDetailResponseJaParticipation } from './talentApplicationDetailResponseJaParticipation';
 import type { TalentApplicationDetailResponseStatus } from './talentApplicationDetailResponseStatus';
@@ -32,4 +33,5 @@ export interface TalentApplicationDetailResponse {
   confirmedByName?: string;
   attachmentAssetId?: number;
   attachmentOriginalName?: string;
+  attachments?: ApplicationAttachmentItem[];
 }

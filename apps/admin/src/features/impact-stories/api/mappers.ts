@@ -78,24 +78,6 @@ export function isPersistedCategoryId(id: string): boolean {
   return Number.isFinite(n) && n > 0 && String(n) === id.trim()
 }
 
-/**
- * Orval 재생 전 런타임 필드.
- * fetch:openapi + generate:api 후 StoryCreateRequest.thumbnailAssetId /
- * StoryResponse.thumbnail 이 생기면 이 교차 타입을 제거하고 생성 스키마만 쓴다.
- */
-type StoryResponseWithThumbnail = StoryResponse & {
-  thumbnail?: StoryResponse['attachment'] | null
-  thumbnailOriginalName?: string | null
-}
-
-type StoryWriteBody = StoryCreateRequest & {
-  thumbnailAssetId: number
-}
-
-type StoryUpdateBody = StoryUpdateRequest & {
-  thumbnailAssetId: number
-}
-
 export function requireThumbnailAssetId(id?: number): number {
   if (id == null || id <= 0) {
     throw new Error('섬네일 이미지를 등록해 주세요.')
@@ -113,7 +95,7 @@ export function assertDistinctStoryAssetIds(
 }
 
 function mapAssetAttachment(
-  asset: NonNullable<StoryResponse['attachment']> | null | undefined,
+  asset: StoryResponse['thumbnail'] | StoryResponse['attachment'],
   originalName?: string | null,
 ): ImpactStoryAttachment | null {
   if (asset?.assetId == null) return null
@@ -132,8 +114,7 @@ function mapAttachmentFromResponse(row: StoryResponse): ImpactStoryAttachment[] 
 }
 
 function mapThumbnailFromResponse(row: StoryResponse): ImpactStoryAttachment | null {
-  const withThumb = row as StoryResponseWithThumbnail
-  return mapAssetAttachment(withThumb.thumbnail, withThumb.thumbnailOriginalName)
+  return mapAssetAttachment(row.thumbnail, row.thumbnailOriginalName)
 }
 
 export function mapStoryListItemToDomain(row: StoryListItem): ImpactStory {
@@ -225,17 +206,18 @@ export function toStoryCreateRequest(
 ): StoryCreateRequest {
   const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
   assertDistinctStoryAssetIds(requiredThumbnailAssetId, attachmentAssetId)
-  const body: StoryWriteBody = {
+  return {
     published: input.isPublic,
     pinned: input.isPinned,
     publishAt: input.publishedAt,
     categoryId: Number(input.categoryId),
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
-    attachmentAssetId,
     thumbnailAssetId: requiredThumbnailAssetId,
+    attachmentAssetId,
+    thumbnailDistinctFromAttachment:
+      attachmentAssetId != null && attachmentAssetId !== requiredThumbnailAssetId,
   }
-  return body
 }
 
 export function toStoryUpdateRequest(
@@ -246,18 +228,19 @@ export function toStoryUpdateRequest(
 ): StoryUpdateRequest {
   const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
   assertDistinctStoryAssetIds(requiredThumbnailAssetId, attachmentAssetId)
-  const body: StoryUpdateBody = {
+  return {
     published: input.isPublic,
     pinned: input.isPinned,
     publishAt: input.publishedAt,
     categoryId: Number(input.categoryId),
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
-    attachmentAssetId,
     thumbnailAssetId: requiredThumbnailAssetId,
+    attachmentAssetId,
+    thumbnailDistinctFromAttachment:
+      attachmentAssetId != null && attachmentAssetId !== requiredThumbnailAssetId,
     version,
   }
-  return body
 }
 
 export function toPublishedToggleRequest(

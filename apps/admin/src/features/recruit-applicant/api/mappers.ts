@@ -17,10 +17,10 @@ import type { CareerTalentApplicationListItem } from '@/shared/api/generated/car
 import type { CareerTalentApplicationListItemCareerType } from '@/shared/api/generated/careers/schemas/careerTalentApplicationListItemCareerType'
 import type { CareerTalentApplicationListItemJobInterest } from '@/shared/api/generated/careers/schemas/careerTalentApplicationListItemJobInterest'
 import type { CareerTalentApplicationListItemStatus } from '@/shared/api/generated/careers/schemas/careerTalentApplicationListItemStatus'
-import type { List15Params } from '@/shared/api/generated/careers/schemas/list15Params'
-import { List15CareerType } from '@/shared/api/generated/careers/schemas/list15CareerType'
-import { List15JobInterest } from '@/shared/api/generated/careers/schemas/list15JobInterest'
-import { List15Status } from '@/shared/api/generated/careers/schemas/list15Status'
+import type { List16Params } from '@/shared/api/generated/careers/schemas/list16Params'
+import { List16CareerType } from '@/shared/api/generated/careers/schemas/list16CareerType'
+import { List16JobInterest } from '@/shared/api/generated/careers/schemas/list16JobInterest'
+import { List16Status } from '@/shared/api/generated/careers/schemas/list16Status'
 
 export const APPLICANT_LIST_PAGE_SIZE = 20
 
@@ -33,13 +33,13 @@ const JOB_INTEREST: Record<CareerTalentApplicationListItemJobInterest, RecruitJo
   OTHER: 'other',
 }
 
-const JOB_INTEREST_TO_API: Record<RecruitJobInterest, List15JobInterest> = {
-  managementPlanning: List15JobInterest.MANAGEMENT_PLANNING,
-  prDesign: List15JobInterest.PR_DESIGN,
-  accounting: List15JobInterest.ACCOUNTING,
-  hrAdmin: List15JobInterest.HR_ADMIN,
-  educationOps: List15JobInterest.EDUCATION_OPS,
-  other: List15JobInterest.OTHER,
+const JOB_INTEREST_TO_API: Record<RecruitJobInterest, List16JobInterest> = {
+  managementPlanning: List16JobInterest.MANAGEMENT_PLANNING,
+  prDesign: List16JobInterest.PR_DESIGN,
+  accounting: List16JobInterest.ACCOUNTING,
+  hrAdmin: List16JobInterest.HR_ADMIN,
+  educationOps: List16JobInterest.EDUCATION_OPS,
+  other: List16JobInterest.OTHER,
 }
 
 function mapStatus(
@@ -82,13 +82,13 @@ export function mapCareerTalentApplicationListItem(
 
 export function toTalentApplicationListParams(
   filter?: RecruitApplicantListFilter,
-): List15Params {
-  const params: List15Params = {
+): List16Params {
+  const params: List16Params = {
     page: 0,
     size: APPLICANT_LIST_PAGE_SIZE,
   }
-  if (filter?.status === 'pending') params.status = List15Status.PENDING
-  if (filter?.status === 'confirmed') params.status = List15Status.CONFIRMED
+  if (filter?.status === 'pending') params.status = List16Status.PENDING
+  if (filter?.status === 'confirmed') params.status = List16Status.CONFIRMED
   if (filter?.jobInterest) params.jobInterest = JOB_INTEREST_TO_API[filter.jobInterest]
   const name = filter?.applicantName?.trim()
   if (name) params.name = name
@@ -96,8 +96,8 @@ export function toTalentApplicationListParams(
   if (phone) params.phone = phone
   const email = filter?.email?.trim()
   if (email) params.email = email
-  if (filter?.careerType === 'newbie') params.careerType = List15CareerType.NEWBIE
-  if (filter?.careerType === 'experienced') params.careerType = List15CareerType.EXPERIENCED
+  if (filter?.careerType === 'newbie') params.careerType = List16CareerType.NEWBIE
+  if (filter?.careerType === 'experienced') params.careerType = List16CareerType.EXPERIENCED
   if (filter?.appliedFrom) params.appliedFrom = filter.appliedFrom
   if (filter?.appliedTo) params.appliedTo = filter.appliedTo
   if (filter?.confirmedFrom) params.confirmedFrom = filter.confirmedFrom
@@ -150,6 +150,11 @@ export function mapCareerTalentApplicationDetail(
   })
   if (!base) return null
   const educationLevel = row.educationLevel ? EDUCATION_LEVEL[row.educationLevel] : undefined
+  const firstAttachment = row.attachments?.find(
+    item => item.assetId != null || Boolean(item.originalName?.trim()),
+  )
+  const attachmentFileName =
+    row.attachmentOriginalName?.trim() || firstAttachment?.originalName?.trim() || null
   return {
     ...base,
     addressRoad: row.addressRoad?.trim() ?? '',
@@ -160,9 +165,8 @@ export function mapCareerTalentApplicationDetail(
     educationInfo: row.educationInfo ?? '',
     careerInfo: row.careerInfo ?? '',
     privacyAgreed: row.privacyAgreed === true,
-    attachmentFileName: row.attachmentOriginalName?.trim()
-      ? row.attachmentOriginalName.trim()
-      : null,
+    attachmentFileName,
+    attachmentAssetId: firstAttachment?.assetId,
     confirmedByName: row.confirmedByName?.trim() ? row.confirmedByName.trim() : null,
   }
 }

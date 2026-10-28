@@ -60,4 +60,10 @@ export interface CareerTalentApplicationCreateRequest {
   careerInfo?: string;
   privacyAgreed: boolean;
   attachmentAssetId?: number;
+  /**
+     * Confirmed career talent-application attachment asset ids in request order. Max 10. Omit when empty.
+     * @minItems 0
+     * @maxItems 10
+     */
+  attachmentAssetIds?: number[];
 }

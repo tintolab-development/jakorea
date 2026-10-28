@@ -33,7 +33,7 @@ function careersApi() {
 async function listRemote(
   filter?: RecruitApplicantListFilter,
 ): Promise<RecruitApplicantListResult> {
-  const response = await careersApi().list15(toTalentApplicationListParams(filter))
+  const response = await careersApi().list16(toTalentApplicationListParams(filter))
   const items = (response.items ?? [])
     .map(mapCareerTalentApplicationListItem)
     .filter((row): row is RecruitApplicant => row != null)
@@ -67,9 +67,14 @@ export async function getRecruitApplicantService(
 
 export async function downloadRecruitApplicantAttachmentService(
   id: string,
+  assetId?: number | null,
 ): Promise<{ downloadUrl: string; originalName?: string } | null> {
   if (!shouldUseRecruitApplicantRemoteApi()) return null
-  const response = await careersApi().attachmentDownload2(toNumericId(id))
+  const numericId = toNumericId(id)
+  const response =
+    assetId != null && assetId > 0
+      ? await careersApi().attachmentDownloadByAsset2(numericId, assetId)
+      : await careersApi().attachmentDownload2(numericId)
   if (!response.downloadUrl) return null
   return {
     downloadUrl: response.downloadUrl,

@@ -5,6 +5,7 @@
  * Filtered for Homepage Admin careers Orval codegen.
  * OpenAPI spec version: v1
  */
+import type { ApplicationAttachmentItem } from './applicationAttachmentItem';
 import type { ConsultationDetailResponseStatus } from './consultationDetailResponseStatus';
 
 export interface ConsultationDetailResponse {
@@ -23,5 +24,6 @@ export interface ConsultationDetailResponse {
   linkUrl?: string;
   attachmentAssetId?: number;
   attachmentOriginalName?: string;
+  attachments?: ApplicationAttachmentItem[];
   version?: number;
 }
