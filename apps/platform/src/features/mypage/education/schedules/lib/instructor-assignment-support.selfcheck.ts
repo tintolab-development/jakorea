@@ -4,6 +4,7 @@ import {
   displayAssignmentValueOrDash,
   formatAssignmentDistanceKm,
   formatAssignmentSessionLabel,
+  formatAssignmentWaitingStatus,
   formatInstructorRole,
   groupAssignmentsByInstitution,
   supportsInstructorIndividualAssignment,
@@ -44,55 +45,82 @@ assert.equal(formatAssignmentDistanceKm(0), '0 km')
 assert.equal(formatAssignmentDistanceKm('3.25'), '3.25 km')
 assert.equal(formatAssignmentDistanceKm(null), '-')
 
-// 같은 기관 = 한 행(여러 줄), 기관 없음(개인형) = 배정마다 한 행, 서버 순서 유지
+// 그룹 키 = organizationApplicationId + 역할 + 실제 배정 학년(grade). 개인형(orgAppId null) = 일정마다 한 행. 서버 순서 유지
 const ids = (groups: Array<{ items: Array<{ assignmentId: number }> }>) =>
   groups.map(group => group.items.map(item => item.assignmentId))
 
-// QA 제휴학교 11/05 대표(LEAD) vs 11/11 일반(ASSISTANT) → 역할이 달라 2행
+// 같은 기관 신청, 대표(LEAD) vs 일반(ASSISTANT) → 역할이 달라 2행
 assert.deepEqual(
   ids(
     groupAssignmentsByInstitution([
-      { assignmentId: 1, institutionName: 'QA 제휴학교', instructorRole: 'LEAD', grade: '3' },
-      { assignmentId: 2, institutionName: 'QA 제휴학교', instructorRole: 'ASSISTANT', grade: '3' },
+      { assignmentId: 1, organizationApplicationId: 7, scheduleId: 101, instructorRole: 'LEAD', grade: '3' },
+      { assignmentId: 2, organizationApplicationId: 7, scheduleId: 102, instructorRole: 'ASSISTANT', grade: '3' },
     ]),
   ),
   [[1], [2]],
 )
-// 같은 기관·역할·학년 일정 2건 → 1행 2줄
+// 같은 기관 신청·역할·학년 일정 2건 → 1행 2줄
 assert.deepEqual(
   ids(
     groupAssignmentsByInstitution([
-      { assignmentId: 1, institutionName: 'QA 제휴학교', instructorRole: 'LEAD', grade: '3' },
-      { assignmentId: 2, institutionName: ' QA 제휴학교 ', instructorRole: 'LEAD', grade: ' 3 ' },
+      { assignmentId: 1, organizationApplicationId: 7, scheduleId: 101, instructorRole: 'LEAD', grade: '3' },
+      { assignmentId: 2, organizationApplicationId: 7, scheduleId: 102, instructorRole: 'LEAD', grade: ' 3 ' },
     ]),
   ),
   [[1, 2]],
 )
-// 같은 역할, 다른 학년 → 2행
+// 같은 역할, 다른 학년 → 2행 (requestedGrade는 그룹 키가 아니다)
 assert.deepEqual(
   ids(
     groupAssignmentsByInstitution([
-      { assignmentId: 1, institutionName: 'QA 제휴학교', instructorRole: 'LEAD', grade: '2' },
-      { assignmentId: 2, institutionName: 'QA 제휴학교', instructorRole: 'LEAD', grade: '3' },
+      { assignmentId: 1, organizationApplicationId: 7, scheduleId: 101, instructorRole: 'LEAD', grade: '2', requestedGrade: '3' },
+      { assignmentId: 2, organizationApplicationId: 7, scheduleId: 102, instructorRole: 'LEAD', grade: '3', requestedGrade: '3' },
     ]),
   ),
   [[1], [2]],
 )
-// 행 순서는 서버 응답에서 처음 나온 순서, 기관 없음(개인형)은 배정마다 1행
+// 기관명이 같아도 기관 신청(organizationApplicationId)이 다르면 다른 행
 assert.deepEqual(
   ids(
     groupAssignmentsByInstitution([
-      { assignmentId: 30, institutionName: 'B학교', instructorRole: 'LEAD', grade: null },
-      { assignmentId: 10, institutionName: 'A학교', instructorRole: 'LEAD', grade: null },
-      { assignmentId: 20, institutionName: 'B학교', instructorRole: 'LEAD', grade: null },
-      { assignmentId: 40, institutionName: null, instructorRole: 'LEAD', grade: null },
-      { assignmentId: 50, institutionName: '', instructorRole: 'LEAD', grade: null },
-      { assignmentId: 60, institutionName: null, instructorRole: 'LEAD', grade: null },
+      { assignmentId: 1, organizationApplicationId: 7, scheduleId: 101, instructorRole: 'LEAD', grade: '3' },
+      { assignmentId: 2, organizationApplicationId: 8, scheduleId: 102, instructorRole: 'LEAD', grade: '3' },
+    ]),
+  ),
+  [[1], [2]],
+)
+// 행 순서는 서버 응답에서 처음 나온 순서, 개인형(orgAppId null)은 일정(scheduleId)마다 1행
+assert.deepEqual(
+  ids(
+    groupAssignmentsByInstitution([
+      { assignmentId: 30, organizationApplicationId: 2, scheduleId: 1, instructorRole: 'LEAD', grade: null },
+      { assignmentId: 10, organizationApplicationId: 1, scheduleId: 2, instructorRole: 'LEAD', grade: null },
+      { assignmentId: 20, organizationApplicationId: 2, scheduleId: 3, instructorRole: 'LEAD', grade: null },
+      { assignmentId: 40, organizationApplicationId: null, scheduleId: 4, instructorRole: 'LEAD', grade: null },
+      { assignmentId: 50, organizationApplicationId: null, scheduleId: 5, instructorRole: 'LEAD', grade: null },
+      { assignmentId: 60, organizationApplicationId: null, scheduleId: 6, instructorRole: 'ASSISTANT', grade: null },
     ]),
   ),
   [[30, 20], [10], [40], [50], [60]],
 )
 assert.deepEqual(groupAssignmentsByInstitution([]), [])
+
+// 배정 대기 상태: 서버 status·unavailableReason을 라벨로만 바꾼다
+assert.deepEqual(formatAssignmentWaitingStatus('WAITING', null), {
+  tone: 'waiting', label: '배정 대기', reason: null, disabled: false,
+})
+assert.deepEqual(formatAssignmentWaitingStatus('UNAVAILABLE', 'SCHEDULE_CONFLICT'), {
+  tone: 'unavailable', label: '배정 불가', reason: '일정 충돌', disabled: true,
+})
+assert.deepEqual(formatAssignmentWaitingStatus('UNAVAILABLE', 'CAPACITY_FULL'), {
+  tone: 'unavailable', label: '배정 불가', reason: '정원 초과', disabled: true,
+})
+assert.deepEqual(formatAssignmentWaitingStatus('UNAVAILABLE', null), {
+  tone: 'unavailable', label: '배정 불가', reason: null, disabled: true,
+})
+assert.deepEqual(formatAssignmentWaitingStatus('CANCELLED', null), {
+  tone: 'cancelled', label: '배정 취소', reason: null, disabled: false,
+})
 
 // 차시 자리: 일정형+복수 회차는 일정명, 그 외 N차시
 assert.equal(formatAssignmentSessionLabel({ sessionNo: 2, scheduleName: '세부 일정 01' }, false), '2차시')

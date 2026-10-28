@@ -44,23 +44,24 @@ assert.deepEqual(
 )
 assert.equal(instructorWithAssignments[0]?.label, INSTRUCTOR_ASSIGNMENT_TAB_LABEL)
 
-// 일반 개인형: 강의 일정 탭을 유지하고 배정 현황 탭을 별도로 추가한다.
-const individualInstructorWithAssignments = buildInProgressDetailTabItems({
+// 강의현황 개인형·기타 유형: 배정 현황이 항상 첫 번째, 강의 일정 탭 없음.
+const individualInstructorTabs = buildInProgressDetailTabItems({
   ...options,
   detailCase: 'instructor',
   programType: 'GENERAL_INDIVIDUAL',
   lectureReportVisible: true,
   instructorAssignmentVisible: true,
-  instructorAssignmentKeepsScheduleTab: true,
+  instructorAssignmentWithActivityTabs: true,
 })
 assert.deepEqual(
-  individualInstructorWithAssignments.map(item => item.key),
-  ['assignment', 'notice', 'schedule', 'lecture-report', 'survey', 'satisfaction', 'settlement'],
+  individualInstructorTabs.map(item => item.key),
+  ['assignment', 'notice', 'lecture-report', 'survey', 'satisfaction', 'settlement'],
 )
 assert.deepEqual(
-  individualInstructorWithAssignments.map(item => item.label),
-  ['배정 현황', '안내사항', '강의 일정', '강의보고서', '설문조사', '만족도조사', '정산현황'],
+  individualInstructorTabs.map(item => item.label),
+  ['배정 현황', '안내사항', '강의보고서', '설문조사', '만족도조사', '정산현황'],
 )
+assert.ok(!individualInstructorTabs.some(item => item.label === '강의 일정'))
 assert.deepEqual(
   buildWithdrawnDuringDetailTabItems({
     ...options,
@@ -68,21 +69,27 @@ assert.deepEqual(
     programType: 'GENERAL_INDIVIDUAL',
     lectureReportVisible: true,
     instructorAssignmentVisible: true,
-    instructorAssignmentKeepsScheduleTab: true,
+    instructorAssignmentWithActivityTabs: true,
   }).map(item => item.key),
-  ['assignment', 'schedule', 'lecture-report', 'survey', 'satisfaction', 'settlement'],
+  ['assignment', 'lecture-report', 'survey', 'satisfaction', 'settlement'],
 )
-// 배정이 없으면 기존 개인형 탭 구성 그대로(배정 현황 탭 없음).
+// 기관형 진행 중 포기: 배정 현황이 첫 번째, 강의 일정 탭 없음.
+assert.deepEqual(
+  buildWithdrawnDuringDetailTabItems({
+    ...options,
+    detailCase: 'instructor',
+    lectureReportVisible: true,
+    instructorAssignmentVisible: true,
+  }).map(item => item.label),
+  ['배정 현황', '강의보고서', '정산 현황'],
+)
+// 교육현황 상세(instructorAssignmentVisible 미설정)는 기존 일정 탭 유지.
 assert.deepEqual(
   buildInProgressDetailTabItems({
     ...options,
-    detailCase: 'instructor',
-    programType: 'GENERAL_INDIVIDUAL',
-    lectureReportVisible: true,
-    instructorAssignmentVisible: false,
-    instructorAssignmentKeepsScheduleTab: true,
+    scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
   }).map(item => item.key),
-  ['notice', 'schedule', 'lecture-report', 'survey', 'satisfaction', 'settlement'],
+  ['notice', 'schedule', 'survey', 'satisfaction', 'settlement'],
 )
 
 assert.equal(resolveVolunteerActivityDetailCase('general'), 'volunteer')

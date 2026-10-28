@@ -23,7 +23,7 @@ export const EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL = '교육 일정'
 /** UJAT 기관(교사) 진행중 — 일정 탭 대신 학급·봉사자 배정 표 */
 export const UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL = '봉사자 배정 현황'
 
-/** 강의현황 상세 — 본인 배정 일정이 있을 때만 노출하는 탭 */
+/** 강의현황 상세 — 항상 첫 번째(기본) 탭. 강의 일정 탭은 두지 않는다. */
 export const INSTRUCTOR_ASSIGNMENT_TAB_LABEL = '배정 현황'
 
 /**
@@ -85,13 +85,16 @@ type ActivityTabOptions = {
   schoolTeacherMember?: boolean
   /** Instructor applications only: expose the independent lecture report tab. */
   lectureReportVisible?: boolean
-  /** Instructor applications only: expose the Figma assignment overview tab. */
+  /**
+   * 강의현황 상세 전용: 배정 현황 탭을 첫 번째로 두고 강의 일정 탭은 노출하지 않는다.
+   * 교육·봉사현황 상세는 이 값을 넘기지 않으므로 기존 탭 구성 그대로다.
+   */
   instructorAssignmentVisible?: boolean
   /**
-   * 일반 개인형 강의현황: 기존 강의 일정 탭을 유지하고 배정 현황을 별도 탭(`assignment`)으로 맨 앞에 추가한다.
-   * `instructorAssignmentVisible`과 함께 true일 때만 적용된다.
+   * 강의현황 상세(기관형·제미나이 외): 배정 현황(`assignment`) 뒤에 안내사항·강의보고서·설문·만족도·정산을 둔다.
+   * `instructorAssignmentVisible`과 함께 true일 때만 적용된다. 강의 일정 탭은 두지 않는다.
    */
-  instructorAssignmentKeepsScheduleTab?: boolean
+  instructorAssignmentWithActivityTabs?: boolean
   /**
    * 제미나이 강의현황 진행 중·완료.
    * 배정 현황·정산 현황만 두고 안내사항·강의보고서는 제공하지 않는다.
@@ -200,7 +203,7 @@ export function buildInProgressDetailTabItems(
 
   if (
     options.instructorAssignmentVisible === true &&
-    options.instructorAssignmentKeepsScheduleTab !== true
+    options.instructorAssignmentWithActivityTabs !== true
   ) {
     const items: EducationDetailTabItem[] = [
       { key: 'schedule', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL },
@@ -215,15 +218,16 @@ export function buildInProgressDetailTabItems(
     return items
   }
 
-  // 일반 개인형도 기관형처럼 배정 현황 탭을 맨 앞에 두고, 강의 일정 탭은 기존 위치에 유지한다.
-  const items: EducationDetailTabItem[] =
-    options.instructorAssignmentVisible === true
-      ? [{ key: 'assignment', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL }]
-      : []
-  items.push(
-    { key: 'notice', label: '안내사항' },
-    { key: 'schedule', label: resolveActivityScheduleTabLabel(options) },
-  )
+  // 강의현황 상세: 배정 현황 탭을 맨 앞에 두고 강의 일정 탭은 두지 않는다.
+  // 교육·봉사현황 상세(instructorAssignmentVisible 미설정)는 안내사항·일정 탭 구성 그대로다.
+  const instructorAssignment = options.instructorAssignmentVisible === true
+  const items: EducationDetailTabItem[] = instructorAssignment
+    ? [{ key: 'assignment', label: INSTRUCTOR_ASSIGNMENT_TAB_LABEL }]
+    : []
+  items.push({ key: 'notice', label: '안내사항' })
+  if (!instructorAssignment) {
+    items.push({ key: 'schedule', label: resolveActivityScheduleTabLabel(options) })
+  }
   if (options.lectureReportVisible === true) {
     items.push({ key: 'lecture-report', label: '강의보고서' })
   }

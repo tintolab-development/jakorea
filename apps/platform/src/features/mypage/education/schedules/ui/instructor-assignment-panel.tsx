@@ -1,19 +1,26 @@
-import type { LectureReportAssignment } from '../api/lecture-report-client'
+import type {
+  InstructorAssignmentItem,
+  InstructorAssignmentWaitingItem,
+} from '../api/instructor-assignment-client'
 import { formatDisplayDateTime } from '@/shared/lib/format-display-date'
 import {
   asAssignmentDisplayText,
   displayAssignmentValueOrDash,
   formatAssignmentDistanceKm,
   formatAssignmentSessionLabel,
+  formatAssignmentWaitingStatus,
   formatInstructorRole,
   groupAssignmentsByInstitution,
+  type AssignmentWaitingStatusView,
 } from '../lib/instructor-assignment-support'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import styles from './instructor-assignment-panel.module.css'
 
 type InstructorAssignmentPanelProps = {
-  items: readonly LectureReportAssignment[]
-  hideWaitingList?: boolean
+  /** GET /api/portal/me/programs/{programId}/instructor-assignments `items` (서버 순서) */
+  assignedItems: readonly InstructorAssignmentItem[]
+  /** GET /api/portal/me/programs/{programId}/instructor-assignment-waitings `items` (서버 순서, FE 재필터링 없음) */
+  waitingItems: readonly InstructorAssignmentWaitingItem[]
   /** 개인 프로그램 — 배정된 교육 일정 / 배정 대기 교육 일정 (기관명·학년 대신 출강지) */
   individual?: boolean
   /** 일정형 + 복수 회차 — 차시/회차 대신 일정명 표시 */
@@ -25,7 +32,10 @@ type AssignmentTableLine = {
   schedule: string
 }
 
-/** 같은 기관 + 같은 역할 + 같은 담당학년은 한 행. 일정만 배정마다 한 줄씩 둔다. */
+/**
+ * 기관형·제미나이: 같은 기관 신청(organizationApplicationId) + 같은 역할 + 같은 배정 학년은 한 행.
+ * 개인형: 일정마다 한 행. 일정만 배정마다 한 줄씩 둔다.
+ */
 type AssignmentTableRow = {
   id: string
   role: string
@@ -34,6 +44,17 @@ type AssignmentTableRow = {
   location: string
   distance: string
   lines: AssignmentTableLine[]
+}
+
+/** 배정 대기 목록 행 — 서버 행(rowKey) 하나가 한 행. */
+type WaitingTableRow = {
+  id: string
+  institutionName: string
+  requestedGrade: string
+  location: string
+  distance: string
+  schedule: string
+  status: AssignmentWaitingStatusView
 }
 
 function parseDisplayDateTime(value: string | null): { date: string; time: string } | null {
@@ -45,7 +66,10 @@ function parseDisplayDateTime(value: string | null): { date: string; time: strin
   return { date: match[1], time: match[2] }
 }
 
-function formatScheduleLine(item: LectureReportAssignment, useScheduleName: boolean): string {
+function formatScheduleLine(
+  item: Pick<InstructorAssignmentItem, 'startAt' | 'endAt' | 'sessionNo' | 'scheduleName'>,
+  useScheduleName: boolean,
+): string {
   const start = parseDisplayDateTime(item.startAt)
   const end = parseDisplayDateTime(item.endAt)
   const date = start?.date || end?.date || '-'
@@ -57,7 +81,8 @@ function formatScheduleLine(item: LectureReportAssignment, useScheduleName: bool
 }
 
 function buildRows(
-  items: readonly LectureReportAssignment[],
+  items: readonly InstructorAssignmentItem[],
+  individual: boolean,
   useScheduleName: boolean,
 ): AssignmentTableRow[] {
   return groupAssignmentsByInstitution(items).map(({ key, items: groupItems }) => {
@@ -67,12 +92,35 @@ function buildRows(
       role: formatInstructorRole(first?.instructorRole),
       grade: displayAssignmentValueOrDash(first?.grade),
       institutionName: asAssignmentDisplayText(first?.institutionName) || '-',
-      location: displayAssignmentValueOrDash(first?.institutionAddress),
-      distance: formatAssignmentDistanceKm(first?.distanceFromHome),
+      location: displayAssignmentValueOrDash(
+        individual ? first?.scheduleLocation : first?.institutionAddress,
+      ),
+      distance: formatAssignmentDistanceKm(first?.distanceKm),
       lines: groupItems.map(item => ({
         id: String(item.assignmentId),
         schedule: formatScheduleLine(item, useScheduleName),
       })),
+    }
+  })
+}
+
+function buildWaitingRows(
+  items: readonly InstructorAssignmentWaitingItem[],
+  individual: boolean,
+  useScheduleName: boolean,
+): WaitingTableRow[] {
+  return items.map(item => {
+    const schedule = formatScheduleLine(item, useScheduleName)
+    return {
+      id: item.rowKey,
+      institutionName: asAssignmentDisplayText(item.institutionName) || '-',
+      requestedGrade: displayAssignmentValueOrDash(item.requestedGrade),
+      location: displayAssignmentValueOrDash(
+        individual ? item.scheduleLocation : item.institutionAddress,
+      ),
+      distance: formatAssignmentDistanceKm(item.distanceKm),
+      schedule: schedule === '-' ? displayAssignmentValueOrDash(item.dateRangeLabel) : schedule,
+      status: formatAssignmentWaitingStatus(item.status, item.unavailableReason),
     }
   })
 }
@@ -148,7 +196,7 @@ function AssignedInstitutionTable({ rows }: { rows: readonly AssignmentTableRow[
   )
 }
 
-/** 개인 프로그램 — 배정된 교육 일정. 출강지는 응답에 일정 장소 필드가 없어 '-'로 둔다. */
+/** 개인 프로그램 — 배정된 교육 일정. 일정(scheduleId)마다 한 행, 출강지는 scheduleLocation. */
 function AssignedScheduleTable({ rows }: { rows: readonly AssignmentTableRow[] }) {
   return (
     <div className={styles.tableWrap}>
@@ -177,7 +225,7 @@ function AssignedScheduleTable({ rows }: { rows: readonly AssignmentTableRow[] }
             <tr key={row.id}>
               <td>{rows.length - index}</td>
               <td>{renderRole(row.role)}</td>
-              <td>-</td>
+              <td>{row.location}</td>
               <td>{row.distance}</td>
               <td>{renderLines(row, line => line.schedule)}</td>
             </tr>
@@ -188,7 +236,32 @@ function AssignedScheduleTable({ rows }: { rows: readonly AssignmentTableRow[] }
   )
 }
 
-function WaitingInstitutionTable() {
+/** 배정 상태 — 기존 봉사 배정 현황과 같은 텍스트 라벨 스타일. 배정 불가는 사유(일정 충돌/정원 초과)를 함께 둔다. */
+function renderWaitingStatus(status: AssignmentWaitingStatusView) {
+  const toneClass =
+    status.tone === 'waiting' ? styles.statusWaiting : styles.statusInactive
+  return (
+    <div className={styles.scheduleLines}>
+      <PFText as="span" typo="bd-md-md" className={toneClass}>
+        {status.label}
+      </PFText>
+      {status.reason ? (
+        <PFText as="span" typo="bd-sm-rg" className={styles.statusInactive}>
+          {status.reason}
+        </PFText>
+      ) : null}
+    </div>
+  )
+}
+
+function waitingRowProps(row: WaitingTableRow) {
+  return {
+    className: row.status.disabled ? styles.disabledRow : undefined,
+    'aria-disabled': row.status.disabled ? true : undefined,
+  }
+}
+
+function WaitingInstitutionTable({ rows }: { rows: readonly WaitingTableRow[] }) {
   return (
     <div className={styles.tableWrap}>
       <table
@@ -216,19 +289,33 @@ function WaitingInstitutionTable() {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td colSpan={7} className={styles.emptyCell}>
-              대기 기관이 없습니다.
-            </td>
-          </tr>
+          {rows.length > 0 ? (
+            rows.map((row, index) => (
+              <tr key={row.id} {...waitingRowProps(row)}>
+                <td>{rows.length - index}</td>
+                <td>{row.institutionName}</td>
+                <td>{row.requestedGrade}</td>
+                <td>{row.location}</td>
+                <td>{row.distance}</td>
+                <td>{row.schedule}</td>
+                <td>{renderWaitingStatus(row.status)}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={7} className={styles.emptyCell}>
+                대기 기관이 없습니다.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
   )
 }
 
-/** 개인 프로그램 — 배정 대기 교육 일정. 대기 목록 API 전까지 빈 상태만 둔다. */
-function WaitingScheduleTable() {
+/** 개인 프로그램 — 배정 대기 교육 일정. 출강지는 scheduleLocation. */
+function WaitingScheduleTable({ rows }: { rows: readonly WaitingTableRow[] }) {
   return (
     <div className={styles.tableWrap}>
       <table
@@ -252,11 +339,23 @@ function WaitingScheduleTable() {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td colSpan={5} className={styles.emptyCell}>
-              대기 교육 일정이 없습니다.
-            </td>
-          </tr>
+          {rows.length > 0 ? (
+            rows.map((row, index) => (
+              <tr key={row.id} {...waitingRowProps(row)}>
+                <td>{rows.length - index}</td>
+                <td>{row.location}</td>
+                <td>{row.distance}</td>
+                <td>{row.schedule}</td>
+                <td>{renderWaitingStatus(row.status)}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={5} className={styles.emptyCell}>
+                대기 교육 일정이 없습니다.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -264,12 +363,13 @@ function WaitingScheduleTable() {
 }
 
 export function InstructorAssignmentPanel({
-  items,
-  hideWaitingList = false,
+  assignedItems,
+  waitingItems,
   individual = false,
   useScheduleName = false,
 }: InstructorAssignmentPanelProps) {
-  const rows = buildRows(items, useScheduleName)
+  const rows = buildRows(assignedItems, individual, useScheduleName)
+  const waitingRows = buildWaitingRows(waitingItems, individual, useScheduleName)
   const assignedTitle = individual ? '배정된 교육 일정' : '배정된 기관 목록'
   const assignedEmptyText = individual ? '배정된 교육 일정이 없습니다.' : '배정된 기관이 없습니다.'
   const waitingTitle = individual ? '배정 대기 교육 일정' : '배정된 대기 기관 목록'
@@ -292,14 +392,16 @@ export function InstructorAssignmentPanel({
           </PFText>
         )}
       </div>
-      {hideWaitingList ? null : (
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>
-            {waitingTitle} <span>0건</span>
-          </h2>
-          {individual ? <WaitingScheduleTable /> : <WaitingInstitutionTable />}
-        </div>
-      )}
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>
+          {waitingTitle} <span>{waitingRows.length}건</span>
+        </h2>
+        {individual ? (
+          <WaitingScheduleTable rows={waitingRows} />
+        ) : (
+          <WaitingInstitutionTable rows={waitingRows} />
+        )}
+      </div>
     </section>
   )
 }

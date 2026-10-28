@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
@@ -14,7 +14,6 @@ import {
   EducationDetailBack,
   EducationDetailHeader,
   EducationInProgressNoticePanel,
-  EducationSchedulePanel,
   EducationSettlementPanel,
   EducationSurveySection,
   DocumentPassBanner,
@@ -23,7 +22,6 @@ import {
   isWithdrawnDuringEducation,
   lectureApplicationDetailPath,
   MYPAGE_LECTURE_PATH,
-  resolveEducationScheduleTabLabel,
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
@@ -42,7 +40,8 @@ import {
 import { resolveGeminiOfficialDocumentFromAnswers } from '@/features/mypage/education/applications/lib/official-document-from-answers'
 import { LectureReportPanel } from '@/features/mypage/education/schedules/ui/lecture-report-panel'
 import { InstructorAssignmentPanel } from '@/features/mypage/education/schedules/ui/instructor-assignment-panel'
-import { useLectureReportAssignmentsQuery } from '@/features/mypage/education/schedules/api/use-lecture-report-assignments-query'
+import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
+import { useInstructorAssignmentStatusQuery } from '@/features/mypage/education/schedules/api/use-instructor-assignment-status-query'
 import {
   supportsInstructorIndividualAssignment,
   supportsInstructorInstitutionAssignment,
@@ -198,18 +197,18 @@ export function MypageLectureDetailPage() {
   const institutionAssignmentProgram = supportsInstructorInstitutionAssignment(program?.programType)
   const individualAssignmentProgram = supportsInstructorIndividualAssignment(program?.programType)
 
-  const instructorAssignmentQuery = useLectureReportAssignmentsQuery(
+  /** 배정 현황 탭 — instructor-assignments + instructor-assignment-waitings (강의보고서 배정 API는 쓰지 않는다) */
+  const instructorAssignmentQuery = useInstructorAssignmentStatusQuery(
     program?.id,
-    routeApplicationType === 'INSTRUCTOR' &&
-      (isActivityStatus || isWithdrawnDuring) &&
-      (institutionAssignmentProgram || individualAssignmentProgram || isGeminiProgram),
+    routeApplicationType === 'INSTRUCTOR' && (isActivityStatus || isWithdrawnDuring),
   )
-  const instructorAssignmentVisible =
-    isGeminiProgram ||
-    ((institutionAssignmentProgram || individualAssignmentProgram) &&
-      instructorAssignmentQuery.hasAssignment)
-  /** 일반 개인형은 강의 일정 탭을 유지하고 배정 현황을 별도 탭으로 둔다. */
-  const instructorAssignmentKeepsScheduleTab = individualAssignmentProgram && !isGeminiProgram
+  /**
+   * 강의현황 상세: 배정 현황 탭은 유형·배정 여부와 무관하게 항상 첫 번째(기본) 탭이다.
+   * 강의 일정 탭은 두지 않는다. 목록이 비어 있으면 패널의 빈 상태 문구를 보여준다.
+   */
+  const instructorAssignmentVisible = true
+  /** 기관형·제미나이 외(일반 개인형 등): 배정 현황 뒤에 안내사항·강의보고서·설문·만족도·정산 탭을 둔다. */
+  const instructorAssignmentWithActivityTabs = !institutionAssignmentProgram && !isGeminiProgram
 
   const activityTabOptions = useMemo(
     () =>
@@ -221,13 +220,13 @@ export function MypageLectureDetailPage() {
             satisfactionConfigured: program.satisfactionConfigured,
             lectureReportVisible: routeApplicationType === 'INSTRUCTOR' && !isGeminiProgram,
             instructorAssignmentVisible,
-            instructorAssignmentKeepsScheduleTab,
+            instructorAssignmentWithActivityTabs,
             geminiInstructorActivityTabs: isGeminiProgram,
           }
         : null,
     [
-      instructorAssignmentKeepsScheduleTab,
       instructorAssignmentVisible,
+      instructorAssignmentWithActivityTabs,
       isGeminiProgram,
       program,
       routeApplicationType,
@@ -459,6 +458,31 @@ export function MypageLectureDetailPage() {
       </PFText>
     )
 
+  /** 배정 현황 탭은 항상 노출되므로 조회 중·실패를 빈 목록으로 보이지 않게 한다. */
+  const renderInstructorAssignmentStatus = (panel: ReactNode) => {
+    if (instructorAssignmentQuery.isLoading) {
+      return <EducationSessionListSkeleton statusMessage="배정 현황을 불러오는 중입니다." />
+    }
+    if (instructorAssignmentQuery.isError) {
+      return (
+        <>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
+            배정 현황을 불러오지 못했습니다.
+          </PFText>
+          <PFButton
+            type="button"
+            variant="tertiary"
+            size="large"
+            onClick={() => void instructorAssignmentQuery.refetch()}
+          >
+            다시 시도
+          </PFButton>
+        </>
+      )
+    }
+    return panel
+  }
+
   const renderActivityBody = (active: EducationActivitySection) => {
     if (active === 'notice' && isActivityStatus) {
       return (
@@ -478,10 +502,11 @@ export function MypageLectureDetailPage() {
       )
     }
     if (active === 'assignment' && instructorAssignmentVisible) {
-      return (
+      return renderInstructorAssignmentStatus(
         <InstructorAssignmentPanel
-          items={instructorAssignmentQuery.items}
-          individual
+          assignedItems={instructorAssignmentQuery.assignedItems}
+          waitingItems={instructorAssignmentQuery.waitingItems}
+          individual={individualAssignmentProgram}
           useScheduleName={
             program.educationStructure === 'schedule' && program.sessionRound === 'multi'
           }
@@ -489,22 +514,11 @@ export function MypageLectureDetailPage() {
       )
     }
     if (active === 'schedule') {
-      if (instructorAssignmentVisible && !instructorAssignmentKeepsScheduleTab) {
-        return (
-          <InstructorAssignmentPanel
-            items={instructorAssignmentQuery.items}
-            hideWaitingList={isGeminiProgram}
-          />
-        )
-      }
-      return (
-        <EducationSchedulePanel
-          applicationType={routeApplicationType}
-          applicationId={application.id}
-          lastParticipatedSession={
-            isWithdrawnDuring ? application.lastParticipatedSession : undefined
-          }
-          listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
+      // 기관형·제미나이: `schedule` 키가 배정 현황 탭이다(강의 일정 탭 없음).
+      return renderInstructorAssignmentStatus(
+        <InstructorAssignmentPanel
+          assignedItems={instructorAssignmentQuery.assignedItems}
+          waitingItems={instructorAssignmentQuery.waitingItems}
         />
       )
     }

@@ -19,7 +19,7 @@ export function supportsInstructorInstitutionAssignment(
 
 /**
  * 일반 개인형 강의현황 — 기관 신청 관계 없이 본인 배정 일정만 배정 현황 탭으로 노출한다.
- * 기존 강의 일정 탭은 유지한다.
+ * 강의현황 상세에는 강의 일정 탭이 없다(배정 현황이 첫 번째 탭).
  */
 export function supportsInstructorIndividualAssignment(
   programType: string | null | undefined,
@@ -68,34 +68,70 @@ export function formatAssignmentDistanceKm(value: unknown): string {
 }
 
 /**
- * 배정된 기관 목록 행 묶음.
- * 응답에 기관 id가 없어 (기관명 + 역할 + 담당학년)으로 묶는다. 같은 기관이어도 역할·학년이 다르면 다른 행.
- * 기관명이 없으면(개인형) 배정마다 한 행으로 둔다.
+ * 배정된 목록 행 묶음 (BE 계약: GET /api/portal/me/programs/{programId}/instructor-assignments).
+ * - 기관형·제미나이: (organizationApplicationId + 역할 + 실제 배정 학년 grade)로 묶는다.
+ *   같은 기관 신청이어도 역할·학년이 다르면 다른 행. requestedGrade는 그룹 키로 쓰지 않는다.
+ * - 개인형(organizationApplicationId null): 일정(scheduleId)마다 한 행.
  * 서버 정렬 순서를 그대로 유지한다(행 순서는 묶음이 처음 나온 순서, 행 안의 줄은 응답 순서).
  */
 export function groupAssignmentsByInstitution<
   T extends {
     assignmentId: number
-    institutionName: string | null
+    organizationApplicationId: number | null
+    scheduleId?: number | null
     instructorRole?: unknown
     grade?: unknown
   },
 >(items: readonly T[]): Array<{ key: string; items: T[] }> {
   const groups = new Map<string, T[]>()
   items.forEach(item => {
-    const name = asAssignmentDisplayText(item.institutionName)
-    const key = name
-      ? `institution:${JSON.stringify([
-          name,
-          formatInstructorRole(item.instructorRole),
-          asAssignmentDisplayText(item.grade),
-        ])}`
-      : `assignment:${item.assignmentId}`
+    const key =
+      item.organizationApplicationId != null
+        ? `organization:${JSON.stringify([
+            item.organizationApplicationId,
+            asAssignmentDisplayText(item.instructorRole).toUpperCase(),
+            asAssignmentDisplayText(item.grade),
+          ])}`
+        : item.scheduleId != null
+          ? `schedule:${item.scheduleId}`
+          : `assignment:${item.assignmentId}`
     const current = groups.get(key)
     if (current) current.push(item)
     else groups.set(key, [item])
   })
   return Array.from(groups, ([key, groupItems]) => ({ key, items: groupItems }))
+}
+
+/**
+ * 배정 대기 목록 상태 표시 (BE 계약: instructor-assignment-waitings `status`·`unavailableReason`).
+ * 서버 값을 그대로 라벨로만 바꾸고 FE에서 재판정하지 않는다.
+ */
+export type AssignmentWaitingStatusView = {
+  tone: 'waiting' | 'unavailable' | 'cancelled'
+  label: string
+  reason: string | null
+  disabled: boolean
+}
+
+export function formatAssignmentWaitingStatus(
+  status: unknown,
+  unavailableReason: unknown,
+): AssignmentWaitingStatusView {
+  const code = asAssignmentDisplayText(status).toUpperCase()
+  if (code === 'UNAVAILABLE') {
+    const reasonCode = asAssignmentDisplayText(unavailableReason).toUpperCase()
+    const reason =
+      reasonCode === 'SCHEDULE_CONFLICT'
+        ? '일정 충돌'
+        : reasonCode === 'CAPACITY_FULL'
+          ? '정원 초과'
+          : null
+    return { tone: 'unavailable', label: '배정 불가', reason, disabled: true }
+  }
+  if (code === 'CANCELLED' || code === 'CANCELED') {
+    return { tone: 'cancelled', label: '배정 취소', reason: null, disabled: false }
+  }
+  return { tone: 'waiting', label: '배정 대기', reason: null, disabled: false }
 }
 
 /**

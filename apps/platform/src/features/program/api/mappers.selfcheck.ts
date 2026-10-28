@@ -575,10 +575,10 @@ const scheduleMulti = mapPortalProgramDetail({
 assert.ok(scheduleMulti)
 assert.equal(scheduleMulti.sessions.length, 0)
 assert.equal(scheduleMulti.educationForm, 'online')
-assert.equal(scheduleMulti.educationFormLabel, '')
+assert.equal(scheduleMulti.educationFormLabel, '온/오프라인')
 assert.equal(
-  scheduleMulti.basicInfoFields.some(field => field.label === '교육 형태'),
-  false
+  scheduleMulti.basicInfoFields.find(field => field.label === '교육 형태')?.value,
+  '온/오프라인'
 )
 assert.equal(scheduleMulti.eventSchedules[0]?.blockKind, 'preEducation')
 assert.equal(scheduleMulti.eventSchedules[0]?.scheduleLabel, '행사 일정 01')

@@ -35,7 +35,8 @@
   width: 100%;
   max-width: 1440px;
   min-width: 0;
-  overflow-x: auto;
+  max-height: 365px; /* 기획: 표 영역 365px 세로 스크롤 */
+  overflow: auto;
   overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--color-border-default);
@@ -67,6 +68,9 @@
 }
 
 .table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   background: var(--color-neutral-cool-80, #eef3f4);
   font-weight: 700;
 }
@@ -165,6 +169,20 @@
   flex-direction: column;
   gap: var(--spacing-4);
   align-items: center;
+}
+
+/* 배정 상태 텍스트 — 봉사 배정 현황(assignment-table.module.css) statusWaiting/statusCancelled와 같은 색 */
+.statusWaiting {
+  color: var(--color-element-orange);
+}
+
+.statusInactive {
+  color: var(--color-neutral-cool-500);
+}
+
+/* 배정 불가(UNAVAILABLE) 행 — 비활성 표시 */
+.disabledRow td {
+  color: var(--color-neutral-cool-500);
 }
 
 .empty {

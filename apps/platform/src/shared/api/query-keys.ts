@@ -577,6 +577,16 @@ export const platformQueryKeys = {
     lectureReportAssignments: (programId: string) =>
       [...platformQueryKeys.mypage.all(), 'lecture-report-assignments', programId] as const,
     /**
+     * 강사 배정 현황(배정된 목록) — GET /api/portal/me/programs/{programId}/instructor-assignments (Class C)
+     */
+    instructorAssignments: (programId: string) =>
+      [...platformQueryKeys.mypage.all(), 'instructor-assignments', programId] as const,
+    /**
+     * 강사 배정 현황(배정 대기 목록) — GET /api/portal/me/programs/{programId}/instructor-assignment-waitings (Class C)
+     */
+    instructorAssignmentWaitings: (programId: string) =>
+      [...platformQueryKeys.mypage.all(), 'instructor-assignment-waitings', programId] as const,
+    /**
      * 일반회원 일정 정산 — GET /api/portal/me/individual-settlements/applications/{id}/schedules (Class C)
      */
     individualSettlementSchedules: (applicationId: string) =>
