@@ -18,6 +18,7 @@ import {
   useRemoveCorporateConsultations,
 } from '@/features/corporate-consultation/api/hooks'
 import { corporateConsultationQueryKeys } from '@/features/corporate-consultation/api/query-keys'
+import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status'
 import { getCorporateConsultationService } from '@/features/corporate-consultation/api/service'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
@@ -353,8 +354,21 @@ export function CorporateConsultationsPage() {
           nextParams.delete('consultationId')
         })
       })
-      .catch(() => {
-        /* 목록에 없는 상세 ID는 기존 목록 화면을 유지 */
+      .catch(error => {
+        if (cancelled) return
+        if (isAdminForbidden(error)) {
+          showAlert({
+            title: '권한 없음',
+            content: '해당 신청을 조회할 권한이 없습니다.',
+          })
+          return
+        }
+        if (isAdminNotFound(error)) {
+          showAlert({
+            title: '신청을 찾을 수 없음',
+            content: '신청 정보를 찾을 수 없습니다.',
+          })
+        }
       })
 
     return () => {
@@ -368,6 +382,7 @@ export function CorporateConsultationsPage() {
     openDetail,
     replaceSearchParams,
     rows,
+    showAlert,
   ])
 
   const refreshDetailFromList = useCallback(

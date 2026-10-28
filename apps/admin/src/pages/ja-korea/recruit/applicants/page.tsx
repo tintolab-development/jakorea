@@ -25,6 +25,7 @@ import {
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
 import { detailFromListItem } from '@/features/recruit-applicant/api/mappers'
 import { isRecruitApplicantNotFoundError } from '@/features/recruit-applicant/api/service'
+import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
 import { RecruitApplicantDetailModal } from '@/features/recruit-applicant/ui/detail-modal'
 import { recruitApplicantQueryKeys } from '@/features/recruit-applicant/api/query-keys'
 import { RECRUIT_APPLICANTS_CHANGED_EVENT } from '@/features/recruit-applicant/api/store'
@@ -370,11 +371,14 @@ export function RecruitApplicantsPage() {
   useEffect(() => {
     if (!remoteDetail || !detailId || !detailQuery.isError) return
     const notFound = isRecruitApplicantNotFoundError(detailQuery.error)
+    const forbidden = isAdminForbidden(detailQuery.error)
     showAlert({
-      title: notFound ? '신청을 찾을 수 없음' : '조회 실패',
-      content: notFound
-        ? '신청 정보를 찾을 수 없습니다.'
-        : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
+      title: forbidden ? '권한 없음' : notFound ? '신청을 찾을 수 없음' : '조회 실패',
+      content: forbidden
+        ? '해당 신청을 조회할 권한이 없습니다.'
+        : notFound
+          ? '신청 정보를 찾을 수 없습니다.'
+          : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
     })
     closeDetail()
   }, [closeDetail, detailId, detailQuery.error, detailQuery.isError, remoteDetail, showAlert])

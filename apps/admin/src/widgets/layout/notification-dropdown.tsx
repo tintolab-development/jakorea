@@ -1,6 +1,6 @@
 /**
  * 상단 GNB 알림 드롭다운 — CMS notification-dropdown 카테고리·UI 미러
- * (auth/API 연동 전 mock)
+ * 홈페이지 시스템 Inbox는 type=system 으로만 표시한다.
  */
 
 import { useMemo, useState } from 'react'
@@ -20,7 +20,6 @@ export type NotificationCategoryKey =
 
 export type HeaderNotification = {
   id: string
-  /** CMS NotificationType 과 동일 키 */
   type: Exclude<NotificationCategoryKey, 'all' | 'inquiry'>
   message: string
   createdAt: string
@@ -28,6 +27,8 @@ export type HeaderNotification = {
   programName?: string
   link?: string
 }
+
+export type NotificationDropdownStatus = 'ready' | 'loading' | 'error' | 'forbidden'
 
 const CATEGORIES: { key: NotificationCategoryKey; label: string }[] = [
   { key: 'all', label: '전체' },
@@ -58,13 +59,17 @@ function formatNotificationDate(iso: string): string {
 
 type NotificationDropdownProps = {
   notifications: HeaderNotification[]
+  status?: NotificationDropdownStatus
   onNotificationClick?: (notification: HeaderNotification) => void
+  onRetry?: () => void
   onClose?: () => void
 }
 
 export function NotificationDropdown({
   notifications,
+  status = 'ready',
   onNotificationClick,
+  onRetry,
   onClose,
 }: NotificationDropdownProps) {
   const [category, setCategory] = useState<NotificationCategoryKey>('all')
@@ -74,7 +79,7 @@ export function NotificationDropdown({
       category === 'all'
         ? notifications
         : category === 'inquiry'
-          ? [] // 추후 API 확장 (CMS와 동일)
+          ? []
           : notifications.filter(n => n.type === category)
 
     return [...base].sort((a, b) => {
@@ -104,7 +109,20 @@ export function NotificationDropdown({
         ))}
       </div>
       <div className="notification-dropdown-body">
-        {filtered.length === 0 ? (
+        {status === 'loading' ? (
+          <div className="notification-dropdown-empty">알림을 불러오는 중입니다</div>
+        ) : status === 'forbidden' ? (
+          <div className="notification-dropdown-empty">시스템 알림은 최고관리자만 확인할 수 있습니다</div>
+        ) : status === 'error' ? (
+          <div className="notification-dropdown-error">
+            <div className="notification-dropdown-empty">알림을 불러오지 못했습니다</div>
+            {onRetry ? (
+              <CmsButton variant="secondary" size="small" type="button" onClick={onRetry}>
+                다시 시도
+              </CmsButton>
+            ) : null}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="notification-dropdown-empty">알림이 없습니다</div>
         ) : (
           <div className="notification-dropdown-list">
@@ -134,7 +152,9 @@ export function NotificationDropdown({
                   </Text>
                 </div>
                 {notification.programName ? (
-                  <Text className="notification-dropdown-item-sub">{notification.programName}</Text>
+                  <Text className="notification-dropdown-item-sub" title={notification.programName}>
+                    {notification.programName}
+                  </Text>
                 ) : null}
                 <Text className="notification-dropdown-item-date">
                   {formatNotificationDate(notification.createdAt)}

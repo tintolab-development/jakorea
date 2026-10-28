@@ -20,6 +20,7 @@ import {
   useTalentDonationApplicationsList,
 } from '@/features/talent-donation-application/api/hooks'
 import { talentDonationApplicationQueryKeys } from '@/features/talent-donation-application/api/query-keys'
+import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status'
 import { getTalentDonationApplicationService } from '@/features/talent-donation-application/api/service'
 import {
   DEFAULT_CONFIRM_ACTOR,
@@ -333,14 +334,35 @@ export function TalentDonationApplicationsPage() {
         setDetailRow(item)
         setDetailOpen(true)
       })
-      .catch(() => {
-        /* 목록에 없는 상세 ID는 기존 목록 화면을 유지 */
+      .catch(error => {
+        if (cancelled) return
+        if (isAdminForbidden(error)) {
+          showAlert({
+            title: '권한 없음',
+            content: '해당 신청을 조회할 권한이 없습니다.',
+          })
+          return
+        }
+        if (isAdminNotFound(error)) {
+          showAlert({
+            title: '신청을 찾을 수 없음',
+            content: '신청 정보를 찾을 수 없습니다.',
+          })
+        }
       })
 
     return () => {
       cancelled = true
     }
-  }, [detailOpen, listQuery.isFetching, listQuery.isLoading, location.search, openDetail, rows])
+  }, [
+    detailOpen,
+    listQuery.isFetching,
+    listQuery.isLoading,
+    location.search,
+    openDetail,
+    rows,
+    showAlert,
+  ])
 
   const refreshDetailFromList = useCallback(
     async (id: string) => {

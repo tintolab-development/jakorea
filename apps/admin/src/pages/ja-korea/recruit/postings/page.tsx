@@ -2,7 +2,7 @@
  * 채용공고 관리 목록
  */
 
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { Dayjs } from 'dayjs'
 import { Switch, Table } from 'antd'
@@ -173,6 +173,21 @@ export function RecruitPostingsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { showAlert } = useCmsAlert()
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const postingId = params.get('postingId')?.trim()
+    if (!postingId || !/^\d+$/.test(postingId)) return
+    params.delete('postingId')
+    const search = params.toString()
+    navigate(
+      {
+        pathname: `/ja-korea/recruit/postings/${postingId}`,
+        search: search ? `?${search}` : '',
+      },
+      { replace: true },
+    )
+  }, [location.search, navigate])
   const {
     pendingFilters,
     setPendingFilters,
