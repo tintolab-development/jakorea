@@ -383,6 +383,7 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
       sessionLabel: '사전 교육',
       title: preName,
       description: '',
+      isPreEducation: true,
       scheduleDateLabel: preLine || undefined,
       assignmentEnabled: false,
       educationFormLabel:
@@ -573,6 +574,7 @@ export function buildEnrichedScheduleDetails(
       rows.unshift({
         scheduleLabel: '사전 교육',
         name: preName,
+        blockKind: 'preEducation',
         assignmentEnabled: false,
         scheduleDateLabel: formatScheduleDateLabel(dates[0]),
         educationFormLabel: preEducationForm

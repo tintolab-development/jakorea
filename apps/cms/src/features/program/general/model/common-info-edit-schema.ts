@@ -51,6 +51,7 @@ import {
   coerceScheduleDetailsToEventLayout,
   inferScheduleDetailBlockKind,
   isPreEducationCurriculumSession,
+  isPreEducationScheduleBlock,
   relabelScheduleDetailFormRowsByKind,
   shouldDisableEducationSchedulePeriodMode,
   trimTrailingBlankRegularCurriculumSessions,
@@ -432,7 +433,7 @@ export const generalProgramCommonInfoEditSchema = z
       const groupCount =
         data.sessionRound === 'multi' ? 1 : Math.max(1, data.scheduleGroupCount ?? 1)
       data.scheduleDetails.forEach((detail, index) => {
-        const isPre = detail.blockKind === 'preEducation'
+        const isPre = isPreEducationScheduleBlock(detail)
         if (isBlankText(detail.name)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -677,7 +678,9 @@ export function resolveScheduleDetailsFormState(
   }
 
   const scheduleDetails = raw.map((d, i) => {
-    const blockKind = inferScheduleDetailBlockKind(d.scheduleLabel ?? '')
+    const blockKind = isPreEducationScheduleBlock(d)
+      ? 'preEducation'
+      : (d.blockKind ?? inferScheduleDetailBlockKind(d.scheduleLabel ?? ''))
     const groupTimes = d.progressTimeSummary
       ? parseScheduleProgressTimeSummary(d.progressTimeSummary)
       : emptyScheduleGroupTimes(1)
@@ -2016,6 +2019,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
                 sessionLabel: '사전 교육',
                 title: s.title.trim() || '사전 교육',
                 description: '',
+                isPreEducation: true,
                 scheduleDateLabel: s.scheduleDate?.trim() || undefined,
                 assignmentEnabled: false,
                 assignmentPeriod: undefined,
@@ -2069,14 +2073,12 @@ export function generalCommonInfoEditValuesToProgramPatch(
               scheduleLabel: d.scheduleLabel,
               name: d.name.trim(),
             }
-            if (
-              d.blockKind === 'preEducation' ||
-              inferScheduleDetailBlockKind(d.scheduleLabel) === 'preEducation'
-            ) {
+            if (isPreEducationScheduleBlock(d)) {
               return {
                 ...row,
                 scheduleLabel: '사전 교육',
                 name: d.name.trim() || '사전 교육',
+                blockKind: 'preEducation' as const,
                 scheduleDateLabel: d.scheduleDate?.trim() || undefined,
                 assignmentEnabled: false,
                 assignmentPeriod: undefined,
@@ -2095,6 +2097,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
             ) {
               return {
                 ...row,
+                blockKind: 'event' as const,
                 scheduleDateLabel: d.scheduleDate?.trim() || undefined,
                 assignmentEnabled:
                   values.participantOrganization || values.sessionRound === 'single'
@@ -2125,6 +2128,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
             }
             return {
               ...row,
+              blockKind: 'sub' as const,
               progressTimeSummary: buildScheduleProgressTimeSummary(d.groupTimes),
               scheduleDateLabel: persistSubScheduleDateLabel({
                 formScheduleDate: d.scheduleDate,

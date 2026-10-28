@@ -195,17 +195,39 @@ export function padEventScheduleLabel(index: number): string {
   return `행사 일정 ${String(index + 1).padStart(2, '0')}`
 }
 
+export function compactGeneralPreEducationName(value: string | undefined | null): string {
+  return (value ?? '').replace(/\s+/g, '')
+}
+
+/** 백엔드와 동일: 공백 제거 후 `사전교육`으로 시작. 교사연수·UJAT 봉사자 사전교육은 해당하지 않음 */
+export function isGeneralPreEducationName(value: string | undefined | null): boolean {
+  return compactGeneralPreEducationName(value).startsWith('사전교육')
+}
+
+function isGeneralPreEducationKindToken(value: string | undefined | null): boolean {
+  const token = (value ?? '').replace(/\s+/g, '').toUpperCase()
+  return token === 'PREEDUCATION' || token === 'PRE_EDUCATION'
+}
+
 export function inferScheduleDetailBlockKind(scheduleLabel: string): ScheduleDetailBlockKind {
-  if (scheduleLabel.includes('사전 교육')) return 'preEducation'
+  if (isGeneralPreEducationName(scheduleLabel)) return 'preEducation'
   return scheduleLabel.includes('행사 일정') ? 'event' : 'sub'
 }
 
 export function isPreEducationScheduleBlock(detail: {
-  blockKind?: ScheduleDetailBlockKind
+  blockKind?: ScheduleDetailBlockKind | string
+  scheduleKind?: string
+  scheduleRole?: string
   scheduleLabel?: string
+  name?: string
+  isPreEducation?: boolean
+  preEducation?: boolean
 }): boolean {
-  if (detail.blockKind === 'preEducation') return true
-  return inferScheduleDetailBlockKind(detail.scheduleLabel ?? '') === 'preEducation'
+  if (detail.isPreEducation === true || detail.preEducation === true) return true
+  if (isGeneralPreEducationKindToken(detail.blockKind)) return true
+  if (isGeneralPreEducationKindToken(detail.scheduleKind)) return true
+  if (isGeneralPreEducationKindToken(detail.scheduleRole)) return true
+  return isGeneralPreEducationName(detail.scheduleLabel) || isGeneralPreEducationName(detail.name)
 }
 
 export function isScheduleMultiAllPerSchedule(
@@ -498,8 +520,14 @@ export type CurriculumSessionFormRow = {
   scheduleDate?: string
 }
 
-export function isPreEducationCurriculumSession(session: { sessionLabel?: string }): boolean {
-  return (session.sessionLabel ?? '').includes(PRE_EDUCATION_SCHEDULE_LABEL)
+export function isPreEducationCurriculumSession(session: {
+  sessionLabel?: string
+  title?: string
+  isPreEducation?: boolean
+  preEducation?: boolean
+}): boolean {
+  if (session.isPreEducation === true || session.preEducation === true) return true
+  return isGeneralPreEducationName(session.sessionLabel)
 }
 
 const DEFAULT_CURRICULUM_SESSION_TITLE_RE = /^(?:\d+)(?:차시|회차)$/
