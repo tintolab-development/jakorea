@@ -283,6 +283,13 @@
   gap: var(--spacing-8);
 }
 
+/* Figma 11001:199645는 1920 단일 행(항목 nowrap)만 정의 — 좁은 폭에선 항목 단위로 줄바꿈하고
+   라벨은 끊지 않는다. 값(후원사 목록 등)은 자르지 않도록 기본 줄바꿈 유지 */
+.metaLabel {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* Figma 11001-199641: 운영기간·후원사 줄 아래 24px, 배지 줄 아래 소개까지 40px */
 .badges {
   margin-top: var(--spacing-24);

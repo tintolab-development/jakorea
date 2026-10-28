@@ -389,4 +389,64 @@
     line-height: 1.6;
     letter-spacing: 0;
   }
+
+  /* 기본정보 (Figma 6772-30657): 패딩 16, 블록 간 20, 필드 행 20 / 열 32 */
+  .participate .basicInfo {
+    gap: var(--spacing-20);
+    padding: var(--spacing-16);
+  }
+
+  .participate .infoFields {
+    column-gap: var(--spacing-32);
+    row-gap: var(--spacing-20);
+  }
+
+  /* 라벨 13 Medium / 140% · cool-600, 값 14 Medium / 160% */
+  .participate .infoItem > :first-child,
+  .participate .recruitmentCard > :first-child,
+  .participate .extraSection > h3 {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0;
+  }
+
+  .participate .infoItem > :last-child,
+  .participate .session > p,
+  .participate .infoBlock > span,
+  .participate .scheduleCard > span,
+  .participate .extraSectionBody,
+  .participate .contact > :last-child {
+    font-size: 14px;
+    line-height: 1.6;
+    letter-spacing: 0;
+  }
+
+  /* 차시 박스: 패딩 16, radius 12 (차시 간 16 + 구분선 + 16 은 공통 규칙 유지) */
+  .participate .sessions {
+    padding: var(--spacing-16);
+  }
+
+  /* 세부내용 (Figma 6772-30401): 블록 간 20 */
+  .participate .detailContent {
+    gap: var(--spacing-20);
+  }
+
+  .participate .recruitmentCard,
+  .participate .scheduleCard {
+    padding: var(--spacing-16);
+  }
+
+  .participate .extraSections {
+    gap: var(--spacing-20);
+    margin-top: var(--spacing-20);
+  }
+
+  .participate .extraSectionRichText {
+    --rt-content-font-size: 14px;
+  }
+
+  .participate .contact {
+    margin-top: var(--spacing-20);
+  }
 }

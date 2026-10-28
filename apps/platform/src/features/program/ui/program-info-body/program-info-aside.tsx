@@ -1,6 +1,7 @@
 import type { ProgramAttachment } from '../../model/types'
 import jaLogoGrayCompactUrl from '@/shared/assets/brand/ja-logo-gray-compact.svg'
 import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg'
+import arrowForwardWhite24Url from '@/shared/assets/icons/arrow-forward-white-24.svg'
 import { resolvePortalPublicFileImageUrl } from '@/shared/lib/resolve-portal-public-file-image-url'
 import closeIconUrl from '@/shared/ui/pf-modal/icons/close.svg'
 import { PFCircleIconButton, PFFileDownload, PFText } from '@/shared/ui'
@@ -47,6 +48,8 @@ type ProgramApplyButtonProps = {
   /** application-options 조회 중 — 중복 클릭 방지 */
   applyChecking?: boolean
   className?: string
+  /** 화살표 아이콘 크기 — 기본 16, 참여하기 상세 PC aside는 Figma 11001:199752 기준 24 */
+  arrowSize?: 16 | 24
 }
 
 /** 신청하기 버튼 — PC aside 카드와 모바일 하단 고정 바가 같은 버튼·상태를 쓴다. */
@@ -55,6 +58,7 @@ export function ProgramApplyButton({
   onApply,
   applyChecking = false,
   className,
+  arrowSize = 16,
 }: ProgramApplyButtonProps) {
   return (
     <button
@@ -72,7 +76,17 @@ export function ProgramApplyButton({
           {applicationPeriodLabel}
         </PFText>
       </span>
-      <img className={styles.applyArrow} src={arrowRightWhite16Url} alt="" width={16} height={16} />
+      {arrowSize === 24 ? (
+        <img
+          className={styles.applyArrow24}
+          src={arrowForwardWhite24Url}
+          alt=""
+          width={24}
+          height={24}
+        />
+      ) : (
+        <img className={styles.applyArrow} src={arrowRightWhite16Url} alt="" width={16} height={16} />
+      )}
     </button>
   )
 }
@@ -127,6 +141,7 @@ export function ProgramInfoAside({
             applicationPeriodLabel={applicationPeriodLabel}
             onApply={onApply}
             applyChecking={applyChecking}
+            arrowSize={variant === 'participate' ? 24 : 16}
           />
         </div>
       ) : null}
