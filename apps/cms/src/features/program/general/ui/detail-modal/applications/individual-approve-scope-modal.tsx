@@ -7,6 +7,7 @@ import {
   defaultIndividualApprovalScheduleIds,
   individualApprovalEducationSlotsQueryKey,
   individualApprovalProgramShapeFromProgram,
+  listAssignedEducationSlotOptions,
   listIndividualPreferredScheduleOptions,
   listPlannedEducationSlotOptions,
   normalizeIndividualApprovalReason,
@@ -88,11 +89,13 @@ function scheduleCardParts(option: IndividualApprovalScheduleOption): {
 function assignedOptionTitle(
   scheduleId: number,
   plannedOptions: IndividualApprovalScheduleOption[],
-  preferredOptions: IndividualApprovalScheduleOption[]
+  preferredOptions: IndividualApprovalScheduleOption[],
+  assignedOptions: IndividualApprovalScheduleOption[] = []
 ): string {
   return (
     plannedOptions.find(option => option.scheduleId === scheduleId)?.title ??
     preferredOptions.find(option => option.scheduleId === scheduleId)?.title ??
+    assignedOptions.find(option => option.scheduleId === scheduleId)?.title ??
     '교육 일정'
   )
 }
@@ -157,6 +160,7 @@ function ScheduleCard({
 export function IndividualEducationScheduleSections({
   plannedOptions,
   preferredOptions,
+  assignedOptions = [],
   selectedIds,
   rejectedIds,
   plan,
@@ -167,6 +171,7 @@ export function IndividualEducationScheduleSections({
 }: {
   plannedOptions: IndividualApprovalScheduleOption[]
   preferredOptions: IndividualApprovalScheduleOption[]
+  assignedOptions?: IndividualApprovalScheduleOption[]
   selectedIds: number[]
   rejectedIds?: ReadonlyArray<number>
   plan: IndividualApprovalSchedulePlan
@@ -230,7 +235,8 @@ export function IndividualEducationScheduleSections({
                       const title = assignedOptionTitle(
                         scheduleId,
                         plannedOptions,
-                        preferredOptions
+                        preferredOptions,
+                        assignedOptions
                       )
                       const card = formatOrganizationApproveScheduleCard({ label: title })
                       const chipTitle = card.title || title
@@ -308,6 +314,10 @@ export function IndividualApproveScopeModal({
   )
   const plannedOptions = useMemo(
     () => listPlannedEducationSlotOptions(slotsQuery.data),
+    [slotsQuery.data]
+  )
+  const assignedOptions = useMemo(
+    () => listAssignedEducationSlotOptions(slotsQuery.data),
     [slotsQuery.data]
   )
   const preferredOptions = useMemo(
@@ -391,6 +401,7 @@ export function IndividualApproveScopeModal({
             plan={plan}
             plannedOptions={plannedOptions}
             preferredOptions={preferredOptions}
+            assignedOptions={assignedOptions}
             selectedIds={selectedIds}
             rejectedIds={rejectedIds}
             assignedLocked={plan.kind === 'all-program-slots'}
@@ -432,6 +443,10 @@ export function IndividualBulkApproveScopeModal({
   })
   const plannedOptions = useMemo(
     () => listPlannedEducationSlotOptions(slotsQuery.data),
+    [slotsQuery.data]
+  )
+  const assignedOptions = useMemo(
+    () => listAssignedEducationSlotOptions(slotsQuery.data),
     [slotsQuery.data]
   )
   const plans = useMemo(
@@ -554,6 +569,7 @@ export function IndividualBulkApproveScopeModal({
                 plan={item.plan}
                 plannedOptions={plannedOptions}
                 preferredOptions={item.preferredOptions}
+                assignedOptions={assignedOptions}
                 selectedIds={selectedByApplicant[item.applicant.id] ?? []}
                 rejectedIds={rejectedIds}
                 assignedLocked={item.plan.kind === 'all-program-slots'}

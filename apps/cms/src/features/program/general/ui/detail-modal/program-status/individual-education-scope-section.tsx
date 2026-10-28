@@ -19,6 +19,7 @@ import {
   isEducationScopeCertificateLocked,
   isEducationScopeRevisionConflict,
   isRejectedEducationScheduleSelectionError,
+  listAssignedEducationSlotOptions,
   listIndividualPreferredScheduleOptions,
   listPlannedEducationSlotOptions,
   normalizeIndividualApprovalReason,
@@ -90,6 +91,10 @@ export function IndividualEducationScopeSection({
   )
   const plannedOptions = useMemo(
     () => listPlannedEducationSlotOptions(slotsQuery.data),
+    [slotsQuery.data]
+  )
+  const assignedOptions = useMemo(
+    () => listAssignedEducationSlotOptions(slotsQuery.data),
     [slotsQuery.data]
   )
   const plannedIds = useMemo(
@@ -222,6 +227,7 @@ export function IndividualEducationScopeSection({
                     plan={plan}
                     plannedOptions={plannedOptions}
                     preferredOptions={preferredOptions}
+                    assignedOptions={assignedOptions}
                     selectedIds={editing ? selectedIds : assignedIds}
                     rejectedIds={rejectedIds}
                     assignedLocked={editing && plan.kind === 'all-program-slots'}
