@@ -69,6 +69,7 @@ export type PaymentOrderDetailLineRow =
   | PaymentOrderAdminInstructorDetailProgramRow
 
 type PaymentOrderDetailLineExcelRow = {
+  id: string
   no: number
   name: string
   institutionName: string
@@ -821,6 +822,7 @@ export function usePaymentOrderDetailLinesController(
   const excelExport = useMemo((): FilterTableExcelExportConfig<PaymentOrderDetailLineExcelRow> => {
     const nameTitle = mode === 'program' ? '신청자명' : '프로그램명'
     const data: PaymentOrderDetailLineExcelRow[] = filteredRows.map(row => ({
+      id: row.id,
       no: row.no,
       name:
         mode === 'program'
@@ -845,8 +847,8 @@ export function usePaymentOrderDetailLinesController(
       { title: '정산 신청 금액', dataIndex: 'estimatedAmountLabel', key: 'estimatedAmountLabel' },
     ]
 
-    return { columns, data }
-  }, [filteredRows, mode])
+    return { columns, data, selectedRowKeys }
+  }, [filteredRows, mode, selectedRowKeys])
 
   return {
     filteredRows,

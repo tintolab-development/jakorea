@@ -862,8 +862,12 @@ export default function AccountPaymentsPage() {
   )
 
   const accountPaymentsExcelExport = useMemo((): FilterTableExcelExportConfig => {
-    return { columns, data: filteredRows }
-  }, [columns, filteredRows])
+    return {
+      columns,
+      data: filteredRows,
+      selectedRowKeys: viewMode === 'list' ? selectedRowKeys : undefined,
+    }
+  }, [columns, filteredRows, selectedRowKeys, viewMode])
 
   const handleAccountPaymentConfirmComplete = useCallback(() => {
     const selection = accountPayConfirmSelection

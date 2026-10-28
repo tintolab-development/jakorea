@@ -106,3 +106,133 @@ describe('useTableExcelExport viewer guard', () => {
     expect(cmsAlertModal.show).not.toHaveBeenCalled()
   })
 })
+
+type KeyedRow = { id: string; name: string }
+
+const keyedColumns: ColumnsType<KeyedRow> = [{ title: '이름', dataIndex: 'name', key: 'name' }]
+const keyedData: KeyedRow[] = [
+  { id: 'a', name: '홍길동' },
+  { id: 'b', name: '김영희' },
+  { id: 'c', name: '박민수' },
+]
+
+describe('useTableExcelExport selection', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    useAuthStore.setState({ user: masterUser })
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+    vi.mocked(exportTableToExcel).mockClear()
+  })
+
+  it('selectedRowKeys가 빈 배열이면 다운로드하지 않고 선택 안내를 띄운다', async () => {
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+
+    const { result } = renderHook(() =>
+      useTableExcelExport({
+        columns: keyedColumns,
+        data: keyedData,
+        selectedRowKeys: [],
+        filename: '목록',
+      })
+    )
+
+    await act(async () => {
+      await result.current.exportExcel()
+    })
+
+    expect(exportTableToExcel).not.toHaveBeenCalled()
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: '항목 선택 안내',
+      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+    })
+  })
+
+  it('선택한 행만 exporter에 전달한다', async () => {
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+
+    const { result } = renderHook(() =>
+      useTableExcelExport({
+        columns: keyedColumns,
+        data: keyedData,
+        selectedRowKeys: ['a', 'c'],
+        filename: '목록',
+      })
+    )
+
+    await act(async () => {
+      await result.current.exportExcel()
+    })
+
+    expect(exportTableToExcel).toHaveBeenCalledWith(
+      keyedColumns,
+      [
+        { id: 'a', name: '홍길동' },
+        { id: 'c', name: '박민수' },
+      ],
+      '목록'
+    )
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+  })
+
+  it('전체 선택 키면 필터된 data 전부를 내보낸다', async () => {
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+
+    const { result } = renderHook(() =>
+      useTableExcelExport({
+        columns: keyedColumns,
+        data: keyedData,
+        selectedRowKeys: ['a', 'b', 'c'],
+        filename: '목록',
+      })
+    )
+
+    await act(async () => {
+      await result.current.exportExcel()
+    })
+
+    expect(exportTableToExcel).toHaveBeenCalledWith(keyedColumns, keyedData, '목록')
+  })
+
+  it('필터된 data와 선택 키의 교집합만 내보낸다', async () => {
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+    const filtered = keyedData.filter(row => row.id !== 'b')
+
+    const { result } = renderHook(() =>
+      useTableExcelExport({
+        columns: keyedColumns,
+        data: filtered,
+        selectedRowKeys: ['a', 'b'],
+        filename: '목록',
+      })
+    )
+
+    await act(async () => {
+      await result.current.exportExcel()
+    })
+
+    expect(exportTableToExcel).toHaveBeenCalledWith(
+      keyedColumns,
+      [{ id: 'a', name: '홍길동' }],
+      '목록'
+    )
+  })
+
+  it('selectedRowKeys를 생략하면 현재 data를 일괄 다운로드한다', async () => {
+    const { exportTableToExcel } = await import('@/shared/utils/table-export')
+
+    const { result } = renderHook(() =>
+      useTableExcelExport({
+        columns: keyedColumns,
+        data: keyedData,
+        filename: '목록',
+      })
+    )
+
+    await act(async () => {
+      await result.current.exportExcel()
+    })
+
+    expect(exportTableToExcel).toHaveBeenCalledWith(keyedColumns, keyedData, '목록')
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+  })
+})

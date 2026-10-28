@@ -469,6 +469,7 @@ export function AdminManagedProgramHistory({
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys: SHOW_PROGRAM_HISTORY_DELETE ? selectedRowKeys : undefined,
         }}
       >
         <Spin spinning={membersRemote && remoteProgramsLoading}>

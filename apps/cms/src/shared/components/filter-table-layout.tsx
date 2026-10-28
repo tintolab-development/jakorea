@@ -7,6 +7,7 @@
  * - 기본: 툴바 우측에 {@link ExcelButton} 노출 — `excelExport` 또는 `onExcelDownload` 연결 필요
  * - `hideExcelDownload`: 엑셀 버튼을 다른 위치에 둘 때 숨김 (예: 탭 nav 우측, 풀페이지 헤더)
  * - `excelExport`: columns·data 전달 시 {@link useTableExcelExport} 자동 연결 (파일명은 `title` 기반)
+ * - `excelExport.selectedRowKeys`를 넘기면(빈 배열 포함) 선택 필수. `resolveData`/`getRowKey`도 훅으로 전달
  * - `onExcelDownload`가 있으면 `excelExport`보다 우선
  *
  * **툴바 액션 버튼:** `actions` / `actionsAfterExcel`에는 {@link FilterTableToolbarButton} 사용 (h40, 엑셀과 동일 높이).
@@ -181,6 +182,9 @@ export function FilterTableLayout({
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     columns: excelExport?.columns ?? [],
     data: excelExport?.data ?? [],
+    resolveData: excelExport?.resolveData,
+    selectedRowKeys: excelExport?.selectedRowKeys,
+    getRowKey: excelExport?.getRowKey,
     filename: excelFilename,
     exporter: excelExport?.exporter,
     alertOnEmpty: excelExport?.alertOnEmpty,
