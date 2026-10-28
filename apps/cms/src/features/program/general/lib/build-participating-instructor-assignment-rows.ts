@@ -151,15 +151,14 @@ function resolveWaitingAssignmentStatus(
     : 'no_assignable_schedule'
 }
 
-function buildScheduleGroups(school: ParticipatingSchoolRow) {
+function buildScheduleGroups(assignmentSessions: ParticipatingSchoolSession[]) {
   const groups = new Map<string, ParticipatingSchoolSession[]>()
-  for (const session of getParticipatingSchoolAssignmentSessions(school)) {
+  for (const session of assignmentSessions) {
     const scheduleKey = `${session.date}|${session.dayOfWeek}`
     const prev = groups.get(scheduleKey)
     if (prev) prev.push(session)
     else groups.set(scheduleKey, [session])
   }
-  const assignmentSessions = getParticipatingSchoolAssignmentSessions(school)
   const preferredLines = buildParticipatingSchoolPreferredScheduleLines(assignmentSessions)
   return Array.from(groups.entries()).map(([scheduleKey, sessions], index) => ({
     scheduleKey,
@@ -168,7 +167,47 @@ function buildScheduleGroups(school: ParticipatingSchoolRow) {
   }))
 }
 
-/** 강사 관점 배정 대기 — 기관×일정 중 아직 배정되지 않은 슬롯 */
+function isCancelledAssignment(assignment: InstructorAssignmentListItemEnriched): boolean {
+  const status = (assignment.assignmentStatus ?? '').toUpperCase()
+  return status === 'CANCELLED' || status === 'CANCELED'
+}
+
+function assignedScheduleKey(scope: string, scheduleId: number | string): string {
+  return `${scope}|${scheduleId}`
+}
+
+/** 강사 무관 — 취소되지 않은 배정이 있는 (기관 신청 + scheduleId) 키. 신청 id가 없으면 기관명으로 묶는다. */
+function buildAssignedScheduleKeys(
+  assignments: InstructorAssignmentListItemEnriched[]
+): Set<string> {
+  const keys = new Set<string>()
+  for (const a of assignments) {
+    if (a.scheduleId == null || isCancelledAssignment(a)) continue
+    if (a.organizationApplicationId != null) {
+      keys.add(assignedScheduleKey(`app:${a.organizationApplicationId}`, a.scheduleId))
+      continue
+    }
+    const orgName = a.organizationName?.trim()
+    if (orgName) keys.add(assignedScheduleKey(`name:${orgName}`, a.scheduleId))
+  }
+  return keys
+}
+
+function isSessionAssignedToAnyInstructor(
+  school: ParticipatingSchoolRow,
+  session: ParticipatingSchoolSession,
+  assignedScheduleKeys: Set<string>
+): boolean {
+  const scheduleId = session.resolvedScheduleId
+  if (scheduleId == null) return false
+  const orgAppId = school.organizationApplicationId
+  if (orgAppId && assignedScheduleKeys.has(assignedScheduleKey(`app:${orgAppId}`, scheduleId))) {
+    return true
+  }
+  return assignedScheduleKeys.has(assignedScheduleKey(`name:${school.schoolName}`, scheduleId))
+}
+
+/** 강사 관점 배정 대기 — 기관×확정 일정 중 어느 강사에게도 배정되지 않은 슬롯 */
 export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
   instructor: ParticipatingInstructorRow
   schoolRows: ParticipatingSchoolRow[]
@@ -189,6 +228,8 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
     }
   }
 
+  const assignedScheduleKeys = buildAssignedScheduleKeys(input.assignments)
+
   const rows: InstructorWaitingSchoolRow[] = []
   let rowNo = 0
 
@@ -197,8 +238,13 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
     const orgAppId = school.organizationApplicationId
     if (orgAppId && assignedOrgAppIds.has(orgAppId)) continue
 
+    const assignmentSessions = getParticipatingSchoolAssignmentSessions(school).filter(
+      session => !isSessionAssignedToAnyInstructor(school, session, assignedScheduleKeys)
+    )
+    if (assignmentSessions.length === 0) continue
+
     if (input.isCompanySchool) {
-      const groups = buildScheduleGroups(school)
+      const groups = buildScheduleGroups(assignmentSessions)
       for (const group of groups) {
         rowNo += 1
         const assignmentStatus = resolveWaitingAssignmentStatus(group.sessions)
@@ -226,7 +272,6 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
       continue
     }
 
-    const assignmentSessions = getParticipatingSchoolAssignmentSessions(school)
     rowNo += 1
     rows.push({
       id: school.id,
@@ -237,7 +282,7 @@ export function buildParticipatingInstructorWaitingSchoolRowsFromBoard(input: {
       desiredGrade: school.educationGrade,
       region: school.region,
       distanceFromHome: '-',
-      educationScheduleLines: scheduleLinesForSchool(school),
+      educationScheduleLines: buildParticipatingSchoolSessionLines(assignmentSessions),
       assignmentStatus: resolveWaitingAssignmentStatus(assignmentSessions),
       assignedInstructorCountLabel: '-',
       organizationApplicationId: orgAppId,
