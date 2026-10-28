@@ -387,28 +387,20 @@ export function hasIncompleteEconomyProgramApplicationRequiredFields(
   // 성범죄 제출 요청 — 스토어 기본값 있음. 조회 방식 단락 노출 시 하위 필드 필수
   void getInstitutionSexOffenseConsentSubmissionRequest()
   if (shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph()) {
-    const method = readText(
-      applicationOverlay,
-      'application.institution.sexOffense.inquiryMethod',
-      'criminal_record_site'
-    )
-    if (isEmptyText(method)) return true
+    const method = readText(applicationOverlay, 'application.institution.sexOffense.inquiryMethod')
+    if (isEmptyText(method) || (method !== 'ja_system' && method !== 'criminal_record_site')) {
+      return true
+    }
     if (method === 'criminal_record_site') {
-      const site = readText(
-        applicationOverlay,
-        'application.institution.sexOffense.siteSubmission',
-        'online'
-      )
-      if (isEmptyText(site)) return true
-      if (site === 'online') {
-        if (isEmptyText(read(applicationOverlay, 'application.institution.sexOffense.institutionId'))) {
-          return true
-        }
-        if (
-          isEmptyText(read(applicationOverlay, 'application.institution.sexOffense.verificationNumber'))
-        ) {
-          return true
-        }
+      const site = readText(applicationOverlay, 'application.institution.sexOffense.siteSubmission')
+      if (site !== 'direct' && site !== 'online') return true
+      if (isEmptyText(read(applicationOverlay, 'application.institution.sexOffense.institutionId'))) {
+        return true
+      }
+      if (
+        isEmptyText(read(applicationOverlay, 'application.institution.sexOffense.verificationNumber'))
+      ) {
+        return true
       }
     }
   }

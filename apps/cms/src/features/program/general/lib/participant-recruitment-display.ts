@@ -287,9 +287,9 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     program.generalParticipantInterviewEnabled ?? info?.interviewEnabled ?? undefined
   const interviewEnabledLabel = isGeneralIndividualProgram(program)
     ? interviewEnabled === true
-      ? '필요'
+      ? '면접 있음'
       : interviewEnabled === false
-        ? '불필요'
+        ? '면접 없음'
         : '-'
     : undefined
 

@@ -54,7 +54,7 @@ export function ParticipantRecruitmentPreviewModal({
   /** 상세 수정 미리보기 — 폼 overlay. 저장본·peek보다 나중에 덮는다. */
   extraOverlay?: Record<string, unknown>
 }) {
-  const posterUrl = usePreviewPosterUrl(program, open, audience)
+  const posterUrl = usePreviewPosterUrl(program, open, audience, extraOverlay)
 
   const message = useMemo(() => {
     if (!open) return null
@@ -74,7 +74,7 @@ export function ParticipantRecruitmentPreviewModal({
     return buildPlatformPreviewMessage(detail, {
       thumbnailUrl: posterUrl,
       attachments: toPreviewAttachments(
-        resolveAudiencePreviewAttachmentNames({ program, audience })
+        resolveAudiencePreviewAttachmentNames({ program, audience, overlay: extraOverlay })
       ),
     })
   }, [open, program, sponsorName, audience, programKind, posterUrl, extraOverlay])

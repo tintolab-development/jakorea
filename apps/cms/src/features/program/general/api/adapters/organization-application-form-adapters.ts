@@ -251,6 +251,7 @@ function formatSexOffenseInquiryParts(object: Record<string, unknown> | null): s
   const method = typeof object.inquiryMethod === 'string' ? object.inquiryMethod : ''
   if (method.trim())
     parts.push(optionLabel(INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS, method))
+  if (method.trim() !== 'criminal_record_site') return parts
 
   const site = typeof object.siteSubmission === 'string' ? object.siteSubmission : ''
   if (site.trim())

@@ -21,8 +21,7 @@ export async function fetchParticipatingInstructorMemberCandidates(
 
   return users
     .filter(user => !excluded.has(user.name.trim()))
-    .map(user => ({
-      memberId: user.id,
-      instructorName: user.name,
-    }))
+    .flatMap(user =>
+      user.memberId != null ? [{ memberId: String(user.memberId), instructorName: user.name }] : []
+    )
 }
