@@ -43,6 +43,20 @@ export interface PublicConsultationCreateRequest {
      * @maxLength 100
      */
   attachmentUploadToken?: string;
+  /**
+     * Confirmed consultation attachment asset ids in request order. Max 10. Omit when empty.
+     * @minItems 0
+     * @maxItems 10
+     */
+  attachmentAssetIds?: number[];
+  /**
+     * Upload tokens paired by index with attachmentAssetIds. Max 10. Omit when empty.
+     * @minItems 0
+     * @maxItems 10
+     * @items.minLength 0
+     * @items.maxLength 100
+     */
+  attachmentUploadTokens?: string[];
   privacyConsent?: boolean;
   attachmentCapabilityPairValid?: boolean;
 }

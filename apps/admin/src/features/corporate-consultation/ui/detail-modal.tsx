@@ -108,7 +108,7 @@ export function CorporateConsultationDetailModal({
         className="corp-consult-detail-modal__attachment"
         onClick={() => {
           if (!data?.id) return
-          void downloadCorporateConsultationAttachmentService(data.id)
+          void downloadCorporateConsultationAttachmentService(data.id, data.attachmentAssetId)
             .then(result => {
               if (!result?.downloadUrl) {
                 showAlert({

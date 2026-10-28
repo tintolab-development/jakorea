@@ -21,7 +21,6 @@ import {
   mapCategoryResponseToDomain,
   mapStoryListItemToDomain,
   mapStoryResponseToDomain,
-  resolvePrimaryAttachmentAssetId,
   toBulkDeleteRequest,
   toCategoryCreateRequest,
   toCategoryUpdateRequest,
@@ -98,17 +97,31 @@ async function listRemoteStories(filter?: ImpactStoryListFilter): Promise<Impact
   return (response.items ?? []).map(mapStoryListItemToDomain)
 }
 
-async function resolveAttachmentAssetId(
-  attachments: ImpactStoryAttachment[],
+async function resolveAssetId(
+  attachment: ImpactStoryAttachment | undefined,
   fallbackAssetId?: number,
 ): Promise<number | undefined> {
-  const withFile = attachments.find(att => att.file instanceof File)
-  if (withFile?.file) {
-    return uploadImpactStoryAttachmentAsset(withFile.file)
+  if (attachment?.file instanceof File) {
+    return uploadImpactStoryAttachmentAsset(attachment.file)
   }
-  const fromExisting = resolvePrimaryAttachmentAssetId(attachments)
-  if (fromExisting != null) return fromExisting
+  if (attachment?.assetId != null && attachment.assetId > 0) return attachment.assetId
   return fallbackAssetId
+}
+
+async function resolveStoryAssetIds(
+  attachments: ImpactStoryAttachment[],
+  fallbackThumbnailAssetId?: number,
+  fallbackAttachmentAssetId?: number,
+): Promise<{ thumbnailAssetId: number; attachmentAssetId?: number }> {
+  const thumbnailAssetId = await resolveAssetId(attachments[0], fallbackThumbnailAssetId)
+  if (thumbnailAssetId == null) {
+    throw new Error('임팩트 스토리 섬네일 이미지는 필수입니다.')
+  }
+  const extra = attachments[1]
+  const attachmentAssetId = extra
+    ? await resolveAssetId(extra, fallbackAttachmentAssetId)
+    : undefined
+  return { thumbnailAssetId, attachmentAssetId }
 }
 
 function isPinLimitApiError(error: unknown): boolean {
@@ -205,9 +218,8 @@ export async function createStoryService(
 ): Promise<ImpactStory> {
   if (shouldUseImpactStoriesRemoteApi()) {
     try {
-      const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
       const created = await impactStoryApi().create8(
-        toStoryCreateRequest(input, attachmentAssetId),
+        toStoryCreateRequest(input, await resolveStoryAssetIds(input.attachments)),
       )
       return mapStoryResponseToDomain(created)
     } catch (error) {
@@ -229,13 +241,17 @@ export async function updateStoryService(
       throw new Error(`Impact story not found: ${input.id}`)
     }
     try {
-      const attachmentAssetId = await resolveAttachmentAssetId(
-        input.attachments,
-        current.attachments[0]?.assetId,
-      )
       const updated = await impactStoryApi().update10(
         Number(input.id),
-        toStoryUpdateRequest(input, current.version ?? 0, attachmentAssetId),
+        toStoryUpdateRequest(
+          input,
+          current.version ?? 0,
+          await resolveStoryAssetIds(
+            input.attachments,
+            current.attachments[0]?.assetId,
+            current.attachments[1]?.assetId,
+          ),
+        ),
       )
       return mapStoryResponseToDomain(updated)
     } catch (error) {

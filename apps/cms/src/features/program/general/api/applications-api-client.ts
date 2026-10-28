@@ -140,7 +140,7 @@ export type InstructorApplicationDecisionWithReasonRequest = {
   notification?: InstructorApplicationNotificationRequest
 }
 
-/** OpenAPI `InstructorApplicationApprovalCancellationRequest` */
+/** OpenAPI `ApprovalCancellation` + CMS faultParty overlay (`InstructorApplicationApprovalCancellationRequest`) */
 export type InstructorApplicationApprovalCancellationRequest = {
   reason: string
   notification?: InstructorApplicationNotificationRequest

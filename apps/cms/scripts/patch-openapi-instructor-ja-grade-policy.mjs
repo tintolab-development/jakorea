@@ -1,7 +1,8 @@
 /**
- * JA 강사 평가 고객사 최종 정책(2026-10-20) + 강사 취소 faultParty OpenAPI 반영.
+ * 강사 취소 faultParty OpenAPI 반영.
  * backend.openapi.json → InstructorAssignmentCancelRequest /
- * InstructorApplicationApprovalCancellationRequest 추가, 강사 cancel 경로 requestBody 교체.
+ * InstructorApplicationApprovalCancellationRequest, 강사 cancel 경로 requestBody 교체.
+ * InstructorJaEvaluationResponse 는 로컬 BE 스펙을 덮어쓰지 않는다.
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -101,53 +102,5 @@ setRequestBodySchema(
   '#/components/schemas/InstructorApplicationApprovalCancellationRequest'
 )
 
-const jaEval = schemas.InstructorJaEvaluationResponse
-if (jaEval?.properties) {
-  jaEval.properties.fixedEvaluationScore = {
-    ...jaEval.properties.fixedEvaluationScore,
-    description: '4개 항목 합 ×5 (20~100). 평가 전 null',
-    nullable: true,
-  }
-  jaEval.properties.cancellationAdjustmentScore = {
-    ...jaEval.properties.cancellationAdjustmentScore,
-    description: '강사 사유 취소 감점 (0, -5, -10 …). projection 없으면 null',
-    nullable: true,
-  }
-  jaEval.properties.lateReportAdjustmentScore = {
-    ...jaEval.properties.lateReportAdjustmentScore,
-    description: '강의보고서 기한 미준수 감점 (0, -5, -10 …). projection 없으면 null',
-    nullable: true,
-  }
-  jaEval.properties.lateSettlementAdjustmentScore = {
-    type: 'number',
-    description: '호환용. 항상 0. 화면에서 행 제거/숨김.',
-  }
-  jaEval.properties.administrativeAdjustmentScore = {
-    ...jaEval.properties.administrativeAdjustmentScore,
-    description: '취소·보고서 감점의 합 (0 이하)',
-  }
-  jaEval.properties.totalScore = {
-    type: 'number',
-    description: 'fixed + administrative. 음수 가능. FE에서 0으로 clamp하지 않음.',
-    nullable: true,
-  }
-  jaEval.properties.currentGrade = {
-    ...jaEval.properties.currentGrade,
-    description: '서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). 평가 전 null.',
-    nullable: true,
-  }
-  jaEval.properties.policyVersion = {
-    type: 'string',
-    nullable: true,
-    description:
-      '활성 정책 버전. 고객사 최종은 CLIENT_FINAL_2026-10-20. 평가 이력 없으면 활성 정책 버전, 미초기화면 null.',
-  }
-  jaEval.properties.policyReady = {
-    type: 'boolean',
-    description:
-      'true면 평가 가능. false일 때만 정책 미확정 안내. 정책 버전 문자열로 판단하지 않음.',
-  }
-}
-
 writeFileSync(inputPath, `${JSON.stringify(spec, null, 2)}\n`)
-console.log('Patched instructor JA grade policy + faultParty cancel schemas')
+console.log('Patched instructor faultParty cancel schemas')

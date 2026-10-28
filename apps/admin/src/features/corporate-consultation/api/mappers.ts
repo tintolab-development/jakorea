@@ -8,6 +8,7 @@ import type {
   CorporateConsultationListFilter,
 } from '@/entities/corporate-consultation/model/types'
 import type { BulkRequest } from '@/shared/api/generated/sponsorship/schemas/bulkRequest'
+import type { ApplicationAttachmentItem } from '@/shared/api/generated/sponsorship/schemas/applicationAttachmentItem'
 import type { ConsultationDetailResponse } from '@/shared/api/generated/sponsorship/schemas/consultationDetailResponse'
 import type { ConsultationListItem } from '@/shared/api/generated/sponsorship/schemas/consultationListItem'
 import type { List14Params } from '@/shared/api/generated/sponsorship/schemas/list14Params'
@@ -19,6 +20,20 @@ export const LIST_PAGE_SIZE = 20
 
 function toDomainStatus(status: string | undefined): ConsultationStatus {
   return status === 'CONFIRMED' ? 'confirmed' : 'pending'
+}
+
+function firstApplicationAttachment(
+  attachments: ApplicationAttachmentItem[] | undefined,
+  originalName?: string | null,
+): { fileName: string | null; assetId?: number } {
+  const first = attachments?.find(
+    item => item.assetId != null || Boolean(item.originalName?.trim()),
+  )
+  const fileName = originalName?.trim() || first?.originalName?.trim() || null
+  return {
+    fileName,
+    ...(first?.assetId != null ? { assetId: first.assetId } : {}),
+  }
 }
 
 function toApiStatus(status: ConsultationStatus): StatusUpdateRequestStatus {
@@ -52,6 +67,7 @@ export function mapConsultationDetailToDomain(
   row: ConsultationDetailResponse,
 ): CorporateConsultation {
   const id = row.id != null ? String(row.id) : ''
+  const attachment = firstApplicationAttachment(row.attachments, row.attachmentOriginalName)
   return {
     id,
     status: toDomainStatus(row.status),
@@ -62,9 +78,8 @@ export function mapConsultationDetailToDomain(
     privacyConsent: true,
     content: row.consultationContent ?? '',
     linkUrl: row.linkUrl?.trim() ? row.linkUrl.trim() : null,
-    attachmentFileName: row.attachmentOriginalName?.trim()
-      ? row.attachmentOriginalName.trim()
-      : null,
+    attachmentFileName: attachment.fileName,
+    attachmentAssetId: attachment.assetId,
     attachmentUrl: null,
     appliedAt: row.createdAt ?? '',
     confirmedAt: row.confirmedAt ?? null,

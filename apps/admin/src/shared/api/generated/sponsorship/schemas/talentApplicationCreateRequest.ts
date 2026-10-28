@@ -61,5 +61,11 @@ export interface TalentApplicationCreateRequest {
   jaParticipation: TalentApplicationCreateRequestJaParticipation;
   privacyAgreed: boolean;
   attachmentAssetId?: number;
+  /**
+     * Confirmed talent-application attachment asset ids in request order. Max 10. Omit when empty.
+     * @minItems 0
+     * @maxItems 10
+     */
+  attachmentAssetIds?: number[];
   periodOrderValid?: boolean;
 }
