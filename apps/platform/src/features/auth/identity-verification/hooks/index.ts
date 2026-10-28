@@ -5,3 +5,4 @@ export { useFindPasswordIdentityVerification } from './use-find-password-identit
 export { useFindEmailIdentityVerification } from './use-find-email-identity-verification'
 export { useAdminProvisionedIdentityVerification } from './use-admin-provisioned-identity-verification'
 export { useSettingsPhoneIdentityVerification } from './use-settings-phone-identity-verification'
+export { useSettingsGuardianIdentityVerification } from './use-settings-guardian-identity-verification'
