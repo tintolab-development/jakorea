@@ -50,7 +50,11 @@ import {
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { useParticipatingInstructorInstitutionAssignment } from '@/features/program/general/hooks/use-participating-instructor-institution-assignment'
 import { resolveRequiredAssignableInstructorCount } from '@/features/program/general/lib/institution-select-assign'
-import { getParticipationConsentRequiredMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  getGeneralProgramApiErrorMessage,
+  getParticipationConsentRequiredMessage,
+} from '@/features/program/general/api/get-general-program-api-error'
+import { waitingAssignmentStatusLabel } from '@/features/program/general/lib/instructor-assignment-availability'
 import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   cancelInstructorAssignmentRemote,
@@ -174,10 +178,13 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           scheduleId,
         })
         await assignment.invalidate()
-      } catch {
+      } catch (error) {
         showAlert({
           title: '대표 강사 변경 실패',
-          content: '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
         })
       }
     },
@@ -273,13 +280,20 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           title: '배정 현황',
           dataIndex: 'assignmentStatus',
           key: 'assignmentStatus',
-          width: 100,
+          width: 180,
           align: 'center',
-          render: (status: ParticipatingIndividualInstructorWaitingScheduleRow['assignmentStatus']) => (
+          render: (
+            _status: ParticipatingIndividualInstructorWaitingScheduleRow['assignmentStatus'],
+            record: ParticipatingIndividualInstructorWaitingScheduleRow
+          ) => (
             <span
-              className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status === 'unavailable' || status === 'assignment_cancelled' ? 'cancelled' : status}`}
+              className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${record.assignmentStatus === 'unavailable' || record.assignmentStatus === 'assignment_cancelled' ? 'cancelled' : record.assignmentStatus}`}
             >
-              {PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS[status]}
+              {waitingAssignmentStatusLabel(
+                record.assignmentStatus,
+                PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS,
+                record.assignmentStatusLabel
+              )}
             </span>
           ),
         },
@@ -313,7 +327,11 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         lectureLocation: row.lectureLocation,
         distanceFromHome: row.distanceFromHome,
         scheduleLabel: row.scheduleLabel,
-        assignmentStatus: PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS[row.assignmentStatus],
+        assignmentStatus: waitingAssignmentStatusLabel(
+          row.assignmentStatus,
+          PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS,
+          row.assignmentStatusLabel
+        ),
         assignedInstructorCountLabel: row.assignedInstructorCountLabel,
       })),
     [waitingSchedules]
@@ -431,9 +449,10 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         }
         const message =
           getParticipationConsentRequiredMessage(error) ??
-          (error instanceof Error && error.message.trim()
-            ? error.message
-            : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+          getGeneralProgramApiErrorMessage(
+            error,
+            '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          )
         showAlert({ title: '배정 실패', content: message })
         return false
       } finally {

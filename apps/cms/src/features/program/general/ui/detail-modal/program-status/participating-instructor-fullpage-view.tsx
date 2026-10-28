@@ -74,10 +74,8 @@ import {
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/general/lib/instructor-institution-assignment'
 import { useParticipatingInstructorInstitutionAssignment } from '@/features/program/general/hooks/use-participating-instructor-institution-assignment'
-import {
-  createSessionInstructorCapChecker,
-  mergeInstitutionWaitingRowsBySchool,
-} from '@/features/program/general/lib/build-participating-instructor-assignment-rows'
+import { mergeInstitutionWaitingRowsBySchool } from '@/features/program/general/lib/build-participating-instructor-assignment-rows'
+import { waitingAssignmentStatusLabel } from '@/features/program/general/lib/instructor-assignment-availability'
 import {
   cancelInstructorAssignmentRemote,
   createInstructorAssignmentRemote,
@@ -485,18 +483,6 @@ export function ParticipatingInstructorFullpageView({
     maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
   })
 
-  /** 배정 안내 창 — 대기 행과 같은 기준((기관 신청 + 일정)별 강사 수 >= cap)으로 정원 도달 회차 선택 차단. 1사1교 제외 */
-  const isAssignGuideSessionAtCap = useMemo(
-    () =>
-      isCompanySchool
-        ? () => false
-        : createSessionInstructorCapChecker({
-            assignments: institutionAssignment.assignments,
-            maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
-          }),
-    [institutionAssignment.assignments, isCompanySchool, program]
-  )
-
   useEffect(() => {
     setAssignedSchools(institutionAssignment.assignedSchools)
     setWaitingSchools(institutionAssignment.waitingSchools)
@@ -709,7 +695,11 @@ export function ParticipatingInstructorFullpageView({
         region: row.region,
         distanceFromHome: row.distanceFromHome,
         educationSchedule: row.educationScheduleLines.join('\n'),
-        assignmentStatus: ASSIGNMENT_STATUS_LABELS[row.assignmentStatus],
+        assignmentStatus: waitingAssignmentStatusLabel(
+          row.assignmentStatus,
+          ASSIGNMENT_STATUS_LABELS,
+          row.assignmentStatusLabel
+        ),
         assignedInstructorCountLabel: row.assignedInstructorCountLabel,
       })),
     [waitingSchools]
@@ -761,13 +751,17 @@ export function ParticipatingInstructorFullpageView({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 100,
+        width: 180,
         align: 'center',
-        render: (status: InstructorWaitingAssignmentStatus) => (
+        render: (_status: InstructorWaitingAssignmentStatus, record: InstructorWaitingSchoolRow) => (
           <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${assignmentStatusChipModifier(status)}`}
+            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${assignmentStatusChipModifier(record.assignmentStatus)}`}
           >
-            {ASSIGNMENT_STATUS_LABELS[status]}
+            {waitingAssignmentStatusLabel(
+              record.assignmentStatus,
+              ASSIGNMENT_STATUS_LABELS,
+              record.assignmentStatusLabel
+            )}
           </span>
         ),
       },
@@ -951,13 +945,9 @@ export function ParticipatingInstructorFullpageView({
           return false
         }
 
-        const capSchool = schoolRows.find(
-          school => school.id === (waitingRow.schoolId ?? waitingRow.id)
-        )
         const targetSessions = listAssignableSessionsForWaitingRow(
           waitingRow,
-          selectedSessionKeys,
-          session => capSchool != null && isAssignGuideSessionAtCap(capSchool, session)
+          selectedSessionKeys
         )
 
         if (targetSessions.length === 0) {
@@ -1015,10 +1005,10 @@ export function ParticipatingInstructorFullpageView({
         showAlert({ title: '배정 실패', content: scopeMessage })
         return false
       }
-      const message =
-        error instanceof Error && error.message.trim()
-          ? error.message
-          : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+      const message = getGeneralProgramApiErrorMessage(
+        error,
+        '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+      )
       showAlert({ title: '배정 실패', content: message })
       return false
     } finally {
@@ -1033,7 +1023,6 @@ export function ParticipatingInstructorFullpageView({
     assignedSchools,
     hasInstructorApplicationId,
     institutionAssignment,
-    isAssignGuideSessionAtCap,
     isCompanySchool,
     instructorApplicationId,
     instructorList,
@@ -1100,12 +1089,11 @@ export function ParticipatingInstructorFullpageView({
       mapParticipatingSessionsToInstructorAssignOptions(assignGuideSchool?.sessions, {
         isSessionDisabled: session =>
           assignGuideSchool != null &&
-          (isAssignGuideSessionAtCap(assignGuideSchool, session) ||
-            (!isCompanySchool &&
-              waitingSessionOptionIdsBySchool.get(assignGuideSchool.id)?.has(sessionOptionId(session)) !==
-                true)),
+          !isCompanySchool &&
+          waitingSessionOptionIdsBySchool.get(assignGuideSchool.id)?.has(sessionOptionId(session)) !==
+            true,
       }),
-    [assignGuideSchool, isAssignGuideSessionAtCap, isCompanySchool, waitingSessionOptionIdsBySchool]
+    [assignGuideSchool, isCompanySchool, waitingSessionOptionIdsBySchool]
   )
 
   const assignGuideInstitutionName =

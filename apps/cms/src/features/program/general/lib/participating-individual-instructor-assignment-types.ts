@@ -42,6 +42,7 @@ export type ParticipatingIndividualInstructorWaitingScheduleRow = {
   distanceFromHome: string
   scheduleLabel: string
   assignmentStatus: ParticipatingIndividualInstructorWaitingStatus
+  assignmentStatusLabel?: string
   assignedInstructorCountLabel: string
   organizationApplicationId?: string
   instructorApplicationId?: string

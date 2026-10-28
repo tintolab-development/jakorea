@@ -71,6 +71,8 @@ export interface InstructorWaitingSchoolRow {
   distanceFromHome: string
   educationScheduleLines: string[]
   assignmentStatus: InstructorWaitingAssignmentStatus
+  /** 서버 reasons[0] 문구. 없으면 상태 기본 라벨 */
+  assignmentStatusLabel?: string
   assignedInstructorCountLabel: string
   /** assignment create API */
   organizationApplicationId?: string

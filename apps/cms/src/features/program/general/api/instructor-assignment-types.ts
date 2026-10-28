@@ -49,6 +49,45 @@ export type InstructorAssignmentCalendarResponse = {
   items?: InstructorAssignmentCalendarItem[]
 }
 
+/** GET /api/admin/programs/{programId}/instructor-assignment-availability — OpenAPI 리터럴 그대로 */
+export type InstructorAssignmentAvailabilityStatus =
+  | 'AVAILABLE'
+  | 'UNAVAILABLE'
+  | 'ASSIGNED'
+  | 'ASSIGNMENT_CANCELLED'
+
+export type InstructorAssignmentAvailabilityReason =
+  | 'CAPACITY_FULL'
+  | 'TIME_CONFLICT_OTHER_PROGRAM'
+  | 'TIME_CONFLICT_OTHER_ORGANIZATION'
+  | 'SAME_ORGANIZATION_OTHER_SCHEDULE_ASSIGNED'
+
+export type InstructorAssignmentAvailabilityConflict = {
+  programId: number
+  scheduleId: number | null
+  organizationApplicationId: number | null
+  startAt: string | null
+  endAt: string | null
+}
+
+export type InstructorAssignmentAvailabilityItem = {
+  organizationApplicationId: number | null
+  scheduleId: number
+  startAt: string | null
+  endAt: string | null
+  status: InstructorAssignmentAvailabilityStatus
+  reasons: InstructorAssignmentAvailabilityReason[]
+  assignedInstructorCount: number | null
+  maxAssignableInstructors: number | null
+  conflicts: InstructorAssignmentAvailabilityConflict[]
+}
+
+export type InstructorAssignmentAvailabilityResponse = {
+  programId: number
+  instructorMemberId: number
+  items: InstructorAssignmentAvailabilityItem[]
+}
+
 /** 지정은 scheduleLead 생략. 강등은 `scheduleLead: false` 또는 `role: 'ASSISTANT'` */
 export type RepresentativeInstructorBody = RepresentativeInstructorRequest & {
   scheduleLead?: boolean
