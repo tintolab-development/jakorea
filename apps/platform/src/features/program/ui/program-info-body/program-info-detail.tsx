@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { RichTextViewer } from '@/shared/rich-text'
 import { PFText } from '@/shared/ui'
 import type { ProgramDetail, ProgramEventSchedule, ProgramSession } from '../../model/types'
 import { isHtmlContent } from '../../lib/html-body'
+import type { ProgramInfoVariant } from './program-info-aside'
 import { ProgramInfoPeriodSponsor } from './program-info-period-sponsor'
 import styles from './program-info-body.module.css'
 
@@ -12,7 +13,17 @@ type ProgramInfoDetailProps = {
   header?: ReactNode
   /** 교육·봉사현황 상세처럼 참여하기 header를 쓰지 않을 때 운영 기간·후원사 노출 */
   showPeriodSponsor?: boolean
+  /** `participate`: 참여하기 상세 Figma(11001-199634 / 6772-30311) 전용 스타일 */
+  variant?: ProgramInfoVariant
   className?: string
+}
+
+/** 매퍼가 `이름, Tel : …, E-mail : …`로 합친 문의처를 항목별로 나눈다 (Tel/E-mail 접두 앞 쉼표만). */
+function splitContactParts(value: string): string[] {
+  return value
+    .split(/,\s*(?=(?:Tel|E-mail) : )/)
+    .map(part => part.trim())
+    .filter(Boolean)
 }
 
 function progressMetaLines(
@@ -86,8 +97,10 @@ export function ProgramInfoDetail({
   program,
   header,
   showPeriodSponsor = false,
+  variant = 'default',
   className,
 }: ProgramInfoDetailProps) {
+  const isParticipate = variant === 'participate'
   const basicInfoFields = resolveBasicInfoFields(program)
   const hasCurriculumBlock = program.sessions.length > 0 || program.eventSchedules.length > 0
   const hasBasicInfoSection = basicInfoFields.length > 0 || hasCurriculumBlock
@@ -101,7 +114,11 @@ export function ProgramInfoDetail({
     program.extraSections.length > 0 ||
     Boolean(program.contactValue.trim())
 
-  const articleClassName = [styles.detail, className].filter(Boolean).join(' ')
+  const contactParts = isParticipate ? splitContactParts(program.contactValue) : []
+
+  const articleClassName = [styles.detail, isParticipate ? styles.participate : null, className]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <article className={articleClassName}>
@@ -145,7 +162,7 @@ export function ProgramInfoDetail({
                     <li key={`${session.sessionLabel}-${session.title}`} className={styles.session}>
                       <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
                         <span className={styles.sessionLabel}>{session.sessionLabel}</span>
-                        {sessionTitle ? ` ${sessionTitle}` : ''}
+                        {sessionTitle ? <span>{` ${sessionTitle}`}</span> : null}
                       </PFText>
                       {session.dateLabel ? (
                         <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
@@ -153,7 +170,7 @@ export function ProgramInfoDetail({
                         </PFText>
                       ) : null}
                       {session.description.trim() ? (
-                        <PFText as="p" typo="bd-md-rg" color="black">
+                        <PFText as="p" typo={isParticipate ? 'bd-md-md' : 'bd-md-rg'} color="black">
                           {session.description}
                         </PFText>
                       ) : null}
@@ -175,7 +192,7 @@ export function ProgramInfoDetail({
                   >
                     <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
                       <span className={styles.sessionLabel}>{event.scheduleLabel}</span>
-                      {event.name ? ` ${event.name}` : ''}
+                      {event.name ? <span>{` ${event.name}`}</span> : null}
                     </PFText>
                     {event.dateLabel && event.dateLabel !== '-' ? (
                       <PFText as="p" typo="bd-md-rg" color="black">
@@ -279,9 +296,20 @@ export function ProgramInfoDetail({
                 <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
                   문의처
                 </PFText>
-                <PFText as="span" typo="bd-md-md" color="black">
-                  {program.contactValue}
-                </PFText>
+                {contactParts.length > 1 ? (
+                  <PFText as="span" typo="bd-md-md" color="black" className={styles.contactParts}>
+                    {contactParts.map((part, index) => (
+                      <Fragment key={`${index}-${part}`}>
+                        {index > 0 ? <span className={styles.contactDivider}>, </span> : null}
+                        <span>{part}</span>
+                      </Fragment>
+                    ))}
+                  </PFText>
+                ) : (
+                  <PFText as="span" typo="bd-md-md" color="black">
+                    {program.contactValue}
+                  </PFText>
+                )}
               </div>
             ) : null}
           </div>
@@ -290,7 +318,12 @@ export function ProgramInfoDetail({
 
       {applicationMethodValue ? (
         <div className={styles.applicationMethod}>
-          <PFText as="span" typo="bd-md-md" color="neutral-cool-600">
+          <PFText
+            as="span"
+            typo="bd-md-md"
+            color="neutral-cool-600"
+            className={styles.applicationMethodLabel}
+          >
             {program.applicationMethodLabel}
           </PFText>
           {isHtmlContent(applicationMethodValue) ? (
@@ -301,7 +334,12 @@ export function ProgramInfoDetail({
               className={styles.extraSectionRichText}
             />
           ) : (
-            <PFText as="span" typo="bd-lg-sb" color="black">
+            <PFText
+              as="span"
+              typo="bd-lg-sb"
+              color="black"
+              className={styles.applicationMethodValue}
+            >
               {applicationMethodValue}
             </PFText>
           )}

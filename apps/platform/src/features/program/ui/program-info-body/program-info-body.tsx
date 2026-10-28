@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ProgramDetail } from '../../model/types'
-import { ProgramInfoAside } from './program-info-aside'
+import { ProgramInfoAside, type ProgramInfoVariant } from './program-info-aside'
 import { ProgramInfoDetail } from './program-info-detail'
 import styles from './program-info-body.module.css'
 
@@ -16,6 +16,8 @@ type ProgramInfoBodyProps = {
   applyChecking?: boolean
   onCancel?: () => void
   showTopFab?: boolean
+  /** `participate`: 참여하기 상세 전용 스타일(마이페이지 등 기본값은 기존 그대로) */
+  variant?: ProgramInfoVariant
   className?: string
 }
 
@@ -29,9 +31,12 @@ export function ProgramInfoBody({
   applyChecking,
   onCancel,
   showTopFab = true,
+  variant = 'default',
   className,
 }: ProgramInfoBodyProps) {
-  const rootClassName = [styles.body, className].filter(Boolean).join(' ')
+  const rootClassName = [styles.body, variant === 'participate' ? styles.participate : null, className]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <div className={rootClassName}>
@@ -39,6 +44,7 @@ export function ProgramInfoBody({
         program={program}
         header={header}
         showPeriodSponsor={showPeriodSponsor}
+        variant={variant}
       />
 
       <ProgramInfoAside
@@ -52,6 +58,7 @@ export function ProgramInfoBody({
         applyChecking={applyChecking}
         onCancel={onCancel}
         showTopFab={showTopFab}
+        variant={variant}
       />
     </div>
   )

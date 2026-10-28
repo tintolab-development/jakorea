@@ -55,6 +55,7 @@ function ProgramDetailLoading() {
         </div>
         <div className={styles.loadingBody}>
           <div className={styles.loadingMain}>
+            <span className={[styles.skeleton, styles.skeletonPoster].join(' ')} />
             <span className={[styles.skeleton, styles.skeletonCategory].join(' ')} />
             <span className={[styles.skeleton, styles.skeletonTitle].join(' ')} />
             <span className={[styles.skeleton, styles.skeletonTitleShort].join(' ')} />

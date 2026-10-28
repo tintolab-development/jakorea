@@ -161,10 +161,13 @@ export {
 } from './lib/badge-config'
 export { ProgramBackButton } from './ui/back-button'
 export {
+  ProgramApplyButton,
   ProgramInfoBody,
   ProgramInfoAside,
   ProgramInfoDetail,
   ProgramInfoPeriodSponsor,
+  ProgramPoster,
+  type ProgramInfoVariant,
 } from './ui/program-info-body'
 export { ProgramListItemRow } from './ui/list-item'
 export { ProgramListSkeleton } from './ui/list-skeleton'
