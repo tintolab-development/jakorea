@@ -1,0 +1,186 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "JA Korea Homepage Admin API — System inbox subset",
+    "description": "Filtered for Homepage Admin GNB system inbox Orval codegen. Excludes public-application outbox.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8081",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/api/admin/notifications/inbox": {
+      "get": {
+        "tags": [
+          "Homepage admin system notifications"
+        ],
+        "operationId": "listHomepageAdminSystemNotifications",
+        "parameters": [
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HomepageAdminSystemNotificationItem"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/notifications/inbox/unread-count": {
+      "get": {
+        "tags": [
+          "Homepage admin system notifications"
+        ],
+        "operationId": "countHomepageAdminSystemNotifications",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomepageAdminSystemNotificationUnreadCount"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/notifications/inbox/{id}/read": {
+      "post": {
+        "tags": [
+          "Homepage admin system notifications"
+        ],
+        "operationId": "readHomepageAdminSystemNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomepageAdminSystemNotificationItem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HomepageAdminSystemNotificationItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventKey": {
+            "type": "string"
+          },
+          "notificationType": {
+            "type": "string",
+            "enum": [
+              "CAREER_TALENT_APPLICATION",
+              "CORPORATE_CONSULTATION",
+              "TALENT_APPLICATION",
+              "CAREER_POSTING_DEADLINE"
+            ]
+          },
+          "aggregateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "actionLabel": {
+            "type": "string"
+          },
+          "actionPath": {
+            "type": "string"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "HomepageAdminSystemNotificationUnreadCount": {
+        "type": "object",
+        "properties": {
+          "unreadCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
