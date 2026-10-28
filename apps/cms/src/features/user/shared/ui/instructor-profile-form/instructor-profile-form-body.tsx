@@ -6,7 +6,10 @@ import {
   INSTRUCTOR_FORM_PLACEHOLDERS,
   INSTRUCTOR_FORM_SECTION_DESCRIPTIONS,
 } from '@jakorea/domain/instructor/form-copy'
-import { getInstructorFormLayout } from '@jakorea/domain/instructor/form-layout'
+import {
+  getInstructorConsentDocumentGroups,
+  getInstructorFormLayout,
+} from '@jakorea/domain/instructor/form-layout'
 import {
   AddressSearch,
   CmsButton,
@@ -60,6 +63,17 @@ import {
   type InstructorProfileFormValues,
 } from './instructor-profile-form-model'
 import '../instructor-register-modal.css'
+
+/** CMS 강사 등록 — 동의서 그룹(필수 작성 / 행정정보 공동이용). CMS는 모두 선택이라 `required`는 false */
+const CONSENT_DOCUMENT_GROUPS = getInstructorConsentDocumentGroups('cmsRegister')
+
+function chunkConsentDocumentRows<T>(items: readonly T[]): T[][] {
+  const rows: T[][] = []
+  for (let index = 0; index < items.length; index += 2) {
+    rows.push(items.slice(index, index + 2) as T[])
+  }
+  return rows
+}
 
 function InstructorCareerRowEdit({
   form,
@@ -837,67 +851,43 @@ export function InstructorProfileFormBody({
                 </DetailInfoForm.Row>
               </DetailInfoForm>
 
-              {showInstructorConsentDocuments ? (
-                <DetailInfoForm
-                  title="약관 및 동의"
-                  hideHeader
-                  mode="edit"
-                  className="instructor-register-modal__consent-block"
-                >
-                  <DetailInfoForm.Row type="double">
-                    <DetailInfoForm.Field
-                      label="지급조서 사전 동의서"
-                      labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                      view="-"
-                      edit={
-                        <Form.Item name="consentPaymentStatement" noStyle>
-                          <ConsentDocumentFieldEdit
-                            onWrite={() => handleConsentWrite('consentPaymentStatement')}
-                          />
-                        </Form.Item>
-                      }
-                    />
-                    <DetailInfoForm.Field
-                      label="교육진행자 서약서"
-                      labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                      view="-"
-                      edit={
-                        <Form.Item name="consentEducatorPledge" noStyle>
-                          <ConsentDocumentFieldEdit
-                            onWrite={() => handleConsentWrite('consentEducatorPledge')}
-                          />
-                        </Form.Item>
-                      }
-                    />
-                  </DetailInfoForm.Row>
-                  <DetailInfoForm.Row type="double">
-                    <DetailInfoForm.Field
-                      label="행정정보 공동이용 사전동의서"
-                      labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                      view="-"
-                      edit={
-                        <Form.Item name="consentAdministrativeJoint" noStyle>
-                          <ConsentDocumentFieldEdit
-                            onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
-                          />
-                        </Form.Item>
-                      }
-                    />
-                    <DetailInfoForm.Field
-                      label="성범죄 경력 조회 동의서"
-                      labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                      view="-"
-                      edit={
-                        <Form.Item name="consentSexOffenseCheck" noStyle>
-                          <ConsentDocumentFieldEdit
-                            onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
-                          />
-                        </Form.Item>
-                      }
-                    />
-                  </DetailInfoForm.Row>
-                </DetailInfoForm>
-              ) : null}
+              {/* 동의서 — 공용 스키마 `documentGroups`: 필수 작성 동의서 / 행정정보 공동이용 동의서 (CMS 스타일 유지, 등록은 모두 선택) */}
+              {showInstructorConsentDocuments
+                ? CONSENT_DOCUMENT_GROUPS.map(group => (
+                    <DetailInfoForm
+                      key={group.id}
+                      title={group.title}
+                      mode="edit"
+                      description={group.footerText}
+                      descriptionPlacement="below"
+                      className="instructor-register-modal__consent-block"
+                    >
+                      {chunkConsentDocumentRows(group.items).map(row => (
+                        <DetailInfoForm.Row
+                          key={row.map(item => item.key).join('-')}
+                          type={row.length > 1 ? 'double' : 'single'}
+                        >
+                          {row.map(item => (
+                            <DetailInfoForm.Field
+                              key={item.key}
+                              label={item.label}
+                              required={group.required}
+                              labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                              view="-"
+                              edit={
+                                <Form.Item name={item.key} noStyle>
+                                  <ConsentDocumentFieldEdit
+                                    onWrite={() => handleConsentWrite(item.key)}
+                                  />
+                                </Form.Item>
+                              }
+                            />
+                          ))}
+                        </DetailInfoForm.Row>
+                      ))}
+                    </DetailInfoForm>
+                  ))
+                : null}
             </div>
           </DetailInfoForm>
         ) : null}

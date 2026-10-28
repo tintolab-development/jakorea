@@ -76,13 +76,12 @@ describe('instructor register consent validation', () => {
     ])
   })
 
-  it('Platform 강사 신청은 이용약관·개인정보 + 동의서 4종이 필수다', () => {
+  it('Platform 강사 신청은 이용약관·개인정보 + 필수 작성 동의서 3종이 필수다 (행정정보 공동이용 선택)', () => {
     expect([...getInstructorRequiredConsentAgreeKeys('platformApply')]).toEqual([
       'consentTermsOfService',
       'consentPersonal',
       'consentPaymentStatement',
       'consentEducatorPledge',
-      'consentAdministrativeJoint',
       'consentSexOffenseCheck',
     ])
   })
@@ -107,6 +106,13 @@ describe('instructor register consent validation', () => {
         options
       ).missingRequired
     ).toBe(true)
+    expect(
+      collectInstructorRegisterValidation(
+        baseValues({ ...allAgreed, consentAdministrativeJoint: 'disagree' }),
+        {},
+        options
+      ).missingRequired
+    ).toBe(false)
   })
 
   it('필수 동의 미동의 시 팝업 문구에 항목명이 포함된다', () => {

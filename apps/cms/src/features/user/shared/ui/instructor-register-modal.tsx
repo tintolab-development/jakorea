@@ -48,7 +48,7 @@ const INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS = [
   { key: 'consentPersonal', label: '개인정보 수집·이용 동의' },
 ] as const
 
-const CRIME_CONSENT_EVIDENCE_REQUIRED_ALERT_MESSAGE = '성범죄 경력조회 동의서 파일을 첨부해 주세요.'
+const CRIME_CONSENT_EVIDENCE_REQUIRED_ALERT_MESSAGE = '성범죄경력 조회 동의서 파일을 첨부해 주세요.'
 
 export interface InstructorRegisterModalProps {
   open: boolean
