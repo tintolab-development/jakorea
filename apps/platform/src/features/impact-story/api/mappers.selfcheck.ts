@@ -53,6 +53,13 @@ const placeholder = mapPublicStoryListItem({
 assert.ok(placeholder)
 assert.equal(placeholder.imageUrl, undefined)
 
+const noThumbnail = mapPublicStoryListItem({
+  id: 2,
+  title: '섬네일 없음',
+})
+assert.ok(noThumbnail)
+assert.equal(noThumbnail.imageUrl, undefined)
+
 const detail = mapPublicStoryDetail({
   id: 42,
   title: '민재',
