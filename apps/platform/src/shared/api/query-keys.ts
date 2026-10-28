@@ -577,6 +577,16 @@ export const platformQueryKeys = {
     lectureReportAssignments: (programId: string) =>
       [...platformQueryKeys.mypage.all(), 'lecture-report-assignments', programId] as const,
     /**
+     * Gemini 정산 요약 — GET /api/portal/me/programs/{programId}/gemini-settlement-summary (Class C)
+     */
+    geminiSettlementSummary: (programId: string) =>
+      [...platformQueryKeys.mypage.all(), 'gemini-settlement-summary', programId] as const,
+    /**
+     * Gemini 강의 일정 정산 — GET /api/portal/me/programs/{programId}/gemini-lecture-schedules (Class C)
+     */
+    geminiLectureSchedules: (programId: string) =>
+      [...platformQueryKeys.mypage.all(), 'gemini-lecture-schedules', programId] as const,
+    /**
      * 일반회원 일정 정산 — GET /api/portal/me/individual-settlements/applications/{id}/schedules (Class C)
      */
     individualSettlementSchedules: (applicationId: string) =>

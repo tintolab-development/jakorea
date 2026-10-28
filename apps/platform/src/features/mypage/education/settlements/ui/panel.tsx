@@ -9,10 +9,16 @@ import { PFButton, PFText } from '@/shared/ui'
 import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { useApplicationSettlementsQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
+import { useGeminiSettlementTabQuery } from '../api/use-gemini-settlement-query'
 import {
   readInstructorBusinessIncomeLabel,
   readInstructorFeeGradeLabel,
 } from '../lib/instructor-settlement-summary'
+import {
+  displayGeminiBusinessIncomeLabel,
+  displayGeminiLectureFeeBasis,
+  mapGeminiPaymentStatementProcessLabel,
+} from '../lib/gemini-settlement-status'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SETTLEMENT_PAGE_SIZE } from '../model/types'
@@ -56,13 +62,17 @@ export function EducationSettlementPanel({
 }: EducationSettlementPanelProps) {
   const location = useLocation()
   const [page, setPage] = useState(1)
-  const profileQuery = usePortalProfileQuery({ enabled: applicationType === 'INSTRUCTOR' })
+  const isGemini = isGeminiSettlementProgram({ programType, detailCase })
+  const profileQuery = usePortalProfileQuery({
+    enabled: applicationType === 'INSTRUCTOR' && !isGemini,
+  })
   const remoteSettlements = useApplicationSettlementsQuery(
     applicationType,
     applicationId,
     programId,
-    { operationEndAt, programType },
+    { operationEndAt, programType, enabled: !isGemini },
   )
+  const geminiSettlements = useGeminiSettlementTabQuery(programId, isGemini)
   const settlementSearchParams = useMemo(
     () => new URLSearchParams(location.search),
     [location.search],
@@ -71,9 +81,19 @@ export function EducationSettlementPanel({
   const shouldOpenRejectReason = settlementSearchParams.get('modal') === 'reject-reason'
 
   const allItems = useMemo(() => {
-    const items = remoteSettlements.enabled ? remoteSettlements.items : []
+    const items = isGemini
+      ? geminiSettlements.items
+      : remoteSettlements.enabled
+        ? remoteSettlements.items
+        : []
     return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
-  }, [lastParticipatedSession, remoteSettlements.enabled, remoteSettlements.items])
+  }, [
+    geminiSettlements.items,
+    isGemini,
+    lastParticipatedSession,
+    remoteSettlements.enabled,
+    remoteSettlements.items,
+  ])
 
   const totalElements = allItems.length
   const totalPages = Math.max(1, Math.ceil(totalElements / EDUCATION_SETTLEMENT_PAGE_SIZE))
@@ -91,14 +111,21 @@ export function EducationSettlementPanel({
   const currentPage = requestedSessionPage ?? Math.min(page, totalPages)
   const completedCount = countCompletedSettlementSessions(allItems)
   const documentKind = resolveSettlementDocumentKind(applicationType)
-  const isGemini = isGeminiSettlementProgram({ programType, detailCase })
-  const processLabel = resolvePaymentStatementProcessLabel(allItems, {
-    variant: isGemini
-      ? 'gemini'
-      : documentKind === 'payment_statement'
-        ? 'payment_statement'
-        : 'receipt',
-  })
+  const processLabel = isGemini
+    ? mapGeminiPaymentStatementProcessLabel(geminiSettlements.summary ?? {})
+    : resolvePaymentStatementProcessLabel(allItems, {
+        variant: documentKind === 'payment_statement' ? 'payment_statement' : 'receipt',
+      })
+  const feeGradeLabel = isGemini
+    ? displayGeminiLectureFeeBasis(geminiSettlements.summary?.lectureFeeBasis)
+    : documentKind === 'payment_statement'
+      ? readInstructorFeeGradeLabel(profileQuery.data)
+      : undefined
+  const businessIncomeLabel = isGemini
+    ? displayGeminiBusinessIncomeLabel(geminiSettlements.summary?.businessIncome)
+    : documentKind === 'payment_statement'
+      ? readInstructorBusinessIncomeLabel(profileQuery.data)
+      : undefined
   const area = resolveSettlementAreaFromPathname(location.pathname)
   const operationEnd = readProgramOperationEndAt(operationEndAt)
   const receiptConsent = useReceiptPaymentStatementConsent()
@@ -110,10 +137,10 @@ export function EducationSettlementPanel({
     return allItems.slice(start, start + EDUCATION_SETTLEMENT_PAGE_SIZE)
   }, [allItems, currentPage])
 
-  if (remoteSettlements.isLoading) {
+  if (isGemini ? geminiSettlements.isLoading : remoteSettlements.isLoading) {
     return <EducationSessionListSkeleton statusMessage="정산현황을 불러오는 중입니다." />
   }
-  if (remoteSettlements.individualDisabled) {
+  if (!isGemini && remoteSettlements.individualDisabled) {
     return (
       <div className={styles.status}>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
@@ -122,7 +149,7 @@ export function EducationSettlementPanel({
       </div>
     )
   }
-  if (remoteSettlements.individualErrorCode) {
+  if (!isGemini && remoteSettlements.individualErrorCode) {
     return (
       <div className={styles.status}>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
@@ -141,9 +168,9 @@ export function EducationSettlementPanel({
       </div>
     )
   }
-  if (remoteSettlements.isError) {
+  if (isGemini ? geminiSettlements.isError : remoteSettlements.isError) {
     const errorMessage =
-      remoteSettlements.errorCode === 'DATABASE_ERROR'
+      !isGemini && remoteSettlements.errorCode === 'DATABASE_ERROR'
         ? DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE
         : '정산현황을 불러오지 못했습니다.'
     return (
@@ -160,8 +187,10 @@ export function EducationSettlementPanel({
           type="button"
           variant="tertiary"
           size="large"
-          disabled={remoteSettlements.isRefetching}
-          onClick={() => void remoteSettlements.refetch()}
+          disabled={isGemini ? geminiSettlements.isRefetching : remoteSettlements.isRefetching}
+          onClick={() =>
+            void (isGemini ? geminiSettlements.refetch() : remoteSettlements.refetch())
+          }
         >
           다시 시도
         </PFButton>
@@ -175,16 +204,8 @@ export function EducationSettlementPanel({
         processLabel={processLabel}
         completedCount={completedCount}
         totalCount={totalElements}
-        feeGradeLabel={
-          documentKind === 'payment_statement'
-            ? readInstructorFeeGradeLabel(profileQuery.data)
-            : undefined
-        }
-        businessIncomeLabel={
-          documentKind === 'payment_statement'
-            ? readInstructorBusinessIncomeLabel(profileQuery.data)
-            : undefined
-        }
+        feeGradeLabel={feeGradeLabel}
+        businessIncomeLabel={businessIncomeLabel}
       />
       <EducationSessionList
         title="정산 현황"
@@ -193,7 +214,7 @@ export function EducationSettlementPanel({
         totalPages={totalPages}
         onPageChange={setPage}
         emptyMessage={
-          remoteSettlements.individualEmpty
+          !isGemini && remoteSettlements.individualEmpty
             ? INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE
             : '정산 현황이 없어요'
         }
