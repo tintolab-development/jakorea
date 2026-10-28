@@ -1,5 +1,6 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { InstructorPortalProfileResponse } from '@/features/auth/sign-in/api/types'
+import { isMinorSettingsMember } from './consent-visibility.ts'
 import { EMPTY_SETTINGS_VALUE } from './constants.ts'
 
 export type SettingsProfileInput = {
@@ -7,6 +8,8 @@ export type SettingsProfileInput = {
   name?: string
   phone?: string
   birthDate?: string
+  under14?: boolean
+  ageGroup?: string
   gender?: string
   schoolEnrollmentStatus?: string
   schoolName?: string
@@ -25,6 +28,11 @@ export type SettingsProfileInput = {
   instructor?: boolean
   instructorProfile?: InstructorPortalProfileResponse
   socialAccounts?: string[]
+  guardian?: {
+    guardianName?: string
+    guardianRelation?: string
+    guardianPhone?: string
+  }
   listMetrics?: PortalProfileListMetrics
 }
 
@@ -123,6 +131,28 @@ function formatSettingsAddress(address: string | undefined, addressDetail: strin
   return [address?.trim(), addressDetail?.trim()].filter(Boolean).join(' ')
 }
 
+export function mapPortalGuardianToSettingsView(
+  guardian:
+    | {
+        guardianName?: string
+        guardianRelation?: string
+        guardianPhone?: string
+      }
+    | null
+    | undefined,
+): SettingsGuardianView | null {
+  if (!guardian) return null
+  const name = guardian.guardianName?.trim() ?? ''
+  const relationship = guardian.guardianRelation?.trim() ?? ''
+  const phoneRaw = guardian.guardianPhone?.trim() ?? ''
+  if (!name && !relationship && !phoneRaw) return null
+  return {
+    name: name || EMPTY_SETTINGS_VALUE,
+    phone: phoneRaw ? formatSettingsPhone(phoneRaw) : EMPTY_SETTINGS_VALUE,
+    relationship: relationship || EMPTY_SETTINGS_VALUE,
+  }
+}
+
 export function mapPortalProfileToSettingsView(
   profile: SettingsProfileInput,
   guardian?: SettingsGuardianView | null,
@@ -157,12 +187,16 @@ export function mapPortalProfileToSettingsView(
           { label: '소속/학교명', value: formatSettingsText(affiliation) },
           { label: '학년', value: formatSettingsGrade(profile.grade) },
         ]
+  const hideMemberPhone = isMinorSettingsMember(profile)
+  const phoneRows: SettingsInfoRow[] = hideMemberPhone
+    ? []
+    : [{ label: '휴대폰 번호', value: formatSettingsPhone(profile.phone) }]
 
   return {
     basicRows: [
       { label: '가입일', value: formatSettingsJoinedAt(profile.joinedAt) },
       { label: '이름', value: formatSettingsText(profile.name) },
-      { label: '휴대폰 번호', value: formatSettingsPhone(profile.phone) },
+      ...phoneRows,
       { label: '생년월일', value: formatSettingsDateDot(profile.birthDate) },
       { label: '성별', value: formatSettingsGender(profile.gender) },
       { label: '재학유무', value: enrollment },

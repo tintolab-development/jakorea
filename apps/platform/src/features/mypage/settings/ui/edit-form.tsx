@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { mapAdminRegisteredEditToPortalProfileUpdate } from '@/features/auth/admin-registered'
+import { isGuardianProfileValid } from '@/features/auth/sign-up/lib/guardian/guardian-profile.logic'
 import {
   clearMypagePhoneIdentityConfirmPending,
   markMypagePhoneIdentityConfirmPending,
+  useSettingsGuardianIdentityVerification,
   useSettingsPhoneIdentityVerification,
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
@@ -20,6 +22,7 @@ import {
 } from '@/features/auth/sign-up'
 import { isRemoteApiConfigured } from '@/shared/lib'
 import { PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
+import { isMinorSettingsMember } from '../lib/consent-visibility'
 import { EMPTY_SETTINGS_VALUE } from '../lib/constants'
 import {
   applySettingsEditToSnapshot,
@@ -38,24 +41,33 @@ import {
   formatSettingsDateDot,
   formatSettingsPhone,
   formatSettingsText,
+  type SettingsGuardianView,
   type SettingsProfileInput,
 } from '../lib/map-view'
 import styles from './edit-form.module.css'
 
 export type SettingsEditFormProps = {
   profile: SettingsProfileInput
+  guardian?: SettingsGuardianView | null
   variant?: 'individual' | 'teacher'
   onCancel: () => void
   onSaved: (next: SettingsProfileInput) => void
 }
 
+function fromGuardianDisplay(value: string | undefined) {
+  const trimmed = value?.trim() ?? ''
+  return trimmed === EMPTY_SETTINGS_VALUE ? '' : trimmed
+}
+
 export function SettingsEditForm({
   profile,
+  guardian,
   variant = 'individual',
   onCancel,
   onSaved,
 }: SettingsEditFormProps) {
   const isTeacher = variant === 'teacher'
+  const hideMemberPhone = isMinorSettingsMember(profile)
   const initial = mapProfileToSettingsEditForm(profile)
   const teacherInitial = mapProfileToTeacherSettingsEditForm(profile)
   const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>(initial.schoolStatus)
@@ -90,9 +102,15 @@ export function SettingsEditForm({
   )
   const [isSchoolSearchOpen, setIsSchoolSearchOpen] = useState(false)
   const [phone, setPhone] = useState(profile.phone ?? '')
+  const [guardianName, setGuardianName] = useState(fromGuardianDisplay(guardian?.name))
+  const [guardianPhone, setGuardianPhone] = useState(fromGuardianDisplay(guardian?.phone))
+  const [guardianRelationship, setGuardianRelationship] = useState(
+    fromGuardianDisplay(guardian?.relationship),
+  )
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string>()
   const [phoneError, setPhoneError] = useState<string>()
+  const [guardianIdentityError, setGuardianIdentityError] = useState<string>()
   const profileUpdateMutation = usePortalProfileUpdateMutation()
   const phoneConfirmMutation = usePortalPhoneIdentityConfirmMutation()
   const confirmPhone = phoneConfirmMutation.mutateAsync
@@ -100,6 +118,8 @@ export function SettingsEditForm({
 
   const handleIdentitySuccess = useCallback(
     (result: IdentityChallengeCompleteResult) => {
+      if (isMinorSettingsMember(profile)) return
+
       void (async () => {
         setPhoneError(undefined)
         const verifiedPhone = result.verifiedPhone?.trim()
@@ -138,7 +158,7 @@ export function SettingsEditForm({
         }
       })()
     },
-    [confirmPhone],
+    [confirmPhone, profile],
   )
 
   const { verify, isVerifying, errorMessage, resetError } = useSettingsPhoneIdentityVerification({
@@ -146,6 +166,26 @@ export function SettingsEditForm({
     birthDate: profile.birthDate,
     gender: toSettingsGender(profile.gender) || null,
     onSuccess: handleIdentitySuccess,
+  })
+
+  const handleGuardianIdentitySuccess = useCallback((result: IdentityChallengeCompleteResult) => {
+    const verifiedName = result.verifiedName?.trim()
+    const verifiedPhone = result.verifiedPhone?.trim()
+    setGuardianIdentityError(undefined)
+    if (verifiedName) setGuardianName(verifiedName)
+    if (verifiedPhone) setGuardianPhone(verifiedPhone)
+    if (!verifiedName && !verifiedPhone) {
+      setGuardianIdentityError('본인인증 정보가 부족합니다. 다시 시도해 주세요.')
+    }
+  }, [])
+
+  const {
+    verify: verifyGuardian,
+    isVerifying: isGuardianVerifying,
+    errorMessage: guardianVerifyError,
+    resetError: resetGuardianVerifyError,
+  } = useSettingsGuardianIdentityVerification({
+    onSuccess: handleGuardianIdentitySuccess,
   })
 
   useEffect(() => {
@@ -166,7 +206,9 @@ export function SettingsEditForm({
   const displayEmail = formatSettingsText(profile.email)
   const displayGender = toSettingsGender(profile.gender)
   const identityError = phoneError ?? errorMessage ?? undefined
+  const guardianError = guardianIdentityError ?? guardianVerifyError ?? undefined
   const isReverifying = isVerifying || isConfirmingPhone
+  const isGuardianReverifying = isGuardianVerifying
 
   const form = {
     schoolStatus,
@@ -190,9 +232,16 @@ export function SettingsEditForm({
     schoolSource: teacherSchoolSource,
     employmentStatus: teacherEmploymentStatus,
   }
-  const isValid = isTeacher
-    ? isTeacherSettingsEditValid(teacherForm)
-    : isSettingsEditValid(form)
+  const guardianValid =
+    !guardian ||
+    isGuardianProfileValid({
+      name: guardianName,
+      phone: guardianPhone,
+      relationship: guardianRelationship,
+    })
+  const isValid =
+    (isTeacher ? isTeacherSettingsEditValid(teacherForm) : isSettingsEditValid(form)) &&
+    guardianValid
 
   const handleSchoolStatusChange = (status: SchoolStatus) => {
     setSchoolStatus(status)
@@ -230,7 +279,7 @@ export function SettingsEditForm({
   }
 
   const handleSubmit = async () => {
-    if (!isValid || profileUpdateMutation.isPending || isReverifying) {
+    if (!isValid || profileUpdateMutation.isPending || isReverifying || isGuardianReverifying) {
       return
     }
 
@@ -264,11 +313,21 @@ export function SettingsEditForm({
       }
     }
 
-    onSaved({ ...next, phone })
+    onSaved({
+      ...next,
+      phone,
+      guardian: guardian
+        ? {
+            guardianName: guardianName.trim(),
+            guardianRelation: guardianRelationship.trim(),
+            guardianPhone: guardianPhone.replace(/\D/g, ''),
+          }
+        : next.guardian,
+    })
   }
 
   const handleReverify = () => {
-    if (isReverifying) {
+    if (isReverifying || isGuardianReverifying) {
       return
     }
 
@@ -280,6 +339,16 @@ export function SettingsEditForm({
     void verify()
   }
 
+  const handleGuardianReverify = () => {
+    if (isReverifying || isGuardianReverifying) {
+      return
+    }
+
+    setGuardianIdentityError(undefined)
+    resetGuardianVerifyError()
+    void verifyGuardian()
+  }
+
   const handleCancel = () => {
     clearMypagePhoneIdentityConfirmPending()
     onCancel()
@@ -288,9 +357,11 @@ export function SettingsEditForm({
   return (
     <div className={styles.page}>
       <section className={styles.section}>
-        <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
-          기본 정보
-        </PFText>
+        <div className={styles.sectionHeader}>
+          <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
+            기본 정보
+          </PFText>
+        </div>
 
         <div className={styles.fields}>
           <PFTextInput
@@ -301,33 +372,35 @@ export function SettingsEditForm({
             disabled
           />
 
-          <div className={styles.addressField}>
-            <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
-              휴대폰 번호 <span className={styles.inlineRequiredMark}>*</span>
-            </PFText>
-            <div className={styles.inlineRow}>
-              <PFTextInput
-                size="xlarge"
-                value={displayPhone === EMPTY_SETTINGS_VALUE ? '' : displayPhone}
-                required
-                readOnly
-              />
-              <PFButton
-                size="xlarge"
-                variant="secondary"
-                type="button"
-                disabled={isReverifying}
-                onClick={handleReverify}
-              >
-                {isReverifying ? '본인인증 진행 중…' : '본인인증 다시하기'}
-              </PFButton>
-            </div>
-            {identityError ? (
-              <PFText as="p" typo="bd-sm-md" color="error" className={styles.fieldError}>
-                {identityError}
+          {hideMemberPhone ? null : (
+            <div className={styles.addressField}>
+              <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                휴대폰 번호 <span className={styles.inlineRequiredMark}>*</span>
               </PFText>
-            ) : null}
-          </div>
+              <div className={styles.inlineRow}>
+                <PFTextInput
+                  size="xlarge"
+                  value={displayPhone === EMPTY_SETTINGS_VALUE ? '' : displayPhone}
+                  required
+                  readOnly
+                />
+                <PFButton
+                  size="xlarge"
+                  variant="secondary"
+                  type="button"
+                  disabled={isReverifying}
+                  onClick={handleReverify}
+                >
+                  {isReverifying ? '본인인증 진행 중…' : '본인인증 다시하기'}
+                </PFButton>
+              </div>
+              {identityError ? (
+                <PFText as="p" typo="bd-sm-md" color="error" className={styles.fieldError}>
+                  {identityError}
+                </PFText>
+              ) : null}
+            </div>
+          )}
 
           <PFTextInput
             size="xlarge"
@@ -536,6 +609,64 @@ export function SettingsEditForm({
         </div>
       </section>
 
+      {guardian ? (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
+              보호자 정보
+            </PFText>
+          </div>
+
+          <div className={styles.fields}>
+            <PFTextInput
+              size="xlarge"
+              label="이름"
+              placeholder="보호자 이름을 입력해 주세요"
+              value={guardianName}
+              required
+              onValueChange={setGuardianName}
+            />
+
+            <div className={styles.addressField}>
+              <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                휴대폰 번호 <span className={styles.inlineRequiredMark}>*</span>
+              </PFText>
+              <div className={styles.inlineRow}>
+                <PFTextInput
+                  size="xlarge"
+                  value={guardianPhone ? formatSettingsPhone(guardianPhone) : ''}
+                  required
+                  readOnly
+                />
+                <PFButton
+                  size="xlarge"
+                  variant="secondary"
+                  type="button"
+                  disabled={isGuardianReverifying || isReverifying}
+                  onClick={handleGuardianReverify}
+                >
+                  {isGuardianReverifying ? '본인인증 진행 중…' : '본인인증 다시하기'}
+                </PFButton>
+              </div>
+              {guardianError ? (
+                <PFText as="p" typo="bd-sm-md" color="error" className={styles.fieldError}>
+                  {guardianError}
+                </PFText>
+              ) : null}
+            </div>
+
+            <PFTextInput
+              size="xlarge"
+              label="가입자의 관계"
+              placeholder="예: 부, 모, 법정대리인"
+              value={guardianRelationship}
+              required
+              onValueChange={setGuardianRelationship}
+            />
+          </div>
+        </section>
+      ) : null}
+
       <div className={styles.actions}>
         {submitError ? (
           <PFText as="p" typo="bd-sm-md" color="error" className={styles.submitError}>
@@ -545,7 +676,7 @@ export function SettingsEditForm({
         <PFButton
           size="xlarge"
           width="100%"
-          disabled={!isValid || profileUpdateMutation.isPending || isReverifying}
+          disabled={!isValid || profileUpdateMutation.isPending || isReverifying || isGuardianReverifying}
           onClick={() => {
             void handleSubmit()
           }}
