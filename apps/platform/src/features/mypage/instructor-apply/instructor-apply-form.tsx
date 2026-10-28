@@ -7,8 +7,7 @@ import {
   type InstructorConsentDocumentKey,
 } from '@jakorea/domain/instructor/consent'
 import {
-  getInstructorConsentDocumentItems,
-  getInstructorFormLayout,
+  getInstructorConsentDocumentGroups,
   getInstructorFormSectionDisplayTitle,
   getInstructorRequiredConsentAgreeKeys,
 } from '@jakorea/domain/instructor/form-layout'
@@ -59,7 +58,6 @@ import {
 import {
   getInstructorApplyConsentPath,
   INSTRUCTOR_APPLY_CONSENT_KEYS,
-  isInstructorApplyOptionalConsentKey,
   type InstructorApplyConsentKey,
 } from './consent/catalog'
 import { formatInstructorConsentAgreedAtLabel } from './lib/format-instructor-apply-datetime'
@@ -84,16 +82,8 @@ import styles from './instructor-apply-form.module.css'
 
 const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
 const FORM_SURFACE = 'platformApply' as const
-const FORM_LAYOUT = getInstructorFormLayout(FORM_SURFACE)
-const CONSENT_DOCUMENT_ITEMS = getInstructorConsentDocumentItems(FORM_SURFACE)
-/** 행정정보 공동이용 동의서는 선택 — 제출 검증에서 제외 */
-const REQUIRED_CONSENT_AGREE_KEYS = getInstructorRequiredConsentAgreeKeys(FORM_SURFACE).filter(
-  key => !isInstructorApplyOptionalConsentKey(key)
-)
-/** 선택 동의서가 섞이면 섹션 `*` 대신 항목별 `*` */
-const CONSENT_SECTION_ALL_REQUIRED =
-  FORM_LAYOUT.consent.allItemsRequired &&
-  CONSENT_DOCUMENT_ITEMS.every(item => !isInstructorApplyOptionalConsentKey(item.key))
+/** 필수 작성 동의서 3종 — 행정정보 공동이용 동의서는 선택(스키마 `documentGroups`) */
+const REQUIRED_CONSENT_AGREE_KEYS = getInstructorRequiredConsentAgreeKeys(FORM_SURFACE)
 
 function chunkPairs<T>(items: readonly T[]): T[][] {
   const rows: T[][] = []
@@ -103,10 +93,18 @@ function chunkPairs<T>(items: readonly T[]): T[][] {
   return rows
 }
 
-const CONSENT_DOCUMENT_ROWS = chunkPairs(CONSENT_DOCUMENT_ITEMS)
+/** 1. 필수 작성 동의서* / 2. 행정정보 공동이용 동의서 — 섹션 id·제목·하단 안내·행(2열) */
+const CONSENT_DOCUMENT_SECTIONS = getInstructorConsentDocumentGroups(FORM_SURFACE).map(group => ({
+  ...group,
+  domId:
+    group.sectionId === 'consent'
+      ? 'instructor-apply-consent'
+      : 'instructor-apply-consent-administrative',
+  displayTitle: getInstructorFormSectionDisplayTitle(FORM_SURFACE, group.sectionId),
+  rows: chunkPairs(group.items),
+}))
 
 const SECTION_TITLE = {
-  consent: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'consent'),
   basic: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'basic'),
   education: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'education'),
   career: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'career'),
@@ -480,64 +478,60 @@ export function InstructorApplyForm({
         }}
       >
         {rejectedBanner}
-        <PFFormSection
-          id="instructor-apply-consent"
-          title={SECTION_TITLE.consent}
-          description={FORM_LAYOUT.consent.description}
-          footer={FORM_LAYOUT.consent.footerText}
-          required={CONSENT_SECTION_ALL_REQUIRED}
-        >
-          <PFFormFieldTable>
-            {CONSENT_DOCUMENT_ROWS.map(row => (
-              <PFFormFieldRow key={row.map(item => item.key).join('-')} type="double">
-                {row.map(item => {
-                  const agreed = values[item.key] === CONSENT_VALUE.agree
-                  const agreedAt = consentAgreedAt[item.key as InstructorApplyConsentKey]
-                  return (
-                    <PFFormField
-                      key={item.key}
-                      label={item.label}
-                      labelWidth="wide"
-                      required={
-                        !CONSENT_SECTION_ALL_REQUIRED &&
-                        item.required &&
-                        !isInstructorApplyOptionalConsentKey(item.key)
-                      }
-                    >
-                      <PFFormInlineSeparatedFields>
-                        <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
-                        {agreed ? (
-                          <PFButton
-                            type="button"
-                            variant="secondary"
-                            size="formPage"
-                            onClick={() => handleConsentDocumentView(item.key)}
-                          >
-                            동의서 보기
-                          </PFButton>
-                        ) : (
-                          <PFButton
-                            type="button"
-                            variant="secondary"
-                            size="formPage"
-                            onClick={() => handleConsentDocumentWrite(item.key)}
-                          >
-                            동의서 작성
-                          </PFButton>
-                        )}
-                        {agreed && agreedAt ? (
-                          <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
-                            {formatInstructorConsentAgreedAtLabel(agreedAt)}
-                          </PFText>
-                        ) : null}
-                      </PFFormInlineSeparatedFields>
-                    </PFFormField>
-                  )
-                })}
-              </PFFormFieldRow>
-            ))}
-          </PFFormFieldTable>
-        </PFFormSection>
+        {CONSENT_DOCUMENT_SECTIONS.map(section => (
+          <PFFormSection
+            key={section.id}
+            id={section.domId}
+            title={section.displayTitle}
+            footer={section.footerText}
+            required={section.required}
+          >
+            <PFFormFieldTable>
+              {section.rows.map(row => (
+                <PFFormFieldRow
+                  key={row.map(item => item.key).join('-')}
+                  type={row.length > 1 ? 'double' : 'single'}
+                >
+                  {row.map(item => {
+                    const agreed = values[item.key] === CONSENT_VALUE.agree
+                    const agreedAt = consentAgreedAt[item.key as InstructorApplyConsentKey]
+                    return (
+                      <PFFormField key={item.key} label={item.label} labelWidth="wide">
+                        <PFFormInlineSeparatedFields>
+                          <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
+                          {agreed ? (
+                            <PFButton
+                              type="button"
+                              variant="secondary"
+                              size="formPage"
+                              onClick={() => handleConsentDocumentView(item.key)}
+                            >
+                              동의서 보기
+                            </PFButton>
+                          ) : (
+                            <PFButton
+                              type="button"
+                              variant="secondary"
+                              size="formPage"
+                              onClick={() => handleConsentDocumentWrite(item.key)}
+                            >
+                              동의서 작성
+                            </PFButton>
+                          )}
+                          {agreed && agreedAt ? (
+                            <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
+                              {formatInstructorConsentAgreedAtLabel(agreedAt)}
+                            </PFText>
+                          ) : null}
+                        </PFFormInlineSeparatedFields>
+                      </PFFormField>
+                    )
+                  })}
+                </PFFormFieldRow>
+              ))}
+            </PFFormFieldTable>
+          </PFFormSection>
+        ))}
 
         <PFFormSection id="instructor-apply-basic" title={SECTION_TITLE.basic} required>
           <PFFormFieldTable>
