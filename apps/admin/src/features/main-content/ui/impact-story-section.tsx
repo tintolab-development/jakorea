@@ -92,8 +92,8 @@ export function ImpactStorySectionCard({ data, options }: Props) {
 
   const storyQuery = useImpactStoryDetail(featuredId || undefined, Boolean(featuredId))
   const coverLoading = Boolean(featuredId) && storyQuery.isPending
-  const savedCoverUrl = storyQuery.data?.attachments[0]?.dataUrl
-  const savedCoverName = storyQuery.data?.attachments[0]?.name
+  const savedCoverUrl = storyQuery.data?.thumbnail?.dataUrl
+  const savedCoverName = storyQuery.data?.thumbnail?.name
   const coverUrl = pendingPreview || savedCoverUrl
   const coverNames = pendingFile ? [pendingFile.name] : savedCoverName ? [savedCoverName] : []
 
@@ -155,14 +155,13 @@ export function ImpactStorySectionCard({ data, options }: Props) {
           isPinned: story.isPinned,
           publishedAt: story.publishedAt,
           authorName: story.authorName,
-          attachments: [
-            {
-              id: `new-${Date.now()}`,
-              name: pendingFile.name,
-              mime: mimeFromFile(pendingFile),
-              file: pendingFile,
-            },
-          ],
+          thumbnail: {
+            id: `thumb-${Date.now()}`,
+            name: pendingFile.name,
+            mime: mimeFromFile(pendingFile),
+            file: pendingFile,
+          },
+          attachments: story.attachments,
         })
       }
       await saveMutation.mutateAsync(draft)
