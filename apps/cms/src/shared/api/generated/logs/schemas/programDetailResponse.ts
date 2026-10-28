@@ -81,6 +81,7 @@ export interface ProgramDetailResponse {
   targetGradeFrom?: string;
   targetGradeTo?: string;
   thumbnailFileObjectId?: number;
+  /** 후원사 표시명 배열. GEMINI_TRAINING은 관계가 비면 ["Google for Education"]. 저장된 이름이 있으면 그대로 둔다. GENERAL/UJAT 등 다른 유형은 빈 배열을 채우지 않는다. recruitmentId·applicationType 포커스와 무관하다. */
   sponsorNames?: string[];
   recruitments?: RecruitmentResponse[];
   schedules?: ScheduleResponse[];
@@ -120,4 +121,6 @@ export interface ProgramDetailResponse {
   recruitmentStartAt?: string | null;
   /** recruitmentId 조회일 때 그 모집의 종료. 쿼리가 없으면 null. */
   recruitmentEndAt?: string | null;
+  /** 제미나이 최소 수강 인원(gemini_program_detail.min_participant_count). CMS minParticipantCount/minimumParticipants/minStudentCount와 같은 저장값. 비제미나이·미설정이면 null. */
+  minStudentCount?: number | null;
 }

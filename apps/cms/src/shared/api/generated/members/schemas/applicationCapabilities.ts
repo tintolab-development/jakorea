@@ -14,5 +14,6 @@ export interface ApplicationCapabilities {
   canSubmitSatisfaction?: boolean;
   canIssueCertificate?: boolean;
   canSubmitReceipt?: boolean;
+  /** 지급조서 사전 동의 가능 여부. 제미나이는 지급조서를 별도 신청하지 않으므로 항상 false. */
   canAgreePaymentStatementConsent?: boolean;
 }

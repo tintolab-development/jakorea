@@ -33,4 +33,6 @@ export interface MemberPortalProgramSummary {
   surveyConfigured?: boolean;
   /** CMS 공통정보 generalSurveyMenuKeys에 satisfaction이 있는지. 레거시 student_satisfaction·teacher_satisfaction·volunteer_satisfaction·school_satisfaction도 satisfaction으로 봅니다. TRAINED_TEACHER 특수 분기 없음. form-binding과 무관. 없으면 false. */
   satisfactionConfigured?: boolean;
+  /** 제미나이 gemini_program_detail.min_participant_count. 비제미나이·미설정이면 null. 기본값으로 채우지 않는다. */
+  minStudentCount?: number | null;
 }

@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { MemberPortalTeacherAssignmentItemAssignmentStatus } from './memberPortalTeacherAssignmentItemAssignmentStatus';
+import type { MemberPortalTeacherAssignmentItemInstructorRole } from './memberPortalTeacherAssignmentItemInstructorRole';
 
 /**
  * 개인 신청 상세에 표시할 강사 배정 1건. 동일 강사가 여러 일정에 배정되면 일정별로 별도 항목입니다.
@@ -19,4 +20,10 @@ export interface MemberPortalTeacherAssignmentItem {
   programScheduleId?: number;
   /** 활성 배정 상태. 현재 정책상 ASSIGNED 또는 COMPLETED가 반환될 수 있으며 취소·대체·대기·반려 상태는 제외합니다. */
   assignmentStatus?: MemberPortalTeacherAssignmentItemAssignmentStatus;
+  /** is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null */
+  instructorRole?: MemberPortalTeacherAssignmentItemInstructorRole;
+  /** 기관 소재지. 없으면 null */
+  institutionAddress?: string | null;
+  /** 자택-기관 거리(km) 숫자. 문자열 아님. 산정값이 있을 때만. 없으면 null */
+  distanceFromHome?: string | null;
 }
