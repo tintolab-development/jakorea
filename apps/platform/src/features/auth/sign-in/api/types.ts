@@ -154,6 +154,12 @@ export type PortalProfileResponse = {
   external1365Id?: string
   accountStatus?: string
   joinedAt?: string
+  /** 만 14세 미만 회원 보호자. 본인 포탈 조회 전용 */
+  guardian?: {
+    guardianName?: string
+    guardianRelation?: string
+    guardianPhone?: string
+  }
   instructorProfile?: InstructorPortalProfileResponse
   socialAccounts?: string[]
   listMetrics?: {

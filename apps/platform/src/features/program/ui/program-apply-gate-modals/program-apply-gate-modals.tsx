@@ -105,9 +105,17 @@ export function ProgramApplyRequiredConsentModal({
   onOpenConsents,
   missingConsentTypes,
 }: ProgramApplyRequiredConsentModalProps) {
+  // 시안: 서약서가 섞이면 '서약 및 동의' 문구, 동의서만이면 '동의' 문구
+  const includesPledge = missingConsentTypes.includes('FACILITATOR_PLEDGE')
   return (
-    <PFModal open={open} size="sm" onClose={onClose} mobilePlacement="bottom">
-      <div className={styles.content}>
+    <PFModal
+      open={open}
+      size="sm"
+      onClose={onClose}
+      mobilePlacement="bottom"
+      showCloseButton={false}
+    >
+      <div className={`${styles.content} ${styles.requiredConsentContent}`}>
         <div className={styles.textBlock}>
           <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
             필수 항목에 동의해 주세요.
@@ -116,25 +124,29 @@ export function ProgramApplyRequiredConsentModal({
             <ul className={styles.consentList}>
               {requiredApplyConsentLabels(missingConsentTypes).map(label => (
                 <li key={label} className={styles.consentListItem}>
-                  <PFText as="span" typo="bd-md-rg" color="neutral-cool-700">
+                  <PFText as="span" typo="bd-sm-md" color="black">
                     {label}
                   </PFText>
                 </li>
               ))}
             </ul>
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.description}>
-              이 프로그램은 해당 항목의 서약 및 동의가 필요해요.
+            <PFText as="p" typo="bd-md-rg" color="neutral-warm-600" className={styles.description}>
+              {includesPledge
+                ? '이 프로그램은 해당 항목의 서약 및 동의가 필요해요.'
+                : '이 프로그램은 해당 항목의 동의가 필요해요.'}
               <br />
-              신청하시려면 마이페이지에서 작성해 주세요.
+              {includesPledge
+                ? '신청하시려면 서약서 및 동의서를 작성해 주세요.'
+                : '신청하시려면 동의서를 작성해 주세요.'}
             </PFText>
           </div>
         </div>
         <div className={styles.actions}>
-          <PFButton type="button" variant="secondary" size="xlarge" onClick={onClose}>
+          <PFButton type="button" variant="tertiary" size="xlarge" onClick={onClose}>
             취소
           </PFButton>
           <PFButton type="button" variant="primary" size="xlarge" onClick={onOpenConsents}>
-            서약 및 동의하기
+            {includesPledge ? '서약 및 동의하기' : '동의서 작성하기'}
           </PFButton>
         </div>
       </div>

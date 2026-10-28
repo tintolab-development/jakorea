@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
@@ -22,6 +23,7 @@ import {
   type SettingsProfileInput,
 } from '@/features/mypage'
 import { isInstructorDualMypageProfile } from '@/features/mypage/lib/member-profile'
+import { mapPortalGuardianToSettingsView } from '@/features/mypage/settings/lib/map-view'
 import type { InstructorSettingsSectionId } from '@/features/mypage/settings/lib/format-instructor-settings-display'
 import { INSTRUCTOR_SETTINGS_ESSAY_SECTIONS } from '@/features/mypage/settings/lib/format-instructor-settings-display'
 import { buildInstructorSettingsFormValues } from '@/features/mypage/settings/lib/map-instructor-settings-form'
@@ -32,6 +34,7 @@ import {
 } from '@/features/mypage/settings/ui/instructor-profile/full-edit-form'
 import { INSTRUCTOR_FORM_SECTION_BASE_TITLES } from '@jakorea/domain/instructor/form-layout'
 import { ProgramBackButton } from '@/features/program'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import { useMediaQuery } from '@/shared/hooks'
 import {
   getAccessToken,
@@ -112,6 +115,7 @@ export function MypageSettingsPage() {
   const [mode, setMode] = useState<SettingsMode>('view')
   const [localProfile, setLocalProfile] = useState<SettingsProfileInput | null>(null)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
+  const queryClient = useQueryClient()
   const { isRemoteSession, isLoading, isError, profile, guardian } = useSettingsView()
   const member = useMypageMember()
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
@@ -152,7 +156,9 @@ export function MypageSettingsPage() {
         guardian: null,
       }
     }
-    return mapPortalProfileToSettingsView(effectiveProfile, guardian, {
+    const nextGuardian =
+      mapPortalGuardianToSettingsView(effectiveProfile.guardian) ?? guardian
+    return mapPortalProfileToSettingsView(effectiveProfile, nextGuardian, {
       variant: isTeacher ? 'teacher' : 'individual',
     })
   }, [effectiveProfile, guardian, isInstructor, isInstructorDual, isTeacher, linkedSocialProviders])
@@ -258,11 +264,16 @@ export function MypageSettingsPage() {
     return wrap(
       <SettingsEditForm
         profile={effectiveProfile}
+        guardian={view.guardian}
         variant={isTeacher ? 'teacher' : 'individual'}
         onCancel={() => setMode('view')}
         onSaved={next => {
-          if (!isRemoteSession) {
-            setLocalProfile(next)
+          setLocalProfile(next)
+          if (isRemoteSession && next.guardian) {
+            queryClient.setQueryData<PortalProfileResponse>(
+              platformQueryKeys.auth.memberProfile(),
+              previous => (previous ? { ...previous, guardian: next.guardian } : previous),
+            )
           }
           setMode('view')
         }}
@@ -306,6 +317,7 @@ export function MypageSettingsPage() {
       basicRows={view.basicRows}
       guardian={view.guardian}
       onEditBasic={() => setMode('edit-basic')}
+      onEditGuardian={() => setMode('edit-basic')}
       instructorProfileValues={instructorProfileForView}
       onEditInstructorSection={
         isInstructor

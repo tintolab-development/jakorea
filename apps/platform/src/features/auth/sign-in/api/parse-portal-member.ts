@@ -74,6 +74,22 @@ function parseInstructorPortalProfile(
   }
 }
 
+function parseGuardianProfile(value: unknown): PortalProfileResponse['guardian'] {
+  const root = optionalObject(value)
+  if (!root) return undefined
+  const guardianName = optionalString(root.guardianName)
+  const guardianRelation = optionalString(root.guardianRelation)
+  const guardianPhone = optionalString(root.guardianPhone)
+  if (!guardianName && !guardianRelation && !guardianPhone) {
+    return undefined
+  }
+  return {
+    ...(guardianName ? { guardianName } : {}),
+    ...(guardianRelation ? { guardianRelation } : {}),
+    ...(guardianPhone ? { guardianPhone } : {}),
+  }
+}
+
 function parseTeacherOrganization(value: unknown): PortalTeacherOrganizationResponse | undefined {
   if (!value || typeof value !== 'object') return undefined
   const org = value as Record<string, unknown>
@@ -153,6 +169,7 @@ export function parsePortalProfileResponse(payload: unknown): PortalProfileRespo
     external1365Id: optionalString(root.external1365Id),
     accountStatus: optionalString(root.accountStatus),
     joinedAt: optionalString(root.joinedAt),
+    guardian: parseGuardianProfile(root.guardian),
     instructorProfile: parseInstructorPortalProfile(root.instructorProfile),
     socialAccounts: optionalStringArray(root.socialAccounts),
     listMetrics: parseListMetrics(root.listMetrics),

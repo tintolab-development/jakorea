@@ -33,27 +33,36 @@
   width: 100%;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--spacing-12);
+  gap: var(--spacing-8);
 }
 
+/* 시안: 항목 블록은 박스 가운데, 줄은 왼쪽 정렬 · 접두는 "· " */
 .consentList {
-  display: flex;
+  display: grid;
   width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-4);
+  justify-content: center;
+  justify-items: start;
   margin: 0;
-  padding: var(--spacing-16) var(--spacing-20);
-  border-radius: var(--radius-12);
-  background: var(--color-neutral-cool-50);
-  list-style: disc;
+  padding: var(--spacing-12) var(--spacing-16);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-warm-80);
+  list-style: none;
   box-sizing: border-box;
 }
 
 .consentListItem {
   margin: 0;
   padding: 0;
+  color: var(--color-neutral-black);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 160%;
   text-align: left;
+}
+
+.consentListItem::before {
+  content: '\00B7\0020';
+  white-space: pre;
 }
 
 .actions {
@@ -71,4 +80,13 @@
   min-width: max-content;
   padding-inline: var(--spacing-8);
   white-space: nowrap;
+}
+
+/* 필수 동의 모달 전용 — 다른 게이트 모달(content/textBlock/actions 공유)에는 영향 없음 */
+.requiredConsentContent .textBlock {
+  gap: var(--spacing-12);
+}
+
+.requiredConsentContent .actions > * {
+  border-radius: var(--radius-12);
 }

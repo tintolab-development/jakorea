@@ -22,6 +22,7 @@ export {
   useFindEmailIdentityVerification,
   useAdminProvisionedIdentityVerification,
   useSettingsPhoneIdentityVerification,
+  useSettingsGuardianIdentityVerification,
 } from './hooks'
 
 export type {

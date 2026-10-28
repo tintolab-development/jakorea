@@ -30,6 +30,7 @@ import {
   type LectureReportFormBinding,
   type LectureReportState,
 } from '@/features/mypage/education/schedules/api/lecture-report-client'
+import { asAssignmentDisplayText } from '@/features/mypage/education/schedules/lib/instructor-assignment-support'
 import {
   INVALID_LECTURE_REPORT_BINDING_MESSAGE,
   LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE,
@@ -112,9 +113,9 @@ function applyLectureReportAssignmentContext(
           assignment.sessionNo != null ? `${assignment.sessionNo}차시` : paragraph.sessionIndex,
         educationTarget:
           program?.educationTargetDetailLabel?.trim() ||
-          assignment.grade?.trim() ||
+          asAssignmentDisplayText(assignment.grade) ||
           paragraph.educationTarget,
-        classLabel: assignment.grade?.trim() || paragraph.classLabel,
+        classLabel: asAssignmentDisplayText(assignment.grade) || paragraph.classLabel,
       }
     }),
   }

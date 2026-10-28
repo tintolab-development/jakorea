@@ -1,8 +1,6 @@
 import type { AxiosError } from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  getMemberDeleteCurrentPasswordInvalidAlertOptions,
-} from '@/features/user/api/get-member-api-error'
+import { getMemberDeleteCurrentPasswordInvalidAlertOptions } from '@/features/user/api/get-member-api-error'
 import {
   ADMIN_ACCESS_DENIED_ALERT_CONTENT,
   ADMIN_ACCESS_DENIED_ALERT_TITLE,
@@ -24,7 +22,10 @@ vi.mock('@/shared/utils/post-auth-redirect', async importOriginal => {
   }
 })
 
-function forbiddenError(url: string, message = '현재 계정에 필요한 권한 또는 접근 범위가 없습니다.'): AxiosError {
+function forbiddenError(
+  url: string,
+  message = '현재 계정에 필요한 권한 또는 접근 범위가 없습니다.'
+): AxiosError {
   return {
     isAxiosError: true,
     message,

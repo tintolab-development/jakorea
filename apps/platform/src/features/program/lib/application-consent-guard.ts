@@ -33,7 +33,7 @@ export const UJAT_REQUIRED_APPLY_CONSENT_TYPES: readonly RequiredApplyConsentTyp
 export const REQUIRED_APPLY_CONSENT_LABELS: Record<RequiredApplyConsentType, string> = {
   FACILITATOR_PLEDGE: '교육진행자 서약서',
   ADMINISTRATIVE_INFO_CONSENT: '행정정보 공동이용 동의서',
-  CRIMINAL_HISTORY_CHECK_CONSENT: '성범죄 경력 조회 동의서',
+  CRIMINAL_HISTORY_CHECK_CONSENT: '성범죄경력 조회 동의서',
   PORTRAIT_RIGHTS: '초상권 수집·이용 동의',
 }
 

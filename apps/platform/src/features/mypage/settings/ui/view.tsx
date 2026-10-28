@@ -24,6 +24,7 @@ export type SettingsViewProps = {
   basicRows: SettingsInfoRow[]
   guardian: SettingsGuardianView | null
   onEditBasic?: () => void
+  onEditGuardian?: () => void
   instructorProfileValues?: InstructorSharedProfileFormValues | null
   onEditInstructorSection?: (section: InstructorSettingsSectionId) => void
 }
@@ -123,6 +124,7 @@ export function SettingsView({
   basicRows,
   guardian,
   onEditBasic,
+  onEditGuardian,
   instructorProfileValues,
   onEditInstructorSection,
 }: SettingsViewProps) {
@@ -196,7 +198,7 @@ export function SettingsView({
             <PFText as="h2" typo="hl-lg" color="black" className={styles.sectionTitle}>
               보호자 정보
             </PFText>
-            <EditButton />
+            <EditButton onClick={onEditGuardian} />
           </div>
           <PFInfoReview
             rows={[

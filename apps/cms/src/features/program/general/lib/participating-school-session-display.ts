@@ -75,11 +75,29 @@ function readExplicitSessionCount(session: {
   return null
 }
 
+/**
+ * 커리큘럼·단일·날짜 — 모든 일정 줄에 커리큘럼 총 차시(`N차시`)를 붙인다.
+ * sessionNo·round(일정 순번)로 차시 라벨을 고르지 않는다. 총 차시가 1 이하면 일시만.
+ */
+function readCurriculumSingleDateTotalSessionText(
+  shape: GeneralEducationScheduleShape
+): string | null {
+  const fromCount = shape.curriculumSessionCount
+  const total =
+    typeof fromCount === 'number' && Number.isFinite(fromCount) && fromCount > 0
+      ? Math.trunc(fromCount)
+      : (shape.curriculumSessionLabels ?? []).filter(label => /\d+\s*차시/.test(label)).length
+  return total > 1 ? `${total}차시` : null
+}
+
 function readCurriculumSessionText(
   session: { round?: number; classNum?: string; duration?: string; scheduleLabel?: string },
   shape: GeneralEducationScheduleShape | null | undefined
 ): string | null {
   if (shape?.educationStructure !== 'curriculum') return null
+  if (shape.sessionRound === 'single' && shape.educationScheduleMode === 'date') {
+    return readCurriculumSingleDateTotalSessionText(shape)
+  }
   const explicit = readExplicitSessionCount(session)
   if (explicit) return explicit
   const round = session.round

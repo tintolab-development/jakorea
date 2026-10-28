@@ -30,6 +30,7 @@ import {
 } from '../../schedules/lib/schedules-query-error'
 import { buildAssignedSettlementItems } from '../../settlements/lib/assigned-settlement-items'
 import { getAllLectureReportAssignments } from '../../schedules/api/lecture-report-client'
+import { asAssignmentDisplayText } from '../../schedules/lib/instructor-assignment-support'
 import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
 import {
   createApplicationNotice,
@@ -1040,7 +1041,7 @@ export function useApplicationSettlementsQuery(
                 reportStatus: row.reportStatus,
                 lectureStatus: row.lectureStatus,
                 institutionName: row.institutionName,
-                grade: row.grade,
+                grade: asAssignmentDisplayText(row.grade) || null,
                 startAt: row.startAt,
                 endAt: row.endAt,
                 sessionNo: row.sessionNo,

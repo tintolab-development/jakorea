@@ -11,11 +11,11 @@ export type LectureReportStatus = 'UPCOMING' | 'AVAILABLE' | 'OVERDUE' | 'BUSINE
 export type LectureReportAssignment = {
   assignmentId: number; instructorApplicationId: number | null; programId: number; scheduleId: number
   startAt: string | null; endAt: string | null; scheduleName: string | null; sessionNo: number | null
-  institutionName: string | null; grade: string | null; lectureStatus: string; reportStatus: string | null
+  institutionName: string | null; grade: string | number | null; lectureStatus: string; reportStatus: string | null
   submitDueAt: string | null; canSubmit: boolean; reportId: number | null
   instructorRole?: string | null
   institutionAddress?: string | null
-  distanceFromHome?: string | null
+  distanceFromHome?: string | number | null
 }
 export type LectureReportPage = { items: LectureReportAssignment[]; page: number; size: number; totalElements: number; totalPages: number }
 export type LectureReportState = {
