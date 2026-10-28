@@ -592,6 +592,17 @@ export function applyIndependentRecruitmentFormValues(
     )
     if (nextNotesNA !== undefined) participantInfo.notesNotApplicable = nextNotesNA
   }
+  const individualInterviewEnabled = keepRecruitmentRows
+    ? undefined
+    : individual?.interviewRequired
+  if (individualInterviewEnabled !== undefined) {
+    const nextInterview = coalesceBool(
+      participantInfo.interviewEnabled,
+      individualInterviewEnabled,
+      preferOverlay
+    )
+    if (nextInterview !== undefined) participantInfo.interviewEnabled = nextInterview
+  }
 
   fillInstructorInfo(instructorInfo, {
     instructorTargets,
@@ -711,7 +722,10 @@ export function applyIndependentRecruitmentFormValues(
   const volunteerFinalAnnounceMethod = volunteer?.finalAnnounceMethod
   const individualDocDeadlineIso = individual?.docDeadlineIso
   const individualDocAnnounceMethod = individual?.docAnnounceMethod
-  const individualInterviewRange = keepRecruitmentRows ? undefined : individual?.interviewRangeSeal
+  const individualInterviewRange =
+    keepRecruitmentRows || individualInterviewEnabled === false
+      ? undefined
+      : individual?.interviewRangeSeal
   const individualInterviewMethod = individual?.interviewMethod
 
   void assignIf
@@ -832,6 +846,11 @@ export function applyIndependentRecruitmentFormValues(
     finalPassAnnouncementMethod: coalesceString(
       program.finalPassAnnouncementMethod,
       volunteerFinalAnnounceMethod ?? instructorFinalAnnounceMethod,
+      preferOverlay
+    ),
+    generalParticipantInterviewEnabled: coalesceBool(
+      program.generalParticipantInterviewEnabled,
+      individualInterviewEnabled,
       preferOverlay
     ),
     generalVolunteerInterviewEnabled: coalesceBool(

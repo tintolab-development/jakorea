@@ -52,6 +52,7 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
     recruitRangeSeal: 'recruit.individual.recruitRangeSeal',
     programRangeSeal: 'recruit.individual.programRangeSeal',
     announcementPublished: 'recruit.individual.announcementPublished',
+    interviewRequired: 'recruit.individual.interviewRequired',
     targetLevels: 'recruit.individual.targetLevels',
     targetLevelDetail: 'recruit.individual.targetLevelDetail',
     docDeadlineIso: 'recruit.individual.docDeadlineIso',
@@ -833,10 +834,26 @@ export function applyGeneralRecruitOverlayToProgram(
   const individualFinalAnnounceMethod = overlayString(overlay, keys.individual.finalAnnounceMethod)
   const individualDocDeadlineIso = overlayString(overlay, keys.individual.docDeadlineIso)
   const individualDocAnnounceMethod = overlayString(overlay, keys.individual.docAnnounceMethod)
+  const individualInterviewEnabled = keepRecruitmentRows
+    ? undefined
+    : overlayYesNoBool(overlay, keys.individual.interviewRequired)
   const individualInterviewRange = keepRecruitmentRows
     ? undefined
-    : readRangeSeal(overlay, keys.individual.interviewRangeSeal)
+    : individualInterviewEnabled === false
+      ? undefined
+      : readRangeSeal(overlay, keys.individual.interviewRangeSeal)
   const individualInterviewMethod = overlayString(overlay, keys.individual.interviewMethod)
+
+  if (individualInterviewEnabled !== undefined) {
+    const nextInterview = coalesceBool(
+      participantInfo.interviewEnabled,
+      individualInterviewEnabled,
+      preferOverlay
+    )
+    if (nextInterview !== undefined) {
+      participantInfo.interviewEnabled = nextInterview
+    }
+  }
 
   // ── 기관·개인 참여자 모집 (공고·사전안내·명단·상한·최종발표) ─────
   const institutionAnnouncementPublished =
@@ -1538,6 +1555,11 @@ export function applyGeneralRecruitOverlayToProgram(
     finalPassAnnouncementMethod: coalesceString(
       program.finalPassAnnouncementMethod,
       volunteerFinalAnnounceMethod ?? instructorFinalAnnounceMethod,
+      preferOverlay
+    ),
+    generalParticipantInterviewEnabled: coalesceBool(
+      program.generalParticipantInterviewEnabled,
+      individualInterviewEnabled,
       preferOverlay
     ),
     generalVolunteerInterviewEnabled: coalesceBool(

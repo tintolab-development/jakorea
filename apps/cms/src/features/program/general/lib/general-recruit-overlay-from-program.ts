@@ -36,6 +36,7 @@ const keys = {
     recruitRangeSeal: 'recruit.individual.recruitRangeSeal',
     programRangeSeal: 'recruit.individual.programRangeSeal',
     announcementPublished: 'recruit.individual.announcementPublished',
+    interviewRequired: 'recruit.individual.interviewRequired',
     targetLevels: 'recruit.individual.targetLevels',
     targetLevelDetail: 'recruit.individual.targetLevelDetail',
     docDeadlineIso: 'recruit.individual.docDeadlineIso',
@@ -246,6 +247,9 @@ export function buildGeneralRecruitOverlayFromProgram(program: Program): Record<
     [keys.individual.notes]: participant?.remarks?.trim() || '',
     [inst.notesNotApplicable]: participant?.notesNotApplicable === true,
     [keys.individual.notesNotApplicable]: participant?.notesNotApplicable === true,
+    [keys.individual.interviewRequired]: yesNo(
+      program.generalParticipantInterviewEnabled ?? participant?.interviewEnabled
+    ),
     [keys.detailInfo.participantDescription]: participant?.programDescription?.trim() || '',
     [keys.detailInfo.participantGuide]: participant?.recruitmentGuide?.trim() || '',
     [keys.detailInfo.participantMethod]: participant?.applicationMethod?.trim() || '',

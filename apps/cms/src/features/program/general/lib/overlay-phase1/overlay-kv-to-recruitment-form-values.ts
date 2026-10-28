@@ -190,6 +190,7 @@ function individualFromOverlay(
       overlay,
       KEYS.individual.announcementPublished
     ),
+    interviewRequired: overlayYesNoBool(overlay, KEYS.individual.interviewRequired),
     targetLevels: overlayStringArray(overlay, KEYS.individual.targetLevels),
     targetLevelDetail: overlayString(overlay, KEYS.individual.targetLevelDetail),
     docDeadlineIso: overlayString(overlay, KEYS.individual.docDeadlineIso),

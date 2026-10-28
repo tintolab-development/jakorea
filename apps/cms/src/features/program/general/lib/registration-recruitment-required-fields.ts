@@ -231,9 +231,21 @@ function listIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): 
     isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published')),
     `${p}.announcementPublished`
   )
+  const interviewRequired = readText(overlay, `${p}.interviewRequired`, 'yes')
+  pushReason(reasons, isEmptyText(interviewRequired), `${p}.interviewRequired`)
   pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
   pushReason(reasons, isEmptyStringList(read(overlay, `${p}.targetLevels`)), `${p}.targetLevels`)
   pushReason(reasons, isEmptyText(read(overlay, `${p}.targetLevelDetail`)), `${p}.targetLevelDetail`)
+  if (interviewRequired === 'yes') {
+    pushReason(reasons, isEmptyText(read(overlay, `${p}.docDeadlineIso`)), `${p}.docDeadlineIso`)
+    pushReason(reasons, isEmptyText(read(overlay, `${p}.docAnnounceMethod`)), `${p}.docAnnounceMethod`)
+    pushReason(
+      reasons,
+      isRangeSealIncomplete(read(overlay, `${p}.interviewRangeSeal`)),
+      `${p}.interviewRangeSeal`
+    )
+    pushReason(reasons, isEmptyText(read(overlay, `${p}.interviewMethod`)), `${p}.interviewMethod`)
+  }
   pushFinalAnnounceIncomplete(reasons, overlay, p)
   pushInquiryIncomplete(reasons, overlay, p)
   pushReason(reasons, isNotesIncomplete(overlay, p), `${p}.notes`)
