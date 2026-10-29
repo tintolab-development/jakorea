@@ -1,10 +1,18 @@
 import dayjs from 'dayjs'
 import { schemaJsonToWritingFormDraft } from '@/features/template/api/adapters/form-template-draft-adapters'
-import { resolveFormTemplateCatalogIds } from '@/features/template/api/admin-form-templates-service'
+import {
+  publishFormTemplateVersionById,
+  resolveFormTemplateCatalogIds,
+} from '@/features/template/api/admin-form-templates-service'
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import {
   fetchFormTemplateVersionRemote,
   fetchFormTemplateVersionsRemote,
 } from '@/features/template/api/form-templates-api-client'
+import {
+  isCatalogFixedWritingFormTemplateCode,
+  isUserCreatedWritingFormTemplateRow,
+} from '@/features/template/lib/form-template-delete-policy'
 import {
   isTitleWithPeriodParagraph,
   resolveTitleEndPeriodMode,
@@ -72,9 +80,33 @@ async function fetchSubmissionPeriod(templateVersionId: number): Promise<SurveyS
   return readSurveySubmissionPeriodFromSchema(version.schemaJson)
 }
 
+function canPublishUserSurveyDraftForProgramBinding(templateCode: string): boolean {
+  const cached = getFormTemplateVersionCacheEntry(templateCode)
+  if (cached?.systemTemplate === true) return false
+  if (cached?.systemTemplate === false) return true
+  if (
+    isUserCreatedWritingFormTemplateRow({
+      id: templateCode,
+      systemTemplate: cached?.systemTemplate,
+    })
+  ) {
+    return true
+  }
+  const base = cached?.baseTemplateCode?.trim()
+  if (base != null && base !== '' && base !== templateCode) return true
+  return !isCatalogFixedWritingFormTemplateCode(templateCode)
+}
+
+function versionAllowsPublish(version: {
+  availableActions?: readonly string[] | null
+}): boolean {
+  return version.availableActions?.some(action => action.toUpperCase() === 'PUBLISH') !== false
+}
+
 /**
  * 설문·만족도·강의평가 등록은 양식 관리에서 고른 템플릿 자체의 version에 바인딩한다(카탈로그 복제 없음).
- * 최신 PUBLISHED version에만 바인딩한다. 프로그램 흐름에서 공용 템플릿을 게시하지 않는다
+ * 최신 PUBLISHED version이 있으면 그 버전만 바인딩한다. 공용 카탈로그 DRAFT는 게시하지 않는다.
+ * 사용자 복제·생성 템플릿이 v1 DRAFT만 있으면 그 복사본을 게시한 뒤 바인딩한다
  * (기존 프로그램은 binding에 고정된 버전이 ARCHIVED되어도 같은 스냅샷을 계속 사용한다).
  */
 export async function resolvePublishedSurveyBinding(
@@ -91,25 +123,38 @@ export async function resolvePublishedSurveyBinding(
     .sort((left, right) => (right.versionNo ?? 0) - (left.versionNo ?? 0))
 
   const latestPublished = versions.find(version => version.versionStatus === 'PUBLISHED')
-
-  // 공용 데이터 보호(2026-10-25): 프로그램 흐름에서는 카탈로그 설문 버전을 게시(publish)하지 않는다.
-  // DRAFT만 있으면 양식 관리에서 게시한 뒤 바인딩하도록 not_published를 돌려준다.
-  const templateVersionId: number | undefined = latestPublished?.templateVersionId
-  if (templateVersionId == null) return { ok: false, reason: 'not_published' }
-
-  return {
-    ok: true,
-    templateId: resolved.templateId,
-    templateVersionId,
-    ...(await fetchSubmissionPeriod(templateVersionId)),
+  if (latestPublished?.templateVersionId != null) {
+    return {
+      ok: true,
+      templateId: resolved.templateId,
+      templateVersionId: latestPublished.templateVersionId,
+      ...(await fetchSubmissionPeriod(latestPublished.templateVersionId)),
+    }
   }
+
+  const latestDraft = versions.find(version => version.versionStatus === 'DRAFT')
+  if (
+    latestDraft?.templateVersionId != null &&
+    versionAllowsPublish(latestDraft) &&
+    canPublishUserSurveyDraftForProgramBinding(code)
+  ) {
+    const templateVersionId = await publishFormTemplateVersionById(latestDraft.templateVersionId)
+    return {
+      ok: true,
+      templateId: resolved.templateId,
+      templateVersionId,
+      ...(await fetchSubmissionPeriod(templateVersionId)),
+    }
+  }
+
+  return { ok: false, reason: 'not_published' }
 }
 
 export function surveyBindingResolutionAlert(
   reason: Exclude<PublishedSurveyBindingResolution, { ok: true }>['reason']
 ): string {
   if (reason === 'not_published') {
-    return '선택한 양식에 등록 가능한 버전이 없습니다. 양식 관리에서 양식을 저장한 뒤 다시 등록해 주세요.'
+    return '선택한 양식에 등록 가능한 발행 버전이 없습니다. 양식 관리에서 해당 양식을 게시한 뒤 다시 등록해 주세요.'
   }
   return '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.'
 }

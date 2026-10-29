@@ -209,6 +209,8 @@ export async function resolveFormTemplateCatalogIds(
       templateVersionId: payload.templateVersionId,
       latestVersionId: payload.templateVersionId,
       latestVersionNo: payload.versionNo,
+      baseTemplateCode: payload.baseTemplateCode,
+      systemTemplate: payload.systemTemplate,
     })
     return { templateId: payload.templateId, templateVersionId: payload.templateVersionId }
   } catch {
@@ -607,6 +609,8 @@ export async function duplicateFormTemplateVersionRemote(args: {
     templateVersionId: createdVersionId,
     latestVersionId: createdVersionId,
     latestVersionNo: createdVersionNo,
+    baseTemplateCode: created.baseTemplateCode?.trim() || args.sourceTemplateCode,
+    systemTemplate: created.systemTemplate ?? false,
   })
 
   return newCode
