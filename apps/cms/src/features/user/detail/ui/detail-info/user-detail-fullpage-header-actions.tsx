@@ -136,7 +136,6 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
 
   const showCommentEditStart =
     !isProfileEditing &&
-    !isCommentEditing &&
     shouldShowAdminCommentSectionForViewer(currentUser, displayUser) &&
     canEditCommentBody
 
@@ -182,6 +181,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
       key="admin-comment-edit"
       size="large"
       variant="primary"
+      disabled={isCommentEditing}
       onClick={pageShell.onStartAdminCommentEdit}
     >
       코멘트 작성

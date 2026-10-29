@@ -48,7 +48,7 @@ export function isAdminPermissionSelectComingSoon(_value: string | undefined): b
 
 /**
  * API roleCode / listMetrics 문자열 → UI variant
- * OpenAPI MASTER·MIDDLE·VIEWER·ACCOUNTING_MANAGER + 레거시 PM·PARTNER 및 FE variant 수용
+ * 정본 MASTER·ACCOUNTING_MANAGER·PROGRAM_MANAGER·PROGRAM_VIEWER + 레거시 MIDDLE·PM·PARTNER·VIEWER
  */
 export function roleCodeToAdminPermissionVariant(
   roleCode?: string
@@ -66,14 +66,16 @@ export function roleCodeToAdminPermissionVariant(
     return 'accounting'
   }
   if (
+    upper === 'PROGRAM_MANAGER' ||
     upper === 'MIDDLE' ||
     upper === 'PM' ||
     upper === 'PARTNER' ||
-    raw === 'partner'
+    raw === 'partner' ||
+    raw === 'program-manager'
   ) {
     return 'partner'
   }
-  if (upper === 'VIEWER' || raw === 'viewer') return 'viewer'
+  if (upper === 'PROGRAM_VIEWER' || upper === 'VIEWER' || raw === 'viewer') return 'viewer'
   return null
 }
 

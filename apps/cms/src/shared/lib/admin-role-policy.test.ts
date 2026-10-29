@@ -46,15 +46,18 @@ function allowed(
 }
 
 describe('parseAdminRoleCode', () => {
-  it('4역할만 인식한다', () => {
+  it('정본·레거시 역할을 인식한다', () => {
     expect(parseAdminRoleCode('master')).toBe('MASTER')
     expect(parseAdminRoleCode('PM')).toBe('PM')
+    expect(parseAdminRoleCode('PROGRAM_MANAGER')).toBe('PROGRAM_MANAGER')
+    expect(parseAdminRoleCode('ACCOUNTING_MANAGER')).toBe('ACCOUNTING_MANAGER')
+    expect(parseAdminRoleCode('PROGRAM_VIEWER')).toBe('PROGRAM_VIEWER')
     expect(parseAdminRoleCode('ADMIN')).toBeNull()
   })
 
-  it('OpenAPI MIDDLE(중간 관리자)는 PARTNER로 정규화한다', () => {
-    expect(parseAdminRoleCode('MIDDLE')).toBe('PARTNER')
-    expect(parseAdminRoleCode('middle')).toBe('PARTNER')
+  it('OpenAPI MIDDLE(중간 관리자)는 PROGRAM_MANAGER로 정규화한다', () => {
+    expect(parseAdminRoleCode('MIDDLE')).toBe('PROGRAM_MANAGER')
+    expect(parseAdminRoleCode('middle')).toBe('PROGRAM_MANAGER')
   })
 })
 
@@ -62,8 +65,11 @@ describe('adminRoleCodeToLegacyAdminLevel', () => {
   it('레거시 3단계로 접는다', () => {
     expect(adminRoleCodeToLegacyAdminLevel('MASTER')).toBe('MASTER')
     expect(adminRoleCodeToLegacyAdminLevel('PM')).toBe('ADMIN')
+    expect(adminRoleCodeToLegacyAdminLevel('PROGRAM_MANAGER')).toBe('ADMIN')
+    expect(adminRoleCodeToLegacyAdminLevel('ACCOUNTING_MANAGER')).toBe('ADMIN')
     expect(adminRoleCodeToLegacyAdminLevel('PARTNER')).toBe('ADMIN')
     expect(adminRoleCodeToLegacyAdminLevel('VIEWER')).toBe('GENERAL')
+    expect(adminRoleCodeToLegacyAdminLevel('PROGRAM_VIEWER')).toBe('GENERAL')
   })
 })
 
@@ -80,7 +86,7 @@ describe('withSessionAdminRole', () => {
       updatedAt: '2026-01-01T00:00:00.000Z',
       listMetrics: { adminPermissionVariant: 'partner' },
     })
-    expect(partner.roleCode).toBe('PARTNER')
+    expect(partner.roleCode).toBe('PROGRAM_MANAGER')
     expect(partner.adminLevel).toBe('ADMIN')
 
     const viewer = withSessionAdminRole({
@@ -94,7 +100,7 @@ describe('withSessionAdminRole', () => {
       updatedAt: '2026-01-01T00:00:00.000Z',
       listMetrics: { adminPermissionVariant: 'viewer' },
     })
-    expect(viewer.roleCode).toBe('VIEWER')
+    expect(viewer.roleCode).toBe('PROGRAM_VIEWER')
     expect(viewer.adminLevel).toBe('GENERAL')
   })
 })

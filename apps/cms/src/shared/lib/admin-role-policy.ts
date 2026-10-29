@@ -1,5 +1,5 @@
 /**
- * CMS 관리자 4역할(MASTER / PM / PARTNER / VIEWER) 화면 가드.
+ * CMS 관리자 역할(MASTER / ACCOUNTING_MANAGER / PROGRAM_MANAGER / PROGRAM_VIEWER + 레거시) 화면 가드.
  * 메뉴·버튼은 숨기지 않고, 차단 시 AlertModal만 띄운다.
  */
 
@@ -9,6 +9,21 @@ import { isAdminSessionRoleSyncPending } from '@/features/auth/lib/admin-session
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
 
 export type { AdminRoleCode }
+
+/** 조회 전용 — 레거시 VIEWER 포함 */
+export function isReadOnlyAdminRoleCode(roleCode: AdminRoleCode | null | undefined): boolean {
+  return roleCode === 'VIEWER' || roleCode === 'PROGRAM_VIEWER'
+}
+
+/** 프로그램 운영·회계 등 write 가능 역할(마스터 제외 실무) */
+export function isProgramOperableAdminRoleCode(roleCode: AdminRoleCode | null | undefined): boolean {
+  return (
+    roleCode === 'ACCOUNTING_MANAGER' ||
+    roleCode === 'PROGRAM_MANAGER' ||
+    roleCode === 'PM' ||
+    roleCode === 'PARTNER'
+  )
+}
 
 export type AdminActionKind =
   | 'view'
@@ -52,15 +67,26 @@ export const SECURITY_LOG_PATHS = [
   '/logs/bug-issue-history',
 ] as const
 
-const ADMIN_ROLE_CODES: readonly AdminRoleCode[] = ['MASTER', 'PM', 'PARTNER', 'VIEWER']
+const ADMIN_ROLE_CODES: readonly AdminRoleCode[] = [
+  'MASTER',
+  'ACCOUNTING_MANAGER',
+  'PROGRAM_MANAGER',
+  'PROGRAM_VIEWER',
+  'PM',
+  'PARTNER',
+  'VIEWER',
+]
 
 export function parseAdminRoleCode(value: string | undefined | null): AdminRoleCode | null {
-  const upper = (value ?? '').trim().toUpperCase()
+  const raw = (value ?? '').trim()
+  if (!raw) return null
+  const upper = raw.toUpperCase().replace(/-/g, '_')
   if ((ADMIN_ROLE_CODES as readonly string[]).includes(upper)) {
     return upper as AdminRoleCode
   }
-  // OpenAPI 관리자 계정 권한 코드 MIDDLE(중간 관리자) → 세션 정책 PARTNER
-  if (upper === 'MIDDLE') return 'PARTNER'
+  if (upper === 'ACCOUNTING') return 'ACCOUNTING_MANAGER'
+  // 레거시 MIDDLE(중간 관리자) → 정본 Program Manager
+  if (upper === 'MIDDLE') return 'PROGRAM_MANAGER'
   return null
 }
 
@@ -68,9 +94,12 @@ export function adminRoleCodeToLegacyAdminLevel(roleCode: AdminRoleCode): AdminL
   switch (roleCode) {
     case 'MASTER':
       return 'MASTER'
+    case 'ACCOUNTING_MANAGER':
+    case 'PROGRAM_MANAGER':
     case 'PM':
     case 'PARTNER':
       return 'ADMIN'
+    case 'PROGRAM_VIEWER':
     case 'VIEWER':
       return 'GENERAL'
   }
@@ -85,19 +114,20 @@ export function resolveAdminRoleCodeFromUser(
 
   const variant = user.listMetrics?.adminPermissionVariant
   if (variant === 'manager') return 'MASTER'
-  if (variant === 'partner') return 'PARTNER'
-  if (variant === 'viewer') return 'VIEWER'
+  if (variant === 'accounting') return 'ACCOUNTING_MANAGER'
+  if (variant === 'partner') return 'PROGRAM_MANAGER'
+  if (variant === 'viewer') return 'PROGRAM_VIEWER'
 
   if (user.adminLevel === 'MASTER') return 'MASTER'
-  if (user.adminLevel === 'GENERAL') return 'VIEWER'
-  if (user.adminLevel === 'ADMIN') return 'PARTNER'
-  return 'VIEWER'
+  if (user.adminLevel === 'GENERAL') return 'PROGRAM_VIEWER'
+  if (user.adminLevel === 'ADMIN') return 'PROGRAM_MANAGER'
+  return 'PROGRAM_VIEWER'
 }
 
-/** 로그인·스토리지 복원 시 4역할과 레거시 adminLevel을 맞춘다. MASTER로 올리지 않는다. */
+/** 로그인·스토리지 복원 시 역할과 레거시 adminLevel을 맞춘다. MASTER로 올리지 않는다. */
 export function withSessionAdminRole(user: Omit<User, 'password'>): Omit<User, 'password'> {
   if (user.role !== 'ADMIN') return user
-  const roleCode = resolveAdminRoleCodeFromUser(user) ?? 'VIEWER'
+  const roleCode = resolveAdminRoleCodeFromUser(user) ?? 'PROGRAM_VIEWER'
   return {
     ...user,
     roleCode,
@@ -188,35 +218,46 @@ export function canAdminAction(input: {
         screen === 'admin-permission-approval' ||
         screen === 'template-management'
       ) {
-        return roleCode !== 'VIEWER'
+        return !isReadOnlyAdminRoleCode(roleCode)
       }
       return true
     case 'write':
     case 'delete':
     case 'send':
     case 'download':
-      return roleCode !== 'VIEWER'
+      return !isReadOnlyAdminRoleCode(roleCode)
     case 'dashboardWrite':
       // DASHBOARD_WRITE: 본인 레이아웃·설정만. PROGRAM_WRITE와 묶지 않음.
-      // V80: MASTER / PM / VIEWER. PARTNER는 서버 미부여.
-      return roleCode === 'MASTER' || roleCode === 'PM' || roleCode === 'VIEWER'
+      // 레거시 PARTNER는 서버 미부여. 정본 ACCOUNTING/PROGRAM_MANAGER·PM·뷰어는 허용.
+      return (
+        roleCode === 'MASTER' ||
+        roleCode === 'ACCOUNTING_MANAGER' ||
+        roleCode === 'PROGRAM_MANAGER' ||
+        roleCode === 'PM' ||
+        isReadOnlyAdminRoleCode(roleCode)
+      )
     case 'sponsorContactWrite':
       // 후원사 상세 > 담당자 목록 CRUD: VIEWER는 조회만.
-      return roleCode !== 'VIEWER'
+      return !isReadOnlyAdminRoleCode(roleCode)
     case 'sponsorWrite':
       // 후원사 기본정보·후원상태 수정: VIEWER는 조회만.
       // 엑셀 다운로드와 후원사 삭제는 각각 download/delete 정책으로 별도 판정.
-      return roleCode !== 'VIEWER'
+      return !isReadOnlyAdminRoleCode(roleCode)
     case 'approve':
       if (screen === 'admin-permission-approval' || screen === 'permission-settings') {
         return roleCode === 'MASTER'
       }
-      return roleCode !== 'VIEWER'
+      return !isReadOnlyAdminRoleCode(roleCode)
     case 'pii':
-      return roleCode !== 'VIEWER'
+      return !isReadOnlyAdminRoleCode(roleCode)
     case 'piiRrn':
     case 'piiAccount':
-      return roleCode === 'MASTER' || roleCode === 'PM'
+      return (
+        roleCode === 'MASTER' ||
+        roleCode === 'ACCOUNTING_MANAGER' ||
+        roleCode === 'PROGRAM_MANAGER' ||
+        roleCode === 'PM'
+      )
   }
 }
 
