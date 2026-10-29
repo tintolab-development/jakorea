@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Program } from '@/types/domain'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -157,10 +157,7 @@ export function UjatEducationProgressVolunteerDetailView({
       onDetailSaved?.()
     }
     setIsEditing(false)
-    showAlert({
-      title: '안내',
-      content: '희망 교육 활동 지역이 저장되었습니다.',
-    })
+    showUpdateCompletedAlert()
   }
 
   const handleCancelEdit = () => {

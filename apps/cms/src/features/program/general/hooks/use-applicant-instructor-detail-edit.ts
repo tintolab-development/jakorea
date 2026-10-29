@@ -21,6 +21,7 @@ import {
 } from '@/features/program/general/api/applications-api-client'
 import { mapInstructorApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { showUpdateCompletedAlert } from '@/shared/ui'
 
 export interface UseApplicantInstructorDetailEditParams {
   instructor: ApplicantInstructorRow | null
@@ -93,6 +94,7 @@ export function useApplicantInstructorDetailEdit({
       const refreshed = await fetchInstructorApplicationDetailRemote(instructor.id)
       onSaved(mapInstructorApplicationDetailToApplicantRow(refreshed, instructor))
       resetEditState()
+      showUpdateCompletedAlert()
       return true
     } catch (error) {
       setValidationErrors({

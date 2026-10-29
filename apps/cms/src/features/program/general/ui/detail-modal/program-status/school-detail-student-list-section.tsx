@@ -25,6 +25,7 @@ import {
   CmsSelect,
   FilterTableLayout,
   FilterTableToolbarButton,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -657,6 +658,7 @@ export function SchoolDetailStudentListSection({
         setSelectedStudentKeys([])
         setIsStudentListEditMode(false)
         onSaveEdit?.(rows)
+        showUpdateCompletedAlert()
       } catch (error) {
         const conflictAlert = resolveStudentRosterCommitErrorAlert(error)
         if (conflictAlert) {
@@ -670,6 +672,7 @@ export function SchoolDetailStudentListSection({
     }
     onSaveEdit?.(rows)
     setIsStudentListEditMode(false)
+    showUpdateCompletedAlert()
   }, [
     getValues,
     onSaveEdit,

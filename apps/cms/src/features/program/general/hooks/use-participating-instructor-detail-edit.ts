@@ -18,7 +18,7 @@ import { mapInstructorApplicationDetailToParticipatingRow } from '@/features/pro
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
-import { useCmsAlert } from '@/shared/ui'
+import { showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -130,6 +130,7 @@ export function useParticipatingInstructorDetailEdit({
       const refreshed = await fetchInstructorApplicationDetailRemote(applicationId)
       onSaved(mapInstructorApplicationDetailToParticipatingRow(refreshed, instructor, programId))
       resetEditState()
+      showUpdateCompletedAlert()
       return true
     } catch (error) {
       const message = getGeneralProgramApiErrorMessage(

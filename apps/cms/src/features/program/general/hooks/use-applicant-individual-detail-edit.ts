@@ -18,6 +18,7 @@ import {
 } from '@/features/program/general/lib/applicant-individual-detail-edit'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { saveIndividualApplicationDetailRemote } from '@/features/program/general/api/individual-application-update-helpers'
+import { showUpdateCompletedAlert } from '@/shared/ui'
 
 export interface UseApplicantIndividualDetailEditParams {
   applicant: GeneralIndividualApplicantRow | null
@@ -110,6 +111,7 @@ export function useApplicantIndividualDetailEdit({
 
       onSaved(updated)
       resetEditState()
+      showUpdateCompletedAlert()
       return true
     } catch {
       setValidationErrors({ form: '저장에 실패했습니다. 다시 시도해 주세요.' })
