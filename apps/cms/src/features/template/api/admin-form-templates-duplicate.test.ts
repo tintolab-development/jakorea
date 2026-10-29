@@ -75,6 +75,8 @@ describe('duplicateFormTemplateVersionRemote', () => {
       {
         templateId: 512,
         templateVersionId: 1203,
+        systemTemplate: false,
+        baseTemplateCode: 'recruitment-participant-school',
       }
     )
   })
