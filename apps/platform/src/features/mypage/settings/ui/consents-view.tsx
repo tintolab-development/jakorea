@@ -178,7 +178,11 @@ function formatWithdrawnDate(date: Date): string {
 
 function ConsentRequirementLabel({ required }: { required: boolean }) {
   return (
-    <PFText typo="bd-md-sb" color={required ? 'primary-500' : 'neutral-cool-500'}>
+    <PFText
+      typo="bd-md-sb"
+      color={required ? 'primary-500' : 'neutral-cool-500'}
+      className={styles.requirementLabel}
+    >
       {required ? '필수' : '선택'}
     </PFText>
   )
@@ -238,7 +242,7 @@ function ConsentCard({
       <div className={styles.cardHeader}>
         <div className={styles.titleGroup}>
           {showRequirementLabel ? <ConsentRequirementLabel required={item.required} /> : null}
-          <PFText typo="bd-md-sb" color="black">
+          <PFText typo="bd-md-sb" color="black" className={styles.cardTitle}>
             {item.title}
           </PFText>
         </div>
