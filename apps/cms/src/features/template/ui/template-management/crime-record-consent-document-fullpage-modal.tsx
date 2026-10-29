@@ -6,8 +6,8 @@ import { ModalCloseIcon } from '@/shared/ui/icons'
 import { type ChangeEvent, useCallback, useId, useRef } from 'react'
 import { useAgreementCrimeConsentDocumentEditor } from '@/features/template/hooks/use-agreement-crime-consent-document-editor'
 import {
-  CATALOG_DOCUMENT_UPLOAD_ACCEPT,
-  validateCatalogDocumentUploadFile,
+  CRIME_CONSENT_UPLOAD_ACCEPT,
+  isCrimeConsentUploadFile,
 } from '@/features/template/lib/agreement-crime-consent-settings'
 import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-management/crime-consent-document-preview'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -15,10 +15,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { openFilePicker } from '@/shared/lib/open-file-picker'
 import '@/shared/ui/file-upload-picker.css'
-import {
-  CATALOG_DOCUMENT_FILE_SIZE_ALERT_MESSAGE,
-  CATALOG_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
-} from '@/shared/constants/messages'
+import { CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './crime-record-consent-document-fullpage-modal.css'
 
@@ -58,14 +55,10 @@ export function CrimeRecordConsentDocumentFullpageModal({
       const file = e.target.files?.[0]
       e.target.value = ''
       if (!file) return
-      const validation = validateCatalogDocumentUploadFile(file)
-      if (validation !== 'ok') {
+      if (!isCrimeConsentUploadFile(file)) {
         showAlert({
           title: '안내',
-          content:
-            validation === 'size'
-              ? CATALOG_DOCUMENT_FILE_SIZE_ALERT_MESSAGE
-              : CATALOG_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
+          content: CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE,
         })
         return
       }
@@ -152,7 +145,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept={CATALOG_DOCUMENT_UPLOAD_ACCEPT}
+                  accept={CRIME_CONSENT_UPLOAD_ACCEPT}
                   className="file-upload-picker__input"
                   onChange={handleFileChange}
                   aria-label="동의서 문서 파일 선택"
