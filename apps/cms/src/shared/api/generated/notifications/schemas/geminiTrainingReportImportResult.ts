@@ -6,10 +6,12 @@
  * OpenAPI spec version: v9
  */
 import type { GeminiTrainingReportImportResultPaymentExclusionReason } from './geminiTrainingReportImportResultPaymentExclusionReason';
+import type { GeminiTrainingReportImportResultStatus } from './geminiTrainingReportImportResultStatus';
 
 export interface GeminiTrainingReportImportResult {
   rowNumber?: number;
-  status?: string;
+  /** 대소문자 고정. 행 검증 실패 또는 지급완료 overwrite 차단만 FAILED. */
+  status?: GeminiTrainingReportImportResultStatus;
   message?: string;
   trainingReportId?: number;
   accountPaymentId?: number;

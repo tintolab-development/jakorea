@@ -228,7 +228,7 @@
         "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "성범죄 경력 조회 동의서 조회 방식",
-        "paragraphDescription": "성범죄경력 조회 동의서의 조회 방식을 선택해 주세요.",
+        "paragraphDescription": "성범죄경력 조회 동의서의 조회 방식을 선택해 주세요. ‘범죄경력회보서 사이트 이용’ 선택 시에는 제출 방식과 성범죄 경력조회용 정보 입력란이 노출됩니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

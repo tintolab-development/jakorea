@@ -818,6 +818,33 @@ type EducationProgressRowVisibility = {
   showEducationForm: boolean
   /** 기간형 배정 정보는 교육받은 교사 프로그램에서만 공개한다. */
   showAssignmentPeriod: boolean
+  /** 개인 일반 「교육 진행 장소」 일정별일 때만 행마다 장소를 보인다. */
+  showEducationPlace: boolean
+}
+
+/** 사전 교육 행에는 교육 장소를 싣지 않는다. */
+function isPortalPreEducationRow(row: {
+  blockKind?: string
+  sessionLabel?: string
+  scheduleLabel?: string
+}): boolean {
+  if (row.blockKind === 'preEducation') return true
+  return [row.sessionLabel, row.scheduleLabel].some(label =>
+    /^사전\s*교육/.test(label?.trim() ?? '')
+  )
+}
+
+function educationPlaceRowLabel(
+  row: {
+    educationPlaceAddress?: string | null
+    blockKind?: string
+    sessionLabel?: string
+    scheduleLabel?: string
+  },
+  rows: EducationProgressRowVisibility
+): string | undefined {
+  if (!rows.showEducationPlace || isPortalPreEducationRow(row)) return undefined
+  return optionalText(row.educationPlaceAddress)
 }
 
 function mapPortalCurriculumSessions(
@@ -835,6 +862,7 @@ function mapPortalCurriculumSessions(
     const assignmentPeriod = rows.showAssignmentPeriod
       ? optionalText(session.assignmentPeriod)
       : undefined
+    const educationPlaceLabel = educationPlaceRowLabel(session, rows)
     return {
       sessionLabel: session.sessionLabel ?? '',
       title: session.title ?? '',
@@ -846,6 +874,7 @@ function mapPortalCurriculumSessions(
         ? { assignmentEnabled: session.assignmentEnabled }
         : {}),
       ...(assignmentPeriod ? { assignmentPeriod } : {}),
+      ...(educationPlaceLabel ? { educationPlaceLabel } : {}),
     }
   })
 }
@@ -900,6 +929,7 @@ function mapPortalScheduleDetails(
     const assignmentPeriod = rows.showAssignmentPeriod
       ? optionalText(detail.assignmentPeriod)
       : undefined
+    const educationPlaceLabel = educationPlaceRowLabel(detail, rows)
     const name = toDisplayEducationScheduleName(detail.name) ?? ''
     if (
       !name &&
@@ -907,6 +937,7 @@ function mapPortalScheduleDetails(
       !educationFormLabel &&
       !participationMethodLabel &&
       !assignmentPeriod &&
+      !educationPlaceLabel &&
       detail.assignmentEnabled === undefined
     ) {
       return []
@@ -924,6 +955,7 @@ function mapPortalScheduleDetails(
           ? { assignmentEnabled: detail.assignmentEnabled }
           : {}),
         ...(assignmentPeriod ? { assignmentPeriod } : {}),
+        ...(educationPlaceLabel ? { educationPlaceLabel } : {}),
       },
     ]
   })
@@ -1252,10 +1284,20 @@ export function mapPortalProgramDetail(
     ? undefined
     : optionalText(remote.educationFormLabel)
   const educationFormLabel = apiEducationFormLabel ?? EDUCATION_FORM_LABEL[educationForm]
-  const educationVenueLabel =
-    formatPortalEducationVenue(remote.venue, remote.venueKind) ||
-    venueFromSchedules(remote.schedules) ||
-    (perScheduleEducationForm ? '' : educationFormLabel)
+  // 개인 일반 「교육 진행 장소」: common은 공통 주소 → venue, perSchedule은 행마다 보이므로 단일 항목을 숨긴다.
+  // 새 필드가 없으면 기존 순서(venue → 첫 일정 주소 → 교육 형태)를 유지한다.
+  const educationPlaceMode =
+    remote.educationPlaceScheduleDetail === 'common' ||
+    remote.educationPlaceScheduleDetail === 'perSchedule'
+      ? remote.educationPlaceScheduleDetail
+      : null
+  const perScheduleEducationPlace = educationPlaceMode === 'perSchedule'
+  const educationVenueLabel = perScheduleEducationPlace
+    ? ''
+    : optionalText(remote.educationPlaceAddress) ||
+      formatPortalEducationVenue(remote.venue, remote.venueKind) ||
+      venueFromSchedules(remote.schedules) ||
+      (perScheduleEducationForm ? '' : educationFormLabel)
   const businessFieldLabel = readString(remote.businessField) || '-'
   const educationTargetGroupLabel = hasEducationTargetCodes ? targets.educationTargetGroupLabel : ''
   const educationTargetDetailLabel = mapEducationTargetDetailLabel(
@@ -1284,6 +1326,7 @@ export function mapPortalProgramDetail(
   const rowVisibility: EducationProgressRowVisibility = {
     showEducationForm: perScheduleEducationForm || !optionalText(remote.educationFormLabel),
     showAssignmentPeriod: isTrainedTeacher,
+    showEducationPlace: perScheduleEducationPlace,
   }
   const sessions = usesEducationProgressFields
     ? mapPortalCurriculumSessions(
@@ -1373,7 +1416,10 @@ export function mapPortalProgramDetail(
       ''
   )
   const otherMatters = visibleCopy(readString(remote.otherMatters) ?? '')
-  const remarks = visibleCopy(readString(independentRow ? independentRow.remarks : remote.remarks) ?? '')
+  // 비고 = remarks, 기타사항 = otherMatters. 서로 대체하지 않는다.
+  const remarks = visibleCopy(
+    readString(independentRow ? independentRow.remarks : remote.remarks) ?? ''
+  )
   const preEducationNoticeRequired = readPortalPreEducationNoticeRequired(remote, independentRow)
   const extraSections: ProgramExtraSection[] = [
     extraSection(recruitmentGuideSectionTitle(detailCase), recruitmentGuide),

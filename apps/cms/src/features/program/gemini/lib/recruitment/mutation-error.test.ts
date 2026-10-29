@@ -16,4 +16,18 @@ describe('formatGeminiRecruitmentSaveError', () => {
       '모집 시작 이후에는 모집 정보를 수정할 수 없습니다.'
     )
   })
+
+  it('403 INLINE_IMAGE_FILE_OWNER_MISMATCH 를 권한 오류로 보여 준다', () => {
+    const error = {
+      response: {
+        status: 403,
+        data: {
+          success: false,
+          error: { code: 'INLINE_IMAGE_FILE_OWNER_MISMATCH' },
+        },
+      },
+    }
+    expect(formatGeminiRecruitmentSaveError(error)).toContain('권한이 없습니다')
+    expect(formatGeminiRecruitmentSaveError(error)).not.toContain('INLINE_IMAGE_FILE_OWNER_MISMATCH')
+  })
 })

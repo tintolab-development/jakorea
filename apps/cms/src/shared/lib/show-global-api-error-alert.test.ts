@@ -156,3 +156,52 @@ describe('showGlobalApiErrorAlert CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID', (
     expect(isGlobalApiErrorAlertShown(error)).toBe(true)
   })
 })
+
+function instructorCancelApprovalBlockedError(url: string): AxiosError {
+  return {
+    isAxiosError: true,
+    message: 'Conflict',
+    name: 'AxiosError',
+    toJSON: () => ({}),
+    response: {
+      status: 409,
+      data: {
+        success: false,
+        data: null,
+        message: '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.',
+        error: {
+          code: 'INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM',
+          message: '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.',
+          field: null,
+          details: null,
+        },
+      },
+    },
+    config: { method: 'post', url },
+  } as AxiosError
+}
+
+describe('showGlobalApiErrorAlert INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
+  })
+
+  it('강사 권한 승인 취소 요청이면 공통 409 알림을 띄우지 않는다', () => {
+    const error = instructorCancelApprovalBlockedError(
+      '/api/admin/instructor-role-requests/42/cancel-approval'
+    )
+    expect(showGlobalApiErrorAlert(error)).toBe(false)
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+    expect(isGlobalApiErrorAlertShown(error)).toBe(true)
+  })
+
+  it('강사 권한 박탈 요청이면 공통 알림을 유지한다', () => {
+    const error = instructorCancelApprovalBlockedError('/api/admin/instructors/42/revoke')
+    expect(showGlobalApiErrorAlert(error)).toBe(true)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: '처리 불가',
+      content: '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.',
+    })
+  })
+})

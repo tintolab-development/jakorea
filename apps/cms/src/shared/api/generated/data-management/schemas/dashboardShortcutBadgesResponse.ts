@@ -9,20 +9,22 @@ import type { DashboardShortcutBadgesResponseCounts } from './dashboardShortcutB
 
 export interface DashboardShortcutBadgesResponse {
   /**
-     * 바로가기 키별 배지 숫자. FE는 목록을 다시 세지 않고 이 값을 canonical로 표시한다. 누락 키는 0으로 채우지 않음.
-     * programs-general-education=GET /api/admin/programs?programType=GENERAL totalElements
-     * programs-economy=GET /api/admin/programs?programType=COMPANY_SCHOOL totalElements
-     * programs-ujat=GET /api/admin/programs?programType=UJAT totalElements
-     * programs-gemini=GET /api/admin/programs?programType=GEMINI totalElements
-     * programs-detail=GET /api/admin/programs(유형 필터 없음) totalElements (= home.programCount)
-     * users-all=GET /api/admin/users(역할 필터 없음) totalElements. 사람 회원(GENERAL/SCHOOL_TEACHER/INSTRUCTOR 또는 강사 철회). 관리자 계정·순수 학교 셸 제외. home.memberCount(삭제되지 않은 member 전체) 및 GET /api/admin/members/all(회원+관리자 UNION)과 다름.
-     * users-school=GET /api/admin/users?role=TEACHER totalElements (SCHOOL_TEACHER)
-     * users-instructor=GET /api/admin/users?role=INSTRUCTOR totalElements (철회 강사 제외)
-     * users-admin=GET /api/admin/admin-accounts 기본 목록 totalElements (ACTIVE/SUSPENDED, 미삭제)
-     * notices=GET /api/admin/content/notices 기본 목록 totalElements (PUBLISHED 공개 전체. isImportant/미읽음 아님)
-     * faq=GET /api/admin/content/faqs 기본 목록 totalElements (PUBLISHED 공개 전체)
-     * inquiries=GET /api/admin/inquiries?status=PENDING totalElements (답변대기 RECEIVED/IN_PROGRESS)
-     * permission-requests=GET /api/admin/instructor-role-requests?status=PENDING totalElements (강사 권한 신청 대기)
+     * 바로가기 키별 배지. 필드명 counts. 양수인 문서화 키만 넣는다. 값이 0이거나 해당 없는 키·문서 외 키(sponsors, textbooks 등)는 JSON에서 생략한다. 0으로 채우지 않는다. FE는 키 존재+양수만 배지 표시한다. 목록 totalElements나 GET /api/admin/dashboard/home 의 programCount/memberCount를 복제하지 않는다.
+     * 신규 추적 키: 이 관리자의 lastReadAt(POST .../dashboard-shortcut-badges/{shortcutId}/read 가 저장한 dashboard_shortcut_badge_read.read_at) 이후 created_at 행 수. 한 번도 안 읽으면 해당 목록 현재 전체와 같아 보일 수 있다. POST /read 성공 후 그 사이 신규가 없으면 키는 생략된다.
+     * programs-general-education=GET /api/admin/programs?programType=GENERAL 집합의 신규(created_at)
+     * programs-economy=GET /api/admin/programs?programType=COMPANY_SCHOOL 신규
+     * programs-ujat=GET /api/admin/programs?programType=UJAT 신규
+     * programs-gemini=GET /api/admin/programs?programType=GEMINI 신규
+     * programs-detail=GET /api/admin/programs(유형 필터 없음) 신규. home.programCount와 등호가 아님
+     * users-all=GET /api/admin/users(역할 필터 없음) 신규. 사람 회원(GENERAL/SCHOOL_TEACHER/INSTRUCTOR 또는 강사 철회). home.memberCount 및 GET /api/admin/members/all과 다름
+     * users-school=GET /api/admin/users?role=TEACHER 신규 (SCHOOL_TEACHER)
+     * users-instructor=GET /api/admin/users?role=INSTRUCTOR 신규 (철회 강사 제외)
+     * users-admin=GET /api/admin/admin-accounts 기본 목록 신규 (ACTIVE/SUSPENDED, 미삭제)
+     * notices=GET /api/admin/content/notices 기본 PUBLISHED 신규 (isImportant/미읽음 아님). 목록 PUBLISHED 전체 totalElements 복제가 아님
+     * faq=GET /api/admin/content/faqs 기본 PUBLISHED 신규. 목록 공개 전체 totalElements 복제가 아님
+     * 대기 키: PENDING 현재 대기. POST /read 해도 숫자가 0이 되지 않는다. 0이면 생략, 양수면 포함.
+     * inquiries=GET /api/admin/inquiries?status=PENDING 현재 대기 건수(RECEIVED/IN_PROGRESS). 읽음 커서를 적용하지 않음. 필터 없는 문의 전체 totalElements가 아님
+     * permission-requests=GET /api/admin/instructor-role-requests?status=PENDING 현재 대기 건수. 읽음 커서를 적용하지 않음
      */
   counts?: DashboardShortcutBadgesResponseCounts;
   calculatedAt?: string;

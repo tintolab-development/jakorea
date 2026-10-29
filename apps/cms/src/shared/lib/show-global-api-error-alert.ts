@@ -11,6 +11,7 @@ import {
   getMemberDeleteCurrentPasswordInvalidAlertOptions,
   isMemberDeleteCurrentPasswordInvalidError,
 } from '@/features/user/api/get-member-api-error'
+import { shouldSkipGlobalAlertForInstructorCancelApprovalBlocked } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-blocked'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
@@ -137,6 +138,12 @@ export function showGlobalApiErrorAlert(
   config?: GlobalApiErrorAlertRequestConfig
 ): boolean {
   if (shouldSkipGlobalErrorAlert(error, config)) return false
+
+  const requestUrl = config?.url ?? error.config?.url
+  if (shouldSkipGlobalAlertForInstructorCancelApprovalBlocked(error, requestUrl)) {
+    markGlobalErrorAlertShown(error)
+    return false
+  }
 
   const httpStatus = error.response?.status ?? null
   if (httpStatus === 403) {

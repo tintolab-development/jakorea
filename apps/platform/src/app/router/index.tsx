@@ -70,7 +70,6 @@ import { HistoryPage } from '@/pages/about/history'
 import { IntroductionPage } from '@/pages/about/introduction'
 import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
-import { DesignSystemPage } from '@/pages/design-system'
 import { PublicSurveyPage } from '@/pages/surveys'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { CorporateDonationPage } from '@/pages/support/corporate'
@@ -322,7 +321,6 @@ export const router = createBrowserRouter([
         path: '/mypage/volunteer/:applicationId/settlement/confirm',
         element: <MypageEducationSettlementConfirmPage />,
       },
-      { path: '/design-system', element: <DesignSystemPage /> },
     ],
   },
   {

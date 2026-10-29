@@ -44,6 +44,7 @@ import {
   UJAT_DEV_AUTOFILL_DEFAULT_CASE_ID,
   type UjatDevAutofillCaseId,
 } from '@/features/program/ujat/lib/dev-autofill-cases'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { UjatRegistrationRequiredFieldsIncompleteError } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
@@ -311,7 +312,10 @@ function UjatProgramRegistrationFullpageModalInner({
               console.debug('UJAT program registration completion failed', error)
               showAlert({
                 title: '프로그램 등록 실패',
-                content: '입력 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.',
+                content: getGeneralProgramApiErrorMessage(
+                  error,
+                  '입력 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.'
+                ),
               })
             })
           },

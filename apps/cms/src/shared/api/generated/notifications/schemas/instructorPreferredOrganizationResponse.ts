@@ -23,8 +23,6 @@ export interface InstructorPreferredOrganizationResponse {
   dateRangeLabel?: string | null;
   /** program_schedule id. */
   scheduleId?: number | null;
-  /** 기간형 교육 기간 인덱스. 없으면 null. */
-  educationPeriodIndex?: number | null;
   /** 운영 일정 시작. dateRangeLabel 파싱 실패 시 FE fallback. */
   startAt?: string | null;
   /** 운영 일정 종료. */

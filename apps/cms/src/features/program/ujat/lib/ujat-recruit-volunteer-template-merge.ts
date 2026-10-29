@@ -113,7 +113,8 @@ export function buildUjatRecruitVolunteerOverlayFromDetailEditValues(
     [KEYS.notes]:
       values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
         ? ''
-        : (values.otherNotes?.trim() ?? ''),
+        : (values.oneLineIntroduction?.trim() ?? ''),
+    [KEYS.otherNotes]: values.otherNotes?.trim() ?? '',
   }
 }
 
@@ -198,7 +199,9 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
   const volunteerTargets = overlayStringList(overlay, KEYS.volunteerTargets)
   const announcementPublished = overlay[KEYS.announcementPublished]
   const noticeExposure = overlay[KEYS.noticeExposure]
-  const notes = overlayString(overlay, KEYS.notes) ?? overlayString(overlay, KEYS.otherNotes)
+  // 비고(notes → oneLineIntroduction)와 기타사항(otherNotes)은 별도 필드다.
+  const notes = overlayString(overlay, KEYS.notes)
+  const otherNotes = overlayString(overlay, KEYS.otherNotes)
   return {
     ...program,
     mainTitle: program.mainTitle,
@@ -240,7 +243,8 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
     managerName: preferOverlay && contact?.name?.trim() ? contact.name : program.managerName,
     contactPhone: preferOverlay && contact?.phone?.trim() ? contact.phone : program.contactPhone,
     contactEmail: preferOverlay && contact?.email?.trim() ? contact.email : program.contactEmail,
-    otherNotes: notes ?? program.otherNotes,
+    oneLineIntroduction: notes ?? program.oneLineIntroduction,
+    otherNotes: otherNotes ?? program.otherNotes,
     description: overlayString(overlay, KEYS.description) ?? program.description,
     recruitmentGuide: overlayString(overlay, KEYS.recruitmentGuide) ?? program.recruitmentGuide,
     applicationMethod: overlayString(overlay, KEYS.applicationMethod) ?? program.applicationMethod,
@@ -375,10 +379,11 @@ export function applyUjatRecruitVolunteerTemplateDefaults(
     ),
     contactPhone: coalesceString(program.contactPhone, contact?.phone),
     contactEmail: coalesceString(program.contactEmail, contact?.email),
-    otherNotes: coalesceString(
-      program.otherNotes ?? program.oneLineIntroduction,
-      overlayString(overlay, KEYS.notes) ?? overlayString(overlay, KEYS.otherNotes)
+    oneLineIntroduction: coalesceString(
+      program.oneLineIntroduction,
+      overlayString(overlay, KEYS.notes)
     ),
+    otherNotes: coalesceString(program.otherNotes, overlayString(overlay, KEYS.otherNotes)),
     description: coalesceString(program.description, overlayString(overlay, KEYS.description)),
     recruitmentGuide: coalesceString(
       program.recruitmentGuide,

@@ -127,6 +127,8 @@ function getProgram186307(): Program {
       ],
       'generalRegistration.kpi.participantCount': 80,
       'generalRegistration.typeSettings.educationForm': 'offline',
+      'generalRegistration.typeSettings.educationPlaceScheduleDetail': 'common',
+      'generalRegistration.typeSettings.educationPlaceAddress': '서울특별시 중구 세종대로 110',
       'generalRegistration.typeSettings.singleEducationForm': 'offline',
       'generalRegistration.typeSettings.multiCommonEducationForm': 'offline',
     },

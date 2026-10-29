@@ -1243,6 +1243,9 @@ function buildGeneralLikeOverlay(
     [`${typeSettingsPrefix}.singleEducationForm`]: typeSettings.educationForm,
     [`${typeSettingsPrefix}.multiCommonEducationForm`]: typeSettings.educationForm,
     [`${typeSettingsPrefix}.educationForm`]: typeSettings.educationForm,
+    // 개인 대상 교육 진행 장소 (일정 공통). 온라인이면 저장 본문에서 빠진다
+    [`${typeSettingsPrefix}.educationPlaceScheduleDetail`]: 'common',
+    [`${typeSettingsPrefix}.educationPlaceAddress`]: '서울특별시 중구 세종대로 110',
     [`${typeSettingsPrefix}.singleParticipation`]: typeSettings.participation,
     [`${typeSettingsPrefix}.multiCommonParticipation`]: typeSettings.participation,
     [`${curriculumPrefix}.unitNameBySession`]: indexRecord(chartCount, index =>

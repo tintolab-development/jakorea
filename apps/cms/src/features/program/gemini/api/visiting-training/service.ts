@@ -36,6 +36,7 @@ import {
   prepareProgramInlineImageBind,
   syncProgramInlineImagesKeepProgram,
 } from '@/features/program/shared/api/program-inline-images'
+import { resolveGeminiAttachmentFileObjectIdsForSave } from '../../lib/recruitment/attachment-file-objects'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { canGeminiRecruitmentInfoEdit } from '../../lib/recruitment/info-edit-policy'
 import {
@@ -80,10 +81,6 @@ async function persistGeminiRecruitmentInlineHtml(
   const patch = pickProgramInlineImageHtmlPatch(rewritten)
   if (Object.keys(patch).length === 0) return
   await updateGeminiRecruitmentRemote(programId, patch as ProgramUpdateRequest)
-}
-
-function toAttachmentFileObjectIds(ids: number[] | undefined): number[] {
-  return (ids ?? []).filter(id => Number.isInteger(id) && id > 0)
 }
 
 export type GeminiRecruitmentsPage = {
@@ -292,9 +289,15 @@ export async function createGeminiRecruitment(
       throw error
     }
   }
-  const attachmentIds = toAttachmentFileObjectIds(snapshot.attachmentFileObjectIds)
-  if (attachmentIds.length > 0 && Number.isFinite(numericId) && numericId > 0) {
-    await putProgramAttachments(numericId, attachmentIds)
+  const attachmentFileObjectIds = resolveGeminiAttachmentFileObjectIdsForSave(snapshot)
+  if (attachmentFileObjectIds != null && Number.isFinite(numericId) && numericId > 0) {
+    try {
+      await putProgramAttachments(numericId, attachmentFileObjectIds)
+    } catch (error) {
+      // 첨부 연결 없이 등록 완료로 남지 않도록 방금 만든 공고를 지운다.
+      await deleteGeminiRecruitmentRemote(id).catch(() => undefined)
+      throw error
+    }
   }
   let detail: GeminiRecruitmentDetail | null = null
   if (id) {
@@ -329,8 +332,13 @@ export async function updateGeminiRecruitment(
   if (draft.thumbnailFileObjectId !== undefined && Number.isFinite(numericId) && numericId > 0) {
     await putProgramThumbnail(numericId, draft.thumbnailFileObjectId)
   }
-  if (Number.isFinite(numericId) && numericId > 0 && draft.attachmentFileObjectIds !== undefined) {
-    await putProgramAttachments(numericId, toAttachmentFileObjectIds(draft.attachmentFileObjectIds))
+  if (draft.attachmentFileObjectIds !== undefined && Number.isFinite(numericId) && numericId > 0) {
+    // PUT은 GENERAL 첨부 전체 교체 — 이미 연결된 첨부는 파일명으로 이어 붙인다.
+    const existing = await fetchProgramAttachments(numericId)
+    const attachmentFileObjectIds = resolveGeminiAttachmentFileObjectIdsForSave(draft, existing)
+    if (attachmentFileObjectIds != null) {
+      await putProgramAttachments(numericId, attachmentFileObjectIds)
+    }
   }
   return getGeminiRecruitmentDetail(programId)
 }

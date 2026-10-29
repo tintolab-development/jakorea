@@ -59,8 +59,11 @@ export type GeminiRecruitmentAddFormSnapshot = {
   learningSupportContent: string
   additionalContentMarkdown: string
   attachmentFileNames: string[]
-  /** 첨부 PUT /programs/{id}/attachments 용. 없으면 파일명만 저장되고 연결되지 않는다. */
-  attachmentFileObjectIds?: number[]
+  /**
+   * 업로드한 첨부 fileObjectId — attachmentFileNames와 같은 index. 저장 시 PUT /programs/{id}/attachments.
+   * undefined: 변경 없음 / null 칸: 파일명만 있는 기존 첨부
+   */
+  attachmentFileObjectIds?: Array<number | null>
   institutionSectionDescription: string
   detailSectionDescription: string
 }
@@ -165,8 +168,8 @@ export function normalizeGeminiRecruitmentAddFormSnapshot(
       : defaults.attachmentFileNames,
     ...(Array.isArray(legacy.attachmentFileObjectIds)
       ? {
-          attachmentFileObjectIds: legacy.attachmentFileObjectIds.filter(
-            (id): id is number => typeof id === 'number' && Number.isInteger(id) && id > 0
+          attachmentFileObjectIds: legacy.attachmentFileObjectIds.map(id =>
+            typeof id === 'number' && Number.isFinite(id) ? id : null
           ),
         }
       : {}),

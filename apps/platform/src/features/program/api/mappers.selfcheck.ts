@@ -12,6 +12,7 @@ import {
   parsePortalProgramId,
   portalPublicFileContentUrl,
 } from './mappers.ts'
+import { curriculumSessionTitle } from '../lib/curriculum-session-title.ts'
 
 assert.equal(parsePortalProgramId('186012'), 186012)
 assert.equal(parsePortalProgramId('trained-teacher-primary-case-08'), null)
@@ -1007,6 +1008,37 @@ assert.equal(
 assert.equal(
   instructorOnly.extraSections.find(section => section.title === '기타사항')?.body,
   '강사 안내'
+)
+
+// 비고 = remarks, 기타사항 = otherMatters. Gemini도 otherMatters를 비고로 대신 쓰지 않는다.
+const geminiRemarksOnly = mapPortalProgramDetail({
+  programId: 186033,
+  programType: 'GEMINI_TRAINING',
+  title: 'Gemini 비고',
+  recruitmentStatus: 'OPEN',
+  remarks: 'Gemini 비고',
+  otherMatters: 'Gemini 기타',
+})
+assert.ok(geminiRemarksOnly)
+assert.equal(
+  geminiRemarksOnly.extraSections.find(section => section.title === '비고')?.body,
+  'Gemini 비고'
+)
+assert.equal(
+  geminiRemarksOnly.extraSections.some(section => section.title === '기타사항'),
+  false
+)
+const geminiOtherMattersOnly = mapPortalProgramDetail({
+  programId: 186034,
+  programType: 'GEMINI_TRAINING',
+  title: 'Gemini 기타만',
+  recruitmentStatus: 'OPEN',
+  otherMatters: 'Gemini 기타',
+})
+assert.ok(geminiOtherMattersOnly)
+assert.equal(
+  geminiOtherMattersOnly.extraSections.some(section => section.title === '비고'),
+  false
 )
 
 const noRecruitmentBadge = mapPortalProgramDetail({
@@ -2078,6 +2110,158 @@ assert.equal(
   instructorKeepsProgramEducationTarget.basicInfoFields.find(field => field.label === '교육 대상 상세')
     ?.value,
   '초등학생 4~6학년',
+)
+
+// 개인 일반 「교육 진행 장소」 — common: 공통 주소가 venue보다 앞서고 행에는 반복하지 않는다.
+const educationPlaceCommon = mapPortalProgramDetail({
+  programId: 186301,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '교육 장소 공통',
+  venue: '기존 venue',
+  educationPlaceScheduleDetail: 'common',
+  educationPlaceAddress: '  서울시 중구 세종대로 110  ',
+  educationStructure: 'curriculum',
+  sessionRound: 'multi',
+  curriculumSessions: [
+    { sessionLabel: '1차시', title: '첫 차시', description: '', educationPlaceAddress: '반복 금지' },
+  ],
+})
+assert.ok(educationPlaceCommon)
+assert.equal(educationPlaceCommon.educationVenueLabel, '서울시 중구 세종대로 110')
+assert.equal(
+  educationPlaceCommon.basicInfoFields.find(field => field.label === '교육 장소')?.value,
+  '서울시 중구 세종대로 110'
+)
+assert.equal(educationPlaceCommon.sessions[0]?.educationPlaceLabel, undefined)
+
+// 모드 없이 주소만 있으면 common처럼 본다.
+const educationPlaceAddressOnly = mapPortalProgramDetail({
+  programId: 186302,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '교육 장소 주소만',
+  venue: '기존 venue',
+  educationPlaceAddress: '부산시 해운대구',
+})
+assert.ok(educationPlaceAddressOnly)
+assert.equal(educationPlaceAddressOnly.educationVenueLabel, '부산시 해운대구')
+
+// perSchedule: 단일 「교육 장소」를 숨기고(첫 일정 주소 폴백 없음) 교육 행마다, 사전 교육 행은 제외.
+const educationPlacePerSchedule = mapPortalProgramDetail({
+  programId: 186303,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '교육 장소 일정별',
+  educationPlaceScheduleDetail: 'perSchedule',
+  educationPlaceAddress: null,
+  schedules: [
+    {
+      scheduleName: '운영 회차',
+      publiclyVisible: true,
+      address: '첫 일정 주소',
+      startAt: '2026-11-02T10:00:00+09:00',
+      endAt: '2026-11-02T12:00:00+09:00',
+    },
+  ],
+  educationStructure: 'schedule',
+  sessionRound: 'multi',
+  scheduleDetails: [
+    {
+      scheduleLabel: '사전 교육',
+      blockKind: 'preEducation',
+      name: '사전 안내',
+      scheduleDateLabel: '26년 11월 1일(일)',
+      educationPlaceAddress: '사전 교육 주소',
+    },
+    {
+      scheduleLabel: '세부 일정 01',
+      blockKind: 'sub',
+      name: '첫 일정',
+      scheduleDateLabel: '26년 11월 2일(월) 10:00 ~ 12:00',
+      educationPlaceAddress: ' 서울 강남구 ',
+    },
+    {
+      scheduleLabel: '세부 일정 02',
+      blockKind: 'sub',
+      name: '둘째 일정',
+      scheduleDateLabel: '26년 11월 9일(월) 10:00 ~ 12:00',
+      educationPlaceAddress: '경기 성남시',
+    },
+  ],
+})
+assert.ok(educationPlacePerSchedule)
+assert.equal(educationPlacePerSchedule.educationVenueLabel, '')
+assert.equal(
+  educationPlacePerSchedule.basicInfoFields.some(field => field.label === '교육 장소'),
+  false
+)
+assert.equal(educationPlacePerSchedule.eventSchedules[0]?.educationPlaceLabel, undefined)
+assert.equal(educationPlacePerSchedule.eventSchedules[1]?.educationPlaceLabel, '서울 강남구')
+assert.equal(educationPlacePerSchedule.eventSchedules[2]?.educationPlaceLabel, '경기 성남시')
+
+const educationPlacePerScheduleCurriculum = mapPortalProgramDetail({
+  programId: 186304,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '교육 장소 일정별 커리큘럼',
+  educationPlaceScheduleDetail: 'perSchedule',
+  educationStructure: 'curriculum',
+  sessionRound: 'multi',
+  curriculumSessions: [
+    { sessionLabel: '사전 교육', title: '사전', description: '', educationPlaceAddress: '사전 주소' },
+    { sessionLabel: '1차시', title: '첫 차시', description: '', educationPlaceAddress: '대전 유성구' },
+  ],
+})
+assert.ok(educationPlacePerScheduleCurriculum)
+assert.equal(educationPlacePerScheduleCurriculum.sessions[0]?.educationPlaceLabel, undefined)
+assert.equal(educationPlacePerScheduleCurriculum.sessions[1]?.educationPlaceLabel, '대전 유성구')
+
+// 새 필드가 없으면 기존 순서(venue → 첫 일정 주소) 유지.
+const educationPlaceLegacy = mapPortalProgramDetail({
+  programId: 186305,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '교육 장소 레거시',
+  schedules: [
+    {
+      scheduleName: '운영 회차',
+      publiclyVisible: true,
+      address: '첫 일정 주소',
+      startAt: '2026-11-02T10:00:00+09:00',
+      endAt: '2026-11-02T12:00:00+09:00',
+    },
+  ],
+})
+assert.ok(educationPlaceLegacy)
+assert.equal(educationPlaceLegacy.educationVenueLabel, '첫 일정 주소')
+
+// 커리큘럼 행 「차시」 — 차시 정보(양의 정수 title)가 있을 때만 붙인다
+const curriculumMulti = { educationStructure: 'curriculum', sessionRound: 'multi' } as const
+assert.equal(curriculumSessionTitle(curriculumMulti, { sessionLabel: '1회차', title: '1' }), '1차시')
+assert.equal(curriculumSessionTitle(curriculumMulti, { sessionLabel: '2회차', title: ' 2차시 ' }), '2차시')
+assert.equal(
+  curriculumSessionTitle(curriculumMulti, { sessionLabel: '사전 교육', title: '오리엔테이션' }),
+  '오리엔테이션'
+)
+assert.equal(
+  curriculumSessionTitle(curriculumMulti, { sessionLabel: '', title: '사전 교육' }),
+  '사전 교육'
+)
+assert.equal(
+  curriculumSessionTitle(curriculumMulti, { sessionLabel: '1회차', title: 'AI 기초 이해' }),
+  'AI 기초 이해'
+)
+assert.equal(curriculumSessionTitle(curriculumMulti, { sessionLabel: '1회차', title: '' }), '')
+assert.equal(curriculumSessionTitle(curriculumMulti, { sessionLabel: '1회차', title: '0' }), '0')
+assert.equal(
+  curriculumSessionTitle(
+    { educationStructure: 'curriculum', sessionRound: 'single' },
+    { sessionLabel: '1차시', title: ' AI 기초 이해 ' }
+  ),
+  'AI 기초 이해'
+)
+assert.equal(
+  curriculumSessionTitle(
+    { educationStructure: 'curriculum', sessionRound: 'single' },
+    { sessionLabel: '1차시', title: '1' }
+  ),
+  '1'
 )
 
 console.log('program portal mappers.selfcheck: ok')

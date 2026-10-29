@@ -28365,6 +28365,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationApplicationApproveRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -28384,6 +28393,9 @@
           },
           "403": {
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -36770,6 +36782,450 @@
         }
       }
     },
+    "/api/admin/account-payments/{paymentId}/paid": {
+      "patch": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "개별 지급 완료",
+        "description": "### 이 API가 하는 일\n- 개별 지급 완료\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산s (`settlements`)\n- 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/paid`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `patch_admin_settlements_account-payments_accountPaymentId_paid`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료",
+        "operationId": "markPaid",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementStatusChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSettlementStatusChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/account-payments/{paymentId}/failed": {
+      "patch": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "개별 지급 실패",
+        "description": "### 이 API가 하는 일\n- 개별 지급 실패\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산s (`settlements`)\n- 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/failed`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `patch_admin_account-payments_paymentId_failed`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료",
+        "operationId": "markFailed",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementStatusChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSettlementStatusChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/account-payments/bulk-paid": {
+      "patch": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "계좌 지급 일괄 완료 처리",
+        "description": "### 이 API가 하는 일\n- 계좌 지급 일괄 완료 처리\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/admin/account-payments/bulk-paid`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend CMS settlement-management P0 bulk paid handoff",
+        "operationId": "bulkPaid",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementBulkStatusChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSettlementBulkStatusChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/settlement-applications/{applicationId}/request-correction": {
       "patch": {
         "tags": [
@@ -42378,450 +42834,6 @@
         }
       }
     },
-    "/api/admin/account-payments/{paymentId}/paid": {
-      "patch": {
-        "tags": [
-          "정산"
-        ],
-        "summary": "개별 지급 완료",
-        "description": "### 이 API가 하는 일\n- 개별 지급 완료\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산s (`settlements`)\n- 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/paid`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `patch_admin_settlements_account-payments_accountPaymentId_paid`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료",
-        "operationId": "markPaid",
-        "parameters": [
-          {
-            "name": "paymentId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SettlementStatusChangeRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "요청 성공",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponseSettlementStatusChangeResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값 검증 실패",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "bad-request": {
-                    "summary": "요청 값 검증 실패",
-                    "description": "bad-request",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "BAD_REQUEST: request parameter is invalid"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "인증 필요",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "unauthorized": {
-                    "summary": "인증 필요",
-                    "description": "unauthorized",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "UNAUTHORIZED: authentication is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "권한 부족",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "forbidden": {
-                    "summary": "권한 부족",
-                    "description": "forbidden",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "PERMISSION_DENIED: admin permission is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "대상 리소스 없음",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "not-found": {
-                    "summary": "대상 리소스 없음",
-                    "description": "not-found",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "NOT_FOUND: requested resource was not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "비즈니스 상태 충돌 또는 중복 요청",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "conflict": {
-                    "summary": "비즈니스 상태 충돌",
-                    "description": "conflict",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "CONFLICT: requested transition is not allowed in the current state"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
-          }
-        }
-      }
-    },
-    "/api/admin/account-payments/{paymentId}/failed": {
-      "patch": {
-        "tags": [
-          "정산"
-        ],
-        "summary": "개별 지급 실패",
-        "description": "### 이 API가 하는 일\n- 개별 지급 실패\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산s (`settlements`)\n- 호출 방식: `PATCH /api/admin/account-payments/{paymentId}/failed`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `patch_admin_account-payments_paymentId_failed`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료",
-        "operationId": "markFailed",
-        "parameters": [
-          {
-            "name": "paymentId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SettlementStatusChangeRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "요청 성공",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponseSettlementStatusChangeResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값 검증 실패",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "bad-request": {
-                    "summary": "요청 값 검증 실패",
-                    "description": "bad-request",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "BAD_REQUEST: request parameter is invalid"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "인증 필요",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "unauthorized": {
-                    "summary": "인증 필요",
-                    "description": "unauthorized",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "UNAUTHORIZED: authentication is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "권한 부족",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "forbidden": {
-                    "summary": "권한 부족",
-                    "description": "forbidden",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "PERMISSION_DENIED: admin permission is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "대상 리소스 없음",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "not-found": {
-                    "summary": "대상 리소스 없음",
-                    "description": "not-found",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "NOT_FOUND: requested resource was not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "비즈니스 상태 충돌 또는 중복 요청",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "conflict": {
-                    "summary": "비즈니스 상태 충돌",
-                    "description": "conflict",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "CONFLICT: requested transition is not allowed in the current state"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
-          }
-        }
-      }
-    },
-    "/api/admin/account-payments/bulk-paid": {
-      "patch": {
-        "tags": [
-          "정산"
-        ],
-        "summary": "계좌 지급 일괄 완료 처리",
-        "description": "### 이 API가 하는 일\n- 계좌 지급 일괄 완료 처리\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PATCH /api/admin/account-payments/bulk-paid`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend CMS settlement-management P0 bulk paid handoff",
-        "operationId": "bulkPaid",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SettlementBulkStatusChangeRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "요청 성공",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponseSettlementBulkStatusChangeResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값 검증 실패",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "bad-request": {
-                    "summary": "요청 값 검증 실패",
-                    "description": "bad-request",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "BAD_REQUEST: request parameter is invalid"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "인증 필요",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "unauthorized": {
-                    "summary": "인증 필요",
-                    "description": "unauthorized",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "UNAUTHORIZED: authentication is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "권한 부족",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "forbidden": {
-                    "summary": "권한 부족",
-                    "description": "forbidden",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "PERMISSION_DENIED: admin permission is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "대상 리소스 없음",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "not-found": {
-                    "summary": "대상 리소스 없음",
-                    "description": "not-found",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "NOT_FOUND: requested resource was not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "비즈니스 상태 충돌 또는 중복 요청",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "conflict": {
-                    "summary": "비즈니스 상태 충돌",
-                    "description": "conflict",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "CONFLICT: requested transition is not allowed in the current state"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
-          }
-        }
-      }
-    },
     "/api/auth/verification-sessions/identity/nice/return": {
       "get": {
         "tags": [
@@ -44847,98 +44859,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PageResponseMemberLectureReportAssignmentItemResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
-          }
-        }
-      }
-    },
-    "/api/portal/me/programs/{programId}/instructor-assignments": {
-      "get": {
-        "tags": [
-          "신청/프로그램 워크플로우"
-        ],
-        "summary": "내 강사 배정 목록 조회",
-        "description": "### 이 API가 하는 일\n- 내 강사 배정 목록 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/programs/{programId}/instructor-assignments`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Portal instructor assignment status assigned list without lecture-report binding",
-        "operationId": "memberInstructorAssignments",
-        "parameters": [
-          {
-            "name": "programId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/MemberInstructorAssignmentListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
-          }
-        }
-      }
-    },
-    "/api/portal/me/programs/{programId}/instructor-assignment-waitings": {
-      "get": {
-        "tags": [
-          "신청/프로그램 워크플로우"
-        ],
-        "summary": "내 강사 배정 대기 목록 조회",
-        "description": "### 이 API가 하는 일\n- 내 강사 배정 대기 목록 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/programs/{programId}/instructor-assignment-waitings`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Portal instructor assignment status waiting list from own application preferred rows",
-        "operationId": "memberInstructorAssignmentWaitings",
-        "parameters": [
-          {
-            "name": "programId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/MemberInstructorAssignmentWaitingResponse"
                 }
               }
             }
@@ -52525,6 +52445,373 @@
         }
       }
     },
+    "/api/admin/account-payments/{paymentId}": {
+      "get": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "계좌 지급 단건 상세 조회",
+        "description": "### 이 API가 하는 일\n- 계좌 지급 단건 상세 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/account-payments/{paymentId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend CMS settlement-management P1 account payment detail handoff",
+        "operationId": "getAccountPayment",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountPaymentDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/account-payments": {
+      "get": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "계좌 지급 확인 목록",
+        "description": "### 이 API가 하는 일\n- 계좌 지급 확인 목록\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산s (`settlements`)\n- 호출 방식: `GET /api/admin/account-payments`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (canonical account payment list endpoint; mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_account-payments`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료",
+        "operationId": "listAccountPayments",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "REQUESTED는 대기 버킷 alias(WAITING_PAYMENT+내부 FAILED)입니다. UI 업무 상태는 WAITING_PAYMENT/PAID만 사용합니다.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "REQUESTED",
+                "WAITING_PAYMENT",
+                "PAID"
+              ]
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "description": "이체 예정일 시작(scheduledPaymentDate). 출강일 lectureDate가 아닙니다.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "description": "이체 예정일 종료(scheduledPaymentDate). 출강일 lectureDate가 아닙니다.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "instructorName",
+            "in": "query",
+            "description": "신청자명 contains. 실명 기준이며 서버에서 마스킹하지 않습니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "programName",
+            "in": "query",
+            "description": "프로그램명 contains (programNameKo).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "이체일 기준 전년-12-01~당해-12-31. fromDate/toDate가 있으면 그 값 우선.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAccountPaymentListItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/settlement-applications": {
       "get": {
         "tags": [
@@ -54882,61 +55169,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/InstructorAssignmentCalendarResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
-          }
-        }
-      }
-    },
-    "/api/admin/programs/{programId}/instructor-assignment-availability": {
-      "get": {
-        "tags": [
-          "신청/프로그램 워크플로우"
-        ],
-        "summary": "강사 배정 대기 일정별 가능 여부",
-        "description": "### 이 API가 하는 일\n- 강사 배정 대기 일정별 가능 여부\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/programs/{programId}/instructor-assignment-availability`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: ASSIGNMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS participating instructor waiting list time-overlap availability",
-        "operationId": "instructorAssignmentAvailability",
-        "parameters": [
-          {
-            "name": "programId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "instructorMemberId",
-            "in": "query",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/InstructorAssignmentAvailabilityResponse"
                 }
               }
             }
@@ -64685,373 +64917,6 @@
           },
           "500": {
             "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
-          }
-        }
-      }
-    },
-    "/api/admin/account-payments": {
-      "get": {
-        "tags": [
-          "정산"
-        ],
-        "summary": "계좌 지급 확인 목록",
-        "description": "### 이 API가 하는 일\n- 계좌 지급 확인 목록\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 정산 관리 (`null`)\n- 프론트 담당 영역: 정산s (`settlements`)\n- 호출 방식: `GET /api/admin/account-payments`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (canonical account payment list endpoint; mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_account-payments`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료",
-        "operationId": "listAccountPayments",
-        "parameters": [
-          {
-            "name": "status",
-            "in": "query",
-            "description": "REQUESTED는 대기 버킷 alias(WAITING_PAYMENT+내부 FAILED)입니다. UI 업무 상태는 WAITING_PAYMENT/PAID만 사용합니다.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "REQUESTED",
-                "WAITING_PAYMENT",
-                "PAID"
-              ]
-            }
-          },
-          {
-            "name": "fromDate",
-            "in": "query",
-            "description": "이체 예정일 시작(scheduledPaymentDate). 출강일 lectureDate가 아닙니다.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "toDate",
-            "in": "query",
-            "description": "이체 예정일 종료(scheduledPaymentDate). 출강일 lectureDate가 아닙니다.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "instructorName",
-            "in": "query",
-            "description": "신청자명 contains. 실명 기준이며 서버에서 마스킹하지 않습니다.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "programName",
-            "in": "query",
-            "description": "프로그램명 contains (programNameKo).",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "year",
-            "in": "query",
-            "description": "이체일 기준 전년-12-01~당해-12-31. fromDate/toDate가 있으면 그 값 우선.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "요청 성공",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageResponseAccountPaymentListItemResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값 검증 실패",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "bad-request": {
-                    "summary": "요청 값 검증 실패",
-                    "description": "bad-request",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "BAD_REQUEST: request parameter is invalid"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "인증 필요",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "unauthorized": {
-                    "summary": "인증 필요",
-                    "description": "unauthorized",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "UNAUTHORIZED: authentication is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "권한 부족",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "forbidden": {
-                    "summary": "권한 부족",
-                    "description": "forbidden",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "PERMISSION_DENIED: admin permission is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "대상 리소스 없음",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "not-found": {
-                    "summary": "대상 리소스 없음",
-                    "description": "not-found",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "NOT_FOUND: requested resource was not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "비즈니스 상태 충돌 또는 중복 요청",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "conflict": {
-                    "summary": "비즈니스 상태 충돌",
-                    "description": "conflict",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "CONFLICT: requested transition is not allowed in the current state"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
-          }
-        }
-      }
-    },
-    "/api/admin/account-payments/{paymentId}": {
-      "get": {
-        "tags": [
-          "정산"
-        ],
-        "summary": "계좌 지급 단건 상세 조회",
-        "description": "### 이 API가 하는 일\n- 계좌 지급 단건 상세 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/account-payments/{paymentId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend CMS settlement-management P1 account payment detail handoff",
-        "operationId": "getAccountPayment",
-        "parameters": [
-          {
-            "name": "paymentId",
-            "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "reason",
-            "in": "query",
-            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "요청 성공",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccountPaymentDetailResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 값 검증 실패",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "bad-request": {
-                    "summary": "요청 값 검증 실패",
-                    "description": "bad-request",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "BAD_REQUEST: request parameter is invalid"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "인증 필요",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "unauthorized": {
-                    "summary": "인증 필요",
-                    "description": "unauthorized",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "UNAUTHORIZED: authentication is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "권한 부족",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "forbidden": {
-                    "summary": "권한 부족",
-                    "description": "forbidden",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "PERMISSION_DENIED: admin permission is required"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "대상 리소스 없음",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "not-found": {
-                    "summary": "대상 리소스 없음",
-                    "description": "not-found",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "NOT_FOUND: requested resource was not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "비즈니스 상태 충돌 또는 중복 요청",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "conflict": {
-                    "summary": "비즈니스 상태 충돌",
-                    "description": "conflict",
-                    "value": {
-                      "success": false,
-                      "data": null,
-                      "message": "CONFLICT: requested transition is not allowed in the current state"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
       }
@@ -79032,8 +78897,19 @@
           "learningSupportContent": {
             "type": "string"
           },
+          "remarks": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "비고. Gemini 찾아가는 연수 모집의 geminiRecruitment.notes 저장 필드. 해당없음이면 생략/null."
+          },
           "otherMatters": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기타사항. 강사·봉사자 모집용. Gemini 찾아가는 연수 모집에는 입력란이 없다. 전환 기간에는 Gemini가 otherMatters/notes로 보낸 비고를 remarks로 받는다."
           },
           "recruitmentTargetDetail": {
             "type": "string"
@@ -85531,11 +85407,16 @@
         "type": "object",
         "properties": {
           "shortcutId": {
-            "type": "string"
+            "type": "string",
+            "description": "path shortcutId와 동일. POST body에 이 값만 보낸다."
           },
           "readAt": {
-            "type": "string",
-            "format": "date-time"
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "클라이언트가 보내지 않는다. 서버가 읽음 시각을 기록한다. 호환용으로 남아 있으며 보내도 계약상 클라이언트 송신 없음."
           }
         }
       },
@@ -87287,7 +87168,14 @@
             }
           },
           "duplicateStrategy": {
-            "type": "string"
+            "type": "string",
+            "description": "overwrite=동일 키 행 덮어쓰기(지급완료면 요청 전체 미커밋). append=중복이어도 신규 insert. 소문자 허용.",
+            "enum": [
+              "overwrite",
+              "append",
+              "OVERWRITE",
+              "APPEND"
+            ]
           }
         }
       },
@@ -87322,13 +87210,18 @@
           },
           "trainingDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "example": "2026-10-12"
           },
           "trainingStartTime": {
-            "type": "string"
+            "type": "string",
+            "format": "time",
+            "example": "10:00:00"
           },
           "trainingEndTime": {
-            "type": "string"
+            "type": "string",
+            "format": "time",
+            "example": "12:00:00"
           },
           "trainingMinutes": {
             "type": "integer",
@@ -87420,7 +87313,12 @@
             "format": "int32"
           },
           "status": {
-            "type": "string"
+            "type": "string",
+            "description": "대소문자 고정. 행 검증 실패 또는 지급완료 overwrite 차단만 FAILED.",
+            "enum": [
+              "SUCCESS",
+              "FAILED"
+            ]
           },
           "message": {
             "type": "string"
@@ -96184,6 +96082,13 @@
           },
           "scheduleDateLabel": {
             "type": "string"
+          },
+          "educationPlaceAddress": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "GENERAL_INDIVIDUAL 교육 진행 장소. 일정 별 상이일 때 이 회차 주소. 없으면 생략."
           }
         }
       },
@@ -96301,7 +96206,7 @@
               "null"
             ],
             "format": "date",
-            "description": "Gemini 연수 요청 가능 기간 시작일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null."
+            "description": "Gemini 연수 요청 가능 기간 시작일(Asia/Seoul 역일). gemini_program_detail 정본. 비Gemini·미설정은 null. 기관 모집 기간(applicationStartDate/applicationEndDate, recruitments startAt/endAt)으로 채우지 않는다."
           },
           "trainingRequestEndDate": {
             "type": [
@@ -96309,7 +96214,7 @@
               "null"
             ],
             "format": "date",
-            "description": "Gemini 연수 요청 가능 기간 종료일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null."
+            "description": "Gemini 연수 요청 가능 기간 종료일(Asia/Seoul 역일). gemini_program_detail 정본. 비Gemini·미설정은 null. 모집 기간·사업기간·operationStartDate로 대체하지 않는다."
           },
           "preEducationNoticeRequired": {
             "type": [
@@ -96632,6 +96537,24 @@
             ],
             "format": "int32",
             "description": "제미나이 최소 수강 인원(gemini_program_detail.min_participant_count). CMS minParticipantCount/minimumParticipants/minStudentCount와 같은 저장값. 비제미나이·미설정이면 null."
+          },
+          "educationPlaceScheduleDetail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "GENERAL_INDIVIDUAL 교육 진행 장소 공통/일정 별 상이. 기관·다른 유형은 null.",
+            "enum": [
+              "common",
+              "perSchedule"
+            ]
+          },
+          "educationPlaceAddress": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "GENERAL_INDIVIDUAL 일정 공통 교육 장소 주소. perSchedule이거나 없으면 null."
           }
         }
       },
@@ -96868,6 +96791,13 @@
           },
           "participationMethodLabel": {
             "type": "string"
+          },
+          "educationPlaceAddress": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "GENERAL_INDIVIDUAL 교육 진행 장소. 일정 별 상이일 때 이 일정 주소. 사전교육 행은 생략."
           }
         }
       },
@@ -97647,46 +97577,6 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
-          }
-        }
-      },
-      "MemberInstructorAssignmentListResponse": {
-        "type": "object",
-        "description": "플랫폼 강사 마이페이지 배정 현황 탭의 배정된 목록. 강의보고서 바인딩과 무관하며 활성 ASSIGNED만 반환합니다.",
-        "properties": {
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "instructorMemberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Item"
-            }
-          }
-        }
-      },
-      "MemberInstructorAssignmentWaitingResponse": {
-        "type": "object",
-        "description": "플랫폼 강사 마이페이지 배정 현황 탭의 배정 대기 목록. 이 강사가 신청한 기관·일정만 포함하며 활성 ASSIGNED는 제외합니다.",
-        "properties": {
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "instructorMemberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Item"
-            }
           }
         }
       },
@@ -103821,6 +103711,202 @@
           }
         }
       },
+      "AccountPaymentDetailResponse": {
+        "type": "object",
+        "description": "계좌 지급 상세. settlement embed로 산출 테이블을 채우며 GET /settlements/{id}를 다시 치지 않습니다.",
+        "properties": {
+          "payment": {
+            "$ref": "#/components/schemas/AccountPaymentListItemResponse"
+          },
+          "settlement": {
+            "description": "GET /settlements/{id} 와 동일 계약(SettlementFrontendResponse). settlement 연동 건은 정산 상세, Gemini 직접 지급은 보고서 기반 합성 embed. 둘 다 없으면 null.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SettlementFrontendResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sensitiveAccount": {
+            "$ref": "#/components/schemas/AccountPaymentSensitiveDetailResponse",
+            "description": "상세 진입(본 API 성공) 시 권한이 확인된 원문 계좌정보. 개인정보 조회 이력이 accessPurpose=정산금 지급 처리를 위함 으로 자동 기록된 뒤에만 제공. 감사 로그 저장 실패 시 요청도 차단됩니다."
+          }
+        }
+      },
+      "AccountPaymentListItemResponse": {
+        "type": "object",
+        "description": "계좌 지급 확인 목록 행. 신청자명(instructorName)은 실명이고 계좌·예금주만 마스킹합니다.",
+        "properties": {
+          "accountPaymentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "batchId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "settlementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "description": "CMS 업무 상태는 WAITING_PAYMENT | PAID만 노출합니다. 내부 FAILED는 WAITING_PAYMENT로 정규화됩니다."
+          },
+          "paymentFailureYn": {
+            "type": "boolean",
+            "description": "내부 계좌 지급 처리 실패 여부. true여도 paymentStatus는 WAITING_PAYMENT입니다."
+          },
+          "paymentFailureReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다."
+          },
+          "instructorName": {
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "maskedAccountNo": {
+            "type": "string"
+          },
+          "accountHolder": {
+            "type": "string"
+          },
+          "netPaymentAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduledPaymentDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "이체 예정일. 목록 필터와 캘린더 배치 기준입니다."
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programNameKo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "프로그램명 (우선)"
+          },
+          "programName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "호환 필드. programNameKo와 동일 값입니다."
+          },
+          "institutionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "참여 기관. 개인 프로그램은 null"
+          },
+          "sessionOrdinal": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다."
+          },
+          "sessionLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "차시 표시. 예: 2 ~ 3차시. 개인은 null",
+            "example": "2 ~ 3차시"
+          },
+          "lectureDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다."
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AccountPaymentSensitiveDetailResponse": {
+        "type": "object",
+        "description": "계좌 지급 상세 진입 시 반환하는 원문 계좌정보. 목록에는 포함하지 않습니다. GET /api/admin/account-payments/{paymentId} 성공 시 accessPurpose=정산금 지급 처리를 위함 개인정보 조회 이력이 자동 기록된 뒤에만 제공됩니다.",
+        "properties": {
+          "bankName": {
+            "type": "string"
+          },
+          "accountNo": {
+            "type": "string",
+            "description": "복호화된 계좌번호 원문"
+          },
+          "accountHolder": {
+            "type": "string",
+            "description": "예금주 원문"
+          }
+        }
+      },
+      "PageResponseAccountPaymentListItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountPaymentListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PageResponseSettlementApplicationAdminListItemResponse": {
         "type": "object",
         "properties": {
@@ -106594,26 +106680,6 @@
           }
         }
       },
-      "InstructorAssignmentAvailabilityResponse": {
-        "type": "object",
-        "description": "참여 강사 배정 대기 목록용 일정별 배정 가능 여부. GENERAL_ORGANIZATION·GENERAL_INDIVIDUAL만 후보를 반환합니다.",
-        "properties": {
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "instructorMemberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Item"
-            }
-          }
-        }
-      },
       "InstructorApplicationListItemResponse": {
         "type": "object",
         "properties": {
@@ -106784,14 +106850,6 @@
             ],
             "format": "int64",
             "description": "program_schedule id."
-          },
-          "educationPeriodIndex": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32",
-            "description": "기간형 교육 기간 인덱스. 없으면 null."
           },
           "startAt": {
             "type": [
@@ -110756,15 +110814,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -110819,7 +110877,7 @@
               "type": "integer",
               "format": "int32"
             },
-            "description": "바로가기 키별 배지 숫자. FE는 목록을 다시 세지 않고 이 값을 canonical로 표시한다. 누락 키는 0으로 채우지 않음.\nprograms-general-education=GET /api/admin/programs?programType=GENERAL totalElements\nprograms-economy=GET /api/admin/programs?programType=COMPANY_SCHOOL totalElements\nprograms-ujat=GET /api/admin/programs?programType=UJAT totalElements\nprograms-gemini=GET /api/admin/programs?programType=GEMINI totalElements\nprograms-detail=GET /api/admin/programs(유형 필터 없음) totalElements (= home.programCount)\nusers-all=GET /api/admin/users(역할 필터 없음) totalElements. 사람 회원(GENERAL/SCHOOL_TEACHER/INSTRUCTOR 또는 강사 철회). 관리자 계정·순수 학교 셸 제외. home.memberCount(삭제되지 않은 member 전체) 및 GET /api/admin/members/all(회원+관리자 UNION)과 다름.\nusers-school=GET /api/admin/users?role=TEACHER totalElements (SCHOOL_TEACHER)\nusers-instructor=GET /api/admin/users?role=INSTRUCTOR totalElements (철회 강사 제외)\nusers-admin=GET /api/admin/admin-accounts 기본 목록 totalElements (ACTIVE/SUSPENDED, 미삭제)\nnotices=GET /api/admin/content/notices 기본 목록 totalElements (PUBLISHED 공개 전체. isImportant/미읽음 아님)\nfaq=GET /api/admin/content/faqs 기본 목록 totalElements (PUBLISHED 공개 전체)\ninquiries=GET /api/admin/inquiries?status=PENDING totalElements (답변대기 RECEIVED/IN_PROGRESS)\npermission-requests=GET /api/admin/instructor-role-requests?status=PENDING totalElements (강사 권한 신청 대기)\n"
+            "description": "바로가기 키별 배지. 필드명 counts. 양수인 문서화 키만 넣는다. 값이 0이거나 해당 없는 키·문서 외 키(sponsors, textbooks 등)는 JSON에서 생략한다. 0으로 채우지 않는다. FE는 키 존재+양수만 배지 표시한다. 목록 totalElements나 GET /api/admin/dashboard/home 의 programCount/memberCount를 복제하지 않는다.\n신규 추적 키: 이 관리자의 lastReadAt(POST .../dashboard-shortcut-badges/{shortcutId}/read 가 저장한 dashboard_shortcut_badge_read.read_at) 이후 created_at 행 수. 한 번도 안 읽으면 해당 목록 현재 전체와 같아 보일 수 있다. POST /read 성공 후 그 사이 신규가 없으면 키는 생략된다.\nprograms-general-education=GET /api/admin/programs?programType=GENERAL 집합의 신규(created_at)\nprograms-economy=GET /api/admin/programs?programType=COMPANY_SCHOOL 신규\nprograms-ujat=GET /api/admin/programs?programType=UJAT 신규\nprograms-gemini=GET /api/admin/programs?programType=GEMINI 신규\nprograms-detail=GET /api/admin/programs(유형 필터 없음) 신규. home.programCount와 등호가 아님\nusers-all=GET /api/admin/users(역할 필터 없음) 신규. 사람 회원(GENERAL/SCHOOL_TEACHER/INSTRUCTOR 또는 강사 철회). home.memberCount 및 GET /api/admin/members/all과 다름\nusers-school=GET /api/admin/users?role=TEACHER 신규 (SCHOOL_TEACHER)\nusers-instructor=GET /api/admin/users?role=INSTRUCTOR 신규 (철회 강사 제외)\nusers-admin=GET /api/admin/admin-accounts 기본 목록 신규 (ACTIVE/SUSPENDED, 미삭제)\nnotices=GET /api/admin/content/notices 기본 PUBLISHED 신규 (isImportant/미읽음 아님). 목록 PUBLISHED 전체 totalElements 복제가 아님\nfaq=GET /api/admin/content/faqs 기본 PUBLISHED 신규. 목록 공개 전체 totalElements 복제가 아님\n대기 키: PENDING 현재 대기. POST /read 해도 숫자가 0이 되지 않는다. 0이면 생략, 양수면 포함.\ninquiries=GET /api/admin/inquiries?status=PENDING 현재 대기 건수(RECEIVED/IN_PROGRESS). 읽음 커서를 적용하지 않음. 필터 없는 문의 전체 totalElements가 아님\npermission-requests=GET /api/admin/instructor-role-requests?status=PENDING 현재 대기 건수. 읽음 커서를 적용하지 않음\n"
           },
           "calculatedAt": {
             "type": "string",
@@ -111753,8 +111811,12 @@
             "format": "int64"
           },
           "accountPaymentId": {
-            "type": "integer",
-            "format": "int64"
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "account_payment.payment_status=PAID 일 때만 채움. 미지급은 null. 0을 넣지 않음."
           },
           "status": {
             "type": "string"
@@ -112032,12 +112094,19 @@
             ],
             "description": "문의처 이메일"
           },
+          "remarks": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "비고. geminiRecruitment.notes 저장값. 해당없음이면 null"
+          },
           "otherMatters": {
             "type": [
               "string",
               "null"
             ],
-            "description": "비고. 해당없음이면 null"
+            "description": "기타사항. Gemini 찾아가는 연수 모집에는 입력란이 없어 항상 null. 하위 호환 필드로 유지한다."
           },
           "thumbnailFileName": {
             "type": [
@@ -113606,12 +113675,12 @@
           "programCount": {
             "type": "integer",
             "format": "int64",
-            "description": "GET /api/admin/programs(필터 없음) totalElements과 동일. 삭제되지 않은 프로그램 수(관리자 데이터 범위 적용)."
+            "description": "GET /api/admin/programs(필터 없음) totalElements과 동일. 삭제되지 않은 프로그램 수(관리자 데이터 범위 적용). 바로가기 배지 programs-detail(읽음 이후 신규)와 의미가 다르다."
           },
           "memberCount": {
             "type": "integer",
             "format": "int64",
-            "description": "member.deleted_at IS NULL인 회원 수. 역할 필터 없음, 관리자 계정(admin_account) 미포함. users-all(사람 회원 디렉터리)과 다를 수 있다."
+            "description": "member.deleted_at IS NULL인 회원 수. 역할 필터 없음, 관리자 계정(admin_account) 미포함. users-all 배지(사람 회원 디렉터리의 읽음 이후 신규)와 다를 수 있다."
           },
           "unreadNotificationCount": {
             "type": "integer",
@@ -114279,202 +114348,6 @@
             "items": {
               "type": "string"
             }
-          }
-        }
-      },
-      "AccountPaymentListItemResponse": {
-        "type": "object",
-        "description": "계좌 지급 확인 목록 행. 신청자명(instructorName)은 실명이고 계좌·예금주만 마스킹합니다.",
-        "properties": {
-          "accountPaymentId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "batchId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "settlementId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "paymentStatus": {
-            "type": "string",
-            "description": "CMS 업무 상태는 WAITING_PAYMENT | PAID만 노출합니다. 내부 FAILED는 WAITING_PAYMENT로 정규화됩니다."
-          },
-          "paymentFailureYn": {
-            "type": "boolean",
-            "description": "내부 계좌 지급 처리 실패 여부. true여도 paymentStatus는 WAITING_PAYMENT입니다."
-          },
-          "paymentFailureReason": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다."
-          },
-          "instructorName": {
-            "type": "string",
-            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
-          },
-          "bankName": {
-            "type": "string"
-          },
-          "maskedAccountNo": {
-            "type": "string"
-          },
-          "accountHolder": {
-            "type": "string"
-          },
-          "netPaymentAmount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "scheduledPaymentDate": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date",
-            "description": "이체 예정일. 목록 필터와 캘린더 배치 기준입니다."
-          },
-          "paidAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "sourceType": {
-            "type": "string"
-          },
-          "sourceId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "memberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "programNameKo": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "프로그램명 (우선)"
-          },
-          "programName": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "호환 필드. programNameKo와 동일 값입니다."
-          },
-          "institutionName": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "참여 기관. 개인 프로그램은 null"
-          },
-          "sessionOrdinal": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32",
-            "description": "차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다."
-          },
-          "sessionLabel": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "차시 표시. 예: 2 ~ 3차시. 개인은 null",
-            "example": "2 ~ 3차시"
-          },
-          "lectureDate": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date",
-            "description": "교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다."
-          },
-          "availableActions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "PageResponseAccountPaymentListItemResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AccountPaymentListItemResponse"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "AccountPaymentDetailResponse": {
-        "type": "object",
-        "description": "계좌 지급 상세. settlement embed로 산출 테이블을 채우며 GET /settlements/{id}를 다시 치지 않습니다.",
-        "properties": {
-          "payment": {
-            "$ref": "#/components/schemas/AccountPaymentListItemResponse"
-          },
-          "settlement": {
-            "description": "GET /settlements/{id} 와 동일 계약(SettlementFrontendResponse). settlement 연동 건은 정산 상세, Gemini 직접 지급은 보고서 기반 합성 embed. 둘 다 없으면 null.",
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/SettlementFrontendResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sensitiveAccount": {
-            "$ref": "#/components/schemas/AccountPaymentSensitiveDetailResponse",
-            "description": "상세 진입(본 API 성공) 시 권한이 확인된 원문 계좌정보. 개인정보 조회 이력이 accessPurpose=정산금 지급 처리를 위함 으로 자동 기록된 뒤에만 제공. 감사 로그 저장 실패 시 요청도 차단됩니다."
-          }
-        }
-      },
-      "AccountPaymentSensitiveDetailResponse": {
-        "type": "object",
-        "description": "계좌 지급 상세 진입 시 반환하는 원문 계좌정보. 목록에는 포함하지 않습니다. GET /api/admin/account-payments/{paymentId} 성공 시 accessPurpose=정산금 지급 처리를 위함 개인정보 조회 이력이 자동 기록된 뒤에만 제공됩니다.",
-        "properties": {
-          "bankName": {
-            "type": "string"
-          },
-          "accountNo": {
-            "type": "string",
-            "description": "복호화된 계좌번호 원문"
-          },
-          "accountHolder": {
-            "type": "string",
-            "description": "예금주 원문"
           }
         }
       },

@@ -34,6 +34,7 @@ import {
 } from '@/features/user/permission-management/instructor-permission-cancel-approval-modal'
 import { resolveApprovalCancelModalCase } from '@/features/user/api/lib/approval-notification-case'
 import { INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_UNKNOWN_CASE_ALERT } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-copy'
+import { resolveInstructorCancelApprovalBlockedAlert } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-blocked'
 import { PermissionNotificationResendModal } from '@/features/user/permission-management/permission-notification-resend-modal'
 import {
   mapPermissionApprovalStatusForResend,
@@ -913,6 +914,12 @@ export function PermissionRequestListPage() {
         }
         setInstructorCancelApproval(null)
       } catch (error) {
+        const blockedAlert = resolveInstructorCancelApprovalBlockedAlert(error)
+        if (blockedAlert) {
+          setInstructorCancelApproval(null)
+          showAlert(blockedAlert)
+          return
+        }
         handleError(error, { defaultMessage: getRevokeError(error) })
       } finally {
         permissionReviewInFlightRef.current = false
@@ -925,6 +932,7 @@ export function PermissionRequestListPage() {
       instructorCancelApproval,
       instructorRemote,
       revokeMutation,
+      showAlert,
     ]
   )
 

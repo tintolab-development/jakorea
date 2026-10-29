@@ -30,6 +30,10 @@ import {
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features/template/lib/education-schedule-line-clock-required'
+import {
+  listIncompleteEducationPlaceReasons,
+  resolveEducationPlaceCommonEducationForm,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-place-rules'
 
 export type GeneralProgramRegistrationRequiredFieldContext = {
   participant: ProgramRegistrationParticipantSelection
@@ -469,6 +473,52 @@ function findIncompleteScheduleCurriculumReasons(
   return reasons
 }
 
+/** 교육 진행 장소 — 일반 등록·참여자 <개인> 전용. 교육 형태 「온라인」 행은 제외 */
+function findIncompleteEducationPlaceReasons(
+  overlay: Record<string, unknown>,
+  ctx: GeneralProgramRegistrationRequiredFieldContext
+): { typeSettings: string[]; rows: string[] } {
+  const isSchedule = ctx.programType === 'schedule'
+  return listIncompleteEducationPlaceReasons({
+    enabled:
+      ctx.participant.individual && !ctx.participant.organization && ctx.omitKpiAndWage !== true,
+    programType: isSchedule ? 'schedule' : 'curriculum',
+    sessionRoundType: ctx.sessionRoundType,
+    educationFormScheduleDetail: ctx.educationFormScheduleDetail,
+    commonEducationForm: resolveEducationPlaceCommonEducationForm({
+      sessionRoundType: ctx.sessionRoundType,
+      singleEducationForm: readOverlay(overlay, 'generalRegistration.typeSettings.singleEducationForm'),
+      multiCommonEducationForm: readOverlay(
+        overlay,
+        'generalRegistration.typeSettings.multiCommonEducationForm'
+      ),
+    }),
+    educationFormByIndex: readIndexRecord(
+      overlay,
+      isSchedule
+        ? 'generalRegistration.educationScheduleCurriculum.educationFormByDetail'
+        : 'generalRegistration.educationCurriculum.educationFormBySession'
+    ),
+    placeScheduleDetail: readOverlay(
+      overlay,
+      'generalRegistration.typeSettings.educationPlaceScheduleDetail'
+    ),
+    placeAddress: readOverlay(overlay, 'generalRegistration.typeSettings.educationPlaceAddress'),
+    placeByIndex: readIndexRecord(
+      overlay,
+      isSchedule
+        ? 'generalRegistration.educationScheduleCurriculum.educationPlaceByDetail'
+        : 'generalRegistration.educationCurriculum.educationPlaceBySession'
+    ),
+    rowCount: isSchedule
+      ? ctx.scheduleCurriculumDetailCount
+      : ctx.sessionRoundType === 'single'
+        ? ctx.curriculumChartSessionCount
+        : ctx.curriculumSessionCount,
+    skipFirstRow: ctx.scheduleCurriculumPreEducation && ctx.preEducationDisplayMode === 'replaceFirst',
+  })
+}
+
 function countNonEmptyEducationScheduleLines(overlay: Record<string, unknown>): number {
   const lines = readOverlay(overlay, GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY)
   if (!Array.isArray(lines)) return 0
@@ -539,6 +589,9 @@ const REQUIRED_FIELD_LABELS: Record<string, string> = {
   'typeSettings.multiCommonEducationForm': '교육 형태',
   'typeSettings.multiCommonParticipation': '참여 방식',
   'typeSettings.ipsType': 'IPS 유형',
+  'typeSettings.educationPlace': '교육 진행 장소',
+  'curriculum.educationPlace': '교육 진행 장소',
+  'scheduleCurriculum.educationPlace': '교육 진행 장소',
   'curriculum.unitName': '단원명',
   'curriculum.unitContent': '교육 내용',
   'curriculum.ips': 'IPS 유형',
@@ -575,13 +628,16 @@ export function listIncompleteGeneralProgramRegistrationRequiredFields(
   overlay: Record<string, unknown>,
   ctx: GeneralProgramRegistrationRequiredFieldContext
 ): string[] {
+  const educationPlace = findIncompleteEducationPlaceReasons(overlay, ctx)
   return [
     ...findIncompleteBasicInfoReasons(overlay, ctx),
     ...findIncompleteKpiReasons(overlay, ctx),
     ...findIncompleteWageReasons(overlay, ctx),
     ...findIncompleteTypeSettingsReasons(overlay, ctx),
+    ...educationPlace.typeSettings,
     ...findIncompleteCurriculumReasons(overlay, ctx),
     ...findIncompleteScheduleCurriculumReasons(overlay, ctx),
+    ...educationPlace.rows,
     ...findIncompleteEducationScheduleSettingsReasons(overlay, ctx),
   ]
 }

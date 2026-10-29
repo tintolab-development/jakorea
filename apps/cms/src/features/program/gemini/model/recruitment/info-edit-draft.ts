@@ -67,7 +67,7 @@ export function addSnapshotToInfoEditDraft(
     learningSupportContent: snapshot.learningSupportContent,
     additionalContentMarkdown: snapshot.additionalContentMarkdown,
     attachmentFileNames: [...snapshot.attachmentFileNames],
-    ...(snapshot.attachmentFileObjectIds != null
+    ...(snapshot.attachmentFileObjectIds !== undefined
       ? { attachmentFileObjectIds: [...snapshot.attachmentFileObjectIds] }
       : {}),
   }

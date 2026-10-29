@@ -91,7 +91,7 @@ export function GeminiRecruitmentAddDetailInfoSection({
           }
           if (patch.programDescription != null) setProgramDescription(patch.programDescription)
           if (patch.attachmentFileNames != null) setAttachmentFileNames(patch.attachmentFileNames)
-          if (patch.attachmentFileObjectIds != null) {
+          if (patch.attachmentFileObjectIds !== undefined) {
             setAttachmentFileObjectIds(patch.attachmentFileObjectIds)
           }
         }}

@@ -77,6 +77,14 @@ export type RegistrationWizardUiValues = {
   singleDateIso: string | null
   periodDateIso: string | null
   footerIpsType: CommonInfoIpsValue
+  /** 개인 대상 — 교육 진행 장소 일정 공통/일정 별 상이 */
+  educationPlaceScheduleDetail: ProgramRegistrationScheduleDetailKind
+  /** 일정 공통 교육 진행 장소(주소) */
+  educationPlaceAddress: string
+  /** 커리큘럼형 차시/회차 별 교육 진행 장소 */
+  educationPlaceBySession: Record<number, string>
+  /** 일정형 세부/행사 일정 별 교육 진행 장소 */
+  educationPlaceByDetail: Record<number, string>
   curriculum: CommonInfoCurriculumMaps
   schedule: CommonInfoScheduleMaps
   extras: RegistrationWizardUiExtras
@@ -151,6 +159,10 @@ export function createDefaultRegistrationWizardUiValues(
     singleDateIso: null,
     periodDateIso: null,
     footerIpsType: { category: '', detail: '' },
+    educationPlaceScheduleDetail: 'common',
+    educationPlaceAddress: '',
+    educationPlaceBySession: {},
+    educationPlaceByDetail: {},
     curriculum: {
       ...emptyCurriculumMaps(),
       preEducationScheduleName: PRE_EDUCATION_SCHEDULE_LABEL,

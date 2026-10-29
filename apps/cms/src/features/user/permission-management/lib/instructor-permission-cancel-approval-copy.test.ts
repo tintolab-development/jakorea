@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_BLOCKED_ALERT,
   INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_REASON_PLACEHOLDER,
   INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_TITLE,
   buildInstructorPermissionCancelApprovalMessage,
@@ -41,6 +42,16 @@ describe('buildInstructorPermissionCancelApprovalMessage', () => {
     expect(INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_TITLE).toBe('강사 권한 승인 취소 안내')
     expect(INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_REASON_PLACEHOLDER).toBe(
       '취소 사유를 입력해 주세요'
+    )
+  })
+
+  it('승인 취소 불가 안내는 권한 종료 불가 문구와 구분한다', () => {
+    expect(INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_BLOCKED_ALERT.title).not.toContain('종료')
+    expect(INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_BLOCKED_ALERT.content).toContain(
+      '강사 권한 승인 취소가 불가합니다'
+    )
+    expect(INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_BLOCKED_ALERT.content).not.toContain(
+      '강사 권한 종료가 불가합니다'
     )
   })
 })

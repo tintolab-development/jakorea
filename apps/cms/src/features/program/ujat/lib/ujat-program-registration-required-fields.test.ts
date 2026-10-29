@@ -430,7 +430,7 @@ function filledTypedVolunteer(
     volunteerRecruitmentContactOrganizationName: '담당',
     contactPhone: '010-0000-0000',
     contactEmail: 'a@b.com',
-    otherNotes: '-',
+    oneLineIntroduction: '-',
     volunteerInterviewConfig: INTERVIEW_CONFIG,
   }
 }

@@ -74,7 +74,7 @@ function snapshotToFormState(snapshot: GeminiRecruitmentAddFormSnapshot) {
     learningSupportContent: snapshot.learningSupportContent,
     additionalContentMarkdown: snapshot.additionalContentMarkdown,
     attachmentFileNames: snapshot.attachmentFileNames,
-    attachmentFileObjectIds: snapshot.attachmentFileObjectIds ?? [],
+    attachmentFileObjectIds: snapshot.attachmentFileObjectIds,
     institutionSectionDescription: snapshot.institutionSectionDescription,
     detailSectionDescription: snapshot.detailSectionDescription,
   }
@@ -158,7 +158,9 @@ export function useGeminiRecruitmentAddForm(
   const [learningSupportContent, setLearningSupportContent] = useState('')
   const [additionalContentMarkdown, setAdditionalContentMarkdown] = useState('')
   const [attachmentFileNames, setAttachmentFileNames] = useState<string[]>([])
-  const [attachmentFileObjectIds, setAttachmentFileObjectIds] = useState<number[]>([])
+  const [attachmentFileObjectIds, setAttachmentFileObjectIds] = useState<
+    Array<number | null> | undefined
+  >(undefined)
   const [institutionSectionDescription, setInstitutionSectionDescription] = useState('')
   const [detailSectionDescription, setDetailSectionDescription] = useState('')
 
@@ -253,7 +255,7 @@ export function useGeminiRecruitmentAddForm(
         learningSupportContent,
         additionalContentMarkdown,
         attachmentFileNames,
-        ...(attachmentFileObjectIds.length > 0 ? { attachmentFileObjectIds } : {}),
+        ...(attachmentFileObjectIds !== undefined ? { attachmentFileObjectIds } : {}),
         institutionSectionDescription,
         detailSectionDescription,
       })

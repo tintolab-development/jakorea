@@ -76,6 +76,8 @@ function validValues(
     sessionRound: 'single',
     educationForm: 'offline',
     educationFormScheduleDetail: 'common',
+    educationPlaceScheduleDetail: 'common',
+    educationPlaceAddress: '서울특별시 중구 세종대로 110',
     participationScheduleDetail: 'common',
     ipsScheduleDetail: 'common',
     ipsCategory: 'prepare',
@@ -686,5 +688,34 @@ describe('일반 상세 공통정보 RHF 필수 검증', () => {
         message: '사업 운영기간 안에 교육 진행 일정을 입력해주세요',
       },
     ])
+  })
+})
+
+describe('교육 진행 장소 (개인 대상)', () => {
+  it('오프라인 일정 공통 — 장소 미입력이면 typeSettings.educationPlace 필수', () => {
+    const result = parseGeneralCommonInfoRhfValidation({
+      ...validValues(),
+      educationPlaceAddress: '',
+    })
+    expect(result.ok).toBe(false)
+    expect(result.ok ? [] : result.keys).toContain('typeSettings.educationPlace')
+  })
+
+  it('온라인이면 장소 미입력이어도 필수 아님', () => {
+    const result = parseGeneralCommonInfoRhfValidation({
+      ...validValues(),
+      educationForm: 'online',
+      educationPlaceAddress: '',
+    })
+    expect(result.ok ? [] : result.keys).not.toContain('typeSettings.educationPlace')
+  })
+
+  it('기관 대상이면 장소 필수 아님', () => {
+    const result = parseGeneralCommonInfoRhfValidation({
+      ...validValues(),
+      participantOrganization: true,
+      educationPlaceAddress: '',
+    })
+    expect(result.ok ? [] : result.keys).not.toContain('typeSettings.educationPlace')
   })
 })

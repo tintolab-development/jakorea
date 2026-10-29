@@ -5,6 +5,7 @@ import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/gen
 import {
   buildEconomyRegistrationOverlayFromProgram,
   resolveCompanySchoolDetailSaveAnnouncementTitle,
+  resolveCompanySchoolDetailSaveTitleFields,
   resyncEconomyRegistrationOverlayFromProgram,
   seedEconomyRegistrationOverlayFromProgram,
   readEconomyRegistrationOverlayForSave,
@@ -175,5 +176,45 @@ describe('buildEconomyRegistrationOverlayFromProgram → apply', () => {
         programAnnouncement: 'RHF-B-공고명',
       })
     ).toBe('')
+  })
+})
+
+describe('resolveCompanySchoolDetailSaveTitleFields (QA C-10)', () => {
+  const program = { title: '기존 제목', mainTitle: '기존 제목', titleEn: 'Old' }
+
+  it('등록 단락에서 바꾼 국문·영문 대표명을 title·mainTitle·titleEn으로 돌려준다', () => {
+    expect(
+      resolveCompanySchoolDetailSaveTitleFields(
+        {
+          'economyRegistration.basicInfo.repKo': ' 새 제목 ',
+          'economyRegistration.basicInfo.repEn': 'New',
+        },
+        program
+      )
+    ).toEqual({ title: '새 제목', mainTitle: '새 제목', titleEn: 'New' })
+  })
+
+  it('overlay 값이 저장값과 같거나 비어 있으면 아무 것도 바꾸지 않는다', () => {
+    expect(
+      resolveCompanySchoolDetailSaveTitleFields(
+        {
+          'economyRegistration.basicInfo.repKo': '기존 제목',
+          'economyRegistration.basicInfo.repEn': 'Old',
+        },
+        program
+      )
+    ).toEqual({})
+    expect(
+      resolveCompanySchoolDetailSaveTitleFields({ 'economyRegistration.basicInfo.repKo': '  ' }, program)
+    ).toEqual({})
+  })
+
+  it('title이 대표명과 다른 기존 프로그램은 mainTitle만 바꾼다', () => {
+    expect(
+      resolveCompanySchoolDetailSaveTitleFields(
+        { 'economyRegistration.basicInfo.repKo': '새 대표명' },
+        { title: '별도 제목', mainTitle: '대표명', titleEn: '' }
+      )
+    ).toEqual({ mainTitle: '새 대표명' })
   })
 })

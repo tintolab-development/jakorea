@@ -14,9 +14,17 @@ import {
   listIncompleteGeneralProgramRegistrationRequiredFields,
   type GeneralProgramRegistrationRequiredFieldContext,
 } from '@/features/program/general/lib/registration-required-fields'
+import {
+  listIncompleteEducationPlaceReasons,
+  resolveEducationPlaceCommonEducationForm,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-place-rules'
 import type { RegistrationWizardUiValues } from './registration-wizard-ui-values'
 import { COMMON_INFO_PERSIST_KEYS as K } from './common-info-persist-keys'
 import {
+  REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
   REGISTRATION_WIZARD_PERIOD_DATE_ISO_KEY,
   REGISTRATION_WIZARD_SINGLE_DATE_ISO_KEY,
 } from './registration-wizard-overlay-path-map'
@@ -92,6 +100,38 @@ function extrasCtx(
     sponsorContactId: ctx.sponsorContactId || values.managerContactId,
     programTitleKo: ctx.programTitleKo || values.programTitleKo,
   }
+}
+
+/** 교육 진행 장소 — 등록 overlay 검사(`registration-required-fields`)와 같은 규칙 */
+function findIncompleteEducationPlaceReasons(
+  values: RegistrationWizardUiValues,
+  ctx: GeneralProgramRegistrationRequiredFieldContext
+): { typeSettings: string[]; rows: string[] } {
+  const isSchedule = ctx.programType === 'schedule'
+  return listIncompleteEducationPlaceReasons({
+    enabled:
+      ctx.participant.individual && !ctx.participant.organization && ctx.omitKpiAndWage !== true,
+    programType: isSchedule ? 'schedule' : 'curriculum',
+    sessionRoundType: ctx.sessionRoundType,
+    educationFormScheduleDetail: ctx.educationFormScheduleDetail,
+    commonEducationForm: resolveEducationPlaceCommonEducationForm({
+      sessionRoundType: ctx.sessionRoundType,
+      singleEducationForm: values.singleEducationForm,
+      multiCommonEducationForm: values.multiCommonEducationForm,
+    }),
+    educationFormByIndex: isSchedule
+      ? values.schedule.educationFormByDetail
+      : values.curriculum.educationFormBySession,
+    placeScheduleDetail: values.educationPlaceScheduleDetail,
+    placeAddress: values.educationPlaceAddress,
+    placeByIndex: (isSchedule ? values.educationPlaceByDetail : values.educationPlaceBySession) ?? {},
+    rowCount: isSchedule
+      ? ctx.scheduleCurriculumDetailCount
+      : ctx.sessionRoundType === 'single'
+        ? ctx.curriculumChartSessionCount
+        : ctx.curriculumSessionCount,
+    skipFirstRow: ctx.scheduleCurriculumPreEducation && ctx.preEducationDisplayMode === 'replaceFirst',
+  })
 }
 
 export function listIncompleteRegistrationWizardRequiredFields(
@@ -172,6 +212,8 @@ export function listIncompleteRegistrationWizardRequiredFields(
     resolved.ipsScheduleDetail === 'common' && isIpsIncomplete(values.ipsType),
     'typeSettings.ipsType'
   )
+  const educationPlace = findIncompleteEducationPlaceReasons(values, resolved)
+  reasons.push(...educationPlace.typeSettings)
 
   if (resolved.programType === 'curriculum') {
     const chartCount = Math.max(1, resolved.curriculumChartSessionCount)
@@ -288,6 +330,8 @@ export function listIncompleteRegistrationWizardRequiredFields(
     }
   }
 
+  reasons.push(...educationPlace.rows)
+
   const hideScheduleSettings =
     resolved.programType === 'schedule' && resolved.sessionRoundType === 'multi'
   if (!hideScheduleSettings) {
@@ -388,6 +432,10 @@ export function projectWizardUiValuesToOverlayForTest(
     [K.ipsByDetailIndex]: values.schedule.ipsByDetailIndex,
     [K.assignmentByDetail]: values.schedule.assignmentByDetail,
     [K.preEducationName]: values.schedule.preEducationName,
+    [REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY]: values.educationPlaceScheduleDetail,
+    [REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY]: values.educationPlaceAddress,
+    [REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY]: values.educationPlaceBySession,
+    [REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY]: values.educationPlaceByDetail,
   }
   return overlay
 }

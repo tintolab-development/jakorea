@@ -327,6 +327,83 @@ describe('UJAT recruit form overlay', () => {
     expect(saved.programRecruitments?.[0]?.otherMatters).toBe('봉사자 준비물 안내')
   })
 
+  it('봉사자 모집 비고는 row remarks, 기타사항은 row otherMatters로 따로 저장한다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      programRecruitments: [
+        {
+          id: 41,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF' as const,
+        },
+      ],
+    }
+    const values = {
+      ...programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1'),
+      oneLineIntroduction: '봉사자 비고',
+      otherNotes: '봉사자 기타사항',
+    }
+    const saved = applyUjatRecruitAnnouncementTitleToDraft({
+      draft: program,
+      existing: program,
+      title: values.announcementTitle,
+      kind: 'volunteer_h1',
+      values,
+    })
+    expect(saved.programRecruitments?.[0]?.remarks).toBe('봉사자 비고')
+    expect(saved.programRecruitments?.[0]?.otherMatters).toBe('봉사자 기타사항')
+  })
+
+  it('봉사자 overlay 비고(notes)와 기타사항(otherNotes)은 섞지 않는다', () => {
+    const base = programToDetailEditValues(UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM)
+    const overlay = buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues(
+      { ...base, oneLineIntroduction: '비고 값', otherNotes: '기타사항 값' },
+      'h1'
+    )
+    expect(overlay['ujat.recruit.volunteer.h1.notes']).toBe('비고 값')
+    expect(overlay['ujat.recruit.volunteer.h1.otherNotes']).toBe('기타사항 값')
+
+    const notApplicable = buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues(
+      {
+        ...base,
+        oneLineIntroduction: '비고 값',
+        otherNotes: '기타사항 값',
+        volunteerRecruitmentNotesNotApplicable: 'not_applicable',
+      },
+      'h1'
+    )
+    expect(notApplicable['ujat.recruit.volunteer.h1.notes']).toBe('')
+    expect(notApplicable['ujat.recruit.volunteer.h1.otherNotes']).toBe('기타사항 값')
+
+    const applied = applyUjatRecruitVolunteerOverlayOntoProgram(
+      { ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM, oneLineIntroduction: undefined, otherNotes: undefined },
+      { [VOLUNTEER_KEYS.notes]: '비고 값' }
+    )
+    expect(applied.oneLineIntroduction).toBe('비고 값')
+    expect(applied.otherNotes).toBeUndefined()
+  })
+
+  it('봉사자 반기 조회는 row remarks를 비고, otherMatters를 기타사항으로 올린다', () => {
+    const displayed = resolveUjatRecruitDisplayProgram(
+      {
+        ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+        oneLineIntroduction: '기관 비고',
+        programRecruitments: [
+          {
+            id: 41,
+            recruitmentType: 'VOLUNTEER',
+            recruitTerm: 'FIRST_HALF' as const,
+            remarks: '상반기 비고',
+            otherMatters: '상반기 기타사항',
+          },
+        ],
+      },
+      'volunteer_h1'
+    )
+    expect(displayed.oneLineIntroduction).toBe('상반기 비고')
+    expect(displayed.otherNotes).toBe('상반기 기타사항')
+  })
+
   it('프로그램 상세는 등록 overlay의 교육 대상을 view·edit 시드에 올린다', () => {
     const displayed = resolveUjatRecruitDisplayProgram(
       {
