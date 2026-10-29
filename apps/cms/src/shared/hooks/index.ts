@@ -46,6 +46,8 @@ export {
   SIDO_MATCH_TOKENS,
 } from '@jakorea/location/sido-sigungu'
 export { useJusoAddressSearch } from '@jakorea/location/juso/react'
+export { useAddressSearch } from './use-address-search'
+export { useBackendAddressSearch } from './use-backend-address-search'
 export { JUSO_BUSINESS_ADDR_LINK_API_URL } from '@jakorea/location/juso'
 export type {
   UseJusoAddressSearchOptions,

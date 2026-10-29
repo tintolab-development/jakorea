@@ -4,7 +4,7 @@ import {
   getPlatformJusoMissingKeyMessage,
   readJusoApiUrlFromEnv,
   readJusoConfmKeyFromEnv,
-  useJusoAddressSearch,
+  useAddressSearch,
 } from '@/shared/hooks'
 import type { JusoAddressItem } from '@/shared/hooks'
 import { highlightKeyword } from '@/shared/lib/highlight-keyword'
@@ -47,7 +47,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   const [keyword, setKeyword] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const { addresses, totalCount, loading, error, search, reset } = useJusoAddressSearch({
+  const { addresses, totalCount, loading, error, search, reset } = useAddressSearch({
     confmKey: readJusoConfmKeyFromEnv(),
     countPerPage: RESULT_COUNT_PER_PAGE,
     apiUrl: readJusoApiUrlFromEnv(),
