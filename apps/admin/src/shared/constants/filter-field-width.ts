@@ -10,5 +10,5 @@ export const FILTER_CONTROL_MAX_WIDTH_PX = 240
 /** dateRange·selectPair 열: 2×240 + 구분 gap 20px */
 export const FILTER_CONTROL_WIDE_FIELD_WIDTH_PX = FILTER_CONTROL_MAX_WIDTH_PX * 2 + 20
 
-/** 조회 버튼 폭 (px) — 높이 44는 CmsButton large */
+/** 조회 버튼 폭 (px) — 높이 40은 CmsButton medium */
 export const FILTER_SEARCH_BUTTON_WIDTH_PX = 160
