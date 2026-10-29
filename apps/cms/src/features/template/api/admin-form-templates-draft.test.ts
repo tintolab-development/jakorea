@@ -260,6 +260,30 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     expect(createVersionMock).toHaveBeenCalled()
   })
 
+  it('does not fork when FORM_VERSION_IMMUTABLE details say templateScope CATALOG (cache scope unknown)', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'recruitment-instructor-custom-02',
+      templateId: 9,
+      templateVersionId: 24,
+      latestVersionId: 24,
+      baseTemplateCode: 'recruitment-instructor',
+    })
+    updateRemoteMock.mockRejectedValueOnce({
+      response: {
+        data: { error: { code: 'FORM_VERSION_IMMUTABLE', details: { templateScope: 'CATALOG' } } },
+      },
+    })
+    createVersionMock.mockResolvedValue({ templateId: 9, templateVersionId: 25, versionNo: 2 })
+
+    await expect(
+      saveFormTemplateVersionDraft({
+        templateCode: 'recruitment-instructor-custom-02',
+        draft: createRecruitFormInstructorDraft(),
+      })
+    ).rejects.toBeDefined()
+    expect(createVersionMock).not.toHaveBeenCalled()
+  })
+
   it('rethrows non-immutable PUT errors without copying', async () => {
     updateRemoteMock.mockRejectedValue({ response: { data: { code: 'VALIDATION_FAILED' } } })
     const draft = createProgramRegistrationDraft('general')
