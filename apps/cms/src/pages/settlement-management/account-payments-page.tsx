@@ -48,6 +48,7 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
 import { FilterTableToolbarButton } from '@/shared/ui'
+import { CmsPageTabs } from '@/shared/ui/cms-text-tabs'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
 import './payment-orders-page.css'
@@ -949,30 +950,17 @@ export default function AccountPaymentsPage() {
   return (
     <div className="payment-orders-page account-payments-page">
       <div className="account-payments-page__top-nav">
-        <div className="account-payments-page__tabs" role="tablist" aria-label="연도별 조회">
-          {tabYears.map(y => {
-            const active = y === selectedYearScoped
-            return (
-              <button
-                key={y}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                id={`account-payments-year-tab-${y}`}
-                className={
-                  active
-                    ? 'account-payments-page__tab account-payments-page__tab--active'
-                    : 'account-payments-page__tab'
-                }
-                onClick={() => {
-                  if (!active) handleYearTabSelect(y)
-                }}
-              >
-                <span className="account-payments-page__tab-label">{y}년</span>
-              </button>
-            )
-          })}
-        </div>
+        <CmsPageTabs
+          className="account-payments-page__tabs"
+          wrap
+          aria-label="연도별 조회"
+          value={String(selectedYearScoped)}
+          onChange={key => handleYearTabSelect(Number(key))}
+          items={tabYears.map(y => ({
+            value: String(y),
+            label: `${y}년`,
+          }))}
+        />
       </div>
 
       <div className="account-payments-page__summary-row" aria-label="정산 요약">

@@ -6,9 +6,11 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Table, Tag, Button, Space, Typography, Tabs } from 'antd'
+import { Card, Tag, Button, Space, Typography } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { ContentModal, EmptyState } from '@/shared/ui'
+import { CmsPageTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -273,20 +275,19 @@ export function InstructorReportsPage() {
       </div>
 
       <Card>
-        <Tabs
-          activeKey={activeTab}
+        <CmsPageTabs
+          size="section"
+          aria-label="보고서 상태"
+          value={activeTab}
           onChange={key => setActiveTab(key as LectureReportStatus | 'all')}
           items={statusTabs.map(tab => ({
-            key: tab.key,
-            label: (
-              <span>
-                {tab.label} ({tabCounts[tab.key]})
-              </span>
-            ),
+            value: tab.key,
+            label: tab.label,
+            count: tabCounts[tab.key],
           }))}
         />
 
-        <Table
+        <CmsDataTable
           columns={columns}
           dataSource={filteredReports}
           rowKey="id"

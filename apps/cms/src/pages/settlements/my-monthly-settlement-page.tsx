@@ -7,7 +7,8 @@ import { CmsRadio, LoadingButton, EmptyState } from '@/shared/ui'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Card, Space, Table, Tag, Select, Statistic } from 'antd'
+import { Card, Space, Tag, Select, Statistic } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
@@ -263,7 +264,7 @@ export function MyMonthlySettlementPage() {
             {settlements.length === 0 ? (
               <EmptyState description="해당 월의 정산 내역이 없습니다" />
             ) : (
-              <Table
+              <CmsDataTable
                 columns={columns}
                 dataSource={settlements}
                 rowKey="id"

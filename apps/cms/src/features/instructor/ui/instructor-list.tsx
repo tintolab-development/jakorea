@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { Instructor } from '@/types/domain'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 
@@ -23,7 +23,7 @@ export function InstructorList({ data, loading, onView }: InstructorListProps) {
   })
 
   return (
-    <Table
+    <CmsDataTable
       dataSource={data}
       onRow={
         onView

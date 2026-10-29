@@ -6,7 +6,8 @@
 
 import { MESSAGES } from '@/shared/constants'
 import { useState } from 'react'
-import { Table, Button, Space, Tag, Tooltip, Dropdown } from 'antd'
+import { Button, Space, Tag, Tooltip, Dropdown } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { MenuProps } from 'antd'
 import { EyeOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons'
@@ -248,7 +249,7 @@ export function InstructorList({
         canDownloadOriginalOverride={canDownload}
       />
 
-      <Table
+      <CmsDataTable
         columns={columns}
         dataSource={data}
         loading={loading}

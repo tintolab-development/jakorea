@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { AppBreadcrumb } from '@/shared/ui/app-breadcrumb'
-import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
+import { CmsPageTabs, CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { PageHeader } from '@/shared/ui/page-header'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import { ViewModeToggle } from '@/shared/components/view-mode'
@@ -10,6 +10,7 @@ import { DsDemo, DsSection } from './section'
 
 export function NavigationSection() {
   const [textTab, setTextTab] = useState<'info' | 'apps' | 'history'>('info')
+  const [pageTab, setPageTab] = useState<'WRITING' | 'ISSUANCE'>('WRITING')
   const [segment, setSegment] = useState('month')
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
@@ -41,8 +42,17 @@ export function NavigationSection() {
         />
       </DsDemo>
 
-      <DsDemo label="CmsTextTabs / SegmentedTab sizes">
+      <DsDemo label="CmsPageTabs / CmsTextTabs / SegmentedTab sizes">
         <div className="ds-demo__stack" style={{ maxWidth: '100%' }}>
+          <CmsPageTabs
+            aria-label="양식 유형"
+            value={pageTab}
+            onChange={setPageTab}
+            items={[
+              { value: 'WRITING', label: '작성 양식' },
+              { value: 'ISSUANCE', label: '발급 양식' },
+            ]}
+          />
           <CmsTextTabs
             activeKey={textTab}
             onChange={setTextTab}

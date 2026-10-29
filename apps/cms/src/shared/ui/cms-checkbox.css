@@ -98,7 +98,7 @@
 /* medium */
 .cms-checkbox.cms-checkbox--medium.ant-checkbox-wrapper,
 .cms-checkbox-group.cms-checkbox-group--medium .ant-checkbox-wrapper {
-  gap: 6px;
+  gap: 8px;
   font-size: 14px;
   line-height: 125%;
 }
@@ -202,7 +202,8 @@
 .cms-checkbox-group .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner {
   border-radius: var(--Radius-4, 4px);
   border: 1px solid var(--Border-disabled-selected, rgba(34, 64, 75, 0.2));
-  background: rgba(40, 95, 116, 0.5);
+  /* Figma Background/disabled-selected — #22404B 20% over white */
+  background: linear-gradient(0deg, rgba(34, 64, 75, 0.2) 0%, rgba(34, 64, 75, 0.2) 100%), #fff;
 }
 
 /* 비활성 — 선택됨 체크마크 */
