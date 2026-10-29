@@ -684,7 +684,12 @@ function ProgramListPageContent() {
         {programListToolbarActions}
       </ProgramList>
       {isCompanySchoolPath ? (
-        <div ref={companySchoolLoadMoreRef} aria-hidden style={{ height: 1 }} />
+        <div
+          ref={companySchoolLoadMoreRef}
+          className="program-list-page__load-more-sentinel"
+          aria-hidden
+          style={{ height: 1 }}
+        />
       ) : null}
 
       <ProgramModalWhenOpen
