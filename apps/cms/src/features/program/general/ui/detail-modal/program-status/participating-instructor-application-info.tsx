@@ -58,7 +58,9 @@ function toApplicantFeeViewRow(instructor: ParticipatingInstructorRow): Applican
   return participatingRowToApplicantFeeViewRow(instructor) as ApplicantInstructorRow
 }
 
-function toApplicantFeeEditDraft(draft: ParticipatingInstructorEditDraft): ApplicantInstructorEditDraft {
+function toApplicantFeeEditDraft(
+  draft: ParticipatingInstructorEditDraft
+): ApplicantInstructorEditDraft {
   return { ...draft, adminComment: '' }
 }
 

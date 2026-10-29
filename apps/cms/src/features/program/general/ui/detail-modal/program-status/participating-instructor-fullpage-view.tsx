@@ -1462,6 +1462,7 @@ export function ParticipatingInstructorFullpageView({
                 size="h40"
                 width={false}
                 isEditing={applicationInfoEdit.isEditing}
+                saving={applicationInfoEdit.isSaving}
                 idleVariant="secondary"
                 onEdit={applicationInfoEdit.enterEdit}
                 onCancel={applicationInfoEdit.cancelEdit}

@@ -9,6 +9,20 @@
   padding: 0;
 }
 
+.participating-instructor-fullpage-view .school-detail-fullpage-view__tabs-row .cms-text-tabs__list {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.participating-instructor-fullpage-view
+  .school-detail-fullpage-view__tabs-row
+  .cms-text-tabs__trailing {
+  position: relative;
+  z-index: 3;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
 /* 내부 content 가 program-detail __content(flex:1)를 재사용해도 세로로 늘어나지 않게 */
 .participating-instructor-fullpage-view .program-detail-fullpage-modal__content {
   flex: 0 1 auto;
