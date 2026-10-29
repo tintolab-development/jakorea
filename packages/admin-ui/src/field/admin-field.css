@@ -7,6 +7,10 @@
  * - medium (M)     40    9px 16px             8    15    14    20
  * - small  (S)     36    8px 14px             6    14    13    18
  *
+ * 입력 line-height(--cms-control-lh): XL·L 150% / M 145% / S 140%
+ * 클리어(X) 노출 시 우측 padding(--cms-control-pr-clear): XL 16 / L 12 / M 12 / S 10
+ * 셀렉트 우측 padding 은 `admin-select.css` 에서 XL 16 / M 12 / S 10 으로 덮어씀
+ *
  * 라벨 ↔ 박스 ↔ 메세지 6px · 기본 폭 240px(모든 사이즈)
  * 상태 우선순위: disabled > error > hover/focus > default
  */
@@ -20,6 +24,8 @@
   --cms-control-pl: 20px;
   --cms-control-gap: 8px;
   --cms-control-font: 18px;
+  --cms-control-lh: 150%;
+  --cms-control-pr-clear: 16px;
   --cms-label-font: 15px;
   --cms-icon-size: 22px;
 }
@@ -32,6 +38,8 @@
   --cms-control-pl: 16px;
   --cms-control-gap: 8px;
   --cms-control-font: 16px;
+  --cms-control-lh: 150%;
+  --cms-control-pr-clear: 12px;
   --cms-label-font: 15px;
   --cms-icon-size: 22px;
 }
@@ -44,6 +52,8 @@
   --cms-control-pl: 16px;
   --cms-control-gap: 8px;
   --cms-control-font: 15px;
+  --cms-control-lh: 145%;
+  --cms-control-pr-clear: 12px;
   --cms-label-font: 14px;
   --cms-icon-size: 20px;
 }
@@ -56,6 +66,8 @@
   --cms-control-pl: 14px;
   --cms-control-gap: 6px;
   --cms-control-font: 14px;
+  --cms-control-lh: 140%;
+  --cms-control-pr-clear: 10px;
   --cms-label-font: 13px;
   --cms-icon-size: 18px;
 }
@@ -69,6 +81,8 @@
   --cms-control-pl: 12px;
   --cms-control-gap: 6px;
   --cms-control-font: 14px;
+  --cms-control-lh: 150%;
+  --cms-control-pr-clear: 12px;
   --cms-label-font: 13px;
   --cms-icon-size: 16px;
 }
@@ -222,7 +236,7 @@
   color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
 }
 
-/* ----- 삭제(X) — 값이 있어도 hover / focus·active 시에만 노출 ----- */
+/* ----- 삭제(X) — 값이 있어도 hover / focus·active 시에만 노출. 색은 hover 시에도 Content/weak 유지 (Figma) ----- */
 .cms-field__clear {
   box-sizing: border-box;
   display: inline-flex;
@@ -255,12 +269,6 @@
 .cms-field__box--active .cms-field__clear {
   opacity: 1;
   pointer-events: auto;
-}
-
-.cms-field__box:focus-within .cms-field__clear,
-.cms-field__box--active .cms-field__clear,
-.cms-field__clear:hover {
-  color: var(--Netural-black, #3d3d3d);
 }
 
 .cms-field__box--disabled .cms-field__clear {

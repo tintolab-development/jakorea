@@ -12,7 +12,7 @@
  *   h32  radius 6  · padding 8×10  · min-width 80   · font 12/115% · icon 16 · gap 4
  * icon = 아이콘 프레임 크기 (여백은 아이콘 SVG viewBox에 포함)
  * 아이콘 있을 때 좌우 padding (아이콘 쪽 / 반대쪽)
- *   h52 16/24 · h44 14/20 · h40 12/16 · h36 8/12 · h32 기본값 유지
+ *   h52 16/24 · h44 14/20 · h40 12/16 · h36 8/12 · h32 6/10
  * 좌우 padding은 Figma 값(테두리 안쪽 stroke 기준)에서 테두리 1px을 뺀다 — 폭·라벨 영역을 Figma와 맞춤
  */
 
@@ -133,6 +133,14 @@
 
 .cms-button.ant-btn.cms-button--h36.cms-button--has-icon.cms-button--icon-end {
   padding-inline: calc(var(--Spacing-12, 12px) - 1px) calc(var(--Spacing-8, 8px) - 1px) !important;
+}
+
+.cms-button.ant-btn.cms-button--h32.cms-button--has-icon {
+  padding-inline: calc(var(--Spacing-6, 6px) - 1px) calc(var(--Spacing-10, 10px) - 1px) !important;
+}
+
+.cms-button.ant-btn.cms-button--h32.cms-button--has-icon.cms-button--icon-end {
+  padding-inline: calc(var(--Spacing-10, 10px) - 1px) calc(var(--Spacing-6, 6px) - 1px) !important;
 }
 
 /* 승인·반려 등 텍스트 액션 — 폭 140 고정 */

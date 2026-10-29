@@ -45,6 +45,19 @@
   --cms-select-suffix-w: var(--cms-icon-size, 22px);
 }
 
+/* 셀렉트 우측 padding (Figma Field/Select) — XL 16 / L 12 / M 12 / S 10. compact(32)는 공통값 유지 */
+.cms-select.cms-control--xlarge {
+  --cms-control-pr: 16px;
+}
+
+.cms-select.cms-control--medium {
+  --cms-control-pr: 12px;
+}
+
+.cms-select.cms-control--small {
+  --cms-control-pr: 10px;
+}
+
 .cms-select--clearable {
   --cms-select-suffix-w: calc(var(--cms-icon-size, 22px) * 2 + var(--cms-control-gap, 8px));
 }
@@ -118,7 +131,7 @@
   font-size: var(--cms-control-font, 16px) !important;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: var(--cms-control-lh, 150%);
 }
 
 .cms-select .ant-select-selection-item {
@@ -203,7 +216,7 @@
   white-space: nowrap;
   font-size: var(--cms-control-font, 16px) !important;
   font-weight: 500;
-  line-height: 150%;
+  line-height: var(--cms-control-lh, 150%);
   color: var(--Netural-black, #3d3d3d);
 }
 

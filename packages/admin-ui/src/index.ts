@@ -72,10 +72,14 @@ export {
 
 export {
   AdminTextTabs,
+  AdminPageTabs,
   AdminSegmentedTab,
   type AdminTextTabItem,
   type AdminTextTabsProps,
   type AdminTextTabsVariant,
+  type AdminPageTabItem,
+  type AdminPageTabsProps,
+  type AdminPageTabsSize,
 } from './tabs/index.js'
 
 export { AdminDataTable, type AdminDataTableProps } from './table/index.js'

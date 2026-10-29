@@ -86,7 +86,7 @@
   box-shadow: none !important;
   background: transparent !important;
   font-weight: 500;
-  line-height: 150%;
+  line-height: var(--cms-control-lh, 150%);
   color: var(--Netural-black, #3d3d3d);
 }
 
@@ -112,7 +112,7 @@
   padding: 0 !important;
   padding-inline: 0 !important;
   font-weight: 500;
-  line-height: 150%;
+  line-height: var(--cms-control-lh, 150%);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -120,6 +120,12 @@
 .cms-input__inner .ant-input-prefix {
   flex-shrink: 0;
   margin-inline-end: 0 !important;
+}
+
+/* 클리어(X) 노출(hover / focus) 시 우측 padding — Figma XL 16 / L 12 / M 12 / S 10 */
+.cms-input--clearable .cms-input__control:hover,
+.cms-input--clearable .cms-input__control:focus-within {
+  padding-right: var(--cms-control-pr-clear, var(--cms-control-pr, 12px));
 }
 
 .cms-input__inner .ant-input-suffix {
@@ -137,7 +143,7 @@
   font-size: inherit;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: var(--cms-control-lh, 150%);
   opacity: 1 !important;
 }
 

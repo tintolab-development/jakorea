@@ -113,6 +113,12 @@
   white-space: nowrap;
 }
 
+.cms-text-tabs__count {
+  font-weight: 500;
+  color: inherit;
+  opacity: 0.65;
+}
+
 /* 활성 탭 — `program-detail-fullpage-modal__tab--active` 와 동일 (버튼 하단 2px stroke) */
 .cms-text-tabs button.cms-text-tabs__tab.cms-text-tabs__tab--active,
 .program-detail-fullpage-modal
@@ -126,11 +132,14 @@
   border-bottom: 2px solid var(--JA-mint-01, #01a1af);
 }
 
-/* 포커스 — 풀페이지 모달과 동일 */
 .cms-text-tabs button.cms-text-tabs__tab:focus,
-.cms-text-tabs button.cms-text-tabs__tab:focus-visible,
-.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:focus,
-.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:focus-visible {
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:focus {
   outline: none;
   box-shadow: none;
+}
+
+.cms-text-tabs button.cms-text-tabs__tab:focus-visible,
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: 2px;
 }
