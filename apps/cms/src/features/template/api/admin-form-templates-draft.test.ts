@@ -42,8 +42,6 @@ vi.mock('@/features/template/api/form-template-version-cache', () => ({
   upsertFormTemplateVersionCacheFromListItems: vi.fn(),
 }))
 
-import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
-import { queryClient } from '@/shared/lib/query-client'
 import {
   loadFormTemplateVersionDraft,
   saveFormTemplateVersionDraft,
@@ -143,10 +141,7 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
 
   it('saves typed template settings without rewriting extensionJson.overlay', async () => {
     updateRemoteMock.mockResolvedValue({})
-    const { createUjatRecruitFormInstitutionDraft } = await import(
-      '@/features/template/model/ujat-recruit-form-institution-draft'
-    )
-    const draft = createUjatRecruitFormInstitutionDraft()
+    const draft = createRecruitFormInstructorDraft()
 
     await saveFormTemplateVersionDraft({
       templateCode: 'recruitment-ujat-school',
@@ -164,7 +159,7 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     expect(putBody.extensionJson).toBeUndefined()
   })
 
-  it('does not fork a draft when CATALOG content PUT returns FORM_CATALOG_VERSION_IMMUTABLE', async () => {
+  it('adds a new draft version to the same template on FORM_CATALOG_VERSION_IMMUTABLE', async () => {
     updateRemoteMock.mockRejectedValueOnce({
       response: { data: { error: { code: 'FORM_CATALOG_VERSION_IMMUTABLE' } } },
     })
@@ -177,14 +172,12 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     createVersionMock.mockResolvedValue({ templateId: 1, templateVersionId: 11, versionNo: 2 })
     const draft = createProgramRegistrationDraft('general')
 
-    await expect(
-      saveFormTemplateVersionDraft({ templateCode: TEMPLATE_CODE, draft })
-    ).rejects.toThrow(/구조는 변경하거나 게시할 수 없습니다/)
-    expect(createVersionMock).not.toHaveBeenCalled()
-    expect(updateRemoteMock).toHaveBeenCalledTimes(1)
+    await saveFormTemplateVersionDraft({ templateCode: TEMPLATE_CODE, draft })
+
+    expect(createVersionMock).toHaveBeenCalled()
   })
 
-  it('does not fork a draft when a CATALOG original returns FORM_VERSION_IMMUTABLE', async () => {
+  it('adds a new draft version to the same template on FORM_VERSION_IMMUTABLE', async () => {
     updateRemoteMock.mockRejectedValueOnce({
       response: { data: { error: { code: 'FORM_VERSION_IMMUTABLE' } } },
     })
@@ -197,67 +190,17 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     createVersionMock.mockResolvedValue({ templateId: 1, templateVersionId: 11, versionNo: 2 })
     const draft = createProgramRegistrationDraft('general')
 
-    await expect(
-      saveFormTemplateVersionDraft({ templateCode: TEMPLATE_CODE, draft })
-    ).rejects.toBeDefined()
-
-    expect(updateRemoteMock).toHaveBeenCalledTimes(1)
-    expect(createVersionMock).not.toHaveBeenCalled()
-  })
-
-  it('invalidates version and published-payload cache after catalog content save', async () => {
-    updateRemoteMock.mockResolvedValue({})
-    const invalidate = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue()
-    const setQueryData = vi.spyOn(queryClient, 'setQueryData')
-    const draft = createProgramRegistrationDraft('general')
-    fetchRemoteMock.mockResolvedValue({
-      templateVersionId: 10,
-      schemaJson: JSON.stringify(draft),
-    })
-
     await saveFormTemplateVersionDraft({ templateCode: TEMPLATE_CODE, draft })
 
-    expect(updateRemoteMock).toHaveBeenCalledWith(10, expect.any(Object))
-    expect(invalidate).toHaveBeenCalledWith({
-      queryKey: formTemplateQueryKeys.versionById(10),
-    })
-    expect(invalidate).toHaveBeenCalledWith({
-      queryKey: formTemplateQueryKeys.publishedPayload(TEMPLATE_CODE),
-    })
+    expect(updateRemoteMock).toHaveBeenCalledTimes(1)
     expect(fetchRemoteMock).toHaveBeenCalledWith(10)
-    expect(setQueryData).toHaveBeenCalledWith(
-      formTemplateQueryKeys.versionById(10),
-      expect.objectContaining({ templateVersionId: 10 })
+    expect(createVersionMock).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        schemaJson: expect.stringContaining('program-registration-seed-basic-info'),
+        settingsJson: '{"s":1}',
+      })
     )
-    invalidate.mockRestore()
-    setQueryData.mockRestore()
-  })
-
-  it('still forks a non-catalog template on FORM_VERSION_IMMUTABLE', async () => {
-    getCacheMock.mockReturnValue({
-      templateCode: 'recruitment-instructor-custom-01',
-      templateId: 9,
-      templateVersionId: 22,
-      latestVersionId: 22,
-      baseTemplateCode: 'recruitment-instructor',
-    })
-    updateRemoteMock.mockRejectedValueOnce({
-      response: { data: { error: { code: 'FORM_VERSION_IMMUTABLE' } } },
-    })
-    fetchRemoteMock.mockResolvedValue({
-      templateVersionId: 22,
-      schemaJson: JSON.stringify(createRecruitFormInstructorDraft()),
-      extensionJson: null,
-      settingsJson: '{"s":1}',
-    })
-    createVersionMock.mockResolvedValue({ templateId: 9, templateVersionId: 23, versionNo: 2 })
-
-    await saveFormTemplateVersionDraft({
-      templateCode: 'recruitment-instructor-custom-01',
-      draft: createRecruitFormInstructorDraft(),
-    })
-
-    expect(createVersionMock).toHaveBeenCalled()
   })
 
   it('rethrows non-immutable PUT errors without copying', async () => {

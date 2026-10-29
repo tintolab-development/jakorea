@@ -5,10 +5,7 @@ import { getFormNavDisplayLine } from '@/features/template/lib/form-title-number
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import { forceParagraphTitleRequired } from '@/features/template/lib/paragraph-required-mark'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
-import {
-  isCatalogOriginalWritingTemplate,
-  isWritingFormTemplateStructureLocked,
-} from '@/features/template/lib/form-template-delete-policy'
+import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -365,23 +362,8 @@ export function useUjatProgramRegistrationEditor(
       ujatProgramRegistrationBasicInfoOverlayFree: usesRegistrationWizardDraft,
       ujatProgramRegistrationEducationScheduleForm: educationScheduleForm,
       structureLockedAuthoringChoicePreview: true,
-      catalogOriginalParagraphTitleLocked:
-        isTemplateManagementSave &&
-        isCatalogOriginalWritingTemplate({
-          templateCode,
-          systemTemplate: options?.systemTemplate,
-        })
-          ? true
-          : undefined,
     }),
-    [
-      basicInfoForm,
-      educationScheduleForm,
-      isTemplateManagementSave,
-      options?.systemTemplate,
-      templateCode,
-      usesRegistrationWizardDraft,
-    ]
+    [basicInfoForm, educationScheduleForm, usesRegistrationWizardDraft]
   )
 
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {

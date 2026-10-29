@@ -14,8 +14,6 @@ export type WritingFormTemplateStructureLockTarget = {
   templateCode?: string | null
   /** forms-surveys 목록 API — false면 사용자 생성(복제) 템플릿 */
   systemTemplate?: boolean
-  /** 목록·상세 `baseTemplateCode`. 원본은 자기 자신. */
-  baseTemplateCode?: string | null
   /** 신규 등록 직후 URL 플래그 — catalog code여도 편집 허용 */
   forceUserEditable?: boolean
 }
@@ -131,41 +129,6 @@ export function isProgramScopedOperationalWritingTemplate(item: {
   return PROGRAM_SCOPED_OPERATIONAL_CATEGORIES.has(resolved)
 }
 
-/**
- * CATALOG 원본.
- * 버전 DTO에 templateScope·sourceTemplateId가 없어
- * systemTemplate·baseTemplateCode·카탈로그 고정 코드로 판별한다.
- */
-export function isCatalogOriginalWritingTemplate(input: {
-  templateCode?: string | null
-  baseTemplateCode?: string | null
-  systemTemplate?: boolean | null
-}): boolean {
-  const code = input.templateCode?.trim() ?? ''
-  if (code === '') return false
-  if (!isCatalogFixedWritingFormTemplateCode(code)) return false
-  if (isDuplicateWritingTemplateCode(code)) return false
-  if (input.systemTemplate === false) return false
-  const base = input.baseTemplateCode?.trim()
-  if (base != null && base !== '' && base !== code) return false
-  return true
-}
-
-/** 프로그램 전용 복사본. CATALOG 원본이 아니면 derived·systemTemplate false·다른 baseTemplateCode. */
-export function isProgramDedicatedWritingTemplate(input: {
-  templateCode?: string | null
-  baseTemplateCode?: string | null
-  systemTemplate?: boolean | null
-}): boolean {
-  const code = input.templateCode?.trim() ?? ''
-  if (code === '') return false
-  if (isCatalogOriginalWritingTemplate(input)) return false
-  if (input.systemTemplate === false) return true
-  if (isDuplicateWritingTemplateCode(code)) return true
-  const base = input.baseTemplateCode?.trim()
-  return base != null && base !== '' && base !== code
-}
-
 /** 단락 구조 잠금 — 모집·신청(복제본 포함)은 항상 잠금. 신청은 등록 화면과 같은 부분 편집. */
 export function isWritingFormTemplateStructureLocked(
   target: WritingFormTemplateStructureLockTarget
@@ -173,15 +136,6 @@ export function isWritingFormTemplateStructureLocked(
   if (isRecruitmentWritingTemplateCode(target.templateCode)) return true
   if (isApplicationWritingTemplateCode(target.templateCode)) return true
   if (target.forceUserEditable === true) return false
-  if (
-    isCatalogOriginalWritingTemplate({
-      templateCode: target.templateCode,
-      baseTemplateCode: target.baseTemplateCode,
-      systemTemplate: target.systemTemplate,
-    })
-  ) {
-    return true
-  }
   const templateCode = target.templateCode?.trim() ?? ''
   const catalogOriginal = isCatalogFixedWritingFormTemplateCode(templateCode)
   if (

@@ -9,6 +9,7 @@ import {
   CRIME_CONSENT_UPLOAD_ACCEPT,
   isCrimeConsentUploadFile,
 } from '@/features/template/lib/agreement-crime-consent-settings'
+import { downloadCrimeConsentFormDocument } from '@/features/template/lib/crime-consent-form-document'
 import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-management/crime-consent-document-preview'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -34,16 +35,8 @@ export function CrimeRecordConsentDocumentFullpageModal({
 }: CrimeRecordConsentDocumentFullpageModalProps) {
   const { showAlert } = useCmsAlert()
   const iconMaskId = `crime-consent-pen-mask-${useId().replace(/:/g, '')}`
-  const {
-    displaySrc,
-    replacementFileName,
-    uploadedFile,
-    documentSettings,
-    replacing,
-    downloadError,
-    handleDocumentFile,
-    downloadFile,
-  } = useAgreementCrimeConsentDocumentEditor(open)
+  const { displaySrc, replacementFileName, uploadedFile, handleDocumentFile } =
+    useAgreementCrimeConsentDocumentEditor(open)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handlePickDocument = useCallback(() => {
@@ -66,6 +59,12 @@ export function CrimeRecordConsentDocumentFullpageModal({
     },
     [handleDocumentFile, showAlert]
   )
+
+  const handleDownload = useCallback(() => {
+    void downloadCrimeConsentFormDocument().catch(error => {
+      console.debug('crimeRecordConsentDocument download failed', error)
+    })
+  }, [])
 
   return (
     <TealHeaderModal
@@ -132,12 +131,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
                 variant="secondary"
                 size="medium"
                 icon={<ButtonDownloadIcon />}
-                disabled={documentSettings?.activeFileObjectId == null}
-                onClick={() => {
-                  const fileObjectId = documentSettings?.activeFileObjectId
-                  if (fileObjectId == null) return
-                  void downloadFile(fileObjectId, '성범죄 경력 조회 동의서.pdf')
-                }}
+                onClick={handleDownload}
               >
                 문서 다운로드
               </CmsButton>
@@ -153,7 +147,6 @@ export function CrimeRecordConsentDocumentFullpageModal({
                 <CmsButton
                   variant="primary"
                   tabIndex={-1}
-                  loading={replacing}
                   onClick={handlePickDocument}
                 >
                   문서 변경
@@ -161,31 +154,6 @@ export function CrimeRecordConsentDocumentFullpageModal({
               </span>
             </div>
           </div>
-
-          {downloadError != null ? (
-            <p className="crime-consent-doc-modal__notice">{downloadError}</p>
-          ) : null}
-          {documentSettings?.versions != null && documentSettings.versions.length > 0 ? (
-            <ul className="crime-consent-doc-modal__versions">
-              {documentSettings.versions.map(item => (
-                <li key={`${item.versionNo}-${item.fileObjectId}`}>
-                  <span>
-                    버전 {item.versionNo}
-                    {item.fileObjectId === documentSettings.activeFileObjectId ? ' (현재)' : ''}
-                  </span>
-                  <CmsButton
-                    variant="secondary"
-                    size="small"
-                    onClick={() =>
-                      void downloadFile(item.fileObjectId, `성범죄-경력조회-동의서-v${item.versionNo}.pdf`)
-                    }
-                  >
-                    다운로드
-                  </CmsButton>
-                </li>
-              ))}
-            </ul>
-          ) : null}
 
           <div className="crime-consent-doc-modal__a4-outer">
             <CrimeConsentDocumentPreview

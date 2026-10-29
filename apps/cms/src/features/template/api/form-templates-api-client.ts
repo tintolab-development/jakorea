@@ -33,12 +33,6 @@ export async function fetchFormTemplatePayloadByCodeRemote(
   return unwrapApiBody(await formsSurveysApi.getTemplatePayloadByCode(templateCode))
 }
 
-export async function fetchPublishedFormTemplatePayloadByCodeRemote(
-  templateCode: string
-): Promise<FormTemplateLatestPayloadResponse> {
-  return unwrapApiBody(await formsSurveysApi.getPublishedTemplatePayloadByCode(templateCode))
-}
-
 export async function fetchFormTemplateVersionRemote(
   versionId: number
 ): Promise<FormTemplateVersionResponse> {

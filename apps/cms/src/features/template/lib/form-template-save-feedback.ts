@@ -27,24 +27,6 @@ function resolveSaveFailureMessage(error?: unknown): string {
   ) {
     return readApiErrorAlertMessage(error, PROGRAM_APPLICATION_FORM_EDIT_PERIOD_ENDED_MESSAGE)
   }
-  if (code === 'FORM_CATALOG_VERSION_IMMUTABLE') {
-    return (
-      extractApiErrorMessage(error) ||
-      '카탈로그 원본 양식의 구조는 변경하거나 게시할 수 없습니다. 기존 항목의 기본 내용은 저장할 수 있습니다.'
-    )
-  }
-  if (code === 'FORM_SEX_OFFENSE_CONSENT_DOCUMENT_ONLY') {
-    return (
-      extractApiErrorMessage(error) ||
-      '성범죄 경력조회 동의서는 문서 파일로만 변경할 수 있습니다.'
-    )
-  }
-  if (code === 'FORM_CATALOG_DOCUMENT_FILE_NOT_READY') {
-    return (
-      extractApiErrorMessage(error) ||
-      '문서 파일 검사가 끝나지 않아 저장할 수 없습니다.'
-    )
-  }
   if (code === 'FORM_SCHEMA_IMMUTABLE') {
     return (
       extractApiErrorMessage(error) ||

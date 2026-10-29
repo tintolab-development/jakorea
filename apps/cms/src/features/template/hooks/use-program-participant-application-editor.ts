@@ -140,7 +140,6 @@ import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-templa
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import {
   canReorderParticipantApplicationParagraphs,
-  isCatalogOriginalWritingTemplate,
   isWritingFormTemplateStructureLocked,
 } from '@/features/template/lib/form-template-delete-policy'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
@@ -1385,7 +1384,7 @@ export function useProgramParticipantApplicationEditor(
         setIsDraftLoading(false)
       })
     } else {
-      void loadDraftPromise.then(async saved => {
+      void loadDraftPromise.then(saved => {
         if (cancelled) {
           if (clearOverlaysOnHydrate) consumeWizardContentResetPending()
           return
@@ -1474,18 +1473,6 @@ export function useProgramParticipantApplicationEditor(
           finishWizardDetailHydrate()
           storageHydratedTemplateIdsRef.current.add(hydrateKey)
           return
-        }
-        if (
-          usesRegistrationWizardDraft &&
-          saved?.draft == null &&
-          autofilled == null
-        ) {
-          const defaults = await import('@/features/template/lib/published-catalog-defaults')
-          const published = await defaults.loadPublishedCatalogDraft(templateId)
-          if (!cancelled && published != null) {
-            const seed = normalizeEditorDraft(createSeedDraft())
-            applyDraftNow(defaults.resolveWizardCatalogDraft({ saved: null, seed, published }))
-          }
         }
         if (variant === 'ujat-application-volunteer') {
           setUjatVolunteerApplicationType('ujat-graduate')
@@ -2119,14 +2106,6 @@ export function useProgramParticipantApplicationEditor(
       if (!active) return INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS
       return {
       structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
-      catalogOriginalParagraphTitleLocked:
-        isTemplateManagementSave &&
-        isCatalogOriginalWritingTemplate({
-          templateCode: resolvePersistTemplateId(),
-          systemTemplate: editorOptions?.systemTemplate,
-        })
-          ? true
-          : undefined,
       structureLockedAuthoringChoicePreview: isApplicationSeedFillLocked
         ? false
         : isStructureLocked
@@ -2267,11 +2246,8 @@ export function useProgramParticipantApplicationEditor(
       programLinkedInstitutionApplicationForm,
       programLinkedPreview,
       recruitVolunteerHiddenParagraphIds,
-      editorOptions?.systemTemplate,
       effectiveStructureLockedParagraphIds,
       isStructureLocked,
-      isTemplateManagementSave,
-      resolvePersistTemplateId,
       ujatProgramApplicationFormVolunteerOptions,
       ujatProgramApplicationGradeClassTime,
       ujatProgramApplicationGradeInfo,

@@ -121,24 +121,17 @@ describe('form-template-delete-policy', () => {
     ).toBe(true)
   })
 
-  it('locks catalog survey originals and keeps survey copies editable', () => {
+  it('never locks catalog survey templates', () => {
     expect(
       isWritingFormTemplateStructureLocked({
         templateCode: 'survey-default',
         systemTemplate: true,
       })
-    ).toBe(true)
+    ).toBe(false)
     expect(
       isWritingFormTemplateStructureLocked({
         templateCode: 'survey-admin',
         systemTemplate: true,
-        baseTemplateCode: 'survey-admin',
-      })
-    ).toBe(true)
-    expect(
-      isWritingFormTemplateStructureLocked({
-        templateCode: 'survey-admin',
-        systemTemplate: false,
       })
     ).toBe(false)
   })

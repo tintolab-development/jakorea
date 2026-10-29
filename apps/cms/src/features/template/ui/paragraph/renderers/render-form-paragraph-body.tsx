@@ -154,8 +154,6 @@ export type RenderFormParagraphBodyOptions = {
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   /** id 포함 시 본문·표 편집 비활성(템플릿 고정 단락) */
   structureLockedParagraphIds?: ReadonlySet<string>
-  /** CATALOG 원본 — 문항 제목은 편집하지 않는다 */
-  catalogOriginalParagraphTitleLocked?: boolean
   /** 지급조서(발급용) 고정 단락 미리 채움 — 목 또는 발급 대상 회원 매핑 */
   paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
   /** true: 지급조서 기본정보에서 「지급 목적」만 비활성, 나머지 필드는 편집 가능(사전 동의 템플릿 등) */

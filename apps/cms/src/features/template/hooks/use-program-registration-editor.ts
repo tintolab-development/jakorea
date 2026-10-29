@@ -135,10 +135,7 @@ import {
   persistWritingFormTemplateDraft,
   isLocalStorageQuotaExceededError,
 } from '@/features/template/lib/writing-form-template-local-save'
-import {
-  isCatalogOriginalWritingTemplate,
-  isWritingFormTemplateStructureLocked,
-} from '@/features/template/lib/form-template-delete-policy'
+import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
@@ -780,30 +777,15 @@ export function useProgramRegistrationEditor(
 
     setProgramRegistrationOverlayScope(templateCode)
     resetProgramRegistrationOverlay()
-    let cancelled = false
 
     if (skipDraftRestore) {
       setIsDraftLoading(false)
       resetRegistrationEditorToSeedRef.current()
-      if (usesRegistrationWizardDraft && templateCode) {
-        void import('@/features/template/lib/published-catalog-defaults').then(async defaults => {
-          const published = await defaults.loadPublishedCatalogDraft(templateCode)
-          if (cancelled || published == null) return
-          const seeded = filterProgramRegistrationDraftForVariant(
-            normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant)),
-            programRegistrationFormVariant
-          )
-          startTransition(() => {
-            setDraft(defaults.resolveWizardCatalogDraft({ saved: null, seed: seeded, published }))
-          })
-        })
-      }
-      return () => {
-        cancelled = true
-      }
+      return
     }
 
     if (usesTemplateDraftApi && templateCode) {
+      let cancelled = false
       setIsDraftLoading(true)
       setDraft(EMPTY_WRITING_FORM_DRAFT)
       setActiveParagraphId(null)
@@ -822,7 +804,7 @@ export function useProgramRegistrationEditor(
           })
 
       void loadDraft
-        .then(async saved => {
+        .then(saved => {
           if (cancelled) return
           if (saved?.draft) {
             replaceProgramRegistrationOverlay(saved.overlay ?? {})
@@ -955,23 +937,6 @@ export function useProgramRegistrationEditor(
             return
           }
           resetRegistrationEditorToSeedRef.current()
-          if (usesRegistrationWizardDraft && templateCode) {
-            const defaults = await import('@/features/template/lib/published-catalog-defaults')
-            const published = await defaults.loadPublishedCatalogDraft(templateCode)
-            if (cancelled || published == null) return
-            const seeded = filterProgramRegistrationDraftForVariant(
-              normalizeWritingFormDraft(createProgramRegistrationDraft(variant)),
-              variant
-            )
-            const merged = defaults.resolveWizardCatalogDraft({
-              saved: null,
-              seed: seeded,
-              published,
-            })
-            startTransition(() => {
-              setDraft(merged)
-            })
-          }
         })
         .finally(() => {
           if (!cancelled) setIsDraftLoading(false)
@@ -1515,16 +1480,9 @@ export function useProgramRegistrationEditor(
     [patchGeneralWizardRhf]
   )
 
-  const catalogOriginalParagraphTitleLocked =
-    onTemplateDraftSaveConfirmed != null &&
-    isCatalogOriginalWritingTemplate({
-      templateCode,
-      systemTemplate: editorOptions?.systemTemplate,
-    })
-
   const paragraphBodyOptions = useMemo(
-    () => ({
-      ...buildProgramRegistrationParagraphBodyOptions(
+    () =>
+      buildProgramRegistrationParagraphBodyOptions(
         {
           participant,
           programType,
@@ -1582,12 +1540,7 @@ export function useProgramRegistrationEditor(
                 : undefined,
         }
       ),
-      ...(catalogOriginalParagraphTitleLocked
-        ? { catalogOriginalParagraphTitleLocked: true as const }
-        : {}),
-    }),
     [
-      catalogOriginalParagraphTitleLocked,
       curriculumChartSessionCount,
       curriculumSessionCount,
       educationFormScheduleDetail,

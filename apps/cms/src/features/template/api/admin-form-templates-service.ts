@@ -13,15 +13,7 @@ import {
   writingFormDraftToSchemaJson,
 } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
-import {
-  CatalogStructureImmutableError,
-  applyCatalogAllowedContent,
-  catalogStructureChanged,
-} from '@/features/template/lib/catalog-structure-diff'
-import { isCatalogOriginalWritingTemplate } from '@/features/template/lib/catalog-original-identity'
 import { shouldOmitImmutableFormSchemaJson } from '@/features/template/lib/form-template-delete-policy'
-import { getFormTemplateSeedDraft } from '@/features/template/lib/form-template-seed-registry'
-import { clearPublishedCatalogDraftCache } from '@/features/template/lib/published-catalog-defaults'
 import { buildOperationalImmutableFormSchemaDraft } from '@/features/template/lib/operational-form-schema-copy-merge'
 import {
   getFormTemplateVersionCacheEntry,
@@ -350,8 +342,6 @@ function buildVersionUpdateBody(args: {
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
   omitSchemaJson?: boolean
-  /** CATALOG 원본 — 병합된 schema를 normalize 없이 보낸다 */
-  forceSchemaFromDraft?: boolean
   catalogBaseline?: WritingFormDraft | null
 }): {
   schemaJson?: string
@@ -364,9 +354,7 @@ function buildVersionUpdateBody(args: {
     settingsJson?: string
   } = {}
 
-  if (args.forceSchemaFromDraft === true) {
-    body.schemaJson = writingFormDraftToCatalogSchemaJson(args.draft)
-  } else if (args.omitSchemaJson !== true) {
+  if (args.omitSchemaJson !== true) {
     body.schemaJson = writingFormDraftToSchemaJson(args.draft)
   } else if (args.templateCode != null && args.templateCode.trim() !== '') {
     const immutableSchemaDraft = buildOperationalImmutableFormSchemaDraft({
@@ -409,64 +397,6 @@ async function loadCatalogBaselineForImmutablePut(
   } catch {
     return null
   }
-}
-
-/**
- * HTTP 클라이언트는 ETag를 직접 관리하지 않는다.
- * PUT 성공 후 version·published-payload 쿼리만 무효화하고 같은 versionId를 다시 읽는다.
- */
-async function refreshCatalogVersionQueries(templateCode: string, versionId: number): Promise<void> {
-  clearPublishedCatalogDraftCache(templateCode)
-  await queryClient.invalidateQueries({
-    queryKey: formTemplateQueryKeys.versionById(versionId),
-  })
-  await queryClient.invalidateQueries({
-    queryKey: formTemplateQueryKeys.publishedPayload(templateCode),
-  })
-  const latest = await fetchFormTemplateVersionRemote(versionId)
-  if (latest != null) {
-    queryClient.setQueryData(formTemplateQueryKeys.versionById(versionId), latest)
-  }
-}
-
-/**
- * CATALOG 원본 — 현재 versionId에 기본 내용만 PUT한다.
- * PUBLISHED도 새 DRAFT를 만들지 않는다. 구조가 바뀌면 저장하지 않는다.
- */
-async function saveCatalogOriginalContent(args: {
-  templateCode: string
-  versionId: number
-  draft: WritingFormDraft
-  overlay?: Record<string, unknown>
-  editorState?: Record<string, unknown>
-  uiState?: Record<string, unknown>
-  settingsJson?: Record<string, unknown>
-}): Promise<void> {
-  const remoteBaseline = await loadCatalogBaselineForImmutablePut(args.versionId)
-  const baseline = remoteBaseline ?? getFormTemplateSeedDraft(args.templateCode)
-  if (baseline == null) {
-    throw new Error('카탈로그 원본 스키마를 불러오지 못했습니다.')
-  }
-  if (catalogStructureChanged(baseline, args.draft)) {
-    throw new CatalogStructureImmutableError()
-  }
-  const merged = applyCatalogAllowedContent(baseline, args.draft)
-  try {
-    await updateFormTemplateVersionRemote(
-      args.versionId,
-      buildVersionUpdateBody({
-        ...args,
-        draft: merged,
-        forceSchemaFromDraft: true,
-      })
-    )
-  } catch (error) {
-    if (getApiErrorCode(error) === 'FORM_CATALOG_VERSION_IMMUTABLE') {
-      throw new CatalogStructureImmutableError()
-    }
-    throw error
-  }
-  await refreshCatalogVersionQueries(args.templateCode, args.versionId)
 }
 
 export async function saveFormTemplateVersionDraftByVersionId(args: {
@@ -521,17 +451,6 @@ export async function saveFormTemplateVersionDraft(args: {
     throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
   }
 
-  const cached = getFormTemplateVersionCacheEntry(args.templateCode)
-  if (
-    isCatalogOriginalWritingTemplate({
-      templateCode: args.templateCode,
-      baseTemplateCode: cached?.baseTemplateCode,
-    })
-  ) {
-    await saveCatalogOriginalContent({ ...args, versionId })
-    return
-  }
-
   const omitSchemaJson = shouldOmitImmutableFormSchemaJson(args.templateCode)
   const catalogBaseline = omitSchemaJson
     ? await loadCatalogBaselineForImmutablePut(versionId)
@@ -551,7 +470,8 @@ export async function saveFormTemplateVersionDraft(args: {
 }
 
 function isFormVersionCopyOnPutError(error: unknown): boolean {
-  return getApiErrorCode(error) === 'FORM_VERSION_IMMUTABLE'
+  const code = getApiErrorCode(error)
+  return code === 'FORM_VERSION_IMMUTABLE' || code === 'FORM_CATALOG_VERSION_IMMUTABLE'
 }
 
 /**
@@ -598,16 +518,6 @@ function toJsonText(value: unknown): string | undefined {
 export async function publishFormTemplateVersion(templateCode: string): Promise<void> {
   if (!shouldUseFormsSurveysRemoteApi()) {
     throw new Error('양식 게시는 formsSurveys API 활성화 후 이용할 수 있습니다.')
-  }
-
-  const cached = getFormTemplateVersionCacheEntry(templateCode)
-  if (
-    isCatalogOriginalWritingTemplate({
-      templateCode,
-      baseTemplateCode: cached?.baseTemplateCode,
-    })
-  ) {
-    throw new CatalogStructureImmutableError()
   }
 
   const versionId = await resolveTemplateVersionId(templateCode)
@@ -789,15 +699,6 @@ export async function renameFormTemplateByCode(
   }
 
   await updateFormTemplateRemote(cached.templateId, { templateName: nextName })
-}
-
-/** 성범죄 동의서 catalogDocument 등 settingsJson만 갱신하는 version PUT */
-export async function putFormTemplateVersionJson(
-  versionId: number,
-  body: { schemaJson?: string; extensionJson?: string; settingsJson?: string }
-): Promise<void> {
-  assertFormsSurveysRemoteReady()
-  await updateFormTemplateVersionRemote(versionId, body)
 }
 
 export async function deleteFormTemplate(templateCode: string): Promise<void> {

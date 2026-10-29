@@ -18,8 +18,6 @@ export type TemplateRendererContext = {
   registryEntry: TemplateRegistryDefinition | undefined
   editorVm: TemplateEditorVm
   generic: GenericTemplateModalState
-  /** CATALOG 설문 원본 — 구조 UI 잠금, 기본 내용 편집은 유지 */
-  catalogOriginal?: boolean
 }
 
 export type TemplateRendererPanels = {
