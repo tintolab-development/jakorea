@@ -76,6 +76,70 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
     expect(mapped.blocks[0]?.lines[0]?.basisDetail?.layout).toBe('lectureFeeTier')
   })
 
+  it('institutionName이 null이면 "-" (다른 필드로 보완하지 않음)', () => {
+    const mapped = mapSettlementDetailToProgramCalculationStatement(
+      { ...lineRow, institutionName: '' },
+      settlement({ institutionName: null }),
+      'JA 경제교실',
+      '홍길동'
+    )
+    expect(mapped.blocks[0]?.institutionName).toBe('-')
+  })
+
+  it('payee·taxIncomeTypeDisplay를 산출 내역서·라인에 매핑한다', () => {
+    const mapped = mapSettlementDetailToInstructorPageCalculationStatement(
+      lineRow,
+      settlement({
+        institutionName: null,
+        instructorName: '이강사',
+        payee: {
+          nameEn: 'Lee',
+          phone: '010-****-5678',
+          email: 'lee***@ex.com',
+          gender: 'M',
+          birthDate: '1990-**-**',
+          addressRoad: '서울시',
+          addressDetail: '101',
+          bankName: '국민',
+          accountNumber: '***',
+          accountHolder: '이*',
+          affiliation: 'JA',
+          residentRegistrationNumber: '900101-*******',
+          privacyMaskingLevel: 'MASKED',
+        },
+        items: [
+          {
+            type: 'instructor_fee',
+            description: '1급 강사비',
+            amount: 240000,
+          },
+          {
+            type: 'withholding',
+            description: '원천징수',
+            amount: -7920,
+            taxIncomeType: 'BUSINESS_INCOME',
+            taxIncomeTypeDisplay: '사업소득',
+          },
+        ],
+        totalAmount: 232080,
+      }),
+      instructorIdentityFromLine('이강사'),
+      'E2E 프로그램'
+    )
+
+    expect(mapped.context).toBe('instructor')
+    if (mapped.context !== 'instructor') return
+    expect(mapped.basic.nameEn).toBe('Lee')
+    expect(mapped.basic.phoneDisplay).toBe('010-****-5678')
+    expect(mapped.basic.affiliation).toBe('JA')
+    expect(mapped.basic.residentRegistrationNumber).toBe('900101-*******')
+    expect(mapped.basic.genderBirthDisplay).toBe('남성 | 1990-**-**')
+    expect(mapped.blocks[0]?.institutionName).toBe('-')
+    expect(mapped.blocks[0]?.lines.find(l => l.kind === 'withholding')?.taxIncomeTypeDisplay).toBe(
+      '사업소득'
+    )
+  })
+
   it('calculationDetail가 미지원이면 basisDetail 없음', () => {
     const mapped = mapSettlementDetailToProgramCalculationStatement(
       lineRow,
@@ -182,6 +246,131 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
     })
   })
 
+  it('일정명은 강의 시간으로 쓰지 않고 sessionOrdinal → N차시 구간을 쓴다', () => {
+    const mapped = mapSettlementDetailToProgramCalculationStatement(
+      { ...lineRow, sessionOrdinal: 1 },
+      settlement({
+        lectureFeeStandardTitle: undefined,
+        lectureFeeStandardAmount: undefined,
+        lectureSessionDisplay: 'GROK_E2E_API CS03 1회차',
+        sessionOrdinal: 1,
+        items: [
+          {
+            type: 'instructor_fee',
+            description: '강사비',
+            amount: 500000,
+          },
+        ],
+        totalAmount: 676000,
+      }),
+      'GROK_E2E_API_CS_03 신청가능진행중',
+      '테스트강사'
+    )
+
+    expect(mapped.basic.lectureFeeStandardTitle).toBe('-')
+    expect(mapped.basic.lectureFeeStandardAmount).toBe('500,000원')
+    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('1 ~ 1차시')
+    expect(mapped.blocks[0]?.lines[0]?.kind).toBe('lecture_fee')
+    expect(mapped.blocks[0]?.lines[0]?.amount).toBe(500000)
+  })
+
+  it('GET 1694926 계약: 급수 title·1차시·lectureFeeTier 합성을 그대로 쓴다', () => {
+    const mapped = mapSettlementDetailToProgramCalculationStatement(
+      { ...lineRow, sessionOrdinal: 1 },
+      settlement({
+        lectureFeeStandardTitle: '1급 강사비',
+        lectureFeeStandardAmount: 500000,
+        wageItemType: 'TIER1',
+        feeGrade: 'GRADE_1',
+        lectureSessionDisplay: '1차시',
+        sessionOrdinal: 1,
+        items: [
+          {
+            type: 'instructor_fee',
+            description: '1급 강사비',
+            amount: 500000,
+            calculationDetail: {
+              layout: 'lectureFeeTier',
+              title: '강사비 산정 기준 상세',
+              resultAmount: 500000,
+              basisJson: JSON.stringify({
+                itemType: 'LECTURE_FEE',
+                feeGrade: 'GRADE_1',
+                wageItemType: 'TIER1',
+                amount: 500000,
+                sessionOrdinal: 1,
+              }),
+            },
+          },
+        ],
+        totalAmount: 676000,
+      }),
+      'GROK_E2E_API_CS_03 신청가능진행중',
+      '테스트강사'
+    )
+
+    expect(mapped.basic.lectureFeeStandardTitle).toBe('1급 강사비')
+    expect(mapped.basic.lectureFeeStandardAmount).toBe('500,000원')
+    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('1차시')
+    expect(mapped.blocks[0]?.lines[0]?.description).toBe('1급 강사비')
+    expect(mapped.blocks[0]?.lines[0]?.basisDetail).toMatchObject({
+      layout: 'lectureFeeTier',
+      categoryLabel: '1급 강사비',
+      lectureTimeDisplay: '1차시',
+      feeAssessmentWon: 500000,
+    })
+  })
+
+  it('GET 1694933: 책정 금액은 정책 단가, 행 금액은 item amount', () => {
+    const mapped = mapSettlementDetailToProgramCalculationStatement(
+      { ...lineRow, sessionOrdinal: 1 },
+      settlement({
+        lectureFeeStandardTitle: '1급 강사비',
+        lectureFeeStandardAmount: 120000,
+        lectureSessionDisplay: '1차시',
+        sessionOrdinal: 1,
+        items: [
+          {
+            type: 'instructor_fee',
+            description: '1급 강사비',
+            amount: 240000,
+            calculationDetail: {
+              layout: 'lectureFeeTier',
+              resultAmount: 240000,
+              basisJson: JSON.stringify({
+                itemType: 'LECTURE_FEE',
+                feeGrade: 'GRADE_1',
+                wageItemType: 'TIER1',
+                amount: 240000,
+                sessionOrdinal: 1,
+              }),
+            },
+          },
+        ],
+      }),
+      '공통 교육',
+      '홍길동'
+    )
+
+    expect(mapped.basic.lectureFeeStandardAmount).toBe('120,000원')
+    expect(mapped.blocks[0]?.lines[0]?.amount).toBe(240000)
+    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('1차시')
+  })
+
+  it('generic 강사비 제목은 구분에서 버린다', () => {
+    const mapped = mapSettlementDetailToProgramCalculationStatement(
+      lineRow,
+      settlement({
+        lectureFeeStandardTitle: '강사비',
+        lectureFeeStandardAmount: 120000,
+      }),
+      'JA 경제교실',
+      '홍길동'
+    )
+    expect(mapped.basic.lectureFeeStandardTitle).toBe('-')
+    expect(mapped.basic.lectureFeeStandardAmount).toBe('120,000원')
+  })
+
   it('meal / activity kind 매핑', () => {
     const mapped = mapSettlementDetailToProgramCalculationStatement(
       lineRow,
@@ -199,6 +388,19 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
 })
 
 describe('mapSettlementDetailToInstructorPageCalculationStatement', () => {
+  it('강사 상세는 일정명 대신 sessionOrdinal을 1차시로 표시한다', () => {
+    const mapped = mapSettlementDetailToInstructorPageCalculationStatement(
+      { ...lineRow, sessionOrdinal: 1 },
+      settlement({
+        lectureSessionDisplay: 'GROK_E2E_API CS03 1회차',
+        sessionOrdinal: 1,
+      }),
+      instructorIdentityFromLine('홍길동'),
+      'JA 경제교실'
+    )
+    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('1차시')
+  })
+
   it('강의비 책정은 API 값, 강사 PII는 placeholder 유지', () => {
     const mapped = mapSettlementDetailToInstructorPageCalculationStatement(
       lineRow,

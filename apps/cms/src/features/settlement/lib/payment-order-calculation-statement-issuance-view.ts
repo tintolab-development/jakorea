@@ -45,9 +45,13 @@ export interface PaymentStatementIssuanceFromCalculationInput {
   instructorNameKo: string
   nameEn?: string
   addressDisplay?: string
+  addressRoad?: string
+  addressDetail?: string
   bankName?: string
   accountNumber?: string
   accountHolder?: string
+  affiliation?: string
+  residentRegistrationNumber?: string
   programName: string
   lectureFeeStandardTitle: string
   lectureFeeStandardAmount: string
@@ -96,23 +100,46 @@ function buildCalculationLines(
   }
 }
 
+function splitResidentForIssuance(raw: string | undefined): {
+  residentFront: string
+  residentBack: string
+} {
+  const trimmed = presentText(raw)
+  if (!trimmed) return { residentFront: '', residentBack: '' }
+  if (trimmed.includes('-')) {
+    const [front, ...rest] = trimmed.split('-')
+    return { residentFront: front ?? '', residentBack: rest.join('-') }
+  }
+  if (trimmed.length > 6) {
+    return { residentFront: trimmed.slice(0, 6), residentBack: trimmed.slice(6) }
+  }
+  return { residentFront: trimmed, residentBack: '' }
+}
+
 function buildBasicInfoValues(
   input: PaymentStatementIssuanceFromCalculationInput
 ): Partial<PaymentStatementBasicInfoAutofillValues> {
   const nameKo = presentText(input.instructorNameKo)
+  const addressRoad =
+    presentText(input.addressRoad) || presentText(input.addressDisplay)
+  const addressDetail = presentText(input.addressDetail)
+  const affiliation = presentText(input.affiliation)
+  const { residentFront, residentBack } = splitResidentForIssuance(
+    input.residentRegistrationNumber
+  )
   return {
     nameKo,
     nameEn: presentText(input.nameEn),
-    addressRoad: presentText(input.addressDisplay),
-    addressDetail: '',
+    addressRoad,
+    addressDetail,
     bankName: presentText(input.bankName),
     accountNumber: presentText(input.accountNumber),
     accountHolder: presentText(input.accountHolder),
     paymentPurpose: PAYMENT_STATEMENT_PAYMENT_PURPOSE,
-    affiliation: '',
-    noAffiliation: false,
-    residentFront: '',
-    residentBack: '',
+    affiliation,
+    noAffiliation: !affiliation,
+    residentFront,
+    residentBack,
   }
 }
 
@@ -159,8 +186,8 @@ function buildLectureFeeCalculationValues(
 export function buildPaymentStatementIssuanceFileNameFromCalculation(
   input: PaymentStatementIssuanceFromCalculationInput
 ): string {
-  const institution =
-    presentText(input.blocks[0]?.institutionName) || presentText(input.programName) || '-'
+  /** 파일명 기관 파트도 institutionName만 — 프로그램명으로 보완하지 않음 */
+  const institution = presentText(input.blocks[0]?.institutionName) || '-'
   return [
     PAYMENT_STATEMENT_ISSUANCE_DOCUMENT_TITLE,
     sanitizeFileNamePart(institution),
@@ -207,13 +234,14 @@ export function mapInstructorCalculationStatementToIssuanceInput(
     instructorNameKo: presentText(statement.basic.nameKo),
     nameEn: presentText(statement.basic.nameEn),
     addressDisplay: presentText(statement.basic.addressDisplay),
+    addressRoad: presentText(statement.basic.addressRoad),
+    addressDetail: presentText(statement.basic.addressDetail),
     bankName,
     accountNumber,
     accountHolder: presentText(statement.basic.settlementAccountHolderPart),
-    programName:
-      presentText(statement.basic.programName) ||
-      presentText(statement.blocks[0]?.institutionName) ||
-      '',
+    affiliation: presentText(statement.basic.affiliation),
+    residentRegistrationNumber: presentText(statement.basic.residentRegistrationNumber),
+    programName: presentText(statement.basic.programName),
     lectureFeeStandardTitle: presentText(statement.basic.lectureFeeStandardTitle),
     lectureFeeStandardAmount: presentText(statement.basic.lectureFeeStandardAmount),
     businessIncomeEarnerLabel: presentText(statement.basic.businessIncomeEarnerLabel),
