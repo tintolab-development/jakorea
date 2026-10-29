@@ -36,6 +36,7 @@ export function filterBasicConsentItemsByAudience(
   audience: BasicConsentAudience,
 ): SettingsConsentItem[] {
   return items.filter(item => {
+    if (item.id === 'privacyCollection') return !audience.isMinor
     if (item.id === 'teacherInfo') return audience.isTeacher
     if (item.id === 'guardianLegal' || item.id === 'childPrivacy') return audience.isMinor
     return true
