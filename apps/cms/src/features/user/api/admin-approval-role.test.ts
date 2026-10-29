@@ -16,11 +16,11 @@ describe('adminPermissionFeeGradeToRoleCode', () => {
     expect(adminPermissionFeeGradeToRoleCode('program-viewer')).toBe('PROGRAM_VIEWER')
   })
 
-  it('legacy write aliases become N-16 canonical codes', () => {
-    expect(adminPermissionFeeGradeToRoleCode('PM')).toBe('PROGRAM_MANAGER')
-    expect(adminPermissionFeeGradeToRoleCode('PARTNER')).toBe('PROGRAM_MANAGER')
-    expect(adminPermissionFeeGradeToRoleCode('MIDDLE')).toBe('PROGRAM_MANAGER')
-    expect(adminPermissionFeeGradeToRoleCode('VIEWER')).toBe('PROGRAM_VIEWER')
+  it('rejects legacy role codes on the write path', () => {
+    expect(() => adminPermissionFeeGradeToRoleCode('PM')).toThrow(/지원하지 않는 관리자 권한 코드/)
+    expect(() => adminPermissionFeeGradeToRoleCode('PARTNER')).toThrow(/지원하지 않는 관리자 권한 코드/)
+    expect(() => adminPermissionFeeGradeToRoleCode('MIDDLE')).toThrow(/지원하지 않는 관리자 권한 코드/)
+    expect(() => adminPermissionFeeGradeToRoleCode('VIEWER')).toThrow(/지원하지 않는 관리자 권한 코드/)
     expect(adminPermissionFeeGradeToRoleCode('MASTER')).toBe('MASTER')
   })
 

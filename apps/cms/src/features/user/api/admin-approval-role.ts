@@ -29,12 +29,6 @@ export function adminPermissionFeeGradeToRoleCode(feeGrade: string): string {
       return 'PROGRAM_VIEWER'
     default: {
       const upper = feeGrade.trim().toUpperCase().replace(/-/g, '_')
-      if (upper === 'PM' || upper === 'PARTNER' || upper === 'MIDDLE') {
-        return 'PROGRAM_MANAGER'
-      }
-      if (upper === 'VIEWER') {
-        return 'PROGRAM_VIEWER'
-      }
       if (CANONICAL_WRITE_ROLE_CODES.has(upper)) {
         return upper
       }
