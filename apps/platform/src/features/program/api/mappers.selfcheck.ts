@@ -937,6 +937,37 @@ assert.equal(
   '강사 안내'
 )
 
+// 비고 = remarks, 기타사항 = otherMatters. Gemini도 otherMatters를 비고로 대신 쓰지 않는다.
+const geminiRemarksOnly = mapPortalProgramDetail({
+  programId: 186033,
+  programType: 'GEMINI_TRAINING',
+  title: 'Gemini 비고',
+  recruitmentStatus: 'OPEN',
+  remarks: 'Gemini 비고',
+  otherMatters: 'Gemini 기타',
+})
+assert.ok(geminiRemarksOnly)
+assert.equal(
+  geminiRemarksOnly.extraSections.find(section => section.title === '비고')?.body,
+  'Gemini 비고'
+)
+assert.equal(
+  geminiRemarksOnly.extraSections.some(section => section.title === '기타사항'),
+  false
+)
+const geminiOtherMattersOnly = mapPortalProgramDetail({
+  programId: 186034,
+  programType: 'GEMINI_TRAINING',
+  title: 'Gemini 기타만',
+  recruitmentStatus: 'OPEN',
+  otherMatters: 'Gemini 기타',
+})
+assert.ok(geminiOtherMattersOnly)
+assert.equal(
+  geminiOtherMattersOnly.extraSections.some(section => section.title === '비고'),
+  false
+)
+
 const noRecruitmentBadge = mapPortalProgramDetail({
   programId: 186032,
   title: '모집 없음',
