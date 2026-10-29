@@ -27,6 +27,8 @@ export function GeminiRecruitmentAddDetailInfoSection({
     markRichTextTouched,
     attachmentFileNames,
     setAttachmentFileNames,
+    attachmentFileObjectIds,
+    setAttachmentFileObjectIds,
     title,
     announcementPublished,
     educationTargetLevels,
@@ -66,6 +68,7 @@ export function GeminiRecruitmentAddDetailInfoSection({
     learningSupportContent,
     additionalContentMarkdown,
     attachmentFileNames,
+    attachmentFileObjectIds,
   }
 
   return (
@@ -88,6 +91,9 @@ export function GeminiRecruitmentAddDetailInfoSection({
           }
           if (patch.programDescription != null) setProgramDescription(patch.programDescription)
           if (patch.attachmentFileNames != null) setAttachmentFileNames(patch.attachmentFileNames)
+          if (patch.attachmentFileObjectIds !== undefined) {
+            setAttachmentFileObjectIds(patch.attachmentFileObjectIds)
+          }
         }}
       />
     </DetailInfoForm>

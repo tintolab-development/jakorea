@@ -74,6 +74,7 @@ function snapshotToFormState(snapshot: GeminiRecruitmentAddFormSnapshot) {
     learningSupportContent: snapshot.learningSupportContent,
     additionalContentMarkdown: snapshot.additionalContentMarkdown,
     attachmentFileNames: snapshot.attachmentFileNames,
+    attachmentFileObjectIds: snapshot.attachmentFileObjectIds,
     institutionSectionDescription: snapshot.institutionSectionDescription,
     detailSectionDescription: snapshot.detailSectionDescription,
   }
@@ -157,6 +158,9 @@ export function useGeminiRecruitmentAddForm(
   const [learningSupportContent, setLearningSupportContent] = useState('')
   const [additionalContentMarkdown, setAdditionalContentMarkdown] = useState('')
   const [attachmentFileNames, setAttachmentFileNames] = useState<string[]>([])
+  const [attachmentFileObjectIds, setAttachmentFileObjectIds] = useState<
+    Array<number | null> | undefined
+  >(undefined)
   const [institutionSectionDescription, setInstitutionSectionDescription] = useState('')
   const [detailSectionDescription, setDetailSectionDescription] = useState('')
 
@@ -190,6 +194,7 @@ export function useGeminiRecruitmentAddForm(
     setLearningSupportContent(next.learningSupportContent)
     setAdditionalContentMarkdown(next.additionalContentMarkdown)
     setAttachmentFileNames(next.attachmentFileNames)
+    setAttachmentFileObjectIds(next.attachmentFileObjectIds)
     setInstitutionSectionDescription(next.institutionSectionDescription)
     setDetailSectionDescription(next.detailSectionDescription)
     baselineRef.current = JSON.stringify(normalizeGeminiRecruitmentAddFormSnapshot(snapshot))
@@ -250,6 +255,7 @@ export function useGeminiRecruitmentAddForm(
         learningSupportContent,
         additionalContentMarkdown,
         attachmentFileNames,
+        ...(attachmentFileObjectIds !== undefined ? { attachmentFileObjectIds } : {}),
         institutionSectionDescription,
         detailSectionDescription,
       })
@@ -260,6 +266,7 @@ export function useGeminiRecruitmentAddForm(
     applicationMethod,
     applicationPeriod,
     attachmentFileNames,
+    attachmentFileObjectIds,
     detailSectionDescription,
     educationForm,
     educationTargetDetail,
@@ -383,6 +390,8 @@ export function useGeminiRecruitmentAddForm(
     markRichTextTouched,
     attachmentFileNames,
     setAttachmentFileNames,
+    attachmentFileObjectIds,
+    setAttachmentFileObjectIds,
     institutionSectionDescription,
     setInstitutionSectionDescription,
     detailSectionDescription,

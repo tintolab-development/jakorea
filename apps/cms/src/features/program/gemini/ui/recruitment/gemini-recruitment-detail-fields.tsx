@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import {
   GEMINI_RECRUITMENT_DETAIL_RICH_TEXT_FIELDS,
@@ -34,6 +34,10 @@ import {
 import { useCmsAlert } from '@/shared/ui'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../../api/visiting-training/capabilities'
 import { GeminiDeferredCmsInput } from './gemini-recruitment-deferred-text-input'
+import {
+  appendGeminiAttachmentUploads,
+  removeGeminiAttachmentAt,
+} from '../../lib/recruitment/attachment-file-objects'
 import { RichTextViewer } from '@/shared/rich-text'
 import { GeminiRecruitmentRichTextEditor } from './gemini-recruitment-rich-text-editor'
 import '@/features/posts/ui/notice-register-modal.css'
@@ -115,6 +119,10 @@ export function GeminiRecruitmentDetailFields({
   const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null)
   const [storedThumbUrl, setStoredThumbUrl] = useState<string | null>(null)
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
+  const [uploadingAttachments, setUploadingAttachments] = useState(false)
+  // 첨부 업로드 완료 시점의 최신 values — 업로드 중 다른 첨부 변경을 덮지 않는다.
+  const latestValuesRef = useRef(values)
+  latestValuesRef.current = values
 
   // 저장된 썸네일 — 저장 후 파일명이 바뀌면 다시 불러온다.
   const thumbnailFileName =
@@ -308,31 +316,40 @@ export function GeminiRecruitmentDetailFields({
               <ParagraphFileUpload
                 accept=".jpg,.jpeg,.png,.pdf,.hwp,.hwpx"
                 multiple
-                disabled={readOnlyUpload}
+                disabled={readOnlyUpload || uploadingAttachments}
                 guideLines={ATTACHMENT_GUIDE_LINES}
                 maxTotalBytes={0}
                 maxFileBytes={RECRUIT_DETAIL_FILE_MAX_BYTES}
                 sizeExceededMessage={RECRUIT_DETAIL_FILE_SIZE_EXCEEDED_MESSAGE}
                 fileNames={values.attachmentFileNames}
                 onFilesChange={files => {
-                  onChange({
-                    attachmentFileNames: [
-                      ...values.attachmentFileNames,
-                      ...files.map(file => file.name),
-                    ],
-                  })
+                  // 업로드 확정 fileObjectId를 파일명과 함께 보관 — 저장 시 PUT /programs/{id}/attachments.
                   const owner = programDetailAttachmentOwner(programNumericId)
+                  setUploadingAttachments(true)
                   void (async () => {
+                    const uploads: Array<{ fileName: string; fileObjectId: number }> = []
+                    let failed = false
                     for (const file of files) {
-                      await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                      try {
+                        const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                        uploads.push({ fileName: file.name, fileObjectId: uploaded.fileObjectId })
+                      } catch {
+                        failed = true
+                      }
+                    }
+                    setUploadingAttachments(false)
+                    if (uploads.length > 0) {
+                      onChange(appendGeminiAttachmentUploads(latestValuesRef.current, uploads))
+                    }
+                    if (failed) {
+                      showAlert({
+                        title: '안내',
+                        content: '첨부 파일을 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                      })
                     }
                   })()
                 }}
-                onRemoveFile={index =>
-                  onChange({
-                    attachmentFileNames: values.attachmentFileNames.filter((_, i) => i !== index),
-                  })
-                }
+                onRemoveFile={index => onChange(removeGeminiAttachmentAt(values, index))}
               />
             ) : undefined
           }
