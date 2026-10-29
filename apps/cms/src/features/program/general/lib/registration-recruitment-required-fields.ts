@@ -34,6 +34,10 @@ import {
   isAnnouncementPublishedChoiceMissing,
   isAnnouncementUnpublished,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import {
+  INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT,
+  VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT,
+} from '@/features/program/general/lib/general-recruit-overlay-to-program'
 
 export type GeneralProgramRecruitmentRequiredFieldContext = {
   participant: ProgramRegistrationParticipantSelection
@@ -243,7 +247,12 @@ function listIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): 
     isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
-  const interviewRequired = readText(overlay, `${p}.interviewRequired`)
+  // 라디오 기본값 '면접 있음'은 조작 전 스토어에 기록되지 않는다. 등록 저장(withIndividualInterviewRequiredCreateDefault)과 같이 yes 로 본다.
+  const interviewRequiredRaw = read(overlay, `${p}.interviewRequired`)
+  const interviewRequired =
+    interviewRequiredRaw == null || interviewRequiredRaw === ''
+      ? INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT
+      : readText(overlay, `${p}.interviewRequired`)
   pushReason(reasons, isEmptyText(interviewRequired), `${p}.interviewRequired`)
   if (!skipSchedule) {
     pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
@@ -353,7 +362,12 @@ function listIncompleteVolunteerRecruitInfo(
     isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
-  const interviewRequired = readText(overlay, `${p}.interviewRequired`)
+  // 라디오 기본값 '면접 있음'은 조작 전 스토어에 기록되지 않는다. 등록 저장(withVolunteerInterviewRequiredCreateDefault)과 같이 yes 로 본다.
+  const interviewRequiredRaw = read(overlay, `${p}.interviewRequired`)
+  const interviewRequired =
+    interviewRequiredRaw == null || interviewRequiredRaw === ''
+      ? VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT
+      : readText(overlay, `${p}.interviewRequired`)
   pushReason(reasons, isEmptyText(interviewRequired), `${p}.interviewRequired`)
   if (!skipSchedule) {
     pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
