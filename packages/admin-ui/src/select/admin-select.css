@@ -10,6 +10,14 @@
   vertical-align: middle;
 }
 
+/* single: size token 높이만. 부모 stretch / 잘못된 flex-basis를 따라가지 않는다. */
+.cms-select.cms-field__box:not(.cms-select--multiple-ui) {
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: var(--cms-control-h, 44px);
+  max-height: var(--cms-control-h, 44px);
+}
+
 .cms-select.cms-field__box:has(.ant-select-open):not(.cms-field__box--disabled):not(
     .cms-field__box--error
   ) {
@@ -20,13 +28,14 @@
   transform: rotate(180deg);
 }
 
-.cms-select .ant-select {
+.cms-select:not(.cms-select--multiple-ui) .ant-select {
   display: flex !important;
   align-items: center;
   flex: 1 1 auto;
   width: 100%;
   min-width: 0;
-  height: 100%;
+  height: var(--cms-control-h, 44px);
+  max-height: var(--cms-control-h, 44px);
   position: relative;
   font-size: var(--cms-control-font, 16px) !important;
 }
@@ -44,10 +53,13 @@
  * 필터 컨테이너(`filter-controls-common.css` 등)가 `.ant-select-arrow`를 12×7 배경 SVG로 덮고 자식을 숨기므로,
  * CmsSelect 자체 suffix(X + 화살표)는 더 높은 특이도로 고정한다.
  */
-.cms-select.cms-field__box .ant-select.ant-select .ant-select-selector.ant-select-selector {
+.cms-select.cms-field__box:not(.cms-select--multiple-ui)
+  .ant-select.ant-select
+  .ant-select-selector.ant-select-selector {
   flex: 1 1 auto;
   min-width: 0;
-  height: 100% !important;
+  height: var(--cms-control-h, 44px) !important;
+  max-height: var(--cms-control-h, 44px) !important;
   min-height: 0 !important;
   display: flex !important;
   align-items: center !important;

@@ -137,6 +137,8 @@ export const AdminSelect = forwardRef<RefSelectProps, AdminSelectProps>((props, 
     .join(' ')
 
   const hasExplicitWidth = width != null
+  // width만 잠근다. flex-basis에 px를 넣으면 column flex 부모(필터 label+control)에서
+  // 높이가 width 값(예: 240px)으로 늘어난다.
   const widthStyle: CSSProperties | undefined =
     width == null
       ? undefined
@@ -145,9 +147,10 @@ export const AdminSelect = forwardRef<RefSelectProps, AdminSelectProps>((props, 
             width: `${width}px`,
             minWidth: `${width}px`,
             maxWidth: `${width}px`,
-            flex: `0 0 ${width}px`,
+            flexGrow: 0,
+            flexShrink: 0,
           }
-        : { width }
+        : { width, flexGrow: 0, flexShrink: 0 }
 
   const mergedOptions = useMemo(
     () =>
