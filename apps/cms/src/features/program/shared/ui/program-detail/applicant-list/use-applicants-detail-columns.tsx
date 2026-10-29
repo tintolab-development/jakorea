@@ -23,7 +23,6 @@ import {
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from './applicants-detail-session-format'
-import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 
 const GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH = 185
@@ -40,28 +39,15 @@ const COMPANY_SCHOOL_CLASS_COUNT_COL_WIDTH = 148
 const COMPANY_SCHOOL_STUDENT_COUNT_COL_WIDTH = 136
 const COMPANY_SCHOOL_TEACHER_COL_WIDTH = 136
 
-/** `duration: "N차시"`(1사1교·TT)가 차시 수 SoT. classNum은 교시 라벨이라 parseInt 금지. */
-function resolveCompanySchoolSessionCount(
+function formatCompanySchoolPreferredScheduleLine(
   session: NonNullable<ApplicantSchoolRow['sessions']>[number]
-): number {
-  const fromDuration = /^(\d+)\s*차시/.exec(session.duration?.trim() ?? '')
-  if (fromDuration) return Math.max(1, Number.parseInt(fromDuration[1]!, 10))
-  return 1
-}
-
-function formatCompanySchoolPreferredSchedule(sessions: ApplicantSchoolRow['sessions']): string {
-  if (!sessions?.length) return '-'
-  const first = sessions[0]
-  const last = sessions[sessions.length - 1]
-  const startTime = first.timeRange?.split('~')[0]?.trim()
-  const endTime = last.timeRange?.split('~')[1]?.trim()
-  const totalSessions = sessions.reduce(
-    (sum, session) => sum + resolveCompanySchoolSessionCount(session),
-    0
-  )
-  const dateLabel = [first.date, first.dayOfWeek ? `(${first.dayOfWeek})` : ''].join('')
-  const timeLabel = startTime && endTime ? `${startTime} ~ ${endTime}` : (first.timeRange ?? '-')
-  return formatCmsScheduleDisplayLabel(`${dateLabel} ${timeLabel} | ${totalSessions}차시`)
+): string {
+  const rank = session.classNum?.trim() || (session.round > 0 ? `${session.round}지망` : '')
+  const dateLabel = [session.date, session.dayOfWeek ? `(${session.dayOfWeek})` : '']
+    .filter(Boolean)
+    .join('')
+  const timeLabel = session.timeRange && session.timeRange !== '-' ? session.timeRange : ''
+  return formatCmsScheduleDisplayLabel([rank, dateLabel, timeLabel].filter(Boolean).join(' '))
 }
 
 export function useInstitutionApplicantColumns(params: {
@@ -162,15 +148,30 @@ export function useInstitutionApplicantColumns(params: {
               className:
                 'applicant-details__td-sessions applicant-details__td-sessions--center applicant-details__td-sessions--schedule',
             }),
-            render: (_: unknown, record: ApplicantSchoolRow) => (
-              <div className="applicant-details__sessions-cell">
-                <div className="applicant-details__session-line applicant-details__session-line--nowrap">
-                  {renderProgramDetailPipeSeparated(
-                    formatCompanySchoolPreferredSchedule(record.sessions)
-                  )}
+            render: (_: unknown, record: ApplicantSchoolRow) => {
+              const hopeSessions = record.sessions ?? []
+              if (hopeSessions.length === 0) {
+                return (
+                  <div className="applicant-details__sessions-cell">
+                    <div className="applicant-details__session-line applicant-details__session-line--nowrap">
+                      -
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <div className="applicant-details__sessions-cell">
+                  {hopeSessions.map((session, index) => (
+                    <div
+                      key={`${record.id}-${session.round}-${index}`}
+                      className="applicant-details__session-line applicant-details__session-line--nowrap"
+                    >
+                      {formatCompanySchoolPreferredScheduleLine(session)}
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ),
+              )
+            },
           },
           {
             title: '신청 학년',

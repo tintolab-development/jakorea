@@ -149,7 +149,11 @@ export function mapPortalGuardianToSettingsView(
   if (!name && !relationship && !phoneRaw) return null
   return {
     name: name || EMPTY_SETTINGS_VALUE,
-    phone: phoneRaw ? formatSettingsPhone(phoneRaw) : EMPTY_SETTINGS_VALUE,
+    phone: phoneRaw
+      ? phoneRaw.includes('-')
+        ? phoneRaw
+        : formatSettingsPhone(phoneRaw)
+      : EMPTY_SETTINGS_VALUE,
     relationship: relationship || EMPTY_SETTINGS_VALUE,
   }
 }

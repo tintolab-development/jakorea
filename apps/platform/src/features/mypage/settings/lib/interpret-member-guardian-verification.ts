@@ -16,15 +16,23 @@ export type InterpretedGuardianVerification =
   | { kind: 'verified'; result: PortraitGuardianVerificationResult }
   | { kind: 'failed'; error: Error }
 
+const GUARDIAN_PROFILE_MISMATCH_MESSAGE =
+  '등록된 보호자와 본인인증 정보가 일치하지 않습니다.'
+
 function failedGetMessage(response: GetMemberGuardianVerificationResponse): string {
   if (response.message?.trim()) return response.message.trim()
-  if (response.failureCode === 'GUARDIAN_IDENTITY_MISMATCH') {
-    return '등록된 보호자와 본인인증 정보가 일치하지 않습니다.'
+  const failureCode = response.failureCode?.trim().toUpperCase()
+  if (
+    failureCode === 'GUARDIAN_IDENTITY_MISMATCH' ||
+    failureCode === 'EXPECTED_PROFILE_MISMATCH' ||
+    failureCode === 'IDENTITY_MISMATCH'
+  ) {
+    return GUARDIAN_PROFILE_MISMATCH_MESSAGE
   }
-  if (response.failureCode === 'GUARDIAN_NOT_ADULT') {
+  if (failureCode === 'GUARDIAN_NOT_ADULT') {
     return '보호자는 만 19세 이상이어야 합니다.'
   }
-  if (response.failureCode?.trim()) return response.failureCode.trim()
+  if (failureCode) return failureCode
   return PORTRAIT_GUARDIAN_VERIFICATION_UNAVAILABLE_MESSAGE
 }
 

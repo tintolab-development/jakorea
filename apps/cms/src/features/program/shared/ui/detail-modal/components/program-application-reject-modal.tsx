@@ -1,7 +1,4 @@
-import {
-  PermissionModal,
-  type PermissionModalPayload,
-} from '@/shared/components/permission-modal'
+import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { NotifyTimingCapability } from '@/shared/lib/notify-timing-capability'
 import {
   buildProgramApplicationRejectCopy,
@@ -37,7 +34,7 @@ export function ProgramApplicationRejectModal({
   notifyTimingCapability,
   notifyTimingOptions,
   confirmLoading,
-  reasonPlaceholder = '반려 사유를 입력해 주세요. 주민등록번호, 건강정보 등 민감한 개인정보는 입력하지 마세요.',
+  reasonPlaceholder = '반려 사유를 입력해 주세요.',
 }: ProgramApplicationRejectModalProps) {
   const copy = buildProgramApplicationRejectCopy({
     audience,

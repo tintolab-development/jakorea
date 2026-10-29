@@ -26780,6 +26780,21 @@
           "content"
         ]
       },
+      "GuardianProfileResponse": {
+        "type": "object",
+        "description": "만 14세 미만 회원의 보호자 정보. GET /api/portal/me/profile 및 PATCH /api/portal/me/profile(nested guardian)에서 동일 키를 사용합니다. 관계만 변경할 수 있고, 이름·휴대폰 변경에도 별도 NICE 세션은 필요하지 않습니다. 초상권 보호자 NICE는 PATCH 이후 저장된 값과 대조합니다.",
+        "properties": {
+          "guardianName": {
+            "type": "string"
+          },
+          "guardianRelation": {
+            "type": "string"
+          },
+          "guardianPhone": {
+            "type": "string"
+          }
+        }
+      },
       "InstructorPortalEditableProfile": {
         "type": "object",
         "description": "강사가 포탈에서 직접 수정할 수 있는 프로필 필드만 노출한 요청 계약",
@@ -26852,7 +26867,7 @@
       },
       "UpdatePortalProfileRequest": {
         "type": "object",
-        "description": "회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다.",
+        "description": "회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다. 만 14세 미만 보호자는 nested guardian(정본) 또는 최상위 guardianName/guardianRelation/guardianPhone 으로 갱신합니다. 둘 다 있으면 nested 우선. 성인 요청의 보호자 필드는 무시합니다. 이름·휴대폰 변경에 NICE 세션은 필요하지 않습니다.",
         "properties": {
           "postalCode": {
             "type": "string",
@@ -26910,21 +26925,22 @@
           "external1365Id": {
             "type": "string",
             "writeOnly": true
-          }
-        }
-      },
-      "GuardianProfileResponse": {
-        "type": "object",
-        "description": "만 14세 미만 회원의 보호자 정보. 본인 포탈에서만 조회되며 수정은 별도 보호자 동의 절차를 따릅니다.",
-        "properties": {
+          },
+          "guardian": {
+            "$ref": "#/components/schemas/GuardianProfileResponse",
+            "writeOnly": true
+          },
           "guardianName": {
-            "type": "string"
+            "type": "string",
+            "writeOnly": true
           },
           "guardianRelation": {
-            "type": "string"
+            "type": "string",
+            "writeOnly": true
           },
           "guardianPhone": {
-            "type": "string"
+            "type": "string",
+            "writeOnly": true
           }
         }
       },
@@ -38875,7 +38891,7 @@
       },
       "AccountPaymentSensitiveDetailResponse": {
         "type": "object",
-        "description": "계좌 지급 상세 진입 시 반환하는 원문 계좌정보. 목록에는 포함하지 않습니다. GET /api/admin/account-payments/{paymentId} 성공 시 accessPurpose=정산금 지급 처리를 위함 개인정보 조회 이력이 자동 기록된 뒤에만 제공됩니다.",
+        "description": "계좌 지급 상세 진입 시 반환하는 원문 계좌정보(bankName, accountNo, accountHolder). 목록에는 포함하지 않습니다. 성별·생년월일·연락처·이메일·자택주소는 계좌 지급 상세 계약에 없습니다. GET /api/admin/account-payments/{paymentId} 성공 시 감사 사유는 정확히 '정산금의 계좌 지급 처리를 위함'이며, 감사 저장 실패 시 이 원문을 반환하지 않습니다.",
         "properties": {
           "bankName": {
             "type": "string"
@@ -41321,6 +41337,74 @@
           },
           "availableActions": {
             "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ApiResponseProgramMyAssignmentResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProgramMyAssignmentResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
+      "ProgramMyAssignmentResponse": {
+        "type": "object",
+        "description": "현재 관리자의 프로그램 배정 역할. 다른 관리자 명단·이메일은 포함하지 않습니다.",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 ID"
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "현재 세션의 admin account id"
+          },
+          "assigned": {
+            "type": "boolean",
+            "description": "이 프로그램에 PM/PARTNER/VIEWER 배정 행이 있으면 true"
+          },
+          "assignmentRole": {
+            "type": "string",
+            "description": "본인 배정 역할. PM | PARTNER | VIEWER. 배정 행이 없으면 null",
+            "enum": [
+              "PM",
+              "PARTNER",
+              "VIEWER"
+            ],
+            "nullable": true
+          },
+          "masterBypass": {
+            "type": "boolean",
+            "description": "CMS MASTER는 프로그램 배정 없이 우회합니다. true여도 assignmentRole은 실제 배정 행이 있을 때만 채워집니다."
+          },
+          "capabilities": {
+            "type": "array",
+            "description": "이 프로그램에서 허용된 capability. MASTER는 전체, 전역 PROGRAM_VIEWER는 PROGRAM_VIEW만.",
             "items": {
               "type": "string"
             }

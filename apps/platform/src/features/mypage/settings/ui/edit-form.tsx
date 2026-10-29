@@ -9,6 +9,7 @@ import {
   type IdentityChallengeCompleteResult,
 } from '@/features/auth/identity-verification'
 import {
+  formatPortalProfileUpdateError,
   getLoginApiErrorMessage,
   usePortalPhoneIdentityConfirmMutation,
   usePortalProfileUpdateMutation,
@@ -27,6 +28,7 @@ import { EMPTY_SETTINGS_VALUE } from '../lib/constants'
 import {
   applySettingsEditToSnapshot,
   applyTeacherSettingsEditToSnapshot,
+  attachGuardianToPortalProfileUpdate,
   isSettingsEditValid,
   isTeacherSettingsEditValid,
   mapProfileToSettingsEditForm,
@@ -297,18 +299,35 @@ export function SettingsEditForm({
 
     if (isRemoteApiConfigured()) {
       try {
-        await profileUpdateMutation.mutateAsync(
-          nullifyEmptyProfileUpdateFields(
-            isTeacher
-              ? mapTeacherSettingsEditToPortalProfileUpdate(teacherForm)
-              : mapAdminRegisteredEditToPortalProfileUpdate({
-                  ...sanitizedForm,
-                  portalProfile: profile,
-                }),
+        const updated = await profileUpdateMutation.mutateAsync(
+          attachGuardianToPortalProfileUpdate(
+            nullifyEmptyProfileUpdateFields(
+              isTeacher
+                ? mapTeacherSettingsEditToPortalProfileUpdate(teacherForm)
+                : mapAdminRegisteredEditToPortalProfileUpdate({
+                    ...sanitizedForm,
+                    portalProfile: profile,
+                  }),
+            ),
+            guardian
+              ? {
+                  guardianName,
+                  guardianRelation: guardianRelationship,
+                  guardianPhone,
+                }
+              : null,
           ),
         )
+        onSaved({
+          ...updated,
+          phone: updated.phone ?? phone,
+          guardian: updated.guardian,
+        })
+        return
       } catch (error) {
-        setSubmitError(getLoginApiErrorMessage(error, '회원 정보를 수정하지 못했습니다.'))
+        setSubmitError(
+          formatPortalProfileUpdateError(error, '회원 정보를 수정하지 못했습니다.'),
+        )
         return
       }
     }

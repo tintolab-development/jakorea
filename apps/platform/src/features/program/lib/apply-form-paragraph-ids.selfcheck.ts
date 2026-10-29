@@ -80,6 +80,10 @@ assert.equal(
   false,
 )
 assert.equal(
+  shouldLockTeacherMobileEmailOnBasicInfo(PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo),
+  true,
+)
+assert.equal(
   shouldShowEducationPlaceOnBasicInfo(PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo),
   true,
 )
