@@ -351,6 +351,25 @@ describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
       )
     ).toContain('EDUCATION')
   })
+
+  it('maps PROGRAM_DATE_OUTSIDE_OPEN_PERIOD even when server message is generic', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            data: {
+              message: '입력값을 확인해 주세요.',
+              error: {
+                code: 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD',
+                message: '입력값을 확인해 주세요.',
+              },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('사업(오픈) 기간')
+  })
 })
 
 describe('getProgramFormBindingErrorMessage PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT', () => {

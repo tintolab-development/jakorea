@@ -214,6 +214,9 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     if (raw && raw !== code) return raw
     return PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE
   }
+  if (code === 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD') {
+    return '모집 기간이 사업(오픈) 기간 밖입니다. 모집은 모집 행으로만 저장되고, 신청 시작·종료일은 사업 기간 안에 있을 때만 함께 전송됩니다.'
+  }
   const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(
     code,
     extractRawApiMessage(error)
