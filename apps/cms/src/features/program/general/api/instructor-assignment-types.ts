@@ -37,19 +37,19 @@ export type RequestedScheduleWithResolved = Omit<
 }
 
 export type InstructorAssignmentCalendarItem = {
-  instructorMemberId?: number
-  lectureDate?: string
-  organizationApplicationId?: number
-  assignmentId?: number
-  scheduleId?: number
+  instructorMemberId?: number | null
+  lectureDate?: string | null
+  organizationApplicationId?: number | null
+  assignmentId?: number | null
+  scheduleId?: number | null
   activeYn?: boolean
 }
 
 export type InstructorAssignmentCalendarResponse = {
-  items?: InstructorAssignmentCalendarItem[]
+  items: InstructorAssignmentCalendarItem[]
 }
 
-/** GET /api/admin/programs/{programId}/instructor-assignment-availability — OpenAPI 리터럴 그대로 */
+/** 레거시 화면 내부 상태 표시용 타입. 조회 API 계약에는 사용하지 않는다. */
 export type InstructorAssignmentAvailabilityStatus =
   | 'AVAILABLE'
   | 'UNAVAILABLE'

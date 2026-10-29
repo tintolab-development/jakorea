@@ -140,10 +140,10 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'student-roster', organizationApplicationId] as const,
   instructorAssignments: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'instructor-assignments', programId] as const,
-  instructorAssignmentAvailability: (programId: string, instructorMemberId: string) =>
+  instructorAssignmentCalendar: (programId: string, instructorMemberId: string) =>
     [
       ...generalProgramProgressQueryKeys.all,
-      'instructor-assignment-availability',
+      'instructor-assignment-calendar',
       programId,
       instructorMemberId,
     ] as const,

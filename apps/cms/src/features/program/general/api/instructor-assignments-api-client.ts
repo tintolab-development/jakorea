@@ -4,7 +4,6 @@
  * - create: POST /api/admin/programs/{programId}/instructor-assignments
  * - cancel: POST /api/admin/program-execution/instructor-assignments/{id}/cancel
  * - calendar: GET /api/admin/programs/{programId}/instructor-assignment-calendar
- * - availability: GET /api/admin/programs/{programId}/instructor-assignment-availability
  * - representative: PUT /api/admin/programs/{programId}/representative-instructor
  *
  * P0/P1 확장 필드는 OpenAPI codegen 전 — `instructor-assignment-types` 사용.
@@ -15,7 +14,6 @@ import customInstance from '@/shared/api/orval-mutator'
 import type { InstructorAssignmentDecisionResponse } from '@/shared/api/generated/dashboard/schemas/instructorAssignmentDecisionResponse'
 import type { PageResponseInstructorAssignmentListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseInstructorAssignmentListItemResponse'
 import type {
-  InstructorAssignmentAvailabilityResponse,
   InstructorAssignmentCalendarResponse,
   InstructorAssignmentCreateBody,
   InstructorAssignmentListItemEnriched,
@@ -83,31 +81,22 @@ export async function cancelInstructorAssignmentRemote(
 
 export async function fetchInstructorAssignmentCalendarRemote(
   programId: string,
-  params: { from: string; to: string; instructorMemberId?: string | number }
+  params: {
+    from?: string
+    to?: string
+    instructorMemberId?: string | number
+  } = {}
 ): Promise<InstructorAssignmentCalendarResponse> {
-  return unwrapApiBody(
+  const body = unwrapApiBody<InstructorAssignmentCalendarResponse | null | undefined>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/instructor-assignment-calendar`,
       method: 'GET',
       params,
     })
   )
-}
-
-export async function fetchInstructorAssignmentAvailabilityRemote(
-  programId: string,
-  instructorMemberId: number
-): Promise<InstructorAssignmentAvailabilityResponse> {
-  const body = unwrapApiBody<InstructorAssignmentAvailabilityResponse>(
-    await customInstance({
-      url: `/api/admin/programs/${encodeURIComponent(programId)}/instructor-assignment-availability`,
-      method: 'GET',
-      params: { instructorMemberId },
-    })
-  )
   return {
-    programId: body?.programId ?? Number(programId),
-    instructorMemberId: body?.instructorMemberId ?? instructorMemberId,
+    // Canonical API는 ApiResponse.data가 아닌 응답 본문을 직접 반환한다.
+    // 계약상 items는 항상 배열이어야 하며, 서버 값 외의 행은 생성하지 않는다.
     items: Array.isArray(body?.items) ? body.items : [],
   }
 }
