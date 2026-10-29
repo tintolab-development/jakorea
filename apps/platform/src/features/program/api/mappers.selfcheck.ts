@@ -12,6 +12,7 @@ import {
   parsePortalProgramId,
   portalPublicFileContentUrl,
 } from './mappers.ts'
+import { curriculumSessionTitle } from '../lib/curriculum-session-title.ts'
 
 assert.equal(parsePortalProgramId('186012'), 186012)
 assert.equal(parsePortalProgramId('trained-teacher-primary-case-08'), null)
@@ -2108,5 +2109,38 @@ const educationPlaceLegacy = mapPortalProgramDetail({
 })
 assert.ok(educationPlaceLegacy)
 assert.equal(educationPlaceLegacy.educationVenueLabel, '첫 일정 주소')
+
+// 커리큘럼 행 「차시」 — 차시 정보(양의 정수 title)가 있을 때만 붙인다
+const curriculumMulti = { educationStructure: 'curriculum', sessionRound: 'multi' } as const
+assert.equal(curriculumSessionTitle(curriculumMulti, { sessionLabel: '1회차', title: '1' }), '1차시')
+assert.equal(curriculumSessionTitle(curriculumMulti, { sessionLabel: '2회차', title: ' 2차시 ' }), '2차시')
+assert.equal(
+  curriculumSessionTitle(curriculumMulti, { sessionLabel: '사전 교육', title: '오리엔테이션' }),
+  '오리엔테이션'
+)
+assert.equal(
+  curriculumSessionTitle(curriculumMulti, { sessionLabel: '', title: '사전 교육' }),
+  '사전 교육'
+)
+assert.equal(
+  curriculumSessionTitle(curriculumMulti, { sessionLabel: '1회차', title: 'AI 기초 이해' }),
+  'AI 기초 이해'
+)
+assert.equal(curriculumSessionTitle(curriculumMulti, { sessionLabel: '1회차', title: '' }), '')
+assert.equal(curriculumSessionTitle(curriculumMulti, { sessionLabel: '1회차', title: '0' }), '0')
+assert.equal(
+  curriculumSessionTitle(
+    { educationStructure: 'curriculum', sessionRound: 'single' },
+    { sessionLabel: '1차시', title: ' AI 기초 이해 ' }
+  ),
+  'AI 기초 이해'
+)
+assert.equal(
+  curriculumSessionTitle(
+    { educationStructure: 'curriculum', sessionRound: 'single' },
+    { sessionLabel: '1차시', title: '1' }
+  ),
+  '1'
+)
 
 console.log('program portal mappers.selfcheck: ok')

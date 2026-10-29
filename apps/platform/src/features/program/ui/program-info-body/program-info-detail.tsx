@@ -3,6 +3,7 @@ import { RichTextViewer } from '@/shared/rich-text'
 import { PFText } from '@/shared/ui'
 import type { ProgramDetail, ProgramEventSchedule, ProgramSession } from '../../model/types'
 import { isHtmlContent } from '../../lib/html-body'
+import { curriculumSessionTitle } from '../../lib/curriculum-session-title'
 import type { ProgramInfoVariant } from './program-info-aside'
 import { ProgramInfoPeriodSponsor } from './program-info-period-sponsor'
 import styles from './program-info-body.module.css'
@@ -105,16 +106,6 @@ function resolveBasicInfoFields(program: ProgramDetail) {
   return fields.filter(field => field.value.trim().length > 0)
 }
 
-function curriculumSessionTitle(program: ProgramDetail, title: string): string {
-  const value = title.trim()
-  if (!value || program.educationStructure !== 'curriculum' || program.sessionRound !== 'multi') {
-    return value
-  }
-
-  const sessionNumber = value.replace(/차시\s*$/, '').trim()
-  return sessionNumber ? `${sessionNumber}차시` : ''
-}
-
 export function ProgramInfoDetail({
   program,
   header,
@@ -179,7 +170,7 @@ export function ProgramInfoDetail({
             <div className={styles.curriculumBlock}>
               <ul className={styles.sessions}>
                 {program.sessions.map(session => {
-                  const sessionTitle = curriculumSessionTitle(program, session.title)
+                  const sessionTitle = curriculumSessionTitle(program, session)
                   return (
                     <li key={`${session.sessionLabel}-${session.title}`} className={styles.session}>
                       <PFText as="p" typo="bd-md-sb" color="black" className={styles.sessionTitle}>
