@@ -85,6 +85,7 @@ import {
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
 
 export type ApplicantType =
@@ -1788,6 +1789,10 @@ export function ApplicantsDetailContents({
           <div className="applicant-contents__header-only-actions">{headerExtraContent}</div>
         ) : null}
         <div className="applicant-contents__panel">{tabPanel}</div>
+        {/* 1사1교 기관 신청 상세 — 시안 하단 52px (교육받은교사 기관 신청 상세와 같은 스페이서) */}
+        {isInstitution && isGeneralDetail && isCompanySchoolProgram(program ?? null) ? (
+          <div className="applicant-contents__page-bottom-spacer" aria-hidden />
+        ) : null}
         {personalInfoRevealModal}
         {isIndividual ? (
           <ConfirmModal

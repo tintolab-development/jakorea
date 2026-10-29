@@ -48,10 +48,17 @@ export type InstitutionApproveConfirmPayload = PermissionModalPayload & {
   slots?: Array<{ scheduleId: number }>
 }
 
+export type InstitutionApproveCopyVariant = 'participation' | 'program-application'
+
 export type InstitutionApproveModalProps = {
   open: boolean
   schoolName: string
   scheduleConfig?: InstitutionApproveScheduleConfig | null
+  /**
+   * 기본 `participation`은 「기관 승인 안내」·프로그램 참여 카피.
+   * `program-application`은 일반 기관과 같은 「프로그램 신청 승인 안내」카피(일정 배정 UI와 무관).
+   */
+  copyVariant?: InstitutionApproveCopyVariant
   onCancel: () => void
   onConfirm: (payload: InstitutionApproveConfirmPayload) => void
   confirmLoading?: boolean
@@ -76,13 +83,27 @@ export type InstitutionApproveModalProps = {
   educationRoundCount?: number | null
 }
 
+export function resolveInstitutionApproveModalTitle(
+  withScheduleAssignment: boolean,
+  copyVariant: InstitutionApproveCopyVariant = 'participation'
+): string {
+  if (copyVariant === 'program-application' || withScheduleAssignment) {
+    return '프로그램 신청 승인 안내'
+  }
+  return '기관 승인 안내'
+}
+
 /** 기관명·대괄호 전체를 bold (`**[기관명]**`) */
 export function buildInstitutionApproveMessage(
   schoolName: string,
   withScheduleAssignment = false,
-  autoAssignEducationSchedules = false
+  autoAssignEducationSchedules = false,
+  copyVariant: InstitutionApproveCopyVariant = 'participation'
 ): string {
   const trimmedName = schoolName.trim() || '기관'
+  if (copyVariant === 'program-application') {
+    return `**[${trimmedName}]**의 프로그램 신청을 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`
+  }
   if (autoAssignEducationSchedules) {
     return `**[${trimmedName}]**의 프로그램 신청을 승인하시겠습니까?\n담당 교사에게 승인 알림이 발송됩니다.`
   }
@@ -175,6 +196,7 @@ export function InstitutionApproveModal({
   open,
   schoolName,
   scheduleConfig,
+  copyVariant = 'participation',
   onCancel,
   onConfirm,
   confirmLoading = false,
@@ -794,7 +816,7 @@ export function InstitutionApproveModal({
       open={open}
       variant="approve"
       className="institution-approve-modal"
-      title={usesScheduleSection ? '프로그램 신청 승인 안내' : '기관 승인 안내'}
+      title={resolveInstitutionApproveModalTitle(usesScheduleSection, copyVariant)}
       confirmLabel="승인"
       confirmLoading={confirmLoading}
       confirmDisabled={
@@ -810,7 +832,12 @@ export function InstitutionApproveModal({
       width={600}
     >
       <PermissionModalMessage
-        text={buildInstitutionApproveMessage(schoolName, usesScheduleSection, autoAssignSchedule)}
+        text={buildInstitutionApproveMessage(
+          schoolName,
+          usesScheduleSection,
+          autoAssignSchedule,
+          copyVariant
+        )}
       />
       {scheduleSection}
     </PermissionModal>

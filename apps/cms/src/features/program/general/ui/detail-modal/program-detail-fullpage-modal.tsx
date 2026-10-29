@@ -65,6 +65,7 @@ import {
 import { ParticipatingVolunteersSection } from './program-status/participating-volunteers-section'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
+import type { ApplicantDetailMeta } from '../../../shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { generalOrganizationApplicationFilterFields } from '@/features/program/general/lib/application-filter-fields'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
 import { GeneralProgramApplicationView } from './info/application-view'
@@ -1342,6 +1343,9 @@ export function ProgramDetailFullPageModal({
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
   const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
   const [volunteerDetailTitle, setVolunteerDetailTitle] = useState<string | null>(null)
+  /** 1사1교 기관 신청 상세 — 시안 헤더 제목·breadcrumb (`참여 기관 신청 상세 (기관명)`) */
+  const [companySchoolApplicantDetailMeta, setCompanySchoolApplicantDetailMeta] =
+    useState<ApplicantDetailMeta>(null)
   /** 교육받은 교사 — 신청 정보 양식 수정 모달·미리보기 갱신 키 */
   const [trainedTeachersFormEditOpen, setTrainedTeachersFormEditOpen] = useState(false)
   const [trainedTeachersFormEditPreflightLoading, setTrainedTeachersFormEditPreflightLoading] =
@@ -1372,8 +1376,17 @@ export function ProgramDetailFullPageModal({
   const programDisplayTitle = displayProgram
     ? resolveGeneralProgramDisplayTitle(displayProgram)
     : '프로그램 상세'
-  const title =
-    schoolIdFromUrl && schoolDetailTitle
+  const companySchoolInstitutionApplicantMeta =
+    isCompanySchoolDetail &&
+    !isTrainedTeachersDetail &&
+    activeLnb === 'applicants' &&
+    searchParams.get(APPLICANT_ID_PARAM) &&
+    companySchoolApplicantDetailMeta?.kind === 'institution'
+      ? companySchoolApplicantDetailMeta
+      : null
+  const title = companySchoolInstitutionApplicantMeta
+    ? companySchoolInstitutionApplicantMeta.title
+    : schoolIdFromUrl && schoolDetailTitle
       ? `참여 기관 상세 (${schoolDetailTitle})`
       : instructorIdFromUrl && instructorDetailTitle
         ? `참여 강사 상세 (${instructorDetailTitle})`
@@ -1409,6 +1422,8 @@ export function ProgramDetailFullPageModal({
           ? instructorDetailTitle
           : volunteerIdFromUrl && volunteerDetailTitle
             ? volunteerDetailTitle
+          : companySchoolInstitutionApplicantMeta
+            ? companySchoolInstitutionApplicantMeta.breadcrumbLabel
           : searchParams.get(APPLICANT_ID_PARAM)
             ? '신청자 상세'
             : null
@@ -2329,6 +2344,11 @@ export function ProgramDetailFullPageModal({
                   institutionColumnPreset="company-school"
                   detailVariant="general"
                   onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
+                  onApplicantDetailMetaChange={
+                    isCompanySchoolDetail && !isTrainedTeachersDetail
+                      ? setCompanySchoolApplicantDetailMeta
+                      : undefined
+                  }
                 />
               </div>
             ) : isCompanySchoolDetail && activeLnb === 'applicant_instructors' ? (

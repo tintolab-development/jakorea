@@ -128,6 +128,7 @@ import { resolveInstitutionCancelApprovalNotificationResult } from '@/features/p
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { fetchTrainedTeacherOrganizationApplicationRemote } from '@/features/program/trained-teachers/api/organization-applications-client'
 import { mapTrainedTeacherOrganizationApplicationToRow } from '@/features/program/trained-teachers/api/organization-applications-adapters'
@@ -314,6 +315,7 @@ export function ApplicantList({
   const [institutionApproveHydrating, setInstitutionApproveHydrating] = useState(false)
   const [institutionApproveSubmitting, setInstitutionApproveSubmitting] = useState(false)
   const isTrainedTeacherProgram = isTrainedTeachersDetailProgram(program)
+  const isCompanySchoolInstitutionApprove = isCompanySchoolProgram(program)
   const requiresInstitutionApproveScheduleAssignment =
     isGeneralOrganizationProgram(program) || isTrainedTeacherProgram
   const institutionApproveTypeFields = useMemo(
@@ -1413,6 +1415,9 @@ export function ApplicantList({
       <InstitutionApproveModal
         open={institutionApproveTarget != null}
         schoolName={institutionApproveTarget?.name ?? ''}
+        copyVariant={
+          isCompanySchoolInstitutionApprove ? 'program-application' : 'participation'
+        }
         scheduleConfig={
           requiresInstitutionApproveScheduleAssignment ? institutionApproveScheduleConfig : null
         }
