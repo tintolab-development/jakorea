@@ -116,6 +116,31 @@ const unpublished = parseUjatEducationDocumentsResponse({
 })
 assert.equal(canEnterUjatEducationDocumentWrite(unpublished.items[0]!.plan), false)
 
+// `publishedTemplateVersionId`라는 필드명과 무관하게 슬롯의 활성 binding 식별자가 작성 SSOT다.
+// 이 ID가 이후 ARCHIVED 상태가 되어도 FE는 최신 버전으로 치환하거나 차단하지 않는다.
+const pinnedArchivedVersion = parseUjatEducationDocumentsResponse({
+  planSetup: {
+    templateCode: 'issuance-2',
+    publishedTemplateVersionId: 70,
+    programFormBindingId: 189289,
+  },
+  items: [
+    {
+      scheduleId: 103,
+      plan: {
+        documentKind: 'PLAN',
+        canSubmit: true,
+        programFormBindingId: 189289,
+        templateVersionId: 70,
+      },
+      journal: { documentKind: 'JOURNAL' },
+    },
+  ],
+})
+assert.equal(canEnterUjatEducationDocumentWrite(pinnedArchivedVersion.items[0]!.plan), true)
+assert.equal(pinnedArchivedVersion.items[0]!.plan.templateVersionId, 70)
+assert.equal(pinnedArchivedVersion.items[0]!.plan.programFormBindingId, 189289)
+
 const empty = parseUjatEducationDocumentsResponse({ items: [] })
 assert.deepEqual(empty.items, [])
 

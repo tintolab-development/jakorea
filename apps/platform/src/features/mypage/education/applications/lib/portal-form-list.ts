@@ -1,4 +1,7 @@
-import type { PortalFormListItem } from '../api/activity-client'
+import type {
+  PortalAvailableProgramForm,
+  PortalFormListItem,
+} from '../api/activity-client'
 import type { EducationSurveyListEntry } from '../../surveys/lib/survey-list-types'
 
 export const PORTAL_SURVEY_FORM_TYPE_QUERIES = ['SURVEY', 'QUESTIONNAIRE'] as const
@@ -14,6 +17,34 @@ export const PORTAL_ASSIGNMENT_FORM_TYPE_QUERIES = ['ASSIGNMENT', 'HOMEWORK'] as
 
 function normalizePortalFormType(formType: string | undefined): string {
   return (formType ?? '').trim().toUpperCase()
+}
+
+/**
+ * 프로그램 runtime은 활성 binding이 고정한 과거 발행본(ARCHIVED)을 정상 사용한다.
+ * 상태가 없으면 서버의 목록/render 성공을 신뢰하고, DRAFT만 fail-closed 한다.
+ */
+export function isPortalBoundFormVersionUsable(
+  versionStatus: string | null | undefined
+): boolean {
+  return (versionStatus ?? '').trim().toUpperCase() !== 'DRAFT'
+}
+
+export function mapAvailableProgramFormToListItem(
+  item: PortalAvailableProgramForm
+): PortalFormListItem {
+  return {
+    bindingId: item.bindingId,
+    templateVersionId: item.templateVersionId,
+    formType: item.formType,
+    title: item.templateName,
+    targetScope: item.targetScope,
+    targetScopeId: item.targetScopeId,
+    required: item.required,
+    submissionStartAt: item.submissionStartAt,
+    submissionEndAt: item.submissionEndAt,
+    status: item.alreadySubmitted ? 'SUBMITTED' : 'NOT_SUBMITTED',
+    canSubmit: item.alreadySubmitted !== true,
+  }
 }
 
 export function isPortalSurveyFormType(formType: string | undefined): boolean {

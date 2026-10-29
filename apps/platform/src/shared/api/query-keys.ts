@@ -108,6 +108,9 @@ export const platformQueryKeys = {
 
   program: {
     all: () => [...platformQueryKeys.all, 'program'] as const,
+    /** 활성 프로그램 양식 binding — GET /api/portal/me/programs/{programId}/available-forms */
+    availableForms: (programId: string) =>
+      [...platformQueryKeys.program.all(), 'available-forms', programId] as const,
     /** 공개 목록 — GET /api/portal/programs (Class C, CMS 8080) */
     list: (params: {
       keyword: string
@@ -416,12 +419,17 @@ export const platformQueryKeys = {
        * 제출된 신청 양식 런타임 — GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render
        * 신청용 GET /api/portal/programs/.../form-bindings 는 제출 후 APPLICATION_ALREADY_SUBMITTED.
        */
-      formBindingRender: (programId: string, bindingId: number) =>
+      formBindingRender: (
+        programId: string,
+        bindingId: number,
+        templateVersionId?: number
+      ) =>
         [
           ...platformQueryKeys.mypage.programApplications.all(),
           'form-binding-render',
           programId,
           bindingId,
+          templateVersionId ?? 0,
         ] as const,
       educationJournals: (programId: string, organizationApplicationId: string) =>
         [
@@ -556,12 +564,17 @@ export const platformQueryKeys = {
           formType,
         ] as const,
       /** 설문 본문 — GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render (Class D) */
-      formBinding: (params: { programId: string; bindingId: number }) =>
+      formBinding: (params: {
+        programId: string
+        bindingId: number
+        templateVersionId?: number
+      }) =>
         [
           ...platformQueryKeys.mypage.programApplications.all(),
           'form-binding',
           params.programId,
           params.bindingId,
+          params.templateVersionId ?? 0,
         ] as const,
       /** 영수증 — GET .../expense-receipts (Class C) */
       expenseReceipts: (applicationType: string, applicationId: string) =>

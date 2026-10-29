@@ -201,6 +201,31 @@ describe('listAllRegistrationCreateFormSpecs', () => {
       })?.bindingId
     ).toBe(189778)
   })
+
+  it('기존 활성 binding의 고정 templateVersionId를 최신 버전으로 치환하지 않는다', () => {
+    const pinnedBinding: ProgramFormBindingResponse = {
+      bindingId: 189289,
+      formType: 'APPLICATION',
+      targetType: 'ORGANIZATION',
+      targetRole: 'ORGANIZATION',
+      targetScope: 'RECRUITMENT',
+      targetScopeId: 186363,
+      templateId: 10,
+      templateVersionId: 70,
+      templateName: '기관 신청',
+      active: true,
+    }
+
+    const selected = pickOperationalFormBinding([pinnedBinding], {
+      formType: 'APPLICATION',
+      targetRole: 'ORGANIZATION',
+      nameHints: ['기관 신청'],
+      catalogTemplateId: 10,
+    })
+
+    expect(selected?.bindingId).toBe(189289)
+    expect(selected?.templateVersionId).toBe(70)
+  })
 })
 
 describe('강사 모집 행 fan-out 바인딩(targetType INSTRUCTOR + targetRole MEMBER)', () => {

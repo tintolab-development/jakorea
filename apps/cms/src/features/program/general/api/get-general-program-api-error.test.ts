@@ -288,6 +288,34 @@ describe('getProgramFormBindingErrorMessage', () => {
       })
     ).toBe('같은 프로그램 양식 슬롯에 이미 활성 양식이 연결되어 있습니다.')
   })
+
+  it('신규·교체 binding의 비발행 버전 409를 PUBLISHED-only 안내로 매핑한다', () => {
+    expect(
+      getProgramFormBindingErrorMessage(
+        {
+          response: {
+            status: 409,
+            data: { error: { code: 'PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION' } },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('현재 발행된 버전')
+  })
+
+  it('응답이 있는 binding의 버전 교체 잠금을 안내한다', () => {
+    expect(
+      getProgramFormBindingErrorMessage(
+        {
+          response: {
+            status: 409,
+            data: { error: { code: 'FORM_BINDING_TEMPLATE_LOCKED' } },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('템플릿 버전을 변경할 수 없습니다')
+  })
 })
 
 describe('getGeneralProgramApiErrorMessage program schedule codes', () => {

@@ -1,6 +1,11 @@
 import { isProgramSurveyManagementFormBinding } from '@/features/program/general/api/adapters/program-survey-adapters'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
-import type { ProgramSurveyResponse } from '@/shared/api/generated/forms-surveys/schemas/programSurveyResponse'
+
+type ProgramSurveyBindingIdentity = {
+  bindingId?: number | null
+  templateId?: number | null
+  templateVersionId?: number | null
+}
 
 /**
  * `/surveys` 행에 대응하는 활성 설문 바인딩.
@@ -8,7 +13,7 @@ import type { ProgramSurveyResponse } from '@/shared/api/generated/forms-surveys
  * bindingId → templateVersionId → templateId 순으로 찾는다(bb6f8755f 이전 merge 기준 + bindingId 우선).
  */
 export function findProgramSurveyBinding(
-  dto: Pick<ProgramSurveyResponse, 'bindingId' | 'templateId' | 'templateVersionId'>,
+  dto: ProgramSurveyBindingIdentity,
   bindings: readonly ProgramFormBindingResponse[]
 ): ProgramFormBindingResponse | undefined {
   const candidates = bindings.filter(

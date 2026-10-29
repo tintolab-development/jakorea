@@ -75,7 +75,7 @@ async function fetchSubmissionPeriod(templateVersionId: number): Promise<SurveyS
 /**
  * 설문·만족도·강의평가 등록은 양식 관리에서 고른 템플릿 자체의 version에 바인딩한다(카탈로그 복제 없음).
  * 최신 PUBLISHED version에만 바인딩한다. 프로그램 흐름에서 공용 템플릿을 게시하지 않는다
- * (게시하면 기존 PUBLISHED가 ARCHIVED되어 다른 프로그램 설문이 Platform에서 사라질 수 있다).
+ * (기존 프로그램은 binding에 고정된 버전이 ARCHIVED되어도 같은 스냅샷을 계속 사용한다).
  */
 export async function resolvePublishedSurveyBinding(
   templateCode: string

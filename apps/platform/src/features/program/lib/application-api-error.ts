@@ -151,7 +151,8 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   PARTICIPATION_REQUIRED: '최종 합격 후 배정된 교육일에 대해 작성할 수 있습니다.',
   UJAT_VOLUNTEER_EDUCATION_DOCUMENT_REQUIRED:
     'UJAT 봉사자 신청에서만 교육계획서·교육일지를 사용할 수 있습니다.',
-  FORM_TEMPLATE_VERSION_NOT_PUBLISHED: '교육 문서 양식이 아직 공개되지 않았습니다.',
+  FORM_TEMPLATE_VERSION_NOT_PUBLISHED:
+    '프로그램 양식이 아직 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.',
   FORM_BINDING_NOT_FOUND: '교육 문서 양식이 아직 준비되지 않았습니다.',
   FORM_TEMPLATE_DISABLED: '교육 문서 양식을 사용할 수 없습니다.',
   SCHEDULE_NOT_FOUND: '해당 교육일의 문서를 조회할 수 없습니다.',
