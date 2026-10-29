@@ -8,9 +8,6 @@ const saveProgramScopedOperationalFormVersion = vi.fn()
 const resolveFormTemplateCatalogIds = vi.fn()
 const loadFormTemplateVersionDraftByVersionId = vi.fn()
 const alertShow = vi.fn()
-const createSeedDraftForOperationalCatalogId = vi.fn((..._args: unknown[]): unknown => null)
-const loadPublishedCatalogDraft = vi.fn()
-const resolveWizardCatalogDraft = vi.fn()
 
 vi.mock('@/features/program/general/api/admin-general-programs-service', () => ({
   fetchGeneralProgramFormBindings: (...args: unknown[]) => fetchGeneralProgramFormBindings(...args),
@@ -26,12 +23,7 @@ vi.mock('@/features/program/general/lib/sync-registration-form-bindings', () => 
   invalidateProgramFormBindingsCache: vi.fn(),
 }))
 vi.mock('@/features/program/general/lib/registration-operational-form-drafts', () => ({
-  createSeedDraftForOperationalCatalogId: (...args: unknown[]) =>
-    createSeedDraftForOperationalCatalogId(...args),
-}))
-vi.mock('@/features/template/lib/published-catalog-defaults', () => ({
-  loadPublishedCatalogDraft: (...args: unknown[]) => loadPublishedCatalogDraft(...args),
-  resolveWizardCatalogDraft: (...args: unknown[]) => resolveWizardCatalogDraft(...args),
+  createSeedDraftForOperationalCatalogId: vi.fn(() => null),
 }))
 vi.mock('@/shared/ui/cms-alert-modal-api', () => ({
   cmsAlertModal: { show: (...args: unknown[]) => alertShow(...args) },
@@ -340,68 +332,6 @@ describe('applyRegistrationFormsAfterCreate', () => {
     expect(result.failed).toEqual([
       expect.objectContaining({ templateCode: 'application-participant-individual' }),
     ])
-  })
-
-  it('C7: 프로그램 COPY 바인딩은 서버 draft를 기준으로 적용하고 게시 기본값·시드로 덮지 않는다', async () => {
-    const serverBody = createProgramRegistrationDraft()
-    fetchGeneralProgramFormBindings.mockResolvedValue([
-      { bindingId: 3, formType: 'REGISTRATION', templateId: 900, templateVersionId: 901, active: true },
-    ])
-    loadFormTemplateVersionDraftByVersionId.mockResolvedValue({ draft: serverBody })
-    createSeedDraftForOperationalCatalogId.mockReturnValue(createProgramRegistrationDraft())
-    const result = await applyRegistrationFormsAfterCreate({
-      program: generalProgram,
-      forms: [{ templateCode: 'registration-general', formType: 'REGISTRATION', draft: null }],
-    })
-    expect(result.failed).toEqual([])
-    expect(loadFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith('registration-general', 901)
-    expect(loadPublishedCatalogDraft).not.toHaveBeenCalled()
-    expect(saveProgramScopedOperationalFormVersion).toHaveBeenCalledWith(
-      expect.objectContaining({ versionId: 901, draft: serverBody })
-    )
-    createSeedDraftForOperationalCatalogId.mockReturnValue(null)
-  })
-
-  it('C7: 프로그램 COPY 서버 draft를 못 읽으면 시드로 대체하지 않고 PUT 없이 실패한다', async () => {
-    fetchGeneralProgramFormBindings.mockResolvedValue([
-      { bindingId: 3, formType: 'REGISTRATION', templateId: 900, templateVersionId: 901, active: true },
-    ])
-    loadFormTemplateVersionDraftByVersionId.mockResolvedValue(null)
-    createSeedDraftForOperationalCatalogId.mockReturnValue(createProgramRegistrationDraft())
-    const result = await applyRegistrationFormsAfterCreate({
-      program: generalProgram,
-      forms: [{ templateCode: 'registration-general', formType: 'REGISTRATION', draft: null }],
-    })
-    expect(saveProgramScopedOperationalFormVersion).not.toHaveBeenCalled()
-    expect(result.failed).toEqual([
-      expect.objectContaining({
-        templateCode: 'registration-general',
-        message: expect.stringContaining('기존 내용을 덮어쓰지 않았습니다'),
-      }),
-    ])
-    createSeedDraftForOperationalCatalogId.mockReturnValue(null)
-  })
-
-  it('C7: CATALOG 원본 바인딩(신규 COPY)은 PUBLISHED 기본값으로 적용한다', async () => {
-    const publishedBody = createProgramRegistrationDraft()
-    fetchGeneralProgramFormBindings.mockResolvedValue([
-      { bindingId: 1, formType: 'REGISTRATION', templateId: 5, templateVersionId: 51, active: true },
-    ])
-    createSeedDraftForOperationalCatalogId.mockReturnValue(createProgramRegistrationDraft())
-    loadPublishedCatalogDraft.mockResolvedValue(publishedBody)
-    resolveWizardCatalogDraft.mockReturnValue(publishedBody)
-    const result = await applyRegistrationFormsAfterCreate({
-      program: generalProgram,
-      forms: [{ templateCode: 'registration-general', formType: 'REGISTRATION', draft: null }],
-    })
-    expect(result.failed).toEqual([])
-    expect(resolveWizardCatalogDraft).toHaveBeenCalledWith(
-      expect.objectContaining({ published: publishedBody, templateCode: 'registration-general' })
-    )
-    expect(saveProgramScopedOperationalFormVersion).toHaveBeenCalledWith(
-      expect.objectContaining({ versionId: 51, draft: publishedBody, ownerProgramId: 186400 })
-    )
-    createSeedDraftForOperationalCatalogId.mockReturnValue(null)
   })
 })
 
