@@ -8,6 +8,7 @@ export const GEMINI_API_ERROR_MESSAGES: Record<string, string> = {
   GEMINI_TRAINING_END_TIME_NOT_AFTER_START: '종료 시각이 시작 시각보다 늦어야 합니다.',
   GEMINI_INSTRUCTOR_MATCH_AMBIGUOUS: '동일 이름·연락처 강사가 여러 명입니다.',
   GEMINI_INSTRUCTOR_NOT_MATCHED: '강사명과 연락처가 일치하는 강사 회원을 찾지 못했습니다.',
+  GEMINI_INSTRUCTOR_NAME_AND_PHONE_REQUIRED: '강사명과 연락처를 입력해 주세요.',
 }
 
 function looksLikeErrorCode(value: string): boolean {

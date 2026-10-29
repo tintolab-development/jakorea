@@ -1,5 +1,9 @@
 import { CmsButton } from '@/shared/ui/cms-button'
 import { ContentModal } from '@/shared/ui/content-modal'
+import {
+  GEMINI_PERFORMANCE_DUPLICATE_MESSAGE,
+  GEMINI_PERFORMANCE_DUPLICATE_TITLE,
+} from '../../lib/performance/import-popup-copy'
 
 export type GeminiPerformanceDuplicateStrategy = 'overwrite' | 'append'
 
@@ -8,6 +12,8 @@ type UploadDuplicateModalProps = {
   onCancel: () => void
   onOverwrite: () => void
   onAppend: () => void
+  /** 지급 완료 중복 — 덮어쓰기 숨김, 데이터 추가만 */
+  overwriteDisabled?: boolean
 }
 
 export function UploadDuplicateModal({
@@ -15,21 +21,24 @@ export function UploadDuplicateModal({
   onCancel,
   onOverwrite,
   onAppend,
+  overwriteDisabled = false,
 }: UploadDuplicateModalProps) {
   return (
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="데이터 중복 안내"
+      title={GEMINI_PERFORMANCE_DUPLICATE_TITLE}
       width={600}
       footer={
         <>
           <CmsButton variant="secondary" type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="secondary" type="button" onClick={onOverwrite}>
-            덮어쓰기
-          </CmsButton>
+          {overwriteDisabled ? null : (
+            <CmsButton variant="secondary" type="button" onClick={onOverwrite}>
+              덮어쓰기
+            </CmsButton>
+          )}
           <CmsButton type="button" onClick={onAppend}>
             데이터 추가
           </CmsButton>
@@ -37,9 +46,7 @@ export function UploadDuplicateModal({
       }
     >
       <p className="gemini-performance-upload-duplicate-modal__message">
-        이미 등록된 연수 보고서와 중복된 데이터가 있습니다.
-        <br />
-        처리 방법을 선택해 주세요.
+        {GEMINI_PERFORMANCE_DUPLICATE_MESSAGE}
       </p>
     </ContentModal>
   )

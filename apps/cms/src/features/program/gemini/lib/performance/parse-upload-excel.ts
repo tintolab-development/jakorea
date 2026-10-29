@@ -6,11 +6,13 @@ import {
 } from './upload-column-spec'
 import { sanitizeXlsxBufferForExcelJs } from './sanitize-xlsx-for-exceljs'
 import type { GeminiPerformanceUploadRow } from '../../model/performance/types'
+import { GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE } from './import-popup-copy'
+import { formatExcelDateValue, toJavaLocalTime } from './import-wire-values'
 
-export const GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE = '양식 불일치 안내'
-
-export const GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE =
-  '업로드한 파일의 항목 구성이 연수 보고서 양식과 다릅니다.\n양식 항목을 다시 확인해 주세요.'
+export {
+  GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
+  GEMINI_PERFORMANCE_INVALID_TEMPLATE_TITLE,
+} from './import-popup-copy'
 
 type HeaderMap = Partial<Record<keyof typeof GEMINI_PERFORMANCE_UPLOAD_COLUMNS, number>>
 
@@ -48,9 +50,46 @@ function validateRequiredHeaders(headerMap: HeaderMap): void {
   }
 }
 
+function unwrapExcelValue(value: ExcelJS.CellValue): unknown {
+  if (value == null) return null
+  if (typeof value === 'object' && 'richText' in value) {
+    return value.richText.map(part => part.text).join('')
+  }
+  if (typeof value === 'object' && 'result' in value) {
+    return unwrapExcelValue(value.result as ExcelJS.CellValue)
+  }
+  if (typeof value === 'object' && 'text' in value && 'hyperlink' in value) {
+    return value.text
+  }
+  return value
+}
+
 function getCellText(row: ExcelJS.Row, colNumber: number | undefined): string {
   if (colNumber == null) return ''
-  return row.getCell(colNumber).text?.trim() ?? ''
+  const cell = row.getCell(colNumber)
+  const value = unwrapExcelValue(cell.value)
+  if (value instanceof Date) {
+    return formatExcelDateValue(value) ?? ''
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const asDate = formatExcelDateValue(value)
+    if (asDate) return asDate
+    return String(value)
+  }
+  if (typeof value === 'string') return value.trim()
+  return cell.text?.trim() ?? ''
+}
+
+function getDateCellText(row: ExcelJS.Row, colNumber: number | undefined): string {
+  if (colNumber == null) return ''
+  const cell = row.getCell(colNumber)
+  return formatExcelDateValue(unwrapExcelValue(cell.value)) ?? getCellText(row, colNumber)
+}
+
+function getTimeCellText(row: ExcelJS.Row, colNumber: number | undefined): string {
+  const raw = getCellText(row, colNumber)
+  if (!raw) return ''
+  return toJavaLocalTime(raw)?.slice(0, 5) ?? raw
 }
 
 function parseOptionalNumberCell(row: ExcelJS.Row, colNumber: number | undefined): number | null {
@@ -109,9 +148,9 @@ export async function parseUploadExcel(file: File): Promise<GeminiPerformanceUpl
       school: getCellText(row, headerMap.school),
       paymentDestination: getCellText(row, headerMap.paymentDestination),
       trainingLocation: getCellText(row, headerMap.trainingLocation),
-      trainingDate: getCellText(row, headerMap.trainingDate),
-      trainingStartTime: getCellText(row, headerMap.trainingStartTime),
-      trainingEndTime: getCellText(row, headerMap.trainingEndTime),
+      trainingDate: getDateCellText(row, headerMap.trainingDate),
+      trainingStartTime: getTimeCellText(row, headerMap.trainingStartTime),
+      trainingEndTime: getTimeCellText(row, headerMap.trainingEndTime),
       classCount: parseOptionalNumberCell(row, headerMap.classCount),
       participantCount: parseOptionalNumberCell(row, headerMap.participantCount),
       trainingPhoto: getCellText(row, headerMap.trainingPhoto) || undefined,

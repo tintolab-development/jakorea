@@ -28,10 +28,16 @@ function describeFailure(message: string): string {
   return message || '등록할 수 없는 행입니다.'
 }
 
+export function isGeminiImportResultSuccess(
+  result: GeminiTrainingReportImportResult
+): boolean {
+  return result.status === 'SUCCESS'
+}
+
 export function formatGeminiImportPreviewFailures(
   results: GeminiTrainingReportImportResult[] | undefined
 ): string | undefined {
-  const failed = (results ?? []).filter(result => result.status === 'FAILED')
+  const failed = (results ?? []).filter(result => !isGeminiImportResultSuccess(result))
   if (failed.length === 0) return undefined
   return failed
     .map(result => {
