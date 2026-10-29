@@ -12,13 +12,12 @@ import type { PaymentStatementBasicInfo } from './paymentStatementBasicInfo';
  * 회원 동의서 작성본 원문 조회 응답. 민감정보 원문 조회 권한과 사유 감사가 적용됩니다.
  */
 export interface FilledDocumentResponse {
-  /** 제출 당시 form template version id. legacy 제출은 null일 수 있습니다. */
-  templateVersionId?: number | null;
   filledDocumentId?: number;
   consentRecordId?: number;
   memberId?: number;
   consentType?: string;
   version?: string;
+  templateVersionId?: number;
   templateCode?: string;
   schemaJson?: FilledDocumentResponseSchemaJson;
   paymentBasicInfo?: PaymentStatementBasicInfo;

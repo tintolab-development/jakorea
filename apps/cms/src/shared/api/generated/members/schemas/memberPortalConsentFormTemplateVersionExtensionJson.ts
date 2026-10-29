@@ -6,4 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-export type MemberPortalConsentFormTemplateVersionExtensionJson = {[key: string]: unknown} | null;
+export type MemberPortalConsentFormTemplateVersionExtensionJson = {[key: string]: unknown};

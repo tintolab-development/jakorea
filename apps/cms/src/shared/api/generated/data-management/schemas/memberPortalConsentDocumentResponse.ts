@@ -38,6 +38,6 @@ export interface MemberPortalConsentDocumentResponse {
   events?: MemberPortalConsentEvent[];
   /** Completed member-authored form; null for drafts and forms without a body */
   filledDocument?: FilledDocumentRequest | null;
-  /** 신규 작성 화면에서 사용할 최신 PUBLISHED CMS 양식 버전. DRAFT 문서에 고정됩니다. */
+  /** 작성형 동의서 DRAFT에 고정된 CMS 양식 버전. 비작성형·legacy 문서는 null. */
   formTemplateVersion?: MemberPortalConsentFormTemplateVersion | null;
 }

@@ -12,8 +12,6 @@ import type { SignedConsentSignatureField } from './signedConsentSignatureField'
  * 관리자용 신청 당시 전자동의서 원본. 작성 폼이 없으므로 schemaJson은 null이고, signatureFields는 해당 문서에 고정된 서명 메타데이터입니다.
  */
 export interface SignedConsentDocumentResponse {
-  /** 제출 당시 form template version id. legacy 제출은 null일 수 있습니다. */
-  templateVersionId?: number | null;
   documentId?: number;
   consentRecordId?: number;
   memberId?: number;
@@ -22,6 +20,7 @@ export interface SignedConsentDocumentResponse {
   contentFormat?: string;
   contentSnapshot?: string;
   version?: string;
+  templateVersionId?: number;
   documentStatus?: string;
   signedAt?: string;
   expiresAt?: string;
