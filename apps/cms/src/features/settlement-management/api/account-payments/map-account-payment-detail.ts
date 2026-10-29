@@ -60,7 +60,7 @@ function formatPaidAtDisplay(iso: string | undefined): string {
   return `${year}. ${String(month).padStart(2, '0')}. ${String(day).padStart(2, '0')}(${dow})`
 }
 
-function formatLectureDateDisplay(iso: string | undefined): string {
+function formatLectureDateDisplay(iso: string | null | undefined): string {
   if (!iso) return '-'
   return formatTransferDateDisplay(iso)
 }
@@ -69,7 +69,10 @@ function toRoundSessionLabel(label: string): string {
   return label.replace(/차시/g, '회차')
 }
 
-function resolveInstitutionName(row: AccountPaymentRow, institutionName?: string): string {
+function resolveInstitutionName(
+  row: AccountPaymentRow,
+  institutionName?: string | null
+): string {
   const fromApi = institutionName?.trim()
   if (fromApi) return fromApi
   if (row.institutionName && row.institutionName !== '-') return row.institutionName
