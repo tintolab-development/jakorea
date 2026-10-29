@@ -12,7 +12,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, CmsPhoneInput, CmsRadioGroup } from '@/shared/ui'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { formatDate } from '@/shared/utils'
-import { detailEmailDisplay, detailPhoneDisplay, genderBirthView, socialView } from './display'
+import { detailEmailDisplay, detailPhoneDisplay, genderBirthView } from './display'
 import { AdminPermissionTypeField } from './admin-permission-type-field'
 import {
   normalizePermissionApprovalStatus,
@@ -126,15 +126,10 @@ export function AdminBasicInfoSection({
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
+          fullRow
           label="가입일"
           view={<span>{formatDate(user.createdAt)}</span>}
           edit={<span>{formatDate(user.createdAt)}</span>}
-          readOnlyDisplay
-        />
-        <DetailInfoForm.Field
-          label="연동된 소셜 계정"
-          view={socialView(user)}
-          edit={<span>{socialView(user)}</span>}
           readOnlyDisplay
         />
       </DetailInfoForm.Row>
@@ -143,15 +138,10 @@ export function AdminBasicInfoSection({
     <DetailInfoForm title="기본 정보" description={caption} mode={mode}>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
+          fullRow
           label="가입일"
           view={<span>{formatDate(user.createdAt)}</span>}
           edit={<span>{formatDate(user.createdAt)}</span>}
-          readOnlyDisplay
-        />
-        <DetailInfoForm.Field
-          label="연동된 소셜 계정"
-          view={socialView(user)}
-          edit={<span>{socialView(user)}</span>}
           readOnlyDisplay
         />
       </DetailInfoForm.Row>
