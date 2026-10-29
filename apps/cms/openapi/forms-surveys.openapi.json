@@ -478,6 +478,65 @@
     }
   ],
   "paths": {
+    "/api/admin/form-templates/{templateId}/catalog-document": {
+      "put": {
+        "tags": [
+          "폼/설문"
+        ],
+        "summary": "성범죄 동의서 카탈로그 PDF 교체",
+        "description": "### 이 API가 하는 일\n- 성범죄 동의서 카탈로그 PDF 교체\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/form-templates/{templateId}/catalog-document`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_TEMPLATE_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: agreement-crime CATALOG original PDF replace only; schema/extension stay immutable",
+        "operationId": "replaceCatalogDocument",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormCatalogDocumentReplaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다."
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "FORM_CATALOG_VERSION_IMMUTABLE, FORM_CATALOG_DOCUMENT_FILE_NOT_READY 또는 FORM_VERSION_IMMUTABLE",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTemplateVersionResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/form-template-versions/{versionId}": {
       "get": {
         "tags": [
@@ -569,7 +628,7 @@
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
           "409": {
-            "description": "FORM_VERSION_IMMUTABLE, FORM_CATALOG_VERSION_IMMUTABLE 또는 FORM_SCHEMA_IMMUTABLE",
+            "description": "FORM_VERSION_IMMUTABLE, FORM_CATALOG_VERSION_IMMUTABLE, FORM_SEX_OFFENSE_CONSENT_DOCUMENT_ONLY 또는 FORM_SCHEMA_IMMUTABLE",
             "content": {
               "*/*": {
                 "schema": {
@@ -661,14 +720,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProgramFormBindingResponse"
-                }
-              }
-            }
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다."
           },
           "400": {
             "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
@@ -680,7 +732,14 @@
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
           "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+            "description": "DRAFT/ARCHIVED 버전 신규 연결(PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION) 또는 binding 정책 충돌",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramFormBindingResponse"
+                }
+              }
+            }
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -1100,14 +1159,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/FormTemplateVersionResponse"
-                }
-              }
-            }
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다."
           },
           "400": {
             "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
@@ -1119,7 +1171,14 @@
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
           "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+            "description": "FORM_CATALOG_VERSION_IMMUTABLE, FORM_SEX_OFFENSE_CONSENT_DOCUMENT_ONLY 또는 FORM_VERSION_IMMUTABLE",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTemplateVersionResponse"
+                }
+              }
+            }
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -1433,14 +1492,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProgramFormBindingResponse"
-                }
-              }
-            }
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다."
           },
           "400": {
             "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
@@ -1452,7 +1504,14 @@
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
           "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+            "description": "명시적 교체 대상의 비발행 버전(PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION), 기존 응답 보호, 중복 활성 binding 또는 설문 변경 잠금 정책 충돌",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramFormBindingResponse"
+                }
+              }
+            }
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -6789,6 +6848,143 @@
           }
         }
       },
+      "FormCatalogDocumentReplaceRequest": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "FormCatalogDocumentResponse": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "activeFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeVersionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "downloadPath": {
+            "type": "string",
+            "description": "CMS 관리자 다운로드 경로. FORM_TEMPLATE_READ + FILE_DOWNLOAD."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormCatalogDocumentVersionItem"
+            }
+          }
+        }
+      },
+      "FormCatalogDocumentVersionItem": {
+        "type": "object",
+        "properties": {
+          "versionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "uploadedBy": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "FormTemplateVersionResponse": {
+        "type": "object",
+        "properties": {
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "versionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versionLabel": {
+            "type": "string"
+          },
+          "versionStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
+          },
+          "schemaJson": {
+            "type": "string"
+          },
+          "extensionJson": {
+            "type": "string"
+          },
+          "settingsJson": {
+            "type": "string"
+          },
+          "responseCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeBindingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "catalogDocument": {
+            "$ref": "#/components/schemas/FormCatalogDocumentResponse",
+            "description": "성범죄 동의서 활성 PDF. agreement-crime 카탈로그 원본만 값이 있고 그 외는 null."
+          }
+        }
+      },
       "FormTemplateVersionUpdateRequest": {
         "type": "object",
         "properties": {
@@ -8086,26 +8282,32 @@
           },
           "programScheduleId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "curriculumSessionId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "contextType": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "contextId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "submittedByMemberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "submittedByAdminId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "answers": {
             "type": "object",
@@ -8119,9 +8321,16 @@
                 "type": "integer",
                 "format": "int64"
               }
-            }
+            },
+            "nullable": true
           }
-        }
+        },
+        "required": [
+          "answers",
+          "programFormBindingId",
+          "programId",
+          "templateVersionId"
+        ]
       },
       "FormRuntimeResponse": {
         "type": "object",
@@ -14980,10 +15189,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -24837,77 +25046,6 @@
           }
         }
       },
-      "FormTemplateVersionResponse": {
-        "type": "object",
-        "properties": {
-          "templateVersionId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "templateId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "versionNo": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "versionLabel": {
-            "type": "string"
-          },
-          "versionStatus": {
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "PUBLISHED",
-              "ARCHIVED"
-            ]
-          },
-          "schemaJson": {
-            "type": "string"
-          },
-          "extensionJson": {
-            "type": "string"
-          },
-          "settingsJson": {
-            "type": "string"
-          },
-          "responseCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "activeBindingCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "effectiveFrom": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "effectiveTo": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "publishedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "availableActions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "FormTemplateVersionCopyRequest": {
         "type": "object",
         "properties": {
@@ -27529,13 +27667,9 @@
         "properties": {
           "totpCode": {
             "type": "string",
-            "minLength": 1,
-            "pattern": "^[0-9]{6,8}$"
+            "pattern": "^([0-9]{6,8})?$"
           }
-        },
-        "required": [
-          "totpCode"
-        ]
+        }
       },
       "StepUpResponse": {
         "type": "object",
@@ -33301,6 +33435,138 @@
           }
         }
       },
+      "ProgramFormBindingRenderResponse": {
+        "type": "object",
+        "properties": {
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateCode": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "formType": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "templateUseYn": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "templateDeletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "versionLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "versionStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
+          },
+          "schemaJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "extensionJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "settingsJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "programFormBindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "targetScope": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetScopeId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "submissionStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "submissionEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "category",
+          "formType",
+          "programFormBindingId",
+          "programId",
+          "questions",
+          "sections",
+          "templateCode",
+          "templateId",
+          "templateName",
+          "templateVersionId",
+          "versionStatus"
+        ]
+      },
       "CertificateAvailabilityResponse": {
         "type": "object",
         "properties": {
@@ -33369,26 +33635,41 @@
           },
           "targetScopeId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "targetScopeLabel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "required": {
             "type": "boolean"
           },
           "submissionStartAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "submissionEndAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "alreadySubmitted": {
             "type": "boolean"
           }
-        }
+        },
+        "required": [
+          "alreadySubmitted",
+          "bindingId",
+          "formType",
+          "programId",
+          "required",
+          "targetScope",
+          "templateId",
+          "templateName",
+          "templateVersionId"
+        ]
       },
       "ApplicationListItemResponse": {
         "type": "object",
@@ -48022,6 +48303,10 @@
           },
           "deletable": {
             "type": "boolean"
+          },
+          "catalogDocument": {
+            "$ref": "#/components/schemas/FormCatalogDocumentResponse",
+            "description": "성범죄 동의서 활성 PDF. agreement-crime 카탈로그 원본만 값이 있고 그 외는 null."
           }
         }
       },

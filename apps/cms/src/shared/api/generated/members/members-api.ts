@@ -3256,7 +3256,7 @@ const resetAdminPassword = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 기존 Secret/pending/challenge/session 무효화
+ * - 검토 메모: Secret/pending/challenge/session 무효화. MASTER 본인 ACTIVE 및 다른 MASTER 허용
  * @summary MASTER 관리자 MFA 초기화 및 재등록 요구
  */
 const reset = (
@@ -3311,12 +3311,12 @@ const reset = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 5분 단회 대상 바인딩 proof 발급
+ * - 검토 메모: 5분 단회 대상 바인딩 proof. MFA 완료 MASTER 세션은 totpCode 생략 가능. MASTER 본인 ACTIVE 및 다른 MASTER 허용
  * @summary MASTER 관리자 MFA 초기화 실행자 TOTP step-up
  */
 const stepUp = (
     adminAccountId: number,
-    stepUpRequest: StepUpRequest,
+    stepUpRequest?: StepUpRequest,
  options?: SecondParameter<typeof customInstance<StepUpResponse>>,) => {
       return customInstance<StepUpResponse>(
       {url: `/api/admin/admin-accounts/${adminAccountId}/mfa/reset/step-up`, method: 'POST',

@@ -7826,6 +7826,143 @@
           }
         }
       },
+      "FormCatalogDocumentReplaceRequest": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "FormCatalogDocumentResponse": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "activeFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeVersionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "downloadPath": {
+            "type": "string",
+            "description": "CMS 관리자 다운로드 경로. FORM_TEMPLATE_READ + FILE_DOWNLOAD."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormCatalogDocumentVersionItem"
+            }
+          }
+        }
+      },
+      "FormCatalogDocumentVersionItem": {
+        "type": "object",
+        "properties": {
+          "versionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "uploadedBy": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "FormTemplateVersionResponse": {
+        "type": "object",
+        "properties": {
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "versionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versionLabel": {
+            "type": "string"
+          },
+          "versionStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
+          },
+          "schemaJson": {
+            "type": "string"
+          },
+          "extensionJson": {
+            "type": "string"
+          },
+          "settingsJson": {
+            "type": "string"
+          },
+          "responseCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeBindingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "catalogDocument": {
+            "$ref": "#/components/schemas/FormCatalogDocumentResponse",
+            "description": "성범죄 동의서 활성 PDF. agreement-crime 카탈로그 원본만 값이 있고 그 외는 null."
+          }
+        }
+      },
       "FormTemplateVersionUpdateRequest": {
         "type": "object",
         "properties": {
@@ -9123,26 +9260,32 @@
           },
           "programScheduleId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "curriculumSessionId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "contextType": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "contextId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "submittedByMemberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "submittedByAdminId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "answers": {
             "type": "object",
@@ -9156,9 +9299,16 @@
                 "type": "integer",
                 "format": "int64"
               }
-            }
+            },
+            "nullable": true
           }
-        }
+        },
+        "required": [
+          "answers",
+          "programFormBindingId",
+          "programId",
+          "templateVersionId"
+        ]
       },
       "FormRuntimeResponse": {
         "type": "object",
@@ -16017,10 +16167,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -25874,77 +26024,6 @@
           }
         }
       },
-      "FormTemplateVersionResponse": {
-        "type": "object",
-        "properties": {
-          "templateVersionId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "templateId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "versionNo": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "versionLabel": {
-            "type": "string"
-          },
-          "versionStatus": {
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "PUBLISHED",
-              "ARCHIVED"
-            ]
-          },
-          "schemaJson": {
-            "type": "string"
-          },
-          "extensionJson": {
-            "type": "string"
-          },
-          "settingsJson": {
-            "type": "string"
-          },
-          "responseCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "activeBindingCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "effectiveFrom": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "effectiveTo": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "publishedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "availableActions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "FormTemplateVersionCopyRequest": {
         "type": "object",
         "properties": {
@@ -28566,13 +28645,9 @@
         "properties": {
           "totpCode": {
             "type": "string",
-            "minLength": 1,
-            "pattern": "^[0-9]{6,8}$"
+            "pattern": "^([0-9]{6,8})?$"
           }
-        },
-        "required": [
-          "totpCode"
-        ]
+        }
       },
       "StepUpResponse": {
         "type": "object",
@@ -34338,6 +34413,138 @@
           }
         }
       },
+      "ProgramFormBindingRenderResponse": {
+        "type": "object",
+        "properties": {
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateCode": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "formType": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "templateUseYn": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "templateDeletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "versionLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "versionStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
+          },
+          "schemaJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "extensionJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "settingsJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "programFormBindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "targetScope": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetScopeId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "submissionStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "submissionEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "category",
+          "formType",
+          "programFormBindingId",
+          "programId",
+          "questions",
+          "sections",
+          "templateCode",
+          "templateId",
+          "templateName",
+          "templateVersionId",
+          "versionStatus"
+        ]
+      },
       "CertificateAvailabilityResponse": {
         "type": "object",
         "properties": {
@@ -34406,26 +34613,41 @@
           },
           "targetScopeId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "targetScopeLabel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "required": {
             "type": "boolean"
           },
           "submissionStartAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "submissionEndAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "alreadySubmitted": {
             "type": "boolean"
           }
-        }
+        },
+        "required": [
+          "alreadySubmitted",
+          "bindingId",
+          "formType",
+          "programId",
+          "required",
+          "targetScope",
+          "templateId",
+          "templateName",
+          "templateVersionId"
+        ]
       },
       "ApplicationListItemResponse": {
         "type": "object",
@@ -49059,6 +49281,10 @@
           },
           "deletable": {
             "type": "boolean"
+          },
+          "catalogDocument": {
+            "$ref": "#/components/schemas/FormCatalogDocumentResponse",
+            "description": "성범죄 동의서 활성 PDF. agreement-crime 카탈로그 원본만 값이 있고 그 외는 null."
           }
         }
       },
