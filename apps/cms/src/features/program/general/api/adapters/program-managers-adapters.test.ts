@@ -12,13 +12,13 @@ describe('mapProgramManagerRole', () => {
     expect(mapProgramManagerRole('ASSISTANT')).toBe('ASSISTANT')
   })
 
-  it('maps aliases and unknown to safe defaults', () => {
+  it('maps known aliases and rejects unknown codes', () => {
     expect(mapProgramManagerRole('PM')).toBe('OWNER')
     expect(mapProgramManagerRole('ROLE_LEAD')).toBe('OWNER')
     expect(mapProgramManagerRole('PROGRAM_LEAD')).toBe('OWNER')
     expect(mapProgramManagerRole('VIEWER')).toBe('ASSISTANT')
-    expect(mapProgramManagerRole('MANAGER')).toBe('ASSISTANT')
-    expect(mapProgramManagerRole('???')).toBe('ASSISTANT')
+    expect(mapProgramManagerRole('MANAGER')).toBeNull()
+    expect(mapProgramManagerRole('???')).toBeNull()
   })
 })
 

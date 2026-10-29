@@ -13,6 +13,11 @@ import {
 } from '@/features/program/general/api/admin-general-programs-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
+import {
+  PROGRAM_ASSIGNMENT_QUERY_ROOT,
+  canListProgramManagers,
+} from '@/features/program/shared/lib/program-my-assignment'
 import {
   buildProgramManagersListQuery,
   serializeProgramManagersListQuery,
@@ -53,6 +58,9 @@ export function useProgramManagers(
   )
 
   const queryClient = useQueryClient()
+  const myAssignment = useMyProgramPrivacyRole(programId)
+  const managersListAllowed =
+    !myAssignment.pending && canListProgramManagers(myAssignment.assignment)
 
   const managersListQuery = useMemo(
     () => buildProgramManagersListQuery(listFilters),
@@ -66,7 +74,7 @@ export function useProgramManagers(
   const listQuery = useQuery({
     queryKey: generalProgramQueryKeys.managers(programId ?? '', filtersKey),
     queryFn: () => fetchGeneralProgramManagers(programId!, managersListQuery),
-    enabled: remoteEnabled && Boolean(programId),
+    enabled: remoteEnabled && Boolean(programId) && managersListAllowed,
     staleTime: 30_000,
     retry: false,
   })
@@ -88,7 +96,7 @@ export function useProgramManagers(
           cmsRoleCode: item.roleCode?.trim() || undefined,
         }))
     },
-    enabled: remoteEnabled,
+    enabled: remoteEnabled && managersListAllowed,
     staleTime: 5 * 60_000,
     retry: false,
   })
@@ -119,6 +127,9 @@ export function useProgramManagers(
     if (!programId) return
     await queryClient.invalidateQueries({
       queryKey: generalProgramQueryKeys.managersRoot(programId),
+    })
+    await queryClient.invalidateQueries({
+      queryKey: [...PROGRAM_ASSIGNMENT_QUERY_ROOT, programId],
     })
   }, [programId, queryClient])
 
@@ -178,6 +189,8 @@ export function useProgramManagers(
   )
 
   return {
+    managersListAllowed,
+    managersListPending: myAssignment.pending,
     managers,
     loading: remoteEnabled ? listQuery.isLoading || listQuery.isFetching : false,
     isRemoteDataSource: remoteEnabled && !listQuery.isError,

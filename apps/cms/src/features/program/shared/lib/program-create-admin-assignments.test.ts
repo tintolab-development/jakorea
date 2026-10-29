@@ -40,13 +40,37 @@ describe('withProgramCreateAdminAssignments', () => {
     ).toEqual(request)
   })
 
-  it('self-assigns eligible creators as PM', () => {
+  it('omits assignments so the server assigns the creator PM', () => {
     expect(
       withProgramCreateAdminAssignments(baseRequest, {
         roleCode: 'PROGRAM_MANAGER',
         adminAccountId: 42,
-      }).adminAssignments
-    ).toEqual([{ adminId: 42, role: 'PM' }])
+      })
+    ).toEqual(baseRequest)
+  })
+
+  it('requires exactly one creator PM when assignments are explicit', () => {
+    expect(() =>
+      withProgramCreateAdminAssignments(
+        {
+          ...baseRequest,
+          adminAssignments: [
+            { adminId: 1, role: 'PM' },
+            { adminId: 2, role: 'PM' },
+          ],
+        },
+        { roleCode: 'PROGRAM_MANAGER', adminAccountId: 42 }
+      )
+    ).toThrow(/생성자 PM은 정확히 1명/)
+  })
+
+  it('rejects master as the explicit creator PM', () => {
+    expect(() =>
+      withProgramCreateAdminAssignments(
+        { ...baseRequest, adminAssignments: [{ adminId: 1, role: 'PM' }] },
+        { roleCode: 'MASTER', adminAccountId: 1 }
+      )
+    ).toThrow(/Master는 생성 담당자 목록/)
   })
 
   it('does not self-assign or block master (no registration owner picker)', () => {

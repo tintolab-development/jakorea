@@ -160,10 +160,10 @@ import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/adm
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 
 /** 관리자 등록 회원 정보 수정 시 unmask 감사 로그 사유 */
-const BASIC_INFO_EDIT_UNMASK_REASON = '정보 수정'
+const BASIC_INFO_EDIT_UNMASK_REASON = '회원 정보 수정'
 
 const BASIC_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
-  "관리자에 의해 등록된 회원은 정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 회원의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  "관리자에 의해 등록된 회원은 정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '회원 정보 수정'으로 로그 이력에 기록됩니다.\n해당 회원의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 export type BasicInfoEditScope = 'none' | 'profile' | 'comment' | 'instructor_fee_ja'
 
