@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ChangeEvent, type Key } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { Alert, Spin } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -12,7 +12,6 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { openFilePicker } from '@/shared/lib/open-file-picker'
 import '@/shared/ui/file-upload-picker.css'
 import {
-  CmsButton,
   ConfirmModal,
   DeleteGuideModal,
   showDeleteCompletedAlert,
@@ -163,8 +162,6 @@ export function GeminiPerformanceList() {
     remoteEnabled,
     isFetching,
     isFetchingNextPage,
-    isError,
-    refetch,
     fetchNextPage,
     hasNextPage,
   } = useGeminiPerformanceRowsQueryState()
@@ -529,20 +526,6 @@ export function GeminiPerformanceList() {
 
   return (
     <div className="program-list-page">
-      {remoteEnabled && isError ? (
-        <Alert
-          type="error"
-          showIcon
-          style={{ marginBottom: 16 }}
-          message="실적 목록을 불러오지 못했습니다."
-          action={
-            <CmsButton variant="secondary" onClick={() => void refetch()}>
-              다시 시도
-            </CmsButton>
-          }
-        />
-      ) : null}
-
       <FilterTableLayout
         bordered={false}
         className="gemini-list-filter gemini-performance-list"

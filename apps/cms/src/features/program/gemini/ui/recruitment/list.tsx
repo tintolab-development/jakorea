@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs from 'dayjs'
-import { Alert, Spin } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -14,8 +14,10 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
-  FilterTableToolbarButton
+  DeleteGuideModal,
+  showDeleteCompletedAlert,
+  useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -119,7 +121,6 @@ export function GeminiRecruitmentList() {
     remoteEnabled,
     isFetching,
     isFetchingNextPage,
-    isError,
     refetch,
     fetchNextPage,
     hasNextPage,
@@ -266,19 +267,6 @@ export function GeminiRecruitmentList() {
 
   return (
     <div className="program-list-page">
-      {remoteEnabled && isError ? (
-        <Alert
-          type="error"
-          showIcon
-          style={{ marginBottom: 16 }}
-          message="모집 공고 목록을 불러오지 못했습니다."
-          action={
-            <CmsButton variant="secondary" onClick={() => void refetch()}>
-              다시 시도
-            </CmsButton>
-          }
-        />
-      ) : null}
       <FilterTableLayout
         hasActiveFilters={hasActiveFilters}
         bordered={false}
