@@ -78,11 +78,12 @@ export function EconomyProgramApplicationBasicInfoParagraph({
     'application.economy.basicInfo.teacherTel',
     PREVIEW_AUTO_USER_INFO_SAMPLE.tel
   )
-  const [teacherMobile, setTeacherMobile] = useGeneralApplicationOverlayKv<string>(
+  /** M·E-mail — 플랫폼에서 로그인 회원 정보로 고정(비활성). 저장된 overlay 값은 그대로 유지 */
+  const [teacherMobile] = useGeneralApplicationOverlayKv<string>(
     'application.economy.basicInfo.teacherMobile',
     PREVIEW_AUTO_USER_INFO_SAMPLE.mobile
   )
-  const [teacherEmail, setTeacherEmail] = useGeneralApplicationOverlayKv<string>(
+  const [teacherEmail] = useGeneralApplicationOverlayKv<string>(
     'application.economy.basicInfo.teacherEmail',
     PREVIEW_AUTO_USER_INFO_SAMPLE.email
   )
@@ -141,7 +142,8 @@ export function EconomyProgramApplicationBasicInfoParagraph({
         width={240}
         placeholder="담당 교사의 휴대폰 번호"
         value={teacherMobile}
-        onChange={e => setTeacherMobile(e.target.value)}
+        disabled
+        readOnly
       />
       <DetailInfoForm.InputsSeparator />
       <span className="mr-6">E-mail</span>
@@ -150,7 +152,8 @@ export function EconomyProgramApplicationBasicInfoParagraph({
         width={240}
         placeholder="담당 교사의 이메일"
         value={teacherEmail}
-        onChange={e => setTeacherEmail(e.target.value)}
+        disabled
+        readOnly
       />
     </div>
   )
