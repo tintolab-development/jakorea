@@ -34,7 +34,8 @@ export function trimCurriculumMaps(
     unitContentBySession: trimIndexRecord(maps.unitContentBySession, maxKey),
     progressSessionByRound: trimIndexRecord(maps.progressSessionByRound, maxKey),
     roundContentByRound: trimIndexRecord(maps.roundContentByRound, maxKey),
-    educationFormBySession: trimIndexRecord(maps.educationFormBySession, maxKey),
+    /** index 0 = 사전 교육 교육형태 — 보존 */
+    educationFormBySession: trimIndexRecord(maps.educationFormBySession, maxKey, 0),
     participationBySession: trimIndexRecord(maps.participationBySession, maxKey),
     ipsBySession: trimIndexRecord(maps.ipsBySession, maxKey),
     assignmentByRound: trimIndexRecord(maps.assignmentByRound, maxKey),

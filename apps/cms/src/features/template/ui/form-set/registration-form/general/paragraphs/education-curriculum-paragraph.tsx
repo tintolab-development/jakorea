@@ -392,6 +392,19 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     )
   }, [prependTraining])
 
+  // 사전 교육 교육 형태 — 라디오 표시 기본값(online)을 overlay에 기록. 미터치·자동채우기 후 0번 누락 방지
+  const preEducationEducationFormMissing = !educationFormBySession?.[PRE_EDUCATION_SESSION_INDEX]
+  useEffect(() => {
+    if (!prependTraining || !preEducationEducationFormMissing) return
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationCurriculum.educationFormBySession',
+      prev =>
+        prev?.[PRE_EDUCATION_SESSION_INDEX]
+          ? prev
+          : { ...(prev ?? {}), [PRE_EDUCATION_SESSION_INDEX]: 'online' }
+    )
+  }, [prependTraining, preEducationEducationFormMissing])
+
   const educationFormForSession = (sessionIndex: number) =>
     educationFormBySession[sessionIndex] ?? 'online'
   const [singleEducationForm] = useProgramRegistrationOverlayKv<string>(

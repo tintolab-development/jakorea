@@ -29,6 +29,7 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
   getProgramRegistrationOverlayRecord,
+  patchProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { resetApplicantRecruitInstitutionOverlayStoreForTests } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
@@ -193,6 +194,39 @@ describe('previewGeneralRegistrationDevAutofillForCase', () => {
       ).toBe(false)
     })
   }
+})
+
+describe('DEV 자동입력 — 사전 교육 교육 형태(index 0) 보존', () => {
+  const CURRICULUM_KEY = 'generalRegistration.educationCurriculum.educationFormBySession'
+  const SCHEDULE_KEY = 'generalRegistration.educationScheduleCurriculum.educationFormByDetail'
+
+  it('기존 0번 값을 유지하고 1..N은 자동입력 값으로 채운다', () => {
+    const caseId = GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_IDS[0]
+    const preset = resolveGeneralRegistrationDevAutofillPreset(caseId)
+    patchProgramRegistrationOverlay({
+      [CURRICULUM_KEY]: { 0: 'offline' },
+      [SCHEDULE_KEY]: { 0: 'hybrid' },
+    })
+    previewGeneralRegistrationDevAutofillForCase(caseId, resolvedForPreset(preset))
+    const overlay = getProgramRegistrationOverlayRecord()
+    const curriculum = overlay[CURRICULUM_KEY] as Record<number, string>
+    const schedule = overlay[SCHEDULE_KEY] as Record<number, string>
+    expect(curriculum[0]).toBe('offline')
+    expect(curriculum[1]).toBeTruthy()
+    expect(schedule[0]).toBe('hybrid')
+    expect(schedule[1]).toBeTruthy()
+  })
+
+  it('기존 0번이 없으면 0번을 만들지 않는다', () => {
+    const caseId = GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_IDS[0]
+    const preset = resolveGeneralRegistrationDevAutofillPreset(caseId)
+    previewGeneralRegistrationDevAutofillForCase(caseId, resolvedForPreset(preset))
+    const curriculum = getProgramRegistrationOverlayRecord()[CURRICULUM_KEY] as Record<
+      number,
+      string
+    >
+    expect(curriculum[0]).toBeUndefined()
+  })
 })
 
 describe('DEV 자동입력 → 등록 POST 스냅샷', () => {
