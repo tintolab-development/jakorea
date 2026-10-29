@@ -183,6 +183,16 @@ export async function persistWritingFormTemplateDraft(args: {
     persistWritingFormTemplateSave(args)
     return
   }
+  const { isCatalogOriginalVersionWriteBlocked } = await import(
+    '@/features/template/lib/form-template-delete-policy'
+  )
+  if (args.templateVersionId == null && isCatalogOriginalVersionWriteBlocked(args.templateId)) {
+    throw new Error(
+      args.templateId.trim() === 'agreement-crime'
+        ? '성범죄 경력조회 동의서는 폼 빌더가 아닌 PDF 교체 기능으로만 수정할 수 있습니다.'
+        : '등록·모집·신청 CATALOG 원본은 수정하거나 새 버전을 만들 수 없습니다.'
+    )
+  }
   if (args.templateVersionId != null) {
     const { saveFormTemplateVersionDraftByVersionId, resolveFormTemplateCatalogIds } = await import(
       '@/features/template/api/admin-form-templates-service'

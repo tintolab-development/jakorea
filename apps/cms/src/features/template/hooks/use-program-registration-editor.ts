@@ -49,7 +49,10 @@ import {
   registrationPendingSnapshotId,
   persistGeneralProgramRegistration,
 } from '@/features/program/general/lib/registration-local-save'
-import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import {
+  peekGeneralRegistrationWizardRhf,
+  subscribeGeneralRegistrationWizardRhf,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 import { buildGeneralProgramCreateFromWizardRhf } from '@/features/program/general/lib/overlay-phase1/build-registration-create-from-rhf'
 import {
   buildTrainedTeachersCanonicalFromRhf,
@@ -481,6 +484,31 @@ export function useProgramRegistrationEditor(
     },
     [programRegistrationFormVariant]
   )
+
+  // general: 참여자 칩을 건드리지 않으면 editor 기본값(개인)이 위저드 RHF extras.participant(전부 false)에
+  // 반영되지 않아, participant 기준 peek/collect(임시저장)가 개인 신청 키를 버린다.
+  // RHF 등록 시점과 participant 변경 시에만 맞춘다(같으면 no-op, dirty 표시 안 함).
+  useEffect(() => {
+    if (programRegistrationFormVariant !== 'general') return
+    let syncedApi: ReturnType<typeof peekGeneralRegistrationWizardRhf> = null
+    const sync = () => {
+      const rhf = peekGeneralRegistrationWizardRhf()
+      if (rhf == null || rhf === syncedApi) return
+      syncedApi = rhf
+      const current = rhf.getValues().extras.participant
+      if (
+        current.individual === participant.individual &&
+        current.organization === participant.organization &&
+        current.teacherInstructor === participant.teacherInstructor &&
+        current.volunteer === participant.volunteer
+      ) {
+        return
+      }
+      rhf.setPath('extras.participant', { ...participant }, { shouldDirty: false })
+    }
+    sync()
+    return subscribeGeneralRegistrationWizardRhf(sync)
+  }, [participant, programRegistrationFormVariant])
 
   const patchTrainedTeachersWizardRhf = useCallback(
     (

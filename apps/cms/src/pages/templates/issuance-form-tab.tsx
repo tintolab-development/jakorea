@@ -737,7 +737,7 @@ export function IssuanceFormTab() {
           </p>
         ) : null}
         {isIssuanceSectionsLoading ? (
-          <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
+          <FormDraftLoading ariaLabel="양식 목록을 불러오는 중" />
         ) : (
           <>
             <TemplateListCard

@@ -66,6 +66,17 @@ describe('program registration local-only draft', () => {
     expect(loadFormTemplateVersionDraft).not.toHaveBeenCalled()
   })
 
+  it('rejects catalog registration original remote persist', async () => {
+    const draft = createProgramRegistrationDraft('general')
+    await expect(
+      persistWritingFormTemplateDraft({
+        templateId: TEMPLATE_ID,
+        draft,
+      })
+    ).rejects.toThrow(/CATALOG 원본/)
+    expect(saveFormTemplateVersionDraft).not.toHaveBeenCalled()
+  })
+
   it('round-trips the UJAT typed common-info snapshot inside editorState', async () => {
     const draft = createProgramRegistrationDraft('general')
     const ujatBasicInfo = {
