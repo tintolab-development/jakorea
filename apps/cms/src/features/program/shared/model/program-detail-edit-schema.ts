@@ -343,6 +343,10 @@ const programDetailEditSchemaBase = z.object({
     .refine(v => v === undefined || (typeof v === 'string' && v.trim().length >= 1), '모집 안내를 입력해주세요'),
   learningSupportContent: z.string().min(1, '학습 지원 내용을 입력해주세요'),
   attachmentFileNames: z.array(z.string()).optional(),
+  /** UJAT 등록 초안 — 모집 행 대표 이미지. overlay 키가 아니라 typed RHF가 SSOT */
+  recruitmentThumbnailFileObjectId: z.number().optional(),
+  recruitmentThumbnailFileName: z.string().optional(),
+  recruitmentAttachmentFileObjectIds: z.array(z.number()).optional(),
   rounds: z.array(roundEditSchema),
   curriculumSession1Title: z.string().optional(),
   curriculumSession1Description: z.string().optional(),
@@ -1060,6 +1064,9 @@ export function programToDetailEditValues(
     recruitmentGuide: program.recruitmentGuide?.trim() ? program.recruitmentGuide : undefined,
     learningSupportContent: program.learningSupportContent ?? '',
     attachmentFileNames: program.attachmentFileNames ?? [],
+    recruitmentThumbnailFileObjectId: undefined,
+    recruitmentThumbnailFileName: undefined,
+    recruitmentAttachmentFileObjectIds: undefined,
     resultAnnouncementDate: program.resultAnnouncementDate
       ? toStr(program.resultAnnouncementDate)
       : '',
