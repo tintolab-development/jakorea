@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatLectureFeeStandardTitle,
   formatLectureSessionLabel,
   formatProgramSessionProgressDisplay,
   formatWonAmountDisplay,
@@ -8,6 +9,8 @@ import {
   needsPaymentStatementJoin,
   pickBusinessPeriodFromListItems,
   pickProgramSessionProgressFromListItems,
+  resolveLectureFeeStandardAmountDisplay,
+  resolveLectureFeeStandardTitleFromSettlement,
 } from './map-frontend-fields'
 
 describe('formatLectureSessionLabel', () => {
@@ -17,6 +20,53 @@ describe('formatLectureSessionLabel', () => {
 
   it('없으면 -', () => {
     expect(formatLectureSessionLabel(undefined)).toBe('-')
+  })
+})
+
+describe('formatLectureFeeStandardTitle', () => {
+  it('급수 제목은 그대로 둔다', () => {
+    expect(formatLectureFeeStandardTitle('1급 강사비')).toBe('1급 강사비')
+  })
+
+  it('generic 강사비·강의비는 -', () => {
+    expect(formatLectureFeeStandardTitle('강사비')).toBe('-')
+    expect(formatLectureFeeStandardTitle('강의비')).toBe('-')
+    expect(formatLectureFeeStandardTitle(undefined)).toBe('-')
+  })
+})
+
+describe('resolveLectureFeeStandardTitleFromSettlement', () => {
+  it('title이 있으면 정본으로 쓴다', () => {
+    expect(
+      resolveLectureFeeStandardTitleFromSettlement({
+        lectureFeeStandardTitle: '1급 강사비',
+        feeGrade: 'GRADE_2',
+      })
+    ).toBe('1급 강사비')
+  })
+
+  it('title이 비면 feeGrade/wageItemType으로 채운다', () => {
+    expect(
+      resolveLectureFeeStandardTitleFromSettlement({
+        lectureFeeStandardTitle: undefined,
+        feeGrade: 'GRADE_1',
+        wageItemType: 'TIER1',
+      })
+    ).toBe('1급 강사비')
+  })
+})
+
+describe('resolveLectureFeeStandardAmountDisplay', () => {
+  it('standard amount 우선', () => {
+    expect(
+      resolveLectureFeeStandardAmountDisplay(120000, [{ type: 'instructor_fee', amount: 500000 }])
+    ).toBe('120,000원')
+  })
+
+  it('standard가 없으면 instructor_fee amount를 보조로 쓴다', () => {
+    expect(
+      resolveLectureFeeStandardAmountDisplay(null, [{ type: 'instructor_fee', amount: 500000 }])
+    ).toBe('500,000원')
   })
 })
 
@@ -159,6 +209,27 @@ describe('mapCalculationDetailToBasisDetail', () => {
     if (detail?.layout === 'lectureFeeGemini') {
       expect(detail.feeAssessmentWon).toBe(170000)
     }
+  })
+
+  it('BE LECTURE_FEE basisJson(layout=lectureFeeTier) → 급수 모달 payload', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      layout: 'lectureFeeTier',
+      title: '강사비 산정 기준 상세',
+      resultAmount: 500000,
+      basisJson: JSON.stringify({
+        itemType: 'LECTURE_FEE',
+        feeGrade: 'GRADE_1',
+        wageItemType: 'TIER1',
+        amount: 500000,
+        sessionOrdinal: 1,
+      }),
+    })
+    expect(detail?.layout).toBe('lectureFeeTier')
+    if (detail?.layout !== 'lectureFeeTier') return
+    expect(detail.categoryLabel).toBe('1급 강사비')
+    expect(detail.tier).toBe('1')
+    expect(detail.feeAssessmentWon).toBe(500000)
+    expect(detail.lectureTimeDisplay).toBe('1차시')
   })
 
   it('layout만 있고 typed 필드 없으면 undefined', () => {

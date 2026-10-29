@@ -757,7 +757,10 @@ export default function AccountPaymentsPage() {
       if (accountPaymentsRemote) {
         const paymentId = target.accountPaymentId
         if (paymentId == null) {
-          window.alert('지급 완료 API에 필요한 accountPaymentId가 없습니다.')
+          cmsAlertModal.show({
+            title: '안내',
+            content: '지급 완료 API에 필요한 accountPaymentId가 없습니다.',
+          })
           return
         }
         void markPaidMutation.mutateAsync([paymentId]).catch(notifyAccountPaymentPaidError)
@@ -882,7 +885,10 @@ export default function AccountPaymentsPage() {
         .map(r => r.accountPaymentId)
         .filter((id): id is number => id != null)
       if (paymentIds.length === 0) {
-        window.alert('지급 완료 API에 필요한 accountPaymentId가 없습니다.')
+        cmsAlertModal.show({
+          title: '안내',
+          content: '지급 완료 API에 필요한 accountPaymentId가 없습니다.',
+        })
         return
       }
       void markPaidMutation

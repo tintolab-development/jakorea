@@ -7,6 +7,10 @@ import type {
   SettlementFrontendCalculationDetailResponse,
   SettlementTransportationSnapshotResponse,
 } from '@/shared/api/generated/settlement/schemas'
+import {
+  INSTRUCTOR_FEE_GRADE_LABELS,
+  toInstructorFeeGradeCode,
+} from '@/shared/constants/instructor-fee-grade'
 
 export interface PaymentOrderCalculationBasisDetailLectureFeeTier {
   layout: 'lectureFeeTier'
@@ -288,6 +292,91 @@ export function mapTransportationSnapshotToBasisDetail(
     snapshotAt: snapshot.snapshotAt,
     distanceSnapshotUnlinked: !hasDistanceOrProvider,
   }
+}
+
+export function lectureFeeTitleFromGradeOrWage(
+  feeGrade?: string | null,
+  wageItemType?: string | null
+): string | undefined {
+  const wage = wageItemType?.trim().toUpperCase()
+  if (wage === 'SPECIAL_LECTURE') return SPECIAL_LECTURE_FEE_TITLE
+  if (wage === 'GEMINI') return GEMINI_LECTURE_FEE_TITLE
+  const gradeCode = toInstructorFeeGradeCode(feeGrade)
+  if (gradeCode) return INSTRUCTOR_FEE_GRADE_LABELS[gradeCode]
+  if (wage === 'TIER1') return INSTRUCTOR_FEE_GRADE_LABELS.GRADE_1
+  if (wage === 'TIER2') return INSTRUCTOR_FEE_GRADE_LABELS.GRADE_2
+  if (wage === 'TIER3') return INSTRUCTOR_FEE_GRADE_LABELS.GRADE_3
+  return undefined
+}
+
+/** BE LECTURE_FEE calculationDetail → 급수/특강/제미나이 모달 payload */
+export function mapLectureFeeCalculationDetailToBasisDetail(
+  detail?: SettlementFrontendCalculationDetailResponse | null
+):
+  | PaymentOrderCalculationBasisDetailLectureFeeTier
+  | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+  | PaymentOrderCalculationBasisDetailLectureFeeGemini
+  | undefined {
+  if (!detail) return undefined
+
+  const candidates: Record<string, unknown>[] = []
+  if (detail.basisJson?.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(detail.basisJson)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        candidates.push(parsed as Record<string, unknown>)
+      }
+    } catch {
+      // invalid JSON — layout/resultAmount만으로 합성
+    }
+  }
+  candidates.push(detail as unknown as Record<string, unknown>)
+
+  for (const candidate of candidates) {
+    const itemType = stringValue(recordValue(candidate, 'itemType'))?.toUpperCase()
+    const layout = stringValue(recordValue(candidate, 'layout'))
+    const isLectureFee =
+      itemType === 'LECTURE_FEE' ||
+      layout === 'lectureFeeTier' ||
+      layout === 'lectureFeeSpecial' ||
+      layout === 'lectureFeeGemini'
+    if (!isLectureFee) continue
+
+    const feeGrade = stringValue(recordValue(candidate, 'feeGrade'))
+    const wageItemType = stringValue(recordValue(candidate, 'wageItemType'))
+    const title =
+      lectureFeeTitleFromGradeOrWage(feeGrade, wageItemType) ??
+      (layout === 'lectureFeeSpecial' ? SPECIAL_LECTURE_FEE_TITLE : undefined) ??
+      (layout === 'lectureFeeGemini' ? GEMINI_LECTURE_FEE_TITLE : undefined)
+    const amount =
+      numberValue(recordValue(candidate, 'amount', 'feeAssessmentWon', 'totalWon')) ??
+      detail.resultAmount
+    const sessionOrdinal = numberValue(recordValue(candidate, 'sessionOrdinal'))
+    const lectureTimeDisplay = resolveCanonicalLectureSessionDisplay(
+      stringValue(recordValue(candidate, 'lectureTimeDisplay')),
+      sessionOrdinal
+    )
+    if (amount == null && !title && lectureTimeDisplay === '-') continue
+
+    const fee = amount ?? 0
+    if (
+      wageItemType?.toUpperCase() === 'SPECIAL_LECTURE' ||
+      layout === 'lectureFeeSpecial' ||
+      isSpecialLectureFeeTitle(title)
+    ) {
+      return buildLectureFeeSpecialBasisDetail(fee, lectureTimeDisplay)
+    }
+    if (
+      wageItemType?.toUpperCase() === 'GEMINI' ||
+      layout === 'lectureFeeGemini' ||
+      isGeminiLectureFeeTitle(title)
+    ) {
+      return buildLectureFeeGeminiBasisDetail(fee, lectureTimeDisplay)
+    }
+    return buildLectureFeeTierBasisDetail(title ?? '-', fee, lectureTimeDisplay)
+  }
+
+  return undefined
 }
 
 function recordValue(record: Record<string, unknown>, ...keys: string[]): unknown {
@@ -628,14 +717,6 @@ function hashLineSeed(lineId: string): number {
   return hash
 }
 
-export type PaymentOrderCalculationBasisDetailResolveContext = {
-  lectureFeeStandardTitle?: string
-  /** 원천징수 fallback — 세전 1일 급여 총액 */
-  withholdingDailySalaryTotalWon?: number
-  /** true이면 서버 calculationDetail이 없는 항목에 mock 기준을 만들지 않는다. */
-  remoteData?: boolean
-}
-
 /** 원천징수 산정 — 세전 1일 급여 총액(양수 항목 합) */
 export function computePaymentOrderCalculationSubtotalBeforeWithholding(
   blocks: PaymentOrderCalculationStatementSessionBlock[]
@@ -682,14 +763,59 @@ function resolveLectureFeeStandardTitleForRow(
   return '-'
 }
 
-function resolveLectureTimeDisplayForRow(row: {
-  basisDetail?: PaymentOrderCalculationBasisDetail
-}): string {
-  if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
-    const fromDetail = row.basisDetail.lectureTimeDisplay.trim()
-    if (fromDetail && fromDetail !== '-') return fromDetail
+/**
+ * 순수 차시·회차 표기만 허용.
+ * `GROK_E2E_API CS03 1회차` 같은 일정명에서 숫자를 뽑아 N차시로 오인하지 않는다.
+ */
+export function isCanonicalLectureSessionDisplay(raw: string | undefined): boolean {
+  const trimmed = raw?.trim()
+  if (!trimmed || trimmed === '-') return false
+  return /^\d+\s*(?:~\s*\d+\s*)?(?:차시|회차)$/u.test(trimmed)
+}
+
+/** lectureSessionDisplay가 일정명이면 파싱하지 않고 sessionOrdinal → N차시 */
+export function resolveCanonicalLectureSessionDisplay(
+  lectureSessionDisplay?: string | null,
+  sessionOrdinal?: number | null
+): string {
+  const fromDisplay = lectureSessionDisplay?.trim()
+  if (fromDisplay && isCanonicalLectureSessionDisplay(fromDisplay)) {
+    return fromDisplay
+  }
+  if (sessionOrdinal != null && Number.isFinite(sessionOrdinal) && sessionOrdinal > 0) {
+    return `${Math.trunc(sessionOrdinal)}차시`
   }
   return '-'
+}
+
+export type PaymentOrderCalculationBasisDetailResolveContext = {
+  lectureFeeStandardTitle?: string
+  /** 원천징수 fallback — 세전 1일 급여 총액 */
+  withholdingDailySalaryTotalWon?: number
+  /** true이면 서버 calculationDetail이 없는 항목에 mock 기준을 만들지 않는다. */
+  remoteData?: boolean
+  sessionOrdinal?: number | null
+  /** 책정 금액 정본 — 있으면 모달 급수 산정 금액에 우선 */
+  lectureFeeStandardAmountWon?: number | null
+}
+
+function resolveLectureTimeDisplayForRow(
+  row: {
+    basisDetail?: PaymentOrderCalculationBasisDetail
+    lectureSessionDisplay?: string
+  },
+  context?: PaymentOrderCalculationBasisDetailResolveContext | null
+): string {
+  if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
+    const fromDetail = row.basisDetail.lectureTimeDisplay.trim()
+    if (fromDetail && fromDetail !== '-' && isCanonicalLectureSessionDisplay(fromDetail)) {
+      return fromDetail
+    }
+  }
+  return resolveCanonicalLectureSessionDisplay(
+    row.lectureSessionDisplay,
+    context?.sessionOrdinal
+  )
 }
 
 /** 행 payload·기본정보로 산정 기준 상세 fallback 생성 (mock/API 공통) */
@@ -705,11 +831,54 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
   context?: PaymentOrderCalculationBasisDetailResolveContext | null
 ): PaymentOrderCalculationBasisDetail | undefined {
   // 표시용 원격 snapshot은 기존 호환 fallback보다 우선한다.
+  // BE lectureFeeTier 합성(title/resultAmount만)이 remote로 떨어진 경우는 급수 모달로 되돌린다.
   if (row.basisDetail?.layout === 'remote') {
+    const sourceLayout = row.basisDetail.sourceLayout
+    if (
+      isLectureFeeCalculationRow(row) &&
+      (sourceLayout === 'lectureFeeTier' ||
+        sourceLayout === 'lectureFeeSpecial' ||
+        sourceLayout === 'lectureFeeGemini')
+    ) {
+      return buildLectureFeeBasisDetailFromStandardTitle(
+        resolveLectureFeeStandardTitleForRow(row, context),
+        context?.lectureFeeStandardAmountWon ?? row.amount,
+        resolveLectureTimeDisplayForRow(row, context)
+      )
+    }
     return row.basisDetail
   }
 
   if (context?.remoteData && row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
+    if (isLectureFeeBasisDetail(row.basisDetail)) {
+      const lectureTimeDisplay = resolveLectureTimeDisplayForRow(row, context)
+      const categoryLabel = resolveLectureFeeStandardTitleForRow(row, context)
+      const amountWon = context.lectureFeeStandardAmountWon
+      let next = row.basisDetail
+      if (
+        lectureTimeDisplay !== '-' &&
+        (!next.lectureTimeDisplay.trim() || next.lectureTimeDisplay.trim() === '-')
+      ) {
+        next = { ...next, lectureTimeDisplay }
+      }
+      if (
+        !isGenericLectureFeeCategoryLabel(categoryLabel) &&
+        isGenericLectureFeeCategoryLabel(next.categoryLabel)
+      ) {
+        next = { ...next, categoryLabel }
+        if (next.layout === 'lectureFeeTier') {
+          next = { ...next, tier: resolveLectureFeeTier(categoryLabel) }
+        }
+      }
+      if (amountWon != null && amountWon > 0) {
+        if (next.layout === 'lectureFeeGemini') {
+          next = { ...next, feeAssessmentWon: amountWon }
+        } else {
+          next = { ...next, feeAssessmentWon: amountWon, totalWon: amountWon }
+        }
+      }
+      return next
+    }
     return row.basisDetail
   }
 
@@ -724,8 +893,17 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return buildLectureFeeBasisDetailFromStandardTitle(
       resolveLectureFeeStandardTitleForRow(row, context),
       row.amount,
-      resolveLectureTimeDisplayForRow(row)
+      resolveLectureTimeDisplayForRow(row, context)
     )
+  }
+
+  // 원천징수: 원격이어도 소계(실지급 전 합)가 있으면 요율 산출 UI를 표시한다.
+  if (row.kind === 'withholding' || row.itemLabel === '원천징수') {
+    const dailyTotal = context?.withholdingDailySalaryTotalWon
+    if (dailyTotal && dailyTotal > 0) {
+      return buildWithholdingBasisDetail(dailyTotal)
+    }
+    if (context?.remoteData) return undefined
   }
 
   if (row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
@@ -739,10 +917,6 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
   const seed = hashLineSeed(row.lineId)
 
   if (row.kind === 'withholding' || row.itemLabel === '원천징수') {
-    const dailyTotal = context?.withholdingDailySalaryTotalWon
-    if (dailyTotal && dailyTotal > 0) {
-      return buildWithholdingBasisDetail(dailyTotal)
-    }
     return buildWithholdingBasisDetail(300000)
   }
 

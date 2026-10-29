@@ -57,7 +57,7 @@ import {
 } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import { sumCountablePaymentOrderLineAmounts } from '@/features/settlement-management/api/payment-orders/payment-order-line-amounts'
 import { renderLineProcessingStatusText } from '@/pages/settlement-management/payment-order-detail-aggregate-status'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -181,6 +181,7 @@ export function usePaymentOrderDetailLinesController(
     detailContextQuery,
   } = args
 
+  const { showAlert } = useCmsAlert()
   const confirmMutation = useConfirmPaymentStatementMutation()
 
   const contextRowNo = mode === 'program' ? args.programRow.no : args.instructorRow.no
@@ -371,9 +372,10 @@ export function usePaymentOrderDetailLinesController(
         setSelectedRowKeys([])
       })
       .catch(error => {
-        window.alert(
-          getSettlementApiErrorMessage(error, '지급 현황 상세 목록을 불러오지 못했습니다.')
-        )
+        showAlert({
+          title: '안내',
+          content: getSettlementApiErrorMessage(error, '지급 현황 상세 목록을 불러오지 못했습니다.'),
+        })
       })
       .finally(() => {
         setFilterFetching(false)
@@ -387,6 +389,7 @@ export function usePaymentOrderDetailLinesController(
     contextAggregateKey,
     mode,
     args,
+    showAlert,
   ])
 
   const handleBatchConfirm = useCallback(
@@ -399,7 +402,10 @@ export function usePaymentOrderDetailLinesController(
           selected.length === 0 ||
           selected.some(row => !canConfirmPaymentStatement(row))
         ) {
-          window.alert('확인할 수 없는 지급조서가 포함되어 있습니다. 목록을 새로고침해 주세요.')
+          showAlert({
+            title: '안내',
+            content: '확인할 수 없는 지급조서가 포함되어 있습니다. 목록을 새로고침해 주세요.',
+          })
           return
         }
         const statementIds = selected
@@ -407,7 +413,10 @@ export function usePaymentOrderDetailLinesController(
           .filter((id): id is number => id != null)
 
         if (statementIds.length === 0) {
-          window.alert('지급조서 확인 API에 필요한 statementId가 없습니다.')
+          showAlert({
+            title: '안내',
+            content: '지급조서 확인 API에 필요한 statementId가 없습니다.',
+          })
           return
         }
 
@@ -439,7 +448,10 @@ export function usePaymentOrderDetailLinesController(
             await detailContextQuery?.refetch()
           })
           .catch(async error => {
-            window.alert(getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.'))
+            showAlert({
+              title: '안내',
+              content: getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.'),
+            })
             if (isPaymentStatementStatusConflictError(error)) {
               setBatchConfirmOpen(false)
               setSelectedRowKeys([])
@@ -466,7 +478,14 @@ export function usePaymentOrderDetailLinesController(
       setBatchConfirmOpen(false)
       setSelectedRowKeys([])
     },
-    [selectedRowKeys, paymentOrdersRemote, rowsState, confirmMutation, detailContextQuery]
+    [
+      selectedRowKeys,
+      paymentOrdersRemote,
+      rowsState,
+      confirmMutation,
+      detailContextQuery,
+      showAlert,
+    ]
   )
 
   const selectedConfirmableRows = useMemo(() => {
@@ -601,12 +620,16 @@ export function usePaymentOrderDetailLinesController(
         setIssuanceQueue(payloads)
         setIssuanceViewOpen(true)
       } catch (error) {
-        window.alert(
-          getSettlementApiErrorMessage(error, '지급조서 발급 미리보기를 불러오지 못했습니다.')
-        )
+        showAlert({
+          title: '안내',
+          content: getSettlementApiErrorMessage(
+            error,
+            '지급조서 발급 미리보기를 불러오지 못했습니다.'
+          ),
+        })
       }
     })()
-  }, [buildIssuancePayloadForLine, rowsState, selectedRowKeys])
+  }, [buildIssuancePayloadForLine, rowsState, selectedRowKeys, showAlert])
 
   const keywordFieldKey = mode === 'program' ? 'instructorName' : 'programName'
 

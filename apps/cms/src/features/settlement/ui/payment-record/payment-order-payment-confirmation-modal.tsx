@@ -65,7 +65,9 @@ export function PaymentOrderPaymentConfirmationModal({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large" style={{ minWidth: 180 }}
+            size="large"
+            className="cms-button--footer-auto"
+            width="auto"
             onClick={() =>
               onConfirm({ lectureFeePaymentScheduledDateIso: expectedDate.format('YYYY-MM-DD') })
             }

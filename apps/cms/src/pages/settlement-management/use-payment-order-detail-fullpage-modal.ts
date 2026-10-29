@@ -19,6 +19,7 @@ import { usePaymentOrdersDetailContextQuery } from '@/features/settlement-manage
 import { useSettlementDetailQuery } from '@/features/settlement-management/hooks/use-settlement-detail-query'
 import { useSettlementTransportationSnapshotQuery } from '@/features/settlement-management/hooks/use-settlement-transportation-snapshot-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import { useCmsAlert } from '@/shared/ui'
 import { isAwaitingFirstQueryData } from '@/shared/lib/is-awaiting-first-query-data'
 import type {
   PaymentOrderAdminInstructorDetailProgramRow,
@@ -45,6 +46,7 @@ export function usePaymentOrderDetailFullPageModalState(
   input: PaymentOrderDetailFullPageModalInput
 ) {
   const { type, isOpen, onClose, data, listPageDateRange } = input
+  const { showAlert } = useCmsAlert()
 
   const row = data
   const paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders')
@@ -199,7 +201,10 @@ export function usePaymentOrderDetailFullPageModalState(
 
       if (paymentOrdersRemote) {
         if (lineRow.settlementId == null) {
-          window.alert('산출 내역서 API에 필요한 settlementId가 없습니다.')
+          showAlert({
+            title: '안내',
+            content: '산출 내역서 API에 필요한 settlementId가 없습니다.',
+          })
           return
         }
         setCalcLineRow(lineRow)
@@ -211,7 +216,7 @@ export function usePaymentOrderDetailFullPageModalState(
       void row
       void lineRow
     },
-    [row, detail, paymentOrdersRemote, type]
+    [row, detail, paymentOrdersRemote, type, showAlert]
   )
 
   const closeCalculationStatement = useCallback(() => {

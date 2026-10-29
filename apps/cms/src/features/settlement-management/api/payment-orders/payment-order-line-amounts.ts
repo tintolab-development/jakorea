@@ -21,11 +21,15 @@ export function sumCountablePaymentOrderLineAmounts(
   }, 0)
 }
 
-/** 개인 프로그램 등 기관 없음 → 테이블 셀 비노출(공란). `-` 플레이스홀더 금지. */
+/**
+ * 지급 현황 「참여 기관명」표시.
+ * BE `institutionName`만 사용 (배정 기관 → 일정 단일 기관 → 장소명, 없으면 null).
+ * null·빈 문자열·`-` → 공란. `없음`/`미지정`/`—`로 치환하지 않음.
+ */
 export function formatPaymentOrderInstitutionDisplay(
   institutionName: string | null | undefined
 ): string {
   const trimmed = institutionName?.trim()
-  if (!trimmed || trimmed === '-') return ''
+  if (!trimmed || trimmed === '-' || trimmed === '—' || trimmed === '–') return ''
   return trimmed
 }

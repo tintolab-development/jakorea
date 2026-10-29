@@ -32,18 +32,24 @@
   justify-content: flex-end;
 }
 
-/* 취소 120×40 · 확인은 `size="tableAction"` → 160×40 (app-button.css) */
-.payment-order-batch-confirm-modal .content-modal__footer-actions .cms-button--secondary {
-  width: 120px;
-  min-width: 120px;
-  height: 40px;
-  box-sizing: border-box;
+/* 취소는 ContentModal 푸터 기본 140×44. 확인 라벨은 footer-auto로 가변 폭 */
+.payment-order-batch-confirm-modal
+  .content-modal__footer-actions
+  .cms-button.ant-btn.cms-button--footer-auto {
+  width: max-content !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  flex-direction: row;
+  white-space: nowrap;
 }
 
-.payment-order-batch-confirm-modal .content-modal__footer-actions .cms-button--primary.cms-button--h44 {
-  width: 160px !important;
-  min-width: 160px !important;
-  height: 40px !important;
+.payment-order-batch-confirm-modal
+  .content-modal__footer-actions
+  .cms-button.ant-btn.cms-button--footer-auto
+  .cms-button__label {
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
 }
 
 .payment-order-batch-confirm-modal .teal-header-modal__body {
