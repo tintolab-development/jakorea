@@ -1478,12 +1478,12 @@ export function useUserDetailController({
         onMemberBasicInfoSaved?.(revoked)
         setInstructorPermissionRevokeOpen(false)
         showAlert({
-          title: '권한 박탈 완료',
-          content: '강사 권한 박탈이 완료되었습니다.',
+          title: '권한 종료 완료',
+          content: '강사 권한 종료가 완료되었습니다.',
         })
       } catch (error) {
         handleError(error, {
-          defaultMessage: getMemberApiErrorMessage(error, '강사 권한 박탈에 실패했습니다.'),
+          defaultMessage: getMemberApiErrorMessage(error, '강사 권한 종료에 실패했습니다.'),
         })
       }
     },
