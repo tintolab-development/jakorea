@@ -22,6 +22,7 @@ vi.mock('@/features/template/api/form-templates-api-client', () => ({
 import {
   readSurveySubmissionPeriodFromSchema,
   readSurveyTitleFromSchema,
+  resolveExistingSurveyBindingVersion,
   resolvePublishedSurveyBinding,
   surveyBindingResolutionAlert,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
@@ -248,6 +249,13 @@ describe('resolvePublishedSurveyBinding', () => {
       reason: 'not_found',
     })
     expect(fetchFormTemplateVersionsRemote).not.toHaveBeenCalled()
+  })
+})
+
+describe('resolveExistingSurveyBindingVersion', () => {
+  it('keeps the pinned binding version even when later versions exist', () => {
+    expect(resolveExistingSurveyBindingVersion({ templateVersionId: 70 })).toBe(70)
+    expect(resolveExistingSurveyBindingVersion({ templateVersionId: null })).toBeNull()
   })
 })
 

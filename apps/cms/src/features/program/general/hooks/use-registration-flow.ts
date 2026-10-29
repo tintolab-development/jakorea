@@ -269,8 +269,17 @@ export function useGeneralProgramRegistrationFlow(
     tabVisibility,
   ])
 
+  // URL(generalStep) → activeStep 동기화. selectStep 직후 URL 반영 전 렌더에서 activeStep만 바뀌면
+  // 옛 URL 값으로 되돌렸다가 다시 오는 되튀김이 생긴다(참여자 편집기 언마운트·재로드 유발).
+  // URL 단계나 그 해석 결과가 바뀔 때만 따른다. 1사1교(economy)는 기존 동작 유지.
+  const lastUrlStepSyncRef = useRef<{ fromUrl: string; normalized: GeneralProgramRegistrationStepKey } | null>(
+    null
+  )
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      lastUrlStepSyncRef.current = null
+      return
+    }
     const fromUrl = options?.initialStep
     if (fromUrl == null) return
     const normalized = coerceRegistrationStepForVariant(
@@ -278,6 +287,11 @@ export function useGeneralProgramRegistrationFlow(
       participantFlags,
       registrationFormVariant
     )
+    if (registrationFormVariant !== 'economy') {
+      const last = lastUrlStepSyncRef.current
+      if (last != null && last.fromUrl === fromUrl && last.normalized === normalized) return
+      lastUrlStepSyncRef.current = { fromUrl, normalized }
+    }
     if (normalized === activeStep) return
     setActiveStep(normalized)
   }, [

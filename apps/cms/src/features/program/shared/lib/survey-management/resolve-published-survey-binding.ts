@@ -104,6 +104,17 @@ function versionAllowsPublish(version: {
 }
 
 /**
+ * 기존 program form-binding에 고정된 version.
+ * ARCHIVED여도 최신 PUBLISHED로 치환하지 않는다.
+ */
+export function resolveExistingSurveyBindingVersion(
+  binding: { templateVersionId?: number | null }
+): number | null {
+  const value = Number(binding.templateVersionId)
+  return Number.isInteger(value) && value > 0 ? value : null
+}
+
+/**
  * 설문·만족도·강의평가 등록은 양식 관리에서 고른 템플릿 자체의 version에 바인딩한다(카탈로그 복제 없음).
  * 최신 PUBLISHED version이 있으면 그 버전만 바인딩한다. 공용 카탈로그 DRAFT는 게시하지 않는다.
  * 사용자 복제·생성 템플릿이 v1 DRAFT만 있으면 그 복사본을 게시한 뒤 바인딩한다
