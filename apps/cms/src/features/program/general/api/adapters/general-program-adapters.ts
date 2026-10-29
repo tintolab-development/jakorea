@@ -1502,8 +1502,11 @@ function mapProgramPatchFieldsToRequest(
                 ...(existing.generalCommonInfo ?? {}),
                 ...(patch.generalCommonInfo ?? {}),
               },
+              // 상세 공통 정보가 명시한 overlay sidecar(교육 진행 장소 등)는 patch 우선
               registrationOverlay:
-                existing.registrationOverlay ?? serializeProgram.registrationOverlay,
+                patch.registrationOverlay ??
+                existing.registrationOverlay ??
+                serializeProgram.registrationOverlay,
             }
           : undefined,
       overlayExplicitCommonInfoKeys:

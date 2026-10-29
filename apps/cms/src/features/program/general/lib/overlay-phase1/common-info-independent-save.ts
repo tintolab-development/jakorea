@@ -5,6 +5,7 @@
 import type { Program } from '@/types/domain'
 import type { GeneralProgramUpdateSerializeOptions } from '@/features/program/general/api/adapters/general-program-adapters'
 import {
+  educationPlaceRegistrationOverlayFromEditValues,
   type GeneralProgramCommonInfoEditFormValues,
   type GeneralProgramSponsorEditContext,
 } from '@/features/program/general/model/common-info-edit-schema'
@@ -44,9 +45,18 @@ export function createGeneralProgramCommonInfoIndependentSave(args: {
   const persistedTargetLevels = resolvePersistedProgramTargetLevels(args.program)
   const targetLevelsPatch =
     persistedTargetLevels.length > 0 ? { targetLevels: persistedTargetLevels } : {}
+  // 교육 진행 장소 — BE 전용 필드 전까지 overlay sidecar. 변경 시에만 patch 에 싣는다.
+  const educationPlaceOverlay = educationPlaceRegistrationOverlayFromEditValues(
+    args.values,
+    args.program
+  )
+  const educationPlacePatch = educationPlaceOverlay
+    ? { registrationOverlay: educationPlaceOverlay }
+    : {}
   return {
     programDraft: {
       ...built.programDraft,
+      ...educationPlacePatch,
       ...(persistedTargetLevels.length > 0
         ? { targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
         : {}),
@@ -55,6 +65,7 @@ export function createGeneralProgramCommonInfoIndependentSave(args: {
     patch: {
       ...built.alignedPatch.patch,
       ...targetLevelsPatch,
+      ...educationPlacePatch,
     },
     structureChanged: built.structureChanged,
     serializeOptions: GENERAL_COMMON_INFO_INDEPENDENT_SERIALIZE_OPTIONS,

@@ -24314,7 +24314,14 @@
             }
           },
           "duplicateStrategy": {
-            "type": "string"
+            "type": "string",
+            "description": "overwrite=동일 키 행 덮어쓰기(지급완료면 요청 전체 미커밋). append=중복이어도 신규 insert. 소문자 허용.",
+            "enum": [
+              "overwrite",
+              "append",
+              "OVERWRITE",
+              "APPEND"
+            ]
           }
         }
       },
@@ -24349,13 +24356,18 @@
           },
           "trainingDate": {
             "type": "string",
-            "format": "date"
+            "format": "date",
+            "example": "2026-10-12"
           },
           "trainingStartTime": {
-            "type": "string"
+            "type": "string",
+            "format": "time",
+            "example": "10:00:00"
           },
           "trainingEndTime": {
-            "type": "string"
+            "type": "string",
+            "format": "time",
+            "example": "12:00:00"
           },
           "trainingMinutes": {
             "type": "integer",
@@ -24447,7 +24459,12 @@
             "format": "int32"
           },
           "status": {
-            "type": "string"
+            "type": "string",
+            "description": "대소문자 고정. 행 검증 실패 또는 지급완료 overwrite 차단만 FAILED.",
+            "enum": [
+              "SUCCESS",
+              "FAILED"
+            ]
           },
           "message": {
             "type": "string"
@@ -32955,6 +32972,11 @@
           },
           "scheduleDateLabel": {
             "type": "string"
+          },
+          "educationPlaceAddress": {
+            "type": "string",
+            "description": "GENERAL_INDIVIDUAL 교육 진행 장소. 일정 별 상이일 때 이 회차 주소. 없으면 생략.",
+            "nullable": true
           }
         }
       },
@@ -33067,13 +33089,13 @@
           "trainingRequestStartDate": {
             "type": "string",
             "format": "date",
-            "description": "Gemini 연수 요청 가능 기간 시작일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null.",
+            "description": "Gemini 연수 요청 가능 기간 시작일(Asia/Seoul 역일). gemini_program_detail 정본. 비Gemini·미설정은 null. 기관 모집 기간(applicationStartDate/applicationEndDate, recruitments startAt/endAt)으로 채우지 않는다.",
             "nullable": true
           },
           "trainingRequestEndDate": {
             "type": "string",
             "format": "date",
-            "description": "Gemini 연수 요청 가능 기간 종료일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null.",
+            "description": "Gemini 연수 요청 가능 기간 종료일(Asia/Seoul 역일). gemini_program_detail 정본. 비Gemini·미설정은 null. 모집 기간·사업기간·operationStartDate로 대체하지 않는다.",
             "nullable": true
           },
           "preEducationNoticeRequired": {
@@ -33353,6 +33375,20 @@
             "format": "int32",
             "description": "제미나이 최소 수강 인원(gemini_program_detail.min_participant_count). CMS minParticipantCount/minimumParticipants/minStudentCount와 같은 저장값. 비제미나이·미설정이면 null.",
             "nullable": true
+          },
+          "educationPlaceScheduleDetail": {
+            "type": "string",
+            "description": "GENERAL_INDIVIDUAL 교육 진행 장소 공통/일정 별 상이. 기관·다른 유형은 null.",
+            "enum": [
+              "common",
+              "perSchedule"
+            ],
+            "nullable": true
+          },
+          "educationPlaceAddress": {
+            "type": "string",
+            "description": "GENERAL_INDIVIDUAL 일정 공통 교육 장소 주소. perSchedule이거나 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -33555,6 +33591,11 @@
           },
           "participationMethodLabel": {
             "type": "string"
+          },
+          "educationPlaceAddress": {
+            "type": "string",
+            "description": "GENERAL_INDIVIDUAL 교육 진행 장소. 일정 별 상이일 때 이 일정 주소. 사전교육 행은 생략.",
+            "nullable": true
           }
         }
       },
@@ -34284,46 +34325,6 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
-          }
-        }
-      },
-      "MemberInstructorAssignmentListResponse": {
-        "type": "object",
-        "description": "플랫폼 강사 마이페이지 배정 현황 탭의 배정된 목록. 강의보고서 바인딩과 무관하며 활성 ASSIGNED만 반환합니다.",
-        "properties": {
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "instructorMemberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Item"
-            }
-          }
-        }
-      },
-      "MemberInstructorAssignmentWaitingResponse": {
-        "type": "object",
-        "description": "플랫폼 강사 마이페이지 배정 현황 탭의 배정 대기 목록. 이 강사가 신청한 기관·일정만 포함하며 활성 ASSIGNED는 제외합니다.",
-        "properties": {
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "instructorMemberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Item"
-            }
           }
         }
       },
@@ -42921,26 +42922,6 @@
           }
         }
       },
-      "InstructorAssignmentAvailabilityResponse": {
-        "type": "object",
-        "description": "참여 강사 배정 대기 목록용 일정별 배정 가능 여부. GENERAL_ORGANIZATION·GENERAL_INDIVIDUAL만 후보를 반환합니다.",
-        "properties": {
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "instructorMemberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Item"
-            }
-          }
-        }
-      },
       "InstructorApplicationListItemResponse": {
         "type": "object",
         "properties": {
@@ -43098,12 +43079,6 @@
             "type": "integer",
             "format": "int64",
             "description": "program_schedule id.",
-            "nullable": true
-          },
-          "educationPeriodIndex": {
-            "type": "integer",
-            "format": "int32",
-            "description": "기간형 교육 기간 인덱스. 없으면 null.",
             "nullable": true
           },
           "startAt": {
@@ -47041,15 +47016,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -48037,7 +48012,9 @@
           },
           "accountPaymentId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "account_payment.payment_status=PAID 일 때만 채움. 미지급은 null. 0을 넣지 않음.",
+            "nullable": true
           },
           "status": {
             "type": "string"

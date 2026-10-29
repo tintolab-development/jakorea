@@ -2,6 +2,7 @@ import type { Program } from '@/types/domain'
 import { pickDisplayValue } from '@/features/program/general/lib/detail-value-helpers'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
+import { stripHiddenEducationPlaceFromRegistrationOverlay } from '@/features/program/general/lib/education-place-overlay-persist'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 import {
   buildGeneralRegistrationOverlayFromProgram,
@@ -673,6 +674,8 @@ export function serializeGeneralProgramServiceDetailJson(
     registrationOverlay = stripWageKeysFromRegistrationOverlay(registrationOverlay)
   }
   registrationOverlay = registrationOverlayWithServerEducationScheduleLines(registrationOverlay)
+  // 숨긴 교육 진행 장소(온라인 행·기관 대상)는 폼에만 두고 저장 본문에서 뺀다
+  registrationOverlay = stripHiddenEducationPlaceFromRegistrationOverlay(registrationOverlay, nestedProgram)
   const persistedTargetLevels = resolvePersistedProgramTargetLevels(program)
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,

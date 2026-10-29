@@ -626,6 +626,8 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
       'generalRegistration.wageInfo.grade3Fee': 60000,
       'generalRegistration.wageInfo.paymentItemValues': ['p-166201'],
       'generalRegistration.typeSettings.multiCommonEducationForm': 'offline',
+      'generalRegistration.typeSettings.educationPlaceScheduleDetail': 'common',
+      'generalRegistration.typeSettings.educationPlaceAddress': '서울특별시 중구 세종대로 110',
       'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '3', 2: '6' },
       'generalRegistration.educationCurriculum.roundContentByRound': {
         1: '필요한 것과 갖고 싶은 것을 구분하고 소비 계획을 세워 봅니다.',

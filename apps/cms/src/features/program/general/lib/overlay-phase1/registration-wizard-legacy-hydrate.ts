@@ -5,6 +5,10 @@ import type { ProgramRegistrationEditorState } from '@/features/template/lib/pro
 import { overlayKvToCommonInfoFormValues } from './overlay-kv-to-common-info-form-values'
 import { isFieldPresent } from './common-info-form-values'
 import {
+  REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
   REGISTRATION_WIZARD_FOOTER_IPS_KEY,
   REGISTRATION_WIZARD_OPERATION_ANCHOR_KEY,
   REGISTRATION_WIZARD_PERIOD_DATE_ISO_KEY,
@@ -22,6 +26,8 @@ import {
   pickApplicationOwnedOverlay,
 } from './registration-wizard-application-rhf'
 import type { CommonInfoIpsValue } from './common-info-form-values'
+import type { GeneralProgramCommonInfoExtension } from '@/types/domain'
+import { overlayWithEducationPlaceCommonInfoFallback } from '@/features/program/general/lib/education-place-common-info-fallback'
 
 function isPresentTextField(field: unknown): field is { present: true; value: unknown } {
   return (
@@ -36,6 +42,15 @@ function isPresentTextField(field: unknown): field is { present: true; value: un
 function readPresentText(field: unknown, fallback: string): string {
   if (!isPresentTextField(field)) return fallback
   return typeof field.value === 'string' ? field.value : fallback
+}
+
+function readIndexTextRecord(raw: unknown): Record<number, string> {
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const out: Record<number, string> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value === 'string') out[Number(key)] = value
+  }
+  return out
 }
 
 export function parseRegistrationWizardRhfSettings(
@@ -89,16 +104,21 @@ export function parseRegistrationWizardRhfSettings(
 export function hydrateRegistrationWizardUiValuesFromLegacy(args: {
   overlay: Record<string, unknown>
   editorState?: ProgramRegistrationEditorState
+  /** 재조회 시 BE 복사본 — overlay에 교육 진행 장소 값이 없을 때만 fallback */
+  generalCommonInfo?: GeneralProgramCommonInfoExtension
 }): RegistrationWizardUiValues {
   const defaults = createDefaultRegistrationWizardUiValues()
   const formValues = overlayKvToCommonInfoFormValues(args.overlay)
   const extras = args.editorState
   const overlay = args.overlay
+  const placeOverlay =
+    overlayWithEducationPlaceCommonInfoFallback(overlay, args.generalCommonInfo) ?? overlay
 
   const operationAnchor = overlay[REGISTRATION_WIZARD_OPERATION_ANCHOR_KEY]
   const singleDateIso = overlay[REGISTRATION_WIZARD_SINGLE_DATE_ISO_KEY]
   const periodDateIso = overlay[REGISTRATION_WIZARD_PERIOD_DATE_ISO_KEY]
   const footerIps = overlay[REGISTRATION_WIZARD_FOOTER_IPS_KEY]
+  const educationPlaceAddress = placeOverlay[REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY]
 
   return {
     ...defaults,
@@ -204,6 +224,20 @@ export function hydrateRegistrationWizardUiValuesFromLegacy(args: {
       footerIps != null && typeof footerIps === 'object' && !Array.isArray(footerIps)
         ? (footerIps as CommonInfoIpsValue)
         : defaults.footerIpsType,
+    educationPlaceScheduleDetail:
+      placeOverlay[REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY] === 'perSchedule'
+        ? 'perSchedule'
+        : defaults.educationPlaceScheduleDetail,
+    educationPlaceAddress:
+      typeof educationPlaceAddress === 'string'
+        ? educationPlaceAddress
+        : defaults.educationPlaceAddress,
+    educationPlaceBySession: readIndexTextRecord(
+      placeOverlay[REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY]
+    ),
+    educationPlaceByDetail: readIndexTextRecord(
+      placeOverlay[REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY]
+    ),
     curriculum: formValues.curriculum,
     schedule: formValues.schedule,
     extras: {
@@ -241,6 +275,8 @@ export function hydrateRegistrationWizardUiValues(args: {
   overlay: Record<string, unknown>
   editorState?: ProgramRegistrationEditorState
   settingsJson?: Record<string, unknown>
+  /** 재조회 시 BE 복사본 — overlay에 교육 진행 장소 값이 없을 때만 fallback */
+  generalCommonInfo?: GeneralProgramCommonInfoExtension
 }): RegistrationWizardUiValues {
   const fromSettings = parseRegistrationWizardRhfSettings(args.settingsJson)
   if (fromSettings) {
@@ -265,5 +301,6 @@ export function hydrateRegistrationWizardUiValues(args: {
   return hydrateRegistrationWizardUiValuesFromLegacy({
     overlay: args.overlay,
     editorState: args.editorState,
+    generalCommonInfo: args.generalCommonInfo,
   })
 }

@@ -6,6 +6,8 @@ import { isHtmlContent } from '../../lib/html-body'
 import type { ProgramInfoVariant } from './program-info-aside'
 import { ProgramInfoPeriodSponsor } from './program-info-period-sponsor'
 import styles from './program-info-body.module.css'
+// 라벨 | 값 세로 구분선 — 마이페이지 신청 내역 `PipeSeparatedInlineText`와 같은 클래스 재사용
+import pipeStyles from '@/features/mypage/education/applications/ui/pipe-separated-inline-text.module.css'
 
 type ProgramInfoDetailProps = {
   program: ProgramDetail
@@ -32,6 +34,7 @@ function progressMetaLines(
     | 'educationFormLabel'
     | 'participationMethodLabel'
     | 'assignmentPeriod'
+    | 'educationPlaceLabel'
   >
 ) {
   return [
@@ -44,7 +47,12 @@ function progressMetaLines(
     row.assignmentPeriod?.trim()
       ? { label: '과제 기간', value: row.assignmentPeriod.trim() }
       : null,
-  ].filter((line): line is { label: string; value: string } => line != null)
+    row.educationPlaceLabel?.trim()
+      ? { label: '교육 장소', value: row.educationPlaceLabel.trim(), divided: true }
+      : null,
+  ].filter(
+    (line): line is { label: string; value: string; divided?: boolean } => line != null
+  )
 }
 
 function ProgressMeta({
@@ -52,18 +60,32 @@ function ProgressMeta({
 }: {
   row: Pick<
     ProgramSession | ProgramEventSchedule,
-    'educationFormLabel' | 'participationMethodLabel' | 'assignmentPeriod'
+    'educationFormLabel' | 'participationMethodLabel' | 'assignmentPeriod' | 'educationPlaceLabel'
   >
 }) {
   const lines = progressMetaLines(row)
   if (lines.length === 0) return null
   return (
     <div className={styles.sessionMeta}>
-      {lines.map(line => (
-        <PFText key={line.label} as="p" typo="bd-sm-rg" color="neutral-cool-600">
-          {line.label} {line.value}
-        </PFText>
-      ))}
+      {lines.map(line =>
+        line.divided ? (
+          <PFText
+            key={line.label}
+            as="p"
+            typo="bd-sm-rg"
+            color="neutral-cool-600"
+            className={`${pipeStyles.root} ${styles.sessionMetaDivided}`}
+          >
+            <span>{line.label}</span>
+            <span className={pipeStyles.divider} aria-hidden="true" />
+            <span>{line.value}</span>
+          </PFText>
+        ) : (
+          <PFText key={line.label} as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            {line.label} {line.value}
+          </PFText>
+        )
+      )}
     </div>
   )
 }

@@ -128,6 +128,9 @@ import {
   resolveScheduleDetailProgressTimeSummaryForView,
   formatScheduleProgressTimeSummaryForView,
   overlayIpsIndexForScheduleDetail,
+  programToGeneralCommonInfoEditValues,
+  isGeneralCommonInfoEducationPlaceRowVisible,
+  isGeneralCommonInfoEducationPlaceSessionVisible,
   resolveSponsorManagementIds,
   retainSponsorManagerContactIdsForSponsors,
   type GeneralProgramCommonInfoEditFormValues,
@@ -171,6 +174,11 @@ import {
   PROGRAM_REGISTRATION_IP_OWNED_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { ProgramRegistrationIpsTypeFields } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
+import {
+  EDUCATION_PLACE_LABEL,
+  ProgramRegistrationEducationPlaceInput,
+  ProgramRegistrationEducationPlacePerScheduleRow,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-place-fields'
 import {
   applyEducationFormTypeSettingsModeChange,
   getProgramRegistrationEducationFormOptions,
@@ -1492,6 +1500,110 @@ function WageSection({
   )
 }
 
+type EducationPlaceDetailState = {
+  values: Pick<
+    GeneralProgramCommonInfoEditFormValues,
+    | 'participantIndividual'
+    | 'participantOrganization'
+    | 'sessionRound'
+    | 'educationForm'
+    | 'educationFormScheduleDetail'
+    | 'educationPlaceScheduleDetail'
+    | 'educationPlaceAddress'
+  >
+  /** 보기 모드 — overlay 기준 회차/세부 일정 장소 */
+  viewCurriculumSessions: GeneralProgramCommonInfoEditFormValues['curriculumSessions']
+  viewScheduleDetails: GeneralProgramCommonInfoEditFormValues['scheduleDetails']
+}
+
+/** 교육 진행 장소 — 수정: RHF watch / 보기: Program(overlay) → 폼 값 */
+function useEducationPlaceDetailState(
+  program: Program | undefined,
+  editForm: UseFormReturn<GeneralProgramCommonInfoEditFormValues>,
+  isFormEdit: boolean
+): EducationPlaceDetailState {
+  const viewValues = useMemo(
+    () => (!isFormEdit && program ? programToGeneralCommonInfoEditValues(program) : null),
+    [isFormEdit, program]
+  )
+  if (isFormEdit) {
+    const [
+      participantIndividual,
+      participantOrganization,
+      sessionRound,
+      educationForm,
+      educationFormScheduleDetail,
+      educationPlaceScheduleDetail,
+      educationPlaceAddress,
+    ] = editForm.watch([
+      'participantIndividual',
+      'participantOrganization',
+      'sessionRound',
+      'educationForm',
+      'educationFormScheduleDetail',
+      'educationPlaceScheduleDetail',
+      'educationPlaceAddress',
+    ])
+    return {
+      values: {
+        participantIndividual,
+        participantOrganization,
+        sessionRound,
+        educationForm,
+        educationFormScheduleDetail,
+        educationPlaceScheduleDetail,
+        educationPlaceAddress,
+      },
+      viewCurriculumSessions: [],
+      viewScheduleDetails: [],
+    }
+  }
+  return {
+    values: viewValues ?? {
+      participantIndividual: false,
+      participantOrganization: true,
+      sessionRound: 'single',
+      educationForm: 'online',
+      educationFormScheduleDetail: 'common',
+      educationPlaceScheduleDetail: 'common',
+      educationPlaceAddress: '',
+    },
+    viewCurriculumSessions: viewValues?.curriculumSessions ?? [],
+    viewScheduleDetails: viewValues?.scheduleDetails ?? [],
+  }
+}
+
+/** 회차/세부 일정 「교육 진행 장소」 행 (일정 별 상이). 숨김이면 null */
+function renderEducationPlaceSessionRow(args: {
+  state: EducationPlaceDetailState
+  editForm: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
+  isFormEdit: boolean
+  kind: 'curriculumSession' | 'scheduleDetail'
+  index: number
+  regularNo: number
+  isPreEducation: boolean
+  rowEducationForm: string | undefined
+  viewPlace: string | undefined
+}): ReactNode {
+  if (args.isPreEducation || args.regularNo < 1) return null
+  if (!isGeneralCommonInfoEducationPlaceSessionVisible(args.state.values, args.rowEducationForm)) {
+    return null
+  }
+  const name =
+    args.kind === 'curriculumSession'
+      ? (`curriculumSessions.${args.index}.educationPlace` as const)
+      : (`scheduleDetails.${args.index}.educationPlace` as const)
+  const value = args.isFormEdit ? (args.editForm.watch(name) ?? '') : (args.viewPlace ?? '')
+  return (
+    <ProgramRegistrationEducationPlacePerScheduleRow
+      kind={args.kind}
+      index={args.regularNo}
+      value={value}
+      onChange={(_, next) => args.editForm.setValue(name, next, { shouldDirty: true })}
+    />
+  )
+}
+
 function TypeSettingsScheduleDetailRow({
   label,
   scheduleDetailName,
@@ -1501,6 +1613,7 @@ function TypeSettingsScheduleDetailRow({
   commonDetailEdit,
   commonDetailView,
   validationKey,
+  required,
   locked = false,
   perScheduleHint = typeSettingsPerScheduleHint({
     educationStructure: 'curriculum',
@@ -1512,7 +1625,9 @@ function TypeSettingsScheduleDetailRow({
     | 'educationFormScheduleDetail'
     | 'participationScheduleDetail'
     | 'ipsScheduleDetail'
+    | 'educationPlaceScheduleDetail'
   scheduleDetailValue: 'common' | 'perSchedule'
+  required?: boolean
   editForm: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   formMode: 'view' | 'edit'
   commonDetailEdit?: ReactNode
@@ -1542,6 +1657,7 @@ function TypeSettingsScheduleDetailRow({
       <DetailInfoForm.Field
         label={label}
         fullRow
+        required={required}
         validationKey={validationKey}
         edit={
           <div className="detail-info-form-inputs-wrapper program-registration-paragraph__schedule-detail-row">
@@ -1761,6 +1877,35 @@ function TypeSettingsSection({
   const ipsCategory = isFormEdit ? editForm.watch('ipsCategory') : ''
   const ipsDetail = isFormEdit ? editForm.watch('ipsDetail') : ''
 
+  const educationPlaceState = useEducationPlaceDetailState(program, editForm, isFormEdit)
+  const educationPlaceRow = isGeneralCommonInfoEducationPlaceRowVisible(
+    educationPlaceState.values
+  ) ? (
+    <TypeSettingsScheduleDetailRow
+      label={EDUCATION_PLACE_LABEL}
+      required
+      validationKey="typeSettings.educationPlace"
+      scheduleDetailName="educationPlaceScheduleDetail"
+      scheduleDetailValue={educationPlaceState.values.educationPlaceScheduleDetail ?? 'common'}
+      editForm={editForm}
+      formMode={formMode}
+      perScheduleHint={schedulePerScheduleHint}
+      commonDetailView={educationPlaceState.values.educationPlaceAddress?.trim() || '-'}
+      commonDetailEdit={
+        <Controller
+          name="educationPlaceAddress"
+          control={editForm.control}
+          render={({ field }) => (
+            <ProgramRegistrationEducationPlaceInput
+              value={field.value ?? ''}
+              onChange={next => field.onChange(next)}
+            />
+          )}
+        />
+      }
+    />
+  ) : null
+
   const scheduleTypeSettingsKey = `${educationFormScheduleDetail}-${participationScheduleDetail}-${ipsScheduleDetail}`
   const prevScheduleTypeSettingsKeyRef = useRef(scheduleTypeSettingsKey)
   useEffect(() => {
@@ -1936,6 +2081,7 @@ function TypeSettingsSection({
               />
             </DetailInfoForm.Row>
           )}
+          {educationPlaceRow}
         </DetailInfoForm>
       ) : (
         <DetailInfoForm
@@ -2067,6 +2213,7 @@ function TypeSettingsSection({
               />
             }
           />
+          {educationPlaceRow}
         </DetailInfoForm>
       )}
     </ProgramRegistrationDetailSection>
@@ -2086,6 +2233,7 @@ type CurriculumSessionViewModel = {
 }
 
 function MultiRoundCurriculumSessionForm({
+  educationPlaceRow,
   index,
   session,
   formMode,
@@ -2103,6 +2251,8 @@ function MultiRoundCurriculumSessionForm({
   highlightSessionNo,
   participationMethodLocked = false,
 }: {
+  /** 교육 진행 장소 일정 별 상이 — 블록 최하단 행 */
+  educationPlaceRow?: ReactNode
   index: number
   session: CurriculumSessionViewModel
   formMode: 'view' | 'edit'
@@ -2476,6 +2626,7 @@ function MultiRoundCurriculumSessionForm({
               }}
             />
           )}
+          {educationPlaceRow}
         </DetailInfoForm>
         {isFormEdit && canRemove ? (
           <ItemDeleteButton
@@ -2493,6 +2644,7 @@ function MultiRoundCurriculumSessionForm({
 }
 
 function SingleRoundCurriculumSessionForm({
+  educationPlaceRow,
   index,
   session,
   formMode,
@@ -2505,6 +2657,8 @@ function SingleRoundCurriculumSessionForm({
   showHeading = true,
   highlightSessionNo,
 }: {
+  /** 교육 진행 장소 일정 별 상이 — 블록 최하단 행 */
+  educationPlaceRow?: ReactNode
   index: number
   session: CurriculumSessionViewModel
   formMode: 'view' | 'edit'
@@ -2617,6 +2771,7 @@ function SingleRoundCurriculumSessionForm({
               />
             </DetailInfoForm.Row>
           ) : null}
+          {educationPlaceRow}
         </DetailInfoForm>
         {isFormEdit && canRemove ? (
           <ItemDeleteButton
@@ -2814,6 +2969,7 @@ function CurriculumSection({
     control: editForm.control,
     name: 'curriculumSessions',
   })
+  const educationPlaceState = useEducationPlaceDetailState(program, editForm, isFormEdit)
 
   const sessions: CurriculumSessionViewModel[] = isFormEdit
     ? fields.map((f, i) => {
@@ -2941,6 +3097,19 @@ function CurriculumSection({
       !isPreEducationBlock &&
       sessions.slice(0, index).some(earlier => !isPreEducationCurriculumSession(earlier))
     const blockKey = fields[index]?.id ?? session.sessionLabel ?? index
+    const educationPlaceRow = renderEducationPlaceSessionRow({
+      state: educationPlaceState,
+      editForm,
+      isFormEdit,
+      kind: 'curriculumSession',
+      index,
+      regularNo: highlightSessionNo,
+      isPreEducation: isPreEducationBlock,
+      rowEducationForm: isFormEdit
+        ? editForm.watch(`curriculumSessions.${index}.educationForm`)
+        : educationPlaceState.viewCurriculumSessions[index]?.educationForm,
+      viewPlace: educationPlaceState.viewCurriculumSessions[index]?.educationPlace,
+    })
     if (isPreEducationBlock) {
       if (!isFormEdit) {
         return (
@@ -2985,6 +3154,7 @@ function CurriculumSection({
         canRemove={canRemove}
         highlightSessionNo={highlightSessionNo}
         participationMethodLocked={participationMethodLocked}
+        educationPlaceRow={educationPlaceRow}
       />
     ) : (
       <SingleRoundCurriculumSessionForm
@@ -3000,6 +3170,7 @@ function CurriculumSection({
         canRemove={canRemove}
         highlightSessionNo={highlightSessionNo}
         showHeading={isPreEducationBlock || curriculumPreEducation || regularSessionCount > 1}
+        educationPlaceRow={educationPlaceRow}
       />
     )
   })
@@ -3062,12 +3233,15 @@ function CurriculumSection({
 }
 
 function ScheduleDetailViewBlock({
+  educationPlaceRow,
   scheduleLabel,
   name,
   progressTimeSummary,
   ipsPerSchedule = false,
   ipsTypeSummary,
 }: {
+  /** 교육 진행 장소 일정 별 상이 — 블록 최하단 행 */
+  educationPlaceRow?: ReactNode
   scheduleLabel: string
   name: string
   progressTimeSummary?: string
@@ -3109,6 +3283,7 @@ function ScheduleDetailViewBlock({
               />
             </DetailInfoForm.Row>
           ) : null}
+          {educationPlaceRow}
         </DetailInfoForm>
       </div>
     </div>
@@ -3229,6 +3404,7 @@ function ScheduleEventPerScheduleExtraViewRows({
 }
 
 function ScheduleEventDetailViewBlock({
+  educationPlaceRow,
   scheduleLabel,
   name,
   scheduleDateLabel,
@@ -3241,6 +3417,8 @@ function ScheduleEventDetailViewBlock({
   showHeading = true,
   isPreEducationBlock = false,
 }: {
+  /** 교육 진행 장소 일정 별 상이 — 블록 최하단 행 */
+  educationPlaceRow?: ReactNode
   scheduleLabel: string
   name: string
   scheduleDateLabel?: string
@@ -3280,6 +3458,7 @@ function ScheduleEventDetailViewBlock({
             assignmentEnabled={assignmentEnabled}
             assignmentPeriod={assignmentPeriod}
           />
+          {educationPlaceRow}
         </DetailInfoForm>
       </div>
     </div>
@@ -3508,6 +3687,7 @@ function ScheduleEventPerScheduleExtraEditRows({
 }
 
 function ScheduleEventDetailEditBlock({
+  educationPlaceRow,
   index,
   scheduleLabel,
   formMode,
@@ -3519,6 +3699,8 @@ function ScheduleEventDetailEditBlock({
   highlightScheduleNo,
   participationMethodLocked = false,
 }: {
+  /** 교육 진행 장소 일정 별 상이 — 블록 최하단 행 */
+  educationPlaceRow?: ReactNode
   index: number
   scheduleLabel: string
   formMode: 'view' | 'edit'
@@ -3621,6 +3803,7 @@ function ScheduleEventDetailEditBlock({
               isPreEducationBlock={isPreEducationBlock}
               participationMethodLocked={participationMethodLocked}
             />
+            {educationPlaceRow}
           </DetailInfoForm>
         </div>
         {canRemove ? (
@@ -3639,6 +3822,7 @@ function ScheduleEventDetailEditBlock({
 }
 
 function ScheduleDetailEditBlock({
+  educationPlaceRow,
   index,
   scheduleLabel,
   formMode,
@@ -3652,6 +3836,8 @@ function ScheduleDetailEditBlock({
   highlightScheduleNo,
   participationMethodLocked = false,
 }: {
+  /** 교육 진행 장소 일정 별 상이 — 블록 최하단 행 */
+  educationPlaceRow?: ReactNode
   index: number
   scheduleLabel: string
   formMode: 'view' | 'edit'
@@ -4138,6 +4324,7 @@ function ScheduleDetailEditBlock({
                 {renderParticipationRows()}
               </>
             ) : null}
+            {educationPlaceRow}
           </DetailInfoForm>
         </div>
         {index > 0 ? (
@@ -4190,6 +4377,7 @@ function ScheduleProgressEditSection({
     control: editForm.control,
     name: 'scheduleDetails',
   })
+  const educationPlaceState = useEducationPlaceDetailState(undefined, editForm, true)
 
   const scheduleGroupCount = Math.min(
     Math.max(1, editForm.watch('scheduleGroupCount') ?? 1),
@@ -4404,9 +4592,22 @@ function ScheduleProgressEditSection({
           return earlierKind === 'event'
         })
 
+        const educationPlaceRow = renderEducationPlaceSessionRow({
+          state: educationPlaceState,
+          editForm,
+          isFormEdit: true,
+          kind: 'scheduleDetail',
+          index,
+          regularNo: highlightScheduleNo,
+          isPreEducation: isPreEducationBlock,
+          rowEducationForm: editForm.watch(`scheduleDetails.${index}.educationForm`),
+          viewPlace: undefined,
+        })
+
         if (detailBlockKind === 'event' || isPreEducationBlock) {
           return (
             <ScheduleEventDetailEditBlock
+              educationPlaceRow={educationPlaceRow}
               key={field.id}
               index={index}
               scheduleLabel={scheduleLabel}
@@ -4424,6 +4625,7 @@ function ScheduleProgressEditSection({
 
         return (
           <ScheduleDetailEditBlock
+            educationPlaceRow={educationPlaceRow}
             key={field.id}
             index={index}
             scheduleLabel={scheduleLabel}
@@ -4456,6 +4658,15 @@ function ScheduleProgressSection({
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
   const isFormEdit = isEditMode && !!form
+  const viewOnlyEditForm =
+    form ??
+    ({
+      control: undefined,
+      formState: { errors: {} },
+      watch: () => undefined,
+      setValue: () => undefined,
+    } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>)
+  const educationPlaceState = useEducationPlaceDetailState(program, viewOnlyEditForm, isFormEdit)
   const effectiveTypeFields = resolveEffectiveGeneralProgramTypeFields({
     generalProgramAudience: program.generalProgramAudience,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
@@ -4525,6 +4736,17 @@ function ScheduleProgressSection({
           .filter(row => inferScheduleDetailBlockKind(row.scheduleLabel) !== 'preEducation').length
         const isEventSchedule = isPreEducationBlock || useEventLayout || detailBlockKind === 'event'
         const overlayIndex = overlayIpsIndexForScheduleDetail(scheduleDetailsView, index)
+        const educationPlaceRow = renderEducationPlaceSessionRow({
+          state: educationPlaceState,
+          editForm: viewOnlyEditForm,
+          isFormEdit: false,
+          kind: 'scheduleDetail',
+          index,
+          regularNo: isPreEducationBlock ? 0 : overlayIndex,
+          isPreEducation: isPreEducationBlock,
+          rowEducationForm: educationPlaceState.viewScheduleDetails[index]?.educationForm,
+          viewPlace: educationPlaceState.viewScheduleDetails[index]?.educationPlace,
+        })
         const ipsTypeSummary = resolveScheduleDetailIpsTypeSummaryForView({
           ipsPerSchedule,
           ipsTypeSummary: detail.ipsTypeSummary,
@@ -4539,6 +4761,7 @@ function ScheduleProgressSection({
         if (isEventSchedule) {
           return (
             <ScheduleEventDetailViewBlock
+              educationPlaceRow={educationPlaceRow}
               key={detail.scheduleLabel}
               scheduleLabel={
                 isPreEducationBlock
@@ -4562,6 +4785,7 @@ function ScheduleProgressSection({
         }
         return (
           <ScheduleDetailViewBlock
+            educationPlaceRow={educationPlaceRow}
             key={detail.scheduleLabel}
             scheduleLabel={detail.scheduleLabel}
             name={detail.name}

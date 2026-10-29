@@ -68,6 +68,15 @@ function generalBusinessKpiParagraphProps(participant: ProgramRegistrationPartic
   }
 }
 
+/** 일반 등록·참여자 유형 <개인> 전용 — 「교육 진행 장소」 (1사1교·교육받은 교사·기관 제외) */
+function isGeneralIndividualEducationPlaceEnabled(
+  options: ProgramRegistrationParagraphBodyOptions
+): boolean {
+  const variant = options.programRegistrationFormVariant
+  if (variant === 'economy' || variant === 'trainedTeachers') return false
+  return options.participant.individual === true && options.participant.organization !== true
+}
+
 export interface ProgramRegistrationParagraphBodyOptions {
   participant: ProgramRegistrationParticipantState
   programType: ProgramRegistrationType
@@ -201,6 +210,7 @@ export function renderProgramRegistrationParagraphBody(
           onParticipationScheduleDetailChange={options.onParticipationScheduleDetailChange}
           ipsScheduleDetail={options.ipsScheduleDetail}
           onIpsScheduleDetailChange={options.onIpsScheduleDetailChange}
+          educationPlaceEnabled={isGeneralIndividualEducationPlaceEnabled(options)}
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationCurriculum:
@@ -268,6 +278,7 @@ export function renderProgramRegistrationParagraphBody(
           participationScheduleDetail={options.participationScheduleDetail}
           ipsScheduleDetail={options.ipsScheduleDetail}
           scheduleCurriculumPreEducation={options.scheduleCurriculumPreEducation}
+          educationPlaceEnabled={isGeneralIndividualEducationPlaceEnabled(options)}
         />
       ) : (
         <ProgramRegistrationEducationCurriculumParagraph
@@ -283,6 +294,7 @@ export function renderProgramRegistrationParagraphBody(
           participationScheduleDetail={options.participationScheduleDetail}
           ipsScheduleDetail={options.ipsScheduleDetail}
           scheduleCurriculumPreEducation={options.scheduleCurriculumPreEducation}
+          educationPlaceEnabled={isGeneralIndividualEducationPlaceEnabled(options)}
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:

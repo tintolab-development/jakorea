@@ -118,6 +118,8 @@ export type PortalEducationCurriculumSession = {
   participationMethodLabel?: string
   ipsTypeSummary?: string
   scheduleDateLabel?: string
+  /** 개인 일반 「교육 진행 장소」 일정별 — 교육 차시 주소. 사전 교육·common은 없음 */
+  educationPlaceAddress?: string | null
 }
 
 /** 공개 상세 교육 진행 — 일정형 블록. 운영 `schedules[]`와 별개 */
@@ -133,6 +135,8 @@ export type PortalEducationScheduleDetail = {
   educationFormLabel?: string
   participationMethodLabel?: string
   ipsTypeSummary?: string
+  /** 개인 일반 「교육 진행 장소」 일정별 — 교육 블록 주소. 사전 교육·common은 없음 */
+  educationPlaceAddress?: string | null
 }
 
 export type PortalEducationScheduleRange = {
@@ -177,6 +181,10 @@ export type PortalProgramDetail = {
   venue?: string
   /** inside=기관 안, outside=기관 밖, other=기타. 없으면 상세만 표시 */
   venueKind?: 'inside' | 'outside' | 'other' | null
+  /** 개인 일반 「교육 진행 장소」 방식. 비대상·미설정은 null */
+  educationPlaceScheduleDetail?: 'common' | 'perSchedule' | null
+  /** common 공통 주소. perSchedule·비대상은 null */
+  educationPlaceAddress?: string | null
   contactName?: string | null
   contactEmail?: string | null
   contactPhone?: string | null

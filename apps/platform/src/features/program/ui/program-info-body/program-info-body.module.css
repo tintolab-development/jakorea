@@ -126,6 +126,22 @@
   min-width: 0;
 }
 
+/* 교육 장소 | 값 — 긴 주소는 구분선 오른쪽에서 줄바꿈 (모바일 포함) */
+.sessionMeta .sessionMetaDivided {
+  flex-wrap: nowrap;
+}
+
+.sessionMeta .sessionMetaDivided > span:first-child {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.sessionMeta .sessionMetaDivided > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
 .sessionLabel {
   color: var(--color-primary-500);
 }

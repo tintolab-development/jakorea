@@ -83,6 +83,8 @@ export type ProgramSession = {
   assignmentEnabled?: boolean
   /** 차시별 과제 기간 */
   assignmentPeriod?: string
+  /** 개인 일반 「교육 진행 장소」 일정별 — 교육 차시 주소(사전 교육 제외) */
+  educationPlaceLabel?: string
 }
 
 /** 일정형 기본정보 — 사전교육 / 세부 일정 / 행사 일정 */
@@ -105,6 +107,8 @@ export type ProgramEventSchedule = {
   assignmentEnabled?: boolean
   /** 일정별 과제 기간 */
   assignmentPeriod?: string
+  /** 개인 일반 「교육 진행 장소」 일정별 — 교육 블록 주소(사전 교육 제외) */
+  educationPlaceLabel?: string
 }
 
 export type ProgramLabeledValue = {

@@ -175,6 +175,7 @@ export function zodIssueToDetailHighlightKey(
       return curriculumRegularSessionIpsValidationKey(n)
     }
     if (field === 'assignmentPeriod') return `curriculum.assignment[${n}]`
+    if (field === 'educationPlace') return `curriculum.educationPlace[${n}]`
     return values.sessionRound === 'multi'
       ? `curriculum.progressSession[${n}]`
       : `curriculum.unitName[${n}]`
@@ -194,6 +195,7 @@ export function zodIssueToDetailHighlightKey(
       return scheduleRegularDetailIpsValidationKey(n)
     }
     if (field === 'assignmentPeriod') return scheduleRegularDetailAssignmentValidationKey(n)
+    if (field === 'educationPlace') return `scheduleCurriculum.educationPlace[${n}]`
     return scheduleRegularDetailNameValidationKey(n)
   }
   switch (head) {
@@ -217,6 +219,9 @@ export function zodIssueToDetailHighlightKey(
       return 'basicInfo.sponsorContactId'
     case 'venueDetail':
       return 'basicInfo.educationVenueDetail'
+    case 'educationPlaceAddress':
+    case 'educationPlaceScheduleDetail':
+      return 'typeSettings.educationPlace'
     case 'educationProcess':
       return 'basicInfo.educationCourse'
     case 'ipOwned':

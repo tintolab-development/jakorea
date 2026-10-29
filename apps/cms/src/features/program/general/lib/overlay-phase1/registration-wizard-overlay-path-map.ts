@@ -12,6 +12,15 @@ export const REGISTRATION_WIZARD_PERIOD_DATE_ISO_KEY =
   'generalRegistration.educationScheduleSettings.periodDateIso' as const
 export const REGISTRATION_WIZARD_FOOTER_IPS_KEY =
   'generalRegistration.basicInfo.footerIpsType' as const
+/** 개인 대상 — 교육 진행 장소 (BE 전용 필드 전까지 overlay sidecar) */
+export const REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY =
+  'generalRegistration.typeSettings.educationPlaceScheduleDetail' as const
+export const REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY =
+  'generalRegistration.typeSettings.educationPlaceAddress' as const
+export const REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY =
+  'generalRegistration.educationCurriculum.educationPlaceBySession' as const
+export const REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY =
+  'generalRegistration.educationScheduleCurriculum.educationPlaceByDetail' as const
 
 export const REGISTRATION_WIZARD_OVERLAY_TO_UI_PATH: Record<string, string> = {
   [K.programTitleKo]: 'programTitleKo',
@@ -54,6 +63,10 @@ export const REGISTRATION_WIZARD_OVERLAY_TO_UI_PATH: Record<string, string> = {
   [REGISTRATION_WIZARD_SINGLE_DATE_ISO_KEY]: 'singleDateIso',
   [REGISTRATION_WIZARD_PERIOD_DATE_ISO_KEY]: 'periodDateIso',
   [REGISTRATION_WIZARD_FOOTER_IPS_KEY]: 'footerIpsType',
+  [REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY]: 'educationPlaceScheduleDetail',
+  [REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY]: 'educationPlaceAddress',
+  [REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY]: 'educationPlaceBySession',
+  [REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY]: 'educationPlaceByDetail',
   [K.unitNameBySession]: 'curriculum.unitNameBySession',
   [K.unitContentBySession]: 'curriculum.unitContentBySession',
   [K.progressSessionByRound]: 'curriculum.progressSessionByRound',

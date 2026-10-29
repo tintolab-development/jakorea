@@ -22,4 +22,6 @@ export interface ScheduleDetailItem {
   assignmentPeriod?: string;
   educationFormLabel?: string;
   participationMethodLabel?: string;
+  /** GENERAL_INDIVIDUAL 교육 진행 장소. 일정 별 상이일 때 이 일정 주소. 사전교육 행은 생략. */
+  educationPlaceAddress?: string | null;
 }

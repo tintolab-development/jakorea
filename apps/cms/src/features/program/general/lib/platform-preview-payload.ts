@@ -5,6 +5,7 @@
 
 import type {
   PortalCurriculum,
+  PortalEducationCurriculumSession,
   PortalProgramDetail,
   PortalRecruitment,
   PortalSchedule,
@@ -35,6 +36,19 @@ import { resolveProgramOperationalBindingKind } from '@/features/program/general
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import { resolveAudienceProgramOperationIsoRange } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
+import {
+  REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
+import { stripHiddenEducationPlaceFromRegistrationOverlay } from '@/features/program/general/lib/education-place-overlay-persist'
+import {
+  isPreCurriculumRowForOverlayKey,
+  isPreScheduleRowForOverlayKey,
+  overlayWithEducationPlaceCommonInfoFallback,
+} from '@/features/program/general/lib/education-place-common-info-fallback'
 import {
   applyGeneralRecruitOverlayToProgram,
   resolveGeneralRecruitDetailDisplayProgram,
@@ -419,7 +433,130 @@ function buildSchedules(program: Program): PortalSchedule[] | undefined {
   return fromLines.length > 0 ? fromLines : undefined
 }
 
-function buildVenue(program: Program): string | undefined {
+type PreviewEducationPlace = {
+  scheduleDetail: 'common' | 'perSchedule' | null
+  /** common 공통 주소. perSchedule·미설정·비대상은 null */
+  address: string | null
+  /** perSchedule 일정형 — overlay 행 키(사전 교육 제외, 1부터) → 주소 */
+  byDetail: Record<string, string>
+  /** perSchedule 커리큘럼 — overlay 행 키(사전 교육 제외, 1부터) → 주소 */
+  bySession: Record<string, string>
+}
+
+function placeTextMap(raw: unknown): Record<string, string> {
+  const out: Record<string, string> = {}
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return out
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const text = typeof value === 'string' ? trimmedOrUndefined(value) : undefined
+    if (text) out[key] = text
+  }
+  return out
+}
+
+/**
+ * 개인 일반 「교육 진행 장소」 — 저장 본문과 같은 규칙(숨김·trim·빈 값 생략)으로 overlay를 정리한 뒤
+ * 포털 응답 필드 형태로 읽는다. overlay에 값이 없으면 BE 복사본 generalCommonInfo를 쓴다.
+ */
+function resolvePreviewEducationPlace(program: Program): PreviewEducationPlace {
+  const none: PreviewEducationPlace = {
+    scheduleDetail: null,
+    address: null,
+    byDetail: {},
+    bySession: {},
+  }
+  if (!isGeneralIndividualProgram(program)) return none
+  const source = overlayWithEducationPlaceCommonInfoFallback(
+    program.registrationOverlay,
+    program.generalCommonInfo
+  )
+  const overlay = stripHiddenEducationPlaceFromRegistrationOverlay(source, program)
+  if (!overlay) return none
+  const mode = overlay[REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY]
+  const rawAddress = overlay[REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY]
+  const address = typeof rawAddress === 'string' ? (trimmedOrUndefined(rawAddress) ?? null) : null
+  if (mode === 'perSchedule') {
+    return {
+      scheduleDetail: 'perSchedule',
+      address: null,
+      byDetail: placeTextMap(overlay[REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY]),
+      bySession: placeTextMap(overlay[REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY]),
+    }
+  }
+  if (mode === 'common' || address) {
+    return { scheduleDetail: 'common', address, byDetail: {}, bySession: {} }
+  }
+  return none
+}
+
+/** perSchedule 일정형 — 교육 슬롯(사전 교육 제외)에 행 주소를 싣는다. BE `schedules[].address`와 같은 뜻. */
+function withPerScheduleAddresses(
+  program: Program,
+  schedules: PortalSchedule[] | undefined,
+  place: PreviewEducationPlace
+): PortalSchedule[] | undefined {
+  if (!schedules || place.scheduleDetail !== 'perSchedule') return schedules
+  if (program.generalProgramEducationStructure !== 'schedule') return schedules
+  const details = program.generalCommonInfo?.scheduleDetails ?? []
+  const keyByIndex = new Map<number, string>()
+  let regular = 0
+  details.forEach((detail, index) => {
+    if (isPreScheduleRowForOverlayKey(detail)) return
+    regular += 1
+    keyByIndex.set(index + 1, String(regular))
+  })
+  return schedules.map(row => {
+    const key = row.sessionNo != null ? keyByIndex.get(row.sessionNo) : undefined
+    const address = key ? place.byDetail[key] : undefined
+    return address ? { ...row, address } : row
+  })
+}
+
+/**
+ * 개인 일반 커리큘럼 — 포털 매퍼가 읽는 공개 상세 행(`curriculumSessions`)을 만든다.
+ * - perSchedule: BE와 같이 교육 차시에만 `educationPlaceAddress`, 사전 교육 행은 비움
+ * - common + 공통 주소: 행에는 장소 없음(기본정보 「교육 장소」 한 번)
+ * 온라인(장소 숨김)·common 주소 미입력(작성 중)·장소 미설정·일정형이면 기존 미리보기 그대로(필드 생략).
+ */
+function buildEducationPlaceCurriculumProjection(
+  program: Program,
+  place: PreviewEducationPlace
+): Pick<PortalProgramDetail, 'educationStructure' | 'sessionRound' | 'curriculumSessions'> {
+  const perSchedule = place.scheduleDetail === 'perSchedule'
+  const commonWithAddress = place.scheduleDetail === 'common' && Boolean(place.address)
+  if (!perSchedule && !commonWithAddress) return {}
+  if (program.generalProgramEducationStructure === 'schedule') return {}
+  let regular = 0
+  const curriculumSessions: PortalEducationCurriculumSession[] = []
+  for (const row of program.generalCommonInfo?.curriculumSessions ?? []) {
+    const isPre = isPreCurriculumRowForOverlayKey(row)
+    if (!isPre) regular += 1
+    const sessionLabel = trimmedOrUndefined(row.sessionLabel)
+    const title = trimmedOrUndefined(row.title)
+    const description = trimmedOrUndefined(row.description)
+    if (!sessionLabel && !title && !description) continue
+    const address = perSchedule && !isPre ? place.bySession[String(regular)] : undefined
+    curriculumSessions.push({
+      ...(sessionLabel ? { sessionLabel } : {}),
+      ...(title ? { title } : {}),
+      ...(description ? { description } : {}),
+      ...(address ? { educationPlaceAddress: address } : {}),
+    })
+  }
+  if (curriculumSessions.length === 0) return {}
+  // BE 공개 상세처럼 sessionRound를 항상 싣는다 — 복수 회차 제목(「N차시」) 표시 규칙이 같아지도록
+  const { sessionRound } = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: program.generalCommonInfo?.curriculumSessions,
+    registrationOverlay: program.registrationOverlay,
+  })
+  return { educationStructure: 'curriculum', sessionRound, curriculumSessions }
+}
+
+function buildVenue(program: Program, place: PreviewEducationPlace): string | undefined {
+  // BE와 같이 개인 common 공통 주소가 있으면 venue보다 앞선다
+  if (place.scheduleDetail === 'common' && place.address) return place.address
   const parts = [program.venue, program.generalCommonInfo?.venueDetail]
     .map(trimmedOrUndefined)
     .filter((part): part is string => Boolean(part))
@@ -441,6 +578,7 @@ export function buildProgramPortalPreviewDetail(
   const participantRecruitment = common?.participantRecruitmentInfo
   const targetLevels = resolveProgramTargetLevels(program)
   const participantPreview = isParticipantPreview(audience)
+  const educationPlace = resolvePreviewEducationPlace(program)
 
   return {
     programId: toPortalProgramId(program.id),
@@ -468,7 +606,9 @@ export function buildProgramPortalPreviewDetail(
         : 'ORGANIZATION',
     participationMethod: common?.participationMethod,
     businessField: normalizeProgramBusinessAreaValue(program.businessArea) || undefined,
-    venue: buildVenue(program),
+    venue: buildVenue(program, educationPlace),
+    educationPlaceScheduleDetail: educationPlace.scheduleDetail,
+    educationPlaceAddress: educationPlace.address,
     contactName: copy.contactName,
     contactPhone: copy.contactPhone,
     contactEmail: copy.contactEmail,
@@ -527,8 +667,9 @@ export function buildProgramPortalPreviewDetail(
     ),
     sponsorNames: toPortalSponsorNames(sponsorName ?? common?.sponsorDisplayName),
     recruitments: [buildRecruitment(program, audience, info)],
-    schedules: buildSchedules(program),
+    schedules: withPerScheduleAddresses(program, buildSchedules(program), educationPlace),
     curricula: buildCurricula(program),
+    ...buildEducationPlaceCurriculumProjection(program, educationPlace),
   }
 }
 
