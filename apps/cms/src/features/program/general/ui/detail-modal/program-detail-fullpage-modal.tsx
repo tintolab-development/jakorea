@@ -90,6 +90,7 @@ import {
   readEconomyRegistrationOverlayForSave,
   resolveCompanySchoolDetailSaveAnnouncementTitle,
   resolveCompanySchoolDetailSaveTitleFields,
+  resolveCompanySchoolDetailSaveLiveFormValues,
   seedEconomyRegistrationOverlayFromProgram,
   writeEconomyRegistrationOverlayFromProgramDraft,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
@@ -1593,6 +1594,11 @@ export function ProgramDetailFullPageModal({
       if (liveTitles.mainTitle !== undefined) infoForm.setValue('mainTitle', liveTitles.mainTitle)
       if (liveTitles.title !== undefined) infoForm.setValue('title', liveTitles.title)
       if (liveTitles.titleEn !== undefined) infoForm.setValue('titleEn', liveTitles.titleEn)
+      // 기본정보·공통정보 단락(overlay) 수정값도 폼에 올려, 아래 재작성·PATCH에서 이전 값으로 덮이지 않게 한다.
+      const liveFormValues = resolveCompanySchoolDetailSaveLiveFormValues(liveOverlay, displayProgram)
+      for (const [field, value] of Object.entries(liveFormValues)) {
+        infoForm.setValue(field as keyof typeof liveFormValues, value as never)
+      }
       const valuesForPatch = infoForm.getValues()
       const patch = narrowProgramDetailPatchForCommonInfoSave(
         detailEditValuesToProgramPatch(valuesForPatch, displayProgram)
