@@ -311,6 +311,7 @@ function RecruitPostingDetailView({
               <RichTextViewer
                 content={posting.contentMarkdown}
                 contentFormat={resolveBodyFormat(posting.contentMarkdown)}
+                maxHeight="none"
               />
             ) : (
               <p className="recruit-posting-detail-page__body-empty">등록된 내용이 없습니다.</p>
