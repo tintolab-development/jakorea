@@ -16,10 +16,10 @@ describe('admin-mfa-reset-fetcher', () => {
     reset.mockReset()
   })
 
-  it('step-up에 totpCode를 보내고 proof만 반환한다', async () => {
+  it('step-up은 빈 본문과 proof만 반환한다', async () => {
     stepUp.mockResolvedValue({ stepUpProof: 'proof-1' })
-    await expect(fetchAdminMfaResetStepUp(22, '123456')).resolves.toBe('proof-1')
-    expect(stepUp).toHaveBeenCalledWith(22, { totpCode: '123456' }, { skipGlobalErrorAlert: true })
+    await expect(fetchAdminMfaResetStepUp(22)).resolves.toBe('proof-1')
+    expect(stepUp).toHaveBeenCalledWith(22, {}, { skipGlobalErrorAlert: true })
   })
 
   it('reset은 생성된 클라이언트로 본문을 보낸다', async () => {

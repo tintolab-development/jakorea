@@ -34,7 +34,7 @@ export function toPositiveAdminAccountId(value: unknown): number | null {
   return n
 }
 
-/** MASTER 세션 + 활성 ADMIN 대상. 본인 상세도 포함(실행자 TOTP step-up 유지). */
+/** MASTER 세션 + ACTIVE ADMIN 대상. 본인(세션 adminAccountId와 동일)도 포함. */
 export function canShowAdminMfaReset(input: {
   sessionRoleCode?: string | null
   sessionAdminLevel?: string | null

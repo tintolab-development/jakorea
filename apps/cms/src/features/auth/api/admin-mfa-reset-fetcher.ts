@@ -43,17 +43,10 @@ function throwResetError(err: unknown, fallback: string, timeoutCode: string): n
   throw new AdminMfaApiError('NETWORK', fallback)
 }
 
-/** POST /api/admin/admin-accounts/{id}/mfa/reset/step-up — body `{ totpCode }` */
-export async function fetchAdminMfaResetStepUp(
-  adminAccountId: number,
-  totpCode: string
-): Promise<string> {
+/** POST /api/admin/admin-accounts/{id}/mfa/reset/step-up — 시안 경로 body `{}` */
+export async function fetchAdminMfaResetStepUp(adminAccountId: number): Promise<string> {
   try {
-    const payload = await membersApi().stepUp(
-      adminAccountId,
-      { totpCode },
-      SKIP_GLOBAL_ALERT
-    )
+    const payload = await membersApi().stepUp(adminAccountId, {}, SKIP_GLOBAL_ALERT)
     const proof = parseStepUpProof(payload)
     if (!proof) {
       throw new AdminMfaApiError('MFA_RESET_STEP_UP_FAILED', 'Step-up 인증에 실패했습니다.')

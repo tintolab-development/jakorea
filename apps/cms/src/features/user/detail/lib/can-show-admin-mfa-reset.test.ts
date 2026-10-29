@@ -11,7 +11,7 @@ const visible = {
 }
 
 describe('canShowAdminMfaReset', () => {
-  it('MASTER가 활성 다른 관리자(Master 포함)에게 보인다', () => {
+  it('MASTER가 활성 다른 관리자·본인(Master 포함)에게 보인다', () => {
     expect(canShowAdminMfaReset(visible)).toBe(true)
     expect(canShowAdminMfaReset({ ...visible, targetPermissionVariant: 'viewer' })).toBe(true)
     expect(canShowAdminMfaReset({ ...visible, targetPermissionVariant: 'manager' })).toBe(true)
