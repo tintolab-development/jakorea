@@ -37,6 +37,7 @@
   align-items: center;
   flex-shrink: 0;
   align-self: center;
+  margin-inline: auto;
   box-sizing: border-box;
   border-radius: 16px;
   border: 2px solid #fff;

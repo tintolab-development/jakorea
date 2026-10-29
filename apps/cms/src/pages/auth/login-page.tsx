@@ -25,7 +25,10 @@ import {
   passwordChangeRequiredPaths,
   resolvePostAuthRedirectPath,
 } from '@/shared/utils/post-auth-redirect'
-import { DEV_LOGIN_QA_ACCOUNTS } from '@/features/auth/lib/dev-login-accounts'
+import {
+  canShowDevRoleLogin,
+  DEV_LOGIN_QA_ACCOUNTS,
+} from '@/features/auth/lib/dev-login-accounts'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
 import { handleError } from '@/shared/utils/error-handler'
@@ -372,32 +375,34 @@ export function LoginPage() {
                   <LoginUtilityLinks registerPath={registerPath} />
                   <LoginSocialSection />
 
-                  <div className="login-dev-quick">
-                    <Text type="secondary" className="login-dev-quick__label">
-                      권한별 로그인
-                    </Text>
-                    <Space size="small" wrap>
-                      {DEV_LOGIN_QA_ACCOUNTS.map(account => (
-                        <CmsButton
-                          key={account.key}
-                          variant="default"
-                          size="h32"
-                          onClick={() => {
-                            form.setFieldsValue({
-                              email: account.email,
-                              password: account.password,
-                            })
-                          }}
-                        >
-                          {account.label}
-                        </CmsButton>
-                      ))}
-                    </Space>
-                    <Text type="secondary" className="login-dev-quick__hint">
-                      실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수
-                      있습니다.
-                    </Text>
-                  </div>
+                  {canShowDevRoleLogin() ? (
+                    <div className="login-dev-quick">
+                      <Text type="secondary" className="login-dev-quick__label">
+                        권한별 로그인
+                      </Text>
+                      <Space size="small" wrap>
+                        {DEV_LOGIN_QA_ACCOUNTS.map(account => (
+                          <CmsButton
+                            key={account.key}
+                            variant="default"
+                            size="h32"
+                            onClick={() => {
+                              form.setFieldsValue({
+                                email: account.email,
+                                password: account.password,
+                              })
+                            }}
+                          >
+                            {account.label}
+                          </CmsButton>
+                        ))}
+                      </Space>
+                      <Text type="secondary" className="login-dev-quick__hint">
+                        실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수
+                        있습니다.
+                      </Text>
+                    </div>
+                  ) : null}
                 </div>
               </>
             )}
