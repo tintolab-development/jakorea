@@ -24,4 +24,8 @@ export interface FormTemplateVersionResponse {
   createdAt?: string;
   updatedAt?: string;
   availableActions?: string[];
+  /** CATALOG | COPY | PROGRAM. 구버전 응답은 생략될 수 있다. */
+  templateScope?: string | null;
+  /** templateScope=PROGRAM 일 때만 프로그램 ID, 그 외 null */
+  ownerProgramId?: number | null;
 }

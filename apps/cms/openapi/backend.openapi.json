@@ -70212,6 +70212,22 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "templateScope": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "CATALOG",
+              "COPY",
+              "PROGRAM"
+            ],
+            "description": "CATALOG | COPY | PROGRAM. 구버전 응답은 생략될 수 있다."
+          },
+          "ownerProgramId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "templateScope=PROGRAM 일 때만 프로그램 ID"
           }
         }
       },
@@ -88716,6 +88732,22 @@
           },
           "deletable": {
             "type": "boolean"
+          },
+          "templateScope": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "CATALOG",
+              "COPY",
+              "PROGRAM"
+            ],
+            "description": "CATALOG | COPY | PROGRAM. 구버전 응답은 생략될 수 있다."
+          },
+          "ownerProgramId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "templateScope=PROGRAM 일 때만 프로그램 ID"
           }
         }
       },
@@ -88779,6 +88811,11 @@
           },
           "settingsJson": {
             "type": "string"
+          },
+          "sourceVersionId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 전용 템플릿에 DRAFT 버전을 추가할 때 원본 버전"
           }
         }
       },
@@ -88850,6 +88887,22 @@
             "items": {
               "type": "string"
             }
+          },
+          "templateScope": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "CATALOG",
+              "COPY",
+              "PROGRAM"
+            ],
+            "description": "CATALOG | COPY | PROGRAM. 구버전 응답은 생략될 수 있다."
+          },
+          "ownerProgramId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "templateScope=PROGRAM 일 때만 프로그램 ID"
           }
         }
       },
