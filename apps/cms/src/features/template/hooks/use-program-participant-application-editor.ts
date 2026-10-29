@@ -1484,18 +1484,7 @@ export function useProgramParticipantApplicationEditor(
           const published = await defaults.loadPublishedCatalogDraft(templateId)
           if (!cancelled && published != null) {
             const seed = normalizeEditorDraft(createSeedDraft())
-            // C8: 늦게 도착한 게시 기본값이 그 사이 사용자 편집을 덮지 않도록 현재 draft에 합친다.
-            setDraft(current =>
-              normalizeEditorDraft(
-                defaults.mergePublishedCatalogDefaults({
-                  current,
-                  seed,
-                  published,
-                  templateCode: templateId,
-                })
-              )
-            )
-            setActiveParagraphId(prev => prev ?? seed.paragraphs[0]?.id ?? null)
+            applyDraftNow(defaults.resolveWizardCatalogDraft({ saved: null, seed, published }))
           }
         }
         if (variant === 'ujat-application-volunteer') {

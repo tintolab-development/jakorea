@@ -793,16 +793,8 @@ export function useProgramRegistrationEditor(
             normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant)),
             programRegistrationFormVariant
           )
-          // C8: 비동기 응답이 늦게 와도 그 사이 사용자 편집을 덮지 않도록 현재 draft에 합친다.
           startTransition(() => {
-            setDraft(current =>
-              defaults.mergePublishedCatalogDefaults({
-                current,
-                seed: seeded,
-                published,
-                templateCode,
-              })
-            )
+            setDraft(defaults.resolveWizardCatalogDraft({ saved: null, seed: seeded, published }))
           })
         })
       }
@@ -971,16 +963,13 @@ export function useProgramRegistrationEditor(
               normalizeWritingFormDraft(createProgramRegistrationDraft(variant)),
               variant
             )
-            // C8: 현재 draft(시드 리셋 이후 편집 포함) 위에 미편집 기본 내용만 채운다.
+            const merged = defaults.resolveWizardCatalogDraft({
+              saved: null,
+              seed: seeded,
+              published,
+            })
             startTransition(() => {
-              setDraft(current =>
-                defaults.mergePublishedCatalogDefaults({
-                  current,
-                  seed: seeded,
-                  published,
-                  templateCode,
-                })
-              )
+              setDraft(merged)
             })
           }
         })
