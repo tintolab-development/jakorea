@@ -15308,8 +15308,15 @@
           "learningSupportContent": {
             "type": "string"
           },
+          "remarks": {
+            "type": "string",
+            "description": "비고. Gemini 찾아가는 연수 모집의 geminiRecruitment.notes 저장 필드. 해당없음이면 생략/null.",
+            "nullable": true
+          },
           "otherMatters": {
-            "type": "string"
+            "type": "string",
+            "description": "기타사항. 강사·봉사자 모집용. Gemini 찾아가는 연수 모집에는 입력란이 없다. 전환 기간에는 Gemini가 otherMatters/notes로 보낸 비고를 remarks로 받는다.",
+            "nullable": true
           },
           "recruitmentTargetDetail": {
             "type": "string"
@@ -21573,11 +21580,14 @@
         "type": "object",
         "properties": {
           "shortcutId": {
-            "type": "string"
+            "type": "string",
+            "description": "path shortcutId와 동일. POST body에 이 값만 보낸다."
           },
           "readAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "클라이언트가 보내지 않는다. 서버가 읽음 시각을 기록한다. 호환용으로 남아 있으며 보내도 계약상 클라이언트 송신 없음.",
+            "nullable": true
           }
         }
       },
@@ -39246,6 +39256,186 @@
           }
         }
       },
+      "AccountPaymentDetailResponse": {
+        "type": "object",
+        "description": "계좌 지급 상세. settlement embed로 산출 테이블을 채우며 GET /settlements/{id}를 다시 치지 않습니다.",
+        "properties": {
+          "payment": {
+            "$ref": "#/components/schemas/AccountPaymentListItemResponse"
+          },
+          "settlement": {
+            "description": "GET /settlements/{id} 와 동일 계약(SettlementFrontendResponse). settlement 연동 건은 정산 상세, Gemini 직접 지급은 보고서 기반 합성 embed. 둘 다 없으면 null.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SettlementFrontendResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sensitiveAccount": {
+            "$ref": "#/components/schemas/AccountPaymentSensitiveDetailResponse",
+            "description": "상세 진입(본 API 성공) 시 권한이 확인된 원문 계좌정보. 개인정보 조회 이력이 accessPurpose=정산금 지급 처리를 위함 으로 자동 기록된 뒤에만 제공. 감사 로그 저장 실패 시 요청도 차단됩니다."
+          }
+        }
+      },
+      "AccountPaymentListItemResponse": {
+        "type": "object",
+        "description": "계좌 지급 확인 목록 행. 신청자명(instructorName)은 실명이고 계좌·예금주만 마스킹합니다.",
+        "properties": {
+          "accountPaymentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "batchId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "settlementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "description": "CMS 업무 상태는 WAITING_PAYMENT | PAID만 노출합니다. 내부 FAILED는 WAITING_PAYMENT로 정규화됩니다."
+          },
+          "paymentFailureYn": {
+            "type": "boolean",
+            "description": "내부 계좌 지급 처리 실패 여부. true여도 paymentStatus는 WAITING_PAYMENT입니다."
+          },
+          "paymentFailureReason": {
+            "type": "string",
+            "description": "내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다.",
+            "nullable": true
+          },
+          "instructorName": {
+            "type": "string",
+            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "maskedAccountNo": {
+            "type": "string"
+          },
+          "accountHolder": {
+            "type": "string"
+          },
+          "netPaymentAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduledPaymentDate": {
+            "type": "string",
+            "format": "date",
+            "description": "이체 예정일. 목록 필터와 캘린더 배치 기준입니다.",
+            "nullable": true
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programNameKo": {
+            "type": "string",
+            "description": "프로그램명 (우선)",
+            "nullable": true
+          },
+          "programName": {
+            "type": "string",
+            "description": "호환 필드. programNameKo와 동일 값입니다.",
+            "nullable": true
+          },
+          "institutionName": {
+            "type": "string",
+            "description": "참여 기관. 개인 프로그램은 null",
+            "nullable": true
+          },
+          "sessionOrdinal": {
+            "type": "integer",
+            "format": "int32",
+            "description": "차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다.",
+            "nullable": true
+          },
+          "sessionLabel": {
+            "type": "string",
+            "description": "차시 표시. 예: 2 ~ 3차시. 개인은 null",
+            "example": "2 ~ 3차시",
+            "nullable": true
+          },
+          "lectureDate": {
+            "type": "string",
+            "format": "date",
+            "description": "교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다.",
+            "nullable": true
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AccountPaymentSensitiveDetailResponse": {
+        "type": "object",
+        "description": "계좌 지급 상세 진입 시 반환하는 원문 계좌정보. 목록에는 포함하지 않습니다. GET /api/admin/account-payments/{paymentId} 성공 시 accessPurpose=정산금 지급 처리를 위함 개인정보 조회 이력이 자동 기록된 뒤에만 제공됩니다.",
+        "properties": {
+          "bankName": {
+            "type": "string"
+          },
+          "accountNo": {
+            "type": "string",
+            "description": "복호화된 계좌번호 원문"
+          },
+          "accountHolder": {
+            "type": "string",
+            "description": "예금주 원문"
+          }
+        }
+      },
+      "PageResponseAccountPaymentListItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountPaymentListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PageResponseSettlementApplicationAdminListItemResponse": {
         "type": "object",
         "properties": {
@@ -46042,7 +46232,7 @@
               "type": "integer",
               "format": "int32"
             },
-            "description": "바로가기 키별 배지 숫자. FE는 목록을 다시 세지 않고 이 값을 canonical로 표시한다. 누락 키는 0으로 채우지 않음.\nprograms-general-education=GET /api/admin/programs?programType=GENERAL totalElements\nprograms-economy=GET /api/admin/programs?programType=COMPANY_SCHOOL totalElements\nprograms-ujat=GET /api/admin/programs?programType=UJAT totalElements\nprograms-gemini=GET /api/admin/programs?programType=GEMINI totalElements\nprograms-detail=GET /api/admin/programs(유형 필터 없음) totalElements (= home.programCount)\nusers-all=GET /api/admin/users(역할 필터 없음) totalElements. 사람 회원(GENERAL/SCHOOL_TEACHER/INSTRUCTOR 또는 강사 철회). 관리자 계정·순수 학교 셸 제외. home.memberCount(삭제되지 않은 member 전체) 및 GET /api/admin/members/all(회원+관리자 UNION)과 다름.\nusers-school=GET /api/admin/users?role=TEACHER totalElements (SCHOOL_TEACHER)\nusers-instructor=GET /api/admin/users?role=INSTRUCTOR totalElements (철회 강사 제외)\nusers-admin=GET /api/admin/admin-accounts 기본 목록 totalElements (ACTIVE/SUSPENDED, 미삭제)\nnotices=GET /api/admin/content/notices 기본 목록 totalElements (PUBLISHED 공개 전체. isImportant/미읽음 아님)\nfaq=GET /api/admin/content/faqs 기본 목록 totalElements (PUBLISHED 공개 전체)\ninquiries=GET /api/admin/inquiries?status=PENDING totalElements (답변대기 RECEIVED/IN_PROGRESS)\npermission-requests=GET /api/admin/instructor-role-requests?status=PENDING totalElements (강사 권한 신청 대기)\n"
+            "description": "바로가기 키별 배지. 필드명 counts. 양수인 문서화 키만 넣는다. 값이 0이거나 해당 없는 키·문서 외 키(sponsors, textbooks 등)는 JSON에서 생략한다. 0으로 채우지 않는다. FE는 키 존재+양수만 배지 표시한다. 목록 totalElements나 GET /api/admin/dashboard/home 의 programCount/memberCount를 복제하지 않는다.\n신규 추적 키: 이 관리자의 lastReadAt(POST .../dashboard-shortcut-badges/{shortcutId}/read 가 저장한 dashboard_shortcut_badge_read.read_at) 이후 created_at 행 수. 한 번도 안 읽으면 해당 목록 현재 전체와 같아 보일 수 있다. POST /read 성공 후 그 사이 신규가 없으면 키는 생략된다.\nprograms-general-education=GET /api/admin/programs?programType=GENERAL 집합의 신규(created_at)\nprograms-economy=GET /api/admin/programs?programType=COMPANY_SCHOOL 신규\nprograms-ujat=GET /api/admin/programs?programType=UJAT 신규\nprograms-gemini=GET /api/admin/programs?programType=GEMINI 신규\nprograms-detail=GET /api/admin/programs(유형 필터 없음) 신규. home.programCount와 등호가 아님\nusers-all=GET /api/admin/users(역할 필터 없음) 신규. 사람 회원(GENERAL/SCHOOL_TEACHER/INSTRUCTOR 또는 강사 철회). home.memberCount 및 GET /api/admin/members/all과 다름\nusers-school=GET /api/admin/users?role=TEACHER 신규 (SCHOOL_TEACHER)\nusers-instructor=GET /api/admin/users?role=INSTRUCTOR 신규 (철회 강사 제외)\nusers-admin=GET /api/admin/admin-accounts 기본 목록 신규 (ACTIVE/SUSPENDED, 미삭제)\nnotices=GET /api/admin/content/notices 기본 PUBLISHED 신규 (isImportant/미읽음 아님). 목록 PUBLISHED 전체 totalElements 복제가 아님\nfaq=GET /api/admin/content/faqs 기본 PUBLISHED 신규. 목록 공개 전체 totalElements 복제가 아님\n대기 키: PENDING 현재 대기. POST /read 해도 숫자가 0이 되지 않는다. 0이면 생략, 양수면 포함.\ninquiries=GET /api/admin/inquiries?status=PENDING 현재 대기 건수(RECEIVED/IN_PROGRESS). 읽음 커서를 적용하지 않음. 필터 없는 문의 전체 totalElements가 아님\npermission-requests=GET /api/admin/instructor-role-requests?status=PENDING 현재 대기 건수. 읽음 커서를 적용하지 않음\n"
           },
           "calculatedAt": {
             "type": "string",
@@ -47233,9 +47423,14 @@
             "description": "문의처 이메일",
             "nullable": true
           },
+          "remarks": {
+            "type": "string",
+            "description": "비고. geminiRecruitment.notes 저장값. 해당없음이면 null",
+            "nullable": true
+          },
           "otherMatters": {
             "type": "string",
-            "description": "비고. 해당없음이면 null",
+            "description": "기타사항. Gemini 찾아가는 연수 모집에는 입력란이 없어 항상 null. 하위 호환 필드로 유지한다.",
             "nullable": true
           },
           "thumbnailFileName": {
@@ -48759,12 +48954,12 @@
           "programCount": {
             "type": "integer",
             "format": "int64",
-            "description": "GET /api/admin/programs(필터 없음) totalElements과 동일. 삭제되지 않은 프로그램 수(관리자 데이터 범위 적용)."
+            "description": "GET /api/admin/programs(필터 없음) totalElements과 동일. 삭제되지 않은 프로그램 수(관리자 데이터 범위 적용). 바로가기 배지 programs-detail(읽음 이후 신규)와 의미가 다르다."
           },
           "memberCount": {
             "type": "integer",
             "format": "int64",
-            "description": "member.deleted_at IS NULL인 회원 수. 역할 필터 없음, 관리자 계정(admin_account) 미포함. users-all(사람 회원 디렉터리)과 다를 수 있다."
+            "description": "member.deleted_at IS NULL인 회원 수. 역할 필터 없음, 관리자 계정(admin_account) 미포함. users-all 배지(사람 회원 디렉터리의 읽음 이후 신규)와 다를 수 있다."
           },
           "unreadNotificationCount": {
             "type": "integer",
@@ -49430,186 +49625,6 @@
             "items": {
               "type": "string"
             }
-          }
-        }
-      },
-      "AccountPaymentListItemResponse": {
-        "type": "object",
-        "description": "계좌 지급 확인 목록 행. 신청자명(instructorName)은 실명이고 계좌·예금주만 마스킹합니다.",
-        "properties": {
-          "accountPaymentId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "batchId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "settlementId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "paymentStatus": {
-            "type": "string",
-            "description": "CMS 업무 상태는 WAITING_PAYMENT | PAID만 노출합니다. 내부 FAILED는 WAITING_PAYMENT로 정규화됩니다."
-          },
-          "paymentFailureYn": {
-            "type": "boolean",
-            "description": "내부 계좌 지급 처리 실패 여부. true여도 paymentStatus는 WAITING_PAYMENT입니다."
-          },
-          "paymentFailureReason": {
-            "type": "string",
-            "description": "내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다.",
-            "nullable": true
-          },
-          "instructorName": {
-            "type": "string",
-            "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
-          },
-          "bankName": {
-            "type": "string"
-          },
-          "maskedAccountNo": {
-            "type": "string"
-          },
-          "accountHolder": {
-            "type": "string"
-          },
-          "netPaymentAmount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "scheduledPaymentDate": {
-            "type": "string",
-            "format": "date",
-            "description": "이체 예정일. 목록 필터와 캘린더 배치 기준입니다.",
-            "nullable": true
-          },
-          "paidAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "sourceType": {
-            "type": "string"
-          },
-          "sourceId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "memberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "programNameKo": {
-            "type": "string",
-            "description": "프로그램명 (우선)",
-            "nullable": true
-          },
-          "programName": {
-            "type": "string",
-            "description": "호환 필드. programNameKo와 동일 값입니다.",
-            "nullable": true
-          },
-          "institutionName": {
-            "type": "string",
-            "description": "참여 기관. 개인 프로그램은 null",
-            "nullable": true
-          },
-          "sessionOrdinal": {
-            "type": "integer",
-            "format": "int32",
-            "description": "차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다.",
-            "nullable": true
-          },
-          "sessionLabel": {
-            "type": "string",
-            "description": "차시 표시. 예: 2 ~ 3차시. 개인은 null",
-            "example": "2 ~ 3차시",
-            "nullable": true
-          },
-          "lectureDate": {
-            "type": "string",
-            "format": "date",
-            "description": "교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다.",
-            "nullable": true
-          },
-          "availableActions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "PageResponseAccountPaymentListItemResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AccountPaymentListItemResponse"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "AccountPaymentDetailResponse": {
-        "type": "object",
-        "description": "계좌 지급 상세. settlement embed로 산출 테이블을 채우며 GET /settlements/{id}를 다시 치지 않습니다.",
-        "properties": {
-          "payment": {
-            "$ref": "#/components/schemas/AccountPaymentListItemResponse"
-          },
-          "settlement": {
-            "description": "GET /settlements/{id} 와 동일 계약(SettlementFrontendResponse). settlement 연동 건은 정산 상세, Gemini 직접 지급은 보고서 기반 합성 embed. 둘 다 없으면 null.",
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/SettlementFrontendResponse"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sensitiveAccount": {
-            "$ref": "#/components/schemas/AccountPaymentSensitiveDetailResponse",
-            "description": "상세 진입(본 API 성공) 시 권한이 확인된 원문 계좌정보. 개인정보 조회 이력이 accessPurpose=정산금 지급 처리를 위함 으로 자동 기록된 뒤에만 제공. 감사 로그 저장 실패 시 요청도 차단됩니다."
-          }
-        }
-      },
-      "AccountPaymentSensitiveDetailResponse": {
-        "type": "object",
-        "description": "계좌 지급 상세 진입 시 반환하는 원문 계좌정보. 목록에는 포함하지 않습니다. GET /api/admin/account-payments/{paymentId} 성공 시 accessPurpose=정산금 지급 처리를 위함 개인정보 조회 이력이 자동 기록된 뒤에만 제공됩니다.",
-        "properties": {
-          "bankName": {
-            "type": "string"
-          },
-          "accountNo": {
-            "type": "string",
-            "description": "복호화된 계좌번호 원문"
-          },
-          "accountHolder": {
-            "type": "string",
-            "description": "예금주 원문"
           }
         }
       },
