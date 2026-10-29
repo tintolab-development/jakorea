@@ -163,6 +163,13 @@
   font-size: 16px;
 }
 
+.instructor-invoice-modal .instructor-invoice-modal__basis-detail-btn-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
 .instructor-invoice-modal .instructor-invoice-modal__footer-actions {
   display: flex;
   justify-content: center;

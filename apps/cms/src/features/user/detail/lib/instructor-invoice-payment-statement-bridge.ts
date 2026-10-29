@@ -76,8 +76,20 @@ export function buildPaymentOrderStatementFromInstructorInvoice(
     itemLabel: item.산정항목,
     description: item.항목설명,
     amount: item.isPositive === false ? -Math.abs(item.정산금액) : item.정산금액,
-    kind: lineKindForItemLabel(item.산정항목),
+    kind: item.kind ?? lineKindForItemLabel(item.산정항목),
+    basisDetail: item.basisDetail,
   }))
+
+  if (invoice.withholdingAmount > 0) {
+    lines.push({
+      id: `${sourceLineRowId}-inv-line-withholding`,
+      itemLabel: '원천징수',
+      description: `원천징수 ${invoice.withholdingRatePercent}%`,
+      amount: -Math.abs(invoice.withholdingAmount),
+      kind: 'withholding',
+      basisDetail: invoice.withholdingBasisDetail,
+    })
+  }
 
   return {
     context: 'program',

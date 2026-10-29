@@ -1,6 +1,9 @@
-import { formatDateDot } from '@/shared/utils/date'
-import type { SettlementFrontendItemResponse, SettlementFrontendResponse } from '@/shared/api/generated/settlement/schemas'
-import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
+import { formatDateDot, formatDateDotWithWeekday } from '@/shared/utils/date'
+import type {
+  SettlementFrontendItemResponse,
+  SettlementFrontendResponse,
+  SettlementListItemResponse,
+} from '@/shared/api/generated/settlement/schemas'
 import type {
   InstructorSettlementInvoiceDetail,
   InstructorSettlementInvoiceLineItem,
@@ -9,7 +12,17 @@ import type {
 } from '@/features/user/detail/model/instructor-settlement-types'
 import { mapStatementStatusToProcessingStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
-import { mapSettlementFrontendItemTypeToLineKind } from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
+import {
+  formatBusinessIncomeEarnerLabel,
+  formatBusinessPeriodDisplay,
+  resolveLectureFeeStandardTitleFromSettlement,
+  formatProgramSessionProgressDisplay,
+  mapCalculationDetailToBasisDetail,
+  mapSettlementFrontendItemTypeToLineKind,
+  prepareSettlementFrontendItemsForStatement,
+  resolveLectureFeeStandardAmountDisplay,
+} from '@/features/settlement-management/api/shared/map-frontend-fields'
+import { resolveCanonicalLectureSessionDisplay } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 
 function paymentOrderStatusToInstructorUiStatus(
   s: ReturnType<typeof mapStatementStatusToProcessingStatus>
@@ -43,8 +56,14 @@ export function resolveSettlementUiStatus(item: SettlementListItemResponse): Ins
   if (paymentStatus === 'CORRECTION_REQUESTED') {
     return 'payment_correction_requested'
   }
+  /**
+   * 지급조서 확인 완료 후 계좌 이체 대기.
+   * bulk-confirm은 WAITING_CONFIRM|REAPPLICATION만 허용하므로
+   * CONFIRMED+WAITING_PAYMENT를 확인 대기로 두면 확인 CTA가 남아 409 CONFLICT가 난다.
+   * (라인 매핑 `mapSettlementAxesToLineStatus`의 awaiting_payment과 동일 계약)
+   */
   if (statementStatus === 'CONFIRMED' && paymentStatus === 'WAITING_PAYMENT') {
-    return 'awaiting_confirmation'
+    return 'payment_statement_verified'
   }
   if (paymentStatus === 'CONFIRMED') {
     if (statementStatus === 'PARTIAL' || statementStatus === 'PARTIAL_CONFIRMED') {
@@ -66,6 +85,8 @@ function mapItemToLine(item: SettlementFrontendItemResponse, index: number): Ins
     항목설명: item.description?.trim() || '—',
     정산금액: Math.abs(amount),
     isPositive: kind !== 'withholding' && amount >= 0,
+    kind,
+    basisDetail: mapCalculationDetailToBasisDetail(item.calculationDetail),
   }
 }
 
@@ -75,13 +96,20 @@ function formatIsoDate(iso?: string): string {
   return label === '-' ? iso : label
 }
 
+function formatIsoDateWithWeekday(iso?: string): string {
+  if (!iso?.trim()) return '-'
+  const label = formatDateDotWithWeekday(iso.slice(0, 10))
+  return label === '-' ? iso : label
+}
+
 export function mapSettlementDetailToInstructorInvoice(
   settlement: SettlementFrontendResponse,
   listItem: SettlementListItemResponse,
   status: InstructorSettlementUiStatus
 ): InstructorSettlementInvoiceDetail {
-  const programName = listItem.programNameKo?.trim() || '프로그램'
-  const items = settlement.items ?? []
+  const programName =
+    settlement.programNameKo?.trim() || listItem.programNameKo?.trim() || '프로그램'
+  const items = prepareSettlementFrontendItemsForStatement(settlement.items)
   const lineItems =
     items.length > 0
       ? items.map(mapItemToLine)
@@ -92,31 +120,73 @@ export function mapSettlementDetailToInstructorInvoice(
             항목설명: programName,
             정산금액: listItem.netPaymentAmount ?? listItem.grossAmount ?? 0,
             isPositive: true,
+            kind: 'lecture_fee' as const,
           },
         ]
 
-  const withholdingLine = lineItems.find(line => line.산정항목.includes('원천'))
+  const withholdingLine = lineItems.find(
+    line => line.kind === 'withholding' || line.산정항목.includes('원천')
+  )
   const withholdingAmount =
     listItem.withholdingTaxAmount ??
     (withholdingLine ? Math.abs(withholdingLine.정산금액) : 0)
   const totalAmount = settlement.totalAmount ?? listItem.netPaymentAmount ?? 0
-  const lectureDate = formatIsoDate(listItem.lectureDate)
+  const lectureDate = formatIsoDateWithWeekday(listItem.lectureDate)
+  const lectureFeeTitle = resolveLectureFeeStandardTitleFromSettlement(settlement)
+  const lectureFeeAmount = resolveLectureFeeStandardAmountDisplay(
+    settlement.lectureFeeStandardAmount,
+    settlement.items
+  )
+  // taxIncomeType(BUSINESS_INCOME 등)은 소득 구분 — 강의비 책정 기준 라벨로 쓰지 않는다.
+  const lectureFeeBasis =
+    lectureFeeTitle !== '-'
+      ? [lectureFeeTitle, lectureFeeAmount !== '-' ? lectureFeeAmount : '']
+          .filter(Boolean)
+          .join(' | ')
+      : '-'
+
+  const sessionOrdinal = settlement.sessionOrdinal ?? listItem.sessionOrdinal
+  const sessionLabel = resolveCanonicalLectureSessionDisplay(
+    settlement.lectureSessionDisplay,
+    sessionOrdinal
+  )
+  const lectureDateSessions =
+    sessionLabel !== '-'
+      ? `${lectureDate} | ${sessionLabel}`
+      : lectureDate
 
   return {
     programName,
-    sessionProgress: '-',
-    operationPeriod: settlement.period?.trim() || lectureDate,
+    sessionProgress: formatProgramSessionProgressDisplay({
+      programSessionProgressDisplay:
+        settlement.programSessionProgressDisplay ?? listItem.programSessionProgressDisplay,
+      sessionCompleted: settlement.sessionCompleted ?? listItem.sessionCompleted,
+      sessionTotal: settlement.sessionTotal ?? listItem.sessionTotal,
+    }),
+    operationPeriod: formatBusinessPeriodDisplay({
+      period: settlement.period,
+      businessPeriodStart:
+        settlement.businessPeriodStart ?? listItem.businessPeriodStart,
+      businessPeriodEnd: settlement.businessPeriodEnd ?? listItem.businessPeriodEnd,
+      formatDate: formatIsoDateWithWeekday,
+    }),
     paymentStatementStatus: status,
-    expectedTransferDate: formatIsoDate(listItem.expectedTransferDate),
-    lectureFeeBasis: listItem.taxIncomeType?.trim() || '-',
-    businessIncomeEarner: '해당 없음',
-    institutionName: listItem.programNameKo?.trim() ? '-' : '-',
-    lectureDateSessions: lectureDate,
-    lineItems: lineItems.filter(line => !line.산정항목.includes('원천')),
+    expectedTransferDate: formatIsoDate(
+      settlement.expectedTransferDate ?? listItem.expectedTransferDate
+    ),
+    lectureFeeBasis,
+    businessIncomeEarner: formatBusinessIncomeEarnerLabel(settlement.businessIncomeEarnerLabel),
+    institutionName:
+      settlement.institutionName?.trim() || listItem.institutionName?.trim() || '-',
+    lectureDateSessions,
+    lineItems: lineItems.filter(
+      line => line.kind !== 'withholding' && !line.산정항목.includes('원천')
+    ),
     withholdingRatePercent: withholdingAmount > 0 ? 8.8 : 0,
     withholdingAmount,
     totalFormulaLabel: '정산 항목 합계',
     totalAmount,
+    withholdingBasisDetail: withholdingLine?.basisDetail,
   }
 }
 
