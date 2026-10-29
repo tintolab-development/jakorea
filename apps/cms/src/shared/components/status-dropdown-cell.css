@@ -292,6 +292,16 @@
   align-items: center !important;
 }
 
+/*
+ * 테이블 tag-100 열림 그림자 제거 — box-shadow 가 ant-table scrollport 의
+ * scrollable overflow 를 키워 배지가 가로로 밀림. 민트 보더·패널 그림자로 충분
+ * (인라인 셸 `.inline-tag100` 과 동일 정책).
+ */
+.ant-table-tbody
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  box-shadow: none !important;
+}
+
 /* tag-100 + style.width: 배지 변수만 쓰고 트리거 외곽은 116px 고정 유지 */
 .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__trigger--cell-style {
   width: 116px !important;
