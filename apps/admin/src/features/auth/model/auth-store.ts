@@ -45,6 +45,7 @@ import { socialLinkQueryKeys } from '@/features/social-link/api/query-keys'
 import { menuViewStatsQueryKeys } from '@/features/menu-view-stats/api/query-keys'
 import { stripBannerQueryKeys } from '@/features/strip-banner/api/query-keys'
 import { visitorStatsQueryKeys } from '@/features/visitor-stats/api/query-keys'
+import { adminMeQueryKeys } from '@/features/auth/api/admin-me-query-keys'
 import { systemInboxQueryKeys } from '@/features/system-inbox/api/query-keys'
 import { queryClient } from '@/shared/lib/query-client'
 import { refreshAccessTokenSession } from '@/shared/instance/axios-instance'
@@ -79,6 +80,7 @@ function clearSessionScopedQueryCaches() {
   void queryClient.removeQueries({ queryKey: adminAccountLogQueryKeys.all })
   void queryClient.removeQueries({ queryKey: bugIssueLogQueryKeys.all })
   void queryClient.removeQueries({ queryKey: systemInboxQueryKeys.all })
+  void queryClient.removeQueries({ queryKey: adminMeQueryKeys.all })
 }
 
 interface AuthState {

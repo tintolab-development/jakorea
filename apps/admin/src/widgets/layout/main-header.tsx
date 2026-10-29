@@ -7,7 +7,7 @@ import { Layout, Space, Typography, Dropdown } from 'antd'
 import { BellOutlined, BellFilled } from '@ant-design/icons'
 import { useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { formatAdminGnbRoleLabel } from '@/features/auth/lib/format-admin-gnb-role-label'
+import { useAdminGnbRoleLabel } from '@/features/auth/hooks/use-admin-gnb-role-label'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   isSystemInboxForbidden,
@@ -67,7 +67,7 @@ export function MainHeader() {
         ? 'error'
         : 'ready'
 
-  const roleLabel = formatAdminGnbRoleLabel(user?.adminLevel)
+  const roleLabel = useAdminGnbRoleLabel()
   const displayName = user?.name?.trim() || user?.email || '관리자'
 
   const handleNotificationClick = (notification: HeaderNotification) => {
