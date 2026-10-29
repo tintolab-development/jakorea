@@ -59,6 +59,7 @@ import {
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
+  FilterTableLayout,
 } from '@/shared/ui'
 
 import './page.css'
@@ -124,9 +125,7 @@ function formatCreatedAt(iso: string): string {
   return formatDateTimeDot(iso)
 }
 
-function periodAsPickerValue(
-  period: PendingDateRange
-): [Dayjs | null, Dayjs | null] {
+function periodAsPickerValue(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
   if (!period) return [null, null]
   return [period[0] ?? null, period[1] ?? null]
 }
@@ -194,7 +193,7 @@ export function CorporatePartnersPage() {
    */
   const unfilteredCountQuery = useCorporatePartnersList(
     undefined,
-    formOpen && formMode === 'create' && hasActiveFilter,
+    formOpen && formMode === 'create' && hasActiveFilter
   )
   const createMutation = useCreateCorporatePartner()
   const updateMutation = useUpdateCorporatePartner(appliedFilter)
@@ -205,15 +204,10 @@ export function CorporatePartnersPage() {
   const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data?.items])
   const totalCount = listQuery.data?.totalCount ?? rows.length
   const allCount = hasActiveFilter
-    ? (unfilteredCountQuery.data?.totalCount ??
-      unfilteredCountQuery.data?.items.length ??
-      0)
+    ? (unfilteredCountQuery.data?.totalCount ?? unfilteredCountQuery.data?.items.length ?? 0)
     : totalCount
 
-  useInvalidateOnWindowEvent(
-    CORPORATE_PARTNERS_CHANGED_EVENT,
-    corporatePartnerQueryKeys.lists()
-  )
+  useInvalidateOnWindowEvent(CORPORATE_PARTNERS_CHANGED_EVENT, corporatePartnerQueryKeys.lists())
 
   const handleSearch = useCallback(() => {
     applySearch()
@@ -222,16 +216,14 @@ export function CorporatePartnersPage() {
 
   const handleRowsReorder = useCallback(
     (reorderedRows: CorporatePartner[]) => {
-      void reorderMutation
-        .mutateAsync(reorderedRows.map(row => row.id))
-        .catch(error => {
-          const alert = corporatePartnerMutationFailureAlert(
-            error,
-            '후원사 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-          )
-          showAlert(alert)
-          void listQuery.refetch()
-        })
+      void reorderMutation.mutateAsync(reorderedRows.map(row => row.id)).catch(error => {
+        const alert = corporatePartnerMutationFailureAlert(
+          error,
+          '후원사 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.'
+        )
+        showAlert(alert)
+        void listQuery.refetch()
+      })
     },
     [listQuery, reorderMutation, showAlert]
   )
@@ -241,7 +233,7 @@ export function CorporatePartnersPage() {
       void setPublicMutation.mutateAsync({ id, isPublic }).catch(error => {
         const alert = corporatePartnerMutationFailureAlert(
           error,
-          '공개 여부 변경에 실패했습니다. 다시 시도해 주세요.',
+          '공개 여부 변경에 실패했습니다. 다시 시도해 주세요.'
         )
         showAlert(alert)
         void listQuery.refetch()
@@ -277,7 +269,7 @@ export function CorporatePartnersPage() {
           error,
           formMode === 'edit'
             ? '후원사 수정에 실패했습니다. 다시 시도해 주세요.'
-            : '후원사 등록에 실패했습니다. 다시 시도해 주세요.',
+            : '후원사 등록에 실패했습니다. 다시 시도해 주세요.'
         )
         showAlert(alert)
       }
@@ -305,7 +297,7 @@ export function CorporatePartnersPage() {
     } catch (error) {
       const alert = corporatePartnerMutationFailureAlert(
         error,
-        '후원사 삭제에 실패했습니다. 다시 시도해 주세요.',
+        '후원사 삭제에 실패했습니다. 다시 시도해 주세요.'
       )
       showAlert(alert)
     }
@@ -398,8 +390,7 @@ export function CorporatePartnersPage() {
     [handleTogglePublic, openEdit, setPublicMutation.isPending]
   )
 
-  const formLoading =
-    formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
+  const formLoading = formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
 
   const emptyText = hasActiveFilter
     ? '검색 결과가 없습니다. 필터 조건을 변경해 주세요.'
@@ -407,76 +398,73 @@ export function CorporatePartnersPage() {
 
   return (
     <div className="corporate-partners-page">
-      <div className="admin-list-card corporate-partners-page__filter-card">
-        <div className="admin-filter-area corporate-partners-page__filter-row">
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">공개 여부</span>
-            <CmsSelect
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              withAllOption
-              value={pendingFilters.isPublic}
-              onChange={value =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  isPublic: (value as PublicFilterValue) ?? '',
-                }))
-              }
-              options={[
-                { label: '공개', value: 'true' },
-                { label: '비공개', value: 'false' },
-              ]}
-              placeholder="전체"
-            />
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area corporate-partners-page__filter-row">
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">공개 여부</span>
+              <CmsSelect
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                withAllOption
+                value={pendingFilters.isPublic}
+                onChange={value =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    isPublic: (value as PublicFilterValue) ?? '',
+                  }))
+                }
+                options={[
+                  { label: '공개', value: 'true' },
+                  { label: '비공개', value: 'false' },
+                ]}
+                placeholder="전체"
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">기업명</span>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="기업명 검색"
+                value={pendingFilters.name}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
+                onPressEnter={handleSearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <span className="admin-filter-area__label">등록일</span>
+              <CmsDateRangePicker
+                inputSize="large"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={periodAsPickerValue(pendingFilters.registeredRange)}
+                onChange={dates =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    registeredRange: dates ?? null,
+                  }))
+                }
+                placeholder={['시작일', '종료일']}
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="large"
+                type="button"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
+            </div>
           </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">기업명</span>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="기업명 검색"
-              value={pendingFilters.name}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
-              onPressEnter={handleSearch}
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <span className="admin-filter-area__label">등록일</span>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={periodAsPickerValue(pendingFilters.registeredRange)}
-              onChange={dates =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  registeredRange: dates ?? null,
-                }))
-              }
-              placeholder={['시작일', '종료일']}
-            />
-          </div>
-          <div className="admin-filter-area__actions">
-            <CmsButton
-              className="admin-filter-area__search-button"
-              variant="primary"
-              size="large"
-              type="button"
-              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={handleSearch}
-            >
-              조회
-            </CmsButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">후원사 목록</span>
-            <span className="table-description">총 {totalCount.toLocaleString()}건</span>
-          </div>
-          <div className="table-header-actions--wrapper">
+        }
+        title="후원사 목록"
+        description={`총 ${totalCount.toLocaleString()}건`}
+        actions={
+          <>
             <CmsButton
               variant="delete"
               size="large"
@@ -486,17 +474,12 @@ export function CorporatePartnersPage() {
             >
               선택 삭제
             </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="large"
-              type="button"
-              onClick={openCreate}
-            >
+            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
               후원사 등록
             </CmsButton>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <CorporatePartnersSortableTable
           rows={rows}
           columns={columns}
@@ -509,7 +492,7 @@ export function CorporatePartnersPage() {
             onChange: keys => setSelectedRowKeys(keys),
           }}
         />
-      </div>
+      </FilterTableLayout>
 
       <CorporatePartnerFormModal
         open={formOpen}

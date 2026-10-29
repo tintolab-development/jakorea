@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { InterviewItem, InterviewSaveItem } from '@/entities/recruit-guide/model/types'
 import {
@@ -167,7 +167,7 @@ export function InterviewSectionCard({ items }: Props) {
         </div>
       </div>
 
-      <Table<InterviewItem>
+      <CmsDataTable<InterviewItem>
         className="cms-data-table recruit-guide-interview-table"
         rowKey="id"
         columns={columns}

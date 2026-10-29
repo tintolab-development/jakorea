@@ -11,7 +11,8 @@ import {
 } from '@jakorea/admin-ui/button'
 
 export type CmsButtonVariant = 'primary' | 'secondary' | 'default' | 'delete'
-export type CmsButtonSize = 'large' | 'medium' | 'small'
+/** 기존 alias(large/medium/small) + CMS와 동일한 높이 토큰(h52~h32) */
+export type CmsButtonSize = 'large' | 'medium' | 'small' | 'h52' | 'h44' | 'h40' | 'h36' | 'h32'
 
 export const CMS_ACTION_BUTTON_WIDTH = ADMIN_ACTION_BUTTON_WIDTH
 export const CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH = ADMIN_CERTIFICATE_ISSUE_BUTTON_WIDTH

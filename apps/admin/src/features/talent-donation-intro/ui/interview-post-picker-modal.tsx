@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { ImpactStory, ImpactStoryListFilter } from '@/entities/impact-stories/model/types'
 import { useImpactStoriesList } from '@/features/impact-stories/api/hooks'
@@ -140,7 +140,7 @@ function PickerBody({
         </div>
       </div>
 
-      <Table<ImpactStory>
+      <CmsDataTable<ImpactStory>
         className="cms-data-table talent-intro-post-picker__table"
         rowKey="id"
         loading={listQuery.isFetching}

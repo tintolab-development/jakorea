@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import {
   ADMIN_ACCOUNT_ACTION_LABELS,
@@ -25,7 +25,6 @@ import {
   parseLogListPage,
   setLogListPageParam,
 } from '@/features/logs/shared/lib/list-page'
-import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -47,6 +46,8 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   useCmsAlert,
+  FilterTableLayout,
+  ExcelButton,
 } from '@/shared/ui'
 
 import '@/features/logs/shared/ui/log-list-layout.css'
@@ -197,7 +198,7 @@ export function AdminAccountLogPage() {
     (nextPage: number) => {
       patchSearchParams(next => setLogListPageParam(next, 'aa_page', nextPage))
     },
-    [patchSearchParams],
+    [patchSearchParams]
   )
 
   const handleExcel = useCallback(() => {
@@ -276,86 +277,82 @@ export function AdminAccountLogPage() {
 
   return (
     <div className="log-list-page">
-      <div className="admin-list-card log-list-page__filter-card">
-        <div className="admin-filter-area">
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">관리자명</span>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="관리자명을 입력하세요"
-              value={pendingFilters.name}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
-              onPressEnter={applySearch}
-            />
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area">
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">관리자명</span>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="관리자명을 입력하세요"
+                value={pendingFilters.name}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
+                onPressEnter={applySearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">아이디</span>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="아이디를 입력하세요"
+                value={pendingFilters.loginId}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
+                onPressEnter={applySearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">내역</span>
+              <CmsSelect
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                withAllOption
+                value={pendingFilters.actionType}
+                onChange={value =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    actionType: (value as AdminAccountActionType | '') ?? '',
+                  }))
+                }
+                options={ACTION_OPTIONS}
+                placeholder="전체"
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <span className="admin-filter-area__label">처리일시</span>
+              <CmsDateRangePicker
+                inputSize="large"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={rangeAsPicker(pendingFilters.range)}
+                onChange={dates =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    range: dates ?? null,
+                  }))
+                }
+                placeholder={['시작일', '종료일']}
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="large"
+                type="button"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                onClick={applySearch}
+              >
+                조회
+              </CmsButton>
+            </div>
           </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">아이디</span>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="아이디를 입력하세요"
-              value={pendingFilters.loginId}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
-              onPressEnter={applySearch}
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">내역</span>
-            <CmsSelect
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              withAllOption
-              value={pendingFilters.actionType}
-              onChange={value =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  actionType: (value as AdminAccountActionType | '') ?? '',
-                }))
-              }
-              options={ACTION_OPTIONS}
-              placeholder="전체"
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <span className="admin-filter-area__label">처리일시</span>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={rangeAsPicker(pendingFilters.range)}
-              onChange={dates =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  range: dates ?? null,
-                }))
-              }
-              placeholder={['시작일', '종료일']}
-            />
-          </div>
-          <div className="admin-filter-area__actions">
-            <CmsButton
-              className="admin-filter-area__search-button"
-              variant="primary"
-              size="large"
-              type="button"
-              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={applySearch}
-            >
-              조회
-            </CmsButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card log-list-page__result-card">
-        <LogResultToolbar
-          title="관리자 계정 처리 이력"
-          total={total}
-          onExcelDownload={handleExcel}
-          excelDisabled={total === 0}
-        />
-
-        <Table<AdminAccountLog>
+        }
+        title="관리자 계정 처리 이력"
+        description={`총 ${total.toLocaleString('ko-KR')}건`}
+        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+      >
+        <CmsDataTable<AdminAccountLog>
           className="cms-data-table"
           rowKey="id"
           columns={columns}
@@ -364,16 +361,10 @@ export function AdminAccountLogPage() {
           pagination={logTablePagination({ page, total, onChange: handlePageChange })}
           locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
-            x:
-              COL.no +
-              COL.name +
-              COL.loginId +
-              COL.action +
-              COL.processedAt +
-              COL.ip,
+            x: COL.no + COL.name + COL.loginId + COL.action + COL.processedAt + COL.ip,
           }}
         />
-      </div>
+      </FilterTableLayout>
     </div>
   )
 }

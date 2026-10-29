@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { JaHistoryTimeline, JaHistoryTimelineEvent } from '@/entities/ja-history/model/types'
 import {
@@ -87,7 +87,7 @@ export function TimelineSection({ title, modalTitle, timeline, variant }: Props)
               {active.events.length === 0 ? (
                 <p className="ja-history-empty">이 기간에 등록된 연혁이 없습니다.</p>
               ) : (
-                <Table<JaHistoryTimelineEvent>
+                <CmsDataTable<JaHistoryTimelineEvent>
                   className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
                   columns={eventColumns}
                   dataSource={active.events}

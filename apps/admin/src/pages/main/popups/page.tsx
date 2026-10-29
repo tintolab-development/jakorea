@@ -6,11 +6,7 @@ import { useCallback, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
 import { Image, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import {
-  MAX_ACTIVE_POPUPS,
-  type Popup,
-  type PopupListFilter,
-} from '@/entities/popup/model/types'
+import { MAX_ACTIVE_POPUPS, type Popup, type PopupListFilter } from '@/entities/popup/model/types'
 import {
   useCreatePopup,
   usePopupsList,
@@ -23,15 +19,9 @@ import { popupQueryKeys } from '@/features/popup/api/query-keys'
 import { listPopupsService } from '@/features/popup/api/service'
 import { popupMutationFailureAlert } from '@/features/popup/lib/mutation-failure-alert'
 import { POPUPS_CHANGED_EVENT } from '@/features/popup/api/store'
-import {
-  PopupFormModal,
-  type PopupFormValues,
-} from '@/features/popup/ui/form-modal'
+import { PopupFormModal, type PopupFormValues } from '@/features/popup/ui/form-modal'
 import { formatDateDot, formatDateRangeDot } from '@/shared/lib/format-display'
-import {
-  PopupDragHandle,
-  PopupsSortableTable,
-} from '@/features/popup/ui/sortable-table'
+import { PopupDragHandle, PopupsSortableTable } from '@/features/popup/ui/sortable-table'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -40,7 +30,12 @@ import {
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_SORT_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import {
   applyDateRangeToSearchParams,
   pendingDateRangeTupleEqual,
@@ -55,6 +50,7 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  FilterTableLayout,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -261,8 +257,8 @@ export function PopupsPage() {
             popupMutationFailureAlert(
               error,
               '팝업 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-              '순서 변경 실패',
-            ),
+              '순서 변경 실패'
+            )
           )
           void listQuery.refetch()
         }
@@ -278,8 +274,8 @@ export function PopupsPage() {
           popupMutationFailureAlert(
             error,
             '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-            '사용 여부 변경 실패',
-          ),
+            '사용 여부 변경 실패'
+          )
         )
         void listQuery.refetch()
       })
@@ -316,8 +312,8 @@ export function PopupsPage() {
             formVariant === 'detail'
               ? '팝업 수정에 실패했습니다. 다시 시도해 주세요.'
               : '팝업 등록에 실패했습니다. 다시 시도해 주세요.',
-            formVariant === 'detail' ? '수정 실패' : '등록 실패',
-          ),
+            formVariant === 'detail' ? '수정 실패' : '등록 실패'
+          )
         )
       }
     },
@@ -336,8 +332,8 @@ export function PopupsPage() {
         popupMutationFailureAlert(
           error,
           '팝업 삭제에 실패했습니다. 다시 시도해 주세요.',
-          '삭제 실패',
-        ),
+          '삭제 실패'
+        )
       )
     }
   }, [editingPopup, removeMutation, showAlert])
@@ -364,8 +360,8 @@ export function PopupsPage() {
         popupMutationFailureAlert(
           error,
           '팝업 삭제에 실패했습니다. 다시 시도해 주세요.',
-          '삭제 실패',
-        ),
+          '삭제 실패'
+        )
       )
     }
   }, [removeMutation, selectedRowKeys, showAlert])
@@ -470,95 +466,93 @@ export function PopupsPage() {
   )
 
   const totalCount = rows.length
-  const formLoading =
-    formVariant === 'detail' ? updateMutation.isPending : createMutation.isPending
+  const formLoading = formVariant === 'detail' ? updateMutation.isPending : createMutation.isPending
 
   return (
     <div className="popups-page">
-      <div className="admin-list-card popups-page__filter-card">
-        <div className="admin-filter-area popups-page__filter-row">
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">사용 여부</span>
-            <CmsSelect
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              withAllOption
-              value={pendingFilters.isActive}
-              onChange={value =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  isActive: (value as ActiveFilterValue) ?? '',
-                }))
-              }
-              options={[
-                { label: '사용', value: 'true' },
-                { label: '미사용', value: 'false' },
-              ]}
-              placeholder="전체"
-            />
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area popups-page__filter-row">
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">사용 여부</span>
+              <CmsSelect
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                withAllOption
+                value={pendingFilters.isActive}
+                onChange={value =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    isActive: (value as ActiveFilterValue) ?? '',
+                  }))
+                }
+                options={[
+                  { label: '사용', value: 'true' },
+                  { label: '미사용', value: 'false' },
+                ]}
+                placeholder="전체"
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">팝업명</span>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="팝업명 검색"
+                value={pendingFilters.name}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
+                onPressEnter={handleSearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">대체 텍스트</span>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="대체 텍스트 검색"
+                value={pendingFilters.altText}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, altText: value }))}
+                onPressEnter={handleSearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <span className="admin-filter-area__label">게시 기간</span>
+              <CmsDateRangePicker
+                inputSize="large"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={periodAsPickerValue(pendingFilters.periodRange)}
+                onChange={dates =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    periodRange: dates ?? null,
+                  }))
+                }
+                placeholder={['시작일', '종료일']}
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="large"
+                type="button"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
+            </div>
           </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">팝업명</span>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="팝업명 검색"
-              value={pendingFilters.name}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
-              onPressEnter={handleSearch}
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">대체 텍스트</span>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="대체 텍스트 검색"
-              value={pendingFilters.altText}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, altText: value }))}
-              onPressEnter={handleSearch}
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <span className="admin-filter-area__label">게시 기간</span>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={periodAsPickerValue(pendingFilters.periodRange)}
-              onChange={dates =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  periodRange: dates ?? null,
-                }))
-              }
-              placeholder={['시작일', '종료일']}
-            />
-          </div>
-          <div className="admin-filter-area__actions">
-            <CmsButton
-              className="admin-filter-area__search-button"
-              variant="primary"
-              size="large"
-              type="button"
-              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={handleSearch}
-            >
-              조회
-            </CmsButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">팝업 목록</span>
-            <span className="table-description">
-              총 {totalCount.toLocaleString()}건 (팝업은 최대 {MAX_ACTIVE_POPUPS}
-              개까지 동시 사용 가능합니다.)
-            </span>
-          </div>
-          <div className="table-header-actions--wrapper">
+        }
+        title="팝업 목록"
+        description={
+          <>
+            총 {totalCount.toLocaleString()}건 (팝업은 최대 {MAX_ACTIVE_POPUPS}
+            개까지 동시 사용 가능합니다.)
+          </>
+        }
+        actions={
+          <>
             <CmsButton
               variant="delete"
               size="large"
@@ -571,9 +565,9 @@ export function PopupsPage() {
             <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
               팝업 등록
             </CmsButton>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <div className="popups-page__table-scroll">
           <PopupsSortableTable
             rows={rows}
@@ -588,7 +582,7 @@ export function PopupsPage() {
             }}
           />
         </div>
-      </div>
+      </FilterTableLayout>
 
       <PopupFormModal
         open={formOpen}

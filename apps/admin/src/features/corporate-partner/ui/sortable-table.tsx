@@ -7,7 +7,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType, TableProps } from 'antd/es/table'
 import type { CorporatePartner } from '@/entities/corporate-partner/model/types'
 
@@ -40,7 +40,7 @@ export function CorporatePartnersSortableTable({
 
   return (
     <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
-      <Table<CorporatePartner>
+      <CmsDataTable<CorporatePartner>
         className="cms-data-table corporate-partner-table"
         rowKey="id"
         loading={loading}

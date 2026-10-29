@@ -7,7 +7,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { GlobalValue } from '@/entities/global-value/model/types'
 
@@ -33,7 +33,7 @@ export function GlobalValuesSortableTable({
 
   return (
     <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
-      <Table<GlobalValue>
+      <CmsDataTable<GlobalValue>
         className="cms-data-table global-value-table"
         rowKey="id"
         loading={loading}

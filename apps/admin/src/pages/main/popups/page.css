@@ -3,10 +3,6 @@
   min-width: 0;
 }
 
-.popups-page__filter-card {
-  margin-bottom: var(--spacing-24, 24px);
-}
-
 .popups-page__table-scroll {
   max-height: calc(100vh - var(--header-height, 64px) - 280px);
   overflow: auto;

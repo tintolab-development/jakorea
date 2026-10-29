@@ -7,7 +7,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType, TableProps } from 'antd/es/table'
 import type { StripBanner } from '@/entities/strip-banner/model/types'
 
@@ -43,7 +43,7 @@ export function StripBannersSortableTable({
       dndContextProps={dndContextProps}
       dragDisabled={disabled}
     >
-      <Table<StripBanner>
+      <CmsDataTable<StripBanner>
         className="cms-data-table strip-banner-table"
         rowKey="id"
         loading={loading}

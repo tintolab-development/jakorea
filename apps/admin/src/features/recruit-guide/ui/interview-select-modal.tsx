@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import {
   isHomepageVisible,
@@ -196,7 +196,7 @@ export function InterviewSelectModal({ open, confirmLoading, onCancel, onSelect 
           <p className="recruit-guide-interview-modal__count">
             총 {totalCount.toLocaleString('ko-KR')}건
           </p>
-          <Table<ImpactStory>
+          <CmsDataTable<ImpactStory>
             className="cms-data-table cms-data-table--skip-auto-no-col recruit-guide-interview-modal__table"
             rowKey="id"
             loading={listQuery.isLoading || confirmLoading}

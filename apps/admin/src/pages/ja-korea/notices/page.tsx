@@ -5,7 +5,8 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { Dayjs } from 'dayjs'
-import { Switch, Table } from 'antd'
+import { Switch } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Notice, NoticeListFilter } from '@/entities/notices/model/types'
 import {
@@ -18,10 +19,7 @@ import {
 import { noticesQueryKeys } from '@/features/notices/api/query-keys'
 import { NOTICES_CHANGED_EVENT } from '@/features/notices/api/store'
 import { noticeMutationFailureAlert } from '@/features/notices/lib/mutation-failure-alert'
-import {
-  NoticeFormModal,
-  type NoticeFormValues,
-} from '@/features/notices/ui/notice-form-modal'
+import { NoticeFormModal, type NoticeFormValues } from '@/features/notices/ui/notice-form-modal'
 import { NoticePinnedIcon } from '@/features/notices/ui/notice-pin-icon'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
@@ -29,7 +27,11 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -48,6 +50,7 @@ import {
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
+  FilterTableLayout,
 } from '@/shared/ui'
 
 import './page.css'
@@ -301,8 +304,8 @@ export function NoticesPage() {
           noticeMutationFailureAlert(
             error,
             '요청을 처리하지 못했습니다. 다시 시도해 주세요.',
-            formMode === 'edit' ? '저장 실패' : '등록 실패',
-          ),
+            formMode === 'edit' ? '저장 실패' : '등록 실패'
+          )
         )
       }
     },
@@ -350,9 +353,7 @@ export function NoticesPage() {
                 : 'notices-page__title-cell'
             }
           >
-            {row.isPinned ? (
-              <NoticePinnedIcon className="notices-page__pin" size={20} />
-            ) : null}
+            {row.isPinned ? <NoticePinnedIcon className="notices-page__pin" size={20} /> : null}
             <span className="notices-page__title-text">{value}</span>
           </span>
         ),
@@ -391,126 +392,121 @@ export function NoticesPage() {
 
   return (
     <div className="notices-page">
-      <div className="admin-list-card notices-page__filter-card">
-        {/*
-          CMS merged-auto-fill + trailing keys 2행 미러
-          1행: 공개 여부·제목·작성자명·게시일
-          2행: 작성일 + 조회(우측)
-          @see apps/cms table-filter-group-layout · mergedAutoFillTrailingFieldKeys
-        */}
-        <div className="admin-filter-area admin-filter-area--split notices-page__filter">
-          <div className="admin-filter-area__head">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">공개 여부</p>
-              <CmsSelect
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.visibility}
-                placeholder="전체"
-                options={[
-                  { value: 'public', label: '공개' },
-                  { value: 'private', label: '비공개' },
-                ]}
-                onChange={v =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    visibility: (v as VisibilityPending) || '',
-                  }))
-                }
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">제목</p>
-              <AdminFilterTextInput
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.title}
-                placeholder="제목을 입력하세요"
-                onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">작성자명</p>
-              <AdminFilterTextInput
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.authorName}
-                placeholder="작성자명을 입력하세요"
-                onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <p className="admin-filter-area__label">게시일</p>
-              <CmsDateRangePicker
-                inputSize="large"
-                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                value={rangeAsPicker(pendingFilters.publishedRange)}
-                placeholder={['시작일', '종료일']}
-                allowClear
-                onChange={dates => {
-                  if (!dates || (!dates[0] && !dates[1])) {
-                    setPendingFilters(prev => ({ ...prev, publishedRange: null }))
-                    return
+      {/*
+        CMS merged-auto-fill + trailing keys 2행 미러
+        1행: 공개 여부·제목·작성자명·게시일
+        2행: 작성일 + 조회(우측)
+        @see apps/cms table-filter-group-layout · mergedAutoFillTrailingFieldKeys
+      */}
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area admin-filter-area--split notices-page__filter">
+            <div className="admin-filter-area__head">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">공개 여부</p>
+                <CmsSelect
+                  inputSize="large"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  value={pendingFilters.visibility}
+                  placeholder="전체"
+                  options={[
+                    { value: 'public', label: '공개' },
+                    { value: 'private', label: '비공개' },
+                  ]}
+                  onChange={v =>
+                    setPendingFilters(prev => ({
+                      ...prev,
+                      visibility: (v as VisibilityPending) || '',
+                    }))
                   }
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    publishedRange: [dates[0] ?? null, dates[1] ?? null],
-                  }))
-                }}
-              />
-            </div>
-          </div>
-          <div className="admin-filter-area__bottom">
-            <div className="admin-filter-area__bottom-fields">
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">제목</p>
+                <AdminFilterTextInput
+                  inputSize="large"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.title}
+                  placeholder="제목을 입력하세요"
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">작성자명</p>
+                <AdminFilterTextInput
+                  inputSize="large"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.authorName}
+                  placeholder="작성자명을 입력하세요"
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
               <div className="admin-filter-area__field admin-filter-area__field--date-range">
-                <p className="admin-filter-area__label">작성일</p>
+                <p className="admin-filter-area__label">게시일</p>
                 <CmsDateRangePicker
                   inputSize="large"
                   width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                  value={rangeAsPicker(pendingFilters.createdRange)}
+                  value={rangeAsPicker(pendingFilters.publishedRange)}
                   placeholder={['시작일', '종료일']}
                   allowClear
                   onChange={dates => {
                     if (!dates || (!dates[0] && !dates[1])) {
-                      setPendingFilters(prev => ({ ...prev, createdRange: null }))
+                      setPendingFilters(prev => ({ ...prev, publishedRange: null }))
                       return
                     }
                     setPendingFilters(prev => ({
                       ...prev,
-                      createdRange: [dates[0] ?? null, dates[1] ?? null],
+                      publishedRange: [dates[0] ?? null, dates[1] ?? null],
                     }))
                   }}
                 />
               </div>
             </div>
-            <div className="admin-filter-area__actions">
-              <CmsButton
-                className="admin-filter-area__search-button"
-                variant="primary"
-                size="large"
-                type="button"
-                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-                onClick={handleSearch}
-              >
-                조회
-              </CmsButton>
+            <div className="admin-filter-area__bottom">
+              <div className="admin-filter-area__bottom-fields">
+                <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                  <p className="admin-filter-area__label">작성일</p>
+                  <CmsDateRangePicker
+                    inputSize="large"
+                    width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                    value={rangeAsPicker(pendingFilters.createdRange)}
+                    placeholder={['시작일', '종료일']}
+                    allowClear
+                    onChange={dates => {
+                      if (!dates || (!dates[0] && !dates[1])) {
+                        setPendingFilters(prev => ({ ...prev, createdRange: null }))
+                        return
+                      }
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        createdRange: [dates[0] ?? null, dates[1] ?? null],
+                      }))
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="admin-filter-area__actions">
+                <CmsButton
+                  className="admin-filter-area__search-button"
+                  variant="primary"
+                  size="large"
+                  type="button"
+                  width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                  onClick={handleSearch}
+                >
+                  조회
+                </CmsButton>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">공지사항 목록</span>
-            <span className="table-description">
-              총 {rows.length.toLocaleString('ko-KR')}건
-            </span>
-          </div>
-          <div className="table-header-actions--wrapper">
+        }
+        title="공지사항 목록"
+        description={`총 ${rows.length.toLocaleString('ko-KR')}건`}
+        actions={
+          <>
             <CmsButton
               variant="delete"
               size="large"
@@ -523,11 +519,11 @@ export function NoticesPage() {
             <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
               공지사항 등록
             </CmsButton>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <div className="notices-page__table-scroll">
-          <Table<Notice>
+          <CmsDataTable<Notice>
             className="cms-data-table notices-page__table"
             rowKey="id"
             loading={listQuery.isLoading}
@@ -549,7 +545,7 @@ export function NoticesPage() {
             scroll={{ x: true }}
           />
         </div>
-      </div>
+      </FilterTableLayout>
 
       <NoticeFormModal
         open={formOpen}

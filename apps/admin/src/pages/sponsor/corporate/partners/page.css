@@ -3,10 +3,6 @@
   min-width: 0;
 }
 
-.corporate-partners-page__filter-card {
-  margin-bottom: var(--spacing-24, 24px);
-}
-
 .corporate-partners-page__thumb-wrap {
   display: inline-flex;
   flex: 1 0 0;

@@ -7,15 +7,16 @@ import { AdminInput, type AdminInputProps } from '@jakorea/admin-ui/input'
 import type { InputRef } from 'antd'
 import type { CmsControlSize } from './cms-control-size'
 
-export type CmsInputSize = CmsControlSize
+/** 로그인 등 CMS와 동일한 52px 인풋을 위해 `xlarge`를 허용한다. */
+export type CmsInputSize = CmsControlSize | 'xlarge'
 
-function mapAdminInputSize(size?: CmsControlSize): AdminInputProps['inputSize'] {
+function mapAdminInputSize(size?: CmsInputSize): AdminInputProps['inputSize'] {
   if (size === 'small') return 'compact'
   return size ?? 'large'
 }
 
 export interface CmsInputProps extends Omit<AdminInputProps, 'inputSize'> {
-  inputSize?: CmsControlSize
+  inputSize?: CmsInputSize
 }
 
 export const CmsInput = forwardRef<InputRef, CmsInputProps>(

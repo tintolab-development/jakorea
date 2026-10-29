@@ -3,7 +3,8 @@
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
-import { Image, Table } from 'antd'
+import { Image } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import type {
@@ -43,6 +44,7 @@ import {
   AdminFilterTextInput,
   ConfirmModal,
   useCmsAlert,
+  FilterTableLayout,
 } from '@/shared/ui'
 
 import './report-list.css'
@@ -81,7 +83,10 @@ export function ReportListPanel({ kind }: Props) {
   const listTitle = kind === 'annual' ? '연차보고서 목록' : '회계감사 보고서 목록'
   const thumbMod = kind === 'annual' ? 'rd-list__thumb-wrap--a4' : 'rd-list__thumb-wrap--wide'
 
-  const createdSyncRef = useMemo<UrlDateRangePendingSyncRef>(() => ({ hadCompleteInUrl: false }), [])
+  const createdSyncRef = useMemo<UrlDateRangePendingSyncRef>(
+    () => ({ hadCompleteInUrl: false }),
+    []
+  )
 
   const parseApplied = useCallback(
     (searchParams: URLSearchParams): ReportListFilter => {
@@ -118,12 +123,7 @@ export function ReportListPanel({ kind }: Props) {
       {
         kind: 'apply',
         apply: (nextParams, f) => {
-          applyDateRangeToSearchParams(
-            nextParams,
-            f.created,
-            `${prefix}_cfrom`,
-            `${prefix}_cto`
-          )
+          applyDateRangeToSearchParams(nextParams, f.created, `${prefix}_cfrom`, `${prefix}_cto`)
         },
       },
     ],
@@ -312,8 +312,7 @@ export function ReportListPanel({ kind }: Props) {
                   e.preventDefault()
                   showAlert({
                     title: '미리보기',
-                    content:
-                      '샘플 첨부파일입니다. 등록·수정 시 PDF를 업로드하면 다운로드됩니다.',
+                    content: '샘플 첨부파일입니다. 등록·수정 시 PDF를 업로드하면 다운로드됩니다.',
                   })
                 }
               }}
@@ -330,8 +329,7 @@ export function ReportListPanel({ kind }: Props) {
         key: 'downloadCount',
         width: 110,
         align: 'center',
-        render: (value: number) =>
-          typeof value === 'number' ? value.toLocaleString() : '-',
+        render: (value: number) => (typeof value === 'number' ? value.toLocaleString() : '-'),
       },
       {
         title: '작성일시',
@@ -363,86 +361,78 @@ export function ReportListPanel({ kind }: Props) {
 
   return (
     <div className="rd-list">
-      <div className="admin-list-card">
-        <div className="admin-filter-area">
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <p className="admin-filter-area__label">제목</p>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              value={pendingFilters.title}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
-              onPressEnter={() => applySearch()}
-              placeholder="제목을 입력하세요"
-            />
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area">
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">제목</p>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                value={pendingFilters.title}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
+                onPressEnter={() => applySearch()}
+                placeholder="제목을 입력하세요"
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">첨부파일명</p>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                value={pendingFilters.attachmentName}
+                onChange={value =>
+                  patchPendingFilters(prev => ({ ...prev, attachmentName: value }))
+                }
+                onPressEnter={() => applySearch()}
+                placeholder="첨부파일명을 입력하세요"
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <p className="admin-filter-area__label">작성일</p>
+              <CmsDateRangePicker
+                inputSize="large"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={periodAsPickerValue(pendingFilters.created)}
+                onChange={dates => {
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    created: dates ? [dates[0] ?? null, dates[1] ?? null] : null,
+                  }))
+                }}
+                placeholder={['시작일', '종료일']}
+                allowClear
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="large"
+                type="button"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                onClick={() => applySearch()}
+              >
+                조회
+              </CmsButton>
+            </div>
           </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <p className="admin-filter-area__label">첨부파일명</p>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              value={pendingFilters.attachmentName}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, attachmentName: value }))}
-              onPressEnter={() => applySearch()}
-              placeholder="첨부파일명을 입력하세요"
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <p className="admin-filter-area__label">작성일</p>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={periodAsPickerValue(pendingFilters.created)}
-              onChange={dates => {
-                setPendingFilters(prev => ({
-                  ...prev,
-                  created: dates ? [dates[0] ?? null, dates[1] ?? null] : null,
-                }))
-              }}
-              placeholder={['시작일', '종료일']}
-              allowClear
-            />
-          </div>
-          <div className="admin-filter-area__actions">
-            <CmsButton
-              className="admin-filter-area__search-button"
-              variant="primary"
-              size="large"
-              type="button"
-              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={() => applySearch()}
-            >
-              조회
-            </CmsButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">{listTitle}</span>
-            <span className="table-description">
-              총 {totalCount.toLocaleString()}건
-            </span>
-          </div>
-          <div className="table-header-actions--wrapper">
-            <CmsButton
-              variant="delete"
-              size="large"
-              type="button"
-              onClick={handleBulkDeleteClick}
-            >
+        }
+        title={listTitle}
+        description={`총 ${totalCount.toLocaleString()}건`}
+        actions={
+          <>
+            <CmsButton variant="delete" size="large" type="button" onClick={handleBulkDeleteClick}>
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
               보고서 등록
             </CmsButton>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <div className="rd-list__table-scroll">
-          <Table<TransparencyReport>
+          <CmsDataTable<TransparencyReport>
             className={`cms-data-table cms-data-table--hoverable rd-list__table rd-list__table--${kind}`}
             rowKey="id"
             loading={listQuery.isLoading}
@@ -457,7 +447,7 @@ export function ReportListPanel({ kind }: Props) {
             scroll={{ x: true }}
           />
         </div>
-      </div>
+      </FilterTableLayout>
 
       <ReportFormModal
         open={modalOpen}

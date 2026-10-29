@@ -8,7 +8,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { GnbSubMenu } from '@/entities/gnb-menu/model/types'
 
@@ -47,7 +47,7 @@ export function GnbMenuSortableTable({
 
   return (
     <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
-      <Table<GnbSubMenu>
+      <CmsDataTable<GnbSubMenu>
         className="cms-data-table gnb-menu-table"
         rowKey="id"
         dataSource={items}

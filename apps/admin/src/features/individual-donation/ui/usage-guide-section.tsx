@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type {
   UsageGuideItem,
@@ -196,7 +196,7 @@ export function UsageGuideSectionCard({ items }: Props) {
         </div>
       </div>
 
-      <Table<UsageGuideItem>
+      <CmsDataTable<UsageGuideItem>
         className="cms-data-table cms-data-table--skip-auto-no-col individual-donation-usage-table"
         columns={columns}
         dataSource={items}

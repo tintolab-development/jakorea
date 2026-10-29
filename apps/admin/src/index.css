@@ -1,5 +1,6 @@
 @import '@jakorea/admin-ui/table/styles';
 @import './shared/ui/list-table-layout.css';
+@import './shared/ui/filter-table-layout.css';
 @import './shared/ui/filter-controls-common.css';
 @import './shared/ui/admin-filter-area.css';
 @import './shared/ui/table-header-label.css';
