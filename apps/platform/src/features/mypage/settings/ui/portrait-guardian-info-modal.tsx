@@ -1,6 +1,9 @@
 import { useId, type ReactNode } from 'react'
 import { PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
-import { PORTRAIT_GUARDIAN_INFO_COPY } from '../lib/portrait-guardian-verification-copy'
+import {
+  PORTRAIT_GUARDIAN_INFO_COPY,
+  PORTRAIT_GUARDIAN_RELATION_MAX_LENGTH,
+} from '../lib/portrait-guardian-verification-copy'
 import styles from './portrait-guardian-info-modal.module.css'
 
 export type PortraitGuardianInfoModalProps = {
@@ -74,6 +77,7 @@ export function PortraitGuardianInfoModal({
               label={PORTRAIT_GUARDIAN_INFO_COPY.relationLabel}
               placeholder={PORTRAIT_GUARDIAN_INFO_COPY.relationPlaceholder}
               value={relation}
+              maxLength={PORTRAIT_GUARDIAN_RELATION_MAX_LENGTH}
               required
               disabled={confirmLoading}
               onValueChange={onRelationChange}

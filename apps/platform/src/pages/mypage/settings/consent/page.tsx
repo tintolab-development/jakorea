@@ -23,8 +23,10 @@ import {
   readProgramMinorPortraitAttempt,
 } from '@/features/program/lib/program-minor-portrait-attempt'
 
-/** 미성년 프로그램 신청 — 보호자 본인인증 직후 라우트 state (토큰은 저장·출력하지 않는다) */
-type ProgramMinorPortraitRouteState = {
+/** 보호자 본인인증 직후 라우트 state (토큰은 저장·출력하지 않는다) */
+type PortraitGuardianRouteState = {
+  guardianVerificationToken?: string
+  portraitGuardian?: { guardianVerificationToken?: string }
   programMinorPortrait?: { guardianVerificationToken?: string }
 } | null
 
@@ -44,8 +46,11 @@ export function MypageSettingsConsentPage() {
   const minorBackTo = parseSafeInternalPath(searchParams.get('backTo')) ?? returnTo
   const minorGuardianVerified =
     minorProgramId != null && readProgramMinorPortraitAttempt(minorProgramId) != null
-  const minorGuardianVerificationToken = (location.state as ProgramMinorPortraitRouteState)
-    ?.programMinorPortrait?.guardianVerificationToken
+  const routeState = location.state as PortraitGuardianRouteState
+  const minorGuardianVerificationToken =
+    routeState?.guardianVerificationToken ??
+    routeState?.portraitGuardian?.guardianVerificationToken ??
+    routeState?.programMinorPortrait?.guardianVerificationToken
 
   useEffect(() => {
     if (!isValidKey) {
@@ -99,13 +104,9 @@ export function MypageSettingsConsentPage() {
           onComplete={handleComplete}
           onTitleAside={setTitleAside}
           programTarget={
-            minorProgramId != null
-              ? {
-                  programId: minorProgramId,
-                  guardianVerificationToken: minorGuardianVerificationToken,
-                }
-              : undefined
+            minorProgramId != null ? { programId: minorProgramId } : undefined
           }
+          guardianVerificationToken={minorGuardianVerificationToken}
         />
       ) : isInstructorApplyConsentKey(consentKey) ? (
         <InstructorApplyConsentWriteForm

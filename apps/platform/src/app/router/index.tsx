@@ -50,6 +50,7 @@ import {
   MypageSettlementPage,
   MypageSettingsPage,
   MypageSettingsConsentPage,
+  MypageSettingsGuardianIdentityCallbackPage,
 } from '@/pages/mypage'
 import {
   ProgramApplyCompletePage,
@@ -220,6 +221,10 @@ export const router = createBrowserRouter([
       {
         path: '/auth/sign-up/guardian-identity/callback',
         element: <SignUpGuardianIdentityCallbackPage />,
+      },
+      {
+        path: '/mypage/settings/guardian-identity/callback',
+        element: <MypageSettingsGuardianIdentityCallbackPage />,
       },
       {
         path: '/auth/find-password/identity/callback',

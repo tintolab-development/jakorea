@@ -39,6 +39,7 @@ import {
 import { downloadSubmittedCrimeConsent } from '../lib/download-submitted-crime-consent'
 import { EMPTY_SETTINGS_VALUE } from '../lib/constants'
 import {
+  PortraitGuardianVerificationCancelledError,
   PORTRAIT_GUARDIAN_VERIFICATION_UNAVAILABLE_MESSAGE,
   startPortraitGuardianVerification,
 } from '../lib/portrait-guardian-verification'
@@ -436,6 +437,7 @@ export function SettingsConsentsView() {
   )
   const [isPortraitGuardianVerifying, setIsPortraitGuardianVerifying] = useState(false)
   const [portraitGuardianVerifiedAt, setPortraitGuardianVerifiedAt] = useState<string | null>(null)
+  const portraitGuardianTokenRef = useRef<string | undefined>(undefined)
   const resolveWithdrawCopy = (id: SettingsConsentItemId) =>
     BASIC_WITHDRAW_COPY[id] ?? DOCUMENT_WITHDRAW_COPY[id]
 
@@ -451,11 +453,17 @@ export function SettingsConsentsView() {
         }
       : undefined
 
-  const navigateToWriteDocument = (id: SettingsConsentItemId) => {
+  const navigateToWriteDocument = (
+    id: SettingsConsentItemId,
+    extraState?: { guardianVerificationToken?: string },
+  ) => {
     if (!isSettingsDocumentConsentItemId(id)) return
     const consentKey = settingsConsentItemIdToWriteKey(id)
     if (!consentKey) return
-    navigate(settingsConsentWritePath(consentKey))
+    navigate(
+      settingsConsentWritePath(consentKey),
+      extraState ? { state: extraState } : undefined,
+    )
   }
 
   const handleWriteDocument = (item: SettingsConsentItem) => {
@@ -489,12 +497,17 @@ export function SettingsConsentsView() {
     try {
       const result = await startPortraitGuardianVerification({
         relation: portraitGuardianRelation.trim(),
+        purpose: 'PORTRAIT_RIGHTS',
       })
+      portraitGuardianTokenRef.current = result.verificationToken
       setPortraitGuardianStep(null)
       setPortraitGuardianVerifiedAt(
         formatPortraitGuardianVerifiedDate(result.verifiedAt) ?? formatWithdrawnDate(new Date())
       )
     } catch (error) {
+      if (error instanceof PortraitGuardianVerificationCancelledError) {
+        return
+      }
       setPortraitGuardianStep(null)
       setNotice({
         title: PORTRAIT_GUARDIAN_ERROR_TITLE,
@@ -808,8 +821,13 @@ export function SettingsConsentsView() {
         confirmLabel={PORTRAIT_GUARDIAN_VERIFIED_COPY.confirmLabel}
         showCloseButton={false}
         onConfirm={() => {
+          const guardianVerificationToken = portraitGuardianTokenRef.current
+          portraitGuardianTokenRef.current = undefined
           setPortraitGuardianVerifiedAt(null)
-          navigateToWriteDocument('portrait')
+          navigateToWriteDocument(
+            'portrait',
+            guardianVerificationToken ? { guardianVerificationToken } : undefined,
+          )
         }}
         onClose={() => setPortraitGuardianVerifiedAt(null)}
       />

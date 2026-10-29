@@ -20,11 +20,13 @@ export function MypagePortraitConsentWriteForm({
   onComplete,
   onTitleAside,
   programTarget,
+  guardianVerificationToken,
 }: {
   onComplete: () => void
   onTitleAside?: (aside: ReactNode | null) => void
   /** 미성년 프로그램 신청 — 프로그램 단위 동의서로 제출 */
-  programTarget?: { programId: number; guardianVerificationToken?: string }
+  programTarget?: { programId: number }
+  guardianVerificationToken?: string
 }) {
   const { displayName } = useMypageMember()
 
@@ -33,10 +35,10 @@ export function MypagePortraitConsentWriteForm({
       verifiedName={displayName}
       saveDraftState={saveMypagePortraitConsentDraftState}
       onSubmitAsync={async (state: PortraitSubmitState) => {
-        await submitPortalPortraitConsentFromWriteState(
-          state,
-          programTarget ? { programTarget } : undefined,
-        )
+        await submitPortalPortraitConsentFromWriteState(state, {
+          programTarget: programTarget ? { programId: programTarget.programId } : undefined,
+          guardianVerificationToken,
+        })
         clearMypagePortraitConsentDraftState()
       }}
       onComplete={onComplete}
