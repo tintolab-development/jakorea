@@ -10,6 +10,16 @@ export const INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_UNKNOWN_CASE_ALERT = {
   content: '승인 알림 발송 상태를 확인할 수 없어 승인 취소를 진행할 수 없습니다.',
 } as const
 
+/** 진행 중 프로그램으로 승인 취소가 차단된 경우 — 권한 종료 불가 안내와 문구를 구분한다. */
+export const INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_BLOCKED_ALERT = {
+  title: '강사 권한 승인 취소 불가 안내',
+  content: [
+    '해당 회원은 현재 진행 중인 프로그램이 있습니다.',
+    '진행 중인 프로그램이 있는 경우, 강사 권한 승인 취소가 불가합니다.',
+  ].join('\n'),
+  confirmLabel: '확인',
+} as const
+
 const CASE_1_BODY_LINES = [
   '취소 시 입력하신 사유가 회원에게 반려 사유로 안내되며, 알림이 발송됩니다.',
   '발송 예정인 승인 알림이 있는 경우, 자동으로 취소되며 해당 건만 발송됩니다.',
