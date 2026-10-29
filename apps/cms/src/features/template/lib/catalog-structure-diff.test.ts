@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest'
+import { vi } from 'vitest'
 import {
   applyCatalogAllowedContent,
   applyUneditedCatalogContent,
+  applyUneditedCatalogContentWithReport,
+  catalogExtensionStructureChanged,
   catalogStructureChanged,
 } from '@/features/template/lib/catalog-structure-diff'
 import {
   isCatalogOriginalWritingTemplate,
   isProgramDedicatedWritingTemplate,
 } from '@/features/template/lib/catalog-original-identity'
-import { resolveWizardCatalogDraft } from '@/features/template/lib/published-catalog-defaults'
+import {
+  mergePublishedCatalogDefaults,
+  resolveWizardCatalogDraft,
+} from '@/features/template/lib/published-catalog-defaults'
 
 type Row = {
   id: string
@@ -200,5 +206,146 @@ describe('wizard published defaults', () => {
     const next = applyUneditedCatalogContent(current, published, seed)
     expect(next.paragraphs[0]?.paragraphDescription).toBe('사용자 입력')
     expect(next.paragraphs[0]?.placeholder).toBe('입력')
+  })
+})
+
+describe('C3 catalog original identity (BE 기준)', () => {
+  it('decides by templateScope/sourceTemplateId when known', () => {
+    expect(
+      isCatalogOriginalWritingTemplate({
+        templateCode: 'recruitment-participant-school-copy-1',
+        templateScope: 'CATALOG',
+        sourceTemplateId: null,
+      })
+    ).toBe(true)
+    expect(
+      isCatalogOriginalWritingTemplate({
+        templateCode: 'recruitment-participant-school',
+        templateScope: 'CATALOG',
+        sourceTemplateId: 12,
+      })
+    ).toBe(false)
+    expect(
+      isProgramDedicatedWritingTemplate({
+        templateCode: 'recruitment-participant-school',
+        templateScope: 'PROGRAM',
+        sourceTemplateId: 12,
+      })
+    ).toBe(true)
+  })
+
+  it('treats the four legacy trained-teacher seeds (use_yn=false) as originals', () => {
+    for (const code of [
+      'registration-trained-teacher',
+      'recruitment-trained-teacher-organization',
+      'application-trained-teacher-participant',
+      'application-trained-teacher-organization',
+    ]) {
+      expect(isCatalogOriginalWritingTemplate({ templateCode: code, systemTemplate: true })).toBe(true)
+    }
+  })
+})
+
+describe('C4 semantic equivalence and allowed content', () => {
+  const original = form([baseParagraph()])
+
+  it('treats null/undefined/[]/{} and numeric strings as the same serialization', () => {
+    const withNulls = {
+      schemaVersion: 1,
+      paragraphs: [{ ...baseParagraph(), helpText: null, extra: [], meta: {} }],
+    }
+    expect(catalogStructureChanged(original, withNulls)).toBe(false)
+    const numeric = { schemaVersion: '1', paragraphs: [baseParagraph()] }
+    expect(catalogStructureChanged(original, numeric)).toBe(false)
+  })
+
+  it('keeps allowed content keys that exist only in the editor', () => {
+    const edited = form([
+      { ...baseParagraph(), helpText: '도움말' } as Row & { helpText: string },
+    ])
+    expect(catalogStructureChanged(original, edited)).toBe(false)
+    const merged = applyCatalogAllowedContent(original, edited) as {
+      paragraphs: Array<Record<string, unknown>>
+    }
+    expect(merged.paragraphs[0]?.helpText).toBe('도움말')
+  })
+})
+
+describe('C5 extensionJson structure guard', () => {
+  const before = {
+    overlay: { 'detail.target': '중학생', items: [{ id: 'a', label: '가' }] },
+    editorState: { activeParagraphId: 'detail' },
+  }
+
+  it('allows content value changes inside overlay/editorState/uiState', () => {
+    expect(
+      catalogExtensionStructureChanged(before, {
+        ...before,
+        overlay: { ...before.overlay, 'detail.target': '고등학생' },
+        uiState: { note: '메모' },
+      })
+    ).toBe(false)
+  })
+
+  it('blocks id, reorder, required and options changes inside extension sections', () => {
+    expect(
+      catalogExtensionStructureChanged(before, {
+        ...before,
+        overlay: { ...before.overlay, items: [{ id: 'b', label: '가' }] },
+      })
+    ).toBe(true)
+    expect(
+      catalogExtensionStructureChanged(before, {
+        ...before,
+        overlay: { ...before.overlay, required: true },
+      })
+    ).toBe(true)
+    expect(
+      catalogExtensionStructureChanged(before, {
+        ...before,
+        overlay: { ...before.overlay, items: [{ id: 'a', label: '가', options: ['x'] }] },
+      })
+    ).toBe(true)
+  })
+
+  it('blocks keys outside the content sections from changing', () => {
+    expect(catalogExtensionStructureChanged(before, { ...before, bindings: { key: 'x' } })).toBe(true)
+  })
+})
+
+describe('C6/C8 published defaults merge', () => {
+  const seed = form([baseParagraph(), { ...baseParagraph(), id: 'target' }])
+
+  it('reports a structure mismatch and keeps seed order and ids', () => {
+    const published = form([
+      { ...baseParagraph(), id: 'target', paragraphDescription: '게시 대상' },
+      { ...baseParagraph(), paragraphDescription: '게시 상세' },
+      { ...baseParagraph(), id: 'extra' },
+    ])
+    const { value, mismatches } = applyUneditedCatalogContentWithReport(seed, published, seed)
+    expect(value.paragraphs.map(item => item.id)).toEqual(['detail', 'target'])
+    expect(mismatches.length).toBeGreaterThan(0)
+  })
+
+  it('merges a late published response onto current user edits (async hydrate)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const published = form([
+      { ...baseParagraph(), paragraphDescription: '게시 설명', placeholder: '게시 placeholder' },
+      { ...baseParagraph(), id: 'target' },
+    ])
+    const current = form([
+      { ...baseParagraph(), paragraphDescription: '사용자가 먼저 입력' },
+      { ...baseParagraph(), id: 'target' },
+    ])
+    const next = mergePublishedCatalogDefaults({ current, seed, published, templateCode: 'x' })
+    expect(next.paragraphs[0]?.paragraphDescription).toBe('사용자가 먼저 입력')
+    expect(next.paragraphs[0]?.placeholder).toBe('게시 placeholder')
+    const empty = mergePublishedCatalogDefaults({
+      current: { schemaVersion: 1, paragraphs: [] as Row[] },
+      seed,
+      published,
+    })
+    expect(empty.paragraphs[0]?.paragraphDescription).toBe('게시 설명')
+    warn.mockRestore()
   })
 })
