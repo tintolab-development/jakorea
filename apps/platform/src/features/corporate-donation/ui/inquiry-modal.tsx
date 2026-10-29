@@ -243,7 +243,7 @@ export function CorporateDonationInquiryModal({
         mobilePlacement="full"
         closeOnBackdropClick={!isBusy}
         closeOnEscape={!isBusy}
-        className={styles.modal}
+        className={styles.panel}
       >
           <form className={styles.form} onSubmit={handleFormSubmit(handleSubmit)} noValidate>
             <div className={styles.body}>
