@@ -48,7 +48,12 @@ import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
 import { useDashboardShortcutBadges } from '../hooks/use-dashboard-shortcut-badges'
 import { resolveDashboardShortcutItems } from '../lib/resolve-dashboard-shortcut-items'
-import { readCountMapValue } from '../api/adapters/dashboard-adapters'
+import {
+  countsAfterShortcutReadOptimistic,
+  readCountMapValue,
+  shouldPostDashboardShortcutRead,
+  shouldShowShortcutBadge,
+} from '../api/adapters/dashboard-adapters'
 import './menu-shortcut-widget.css'
 
 /** 배지 표시용: 99 초과 시 "99+" */
@@ -92,12 +97,29 @@ export function MenuShortcutWidget() {
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const useRemoteShortcuts = shouldUseDashboardRemoteApi()
   const { data: apiShortcuts } = useDashboardShortcuts(useRemoteShortcuts)
-  const { data: remoteBadgeCounts } = useDashboardShortcutBadges(useRemoteShortcuts)
+  const { data: remoteBadgeCounts, isFetched: remoteBadgesFetched } =
+    useDashboardShortcutBadges(useRemoteShortcuts)
 
+  const badgeQueryKey = dashboardQueryKeys.shortcutBadges('remote')
   const { mutate: markShortcutRead } = useMutation({
     mutationFn: (shortcutId: string) => readDashboardShortcutBadge(shortcutId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.shortcutBadges('remote') })
+    retry: false,
+    onMutate: async shortcutId => {
+      await queryClient.cancelQueries({ queryKey: badgeQueryKey })
+      const previous = queryClient.getQueryData<Record<string, number>>(badgeQueryKey)
+      queryClient.setQueryData(
+        badgeQueryKey,
+        countsAfterShortcutReadOptimistic(previous, shortcutId)
+      )
+      return { previous }
+    },
+    onError: (_error, _shortcutId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(badgeQueryKey, context.previous)
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: badgeQueryKey })
     },
   })
 
@@ -106,7 +128,11 @@ export function MenuShortcutWidget() {
     [apiShortcuts, shortcutEnabled]
   )
 
-  const liveBadgeCounts = useRemoteShortcuts ? (remoteBadgeCounts ?? {}) : {}
+  const liveBadgeCounts = useRemoteShortcuts
+    ? remoteBadgesFetched
+      ? (remoteBadgeCounts ?? {})
+      : undefined
+    : {}
 
   if (visibleItems.length === 0) return null
 
@@ -129,11 +155,16 @@ export function MenuShortcutWidget() {
                 type="button"
                 className="menu-shortcut-widget__item"
                 onClick={() => {
-                  if (useRemoteShortcuts) {
+                  if (
+                    useRemoteShortcuts &&
+                    shouldPostDashboardShortcutRead(item.id, liveBadgeCounts)
+                  ) {
                     markShortcutRead(item.id)
                   }
-                  invalidateQueriesForMemberManagementNavigation(queryClient, item.path)
                   navigate(item.path)
+                  queueMicrotask(() => {
+                    invalidateQueriesForMemberManagementNavigation(queryClient, item.path)
+                  })
                 }}
               >
                 <span className="menu-shortcut-widget__item-inner">
@@ -143,7 +174,7 @@ export function MenuShortcutWidget() {
                     </span>
                     <span className="menu-shortcut-widget__label">{item.label}</span>
                   </span>
-                  {typeof count === 'number' && count > 0 && (
+                  {shouldShowShortcutBadge(liveBadgeCounts, item.id) && count != null && (
                     <span className="menu-shortcut-widget__badge">{formatBadgeCount(count)}</span>
                   )}
                 </span>

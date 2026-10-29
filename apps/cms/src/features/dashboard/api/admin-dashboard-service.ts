@@ -467,7 +467,6 @@ export async function readDashboardShortcutBadge(shortcutId: string): Promise<vo
   if (!shouldUseDashboardRemoteApi()) return
   await readDashboardShortcutBadgeRemote(shortcutId, {
     shortcutId,
-    readAt: new Date().toISOString(),
   })
 }
 

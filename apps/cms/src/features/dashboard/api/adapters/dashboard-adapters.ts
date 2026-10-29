@@ -144,6 +144,46 @@ export function readCountMapValue(
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
+/** 바로가기 배지: 키 있고 양수일 때만 표시. 0·누락은 숨김. inquiries 대기도 GET 값 그대로. */
+export function shouldShowShortcutBadge(
+  counts: Record<string, number> | undefined,
+  key: string
+): boolean {
+  const value = readCountMapValue(counts, key)
+  return typeof value === 'number' && value > 0
+}
+
+/** GET이 PENDING 대기를 주는 키. 클릭해도 숫자를 지우지 않고 POST /read 도 보내지 않음. */
+export const DASHBOARD_PENDING_WAIT_SHORTCUT_IDS = [
+  'inquiries',
+  'permission-requests',
+] as const
+
+export function isDashboardPendingWaitShortcut(shortcutId: string): boolean {
+  return (DASHBOARD_PENDING_WAIT_SHORTCUT_IDS as readonly string[]).includes(shortcutId)
+}
+
+/** 신규 추적 키이고 배지가 있을 때만 lastReadAt POST. 대기 키·0·누락은 이동만. */
+export function shouldPostDashboardShortcutRead(
+  shortcutId: string,
+  counts: Record<string, number> | undefined
+): boolean {
+  if (isDashboardPendingWaitShortcut(shortcutId)) return false
+  return shouldShowShortcutBadge(counts, shortcutId)
+}
+
+/** 클릭 직후 캐시에서 해당 키만 제거. 0으로 채우지 않음. 대기 키는 그대로. */
+export function countsAfterShortcutReadOptimistic(
+  counts: Record<string, number> | undefined,
+  shortcutId: string
+): Record<string, number> | undefined {
+  if (!counts || isDashboardPendingWaitShortcut(shortcutId)) return counts
+  if (!Object.prototype.hasOwnProperty.call(counts, shortcutId)) return counts
+  const next = { ...counts }
+  delete next[shortcutId]
+  return next
+}
+
 type RecruitmentListTotalsDto = DashboardRecruitmentListResponse & {
   totalCount?: number
   totalElements?: number
