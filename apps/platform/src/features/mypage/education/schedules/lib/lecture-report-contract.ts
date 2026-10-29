@@ -1,7 +1,10 @@
 export type LectureReportContextType = 'INSTRUCTOR_APPLICATION' | 'INSTRUCTOR_ASSIGNMENT'
 
 export const INVALID_LECTURE_REPORT_BINDING_MESSAGE = '강의보고서 양식 정보가 올바르지 않습니다.'
-export const LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE = '현재 활성화된 강의보고서 양식을 사용할 수 없습니다.'
+/** LECTURE_REPORT_FORM_BINDING_NOT_FOUND — 활성 강의보고서 바인딩 없음 */
+export const LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE = '제출 가능한 강의보고서가 없습니다.'
+/** LECTURE_REPORT_CONTENT_NOT_FOUND — 제출본 없음(빈 본문으로 위장 금지) */
+export const LECTURE_REPORT_CONTENT_NOT_FOUND_MESSAGE = '아직 제출된 강의보고서가 없습니다.'
 export const LECTURE_REPORT_CANONICAL_TEMPLATE_UNAVAILABLE_MESSAGE =
   '강의보고서 양식을 준비 중입니다. 잠시 후 다시 시도해 주세요.'
 
@@ -15,15 +18,16 @@ export type LectureReportFormBinding = {
   contextId: number
 }
 
-export type LectureReportFormResponseInput = {
+/**
+ * POST /api/portal/me/instructor-assignments/{assignmentId}/lecture-report body.
+ * bindingId·contextType·contextId·programId는 body에 넣지 않는다 — 서버가 assignment로 결정한다.
+ */
+export type LectureReportSubmitInput = {
   templateVersionId: number
-  programId: number
-  programFormBindingId: number
-  programScheduleId: number
-  contextType: LectureReportContextType
-  contextId: number
-  answers: Record<string, unknown>
-  fileObjectIdsByQuestion: Record<string, number[]>
+  formResponseId?: number | null
+  attachmentGroupId?: number | null
+  answers?: Record<string, unknown>
+  fileObjectIdsByQuestion?: Record<string, number[]>
 }
 
 type LectureReportBindingContextValidationInput = {
@@ -52,17 +56,26 @@ export function isValidLectureReportBindingContext(
   return input.instructorApplicationId != null && input.contextId === input.instructorApplicationId
 }
 
-export function buildLectureReportFormResponseBody(input: LectureReportFormResponseInput) {
+/** 강의보고서 제출 body — templateVersionId는 form-binding 응답값만 사용 */
+export function buildLectureReportSubmitBody(input: LectureReportSubmitInput) {
   return {
     templateVersionId: input.templateVersionId,
-    programId: input.programId,
-    programFormBindingId: input.programFormBindingId,
-    programScheduleId: input.programScheduleId,
-    contextType: input.contextType,
-    contextId: input.contextId,
-    answers: input.answers,
-    fileObjectIdsByQuestion: input.fileObjectIdsByQuestion,
+    formResponseId: input.formResponseId ?? null,
+    attachmentGroupId: input.attachmentGroupId ?? null,
+    answers: input.answers ?? {},
+    fileObjectIdsByQuestion: input.fileObjectIdsByQuestion ?? {},
   }
+}
+
+/** @deprecated buildLectureReportSubmitBody 사용 */
+export function buildLectureReportFormResponseBody(input: LectureReportSubmitInput & {
+  programId?: number
+  programFormBindingId?: number
+  programScheduleId?: number
+  contextType?: LectureReportContextType
+  contextId?: number
+}) {
+  return buildLectureReportSubmitBody(input)
 }
 
 export function getLectureReportApiErrorMessage(
@@ -99,8 +112,9 @@ export function getLectureReportApiErrorMessage(
     case 'LECTURE_REPORT_CANONICAL_TEMPLATE_UNAVAILABLE':
       return LECTURE_REPORT_CANONICAL_TEMPLATE_UNAVAILABLE_MESSAGE
     case 'LECTURE_REPORT_FORM_BINDING_NOT_FOUND':
-    case 'LECTURE_REPORT_CONTENT_NOT_FOUND':
       return LECTURE_REPORT_BINDING_UNAVAILABLE_MESSAGE
+    case 'LECTURE_REPORT_CONTENT_NOT_FOUND':
+      return LECTURE_REPORT_CONTENT_NOT_FOUND_MESSAGE
     case 'LECTURE_REPORT_SCHEDULE_NOT_COMPLETED':
       return '강의 종료 후 강의보고서를 작성할 수 있습니다.'
     case 'LECTURE_REPORT_BUSINESS_PERIOD_CLOSED':
@@ -111,12 +125,17 @@ export function getLectureReportApiErrorMessage(
       return '아직 강의보고서 제출 기간이 시작되지 않았습니다.'
     case 'FORM_SUBMISSION_CLOSED':
       return '강의보고서 제출 기간이 종료되었습니다.'
+    case 'NOT_FOUND':
+      return serverMessage ?? '요청한 API를 찾을 수 없습니다.'
+    case 'PERMISSION_DENIED':
+      return serverMessage ?? '강의보고서에 접근하거나 제출할 권한이 없습니다.'
     default:
       break
   }
   if (data !== undefined && !serverCode) return fallback
   if (status === 400) return serverMessage ?? '양식 응답과 강사 배정 정보가 일치하지 않아 제출할 수 없습니다.'
   if (status === 403) return serverMessage ?? '강의보고서에 접근하거나 제출할 권한이 없습니다.'
+  if (status === 404) return serverMessage ?? '요청한 API를 찾을 수 없습니다.'
   if (serverMessage) return serverMessage
   if (typeof data === 'string' && data.trim()) return data.trim()
   return fallback

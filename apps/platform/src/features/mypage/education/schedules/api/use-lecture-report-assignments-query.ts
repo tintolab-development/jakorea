@@ -10,11 +10,11 @@ const STALE_MS = 30_000
 const GC_MS = 10 * 60_000
 
 /**
- * 강사 배정현황 탭의 현재 포탈 SSOT.
+ * 강의보고서·배정 현황 탭 SSOT.
+ * GET /api/portal/me/programs/{programId}/lecture-report-assignments
  *
- * 현재 포탈 계약은 본인에게 배정된 강의보고서 대상 일정만 반환하므로,
- * 이 조회 결과가 있을 때만 배정현황 탭을 노출한다. 대기 일정은 별도 계약이
- * 추가되기 전까지 이 조회 결과로 추정하지 않는다.
+ * items: [] 는 배정 없음(정상). API 오류는 isError로 구분하고 빈 목록으로 위장하지 않는다.
+ * 신청 대기 상태(결과 대기 등)는 program-applications.displayStatus를 쓴다.
  */
 export function useLectureReportAssignmentsQuery(
   programId: string | number | null | undefined,
@@ -46,7 +46,7 @@ export function useLectureReportAssignmentsQuery(
     isLoading: queryEnabled && query.isPending,
     isError: queryEnabled && query.isError,
     isSuccess: queryEnabled && query.isSuccess,
-    items: query.isError ? [] : (query.data ?? []),
+    items: query.isSuccess ? (query.data ?? []) : [],
     hasAssignment: query.isSuccess && (query.data?.length ?? 0) > 0,
     refetch: query.refetch,
   }

@@ -18,10 +18,13 @@ import { PFCategoryBadge, PFText } from '@/shared/ui'
 import styles from './instructor-assignment-panel.module.css'
 
 type InstructorAssignmentPanelProps = {
-  /** GET /api/portal/me/programs/{programId}/instructor-assignments `items` (서버 순서) */
+  /** GET /api/portal/me/programs/{programId}/lecture-report-assignments 매핑 행 (서버 순서) */
   assignedItems: readonly InstructorAssignmentItem[]
-  /** GET /api/portal/me/programs/{programId}/instructor-assignment-waitings `items` (서버 순서, FE 재필터링 없음) */
-  waitingItems: readonly InstructorAssignmentWaitingItem[]
+  /**
+   * 배정 대기 API는 없다. 항상 [] — assignment 부재로 대기를 추론하지 않는다.
+   * 신청 대기 상태(결과 대기 등)는 program-applications.displayStatus.
+   */
+  waitingItems?: readonly InstructorAssignmentWaitingItem[]
   /** 개인 프로그램 — 배정된 교육 일정 / 배정 대기 교육 일정 (기관명·학년 대신 출강지) */
   individual?: boolean
   /** 일정형 + 복수 회차 — 차시/회차 대신 일정명 표시 */
@@ -360,7 +363,7 @@ function WaitingScheduleTable({ rows }: { rows: readonly WaitingTableRow[] }) {
 
 export function InstructorAssignmentPanel({
   assignedItems,
-  waitingItems,
+  waitingItems = [],
   individual = false,
   useScheduleName = false,
 }: InstructorAssignmentPanelProps) {
@@ -388,16 +391,19 @@ export function InstructorAssignmentPanel({
           </PFText>
         )}
       </div>
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          {waitingTitle} <span>{waitingRows.length}건</span>
-        </h2>
-        {individual ? (
-          <WaitingScheduleTable rows={waitingRows} />
-        ) : (
-          <WaitingInstitutionTable rows={waitingRows} />
-        )}
-      </div>
+      {/* 배정 대기 API 없음 — 서버 waiting items가 있을 때만 노출. 빈 목록으로 대기를 추론하지 않는다. */}
+      {waitingRows.length > 0 ? (
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            {waitingTitle} <span>{waitingRows.length}건</span>
+          </h2>
+          {individual ? (
+            <WaitingScheduleTable rows={waitingRows} />
+          ) : (
+            <WaitingInstitutionTable rows={waitingRows} />
+          )}
+        </div>
+      ) : null}
     </section>
   )
 }

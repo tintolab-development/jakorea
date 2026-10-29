@@ -1,46 +1,52 @@
 import assert from 'node:assert/strict'
 import {
-  buildLectureReportFormResponseBody,
+  buildLectureReportSubmitBody,
   getLectureReportApiErrorMessage,
   isValidLectureReportBindingContext,
 } from './lecture-report-contract.ts'
 
-const common = {
+assert.deepEqual(
+  buildLectureReportSubmitBody({
+    templateVersionId: 606,
+    formResponseId: null,
+    attachmentGroupId: null,
+    answers: { 'question-42': '수업 답변' },
+    fileObjectIdsByQuestion: {},
+  }),
+  {
+    templateVersionId: 606,
+    formResponseId: null,
+    attachmentGroupId: null,
+    answers: { 'question-42': '수업 답변' },
+    fileObjectIdsByQuestion: {},
+  },
+)
+
+assert.deepEqual(
+  buildLectureReportSubmitBody({
+    templateVersionId: 606,
+    answers: {},
+    fileObjectIdsByQuestion: { 'question-file': [1002] },
+  }),
+  {
+    templateVersionId: 606,
+    formResponseId: null,
+    attachmentGroupId: null,
+    answers: {},
+    fileObjectIdsByQuestion: { 'question-file': [1002] },
+  },
+)
+
+const submitBody = buildLectureReportSubmitBody({
   templateVersionId: 606,
-  programId: 101,
-  programFormBindingId: 505,
-  programScheduleId: 707,
-  answers: { 'question-42': '수업 답변' },
+  answers: { a: 1 },
   fileObjectIdsByQuestion: {},
-}
-
-assert.deepEqual(
-  buildLectureReportFormResponseBody({
-    ...common,
-    contextType: 'INSTRUCTOR_APPLICATION',
-    contextId: 303,
-  }),
-  {
-    ...common,
-    contextType: 'INSTRUCTOR_APPLICATION',
-    contextId: 303,
-  },
-)
-
-assert.deepEqual(
-  buildLectureReportFormResponseBody({
-    ...common,
-    contextType: 'INSTRUCTOR_ASSIGNMENT',
-    contextId: 404,
-    fileObjectIdsByQuestion: { 'question-file': [1002] },
-  }),
-  {
-    ...common,
-    contextType: 'INSTRUCTOR_ASSIGNMENT',
-    contextId: 404,
-    fileObjectIdsByQuestion: { 'question-file': [1002] },
-  },
-)
+})
+assert.equal('bindingId' in submitBody, false)
+assert.equal('contextType' in submitBody, false)
+assert.equal('contextId' in submitBody, false)
+assert.equal('programId' in submitBody, false)
+assert.equal('programFormBindingId' in submitBody, false)
 
 assert.equal(
   isValidLectureReportBindingContext({
@@ -85,8 +91,39 @@ assert.equal(
 assert.match(getLectureReportApiErrorMessage({ response: { status: 400 } }), /응답과 강사 배정 정보가 일치하지 않아 제출할 수 없습니다/)
 assert.match(getLectureReportApiErrorMessage({ response: { status: 403 } }), /접근하거나 제출할 권한이 없습니다/)
 assert.match(
+  getLectureReportApiErrorMessage({
+    response: {
+      status: 403,
+      data: { success: false, data: null, error: { code: 'PERMISSION_DENIED', message: '권한 없음' } },
+    },
+  }),
+  /권한 없음/,
+)
+assert.match(
+  getLectureReportApiErrorMessage({
+    response: {
+      status: 404,
+      data: { success: false, data: null, error: { code: 'NOT_FOUND', message: '요청한 API를 찾을 수 없습니다.' } },
+    },
+  }),
+  /요청한 API를 찾을 수 없습니다/,
+)
+assert.match(
   getLectureReportApiErrorMessage({ response: { status: 404, data: { code: 'LECTURE_REPORT_FORM_BINDING_NOT_FOUND' } } }),
-  /현재 활성화된 강의보고서 양식을 사용할 수 없습니다/,
+  /제출 가능한 강의보고서가 없습니다/,
+)
+assert.match(
+  getLectureReportApiErrorMessage({
+    response: {
+      status: 404,
+      data: {
+        success: false,
+        data: null,
+        error: { code: 'LECTURE_REPORT_CONTENT_NOT_FOUND', message: 'content missing' },
+      },
+    },
+  }),
+  /아직 제출된 강의보고서가 없습니다/,
 )
 assert.match(
   getLectureReportApiErrorMessage({

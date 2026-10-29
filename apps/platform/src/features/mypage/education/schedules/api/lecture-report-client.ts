@@ -1,36 +1,99 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import {
-  buildLectureReportFormResponseBody,
+  buildLectureReportSubmitBody,
   getLectureReportApiErrorMessage,
   type LectureReportContextType,
   type LectureReportFormBinding,
-  type LectureReportFormResponseInput,
+  type LectureReportSubmitInput,
 } from '../lib/lecture-report-contract'
 
 export type LectureReportStatus = 'UPCOMING' | 'AVAILABLE' | 'OVERDUE' | 'BUSINESS_ENDED' | 'SUBMITTED'
+export type LectureReportLectureStatus = 'UPCOMING' | 'COMPLETED'
+export type LectureReportInstructorRole = 'LEAD' | 'ASSISTANT'
+
 export type LectureReportAssignment = {
-  assignmentId: number; instructorApplicationId: number | null; programId: number; scheduleId: number
-  startAt: string | null; endAt: string | null; scheduleName: string | null; sessionNo: number | null
-  institutionName: string | null; grade: string | number | null; lectureStatus: string; reportStatus: string | null
-  submitDueAt: string | null; canSubmit: boolean; reportId: number | null
-  instructorRole?: string | null
+  assignmentId: number
+  instructorApplicationId: number | null
+  programId: number
+  scheduleId: number
+  startAt: string | null
+  endAt: string | null
+  scheduleName: string | null
+  sessionNo: number | null
+  institutionName: string | null
+  grade: string | null
+  lectureStatus: LectureReportLectureStatus | string
+  reportStatus: LectureReportStatus | string | null
+  submitDueAt: string | null
+  canSubmit: boolean
+  reportId: number | null
+  instructorRole?: LectureReportInstructorRole | string | null
   institutionAddress?: string | null
-  distanceFromHome?: string | number | null
+  /** 서버 숫자 km. 문자열이 아니다. */
+  distanceFromHome?: number | null
 }
-export type LectureReportPage = { items: LectureReportAssignment[]; page: number; size: number; totalElements: number; totalPages: number }
+
+export type LectureReportPage = {
+  items: LectureReportAssignment[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
 export type LectureReportState = {
-  assignmentId: number; instructorApplicationId: number | null; programId: number; programScheduleId: number
-  reportId: number | null; submitted: boolean; submittedAt: string | null; formResponseId: number | null
-  templateVersionId: number | null; attachmentGroupId: number | null; reportStatus: LectureReportStatus
-  scheduleStatus: string; submitDueAt: string | null; canSubmit: boolean; bindingId: number | null
+  assignmentId: number
+  instructorApplicationId: number | null
+  programId: number
+  programScheduleId: number
+  reportId: number | null
+  submitted: boolean
+  submittedAt: string | null
+  formResponseId: number | null
+  templateVersionId: number | null
+  attachmentGroupId: number | null
+  reportStatus: LectureReportStatus
+  scheduleStatus: string
+  submitDueAt: string | null
+  canSubmit: boolean
+  bindingId: number | null
 }
+
 export type LectureReportContent = {
-  assignmentId: number; reportId: number; formResponseId: number; programId: number; scheduleId: number
-  bindingId: number; templateVersionId: number; formType: string; title: string | null
-  responseStatus: string; submittedAt: string | null; form: Record<string, unknown>
-  answers: Record<string, unknown>; files: Array<{ formSubmissionFileId: number; questionKey: string | null; fileObjectId: number; originalFileName: string | null; contentType: string | null; fileSize: number | null; downloadable: boolean }>
+  assignmentId: number
+  reportId: number
+  formResponseId: number
+  programId: number
+  scheduleId: number
+  bindingId: number
+  templateVersionId: number
+  formType: string
+  title: string | null
+  responseStatus: string
+  submittedAt: string | null
+  form: Record<string, unknown>
+  answers: Record<string, unknown>
+  files: Array<{
+    formSubmissionFileId: number
+    questionKey: string | null
+    fileObjectId: number
+    originalFileName: string | null
+    contentType: string | null
+    fileSize: number | null
+    downloadable: boolean
+  }>
 }
-export type { LectureReportContextType, LectureReportFormBinding, LectureReportFormResponseInput }
+
+export type { LectureReportContextType, LectureReportFormBinding, LectureReportSubmitInput }
+
+/** @deprecated LectureReportSubmitInput 사용 */
+export type LectureReportFormResponseInput = LectureReportSubmitInput & {
+  programId?: number
+  programFormBindingId?: number
+  programScheduleId?: number
+  contextType?: LectureReportContextType
+  contextId?: number
+}
 
 export class LectureReportApiError extends Error {
   readonly response: { status: number; data: unknown }
@@ -61,6 +124,8 @@ function unwrap<T>(value: unknown): T {
   return value as T
 }
 
+const LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX = 10
+
 function unwrapPage(value: unknown): LectureReportPage {
   if (
     !isRecord(value) ||
@@ -73,19 +138,36 @@ function unwrapPage(value: unknown): LectureReportPage {
   ) {
     throw new LectureReportApiError(value)
   }
-  return value as unknown as LectureReportPage
+  return {
+    items: value.items as LectureReportAssignment[],
+    page: value.page,
+    size: value.size,
+    totalElements: value.totalElements,
+    totalPages: value.totalPages,
+  }
 }
 
+/**
+ * GET /api/portal/me/programs/{programId}/lecture-report-assignments
+ * page는 0부터, size 최대 10. items 없으면 [].
+ */
 export async function getLectureReportAssignments(
   programId: number,
   page = 0,
   signal?: AbortSignal,
-  size = 10,
+  size = LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX,
 ): Promise<LectureReportPage> {
-  const { data } = await axiosClient.get(`/api/portal/me/programs/${programId}/lecture-report-assignments`, {
-    params: { page, size },
-    signal,
-  })
+  const safeSize = Math.min(
+    Math.max(1, Math.trunc(size)),
+    LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX,
+  )
+  const { data } = await axiosClient.get(
+    `/api/portal/me/programs/${programId}/lecture-report-assignments`,
+    {
+      params: { page, size: safeSize },
+      signal,
+    },
+  )
   return unwrapPage(unwrap(data))
 }
 
@@ -93,44 +175,80 @@ export async function getAllLectureReportAssignments(
   programId: number,
   signal?: AbortSignal,
 ): Promise<LectureReportAssignment[]> {
-  const first = await getLectureReportAssignments(programId, 0, signal, 50)
+  const first = await getLectureReportAssignments(
+    programId,
+    0,
+    signal,
+    LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX,
+  )
   const items = [...(first.items ?? [])]
   const totalPages = Math.max(1, first.totalPages ?? 1)
-  for (let page = 1; page < totalPages && page < 20; page += 1) {
-    const next = await getLectureReportAssignments(programId, page, signal, 50)
+  for (let page = 1; page < totalPages && page < 100; page += 1) {
+    const next = await getLectureReportAssignments(
+      programId,
+      page,
+      signal,
+      LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX,
+    )
     items.push(...(next.items ?? []))
   }
   return items
 }
+
 export async function getLectureReportState(assignmentId: number): Promise<LectureReportState> {
-  const { data } = await axiosClient.get(`/api/portal/me/instructor-assignments/${assignmentId}/lecture-report`)
-  return unwrap(data)
-}
-export async function getLectureReportBinding(assignmentId: number): Promise<LectureReportFormBinding> {
-  const { data } = await axiosClient.get(`/api/portal/me/instructor-assignments/${assignmentId}/lecture-report/form-binding`)
-  return unwrap(data)
-}
-export async function renderLectureReport(programId: number, bindingId: number): Promise<Record<string, unknown>> {
-  const { data } = await axiosClient.get(`/api/portal/me/programs/${programId}/form-bindings/${bindingId}/render`)
-  return unwrap(data)
-}
-export async function submitLectureReportResponse(input: LectureReportFormResponseInput): Promise<{ formResponseId: number }> {
-  const { data } = await axiosClient.post(
-    `/api/portal/me/programs/${input.programId}/form-bindings/${input.programFormBindingId}/responses`,
-    buildLectureReportFormResponseBody(input),
+  const { data } = await axiosClient.get(
+    `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report`,
   )
   return unwrap(data)
 }
-export async function submitLectureReport(
+
+export async function getLectureReportBinding(
   assignmentId: number,
-  input: { templateVersionId: number; formResponseId: number },
-): Promise<{ reportId: number }> {
-  const { data } = await axiosClient.post(`/api/portal/me/instructor-assignments/${assignmentId}/lecture-report`, input)
-  return unwrap(data)
-}
-export async function getLectureReportContent(assignmentId: number): Promise<LectureReportContent> {
-  const { data } = await axiosClient.get(`/api/portal/me/instructor-assignments/${assignmentId}/lecture-report/content`, { headers: { 'Cache-Control': 'no-store' } })
+): Promise<LectureReportFormBinding> {
+  const { data } = await axiosClient.get(
+    `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report/form-binding`,
+  )
   return unwrap(data)
 }
 
-export { getLectureReportApiErrorMessage }
+/**
+ * 강의보고서 바인딩 전용 공통 렌더.
+ * APPLICATION 바인딩(신청서)에는 사용하지 않는다 — 403 PERMISSION_DENIED가 정상.
+ */
+export async function renderLectureReport(
+  programId: number,
+  bindingId: number,
+): Promise<Record<string, unknown>> {
+  const { data } = await axiosClient.get(
+    `/api/portal/me/programs/${programId}/form-bindings/${bindingId}/render`,
+  )
+  return unwrap(data)
+}
+
+/**
+ * POST /api/portal/me/instructor-assignments/{assignmentId}/lecture-report
+ * 신규 inline 제출은 answers·fileObjectIdsByQuestion을 이 body로 전달한다.
+ * form-bindings/.../responses 를 거치지 않는다.
+ */
+export async function submitLectureReport(
+  assignmentId: number,
+  input: LectureReportSubmitInput,
+): Promise<{ reportId: number; formResponseId?: number }> {
+  const { data } = await axiosClient.post(
+    `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report`,
+    buildLectureReportSubmitBody(input),
+  )
+  return unwrap(data)
+}
+
+export async function getLectureReportContent(
+  assignmentId: number,
+): Promise<LectureReportContent> {
+  const { data } = await axiosClient.get(
+    `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report/content`,
+    { headers: { 'Cache-Control': 'no-store' } },
+  )
+  return unwrap(data)
+}
+
+export { getLectureReportApiErrorMessage, buildLectureReportSubmitBody }

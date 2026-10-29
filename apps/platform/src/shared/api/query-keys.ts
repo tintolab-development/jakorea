@@ -416,8 +416,10 @@ export const platformQueryKeys = {
           applicationId,
         ] as const,
       /**
-       * 제출된 신청 양식 런타임 — GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render
-       * 신청용 GET /api/portal/programs/.../form-bindings 는 제출 후 APPLICATION_ALREADY_SUBMITTED.
+       * 설문·만족도·강의보고서 등 non-APPLICATION 바인딩 렌더 —
+       * GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render
+       * APPLICATION(신청서) 바인딩에는 사용하지 않는다(403 PERMISSION_DENIED).
+       * 신청서는 GET /api/portal/programs/.../form-bindings/{bindingId}?recruitmentId&applicationType.
        */
       formBindingRender: (
         programId: string,
@@ -613,16 +615,6 @@ export const platformQueryKeys = {
         applicationType,
         applicationId,
       ] as const,
-    /**
-     * 강사 배정 현황(배정된 목록) — GET /api/portal/me/programs/{programId}/instructor-assignments (Class C)
-     */
-    instructorAssignments: (programId: string) =>
-      [...platformQueryKeys.mypage.all(), 'instructor-assignments', programId] as const,
-    /**
-     * 강사 배정 현황(배정 대기 목록) — GET /api/portal/me/programs/{programId}/instructor-assignment-waitings (Class C)
-     */
-    instructorAssignmentWaitings: (programId: string) =>
-      [...platformQueryKeys.mypage.all(), 'instructor-assignment-waitings', programId] as const,
     /**
      * 일반회원 일정 정산 — GET /api/portal/me/individual-settlements/applications/{id}/schedules (Class C)
      */

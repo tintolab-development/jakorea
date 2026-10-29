@@ -25,7 +25,6 @@ import {
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
-  usePortalMeFormBindingRender,
   useMypageMember,
   EducationApplicationDetailLoading,
   type EducationActivitySection,
@@ -34,7 +33,6 @@ import {
 } from '@/features/mypage'
 import {
   instructorAvailableScheduleHasSubmittedSelection,
-  readInstructorScheduleBindingSlotsFromFormDocument,
   resolveInstructorAvailableScheduleLines,
 } from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
 import { resolveGeminiOfficialDocumentFromAnswers } from '@/features/mypage/education/applications/lib/official-document-from-answers'
@@ -151,10 +149,6 @@ export function MypageLectureDetailPage() {
 
   const remoteApplicationQuery = useMyProgramApplicationDetail(routeApplicationType, applicationId)
   const application = remoteDetailEnabled ? remoteApplicationQuery.application : undefined
-  const formBindingRenderQuery = usePortalMeFormBindingRender(
-    application?.programId,
-    application?.formBindingId,
-  )
   const remoteProgramQuery = useProgramDetail(
     application?.programId ?? null,
     { fresh: true },
@@ -175,14 +169,11 @@ export function MypageLectureDetailPage() {
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading
     : false
-  const isFormBindingLoading =
-    Boolean(application?.formBindingId) && formBindingRenderQuery.isLoading
   const isDetailLoading =
     !isAuthReady ||
     isChecking ||
     isRedirecting ||
     isApplicationLoading ||
-    isFormBindingLoading ||
     (Boolean(application) && isProgramLoading && !program)
 
   const isWithdrawnBefore = application ? isWithdrawnBeforeEducation(application) : false
@@ -197,7 +188,7 @@ export function MypageLectureDetailPage() {
   const institutionAssignmentProgram = supportsInstructorInstitutionAssignment(program?.programType)
   const individualAssignmentProgram = supportsInstructorIndividualAssignment(program?.programType)
 
-  /** 배정 현황 탭 — instructor-assignments + instructor-assignment-waitings (강의보고서 배정 API는 쓰지 않는다) */
+  /** 배정 현황 탭 — lecture-report-assignments (존재하지 않는 instructor-assignments/waitings 호출 금지) */
   const instructorAssignmentQuery = useInstructorAssignmentStatusQuery(
     program?.id,
     routeApplicationType === 'INSTRUCTOR' && (isActivityStatus || isWithdrawnDuring),
@@ -330,10 +321,10 @@ export function MypageLectureDetailPage() {
     navigate(MYPAGE_LECTURE_PATH, { replace: true })
   }
 
-  const instructorScheduleBindingSlots = useMemo(
-    () => readInstructorScheduleBindingSlotsFromFormDocument(formBindingRenderQuery.document),
-    [formBindingRenderQuery.document],
-  )
+  /**
+   * APPLICATION 바인딩은 /me/.../form-bindings/.../render 로 조회하지 않는다(403 정상).
+   * 일정 표시는 신청 상세 answers·preferredSchedule 서버 값만 사용한다.
+   */
   const instructorAvailableScheduleLines = useMemo(
     () =>
       resolveInstructorAvailableScheduleLines({
@@ -341,13 +332,12 @@ export function MypageLectureDetailPage() {
         preferredEducationScheduleLabel: application?.preferredEducationScheduleLabel,
         preferredScheduleOptionValues: application?.preferredScheduleOptionValues,
         program: programDetailToPreferredScheduleLookup(program),
-        bindingSlots: instructorScheduleBindingSlots,
+        bindingSlots: [],
       }),
     [
       application?.applicationAnswers,
       application?.preferredEducationScheduleLabel,
       application?.preferredScheduleOptionValues,
-      instructorScheduleBindingSlots,
       program,
     ],
   )

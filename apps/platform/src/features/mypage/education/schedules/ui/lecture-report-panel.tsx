@@ -31,7 +31,8 @@ function resolveReportStatus(state: LectureReportState | undefined, row: Lecture
   const rowValue = normalizeStatus(row.reportStatus)
   if (validStatuses.has(rowValue as LectureReportStatus)) return rowValue as LectureReportStatus
 
-  return ['UPCOMING', 'SCHEDULED', 'PLANNED'].includes(normalizeStatus(row.lectureStatus)) ? 'UPCOMING' : undefined
+  // reportStatus는 서버 값만 사용 — lectureStatus로 추정하지 않는다.
+  return undefined
 }
 function formatDateOnly(value: string | null): string {
   if (!value) return ''

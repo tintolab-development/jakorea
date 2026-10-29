@@ -104,6 +104,38 @@ assert.deepEqual(
   ),
   [[30, 20], [10], [40], [50], [60]],
 )
+// lecture-report-assignments: orgAppId 없이 institutionName만 있으면 기관·역할·학년으로 묶음
+assert.deepEqual(
+  ids(
+    groupAssignmentsByInstitution([
+      {
+        assignmentId: 1694870,
+        organizationApplicationId: null,
+        scheduleId: 187447,
+        instructorRole: 'LEAD',
+        grade: '3',
+        institutionName: '서울초',
+      },
+      {
+        assignmentId: 1694871,
+        organizationApplicationId: null,
+        scheduleId: 187429,
+        instructorRole: 'LEAD',
+        grade: '3',
+        institutionName: '서울초',
+      },
+      {
+        assignmentId: 1694872,
+        organizationApplicationId: null,
+        scheduleId: 187446,
+        instructorRole: 'ASSISTANT',
+        grade: '3',
+        institutionName: '서울초',
+      },
+    ]),
+  ),
+  [[1694870, 1694871], [1694872]],
+)
 assert.deepEqual(groupAssignmentsByInstitution([]), [])
 
 // 배정 대기 상태: 서버 status를 라벨로만 바꾼다(배정 불가 사유는 표시하지 않음)

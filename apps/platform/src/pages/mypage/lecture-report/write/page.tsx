@@ -24,7 +24,6 @@ import {
   getLectureReportState,
   renderLectureReport,
   submitLectureReport,
-  submitLectureReportResponse,
   type LectureReportAssignment,
   type LectureReportContent,
   type LectureReportFormBinding,
@@ -325,7 +324,7 @@ export function MypageLectureReportWritePage() {
     setFileUploadError('')
   }
 
-  function buildResponseInput() {
+  function buildSubmitInput() {
     if (!loaded?.binding || !draft) throw new Error(INVALID_LECTURE_REPORT_BINDING_MESSAGE)
     if (
       loaded.binding.assignmentId !== loaded.assignment.assignmentId ||
@@ -343,11 +342,8 @@ export function MypageLectureReportWritePage() {
     }
     return {
       templateVersionId: loaded.binding.templateVersionId,
-      programId: loaded.binding.programId,
-      programFormBindingId: loaded.binding.bindingId,
-      programScheduleId: loaded.binding.programScheduleId,
-      contextType: loaded.binding.contextType,
-      contextId: loaded.binding.contextId,
+      formResponseId: loaded.state.formResponseId,
+      attachmentGroupId: loaded.state.attachmentGroupId,
       answers: buildEducationSurveyAnswers(draft, sidecar),
       fileObjectIdsByQuestion,
     }
@@ -367,45 +363,7 @@ export function MypageLectureReportWritePage() {
     setBusy(true)
     setError('')
     try {
-      const created = await submitLectureReportResponse(buildResponseInput())
-      if (created.formResponseId == null) {
-        throw new Error('양식 응답 ID를 받지 못했습니다. 최종 제출을 진행하지 않았습니다.')
-      }
-      const linkInput = {
-        templateVersionId: loaded.binding.templateVersionId,
-        formResponseId: created.formResponseId,
-      }
-      try {
-        await submitLectureReport(loaded.assignment.assignmentId, linkInput)
-      } catch {
-        let alreadyLinked = false
-        try {
-          const afterFirstLinkFailure = await getLectureReportState(loaded.assignment.assignmentId)
-          alreadyLinked =
-            afterFirstLinkFailure.reportStatus === 'SUBMITTED' &&
-            afterFirstLinkFailure.formResponseId === created.formResponseId
-        } catch {
-          // 상태 조회 실패 시에도 동일 formResponseId로 한 번만 재연결한다.
-        }
-        if (!alreadyLinked) {
-          try {
-            await submitLectureReport(loaded.assignment.assignmentId, linkInput)
-          } catch (retryLinkError) {
-            let retryWasAlreadyApplied = false
-            try {
-              const afterRetryLinkFailure = await getLectureReportState(
-                loaded.assignment.assignmentId
-              )
-              retryWasAlreadyApplied =
-                afterRetryLinkFailure.reportStatus === 'SUBMITTED' &&
-                afterRetryLinkFailure.formResponseId === created.formResponseId
-            } catch {
-              // 재시도 결과를 확인할 수 없으면 원래 연결 오류를 유지한다.
-            }
-            if (!retryWasAlreadyApplied) throw retryLinkError
-          }
-        }
-      }
+      await submitLectureReport(loaded.assignment.assignmentId, buildSubmitInput())
       const latest = await getLectureReportState(loaded.assignment.assignmentId)
       if (
         latest.reportStatus !== 'SUBMITTED' ||

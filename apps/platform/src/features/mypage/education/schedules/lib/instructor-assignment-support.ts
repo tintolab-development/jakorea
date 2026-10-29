@@ -68,11 +68,12 @@ export function formatAssignmentDistanceKm(value: unknown): string {
 }
 
 /**
- * 배정된 목록 행 묶음 (BE 계약: GET /api/portal/me/programs/{programId}/instructor-assignments).
- * - 기관형·제미나이: (organizationApplicationId + 역할 + 실제 배정 학년 grade)로 묶는다.
- *   같은 기관 신청이어도 역할·학년이 다르면 다른 행. requestedGrade는 그룹 키로 쓰지 않는다.
- * - 개인형(organizationApplicationId null): 일정(scheduleId)마다 한 행.
- * 서버 정렬 순서를 그대로 유지한다(행 순서는 묶음이 처음 나온 순서, 행 안의 줄은 응답 순서).
+ * 배정된 목록 행 묶음
+ * (SSOT: GET /api/portal/me/programs/{programId}/lecture-report-assignments).
+ * - 기관형·제미나이: (organizationApplicationId 또는 institutionName + 역할 + grade)로 묶는다.
+ *   같은 기관이어도 역할·학년이 다르면 다른 행. requestedGrade는 그룹 키로 쓰지 않는다.
+ * - 개인형(기관명·orgAppId 없음): 일정(scheduleId)마다 한 행.
+ * 서버 정렬 순서를 그대로 유지한다.
  */
 export function groupAssignmentsByInstitution<
   T extends {
@@ -81,10 +82,12 @@ export function groupAssignmentsByInstitution<
     scheduleId?: number | null
     instructorRole?: unknown
     grade?: unknown
+    institutionName?: unknown
   },
 >(items: readonly T[]): Array<{ key: string; items: T[] }> {
   const groups = new Map<string, T[]>()
   items.forEach(item => {
+    const institutionName = asAssignmentDisplayText(item.institutionName)
     const key =
       item.organizationApplicationId != null
         ? `organization:${JSON.stringify([
@@ -92,9 +95,15 @@ export function groupAssignmentsByInstitution<
             asAssignmentDisplayText(item.instructorRole).toUpperCase(),
             asAssignmentDisplayText(item.grade),
           ])}`
-        : item.scheduleId != null
-          ? `schedule:${item.scheduleId}`
-          : `assignment:${item.assignmentId}`
+        : institutionName
+          ? `institution:${JSON.stringify([
+              institutionName,
+              asAssignmentDisplayText(item.instructorRole).toUpperCase(),
+              asAssignmentDisplayText(item.grade),
+            ])}`
+          : item.scheduleId != null
+            ? `schedule:${item.scheduleId}`
+            : `assignment:${item.assignmentId}`
     const current = groups.get(key)
     if (current) current.push(item)
     else groups.set(key, [item])
@@ -103,8 +112,9 @@ export function groupAssignmentsByInstitution<
 }
 
 /**
- * 배정 대기 목록 상태 표시 (BE 계약: instructor-assignment-waitings `status`).
- * 서버 값을 그대로 라벨로만 바꾸고 FE에서 재판정하지 않는다. 배정 불가 사유는 표시하지 않는다.
+ * 배정 대기 목록 상태 표시.
+ * instructor-assignment-waitings API는 존재하지 않으므로 신규 호출/목 생성 금지.
+ * 신청 대기(결과 대기 등)는 program-applications.displayStatus를 쓴다.
  */
 export type AssignmentWaitingStatusView = {
   tone: 'waiting' | 'unavailable' | 'cancelled'
