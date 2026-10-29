@@ -39,7 +39,7 @@ export const EDUCATION_LEVEL_CSS_VARS: Record<EducationLevelKey, string> = {
   adult: '--color-education-level-adult',
 }
 
-/** Hex values mirrored from color.css for design-system catalog / non-CSS contexts */
+/** Hex values mirrored from color.css for non-CSS contexts */
 export const EDUCATION_LEVEL_HEX: Record<EducationLevelKey, string> = {
   notice: '#9E9E9E',
   preschool: '#D3BA00',
