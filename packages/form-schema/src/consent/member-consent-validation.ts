@@ -216,24 +216,85 @@ export function collectMemberConsentDisagreedRequiredLabels(
     .map(resolveParagraphConsentLabel)
 }
 
+export type MemberConsentIncompleteRequiredField = {
+  paragraphId: string
+  fieldId: string
+  label: string
+}
+
+function describeIncompleteRequiredParagraph(
+  paragraph: WritingFormParagraph
+): MemberConsentIncompleteRequiredField[] {
+  if (isRequiredParagraphResponseComplete(paragraph)) return []
+
+  const paragraphLabel = resolveParagraphConsentLabel(paragraph)
+
+  if (!isRequiredBottomConsentComplete(paragraph)) {
+    return [{ paragraphId: paragraph.id, fieldId: paragraph.id, label: paragraphLabel }]
+  }
+
+  if (paragraph.kind !== 'single_item') {
+    return [{ paragraphId: paragraph.id, fieldId: paragraph.id, label: paragraphLabel }]
+  }
+
+  if (paragraph.variant === 'short_essay' || paragraph.variant === 'session_plan_short_essay') {
+    const items = paragraph.items ?? []
+    if (items.length === 0) {
+      return [{ paragraphId: paragraph.id, fieldId: paragraph.id, label: paragraphLabel }]
+    }
+    return items
+      .filter(item => (item.bodyText ?? '').trim() === '')
+      .map(item => ({
+        paragraphId: paragraph.id,
+        fieldId: item.id,
+        label: item.label?.trim() || paragraphLabel,
+      }))
+  }
+
+  return [{ paragraphId: paragraph.id, fieldId: paragraph.id, label: paragraphLabel }]
+}
+
+export function listMemberConsentIncompleteRequiredFields(
+  draft: WritingFormDraft,
+  options?: MemberConsentDraftValidationOptions
+): MemberConsentIncompleteRequiredField[] {
+  const fields = draft.paragraphs.flatMap(describeIncompleteRequiredParagraph)
+
+  const templateId = options?.templateId
+  if (templateId === 'agreement-portrait' && !isPortraitPersonalConsentResponseComplete(draft)) {
+    fields.push({
+      paragraphId: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable,
+      fieldId: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable,
+      label: '성명·소속',
+    })
+  }
+
+  if (templateId != null && PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) {
+    if (isPaymentStatementBasicInfoIncomplete(options?.paymentStatementBasicInfo)) {
+      fields.push({
+        paragraphId: 'paymentRecord',
+        fieldId: 'paymentRecord',
+        label: '지급조서 기본 정보',
+      })
+    }
+  }
+
+  return fields
+}
+
 export function hasMemberConsentIncompleteRequiredFields(
   draft: WritingFormDraft,
   options?: MemberConsentDraftValidationOptions
 ): boolean {
-  if (draft.paragraphs.some(paragraph => !isRequiredParagraphResponseComplete(paragraph))) {
-    return true
-  }
+  return listMemberConsentIncompleteRequiredFields(draft, options).length > 0
+}
 
-  const templateId = options?.templateId
-  if (templateId === 'agreement-portrait') {
-    return !isPortraitPersonalConsentResponseComplete(draft)
-  }
-
-  if (templateId != null && PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) {
-    return isPaymentStatementBasicInfoIncomplete(options?.paymentStatementBasicInfo)
-  }
-
-  return false
+export function formatMemberConsentIncompleteRequiredAlertMessage(
+  fields: MemberConsentIncompleteRequiredField[]
+): string {
+  if (fields.length === 0) return '필수 항목을 모두 작성해주세요'
+  if (fields.length === 1) return `${fields[0].label} 항목을 작성해 주세요.`
+  return `${fields.map(field => field.label).join(', ')} 항목을 작성해 주세요.`
 }
 
 /** 지급조서 작성완료 — 필수 값은 채워졌으나 주민등록번호 형식이 잘못된 경우 */
