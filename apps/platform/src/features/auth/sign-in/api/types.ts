@@ -3,6 +3,9 @@ import type {
   InstructorRoleRequestProfile,
   InstructorRoleRequestSettlement,
 } from '@/features/mypage/instructor-apply/api/types'
+import type { PortalAgeGroup } from '../lib/portal-age-group'
+
+export type { PortalAgeGroup }
 
 /** 포털 회원 로그인 OpenAPI 최소 타입 (앱 경계 — CMS generated import 금지) */
 
@@ -26,6 +29,12 @@ export type AuthTokenResponse = {
   registeredByAdmin?: boolean
   /** 관리자 등록 후 본인 프로필·본인인증·비밀번호 변경까지 완료했는지 */
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
+  /**
+   * 회원 포털 토큰: 항상 `UNDER_14` | `OVER_14`.
+   * 관리자 토큰이 같은 DTO를 쓰면 `null` — 포털은 무시하고 GET /me 로 보완.
+   * 로그인 응답에 `under14`는 두지 않는다. `isUnder14 = ageGroup === "UNDER_14"`
+   */
+  ageGroup?: PortalAgeGroup | null
 }
 
 export type PasswordChangeRequest = {
@@ -42,7 +51,7 @@ export type HomepageMeResponse = {
   status?: string
   memberType?: string
   /** `UNDER_14` | `OVER_14` */
-  ageGroup?: string
+  ageGroup?: PortalAgeGroup
   teacher?: boolean
   instructor?: boolean
   identityVerified?: boolean
@@ -134,8 +143,8 @@ export type PortalProfileResponse = {
   teacher?: boolean
   instructor?: boolean
   under14?: boolean
-  /** `UNDER_14` | `OVER_14` */
-  ageGroup?: string
+  /** `UNDER_14` | `OVER_14` — `under14 === (ageGroup === "UNDER_14")` */
+  ageGroup?: PortalAgeGroup
   postalCode?: string
   address?: string
   addressDetail?: string

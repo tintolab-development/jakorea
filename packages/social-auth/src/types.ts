@@ -52,6 +52,8 @@ export interface AuthTokenResult {
   refreshToken: string
   tokenType?: string
   expiresInSeconds?: number
+  /** 회원 포털 토큰만. `UNDER_14` | `OVER_14`. 관리자 SSO는 없음. */
+  ageGroup?: 'UNDER_14' | 'OVER_14'
 }
 
 export interface SocialLinkConsent {

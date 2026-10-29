@@ -1,5 +1,6 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type { InstructorPortalProfileResponse } from '@/features/auth/sign-in/api/types'
+import type { PortalAgeGroup } from '@/features/auth/sign-in/lib/portal-age-group'
 import { isMinorSettingsMember } from './consent-visibility.ts'
 import { EMPTY_SETTINGS_VALUE } from './constants.ts'
 
@@ -9,7 +10,7 @@ export type SettingsProfileInput = {
   phone?: string
   birthDate?: string
   under14?: boolean
-  ageGroup?: string
+  ageGroup?: PortalAgeGroup
   gender?: string
   schoolEnrollmentStatus?: string
   schoolName?: string

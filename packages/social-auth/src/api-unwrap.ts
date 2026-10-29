@@ -50,12 +50,16 @@ export function unwrapAuthTokenResult(payload: unknown): AuthTokenResult {
     const accessToken = o.accessToken
     const refreshToken = o.refreshToken
     if (typeof accessToken === 'string' && typeof refreshToken === 'string') {
+      const ageGroupRaw = typeof o.ageGroup === 'string' ? o.ageGroup.trim().toUpperCase() : ''
+      const ageGroup =
+        ageGroupRaw === 'UNDER_14' || ageGroupRaw === 'OVER_14' ? ageGroupRaw : undefined
       return {
         accessToken,
         refreshToken,
         tokenType: typeof o.tokenType === 'string' ? o.tokenType : undefined,
         expiresInSeconds:
           typeof o.expiresInSeconds === 'number' ? o.expiresInSeconds : undefined,
+        ageGroup,
       }
     }
   }

@@ -6,6 +6,7 @@ import type {
   PortalTeacherOrganizationResponse,
 } from './types'
 import type { InstructorRoleRequestProfile } from '@/features/mypage/instructor-apply/api/types'
+import { parsePortalAgeGroup } from '../lib/portal-age-group'
 
 function unwrapData(payload: unknown): Record<string, unknown> | null {
   if (!payload || typeof payload !== 'object') return null
@@ -122,7 +123,7 @@ export function parseHomepageMeResponse(payload: unknown): HomepageMeResponse {
     name: optionalString(root.name),
     status: optionalString(root.status),
     memberType: optionalString(root.memberType),
-    ageGroup: optionalString(root.ageGroup),
+    ageGroup: parsePortalAgeGroup(root.ageGroup),
     teacher: optionalBoolean(root.teacher),
     identityVerified: optionalBoolean(root.identityVerified),
     lastLoginAt: optionalString(root.lastLoginAt),
@@ -153,7 +154,7 @@ export function parsePortalProfileResponse(payload: unknown): PortalProfileRespo
     teacher: optionalBoolean(root.teacher),
     instructor: optionalBoolean(root.instructor),
     under14: optionalBoolean(root.under14),
-    ageGroup: optionalString(root.ageGroup),
+    ageGroup: parsePortalAgeGroup(root.ageGroup),
     postalCode: optionalString(root.postalCode),
     address: optionalString(root.address),
     addressDetail: optionalString(root.addressDetail),
