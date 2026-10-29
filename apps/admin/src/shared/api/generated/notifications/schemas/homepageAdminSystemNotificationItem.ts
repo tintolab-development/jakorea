@@ -7,6 +7,9 @@
  */
 import type { HomepageAdminSystemNotificationItemNotificationType } from './homepageAdminSystemNotificationItemNotificationType';
 
+/**
+ * Homepage-admin in-app inbox item. Distinct from public-application outbox history.
+ */
 export interface HomepageAdminSystemNotificationItem {
   id?: number;
   eventKey?: string;
@@ -17,6 +20,7 @@ export interface HomepageAdminSystemNotificationItem {
   actionLabel?: string;
   actionPath?: string;
   read?: boolean;
+  /** Set when the caller marks this row read. Distinct from outbox SENT. */
   readAt?: string | null;
   createdAt?: string;
 }

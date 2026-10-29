@@ -18,6 +18,23 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   export const getJAKoreaHomepageAdminAPISystemInboxSubset = () => {
+/**
+ * Requires HOMEPAGE_VIEW plus CMS MASTER role. Other administrators' ids return 404. Excel [닫기] is UI dismiss only and must not call this endpoint.
+ * @summary Mark one homepage-admin system inbox row as read
+ */
+const readHomepageAdminSystemNotification = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<HomepageAdminSystemNotificationItem>>,) => {
+      return customInstance<HomepageAdminSystemNotificationItem>(
+      {url: `/api/admin/notifications/inbox/${id}/read`, method: 'POST'
+    },
+      options);
+    }
+
+/**
+ * Requires HOMEPAGE_VIEW plus CMS MASTER role. Returns only the caller's rows. This is in-app inbox state, not EMAIL/ALIMTALK outbox SENT/HELD/FAILED. Closing a UI panel must not call this read API.
+ * @summary List homepage-admin system inbox rows for the current MASTER administrator
+ */
 const listHomepageAdminSystemNotifications = (
     params?: ListHomepageAdminSystemNotificationsParams,
  options?: SecondParameter<typeof customInstance<HomepageAdminSystemNotificationItem[]>>,) => {
@@ -28,6 +45,10 @@ const listHomepageAdminSystemNotifications = (
       options);
     }
 
+/**
+ * Requires HOMEPAGE_VIEW plus CMS MASTER role. Counts only the caller's unread rows.
+ * @summary Count unread homepage-admin system inbox rows
+ */
 const countHomepageAdminSystemNotifications = (
 
  options?: SecondParameter<typeof customInstance<HomepageAdminSystemNotificationUnreadCount>>,) => {
@@ -37,16 +58,7 @@ const countHomepageAdminSystemNotifications = (
       options);
     }
 
-const readHomepageAdminSystemNotification = (
-    id: number,
- options?: SecondParameter<typeof customInstance<HomepageAdminSystemNotificationItem>>,) => {
-      return customInstance<HomepageAdminSystemNotificationItem>(
-      {url: `/api/admin/notifications/inbox/${id}/read`, method: 'POST'
-    },
-      options);
-    }
-
-return {listHomepageAdminSystemNotifications,countHomepageAdminSystemNotifications,readHomepageAdminSystemNotification}};
+return {readHomepageAdminSystemNotification,listHomepageAdminSystemNotifications,countHomepageAdminSystemNotifications}};
+export type ReadHomepageAdminSystemNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISystemInboxSubset>['readHomepageAdminSystemNotification']>>>
 export type ListHomepageAdminSystemNotificationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISystemInboxSubset>['listHomepageAdminSystemNotifications']>>>
 export type CountHomepageAdminSystemNotificationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISystemInboxSubset>['countHomepageAdminSystemNotifications']>>>
-export type ReadHomepageAdminSystemNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISystemInboxSubset>['readHomepageAdminSystemNotification']>>>

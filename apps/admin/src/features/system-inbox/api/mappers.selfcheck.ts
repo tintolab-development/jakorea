@@ -10,7 +10,6 @@ import {
   mapInboxItemToListItem,
   mapInboxItemsToListItems,
   parseUnreadCount,
-  type InboxItemContract,
 } from './mappers.ts'
 
 const snapshot: HomepageAdminSystemNotificationItem = {
@@ -35,7 +34,7 @@ assert.equal(
 assert.equal(mapped?.link, '/ja-korea/recruit/applicants?applicationId=11')
 assert.equal(mapped?.read, false)
 
-const posting: InboxItemContract = {
+const posting: HomepageAdminSystemNotificationItem = {
   id: 102,
   notificationType: 'CAREER_POSTING_DEADLINE',
   aggregateId: 44,

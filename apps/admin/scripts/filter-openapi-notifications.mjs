@@ -7,10 +7,4 @@ writeOpenApiSubset({
     'Filtered for Homepage Admin GNB system inbox Orval codegen. Excludes public-application outbox.',
   matchPath: matchPathPrefixes(['/api/admin/notifications/inbox']),
   pruneUnusedSchemas: true,
-  afterFilter(subset) {
-    const item = subset.components?.schemas?.HomepageAdminSystemNotificationItem
-    if (item?.properties?.readAt) {
-      item.properties.readAt.nullable = true
-    }
-  },
 })

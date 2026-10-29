@@ -12,11 +12,51 @@
     }
   ],
   "paths": {
+    "/api/admin/notifications/inbox/{id}/read": {
+      "post": {
+        "tags": [
+          "Homepage admin system notifications"
+        ],
+        "summary": "Mark one homepage-admin system inbox row as read",
+        "description": "Requires HOMEPAGE_VIEW plus CMS MASTER role. Other administrators' ids return 404. Excel [닫기] is UI dismiss only and must not call this endpoint.",
+        "operationId": "readHomepageAdminSystemNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomepageAdminSystemNotificationItem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/admin/notifications/inbox": {
       "get": {
         "tags": [
           "Homepage admin system notifications"
         ],
+        "summary": "List homepage-admin system inbox rows for the current MASTER administrator",
+        "description": "Requires HOMEPAGE_VIEW plus CMS MASTER role. Returns only the caller's rows. This is in-app inbox state, not EMAIL/ALIMTALK outbox SENT/HELD/FAILED. Closing a UI panel must not call this read API.",
         "operationId": "listHomepageAdminSystemNotifications",
         "parameters": [
           {
@@ -57,6 +97,8 @@
         "tags": [
           "Homepage admin system notifications"
         ],
+        "summary": "Count unread homepage-admin system inbox rows",
+        "description": "Requires HOMEPAGE_VIEW plus CMS MASTER role. Counts only the caller's unread rows.",
         "operationId": "countHomepageAdminSystemNotifications",
         "responses": {
           "200": {
@@ -76,48 +118,13 @@
           }
         ]
       }
-    },
-    "/api/admin/notifications/inbox/{id}/read": {
-      "post": {
-        "tags": [
-          "Homepage admin system notifications"
-        ],
-        "operationId": "readHomepageAdminSystemNotification",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/HomepageAdminSystemNotificationItem"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
     }
   },
   "components": {
     "schemas": {
       "HomepageAdminSystemNotificationItem": {
         "type": "object",
+        "description": "Homepage-admin in-app inbox item. Distinct from public-application outbox history.",
         "properties": {
           "id": {
             "type": "integer",
@@ -157,6 +164,7 @@
           "readAt": {
             "type": "string",
             "format": "date-time",
+            "description": "Set when the caller marks this row read. Distinct from outbox SENT.",
             "nullable": true
           },
           "createdAt": {

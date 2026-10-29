@@ -9,11 +9,15 @@ import {
 } from './service'
 import { systemInboxQueryKeys } from './query-keys'
 import {
-  isInboxItemRead,
   mapInboxItemsToListItems,
   parseUnreadCount,
   type SystemInboxListItem,
 } from './mappers'
+import {
+  markInboxItemReadLocally,
+  mergeConfirmedInboxItem,
+  nextUnreadCountAfterRead,
+} from './inbox-cache'
 
 const LIST_STALE_MS = 15_000
 const COUNT_STALE_MS = 15_000
@@ -66,20 +70,13 @@ export function useReadSystemInboxItem(adminId: string | undefined) {
       const countKey = systemInboxQueryKeys.unreadCount(id)
       const previousList = queryClient.getQueryData<HomepageAdminSystemNotificationItem[]>(listKey)
       const previousCount = queryClient.getQueryData<number>(countKey)
+      const readAt = new Date().toISOString()
       queryClient.setQueryData<HomepageAdminSystemNotificationItem[]>(listKey, current =>
-        (current ?? []).map(item =>
-          item.id === numericId
-            ? { ...item, read: true, readAt: item.readAt ?? new Date().toISOString() }
-            : item,
-        ),
+        markInboxItemReadLocally(current ?? [], numericId, readAt),
       )
-      if (typeof previousCount === 'number' && previousCount > 0) {
-        const wasUnread = previousList?.some(
-          item => item.id === numericId && !isInboxItemRead(item),
-        )
-        if (wasUnread) {
-          queryClient.setQueryData(countKey, previousCount - 1)
-        }
+      const nextCount = nextUnreadCountAfterRead(previousCount, previousList, numericId)
+      if (typeof nextCount === 'number') {
+        queryClient.setQueryData(countKey, nextCount)
       }
       return { previousList, previousCount }
     },
@@ -94,12 +91,7 @@ export function useReadSystemInboxItem(adminId: string | undefined) {
     onSuccess: item => {
       queryClient.setQueryData<HomepageAdminSystemNotificationItem[]>(
         systemInboxQueryKeys.list(id, INBOX_PAGE_SIZE),
-        current => {
-          const rows = current ?? []
-          if (item.id == null) return rows
-          const hasRow = rows.some(row => row.id === item.id)
-          return hasRow ? rows.map(row => (row.id === item.id ? item : row)) : [item, ...rows]
-        },
+        current => mergeConfirmedInboxItem(current ?? [], item),
       )
       void queryClient.invalidateQueries({ queryKey: systemInboxQueryKeys.unreadCount(id) })
     },

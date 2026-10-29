@@ -1,10 +1,6 @@
 import type { HomepageAdminSystemNotificationItem } from '@/shared/api/generated/notifications/schemas/homepageAdminSystemNotificationItem'
 import { resolveInboxNavigationPath } from '../lib/action-path.ts'
 
-export type InboxItemContract = Omit<HomepageAdminSystemNotificationItem, 'readAt'> & {
-  readAt?: string | null
-}
-
 export type SystemInboxListItem = {
   id: string
   numericId: number
@@ -20,14 +16,16 @@ function asText(value: string | null | undefined): string {
   return trimmed ? trimmed : '-'
 }
 
-export function isInboxItemRead(item: Pick<InboxItemContract, 'read' | 'readAt'>): boolean {
+export function isInboxItemRead(
+  item: Pick<HomepageAdminSystemNotificationItem, 'read' | 'readAt'>,
+): boolean {
   if (item.read === true) return true
   if (item.read === false) return false
   return typeof item.readAt === 'string' && item.readAt.trim().length > 0
 }
 
 export function mapInboxItemToListItem(
-  item: InboxItemContract,
+  item: HomepageAdminSystemNotificationItem,
 ): SystemInboxListItem | null {
   if (item.id == null || !Number.isFinite(item.id) || item.id <= 0) return null
   const link = resolveInboxNavigationPath({
@@ -47,7 +45,7 @@ export function mapInboxItemToListItem(
 }
 
 export function mapInboxItemsToListItems(
-  items: InboxItemContract[] | undefined,
+  items: HomepageAdminSystemNotificationItem[] | undefined,
 ): SystemInboxListItem[] {
   return (items ?? [])
     .map(mapInboxItemToListItem)
