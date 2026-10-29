@@ -9,6 +9,7 @@ import {
 import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 import { FILE_UPLOAD_MAX_COUNT } from '@/shared/lib/file-upload-policy'
 import type { ProgramApplicationType } from './types'
+import { buildPortalBoundFormSubmitBody } from '../lib/portal-form-submit'
 
 const APPLICATIONS_PATH = '/api/portal/me/program-applications'
 
@@ -351,6 +352,22 @@ export type PortalFormListItem = {
   form?: Record<string, unknown> | null
   answers?: Record<string, unknown> | null
   draftAnswers?: Record<string, unknown> | null
+}
+
+export type PortalAvailableProgramForm = {
+  bindingId: number
+  programId: number
+  templateId: number
+  templateVersionId: number
+  templateName: string
+  formType: string
+  targetScope: string
+  targetScopeId?: number | null
+  targetScopeLabel?: string | null
+  required: boolean
+  submissionStartAt?: string | null
+  submissionEndAt?: string | null
+  alreadySubmitted: boolean
 }
 
 export type PortalFormListResponse = {
@@ -843,20 +860,63 @@ export async function fetchApplicationForms(
   return merged
 }
 
+/**
+ * 활성 program_form_binding 목록.
+ * 서버가 고정한 ARCHIVED 버전도 정상 항목이므로 versionStatus로 필터링하지 않는다.
+ */
+export async function fetchAvailableProgramForms(
+  programId: number,
+  signal?: AbortSignal
+): Promise<PortalAvailableProgramForm[]> {
+  const { data } = await axiosClient.get<unknown>(
+    `/api/portal/me/programs/${programId}/available-forms`,
+    { signal }
+  )
+  const unwrapped = unwrapEnvelope<
+    PortalAvailableProgramForm[] | { items?: PortalAvailableProgramForm[] }
+  >(data)
+  return Array.isArray(unwrapped) ? unwrapped : (unwrapped.items ?? [])
+}
+
+export type PortalFormVersionStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+
+export type PortalFormBindingRender = {
+  templateVersionId: number
+  templateId: number
+  templateCode: string
+  templateName: string
+  formType: string
+  category: string
+  templateUseYn?: boolean | null
+  templateDeletedAt?: string | null
+  versionNo?: number | null
+  versionLabel?: string | null
+  versionStatus: PortalFormVersionStatus
+  schemaJson?: string | null
+  extensionJson?: string | null
+  settingsJson?: string | null
+  effectiveFrom?: string | null
+  effectiveTo?: string | null
+  publishedAt?: string | null
+  sections: Record<string, unknown>[]
+  questions: Record<string, unknown>[]
+  programFormBindingId: number
+  programId: number
+  targetScope?: string | null
+  targetScopeId?: number | null
+  submissionStartAt?: string | null
+  submissionEndAt?: string | null
+}
+
 export type PortalSurveyFormDocument = {
-  programId?: number
-  formBindingId?: number
-  templateVersionId?: number
-  form?: Record<string, unknown> | null
+  programId: number
+  formBindingId: number
+  templateVersionId: number
+  versionStatus: PortalFormVersionStatus
+  form: PortalFormBindingRender
   draftAnswers?: Record<string, unknown> | null
   answers?: Record<string, unknown> | null
   formResponseId?: number
-}
-
-type PortalFormBindingRender = Record<string, unknown> & {
-  programId?: number
-  programFormBindingId?: number
-  templateVersionId?: number
 }
 
 /**
@@ -879,13 +939,17 @@ export async function fetchPortalSurveyFormBinding(
     programId: rendered.programId,
     formBindingId: rendered.programFormBindingId,
     templateVersionId: rendered.templateVersionId,
+    versionStatus: rendered.versionStatus,
     form: rendered,
   }
 }
 
 export type PortalSurveySubmitBody = {
   answers: Record<string, unknown>
-  templateVersionId?: number
+  templateVersionId: number
+  contextType?: string
+  contextId?: number
+  fileObjectIdsByQuestion?: Record<string, number[]>
 }
 
 /** POST 설문·만족도 제출 */
@@ -894,10 +958,15 @@ export async function submitPortalSurveyResponse(
   bindingId: number,
   body: PortalSurveySubmitBody
 ): Promise<unknown> {
+  const submitBody = buildPortalBoundFormSubmitBody({
+    programId,
+    bindingId,
+    ...body,
+  })
   try {
     const { data } = await axiosClient.post<unknown>(
       `/api/portal/me/programs/${programId}/form-bindings/${bindingId}/responses`,
-      { answers: body.answers }
+      submitBody
     )
     return unwrapEnvelope(data)
   } catch (error) {
@@ -906,13 +975,10 @@ export async function submitPortalSurveyResponse(
         ? (error as { response?: { status?: unknown } }).response?.status
         : undefined
     if (status !== 404 && status !== 405) throw error
-    const { data } = await axiosClient.post<unknown>('/api/portal/me/form-responses/submit', {
-      programId,
-      templateVersionId: body.templateVersionId,
-      contextType: 'PROGRAM',
-      contextId: programId,
-      answers: body.answers,
-    })
+    const { data } = await axiosClient.post<unknown>(
+      '/api/portal/me/form-responses/submit',
+      submitBody
+    )
     return unwrapEnvelope(data)
   }
 }

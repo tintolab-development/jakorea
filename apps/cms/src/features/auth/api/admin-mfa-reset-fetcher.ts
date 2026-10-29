@@ -1,21 +1,21 @@
 /**
- * MASTER 관리자 MFA 초기화.
+ * MASTER 관리자 MFA 초기화 — Orval members 클라이언트.
  * stepUpProof는 호출 측 메모리에만 두고, 이 모듈은 로그에 남기지 않는다.
  */
 
-import { isAxiosError, type InternalAxiosRequestConfig } from 'axios'
-import { axiosClient } from '@/shared/api'
-import { adminAuthPaths } from '@/shared/config/api-paths'
+import { isAxiosError } from 'axios'
 import { AdminMfaApiError } from '@/features/auth/api/admin-auth-fetcher'
 import {
-  buildMfaResetRequest,
   parseStepUpProof,
   type AdminMfaResetRequestBody,
 } from '@/features/auth/lib/admin-mfa-contract'
+import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 
-const resetConfig = {
-  skipGlobalErrorAlert: true,
-} as InternalAxiosRequestConfig & { skipGlobalErrorAlert?: boolean }
+const SKIP_GLOBAL_ALERT = { skipGlobalErrorAlert: true } as const
+
+function membersApi() {
+  return getJAKoreaCMSBackendAPIMembersSubset()
+}
 
 function readErrorCode(payload: unknown): string {
   if (!payload || typeof payload !== 'object') return 'UNKNOWN'
@@ -34,22 +34,20 @@ function throwResetError(err: unknown, fallback: string, timeoutCode: string): n
     }
     const status = err.response.status
     const code = readErrorCode(err.response.data)
-    throw new AdminMfaApiError(code === 'UNKNOWN' && status === 400 ? 'VALIDATION_ERROR' : code, fallback, status)
+    throw new AdminMfaApiError(
+      code === 'UNKNOWN' && status === 400 ? 'VALIDATION_ERROR' : code,
+      fallback,
+      status
+    )
   }
   throw new AdminMfaApiError('NETWORK', fallback)
 }
 
-export async function fetchAdminMfaResetStepUp(
-  adminAccountId: number,
-  totpCode: string
-): Promise<string> {
+/** POST /api/admin/admin-accounts/{id}/mfa/reset/step-up — 시안 경로 body `{}` */
+export async function fetchAdminMfaResetStepUp(adminAccountId: number): Promise<string> {
   try {
-    const { data } = await axiosClient.post<unknown>(
-      adminAuthPaths.mfaResetStepUp(adminAccountId),
-      { totpCode },
-      resetConfig
-    )
-    const proof = parseStepUpProof(data)
+    const payload = await membersApi().stepUp(adminAccountId, {}, SKIP_GLOBAL_ALERT)
+    const proof = parseStepUpProof(payload)
     if (!proof) {
       throw new AdminMfaApiError('MFA_RESET_STEP_UP_FAILED', 'Step-up 인증에 실패했습니다.')
     }
@@ -59,15 +57,13 @@ export async function fetchAdminMfaResetStepUp(
   }
 }
 
+/** POST /api/admin/admin-accounts/{id}/mfa/reset — 204 */
 export async function fetchAdminMfaReset(
   adminAccountId: number,
   body: AdminMfaResetRequestBody
 ): Promise<void> {
   try {
-    await axiosClient.post<unknown>(adminAuthPaths.mfaReset(adminAccountId), body, {
-      ...resetConfig,
-      validateStatus: (status: number) => status === 204 || status === 200,
-    } as InternalAxiosRequestConfig & { skipGlobalErrorAlert?: boolean })
+    await membersApi().reset(adminAccountId, body, SKIP_GLOBAL_ALERT)
   } catch (err) {
     throwResetError(
       err,
@@ -75,13 +71,4 @@ export async function fetchAdminMfaReset(
       'MFA_RESET_OUTCOME_UNKNOWN'
     )
   }
-}
-
-export function prepareAdminMfaResetRequest(input: {
-  reason: string
-  recoveryType: string
-  verificationReference: string
-  stepUpProof: string
-}) {
-  return buildMfaResetRequest(input)
 }

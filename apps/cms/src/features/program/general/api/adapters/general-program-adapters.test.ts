@@ -397,6 +397,53 @@ describe('general-program-adapters', () => {
       }),
     ])
     expect(create.sponsors).toEqual([{ sponsorId: 'sponsor-1', sponsorContactIds: [] }])
+    expect(create.applicationStartDate).toBeUndefined()
+    expect(create.applicationEndDate).toBeUndefined()
+  })
+
+  it('사업 시작 전 모집일은 application* 대신 recruitments에만 실는다', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      startDate: '2026-10-30T15:00:00.000Z',
+      endDate: '2026-12-13T14:59:59.999Z',
+      applicationStartDate: '2026-10-08T15:00:00.000Z',
+      applicationEndDate: '2026-10-18T15:00:00.000Z',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT',
+          targetType: 'ORGANIZATION',
+          startAt: '2026-10-08T15:00:00.000Z',
+          endAt: '2026-10-18T15:00:00.000Z',
+        },
+      ],
+    })
+
+    expect(request.applicationStartDate).toBeUndefined()
+    expect(request.applicationEndDate).toBeUndefined()
+    expect(request.businessStartDate).toBe('2026-10-30T15:00:00.000Z')
+    expect(request.recruitments).toEqual([
+      expect.objectContaining({
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'ORGANIZATION',
+        startAt: '2026-10-08T15:00:00.000Z',
+        endAt: '2026-10-18T15:00:00.000Z',
+      }),
+    ])
+  })
+
+  it('사업 기간 안의 모집일은 레거시 application* 도 함께 보낸다', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      startDate: '2026-10-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+      applicationStartDate: '2026-10-08T15:00:00.000Z',
+      applicationEndDate: '2026-10-18T15:00:00.000Z',
+    })
+
+    expect(request.applicationStartDate).toBe('2026-10-08T15:00:00.000Z')
+    expect(request.applicationEndDate).toBe('2026-10-18T15:00:00.000Z')
   })
 
   it('omits legacy rounds key for GENERAL create, full update and rounds PATCH', () => {

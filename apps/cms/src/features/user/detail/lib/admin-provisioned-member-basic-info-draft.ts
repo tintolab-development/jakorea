@@ -7,6 +7,7 @@ import type {
 } from '@/features/user/api/types/instructor-cms-profile-proposal'
 import {
   getAdminPermissionVariant,
+  isAdminPermissionTagVariant,
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
@@ -377,10 +378,9 @@ export function userToAdminProvisionedBasicDraft(
 export function draftToAdminMemberRestrictedPatch(draft: AdminProvisionedMemberBasicInfoDraft): PatchUserBasicInfoInput {
   const adminTrimmed = draft.adminComment.trim()
   const v = (draft.adminPermissionVariant ?? '').trim()
-  const listMetrics =
-    v === 'manager' || v === 'partner' || v === 'viewer'
-      ? { adminPermissionVariant: v as AdminPermissionTagVariant }
-      : undefined
+  const listMetrics = isAdminPermissionTagVariant(v)
+    ? { adminPermissionVariant: v }
+    : undefined
   return {
     adminComment: adminTrimmed ? adminTrimmed : undefined,
     ...(listMetrics ? { listMetrics } : {}),
@@ -427,12 +427,9 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
     socialAccounts: social ? [social] : [],
     adminComment: adminTrimmed ? adminTrimmed : undefined,
     ...(id1365 ? { id1365 } : {}),
-    listMetrics:
-      adminPermissionVariant === 'manager' ||
-      adminPermissionVariant === 'partner' ||
-      adminPermissionVariant === 'viewer'
-        ? { adminPermissionVariant }
-        : undefined,
+    listMetrics: isAdminPermissionTagVariant(adminPermissionVariant)
+      ? { adminPermissionVariant }
+      : undefined,
   }
 }
 

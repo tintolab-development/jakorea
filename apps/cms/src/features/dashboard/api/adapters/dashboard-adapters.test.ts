@@ -11,7 +11,10 @@ import {
   mapProgramInquiryListResponse,
   mapProgramOptionsForWidget,
   mapRecruitmentListResponse,
+  countsAfterShortcutReadOptimistic,
   readCountMapValue,
+  shouldPostDashboardShortcutRead,
+  shouldShowShortcutBadge,
 } from './dashboard-adapters'
 
 describe('mapKpiProgressListResponse', () => {
@@ -350,6 +353,47 @@ describe('readCountMapValue', () => {
   it('없는 키를 0으로 채우지 않는다', () => {
     expect(readCountMapValue({ 'programs-ujat': 9 }, 'programs-gemini')).toBeUndefined()
     expect(readCountMapValue({ 'programs-ujat': 0 }, 'programs-ujat')).toBe(0)
+  })
+})
+
+describe('shouldShowShortcutBadge', () => {
+  it('0이거나 키 없으면 숨기고 양수만 표시한다', () => {
+    const counts = {
+      'programs-general-education': 0,
+      'programs-economy': 20,
+      inquiries: 4,
+    }
+    expect(shouldShowShortcutBadge(counts, 'programs-general-education')).toBe(false)
+    expect(shouldShowShortcutBadge(counts, 'programs-gemini')).toBe(false)
+    expect(shouldShowShortcutBadge(counts, 'programs-economy')).toBe(true)
+    expect(shouldShowShortcutBadge(counts, 'inquiries')).toBe(true)
+  })
+})
+
+describe('shouldPostDashboardShortcutRead', () => {
+  it('신규 키 양수만 POST하고 대기·0·누락은 보내지 않는다', () => {
+    const counts = {
+      notices: 1,
+      faq: 0,
+      inquiries: 4,
+      'permission-requests': 1,
+    }
+    expect(shouldPostDashboardShortcutRead('notices', counts)).toBe(true)
+    expect(shouldPostDashboardShortcutRead('faq', counts)).toBe(false)
+    expect(shouldPostDashboardShortcutRead('programs-gemini', counts)).toBe(false)
+    expect(shouldPostDashboardShortcutRead('inquiries', counts)).toBe(false)
+    expect(shouldPostDashboardShortcutRead('permission-requests', counts)).toBe(false)
+  })
+})
+
+describe('countsAfterShortcutReadOptimistic', () => {
+  it('신규 키는 제거하고 대기 키는 유지한다', () => {
+    const counts = { notices: 1, faq: 2, inquiries: 4 }
+    expect(countsAfterShortcutReadOptimistic(counts, 'notices')).toEqual({
+      faq: 2,
+      inquiries: 4,
+    })
+    expect(countsAfterShortcutReadOptimistic(counts, 'inquiries')).toEqual(counts)
   })
 })
 

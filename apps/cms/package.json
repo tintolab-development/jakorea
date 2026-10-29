@@ -122,6 +122,7 @@
     "filter:openapi:performance": "node scripts/filter-openapi-performance.mjs",
     "filter:openapi:program-progress": "node scripts/filter-openapi-program-progress.mjs",
     "sync:openapi:from-be": "node scripts/sync-openapi-from-be.mjs",
+    "sync:openapi:form-contracts:from-live": "node scripts/sync-openapi-form-contracts-from-live.mjs",
     "generate:api:program-progress": "pnpm filter:openapi:program-progress && orval --config orval.config.ts --project programProgress",
     "filter:openapi:forms-surveys": "node scripts/filter-openapi-forms-surveys.mjs",
     "generate:api:forms-surveys": "pnpm filter:openapi:forms-surveys && orval --config orval.config.ts --project formsSurveys",

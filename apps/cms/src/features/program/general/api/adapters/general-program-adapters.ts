@@ -255,6 +255,38 @@ function toRequestDate(value: Date | string | undefined): string | undefined {
   return value
 }
 
+function parsedMillis(value: string | undefined): number | undefined {
+  if (!value) return undefined
+  const ms = Date.parse(value)
+  return Number.isFinite(ms) ? ms : undefined
+}
+
+/**
+ * 레거시 application* 는 사업(오픈) 기간 안에 있을 때만 보낸다.
+ * 모집이 사업 시작 전인 일반 등록은 recruitments[]가 정본이며,
+ * 레거시 필드를 같이 보내면 409 PROGRAM_DATE_OUTSIDE_OPEN_PERIOD가 난다.
+ */
+function applicationDatesInsideBusinessPeriod(program: Pick<
+  Program,
+  'startDate' | 'endDate' | 'applicationStartDate' | 'applicationEndDate'
+>): {
+  applicationStartDate?: string
+  applicationEndDate?: string
+} {
+  const applicationStartDate = toRequestDate(program.applicationStartDate)
+  const applicationEndDate = toRequestDate(program.applicationEndDate)
+  const businessStart = parsedMillis(toRequestDate(program.startDate))
+  const businessEnd = parsedMillis(toRequestDate(program.endDate))
+  const applyStart = parsedMillis(applicationStartDate)
+  const applyEnd = parsedMillis(applicationEndDate)
+  if (!applicationStartDate || !applicationEndDate || applyStart == null || applyEnd == null) {
+    return {}
+  }
+  if (businessStart != null && applyStart < businessStart) return {}
+  if (businessEnd != null && applyEnd > businessEnd) return {}
+  return { applicationStartDate, applicationEndDate }
+}
+
 function mapPeriodStatusToLifecycle(periodStatus?: string): ProgramLifecycleStatus | undefined {
   // list DTO에 typed lifecycle이 없을 때만 — periodStatus → typed 리다이렉트
   return toTypedProgramLifecycleStatus(periodStatus)
@@ -1019,8 +1051,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     endDate: toRequestDate(program.endDate),
     businessStartDate: toRequestDate(program.startDate),
     businessEndDate: toRequestDate(program.endDate),
-    applicationStartDate: toRequestDate(program.applicationStartDate),
-    applicationEndDate: toRequestDate(program.applicationEndDate),
+    ...applicationDatesInsideBusinessPeriod(program),
     recruitments: mapGeneralProgramRecruitmentsToRequest(program),
     businessArea,
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
@@ -1331,11 +1362,14 @@ function mapProgramPatchFieldsToRequest(
   const includeVolunteerRecruitment =
     (has('volunteerApplicationStartDate') || has('volunteerApplicationEndDate')) && !volunteerLocked
 
-  if (has('applicationStartDate') && !participantLocked) {
-    body.applicationStartDate = toRequestDate(merged.applicationStartDate)
-  }
-  if (has('applicationEndDate') && !participantLocked) {
-    body.applicationEndDate = toRequestDate(merged.applicationEndDate)
+  if ((has('applicationStartDate') || has('applicationEndDate')) && !participantLocked) {
+    const applicationDates = applicationDatesInsideBusinessPeriod(merged)
+    if (applicationDates.applicationStartDate != null) {
+      body.applicationStartDate = applicationDates.applicationStartDate
+    }
+    if (applicationDates.applicationEndDate != null) {
+      body.applicationEndDate = applicationDates.applicationEndDate
+    }
   }
   const windowRows =
     includeParticipantRecruitment || includeInstructorRecruitment || includeVolunteerRecruitment

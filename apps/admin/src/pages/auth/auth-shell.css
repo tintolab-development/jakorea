@@ -12,10 +12,7 @@
 
 .auth-form .ant-input,
 .auth-form .ant-input-affix-wrapper,
-.auth-form .ant-input-password,
-.login-form .ant-input,
-.login-form .ant-input-affix-wrapper,
-.login-form .ant-input-password {
+.auth-form .ant-input-password {
   display: flex;
   height: 52px;
   padding: 0 12px 0 14px;
@@ -28,8 +25,7 @@
   font-family: Pretendard, system-ui, sans-serif;
 }
 
-.auth-form .ant-input-affix-wrapper .ant-input,
-.login-form .ant-input-affix-wrapper .ant-input {
+.auth-form .ant-input-affix-wrapper .ant-input {
   height: auto;
   padding: 0;
   border: none;
@@ -38,16 +34,12 @@
 
 .auth-form .ant-input-affix-wrapper:focus,
 .auth-form .ant-input-affix-wrapper-focused,
-.auth-form .ant-input:focus,
-.login-form .ant-input-affix-wrapper:focus,
-.login-form .ant-input-affix-wrapper-focused,
-.login-form .ant-input:focus {
+.auth-form .ant-input:focus {
   border-color: var(--color-mint-01, #01a1af);
   box-shadow: var(--shadow-focus-teal, 0 0 0 1px rgba(74, 212, 204, 0.2));
 }
 
-.auth-submit-btn,
-.login-submit-btn {
+.auth-submit-btn {
   display: inline-flex;
   height: 52px;
   padding: 6px 16px;
@@ -64,8 +56,7 @@
   font-weight: 600;
 }
 
-.auth-submit-btn:not(:disabled):hover,
-.login-submit-btn:not(:disabled):hover {
+.auth-submit-btn:not(:disabled):hover {
   background: var(--color-brand-primary-hover, #019ba8) !important;
 }
 

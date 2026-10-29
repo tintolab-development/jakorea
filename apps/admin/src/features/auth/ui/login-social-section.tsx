@@ -10,9 +10,16 @@ import googleLogoImage from '@/assets/images/logo/google_logo.png'
 
 type SocialProvider = 'google' | 'naver' | 'kakao'
 
+/** 로그인 화면 소셜 버튼만 숨김. 핸들러·후속 SSO 연동은 유지. */
+export const SHOW_SOCIAL_LOGIN_UI = false
+
+export function startLoginSocialOAuth(provider: SocialProvider): void {
+  message.info(`소셜 로그인(${provider})은 이후 Phase에서 연동합니다.`)
+}
+
 export function LoginSocialSection() {
-  const handleSocialLogin = (provider: SocialProvider) => {
-    message.info(`소셜 로그인(${provider})은 이후 Phase에서 연동합니다.`)
+  if (!SHOW_SOCIAL_LOGIN_UI) {
+    return null
   }
 
   return (
@@ -25,7 +32,7 @@ export function LoginSocialSection() {
           type="button"
           className="login-social-icon"
           aria-label="Google 로그인"
-          onClick={() => handleSocialLogin('google')}
+          onClick={() => startLoginSocialOAuth('google')}
         >
           <img
             src={googleLogoImage}
@@ -39,7 +46,7 @@ export function LoginSocialSection() {
           type="button"
           className="login-social-icon"
           aria-label="네이버 로그인"
-          onClick={() => handleSocialLogin('naver')}
+          onClick={() => startLoginSocialOAuth('naver')}
         >
           <NaverSocialLoginIcon className="login-social-icon__image" />
         </button>
@@ -47,7 +54,7 @@ export function LoginSocialSection() {
           type="button"
           className="login-social-icon"
           aria-label="카카오 로그인"
-          onClick={() => handleSocialLogin('kakao')}
+          onClick={() => startLoginSocialOAuth('kakao')}
         >
           <KakaoSocialLoginIcon className="login-social-icon__image" />
         </button>

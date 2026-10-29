@@ -296,7 +296,7 @@ export interface UserListRowMetrics {
   /** 관리자: 현재 또는 과거 프로그램 담당자 배정 이력 (BE `hasProgramAssignmentHistory`) */
   hasProgramAssignmentHistory?: boolean
   /** 관리자 목록: 권한 유형 태그 (없으면 programRoles로 추론) */
-  adminPermissionVariant?: 'manager' | 'partner' | 'viewer'
+  adminPermissionVariant?: 'manager' | 'accounting' | 'partner' | 'viewer'
   /** 일반 교사 상세: 재직 현황 라벨 */
   employmentStatusLabel?: string
   /** 일반 교사 상세: 담당 학년 등 */

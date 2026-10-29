@@ -1,5 +1,6 @@
 /**
- * 권한별 로그인 버튼 — CMS `dev-login-accounts.ts` 와 동일 (배포 빌드에도 노출).
+ * 권한별 로그인 버튼 — CMS `dev-login-accounts.ts` 와 동일.
+ * UI는 Vite 로컬 개발(`import.meta.env.DEV`)에서만 노출한다.
  */
 export type DevLoginQaAccount = {
   key: 'master' | 'pm' | 'partner' | 'viewer'
@@ -11,6 +12,10 @@ export type DevLoginQaAccount = {
 
 /** @deprecated 계정별 `password` 사용 — 하위 호환용 */
 export const DEV_LOGIN_QA_PASSWORD = 'test1234!'
+
+export function canShowDevRoleLogin(): boolean {
+  return import.meta.env.DEV === true
+}
 
 export const DEV_LOGIN_QA_ACCOUNTS: readonly DevLoginQaAccount[] = [
   {

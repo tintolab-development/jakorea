@@ -858,7 +858,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               payload.targetScopeId = surveyTarget.targetScopeId
             }
           }
-          surveyBindingTargetScope = payload.targetScope
+          surveyBindingTargetScope = payload.targetScope ?? undefined
         }
         const result = await createBinding(payload)
         if (!result.ok) {

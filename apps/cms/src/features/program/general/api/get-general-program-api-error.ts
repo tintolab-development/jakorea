@@ -121,12 +121,24 @@ const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE =
 const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_SURVEY_MESSAGE =
   '교육 진행 예정일만 설문 대상으로 지정할 수 있습니다.'
 
+const PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION_MESSAGE =
+  '새로 연결하거나 교체할 양식은 현재 발행된 버전만 선택할 수 있습니다.'
+
+const FORM_BINDING_TEMPLATE_LOCKED_MESSAGE =
+  '이미 응답이 있는 양식은 연결된 템플릿 버전을 변경할 수 없습니다.'
+
 export function getProgramFormBindingErrorMessage(
   error: unknown,
   fallback: string,
   context?: ProgramFormBindingErrorContext
 ): string {
   const code = extractApiErrorCode(error)
+  if (code === 'PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION') {
+    return PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION_MESSAGE
+  }
+  if (code === 'FORM_BINDING_TEMPLATE_LOCKED') {
+    return FORM_BINDING_TEMPLATE_LOCKED_MESSAGE
+  }
   if (code === 'TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY') {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw
@@ -201,6 +213,9 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw
     return PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE
+  }
+  if (code === 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD') {
+    return '모집 기간이 사업(오픈) 기간 밖입니다. 모집은 모집 행으로만 저장되고, 신청 시작·종료일은 사업 기간 안에 있을 때만 함께 전송됩니다.'
   }
   const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(
     code,

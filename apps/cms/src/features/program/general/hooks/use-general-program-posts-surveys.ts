@@ -709,8 +709,8 @@ export function useGeneralProgramSurveyFormBindingMutations(programId: string | 
             error,
             '설문 등록에 실패했습니다. 다시 시도해 주세요.',
             {
-              formType: payload.formType,
-              targetScope: payload.targetScope,
+              formType: payload.formType ?? undefined,
+              targetScope: payload.targetScope ?? undefined,
             }
           ),
           field: getApiErrorField(error),

@@ -15,11 +15,6 @@ import {
   type PersonalInfoToggleButtonConfig,
 } from '@/features/user/detail/lib/use-personal-info-toggle'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
-import { AdminMfaResetButton } from '@/features/user/detail/ui/admin-mfa-reset-button'
-import {
-  canShowAdminMfaReset,
-  resolveExplicitAdminPermissionVariant,
-} from '@/features/user/detail/lib/can-show-admin-mfa-reset'
 import { PermissionHeaderActions } from './permission-header-actions'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import {
@@ -207,17 +202,6 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
       />
     ) : null
 
-  const showMfaReset =
-    !isProfileEditing &&
-    canShowAdminMfaReset({
-      sessionRoleCode: currentUser?.roleCode,
-      sessionAdminAccountId: currentUser?.adminAccountId,
-      targetRole: displayUser.role,
-      targetAdminAccountId: displayUser.adminAccountId,
-      targetIsActive: displayUser.isActive,
-      targetPermissionVariant: resolveExplicitAdminPermissionVariant(displayUser),
-    })
-
   const headerActionsForLayout = isProfileEditing
     ? actions.filter(a => a.key !== 'school-delete' && a.key !== 'withdraw')
     : actions
@@ -245,7 +229,6 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
           {commentEditButton}
         </>
       )}
-      {showMfaReset ? <AdminMfaResetButton target={displayUser} /> : null}
       {personalInfoNode}
     </div>
   )

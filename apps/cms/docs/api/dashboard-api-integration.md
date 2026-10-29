@@ -33,8 +33,8 @@
 | `GET /program-schedules` | `get_admin_dashboard_program-schedules` | `getDashboardScheduleEvents()` | 프로그램 일정 위젯 (remote 시 API-only) |
 | `GET/PUT /api/me/dashboard-preferences` | `get_me_dashboard_preferences` | `dashboard-preferences-service` | 설정·DnD layout SSOT (revision 잠금) |
 | `GET /shortcuts` | `get_admin_dashboard_shortcuts` | `getDashboardShortcuts()` | 바로가기 메타 |
-| `GET /api/me/dashboard-shortcut-badges` | `get_me_dashboard_shortcut_badges` | `getDashboardShortcutBadges()` | 바로가기 배지 count (API counts만. mock 집계 없음. 0·누락은 배지 숨김) |
-| `POST /api/me/dashboard-shortcut-badges/{id}/read` | — | `readDashboardShortcutBadge()` | 바로가기 방문 읽음. FE는 로컬에서 0으로 덮지 않고 GET을 다시 받아 표시 |
+| `GET /api/me/dashboard-shortcut-badges` | `get_me_dashboard_shortcut_badges` | `getDashboardShortcutBadges()` | 바로가기 배지. counts[k]는 이 관리자 lastReadAt 이후 신규(대기 키 inquiries·permission-requests는 PENDING). 0·누락 숨김 |
+| `POST /api/me/dashboard-shortcut-badges/{id}/read` | — | `readDashboardShortcutBadge()` | path/body shortcutId=키 문자열. readAt 생략(서버 시각). 성공 후 badges GET만 refetch. 로컬 0 덮기 없음 |
 | `GET /log-alerts` | `get_admin_dashboard_log-alerts` | `getDashboardLogAlerts()` | MASTER 로그 알림 위젯 |
 
 **preferences_only:** `shortcuts/visibility`, `widgets/layout`, `program-filters` granular API는 호출하지 않음. Me preferences API로 통합.
@@ -74,6 +74,17 @@ OpenAPI subset 필터: `scripts/filter-openapi-dashboard.mjs` — `/api/admin/da
 - 위젯은 React Query `isError` → `DashboardWidgetQueryError`
 - Query `retry: false` (403/500 즉시 표면화)
 - Me preferences 저장 409 → revision 충돌, 재조회 후 재시도 필요
+
+---
+
+## 바로가기 배지
+
+`GET /api/admin/me/dashboard-shortcut-badges`의 `counts`만 사용한다. 목록 GET으로 다시 세지 않는다.
+
+- 신규 추적 키: 이 관리자 `lastReadAt` 이후 행 수. 배지가 있는 항목 클릭 시 즉시 해당 키를 캐시에서 빼고 이동한 뒤 `POST .../{shortcutId}/read`(body `shortcutId`만, `readAt` 생략) → badges GET refetch. 실패하면 캐시 롤백. 배지 없는 항목·대기 키는 POST하지 않음.
+- `inquiries` / `permission-requests`: GET이 PENDING 대기를 주면 클릭해도 그 숫자를 유지한다.
+- 렌더: 키 존재이고 양수일 때만 배지. 0·키 없음·문서 외 키 0 채우기 금지.
+- `home.programCount` / `home.memberCount`와 배지를 맞추지 않음. 읽은 뒤 `programs-detail` ≠ `programCount`, `users-all` ≠ `memberCount`일 수 있다.
 
 ---
 

@@ -1,5 +1,6 @@
 /**
- * 권한별 로그인 버튼 — 이메일·비밀번호 자동 입력 (배포 빌드에도 노출).
+ * 권한별 로그인 버튼 — 이메일·비밀번호 자동 입력.
+ * UI는 Vite 로컬 개발(`import.meta.env.DEV`)에서만 노출한다.
  *
  * - **마스터**: `admin1@jakorea.org` — MFA `000000`
  * - **PM/Partner/Viewer**: `pm1` / `partner1` / `viewer1@jakorea.org`
@@ -16,6 +17,10 @@ export type DevLoginQaAccount = {
 
 /** 권한별 로그인 버튼이 공통으로 폼에 입력하는 QA 비밀번호 */
 export const DEV_LOGIN_QA_PASSWORD = 'admin1234!'
+
+export function canShowDevRoleLogin(): boolean {
+  return import.meta.env.DEV === true
+}
 
 export const DEV_LOGIN_QA_ACCOUNTS: readonly DevLoginQaAccount[] = [
   {

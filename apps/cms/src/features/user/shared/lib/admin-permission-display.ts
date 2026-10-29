@@ -1,46 +1,70 @@
 import type { User } from '@/types/user'
 
-export type AdminPermissionTagVariant = 'manager' | 'partner' | 'viewer'
+export const ADMIN_PERMISSION_TAG_VARIANTS = [
+  'manager',
+  'accounting',
+  'partner',
+  'viewer',
+] as const
+
+export type AdminPermissionTagVariant = (typeof ADMIN_PERMISSION_TAG_VARIANTS)[number]
 
 /**
  * 관리자 권한 유형 표시명.
  * 관리자 권한 설정 탭 라벨과 맞춘다.
- * Accounting Manager는 승인 셀렉트에만 노출하고, 선택은 아직 준비 중이다.
  */
 export const ADMIN_PERMISSION_TAG_LABEL: Record<AdminPermissionTagVariant, string> = {
   manager: 'Master',
+  accounting: 'Accounting Manager',
   partner: 'Program Manager',
   viewer: 'Program Viewer',
 }
 
-/** 승인 셀렉트 전용. 아직 API roleCode가 없어 선택 시 준비 중 안내만 한다. */
-export const ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE = 'accounting-manager'
+/** 승인 셀렉트 value. Accounting Manager는 `accounting` variant. */
+export const ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE = 'accounting' as const
 
 export const ADMIN_PERMISSION_SELECT_OPTIONS: {
-  value: string
+  value: AdminPermissionTagVariant
   label: string
-}[] = [
-  { value: 'manager', label: ADMIN_PERMISSION_TAG_LABEL.manager },
-  { value: ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE, label: 'Accounting Manager' },
-  { value: 'partner', label: ADMIN_PERMISSION_TAG_LABEL.partner },
-  { value: 'viewer', label: ADMIN_PERMISSION_TAG_LABEL.viewer },
-]
+}[] = ADMIN_PERMISSION_TAG_VARIANTS.map(value => ({
+  value,
+  label: ADMIN_PERMISSION_TAG_LABEL[value],
+}))
 
-export function isAdminPermissionSelectComingSoon(value: string | undefined): boolean {
-  return value === ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE
+export function isAdminPermissionTagVariant(
+  value: string | undefined | null
+): value is AdminPermissionTagVariant {
+  return (
+    value === 'manager' ||
+    value === 'accounting' ||
+    value === 'partner' ||
+    value === 'viewer'
+  )
+}
+
+export function isAdminPermissionSelectComingSoon(_value: string | undefined): boolean {
+  return false
 }
 
 /**
  * API roleCode / listMetrics 문자열 → UI variant
- * OpenAPI MASTER·MIDDLE·VIEWER + 레거시 PM·PARTNER 및 FE variant(manager/partner/viewer) 수용
+ * OpenAPI MASTER·MIDDLE·VIEWER·ACCOUNTING_MANAGER + 레거시 PM·PARTNER 및 FE variant 수용
  */
 export function roleCodeToAdminPermissionVariant(
   roleCode?: string
 ): AdminPermissionTagVariant | null {
   const raw = (roleCode ?? '').trim()
   if (!raw) return null
-  const upper = raw.toUpperCase()
+  const upper = raw.toUpperCase().replace(/-/g, '_')
   if (upper === 'MASTER' || raw === 'manager') return 'manager'
+  if (
+    upper === 'ACCOUNTING_MANAGER' ||
+    upper === 'ACCOUNTING' ||
+    raw === 'accounting' ||
+    raw === 'accounting-manager'
+  ) {
+    return 'accounting'
+  }
   if (
     upper === 'MIDDLE' ||
     upper === 'PM' ||
@@ -61,7 +85,7 @@ type AdminPermissionSource = Pick<User, 'listMetrics' | 'programRoles' | 'roleCo
  */
 export function getAdminPermissionVariant(user: AdminPermissionSource): AdminPermissionTagVariant {
   const explicit = user.listMetrics?.adminPermissionVariant
-  if (explicit === 'manager' || explicit === 'partner' || explicit === 'viewer') {
+  if (isAdminPermissionTagVariant(explicit)) {
     return explicit
   }
 

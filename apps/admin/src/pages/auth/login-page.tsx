@@ -3,10 +3,10 @@
  * 로그인 → CMS auth + Homepage remote API
  */
 
-import { Form, Input, Button, Typography, Space, Alert } from 'antd'
+import { Form, Typography, Space, Alert } from 'antd'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore, type LoginMode } from '@/features/auth/model/auth-store'
-import { LoadingButton } from '@/shared/ui/loading-button'
+import { CmsButton, CmsInput } from '@/shared/ui'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/entities/auth/model/types'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -15,8 +15,10 @@ import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
-import { DEV_LOGIN_QA_ACCOUNTS } from '@/features/auth/lib/dev-login-accounts'
-import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
+import {
+  canShowDevRoleLogin,
+  DEV_LOGIN_QA_ACCOUNTS,
+} from '@/features/auth/lib/dev-login-accounts'
 import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
 import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
@@ -111,7 +113,9 @@ export function LoginPage() {
         <AuthLogoLink wrapperClassName="login-logo-wrapper" logoClassName="login-logo" />
 
         <p className="login-notice">
-          인가된 관리자만 접속 가능하며, 중요 활동의 경우 로그로 기록됩니다.
+          본 시스템은 승인된 관리자 전용입니다.
+          <br />
+          보안을 위해 접속 및 중요 작업의 이력이 저장됩니다.
         </p>
 
         <div className="login-form-wrapper">
@@ -133,21 +137,43 @@ export function LoginPage() {
           >
             <Form.Item
               name="email"
-              label={<AuthFormLabel>이메일</AuthFormLabel>}
               rules={[
                 { required: true, message: '이메일을 입력해 주세요.' },
                 { type: 'email', message: '올바른 이메일 형식을 입력해 주세요.' },
               ]}
             >
-              <Input placeholder="이메일 주소를 입력해 주세요" autoComplete="email" />
+              <CmsInput
+                label={
+                  <>
+                    이메일
+                    <span className="login-required" aria-hidden>
+                      *
+                    </span>
+                  </>
+                }
+                inputSize="large"
+                width="100%"
+                placeholder="이메일 주소를 입력해 주세요"
+                autoComplete="email"
+              />
             </Form.Item>
 
             <Form.Item
               name="password"
-              label={<AuthFormLabel>비밀번호</AuthFormLabel>}
               rules={[{ required: true, message: '비밀번호를 입력해 주세요.' }]}
             >
-              <Input.Password
+              <CmsInput
+                label={
+                  <>
+                    비밀번호
+                    <span className="login-required" aria-hidden>
+                      *
+                    </span>
+                  </>
+                }
+                type="password"
+                inputSize="large"
+                width="100%"
                 placeholder="비밀번호를 입력해 주세요"
                 autoComplete="current-password"
                 disabled={isLocked}
@@ -194,35 +220,33 @@ export function LoginPage() {
             )}
 
             <Form.Item className="login-submit-actions">
-              <LoadingButton
-                type="primary"
-                block
+              <CmsButton
+                variant="primary"
+                size="large"
+                width="100%"
                 className="login-submit-btn"
                 loading={loading && loginMode === 'api'}
                 disabled={isLocked || !apiLoginAvailable}
                 onClick={() => void handleLoginClick('api')}
               >
                 로그인하기
-              </LoadingButton>
-              {!apiLoginAvailable && (
-                <Text type="secondary" className="login-api-hint">
-                  로그인은 `VITE_API_SERVER` 설정 후 사용할 수 있습니다.
-                </Text>
-              )}
+              </CmsButton>
             </Form.Item>
           </Form>
 
           <LoginUtilityLinks />
           <LoginSocialSection />
 
-          <div className="login-dev-quick">
-            <Text type="secondary" className="login-dev-quick__label">
-              권한별 로그인
-            </Text>
-            <Space size="small" wrap>
+          {canShowDevRoleLogin() ? (
+            <div className="login-dev-quick">
+              <Text type="secondary" className="login-dev-quick__label">
+                권한별 로그인
+              </Text>
+              <Space size="small" wrap>
               {DEV_LOGIN_QA_ACCOUNTS.map(account => (
-                <Button
+                <CmsButton
                   key={account.key}
+                  variant="default"
                   size="small"
                   onClick={() => {
                     form.setFieldsValue({
@@ -232,10 +256,14 @@ export function LoginPage() {
                   }}
                 >
                   {account.label}
-                </Button>
+                </CmsButton>
               ))}
             </Space>
+            <Text type="secondary" className="login-dev-quick__hint">
+              실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수 있습니다.
+            </Text>
           </div>
+          ) : null}
         </div>
       </div>
 

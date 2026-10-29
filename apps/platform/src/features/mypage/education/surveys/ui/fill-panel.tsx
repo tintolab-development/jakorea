@@ -22,10 +22,15 @@ import {
   type EducationSurveySeedKind,
 } from '../lib/seed-survey-draft'
 import {
-  useApplicationFormsQuery,
+  useAvailableProgramFormsQuery,
   useApplicationSurveyFormQuery,
   useSubmitEducationSurveyMutation,
 } from '../../applications/api/activity-hooks'
+import {
+  isPortalBoundFormVersionUsable,
+  PORTAL_SATISFACTION_FORM_TYPE_QUERIES,
+  PORTAL_SURVEY_FORM_TYPE_QUERIES,
+} from '../../applications/lib/portal-form-list'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import type { EducationSurveyListEntry } from '../lib/survey-list-types'
 import {
@@ -106,14 +111,15 @@ export function EducationSurveyFillPanel({
   programId,
   pendingSurveyCount,
 }: EducationSurveyFillPanelProps) {
-  const remoteForms = useApplicationFormsQuery(
-    applicationType,
-    applicationId,
-    kind === 'satisfaction' ? 'SATISFACTION' : 'SURVEY',
+  const remoteForms = useAvailableProgramFormsQuery(
+    programId,
+    kind === 'satisfaction'
+      ? PORTAL_SATISFACTION_FORM_TYPE_QUERIES
+      : PORTAL_SURVEY_FORM_TYPE_QUERIES,
   )
   const surveyList = useMemo(
     () => (remoteForms.enabled ? remoteForms.items : []),
-    [kind, remoteForms.enabled, remoteForms.items],
+    [remoteForms.enabled, remoteForms.items],
   )
   const showList = surveyList.length >= 2
   const [selectedId, setSelectedId] = useState(() => surveyList[0]?.id ?? '')
@@ -140,6 +146,7 @@ export function EducationSurveyFillPanel({
   const remoteFormQuery = useApplicationSurveyFormQuery(
     canFetchRemoteForm ? programId : null,
     canFetchRemoteForm ? selectedEntryId : null,
+    selectedEntry?.templateVersionId,
   )
   const submitMutation = useSubmitEducationSurveyMutation(programId, applicationType, applicationId)
 
@@ -149,6 +156,7 @@ export function EducationSurveyFillPanel({
         answers: selectedEntry?.answers,
         draftAnswers: selectedEntry?.draftAnswers,
         templateVersionId: selectedEntry?.templateVersionId,
+        versionStatus: undefined,
       }
     : remoteFormQuery.document
 
@@ -312,7 +320,12 @@ export function EducationSurveyFillPanel({
     const templateVersionId =
       remoteFormDocument?.templateVersionId ?? selectedEntry?.templateVersionId
 
-    if (remoteForms.enabled && bindingId != null && programId) {
+    if (
+      remoteForms.enabled &&
+      bindingId != null &&
+      programId &&
+      templateVersionId != null
+    ) {
       submitMutation.mutate(
         { bindingId, answers, templateVersionId },
         {
@@ -419,6 +432,16 @@ export function EducationSurveyFillPanel({
           remoteFormQuery.error,
           kind === 'satisfaction' ? '만족도조사를 불러오지 못했습니다.' : '설문조사를 불러오지 못했습니다.',
         )}
+      </PFText>
+    )
+  }
+
+  if (!isPortalBoundFormVersionUsable(remoteFormDocument?.versionStatus)) {
+    return (
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+        {kind === 'satisfaction'
+          ? '만족도조사 양식이 아직 준비되지 않았습니다.'
+          : '설문조사 양식이 아직 준비되지 않았습니다.'}
       </PFText>
     )
   }

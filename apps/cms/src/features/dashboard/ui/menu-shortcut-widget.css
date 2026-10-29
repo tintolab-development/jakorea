@@ -72,9 +72,9 @@
   background-color: rgba(1, 161, 175, 0.04) !important;
   cursor: pointer !important;
   transition:
-    border-color 0.2s,
-    background 0.2s,
-    box-shadow 0.2s !important;
+    border-color 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease !important;
   -webkit-user-select: none;
   user-select: none;
   box-sizing: border-box !important;
@@ -109,6 +109,7 @@
 .menu-shortcut-widget .menu-shortcut-widget__grid > button.menu-shortcut-widget__item:active {
   background: rgba(1, 161, 175, 0.12) !important;
   background-color: rgba(1, 161, 175, 0.12) !important;
+  transform: translateY(1px);
 }
 
 .menu-shortcut-widget__item-left {
@@ -170,4 +171,5 @@
   line-height: 130%;
   position: relative;
   z-index: 1;
+  transition: opacity 0.12s ease, transform 0.12s ease;
 }
