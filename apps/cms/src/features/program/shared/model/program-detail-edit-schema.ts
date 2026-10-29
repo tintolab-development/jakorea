@@ -50,6 +50,10 @@ import {
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { resolveVenueKind } from '@/features/program/general/model/common-info-edit-schema'
 import {
+  isPreEducationCurriculumSession,
+  isPreEducationScheduleBlock,
+} from '@/features/program/general/lib/schedule-detail-form'
+import {
   isSponsorContactUnselected,
   resolveSponsorContactIdsForEdit,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
@@ -178,17 +182,34 @@ export function resolveStoredIpsTypeSummary(input: {
   )
 }
 
+type ResolveStoredEducationFormLabelScheduleRow = Parameters<
+  typeof isPreEducationScheduleBlock
+>[0] & {
+  educationFormLabel?: string | null
+}
+
+type ResolveStoredEducationFormLabelCurriculumRow = Parameters<
+  typeof isPreEducationCurriculumSession
+>[0] & {
+  educationFormLabel?: string | null
+}
+
 export function resolveStoredEducationFormLabel(input: {
   educationFormLabel?: string | null
-  scheduleDetails?: Array<{ educationFormLabel?: string | null }> | null
-  curriculumSessions?: Array<{ educationFormLabel?: string | null }> | null
+  scheduleDetails?: ResolveStoredEducationFormLabelScheduleRow[] | null
+  curriculumSessions?: ResolveStoredEducationFormLabelCurriculumRow[] | null
 }): string {
   const root = input.educationFormLabel?.trim()
   if (root) return root
+  // 사전 교육 행(overlay 0) 교육 형태는 본 교육과 별개다. 본 교육 라벨 추론에서 뺀다.
   return (
     sharedFilledText([
-      ...(input.scheduleDetails ?? []).map(row => row.educationFormLabel),
-      ...(input.curriculumSessions ?? []).map(row => row.educationFormLabel),
+      ...(input.scheduleDetails ?? [])
+        .filter(row => !isPreEducationScheduleBlock(row))
+        .map(row => row.educationFormLabel),
+      ...(input.curriculumSessions ?? [])
+        .filter(row => !isPreEducationCurriculumSession(row))
+        .map(row => row.educationFormLabel),
     ]) ?? ''
   )
 }
