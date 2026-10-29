@@ -55,15 +55,28 @@
 }
 
 .recruit-guide-section .cms-data-table .ant-table-tbody > tr > td,
-.recruit-guide-section .cms-data-table .ant-table-tbody > tr:hover > td {
+.recruit-guide-section .cms-data-table .ant-table-tbody > tr:hover > td,
+.recruit-guide-section
+  .cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell-row-hover {
   height: auto !important;
   min-height: 54px;
 }
 
 .recruit-guide-banner-table .ant-table-tbody > tr > td,
 .recruit-guide-banner-table .ant-table-tbody > tr:hover > td,
+.recruit-guide-banner-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell-row-hover,
 .recruit-guide-culture-table .ant-table-tbody > tr > td,
-.recruit-guide-culture-table .ant-table-tbody > tr:hover > td {
+.recruit-guide-culture-table .ant-table-tbody > tr:hover > td,
+.recruit-guide-culture-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell-row-hover {
   white-space: normal !important;
 }
 

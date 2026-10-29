@@ -159,7 +159,11 @@
 .is-category-modal__table.cms-data-table
   .ant-table-tbody
   > tr.ant-table-row.ant-table-row-selected
-  > td {
+  > td,
+.is-category-modal__table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell-row-hover {
   box-sizing: border-box !important;
   height: 64px !important;
   min-height: 64px !important;
