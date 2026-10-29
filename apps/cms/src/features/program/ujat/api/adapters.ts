@@ -78,6 +78,7 @@ import {
   resolveOtherNotesFromProgramResponse,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { toOperationCalendarDate } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { assignProgramPaymentItemsToWriteRequest } from '@/features/program/shared/lib/wage-payment-item-request'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
@@ -299,6 +300,52 @@ function applicationDatesInsideBusiness(program: Program): {
   return { applicationStartDate, applicationEndDate }
 }
 
+function calendarDateInsideBusiness(date: string | undefined, program: Program): boolean {
+  const day = toOperationCalendarDate(date)
+  if (!day) return false
+  const start = toOperationCalendarDate(dateValue(program.startDate))
+  const end = toOperationCalendarDate(dateValue(program.endDate))
+  if (start && day < start) return false
+  if (end && day > end) return false
+  return true
+}
+
+/**
+ * BE PROGRAM_DATE_OUTSIDE_OPEN_PERIOD 는 recruitments[].operation* 도 검사한다.
+ * 모집 창(startAt/endAt)은 사업 기간 밖이어도 행에 남기고, 운영일만 사업 기간 안일 때 보낸다.
+ * 생략 시 생성 fallback 은 사업 시작·종료일.
+ */
+function pickOperationDatesInsideBusiness(
+  program: Program,
+  operationStartDate?: string,
+  operationEndDate?: string
+): { operationStartDate?: string; operationEndDate?: string } {
+  const start = dateValue(operationStartDate)
+  const end = dateValue(operationEndDate)
+  return {
+    ...(start && calendarDateInsideBusiness(start, program) ? { operationStartDate: start } : {}),
+    ...(end && calendarDateInsideBusiness(end, program) ? { operationEndDate: end } : {}),
+  }
+}
+
+function omitRecruitmentOperationDatesOutsideBusiness(
+  rows: ProgramRecruitmentRequest[] | undefined,
+  program: Program
+): ProgramRecruitmentRequest[] | undefined {
+  if (rows == null) return rows
+  return rows.map(row => {
+    const allowed = pickOperationDatesInsideBusiness(
+      program,
+      row.operationStartDate,
+      row.operationEndDate
+    )
+    const next = { ...row }
+    if (next.operationStartDate && !allowed.operationStartDate) delete next.operationStartDate
+    if (next.operationEndDate && !allowed.operationEndDate) delete next.operationEndDate
+    return next
+  })
+}
+
 function ujatVolunteerInterviewFields(
   program: Program,
   row?: ProgramRecruitmentWindow
@@ -469,7 +516,10 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       })
     )
   // 프로그램 봉사자 기간은 상반기 행에만 맞춘다. 하반기 기간은 그 행의 startAt/endAt 변경분으로만 보낸다.
-  return attachRecruitmentRowIdentity([...rows, ...secondHalfRows], program.programRecruitments)
+  return omitRecruitmentOperationDatesOutsideBusiness(
+    attachRecruitmentRowIdentity([...rows, ...secondHalfRows], program.programRecruitments),
+    program
+  ) as ProgramRecruitmentRequest[]
 }
 
 /**
@@ -483,7 +533,7 @@ export function buildUjatNewVolunteerHalfRowRequests(
   const savedTerms = new Set(
     (existing.programRecruitments ?? []).map(row => row.recruitTerm).filter(Boolean)
   )
-  return (rows ?? [])
+  const built = (rows ?? [])
     .filter(
       row =>
         row.id == null &&
@@ -538,6 +588,7 @@ export function buildUjatNewVolunteerHalfRowRequests(
       ...(row.volunteerTargets !== undefined ? { volunteerTargets: row.volunteerTargets } : {}),
       ...(row.interviewConfig !== undefined ? { interviewConfig: row.interviewConfig } : {}),
     })) as ProgramRecruitmentRequest[]
+  return omitRecruitmentOperationDatesOutsideBusiness(built, existing) as ProgramRecruitmentRequest[]
 }
 
 /**
@@ -629,7 +680,10 @@ function withUjatCreateRowCopy(
       ...(kind === 'institution' ? {} : ujatVolunteerInterviewFields(display)),
     }
   })
-  return withRecruitmentCreateMedia(copied, overlayForUjatCreateMedia(program), 'ujat')
+  return omitRecruitmentOperationDatesOutsideBusiness(
+    withRecruitmentCreateMedia(copied, overlayForUjatCreateMedia(program), 'ujat'),
+    program
+  )
 }
 
 function programIps(value: string | null | undefined): Program['ips'] | undefined {
