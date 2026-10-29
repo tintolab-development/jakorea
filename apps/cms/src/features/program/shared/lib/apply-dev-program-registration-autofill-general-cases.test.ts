@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it } from 'vitest'
+import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import {
   buildGeneralProgramListRowFromRegistrationSnapshot,
@@ -31,8 +32,16 @@ import {
   getProgramRegistrationOverlayRecord,
   resetProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import { resetApplicantRecruitInstitutionOverlayStoreForTests } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { resetGeneralRecruitOverlayStoreForTests } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS as RK } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
+import {
+  peekApplicantRecruitInstitutionOverlayRecord,
+  resetApplicantRecruitInstitutionOverlayStoreForTests,
+} from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import {
+  peekGeneralRecruitOverlayRecord,
+  resetGeneralRecruitOverlayStoreForTests,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { listDevAutofillRecruitOverlayTargets } from '@/features/program/shared/lib/dev-autofill-recruit-overlay'
 import { clearRegistrationWizardSessionDrafts } from '@/features/program/general/lib/registration-wizard-session-drafts'
 
 const RESOLVED_CURRICULUM = {
@@ -193,6 +202,41 @@ describe('previewGeneralRegistrationDevAutofillForCase', () => {
       ).toBe(false)
     })
   }
+
+  it('모집·프로그램 기간은 사업(오픈) 기간 안에 둔다', () => {
+    const caseId = GENERAL_REGISTRATION_DEV_AUTOFILL_CASE_IDS[0]!
+    const preset = resolveGeneralRegistrationDevAutofillPreset(caseId)
+    previewGeneralRegistrationDevAutofillForCase(caseId, resolvedForPreset(preset))
+    const overlay = getProgramRegistrationOverlayRecord()
+    const targets = listDevAutofillRecruitOverlayTargets('general', preset.participantFlags)
+    const institutionCode = targets.institutionRecruit[0]
+    const generalCode = targets.generalRecruit[0]
+    const recruit =
+      institutionCode != null
+        ? peekApplicantRecruitInstitutionOverlayRecord(institutionCode)
+        : generalCode != null
+          ? peekGeneralRecruitOverlayRecord(generalCode)
+          : {}
+    const business = overlay['generalRegistration.basicInfo.operationRangeSeal'] as {
+      start?: string
+      end?: string
+    }
+    const program = (recruit[RK.programRangeSeal] ??
+      recruit['recruit.individual.programRangeSeal']) as { start?: string; end?: string }
+    const recruitRange = (recruit[RK.recruitRangeSeal] ??
+      recruit['recruit.individual.recruitRangeSeal']) as { start?: string; end?: string }
+    const bizStart = dayjs(business.start)
+    const bizEnd = dayjs(business.end)
+    const inside = (start?: string, end?: string) => {
+      expect(start).toBeTruthy()
+      expect(end).toBeTruthy()
+      expect(!dayjs(start).isBefore(bizStart, 'day')).toBe(true)
+      expect(!dayjs(end).isAfter(bizEnd, 'day')).toBe(true)
+    }
+    inside(business.start, business.end)
+    inside(program.start, program.end)
+    inside(recruitRange.start, recruitRange.end)
+  })
 })
 
 describe('DEV 자동입력 → 등록 POST 스냅샷', () => {
