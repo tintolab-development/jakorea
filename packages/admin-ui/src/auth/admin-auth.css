@@ -1,0 +1,130 @@
+/**
+ * CMS/Admin 로그인·회원가입 공통 auth shell presentation.
+ * 카드 padding·액션 gap·input/button 높이는 앱 override 가능.
+ */
+
+.auth-page,
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  box-sizing: border-box;
+  background: var(--color-bg-tertiary, #f5f5f5);
+  padding: var(--spacing-20);
+  overflow: auto;
+  overscroll-behavior: none;
+}
+
+.auth-card,
+.login-card {
+  display: flex;
+  width: 600px;
+  max-width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: calc(100vh - var(--spacing-20) * 2);
+  max-height: calc(100dvh - var(--spacing-20) * 2);
+  padding: 60px !important;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: center;
+  box-sizing: border-box;
+  border-radius: 16px;
+  border: 2px solid #fff;
+  background: var(--main-WT, #fff);
+  box-shadow:
+    4px 4px 16px 0 rgba(0, 38, 75, 0.06),
+    0 32px 80px 0 rgba(0, 38, 75, 0.08);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.auth-logo-wrapper,
+.login-logo-wrapper {
+  display: flex;
+  padding: 0 44px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.auth-logo,
+.login-logo {
+  width: 198px;
+  height: 100px;
+  aspect-ratio: 99 / 50;
+}
+
+.auth-logo-link {
+  display: inline-flex;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  line-height: 0;
+}
+
+.auth-form-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+  padding: 0 44px;
+  flex: 1;
+  min-height: 0;
+}
+
+.auth-label,
+.login-label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.auth-required,
+.login-required {
+  color: var(--color-red, #c32f4a);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 120%;
+  margin-left: 2px;
+}
+
+.auth-form,
+.login-form {
+  width: 100%;
+}
+
+.auth-form .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.auth-form .ant-form-item:last-of-type {
+  margin-bottom: 0;
+}
+
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+}

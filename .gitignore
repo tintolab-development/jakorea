@@ -3,6 +3,7 @@ node_modules
 .turbo
 apps/*/dist
 packages/*/dist
+packages/*/.dev-watch.lock
 .DS_Store
 .env
 .env.local

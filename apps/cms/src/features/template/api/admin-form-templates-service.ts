@@ -13,7 +13,13 @@ import {
   writingFormDraftToSchemaJson,
 } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
-import { shouldOmitImmutableFormSchemaJson } from '@/features/template/lib/form-template-delete-policy'
+import {
+  isCatalogOriginalVersionWriteBlocked,
+  isCatalogSurveyOrGeneralAgreementTemplateCode,
+  isDocumentOnlyAgreementTemplateCode,
+  resolveWritingFormCatalogCategory,
+  shouldOmitImmutableFormSchemaJson,
+} from '@/features/template/lib/form-template-delete-policy'
 import { buildOperationalImmutableFormSchemaDraft } from '@/features/template/lib/operational-form-schema-copy-merge'
 import {
   getFormTemplateVersionCacheEntry,
@@ -390,6 +396,15 @@ function buildVersionUpdateBody(args: {
   return body
 }
 
+function assertCatalogTemplateVersionEditable(templateCode: string): void {
+  if (isCatalogOriginalVersionWriteBlocked(templateCode)) {
+    if (templateCode.trim() === 'agreement-crime') {
+      throw new Error('성범죄 경력조회 동의서는 폼 빌더가 아닌 PDF 교체 기능으로만 수정할 수 있습니다.')
+    }
+    throw new Error('등록·모집·신청 CATALOG 원본은 수정하거나 새 버전을 만들 수 없습니다.')
+  }
+}
+
 async function loadCatalogBaselineForImmutablePut(
   versionId: number
 ): Promise<WritingFormDraft | null> {
@@ -447,6 +462,7 @@ export async function saveFormTemplateVersionDraft(args: {
   if (!shouldUseRemoteDraftApiForTemplateCode(args.templateCode)) {
     throw new Error('이 템플릿은 원격 draft API 대상이 아닙니다.')
   }
+  assertCatalogTemplateVersionEditable(args.templateCode)
 
   const versionId = await resolveTemplateVersionId(args.templateCode)
   if (versionId == null) {
@@ -462,6 +478,11 @@ export async function saveFormTemplateVersionDraft(args: {
     omitSchemaJson,
     catalogBaseline,
   })
+
+  if (isCatalogSurveyOrGeneralAgreementTemplateCode(args.templateCode)) {
+    await createDraftVersionFromImmutable(args.templateCode, versionId, body)
+    return
+  }
 
   try {
     await updateFormTemplateVersionRemote(versionId, body)
@@ -495,6 +516,7 @@ async function createDraftVersionFromImmutable(
       ? null
       : await fetchFormTemplateVersionRemote(sourceVersionId)
   const created = await createFormTemplateVersionRemote(cached.templateId, {
+    sourceVersionId,
     schemaJson: body.schemaJson ?? toJsonText(source?.schemaJson),
     extensionJson: body.extensionJson ?? toJsonText(source?.extensionJson),
     settingsJson: body.settingsJson ?? toJsonText(source?.settingsJson),
@@ -521,6 +543,7 @@ export async function publishFormTemplateVersion(templateCode: string): Promise<
   if (!shouldUseFormsSurveysRemoteApi()) {
     throw new Error('양식 게시는 formsSurveys API 활성화 후 이용할 수 있습니다.')
   }
+  assertCatalogTemplateVersionEditable(templateCode)
 
   const versionId = await resolveTemplateVersionId(templateCode)
   if (versionId == null) {
@@ -564,6 +587,12 @@ export async function duplicateFormTemplateVersionRemote(args: {
   templateName?: string
 }): Promise<string> {
   assertFormsSurveysRemoteReady()
+  if (resolveWritingFormCatalogCategory(args.sourceTemplateCode) === 'REGISTRATION') {
+    throw new Error('등록 양식 CATALOG 원본은 복제할 수 없습니다.')
+  }
+  if (isDocumentOnlyAgreementTemplateCode(args.sourceTemplateCode)) {
+    throw new Error('성범죄 경력조회 동의서는 복제하거나 새 버전을 만들 수 없습니다.')
+  }
 
   let sourceTemplateId = args.sourceApiTemplateId
   let sourceVersionId = args.sourceVersionId

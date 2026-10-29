@@ -1,26 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
 import {
+  fetchFormTemplatePayloadByCodeRemote,
+  replaceCatalogDocumentRemote,
+} from '@/features/template/api/form-templates-api-client'
+import {
+  resolveFormTemplateCatalogIds,
+} from '@/features/template/api/admin-form-templates-service'
+import {
   AGREEMENT_CRIME_TEMPLATE_CODE,
-  buildAgreementCrimeConsentSettings,
-  parseAgreementCrimeConsentSettings,
-  readImageFileAsDataUrl,
+  readFileAsDataUrl,
 } from '@/features/template/lib/agreement-crime-consent-settings'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import { contentUrlForFileObjectId } from '@/shared/lib/admin-file-upload'
 import {
-  loadWritingFormTemplateDraft,
-  persistWritingFormTemplateDraft,
-} from '@/features/template/lib/writing-form-template-local-save'
-import {
-  normalizeWritingFormDraft,
-  type WritingFormDraft,
-} from '@/features/template/model/writing-form-draft.schema'
-
-const EMPTY_CRIME_CONSENT_DRAFT: WritingFormDraft = {
-  schemaVersion: 1,
-  formSettings: { titleNumbering: 'none' },
-  paragraphs: [],
-}
+  ADMIN_FILE_PURPOSE,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload/upload-maybe-mock'
 
 export function useAgreementCrimeConsentDocumentEditor(active: boolean) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
@@ -40,14 +36,24 @@ export function useAgreementCrimeConsentDocumentEditor(active: boolean) {
 
     let cancelled = false
     ignoreDraftLoadRef.current = false
-    void loadWritingFormTemplateDraft(AGREEMENT_CRIME_TEMPLATE_CODE).then(saved => {
+    void fetchFormTemplatePayloadByCodeRemote(AGREEMENT_CRIME_TEMPLATE_CODE).then(payload => {
       if (cancelled || ignoreDraftLoadRef.current) return
-      const settings = parseAgreementCrimeConsentSettings(saved?.settingsJson)
-      if (settings.documentImageUrl != null) {
-        setDisplaySrc(settings.documentImageUrl)
-        setReplacementFileName(settings.replacementFileName ?? null)
+      const document = payload.catalogDocument
+      const src =
+        document?.downloadPath?.trim() ||
+        (document?.activeFileObjectId != null
+          ? contentUrlForFileObjectId(document.activeFileObjectId)
+          : '')
+      if (src !== '') {
+        setDisplaySrc(src)
+        setReplacementFileName(document?.fileName ?? null)
         return
       }
+      setDisplaySrc(crimeConsentDefaultImage)
+      setReplacementFileName(null)
+    }).catch(error => {
+      console.debug('agreementCrimeConsent catalog document load failed', error)
+      if (cancelled || ignoreDraftLoadRef.current) return
       setDisplaySrc(crimeConsentDefaultImage)
       setReplacementFileName(null)
     })
@@ -57,13 +63,26 @@ export function useAgreementCrimeConsentDocumentEditor(active: boolean) {
     }
   }, [active])
 
-  const persistDocument = useCallback(
-    async (args: { documentImageUrl: string; replacementFileName: string | null }) => {
+  const replaceDocument = useCallback(
+    async (file: File) => {
       try {
-        await persistWritingFormTemplateDraft({
-          templateId: AGREEMENT_CRIME_TEMPLATE_CODE,
-          draft: normalizeWritingFormDraft(EMPTY_CRIME_CONSENT_DRAFT),
-          settingsJson: buildAgreementCrimeConsentSettings(args),
+        const catalog = await resolveFormTemplateCatalogIds(AGREEMENT_CRIME_TEMPLATE_CODE)
+        if (catalog?.templateId == null) {
+          throw new Error('성범죄 동의서 템플릿 ID를 찾을 수 없습니다.')
+        }
+        const uploaded = await uploadAdminFileMaybeMock({
+          file,
+          owner: {
+            ownerDomain: 'CONTENT',
+            ownerType: 'FORM_TEMPLATE',
+            ownerId: catalog.templateId,
+            filePurpose: ADMIN_FILE_PURPOSE.FORM_CATALOG_DOCUMENT,
+          },
+          originalFileName: file.name,
+          waitUntilAvailable: true,
+        })
+        await replaceCatalogDocumentRemote(catalog.templateId, {
+          fileObjectId: uploaded.fileObjectId,
         })
         showSaveSuccess()
       } catch (error) {
@@ -77,16 +96,13 @@ export function useAgreementCrimeConsentDocumentEditor(active: boolean) {
   const handleDocumentFile = useCallback(
     async (file: File) => {
       ignoreDraftLoadRef.current = true
-      const dataUrl = await readImageFileAsDataUrl(file)
+      const dataUrl = await readFileAsDataUrl(file)
       setDisplaySrc(dataUrl)
       setReplacementFileName(file.name)
       setUploadedFile(file)
-      await persistDocument({
-        documentImageUrl: dataUrl,
-        replacementFileName: file.name,
-      })
+      await replaceDocument(file)
     },
-    [persistDocument]
+    [replaceDocument]
   )
 
   return {

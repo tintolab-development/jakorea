@@ -38,6 +38,7 @@ import {
   isIndividualApplicationEnrolledGradeRequiredError,
   PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE,
 } from '@/features/program/lib/application-api-error'
+import { clearProgramMinorPortraitAttempt } from '@/features/program/lib/program-minor-portrait-attempt'
 import {
   collectApplicationSubmitParagraphErrors,
   isApplicationAnswerValidationErrorCode,
@@ -454,6 +455,7 @@ export function ProgramApplyPage() {
     missingConsents,
     findMissingRequiredConsents,
     openRequiredConsentModal,
+    minorPortraitGateModalProps,
   } = useProgramApplyGate(programId, applicationSelection)
   const [completeModalOpen, setCompleteModalOpen] = useState(false)
   const applyGatePromptedRef = useRef(false)
@@ -3196,6 +3198,8 @@ export function ProgramApplyPage() {
           })(),
         })
         submittedSuccessfullyProgramIdRef.current = programId
+        // 미성년 프로그램 초상권: 신청 시도 단위 — 제출 성공 시 다음 신청에서 다시 받도록 초기화
+        clearProgramMinorPortraitAttempt(programId)
         setSubmitErrorField(null)
         setSubmitErrorMessages({})
         setGateModal(null)
@@ -3381,6 +3385,7 @@ export function ProgramApplyPage() {
           }
         }}
         missingConsentTypes={missingConsents}
+        {...minorPortraitGateModalProps}
         onOpenConsents={() => {
           closeGateModal()
           navigate(programApplyGateConsentsPath)

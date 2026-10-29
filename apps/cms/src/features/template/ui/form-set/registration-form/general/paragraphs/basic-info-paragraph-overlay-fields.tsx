@@ -375,7 +375,8 @@ export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
           <div className="detail-info-form-inputs-wrapper">
             <CmsRadioGroup
               size="medium"
-              value={partnerInvolvement || undefined}
+              // 미선택('')·키 없음은 저장 빌더와 동일하게 Yes(true)로 표시 — 'no'만 No
+              value={partnerInvolvement === 'no' ? 'no' : 'yes'}
               onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
             >
               <CmsRadio size="medium" value="yes">Yes</CmsRadio>

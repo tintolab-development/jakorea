@@ -8,6 +8,7 @@ import type {
   FormTemplateLatestPayloadResponse,
   FormTemplateResponse,
   FormTemplateUpdateRequest,
+  FormCatalogDocumentReplaceRequest,
   FormTemplateVersionCopyRequest,
   FormTemplateVersionCreateRequest,
   FormTemplateVersionPublishRequest,
@@ -51,6 +52,13 @@ export async function publishFormTemplateVersionRemote(
   body?: FormTemplateVersionPublishRequest
 ): Promise<FormTemplateVersionResponse> {
   return unwrapApiBody(await formsSurveysApi.publishVersion(versionId, body ?? {}))
+}
+
+export async function replaceCatalogDocumentRemote(
+  templateId: number,
+  body: FormCatalogDocumentReplaceRequest
+): Promise<void> {
+  await formsSurveysApi.replaceCatalogDocument(templateId, body)
 }
 
 export async function copyFormTemplateVersionRemote(

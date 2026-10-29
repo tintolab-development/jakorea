@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import { INSTRUCTOR_PERMISSION_REVOKE_BLOCKED_ALERT } from '@/features/user/detail/lib/instructor-permission-revoke-copy'
 import {
   INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM_CODE,
   isInstructorRevokeBlockedByActiveProgramError,
+  isInstructorRevokeUrl,
   isInstructorRoleRequestCancelApprovalUrl,
   resolveInstructorCancelApprovalBlockedAlert,
+  resolveInstructorRevokeBlockedAlert,
   shouldSkipGlobalAlertForInstructorCancelApprovalBlocked,
+  shouldSkipGlobalAlertForInstructorRevokeBlocked,
 } from './instructor-permission-cancel-approval-blocked'
 import { INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_BLOCKED_ALERT } from './instructor-permission-cancel-approval-copy'
 
-const GENERIC_CONFLICT_MESSAGE =
-  '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.'
+const GENERIC_CONFLICT_MESSAGE = '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.'
 
 function axiosEnvelopeError(input: {
   status: number
@@ -135,7 +138,7 @@ describe('instructor cancel-approval blocked-by-active-program', () => {
     )
   })
 
-  it('T16: 강사 권한 박탈 URL은 글로벌 알림을 건너뛰지 않는다', () => {
+  it('T16: 승인 취소 전용 skip은 강사 권한 종료 URL에 적용하지 않는다', () => {
     const error = axiosEnvelopeError({
       status: 409,
       code: INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM_CODE,
@@ -143,6 +146,34 @@ describe('instructor cancel-approval blocked-by-active-program', () => {
     })
     expect(isInstructorRoleRequestCancelApprovalUrl(REVOKE_URL)).toBe(false)
     expect(shouldSkipGlobalAlertForInstructorCancelApprovalBlocked(error, REVOKE_URL)).toBe(false)
+  })
+
+  it('강사 권한 종료 URL + 대상 코드만 종료 전용 안내를 쓰고 글로벌 알림을 건너뛴다', () => {
+    const error = axiosEnvelopeError({
+      status: 409,
+      code: INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM_CODE,
+      details: null,
+      url: REVOKE_URL,
+    })
+    expect(isInstructorRevokeUrl(REVOKE_URL)).toBe(true)
+    expect(isInstructorRevokeUrl(CANCEL_APPROVAL_URL)).toBe(false)
+    expect(shouldSkipGlobalAlertForInstructorRevokeBlocked(error, REVOKE_URL)).toBe(true)
+    expect(shouldSkipGlobalAlertForInstructorRevokeBlocked(error, CANCEL_APPROVAL_URL)).toBe(false)
+    expect(resolveInstructorRevokeBlockedAlert(error)).toEqual(
+      INSTRUCTOR_PERMISSION_REVOKE_BLOCKED_ALERT
+    )
+    expect(INSTRUCTOR_PERMISSION_REVOKE_BLOCKED_ALERT.content).not.toBe(GENERIC_CONFLICT_MESSAGE)
+  })
+
+  it('강사 권한 종료 URL의 일반 409는 전용 안내를 쓰지 않는다', () => {
+    const error = axiosEnvelopeError({
+      status: 409,
+      code: 'INSTRUCTOR_REVOKE_STATE_CHANGED',
+      url: REVOKE_URL,
+    })
+    expect(isInstructorRevokeBlockedByActiveProgramError(error)).toBe(false)
+    expect(resolveInstructorRevokeBlockedAlert(error)).toBeNull()
+    expect(shouldSkipGlobalAlertForInstructorRevokeBlocked(error, REVOKE_URL)).toBe(false)
   })
 
   it('승인 취소 URL + 대상 코드만 글로벌 알림을 건너뛴다', () => {

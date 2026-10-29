@@ -16,6 +16,7 @@ import { MfaVerificationModal } from '@/features/auth/ui/mfa-verification-modal'
 import { LoginSocialNotLinkedView } from '@/features/auth/ui/login-social-not-linked-view'
 import { LoginSocialAlreadyLinkedView } from '@/features/auth/ui/login-social-already-linked-view'
 import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
@@ -95,9 +96,12 @@ export function LoginPage() {
   } = useLoginAttempts()
 
   const redirectPath = params.redirect
-  const showSocialNotLinked = params.socialNotLinked === '1' || params.socialNotLinked === 'true'
+  const showSocialNotLinked =
+    SOCIAL_ACCOUNT_LINK_ENABLED &&
+    (params.socialNotLinked === '1' || params.socialNotLinked === 'true')
   const showSocialAlreadyLinked =
-    params.socialAlreadyLinked === '1' || params.socialAlreadyLinked === 'true'
+    SOCIAL_ACCOUNT_LINK_ENABLED &&
+    (params.socialAlreadyLinked === '1' || params.socialAlreadyLinked === 'true')
   const registerPath = redirectPath
     ? `/register?redirect=${encodeURIComponent(redirectPath)}`
     : '/register'
@@ -398,8 +402,8 @@ export function LoginPage() {
                         ))}
                       </Space>
                       <Text type="secondary" className="login-dev-quick__hint">
-                        실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수
-                        있습니다.
+                        실 API: Master → MFA 000000. Accounting Manager/Program Manager/Program
+                        Viewer는 BE QA seed 전까지 401일 수 있습니다.
                       </Text>
                     </div>
                   ) : null}

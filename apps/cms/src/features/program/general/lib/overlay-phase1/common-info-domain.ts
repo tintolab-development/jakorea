@@ -315,9 +315,8 @@ export function buildCurriculumSessionsFromMaps(
       assignmentEnabled: false,
       educationFormLabel: isTeacherTraining
         ? educationFormLabelFromValue(teacherTrainingForm || 'online')
-        : eduDetail === 'perSchedule'
-          ? educationFormLabelFromValue(maps.educationFormBySession[0] ?? 'online')
-          : undefined,
+        : /** 사전 교육 교육형태 — common/perSchedule 무관 (상세 수정 폼과 동일 규칙) */
+          educationFormLabelFromValue(maps.educationFormBySession[0] ?? 'online'),
       ipsTypeSummary:
         isTeacherTraining || ipsDetail === 'perSchedule'
           ? buildSessionIpsTypeSummary('prepare', 'none')
@@ -468,11 +467,8 @@ export function buildScheduleDetailsFromMaps(
       ...(isTeacherTraining ? {} : { blockKind: 'preEducation' as const }),
       assignmentEnabled: false,
       scheduleDateLabel: formatScheduleDateLabel(maps.scheduleDateByDetailIso[0]),
-      educationFormLabel: preEducationForm
-        ? educationFormLabelFromValue(preEducationForm)
-        : eduDetail === 'perSchedule'
-          ? educationFormLabelFromValue('online')
-          : undefined,
+      /** 사전 교육 교육형태 — common/perSchedule 무관 (커리큘럼형과 동일 규칙) */
+      educationFormLabel: educationFormLabelFromValue(preEducationForm || 'online'),
       ipsTypeSummary:
         isTeacherTraining || ipsDetailKind === 'perSchedule'
           ? buildSessionIpsTypeSummary('prepare', 'none')

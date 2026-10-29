@@ -11,9 +11,9 @@ import { Row } from 'antd'
 import { DndContext, DragOverlay, MeasuringStrategy, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSwappingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getAdminLevelLabel } from '@/shared/config/permissions'
 import { getDashboardWidgetsForUser, isWidgetResizable } from '@/shared/config/dashboard-config'
 import { getRoleLabel } from '@/shared/ui'
+import { getAdminPermissionDisplayLabel } from '@/features/user/shared/lib/admin-permission-display'
 import { canAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import {
@@ -69,11 +69,11 @@ export function Dashboard() {
 
   const userRoleLabel = useMemo(() => {
     if (!user) return ''
-    if (user.role === 'ADMIN' && user.adminLevel) {
-      return getAdminLevelLabel(user.adminLevel)
+    if (user.role === 'ADMIN') {
+      return getAdminPermissionDisplayLabel(user)
     }
     return getRoleLabel(user.role, user.adminLevel)
-  }, [user?.role, user?.adminLevel])
+  }, [user])
 
   const isInstructorOrIndividual =
     (user?.role === 'INSTRUCTOR' || user?.role === 'INDIVIDUAL') && !!user?.instructorId

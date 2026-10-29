@@ -2,7 +2,7 @@
  * 메뉴별 조회 통계 — 요약 테이블 (상위 5메뉴 + 총합)
  */
 
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { MenuViewSummary } from '@/entities/menu-view-stats/model/types'
 import { formatCount } from '@/features/menu-view-stats/lib/format-count'
@@ -64,7 +64,7 @@ export function MenuViewSummaryTable({ summary, loading }: Props) {
 
   return (
     <div className="cms-data-table menu-view-stats-summary">
-      <Table<SummaryRow>
+      <CmsDataTable<SummaryRow>
         className="menu-view-stats-summary__table"
         columns={columns}
         dataSource={dataSource}

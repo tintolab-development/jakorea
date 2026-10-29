@@ -59,6 +59,7 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
+  getProgramRegistrationOverlayRecord,
   patchGeneralRegistrationSponsorSelectionOverlay,
   patchProgramRegistrationOverlay,
   replaceProgramRegistrationOverlayPrefixes,
@@ -1196,6 +1197,32 @@ function finalizeTypeSettings(
   }
 }
 
+/** 사전 교육(index 0) 교육 형태를 담는 맵 — 자동채우기는 1..N만 만든다 */
+const PRE_EDUCATION_EDUCATION_FORM_KEYS = [
+  'generalRegistration.educationCurriculum.educationFormBySession',
+  'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
+] as const
+
+/**
+ * 자동채우기가 교육 형태 맵을 통째로 덮어써도 기존 사전 교육(0번) 값을 보존한다.
+ * 0번이 없으면 넣지 않는다 — 사전 교육이 켜져 있으면 paragraph effect가 'online'을 기록한다.
+ */
+function preservePreEducationEducationForm(
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  const current = getProgramRegistrationOverlayRecord()
+  const next = { ...overlay }
+  for (const key of PRE_EDUCATION_EDUCATION_FORM_KEYS) {
+    const filled = next[key]
+    if (filled == null || typeof filled !== 'object') continue
+    const prevZero = (current[key] as Record<number, unknown> | undefined)?.[0]
+    if (typeof prevZero === 'string' && prevZero.trim()) {
+      next[key] = { ...(filled as Record<number, string>), 0: prevZero }
+    }
+  }
+  return next
+}
+
 function buildGeneralLikeOverlay(
   sample: DevAutofillSample,
   basicPrefix: string,
@@ -2207,19 +2234,21 @@ export async function applyDevProgramRegistrationAutofill(
   }
 
   patchProgramRegistrationOverlay(
-    buildGeneralLikeOverlay(
-      sample,
-      'generalRegistration.basicInfo',
-      'generalRegistration.kpi',
-      'generalRegistration.educationCurriculum',
-      'generalRegistration.educationScheduleSettings',
-      GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
-      'generalRegistration.typeSettings',
-      effectiveLayout,
-      typeSettings,
-      educationScheduleLines,
-      resolved,
-      overlayBehavior
+    preservePreEducationEducationForm(
+      buildGeneralLikeOverlay(
+        sample,
+        'generalRegistration.basicInfo',
+        'generalRegistration.kpi',
+        'generalRegistration.educationCurriculum',
+        'generalRegistration.educationScheduleSettings',
+        GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+        'generalRegistration.typeSettings',
+        effectiveLayout,
+        typeSettings,
+        educationScheduleLines,
+        resolved,
+        overlayBehavior
+      )
     )
   )
   patchGeneralRegistrationSponsorSelectionOverlay({
@@ -2279,22 +2308,24 @@ export function previewGeneralRegistrationDevAutofillForCase(
   )
   seedDevAutofillApplicationThirdPartyRecipients('general', preset.layout)
   patchProgramRegistrationOverlay(
-    buildGeneralLikeOverlay(
-      sample,
-      'generalRegistration.basicInfo',
-      'generalRegistration.kpi',
-      'generalRegistration.educationCurriculum',
-      'generalRegistration.educationScheduleSettings',
-      GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
-      'generalRegistration.typeSettings',
-      preset.layout,
-      typeSettings,
-      educationScheduleLines,
-      {
-        ...resolved,
-        contactId: resolved.contactId,
-      },
-      preset.overlayBehavior
+    preservePreEducationEducationForm(
+      buildGeneralLikeOverlay(
+        sample,
+        'generalRegistration.basicInfo',
+        'generalRegistration.kpi',
+        'generalRegistration.educationCurriculum',
+        'generalRegistration.educationScheduleSettings',
+        GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+        'generalRegistration.typeSettings',
+        preset.layout,
+        typeSettings,
+        educationScheduleLines,
+        {
+          ...resolved,
+          contactId: resolved.contactId,
+        },
+        preset.overlayBehavior
+      )
     )
   )
   return {

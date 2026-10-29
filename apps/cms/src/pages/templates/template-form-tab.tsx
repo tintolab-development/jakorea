@@ -10,7 +10,6 @@ import {
 import {
   isDuplicateWritingTemplateCode,
   isUserCreatedWritingFormTemplateRow,
-  isWritingFormTemplateStructureLocked,
 } from '@/features/template/lib/form-template-delete-policy'
 import { resolvePreviewHeaderTitle } from '@/features/template/model/template-registry/template-registry'
 import { lookupWritingTemplateRegistry } from '@/features/template/lib/lookup-writing-template-registry'
@@ -24,6 +23,7 @@ import { useFormTemplateDeleteAction } from '@/features/template/hooks/use-form-
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
 import { TemplateTable } from '@/features/template/ui/template-management/template-table'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { TemplatePreviewModal } from '@/features/template/ui/template-management/template-preview-modal'
 import { CrimeRecordConsentDocumentFullpageModal } from '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal'
 import {
@@ -245,21 +245,8 @@ export default function TemplateFormTab() {
         ? createDirectAgreementWritingFormConfig(row?.templateName ?? '동의 양식 신규 폼')
         : null)
     if (raw == null) return null
-
-    const locked = isWritingFormTemplateStructureLocked({
-      templateCode,
-      systemTemplate: row?.systemTemplate,
-      forceUserEditable,
-    })
-    return locked ? raw : stripAgreementWritingFormStructureLocks(raw)
-  }, [
-    forceUserEditable,
-    params.id,
-    params.mode,
-    params.type,
-    selectedTemplate,
-    writingSections,
-  ])
+    return stripAgreementWritingFormStructureLocks(raw)
+  }, [params.id, params.mode, params.type, selectedTemplate, writingSections])
 
   const suppressInactiveUserPreviewStrip = useMemo(() => {
     if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return false
@@ -338,7 +325,7 @@ export default function TemplateFormTab() {
           </p>
         ) : null}
         {isWritingSectionsLoading ? (
-          <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
+          <FormDraftLoading ariaLabel="양식 목록을 불러오는 중" />
         ) : (
           writingSections.map(section => (
             <TemplateListCard

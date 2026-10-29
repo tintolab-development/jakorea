@@ -7,7 +7,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType, TableProps } from 'antd/es/table'
 import type { Popup } from '@/entities/popup/model/types'
 
@@ -43,7 +43,7 @@ export function PopupsSortableTable({
       dndContextProps={dndContextProps}
       dragDisabled={disabled}
     >
-      <Table<Popup>
+      <CmsDataTable<Popup>
         className="cms-data-table popup-table"
         rowKey="id"
         loading={loading}

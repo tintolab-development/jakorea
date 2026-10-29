@@ -19,6 +19,8 @@ interface TemplateFullpageModalProps {
   /** false면 헤더 「미리보기」 버튼을 숨긴다. 기본 true */
   showPreview?: boolean
   onSave?: () => void
+  /** false면 헤더 저장 버튼을 숨긴다. 기본 true */
+  showSave?: boolean
   /** 사용자 추가 생성 템플릿 — 시안: 삭제 | 미리보기 | 저장 */
   showDeleteButton?: boolean
   onDelete?: () => void
@@ -101,6 +103,7 @@ export function TemplateFullpageModal({
   onPreview,
   showPreview = true,
   onSave,
+  showSave = true,
   showDeleteButton = false,
   onDelete,
   deleteLoading = false,
@@ -173,9 +176,11 @@ export function TemplateFullpageModal({
             미리보기
           </CmsButton>
         ) : null}
-        <CmsButton onClick={() => onSave?.()} disabled={deleteLoading}>
-          {resolvedSaveLabel}
-        </CmsButton>
+        {showSave ? (
+          <CmsButton onClick={() => onSave?.()} disabled={deleteLoading}>
+            {resolvedSaveLabel}
+          </CmsButton>
+        ) : null}
       </>
     ) : (
       <>
@@ -195,7 +200,9 @@ export function TemplateFullpageModal({
             미리보기
           </CmsButton>
         ) : null}
-        <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
+        {showSave ? (
+          <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
+        ) : null}
       </>
     )
 

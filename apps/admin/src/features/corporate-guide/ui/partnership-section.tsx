@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type {
   PartnershipStep,
@@ -201,7 +201,7 @@ export function PartnershipSectionCard({ items }: Props) {
         </div>
       </div>
 
-      <Table<PartnershipStep>
+      <CmsDataTable<PartnershipStep>
         className="cms-data-table cms-data-table--skip-auto-no-col corporate-guide-partnership-table"
         columns={columns}
         dataSource={items}

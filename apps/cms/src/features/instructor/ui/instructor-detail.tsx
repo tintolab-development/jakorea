@@ -6,22 +6,8 @@
 
 import { CmsRadio } from '@/shared/ui'
 import { useEffect, useState, useMemo } from 'react'
-import {
-  Card,
-  Descriptions,
-  Tag,
-  Space,
-  Button,
-  Table,
-  Tabs,
-  Badge,
-  Select,
-  Collapse,
-  Statistic,
-  Row,
-  Col,
-  Modal,
-} from 'antd'
+import { Card, Descriptions, Tag, Space, Button, Tabs, Badge, Select, Collapse, Statistic, Row, Col, Modal } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { Instructor } from '@/types/domain'
 import { formatInstructorSettlementAccountParts } from '@/features/user/detail/ui/user-basic-info/display'
@@ -416,7 +402,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
 
           {/* 전체 매칭 목록 */}
           <Card size="small" title="전체 매칭 목록">
-            <Table
+            <CmsDataTable
               dataSource={instructorMatchings}
               columns={matchingColumns}
               rowKey="id"
@@ -512,7 +498,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
                     {month.matchings.length > 0 && (
                       <div>
                         <h4 style={{ marginBottom: 8 }}>강의 진행 내역</h4>
-                        <Table
+                        <CmsDataTable
                           dataSource={month.matchings}
                           columns={matchingColumns}
                           rowKey="id"
@@ -526,7 +512,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
                     {month.settlements.length > 0 && (
                       <div>
                         <h4 style={{ marginBottom: 8 }}>정산 내역</h4>
-                        <Table
+                        <CmsDataTable
                           dataSource={month.settlements}
                           columns={settlementColumns}
                           rowKey="id"

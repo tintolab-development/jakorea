@@ -2,9 +2,9 @@
  * 방문자 통계 섹션 공통 스타일
  */
 
-.visitor-stats-filter-card.admin-list-card {
-  flex-shrink: 0;
-  margin-bottom: 0;
+.visitor-stats-filter-card {
+  width: 100%;
+  min-width: 0;
 }
 
 .visitor-stats-summary {

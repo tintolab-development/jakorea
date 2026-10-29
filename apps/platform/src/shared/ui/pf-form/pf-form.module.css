@@ -160,8 +160,16 @@
   margin: 0;
 }
 
-.sectionRequired {
-  flex-shrink: 0;
+/*
+ * 타이틀(h2) 안 인라인 `*` — 줄바꿈돼도 마지막 글자 뒤에 붙음.
+ * 기존 flex(gap 2px, align-items center)와 같은 위치: 마지막 줄 상단 기준
+ * (form-section-title 20px×150% − bd-lg-sb 18px×150%) / 2 = 1.5px 아래.
+ */
+.sectionTitle .sectionRequired {
+  display: inline-block;
+  margin-top: calc((20px * 1.5 - 18px * 1.5) / 2);
+  margin-left: var(--spacing-2);
+  vertical-align: top;
 }
 
 .sectionDescription {

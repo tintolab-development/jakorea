@@ -7,10 +7,6 @@
   min-width: 0;
 }
 
-.talent-apps-page__filter-card {
-  margin-bottom: var(--spacing-24, 24px);
-}
-
 .talent-apps-page__filter {
   width: 100%;
 }

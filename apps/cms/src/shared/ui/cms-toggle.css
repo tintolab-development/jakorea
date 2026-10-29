@@ -85,7 +85,12 @@
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   background: var(--main-WT, #fff);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  /* Figma: 꺼짐 그림자 없음 / 켜짐 0 3px 7px rgba(0,0,0,.12) */
+  box-shadow: none;
+}
+
+.cms-toggle--checked .cms-toggle__thumb {
+  box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.12);
 }
 
 .cms-toggle__root--medium .cms-toggle__thumb {

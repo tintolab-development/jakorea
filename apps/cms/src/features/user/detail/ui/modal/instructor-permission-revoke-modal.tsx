@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react'
-import { CmsButton } from '@/shared/ui/cms-button'
-import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsRadio } from '@/shared/ui/cms-radio'
-import { ContentModal } from '@/shared/ui/content-modal'
+import { useState } from 'react'
+import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
+import { toInstructorRoleReviewScheduledAt } from '@/features/user/permission-management/lib/instructor-role-review-notify'
 import {
-  DEFAULT_INSTRUCTOR_PERMISSION_REVOKE_CHANNEL,
-  INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS,
-  type InstructorPermissionRevokeChannelType,
-} from '@/features/user/detail/lib/instructor-permission-revoke-channel'
-import './instructor-permission-revoke-modal.css'
+  INSTRUCTOR_PERMISSION_REVOKE_CONFIRM_LABEL,
+  INSTRUCTOR_PERMISSION_REVOKE_REASON_LABEL,
+  INSTRUCTOR_PERMISSION_REVOKE_REASON_PLACEHOLDER,
+  INSTRUCTOR_PERMISSION_REVOKE_TITLE,
+  buildInstructorPermissionRevokeMessage,
+} from '@/features/user/detail/lib/instructor-permission-revoke-copy'
 
 export interface InstructorPermissionRevokeModalProps {
   open: boolean
@@ -18,7 +17,6 @@ export interface InstructorPermissionRevokeModalProps {
   onConfirm: (payload: {
     reason: string
     notifyTiming: InstructorPermissionRevokeNotifyTiming
-    channelType?: InstructorPermissionRevokeChannelType
     scheduledAt?: string
   }) => void | Promise<void>
 }
@@ -29,49 +27,17 @@ export function InstructorPermissionRevokeModal({
   onCancel,
   onConfirm,
 }: InstructorPermissionRevokeModalProps) {
-  const [notifyTiming, setNotifyTiming] =
-    useState<InstructorPermissionRevokeNotifyTiming>('immediate')
-  const [channelType, setChannelType] = useState<InstructorPermissionRevokeChannelType | undefined>(
-    DEFAULT_INSTRUCTOR_PERMISSION_REVOKE_CHANNEL
-  )
-  const [scheduledAt, setScheduledAt] = useState('')
-  const [reason, setReason] = useState('')
   const [confirmLoading, setConfirmLoading] = useState(false)
 
-  useEffect(() => {
-    if (!open) return
-    setNotifyTiming('immediate')
-    setChannelType(DEFAULT_INSTRUCTOR_PERMISSION_REVOKE_CHANNEL)
-    setScheduledAt('')
-    setReason('')
-    setConfirmLoading(false)
-  }, [open])
-
-  const trimmedReason = reason.trim()
-  const now = new Date()
-  now.setSeconds(0, 0)
-  const pad = (value: number) => String(value).padStart(2, '0')
-  const scheduledAtMin = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(
-    now.getHours()
-  )}:${pad(now.getMinutes())}`
-  const isManualScheduleValid =
-    notifyTiming !== 'manual' ||
-    (scheduledAt !== '' && new Date(scheduledAt).getTime() > Date.now())
-  const canConfirm = trimmedReason.length > 0 && isManualScheduleValid && !confirmLoading
-  const displayName = instructorName.trim() || '강사'
-
-  const handleConfirm = async () => {
-    if (!trimmedReason || confirmLoading) return
+  const handleConfirm = async (payload: PermissionModalPayload) => {
+    const notifyTiming: InstructorPermissionRevokeNotifyTiming =
+      payload.notifyTiming === 'on_announcement' ? 'immediate' : payload.notifyTiming
     setConfirmLoading(true)
     try {
       await onConfirm({
-        reason: trimmedReason,
+        reason: payload.reason,
         notifyTiming,
-        channelType,
-        scheduledAt:
-          notifyTiming === 'manual' && scheduledAt
-            ? new Date(scheduledAt).toISOString()
-            : undefined,
+        scheduledAt: toInstructorRoleReviewScheduledAt(notifyTiming, payload.manualNotifyAt),
       })
     } finally {
       setConfirmLoading(false)
@@ -79,108 +45,22 @@ export function InstructorPermissionRevokeModal({
   }
 
   return (
-    <ContentModal
+    <PermissionModal
       open={open}
       onCancel={confirmLoading ? () => undefined : onCancel}
-      title="강사 권한 박탈 안내"
-      titleBodyGap="always"
+      onConfirm={payload => {
+        void handleConfirm(payload)
+      }}
+      variant="reject"
+      title={INSTRUCTOR_PERMISSION_REVOKE_TITLE}
       width={600}
-      className="instructor-permission-revoke-modal"
-      footer={
-        <div className="instructor-permission-revoke-modal__footer">
-          <CmsButton
-            variant="secondary"
-            size="medium"
-            type="button"
-            onClick={onCancel}
-            disabled={confirmLoading}
-          >
-            취소
-          </CmsButton>
-          <CmsButton
-            variant="delete"
-            type="button"
-            disabled={!canConfirm}
-            loading={confirmLoading}
-            size="medium"
-            onClick={() => {
-              void handleConfirm()
-            }}
-          >
-            권한 박탈
-          </CmsButton>
-        </div>
-      }
-    >
-      <div className="instructor-permission-revoke-modal__content">
-        <span className="instructor-permission-revoke-modal__line">
-          <strong>[{displayName}]</strong> 강사님의 강사 권한을 박탈하시겠습니까? <br />
-          박탈 시 입력하신 박탈 사유가 강사님에게 전달되며, 알림이 발송됩니다.
-          <br />
-          또한, 해당 강사님은 자동으로 일반 회원(개인 또는 교사)으로 처리됩니다.
-        </span>
-
-        <div className="instructor-permission-revoke-modal__field">
-          <span className="instructor-permission-revoke-modal__label">알림 발송</span>
-          <CmsRadio.Group
-            size="large"
-            value={notifyTiming}
-            onChange={e =>
-              setNotifyTiming(e.target.value as InstructorPermissionRevokeNotifyTiming)
-            }
-            disabled={confirmLoading}
-          >
-            <CmsRadio value="immediate">즉시</CmsRadio>
-            <CmsRadio value="manual">직접 설정</CmsRadio>
-          </CmsRadio.Group>
-          {notifyTiming === 'manual' ? (
-            <input
-              className="instructor-permission-revoke-modal__scheduled-at"
-              type="datetime-local"
-              value={scheduledAt}
-              min={scheduledAtMin}
-              onChange={e => setScheduledAt(e.target.value)}
-              disabled={confirmLoading}
-              aria-label="알림 발송 예약 시각"
-            />
-          ) : null}
-        </div>
-
-        <div className="instructor-permission-revoke-modal__field">
-          <span className="instructor-permission-revoke-modal__label">알림 방식</span>
-          <CmsRadio.Group
-            size="large"
-            value={channelType ?? 'POLICY'}
-            onChange={e => {
-              const value = e.target.value as InstructorPermissionRevokeChannelType | 'POLICY'
-              setChannelType(value === 'POLICY' ? undefined : value)
-            }}
-            disabled={confirmLoading}
-          >
-            <CmsRadio value="POLICY">기존 채널 정책</CmsRadio>
-            <CmsRadio value="ALIMTALK">
-              {INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS.ALIMTALK}
-            </CmsRadio>
-            <CmsRadio value="SMS">{INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS.SMS}</CmsRadio>
-            <CmsRadio value="EMAIL">
-              {INSTRUCTOR_PERMISSION_REVOKE_CHANNEL_LABELS.EMAIL}
-            </CmsRadio>
-          </CmsRadio.Group>
-        </div>
-
-        <div className="instructor-permission-revoke-modal__field">
-          <span className="instructor-permission-revoke-modal__label">권한 박탈 사유</span>
-          <CmsInput
-            width="100%"
-            inputSize="large"
-            value={reason}
-            onChange={e => setReason(e.target.value)}
-            placeholder="권한 박탈 사유를 입력해 주세요."
-            maxLength={200}
-            disabled={confirmLoading}
-          />
-        </div>
-      </div>
-    </ContentModal>
+      notifyTimingOptions="two"
+      reasonLabel={INSTRUCTOR_PERMISSION_REVOKE_REASON_LABEL}
+      reasonPlaceholder={INSTRUCTOR_PERMISSION_REVOKE_REASON_PLACEHOLDER}
+      confirmLabel={INSTRUCTOR_PERMISSION_REVOKE_CONFIRM_LABEL}
+      confirmVariant="delete"
+      confirmLoading={confirmLoading}
+      message={buildInstructorPermissionRevokeMessage(instructorName)}
+    />
   )
 }

@@ -7,7 +7,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType, TableProps } from 'antd/es/table'
 import type { FinanceItem } from '@/entities/income-expense/model/types'
 
@@ -47,7 +47,7 @@ export function FinanceItemsSortableTable({
 
   return (
     <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
-      <Table<FinanceItem>
+      <CmsDataTable<FinanceItem>
         className={tableClassName}
         rowKey="id"
         loading={loading}

@@ -24,6 +24,7 @@ import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-cod
 import { MenuDropdownChevronIcon } from '@/shared/ui/icons'
 import './sidebar.css'
 import { Header } from './header'
+import { collectMenuRouteKeys, resolveSidebarSelectedKey } from './sidebar-selected-key'
 
 const { Sider } = Layout
 
@@ -65,6 +66,8 @@ export function Sidebar() {
   const menuItems = useMemo(() => {
     return withProgramListChunkPrefetch(getMenuItemsByRole(user?.role || null, user))
   }, [user?.role, user])
+
+  const menuRouteKeys = useMemo(() => collectMenuRouteKeys(menuItems), [menuItems])
 
   const openKeys = useMemo(() => {
     const path = location.pathname
@@ -198,8 +201,9 @@ export function Sidebar() {
       return ['/admin/posts/faq']
     }
 
-    return [path]
-  }, [location.pathname, location.search, user?.role])
+    // 메뉴에 없는 하위 경로(예: /programs/general/enrollment) → 가장 가까운 메뉴 키로 하이라이트
+    return [resolveSidebarSelectedKey(path, menuRouteKeys)]
+  }, [location.pathname, location.search, user?.role, menuRouteKeys])
 
   const sidebarWidth = 'var(--sidebar-width)'
   const sidebarChrome: CSSProperties = {

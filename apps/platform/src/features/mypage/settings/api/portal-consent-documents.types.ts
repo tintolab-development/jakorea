@@ -28,6 +28,8 @@ export type PortalConsentDocumentDetail = {
   schemaJson?: unknown
   renderStatus?: string
   signatureFields?: PortalConsentSignatureField[]
+  filledDocument?: PortalFilledDocumentRequest | null
+  formTemplateVersion?: PortalConsentFormTemplateVersion | null
 }
 
 export type PortalConsentSignFieldRequest = {
@@ -35,9 +37,19 @@ export type PortalConsentSignFieldRequest = {
 }
 
 export type PortalFilledDocumentRequest = {
+  templateVersionId?: number | null
   templateCode?: string
   schemaJson?: Record<string, unknown>
   paymentBasicInfo?: Record<string, unknown>
+}
+
+export type PortalConsentFormTemplateVersion = {
+  templateVersionId?: number
+  templateCode?: string
+  versionNo?: number
+  schemaJson?: unknown
+  extensionJson?: Record<string, unknown> | null
+  settingsJson?: Record<string, unknown> | null
 }
 
 /** CMS `MemberPortalConsentCompleteRequest` */

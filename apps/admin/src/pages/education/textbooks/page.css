@@ -10,10 +10,6 @@
   min-width: 0;
 }
 
-.education-textbooks-page__filter-card {
-  margin-bottom: var(--spacing-24, 24px);
-}
-
 .education-textbooks-page__filter {
   width: 100%;
 }

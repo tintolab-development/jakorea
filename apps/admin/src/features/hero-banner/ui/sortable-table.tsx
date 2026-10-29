@@ -7,7 +7,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType, TableProps } from 'antd/es/table'
 import type { HeroBanner } from '@/entities/hero-banner/model/types'
 
@@ -43,7 +43,7 @@ export function HeroBannersSortableTable({
       dndContextProps={dndContextProps}
       dragDisabled={disabled}
     >
-      <Table<HeroBanner>
+      <CmsDataTable<HeroBanner>
         className="cms-data-table hero-banner-table"
         rowKey="id"
         loading={loading}

@@ -4,16 +4,10 @@
 
 import { useCallback, useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
-import type {
-  BugIssueListFilter,
-  BugIssueLog,
-} from '@/entities/bug-issue-log/model/types'
-import {
-  useBugIssueLogsList,
-  useExportBugIssueLogs,
-} from '@/features/bug-issue-log/api/hooks'
+import type { BugIssueListFilter, BugIssueLog } from '@/entities/bug-issue-log/model/types'
+import { useBugIssueLogsList, useExportBugIssueLogs } from '@/features/bug-issue-log/api/hooks'
 import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import {
@@ -22,7 +16,6 @@ import {
   parseLogListPage,
   setLogListPageParam,
 } from '@/features/logs/shared/lib/list-page'
-import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -38,7 +31,14 @@ import {
   type PendingDateRange,
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
-import { CmsButton, CmsDateRangePicker, AdminFilterTextInput, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsDateRangePicker,
+  AdminFilterTextInput,
+  useCmsAlert,
+  FilterTableLayout,
+  ExcelButton,
+} from '@/shared/ui'
 
 import '@/features/logs/shared/ui/log-list-layout.css'
 
@@ -127,10 +127,7 @@ export function BugIssueLogPage() {
         }) as PendingDateRange
 
         const next: PendingFilters = { userName, range }
-        if (
-          prev.userName === next.userName &&
-          pendingDateRangeTupleEqual(prev.range, next.range)
-        ) {
+        if (prev.userName === next.userName && pendingDateRangeTupleEqual(prev.range, next.range)) {
           return prev
         }
         return next
@@ -149,7 +146,7 @@ export function BugIssueLogPage() {
     (nextPage: number) => {
       patchSearchParams(next => setLogListPageParam(next, 'bg_page', nextPage))
     },
-    [patchSearchParams],
+    [patchSearchParams]
   )
 
   const handleExcel = useCallback(() => {
@@ -214,58 +211,54 @@ export function BugIssueLogPage() {
 
   return (
     <div className="log-list-page">
-      <div className="admin-list-card log-list-page__filter-card">
-        <div className="admin-filter-area">
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">사용자명</span>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="사용자명을 입력하세요"
-              value={pendingFilters.userName}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, userName: value }))}
-              onPressEnter={applySearch}
-            />
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area">
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">사용자명</span>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="사용자명을 입력하세요"
+                value={pendingFilters.userName}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, userName: value }))}
+                onPressEnter={applySearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <span className="admin-filter-area__label">발생일시</span>
+              <CmsDateRangePicker
+                inputSize="large"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={rangeAsPicker(pendingFilters.range)}
+                onChange={dates =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    range: dates ?? null,
+                  }))
+                }
+                placeholder={['시작일', '종료일']}
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="large"
+                type="button"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                onClick={applySearch}
+              >
+                조회
+              </CmsButton>
+            </div>
           </div>
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <span className="admin-filter-area__label">발생일시</span>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={rangeAsPicker(pendingFilters.range)}
-              onChange={dates =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  range: dates ?? null,
-                }))
-              }
-              placeholder={['시작일', '종료일']}
-            />
-          </div>
-          <div className="admin-filter-area__actions">
-            <CmsButton
-              className="admin-filter-area__search-button"
-              variant="primary"
-              size="large"
-              type="button"
-              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={applySearch}
-            >
-              조회
-            </CmsButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card log-list-page__result-card">
-        <LogResultToolbar
-          title="버그/이슈 이력"
-          total={total}
-          onExcelDownload={handleExcel}
-          excelDisabled={total === 0}
-        />
-
-        <Table<BugIssueLog>
+        }
+        title="버그/이슈 이력"
+        description={`총 ${total.toLocaleString('ko-KR')}건`}
+        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+      >
+        <CmsDataTable<BugIssueLog>
           className="cms-data-table"
           rowKey="id"
           columns={columns}
@@ -277,7 +270,7 @@ export function BugIssueLogPage() {
             x: COL.no + COL.errorMessage + COL.userName + COL.occurredAt,
           }}
         />
-      </div>
+      </FilterTableLayout>
     </div>
   )
 }

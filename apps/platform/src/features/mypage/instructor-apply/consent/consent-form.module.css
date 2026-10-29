@@ -378,6 +378,8 @@
     display: flex;
     box-sizing: border-box;
     width: 100%;
+    /* PC 기본 height: 54px 해제 — 라벨+값 세로 스택이 행 높이를 넘겨 겹침·잘림 */
+    height: auto;
     flex-direction: column;
     align-items: stretch;
     gap: var(--spacing-8);
@@ -385,6 +387,11 @@
     border: none;
     border-bottom: 1px solid var(--color-neutral-black-10, rgba(61, 61, 61, 0.1));
     text-align: left;
+  }
+
+  /* PC 기본 `tbody tr:last-child td { border-bottom: none }` 덮어쓰기 — 마지막 행 항목 사이 구분선 유지 */
+  .infoTable tbody tr:last-child td:not(:last-child) {
+    border-bottom: 1px solid var(--color-neutral-black-10, rgba(61, 61, 61, 0.1));
   }
 
   .infoTable tbody tr:last-child td:last-child {

@@ -24,6 +24,7 @@ import { HideParagraphSelectionChromeContext } from '@/features/template/context
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
 import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT'
+import { isCatalogOperationalWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import {
   useTemplatePreviewController,
@@ -34,6 +35,14 @@ import {
   DEFAULT_SURVEY_PARAGRAPH_IDS,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+
+function canShowCatalogOriginalSaveButton(args: {
+  templateId: string | undefined
+  registrationUserMode?: boolean
+}): boolean {
+  if (args.registrationUserMode) return true
+  return !isCatalogOperationalWritingTemplateCode(args.templateId)
+}
 
 type TemplatePreviewModalEditorProps = {
   title: string
@@ -61,6 +70,7 @@ type TemplatePreviewModalShellProps = {
   description?: ReactNode
   onPreview: () => void
   onSave?: () => void
+  showSave?: boolean
   onTitleCommit?: (nextTitle: string) => void
   showDeleteButton?: boolean
   onDelete?: () => void
@@ -78,6 +88,7 @@ function TemplatePreviewModalShell({
   description,
   onPreview,
   onSave,
+  showSave = true,
   onTitleCommit,
   showDeleteButton,
   onDelete,
@@ -97,6 +108,7 @@ function TemplatePreviewModalShell({
       templateTabType="writing"
       onPreview={onPreview}
       onSave={onSave}
+      showSave={showSave}
       onTitleCommit={onTitleCommit}
       showDeleteButton={showDeleteButton}
       onDelete={onDelete}
@@ -192,6 +204,10 @@ function GeneralRegistrationTemplatePreviewEditor({
       footerAction={footerAction}
       onPreview={handlePreview}
       onSave={programRegistrationVm.handleSave}
+      showSave={canShowCatalogOriginalSaveButton({
+        templateId,
+        registrationUserMode,
+      })}
       isDraftLoading={programRegistrationVm.isDraftLoading}
       leftContent={leftContent}
       rightNavigation={rightNavigation}
@@ -266,6 +282,10 @@ function UjatRegistrationTemplatePreviewEditor({
       footerAction={footerAction}
       onPreview={handlePreview}
       onSave={ujatProgramRegistrationVm.handleSave}
+      showSave={canShowCatalogOriginalSaveButton({
+        templateId,
+        registrationUserMode,
+      })}
       isDraftLoading={ujatProgramRegistrationVm.isDraftLoading}
       leftContent={leftContent}
       rightNavigation={rightNavigation}
@@ -349,6 +369,10 @@ function ParticipantApplicationTemplatePreviewEditor({
       footerAction={footerAction}
       onPreview={handlePreview}
       onSave={programParticipantApplicationVm.handleSave}
+      showSave={canShowCatalogOriginalSaveButton({
+        templateId,
+        registrationUserMode,
+      })}
       isDraftLoading={programParticipantApplicationVm.isDraftLoading}
       leftContent={
         isRecruitment ? (
@@ -452,6 +476,10 @@ function SurveyTemplatePreviewEditor({
       footerAction={footerAction}
       onPreview={handlePreview}
       onSave={surveyListEditor.handleSave}
+      showSave={canShowCatalogOriginalSaveButton({
+        templateId,
+        registrationUserMode,
+      })}
       isDraftLoading={surveyListEditor.isDraftLoading}
       leftContent={leftContent}
       rightNavigation={rightNavigation}

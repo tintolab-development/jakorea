@@ -11,4 +11,6 @@ export interface FormTemplateVersionCreateRequest {
   schemaJson?: string;
   extensionJson?: string;
   settingsJson?: string;
+  /** 프로그램 전용 템플릿에 DRAFT 버전을 추가할 때 원본 버전 */
+  sourceVersionId?: number;
 }

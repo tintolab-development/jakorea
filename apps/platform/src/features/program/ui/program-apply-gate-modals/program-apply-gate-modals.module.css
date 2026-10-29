@@ -90,3 +90,33 @@
 .requiredConsentContent .actions > * {
   border-radius: var(--radius-12);
 }
+
+@media (--bp-below-pc) {
+  /* 모바일 전체 화면: 안내 영역만 스크롤, 버튼 영역은 화면 하단 고정 (보호자 본인인증·정보 안내 팝업과 동일) */
+  .content {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: var(--spacing-32);
+  }
+
+  .textBlock {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    word-break: keep-all;
+  }
+
+  /* 세로 가운데: auto 마진 — 내용이 넘치면 0으로 줄어 위쪽이 잘리지 않고 스크롤된다 */
+  .textBlock > :first-child {
+    margin-top: auto;
+  }
+
+  .textBlock > :last-child {
+    margin-bottom: auto;
+  }
+
+  .actions {
+    flex: 0 0 auto;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}

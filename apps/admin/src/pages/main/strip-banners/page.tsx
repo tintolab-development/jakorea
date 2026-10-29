@@ -38,7 +38,12 @@ import {
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_SORT_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import {
   applyDateRangeToSearchParams,
   pendingDateRangeTupleEqual,
@@ -54,6 +59,7 @@ import {
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
+  FilterTableLayout,
 } from '@/shared/ui'
 
 import './page.css'
@@ -243,8 +249,8 @@ export function StripBannersPage() {
             stripBannerMutationFailureAlert(
               error,
               '배너 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-              '순서 변경 실패',
-            ),
+              '순서 변경 실패'
+            )
           )
           void listQuery.refetch()
         }
@@ -260,8 +266,8 @@ export function StripBannersPage() {
           stripBannerMutationFailureAlert(
             error,
             '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-            '사용 여부 변경 실패',
-          ),
+            '사용 여부 변경 실패'
+          )
         )
         void listQuery.refetch()
       })
@@ -298,8 +304,8 @@ export function StripBannersPage() {
             formVariant === 'detail'
               ? '배너 수정에 실패했습니다. 다시 시도해 주세요.'
               : '배너 등록에 실패했습니다. 다시 시도해 주세요.',
-            formVariant === 'detail' ? '수정 실패' : '등록 실패',
-          ),
+            formVariant === 'detail' ? '수정 실패' : '등록 실패'
+          )
         )
       }
     },
@@ -318,8 +324,8 @@ export function StripBannersPage() {
         stripBannerMutationFailureAlert(
           error,
           '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
-          '삭제 실패',
-        ),
+          '삭제 실패'
+        )
       )
     }
   }, [editingBanner, removeMutation, showAlert])
@@ -346,8 +352,8 @@ export function StripBannersPage() {
         stripBannerMutationFailureAlert(
           error,
           '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
-          '삭제 실패',
-        ),
+          '삭제 실패'
+        )
       )
     }
   }, [removeMutation, selectedRowKeys, showAlert])
@@ -432,84 +438,82 @@ export function StripBannersPage() {
     [handleToggleActive, listBusy, openDetail]
   )
 
-  const formLoading =
-    formVariant === 'detail' ? updateMutation.isPending : createMutation.isPending
+  const formLoading = formVariant === 'detail' ? updateMutation.isPending : createMutation.isPending
 
   return (
     <div className="strip-banners-page">
-      <div className="admin-list-card">
-        <div className="admin-filter-area strip-banners-page__filter">
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <p className="admin-filter-area__label">사용 여부</p>
-            <CmsSelect
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              value={pendingFilters.active}
-              onChange={value =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  active: (value as ActiveFilterValue) ?? '',
-                }))
-              }
-              options={[
-                { label: '전체', value: '' },
-                { label: '사용', value: 'true' },
-                { label: '미사용', value: 'false' },
-              ]}
-            />
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area strip-banners-page__filter">
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">사용 여부</p>
+              <CmsSelect
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                value={pendingFilters.active}
+                onChange={value =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    active: (value as ActiveFilterValue) ?? '',
+                  }))
+                }
+                options={[
+                  { label: '전체', value: '' },
+                  { label: '사용', value: 'true' },
+                  { label: '미사용', value: 'false' },
+                ]}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">배너 문구</p>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="배너 문구를 입력하세요"
+                value={pendingFilters.text}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, text: value }))}
+                onPressEnter={handleSearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <p className="admin-filter-area__label">게시 기간</p>
+              <CmsDateRangePicker
+                inputSize="large"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={periodAsPickerValue(pendingFilters.period)}
+                onChange={dates =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    period: dates ?? null,
+                  }))
+                }
+                placeholder={['시작일', '종료일']}
+                allowClear
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="large"
+                type="button"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
+            </div>
           </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <p className="admin-filter-area__label">배너 문구</p>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="배너 문구를 입력하세요"
-              value={pendingFilters.text}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, text: value }))}
-              onPressEnter={handleSearch}
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <p className="admin-filter-area__label">게시 기간</p>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={periodAsPickerValue(pendingFilters.period)}
-              onChange={dates =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  period: dates ?? null,
-                }))
-              }
-              placeholder={['시작일', '종료일']}
-              allowClear
-            />
-          </div>
-          <div className="admin-filter-area__actions">
-            <CmsButton
-              className="admin-filter-area__search-button"
-              variant="primary"
-              size="large"
-              type="button"
-              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={handleSearch}
-            >
-              조회
-            </CmsButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">메인 상단 띠배너 목록</span>
-            <span className="table-description">
-              총 {totalCount.toLocaleString()}건 (배너는 최대 {MAX_ACTIVE_STRIP_BANNERS}
-              개까지 동시 사용 가능합니다.)
-            </span>
-          </div>
-          <div className="table-header-actions--wrapper">
+        }
+        title="메인 상단 띠배너 목록"
+        description={
+          <>
+            총 {totalCount.toLocaleString()}건 (배너는 최대 {MAX_ACTIVE_STRIP_BANNERS}
+            개까지 동시 사용 가능합니다.)
+          </>
+        }
+        actions={
+          <>
             <CmsButton
               variant="delete"
               size="large"
@@ -522,9 +526,9 @@ export function StripBannersPage() {
             <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
               배너 등록
             </CmsButton>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <div className="strip-banners-page__table-scroll">
           <StripBannersSortableTable
             rows={rows}
@@ -539,7 +543,7 @@ export function StripBannersPage() {
             }}
           />
         </div>
-      </div>
+      </FilterTableLayout>
 
       <StripBannerFormModal
         open={formOpen}

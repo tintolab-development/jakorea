@@ -5,7 +5,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Tag, Table, Space, Spin } from 'antd'
+import { Card, Tag, Space, Spin } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import {
   HeartOutlined,
@@ -295,7 +296,7 @@ export function MyProgramDetailPage() {
         }
       >
         {program.schedules.length > 0 ? (
-          <Table
+          <CmsDataTable
             columns={scheduleColumns}
             dataSource={program.schedules}
             rowKey="id"

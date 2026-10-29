@@ -53,26 +53,17 @@ function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
           : 'kpi-achievement-widget__kpi-row'
       }
     >
-      <div className="kpi-achievement-widget__kpi-label">
-        <span className="kpi-achievement-widget__kpi-label-main">{kpi.label}</span>
-        <span className="kpi-achievement-widget__kpi-label-unit">(단위: {kpi.description})</span>
-      </div>
-      <div className="kpi-achievement-widget__bar-wrap">
-        <div
-          className="kpi-achievement-widget__bar-bg"
-          role="img"
-          aria-label={`${kpi.label} ${disabled ? '해당 없음' : kpi.achieved == null ? '미제공' : `${rate}%`}`}
-        >
-          <div
-            className={`kpi-achievement-widget__bar-fill ${achieved ? 'kpi-achievement-widget__bar-fill--achieved' : 'kpi-achievement-widget__bar-fill--under'}`}
-            style={{ '--kpi-bar-percent': `${barPercent}%` } as React.CSSProperties}
-          />
+      {/* 피그마: 라벨·수치 한 줄(head) + 아래 막대 */}
+      <div className="kpi-achievement-widget__kpi-head">
+        <div className="kpi-achievement-widget__kpi-label">
+          <span className="kpi-achievement-widget__kpi-label-main">{kpi.label}</span>
+          <span className="kpi-achievement-widget__kpi-label-unit">(단위 : {kpi.description})</span>
         </div>
         <div className="kpi-achievement-widget__values">
           <span className="kpi-achievement-widget__achieved-kpi">
             {disabled
-              ? '-/-'
-              : `${formatKpiNumber(kpi.achieved)}/${formatKpiNumber(kpi.target)}`}
+              ? '- / -'
+              : `${formatKpiNumber(kpi.achieved)} / ${formatKpiNumber(kpi.target)}`}
           </span>
           <span
             className={`kpi-achievement-widget__rate-badge ${achieved ? 'kpi-achievement-widget__rate-badge--achieved' : 'kpi-achievement-widget__rate-badge--under'}`}
@@ -80,6 +71,16 @@ function KpiBarRow({ kpi }: { kpi: KpiMetric }) {
             {disabled || kpi.achieved == null ? '-' : `${rate}%`}
           </span>
         </div>
+      </div>
+      <div
+        className="kpi-achievement-widget__bar-bg"
+        role="img"
+        aria-label={`${kpi.label} ${disabled ? '해당 없음' : kpi.achieved == null ? '미제공' : `${rate}%`}`}
+      >
+        <div
+          className={`kpi-achievement-widget__bar-fill ${achieved ? 'kpi-achievement-widget__bar-fill--achieved' : 'kpi-achievement-widget__bar-fill--under'}`}
+          style={{ '--kpi-bar-percent': `${barPercent}%` } as React.CSSProperties}
+        />
       </div>
     </div>
   )

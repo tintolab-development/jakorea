@@ -3,7 +3,6 @@ import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { ContentModal } from './content-modal'
 import { renderContentModalDescription } from './content-modal-description'
 import { CmsButton, type CmsButtonVariant } from './cms-button'
-import './content-modal.css'
 import './cms-modal.css'
 
 const DEFAULT_WIDTH = 600

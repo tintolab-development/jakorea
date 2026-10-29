@@ -20,10 +20,19 @@
 }
 
 .cms-textarea__label {
-  color: var(--main-BK, #3d3d3d);
+  color: var(--Content-secondary, #525252);
   font-size: 14px;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 140%;
+}
+
+/* Figma Field 라벨 — L 15 / M 14 / small(32) 13 */
+.cms-textarea__field:has(> .cms-textarea--large) > .cms-textarea__label {
+  font-size: 15px;
+}
+
+.cms-textarea__field:has(> .cms-textarea--small) > .cms-textarea__label {
+  font-size: 13px;
 }
 
 .cms-textarea__control {
@@ -51,7 +60,7 @@
   background-color: #fff;
   background-image: var(
     --disabled-default-bg,
-    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%)
   );
   cursor: not-allowed;
 }
@@ -70,7 +79,7 @@
   width: 240px;
   min-width: 120px;
   min-height: 44px;
-  padding: 8px 12px 8px 14px;
+  padding: 10px 12px 10px 16px;
 }
 
 .cms-textarea--large.cms-textarea--explicit-width .cms-textarea__control {
@@ -82,7 +91,7 @@
   width: 240px;
   min-width: 120px;
   min-height: 40px;
-  padding: 6px 12px 6px 14px;
+  padding: 9px 16px;
 }
 
 .cms-textarea--medium.cms-textarea--explicit-width .cms-textarea__control {
@@ -108,6 +117,7 @@
 
 .cms-textarea--medium .cms-textarea__inner textarea.ant-input {
   font-size: 15px;
+  line-height: 145%;
 }
 
 .cms-textarea--small .cms-textarea__inner textarea.ant-input {
@@ -136,10 +146,10 @@
   color: var(--gray-85969-d, #85969d);
   text-overflow: ellipsis;
   font-family: Pretendard, sans-serif;
-  font-size: 15px;
+  font-size: inherit;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: inherit;
 }
 
 /*
@@ -161,7 +171,7 @@
   box-sizing: border-box;
   min-height: 44px;
   height: 44px;
-  padding: 0 12px 0 14px !important;
+  padding: 0 12px 0 16px !important;
   line-height: 44px;
 }
 
@@ -169,7 +179,7 @@
   box-sizing: border-box;
   min-height: 40px;
   height: 40px;
-  padding: 0 12px 0 14px !important;
+  padding: 0 16px !important;
   line-height: 40px;
 }
 

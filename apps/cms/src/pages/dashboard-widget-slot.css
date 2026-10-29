@@ -10,7 +10,7 @@
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-16, 16px);
 }
 
 /* 그랩(포인터 다운) 즉시 피드백: 드래그 활성화 전 구간의 체감 지연을 줄인다.
@@ -123,7 +123,7 @@
 .dashboard-widget-slot > .ant-card {
   flex: 1;
   min-height: 0;
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-16, 16px);
   overflow: hidden;
   box-sizing: border-box;
   padding: 24px;
@@ -234,7 +234,7 @@
 .dashboard-widget-slot:has(.dashboard-widget-table--recruitment) > .ant-card {
   flex: 1;
   min-height: 0;
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-16, 16px);
   overflow: hidden;
 }
 .dashboard-widget-slot:has(.dashboard-widget-table--recruitment)
@@ -260,7 +260,7 @@
 .dashboard-widget-slot:has(.dashboard-widget-table--customer-inquiry) > .ant-card {
   flex: 1;
   min-height: 0;
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-16, 16px);
   overflow: hidden;
 }
 .dashboard-widget-slot:has(.dashboard-widget-table--customer-inquiry)

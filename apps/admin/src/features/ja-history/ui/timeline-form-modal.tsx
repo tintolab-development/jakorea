@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
-import { Image, Table } from 'antd'
+import { Image } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
@@ -454,7 +455,7 @@ function TimelineFormBody({
                 />
               </DetailInfoForm.Row>
             </DetailInfoForm>
-            <Table<DraftEventRow>
+            <CmsDataTable<DraftEventRow>
               key={active.id}
               className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
               columns={columns}

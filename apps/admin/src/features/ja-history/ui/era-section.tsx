@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { JaHistoryEra } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryEras } from '@/features/ja-history/api/hooks'
@@ -75,7 +75,7 @@ export function EraSection({ eras }: { eras: JaHistoryEra[] }) {
           )
       }}
     >
-      <Table<JaHistoryEra>
+      <CmsDataTable<JaHistoryEra>
         className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
         columns={columns}
         dataSource={eras}

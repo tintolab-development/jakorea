@@ -8,7 +8,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { BoardMember } from '@/entities/board-members/model/types'
 
@@ -43,7 +43,7 @@ export function BoardMembersSortableTable({
 
   return (
     <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
-      <Table<BoardMember>
+      <CmsDataTable<BoardMember>
         className="cms-data-table cms-data-table--skip-auto-no-col board-members-table"
         rowKey="id"
         loading={loading}

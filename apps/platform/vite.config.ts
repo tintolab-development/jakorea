@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import type { Plugin, ProxyOptions } from 'vite'
 import { viteAppBuildDefine } from '../../scripts/vite-app-build-define'
+import {
+  FORM_TEMPLATE_RUNTIME_OPTIMIZE_DEPS_EXCLUDE,
+  formTemplateRuntimeWatchIgnored,
+} from '../../scripts/vite-form-template-runtime-watch'
 import postcssCustomMedia from 'postcss-custom-media'
 import postcssGlobalData from '@csstools/postcss-global-data'
 
@@ -160,11 +164,15 @@ export default defineConfig(({ mode }) => {
         '@tiptap/extension-dropcursor',
         '@tiptap/markdown',
       ],
+      exclude: [...FORM_TEMPLATE_RUNTIME_OPTIMIZE_DEPS_EXCLUDE],
     },
     server: {
       port: 5173,
       strictPort: true,
       proxy,
+      watch: {
+        ignored: formTemplateRuntimeWatchIgnored,
+      },
     },
   }
 })

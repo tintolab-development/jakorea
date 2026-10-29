@@ -11,7 +11,7 @@ export const MEMBER_ROLE_TOKEN = {
   admin: 'admin',
 } as const
 
-/** 강사 회원 목록 — 활성 강사 + 교사겸강사 (권한박탈 제외) */
+/** 강사 회원 목록 — 활성 강사 + 교사겸강사 (권한 종료 제외) */
 export const INSTRUCTOR_LIST_ROLES_EXACT_ANY_OF = [
   [MEMBER_ROLE_TOKEN.general, MEMBER_ROLE_TOKEN.instructor],
   [MEMBER_ROLE_TOKEN.schoolTeacher, MEMBER_ROLE_TOKEN.instructor],
@@ -119,7 +119,9 @@ export function instructorListRolesExactAnyOf(): string {
 }
 
 /** 전체 회원 유형 필터 value → rolesExactAnyOf (학교 조직 옵션 없음) */
-export function rolesExactAnyOfForAllTabRoleFilter(roleFilter: string | undefined): string | undefined {
+export function rolesExactAnyOfForAllTabRoleFilter(
+  roleFilter: string | undefined
+): string | undefined {
   if (!roleFilter?.trim()) return undefined
   const key = parseAllTabRoleFilterParam(roleFilter)
   if (key === 'ALL') return undefined

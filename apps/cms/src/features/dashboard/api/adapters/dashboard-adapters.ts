@@ -16,6 +16,7 @@ import type { DashboardRecruitmentResponse } from '@/shared/api/generated/dashbo
 import type { DashboardProgramInquirySummaryResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquirySummaryResponse'
 import type { DashboardProgramInquiryResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquiryResponse'
 import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
+import { buildScheduleEventDetailLabel } from '@/features/dashboard/lib/schedule-event-detail-label'
 import type { KpiMetric, KpiMetricKey, ProgramKpiItem } from '../admin-dashboard-service'
 
 export interface DashboardHomeSummary {
@@ -62,6 +63,20 @@ export interface DashboardScheduleEventDto {
   lifecycleStatus: ProgramLifecycleStatus
   startAt: string
   endAt?: string
+  sessionNo?: number | null
+  scheduleName?: string | null
+  /** BE 추가 예정(program-schedules). 배정 기관 1곳이면 그 이름, 여러 곳이면 이름순 첫 기관, 없으면 null */
+  organizationName?: string | null
+  /** BE 추가 예정. 유효 배정(CANCELLED 제외) 기관 수 */
+  organizationCount?: number | null
+  /** 주간 캘린더 태그 2줄 라벨. 없으면 위젯이 유형 라벨로 대체 */
+  detailLabel?: string
+}
+
+/** BE가 organizationName/organizationCount를 내려주기 전까지 generated 타입에 없으므로 선택 필드로 확장 */
+type DashboardProgramScheduleResponseWithOrganization = DashboardProgramScheduleResponse & {
+  organizationName?: string | null
+  organizationCount?: number | null
 }
 
 export interface DashboardProgramOption {
@@ -539,11 +554,14 @@ function formatScheduleTime(startAt: string | undefined, allDay?: boolean): stri
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-export function mapScheduleItem(item: DashboardProgramScheduleResponse): DashboardScheduleEventDto | null {
+export function mapScheduleItem(
+  item: DashboardProgramScheduleResponseWithOrganization
+): DashboardScheduleEventDto | null {
   if (item.scheduleId == null || item.programId == null || !item.startAt) return null
+  const type = mapScheduleType(item)
   return {
     id: String(item.scheduleId),
-    type: mapScheduleType(item),
+    type,
     title: toDisplayEducationScheduleName(item.scheduleName) ?? item.programNameKo ?? '일정',
     time: formatScheduleTime(item.startAt, item.allDay),
     programId: String(item.programId),
@@ -551,6 +569,17 @@ export function mapScheduleItem(item: DashboardProgramScheduleResponse): Dashboa
     lifecycleStatus: 'education_after_textbook',
     startAt: item.startAt,
     endAt: item.endAt,
+    sessionNo: item.sessionNo ?? null,
+    scheduleName: item.scheduleName ?? null,
+    organizationName: item.organizationName ?? null,
+    organizationCount: item.organizationCount ?? null,
+    detailLabel: buildScheduleEventDetailLabel({
+      type,
+      scheduleName: item.scheduleName,
+      sessionNo: item.sessionNo,
+      organizationName: item.organizationName,
+      organizationCount: item.organizationCount,
+    }),
   }
 }
 

@@ -4,16 +4,10 @@
 
 import { useCallback, useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
-import type {
-  PiiAccessListFilter,
-  PiiAccessLog,
-} from '@/entities/pii-access-log/model/types'
-import {
-  useExportPiiAccessLogs,
-  usePiiAccessLogsList,
-} from '@/features/pii-access-log/api/hooks'
+import type { PiiAccessListFilter, PiiAccessLog } from '@/entities/pii-access-log/model/types'
+import { useExportPiiAccessLogs, usePiiAccessLogsList } from '@/features/pii-access-log/api/hooks'
 import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import {
@@ -22,7 +16,6 @@ import {
   parseLogListPage,
   setLogListPageParam,
 } from '@/features/logs/shared/lib/list-page'
-import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -38,7 +31,14 @@ import {
   type PendingDateRange,
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
-import { CmsButton, CmsDateRangePicker, AdminFilterTextInput, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsDateRangePicker,
+  AdminFilterTextInput,
+  useCmsAlert,
+  FilterTableLayout,
+  ExcelButton,
+} from '@/shared/ui'
 
 import '@/features/logs/shared/ui/log-list-layout.css'
 
@@ -177,7 +177,7 @@ export function PiiAccessLogPage() {
     (nextPage: number) => {
       patchSearchParams(next => setLogListPageParam(next, 'pi_page', nextPage))
     },
-    [patchSearchParams],
+    [patchSearchParams]
   )
 
   const handleExcel = useCallback(() => {
@@ -188,14 +188,7 @@ export function PiiAccessLogPage() {
         const all = result.rows
         downloadCsv({
           filenameBase: '개인정보_조회_이력',
-          headers: [
-            'No.',
-            '조회 대상',
-            '조회 목적',
-            '조회자명',
-            '조회 일시',
-            'IP',
-          ],
+          headers: ['No.', '조회 대상', '조회 목적', '조회자명', '조회 일시', 'IP'],
           rows: all.map((row, index) => [
             all.length - index,
             row.targetName,
@@ -263,80 +256,76 @@ export function PiiAccessLogPage() {
 
   return (
     <div className="log-list-page">
-      <div className="admin-list-card log-list-page__filter-card">
-        <div className="admin-filter-area">
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">조회 대상</span>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="조회 대상을 입력하세요"
-              value={pendingFilters.targetName}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, targetName: value }))}
-              onPressEnter={applySearch}
-            />
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area">
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">조회 대상</span>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="조회 대상을 입력하세요"
+                value={pendingFilters.targetName}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, targetName: value }))}
+                onPressEnter={applySearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">조회 목적</span>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="조회 목적을 입력하세요"
+                value={pendingFilters.purpose}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, purpose: value }))}
+                onPressEnter={applySearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <span className="admin-filter-area__label">조회자명</span>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="조회자명을 입력하세요"
+                value={pendingFilters.accessorName}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, accessorName: value }))}
+                onPressEnter={applySearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <span className="admin-filter-area__label">조회 일시</span>
+              <CmsDateRangePicker
+                inputSize="large"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={rangeAsPicker(pendingFilters.range)}
+                onChange={dates =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    range: dates ?? null,
+                  }))
+                }
+                placeholder={['시작일', '종료일']}
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="large"
+                type="button"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                onClick={applySearch}
+              >
+                조회
+              </CmsButton>
+            </div>
           </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">조회 목적</span>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="조회 목적을 입력하세요"
-              value={pendingFilters.purpose}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, purpose: value }))}
-              onPressEnter={applySearch}
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <span className="admin-filter-area__label">조회자명</span>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="조회자명을 입력하세요"
-              value={pendingFilters.accessorName}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, accessorName: value }))}
-              onPressEnter={applySearch}
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <span className="admin-filter-area__label">조회 일시</span>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={rangeAsPicker(pendingFilters.range)}
-              onChange={dates =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  range: dates ?? null,
-                }))
-              }
-              placeholder={['시작일', '종료일']}
-            />
-          </div>
-          <div className="admin-filter-area__actions">
-            <CmsButton
-              className="admin-filter-area__search-button"
-              variant="primary"
-              size="large"
-              type="button"
-              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={applySearch}
-            >
-              조회
-            </CmsButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card log-list-page__result-card">
-        <LogResultToolbar
-          title="개인정보 조회 이력"
-          total={total}
-          onExcelDownload={handleExcel}
-          excelDisabled={total === 0}
-        />
-
-        <Table<PiiAccessLog>
+        }
+        title="개인정보 조회 이력"
+        description={`총 ${total.toLocaleString('ko-KR')}건`}
+        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+      >
+        <CmsDataTable<PiiAccessLog>
           className="cms-data-table"
           rowKey="id"
           columns={columns}
@@ -345,16 +334,10 @@ export function PiiAccessLogPage() {
           pagination={logTablePagination({ page, total, onChange: handlePageChange })}
           locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
-            x:
-              COL.no +
-              COL.targetName +
-              COL.purpose +
-              COL.accessorName +
-              COL.accessedAt +
-              COL.ip,
+            x: COL.no + COL.targetName + COL.purpose + COL.accessorName + COL.accessedAt + COL.ip,
           }}
         />
-      </div>
+      </FilterTableLayout>
     </div>
   )
 }

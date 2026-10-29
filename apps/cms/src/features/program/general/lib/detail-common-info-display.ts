@@ -13,7 +13,11 @@ import {
   resolveEffectiveGeneralProgramTypeFields,
 } from '@/features/program/general/lib/curriculum-display'
 import { resolveEducationScheduleLinesForView } from '@/features/program/general/lib/education-schedule-lines-display'
-import { shouldAutoFillEducationScheduleFromGroupTimes } from '@/features/program/general/lib/schedule-detail-form'
+import {
+  isPreEducationCurriculumSession,
+  isPreEducationScheduleBlock,
+  shouldAutoFillEducationScheduleFromGroupTimes,
+} from '@/features/program/general/lib/schedule-detail-form'
 import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
   buildGeneralProgramVariantTitle,
@@ -762,10 +766,13 @@ function applyRegistrationEducationFormLabelToCommonInfo<
     return { ...common, educationFormLabel: label }
   }
 
+  // 사전 교육 행(overlay 0) 교육 형태는 본 교육과 별개다. 본 교육 라벨 추론에서 뺀다.
   const fromStored = resolveStoredEducationFormLabel({
     educationFormLabel: common.educationFormLabel,
-    scheduleDetails: common.scheduleDetails,
-    curriculumSessions: common.curriculumSessions,
+    scheduleDetails: common.scheduleDetails?.filter(row => !isPreEducationScheduleBlock(row)),
+    curriculumSessions: common.curriculumSessions?.filter(
+      row => !isPreEducationCurriculumSession(row)
+    ),
   }).trim()
   if (fromStored) {
     if (common.educationFormLabel?.trim()) return common

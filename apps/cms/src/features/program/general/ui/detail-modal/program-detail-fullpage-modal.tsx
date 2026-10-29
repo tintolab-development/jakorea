@@ -106,6 +106,7 @@ import {
   RegistrationWizardValidationHighlightSync,
   useDetailEditRequiredHighlightRequest,
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
+import { useProgramOperationDateErrorFocus } from '@/features/program/shared/lib/use-program-operation-date-error-focus'
 import {
   detailEditValuesToProgramPatch,
   narrowProgramDetailPatchForCommonInfoSave,
@@ -341,6 +342,9 @@ export function ProgramDetailFullPageModal({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
+  useProgramOperationDateErrorFocus(open, focus => {
+    detailRequiredHighlight.report(focus.highlightKeys)
+  })
   const programId = program?.id
   const {
     program: detailProgram,

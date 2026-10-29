@@ -45,6 +45,13 @@ import {
   type UjatDevAutofillCaseId,
 } from '@/features/program/ujat/lib/dev-autofill-cases'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  isProgramDateOutsideOpenPeriodError,
+  publishProgramOperationDateFocus,
+  resolveProgramDateOutsideOpenPeriodAlert,
+} from '@/features/program/shared/lib/program-date-outside-open-period-alert'
+import { useProgramOperationDateErrorFocus } from '@/features/program/shared/lib/use-program-operation-date-error-focus'
+import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { UjatRegistrationRequiredFieldsIncompleteError } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
@@ -97,6 +104,9 @@ function UjatProgramRegistrationFullpageModalInner({
     },
     [reportIncomplete]
   )
+  useProgramOperationDateErrorFocus(open, focus => {
+    reportValidationIncomplete(focus.highlightKeys)
+  })
 
   const [overwriteOpen, setOverwriteOpen] = useState(false)
   const [overwriteTitle, setOverwriteTitle] = useState('')
@@ -311,6 +321,16 @@ function UjatProgramRegistrationFullpageModalInner({
           onClick: () => {
             void flow.handleCompleteRegistration().catch(error => {
               if (error instanceof UjatRegistrationRequiredFieldsIncompleteError) return
+              const dateAlert = isProgramDateOutsideOpenPeriodError(error)
+                ? resolveProgramDateOutsideOpenPeriodAlert(error)
+                : null
+              if (dateAlert) {
+                if (!isGlobalApiErrorAlertShown(error)) {
+                  showAlert({ title: dateAlert.title, content: dateAlert.content })
+                  publishProgramOperationDateFocus(dateAlert.focus)
+                }
+                return
+              }
               console.debug('UJAT program registration completion failed', error)
               showAlert({
                 title: '프로그램 등록 실패',

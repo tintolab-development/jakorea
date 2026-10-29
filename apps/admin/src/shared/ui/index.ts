@@ -59,11 +59,17 @@ export type {
   CmsRadioButtonProps,
 } from './cms-radio'
 
-export { CmsTextTabs } from './cms-text-tabs'
+export { CmsDataTable, type CmsDataTableProps } from './cms-data-table'
+export { FilterTableLayout, type FilterTableLayoutProps } from './filter-table-layout'
+
+export { CmsTextTabs, CmsPageTabs } from './cms-text-tabs'
 export type {
   CmsTextTabItem,
   CmsTextTabsProps,
   CmsTextTabsVariant,
+  CmsPageTabItem,
+  CmsPageTabsProps,
+  CmsPageTabsSize,
 } from './cms-text-tabs'
 
 export { FileSelectField } from './file-select-field'

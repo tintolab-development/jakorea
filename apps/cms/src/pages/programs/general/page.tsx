@@ -96,9 +96,22 @@ export function GeneralProgramListPageContent() {
     listQueryFiltersKey,
   } = useGeneralProgramListFilters()
 
+  const viewModeFromUrl = searchParams.get('viewMode') as 'list' | 'calendar' | null
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>(
+    viewModeFromUrl === 'list' || viewModeFromUrl === 'calendar' ? viewModeFromUrl : 'list'
+  )
+
+  useEffect(() => {
+    const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
+    if (urlViewMode === 'list' || urlViewMode === 'calendar') {
+      setViewMode(urlViewMode)
+    }
+  }, [searchParams])
+
+  const isListView = viewMode === 'list'
   const infiniteResetKey = `${statusFilter ?? 'all'}:${listQueryFiltersKey}`
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
-    hasNextPage,
+    hasNextPage: isListView && hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
     resetKey: infiniteResetKey,
@@ -210,21 +223,9 @@ export function GeneralProgramListPageContent() {
     setHasListFilters(hasActiveFilters)
   }, [])
 
-  const viewModeFromUrl = searchParams.get('viewMode') as 'list' | 'calendar' | null
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>(
-    viewModeFromUrl === 'list' || viewModeFromUrl === 'calendar' ? viewModeFromUrl : 'list'
-  )
-
   useEffect(() => {
     setSelectedRowKeys([])
   }, [statusFilter])
-
-  useEffect(() => {
-    const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
-    if (urlViewMode === 'list' || urlViewMode === 'calendar') {
-      setViewMode(urlViewMode)
-    }
-  }, [searchParams])
 
   const programIdFromUrl = searchParams.get('programId')
 
@@ -445,19 +446,8 @@ export function GeneralProgramListPageContent() {
       >
         {programListToolbarActions}
       </ProgramList>
-      {isRemoteDataSource ? (
-        <div className="program-list-page__load-more">
-          {hasNextPage ? (
-            <FilterTableToolbarButton
-              variant="secondary"
-              onClick={() => void fetchNextPage()}
-              disabled={isFetchingNextPage}
-            >
-              {isFetchingNextPage ? '불러오는 중...' : '다음 페이지'}
-            </FilterTableToolbarButton>
-          ) : null}
-          <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
-        </div>
+      {isRemoteDataSource && isListView ? (
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       ) : null}
 
       <ProgramModalWhenOpen open={generalDetailModalOpen}>

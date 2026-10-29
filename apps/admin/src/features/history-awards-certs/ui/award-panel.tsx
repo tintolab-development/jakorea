@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
-import { Switch, Table } from 'antd'
+import { Switch } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoFormTdDivider } from '@jakorea/form-template-runtime'
@@ -20,10 +21,7 @@ import {
 } from '@/features/history-awards-certs/api/hooks'
 import { historyAwardsCertsQueryKeys } from '@/features/history-awards-certs/api/query-keys'
 import { AWARD_CHANGED_EVENT } from '@/features/history-awards-certs/api/store'
-import {
-  formatCreatedDateTime,
-  formatYmdDot,
-} from '@/features/history-awards-certs/lib/format'
+import { formatCreatedDateTime, formatYmdDot } from '@/features/history-awards-certs/lib/format'
 import {
   deleteConfirmContent,
   deleteFailureAlert,
@@ -35,7 +33,11 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -54,6 +56,7 @@ import {
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
+  FilterTableLayout,
 } from '@/shared/ui'
 
 type AwardPendingFilters = {
@@ -407,103 +410,100 @@ export function AwardPanel() {
 
   return (
     <div className="hac-panel">
-      <div className="admin-list-card">
-        <div className="admin-filter-area">
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <p className="admin-filter-area__label">공개 여부</p>
-            <CmsSelect
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              value={pendingFilters.isPublic}
-              onChange={v =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  isPublic: (v as PublicFilterValue) ?? '',
-                }))
-              }
-              options={[
-                { label: '전체', value: '' },
-                { label: '공개', value: 'true' },
-                { label: '비공개', value: 'false' },
-              ]}
-            />
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area">
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">공개 여부</p>
+              <CmsSelect
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                value={pendingFilters.isPublic}
+                onChange={v =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    isPublic: (v as PublicFilterValue) ?? '',
+                  }))
+                }
+                options={[
+                  { label: '전체', value: '' },
+                  { label: '공개', value: 'true' },
+                  { label: '비공개', value: 'false' },
+                ]}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">상명</p>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="상명을 입력하세요"
+                value={pendingFilters.title}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
+                onPressEnter={handleSearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--control">
+              <p className="admin-filter-area__label">수여 기관명</p>
+              <AdminFilterTextInput
+                inputSize="large"
+                width={FILTER_CONTROL_MAX_WIDTH_PX}
+                placeholder="수여 기관명을 입력하세요"
+                value={pendingFilters.organization}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, organization: value }))}
+                onPressEnter={handleSearch}
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <p className="admin-filter-area__label">수상일</p>
+              <CmsDateRangePicker
+                inputSize="large"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={periodAsPickerValue(pendingFilters.awarded)}
+                onChange={dates =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    awarded: dates ?? null,
+                  }))
+                }
+                placeholder={['시작일', '종료일']}
+                allowClear
+              />
+            </div>
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <p className="admin-filter-area__label">작성일</p>
+              <CmsDateRangePicker
+                inputSize="large"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={periodAsPickerValue(pendingFilters.created)}
+                onChange={dates =>
+                  setPendingFilters(prev => ({
+                    ...prev,
+                    created: dates ?? null,
+                  }))
+                }
+                placeholder={['시작일', '종료일']}
+                allowClear
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="large"
+                type="button"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
+            </div>
           </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <p className="admin-filter-area__label">상명</p>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="상명을 입력하세요"
-              value={pendingFilters.title}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
-              onPressEnter={handleSearch}
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--control">
-            <p className="admin-filter-area__label">수여 기관명</p>
-            <AdminFilterTextInput
-              inputSize="large"
-              width={FILTER_CONTROL_MAX_WIDTH_PX}
-              placeholder="수여 기관명을 입력하세요"
-              value={pendingFilters.organization}
-              onChange={value => patchPendingFilters(prev => ({ ...prev, organization: value }))}
-              onPressEnter={handleSearch}
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <p className="admin-filter-area__label">수상일</p>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={periodAsPickerValue(pendingFilters.awarded)}
-              onChange={dates =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  awarded: dates ?? null,
-                }))
-              }
-              placeholder={['시작일', '종료일']}
-              allowClear
-            />
-          </div>
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <p className="admin-filter-area__label">작성일</p>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={periodAsPickerValue(pendingFilters.created)}
-              onChange={dates =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  created: dates ?? null,
-                }))
-              }
-              placeholder={['시작일', '종료일']}
-              allowClear
-            />
-          </div>
-          <div className="admin-filter-area__actions">
-            <CmsButton
-              className="admin-filter-area__search-button"
-              variant="primary"
-              size="large"
-              type="button"
-              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={handleSearch}
-            >
-              조회
-            </CmsButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">수상 목록</span>
-            <span className="table-description">총 {totalCount.toLocaleString()}건</span>
-          </div>
-          <div className="table-header-actions--wrapper hac-panel__toolbar-actions">
+        }
+        title="수상 목록"
+        description={`총 ${totalCount.toLocaleString()}건`}
+        actions={
+          <>
             <CmsSelect
               inputSize="medium"
               width={140}
@@ -529,11 +529,11 @@ export function AwardPanel() {
                 수상 등록
               </CmsButton>
             </div>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <div className="hac-panel__table-scroll">
-          <Table<AwardItem>
+          <CmsDataTable<AwardItem>
             className="cms-data-table"
             rowKey="id"
             loading={listQuery.isLoading}
@@ -548,7 +548,7 @@ export function AwardPanel() {
             }}
           />
         </div>
-      </div>
+      </FilterTableLayout>
 
       <AwardFormModal
         open={formOpen}

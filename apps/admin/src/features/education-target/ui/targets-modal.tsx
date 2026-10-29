@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { EducationTarget } from '@/entities/education-target/model/types'
 import {
@@ -128,7 +128,7 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
       <p className="education-targets-modal__note">
         인덱스 색상과 교육 대상 항목 수는 변경이 불가합니다.
       </p>
-      <Table<EducationTarget>
+      <CmsDataTable<EducationTarget>
         className="cms-data-table education-targets-modal__table"
         rowKey="id"
         loading={listQuery.isLoading}

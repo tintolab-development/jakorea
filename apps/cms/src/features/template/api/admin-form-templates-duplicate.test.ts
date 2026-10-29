@@ -97,6 +97,28 @@ describe('duplicateFormTemplateVersionRemote', () => {
     ).rejects.toThrow('신규 템플릿 코드를 응답에서 찾을 수 없습니다')
   })
 
+  it('rejects registration catalog original duplicate', async () => {
+    await expect(
+      duplicateFormTemplateVersionRemote({
+        sourceTemplateCode: 'registration-general',
+        sourceApiTemplateId: 1,
+        sourceVersionId: 10,
+      })
+    ).rejects.toThrow(/등록 양식 CATALOG 원본/)
+    expect(duplicateMock).not.toHaveBeenCalled()
+  })
+
+  it('rejects agreement-crime duplicate', async () => {
+    await expect(
+      duplicateFormTemplateVersionRemote({
+        sourceTemplateCode: 'agreement-crime',
+        sourceApiTemplateId: 2,
+        sourceVersionId: 20,
+      })
+    ).rejects.toThrow(/성범죄/)
+    expect(duplicateMock).not.toHaveBeenCalled()
+  })
+
   it('does not fall back to a local stub when remote duplicate fails', async () => {
     fetchPayloadMock.mockResolvedValue(null)
 

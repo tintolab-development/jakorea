@@ -165,11 +165,18 @@ export type PortalConsentDocumentDetail = {
   evidenceFileObjectId?: number
   evidenceOriginalFileName?: string
   filledDocument?: {
+    templateVersionId?: number | null
     templateCode?: string
     schemaJson?: unknown
     paymentBasicInfo?: Record<string, unknown>
     evidenceFileObjectId?: number
     evidenceOriginalFileName?: string
+  } | null
+  /** SIGNED 미리보기에는 쓰지 않는다. 신규 DRAFT 작성 전용. */
+  formTemplateVersion?: {
+    templateVersionId?: number
+    templateCode?: string
+    schemaJson?: unknown
   } | null
 }
 

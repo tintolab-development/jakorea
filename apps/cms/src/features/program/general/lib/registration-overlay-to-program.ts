@@ -386,10 +386,8 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
       isPreEducation: true,
       scheduleDateLabel: preLine || undefined,
       assignmentEnabled: false,
-      educationFormLabel:
-        eduDetail === 'perSchedule'
-          ? educationFormLabelFromValue(educationFormBySession[0] ?? 'online')
-          : undefined,
+      /** 사전 교육 교육형태 — common/perSchedule 무관 (상세 수정 폼과 동일 규칙) */
+      educationFormLabel: educationFormLabelFromValue(educationFormBySession[0] ?? 'online'),
       ipsTypeSummary:
         ipsDetail === 'perSchedule'
           ? buildSessionIpsTypeSummary('prepare', 'none')
@@ -577,11 +575,8 @@ export function buildEnrichedScheduleDetails(
         blockKind: 'preEducation',
         assignmentEnabled: false,
         scheduleDateLabel: formatScheduleDateLabel(dates[0]),
-        educationFormLabel: preEducationForm
-          ? educationFormLabelFromValue(preEducationForm)
-          : eduDetail === 'perSchedule'
-            ? educationFormLabelFromValue('online')
-            : undefined,
+        /** 사전 교육 교육형태 — common/perSchedule 무관 (커리큘럼형과 동일 규칙) */
+        educationFormLabel: educationFormLabelFromValue(preEducationForm || 'online'),
         ipsTypeSummary:
           ipsDetailKind === 'perSchedule'
             ? buildSessionIpsTypeSummary('prepare', 'none')
