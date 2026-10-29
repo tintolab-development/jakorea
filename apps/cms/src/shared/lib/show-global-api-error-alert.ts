@@ -12,6 +12,11 @@ import {
   isMemberDeleteCurrentPasswordInvalidError,
 } from '@/features/user/api/get-member-api-error'
 import { shouldSkipGlobalAlertForInstructorCancelApprovalBlocked } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-blocked'
+import {
+  isProgramDateOutsideOpenPeriodError,
+  publishProgramOperationDateFocus,
+  resolveProgramDateOutsideOpenPeriodAlert,
+} from '@/features/program/shared/lib/program-date-outside-open-period-alert'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
@@ -158,6 +163,16 @@ export function showGlobalApiErrorAlert(
     markGlobalErrorAlertShown(error)
     cmsAlertModal.show(getMemberDeleteCurrentPasswordInvalidAlertOptions())
     return true
+  }
+
+  if (isProgramDateOutsideOpenPeriodError(error)) {
+    const dateAlert = resolveProgramDateOutsideOpenPeriodAlert(error)
+    markGlobalErrorAlertShown(error)
+    if (dateAlert) {
+      cmsAlertModal.show({ title: dateAlert.title, content: dateAlert.content })
+      publishProgramOperationDateFocus(dateAlert.focus)
+    }
+    return dateAlert != null
   }
 
   const method = (config?.method ?? error.config?.method ?? 'GET').toUpperCase()

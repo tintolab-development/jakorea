@@ -35,6 +35,12 @@ import {
 } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  isProgramDateOutsideOpenPeriodError,
+  publishProgramOperationDateFocus,
+  resolveProgramDateOutsideOpenPeriodAlert,
+} from '@/features/program/shared/lib/program-date-outside-open-period-alert'
+import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
@@ -2386,16 +2392,26 @@ export function useProgramRegistrationEditor(
           resetProgramRegistrationOverlay()
           onRegistrationSaved(createdProgram)
         } catch (error) {
-          showAlert({
-            title: '등록 실패',
-            content:
-              error instanceof CompanySchoolOperationRangeRequiredError
-                ? error.message
-                : getGeneralProgramApiErrorMessage(
-                    error,
-                    '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
-                  ),
-          })
+          const dateAlert = isProgramDateOutsideOpenPeriodError(error)
+            ? resolveProgramDateOutsideOpenPeriodAlert(error)
+            : null
+          if (dateAlert) {
+            if (!isGlobalApiErrorAlertShown(error)) {
+              showAlert({ title: dateAlert.title, content: dateAlert.content })
+              publishProgramOperationDateFocus(dateAlert.focus)
+            }
+          } else {
+            showAlert({
+              title: '등록 실패',
+              content:
+                error instanceof CompanySchoolOperationRangeRequiredError
+                  ? error.message
+                  : getGeneralProgramApiErrorMessage(
+                      error,
+                      '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
+                    ),
+            })
+          }
         } finally {
           endOverlay()
           completionPromiseRef.current = null

@@ -64,6 +64,41 @@ describe('showGlobalApiErrorAlert 403', () => {
     vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
   })
 
+  it('운영 기간 오류는 서버 공통 문구 대신 기간 안내를 한 번만 띄운다', () => {
+    const error = {
+      isAxiosError: true,
+      message: '입력값을 확인해 주세요.',
+      name: 'AxiosError',
+      toJSON: () => ({}),
+      response: {
+        status: 400,
+        data: {
+          success: false,
+          error: {
+            code: 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD',
+            message: '입력값을 확인해 주세요.',
+            field: 'recruitments.INSTRUCTOR.operationStartDate',
+            details: {
+              date: '2026-10-01',
+              openStart: '2026-10-03',
+              openEnd: '2026-11-30',
+            },
+          },
+        },
+      },
+      config: { method: 'post', url: '/api/admin/programs' },
+    } as AxiosError
+
+    expect(showGlobalApiErrorAlert(error)).toBe(true)
+    expect(cmsAlertModal.show).toHaveBeenCalledTimes(1)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: '운영 기간을 확인해 주세요',
+      content: expect.stringContaining('강사의 운영 시작일'),
+    })
+    expect(isGlobalApiErrorAlertShown(error)).toBe(true)
+    expect(showGlobalApiErrorAlert(error)).toBe(false)
+  })
+
   it('서버 메시지 대신 권한 안내 고정 카피를 띄운다', () => {
     const error = forbiddenError('/api/admin/members/all')
     const shown = showGlobalApiErrorAlert(error)

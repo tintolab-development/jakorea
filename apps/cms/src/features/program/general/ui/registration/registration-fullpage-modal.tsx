@@ -50,6 +50,8 @@ import type { GeneralRegistrationDevAutofillCaseId } from '@/features/program/ge
 import { TrainedTeachersDevAutofillToolbar } from '@/features/program/trained-teachers/ui/registration/trained-teachers-dev-autofill-toolbar'
 import type { TrainedTeachersRegistrationDevAutofillCaseId } from '@/features/program/trained-teachers/lib/registration-dev-autofill-cases'
 import { useCmsAlert } from '@/shared/ui'
+import { registrationStepForOperationDateFocus } from '@/features/program/shared/lib/program-date-outside-open-period-alert'
+import { useProgramOperationDateErrorFocus } from '@/features/program/shared/lib/use-program-operation-date-error-focus'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { getProgramRegistrationOverlayVersion } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
@@ -231,6 +233,14 @@ function GeneralProgramRegistrationFullpageModalInner({
     registrationFormVariant,
     skipDraftRestore,
     reportValidationIncomplete,
+  })
+  useProgramOperationDateErrorFocus(open, focus => {
+    const step = registrationStepForOperationDateFocus(
+      focus.recruitmentType,
+      flow.visibleRecruitTabKeys
+    )
+    if (step) flow.selectStep(step)
+    reportValidationIncomplete(focus.highlightKeys)
   })
 
   const handleClose = useCallback(() => {

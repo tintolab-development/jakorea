@@ -5,7 +5,7 @@
  */
 
 @import './program-status/program-status-participating-shared.css';
-@import '../../../../../shared/ui/cms-text-tabs.css';
+@import '@jakorea/admin-ui/tabs/styles';
 
 .program-detail-fullpage-modal .teal-header-modal__body {
   padding: 0;
