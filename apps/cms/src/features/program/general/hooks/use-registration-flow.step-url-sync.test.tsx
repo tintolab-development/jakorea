@@ -22,6 +22,7 @@ import {
   type GeneralProgramRegistrationStepKey,
 } from '@/features/program/general/model/registration-flow'
 import { GeneralRegistrationWizardFormProvider } from '@/features/program/general/ui/registration/registration-wizard-form-provider'
+import { CompanySchoolRegistrationWizardFormProvider } from '@/features/program/1c-1s/ui/registration/registration-wizard-form-provider'
 import { TrainedTeachersRegistrationWizardFormProvider } from '@/features/program/trained-teachers/ui/registration/registration-wizard-form-provider'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import {
@@ -92,7 +93,9 @@ function mount(variant: ProgramRegistrationFormVariant, continueMode = false) {
   const Provider =
     variant === 'trainedTeachers'
       ? TrainedTeachersRegistrationWizardFormProvider
-      : GeneralRegistrationWizardFormProvider
+      : variant === 'economy'
+        ? CompanySchoolRegistrationWizardFormProvider
+        : GeneralRegistrationWizardFormProvider
   const router = createMemoryRouter(
     [
       {
@@ -123,7 +126,7 @@ async function settle(apiRef: { current: FlowApi | null }, variant: ProgramRegis
       await sleep(10)
     })
     const flags = apiRef.current?.participantFlags
-    if (variant !== 'trainedTeachers' || flags?.organization === true) return
+    if ((variant !== 'trainedTeachers' && variant !== 'economy') || flags?.organization === true) return
   }
 }
 
@@ -136,6 +139,7 @@ describe('useGeneralProgramRegistrationFlow — 단계 이동 시 URL↔activeSt
   it.each([
     ['general', 'recruit-participant-individual'],
     ['trainedTeachers', 'recruit-participant-school'],
+    ['economy', 'recruit-participant-school'],
   ] as const)(
     '%s: 헤더 단계 클릭(실제 이벤트·라우터) 후 activeStep이 옛 단계로 되돌아갔다 오지 않는다',
     async (variant, to) => {
