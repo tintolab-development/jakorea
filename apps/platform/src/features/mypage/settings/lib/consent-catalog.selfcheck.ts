@@ -17,14 +17,7 @@ assert.equal(teacher.find(item => item.id === 'teacherInfo')?.required, true)
 const minor = getBasicConsentItems({ isTeacher: false, isMinor: true })
 assert.deepEqual(
   minor.map(item => item.id),
-  [
-    'serviceTerms',
-    'privacyCollection',
-    'guardianLegal',
-    'childPrivacy',
-    'marketing',
-    'portrait',
-  ],
+  ['serviceTerms', 'guardianLegal', 'childPrivacy', 'marketing', 'portrait'],
 )
 assert.equal(minor.find(item => item.id === 'guardianLegal')?.required, true)
 assert.equal(minor.find(item => item.id === 'childPrivacy')?.required, false)
