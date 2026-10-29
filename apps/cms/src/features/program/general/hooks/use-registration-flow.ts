@@ -608,7 +608,12 @@ export function useGeneralProgramRegistrationFlow(
           excludeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
         })
       }
-      await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
+      // 일반·TT: 떠난 탭의 단락 타이틀·설명(세션 draft)도 함께 기록한다. 1사1교는 기존 동작 유지.
+      await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant, {
+        preferSessionDrafts:
+          registrationFormVariant === 'general' || registrationFormVariant === 'trainedTeachers',
+        activeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
+      })
       syncRegistrationProgramDraftSession({
         programType,
         registrationTemplateCode: registrationTemplateId,
