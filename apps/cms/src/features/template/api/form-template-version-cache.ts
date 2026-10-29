@@ -12,10 +12,6 @@ export type FormTemplateVersionCacheEntry = {
   /** 목록 API — 복제·사용자 생성 행의 카탈로그 원본 */
   baseTemplateCode?: string
   templateName?: string
-  /** BE `template_scope` — 버전/목록 DTO에 노출되면 채운다(현재 미노출). */
-  templateScope?: string
-  /** BE `source_template_id` — CATALOG 원본은 null */
-  sourceTemplateId?: number | null
 }
 
 const byTemplateCode = new Map<string, FormTemplateVersionCacheEntry>()
@@ -35,9 +31,6 @@ export function upsertFormTemplateVersionCacheEntry(
     ...entry,
     baseTemplateCode: entry.baseTemplateCode ?? existing?.baseTemplateCode,
     templateName: entry.templateName ?? existing?.templateName,
-    templateScope: entry.templateScope ?? existing?.templateScope,
-    sourceTemplateId:
-      entry.sourceTemplateId !== undefined ? entry.sourceTemplateId : existing?.sourceTemplateId,
   })
 }
 
@@ -58,8 +51,6 @@ export function upsertFormTemplateVersionCacheFromListItems(
     latestVersionNo?: number
     baseTemplateCode?: string
     templateName?: string
-    templateScope?: string
-    sourceTemplateId?: number | null
   }>
 ): void {
   for (const item of items) {
@@ -69,9 +60,6 @@ export function upsertFormTemplateVersionCacheFromListItems(
     const latestVersionId = item.latestVersionId ?? existing?.latestVersionId
     const baseTemplateCode = item.baseTemplateCode?.trim() || existing?.baseTemplateCode
     const templateName = item.templateName?.trim() || existing?.templateName
-    const templateScope = item.templateScope?.trim() || existing?.templateScope
-    const sourceTemplateId =
-      item.sourceTemplateId !== undefined ? item.sourceTemplateId : existing?.sourceTemplateId
     byTemplateCode.set(templateCode, {
       templateCode,
       templateId: item.templateId,
@@ -80,8 +68,6 @@ export function upsertFormTemplateVersionCacheFromListItems(
       latestVersionNo: item.latestVersionNo ?? existing?.latestVersionNo,
       ...(baseTemplateCode != null && baseTemplateCode !== '' ? { baseTemplateCode } : {}),
       ...(templateName != null && templateName !== '' ? { templateName } : {}),
-      ...(templateScope != null && templateScope !== '' ? { templateScope } : {}),
-      ...(sourceTemplateId !== undefined ? { sourceTemplateId } : {}),
     })
   }
 }
