@@ -1,7 +1,8 @@
 import {
-  canWriteProgramFormVersionInPlace,
   readFormVersionStatus,
+  resolveProgramFormWritePlan,
 } from '@/features/template/lib/program-form-version-write-guard'
+import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
 import type { Program } from '@/types/domain'
@@ -26,6 +27,7 @@ import {
 import { getParticipantApplicationEditorVariantForTemplateCode } from '@/features/template/lib/participant-application-template-id'
 import {
   copyFormTemplateVersionRemote,
+  createFormTemplateVersionRemote,
   fetchFormTemplateVersionRemote,
   updateFormTemplateRemote,
 } from '@/features/template/api/form-templates-api-client'
@@ -255,6 +257,80 @@ function toOwnerProgramId(programId: string | number | null | undefined): number
   return Number.isSafeInteger(n) && n > 0 ? n : undefined
 }
 
+function isCopyFromNonCatalogOriginalError(error: unknown): boolean {
+  const message = extractCopyErrorMessage(error)
+  return message.includes('카탈로그 원본에서만')
+}
+
+function extractCopyErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const data = (error as { response?: { data?: { error?: { message?: string }; message?: string } } })
+      .response?.data
+    const nested = data?.error?.message?.trim()
+    if (nested) return nested
+    const top = data?.message?.trim()
+    if (top) return top
+  }
+  return error instanceof Error ? error.message : ''
+}
+
+async function createDraftVersionOnTemplate(
+  templateId: number,
+  programId: string | number,
+  sourceVersionId: number
+): Promise<number> {
+  const created = await createFormTemplateVersionRemote(templateId, {
+    versionLabel: `program-${programId}`,
+    sourceVersionId,
+  })
+  if (created.templateVersionId == null) {
+    throw new Error('프로그램 전용 양식 초안을 만들지 못했습니다.')
+  }
+  return created.templateVersionId
+}
+
+async function copyCatalogOperationalFormVersion(args: {
+  sourceTemplateId: number
+  sourceVersionId: number
+  programId: string | number
+  ownerProgramId?: number
+}): Promise<{ templateId: number; templateVersionId: number }> {
+  const copyOwnerProgramId = args.ownerProgramId ?? toOwnerProgramId(args.programId)
+  try {
+    const copied = await copyFormTemplateVersionRemote(args.sourceTemplateId, {
+      sourceVersionId: args.sourceVersionId,
+      versionLabel: `program-${args.programId}`,
+      ...(copyOwnerProgramId != null ? { ownerProgramId: copyOwnerProgramId } : {}),
+    })
+    if (copied.templateVersionId == null) {
+      throw new Error('프로그램 전용 양식 초안을 만들지 못했습니다.')
+    }
+    return {
+      templateId: copied.templateId ?? args.sourceTemplateId,
+      templateVersionId: copied.templateVersionId,
+    }
+  } catch (error) {
+    const code = getApiErrorCode(error)
+    if (code === 'DATABASE_ERROR') {
+      console.warn('[program-form-bindings] copyVersion DATABASE_ERROR — copy 재시도 없음', {
+        templateId: args.sourceTemplateId,
+        sourceVersionId: args.sourceVersionId,
+        ownerProgramId: copyOwnerProgramId,
+      })
+      throw error
+    }
+    if (isCopyFromNonCatalogOriginalError(error)) {
+      const draftVersionId = await createDraftVersionOnTemplate(
+        args.sourceTemplateId,
+        args.programId,
+        args.sourceVersionId
+      )
+      return { templateId: args.sourceTemplateId, templateVersionId: draftVersionId }
+    }
+    throw error
+  }
+}
+
 /**
  * 프로그램 상세 신청 양식 저장.
  * 바인딩된 버전은 PUBLISHED·카탈로그라 PUT이 409 FORM_VERSION_IMMUTABLE 또는 FORM_CATALOG_VERSION_IMMUTABLE이다.
@@ -275,6 +351,11 @@ export async function saveProgramScopedOperationalFormVersion(input: {
   settingsJson?: Record<string, unknown>
   /** CREATE 직후 양식 적용 — COPY를 이 프로그램 소유(`ownerProgramId`)로 만든다. */
   ownerProgramId?: number
+  /**
+   * 같은 templateCode를 이미 COPY·발행한 경우(UJAT 봉사자 상·하반기 행).
+   * 추가 COPY 없이 이 버전으로 바인딩만 붙인다.
+   */
+  reusePublished?: { templateId: number; templateVersionId: number }
   /**
    * 같은 적용 실행에서 이미 다른 양식이 차지한 바인딩. 여기 있으면 PATCH하지 않고 새 바인딩을 만든다.
    * (1사1교: BE 자동 적용은 모집·신청 바인딩을 1개씩만 만든다 → 기관/강사 양식이 같은 바인딩을 덮어쓰는 것 방지)
@@ -303,6 +384,7 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
   editorState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
   ownerProgramId?: number
+  reusePublished?: { templateId: number; templateVersionId: number }
   excludeBindingIds?: ReadonlySet<number>
 }): Promise<RememberedBinding & { bindingId?: number }> {
   const args = {
@@ -318,59 +400,66 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
   // can be rejected after recruitment applications exist; the preflight keeps
   // that rejection from leaving a copied/published orphan version behind.
   await assertProgramApplicationFormWritable(args.program, args.templateCode)
-  const current = await fetchFormTemplateVersionRemote(args.versionId)
-  const sourceTemplateId = current.templateId
-  if (sourceTemplateId == null) {
-    throw new Error('양식 버전의 템플릿 ID를 찾을 수 없습니다.')
-  }
 
-  let draftTemplateId = sourceTemplateId
-  let draftVersionId = args.versionId
-  // 안전장치: CREATE 직후 적용(ownerProgramId)·공용 카탈로그·공유·발행·상태 불명 버전은 항상 COPY한다.
-  // (자동 적용 바인딩은 공용 카탈로그 버전을 가리킨다 — 제자리 PUT/publish는 공용 양식을 덮어쓴다.)
-  const catalogForGuard = await resolveFormTemplateCatalogIds(args.templateCode).catch(() => null)
-  if (
-    !canWriteProgramFormVersionInPlace(current, {
-      catalogTemplateId: catalogForGuard?.templateId,
-      programId: args.program.id,
-      forceCopy: args.ownerProgramId != null,
-    })
-  ) {
-    const copyOwnerProgramId = args.ownerProgramId ?? toOwnerProgramId(args.program.id)
-    const copied = await copyFormTemplateVersionRemote(sourceTemplateId, {
-      sourceVersionId: args.versionId,
-      versionLabel: `program-${args.program.id}`,
-      ...(copyOwnerProgramId != null ? { ownerProgramId: copyOwnerProgramId } : {}),
-    })
-    if (copied.templateVersionId == null) {
-      throw new Error('프로그램 전용 양식 초안을 만들지 못했습니다.')
-    }
-    draftTemplateId = copied.templateId ?? sourceTemplateId
-    draftVersionId = copied.templateVersionId
-  }
-
-  const baseline = await loadFormTemplateVersionDraftByVersionId(args.templateCode, draftVersionId)
-  const draftForPut =
-    baseline?.draft != null ? coalesceScopedFormDraftForPut(baseline.draft, args.draft) : args.draft
-
-  await saveFormTemplateVersionDraftByVersionId({
-    versionId: draftVersionId,
-    draft: draftForPut,
-    overlay: args.overlay,
-    editorState: args.editorState,
-    settingsJson: args.settingsJson,
-    templateCode: args.templateCode,
-  })
-
-  const publishedVersionId = await publishFormTemplateVersionById(draftVersionId)
+  let draftTemplateId: number
+  let publishedVersionId: number
   const catalog = await resolveFormTemplateCatalogIds(args.templateCode).catch(() => null)
-  if (catalog != null && draftTemplateId !== catalog.templateId) {
-    try {
-      await updateFormTemplateRemote(draftTemplateId, {
-        description: `program-scoped:${args.program.id}`,
+
+  if (args.reusePublished != null) {
+    draftTemplateId = args.reusePublished.templateId
+    publishedVersionId = args.reusePublished.templateVersionId
+  } else {
+    const current = await fetchFormTemplateVersionRemote(args.versionId)
+    const sourceTemplateId = current.templateId
+    if (sourceTemplateId == null) {
+      throw new Error('양식 버전의 템플릿 ID를 찾을 수 없습니다.')
+    }
+
+    let draftVersionId = args.versionId
+    draftTemplateId = sourceTemplateId
+    const plan = resolveProgramFormWritePlan(current, {
+      catalogTemplateId: catalog?.templateId,
+      programId: args.program.id,
+    })
+    if (plan.action === 'copy-from-catalog') {
+      const copied = await copyCatalogOperationalFormVersion({
+        sourceTemplateId,
+        sourceVersionId: args.versionId,
+        programId: args.program.id,
+        ownerProgramId: args.ownerProgramId,
       })
-    } catch (error) {
-      console.warn('[program-form-bindings] label program-scoped template failed', error)
+      draftTemplateId = copied.templateId
+      draftVersionId = copied.templateVersionId
+    } else if (plan.action === 'create-draft-version') {
+      draftVersionId = await createDraftVersionOnTemplate(
+        sourceTemplateId,
+        args.program.id,
+        args.versionId
+      )
+    }
+
+    const baseline = await loadFormTemplateVersionDraftByVersionId(args.templateCode, draftVersionId)
+    const draftForPut =
+      baseline?.draft != null ? coalesceScopedFormDraftForPut(baseline.draft, args.draft) : args.draft
+
+    await saveFormTemplateVersionDraftByVersionId({
+      versionId: draftVersionId,
+      draft: draftForPut,
+      overlay: args.overlay,
+      editorState: args.editorState,
+      settingsJson: args.settingsJson,
+      templateCode: args.templateCode,
+    })
+
+    publishedVersionId = await publishFormTemplateVersionById(draftVersionId)
+    if (catalog != null && draftTemplateId !== catalog.templateId) {
+      try {
+        await updateFormTemplateRemote(draftTemplateId, {
+          description: `program-scoped:${args.program.id}`,
+        })
+      } catch (error) {
+        console.warn('[program-form-bindings] label program-scoped template failed', error)
+      }
     }
   }
 
@@ -446,7 +535,7 @@ export async function resolveProgramOperationalFormLoadSource(
   return { templateVersionId: binding.templateVersionId, preferLocalDraft: false }
 }
 
-/** 발행·보관·상태 불명 버전은 PUT 불가. DRAFT만 수정한다(공용 여부는 canWriteProgramFormVersionInPlace). */
+/** 발행·보관·상태 불명 버전은 PUT 불가. DRAFT만 수정한다. */
 export function isProgramFormVersionMutable(versionStatus: string | null | undefined): boolean {
   return readFormVersionStatus({ versionStatus }) === 'DRAFT'
 }

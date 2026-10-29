@@ -195,7 +195,10 @@ export async function persistWritingFormTemplateDraft(args: {
     const current = await fetchFormTemplateVersionRemote(args.templateVersionId)
     const catalog = await resolveFormTemplateCatalogIds(args.templateId).catch(() => null)
     if (
-      !guard.canWriteProgramFormVersionInPlace(current, { catalogTemplateId: catalog?.templateId })
+      !guard.canWriteProgramFormVersionInPlace(current, {
+        catalogTemplateId: catalog?.templateId,
+        programId: current.ownerProgramId,
+      })
     ) {
       throw new guard.SharedFormVersionWriteBlockedError(args.templateVersionId)
     }

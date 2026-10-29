@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
   getOperationalFormSpec,
+  isSystemCatalogOnlyFormType,
   listAllRegistrationCreateFormSpecs,
   listRecruitmentRowApplicationBindings,
   listVisibleOperationalFormSpecs,
@@ -13,6 +14,16 @@ import {
   clearRegistrationStepTemplateSelections,
   setRegistrationStepTemplateSelection,
 } from '@/features/program/shared/lib/step-template-selection'
+
+describe('isSystemCatalogOnlyFormType', () => {
+  it('treats registration, issuance, and certificate forms as catalog-only', () => {
+    expect(isSystemCatalogOnlyFormType('REGISTRATION')).toBe(true)
+    expect(isSystemCatalogOnlyFormType('ISSUANCE')).toBe(true)
+    expect(isSystemCatalogOnlyFormType('CERTIFICATE')).toBe(true)
+    expect(isSystemCatalogOnlyFormType('APPLICATION')).toBe(false)
+    expect(isSystemCatalogOnlyFormType('RECRUITMENT')).toBe(false)
+  })
+})
 
 describe('listAllRegistrationCreateFormSpecs', () => {
   afterEach(() => {
@@ -298,6 +309,26 @@ describe('신청 바인딩 대상 별칭 — BE canonicalTarget와 같은 규칙
   it('봉사자는 COLLEGE_STUDENT·VOLUNTEER 모두 인식한다', () => {
     expect(
       ids('VOLUNTEER', [row(1, 'COLLEGE_STUDENT', 'VOLUNTEER'), row(2, 'VOLUNTEER', 'MEMBER')])
+    ).toEqual([1, 2])
+  })
+  it('targetType이 비고 targetRole만 MEMBER인 봉사자 행도 인식한다', () => {
+    expect(ids('VOLUNTEER', [row(9, '', 'MEMBER')])).toEqual([9])
+  })
+  it('UJAT 봉사자 모집 TERM 2행도 RECRUITMENT scope로 모은다', () => {
+    const recruit = (bindingId: number, scopeId: number) =>
+      ({
+        bindingId,
+        formType: 'RECRUITMENT',
+        targetType: 'VOLUNTEER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: scopeId,
+        active: true,
+      }) as ProgramFormBindingResponse
+    expect(
+      listRecruitmentRowApplicationBindings(program, [recruit(1, 801), recruit(2, 802)], {
+        formType: 'RECRUITMENT',
+        targetRole: 'VOLUNTEER',
+      }).map(item => item.bindingId)
     ).toEqual([1, 2])
   })
   it('기관은 ORGANIZATION·SCHOOL·INSTITUTION, 개인은 INDIVIDUAL·PERSONAL을 인식한다', () => {

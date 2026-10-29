@@ -8,6 +8,7 @@ import {
 import {
   getOperationalFormSpec,
   getRegistrationFormSpec,
+  isSystemCatalogOnlyFormType,
   listRecruitmentRowApplicationBindings,
   pickOperationalFormBinding,
 } from '@/features/program/general/lib/operational-form-bindings'
@@ -79,7 +80,10 @@ export function formatRegistrationFormApplyFailureContent(
   failed: readonly RegistrationFormApplyFailure[]
 ): string {
   const groups = new Map<string, string[]>()
+  const seenTemplateCodes = new Set<string>()
   for (const item of failed) {
+    if (seenTemplateCodes.has(item.templateCode)) continue
+    seenTemplateCodes.add(item.templateCode)
     const audience = recruitmentAudienceLabel(item.templateCode)
     const name = formDisplayName(item.templateCode)
     const detail = [item.message, item.code].filter(Boolean).join(' · ')
@@ -115,7 +119,7 @@ async function resolveApplyTargets(
     getOperationalFormSpec(item.templateCode) ?? getRegistrationFormSpec(item.templateCode)
   if (spec == null) throw new Error(`양식 스펙을 찾을 수 없습니다: ${item.templateCode}`)
 
-  // GENERAL·UJAT 신청 양식: BE fan-out으로 모집 행마다 바인딩이 있다 → 행마다 적용한다.
+  // GENERAL·UJAT 신청·UJAT 봉사자 모집: BE fan-out으로 모집 행마다 바인딩이 있다 → 행마다 적용한다. COPY는 templateCode당 1회.
   const rows = listRecruitmentRowApplicationBindings(program, bindings, spec)
   const rowTargets = rows
     .filter(row => row.templateVersionId != null)
@@ -156,8 +160,9 @@ async function resolveApplyTargets(
 async function applyOne(
   target: ApplyTarget,
   item: RegistrationFormApplyItem,
-  claimedBindingIds: Set<number>
-): Promise<void> {
+  claimedBindingIds: Set<number>,
+  reusePublished?: { templateId: number; templateVersionId: number }
+): Promise<{ templateId: number; templateVersionId: number } | undefined> {
   const draft =
     item.draft ??
     (await loadFormTemplateVersionDraftByVersionId(item.templateCode, target.versionId))?.draft ??
@@ -181,10 +186,13 @@ async function applyOne(
     editorState: item.editorState,
     settingsJson: item.settingsJson,
     ownerProgramId,
+    reusePublished,
     // 모집 행 신청 양식(행마다 다른 바인딩)은 행 바인딩을 그대로 쓴다.
     excludeBindingIds: target.recruitmentId == null ? claimedBindingIds : undefined,
   })
   if (saved?.bindingId != null) claimedBindingIds.add(saved.bindingId)
+  if (saved?.templateId == null || saved.templateVersionId == null) return undefined
+  return { templateId: saved.templateId, templateVersionId: saved.templateVersionId }
 }
 
 /**
@@ -215,7 +223,12 @@ export async function applyRegistrationFormsAfterCreate(args: {
 
   // 한 실행 안에서 바인딩 1개는 양식 1개만 차지한다(덮어쓰기 방지).
   const claimedBindingIds = new Set<number>()
+  // UJAT 봉사자 상·하반기처럼 같은 templateCode를 행마다 적용할 때 COPY는 한 번만.
+  const publishedByTemplateCode = new Map<string, { templateId: number; templateVersionId: number }>()
   for (const item of args.forms) {
+    if (isSystemCatalogOnlyFormType(item.formType)) {
+      continue
+    }
     let targets: ApplyTarget[]
     try {
       targets = await resolveApplyTargets(args.program, bindings, item, claimedBindingIds)
@@ -228,7 +241,13 @@ export async function applyRegistrationFormsAfterCreate(args: {
     }
     for (const target of targets) {
       try {
-        await applyOne(target, item, claimedBindingIds)
+        const published = await applyOne(
+          target,
+          item,
+          claimedBindingIds,
+          publishedByTemplateCode.get(item.templateCode)
+        )
+        if (published != null) publishedByTemplateCode.set(item.templateCode, published)
         result.applied.push({
           templateCode: item.templateCode,
           recruitmentId: target.recruitmentId,
