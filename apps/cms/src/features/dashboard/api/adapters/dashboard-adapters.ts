@@ -101,6 +101,20 @@ export function formatRecruitmentCount(
   return `${applied ?? '-'} / ${capacity ?? '-'}`
 }
 
+/** 헤더·위젯 건수. 누락이면 행 수/0으로 채우지 않는다. */
+export function formatDashboardCountLabel(count: number | null | undefined): string {
+  return typeof count === 'number' && Number.isFinite(count) ? `${count}건` : '-'
+}
+
+export function formatDashboardHeaderTotalCount(totalCount: number | null | undefined): string {
+  const label = formatDashboardCountLabel(totalCount)
+  return label === '-' ? '총 -' : `총 ${label}`
+}
+
+export function mapNotificationUnreadCount(unreadCount: number | undefined): number | null {
+  return nullableNumber(unreadCount)
+}
+
 type RecruitmentCountFields = {
   participantAppliedCount?: number
   participantCapacity?: number
@@ -111,6 +125,12 @@ type RecruitmentCountFields = {
 }
 
 function nullableNumber(value: number | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function ownFiniteNumber(record: object, key: string): number | null {
+  if (!Object.prototype.hasOwnProperty.call(record, key)) return null
+  const value = (record as Record<string, unknown>)[key]
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
@@ -141,10 +161,12 @@ function recruitmentCountsFromItem(item: RecruitmentCountFields): {
   volunteerCapacity: number | null
 } {
   return {
-    participantApplied: nullableNumber(item.participantAppliedCount) ?? nullableNumber(item.studentAppliedCount),
-    participantCapacity: nullableNumber(item.participantCapacity) ?? nullableNumber(item.studentCapacity),
-    volunteerApplied: nullableNumber(item.volunteerAppliedCount),
-    volunteerCapacity: nullableNumber(item.volunteerCapacity),
+    participantApplied:
+      ownFiniteNumber(item, 'participantAppliedCount') ?? ownFiniteNumber(item, 'studentAppliedCount'),
+    participantCapacity:
+      ownFiniteNumber(item, 'participantCapacity') ?? ownFiniteNumber(item, 'studentCapacity'),
+    volunteerApplied: ownFiniteNumber(item, 'volunteerAppliedCount'),
+    volunteerCapacity: ownFiniteNumber(item, 'volunteerCapacity'),
   }
 }
 
@@ -320,11 +342,8 @@ export function recruitmentItemMatchesWidgetProgramType(
   const param = normalizeRecruitmentProgramType(widgetProgramTypeParam)
   if (!param) return true
   if (item === param) return true
-  if (
-    param === 'general' &&
-    (item.includes('general') || item === 'trained_teachers' || item.includes('trained_teacher'))
-  ) {
-    return true
+  if (param === 'general') {
+    return item === 'general' || item.startsWith('general_')
   }
   if (
     param === 'company_school' &&

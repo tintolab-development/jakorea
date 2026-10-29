@@ -11,6 +11,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
 import {
+  formatDashboardHeaderTotalCount,
   formatRecruitmentCount,
   formatRecruitmentWindowStatus,
   type DashboardRecruitmentRow,
@@ -58,7 +59,7 @@ export function RecruitmentStatusWidget() {
     return () => mo.disconnect()
   }, [])
 
-  const totalCount = data?.totalCount ?? programs.length
+  const totalCountLabel = formatDashboardHeaderTotalCount(data?.totalCount ?? null)
 
   const columns: ColumnsType<DashboardRecruitmentRow> = useMemo(
     () => [
@@ -112,7 +113,7 @@ export function RecruitmentStatusWidget() {
         <WidgetTitleWithHandle>
           <span className="widget-card-title">모집 신청 현황</span>
           <Text type="secondary" className="dashboard-widget-table__header-total-count">
-            총 {totalCount}건
+            {totalCountLabel}
           </Text>
         </WidgetTitleWithHandle>
       }

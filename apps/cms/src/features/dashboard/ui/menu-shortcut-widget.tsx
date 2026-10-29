@@ -39,7 +39,6 @@ import { useMemo } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import {
-  getMenuShortcutBadgeCounts,
   readDashboardShortcutBadge,
   shouldUseDashboardRemoteApi,
 } from '../api/admin-dashboard-service'
@@ -91,8 +90,6 @@ export function MenuShortcutWidget() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
-  const badgeCounts = useDashboardSettingsStore(s => s.shortcutBadgeCounts)
-  const setShortcutBadgeCount = useDashboardSettingsStore(s => s.setShortcutBadgeCount)
   const useRemoteShortcuts = shouldUseDashboardRemoteApi()
   const { data: apiShortcuts } = useDashboardShortcuts(useRemoteShortcuts)
   const { data: remoteBadgeCounts } = useDashboardShortcutBadges(useRemoteShortcuts)
@@ -109,12 +106,7 @@ export function MenuShortcutWidget() {
     [apiShortcuts, shortcutEnabled]
   )
 
-  const liveBadgeCounts = useMemo(() => {
-    if (useRemoteShortcuts) {
-      return remoteBadgeCounts ?? {}
-    }
-    return getMenuShortcutBadgeCounts()
-  }, [useRemoteShortcuts, remoteBadgeCounts])
+  const liveBadgeCounts = useRemoteShortcuts ? (remoteBadgeCounts ?? {}) : {}
 
   if (visibleItems.length === 0) return null
 
@@ -130,12 +122,7 @@ export function MenuShortcutWidget() {
       <div className="menu-shortcut-widget__body">
         <div className="menu-shortcut-widget__grid">
           {visibleItems.map(item => {
-            const live = readCountMapValue(liveBadgeCounts, item.id)
-            const count = useRemoteShortcuts
-              ? live
-              : badgeCounts[item.id] === 0
-                ? 0
-                : live
+            const count = readCountMapValue(liveBadgeCounts, item.id)
             return (
               <button
                 key={item.id}
@@ -144,8 +131,6 @@ export function MenuShortcutWidget() {
                 onClick={() => {
                   if (useRemoteShortcuts) {
                     markShortcutRead(item.id)
-                  } else {
-                    setShortcutBadgeCount(item.id, 0)
                   }
                   invalidateQueriesForMemberManagementNavigation(queryClient, item.path)
                   navigate(item.path)
@@ -158,7 +143,7 @@ export function MenuShortcutWidget() {
                     </span>
                     <span className="menu-shortcut-widget__label">{item.label}</span>
                   </span>
-                  {count != null && count > 0 && (
+                  {typeof count === 'number' && count > 0 && (
                     <span className="menu-shortcut-widget__badge">{formatBadgeCount(count)}</span>
                   )}
                 </span>

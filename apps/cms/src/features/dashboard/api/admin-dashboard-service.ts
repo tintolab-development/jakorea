@@ -10,8 +10,6 @@ import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/progr
 import type { Program } from '@/types/domain'
 import { countGeneralProgramOverviewStages } from '@/features/program/general/lib/overview-stage-counts'
 import { countCompanySchoolOverviewStages } from '@/features/program/1c-1s/lib/overview-stage-counts'
-import { MOCK_APPLICANT_INSTITUTIONS } from '@/features/program/shared/model/applicant-institution'
-import { MOCK_APPLICANT_INSTRUCTORS } from '@/features/program/shared/model/applicant-instructor'
 import { SHORTCUT_ITEMS, DASHBOARD_HOME_PATH } from '@/features/dashboard/model/dashboard-settings-store'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -37,6 +35,7 @@ import {
   mapProgramInquiryListResponse,
   mapProgramOptionsForWidget,
   mapProgramScheduleListResponse,
+  mapNotificationUnreadCount,
   mapRecruitmentListResponse,
   type DashboardHomeSummary,
   type DashboardProgramOption,
@@ -297,57 +296,6 @@ export async function getKpiAchievementList(options?: {
   return []
 }
 
-/** getProgramProgressStages(교육)와 동일한 lifecycle 집계 — 동기·목 데이터 전용 */
-function accumulateLifecycleStages(programs: Program[]): ProgramProgressStages {
-  const stages = {
-    studentRecruitment: 0,
-    instructorRecruitment: 0,
-    matchingCompleted: 0,
-    educationBeforeTextbook: 0,
-    educationAfterTextbook: 0,
-    educationCompleted: 0,
-    documentProcessingCompleted: 0,
-  }
-
-  programs.forEach(program => {
-    switch (program.lifecycleStatus) {
-      case 'recruiting_students':
-        stages.studentRecruitment++
-        break
-      case 'recruiting_instructors':
-        stages.instructorRecruitment++
-        break
-      case 'participant_instructor_recruiting':
-        stages.studentRecruitment++
-        stages.instructorRecruitment++
-        break
-      case 'matching_completed':
-        stages.matchingCompleted++
-        break
-      case 'participant_instructor_recruitment_completed':
-        stages.matchingCompleted++
-        break
-      case 'education_before_textbook':
-        stages.educationBeforeTextbook++
-        break
-      case 'education_after_textbook':
-        stages.educationAfterTextbook++
-        break
-      case 'education_completed':
-        stages.educationCompleted++
-        break
-      case 'document_processing_completed':
-        stages.documentProcessingCompleted++
-        break
-      default:
-        break
-    }
-  })
-
-  const total = Object.values(stages).reduce((sum, c) => sum + c, 0)
-  return { ...stages, total }
-}
-
 function getPendingActionCountsSync(): PendingActionCounts {
   return {
     pendingApplications: 0,
@@ -356,60 +304,9 @@ function getPendingActionCountsSync(): PendingActionCounts {
   }
 }
 
-/**
- * 메뉴 바로가기 위젯 배지: 목 데이터 기준 미처리·모집·승인 대기 건수 (동기).
- * API 연동 시 이 함수만 서버 집계로 교체하면 된다.
- */
+/** remote 아닐 때 바로가기 배지. 목 카탈로그로 숫자를 만들지 않는다. */
 export function getMenuShortcutBadgeCounts(): Record<string, number> {
-  const emptyStages = accumulateLifecycleStages([])
-
-  const pending = getPendingActionCountsSync()
-  const institutionPending = MOCK_APPLICANT_INSTITUTIONS.filter(s => s.approvalStatus === 'pending').length
-  const instructorApplicantPending = MOCK_APPLICANT_INSTRUCTORS.filter(s => s.approvalStatus === 'pending')
-    .length
-  const inquiryPending = 0
-  const permissionPending = 0
-  const paymentOrderPending = 0
-  const accountPaymentPending = 0
-
-  const mapped: Record<string, number> = {
-    'programs-general-education': emptyStages.studentRecruitment,
-    'programs-economy': 0,
-    'programs-gemini': 0,
-    'programs-ujat': 0,
-    'programs-detail': emptyStages.matchingCompleted,
-    'users-all': Math.min(
-      999,
-      institutionPending + instructorApplicantPending + pending.pendingApplications
-    ),
-    'users-school': institutionPending,
-    'users-instructor': instructorApplicantPending,
-    'users-admin': 0,
-    'permission-requests': permissionPending,
-    'admin-permission-settings': 0,
-    'program-permission-settings': 0,
-    'settlement-payment-orders': paymentOrderPending,
-    'settlement-account-payments': accountPaymentPending,
-    'settlement-item-settings': 0,
-    notices: 0,
-    faq: 0,
-    inquiries: inquiryPending,
-    'template-management': 0,
-    sponsors: 0,
-    textbooks: 0,
-    'notification-messages': 0,
-    performance: pending.pendingSettlements,
-    'member-login-history': 0,
-    'file-download-history': 0,
-    'privacy-query-history': 0,
-    'bug-issue-history': 0,
-  }
-
-  const out: Record<string, number> = {}
-  for (const item of SHORTCUT_ITEMS) {
-    out[item.id] = mapped[item.id] ?? 0
-  }
-  return out
+  return {}
 }
 
 /** Swagger: GET /api/admin/dashboard/home */
@@ -428,12 +325,12 @@ export async function getDashboardHomeSummary(): Promise<DashboardHomeSummary> {
 }
 
 /** Swagger: GET /api/admin/notifications/unread-count */
-export async function getDashboardNotificationCount(): Promise<number> {
+export async function getDashboardNotificationCount(): Promise<number | null> {
   if (shouldUseDashboardRemoteApi()) {
     const dto = await fetchDashboardNotificationCountRemote()
-    return dto.unreadCount ?? 0
+    return mapNotificationUnreadCount(dto.unreadCount)
   }
-  return 0
+  return null
 }
 
 /** Swagger: GET /api/admin/dashboard/program-inquiries */
