@@ -49,11 +49,6 @@ import { systemInboxQueryKeys } from '@/features/system-inbox/api/query-keys'
 import { queryClient } from '@/shared/lib/query-client'
 import { refreshAccessTokenSession } from '@/shared/instance/axios-instance'
 
-function elevateAdminToMaster(user: AuthUser): AuthUser {
-  if (user.role !== 'ADMIN') return user
-  return { ...user, adminLevel: user.adminLevel ?? 'MASTER' }
-}
-
 function clearSessionScopedQueryCaches() {
   void queryClient.removeQueries({ queryKey: heroBannerQueryKeys.all })
   void queryClient.removeQueries({ queryKey: popupQueryKeys.all })
@@ -153,7 +148,7 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
   if (token && expiresAt && userStr) {
     if (new Date(expiresAt) > new Date()) {
       try {
-        const user = elevateAdminToMaster(JSON.parse(userStr) as AuthUser)
+        const user = JSON.parse(userStr) as AuthUser
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
         return {
           user,
@@ -202,7 +197,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         const response = await loginApi(request, options)
 
         if (response.requiresMfa && response.mfaState) {
-          const normalizedUser = elevateAdminToMaster(response.user)
+          const normalizedUser = response.user
           set({
             user: normalizedUser,
             token: null,
@@ -216,7 +211,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           return { requiresMfa: true, mfaState: response.mfaState }
         }
 
-        const normalizedUser = elevateAdminToMaster(response.user)
+        const normalizedUser = response.user
         if (typeof window !== 'undefined' && window.localStorage) {
           localStorage.setItem(AUTH_TOKEN_KEY, response.token)
           localStorage.setItem(AUTH_EXPIRY_KEY, response.expiresAt)
@@ -253,7 +248,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const state = get()
       if (!state.user) return
 
-      const normalizedUser = elevateAdminToMaster(state.user)
+      const normalizedUser = state.user
       const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
 
       clearSessionScopedQueryCaches()
@@ -274,7 +269,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     },
 
     setAuth: ({ user, token, expiresAt }) => {
-      const normalizedUser = elevateAdminToMaster(user)
+      const normalizedUser = user
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem(AUTH_TOKEN_KEY, token)
         localStorage.setItem(AUTH_EXPIRY_KEY, expiresAt)
@@ -389,7 +384,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           }
 
           if (storedUser?.isActive) {
-            const normalizedUser = elevateAdminToMaster(storedUser)
+            const normalizedUser = storedUser
             localStorage.setItem(AUTH_USER_KEY, JSON.stringify(normalizedUser))
             set({
               user: normalizedUser,
