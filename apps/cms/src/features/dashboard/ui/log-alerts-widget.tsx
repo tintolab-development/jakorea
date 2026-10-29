@@ -1,7 +1,8 @@
 /**
  * MASTER 전용 로그 알림 위젯
  */
-import { Card, Table, Typography } from 'antd'
+import { Card, Typography } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useDashboardLogAlerts } from '../hooks/use-dashboard-log-alerts'
@@ -55,7 +56,7 @@ export function LogAlertsWidget() {
       {isError ? (
         <DashboardWidgetQueryError />
       ) : (
-        <Table<DashboardLogAlertItem>
+        <CmsDataTable<DashboardLogAlertItem>
           columns={columns}
           dataSource={data}
           rowKey="id"

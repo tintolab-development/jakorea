@@ -50,6 +50,8 @@ interface ScheduleEvent {
   programTitle: string
   /** 프로그램 진행 현황 태그 색상 동기화용 */
   lifecycleStatus: ProgramLifecycleStatus
+  /** 주간 태그 2줄 라벨(원격 일정). 없으면 유형 라벨 */
+  detailLabel?: string
 }
 
 function getEventTypeLabel(type: ScheduleEvent['type']) {
@@ -493,6 +495,7 @@ export function ProgramScheduleWidget({
           programId: ev.programId,
           programTitle: ev.programTitle,
           lifecycleStatus: ev.lifecycleStatus,
+          detailLabel: ev.detailLabel,
         })
       }
       for (const key of Object.keys(out)) {
@@ -746,9 +749,14 @@ export function ProgramScheduleWidget({
           const isToday = date.isSame(dayjs(), 'day')
           const dayEvents = eventsByDate[dateKey] || []
           const dayColorMap = buildScheduleColorMapForWidgetEvents(dayEvents, variant)
-          const programIds = getDisplayProgramIds(dayEvents, 2)
+          // 피그마: 2단(색상 바)은 하루 최대 3개, 1단은 2개
+          const programIds = getDisplayProgramIds(dayEvents, halfColumn ? 3 : 2)
           const hasEvents = programIds.length > 0
           const weekColorOnly = halfColumn
+          // '외 N개의 항목' = 화면에 안 보이는 일정 수 (1단: 2건 이후, 2단: 표시된 프로그램에 속하지 않는 일정)
+          const hiddenEventCount = weekColorOnly
+            ? dayEvents.filter(ev => !programIds.includes(ev.programId)).length
+            : dayEvents.length - 2
 
           const eventsClass = [
             'program-schedule-widget__week-events',
@@ -773,6 +781,7 @@ export function ProgramScheduleWidget({
                 className={[
                   'program-calendar-week-cell-date',
                   isSelected ? 'program-calendar-week-cell-date--selected' : '',
+                  hasEvents ? 'program-calendar-week-cell-date--has-events' : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}
@@ -797,7 +806,6 @@ export function ProgramScheduleWidget({
                               className="program-schedule-widget__week-event-card"
                               style={{
                                 backgroundColor: pair.bg,
-                                border: `1px solid ${pair.border}`,
                               }}
                               role="button"
                               tabIndex={0}
@@ -813,9 +821,13 @@ export function ProgramScheduleWidget({
                                 }
                               }}
                             >
-                              <div className="program-schedule-widget__week-event-title">{ev.programTitle}</div>
-                              <div className="program-schedule-widget__week-event-time">
-                                {getEventTypeLabel(ev.type)} | {ev.time}
+                              <div className="program-schedule-widget__week-event-head">
+                                <div className="program-schedule-widget__week-event-title">{ev.programTitle}</div>
+                                <span className="program-schedule-widget__week-event-divider" aria-hidden />
+                                <div className="program-schedule-widget__week-event-time">{ev.time}</div>
+                              </div>
+                              <div className="program-schedule-widget__week-event-desc">
+                                {ev.detailLabel ?? getEventTypeLabel(ev.type)}
                               </div>
                             </div>
                           </div>
@@ -838,7 +850,6 @@ export function ProgramScheduleWidget({
                               className="program-schedule-widget__week-event-card program-schedule-widget__week-event-card--color-only"
                               style={{
                                 backgroundColor: pair.bg,
-                                border: `1px solid ${pair.border}`,
                               }}
                               role="button"
                               tabIndex={0}
@@ -860,7 +871,7 @@ export function ProgramScheduleWidget({
                         </ProgramScheduleEventPreviewPopover>
                       )
                     })}
-                  {dayEvents.length > 2 && (
+                  {hiddenEventCount > 0 && (
                     <ProgramScheduleEventPreviewPopover
                       dayEvents={dayEvents}
                       variant={variant}
@@ -869,7 +880,7 @@ export function ProgramScheduleWidget({
                     >
                       <div className="program-schedule-widget__week-event-preview-host">
                         <div className="program-schedule-widget__week-event-more">
-                          외 {dayEvents.length - 2}개의 항목
+                          외 {hiddenEventCount}개의 항목
                         </div>
                       </div>
                     </ProgramScheduleEventPreviewPopover>

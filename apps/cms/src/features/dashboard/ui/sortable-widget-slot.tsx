@@ -20,6 +20,7 @@ import { Col } from 'antd'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { resolveResizeSnap } from '@/features/dashboard/lib/resize-snap'
+import { SortOrderDragIcon } from '@/shared/ui/sort-order-drag-icon'
 
 export interface SortableWidgetSlotProps {
   id: string
@@ -320,8 +321,7 @@ function SortableWidgetSlotInner({
               {...listeners}
               {...attributes}
             >
-              <span className="widget-drag-handle-bar" />
-              <span className="widget-drag-handle-bar" />
+              <SortOrderDragIcon />
             </div>
           )}
           {children}

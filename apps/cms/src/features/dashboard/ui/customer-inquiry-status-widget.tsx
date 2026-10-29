@@ -3,7 +3,8 @@
  * 프로그램별 답변 대기 / 답변 완료 / 전체 건수를 테이블로 표시
  */
 
-import { Card, Table, Typography } from 'antd'
+import { Card, Typography } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -153,7 +154,7 @@ export function CustomerInquiryStatusWidget() {
       {isError ? (
         <DashboardWidgetQueryError />
       ) : (
-        <Table<ProgramInquiryRow>
+        <CmsDataTable<ProgramInquiryRow>
           columns={columns}
           dataSource={data}
           rowKey="key"

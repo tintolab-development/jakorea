@@ -11,9 +11,9 @@
   display: flex;
   flex-direction: column;
   overflow: visible;
-  border-radius: 12px !important;
+  border-radius: 16px !important;
   border: none !important;
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* 타이틀 옆 디스크립션 — dashboard-toolbar-description과 동일 타이포 (Typography secondary 색상 덮어씀) */
@@ -25,8 +25,8 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 170%;
-  opacity: 0.6;
+  line-height: 150%;
+  opacity: 0.5;
 }
 
 .kpi-achievement-widget .ant-card-head {
@@ -58,10 +58,11 @@
 /* 가로 스크롤 영역: 카드 행 — 가로 스크롤바 UI는 유지(다른 위젯과 달리 숨기지 않음) */
 .kpi-achievement-widget__scroll {
   display: flex;
-  align-items: flex-start;
+  /* 슬롯 고정 높이(372) 안에서 카드가 남는 높이를 채우고(최대 280) 잘리지 않게 */
+  align-items: stretch;
   gap: var(--spacing-16);
-  flex: 0 0 auto;
-  min-height: 280px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: calc(var(--spacing-8) + 6px);
@@ -102,10 +103,10 @@
   min-height: 280px;
   max-height: 280px;
   height: auto;
-  padding: 16px 20px 16px;
+  padding: 16px 20px 22px;
   background: #fff;
-  border: 1px solid var(--color-border-skeleton, #f0f0f0);
-  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -139,17 +140,27 @@
   overflow-y: auto;
 }
 
-/* KPI 한 줄 */
+/* KPI 한 줄 — 피그마: head(라벨·수치) + 막대, 간격 8 */
 .kpi-achievement-widget__kpi-row {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-8);
+}
+
+.kpi-achievement-widget__kpi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-8);
+  padding: 0 4px;
+  min-width: 0;
 }
 
 /* KPI 라벨: 메인 타이틀과 (단위: …) 디스크립션 사이 8px — flex gap은 unit의 -webkit-box와 충돌할 수 있어 margin으로 고정 */
 .kpi-achievement-widget__kpi-label {
   display: flex;
-  flex-wrap: wrap;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
   align-items: baseline;
   min-width: 0;
 }
@@ -164,7 +175,7 @@
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 130%;
   letter-spacing: -0.14px;
   white-space: nowrap;
@@ -173,7 +184,7 @@
 /* (단위: 명) 디스크립션 — 타이틀과 8px, 0.6 톤 */
 .kpi-achievement-widget__kpi-label-unit {
   flex-shrink: 0;
-  margin-left: var(--spacing-8);
+  margin-left: var(--spacing-4);
   max-width: 100%;
   overflow: hidden;
   display: inline-block;
@@ -185,23 +196,18 @@
   font-size: 12px;
   font-style: normal;
   font-weight: 500;
-  line-height: 130%;
+  line-height: 140%;
   letter-spacing: -0.12px;
-}
-
-.kpi-achievement-widget__bar-wrap {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-8);
 }
 
 /* 바 차트: 배경(회색) = 100%, 채움 = 달성률(%)만큼 색상 */
 .kpi-achievement-widget__bar-bg {
-  flex: 1;
+  flex: 0 0 auto;
+  width: 100%;
   min-width: 0;
-  height: 8px;
-  background: var(--color-border-skeleton, #e8e8e8);
-  border-radius: 4px;
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 30px;
   overflow: hidden;
   display: block;
 }
@@ -212,7 +218,7 @@
   height: 100%;
   width: var(--kpi-bar-percent, 0);
   max-width: 100%;
-  border-radius: 4px;
+  border-radius: 30px;
   transition: width 0.2s ease;
   background: var(--JA-mint-01, #01a1af);
 }
@@ -222,20 +228,24 @@
 }
 
 .kpi-achievement-widget__bar-fill--under {
-  background: #777;
+  background: #85969d;
 }
 
 /* 달성/KPI 수치 + 달성률 뱃지 */
 .kpi-achievement-widget__values {
   display: flex;
   align-items: center;
-  gap: var(--spacing-6);
+  gap: var(--spacing-8);
   flex-shrink: 0;
 }
 
 .kpi-achievement-widget__achieved-kpi {
-  font-size: var(--font-size-12);
-  color: var(--color-text-secondary);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 130%;
+  letter-spacing: -0.16px;
   white-space: nowrap;
 }
 
@@ -244,13 +254,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
-  min-width: 46px;
-  height: 20px;
-  padding: 0 6px;
+  width: 52px;
+  min-width: 52px;
+  height: auto;
+  padding: 2px 6px 2px 7px;
   box-sizing: border-box;
-  font-size: var(--font-size-12);
-  font-weight: var(--font-weight-600);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
   border-radius: 30px;
   text-align: center;
 }
@@ -270,7 +281,7 @@
 }
 
 .kpi-achievement-widget__rate-badge--under {
-  background: #777;
+  background: #85969d;
   color: #fff;
 }
 

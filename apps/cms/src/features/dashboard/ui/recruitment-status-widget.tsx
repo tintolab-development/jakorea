@@ -5,7 +5,8 @@
  * 모집 신청 현황 컬럼: dashboard recruitments.recruitmentStatus 라벨 (lifecycle 매핑 없음)
  */
 
-import { Card, Table, Typography } from 'antd'
+import { Card, Typography } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -131,7 +132,7 @@ export function RecruitmentStatusWidget() {
       {isError ? (
         <DashboardWidgetQueryError />
       ) : (
-        <Table<DashboardRecruitmentRow>
+        <CmsDataTable<DashboardRecruitmentRow>
           columns={columns}
           dataSource={programs}
           rowKey="id"
