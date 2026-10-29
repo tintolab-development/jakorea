@@ -103,6 +103,7 @@ const merged = mergePublicMainWithFallback(
         mainTitle: '청소년의 가능성이\n더 넓은 세상과 만납니다',
         bottomText: '원격 설명',
         imageUrl: 'https://cdn.example/hero.png',
+        linkUrl: 'https://www.jakorea.org/about',
       },
     ],
     education: {
@@ -138,6 +139,8 @@ const merged = mergePublicMainWithFallback(
 
 assert.equal(merged.heroes.length, 1)
 assert.deepEqual(merged.heroes[0]?.titleLines, ['청소년의 가능성이', '더 넓은 세상과 만납니다'])
+assert.equal(merged.heroes[0]?.href, '/about')
+assert.equal(merged.heroes[0]?.external, false)
 assert.equal(merged.educationTitle, '원격 교육 제목')
 assert.equal(merged.programs.length, 0)
 assert.equal(merged.stats[0]?.value, '200')

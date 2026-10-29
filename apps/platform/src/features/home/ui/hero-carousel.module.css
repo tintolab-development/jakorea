@@ -48,9 +48,16 @@
  * - 컨트롤 하단 → 히어로 하단: 261px
  * - 카피 최대 폭: 1920 - 240 - 969 = 711px
  */
+.slideHit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
 .inner {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  pointer-events: none;
   display: flex;
   width: 100%;
   max-width: 1920px;
@@ -130,6 +137,7 @@
   align-items: center;
   align-self: flex-start;
   gap: var(--spacing-16);
+  pointer-events: auto;
 }
 
 .controlsMeta {
