@@ -1,0 +1,136 @@
+/**
+ * CmsTextTabs — 민트 밑줄 텍스트 탭 (배경 없음, 회색/흰 배경 공통)
+ * 스펙: program-detail-fullpage-modal-tabs-spec.md
+ */
+
+.cms-text-tabs {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.cms-text-tabs__row,
+.program-detail-fullpage-modal__tabs-row {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-16);
+  min-height: 0;
+}
+
+/* 상세(일반) — 하단 패딩만 (권한 승인 목록 등) */
+.cms-text-tabs--detail .cms-text-tabs__row {
+  padding: 0 0 32px;
+}
+
+/* 상세 풀페이지 모달 — 상·하 패딩 (좌우는 부모 content 패딩) */
+.detail-fullpage-modal .cms-text-tabs--detail .cms-text-tabs__row,
+.detail-fullpage-modal .program-detail-fullpage-modal__tabs-row,
+.program-detail-fullpage-modal .cms-text-tabs:not(.cms-text-tabs--list) .cms-text-tabs__row,
+.program-detail-fullpage-modal__tabs-row {
+  padding: var(--spacing-16) 0 32px;
+}
+
+/* 목록 — 등록 플로우 등, 행 패딩 없음 */
+.cms-text-tabs--list .cms-text-tabs__row {
+  padding: 0;
+}
+
+.cms-text-tabs__list,
+.program-detail-fullpage-modal__tabs {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.cms-text-tabs__list--wrap,
+.program-detail-fullpage-modal__tabs.cms-text-tabs__list--wrap {
+  flex-wrap: wrap;
+  row-gap: 8px;
+  overflow-x: visible;
+}
+
+.cms-text-tabs__trailing,
+.program-detail-fullpage-modal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex-shrink: 0;
+}
+
+.cms-text-tabs button.cms-text-tabs__tab,
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab {
+  display: inline-flex;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 6px 16px 10px 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: #7d7d7d;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.cms-text-tabs button.cms-text-tabs__tab:hover:not(:disabled),
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:hover:not(:disabled) {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.cms-text-tabs button.cms-text-tabs__tab:disabled,
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled {
+  color: #bdbdbd;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.cms-text-tabs button.cms-text-tabs__tab:disabled:hover,
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled:hover {
+  color: #bdbdbd;
+}
+
+.cms-text-tabs__tab-label,
+.program-detail-fullpage-modal__tab-label {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* 활성 탭 — `program-detail-fullpage-modal__tab--active` 와 동일 (버튼 하단 2px stroke) */
+.cms-text-tabs button.cms-text-tabs__tab.cms-text-tabs__tab--active,
+.program-detail-fullpage-modal
+  button.program-detail-fullpage-modal__tab.program-detail-fullpage-modal__tab--active {
+  color: var(--JA-mint-01, #01a1af);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  border-bottom: 2px solid var(--JA-mint-01, #01a1af);
+}
+
+/* 포커스 — 풀페이지 모달과 동일 */
+.cms-text-tabs button.cms-text-tabs__tab:focus,
+.cms-text-tabs button.cms-text-tabs__tab:focus-visible,
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:focus,
+.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
