@@ -210,8 +210,10 @@ function UjatProgramRegistrationFullpageModalInner({
 
   const handlePreview = useCallback(() => {
     if (flow.phase === 'recruitment') {
-      if (flow.recruitmentPreviewProgram == null) return
-      setRecruitmentPreviewProgram(flow.recruitmentPreviewProgram)
+      const previewProgram =
+        flow.buildRecruitmentPreviewProgram() ?? flow.recruitmentPreviewProgram
+      if (previewProgram == null) return
+      setRecruitmentPreviewProgram(previewProgram)
       setRecruitmentPreviewAudience(
         recruitmentPreviewAudienceFromUjatRegistrationStep(flow.activeStep)
       )

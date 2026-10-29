@@ -41,6 +41,7 @@ import {
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import type { ScopedRhfFieldForm } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
+import { filterUjatTypedRecruitmentOverlayPatch } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 
 function patchFieldForm(form: ScopedRhfFieldForm, partial: Record<string, unknown>): void {
   beginWizardRecruitmentRhfProjection()
@@ -55,6 +56,9 @@ export function writeGeneralRecruitFields(
   form: ScopedRhfFieldForm,
   partial: Record<string, unknown>
 ): void {
+  const allowed = filterUjatTypedRecruitmentOverlayPatch(partial)
+  if (allowed == null) return
+  partial = allowed
   if (peekTrainedTeachersRegistrationRhf() != null) {
     const rest = patchActiveTrainedTeachersRecruitmentOverlay(partial)
     if (Object.keys(rest).length === 0) return

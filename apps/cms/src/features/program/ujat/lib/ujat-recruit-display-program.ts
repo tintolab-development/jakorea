@@ -383,6 +383,24 @@ export function programToUjatRecruitCanonicalFormValues(
             ? { volunteerInterviewConfig: row.interviewConfig ?? {} }
             : {}),
         }),
+    ...(hasOwnField(row, 'thumbnailFileObjectId')
+      ? {
+          recruitmentThumbnailFileObjectId:
+            typeof row.thumbnailFileObjectId === 'number' && row.thumbnailFileObjectId > 0
+              ? row.thumbnailFileObjectId
+              : undefined,
+        }
+      : {}),
+    ...(row.attachments?.some(item => typeof item.fileObjectId === 'number' && item.fileObjectId > 0)
+      ? {
+          recruitmentAttachmentFileObjectIds: row.attachments
+            .map(item => item.fileObjectId)
+            .filter((id): id is number => typeof id === 'number' && id > 0),
+          attachmentFileNames: row.attachments
+            .map(item => item.originalFileName?.trim() || '')
+            .filter(Boolean),
+        }
+      : {}),
   }
 }
 
@@ -457,7 +475,7 @@ export function applyUjatRecruitFormValuesToProgram(
     contactName: contactName?.trim() || null,
     contactPhone: values.contactPhone?.trim() || null,
     contactEmail: values.contactEmail?.trim() || null,
-    ...(isInstitution
+        ...(isInstitution
       ? {
           remarks: values.oneLineIntroduction?.trim() || null,
           ...typedFieldsFromRecruitmentFormValues(values, 'institution'),
@@ -470,6 +488,17 @@ export function applyUjatRecruitFormValuesToProgram(
           interviewEndAt: values.interviewEndDate?.trim() || null,
           ...typedFieldsFromRecruitmentFormValues(values, 'volunteer'),
         }),
+    ...(values.recruitmentThumbnailFileObjectId !== undefined
+      ? { thumbnailFileObjectId: values.recruitmentThumbnailFileObjectId || null }
+      : {}),
+    ...(values.recruitmentAttachmentFileObjectIds !== undefined
+      ? {
+          attachments: values.recruitmentAttachmentFileObjectIds.map((fileObjectId, index) => ({
+            fileObjectId,
+            originalFileName: values.attachmentFileNames?.[index] ?? null,
+          })),
+        }
+      : {}),
   }
   return {
     ...program,
@@ -477,6 +506,26 @@ export function applyUjatRecruitFormValuesToProgram(
       ? rows.map(row => (row === existingTarget ? nextRow : row))
       : [...rows, nextRow],
   }
+}
+
+/** 등록 위저드 — 기관·상반기·하반기 typed RHF를 행에만 반영한다. overlay는 건드리지 않는다. */
+export function applyUjatRegistrationRecruitmentFormsToProgram(
+  program: Program,
+  forms: {
+    institution: ProgramDetailEditFormValues
+    volunteerH1: ProgramDetailEditFormValues
+    volunteerH2: ProgramDetailEditFormValues
+  }
+): Program {
+  let next = applyUjatRecruitFormValuesToProgram(program, 'institution', forms.institution, {
+    createMissing: true,
+  })
+  next = applyUjatRecruitFormValuesToProgram(next, 'volunteer_h1', forms.volunteerH1, {
+    createMissing: true,
+  })
+  return applyUjatRecruitFormValuesToProgram(next, 'volunteer_h2', forms.volunteerH2, {
+    createMissing: true,
+  })
 }
 
 function volunteerHalfPeriod(

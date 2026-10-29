@@ -1,4 +1,5 @@
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import { filterUjatTypedRecruitmentOverlayPatch } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 
 /**
  * UJAT 학교 모집 폼 템플릿 편집기·미리보기가 각각 마운트될 때 로컬 state가 갈라지지 않도록 공유한다.
@@ -41,7 +42,9 @@ export function resetUjatRecruitInstitutionOverlayForScope(
   store.resetFor(templateCode)
 }
 export function patchUjatRecruitInstitutionOverlay(partial: Record<string, unknown>): void {
-  store.patch(partial)
+  const allowed = filterUjatTypedRecruitmentOverlayPatch(partial)
+  if (allowed == null) return
+  store.patch(allowed)
 }
 export function replaceUjatRecruitInstitutionOverlay(next: Record<string, unknown>): void {
   store.replace(next)

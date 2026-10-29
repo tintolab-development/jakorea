@@ -136,11 +136,15 @@ function overlayKeysForDirtyFormField(
   if (kind === 'institution') {
     return INSTITUTION_DIRTY_FIELD_KEYS[name] ?? []
   }
-  const sharedKeys = name.startsWith('rounds.0')
-    ? [VOLUNTEER_KEYS.recruitRange, VOLUNTEER_KEYS.recruitRangeH1, VOLUNTEER_KEYS.activityTermH1]
-    : name.startsWith('rounds.1')
-      ? [VOLUNTEER_KEYS.recruitRangeH2, VOLUNTEER_KEYS.activityTermH2]
-      : (VOLUNTEER_DIRTY_FIELD_KEYS[name] ?? [])
+  const sharedKeys = name.startsWith('rounds.0.curriculum')
+    ? [VOLUNTEER_KEYS.activityTermH1]
+    : name.startsWith('rounds.1.curriculum')
+      ? [VOLUNTEER_KEYS.activityTermH2]
+      : name.startsWith('rounds.0')
+        ? [VOLUNTEER_KEYS.recruitRange, VOLUNTEER_KEYS.recruitRangeH1]
+        : name.startsWith('rounds.1')
+          ? [VOLUNTEER_KEYS.recruitRangeH2]
+          : (VOLUNTEER_DIRTY_FIELD_KEYS[name] ?? [])
   if (volunteerHalf == null) return sharedKeys
   return sharedKeys.map(key => remapVolunteerDirtyKeyToHalf(key, volunteerHalf))
 }

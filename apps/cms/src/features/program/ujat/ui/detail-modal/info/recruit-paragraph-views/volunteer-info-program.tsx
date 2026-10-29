@@ -132,7 +132,7 @@ export function UjatRecruitVolunteerInfoProgramView({
   const roundIndex = volunteerHalf === 'h1' ? 0 : 1
   const hasRound =
     isEdit && form
-      ? form.watch(`rounds.${roundIndex}`) != null
+      ? form.getValues(`rounds.${roundIndex}` as 'rounds.0') != null
       : program.rounds?.[roundIndex] != null
   const recruitStartName = (
     hasRound
