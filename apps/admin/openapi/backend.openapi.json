@@ -17003,6 +17003,12 @@
               "null"
             ]
           },
+          "attachmentUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "authorName": {
             "type": "string"
           },
