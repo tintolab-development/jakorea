@@ -426,3 +426,26 @@ describe('교육구조 Guard 코드', () => {
     ).toBe('변경할 교육구조의 회차 또는 일정 정보를 입력해 주세요.')
   })
 })
+
+describe('getGeneralProgramApiErrorMessage inline images', () => {
+  function errorFor(code: string, status = 400) {
+    return {
+      response: {
+        status,
+        data: { success: false, error: { code } },
+      },
+    }
+  }
+
+  it('403 소유권 불일치를 권한 안내로 변환한다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('INLINE_IMAGE_FILE_OWNER_MISMATCH', 403), 'fallback')
+    ).toContain('권한이 없습니다')
+  })
+
+  it('409 미완료 스캔을 AVAILABLE·CLEAN 확인 안내로 변환한다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('INLINE_IMAGE_FILE_NOT_AVAILABLE', 409), 'fallback')
+    ).toContain('AVAILABLE·CLEAN')
+  })
+})

@@ -4,6 +4,10 @@
 
 import { CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
 import {
+  PROGRAM_INLINE_IMAGE_ERROR_MESSAGES,
+  isProgramInlineImageBindError,
+} from '@/features/program/shared/api/program-inline-images'
+import {
   isProgramEducationStructureGuardCode,
   PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES,
 } from '@/features/program/general/lib/education-structure-guard'
@@ -163,10 +167,17 @@ export function getGeneralProgramApiErrorCode(error: unknown): string | undefine
 }
 
 export function getGeneralProgramApiErrorMessage(error: unknown, fallback: string): string {
+  if (isProgramInlineImageBindError(error) && error.message.trim()) {
+    return error.message
+  }
+
   const organizationAssignmentMessage = formatOrganizationApplicationApproveErrorMessage(error)
   if (organizationAssignmentMessage) return organizationAssignmentMessage
 
   const code = extractApiErrorCode(error)
+  if (code && PROGRAM_INLINE_IMAGE_ERROR_MESSAGES[code]) {
+    return PROGRAM_INLINE_IMAGE_ERROR_MESSAGES[code]
+  }
   if (code === 'PUBLIC_SURVEY_FILE_QUESTION_NOT_SUPPORTED') {
     return PUBLIC_SURVEY_FILE_QUESTION_NOT_SUPPORTED_MESSAGE
   }

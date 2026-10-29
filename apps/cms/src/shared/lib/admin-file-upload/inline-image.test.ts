@@ -31,6 +31,21 @@ describe('rich-text inline image owners', () => {
     expect(mailTemplateInlineImageOwner(12).filePurpose).toBe('MAIL_TEMPLATE_ATTACHMENT')
   })
 
+  it('프로그램 본문 이미지는 PROGRAM_CONTENT/PROGRAM 과 수정 시 programId를 쓴다', () => {
+    expect(programInlineImageOwner(null)).toMatchObject({
+      ownerDomain: 'PROGRAM_CONTENT',
+      ownerType: 'PROGRAM',
+      ownerId: null,
+      filePurpose: 'PROGRAM_INLINE_IMAGE',
+    })
+    expect(programInlineImageOwner(12)).toMatchObject({
+      ownerDomain: 'PROGRAM_CONTENT',
+      ownerType: 'PROGRAM',
+      ownerId: 12,
+      filePurpose: 'PROGRAM_INLINE_IMAGE',
+    })
+  })
+
   it('에디터에는 blob 미리보기를 주고 저장용 URL은 따로 둔다', async () => {
     const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
     const resolved = await resolveRichTextInlineImageSrc(file, programInlineImageOwner(null))
