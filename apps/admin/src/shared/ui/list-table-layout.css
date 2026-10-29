@@ -18,7 +18,8 @@
   min-width: 0;
   box-sizing: border-box;
   background: var(--color-bg-base, #fff);
-  margin-bottom: var(--spacing-24, 24px);
+  /* 시안: 카드 ↔ 카드 간격 32 (CMS 12603:480517 gap 32) */
+  margin-bottom: var(--spacing-32, 32px);
   padding: var(--admin-list-card-padding);
   border-radius: var(--admin-list-card-radius);
   /* 시안: drop-shadow 0 0 16px rgba(0,0,0,0.06), 내용 clip (popup은 모두 body 포털이라 영향 없음) */
@@ -26,7 +27,7 @@
   overflow: clip;
 }
 
-/* 시안: 마지막 카드 아래 여백 = 콘텐츠 영역 pb 32 (카드 margin 24 이중 적용 방지) */
+/* 시안: 마지막 카드 아래 여백 = 콘텐츠 영역 pb 32 (카드 margin 32 이중 적용 방지) */
 .admin-list-card:last-child {
   margin-bottom: 0;
 }

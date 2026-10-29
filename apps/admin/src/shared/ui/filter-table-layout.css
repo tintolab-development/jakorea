@@ -10,7 +10,8 @@
   width: 100%;
   min-width: 0;
   background: var(--color-bg-base, #fff);
-  margin-bottom: var(--spacing-24, 24px);
+  /* 시안: 카드 ↔ 카드 간격 32 (12603:480517 gap 32) */
+  margin-bottom: var(--spacing-32, 32px);
   /* CMS 시안(목록 카드 12603:480518): p24 / r16 / drop-shadow 0 0 16px rgba(0,0,0,0.06) */
   border-radius: 16px;
   box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
@@ -18,7 +19,7 @@
   box-sizing: border-box;
 }
 
-/* 시안: 마지막 카드 아래 여백 = 콘텐츠 영역 pb 32 (카드 margin 24 이중 적용 방지) */
+/* 시안: 마지막 카드 아래 여백 = 콘텐츠 영역 pb 32 (카드 margin 32 이중 적용 방지) */
 .filter-table-layout:last-child {
   margin-bottom: 0;
 }
