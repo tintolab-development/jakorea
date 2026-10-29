@@ -16,7 +16,6 @@ import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/f
 import {
   CatalogStructureImmutableError,
   applyCatalogAllowedContent,
-  catalogExtensionStructureChanged,
   catalogStructureChanged,
 } from '@/features/template/lib/catalog-structure-diff'
 import { isCatalogOriginalWritingTemplate } from '@/features/template/lib/catalog-original-identity'
@@ -412,48 +411,6 @@ async function loadCatalogBaselineForImmutablePut(
   }
 }
 
-export const CATALOG_ARCHIVED_VERSION_MESSAGE = '보관된 양식 버전은 수정할 수 없습니다.'
-
-type CatalogOriginalVersionBaseline = {
-  schema: WritingFormDraft | null
-  extension: {
-    overlay?: Record<string, unknown>
-    editorState?: Record<string, unknown>
-    uiState?: Record<string, unknown>
-  } | null
-  versionStatus?: string
-}
-
-/** CATALOG 원본 — 현재 version의 schema·extension·상태를 함께 읽는다. 실패 시 null. */
-async function loadCatalogOriginalVersionBaseline(
-  versionId: number
-): Promise<CatalogOriginalVersionBaseline | null> {
-  try {
-    const current = await fetchFormTemplateVersionRemote(versionId)
-    return {
-      schema: parseCatalogSchemaJson(current.schemaJson),
-      extension: extensionJsonToExtensionPayload(current.extensionJson),
-      versionStatus: current.versionStatus,
-    }
-  } catch {
-    return null
-  }
-}
-
-/**
- * CATALOG 원본 판별(C3) — 캐시에 BE templateScope가 있으면 그 값을 우선한다.
- * 저장·게시 라우팅과 FORM_VERSION_IMMUTABLE 우회 차단에 같은 기준을 쓴다.
- */
-function isCatalogOriginalForSave(templateCode: string): boolean {
-  const cached = getFormTemplateVersionCacheEntry(templateCode)
-  return isCatalogOriginalWritingTemplate({
-    templateCode,
-    baseTemplateCode: cached?.baseTemplateCode,
-    templateScope: cached?.templateScope,
-    sourceTemplateId: cached?.sourceTemplateId,
-  })
-}
-
 /**
  * HTTP 클라이언트는 ETag를 직접 관리하지 않는다.
  * PUT 성공 후 version·published-payload 쿼리만 무효화하고 같은 versionId를 다시 읽는다.
@@ -485,27 +442,12 @@ async function saveCatalogOriginalContent(args: {
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
 }): Promise<void> {
-  const remote = await loadCatalogOriginalVersionBaseline(args.versionId)
-  if (remote?.versionStatus === 'ARCHIVED') {
-    throw new Error(CATALOG_ARCHIVED_VERSION_MESSAGE)
-  }
-  const baseline = remote?.schema ?? getFormTemplateSeedDraft(args.templateCode)
+  const remoteBaseline = await loadCatalogBaselineForImmutablePut(args.versionId)
+  const baseline = remoteBaseline ?? getFormTemplateSeedDraft(args.templateCode)
   if (baseline == null) {
     throw new Error('카탈로그 원본 스키마를 불러오지 못했습니다.')
   }
   if (catalogStructureChanged(baseline, args.draft)) {
-    throw new CatalogStructureImmutableError()
-  }
-  // extensionJson: 요청에 없는 영역은 현재 version 값을 유지하고, 내용 값 변경만 허용한다(C5).
-  const extensionBaseline: NonNullable<CatalogOriginalVersionBaseline['extension']> =
-    remote?.extension ?? {}
-  const sendsExtension = hasExtensionPayload(args)
-  const nextExtension = {
-    overlay: args.overlay ?? extensionBaseline.overlay,
-    editorState: args.editorState ?? extensionBaseline.editorState,
-    uiState: args.uiState ?? extensionBaseline.uiState,
-  }
-  if (sendsExtension && catalogExtensionStructureChanged(extensionBaseline, nextExtension)) {
     throw new CatalogStructureImmutableError()
   }
   const merged = applyCatalogAllowedContent(baseline, args.draft)
@@ -514,7 +456,6 @@ async function saveCatalogOriginalContent(args: {
       args.versionId,
       buildVersionUpdateBody({
         ...args,
-        ...(sendsExtension ? nextExtension : {}),
         draft: merged,
         forceSchemaFromDraft: true,
       })
@@ -523,7 +464,6 @@ async function saveCatalogOriginalContent(args: {
     if (getApiErrorCode(error) === 'FORM_CATALOG_VERSION_IMMUTABLE') {
       throw new CatalogStructureImmutableError()
     }
-    // FORM_VERSION_IMMUTABLE 포함 — 별도 DRAFT를 만들지 않고 기존 오류 팝업으로 올린다.
     throw error
   }
   await refreshCatalogVersionQueries(args.templateCode, args.versionId)
@@ -581,7 +521,13 @@ export async function saveFormTemplateVersionDraft(args: {
     throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
   }
 
-  if (isCatalogOriginalForSave(args.templateCode)) {
+  const cached = getFormTemplateVersionCacheEntry(args.templateCode)
+  if (
+    isCatalogOriginalWritingTemplate({
+      templateCode: args.templateCode,
+      baseTemplateCode: cached?.baseTemplateCode,
+    })
+  ) {
     await saveCatalogOriginalContent({ ...args, versionId })
     return
   }
@@ -600,22 +546,8 @@ export async function saveFormTemplateVersionDraft(args: {
     await updateFormTemplateVersionRemote(versionId, body)
   } catch (error) {
     if (!isFormVersionCopyOnPutError(error)) throw error
-    // CATALOG 원본은 별도 DRAFT 우회 금지 — 실패를 성공처럼 보이지 않게 그대로 올린다(C1).
-    // FE 캐시에 scope가 없어도 409 details.templateScope가 CATALOG면 새 DRAFT를 만들지 않는다.
-    if (isCatalogOriginalForSave(args.templateCode) || apiErrorTemplateScope(error) === 'CATALOG') {
-      throw error
-    }
     await createDraftVersionFromImmutable(args.templateCode, versionId, body)
   }
-}
-
-function apiErrorTemplateScope(error: unknown): string | undefined {
-  const details = (
-    error as { response?: { data?: { error?: { details?: unknown } } } } | null
-  )?.response?.data?.error?.details
-  if (details == null || typeof details !== 'object' || Array.isArray(details)) return undefined
-  const scope = (details as { templateScope?: unknown }).templateScope
-  return typeof scope === 'string' ? scope.trim().toUpperCase() : undefined
 }
 
 function isFormVersionCopyOnPutError(error: unknown): boolean {
@@ -668,7 +600,13 @@ export async function publishFormTemplateVersion(templateCode: string): Promise<
     throw new Error('양식 게시는 formsSurveys API 활성화 후 이용할 수 있습니다.')
   }
 
-  if (isCatalogOriginalForSave(templateCode)) {
+  const cached = getFormTemplateVersionCacheEntry(templateCode)
+  if (
+    isCatalogOriginalWritingTemplate({
+      templateCode,
+      baseTemplateCode: cached?.baseTemplateCode,
+    })
+  ) {
     throw new CatalogStructureImmutableError()
   }
 
