@@ -319,9 +319,16 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
         isTrainedTeachers || isCompanySchoolProgram(program) ? program.remarks : undefined
       )
 
+  // 모집 행에 문의처가 있으면 행 우선. 행이 비어 있으면 nested·컬럼으로 복원
+  // (등록 CREATE가 행에 문의처를 못 실었던 구간 호환 + TT 컬럼 폴백).
+  const rowContactName = row?.contactName?.trim() || undefined
+  const rowContactPhone = row?.contactPhone?.trim() || undefined
+  const rowContactEmail = row?.contactEmail?.trim() || undefined
   const contactOrganizationName = formatRecruitmentInquiryContactName(
-    row?.contactName ?? (useRow ? undefined : info?.contactOrganizationName),
-    useRow ? undefined : info?.contactName
+    rowContactName ??
+      info?.contactOrganizationName ??
+      (isTrainedTeachers ? program.contactName : undefined),
+    rowContactName ? undefined : info?.contactName
   )
 
   const operationFromProgram = isTrainedTeachers
@@ -374,19 +381,19 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     contactOrganizationName,
     contactPhone: formatRecruitmentInquiryPhone(
       pickDisplayString(
-        row?.contactPhone,
-        useRow ? undefined : info?.inquiryTel,
-        useRow ? undefined : info?.tel,
-        useRow ? undefined : info?.contactPhone,
-        !useRow && isTrainedTeachers ? program.contactPhone : undefined
+        rowContactPhone,
+        rowContactPhone ? undefined : info?.inquiryTel,
+        rowContactPhone ? undefined : info?.tel,
+        rowContactPhone ? undefined : info?.contactPhone,
+        !rowContactPhone && isTrainedTeachers ? program.contactPhone : undefined
       )
     ),
     contactEmail: pickDisplayString(
-      row?.contactEmail,
-      useRow ? undefined : info?.inquiryEmail,
-      useRow ? undefined : info?.email,
-      useRow ? undefined : info?.contactEmail,
-      !useRow && isTrainedTeachers ? program.contactEmail : undefined
+      rowContactEmail,
+      rowContactEmail ? undefined : info?.inquiryEmail,
+      rowContactEmail ? undefined : info?.email,
+      rowContactEmail ? undefined : info?.contactEmail,
+      !rowContactEmail && isTrainedTeachers ? program.contactEmail : undefined
     ),
     notes,
   }

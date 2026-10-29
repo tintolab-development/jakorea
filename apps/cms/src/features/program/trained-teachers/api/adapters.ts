@@ -2,6 +2,9 @@ import type { AdminProgramListItemDto } from '@/features/program/general/api/pro
 import { omitNullRecordValues } from '@/shared/lib/openapi-null'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
+import type { ProgramRecruitmentRequest } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequest'
+import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestRecruitmentType'
+import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramUpdateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestEducationStructure'
 import type { ProgramResponse } from '@/shared/api/generated/dashboard/schemas/programResponse'
@@ -47,6 +50,7 @@ import {
   applyProgramMissingCommonStringFieldsToUpdateRequest,
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
+  resolveProgramInquiryContactName,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
 import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
 import {
@@ -602,12 +606,52 @@ export function mapTrainedTeacherToUpdateRequest(
   return body
 }
 
+/** CREATE 모집 행 — 이후 GET 상세는 행 문의처가 SSOT. 문의처·기간을 행에 함께 싣는다. */
+function mapTrainedTeacherCreateRecruitments(program: Program): ProgramRecruitmentRequest[] {
+  const info = program.generalCommonInfo?.participantRecruitmentInfo
+  const contactName = resolveProgramInquiryContactName(program)
+  const contactPhone =
+    (typeof program.contactPhone === 'string' && program.contactPhone.trim()) ||
+    info?.inquiryTel?.trim() ||
+    info?.tel?.trim() ||
+    info?.contactPhone?.trim() ||
+    undefined
+  const contactEmail =
+    (typeof program.contactEmail === 'string' && program.contactEmail.trim()) ||
+    info?.inquiryEmail?.trim() ||
+    info?.email?.trim() ||
+    info?.contactEmail?.trim() ||
+    undefined
+  const remarks = info?.notesNotApplicable === true ? undefined : info?.remarks?.trim() || undefined
+  return [
+    {
+      recruitmentType: ProgramRecruitmentRequestRecruitmentType.PARTICIPANT,
+      targetType: 'ORGANIZATION',
+      status: ProgramRecruitmentRequestStatus.ACTIVE,
+      startAt: toDate(program.applicationStartDate),
+      endAt: toDate(program.applicationEndDate),
+      operationStartDate: toDate(program.startDate),
+      operationEndDate: toDate(program.endDate),
+      selectionMethod: 'ADMIN_REVIEW',
+      ...(contactName ? { contactName } : {}),
+      ...(contactPhone ? { contactPhone } : {}),
+      ...(contactEmail ? { contactEmail } : {}),
+      ...(remarks ? { remarks } : {}),
+    },
+  ]
+}
+
 export function mapTrainedTeacherToCreateRequest(program: Program): ProgramCreateRequest {
+  const update = mapTrainedTeacherToUpdateRequest(program, undefined, {
+    omitInfoDetailOwnedFields: false,
+    omitRegistrationOverlay: true,
+  })
+  // update 매퍼는 existing===merged 라 contactName 미변경으로 생략한다. CREATE는 값을 강제 실는다.
+  const contactName = resolveProgramInquiryContactName(program)
   return omitNullRecordValues({
-    ...mapTrainedTeacherToUpdateRequest(program, undefined, {
-      omitInfoDetailOwnedFields: false,
-      omitRegistrationOverlay: true,
-    }),
+    ...update,
+    ...(contactName ? { contactName } : {}),
+    recruitments: mapTrainedTeacherCreateRecruitments(program),
     programType: TRAINED_TEACHER_PROGRAM_API_TYPE,
     applicationTargetMode: 'ORGANIZATION',
     businessStartDate: toDate(program.startDate),
