@@ -45,6 +45,10 @@
       "description": "회원 포탈 일반 사용자 로그인/세션 API. 관리자 인증과 분리된 canonical surface입니다."
     },
     {
+      "name": "기타 API",
+      "description": "만 14세 미만 회원의 초상권 동의·프로그램 신청용 보호자 NICE. 가입 Bridge와 분리됩니다."
+    },
+    {
       "name": "회원/강사",
       "description": "Members 관련 관리자 API"
     },
@@ -11860,6 +11864,106 @@
           "scheduleId"
         ]
       },
+      "MemberGuardianVerificationCreateRequest": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 0
+          },
+          "guardianRelation": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "frontendReturnUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "guardianRelation",
+          "purpose"
+        ]
+      },
+      "MemberGuardianVerificationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "statusToken": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberGuardianVerificationNiceStartRequest": {
+        "type": "object",
+        "properties": {
+          "frontendReturnUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        }
+      },
+      "NiceIdentityAuthStartResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "providerTxId": {
+            "type": "string"
+          },
+          "statusToken": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "authUrl": {
+            "type": "string"
+          },
+          "requestNo": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          },
+          "flow": {
+            "type": "string"
+          },
+          "frontendReturnUrl": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        }
+      },
       "FormRevisionRequest": {
         "type": "object",
         "description": "회원 포탈 Form 재제출 요청",
@@ -12369,6 +12473,12 @@
             "type": "integer",
             "format": "int64",
             "description": "Deprecated compatibility field. Current policy rejects evidence uploads with CONSENT_EVIDENCE_FILE_NOT_ALLOWED"
+          },
+          "guardianVerificationToken": {
+            "type": "string",
+            "description": "만 14세 미만 PORTRAIT_RIGHTS complete 시 필수. POST /api/portal/me/guardian-verifications 이후 VERIFIED 조회에서 받은 one-time token.",
+            "maxLength": 256,
+            "minLength": 0
           }
         }
       },
@@ -13452,49 +13562,6 @@
           "usedAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "NiceIdentityAuthStartResponse": {
-        "type": "object",
-        "properties": {
-          "sessionId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "providerTxId": {
-            "type": "string"
-          },
-          "statusToken": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "authUrl": {
-            "type": "string"
-          },
-          "requestNo": {
-            "type": "string"
-          },
-          "transactionId": {
-            "type": "string"
-          },
-          "flow": {
-            "type": "string"
-          },
-          "frontendReturnUrl": {
-            "type": "string"
-          },
-          "state": {
-            "type": "string"
           }
         }
       },
@@ -16968,10 +17035,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -38402,6 +38469,28 @@
           }
         }
       },
+      "MemberGuardianVerificationStatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "failureCode": {
+            "type": "string"
+          },
+          "verificationToken": {
+            "type": "string"
+          },
+          "tokenExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "FormResponseDetailResponse": {
         "type": "object",
         "properties": {
@@ -40211,7 +40300,9 @@
             "format": "int64"
           },
           "institutionName": {
-            "type": "string"
+            "type": "string",
+            "description": "참여 기관명. 배정 기관 → 일정 단일 기관 → 장소명 순. 개인 참여 등으로 기관이 없으면 null",
+            "nullable": true
           },
           "businessPeriodStart": {
             "type": "string",
@@ -40424,6 +40515,94 @@
           },
           "calculationDetail": {
             "$ref": "#/components/schemas/SettlementFrontendCalculationDetailResponse"
+          },
+          "taxIncomeType": {
+            "type": "string",
+            "description": "소득 구분 코드. BUSINESS_INCOME / OTHER_INCOME / DAILY_EMPLOYMENT_INCOME. 항목에 없으면 null",
+            "example": "BUSINESS_INCOME",
+            "nullable": true
+          },
+          "taxIncomeTypeDisplay": {
+            "type": "string",
+            "description": "소득 구분 화면 라벨. 사업소득 | 기타소득 | 일용근로소득. taxIncomeType과 1:1. 없으면 null(FE는 -)",
+            "example": "사업소득",
+            "nullable": true
+          }
+        }
+      },
+      "SettlementFrontendPayeeResponse": {
+        "type": "object",
+        "description": "지급조서·산출 내역서 수취인 표시용. SETTLEMENT_READ 기본 조회는 MASKED. 원문 언마스크는 member consent / instructor privacy 경로.",
+        "properties": {
+          "nameEn": {
+            "type": "string",
+            "description": "영문 성명. 지급조서 동의서 paymentBasicInfo.nameEn. 없으면 null",
+            "nullable": true
+          },
+          "residentRegistrationNumber": {
+            "type": "string",
+            "description": "주민등록번호(마스킹). residentFront-residentBack 결합. 없으면 null",
+            "example": "900721-2******",
+            "nullable": true
+          },
+          "affiliation": {
+            "type": "string",
+            "description": "소속. noAffiliation=true 이거나 미입력이면 null",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "description": "연락처(마스킹). member.phone",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "description": "이메일(마스킹). member.email",
+            "nullable": true
+          },
+          "gender": {
+            "type": "string",
+            "description": "성별(마스킹). 값 존재 시 **",
+            "nullable": true
+          },
+          "birthDate": {
+            "type": "string",
+            "description": "생년월일(마스킹). yyyy-**-**",
+            "example": "1990-**-**",
+            "nullable": true
+          },
+          "addressRoad": {
+            "type": "string",
+            "description": "자택 도로명/기본 주소(마스킹). 동의서 addressRoad 우선, 없으면 instructor_profile.home_address",
+            "nullable": true
+          },
+          "addressDetail": {
+            "type": "string",
+            "description": "자택 상세 주소(마스킹). 동의서 addressDetail 우선, 없으면 instructor_profile.home_address_detail",
+            "nullable": true
+          },
+          "bankName": {
+            "type": "string",
+            "description": "정산 계좌 은행명. 동의서 bankName 우선, 없으면 member_bank_account",
+            "nullable": true
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "정산 계좌번호(마스킹)",
+            "nullable": true
+          },
+          "accountHolder": {
+            "type": "string",
+            "description": "예금주(마스킹)",
+            "nullable": true
+          },
+          "privacyMaskingLevel": {
+            "type": "string",
+            "description": "MASKED | RAW. 정산 상세 GET은 항상 MASKED",
+            "enum": [
+              "MASKED",
+              "RAW"
+            ]
           }
         }
       },
@@ -40488,7 +40667,9 @@
             "type": "string"
           },
           "institutionName": {
-            "type": "string"
+            "type": "string",
+            "description": "참여 기관명. 목록 institutionName과 동일 규칙. 개인 참여 등으로 기관이 없으면 null",
+            "nullable": true
           },
           "instructorName": {
             "type": "string"
@@ -40557,6 +40738,17 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "payee": {
+            "description": "지급조서·산출 내역서 수취인 표시 블록(MASKED). instructorMemberId가 없으면 null",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SettlementFrontendPayeeResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "availableActions": {
             "type": "array",
@@ -40650,6 +40842,9 @@
           },
           "manualInputYn": {
             "type": "boolean"
+          },
+          "taxIncomeType": {
+            "type": "string"
           }
         }
       },
