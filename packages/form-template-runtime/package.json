@@ -8,9 +8,9 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/copy-css.mjs",
-    "dev": "tsc -w -p tsconfig.build.json",
+    "dev": "node scripts/dev.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --experimental-strip-types --experimental-transform-types src/renderer/vertical-table-preview.test.ts && node --experimental-strip-types --experimental-transform-types src/renderer/horizontal-table-preview.test.ts"
+    "test": "node --experimental-strip-types --experimental-transform-types src/renderer/vertical-table-preview.test.ts && node --experimental-strip-types --experimental-transform-types src/renderer/horizontal-table-preview.test.ts && node scripts/copy-css-lib.test.mjs && node scripts/watch-css-lib.test.mjs && node scripts/resolution-contract.test.mjs"
   },
   "dependencies": {
     "@jakorea/form-schema": "workspace:*"
