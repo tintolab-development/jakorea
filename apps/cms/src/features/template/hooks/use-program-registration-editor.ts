@@ -117,7 +117,7 @@ import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set
 import { peekGeneralApplicationOverlayRecord } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { flushRecruitDetailRichTextIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
-  createDefaultRegistrationWizardUiValues,
+  createNewRegistrationWizardUiValues,
   REGISTRATION_WIZARD_RHF_SETTINGS_KEY,
   type RegistrationWizardUiValues,
 } from '@/features/program/general/lib/overlay-phase1/registration-wizard-ui-values'
@@ -774,7 +774,7 @@ export function useProgramRegistrationEditor(
       setSingleItemListActiveItemId(null)
       applyEditorStateSnapshot(createDefaultRegistrationEditorState(programRegistrationFormVariant))
       if (programRegistrationFormVariant === 'general') {
-        peekGeneralRegistrationWizardRhf()?.reset(createDefaultRegistrationWizardUiValues(), {
+        peekGeneralRegistrationWizardRhf()?.reset(createNewRegistrationWizardUiValues(), {
           keepDirty: false,
         })
       }
