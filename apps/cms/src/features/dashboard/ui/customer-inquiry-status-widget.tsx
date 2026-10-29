@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
+import { DashboardWidgetEmpty } from './dashboard-widget-empty'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useProgramInquiryStatusList } from '../hooks/use-program-inquiry-status-list'
 import type { ProgramInquiryRow } from '../api/adapters/dashboard-adapters'
@@ -35,7 +36,8 @@ export function CustomerInquiryStatusWidget() {
   const { data = [], isLoading: loading, isError } = useProgramInquiryStatusList(allowedProgramIds)
 
   const totalCount = data.length
-  const equalWidth = halfColumn ? '25%' : undefined
+  /** 시안 100% 13192:232459 — 프로그램명 가변 + 200/200/200, 50% 12360:299676 — 가변 + 80/80/80 */
+  const countColumnWidth = halfColumn ? 80 : 200
 
   useLayoutEffect(() => {
     const root = cardRef.current
@@ -73,7 +75,6 @@ export function CustomerInquiryStatusWidget() {
         dataIndex: 'programName',
         key: 'programName',
         ellipsis: true,
-        width: equalWidth ?? '50%',
         align: 'center',
         render: (value: string) => (
           <span className="dashboard-widget-table__program-name" title={value}>
@@ -85,7 +86,7 @@ export function CustomerInquiryStatusWidget() {
         title: '답변 대기',
         dataIndex: 'pending',
         key: 'pending',
-        width: equalWidth ?? '17%',
+        width: countColumnWidth,
         align: 'center',
         render: (value: number | null, record: ProgramInquiryRow) =>
           value != null && value > 0 ? (
@@ -109,7 +110,7 @@ export function CustomerInquiryStatusWidget() {
         title: '답변 완료',
         dataIndex: 'answered',
         key: 'answered',
-        width: equalWidth ?? '17%',
+        width: countColumnWidth,
         align: 'center',
         render: (value: number | null) => (
           <span className="dashboard-widget-table__count--muted">
@@ -121,7 +122,7 @@ export function CustomerInquiryStatusWidget() {
         title: '전체',
         dataIndex: 'total',
         key: 'total',
-        width: equalWidth ?? '16%',
+        width: countColumnWidth,
         align: 'center',
         render: (value: number | null) => (
           <span className="dashboard-widget-table__count--muted">
@@ -130,7 +131,7 @@ export function CustomerInquiryStatusWidget() {
         ),
       },
     ],
-    [equalWidth, inquiryNotificationReadProgramKeys]
+    [countColumnWidth, inquiryNotificationReadProgramKeys]
   )
 
   return (
@@ -160,7 +161,8 @@ export function CustomerInquiryStatusWidget() {
           rowKey="key"
           pagination={false}
           loading={loading}
-          className="dashboard-widget-table__data"
+          className="dashboard-widget-table__data cms-data-table--skip-auto-no-col"
+          emptyText={<DashboardWidgetEmpty inTable />}
           onRow={record => ({
             onClick: () => goToInquiryListForProgram(record),
           })}

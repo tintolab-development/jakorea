@@ -252,8 +252,8 @@
   .ant-table-wrapper {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: auto;
-  overflow-y: auto;
+  /* 스크롤은 테두리 박스 안 .ant-table-content (dashboard-widget-table.css) */
+  overflow: hidden;
 }
 
 /* 프로그램 별 문의 현황: 슬롯 높이 안에서 카드·본문·테이블 래퍼가 flex로 채워지고 테이블 영역만 세로 스크롤 */
@@ -278,8 +278,8 @@
   .ant-table-wrapper {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: auto;
-  overflow-y: auto;
+  /* 스크롤은 테두리 박스 안 .ant-table-content (dashboard-widget-table.css) */
+  overflow: hidden;
 }
 
 /* 50% 너비 슬롯: 긴 헤더 라벨 한 줄 유지를 위해 좌우 패딩 축소 */

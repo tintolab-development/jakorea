@@ -8,7 +8,7 @@ import { Card, List, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment, type ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LoadingButton, EmptyState } from '@/shared/ui'
+import { LoadingButton } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
@@ -903,8 +903,11 @@ export function ProgramScheduleWidget({
   const eventListSection = (
     <div className="program-schedule-widget__events">
       {selectedDateEvents.length === 0 ? (
-        <div className="program-schedule-widget__empty">
-          <EmptyState description="해당 날짜에 일정이 없습니다" />
+        <div className="program-schedule-widget__empty" role="status">
+          <p className="program-schedule-widget__empty-title">등록된 일정이 없습니다.</p>
+          <p className="program-schedule-widget__empty-desc">
+            일정이 등록되면 이곳에 목록이 표시됩니다.
+          </p>
         </div>
       ) : (
         <List
@@ -917,8 +920,9 @@ export function ProgramScheduleWidget({
               <List.Item
                 className="program-schedule-widget__event-item"
                 style={{
-                  backgroundColor: pair.bg,
-                  border: `1px solid ${pair.border}`,
+                  // 피그마 14894:26661 — 프로그램 주 색상(accent) 배경 6% · 테두리 10%
+                  backgroundColor: `color-mix(in srgb, ${pair.accent ?? pair.bg} 6%, transparent)`,
+                  border: `1px solid color-mix(in srgb, ${pair.accent ?? pair.bg} 10%, transparent)`,
                 }}
                 onClick={() => handleEventClick(event)}
               >

@@ -8,6 +8,7 @@ import dayjs from 'dayjs'
 import { useDashboardLogAlerts } from '../hooks/use-dashboard-log-alerts'
 import type { DashboardLogAlertItem } from '../api/admin-dashboard-service'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
+import { DashboardWidgetEmpty } from './dashboard-widget-empty'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import './dashboard-widget-table.css'
 
@@ -62,7 +63,8 @@ export function LogAlertsWidget() {
           rowKey="id"
           pagination={false}
           loading={isLoading}
-          className="dashboard-widget-table__data"
+          className="dashboard-widget-table__data cms-data-table--skip-auto-no-col"
+          emptyText={<DashboardWidgetEmpty inTable />}
         />
       )}
     </Card>

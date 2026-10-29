@@ -9,10 +9,11 @@ import {
   type ProgramKpiItem,
   type KpiMetric,
 } from '../api/admin-dashboard-service'
-import { LoadingButton, EmptyState } from '@/shared/ui'
+import { LoadingButton } from '@/shared/ui'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useKpiAchievementList } from '../hooks/use-kpi-achievement-list'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
+import { DashboardWidgetEmpty } from './dashboard-widget-empty'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { kpiEducationRecordsPath } from '../lib/dashboard-widget-links'
 import '@/shared/ui/widget-more-button.css'
@@ -146,7 +147,7 @@ export function KpiAchievementWidget() {
       ) : loading ? (
         <div className="kpi-achievement-widget__loading" />
       ) : list.length === 0 ? (
-        <EmptyState description="표시할 KPI 데이터가 없습니다" />
+        <DashboardWidgetEmpty />
       ) : (
         <div className="kpi-achievement-widget__scroll">
           {list.map(item => (
