@@ -40,6 +40,10 @@ type ApplyTarget = {
   versionId: number
   recruitmentId?: number
   bindingId?: number
+  /** 대상 version의 템플릿 ID(바인딩 응답) */
+  templateId?: number
+  /** templateCode의 CATALOG 템플릿 ID */
+  catalogTemplateId?: number
 }
 
 type FormApplyServerError = {
@@ -115,6 +119,8 @@ async function resolveApplyTargets(
     getOperationalFormSpec(item.templateCode) ?? getRegistrationFormSpec(item.templateCode)
   if (spec == null) throw new Error(`양식 스펙을 찾을 수 없습니다: ${item.templateCode}`)
 
+  const catalog = await resolveFormTemplateCatalogIds(item.templateCode).catch(() => null)
+
   // GENERAL·UJAT 신청 양식: BE fan-out으로 모집 행마다 바인딩이 있다 → 행마다 적용한다.
   const rows = listRecruitmentRowApplicationBindings(program, bindings, spec)
   const rowTargets = rows
@@ -124,6 +130,8 @@ async function resolveApplyTargets(
       versionId: row.templateVersionId as number,
       recruitmentId: row.targetScopeId as number,
       bindingId: row.bindingId,
+      templateId: row.templateId,
+      catalogTemplateId: catalog?.templateId,
     }))
   if (rowTargets.length > 0) {
     const duplicate = rowTargets.find(
@@ -137,7 +145,6 @@ async function resolveApplyTargets(
     return rowTargets
   }
 
-  const catalog = await resolveFormTemplateCatalogIds(item.templateCode).catch(() => null)
   const isApplicationSpec = spec.formType === 'APPLICATION'
   const picked = pickOperationalFormBinding(
     bindings,
@@ -159,7 +166,15 @@ async function resolveApplyTargets(
   if (versionId == null) {
     throw new Error(`적용할 기본 양식 버전을 찾을 수 없습니다: ${item.templateCode}`)
   }
-  return [{ program, versionId, bindingId: existing?.bindingId }]
+  return [
+    {
+      program,
+      versionId,
+      bindingId: existing?.bindingId,
+      templateId: existing != null ? existing.templateId : catalog?.templateId,
+      catalogTemplateId: catalog?.templateId,
+    },
+  ]
 }
 
 async function resolvePublishedDefaultsForNewCopy(
@@ -173,7 +188,46 @@ async function resolvePublishedDefaultsForNewCopy(
   )
   const published = await loadPublishedCatalogDraft(item.templateCode)
   if (published == null) return null
-  return resolveWizardCatalogDraft({ saved: null, seed, published })
+  return resolveWizardCatalogDraft({
+    saved: null,
+    seed,
+    published,
+    templateCode: item.templateCode,
+  })
+}
+
+/**
+ * 대상 version이 프로그램 COPY 등 CATALOG가 아닌 템플릿인지(C7).
+ * 템플릿 ID를 모르면 기존 바인딩은 서버 저장본으로 보고 FE 초기값으로 덮지 않는다.
+ */
+function isProgramOwnedApplyTarget(target: ApplyTarget): boolean {
+  if (target.templateId != null && target.catalogTemplateId != null) {
+    return target.templateId !== target.catalogTemplateId
+  }
+  return target.bindingId != null
+}
+
+async function resolveApplyDraft(
+  target: ApplyTarget,
+  item: RegistrationFormApplyItem
+): Promise<RegistrationFormApplyItem['draft']> {
+  if (item.draft != null) return item.draft
+  if (isProgramOwnedApplyTarget(target)) {
+    // 프로그램 서버 저장 draft가 기준 — 게시 기본값·시드로 덮어쓰지 않는다.
+    const saved = await loadFormTemplateVersionDraftByVersionId(item.templateCode, target.versionId)
+    if (saved?.draft == null) {
+      throw new Error(
+        `프로그램 양식 본문을 불러오지 못해 기존 내용을 덮어쓰지 않았습니다: ${item.templateCode}`
+      )
+    }
+    return saved.draft
+  }
+  const publishedDefaults = await resolvePublishedDefaultsForNewCopy(item)
+  return (
+    publishedDefaults ??
+    (await loadFormTemplateVersionDraftByVersionId(item.templateCode, target.versionId))?.draft ??
+    createSeedDraftForOperationalCatalogId(item.templateCode)
+  )
 }
 
 async function applyOne(
@@ -181,12 +235,7 @@ async function applyOne(
   item: RegistrationFormApplyItem,
   claimedBindingIds: Set<number>
 ): Promise<void> {
-  const publishedDefaults = await resolvePublishedDefaultsForNewCopy(item)
-  const draft =
-    item.draft ??
-    publishedDefaults ??
-    (await loadFormTemplateVersionDraftByVersionId(item.templateCode, target.versionId))?.draft ??
-    createSeedDraftForOperationalCatalogId(item.templateCode)
+  const draft = await resolveApplyDraft(target, item)
   if (draft == null) {
     throw new Error(`양식 본문을 찾을 수 없습니다: ${item.templateCode}`)
   }
