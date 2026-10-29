@@ -47,7 +47,13 @@ export function TalentDonationIntroPage() {
         <BannerSectionCard banner={data.banner} />
         <HowSectionCard items={data.howItems} />
         {data.interviews.map(slot => (
-          <InterviewSectionCard key={slot.id} slot={slot} />
+          <InterviewSectionCard
+            key={slot.id}
+            slot={slot}
+            siblingLinkedStoryIds={data.interviews
+              .filter(item => item.id !== slot.id)
+              .map(item => item.linkedStoryId)}
+          />
         ))}
       </div>
     </div>

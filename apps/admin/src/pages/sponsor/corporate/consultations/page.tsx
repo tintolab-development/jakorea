@@ -387,12 +387,7 @@ export function CorporateConsultationsPage() {
 
   const refreshDetailFromList = useCallback(
     async (id: string) => {
-      const next = await listQuery.refetch()
-      const found = (next.data?.items ?? []).find(r => r.id === id) ?? null
-      if (found) {
-        setDetailRow(found)
-        return
-      }
+      void listQuery.refetch()
       const detail = await getCorporateConsultationService(id, DEFAULT_CONFIRM_ACTOR)
       setDetailRow(detail)
       if (!detail) setDetailOpen(false)
