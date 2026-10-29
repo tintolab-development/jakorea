@@ -8,6 +8,7 @@ import {
   logOAuthBackendOriginDebug,
   resolveBackendApiOrigin,
 } from '@/features/auth/lib/oauth-backend-origin'
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { adminSocialAuthPaths } from '@/shared/config/social-auth-paths'
 import { handleError } from '@/shared/utils/error-handler'
@@ -15,8 +16,8 @@ import { NaverSocialLoginIcon } from '@/shared/ui/icons/NaverSocialLoginIcon'
 import { KakaoSocialLoginIcon } from '@/shared/ui/icons/KakaoSocialLoginIcon'
 import googleLogoImage from '@/assets/images/logo/google_logo.png'
 
-/** 로그인 화면 소셜 버튼만 숨김. startLogin·콜백 라우트는 유지. */
-export const SHOW_SOCIAL_LOGIN_UI = false
+/** @deprecated SOCIAL_ACCOUNT_LINK_ENABLED 와 동일. 기존 import 호환용. */
+export const SHOW_SOCIAL_LOGIN_UI = SOCIAL_ACCOUNT_LINK_ENABLED
 
 export function startLoginSocialOAuth(
   provider: SocialProvider,
@@ -120,7 +121,7 @@ function LoginSocialSectionButtons() {
 }
 
 export function LoginSocialSection() {
-  if (!SHOW_SOCIAL_LOGIN_UI) {
+  if (!SOCIAL_ACCOUNT_LINK_ENABLED) {
     return null
   }
   return <LoginSocialSectionButtons />

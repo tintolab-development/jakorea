@@ -22,6 +22,7 @@ import {
   getManagedProgramMetricsParts,
   ManagedProgramCountDisplay,
 } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import {
   buildRegisterSocialConnectPath,
   isSocialConnectAuthFlowPath,
@@ -583,11 +584,15 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                   label="연동된 소셜 계정"
                   readOnlyDisplay
                   view={
-                    <ProfileFieldWithAction
-                      value={linkedSocialDisplay}
-                      actionLabel="계정 연동/해제"
-                      onAction={handleSocialConnect}
-                    />
+                    SOCIAL_ACCOUNT_LINK_ENABLED ? (
+                      <ProfileFieldWithAction
+                        value={linkedSocialDisplay}
+                        actionLabel="계정 연동/해제"
+                        onAction={handleSocialConnect}
+                      />
+                    ) : (
+                      linkedSocialDisplay
+                    )
                   }
                 />
               </DetailInfoForm.Row>

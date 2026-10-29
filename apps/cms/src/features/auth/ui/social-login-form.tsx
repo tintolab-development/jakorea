@@ -10,6 +10,7 @@ import { SocialAuthApiError } from '@jakorea/social-auth'
 import { GoogleMarkIcon } from '@/shared/ui/icons'
 import { handleError } from '@/shared/utils/error-handler'
 import { LoadingButton } from '@/shared/ui/loading-button'
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import './social-login-form.css'
 
@@ -65,6 +66,10 @@ const googleButtonStyle: React.CSSProperties = {
 
 export function SocialLoginForm() {
   const [loading, setLoading] = useState<SocialProvider | null>(null)
+
+  if (!SOCIAL_ACCOUNT_LINK_ENABLED) {
+    return null
+  }
 
   const handleSocialLogin = async (provider: SocialProvider) => {
     setLoading(provider)

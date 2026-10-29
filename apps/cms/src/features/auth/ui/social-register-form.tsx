@@ -7,6 +7,7 @@ import { Space } from 'antd'
 import { useState } from 'react'
 import type { SocialProvider } from '@/entities/user/api/auth-service'
 import { GoogleMarkIcon } from '@/shared/ui/icons'
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import { LoadingButton } from '@/shared/ui/loading-button'
 import './social-register-form.css'
 
@@ -66,6 +67,10 @@ const googleButtonStyle: React.CSSProperties = {
 
 export function SocialRegisterForm({ onSocialRegister, disabled }: SocialRegisterFormProps) {
   const [loading, setLoading] = useState<SocialProvider | null>(null)
+
+  if (!SOCIAL_ACCOUNT_LINK_ENABLED) {
+    return null
+  }
 
   // 소셜 회원가입 처리
   const handleSocialRegister = async (provider: SocialProvider) => {
