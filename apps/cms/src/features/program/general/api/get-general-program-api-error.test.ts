@@ -80,6 +80,26 @@ describe('getGeneralProgramApiErrorMessage', () => {
     )
   })
 
+  it('PROGRAM_OWNER_ROLE_REQUIRES_ACCOUNTING_OR_PROGRAM_MANAGER를 Master 안내로 변환한다', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          success: false,
+          message: '필수 관련 정보 또는 선행 상태를 먼저 확인해 주세요.',
+          error: {
+            code: 'PROGRAM_OWNER_ROLE_REQUIRES_ACCOUNTING_OR_PROGRAM_MANAGER',
+            message: '필수 관련 정보 또는 선행 상태를 먼저 확인해 주세요.',
+            field: 'role',
+          },
+        },
+      },
+    }
+    expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe(
+      'Master 관리자는 프로그램 담당(PM)으로 지정할 수 없습니다. Accounting Manager 또는 Program Manager를 지정해 주세요.'
+    )
+  })
+
   it('PREFERRED_SCHEDULE_* code를 FE 메시지로 매핑한다', () => {
     const error = {
       response: {

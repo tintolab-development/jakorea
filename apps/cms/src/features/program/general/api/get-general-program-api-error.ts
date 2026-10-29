@@ -2,7 +2,15 @@
  * 일반 프로그램 API 에러 메시지 추출 · CONFLICT 한글화
  */
 
-import { CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
+import {
+  CMS_MASTER_CANNOT_BE_PROGRAM_OWNER_MESSAGE,
+  CMS_OPERABLE_ADMIN_PROGRAM_VIEWER_FORBIDDEN_MESSAGE,
+  CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
+import {
+  PROGRAM_CREATE_OWNER_REQUIRES_ELIGIBLE_PM_MESSAGE,
+  PROGRAM_CREATE_VIEWER_CANNOT_OWN_MESSAGE,
+} from '@/features/program/shared/lib/program-create-admin-assignments'
 import {
   PROGRAM_INLINE_IMAGE_ERROR_MESSAGES,
   isProgramInlineImageBindError,
@@ -226,6 +234,22 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (editWindowMessage) return editWindowMessage
   if (code === 'INVALID_PROGRAM_ASSIGNMENT_ROLE') {
     return CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE
+  }
+  if (code === 'PROGRAM_OWNER_ROLE_REQUIRES_ACCOUNTING_OR_PROGRAM_MANAGER') {
+    return CMS_MASTER_CANNOT_BE_PROGRAM_OWNER_MESSAGE
+  }
+  if (code === 'ACCOUNTING_OR_PROGRAM_MANAGER_REQUIRED_FOR_OWNER_OR_ASSISTANT') {
+    return CMS_OPERABLE_ADMIN_PROGRAM_VIEWER_FORBIDDEN_MESSAGE
+  }
+  if (code === 'PROGRAM_VIEWER_GLOBAL_ROLE_CANNOT_BE_ELEVATED') {
+    return CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE
+  }
+  if (
+    error instanceof Error &&
+    (error.message === PROGRAM_CREATE_OWNER_REQUIRES_ELIGIBLE_PM_MESSAGE ||
+      error.message === PROGRAM_CREATE_VIEWER_CANNOT_OWN_MESSAGE)
+  ) {
+    return error.message
   }
   if (code && INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES[code]) {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()

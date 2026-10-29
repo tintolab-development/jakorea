@@ -1,9 +1,14 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   buildEconomyAutofillDatePlan,
+  buildEconomyAutofillPreferredScheduleBlocks,
   selectEconomyRegistrationAutofillPhrases,
   type EconomyAutofillPhraseSelection,
 } from '@/features/program/1c-1s/lib/dev-autofill-phrases'
+import {
+  collectCompanySchoolApplicationFormState,
+  companySchoolApplicationEditorState,
+} from '@/features/program/1c-1s/lib/application-form-state'
 import {
   fillBlankApplicationFormThirdPartyRecipients,
   seedDevAutofillApplicationThirdPartyRecipients,
@@ -119,7 +124,10 @@ import {
   VOLUNTEER_TARGET_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { createDefaultUnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
-import { replaceGeneralApplicationOverlayForScope } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import {
+  peekGeneralApplicationOverlayRecord,
+  replaceGeneralApplicationOverlayForScope,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS,
   replaceUjatApplicationInstitutionOverlayForScope,
@@ -1966,6 +1974,32 @@ function seedUjatApplicationAutofill(): void {
   }
 }
 
+const ECONOMY_APPLICATION_TEMPLATE_CODE = 'application-economy' as const
+
+/** 1사1교 개발용 자동입력의 신청 단계 seed — 1·2지망을 교육/사업 운영기간 안에 둔다. */
+function seedEconomyApplicationAutofill(range: RangeIso): void {
+  const schedule = buildEconomyAutofillPreferredScheduleBlocks(range)
+  const application = collectCompanySchoolApplicationFormState(
+    peekGeneralApplicationOverlayRecord(ECONOMY_APPLICATION_TEMPLATE_CODE)
+  )
+  application.schedule = schedule
+
+  const overlay = {
+    'application.economy.schedule.first': { ...schedule.first },
+    'application.economy.schedule.second': { ...schedule.second },
+  }
+  replaceGeneralApplicationOverlayForScope(ECONOMY_APPLICATION_TEMPLATE_CODE, overlay)
+
+  const draft = createSeedDraftForOperationalCatalogId(ECONOMY_APPLICATION_TEMPLATE_CODE)
+  if (draft == null) return
+  publishRegistrationWizardApplicationDraft({
+    templateCode: ECONOMY_APPLICATION_TEMPLATE_CODE,
+    draft: fillBlankApplicationFormThirdPartyRecipients(draft, 'JA코리아'),
+    editorState: companySchoolApplicationEditorState(application),
+    overlay,
+  })
+}
+
 /**
  * 프로그램 등록 공통정보 — 개발용 자동입력.
  * 셀렉트는 화면과 같은 옵션에서 고르고, 텍스트·일정은 호출마다 달라진다.
@@ -2168,6 +2202,7 @@ export async function applyDevProgramRegistrationAutofill(
       'generalRegistration.typeSettings.singleParticipation': typeSettings.participation,
       'generalRegistration.typeSettings.multiCommonParticipation': typeSettings.participation,
     })
+    seedEconomyApplicationAutofill(sample.periodRange)
     return {
       programTitleKo: sample.titleKo,
       sponsorId: sponsorContact.sponsorId || ECONOMY_ALL_VALUE,

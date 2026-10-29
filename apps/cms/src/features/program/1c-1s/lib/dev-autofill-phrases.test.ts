@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 import {
   buildEconomyAutofillDatePlan,
+  buildEconomyAutofillPreferredScheduleBlocks,
   selectEconomyRegistrationAutofillPhrases,
 } from './dev-autofill-phrases'
 
@@ -78,5 +79,24 @@ describe('buildEconomyAutofillDatePlan', () => {
     expect(dayjs(plan.educationPeriod.end).isBefore(businessEnd)).toBe(true)
     expect(dayjs(plan.interview.start).isBefore(dayjs(plan.interview.end))).toBe(true)
     expect(dayjs(plan.interview.end).isBefore(dayjs(plan.recruit.end))).toBe(true)
+  })
+
+  it('1·2지망 희망일을 교육 기간 안에서 만들고 사업 기간 밖으로 내보내지 않는다', () => {
+    const plan = buildEconomyAutofillDatePlan(dayjs('2026-10-02'))
+    const schedules = buildEconomyAutofillPreferredScheduleBlocks(plan.educationPeriod)
+    const businessStart = dayjs(plan.business.start)
+    const businessEnd = dayjs(plan.business.end)
+    const educationStart = dayjs(plan.educationPeriod.start)
+    const educationEnd = dayjs(plan.educationPeriod.end)
+
+    for (const schedule of [schedules.first, schedules.second]) {
+      const date = dayjs(schedule.date)
+      expect(!date.isBefore(educationStart, 'day')).toBe(true)
+      expect(!date.isAfter(educationEnd, 'day')).toBe(true)
+      expect(!date.isBefore(businessStart, 'day')).toBe(true)
+      expect(!date.isAfter(businessEnd, 'day')).toBe(true)
+    }
+    expect(schedules.first.session).toBe('1')
+    expect(schedules.second.session).toBe('2')
   })
 })

@@ -5,7 +5,9 @@ import { createAdminProgramRemote } from '@/features/program/general/api/program
 import type { RegistrationCreateFormBindingsPayload } from '@/features/program/general/lib/build-registration-create-form-bindings'
 import { enrichProgramCreateRequestWithRegistrationFormBindings } from '@/features/program/general/lib/enrich-program-create-request'
 import { shouldApplyRegistrationFormsAfterCreate } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import { withProgramCreateAdminAssignments } from '@/features/program/shared/lib/program-create-admin-assignments'
 import { assertServiceDetailJsonForCreate } from '@/features/program/shared/lib/program-create-service-detail-json'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 
 /**
  * 프로그램 CREATE(서버 임시저장 ID 없음) → 위저드 양식을 프로그램 전용 COPY로 적용.
@@ -16,7 +18,9 @@ export async function createAdminProgramRemoteWithRegistrationForms(
   baseRequest: ProgramCreateRequest,
   prepared?: RegistrationCreateFormBindingsPayload | null
 ): Promise<ProgramResponse> {
-  const request = enrichProgramCreateRequestWithRegistrationFormBindings(program, baseRequest)
+  const enriched = enrichProgramCreateRequestWithRegistrationFormBindings(program, baseRequest)
+  const sessionUser = useAuthStore.getState().user
+  const request = withProgramCreateAdminAssignments(enriched, sessionUser)
   assertServiceDetailJsonForCreate(request.serviceDetailJson)
   if (!request.programType?.trim()) {
     throw new Error(
