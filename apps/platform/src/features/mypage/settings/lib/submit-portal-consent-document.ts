@@ -114,15 +114,41 @@ async function signDocumentSignatureFields(
   }
 }
 
-function buildFilledDocument(
+export function buildPortalConsentFilledDocument(
   consentKey: InstructorApplyConsentKey,
   state: SchemaConsentWriteState,
-): { templateCode: string; schemaJson: WritingFormDraft; paymentBasicInfo?: Record<string, unknown> } {
+): {
+  templateVersionId?: number | null
+  templateCode: string
+  schemaJson: WritingFormDraft
+  paymentBasicInfo?: Record<string, unknown>
+} {
   const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
   return {
-    templateCode: templateId,
+    templateVersionId: state.portalDocument?.templateVersionId,
+    templateCode: state.portalDocument?.templateCode?.trim() || templateId,
     schemaJson: state.draft,
     ...(state.paymentBasicInfo ? { paymentBasicInfo: state.paymentBasicInfo } : {}),
+  }
+}
+
+async function resolveDocumentForSubmit(
+  consentKey: InstructorApplyConsentKey,
+  state: SchemaConsentWriteState,
+): Promise<{ documentId: number; templateVersionId?: number | null; templateCode?: string | null }> {
+  if (state.portalDocument?.documentId != null) {
+    return state.portalDocument
+  }
+  const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
+  const created = await createPortalConsentDocument({ consentType })
+  const documentId = created.documentId
+  if (documentId == null) {
+    throw new Error('동의서 문서를 만들지 못했습니다.')
+  }
+  return {
+    documentId,
+    templateVersionId: created.formTemplateVersion?.templateVersionId ?? null,
+    templateCode: created.formTemplateVersion?.templateCode ?? null,
   }
 }
 
@@ -131,16 +157,18 @@ export async function submitPortalConsentDocumentFromWriteState(
   consentKey: InstructorApplyConsentKey,
   state: SchemaConsentWriteState,
 ): Promise<void> {
-  const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
-  const created = await createPortalConsentDocument({ consentType })
-  const documentId = created.documentId
-  if (documentId == null) {
-    throw new Error('동의서 문서를 만들지 못했습니다.')
-  }
+  const portalDocument = await resolveDocumentForSubmit(consentKey, state)
+  const documentId = portalDocument.documentId
 
   await signDocumentSignatureFields(documentId, state)
 
-  const filledDocument = buildFilledDocument(consentKey, state)
+  const filledDocument = buildPortalConsentFilledDocument(consentKey, {
+    ...state,
+    portalDocument: {
+      ...portalDocument,
+      templateCode: portalDocument.templateCode ?? undefined,
+    },
+  })
   await completePortalConsentDocument(documentId, {
     filledDocument: {
       ...filledDocument,
@@ -179,7 +207,9 @@ export async function submitPortalPortraitConsentFromWriteState(
 
   await completePortalConsentDocument(documentId, {
     filledDocument: {
-      templateCode: filledDocument.templateCode,
+      templateVersionId: created.formTemplateVersion?.templateVersionId ?? null,
+      templateCode:
+        created.formTemplateVersion?.templateCode?.trim() || filledDocument.templateCode,
       schemaJson: filledDocument.schemaJson as unknown as Record<string, unknown>,
     },
     consentStatus: hints.consentStatus,

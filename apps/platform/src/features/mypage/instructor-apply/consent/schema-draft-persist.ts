@@ -14,6 +14,11 @@ export type SchemaConsentWriteState = {
   draft: WritingFormDraft
   paymentBasicInfo?: Partial<PaymentStatementBasicInfoValues>
   signatures?: ConsentSignatureSidecar
+  portalDocument?: {
+    documentId: number
+    templateVersionId?: number | null
+    templateCode?: string | null
+  }
   /** agreement-crime — CMS와 동일: 업로드 완료 여부 */
   crimeDocumentUploaded?: boolean
 }
@@ -38,6 +43,7 @@ export function loadSchemaConsentWriteState(
       draft: parsed.draft,
       paymentBasicInfo: { ...fallback.paymentBasicInfo, ...parsed.paymentBasicInfo },
       signatures: { ...fallback.signatures, ...parsed.signatures },
+      portalDocument: parsed.portalDocument ?? fallback.portalDocument,
     }
   } catch {
     return fallback

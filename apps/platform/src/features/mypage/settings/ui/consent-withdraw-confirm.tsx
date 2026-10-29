@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react'
 import { PFButton, PFModal, PFText } from '@/shared/ui'
-import { useMediaQuery } from '@/shared/hooks'
-import { platformMediaQueries } from '@/shared/lib'
 import styles from './consent-withdraw-confirm.module.css'
 
 type ConsentWithdrawConfirmProps = {
@@ -16,10 +14,10 @@ type ConsentWithdrawConfirmProps = {
   /** 취소 버튼 문구 — 기본값: `취소` */
   cancelLabel?: ReactNode
   /**
-   * PC 미만에서 하단 시트(`PFModal` `mobilePlacement="bottom"`, 핸들 표시·닫기(X) 숨김) — 기본값: `false`.
+   * PC 미만에서 전체 화면(`PFModal` `mobilePlacement="full"`, 본문 스크롤·버튼 하단 고정) — 기본값: `false`.
    * 프로그램 신청 필수 동의 모달과 같은 패턴.
    */
-  mobileBottomSheet?: boolean
+  mobileFullPage?: boolean
   onCancel: () => void
   onConfirm: () => void
 }
@@ -32,25 +30,22 @@ export function ConsentWithdrawConfirm({
   mode = 'withdraw',
   confirmLabel,
   cancelLabel = '취소',
-  mobileBottomSheet = false,
+  mobileFullPage = false,
   onCancel,
   onConfirm,
 }: ConsentWithdrawConfirmProps) {
   const isAgree = mode === 'agree'
-  // 하단 시트(PC 미만)에서만 닫기(X)를 숨긴다. PC 팝업은 기존과 같다.
-  const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   return (
     <PFModal
       open={open}
       size="md"
       onClose={onCancel}
       closeOnBackdropClick={!confirmLoading}
-      mobilePlacement={mobileBottomSheet ? 'bottom' : undefined}
-      showCloseButton={!(mobileBottomSheet && isBelowPc)}
+      mobilePlacement={mobileFullPage ? 'full' : undefined}
     >
       <div
         className={
-          mobileBottomSheet ? `${styles.content} ${styles.contentMobileBottomSheet}` : styles.content
+          mobileFullPage ? `${styles.content} ${styles.contentMobileFullPage}` : styles.content
         }
       >
         <div className={styles.textBlock}>

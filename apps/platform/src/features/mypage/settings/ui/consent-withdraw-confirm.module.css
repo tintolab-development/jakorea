@@ -41,20 +41,49 @@
   flex: 1 1 140px;
 }
 
-/* mobileBottomSheet 전용 — 기존 동의·철회 팝업에는 적용되지 않음 */
-.contentMobileBottomSheet .title,
-.contentMobileBottomSheet .description {
+/* mobileFullPage 전용 — 기존 동의·철회 팝업에는 적용되지 않음 */
+.contentMobileFullPage .title,
+.contentMobileFullPage .description {
   word-break: keep-all;
 }
 
-/* 하단 시트: 취소 / 확인 버튼을 가로로 나란히 (프로그램 신청 필수 동의 모달과 동일) */
-.contentMobileBottomSheet .actions {
+/* 취소 / 확인 버튼을 가로로 나란히 (프로그램 신청 필수 동의 모달과 동일) */
+.contentMobileFullPage .actions {
   flex-wrap: nowrap;
   align-items: stretch;
 }
 
-.contentMobileBottomSheet .actions > * {
+.contentMobileFullPage .actions > * {
   box-sizing: border-box;
   flex: 1 1 0;
   min-width: 0;
+}
+
+@media (--bp-below-pc) {
+  /* 모바일 전체 화면: 안내 영역만 스크롤, 버튼 영역은 화면 하단 고정 */
+  .contentMobileFullPage {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: var(--spacing-32);
+  }
+
+  .contentMobileFullPage .textBlock {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* 세로 가운데: auto 마진 — 내용이 넘치면 0으로 줄어 위쪽이 잘리지 않고 스크롤된다 */
+  .contentMobileFullPage .textBlock > :first-child {
+    margin-top: auto;
+  }
+
+  .contentMobileFullPage .textBlock > :last-child {
+    margin-bottom: auto;
+  }
+
+  .contentMobileFullPage .actions {
+    flex: 0 0 auto;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }

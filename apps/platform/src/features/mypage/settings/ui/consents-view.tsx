@@ -775,7 +775,7 @@ export function SettingsConsentsView() {
         title={PORTRAIT_GUARDIAN_CONFIRM_COPY.title}
         description={PORTRAIT_GUARDIAN_CONFIRM_COPY.description}
         confirmLabel={PORTRAIT_GUARDIAN_CONFIRM_COPY.confirmLabel}
-        mobileBottomSheet
+        mobileFullPage
         onCancel={() => setPortraitGuardianStep(null)}
         onConfirm={handlePortraitGuardianConfirm}
       />

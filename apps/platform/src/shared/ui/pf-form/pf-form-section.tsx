@@ -43,18 +43,19 @@ export function PFFormSection({
                 className={styles.sectionTitle}
               >
                 {trimmedTitle}
+                {/* 타이틀 텍스트 안 인라인 — 두 줄로 줄바꿈돼도 마지막 글자 뒤에 붙음 */}
+                {required ? (
+                  <PFText
+                    as="span"
+                    typo="bd-lg-sb"
+                    color="error"
+                    className={styles.sectionRequired}
+                    aria-hidden
+                  >
+                    *
+                  </PFText>
+                ) : null}
               </PFText>
-              {required ? (
-                <PFText
-                  as="span"
-                  typo="bd-lg-sb"
-                  color="error"
-                  className={styles.sectionRequired}
-                  aria-hidden
-                >
-                  *
-                </PFText>
-              ) : null}
             </div>
           ) : null}
           {description ? (

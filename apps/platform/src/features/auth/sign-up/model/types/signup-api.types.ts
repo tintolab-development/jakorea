@@ -41,6 +41,7 @@ export type SignupTermsCatalogResponse = {
 }
 
 export type SignupFilledDocumentRequest = {
+  templateVersionId?: number | null
   templateCode?: string
   /** WritingFormDraft — JSON object (이중 인코딩 없음) */
   schemaJson?: Record<string, unknown>
