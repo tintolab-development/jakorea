@@ -1374,7 +1374,10 @@ export function mapPortalProgramDetail(
       ''
   )
   const otherMatters = visibleCopy(readString(remote.otherMatters) ?? '')
-  const remarks = visibleCopy(readString(independentRow ? independentRow.remarks : remote.remarks) ?? '')
+  // Gemini 모집 공고의 '비고'는 BE 계약상 otherMatters(serviceDetailJson.geminiRecruitment.notes)에만 있다.
+  const remarks =
+    visibleCopy(readString(independentRow ? independentRow.remarks : remote.remarks) ?? '') ||
+    (detailCase === 'gemini' ? otherMatters : '')
   const preEducationNoticeRequired = readPortalPreEducationNoticeRequired(remote, independentRow)
   const extraSections: ProgramExtraSection[] = [
     extraSection('모집 안내', recruitmentGuide),
