@@ -32,7 +32,7 @@ export function ParagraphMetaSection({
       <span className="form-editor-right-panel__section-title">{outline}</span>
       <Form.Item>
         <div className="form-editor-right-panel__kind-row">
-          <>
+          <div className="form-editor-right-panel__kind-cell">
             <CmsSelect
               width="100%"
               value={activeKindValue ?? paragraphKindLabel(active)}
@@ -42,6 +42,8 @@ export function ParagraphMetaSection({
               withAllOption={false}
               allowClear={false}
             />
+          </div>
+          <div className="form-editor-right-panel__kind-cell">
             <CmsSelect
               width="100%"
               value={activeDetailValue ?? paragraphVariantLabel(active)}
@@ -54,7 +56,7 @@ export function ParagraphMetaSection({
               withAllOption={false}
               allowClear={false}
             />
-          </>
+          </div>
         </div>
       </Form.Item>
     </Form>
