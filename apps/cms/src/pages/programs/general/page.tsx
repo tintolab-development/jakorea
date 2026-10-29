@@ -447,7 +447,12 @@ export function GeneralProgramListPageContent() {
         {programListToolbarActions}
       </ProgramList>
       {isRemoteDataSource && isListView ? (
-        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+        <div
+          ref={loadMoreRef}
+          className="program-list-page__load-more-sentinel"
+          aria-hidden
+          style={{ height: 1 }}
+        />
       ) : null}
 
       <ProgramModalWhenOpen open={generalDetailModalOpen}>
