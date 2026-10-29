@@ -129,7 +129,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
             <div className="crime-consent-doc-modal__actions">
               <CmsButton
                 variant="secondary"
-                size="medium"
+                size="large"
                 icon={<ButtonDownloadIcon />}
                 onClick={handleDownload}
               >
@@ -146,6 +146,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
                 />
                 <CmsButton
                   variant="primary"
+                  size="large"
                   tabIndex={-1}
                   onClick={handlePickDocument}
                 >
