@@ -352,6 +352,17 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       typeof prev === 'string' && prev.trim() ? prev : preEducationBlockLabel
     )
   }, [preEducationBlockLabel, scheduleCurriculumPreEducation])
+  // 사전 교육 교육 형태 — 라디오 표시 기본값(online)을 overlay에 기록. 미터치 시 payload 누락 방지
+  useEffect(() => {
+    if (!prependTraining) return
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
+      prev =>
+        prev?.[PRE_EDUCATION_DETAIL_INDEX]
+          ? prev
+          : { ...(prev ?? {}), [PRE_EDUCATION_DETAIL_INDEX]: 'online' }
+    )
+  }, [prependTraining])
 
   const setIpsForDetail = (detailIndex: number, next: ProgramRegistrationIpsTypeValue) => {
     updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationIpsTypeValue>>(

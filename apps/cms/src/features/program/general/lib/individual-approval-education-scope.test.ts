@@ -11,7 +11,9 @@ import {
   defaultIndividualApprovalScheduleIds,
   describeApprovedEducationScope,
   formatIndividualApprovalScopeErrorMessage,
+  GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE,
   isEducationScopeRevisionConflict,
+  listAssignedEducationSlotOptions,
   isRejectedEducationScheduleSelectionError,
   listSelectableProgramDefinedEducationSlots,
   parseRejectedEducationScheduleIds,
@@ -82,6 +84,35 @@ describe('individual approval education scope', () => {
         { educationSlotKey: 'line:9' },
       ]).map(item => item.scheduleId)
     ).toEqual([11, 12])
+  })
+
+  it('assigned display includes PRE_EDUCATION but approval selection does not', () => {
+    const slots = [slot(11), slot(13, { scheduleRole: 'PRE_EDUCATION', educationSlotKey: 'general-pre-education:1' })]
+    expect(listAssignedEducationSlotOptions(slots).map(item => item.scheduleId)).toEqual([11, 13])
+    expect(listAssignedEducationSlotOptions(slots)[1]?.title).toContain('사전 교육')
+    const plan = planFor('SCHEDULE', 'MULTI', [], slots)
+    expect(plan.lockedScheduleIds).toEqual([11])
+    expect(validateIndividualApprovalScheduleSelection(plan, [11, 13]).ok).toBe(false)
+  })
+
+  it('maps GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED as a failed approval', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          message: '필수 사전교육의 프로그램 일정을 확인할 수 없습니다.',
+          error: {
+            code: 'GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED',
+            message: '필수 사전교육의 프로그램 일정을 확인할 수 없습니다.',
+            field: 'confirmedScheduleIds',
+          },
+        },
+      },
+    }
+    expect(formatIndividualApprovalScopeErrorMessage(error)).toBe(
+      GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE
+    )
   })
 
   it('approves CURRICULUM / SINGLE with exactly one preferred schedule', () => {

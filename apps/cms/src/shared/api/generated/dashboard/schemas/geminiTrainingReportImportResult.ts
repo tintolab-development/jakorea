@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { GeminiTrainingReportImportResultPaymentExclusionReason } from './geminiTrainingReportImportResultPaymentExclusionReason';
 
 export interface GeminiTrainingReportImportResult {
   rowNumber?: number;
@@ -19,4 +20,6 @@ export interface GeminiTrainingReportImportResult {
   assistantInstructorCount?: number;
   deliveryType?: string;
   duplicate?: boolean;
+  /** 계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정 */
+  paymentExclusionReason?: GeminiTrainingReportImportResultPaymentExclusionReason;
 }

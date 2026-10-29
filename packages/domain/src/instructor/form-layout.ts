@@ -15,6 +15,7 @@ import {
 
 export const INSTRUCTOR_FORM_SECTION_IDS = [
   'consent',
+  'consentAdministrative',
   'basic',
   'grades',
   'education',
@@ -36,6 +37,7 @@ export type InstructorConsentRadioKey = (typeof INSTRUCTOR_CONSENT_RADIO_ITEMS)[
 /** 섹션 기본 제목 (동의 단락은 layout.consent.title 우선) */
 export const INSTRUCTOR_FORM_SECTION_BASE_TITLES: Record<InstructorFormSectionId, string> = {
   consent: '약관 및 동의',
+  consentAdministrative: '행정정보 공동이용 동의서',
   basic: '기본 정보',
   grades: '강사 등급',
   education: '학력사항',
@@ -46,6 +48,46 @@ export const INSTRUCTOR_FORM_SECTION_BASE_TITLES: Record<InstructorFormSectionId
   freeWrite: '자유 작성 항목',
 }
 
+export type InstructorConsentDocumentGroupId = 'required' | 'administrative'
+
+/**
+ * 동의서 묶음 — 필수 작성 동의서 / 행정정보 공동이용 동의서 (2026-10-29 시안 분리).
+ * Platform: 묶음마다 번호 섹션 / CMS: 약관 및 동의 단락 안에서 CMS 스타일로 묶음 표시.
+ */
+export type InstructorConsentDocumentGroup = {
+  id: InstructorConsentDocumentGroupId
+  /** Platform에서 이 묶음을 그리는 섹션 */
+  sectionId: Extract<InstructorFormSectionId, 'consent' | 'consentAdministrative'>
+  title: string
+  footerText: string
+  documentKeys: readonly InstructorConsentDocumentKey[]
+  /** surface가 `allItemsRequired`일 때 이 묶음을 필수(*)·제출 검증할지 */
+  required: boolean
+}
+
+export const INSTRUCTOR_CONSENT_DOCUMENT_GROUPS: readonly InstructorConsentDocumentGroup[] = [
+  {
+    id: 'required',
+    sectionId: 'consent',
+    title: '필수 작성 동의서',
+    footerText:
+      '위의 정보 수집•이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 JA Korea 강사 신청 및 활동이 불가합니다.',
+    documentKeys: ['consentPaymentStatement', 'consentEducatorPledge', 'consentSexOffenseCheck'],
+    required: true,
+  },
+  {
+    id: 'administrative',
+    sectionId: 'consentAdministrative',
+    title: '행정정보 공동이용 동의서',
+    footerText:
+      '위의 정보 수집•이용에 대한 동의를 거부할 권리가 있습니다. 다만, 동의하지 아니한 경우에는 본인이 대체 서류를 담당자에게 제출하여야 합니다.',
+    documentKeys: ['consentAdministrativeJoint'],
+    required: false,
+  },
+]
+
+const REQUIRED_DOCUMENT_GROUP = INSTRUCTOR_CONSENT_DOCUMENT_GROUPS[0]!
+
 export type InstructorFormConsentLayout = {
   title: string
   description: string
@@ -55,8 +97,10 @@ export type InstructorFormConsentLayout = {
   layout: InstructorConsentLayoutMode
   radioKeys: readonly InstructorConsentRadioKey[]
   documentKeys: readonly InstructorConsentDocumentKey[]
-  /** true면 해당 surface 동의 단락의 모든 항목을 필수(*)·제출 검증 */
+  /** true면 해당 surface 동의 단락 항목을 필수(*)·제출 검증 — 동의서는 `documentGroups[].required`인 묶음만 */
   allItemsRequired: boolean
+  /** 동의서 묶음 (documentKeys 중 묶음에 든 키만 묶음으로 표시) */
+  documentGroups: readonly InstructorConsentDocumentGroup[]
 }
 
 export type InstructorFormLayout = {
@@ -82,18 +126,18 @@ const CMS_CONSENT_LAYOUT: InstructorFormConsentLayout = {
   radioKeys: ALL_CONSENT_RADIO_KEYS,
   documentKeys: ALL_CONSENT_DOCUMENT_KEYS,
   allItemsRequired: false,
+  documentGroups: INSTRUCTOR_CONSENT_DOCUMENT_GROUPS,
 }
 
 /**
- * Platform 강사 신청 — 동의 상단·제목 별도.
- * 동의서 4건만 2열 노출 (지급조서|교육진행자 / 행정정보|성범죄). CMS 8건과 별개.
- * 강사 신청은 위 4건 모두 작성·동의해야 제출 가능(섹션 `*`). CMS 등록·상세는 선택 유지.
+ * Platform 강사 신청 — 동의서 4건을 두 섹션으로 노출. CMS 8건과 별개.
+ * 1. 필수 작성 동의서* (지급조서|교육진행자 / 성범죄경력) — 모두 작성·동의해야 제출 가능.
+ * 2. 행정정보 공동이용 동의서 — 선택 (2026-10-29 필수 해제). CMS 등록·상세는 모두 선택 유지.
  */
 const PLATFORM_APPLY_CONSENT_LAYOUT: InstructorFormConsentLayout = {
-  title: '필수 작성 동의서',
+  title: REQUIRED_DOCUMENT_GROUP.title,
   description: '',
-  footerText:
-    '위의 정보 수집•이용에 대한 동의를 거부할 권리가 있습니다. 다만 미동의 시 프로그램 참여 및 강사 활동에 제한이 있을 수 있습니다.',
+  footerText: REQUIRED_DOCUMENT_GROUP.footerText,
   layout: 'cmsGrid',
   radioKeys: [],
   documentKeys: [
@@ -103,6 +147,7 @@ const PLATFORM_APPLY_CONSENT_LAYOUT: InstructorFormConsentLayout = {
     'consentSexOffenseCheck',
   ],
   allItemsRequired: true,
+  documentGroups: INSTRUCTOR_CONSENT_DOCUMENT_GROUPS,
 }
 
 export const INSTRUCTOR_FORM_LAYOUT: Record<InstructorFormSurface, InstructorFormLayout> = {
@@ -143,6 +188,7 @@ export const INSTRUCTOR_FORM_LAYOUT: Record<InstructorFormSurface, InstructorFor
     surface: 'platformApply',
     sections: [
       'consent',
+      'consentAdministrative',
       'basic',
       'education',
       'career',
@@ -170,7 +216,10 @@ export function getInstructorFormSectionDisplayTitle(
   const base =
     sectionId === 'consent'
       ? layout.consent.title
-      : INSTRUCTOR_FORM_SECTION_BASE_TITLES[sectionId]
+      : sectionId === 'consentAdministrative'
+        ? (layout.consent.documentGroups.find(group => group.sectionId === sectionId)?.title ??
+          INSTRUCTOR_FORM_SECTION_BASE_TITLES[sectionId])
+        : INSTRUCTOR_FORM_SECTION_BASE_TITLES[sectionId]
   if (!layout.numberSections) return base
   const index = layout.sections.indexOf(sectionId)
   if (index < 0) return base
@@ -186,18 +235,43 @@ export function getInstructorConsentRadioItems(surface: InstructorFormSurface) {
   }))
 }
 
+function isConsentDocumentKeyRequired(
+  layout: InstructorFormConsentLayout,
+  key: InstructorConsentDocumentKey,
+): boolean {
+  if (!layout.allItemsRequired) return false
+  const group = layout.documentGroups.find(item => item.documentKeys.includes(key))
+  return group ? group.required : true
+}
+
 export function getInstructorConsentDocumentItems(surface: InstructorFormSurface) {
   const layout = INSTRUCTOR_FORM_LAYOUT[surface]
   const allowed = new Set(layout.consent.documentKeys)
   return INSTRUCTOR_CONSENT_DOCUMENT_ITEMS.filter(item => allowed.has(item.key)).map(item => ({
     ...item,
-    required: layout.consent.allItemsRequired,
+    required: isConsentDocumentKeyRequired(layout.consent, item.key),
   }))
+}
+
+/** surface 동의서 묶음 — 묶음 순서·항목(카탈로그 순서)·필수 여부. 노출 항목이 없는 묶음은 제외 */
+export function getInstructorConsentDocumentGroups(surface: InstructorFormSurface) {
+  const layout = INSTRUCTOR_FORM_LAYOUT[surface]
+  const items = getInstructorConsentDocumentItems(surface)
+  return layout.consent.documentGroups
+    .map(group => {
+      const keys = new Set<InstructorConsentDocumentKey>(group.documentKeys)
+      return {
+        ...group,
+        required: layout.consent.allItemsRequired && group.required,
+        items: items.filter(item => keys.has(item.key)),
+      }
+    })
+    .filter(group => group.items.length > 0)
 }
 
 const BASE_REQUIRED_CONSENT_AGREE_KEYS = ['consentTermsOfService', 'consentPersonal'] as const
 
-/** 제출 시 동의(agree)가 필요한 키 — 이용약관·개인정보 + `allItemsRequired`면 해당 surface 동의 단락 전체 */
+/** 제출 시 동의(agree)가 필요한 키 — 이용약관·개인정보 + `allItemsRequired`면 라디오 전체 + 필수 묶음 동의서 */
 export function getInstructorRequiredConsentAgreeKeys(
   surface: InstructorFormSurface,
 ): readonly (InstructorConsentRadioKey | InstructorConsentDocumentKey)[] {
@@ -207,7 +281,7 @@ export function getInstructorRequiredConsentAgreeKeys(
     ...new Set([
       ...BASE_REQUIRED_CONSENT_AGREE_KEYS,
       ...layout.consent.radioKeys,
-      ...layout.consent.documentKeys,
+      ...layout.consent.documentKeys.filter(key => isConsentDocumentKeyRequired(layout.consent, key)),
     ]),
   ]
 }

@@ -122,6 +122,7 @@ function jsonScheduleDetails(parsed: { generalCommonInfo?: Record<string, unknow
   return (parsed.generalCommonInfo?.scheduleDetails ?? undefined) as
     | Array<{
         scheduleLabel?: string
+        blockKind?: string
         name?: string
         scheduleDateLabel?: string
         progressTimeSummary?: string
@@ -226,6 +227,7 @@ describe('GENERAL_SCHEDULE_DETAILS', () => {
     )
     const details = jsonScheduleDetails(parsed)
     expect(details?.[0]?.scheduleLabel).toBe(PRE_EDUCATION_SCHEDULE_LABEL)
+    expect(details?.[0]?.blockKind).toBe('preEducation')
     const kept = details?.find(row => row.name === DETAIL_01_NAME)
     expect(kept?.scheduleDateLabel).toBe(DETAIL_01_DATE)
     expect(kept?.progressTimeSummary).toBe(TIME_SUMMARY)

@@ -15,7 +15,7 @@ describe('resolveTermsTypeToConsentLabel', () => {
       '개인정보 수집·이용 동의'
     )
     expect(resolveTermsTypeToConsentLabel('ADMINISTRATIVE_JOINT')).toBe(
-      '행정정보 공동이용 사전동의서'
+      '행정정보 공동이용 동의서'
     )
   })
 
@@ -25,10 +25,10 @@ describe('resolveTermsTypeToConsentLabel', () => {
     )
     expect(resolveTermsTypeToConsentLabel('FACILITATOR_PLEDGE')).toBe('교육진행자 서약서')
     expect(resolveTermsTypeToConsentLabel('ADMINISTRATIVE_INFO_CONSENT')).toBe(
-      '행정정보 공동이용 사전동의서'
+      '행정정보 공동이용 동의서'
     )
     expect(resolveTermsTypeToConsentLabel('CRIMINAL_HISTORY_CHECK_CONSENT')).toBe(
-      '성범죄 경력 조회 동의서'
+      '성범죄경력 조회 동의서'
     )
   })
 })
@@ -99,11 +99,11 @@ describe('applyTermsAgreementsToSchema', () => {
     expect(field('서비스 이용약관')).toMatchObject({ agreed: true })
     expect(field('지급조서 사전 동의서')).toMatchObject({ type: 'document', agreed: true })
     expect(field('교육진행자 서약서')).toMatchObject({ type: 'document', agreed: true })
-    expect(field('행정정보 공동이용 사전동의서')).toMatchObject({
+    expect(field('행정정보 공동이용 동의서')).toMatchObject({
       type: 'document',
       agreed: true,
     })
-    expect(field('성범죄 경력 조회 동의서')).toMatchObject({ type: 'document', agreed: true })
+    expect(field('성범죄경력 조회 동의서')).toMatchObject({ type: 'document', agreed: true })
   })
 
   it('데이터가 없으면 mock 샘플 대신 미동의 기본값을 사용한다', () => {
@@ -199,7 +199,7 @@ describe('applyMemberConsentToSchema', () => {
 
     const notice = rows
       .flatMap(r => r.fields)
-      .find(f => f.label === '행정정보 공동이용 사전동의서')?.value
+      .find(f => f.label === '행정정보 공동이용 동의서')?.value
 
     expect(notice).toMatchObject({
       type: 'document',

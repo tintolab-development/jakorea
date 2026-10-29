@@ -1,7 +1,6 @@
 import { CONSENT_VALUE } from '@jakorea/domain/instructor/consent'
 import {
-  getInstructorConsentDocumentItems,
-  getInstructorFormLayout,
+  getInstructorConsentDocumentGroups,
   getInstructorFormSectionDisplayTitle,
 } from '@jakorea/domain/instructor/form-layout'
 import { INSTRUCTOR_FORM_SECTION_DESCRIPTIONS } from '@jakorea/domain/instructor/form-copy'
@@ -43,8 +42,6 @@ import {
 } from '@/shared/ui'
 
 const FORM_SURFACE = 'platformApply' as const
-const FORM_LAYOUT = getInstructorFormLayout(FORM_SURFACE)
-const CONSENT_DOCUMENT_ITEMS = getInstructorConsentDocumentItems(FORM_SURFACE)
 
 function chunkPairs<T>(items: readonly T[]): T[][] {
   const rows: T[][] = []
@@ -54,9 +51,17 @@ function chunkPairs<T>(items: readonly T[]): T[][] {
   return rows
 }
 
-const CONSENT_DOCUMENT_ROWS = chunkPairs(CONSENT_DOCUMENT_ITEMS)
+/** 1. 필수 작성 동의서* / 2. 행정정보 공동이용 동의서 — 신청 폼과 동일 스키마(`documentGroups`) */
+const CONSENT_DOCUMENT_SECTIONS = getInstructorConsentDocumentGroups(FORM_SURFACE).map(group => ({
+  ...group,
+  domId:
+    group.sectionId === 'consent'
+      ? 'instructor-apply-consent'
+      : 'instructor-apply-consent-administrative',
+  displayTitle: getInstructorFormSectionDisplayTitle(FORM_SURFACE, group.sectionId),
+  rows: chunkPairs(group.items),
+}))
 const SECTION_TITLE = {
-  consent: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'consent'),
   basic: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'basic'),
   education: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'education'),
   career: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'career'),
@@ -89,49 +94,49 @@ export function InstructorApplySubmittedForm({ snapshot }: InstructorApplySubmit
   return (
     <>
     <div className={styles.form}>
-      <PFFormSection
-        id="instructor-apply-consent"
-        title={SECTION_TITLE.consent}
-        description={FORM_LAYOUT.consent.description}
-        footer={FORM_LAYOUT.consent.footerText}
-        required={FORM_LAYOUT.consent.allItemsRequired}
-      >
-        <PFFormFieldTable>
-          {CONSENT_DOCUMENT_ROWS.map(row => (
-            <PFFormFieldRow key={row.map(item => item.key).join('-')} type="double">
-              {row.map(item => {
-                const agreed = values[item.key] === CONSENT_VALUE.agree
-                const agreedAt = consentAgreedAt[item.key as InstructorApplyConsentKey]
-                return (
-                  <PFFormField
-                    key={item.key}
-                    label={item.label}
-                    labelWidth="wide"
-                    required={!FORM_LAYOUT.consent.allItemsRequired && item.required}
-                  >
-                    <PFFormInlineSeparatedFields>
-                      <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
-                      <PFButton
-                        type="button"
-                        variant="secondary"
-                        size="formPage"
-                        onClick={() => handleConsentView(item.key)}
-                      >
-                        동의서 보기
-                      </PFButton>
-                      {agreedAt ? (
-                        <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
-                          {formatInstructorConsentAgreedAtLabel(agreedAt)}
-                        </PFText>
-                      ) : null}
-                    </PFFormInlineSeparatedFields>
-                  </PFFormField>
-                )
-              })}
-            </PFFormFieldRow>
-          ))}
-        </PFFormFieldTable>
-      </PFFormSection>
+      {CONSENT_DOCUMENT_SECTIONS.map(section => (
+        <PFFormSection
+          key={section.id}
+          id={section.domId}
+          title={section.displayTitle}
+          footer={section.footerText}
+          required={section.required}
+        >
+          <PFFormFieldTable>
+            {section.rows.map(row => (
+              <PFFormFieldRow
+                key={row.map(item => item.key).join('-')}
+                type={row.length > 1 ? 'double' : 'single'}
+              >
+                {row.map(item => {
+                  const agreed = values[item.key] === CONSENT_VALUE.agree
+                  const agreedAt = consentAgreedAt[item.key as InstructorApplyConsentKey]
+                  return (
+                    <PFFormField key={item.key} label={item.label} labelWidth="wide">
+                      <PFFormInlineSeparatedFields>
+                        <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
+                        <PFButton
+                          type="button"
+                          variant="secondary"
+                          size="formPage"
+                          onClick={() => handleConsentView(item.key)}
+                        >
+                          동의서 보기
+                        </PFButton>
+                        {agreedAt ? (
+                          <PFText as="span" typo="bd-md-rg" color="neutral-cool-600">
+                            {formatInstructorConsentAgreedAtLabel(agreedAt)}
+                          </PFText>
+                        ) : null}
+                      </PFFormInlineSeparatedFields>
+                    </PFFormField>
+                  )
+                })}
+              </PFFormFieldRow>
+            ))}
+          </PFFormFieldTable>
+        </PFFormSection>
+      ))}
 
       <PFFormSection id="instructor-apply-basic" title={SECTION_TITLE.basic} required>
         <PFFormFieldTable>

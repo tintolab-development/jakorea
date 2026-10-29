@@ -28,6 +28,9 @@ export const CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE: Record<string, TermsAgreement
   '초상권 수집·이용 동의': 'PORTRAIT_RIGHTS',
   '지급조서 사전 동의서': 'PAYMENT_STATEMENT_PRE_CONSENT',
   '교육진행자 서약서': 'FACILITATOR_PLEDGE',
+  '행정정보 공동이용 동의서': 'ADMINISTRATIVE_INFO_CONSENT',
+  '성범죄경력 조회 동의서': 'CRIMINAL_HISTORY_CHECK_CONSENT',
+  /** 구 라벨 별칭 — 2026-10-29 라벨 변경 전 문자열도 계속 매칭 */
   '행정정보 공동이용 사전동의서': 'ADMINISTRATIVE_INFO_CONSENT',
   '성범죄 경력 조회 동의서': 'CRIMINAL_HISTORY_CHECK_CONSENT',
 }

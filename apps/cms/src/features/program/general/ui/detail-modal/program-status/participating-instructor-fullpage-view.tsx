@@ -74,6 +74,8 @@ import {
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/general/lib/instructor-institution-assignment'
 import { useParticipatingInstructorInstitutionAssignment } from '@/features/program/general/hooks/use-participating-instructor-institution-assignment'
+import { mergeInstitutionWaitingRowsBySchool } from '@/features/program/general/lib/build-participating-instructor-assignment-rows'
+import { waitingAssignmentStatusLabel } from '@/features/program/general/lib/instructor-assignment-availability'
 import {
   cancelInstructorAssignmentRemote,
   createInstructorAssignmentRemote,
@@ -125,6 +127,13 @@ const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string
   cancelled: '배정 불가',
   assigned: '배정 완료',
   no_assignable_schedule: '배정 가능 일정 없음',
+  unavailable: '배정 불가',
+  assignment_cancelled: '배정 취소',
+}
+
+/** 기관형 배정 불가/배정 취소 — 기존 배정 불가(cancelled) 칩 스타일 재사용 */
+function assignmentStatusChipModifier(status: InstructorWaitingAssignmentStatus): string {
+  return status === 'unavailable' || status === 'assignment_cancelled' ? 'cancelled' : status
 }
 
 function sessionOptionId(session: ParticipatingSchoolSession): string {
@@ -133,11 +142,13 @@ function sessionOptionId(session: ParticipatingSchoolSession): string {
 
 function listAssignableSessionsForWaitingRow(
   waitingRow: InstructorWaitingSchoolRow,
-  selectedSessionKeys: ReadonlySet<string>
+  selectedSessionKeys: ReadonlySet<string>,
+  isSessionBlocked: (session: ParticipatingSchoolSession) => boolean = () => false
 ): ParticipatingSchoolSession[] {
   const sessions = waitingRow.sessions ?? []
   const assignable = sessions.filter(
-    session => resolveAssignableSchedulePayloadFromSession(session) != null
+    session =>
+      resolveAssignableSchedulePayloadFromSession(session) != null && !isSessionBlocked(session)
   )
   if (assignable.length === 0) return []
   if (selectedSessionKeys.size > 0) {
@@ -468,6 +479,8 @@ export function ParticipatingInstructorFullpageView({
     instructorList,
     isCompanySchool,
     enabled: uiTab === 'institutionAssignment',
+
+    maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
   })
 
   useEffect(() => {
@@ -684,7 +697,11 @@ export function ParticipatingInstructorFullpageView({
         region: row.region,
         distanceFromHome: row.distanceFromHome,
         educationSchedule: row.educationScheduleLines.join('\n'),
-        assignmentStatus: ASSIGNMENT_STATUS_LABELS[row.assignmentStatus],
+        assignmentStatus: waitingAssignmentStatusLabel(
+          row.assignmentStatus,
+          ASSIGNMENT_STATUS_LABELS,
+          row.assignmentStatusLabel
+        ),
         assignedInstructorCountLabel: row.assignedInstructorCountLabel,
       })),
     [waitingSchools]
@@ -738,13 +755,17 @@ export function ParticipatingInstructorFullpageView({
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
-        width: 100,
+        width: 180,
         align: 'center',
-        render: (status: InstructorWaitingAssignmentStatus) => (
+        render: (_status: InstructorWaitingAssignmentStatus, record: InstructorWaitingSchoolRow) => (
           <span
-            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status}`}
+            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${assignmentStatusChipModifier(record.assignmentStatus)}`}
           >
-            {ASSIGNMENT_STATUS_LABELS[status]}
+            {waitingAssignmentStatusLabel(
+              record.assignmentStatus,
+              ASSIGNMENT_STATUS_LABELS,
+              record.assignmentStatusLabel
+            )}
           </span>
         ),
       },
@@ -898,7 +919,11 @@ export function ParticipatingInstructorFullpageView({
       let leadAssigned = assignedSchools.some(row => row.role === 'lead')
       const selectedSessionKeys = new Set(assignGuideSessionIds)
 
-      for (const waitingRow of rowsToAssign) {
+      // 기관형은 일정별 행 — 기관 단위로 회차를 합쳐 기존처럼 기관 1건으로 배정(1사1교는 기존 그대로)
+      const rowsToProcess = isCompanySchool
+        ? rowsToAssign
+        : mergeInstitutionWaitingRowsBySchool(rowsToAssign)
+      for (const waitingRow of rowsToProcess) {
         if (waitingRow.assignmentStatus !== 'waiting') {
           showAlert({
             title: '안내',
@@ -924,7 +949,10 @@ export function ParticipatingInstructorFullpageView({
           return false
         }
 
-        const targetSessions = listAssignableSessionsForWaitingRow(waitingRow, selectedSessionKeys)
+        const targetSessions = listAssignableSessionsForWaitingRow(
+          waitingRow,
+          selectedSessionKeys
+        )
 
         if (targetSessions.length === 0) {
           showAlert({
@@ -981,10 +1009,10 @@ export function ParticipatingInstructorFullpageView({
         showAlert({ title: '배정 실패', content: scopeMessage })
         return false
       }
-      const message =
-        error instanceof Error && error.message.trim()
-          ? error.message
-          : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+      const message = getGeneralProgramApiErrorMessage(
+        error,
+        '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+      )
       showAlert({ title: '배정 실패', content: message })
       return false
     } finally {
@@ -999,6 +1027,7 @@ export function ParticipatingInstructorFullpageView({
     assignedSchools,
     hasInstructorApplicationId,
     institutionAssignment,
+    isCompanySchool,
     instructorApplicationId,
     instructorList,
     mergedInstructor,
@@ -1046,9 +1075,29 @@ export function ParticipatingInstructorFullpageView({
     [assignGuideSchoolId, schoolRows]
   )
 
+  /** 기관형 — 배정 대기(waiting) 일정 행에 속한 회차만 선택 가능(배정 불가·배정 취소 일정 회차는 비활성) */
+  const waitingSessionOptionIdsBySchool = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const row of waitingSchools) {
+      if (row.assignmentStatus !== 'waiting') continue
+      const key = row.schoolId ?? row.id
+      const ids = map.get(key) ?? new Set<string>()
+      for (const session of row.sessions ?? []) ids.add(sessionOptionId(session))
+      map.set(key, ids)
+    }
+    return map
+  }, [waitingSchools])
+
   const assignGuideSessionOptions = useMemo(
-    () => mapParticipatingSessionsToInstructorAssignOptions(assignGuideSchool?.sessions),
-    [assignGuideSchool]
+    () =>
+      mapParticipatingSessionsToInstructorAssignOptions(assignGuideSchool?.sessions, {
+        isSessionDisabled: session =>
+          assignGuideSchool != null &&
+          !isCompanySchool &&
+          waitingSessionOptionIdsBySchool.get(assignGuideSchool.id)?.has(sessionOptionId(session)) !==
+            true,
+      }),
+    [assignGuideSchool, isCompanySchool, waitingSessionOptionIdsBySchool]
   )
 
   const assignGuideInstitutionName =
@@ -1493,7 +1542,7 @@ export function ParticipatingInstructorFullpageView({
                     />
                   </div>
                 </div>
-                <div className="participating-institutions-section__table-wrap">
+                <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
                   {assignedSchools.length === 0 ? (
                     <div
                       className="school-detail-fullpage-view__instructor-list-empty"
@@ -1558,7 +1607,9 @@ export function ParticipatingInstructorFullpageView({
                     rowClassName={record =>
                       record.assignmentStatus === 'assigned' ||
                       record.assignmentStatus === 'no_assignable_schedule' ||
-                      record.assignmentStatus === 'cancelled'
+                      record.assignmentStatus === 'cancelled' ||
+                      record.assignmentStatus === 'unavailable' ||
+                      record.assignmentStatus === 'assignment_cancelled'
                         ? 'school-detail-fullpage-view__waiting-row--assigned'
                         : ''
                     }

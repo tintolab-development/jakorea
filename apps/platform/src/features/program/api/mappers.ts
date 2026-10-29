@@ -1351,7 +1351,10 @@ export function mapPortalProgramDetail(
       : ''
   const geminiMinStudentCountLabel =
     detailCase === 'gemini' ? formatGeminiMinStudentCountLabel(remote) : ''
-  const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
+  // 교육 형태 '일정 별 상이'(perSchedule) — 모집공고 공통 표기는 온/오프라인
+  const educationFormLabelForDetail = perScheduleEducationForm
+    ? EDUCATION_FORM_LABEL.hybrid
+    : educationFormLabel
 
   const programDescription = visibleCopy(
     readString(independentRow ? independentRow.programDescription : remote.description) ?? ''
@@ -1456,7 +1459,7 @@ export function mapPortalProgramDetail(
       usesEducationProgressFields,
       businessFieldLabel,
       educationFormLabel: perScheduleEducationForm
-        ? ''
+        ? EDUCATION_FORM_LABEL.hybrid
         : usesEducationProgressFields
           ? (apiEducationFormLabel ?? '')
           : educationFormLabel,

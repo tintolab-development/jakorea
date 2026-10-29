@@ -9,8 +9,20 @@ describe('resolveMemberConsentTemplateByLabel', () => {
     expect(resolveMemberConsentTemplateByLabel('교육진행자 서약서')).toMatchObject({
       templateId: 'agreement-expense',
     })
-    expect(resolveMemberConsentTemplateByLabel('성범죄 경력 조회 동의서')).toMatchObject({
+    expect(resolveMemberConsentTemplateByLabel('성범죄경력 조회 동의서')).toMatchObject({
       templateId: 'agreement-crime',
+      modalTitle: '성범죄경력 조회 동의서',
     })
+    expect(resolveMemberConsentTemplateByLabel('행정정보 공동이용 동의서')).toMatchObject({
+      templateId: 'agreement-notice',
+      modalTitle: '행정정보 공동이용 동의서',
+    })
+    // 구 라벨 별칭도 계속 매칭
+    expect(resolveMemberConsentTemplateByLabel('성범죄 경력 조회 동의서')?.templateId).toBe(
+      'agreement-crime'
+    )
+    expect(resolveMemberConsentTemplateByLabel('행정정보 공동이용 사전동의서')?.templateId).toBe(
+      'agreement-notice'
+    )
   })
 })

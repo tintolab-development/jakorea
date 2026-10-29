@@ -8,6 +8,7 @@ import {
   PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES,
 } from '@/features/program/general/lib/education-structure-guard'
 import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
+import { INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES } from '@/features/program/general/lib/instructor-assignment-availability'
 import {
   programEditWindowErrorMessage,
   resolveProgramRecruitmentPolicyErrorMessage,
@@ -199,6 +200,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (editWindowMessage) return editWindowMessage
   if (code === 'INVALID_PROGRAM_ASSIGNMENT_ROLE') {
     return CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE
+  }
+  if (code && INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES[code]) {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES[code]
   }
   if (code && PROGRESS_INSTRUCTOR_ERROR_MESSAGES[code]) {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()

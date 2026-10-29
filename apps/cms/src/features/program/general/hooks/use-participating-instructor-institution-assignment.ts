@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
+import { fetchInstructorAssignmentAvailabilityRemote } from '@/features/program/general/api/instructor-assignments-api-client'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
@@ -16,6 +17,11 @@ import {
   buildParticipatingInstructorWaitingSchoolRowsFromBoard,
   buildParticipatingInstructorWaitingScheduleRowsFromBoard,
 } from '@/features/program/general/lib/build-participating-instructor-assignment-rows'
+import {
+  buildWaitingScheduleRowsFromAvailability,
+  buildWaitingSchoolRowsFromAvailability,
+  normalizeAvailabilityItems,
+} from '@/features/program/general/lib/instructor-assignment-availability'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type {
@@ -35,6 +41,8 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   instructorList: ParticipatingInstructorRow[]
   isCompanySchool: boolean
   enabled?: boolean
+  /** program participantRecruitmentInfo.maxAssignableInstructors (참여 기관 상세 배정 인원 분모와 동일 출처) */
+  maxAssignableInstructors?: number | null
 }): {
   remoteEnabled: boolean
   isLoading: boolean
@@ -51,12 +59,22 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   const useCompanySchoolBoard = isCompanySchoolSurface || input.isCompanySchool
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(input.programId)
   const instructorMemberId = input.instructor.memberId?.trim() ?? ''
+  const instructorMemberIdNumber = Number(instructorMemberId)
   const queryEnabled = Boolean(
     input.enabled !== false && remoteEnabled && input.programId && instructorMemberId
   )
+  const availabilityEnabled =
+    queryEnabled &&
+    !useCompanySchoolBoard &&
+    Number.isFinite(instructorMemberIdNumber) &&
+    instructorMemberIdNumber > 0
   const assignmentQueryKey = useCompanySchoolBoard
     ? companySchoolQueryKeys.instructorAssignmentConflicts(input.programId)
     : generalProgramProgressQueryKeys.instructorAssignments(input.programId)
+  const availabilityQueryKey = generalProgramProgressQueryKeys.instructorAssignmentAvailability(
+    input.programId,
+    instructorMemberId
+  )
 
   useNotifyProgramApiUnavailableOnce(
     Boolean(input.enabled !== false && (!remoteEnabled || !instructorMemberId)),
@@ -71,6 +89,15 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
         ? fetchCompanySchoolAssignmentBoard(input.programId)
         : fetchGeneralInstructorAssignmentBoard(input.programId),
     enabled: queryEnabled,
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const availabilityQuery = useQuery({
+    queryKey: availabilityQueryKey,
+    queryFn: () =>
+      fetchInstructorAssignmentAvailabilityRemote(input.programId, instructorMemberIdNumber),
+    enabled: availabilityEnabled,
     staleTime: 30_000,
     retry: false,
   })
@@ -100,57 +127,97 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       schoolRows: input.schoolRows,
       scheduleLabelById: board.scheduleLabelById,
     })
-    const assignedSchoolIds = new Set(assignedSchools.map(row => row.id))
-    const waitingSchools = buildParticipatingInstructorWaitingSchoolRowsFromBoard({
-      instructor: input.instructor,
-      schoolRows: input.schoolRows,
-      instructorList: input.instructorList,
-      assignedSchoolIds,
-      isCompanySchool: input.isCompanySchool,
-      assignments: board.assignments,
-      instructorMemberId,
-    })
     const assignedSchedules = buildParticipatingInstructorAssignedScheduleRowsFromBoard({
       assignments: board.assignments,
       instructorMemberId,
       schoolRows: input.schoolRows,
       scheduleLabelById: board.scheduleLabelById,
     })
-    const waitingSchedules = buildParticipatingInstructorWaitingScheduleRowsFromBoard({
-      instructor: input.instructor,
-      schoolRows: input.schoolRows,
-      instructorList: input.instructorList,
-      assignedSchoolIds,
-      assignments: board.assignments,
-      instructorMemberId,
-    })
+
+    if (useCompanySchoolBoard) {
+      const assignedSchoolIds = new Set(assignedSchools.map(row => row.id))
+      return {
+        assignedSchools,
+        waitingSchools: buildParticipatingInstructorWaitingSchoolRowsFromBoard({
+          instructor: input.instructor,
+          schoolRows: input.schoolRows,
+          instructorList: input.instructorList,
+          assignedSchoolIds,
+          isCompanySchool: true,
+          assignments: board.assignments,
+          instructorMemberId,
+          maxAssignableInstructors: input.maxAssignableInstructors,
+        }),
+        assignedSchedules,
+        waitingSchedules: buildParticipatingInstructorWaitingScheduleRowsFromBoard({
+          instructor: input.instructor,
+          schedules: board.schedules,
+          scheduleLabelById: board.scheduleLabelById,
+          assignments: board.assignments,
+          instructorMemberId,
+          maxAssignableInstructors: input.maxAssignableInstructors,
+        }),
+      }
+    }
+
+    const availabilityItems = availabilityQuery.isError
+      ? []
+      : normalizeAvailabilityItems(availabilityQuery.data)
+    const lectureLocationByScheduleId = new Map<string, string>()
+    for (const schedule of board.schedules) {
+      if (schedule.id == null) continue
+      const location = schedule.locationName?.trim() || schedule.address?.trim() || ''
+      if (location) lectureLocationByScheduleId.set(String(schedule.id), location)
+    }
+
     return {
       assignedSchools,
-      waitingSchools,
+      waitingSchools: buildWaitingSchoolRowsFromAvailability({
+        items: availabilityItems,
+        instructor: input.instructor,
+        schoolRows: input.schoolRows,
+        scheduleLabelById: board.scheduleLabelById,
+        instructorMemberId,
+      }),
       assignedSchedules,
-      waitingSchedules,
+      waitingSchedules: buildWaitingScheduleRowsFromAvailability({
+        items: availabilityItems,
+        instructor: input.instructor,
+        scheduleLabelById: board.scheduleLabelById,
+        lectureLocationByScheduleId,
+        instructorMemberId,
+      }),
     }
   }, [
+    availabilityQuery.data,
+    availabilityQuery.isError,
     boardQuery.data,
-    input.enabled,
     input.instructor,
     input.instructorList,
-    input.isCompanySchool,
+    input.maxAssignableInstructors,
     input.schoolRows,
     instructorMemberId,
     remoteEnabled,
+    useCompanySchoolBoard,
   ])
 
   const invalidate = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: assignmentQueryKey,
-    })
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: assignmentQueryKey }),
+      availabilityEnabled
+        ? queryClient.invalidateQueries({ queryKey: availabilityQueryKey })
+        : Promise.resolve(),
+    ])
   }
+
+  const availabilityLoading =
+    availabilityEnabled && availabilityQuery.isFetching && availabilityQuery.data === undefined
+  const boardLoading = queryEnabled && boardQuery.isFetching && boardQuery.data === undefined
 
   return {
     remoteEnabled: remoteEnabled && Boolean(instructorMemberId),
     isTempMockDataSource: false,
-    isLoading: queryEnabled && boardQuery.isFetching && boardQuery.data === undefined,
+    isLoading: boardLoading || availabilityLoading,
     assignedSchools: rows.assignedSchools,
     waitingSchools: rows.waitingSchools,
     assignedSchedules: rows.assignedSchedules,

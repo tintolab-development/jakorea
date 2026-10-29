@@ -678,6 +678,17 @@ function readRuntimeScheduleChoiceRoundNumber(id: unknown, index: number): numbe
  * 서버 선택지 라벨에서 자동 기본명(`공통 교육 예정 N`)을 제거한다. id는 그대로 둔다.
  * ③이면 제거 후 `일시 | (입력순)회차`를 붙인다.
  */
+function isGeneralRequiredPreEducationChoiceLabel(label: string): boolean {
+  return label.replace(/\s+/g, '').startsWith('사전교육')
+}
+
+function withoutGeneralRequiredPreEducationChoices<T extends { label: string }>(
+  items: ReadonlyArray<T> | null
+): ReadonlyArray<T> | null {
+  if (items == null) return items
+  return items.filter(item => !isGeneralRequiredPreEducationChoiceLabel(item.label))
+}
+
 function withDisplayScheduleChoiceLabels<T extends { id?: string; label: string }>(
   items: ReadonlyArray<T> | null,
   runtime?: unknown
@@ -700,7 +711,9 @@ export function readRuntimeFixedScheduleChoiceItems(
   ...args: Parameters<typeof readRuntimeFixedScheduleChoiceItemsFromSchema>
 ): ReturnType<typeof readRuntimeFixedScheduleChoiceItemsFromSchema> {
   return withDisplayScheduleChoiceLabels(
-    readRuntimeFixedScheduleChoiceItemsFromSchema(...args),
+    withoutGeneralRequiredPreEducationChoices(
+      readRuntimeFixedScheduleChoiceItemsFromSchema(...args)
+    ),
     args[0]
   )
 }
@@ -709,7 +722,9 @@ export function readInstitutionFixedScheduleChoiceItems(
   ...args: Parameters<typeof readInstitutionFixedScheduleChoiceItemsFromSchema>
 ): ReturnType<typeof readInstitutionFixedScheduleChoiceItemsFromSchema> {
   return withDisplayScheduleChoiceLabels(
-    readInstitutionFixedScheduleChoiceItemsFromSchema(...args),
+    withoutGeneralRequiredPreEducationChoices(
+      readInstitutionFixedScheduleChoiceItemsFromSchema(...args)
+    ),
     args[0]
   )
 }

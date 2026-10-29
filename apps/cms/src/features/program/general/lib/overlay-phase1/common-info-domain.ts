@@ -310,6 +310,7 @@ export function buildCurriculumSessionsFromMaps(
       sessionLabel: isTeacherTraining ? '교육 연수' : '사전 교육',
       title: preName,
       description: '',
+      ...(isTeacherTraining ? {} : { isPreEducation: true }),
       scheduleDateLabel: preLine || undefined,
       assignmentEnabled: false,
       educationFormLabel: isTeacherTraining
@@ -464,11 +465,14 @@ export function buildScheduleDetailsFromMaps(
     rows.unshift({
       scheduleLabel: isTeacherTraining ? '교육 연수' : '사전 교육',
       name: preName,
+      ...(isTeacherTraining ? {} : { blockKind: 'preEducation' as const }),
       assignmentEnabled: false,
       scheduleDateLabel: formatScheduleDateLabel(maps.scheduleDateByDetailIso[0]),
       educationFormLabel: preEducationForm
         ? educationFormLabelFromValue(preEducationForm)
-        : undefined,
+        : eduDetail === 'perSchedule'
+          ? educationFormLabelFromValue('online')
+          : undefined,
       ipsTypeSummary:
         isTeacherTraining || ipsDetailKind === 'perSchedule'
           ? buildSessionIpsTypeSummary('prepare', 'none')

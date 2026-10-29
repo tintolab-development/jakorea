@@ -2,6 +2,8 @@
 import { describe, expect, it } from 'vitest'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { PRE_EDUCATION_SCHEDULE_LABEL } from '@/features/program/general/lib/schedule-detail-form'
+import { buildScheduleDetailsFromMaps } from './common-info-domain'
+import type { CommonInfoScheduleMaps } from './common-info-form-values'
 import { createDefaultRegistrationWizardUiValues } from './registration-wizard-ui-values'
 import {
   applyCurriculumCountTrim,
@@ -69,6 +71,21 @@ describe('registration-wizard-structure', () => {
     expect(groups.schedule.groupTimesByDetail[1]).toEqual([{ startTime: '09:00' }])
   })
 
+  it('세부 일정 수 축소 시 사전 교육(index 0) 값은 유지한다', () => {
+    const values = createDefaultRegistrationWizardUiValues({
+      scheduleCurriculumDetailCount: 3,
+    })
+    values.schedule.educationFormByDetail = { 0: 'offline', 1: 'online', 2: 'hybrid', 3: 'online' }
+    values.schedule.scheduleDateByDetailIso = { 0: '2026-11-01', 1: '2026-11-02', 3: '2026-11-04' }
+    const details = applyScheduleDetailCountTrim(values, 1)
+    expect(details.schedule.educationFormByDetail).toEqual({ 0: 'offline', 1: 'online' })
+    expect(details.schedule.scheduleDateByDetailIso).toEqual({ 0: '2026-11-01', 1: '2026-11-02' })
+  })
+
+  it('trimIndexRecord 기본 호출은 index 0을 여전히 제외한다', () => {
+    expect(trimIndexRecord({ 0: 'a', 1: 'b', 2: 'c' }, 1)).toEqual({ 1: 'b' })
+  })
+
   it('CREATE sessionAuthoring은 활성 구조만 maps, 비활성은 clear', () => {
     expect(createRegistrationCreateSessionAuthoring('curriculum')).toEqual({
       curriculum: { kind: 'maps' },
@@ -78,5 +95,45 @@ describe('registration-wizard-structure', () => {
       curriculum: { kind: 'clear' },
       schedule: { kind: 'maps' },
     })
+  })
+})
+
+describe('buildScheduleDetailsFromMaps 사전 교육 교육 형태', () => {
+  const maps: CommonInfoScheduleMaps = {
+    eventNameByDetail: { 1: '본 교육' },
+    scheduleDateByDetailIso: {},
+    groupTimesByDetail: {},
+    educationFormByDetail: {},
+    participationByDetail: {},
+    ipsByDetailIndex: {},
+    assignmentByDetail: {},
+    preEducationName: '',
+  }
+  const baseExtras = {
+    programType: 'schedule',
+    sessionRoundType: 'single',
+    scheduleCurriculumPreEducation: true,
+    scheduleCurriculumDetailCount: 1,
+  } as const
+
+  it('perSchedule이고 index 0이 없으면 사전 교육 행도 온라인 기본값', () => {
+    const rows = buildScheduleDetailsFromMaps(maps, {
+      ...baseExtras,
+      educationFormScheduleDetail: 'perSchedule',
+    } as Parameters<typeof buildScheduleDetailsFromMaps>[1])
+    expect(rows[0]).toEqual(
+      expect.objectContaining({
+        scheduleLabel: PRE_EDUCATION_SCHEDULE_LABEL,
+        educationFormLabel: '온라인',
+      })
+    )
+  })
+
+  it('common이면 사전 교육 행 교육 형태는 비운다', () => {
+    const rows = buildScheduleDetailsFromMaps(maps, {
+      ...baseExtras,
+      educationFormScheduleDetail: 'common',
+    } as Parameters<typeof buildScheduleDetailsFromMaps>[1])
+    expect(rows[0]?.educationFormLabel).toBeUndefined()
   })
 })

@@ -9,12 +9,16 @@ import type {
 } from './common-info-form-values'
 import type { RegistrationWizardUiValues } from './registration-wizard-ui-values'
 
-export function trimIndexRecord<T>(record: Record<number, T>, maxKey: number): Record<number, T> {
+export function trimIndexRecord<T>(
+  record: Record<number, T>,
+  maxKey: number,
+  minKey = 1
+): Record<number, T> {
   if (maxKey <= 0) return {}
   const next: Record<number, T> = {}
   for (const [raw, value] of Object.entries(record)) {
     const index = Number(raw)
-    if (!Number.isInteger(index) || index < 1 || index > maxKey) continue
+    if (!Number.isInteger(index) || index < minKey || index > maxKey) continue
     next[index] = value as T
   }
   return next
@@ -37,19 +41,24 @@ export function trimCurriculumMaps(
   }
 }
 
+/** 일정형 maps — index 0(사전 교육) 보존 */
+const PRE_EDUCATION_DETAIL_INDEX = 0
+
 export function trimScheduleMaps(
   maps: CommonInfoScheduleMaps,
   maxKey: number
 ): CommonInfoScheduleMaps {
+  const trim = <T>(record: Record<number, T>) =>
+    trimIndexRecord(record, maxKey, PRE_EDUCATION_DETAIL_INDEX)
   return {
     ...maps,
-    eventNameByDetail: trimIndexRecord(maps.eventNameByDetail, maxKey),
-    scheduleDateByDetailIso: trimIndexRecord(maps.scheduleDateByDetailIso, maxKey),
-    groupTimesByDetail: trimIndexRecord(maps.groupTimesByDetail, maxKey),
-    educationFormByDetail: trimIndexRecord(maps.educationFormByDetail, maxKey),
-    participationByDetail: trimIndexRecord(maps.participationByDetail, maxKey),
-    ipsByDetailIndex: trimIndexRecord(maps.ipsByDetailIndex, maxKey),
-    assignmentByDetail: trimIndexRecord(maps.assignmentByDetail, maxKey),
+    eventNameByDetail: trim(maps.eventNameByDetail),
+    scheduleDateByDetailIso: trim(maps.scheduleDateByDetailIso),
+    groupTimesByDetail: trim(maps.groupTimesByDetail),
+    educationFormByDetail: trim(maps.educationFormByDetail),
+    participationByDetail: trim(maps.participationByDetail),
+    ipsByDetailIndex: trim(maps.ipsByDetailIndex),
+    assignmentByDetail: trim(maps.assignmentByDetail),
   }
 }
 

@@ -17524,7 +17524,7 @@
           },
           "scheduleAssignmentStatus": {
             "type": "string",
-            "description": "기관 승인 후 일정 배정 상태. ASSIGNED는 active OSA가 있고, UNASSIGNED는 APPROVED이지만 OSA가 없습니다. 기관 승인 외 결정에서는 null입니다.",
+            "description": "기관 승인 후 또는 제미나이 강사 승인 후 일정 배정 상태. ASSIGNED는 확정 일정(OSA 또는 강사 배정 일정)이 있고, UNASSIGNED는 승인됐지만 일정이 없습니다. GENERAL/UJAT/1사1교 강사 승인 등 그 외 결정에서는 null입니다.",
             "enum": [
               "ASSIGNED",
               "UNASSIGNED"
@@ -20231,10 +20231,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -28051,6 +28051,7 @@
         "properties": {
           "assignments": {
             "type": "array",
+            "description": "교육 일정 배정. 빈 배열이면 신청만 승인하고 배정 행을 만들지 않습니다. 필드는 필수이며 null/생략은 기존과 같이 거부합니다.",
             "items": {
               "$ref": "#/components/schemas/Assignment"
             },
@@ -28698,6 +28699,15 @@
           },
           "duplicate": {
             "type": "boolean"
+          },
+          "paymentExclusionReason": {
+            "type": "string",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정",
+            "enum": [
+              "ZERO_CALCULATED_FEE",
+              "GEMINI_WAGE_RATE_NOT_CONFIGURED"
+            ],
+            "nullable": true
           }
         }
       },
@@ -29608,7 +29618,9 @@
           },
           "classCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "신청 requested_class_count. 없으면 확정 일정의 시작·종료 시간으로 산정한 인정 차시. 둘 다 없으면 null",
+            "nullable": true
           },
           "requestedScheduleMemo": {
             "type": "string"
@@ -37031,7 +37043,7 @@
           },
           "educationForm": {
             "type": "string",
-            "description": "공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice.",
+            "description": "공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다.",
             "enum": [
               "online",
               "offline",
@@ -37388,6 +37400,7 @@
           },
           "sponsorNames": {
             "type": "array",
+            "description": "후원사 표시명 배열. GEMINI_TRAINING은 관계가 비면 [\"Google for Education\"]. 저장된 이름이 있으면 그대로 둔다. GENERAL/UJAT 등 다른 유형은 빈 배열을 채우지 않는다. recruitmentId·applicationType 포커스와 무관하다.",
             "items": {
               "type": "string"
             }
@@ -37547,6 +37560,12 @@
             "type": "string",
             "format": "date-time",
             "description": "recruitmentId 조회일 때 그 모집의 종료. 쿼리가 없으면 null.",
+            "nullable": true
+          },
+          "minStudentCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "제미나이 최소 수강 인원(gemini_program_detail.min_participant_count). CMS minParticipantCount/minimumParticipants/minStudentCount와 같은 저장값. 비제미나이·미설정이면 null.",
             "nullable": true
           }
         }
@@ -38440,6 +38459,18 @@
           "reportId": {
             "type": "integer",
             "format": "int64"
+          },
+          "instructorRole": {
+            "type": "string"
+          },
+          "institutionAddress": {
+            "type": "string"
+          },
+          "distanceFromHome": {
+            "type": "string",
+            "format": "double",
+            "description": "자택-기관 거리(km) 숫자. 문자열 아님. 없으면 null",
+            "nullable": true
           }
         }
       },
@@ -38467,6 +38498,46 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "MemberInstructorAssignmentListResponse": {
+        "type": "object",
+        "description": "플랫폼 강사 마이페이지 배정 현황 탭의 배정된 목록. 강의보고서 바인딩과 무관하며 활성 ASSIGNED만 반환합니다.",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        }
+      },
+      "MemberInstructorAssignmentWaitingResponse": {
+        "type": "object",
+        "description": "플랫폼 강사 마이페이지 배정 현황 탭의 배정 대기 목록. 이 강사가 신청한 기관·일정만 포함하며 활성 ASSIGNED는 제외합니다.",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
           }
         }
       },
@@ -38860,7 +38931,8 @@
             "type": "boolean"
           },
           "canAgreePaymentStatementConsent": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "지급조서 사전 동의 가능 여부. 제미나이는 지급조서를 별도 신청하지 않으므로 항상 false."
           }
         }
       },
@@ -39039,6 +39111,47 @@
                 "type": "null"
               }
             ]
+          },
+          "organizationApplication": {
+            "description": "ORGANIZATION 신청의 기관 마스터·스냅샷. 비기관 신청이거나 저장값이 없으면 null. 가짜 기본값을 넣지 않는다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MemberPortalOrganizationApplicationSnapshot"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "MemberPortalOrganizationApplicationSnapshot": {
+        "type": "object",
+        "description": "기관 신청에 연결된 기관명·학년·소재지. 컬럼/마스터에 없으면 해당 필드는 null. teacherPosition(직급)은 저장 원천이 없으면 null이며 교사명으로 채우지 않는다.",
+        "properties": {
+          "organizationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestedGrade": {
+            "type": "string",
+            "description": "program_organization_application.requested_grade",
+            "nullable": true
+          },
+          "institutionAddress": {
+            "type": "string",
+            "description": "organization.address",
+            "nullable": true
+          },
+          "institutionAddressDetail": {
+            "type": "string",
+            "description": "organization_address_detail_snapshot 또는 organization.address_detail",
+            "nullable": true
+          },
+          "teacherPosition": {
+            "type": "string",
+            "description": "직급. 저장 컬럼이 없으면 항상 null",
+            "nullable": true
           }
         }
       },
@@ -39110,6 +39223,12 @@
           "satisfactionConfigured": {
             "type": "boolean",
             "description": "CMS 공통정보 generalSurveyMenuKeys에 satisfaction이 있는지. 레거시 student_satisfaction·teacher_satisfaction·volunteer_satisfaction·school_satisfaction도 satisfaction으로 봅니다. TRAINED_TEACHER 특수 분기 없음. form-binding과 무관. 없으면 false."
+          },
+          "minStudentCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "제미나이 gemini_program_detail.min_participant_count. 비제미나이·미설정이면 null. 기본값으로 채우지 않는다.",
+            "nullable": true
           }
         }
       },
@@ -39183,6 +39302,26 @@
               "ASSIGNED",
               "COMPLETED"
             ]
+          },
+          "instructorRole": {
+            "type": "string",
+            "description": "is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null",
+            "enum": [
+              "LEAD",
+              "ASSISTANT"
+            ],
+            "nullable": true
+          },
+          "institutionAddress": {
+            "type": "string",
+            "description": "기관 소재지. 없으면 null",
+            "nullable": true
+          },
+          "distanceFromHome": {
+            "type": "string",
+            "format": "double",
+            "description": "자택-기관 거리(km) 숫자. 문자열 아님. 산정값이 있을 때만. 없으면 null",
+            "nullable": true
           }
         }
       },
@@ -40259,6 +40398,165 @@
           }
         }
       },
+      "MemberPortalGeminiSettlementSummary": {
+        "type": "object",
+        "description": "제미나이 정산 현황 상단. 지급조서는 CMS 연수 실적·계좌 지급 결과 기준이며 강사가 별도 신청하지 않는다.",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paymentStatementProcessingStatus": {
+            "type": "string",
+            "enum": [
+              "확인 진행 중",
+              "확인 대기 중",
+              "계좌 지급 완료"
+            ]
+          },
+          "paymentStatementProcessingStatusCode": {
+            "type": "string",
+            "enum": [
+              "PARTIAL_CONFIRMATION",
+              "AWAITING_CONFIRMATION",
+              "ACCOUNT_PAID"
+            ]
+          },
+          "lectureProgressRound": {
+            "type": "integer",
+            "format": "int32",
+            "description": "강의 진행이 끝난 회차 수(서울 기준 연수일 < 오늘)"
+          },
+          "lectureTotalRound": {
+            "type": "integer",
+            "format": "int32",
+            "description": "배정된 강의 일정 총 회차"
+          },
+          "businessIncomeYn": {
+            "type": "boolean",
+            "description": "사업소득자이면 true, 아니면 false, 미설정이면 null",
+            "nullable": true
+          },
+          "businessIncomeLabel": {
+            "type": "string",
+            "description": "사업소득자 | 사업소득자 아님. 미설정이면 null",
+            "nullable": true
+          },
+          "lectureFeeBasis": {
+            "type": "string",
+            "description": "인정 차시별 고정 강사비 표시. 예: 인정 2차시 고정 강사비 170000원. 단가 없으면 단가 미설정",
+            "nullable": true
+          },
+          "accountPaymentStatus": {
+            "type": "string",
+            "description": "연수 실적에 연결된 account_payment.payment_status 원문(정규화). 지급 행이 없으면 null. SettlementPaymentStatus: NOT_READY|WAITING|WAITING_PAYMENT|READY_TO_PAY|PAID|FAILED 및 DB ON_HOLD",
+            "nullable": true
+          },
+          "settlementStatus": {
+            "type": "string",
+            "description": "settlement.payment_status 원문. 제미나이가 계좌지급만 있고 settlement 행이 없으면 null",
+            "nullable": true
+          },
+          "withholdingStatementStatus": {
+            "type": "string",
+            "description": "settlement.statement_status 원문(DRAFT|ISSUED|REQUESTED|CONFIRMED|REJECTED|CORRECTION_REQUESTED|NOT_APPLICABLE). settlement 행이 없으면 null",
+            "nullable": true
+          }
+        }
+      },
+      "MemberPortalGeminiLectureScheduleItem": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "institutionName": {
+            "type": "string",
+            "description": "기관명",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "description": "학년. requested_grade 원문. 없으면 null",
+            "nullable": true
+          },
+          "trainingDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "trainingStartTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "trainingEndTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "trainingTimeText": {
+            "type": "string",
+            "description": "HH:mm~HH:mm. 시각이 없으면 null",
+            "nullable": true
+          },
+          "recognizedClassCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "실제 시작·종료 시간으로 산정한 인정 차시"
+          },
+          "instructorRole": {
+            "type": "string",
+            "description": "is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null",
+            "enum": [
+              "LEAD",
+              "ASSISTANT"
+            ],
+            "nullable": true
+          },
+          "institutionAddress": {
+            "type": "string",
+            "description": "기관 소재지(organization.address). 없으면 null",
+            "nullable": true
+          },
+          "distanceFromHome": {
+            "type": "string",
+            "format": "double",
+            "description": "자택-기관 거리(km) 숫자. distance_status=CALCULATED이고 distance_km가 있을 때만. 문자열 아님. 없으면 null",
+            "nullable": true
+          }
+        }
+      },
+      "MemberPortalGeminiLectureScheduleList": {
+        "type": "object",
+        "description": "제미나이 강의 일정. items는 없으면 []. null이 아니다.",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalGeminiLectureScheduleItem"
+            }
+          }
+        }
+      },
       "PortalFormListItem": {
         "type": "object",
         "properties": {
@@ -40508,18 +40806,18 @@
           "assignmentId": {
             "type": "integer",
             "format": "int64",
-            "description": "개인 신청 CASE_D에서 직접 연결된 강사 배정 ID. ORGANIZATION 응답에서는 null.",
+            "description": "강사 배정 ID. 개인 신청 CASE_D와 기관 신청(직접 organization_application_id 또는 OSA 일정 연결) 모두 있으면 채운다. 없으면 null.",
             "nullable": true
           },
           "programScheduleId": {
             "type": "integer",
             "format": "int64",
-            "description": "개인 신청 CASE_D에서 직접 연결된 교육 일정 ID. ORGANIZATION 응답에서는 null.",
+            "description": "교육 일정 ID. 기관 신청은 OSA로 연결된 program_schedule_id를 반환한다. 없으면 null.",
             "nullable": true
           },
           "assignmentStatus": {
             "type": "string",
-            "description": "직접 연결된 배정 상태. 개인 신청 CASE_D에서는 ASSIGNED만 반환하며 ORGANIZATION 응답에서는 null.",
+            "description": "배정 상태. ASSIGNED 등 활성 상태. 없으면 null.",
             "nullable": true
           },
           "consentDocumentsRequested": {
@@ -40530,6 +40828,16 @@
             "items": {
               "$ref": "#/components/schemas/AssignedInstructorConsent"
             }
+          },
+          "phone": {
+            "type": "string",
+            "description": "승인된 기관/교사 본인에게만 반환. PrivacyMaskingSupport 마스킹 전화번호. 그 외·미설정은 null",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "description": "승인된 기관/교사 본인에게만 반환. PrivacyMaskingSupport 마스킹 이메일. 그 외·미설정은 null",
+            "nullable": true
           }
         }
       },
@@ -46827,6 +47135,26 @@
           }
         }
       },
+      "InstructorAssignmentAvailabilityResponse": {
+        "type": "object",
+        "description": "참여 강사 배정 대기 목록용 일정별 배정 가능 여부. GENERAL_ORGANIZATION·GENERAL_INDIVIDUAL만 후보를 반환합니다.",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        }
+      },
       "InstructorApplicationListItemResponse": {
         "type": "object",
         "properties": {
@@ -46984,6 +47312,12 @@
             "type": "integer",
             "format": "int64",
             "description": "program_schedule id.",
+            "nullable": true
+          },
+          "educationPeriodIndex": {
+            "type": "integer",
+            "format": "int32",
+            "description": "기간형 교육 기간 인덱스. 없으면 null.",
             "nullable": true
           },
           "startAt": {
@@ -50363,12 +50697,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨",
+            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰",
+            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -50378,11 +50712,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
+            "description": "true이면 programId 없이 enabled=false."
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
+            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
           },
           "programGroups": {
             "type": "array",
@@ -50400,21 +50734,21 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
               "type": "string"
             }
           },
           "sourceMode": {
             "type": "string",
-            "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립. 구 FE는 필드를 무시해도 됨",
+            "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
             "enum": [
               "SERVER_RESOLVED",
               "MANUAL_ALLOWED",
@@ -51925,6 +52259,15 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "paymentExclusionReason": {
+            "type": "string",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null",
+            "enum": [
+              "ZERO_CALCULATED_FEE",
+              "GEMINI_WAGE_RATE_NOT_CONFIGURED"
+            ],
+            "nullable": true
           }
         }
       },

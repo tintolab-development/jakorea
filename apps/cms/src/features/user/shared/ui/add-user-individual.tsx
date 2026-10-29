@@ -788,7 +788,7 @@ export function AddUserIndividual({
                 </DetailInfoForm.Row>
                 <DetailInfoForm.Row type="double">
                   <DetailInfoForm.Field
-                    label="행정정보 공동이용 사전동의서"
+                    label="행정정보 공동이용 동의서"
                     labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                     view="-"
                     edit={
@@ -805,7 +805,7 @@ export function AddUserIndividual({
                     }
                   />
                   <DetailInfoForm.Field
-                    label="성범죄 경력 조회 동의서"
+                    label="성범죄경력 조회 동의서"
                     labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                     view="-"
                     edit={
