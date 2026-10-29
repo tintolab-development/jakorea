@@ -237,6 +237,18 @@
   transition: background-color 0s !important;
 }
 
+/*
+ * Ant Design은 행에 진입할 때 셀에 `ant-table-cell-row-hover`를 추가하고
+ * 기본적으로 background/border transition을 실행한다. hover는 색상만 바꾸는
+ * 상태이므로 행·셀의 transition을 제거해 hover 진입/이탈 시 시각적 밀림을 막는다.
+ * 치수(padding·height·border-width)는 이 공통 상태 규칙에서 변경하지 않는다.
+ */
+.cms-data-table .ant-table-tbody > tr,
+.cms-data-table .ant-table-tbody > tr > th,
+.cms-data-table .ant-table-tbody > tr > td {
+  transition: none !important;
+}
+
 /* 단줄 고정·말줄임 클립 (기본도 52px — max-height로 초과 콘텐츠 잘림) */
 .cms-data-table.cms-data-table--fixed-row-height
   .ant-table-tbody
