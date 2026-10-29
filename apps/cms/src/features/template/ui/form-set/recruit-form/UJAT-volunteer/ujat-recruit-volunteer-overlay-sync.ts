@@ -1,4 +1,5 @@
 import { createScopedOverlayStore } from '@/features/template/ui/form-set/shared/scoped-overlay-store'
+import { filterUjatTypedRecruitmentOverlayPatch } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 
 const store = createScopedOverlayStore()
 
@@ -36,7 +37,9 @@ export function resetUjatRecruitVolunteerOverlayForScope(
   store.resetFor(templateCode)
 }
 export function patchUjatRecruitVolunteerOverlay(partial: Record<string, unknown>): void {
-  store.patch(partial)
+  const allowed = filterUjatTypedRecruitmentOverlayPatch(partial)
+  if (allowed == null) return
+  store.patch(allowed)
 }
 export function replaceUjatRecruitVolunteerOverlay(next: Record<string, unknown>): void {
   store.replace(next)

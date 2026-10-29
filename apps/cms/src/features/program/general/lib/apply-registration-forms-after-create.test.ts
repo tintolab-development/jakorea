@@ -51,7 +51,7 @@ describe('applyRegistrationFormsAfterCreate', () => {
     saveProgramScopedOperationalFormVersion.mockResolvedValue({ templateId: 9, templateVersionId: 90 })
   })
 
-  it('프로그램 단위 양식은 기본 바인딩 버전에서 ownerProgramId COPY로 적용한다', async () => {
+  it('등록/발급/인증서 양식은 시스템 카탈로그만 쓰고 COPY하지 않는다', async () => {
     fetchGeneralProgramFormBindings.mockResolvedValue([
       { bindingId: 1, formType: 'REGISTRATION', templateId: 5, templateVersionId: 51, active: true },
     ])
@@ -60,16 +60,8 @@ describe('applyRegistrationFormsAfterCreate', () => {
       forms: [{ templateCode: 'registration-general', formType: 'REGISTRATION', draft, overlay: { a: 1 } }],
     })
     expect(result.failed).toEqual([])
-    expect(result.applied).toEqual([{ templateCode: 'registration-general', recruitmentId: undefined }])
-    expect(saveProgramScopedOperationalFormVersion).toHaveBeenCalledWith(
-      expect.objectContaining({
-        templateCode: 'registration-general',
-        versionId: 51,
-        draft,
-        overlay: { a: 1 },
-        ownerProgramId: 186400,
-      })
-    )
+    expect(result.applied).toEqual([])
+    expect(saveProgramScopedOperationalFormVersion).not.toHaveBeenCalled()
   })
 
   it('1사1교: 기관 양식이 차지한 BE 자동 바인딩을 강사 양식이 덮어쓰지 않는다(새 바인딩, 카탈로그 원본)', async () => {
@@ -266,11 +258,109 @@ describe('applyRegistrationFormsAfterCreate', () => {
       { templateCode: 'application-volunteer', recruitmentId: 303 },
     ])
     expect(saveProgramScopedOperationalFormVersion).toHaveBeenCalledTimes(3)
+    expect(
+      saveProgramScopedOperationalFormVersion.mock.calls.map(
+        call => (call[0] as { reusePublished?: unknown }).reusePublished
+      )
+    ).toEqual([undefined, undefined, undefined])
     expect(saveProgramScopedOperationalFormVersion.mock.calls.map(call => call[0].versionId)).toEqual([
       31,
       32,
       33,
     ])
+  })
+
+  it('UJAT 봉사자 상·하반기 신청은 같은 양식을 한 번만 COPY하고 둘째 행은 발행본을 재사용한다', async () => {
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      {
+        bindingId: 21,
+        formType: 'APPLICATION',
+        targetType: 'VOLUNTEER',
+        targetRole: 'VOLUNTEER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 801,
+        templateVersionId: 80,
+        active: true,
+      },
+      {
+        bindingId: 22,
+        formType: 'APPLICATION',
+        targetType: 'VOLUNTEER',
+        targetRole: 'VOLUNTEER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 802,
+        templateVersionId: 80,
+        active: true,
+      },
+    ])
+    saveProgramScopedOperationalFormVersion
+      .mockResolvedValueOnce({ templateId: 900, templateVersionId: 901, bindingId: 21 })
+      .mockResolvedValueOnce({ templateId: 900, templateVersionId: 901, bindingId: 22 })
+
+    const result = await applyRegistrationFormsAfterCreate({
+      program: { id: '182200', backendProgramType: 'UJAT' } as Program,
+      forms: [{ templateCode: 'application-ujat-volunteer', formType: 'APPLICATION', draft }],
+    })
+
+    expect(result.failed).toEqual([])
+    expect(result.applied).toEqual([
+      { templateCode: 'application-ujat-volunteer', recruitmentId: 801 },
+      { templateCode: 'application-ujat-volunteer', recruitmentId: 802 },
+    ])
+    const calls = saveProgramScopedOperationalFormVersion.mock.calls.map(
+      call =>
+        call[0] as {
+          reusePublished?: { templateId: number; templateVersionId: number }
+        }
+    )
+    expect(calls).toHaveLength(2)
+    expect(calls[0]?.reusePublished).toBeUndefined()
+    expect(calls[1]?.reusePublished).toEqual({ templateId: 900, templateVersionId: 901 })
+  })
+
+  it('UJAT 봉사자 모집 TERM 2행도 templateCode당 COPY 1회 후 같은 발행본을 재사용한다', async () => {
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      {
+        bindingId: 31,
+        formType: 'RECRUITMENT',
+        targetType: 'VOLUNTEER',
+        targetRole: 'VOLUNTEER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 901,
+        templateVersionId: 90,
+        active: true,
+      },
+      {
+        bindingId: 32,
+        formType: 'RECRUITMENT',
+        targetType: 'VOLUNTEER',
+        targetRole: 'MEMBER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 902,
+        templateVersionId: 90,
+        active: true,
+      },
+    ])
+    saveProgramScopedOperationalFormVersion
+      .mockResolvedValueOnce({ templateId: 800, templateVersionId: 801, bindingId: 31 })
+      .mockResolvedValueOnce({ templateId: 800, templateVersionId: 801, bindingId: 32 })
+
+    const result = await applyRegistrationFormsAfterCreate({
+      program: { id: '182201', backendProgramType: 'UJAT' } as Program,
+      forms: [{ templateCode: 'recruitment-ujat-volunteer', formType: 'RECRUITMENT', draft }],
+    })
+
+    expect(result.failed).toEqual([])
+    expect(result.applied).toEqual([
+      { templateCode: 'recruitment-ujat-volunteer', recruitmentId: 901 },
+      { templateCode: 'recruitment-ujat-volunteer', recruitmentId: 902 },
+    ])
+    const calls = saveProgramScopedOperationalFormVersion.mock.calls.map(
+      call => call[0] as { reusePublished?: { templateId: number; templateVersionId: number } }
+    )
+    expect(calls).toHaveLength(2)
+    expect(calls[0]?.reusePublished).toBeUndefined()
+    expect(calls[1]?.reusePublished).toEqual({ templateId: 800, templateVersionId: 801 })
   })
 
   it('draft가 null이면 바인딩 버전 본문(baseline)을 쓴다', async () => {
@@ -400,7 +490,7 @@ describe('applyPreparedRegistrationFormsAfterCreate (부분 실패 → 안내·�
       { id: '186401', backendProgramType: 'COMPANY_SCHOOL' } as Program,
       {
         forms: [
-          { templateCode: 'registration-economy', formType: 'REGISTRATION', draft },
+          { templateCode: 'application-economy', formType: 'APPLICATION', draft },
           { templateCode: 'recruitment-economy', formType: 'RECRUITMENT', draft },
         ],
       }

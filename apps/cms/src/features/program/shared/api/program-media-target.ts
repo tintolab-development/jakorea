@@ -55,6 +55,13 @@ export function hasProgramMediaTarget(program: Program): boolean {
   return resolveTarget(program) != null
 }
 
+/** UJAT 등록 위저드 초안 — 미디어는 overlay가 아니라 typed 모집 RHF가 SSOT */
+export function isUjatTypedRecruitmentDraftProgram(program: Program): boolean {
+  if (hasProgramMediaTarget(program)) return false
+  const id = String(program.id ?? '')
+  return program.backendProgramType === 'UJAT' || id.startsWith('ujat-')
+}
+
 /** GENERAL_*·UJAT 모집 탭. 첨부와 대표 이미지는 그 행만 쓴다. */
 export function usesRecruitmentRowMedia(program: Program): boolean {
   return resolveTarget(program)?.recruitmentId != null
@@ -74,6 +81,15 @@ export function programMediaThumbnailOwner(program: Program): AdminFileUploadOwn
   return target.recruitmentId != null
     ? programRecruitmentThumbnailOwner(target.recruitmentId)
     : programThumbnailOwner(target.programId)
+}
+
+/** 등록 위저드(ujat-local 등)는 프로그램 번호가 없으므로 ownerId=null draft로 올린다. */
+export function resolveProgramMediaThumbnailUploadOwner(program: Program): AdminFileUploadOwner {
+  return programMediaThumbnailOwner(program) ?? programThumbnailOwner(null)
+}
+
+export function resolveProgramMediaAttachmentUploadOwner(program: Program): AdminFileUploadOwner {
+  return programMediaAttachmentOwner(program) ?? programDetailAttachmentOwner(null)
 }
 
 export async function fetchProgramMediaAttachments(

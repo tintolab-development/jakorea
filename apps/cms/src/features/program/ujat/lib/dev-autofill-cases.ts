@@ -37,11 +37,9 @@ export function isUjatDevAutofillCaseId(value: unknown): value is UjatDevAutofil
   )
 }
 
-/** 사업 연도 첫 모집 시작일(1/4) — 이 날짜가 지났으면 다음 연도를 기본으로 쓴다. */
-export const UJAT_DEV_AUTOFILL_FIRST_RECRUIT_MONTH_DAY = '01-04'
+/** 개발용 자동입력 사업 연도. 일정 프리셋(3/1~12/31)을 이 연도에 붙인다. */
+export const UJAT_DEV_AUTOFILL_DEFAULT_BUSINESS_YEAR = 2026
 
-export function resolveUjatDevAutofillDefaultBusinessYear(referenceNow: Date = new Date()): number {
-  const year = referenceNow.getFullYear()
-  const firstRecruit = new Date(`${year}-${UJAT_DEV_AUTOFILL_FIRST_RECRUIT_MONTH_DAY}T00:00:00`)
-  return referenceNow.getTime() < firstRecruit.getTime() ? year : year + 1
+export function resolveUjatDevAutofillDefaultBusinessYear(_referenceNow: Date = new Date()): number {
+  return UJAT_DEV_AUTOFILL_DEFAULT_BUSINESS_YEAR
 }

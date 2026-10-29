@@ -167,14 +167,14 @@ const H2_CONTACT = { name: '이하은', phone: '010-5123-6789', email: 'ujat.h2@
 function baseHalves(): Record<UjatHalfSemesterKey, HalfProfile> {
   return {
     h1: {
-      eventFrom: '03-15',
+      eventFrom: '03-27',
       eventTo: '06-30',
       preOffsetsDays: [-10],
       closingOffsetsDays: [8],
-      recruit: ['01-11', '01-29'],
-      docAnnounce: '02-02',
-      interview: ['02-05', '02-07'],
-      finalAnnounce: '02-12',
+      recruit: ['03-02', '03-13'],
+      docAnnounce: '03-16',
+      interview: ['03-18', '03-20'],
+      finalAnnounce: '03-23',
       preDelivery: 'online',
       eventDelivery: 'offline',
       closingDelivery: 'online',
@@ -217,8 +217,8 @@ function baseProfile(serial: string): CaseProfile {
     serial,
     businessFrom: '03-01',
     businessTo: '12-31',
-    institutionRecruit: ['01-04', '02-12'],
-    institutionResultAnnounce: '02-19',
+    institutionRecruit: ['03-02', '03-13'],
+    institutionResultAnnounce: '03-16',
     halves: baseHalves(),
     surveyItems: createUjatSurveyItemsDefault(),
     kpi: { participantCount: 480, volunteer: 64, dispatchedSchool: 16, dispatchedClass: 32 },
@@ -246,10 +246,10 @@ function caseProfile(caseId: UjatDevAutofillCaseId): CaseProfile {
             eventTo: '06-19',
             preOffsetsDays: [-14, -7],
             closingOffsetsDays: [7],
-            recruit: ['01-18', '02-06'],
-            docAnnounce: '02-10',
-            interview: ['02-12', '02-15'],
-            finalAnnounce: '02-19',
+            recruit: ['03-08', '03-19'],
+            docAnnounce: '03-22',
+            interview: ['03-24', '03-26'],
+            finalAnnounce: '03-30',
             preDelivery: 'offline',
             capacity: index => ({ classCount: 4 + index, volunteerCount: 8 + index * 2 }),
           },
@@ -414,7 +414,17 @@ export function listAvailableEducationFridays(
   })
 }
 
-function buildHalfPlan(year: number, profile: HalfProfile): UjatDevHalfPlan {
+function clampDateKey(key: string, start: string, end: string): string {
+  if (toDay(key).isBefore(toDay(start), 'day')) return start
+  if (toDay(key).isAfter(toDay(end), 'day')) return end
+  return key
+}
+
+function buildHalfPlan(
+  year: number,
+  profile: HalfProfile,
+  business: UjatDevDateRange
+): UjatDevHalfPlan {
   const event = {
     start: firstFridayOnOrAfter(dateKey(year, profile.eventFrom)),
     end: lastFridayOnOrBefore(dateKey(year, profile.eventTo)),
@@ -439,8 +449,12 @@ function buildHalfPlan(year: number, profile: HalfProfile): UjatDevHalfPlan {
         }
   return {
     event,
-    preDates: profile.preOffsetsDays.map(days => keyOf(eventStart.add(days, 'day'))),
-    closingDates: profile.closingOffsetsDays.map(days => keyOf(eventEnd.add(days, 'day'))),
+    preDates: profile.preOffsetsDays.map(days =>
+      clampDateKey(keyOf(eventStart.add(days, 'day')), business.start, business.end)
+    ),
+    closingDates: profile.closingOffsetsDays.map(days =>
+      clampDateKey(keyOf(eventEnd.add(days, 'day')), business.start, business.end)
+    ),
     recruit: {
       start: dateKey(year, profile.recruit[0]),
       end: dateKey(year, profile.recruit[1]),
@@ -461,11 +475,12 @@ export function buildUjatDevDatePlan(
   businessYear: number
 ): UjatDevDatePlan {
   const profile = caseProfile(caseId)
+  const business = {
+    start: dateKey(businessYear, profile.businessFrom),
+    end: dateKey(businessYear, profile.businessTo),
+  }
   return {
-    business: {
-      start: dateKey(businessYear, profile.businessFrom),
-      end: dateKey(businessYear, profile.businessTo),
-    },
+    business,
     institution: {
       recruit: {
         start: dateKey(businessYear, profile.institutionRecruit[0]),
@@ -474,8 +489,8 @@ export function buildUjatDevDatePlan(
       resultAnnounce: dateKey(businessYear, profile.institutionResultAnnounce),
     },
     halves: {
-      h1: buildHalfPlan(businessYear, profile.halves.h1),
-      h2: buildHalfPlan(businessYear, profile.halves.h2),
+      h1: buildHalfPlan(businessYear, profile.halves.h1, business),
+      h2: buildHalfPlan(businessYear, profile.halves.h2, business),
     },
   }
 }

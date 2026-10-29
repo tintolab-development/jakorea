@@ -22,6 +22,7 @@ import {
   patchRecruitDetailInfo,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 import { RECRUIT_DETAIL_INFO_OVERLAY_PREFIX } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
+import { isUjatTypedRecruitmentOverlayWritesBlocked } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 
 /**
  * 등록 전 썸네일·첨부 prepare owner.
@@ -208,7 +209,14 @@ export function recruitDetailOverlayPrefixForProgram(program: Program): string {
   if (backend === 'TRAINED_TEACHER' || backend.includes('TRAINED')) {
     return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.trainedTeachers
   }
-  if (backend === 'UJAT') return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution
+  const programId = String(program.id ?? '')
+  if (
+    backend === 'UJAT' ||
+    programId.startsWith('ujat-local-') ||
+    programId.startsWith('ujat-institution-recruit-template-preview')
+  ) {
+    return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution
+  }
   if (backend.includes('GEMINI') || backend.includes('VISITING')) {
     return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.gemini
   }
@@ -221,6 +229,7 @@ export function applyLiveRecruitmentThumbnailOverlay(
   fileObjectId: number | null,
   fileName?: string | null
 ): void {
+  if (isUjatTypedRecruitmentOverlayWritesBlocked()) return
   const prefix = recruitDetailOverlayPrefixForProgram(program)
   if (fileObjectId != null && fileObjectId > 0) {
     patchRecruitDetailInfo({
@@ -297,10 +306,24 @@ export function withRecruitmentCreateMedia<T extends RecruitmentCreateMediaMatch
   overlay: Record<string, unknown>,
   variant: RecruitmentCreateMediaVariant
 ): Array<T & RecruitmentCreateMediaFields> | undefined {
-  return rows?.map(row => ({
-    ...row,
-    ...recruitmentCreateMediaFieldsFromOverlay(overlay, row, variant),
-  }))
+  return rows?.map(row => {
+    const fromOverlay = recruitmentCreateMediaFieldsFromOverlay(overlay, row, variant)
+    const rowThumb = (row as { thumbnailFileObjectId?: number | null }).thumbnailFileObjectId
+    const rowAttachments = (row as { attachments?: { fileObjectId?: number }[] }).attachments
+    const rowAttachmentIds = rowAttachments
+      ?.map(item => item.fileObjectId)
+      .filter((id): id is number => typeof id === 'number' && id > 0)
+    return {
+      ...row,
+      ...fromOverlay,
+      ...(typeof rowThumb === 'number' && rowThumb > 0
+        ? { thumbnailFileObjectId: rowThumb }
+        : {}),
+      ...(rowAttachmentIds && rowAttachmentIds.length > 0
+        ? { attachmentFileObjectIds: rowAttachmentIds }
+        : {}),
+    }
+  })
 }
 
 function isRecruitmentCreateMediaOverlayKey(key: string): boolean {

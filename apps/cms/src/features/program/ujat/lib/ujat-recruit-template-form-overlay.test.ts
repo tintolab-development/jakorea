@@ -24,6 +24,7 @@ import {
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import {
   applyUjatRecruitFormValuesToProgram,
+  applyUjatRegistrationRecruitmentFormsToProgram,
   applyUjatRecruitAnnouncementTitleToDraft,
   programToUjatRecruitCanonicalFormValues,
   resolveUjatRecruitAnnouncementTitle,
@@ -165,6 +166,28 @@ describe('UJAT recruit form overlay', () => {
     })
     expect(merged[INSTITUTION_KEYS.publicTitle]).toBe('참여 기관 모집 공고')
     expect(merged[INSTITUTION_KEYS.district]).toBe('서울 지역 초등학교')
+  })
+
+  it('활동 기수 변경은 모집 기간 overlay를 덮지 않는다', () => {
+    const existing = {
+      [VOLUNTEER_KEYS.activityTermH1]: '1',
+      [VOLUNTEER_KEYS.recruitRangeH1]: { start: '2027-02-01', end: '2027-02-28' },
+    }
+    const merged = mergeUjatRecruitFormOverlayPatch({
+      existing,
+      next: {
+        [VOLUNTEER_KEYS.activityTermH1]: '12',
+        [VOLUNTEER_KEYS.recruitRangeH1]: { start: '', end: '' },
+      },
+      dirtyFormField: 'rounds.0.curriculum',
+      kind: 'volunteer',
+      volunteerHalf: 'h1',
+    })
+    expect(merged[VOLUNTEER_KEYS.activityTermH1]).toBe('12')
+    expect(merged[VOLUNTEER_KEYS.recruitRangeH1]).toEqual({
+      start: '2027-02-01',
+      end: '2027-02-28',
+    })
   })
 
   it('사용자가 공고명을 지운 경우에만 빈 값을 허용한다', () => {
@@ -701,19 +724,11 @@ describe('UJAT recruit form overlay', () => {
       volunteerApplicationStartDate: '2027-08-01T00:00:00Z',
       volunteerApplicationEndDate: '2027-08-31T00:00:00Z',
     }
-    const typed = applyUjatRecruitFormValuesToProgram(
-      applyUjatRecruitFormValuesToProgram(
-        applyUjatRecruitFormValuesToProgram(base, 'institution', institutionValues, {
-          createMissing: true,
-        }),
-        'volunteer_h1',
-        h1Values,
-        { createMissing: true }
-      ),
-      'volunteer_h2',
-      h2Values,
-      { createMissing: true }
-    )
+    const typed = applyUjatRegistrationRecruitmentFormsToProgram(base, {
+      institution: institutionValues,
+      volunteerH1: h1Values,
+      volunteerH2: h2Values,
+    })
 
     expect(typed.programRecruitments?.map(row => [row.id, row.recruitTerm ?? null])).toEqual([
       [undefined, null],
@@ -789,6 +804,35 @@ describe('UJAT recruit form overlay', () => {
       applicationFormBindingId: 77,
       attachments: [{ fileObjectId: 9, originalFileName: 'guide.pdf' }],
     })
+  })
+
+  it('typed 폼의 섬네일·첨부를 overlay 없이 모집 행에 싣는다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      id: 'ujat-registration-linked',
+      programRecruitments: [],
+    }
+    const values = {
+      ...programToUjatRecruitCanonicalFormValues(program, 'volunteer_h1'),
+      announcementTitle: 'H1 공고',
+      volunteerApplicationStartDate: '2027-02-01T00:00:00Z',
+      volunteerApplicationEndDate: '2027-02-28T00:00:00Z',
+      recruitmentThumbnailFileObjectId: 321,
+      recruitmentThumbnailFileName: 'thumb.png',
+      recruitmentAttachmentFileObjectIds: [654],
+      attachmentFileNames: ['guide.pdf'],
+    }
+    const saved = applyUjatRecruitFormValuesToProgram(program, 'volunteer_h1', values, {
+      createMissing: true,
+    })
+    expect(saved.programRecruitments?.[0]).toMatchObject({
+      recruitTerm: 'FIRST_HALF',
+      thumbnailFileObjectId: 321,
+      attachments: [{ fileObjectId: 654, originalFileName: 'guide.pdf' }],
+    })
+    const roundTrip = programToUjatRecruitCanonicalFormValues(saved, 'volunteer_h1')
+    expect(roundTrip.recruitmentThumbnailFileObjectId).toBe(321)
+    expect(roundTrip.recruitmentAttachmentFileObjectIds).toEqual([654])
   })
 
   it('createMissing 없이 행이 없으면 신규 row를 만들지 않는다', () => {

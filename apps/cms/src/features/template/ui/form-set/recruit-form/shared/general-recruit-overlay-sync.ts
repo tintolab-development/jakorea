@@ -39,6 +39,7 @@ import {
   isCompanySchoolRecruitmentCatalog,
   isCompanySchoolRecruitmentOverlayKey,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
+import { filterUjatTypedRecruitmentOverlayPatch } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 
 /**
  * 모집 폼(개인 모집, 강사 모집, 봉사자 모집) overlay.
@@ -136,6 +137,9 @@ function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
 }
 
 export function patchGeneralRecruitOverlay(partial: Record<string, unknown>): void {
+  const allowed = filterUjatTypedRecruitmentOverlayPatch(partial)
+  if (allowed == null) return
+  partial = allowed
   if (peekTrainedTeachersRegistrationRhf() != null) {
     const rest = patchActiveTrainedTeachersRecruitmentOverlay(partial)
     if (Object.keys(rest).length === 0) return

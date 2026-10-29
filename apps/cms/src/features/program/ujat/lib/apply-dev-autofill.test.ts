@@ -57,7 +57,7 @@ import {
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import { resetGeneralApplicationOverlayStoreForTests } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 
-const YEAR = 2027
+const YEAR = 2026
 const VOLUNTEER_CODE = 'recruitment-ujat-volunteer'
 const INSTITUTION_CODE = 'recruitment-ujat-school'
 

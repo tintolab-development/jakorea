@@ -6863,6 +6863,22 @@
           "catalogDocument": {
             "$ref": "#/components/schemas/FormCatalogDocumentResponse",
             "description": "성범죄 동의서 활성 PDF. agreement-crime 카탈로그 원본만 값이 있고 그 외는 null."
+          },
+          "templateScope": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "CATALOG",
+              "COPY",
+              "PROGRAM"
+            ],
+            "description": "CATALOG | COPY | PROGRAM. 구버전 응답은 생략될 수 있다."
+          },
+          "ownerProgramId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "templateScope=PROGRAM 일 때만 프로그램 ID"
           }
         }
       },
@@ -24387,12 +24403,6 @@
       "FormTemplateVersionCreateRequest": {
         "type": "object",
         "properties": {
-          "sourceVersionId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true,
-            "description": "같은 templateId 소속 원본 version. null 필드는 sourceVersionId 값을 서버가 상속합니다."
-          },
           "versionLabel": {
             "type": "string"
           },
@@ -24404,6 +24414,11 @@
           },
           "settingsJson": {
             "type": "string"
+          },
+          "sourceVersionId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 전용 템플릿에 DRAFT 버전을 추가할 때 원본 버전"
           }
         }
       },

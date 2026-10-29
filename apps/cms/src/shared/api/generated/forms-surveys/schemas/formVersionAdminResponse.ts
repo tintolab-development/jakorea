@@ -21,4 +21,6 @@ export interface FormVersionAdminResponse {
   publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  templateScope?: string | null;
+  ownerProgramId?: number | null;
 }

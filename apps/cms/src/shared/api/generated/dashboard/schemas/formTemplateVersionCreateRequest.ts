@@ -7,10 +7,10 @@
  */
 
 export interface FormTemplateVersionCreateRequest {
-  /** 같은 templateId 소속 원본 version. null 필드는 sourceVersionId 값을 서버가 상속합니다. */
-  sourceVersionId?: number | null;
   versionLabel?: string;
   schemaJson?: string;
   extensionJson?: string;
   settingsJson?: string;
+  /** 프로그램 전용 템플릿에 DRAFT 버전을 추가할 때 원본 버전 */
+  sourceVersionId?: number;
 }
