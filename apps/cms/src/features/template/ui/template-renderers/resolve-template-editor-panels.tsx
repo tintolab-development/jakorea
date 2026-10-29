@@ -194,6 +194,10 @@ function resolveParticipantApplicationRight(
 function resolveSurveyPanels(ctx: TemplateRendererContext): TemplateRendererPanels {
   const { editorVm } = ctx
   const { surveyListEditor, surveyTableRowSelection } = editorVm
+  const catalogLockedIds = ctx.catalogOriginal
+    ? new Set(surveyListEditor.draft.paragraphs.map(paragraph => paragraph.id))
+    : undefined
+  const onReorderMiddle = ctx.catalogOriginal ? () => {} : surveyListEditor.onReorderMiddle
 
   return {
     leftContent: (
@@ -202,9 +206,14 @@ function resolveSurveyPanels(ctx: TemplateRendererContext): TemplateRendererPane
         titleNumbering={surveyListEditor.draft.formSettings.titleNumbering}
         selectedCardId={surveyListEditor.activeParagraphId}
         onSelectCard={surveyListEditor.handleSelectCard}
-        onReorderMiddle={surveyListEditor.onReorderMiddle}
+        onReorderMiddle={onReorderMiddle}
         updateParagraph={surveyListEditor.updateParagraph}
         editorKind="survey"
+        structureLockedParagraphIds={catalogLockedIds}
+        hideDragHandleForParagraphIds={catalogLockedIds}
+        paragraphBodyOptions={
+          ctx.catalogOriginal ? { catalogOriginalParagraphTitleLocked: true } : undefined
+        }
         singleItemListActiveItemId={surveyListEditor.singleItemListActiveItemId}
         onSelectSingleItemListItem={surveyListEditor.onSelectSingleItemListItem}
         horizontalTableRowSelectionsByParagraphId={
@@ -225,14 +234,16 @@ function resolveSurveyPanels(ctx: TemplateRendererContext): TemplateRendererPane
         sectionTitle="커스텀 필드"
         pinnedTop={surveyListEditor.pinnedTop}
         sortableMiddle={surveyListEditor.sortableMiddle}
+        hideSortableDragHandleForIds={catalogLockedIds}
         pinnedBottom={surveyListEditor.pinnedBottom}
         selectedItemId={surveyListEditor.activeParagraphId}
         onSelectItem={surveyListEditor.handleSelectCard}
-        onReorderMiddle={surveyListEditor.onReorderMiddle}
+        onReorderMiddle={onReorderMiddle}
         fieldListBottomSlot={
           <FormEditorTitleNumberingField
             value={surveyListEditor.draft.formSettings.titleNumbering}
             onChange={surveyListEditor.onTitleNumberingChange}
+            disabled={ctx.catalogOriginal === true}
           />
         }
       >
@@ -243,6 +254,7 @@ function resolveSurveyPanels(ctx: TemplateRendererContext): TemplateRendererPane
           updateParagraph={surveyListEditor.updateParagraph}
           editorKind="survey"
           showTitleNumbering={false}
+          structureLockedParagraphIds={catalogLockedIds}
           singleItemListActiveItemId={surveyListEditor.singleItemListActiveItemId}
           horizontalTableRowSelection={surveyTableRowSelection.activeHorizontalTableRowSelection}
           onHorizontalTableBodyRowDeleted={surveyTableRowSelection.focusHorizontalTableBodyRow}

@@ -162,13 +162,29 @@ async function resolveApplyTargets(
   return [{ program, versionId, bindingId: existing?.bindingId }]
 }
 
+async function resolvePublishedDefaultsForNewCopy(
+  item: RegistrationFormApplyItem
+): Promise<RegistrationFormApplyItem['draft']> {
+  if (item.draft != null) return null
+  const seed = createSeedDraftForOperationalCatalogId(item.templateCode)
+  if (seed == null) return null
+  const { loadPublishedCatalogDraft, resolveWizardCatalogDraft } = await import(
+    '@/features/template/lib/published-catalog-defaults'
+  )
+  const published = await loadPublishedCatalogDraft(item.templateCode)
+  if (published == null) return null
+  return resolveWizardCatalogDraft({ saved: null, seed, published })
+}
+
 async function applyOne(
   target: ApplyTarget,
   item: RegistrationFormApplyItem,
   claimedBindingIds: Set<number>
 ): Promise<void> {
+  const publishedDefaults = await resolvePublishedDefaultsForNewCopy(item)
   const draft =
     item.draft ??
+    publishedDefaults ??
     (await loadFormTemplateVersionDraftByVersionId(item.templateCode, target.versionId))?.draft ??
     createSeedDraftForOperationalCatalogId(item.templateCode)
   if (draft == null) {

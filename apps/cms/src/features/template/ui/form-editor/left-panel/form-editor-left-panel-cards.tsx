@@ -101,6 +101,18 @@ export interface PinnedCardProps {
   surveyWriteNumbering?: boolean
 }
 
+function lockCatalogParagraphTitle(
+  heading: ParagraphCardEditableHeading | undefined,
+  locked: boolean
+): ParagraphCardEditableHeading | undefined {
+  if (heading == null || !locked) return heading
+  return {
+    ...heading,
+    titleIsEditMode: false,
+    onTitleChange: () => {},
+  }
+}
+
 function PinnedFormCardInner({
   paragraph,
   paragraphs,
@@ -132,31 +144,34 @@ function PinnedFormCardInner({
     (editorKind === 'horizontal_table' &&
       structureLockedParagraphIds != null &&
       !allowAddAfterStructureLockedParagraphs)
-  const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
-    withoutTitleRequired(
-      withSurveyWriteTitleNumbering(
-        withMultipleChoiceAllowMultipleTitleHint(
-          paragraphEditableHeading(
-            paragraph,
-            paragraphs,
-            titleNumbering,
-            isSelected,
-            updateParagraph,
-            editorKind,
-            structureLockedParagraphIds,
-            headingDescriptionExtraClassName,
-            paragraphBodyOptions?.structureLockedAuthoringOperationalFill === true
+  const editableHeadingBase = lockCatalogParagraphTitle(
+    withoutPlaceholderDescriptionInPreview(
+      withoutTitleRequired(
+        withSurveyWriteTitleNumbering(
+          withMultipleChoiceAllowMultipleTitleHint(
+            paragraphEditableHeading(
+              paragraph,
+              paragraphs,
+              titleNumbering,
+              isSelected,
+              updateParagraph,
+              editorKind,
+              structureLockedParagraphIds,
+              headingDescriptionExtraClassName,
+              paragraphBodyOptions?.structureLockedAuthoringOperationalFill === true
+            ),
+            paragraph
           ),
-          paragraph
+          paragraphs,
+          paragraph,
+          titleNumbering,
+          surveyWriteNumbering
         ),
-        paragraphs,
-        paragraph,
-        titleNumbering,
-        surveyWriteNumbering
+        hideParagraphRequiredChrome
       ),
-      hideParagraphRequiredChrome
+      !showEditorChrome
     ),
-    !showEditorChrome
+    paragraphBodyOptions?.catalogOriginalParagraphTitleLocked === true
   )
   const editableHeading = withAgreementAdminProxyConfirmHeading(
     withProgramApplicationFixedScheduleHeading(
@@ -335,31 +350,34 @@ function SortableMiddleFormCardInner({
   } = useSortable({ id: paragraph.id })
 
   const isSelected = selectedCardId === paragraph.id
-  const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
-    withoutTitleRequired(
-      withSurveyWriteTitleNumbering(
-        withMultipleChoiceAllowMultipleTitleHint(
-          paragraphEditableHeading(
-            paragraph,
-            paragraphs,
-            titleNumbering,
-            isSelected,
-            updateParagraph,
-            editorKind,
-            structureLockedParagraphIds,
-            headingDescriptionExtraClassName,
-            paragraphBodyOptions?.structureLockedAuthoringOperationalFill === true
+  const editableHeadingBase = lockCatalogParagraphTitle(
+    withoutPlaceholderDescriptionInPreview(
+      withoutTitleRequired(
+        withSurveyWriteTitleNumbering(
+          withMultipleChoiceAllowMultipleTitleHint(
+            paragraphEditableHeading(
+              paragraph,
+              paragraphs,
+              titleNumbering,
+              isSelected,
+              updateParagraph,
+              editorKind,
+              structureLockedParagraphIds,
+              headingDescriptionExtraClassName,
+              paragraphBodyOptions?.structureLockedAuthoringOperationalFill === true
+            ),
+            paragraph
           ),
-          paragraph
+          paragraphs,
+          paragraph,
+          titleNumbering,
+          surveyWriteNumbering
         ),
-        paragraphs,
-        paragraph,
-        titleNumbering,
-        surveyWriteNumbering
+        hideParagraphRequiredChrome
       ),
-      hideParagraphRequiredChrome
+      !showEditorChrome
     ),
-    !showEditorChrome
+    paragraphBodyOptions?.catalogOriginalParagraphTitleLocked === true
   )
   const editableHeading = withAgreementAdminProxyConfirmHeading(
     withProgramApplicationFixedScheduleHeading(

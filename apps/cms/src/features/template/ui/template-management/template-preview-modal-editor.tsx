@@ -29,6 +29,8 @@ import {
   useTemplatePreviewController,
   type TemplatePreviewControllerParams,
 } from '@/features/template/hooks/use-template-preview-controller'
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
+import { isCatalogOriginalWritingTemplate } from '@/features/template/lib/catalog-original-identity'
 import {
   createDefaultSurveyDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
@@ -369,6 +371,8 @@ function SurveyTemplatePreviewEditor({
   registryEntry,
   templateId,
   templateName,
+  systemTemplate,
+  forceUserEditable = false,
   onTemplateDraftSaveConfirmed,
   registrationUserMode,
   footerAction,
@@ -412,9 +416,19 @@ function SurveyTemplatePreviewEditor({
     runPreview: surveyListEditor.handlePreview,
   })
 
+  const surveyTemplateCode = registryEntry.id ?? templateId ?? ''
+  const catalogOriginal =
+    forceUserEditable !== true &&
+    isCatalogOriginalWritingTemplate({
+      templateCode: surveyTemplateCode,
+      baseTemplateCode: getFormTemplateVersionCacheEntry(surveyTemplateCode)?.baseTemplateCode,
+      systemTemplate,
+    })
+
   const rendererContext = useMemo(
     (): TemplateRendererContext => ({
       registryEntry,
+      catalogOriginal,
       editorVm: {
         registryEntry,
         isProgramRegistration: false,
@@ -431,7 +445,7 @@ function SurveyTemplatePreviewEditor({
       },
       generic,
     }),
-    [generic, registryEntry, surveyListEditor, surveyTableRowSelection]
+    [catalogOriginal, generic, registryEntry, surveyListEditor, surveyTableRowSelection]
   )
 
   const { leftContent, rightNavigation } = useTemplatePreviewModalPanels(

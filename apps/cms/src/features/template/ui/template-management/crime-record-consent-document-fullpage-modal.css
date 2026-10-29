@@ -197,6 +197,24 @@
   mask-type: alpha;
 }
 
+.crime-consent-doc-modal__versions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 52px 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.crime-consent-doc-modal__versions li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+}
+
 .crime-consent-doc-modal__visually-hidden-file {
   position: absolute;
   width: 1px;
