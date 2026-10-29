@@ -745,7 +745,7 @@ export async function upsertMember1365ExternalIdentifierRemote(
   return unwrapApiBody(
     await membersApi.upsertExternalIdentifier(memberId, EXTERNAL_IDENTIFIER_PROVIDER_1365, {
       externalId,
-      reason: 'CMS 관리자 회원 정보 수정',
+      reason: '회원 정보 수정',
     })
   )
 }

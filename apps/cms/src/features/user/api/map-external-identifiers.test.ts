@@ -19,7 +19,7 @@ describe('preferUnmasked1365Id', () => {
 
 describe('detail1365Display', () => {
   it('미해제일 때 원문을 FE 마스킹한다', () => {
-    expect(detail1365Display('0915123456', false)).toBe('0915***')
+    expect(detail1365Display('0915123456', false)).toBe('09151234**')
   })
 
   it('해제 후에는 원문을 그대로 보여준다', () => {

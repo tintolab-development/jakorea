@@ -21,15 +21,14 @@ export function looksMaskedExternalId(value: string | null | undefined): boolean
 }
 
 /**
- * 연락처 `MASKING_POLICY.phone`과 동일 — 조회 모드에서만 FE 마스킹.
- * 이미 BE 마스킹(`*`)이면 그대로 둔다.
+ * 1365 ID는 마지막 2글자만 `*`. 이미 `*`면 그대로 둔다.
  */
 export function mask1365IdForDisplay(value: string): string {
   const t = value.trim()
   if (!t) return t
   if (looksMaskedExternalId(t)) return t
-  if (t.length <= 4) return '*'.repeat(t.length)
-  return `${t.slice(0, 4)}***`
+  if (t.length <= 2) return '*'.repeat(t.length)
+  return `${t.slice(0, -2)}**`
 }
 
 /** 조회 표시 — 연락처/이메일과 같이 revealed 시에만 원문 */

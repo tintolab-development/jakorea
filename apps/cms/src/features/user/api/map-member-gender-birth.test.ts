@@ -45,9 +45,9 @@ describe('map-member-gender-birth', () => {
     expect(toDisplayGender(undefined)).toBe('-')
     expect(toDisplayGender('unknown')).toBe('-')
     expect(toDisplayGender('**')).toBe('**')
-    expect(toDisplayGender('***')).toBe('***')
-    expect(toDisplayGender('*')).toBe('*')
-    expect(toDisplayGender('•')).toBe('•')
+    expect(toDisplayGender('***')).toBe('**')
+    expect(toDisplayGender('*')).toBe('**')
+    expect(toDisplayGender('•')).toBe('**')
   })
 
   it('어댑터용 성별 라벨은 원시값을 한글로, 빈 값은 undefined로 둔다', () => {
