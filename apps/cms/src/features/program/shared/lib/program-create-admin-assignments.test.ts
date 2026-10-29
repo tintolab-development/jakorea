@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  PROGRAM_CREATE_OWNER_REQUIRES_ELIGIBLE_PM_MESSAGE,
   PROGRAM_CREATE_VIEWER_CANNOT_OWN_MESSAGE,
   isCmsRoleEligibleProgramOwner,
   withProgramCreateAdminAssignments,
@@ -50,13 +49,13 @@ describe('withProgramCreateAdminAssignments', () => {
     ).toEqual([{ adminId: 42, role: 'PM' }])
   })
 
-  it('rejects master without explicit owner', () => {
-    expect(() =>
+  it('does not self-assign or block master (no registration owner picker)', () => {
+    expect(
       withProgramCreateAdminAssignments(baseRequest, {
         roleCode: 'MASTER',
         adminAccountId: 1,
       })
-    ).toThrow(PROGRAM_CREATE_OWNER_REQUIRES_ELIGIBLE_PM_MESSAGE)
+    ).toEqual(baseRequest)
   })
 
   it('rejects program viewer', () => {

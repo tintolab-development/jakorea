@@ -14,7 +14,10 @@ describe('mapProgramManagerRole', () => {
 
   it('maps aliases and unknown to safe defaults', () => {
     expect(mapProgramManagerRole('PM')).toBe('OWNER')
+    expect(mapProgramManagerRole('ROLE_LEAD')).toBe('OWNER')
+    expect(mapProgramManagerRole('PROGRAM_LEAD')).toBe('OWNER')
     expect(mapProgramManagerRole('VIEWER')).toBe('ASSISTANT')
+    expect(mapProgramManagerRole('MANAGER')).toBe('ASSISTANT')
     expect(mapProgramManagerRole('???')).toBe('ASSISTANT')
   })
 })
@@ -24,6 +27,13 @@ describe('toProgramManagerApiRole', () => {
     expect(toProgramManagerApiRole('OWNER')).toBe('PM')
     expect(toProgramManagerApiRole('PARTNER')).toBe('PARTNER')
     expect(toProgramManagerApiRole('ASSISTANT')).toBe('VIEWER')
+  })
+
+  it('never sends ASSISTANT or MANAGER literals', () => {
+    const sent = (['OWNER', 'PARTNER', 'ASSISTANT'] as const).map(toProgramManagerApiRole)
+    expect(sent).toEqual(['PM', 'PARTNER', 'VIEWER'])
+    expect(sent).not.toContain('ASSISTANT')
+    expect(sent).not.toContain('MANAGER')
   })
 })
 

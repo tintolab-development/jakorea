@@ -977,19 +977,19 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          {
-            key: 'survey',
-            label: '설문 관리',
-            icon: <GeneralLnbSurveyManagementIcon />,
-            ...(surveyMenuItems.length > 0
-              ? {
+          ...(surveyMenuItems.length > 0
+            ? [
+                {
+                  key: 'survey',
+                  label: '설문 관리',
+                  icon: <GeneralLnbSurveyManagementIcon />,
                   children: surveyMenuItems.map(item => ({
                     key: item.key,
                     label: item.label,
                   })),
-                }
-              : {}),
-          },
+                },
+              ]
+            : []),
           ...(!hideManagers
             ? [{ key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> }]
             : []),
@@ -1037,19 +1037,19 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          {
-            key: 'survey',
-            label: '설문 관리',
-            icon: <GeneralLnbSurveyManagementIcon />,
-            ...(surveyMenuItems.length > 0
-              ? {
+          ...(surveyMenuItems.length > 0
+            ? [
+                {
+                  key: 'survey',
+                  label: '설문 관리',
+                  icon: <GeneralLnbSurveyManagementIcon />,
                   children: surveyMenuItems.map(item => ({
                     key: item.key,
                     label: item.label,
                   })),
-                }
-              : {}),
-          },
+                },
+              ]
+            : []),
           ...(!hideManagers
             ? [{ key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> }]
             : []),

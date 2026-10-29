@@ -7,10 +7,7 @@ import {
   CMS_OPERABLE_ADMIN_PROGRAM_VIEWER_FORBIDDEN_MESSAGE,
   CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
 } from '@/entities/program/lib/program-pm-role-policy'
-import {
-  PROGRAM_CREATE_OWNER_REQUIRES_ELIGIBLE_PM_MESSAGE,
-  PROGRAM_CREATE_VIEWER_CANNOT_OWN_MESSAGE,
-} from '@/features/program/shared/lib/program-create-admin-assignments'
+import { PROGRAM_CREATE_VIEWER_CANNOT_OWN_MESSAGE } from '@/features/program/shared/lib/program-create-admin-assignments'
 import {
   PROGRAM_INLINE_IMAGE_ERROR_MESSAGES,
   isProgramInlineImageBindError,
@@ -244,11 +241,7 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (code === 'PROGRAM_VIEWER_GLOBAL_ROLE_CANNOT_BE_ELEVATED') {
     return CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE
   }
-  if (
-    error instanceof Error &&
-    (error.message === PROGRAM_CREATE_OWNER_REQUIRES_ELIGIBLE_PM_MESSAGE ||
-      error.message === PROGRAM_CREATE_VIEWER_CANNOT_OWN_MESSAGE)
-  ) {
+  if (error instanceof Error && error.message === PROGRAM_CREATE_VIEWER_CANNOT_OWN_MESSAGE) {
     return error.message
   }
   if (code && INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES[code]) {

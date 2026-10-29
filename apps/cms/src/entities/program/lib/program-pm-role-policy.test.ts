@@ -37,6 +37,7 @@ describe('canAssignProgramRoleToCmsAdmin', () => {
     expect(canAssignProgramRoleToCmsAdmin('ACCOUNTING_MANAGER', 'PARTNER')).toBe(true)
     expect(canAssignProgramRoleToCmsAdmin('PROGRAM_MANAGER', 'ASSISTANT')).toBe(false)
     expect(canAssignProgramRoleToCmsAdmin('PM', 'OWNER')).toBe(true)
+    expect(canAssignProgramRoleToCmsAdmin('MIDDLE', 'OWNER')).toBe(true)
     expect(canAssignProgramRoleToCmsAdmin(undefined, 'OWNER')).toBe(true)
   })
 })

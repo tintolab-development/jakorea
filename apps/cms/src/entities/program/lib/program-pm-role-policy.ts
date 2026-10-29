@@ -4,6 +4,17 @@
  */
 
 import type { ProgramRole, UserRole } from '@/types/user'
+import {
+  isCmsMasterAdminRole,
+  isCmsOperableProgramOwnerRole,
+  isCmsViewerAdminRole,
+} from '@/shared/lib/cms-global-role-code'
+
+export {
+  isCmsMasterAdminRole,
+  isCmsOperableProgramOwnerRole,
+  isCmsViewerAdminRole,
+} from '@/shared/lib/cms-global-role-code'
 
 export const MAX_PM_PER_PROGRAM = 3
 
@@ -20,30 +31,6 @@ export const CMS_MASTER_CANNOT_BE_PROGRAM_OWNER_MESSAGE =
 /** ACCOUNTING/PROGRAM_MANAGER는 프로그램 VIEWER(ASSISTANT)로 내릴 수 없음 */
 export const CMS_OPERABLE_ADMIN_PROGRAM_VIEWER_FORBIDDEN_MESSAGE =
   'Accounting Manager·Program Manager에게는 프로그램 뷰어 권한을 지정할 수 없습니다.'
-
-function normalizeCmsRole(roleCode: string | undefined | null): string {
-  return (roleCode ?? '').trim().toUpperCase().replace(/-/g, '_')
-}
-
-export function isCmsViewerAdminRole(roleCode: string | undefined | null): boolean {
-  const upper = normalizeCmsRole(roleCode)
-  return upper === 'VIEWER' || upper === 'PROGRAM_VIEWER'
-}
-
-export function isCmsMasterAdminRole(roleCode: string | undefined | null): boolean {
-  return normalizeCmsRole(roleCode) === 'MASTER'
-}
-
-export function isCmsOperableProgramOwnerRole(roleCode: string | undefined | null): boolean {
-  const upper = normalizeCmsRole(roleCode)
-  return (
-    upper === 'ACCOUNTING_MANAGER' ||
-    upper === 'PROGRAM_MANAGER' ||
-    upper === 'MIDDLE' ||
-    upper === 'PM' ||
-    upper === 'PARTNER'
-  )
-}
 
 export function canAssignProgramRoleToCmsAdmin(
   cmsRoleCode: string | undefined | null,
