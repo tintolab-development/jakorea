@@ -7,7 +7,7 @@
  */
 
 /**
- * 만 14세 미만 회원의 보호자 정보. 본인 포탈에서만 조회되며 수정은 별도 보호자 동의 절차를 따릅니다.
+ * 만 14세 미만 회원의 보호자 정보. GET /api/portal/me/profile 및 PATCH /api/portal/me/profile(nested guardian)에서 동일 키를 사용합니다. 관계만 변경할 수 있고, 이름·휴대폰 변경에도 별도 NICE 세션은 필요하지 않습니다. 초상권 보호자 NICE는 PATCH 이후 저장된 값과 대조합니다.
  */
 export interface GuardianProfileResponse {
   guardianName?: string;

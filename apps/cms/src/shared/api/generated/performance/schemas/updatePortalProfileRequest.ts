@@ -5,11 +5,12 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GuardianProfileResponse } from './guardianProfileResponse';
 import type { InstructorPortalProfileUpdate } from './instructorPortalProfileUpdate';
 import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 
 /**
- * 회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다.
+ * 회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다. 만 14세 미만 보호자는 nested guardian(정본) 또는 최상위 guardianName/guardianRelation/guardianPhone 으로 갱신합니다. 둘 다 있으면 nested 우선. 성인 요청의 보호자 필드는 무시합니다. 이름·휴대폰 변경에 NICE 세션은 필요하지 않습니다.
  */
 export interface UpdatePortalProfileRequest {
   postalCode?: string;
@@ -26,4 +27,8 @@ export interface UpdatePortalProfileRequest {
   instructorProfile?: InstructorPortalProfileUpdate;
   affiliationName?: string;
   external1365Id?: string;
+  guardian?: GuardianProfileResponse;
+  guardianName?: string;
+  guardianRelation?: string;
+  guardianPhone?: string;
 }
