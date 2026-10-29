@@ -132,18 +132,52 @@ export function isProgramScopedOperationalWritingTemplate(item: {
 }
 
 /**
- * CATALOG 원본.
- * 버전 DTO에 templateScope·sourceTemplateId가 없어
- * systemTemplate·baseTemplateCode·카탈로그 고정 코드로 판별한다.
+ * BE V41 레거시 CATALOG 시드(`use_yn=false`, `source_template_id` null).
+ * FE 카탈로그 목록(TEMPLATE_CODE_CATALOG)에는 없지만 BE는 CATALOG 원본으로 409를 낸다.
+ * `use_yn=false`를 원본 아님으로 해석하지 않는다(C3). 목록 노출에는 쓰지 않는다.
  */
-export function isCatalogOriginalWritingTemplate(input: {
+export const BE_LEGACY_CATALOG_ORIGINAL_WRITING_TEMPLATE_CODES: ReadonlySet<string> = new Set([
+  'registration-trained-teacher',
+  'recruitment-trained-teacher-organization',
+  'application-trained-teacher-participant',
+  'application-trained-teacher-organization',
+])
+
+export type CatalogOriginalIdentityInput = {
   templateCode?: string | null
   baseTemplateCode?: string | null
   systemTemplate?: boolean | null
-}): boolean {
+  /** BE `template_scope` — DTO에 노출되면 이 값으로만 판정한다. */
+  templateScope?: string | null
+  /** BE `source_template_id` — CATALOG 원본은 null */
+  sourceTemplateId?: number | string | null
+}
+
+function resolveKnownTemplateScope(input: CatalogOriginalIdentityInput): string | null {
+  const scope = input.templateScope?.trim().toUpperCase() ?? ''
+  return scope === '' ? null : scope
+}
+
+function hasSourceTemplateId(value: number | string | null | undefined): boolean {
+  if (value == null) return false
+  return String(value).trim() !== ''
+}
+
+/**
+ * CATALOG 원본 — BE 기준 `template_scope=CATALOG && source_template_id null`.
+ * DTO에 templateScope가 아직 없으면 systemTemplate·baseTemplateCode·카탈로그 고정 코드(+BE 레거시 시드 코드)로 판별한다.
+ */
+export function isCatalogOriginalWritingTemplate(input: CatalogOriginalIdentityInput): boolean {
+  const scope = resolveKnownTemplateScope(input)
+  if (scope != null) return scope === 'CATALOG' && !hasSourceTemplateId(input.sourceTemplateId)
   const code = input.templateCode?.trim() ?? ''
   if (code === '') return false
-  if (!isCatalogFixedWritingFormTemplateCode(code)) return false
+  if (
+    !isCatalogFixedWritingFormTemplateCode(code) &&
+    !BE_LEGACY_CATALOG_ORIGINAL_WRITING_TEMPLATE_CODES.has(code)
+  ) {
+    return false
+  }
   if (isDuplicateWritingTemplateCode(code)) return false
   if (input.systemTemplate === false) return false
   const base = input.baseTemplateCode?.trim()
@@ -152,11 +186,9 @@ export function isCatalogOriginalWritingTemplate(input: {
 }
 
 /** 프로그램 전용 복사본. CATALOG 원본이 아니면 derived·systemTemplate false·다른 baseTemplateCode. */
-export function isProgramDedicatedWritingTemplate(input: {
-  templateCode?: string | null
-  baseTemplateCode?: string | null
-  systemTemplate?: boolean | null
-}): boolean {
+export function isProgramDedicatedWritingTemplate(input: CatalogOriginalIdentityInput): boolean {
+  const scope = resolveKnownTemplateScope(input)
+  if (scope != null) return !isCatalogOriginalWritingTemplate(input)
   const code = input.templateCode?.trim() ?? ''
   if (code === '') return false
   if (isCatalogOriginalWritingTemplate(input)) return false
