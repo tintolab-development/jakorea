@@ -1,11 +1,14 @@
-/* 관리자 권한 유형 태그 — Master/Viewer와 동일 140×32, padding 6×10 */
+/*
+ * 관리자 권한 유형 태그.
+ * Accounting Manager(가장 긴 라벨) 좌우 패딩이 보이도록 172×32, padding 6×12.
+ */
 .user-list-admin-perm-tag {
   display: flex;
-  width: 140px;
-  min-width: 140px;
-  max-width: 140px;
+  width: 172px;
+  min-width: 172px;
+  max-width: 172px;
   height: 32px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   justify-content: center;
   align-items: center;
   gap: 10px;
@@ -81,13 +84,13 @@
 .status-dropdown-cell__status-trigger--tag-160 .app-status-badge.user-list-admin-perm-badge,
 .status-dropdown-cell__dropdown-overlay--tag-160 .app-status-badge.user-list-admin-perm-badge {
   box-sizing: border-box;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
+  width: 172px !important;
+  min-width: 172px !important;
+  max-width: 172px !important;
   height: 32px !important;
   min-height: 32px !important;
   max-height: 32px !important;
-  padding: 6px 10px !important;
+  padding: 6px 12px !important;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -95,33 +98,74 @@
 }
 
 /*
- * tag-160 기본은 132 태그 + 가로 패딩 13px (1+13+132+13+1=160).
- * 권한 배지는 140이라 패딩을 9px로 맞춤. 안 맞으면 닫힘 상태에서 배지가 셀 밖으로
- * 넘치고, 열리면 160 박스에 잘리며 왼쪽으로 밀려 보인다.
+ * 권한 배지 172 + 좌우 패딩 10px → 드롭다운 셸 192.
+ * Accounting Manager 라벨이 잘리거나 좌우 패딩이 없어지지 않게 맞춤.
  */
+.cms-data-table.user-list-table
+  .ant-table-tbody
+  > tr
+  > td.status-dropdown-cell__cell-status--tag-160:has(.user-list-admin-perm-badge),
+.cms-data-table.user-list-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__header--tag-160 {
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+}
+
+.status-dropdown-cell__cell-status--tag-160:has(.user-list-admin-perm-badge) .ant-dropdown-trigger {
+  max-width: 192px !important;
+}
+
 .status-dropdown-cell__status-trigger--tag-160:has(.user-list-admin-perm-badge),
 .status-dropdown-cell__status-trigger--tag-160.status-dropdown-cell__status-trigger--open:has(
     .user-list-admin-perm-badge
   ) {
   box-sizing: border-box !important;
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-  padding: 8px 9px !important;
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+  padding: 8px 10px !important;
   overflow: hidden;
 }
 
-.status-dropdown-cell__dropdown-overlay:has(.user-list-admin-perm-badge),
-.status-dropdown-cell__dropdown-overlay--tag-160:has(.user-list-admin-perm-badge) {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
+.status-dropdown-cell__status-trigger:has(.user-list-admin-perm-badge),
+.status-dropdown-cell__status-trigger.status-dropdown-cell__status-trigger--open:has(
+    .user-list-admin-perm-badge
+  ) {
+  box-sizing: border-box !important;
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+  padding: 8px 10px !important;
+  overflow: hidden;
 }
 
-.status-dropdown-cell__dropdown-overlay:has(.user-list-admin-perm-badge) .ant-dropdown-menu,
+/*
+ * default 오버레이 136px 규칙(클래스 4개)보다 특이도를 높인다.
+ * 관리자 상세·신청 상세도 목록과 같은 192px 셸을 쓴다.
+ */
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
+    .status-dropdown-cell__dropdown-overlay--tag-160
+  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line):has(
+    .user-list-admin-perm-badge
+  ),
+.status-dropdown-cell__dropdown-overlay--tag-160:has(.user-list-admin-perm-badge) {
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+}
+
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
+    .status-dropdown-cell__dropdown-overlay--tag-160
+  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line):has(
+    .user-list-admin-perm-badge
+  )
+  .ant-dropdown-menu,
 .status-dropdown-cell__dropdown-overlay--tag-160:has(.user-list-admin-perm-badge) .ant-dropdown-menu {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-  padding: 8px 9px !important;
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+  padding: 8px 10px !important;
 }

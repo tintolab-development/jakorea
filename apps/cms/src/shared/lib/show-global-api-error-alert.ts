@@ -11,7 +11,10 @@ import {
   getMemberDeleteCurrentPasswordInvalidAlertOptions,
   isMemberDeleteCurrentPasswordInvalidError,
 } from '@/features/user/api/get-member-api-error'
-import { shouldSkipGlobalAlertForInstructorCancelApprovalBlocked } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-blocked'
+import {
+  shouldSkipGlobalAlertForInstructorCancelApprovalBlocked,
+  shouldSkipGlobalAlertForInstructorRevokeBlocked,
+} from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-blocked'
 import {
   isProgramDateOutsideOpenPeriodError,
   publishProgramOperationDateFocus,
@@ -145,7 +148,10 @@ export function showGlobalApiErrorAlert(
   if (shouldSkipGlobalErrorAlert(error, config)) return false
 
   const requestUrl = config?.url ?? error.config?.url
-  if (shouldSkipGlobalAlertForInstructorCancelApprovalBlocked(error, requestUrl)) {
+  if (
+    shouldSkipGlobalAlertForInstructorCancelApprovalBlocked(error, requestUrl) ||
+    shouldSkipGlobalAlertForInstructorRevokeBlocked(error, requestUrl)
+  ) {
     markGlobalErrorAlertShown(error)
     return false
   }

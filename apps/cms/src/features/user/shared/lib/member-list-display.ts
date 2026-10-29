@@ -10,7 +10,7 @@ const MEMBER_LIST_ROLE_LABELS = {
   ADMIN: '관리자',
 } as const
 
-export const REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL = '강사(권한박탈)'
+export const REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL = '강사(권한 종료)'
 export const DUAL_MEMBER_ROLE_TYPE_LABEL = `${MEMBER_LIST_ROLE_LABELS.SCHOOL}, ${MEMBER_LIST_ROLE_LABELS.INSTRUCTOR}`
 export const DUAL_REVOKED_MEMBER_ROLE_TYPE_LABEL = `${MEMBER_LIST_ROLE_LABELS.SCHOOL}, ${REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL}`
 
@@ -23,19 +23,16 @@ export const ALL_MEMBER_LIST_ROLE_TYPE_LABELS = {
   ADMIN: MEMBER_LIST_ROLE_LABELS.ADMIN,
 } as const
 
-/** 강사 권한 박탈 여부 — 목록·상세 회원 유형 표시용 */
+/** 강사 권한 종료 여부 — 목록·상세 회원 유형 표시용 */
 export function isInstructorPermissionRevoked(
-  record: Pick<User, 'instructorApprovalStatus'> &
-    Partial<Pick<User, 'id' | 'memberId' | 'roles'>>
+  record: Pick<User, 'instructorApprovalStatus'> & Partial<Pick<User, 'id' | 'memberId' | 'roles'>>
 ): boolean {
   if (record.instructorApprovalStatus?.trim().toUpperCase() === 'REVOKED') return true
   if (memberRolesIncludeInstructorRevoked(record.roles)) return true
   return isInstructorPermissionRevokedOverlay(record)
 }
 
-function resolveListInstructorProfile(
-  record: Parameters<typeof getAllMemberListRoleTypeLabel>[0]
-) {
+function resolveListInstructorProfile(record: Parameters<typeof getAllMemberListRoleTypeLabel>[0]) {
   return record.role === 'INSTRUCTOR'
     ? resolveInstructorMemberProfile(record)
     : record.instructorMemberProfile

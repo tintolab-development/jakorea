@@ -35,7 +35,7 @@ export type InstructorMemberProfile = 'school_teacher' | 'instructor_dual' | 'in
 // 관리자 권한 레벨 (§2.2) — UI 배지·레거시 호환. 화면 가드는 `roleCode` 4역할을 쓴다.
 export type AdminLevel = 'MASTER' | 'ADMIN' | 'GENERAL'
 
-/** API `AdminMeResponse.roleCode` — 마스터 / PM / 파트너 / 뷰어 */
+/** API `AdminMeResponse.roleCode` — Master / Accounting Manager / Program Manager / Program Viewer */
 export type AdminRoleCode = 'MASTER' | 'PM' | 'PARTNER' | 'VIEWER'
 
 // 프로그램 단위 역할 (§백오피스 권한 구조)

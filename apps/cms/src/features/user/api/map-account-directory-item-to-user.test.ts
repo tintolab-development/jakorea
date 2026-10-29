@@ -102,7 +102,7 @@ describe('mapAccountDirectoryItemToUser', () => {
         roles: user.roles,
         instructorMemberProfile: user.instructorMemberProfile,
       })
-    ).toBe('학교(교사), 강사(권한박탈)')
+    ).toBe('학교(교사), 강사(권한 종료)')
   })
 
   it('createdByAdmin·본인인증 플래그를 registeredByAdmin·identitySelfSignup에 반영한다', () => {

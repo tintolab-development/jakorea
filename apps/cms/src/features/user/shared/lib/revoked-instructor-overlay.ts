@@ -2,7 +2,7 @@ import type { User } from '@/types/user'
 
 /**
  * 목록 API가 instructorStatus/REVOKED를 안 내려도 세션 동안
- * 「강사(권한박탈)」 표시·강사 목록 제외를 유지하기 위한 클라이언트 오버레이.
+ * 「강사(권한 종료)」 표시·강사 목록 제외를 유지하기 위한 클라이언트 오버레이.
  */
 const revokedUserIds = new Set<string>()
 const revokedMemberIds = new Set<number>()

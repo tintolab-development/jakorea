@@ -14,6 +14,7 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { AdminMfaResetButton } from '@/features/user/detail/ui/admin-mfa-reset-button'
+import '@/features/user/shared/ui/admin-permission-tag.css'
 
 export type AdminPermissionTypeFieldProps = {
   mode: 'view' | 'edit'
@@ -77,7 +78,7 @@ export function AdminPermissionTypeField({
           isUpdating={permDropdownInView && adminPermissionVariantPatching}
           isOpen={adminPermissionOpen}
           onOpenChange={setAdminPermissionOpen}
-          tagLayout="default"
+          tagLayout="tag160"
           emptyPlaceholder="-"
         />
         {mfaReset}

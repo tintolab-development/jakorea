@@ -231,8 +231,21 @@ describe('showGlobalApiErrorAlert INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM', 
     expect(isGlobalApiErrorAlertShown(error)).toBe(true)
   })
 
-  it('강사 권한 박탈 요청이면 공통 알림을 유지한다', () => {
+  it('강사 권한 종료 요청이면 공통 409 알림을 띄우지 않는다', () => {
     const error = instructorCancelApprovalBlockedError('/api/admin/instructors/42/revoke')
+    expect(showGlobalApiErrorAlert(error)).toBe(false)
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+    expect(isGlobalApiErrorAlertShown(error)).toBe(true)
+  })
+
+  it('강사 권한 종료 요청의 다른 409는 공통 알림을 유지한다', () => {
+    const error = instructorCancelApprovalBlockedError('/api/admin/instructors/42/revoke')
+    if (error.response?.data && typeof error.response.data === 'object') {
+      const data = error.response.data as {
+        error: { code: string }
+      }
+      data.error.code = 'INSTRUCTOR_REVOKE_STATE_CHANGED'
+    }
     expect(showGlobalApiErrorAlert(error)).toBe(true)
     expect(cmsAlertModal.show).toHaveBeenCalledWith({
       title: '처리 불가',

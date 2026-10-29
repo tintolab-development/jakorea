@@ -1,7 +1,4 @@
-import {
-  extractApiErrorCode,
-  extractApiErrorMessage,
-} from '@/shared/lib/extract-api-error-message'
+import { extractApiErrorCode, extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
 
 /** BE가 code별 구체 메시지 대신 쓰는 공통 409 문구 — FE 매핑이 있으면 이를 덮어쓴다 */
@@ -17,8 +14,7 @@ export const MEMBER_DELETE_CURRENT_PASSWORD_INVALID_ALERT_CONTENT =
   '현재 비밀번호가 일치하지 않습니다.\n비밀번호를 확인 후 다시 시도해 주세요.'
 
 const MEMBER_ERROR_CODE_MESSAGES: Record<string, string> = {
-  CMS_INDIVIDUAL_GRADE_REQUIRED_WHEN_ENROLLED:
-    '재학 중일 때는 학년을 입력해 주세요.',
+  CMS_INDIVIDUAL_GRADE_REQUIRED_WHEN_ENROLLED: '재학 중일 때는 학년을 입력해 주세요.',
   CMS_INDIVIDUAL_SCHOOL_NOT_ALLOWED_WHEN_NOT_ENROLLED:
     '미재학 상태에서는 학교 소속을 선택할 수 없습니다.',
   INSTRUCTOR_JA_GRADE_POLICY_NOT_INITIALIZED:
@@ -29,22 +25,20 @@ const MEMBER_ERROR_CODE_MESSAGES: Record<string, string> = {
     '지원하지 않는 강사비 등급입니다. 1급·2급·3급 중에서 선택해 주세요.',
   CMS_INSTRUCTOR_FEE_GRADE_UNSUPPORTED:
     '지원하지 않는 강사비 등급입니다. 1급·2급·3급 중에서 선택해 주세요.',
-  /** 강사 권한 박탈·승인 취소 — 진행/배정 중 프로그램이 있으면 BE 409 */
+  /** 강사 권한 종료·승인 취소 — 진행/배정 중 프로그램이 있으면 BE 409 */
   INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM:
     '참여 중인 프로그램이 있어 권한을 취소할 수 없습니다.',
   ADMIN_APPROVAL_CANCEL_HAS_PROGRAM_ASSIGNMENT_HISTORY:
     '프로그램 담당 이력이 있어 승인을 취소할 수 없습니다.',
   /** CMS 회원 삭제 — 관리자 현재 비밀번호 불일치 */
-  CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID:
-    MEMBER_DELETE_CURRENT_PASSWORD_INVALID_ALERT_CONTENT,
+  CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID: MEMBER_DELETE_CURRENT_PASSWORD_INVALID_ALERT_CONTENT,
 }
 
 export function isMemberDeleteCurrentPasswordInvalidError(error: unknown): boolean {
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosErr = error as { response?: { data?: unknown } }
     return (
-      extractApiErrorCode(axiosErr.response?.data) ===
-      MEMBER_DELETE_CURRENT_PASSWORD_INVALID_CODE
+      extractApiErrorCode(axiosErr.response?.data) === MEMBER_DELETE_CURRENT_PASSWORD_INVALID_CODE
     )
   }
   return false

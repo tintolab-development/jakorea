@@ -77,7 +77,7 @@ describe('buildListQueryApiFilters', () => {
     expect(api.createdAtTo).toBe('2026-03-31')
   })
 
-  it('전체 탭 — 학교(교사)·겸직·권한박탈·관리자 유형을 allTabRoleFilter로 넣는다', () => {
+  it('전체 탭 — 학교(교사)·겸직·권한 종료·관리자 유형을 allTabRoleFilter로 넣는다', () => {
     expect(buildListQueryApiFilters({ kind: 'all', role: 'SCHOOL_TEACHER' })).toMatchObject({
       listAllAccounts: true,
       allTabRoleFilter: 'SCHOOL_TEACHER',

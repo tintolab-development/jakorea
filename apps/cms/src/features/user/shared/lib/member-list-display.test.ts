@@ -40,35 +40,35 @@ describe('isInstructorPermissionRevoked', () => {
         role: 'INSTRUCTOR',
         instructorMemberProfile: 'instructor_only',
       })
-    ).toBe('강사(권한박탈)')
+    ).toBe('강사(권한 종료)')
   })
 })
 
 describe('getAllMemberListRoleTypeLabel', () => {
-  it('권한 박탈 강사는 강사(권한박탈)', () => {
+  it('권한 종료 강사는 강사(권한 종료)', () => {
     expect(
       getAllMemberListRoleTypeLabel({
         role: 'INDIVIDUAL',
         instructorApprovalStatus: 'REVOKED',
       })
-    ).toBe('강사(권한박탈)')
+    ).toBe('강사(권한 종료)')
     expect(
       getAllMemberListRoleTypeLabel({
         role: 'INSTRUCTOR',
         instructorMemberProfile: 'instructor_only',
         instructorApprovalStatus: 'REVOKED',
       })
-    ).toBe('강사(권한박탈)')
+    ).toBe('강사(권한 종료)')
     expect(
       getAllMemberListRoleTypeLabel({
         role: 'INSTRUCTOR',
         roles: ['INSTRUCTOR_REVOKED'],
         instructorMemberProfile: 'instructor_only',
       })
-    ).toBe('강사(권한박탈)')
+    ).toBe('강사(권한 종료)')
   })
 
-  it('교사 겸 강사 박탈은 학교(교사), 강사(권한박탈)', () => {
+  it('교사 겸 강사 박탈은 학교(교사), 강사(권한 종료)', () => {
     expect(
       getAllMemberListRoleTypeLabel({
         role: 'INSTRUCTOR',
@@ -76,14 +76,14 @@ describe('getAllMemberListRoleTypeLabel', () => {
         instructorMemberProfile: 'instructor_dual',
         instructorApprovalStatus: 'REVOKED',
       })
-    ).toBe('학교(교사), 강사(권한박탈)')
+    ).toBe('학교(교사), 강사(권한 종료)')
     expect(
       getAllMemberListRoleTypeLabel({
         role: 'INSTRUCTOR',
         roles: ['SCHOOL_TEACHER', 'INSTRUCTOR_REVOKED'],
         instructorMemberProfile: 'instructor_dual',
       })
-    ).toBe('학교(교사), 강사(권한박탈)')
+    ).toBe('학교(교사), 강사(권한 종료)')
   })
 
   it('일반 강사는 강사', () => {
@@ -153,7 +153,7 @@ describe('matchesAllTabRoleFilter', () => {
     ).toBe(true)
   })
 
-  it('강사(권한박탈) 필터는 순수·겸직 박탈을 모두 포함한다', () => {
+  it('강사(권한 종료) 필터는 순수·겸직 박탈을 모두 포함한다', () => {
     expect(
       matchesAllTabRoleFilter(
         {

@@ -77,7 +77,15 @@ export function roleCodeToAdminPermissionVariant(
   return null
 }
 
-type AdminPermissionSource = Pick<User, 'listMetrics' | 'programRoles' | 'roleCode' | 'adminLevel'>
+/** roleCode는 OpenAPI 세션 문자열(ACCOUNTING_MANAGER·MIDDLE 등)도 받을 수 있다. */
+type AdminPermissionSource = Pick<User, 'listMetrics' | 'programRoles' | 'adminLevel'> & {
+  roleCode?: string
+}
+
+/** 대시보드·헤더 등 관리자 권한 표시명 */
+export function getAdminPermissionDisplayLabel(user: AdminPermissionSource): string {
+  return ADMIN_PERMISSION_TAG_LABEL[getAdminPermissionVariant(user)]
+}
 
 /**
  * 권한 유형 UI variant.

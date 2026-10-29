@@ -4,6 +4,7 @@ import {
   ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE,
   ADMIN_PERMISSION_SELECT_OPTIONS,
   ADMIN_PERMISSION_TAG_LABEL,
+  getAdminPermissionDisplayLabel,
   getAdminPermissionVariant,
   isAdminPermissionSelectComingSoon,
   roleCodeToAdminPermissionVariant,
@@ -54,6 +55,16 @@ describe('getAdminPermissionVariant', () => {
     expect(getAdminPermissionVariant({ roleCode: 'VIEWER' })).toBe('viewer')
     // OpenAPI MIDDLE은 세션 AdminRoleCode 밖 — 문자열 매퍼로 검증
     expect(roleCodeToAdminPermissionVariant('MIDDLE')).toBe('partner')
+  })
+
+  it('roleCode 표시명을 새 권한 명칭으로 반환한다', () => {
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'MASTER' })).toBe('Master')
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'ACCOUNTING_MANAGER' })).toBe(
+      'Accounting Manager'
+    )
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'PM' })).toBe('Program Manager')
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'VIEWER' })).toBe('Program Viewer')
+    expect(getAdminPermissionDisplayLabel({ adminLevel: 'ADMIN' })).toBe('Program Manager')
   })
 
   it('roleCode가 없으면 programRoles·adminLevel로 추론한다', () => {

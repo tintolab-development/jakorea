@@ -44,7 +44,7 @@ export function memberRolesIncludeSchoolTeacher(roles: string[] | undefined): bo
   return (roles ?? []).some(r => r.trim().toUpperCase().replace(/-/g, '_') === 'SCHOOL_TEACHER')
 }
 
-/** 강사 권한 박탈 토큰 — `roles[]` SSOT */
+/** 강사 권한 종료 토큰 — `roles[]` SSOT */
 export function memberRolesIncludeInstructorRevoked(roles: string[] | undefined): boolean {
   return (roles ?? []).some(r => r.trim().toUpperCase().replace(/-/g, '_') === 'INSTRUCTOR_REVOKED')
 }
@@ -56,7 +56,7 @@ export function copyMemberRoles(roles: string[] | undefined): string[] | undefin
   return copied.length > 0 ? copied : undefined
 }
 
-/** 강사 권한 박탈 스냅샷 — `INSTRUCTOR` → `INSTRUCTOR_REVOKED` (이미 박탈 토큰이면 유지) */
+/** 강사 권한 종료 스냅샷 — `INSTRUCTOR` → `INSTRUCTOR_REVOKED` (이미 박탈 토큰이면 유지) */
 export function memberRolesWithInstructorRevoked(
   roles: string[] | undefined
 ): string[] | undefined {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  INSTRUCTOR_PERMISSION_REVOKE_BLOCKED_ALERT,
   INSTRUCTOR_PERMISSION_REVOKE_CONFIRM_LABEL,
   INSTRUCTOR_PERMISSION_REVOKE_HEADER_LABEL,
   INSTRUCTOR_PERMISSION_REVOKE_REASON_LABEL,
@@ -31,5 +32,16 @@ describe('buildInstructorPermissionRevokeMessage', () => {
     )
     expect(INSTRUCTOR_PERMISSION_REVOKE_CONFIRM_LABEL).toBe('권한 종료')
     expect(INSTRUCTOR_PERMISSION_REVOKE_HEADER_LABEL).toBe('강사 권한 종료')
+  })
+
+  it('진행 중 프로그램 차단 안내는 승인 취소 문구와 구분한다', () => {
+    expect(INSTRUCTOR_PERMISSION_REVOKE_BLOCKED_ALERT.title).toBe('강사 권한 종료 불가 안내')
+    expect(INSTRUCTOR_PERMISSION_REVOKE_BLOCKED_ALERT.content).toBe(
+      [
+        '해당 회원은 현재 진행 중인 프로그램이 있습니다.',
+        '진행 중인 프로그램이 있는 경우, 강사 권한 종료가 불가합니다.',
+      ].join('\n')
+    )
+    expect(INSTRUCTOR_PERMISSION_REVOKE_BLOCKED_ALERT.confirmLabel).toBe('확인')
   })
 })
