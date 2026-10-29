@@ -83,7 +83,8 @@
   > td.ant-table-cell-row-hover {
   box-sizing: border-box !important;
   vertical-align: middle !important;
-  white-space: normal !important;
+  /* 항목명·URL이 줄바꿈되어 행 높이를 밀지 않도록 한 줄 ellipsis를 유지한다. */
+  white-space: nowrap !important;
   transition: none !important;
   /* transform 은 DnD 실시간 동기화용 — none !important 금지 */
   box-shadow: none !important;
@@ -129,29 +130,33 @@
   overflow: visible !important;
 }
 
-/* —— 상단 노출 메뉴: 행 높이 54 완전 고정 —— */
+/*
+ * —— 상단 노출 메뉴: 행 높이 54 완전 고정 ——
+ * 공통 .cms-data-table 규칙도 같은 !important 우선순위를 사용하므로
+ * footer-sortable-table을 선택자에 포함해 푸터 치수 규칙이 이기게 한다.
+ */
 .footer-section
-  .footer-top-menu-table.cms-data-table
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td,
 .footer-section
-  .footer-top-menu-table.cms-data-table
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr:hover
   > td,
 .footer-section
-  .footer-top-menu-table.cms-data-table
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr.ant-table-row:hover
   > td,
 .footer-section
-  .footer-top-menu-table.cms-data-table
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td.ant-table-cell-row-hover,
 .footer-section
-  .footer-top-menu-table.cms-data-table
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr:hover
   > td.ant-table-cell-row-hover {
@@ -164,17 +169,17 @@
 
 /* 수정 모드: 입력 높이 반영, 상태 간 동일 */
 .footer-section
-  .footer-top-menu-table.cms-data-table
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td:has(.cms-input),
 .footer-section
-  .footer-top-menu-table.cms-data-table
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr:hover
   > td:has(.cms-input),
 .footer-section
-  .footer-top-menu-table.cms-data-table
+  .footer-top-menu-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td.ant-table-cell-row-hover:has(.cms-input) {
@@ -187,27 +192,27 @@
 
 /* —— 유관기관 로고: 60(thumb)+12+12=84 고정 —— */
 .footer-section
-  .footer-related-logos-table.cms-data-table
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td,
 .footer-section
-  .footer-related-logos-table.cms-data-table
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr:hover
   > td,
 .footer-section
-  .footer-related-logos-table.cms-data-table
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr.ant-table-row:hover
   > td,
 .footer-section
-  .footer-related-logos-table.cms-data-table
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td.ant-table-cell-row-hover,
 .footer-section
-  .footer-related-logos-table.cms-data-table
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr:hover
   > td.ant-table-cell-row-hover {
@@ -220,17 +225,17 @@
 }
 
 .footer-section
-  .footer-related-logos-table.cms-data-table
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td:last-child,
 .footer-section
-  .footer-related-logos-table.cms-data-table
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr:hover
   > td:last-child,
 .footer-section
-  .footer-related-logos-table.cms-data-table
+  .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
   > tr
   > td.ant-table-cell-row-hover:last-child {
