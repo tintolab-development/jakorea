@@ -58,7 +58,7 @@ export interface AppDatePickerProps extends Omit<DatePickerProps, 'variant' | 'c
   className?: string
   /** Ant DatePicker(.ant-picker) 루트 클래스 */
   pickerClassName?: string
-  /** filter: 44px·8px radius 등 통일 필터 토큰 */
+  /** filter: 40px·8px radius 등 통일 필터 토큰 */
   uiVariant?: 'default' | 'filter'
 }
 

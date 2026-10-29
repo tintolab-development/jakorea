@@ -17,7 +17,7 @@ alwaysApply: false
 |------|------|
 | size 토큰 | `shared/ui/cms-button.css` · `cms-button.tsx` |
 | 모달 푸터 강제 large | `shared/ui/content-modal.css` → `.content-modal__footer-actions` |
-| 목록 툴바 강제 large | `shared/ui/table-header-label.css` → `.table-header-actions--wrapper` |
+| 목록 툴바 강제 h40 (140×40, 엑셀 180×40) | `shared/ui/table-header-label.css` → `.table-header-actions--wrapper` |
 | FileSelect medium | `shared/ui/file-select-field.tsx` |
 
 ## 관련

@@ -11,11 +11,14 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 import {
+  applyAgreementNoticeSubjectMemberName,
   collectMemberConsentDisagreedRequiredLabels,
+  formatMemberConsentIncompleteRequiredAlertMessage,
   getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,
   hasMemberConsentInvalidIdTypeResidentNumber,
   hasMemberConsentInvalidPaymentStatementResidentNumber,
+  listMemberConsentIncompleteRequiredFields,
 } from '@/features/user/shared/lib/validate-member-consent-draft'
 
 function withPersonalConsentCells(
@@ -203,6 +206,56 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
     ).toBe(true)
+    expect(
+      listMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
+        .filter(field => field.paragraphId === 'agreement-notice-subject')
+        .map(field => field.fieldId)
+    ).toEqual([
+      'agreement-notice-subj-name',
+      'agreement-notice-subj-birth',
+      'agreement-notice-subj-phone',
+    ])
+  })
+
+  it('blocks agreement-notice when locked name is displayed but draft name bodyText is empty', () => {
+    const base = normalizeMemberConsentWriteDraft(
+      normalizeWritingFormDraft(createAgreementNoticeDraft()),
+      'agreement-notice'
+    )
+    const draft: WritingFormDraft = {
+      ...base,
+      paragraphs: base.paragraphs.map(paragraph => {
+        if (paragraph.id !== 'agreement-notice-subject') return paragraph
+        if (paragraph.kind !== 'single_item' || paragraph.variant !== 'short_essay') {
+          return paragraph
+        }
+        return {
+          ...paragraph,
+          items: (paragraph.items ?? []).map(item => ({
+            ...item,
+            bodyText:
+              item.id === 'agreement-notice-subj-birth'
+                ? '1990.01.01'
+                : item.id === 'agreement-notice-subj-phone'
+                  ? '010-1234-5678'
+                  : '',
+          })),
+        }
+      }),
+    }
+
+    const incomplete = listMemberConsentIncompleteRequiredFields(draft, {
+      templateId: 'agreement-notice',
+    }).filter(field => field.paragraphId === 'agreement-notice-subject')
+    expect(incomplete.map(field => field.fieldId)).toEqual(['agreement-notice-subj-name'])
+    expect(formatMemberConsentIncompleteRequiredAlertMessage(incomplete)).toBe(
+      '성명 항목을 작성해 주세요.'
+    )
+
+    const synced = applyAgreementNoticeSubjectMemberName(draft, '홍길동')
+    expect(
+      hasMemberConsentIncompleteRequiredFields(synced, { templateId: 'agreement-notice' })
+    ).toBe(false)
   })
 
   it('allows agreement-notice when subject paragraph is filled', () => {

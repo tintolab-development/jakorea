@@ -489,7 +489,7 @@ export function RecruitPostingsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">공개 여부</p>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   withAllOption
                   value={pendingFilters.visibility}
@@ -509,7 +509,7 @@ export function RecruitPostingsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">게시 유형</p>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   withAllOption
                   value={pendingFilters.status}
@@ -526,7 +526,7 @@ export function RecruitPostingsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">제목</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.title}
                   placeholder="제목을 입력하세요"
@@ -537,7 +537,7 @@ export function RecruitPostingsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">작성자명</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.authorName}
                   placeholder="작성자명을 입력하세요"
@@ -551,7 +551,7 @@ export function RecruitPostingsPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">모집 기간</p>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     value={rangeAsPicker(pendingFilters.recruitRange)}
                     placeholder={['시작일', '종료일']}
@@ -571,7 +571,7 @@ export function RecruitPostingsPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">게시일</p>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     value={rangeAsPicker(pendingFilters.publishedRange)}
                     placeholder={['시작일', '종료일']}
@@ -593,9 +593,9 @@ export function RecruitPostingsPage() {
                 <CmsButton
                   className="admin-filter-area__search-button"
                   variant="primary"
-                  size="large"
-                  type="button"
+                  size="medium"
                   width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                  type="button"
                   onClick={handleSearch}
                 >
                   조회
@@ -610,14 +610,14 @@ export function RecruitPostingsPage() {
           <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               loading={removeMutation.isPending}
               onClick={handleBulkDeleteClick}
             >
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               공고 등록
             </CmsButton>
           </>

@@ -8,5 +8,6 @@
 
 export interface ProgramRoleItem {
   programId: number;
-  assignmentRole?: string;
+  /** @minLength 1 */
+  assignmentRole: string;
 }

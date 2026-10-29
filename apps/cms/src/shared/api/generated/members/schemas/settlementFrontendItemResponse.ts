@@ -13,4 +13,8 @@ export interface SettlementFrontendItemResponse {
   description?: string;
   amount?: number;
   calculationDetail?: SettlementFrontendCalculationDetailResponse;
+  /** 소득 구분 코드. BUSINESS_INCOME / OTHER_INCOME / DAILY_EMPLOYMENT_INCOME. 항목에 없으면 null */
+  taxIncomeType?: string | null;
+  /** 소득 구분 화면 라벨. 사업소득 | 기타소득 | 일용근로소득. taxIncomeType과 1:1. 없으면 null(FE는 -) */
+  taxIncomeTypeDisplay?: string | null;
 }

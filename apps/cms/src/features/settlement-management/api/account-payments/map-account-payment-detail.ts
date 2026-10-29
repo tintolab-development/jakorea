@@ -14,19 +14,18 @@ import type {
   SettlementFrontendItemResponse,
   SettlementFrontendResponse,
 } from '@/shared/api/generated/settlement/schemas'
+import { formatLectureSessionLabel } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import { mapPaymentStatusToAccountPaymentStatus } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import {
   formatBusinessIncomeEarnerLabel,
   formatBusinessPeriodDisplay,
-  resolveLectureFeeStandardTitleFromSettlement,
-  formatLectureSessionLabel,
+  formatLectureFeeStandardTitle,
   formatProgramSessionProgressDisplay,
+  formatWonAmountDisplay,
   mapCalculationDetailToBasisDetail,
   mapSettlementFrontendItemTypeToLineKind,
   prepareSettlementFrontendItemsForStatement,
-  resolveLectureFeeStandardAmountDisplay,
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
-import { isCanonicalLectureSessionDisplay } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 
 const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -61,7 +60,7 @@ function formatPaidAtDisplay(iso: string | undefined): string {
   return `${year}. ${String(month).padStart(2, '0')}. ${String(day).padStart(2, '0')}(${dow})`
 }
 
-function formatLectureDateDisplay(iso: string | undefined): string {
+function formatLectureDateDisplay(iso: string | null | undefined): string {
   if (!iso) return '-'
   return formatTransferDateDisplay(iso)
 }
@@ -70,7 +69,10 @@ function toRoundSessionLabel(label: string): string {
   return label.replace(/차시/g, '회차')
 }
 
-function resolveInstitutionName(row: AccountPaymentRow, institutionName?: string | null): string {
+function resolveInstitutionName(
+  row: AccountPaymentRow,
+  institutionName?: string | null
+): string {
   const fromApi = institutionName?.trim()
   if (fromApi) return fromApi
   if (row.institutionName && row.institutionName !== '-') return row.institutionName
@@ -83,17 +85,9 @@ function resolveSessionDisplay(
   sessionOrdinal?: number
 ): string {
   const fromApi = lectureSessionDisplay?.trim()
-  if (fromApi && isCanonicalLectureSessionDisplay(fromApi)) {
-    return toRoundSessionLabel(fromApi)
-  }
+  if (fromApi) return toRoundSessionLabel(fromApi)
   if (sessionOrdinal != null) return toRoundSessionLabel(formatLectureSessionLabel(sessionOrdinal))
-  if (
-    row.sessionLabel &&
-    row.sessionLabel !== '-' &&
-    isCanonicalLectureSessionDisplay(row.sessionLabel)
-  ) {
-    return toRoundSessionLabel(row.sessionLabel)
-  }
+  if (row.sessionLabel && row.sessionLabel !== '-') return toRoundSessionLabel(row.sessionLabel)
   return '-'
 }
 
@@ -361,11 +355,8 @@ export function mapAccountPaymentDetailRemote(
       formatDate: formatTransferDateDisplay,
     }),
     programSessionProgressDisplay: toRoundSessionLabel(formatProgramSessionProgressDisplay(settlement)),
-    lectureFeeStandardTitle: resolveLectureFeeStandardTitleFromSettlement(settlement),
-    lectureFeeStandardAmount: resolveLectureFeeStandardAmountDisplay(
-      settlement.lectureFeeStandardAmount,
-      settlement.items
-    ),
+    lectureFeeStandardTitle: formatLectureFeeStandardTitle(settlement.lectureFeeStandardTitle),
+    lectureFeeStandardAmount: formatWonAmountDisplay(settlement.lectureFeeStandardAmount),
     businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
       settlement.businessIncomeEarnerLabel
     ),

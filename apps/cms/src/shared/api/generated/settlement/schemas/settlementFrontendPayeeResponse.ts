@@ -5,24 +5,36 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SettlementFrontendPayeeResponsePrivacyMaskingLevel } from './settlementFrontendPayeeResponsePrivacyMaskingLevel';
 
 /**
- * 정산 상세 수취인(MASKED). 목록에는 없음. null이면 FE는 '-'.
+ * 지급조서·산출 내역서 수취인 표시용. SETTLEMENT_READ 기본 조회는 MASKED. 원문 언마스크는 member consent / instructor privacy 경로.
  */
-export type SettlementFrontendPayeeResponse = {
-  nameEn?: string | null
-  residentRegistrationNumber?: string | null
-  affiliation?: string | null
-  phone?: string | null
-  email?: string | null
-  gender?: string | null
-  /** yyyy-**-** 등 마스킹 생년월일 */
-  birthDate?: string | null
-  addressRoad?: string | null
-  addressDetail?: string | null
-  bankName?: string | null
-  accountNumber?: string | null
-  accountHolder?: string | null
-  /** MASKED */
-  privacyMaskingLevel?: string | null
-} | null
+export interface SettlementFrontendPayeeResponse {
+  /** 영문 성명. 지급조서 동의서 paymentBasicInfo.nameEn. 없으면 null */
+  nameEn?: string | null;
+  /** 주민등록번호(마스킹). residentFront-residentBack 결합. 없으면 null */
+  residentRegistrationNumber?: string | null;
+  /** 소속. noAffiliation=true 이거나 미입력이면 null */
+  affiliation?: string | null;
+  /** 연락처(마스킹). member.phone */
+  phone?: string | null;
+  /** 이메일(마스킹). member.email */
+  email?: string | null;
+  /** 성별(마스킹). 값 존재 시 ** */
+  gender?: string | null;
+  /** 생년월일(마스킹). yyyy-**-** */
+  birthDate?: string | null;
+  /** 자택 도로명/기본 주소(마스킹). 동의서 addressRoad 우선, 없으면 instructor_profile.home_address */
+  addressRoad?: string | null;
+  /** 자택 상세 주소(마스킹). 동의서 addressDetail 우선, 없으면 instructor_profile.home_address_detail */
+  addressDetail?: string | null;
+  /** 정산 계좌 은행명. 동의서 bankName 우선, 없으면 member_bank_account */
+  bankName?: string | null;
+  /** 정산 계좌번호(마스킹) */
+  accountNumber?: string | null;
+  /** 예금주(마스킹) */
+  accountHolder?: string | null;
+  /** MASKED | RAW. 정산 상세 GET은 항상 MASKED */
+  privacyMaskingLevel?: SettlementFrontendPayeeResponsePrivacyMaskingLevel;
+}

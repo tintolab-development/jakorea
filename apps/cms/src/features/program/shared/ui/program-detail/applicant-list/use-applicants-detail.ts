@@ -399,9 +399,11 @@ export function useApplicantsDetail({
       decision: 'approve' | 'reject',
       reason?: string,
       notify?: OrganizationDecisionNotifyRequest,
-      approvePayload?: OrganizationApplicationApprovePayload
+      approvePayload?: OrganizationApplicationApprovePayload,
+      options?: { awaitRefresh?: boolean }
     ): Promise<'ok' | 'error' | 'skipped'> => {
       if (!institutionApplicationsRemote.remoteEnabled) return 'skipped'
+      const awaitRefresh = options?.awaitRefresh ?? true
       try {
         const approvalResponses: Array<{
           scheduleAssignmentStatus?: string | null
@@ -457,59 +459,69 @@ export function useApplicantsDetail({
             }
           }
         }
-        await institutionApplicationsRemote.invalidateApplications()
-        if (decision === 'approve') {
-          const refresh = programId
-            ? organizationApprovalRefreshTargets(programId, ids)
-            : null
-          const scheduleSelectionRequested =
-            (approvePayload?.slots?.length ?? 0) > 0 ||
-            approvePayload?.selectedScheduleId != null ||
-            (typeof approvePayload?.requestedScheduleId === 'number' &&
-              approvePayload.requestedScheduleId > 0) ||
-            (typeof approvePayload?.preferredScheduleRank === 'number' &&
-              approvePayload.preferredScheduleRank > 0)
-          const scheduleAssigned = approvalResponses.some(
-            response => response?.scheduleAssignmentStatus?.trim().toUpperCase() === 'ASSIGNED'
-          )
-          if (programId) {
-            await queryClient.invalidateQueries({
-              queryKey: generalProgramQueryKeys.formBindings(programId),
-            })
-            await invalidateProgramAdminSchedulesQuery(queryClient, programId)
-          }
-          if (scheduleSelectionRequested || scheduleAssigned) {
-            await queryClient.invalidateQueries({
-              queryKey: generalProgramProgressQueryKeys.all,
-            })
-          }
-          for (let index = 0; index < ids.length; index += 1) {
-            const applicationId = ids[index] ?? ''
-            await queryClient.invalidateQueries({
-              queryKey:
-                refresh?.organizationDetails[index] ??
-                generalApplicationsQueryKeys.organizationDetail(applicationId),
-            })
-            if (isTrainedTeachersSurface && programId) {
+        const refreshAfterDecision = async () => {
+          await institutionApplicationsRemote.invalidateApplications()
+          if (decision === 'approve') {
+            const refresh = programId
+              ? organizationApprovalRefreshTargets(programId, ids)
+              : null
+            const scheduleSelectionRequested =
+              (approvePayload?.slots?.length ?? 0) > 0 ||
+              approvePayload?.selectedScheduleId != null ||
+              (typeof approvePayload?.requestedScheduleId === 'number' &&
+                approvePayload.requestedScheduleId > 0) ||
+              (typeof approvePayload?.preferredScheduleRank === 'number' &&
+                approvePayload.preferredScheduleRank > 0)
+            const scheduleAssigned = approvalResponses.some(
+              response => response?.scheduleAssignmentStatus?.trim().toUpperCase() === 'ASSIGNED'
+            )
+            if (programId) {
               await queryClient.invalidateQueries({
-                queryKey: trainedTeacherQueryKeys.organizationApplication(
-                  programId,
-                  applicationId
-                ),
+                queryKey: generalProgramQueryKeys.formBindings(programId),
               })
-            }
-            await queryClient.invalidateQueries({
-              queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(applicationId),
-            })
-          }
-          if (refresh) {
-            for (const queryKey of refresh.organizationScheduleAssignments) {
-              await queryClient.invalidateQueries({ queryKey })
+              await invalidateProgramAdminSchedulesQuery(queryClient, programId)
             }
             if (scheduleSelectionRequested || scheduleAssigned) {
-              await queryClient.invalidateQueries({ queryKey: refresh.educationSlots })
+              await queryClient.invalidateQueries({
+                queryKey: generalProgramProgressQueryKeys.all,
+              })
+            }
+            for (let index = 0; index < ids.length; index += 1) {
+              const applicationId = ids[index] ?? ''
+              await queryClient.invalidateQueries({
+                queryKey:
+                  refresh?.organizationDetails[index] ??
+                  generalApplicationsQueryKeys.organizationDetail(applicationId),
+              })
+              if (isTrainedTeachersSurface && programId) {
+                await queryClient.invalidateQueries({
+                  queryKey: trainedTeacherQueryKeys.organizationApplication(
+                    programId,
+                    applicationId
+                  ),
+                })
+              }
+              await queryClient.invalidateQueries({
+                queryKey: generalApplicationsQueryKeys.organizationRequestedSchedules(applicationId),
+              })
+            }
+            if (refresh) {
+              for (const queryKey of refresh.organizationScheduleAssignments) {
+                await queryClient.invalidateQueries({ queryKey })
+              }
+              if (scheduleSelectionRequested || scheduleAssigned) {
+                await queryClient.invalidateQueries({ queryKey: refresh.educationSlots })
+              }
             }
           }
+        }
+        if (awaitRefresh) {
+          await refreshAfterDecision()
+        } else {
+          // 승인 팝업은 API 성공 즉시 닫고, 목록·상세·일정 재조회는 백그라운드로 돌린다.
+          void refreshAfterDecision().catch(error => {
+            console.debug('institution decision background refresh failed', error)
+          })
         }
         return 'ok'
       } catch (error) {

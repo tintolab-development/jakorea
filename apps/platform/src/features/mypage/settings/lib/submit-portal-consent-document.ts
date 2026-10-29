@@ -181,16 +181,13 @@ export async function submitPortalConsentDocumentFromWriteState(
 export async function submitPortalPortraitConsentFromWriteState(
   state: PortraitPortalConsentWriteState,
   options?: {
-    programTarget?: {
-      programId: number
-      /**
-       * 보호자 본인인증 토큰. TODO(BE): complete 요청 필드명 확정 전이라 아직 보내지 않는다.
-       */
-      guardianVerificationToken?: string
-    }
+    programTarget?: { programId: number }
+    /** 만 14세 미만 complete 필수. 화면·로그에 출력하지 않는다. */
+    guardianVerificationToken?: string
   },
 ): Promise<void> {
   const programTarget = options?.programTarget
+  const guardianVerificationToken = options?.guardianVerificationToken?.trim()
   const createBody = buildPortalPortraitRightsConsentCreateRequest(
     programTarget ? { programId: programTarget.programId } : undefined,
   )
@@ -214,6 +211,7 @@ export async function submitPortalPortraitConsentFromWriteState(
     },
     consentStatus: hints.consentStatus,
     programEligible: hints.programEligible,
+    ...(guardianVerificationToken ? { guardianVerificationToken } : {}),
   })
 }
 

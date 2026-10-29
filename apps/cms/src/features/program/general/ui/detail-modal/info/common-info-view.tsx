@@ -1883,7 +1883,6 @@ function TypeSettingsSection({
   ) ? (
     <TypeSettingsScheduleDetailRow
       label={EDUCATION_PLACE_LABEL}
-      required
       validationKey="typeSettings.educationPlace"
       scheduleDetailName="educationPlaceScheduleDetail"
       scheduleDetailValue={educationPlaceState.values.educationPlaceScheduleDetail ?? 'common'}

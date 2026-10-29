@@ -6,7 +6,7 @@ export function ListLayoutSection() {
     <DsSection
       id="list-layout"
       title="List layout"
-      description="목록 카드·툴바 갭 + 툴바 버튼 large (140×44)."
+      description="목록 카드·툴바 갭 + 툴바 버튼 h40 (140×40)."
     >
       <p className="ds-note">
         토큰: <code>--admin-list-card-padding: 20px</code> ·{' '}
@@ -14,13 +14,11 @@ export function ListLayoutSection() {
         <code>--admin-list-title-desc-gap: 10px</code> ·{' '}
         <code>--admin-list-toolbar-actions-gap: 8px</code>
         <br />
-        툴바 버튼: <code>size=&quot;large&quot;</code> (등록·선택 삭제 등). Rule:{' '}
-        <code>cms-admin-ui/cms-button-action-sizes</code> ·{' '}
-        <code>list-table-spacing.mdc</code>
+        툴바 버튼: <code>size=&quot;h40&quot;</code> (등록·선택 삭제 등). Rule:{' '}
+        <code>cms-admin-ui/cms-button-action-sizes</code> · <code>list-table-spacing.mdc</code>
         <br />
-        단건 페이지 로딩: <code>PageContentLoading</code> · RQ{' '}
-        <code>isLoading</code> 후 empty — Rule:{' '}
-        <code>detail-loading-before-empty</code>
+        단건 페이지 로딩: <code>PageContentLoading</code> · RQ <code>isLoading</code> 후 empty —
+        Rule: <code>detail-loading-before-empty</code>
       </p>
 
       <DsDemo label="admin-list-card + toolbar">
@@ -31,10 +29,10 @@ export function ListLayoutSection() {
               <span className="table-description">총 6건</span>
             </div>
             <div className="table-header-actions--wrapper">
-              <CmsButton variant="delete" size="large">
+              <CmsButton variant="delete" size="h40">
                 선택 삭제
               </CmsButton>
-              <CmsButton variant="primary" size="large">
+              <CmsButton variant="primary" size="h40">
                 배너 등록
               </CmsButton>
             </div>

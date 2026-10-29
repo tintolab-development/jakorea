@@ -215,7 +215,7 @@ export function FooterTopMenuSection() {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancelEdit}
                 disabled={saveMutation.isPending}
@@ -224,7 +224,7 @@ export function FooterTopMenuSection() {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -237,7 +237,7 @@ export function FooterTopMenuSection() {
           ) : (
             <CmsButton
               variant="primary"
-              size="large"
+              size="h40"
               type="button"
               onClick={handleStartEdit}
               disabled={listQuery.isLoading || rows.length === 0}

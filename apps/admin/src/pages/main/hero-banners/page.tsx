@@ -28,7 +28,12 @@ import {
 import { HeroBannerTextLinkCell } from '@/features/hero-banner/ui/text-link-cell'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_SORT_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import {
   isLastActiveToggleOff,
   minActiveRequiredAlert,
@@ -62,8 +67,8 @@ export function HeroBannersPage() {
           heroBannerMutationFailureAlert(
             error,
             '배너 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-            '순서 변경 실패',
-          ),
+            '순서 변경 실패'
+          )
         )
         void listQuery.refetch()
       })
@@ -82,8 +87,8 @@ export function HeroBannersPage() {
           heroBannerMutationFailureAlert(
             error,
             '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-            '사용 여부 변경 실패',
-          ),
+            '사용 여부 변경 실패'
+          )
         )
         void listQuery.refetch()
       })
@@ -129,8 +134,8 @@ export function HeroBannersPage() {
             formMode === 'edit'
               ? '배너 수정에 실패했습니다. 다시 시도해 주세요.'
               : '배너 등록에 실패했습니다. 다시 시도해 주세요.',
-            formMode === 'edit' ? '수정 실패' : '등록 실패',
-          ),
+            formMode === 'edit' ? '수정 실패' : '등록 실패'
+          )
         )
       }
     },
@@ -163,8 +168,8 @@ export function HeroBannersPage() {
         heroBannerMutationFailureAlert(
           error,
           '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
-          '삭제 실패',
-        ),
+          '삭제 실패'
+        )
       )
     }
   }, [removeMutation, selectedRowKeys, showAlert])
@@ -248,8 +253,7 @@ export function HeroBannersPage() {
   )
 
   const totalCount = rows.length
-  const formLoading =
-    formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
+  const formLoading = formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
 
   return (
     <div className="hero-banners-page">
@@ -262,14 +266,14 @@ export function HeroBannersPage() {
           <div className="table-header-actions--wrapper">
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               onClick={handleDeleteClick}
               loading={removeMutation.isPending}
             >
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               배너 등록
             </CmsButton>
           </div>

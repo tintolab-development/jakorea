@@ -41,7 +41,7 @@ import { isSchoolAffiliatedTeacherRowSelectable } from '@/features/user/detail/l
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
 import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
-import { useCmsAlert } from '@/shared/ui'
+import { showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -480,6 +480,7 @@ export function useParticipatingInstitutionDetailEdit({
 
       if (!nonMergeChanged) {
         resetEditState()
+        showUpdateCompletedAlert()
         return true
       }
 
@@ -563,6 +564,7 @@ export function useParticipatingInstitutionDetailEdit({
       }
 
       resetEditState()
+      showUpdateCompletedAlert()
       return true
     } catch (error) {
       const responseData = axios.isAxiosError(error) ? error.response?.data : undefined

@@ -501,7 +501,6 @@ export function ProgramRegistrationTypeSettingsParagraph({
         {showEducationPlaceRow ? (
           <ScheduleDetailRadioRow
             label={EDUCATION_PLACE_LABEL}
-            required
             validationKey="typeSettings.educationPlace"
             value={educationPlaceScheduleDetail}
             onChange={setEducationPlaceScheduleDetail}

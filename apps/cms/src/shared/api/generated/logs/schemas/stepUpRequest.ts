@@ -7,9 +7,6 @@
  */
 
 export interface StepUpRequest {
-  /**
-     * Optional. MFA-complete MASTER session omits this. Empty/null is treated as omitted. Pattern ^[0-9]{6,8}$ when sent.
-     * @pattern ^[0-9]{6,8}$
-     */
+  /** @pattern ^([0-9]{6,8})?$ */
   totpCode?: string;
 }

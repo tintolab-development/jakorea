@@ -8,6 +8,7 @@ import { settingsConsentWritePath } from '@/features/mypage/lib/constants'
 import { useSettingsView } from '@/features/mypage/settings/hooks/use-settings-view'
 import { isMinorSettingsMember } from '@/features/mypage/settings/lib/consent-visibility'
 import {
+  PortraitGuardianVerificationCancelledError,
   PORTRAIT_GUARDIAN_VERIFICATION_UNAVAILABLE_MESSAGE,
   startPortraitGuardianVerification,
 } from '@/features/mypage/settings/lib/portrait-guardian-verification'
@@ -149,7 +150,6 @@ export function useProgramMinorPortraitGate(
     if (error) return
     setVerifying(true)
     try {
-      // TODO(BE): 보호자 본인인증(NICE) 실 API 연결 — 현재 어댑터는 dev mock 외에는 '진행 불가' 를 던진다.
       const result = await startPortraitGuardianVerification({
         relation: relation.trim(),
         purpose: 'PROGRAM_APPLICATION',
@@ -170,6 +170,9 @@ export function useProgramMinorPortraitGate(
       })
     } catch (err) {
       setVerifying(false)
+      if (err instanceof PortraitGuardianVerificationCancelledError) {
+        return
+      }
       setStep('identity')
       setIdentityError(
         err instanceof Error && err.message

@@ -448,7 +448,7 @@ export function ImpactStoriesPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">공개 여부</p>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   withAllOption
                   value={pendingFilters.visibility}
@@ -468,7 +468,7 @@ export function ImpactStoriesPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">카테고리</p>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   withAllOption
                   value={pendingFilters.categoryId}
@@ -485,7 +485,7 @@ export function ImpactStoriesPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">제목</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.title}
                   placeholder="제목을 입력하세요"
@@ -496,7 +496,7 @@ export function ImpactStoriesPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">작성자명</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.authorName}
                   placeholder="작성자명을 입력하세요"
@@ -510,7 +510,7 @@ export function ImpactStoriesPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">게시일</p>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     value={rangeAsPicker(pendingFilters.publishedRange)}
                     placeholder={['시작일', '종료일']}
@@ -530,7 +530,7 @@ export function ImpactStoriesPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">작성일</p>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     value={rangeAsPicker(pendingFilters.createdRange)}
                     placeholder={['시작일', '종료일']}
@@ -552,9 +552,9 @@ export function ImpactStoriesPage() {
                 <CmsButton
                   className="admin-filter-area__search-button"
                   variant="primary"
-                  size="large"
-                  type="button"
+                  size="medium"
                   width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                  type="button"
                   onClick={handleSearch}
                 >
                   조회
@@ -574,7 +574,7 @@ export function ImpactStoriesPage() {
           <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               loading={removeMutation.isPending && !formOpen}
               onClick={handleBulkDeleteClick}
@@ -583,13 +583,13 @@ export function ImpactStoriesPage() {
             </CmsButton>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               type="button"
               onClick={() => setCategoryOpen(true)}
             >
               카테고리 관리
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               게시글 등록
             </CmsButton>
           </>

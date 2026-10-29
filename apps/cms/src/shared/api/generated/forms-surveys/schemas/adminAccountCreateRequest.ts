@@ -23,7 +23,7 @@ export interface AdminAccountCreateRequest {
   phone?: string;
   gender?: string;
   birthDate?: string;
-  /** CMS 관리자 권한 코드. MASTER, MIDDLE, VIEWER. 생략 시 최소 권한 VIEWER로 생성됩니다. */
+  /** CMS 전역 권한 코드. MASTER, ACCOUNTING_MANAGER, PROGRAM_MANAGER, PROGRAM_VIEWER. 생략 시 PROGRAM_VIEWER. */
   roleCode?: string;
   reason?: string;
   /**

@@ -501,7 +501,7 @@ export function RecruitApplicantsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">처리 상태</p>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   withAllOption
                   value={pendingFilters.status}
@@ -521,7 +521,7 @@ export function RecruitApplicantsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">관심 직무</p>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   withAllOption
                   value={pendingFilters.jobInterest}
@@ -538,7 +538,7 @@ export function RecruitApplicantsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">지원자명</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.applicantName}
                   placeholder="지원자명을 입력하세요"
@@ -551,7 +551,7 @@ export function RecruitApplicantsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">연락처</p>
                 <CmsInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   type="tel"
                   inputMode="numeric"
@@ -576,7 +576,7 @@ export function RecruitApplicantsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">이메일</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.email}
                   placeholder="이메일을 입력하세요"
@@ -590,7 +590,7 @@ export function RecruitApplicantsPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--control">
                   <p className="admin-filter-area__label">경력</p>
                   <CmsSelect
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_MAX_WIDTH_PX}
                     withAllOption
                     value={pendingFilters.careerType}
@@ -607,7 +607,7 @@ export function RecruitApplicantsPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">신청일</p>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     value={rangeAsPicker(pendingFilters.appliedRange)}
                     placeholder={['시작일', '종료일']}
@@ -627,7 +627,7 @@ export function RecruitApplicantsPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">확인일</p>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     value={rangeAsPicker(pendingFilters.confirmedRange)}
                     placeholder={['시작일', '종료일']}
@@ -649,9 +649,9 @@ export function RecruitApplicantsPage() {
                 <CmsButton
                   className="admin-filter-area__search-button"
                   variant="primary"
-                  size="large"
-                  type="button"
+                  size="medium"
                   width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                  type="button"
                   onClick={handleSearch}
                 >
                   조회
@@ -666,7 +666,7 @@ export function RecruitApplicantsPage() {
           <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               loading={removeMutation.isPending}
               onClick={() => {
@@ -677,7 +677,7 @@ export function RecruitApplicantsPage() {
             </CmsButton>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               type="button"
               loading={confirmMutation.isPending}
               onClick={() => {

@@ -14,6 +14,11 @@ assert.equal(
   PORTRAIT_GUARDIAN_INFO_COPY.relationRequiredMessage
 )
 assert.equal(validatePortraitGuardianRelation('어머니'), null)
+assert.equal(validatePortraitGuardianRelation('가'.repeat(64)), null)
+assert.equal(
+  validatePortraitGuardianRelation('가'.repeat(65)),
+  PORTRAIT_GUARDIAN_INFO_COPY.relationMaxLengthMessage,
+)
 
 assert.equal(formatPortraitGuardianVerifiedDate('2026-10-29T10:00:00+09:00'), '2026.10.29')
 // UTC 15:00 = KST 다음날 00:00

@@ -1476,7 +1476,8 @@ export function ApplicantList({
                 'approve',
                 undefined,
                 remoteNotify,
-                approvePayload
+                approvePayload,
+                { awaitRefresh: false }
               )
               if (remote === 'error') return
               if (remote === 'skipped') {

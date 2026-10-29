@@ -10,5 +10,5 @@ export type GetAccountPaymentParams = {
 /**
  * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
  */
-reason: string;
+reason?: string;
 };

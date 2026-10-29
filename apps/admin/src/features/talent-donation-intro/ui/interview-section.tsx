@@ -40,7 +40,14 @@ function slotTitle(id: InterviewSlot['id']): string {
 
 function SearchIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden
+    >
       <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
       <path d="M13.5 13.5L17 17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
@@ -93,10 +100,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
       return
     }
     const linkedId = draft.linkedStoryId?.trim() ?? ''
-    if (
-      linkedId &&
-      siblingLinkedStoryIds.some(id => (id ?? '').trim() === linkedId)
-    ) {
+    if (linkedId && siblingLinkedStoryIds.some(id => (id ?? '').trim() === linkedId)) {
       showAlert({
         title: '연결 게시글 중복',
         content: '다른 인터뷰 슬롯에 이미 연결된 게시글입니다. 다른 글을 선택해 주세요.',
@@ -117,10 +121,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
       setIsEditing(false)
     } catch (err) {
       showAlert(
-        talentDonationIntroSaveFailureAlert(
-          err,
-          '인터뷰 저장에 실패했습니다. 다시 시도해 주세요.'
-        )
+        talentDonationIntroSaveFailureAlert(err, '인터뷰 저장에 실패했습니다. 다시 시도해 주세요.')
       )
     }
   }, [draft, saveMutation, showAlert, siblingLinkedStoryIds, slot.id, slot.version])
@@ -138,7 +139,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending}
@@ -147,7 +148,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -158,7 +159,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

@@ -19,7 +19,12 @@ import {
   EducationBusinessFieldsSortableTable,
 } from '@/features/education-business-field/ui/sortable-table'
 import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_SORT_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 
 import './page.css'
 type DraftRow = {
@@ -104,23 +109,20 @@ export function EducationFieldsPage() {
     setDraft(prev => (prev ? { ...prev, mainText: value } : prev))
   }, [])
 
-  const handleRowFieldChange = useCallback(
-    (id: string, field: keyof DraftRow, value: string) => {
-      setDraft(prev => {
-        if (!prev) return prev
-        const current = prev.rows[id]
-        if (!current) return prev
-        return {
-          ...prev,
-          rows: {
-            ...prev.rows,
-            [id]: { ...current, [field]: value },
-          },
-        }
-      })
-    },
-    []
-  )
+  const handleRowFieldChange = useCallback((id: string, field: keyof DraftRow, value: string) => {
+    setDraft(prev => {
+      if (!prev) return prev
+      const current = prev.rows[id]
+      if (!current) return prev
+      return {
+        ...prev,
+        rows: {
+          ...prev.rows,
+          [id]: { ...current, [field]: value },
+        },
+      }
+    })
+  }, [])
 
   const handleSave = useCallback(async () => {
     if (!draft) return
@@ -270,7 +272,7 @@ export function EducationFieldsPage() {
               <>
                 <CmsButton
                   variant="secondary"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={handleCancelEdit}
                   disabled={saveMutation.isPending}
@@ -279,7 +281,7 @@ export function EducationFieldsPage() {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="large"
+                  size="h40"
                   type="button"
                   loading={saveMutation.isPending}
                   onClick={() => {
@@ -292,7 +294,7 @@ export function EducationFieldsPage() {
             ) : (
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleStartEdit}
                 disabled={docQuery.isLoading || fields.length === 0}

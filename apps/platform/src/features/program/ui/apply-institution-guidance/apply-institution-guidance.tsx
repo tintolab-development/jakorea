@@ -109,7 +109,6 @@ export function ApplyInstitutionGuidance({
             <PFFormField
               label={field.title}
               labelDescription={field.description}
-              stackLabelDescription
               layout="vertical"
             >
               {guidanceTextarea(field, value, onChange)}

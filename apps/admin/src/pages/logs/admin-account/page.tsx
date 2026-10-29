@@ -283,7 +283,7 @@ export function AdminAccountLogPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">관리자명</span>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="관리자명을 입력하세요"
                 value={pendingFilters.name}
@@ -294,7 +294,7 @@ export function AdminAccountLogPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">아이디</span>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="아이디를 입력하세요"
                 value={pendingFilters.loginId}
@@ -305,7 +305,7 @@ export function AdminAccountLogPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">내역</span>
               <CmsSelect
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 withAllOption
                 value={pendingFilters.actionType}
@@ -322,7 +322,7 @@ export function AdminAccountLogPage() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <span className="admin-filter-area__label">처리일시</span>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={rangeAsPicker(pendingFilters.range)}
                 onChange={dates =>
@@ -338,9 +338,9 @@ export function AdminAccountLogPage() {
               <CmsButton
                 className="admin-filter-area__search-button"
                 variant="primary"
-                size="large"
-                type="button"
+                size="medium"
                 width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                type="button"
                 onClick={applySearch}
               >
                 조회

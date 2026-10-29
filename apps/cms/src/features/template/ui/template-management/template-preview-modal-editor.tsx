@@ -24,7 +24,11 @@ import { HideParagraphSelectionChromeContext } from '@/features/template/context
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
 import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT'
-import { isCatalogOperationalWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
+import {
+  isCatalogOperationalWritingTemplateCode,
+  isRecruitmentWritingTemplateCode,
+} from '@/features/template/lib/form-template-delete-policy'
+import { useCmsAlert } from '@/shared/ui'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import {
   useTemplatePreviewController,
@@ -36,12 +40,53 @@ import {
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 
-function canShowCatalogOriginalSaveButton(args: {
+export type CatalogOriginalSaveRestrictionNotice = { title: string; content: string }
+
+const CATALOG_ORIGINAL_SAVE_RESTRICTION_TITLE = '양식 수정 제한 안내'
+
+/**
+ * 기본(CATALOG) 등록·모집·신청 양식 저장 클릭 시 안내. 저장 API는 호출하지 않는다.
+ * 복사본(카탈로그 밖 code)·사용자 등록 모드는 null → 기존 저장 그대로.
+ */
+export function resolveCatalogOriginalSaveRestrictionNotice(args: {
   templateId: string | undefined
   registrationUserMode?: boolean
-}): boolean {
-  if (args.registrationUserMode) return true
-  return !isCatalogOperationalWritingTemplateCode(args.templateId)
+}): CatalogOriginalSaveRestrictionNotice | null {
+  if (args.registrationUserMode) return null
+  if (!isCatalogOperationalWritingTemplateCode(args.templateId)) return null
+  const code = args.templateId?.trim() ?? ''
+  if (code.startsWith('registration-')) {
+    return {
+      title: CATALOG_ORIGINAL_SAVE_RESTRICTION_TITLE,
+      content: '등록 양식은 항목 추가 및 삭제, 수정이 불가합니다.',
+    }
+  }
+  const formLabel = isRecruitmentWritingTemplateCode(code) ? '모집' : '신청'
+  return {
+    title: CATALOG_ORIGINAL_SAVE_RESTRICTION_TITLE,
+    content: `${formLabel} 폼 기본 양식은 항목 추가 및 삭제, 수정이 불가합니다.\n신규 템플릿 생성으로 복사본 생성 후 수정해주세요.`,
+  }
+}
+
+/** 기본 양식이면 안내 팝업, 아니면 기존 handleSave */
+function useCatalogOriginalGuardedSave(args: {
+  templateId: string | undefined
+  registrationUserMode?: boolean
+  handleSave: () => unknown
+}): () => void {
+  const { showAlert } = useCmsAlert()
+  const { templateId, registrationUserMode, handleSave } = args
+  return useCallback(() => {
+    const notice = resolveCatalogOriginalSaveRestrictionNotice({
+      templateId,
+      registrationUserMode,
+    })
+    if (notice) {
+      showAlert(notice)
+      return
+    }
+    void handleSave()
+  }, [handleSave, registrationUserMode, showAlert, templateId])
 }
 
 type TemplatePreviewModalEditorProps = {
@@ -163,6 +208,11 @@ function GeneralRegistrationTemplatePreviewEditor({
     ...previewControllerBase,
     runPreview: programRegistrationVm.handlePreview,
   })
+  const guardedSave = useCatalogOriginalGuardedSave({
+    templateId,
+    registrationUserMode,
+    handleSave: programRegistrationVm.handleSave,
+  })
 
   const rendererContext = useMemo(
     (): TemplateRendererContext => ({
@@ -203,11 +253,7 @@ function GeneralRegistrationTemplatePreviewEditor({
       registrationUserMode={registrationUserMode}
       footerAction={footerAction}
       onPreview={handlePreview}
-      onSave={programRegistrationVm.handleSave}
-      showSave={canShowCatalogOriginalSaveButton({
-        templateId,
-        registrationUserMode,
-      })}
+      onSave={guardedSave}
       isDraftLoading={programRegistrationVm.isDraftLoading}
       leftContent={leftContent}
       rightNavigation={rightNavigation}
@@ -240,6 +286,11 @@ function UjatRegistrationTemplatePreviewEditor({
   const { handlePreview } = useTemplatePreviewController({
     ...previewControllerBase,
     runPreview: ujatProgramRegistrationVm.handlePreview,
+  })
+  const guardedSave = useCatalogOriginalGuardedSave({
+    templateId,
+    registrationUserMode,
+    handleSave: ujatProgramRegistrationVm.handleSave,
   })
 
   const rendererContext = useMemo(
@@ -281,11 +332,7 @@ function UjatRegistrationTemplatePreviewEditor({
       registrationUserMode={registrationUserMode}
       footerAction={footerAction}
       onPreview={handlePreview}
-      onSave={ujatProgramRegistrationVm.handleSave}
-      showSave={canShowCatalogOriginalSaveButton({
-        templateId,
-        registrationUserMode,
-      })}
+      onSave={guardedSave}
       isDraftLoading={ujatProgramRegistrationVm.isDraftLoading}
       leftContent={leftContent}
       rightNavigation={rightNavigation}
@@ -326,6 +373,11 @@ function ParticipantApplicationTemplatePreviewEditor({
   const { handlePreview } = useTemplatePreviewController({
     ...previewControllerBase,
     runPreview: programParticipantApplicationVm.handlePreview,
+  })
+  const guardedSave = useCatalogOriginalGuardedSave({
+    templateId,
+    registrationUserMode,
+    handleSave: programParticipantApplicationVm.handleSave,
   })
 
   const rendererContext = useMemo(
@@ -368,11 +420,7 @@ function ParticipantApplicationTemplatePreviewEditor({
       registrationUserMode={registrationUserMode}
       footerAction={footerAction}
       onPreview={handlePreview}
-      onSave={programParticipantApplicationVm.handleSave}
-      showSave={canShowCatalogOriginalSaveButton({
-        templateId,
-        registrationUserMode,
-      })}
+      onSave={guardedSave}
       isDraftLoading={programParticipantApplicationVm.isDraftLoading}
       leftContent={
         isRecruitment ? (
@@ -476,10 +524,6 @@ function SurveyTemplatePreviewEditor({
       footerAction={footerAction}
       onPreview={handlePreview}
       onSave={surveyListEditor.handleSave}
-      showSave={canShowCatalogOriginalSaveButton({
-        templateId,
-        registrationUserMode,
-      })}
       isDraftLoading={surveyListEditor.isDraftLoading}
       leftContent={leftContent}
       rightNavigation={rightNavigation}

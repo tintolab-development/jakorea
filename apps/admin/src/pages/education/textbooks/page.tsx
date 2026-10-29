@@ -540,7 +540,7 @@ export function EducationTextbooksPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">사용 여부</p>
               <CmsSelect
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 withAllOption
                 value={pendingFilters.usage}
@@ -560,7 +560,7 @@ export function EducationTextbooksPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">교재명</p>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.title}
                 placeholder="교재명을 입력하세요"
@@ -571,7 +571,7 @@ export function EducationTextbooksPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">사업 분야</p>
               <CmsSelect
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 withAllOption
                 value={pendingFilters.businessFieldId}
@@ -588,7 +588,7 @@ export function EducationTextbooksPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">교육 대상</p>
               <CmsSelect
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 withAllOption
                 value={pendingFilters.educationTargetId}
@@ -605,7 +605,7 @@ export function EducationTextbooksPage() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <p className="admin-filter-area__label">등록일</p>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={rangeAsPicker(pendingFilters.createdRange)}
                 placeholder={['시작일', '종료일']}
@@ -626,9 +626,9 @@ export function EducationTextbooksPage() {
               <CmsButton
                 className="admin-filter-area__search-button"
                 variant="primary"
-                size="large"
-                type="button"
+                size="medium"
                 width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                type="button"
                 onClick={handleSearch}
               >
                 조회
@@ -642,7 +642,7 @@ export function EducationTextbooksPage() {
           <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               onClick={handleBulkDeleteClick}
               disabled={removeMutation.isPending}
@@ -651,14 +651,14 @@ export function EducationTextbooksPage() {
             </CmsButton>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               type="button"
               className="cms-button--toolbar-auto"
               onClick={() => setTargetsOpen(true)}
             >
               교육 대상 관리
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               교재 등록
             </CmsButton>
           </>

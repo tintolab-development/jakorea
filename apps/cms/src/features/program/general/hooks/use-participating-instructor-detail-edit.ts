@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   draftToParticipatingInstructorSavePayload,
   parseParticipatingInstructorEditDraft,
@@ -18,6 +18,11 @@ import { mapInstructorApplicationDetailToParticipatingRow } from '@/features/pro
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
+import { showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 
 /**
  * 참여 강사 신청 정보 편집.
@@ -35,25 +40,34 @@ export function useParticipatingInstructorDetailEdit({
   onSaved,
 }: UseParticipatingInstructorDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [draft, setDraft] = useState<ParticipatingInstructorEditDraft | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const { showAlert } = useCmsAlert()
+  const instructorKey = String(instructor.id ?? '')
+  const instructorKeyRef = useRef(instructorKey)
+  const savingRef = useRef(false)
 
   const resetEditState = useCallback(() => {
+    savingRef.current = false
     setIsEditing(false)
+    setIsSaving(false)
     setDraft(null)
     setValidationErrors({})
   }, [])
 
-  /* eslint-disable react-hooks/set-state-in-effect -- instructor 변경 시 편집 draft 초기화 */
+  /* eslint-disable react-hooks/set-state-in-effect -- 다른 강사로 바뀌면 편집 draft 초기화 */
   useEffect(() => {
+    if (instructorKeyRef.current === instructorKey) return
+    instructorKeyRef.current = instructorKey
     resetEditState()
-  }, [instructor.id, resetEditState])
+  }, [instructorKey, resetEditState])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const enterEdit = useCallback(() => {
-    setDraft(rowToParticipatingInstructorEditDraft(instructor))
-    setValidationErrors({})
     setIsEditing(true)
+    setDraft(prev => prev ?? rowToParticipatingInstructorEditDraft(instructor))
+    setValidationErrors({})
   }, [instructor])
 
   const cancelEdit = useCallback(() => {
@@ -66,24 +80,30 @@ export function useParticipatingInstructorDetailEdit({
   }, [])
 
   const saveEdit = useCallback(async (): Promise<boolean> => {
-    if (!draft) return false
+    if (!draft || savingRef.current) return false
 
     const parsed = parseParticipatingInstructorEditDraft(draft)
     if (!parsed.success) {
       setValidationErrors(parsed.errors)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return false
     }
 
     const applicationId = instructor.instructorApplicationId?.trim()
     if (!applicationId) {
-      setValidationErrors({
-        form: '강사 신청 ID가 없어 신청 정보를 저장할 수 없습니다. 관리자 등록 강사는 신청 정보 수정 대상이 아닙니다.',
-      })
+      const message =
+        '강사 신청 ID가 없어 신청 정보를 저장할 수 없습니다. 관리자 등록 강사는 신청 정보 수정 대상이 아닙니다.'
+      setValidationErrors({ form: message })
+      void showAlert({ title: '안내', content: message })
       return false
     }
 
     if (!shouldUseOrganizationApplicationRemoteApi()) {
       setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+      void showAlert({ title: '안내', content: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
       return false
     }
 
@@ -96,9 +116,12 @@ export function useParticipatingInstructorDetailEdit({
     })
     if (!feePolicy) {
       setValidationErrors({ form: INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE })
+      void showAlert({ title: '안내', content: INSTRUCTOR_FEE_POLICY_INVALID_MESSAGE })
       return false
     }
 
+    savingRef.current = true
+    setIsSaving(true)
     try {
       await updateInstructorApplication(applicationId, {
         feePolicy,
@@ -107,20 +130,25 @@ export function useParticipatingInstructorDetailEdit({
       const refreshed = await fetchInstructorApplicationDetailRemote(applicationId)
       onSaved(mapInstructorApplicationDetailToParticipatingRow(refreshed, instructor, programId))
       resetEditState()
+      showUpdateCompletedAlert()
       return true
     } catch (error) {
-      setValidationErrors({
-        form: getGeneralProgramApiErrorMessage(
-          error,
-          '강사 정보를 저장하지 못했습니다. 다시 시도해 주세요.'
-        ),
-      })
+      const message = getGeneralProgramApiErrorMessage(
+        error,
+        '강사 정보를 저장하지 못했습니다. 다시 시도해 주세요.'
+      )
+      setValidationErrors({ form: message })
+      void showAlert({ title: '저장 실패', content: message })
       return false
+    } finally {
+      savingRef.current = false
+      setIsSaving(false)
     }
-  }, [draft, instructor, onSaved, programId, resetEditState])
+  }, [draft, instructor, onSaved, programId, resetEditState, showAlert])
 
   return {
     isEditing,
+    isSaving,
     draft,
     validationErrors,
     enterEdit,

@@ -162,7 +162,7 @@ export function MenuViewsStatsPage() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <span className="admin-filter-area__label">기간</span>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={periodAsPickerValue(pendingFilters.periodRange)}
                 onChange={dates =>
@@ -177,7 +177,7 @@ export function MenuViewsStatsPage() {
               <CmsButton
                 className="admin-filter-area__search-button"
                 variant="primary"
-                size="large"
+                size="medium"
                 width={FILTER_SEARCH_BUTTON_WIDTH_PX}
                 type="button"
                 onClick={handleSearch}

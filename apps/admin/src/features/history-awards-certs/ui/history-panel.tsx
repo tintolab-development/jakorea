@@ -420,7 +420,7 @@ export function HistoryPanel() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">공개 여부</p>
               <CmsSelect
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.isPublic}
                 onChange={v =>
@@ -440,14 +440,14 @@ export function HistoryPanel() {
               <p className="admin-filter-area__label">연혁년도/월</p>
               <div className="hac-panel__year-month-filters">
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={116}
                   value={pendingFilters.year}
                   onChange={v => setPendingFilters(prev => ({ ...prev, year: String(v ?? '') }))}
                   options={YEAR_OPTIONS}
                 />
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={116}
                   value={pendingFilters.month}
                   onChange={v => setPendingFilters(prev => ({ ...prev, month: String(v ?? '') }))}
@@ -458,7 +458,7 @@ export function HistoryPanel() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">내용</p>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="검색어를 입력하세요"
                 value={pendingFilters.content}
@@ -469,7 +469,7 @@ export function HistoryPanel() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <p className="admin-filter-area__label">작성일</p>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={periodAsPickerValue(pendingFilters.created)}
                 onChange={dates =>
@@ -486,7 +486,7 @@ export function HistoryPanel() {
               <CmsButton
                 className="admin-filter-area__search-button"
                 variant="primary"
-                size="large"
+                size="medium"
                 type="button"
                 width={FILTER_SEARCH_BUTTON_WIDTH_PX}
                 onClick={handleSearch}
@@ -514,14 +514,14 @@ export function HistoryPanel() {
             <div className="hac-panel__toolbar-buttons">
               <CmsButton
                 variant="delete"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleDeleteClick}
                 loading={removeMutation.isPending}
               >
                 선택 삭제
               </CmsButton>
-              <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+              <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
                 연혁 등록
               </CmsButton>
             </div>

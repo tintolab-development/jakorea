@@ -26,14 +26,14 @@ alwaysApply: false
 <div className="admin-filter-area">
   <div className="admin-filter-area__field admin-filter-area__field--control">
     <p className="admin-filter-area__label">…</p>
-    <CmsSelect inputSize="large" width={FILTER_CONTROL_MAX_WIDTH_PX} … />
-  </div>
+    <CmsSelect inputSize="medium" width={FILTER_CONTROL_MAX_WIDTH_PX} … />
+    </div>
   <div className="admin-filter-area__field admin-filter-area__field--date-range">
     <p className="admin-filter-area__label">게시 기간</p>
-    <CmsDateRangePicker inputSize="large" width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX} … />
+    <CmsDateRangePicker inputSize="medium" width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX} … />
   </div>
   <div className="admin-filter-area__actions">
-    <CmsButton className="admin-filter-area__search-button" size="large" width={FILTER_SEARCH_BUTTON_WIDTH_PX}>
+    <CmsButton className="admin-filter-area__search-button" size="medium" width={FILTER_SEARCH_BUTTON_WIDTH_PX}>
       조회
     </CmsButton>
   </div>
@@ -72,4 +72,4 @@ CMS: `multiRowResponsiveLayout="merged-auto-fill"` + `mergedAutoFillTrailingFiel
 - [styling-tokens.mdc](./styling-tokens.mdc)
 - CMS: [table-filter-group-layout.mdc](../../../cms/.cursor/rules/design/table-filter-group-layout.mdc)
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-10-30

@@ -18,4 +18,10 @@ export interface MemberPortalConsentCompleteRequest {
   filledDocument?: FilledDocumentRequest;
   /** Deprecated compatibility field. Current policy rejects evidence uploads with CONSENT_EVIDENCE_FILE_NOT_ALLOWED */
   evidenceFileObjectId?: number;
+  /**
+     * 만 14세 미만 PORTRAIT_RIGHTS complete 시 필수. POST /api/portal/me/guardian-verifications 이후 VERIFIED 조회에서 받은 one-time token.
+     * @minLength 0
+     * @maxLength 256
+     */
+  guardianVerificationToken?: string;
 }

@@ -404,7 +404,7 @@ export function CorporatePartnersPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">공개 여부</span>
               <CmsSelect
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 withAllOption
                 value={pendingFilters.isPublic}
@@ -424,7 +424,7 @@ export function CorporatePartnersPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">기업명</span>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="기업명 검색"
                 value={pendingFilters.name}
@@ -435,7 +435,7 @@ export function CorporatePartnersPage() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <span className="admin-filter-area__label">등록일</span>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={periodAsPickerValue(pendingFilters.registeredRange)}
                 onChange={dates =>
@@ -451,9 +451,9 @@ export function CorporatePartnersPage() {
               <CmsButton
                 className="admin-filter-area__search-button"
                 variant="primary"
-                size="large"
-                type="button"
+                size="medium"
                 width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                type="button"
                 onClick={handleSearch}
               >
                 조회
@@ -467,14 +467,14 @@ export function CorporatePartnersPage() {
           <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               onClick={handleDeleteClick}
               disabled={removeMutation.isPending}
             >
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               후원사 등록
             </CmsButton>
           </>

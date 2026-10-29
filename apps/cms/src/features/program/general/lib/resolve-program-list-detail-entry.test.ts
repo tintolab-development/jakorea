@@ -26,13 +26,15 @@ describe('resolveProgramListDetailEntry', () => {
     })
   })
 
-  it('1사1교 진행 중·완료는 기관 신청 목록으로 연다', () => {
-    expect(
-      resolveProgramListDetailEntry(
-        { lifecycleStatus: 'completed' },
-        { programType: 'company_school' }
-      )
-    ).toEqual({ lnb: 'applicants', tab: 'institutions' })
+  it('1사1교 목록 상세는 진행 상태와 무관하게 공통정보로 연다', () => {
+    for (const lifecycleStatus of ['scheduled', 'education_in_progress', 'completed'] as const) {
+      expect(
+        resolveProgramListDetailEntry(
+          { lifecycleStatus },
+          { programType: 'company_school', statusFilter: 'in_progress' }
+        )
+      ).toEqual({ lnb: 'info', tab: 'info' })
+    }
   })
 
   it('목록 위젯의 선택 상태를 canonical 상태보다 우선한다', () => {

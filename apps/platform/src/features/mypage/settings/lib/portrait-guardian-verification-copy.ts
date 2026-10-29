@@ -21,6 +21,7 @@ export const PORTRAIT_GUARDIAN_INFO_COPY = {
   relationLabel: '신청 회원과의 관계',
   relationPlaceholder: '신청 회원과의 관계를 입력해 주세요',
   relationRequiredMessage: '신청 회원과의 관계를 입력해 주세요.',
+  relationMaxLengthMessage: '신청 회원과의 관계는 64자 이내로 입력해 주세요.',
   cancelLabel: '취소',
   confirmLabel: '확인하기',
 } as const
@@ -36,9 +37,15 @@ export const PORTRAIT_GUARDIAN_ERROR_TITLE = '보호자 본인인증 실패'
 export const PORTRAIT_GUARDIAN_MISSING_MESSAGE =
   '등록된 보호자 정보를 확인할 수 없어요. 회원정보 수정에서 보호자 정보를 확인해 주세요.'
 
-/** 관계 필수 — 길이 제한은 BE 확정 후 맞춘다. TODO(BE): guardianRelation 최대 길이 */
+export const PORTRAIT_GUARDIAN_RELATION_MAX_LENGTH = 64
+
 export function validatePortraitGuardianRelation(value: string): string | null {
-  return value.trim() ? null : PORTRAIT_GUARDIAN_INFO_COPY.relationRequiredMessage
+  const trimmed = value.trim()
+  if (!trimmed) return PORTRAIT_GUARDIAN_INFO_COPY.relationRequiredMessage
+  if (trimmed.length > PORTRAIT_GUARDIAN_RELATION_MAX_LENGTH) {
+    return PORTRAIT_GUARDIAN_INFO_COPY.relationMaxLengthMessage
+  }
+  return null
 }
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000

@@ -31,7 +31,11 @@ import {
   BoardMemberDragHandle,
   BoardMembersSortableTable,
 } from '@/features/board-members/ui/sortable-table'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_SORT_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import { CmsButton, CmsInput, ConfirmModal, PageContentLoading, useCmsAlert } from '@/shared/ui'
 
 import './board-panel.css'
@@ -427,7 +431,7 @@ export function BoardPanel() {
               <>
                 <CmsButton
                   variant="secondary"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={handleCancelEdit}
                   disabled={bulkUpdateMutation.isPending}
@@ -436,7 +440,7 @@ export function BoardPanel() {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="large"
+                  size="h40"
                   type="button"
                   loading={bulkUpdateMutation.isPending}
                   onClick={() => {
@@ -450,7 +454,7 @@ export function BoardPanel() {
               <>
                 <CmsButton
                   variant="delete"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={handleDeleteClick}
                   disabled={removeMutation.isPending}
@@ -459,7 +463,7 @@ export function BoardPanel() {
                 </CmsButton>
                 <CmsButton
                   variant="secondary"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={handleStartEdit}
                   disabled={rows.length === 0}
@@ -468,7 +472,7 @@ export function BoardPanel() {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={() => setRegisterOpen(true)}
                 >
@@ -497,9 +501,7 @@ export function BoardPanel() {
                     selectedRowKeys: selectedKeys,
                     onChange: setSelectedKeys,
                   }}
-                  onRowsReorder={reordered =>
-                    handleRowsReorder(group.roleGroup, reordered)
-                  }
+                  onRowsReorder={reordered => handleRowsReorder(group.roleGroup, reordered)}
                 />
               </div>
             </section>

@@ -34,8 +34,6 @@ export interface SettlementFrontendResponse {
   businessIncomeEarnerLabel?: string;
   expectedTransferDate?: string;
   correctionReason?: string;
-  /** 정산 상세 수취인(MASKED). 목록에는 없음. */
-  payee?: SettlementFrontendPayeeResponse;
   items?: SettlementFrontendItemResponse[];
   totalAmount?: number;
   status?: string;
@@ -51,5 +49,7 @@ export interface SettlementFrontendResponse {
   approvalHistories?: SettlementFrontendApprovalHistoryResponse[];
   createdAt?: string;
   updatedAt?: string;
+  /** 지급조서·산출 내역서 수취인 표시 블록(MASKED). instructorMemberId가 없으면 null */
+  payee?: SettlementFrontendPayeeResponse | null;
   availableActions?: string[];
 }

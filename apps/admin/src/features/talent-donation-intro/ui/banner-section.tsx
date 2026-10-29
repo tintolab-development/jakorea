@@ -97,7 +97,7 @@ export function BannerSectionCard({ banner }: Props) {
         <div className="table-header-actions--wrapper">
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
             type="button"
             onClick={() => setModalOpen(true)}
           >

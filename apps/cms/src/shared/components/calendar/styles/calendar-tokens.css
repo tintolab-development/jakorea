@@ -55,7 +55,7 @@
   /* 3열 calendar-set · 2열 split-card — 가로 축소 시 열 겹침 방지용 합산 min-width */
   --calendar-sub-left-width: 300px;
   --calendar-set-column-gap: 20px;
-  --calendar-split-card-column-gap: 16px;
+  --calendar-split-card-column-gap: 20px;
   --calendar-set-min-width-3col-month: calc(
     var(--calendar-sub-left-width) + var(--calendar-set-column-gap) +
       var(--calendar-main-month-min-width) + var(--calendar-set-column-gap) +

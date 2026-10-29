@@ -55,6 +55,8 @@ export type PortalConsentFormTemplateVersion = {
 /** CMS `MemberPortalConsentCompleteRequest` */
 export type PortalConsentCompleteRequest = {
   identityVerificationSessionId?: number
+  /** 만 14세 미만 PORTRAIT_RIGHTS complete — 보호자 NICE 1회 토큰 */
+  guardianVerificationToken?: string
   /** PORTRAIT_RIGHTS — `PARTIAL` (FULL deprecated) */
   consentStatus?: string
   /** PORTRAIT_RIGHTS — 1·2번 항목 동의 기반 힌트(서버 재계산) */

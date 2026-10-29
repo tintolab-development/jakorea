@@ -45,6 +45,10 @@
       "description": "회원 포탈 일반 사용자 로그인/세션 API. 관리자 인증과 분리된 canonical surface입니다."
     },
     {
+      "name": "기타 API",
+      "description": "만 14세 미만 회원의 초상권 동의·프로그램 신청용 보호자 NICE. 가입 Bridge와 분리됩니다."
+    },
+    {
       "name": "회원/강사",
       "description": "Members 관련 관리자 API"
     },
@@ -6607,7 +6611,7 @@
             "name": "reason",
             "in": "query",
             "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -14936,6 +14940,106 @@
           "scheduleId"
         ]
       },
+      "MemberGuardianVerificationCreateRequest": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 0
+          },
+          "guardianRelation": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "frontendReturnUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "guardianRelation",
+          "purpose"
+        ]
+      },
+      "MemberGuardianVerificationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "statusToken": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberGuardianVerificationNiceStartRequest": {
+        "type": "object",
+        "properties": {
+          "frontendReturnUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        }
+      },
+      "NiceIdentityAuthStartResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "providerTxId": {
+            "type": "string"
+          },
+          "statusToken": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "authUrl": {
+            "type": "string"
+          },
+          "requestNo": {
+            "type": "string"
+          },
+          "transactionId": {
+            "type": "string"
+          },
+          "flow": {
+            "type": "string"
+          },
+          "frontendReturnUrl": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        }
+      },
       "FormRevisionRequest": {
         "type": "object",
         "description": "회원 포탈 Form 재제출 요청",
@@ -15445,6 +15549,12 @@
             "type": "integer",
             "format": "int64",
             "description": "Deprecated compatibility field. Current policy rejects evidence uploads with CONSENT_EVIDENCE_FILE_NOT_ALLOWED"
+          },
+          "guardianVerificationToken": {
+            "type": "string",
+            "description": "만 14세 미만 PORTRAIT_RIGHTS complete 시 필수. POST /api/portal/me/guardian-verifications 이후 VERIFIED 조회에서 받은 one-time token.",
+            "maxLength": 256,
+            "minLength": 0
           }
         }
       },
@@ -15629,6 +15739,16 @@
             "type": "boolean",
             "description": "관리자 등록 후 본인 프로필·본인인증·비밀번호 변경까지 완료했는지 여부",
             "example": false
+          },
+          "ageGroup": {
+            "type": "string",
+            "description": "회원 포탈 로그인·토큰 갱신·소셜 로그인에서 항상 UNDER_14 또는 OVER_14. GET /api/portal/auth/me 및 GET /api/portal/me/profile 과 동일 규칙(member_signup_profile.age_group 우선, 없으면 member.is_under_14_yn). 관리자 토큰 응답은 null.",
+            "enum": [
+              "UNDER_14",
+              "OVER_14"
+            ],
+            "example": "OVER_14",
+            "nullable": true
           }
         }
       },
@@ -16518,49 +16638,6 @@
           "usedAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "NiceIdentityAuthStartResponse": {
-        "type": "object",
-        "properties": {
-          "sessionId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "providerTxId": {
-            "type": "string"
-          },
-          "statusToken": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "authUrl": {
-            "type": "string"
-          },
-          "requestNo": {
-            "type": "string"
-          },
-          "transactionId": {
-            "type": "string"
-          },
-          "flow": {
-            "type": "string"
-          },
-          "frontendReturnUrl": {
-            "type": "string"
-          },
-          "state": {
-            "type": "string"
           }
         }
       },
@@ -20034,10 +20111,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -32333,7 +32410,7 @@
           },
           "roleCode": {
             "type": "string",
-            "description": "CMS 관리자 권한 코드. MASTER, MIDDLE, VIEWER. 생략 시 최소 권한 VIEWER로 생성됩니다."
+            "description": "CMS 전역 권한 코드. MASTER, ACCOUNTING_MANAGER, PROGRAM_MANAGER, PROGRAM_VIEWER. 생략 시 PROGRAM_VIEWER."
           },
           "reason": {
             "type": "string"
@@ -41468,6 +41545,28 @@
           }
         }
       },
+      "MemberGuardianVerificationStatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "failureCode": {
+            "type": "string"
+          },
+          "verificationToken": {
+            "type": "string"
+          },
+          "tokenExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "FormResponseDetailResponse": {
         "type": "object",
         "properties": {
@@ -43495,80 +43594,91 @@
           },
           "taxIncomeType": {
             "type": "string",
-            "nullable": true,
-            "enum": [
-              "BUSINESS_INCOME",
-              "OTHER_INCOME",
-              "DAILY_EMPLOYMENT_INCOME",
-              null
-            ],
-            "description": "원천징수 소득 구분 코드. withholding 행에만 의미 있음."
+            "description": "소득 구분 코드. BUSINESS_INCOME / OTHER_INCOME / DAILY_EMPLOYMENT_INCOME. 항목에 없으면 null",
+            "example": "BUSINESS_INCOME",
+            "nullable": true
           },
           "taxIncomeTypeDisplay": {
             "type": "string",
-            "nullable": true,
-            "description": "원천징수 「구분」열 표시용. 사업소득|기타소득|일용근로소득. 없으면 FE는 '-'"
+            "description": "소득 구분 화면 라벨. 사업소득 | 기타소득 | 일용근로소득. taxIncomeType과 1:1. 없으면 null(FE는 -)",
+            "example": "사업소득",
+            "nullable": true
           }
         }
       },
       "SettlementFrontendPayeeResponse": {
         "type": "object",
-        "nullable": true,
-        "description": "정산 상세 수취인(MASKED). 목록에는 없음. null이면 FE는 '-'.",
+        "description": "지급조서·산출 내역서 수취인 표시용. SETTLEMENT_READ 기본 조회는 MASKED. 원문 언마스크는 member consent / instructor privacy 경로.",
         "properties": {
           "nameEn": {
             "type": "string",
+            "description": "영문 성명. 지급조서 동의서 paymentBasicInfo.nameEn. 없으면 null",
             "nullable": true
           },
           "residentRegistrationNumber": {
             "type": "string",
+            "description": "주민등록번호(마스킹). residentFront-residentBack 결합. 없으면 null",
+            "example": "900721-2******",
             "nullable": true
           },
           "affiliation": {
             "type": "string",
+            "description": "소속. noAffiliation=true 이거나 미입력이면 null",
             "nullable": true
           },
           "phone": {
             "type": "string",
+            "description": "연락처(마스킹). member.phone",
             "nullable": true
           },
           "email": {
             "type": "string",
+            "description": "이메일(마스킹). member.email",
             "nullable": true
           },
           "gender": {
             "type": "string",
+            "description": "성별(마스킹). 값 존재 시 **",
             "nullable": true
           },
           "birthDate": {
             "type": "string",
-            "nullable": true,
-            "description": "yyyy-**-** 등 마스킹 생년월일"
+            "description": "생년월일(마스킹). yyyy-**-**",
+            "example": "1990-**-**",
+            "nullable": true
           },
           "addressRoad": {
             "type": "string",
+            "description": "자택 도로명/기본 주소(마스킹). 동의서 addressRoad 우선, 없으면 instructor_profile.home_address",
             "nullable": true
           },
           "addressDetail": {
             "type": "string",
+            "description": "자택 상세 주소(마스킹). 동의서 addressDetail 우선, 없으면 instructor_profile.home_address_detail",
             "nullable": true
           },
           "bankName": {
             "type": "string",
+            "description": "정산 계좌 은행명. 동의서 bankName 우선, 없으면 member_bank_account",
             "nullable": true
           },
           "accountNumber": {
             "type": "string",
+            "description": "정산 계좌번호(마스킹)",
             "nullable": true
           },
           "accountHolder": {
             "type": "string",
+            "description": "예금주(마스킹)",
             "nullable": true
           },
           "privacyMaskingLevel": {
             "type": "string",
-            "nullable": true,
-            "description": "MASKED"
+            "description": "MASKED | RAW. 정산 상세 GET은 항상 MASKED",
+            "enum": [
+              "MASKED",
+              "RAW"
+            ]
           }
         }
       },
@@ -43650,9 +43760,6 @@
           "correctionReason": {
             "type": "string"
           },
-          "payee": {
-            "$ref": "#/components/schemas/SettlementFrontendPayeeResponse"
-          },
           "items": {
             "type": "array",
             "items": {
@@ -43707,6 +43814,17 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "payee": {
+            "description": "지급조서·산출 내역서 수취인 표시 블록(MASKED). instructorMemberId가 없으면 null",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SettlementFrontendPayeeResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "availableActions": {
             "type": "array",
@@ -43800,6 +43918,9 @@
           },
           "manualInputYn": {
             "type": "boolean"
+          },
+          "taxIncomeType": {
+            "type": "string"
           }
         }
       },
@@ -50830,12 +50951,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨",
+            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰",
+            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -50845,11 +50966,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
+            "description": "true이면 programId 없이 enabled=false."
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
+            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
           },
           "programGroups": {
             "type": "array",
@@ -50867,21 +50988,21 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
               "type": "string"
             }
           },
           "sourceMode": {
             "type": "string",
-            "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립. 구 FE는 필드를 무시해도 됨",
+            "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
             "enum": [
               "SERVER_RESOLVED",
               "MANUAL_ALLOWED",

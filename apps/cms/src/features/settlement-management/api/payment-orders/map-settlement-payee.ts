@@ -72,7 +72,7 @@ export type SettlementPayeeInstructorBasicFields = {
  * payee null/빈 객체면 null (호출부가 stub/`-` 유지).
  */
 export function mapSettlementPayeeToInstructorBasicFields(
-  payee: SettlementFrontendPayeeResponse | undefined
+  payee: SettlementFrontendPayeeResponse | null | undefined
 ): SettlementPayeeInstructorBasicFields | null {
   if (payee == null) return null
 

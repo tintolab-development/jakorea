@@ -8,7 +8,7 @@ import { Card, List, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment, type ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LoadingButton, EmptyState } from '@/shared/ui'
+import { LoadingButton } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
@@ -146,7 +146,11 @@ function buildDynamicSchedulesForVisibleRange(
   return []
 }
 
-/** 일정 목록·캘린더·팝오버에서 동일한 SCHEDULE_COLORS 매핑 */
+/**
+ * 일정 목록·캘린더·팝오버에서 동일한 SCHEDULE_COLORS 매핑
+ * - 위젯 표시 기간(월/주) 전체 이벤트로 1회 생성해 모든 셀·팝오버·선택일 목록이 공유
+ * - resolveWidgetProgram 미해결(원격 일정 등) 시 이벤트의 programId/programTitle로 대체
+ */
 function buildScheduleColorMapForWidgetEvents(
   events: ScheduleEvent[],
   variant: ProgramScheduleKind
@@ -156,8 +160,10 @@ function buildScheduleColorMapForWidgetEvents(
   for (const ev of events) {
     if (seen.has(ev.programId)) continue
     seen.add(ev.programId)
-    const p = resolveWidgetProgram(ev.programId, variant)
-    if (p) programs.push(p)
+    const p =
+      resolveWidgetProgram(ev.programId, variant) ??
+      programsFromOptions([{ id: ev.programId, title: ev.programTitle }])[0]
+    programs.push(p)
   }
   return buildResolvedScheduleColorMapForPrograms(programs)
 }
@@ -180,17 +186,13 @@ function getDisplayProgramIds(dayEvents: ScheduleEvent[], max = 2): string[] {
 function ScheduleWidgetWeekCellPreview({
   dayEvents,
   onEventClick,
-  variant,
+  scheduleColorMap,
 }: {
   dayEvents: ScheduleEvent[]
   onEventClick?: (ev: ScheduleEvent) => void
-  variant: ProgramScheduleKind
+  /** 위젯 표시 기간 전체 기준 공유 색상 맵 */
+  scheduleColorMap: Map<string, ScheduleColorPair>
 }) {
-  const scheduleColorMap = useMemo(
-    () => buildScheduleColorMapForWidgetEvents(dayEvents, variant),
-    [dayEvents, variant]
-  )
-
   return (
     <div className="program-calendar-cell-preview">
       {dayEvents.map(ev => {
@@ -236,13 +238,13 @@ const EVENT_PREVIEW_POPOVER_CLASS =
 /** 태그(배지·일정 카드) 기준 상단 고정 미리보기 — 본문은 공통 popover 클래스로 스크롤 가능 */
 function ProgramScheduleEventPreviewPopover({
   dayEvents,
-  variant,
+  scheduleColorMap,
   onEventClick,
   children,
   placement = 'top',
 }: {
   dayEvents: ScheduleEvent[]
-  variant: ProgramScheduleKind
+  scheduleColorMap: Map<string, ScheduleColorPair>
   onEventClick?: (ev: ScheduleEvent) => void
   children: ReactElement
   placement?: 'top' | 'bottom'
@@ -261,7 +263,7 @@ function ProgramScheduleEventPreviewPopover({
         <ScheduleWidgetWeekCellPreview
           dayEvents={dayEvents}
           onEventClick={onEventClick}
-          variant={variant}
+          scheduleColorMap={scheduleColorMap}
         />
       }
     >
@@ -536,9 +538,14 @@ export function ProgramScheduleWidget({
     return eventsByDate[dateKey] ?? []
   }, [selectedDate, eventsByDate])
 
-  const selectedDayScheduleColorMap = useMemo(
-    () => buildScheduleColorMapForWidgetEvents(selectedDateEvents, variant),
-    [selectedDateEvents, variant]
+  /** 표시 기간(월간 35일 / 주간 7일) 전체 이벤트 기준 — 셀·팝오버·선택일 목록 공유 */
+  const scheduleColorMap = useMemo(
+    () =>
+      buildScheduleColorMapForWidgetEvents(
+        visibleDateRange.flatMap(d => eventsByDate[d.format('YYYY-MM-DD')] ?? []),
+        variant
+      ),
+    [visibleDateRange, eventsByDate, variant]
   )
 
   const weekDates = useMemo(() => {
@@ -592,7 +599,6 @@ export function ProgramScheduleWidget({
     const isSelected = date.isSame(selectedDate, 'day')
     const dateKey = date.format('YYYY-MM-DD')
     const dayEvents = eventsByDate[dateKey] || []
-    const dayColorMap = buildScheduleColorMapForWidgetEvents(dayEvents, variant)
     const programIds = getDisplayProgramIds(dayEvents, 2)
     const hasEvents = programIds.length > 0
     const isSingleBlock = programIds.length === 1
@@ -616,14 +622,15 @@ export function ProgramScheduleWidget({
             {isSingleBlock ? (
               <ProgramScheduleEventPreviewPopover
                 dayEvents={dayEvents}
-                variant={variant}
+                scheduleColorMap={scheduleColorMap}
                 onEventClick={handleEventClick}
               >
                 <span className="program-schedule-widget__month-cell-badge-host">
                   <div
                     className="program-schedule-widget__cell-badge program-schedule-widget__cell-badge--single"
                     style={{
-                      backgroundColor: (dayColorMap.get(programIds[0]) ?? SCHEDULE_COLORS[0]).bg,
+                      backgroundColor: (scheduleColorMap.get(programIds[0]) ?? SCHEDULE_COLORS[0])
+                        .bg,
                     }}
                     role="button"
                     tabIndex={0}
@@ -645,12 +652,12 @@ export function ProgramScheduleWidget({
               </ProgramScheduleEventPreviewPopover>
             ) : (
               programIds.map(pid => {
-                const pair = dayColorMap.get(pid) ?? SCHEDULE_COLORS[0]
+                const pair = scheduleColorMap.get(pid) ?? SCHEDULE_COLORS[0]
                 return (
                   <ProgramScheduleEventPreviewPopover
                     key={pid}
                     dayEvents={dayEvents}
-                    variant={variant}
+                    scheduleColorMap={scheduleColorMap}
                     onEventClick={handleEventClick}
                   >
                     <span className="program-schedule-widget__month-cell-badge-host">
@@ -748,7 +755,6 @@ export function ProgramScheduleWidget({
           const isSelected = date.isSame(selectedDate, 'day')
           const isToday = date.isSame(dayjs(), 'day')
           const dayEvents = eventsByDate[dateKey] || []
-          const dayColorMap = buildScheduleColorMapForWidgetEvents(dayEvents, variant)
           // 피그마: 2단(색상 바)은 하루 최대 3개, 1단은 2개
           const programIds = getDisplayProgramIds(dayEvents, halfColumn ? 3 : 2)
           const hasEvents = programIds.length > 0
@@ -792,12 +798,12 @@ export function ProgramScheduleWidget({
                 <div className={eventsClass}>
                   {!weekColorOnly &&
                     dayEvents.slice(0, 2).map(ev => {
-                      const pair = dayColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]
+                      const pair = scheduleColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]
                       return (
                         <ProgramScheduleEventPreviewPopover
                           key={ev.id}
                           dayEvents={dayEvents}
-                          variant={variant}
+                          scheduleColorMap={scheduleColorMap}
                           onEventClick={handleEventClick}
                           placement="bottom"
                         >
@@ -836,12 +842,12 @@ export function ProgramScheduleWidget({
                     })}
                   {weekColorOnly &&
                     programIds.map(pid => {
-                      const pair = dayColorMap.get(pid) ?? SCHEDULE_COLORS[0]
+                      const pair = scheduleColorMap.get(pid) ?? SCHEDULE_COLORS[0]
                       return (
                         <ProgramScheduleEventPreviewPopover
                           key={pid}
                           dayEvents={dayEvents}
-                          variant={variant}
+                          scheduleColorMap={scheduleColorMap}
                           onEventClick={handleEventClick}
                           placement="bottom"
                         >
@@ -874,7 +880,7 @@ export function ProgramScheduleWidget({
                   {hiddenEventCount > 0 && (
                     <ProgramScheduleEventPreviewPopover
                       dayEvents={dayEvents}
-                      variant={variant}
+                      scheduleColorMap={scheduleColorMap}
                       onEventClick={handleEventClick}
                       placement="bottom"
                     >
@@ -897,8 +903,11 @@ export function ProgramScheduleWidget({
   const eventListSection = (
     <div className="program-schedule-widget__events">
       {selectedDateEvents.length === 0 ? (
-        <div className="program-schedule-widget__empty">
-          <EmptyState description="해당 날짜에 일정이 없습니다" />
+        <div className="program-schedule-widget__empty" role="status">
+          <p className="program-schedule-widget__empty-title">등록된 일정이 없습니다.</p>
+          <p className="program-schedule-widget__empty-desc">
+            일정이 등록되면 이곳에 목록이 표시됩니다.
+          </p>
         </div>
       ) : (
         <List
@@ -906,13 +915,14 @@ export function ProgramScheduleWidget({
           split={false}
           className="program-schedule-widget__event-list"
           renderItem={event => {
-            const pair = selectedDayScheduleColorMap.get(event.programId) ?? SCHEDULE_COLORS[0]
+            const pair = scheduleColorMap.get(event.programId) ?? SCHEDULE_COLORS[0]
             return (
               <List.Item
                 className="program-schedule-widget__event-item"
                 style={{
-                  backgroundColor: pair.bg,
-                  border: `1px solid ${pair.border}`,
+                  // 피그마 14894:26661 — 프로그램 주 색상(accent) 배경 6% · 테두리 10%
+                  backgroundColor: `color-mix(in srgb, ${pair.accent ?? pair.bg} 6%, transparent)`,
+                  border: `1px solid color-mix(in srgb, ${pair.accent ?? pair.bg} 10%, transparent)`,
                 }}
                 onClick={() => handleEventClick(event)}
               >

@@ -8,8 +8,7 @@ import type { PortalConsentDocumentCreateRequest } from '../api/portal-consent-d
 export function buildPortalPortraitRightsConsentCreateRequest(
   /**
    * 미성년 프로그램 신청 — 프로그램 단위 초상권 동의서 (`targetType: PROGRAM`).
-   * TODO(BE): 현재 PROGRAM 대상 create 는 신청(참여) 이력이 없으면 403 `PORTAL_CONSENT_PROGRAM_NOT_OWNED`.
-   * 신청 전 작성 허용 여부는 BE 회신 후 맞춘다.
+   * 공개 프로그램이면 신청 전 create 허용. `PORTAL_CONSENT_PROGRAM_NOT_OWNED` 는 없는 프로그램일 때만.
    */
   programTarget?: { programId: number },
 ): PortalConsentDocumentCreateRequest {
