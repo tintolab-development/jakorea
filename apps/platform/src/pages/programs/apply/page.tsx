@@ -101,6 +101,28 @@ import {
   shouldLockTeacherMobileEmailOnBasicInfo,
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
+import { ApplyEconomyPreferredSchedule } from '@/features/program/ui/apply-economy-preferred-schedule/apply-economy-preferred-schedule'
+import {
+  createEmptyEconomyPreferredScheduleBlocks,
+  economyPreferredScheduleBlocksFromDraftAnswer,
+  findIncompleteEconomyPreferredScheduleMessage,
+  toEconomyPortalPreferredScheduleBlocks,
+  toEconomyPreferredScheduleAnswerValue,
+  type EconomyPreferredScheduleBlock,
+} from '@/features/program/lib/economy-preferred-schedule'
+import {
+  ApplyEconomyEducationExperience,
+  ApplyEconomyLessonReply,
+  economyEducationExperienceValueFromDraftAnswer,
+  economyLessonReplyAnswerFromValues,
+  economyLessonReplyValuesFromDraftAnswer,
+  emptyEconomyLessonReply,
+  isEconomyEducationExperienceParagraphId,
+  isEconomyLessonReplyIncomplete,
+  isEconomyLessonReplyParagraphId,
+  type ApplyEconomyEducationExperienceValue,
+  type ApplyEconomyLessonReplyValues,
+} from '@/features/program/ui/apply-economy-institution-choices/apply-economy-institution-choices'
 import {
   ApplyGeminiInstitutionContact,
   ApplyGeminiInstitutionTrainingInfo,
@@ -583,6 +605,14 @@ export function ProgramApplyPage() {
     useState<ApplyInstructorAvailableScheduleValues>(emptyInstructorAvailableSchedule)
   const [volunteerPreviousJa, setVolunteerPreviousJa] =
     useState<ApplyVolunteerPreviousJaProgramValues>(emptyVolunteerPreviousJaProgram)
+  /** 1사1교 — 결연 금융 회사명 · 전년도 1사1교 진행 여부 */
+  const [economyLessonReply, setEconomyLessonReply] =
+    useState<ApplyEconomyLessonReplyValues>(emptyEconomyLessonReply)
+  const [economyEducationExperience, setEconomyEducationExperience] =
+    useState<ApplyEconomyEducationExperienceValue>('')
+  const [economyPreferredBlocks, setEconomyPreferredBlocks] = useState<
+    EconomyPreferredScheduleBlock[]
+  >(createEmptyEconomyPreferredScheduleBlocks)
   const [volunteerEvidenceFiles, setVolunteerEvidenceFiles] = useState<
     ApplyVolunteerEvidenceFile[]
   >([])
@@ -804,6 +834,7 @@ export function ProgramApplyPage() {
     (institutionScheduleInputMode === 'date_time_requests' ||
       (institutionScheduleInputMode == null && shouldShowApplyPreferredSchedule(program)))
   const showEconomyPreferredSchedule = applyCase === 'institution-economy'
+  const showEconomyInstitutionApply = applyCase === 'institution-economy'
   const trainedTeachersScheduleVisibility = useMemo(
     () => ({
       educationStructure:
@@ -1129,6 +1160,11 @@ export function ProgramApplyPage() {
                     )
                   : [createEmptyPreferredBlock()])
           )
+          setEconomyPreferredBlocks(
+            economyPreferredScheduleBlocksFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, preferredParagraph ?? undefined)
+            ) ?? createEmptyEconomyPreferredScheduleBlocks()
+          )
           setTrainedTeachersFixedSelectedIds(
             selectedFixedScheduleIdsFromDraftAnswer(
               draftAnswerForParagraph(
@@ -1194,6 +1230,22 @@ export function ProgramApplyPage() {
             guidanceValuesFromDraftAnswer(
               draftAnswerForParagraph(draftAnswers, guidanceParagraph)
             ) ?? emptyInstitutionGuidanceAnswers()
+          )
+          setEconomyLessonReply(
+            economyLessonReplyValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isEconomyLessonReplyParagraphId)
+              )
+            ) ?? emptyEconomyLessonReply()
+          )
+          setEconomyEducationExperience(
+            economyEducationExperienceValueFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isEconomyEducationExperienceParagraphId)
+              )
+            )
           )
           const submissionParagraph = findDraftParagraph(
             remoteDraft,
@@ -1349,6 +1401,9 @@ export function ProgramApplyPage() {
       setInstructorSchedule(emptyInstructorAvailableSchedule())
       setInterviewSchedule(emptyInstructorAvailableSchedule())
       setVolunteerPreviousJa(emptyVolunteerPreviousJaProgram())
+      setEconomyLessonReply(emptyEconomyLessonReply())
+      setEconomyEducationExperience('')
+      setEconomyPreferredBlocks(createEmptyEconomyPreferredScheduleBlocks())
       setVolunteerEvidenceFiles([])
       setVolunteerFreeText(emptyVolunteerFreeTextItems())
       setVolunteerActivitySchedule(emptyInstructorAvailableSchedule())
@@ -1392,6 +1447,9 @@ export function ProgramApplyPage() {
     setInstructorSchedule(emptyInstructorAvailableSchedule())
     setInterviewSchedule(emptyInstructorAvailableSchedule())
     setVolunteerPreviousJa(emptyVolunteerPreviousJaProgram())
+    setEconomyLessonReply(emptyEconomyLessonReply())
+    setEconomyEducationExperience('')
+    setEconomyPreferredBlocks(createEmptyEconomyPreferredScheduleBlocks())
     setVolunteerEvidenceFiles([])
     setVolunteerFreeText(emptyVolunteerFreeTextItems())
     setVolunteerActivitySchedule(emptyInstructorAvailableSchedule())
@@ -1460,6 +1518,25 @@ export function ProgramApplyPage() {
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {
       if (program == null) return undefined
+
+      if (showEconomyInstitutionApply && isEconomyLessonReplyParagraphId(paragraph.id)) {
+        return (
+          <ApplyEconomyLessonReply
+            value={economyLessonReply}
+            onChange={setEconomyLessonReply}
+            sponsorDisplayName={program.sponsor}
+          />
+        )
+      }
+
+      if (showEconomyInstitutionApply && isEconomyEducationExperienceParagraphId(paragraph.id)) {
+        return (
+          <ApplyEconomyEducationExperience
+            value={economyEducationExperience}
+            onChange={setEconomyEducationExperience}
+          />
+        )
+      }
 
       if (isGeminiInstitutionTrainingInfoParagraphId(paragraph.id)) {
         return (
@@ -1762,6 +1839,15 @@ export function ProgramApplyPage() {
         )
       }
 
+      if (isPreferredScheduleSlot && showPreferredScheduleInput && showEconomyPreferredSchedule) {
+        return (
+          <ApplyEconomyPreferredSchedule
+            value={economyPreferredBlocks}
+            onChange={setEconomyPreferredBlocks}
+          />
+        )
+      }
+
       if (isPreferredScheduleSlot && showPreferredScheduleInput) {
         const useInstitutionScheduleBounds =
           showGeneralPreferredSchedule && isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
@@ -2004,6 +2090,11 @@ export function ProgramApplyPage() {
       basicInfo,
       teamInfo,
       guidanceAnswers,
+      economyLessonReply,
+      economyEducationExperience,
+      economyPreferredBlocks,
+      showEconomyInstitutionApply,
+      showEconomyPreferredSchedule,
       sexOffense,
       instructorCrimeRecord,
       instructorSchedule,
@@ -2091,7 +2182,7 @@ export function ProgramApplyPage() {
       }
 
       if (!isPreferredScheduleSlot || !showPreferredScheduleInput) return null
-      if (showGeminiInstitutionApply) return null
+      if (showGeminiInstitutionApply || showEconomyPreferredSchedule) return null
 
       const atPreferredScheduleMax = preferredBlocks.length >= preferredScheduleMaxBlocks
       const scheduleInputDisabled =
@@ -2112,6 +2203,7 @@ export function ProgramApplyPage() {
     [
       showGeneralPreferredSchedule,
       showGeminiInstitutionApply,
+      showEconomyPreferredSchedule,
       showTrainedTeachersApply,
       showPreferredScheduleInput,
       preferredBlocks.length,
@@ -2486,7 +2578,9 @@ export function ProgramApplyPage() {
         : showPreferredScheduleInput &&
             !isTrainedTeachersFixedScheduleTarget &&
             !skipPreferredScheduleInput
-          ? toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
+          ? showEconomyPreferredSchedule
+            ? toEconomyPortalPreferredScheduleBlocks(economyPreferredBlocks)
+            : toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
           : undefined
       if (showPreferredScheduleInput && !skipPreferredScheduleInput) {
         if (trainedTeachersScheduleNotConfigured) {
@@ -2542,10 +2636,20 @@ export function ProgramApplyPage() {
               return
             }
           }
-          const preferredError = findIncompletePreferredScheduleMessage(
-            preferredBlocks,
-            preferredScheduleMapOptions
-          )
+          const economyPreferredParagraph = showEconomyPreferredSchedule
+            ? displayDraft.paragraphs.find(paragraph =>
+                isApplicationPreferredScheduleParagraphId(paragraph.id)
+              )
+            : undefined
+          const preferredError = showEconomyPreferredSchedule
+            ? findIncompleteEconomyPreferredScheduleMessage(
+                economyPreferredBlocks,
+                economyPreferredParagraph == null || isRequiredParagraph(economyPreferredParagraph)
+              )
+            : findIncompletePreferredScheduleMessage(preferredBlocks, preferredScheduleMapOptions)
+          if (preferredError && economyPreferredParagraph) {
+            setSubmitErrorField(economyPreferredParagraph.id)
+          }
           if (preferredError) {
             if (useTrainedTeachersOperatingPeriod) {
               setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
@@ -2558,7 +2662,9 @@ export function ProgramApplyPage() {
       const preferredAnswer = isTrainedTeachersFixedScheduleTarget
         ? trainedTeachersFixedScheduleAnswer
         : showPreferredScheduleInput && !skipPreferredScheduleInput
-          ? toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
+          ? showEconomyPreferredSchedule
+            ? toEconomyPreferredScheduleAnswerValue(economyPreferredBlocks)
+            : toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
           : null
       const applyScheduleChoiceParagraphId =
         applyScheduleChoiceParagraph &&
@@ -2802,6 +2908,30 @@ export function ProgramApplyPage() {
         const found = findDraftParagraph(displayDraft, match)
         return found && !hiddenParagraphIds.has(found.id) ? found : null
       }
+      const economyLessonReplyParagraph = showEconomyInstitutionApply
+        ? visibleDraftParagraph(isEconomyLessonReplyParagraphId)
+        : null
+      const economyEducationExperienceParagraph = showEconomyInstitutionApply
+        ? visibleDraftParagraph(isEconomyEducationExperienceParagraphId)
+        : null
+      if (
+        economyLessonReplyParagraph &&
+        isRequiredParagraph(economyLessonReplyParagraph) &&
+        isEconomyLessonReplyIncomplete(economyLessonReply)
+      ) {
+        setSubmitErrorField(economyLessonReplyParagraph.id)
+        setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+        return
+      }
+      if (
+        economyEducationExperienceParagraph &&
+        isRequiredParagraph(economyEducationExperienceParagraph) &&
+        !economyEducationExperience
+      ) {
+        setSubmitErrorField(economyEducationExperienceParagraph.id)
+        setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+        return
+      }
       const volunteerPreviousJaParagraph = visibleDraftParagraph(
         isVolunteerPreviousJaProgramParagraphId
       )
@@ -3013,6 +3143,15 @@ export function ProgramApplyPage() {
           interviewSlots
         )
       }
+      const economyLessonReplyAnswer = economyLessonReplyAnswerFromValues(economyLessonReply)
+      if (economyLessonReplyParagraph && economyLessonReplyAnswer) {
+        overrides[resolveApplicationAnswerKey(economyLessonReplyParagraph)] =
+          economyLessonReplyAnswer
+      }
+      if (economyEducationExperienceParagraph && economyEducationExperience) {
+        overrides[resolveApplicationAnswerKey(economyEducationExperienceParagraph)] =
+          economyEducationExperience
+      }
       if (volunteerPreviousJaParagraph) {
         overrides[resolveApplicationAnswerKey(volunteerPreviousJaParagraph)] =
           volunteerPreviousJaProgramAnswerFromValues(volunteerPreviousJa)
@@ -3076,6 +3215,15 @@ export function ProgramApplyPage() {
       if (instructorCrimeParagraph && !instructorCrimeRecord.confirmed) {
         omitParagraphIds.add(instructorCrimeParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(instructorCrimeParagraph))
+      }
+      // 1사1교 슬롯 미응답(선택 단락) — placeholder 표 답을 보내지 않는다.
+      if (economyLessonReplyParagraph && !economyLessonReplyAnswer) {
+        omitParagraphIds.add(economyLessonReplyParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(economyLessonReplyParagraph))
+      }
+      if (economyEducationExperienceParagraph && !economyEducationExperience) {
+        omitParagraphIds.add(economyEducationExperienceParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(economyEducationExperienceParagraph))
       }
       for (const paragraph of displayDraft.paragraphs) {
         const key = resolveApplicationAnswerKey(paragraph)
@@ -3319,7 +3467,7 @@ export function ProgramApplyPage() {
           <PFText as="h2" typo="hl-sm" color="black">
             {program.title}
           </PFText>
-          <PFText as="p" typo="bd-md-md" color="primary-500">
+          <PFText as="p" typo="bd-md-rg" color="primary-500">
             {program.applicationPeriodLabel}
           </PFText>
         </div>

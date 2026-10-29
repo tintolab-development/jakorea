@@ -32,7 +32,6 @@
 }
 
 .scheduleForm :global(.detail-info-form__body) {
-  overflow: visible;
   border: 1px solid var(--table-line, #e0e0e0);
 }
 
