@@ -7,7 +7,14 @@ import {
   type ImpactStoryDetailStatus,
 } from '@/features/impact-story'
 import { RichTextViewer } from '@/shared/rich-text'
-import { PFButton, PFCategoryBadge, PFDivider, PFLoadingSpinner, PFText } from '@/shared/ui'
+import {
+  PFAttachmentDropdown,
+  PFButton,
+  PFCategoryBadge,
+  PFDivider,
+  PFLoadingSpinner,
+  PFText,
+} from '@/shared/ui'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
 
@@ -64,6 +71,17 @@ export function ImpactStoryDetailPage() {
   }
 
   const body = detail.body?.trim() ?? ''
+  const attachmentName = detail.attachmentOriginalName?.trim()
+  const attachmentUrl = detail.attachmentUrl?.trim()
+  const attachmentFiles = attachmentUrl
+    ? [
+        {
+          id: detail.id,
+          fileName: attachmentName || '첨부파일',
+          href: attachmentUrl,
+        },
+      ]
+    : []
 
   return (
     <section className={styles.page}>
@@ -97,6 +115,18 @@ export function ImpactStoryDetailPage() {
                 </span>
               </div>
             </div>
+
+            {attachmentFiles.length > 0 ? (
+              <PFAttachmentDropdown
+                files={attachmentFiles}
+                triggerLabel={`${attachmentFiles.length}개의 첨부파일`}
+                className={styles.attachmentDropdown}
+              />
+            ) : attachmentName ? (
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.attachmentName}>
+                {attachmentName}
+              </PFText>
+            ) : null}
           </header>
 
           <PFDivider variant="focus" />
