@@ -23,6 +23,7 @@ export function mapAccountPaymentListItemToRow(
     settlementId: item.settlementId,
     no: index + 1,
     instructorName: item.instructorName?.trim() || '-',
+    programId: item.programId,
     programName: item.programNameKo?.trim() || item.programName?.trim() || '-',
     institutionName: item.institutionName?.trim() || '-',
     sessionLabel: resolveSessionLabel(item),

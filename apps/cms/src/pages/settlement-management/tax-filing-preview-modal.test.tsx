@@ -49,7 +49,7 @@ describe('TaxFilingPreviewModal SERVER_FILE 다운로드', () => {
     expect(downloadIssuedSettlementExportFile).toHaveBeenCalledWith({
       serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
       filenamePrefix: '세금신고',
-      reason: '세금신고 양식 다운로드',
+      reason: '세금신고 양식 발급',
     })
   })
 })

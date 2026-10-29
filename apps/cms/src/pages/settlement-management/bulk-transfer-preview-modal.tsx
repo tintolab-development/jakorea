@@ -14,6 +14,8 @@ import {
   downloadIssuedSettlementExportFile,
   notifySettlementExportDownloadError,
 } from '@/features/settlement-management/api/account-payments/download-issued-export-file'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import {
   BULK_TRANSFER_SHEET_COLUMN_COUNT,
   buildBulkTransferFortuneSheet,
@@ -47,7 +49,15 @@ export function BulkTransferPreviewModal({
         await downloadIssuedSettlementExportFile({
           serverExport,
           filenamePrefix: '대량이체',
-          reason: '대량이체 양식 다운로드',
+          reason: '대량이체 양식 발급',
+        })
+        return
+      }
+      if (shouldUseSettlementRemote('accountPayments')) {
+        cmsAlertModal.show({
+          title: '다운로드 불가',
+          content:
+            '승인된 서버 파일이 준비된 뒤에만 대량이체 양식을 받을 수 있습니다. 원본 파일을 브라우저에서 만들지 않습니다.',
         })
         return
       }

@@ -2,7 +2,7 @@
  * 정산 관리 > 계좌 지급 확인 — 행 클릭 시 [계좌 지급 현황 상세] 풀페이지 모달
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -75,15 +75,26 @@ export function AccountPaymentStatusDetailFullPageModal({
       : null
   const detailForbidden = getApiErrorHttpStatus(detailError) === 403
   const { showAlert } = useCmsAlert()
+  const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
+  const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const detailRowId = row?.id ?? ''
+  const [overlayRowId, setOverlayRowId] = useState(detailRowId)
+  if (detailRowId !== overlayRowId) {
+    setOverlayRowId(detailRowId)
+    setPaymentCompleteConfirmOpen(false)
+    setIssuanceViewOpen(false)
+  }
+  const closeDetail = useCallback(() => {
+    setPaymentCompleteConfirmOpen(false)
+    setIssuanceViewOpen(false)
+    onClose()
+  }, [onClose])
 
   useEffect(() => {
     if (!open || !detailForbidden) return
     onClose()
     void showAlert({ title: '권한 없음', content: ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE })
   }, [open, detailForbidden, onClose, showAlert])
-
-  const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
-  const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
   const basisDetailContext = useMemo(() => {
     const subtotalBeforeWithholding = detail
       ? computePaymentOrderCalculationSubtotalBeforeWithholding(detail.blocks)
@@ -156,7 +167,7 @@ export function AccountPaymentStatusDetailFullPageModal({
     <>
       <DetailFullPageModal
         open={open}
-        onClose={onClose}
+        onClose={closeDetail}
         title={title}
         loading={detailLoading}
         error={

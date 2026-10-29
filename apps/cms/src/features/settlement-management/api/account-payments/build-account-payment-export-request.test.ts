@@ -3,6 +3,7 @@ import {
   ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
   ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT,
   buildAccountPaymentExportRequest,
+  buildRawAccountPaymentExportRequest,
 } from './build-account-payment-export-request'
 
 describe('buildAccountPaymentExportRequest', () => {
@@ -74,5 +75,41 @@ describe('buildAccountPaymentExportRequest', () => {
     expect(body.toDate).toBe('2026-08-31')
     expect(body.dateRangeValid).toBe(true)
     expect(body.reason).toContain('세금신고')
+  })
+
+  it('마스킹 발급은 원본 승인을 넣지 않는다', () => {
+    const body = buildAccountPaymentExportRequest({
+      kind: 'bulk-transfer',
+      selection: { kind: 'selected', rows: [{ settlementId: 1, accountPaymentId: 2 }] },
+    })
+    expect(body.rawPrivacyIncluded).toBe(false)
+    expect(body.approvalReference).toBeUndefined()
+  })
+})
+
+describe('buildRawAccountPaymentExportRequest', () => {
+  it('승인 reference와 기간 필터 전체 범위로 원본 export를 만든다', () => {
+    const body = buildRawAccountPaymentExportRequest({
+      kind: 'tax-report',
+      approvalReference: 'apr-1',
+      fromDate: '2026-01-01',
+      toDate: '2026-12-31',
+    })
+    expect(body.rawPrivacyIncluded).toBe(true)
+    expect(body.exportPolicy).toBe('RAW_PRIVACY_APPROVAL_REQUIRED')
+    expect(body.approvalReference).toBe('apr-1')
+    expect(body.programId).toBeUndefined()
+    expect(body.settlementIds).toEqual([])
+    expect(body.accountPaymentIds).toEqual([])
+    expect(body.status).toBe(ACCOUNT_PAYMENT_EXPORT_STATUS_PAID)
+  })
+
+  it('승인 reference가 없으면 요청을 만들지 않는다', () => {
+    expect(() =>
+      buildRawAccountPaymentExportRequest({
+        kind: 'bulk-transfer',
+        approvalReference: '  ',
+      })
+    ).toThrow(/승인 reference/)
   })
 })

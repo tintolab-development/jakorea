@@ -49,7 +49,7 @@ describe('BulkTransferPreviewModal SERVER_FILE 다운로드', () => {
     expect(downloadIssuedSettlementExportFile).toHaveBeenCalledWith({
       serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
       filenamePrefix: '대량이체',
-      reason: '대량이체 양식 다운로드',
+      reason: '대량이체 양식 발급',
     })
   })
 })

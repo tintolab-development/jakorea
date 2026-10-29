@@ -59,6 +59,7 @@ export function buildAccountPaymentExportRequest(
         : ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
     reason: `${EXPORT_REASON} (${label})`,
     businessPurpose: EXPORT_BUSINESS_PURPOSE,
+    rawPrivacyIncluded: false,
     settlementIds: selectedIds?.settlementIds ?? [],
     ...(input.kind === 'bulk-transfer'
       ? { accountPaymentIds: selectedIds?.accountPaymentIds ?? [] }
@@ -72,3 +73,42 @@ export function buildAccountPaymentExportRequest(
       : {}),
   }
 }
+
+export const RAW_PRIVACY_EXPORT_POLICY = 'RAW_PRIVACY_APPROVAL_REQUIRED'
+
+/**
+ * 대량이체·세금신고 원본 export.
+ * 회계 관리자 공식 경로는 프로그램 ID를 넣지 않는다. 빈 ID 배열과 기간 필터가 전체 범위다.
+ * approvalReference 없이 호출할 수 없다.
+ */
+export function buildRawAccountPaymentExportRequest(input: {
+  kind: 'bulk-transfer' | 'tax-report'
+  approvalReference: string
+  fromDate?: string
+  toDate?: string
+}): SettlementExportRequest {
+  const approvalReference = input.approvalReference.trim()
+  if (!approvalReference) throw new Error('승인 reference가 없습니다.')
+  const label = input.kind === 'bulk-transfer' ? '대량이체 양식 발급' : '세금신고 양식 발급'
+  return {
+    status:
+      input.kind === 'bulk-transfer'
+        ? ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT
+        : ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
+    reason: `${EXPORT_REASON} (${label})`,
+    businessPurpose: EXPORT_BUSINESS_PURPOSE,
+    exportPolicy: RAW_PRIVACY_EXPORT_POLICY,
+    rawPrivacyIncluded: true,
+    approvalReference,
+    settlementIds: [],
+    accountPaymentIds: [],
+    ...(input.fromDate || input.toDate
+      ? {
+          ...(input.fromDate ? { fromDate: input.fromDate } : {}),
+          ...(input.toDate ? { toDate: input.toDate } : {}),
+          dateRangeValid: true,
+        }
+      : {}),
+  }
+}
+

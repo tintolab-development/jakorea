@@ -27,6 +27,7 @@ export interface AccountPaymentRow {
   instructorMemberId?: number
   no: number
   instructorName: string
+  programId?: number
   programName: string
   institutionName: string
   sessionLabel: string

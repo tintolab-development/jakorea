@@ -54,24 +54,9 @@ export const TAX_FILING_INCOME_GROUPS = [
 
 const DETAIL_SLOT_COUNT = TAX_FILING_INCOME_GROUPS.reduce((a, g) => a + g.detailRows, 0)
 
-function simpleHash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i += 1) {
-    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
-  }
-  return Math.abs(h)
-}
-
 function formatPaymentDate(iso: string): string {
   const d = dayjs(iso)
   return formatDateDotWithWeekday(d)
-}
-
-function mockResidentId(seed: string): string {
-  const h = simpleHash(seed)
-  const p1 = String(100000 + (h % 899999)).padStart(6, '0')
-  const p2 = String(1000000 + (h % 8999999)).padStart(7, '0')
-  return `${p1}-${p2[0]}******`
 }
 
 /** 그룹별 대략 세액 비율 (소득세+주민세 합이 라벨 세율에 근사) */
@@ -280,7 +265,7 @@ export function buildTaxFilingSheetLines(rows: AccountPaymentRow[]): TaxFilingSh
         residenceTax,
         afterDeduction: after,
         name: src.instructorName,
-        residentId: mockResidentId(`${src.instructorName}|${src.id}`),
+        residentId: DASH,
         project: src.programName,
       })
     }
