@@ -211,15 +211,17 @@ function isVisibleApplicationParagraphRow(row: Record<string, unknown>): boolean
 }
 
 function paragraphHasRuntimeBindingOptions(row: Record<string, unknown>): boolean {
-  const rawItems = Array.isArray(row.items)
-    ? row.items
-    : Array.isArray(row.options)
-      ? row.options
-      : []
+  const rawItems = [
+    ...(Array.isArray(row.items) ? row.items : []),
+    ...(Array.isArray(row.options) ? row.options : []),
+    ...(Array.isArray(row.scheduleOptions) ? row.scheduleOptions : []),
+  ]
   return rawItems.some(item => {
     if (!item || typeof item !== 'object') return false
     const option = item as Record<string, unknown>
-    const id = String(option.id ?? option.option_value ?? '').trim()
+    const id = String(
+      option.id ?? option.option_value ?? option.optionValue ?? option.value ?? '',
+    ).trim()
     return id.length > 0
   })
 }

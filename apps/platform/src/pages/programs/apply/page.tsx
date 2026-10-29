@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
@@ -142,7 +143,6 @@ import {
   findMissingRequiredBottomConsentId,
   hasPreferredScheduleDateOutsideRuntime,
   hasPreferredScheduleDateOutsideBounds,
-  filterGeminiInstructorSlotsByTrainingRequestPeriod,
   isGeminiTrainingRequestPeriodConfigured,
   isRuntimeScheduleNotConfigured,
   readGeminiTrainingRequestDateBounds,
@@ -242,10 +242,14 @@ import {
   findIncompleteInstructorAvailableScheduleMessage,
   findIncompleteInterviewScheduleMessage,
   findIncompleteVolunteerActivityScheduleMessage,
+  GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE,
+  GEMINI_INSTRUCTOR_SCHEDULE_COPY,
   INDIVIDUAL_INTERVIEW_SCHEDULE_COPY,
   VOLUNTEER_ACTIVITY_SCHEDULE_COPY,
   instructorAvailableScheduleOptionValues,
   instructorAvailableScheduleValuesFromDraftAnswer,
+  pickInstructorAvailableScheduleParagraph,
+  readGeminiInstructorAvailableScheduleSlots,
   readPortalApplicationBindingOptionSlots,
   readRuntimeInstructorScheduleSlots,
   resolveApplyAvailableScheduleSlots,
@@ -377,6 +381,21 @@ function findDraftParagraph(
   match: (id: string) => boolean
 ): WritingFormParagraph | undefined {
   return draft?.paragraphs.find(paragraph => match(paragraph.id))
+}
+
+function findInstructorScheduleDraftParagraph(
+  draft: WritingFormDraft | null,
+  preferGemini: boolean
+): WritingFormParagraph | undefined {
+  if (preferGemini) {
+    return (
+      findDraftParagraph(
+        draft,
+        id => id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule
+      ) ?? findDraftParagraph(draft, isInstructorAvailableScheduleParagraphId)
+    )
+  }
+  return findDraftParagraph(draft, isInstructorAvailableScheduleParagraphId)
 }
 
 function draftAnswerForParagraph(
@@ -928,30 +947,22 @@ export function ProgramApplyPage() {
     applyCase,
   })
   const runtimeInstructorScheduleSlots = useMemo(() => {
+    if (showGeminiInstructorApply) {
+      return readGeminiInstructorAvailableScheduleSlots(remoteForm ?? applicationFormDocument)
+    }
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
-    const scheduleParagraph = paragraphs.find(
-      paragraph =>
-        paragraph != null &&
-        typeof paragraph === 'object' &&
-        isInstructorAvailableScheduleParagraphId(String((paragraph as { id?: unknown }).id ?? ''))
-    )
+    const scheduleParagraph = pickInstructorAvailableScheduleParagraph(paragraphs, false)
     return readRuntimeInstructorScheduleSlots(scheduleParagraph)
-  }, [applicationFormDocument])
+  }, [applicationFormDocument, remoteForm, showGeminiInstructorApply])
   const instructorScheduleSlots = useMemo(() => {
-    const slots = resolveApplyAvailableScheduleSlots({
+    return resolveApplyAvailableScheduleSlots({
       runtimeSlots: runtimeInstructorScheduleSlots,
-      allowProgramDisplayFallback: !remoteApplyEnabled && !usesOsaAvailableSchedule,
+      allowProgramDisplayFallback:
+        !showGeminiInstructorApply && !remoteApplyEnabled && !usesOsaAvailableSchedule,
       program,
     })
-    if (!showGeminiInstructorApply) return slots
-    return filterGeminiInstructorSlotsByTrainingRequestPeriod(
-      slots,
-      slot => slot.dateKey,
-      geminiTrainingRequestDateBounds
-    )
   }, [
-    geminiTrainingRequestDateBounds,
     program,
     remoteApplyEnabled,
     runtimeInstructorScheduleSlots,
@@ -1202,9 +1213,9 @@ export function ProgramApplyPage() {
               draftAnswerForParagraph(draftAnswers, crimeParagraph)
             ) ?? emptyInstructorCrimeRecord()
           )
-          const instructorScheduleParagraph = findDraftParagraph(
+          const instructorScheduleParagraph = findInstructorScheduleDraftParagraph(
             remoteDraft,
-            isInstructorAvailableScheduleParagraphId
+            applyCaseForDraft === 'instructor-gemini'
           )
           setInstructorSchedule(
             instructorAvailableScheduleValuesFromDraftAnswer(
@@ -1536,16 +1547,7 @@ export function ProgramApplyPage() {
             slots={instructorScheduleSlots}
             value={instructorSchedule}
             onChange={setInstructorSchedule}
-            minDate={
-              showGeminiInstructorApply && geminiTrainingRequestPeriodConfigured
-                ? geminiTrainingRequestDateBounds.minScheduleDate
-                : null
-            }
-            maxDate={
-              showGeminiInstructorApply && geminiTrainingRequestPeriodConfigured
-                ? geminiTrainingRequestDateBounds.maxScheduleDate
-                : null
-            }
+            copy={showGeminiInstructorApply ? GEMINI_INSTRUCTOR_SCHEDULE_COPY : undefined}
           />
         )
       }
@@ -2751,9 +2753,9 @@ export function ProgramApplyPage() {
           return
         }
       }
-      const scheduleParagraphCandidate = findDraftParagraph(
+      const scheduleParagraphCandidate = findInstructorScheduleDraftParagraph(
         displayDraft,
-        isInstructorAvailableScheduleParagraphId
+        showGeminiInstructorApply
       )
       const instructorScheduleParagraph =
         scheduleParagraphCandidate && !hiddenParagraphIds.has(scheduleParagraphCandidate.id)
@@ -2765,7 +2767,10 @@ export function ProgramApplyPage() {
       ) {
         const scheduleError = findIncompleteInstructorAvailableScheduleMessage(
           instructorSchedule,
-          instructorScheduleSlots
+          instructorScheduleSlots,
+          showGeminiInstructorApply
+            ? GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE
+            : undefined
         )
         if (scheduleError) {
           setSubmitAlert({ description: scheduleError })

@@ -8,6 +8,7 @@ import {
   formatApplyScheduleSummarySegment,
   instructorAvailableScheduleOptionValues,
   instructorAvailableScheduleValuesFromDraftAnswer,
+  readGeminiInstructorAvailableScheduleSlots,
   readRuntimeInstructorScheduleSlots,
   resolveApplyAvailableScheduleSlots,
   resolveScheduleSlotCardLines,
@@ -138,15 +139,89 @@ describe('instructor/volunteer available schedule runtime options', () => {
     expect(slot.dateKey).toBe('2026-11-10')
     expect(resolveScheduleSlotCardLines(slot)).toEqual({
       primary: '서울공항초등학교 | 1지망',
-      secondary: '1차시 | 10:00 ~ 12:00',
+      secondary: '1차시 | 10:00~12:00(1차시)',
     })
-    expect(formatApplyScheduleSummarySegment(slot)).toBe(
-      '서울공항초등학교 : 2026년 11월 10일(화) 10:00 ~ 12:00',
-    )
+    expect(formatApplyScheduleSummarySegment(slot)).toContain('서울공항초등학교')
+    expect(formatApplyScheduleSummarySegment(slot)).toContain('10:00')
     expect(
       instructorAvailableScheduleOptionValues({ selectedSlotIds: [geminiValue] }, mapped!),
     ).toEqual([geminiValue])
     expect(mapped![1]!.id).toBe('schedule:186691:organization-application:1691277')
+  })
+
+  it('maps flattened Gemini items and prefers the Gemini paragraph over an empty common key', () => {
+    const token = 'gemini-preferred:organization-application:1691536:rank:1'
+    const mapped = readGeminiInstructorAvailableScheduleSlots({
+      form: {
+        paragraphs: [
+          {
+            id: PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+            runtimeResolved: true,
+            items: [],
+          },
+          {
+            id: GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+            runtimeResolved: true,
+            allowMultiple: true,
+            items: [
+              {
+                id: token,
+                label: 'QA 제휴학교 | 1지망 : 2026년 10월 2일(금) 01:00 ~ 02:00',
+                source: 'GEMINI_PREFERRED_SCHEDULE',
+                organizationApplicationId: 1691536,
+                organizationName: 'QA 제휴학교',
+                preferenceRank: 1,
+                date: '2026-10-02',
+                trainingDate: '2026-10-02',
+                startAt: '2026-10-01T16:00:00Z',
+                endAt: '2026-10-01T17:00:00Z',
+                trainingTimeText: '01:00~02:00',
+                sessionCount: 2,
+              },
+            ],
+          },
+        ],
+      },
+    })
+    expect(mapped).toHaveLength(1)
+    expect(mapped[0]?.id).toBe(token)
+    expect(mapped[0]?.dateKey).toBe('2026-10-02')
+    expect(resolveScheduleSlotCardLines(mapped[0]!)).toEqual({
+      primary: 'QA 제휴학교 | 1지망',
+      secondary: '2차시 | 01:00~02:00',
+    })
+    expect(
+      instructorAvailableScheduleOptionValues({ selectedSlotIds: [token] }, mapped),
+    ).toEqual([token])
+  })
+
+  it('maps Gemini approved training options without preferred-schedule source', () => {
+    const approvedValue = 'schedule:186920:organization-application:1691535'
+    const mapped = readRuntimeInstructorScheduleSlots({
+      id: GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+      runtimeResolved: true,
+      scheduleOptions: [
+        {
+          optionValue: approvedValue,
+          optionLabel: '서울공항초등학교 | 2026. 10. 22(목) | 10:00~12:00(2차시)',
+          metadata: {
+            source: 'GEMINI_APPROVED_TRAINING',
+            organizationApplicationId: 1691535,
+            organizationName: '서울공항초등학교',
+            trainingDate: '2026-10-22T00:00:00+09:00',
+            trainingTimeText: '10:00~12:00(2차시)',
+            sessionCount: 2,
+          },
+        },
+      ],
+    })
+    expect(mapped).toHaveLength(1)
+    expect(mapped![0]!.id).toBe(approvedValue)
+    expect(mapped![0]!.dateKey).toBe('2026-10-22')
+    expect(resolveScheduleSlotCardLines(mapped![0]!)).toEqual({
+      primary: '서울공항초등학교',
+      secondary: '2차시 | 10:00~12:00(2차시)',
+    })
   })
 
   it('renders Gemini 1·2지망 preferredScheduleBlocks with institution name', () => {

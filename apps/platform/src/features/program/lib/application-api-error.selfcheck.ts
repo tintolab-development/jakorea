@@ -316,6 +316,24 @@ assert.deepEqual(
       '희망 교육 일정이 연수 요청 가능기간을 벗어났습니다.',
   },
 )
+assert.deepEqual(
+  collectApplicationSubmitParagraphErrors(
+    {
+      field: null,
+      message: '선택한 교육 일정이 변경되었습니다. 일정을 다시 선택해 주세요.',
+      details: {
+        answerKey: 'gemini-vt-instructor-seed-available-schedule',
+        field: 'gemini-vt-instructor-seed-available-schedule',
+      },
+    },
+    geminiPreferredDraft as never,
+    '입력값 또는 요청 조건을 확인해 주세요.',
+  ),
+  {
+    'gemini-vt-instructor-seed-available-schedule':
+      '선택한 교육 일정이 변경되었습니다. 일정을 다시 선택해 주세요.',
+  },
+)
 
 const officialDocumentDraft = {
   schemaVersion: 1 as const,

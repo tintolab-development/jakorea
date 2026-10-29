@@ -83,12 +83,20 @@ export function collectApplicationSubmitParagraphErrors(
       addParagraphError(out, draft, row.field ?? row.path, message)
     }
   } else if (details && typeof details === 'object') {
+    const detailRecord = details as Record<string, unknown>
+    addParagraphError(
+      out,
+      draft,
+      detailRecord.answerKey ?? detailRecord.field,
+      messageFromUnknown(envelope.message) ?? fallback,
+    )
     for (const [key, value] of Object.entries(details)) {
       if (key === 'reason') {
         const reason = messageFromUnknown(value)
         if (reason) addParagraphError(out, draft, envelope.field, reason)
         continue
       }
+      if (key === 'answerKey' || key === 'field') continue
       addParagraphError(out, draft, key, messageFromUnknown(value) ?? fallback)
     }
   }

@@ -899,18 +899,18 @@ export function filterItemsByScheduleDateBounds<T>(
   })
 }
 
-/** Gemini 강사 강의 가능 일정 — 기간 미설정·날짜 없는 슬롯은 0건. */
+/**
+ * Gemini 강사 강의 가능 일정.
+ * form-binding 런타임 선택지(기관 승인 후 확정 일정 포함)를 SSOT로 두고,
+ * 날짜가 있는 슬롯만 연수 요청 가능기간 밖으로 걸러 낸다.
+ */
 export function filterGeminiInstructorSlotsByTrainingRequestPeriod<T>(
   items: readonly T[],
   getDate: (item: T) => string | undefined | null,
   bounds: ApplyScheduleDateBounds
 ): T[] {
-  if (!isGeminiTrainingRequestPeriodConfigured(bounds)) return []
-  return items.filter(item => {
-    const date = getDate(item)
-    if (!date?.trim()) return false
-    return !isIsoDateOutsideScheduleBounds(date, bounds)
-  })
+  if (!isGeminiTrainingRequestPeriodConfigured(bounds)) return [...items]
+  return filterItemsByScheduleDateBounds(items, getDate, bounds)
 }
 
 export function createEmptyApplyPreferredScheduleBlocks(

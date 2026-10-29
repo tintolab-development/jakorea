@@ -1262,15 +1262,15 @@ function testGeminiPreferredSchedulePad() {
       item => item.dateKey,
       bounds,
     ).map(slot => slot.id),
-    ['in'],
+    ['in', 'undated'],
   )
   assert.deepEqual(
     filterGeminiInstructorSlotsByTrainingRequestPeriod(
-      [{ id: 'in', dateKey: '2026-11-17' }],
+      [{ id: 'approved', dateKey: '2026-10-22' }],
       item => item.dateKey,
       unconfigured,
-    ),
-    [],
+    ).map(slot => slot.id),
+    ['approved'],
   )
 }
 

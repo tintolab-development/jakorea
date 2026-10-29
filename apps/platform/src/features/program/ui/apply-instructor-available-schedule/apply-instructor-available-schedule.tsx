@@ -1,4 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import {
   formatDisplayClockLabel,
   formatDisplayDate,
@@ -52,15 +54,20 @@ function readIsoDateOnly(value: unknown): string | undefined {
   return ISO_DATE_ONLY_RE.test(trimmed) ? trimmed : undefined
 }
 
+function readIsoDateLike(value: unknown): string | undefined {
+  return readIsoDateOnly(value) ?? seoulDateTimeParts(value)?.dateKey
+}
+
 function isEducationPeriodScheduleValue(id: string): boolean {
   return /:education-period:\d+$/i.test(id)
 }
 
 function optionMetadata(option: Record<string, unknown>): Record<string, unknown> {
   const meta = option.metadata
-  return meta && typeof meta === 'object' && !Array.isArray(meta)
-    ? (meta as Record<string, unknown>)
-    : option
+  if (meta && typeof meta === 'object' && !Array.isArray(meta)) {
+    return { ...option, ...(meta as Record<string, unknown>) }
+  }
+  return option
 }
 
 const SCHEDULE_DISPLAY_PLACEHOLDER = '미지정'
@@ -385,30 +392,73 @@ function readPositiveInteger(value: unknown): number | undefined {
   return typeof parsed === 'number' && Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
 }
 
-/** Gemini 승인 연수 희망 일정 후보 — `기관 | n지망` / `n차시 | 10:00 ~ 12:00` (scheduleId 없음) */
+function readGeminiScheduleSource(
+  option: Record<string, unknown>,
+  meta: Record<string, unknown>,
+): string {
+  return String(option.source ?? meta.source ?? '')
+    .trim()
+    .toUpperCase()
+}
+
+/** 기관 승인 후 확정 연수·희망 일정 후보 모두 Gemini 강사 선택지로 본다. */
+function isGeminiInstructorScheduleOption(
+  id: string,
+  option: Record<string, unknown>,
+  meta: Record<string, unknown>,
+): boolean {
+  const source = readGeminiScheduleSource(option, meta)
+  if (source === GEMINI_PREFERRED_SCHEDULE_SOURCE || source.startsWith('GEMINI')) return true
+  if (/^gemini-preferred:/i.test(id)) return true
+  if (option.trainingDate != null || meta.trainingDate != null) return true
+  return false
+}
+
+function readGeminiScheduleDateKey(
+  option: Record<string, unknown>,
+  meta: Record<string, unknown>,
+  start: { dateKey: string } | null,
+  displayLabel: string,
+): string | undefined {
+  return (
+    readIsoDateLike(meta.date) ??
+    readIsoDateLike(option.date) ??
+    readIsoDateLike(meta.trainingDate) ??
+    readIsoDateLike(option.trainingDate) ??
+    start?.dateKey ??
+    parseKoreanEducationScheduleLabel(displayLabel).dateKey
+  )
+}
+
+/** Gemini 승인 연수·희망 일정 — `기관 | n지망` / `n차시 | 10:00 ~ 12:00` */
 function geminiPreferredScheduleSlotFromOption(
   option: Record<string, unknown>,
   meta: Record<string, unknown>,
   id: string,
   displayLabel: string,
 ): ApplyInstructorScheduleSlot | null {
-  if (meta.source !== GEMINI_PREFERRED_SCHEDULE_SOURCE) return null
+  if (!isGeminiInstructorScheduleOption(id, option, meta)) return null
   const start = seoulDateTimeParts(option.startAt ?? meta.startAt)
   const end = seoulDateTimeParts(option.endAt ?? meta.endAt)
-  const dateKey = readIsoDateOnly(meta.date) ?? start?.dateKey
-  const rank = readPositiveInteger(meta.preferenceRank)
-  const sessionCount = readPositiveInteger(meta.sessionCount)
-  const timeRange = start ? buildScheduleTimeRangeLabel(option, meta, start, end, start.dateKey) : ''
-  const title = joinScheduleCardLine([
-    readScheduleMetaString(option, meta, ['organizationName']),
-    rank ? `${rank}지망` : '',
+  const dateKey = readGeminiScheduleDateKey(option, meta, start, displayLabel)
+  const rank = readPositiveInteger(option.preferenceRank ?? meta.preferenceRank)
+  const sessionCount = readPositiveInteger(option.sessionCount ?? meta.sessionCount)
+  const trainingTimeText = readScheduleMetaString(option, meta, [
+    'trainingTimeText',
+    'timeRange',
+    'timeLabel',
   ])
+  const timeRange =
+    trainingTimeText ||
+    (start ? buildScheduleTimeRangeLabel(option, meta, start, end, start.dateKey) : '')
+  const organizationName = readScheduleMetaString(option, meta, ['organizationName'])
+  const title = joinScheduleCardLine([organizationName, rank ? `${rank}지망` : ''])
   const detail = joinScheduleCardLine([sessionCount ? `${sessionCount}차시` : '', timeRange])
   return {
     id,
     label: displayLabel,
     dateKey,
-    title,
+    title: title || undefined,
     detail: detail || undefined,
   }
 }
@@ -491,20 +541,42 @@ export function buildInstructorApplyScheduleSlots(input: {
     .filter((row): row is ApplyInstructorScheduleSlot => row != null)
 }
 
+function readBindingOptionId(option: Record<string, unknown>): string {
+  return String(
+    option.id ?? option.option_value ?? option.optionValue ?? option.value ?? '',
+  ).trim()
+}
+
+function readBindingOptionLabel(option: Record<string, unknown>): string {
+  return String(
+    option.label ?? option.option_label ?? option.optionLabel ?? '',
+  ).trim()
+}
+
+function bindingOptionRows(row: Record<string, unknown>): Record<string, unknown>[] {
+  const buckets = [row.items, row.options, row.scheduleOptions]
+  const out: Record<string, unknown>[] = []
+  const seen = new Set<string>()
+  for (const bucket of buckets) {
+    if (!Array.isArray(bucket)) continue
+    for (const item of bucket) {
+      if (!item || typeof item !== 'object') continue
+      const option = item as Record<string, unknown>
+      const id = readBindingOptionId(option)
+      if (!id || seen.has(id)) continue
+      seen.add(id)
+      out.push(option)
+    }
+  }
+  return out
+}
+
 function bindingOptionSlotsFromParagraphRow(
   row: Record<string, unknown>,
 ): ApplyInstructorScheduleSlot[] {
-  const rawItems = Array.isArray(row.items)
-    ? row.items
-    : Array.isArray(row.options)
-      ? row.options
-      : []
-  return rawItems.flatMap(item => {
-    if (!item || typeof item !== 'object') return []
-    const option = item as Record<string, unknown>
-    const id = String(option.id ?? option.option_value ?? '').trim()
-    const label = String(option.label ?? option.option_label ?? '').trim()
-    return id ? [runtimeScheduleSlotFromOption(option, id, label || id)] : []
+  return bindingOptionRows(row).map(option => {
+    const id = readBindingOptionId(option)
+    return runtimeScheduleSlotFromOption(option, id, readBindingOptionLabel(option) || id)
   })
 }
 
@@ -524,6 +596,95 @@ export function readPortalApplicationBindingOptionSlots(
  * `runtimeResolved`가 없는 문항은 런타임 선택지 대상이 아니므로 null.
  * GENERAL_ORGANIZATION 강사/봉사는 호출측에서 null을 프로그램 공통 일정으로 대체하지 않는다.
  */
+const GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_ID =
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule
+const GENERAL_INSTRUCTOR_AVAILABLE_SCHEDULE_ID =
+  PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule
+
+function paragraphIdOf(paragraph: unknown): string {
+  if (!paragraph || typeof paragraph !== 'object') return ''
+  return String((paragraph as { id?: unknown }).id ?? '').trim()
+}
+
+/** Gemini 강사 문항 키를 공통 강사 키보다 우선한다. 공통 키 optionCount=0 이어도 Gemini items를 쓴다. */
+export function pickInstructorAvailableScheduleParagraph(
+  paragraphs: readonly unknown[],
+  preferGemini: boolean,
+): unknown {
+  const matches = paragraphs.filter(paragraph => {
+    const id = paragraphIdOf(paragraph)
+    return (
+      id === GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_ID ||
+      id === GENERAL_INSTRUCTOR_AVAILABLE_SCHEDULE_ID
+    )
+  })
+  if (preferGemini) {
+    return (
+      matches.find(paragraph => paragraphIdOf(paragraph) === GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_ID) ??
+      matches[0] ??
+      null
+    )
+  }
+  return (
+    matches.find(paragraph => paragraphIdOf(paragraph) === GENERAL_INSTRUCTOR_AVAILABLE_SCHEDULE_ID) ??
+    matches[0] ??
+    null
+  )
+}
+
+function collectBindingQuestionOptions(form: unknown, questionId: string): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = []
+  const visit = (value: unknown, depth: number) => {
+    if (!value || depth > 6) return
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item, depth + 1)
+      return
+    }
+    if (typeof value !== 'object') return
+    const row = value as Record<string, unknown>
+    const id = String(row.question_id ?? row.questionId ?? row.id ?? '').trim()
+    if (id === questionId && (Array.isArray(row.options) || Array.isArray(row.items))) {
+      out.push(row)
+    }
+    for (const nested of Object.values(row)) {
+      if (nested && typeof nested === 'object') visit(nested, depth + 1)
+    }
+  }
+  visit(form, 0)
+  return out
+}
+
+export function readGeminiInstructorAvailableScheduleSlots(form: unknown): ApplyInstructorScheduleSlot[] {
+  const paragraphBuckets: unknown[] = []
+  const visitParagraphs = (value: unknown, depth: number) => {
+    if (!value || depth > 5) return
+    if (Array.isArray(value)) {
+      if (value.some(item => paragraphIdOf(item) === GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_ID)) {
+        paragraphBuckets.push(...value)
+      }
+      for (const item of value) visitParagraphs(item, depth + 1)
+      return
+    }
+    if (typeof value !== 'object') return
+    const row = value as Record<string, unknown>
+    if (Array.isArray(row.paragraphs)) visitParagraphs(row.paragraphs, depth + 1)
+    if (row.form) visitParagraphs(row.form, depth + 1)
+    if (row.data) visitParagraphs(row.data, depth + 1)
+  }
+  visitParagraphs(form, 0)
+  const paragraph = pickInstructorAvailableScheduleParagraph(paragraphBuckets, true)
+  const fromParagraph = readRuntimeInstructorScheduleSlots(paragraph) ?? []
+  const fromQuestions = collectBindingQuestionOptions(
+    form,
+    GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_ID,
+  ).flatMap(row => bindingOptionSlotsFromParagraphRow(row))
+  const byId = new Map<string, ApplyInstructorScheduleSlot>()
+  for (const slot of [...fromParagraph, ...fromQuestions]) {
+    if (!byId.has(slot.id)) byId.set(slot.id, slot)
+  }
+  return [...byId.values()]
+}
+
 export function readRuntimeInstructorScheduleSlots(
   paragraph: unknown,
 ): ApplyInstructorScheduleSlot[] | null {
@@ -571,15 +732,19 @@ export function instructorAvailableScheduleOptionValues(
 export const INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE =
   '선택 가능한 강의 일정이 없습니다. 관리자에게 문의해 주세요.'
 
+export const GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE =
+  '선택 가능한 승인 연수가 없습니다.'
+
 export const VOLUNTEER_ACTIVITY_SCHEDULE_EMPTY_MESSAGE =
   '선택 가능한 봉사 일정이 없습니다. 관리자에게 문의해 주세요.'
 
 export function findIncompleteInstructorAvailableScheduleMessage(
   values: ApplyInstructorAvailableScheduleValues,
   slots: readonly ApplyInstructorScheduleSlot[],
+  emptyMessage: string = INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE,
 ): string | null {
   if (slots.length === 0) {
-    return INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE
+    return emptyMessage
   }
   if (!slots.some(slot => values.selectedSlotIds.includes(slot.id))) {
     return '강의 진행이 가능한 일정을 하나 이상 선택해 주세요.'
@@ -640,6 +805,15 @@ const INSTRUCTOR_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
   emptyMessage: INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE,
   emptyHint:
     '기관 프로그램은 기관이 신청한 희망 일정 중 강의 진행이 가능한 일정을 모두 선택해 주세요.',
+  summaryEmptyHint: '일정을 먼저 선택해 주세요.',
+  slotChipStyle: 'lecture',
+}
+
+export const GEMINI_INSTRUCTOR_SCHEDULE_COPY: ApplyScheduleSlotPickerCopy = {
+  calendarAriaLabel: '강의 진행 가능 일정 날짜',
+  summaryLabel: '강의 진행 가능일',
+  emptyMessage: GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE,
+  emptyHint: GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE,
   summaryEmptyHint: '일정을 먼저 선택해 주세요.',
   slotChipStyle: 'lecture',
 }
