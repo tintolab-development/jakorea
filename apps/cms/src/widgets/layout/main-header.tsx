@@ -18,7 +18,7 @@ import { getRoleLabel, AppBreadcrumb, ProfileEditModal } from '@/shared/ui'
 import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { normalizeMemberListKind } from '@/shared/config/member-list-kinds'
-import { getAdminLevelLabel } from '@/shared/config/permissions'
+import { getAdminPermissionDisplayLabel } from '@/features/user/shared/lib/admin-permission-display'
 import type { Notification } from '@/features/dashboard/api/notification-service'
 import { NotificationDropdown } from '@/features/dashboard/ui/notification-dropdown'
 import { NotificationSettingsModal } from '@/features/dashboard/ui/notification-settings-modal'
@@ -222,15 +222,11 @@ export function MainHeader() {
   // 세부 권한 정보 계산 (상태 동기화 확인)
   const userRoleLabel = useMemo(() => {
     if (!user) return ''
-
-    // 관리자인 경우 adminLevel에 따른 세부 권한 표시
-    if (user.role === 'ADMIN' && user.adminLevel) {
-      return getAdminLevelLabel(user.adminLevel)
+    if (user.role === 'ADMIN') {
+      return getAdminPermissionDisplayLabel(user)
     }
-
-    // 일반 역할인 경우 기본 라벨 사용
     return getRoleLabel(user.role, user.adminLevel)
-  }, [user?.role, user?.adminLevel])
+  }, [user])
 
   if (!user) {
     return null
