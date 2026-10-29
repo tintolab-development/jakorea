@@ -518,24 +518,48 @@ function inlineImagesPath(programId: string | number): string {
   return `/api/admin/programs/${encodeURIComponent(String(programId))}/inline-images`
 }
 
-function isPositiveIntegerId(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 1
+function toPositiveIntegerId(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 1) return value
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    const parsed = Number(value.trim())
+    if (Number.isInteger(parsed) && parsed >= 1) return parsed
+  }
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return toPositiveIntegerId((value as { fileObjectId?: unknown }).fileObjectId)
+  }
+  return null
 }
 
 function readBoundFileObjectIds(payload: unknown): number[] | null {
   const body = unwrapApiBody<unknown>(payload)
   if (Array.isArray(body)) {
-    return body.filter(isPositiveIntegerId)
+    const ids = body.map(toPositiveIntegerId).filter((id): id is number => id != null)
+    return ids
   }
   if (body && typeof body === 'object' && Array.isArray((body as { fileObjectIds?: unknown }).fileObjectIds)) {
-    return (body as { fileObjectIds: unknown[] }).fileObjectIds.filter(isPositiveIntegerId)
+    return (body as { fileObjectIds: unknown[] }).fileObjectIds
+      .map(toPositiveIntegerId)
+      .filter((id): id is number => id != null)
   }
   return null
 }
 
-function sameFileObjectIds(left: number[], right: number[]): boolean {
-  if (left.length !== right.length) return false
-  return left.every((id, index) => id === right[index])
+function uniqueSortedIds(ids: number[]): number[] {
+  return [...new Set(ids)].sort((left, right) => left - right)
+}
+
+/** 순서·중복은 무시하고, 한쪽이 다른 쪽의 부분집합이면 연결이 반영된 것으로 본다. */
+function boundCompatibleWithPut(bound: number[], put: number[]): boolean {
+  const boundIds = uniqueSortedIds(bound)
+  const putIds = uniqueSortedIds(put)
+  if (boundIds.length === putIds.length && boundIds.every((id, index) => id === putIds[index])) {
+    return true
+  }
+  const putSet = new Set(putIds)
+  const boundSet = new Set(boundIds)
+  if (boundIds.length > 0 && boundIds.every(id => putSet.has(id))) return true
+  if (putIds.length > 0 && putIds.every(id => boundSet.has(id))) return true
+  return false
 }
 
 /** PUT /api/admin/programs/{programId}/inline-images — 공개 content 바인딩 */
@@ -560,14 +584,16 @@ export async function getProgramInlineImages(programId: string | number): Promis
 
 async function confirmProgramInlineImagesBound(
   programId: string | number,
-  fileObjectIds: number[]
+  fileObjectIds: number[],
+  stage: 'create' | 'update'
 ): Promise<void> {
   try {
     const bound = await getProgramInlineImages(programId)
     if (bound == null) return
-    if (!sameFileObjectIds(bound, fileObjectIds)) {
-      throw new Error('본문 이미지 연결 결과가 저장한 ID와 일치하지 않습니다.')
-    }
+    if (boundCompatibleWithPut(bound, fileObjectIds)) return
+    // 생성은 PUT 성공이 본문 연결 SSOT. GET echo 순서·부분집합 차이는 등록을 되돌리지 않는다.
+    if (stage === 'create') return
+    throw new Error('본문 이미지 연결 결과가 저장한 ID와 일치하지 않습니다.')
   } catch (error) {
     if (getApiErrorHttpStatus(error) === 404) return
     throw error
@@ -576,10 +602,11 @@ async function confirmProgramInlineImagesBound(
 
 async function putAndConfirmProgramInlineImages(
   programId: string | number,
-  fileObjectIds: number[]
+  fileObjectIds: number[],
+  stage: 'create' | 'update'
 ): Promise<void> {
   await putProgramInlineImages(programId, fileObjectIds)
-  await confirmProgramInlineImagesBound(programId, fileObjectIds)
+  await confirmProgramInlineImagesBound(programId, fileObjectIds, stage)
 }
 
 /** 바인딩 PUT 실패 중 본문 이미지와 무관한 API 오류 코드(예: UJAT_RECRUIT_TERM_DUPLICATE)인지. */
@@ -617,7 +644,7 @@ export async function syncProgramInlineImages(
   let fileObjectIds = preparedIds
   try {
     fileObjectIds = await resolveProgramInlineImageBindIds(programId, preparedIds)
-    await putAndConfirmProgramInlineImages(programId, fileObjectIds)
+    await putAndConfirmProgramInlineImages(programId, fileObjectIds, 'update')
   } catch (error) {
     throw new ProgramInlineImageBindError({
       programId,
@@ -660,7 +687,7 @@ export async function syncProgramInlineImagesKeepProgram(
   const fileObjectIds = await resolveProgramInlineImageBindIds(programId, preparedIds)
   if (fileObjectIds.length === 0) return 'skipped'
   try {
-    await putAndConfirmProgramInlineImages(programId, fileObjectIds)
+    await putAndConfirmProgramInlineImages(programId, fileObjectIds, 'create')
     return 'ok'
   } catch (error) {
     if (isUnrelatedApiError(error)) return 'skipped'

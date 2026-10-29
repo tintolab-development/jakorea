@@ -81,6 +81,25 @@ describe('syncProgramInlineImagesKeepProgram', () => {
     )
   })
 
+  it('생성 후 GET 본문 이미지 ID 순서가 달라도 등록을 실패로 보지 않는다', async () => {
+    customInstance.mockImplementation(async (config: { method?: string; url?: string }) => {
+      if (config.method === 'GET' && config.url === '/api/admin/programs/12/inline-images') {
+        return { success: true, data: { fileObjectIds: [8, 7] } }
+      }
+      if (config.method === 'GET' && config.url === '/api/admin/programs/12') {
+        return { success: true, data: { id: 12 } }
+      }
+      return { success: true, data: {} }
+    })
+
+    await expect(
+      syncProgramInlineImagesKeepProgram(12, {
+        additionalContentHtml:
+          '<img src="file-object:7" /><img src="/api/admin/files/8/content" />',
+      })
+    ).resolves.toBe('ok')
+  })
+
   it('등록 draft 본문 이미지는 프로그램 owner로 다시 올린 뒤 PUT한다', async () => {
     const draft = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
     rememberProgramInlineImageDraft(9, draft)
