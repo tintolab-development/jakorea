@@ -52,7 +52,6 @@ import {
 import {
   unmaskInstructorApplicationPrivacyRemote,
   unmaskOrganizationApplicationPrivacyRemote,
-  updateInstructorApplicationManagerCommentRemote,
 } from '@/features/program/general/api/applications-api-client'
 import { mapInstructorApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
@@ -1033,17 +1032,43 @@ export function ApplicantsDetailContents({
 
   const handleInstructorAdminCommentSave = useCallback(async () => {
     if (!instructorData) return
+    const comment = instructorAdminCommentDraft.trim()
+    if (!shouldUseOrganizationApplicationRemoteApi()) {
+      void showAlert({
+        title: PROGRAM_API_UNAVAILABLE_TITLE,
+        content: buildProgramApiUnavailableSaveContent('강사 신청 관리자 코멘트'),
+      })
+      return
+    }
+
+    const targetId = Number(instructorData.id)
+    if (!Number.isFinite(targetId)) {
+      void showAlert({
+        title: '안내',
+        content: MESSAGES.error.save,
+      })
+      return
+    }
+
     try {
-      const response = await updateInstructorApplicationManagerCommentRemote(
-        instructorData.id,
-        { managerComment: instructorAdminCommentDraft.trim() || null }
-      )
+      const result = await upsertAdminCommentByTargetRemote({
+        targetType: 'INSTRUCTOR_APPLICATION',
+        targetId,
+        screenCode: 'INSTRUCTOR_APPLICATION',
+        comment,
+      })
       onInstructorDetailSaved?.({
         ...instructorData,
-        managerComment: response.managerComment ?? undefined,
+        managerComment: result.commentText,
       })
       await queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.instructorDetail(instructorData.id),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.commentsByTarget(
+          'INSTRUCTOR_APPLICATION',
+          String(targetId)
+        ),
       })
       setIsInstructorAdminCommentModalOpen(false)
     } catch {
