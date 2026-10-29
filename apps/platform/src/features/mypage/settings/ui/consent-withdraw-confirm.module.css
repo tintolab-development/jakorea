@@ -40,3 +40,21 @@
 .actions > * {
   flex: 1 1 140px;
 }
+
+/* mobileBottomSheet 전용 — 기존 동의·철회 팝업에는 적용되지 않음 */
+.contentMobileBottomSheet .title,
+.contentMobileBottomSheet .description {
+  word-break: keep-all;
+}
+
+/* 하단 시트: 취소 / 확인 버튼을 가로로 나란히 (프로그램 신청 필수 동의 모달과 동일) */
+.contentMobileBottomSheet .actions {
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+.contentMobileBottomSheet .actions > * {
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-width: 0;
+}

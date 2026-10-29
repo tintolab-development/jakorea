@@ -149,11 +149,23 @@ export async function submitPortalConsentDocumentFromWriteState(
   })
 }
 
-/** 마이페이지 — 초상권 수집·이용 동의서 */
+/** 마이페이지 — 초상권 수집·이용 동의서 (미성년 프로그램 신청 시 `programTarget`) */
 export async function submitPortalPortraitConsentFromWriteState(
   state: PortraitPortalConsentWriteState,
+  options?: {
+    programTarget?: {
+      programId: number
+      /**
+       * 보호자 본인인증 토큰. TODO(BE): complete 요청 필드명 확정 전이라 아직 보내지 않는다.
+       */
+      guardianVerificationToken?: string
+    }
+  },
 ): Promise<void> {
-  const createBody = buildPortalPortraitRightsConsentCreateRequest()
+  const programTarget = options?.programTarget
+  const createBody = buildPortalPortraitRightsConsentCreateRequest(
+    programTarget ? { programId: programTarget.programId } : undefined,
+  )
   const created = await createPortalConsentDocument(createBody)
   const documentId = created.documentId
   if (documentId == null) {

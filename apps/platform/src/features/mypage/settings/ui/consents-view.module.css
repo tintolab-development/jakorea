@@ -114,6 +114,21 @@
   min-width: 52px;
 }
 
+/* 지정 안내 문구(미성년 초상권 미동의) 전용 — 줄바꿈 시 2번째 줄도 칩 오른쪽에서 시작 */
+.statusInfoHintBesideBadge {
+  flex-wrap: nowrap;
+  align-items: baseline;
+}
+
+.statusInfoHintBesideBadge > .statusBadge {
+  flex-shrink: 0;
+}
+
+.statusHintBesideBadge {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .statusToggle {
   flex-shrink: 0;
 }

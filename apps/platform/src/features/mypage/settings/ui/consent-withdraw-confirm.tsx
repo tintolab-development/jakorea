@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { PFButton, PFModal, PFText } from '@/shared/ui'
+import { useMediaQuery } from '@/shared/hooks'
+import { platformMediaQueries } from '@/shared/lib'
 import styles from './consent-withdraw-confirm.module.css'
 
 type ConsentWithdrawConfirmProps = {
@@ -13,6 +15,11 @@ type ConsentWithdrawConfirmProps = {
   confirmLabel?: ReactNode
   /** 취소 버튼 문구 — 기본값: `취소` */
   cancelLabel?: ReactNode
+  /**
+   * PC 미만에서 하단 시트(`PFModal` `mobilePlacement="bottom"`, 핸들 표시·닫기(X) 숨김) — 기본값: `false`.
+   * 프로그램 신청 필수 동의 모달과 같은 패턴.
+   */
+  mobileBottomSheet?: boolean
   onCancel: () => void
   onConfirm: () => void
 }
@@ -25,13 +32,27 @@ export function ConsentWithdrawConfirm({
   mode = 'withdraw',
   confirmLabel,
   cancelLabel = '취소',
+  mobileBottomSheet = false,
   onCancel,
   onConfirm,
 }: ConsentWithdrawConfirmProps) {
   const isAgree = mode === 'agree'
+  // 하단 시트(PC 미만)에서만 닫기(X)를 숨긴다. PC 팝업은 기존과 같다.
+  const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   return (
-    <PFModal open={open} size="md" onClose={onCancel} closeOnBackdropClick={!confirmLoading}>
-      <div className={styles.content}>
+    <PFModal
+      open={open}
+      size="md"
+      onClose={onCancel}
+      closeOnBackdropClick={!confirmLoading}
+      mobilePlacement={mobileBottomSheet ? 'bottom' : undefined}
+      showCloseButton={!(mobileBottomSheet && isBelowPc)}
+    >
+      <div
+        className={
+          mobileBottomSheet ? `${styles.content} ${styles.contentMobileBottomSheet}` : styles.content
+        }
+      >
         <div className={styles.textBlock}>
           <PFText as="div" typo="hl-lg" color="black" className={styles.title}>
             {title}
@@ -69,6 +90,12 @@ type ConsentWithdrawCompleteProps = {
   open: boolean
   title: ReactNode
   description: ReactNode
+  /** 버튼 문구 — 기본값: `확인` */
+  confirmLabel?: ReactNode
+  /** 버튼 클릭 — 미지정 시 `onClose` */
+  onConfirm?: () => void
+  /** 우측 상단 닫기(X) 노출 — 기본값: `true` */
+  showCloseButton?: boolean
   onClose: () => void
 }
 
@@ -76,10 +103,19 @@ export function ConsentWithdrawComplete({
   open,
   title,
   description,
+  confirmLabel = '확인',
+  onConfirm,
+  showCloseButton = true,
   onClose,
 }: ConsentWithdrawCompleteProps) {
   return (
-    <PFModal open={open} size="md" onClose={onClose} closeOnBackdropClick>
+    <PFModal
+      open={open}
+      size="md"
+      onClose={onClose}
+      closeOnBackdropClick
+      showCloseButton={showCloseButton}
+    >
       <div className={styles.content}>
         <div className={styles.textBlock}>
           <PFText as="div" typo="hl-lg" color="black" className={styles.title}>
@@ -89,8 +125,14 @@ export function ConsentWithdrawComplete({
             {description}
           </PFText>
         </div>
-        <PFButton type="button" variant="primary" size="xlarge" width="100%" onClick={onClose}>
-          확인
+        <PFButton
+          type="button"
+          variant="primary"
+          size="xlarge"
+          width="100%"
+          onClick={onConfirm ?? onClose}
+        >
+          {confirmLabel}
         </PFButton>
       </div>
     </PFModal>

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { ConsentWriteFormPage } from '@/features/mypage/consent/ui/consent-write-form-page'
 import {
@@ -17,6 +17,16 @@ import {
 } from '@/features/mypage/settings/lib/settings-consent-key'
 import { MypagePortraitConsentWriteForm } from '@/features/mypage/settings/ui/mypage-portrait-consent-write-form'
 import { parseSafeInternalPath } from '@/features/mypage/lib/safe-internal-path'
+import { parsePortalProgramId } from '@/features/program/api/mappers'
+import {
+  markProgramMinorPortraitConsentCompleted,
+  readProgramMinorPortraitAttempt,
+} from '@/features/program/lib/program-minor-portrait-attempt'
+
+/** 미성년 프로그램 신청 — 보호자 본인인증 직후 라우트 state (토큰은 저장·출력하지 않는다) */
+type ProgramMinorPortraitRouteState = {
+  programMinorPortrait?: { guardianVerificationToken?: string }
+} | null
 
 export function MypageSettingsConsentPage() {
   const navigate = useNavigate()
@@ -28,12 +38,27 @@ export function MypageSettingsConsentPage() {
   const returnTo =
     parseSafeInternalPath(searchParams.get('returnTo')) ?? MYPAGE_SETTINGS_CONSENTS_TAB
   const isView = searchParams.get('mode') === 'view'
+  const location = useLocation()
+  // 미성년 프로그램 신청: `?programId=` 가 있으면 프로그램 단위 초상권 동의서로 작성한다.
+  const minorProgramId = isPortraitKey ? parsePortalProgramId(searchParams.get('programId')) : null
+  const minorBackTo = parseSafeInternalPath(searchParams.get('backTo')) ?? returnTo
+  const minorGuardianVerified =
+    minorProgramId != null && readProgramMinorPortraitAttempt(minorProgramId) != null
+  const minorGuardianVerificationToken = (location.state as ProgramMinorPortraitRouteState)
+    ?.programMinorPortrait?.guardianVerificationToken
 
   useEffect(() => {
     if (!isValidKey) {
       navigate(MYPAGE_SETTINGS_CONSENTS_TAB, { replace: true })
     }
   }, [isValidKey, navigate])
+
+  // 보호자 본인인증 없이 URL 로 직접 들어온 경우 — 신청 흐름 처음으로 돌려보낸다.
+  useEffect(() => {
+    if (minorProgramId != null && !minorGuardianVerified) {
+      navigate(minorBackTo, { replace: true })
+    }
+  }, [minorBackTo, minorGuardianVerified, minorProgramId, navigate])
 
   if (!isValidKey) {
     return null
@@ -51,6 +76,12 @@ export function MypageSettingsConsentPage() {
 
   const handleComplete = () => {
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })
+    if (minorProgramId != null) {
+      // 이번 신청 시도의 동의 완료 → 신청서로 (replace: 뒤로가기로 동의서 재제출 방지)
+      markProgramMinorPortraitConsentCompleted(minorProgramId)
+      navigate(returnTo, { replace: true })
+      return
+    }
     navigate(returnTo)
   }
   const [titleAside, setTitleAside] = useState<ReactNode>(null)
@@ -61,12 +92,20 @@ export function MypageSettingsConsentPage() {
       title={title}
       description={description}
       titleAside={titleAside}
-      onBack={() => navigate(returnTo)}
+      onBack={() => navigate(minorProgramId != null ? minorBackTo : returnTo)}
     >
       {isPortraitKey ? (
         <MypagePortraitConsentWriteForm
           onComplete={handleComplete}
           onTitleAside={setTitleAside}
+          programTarget={
+            minorProgramId != null
+              ? {
+                  programId: minorProgramId,
+                  guardianVerificationToken: minorGuardianVerificationToken,
+                }
+              : undefined
+          }
         />
       ) : isInstructorApplyConsentKey(consentKey) ? (
         <InstructorApplyConsentWriteForm

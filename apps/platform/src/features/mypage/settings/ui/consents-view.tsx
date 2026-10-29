@@ -21,6 +21,7 @@ import {
   type PortalConsentMutationResponse,
 } from '../api/consents'
 import { useSettingsConsents } from '../hooks/use-settings-consents'
+import { useSettingsView } from '../hooks/use-settings-view'
 import type { SettingsConsentItem, SettingsConsentItemId } from '../lib/consent-catalog'
 import {
   canWithdrawConsent,
@@ -36,7 +37,22 @@ import {
   settingsConsentItemIdToWriteKey,
 } from '../lib/settings-consent-key'
 import { downloadSubmittedCrimeConsent } from '../lib/download-submitted-crime-consent'
+import { EMPTY_SETTINGS_VALUE } from '../lib/constants'
+import {
+  PORTRAIT_GUARDIAN_VERIFICATION_UNAVAILABLE_MESSAGE,
+  startPortraitGuardianVerification,
+} from '../lib/portrait-guardian-verification'
+import {
+  formatPortraitGuardianVerifiedDate,
+  PORTRAIT_GUARDIAN_CARD_COPY,
+  PORTRAIT_GUARDIAN_CONFIRM_COPY,
+  PORTRAIT_GUARDIAN_ERROR_TITLE,
+  PORTRAIT_GUARDIAN_MISSING_MESSAGE,
+  PORTRAIT_GUARDIAN_VERIFIED_COPY,
+  validatePortraitGuardianRelation,
+} from '../lib/portrait-guardian-verification-copy'
 import { ConsentWithdrawComplete, ConsentWithdrawConfirm } from './consent-withdraw-confirm'
+import { PortraitGuardianInfoModal } from './portrait-guardian-info-modal'
 import { ConsentDocumentPreviewOverlay } from './consent-document-preview-overlay'
 import styles from './consents-view.module.css'
 
@@ -211,6 +227,8 @@ function ConsentCard({
   onWriteDocument,
   onDownloadDocument,
   onWithdraw,
+  notAgreedWriteLabel = '동의서 작성',
+  notAgreedHint,
 }: {
   item: SettingsConsentItem
   marketingAgreed: boolean
@@ -222,8 +240,15 @@ function ConsentCard({
   onWriteDocument?: (item: SettingsConsentItem) => void
   onDownloadDocument?: (item: SettingsConsentItem) => void
   onWithdraw?: (item: SettingsConsentItem) => void
+  /** 미동의 동의서 버튼 문구 — 기본값: `동의서 작성` */
+  notAgreedWriteLabel?: string
+  /** 미동의 안내 문구 — 지정 시 `item.hint`(만료 안내 포함) 대신 노출 */
+  notAgreedHint?: string
 }) {
   const agreed = item.kind === 'toggle' ? marketingAgreed : item.agreed
+  const hint = notAgreedHint ?? item.hint
+  /** 지정 안내 문구(미성년 초상권) — 두 줄이어도 칩 오른쪽 시작선에 맞춤 */
+  const alignHintBesideBadge = !agreed && notAgreedHint != null
   const canWithdraw =
     onWithdraw != null &&
     canWithdrawConsent({
@@ -261,7 +286,13 @@ function ConsentCard({
       </div>
 
       <div className={styles.statusRow}>
-        <div className={styles.statusInfo}>
+        <div
+          className={
+            alignHintBesideBadge
+              ? `${styles.statusInfo} ${styles.statusInfoHintBesideBadge}`
+              : styles.statusInfo
+          }
+        >
           <ConsentStatusBadge agreed={agreed} />
           {item.kind === 'document' && agreed && (item.agreedAt || item.validityLabel) ? (
             <PFText typo="bd-sm-rg" color="neutral-cool-500">
@@ -278,9 +309,13 @@ function ConsentCard({
               동의일시 {item.agreedAt}
             </PFText>
           ) : null}
-          {!agreed && item.hint ? (
-            <PFText typo="bd-sm-rg" color="neutral-cool-500">
-              {item.hint}
+          {!agreed && hint ? (
+            <PFText
+              typo="bd-sm-rg"
+              color="neutral-cool-500"
+              className={alignHintBesideBadge ? styles.statusHintBesideBadge : undefined}
+            >
+              {hint}
             </PFText>
           ) : null}
         </div>
@@ -360,7 +395,7 @@ function ConsentCard({
             width="100%"
             onClick={() => onWriteDocument?.(item)}
           >
-            동의서 작성
+            {notAgreedWriteLabel}
           </PFButton>
         </div>
       ) : null}
@@ -373,6 +408,7 @@ export function SettingsConsentsView() {
   const terms = useTermsViewModal()
   const queryClient = useQueryClient()
   const consents = useSettingsConsents()
+  const { guardian } = useSettingsView()
   const marketingItem = consents.basicItems.find(item => item.id === 'marketing')
   const [marketingOverride, setMarketingOverride] = useState<boolean | null>(null)
   const marketingAgreed = marketingOverride ?? marketingItem?.agreed ?? false
@@ -392,17 +428,84 @@ export function SettingsConsentsView() {
     withdrawnAt: string
   } | null>(null)
   const [documentPreviewItem, setDocumentPreviewItem] = useState<SettingsConsentItem | null>(null)
+  /** 미성년 초상권 — 보호자 본인인증 단계 (1: confirm, 2: info, 4: verifiedAt) */
+  const [portraitGuardianStep, setPortraitGuardianStep] = useState<'confirm' | 'info' | null>(null)
+  const [portraitGuardianRelation, setPortraitGuardianRelation] = useState('')
+  const [portraitGuardianRelationError, setPortraitGuardianRelationError] = useState<string | null>(
+    null
+  )
+  const [isPortraitGuardianVerifying, setIsPortraitGuardianVerifying] = useState(false)
+  const [portraitGuardianVerifiedAt, setPortraitGuardianVerifiedAt] = useState<string | null>(null)
   const resolveWithdrawCopy = (id: SettingsConsentItemId) =>
     BASIC_WITHDRAW_COPY[id] ?? DOCUMENT_WITHDRAW_COPY[id]
 
   const withdrawCopy = withdrawTarget ? resolveWithdrawCopy(withdrawTarget.id) : undefined
   const completeCopy = withdrawComplete ? resolveWithdrawCopy(withdrawComplete.id) : undefined
 
-  const handleWriteDocument = (item: SettingsConsentItem) => {
-    if (!isSettingsDocumentConsentItemId(item.id)) return
-    const consentKey = settingsConsentItemIdToWriteKey(item.id)
+  /** 미성년 초상권 카드 — 미동의 문구 (성인·다른 카드는 기본값) */
+  const resolvePortraitGuardianCardProps = (item: SettingsConsentItem) =>
+    item.id === 'portrait' && consents.isMinor
+      ? {
+          notAgreedWriteLabel: PORTRAIT_GUARDIAN_CARD_COPY.writeLabel,
+          notAgreedHint: PORTRAIT_GUARDIAN_CARD_COPY.notAgreedHint,
+        }
+      : undefined
+
+  const navigateToWriteDocument = (id: SettingsConsentItemId) => {
+    if (!isSettingsDocumentConsentItemId(id)) return
+    const consentKey = settingsConsentItemIdToWriteKey(id)
     if (!consentKey) return
     navigate(settingsConsentWritePath(consentKey))
+  }
+
+  const handleWriteDocument = (item: SettingsConsentItem) => {
+    if (item.id === 'portrait' && consents.isMinor) {
+      setPortraitGuardianRelation('')
+      setPortraitGuardianRelationError(null)
+      setPortraitGuardianStep('confirm')
+      return
+    }
+    navigateToWriteDocument(item.id)
+  }
+
+  const handlePortraitGuardianConfirm = () => {
+    if (!guardian) {
+      setPortraitGuardianStep(null)
+      setNotice({
+        title: PORTRAIT_GUARDIAN_ERROR_TITLE,
+        description: PORTRAIT_GUARDIAN_MISSING_MESSAGE,
+      })
+      return
+    }
+    setPortraitGuardianStep('info')
+  }
+
+  const handlePortraitGuardianInfoConfirm = async () => {
+    if (isPortraitGuardianVerifying) return
+    const relationError = validatePortraitGuardianRelation(portraitGuardianRelation)
+    setPortraitGuardianRelationError(relationError)
+    if (relationError) return
+    setIsPortraitGuardianVerifying(true)
+    try {
+      const result = await startPortraitGuardianVerification({
+        relation: portraitGuardianRelation.trim(),
+      })
+      setPortraitGuardianStep(null)
+      setPortraitGuardianVerifiedAt(
+        formatPortraitGuardianVerifiedDate(result.verifiedAt) ?? formatWithdrawnDate(new Date())
+      )
+    } catch (error) {
+      setPortraitGuardianStep(null)
+      setNotice({
+        title: PORTRAIT_GUARDIAN_ERROR_TITLE,
+        description:
+          error instanceof Error && error.message
+            ? error.message
+            : PORTRAIT_GUARDIAN_VERIFICATION_UNAVAILABLE_MESSAGE,
+      })
+    } finally {
+      setIsPortraitGuardianVerifying(false)
+    }
   }
 
   const handleDownloadDocument = (item: SettingsConsentItem) => {
@@ -581,6 +684,7 @@ export function SettingsConsentsView() {
             onViewDocument={item.kind === 'document' ? setDocumentPreviewItem : undefined}
             onWriteDocument={item.kind === 'document' ? handleWriteDocument : undefined}
             onWithdraw={BASIC_WITHDRAW_COPY[item.id] ? openWithdrawConfirm : undefined}
+            {...resolvePortraitGuardianCardProps(item)}
           />
         ))}
       </section>
@@ -604,6 +708,7 @@ export function SettingsConsentsView() {
             onWriteDocument={handleWriteDocument}
             onDownloadDocument={handleDownloadDocument}
             onWithdraw={resolveWithdrawCopy(item.id) ? openWithdrawConfirm : undefined}
+            {...resolvePortraitGuardianCardProps(item)}
           />
         ))}
       </section>
@@ -662,6 +767,51 @@ export function SettingsConsentsView() {
             : null
         }
         onClose={() => setMarketingAgreedAt(null)}
+      />
+
+      <ConsentWithdrawConfirm
+        open={portraitGuardianStep === 'confirm'}
+        mode="agree"
+        title={PORTRAIT_GUARDIAN_CONFIRM_COPY.title}
+        description={PORTRAIT_GUARDIAN_CONFIRM_COPY.description}
+        confirmLabel={PORTRAIT_GUARDIAN_CONFIRM_COPY.confirmLabel}
+        mobileBottomSheet
+        onCancel={() => setPortraitGuardianStep(null)}
+        onConfirm={handlePortraitGuardianConfirm}
+      />
+
+      <PortraitGuardianInfoModal
+        open={portraitGuardianStep === 'info'}
+        guardianName={guardian?.name ?? EMPTY_SETTINGS_VALUE}
+        guardianPhone={guardian?.phone ?? EMPTY_SETTINGS_VALUE}
+        relation={portraitGuardianRelation}
+        relationError={portraitGuardianRelationError}
+        confirmLoading={isPortraitGuardianVerifying}
+        onRelationChange={value => {
+          setPortraitGuardianRelation(value)
+          if (portraitGuardianRelationError) setPortraitGuardianRelationError(null)
+        }}
+        onCancel={() => setPortraitGuardianStep(null)}
+        onConfirm={() => {
+          void handlePortraitGuardianInfoConfirm()
+        }}
+      />
+
+      <ConsentWithdrawComplete
+        open={portraitGuardianVerifiedAt != null}
+        title={PORTRAIT_GUARDIAN_VERIFIED_COPY.title}
+        description={
+          portraitGuardianVerifiedAt
+            ? `${PORTRAIT_GUARDIAN_VERIFIED_COPY.dateLabel} : ${portraitGuardianVerifiedAt}\n${PORTRAIT_GUARDIAN_VERIFIED_COPY.guide}`
+            : null
+        }
+        confirmLabel={PORTRAIT_GUARDIAN_VERIFIED_COPY.confirmLabel}
+        showCloseButton={false}
+        onConfirm={() => {
+          setPortraitGuardianVerifiedAt(null)
+          navigateToWriteDocument('portrait')
+        }}
+        onClose={() => setPortraitGuardianVerifiedAt(null)}
       />
 
       <PFAlertModal
