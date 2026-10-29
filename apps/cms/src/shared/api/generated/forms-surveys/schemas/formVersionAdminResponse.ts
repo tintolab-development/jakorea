@@ -21,6 +21,8 @@ export interface FormVersionAdminResponse {
   publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** CATALOG | COPY | PROGRAM. GET version write-guard SSOT. */
   templateScope?: string | null;
+  /** PROGRAM 전용 복사본의 소유 프로그램. CATALOG/COPY는 null. */
   ownerProgramId?: number | null;
 }

@@ -9,14 +9,10 @@ import type { MemberPortalConsentFormTemplateVersionExtensionJson } from './memb
 import type { MemberPortalConsentFormTemplateVersionSchemaJson } from './memberPortalConsentFormTemplateVersionSchemaJson';
 import type { MemberPortalConsentFormTemplateVersionSettingsJson } from './memberPortalConsentFormTemplateVersionSettingsJson';
 
-/**
- * Portal consent draft에 고정된 CMS form template version payload.
- */
 export interface MemberPortalConsentFormTemplateVersion {
   templateVersionId?: number;
   templateCode?: string;
   versionNo?: number;
-  /** @jakorea/form-schema WritingFormDraft payload. */
   schemaJson?: MemberPortalConsentFormTemplateVersionSchemaJson;
   extensionJson?: MemberPortalConsentFormTemplateVersionExtensionJson;
   settingsJson?: MemberPortalConsentFormTemplateVersionSettingsJson;

@@ -30,7 +30,6 @@ import type {
   FormTemplateVersionCopyRequest,
   FormTemplateVersionCreateRequest,
   FormTemplateVersionPublishRequest,
-  FormTemplateVersionResponse,
   FormTemplateVersionSummaryResponse,
   FormTemplateVersionUpdateRequest,
   FormVersionAdminResponse,
@@ -221,8 +220,49 @@ const updateVersion = (
     }
 
 /**
- * SURVEY·SATISFACTION·LECTURE_EVALUATION 등 설문류는 submissionStartAt 전이면 409 FORM_SUBMISSION_NOT_STARTED, submissionEndAt 이후면 409 FORM_SUBMISSION_CLOSED. 기간이 없는 SATISFACTION·LECTURE_EVALUATION은 기간 제한 없이 제출한다. 신규 바인딩은 PUBLISHED만 허용하며, 활성 바인딩이 고정한 이전 발행본은 이후 ARCHIVED되어도 제출할 수 있다. UJAT 교육계획서(issuance-2)·교육일지(issuance-ujat-edu-journal)는 유효한 ISSUANCE 바인딩과 contextType=PROGRAM_SCHEDULE, contextId=실제 교육일 scheduleId가 필요하고, 바인딩을 자동 생성하지 않는다. 해당 공식 UJAT 교육문서의 파일 문항은 fileObjectIdsByQuestion으로 본인 업로드·CLEAN·AVAILABLE/CONFIRMED 파일의 filePurpose=ASSIGNMENT_ATTACHMENT를 보낼 수 있으며, 서버가 UJAT 프로그램·VOLUNTEER 실제 교육일 배정·소유권을 재검증한다. 그 외 ISSUANCE 양식에는 이 목적을 허용하지 않는다. 활동 포기 이후 신규 제출은 409 FORM_SUBMISSION_ACTIVITY_ABANDONED. UJAT 공식 교육문서는 문서 제출기한이 지나도 미제출 슬롯의 최초 제출은 허용하되, 제출 후 기한 경과 수정은 피드백 또는 수정요청이 있어야 한다.
- * @summary 프로그램 양식 연결 제출
+ * ### 이 API가 하는 일
+ * - POST /api/portal/me/programs/{programId}/form-bindings/{bindingId}/responses
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `POST /api/portal/me/programs/{programId}/form-bindings/{bindingId}/responses`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
+ * - 응답 사용 위치: 사용자 대상 설문/만족도 응답 제출 결과로 화면 목록/모달/응답 상태를 갱신
+ * - 프론트 조회 키: `post_users_me_programs_programId_form_bindings_bindingId_responses`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
+ * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 일반/교사/강사 회원 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 활성 바인딩 고정 PUBLISHED 또는 과거 발행 ARCHIVED 제출. 바인딩 기간·소유권 유지
+ * @summary POST /api/portal/me/programs/{programId}/form-bindings/{bindingId}/responses
  */
 const submitBinding = (
     programId: number,
@@ -238,8 +278,49 @@ const submitBinding = (
     }
 
 /**
- * 생성 시 받은 formType, targetRole, targetScope, targetScopeId를 그대로 반환한다. 설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)는 progressStatus를 함께 반환한다. SURVEY는 submissionStartAt·submissionEndAt을 모두 입력해야 하며, SATISFACTION·LECTURE_EVALUATION은 기간 없음도 허용한다. now < submissionStartAt이면 BEFORE_START이고, 그때만 availableActions에 DELETE와 UPDATE_TEMPLATE이 있다. expectedRespondentCount는 만족도 대상별 예상 인원이다. 대상을 확정할 수 없으면 null이며 submittedCount와 같지 않다.
- * @summary 프로그램 양식 연결 목록 조회
+ * ### 이 API가 하는 일
+ * - 프로그램 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `GET /api/admin/programs/{programId}/form-bindings`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
+ * - 응답 사용 위치: 프로그램 상세 설문/만족도 바인딩 목록 조회 결과로 화면 목록/모달/응답 상태를 갱신
+ * - 프론트 조회 키: `get_programs_programId_form_bindings`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
+ * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 프로그램 조회
  */
 const formBindings = (
     programId: string,
@@ -251,14 +332,55 @@ const formBindings = (
     }
 
 /**
- * submissionStartAt·submissionEndAt은 ISO-8601 오프셋(Z, +09:00) 모두 받고 UTC Instant로 저장·응답한다. formType=SURVEY는 두 값을 모두 보내야 하며, 누락 시 400 FORM_BINDING_SUBMISSION_PERIOD_REQUIRED를 반환한다. SATISFACTION·LECTURE_EVALUATION은 기간 없이 등록할 수 있다. 두 값이 모두 있고 종료가 시작보다 늦지 않으면 400 FORM_BINDING_INVALID_SUBMISSION_PERIOD. 신규 연결은 PUBLISHED templateVersionId만 허용하며 DRAFT 또는 ARCHIVED는 409 PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION이다. 연결 후 새 버전 발행으로 고정 버전이 ARCHIVED되어도 기존 active binding은 정상 스냅샷이며 최신 PUBLISHED 버전으로 자동 교체하지 않는다.
- * @summary 프로그램 양식 연결 생성
+ * ### 이 API가 하는 일
+ * - POST /api/admin/programs/{programId}/form-bindings
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `POST /api/admin/programs/{programId}/form-bindings`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
+ * - 응답 사용 위치: 프로그램 상세 설문/만족도 바인딩 등록 결과로 화면 목록/모달/응답 상태를 갱신
+ * - 프론트 조회 키: `post_programs_programId_form_bindings`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
+ * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/programs/{programId}/form-bindings
  */
 const createFormBinding = (
     programId: string,
     programFormBindingRequest: ProgramFormBindingRequest,
- options?: SecondParameter<typeof customInstance<unknown>>,) => {
-      return customInstance<unknown>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/programs/${programId}/form-bindings`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: programFormBindingRequest
@@ -479,8 +601,8 @@ const listVersions = (
 const createVersion1 = (
     templateId: number,
     formTemplateVersionCreateRequest: FormTemplateVersionCreateRequest,
- options?: SecondParameter<typeof customInstance<FormTemplateVersionResponse>>,) => {
-      return customInstance<FormTemplateVersionResponse>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/form-templates/${templateId}/versions`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: formTemplateVersionCreateRequest
@@ -878,8 +1000,49 @@ const submitResponse = (
     }
 
 /**
- * 설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)는 progressStatus가 BEFORE_START이고 submittedCount가 0일 때만 비활성화한다. 그 외에는 409 FORM_BINDING_NOT_DELETABLE. 신청서 등 설문류가 아닌 연결은 기존 삭제 규칙을 유지한다.
- * @summary 프로그램 양식 연결 비활성화
+ * ### 이 API가 하는 일
+ * - 프로그램 삭제
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `DELETE /api/admin/programs/{programId}/form-bindings/{bindingId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
+ * - 응답 사용 위치: 프로그램 상세 설문/만족도 바인딩 비활성화 결과로 화면 목록/모달/응답 상태를 갱신
+ * - 프론트 조회 키: `delete_programs_programId_form_bindings_bindingId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
+ * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 프로그램 삭제
  */
 const deactivateFormBinding = (
     programId: string,
@@ -892,15 +1055,56 @@ const deactivateFormBinding = (
     }
 
 /**
- * 부분 수정이다. 보내지 않았거나 null인 필드는 기존 값을 유지한다. submissionStartAt·submissionEndAt만 보내 기간만 고칠 수 있고, SURVEY는 저장 후 시작·종료일이 모두 있어야 하며, 누락 시 400 FORM_BINDING_SUBMISSION_PERIOD_REQUIRED를 반환한다. null로 기간을 지울 수는 없다. 수정 후 종료가 시작보다 늦지 않으면 400 FORM_BINDING_INVALID_SUBMISSION_PERIOD. templateId+templateVersionId로 다른 템플릿의 PUBLISHED 버전으로 교체할 수 있다(PUBLISHED 아니면 409 PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION). 기존 active binding에 고정된 version이 이후 ARCHIVED된 것은 정상이며, 템플릿을 교체하지 않는 속성 수정은 ARCHIVED 상태만으로 거부하지 않는다. 최신 PUBLISHED 버전으로 자동 교체하지 않는다. 교체 시 formType과 템플릿 formType·category는 바뀔 수 없다(400 FORM_BINDING_FORM_TYPE_IMMUTABLE). 설문류는 progressStatus가 BEFORE_START가 아니거나 submittedCount가 1 이상이면 409 FORM_BINDING_TEMPLATE_LOCKED. 교체 후 이전 템플릿이 이 프로그램 소유 PROGRAM scope이고 다른 활성 연결·응답이 없으면 soft delete한다(CATALOG/COPY는 건드리지 않음).
- * @summary 프로그램 양식 연결 수정
+ * ### 이 API가 하는 일
+ * - 프로그램 부분 수정
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `PATCH /api/admin/programs/{programId}/form-bindings/{bindingId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
+ * - 응답 사용 위치: 프로그램 상세 설문/만족도 바인딩 수정 결과로 화면 목록/모달/응답 상태를 갱신
+ * - 프론트 조회 키: `patch_programs_programId_form_bindings_bindingId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
+ * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 프로그램 부분 수정
  */
 const updateFormBinding = (
     programId: string,
     bindingId: number,
     programFormBindingRequest: ProgramFormBindingRequest,
- options?: SecondParameter<typeof customInstance<unknown>>,) => {
-      return customInstance<unknown>(
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
       {url: `/api/admin/programs/${programId}/form-bindings/${bindingId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: programFormBindingRequest
@@ -1242,8 +1446,49 @@ const updateResponse = (
     }
 
 /**
- * 응답에 submissionStartAt·submissionEndAt(UTC, 없으면 null)을 담는다. 설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)가 작성 기간 전이면 409 FORM_SUBMISSION_NOT_STARTED, 종료 후면 409 FORM_SUBMISSION_CLOSED이며 error.details에 기간을 담는다. 인증된 회원이 해당 바인딩 대상에 적격하지 않으면 403 PERMISSION_DENIED. 활성 프로그램 바인딩이 고정한 이전 발행본은 이후 ARCHIVED되어도 렌더링한다. 바인딩 없는 ARCHIVED 직접 렌더링은 허용하지 않는다.
- * @summary 프로그램 양식 연결 렌더링
+ * ### 이 API가 하는 일
+ * - 프로그램 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
+ * - 응답 사용 위치: 사용자 대상 설문/만족도 렌더링 결과로 화면 목록/모달/응답 상태를 갱신
+ * - 프론트 조회 키: `get_users_me_programs_programId_form_bindings_bindingId_render`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
+ * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 일반/교사/강사 회원 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 활성 바인딩 고정 PUBLISHED 또는 과거 발행 ARCHIVED 렌더. DRAFT/직접 ARCHIVED 금지
+ * @summary 프로그램 조회
  */
 const renderBinding = (
     programId: number,
@@ -1256,8 +1501,49 @@ const renderBinding = (
     }
 
 /**
- * 신규 프로그램 바인딩은 PUBLISHED 버전만 연결할 수 있다. 연결 후 새 버전 발행으로 기존 버전이 ARCHIVED되어도 활성 바인딩이 고정한 버전은 설문·동의·보고 양식의 포털 런타임에서 유지된다.
- * @summary 사용 가능한 프로그램 양식 목록 조회
+ * ### 이 API가 하는 일
+ * - 프로그램 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `GET /api/portal/me/programs/{programId}/available-forms`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
+ * - 응답 사용 위치: 사용자 대상 설문/만족도 목록 조회 결과로 화면 목록/모달/응답 상태를 갱신
+ * - 프론트 조회 키: `get_users_me_programs_programId_available_forms`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
+ * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 일반/교사/강사 회원 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 활성 바인딩이 고정한 이전 발행본은 ARCHIVED 후에도 목록 유지. 신규 연결은 PUBLISHED만
+ * @summary 프로그램 조회
  */
 const availableProgramForms = (
     programId: number,

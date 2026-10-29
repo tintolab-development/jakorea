@@ -6,7 +6,4 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * @jakorea/form-schema WritingFormDraft payload.
- */
 export type MemberPortalConsentFormTemplateVersionSchemaJson = {[key: string]: unknown};
