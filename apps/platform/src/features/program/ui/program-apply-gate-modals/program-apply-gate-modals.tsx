@@ -4,13 +4,21 @@ import {
   MYPAGE_SETTINGS_PATH,
   MYPAGE_VOLUNTEER_PATH,
 } from '@/features/mypage/lib/constants'
+import { PortraitGuardianInfoModal } from '@/features/mypage/settings/ui/portrait-guardian-info-modal'
 import { PFButton, PFModal, PFText } from '@/shared/ui'
+import type { ProgramRequiredConsentVariant } from '../../hooks/use-program-apply-gate'
+import type { ProgramMinorPortraitFlowProps } from '../../hooks/use-program-minor-portrait-gate'
 import type { ProgramApplyGateModalKind } from '../../lib/application-apply-gate'
+import {
+  PROGRAM_GUARDIAN_INFO_DESCRIPTION,
+  PROGRAM_MINOR_PORTRAIT_REQUIRED_COPY,
+} from '../../lib/program-minor-portrait-copy'
 import {
   requiredApplyConsentLabels,
   type RequiredApplyConsentType,
 } from '../../lib/application-consent-guard'
 import styles from './program-apply-gate-modals.module.css'
+import { ProgramGuardianIdentityModal } from './program-guardian-identity-modal'
 
 type ProgramApplyGateModalsProps = {
   kind: ProgramApplyGateModalKind | null
@@ -20,6 +28,9 @@ type ProgramApplyGateModalsProps = {
   /** `required-consent` — 아직 완료되지 않은 필수 동의 항목만 */
   missingConsentTypes?: readonly RequiredApplyConsentType[]
   onOpenConsents?: () => void
+  /** `minor` — 만 14세 미만 회원: 문구 변형 + `동의서 작성하기` 가 보호자 본인인증 흐름을 연다 */
+  requiredConsentVariant?: ProgramRequiredConsentVariant
+  minorPortrait?: ProgramMinorPortraitFlowProps
 }
 
 /** application-options `blockedReason` 기반 (대상 불일치·이미 신청) + 필수 동의 가드 */
@@ -30,15 +41,49 @@ export function ProgramApplyGateModals({
   onViewApplications,
   missingConsentTypes = [],
   onOpenConsents,
+  requiredConsentVariant = 'default',
+  minorPortrait,
 }: ProgramApplyGateModalsProps) {
+  const isMinorPortrait = requiredConsentVariant === 'minor' && minorPortrait != null
+  const minorStep = isMinorPortrait && kind === 'required-consent' ? minorPortrait.step : null
+  const cancelMinorPortrait = () => {
+    minorPortrait?.onCancel()
+    onClose()
+  }
   return (
     <>
       <ProgramApplyRequiredConsentModal
-        open={kind === 'required-consent'}
-        onClose={onClose}
-        onOpenConsents={onOpenConsents ?? onClose}
+        open={kind === 'required-consent' && minorStep == null}
+        onClose={isMinorPortrait ? cancelMinorPortrait : onClose}
+        onOpenConsents={isMinorPortrait ? minorPortrait.onStart : (onOpenConsents ?? onClose)}
         missingConsentTypes={missingConsentTypes}
+        descriptionLines={
+          isMinorPortrait ? PROGRAM_MINOR_PORTRAIT_REQUIRED_COPY.descriptionLines : undefined
+        }
       />
+
+      {isMinorPortrait ? (
+        <>
+          <ProgramGuardianIdentityModal
+            open={minorStep === 'identity'}
+            errorMessage={minorPortrait.identityError}
+            onClose={cancelMinorPortrait}
+            onVerify={minorPortrait.onOpenInfo}
+          />
+          <PortraitGuardianInfoModal
+            open={minorStep === 'info'}
+            description={PROGRAM_GUARDIAN_INFO_DESCRIPTION}
+            guardianName={minorPortrait.guardianName}
+            guardianPhone={minorPortrait.guardianPhone}
+            relation={minorPortrait.relation}
+            relationError={minorPortrait.relationError}
+            confirmLoading={minorPortrait.verifying}
+            onRelationChange={minorPortrait.onRelationChange}
+            onCancel={cancelMinorPortrait}
+            onConfirm={minorPortrait.onConfirmInfo}
+          />
+        </>
+      ) : null}
 
       <PFModal open={kind === 'not-eligible'} size="sm" onClose={onClose} mobilePlacement="bottom">
         <div className={styles.content}>
@@ -93,6 +138,8 @@ type ProgramApplyRequiredConsentModalProps = {
   onOpenConsents: () => void
   /** 미완료 항목만 표시 */
   missingConsentTypes: readonly RequiredApplyConsentType[]
+  /** 안내 문구(두 줄) 덮어쓰기 — 미지정 시 기존 문구 */
+  descriptionLines?: readonly [string, string]
 }
 
 /**
@@ -104,6 +151,7 @@ export function ProgramApplyRequiredConsentModal({
   onClose,
   onOpenConsents,
   missingConsentTypes,
+  descriptionLines,
 }: ProgramApplyRequiredConsentModalProps) {
   // 시안: 서약서가 섞이면 '서약 및 동의' 문구, 동의서만이면 '동의' 문구
   const includesPledge = missingConsentTypes.includes('FACILITATOR_PLEDGE')
@@ -131,13 +179,23 @@ export function ProgramApplyRequiredConsentModal({
               ))}
             </ul>
             <PFText as="p" typo="bd-md-rg" color="neutral-warm-600" className={styles.description}>
-              {includesPledge
-                ? '이 프로그램은 해당 항목의 서약 및 동의가 필요해요.'
-                : '이 프로그램은 해당 항목의 동의가 필요해요.'}
-              <br />
-              {includesPledge
-                ? '신청하시려면 서약서 및 동의서를 작성해 주세요.'
-                : '신청하시려면 동의서를 작성해 주세요.'}
+              {descriptionLines ? (
+                <>
+                  {descriptionLines[0]}
+                  <br />
+                  {descriptionLines[1]}
+                </>
+              ) : (
+                <>
+                  {includesPledge
+                    ? '이 프로그램은 해당 항목의 서약 및 동의가 필요해요.'
+                    : '이 프로그램은 해당 항목의 동의가 필요해요.'}
+                  <br />
+                  {includesPledge
+                    ? '신청하시려면 서약서 및 동의서를 작성해 주세요.'
+                    : '신청하시려면 동의서를 작성해 주세요.'}
+                </>
+              )}
             </PFText>
           </div>
         </div>

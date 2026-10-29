@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { fetchPortalConsents } from '@/features/mypage/settings/api/consents'
@@ -24,6 +24,10 @@ import {
   type RequiredApplyConsentType,
 } from '../lib/application-consent-guard'
 import { parsePortalProgramId } from '../api/mappers'
+import { useProgramMinorPortraitGate } from './use-program-minor-portrait-gate'
+
+/** 필수 동의 하단 시트 문구 — `minor`: 만 14세 미만 회원 프로그램 초상권(보호자 본인인증 흐름) */
+export type ProgramRequiredConsentVariant = 'default' | 'minor'
 
 export function useProgramApplyGate(
   programId: string | null | undefined,
@@ -33,6 +37,17 @@ export function useProgramApplyGate(
   const [gateModal, setGateModal] = useState<ProgramApplyGateModalKind | null>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [missingConsents, setMissingConsents] = useState<RequiredApplyConsentType[]>([])
+  const [requiredConsentVariant, setRequiredConsentVariant] =
+    useState<ProgramRequiredConsentVariant>('default')
+  /** 마지막 `findMissingRequiredConsents` 가 미성년 시도 미완료로 막았는지 */
+  const minorPortraitPendingRef = useRef(false)
+  /** `runApplyGate` 에서 넘긴 신청서 경로 (상세 → 신청서) */
+  const minorReturnToRef = useRef<string | undefined>(undefined)
+  const minorPortrait = useProgramMinorPortraitGate(programId, {
+    onLeave: () => setGateModal(null),
+  })
+  const { checkPending: checkMinorPortraitPending, rememberReturnTo: rememberMinorReturnTo } =
+    minorPortrait
 
   const readGateModalForOptions = useCallback(
     (canApply?: boolean, blockedReason?: string | null) => {
@@ -108,28 +123,48 @@ export function useProgramApplyGate(
   const findMissingRequiredConsents = useCallback(async (): Promise<
     RequiredApplyConsentType[]
   > => {
+    // 만 14세 미만: 회원 단위 초상권과 무관하게 신청 시도마다 보호자 인증 + 프로그램 초상권 동의서.
+    const minor = await checkMinorPortraitPending()
+    minorPortraitPendingRef.current = minor.pending
+    if (minor.pending) return ['PORTRAIT_RIGHTS']
     try {
       const summaries = await queryClient.fetchQuery({
         queryKey: platformQueryKeys.mypage.consents(),
         queryFn: ({ signal }) => fetchPortalConsents(signal),
         staleTime: 0,
       })
-      return findMissingApplyConsents(
+      const missing = findMissingApplyConsents(
         summaries,
         resolveRequiredApplyConsentTypes({ programType: selection?.programType }),
       )
+      // 미성년은 이번 시도에서 프로그램 초상권을 이미 받았으므로 회원 단위 초상권은 보지 않는다.
+      return minor.isMinor ? missing.filter(type => type !== 'PORTRAIT_RIGHTS') : missing
     } catch {
       return []
     }
-  }, [queryClient, selection?.programType])
+  }, [checkMinorPortraitPending, queryClient, selection?.programType])
 
-  const openRequiredConsentModal = useCallback((missing: RequiredApplyConsentType[]) => {
-    setMissingConsents(missing)
-    setGateModal('required-consent')
-  }, [])
+  const openRequiredConsentModal = useCallback(
+    (missing: RequiredApplyConsentType[]) => {
+      const isMinorPortrait = minorPortraitPendingRef.current
+      if (isMinorPortrait) {
+        rememberMinorReturnTo(minorReturnToRef.current)
+      }
+      minorReturnToRef.current = undefined
+      setRequiredConsentVariant(isMinorPortrait ? 'minor' : 'default')
+      setMissingConsents(missing)
+      setGateModal('required-consent')
+    },
+    [rememberMinorReturnTo],
+  )
 
   const runApplyGate = useCallback(
-    async (onProceed: () => void) => {
+    async (
+      onProceed: () => void,
+      /** `minorPortraitReturnTo` — 미성년 동의서 완료 후 이동할 신청서 경로 (기본값: 현재 경로) */
+      gateOptions?: { minorPortraitReturnTo?: string },
+    ) => {
+      minorReturnToRef.current = gateOptions?.minorPortraitReturnTo
       const remote = isRemoteApiConfigured()
       const numericId = parsePortalProgramId(programId)
       if (!remote || numericId == null || !getAccessToken()) {
@@ -190,5 +225,10 @@ export function useProgramApplyGate(
     missingConsents,
     findMissingRequiredConsents,
     openRequiredConsentModal,
+    /** `ProgramApplyGateModals` 에 펼쳐 넘긴다 — 미성년 프로그램 초상권(보호자 본인인증) 흐름 */
+    minorPortraitGateModalProps: {
+      requiredConsentVariant,
+      minorPortrait: minorPortrait.flowProps,
+    },
   }
 }
