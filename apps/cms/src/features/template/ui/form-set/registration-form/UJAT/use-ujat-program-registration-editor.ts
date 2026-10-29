@@ -166,10 +166,41 @@ export function useUjatProgramRegistrationEditor(
       resetUjatProgramRegistrationOverlay()
     }
 
+    /**
+     * C9: 등록 위저드(신규)만 — 저장본이 없을 때 게시 CATALOG 기본 내용을 미편집 필드에 채운다.
+     * 비동기 응답이 늦어도 현재 draft(사용자 편집)를 기준으로 합쳐 덮어쓰지 않는다.
+     */
+    const applyPublishedCatalogDefaults = () => {
+      if (!usesRegistrationWizardDraft) return
+      void import('@/features/template/lib/published-catalog-defaults').then(async defaults => {
+        const published = await defaults.loadPublishedCatalogDraft(templateCode)
+        if (cancelled || published == null) return
+        const seed = withForcedUjatRegistrationSeedTitleRequired(
+          normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
+        )
+        setDraft(current =>
+          withForcedUjatRegistrationSeedTitleRequired(
+            normalizeWritingFormDraft(
+              defaults.mergePublishedCatalogDefaults({
+                current,
+                seed,
+                published,
+                templateCode,
+              })
+            )
+          )
+        )
+        setActiveParagraphId(prev => prev ?? seed.paragraphs[0]?.id ?? null)
+      })
+    }
+
     if (skipDraftRestore) {
       setIsDraftLoading(false)
       resetToSeed()
-      return
+      applyPublishedCatalogDefaults()
+      return () => {
+        cancelled = true
+      }
     }
 
     setIsDraftLoading(true)
@@ -224,6 +255,7 @@ export function useUjatProgramRegistrationEditor(
         setDraft(next)
         setActiveParagraphId(next.paragraphs[0]?.id ?? null)
         setSingleItemListActiveItemId(null)
+        if (legacy?.draft == null) applyPublishedCatalogDefaults()
       })
       .finally(() => {
         if (!cancelled) setIsDraftLoading(false)
