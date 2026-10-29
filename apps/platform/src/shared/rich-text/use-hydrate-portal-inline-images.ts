@@ -69,7 +69,6 @@ export function useHydratePortalInlineImages(
       editor.state.doc.descendants((node, pos) => {
         if (node.type.name !== 'image') return
         const src = typeof node.attrs.src === 'string' ? node.attrs.src : ''
-        if (src.startsWith('blob:')) return
         const persist =
           typeof node.attrs.persistSrc === 'string' && node.attrs.persistSrc.trim()
             ? node.attrs.persistSrc

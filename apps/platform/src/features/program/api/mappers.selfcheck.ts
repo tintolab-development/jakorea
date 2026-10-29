@@ -200,6 +200,60 @@ assert.deepEqual(
   },
 )
 
+const orgFocusKeepsProgramHtmlWhenRowOmitsAdditionalContent = mapPortalProgramDetail(
+  {
+    programId: 1691535,
+    title: '기관 프로그램',
+    programType: 'GENERAL_ORGANIZATION',
+    additionalContentHtml: '<p><img src="/api/admin/files/91/content" alt="사진" /></p>',
+    recruitments: [
+      {
+        recruitmentId: 1692001,
+        recruitmentType: 'PARTICIPANT',
+        applicationTypes: ['ORGANIZATION'],
+        announcementTitle: '기관 공고',
+      },
+    ],
+  },
+  { recruitmentIds: [1692001], applicationTypes: ['ORGANIZATION'] },
+)
+assert.ok(orgFocusKeepsProgramHtmlWhenRowOmitsAdditionalContent)
+assert.deepEqual(
+  orgFocusKeepsProgramHtmlWhenRowOmitsAdditionalContent.extraSections.find(
+    section => section.title === '추가 내용',
+  ),
+  {
+    title: '추가 내용',
+    body: '<p><img src="/api/portal/public/files/91/content?inline=1" alt="사진" /></p>',
+    bodyFormat: 'html',
+  },
+)
+
+const orgFocusDoesNotFillNullRowAdditionalContent = mapPortalProgramDetail(
+  {
+    programId: 1691536,
+    title: '기관 프로그램',
+    programType: 'GENERAL_ORGANIZATION',
+    additionalContentHtml: '<p><img src="/api/admin/files/91/content" alt="사진" /></p>',
+    recruitments: [
+      {
+        recruitmentId: 1692002,
+        recruitmentType: 'PARTICIPANT',
+        applicationTypes: ['ORGANIZATION'],
+        additionalContentHtml: null,
+      },
+    ],
+  },
+  { recruitmentIds: [1692002], applicationTypes: ['ORGANIZATION'] },
+)
+assert.ok(orgFocusDoesNotFillNullRowAdditionalContent)
+assert.equal(
+  orgFocusDoesNotFillNullRowAdditionalContent.extraSections.some(
+    section => section.title === '추가 내용',
+  ),
+  false,
+)
+
 const individualOnly = mapPortalProgramDetail({
   programId: 186015,
   title: '개인 참여',
@@ -1025,8 +1079,8 @@ assert.equal(
   'Gemini 비고'
 )
 assert.equal(
-  geminiRemarksOnly.extraSections.some(section => section.title === '기타사항'),
-  false
+  geminiRemarksOnly.extraSections.find(section => section.title === '기타사항')?.body,
+  'Gemini 기타'
 )
 const geminiOtherMattersOnly = mapPortalProgramDetail({
   programId: 186034,

@@ -340,4 +340,54 @@ assert.equal(missingRootTitle, null)
   )
 }
 
+const geminiOrgNameFromOrganizationApplication = mapPortalProgramApplicationDetail({
+  applicationId: 1691535,
+  applicationType: 'ORGANIZATION',
+  programId: 186425,
+  programType: 'GEMINI_TRAINING',
+  programGroup: 'SEMINAR',
+  programTitle: '이건희',
+  displayStatus: '신청 반려',
+  answers: {
+    'gemini-vt-inst-seed-contact': { jobTitle: '13131', subject: '1532153' },
+    'gemini-vt-inst-seed-training-info': {
+      organizationRegion: '서울특별시 중구 세종대로 110',
+      regionLabel: '서울특별시 중구 세종대로 110',
+      studentCount: 15,
+    },
+  },
+  organizationApplication: {
+    organizationName: 'QA 제휴학교',
+    institutionAddress: '서울특별시 중구 세종대로 110',
+    institutionAddressDetail: null,
+    requestedGrade: null,
+    teacherPosition: null,
+  },
+})
+assert.ok(geminiOrgNameFromOrganizationApplication)
+assert.equal(
+  geminiOrgNameFromOrganizationApplication.teacherApplicationContent?.institution.name,
+  'QA 제휴학교',
+)
+assert.equal(
+  geminiOrgNameFromOrganizationApplication.teacherApplicationContent?.institution.studentCount,
+  '15명',
+)
+assert.equal(
+  geminiOrgNameFromOrganizationApplication.teacherApplicationContent?.institution.jobTitle,
+  '13131',
+)
+assert.equal(
+  geminiOrgNameFromOrganizationApplication.teacherApplicationContent?.institution.subject,
+  '1532153',
+)
+assert.equal(
+  geminiOrgNameFromOrganizationApplication.teacherApplicationContent?.institution.address,
+  '서울특별시 중구 세종대로 110',
+)
+assert.equal(
+  geminiOrgNameFromOrganizationApplication.teacherApplicationContent?.institution.grade,
+  '',
+)
+
 console.log('portal application mappers.selfcheck: ok')

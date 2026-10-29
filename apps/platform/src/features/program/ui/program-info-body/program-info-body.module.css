@@ -251,8 +251,16 @@
   --rt-content-line-height: 1.6;
   --rt-content-paragraph-margin: 0.5em;
 
+  max-height: none;
   overflow: visible;
   padding: 0;
+}
+
+.extraSectionRichText :global(.rich-text-content img),
+.extraSectionRichText :global(.rich-text-content .rich-text-content__image) {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 .contact {

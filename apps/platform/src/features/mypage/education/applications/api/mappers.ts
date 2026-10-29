@@ -464,6 +464,7 @@ function pickGeminiInstitutionOverlay(
 ): Record<string, unknown> {
   const row = detail as Record<string, unknown>
   const program = asOverlayRecord(detail.program)
+  const organizationApplication = asOverlayRecord(detail.organizationApplication)
   const nestedInst =
     nestedOverlayRecord(row, 'application', 'gemini', 'inst') ??
     nestedOverlayRecord(row, 'gemini', 'inst') ??
@@ -471,7 +472,7 @@ function pickGeminiInstitutionOverlay(
   const overlay: Record<string, unknown> = {}
   const assign = (target: string, ...keys: string[]) => {
     if (overlay[target]) return
-    for (const source of [row, nestedInst, program]) {
+    for (const source of [row, nestedInst, organizationApplication, program]) {
       for (const key of keys) {
         const value = readOverlayString(source, key)
         if (value) {

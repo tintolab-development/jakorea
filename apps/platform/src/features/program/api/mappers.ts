@@ -161,6 +161,20 @@ function readString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
+/**
+ * 모집 행에 키가 있으면 그 값(빈 값·null 포함)을 쓰고, 키가 없을 때만 프로그램 값을 쓴다.
+ * 기관 신청 상세 focus 시 상세 정보 이미지가 프로그램 HTML에만 있는 경우를 살린다.
+ */
+function pickFocusedRecruitmentCopy(
+  row: { additionalContentHtml?: string | null } | undefined,
+  rowValue: string | null | undefined,
+  remoteValue: string | null | undefined,
+): string {
+  if (!row) return readString(remoteValue) ?? ''
+  if (rowValue !== undefined) return readString(rowValue) ?? ''
+  return readString(remoteValue) ?? ''
+}
+
 /** 기관 참여자 모집 행. 강사·봉사자 행은 제외한다. */
 function resolvePortalProgramAudience(
   remote: PortalProgramDetail,
@@ -1407,9 +1421,12 @@ export function mapPortalProgramDetail(
   )
   const additionalContent = visibleCopy(
     rewriteAdminFileContentSrcsForPortal(
-      readString(independentRow ? independentRow.additionalContentHtml : remote.additionalContentHtml) ??
-        ''
-    )
+      pickFocusedRecruitmentCopy(
+        independentRow,
+        independentRow?.additionalContentHtml,
+        remote.additionalContentHtml,
+      ),
+    ),
   )
   const learningSupportContent = visibleCopy(
     readString(independentRow ? independentRow.learningSupportContent : remote.learningSupportContent) ??
