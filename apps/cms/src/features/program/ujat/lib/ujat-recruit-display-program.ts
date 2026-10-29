@@ -463,6 +463,7 @@ export function applyUjatRecruitFormValuesToProgram(
           ...typedFieldsFromRecruitmentFormValues(values, 'institution'),
         }
       : {
+          remarks: values.oneLineIntroduction?.trim() || null,
           otherMatters: values.otherNotes?.trim() || null,
           interviewEnabled: true,
           interviewStartAt: values.interviewStartDate?.trim() || null,
@@ -586,7 +587,10 @@ export function applyUjatRecruitAnnouncementTitleToDraft(args: {
           )?.trim() || null,
         ...(args.kind === 'institution'
           ? { remarks: args.values.oneLineIntroduction?.trim() || null }
-          : { otherMatters: args.values.otherNotes?.trim() || null }),
+          : {
+              remarks: args.values.oneLineIntroduction?.trim() || null,
+              otherMatters: args.values.otherNotes?.trim() || null,
+            }),
         contactName:
           (args.kind === 'institution'
             ? args.values.recruitmentContactOrganizationName

@@ -492,7 +492,6 @@ function listIncompleteUjatVolunteerRecruitHalf(
   pushReason(reasons, contactRow == null || isEmptyText(contactRow.phone), `${p}.inquiryTel`)
   pushReason(reasons, contactRow == null || isEmptyText(contactRow.email), `${p}.inquiryEmail`)
   pushReason(reasons, isEmptyText(read(resolved, VOLUNTEER_KEYS.notes)), `${p}.notes`)
-  pushReason(reasons, isEmptyText(read(resolved, VOLUNTEER_KEYS.otherNotes)), `${p}.otherNotes`)
   return reasons
 }
 
@@ -707,8 +706,8 @@ function listIncompleteTypedVolunteerRecruitment(
   pushReason(
     reasons,
     values.volunteerRecruitmentNotesNotApplicable !== 'not_applicable' &&
-      isEmptyFormText(values.otherNotes),
-    `${p}.otherNotes`
+      isEmptyFormText(values.oneLineIntroduction),
+    `${p}.notes`
   )
   if (
     !skipSchedule &&

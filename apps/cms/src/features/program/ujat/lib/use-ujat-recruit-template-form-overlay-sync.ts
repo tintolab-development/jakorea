@@ -82,7 +82,10 @@ const VOLUNTEER_DIRTY_FIELD_KEYS: Record<string, readonly string[]> = {
   volunteerRecruitmentContactOrganizationName: [VOLUNTEER_KEYS.contact],
   contactPhone: [VOLUNTEER_KEYS.contact],
   contactEmail: [VOLUNTEER_KEYS.contact],
-  otherNotes: [VOLUNTEER_KEYS.notes, VOLUNTEER_KEYS.otherNotes],
+  // 비고(행 remarks) ↔ notes, 기타사항(행 otherMatters) ↔ otherNotes. 서로 섞지 않는다.
+  oneLineIntroduction: [VOLUNTEER_KEYS.notes],
+  volunteerRecruitmentNotesNotApplicable: [VOLUNTEER_KEYS.notes],
+  otherNotes: [VOLUNTEER_KEYS.otherNotes],
   volunteerRecruitmentAnnouncementPublished: [VOLUNTEER_KEYS.announcementPublished],
   volunteerRecruitmentNoticeExposure: [VOLUNTEER_KEYS.noticeExposure],
 }

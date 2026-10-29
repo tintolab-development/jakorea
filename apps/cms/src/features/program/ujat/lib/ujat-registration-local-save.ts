@@ -276,6 +276,8 @@ function applyUjatRegistrationCreateOverlaysToProgram(
       pickUjatRecruitVolunteerOverlay(overlay)
     ),
     ujatRegistrationOverlay: overlay,
+    // 봉사자 비고는 각 봉사자 행 remarks로만 간다. 프로그램 단위 비고는 기관 값을 유지한다.
+    oneLineIntroduction: withInstitution.oneLineIntroduction,
     venue: withRegistration.venue ?? withVolunteer.venue,
     institutionType: withRegistration.institutionType ?? withVolunteer.institutionType,
     generalCommonInfo: {

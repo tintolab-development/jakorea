@@ -149,10 +149,8 @@ export function buildUjatRecruitVolunteerHalfOverlayFromDetailEditValues(
     [`${prefix}recruitmentGuide`]: values.recruitmentGuide?.trim() ?? shared[KEYS.recruitmentGuide],
     [`${prefix}applicationMethod`]:
       values.applicationMethod?.trim() ?? shared[KEYS.applicationMethod],
-    [`${prefix}otherNotes`]:
-      values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
-        ? ''
-        : (values.otherNotes?.trim() ?? shared[KEYS.otherNotes]),
+    // 「해당 없음」은 비고(notes)만 비운다. 기타사항은 별도 필드다.
+    [`${prefix}otherNotes`]: values.otherNotes?.trim() ?? shared[KEYS.otherNotes],
     [`${prefix}additionalContentHtml`]: shared[KEYS.additionalContentHtml],
     [`${prefix}attachmentFileNames`]: shared[KEYS.attachmentFileNames],
     [recruitKey]: half === 'h1' ? shared[KEYS.recruitRangeH1] : shared[KEYS.recruitRangeH2],
@@ -178,6 +176,7 @@ export function blankUjatVolunteerRecruitProgramFields(program: Program): Progra
     finalPassAnnouncementMethod: undefined,
     contactPhone: undefined,
     contactEmail: undefined,
+    oneLineIntroduction: undefined,
     otherNotes: undefined,
     startDate: '',
     endDate: '',
@@ -236,6 +235,7 @@ export function restoreUjatVolunteerRecruitProgramColumns(
     contactPhone: existing.contactPhone,
     contactEmail: existing.contactEmail,
     managerName: existing.managerName,
+    oneLineIntroduction: existing.oneLineIntroduction,
     otherNotes: existing.otherNotes,
     startDate: existing.startDate,
     endDate: existing.endDate,

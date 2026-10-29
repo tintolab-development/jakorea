@@ -1594,7 +1594,7 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram ?? ({} as Program),
     mapToValues: mapVolunteerRecruitmentEditValues,
     recruitmentAudience: 'volunteer',
-    recruitmentNotesField: 'otherNotes',
+    recruitmentNotesField: 'oneLineIntroduction',
     strictRemote: true,
     onSaveEdit: displayProgram
       ? async (draft, patch) => {

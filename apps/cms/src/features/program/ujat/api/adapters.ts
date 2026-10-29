@@ -618,7 +618,9 @@ function withUjatCreateRowCopy(
       applicationMethod: display.applicationMethod || undefined,
       learningSupportContent: display.learningSupportContent || undefined,
       additionalContentHtml: display.additionalContentHtml || undefined,
-      remarks: display.otherNotes || undefined,
+      // 비고 = remarks(oneLineIntroduction), 기타사항 = otherMatters(otherNotes, 봉사자만).
+      remarks: display.oneLineIntroduction || undefined,
+      ...(kind !== 'institution' && display.otherNotes ? { otherMatters: display.otherNotes } : {}),
       contactName: display.managerName || undefined,
       contactPhone: display.contactPhone || undefined,
       contactEmail: display.contactEmail || undefined,
