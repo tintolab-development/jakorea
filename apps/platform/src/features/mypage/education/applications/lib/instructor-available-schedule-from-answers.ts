@@ -215,6 +215,7 @@ export function resolveInstructorAvailableScheduleLines(input: {
   answers?: Record<string, unknown> | null
   preferredEducationScheduleLabel?: string
   preferredScheduleOptionValues?: readonly string[]
+  preferredScheduleBlocks?: readonly unknown[] | null
   program?: PreferredScheduleProgramLookup
   bindingSlots?: readonly ApplyInstructorScheduleSlot[]
 }): string[] {
@@ -244,11 +245,25 @@ export function resolveInstructorAvailableScheduleLines(input: {
   const fromBinding = linesFromBindingSlots(optionValues, input.bindingSlots ?? [])
   if (fromBinding.length > 0) return fromBinding
 
-  const resolved = resolvePreferredScheduleLabelsFromAnswers({
+  const resolvedTokens = resolvePreferredScheduleLabelsFromAnswers({
     answers: input.answers ?? undefined,
     preferredScheduleOptionValues: optionValues,
     educationScheduleLines: input.program?.educationScheduleLines,
+    preferredScheduleBlocks: input.preferredScheduleBlocks,
     schedules: input.program?.schedules,
   })
-  return resolved
+  if (resolvedTokens.length > 0) return resolvedTokens
+
+  if (input.preferredScheduleBlocks?.length) {
+    const fromBlocks = resolvePreferredScheduleLabelsFromAnswers({
+      answers: { preferredScheduleBlocks: [...input.preferredScheduleBlocks] },
+      preferredScheduleOptionValues: [],
+      educationScheduleLines: input.program?.educationScheduleLines,
+      preferredScheduleBlocks: input.preferredScheduleBlocks,
+      schedules: input.program?.schedules,
+    })
+    if (fromBlocks.length > 0) return fromBlocks
+  }
+
+  return []
 }

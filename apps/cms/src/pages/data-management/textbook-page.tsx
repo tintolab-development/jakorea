@@ -618,6 +618,7 @@ export default function TextbookPage() {
         excelExport={{
           columns,
           data: filteredRows,
+          selectedRowKeys,
         }}
       >
         <CmsDataTable<TextbookRow>

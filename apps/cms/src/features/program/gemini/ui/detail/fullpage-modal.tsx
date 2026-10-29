@@ -342,14 +342,16 @@ export function GeminiRecruitmentDetailFullPageModal({
                     미리보기
                   </CmsButton>
                 </div>
-                <GeminiRecruitmentInfoTab
-                  detail={detail}
-                  todayKey={todayKey}
-                  isEditMode={isEditModeInfo}
-                  draft={infoDraft}
-                  onDraftChange={patchDraft}
-                  registerRichTextGetter={registerRichTextGetter}
-                />
+                <div className="program-detail-fullpage-modal__info-tab">
+                  <GeminiRecruitmentInfoTab
+                    detail={detail}
+                    todayKey={todayKey}
+                    isEditMode={isEditModeInfo}
+                    draft={infoDraft}
+                    onDraftChange={patchDraft}
+                    registerRichTextGetter={registerRichTextGetter}
+                  />
+                </div>
               </>
             ) : activeLnb === 'institutions' ? (
               <GeminiInstitutionApplicationTab recruitmentId={recruitmentId} />

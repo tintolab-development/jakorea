@@ -144,16 +144,20 @@ export const platformQueryKeys = {
     /** 홈 캐러셀 — GET /api/portal/programs?page=0&size=8&sort=LATEST (Class C) */
     homePreview: () => [...platformQueryKeys.program.all(), 'home-preview'] as const,
     /**
-     * 공개 상세 — GET /api/portal/programs/{programId}
-     * recruitmentId·applicationType 이 있으면 그 모집 케이스 캐시.
+     * 공개 상세 — GET /api/portal/programs/{programId} (Class D)
+     * applicationType·recruitmentId 가 있으면 동일 쿼리로 보낸다. 포커스 응답은
+     * recruitments[] 가 줄어들 수 있으므로 키에 포함한다.
      */
-    detail: (id: string, scope?: { recruitmentId?: number; applicationType?: string }) =>
+    detail: (
+      id: string,
+      params?: { applicationType?: string; recruitmentId?: number },
+    ) =>
       [
         ...platformQueryKeys.program.all(),
         'detail',
         id,
-        scope?.recruitmentId ?? '',
-        scope?.applicationType ?? '',
+        (params?.applicationType ?? '').trim().toUpperCase(),
+        params?.recruitmentId != null && params.recruitmentId > 0 ? params.recruitmentId : 0,
       ] as const,
     /** 프로그램 상세 전체 scope — 모집별 상세 캐시까지 함께 무효화할 때 사용 */
     detailPrefix: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
@@ -576,6 +580,26 @@ export const platformQueryKeys = {
      */
     lectureReportAssignments: (programId: string) =>
       [...platformQueryKeys.mypage.all(), 'lecture-report-assignments', programId] as const,
+    /**
+     * Gemini 정산 요약 — GET /api/portal/me/program-applications/{type}/{id}/gemini-settlement-summary (Class C)
+     */
+    geminiSettlementSummary: (applicationType: string, applicationId: string) =>
+      [
+        ...platformQueryKeys.mypage.all(),
+        'gemini-settlement-summary',
+        applicationType,
+        applicationId,
+      ] as const,
+    /**
+     * Gemini 강의 일정 — GET /api/portal/me/program-applications/{type}/{id}/gemini-lecture-schedules (Class C)
+     */
+    geminiLectureSchedules: (applicationType: string, applicationId: string) =>
+      [
+        ...platformQueryKeys.mypage.all(),
+        'gemini-lecture-schedules',
+        applicationType,
+        applicationId,
+      ] as const,
     /**
      * 강사 배정 현황(배정된 목록) — GET /api/portal/me/programs/{programId}/instructor-assignments (Class C)
      */

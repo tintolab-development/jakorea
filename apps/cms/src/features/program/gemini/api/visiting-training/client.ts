@@ -4,6 +4,10 @@ import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
 import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
+import {
+  toGeminiOrganizationApplicationApproveBody,
+  type GeminiOrganizationApplicationApprovePayload,
+} from './organization-application-approve'
 import type { GeminiApprovedTrainingDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingDetailResponse'
 import type { GeminiApprovedTrainingItem } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingItem'
 import type { GeminiApprovedTrainingListResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingListResponse'
@@ -296,25 +300,29 @@ export async function bulkDeleteGeminiApprovedTrainingsRemote(
   )
 }
 
+export type { GeminiOrganizationApplicationApprovePayload }
+
 export async function approveGeminiOrganizationApplicationRemote(
-  applicationId: string
+  applicationId: string,
+  payload?: GeminiOrganizationApplicationApprovePayload
 ): Promise<void> {
   await customInstance({
     url: `${BASE}/organization-applications/${encodeURIComponent(applicationId)}/approve`,
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: toGeminiOrganizationApplicationApproveBody(payload),
   })
 }
 
 export async function rejectGeminiOrganizationApplicationRemote(
   applicationId: string,
-  reason = DEFAULT_REJECT_REASON
+  payload: ApplicationRejectRequest
 ): Promise<void> {
-  const body: ApplicationRejectRequest = { reason }
   await customInstance({
     url: `${BASE}/organization-applications/${encodeURIComponent(applicationId)}/reject`,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    data: body,
+    data: payload,
   })
 }
 
@@ -332,9 +340,14 @@ export async function bulkApproveGeminiOrganizationApplicationsRemote(
 
 export async function bulkRejectGeminiOrganizationApplicationsRemote(
   ids: number[],
-  reason = DEFAULT_REJECT_REASON
+  payload: ApplicationRejectRequest
 ): Promise<void> {
-  const body: BulkDecisionRequest = { ids, reason }
+  const body: BulkDecisionRequest = {
+    ids,
+    reason: payload.reason,
+    ...(payload.timing ? { timing: payload.timing } : {}),
+    ...(payload.scheduledAt ? { scheduledAt: payload.scheduledAt } : {}),
+  }
   await customInstance({
     url: `${BASE}/organization-applications/bulk-reject`,
     method: 'POST',

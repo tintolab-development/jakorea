@@ -21,6 +21,8 @@ export type ProgramApplicationRejectModalProps = {
   zIndex?: number
   notifyTimingCapability?: NotifyTimingCapability
   notifyTimingOptions?: 'two' | 'three'
+  confirmLoading?: boolean
+  reasonPlaceholder?: string
 }
 
 export function ProgramApplicationRejectModal({
@@ -34,6 +36,8 @@ export function ProgramApplicationRejectModal({
   zIndex,
   notifyTimingCapability,
   notifyTimingOptions,
+  confirmLoading,
+  reasonPlaceholder = '반려 사유를 입력해 주세요. 주민등록번호, 건강정보 등 민감한 개인정보는 입력하지 마세요.',
 }: ProgramApplicationRejectModalProps) {
   const copy = buildProgramApplicationRejectCopy({
     audience,
@@ -53,8 +57,9 @@ export function ProgramApplicationRejectModal({
       confirmVariant="delete"
       requireReason
       reasonLabel="반려 사유"
-      reasonPlaceholder="반려 사유를 입력해 주세요."
+      reasonPlaceholder={reasonPlaceholder}
       reasonRequiredMessage="반려 사유를 입력해 주세요."
+      confirmLoading={confirmLoading}
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}

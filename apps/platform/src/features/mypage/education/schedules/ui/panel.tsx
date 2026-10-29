@@ -13,6 +13,8 @@ import {
 import { useApplicationSchedulesQuery } from '../../applications/api/activity-hooks'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
+import { useGeminiSettlementTabQuery } from '../../settlements/api/use-gemini-settlement-query'
+import { mapGeminiLectureSchedulesToEducationScheduleItems } from '../../settlements/lib/map-gemini-lecture-schedules'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SCHEDULE_PAGE_SIZE, type EducationScheduleItem } from '../model/types'
 import { EducationScheduleRow } from './row'
@@ -28,6 +30,8 @@ type EducationSchedulePanelProps = {
   applicationId?: string | null
   /** 결석 사유 제출 버튼·모달·사유 텍스트 노출 (교육받은 교사 신청 건은 false) */
   absenceReasonEnabled?: boolean
+  /** Gemini 기관 일정은 lecture-schedules의 trainingTimeText·recognizedClassCount를 쓴다 */
+  useGeminiLectureSchedules?: boolean
 }
 
 /**
@@ -40,19 +44,38 @@ export function EducationSchedulePanel({
   applicationType,
   applicationId,
   absenceReasonEnabled = true,
+  useGeminiLectureSchedules = false,
 }: EducationSchedulePanelProps) {
   const [page, setPage] = useState(1)
   const [absenceReasonScheduleId, setAbsenceReasonScheduleId] = useState<number | null>(null)
   const [absenceReasonOpenKey, setAbsenceReasonOpenKey] = useState(0)
-  const remoteSchedules = useApplicationSchedulesQuery(applicationType, applicationId)
+  const remoteSchedules = useApplicationSchedulesQuery(
+    useGeminiLectureSchedules ? null : applicationType,
+    useGeminiLectureSchedules ? null : applicationId,
+  )
+  const geminiSchedules = useGeminiSettlementTabQuery(
+    applicationType,
+    applicationId,
+    useGeminiLectureSchedules,
+  )
   // 과제는 참여자(개인·기관) 대상. 강사는 강의보고서만 제출한다.
   const assignmentVisible = applicationType !== 'INSTRUCTOR' && applicationType !== 'VOLUNTEER'
 
   const allItems = useMemo(() => {
+    if (useGeminiLectureSchedules) {
+      const items = mapGeminiLectureSchedulesToEducationScheduleItems(geminiSchedules.scheduleItems)
+      return filterItemsUpToLastParticipatedSession(items, lastParticipatedSession)
+    }
     const items: EducationScheduleItem[] = remoteSchedules.enabled ? remoteSchedules.items : []
     const assigned = filterEducationSchedulesForMemberAssignment(items)
     return filterItemsUpToLastParticipatedSession(assigned, lastParticipatedSession)
-  }, [lastParticipatedSession, remoteSchedules.enabled, remoteSchedules.items])
+  }, [
+    geminiSchedules.scheduleItems,
+    lastParticipatedSession,
+    remoteSchedules.enabled,
+    remoteSchedules.items,
+    useGeminiLectureSchedules,
+  ])
 
   const totalElements = allItems.length
   const totalPages = Math.max(1, Math.ceil(totalElements / EDUCATION_SCHEDULE_PAGE_SIZE))
@@ -77,12 +100,19 @@ export function EducationSchedulePanel({
     [allItems]
   )
 
-  if (remoteSchedules.isLoading) {
+  const isLoading = useGeminiLectureSchedules ? geminiSchedules.isLoading : remoteSchedules.isLoading
+  const isError = useGeminiLectureSchedules ? geminiSchedules.isError : remoteSchedules.isError
+  const isRefetching = useGeminiLectureSchedules
+    ? geminiSchedules.isRefetching
+    : remoteSchedules.isRefetching
+  const sourceEnabled = useGeminiLectureSchedules ? geminiSchedules.enabled : remoteSchedules.enabled
+
+  if (isLoading) {
     return <EducationSessionListSkeleton statusMessage={`${listTitle}을 불러오는 중입니다.`} />
   }
-  if (remoteSchedules.isError) {
+  if (isError) {
     const errorMessage =
-      remoteSchedules.errorCode === 'DATABASE_ERROR'
+      !useGeminiLectureSchedules && remoteSchedules.errorCode === 'DATABASE_ERROR'
         ? DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE
         : `${listTitle}을 불러오지 못했습니다.`
     return (
@@ -90,7 +120,7 @@ export function EducationSchedulePanel({
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           {errorMessage}
         </PFText>
-        {remoteSchedules.traceId ? (
+        {!useGeminiLectureSchedules && remoteSchedules.traceId ? (
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-500">
             traceId: {remoteSchedules.traceId}
           </PFText>
@@ -99,8 +129,10 @@ export function EducationSchedulePanel({
           type="button"
           variant="tertiary"
           size="large"
-          disabled={remoteSchedules.isRefetching}
-          onClick={() => void remoteSchedules.refetch()}
+          disabled={isRefetching}
+          onClick={() =>
+            void (useGeminiLectureSchedules ? geminiSchedules.refetch() : remoteSchedules.refetch())
+          }
         >
           다시 시도
         </PFButton>
@@ -108,8 +140,12 @@ export function EducationSchedulePanel({
     )
   }
 
-  const emptyMessage = remoteSchedules.enabled
-    ? resolveEducationScheduleEmptyMessage(remoteSchedules.scopeStatus, listTitle)
+  const emptyMessage = sourceEnabled
+    ? useGeminiLectureSchedules
+      ? listTitle === '배정현황'
+        ? '등록된 배정 일정이 없어요'
+        : '등록된 교육일정이 없어요'
+      : resolveEducationScheduleEmptyMessage(remoteSchedules.scopeStatus, listTitle)
     : listTitle === '배정현황'
       ? '등록된 배정 일정이 없어요'
       : '등록된 교육일정이 없어요'

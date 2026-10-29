@@ -1379,6 +1379,7 @@ export function SchoolDetailStudentListSection({
         excelExport={{
           columns: studentColumnsView,
           data: filteredStudentList,
+          selectedRowKeys: selectedStudentKeys,
         }}
       >
         <div

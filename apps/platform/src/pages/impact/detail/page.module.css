@@ -98,6 +98,23 @@
   gap: var(--spacing-4);
 }
 
+.attachmentDropdown {
+  width: 100%;
+  max-width: 100%;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.attachmentDropdown :global(button) {
+  width: 100%;
+  max-width: 100%;
+}
+
+.attachmentName {
+  margin: 0;
+  width: 100%;
+}
+
 .body {
   display: flex;
   width: 100%;
@@ -146,6 +163,22 @@
 
   .layout {
     gap: var(--spacing-40);
+  }
+
+  .attachmentDropdown {
+    width: auto;
+    align-self: flex-end;
+    margin-left: auto;
+  }
+
+  .attachmentDropdown :global(button) {
+    width: max-content;
+  }
+
+  .attachmentName {
+    width: auto;
+    margin-left: auto;
+    align-self: flex-end;
   }
 }
 

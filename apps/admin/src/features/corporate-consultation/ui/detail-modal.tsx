@@ -10,7 +10,6 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { CorporateConsultation } from '@/entities/corporate-consultation/model/types'
 import { shouldUseCorporateConsultationRemoteApi } from '@/features/corporate-consultation/api/capabilities'
 import { downloadCorporateConsultationAttachmentService } from '@/features/corporate-consultation/api/service'
-import { DEFAULT_CONFIRM_ACTOR } from '@/features/corporate-consultation/api/store'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 
@@ -77,7 +76,7 @@ export function CorporateConsultationDetailModal({
     if (!data?.confirmedAt) {
       return <span>-</span>
     }
-    const name = data.confirmedByName?.trim() || DEFAULT_CONFIRM_ACTOR
+    const name = data.confirmedByName?.trim() || '-'
     return (
       <span className="corp-consult-detail-modal__confirmed">
         <span>{formatDateTimeDotWithKoreanWeekday(data.confirmedAt)}</span>

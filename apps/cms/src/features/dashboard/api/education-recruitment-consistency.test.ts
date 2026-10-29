@@ -7,6 +7,8 @@ import { describe, it, expect } from 'vitest'
 import {
   getRecruitmentStatusList,
   getProgramProgressStages,
+  getDashboardShortcutBadges,
+  getMenuShortcutBadgeCounts,
   type ProgramProgressStages,
 } from './admin-dashboard-service'
 
@@ -14,6 +16,11 @@ describe('대시보드 프로그램 집계 (mock 카탈로그 제거)', () => {
   it('remote OFF면 모집 신청 현황은 빈 목록이다', async () => {
     const widgetPrograms = await getRecruitmentStatusList()
     expect(widgetPrograms).toEqual({ rows: [], totalCount: null })
+  })
+
+  it('remote OFF면 바로가기 배지를 mock 숫자로 채우지 않는다', async () => {
+    expect(getMenuShortcutBadgeCounts()).toEqual({})
+    await expect(getDashboardShortcutBadges()).resolves.toEqual({})
   })
 
   it('getProgramProgressStages(education)는 빈 7단계 집계를 반환한다', async () => {

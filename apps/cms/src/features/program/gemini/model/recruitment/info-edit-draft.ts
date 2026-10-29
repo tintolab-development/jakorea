@@ -81,6 +81,9 @@ export function applyInfoEditDraft(
     ...detail,
     ...draft,
     educationTargetLevels: [...draft.educationTargetLevels],
+    ...(draft.attachmentFileObjectIds != null
+      ? { attachmentFileObjectIds: [...draft.attachmentFileObjectIds] }
+      : {}),
     attachmentFileNames: [...draft.attachmentFileNames],
     updatedAt: dayjs().toISOString(),
   }

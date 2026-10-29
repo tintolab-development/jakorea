@@ -321,6 +321,16 @@
   margin-top: var(--spacing-60);
 }
 
+.participate .detailContentBody {
+  gap: var(--spacing-32);
+}
+
+.participate .extraSections,
+.participate .contact,
+.participate .schedules {
+  margin-top: 0;
+}
+
 /* 문의처: 이름 │ Tel : … │ E-mail : … (구분선 1×13, #3d3d3d 50%) */
 .participate .contactParts {
   display: flex;
@@ -340,9 +350,9 @@
   opacity: 0.5;
 }
 
-/* 지원방법: 세부내용 마지막 항목(문의처) 아래 32px */
+/* 지원방법: 세부내용 컬럼 마지막 (Figma 11001:199949) */
 .participate .applicationMethod {
-  margin-top: var(--spacing-32);
+  margin-top: 0;
 }
 
 @media (--bp-below-pc) {

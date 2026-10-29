@@ -311,6 +311,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const assignedExportRows = useMemo(
     () =>
       assignedSchedules.map(row => ({
+        id: row.id,
         no: row.no,
         role: INSTRUCTOR_ROLE_LABELS[row.role],
         lectureLocation: row.lectureLocation,
@@ -323,6 +324,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const waitingExportRows = useMemo(
     () =>
       waitingSchedules.map(row => ({
+        id: row.id,
         no: row.no,
         lectureLocation: row.lectureLocation,
         distanceFromHome: row.distanceFromHome,
@@ -342,6 +344,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       columns: PARTICIPATING_INDIVIDUAL_INSTRUCTOR_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
       data: assignedExportRows,
       filename: '배정된 교육 일정',
+      selectedRowKeys: selectedAssignedKeys,
     })
 
   const { exportExcel: exportWaitingExcel, isExporting: isWaitingExcelExporting } =
@@ -349,6 +352,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       columns: PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_SCHEDULE_EXCEL_COLUMNS,
       data: waitingExportRows,
       filename: '배정 대기 교육 일정',
+      selectedRowKeys: selectedWaitingKeys,
     })
 
   const handleUnassignClick = useCallback(() => {

@@ -13,6 +13,7 @@ import type {
 import type { GeminiApprovedTrainingRow, GeminiApprovedTrainingStatus } from './types'
 import { getGeminiApprovedTrainingRowsSnapshot } from './approved-training-store'
 import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee-grade'
+import { formatGeminiInstructorApplicationGrade } from '../../lib/instructor-application-grade-label'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
 import { mapGeminiTrainingDateCandidates } from '../../lib/approved/training-date-candidates'
 
@@ -50,7 +51,7 @@ function mapAssignedInstructor(
       name: trimmed(assigned.name) || '-',
       region: trimmed(assigned.homeAddress) || '-',
       experienceYears: assigned.experienceYears ?? null,
-      grade: trimmed(assigned.grade) || '-',
+      grade: formatGeminiInstructorApplicationGrade(assigned.grade),
       contact: trimmed(assigned.phone) || '-',
       email: trimmed(assigned.email) || '-',
     },
@@ -164,7 +165,7 @@ export function mapGeminiInstructorApplicationItemToRow(
     homeSido: trimmed(dto.homeSido),
     homeSigungu: trimmed(dto.homeSigungu),
     experienceYears: dto.experienceYears ?? 0,
-    grade: trimmed(dto.grade) || trimmed(dto.instructorFeeGradeSnapshot) || '-',
+    grade: formatGeminiInstructorApplicationGrade(dto.grade, dto.instructorFeeGradeSnapshot),
     contact: trimmed(dto.phone) || '-',
     email: trimmed(dto.email) || '-',
     monthlyAssignmentCount: dto.monthlyAssignmentCount ?? 0,

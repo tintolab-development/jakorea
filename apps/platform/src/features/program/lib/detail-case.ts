@@ -87,16 +87,21 @@ export function recruitmentPeriodPhaseLabel(detailCase: ProgramDetailCase): stri
     case 'ujat-participant':
       return '기관 모집 기간'
     case 'gemini':
-      return '연수 신청 기간'
+      return '기관 모집 기간'
     default:
       return '참여자 모집 기간'
   }
 }
 
+/** 참여하기 상세 모집안내 섹션 제목 (Figma 11001:199879 Gemini는 공백 없음). */
+export function recruitmentGuideSectionTitle(detailCase: ProgramDetailCase): string {
+  return detailCase === 'gemini' ? '모집안내' : '모집 안내'
+}
+
 export function recruitmentPhaseGroupLabel(detailCase: ProgramDetailCase): string {
   switch (detailCase) {
     case 'gemini':
-      return '신청 및 연수 기간'
+      return '모집 및 선별 기간'
     case 'ujat-volunteer':
     case 'volunteer':
       return '모집 및 선발 일정'

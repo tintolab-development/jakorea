@@ -54,13 +54,12 @@ export async function fetchGeminiTrainingReportsRemotePage(params?: {
   const size = body.size ?? sizeParam
   const currentPage = body.page ?? pageParam
   const totalElements = body.totalElements ?? items.length
-  const totalPages = size > 0 ? Math.ceil(totalElements / size) : currentPage + 1
   return {
     items,
     page: currentPage,
     size,
     totalElements,
-    hasMore: currentPage + 1 < totalPages,
+    hasMore: size > 0 && (currentPage + 1) * size < totalElements,
   }
 }
 
@@ -98,4 +97,30 @@ export async function importGeminiTrainingReportsRemote(
       data: request,
     })
   )
+}
+
+export async function deleteGeminiTrainingReportRemote(
+  trainingReportId: number
+): Promise<void> {
+  await customInstance({
+    url: `${BASE}/${trainingReportId}`,
+    method: 'DELETE',
+  })
+}
+
+const BULK_DELETE_MAX_IDS = 100
+
+export async function bulkDeleteGeminiTrainingReportsRemote(
+  ids: number[]
+): Promise<void> {
+  const unique = [...new Set(ids.filter(id => Number.isFinite(id) && id > 0))]
+  for (let offset = 0; offset < unique.length; offset += BULK_DELETE_MAX_IDS) {
+    const chunk = unique.slice(offset, offset + BULK_DELETE_MAX_IDS)
+    await customInstance({
+      url: `${BASE}/bulk-delete`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: { ids: chunk },
+    })
+  }
 }

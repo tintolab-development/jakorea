@@ -42,6 +42,9 @@ function isGenericApplicationErrorMessage(message: string): boolean {
 export const DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE =
   '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
 
+export const PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE =
+  '희망 교육 일정이 연수 요청 가능기간을 벗어났습니다.'
+
 export function getApiErrorMessageFromBody(
   data: unknown,
   fallback = DEFAULT_PROGRAM_APPLICATION_REQUEST_ERROR_MESSAGE,
@@ -86,6 +89,9 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   ALREADY_APPLIED: '이미 제출한 신청이 있습니다.',
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
     '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
+  /** Gemini 연수 요청 가능기간 밖·미설정. 교육 가능 기간 코드와 분리. */
+  PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE:
+    PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE,
   OUTSIDE_EDUCATION_SCHEDULE_PERIODS:
     '희망 교육일이 선택 가능한 교육 예정일 구간을 벗어났습니다.',
   PREFERRED_SCHEDULE_EXCEEDS_MAX_SCHEDULE_COUNT:

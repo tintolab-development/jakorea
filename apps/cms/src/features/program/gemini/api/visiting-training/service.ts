@@ -24,11 +24,18 @@ import {
   mapGeminiRecruitmentSnapshotToCreateRequest,
   toGeminiNumericIds,
 } from './adapters'
-import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
+import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import {
   fetchProgramAttachments,
   putProgramAttachments,
 } from '@/features/program/shared/api/program-attachments'
+import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
+import {
+  pickProgramInlineImageHtmlPatch,
+  putProgramInlineImages,
+  prepareProgramInlineImageBind,
+  syncProgramInlineImagesKeepProgram,
+} from '@/features/program/shared/api/program-inline-images'
 import { resolveGeminiAttachmentFileObjectIdsForSave } from '../../lib/recruitment/attachment-file-objects'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from './capabilities'
 import { canGeminiRecruitmentInfoEdit } from '../../lib/recruitment/info-edit-policy'
@@ -55,6 +62,7 @@ import {
   updateGeminiRecruitmentRemote,
   type GeminiApprovedTrainingRemoteFilters,
   type GeminiInstructorApplicationRemoteFilters,
+  type GeminiOrganizationApplicationApprovePayload,
   type GeminiOrganizationNotificationResendPayload,
   type GeminiRecruitmentRemoteFilters,
 } from './client'
@@ -64,6 +72,15 @@ function assertRemoteReady(): void {
   throw new Error(
     'Gemini 찾아가는 연수 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요. mock 폴백은 사용하지 않습니다.'
   )
+}
+
+async function persistGeminiRecruitmentInlineHtml(
+  programId: string,
+  rewritten: unknown
+): Promise<void> {
+  const patch = pickProgramInlineImageHtmlPatch(rewritten)
+  if (Object.keys(patch).length === 0) return
+  await updateGeminiRecruitmentRemote(programId, patch as ProgramUpdateRequest)
 }
 
 export type GeminiRecruitmentsPage = {
@@ -124,7 +141,26 @@ export async function getGeminiRecruitmentDetail(
 ): Promise<GeminiRecruitmentDetail | null> {
   assertRemoteReady()
   const dto = await fetchGeminiRecruitmentDetailRemote(programId)
-  return mapGeminiRecruitmentDetailToDetail(dto)
+  const detail = mapGeminiRecruitmentDetailToDetail(dto)
+  const numericId = Number(dto.programId ?? programId)
+  if (!Number.isFinite(numericId) || numericId < 1) return detail
+  try {
+    const attachments = await fetchProgramAttachments(numericId)
+    const attachmentFileObjectIds = attachments
+      .map(item => item.fileObjectId)
+      .filter((id): id is number => typeof id === 'number' && Number.isInteger(id) && id > 0)
+    const attachmentFileNames = attachments
+      .map(item => item.originalFileName?.trim())
+      .filter((name): name is string => Boolean(name))
+    return {
+      ...detail,
+      ...(attachmentFileObjectIds.length > 0 ? { attachmentFileObjectIds } : {}),
+      attachmentFileNames:
+        attachmentFileNames.length > 0 ? attachmentFileNames : detail.attachmentFileNames,
+    }
+  } catch {
+    return detail
+  }
 }
 
 export async function listGeminiOrganizationApplicationsPage(
@@ -237,6 +273,11 @@ export async function createGeminiRecruitment(
   const request = mapGeminiRecruitmentSnapshotToCreateRequest(snapshot)
   const created = await createGeminiRecruitmentRemote(request)
   const id = String(created.id ?? '')
+  if (id) {
+    await syncProgramInlineImagesKeepProgram(id, request, rewritten =>
+      persistGeminiRecruitmentInlineHtml(id, rewritten)
+    )
+  }
   const thumbnailFileObjectId = snapshot.thumbnailFileObjectId
   const numericId = Number(id)
   if (thumbnailFileObjectId != null && Number.isFinite(numericId) && numericId > 0) {
@@ -278,10 +319,15 @@ export async function updateGeminiRecruitment(
   const recruitmentWindowLocked = !canGeminiRecruitmentInfoEdit(
     options?.existingApplicationPeriodStart ?? draft.applicationPeriodStart
   )
-  await updateGeminiRecruitmentRemote(
-    programId,
-    mapGeminiRecruitmentDetailToUpdateRequest(draft, { recruitmentWindowLocked })
-  )
+  const request = mapGeminiRecruitmentDetailToUpdateRequest(draft, { recruitmentWindowLocked })
+  const prepared = await prepareProgramInlineImageBind(programId, request)
+  const body = (
+    prepared.didAdopt ? prepared.rewritten : request
+  ) as ProgramUpdateRequest
+  await updateGeminiRecruitmentRemote(programId, body)
+  if (prepared.fileObjectIds.length > 0) {
+    await putProgramInlineImages(programId, prepared.fileObjectIds)
+  }
   const numericId = Number(programId)
   if (draft.thumbnailFileObjectId !== undefined && Number.isFinite(numericId) && numericId > 0) {
     await putProgramThumbnail(numericId, draft.thumbnailFileObjectId)
@@ -335,14 +381,23 @@ export async function deleteGeminiApprovedTrainings(
   }
 }
 
-export async function approveGeminiOrganizationApplications(ids: string[]): Promise<void> {
+export async function approveGeminiOrganizationApplications(
+  ids: string[],
+  payload?: GeminiOrganizationApplicationApprovePayload
+): Promise<void> {
   assertRemoteReady()
   const numericIds = toGeminiNumericIds(ids)
   if (numericIds.length === 0) {
     throw new Error('승인할 신청 ID가 올바르지 않습니다.')
   }
-  if (numericIds.length === 1) {
-    await approveGeminiOrganizationApplicationRemote(String(numericIds[0]))
+  const usesSingleApprovePath =
+    numericIds.length === 1 ||
+    payload?.timing === 'SCHEDULED' ||
+    payload?.timing === 'ON_ANNOUNCEMENT'
+  if (usesSingleApprovePath) {
+    for (const id of numericIds) {
+      await approveGeminiOrganizationApplicationRemote(String(id), payload)
+    }
     return
   }
   await bulkApproveGeminiOrganizationApplicationsRemote(numericIds)
@@ -350,7 +405,7 @@ export async function approveGeminiOrganizationApplications(ids: string[]): Prom
 
 export async function rejectGeminiOrganizationApplications(
   ids: string[],
-  reason?: string
+  payload: { reason: string; timing?: string; scheduledAt?: string }
 ): Promise<void> {
   assertRemoteReady()
   const numericIds = toGeminiNumericIds(ids)
@@ -358,10 +413,10 @@ export async function rejectGeminiOrganizationApplications(
     throw new Error('반려할 신청 ID가 올바르지 않습니다.')
   }
   if (numericIds.length === 1) {
-    await rejectGeminiOrganizationApplicationRemote(String(numericIds[0]), reason)
+    await rejectGeminiOrganizationApplicationRemote(String(numericIds[0]), payload)
     return
   }
-  await bulkRejectGeminiOrganizationApplicationsRemote(numericIds, reason)
+  await bulkRejectGeminiOrganizationApplicationsRemote(numericIds, payload)
 }
 
 export async function resendGeminiOrganizationApplicationNotification(

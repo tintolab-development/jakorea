@@ -35,9 +35,9 @@ export const GAP_ROWS: readonly GapRow[] = [
     id: 'G-08',
     categoryId: 'gemini-performance',
     priority: 'P0',
-    title: '실적 행 삭제 — FE 미배선',
+    title: '실적 행 삭제 — FE remote 배선 완료, 스테이징 스모크',
     suggestedApi:
-      'OpenAPI: DELETE …/training-reports/{id} · bulk-delete · FE remote 분기 throw 가드 해제',
+      'DELETE …/training-reports/{id} · POST …/bulk-delete ids 1~100 · accountPaymentId>0 지급완료',
   },
   {
     id: 'U-01',

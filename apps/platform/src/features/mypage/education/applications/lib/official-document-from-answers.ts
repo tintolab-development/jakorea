@@ -18,24 +18,34 @@ function readTrimmed(value: unknown): string {
 }
 
 function formatRequiredLabel(raw: string): string {
-  const normalized = raw.trim().toLowerCase()
+  const trimmed = raw.trim()
+  const normalized = trimmed.toLowerCase()
+  const compact = normalized.replace(/[\s_-]/g, '')
   if (
-    normalized === 'needed' ||
-    normalized === 'required' ||
-    normalized === 'true' ||
-    raw.trim() === '필요'
+    compact === 'needed' ||
+    compact === 'required' ||
+    compact === 'true' ||
+    compact === 'yes' ||
+    compact === 'y' ||
+    trimmed === '필요'
   ) {
     return '필요'
   }
   if (
-    normalized === 'not_needed' ||
-    normalized === 'not-needed' ||
-    normalized === 'false' ||
-    raw.trim() === '필요 없음'
+    compact === 'notneeded' ||
+    compact === 'unneeded' ||
+    compact === 'unnecessary' ||
+    compact === 'false' ||
+    compact === 'no' ||
+    compact === 'n' ||
+    compact === 'none' ||
+    trimmed === '필요 없음' ||
+    trimmed === '필요없음' ||
+    trimmed === '불필요'
   ) {
-    return '필요 없음'
+    return '불필요'
   }
-  return raw.trim()
+  return trimmed
 }
 
 function readDataRows(raw: unknown): string[][] {
@@ -45,16 +55,41 @@ function readDataRows(raw: unknown): string[][] {
     .filter(row => row.some(cell => cell.length > 0))
 }
 
+function findOfficialDocumentAnswer(answers: Record<string, unknown>): unknown {
+  const direct = answers[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.officialDocument]
+  if (direct != null) return direct
+  for (const value of Object.values(answers)) {
+    const row = asRecord(value)
+    if (!row) continue
+    if (
+      'officialNeed' in row ||
+      'officialDocumentRequired' in row ||
+      'officialDocumentRequiredInfo' in row ||
+      'officialDetail' in row
+    ) {
+      return row
+    }
+    if (Array.isArray(row.dataRows)) {
+      const labels = row.dataRows
+        .filter(item => Array.isArray(item))
+        .map(item => (typeof item[0] === 'string' ? item[0] : ''))
+      if (labels.some(label => label.includes('공문'))) return row
+    }
+  }
+  return undefined
+}
+
 export function resolveGeminiOfficialDocumentFromAnswers(
   answers?: Record<string, unknown> | null,
 ): GeminiOfficialDocumentDisplay | null {
   if (!answers) return null
-  const raw = answers[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.officialDocument]
+  const raw = findOfficialDocumentAnswer(answers)
   const row = asRecord(raw)
   const dataRows = readDataRows(row?.dataRows ?? raw)
 
   let requiredLabel = ''
-  let info = ''
+  let requiredInfo = ''
+  let receiveInfo = ''
 
   for (const cells of dataRows) {
     const label = cells[0] ?? ''
@@ -62,10 +97,12 @@ export function resolveGeminiOfficialDocumentFromAnswers(
     if (label.includes('필요 여부')) {
       requiredLabel = formatRequiredLabel(value || label)
     } else if (label.includes('필요 정보')) {
-      info = value
+      requiredInfo = value
+    } else if (label.includes('수신') && !label.includes('필요')) {
+      receiveInfo = value ? `수신: ${value}` : '수신'
     } else if (!requiredLabel && value) {
       requiredLabel = formatRequiredLabel(label)
-      info = value
+      requiredInfo = requiredInfo || value
     }
   }
 
@@ -78,8 +115,8 @@ export function resolveGeminiOfficialDocumentFromAnswers(
           readTrimmed(row.officialDocumentRequired),
       )
     }
-    if (!info) {
-      info =
+    if (!requiredInfo) {
+      requiredInfo =
         readTrimmed(row.officialDetail) ||
         readTrimmed(row.info) ||
         readTrimmed(row.officialDocumentRequiredInfo) ||
@@ -87,6 +124,21 @@ export function resolveGeminiOfficialDocumentFromAnswers(
     }
   }
 
+  if (!requiredLabel) {
+    requiredLabel = formatRequiredLabel(
+      readTrimmed(answers.officialNeed) ||
+        readTrimmed(answers.officialDocumentRequired) ||
+        readTrimmed(answers.required),
+    )
+  }
+  if (!requiredInfo) {
+    requiredInfo =
+      readTrimmed(answers.officialDetail) ||
+      readTrimmed(answers.officialDocumentRequiredInfo) ||
+      readTrimmed(answers.info)
+  }
+
+  const info = [requiredInfo, receiveInfo].filter(Boolean).join('\n')
   if (!requiredLabel && !info) return null
   return {
     requiredLabel: requiredLabel || '-',

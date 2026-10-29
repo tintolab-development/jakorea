@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
 import { useDashboardNotificationCount } from '@/features/dashboard/hooks/use-dashboard-notification-count'
+import { formatDashboardCountLabel } from '@/features/dashboard/api/adapters/dashboard-adapters'
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 import { getRoleLabel, AppBreadcrumb, ProfileEditModal } from '@/shared/ui'
 import { useBreadcrumb } from '@/shared/hooks'
@@ -36,7 +37,7 @@ export function MainHeader() {
   const location = useLocation()
   const { user, logout, checkAuth } = useAuthStore()
   const useRemoteNotificationCount = user?.role === 'ADMIN' && shouldUseDashboardRemoteApi()
-  const { data: remoteUnreadCount = 0, refetch: refetchRemoteUnreadCount } =
+  const { data: remoteUnreadCount, refetch: refetchRemoteUnreadCount } =
     useDashboardNotificationCount(useRemoteNotificationCount)
   const {
     notifications: headerNotifications,
@@ -48,7 +49,9 @@ export function MainHeader() {
     isFetchingNextPage,
     fetchNextPage,
   } = useNotifications()
-  const unreadCount = useRemoteNotificationCount ? remoteUnreadCount : listUnreadCount
+  const unreadCount = useRemoteNotificationCount
+    ? (typeof remoteUnreadCount === 'number' ? remoteUnreadCount : null)
+    : listUnreadCount
   const dropdownNotifications = headerNotifications
   const { items: breadcrumbItems } = useBreadcrumb()
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -284,12 +287,14 @@ export function MainHeader() {
               )}
             >
               <div className="main-header-notification-badge" role="button" tabIndex={0}>
-                {unreadCount > 0 ? (
+                {typeof unreadCount === 'number' && unreadCount > 0 ? (
                   <BellFilled className="main-header-notification-icon" />
                 ) : (
                   <BellOutlined className="main-header-notification-icon" />
                 )}
-                <Text className="main-header-notification-count">{unreadCount}건</Text>
+                <Text className="main-header-notification-count">
+                  {formatDashboardCountLabel(unreadCount)}
+                </Text>
               </div>
             </Dropdown>
 

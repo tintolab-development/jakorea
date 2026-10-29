@@ -208,9 +208,7 @@ export function GeminiRecruitmentDetailFields({
     [thumbObjectUrl]
   )
 
-  const thumbnailPreviewUrl =
-    thumbObjectUrl ??
-    (thumbnailFileName && values.thumbnailFileObjectId !== null ? storedThumbUrl : null)
+  const thumbnailPreviewUrl = thumbObjectUrl ?? storedThumbUrl
 
   const programDescription = GEMINI_RECRUITMENT_PROGRAM_DESCRIPTION_FIELD
 

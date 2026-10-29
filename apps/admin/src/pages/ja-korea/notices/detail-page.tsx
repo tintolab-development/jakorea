@@ -294,6 +294,7 @@ function NoticeDetailView({
             <RichTextViewer
               content={notice.contentMarkdown}
               contentFormat={resolveNoticeBodyFormat(notice.contentMarkdown)}
+              maxHeight="none"
             />
           </div>
         </div>

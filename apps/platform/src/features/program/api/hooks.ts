@@ -9,7 +9,10 @@ import {
   normalizePortalProgramFilterValues,
   toPortalProgramListQuery,
 } from './list-query'
-import type { PortalRecruitmentFocus } from '../lib/portal-recruitment'
+import {
+  portalProgramDetailRequestQuery,
+  type PortalRecruitmentFocus,
+} from '../lib/portal-recruitment'
 import { mapPortalProgramDetail, mapPortalProgramListItem, parsePortalProgramId } from './mappers'
 import type { PortalProgramListQuery } from './types'
 
@@ -209,18 +212,14 @@ export function useProgramDetail(
   const numericId = parsePortalProgramId(programId)
   const enabled = remote && numericId != null
   const fresh = options?.fresh === true
-
-  const recruitmentId =
-    options?.focus?.recruitmentIds?.length === 1 ? options.focus.recruitmentIds[0] : undefined
-  const applicationType =
-    options?.focus?.applicationTypes?.length === 1
-      ? options.focus.applicationTypes[0]
-      : undefined
-  const detailScope = { recruitmentId, applicationType }
+  const detailRequest = portalProgramDetailRequestQuery(options?.focus)
 
   const detailQuery = useQuery({
-    queryKey: platformQueryKeys.program.detail(String(numericId ?? ''), detailScope),
-    queryFn: ({ signal }) => fetchPortalProgramDetail(numericId!, signal, detailScope),
+    queryKey: platformQueryKeys.program.detail(String(numericId ?? ''), {
+      applicationType: detailRequest?.applicationType,
+      recruitmentId: detailRequest?.recruitmentId,
+    }),
+    queryFn: ({ signal }) => fetchPortalProgramDetail(numericId!, signal, detailRequest),
     enabled,
     staleTime: fresh ? DETAIL_FRESH_STALE_MS : DETAIL_STALE_MS,
     gcTime: DETAIL_GC_MS,

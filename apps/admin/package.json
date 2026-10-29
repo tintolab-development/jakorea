@@ -25,7 +25,8 @@
     "filter:openapi:assets": "node scripts/filter-openapi-assets.mjs",
     "filter:openapi:me": "node scripts/filter-openapi-me.mjs",
     "filter:openapi:careers": "node scripts/filter-openapi-careers.mjs",
-    "generate:api": "pnpm filter:openapi:main && pnpm filter:openapi:ja-korea && pnpm filter:openapi:impact-story && pnpm filter:openapi:education && pnpm filter:openapi:sponsorship && pnpm filter:openapi:participation && pnpm filter:openapi:site && pnpm filter:openapi:statistics && pnpm filter:openapi:logs && pnpm filter:openapi:assets && pnpm filter:openapi:me && pnpm filter:openapi:careers && orval --config orval.config.ts",
+    "filter:openapi:notifications": "node scripts/filter-openapi-notifications.mjs",
+    "generate:api": "pnpm filter:openapi:main && pnpm filter:openapi:ja-korea && pnpm filter:openapi:impact-story && pnpm filter:openapi:education && pnpm filter:openapi:sponsorship && pnpm filter:openapi:participation && pnpm filter:openapi:site && pnpm filter:openapi:statistics && pnpm filter:openapi:logs && pnpm filter:openapi:assets && pnpm filter:openapi:me && pnpm filter:openapi:careers && pnpm filter:openapi:notifications && orval --config orval.config.ts",
     "generate:api:watch": "orval --config orval.config.ts --watch openapi/main.openapi.json",
     "validate": "pnpm typecheck && pnpm lint && pnpm build"
   },

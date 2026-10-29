@@ -2,7 +2,7 @@
  * 교재 관리 목록
  */
 
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
 import { Image, Switch, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -15,6 +15,7 @@ import { useEducationTargetsList } from '@/features/education-target/api/hooks'
 import { EducationTargetsModal } from '@/features/education-target/ui/targets-modal'
 import {
   useCreateEducationTextbook,
+  useEducationTextbookDetail,
   useEducationTextbooksList,
   useRemoveEducationTextbooks,
   useSetEducationTextbookActive,
@@ -267,6 +268,23 @@ export function EducationTextbooksPage() {
   const [formMode, setFormMode] = useState<TextbookFormMode>('create')
   const [editing, setEditing] = useState<EducationTextbook | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const detailQuery = useEducationTextbookDetail(
+    formOpen && formMode !== 'create' && editing ? editing.id : null,
+    formMode !== 'create',
+  )
+
+  useEffect(() => {
+    if (!formOpen || formMode === 'create' || !detailQuery.data) return
+    setEditing(detailQuery.data)
+  }, [detailQuery.data, formOpen, formMode])
+
+  useEffect(() => {
+    if (!formOpen || formMode === 'create' || !detailQuery.isError) return
+    showAlert({
+      title: '조회 실패',
+      content: '교재 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
+    })
+  }, [detailQuery.isError, formOpen, formMode, showAlert])
 
   const rowNoMap = useMemo(() => {
     const map = new Map<string, number>()
@@ -373,7 +391,10 @@ export function EducationTextbooksPage() {
     }
   }, [editing, removeMutation, showAlert])
 
-  const formLoading = createMutation.isPending || updateMutation.isPending
+  const formLoading =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    (formOpen && formMode !== 'create' && !detailQuery.data)
 
   const fieldFilterOptions = useMemo(
     () => businessFields.map(f => ({ value: f.id, label: f.name })),
@@ -690,7 +711,7 @@ export function EducationTextbooksPage() {
       <EducationTextbookFormModal
         open={formOpen}
         mode={formMode}
-        initial={editing}
+        initial={formMode === 'create' ? null : (detailQuery.data ?? editing)}
         businessFields={businessFields}
         educationTargets={educationTargets}
         confirmLoading={formLoading}

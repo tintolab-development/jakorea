@@ -363,6 +363,7 @@ export function InstructorPaymentTab({
     columns: excelExportColumns,
     data: filteredRows,
     filename: excelFilename,
+    selectedRowKeys: viewMode === 'list' ? selectedRowKeys : undefined,
   })
 
   const handleSearch = () => {

@@ -110,6 +110,56 @@ describe('applyRegistrationFormsAfterCreate', () => {
     expect(second?.excludeBindingIds?.has(77)).toBe(true)
   })
 
+  it('1사1교: 강사 APPLICATION만 있어도 기관 신청이 그 바인딩을 가져가지 않아 강사 신청이 실패하지 않는다', async () => {
+    const csProgram = { id: '186500', backendProgramType: 'COMPANY_SCHOOL' } as Program
+    fetchGeneralProgramFormBindings.mockResolvedValue([
+      {
+        bindingId: 189778,
+        formType: 'APPLICATION',
+        targetType: 'INSTRUCTOR',
+        targetRole: 'INSTRUCTOR',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: 501,
+        templateId: 12,
+        templateVersionId: 68,
+        active: true,
+      },
+    ])
+    resolveFormTemplateCatalogIds.mockImplementation(async (code: string) =>
+      code === 'application-economy'
+        ? { templateId: 42, templateVersionId: 85 }
+        : { templateId: 12, templateVersionId: 68 }
+    )
+    saveProgramScopedOperationalFormVersion
+      .mockResolvedValueOnce({ templateId: 900, templateVersionId: 901, bindingId: 9001 })
+      .mockResolvedValueOnce({ templateId: 12, templateVersionId: 902, bindingId: 189778 })
+    const result = await applyRegistrationFormsAfterCreate({
+      program: csProgram,
+      forms: [
+        { templateCode: 'application-economy', formType: 'APPLICATION', draft, overlay: { a: 1 } },
+        { templateCode: 'application-instructor', formType: 'APPLICATION', draft, overlay: { b: 2 } },
+      ],
+    })
+    expect(result.failed).toEqual([])
+    expect(result.applied).toEqual([
+      { templateCode: 'application-economy', recruitmentId: undefined },
+      { templateCode: 'application-instructor', recruitmentId: 501 },
+    ])
+    const [economy, instructor] = saveProgramScopedOperationalFormVersion.mock.calls.map(
+      call =>
+        call[0] as {
+          templateCode: string
+          versionId: number
+          program: Program
+        }
+    )
+    expect(economy?.templateCode).toBe('application-economy')
+    expect(economy?.versionId).toBe(85)
+    expect(instructor?.templateCode).toBe('application-instructor')
+    expect(instructor?.versionId).toBe(68)
+    expect(instructor?.program.activeRecruitmentId).toBe(501)
+  })
+
   it('GENERAL 신청 양식은 fan-out된 모집 행 바인딩마다 적용한다', async () => {
     fetchGeneralProgramFormBindings.mockResolvedValue([
       {

@@ -16,6 +16,7 @@ export interface PublicStoryDetail {
   body?: string;
   imageUrl?: string | null;
   attachmentOriginalName?: string | null;
+  attachmentUrl?: string | null;
   authorName?: string;
   viewCount?: number;
 }

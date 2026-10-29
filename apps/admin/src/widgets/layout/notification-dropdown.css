@@ -5,9 +5,9 @@
 
 .notification-dropdown-panel {
   box-sizing: border-box;
-  width: 406px;
-  min-width: 406px;
-  max-width: 406px;
+  width: min(406px, calc(100vw - 24px));
+  min-width: 0;
+  max-width: min(406px, calc(100vw - 24px));
   height: 500px;
   padding: 4px 0 16px 0;
   border-radius: 6px;
@@ -103,6 +103,17 @@
   font-size: 14px;
 }
 
+.notification-dropdown-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.notification-dropdown-error .notification-dropdown-empty {
+  padding-bottom: 0;
+}
+
 .notification-dropdown-list {
   display: flex;
   flex-direction: column;
@@ -177,6 +188,9 @@
   line-height: 150%;
   opacity: 0.6;
   margin-bottom: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .notification-dropdown-item-date {

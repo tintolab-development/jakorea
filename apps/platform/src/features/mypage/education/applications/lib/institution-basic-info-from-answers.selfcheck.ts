@@ -120,4 +120,77 @@ assert.equal(ujat!.teacherContact, 'UJAT교사 | 032-123-4567 | 010-2222-3333 | 
 const fallback = mapTeacherInstitutionFromApplicationAnswers(economyOnly, 'general')
 assert.equal(fallback!.name, '경제교육학교')
 
+const geminiAnswers = {
+  'gemini-vt-inst-seed-training-info': { studentCount: 20 },
+  'gemini-vt-inst-seed-contact': { teacherName: '김교사', jobTitle: '교사', subject: '사회' },
+  schoolName: '서울초등학교',
+  applicationGrade: '3',
+  regionLabel: '서울특별시 강서구',
+  addressDetail: '본관',
+}
+const gemini = mapTeacherInstitutionFromApplicationAnswers(geminiAnswers, 'gemini')
+assert.equal(gemini!.name, '서울초등학교')
+assert.equal(gemini!.grade, '3학년')
+assert.equal(gemini!.address, '서울특별시 강서구')
+assert.equal(gemini!.addressDetail, '본관')
+assert.equal(gemini!.jobTitle, '교사')
+assert.equal(gemini!.studentCount, '20명')
+assert.ok(gemini!.teacherContact.includes('김교사'))
+assert.notEqual(gemini!.jobTitle, '김교사')
+
+const geminiShifted = mapTeacherInstitutionFromApplicationAnswers(
+  {
+    'gemini-vt-inst-seed-training-info': { studentCount: 15 },
+    'gemini-vt-inst-seed-contact': { teacherName: '김교사', jobTitle: '김교사' },
+  },
+  'gemini',
+)
+assert.equal(geminiShifted!.jobTitle, undefined)
+assert.ok(geminiShifted!.teacherContact.includes('김교사'))
+
+const geminiLabeled = mapTeacherInstitutionFromApplicationAnswers(
+  {
+    'gemini-vt-inst-seed-training-info': {
+      studentCount: 20,
+      dataRows: [
+        ['기관명', '서울초등학교'],
+        ['학년', '3'],
+        ['소재지', '서울특별시 강서구'],
+        ['상세주소', '본관'],
+        ['학급', 2],
+      ],
+    },
+    'gemini-vt-inst-seed-contact': { name: '김교사', jobTitle: '교사' },
+  },
+  'gemini',
+)
+assert.equal(geminiLabeled!.name, '서울초등학교')
+assert.equal(geminiLabeled!.grade, '3학년')
+assert.equal(geminiLabeled!.address, '서울특별시 강서구')
+assert.equal(geminiLabeled!.addressDetail, '본관')
+assert.equal(geminiLabeled!.classAndHeadcount, '2개 학급 | 총 20명')
+assert.equal(geminiLabeled!.jobTitle, '교사')
+assert.ok(geminiLabeled!.teacherContact.includes('김교사'))
+
+const geminiNested = mapTeacherInstitutionFromApplicationAnswers(
+  {
+    application: {
+      gemini: {
+        inst: {
+          institutionName: '승인된 기관',
+          grade: '2',
+          address: '서울 강서구',
+          addressDetail: '3층',
+        },
+      },
+    },
+    'gemini-vt-inst-seed-contact': { teacherName: '담당교사' },
+  },
+  'gemini',
+)
+assert.equal(geminiNested!.name, '승인된 기관')
+assert.equal(geminiNested!.grade, '2학년')
+assert.equal(geminiNested!.addressDetail, '3층')
+assert.ok(geminiNested!.teacherContact.includes('담당교사'))
+
 console.log('institution-basic-info-from-answers.selfcheck: ok')

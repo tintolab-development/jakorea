@@ -34,7 +34,7 @@
   flex-direction: column;
   align-items: stretch;
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: auto;
   gap: 24px;
   box-sizing: border-box;
   margin-inline: auto;
@@ -289,13 +289,20 @@
   margin-top: 24px;
 }
 
-/* 본문: 카드 잔여 높이 채움 */
+/* 본문: 짧은 글은 카드 잔여 높이 채움 · 긴 글·이미지는 카드와 함께 성장 */
 .notice-detail-page__body {
   margin-top: 24px;
   width: 100%;
   min-width: 0;
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: auto;
+  overflow: visible;
+}
+
+.notice-detail-page__body .rich-text-viewer {
+  max-height: none;
+  height: auto;
+  overflow: visible;
 }
 
 /* 액션 — 카드 밖 · full width */

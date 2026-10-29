@@ -47,8 +47,11 @@ export {
   noticeInlineImageOwner,
   programInlineImageOwner,
   programPostInlineImageOwner,
+  rememberProgramInlineImageDraft,
+  resetProgramInlineImageDraftsForTests,
   resolveRichTextInlineImageSrc,
   shouldInsertRichTextImageLocally,
+  takeProgramInlineImageDraft,
 } from '@/shared/lib/admin-file-upload/inline-image'
 export type {
   AdminFileUploadOwner,

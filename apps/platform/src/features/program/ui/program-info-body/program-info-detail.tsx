@@ -125,7 +125,8 @@ export function ProgramInfoDetail({
     Boolean(geminiTrainingRequestPeriodLabel) ||
     program.educationSchedules.length > 0 ||
     program.extraSections.length > 0 ||
-    Boolean(program.contactValue.trim())
+    Boolean(program.contactValue.trim()) ||
+    Boolean(applicationMethodValue)
 
   const contactParts = isParticipate ? splitContactParts(program.contactValue) : []
 
@@ -325,38 +326,38 @@ export function ProgramInfoDetail({
                 )}
               </div>
             ) : null}
+
+            {applicationMethodValue ? (
+              <div className={styles.applicationMethod}>
+                <PFText
+                  as="span"
+                  typo="bd-md-md"
+                  color="neutral-cool-600"
+                  className={styles.applicationMethodLabel}
+                >
+                  {program.applicationMethodLabel}
+                </PFText>
+                {isHtmlContent(applicationMethodValue) ? (
+                  <RichTextViewer
+                    content={applicationMethodValue}
+                    contentFormat="html"
+                    maxHeight="none"
+                    className={styles.extraSectionRichText}
+                  />
+                ) : (
+                  <PFText
+                    as="span"
+                    typo="bd-lg-sb"
+                    color="black"
+                    className={styles.applicationMethodValue}
+                  >
+                    {applicationMethodValue}
+                  </PFText>
+                )}
+              </div>
+            ) : null}
           </div>
         </section>
-      ) : null}
-
-      {applicationMethodValue ? (
-        <div className={styles.applicationMethod}>
-          <PFText
-            as="span"
-            typo="bd-md-md"
-            color="neutral-cool-600"
-            className={styles.applicationMethodLabel}
-          >
-            {program.applicationMethodLabel}
-          </PFText>
-          {isHtmlContent(applicationMethodValue) ? (
-            <RichTextViewer
-              content={applicationMethodValue}
-              contentFormat="html"
-              maxHeight="none"
-              className={styles.extraSectionRichText}
-            />
-          ) : (
-            <PFText
-              as="span"
-              typo="bd-lg-sb"
-              color="black"
-              className={styles.applicationMethodValue}
-            >
-              {applicationMethodValue}
-            </PFText>
-          )}
-        </div>
       ) : null}
     </article>
   )

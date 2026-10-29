@@ -163,6 +163,15 @@ export function HeroCarousel({ slides: slidesProp, autoplayMs = HOME_HERO_AUTOPL
       ))}
 
       <div className={styles.scrim} aria-hidden="true" />
+      {activeSlide.href ? (
+        <a
+          className={styles.slideHit}
+          href={activeSlide.href}
+          target={activeSlide.external ? '_blank' : undefined}
+          rel={activeSlide.external ? 'noopener noreferrer' : undefined}
+          aria-label={titleLines.join(' ') || '배너 바로가기'}
+        />
+      ) : null}
 
       <div className={styles.inner}>
         <div className={styles.copy}>

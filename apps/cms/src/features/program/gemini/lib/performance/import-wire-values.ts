@@ -61,14 +61,38 @@ function normalizeDateRaw(raw: string): string {
     .trim()
 }
 
+function pad2(value: number): string {
+  return String(value).padStart(2, '0')
+}
+
+function utcYmd(date: Date): string {
+  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`
+}
+
+function localYmd(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+}
+
 function excelSerialToIsoDate(serial: number): string | undefined {
-  if (!Number.isInteger(serial) || serial < 20_000 || serial > 80_000) return undefined
-  const utc = Date.UTC(1899, 11, 30) + serial * 86_400_000
-  const date = new Date(utc)
-  const year = date.getUTCFullYear()
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  if (!Number.isFinite(serial) || serial < 20_000 || serial > 80_000) return undefined
+  const utc = Date.UTC(1899, 11, 30) + Math.floor(serial) * 86_400_000
+  return utcYmd(new Date(utc))
+}
+
+function jsDateToIsoDate(date: Date): string | undefined {
+  if (Number.isNaN(date.getTime())) return undefined
+  if (date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0) {
+    return utcYmd(date)
+  }
+  return localYmd(date)
+}
+
+/** ExcelJS Date·시리얼·표시 문자열 → `YYYY-MM-DD` */
+export function formatExcelDateValue(value: unknown): string | undefined {
+  if (value instanceof Date) return jsDateToIsoDate(value)
+  if (typeof value === 'number') return excelSerialToIsoDate(value)
+  if (typeof value === 'string') return toJavaLocalDate(value)
+  return undefined
 }
 
 /** Jackson `LocalDate` — `YYYY-MM-DD`만 보낸다. 파싱 실패 값은 생략한다. */
@@ -76,7 +100,7 @@ export function toJavaLocalDate(raw: string): string | undefined {
   const trimmed = normalizeDateRaw(raw)
   if (!trimmed) return undefined
 
-  if (/^\d{5}$/.test(trimmed)) {
+  if (/^\d{5}(?:\.\d+)?$/.test(trimmed)) {
     return excelSerialToIsoDate(Number(trimmed))
   }
 
@@ -86,6 +110,10 @@ export function toJavaLocalDate(raw: string): string | undefined {
   for (const format of DATE_FORMATS) {
     const parsed = dayjs(candidate, format, true)
     if (parsed.isValid()) return parsed.format('YYYY-MM-DD')
+  }
+
+  if (/\b(?:GMT|UTC)\b/.test(trimmed) || /^[A-Z][a-z]{2} [A-Z][a-z]{2} /.test(trimmed)) {
+    return jsDateToIsoDate(new Date(trimmed))
   }
 
   return undefined

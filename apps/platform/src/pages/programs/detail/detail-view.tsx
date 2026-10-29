@@ -7,6 +7,9 @@ import {
   ProgramStatusBadges,
   type ProgramDetail,
 } from '@/features/program'
+import { resolveGeminiProgramOperatingPeriodLabel } from '@/features/program/lib/gemini-program-period-label'
+import { isProgramSponsorVisible } from '@/features/program/lib/portal-sponsor-display'
+import { resolveProgramDetailCategoryTabs } from '@/features/program/lib/portal-category'
 import { PFFileDownload, PFText } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
@@ -28,6 +31,11 @@ export function ProgramDetailView({
   onApply,
   applyChecking,
 }: ProgramDetailViewProps) {
+  const headerCategories = resolveProgramDetailCategoryTabs({
+    tabs: program.categories,
+    detailCase: program.detailCase,
+  })
+
   return (
     <section className={[shell.page, styles.page].join(' ')}>
       <div className={shell.inner}>
@@ -49,9 +57,9 @@ export function ProgramDetailView({
                 className={styles.posterThumb}
               />
               <div className={styles.headerMain}>
-                {program.categories.length > 0 ? (
+                {headerCategories.length > 0 ? (
                   <div className={styles.categories}>
-                    {program.categories.map(tab => (
+                    {headerCategories.map(tab => (
                       <PFText
                         key={tab}
                         as="span"
@@ -78,22 +86,24 @@ export function ProgramDetailView({
                       프로그램 운영 기간
                     </PFText>
                     <PFText as="span" typo="hl-sm" color="black" className={styles.metaValue}>
-                      {program.operatingPeriodLabel}
+                      {resolveGeminiProgramOperatingPeriodLabel(program)}
                     </PFText>
                   </div>
-                  <div className={styles.metaItem}>
-                    <PFText
-                      as="span"
-                      typo="bd-lg-rg"
-                      color="neutral-cool-600"
-                      className={styles.metaLabel}
-                    >
-                      후원사
-                    </PFText>
-                    <PFText as="span" typo="hl-sm" color="black" className={styles.metaValue}>
-                      {program.sponsor}
-                    </PFText>
-                  </div>
+                  {isProgramSponsorVisible(program.sponsor) ? (
+                    <div className={styles.metaItem}>
+                      <PFText
+                        as="span"
+                        typo="bd-lg-rg"
+                        color="neutral-cool-600"
+                        className={styles.metaLabel}
+                      >
+                        후원사
+                      </PFText>
+                      <PFText as="span" typo="hl-sm" color="black" className={styles.metaValue}>
+                        {program.sponsor}
+                      </PFText>
+                    </div>
+                  ) : null}
                 </div>
               </div>
               {/* 상세에서는 모집 역할(강사 등) 배지를 숨긴다 — 목록·마이페이지는 그대로 */}

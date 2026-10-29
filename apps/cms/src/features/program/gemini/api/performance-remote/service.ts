@@ -11,6 +11,11 @@ import type {
 import type { GeminiTrainingReportImportRow } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportRow'
 import { fetchGeminiRecruitmentsRemotePage } from '@/features/program/gemini/api/visiting-training/client'
 import { formatGeminiImportPreviewFailures } from '@/features/program/gemini/lib/performance/import-preview-failure'
+import {
+  hasPaidBlockedImportFailures,
+  hasPaidDuplicateImportResults,
+} from '@/features/program/gemini/lib/performance/import-paid-duplicate'
+import { GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE } from '@/features/program/gemini/lib/performance/import-popup-copy'
 import { pickGeminiImportProgramId } from '@/features/program/gemini/lib/performance/pick-import-program-id'
 import {
   mapGeminiTrainingReportItemToRow,
@@ -18,7 +23,10 @@ import {
 } from './adapters'
 import { shouldUseGeminiPerformanceRemoteApi } from './capabilities'
 import {
+  bulkDeleteGeminiTrainingReportsRemote,
+  deleteGeminiTrainingReportRemote,
   fetchGeminiTrainingReportsRemotePage,
+  GEMINI_PERFORMANCE_LIST_PAGE_SIZE,
   importGeminiTrainingReportsRemote,
   previewGeminiTrainingReportImportRemote,
   type GeminiTrainingReportsRemotePage,
@@ -44,6 +52,7 @@ export type GeminiPerformanceRemoteImportPrepareResult = {
   duplicateKeys: string[]
   remoteImportRows: GeminiTrainingReportImportRow[]
   uploadRows: GeminiPerformanceUploadRow[]
+  paidDuplicate?: boolean
 }
 
 export async function listGeminiPerformanceRowsPage(
@@ -52,6 +61,7 @@ export async function listGeminiPerformanceRowsPage(
   assertRemoteReady()
   const page: GeminiTrainingReportsRemotePage = await fetchGeminiTrainingReportsRemotePage({
     page: pageParam,
+    size: GEMINI_PERFORMANCE_LIST_PAGE_SIZE,
   })
   const baseNo = pageParam * page.size
   return {
@@ -87,8 +97,13 @@ export async function prepareGeminiPerformanceImportRemote(
   const preview = await previewGeminiTrainingReportImportRemote({
     rows: remoteImportRows,
   })
+  const paidDuplicate = hasPaidDuplicateImportResults(preview.results)
+  const paidFailed = hasPaidBlockedImportFailures(preview.results)
   const previewFailure = formatGeminiImportPreviewFailures(preview.results)
-  if (previewFailure) {
+  if (paidFailed && !paidDuplicate) {
+    throw new Error(GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE)
+  }
+  if (previewFailure && !paidDuplicate) {
     throw new Error(previewFailure)
   }
   const remoteDuplicateIndexes = new Set(
@@ -105,7 +120,7 @@ export async function prepareGeminiPerformanceImportRemote(
           .map(row => row.duplicateKey)
       : findDuplicateKeys(importedRows)
 
-  return { importedRows, duplicateKeys, remoteImportRows, uploadRows }
+  return { importedRows, duplicateKeys, remoteImportRows, uploadRows, paidDuplicate }
 }
 
 export async function applyGeminiPerformanceImportRemote(
@@ -113,8 +128,35 @@ export async function applyGeminiPerformanceImportRemote(
   strategy: GeminiPerformanceImportDuplicateStrategy
 ): Promise<void> {
   assertRemoteReady()
-  await importGeminiTrainingReportsRemote({
+  const response = await importGeminiTrainingReportsRemote({
     rows: remoteImportRows,
     duplicateStrategy: strategy,
   })
+  if (hasPaidBlockedImportFailures(response.results)) {
+    throw new Error(GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE)
+  }
+  const previewFailure = formatGeminiImportPreviewFailures(response.results)
+  if (previewFailure) {
+    throw new Error(previewFailure)
+  }
+  if ((response.failedRows ?? 0) > 0) {
+    throw new Error(
+      '연수 보고서를 등록하지 못했습니다.\n잠시 후 다시 시도해 주세요.'
+    )
+  }
+}
+
+export async function deleteGeminiPerformanceRowsRemote(ids: string[]): Promise<void> {
+  assertRemoteReady()
+  const numericIds = ids
+    .map(id => Number(id))
+    .filter(id => Number.isFinite(id) && id > 0)
+  if (numericIds.length === 0) {
+    throw new Error('삭제할 실적이 없습니다.')
+  }
+  if (numericIds.length === 1) {
+    await deleteGeminiTrainingReportRemote(numericIds[0]!)
+    return
+  }
+  await bulkDeleteGeminiTrainingReportsRemote(numericIds)
 }

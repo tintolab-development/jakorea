@@ -1,5 +1,10 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import {
+  programInlineImageOwner,
+  takeProgramInlineImageDraft,
+} from '@/shared/lib/admin-file-upload/inline-image'
+import { uploadAdminFileMaybeMock } from '@/shared/lib/admin-file-upload/upload-maybe-mock'
 import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 
 const FILE_SRC_RE =
@@ -8,6 +13,35 @@ const IMG_TAG_RE = /<img\b[^>]*>/gi
 const IMG_SRC_ATTR_RE = /\bsrc\s*=\s*(["'])(.*?)\1/i
 const MARKDOWN_IMAGE_RE = /!\[[^\]]*\]\(([^)]+)\)/g
 
+const FILE_ID_RE =
+  /\/api\/(?:admin|portal\/public)\/files\/(\d+)\/(?:content|download)|file-object:(\d+)/g
+
+const IMAGE_MARKUP_RE = /<img\b|!\[[^\]]*\]\(/i
+
+const INLINE_IMAGE_HTML_PATCH_KEYS = [
+  'description',
+  'recruitmentGuide',
+  'applicationMethod',
+  'learningSupportContent',
+  'additionalContentHtml',
+  'otherMatters',
+  'remarks',
+  'serviceDetailJson',
+] as const
+
+const RECRUITMENT_INLINE_IMAGE_HTML_KEYS = [
+  'programDescription',
+  'recruitmentGuide',
+  'applicationMethod',
+  'learningSupportContent',
+  'additionalContentHtml',
+  'otherMatters',
+  'remarks',
+] as const
+
+const INLINE_IMAGE_BIND_ERROR_RE =
+  /INLINE_IMAGE|PURPOSE_MISMATCH|FILE_OWNER_MISMATCH|PUBLIC_FILE_NOT_FOUND/i
+
 const PROGRAM_INLINE_IMAGE_CONTENT_KEYS = new Set([
   'description',
   'programDescription',
@@ -15,6 +49,7 @@ const PROGRAM_INLINE_IMAGE_CONTENT_KEYS = new Set([
   'applicationMethod',
   'learningSupportContent',
   'additionalContentHtml',
+  'additionalContentMarkdown',
   'otherMatters',
   'otherNotes',
   'remarks',
@@ -220,6 +255,248 @@ export function resolveProgramInlineImagePut(
   return { fileObjectIds, shouldPut: true }
 }
 
+function replaceFileObjectIdsInString(value: string, idMap: Map<number, number>): string {
+  FILE_ID_RE.lastIndex = 0
+  return value.replace(FILE_ID_RE, (full, contentId, tokenId) => {
+    const id = Number(contentId ?? tokenId)
+    const next = idMap.get(id)
+    if (next == null) return full
+    return full.replace(String(id), String(next))
+  })
+}
+
+export function rewriteFileObjectIdsInUnknown(
+  value: unknown,
+  idMap: Map<number, number>
+): unknown {
+  if (idMap.size === 0) return value
+  if (typeof value === 'string') {
+    const parsed = parseJsonObject(value)
+    if (parsed != null && (value.startsWith('{') || value.startsWith('['))) {
+      return JSON.stringify(rewriteFileObjectIdsInUnknown(parsed, idMap))
+    }
+    return replaceFileObjectIdsInString(value, idMap)
+  }
+  if (Array.isArray(value)) {
+    return value.map(item => rewriteFileObjectIdsInUnknown(item, idMap))
+  }
+  if (value && typeof value === 'object') {
+    const next: Record<string, unknown> = {}
+    for (const [key, child] of Object.entries(value)) {
+      next[key] = rewriteFileObjectIdsInUnknown(child, idMap)
+    }
+    return next
+  }
+  return value
+}
+
+function firstPayloadRecord(content: unknown): Record<string, unknown> | null {
+  if (Array.isArray(content)) {
+    for (const item of content) {
+      if (item && typeof item === 'object' && !Array.isArray(item)) {
+        return item as Record<string, unknown>
+      }
+    }
+    return null
+  }
+  if (content && typeof content === 'object') return content as Record<string, unknown>
+  return null
+}
+
+function valueHasInlineImages(value: unknown): boolean {
+  if (typeof value === 'string') {
+    if (IMAGE_MARKUP_RE.test(value) && collectFileObjectIdsFromHtml(value).length > 0) {
+      return true
+    }
+    if (value.startsWith('{') || value.startsWith('[')) {
+      return collectProgramInlineImageFileObjectIds({ serviceDetailJson: value }).length > 0
+    }
+    return false
+  }
+  return collectProgramInlineImageFileObjectIds(value).length > 0
+}
+
+function pickRecordInlineImageHtmlPatch(
+  record: Record<string, unknown>,
+  keys: readonly string[]
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = {}
+  for (const key of keys) {
+    if (record[key] === undefined) continue
+    if (!valueHasInlineImages(record[key])) continue
+    patch[key] = record[key]
+  }
+  return patch
+}
+
+export function pickProgramInlineImageHtmlPatch(content: unknown): Record<string, unknown> {
+  const record = firstPayloadRecord(content)
+  if (record == null) return {}
+  return pickRecordInlineImageHtmlPatch(record, INLINE_IMAGE_HTML_PATCH_KEYS)
+}
+
+function recruitmentNumericId(row: Record<string, unknown>): number | null {
+  const id = Number(row.id)
+  if (!Number.isInteger(id) || id < 1) return null
+  return id
+}
+
+function recruitmentMatchKey(row: Record<string, unknown>): string {
+  return [String(row.applicationType ?? ''), String(row.recruitTerm ?? ''), String(row.recruitmentType ?? '')].join(
+    '|'
+  )
+}
+
+function collectRecruitmentRows(content: unknown): Record<string, unknown>[] {
+  const rows: Record<string, unknown>[] = []
+  const visit = (node: unknown) => {
+    if (Array.isArray(node)) {
+      for (const item of node) visit(item)
+      return
+    }
+    if (node && typeof node === 'object') {
+      const rec = node as Record<string, unknown>
+      if (Array.isArray(rec.recruitments)) {
+        for (const row of rec.recruitments) {
+          if (row && typeof row === 'object' && !Array.isArray(row)) {
+            rows.push(row as Record<string, unknown>)
+          }
+        }
+      }
+    }
+  }
+  visit(content)
+  return rows
+}
+
+function pickRecruitmentInlineImagePatches(
+  content: unknown
+): Array<{ recruitmentId: number; patch: Record<string, unknown> }> {
+  const rows = collectRecruitmentRows(content)
+  const idsByKey = new Map<string, number[]>()
+  for (const row of rows) {
+    const id = recruitmentNumericId(row)
+    if (id == null) continue
+    const key = recruitmentMatchKey(row)
+    const list = idsByKey.get(key) ?? []
+    list.push(id)
+    idsByKey.set(key, list)
+  }
+  const byId = new Map<number, Record<string, unknown>>()
+  for (const row of rows) {
+    const patch = pickRecordInlineImageHtmlPatch(row, RECRUITMENT_INLINE_IMAGE_HTML_KEYS)
+    if (Object.keys(patch).length === 0) continue
+    const id = recruitmentNumericId(row) ?? idsByKey.get(recruitmentMatchKey(row))?.shift()
+    if (id == null || byId.has(id)) continue
+    byId.set(id, patch)
+  }
+  return [...byId.entries()].map(([recruitmentId, patch]) => ({ recruitmentId, patch }))
+}
+
+function parseProgramNumericId(programId: string | number): number | null {
+  const numericId = typeof programId === 'number' ? programId : Number(programId)
+  if (!Number.isFinite(numericId) || numericId < 1) return null
+  return numericId
+}
+
+function unwrapApiData(payload: unknown): unknown {
+  if (payload != null && typeof payload === 'object') {
+    const body = payload as Record<string, unknown>
+    if (body.success === true && 'data' in body) {
+      return unwrapApiData(body.data)
+    }
+  }
+  return payload
+}
+
+function uniqueFileObjectIds(...groups: number[][]): number[] {
+  const seen = new Set<number>()
+  const out: number[] = []
+  for (const group of groups) {
+    for (const id of group) {
+      if (!Number.isInteger(id) || id < 1 || seen.has(id)) continue
+      seen.add(id)
+      out.push(id)
+    }
+  }
+  return out
+}
+
+/** PATCH 본문에 없는 모집 행 HTML 이미지가 PUT에서 빠지지 않게 현재 프로그램을 한 번 더 읽는다. */
+async function fetchCurrentProgramInlineImageFileObjectIds(
+  programId: string | number
+): Promise<number[]> {
+  try {
+    const payload = await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(String(programId))}`,
+      method: 'GET',
+    })
+    return collectProgramInlineImageFileObjectIds(unwrapApiData(payload))
+  } catch {
+    return []
+  }
+}
+
+async function resolveProgramInlineImageBindIds(
+  programId: string | number,
+  contentIds: number[]
+): Promise<number[]> {
+  const currentIds = await fetchCurrentProgramInlineImageFileObjectIds(programId)
+  return uniqueFileObjectIds(currentIds, contentIds)
+}
+
+export async function prepareProgramInlineImageBind(
+  programId: string | number,
+  content: unknown
+): Promise<{ rewritten: unknown; fileObjectIds: number[]; didAdopt: boolean }> {
+  const collected = collectProgramInlineImageFileObjectIds(content)
+  if (collected.length === 0) {
+    return { rewritten: content, fileObjectIds: [], didAdopt: false }
+  }
+  const numericId = parseProgramNumericId(programId)
+  if (numericId == null) {
+    return { rewritten: content, fileObjectIds: collected, didAdopt: false }
+  }
+  const idMap = new Map<number, number>()
+  for (const id of collected) {
+    const file = takeProgramInlineImageDraft(id)
+    if (file == null) continue
+    const uploaded = await uploadAdminFileMaybeMock({
+      file,
+      owner: programInlineImageOwner(numericId),
+      waitUntilAvailable: true,
+    })
+    idMap.set(id, uploaded.fileObjectId)
+  }
+  if (idMap.size === 0) {
+    return { rewritten: content, fileObjectIds: collected, didAdopt: false }
+  }
+  const rewritten = rewriteFileObjectIdsInUnknown(content, idMap)
+  const fileObjectIds = [...new Set(collected.map(id => idMap.get(id) ?? id))]
+  return { rewritten, fileObjectIds, didAdopt: true }
+}
+
+async function persistRewrittenProgramInlineImageHtml(
+  programId: string | number,
+  rewritten: unknown
+): Promise<void> {
+  const patch = pickProgramInlineImageHtmlPatch(rewritten)
+  if (Object.keys(patch).length > 0) {
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(String(programId))}`,
+      method: 'PATCH',
+      data: patch,
+    })
+  }
+  for (const row of pickRecruitmentInlineImagePatches(rewritten)) {
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(String(programId))}/recruitments/${row.recruitmentId}`,
+      method: 'PATCH',
+      data: row.patch,
+    })
+  }
+}
+
 export function programInlineImageErrorMessage(error: unknown): string {
   const code = getApiErrorCode(error)?.trim()
   if (code && PROGRAM_INLINE_IMAGE_ERROR_MESSAGES[code]) {
@@ -305,13 +582,41 @@ async function putAndConfirmProgramInlineImages(
   await confirmProgramInlineImagesBound(programId, fileObjectIds)
 }
 
+/** 바인딩 PUT 실패 중 본문 이미지와 무관한 API 오류 코드(예: UJAT_RECRUIT_TERM_DUPLICATE)인지. */
+function isUnrelatedApiError(error: unknown): boolean {
+  const code = getApiErrorCode(error)?.trim()
+  return Boolean(code) && !INLINE_IMAGE_BIND_ERROR_RE.test(code as string)
+}
+
+async function persistRewrittenInlineImageContent(
+  programId: string | number,
+  rewritten: unknown,
+  persistRewritten?: (rewritten: unknown) => Promise<void>
+): Promise<void> {
+  if (persistRewritten) await persistRewritten(rewritten)
+  else await persistRewrittenProgramInlineImageHtml(programId, rewritten)
+}
+
+/**
+ * UPDATE 후 본문 이미지 바인딩.
+ * 등록 draft 이미지는 프로그램 owner로 다시 올려 본문을 갱신하고, 현재 프로그램(모집 행 포함) id와 합쳐 PUT·확인한다.
+ * 실패는 ProgramInlineImageBindError로 저장 오류에 전달한다.
+ */
 export async function syncProgramInlineImages(
   programId: string | number,
-  content: unknown
+  content: unknown,
+  persistRewritten?: (rewritten: unknown) => Promise<void>
 ): Promise<void> {
-  const { fileObjectIds, shouldPut } = resolveProgramInlineImagePut(content, 'update')
+  const { rewritten, fileObjectIds: preparedIds, didAdopt } = await prepareProgramInlineImageBind(
+    programId,
+    content
+  )
+  if (didAdopt) await persistRewrittenInlineImageContent(programId, rewritten, persistRewritten)
+  const { shouldPut } = resolveProgramInlineImagePut(didAdopt ? rewritten : content, 'update')
   if (!shouldPut) return
+  let fileObjectIds = preparedIds
   try {
+    fileObjectIds = await resolveProgramInlineImageBindIds(programId, preparedIds)
     await putAndConfirmProgramInlineImages(programId, fileObjectIds)
   } catch (error) {
     throw new ProgramInlineImageBindError({
@@ -323,16 +628,42 @@ export async function syncProgramInlineImages(
   }
 }
 
+/**
+ * CREATE 직후 본문 이미지 바인딩. 프로그램은 지우지 않는다.
+ * 본문 이미지 바인딩 실패는 ProgramInlineImageBindError로 throw해 저장 오류로 안내한다.
+ */
 export async function syncProgramInlineImagesKeepProgram(
   programId: string | number,
-  content: unknown
+  content: unknown,
+  persistRewritten?: (rewritten: unknown) => Promise<void>
 ): Promise<'ok' | 'skipped'> {
-  const { fileObjectIds, shouldPut } = resolveProgramInlineImagePut(content, 'create')
-  if (!shouldPut) return 'skipped'
+  const { rewritten, fileObjectIds: preparedIds, didAdopt } = await prepareProgramInlineImageBind(
+    programId,
+    content
+  )
+  if (didAdopt) {
+    try {
+      await persistRewrittenInlineImageContent(programId, rewritten, persistRewritten)
+    } catch (error) {
+      if (!isUnrelatedApiError(error)) {
+        throw new ProgramInlineImageBindError({
+          programId,
+          fileObjectIds: preparedIds,
+          stage: 'create',
+          cause: error,
+        })
+      }
+    }
+  }
+  const { shouldPut } = resolveProgramInlineImagePut(didAdopt ? rewritten : content, 'create')
+  if (!shouldPut || preparedIds.length === 0) return 'skipped'
+  const fileObjectIds = await resolveProgramInlineImageBindIds(programId, preparedIds)
+  if (fileObjectIds.length === 0) return 'skipped'
   try {
     await putAndConfirmProgramInlineImages(programId, fileObjectIds)
     return 'ok'
   } catch (error) {
+    if (isUnrelatedApiError(error)) return 'skipped'
     throw new ProgramInlineImageBindError({
       programId,
       fileObjectIds,

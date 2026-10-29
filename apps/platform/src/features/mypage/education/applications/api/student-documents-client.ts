@@ -10,6 +10,7 @@ import {
   toCertificateBulkDownloadError,
   validateCertificateRosterIds,
 } from '../lib/certificate-bulk-download'
+import { readStudentDocumentsErrorCode } from '../lib/student-documents-errors'
 import {
   extractGeneratedFileName,
   isPortraitConsentTemplateJobCompleted,
@@ -322,11 +323,18 @@ export async function fetchOrganizationStudentDocumentPolicy(
   applicationId: string,
   signal?: AbortSignal
 ): Promise<PortalStudentDocumentPolicy> {
-  const { data } = await axiosClient.get<unknown>(
-    `${organizationApplicationPath(applicationId)}/student-documents/policy`,
-    { signal }
-  )
-  return unwrapEnvelope<PortalStudentDocumentPolicy>(data)
+  try {
+    const { data } = await axiosClient.get<unknown>(
+      `${organizationApplicationPath(applicationId)}/student-documents/policy`,
+      { signal }
+    )
+    return unwrapEnvelope<PortalStudentDocumentPolicy>(data)
+  } catch (error) {
+    if (readStudentDocumentsErrorCode(error) === 'PROGRAM_STUDENT_DOCUMENTS_NOT_SUPPORTED') {
+      return { studentDocumentsSupported: false }
+    }
+    throw error
+  }
 }
 
 export async function fetchOrganizationPortraitConsent(

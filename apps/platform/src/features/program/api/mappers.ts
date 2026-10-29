@@ -15,7 +15,12 @@ import type {
   ProgramVolunteerInterviewSchedule,
 } from '../model/types'
 import { PROGRAM_TAB_LABEL, programTabLabels } from '../lib/constants.ts'
-import { fallbackPortalTab, isUjatProgramType, mapPortalTabs } from '../lib/portal-category.ts'
+import {
+  fallbackPortalTab,
+  isUjatProgramType,
+  mapPortalTabs,
+  resolveProgramDetailCategoryTabs,
+} from '../lib/portal-category.ts'
 import {
   programTabFromPortalTab,
   selectRecruitmentsForFocus,
@@ -33,6 +38,11 @@ import type {
   PortalVolunteerInterviewSchedule,
 } from './types'
 import { extraSection, rewriteAdminFileContentSrcsForPortal } from '../lib/html-body.ts'
+import { mapPortalSponsorDisplay } from '../lib/portal-sponsor-display.ts'
+import {
+  recruitmentGuideSectionTitle,
+  recruitmentPhaseGroupLabel,
+} from '../lib/detail-case.ts'
 import {
   educationScheduleDetailCardLabel,
   formatEducationScheduleRangeForDetailCard,
@@ -219,6 +229,23 @@ function formatYmd(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
+}
+
+const SEOUL_YMD_FORMAT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** Portal `trainingRequest*` — 날짜만 있으면 그대로, datetime은 Asia/Seoul 역일. */
+function toIsoDateOnlyFromPortal(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+  const date = toDate(trimmed)
+  if (!date) return null
+  return SEOUL_YMD_FORMAT.format(date)
 }
 
 function formatRange(start: Date | null, end: Date | null): string {
@@ -453,6 +480,8 @@ function recruitmentTypeLabel(value: string | undefined): string {
       return '강사 모집 기간'
     case 'VOLUNTEER':
       return '봉사자 모집 기간'
+    case 'ORGANIZATION':
+      return '기관 모집 기간'
     default:
       return '참여자 모집 기간'
   }
@@ -464,6 +493,8 @@ function recruitmentRoleShort(value: string | undefined): string {
       return '강사'
     case 'VOLUNTEER':
       return '봉사자'
+    case 'ORGANIZATION':
+      return '기관'
     default:
       return '참여자'
   }
@@ -692,19 +723,27 @@ export function formatPortalEducationVenue(
   return detailWithoutKind ? `${kindLabel} | ${detailWithoutKind}` : kindLabel
 }
 
-/** 참여자·기관·Gemini만 학습 지원. 강사·봉사자는 기타사항. */
+/** 참여자·기관·Gemini만 학습 지원. 강사·봉사자는 기타사항. Gemini 비고(notes)도 otherMatters. */
 function showsLearningSupport(detailCase: ProgramDetailCase): boolean {
   return detailCase === 'general' || detailCase === 'ujat-participant' || detailCase === 'gemini'
 }
 
 function showsOtherMatters(detailCase: ProgramDetailCase): boolean {
-  return detailCase === 'instructor' || detailCase === 'volunteer' || detailCase === 'ujat-volunteer'
+  return (
+    detailCase === 'instructor' ||
+    detailCase === 'volunteer' ||
+    detailCase === 'ujat-volunteer' ||
+    detailCase === 'gemini'
+  )
 }
 
-/** 빈 에디터(`<p></p>`, `<p><br></p>`)와 CMS 공란 표식은 섹션을 만들지 않는다. */
+/** 빈 에디터(`<p></p>`, `<p><br></p>`)와 CMS 공란 표식은 섹션을 만들지 않는다. 이미지만 있으면 유지한다. */
 function visibleCopy(value: string): string {
   const trimmed = value.trim()
   if (!trimmed || trimmed === '-' || trimmed === '해당 없음' || trimmed === '해당없음') return ''
+  if (/<img\b/i.test(trimmed) || /!\[[^\]]*]\(/i.test(trimmed) || /file-object:\d+/i.test(trimmed)) {
+    return trimmed
+  }
   const plain = trimmed
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;|&#160;/gi, ' ')
@@ -1134,7 +1173,6 @@ function buildPortalBasicInfoFields(args: {
         { label: '교육 대상', value: args.educationTargetGroupLabel },
         { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
         { label: '최소 수강 인원', value: args.geminiMinStudentCountLabel ?? '' },
-        { label: '교육 장소', value: args.educationVenueLabel },
       ])
     default: {
       const fields: ProgramBasicInfoField[] = [{ label: '사업 분야', value: args.businessFieldLabel }]
@@ -1192,19 +1230,19 @@ export function mapPortalProgramDetail(
     : selected?.ambiguous
       ? []
       : remote.recruitments
-  const focusedTab = focus?.portalTab
-  const categories = focusedTab
-    ? [programTabFromPortalTab(focusedTab)]
-    : mapPortalTabs(remote.portalCategories, remote.programType)
-  const category = focusedTab
-    ? programTabFromPortalTab(focusedTab)
-    : mapCategory(remote.portalCategories, remote.programType)
+  const focusedTab = focus?.portalTab ? programTabFromPortalTab(focus.portalTab) : undefined
   const detailCase =
     recruitmentResolved && selected
       ? detailCaseForFocus(remote.programType, selected.applicationTypes)
       : selected?.ambiguous && selected.applicationTypes.length === 1
         ? detailCaseForFocus(remote.programType, selected.applicationTypes)
         : mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
+  const categories = resolveProgramDetailCategoryTabs({
+    tabs: mapPortalTabs(remote.portalCategories, remote.programType),
+    detailCase,
+    focusedTab,
+  })
+  const category = categories[0] ?? fallbackPortalTab(remote.programType)
   const perScheduleEducationForm = remote.educationFormScheduleDetail === 'perSchedule'
   const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const programType = readString(remote.programType)?.toUpperCase()
@@ -1346,6 +1384,10 @@ export function mapPortalProgramDetail(
   const recruitmentPeriodLabel = formatRange(appStart, appEnd)
   const geminiTrainingRequestStart = toDate(remote.trainingRequestStartDate ?? undefined)
   const geminiTrainingRequestEnd = toDate(remote.trainingRequestEndDate ?? undefined)
+  const geminiTrainingRequestStartDate =
+    detailCase === 'gemini' ? toIsoDateOnlyFromPortal(remote.trainingRequestStartDate) : null
+  const geminiTrainingRequestEndDate =
+    detailCase === 'gemini' ? toIsoDateOnlyFromPortal(remote.trainingRequestEndDate) : null
   const geminiTrainingRequestPeriodLabel =
     detailCase === 'gemini' && (geminiTrainingRequestStart || geminiTrainingRequestEnd)
       ? formatRange(geminiTrainingRequestStart, geminiTrainingRequestEnd)
@@ -1380,8 +1422,8 @@ export function mapPortalProgramDetail(
   )
   const preEducationNoticeRequired = readPortalPreEducationNoticeRequired(remote, independentRow)
   const extraSections: ProgramExtraSection[] = [
-    extraSection('모집 안내', recruitmentGuide),
-    { title: '추가 내용', body: additionalContent, bodyFormat: 'html' as const },
+    extraSection(recruitmentGuideSectionTitle(detailCase), recruitmentGuide),
+    extraSection('추가 내용', additionalContent),
     ...(showsLearningSupport(detailCase)
       ? [extraSection('학습 지원 내용', learningSupportContent)]
       : []),
@@ -1412,6 +1454,10 @@ export function mapPortalProgramDetail(
     ...(geminiTrainingRequestPeriodLabel
       ? { geminiTrainingRequestPeriodLabel }
       : {}),
+    ...(geminiTrainingRequestStartDate
+      ? { geminiTrainingRequestStartDate }
+      : {}),
+    ...(geminiTrainingRequestEndDate ? { geminiTrainingRequestEndDate } : {}),
     ...(geminiMinStudentCountLabel ? { geminiMinStudentCountLabel } : {}),
     recruitmentStatus,
     educationTargetKey: targets.key,
@@ -1421,7 +1467,7 @@ export function mapPortalProgramDetail(
     educationFormLabel: educationFormLabelForDetail,
     thumbnailUrl,
     detailImageUrl: thumbnailUrl,
-    sponsor: (remote.sponsorNames ?? []).map(readString).filter(Boolean).join(', ') || '-',
+    sponsor: mapPortalSponsorDisplay(remote.sponsorNames),
     summary: independentRow
       ? programDescription
       : visibleCopy(readString(remote.description) ?? readString(remote.summary) ?? ''),
@@ -1482,8 +1528,7 @@ export function mapPortalProgramDetail(
     ),
     sessions,
     eventSchedules,
-    recruitmentPhaseGroupLabel:
-      detailCase === 'gemini' ? '신청 및 연수 기간' : '모집 및 선별 기간',
+    recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(
       selected?.ambiguous
         ? undefined

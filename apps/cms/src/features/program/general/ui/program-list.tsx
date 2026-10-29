@@ -235,14 +235,21 @@ export function ProgramList({
 
   const countForHeader = headerCount ?? displayedCount
 
+  const overviewRowSelectionActive =
+    showRowSelection && (onBulkDelete != null || onSelectionChange != null)
+
+  const excelSelectedRowKeys = overviewRowSelectionActive
+    ? viewMode === 'calendar'
+      ? calendarSelectedProgramIds
+      : effectiveSelectedRowKeys
+    : undefined
+
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     columns: antdColumns,
     data: filteredRows,
     filename: headerTitle ?? '프로그램 목록',
+    selectedRowKeys: excelSelectedRowKeys,
   })
-
-  const overviewRowSelectionActive =
-    showRowSelection && (onBulkDelete != null || onSelectionChange != null)
 
   return (
     <>
@@ -266,6 +273,7 @@ export function ProgramList({
           excelExport={{
             columns: antdColumns,
             data: filteredRows,
+            selectedRowKeys: excelSelectedRowKeys,
           }}
         >
           <div className="program-list-table-fit-wrap">

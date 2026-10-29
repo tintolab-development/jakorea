@@ -29,6 +29,7 @@ import type {
   CmsTargetLevel,
 } from '../model/cms-program.types'
 import {
+  recruitmentGuideSectionTitle,
   recruitmentPeriodPhaseLabel,
   recruitmentPhaseGroupLabel,
   recruitmentRoleLabelForCase,
@@ -365,10 +366,8 @@ export function mapBasicInfoFields(
           label: '교육 대상 상세',
           value: args.educationTargetDetailLabel,
         },
-        ...(sessionCount
-          ? [{ label: '교육 기수', value: sessionCount }]
-          : [{ label: '교육 장소', value: args.educationVenueLabel }]),
-      ]
+        ...(sessionCount ? [{ label: '교육 기수', value: sessionCount }] : []),
+      ].filter(field => field.value.trim().length > 0 && field.value !== '-')
     default:
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
@@ -669,12 +668,14 @@ function mapRecruitmentPhases(
       ? formatOptionalDate(program.finalPassAnnouncementDate)
       : formatOptionalDate(program.resultAnnouncementDate)
 
-  phases.push({
-    label: '최종 합격자 발표',
-    value: finalValue,
-  })
+  if (finalValue !== '-') {
+    phases.push({
+      label: '최종 합격자 발표',
+      value: finalValue,
+    })
+  }
 
-  return phases
+  return phases.filter(phase => phase.value.trim().length > 0 && phase.value !== '-')
 }
 
 /** mock 등 실파일 URL 이 없을 때 표시용 placeholder — 상세에서 빈 파일·원 파일명으로 다운로드 */
@@ -703,7 +704,7 @@ function mapExtraSections(
   const sections: ProgramExtraSection[] = []
   const guide = program.recruitmentGuide?.trim()
   if (guide) {
-    sections.push(extraSection('모집안내', guide))
+    sections.push(extraSection(recruitmentGuideSectionTitle(detailCase), guide))
   }
 
   const additional = program.additionalContent?.trim()

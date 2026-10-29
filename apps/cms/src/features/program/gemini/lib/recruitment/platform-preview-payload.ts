@@ -21,14 +21,28 @@ export function buildGeminiRecruitmentPortalPreview(
 ): PortalProgramDetail {
   const startAt = toPortalDateTime(snapshot.applicationPeriodStart)
   const endAt = toPortalDateTime(snapshot.applicationPeriodEnd)
+  const trainingStart = toPortalDateTime(snapshot.trainingRequestPeriodStart)
+  const trainingEnd = toPortalDateTime(snapshot.trainingRequestPeriodEnd)
+  const businessStartDate =
+    startAt && trainingStart
+      ? startAt <= trainingStart
+        ? startAt
+        : trainingStart
+      : trainingStart ?? startAt
+  const businessEndDate =
+    endAt && trainingEnd
+      ? endAt >= trainingEnd
+        ? endAt
+        : trainingEnd
+      : trainingEnd ?? endAt
   return {
     programId: toPortalProgramId(options?.programId),
     programType: PORTAL_GEMINI_PROGRAM_TYPE,
     title: trimmedOrUndefined(snapshot.title) ?? '(공고명 없음)',
     summary: trimmedOrUndefined(snapshot.programDescription),
     operationMethod: toPortalOperationMethod(snapshot.educationForm),
-    businessStartDate: startAt,
-    businessEndDate: endAt,
+    businessStartDate,
+    businessEndDate,
     trainingRequestStartDate: toPortalDateTime(snapshot.trainingRequestPeriodStart),
     trainingRequestEndDate: toPortalDateTime(snapshot.trainingRequestPeriodEnd),
     minStudentCount: snapshot.minStudentCount,

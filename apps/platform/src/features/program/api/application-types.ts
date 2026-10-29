@@ -90,6 +90,9 @@ export type PortalPreferredScheduleSessionTime = {
 export type PortalPreferredScheduleBlock = {
   preferenceRank?: number
   date?: string
+  /** Gemini 기관 등 — 블록 루트 시각. sessionTimes와 함께 둘 수 있다. */
+  startTime?: string
+  endTime?: string
   /** OpenAPI `PreferredScheduleBlock.dayOfWeek` — 표시는 `date`에서 파생. */
   dayOfWeek?: string
   dateText?: string

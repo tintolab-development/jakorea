@@ -164,6 +164,7 @@ export function UjatInstitutionApplicationList({
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys,
         }}
       >
         {viewMode === 'table' ? (

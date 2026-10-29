@@ -49,9 +49,10 @@ function SearchIcon() {
 
 type Props = {
   slot: InterviewSlot
+  siblingLinkedStoryIds?: readonly (string | null)[]
 }
 
-export function InterviewSectionCard({ slot }: Props) {
+export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props) {
   const { showAlert } = useCmsAlert()
   const saveMutation = useSaveInterview()
   const [isEditing, setIsEditing] = useState(false)
@@ -91,6 +92,17 @@ export function InterviewSectionCard({ slot }: Props) {
       showAlert({ title: '입력 확인', content: '연결 게시글을 선택해 주세요.' })
       return
     }
+    const linkedId = draft.linkedStoryId?.trim() ?? ''
+    if (
+      linkedId &&
+      siblingLinkedStoryIds.some(id => (id ?? '').trim() === linkedId)
+    ) {
+      showAlert({
+        title: '연결 게시글 중복',
+        content: '다른 인터뷰 슬롯에 이미 연결된 게시글입니다. 다른 글을 선택해 주세요.',
+      })
+      return
+    }
     try {
       await saveMutation.mutateAsync({
         id: slot.id,
@@ -111,7 +123,7 @@ export function InterviewSectionCard({ slot }: Props) {
         )
       )
     }
-  }, [draft, saveMutation, showAlert, slot.id, slot.version])
+  }, [draft, saveMutation, showAlert, siblingLinkedStoryIds, slot.id, slot.version])
 
   const mode = isEditing ? 'edit' : 'view'
 

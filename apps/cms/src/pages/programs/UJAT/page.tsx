@@ -666,6 +666,7 @@ function UjatProgramListPageContent() {
         excelExport={{
           columns,
           data: filteredRows,
+          selectedRowKeys,
         }}
       >
         <CmsDataTable<Program>

@@ -3,8 +3,8 @@ import styles from './summary.module.css'
 
 type EducationSettlementSummaryProps = {
   processLabel: string
-  completedCount: number
-  totalCount: number
+  completedCount: number | string
+  totalCount: number | string
   feeGradeLabel?: string
   businessIncomeLabel?: string
 }

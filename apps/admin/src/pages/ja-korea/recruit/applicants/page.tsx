@@ -4,7 +4,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
 import type { Dayjs } from 'dayjs'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -25,6 +24,7 @@ import {
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
 import { detailFromListItem } from '@/features/recruit-applicant/api/mappers'
 import { isRecruitApplicantNotFoundError } from '@/features/recruit-applicant/api/service'
+import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
 import { RecruitApplicantDetailModal } from '@/features/recruit-applicant/ui/detail-modal'
 import { recruitApplicantQueryKeys } from '@/features/recruit-applicant/api/query-keys'
 import { RECRUIT_APPLICANTS_CHANGED_EVENT } from '@/features/recruit-applicant/api/store'
@@ -39,6 +39,7 @@ import { formatDateTimeDot, formatNumberDisplay } from '@/shared/lib/format-disp
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
+import { useUrlDetailId } from '@/shared/lib/use-url-detail-id'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
   applyDateRangeToSearchParams,
@@ -88,6 +89,7 @@ const INITIAL_PENDING: ApplicantPendingFilters = {
 
 const appliedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 const confirmedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
+const DETAIL_QUERY_KEYS = ['applicationId'] as const
 
 const JOB_OPTIONS: Array<{ value: RecruitJobInterest; label: string }> = [
   { value: 'managementPlanning', label: '경영/기획' },
@@ -216,14 +218,14 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 
 export function RecruitApplicantsPage() {
   const { showAlert } = useCmsAlert()
-  const location = useLocation()
-  const navigate = useNavigate()
   const {
     pendingFilters,
     setPendingFilters,
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    searchParams,
+    patchSearchParams,
   } = useListFilterUrl<ApplicantPendingFilters, RecruitApplicantListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -278,9 +280,13 @@ export function RecruitApplicantsPage() {
   const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data])
   const totalCount = listQuery.data?.totalCount ?? rows.length
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [detailId, setDetailId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
+  const { detailId, openDetail, closeDetail } = useUrlDetailId(
+    searchParams,
+    patchSearchParams,
+    DETAIL_QUERY_KEYS,
+  )
   const detailQuery = useRecruitApplicantDetail(detailId)
   const remoteDetail = shouldUseRecruitApplicantRemoteApi()
 
@@ -325,56 +331,17 @@ export function RecruitApplicantsPage() {
     return listed ? detailFromListItem(listed) : null
   }, [detailId, detailQuery.data, remoteDetail, rows])
 
-  const replaceSearchParams = useCallback(
-    (mutate: (params: URLSearchParams) => void) => {
-      const params = new URLSearchParams(location.search)
-      mutate(params)
-      const next = params.toString()
-      const current = location.search.startsWith('?') ? location.search.slice(1) : location.search
-      if (next === current) return
-      navigate({ search: next ? `?${next}` : '' }, { replace: true })
-    },
-    [location.search, navigate]
-  )
-
-  const openDetail = useCallback(
-    (id: string) => {
-      setDetailId(id)
-      replaceSearchParams(params => {
-        params.set('applicationId', id)
-      })
-    },
-    [replaceSearchParams]
-  )
-
-  const closeDetail = useCallback(() => {
-    setDetailId(null)
-    replaceSearchParams(params => {
-      params.delete('applicationId')
-    })
-  }, [replaceSearchParams])
-
-  useEffect(() => {
-    const applicationId = new URLSearchParams(location.search).get('applicationId')?.trim()
-    if (!applicationId || detailId != null || listQuery.isLoading || listQuery.isFetching) return
-
-    let cancelled = false
-    queueMicrotask(() => {
-      if (!cancelled) setDetailId(applicationId)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [detailId, listQuery.isFetching, listQuery.isLoading, location.search])
-
   useEffect(() => {
     if (!remoteDetail || !detailId || !detailQuery.isError) return
     const notFound = isRecruitApplicantNotFoundError(detailQuery.error)
+    const forbidden = isAdminForbidden(detailQuery.error)
     showAlert({
-      title: notFound ? '신청을 찾을 수 없음' : '조회 실패',
-      content: notFound
-        ? '신청 정보를 찾을 수 없습니다.'
-        : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
+      title: forbidden ? '권한 없음' : notFound ? '신청을 찾을 수 없음' : '조회 실패',
+      content: forbidden
+        ? '해당 신청을 조회할 권한이 없습니다.'
+        : notFound
+          ? '신청 정보를 찾을 수 없습니다.'
+          : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
     })
     closeDetail()
   }, [closeDetail, detailId, detailQuery.error, detailQuery.isError, remoteDetail, showAlert])

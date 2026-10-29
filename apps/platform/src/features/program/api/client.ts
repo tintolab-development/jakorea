@@ -107,7 +107,10 @@ export type PortalProgramDetailQuery = {
   applicationType?: string
 }
 
-/** GET /api/portal/programs/{programId} — CMS 8080, 로그인 전 호출 가능 */
+/**
+ * GET /api/portal/programs/{programId}
+ * URL/라우트의 applicationType·recruitmentId 가 있으면 그대로 query 로 보낸다.
+ */
 export async function fetchPortalProgramDetail(
   programId: number,
   signal?: AbortSignal,

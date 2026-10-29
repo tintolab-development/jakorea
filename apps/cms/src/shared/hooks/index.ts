@@ -66,7 +66,11 @@ export { useObjectUrlFromFile } from './use-object-url-from-file'
 export { useFormInputsWidth } from './use-form-inputs-width'
 export type { FormInputsWidthOptions } from './use-form-inputs-width'
 export { useDeleteGuideMessages } from './use-delete-guide-messages'
-export { useTableExcelExport } from './use-table-excel-export'
+export {
+  defaultTableExcelRowKey,
+  TABLE_EXCEL_NO_SELECTION_ALERT,
+  useTableExcelExport,
+} from './use-table-excel-export'
 export type {
   TableExcelExporter,
   UseTableExcelExportOptions,

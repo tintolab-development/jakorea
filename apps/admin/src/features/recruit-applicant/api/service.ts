@@ -33,7 +33,7 @@ function careersApi() {
 async function listRemote(
   filter?: RecruitApplicantListFilter,
 ): Promise<RecruitApplicantListResult> {
-  const response = await careersApi().list16(toTalentApplicationListParams(filter))
+  const response = await careersApi().list15(toTalentApplicationListParams(filter))
   const items = (response.items ?? [])
     .map(mapCareerTalentApplicationListItem)
     .filter((row): row is RecruitApplicant => row != null)

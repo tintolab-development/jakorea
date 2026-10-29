@@ -6,6 +6,7 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@jako
 import type { ProgramDetailCase } from '@/features/program'
 import {
   basicInfoValuesFromDraftAnswer,
+  emptyTrainedTeachersBasicInfo,
   type ApplyTrainedTeachersBasicInfoValues,
 } from '@/features/program/ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info'
 import type { EducationTeacherApplicationInstitution } from '../model/types'
@@ -43,9 +44,6 @@ function resolveBasicInfoAnswerKey(
   detailCase: ProgramDetailCase | undefined,
   programGroup?: string,
 ): string {
-  if (detailCase === 'gemini') {
-    return GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.trainingInfo
-  }
   if (detailCase === 'ujat-participant') {
     return UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
   }
@@ -105,11 +103,33 @@ function formatVenue(values: ApplyTrainedTeachersBasicInfoValues): string | unde
   return base
 }
 
+function readNestedValue(row: Record<string, unknown>, path: string): unknown {
+  if (path in row) return row[path]
+  const parts = path.split('.')
+  if (parts.length < 2) return undefined
+  let current: unknown = row
+  for (const part of parts) {
+    const next = asRecordIfObject(current)
+    if (!next) return undefined
+    current = next[part]
+  }
+  return current
+}
+
+function stringifyAnswerField(raw: unknown): string {
+  if (typeof raw === 'string') return raw.trim()
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+  return ''
+}
+
 function readAnswerStringField(row: Record<string, unknown>, ...keys: string[]): string {
   for (const key of keys) {
-    const raw = row[key]
-    if (typeof raw === 'string' && raw.trim()) return raw.trim()
-    if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+    const direct = stringifyAnswerField(row[key])
+    if (direct) return direct
+    if (key.includes('.')) {
+      const nested = stringifyAnswerField(readNestedValue(row, key))
+      if (nested) return nested
+    }
   }
   return ''
 }
@@ -172,23 +192,152 @@ function asRecordIfObject(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>
 }
 
-function readGeminiInstitutionExtras(
+function readLabeledTableCell(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return ''
+}
+
+function readLabeledTableValue(row: Record<string, unknown>, labelIncludes: string[]): string {
+  const dataRows = row.dataRows
+  if (!Array.isArray(dataRows)) return ''
+  for (const item of dataRows) {
+    if (!Array.isArray(item)) continue
+    const label = typeof item[0] === 'string' ? item[0] : ''
+    const value = readLabeledTableCell(item[1])
+    if (value && labelIncludes.some(token => label.includes(token))) return value
+  }
+  return ''
+}
+
+function readGeminiInstitutionFromAnswers(
   answers: Record<string, unknown>,
-): Pick<EducationTeacherApplicationInstitution, 'studentCount' | 'jobTitle' | 'subject'> {
+): EducationTeacherApplicationInstitution {
   const training = asRecordIfObject(
     answers[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.trainingInfo],
   )
   const contact = asRecordIfObject(
     answers[GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.contactPerson],
   )
-  const studentCount = training
-    ? readAnswerStringField(training, 'studentCount', 'totalStudents', 'participantCount')
+  const overlay = asRecordIfObject(answers.geminiApplication) ?? answers
+
+  const studentCountRaw =
+    (training
+      ? readAnswerStringField(training, 'studentCount', 'totalStudents', 'participantCount', 'headcount')
+      : '') ||
+    readAnswerStringField(overlay, 'application.gemini.inst.headcount', 'headcount')
+  const jobTitle =
+    (contact
+      ? readAnswerStringField(contact, 'jobTitle', 'position', 'rank', 'contactJobTitle')
+      : '') ||
+    (contact ? readLabeledTableValue(contact, ['직급', '직위']) : '') ||
+    readAnswerStringField(overlay, 'application.gemini.inst.contactJobTitle', 'contactJobTitle')
+  const subject =
+    (contact
+      ? readAnswerStringField(contact, 'subject', 'classSubject', 'contactSubject')
+      : '') ||
+    (contact ? readLabeledTableValue(contact, ['과목']) : '') ||
+    readAnswerStringField(overlay, 'application.gemini.inst.contactSubject')
+  const teacherName =
+    (contact
+      ? readAnswerStringField(contact, 'teacherName', 'managerName', 'contactName', 'name') ||
+        readLabeledTableValue(contact, ['담당 교사', '교사명', '담당자', '성명', '이름'])
+      : '') ||
+    readAnswerStringField(overlay, 'teacherName', 'managerName', 'contactName', 'teacherContactName')
+  const teacherTel = contact
+    ? readAnswerStringField(contact, 'teacherTel', 'tel', 'phone')
     : ''
-  const jobTitle = contact ? readAnswerStringField(contact, 'jobTitle', 'position', 'rank') : ''
-  const subject = contact ? readAnswerStringField(contact, 'subject', 'classSubject') : ''
+  const teacherMobile = contact
+    ? readAnswerStringField(contact, 'teacherMobile', 'mobile')
+    : ''
+  const teacherEmail = contact
+    ? readAnswerStringField(contact, 'teacherEmail', 'email')
+    : ''
+
+  const name =
+    readAnswerStringField(
+      overlay,
+      'institutionName',
+      'schoolName',
+      'organizationName',
+      'teacherSchoolName',
+      'approvedInstitutionName',
+      'application.gemini.inst.institutionName',
+    ) ||
+    (training
+      ? readAnswerStringField(training, 'institutionName', 'schoolName', 'organizationName') ||
+        readLabeledTableValue(training, ['신청 기관명', '기관명', '학교명', '소속', '학교/기관명'])
+      : '')
+  const grade = formatApplicationGradeLabel(
+    readAnswerStringField(
+      overlay,
+      'applicationGrade',
+      'educationGrade',
+      'requestedGrade',
+      'grade',
+      'application.gemini.inst.grade',
+    ) ||
+      (training
+        ? readAnswerStringField(training, 'applicationGrade', 'educationGrade', 'grade') ||
+          readLabeledTableValue(training, ['학년', '담당학년', '신청 학년'])
+        : ''),
+  )
+  const address =
+    readAnswerStringField(
+      overlay,
+      'regionLabel',
+      'organizationRegion',
+      'institutionAddress',
+      'address',
+      'application.gemini.inst.address',
+    ) ||
+    (training
+      ? readAnswerStringField(training, 'regionLabel', 'organizationRegion', 'institutionAddress', 'address') ||
+        readLabeledTableValue(training, ['소재지', '주소', '지역', '기관 소재지'])
+      : '')
+  const addressDetail =
+    readAnswerStringField(
+      overlay,
+      'addressDetail',
+      'detailAddress',
+      'institutionAddressDetail',
+      'application.gemini.inst.addressDetail',
+    ) ||
+    (training
+      ? readAnswerStringField(training, 'addressDetail', 'detailAddress') ||
+        readLabeledTableValue(training, ['상세주소', '상세 주소'])
+      : '')
+  const classCountRaw =
+    readAnswerStringField(overlay, 'classCount', 'application.gemini.inst.classCount') ||
+    (training
+      ? readAnswerStringField(training, 'classCount', 'classCnt') ||
+        readLabeledTableValue(training, ['학급'])
+      : '')
+
+  const teacherContact = [teacherName, teacherTel, teacherMobile, teacherEmail]
+    .map(part => part.trim())
+    .filter(Boolean)
+    .join(' | ')
+
+  const classAndHeadcount = formatClassAndHeadcount({
+    ...emptyTrainedTeachersBasicInfo(),
+    classCount: classCountRaw,
+    studentCount: studentCountRaw,
+  })
+
   return {
-    ...(studentCount ? { studentCount: studentCount.endsWith('명') ? studentCount : `${studentCount}명` } : {}),
-    ...(jobTitle ? { jobTitle } : {}),
+    name,
+    grade,
+    address,
+    addressDetail,
+    classAndHeadcount,
+    teacherContact,
+    reason: '',
+    otherRequests: '',
+    ...(studentCountRaw
+      ? { studentCount: studentCountRaw.endsWith('명') ? studentCountRaw : `${studentCountRaw}명` }
+      : {}),
+    ...(jobTitle && jobTitle !== teacherName ? { jobTitle } : {}),
     ...(subject ? { subject } : {}),
   }
 }
@@ -200,9 +349,23 @@ export function mapTeacherInstitutionFromApplicationAnswers(
 ): EducationTeacherApplicationInstitution | null {
   if (!answers || Object.keys(answers).length === 0) return null
 
-  const geminiExtras = detailCase === 'gemini' ? readGeminiInstitutionExtras(answers) : {}
+  if (detailCase === 'gemini') {
+    const gemini = readGeminiInstitutionFromAnswers(answers)
+    const hasGeminiFields = Boolean(
+      gemini.name ||
+        gemini.grade ||
+        gemini.address ||
+        gemini.addressDetail ||
+        gemini.teacherContact ||
+        gemini.studentCount ||
+        gemini.jobTitle ||
+        gemini.subject,
+    )
+    if (hasGeminiFields) return gemini
+  }
 
   for (const key of basicInfoAnswerKeysInPriority(detailCase, programGroup)) {
+    if (key === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.trainingInfo) continue
     const raw = answers[key]
     const values = basicInfoValuesFromDraftAnswer(raw)
     if (!values) continue
@@ -211,24 +374,7 @@ export function mapTeacherInstitutionFromApplicationAnswers(
         ? (raw as Record<string, unknown>)
         : {}
     const preferredFromAnswers = readPreferredFieldsFromAnswerRow(row, values)
-    return {
-      ...institutionFromBasicInfoValues(values, preferredFromAnswers),
-      ...geminiExtras,
-    }
-  }
-
-  if (detailCase === 'gemini' && (geminiExtras.studentCount || geminiExtras.jobTitle || geminiExtras.subject)) {
-    return {
-      name: '',
-      grade: '',
-      address: '',
-      addressDetail: '',
-      classAndHeadcount: geminiExtras.studentCount ?? '',
-      teacherContact: '',
-      reason: '',
-      otherRequests: '',
-      ...geminiExtras,
-    }
+    return institutionFromBasicInfoValues(values, preferredFromAnswers)
   }
 
   return null

@@ -126,33 +126,24 @@ async function resolveApplyTargets(
       bindingId: row.bindingId,
     }))
   if (rowTargets.length > 0) {
-    const duplicate = rowTargets.find(
-      target => target.bindingId != null && claimedBindingIds.has(Number(target.bindingId))
+    const unclaimed = rowTargets.filter(
+      target => target.bindingId == null || !claimedBindingIds.has(Number(target.bindingId))
     )
-    if (duplicate?.bindingId != null) {
-      throw new Error(
-        `서로 다른 양식 스펙에 같은 운영 바인딩을 선택할 수 없습니다: ${String(duplicate.bindingId)}`
-      )
-    }
-    return rowTargets
+    if (unclaimed.length > 0) return unclaimed
   }
 
   const catalog = await resolveFormTemplateCatalogIds(item.templateCode).catch(() => null)
-  const isApplicationSpec = spec.formType === 'APPLICATION'
   const picked = pickOperationalFormBinding(
     bindings,
     {
       ...spec,
       catalogTemplateId: catalog?.templateId,
     },
-    isApplicationSpec ? { claimedBindingIds } : undefined
+    { claimedBindingIds }
   )
-  // 신청 양식은 서로 다른 스펙이 같은 bindingId를 고르면 fail-closed한다.
-  // 모집 양식은 기존 1사1교 fallback(사용 중인 바인딩을 제외하고 카탈로그 COPY)을 유지한다.
+  // 이미 다른 스펙이 쓰는 바인딩은 덮지 않고 카탈로그 원본에서 COPY한다(1사1교 기관·강사).
   const existing =
-    isApplicationSpec ||
-    picked?.bindingId == null ||
-    !claimedBindingIds.has(Number(picked.bindingId))
+    picked?.bindingId == null || !claimedBindingIds.has(Number(picked.bindingId))
       ? picked
       : undefined
   const versionId = existing?.templateVersionId ?? catalog?.templateVersionId

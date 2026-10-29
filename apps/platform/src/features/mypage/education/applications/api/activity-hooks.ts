@@ -976,10 +976,10 @@ export function useApplicationSettlementsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
   programId: string | null | undefined,
-  options?: { operationEndAt?: string | null; programType?: string | null }
+  options?: { operationEndAt?: string | null; programType?: string | null; enabled?: boolean }
 ) {
   const schedules = useApplicationSchedulesQuery(applicationType, applicationId)
-  const enabled = schedules.enabled
+  const enabled = schedules.enabled && options?.enabled !== false
   const individualAudience = shouldUseIndividualSettlementSchedulesApi(
     applicationType,
     options?.programType,

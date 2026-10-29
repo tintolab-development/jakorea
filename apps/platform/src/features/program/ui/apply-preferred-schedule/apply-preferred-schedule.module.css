@@ -31,23 +31,28 @@
   align-self: stretch;
 }
 
-.scheduleForm .detail-info-form__body {
+.scheduleForm :global(.detail-info-form__body) {
+  overflow: visible;
   border: 1px solid var(--table-line, #e0e0e0);
 }
 
-.scheduleForm .detail-info-form__row--double {
+.scheduleForm :global(.detail-info-form__row--double) {
   flex-wrap: wrap;
 }
 
-.scheduleForm .detail-info-form__row--double > .detail-info-form__field:first-of-type {
-  flex: 1 1 360px;
-  min-width: min(100%, 360px);
+.scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field):first-of-type {
+  flex: 1 1 320px;
+  min-width: min(100%, 280px);
   max-width: none;
 }
 
-.scheduleForm .detail-info-form__row--double > .detail-info-form__field:last-of-type {
-  flex: 2 1 680px;
-  min-width: min(100%, 680px);
+.scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field):last-of-type {
+  flex: 2 1 560px;
+  min-width: min(100%, 420px);
+}
+
+.scheduleForm :global(.detail-info-form__field-content--edit) {
+  overflow: visible;
 }
 
 .datePicker {
@@ -56,30 +61,45 @@
   max-width: 100%;
 }
 
+.compactTime .datePicker {
+  flex-basis: 240px;
+  width: 240px;
+}
+
 .timeInputs {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  gap: 0;
+  gap: 8px 0;
 }
 
-.timeInputs > :global(.pf-text-input) {
+.sessionRow,
+.timeRange {
+  display: contents;
+}
+
+.timeInputs > :global(.pf-text-input),
+.sessionRow > :global(.pf-text-input) {
   flex: 0 0 120px;
   width: 120px;
+  min-width: 120px;
 }
 
-.timeInputs .sessionSelect {
+.timeInputs .sessionSelect,
+.compactTime .timeInputs .sessionSelect {
   flex: 0 0 140px;
   width: 140px;
   min-width: 140px;
 }
 
-.timeInputs .timePicker {
-  flex: 0 0 140px;
-  width: 140px;
-  min-width: 140px;
+.timeInputs .timePicker,
+.compactTime .timeInputs .timePicker {
+  flex: 0 0 168px;
+  width: 168px;
+  min-width: 168px;
 }
 
 .tilde {
@@ -174,26 +194,27 @@
     color: var(--color-neutral-cool-700, #647780);
   }
 
-  .scheduleForm .detail-info-form__body {
+  .scheduleForm :global(.detail-info-form__body) {
+    overflow: visible;
     border: 0;
     border-radius: 12px;
     background: var(--color-neutral-cool-50, #f5f8f8);
     padding: 14px;
   }
 
-  .scheduleForm .detail-info-form__row {
+  .scheduleForm :global(.detail-info-form__row) {
     border-bottom: 0;
   }
 
-  .scheduleForm .detail-info-form__row--double {
+  .scheduleForm :global(.detail-info-form__row--double) {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
 
-  .scheduleForm .detail-info-form__row--double > .detail-info-form__field,
-  .scheduleForm .detail-info-form__row--double > .detail-info-form__field:first-of-type,
-  .scheduleForm .detail-info-form__row--double > .detail-info-form__field:last-of-type {
+  .scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field),
+  .scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field):first-of-type,
+  .scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field):last-of-type {
     display: flex;
     width: 100%;
     min-width: 0;
@@ -202,7 +223,7 @@
     border-right: 0;
   }
 
-  .scheduleForm .detail-info-form__field-label {
+  .scheduleForm :global(.detail-info-form__field-label) {
     justify-content: flex-start;
     width: 100%;
     min-width: 0;
@@ -217,39 +238,73 @@
     text-align: left;
   }
 
-  .scheduleForm .detail-info-form__field-content {
+  .scheduleForm :global(.detail-info-form__field-content) {
     width: 100%;
     min-height: 0;
     padding: 0;
     background: transparent;
   }
 
-  .datePicker,
-  .sessionSelect {
-    flex: 1 1 100%;
+  .datePicker {
+    flex: 1 1 auto;
     width: 100%;
     min-width: 0;
   }
 
   .timeInputs {
-    flex-wrap: wrap;
-    gap: 8px 0;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 8px;
   }
 
-  .timeInputs > :global(.detail-info-form-inputs-separator) {
+  .sessionRow,
+  .timeRange {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .timeInputs > :global(.detail-info-form-inputs-separator),
+  .sessionRow > :global(.detail-info-form-inputs-separator) {
     display: none;
   }
 
   .timeInputs > :global(.pf-text-input),
-  .timeInputs > :global(.pf-time-input),
-  .timeInputs .sessionSelect {
-    flex: 1 1 100%;
+  .sessionRow > :global(.pf-text-input),
+  .timeInputs .sessionSelect,
+  .compactTime .timeInputs .sessionSelect {
+    flex: 1 1 auto;
     width: 100%;
+    min-width: 0;
   }
 
-  .timeInputs .timePicker {
+  .timeInputs .timePicker,
+  .compactTime .timeInputs .timePicker {
     flex: 1 1 0;
     width: auto;
+    min-width: 0;
+  }
+
+  :global(.form-template-host[data-surface='platformUser']) .sessionRow :global(.pf-select),
+  :global(.form-template-host[data-surface='platformUser']) .sessionRow :global(.pf-text-input) {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  :global(.form-template-host[data-surface='platformUser']) .timeRange :global(.pf-time-input) {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .timeInputs :global(.pf-select__trigger),
+  .timeInputs :global(.pf-time-input__trigger) {
     min-width: 0;
   }
 
@@ -261,7 +316,7 @@
   }
 
   .tilde {
-    margin: 0 6px;
+    margin: 0;
     align-self: center;
   }
 

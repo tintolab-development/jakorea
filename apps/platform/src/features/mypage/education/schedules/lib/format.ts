@@ -24,7 +24,10 @@ export function resolveEducationScheduleDateLabel(
   }
   const heldAt = item.heldAt?.trim()
   if (heldAt && !Number.isNaN(new Date(heldAt).getTime())) {
-    return formatEducationSessionDate(heldAt)
+    const date = formatEducationSessionDate(heldAt)
+    const time = item.progressTimeLabel?.trim()
+    if (time && !date.includes(time)) return `${date} ${time}`
+    return date
   }
   return (
     item.progressTimeLabel?.trim() ||
