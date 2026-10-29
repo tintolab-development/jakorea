@@ -11,6 +11,7 @@ import {
   isProgramManagerPermissionSettingsPath,
   isSecurityLogPath,
   isTemplateManagementPath,
+  isProgramOperableAdminRoleCode,
   parseAdminRoleCode,
   resolveAdminPolicyScreen,
   resolveAdminRoleCodeFromUser,
@@ -59,6 +60,24 @@ describe('parseAdminRoleCode', () => {
     expect(parseAdminRoleCode('MIDDLE')).toBe('PROGRAM_MANAGER')
     expect(parseAdminRoleCode('middle')).toBe('PROGRAM_MANAGER')
   })
+
+  it('로컬 /me 원문을 세션 정본으로 접는다', () => {
+    expect(parseAdminRoleCode('MASTER')).toBe('MASTER')
+    expect(parseAdminRoleCode('MIDDLE')).toBe('PROGRAM_MANAGER')
+    expect(parseAdminRoleCode('VIEWER')).toBe('VIEWER')
+  })
+})
+
+describe('isProgramOperableAdminRoleCode', () => {
+  it('includes N-16 managers and legacy MIDDLE/PM/PARTNER', () => {
+    expect(isProgramOperableAdminRoleCode('PROGRAM_MANAGER')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('ACCOUNTING_MANAGER')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('MIDDLE')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('PM')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('PARTNER')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('MASTER')).toBe(false)
+    expect(isProgramOperableAdminRoleCode('VIEWER')).toBe(false)
+  })
 })
 
 describe('adminRoleCodeToLegacyAdminLevel', () => {
@@ -66,6 +85,7 @@ describe('adminRoleCodeToLegacyAdminLevel', () => {
     expect(adminRoleCodeToLegacyAdminLevel('MASTER')).toBe('MASTER')
     expect(adminRoleCodeToLegacyAdminLevel('PM')).toBe('ADMIN')
     expect(adminRoleCodeToLegacyAdminLevel('PROGRAM_MANAGER')).toBe('ADMIN')
+    expect(adminRoleCodeToLegacyAdminLevel('MIDDLE')).toBe('ADMIN')
     expect(adminRoleCodeToLegacyAdminLevel('ACCOUNTING_MANAGER')).toBe('ADMIN')
     expect(adminRoleCodeToLegacyAdminLevel('PARTNER')).toBe('ADMIN')
     expect(adminRoleCodeToLegacyAdminLevel('VIEWER')).toBe('GENERAL')
@@ -149,6 +169,8 @@ describe('canAdminAction 표 규칙', () => {
   it('대시보드 개인화 저장은 VIEWER 허용, PARTNER 차단', () => {
     expect(allowed('MASTER', 'dashboardWrite')).toBe(true)
     expect(allowed('PM', 'dashboardWrite')).toBe(true)
+    expect(allowed('PROGRAM_MANAGER', 'dashboardWrite')).toBe(true)
+    expect(allowed('MIDDLE', 'dashboardWrite')).toBe(true)
     expect(allowed('VIEWER', 'dashboardWrite')).toBe(true)
     expect(allowed('PARTNER', 'dashboardWrite')).toBe(false)
   })
@@ -179,12 +201,15 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('VIEWER', 'pii')).toBe(false)
   })
 
-  it('주민번호·계좌는 파트너·뷰어 차단', () => {
+  it('주민번호·계좌는 Program Manager 동등 역할·마스터만', () => {
     for (const action of ['piiRrn', 'piiAccount'] as const) {
       expect(allowed('MASTER', action)).toBe(true)
       expect(allowed('PM', action)).toBe(true)
-      expect(allowed('PARTNER', action)).toBe(false)
+      expect(allowed('PARTNER', action)).toBe(true)
+      expect(allowed('PROGRAM_MANAGER', action)).toBe(true)
+      expect(allowed('MIDDLE', action)).toBe(true)
       expect(allowed('VIEWER', action)).toBe(false)
+      expect(allowed('PROGRAM_VIEWER', action)).toBe(false)
     }
   })
 

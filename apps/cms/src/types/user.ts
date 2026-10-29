@@ -36,15 +36,17 @@ export type InstructorMemberProfile = 'school_teacher' | 'instructor_dual' | 'in
 export type AdminLevel = 'MASTER' | 'ADMIN' | 'GENERAL'
 
 /**
- * API `AdminMeResponse.roleCode` — N-16 정본 4역할 + 레거시 별칭.
- * 정본: MASTER / ACCOUNTING_MANAGER / PROGRAM_MANAGER / PROGRAM_VIEWER
- * 레거시: PM / PARTNER / VIEWER / MIDDLE(파서에서 PROGRAM_MANAGER로 정규화)
+ * API `AdminMeResponse.roleCode` — N-16 정본 4역할 + 레거시 응답 원문.
+ * 정본(쓰기·selectable): MASTER / ACCOUNTING_MANAGER / PROGRAM_MANAGER / PROGRAM_VIEWER
+ * 레거시 원문: MIDDLE / VIEWER / PM / PARTNER
+ * 세션 parse는 MIDDLE → PROGRAM_MANAGER.
  */
 export type AdminRoleCode =
   | 'MASTER'
   | 'ACCOUNTING_MANAGER'
   | 'PROGRAM_MANAGER'
   | 'PROGRAM_VIEWER'
+  | 'MIDDLE'
   | 'PM'
   | 'PARTNER'
   | 'VIEWER'

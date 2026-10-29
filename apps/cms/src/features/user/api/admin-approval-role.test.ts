@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ADMIN_ACCOUNT_CREATE_DEFAULT_ROLE_CODE,
   adminPermissionFeeGradeToRoleCode,
   roleCodeToAdminPermissionVariant,
 } from './admin-approval-role'
@@ -13,6 +14,27 @@ describe('adminPermissionFeeGradeToRoleCode', () => {
     expect(adminPermissionFeeGradeToRoleCode('program-manager')).toBe('PROGRAM_MANAGER')
     expect(adminPermissionFeeGradeToRoleCode('viewer')).toBe('PROGRAM_VIEWER')
     expect(adminPermissionFeeGradeToRoleCode('program-viewer')).toBe('PROGRAM_VIEWER')
+  })
+
+  it('legacy write aliases become N-16 canonical codes', () => {
+    expect(adminPermissionFeeGradeToRoleCode('PM')).toBe('PROGRAM_MANAGER')
+    expect(adminPermissionFeeGradeToRoleCode('PARTNER')).toBe('PROGRAM_MANAGER')
+    expect(adminPermissionFeeGradeToRoleCode('MIDDLE')).toBe('PROGRAM_MANAGER')
+    expect(adminPermissionFeeGradeToRoleCode('VIEWER')).toBe('PROGRAM_VIEWER')
+    expect(adminPermissionFeeGradeToRoleCode('MASTER')).toBe('MASTER')
+  })
+
+  it('rejects unknown global role writes', () => {
+    expect(() => adminPermissionFeeGradeToRoleCode('UNKNOWN_ROLE')).toThrow(
+      /지원하지 않는 관리자 권한 코드/
+    )
+  })
+
+  it('does not default admin create to legacy VIEWER', () => {
+    expect(ADMIN_ACCOUNT_CREATE_DEFAULT_ROLE_CODE).toBe('PROGRAM_VIEWER')
+    expect(ADMIN_ACCOUNT_CREATE_DEFAULT_ROLE_CODE).not.toBe('VIEWER')
+    expect(ADMIN_ACCOUNT_CREATE_DEFAULT_ROLE_CODE).not.toBe('PM')
+    expect(ADMIN_ACCOUNT_CREATE_DEFAULT_ROLE_CODE).not.toBe('PARTNER')
   })
 })
 

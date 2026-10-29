@@ -7,22 +7,21 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { AdminLevel, AdminRoleCode, User } from '@/types/user'
 import { isAdminSessionRoleSyncPending } from '@/features/auth/lib/admin-session-sync-state'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
+import {
+  isCmsOperableProgramOwnerRole,
+  isCmsViewerAdminRole,
+} from '@/shared/lib/cms-global-role-code'
 
 export type { AdminRoleCode }
 
 /** 조회 전용 — 레거시 VIEWER 포함 */
 export function isReadOnlyAdminRoleCode(roleCode: AdminRoleCode | null | undefined): boolean {
-  return roleCode === 'VIEWER' || roleCode === 'PROGRAM_VIEWER'
+  return isCmsViewerAdminRole(roleCode)
 }
 
-/** 프로그램 운영·회계 등 write 가능 역할(마스터 제외 실무) */
+/** 프로그램 운영·회계 등 write 가능 역할(마스터 제외 실무) — 레거시 MIDDLE 포함 */
 export function isProgramOperableAdminRoleCode(roleCode: AdminRoleCode | null | undefined): boolean {
-  return (
-    roleCode === 'ACCOUNTING_MANAGER' ||
-    roleCode === 'PROGRAM_MANAGER' ||
-    roleCode === 'PM' ||
-    roleCode === 'PARTNER'
-  )
+  return isCmsOperableProgramOwnerRole(roleCode)
 }
 
 export type AdminActionKind =
@@ -96,6 +95,7 @@ export function adminRoleCodeToLegacyAdminLevel(roleCode: AdminRoleCode): AdminL
       return 'MASTER'
     case 'ACCOUNTING_MANAGER':
     case 'PROGRAM_MANAGER':
+    case 'MIDDLE':
     case 'PM':
     case 'PARTNER':
       return 'ADMIN'
@@ -196,7 +196,7 @@ export function canAdminAction(input: {
   screen?: AdminPolicyScreen
   pathname?: string
 }): boolean {
-  const roleCode = input.roleCode ?? null
+  const roleCode = parseAdminRoleCode(input.roleCode) ?? input.roleCode ?? null
   const screen = input.screen ?? resolveAdminPolicyScreen(input.pathname)
 
   if (roleCode == null) {
@@ -252,12 +252,7 @@ export function canAdminAction(input: {
       return !isReadOnlyAdminRoleCode(roleCode)
     case 'piiRrn':
     case 'piiAccount':
-      return (
-        roleCode === 'MASTER' ||
-        roleCode === 'ACCOUNTING_MANAGER' ||
-        roleCode === 'PROGRAM_MANAGER' ||
-        roleCode === 'PM'
-      )
+      return roleCode === 'MASTER' || isCmsOperableProgramOwnerRole(roleCode)
   }
 }
 

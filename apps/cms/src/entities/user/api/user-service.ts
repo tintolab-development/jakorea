@@ -112,7 +112,10 @@ import {
   collectOrganizationIds,
 } from '@/features/user/api/partition-users-for-bulk-delete'
 import type { MemberListKind } from '@/shared/config/member-list-kinds'
-import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
+import {
+  ADMIN_ACCOUNT_CREATE_DEFAULT_ROLE_CODE,
+  adminPermissionFeeGradeToRoleCode,
+} from '@/features/user/api/admin-approval-role'
 import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
 import type { AdminTermsAgreementRequest } from '@/shared/api/generated/members/schemas/adminTermsAgreementRequest'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
@@ -560,7 +563,12 @@ async function patchAdminUserBasicInfoRemote(
   const hasBasicBody = Object.keys(body).length > 0
 
   const permVariant = listMetrics?.adminPermissionVariant
-  if (permVariant === 'manager' || permVariant === 'partner' || permVariant === 'viewer') {
+  if (
+    permVariant === 'manager' ||
+    permVariant === 'accounting' ||
+    permVariant === 'partner' ||
+    permVariant === 'viewer'
+  ) {
     const current = getAdminPermissionVariant(existing)
     if (permVariant !== current) {
       await changeAdminAccountRoleRemote(adminId, {
@@ -1312,7 +1320,7 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
           phone: resolvedRequest.phone?.trim(),
           gender: toApiGender(resolvedRequest.gender),
           birthDate: toApiBirthDate(resolvedRequest.birthDate),
-          roleCode: 'VIEWER',
+          roleCode: ADMIN_ACCOUNT_CREATE_DEFAULT_ROLE_CODE,
           reason: 'CMS 관리자 회원 신규 등록',
           termsAgreements,
         })

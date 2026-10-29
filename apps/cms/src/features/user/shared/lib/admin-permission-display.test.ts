@@ -53,8 +53,13 @@ describe('getAdminPermissionVariant', () => {
     expect(roleCodeToAdminPermissionVariant('ACCOUNTING_MANAGER')).toBe('accounting')
     expect(getAdminPermissionVariant({ roleCode: 'PM' })).toBe('partner')
     expect(getAdminPermissionVariant({ roleCode: 'VIEWER' })).toBe('viewer')
-    // OpenAPI MIDDLE은 세션 AdminRoleCode 밖 — 문자열 매퍼로 검증
     expect(roleCodeToAdminPermissionVariant('MIDDLE')).toBe('partner')
+  })
+
+  it('로컬 /me 원문(admin1 MASTER, pm1 MIDDLE, viewer1 VIEWER)을 표시한다', () => {
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'MASTER' })).toBe('Master')
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'MIDDLE' })).toBe('Program Manager')
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'VIEWER' })).toBe('Program Viewer')
   })
 
   it('roleCode 표시명을 새 권한 명칭으로 반환한다', () => {
