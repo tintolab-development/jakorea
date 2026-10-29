@@ -12,7 +12,7 @@
     "build": "tsc -p tsconfig.build.json && node scripts/copy-css.mjs",
     "dev": "node scripts/dev.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node scripts/exports-contract.test.mjs && node scripts/select-options.test.mjs && node scripts/button-resolve.test.mjs && node scripts/no-app-alias.test.mjs && node scripts/step4-contract.test.mjs"
+    "test": "node scripts/exports-contract.test.mjs && node scripts/select-options.test.mjs && node scripts/button-resolve.test.mjs && node scripts/no-app-alias.test.mjs && node scripts/step4-contract.test.mjs && node scripts/step5-auth-contract.test.mjs"
   },
   "peerDependencies": {
     "@ant-design/icons": "^5.5.1",
@@ -95,6 +95,14 @@
     "./date/styles": {
       "types": "./css-side-effect.d.ts",
       "import": "./dist/date/admin-datepicker.css"
+    },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.js"
+    },
+    "./auth/styles": {
+      "types": "./css-side-effect.d.ts",
+      "import": "./dist/auth/admin-auth.css"
     }
   }
 }

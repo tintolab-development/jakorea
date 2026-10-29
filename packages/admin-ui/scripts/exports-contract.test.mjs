@@ -26,6 +26,8 @@ assert(pkg.exports['./tabs'].import === './dist/tabs/index.js', 'tabs subpath')
 assert(pkg.exports['./table'].import === './dist/table/index.js', 'table subpath')
 assert(pkg.exports['./empty'].import === './dist/empty/index.js', 'empty subpath')
 assert(pkg.exports['./date'].import === './dist/date/index.js', 'date subpath')
+assert(pkg.exports['./auth'].import === './dist/auth/index.js', 'auth subpath')
+assert(pkg.exports['./auth/styles'].import === './dist/auth/admin-auth.css', 'auth styles subpath')
 assert(!tokens.includes('@font-face'), 'tokens must not embed font-face')
 assert(!tokens.includes('url('), 'tokens must not embed app asset URLs')
 assert(!tokens.includes('--color-school:'), 'domain school color stays in apps')
@@ -52,6 +54,8 @@ const distFiles = [
   'dist/table/index.js',
   'dist/empty/index.js',
   'dist/date/index.js',
+  'dist/auth/index.js',
+  'dist/auth/admin-auth.css',
 ]
 for (const rel of distFiles) {
   assert(existsSync(join(root, rel)), `missing ${rel}`)
