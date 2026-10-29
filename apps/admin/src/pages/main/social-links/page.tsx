@@ -26,7 +26,12 @@ import {
 } from '@/features/social-link/ui/sortable-table'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_SORT_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import { isLastActiveToggleOff, minActiveRequiredAlert } from '@/shared/lib/min-active-guard'
 
 import './page.css'
@@ -54,8 +59,8 @@ export function SocialLinksPage() {
           socialLinkMutationFailureAlert(
             error,
             '소셜 링크 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-            '순서 변경 실패',
-          ),
+            '순서 변경 실패'
+          )
         )
         void listQuery.refetch()
       })
@@ -89,8 +94,8 @@ export function SocialLinksPage() {
           socialLinkMutationFailureAlert(
             error,
             '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-            '사용 여부 변경 실패',
-          ),
+            '사용 여부 변경 실패'
+          )
         )
         void listQuery.refetch()
       })
@@ -143,10 +148,7 @@ export function SocialLinksPage() {
       setIsEditing(false)
     } catch (error) {
       showAlert(
-        socialLinkMutationFailureAlert(
-          error,
-          '소셜 링크 저장에 실패했습니다. 다시 시도해 주세요.',
-        ),
+        socialLinkMutationFailureAlert(error, '소셜 링크 저장에 실패했습니다. 다시 시도해 주세요.')
       )
     }
   }, [draftUrls, rows, saveMutation, showAlert])
@@ -188,9 +190,7 @@ export function SocialLinksPage() {
         title: '소셜 매체명',
         key: 'name',
         width: 160,
-        render: (_value, record) => (
-          <span className="social-links-page__name">{record.name}</span>
-        ),
+        render: (_value, record) => <span className="social-links-page__name">{record.name}</span>,
       },
       {
         title: '연결 링크',
@@ -227,7 +227,7 @@ export function SocialLinksPage() {
               <>
                 <CmsButton
                   variant="secondary"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={handleCancelEdit}
                   disabled={saveMutation.isPending}
@@ -236,7 +236,7 @@ export function SocialLinksPage() {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="large"
+                  size="h40"
                   type="button"
                   loading={saveMutation.isPending}
                   onClick={() => {
@@ -249,7 +249,7 @@ export function SocialLinksPage() {
             ) : (
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleStartEdit}
                 disabled={listQuery.isLoading || rows.length === 0}

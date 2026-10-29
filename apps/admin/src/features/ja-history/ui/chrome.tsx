@@ -158,7 +158,7 @@ export function SectionFrame({
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 disabled={saving}
                 onClick={onCancel}
@@ -167,7 +167,7 @@ export function SectionFrame({
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saving}
                 disabled={saving}
@@ -177,7 +177,7 @@ export function SectionFrame({
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={onEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={onEdit}>
               수정
             </CmsButton>
           )}

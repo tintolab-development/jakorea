@@ -80,7 +80,7 @@ export function OrganizationChartPanel() {
           <div className="table-header-actions--wrapper">
             <CmsButton
               variant="primary"
-              size="large"
+              size="h40"
               type="button"
               onClick={handleOpenEdit}
             >

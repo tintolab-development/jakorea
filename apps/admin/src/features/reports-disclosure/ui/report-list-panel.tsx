@@ -367,7 +367,7 @@ export function ReportListPanel({ kind }: Props) {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">제목</p>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.title}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
@@ -378,7 +378,7 @@ export function ReportListPanel({ kind }: Props) {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">첨부파일명</p>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.attachmentName}
                 onChange={value =>
@@ -391,7 +391,7 @@ export function ReportListPanel({ kind }: Props) {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <p className="admin-filter-area__label">작성일</p>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={periodAsPickerValue(pendingFilters.created)}
                 onChange={dates => {
@@ -408,7 +408,7 @@ export function ReportListPanel({ kind }: Props) {
               <CmsButton
                 className="admin-filter-area__search-button"
                 variant="primary"
-                size="large"
+                size="medium"
                 type="button"
                 width={FILTER_SEARCH_BUTTON_WIDTH_PX}
                 onClick={() => applySearch()}
@@ -422,10 +422,10 @@ export function ReportListPanel({ kind }: Props) {
         description={`총 ${totalCount.toLocaleString()}건`}
         actions={
           <>
-            <CmsButton variant="delete" size="large" type="button" onClick={handleBulkDeleteClick}>
+            <CmsButton variant="delete" size="h40" type="button" onClick={handleBulkDeleteClick}>
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               보고서 등록
             </CmsButton>
           </>

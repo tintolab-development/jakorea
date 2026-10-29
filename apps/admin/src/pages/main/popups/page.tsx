@@ -25,6 +25,7 @@ import { PopupDragHandle, PopupsSortableTable } from '@/features/popup/ui/sortab
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -475,7 +476,7 @@ export function PopupsPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">사용 여부</span>
               <CmsSelect
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 withAllOption
                 value={pendingFilters.isActive}
@@ -495,7 +496,7 @@ export function PopupsPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">팝업명</span>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="팝업명 검색"
                 value={pendingFilters.name}
@@ -506,7 +507,7 @@ export function PopupsPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">대체 텍스트</span>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="대체 텍스트 검색"
                 value={pendingFilters.altText}
@@ -517,7 +518,7 @@ export function PopupsPage() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <span className="admin-filter-area__label">게시 기간</span>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={periodAsPickerValue(pendingFilters.periodRange)}
                 onChange={dates =>
@@ -530,7 +531,14 @@ export function PopupsPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton variant="primary" size="h40" type="button" onClick={handleSearch}>
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                type="button"
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -547,14 +555,14 @@ export function PopupsPage() {
           <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               onClick={handleDeleteClick}
               loading={removeMutation.isPending && !formOpen}
             >
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               팝업 등록
             </CmsButton>
           </>

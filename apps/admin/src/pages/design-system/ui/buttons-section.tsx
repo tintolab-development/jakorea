@@ -41,9 +41,9 @@ export function ButtonsSection() {
         </div>
       </DsDemo>
 
-      <DsDemo label="ExcelButton (large + icon 180×44)">
+      <DsDemo label="ExcelButton (h40 + icon 180×40)">
         <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          <code>ExcelButton</code> = primary · large · Download 아이콘 · 180×44 (CMS 동일 스펙)
+          <code>ExcelButton</code> = primary · h40 · Download 아이콘 · 목록 툴바에서 180×40
         </p>
         <div className="ds-demo__row">
           <ExcelButton onClick={() => undefined} />

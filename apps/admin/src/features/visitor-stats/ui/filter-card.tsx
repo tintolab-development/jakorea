@@ -47,7 +47,7 @@ export function VisitorStatsFilterCard({
             <p className="admin-filter-area__label">연도</p>
             <CmsSelect
               mode="multiple"
-              inputSize="large"
+              inputSize="medium"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="전체"
               allowClear
@@ -68,7 +68,7 @@ export function VisitorStatsFilterCard({
             <p className="admin-filter-area__label">월</p>
             <CmsSelect
               mode="multiple"
-              inputSize="large"
+              inputSize="medium"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="전체"
               allowClear
@@ -88,7 +88,7 @@ export function VisitorStatsFilterCard({
           <div className="admin-filter-area__field admin-filter-area__field--date-range">
             <p className="admin-filter-area__label">기간</p>
             <CmsDateRangePicker
-              inputSize="large"
+              inputSize="medium"
               width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
               value={rangeAsPicker(pending.from, pending.to)}
               placeholder={['시작일', '종료일']}
@@ -112,7 +112,7 @@ export function VisitorStatsFilterCard({
           <CmsButton
             className="admin-filter-area__search-button"
             variant="primary"
-            size="large"
+            size="medium"
             width={FILTER_SEARCH_BUTTON_WIDTH_PX}
             type="button"
             loading={loading}

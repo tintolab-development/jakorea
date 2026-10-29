@@ -19,6 +19,7 @@ import {
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -216,7 +217,7 @@ export function BugIssueLogPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">사용자명</span>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="사용자명을 입력하세요"
                 value={pendingFilters.userName}
@@ -227,7 +228,7 @@ export function BugIssueLogPage() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <span className="admin-filter-area__label">발생일시</span>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={rangeAsPicker(pendingFilters.range)}
                 onChange={dates =>
@@ -240,7 +241,14 @@ export function BugIssueLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton variant="primary" size="h40" type="button" onClick={applySearch}>
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                type="button"
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>

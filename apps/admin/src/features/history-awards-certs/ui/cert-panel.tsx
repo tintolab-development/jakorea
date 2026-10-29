@@ -416,7 +416,7 @@ export function CertPanel() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">공개 여부</p>
               <CmsSelect
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.isPublic}
                 onChange={v =>
@@ -435,7 +435,7 @@ export function CertPanel() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">내용</p>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="내용을 입력하세요"
                 value={pendingFilters.content}
@@ -446,7 +446,7 @@ export function CertPanel() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">인증 기관명</p>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="인증 기관명을 입력하세요"
                 value={pendingFilters.organization}
@@ -457,7 +457,7 @@ export function CertPanel() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <p className="admin-filter-area__label">인증일</p>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={periodAsPickerValue(pendingFilters.certified)}
                 onChange={dates =>
@@ -473,7 +473,7 @@ export function CertPanel() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <p className="admin-filter-area__label">작성일</p>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={periodAsPickerValue(pendingFilters.created)}
                 onChange={dates =>
@@ -490,7 +490,7 @@ export function CertPanel() {
               <CmsButton
                 className="admin-filter-area__search-button"
                 variant="primary"
-                size="large"
+                size="medium"
                 type="button"
                 width={FILTER_SEARCH_BUTTON_WIDTH_PX}
                 onClick={handleSearch}
@@ -518,14 +518,14 @@ export function CertPanel() {
             <div className="hac-panel__toolbar-buttons">
               <CmsButton
                 variant="delete"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleDeleteClick}
                 loading={removeMutation.isPending}
               >
                 선택 삭제
               </CmsButton>
-              <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+              <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
                 인증 등록
               </CmsButton>
             </div>

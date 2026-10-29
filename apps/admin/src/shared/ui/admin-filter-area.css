@@ -191,7 +191,9 @@
   width: var(--filter-control-max-width, 240px);
 }
 
-.admin-filter-area__field--date-range .cms-datepicker--range-split .cms-datepicker__range-separator {
+.admin-filter-area__field--date-range
+  .cms-datepicker--range-split
+  .cms-datepicker__range-separator {
   flex-shrink: 0;
   width: var(--filter-control-range-split-between, 20px);
   margin: 0;

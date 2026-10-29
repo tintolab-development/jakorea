@@ -30,6 +30,7 @@ import { CorporateConsultationDetailModal } from '@/features/corporate-consultat
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
@@ -531,7 +532,7 @@ export function CorporateConsultationsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">처리 상태</p>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   withAllOption
                   value={pendingFilters.status}
@@ -551,7 +552,7 @@ export function CorporateConsultationsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">기업명</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.companyName}
                   placeholder="기업명을 입력하세요"
@@ -562,7 +563,7 @@ export function CorporateConsultationsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">담당자명</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.contactName}
                   placeholder="담당자명을 입력하세요"
@@ -573,7 +574,7 @@ export function CorporateConsultationsPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">부서/직함명</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.departmentTitle}
                   placeholder="부서/직함명을 입력하세요"
@@ -589,7 +590,7 @@ export function CorporateConsultationsPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">신청일</p>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     value={rangeAsPicker(pendingFilters.appliedRange)}
                     placeholder={['시작일', '종료일']}
@@ -609,7 +610,7 @@ export function CorporateConsultationsPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">확인일</p>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     value={rangeAsPicker(pendingFilters.confirmedRange)}
                     placeholder={['시작일', '종료일']}
@@ -628,7 +629,14 @@ export function CorporateConsultationsPage() {
                 </div>
               </div>
               <div className="admin-filter-area__actions">
-                <CmsButton variant="primary" size="h40" type="button" onClick={handleSearch}>
+                <CmsButton
+                  className="admin-filter-area__search-button"
+                  variant="primary"
+                  size="medium"
+                  width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                  type="button"
+                  onClick={handleSearch}
+                >
                   조회
                 </CmsButton>
               </div>
@@ -641,7 +649,7 @@ export function CorporateConsultationsPage() {
           <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               loading={removeMutation.isPending && !detailOpen}
               onClick={handleBulkDeleteClick}
@@ -650,7 +658,7 @@ export function CorporateConsultationsPage() {
             </CmsButton>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               type="button"
               loading={confirmMutation.isPending && !detailOpen}
               onClick={handleBulkConfirmClick}

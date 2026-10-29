@@ -33,6 +33,7 @@ import {
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -447,7 +448,7 @@ export function StripBannersPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">사용 여부</p>
               <CmsSelect
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.active}
                 onChange={value =>
@@ -466,7 +467,7 @@ export function StripBannersPage() {
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">배너 문구</p>
               <AdminFilterTextInput
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 placeholder="배너 문구를 입력하세요"
                 value={pendingFilters.text}
@@ -477,7 +478,7 @@ export function StripBannersPage() {
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <p className="admin-filter-area__label">게시 기간</p>
               <CmsDateRangePicker
-                inputSize="large"
+                inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                 value={periodAsPickerValue(pendingFilters.period)}
                 onChange={dates =>
@@ -491,7 +492,14 @@ export function StripBannersPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton variant="primary" size="h40" type="button" onClick={handleSearch}>
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                type="button"
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -508,14 +516,14 @@ export function StripBannersPage() {
           <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               onClick={handleDeleteClick}
               loading={removeMutation.isPending}
             >
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               배너 등록
             </CmsButton>
           </>

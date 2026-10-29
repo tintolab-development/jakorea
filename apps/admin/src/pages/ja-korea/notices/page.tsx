@@ -25,6 +25,7 @@ import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import {
   CMS_TABLE_NO_COL_CLASS,
@@ -404,7 +405,7 @@ export function NoticesPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">공개 여부</p>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   withAllOption
                   value={pendingFilters.visibility}
@@ -424,7 +425,7 @@ export function NoticesPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">제목</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.title}
                   placeholder="제목을 입력하세요"
@@ -435,7 +436,7 @@ export function NoticesPage() {
               <div className="admin-filter-area__field admin-filter-area__field--control">
                 <p className="admin-filter-area__label">작성자명</p>
                 <AdminFilterTextInput
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.authorName}
                   placeholder="작성자명을 입력하세요"
@@ -446,7 +447,7 @@ export function NoticesPage() {
               <div className="admin-filter-area__field admin-filter-area__field--date-range">
                 <p className="admin-filter-area__label">게시일</p>
                 <CmsDateRangePicker
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                   value={rangeAsPicker(pendingFilters.publishedRange)}
                   placeholder={['시작일', '종료일']}
@@ -469,7 +470,7 @@ export function NoticesPage() {
                 <div className="admin-filter-area__field admin-filter-area__field--date-range">
                   <p className="admin-filter-area__label">작성일</p>
                   <CmsDateRangePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
                     value={rangeAsPicker(pendingFilters.createdRange)}
                     placeholder={['시작일', '종료일']}
@@ -488,7 +489,14 @@ export function NoticesPage() {
                 </div>
               </div>
               <div className="admin-filter-area__actions">
-                <CmsButton variant="primary" size="h40" type="button" onClick={handleSearch}>
+                <CmsButton
+                  className="admin-filter-area__search-button"
+                  variant="primary"
+                  size="medium"
+                  width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                  type="button"
+                  onClick={handleSearch}
+                >
                   조회
                 </CmsButton>
               </div>
@@ -501,14 +509,14 @@ export function NoticesPage() {
           <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               loading={removeMutation.isPending && !formOpen}
               onClick={handleBulkDeleteClick}
             >
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               공지사항 등록
             </CmsButton>
           </>
