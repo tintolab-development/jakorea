@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef, type Key } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -28,6 +29,7 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
@@ -392,9 +394,14 @@ export function ParticipatingInstructorFullpageView({
           reason,
           Number.isFinite(programIdNumber) ? programIdNumber : undefined
         )
-        queryClient.setQueryData(generalApplicationsQueryKeys.instructorDetail(applicationId), dto)
+        const safeDto = cacheProjectedProgramPrivacy(
+          queryClient,
+          generalApplicationsQueryKeys.instructorDetail(applicationId),
+          program.id,
+          dto
+        )
         const mapped = mapInstructorApplicationDetailToParticipatingRow(
-          dto,
+          safeDto,
           mergedInstructor,
           program.id
         )
@@ -410,11 +417,11 @@ export function ParticipatingInstructorFullpageView({
           gender: mapped.gender,
         }))
         return {
-          name: dto.instructorName?.trim() || undefined,
-          phone: dto.contact?.trim() || undefined,
-          email: dto.email?.trim() || undefined,
+          name: safeDto.instructorName?.trim() || undefined,
+          phone: safeDto.contact?.trim() || undefined,
+          email: safeDto.email?.trim() || undefined,
           address:
-            [dto.homeAddress, dto.homeAddressDetail]
+            [safeDto.homeAddress, safeDto.homeAddressDetail]
               .map(part => part?.trim())
               .filter(Boolean)
               .join(' ') || undefined,
@@ -451,7 +458,11 @@ export function ParticipatingInstructorFullpageView({
     personalInfoRevealed,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: program.id,
+    resolveProgramRole: () => resolveSessionProgramRole(program.id),
     resolveAccessItem: resolveParticipatingInstructorFullpageAccessItem,
     revealPersonalInfo: revealParticipatingInstructorPersonalInfo,
     onPrivacyUnmasked: applyParticipatingInstructorPersonalInfo,
@@ -1478,7 +1489,7 @@ export function ParticipatingInstructorFullpageView({
               >
                 코멘트 작성
               </CmsButton>
-              <PersonalInfoRevealButton
+              <PersonalInfoRevealButton disabled={programPrivacyPending}
                 labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"

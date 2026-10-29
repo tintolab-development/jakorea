@@ -4,6 +4,7 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -127,7 +128,11 @@ export function UjatEducationProgressVolunteerDetailView({
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: program.id,
+    resolveProgramRole: () => resolveSessionProgramRole(program.id),
     resolveAccessItem,
     resetDeps: [detail.volunteerId, detail.half],
     controlMode: 'headerStickyNoop',
@@ -287,7 +292,7 @@ export function UjatEducationProgressVolunteerDetailView({
       >
         코멘트 작성
       </CmsButton>
-      <PersonalInfoRevealButton
+      <PersonalInfoRevealButton disabled={programPrivacyPending}
         labelMode="stickyReveal"
         revealed={personalInfoRevealed}
         onClick={openPersonalInfoRevealConfirm}

@@ -3,6 +3,7 @@ import { Space, Spin } from 'antd'
 import { useCmsAlert } from '@/shared/ui'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { UjatInstitutionApplicationDetailView } from './detail-view'
@@ -47,7 +48,11 @@ export function UjatInstitutionApplicationDetailPage({
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: programId,
+    resolveProgramRole: () => resolveSessionProgramRole(programId),
     resolveAccessItem: () => row?.institutionName ?? 'UJAT 신청 기관',
     resetDeps: [row?.id],
     controlMode: 'headerStickyNoop',
@@ -195,7 +200,7 @@ export function UjatInstitutionApplicationDetailPage({
           >
             {workflow.primaryAction === 'open_schedule_assign' ? '임시 배정' : workflow.primaryLabel}
           </CmsButton>
-          <PersonalInfoRevealButton
+          <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"

@@ -6,6 +6,7 @@ import type {
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
 import {
@@ -77,6 +78,7 @@ function isInterview2Props(
 function Interview2ApplicantDetail({
   applicant,
   personalInfoRevealed,
+  programPrivacyPending,
   openPersonalInfoRevealConfirm,
   personalInfoRevealModal,
   onWithdrawActivity,
@@ -86,6 +88,7 @@ function Interview2ApplicantDetail({
 }: {
   applicant: UjatVolunteerApplicantRow
   personalInfoRevealed: boolean
+  programPrivacyPending: boolean
   openPersonalInfoRevealConfirm: () => void
   personalInfoRevealModal: ReactNode
   onWithdrawActivity?: () => void
@@ -158,7 +161,7 @@ function Interview2ApplicantDetail({
           >
             면접 평가
           </CmsButton>
-          <PersonalInfoRevealButton
+          <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"
@@ -226,7 +229,11 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: applicant.programId,
+    resolveProgramRole: () => resolveSessionProgramRole(applicant.programId),
     resolveAccessItem,
     revealPersonalInfo: revealVolunteerPersonalInfo,
     onPrivacyUnmasked: payload => {
@@ -246,6 +253,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
       <Interview2ApplicantDetail
         applicant={applicant}
         personalInfoRevealed={personalInfoRevealed}
+        programPrivacyPending={programPrivacyPending}
         openPersonalInfoRevealConfirm={openPersonalInfoRevealConfirm}
         personalInfoRevealModal={personalInfoRevealModal}
         onWithdrawActivity={props.onWithdrawActivity}
@@ -283,7 +291,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             >
               {assignInterviewLabel}
             </CmsButton>
-            <PersonalInfoRevealButton
+            <PersonalInfoRevealButton disabled={programPrivacyPending}
               labelMode="stickyReveal"
               revealed={personalInfoRevealed}
               cmsVariant="primary"
@@ -343,7 +351,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
           >
             서류 승인
           </CmsButton>
-          <PersonalInfoRevealButton
+          <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"

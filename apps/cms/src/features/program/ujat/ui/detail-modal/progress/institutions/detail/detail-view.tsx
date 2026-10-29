@@ -6,6 +6,7 @@ import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrol
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import type { UjatEducationProgressInstitutionDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import {
   UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TAB_LABELS,
@@ -113,7 +114,11 @@ export function UjatEducationProgressInstitutionDetailView({
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: program.id,
+    resolveProgramRole: () => resolveSessionProgramRole(program.id),
     resolveAccessItem,
     resetDeps: [detail.institutionId, detail.half],
     controlMode: 'headerStickyNoop',
@@ -264,7 +269,7 @@ export function UjatEducationProgressInstitutionDetailView({
             >
               코멘트 작성
             </CmsButton>
-            <PersonalInfoRevealButton
+            <PersonalInfoRevealButton disabled={programPrivacyPending}
               labelMode="stickyReveal"
               revealed={personalInfoRevealed}
               cmsVariant="primary"

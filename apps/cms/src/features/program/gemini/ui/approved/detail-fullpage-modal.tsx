@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { Result } from 'antd'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import {
   revealGeminiApprovedTrainingPersonalInfo,
@@ -85,7 +86,11 @@ export function GeminiApprovedTrainingDetailFullPageModal({
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: detail?.programId,
+    resolveProgramRole: () => resolveSessionProgramRole(detail?.programId),
     resolveAccessItem: () => detail?.managerNameKo || detail?.institutionName || '승인 연수 정보',
     revealPersonalInfo: reason => {
       if (!detail) return Promise.reject(new Error('승인 연수 상세가 없습니다.'))
@@ -249,7 +254,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
             {activeLnb === 'info' ? (
               <>
                 <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
-                  <PersonalInfoRevealButton
+                  <PersonalInfoRevealButton disabled={programPrivacyPending}
                     labelMode="stickyReveal"
                     revealed={personalInfoRevealed}
                     cmsSize="large"
