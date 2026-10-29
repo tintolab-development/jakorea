@@ -22,6 +22,7 @@ export type {
   PasswordChangeRequest,
   PhoneIdentityChangeResponse,
   PhoneIdentityConfirmRequest,
+  PortalGuardianProfileUpdate,
   PortalProfileResponse,
   PortalSchoolSelectionRequest,
   PortalWithdrawalRequest,

@@ -32,8 +32,20 @@ const mismatch = interpretMemberGuardianVerificationGet({
 assert.equal(mismatch.kind, 'failed')
 if (mismatch.kind === 'failed') {
   assert.equal(mismatch.error instanceof PortraitGuardianVerificationUnavailableError, true)
-  assert.match(mismatch.error.message, /보호자/)
+  assert.equal(mismatch.error.message, '등록된 보호자와 본인인증 정보가 일치하지 않습니다.')
   assert.equal(mismatch.error.message.includes('one-time-token'), false)
+}
+
+const expectedMismatch = interpretMemberGuardianVerificationGet({
+  status: 'FAILED',
+  failureCode: 'EXPECTED_PROFILE_MISMATCH',
+})
+assert.equal(expectedMismatch.kind, 'failed')
+if (expectedMismatch.kind === 'failed') {
+  assert.equal(
+    expectedMismatch.error.message,
+    '등록된 보호자와 본인인증 정보가 일치하지 않습니다.',
+  )
 }
 
 const adult = interpretMemberGuardianVerificationGet({

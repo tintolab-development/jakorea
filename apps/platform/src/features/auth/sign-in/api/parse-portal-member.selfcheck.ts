@@ -24,6 +24,18 @@ assert.equal(parsed.guardian?.guardianName, '최지원')
 assert.equal(parsed.guardian?.guardianRelation, 'ㄷ')
 assert.equal(parsed.guardian?.guardianPhone, '01033275124')
 assert.equal(parsed.under14, true)
+assert.equal(
+  parsePortalProfileResponse({
+    name: '신영서',
+    under14: true,
+    guardian: {
+      guardianName: '최지원',
+      guardianRelation: 'PARENT',
+      guardianPhone: '010-3327-5124',
+    },
+  }).guardian?.guardianPhone,
+  '010-3327-5124',
+)
 
 assert.equal(
   parsePortalProfileResponse({ name: '성인', guardian: null }).guardian,

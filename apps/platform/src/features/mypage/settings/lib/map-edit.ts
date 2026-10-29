@@ -191,6 +191,32 @@ export function nullifyEmptyProfileUpdateFields<T extends Record<string, unknown
   return next
 }
 
+export type PortalGuardianPatchInput = {
+  guardianName: string
+  guardianRelation: string
+  guardianPhone: string
+}
+
+/** PATCH `/me/profile` 정본 — nested `guardian` 만 보낸다. */
+export function attachGuardianToPortalProfileUpdate<T extends Record<string, unknown>>(
+  payload: T,
+  guardian: PortalGuardianPatchInput | null | undefined,
+): T {
+  if (!guardian) return payload
+  const guardianName = guardian.guardianName.trim()
+  const guardianRelation = guardian.guardianRelation.trim()
+  const guardianPhone = guardian.guardianPhone.replace(/\D/g, '')
+  if (!guardianName && !guardianRelation && !guardianPhone) return payload
+  return {
+    ...payload,
+    guardian: {
+      guardianName,
+      guardianRelation,
+      guardianPhone,
+    },
+  }
+}
+
 /**
  * 해당 없음 전환 시 남아 있을 수 있는 학교 검색 메타를 제출 직전에 제거한다.
  * (재학 중 → 해당 없음 후 소속 기관명 미입력 포함)

@@ -83,6 +83,13 @@ export type PortalSchoolSelectionRequest = {
  * PATCH /api/portal/me/profile — OpenAPI `UpdatePortalProfileRequest`.
  * 이메일·이름·휴대폰·생년월일·성별은 본인인증 필드로 PATCH 대상이 아님.
  */
+/** PATCH `guardian` — GET `PortalProfileResponse.guardian` 과 동일 필드 */
+export type PortalGuardianProfileUpdate = {
+  guardianName?: string | null
+  guardianRelation?: string | null
+  guardianPhone?: string | null
+}
+
 export type UpdatePortalProfileRequest = {
   postalCode?: string | null
   address?: string | null
@@ -99,6 +106,12 @@ export type UpdatePortalProfileRequest = {
   teacherEmploymentStatus?: string | null
   external1365Id?: string | null
   instructorProfile?: InstructorPortalProfileUpdate
+  /** 만 14세 미만 보호자. nested 가 최상위 동일 필드보다 우선 */
+  guardian?: PortalGuardianProfileUpdate | null
+  /** 호환용. nested `guardian` 과 둘 다 있으면 nested 우선 */
+  guardianName?: string | null
+  guardianRelation?: string | null
+  guardianPhone?: string | null
 }
 
 /** PATCH — 강사 포탈 프로필 (editable profile + optional settlement) */
@@ -163,7 +176,7 @@ export type PortalProfileResponse = {
   external1365Id?: string
   accountStatus?: string
   joinedAt?: string
-  /** 만 14세 미만 회원 보호자. 본인 포탈 조회 전용 */
+  /** 만 14세 미만 회원 보호자. GET·PATCH 응답 nested `guardian` */
   guardian?: {
     guardianName?: string
     guardianRelation?: string

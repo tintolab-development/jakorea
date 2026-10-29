@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
@@ -34,7 +33,6 @@ import {
 } from '@/features/mypage/settings/ui/instructor-profile/full-edit-form'
 import { INSTRUCTOR_FORM_SECTION_BASE_TITLES } from '@jakorea/domain/instructor/form-layout'
 import { ProgramBackButton } from '@/features/program'
-import { platformQueryKeys } from '@/shared/api/query-keys'
 import { useMediaQuery } from '@/shared/hooks'
 import {
   getAccessToken,
@@ -115,7 +113,6 @@ export function MypageSettingsPage() {
   const [mode, setMode] = useState<SettingsMode>('view')
   const [localProfile, setLocalProfile] = useState<SettingsProfileInput | null>(null)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
-  const queryClient = useQueryClient()
   const { isRemoteSession, isLoading, isError, profile, guardian } = useSettingsView()
   const member = useMypageMember()
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
@@ -269,12 +266,6 @@ export function MypageSettingsPage() {
         onCancel={() => setMode('view')}
         onSaved={next => {
           setLocalProfile(next)
-          if (isRemoteSession && next.guardian) {
-            queryClient.setQueryData<PortalProfileResponse>(
-              platformQueryKeys.auth.memberProfile(),
-              previous => (previous ? { ...previous, guardian: next.guardian } : previous),
-            )
-          }
           setMode('view')
         }}
       />

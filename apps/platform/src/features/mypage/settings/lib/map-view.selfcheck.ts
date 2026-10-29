@@ -99,6 +99,14 @@ const mappedGuardian = mapPortalGuardianToSettingsView({
 assert.equal(mappedGuardian?.name, '홍보호')
 assert.equal(mappedGuardian?.phone, '010-1234-5678')
 assert.equal(mappedGuardian?.relationship, '모')
+assert.equal(
+  mapPortalGuardianToSettingsView({
+    guardianName: '최지원',
+    guardianRelation: 'PARENT',
+    guardianPhone: '010-3327-5124',
+  })?.phone,
+  '010-3327-5124',
+)
 assert.equal(mapPortalGuardianToSettingsView({}), null)
 assert.equal(mapPortalGuardianToSettingsView(undefined), null)
 
