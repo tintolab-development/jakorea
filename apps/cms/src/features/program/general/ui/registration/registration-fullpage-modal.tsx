@@ -23,6 +23,7 @@ import {
   type RecruitmentUserPreviewAudience,
 } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
 import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
+import { useRegistrationWizardHistoryLeaveGuard } from '@/features/program/general/hooks/use-registration-wizard-history-leave-guard'
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 import { RegistrationStepTemplateChrome } from '@/features/program/shared/ui/registration/step-template-banner'
 import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
@@ -166,10 +167,31 @@ function GeneralProgramRegistrationFullpageModalInner({
     searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
   )
 
+  // 일반·TT: 브라우저 뒤로/앞으로 가드와 새 작성 시작 단계 정규화. 1사1교·기타는 기존 동작 유지.
+  const guardsBrowserHistory =
+    registrationFormVariant === 'general' || registrationFormVariant === 'trainedTeachers'
+
+  // 새 작성(fresh·mode 없음)으로 열릴 때 URL 단계가 공통 정보가 아니면(앞으로 가기·직접 진입)
+  // 공통 정보 검증을 건너뛰지 않도록 첫 단계로 시작하고 URL도 replace한다. 열릴 때 한 번만 판단한다.
+  const rawUrlStep = searchParams.get(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+  const freshOpenStepResetRef = useRef<boolean | null>(null)
+  if (!open) {
+    freshOpenStepResetRef.current = null
+  } else if (freshOpenStepResetRef.current == null) {
+    freshOpenStepResetRef.current =
+      guardsBrowserHistory &&
+      skipDraftRestore &&
+      rawUrlStep != null &&
+      normalizeGeneralProgramRegistrationStepKey(rawUrlStep) !== 'program'
+  } else if (freshOpenStepResetRef.current && rawUrlStep === 'program') {
+    freshOpenStepResetRef.current = false
+  }
+  const forceFreshOpenProgramStep = open && freshOpenStepResetRef.current === true
+
   const initialStep = useMemo(() => {
-    const raw = searchParams.get(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
-    return normalizeGeneralProgramRegistrationStepKey(raw)
-  }, [searchParams])
+    if (forceFreshOpenProgramStep) return 'program'
+    return normalizeGeneralProgramRegistrationStepKey(rawUrlStep)
+  }, [forceFreshOpenProgramStep, rawUrlStep])
 
   const syncStepToUrl = useCallback(
     (step: string) => {
@@ -200,6 +222,13 @@ function GeneralProgramRegistrationFullpageModalInner({
     next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
     setSearchParams(next, { replace: true })
   }, [open, searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (!forceFreshOpenProgramStep) return
+    const next = new URLSearchParams(searchParams)
+    next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
+    setSearchParams(next, { replace: true })
+  }, [forceFreshOpenProgramStep, searchParams, setSearchParams])
 
   useEffect(() => {
     if (open) return
@@ -274,6 +303,7 @@ function GeneralProgramRegistrationFullpageModalInner({
     isDirtyOverride: () => true,
     onLeave: handleClose,
   })
+  useRegistrationWizardHistoryLeaveGuard(open && guardsBrowserHistory, requestLeave)
 
   const handlePreview = useCallback(() => {
     if (flow.phase === 'recruitment') {
