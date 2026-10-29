@@ -6,6 +6,7 @@
 import type { AdminLevel, ProgramRole, User, UserRole } from '@/types/user'
 import {
   getAdminPermissionVariant,
+  isAdminPermissionTagVariant,
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
@@ -492,9 +493,7 @@ function isAdminPermissionVariantOnlyPatch(patch: PatchUserBasicInfoInput): bool
   return (
     metricKeys.length === 1 &&
     metricKeys[0] === 'adminPermissionVariant' &&
-    (patch.listMetrics.adminPermissionVariant === 'manager' ||
-      patch.listMetrics.adminPermissionVariant === 'partner' ||
-      patch.listMetrics.adminPermissionVariant === 'viewer')
+    isAdminPermissionTagVariant(patch.listMetrics.adminPermissionVariant)
   )
 }
 

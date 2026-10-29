@@ -1,7 +1,10 @@
-/* 관리자 권한 유형 태그 — 목록 테이블·회원 상세 기본 정보 공통 */
+/* 관리자 권한 유형 태그 — Master/Viewer와 동일 140×32, padding 6×10 */
 .user-list-admin-perm-tag {
   display: flex;
-  width: 132px;
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+  height: 32px;
   padding: 6px 10px;
   justify-content: center;
   align-items: center;
@@ -9,12 +12,15 @@
   flex-shrink: 0;
   margin-inline: auto;
   box-sizing: border-box;
-  border-radius: 4px;
+  border-radius: 6px;
   color: #017eaf;
   text-align: center;
   font-size: 14px;
   font-weight: 600;
   line-height: 150%; /* 21px */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-detail-modal__basic-table .user-list-admin-perm-tag {
@@ -25,6 +31,12 @@
   border: 1px solid rgba(1, 126, 175, 0.06);
   background: #e6f2f7;
   color: #017eaf;
+}
+
+.user-list-admin-perm-tag--accounting {
+  border: 1px solid rgba(132, 87, 206, 0.06);
+  background: #f3eef9;
+  color: #8457ce;
 }
 
 .user-list-admin-perm-tag--partner {
@@ -46,6 +58,12 @@
   color: #017eaf;
 }
 
+.user-list-admin-perm-badge--accounting {
+  border: 1px solid rgba(132, 87, 206, 0.06);
+  background: #f3eef9;
+  color: #8457ce;
+}
+
 .user-list-admin-perm-badge--partner {
   border: 1px solid rgba(30, 140, 41, 0.06);
   background: #e9f3ea;
@@ -58,13 +76,52 @@
   color: #464646;
 }
 
-/* 목록 tag160 — 132×33 배지 (래퍼 160 = 1+13+132+13+1). 기본 app-status-badge 120 덮어씀 */
-.status-dropdown-cell__status-trigger--tag-160 .app-status-badge[class*='user-list-admin-perm-badge'],
-.status-dropdown-cell__dropdown-overlay--tag-160 .app-status-badge[class*='user-list-admin-perm-badge'] {
-  width: 132px !important;
-  min-width: 132px !important;
-  max-width: 132px !important;
-  height: 33px !important;
-  min-height: 33px !important;
-  max-height: 33px !important;
+.status-dropdown-cell__status-trigger .app-status-badge.user-list-admin-perm-badge,
+.status-dropdown-cell__dropdown-item .app-status-badge.user-list-admin-perm-badge,
+.status-dropdown-cell__status-trigger--tag-160 .app-status-badge.user-list-admin-perm-badge,
+.status-dropdown-cell__dropdown-overlay--tag-160 .app-status-badge.user-list-admin-perm-badge {
+  box-sizing: border-box;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 6px 10px !important;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: 6px;
+}
+
+/*
+ * tag-160 기본은 132 태그 + 가로 패딩 13px (1+13+132+13+1=160).
+ * 권한 배지는 140이라 패딩을 9px로 맞춤. 안 맞으면 닫힘 상태에서 배지가 셀 밖으로
+ * 넘치고, 열리면 160 박스에 잘리며 왼쪽으로 밀려 보인다.
+ */
+.status-dropdown-cell__status-trigger--tag-160:has(.user-list-admin-perm-badge),
+.status-dropdown-cell__status-trigger--tag-160.status-dropdown-cell__status-trigger--open:has(
+    .user-list-admin-perm-badge
+  ) {
+  box-sizing: border-box !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  padding: 8px 9px !important;
+  overflow: hidden;
+}
+
+.status-dropdown-cell__dropdown-overlay:has(.user-list-admin-perm-badge),
+.status-dropdown-cell__dropdown-overlay--tag-160:has(.user-list-admin-perm-badge) {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+.status-dropdown-cell__dropdown-overlay:has(.user-list-admin-perm-badge) .ant-dropdown-menu,
+.status-dropdown-cell__dropdown-overlay--tag-160:has(.user-list-admin-perm-badge) .ant-dropdown-menu {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  padding: 8px 9px !important;
 }

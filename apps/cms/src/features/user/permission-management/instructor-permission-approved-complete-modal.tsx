@@ -6,9 +6,7 @@ import {
 } from '@/features/user/shared/lib/admin-permission-display'
 
 function resolveAdminPermissionPhrase(variant: AdminPermissionTagVariant | undefined): string {
-  if (variant === 'partner') return `${ADMIN_PERMISSION_TAG_LABEL.partner} 권한`
-  if (variant === 'viewer') return `${ADMIN_PERMISSION_TAG_LABEL.viewer} 권한`
-  return `${ADMIN_PERMISSION_TAG_LABEL.manager} 권한`
+  return `${ADMIN_PERMISSION_TAG_LABEL[variant ?? 'manager']} 권한`
 }
 
 function buildSingleApprovedDescription(

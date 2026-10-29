@@ -11,17 +11,26 @@ const visible = {
 }
 
 describe('canShowAdminMfaReset', () => {
-  it('MASTER가 활성 non-MASTER 다른 관리자에게만 보인다', () => {
+  it('MASTER가 활성 다른 관리자(Master 포함)에게 보인다', () => {
     expect(canShowAdminMfaReset(visible)).toBe(true)
     expect(canShowAdminMfaReset({ ...visible, targetPermissionVariant: 'viewer' })).toBe(true)
+    expect(canShowAdminMfaReset({ ...visible, targetPermissionVariant: 'manager' })).toBe(true)
+    expect(canShowAdminMfaReset({ ...visible, targetPermissionVariant: 'accounting' })).toBe(true)
+    expect(canShowAdminMfaReset({ ...visible, targetPermissionVariant: null })).toBe(true)
+    expect(
+      canShowAdminMfaReset({
+        ...visible,
+        sessionRoleCode: 'PM',
+        sessionAdminLevel: 'MASTER',
+      })
+    ).toBe(true)
+    expect(canShowAdminMfaReset({ ...visible, targetAdminAccountId: 1 })).toBe(true)
   })
 
-  it('MASTER가 아니거나 자기 자신, MASTER 대상, 비활성 대상에는 숨긴다', () => {
+  it('MASTER가 아니거나 비활성 대상에는 숨긴다', () => {
     expect(canShowAdminMfaReset({ ...visible, sessionRoleCode: 'PM' })).toBe(false)
-    expect(canShowAdminMfaReset({ ...visible, targetAdminAccountId: 1 })).toBe(false)
-    expect(canShowAdminMfaReset({ ...visible, targetPermissionVariant: 'manager' })).toBe(false)
     expect(canShowAdminMfaReset({ ...visible, targetIsActive: false })).toBe(false)
-    expect(canShowAdminMfaReset({ ...visible, targetPermissionVariant: null })).toBe(false)
+    expect(canShowAdminMfaReset({ ...visible, sessionRoleCode: 'VIEWER' })).toBe(false)
   })
 })
 

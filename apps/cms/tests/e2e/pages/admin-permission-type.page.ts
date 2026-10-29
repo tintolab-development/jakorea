@@ -4,10 +4,11 @@
 
 import { type Locator, type Page, expect } from '@playwright/test'
 
-export type AdminPermissionTagVariant = 'manager' | 'partner' | 'viewer'
+export type AdminPermissionTagVariant = 'manager' | 'accounting' | 'partner' | 'viewer'
 
 export const ADMIN_PERMISSION_LABELS: Record<AdminPermissionTagVariant, string> = {
   manager: 'Master',
+  accounting: 'Accounting Manager',
   partner: 'Program Manager',
   viewer: 'Program Viewer',
 }

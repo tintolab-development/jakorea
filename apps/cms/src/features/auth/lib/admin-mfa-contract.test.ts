@@ -128,5 +128,12 @@ describe('mapMfaResetError', () => {
     expect(mapMfaResetError('MFA_RESET_TARGET_INACTIVE', 423).action).toBe('inactive')
     expect(mapMfaResetError('ACCOUNT_LOCKED', 423).action).toBe('rate-limited')
     expect(mapMfaResetError('PERMISSION_DENIED', 403).action).toBe('permission')
+    expect(mapMfaResetError('MFA_RESET_SELF_FORBIDDEN', 403).message).toContain('본인 MFA')
+    expect(mapMfaResetError('MFA_RESET_TARGET_PRIVILEGE_FORBIDDEN', 403).message).not.toContain(
+      '마스터'
+    )
+    expect(mapMfaResetError('MFA_RESET_TARGET_PRIVILEGE_FORBIDDEN', 403).action).toBe('permission')
+    expect(mapMfaResetError('UNAUTHORIZED', 401).action).toBe('permission')
+    expect(mapMfaResetError('MFA_VERIFICATION_FAILED').action).toBe('restart-step-up')
   })
 })

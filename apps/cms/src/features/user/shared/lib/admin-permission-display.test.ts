@@ -14,6 +14,9 @@ describe('ADMIN_PERMISSION_TAG_LABEL', () => {
     expect(ADMIN_PERMISSION_TAG_LABEL.manager).toBe(
       ADMIN_PERMISSION_SETTINGS_ROLE_LABELS.master
     )
+    expect(ADMIN_PERMISSION_TAG_LABEL.accounting).toBe(
+      ADMIN_PERMISSION_SETTINGS_ROLE_LABELS['accounting-manager']
+    )
     expect(ADMIN_PERMISSION_TAG_LABEL.partner).toBe(
       ADMIN_PERMISSION_SETTINGS_ROLE_LABELS['program-manager']
     )
@@ -26,9 +29,10 @@ describe('ADMIN_PERMISSION_TAG_LABEL', () => {
       'Program Manager',
       'Program Viewer',
     ])
+    expect(ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE).toBe('accounting')
     expect(
       isAdminPermissionSelectComingSoon(ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE)
-    ).toBe(true)
+    ).toBe(false)
     expect(isAdminPermissionSelectComingSoon('partner')).toBe(false)
   })
 })
@@ -45,6 +49,7 @@ describe('getAdminPermissionVariant', () => {
 
   it('세션 roleCode(/api/admin/me)를 권한 유형으로 매핑한다', () => {
     expect(getAdminPermissionVariant({ roleCode: 'MASTER' })).toBe('manager')
+    expect(roleCodeToAdminPermissionVariant('ACCOUNTING_MANAGER')).toBe('accounting')
     expect(getAdminPermissionVariant({ roleCode: 'PM' })).toBe('partner')
     expect(getAdminPermissionVariant({ roleCode: 'VIEWER' })).toBe('viewer')
     // OpenAPI MIDDLE은 세션 AdminRoleCode 밖 — 문자열 매퍼로 검증
