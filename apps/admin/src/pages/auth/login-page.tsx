@@ -143,15 +143,10 @@ export function LoginPage() {
               ]}
             >
               <CmsInput
-                label={
-                  <>
-                    이메일
-                    <span className="login-required" aria-hidden>
-                      *
-                    </span>
-                  </>
-                }
-                inputSize="large"
+                label="이메일"
+                required
+                inputSize="xlarge"
+                allowClear
                 width="100%"
                 placeholder="이메일 주소를 입력해 주세요"
                 autoComplete="email"
@@ -163,16 +158,11 @@ export function LoginPage() {
               rules={[{ required: true, message: '비밀번호를 입력해 주세요.' }]}
             >
               <CmsInput
-                label={
-                  <>
-                    비밀번호
-                    <span className="login-required" aria-hidden>
-                      *
-                    </span>
-                  </>
-                }
+                label="비밀번호"
+                required
                 type="password"
-                inputSize="large"
+                inputSize="xlarge"
+                allowClear
                 width="100%"
                 placeholder="비밀번호를 입력해 주세요"
                 autoComplete="current-password"
@@ -222,7 +212,7 @@ export function LoginPage() {
             <Form.Item className="login-submit-actions">
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h52"
                 width="100%"
                 className="login-submit-btn"
                 loading={loading && loginMode === 'api'}
@@ -247,7 +237,7 @@ export function LoginPage() {
                 <CmsButton
                   key={account.key}
                   variant="default"
-                  size="small"
+                  size="h32"
                   onClick={() => {
                     form.setFieldsValue({
                       email: account.email,
@@ -260,7 +250,8 @@ export function LoginPage() {
               ))}
             </Space>
             <Text type="secondary" className="login-dev-quick__hint">
-              실 API: 마스터 → MFA 000000. PM/Partner/Viewer는 BE QA seed 전까지 401일 수 있습니다.
+              실 API: Master → MFA 000000. Accounting Manager/Program Manager/Program Viewer는 BE QA
+              seed 전까지 401일 수 있습니다.
             </Text>
           </div>
           ) : null}

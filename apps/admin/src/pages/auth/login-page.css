@@ -36,11 +36,6 @@
   margin-top: 40px;
 }
 
-/* CMS `.login-form`는 Form.Item 기본 margin 24px (antd) — 20px 오버라이드 없음 */
-.login-form .ant-form-item {
-  margin-bottom: 24px;
-}
-
 .login-alert {
   margin-bottom: 16px;
 }
@@ -100,108 +95,6 @@
 
 .login-submit-actions.ant-form-item {
   margin-bottom: 0;
-}
-
-.login-submit-btn {
-  margin-top: 16px;
-}
-
-/* CMS 로그인 xlarge Input / h52 Button 스펙 */
-.login-form .cms-input {
-  width: 100%;
-}
-
-.login-form .cms-input__field {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.login-form .cms-input {
-  gap: 6px;
-}
-
-.login-form .cms-input__label {
-  display: flex;
-  align-self: flex-start;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 2px;
-  max-width: 100%;
-  min-width: 0;
-  width: fit-content;
-  margin: 0;
-  padding: 0 0 2px;
-  overflow: hidden;
-  color: var(--Content-secondary, #525252);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 140%;
-}
-
-.login-form .cms-input__label .login-required {
-  color: var(--Status-red-main, #c32f4a);
-  font-size: inherit;
-  font-weight: 700;
-  line-height: 140%;
-  margin-left: 0;
-}
-
-.login-form .cms-input .cms-input__control {
-  width: 100%;
-  min-width: 0;
-  height: 52px;
-  padding: 10px 20px;
-  gap: 8px;
-  border-radius: var(--Radius-8, 8px);
-  border: 1px solid var(--Border-default, #e0e0e0);
-  background: var(--White, #fff);
-  color: var(--Netural-black, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.login-form .cms-input .cms-input__inner .ant-input,
-.login-form .cms-input .cms-input__inner .ant-input-affix-wrapper,
-.login-form .cms-input .cms-input__inner .ant-input-password {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: auto !important;
-  margin: 0;
-  padding: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 18px !important;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--Netural-black, #3d3d3d);
-}
-
-.login-form .cms-input .cms-input__inner .ant-input::placeholder {
-  color: var(--gray-85969-d, #85969d);
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.login-form .login-submit-btn.cms-button.ant-btn.cms-button--large {
-  width: 100% !important;
-  height: 52px !important;
-  min-height: 52px !important;
-  padding: 10px 23px !important;
-  gap: 8px;
-  border-radius: var(--Radius-10, 10px);
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 135%;
-  background: var(--Brand-500, #00a0af) !important;
-  border-color: var(--Border-alpha-10, rgba(61, 61, 61, 0.1)) !important;
 }
 
 .login-api-hint {
@@ -299,78 +192,106 @@
   flex-direction: column;
   align-items: stretch;
   width: 100%;
-  gap: 24px;
 }
 
 .login-form-wrapper--social-not-linked {
   margin-top: 30px;
 }
 
+.login-social-not-linked__icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.login-social-not-linked__icon .find-email-search-icon {
+  display: flex;
+  height: 84px;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-social-not-linked__icon .find-email-search-icon__image {
+  display: block;
+  max-height: 84px;
+  width: auto;
+}
+
 .login-social-not-linked__heading {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   text-align: center;
 }
 
 .login-social-not-linked__title {
-  margin: 0;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 24px;
+  color: var(--Color-netural-black, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 30px;
+  font-style: normal;
   font-weight: 700;
-  line-height: 150%;
+  line-height: 144%; /* 43.2px */
+  letter-spacing: -0.6px;
+  margin: 0;
 }
 
 .login-social-not-linked__subtitle {
-  margin: 0;
-  color: var(--Color-netural-cool-500, #85969d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 16px;
+  color: var(--Color-primary-boundless_blue, #285f74);
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
   font-weight: 400;
-  line-height: 150%;
+  line-height: 150%; /* 27px */
+  letter-spacing: -0.18px;
+  margin: 0;
 }
 
 .login-social-not-linked__body {
+  margin: 30px 0 40px 0;
   display: flex;
-  padding: var(--spacing-24, 24px);
+  padding: var(--Spacing-24, 24px);
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 10px;
   align-self: stretch;
-  border-radius: var(--radius-8, 8px);
+  border-radius: var(--Radius-8, 8px);
   background: var(--Color-netural-cool-50, #f5f7f7);
 }
 
 .login-social-not-linked__body-text {
   margin: 0;
-  color: var(--Color-netural-cool-500, #85969d);
+  color: var(--Color-netural-black, #3d3d3d);
   text-align: center;
-  font-family: Pretendard, system-ui, sans-serif;
+  font-family: Pretendard;
   font-size: 14px;
+  font-style: normal;
   font-weight: 400;
-  line-height: 150%;
-}
-
-.login-social-not-linked .login-submit-btn {
-  margin-top: 6px;
+  line-height: 160%; /* 22.4px */
 }
 
 .login-social-not-linked .login-utility-links {
-  margin-top: -16px;
+  margin-top: 8px;
 }
 
-.login-social-not-linked .login-utility-links + .login-social-section {
-  margin-top: 28px;
+.login-social-already-linked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .login-social-already-linked__icon {
-  width: 70px;
-  height: 70px;
+  width: 84px;
+  height: 84px;
   flex-shrink: 0;
   display: block;
+  margin-inline: auto;
+  object-fit: contain;
 }
 
 .login-social-already-linked__title {
@@ -386,13 +307,15 @@
 }
 
 .login-social-already-linked__description {
-  margin: 12px 0 0;
-  color: var(--Color-netural-cool-500, #85969d);
+  color: var(--Brand-700, #285f74);
   text-align: center;
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 16px;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
   font-weight: 400;
-  line-height: 150%;
+  line-height: 150%; /* 27px */
+  letter-spacing: -0.18px;
+  margin: 16px 0 0;
 }
 
 .login-social-already-linked__actions {
@@ -404,6 +327,9 @@
   margin-top: 40px;
 }
 
+.login-submit-btn {
+  margin-top: 16px;
+}
 .login-social-already-linked__actions .login-submit-btn,
 .login-social-already-linked__actions .login-secondary-btn {
   display: flex;
@@ -439,18 +365,6 @@
   margin-top: 24px;
   width: 100%;
   text-align: center;
-}
-
-.login-dev-quick .cms-button.ant-btn.cms-button--small {
-  width: auto !important;
-  min-width: 80px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  padding: 8px 9px !important;
-  gap: 4px;
-  border-radius: var(--Radius-6, 6px);
-  font-size: 12px;
-  line-height: 115%;
 }
 
 .login-dev-quick__label {

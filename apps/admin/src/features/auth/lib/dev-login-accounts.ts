@@ -20,26 +20,26 @@ export function canShowDevRoleLogin(): boolean {
 export const DEV_LOGIN_QA_ACCOUNTS: readonly DevLoginQaAccount[] = [
   {
     key: 'master',
-    label: '마스터',
+    label: 'Master',
     email: 'admin1@jakorea.org',
     password: 'admin1234!',
     apiReady: true,
   },
   {
     key: 'pm',
-    label: 'PM',
+    label: 'Accounting Manager',
     email: 'pm1@jakorea.org',
     password: 'test1234!',
   },
   {
     key: 'partner',
-    label: 'Partner',
+    label: 'Program Manager',
     email: 'partner1@jakorea.org',
     password: 'test1234!',
   },
   {
     key: 'viewer',
-    label: 'Viewer',
+    label: 'Program Viewer',
     email: 'viewer1@jakorea.org',
     password: 'test1234!',
   },

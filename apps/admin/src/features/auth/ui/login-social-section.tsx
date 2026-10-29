@@ -4,21 +4,22 @@
  */
 
 import { message } from 'antd'
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import { KakaoSocialLoginIcon } from '@/shared/ui/icons/kakao-social-login-icon'
 import { NaverSocialLoginIcon } from '@/shared/ui/icons/naver-social-login-icon'
 import googleLogoImage from '@/assets/images/logo/google_logo.png'
 
 type SocialProvider = 'google' | 'naver' | 'kakao'
 
-/** 로그인 화면 소셜 버튼만 숨김. 핸들러·후속 SSO 연동은 유지. */
-export const SHOW_SOCIAL_LOGIN_UI = false
+/** @deprecated SOCIAL_ACCOUNT_LINK_ENABLED 와 동일. 기존 import 호환용. */
+export const SHOW_SOCIAL_LOGIN_UI = SOCIAL_ACCOUNT_LINK_ENABLED
 
 export function startLoginSocialOAuth(provider: SocialProvider): void {
   message.info(`소셜 로그인(${provider})은 이후 Phase에서 연동합니다.`)
 }
 
 export function LoginSocialSection() {
-  if (!SHOW_SOCIAL_LOGIN_UI) {
+  if (!SOCIAL_ACCOUNT_LINK_ENABLED) {
     return null
   }
 
