@@ -269,6 +269,30 @@ export function resolveCompanySchoolDetailSaveAnnouncementTitle(args: {
   return form
 }
 
+/**
+ * 1사1교 상세 공통정보 저장 — 등록 단락(overlay)에서 바꾼 대표 프로그램명(국문·영문)을 폼 값으로 올린다.
+ * overlay 값이 저장된 Program과 다를 때만 반환한다. title은 등록 계약(title = repKo)대로
+ * 기존 title이 비었거나 이전 대표명과 같을 때만 함께 바꾼다.
+ */
+export function resolveCompanySchoolDetailSaveTitleFields(
+  overlay: Record<string, unknown>,
+  program: Pick<Program, 'title' | 'mainTitle' | 'titleEn'>
+): { title?: string; mainTitle?: string; titleEn?: string } {
+  const next: { title?: string; mainTitle?: string; titleEn?: string } = {}
+  const repKo = overlay[`${BASIC}.repKo`]
+  const baselineKo = program.mainTitle?.trim() || program.title?.trim() || ''
+  if (typeof repKo === 'string' && repKo.trim() && repKo.trim() !== baselineKo) {
+    next.mainTitle = repKo.trim()
+    const currentTitle = program.title?.trim() || ''
+    if (!currentTitle || currentTitle === baselineKo) next.title = repKo.trim()
+  }
+  const repEn = overlay[`${BASIC}.repEn`]
+  if (typeof repEn === 'string' && repEn.trim() !== (program.titleEn?.trim() || '')) {
+    next.titleEn = repEn.trim()
+  }
+  return next
+}
+
 export function applyLiveEconomyAnnouncementToProgram(
   program: Program,
   overlay: Record<string, unknown>,
