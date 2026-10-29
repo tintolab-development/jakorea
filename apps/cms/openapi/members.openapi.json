@@ -32780,13 +32780,10 @@
         "properties": {
           "totpCode": {
             "type": "string",
-            "minLength": 1,
+            "description": "Optional. MFA-complete MASTER session omits this. Empty/null is treated as omitted. Pattern ^[0-9]{6,8}$ when sent.",
             "pattern": "^[0-9]{6,8}$"
           }
-        },
-        "required": [
-          "totpCode"
-        ]
+        }
       },
       "StepUpResponse": {
         "type": "object",
