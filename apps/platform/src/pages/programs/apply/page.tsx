@@ -103,9 +103,11 @@ import {
 } from '@/features/program/lib/apply-form-paragraph-ids'
 import { ApplyEconomyPreferredSchedule } from '@/features/program/ui/apply-economy-preferred-schedule/apply-economy-preferred-schedule'
 import {
+  buildEconomyOrganizationSchedulePayload,
   createEmptyEconomyPreferredScheduleBlocks,
   economyPreferredScheduleBlocksFromDraftAnswer,
   findIncompleteEconomyPreferredScheduleMessage,
+  shouldAttachEconomyRequestedSchedules,
   toEconomyPortalPreferredScheduleBlocks,
   toEconomyPreferredScheduleAnswerValue,
   type EconomyPreferredScheduleBlock,
@@ -1844,6 +1846,8 @@ export function ProgramApplyPage() {
           <ApplyEconomyPreferredSchedule
             value={economyPreferredBlocks}
             onChange={setEconomyPreferredBlocks}
+            minDate={program?.educationScheduleRange?.start ?? null}
+            maxDate={program?.educationScheduleRange?.end ?? null}
           />
         )
       }
@@ -2563,6 +2567,16 @@ export function ProgramApplyPage() {
       const skipPreferredScheduleInput =
         applyScheduleChoiceHidden || Boolean(hiddenScheduleAutoSubmitIds)
 
+      const attachEconomyRequestedSchedules =
+        showPreferredScheduleInput &&
+        !skipPreferredScheduleInput &&
+        shouldAttachEconomyRequestedSchedules({
+          applyCase,
+          applicationType: bundle.option.applicationType,
+        })
+      const economySchedulePayload = attachEconomyRequestedSchedules
+        ? buildEconomyOrganizationSchedulePayload(economyPreferredBlocks)
+        : null
       const preferredScheduleBlocks = isUjatInstitutionApplyFormCase(applyCase)
         ? toPortalPreferredScheduleBlocks(
             ujatPreferredScheduleOptions
@@ -2579,7 +2593,8 @@ export function ProgramApplyPage() {
             !isTrainedTeachersFixedScheduleTarget &&
             !skipPreferredScheduleInput
           ? showEconomyPreferredSchedule
-            ? toEconomyPortalPreferredScheduleBlocks(economyPreferredBlocks)
+            ? (economySchedulePayload?.preferredScheduleBlocks ??
+              toEconomyPortalPreferredScheduleBlocks(economyPreferredBlocks))
             : toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
           : undefined
       if (showPreferredScheduleInput && !skipPreferredScheduleInput) {
@@ -2655,6 +2670,20 @@ export function ProgramApplyPage() {
               setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
             }
             setSubmitAlert({ description: preferredError })
+            return
+          }
+          if (attachEconomyRequestedSchedules && economySchedulePayload == null) {
+            const fallbackParagraph =
+              economyPreferredParagraph ??
+              displayDraft.paragraphs.find(paragraph =>
+                isApplicationPreferredScheduleParagraphId(paragraph.id)
+              )
+            if (fallbackParagraph) setSubmitErrorField(fallbackParagraph.id)
+            setSubmitAlert({
+              description:
+                findIncompleteEconomyPreferredScheduleMessage(economyPreferredBlocks, true) ??
+                '진행 희망 교육 일정 1지망·2지망의 희망 교육일·희망 차시·교시·시간을 모두 입력해 주세요.',
+            })
             return
           }
         }
@@ -3317,6 +3346,9 @@ export function ProgramApplyPage() {
         formBindingId: bundle.option.formBindingId,
         answers,
         preferredScheduleBlocks,
+        ...(economySchedulePayload
+          ? { requestedSchedules: economySchedulePayload.requestedSchedules }
+          : {}),
       }
       const submitDebug = summarizePortalApplicationSubmit({
         programId: numericProgramId,

@@ -9,10 +9,16 @@
 import type {
   PortalPreferredScheduleBlock,
   PortalPreferredScheduleSessionTime,
+  PortalRequestedScheduleRequest,
+  PortalRequestedSessionTimeRequest,
 } from '../api/application-types'
 
 export const ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT = 2
 export const ECONOMY_PREFERRED_SCHEDULE_MAX_CLASS_PERIOD = 12
+export const ECONOMY_PREFERRED_SCHEDULE_DUPLICATE_DATE_MESSAGE =
+  '1지망과 2지망의 희망 교육일은 서로 달라야 합니다.'
+export const ECONOMY_PREFERRED_SCHEDULE_REQUIRED_BOTH_MESSAGE =
+  '진행 희망 교육 일정 1지망·2지망의 희망 교육일·희망 차시·교시·시간을 모두 입력해 주세요.'
 
 export type EconomyPreferredScheduleSession = '' | '1' | '2'
 
@@ -71,6 +77,27 @@ function isValidTime(value: string): boolean {
 
 function sessionCountOf(block: EconomyPreferredScheduleBlock): number {
   return block.session === '2' ? 2 : block.session === '1' ? 1 : 0
+}
+
+/** 입력 교시 문자열 → 1~12 정수. 보정하지 않고 숫자 prefix만 읽는다. */
+function parseClassPeriodNumber(raw: string): number | null {
+  const match = raw.trim().match(/^\d+/)
+  if (!match) return null
+  const value = Number(match[0])
+  if (!Number.isInteger(value) || value < 1 || value > ECONOMY_PREFERRED_SCHEDULE_MAX_CLASS_PERIOD) {
+    return null
+  }
+  return value
+}
+
+export function shouldAttachEconomyRequestedSchedules(input: {
+  applyCase?: string | null
+  applicationType?: string | null
+}): boolean {
+  return (
+    input.applyCase === 'institution-economy' &&
+    String(input.applicationType ?? '').trim().toUpperCase() === 'ORGANIZATION'
+  )
 }
 
 function hasAnyInput(block: EconomyPreferredScheduleBlock): boolean {
@@ -149,6 +176,87 @@ export function toEconomyPreferredScheduleAnswerValue(
   return mapped.length > 0 ? mapped : null
 }
 
+function mapEconomyBlockToRequestedSchedule(
+  block: EconomyPreferredScheduleBlock
+): PortalRequestedScheduleRequest | null {
+  if (!isBlockComplete(block)) return null
+  const requestedDate = block.date.trim()
+  const sessionCount = sessionCountOf(block)
+  const startPeriod = parseClassPeriodNumber(block.firstClassPeriod)
+  if (!requestedDate || sessionCount < 1 || startPeriod == null) return null
+  const lastPeriod = startPeriod + sessionCount - 1
+  if (lastPeriod > ECONOMY_PREFERRED_SCHEDULE_MAX_CLASS_PERIOD) return null
+
+  const firstStart = normalizeTime(block.firstStart)
+  const firstEnd = normalizeTime(block.firstEnd)
+  if (!isValidTime(firstStart) || !isValidTime(firstEnd)) return null
+
+  const sessionTimes: PortalRequestedSessionTimeRequest[] = [
+    { period: startPeriod, startTime: firstStart, endTime: firstEnd },
+  ]
+  if (sessionCount === 2) {
+    const secondPeriod = parseClassPeriodNumber(resolveEconomySecondClassPeriod(block.firstClassPeriod))
+    const secondStart = normalizeTime(block.secondStart)
+    const secondEnd = normalizeTime(block.secondEnd)
+    if (secondPeriod == null || secondPeriod !== startPeriod + 1) return null
+    if (!isValidTime(secondStart) || !isValidTime(secondEnd)) return null
+    sessionTimes.push({ period: secondPeriod, startTime: secondStart, endTime: secondEnd })
+  }
+  if (sessionTimes.length !== sessionCount) return null
+  for (let index = 0; index < sessionTimes.length; index += 1) {
+    if (sessionTimes[index]!.period !== startPeriod + index) return null
+  }
+  return {
+    requestedDate,
+    startPeriod,
+    sessionCount,
+    combinedClassYn: false,
+    sessionTimes,
+  }
+}
+
+/**
+ * 1사1교 기관(ORGANIZATION) 최종 제출용 requestedSchedules.
+ * 1·2지망이 모두 유효하고 날짜가 다를 때만 2건을 반환한다. 불완전하면 null (빈 배열 금지).
+ */
+export function toEconomyRequestedSchedules(
+  blocks: readonly EconomyPreferredScheduleBlock[]
+): PortalRequestedScheduleRequest[] | null {
+  const ranked = Array.from(
+    { length: ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT },
+    (_, index) => blocks[index] ?? createEmptyEconomyPreferredScheduleBlock()
+  )
+  const dates = new Set<string>()
+  const out: PortalRequestedScheduleRequest[] = []
+  for (const block of ranked) {
+    const mapped = mapEconomyBlockToRequestedSchedule(block)
+    if (!mapped) return null
+    if (dates.has(mapped.requestedDate)) return null
+    dates.add(mapped.requestedDate)
+    out.push(mapped)
+  }
+  if (out.length !== ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT) return null
+  return out
+}
+
+/** 임시저장·최종 제출이 같은 1·2지망에서 preferred + requested 를 만든다. */
+export function buildEconomyOrganizationSchedulePayload(
+  blocks: readonly EconomyPreferredScheduleBlock[]
+): {
+  preferredScheduleBlocks: PortalPreferredScheduleBlock[]
+  requestedSchedules: PortalRequestedScheduleRequest[]
+} | null {
+  const preferredScheduleBlocks = toEconomyPortalPreferredScheduleBlocks(blocks)
+  const requestedSchedules = toEconomyRequestedSchedules(blocks)
+  if (
+    preferredScheduleBlocks.length !== ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT ||
+    requestedSchedules == null
+  ) {
+    return null
+  }
+  return { preferredScheduleBlocks, requestedSchedules }
+}
+
 /**
  * 화면 검증. CMS 1사1교 필수 기준과 같이 1·2지망 모두 날짜·희망 차시·교시·시간을 요구한다.
  * `required=false`면 빈 지망은 허용하고 일부만 입력된 지망만 막는다.
@@ -185,8 +293,20 @@ export function findIncompleteEconomyPreferredScheduleMessage(
       }
     }
   }
-  if (required && toEconomyPortalPreferredScheduleBlocks(ranked).length === 0) {
-    return '진행 희망 교육 일정을 입력해 주세요.'
+  const completeDates = ranked
+    .filter(isBlockComplete)
+    .map(block => block.date.trim())
+    .filter(Boolean)
+  if (completeDates.length === ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT) {
+    if (new Set(completeDates).size !== completeDates.length) {
+      return ECONOMY_PREFERRED_SCHEDULE_DUPLICATE_DATE_MESSAGE
+    }
+    if (toEconomyRequestedSchedules(ranked) == null) {
+      return ECONOMY_PREFERRED_SCHEDULE_REQUIRED_BOTH_MESSAGE
+    }
+  }
+  if (required && toEconomyPortalPreferredScheduleBlocks(ranked).length !== ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT) {
+    return ECONOMY_PREFERRED_SCHEDULE_REQUIRED_BOTH_MESSAGE
   }
   return null
 }

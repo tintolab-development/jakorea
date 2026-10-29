@@ -109,12 +109,28 @@ export type PortalPreferredScheduleBlock = {
   scheduleStatus?: 'MATCHED' | 'INACTIVE_OR_DELETED' | 'UNMATCHED' | string | null
 }
 
+/** Portal `RequestedSessionTimeRequest` — 1사1교 기관 신청 requestedSchedules[].sessionTimes */
+export type PortalRequestedSessionTimeRequest = {
+  period: number
+  startTime: string
+  endTime: string
+}
+
+/** Portal `RequestedScheduleRequest` — 1사1교 기관 최종 제출 2지망 */
+export type PortalRequestedScheduleRequest = {
+  requestedDate: string
+  startPeriod: number
+  sessionCount: number
+  combinedClassYn: boolean
+  sessionTimes: PortalRequestedSessionTimeRequest[]
+}
+
 export type PortalSaveApplicationRequest = {
   recruitmentId: number
   applicationType: string
   formBindingId: number
   answers?: Record<string, unknown>
-  requestedSchedules?: unknown[]
+  requestedSchedules?: PortalRequestedScheduleRequest[]
   requestedClassCount?: number
   requestedStudentCount?: number
   requestedMaleCount?: number
