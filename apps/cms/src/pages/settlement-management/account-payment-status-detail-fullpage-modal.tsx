@@ -190,9 +190,6 @@ export function AccountPaymentStatusDetailFullPageModal({
                 formulaLabel={detail.formulaLabel}
                 totalAmount={detail.totalAmount}
                 lectureSessionSegmentLabel="round"
-                actionButtonSize="h32"
-                actionButtonWidth={176}
-                tableCellSpec="cms-data-table"
                 onBasisDetailClick={handleBasisDetailClick}
                 onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
                 headerActions={
