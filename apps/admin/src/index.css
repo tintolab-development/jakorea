@@ -1,4 +1,4 @@
-@import './shared/ui/cms-data-table.css';
+@import '@jakorea/admin-ui/table/styles';
 @import './shared/ui/list-table-layout.css';
 @import './shared/ui/filter-controls-common.css';
 @import './shared/ui/admin-filter-area.css';
