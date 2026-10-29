@@ -1505,6 +1505,17 @@ export function ParticipatingInstructorFullpageView({
             </div>
           ) : (
             <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
+              {institutionAssignment.error ? (
+                <div
+                  role="alert"
+                  className="school-detail-fullpage-view__assignment-error"
+                >
+                  {getGeneralProgramApiErrorMessage(
+                    institutionAssignment.error,
+                    '강사 배정 조회에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                  )}
+                </div>
+              ) : null}
               <div className="school-detail-fullpage-view__instructor-section">
                 <div className="table-header-actions">
                   <div className="table-header-title--wrapper">
