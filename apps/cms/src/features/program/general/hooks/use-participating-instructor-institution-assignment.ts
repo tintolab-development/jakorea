@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
-import { fetchInstructorAssignmentCalendarRemote } from '@/features/program/general/api/instructor-assignments-api-client'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
@@ -29,23 +28,21 @@ import type {
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 
-function selectAssignmentsFromCalendar(
+/**
+ * 배정 현황 SSOT = GET /api/admin/program-execution/instructor-assignments (board.assignments).
+ * instructor-assignment-calendar 와 교차하지 않는다 — calendar 빈 items로 배정 list를 숨기면
+ * Platform lecture-report-assignments 와 CMS 노출이 어긋난다.
+ * URL instructorId 는 participantId 이며, 필터 키는 instructor.memberId(member.id)다.
+ */
+export function selectAssignmentsForInstructor(
   assignments: InstructorAssignmentListItemEnriched[],
-  calendarItems: Array<{ assignmentId?: number | null }>,
   instructorMemberId: string
 ): InstructorAssignmentListItemEnriched[] {
-  const activeAssignmentIds = new Set(
-    calendarItems
-      .map(item => item.assignmentId)
-      .filter((assignmentId): assignmentId is number => assignmentId != null)
-      .map(String)
-  )
-
   return assignments.filter(assignment => {
     if (assignment.instructorMemberId == null) return false
     if (String(assignment.instructorMemberId) !== instructorMemberId) return false
-    if (assignment.assignmentId == null) return false
-    return activeAssignmentIds.has(String(assignment.assignmentId))
+    const status = (assignment.assignmentStatus ?? '').toUpperCase()
+    return status !== 'CANCELLED' && status !== 'CANCELED'
   })
 }
 
@@ -75,22 +72,12 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   const useCompanySchoolBoard = isCompanySchoolSurface || input.isCompanySchool
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(input.programId)
   const instructorMemberId = input.instructor.memberId?.trim() ?? ''
-  const instructorMemberIdNumber = Number(instructorMemberId)
   const queryEnabled = Boolean(
     input.enabled !== false && remoteEnabled && input.programId && instructorMemberId
   )
-  const calendarEnabled =
-    queryEnabled &&
-    !useCompanySchoolBoard &&
-    Number.isFinite(instructorMemberIdNumber) &&
-    instructorMemberIdNumber > 0
   const assignmentQueryKey = useCompanySchoolBoard
     ? companySchoolQueryKeys.instructorAssignmentConflicts(input.programId)
     : generalProgramProgressQueryKeys.instructorAssignments(input.programId)
-  const calendarQueryKey = generalProgramProgressQueryKeys.instructorAssignmentCalendar(
-    input.programId,
-    instructorMemberId
-  )
 
   useNotifyProgramApiUnavailableOnce(
     Boolean(input.enabled !== false && (!remoteEnabled || !instructorMemberId)),
@@ -109,19 +96,8 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     retry: false,
   })
 
-  const calendarQuery = useQuery({
-    queryKey: calendarQueryKey,
-    queryFn: () =>
-      fetchInstructorAssignmentCalendarRemote(input.programId, {
-        instructorMemberId: instructorMemberIdNumber,
-      }),
-    enabled: calendarEnabled,
-    staleTime: 30_000,
-    retry: false,
-  })
-
   const queryClient = useQueryClient()
-  const queryError = boardQuery.error ?? (calendarEnabled ? calendarQuery.error : undefined)
+  const queryError = boardQuery.error
 
   const rows = useMemo(() => {
     if (!remoteEnabled || !instructorMemberId) {
@@ -132,11 +108,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       }
     }
     const board = boardQuery.data
-    if (
-      !board ||
-      queryError ||
-      (!useCompanySchoolBoard && calendarQuery.data == null)
-    ) {
+    if (!board || queryError) {
       return {
         ...buildEmptyParticipatingInstructorAssignmentRows(),
         assignedSchedules: [] as ParticipatingIndividualInstructorAssignedScheduleRow[],
@@ -144,13 +116,10 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       }
     }
 
-    const assignedAssignments = useCompanySchoolBoard
-      ? board.assignments
-      : selectAssignmentsFromCalendar(
-          board.assignments,
-          calendarQuery.data?.items ?? [],
-          instructorMemberId
-        )
+    const assignedAssignments = selectAssignmentsForInstructor(
+      board.assignments,
+      instructorMemberId
+    )
     const assignedSchools = buildParticipatingInstructorAssignedSchoolRowsFromBoard({
       assignments: assignedAssignments,
       instructorMemberId,
@@ -213,7 +182,6 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       }),
     }
   }, [
-    calendarQuery.data,
     boardQuery.data,
     queryError,
     input.instructor,
@@ -226,22 +194,15 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   ])
 
   const invalidate = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: assignmentQueryKey }),
-      calendarEnabled
-        ? queryClient.invalidateQueries({ queryKey: calendarQueryKey })
-        : Promise.resolve(),
-    ])
+    await queryClient.invalidateQueries({ queryKey: assignmentQueryKey })
   }
 
-  const calendarLoading =
-    calendarEnabled && calendarQuery.isFetching && calendarQuery.data === undefined
   const boardLoading = queryEnabled && boardQuery.isFetching && boardQuery.data === undefined
 
   return {
     remoteEnabled: remoteEnabled && Boolean(instructorMemberId),
     isTempMockDataSource: false,
-    isLoading: boardLoading || calendarLoading,
+    isLoading: boardLoading,
     assignedSchools: rows.assignedSchools,
     waitingSchools: rows.waitingSchools,
     assignedSchedules: rows.assignedSchedules,
