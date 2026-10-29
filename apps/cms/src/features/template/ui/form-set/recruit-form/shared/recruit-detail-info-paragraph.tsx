@@ -496,9 +496,7 @@ export function RecruitDetailInfoParagraph({
     (files: File[]) => {
       if (files.length === 0) return
       const incomingNames = files.map(file => file.name)
-      const previousCount = Array.isArray(getRecruitDetailInfoRecord()[attachmentFileNamesKey])
-        ? (getRecruitDetailInfoRecord()[attachmentFileNamesKey] as string[]).length
-        : 0
+      const previousCount = Array.isArray(attachmentFileNames) ? attachmentFileNames.length : 0
       // 업로드 완료 전에 단계를 바꿔도 파일명이 남도록 먼저 기록한다.
       updateRecruitDetailInfoKey<string[]>(attachmentFileNamesKey, prev => [
         ...(prev ?? []),
@@ -550,7 +548,13 @@ export function RecruitDetailInfoParagraph({
         })()
       )
     },
-    [attachmentFileNamesKey, attachmentFileObjectIdsKey, overlayKeyPrefix, overlayScope]
+    [
+      attachmentFileNames,
+      attachmentFileNamesKey,
+      attachmentFileObjectIdsKey,
+      overlayKeyPrefix,
+      overlayScope,
+    ]
   )
 
   const handleRemoveAttachment = useCallback(
