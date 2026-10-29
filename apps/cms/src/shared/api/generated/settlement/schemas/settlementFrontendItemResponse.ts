@@ -7,10 +7,15 @@
  */
 import type { SettlementFrontendCalculationDetailResponse } from './settlementFrontendCalculationDetailResponse';
 import type { SettlementFrontendItemResponseType } from './settlementFrontendItemResponseType';
+import type { SettlementFrontendItemResponseTaxIncomeType } from './settlementFrontendItemResponseTaxIncomeType';
 
 export interface SettlementFrontendItemResponse {
   type?: SettlementFrontendItemResponseType;
   description?: string;
   amount?: number;
   calculationDetail?: SettlementFrontendCalculationDetailResponse;
+  /** 원천징수 소득 구분 코드. withholding 행에만 의미 있음. */
+  taxIncomeType?: SettlementFrontendItemResponseTaxIncomeType | null;
+  /** 원천징수 「구분」열 표시용. 사업소득|기타소득|일용근로소득. 없으면 FE는 '-' */
+  taxIncomeTypeDisplay?: string | null;
 }

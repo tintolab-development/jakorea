@@ -7,14 +7,14 @@
  */
 
 /**
- * 강사 프로필 상태. 권한 종료 회원은 REVOKED로 반환됩니다.
+ * 강사 프로필 상태. 권한 박탈 회원은 REVOKED로 반환됩니다.
  */
-export type UserResponseInstructorStatus =
-  (typeof UserResponseInstructorStatus)[keyof typeof UserResponseInstructorStatus]
+export type UserResponseInstructorStatus = typeof UserResponseInstructorStatus[keyof typeof UserResponseInstructorStatus];
+
 
 export const UserResponseInstructorStatus = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   APPROVED: 'APPROVED',
   REVOKED: 'REVOKED',
-} as const
+} as const;

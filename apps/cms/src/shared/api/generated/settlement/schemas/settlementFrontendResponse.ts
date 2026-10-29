@@ -8,6 +8,7 @@
 import type { SettlementFrontendApprovalHistoryResponse } from './settlementFrontendApprovalHistoryResponse';
 import type { SettlementFrontendAttachmentResponse } from './settlementFrontendAttachmentResponse';
 import type { SettlementFrontendItemResponse } from './settlementFrontendItemResponse';
+import type { SettlementFrontendPayeeResponse } from './settlementFrontendPayeeResponse';
 
 export interface SettlementFrontendResponse {
   id?: string;
@@ -27,11 +28,14 @@ export interface SettlementFrontendResponse {
   wageItemType?: string;
   feeGrade?: string;
   lectureSessionDisplay?: string;
-  institutionName?: string;
+  /** 참여 기관명. 목록 institutionName과 동일 규칙. 개인 참여 등으로 기관이 없으면 null */
+  institutionName?: string | null;
   instructorName?: string;
   businessIncomeEarnerLabel?: string;
   expectedTransferDate?: string;
   correctionReason?: string;
+  /** 정산 상세 수취인(MASKED). 목록에는 없음. */
+  payee?: SettlementFrontendPayeeResponse;
   items?: SettlementFrontendItemResponse[];
   totalAmount?: number;
   status?: string;

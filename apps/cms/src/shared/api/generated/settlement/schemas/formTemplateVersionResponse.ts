@@ -27,8 +27,8 @@ export interface FormTemplateVersionResponse {
   availableActions?: string[];
   /** 성범죄 동의서 활성 PDF. agreement-crime 카탈로그 원본만 값이 있고 그 외는 null. */
   catalogDocument?: FormCatalogDocumentResponse;
-  /** CATALOG | COPY | PROGRAM. 구버전 응답은 생략될 수 있다. */
+  /** CATALOG | COPY | PROGRAM. GET version write-guard SSOT. */
   templateScope?: string | null;
-  /** templateScope=PROGRAM 일 때만 프로그램 ID, 그 외 null */
+  /** PROGRAM 전용 복사본의 소유 프로그램. CATALOG/COPY는 null. */
   ownerProgramId?: number | null;
 }
