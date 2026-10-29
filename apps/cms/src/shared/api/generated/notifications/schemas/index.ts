@@ -257,6 +257,7 @@ export * from './attendancePeerListResponse';
 export * from './attendancePolicy';
 export * from './attendanceStatusResponse';
 export * from './authTokenResponse';
+export * from './authTokenResponseAgeGroup';
 export * from './autoAssignmentRequest';
 export * from './autoAssignmentResponse';
 export * from './autoAssignmentSlotResult';

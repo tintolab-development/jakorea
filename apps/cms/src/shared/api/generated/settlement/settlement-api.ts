@@ -2301,7 +2301,7 @@ const listSettlementAggregates = (
  */
 const getAccountPayment = (
     paymentId: number,
-    params: GetAccountPaymentParams,
+    params?: GetAccountPaymentParams,
  options?: SecondParameter<typeof customInstance<AccountPaymentDetailResponse>>,) => {
       return customInstance<AccountPaymentDetailResponse>(
       {url: `/api/admin/account-payments/${paymentId}`, method: 'GET',

@@ -52525,7 +52525,7 @@
             "name": "reason",
             "in": "query",
             "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -74527,6 +74527,18 @@
             "type": "boolean",
             "description": "관리자 등록 후 본인 프로필·본인인증·비밀번호 변경까지 완료했는지 여부",
             "example": false
+          },
+          "ageGroup": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "회원 포탈 로그인·토큰 갱신·소셜 로그인에서 항상 UNDER_14 또는 OVER_14. GET /api/portal/auth/me 및 GET /api/portal/me/profile 과 동일 규칙(member_signup_profile.age_group 우선, 없으면 member.is_under_14_yn). 관리자 토큰 응답은 null.",
+            "enum": [
+              "UNDER_14",
+              "OVER_14"
+            ],
+            "example": "OVER_14"
           }
         }
       },
@@ -91791,7 +91803,7 @@
           },
           "roleCode": {
             "type": "string",
-            "description": "CMS 관리자 권한 코드. MASTER, MIDDLE, VIEWER. 생략 시 최소 권한 VIEWER로 생성됩니다."
+            "description": "CMS 전역 권한 코드. MASTER, ACCOUNTING_MANAGER, PROGRAM_MANAGER, PROGRAM_VIEWER. 생략 시 PROGRAM_VIEWER."
           },
           "reason": {
             "type": "string"
