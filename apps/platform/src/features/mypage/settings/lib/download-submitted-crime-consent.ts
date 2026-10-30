@@ -45,15 +45,33 @@ function saveBlobFile(fileName: string, blob: Blob): void {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
 }
 
+function isUsableFileBlob(data: unknown): data is Blob {
+  return data instanceof Blob && data.size > 0 && !data.type.toLowerCase().includes('application/json')
+}
+
 /**
- * 서명 완료 동의서 다운로드.
- * `signedFileObjectId`는 회원 소유 파일이 아니므로 `/me/files/{id}/download-requests`는 403이다.
+ * 제출한 성범죄 동의서 원본 다운로드.
+ * 1) GET .../content — 소유자 원본 PDF relay (OpenAPI streamOriginal)
+ * 2) POST .../download-requests — 서명 보관본 Signed URL 폴백
+ * `signedFileObjectId` + `/me/files/{id}/download-requests`는 403.
  */
 export async function downloadSubmittedCrimeConsent(documentId: number): Promise<void> {
-  const res = await axiosClient.post(
-    `/api/portal/me/consents/documents/${encodeURIComponent(String(documentId))}/download-requests`,
-    { purpose: DOWNLOAD_PURPOSE },
-  )
+  const documentPath = `/api/portal/me/consents/documents/${encodeURIComponent(String(documentId))}`
+  try {
+    const res = await axiosClient.get(documentPath + '/content', {
+      responseType: 'blob',
+    })
+    if (isUsableFileBlob(res.data)) {
+      saveBlobFile(ensureFileName(FALLBACK_FILE_NAME, res.data), res.data)
+      return
+    }
+  } catch {
+    /* download-requests 폴백 */
+  }
+
+  const res = await axiosClient.post(documentPath + '/download-requests', {
+    purpose: DOWNLOAD_PURPOSE,
+  })
   const body = unwrapEnvelope<ConsentDocumentDownload>(res.data)
   const url = body.downloadUrl?.trim()
   if (!url) throw new Error('download url missing')
