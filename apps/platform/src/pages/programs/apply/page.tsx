@@ -166,19 +166,16 @@ import {
   buildEnabledDatesFromEducationScheduleLines,
   mergeApplyScheduleVisibilityFields,
   findMissingRequiredBottomConsentId,
-  hasPreferredScheduleDateOutsideRuntime,
   hasPreferredScheduleDateOutsideBounds,
+  hasPreferredScheduleDateOutsideEducationConstraint,
+  resolveEducationScheduleApplyConstraint,
+  PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE,
+  PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
   isGeminiTrainingRequestPeriodConfigured,
-  isRuntimeScheduleNotConfigured,
   readGeminiTrainingRequestDateBounds,
   isTrainedTeachersOrganizationPeriodDateRequests,
-  readInstitutionAllowedSchedulePeriods,
-  readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
   readRuntimeFixedScheduleChoiceItems,
-  resolveRuntimeScheduleDateBounds,
-  resolveRuntimeScheduleEnabledDates,
-  resolveInstitutionAllowedScheduleEnabledDates,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   normalizeInstitutionFixedScheduleAnswerTokens,
   isApplyScheduleParagraphForcedHidden,
@@ -801,30 +798,6 @@ export function ProgramApplyPage() {
       ),
     [applicationFormDocument, institutionScheduleParagraph]
   )
-  const institutionScheduleDateBounds = useMemo(
-    () =>
-      readInstitutionApplyScheduleDateBounds(
-        applicationFormDocument?.runtimeContext,
-        institutionScheduleParagraph
-      ),
-    [applicationFormDocument, institutionScheduleParagraph]
-  )
-  const institutionAllowedSchedulePeriods = useMemo(
-    () =>
-      readInstitutionAllowedSchedulePeriods(
-        applicationFormDocument?.runtimeContext,
-        institutionScheduleParagraph
-      ),
-    [applicationFormDocument, institutionScheduleParagraph]
-  )
-  const institutionScheduleRequiresRuntimePeriods =
-    applyCase === 'institution-general' && institutionScheduleInputMode === 'date_time_requests'
-  const institutionScheduleEnabledDates = useMemo(() => {
-    return resolveInstitutionAllowedScheduleEnabledDates(
-      institutionAllowedSchedulePeriods,
-      institutionScheduleRequiresRuntimePeriods
-    )
-  }, [institutionAllowedSchedulePeriods, institutionScheduleRequiresRuntimePeriods])
   /**
    * CMS 개인 신청은 기간 지정 지망 UI가 없다 (institution-schedule 전용).
    * 일반 기관 + 기간 지정(또는 render `date_time_requests`)일 때만 1·2지망을 덮어쓴다.
@@ -868,6 +841,44 @@ export function ProgramApplyPage() {
     showGeneralPreferredSchedule ||
     showEconomyPreferredSchedule ||
     showGeminiInstitutionApply
+  const economyEducationScheduleConstraint = useMemo(
+    () =>
+      resolveEducationScheduleApplyConstraint({
+        educationScheduleRange: program?.educationScheduleRange,
+        failClosed: showEconomyPreferredSchedule,
+      }),
+    [program?.educationScheduleRange, showEconomyPreferredSchedule]
+  )
+  const institutionEducationScheduleConstraint = useMemo(
+    () =>
+      resolveEducationScheduleApplyConstraint({
+        runtime: applicationFormDocument?.runtimeContext,
+        paragraph: institutionScheduleParagraph,
+        educationScheduleRange: program?.educationScheduleRange,
+        failClosed: showGeneralPreferredSchedule,
+      }),
+    [
+      applicationFormDocument?.runtimeContext,
+      institutionScheduleParagraph,
+      program?.educationScheduleRange,
+      showGeneralPreferredSchedule,
+    ]
+  )
+  const trainedTeachersEducationScheduleConstraint = useMemo(
+    () =>
+      resolveEducationScheduleApplyConstraint({
+        runtime: applicationFormRuntimeContext,
+        paragraph: trainedTeachersScheduleParagraph,
+        educationScheduleRange: program?.educationScheduleRange,
+        failClosed: useTrainedTeachersOperatingPeriod,
+      }),
+    [
+      applicationFormRuntimeContext,
+      program?.educationScheduleRange,
+      trainedTeachersScheduleParagraph,
+      useTrainedTeachersOperatingPeriod,
+    ]
+  )
   const institutionPreferredSessionSelect = useMemo(() => {
     if (!program || (!showGeneralPreferredSchedule && !showGeminiInstitutionApply)) {
       return { show: false, options: [] as { value: string; label: string }[] }
@@ -934,44 +945,6 @@ export function ProgramApplyPage() {
     educationScheduleLinesForApply,
     showTrainedTeachersPreferredSchedule,
   ])
-  const trainedTeachersScheduleDateBounds = useMemo(() => {
-    if (!useTrainedTeachersOperatingPeriod) {
-      return { minScheduleDate: null, maxScheduleDate: null }
-    }
-    return resolveRuntimeScheduleDateBounds(
-      applicationFormRuntimeContext,
-      trainedTeachersScheduleParagraph
-    )
-  }, [
-    applicationFormRuntimeContext,
-    trainedTeachersScheduleParagraph,
-    useTrainedTeachersOperatingPeriod,
-  ])
-  const trainedTeachersScheduleEnabledDates = useMemo(() => {
-    if (!useTrainedTeachersOperatingPeriod) return null
-    return resolveRuntimeScheduleEnabledDates(
-      applicationFormRuntimeContext,
-      true,
-      trainedTeachersScheduleParagraph
-    )
-  }, [
-    applicationFormRuntimeContext,
-    trainedTeachersScheduleParagraph,
-    useTrainedTeachersOperatingPeriod,
-  ])
-  const trainedTeachersScheduleNotConfigured = useMemo(
-    () =>
-      useTrainedTeachersOperatingPeriod &&
-      isRuntimeScheduleNotConfigured(
-        applicationFormRuntimeContext,
-        trainedTeachersScheduleParagraph
-      ),
-    [
-      applicationFormRuntimeContext,
-      trainedTeachersScheduleParagraph,
-      useTrainedTeachersOperatingPeriod,
-    ]
-  )
   const trainedTeachersFixedScheduleChoiceItems = trainedTeachersRuntimeFixedScheduleChoices ?? []
   const applicationRecruitmentLimits = useMemo(
     () => readApplicationScheduleRecruitmentLimitsFromRuntime(applicationFormRuntimeContext),
@@ -1846,8 +1819,10 @@ export function ProgramApplyPage() {
           <ApplyEconomyPreferredSchedule
             value={economyPreferredBlocks}
             onChange={setEconomyPreferredBlocks}
-            minDate={program?.educationScheduleRange?.start ?? null}
-            maxDate={program?.educationScheduleRange?.end ?? null}
+            minDate={economyEducationScheduleConstraint.minDate}
+            maxDate={economyEducationScheduleConstraint.maxDate}
+            enabledDates={economyEducationScheduleConstraint.enabledDates}
+            disabled={!economyEducationScheduleConstraint.configured}
           />
         )
       }
@@ -1872,9 +1847,9 @@ export function ProgramApplyPage() {
                   ? geminiTrainingRequestDateBounds.minScheduleDate
                   : null
                 : useInstitutionScheduleBounds
-                  ? institutionScheduleDateBounds.minScheduleDate
+                  ? institutionEducationScheduleConstraint.minDate
                   : useTrainedTeachersOperatingPeriod
-                    ? trainedTeachersScheduleDateBounds.minScheduleDate
+                    ? trainedTeachersEducationScheduleConstraint.minDate
                     : null
             }
             maxDate={
@@ -1883,22 +1858,25 @@ export function ProgramApplyPage() {
                   ? geminiTrainingRequestDateBounds.maxScheduleDate
                   : null
                 : useInstitutionScheduleBounds
-                  ? institutionScheduleDateBounds.maxScheduleDate
+                  ? institutionEducationScheduleConstraint.maxDate
                   : useTrainedTeachersOperatingPeriod
-                    ? trainedTeachersScheduleDateBounds.maxScheduleDate
+                    ? trainedTeachersEducationScheduleConstraint.maxDate
                     : null
             }
             enabledDates={
               useInstitutionScheduleBounds
-                ? institutionScheduleEnabledDates
+                ? institutionEducationScheduleConstraint.enabledDates
                 : useTrainedTeachersOperatingPeriod
-                  ? trainedTeachersScheduleEnabledDates
+                  ? trainedTeachersEducationScheduleConstraint.enabledDates
                 : showTrainedTeachersApply
                   ? trainedTeachersEnabledDates
                   : null
             }
             disabled={
-              trainedTeachersScheduleNotConfigured ||
+              (useInstitutionScheduleBounds &&
+                !institutionEducationScheduleConstraint.configured) ||
+              (useTrainedTeachersOperatingPeriod &&
+                !trainedTeachersEducationScheduleConstraint.configured) ||
               (showGeminiInstitutionApply && !geminiTrainingRequestPeriodConfigured)
             }
             showSessionSelect={
@@ -2132,12 +2110,10 @@ export function ProgramApplyPage() {
       showPreferredScheduleInput,
       institutionPreferredSessionSelect,
       showPreferredEducationForm,
-      institutionScheduleDateBounds.minScheduleDate,
-      institutionScheduleDateBounds.maxScheduleDate,
-      institutionScheduleEnabledDates,
       trainedTeachersEnabledDates,
-      trainedTeachersScheduleEnabledDates,
-      trainedTeachersScheduleNotConfigured,
+      economyEducationScheduleConstraint,
+      institutionEducationScheduleConstraint,
+      trainedTeachersEducationScheduleConstraint,
       trainedTeachersDateOnlyPreferred,
       isTrainedTeachersFixedScheduleOptions,
       trainedTeachersFixedScheduleChoiceItems,
@@ -2190,7 +2166,9 @@ export function ProgramApplyPage() {
 
       const atPreferredScheduleMax = preferredBlocks.length >= preferredScheduleMaxBlocks
       const scheduleInputDisabled =
-        showTrainedTeachersPreferredSchedule && trainedTeachersScheduleNotConfigured
+        showTrainedTeachersPreferredSchedule &&
+        useTrainedTeachersOperatingPeriod &&
+        !trainedTeachersEducationScheduleConstraint.configured
 
       return (
         <ApplyPreferredScheduleAddButton
@@ -2212,8 +2190,9 @@ export function ProgramApplyPage() {
       showPreferredScheduleInput,
       preferredBlocks.length,
       preferredScheduleMaxBlocks,
-      trainedTeachersScheduleNotConfigured,
       showTrainedTeachersPreferredSchedule,
+      useTrainedTeachersOperatingPeriod,
+      trainedTeachersEducationScheduleConstraint,
     ]
   )
 
@@ -2598,10 +2577,13 @@ export function ProgramApplyPage() {
             : toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
           : undefined
       if (showPreferredScheduleInput && !skipPreferredScheduleInput) {
-        if (trainedTeachersScheduleNotConfigured) {
+        if (
+          useTrainedTeachersOperatingPeriod &&
+          !trainedTeachersEducationScheduleConstraint.configured
+        ) {
           setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
           setSubmitAlert({
-            description: '신청 가능한 교육 일정이 설정되지 않았습니다. 관리자에게 확인해 주세요.',
+            description: PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
           })
           return
         }
@@ -2612,17 +2594,74 @@ export function ProgramApplyPage() {
           return
         }
         if (!isTrainedTeachersFixedScheduleTarget) {
+          if (showEconomyPreferredSchedule) {
+            const economyPreferredParagraph =
+              displayDraft.paragraphs.find(paragraph =>
+                isApplicationPreferredScheduleParagraphId(paragraph.id)
+              ) ?? undefined
+            if (!economyEducationScheduleConstraint.configured) {
+              if (economyPreferredParagraph) setSubmitErrorField(economyPreferredParagraph.id)
+              setSubmitAlert({
+                description: PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
+              })
+              return
+            }
+            if (
+              hasPreferredScheduleDateOutsideEducationConstraint(
+                economyPreferredBlocks,
+                economyEducationScheduleConstraint
+              )
+            ) {
+              if (economyPreferredParagraph) setSubmitErrorField(economyPreferredParagraph.id)
+              setSubmitAlert({
+                description: PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE,
+              })
+              return
+            }
+          }
+          if (
+            showGeneralPreferredSchedule &&
+            !institutionEducationScheduleConstraint.configured
+          ) {
+            setSubmitErrorField(institutionScheduleParagraph?.id ?? null)
+            setSubmitAlert({
+              description: PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
+            })
+            return
+          }
+          if (
+            showGeneralPreferredSchedule &&
+            hasPreferredScheduleDateOutsideEducationConstraint(
+              preferredBlocks,
+              institutionEducationScheduleConstraint
+            )
+          ) {
+            setSubmitErrorField(institutionScheduleParagraph?.id ?? null)
+            setSubmitAlert({
+              description: PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE,
+            })
+            return
+          }
           if (
             useTrainedTeachersOperatingPeriod &&
-            hasPreferredScheduleDateOutsideRuntime(
+            !trainedTeachersEducationScheduleConstraint.configured
+          ) {
+            setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
+            setSubmitAlert({
+              description: PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
+            })
+            return
+          }
+          if (
+            useTrainedTeachersOperatingPeriod &&
+            hasPreferredScheduleDateOutsideEducationConstraint(
               preferredBlocks,
-              applicationFormRuntimeContext,
-              trainedTeachersScheduleParagraph
+              trainedTeachersEducationScheduleConstraint
             )
           ) {
             setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
             setSubmitAlert({
-              description: '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
+              description: PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE,
             })
             return
           }

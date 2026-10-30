@@ -48,6 +48,8 @@ import {
   padPreferredScheduleBlocks,
   readGeminiTrainingRequestDateBounds,
   hasPreferredScheduleDateOutsideBounds,
+  hasPreferredScheduleDateOutsideEducationConstraint,
+  resolveEducationScheduleApplyConstraint,
   filterItemsByScheduleDateBounds,
   filterGeminiInstructorSlotsByTrainingRequestPeriod,
   isGeminiTrainingRequestPeriodConfigured,
@@ -1292,5 +1294,73 @@ function testGeminiPreferredSchedulePad() {
 }
 
 testGeminiPreferredSchedulePad()
+
+function testEducationScheduleApplyConstraint() {
+  const range = { start: '2026-10-01', end: '2026-12-31' }
+  const fromRange = resolveEducationScheduleApplyConstraint({
+    educationScheduleRange: range,
+    failClosed: true,
+  })
+  assert.equal(fromRange.configured, true)
+  assert.equal(fromRange.minDate, '2026-10-01')
+  assert.equal(fromRange.maxDate, '2026-12-31')
+  assert.equal(hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-10-01' }], fromRange), false)
+  assert.equal(hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-12-31' }], fromRange), false)
+  assert.equal(hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-09-30' }], fromRange), true)
+  assert.equal(hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2027-01-01' }], fromRange), true)
+
+  const fromRuntimePeriods = resolveEducationScheduleApplyConstraint({
+    runtime: {
+      scheduleInputMode: 'date_time_requests',
+      allowedSchedulePeriods: [{ startDate: '2026-11-01', endDate: '2026-11-15' }],
+    },
+    educationScheduleRange: range,
+    failClosed: true,
+  })
+  assert.equal(fromRuntimePeriods.minDate, '2026-11-01')
+  assert.equal(fromRuntimePeriods.maxDate, '2026-11-15')
+  assert.equal(fromRuntimePeriods.enabledDates?.has('2026-11-10'), true)
+  assert.equal(fromRuntimePeriods.enabledDates?.has('2026-10-05'), false)
+  assert.equal(
+    hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-10-05' }], fromRuntimePeriods),
+    true
+  )
+
+  const fromRuntimeMinMax = resolveEducationScheduleApplyConstraint({
+    runtime: {
+      scheduleInputMode: 'date_time_requests',
+      minScheduleDate: '2026-11-01',
+      maxScheduleDate: '2026-11-30',
+    },
+    educationScheduleRange: range,
+    failClosed: true,
+  })
+  assert.equal(fromRuntimeMinMax.minDate, '2026-11-01')
+  assert.equal(fromRuntimeMinMax.maxDate, '2026-11-30')
+  assert.equal(fromRuntimeMinMax.enabledDates, null)
+
+  const fallbackWhenRuntimeEmpty = resolveEducationScheduleApplyConstraint({
+    runtime: { scheduleInputMode: 'date_time_requests' },
+    educationScheduleRange: range,
+    failClosed: true,
+  })
+  assert.equal(fallbackWhenRuntimeEmpty.minDate, '2026-10-01')
+  assert.equal(fallbackWhenRuntimeEmpty.maxDate, '2026-12-31')
+  assert.equal(fallbackWhenRuntimeEmpty.configured, true)
+
+  const unconfigured = resolveEducationScheduleApplyConstraint({ failClosed: true })
+  assert.equal(unconfigured.configured, false)
+  assert.equal(unconfigured.enabledDates?.size, 0)
+  assert.equal(
+    hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-11-01' }], unconfigured),
+    true
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideEducationConstraint([{ date: '' }], unconfigured),
+    false
+  )
+}
+
+testEducationScheduleApplyConstraint()
 
 console.log('apply-form-schedule.selfcheck: ok')
