@@ -59,6 +59,7 @@ describe('company-school adapters', () => {
     const request = mapCompanySchoolToCreateRequest(program)
 
     expect(request.programType).toBe(COMPANY_SCHOOL_PROGRAM_API_TYPE)
+    expect(request.recruitments).toBeUndefined()
     expect(request.startDate).toBe(program.startDate)
     expect(request.endDate).toBe(program.endDate)
     expect(request.businessStartDate).toBe(program.startDate)
