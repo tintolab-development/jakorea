@@ -40,16 +40,16 @@ jobs:
         include:
           - app: cms
             output: apps/cms/dist
-            bucket_output: CmsBucket
-            distribution_output: CmsDistributionId
+            bucket_name: ja-newprod-frontend-cms-264015108093
+            distribution_id: E1BHHBFDIB0SS4
           - app: platform
             output: apps/platform/dist
-            bucket_output: PlatformBucket
-            distribution_output: PlatformDistributionId
+            bucket_name: ja-newprod-frontend-platform-264015108093
+            distribution_id: E1SQOBKZPQT8AO
           - app: admin
             output: apps/admin/dist
-            bucket_output: AdminBucket
-            distribution_output: AdminDistributionId
+            bucket_name: ja-newprod-frontend-admin-264015108093
+            distribution_id: E2TXN0KKHC3L8W
     steps:
       - name: Guard deployment branch and homepage HTTPS origin
         shell: bash
@@ -93,17 +93,13 @@ jobs:
         shell: bash
         env:
           HOMEPAGE_API: ${{ inputs.homepage_api_base_url }}
-          BUCKET_OUTPUT: ${{ matrix.bucket_output }}
-          DISTRIBUTION_OUTPUT: ${{ matrix.distribution_output }}
+          BUCKET: ${{ matrix.bucket_name }}
+          DISTRIBUTION_ID: ${{ matrix.distribution_id }}
         run: |
           set -euo pipefail
           test "$(aws sts get-caller-identity --query Account --output text)" = "$AWS_ACCOUNT_ID"
-          OUTPUTS="$(aws cloudformation describe-stacks --stack-name ja-newprod-frontend-static --query 'Stacks[0].Outputs' --output json)"
-          get_output() { jq -er --arg key "$1" '.[] | select(.OutputKey == $key) | .OutputValue' <<< "$OUTPUTS"; }
-          BUCKET="$(get_output "$BUCKET_OUTPUT")"
-          DISTRIBUTION_ID="$(get_output "$DISTRIBUTION_OUTPUT")"
-          CMS_ORIGIN="https://$(get_output CmsDomain)"
-          PLATFORM_ORIGIN="https://$(get_output PlatformDomain)"
+          CMS_ORIGIN="https://d3i2bbwk7uctkw.cloudfront.net"
+          PLATFORM_ORIGIN="https://d1bbeh5w17qesi.cloudfront.net"
           test -n "$BUCKET"
           test -n "$DISTRIBUTION_ID"
           {
