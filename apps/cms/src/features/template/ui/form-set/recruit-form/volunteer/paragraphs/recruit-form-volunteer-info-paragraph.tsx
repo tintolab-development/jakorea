@@ -17,6 +17,10 @@ import {
   RECRUIT_FORM_MAX_SUFFIX_CLASS,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
+import {
+  isRecruitInterviewRequiredOff,
+  isRecruitInterviewRequiredOn,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-required'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -183,7 +187,8 @@ export function RecruitFormVolunteerInfoParagraph() {
   )
   const [notes, setNotes] = useVolunteerRecruitField<string>('recruit.volunteer.notes', '')
 
-  const interviewEnabled = interviewRequired === 'yes'
+  const interviewEnabled = isRecruitInterviewRequiredOn(interviewRequired)
+  const interviewRadioValue = isRecruitInterviewRequiredOff(interviewRequired) ? 'no' : 'yes'
 
   return (
     <div className="recruit-form-volunteer-info-paragraph__forms">
@@ -206,7 +211,7 @@ export function RecruitFormVolunteerInfoParagraph() {
             edit={
               <CmsRadioGroup
                 size="medium"
-                value={interviewRequired}
+                value={interviewRadioValue}
                 onChange={e => setInterviewRequired(String(e.target.value))}
                 className={RECRUITMENT_RADIO_CLASS}
               >

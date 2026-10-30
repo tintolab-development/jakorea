@@ -105,5 +105,29 @@ describe('GeneralProgramParticipantRecruitmentInfoView', () => {
       render(<GeneralProgramParticipantRecruitmentInfoView program={program} isEdit={false} />)
       expect(screen.queryByText('참여자 면접 유무')).toBeNull()
     })
+
+    it('면접 있음이면 2차 면접 기간이 보인다', () => {
+      const { unmount } = render(
+        <GeneralProgramParticipantRecruitmentInfoView
+          program={individualProgram(true)}
+          isEdit={false}
+        />
+      )
+      expect(screen.getByText('2차 면접 기간')).toBeTruthy()
+      expect(screen.getByText('1차 서류 합격자 발표')).toBeTruthy()
+      unmount()
+    })
+
+    it('면접 없음이면 2차 면접 기간이 없다', () => {
+      const { unmount } = render(
+        <GeneralProgramParticipantRecruitmentInfoView
+          program={individualProgram(false)}
+          isEdit={false}
+        />
+      )
+      expect(screen.queryByText('2차 면접 기간')).toBeNull()
+      expect(screen.queryByText('1차 서류 합격자 발표')).toBeNull()
+      unmount()
+    })
   })
 })

@@ -2142,6 +2142,8 @@ export function useProgramParticipantApplicationEditor(
           })
         }
         if (variant === 'instructor') return undefined
+        // 등록 위저드는 linkedProgram이 항상 있다. 봉사자 모집 면접 단락은 overlay/RHF 면접 유무가 정본.
+        if (variant === 'recruit-volunteer') return recruitVolunteerHiddenParagraphIds
         if (linkedProgram != null) {
           return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
             program: linkedProgram,
@@ -2151,7 +2153,6 @@ export function useProgramParticipantApplicationEditor(
           })
         }
         if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
-        if (variant === 'recruit-volunteer') return recruitVolunteerHiddenParagraphIds
         if (variant === 'individual') return individualApplicationHiddenParagraphIds
         if (variant === 'economy-application-institution') return economyApplicationHiddenParagraphIds
         return institutionApplicationHiddenParagraphIds
