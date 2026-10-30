@@ -225,6 +225,9 @@ Resources:
                   - !Sub '${PlatformBucket.Arn}/*'
                   - !Sub '${AdminBucket.Arn}/*'
               - Effect: Allow
+                Action: [cloudformation:DescribeStacks]
+                Resource: !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/ja-newprod-frontend-static/*'
+              - Effect: Allow
                 Action: [cloudfront:CreateInvalidation, cloudfront:GetInvalidation, cloudfront:GetDistribution]
                 Resource:
                   - !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CmsDistribution}'
