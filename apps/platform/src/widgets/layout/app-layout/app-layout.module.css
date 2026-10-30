@@ -19,6 +19,13 @@
   margin-inline: auto;
 }
 
+/* 헤더·푸터 사이 남은 높이를 바디가 채움 (만 14세 전환 등) */
+.mainFill {
+  composes: main;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .mainMypage {
   composes: main;
   align-items: stretch;

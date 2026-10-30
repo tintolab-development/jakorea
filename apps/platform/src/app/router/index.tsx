@@ -17,6 +17,11 @@ import {
   FindPasswordPage,
   FindPasswordResetPage,
   RequiredPage,
+  MemberConversionCompletePage,
+  MemberConversionConfirmPage,
+  MemberConversionIdentityPage,
+  MemberConversionMarketingPage,
+  MemberConversionPage,
   SignInPage,
   SignUpCompletePage,
   SignUpPage,
@@ -212,11 +217,16 @@ export const router = createBrowserRouter([
       { path: '/auth/sign-up/social-connect/error', element: <SignUpSocialConnectErrorPage /> },
       { path: '/auth/social/complete', element: <SocialLoginCompletePage /> },
       { path: '/auth/social/error', element: <SocialErrorPage /> },
+      { path: '/auth/member-conversion/identity', element: <MemberConversionIdentityPage /> },
+      { path: '/auth/member-conversion/confirm', element: <MemberConversionConfirmPage /> },
+      { path: '/auth/member-conversion/marketing', element: <MemberConversionMarketingPage /> },
+      { path: '/auth/member-conversion/complete', element: <MemberConversionCompletePage /> },
     ],
   },
   {
     element: <AppLayoutRoute layout="full" />,
     children: [
+      { path: '/auth/member-conversion', element: <MemberConversionPage /> },
       { path: '/auth/sign-up/identity/callback', element: <SignUpIdentityCallbackPage /> },
       {
         path: '/auth/sign-up/guardian-identity/callback',

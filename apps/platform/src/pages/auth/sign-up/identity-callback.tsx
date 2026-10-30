@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { PFText } from '@/shared/ui'
 import { isAdminProvisionedIdentityConfirmPending } from '@/features/auth/admin-registered'
+import { isAgeTransitionIdentityPending } from '@/features/auth/age-transition'
 import {
+  ageTransitionIdentityVerificationClient,
   buildIdentityCallbackKey,
   isIdentityCallbackHandled,
   isMypagePhoneIdentityConfirmPending,
@@ -32,12 +34,18 @@ export function SignUpIdentityCallbackPage() {
     markIdentityCallbackHandled(callbackKey)
 
     const execute = async () => {
+      const conversionPending = isAgeTransitionIdentityPending()
       const skipVerifiedProfileFetch =
-        isAdminProvisionedIdentityConfirmPending() || isMypagePhoneIdentityConfirmPending()
+        isAdminProvisionedIdentityConfirmPending() ||
+        isMypagePhoneIdentityConfirmPending() ||
+        conversionPending
+      const client = conversionPending
+        ? ageTransitionIdentityVerificationClient
+        : signupIdentityVerificationClient
 
       try {
         const outcome = await processIdentityCallback(
-          signupIdentityVerificationClient,
+          client,
           new URLSearchParams(window.location.search),
           { skipVerifiedProfileFetch },
         )

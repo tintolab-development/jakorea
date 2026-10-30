@@ -42,6 +42,10 @@ export interface CreateIdentityVerificationClientOptions {
   omitExpectedProfileOnStart?: boolean
   /** true면 remote 비활성 시 mock 팝업 대신 오류 (Platform NICE 실연동) */
   remoteOnly?: boolean
+  /** true면 세션 GET에 statusToken 헤더를 생략할 수 있다 (AGE14 status-only) */
+  optionalStatusToken?: boolean
+  /** true면 nice/start에 JSON body를 보내지 않는다 (AGE14 OpenAPI: requestBody 없음) */
+  omitStartRequestBody?: boolean
 }
 
 export interface IdentityVerificationClient {
@@ -146,7 +150,9 @@ export function createIdentityVerificationClient(
     try {
       const { data: payload } = await options.http.post<unknown>(
         options.paths.niceStart(),
-        buildNiceStartRequest(input, challengeState)
+        options.omitStartRequestBody
+          ? undefined
+          : buildNiceStartRequest(input, challengeState),
       )
 
       const body = unwrapApiData<NiceIdentityAuthStartResponse>(payload)
@@ -232,7 +238,7 @@ export function createIdentityVerificationClient(
 
     try {
       const statusToken = state.getPendingChallenge()?.statusToken?.trim()
-      if (!statusToken) {
+      if (!statusToken && !options.optionalStatusToken) {
         throw new IdentityVerificationApiError(
           'INVALID_REQUEST',
           '본인인증 상태 토큰이 없습니다. 다시 시도해 주세요.'
@@ -241,11 +247,13 @@ export function createIdentityVerificationClient(
 
       const { data: payload } = await options.http.get<unknown>(
         options.paths.identitySession(sessionId),
-        {
-          headers: {
-            'X-Verification-Status-Token': statusToken,
-          },
-        }
+        statusToken
+          ? {
+              headers: {
+                'X-Verification-Status-Token': statusToken,
+              },
+            }
+          : undefined,
       )
       return normalizeVerificationSession(unwrapApiData<unknown>(payload))
     } catch (error) {

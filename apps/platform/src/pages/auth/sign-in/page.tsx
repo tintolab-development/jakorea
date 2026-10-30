@@ -11,6 +11,10 @@ import {
   ADMIN_REGISTERED_NOTICE_PATH,
 } from '@/features/auth/admin-registered'
 import {
+  beginAgeTransitionLoginScope,
+  resolvePostLoginPath,
+} from '@/features/auth/age-transition'
+import {
   expiresAtFromExpiresInSeconds,
   getLoginApiErrorMessage,
   usePortalLoginMutation,
@@ -101,6 +105,8 @@ export function SignInPage() {
   }) => {
     queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
     queryClient.removeQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
+    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.ageTransition() })
+    beginAgeTransitionLoginScope()
     setAuthTokens({
       accessToken: input.accessToken,
       refreshToken: input.refreshToken,
@@ -158,7 +164,8 @@ export function SignInPage() {
         expiresInSeconds: tokens.expiresInSeconds,
         ageGroup: tokens.ageGroup,
       })
-      navigate(resolveRedirectPath())
+      const nextPath = await resolvePostLoginPath(resolveRedirectPath())
+      navigate(nextPath)
     } catch (error) {
       clearAuthTokens()
       setDevAuthLoggedIn(false)

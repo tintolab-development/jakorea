@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { processSocialLoginSessionReturn } from '@jakorea/social-auth'
+import {
+  beginAgeTransitionLoginScope,
+  resolvePostLoginPath,
+} from '@/features/auth/age-transition'
 import { expiresAtFromExpiresInSeconds } from '@/features/auth/sign-in'
 import { applyAuthTokenAgeGroupToMeCache } from '@/features/auth/sign-in/lib/apply-auth-token-age-group'
 import {
@@ -67,6 +71,8 @@ export function SocialLoginCompletePage() {
         case 'authenticated': {
           queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
           queryClient.removeQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
+          queryClient.removeQueries({ queryKey: platformQueryKeys.auth.ageTransition() })
+          beginAgeTransitionLoginScope()
           setAuthTokens({
             accessToken: outcome.tokens.accessToken,
             refreshToken: outcome.tokens.refreshToken,
@@ -75,7 +81,8 @@ export function SocialLoginCompletePage() {
           applyAuthTokenAgeGroupToMeCache(outcome.tokens.ageGroup)
           setDevMemberProfile('individual')
           setDevAuthLoggedIn(false)
-          navigate(redirectAfterLogin(), { replace: true })
+          const nextPath = await resolvePostLoginPath(redirectAfterLogin())
+          navigate(nextPath, { replace: true })
           return
         }
 

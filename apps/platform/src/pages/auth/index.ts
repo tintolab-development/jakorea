@@ -35,4 +35,12 @@ export {
   SignUpGuardianIdentityCallbackPage,
 } from './sign-up/identity-pages'
 export { RequiredPage } from './required'
+export {
+  MemberConversionCompletePage,
+  MemberConversionConfirmPage,
+  MemberConversionIdentityPage,
+  MemberConversionMarketingPage,
+  MemberConversionPage,
+  MEMBER_CONVERSION_PATH,
+} from './member-conversion'
 export { SocialErrorPage, SocialLoginCompletePage } from './social'

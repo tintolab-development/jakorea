@@ -4,6 +4,7 @@ export {
   findPasswordIdentityVerificationClient,
   findEmailIdentityVerificationClient,
   adminProvisionedIdentityVerificationClient,
+  ageTransitionIdentityVerificationClient,
 } from './api'
 export {
   buildIdentityCallbackKey,
@@ -23,6 +24,7 @@ export {
   useAdminProvisionedIdentityVerification,
   useSettingsPhoneIdentityVerification,
   useSettingsGuardianIdentityVerification,
+  useMemberConversionIdentityVerification,
 } from './hooks'
 
 export type {

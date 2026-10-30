@@ -108,14 +108,14 @@ async function processRemoteCallback(
     }
 
     const profileToken = pickProfileTokenFromSearchParams(params)
-    if (!profileToken) {
+    if (!profileToken && !skipVerifiedProfileFetch) {
       const message =
         '인증 프로필 정보가 없습니다. 회원가입 화면에서 다시 시도해 주세요.'
       const posted = deliverToParent(client, { type: 'IDENTITY_FAILED', message })
       return failOutcome(message, cancelled, posted)
     }
 
-    if (beforeProfileFetch) {
+    if (beforeProfileFetch && profileToken) {
       await beforeProfileFetch({ sessionId, profileToken })
     }
 
@@ -138,7 +138,7 @@ async function processRemoteCallback(
     const needsVerifiedProfileFetch =
       !skipVerifiedProfileFetch && (!verifiedName || !verifiedPhone || !verifiedGender)
 
-    if (needsVerifiedProfileFetch) {
+    if (needsVerifiedProfileFetch && profileToken) {
       try {
         const profile = await client.fetchVerifiedProfile(sessionId, profileToken)
         verifiedName = profile.name ?? verifiedName
@@ -169,7 +169,7 @@ async function processRemoteCallback(
       type: 'IDENTITY_VERIFIED',
       sessionId: resolvedSessionId,
       sessionUuid: session.sessionUuid ?? String(resolvedSessionId),
-      profileToken,
+      profileToken: profileToken || undefined,
       verifiedName,
       verifiedPhone,
       verifiedBirthDate,
