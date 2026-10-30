@@ -13,8 +13,8 @@ type UseMemberConversionIdentityOptions = {
 
 /**
  * 만 14세 회원 전환 NICE.
- * 본인인증 호출: POST /api/auth/verification-sessions/identity/nice/start (flow AGE14_TRANSITION).
- * 회원가입 MEMBER_SIGNUP 과 AGE14 portal nice/start 를 쓰지 않는다.
+ * POST /api/portal/me/age-transition/nice/start (회원 Bearer).
+ * 가입용 POST /api/auth/verification-sessions/identity/nice/start (MEMBER_SIGNUP) 와 분리.
  */
 export function useMemberConversionIdentityVerification(
   options: UseMemberConversionIdentityOptions,

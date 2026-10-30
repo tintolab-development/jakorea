@@ -28,6 +28,7 @@ import {
   SignUpPortraitConsentPage,
   SignUpIdentityCallbackPage,
   SignUpGuardianIdentityCallbackPage,
+  AgeTransitionIdentityCallbackPage,
   SignUpSocialConnectCompletePage,
   SignUpSocialConnectErrorPage,
   SignUpSocialConnectCallbackPage,
@@ -228,6 +229,10 @@ export const router = createBrowserRouter([
     children: [
       { path: '/auth/member-conversion', element: <MemberConversionPage /> },
       { path: '/auth/sign-up/identity/callback', element: <SignUpIdentityCallbackPage /> },
+      {
+        path: '/auth/age-transition/identity/callback',
+        element: <AgeTransitionIdentityCallbackPage />,
+      },
       {
         path: '/auth/sign-up/guardian-identity/callback',
         element: <SignUpGuardianIdentityCallbackPage />,

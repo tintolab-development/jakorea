@@ -9,7 +9,6 @@ import {
   getAgeTransitionNiceStatus,
   isAgeTransitionNiceValid,
   isNiceSessionVerified,
-  mapAgeTransitionNiceStatusToAlert,
   mapAgeTransitionUnknownErrorToAlert,
   markAgeTransitionNiceValidated,
   postAgeTransitionNiceValidate,
@@ -39,12 +38,6 @@ export function MemberConversionIdentityPage() {
     async (result: { sessionId: number }) => {
       try {
         const session = await getAgeTransitionNiceStatus(result.sessionId)
-        const mapped = mapAgeTransitionNiceStatusToAlert(session)
-        if (mapped) {
-          clearAgeTransitionIdentityPending()
-          setAlertKind(mapped)
-          return
-        }
         if (!isNiceSessionVerified(session)) {
           clearAgeTransitionIdentityPending()
           setAlertKind('fail')
@@ -54,6 +47,7 @@ export function MemberConversionIdentityPage() {
         const validated = await postAgeTransitionNiceValidate(result.sessionId)
         if (!isAgeTransitionNiceValid(validated)) {
           clearAgeTransitionIdentityPending()
+          setAlertKind('fail')
           return
         }
 
@@ -73,7 +67,8 @@ export function MemberConversionIdentityPage() {
     [navigate, searchParams],
   )
 
-  const { verify, isVerifying, resetError } = useMemberConversionIdentityVerification({
+  const { verify, isVerifying, resetError, errorMessage } =
+    useMemberConversionIdentityVerification({
     onSuccess: result => {
       awaitingServerRef.current = true
       void handleSuccess(result).finally(() => {
@@ -88,7 +83,9 @@ export function MemberConversionIdentityPage() {
       succeededRef.current = false
       return
     }
-    if (
+    if (errorMessage?.trim()) {
+      setAlertKind('fail')
+    } else if (
       wasVerifyingRef.current &&
       !succeededRef.current &&
       !alertKind &&
@@ -97,7 +94,7 @@ export function MemberConversionIdentityPage() {
       setAlertKind('fail')
     }
     wasVerifyingRef.current = false
-  }, [alertKind, isVerifying])
+  }, [alertKind, errorMessage, isVerifying])
 
   const handleCloseAlert = () => {
     setAlertKind(null)
