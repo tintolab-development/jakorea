@@ -101,6 +101,10 @@ jobs:
             echo "PLATFORM_ORIGIN=$PLATFORM_ORIGIN"
             echo "HOMEPAGE_API=$HOMEPAGE_API"
           } >> "$GITHUB_ENV"
+          {
+            echo "cms_origin=$CMS_ORIGIN"
+            echo "platform_origin=$PLATFORM_ORIGIN"
+          } >> "$GITHUB_OUTPUT"
           echo "NEWPROD_AWS_TARGETS=PASS"
       - name: Build CMS
         if: matrix.app == 'cms'
@@ -124,7 +128,7 @@ jobs:
         if: matrix.app == 'admin'
         env:
           VITE_HOMEPAGE_API_BASE_URL: ${{ inputs.homepage_api_base_url }}
-          VITE_CMS_ORIGIN: https://newprod-cms-origin-from-stack.invalid
+          VITE_CMS_ORIGIN: ${{ steps.targets.outputs.cms_origin }}
           VITE_ADMIN_AUTH_API_PREFIX: /api/admin/auth
         run: pnpm --filter admin build
       - name: Verify build output and NEW PROD API wiring
