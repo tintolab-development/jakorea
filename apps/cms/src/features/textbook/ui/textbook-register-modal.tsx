@@ -4,7 +4,10 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { CmsButton, CmsInput, CmsRadio, CmsSelect, ContentModal, useCmsAlert } from '@/shared/ui'
-import type { TextbookBusinessArea } from '@/features/textbook/model/textbook-business-areas'
+import {
+  isTextbookRegisterBusinessAreaFilled,
+  type TextbookBusinessArea,
+} from '@/features/textbook/model/textbook-business-areas'
 import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
 import {
   TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS,
@@ -13,6 +16,7 @@ import {
 } from '@/features/textbook/model/textbook-education-targets'
 import {
   gradesByTargetFromRegisterValues,
+  syncTextbookRegisterGradesAfterTargetsChange,
   nextTextbookRegisterGradeValuesForTargets,
   parseTextbookRegisterGradeValuesForTargets,
   parseTextbookRegisterGradeValuesFromStages,
@@ -76,8 +80,14 @@ function toRegisterForm(initialValues?: Partial<TextbookRegisterPayload> | null)
     educationTargets,
     grades:
       fromStages.grades.length > 0
-        ? fromStages.grades
-        : parseTextbookRegisterGradeValuesForTargets(educationTargets, initialValues?.grade ?? ''),
+        ? syncTextbookRegisterGradesAfterTargetsChange(
+            educationTargets,
+            fromStages.grades
+          )
+        : parseTextbookRegisterGradeValuesForTargets(
+            educationTargets,
+            initialValues?.grade ?? ''
+          ),
   }
 }
 
@@ -120,7 +130,7 @@ export function TextbookRegisterModal({
     if (
       !form.textbookName.trim() ||
       !form.textbookNameEn.trim() ||
-      !form.businessArea ||
+      !isTextbookRegisterBusinessAreaFilled(form.businessArea) ||
       form.educationTargets.length === 0 ||
       missingGradeTarget
     ) {
@@ -130,7 +140,10 @@ export function TextbookRegisterModal({
       })
       return
     }
-    const educationStages = buildEducationStagesFromSelections(form.educationTargets, gradesByTarget)
+    const educationStages = buildEducationStagesFromSelections(
+      form.educationTargets,
+      gradesByTarget
+    )
     const summary = summarizeEducationStages(educationStages)
     onSubmit({
       useStatus: form.useStatus,
@@ -206,6 +219,7 @@ export function TextbookRegisterModal({
             <CmsSelect
               label="사업 분야"
               required
+              withAllOption={false}
               inputSize="large"
               placeholder="사업 분야를 선택해 주세요."
               value={form.businessArea || undefined}
@@ -234,9 +248,8 @@ export function TextbookRegisterModal({
                 setForm(prev => ({
                   ...prev,
                   educationTargets: nextTargets,
-                  grades: nextTextbookRegisterGradeValuesForTargets(
+                  grades: syncTextbookRegisterGradesAfterTargetsChange(
                     nextTargets,
-                    prev.grades ?? [],
                     prev.grades ?? []
                   ),
                 }))
