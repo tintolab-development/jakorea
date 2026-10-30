@@ -1,0 +1,125 @@
+name: NEW PROD Frontend Parallel Build
+
+on:
+  push:
+    branches:
+      - deploy/newprod
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'scripts/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/newprod-frontend-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: newprod-frontend-build
+  cancel-in-progress: false
+
+env:
+  NODE_OPTIONS: --max-old-space-size=5120
+  VITE_API_BASE_URL: https://d2yfe3hmramof9.cloudfront.net
+  VITE_OAUTH_BACKEND_ORIGIN: https://d2yfe3hmramof9.cloudfront.net
+  VITE_JUSO_ADDRESS_API_URL: https://business.juso.go.kr/addrlink/addrLinkApi.do
+
+jobs:
+  build:
+    name: Build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: cms
+            filter: cms
+            output: apps/cms/dist
+          - app: platform
+            filter: platform
+            output: apps/platform/dist
+          - app: admin
+            filter: admin
+            output: apps/admin/dist
+
+    steps:
+      - name: Checkout pinned NEW PROD branch commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.20.2
+          cache: pnpm
+
+      - name: Install locked dependencies
+        env:
+          HUSKY: '0'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build CMS
+        if: matrix.app == 'cms'
+        env:
+          VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
+          VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
+          VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
+          VITE_NAVER_CLIENT_ID: ${{ secrets.VITE_NAVER_CLIENT_ID }}
+          VITE_PLATFORM_PUBLIC_ORIGIN: https://newprod-platform-pending.invalid
+        run: pnpm --filter cms build
+
+      - name: Build Platform
+        if: matrix.app == 'platform'
+        env:
+          VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
+          VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
+          VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
+          VITE_PLATFORM_NAVER_CLIENT_ID: ${{ secrets.VITE_PLATFORM_NAVER_CLIENT_ID }}
+          VITE_HOMEPAGE_API_BASE_URL: ${{ secrets.NEWPROD_HOMEPAGE_API_BASE_URL }}
+        run: |
+          test -n "$VITE_HOMEPAGE_API_BASE_URL"
+          pnpm --filter platform build
+
+      - name: Build Admin
+        if: matrix.app == 'admin'
+        env:
+          VITE_HOMEPAGE_API_BASE_URL: ${{ secrets.NEWPROD_HOMEPAGE_API_BASE_URL }}
+          VITE_CMS_ORIGIN: https://newprod-cms-pending.invalid
+        run: |
+          test -n "$VITE_HOMEPAGE_API_BASE_URL"
+          pnpm --filter admin build
+
+      - name: Verify output and prevent old PROD API references
+        shell: bash
+        env:
+          APP_OUTPUT: ${{ matrix.output }}
+        run: |
+          set -euo pipefail
+          test -s "$APP_OUTPUT/index.html"
+          test -d "$APP_OUTPUT/assets"
+          if grep -R -nE 'd3r1iaa0sy4tcq|d388j6f4woncqy|d39lkvqlx43zyt|d3w7tebssiz0v|d2rdfkctvi6zhx' "$APP_OUTPUT"; then
+            echo "OLD_PROD_ENDPOINT_REFERENCE=FAIL"
+            exit 1
+          fi
+          echo "APP_BUILD=${{ matrix.app }}:PASS"
+          echo "SOURCE_SHA=$GITHUB_SHA"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: newprod-${{ matrix.app }}-${{ github.sha }}
+          path: ${{ matrix.output }}/
+          if-no-files-found: error
+          retention-days: 3
