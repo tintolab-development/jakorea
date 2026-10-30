@@ -29,6 +29,10 @@ import { isGeneralProgressEducationSessionSchedule } from '@/features/program/ge
 import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
 import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
 import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
+import {
+  isGeneralScheduleSingleDateProgram,
+  resolveGeneralScheduleSingleDateDetailName,
+} from '@/features/program/general/lib/general-progress-date-schedule-lead'
 
 const UI_TO_API_STATUS: Record<ParticipatingIndividualProgressAttendanceStatus, string> = {
   present: 'PRESENT',
@@ -121,9 +125,13 @@ function formatScheduleHeader(
   headerPrefix: string
 } {
   const round = schedule.sessionNo ?? index + 1
-  const leadLabel = program
-    ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
-    : `${round}회차`
+  const scheduleDirect = isGeneralScheduleSingleDateProgram(program)
+  const leadLabel =
+    program && scheduleDirect
+      ? resolveGeneralScheduleSingleDateDetailName(program, schedule)
+      : program
+        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
+        : `${round}회차`
   const built = buildGeneralProgressSessionTableHeader({
     round,
     leadLabel,
@@ -132,6 +140,7 @@ function formatScheduleHeader(
     endAt: schedule.endAt,
     allDay: schedule.allDay,
     program,
+    scheduleDirect,
   })
   return {
     round,

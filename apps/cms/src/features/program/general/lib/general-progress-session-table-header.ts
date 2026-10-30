@@ -3,6 +3,8 @@ import { isDefaultEducationSlotName } from '@/shared/lib/education-schedule-name
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import type { Program } from '@/types/domain'
 
+/** Notion 일정형 표기 `일시 ㅣ 일정명` 구분자 (한글 모음 ㅣ) */
+const SCHEDULE_DIRECT_NAME_SEPARATOR = ' ㅣ '
 const SYNTHETIC_CLASS_NUM = /^(\d+)\s*교시$/u
 const EDUCATION_FORMAT_HINT =
   /온라인|오프라인|대면|비대면|혼합|블렌디드|온\s*\/\s*오프|화상/u
@@ -40,6 +42,12 @@ export type GeneralProgressSessionTableHeaderInput = {
   sessionClassNum?: string | null
   sessionTimeRange?: string | null
   program?: Program | null
+  /**
+   * 일정형 · 단일 · 날짜 지정(⑤) — 일정 ID 직접 연결, 회차/차시 없음.
+   * 회차 번호로 공통 정보(세부 일정·커리큘럼)를 찾지 않는다.
+   * 제목·필터는 `일시 ㅣ 일정명`, 이름이 없으면 일시만.
+   */
+  scheduleDirect?: boolean
 }
 
 export type GeneralProgressSessionTableHeader = {
@@ -96,6 +104,11 @@ function isNamedScheduleLead(value: string, round: number): boolean {
 }
 
 function resolveLeadLabel(input: GeneralProgressSessionTableHeaderInput): string {
+  if (input.scheduleDirect) {
+    const directName = input.scheduleName?.trim() ?? ''
+    if (directName && !isGenericProgressScheduleName(directName, input.round)) return directName
+    return input.leadLabel?.trim() ?? ''
+  }
   const named =
     input.educationScheduleLabel?.trim() || input.scheduleName?.trim() || ''
   if (named && !isGenericProgressScheduleName(named, input.round) && isNamedScheduleLead(named, input.round)) {
@@ -133,6 +146,7 @@ function resolveEducationFormat(input: GeneralProgressSessionTableHeaderInput): 
     return sessionFormat
   }
   const common = input.program ? resolveGeneralProgramCommonInfo(input.program) : null
+  if (input.scheduleDirect) return common?.educationFormLabel?.trim() || ''
   const roundIndex = Math.max(0, input.round - 1)
   const fromCurriculum = common?.curriculumSessions?.[roundIndex]?.educationFormLabel?.trim()
   if (fromCurriculum) return fromCurriculum
@@ -158,6 +172,7 @@ function formatClockRange(input: GeneralProgressSessionTableHeaderInput): string
 }
 
 function resolveClassPeriodFromCommonInfo(input: GeneralProgressSessionTableHeaderInput): string {
+  if (input.scheduleDirect) return ''
   const common = input.program ? resolveGeneralProgramCommonInfo(input.program) : null
   const roundIndex = Math.max(0, input.round - 1)
   const summary = common?.scheduleDetails?.[roundIndex]?.progressTimeSummary?.trim() ?? ''
@@ -178,13 +193,25 @@ function formatPeriodLabel(input: GeneralProgressSessionTableHeaderInput): strin
   return resolveClassPeriodFromCommonInfo(input) || clock
 }
 
+function joinLeadAndDate(lead: string, dateLabel: string, separator: string): string {
+  if (!lead) return dateLabel
+  return dateLabel ? `${lead}${separator}${dateLabel}` : lead
+}
+
+function joinDateAndName(dateTimeLabel: string, name: string): string {
+  if (!name) return dateTimeLabel
+  return dateTimeLabel ? `${dateTimeLabel}${SCHEDULE_DIRECT_NAME_SEPARATOR}${name}` : name
+}
+
 export function buildGeneralProgressSessionTableHeader(
   input: GeneralProgressSessionTableHeaderInput
 ): GeneralProgressSessionTableHeader {
   const round = input.round
   const lead = resolveLeadLabel(input)
   const dateLabel = formatDateTitle(input)
-  const headerTitle = dateLabel ? `${lead} : ${dateLabel}` : lead
+  const headerTitle = input.scheduleDirect
+    ? joinDateAndName(dateLabel, lead)
+    : joinLeadAndDate(lead, dateLabel, ' : ')
   const duration = formatDurationLabel(input)
   const formatLabel = resolveEducationFormat(input)
   const headerScheduleSummary =
@@ -193,7 +220,9 @@ export function buildGeneralProgressSessionTableHeader(
   const headerPrefix = [headerTitle, headerScheduleSummary, headerPeriodRangeLabel]
     .filter(Boolean)
     .join(' | ')
-  const filterLabel = dateLabel ? `${lead} · ${dateLabel}` : lead
+  const filterLabel = input.scheduleDirect
+    ? joinDateAndName([dateLabel, headerPeriodRangeLabel].filter(Boolean).join(' '), lead)
+    : joinLeadAndDate(lead, dateLabel, ' · ')
   return {
     round,
     headerTitle,
