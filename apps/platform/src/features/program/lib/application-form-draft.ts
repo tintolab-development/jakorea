@@ -306,6 +306,28 @@ function pickBestRuntimeContext(candidates: readonly unknown[]): unknown | undef
   return best
 }
 
+/** pick 한 runtimeContext에 다른 후보의 UJAT 희망일 배열을 합친다. */
+function mergeUjatPreferredEducationDateOptions(
+  best: unknown,
+  candidates: readonly unknown[],
+): unknown {
+  if (!isRecord(best)) return best
+  let dates: unknown[] | undefined
+  let dateLen = -1
+  for (const candidate of candidates) {
+    if (!isRecord(candidate)) continue
+    const next = candidate.ujatPreferredEducationDateOptions
+    if (!Array.isArray(next)) continue
+    if (next.length > dateLen) {
+      dates = next
+      dateLen = next.length
+    }
+  }
+  if (!dates) return best
+  if (best.ujatPreferredEducationDateOptions === dates) return best
+  return { ...best, ujatPreferredEducationDateOptions: dates }
+}
+
 function collectRuntimeContextCandidates(form: unknown, depth: number, collected: unknown[]): void {
   if (!form || depth > 4) return
   if (typeof form === 'string' && form.trim()) {
@@ -331,7 +353,8 @@ function collectRuntimeContextCandidates(form: unknown, depth: number, collected
 export function resolvePortalApplicationFormRuntimeContext(formBinding: unknown): unknown | undefined {
   const candidates: unknown[] = []
   collectRuntimeContextCandidates(formBinding, 0, candidates)
-  return pickBestRuntimeContext(candidates)
+  const best = pickBestRuntimeContext(candidates)
+  return mergeUjatPreferredEducationDateOptions(best, candidates)
 }
 
 function attachBestRuntimeContext(
@@ -343,7 +366,7 @@ function attachBestRuntimeContext(
   if (document.runtimeContext != null) candidates.push(document.runtimeContext)
   const best = pickBestRuntimeContext(candidates)
   if (!best) return document
-  return { ...document, runtimeContext: best }
+  return { ...document, runtimeContext: mergeUjatPreferredEducationDateOptions(best, candidates) }
 }
 
 function pickRicherFormDocument(
