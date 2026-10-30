@@ -146,4 +146,20 @@ assert.ok(
   PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod in ujatPatch,
 )
 
+// 1사1교: 성범죄 답이 answerValueJson 문자열로 와도 읽는다
+const economySexOffense = mapInstitutionGuidanceFromApplicationAnswers(
+  {
+    [PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentSubmissionRequest]:
+      '{"submissionRequest":"request"}',
+    [PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod]:
+      '{"inquiryMethod":"criminal_record_site","siteSubmission":"direct","institutionId":"12333","verificationNumber":"3323"}',
+  },
+  'gemini',
+)
+assert.equal(economySexOffense.sexOffense.submissionRequest, 'request')
+assert.equal(economySexOffense.sexOffense.inquiryMethod, 'criminal_record_site')
+assert.equal(economySexOffense.sexOffense.siteSubmission, 'direct')
+assert.equal(economySexOffense.sexOffense.institutionId, '12333')
+assert.equal(economySexOffense.sexOffense.verificationNumber, '3323')
+
 console.log('institution-guidance-from-answers.selfcheck: ok')
