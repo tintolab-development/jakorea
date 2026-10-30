@@ -144,6 +144,20 @@
   align-items: center;
   gap: 5px;
   flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.program-registration-paragraph__instructor-kpi-group > .detail-info-form--text {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* KpiValueWithUnit 기본 width:100% 가 라벨(봉사자)을 밀어 줄바꿈시키는 것 방지 */
+.program-registration-paragraph__instructor-kpi-group > .detail-info-form-inputs-wrapper {
+  width: auto;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .program-registration-paragraph__schedule-detail-row > .app-radio-group {

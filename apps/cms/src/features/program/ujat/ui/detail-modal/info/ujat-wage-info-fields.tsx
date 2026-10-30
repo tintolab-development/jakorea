@@ -13,8 +13,6 @@ import {
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { CmsButton } from '@/shared/ui/cms-button'
-import { resolveUjatDefaultPaymentItemValues } from '@/features/program/ujat/lib/ujat-wage-info-display'
 
 export function UjatWageInfoFields({
   mode,
@@ -54,40 +52,26 @@ export function UjatWageInfoFields({
         view={viewPaymentText}
         edit={
           mode === 'edit' && form != null ? (
-            <div className="detail-info-form-inputs-wrapper-no-gap">
-              <Controller
-                name="wagePaymentItemIds"
-                control={form.control}
-                render={({ field }) => (
-                  <CmsSelect
-                    inputSize="small"
-                    mode="multiple"
-                    withAllOption={false}
-                    value={field.value ?? []}
-                    onChange={next => {
-                      const selected = next as string[]
-                      field.onChange(normalizeUjatPaymentItemSelection(selected, field.value ?? []))
-                    }}
-                    options={paymentItemOptions}
-                    disabled={!paymentCatalog.ready}
-                    placeholder="선택하세요"
-                    style={{ width: '100%', minWidth: 0 }}
-                  />
-                )}
-              />
-              {editPaymentIds.length === 0 ? (
-                <CmsButton
-                  type="button"
-                  variant="secondary"
-                  size="small"
-                  onClick={() =>
-                    setPaymentItemValues(resolveUjatDefaultPaymentItemValues())
-                  }
-                >
-                  기본 항목 추가
-                </CmsButton>
-              ) : null}
-            </div>
+            <Controller
+              name="wagePaymentItemIds"
+              control={form.control}
+              render={({ field }) => (
+                <CmsSelect
+                  inputSize="small"
+                  mode="multiple"
+                  withAllOption={false}
+                  value={field.value ?? []}
+                  onChange={next => {
+                    const selected = next as string[]
+                    field.onChange(normalizeUjatPaymentItemSelection(selected, field.value ?? []))
+                  }}
+                  options={paymentItemOptions}
+                  disabled={!paymentCatalog.ready}
+                  placeholder="선택하세요"
+                  style={{ width: '100%', minWidth: 0 }}
+                />
+              )}
+            />
           ) : undefined
         }
       />
