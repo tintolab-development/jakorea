@@ -48,6 +48,7 @@ import {
 } from '@/features/program/shared/lib/log-program-registration-create-payload'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
+import { publishUjatRegistrationBusinessPeriod } from '@/features/program/shared/lib/registration-business-period-issues'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT/use-ujat-program-registration-editor'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
@@ -267,6 +268,23 @@ export function useUjatProgramRegistrationFlow(
     skipDraftRestore,
     registrationWizardProgramType: programType,
   })
+  const ujatBusinessPeriodStart = registrationVm.basicInfoForm.watch('startDate')
+  const ujatBusinessPeriodEnd = registrationVm.basicInfoForm.watch('endDate')
+
+  useEffect(() => {
+    if (!open) {
+      publishUjatRegistrationBusinessPeriod(null)
+      return
+    }
+    publishUjatRegistrationBusinessPeriod({
+      start: ujatBusinessPeriodStart,
+      end: ujatBusinessPeriodEnd,
+    })
+  }, [open, ujatBusinessPeriodEnd, ujatBusinessPeriodStart])
+
+  useEffect(() => {
+    return () => publishUjatRegistrationBusinessPeriod(null)
+  }, [])
 
   const registrationWizardBaseProgram = useMemo(() => {
     if (!open) return null

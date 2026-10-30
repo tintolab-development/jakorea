@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { resolveRegistrationWizardIncompleteParagraphIds } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
+import { RegistrationBusinessPeriodConstraintProvider } from '@/features/program/shared/ui/registration/registration-business-period-constraint'
 import {
   RegistrationWizardValidationHighlightProvider,
   scrollToFirstRegistrationWizardIncompleteParagraph,
@@ -81,7 +82,9 @@ export function UjatProgramRegistrationFullpageModal(
 ) {
   return (
     <RegistrationWizardValidationHighlightProvider variant="ujat">
-      <UjatProgramRegistrationFullpageModalInner {...props} />
+      <RegistrationBusinessPeriodConstraintProvider>
+        <UjatProgramRegistrationFullpageModalInner {...props} />
+      </RegistrationBusinessPeriodConstraintProvider>
     </RegistrationWizardValidationHighlightProvider>
   )
 }

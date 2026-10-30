@@ -694,6 +694,7 @@ function UjatBasicInfoLegacyParagraph({
                   width="100%"
                   placeholder="사업 운영 기간을 선택하세요"
                   preferPeriodModeInPopover
+                  excludeBusinessPeriodConstraint
                   appliedSurfaceRange={operationRange}
                   appliedSurfaceWithTime={operationRangeWithTime}
                   onRangeChange={range => setOperationRange(range)}
