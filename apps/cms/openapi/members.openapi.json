@@ -390,6 +390,10 @@
     },
     {
       "name": "기타 API",
+      "description": "1365 등록 양식 미리보기와 다운로드"
+    },
+    {
+      "name": "기타 API",
       "description": "UJAT 교육 지역 순서 마스터 API"
     },
     {
@@ -1138,7 +1142,7 @@
           "폼/설문"
         ],
         "summary": "?? ?? ?? ??? ????? ?? ??",
-        "description": "### 이 API가 하는 일\n- ?? ?? ?? ??? ????? ?? ??\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/users/{memberId}/consent-records/{consentType}/signed-document`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MEMBER_READ+DYNAMIC_PRIVACY_PERMISSION 권한 필요\n- 접근 범위: MEMBER_SCOPE 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: RAW_PERSONAL_DATA_AND_SIGNATURE_METADATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Returns immutable signed snapshot; requires PRIVACY_RAW_READ reason and excludes withdrawn, expired, destroyed documents.",
+        "description": "### 이 API가 하는 일\n- ?? ?? ?? ??? ????? ?? ??\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/users/{memberId}/consent-records/{consentType}/signed-document`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MEMBER_READ+DYNAMIC_PRIVACY_PERMISSION 권한 필요\n- 접근 범위: MEMBER_SCOPE 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: RAW_PERSONAL_DATA_AND_SIGNATURE_METADATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Returns immutable signed snapshot and nullable originalFileObjectId/originalDownloadApi; original PDF uses SENSITIVE_FILE_DOWNLOAD+MEMBER_READ audited relay. Requires PRIVACY_RAW_READ reason and excludes withdrawn, expired, destroyed documents.",
         "operationId": "signedConsentDocument",
         "parameters": [
           {
@@ -15740,6 +15744,7 @@
               "PORTRAIT_CONSENT",
               "STUDENT_ROSTER",
               "CRIMINAL_HISTORY_EVIDENCE",
+              "CRIMINAL_HISTORY_CONSENT_ORIGINAL",
               "EDUCATION_JOURNAL",
               "EXPENSE_RECEIPT",
               "INSTRUCTOR_APPLICATION",
@@ -16124,7 +16129,7 @@
           "evidenceFileObjectId": {
             "type": "integer",
             "format": "int64",
-            "description": "Deprecated compatibility field. Current policy rejects evidence uploads with CONSENT_EVIDENCE_FILE_NOT_ALLOWED"
+            "description": "CRIMINAL_HISTORY_CHECK_CONSENT 전용, confirm 및 CLEAN 검사를 마친 원본 PDF fileObjectId"
           },
           "guardianVerificationToken": {
             "type": "string",
@@ -16233,6 +16238,236 @@
             "format": "date-time",
             "description": "마지막 다운로드 시각",
             "example": "2026-06-02T09:30:00Z"
+          }
+        }
+      },
+      "ApiResponseIdentityCheckResult": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/IdentityCheckResult",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
+      "IdentityCheckResult": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "identityVerified": {
+            "type": "boolean"
+          },
+          "transitionCompleted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApiResponseNiceIdentityAuthStartResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/NiceIdentityAuthStartResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
+      "ApiResponseResult": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/Result",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
+      "Result": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "guardianConsentRowsDeleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "guardianSessionRowsDeleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "guardianIdentitySessionRowsDeleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "blockCode": {
+            "type": "string"
+          }
+        }
+      },
+      "CompleteRequest": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "marketingAgreed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApiResponseCompletionResult": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/CompletionResult",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
+      "CompletionResult": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "evidencePending": {
+            "type": "boolean"
+          },
+          "guardianConsentRowsDeleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "filePiiCleanupStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "ChoiceRequest": {
+        "type": "object",
+        "properties": {
+          "choice": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseChoiceResult": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/ChoiceResult",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
+      "ChoiceResult": {
+        "type": "object",
+        "properties": {
+          "choice": {
+            "type": "string"
+          },
+          "transitionSelected": {
+            "type": "boolean"
+          },
+          "guardianPersonalDataDeleted": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
           }
         }
       },
@@ -18786,6 +19021,15 @@
             "items": {
               "$ref": "#/components/schemas/SignedConsentSignatureField"
             }
+          },
+          "originalFileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "회원이 제출한 성범죄 동의서 원본 PDF ID. 연결된 원본이 없으면 null."
+          },
+          "originalDownloadApi": {
+            "type": "string",
+            "description": "원본 PDF의 관리자 민감 파일 relay 요청 API. 원본이 없으면 null. SENSITIVE_FILE_DOWNLOAD 권한과 사유가 필요합니다."
           }
         }
       },
@@ -20667,7 +20911,7 @@
           },
           "settlementIds": {
             "type": "array",
-            "description": "화면에서 선택한 정산 ID(settlement.id). 지정하면 필터 결과 중 해당 정산만 발급하며, 미지급/누락/권한 밖 ID가 섞이면 발급하지 않습니다. 계좌 지급 ID(account_payment.id)를 넣으면 안 됩니다.",
+            "description": "화면에서 선택한 정산 ID(settlement.id). 지정하면 필터 결과 중 해당 정산만 발급하며, 미지급/누락/권한 밖 ID가 섞이면 발급하지 않습니다. 계좌 지급 ID(account_payment.id)를 넣으면 안 됩니다. settlementIds와 accountPaymentIds가 모두 빈 배열이거나 생략되고 프로그램·강사·기간·상태 필터도 없으면 권한 안 전체 대상(전체 범위)입니다. 선택 건 발급은 승인 rowCount와 searchSnapshotHash가 이 조회 범위와 같을 때만 가능합니다.",
             "items": {
               "type": "integer",
               "format": "int64",
@@ -20678,7 +20922,7 @@
           },
           "accountPaymentIds": {
             "type": "array",
-            "description": "정산과 연결되지 않은 직접 계좌 지급 ID(account_payment.id, 예: Gemini 교육 보고서 지급). 대량이체에서만 허용하며 settlement 연결 지급 ID가 섞이면 발급하지 않습니다. 미지정 시 빈 배열입니다.",
+            "description": "정산과 연결되지 않은 직접 계좌 지급 ID(account_payment.id, 예: Gemini 교육 보고서 지급). 대량이체에서만 허용하며 settlement 연결 지급 ID가 섞이면 발급하지 않습니다. 미지정 시 빈 배열입니다. settlementIds와 함께 둘 다 빈 배열이면 상태별 전체 대상이며, 승인에 searchSnapshotHash가 없으면 이 전체 범위만 발급됩니다. 선택 ID보다 넓은 원문은 같은 approvalReference로 발급할 수 없습니다.",
             "items": {
               "type": "integer",
               "format": "int64",
@@ -20698,6 +20942,34 @@
           "businessPurpose",
           "reason"
         ]
+      },
+      "Scope": {
+        "type": "object",
+        "properties": {
+          "exportType": {
+            "type": "string"
+          },
+          "fullCorpus": {
+            "type": "boolean"
+          },
+          "effectiveStatus": {
+            "type": "string"
+          },
+          "searchSnapshotHash": {
+            "type": "string"
+          },
+          "rowCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scopeToken": {
+            "type": "string"
+          },
+          "expiresAtEpochSecond": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
       },
       "ProviderRetryActionResponse": {
         "type": "object",
@@ -22985,6 +23257,50 @@
           }
         }
       },
+      "Ujat1365RegistrationFormResponse": {
+        "type": "object",
+        "description": "UJAT 1365 봉사시간 등록 양식에 필요한 최소 원문. 연락처·주소·계좌·주민번호는 포함하지 않습니다.",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "봉사자 이름. 2026-10-26 정책상 일반 이름은 마스킹하지 않습니다.",
+            "nullable": true
+          },
+          "birthDate": {
+            "type": "string",
+            "description": "생년월일 원문. 없으면 null.",
+            "example": "2002-03-04",
+            "nullable": true
+          },
+          "external1365Id": {
+            "type": "string",
+            "description": "1365 ID 원문. 없으면 null.",
+            "nullable": true
+          },
+          "volunteerMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "출석에 저장된 1365 인정 분 합계. 출석 행이 없으면 0."
+          },
+          "mode": {
+            "type": "string",
+            "description": "PREVIEW 또는 DOWNLOAD",
+            "example": "PREVIEW"
+          }
+        }
+      },
       "CreateMergeRequest": {
         "type": "object",
         "properties": {
@@ -24645,6 +24961,12 @@
             "format": "int64",
             "description": "프로그램 범위 원문 export 승인 요청인 경우 프로그램 ID. CMS 전역 요청은 생략합니다.",
             "minimum": 1
+          },
+          "scopeToken": {
+            "type": "string",
+            "description": "정산 원문 Export의 서버 발급 scopeToken. 선택·필터 발급은 필수이고, 무필터 전체 발급은 생략할 수 있습니다. 클라이언트가 만든 searchSnapshotHash는 정산 도메인에서 이 토큰 없이 승인되지 않습니다.",
+            "maxLength": 2000,
+            "minLength": 0
           }
         },
         "required": [
@@ -25887,13 +26209,13 @@
           "startAt": {
             "type": "string",
             "format": "date-time",
-            "description": "선택 일정의 시작 시각.",
+            "description": "선택 일정의 시작 시각(UTC Instant). 캘린더 날짜는 educationDate(Asia/Seoul)를 사용한다.",
             "nullable": true
           },
           "endAt": {
             "type": "string",
             "format": "date-time",
-            "description": "선택 일정의 종료 시각.",
+            "description": "선택 일정의 종료 시각(UTC Instant).",
             "nullable": true
           },
           "label": {
@@ -25903,7 +26225,7 @@
           },
           "unresolvedReason": {
             "type": "string",
-            "description": "scheduleId가 null인 이유. 연결되면 null, 연결할 공통 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH. AMBIGUOUS_SCHEDULE_MATCH는 하위 호환을 위해 enum에 남지만 일반(GENERAL) 희망 일정에서는 더 이상 반환하지 않는다.",
+            "description": "scheduleId가 null인 이유. 연결되면 null, 연결할 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH. AMBIGUOUS_SCHEDULE_MATCH는 하위 호환을 위해 enum에 남지만 일반(GENERAL) 희망 일정에서는 더 이상 반환하지 않는다.",
             "nullable": true
           },
           "scheduleIds": {
@@ -25913,6 +26235,12 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          "educationDate": {
+            "type": "string",
+            "format": "date",
+            "description": "희망 교육일(Asia/Seoul 달력 날짜). startAt Instant를 UTC 날짜로 자르면 하루 밀릴 수 있으므로 표시·비교에는 이 필드를 사용한다.",
+            "nullable": true
           }
         }
       },
@@ -28872,17 +29200,6 @@
           "expectedScopeRevision",
           "reason"
         ]
-      },
-      "Result": {
-        "type": "object",
-        "properties": {
-          "decision": {
-            "$ref": "#/components/schemas/ApplicationDecisionResponse"
-          },
-          "educationScope": {
-            "$ref": "#/components/schemas/ScopeResponse"
-          }
-        }
       },
       "IndividualApprovalWithScopeBulkRequest": {
         "type": "object",
@@ -42579,6 +42896,100 @@
           }
         }
       },
+      "ApiResponsePortalStatus": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/PortalStatus",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
+      "PortalStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "transitionedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "noticePending": {
+            "type": "boolean"
+          },
+          "guardianPersonalDataDeleted": {
+            "type": "boolean"
+          },
+          "identityVerificationRequired": {
+            "type": "boolean"
+          },
+          "choice": {
+            "type": "string"
+          },
+          "signupAgeOrigin": {
+            "type": "string"
+          },
+          "signupUnder14": {
+            "type": "boolean"
+          },
+          "eligible": {
+            "type": "boolean"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "convertedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiResponseVerificationSessionResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/VerificationSessionResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          }
+        }
+      },
       "SignupTermsAgreementPayload": {
         "type": "object",
         "description": "회원 포탈 회원가입 약관 동의 요청 payload",
@@ -51595,6 +52006,11 @@
       },
       "NotificationCatalogCategory": {
         "type": "object",
+        "required": [
+          "categoryCode",
+          "categoryLabel",
+          "variables"
+        ],
         "properties": {
           "categoryCode": {
             "type": "string",
@@ -51615,6 +52031,16 @@
       "NotificationCatalogVariableItem": {
         "type": "object",
         "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
+        "required": [
+          "key",
+          "token",
+          "requiresProgram",
+          "enabled",
+          "programGroups",
+          "recruitmentTypes",
+          "participantTypes",
+          "memberTypes"
+        ],
         "properties": {
           "key": {
             "type": "string",
@@ -51628,8 +52054,8 @@
           },
           "description": {
             "type": "string",
-            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null",
-            "nullable": true
+            "nullable": true,
+            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
           },
           "requiresProgram": {
             "type": "boolean",
@@ -51641,46 +52067,63 @@
           },
           "programGroups": {
             "type": "array",
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
           },
           "recruitmentTypes": {
             "type": "array",
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "PARTICIPANT",
+                "INSTRUCTOR",
+                "VOLUNTEER"
+              ]
+            },
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "GENERAL",
+                "SCHOOL_TEACHER",
+                "INSTRUCTOR",
+                "TEACHER_AND_INSTRUCTOR",
+                "ADMIN"
+              ]
+            },
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
           },
           "sourceMode": {
             "type": "string",
+            "nullable": true,
             "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
             "enum": [
               "SERVER_RESOLVED",
               "MANUAL_ALLOWED",
               "EVENT_ONLY"
-            ],
-            "nullable": true
+            ]
           }
         }
       },
       "NotificationTemplateVariableCatalogResponse": {
         "type": "object",
+        "required": [
+          "totalCount",
+          "categories",
+          "systemManualSendQaEnabled"
+        ],
         "properties": {
           "totalCount": {
             "type": "integer",
@@ -51951,7 +52394,8 @@
             "description": "발송 채널 유형(ALIMTALK|SMS|EMAIL)"
           },
           "recipientContactMasked": {
-            "type": "string"
+            "type": "string",
+            "description": "목록 GET: 마스킹된 수신 연락처. 상세 GET: 감사 성공 후 원문. 레거시 필드명을 유지합니다."
           },
           "templateCodeSnapshot": {
             "type": "string"
@@ -52037,7 +52481,8 @@
             "type": "string"
           },
           "recipientName": {
-            "type": "string"
+            "type": "string",
+            "description": "수신자 이름. 2026-10-26 정책상 일반 이름은 마스킹하지 않습니다."
           },
           "templateDisplayName": {
             "type": "string",
@@ -55940,6 +56385,102 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "OrganizationApplicationSession": {
+        "type": "object",
+        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "className": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrganizationApplicationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "resolvedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleUnresolved": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

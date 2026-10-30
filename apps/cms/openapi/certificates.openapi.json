@@ -390,6 +390,10 @@
     },
     {
       "name": "기타 API",
+      "description": "1365 등록 양식 미리보기와 다운로드"
+    },
+    {
+      "name": "기타 API",
       "description": "UJAT 교육 지역 순서 마스터 API"
     },
     {

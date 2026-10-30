@@ -51,4 +51,10 @@ export interface PrivacyExportApprovalRequestCreate {
      * @minimum 1
      */
   programId?: number;
+  /**
+     * 정산 원문 Export의 서버 발급 scopeToken. 선택·필터 발급은 필수이고, 무필터 전체 발급은 생략할 수 있습니다. 클라이언트가 만든 searchSnapshotHash는 정산 도메인에서 이 토큰 없이 승인되지 않습니다.
+     * @minLength 0
+     * @maxLength 2000
+     */
+  scopeToken?: string;
 }
