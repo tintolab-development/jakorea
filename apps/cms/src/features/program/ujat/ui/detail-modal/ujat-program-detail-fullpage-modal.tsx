@@ -283,7 +283,10 @@ import {
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
-import { resolveSurveyShareClipboardUrl } from '@/features/program/general/api/adapters/program-survey-adapters'
+import {
+  describeSurveyShareClipboardFailure,
+  resolveSurveyShareClipboardUrl,
+} from '@/features/program/general/api/adapters/program-survey-adapters'
 import { getPlatformPublicOrigin } from '@/features/program/general/lib/public-survey-origin'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
@@ -2105,13 +2108,14 @@ export function UjatProgramDetailFullPageModal({
     void (async () => {
       try {
         const response = await createGeneralProgramSurveyShareLink(programId, bindingId)
+        const platformOrigin = getPlatformPublicOrigin()
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
+          ? resolveSurveyShareClipboardUrl(response, platformOrigin)
           : null
         if (!url) {
           void showAlert({
             title: '공유',
-            content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            content: describeSurveyShareClipboardFailure(response, platformOrigin, 'survey'),
           })
           return
         }
@@ -2316,13 +2320,18 @@ export function UjatProgramDetailFullPageModal({
     void (async () => {
       try {
         const response = await createGeneralProgramSurveyShareLink(programId, bindingId)
+        const platformOrigin = getPlatformPublicOrigin()
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
+          ? resolveSurveyShareClipboardUrl(response, platformOrigin)
           : null
         if (!url) {
           void showAlert({
             title: '공유',
-            content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            content: describeSurveyShareClipboardFailure(
+              response,
+              platformOrigin,
+              'satisfaction'
+            ),
           })
           return
         }

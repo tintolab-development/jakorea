@@ -694,10 +694,12 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       isGeneralOrganization: isGeneralOrgProgram,
       assignedSessions: assignmentsQuerySettled ? assignedEducationSessions : [],
       participantSessions: assignmentsQuerySettled ? participantSessions : [],
+      hopeSessions: hopeEducationSessions,
     })
   }, [
     assignedEducationSessions,
     assignmentsQuerySettled,
+    hopeEducationSessions,
     isCompanySchool,
     isGeneralOrgProgram,
     participantSessions,

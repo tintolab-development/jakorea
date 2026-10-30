@@ -275,7 +275,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 150,
+        width: 208,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (role: ProgramRole, record: ProgramManagerRow) => (
@@ -291,7 +291,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            style={{ width: 132, minWidth: 132, maxWidth: 132 }}
+            style={{ width: 176, minWidth: 176, maxWidth: 176 }}
           />
         ),
       },

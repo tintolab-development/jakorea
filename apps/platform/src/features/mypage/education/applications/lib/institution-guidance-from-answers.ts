@@ -67,6 +67,19 @@ function readAnswer(answers: Record<string, unknown>, key: string): unknown {
   return undefined
 }
 
+/** 답이 JSON 객체 문자열(`answerValueJson` 형태)로 와도 객체로 읽는다. 그 외 값은 그대로. */
+function parseJsonObjectAnswer(raw: unknown): unknown {
+  if (typeof raw !== 'string') return raw
+  const trimmed = raw.trim()
+  if (!trimmed.startsWith('{')) return raw
+  try {
+    const parsed: unknown = JSON.parse(trimmed)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : raw
+  } catch {
+    return raw
+  }
+}
+
 function pickExistingAnswerKey(
   answers: Record<string, unknown>,
   keys: readonly string[],
@@ -116,8 +129,8 @@ export function mapInstitutionGuidanceFromApplicationAnswers(
 ): TeacherInstitutionGuidanceFormState {
   const ids = resolveInstitutionGuidanceParagraphIds(detailCase, answers)
   const guidanceRaw = readAnswer(answers ?? {}, ids.guidance)
-  const submissionRaw = readAnswer(answers ?? {}, ids.sexOffenseSubmission)
-  const inquiryRaw = readAnswer(answers ?? {}, ids.sexOffenseInquiry)
+  const submissionRaw = parseJsonObjectAnswer(readAnswer(answers ?? {}, ids.sexOffenseSubmission))
+  const inquiryRaw = parseJsonObjectAnswer(readAnswer(answers ?? {}, ids.sexOffenseInquiry))
 
   const guidance =
     guidanceValuesFromDraftAnswer(guidanceRaw) ?? emptyInstitutionGuidanceAnswers()

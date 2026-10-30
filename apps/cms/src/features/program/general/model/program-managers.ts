@@ -16,11 +16,11 @@ export interface ProgramManagerRow {
   removableYn?: boolean
 }
 
-/** UI 표시용 권한 라벨 (시안: PM / 파트너 / 뷰어) */
+/** UI 표시용 권한 라벨 (시안: Program Owner / Assistant / Viewer) */
 export const PROGRAM_ROLE_LABELS: Record<ProgramRole, string> = {
-  OWNER: 'PM',
-  PARTNER: '파트너',
-  ASSISTANT: '뷰어',
+  OWNER: 'Program Owner',
+  PARTNER: 'Program Assistant',
+  ASSISTANT: 'Program Viewer',
 }
 
 /** @deprecated {@link MAX_PM_PER_PROGRAM} 사용 권장 (엔티티 정책과 동일 값) */

@@ -26,6 +26,7 @@ import {
   emptyCompanySchoolApplicationFormState,
   isCompanySchoolApplicationOverlayKey,
 } from './registration-rhf-application'
+import { resolveCompanySchoolWageDefaultPaymentItemIds } from './company-school-wage-defaults'
 
 export const COMPANY_SCHOOL_REGISTRATION_OVERLAY_PREFIX = 'economyRegistration.' as const
 export const COMPANY_SCHOOL_UNSELECTED = '__all__' as const
@@ -265,7 +266,7 @@ export function createDefaultCompanySchoolRegistrationRhfValues(): CompanySchool
     grade2DistanceFee: null,
     grade3Fee: null,
     grade3DistanceFee: null,
-    paymentItemValues: undefined,
+    paymentItemValues: resolveCompanySchoolWageDefaultPaymentItemIds(),
     curriculumSessions: COMPANY_SCHOOL_FIXED_CURRICULUM_SESSIONS.map(session => ({
       sessionLabel: session.sessionLabel,
       title: session.title,
@@ -316,8 +317,9 @@ export function rhfValuesFromCompanySchoolCanonical(
     curriculumSessions: ensureTwoSessions(common.curriculumSessions),
     educationScheduleLines: [...common.educationScheduleLines],
     generalSurveyMenuKeys: [...common.generalSurveyMenuKeys],
-    paymentItemValues:
-      common.paymentItemValues === undefined ? undefined : [...common.paymentItemValues],
+    ...(common.paymentItemValues !== undefined
+      ? { paymentItemValues: [...common.paymentItemValues] }
+      : {}),
     operationRange: common.operationRange ? { ...common.operationRange } : null,
     operationAnchorIso: common.operationAnchorIso ?? null,
     educationScheduleRange: common.educationScheduleRange

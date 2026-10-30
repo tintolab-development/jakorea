@@ -80,3 +80,26 @@ describe('parseCompanySchoolRequestedScheduleMemo', () => {
     expect(parseCompanySchoolRequestedScheduleMemo(null)).toEqual([])
   })
 })
+
+describe('alignCompanySchoolScheduleDates', () => {
+  it('교시·시간은 유지하고 날짜는 educationDate로 맞춘다 (UTC 날짜 미사용)', async () => {
+    const { alignCompanySchoolScheduleDates, parseCompanySchoolRequestedScheduleMemo } =
+      await import('./company-school-preferred-schedule-blocks')
+    const rows = parseCompanySchoolRequestedScheduleMemo(
+      '2026-12-22 2교시/2차시 [1:2:03:00-04:00;2:3:05:00-06:00], 2026-12-29 3교시/2차시 [1:3:04:00-05:00;2:4:06:00-07:00]'
+    )
+    const aligned = alignCompanySchoolScheduleDates(rows, [
+      { round: 1, startAt: '2026-12-22T18:00:00Z', educationDate: '2026-12-23' },
+      { round: 2, startAt: '2026-12-29T19:00:00Z', educationDate: null },
+    ])
+    expect(aligned.map(row => row.requestedDate)).toEqual(['2026-12-23', '2026-12-30'])
+    const blocks = buildCompanySchoolPreferredScheduleBlocks(aligned)
+    expect(blocks[0]!.dateSegments).toEqual(['2026.12.23(수)', '2차시'])
+    expect(blocks[0]!.timeRows[0]![1]!.segments).toEqual(['3교시', '05:00 ~ 06:00'])
+  })
+  it('preferred가 없으면 그대로', async () => {
+    const { alignCompanySchoolScheduleDates } = await import('./company-school-preferred-schedule-blocks')
+    const rows = [{ preferenceOrder: 1, requestedDate: '2026-12-22' }]
+    expect(alignCompanySchoolScheduleDates(rows, [])).toEqual(rows)
+  })
+})

@@ -360,7 +360,8 @@ export function resolveOrganizationApplicationHopeSessions(
   if (isCompanySchoolOrganizationApplication(dto)) {
     const fromRequested = mapRequestedSchedulesToSessions(requestedSchedules) ?? []
     if (fromRequested.length > 0) return fromRequested
-    return mapPreferredEducationSchedulesToSessions(preferred)
+    /** 1사1교: 날짜는 `educationDate`(Seoul 달력일) 우선 */
+    return mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
   }
   const storedPeriodHopes = mapStoredPeriodRequestedSchedulesToHopeSessions(requestedSchedules)
   if (storedPeriodHopes.length > 0) return storedPeriodHopes
@@ -1147,7 +1148,8 @@ function orderPreferredEducationSchedules(
 }
 
 export function mapPreferredEducationSchedulesToSessions(
-  schedules: PreferredEducationSchedule[] | undefined
+  schedules: PreferredEducationSchedule[] | undefined,
+  options?: { useEducationDate?: boolean }
 ): ParticipatingSchoolSession[] {
   return orderPreferredEducationSchedules([...(schedules ?? [])]).map((schedule, index) => {
     const scheduleLabel = preferredScheduleLabel(schedule)
@@ -1156,9 +1158,14 @@ export function mapPreferredEducationSchedulesToSessions(
     const validStart = start != null && !Number.isNaN(start.getTime())
     const validEnd = end != null && !Number.isNaN(end.getTime())
     const dateOnly = isOrganizationPreferredDateOnlyRange(schedule.startAt, schedule.endAt)
-    const dateParts = validStart
-      ? formatPreferredScheduleDate(start)
-      : { date: '-', dayOfWeek: '-' }
+    const educationDate = options?.useEducationDate ? schedule.educationDate?.trim() : undefined
+    const educationDay = educationDate ? new Date(`${educationDate}T00:00:00+09:00`) : null
+    const dateParts =
+      educationDay != null && !Number.isNaN(educationDay.getTime())
+        ? formatPreferredScheduleDate(educationDay)
+        : validStart
+          ? formatPreferredScheduleDate(start)
+          : { date: '-', dayOfWeek: '-' }
     const timeRange = dateOnly
       ? '-'
       : validStart && validEnd
@@ -1770,6 +1777,11 @@ export function mapParticipantToParticipatingSchoolRow(
   const teacherEmail = dto.email?.trim() || undefined
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
   const sessions = mapSessionProgressToParticipatingSchoolSessions(dto.sessions ?? [])
+  const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const hopeEducationSessions =
+    preferred.length > 0
+      ? mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
+      : undefined
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId ?? undefined,
@@ -1793,6 +1805,8 @@ export function mapParticipantToParticipatingSchoolRow(
     addressDetail: dto.homeAddressSummary?.trim() || undefined,
     instructors: '',
     sessions: sessions.length > 0 ? sessions : undefined,
+    preferredEducationSchedules: preferred.length > 0 ? preferred : undefined,
+    hopeEducationSessions,
     programId,
     organizationApplicationId,
     participantStatus,

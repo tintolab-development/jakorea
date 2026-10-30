@@ -14,10 +14,16 @@ import { writingFormDraftToSchemaJson } from '@/features/template/api/adapters/f
 import { publishFormTemplateVersionById } from '@/features/template/api/admin-form-templates-service'
 import {
   copyFormTemplateVersionRemote,
+  createFormTemplateVersionRemote,
   fetchFormTemplateVersionRemote,
   updateFormTemplateRemote,
   updateFormTemplateVersionRemote,
 } from '@/features/template/api/form-templates-api-client'
+import {
+  readFormTemplateScope,
+  readFormVersionStatus,
+  resolveProgramFormWritePlan,
+} from '@/features/template/lib/program-form-version-write-guard'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas'
 import {
   extractApiErrorMessage,
@@ -281,6 +287,91 @@ export function resolveProgramSurveyFormEditFailure(
   return undefined
 }
 
+export const PROGRAM_SURVEY_FORM_FOREIGN_OWNER_MESSAGE =
+  '다른 프로그램 전용 양식은 이 프로그램에서 수정할 수 없습니다.'
+
+/** BE `assertCatalogOriginalCopySource` 400 — 전용 code가 없어 메시지로 판별한다 (sync-registration-form-bindings와 동일). */
+function isCopyFromNonCatalogOriginalError(error: unknown): boolean {
+  if (error && typeof error === 'object') {
+    const data = (error as { response?: { data?: { error?: { message?: string }; message?: string } } })
+      .response?.data
+    const message = data?.error?.message ?? data?.message ?? ''
+    if (message.includes('카탈로그 원본에서만')) return true
+  }
+  return error instanceof Error && error.message.includes('카탈로그 원본에서만')
+}
+
+/** 같은 템플릿에 DRAFT version 추가 (`POST /form-templates/{templateId}/versions`). */
+async function createProgramSurveyDraftVersion(
+  templateId: number,
+  programId: string,
+  sourceVersionId: number
+): Promise<number | undefined> {
+  const created = await createFormTemplateVersionRemote(templateId, {
+    versionLabel: `program-${programId}`,
+    sourceVersionId,
+  })
+  return created.templateVersionId
+}
+
+/**
+ * 저장할 DRAFT version을 준비한다 (write-guard `resolveProgramFormWritePlan` 기준).
+ * - CATALOG 원본: `versions/copy`(ownerProgramId). BE가 기존 PROGRAM 복사본을 재사용해 DRAFT가 아닌 version을 주면 그 템플릿에 version 추가.
+ * - PROGRAM(이 프로그램 소유)·COPY: copy는 400이므로 같은 템플릿에 version 추가.
+ */
+async function prepareProgramSurveyDraftVersion(
+  target: ProgramSurveyFormEditTarget,
+  source: Awaited<ReturnType<typeof fetchFormTemplateVersionRemote>> & { templateId: number }
+): Promise<{ templateId: number; draftVersionId?: number }> {
+  const plan = resolveProgramFormWritePlan(source, { programId: target.programId })
+  if (plan.action === 'write-in-place') {
+    return { templateId: source.templateId, draftVersionId: target.sourceVersionId }
+  }
+  if (plan.action === 'create-draft-version') {
+    return {
+      templateId: source.templateId,
+      draftVersionId: await createProgramSurveyDraftVersion(
+        source.templateId,
+        target.programId,
+        target.sourceVersionId
+      ),
+    }
+  }
+
+  try {
+    // ownerProgramId → template_scope=PROGRAM: 양식 관리 목록·등록 후보에 나오지 않는다.
+    // versionLabel은 새 템플릿 이름이 되므로 보내지 않는다.
+    const copied = await copyFormTemplateVersionRemote(source.templateId, {
+      sourceVersionId: target.sourceVersionId,
+      ownerProgramId: Number(target.programId),
+    })
+    const templateId = copied.templateId ?? source.templateId
+    const copiedStatus = readFormVersionStatus(copied)
+    if (copied.templateVersionId != null && copiedStatus != null && copiedStatus !== 'DRAFT') {
+      return {
+        templateId,
+        draftVersionId: await createProgramSurveyDraftVersion(
+          templateId,
+          target.programId,
+          copied.templateVersionId
+        ),
+      }
+    }
+    return { templateId, draftVersionId: copied.templateVersionId }
+  } catch (error) {
+    if (!isCopyFromNonCatalogOriginalError(error)) throw error
+    // 구버전 응답(templateScope 없음)으로 copy를 골랐지만 이미 프로그램 전용 복사본인 경우.
+    return {
+      templateId: source.templateId,
+      draftVersionId: await createProgramSurveyDraftVersion(
+        source.templateId,
+        target.programId,
+        target.sourceVersionId
+      ),
+    }
+  }
+}
+
 export type ProgramSurveyFormEditResult =
   | { ok: true; templateId: number; templateVersionId: number }
   | { ok: false; message: string; refetchBindings?: boolean; incompleteKeys?: readonly string[] }
@@ -343,21 +434,26 @@ export async function saveProgramSurveyFormEdit(
       return { ok: false, message: '바인딩된 양식의 템플릿 ID를 찾을 수 없습니다.' }
     }
 
-    // ownerProgramId → template_scope=PROGRAM: 양식 관리 목록·등록 후보에 나오지 않는다.
-    // versionLabel은 새 템플릿 이름이 되므로 보내지 않는다.
-    const copied = await copyFormTemplateVersionRemote(source.templateId, {
-      sourceVersionId: target.sourceVersionId,
-      ownerProgramId: Number(target.programId),
+    if (
+      readFormTemplateScope(source) === 'PROGRAM' &&
+      String(source.ownerProgramId ?? '') !== String(target.programId)
+    ) {
+      await restoreUnlockPeriod()
+      return { ok: false, message: PROGRAM_SURVEY_FORM_FOREIGN_OWNER_MESSAGE }
+    }
+
+    const { templateId, draftVersionId } = await prepareProgramSurveyDraftVersion(target, {
+      ...source,
+      templateId: source.templateId,
     })
-    if (copied.templateVersionId == null) {
+    if (draftVersionId == null) {
       await restoreUnlockPeriod()
       return { ok: false, message: '프로그램 전용 양식 초안을 만들지 못했습니다.' }
     }
-    const templateId = copied.templateId ?? source.templateId
 
     const schemaJson = writingFormDraftToSchemaJson(normalizeWritingFormDraft(draft))
-    await updateFormTemplateVersionRemote(copied.templateVersionId, { schemaJson })
-    const templateVersionId = await publishFormTemplateVersionById(copied.templateVersionId)
+    await updateFormTemplateVersionRemote(draftVersionId, { schemaJson })
+    const templateVersionId = await publishFormTemplateVersionById(draftVersionId)
 
     const templateName = target.title.trim()
     if (templateId !== source.templateId && templateName !== '') {

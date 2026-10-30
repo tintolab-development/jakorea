@@ -12,7 +12,10 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
-import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import {
+  resolveParticipatingInstitutionPreferredDisplaySessions,
+  resolveParticipatingProgressAssignedSessions,
+} from '@/features/program/general/lib/organization-education-schedule-sources'
 import {
   formatInstitutionRegionForCalendarListDisplay,
 } from '@/shared/lib/format-institution-region-display'
@@ -295,7 +298,7 @@ function buildEventsFromSchools(
 
     const sessionsByDate = new Map<string, ParticipatingSchoolSession[]>()
 
-    for (const session of row.sessions?.filter(s => s.status !== 'not_planned') ?? []) {
+    for (const session of resolveParticipatingInstitutionPreferredDisplaySessions(row)) {
       const date = parseSessionDate(session.date)
       if (!date.isValid()) continue
       const dateKey = date.format('YYYY-MM-DD')
