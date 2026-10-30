@@ -78,6 +78,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: github-newprod-${{ matrix.app }}-deploy
       - name: Verify account and load NEW PROD targets
+        id: targets
         shell: bash
         env:
           HOMEPAGE_API: ${{ inputs.homepage_api_base_url }}
@@ -113,7 +114,7 @@ jobs:
           VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
           VITE_CAREER_NET_API_KEY: ${{ secrets.VITE_CAREER_NET_API_KEY }}
           VITE_NAVER_CLIENT_ID: ${{ secrets.VITE_NAVER_CLIENT_ID }}
-          VITE_PLATFORM_PUBLIC_ORIGIN: https://newprod-platform-origin-from-stack.invalid
+          VITE_PLATFORM_PUBLIC_ORIGIN: ${{ steps.targets.outputs.platform_origin }}
         run: pnpm --filter cms build
       - name: Build Platform
         if: matrix.app == 'platform'
