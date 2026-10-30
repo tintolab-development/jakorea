@@ -35,3 +35,11 @@ describe('resolveAffiliatedFinancialCompanyDisplay', () => {
     expect(resolveAffiliatedFinancialCompanyDisplay(undefined)).toEqual({ kind: 'empty' })
   })
 })
+
+describe('resolveAffiliatedFinancialCompanyDisplay — BE 정규 문자열', () => {
+  it('미결연·후원사명·후원사·기타 입력값은 그대로 표시한다', () => {
+    for (const text of ['미결연', '스타벅스', '후원사', '우리은행']) {
+      expect(resolveAffiliatedFinancialCompanyDisplay(text)).toEqual({ kind: 'text', text })
+    }
+  })
+})

@@ -1,7 +1,7 @@
 /**
  * 1사1교 기관 신청 상세 — 결연 금융 회사 표시값.
- * 신청 폼(lessonReply) 값이 객체 문자열(`{companyType=partner, customCompanyName=}`·JSON)로 올 때
- * 신청 폼 라디오 옵션 기준으로 사람이 읽는 값으로 바꾼다.
+ * BE 정규 응답은 사람이 읽는 문자열(`미결연`·후원사명/`후원사`·기타 입력값)이며 그대로 통과한다.
+ * 아래 파싱은 예전 객체 문자열(`{companyType=partner, customCompanyName=}`·JSON) 응답용 fallback이다.
  * - partner: 프로그램 후원사명(신청 폼 라디오와 동일) → 호출부에서 sponsorId로 표시
  * - none: 미결연
  * - custom: 기타 입력값
