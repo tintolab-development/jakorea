@@ -1,7 +1,7 @@
 /**
- * 담당자 등록 모달
- * 프로그램 상세 > 담당자 정보 탭 > 등록 버튼
- * ContentModal 레이아웃(패딩 28/30/34) · 권한 설정 CmsRadio · 담당자명 CmsSelect
+ * 담당자 추가 등록 모달
+ * 프로그램 상세 > 담당자 정보 탭 > 담당자 등록
+ * ContentModal · 권한 설정 CmsRadio · 담당자 CmsSelect(검색)
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -9,6 +9,7 @@ import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton, CmsRadio, CmsSelect } from '@/shared/ui'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import type { ProgramRole } from '@/types/user'
 import {
   PROGRAM_ROLE_LABELS,
@@ -149,7 +150,7 @@ export function AddManagerModal({
         loading={confirmLoading}
         onClick={() => form.submit()}
       >
-        담당자 등록
+        추가 등록
       </CmsButton>
     </>
   )
@@ -159,29 +160,31 @@ export function AddManagerModal({
       <ContentModal
         open={open}
         onCancel={handleCancel}
-        title="담당자 등록"
+        title="담당자 추가 등록"
         width={600}
         footer={footer}
         className="add-manager-modal"
+        titleBodyGap="list-settings"
       >
         <div className="add-manager-modal__body">
           <Form<AddManagerModalFormValues>
             form={form}
             layout="vertical"
             className="add-manager-modal__form"
+            colon={false}
+            requiredMark={false}
             onFinish={values => {
               void handleSubmit(values)
             }}
             initialValues={{ managerPreset: undefined, role: 'OWNER' }}
-            requiredMark={false}
           >
             <Form.Item
               name="role"
-              label="권한 설정"
+              rules={[{ required: true, message: '권한을 선택해 주세요' }]}
               className="add-manager-modal__field"
               extra={viewerSelected ? CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE : undefined}
             >
-              <CmsRadio.Group className="add-manager-modal__role-radios" size="large">
+              <CmsRadio.Group label="권한 설정" required size="large">
                 {ROLE_OPTIONS.map(opt => (
                   <CmsRadio
                     key={opt.value}
@@ -199,15 +202,24 @@ export function AddManagerModal({
 
             <Form.Item
               name="managerPreset"
-              label="담당자 추가"
+              rules={[{ required: true, message: '추가 등록할 담당자를 선택해 주세요' }]}
               className="add-manager-modal__field"
             >
               <CmsSelect
-                placeholder="담당자로 추가할 관리자를 선택하세요"
+                label="담당자 추가"
+                required
+                inputSize="large"
+                placeholder="추가 등록할 담당자를 선택해 주세요"
                 width="100%"
                 withAllOption={false}
+                showSearch
+                optionFilterProp="label"
                 loading={candidatesLoading}
-                className="add-manager-modal__select"
+                suffixIcon={
+                  <span className="cms-field__icon" aria-hidden>
+                    <FieldSearchIcon />
+                  </span>
+                }
                 options={managerSelectOptions}
                 notFoundContent={
                   assignablePool.length === 0 && !candidatesLoading
