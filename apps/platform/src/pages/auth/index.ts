@@ -34,6 +34,7 @@ export {
   SignUpIdentityCallbackPage,
   SignUpGuardianIdentityCallbackPage,
 } from './sign-up/identity-pages'
+export { AgeTransitionIdentityCallbackPage } from './age-transition'
 export { RequiredPage } from './required'
 export {
   MemberConversionCompletePage,

@@ -36,17 +36,13 @@ describe('TT 문의처 등록→상세', () => {
     expect(program.contactEmail).toBe('ask@jakorea.org')
 
     const request = mapTrainedTeacherToCreateRequest(program)
+    expect(request.programType).toBe('TRAINED_TEACHER')
     expect(request.contactName).toBe('김문의')
     expect(request.contactPhone).toBe('02-1234-5678')
     expect(request.contactEmail).toBe('ask@jakorea.org')
-    expect(request.recruitments).toHaveLength(1)
-    expect(request.recruitments?.[0]).toMatchObject({
-      recruitmentType: 'PARTICIPANT',
-      targetType: 'ORGANIZATION',
-      contactName: '김문의',
-      contactPhone: '02-1234-5678',
-      contactEmail: 'ask@jakorea.org',
-    })
+    expect(request.applicationStartDate).toBeTruthy()
+    expect(request.applicationEndDate).toBeTruthy()
+    expect(request.recruitments).toBeUndefined()
   })
 
   it('모집 행 문의처가 비어 있어도 nested·컬럼 문의처를 상세에 보여 준다', () => {

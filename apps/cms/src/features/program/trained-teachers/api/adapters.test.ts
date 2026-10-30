@@ -1067,6 +1067,9 @@ describe('mapTrainedTeacherToCreateRequest BE registration contract', () => {
 
     const request = mapTrainedTeacherToCreateRequest(program)
     expect(request.programType).toBe('TRAINED_TEACHER')
+    expect(request.recruitments).toBeUndefined()
+    expect(request.applicationStartDate).toBe(program.applicationStartDate)
+    expect(request.applicationEndDate).toBe(program.applicationEndDate)
     expect(request.applicationTargetMode).toBe('ORGANIZATION')
     expect(request.autoApplyDefaultFormBindings).toBe(true)
     expect(request.businessStartDate).toBe(program.startDate)

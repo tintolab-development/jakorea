@@ -115,6 +115,7 @@ export function buildTrainedTeacherProgramFromCanonical(args: {
     type: common.educationForm ?? 'offline',
     format: 'workshop',
     category: 'school',
+    backendProgramType: 'TRAINED_TEACHER',
     description: title,
     startDate,
     endDate,
