@@ -11,11 +11,9 @@ import {
   insertTable,
   insertYoutubeFromUrl,
   EMPTY_RICH_TEXT_TABLE_COMMAND_AVAILABILITY,
-  RICH_TEXT_TABLE_EDIT_ACTIONS,
   getRichTextTableCommandAvailability,
   isRichTextTableActive,
   listRichTextTableToolbarItems,
-  richTextDocumentHasTable,
   runRichTextTableCommand,
   LINE_HEIGHT_OPTIONS,
   LIST_OPTIONS,
@@ -88,7 +86,6 @@ const EMPTY_TOOLBAR_STATE = {
   isBulletList: false,
   isOrderedList: false,
   isTable: false,
-  hasTable: false,
   tableCommandAvailability: EMPTY_RICH_TEXT_TABLE_COMMAND_AVAILABILITY,
 }
 
@@ -152,7 +149,6 @@ export function RichTextToolbar({
           isBulletList: ed.isActive('bulletList'),
           isOrderedList: ed.isActive('orderedList'),
           isTable: isRichTextTableActive(ed),
-          hasTable: richTextDocumentHasTable(ed),
           tableCommandAvailability: getRichTextTableCommandAvailability(ed),
         }
       },
@@ -372,8 +368,6 @@ export function RichTextToolbar({
 
   if (!editor) return null
 
-  const showTableActions = state.isTable || state.hasTable
-
   return (
     <div className="rich-text-toolbar-shell">
     <div className="rich-text-toolbar" role="toolbar" aria-label="서식">
@@ -570,25 +564,6 @@ export function RichTextToolbar({
         disabled={disabled}
       />
     </div>
-    {showTableActions ? (
-      <div className="rich-text-toolbar__table-actions" role="toolbar" aria-label="표 편집">
-        {RICH_TEXT_TABLE_EDIT_ACTIONS.map(action => (
-          <button
-            key={action.command}
-            type="button"
-            className="rich-text-toolbar__table-action"
-            disabled={
-              disabled || !state.isTable || state.tableCommandAvailability[action.command] === false
-            }
-            title={action.label}
-            onMouseDown={event => event.preventDefault()}
-            onClick={() => run(ed => runRichTextTableCommand(ed, action.command))}
-          >
-            {action.label}
-          </button>
-        ))}
-      </div>
-    ) : null}
     </div>
   )
 }

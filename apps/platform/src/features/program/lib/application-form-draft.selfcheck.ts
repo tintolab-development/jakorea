@@ -179,6 +179,40 @@ assert.equal(
   8,
 )
 
+const ujatDatesSplitRuntime = coerceApplicationFormDocument({
+  runtimeContext: {
+    audienceApplication: {
+      dynamicQuestions: {
+        'ujat-program-application-institution-seed-application-region': {
+          optionCount: 8,
+          resolved: true,
+        },
+      },
+    },
+  },
+  form: {
+    paragraphs: [
+      { id: 'ujat-program-application-institution-seed-preferred-education-schedule', kind: 'single_item' },
+    ],
+    runtimeContext: {
+      ujatPreferredEducationDateOptions: [
+        { id: 'h1:2026-04-03', date: '2026-04-03', label: '26년 4월 3일(금)' },
+      ],
+    },
+  },
+})
+const mergedUjatRuntime = ujatDatesSplitRuntime?.runtimeContext as {
+  audienceApplication?: { dynamicQuestions?: Record<string, { optionCount?: number }> }
+  ujatPreferredEducationDateOptions?: { id: string }[]
+}
+assert.equal(
+  mergedUjatRuntime.audienceApplication?.dynamicQuestions?.[
+    'ujat-program-application-institution-seed-application-region'
+  ]?.optionCount,
+  8,
+)
+assert.equal(mergedUjatRuntime.ujatPreferredEducationDateOptions?.[0]?.id, 'h1:2026-04-03')
+
 const draft = writingFormDraftFromApplicationForm(formDoc, {
   'program-application-trained-teachers-seed-personal-info': { bottomConsent: 'agree' },
 })
