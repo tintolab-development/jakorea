@@ -75,7 +75,7 @@ describe('unmaskRosterStudentForCertificateIssue', () => {
     invalidatePrivacyAccessLogsAfterCertificateIssue.mockReset()
   })
 
-  it('calls roster privacy-detail with 증명서 발급 and returns the matching row', async () => {
+  it('calls roster privacy-detail without a client reason and returns the matching row', async () => {
     fetchOrganizationStudentRosterPrivacyDetail.mockResolvedValue({
       revisionNo: 3,
       totalCount: 1,
@@ -100,10 +100,7 @@ describe('unmaskRosterStudentForCertificateIssue', () => {
       birthDate: '2010. 03. 15.',
     })
 
-    expect(fetchOrganizationStudentRosterPrivacyDetail).toHaveBeenCalledWith(
-      1691524,
-      CERTIFICATE_ISSUE_PRIVACY_ACCESS_PURPOSE
-    )
+    expect(fetchOrganizationStudentRosterPrivacyDetail).toHaveBeenCalledWith(1691524)
     expect(invalidatePrivacyAccessLogsAfterCertificateIssue).toHaveBeenCalled()
   })
 })

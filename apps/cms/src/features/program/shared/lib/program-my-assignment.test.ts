@@ -25,6 +25,30 @@ describe('program my-assignment capabilities', () => {
     expect(canListProgramManagers(viewerCeiling)).toBe(false)
   })
 
+  it('blocks unassigned and PROGRAM_VIEWER ceiling even if assignmentRole is PM', () => {
+    expect(
+      canRevealProgramGeneralPii({
+        assigned: false,
+        assignmentRole: null,
+        capabilities: [],
+      })
+    ).toBe(false)
+    expect(
+      canRevealProgramGeneralPii({
+        assigned: true,
+        assignmentRole: 'VIEWER',
+        capabilities: ['PROGRAM_VIEW'],
+      })
+    ).toBe(false)
+    expect(
+      canRevealProgramGeneralPii({
+        assigned: true,
+        assignmentRole: 'PM',
+        capabilities: ['PROGRAM_VIEW'],
+      })
+    ).toBe(false)
+  })
+
   it('lets PARTNER read general fields and not account or the manager list', () => {
     const partner = {
       assigned: true,
