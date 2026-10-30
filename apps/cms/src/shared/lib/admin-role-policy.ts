@@ -249,10 +249,15 @@ export function canAdminAction(input: {
       }
       return !isReadOnlyAdminRoleCode(roleCode)
     case 'pii':
-      return !isReadOnlyAdminRoleCode(roleCode)
+      // 회원 관리 일반 개인정보. 프로그램 상세 원문은 canRevealProgramPrivacy.
+      return (
+        roleCode === 'MASTER' ||
+        roleCode === 'ACCOUNTING_MANAGER' ||
+        roleCode === 'PROGRAM_MANAGER'
+      )
     case 'piiRrn':
     case 'piiAccount':
-      return roleCode === 'MASTER' || isCmsOperableProgramOwnerRole(roleCode)
+      return roleCode === 'MASTER'
   }
 }
 

@@ -8,6 +8,7 @@
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 
 export const BULK_TRANSFER_HEADER_LABELS = [
   '입금은행',
@@ -48,9 +49,9 @@ function payoutMetaFromRow(
   if (mode === 'preview') {
     return {
       bank: row.bankName ?? '',
-      acctNum: row.maskedAccountNo ?? '',
-      holder: row.accountHolder ?? '',
-      mobile: row.recipientMobile ?? '',
+      acctNum: MASKING_POLICY.accountNumber(row.maskedAccountNo ?? ''),
+      holder: MASKING_POLICY.accountHolderName(row.accountHolder ?? ''),
+      mobile: MASKING_POLICY.phone(row.recipientMobile ?? ''),
     }
   }
   return {

@@ -29,12 +29,12 @@ const merged: Omit<User, 'password'> = {
 }
 
 describe('stripRestrictedPiiForRole', () => {
-  it('마스터·PM은 계좌 원문을 유지한다', () => {
+  it('계좌 원문은 MASTER만 유지하고 PM은 이전 마스킹 값을 남긴다', () => {
     expect(stripRestrictedPiiForRole(merged, previous, 'MASTER').instructorInfo?.accountNumber).toBe(
       '1002-859-723089'
     )
     expect(stripRestrictedPiiForRole(merged, previous, 'PM').instructorInfo?.accountNumber).toBe(
-      '1002-859-723089'
+      '***********'
     )
   })
 

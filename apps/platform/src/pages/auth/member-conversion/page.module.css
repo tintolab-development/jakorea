@@ -1,0 +1,71 @@
+.page {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: center;
+  padding: var(--spacing-40) var(--auth-page-padding-x) var(--spacing-56);
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  max-width: 1440px;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.illustration {
+  display: flex;
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy {
+  display: flex;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: center;
+  padding-inline: var(--spacing-8);
+  text-align: center;
+}
+
+.title,
+.description {
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  width: min(100%, var(--width-page-sm));
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-56);
+}
+
+@media (--bp-pc-up) {
+  .page {
+    padding-top: var(--spacing-100);
+    padding-bottom: var(--spacing-100);
+  }
+
+  .title {
+    white-space: nowrap;
+  }
+}

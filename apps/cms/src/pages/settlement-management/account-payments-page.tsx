@@ -22,7 +22,10 @@ import {
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
 import { waitForSettlementExportDownload } from '@/features/settlement-management/api/settlement-api-client'
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
+import type {
+  SettlementExportHistoryResponse,
+  SettlementExportRequest,
+} from '@/shared/api/generated/settlement/schemas'
 import { pickEligibleAccountPaymentFormIssueRows } from './resolve-toolbar-form-issue-rows'
 import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
 import {
@@ -36,7 +39,11 @@ import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-a
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessAccountPayments } from '@/shared/lib/account-payments-access'
-import { showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
+import {
+  resolveAdminRoleCodeFromUser,
+  showAdminAccessDeniedAlert,
+} from '@/shared/lib/admin-role-policy'
+import { RawSettlementExportApprovalModal } from './raw-settlement-export-approval-modal'
 import { ACCOUNT_PAYMENT_LIST_FILTER_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import {
   FilterTableLayout,
@@ -203,6 +210,11 @@ function useCalendarYear(): number {
 export default function AccountPaymentsPage() {
   const { user } = useAuthStore()
   const canManageAccountPayments = canAccessAccountPayments(user)
+  const sessionRoleCode = resolveAdminRoleCodeFromUser(user)
+  const [rawExport, setRawExport] = useState<{
+    mode: 'request' | 'approve'
+    kind: 'bulk-transfer' | 'tax-report'
+  } | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const calendarYear = useCalendarYear()
   const tabYears = useMemo(
@@ -285,6 +297,8 @@ export default function AccountPaymentsPage() {
   )
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
+  const canRequestRawExport = accountPaymentsRemote && sessionRoleCode === 'ACCOUNTING_MANAGER'
+  const canApproveRawExport = accountPaymentsRemote && sessionRoleCode === 'MASTER'
   const markPaidMutation = useMarkAccountPaymentPaidMutation()
   const bulkTransferExportMutation = useBulkTransferExportMutation()
   const taxReportExportMutation = useTaxReportExportMutation()
@@ -575,6 +589,11 @@ export default function AccountPaymentsPage() {
     []
   )
 
+  const rawExportSelectedRows = useMemo(() => {
+    const keySet = new Set(selectedRowKeys.map(String))
+    return filteredRows.filter(row => keySet.has(String(row.id)))
+  }, [filteredRows, selectedRowKeys])
+
   /** 화면에는 `총 n건만` 표기. 기획상 집계 구간은 전년 12월 ~ 당해 12월이며 연도가 바뀌면 갱신(API·데이터 연동 시 반영). */
   const total = filteredRows.length
 
@@ -651,6 +670,25 @@ export default function AccountPaymentsPage() {
       notifyExportError,
       taxReportExportMutation,
     ]
+  )
+
+  const submitPreparedExport = useCallback(
+    async (kind: 'bulk-transfer' | 'tax-report', body: SettlementExportRequest) => {
+      if (kind === 'bulk-transfer') return bulkTransferExportMutation.mutateAsync(body)
+      return taxReportExportMutation.mutateAsync(body)
+    },
+    [bulkTransferExportMutation, taxReportExportMutation]
+  )
+
+  const openRawExportRequest = useCallback(
+    (kind: 'bulk-transfer' | 'tax-report') => {
+      if (!canRequestRawExport) {
+        showAdminAccessDeniedAlert()
+        return
+      }
+      setRawExport({ mode: 'request', kind })
+    },
+    [canRequestRawExport]
   )
 
   const openBulkTransferPreview = useCallback(() => {
@@ -846,9 +884,51 @@ export default function AccountPaymentsPage() {
         >
           세금 신고 양식 발급
         </FilterTableToolbarButton>
+        {canRequestRawExport ? (
+          <>
+            <FilterTableToolbarButton
+              variant="secondary"
+              width="auto"
+              style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+              type="button"
+              onClick={() => openRawExportRequest('bulk-transfer')}
+            >
+              대량이체 전체 원본 승인
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
+              variant="secondary"
+              width="auto"
+              style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+              type="button"
+              onClick={() => openRawExportRequest('tax-report')}
+            >
+              세금신고 전체 원본 승인
+            </FilterTableToolbarButton>
+          </>
+        ) : null}
+        {canApproveRawExport ? (
+          <FilterTableToolbarButton
+            variant="secondary"
+            width="auto"
+            style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+            type="button"
+            onClick={() =>
+              setRawExport({ mode: 'approve', kind: 'bulk-transfer' })
+            }
+          >
+            원본 양식 승인
+          </FilterTableToolbarButton>
+        ) : null}
       </>
     ),
-    [viewMode, openBulkTransferPreview, openTaxFilingPreview]
+    [
+      viewMode,
+      openBulkTransferPreview,
+      openTaxFilingPreview,
+      canRequestRawExport,
+      canApproveRawExport,
+      openRawExportRequest,
+    ]
   )
 
   const accountPaymentsAfterActions = useMemo(
@@ -1134,6 +1214,16 @@ export default function AccountPaymentsPage() {
         context={accountPaymentCompleteSuccessContext}
         onCancel={closeAccountPaymentCompleteSuccess}
         onIssueBulkTransfer={handleIssueBulkTransferFromSuccessModal}
+      />
+
+      <RawSettlementExportApprovalModal
+        open={rawExport != null}
+        mode={rawExport?.mode ?? 'request'}
+        kind={rawExport?.kind ?? 'bulk-transfer'}
+        sessionAdminAccountId={user?.adminAccountId ?? null}
+        selectedRows={rawExportSelectedRows}
+        onRequestExport={submitPreparedExport}
+        onClose={() => setRawExport(null)}
       />
 
       <InstructorPaymentStatementBlockedModal

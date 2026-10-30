@@ -15,6 +15,8 @@ export const platformQueryKeys = {
     me: () => [...platformQueryKeys.auth.all(), 'me'] as const,
     /** 회원 포탈 내정보 — GET /api/portal/me/profile */
     memberProfile: () => [...platformQueryKeys.auth.all(), 'member-profile'] as const,
+    /** AGE14 전환 상태 — GET /api/portal/me/age-transition */
+    ageTransition: () => [...platformQueryKeys.auth.all(), 'age-transition'] as const,
     /** 회원가입 이메일 가용성 (mutation 키·캐시 무효화용) */
     emailAvailability: (email: string) =>
       [...platformQueryKeys.auth.all(), 'email-availability', email] as const,

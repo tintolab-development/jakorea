@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useState, useEffect } from 'react'
 import axios from 'axios'
 import { useQueryClient } from '@tanstack/react-query'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import { useSearchParams } from 'react-router-dom'
 import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -73,6 +74,7 @@ import { ApplicantGeneralIndividualBasicInfo } from '@/features/program/general/
 import { ApplicantGeneralInstructorBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import {
   PersonalInfoRevealButton,
   PERSONAL_INFO_REVEAL_BUTTON_LABEL,
@@ -96,7 +98,7 @@ export type ApplicantType =
 
 export type ApplicantDetailVariant = 'legacy' | 'general'
 
-const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
+const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
   "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
@@ -143,9 +145,11 @@ type ApplicantHeaderActionItem = {
 function ApplicantHeaderActionsExtra({
   items,
   personalInfoRevealed,
+  programPrivacyPending = false,
 }: {
   items: ApplicantHeaderActionItem[]
   personalInfoRevealed: boolean
+  programPrivacyPending?: boolean
 }) {
   return (
     <Space size="small" className="applicant-contents__header-actions">
@@ -158,7 +162,7 @@ function ApplicantHeaderActionsExtra({
             cmsVariant={a.variant}
             cmsSize="large"
             width={a.width ?? (a.size === 'filter-wide' ? 180 : CMS_ACTION_BUTTON_WIDTH)}
-            disabled={a.disabled}
+            disabled={a.disabled || programPrivacyPending}
             onClick={a.onClick ?? (() => {})}
           />
         ) : a.key === 'edit-info' ? (
@@ -1198,14 +1202,16 @@ export function ApplicantsDetailContents({
         reason,
         Number.isFinite(programIdNumber) ? programIdNumber : undefined
       )
-      queryClient.setQueryData(
+      const safeDetail = cacheProjectedProgramPrivacy(
+        queryClient,
         generalApplicationsQueryKeys.organizationDetail(applicationId),
+        program?.id ?? '',
         detail
       )
       return {
-        name: detail.teacherName?.trim() || undefined,
-        phone: detail.teacherPhone?.trim() || undefined,
-        email: detail.teacherEmail?.trim() || undefined,
+        name: safeDetail.teacherName?.trim() || undefined,
+        phone: safeDetail.teacherPhone?.trim() || undefined,
+        email: safeDetail.teacherEmail?.trim() || undefined,
       }
     },
     [institutionData?.id, program?.id, queryClient]
@@ -1233,20 +1239,22 @@ export function ApplicantsDetailContents({
         reason,
         Number.isFinite(programIdNumber) ? programIdNumber : undefined
       )
-      queryClient.setQueryData(
+      const safeDetail = cacheProjectedProgramPrivacy(
+        queryClient,
         generalApplicationsQueryKeys.instructorDetail(applicationId),
+        program?.id ?? '',
         detail
       )
       if (instructorData) {
-        const mapped = mapInstructorApplicationDetailToApplicantRow(detail, instructorData)
+        const mapped = mapInstructorApplicationDetailToApplicantRow(safeDetail, instructorData)
         onInstructorDetailSaved?.(mapped)
       }
       return {
-        name: detail.instructorName?.trim() || undefined,
-        phone: detail.contact?.trim() || undefined,
-        email: detail.email?.trim() || undefined,
+        name: safeDetail.instructorName?.trim() || undefined,
+        phone: safeDetail.contact?.trim() || undefined,
+        email: safeDetail.email?.trim() || undefined,
         address:
-          [detail.homeAddress, detail.homeAddressDetail]
+          [safeDetail.homeAddress, safeDetail.homeAddressDetail]
             .map(part => part?.trim())
             .filter(Boolean)
             .join(' ') || undefined,
@@ -1310,7 +1318,11 @@ export function ApplicantsDetailContents({
     revealWithReason,
     openPersonalInfoRevealConfirm: onRevealPersonalInfo,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: programId,
+    resolveProgramRole: () => resolveSessionProgramRole(programId),
     resolveAccessItem: resolveApplicantPersonalInfoAccessItem,
     resolveMemberId: () => {
       if (isIndividual) return individualData?.memberId
@@ -1446,6 +1458,7 @@ export function ApplicantsDetailContents({
       <ApplicantHeaderActionsExtra
         items={visibleItems}
         personalInfoRevealed={personalInfoRevealed}
+        programPrivacyPending={programPrivacyPending}
       />
     )
   }, [
@@ -1484,6 +1497,7 @@ export function ApplicantsDetailContents({
     onCancelFinalPass,
     onCancelFinalFail,
     personalInfoRevealed,
+    programPrivacyPending,
     individualData,
     institutionData,
     instructorData,

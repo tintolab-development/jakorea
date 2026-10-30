@@ -19,7 +19,7 @@ function instructor(partial: Partial<Omit<User, 'password'>>): Omit<User, 'passw
 }
 
 describe('formatInstructorSettlementAccountParts', () => {
-  it('마스킹 시 스크린샷 형식: 은행명 원문 · 계좌 전체 마스킹 · 예금주 성만', () => {
+  it('마스킹 시 은행명 원문 · 계좌 전체 마스킹 · 예금주 성과 마지막 글자', () => {
     const user = instructor({
       instructorInfo: {
         bankName: '농협',
@@ -28,7 +28,7 @@ describe('formatInstructorSettlementAccountParts', () => {
         isBusinessIncome: false,
       },
     })
-    expect(instructorBankLine(user, false)).toBe('농협 ******-**-****** | 박**')
+    expect(instructorBankLine(user, false)).toBe('농협 ******-**-****** | 박*토')
   })
 
   it('개인정보 확인 시에는 원문을 노출한다', () => {
@@ -43,7 +43,7 @@ describe('formatInstructorSettlementAccountParts', () => {
     expect(instructorBankLine(user, true)).toBe('농협 123456-12-123456 | 박틴토')
   })
 
-  it('복성 예금주는 앞 2글자를 성으로 노출한다', () => {
+  it('복성 예금주는 앞 2글자와 마지막 글자를 남긴다', () => {
     const parts = formatInstructorSettlementAccountParts({
       bankName: '신한',
       accountNumber: '110',
@@ -51,7 +51,7 @@ describe('formatInstructorSettlementAccountParts', () => {
     })
     expect(parts).toEqual({
       left: '신한 ***',
-      holder: '남궁**',
+      holder: '남궁*수',
     })
   })
 })

@@ -188,6 +188,26 @@ const geminiNested = mapTeacherInstitutionFromApplicationAnswers(
   },
   'gemini',
 )
+const geminiOrgOverlayName = mapTeacherInstitutionFromApplicationAnswers(
+  {
+    institutionName: 'QA 제휴학교',
+    'gemini-vt-inst-seed-training-info': {
+      organizationRegion: '서울특별시 중구 세종대로 110',
+      regionLabel: '서울특별시 중구 세종대로 110',
+      studentCount: 15,
+    },
+    'gemini-vt-inst-seed-contact': { jobTitle: '13131', subject: '1532153' },
+  },
+  'gemini',
+)
+assert.equal(geminiOrgOverlayName!.name, 'QA 제휴학교')
+assert.equal(geminiOrgOverlayName!.studentCount, '15명')
+assert.equal(geminiOrgOverlayName!.jobTitle, '13131')
+assert.equal(geminiOrgOverlayName!.subject, '1532153')
+assert.equal(geminiOrgOverlayName!.address, '서울특별시 중구 세종대로 110')
+assert.equal(geminiOrgOverlayName!.grade, '')
+assert.equal(geminiOrgOverlayName!.addressDetail, '')
+
 assert.equal(geminiNested!.name, '승인된 기관')
 assert.equal(geminiNested!.grade, '2학년')
 assert.equal(geminiNested!.addressDetail, '3층')

@@ -8,6 +8,7 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
 import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type {
   AccountPaymentDetailResponse,
@@ -207,9 +208,8 @@ function formatHomeAddressDisplay(
 }
 
 /**
- * 지급 상세에 PII가 없으므로 instructor privacy unmask 응답으로 채운다.
- * (상세 화면은 마스킹 UI 없음 — 진입 시 원문 + 고정 목적 감사 로그)
- * memberId 없음·2차 API 실패 시에만 `-` 유지.
+ * 이미 마스킹된 강사 회원 스냅샷을 표시 칸에 합친다.
+ * 계좌 지급 화면의 조회 경로는 `applyMaskedInstructorMemberToAccountPaymentDetail`을 쓴다.
  */
 export function applyInstructorMemberPiiToAccountPaymentDetail(
   detail: AccountPaymentStatusDetail,
@@ -240,17 +240,48 @@ export function applyInstructorMemberPiiToAccountPaymentDetail(
   }
 }
 
-/** instructor unmask 응답의 정산 계좌 원문 (sensitiveAccount 보완용) */
-function resolveInstructorSettlementAccount(
+function maskPlainOrKeep(value: string | null | undefined, mask: (input: string) => string): string {
+  const raw = value?.trim()
+  if (!raw) return '-'
+  const masked = mask(raw)
+  if (masked.includes('*')) return masked
+  return '***'
+}
+
+/**
+ * 강사 회원 마스킹 GET 값만 계좌 지급 상세의 일반 개인정보 칸에 넣는다.
+ * 응답이 원문이면 다시 마스킹한다. 계좌번호는 여기서 채우지 않는다.
+ */
+export function applyMaskedInstructorMemberToAccountPaymentDetail(
+  detail: AccountPaymentStatusDetail,
   instructor: InstructorMemberDetailResponse | null | undefined
-): { bankName?: string; accountNumber?: string; accountHolder?: string } | null {
-  const settlement = instructor?.settlement
-  if (!settlement) return null
-  const bankName = settlement.bankName?.trim()
-  const accountNumber = settlement.accountNumber?.trim()
-  const accountHolder = settlement.accountHolder?.trim()
-  if (!bankName && !accountNumber && !accountHolder) return null
-  return { bankName, accountNumber, accountHolder }
+): AccountPaymentStatusDetail {
+  if (!instructor) return detail
+  const member = instructor.member
+  const address = formatHomeAddressDisplay(instructor.profile?.homeAddress)
+  const birthApi = toApiBirthDate(member?.birthDate)
+  const birthYear =
+    member?.birthYear ?? (birthApi ? Number(birthApi.slice(0, 4)) : undefined)
+  const genderPart = member?.gender?.trim() ? '**' : '-'
+  const birthPart =
+    birthYear != null && Number.isFinite(birthYear) ? `${birthYear}. **. **` : '-'
+  const genderBirthDisplay =
+    genderPart === '-' && birthPart === '-' ? '-' : `${genderPart} | ${birthPart}`
+
+  return {
+    ...detail,
+    basic: {
+      ...detail.basic,
+      genderBirthDisplay:
+        member != null ? genderBirthDisplay : detail.basic.genderBirthDisplay,
+      phoneDisplay: member ? maskPlainOrKeep(member.phone, MASKING_POLICY.phone) : detail.basic.phoneDisplay,
+      emailDisplay: member ? maskPlainOrKeep(member.email, MASKING_POLICY.email) : detail.basic.emailDisplay,
+      addressDisplay:
+        instructor.profile?.homeAddress != null
+          ? maskPlainOrKeep(address === '-' ? undefined : address, MASKING_POLICY.address)
+          : detail.basic.addressDisplay,
+    },
+  }
 }
 
 /** `payment.memberId` → `settlement.instructorId` → 목록 row 순 */
@@ -300,7 +331,7 @@ function buildAccountPaymentStatusDetail(
     basic: {
       nameKo: row.instructorName,
       nameEn: '-',
-      // PII는 AccountPaymentDetailResponse에 없음 — instructor 2차 조회로 채움
+      // 성별·생년월일·연락처·이메일·주소는 계좌 지급 GET에 없다. BE_HANDOFF_REQUIRED.
       genderBirthDisplay: '-',
       scheduleChangeCancelCount: undefined,
       phoneDisplay: '-',
@@ -365,20 +396,17 @@ export function mapAccountPaymentDetailRemote(
 }
 
 /**
- * `GET /api/admin/account-payments/{id}` + (선택) instructor privacy unmask로 구성.
- * PII(성별·연락처·이메일·자택)는 지급 상세에 없음 → instructor 원문 응답에서 compose.
- * 계좌번호는 sensitiveAccount 우선, 없으면 instructor settlement/bankAccounts 원문으로 보완.
- * settlement embed가 없어도(memberId만 있으면) PII 조회는 스킵하지 않는다.
+ * `GET /api/admin/account-payments/{id}`만 사용한다.
+ * 성별·생년월일·연락처·이메일·주소는 이 응답에 없으면 `-`로 둔다.
+ * 계좌 원문은 sensitiveAccount만 사용한다.
  */
 export function mapAccountPaymentDetailFromGetApi(
   row: AccountPaymentRow,
-  detail: AccountPaymentDetailResponse,
-  instructorDetail?: InstructorMemberDetailResponse | null
+  detail: AccountPaymentDetailResponse
 ): AccountPaymentStatusDetail {
   const payment = detail.payment
   const settlement = detail.settlement ?? undefined
   const sensitiveAccount = detail.sensitiveAccount
-  const instructorBank = resolveInstructorSettlementAccount(instructorDetail)
 
   const mergedRow: AccountPaymentRow = {
     ...row,
@@ -403,21 +431,11 @@ export function mapAccountPaymentDetailFromGetApi(
     transferScheduledDate:
       payment?.scheduledPaymentDate ?? settlement?.expectedTransferDate ?? row.transferScheduledDate,
     paidAt: payment?.paidAt ?? settlement?.paidAt ?? row.paidAt,
-    bankName:
-      sensitiveAccount?.bankName?.trim() ||
-      payment?.bankName ||
-      instructorBank?.bankName ||
-      row.bankName,
+    bankName: sensitiveAccount?.bankName?.trim() || payment?.bankName || row.bankName,
     maskedAccountNo:
-      sensitiveAccount?.accountNo?.trim() ||
-      payment?.maskedAccountNo ||
-      instructorBank?.accountNumber ||
-      row.maskedAccountNo,
+      sensitiveAccount?.accountNo?.trim() || payment?.maskedAccountNo || row.maskedAccountNo,
     accountHolder:
-      sensitiveAccount?.accountHolder?.trim() ||
-      payment?.accountHolder ||
-      instructorBank?.accountHolder ||
-      row.accountHolder,
+      sensitiveAccount?.accountHolder?.trim() || payment?.accountHolder || row.accountHolder,
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(payment?.paymentStatus),
     instructorMemberId:
       resolveAccountPaymentMemberId(detail, row) ?? row.instructorMemberId,
@@ -437,5 +455,5 @@ export function mapAccountPaymentDetailFromGetApi(
         }
       )
 
-  return applyInstructorMemberPiiToAccountPaymentDetail(base, instructorDetail)
+  return base
 }

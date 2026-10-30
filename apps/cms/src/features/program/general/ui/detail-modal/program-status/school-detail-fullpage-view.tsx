@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
@@ -120,6 +121,7 @@ import {
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-general-program-posts-surveys'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import {
@@ -367,7 +369,7 @@ function formatWaitingInstructorHopeScheduleExport(row: WaitingInstructorRow): s
   return `${dateTime} | ${session}`
 }
 
-const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
+const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
   "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
@@ -926,12 +928,14 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           reason,
           Number.isFinite(programIdNumber) ? programIdNumber : undefined
         )
-        queryClient.setQueryData(
+        const safeDto = cacheProjectedProgramPrivacy(
+          queryClient,
           generalApplicationsQueryKeys.organizationDetailInProgram(programId, orgAppId),
+          program.id,
           dto
         )
-        queryClient.setQueryData(generalApplicationsQueryKeys.organizationDetail(orgAppId), dto)
-        return dto
+        queryClient.setQueryData(generalApplicationsQueryKeys.organizationDetail(orgAppId), safeDto)
+        return safeDto
       }
       if (row.teacherMemberId == null) {
         throw new Error('기관 신청 ID 또는 담당 교사 회원 ID가 없습니다.')
@@ -974,7 +978,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     revealWithReason,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: programId,
+    resolveProgramRole: () => resolveSessionProgramRole(programId),
     resolveAccessItem: resolvePersonalInfoAccessItem,
     revealPersonalInfo: revealInstitutionTeacherPersonalInfo,
     onPrivacyUnmasked: applyInstitutionTeacherPersonalInfo,
@@ -2389,7 +2397,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   코멘트 작성
                 </CmsButton>
               ) : null}
-              <PersonalInfoRevealButton
+              <PersonalInfoRevealButton disabled={programPrivacyPending}
                 labelMode="toggle"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"

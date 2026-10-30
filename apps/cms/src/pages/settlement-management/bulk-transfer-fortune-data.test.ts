@@ -58,6 +58,6 @@ describe('buildBulkTransferSheetRows', () => {
 
     expect(line?.depositAccount).toBe('123-****-5678')
     expect(line?.expectedDepositor).toBe('강**')
-    expect(line?.mobile).toBe('01012345678')
+    expect(line?.mobile).toBe('010-****-5678')
   })
 })

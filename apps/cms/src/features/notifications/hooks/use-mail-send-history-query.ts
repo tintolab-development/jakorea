@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { markNotificationDeliveryListAwaitingDispatch } from '@/features/notifications/api/delivery-list-refresh'
+import { notificationDeliveryDetailQueryCache } from '@/features/notifications/api/notification-delivery-detail-cache'
 import {
   getMailSendHistoryDetail,
   getMailSendHistoryList,
@@ -23,12 +25,22 @@ export function useMailSendHistoryQuery(searchParams: URLSearchParams, enabled =
 }
 
 export function useMailSendHistoryDetailQuery(deliveryId: string | null, enabled = true) {
+  const queryClient = useQueryClient()
+  const id = deliveryId ?? ''
+  const queryKey = notificationsQueryKeys.mailSendHistory.detail(id)
+  useEffect(() => {
+    if (!id) return
+    return () => {
+      queryClient.removeQueries({
+        queryKey: notificationsQueryKeys.mailSendHistory.detail(id),
+      })
+    }
+  }, [id, queryClient])
   return useQuery({
-    queryKey: notificationsQueryKeys.mailSendHistory.detail(deliveryId ?? ''),
+    queryKey,
     queryFn: () => getMailSendHistoryDetail(deliveryId!),
     enabled: enabled && Boolean(deliveryId),
-    staleTime: 30_000,
-    retry: false,
+    ...notificationDeliveryDetailQueryCache,
   })
 }
 

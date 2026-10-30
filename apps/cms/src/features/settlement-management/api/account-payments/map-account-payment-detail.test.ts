@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyInstructorMemberPiiToAccountPaymentDetail,
+  applyMaskedInstructorMemberToAccountPaymentDetail,
   mapAccountPaymentDetailFromGetApi,
   resolveAccountPaymentMemberId,
 } from '@/features/settlement-management/api/account-payments/map-account-payment-detail'
@@ -108,6 +109,28 @@ describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
     expect(mapped.basic.addressDisplay).toBe('서울특별시 강서구 마스킹')
   })
 
+  it('회원 상세 원문은 마스킹하고 계좌 칸은 유지한다', () => {
+    const instructor: InstructorMemberDetailResponse = {
+      member: {
+        memberId: 190001,
+        name: '이건희',
+        gender: 'M',
+        birthDate: '1994-03-02',
+        phone: '010-1234-5425',
+        email: 'teacher.instruct@test.com',
+      },
+      profile: {
+        homeAddress: { line: '서울특별시 강서구 화곡동 12', detail: '101호' },
+      },
+    }
+    const mapped = applyMaskedInstructorMemberToAccountPaymentDetail(emptyDetailBasic(), instructor)
+    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994. **. **')
+    expect(mapped.basic.phoneDisplay).toBe('010-****-5425')
+    expect(mapped.basic.emailDisplay).toContain('***@')
+    expect(mapped.basic.addressDisplay).not.toContain('101호')
+    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민은행 ****')
+  })
+
   it('instructor 없으면 PII를 -로 유지한다', () => {
     const mapped = applyInstructorMemberPiiToAccountPaymentDetail(emptyDetailBasic(), null)
     expect(mapped.basic.genderBirthDisplay).toBe('-')
@@ -118,7 +141,7 @@ describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
 })
 
 describe('mapAccountPaymentDetailFromGetApi', () => {
-  it('settlement embed + sensitiveAccount + instructor PII를 compose한다', () => {
+  it('settlement embed와 sensitiveAccount만 반영하고 강사 unmask PII는 채우지 않는다', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {
         accountPaymentId: 185956,
@@ -146,25 +169,13 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
       },
     }
 
-    const instructor: InstructorMemberDetailResponse = {
-      member: {
-        gender: '*',
-        birthYear: 1994,
-        phone: '010-****-5425',
-        email: 'teacher.instruc***@test.com',
-      },
-      profile: {
-        homeAddress: { line: '서울특별시 강서구', detail: '마스킹' },
-      },
-    }
-
-    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail, instructor)
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
 
     expect(mapped.basic.nameKo).toBe('이건희')
-    expect(mapped.basic.genderBirthDisplay).not.toBe('-')
-    expect(mapped.basic.phoneDisplay).toBe('010-****-5425')
-    expect(mapped.basic.emailDisplay).toBe('teacher.instruc***@test.com')
-    expect(mapped.basic.addressDisplay).toBe('서울특별시 강서구 마스킹')
+    expect(mapped.basic.genderBirthDisplay).toBe('-')
+    expect(mapped.basic.phoneDisplay).toBe('-')
+    expect(mapped.basic.emailDisplay).toBe('-')
+    expect(mapped.basic.addressDisplay).toBe('-')
     expect(mapped.basic.settlementAccountBankNumberPart).toContain('국민은행')
     expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
     expect(mapped.blocks[0]?.institutionName).toBe('서울 성동고등학교')
@@ -184,14 +195,13 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
 
     const mapped = mapAccountPaymentDetailFromGetApi(
       { ...baseRow, paidAt: '2026-10-15T15:00:00.000Z' },
-      detail,
-      null
+      detail
     )
 
     expect(mapped.basic.paidAtDisplay).toBe('-')
   })
 
-  it('settlement == null이어도 instructor PII는 채운다', () => {
+  it('settlement가 없어도 강사 unmask로 성별·연락처를 채우지 않는다', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {
         accountPaymentId: 185956,
@@ -207,28 +217,16 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
       },
     }
 
-    const instructor: InstructorMemberDetailResponse = {
-      member: {
-        gender: 'M',
-        birthDate: '1994-07-22',
-        phone: '010-1234-5678',
-        email: 'a@test.com',
-      },
-      profile: {
-        homeAddress: { line: '서울시 중구' },
-      },
-    }
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
 
-    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail, instructor)
-
-    expect(mapped.basic.genderBirthDisplay).toBe('남성 | 1994. 07. 22')
-    expect(mapped.basic.phoneDisplay).toBe('010-1234-5678')
-    expect(mapped.basic.emailDisplay).toBe('a@test.com')
-    expect(mapped.basic.addressDisplay).toBe('서울시 중구')
+    expect(mapped.basic.genderBirthDisplay).toBe('-')
+    expect(mapped.basic.phoneDisplay).toBe('-')
+    expect(mapped.basic.emailDisplay).toBe('-')
+    expect(mapped.basic.addressDisplay).toBe('-')
     expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
   })
 
-  it('sensitiveAccount.accountNo가 없으면 instructor settlement 계좌번호로 보완한다', () => {
+  it('sensitiveAccount.accountNo가 없으면 강사 계좌 원문으로 보완하지 않는다', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {
         accountPaymentId: 185956,
@@ -243,18 +241,9 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
       },
     }
 
-    const instructor: InstructorMemberDetailResponse = {
-      member: { name: '이건희' },
-      settlement: {
-        bankName: '국민은행',
-        accountNumber: '123456789012',
-        accountHolder: '이건희',
-      },
-    }
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
 
-    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail, instructor)
-
-    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민은행 123456789012')
+    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민은행')
     expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
   })
 })

@@ -141,6 +141,29 @@ describe('collectProgramInlineImageFileObjectIds', () => {
       })
     ).toEqual([2056225])
   })
+
+  it('루트 모집안내에만 이미지가 있고 모집 행 HTML이 null이어도 id를 모은다', () => {
+    expect(
+      collectProgramInlineImageFileObjectIds({
+        recruitmentGuide:
+          '<p><img src="/api/portal/public/files/2056219/content?inline=1" alt="jakorea.png" /></p>',
+        recruitments: [
+          {
+            recruitmentId: 186912,
+            applicationTypes: ['ORGANIZATION'],
+            recruitmentGuide: null,
+            additionalContentHtml: null,
+          },
+          {
+            recruitmentId: 186913,
+            applicationTypes: ['INSTRUCTOR'],
+            recruitmentGuide: null,
+            additionalContentHtml: null,
+          },
+        ],
+      })
+    ).toEqual([2056219])
+  })
 })
 
 describe('pickProgramInlineImageHtmlPatch', () => {

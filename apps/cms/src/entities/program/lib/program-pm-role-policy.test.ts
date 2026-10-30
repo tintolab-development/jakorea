@@ -32,10 +32,11 @@ describe('canAssignProgramRoleToCmsAdmin', () => {
     expect(canAssignProgramRoleToCmsAdmin('MASTER', 'ASSISTANT')).toBe(false)
   })
 
-  it('allows OWNER/PARTNER only for accounting·program manager roles', () => {
+  it('allows OWNER, PARTNER, and program VIEWER for accounting·program manager roles', () => {
     expect(canAssignProgramRoleToCmsAdmin('PROGRAM_MANAGER', 'OWNER')).toBe(true)
     expect(canAssignProgramRoleToCmsAdmin('ACCOUNTING_MANAGER', 'PARTNER')).toBe(true)
-    expect(canAssignProgramRoleToCmsAdmin('PROGRAM_MANAGER', 'ASSISTANT')).toBe(false)
+    expect(canAssignProgramRoleToCmsAdmin('PROGRAM_MANAGER', 'ASSISTANT')).toBe(true)
+    expect(canAssignProgramRoleToCmsAdmin('ACCOUNTING_MANAGER', 'ASSISTANT')).toBe(true)
     expect(canAssignProgramRoleToCmsAdmin('PM', 'OWNER')).toBe(true)
     expect(canAssignProgramRoleToCmsAdmin('MIDDLE', 'OWNER')).toBe(true)
     expect(canAssignProgramRoleToCmsAdmin(undefined, 'OWNER')).toBe(true)

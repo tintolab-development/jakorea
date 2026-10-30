@@ -450,7 +450,7 @@ describe('mapPatchUserBasicInfoToAdminAccountApiRequest', () => {
 
     expect(body).toEqual({
       name: '홍관리',
-      reason: 'CMS 관리자 회원 정보 수정',
+      reason: '회원 정보 수정',
     })
     expect('termsAgreements' in body).toBe(false)
   })

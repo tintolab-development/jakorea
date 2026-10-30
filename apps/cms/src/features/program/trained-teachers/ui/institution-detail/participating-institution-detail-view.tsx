@@ -60,6 +60,7 @@ import {
   type ActivityWithdrawScheduleModalPayload,
 } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
@@ -357,7 +358,11 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     personalInfoRevealed,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: programId,
+    resolveProgramRole: () => resolveSessionProgramRole(programId),
     resolveAccessItem: resolvePersonalInfoAccessItem,
     revealPersonalInfo: revealInstitutionTeacherPersonalInfo,
     onPrivacyUnmasked: applyInstitutionTeacherPersonalInfo,
@@ -749,7 +754,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                   코멘트 작성
                 </CmsButton>
               ) : null}
-              <PersonalInfoRevealButton
+              <PersonalInfoRevealButton disabled={programPrivacyPending}
                 labelMode="toggle"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"

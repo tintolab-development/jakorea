@@ -194,20 +194,26 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('PARTNER', 'download')).toBe(true)
   })
 
-  it('일반 개인정보 열람은 뷰어만 차단', () => {
+  it('회원 관리 일반 개인정보는 Master·Accounting·Program Manager만', () => {
     expect(allowed('MASTER', 'pii')).toBe(true)
-    expect(allowed('PM', 'pii')).toBe(true)
-    expect(allowed('PARTNER', 'pii')).toBe(true)
+    expect(allowed('ACCOUNTING_MANAGER', 'pii')).toBe(true)
+    expect(allowed('PROGRAM_MANAGER', 'pii')).toBe(true)
+    expect(allowed('PM', 'pii')).toBe(false)
+    expect(allowed('PARTNER', 'pii')).toBe(false)
+    // 읽기 별칭. 신규 쓰기 경로의 MIDDLE 거절과 별개다.
+    expect(allowed('MIDDLE', 'pii')).toBe(true)
     expect(allowed('VIEWER', 'pii')).toBe(false)
+    expect(allowed('PROGRAM_VIEWER', 'pii')).toBe(false)
   })
 
-  it('주민번호·계좌는 Program Manager 동등 역할·마스터만', () => {
+  it('전역 주민번호·계좌 원문은 Master만', () => {
     for (const action of ['piiRrn', 'piiAccount'] as const) {
       expect(allowed('MASTER', action)).toBe(true)
-      expect(allowed('PM', action)).toBe(true)
-      expect(allowed('PARTNER', action)).toBe(true)
-      expect(allowed('PROGRAM_MANAGER', action)).toBe(true)
-      expect(allowed('MIDDLE', action)).toBe(true)
+      expect(allowed('ACCOUNTING_MANAGER', action)).toBe(false)
+      expect(allowed('PROGRAM_MANAGER', action)).toBe(false)
+      expect(allowed('PM', action)).toBe(false)
+      expect(allowed('PARTNER', action)).toBe(false)
+      expect(allowed('MIDDLE', action)).toBe(false)
       expect(allowed('VIEWER', action)).toBe(false)
       expect(allowed('PROGRAM_VIEWER', action)).toBe(false)
     }

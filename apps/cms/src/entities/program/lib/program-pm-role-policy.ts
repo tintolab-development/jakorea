@@ -28,7 +28,10 @@ export const CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE =
 export const CMS_MASTER_CANNOT_BE_PROGRAM_OWNER_MESSAGE =
   'Master 관리자는 프로그램 담당(PM)으로 지정할 수 없습니다. Accounting Manager 또는 Program Manager를 지정해 주세요.'
 
-/** ACCOUNTING/PROGRAM_MANAGER는 프로그램 VIEWER(ASSISTANT)로 내릴 수 없음 */
+/**
+ * BE가 운영 관리자의 프로그램 VIEWER 배정을 거절할 때 표시.
+ * FE 배정 가능 여부는 canAssignProgramRoleToCmsAdmin이 허용한다.
+ */
 export const CMS_OPERABLE_ADMIN_PROGRAM_VIEWER_FORBIDDEN_MESSAGE =
   'Accounting Manager·Program Manager에게는 프로그램 뷰어 권한을 지정할 수 없습니다.'
 
@@ -39,7 +42,7 @@ export function canAssignProgramRoleToCmsAdmin(
   if (isCmsMasterAdminRole(cmsRoleCode)) return false
   if (isCmsViewerAdminRole(cmsRoleCode)) return programRole === 'ASSISTANT'
   if (isCmsOperableProgramOwnerRole(cmsRoleCode)) {
-    return programRole === 'OWNER' || programRole === 'PARTNER'
+    return programRole === 'OWNER' || programRole === 'PARTNER' || programRole === 'ASSISTANT'
   }
   return true
 }

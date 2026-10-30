@@ -13,6 +13,8 @@ import {
   downloadIssuedSettlementExportFile,
   notifySettlementExportDownloadError,
 } from '@/features/settlement-management/api/account-payments/download-issued-export-file'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import {
   TAX_FILING_SHEET_COLUMN_COUNT,
   buildTaxFilingFortuneSheet,
@@ -42,7 +44,15 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
         await downloadIssuedSettlementExportFile({
           serverExport,
           filenamePrefix: '세금신고',
-          reason: '세금신고 양식 다운로드',
+          reason: '세금신고 양식 발급',
+        })
+        return
+      }
+      if (shouldUseSettlementRemote('accountPayments')) {
+        cmsAlertModal.show({
+          title: '다운로드 불가',
+          content:
+            '승인된 서버 파일이 준비된 뒤에만 세금신고 양식을 받을 수 있습니다. 원본 파일을 브라우저에서 만들지 않습니다.',
         })
         return
       }

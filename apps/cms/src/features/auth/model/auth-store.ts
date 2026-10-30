@@ -21,7 +21,10 @@ import { clearDashboardQueryCache } from '@/features/dashboard/api/clear-dashboa
 import { clearDataManagementQueryCache } from '@/features/data-management/api/clear-data-management-query-cache'
 import { clearLogsQueryCache } from '@/features/logs/api/clear-logs-query-cache'
 import { clearPostsQueryCache } from '@/features/posts/api/clear-posts-query-cache'
-import { clearSettlementQueryCache } from '@/features/settlement-management/api/clear-settlement-query-cache'
+import {
+  clearSettlementQueryCache,
+  discardAccountPaymentPlaintextCache,
+} from '@/features/settlement-management/api/clear-settlement-query-cache'
 import { clearMemberQueryCache } from '@/features/user/api/clear-member-query-cache'
 import { clearPerformanceQueryCache } from '@/features/education-record/api/clear-performance-query-cache'
 import { clearProgramQueryCache } from '@/features/program/shared/api/clear-query-cache'
@@ -568,6 +571,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       if (!currentUser) return
 
       const updatedUser = { ...currentUser, ...userData }
+      if (updatedUser.id !== currentUser.id || updatedUser.roleCode !== currentUser.roleCode) {
+        discardAccountPaymentPlaintextCache()
+      }
 
       // Mock 데이터 동기화 (validateToken/login과 동일 데이터 소스 유지)
       updateMockUserById(currentUser.id, userData as Partial<User>)
@@ -716,6 +722,9 @@ export async function refreshAdminSessionFromMe(): Promise<void> {
     const current = useAuthStore.getState().user
     if (!current) return
     const next = applyAdminMeToSessionUser(current, me)
+    if (next.id !== current.id || next.roleCode !== current.roleCode) {
+      discardAccountPaymentPlaintextCache()
+    }
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem('auth_user', JSON.stringify(next))
     }
