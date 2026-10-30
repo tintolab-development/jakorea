@@ -658,6 +658,23 @@ function venueFromSchedules(schedules: PortalSchedule[] | undefined): string {
   return parts.join(' ')
 }
 
+/** 모집 행 발표·면접 방법(CMS 원문 라벨)을 날짜 뒤 「, 」로 붙인다(Figma 사용자 플랫폼 11001:200151 등). null·키 없음·공백이면 날짜만. */
+export function withRecruitmentMethod(dateText: string, method: string | null | undefined): string {
+  const label = typeof method === 'string' ? method.trim() : ''
+  return label ? `${dateText}, ${label}` : dateText
+}
+
+/**
+ * 프로그램 상세 「모집 및 선발 일정」 단계 라벨 — 모든 모집 유형(참여자·강사·봉사자·UJAT) 공통.
+ * Figma 사용자 플랫폼(tiDywBHEhTkruOHjh1ctuT) 봉사자 상세 기준 11001:200152·200157·200162.
+ * CMS 미리보기 경로 map-from-cms.ts 도 같은 문구를 쓴다. CMS 화면 라벨과는 별개.
+ */
+const RECRUITMENT_SELECTION_PHASE_LABELS = {
+  documentPass: '1차 서류 합격자 발표',
+  interview: '2차 면접 기간',
+  finalPass: '최종 합격자 발표',
+} as const
+
 function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
   const rows = recruitments ?? []
   const qualify = rows.length > 1
@@ -692,6 +709,8 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
         ]
       : []
     const interviewOff = row.interviewEnabled === false
+    /** 서류 발표 방법·면접 방식은 면접 운영 행(interviewEnabled === true)만 표시 */
+    const interviewOn = row.interviewEnabled === true
     const hasInterviewDates = Boolean(
       readString(row.documentPassAnnouncementAt ?? undefined) ||
         readString(row.interviewStartAt ?? undefined) ||
@@ -701,24 +720,30 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
       const documentAt = toDate(row.documentPassAnnouncementAt ?? undefined)
       if (documentAt) {
         phases.push({
-          label: selectionLabel('1차 합격자 발표일'),
-          value: formatDisplayDate(documentAt),
+          label: selectionLabel(RECRUITMENT_SELECTION_PHASE_LABELS.documentPass),
+          value: withRecruitmentMethod(
+            formatDisplayDate(documentAt),
+            interviewOn ? row.documentPassAnnouncementMethod : null,
+          ),
         })
       }
       const interviewStart = toDate(row.interviewStartAt ?? undefined)
       const interviewEnd = toDate(row.interviewEndAt ?? undefined)
       if (interviewStart || interviewEnd) {
         phases.push({
-          label: selectionLabel('면접 기간'),
-          value: formatRange(interviewStart, interviewEnd),
+          label: selectionLabel(RECRUITMENT_SELECTION_PHASE_LABELS.interview),
+          value: withRecruitmentMethod(
+            formatRange(interviewStart, interviewEnd),
+            interviewOn ? row.interviewMethod : null,
+          ),
         })
       }
     }
     const finalAt = toDate(row.finalPassAnnouncementAt ?? undefined)
     if (finalAt) {
       phases.push({
-        label: selectionLabel('최종 합격자 발표'),
-        value: formatDisplayDate(finalAt),
+        label: selectionLabel(RECRUITMENT_SELECTION_PHASE_LABELS.finalPass),
+        value: withRecruitmentMethod(formatDisplayDate(finalAt), row.finalPassAnnouncementMethod),
       })
     }
     return phases

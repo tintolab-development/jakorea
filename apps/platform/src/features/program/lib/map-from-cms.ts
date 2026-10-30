@@ -653,11 +653,11 @@ function mapRecruitmentPhases(
   if (shouldIncludeInterviewStages(detailCase, program)) {
     phases.push(
       {
-        label: '1차 합격자 발표일',
+        label: '1차 서류 합격자 발표',
         value: formatOptionalDate(program.documentPassAnnouncementDate),
       },
       {
-        label: '면접 기간',
+        label: '2차 면접 기간',
         value: formatOptionalDateRange(program.interviewStartDate, program.interviewEndDate),
       }
     )
