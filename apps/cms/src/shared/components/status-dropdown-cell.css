@@ -1047,9 +1047,12 @@
 }
 
 /* `style.width` = 배지 폭; 패널은 트리거와 맞춤 = 배지 + 좌우 chrome 16px (기본 136 = 120+16)
- * tag-100은 고정 116px(1+7+100+7+1) — cell-style calc로 덮어쓰지 않음(단위 누락 시 ~110px 수축 방지) */
+ * 기본 136px 규칙은 :not ×3 이라 여기도 같은 :not 체인이 있어야 calc가 이긴다.
+ * tag-100은 고정 116px — cell-style calc로 덮지 않음 */
 .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
     .status-dropdown-cell__dropdown-overlay--tag-100
+  ):not(.status-dropdown-cell__dropdown-overlay--tag-160):not(
+    .status-dropdown-cell__dropdown-overlay--payment-order-line
   ) {
   width: calc(var(--sdcb-overlay-w) + 16px) !important;
   min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
@@ -1058,6 +1061,8 @@
 
 .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
     .status-dropdown-cell__dropdown-overlay--tag-100
+  ):not(.status-dropdown-cell__dropdown-overlay--tag-160):not(
+    .status-dropdown-cell__dropdown-overlay--payment-order-line
   )
   .ant-dropdown-menu {
   box-sizing: border-box;
