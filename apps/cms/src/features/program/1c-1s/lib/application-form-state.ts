@@ -11,6 +11,7 @@ import {
   emptyCompanySchoolApplicationFormState,
   importLegacyCompanySchoolApplicationOverlay,
   serializeCompanySchoolApplicationForFormVersion,
+  withEmptyCompanySchoolApplicationPreferredSchedule,
 } from './registration-rhf-application'
 
 export { emptyCompanySchoolApplicationFormState }
@@ -52,15 +53,12 @@ export function readCompanySchoolApplicationEditorState(
   if (!application || typeof application !== 'object' || Array.isArray(application)) return null
   const rec = application as Partial<CompanySchoolApplicationFormState>
   const empty = emptyCompanySchoolApplicationFormState()
-  return {
+  return withEmptyCompanySchoolApplicationPreferredSchedule({
     ...empty,
     ...rec,
     basicInfo: { ...empty.basicInfo, ...(rec.basicInfo ?? {}) },
     guidanceAnswers: { ...empty.guidanceAnswers, ...(rec.guidanceAnswers ?? {}) },
     lessonReply: { ...empty.lessonReply, ...(rec.lessonReply ?? {}) },
-    schedule: {
-      first: { ...empty.schedule.first, ...(rec.schedule?.first ?? {}) },
-      second: { ...empty.schedule.second, ...(rec.schedule?.second ?? {}) },
-    },
-  }
+    schedule: empty.schedule,
+  })
 }
