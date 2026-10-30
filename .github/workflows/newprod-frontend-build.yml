@@ -1,10 +1,19 @@
 name: NEW PROD Frontend Parallel Build and Deploy
 on:
+  push:
+    branches:
+      - deploy/newprod
+    paths:
+      - 'apps/cms/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - '.github/workflows/newprod-frontend-build.yml'
   workflow_dispatch:
     inputs:
       homepage_api_base_url:
-        description: "NEW PROD JAHOMEADMINBACK HTTPS CloudFront URL"
-        required: true
+        description: "NEW PROD JAHOMEADMINBACK HTTPS CloudFront URL; leave empty to deploy CMS only"
+        required: false
         type: string
 permissions:
   contents: read
@@ -49,8 +58,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = "refs/heads/deploy/newprod"
-          case "$HOMEPAGE_API" in https://*) ;; *) echo "HOMEPAGE_API_MUST_BE_HTTPS"; exit 1 ;; esac
-          case "$HOMEPAGE_API" in *localhost*|*127.0.0.1*|*pending.invalid*) echo "INVALID_HOMEPAGE_API_ORIGIN"; exit 1 ;; esac
+          if [[ -n "$HOMEPAGE_API" ]]; then
+            case "$HOMEPAGE_API" in https://*) ;; *) echo "HOMEPAGE_API_MUST_BE_HTTPS"; exit 1 ;; esac
+            case "$HOMEPAGE_API" in *localhost*|*127.0.0.1*|*pending.invalid*) echo "INVALID_HOMEPAGE_API_ORIGIN"; exit 1 ;; esac
+          fi
           echo "NEWPROD_FRONTEND_DEPLOY_GUARD=PASS"
       - name: Checkout pinned NEW PROD commit
         uses: actions/checkout@v4
@@ -117,7 +128,7 @@ jobs:
           VITE_PLATFORM_PUBLIC_ORIGIN: ${{ steps.targets.outputs.platform_origin }}
         run: pnpm --filter cms build
       - name: Build Platform
-        if: matrix.app == 'platform'
+        if: matrix.app == 'platform' && inputs.homepage_api_base_url != ''
         env:
           VITE_ADDRESS_API_KEY: ${{ secrets.VITE_ADDRESS_API_KEY }}
           VITE_NEIS_API_KEY: ${{ secrets.VITE_NEIS_API_KEY }}
@@ -126,13 +137,14 @@ jobs:
           VITE_HOMEPAGE_API_BASE_URL: ${{ inputs.homepage_api_base_url }}
         run: pnpm --filter platform build
       - name: Build Homepage Admin
-        if: matrix.app == 'admin'
+        if: matrix.app == 'admin' && inputs.homepage_api_base_url != ''
         env:
           VITE_HOMEPAGE_API_BASE_URL: ${{ inputs.homepage_api_base_url }}
           VITE_CMS_ORIGIN: ${{ steps.targets.outputs.cms_origin }}
           VITE_ADMIN_AUTH_API_PREFIX: /api/admin/auth
         run: pnpm --filter admin build
       - name: Verify build output and NEW PROD API wiring
+        if: matrix.app == 'cms' || inputs.homepage_api_base_url != ''
         shell: bash
         env:
           APP_OUTPUT: ${{ matrix.output }}
@@ -146,6 +158,7 @@ jobs:
           fi
           echo "APP_BUILD_AND_ORIGIN_CHECK=$APP:PASS"
       - name: Upload assets before index.html
+        if: matrix.app == 'cms' || inputs.homepage_api_base_url != ''
         shell: bash
         env:
           APP_OUTPUT: ${{ matrix.output }}
@@ -154,6 +167,7 @@ jobs:
           aws s3 sync "$APP_OUTPUT/" "s3://$DEPLOY_BUCKET/" --exclude "index.html" --no-progress --cache-control "public,max-age=300"
           echo "ASSETS_UPLOAD=PASS"
       - name: Publish index.html last
+        if: matrix.app == 'cms' || inputs.homepage_api_base_url != ''
         shell: bash
         env:
           APP_OUTPUT: ${{ matrix.output }}
@@ -162,6 +176,7 @@ jobs:
           aws s3 cp "$APP_OUTPUT/index.html" "s3://$DEPLOY_BUCKET/index.html" --no-progress --cache-control "no-cache,no-store,must-revalidate" --content-type "text/html; charset=utf-8"
           echo "INDEX_PUBLISH=PASS"
       - name: Invalidate NEW PROD CloudFront
+        if: matrix.app == 'cms' || inputs.homepage_api_base_url != ''
         shell: bash
         run: |
           set -euo pipefail
@@ -169,6 +184,7 @@ jobs:
           aws cloudfront wait invalidation-completed --distribution-id "$DISTRIBUTION_ID" --id "$INVALIDATION_ID"
           echo "CLOUDFRONT_INVALIDATION=PASS"
       - name: Verify public HTTPS entrypoint
+        if: matrix.app == 'cms' || inputs.homepage_api_base_url != ''
         shell: bash
         run: |
           set -euo pipefail
