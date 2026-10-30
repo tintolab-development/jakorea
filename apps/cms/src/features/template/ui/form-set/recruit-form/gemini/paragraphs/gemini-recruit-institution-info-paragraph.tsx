@@ -37,8 +37,8 @@ function serializePeriodToOverlay(period: [Dayjs | null, Dayjs | null] | null): 
 export function GeminiRecruitInstitutionInfoParagraph() {
   const [title, setTitle] = useGeminiRecruitField(GEMINI_RECRUIT_FIELD_KEYS.title, '')
   const [announcementPublished, setAnnouncementPublished] = useGeminiRecruitField<
-    ParticipantRecruitmentAnnouncementPublishedValue
-  >(GEMINI_RECRUIT_FIELD_KEYS.announcementPublished, 'published')
+    ParticipantRecruitmentAnnouncementPublishedValue | ''
+  >(GEMINI_RECRUIT_FIELD_KEYS.announcementPublished, '')
   const [educationTargetLevels, setEducationTargetLevels] = useGeminiRecruitField<string[]>(
     GEMINI_RECRUIT_FIELD_KEYS.educationTargetLevels,
     []

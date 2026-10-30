@@ -9,6 +9,7 @@
  * - 일반 모집 스토어(`general-recruit-overlay-sync`)는 이 폼을 합성해서 기존 읽기·collect 결과를 그대로 만든다.
  */
 import { createScopedRhfFieldForm } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
+import { filterUjatTypedRecruitmentOverlayPatch } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 import {
   peekGeneralRecruitFieldRecord,
   replaceGeneralRecruitFields,
@@ -67,7 +68,9 @@ export function subscribeRecruitDetailInfo(listener: () => void): () => void {
 }
 
 export function patchRecruitDetailInfo(partial: Record<string, unknown>): void {
-  writeGeneralRecruitFields(recruitDetailInfoFieldForm, partial)
+  const allowed = filterUjatTypedRecruitmentOverlayPatch(partial)
+  if (allowed == null) return
+  writeGeneralRecruitFields(recruitDetailInfoFieldForm, allowed)
 }
 
 export function updateRecruitDetailInfoKey<T>(key: string, updater: (prev: T | undefined) => T): void {

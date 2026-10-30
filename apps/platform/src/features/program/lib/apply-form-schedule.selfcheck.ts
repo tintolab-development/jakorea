@@ -23,6 +23,7 @@ import {
   resolveApplyPreferredScheduleMaxBlocks,
   resolveApplyPreferredScheduleMaxBlocksFromFixedOptions,
   hasMissingRequiredBottomConsent,
+  findMissingRequiredBottomConsentId,
   areTrainedTeachersScheduleRuntimeFieldsInSync,
   hasPreferredScheduleDateOutsideRuntime,
   isDateInAllowedSchedulePeriods,
@@ -39,6 +40,17 @@ import {
   readApplyFixedScheduleChoiceIds,
   resolveApplyScheduleChoiceAnswerKey,
   resolveHiddenScheduleAutoSubmitIds,
+  GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+  GEMINI_INSTITUTION_SESSION_COUNT_MAX,
+  GEMINI_INSTITUTION_SESSION_COUNT_MIN,
+  buildGeminiInstitutionSessionSelectOptions,
+  geminiInstitutionPreferredScheduleMapOptions,
+  padPreferredScheduleBlocks,
+  readGeminiTrainingRequestDateBounds,
+  hasPreferredScheduleDateOutsideBounds,
+  filterItemsByScheduleDateBounds,
+  filterGeminiInstructorSlotsByTrainingRequestPeriod,
+  isGeminiTrainingRequestPeriodConfigured,
 } from './apply-form-schedule.ts'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
@@ -676,6 +688,23 @@ const runtimeFixedItems = readRuntimeFixedScheduleChoiceItems(
 assert.deepEqual(runtimeFixedItems, [{ id: 'schedule:187123', label: '교육 일정' }])
 assert.deepEqual(
   readRuntimeFixedScheduleChoiceItems(
+    {
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleOptions: [
+        { id: '901', value: 'schedule:901', label: '사전 교육' },
+        { id: '187123', value: 'schedule:187123', label: '교육 일정' },
+        { id: '902', value: 'schedule:902', label: '봉사자 사전교육' },
+      ],
+    },
+    { items: [] }
+  ),
+  [
+    { id: 'schedule:187123', label: '교육 일정' },
+    { id: 'schedule:902', label: '봉사자 사전교육' },
+  ]
+)
+assert.deepEqual(
+  readRuntimeFixedScheduleChoiceItems(
     { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [{ scheduleId: 187123 }] },
     { items: [] }
   ),
@@ -872,8 +901,8 @@ function testPreEducationExcludedFromCurriculumChartSessionCount() {
     }
   )
   assert.equal(items?.length, 1)
-  // ① 예정일 줄 i = (i+1)차시 (총 차시 2 → 접미사 노출)
-  assert.equal(items?.[0]?.label, `${scheduleLine} | 1차시`)
+  // ① 모든 예정일 줄 = 커리큘럼 총 차시 (사전 교육 제외 2 → 접미사 노출)
+  assert.equal(items?.[0]?.label, `${scheduleLine} | 2차시`)
 }
 
 testPreEducationExcludedFromCurriculumChartSessionCount()
@@ -1038,6 +1067,8 @@ function testEducationScheduleWireContract() {
       preferenceRank: 1,
       date: '2026-11-20',
       sessionCount: 1,
+      startTime: '09:00',
+      endTime: '12:00',
       sessionTimes: [
         {
           sessionIndex: 1,
@@ -1065,6 +1096,67 @@ function testEducationScheduleWireContract() {
     { date: '2026-11-20', classPeriod: '', startTime: '', endTime: '' },
   ])
   assert.deepEqual(incomplete, [])
+
+  const geminiMapOptions = geminiInstitutionPreferredScheduleMapOptions()
+  assert.deepEqual(buildGeminiInstitutionSessionSelectOptions().map(option => option.value), [
+    '2',
+    '3',
+    '4',
+  ])
+  assert.equal(GEMINI_INSTITUTION_SESSION_COUNT_MIN, 2)
+  assert.equal(GEMINI_INSTITUTION_SESSION_COUNT_MAX, 4)
+
+  const geminiWithoutPeriod = toPortalPreferredScheduleBlocks(
+    [{ date: '2026-10-07', classPeriod: '', startTime: '01:00', endTime: '02:00' }],
+    geminiMapOptions,
+  )
+  assert.deepEqual(geminiWithoutPeriod, [])
+  assert.equal(
+    findIncompletePreferredScheduleMessage(
+      [{ date: '2026-10-07', classPeriod: '', startTime: '01:00', endTime: '02:00' }],
+      geminiMapOptions,
+    ),
+    '진행 희망 교육 일정에 날짜·차시(교시)·시작/종료 시간을 모두 입력해 주세요.',
+  )
+
+  const geminiOneSession = toPortalPreferredScheduleBlocks(
+    [{ date: '2026-10-07', classPeriod: '1', startTime: '01:00', endTime: '02:00' }],
+    geminiMapOptions,
+  )
+  assert.deepEqual(geminiOneSession, [])
+  assert.equal(
+    findIncompletePreferredScheduleMessage(
+      [{ date: '2026-10-07', classPeriod: '1', startTime: '01:00', endTime: '02:00' }],
+      geminiMapOptions,
+    ),
+    '2차시 이상 최대 4차시까지 신청할 수 있습니다.',
+  )
+
+  const geminiFourSessions = toPortalPreferredScheduleBlocks(
+    [{ date: '2026-10-07', classPeriod: '4', startTime: '01:00', endTime: '02:00' }],
+    geminiMapOptions,
+  )
+  assert.equal(geminiFourSessions[0]?.sessionCount, 4)
+
+  const geminiConsentDraft = {
+    schemaVersion: 1,
+    formSettings: {},
+    paragraphs: [
+      {
+        id: 'gemini-vt-inst-seed-personal-info',
+        kind: 'single_item',
+        variant: 'horizontal_table',
+        requiredMark: true,
+        answerRequired: true,
+        showBottomConsent: true,
+        bottomConsent: undefined,
+      },
+    ],
+  } as never
+  assert.equal(
+    findMissingRequiredBottomConsentId(geminiConsentDraft),
+    'gemini-vt-inst-seed-personal-info',
+  )
 
   const ujat = toPortalPreferredScheduleBlocks(
     [
@@ -1105,5 +1197,100 @@ function testEducationScheduleWireContract() {
 }
 
 testEducationScheduleWireContract()
+
+function testGeminiPreferredSchedulePad() {
+  const padded = padPreferredScheduleBlocks(
+    [{ date: '2026-11-10', classPeriod: '1', startTime: '10:00', endTime: '12:00' }],
+    GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT
+  )
+  assert.equal(padded.length, 3)
+  assert.equal(padded[0]?.date, '2026-11-10')
+  assert.equal(padded[1]?.date, '')
+  assert.equal(padded[2]?.classPeriod, '')
+
+  const bounds = readGeminiTrainingRequestDateBounds({
+    detailCase: 'gemini',
+    geminiTrainingRequestStartDate: '2026-11-02',
+    geminiTrainingRequestEndDate: '2026-11-30',
+  })
+  assert.deepEqual(bounds, {
+    minScheduleDate: '2026-11-02',
+    maxScheduleDate: '2026-11-30',
+  })
+  assert.equal(isGeminiTrainingRequestPeriodConfigured(bounds), true)
+  assert.equal(
+    hasPreferredScheduleDateOutsideBounds([{ date: '2026-11-02' }], bounds),
+    false,
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideBounds([{ date: '2026-11-17' }], bounds),
+    false,
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideBounds([{ date: '2026-11-30' }], bounds),
+    false,
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideBounds([{ date: '2026-11-01' }], bounds),
+    true,
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideBounds([{ date: '2026-12-01' }], bounds),
+    true,
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideBounds([{ date: '2026-10-28' }], bounds),
+    true,
+  )
+  assert.deepEqual(
+    readGeminiTrainingRequestDateBounds({ detailCase: 'general' }),
+    { minScheduleDate: null, maxScheduleDate: null },
+  )
+  const unconfigured = { minScheduleDate: null, maxScheduleDate: null }
+  assert.equal(isGeminiTrainingRequestPeriodConfigured(unconfigured), false)
+  assert.equal(
+    hasPreferredScheduleDateOutsideBounds([{ date: '2026-11-17' }], unconfigured),
+    true,
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideBounds([{ date: '' }], unconfigured),
+    false,
+  )
+  const slots = filterItemsByScheduleDateBounds(
+    [
+      { id: 'in', dateKey: '2026-11-17' },
+      { id: 'out', dateKey: '2026-10-28' },
+      { id: 'undated' },
+    ],
+    item => item.dateKey,
+    bounds,
+  )
+  assert.deepEqual(
+    slots.map(slot => slot.id),
+    ['in', 'undated'],
+  )
+  assert.deepEqual(
+    filterGeminiInstructorSlotsByTrainingRequestPeriod(
+      [
+        { id: 'in', dateKey: '2026-11-17' },
+        { id: 'out', dateKey: '2026-10-28' },
+        { id: 'undated' },
+      ],
+      item => item.dateKey,
+      bounds,
+    ).map(slot => slot.id),
+    ['in', 'undated'],
+  )
+  assert.deepEqual(
+    filterGeminiInstructorSlotsByTrainingRequestPeriod(
+      [{ id: 'approved', dateKey: '2026-10-22' }],
+      item => item.dateKey,
+      unconfigured,
+    ).map(slot => slot.id),
+    ['approved'],
+  )
+}
+
+testGeminiPreferredSchedulePad()
 
 console.log('apply-form-schedule.selfcheck: ok')

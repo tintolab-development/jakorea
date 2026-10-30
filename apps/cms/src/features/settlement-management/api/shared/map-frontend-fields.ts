@@ -1,7 +1,10 @@
 import type { PaymentOrderCalculationLineKind } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
-  mapTransportationCalculationDetailToBasisDetail,
+  isGenericLectureFeeCategoryLabel,
   isSupportedBasisDetailLayout,
+  lectureFeeTitleFromGradeOrWage,
+  mapLectureFeeCalculationDetailToBasisDetail,
+  mapTransportationCalculationDetailToBasisDetail,
   type PaymentOrderCalculationBasisDetail,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import type { SettlementFrontendCalculationDetailResponse } from '@/shared/api/generated/settlement/schemas'
@@ -146,8 +149,31 @@ export function formatBusinessPeriodDisplay(input: {
 }
 
 export function formatLectureFeeStandardTitle(title?: string): string {
-  const trimmed = title?.trim()
-  return trimmed || '-'
+  if (isGenericLectureFeeCategoryLabel(title)) return '-'
+  return title?.trim() || '-'
+}
+
+export function resolveLectureFeeStandardTitleFromSettlement(input: {
+  lectureFeeStandardTitle?: string | null
+  feeGrade?: string | null
+  wageItemType?: string | null
+}): string {
+  const fromTitle = formatLectureFeeStandardTitle(input.lectureFeeStandardTitle ?? undefined)
+  if (fromTitle !== '-') return fromTitle
+  return formatLectureFeeStandardTitle(
+    lectureFeeTitleFromGradeOrWage(input.feeGrade, input.wageItemType)
+  )
+}
+
+/** 책정 금액: lectureFeeStandardAmount 우선, 없으면 instructor_fee item amount */
+export function resolveLectureFeeStandardAmountDisplay(
+  standardAmount?: number | null,
+  items?: Array<{ type?: string | null; amount?: number | null }>
+): string {
+  if (standardAmount != null) return formatWonAmountDisplay(standardAmount)
+  const feeItem = items?.find(item => item.type === 'instructor_fee')
+  if (feeItem?.amount != null) return formatWonAmountDisplay(feeItem.amount)
+  return '-'
 }
 
 export function formatBusinessIncomeEarnerLabel(label?: string): string {
@@ -279,6 +305,9 @@ export function mapCalculationDetailToBasisDetail(
       return coerced as PaymentOrderCalculationBasisDetail
     }
   }
+
+  const lectureFee = mapLectureFeeCalculationDetailToBasisDetail(detail)
+  if (lectureFee) return lectureFee
 
   return mapRemoteCalculationDetail(detail)
 }

@@ -298,6 +298,88 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(detail.lectureTimeDisplay).not.toBe('2차시')
   })
 
+  it('remote lectureFeeTier 합성은 급수 모달로 되돌린다', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'lecture_fee',
+        itemLabel: '1급 강사비',
+        amount: 500000,
+        lineId: 'lecture-remote-tier',
+        lectureSessionDisplay: '1차시',
+        basisDetail: {
+          layout: 'remote',
+          sourceLayout: 'lectureFeeTier',
+          title: '강사비 산정 기준 상세',
+          lineLabels: [],
+          formulaLines: [],
+          summaryLabels: [],
+          resultAmount: 500000,
+        },
+      },
+      {
+        lectureFeeStandardTitle: '1급 강사비',
+        sessionOrdinal: 1,
+        lectureFeeStandardAmountWon: 500000,
+        remoteData: true,
+      }
+    )
+
+    expect(detail?.layout).toBe('lectureFeeTier')
+    if (detail?.layout !== 'lectureFeeTier') return
+    expect(detail.categoryLabel).toBe('1급 강사비')
+    expect(detail.lectureTimeDisplay).toBe('1차시')
+  })
+
+  it('일정명이어도 sessionOrdinal이 있으면 N차시로 강의 시간을 채운다', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'lecture_fee',
+        itemLabel: '강사비',
+        amount: 500000,
+        lineId: 'lecture-schedule-ordinal',
+        lectureSessionDisplay: 'GROK_E2E_API CS03 1회차',
+      },
+      { lectureFeeStandardTitle: '-', sessionOrdinal: 1 }
+    )
+
+    expect(detail?.layout).toBe('lectureFeeTier')
+    if (detail?.layout !== 'lectureFeeTier') return
+    expect(detail.categoryLabel).toBe('-')
+    expect(detail.lectureTimeDisplay).toBe('1차시')
+  })
+
+  it('순수 차시·회차 표기는 강의 시간으로 쓴다', () => {
+    const bySession = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'lecture_fee',
+        itemLabel: '강사비',
+        amount: 500000,
+        lineId: 'lecture-session-1',
+        lectureSessionDisplay: '1차시',
+      },
+      { lectureFeeStandardTitle: 'BUSINESS_INCOME' }
+    )
+    expect(bySession?.layout).toBe('lectureFeeTier')
+    if (bySession?.layout === 'lectureFeeTier') {
+      expect(bySession.lectureTimeDisplay).toBe('1차시')
+    }
+
+    const byRound = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'lecture_fee',
+        itemLabel: '강사비',
+        amount: 500000,
+        lineId: 'lecture-round-1',
+        lectureSessionDisplay: '3회차',
+      },
+      { lectureFeeStandardTitle: '2급 강사비' }
+    )
+    expect(byRound?.layout).toBe('lectureFeeTier')
+    if (byRound?.layout === 'lectureFeeTier') {
+      expect(byRound.lectureTimeDisplay).toBe('3회차')
+    }
+  })
+
   it('row.basisDetail 없어도 강의비·원천징수 등은 산정 기준 상세를 만든다 (교통비는 서버 basis만)', () => {
     const kinds = [
       { kind: 'lecture_fee', itemLabel: '강의비', amount: 200000 },

@@ -5,7 +5,8 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Card, Upload, Button, Table, Tag, Space, Typography, Alert } from 'antd'
+import { Card, Upload, Button, Tag, Space, Typography, Alert } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { UploadOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
@@ -201,7 +202,7 @@ export function InstructorDocumentsPage() {
 
         {/* 제출 서류 목록 */}
         <Card title="제출 서류 목록">
-          <Table
+          <CmsDataTable
             columns={columns}
             dataSource={documents}
             rowKey="id"

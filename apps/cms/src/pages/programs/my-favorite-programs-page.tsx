@@ -6,7 +6,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Select, Space, Card, Tag, Table } from 'antd'
+import { Select, Space, Card, Tag } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { CmsButton, EmptyState, LoadingButton } from '@/shared/ui'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import type { ColumnsType } from 'antd/es/table'
@@ -237,7 +238,7 @@ export function MyFavoriteProgramsPage() {
         </Space>
       </Card>
 
-      <Table
+      <CmsDataTable
         columns={columns}
         dataSource={programs}
         rowKey="id"

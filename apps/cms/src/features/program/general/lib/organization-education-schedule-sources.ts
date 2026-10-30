@@ -259,15 +259,19 @@ export function resolveParticipatingInstitutionApplicationScheduleSessions(input
   isGeneralOrganization: boolean
   assignedSessions: ParticipatingSchoolSession[]
   participantSessions: ParticipatingSchoolSession[]
+  hopeSessions?: ParticipatingSchoolSession[]
 }): ParticipatingSchoolSession[] {
-  if (input.isCompanySchool) return input.participantSessions
+  if (input.isCompanySchool) {
+    if (input.participantSessions.length > 0) return input.participantSessions
+    return input.hopeSessions ?? []
+  }
   if (input.isGeneralOrganization && input.assignedSessions.length > 0) {
     return input.assignedSessions
   }
   return resolveParticipatingProgressAssignedSessions(input.participantSessions)
 }
 
-/** 기관 신청 희망 일정 — 신청 화면용. 진행 현황 목록·상세 표시에는 쓰지 않는다. */
+/** 기관 신청 희망 일정. 1사1교 진행 현황 「진행 희망 교육 일정」도 이 값을 쓴다. */
 export function resolveParticipatingSchoolHopeSessions(
   row: Pick<
     ParticipatingSchoolRow,
@@ -288,15 +292,29 @@ export function resolveParticipatingSchoolHopeSessions(
   }
   if (row.hopeEducationSessions?.length) return row.hopeEducationSessions
   if (row.preferredEducationSchedules?.length) {
-    return mapPreferredEducationSchedulesToSessions(row.preferredEducationSchedules)
+    return mapPreferredEducationSchedulesToSessions(row.preferredEducationSchedules, {
+      useEducationDate: true,
+    })
   }
   return []
+}
+
+/** 1사1교 참여 기관 목록·캘린더 — 희망 일정 우선, 없으면 참여자 sessions */
+export function resolveParticipatingInstitutionPreferredDisplaySessions(
+  row: Pick<
+    ParticipatingSchoolRow,
+    'hopeEducationSessions' | 'preferredEducationSchedules' | 'sessions' | 'programId' | 'organizationApplicationId'
+  >
+): ParticipatingSchoolSession[] {
+  const hope = resolveParticipatingSchoolHopeSessions(row)
+  if (hope.length > 0) return hope
+  return (row.sessions ?? []).filter(session => session.status !== 'not_planned')
 }
 
 export function buildHopeEducationSessionsFromPreferred(
   preferred: PreferredEducationSchedule[]
 ): ParticipatingSchoolSession[] {
-  return mapPreferredEducationSchedulesToSessions(preferred)
+  return mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
 }
 
 /** 신청 목록 enrich — programId + organizationApplicationId 복합 키 */

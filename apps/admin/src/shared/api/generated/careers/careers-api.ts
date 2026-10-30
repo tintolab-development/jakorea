@@ -35,7 +35,7 @@ import type {
   ConfirmRequest,
   ConfirmResponse,
   List12Params,
-  List16Params,
+  List15Params,
   PageResponseCareerPostingPublicItem,
   PageResponseCareerTalentApplicationListItem,
   PrepareRequest,
@@ -296,8 +296,8 @@ const guide = (
       options);
     }
 
-const list16 = (
-    params?: List16Params,
+const list15 = (
+    params?: List15Params,
  options?: SecondParameter<typeof customInstance<PageResponseCareerTalentApplicationListItem>>,) => {
       return customInstance<PageResponseCareerTalentApplicationListItem>(
       {url: `/api/admin/careers/talent-applications`, method: 'GET',
@@ -354,7 +354,7 @@ const guide1 = (
       options);
     }
 
-return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,bulkDeleteCareerGuideInterviews,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list16,delete4,detail9,attachmentDownloadByAsset2,attachmentDownload2,guide1}};
+return {detail3,update14,updateCareerGuideInterview,deleteCareerGuideInterview,updateCareerGuideCultureItems,updateCareerGuideBanner,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,createCareerGuideInterview,bulkDeleteCareerGuideInterviews,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownloadByAsset2,attachmentDownload2,guide1}};
 export type Detail3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail3']>>>
 export type Update14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['update14']>>>
 export type UpdateCareerGuideInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['updateCareerGuideInterview']>>>
@@ -377,7 +377,7 @@ export type Detail6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof get
 export type DetailHead2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detailHead2']>>>
 export type List12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list12']>>>
 export type GuideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['guide']>>>
-export type List16Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list16']>>>
+export type List15Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list15']>>>
 export type Delete4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['delete4']>>>
 export type Detail9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail9']>>>
 export type AttachmentDownloadByAsset2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['attachmentDownloadByAsset2']>>>

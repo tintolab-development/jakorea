@@ -14,6 +14,7 @@ import {
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
   resolveSatisfactionAudienceFromBinding,
+  describeSurveyShareClipboardFailure,
   resolveSurveyShareClipboardUrl,
   mapSurveySummaryToQuestionSummaries,
   surveyResponseNeedsDetail,
@@ -602,7 +603,7 @@ describe('resolveSurveyShareClipboardUrl', () => {
     ).toBe('https://platform.example.com/surveys/share/abc')
   })
 
-  it('does not expose backend formPath or submitPath as a shared UI URL', () => {
+  it('builds the Platform UI URL from a public formPath token when shareToken is omitted', () => {
     const backendResponse = {
       accessMode: 'PUBLIC_ANONYMOUS',
       formPath: '/api/portal/public/surveys/abc',
@@ -610,7 +611,10 @@ describe('resolveSurveyShareClipboardUrl', () => {
     } as const
     expect(
       resolveSurveyShareClipboardUrl(backendResponse, 'https://platform.example.com')
-    ).toBeNull()
+    ).toBe('https://platform.example.com/surveys/share/abc')
+    expect(
+      resolveSurveyShareClipboardUrl(backendResponse, 'https://platform.example.com')
+    ).not.toContain('/api/portal/')
   })
 
   it('rejects member-authenticated shares and invalid origin/token data', () => {
@@ -629,6 +633,26 @@ describe('resolveSurveyShareClipboardUrl', () => {
         'https://platform.example.com'
       )
     ).toBeNull()
+  })
+})
+
+describe('describeSurveyShareClipboardFailure', () => {
+  it('explains member-only surveys', () => {
+    expect(
+      describeSurveyShareClipboardFailure(
+        { accessMode: 'MEMBER_AUTHENTICATED', shareToken: 'abc' },
+        'https://platform.example.com'
+      )
+    ).toContain('회원 전용')
+  })
+
+  it('explains a missing Platform origin', () => {
+    expect(
+      describeSurveyShareClipboardFailure(
+        { accessMode: 'PUBLIC_ANONYMOUS', shareToken: 'abc' },
+        null
+      )
+    ).toContain('VITE_PLATFORM_PUBLIC_ORIGIN')
   })
 })
 

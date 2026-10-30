@@ -30,6 +30,8 @@ export interface LabeledSearchInputProps {
   showLabel?: boolean
   /** 포커스 해제 시 콜백 (한글 IME 등 입력 완료 후 URL 동기화용) */
   onBlur?: () => void
+  /** Enter 시 조회와 동일한 동작 */
+  onPressEnter?: () => void
   /** default: 일반 폼 높이(large). filter: TableFilterGroup 등 필터 카드(medium / 40px) */
   uiVariant?: 'default' | 'filter'
   /** true면 숫자만 입력 가능(비숫자 문자·붙여넣기 즉시 제거) */
@@ -48,6 +50,7 @@ export function LabeledSearchInput({
   value,
   onChange,
   onBlur,
+  onPressEnter,
   width = 300,
   style,
   disabled = false,
@@ -89,6 +92,7 @@ export function LabeledSearchInput({
         inputSize={uiVariant === 'filter' ? 'medium' : 'large'}
         onChange={e => handleChange(e.target.value)}
         onBlur={onBlur}
+        onPressEnter={onPressEnter ? () => onPressEnter() : undefined}
         inputMode={numericOnly ? 'numeric' : undefined}
         allowClear={true}
         width={width}

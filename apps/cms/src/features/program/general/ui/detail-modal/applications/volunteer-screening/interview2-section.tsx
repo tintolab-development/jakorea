@@ -424,6 +424,7 @@ export function GeneralVolunteerInterview2Section({
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys,
         }}
       >
         {viewMode === 'list' ? (

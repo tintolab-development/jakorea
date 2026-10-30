@@ -4,6 +4,12 @@ const PAYMENT_STATEMENT_STATUS_CONFLICT = 'PAYMENT_STATEMENT_STATUS_CONFLICT'
 const PAYMENT_STATEMENT_CONFLICT_FALLBACK =
   '이미 확인된 지급조서가 포함되어 있습니다. 목록을 새로고침한 뒤 다시 확인해 주세요.'
 
+/** BE가 code별 안내 대신 공통 문구만 줄 때 FE 매핑을 쓴다 */
+const GENERIC_SETTLEMENT_API_MESSAGES = new Set([
+  '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+  '요청 처리 중 오류가 발생했습니다.',
+])
+
 export const SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED =
   'SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED'
 export const FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED = 'FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED'
@@ -41,6 +47,10 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
     '원천징수 세율 입력값을 확인해 주세요. 퍼센트 단위로 0 이상 100 이하를 입력해야 합니다.',
   [SETTLEMENT_CONFIG_WITHHOLDING_AMOUNT_INVALID]:
     '원천징수 금액 입력값을 확인해 주세요. 0 이상의 원 단위 금액을 입력해야 합니다.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_REQUIRED:
+    '선택·필터 원본 발급은 서버 발급 범위 확인(scopeToken)이 필요합니다.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_INVALID: '발급 범위 확인이 유효하지 않습니다. 범위를 다시 확인해 주세요.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_EXPIRED: '발급 범위 확인이 만료되었습니다. 범위를 다시 확인해 주세요.',
 }
 
 function readAxiosResponse(error: unknown): { status?: number; data?: unknown } | null {
@@ -78,7 +88,7 @@ export function getSettlementApiErrorMessage(error: unknown, fallback: string): 
         fallback: mapped,
       }).trim()
       // 서버가 code만 주거나 공통 문구만 주면 FE 매핑 우선
-      if (!msg || msg === code) return mapped
+      if (!msg || msg === code || GENERIC_SETTLEMENT_API_MESSAGES.has(msg)) return mapped
       return msg
     }
 

@@ -11,6 +11,7 @@ import type { Notification } from './notification';
 
 export interface Approval {
   /**
+     * 교육 일정 배정. 빈 배열이면 신청만 승인하고 배정 행을 만들지 않습니다. 필드는 필수이며 null/생략은 기존과 같이 거부합니다.
      * @minItems 0
      * @maxItems 100
      */

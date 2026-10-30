@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Program } from '@/types/domain'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { useCmsAlert } from '@/shared/ui'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import type { UjatEducationProgressInstitutionDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import {
   UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TAB_LABELS,
@@ -114,7 +114,11 @@ export function UjatEducationProgressInstitutionDetailView({
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: program.id,
+    resolveProgramRole: () => resolveSessionProgramRole(program.id),
     resolveAccessItem,
     resetDeps: [detail.institutionId, detail.half],
     controlMode: 'headerStickyNoop',
@@ -183,15 +187,11 @@ export function UjatEducationProgressInstitutionDetailView({
     setAddressDetail(addressDetailDraft)
     setTeacherContact(teacherContactDraft)
     setIsApplicationInfoEditing(false)
-    showAlert({
-      title: '정보 수정',
-      content: '신청 정보가 저장되었습니다.',
-    })
+    showUpdateCompletedAlert()
   }, [
     addressDetail,
     addressDetailDraft,
     isApplicationInfoEditing,
-    showAlert,
     teacherContact,
     teacherContactDraft,
   ])
@@ -269,7 +269,7 @@ export function UjatEducationProgressInstitutionDetailView({
             >
               코멘트 작성
             </CmsButton>
-            <PersonalInfoRevealButton
+            <PersonalInfoRevealButton disabled={programPrivacyPending}
               labelMode="stickyReveal"
               revealed={personalInfoRevealed}
               cmsVariant="primary"

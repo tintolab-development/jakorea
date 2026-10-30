@@ -7,6 +7,7 @@ import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragr
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
@@ -39,6 +40,7 @@ const PREFERRED_SCHEDULE_ANSWER_KEYS = [
   PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule,
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
   GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
   'preferredEducationSchedule',
   'preferredScheduleBlocks',
 ] as const
@@ -119,17 +121,38 @@ function formatPreferredScheduleBlock(block: Record<string, unknown>): string | 
     readTrimmedString(first?.end) ||
     readTrimmedString(block.endTime)
   const timeRange =
+    readTrimmedString(block.trainingTimeText) ||
     readTrimmedString(first?.timeRange) ||
     (startTime && endTime
       ? `${formatDisplayClockLabel(startTime)} ~ ${formatDisplayClockLabel(endTime)}`
       : undefined)
 
   const dateLabel = formatDisplayDate(dateRaw.includes('T') ? dateRaw : dateRaw)
+  let core = ''
   if (dateLabel && timeRange) {
-    return normalizeScheduleDisplayLabel(`${dateLabel} ${timeRange}`)
+    core = normalizeScheduleDisplayLabel(`${dateLabel} ${timeRange}`)
+  } else if (dateLabel) {
+    core = dateLabel
+  } else {
+    core = timeRange ? normalizeScheduleDisplayLabel(`${dateRaw} ${timeRange}`) : dateRaw
   }
-  if (dateLabel) return dateLabel
-  return timeRange ? normalizeScheduleDisplayLabel(`${dateRaw} ${timeRange}`) : dateRaw
+  const org =
+    readTrimmedString(block.organizationName) ||
+    readTrimmedString(block.institutionName) ||
+    readTrimmedString(block.schoolName)
+  const rankRaw = block.preferenceRank
+  const rank =
+    typeof rankRaw === 'number' && Number.isFinite(rankRaw)
+      ? rankRaw
+      : typeof rankRaw === 'string' && /^\d+$/.test(rankRaw.trim())
+        ? Number(rankRaw.trim())
+        : null
+  const parts = [
+    rank != null && rank > 0 ? `${rank}지망` : '',
+    core,
+    org ?? '',
+  ].filter(Boolean)
+  return parts.join(' | ')
 }
 
 /**
@@ -237,25 +260,32 @@ function mapStoredScheduleLabelToFormOptions(
     .join('\n')
 }
 
+function readAnswerToken(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(Math.trunc(value))
+  }
+  return readTrimmedString(value)
+}
+
 function flattenAnswerStrings(raw: unknown): string[] {
-  if (typeof raw === 'string') {
-    const trimmed = raw.trim()
-    return trimmed ? [trimmed] : []
+  if (typeof raw === 'string' || typeof raw === 'number') {
+    const token = readAnswerToken(raw)
+    return token ? [token] : []
   }
   if (Array.isArray(raw)) {
     const out: string[] = []
     for (const item of raw) {
-      if (typeof item === 'string') {
-        const trimmed = item.trim()
-        if (trimmed) out.push(trimmed)
+      const direct = readAnswerToken(item)
+      if (direct) {
+        out.push(direct)
         continue
       }
       const row = asRecord(item)
       if (!row) continue
       const value =
-        readTrimmedString(row.value) ||
-        readTrimmedString(row.option_value) ||
-        readTrimmedString(row.id) ||
+        readAnswerToken(row.value) ||
+        readAnswerToken(row.option_value) ||
+        readAnswerToken(row.id) ||
         readTrimmedString(row.label) ||
         readTrimmedString(row.displayLabel)
       if (value) out.push(value)
@@ -265,9 +295,9 @@ function flattenAnswerStrings(raw: unknown): string[] {
   const row = asRecord(raw)
   if (!row) return []
   const value =
-    readTrimmedString(row.value) ||
-    readTrimmedString(row.option_value) ||
-    readTrimmedString(row.id)
+    readAnswerToken(row.value) ||
+    readAnswerToken(row.option_value) ||
+    readAnswerToken(row.id)
   return value ? [value] : []
 }
 
@@ -345,7 +375,7 @@ export function collectPreferredScheduleOptionValues(
     ]
     if (selectedIds.length > 0) {
       for (const id of selectedIds) {
-        const token = readTrimmedString(id)
+        const token = readAnswerToken(id)
         if (!token || !isOpaqueScheduleOptionToken(token) || seen.has(token)) continue
         seen.add(token)
         out.push(token)
@@ -360,8 +390,59 @@ export function collectPreferredScheduleOptionValues(
   return out
 }
 
+const GEMINI_PREFERRED_ORG_TOKEN_RE =
+  /^gemini-preferred:organization-application:(\d+):rank:(\d+)$/i
+
+export function parseGeminiPreferredOrganizationToken(
+  token: string,
+): { organizationApplicationId: number; rank: number } | null {
+  const match = GEMINI_PREFERRED_ORG_TOKEN_RE.exec(token.trim())
+  if (!match) return null
+  const organizationApplicationId = Number(match[1])
+  const rank = Number(match[2])
+  if (!Number.isFinite(organizationApplicationId) || !Number.isFinite(rank)) return null
+  return { organizationApplicationId, rank }
+}
+
+function readBlockOrganizationApplicationId(row: Record<string, unknown>): number | null {
+  const raw = row.organizationApplicationId ?? row.organizationId ?? row.applicationId
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string' && /^\d+$/.test(raw.trim())) return Number(raw.trim())
+  return null
+}
+
+function readBlockPreferenceRank(row: Record<string, unknown>): number | null {
+  const raw = row.preferenceRank ?? row.rank
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string' && /^\d+$/.test(raw.trim())) return Number(raw.trim())
+  return null
+}
+
+export function resolveGeminiPreferredScheduleLine(
+  token: string,
+  blocks: readonly unknown[] | null | undefined,
+): string | undefined {
+  const parsed = parseGeminiPreferredOrganizationToken(token)
+  if (!parsed || !blocks?.length) return undefined
+  const rows = blocks.map(item => asRecord(item)).filter((row): row is Record<string, unknown> => row != null)
+  const exact = rows.find(row => {
+    const orgId = readBlockOrganizationApplicationId(row)
+    const rank = readBlockPreferenceRank(row)
+    return orgId === parsed.organizationApplicationId && rank === parsed.rank
+  })
+  if (exact) return formatPreferredScheduleBlock(exact)
+  const sameOrg = rows.filter(row => readBlockOrganizationApplicationId(row) === parsed.organizationApplicationId)
+  if (sameOrg.length === 1) return formatPreferredScheduleBlock(sameOrg[0]!)
+  const sameRank = rows.filter(row => readBlockPreferenceRank(row) === parsed.rank)
+  if (sameRank.length === 1) return formatPreferredScheduleBlock(sameRank[0]!)
+  const byIndex = rows[parsed.rank - 1]
+  if (byIndex) return formatPreferredScheduleBlock(byIndex)
+  return undefined
+}
+
 export type PreferredScheduleProgramLookup = {
   educationScheduleLines?: readonly string[]
+  preferredScheduleBlocks?: readonly unknown[] | null
   schedules?: ReadonlyArray<{
     scheduleId?: number
     startAt?: string
@@ -430,6 +511,8 @@ function resolveOneScheduleOptionToken(
   token: string,
   lookup: PreferredScheduleProgramLookup,
 ): string | undefined {
+  const geminiLine = resolveGeminiPreferredScheduleLine(token, lookup.preferredScheduleBlocks)
+  if (geminiLine) return geminiLine
   const lineMatch = token.trim().match(/^line:(\d+)$/i)
   if (lineMatch) {
     const index = Number(lineMatch[1])
@@ -465,10 +548,12 @@ export function resolvePreferredScheduleLabelsFromAnswers(input: {
   answers?: Record<string, unknown> | null
   preferredScheduleOptionValues?: readonly string[]
   educationScheduleLines?: readonly string[]
+  preferredScheduleBlocks?: readonly unknown[] | null
   schedules?: PreferredScheduleProgramLookup['schedules']
 }): string[] {
   const lookup: PreferredScheduleProgramLookup = {
     educationScheduleLines: input.educationScheduleLines,
+    preferredScheduleBlocks: input.preferredScheduleBlocks,
     schedules: input.schedules,
   }
   const optionValues =

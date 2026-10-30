@@ -125,10 +125,16 @@ export function useConfirmCorporateConsultations(filter: CorporateConsultationLi
     retry: false,
     onSuccess: updatedRows => {
       for (const row of updatedRows) {
-        queryClient.setQueryData(
-          corporateConsultationQueryKeys.detail(source(), row.id),
-          row,
-        )
+        const detailKey = corporateConsultationQueryKeys.detail(source(), row.id)
+        const existing = queryClient.getQueryData<CorporateConsultation>(detailKey)
+        if (existing) {
+          queryClient.setQueryData(detailKey, {
+            ...existing,
+            status: row.status,
+            confirmedAt: row.confirmedAt,
+            confirmedByName: row.confirmedByName ?? existing.confirmedByName,
+          })
+        }
         patchConsultationInLists(queryClient, row)
       }
       if (updatedRows.length === 0) {

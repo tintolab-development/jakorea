@@ -48,6 +48,7 @@ export type ImpactStoryDetail = ImpactStoryListItem & {
   body?: string
   bodyFormat?: ImpactStoryBodyFormat
   attachmentOriginalName?: string
+  attachmentUrl?: string
 }
 
 export type ImpactStoryDetailStatus = 'loading' | 'ready' | 'not-found' | 'error'

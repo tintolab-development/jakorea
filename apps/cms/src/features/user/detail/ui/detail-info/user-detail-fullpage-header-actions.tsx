@@ -15,11 +15,6 @@ import {
   type PersonalInfoToggleButtonConfig,
 } from '@/features/user/detail/lib/use-personal-info-toggle'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
-import { AdminMfaResetButton } from '@/features/user/detail/ui/admin-mfa-reset-button'
-import {
-  canShowAdminMfaReset,
-  resolveExplicitAdminPermissionVariant,
-} from '@/features/user/detail/lib/can-show-admin-mfa-reset'
 import { PermissionHeaderActions } from './permission-header-actions'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import {
@@ -141,7 +136,6 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
 
   const showCommentEditStart =
     !isProfileEditing &&
-    !isCommentEditing &&
     shouldShowAdminCommentSectionForViewer(currentUser, displayUser) &&
     canEditCommentBody
 
@@ -187,6 +181,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
       key="admin-comment-edit"
       size="large"
       variant="primary"
+      disabled={isCommentEditing}
       onClick={pageShell.onStartAdminCommentEdit}
     >
       코멘트 작성
@@ -206,17 +201,6 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         onClick={personalInfoButton.onClick}
       />
     ) : null
-
-  const showMfaReset =
-    !isProfileEditing &&
-    canShowAdminMfaReset({
-      sessionRoleCode: currentUser?.roleCode,
-      sessionAdminAccountId: currentUser?.adminAccountId,
-      targetRole: displayUser.role,
-      targetAdminAccountId: displayUser.adminAccountId,
-      targetIsActive: displayUser.isActive,
-      targetPermissionVariant: resolveExplicitAdminPermissionVariant(displayUser),
-    })
 
   const headerActionsForLayout = isProfileEditing
     ? actions.filter(a => a.key !== 'school-delete' && a.key !== 'withdraw')
@@ -245,7 +229,6 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
           {commentEditButton}
         </>
       )}
-      {showMfaReset ? <AdminMfaResetButton target={displayUser} /> : null}
       {personalInfoNode}
     </div>
   )

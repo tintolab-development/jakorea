@@ -11,6 +11,8 @@ import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/gene
 import { mapVolunteerApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
+import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import {
   APPLICATION_ACTION_CANCEL_APPROVAL,
@@ -93,6 +95,7 @@ function isInterview2Props(
 function Interview2VolunteerApplicantDetail({
   applicant,
   personalInfoRevealed,
+  programPrivacyPending,
   openPersonalInfoRevealConfirm,
   personalInfoRevealModal,
   onWithdrawActivity,
@@ -106,6 +109,7 @@ function Interview2VolunteerApplicantDetail({
 }: {
   applicant: GeneralVolunteerApplicantRow
   personalInfoRevealed: boolean
+  programPrivacyPending: boolean
   openPersonalInfoRevealConfirm: () => void
   personalInfoRevealModal: ReactNode
   onWithdrawActivity?: () => void
@@ -225,7 +229,7 @@ function Interview2VolunteerApplicantDetail({
               </CmsButton>
             </>
           ) : null}
-          <PersonalInfoRevealButton
+          <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"
@@ -301,15 +305,28 @@ export function GeneralVolunteerApplicantDetailView(
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: applicant.programId,
+    resolveProgramRole: () => resolveSessionProgramRole(applicant.programId),
     resolveAccessItem,
     revealPersonalInfo: revealVolunteerPersonalInfo,
     onPrivacyUnmasked: payload => {
-      setUnmaskedOverlay(payload as GeneralVolunteerApplicantRow)
+      setUnmaskedOverlay(
+        sanitizeProgramPrivacyOverlay(
+          applicant.programId,
+          payload as GeneralVolunteerApplicantRow
+        )
+      )
     },
     resetDeps: [applicant.id],
     controlMode: 'headerStickyNoop',
   })
+
+  useEffect(() => {
+    if (!personalInfoRevealed) setUnmaskedOverlay(null)
+  }, [personalInfoRevealed])
 
   const assignInterviewLabel = useMemo(() => {
     if (applicant.interviewAssignmentStatus === 'assigned') return '면접일 재배정'
@@ -321,6 +338,7 @@ export function GeneralVolunteerApplicantDetailView(
       <Interview2VolunteerApplicantDetail
         applicant={applicant}
         personalInfoRevealed={personalInfoRevealed}
+        programPrivacyPending={programPrivacyPending}
         openPersonalInfoRevealConfirm={openPersonalInfoRevealConfirm}
         personalInfoRevealModal={personalInfoRevealModal}
         onWithdrawActivity={props.onWithdrawActivity}
@@ -402,7 +420,7 @@ export function GeneralVolunteerApplicantDetailView(
             >
               {assignInterviewLabel}
             </CmsButton>
-            <PersonalInfoRevealButton
+            <PersonalInfoRevealButton disabled={programPrivacyPending}
               labelMode="stickyReveal"
               revealed={personalInfoRevealed}
               cmsVariant="primary"
@@ -508,7 +526,7 @@ export function GeneralVolunteerApplicantDetailView(
               ) : null}
             </>
           ) : null}
-          <PersonalInfoRevealButton
+          <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"

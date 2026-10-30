@@ -1,13 +1,13 @@
 /**
- * 계좌 지급 확인 모달 — 800×404, 요약 표 + 푸터
+ * 계좌 지급 확인 모달 — 콘텐츠 높이에 맞춤 (고정 높이·불필요 세로 스크롤 금지)
  */
 
 .account-payment-confirm-modal.content-modal.ant-modal .ant-modal-content {
   width: 800px !important;
   max-width: min(800px, calc(100vw - 32px));
-  height: 404px;
-  min-height: 404px;
-  max-height: 404px;
+  height: auto;
+  min-height: 0;
+  max-height: none;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -15,13 +15,13 @@
 }
 
 .account-payment-confirm-modal.content-modal.ant-modal .ant-modal-body {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   padding: 0 !important;
-  height: 100%;
+  height: auto;
 }
 
 .account-payment-confirm-modal .teal-header-modal__header {
@@ -29,14 +29,12 @@
 }
 
 .account-payment-confirm-modal .teal-header-modal__body {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 20px;
   padding-top: 16px;
 }
 
@@ -79,7 +77,7 @@
   flex-direction: column;
   gap: 30px;
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
 }
 
 .account-payment-confirm-modal__intro {

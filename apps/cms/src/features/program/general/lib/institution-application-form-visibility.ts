@@ -12,9 +12,9 @@ export type InstitutionSexOffenseConsentSiteSubmission = 'direct' | 'online'
 const DEFAULT_SEX_OFFENSE_CONSENT_SUBMISSION_REQUEST: InstitutionSexOffenseConsentSubmissionRequest =
   'request'
 const DEFAULT_SEX_OFFENSE_CONSENT_INQUIRY_METHOD: InstitutionSexOffenseConsentInquiryMethod =
-  'criminal_record_site'
+  'ja_system'
 const DEFAULT_SEX_OFFENSE_CONSENT_SITE_SUBMISSION: InstitutionSexOffenseConsentSiteSubmission =
-  'online'
+  'direct'
 
 let sexOffenseConsentSubmissionRequest: InstitutionSexOffenseConsentSubmissionRequest =
   DEFAULT_SEX_OFFENSE_CONSENT_SUBMISSION_REQUEST

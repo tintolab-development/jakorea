@@ -20,6 +20,12 @@ function readNullableIsoDateTime(value: unknown): string | null {
   return trimmed || null
 }
 
+function readNullableEducationDate(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null
+}
+
 function readNullableLabel(value: unknown): string | null {
   if (value == null) return null
   if (typeof value !== 'string') return String(value).trim() || null
@@ -67,6 +73,7 @@ export function normalizePreferredEducationScheduleEntry(
   const endAt = readNullableIsoDateTime(raw.endAt)
   const round = readNullableRound(raw.round)
   const unresolvedReason = readUnresolvedReason(raw.unresolvedReason)
+  const educationDate = readNullableEducationDate(raw.educationDate)
 
   if (!scheduleId && !label && !startAt && !endAt && !unresolvedReason) return null
 
@@ -77,6 +84,7 @@ export function normalizePreferredEducationScheduleEntry(
     ...(endAt != null ? { endAt } : {}),
     ...(label != null ? { label } : {}),
     ...(unresolvedReason != null ? { unresolvedReason } : {}),
+    ...(educationDate != null ? { educationDate } : {}),
   }
 }
 

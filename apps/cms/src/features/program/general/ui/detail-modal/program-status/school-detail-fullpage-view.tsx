@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
@@ -120,6 +121,7 @@ import {
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-general-program-posts-surveys'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import {
@@ -367,7 +369,7 @@ function formatWaitingInstructorHopeScheduleExport(row: WaitingInstructorRow): s
   return `${dateTime} | ${session}`
 }
 
-const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
+const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
   "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 기관의 개인정보 열람 및 정보를 수정하시겠습니까?"
@@ -692,10 +694,12 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       isGeneralOrganization: isGeneralOrgProgram,
       assignedSessions: assignmentsQuerySettled ? assignedEducationSessions : [],
       participantSessions: assignmentsQuerySettled ? participantSessions : [],
+      hopeSessions: hopeEducationSessions,
     })
   }, [
     assignedEducationSessions,
     assignmentsQuerySettled,
+    hopeEducationSessions,
     isCompanySchool,
     isGeneralOrgProgram,
     participantSessions,
@@ -924,12 +928,14 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           reason,
           Number.isFinite(programIdNumber) ? programIdNumber : undefined
         )
-        queryClient.setQueryData(
+        const safeDto = cacheProjectedProgramPrivacy(
+          queryClient,
           generalApplicationsQueryKeys.organizationDetailInProgram(programId, orgAppId),
+          program.id,
           dto
         )
-        queryClient.setQueryData(generalApplicationsQueryKeys.organizationDetail(orgAppId), dto)
-        return dto
+        queryClient.setQueryData(generalApplicationsQueryKeys.organizationDetail(orgAppId), safeDto)
+        return safeDto
       }
       if (row.teacherMemberId == null) {
         throw new Error('기관 신청 ID 또는 담당 교사 회원 ID가 없습니다.')
@@ -972,7 +978,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     revealWithReason,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: programId,
+    resolveProgramRole: () => resolveSessionProgramRole(programId),
     resolveAccessItem: resolvePersonalInfoAccessItem,
     revealPersonalInfo: revealInstitutionTeacherPersonalInfo,
     onPrivacyUnmasked: applyInstitutionTeacherPersonalInfo,
@@ -2165,6 +2175,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const assignedInstructorExportRows = useMemo(
     () =>
       assignedRows.map(row => ({
+        id: row.id,
         no: row.no,
         role: INSTRUCTOR_ROLE_LABELS[row.role],
         instructorName: row.instructorName,
@@ -2179,6 +2190,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const waitingInstructorExportRows = useMemo(
     () =>
       waitingRows.map(row => ({
+        id: row.id,
         no: row.no,
         instructorName: row.instructorName,
         homeAddress: displayServerPiiAsIs(row.homeAddress),
@@ -2196,6 +2208,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     columns: assignedInstructorExportColumns,
     data: assignedInstructorExportRows,
     filename: '배정된 강사 목록',
+    selectedRowKeys: selectedAssignedKeys,
   })
 
   const {
@@ -2205,6 +2218,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     columns: waitingInstructorExportColumns,
     data: waitingInstructorExportRows,
     filename: '배정 대기 강사 목록',
+    selectedRowKeys: selectedWaitingKeys,
   })
 
   /** 기본 정보 — 상단(진행·교재) / 하단(기관·신청) 테이블 분리 (시안) */
@@ -2383,7 +2397,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   코멘트 작성
                 </CmsButton>
               ) : null}
-              <PersonalInfoRevealButton
+              <PersonalInfoRevealButton disabled={programPrivacyPending}
                 labelMode="toggle"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"

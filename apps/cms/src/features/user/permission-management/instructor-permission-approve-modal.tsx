@@ -18,9 +18,7 @@ import {
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import {
   ADMIN_PERMISSION_SELECT_OPTIONS,
-  isAdminPermissionSelectComingSoon,
 } from '@/features/user/shared/lib/admin-permission-display'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { toInstructorRoleReviewScheduledAt } from '@/features/user/permission-management/lib/instructor-role-review-notify'
 import './instructor-permission-approve-modal.css'
 
@@ -92,7 +90,7 @@ export function InstructorPermissionApproveModal(
 
   const handleConfirm = () => {
     const grade = feeGrade?.trim()
-    if (!grade || isAdminPermissionSelectComingSoon(grade)) {
+    if (!grade) {
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -182,15 +180,7 @@ export function InstructorPermissionApproveModal(
               placeholder="관리자 권한을 선택해 주세요"
               value={feeGrade}
               onChange={v => {
-                const next = typeof v === 'string' ? v : undefined
-                if (isAdminPermissionSelectComingSoon(next)) {
-                  showAlert({
-                    title: '안내',
-                    content: FEATURE_COMING_SOON_ALERT_MESSAGE,
-                  })
-                  return
-                }
-                setFeeGrade(next)
+                setFeeGrade(typeof v === 'string' ? v : undefined)
               }}
               options={ADMIN_PERMISSION_SELECT_OPTIONS}
             />

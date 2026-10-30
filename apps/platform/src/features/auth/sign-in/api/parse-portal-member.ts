@@ -6,6 +6,7 @@ import type {
   PortalTeacherOrganizationResponse,
 } from './types'
 import type { InstructorRoleRequestProfile } from '@/features/mypage/instructor-apply/api/types'
+import { parsePortalAgeGroup } from '../lib/portal-age-group'
 
 function unwrapData(payload: unknown): Record<string, unknown> | null {
   if (!payload || typeof payload !== 'object') return null
@@ -74,6 +75,22 @@ function parseInstructorPortalProfile(
   }
 }
 
+function parseGuardianProfile(value: unknown): PortalProfileResponse['guardian'] {
+  const root = optionalObject(value)
+  if (!root) return undefined
+  const guardianName = optionalString(root.guardianName)
+  const guardianRelation = optionalString(root.guardianRelation)
+  const guardianPhone = optionalString(root.guardianPhone)
+  if (!guardianName && !guardianRelation && !guardianPhone) {
+    return undefined
+  }
+  return {
+    ...(guardianName ? { guardianName } : {}),
+    ...(guardianRelation ? { guardianRelation } : {}),
+    ...(guardianPhone ? { guardianPhone } : {}),
+  }
+}
+
 function parseTeacherOrganization(value: unknown): PortalTeacherOrganizationResponse | undefined {
   if (!value || typeof value !== 'object') return undefined
   const org = value as Record<string, unknown>
@@ -106,7 +123,7 @@ export function parseHomepageMeResponse(payload: unknown): HomepageMeResponse {
     name: optionalString(root.name),
     status: optionalString(root.status),
     memberType: optionalString(root.memberType),
-    ageGroup: optionalString(root.ageGroup),
+    ageGroup: parsePortalAgeGroup(root.ageGroup),
     teacher: optionalBoolean(root.teacher),
     identityVerified: optionalBoolean(root.identityVerified),
     lastLoginAt: optionalString(root.lastLoginAt),
@@ -137,7 +154,7 @@ export function parsePortalProfileResponse(payload: unknown): PortalProfileRespo
     teacher: optionalBoolean(root.teacher),
     instructor: optionalBoolean(root.instructor),
     under14: optionalBoolean(root.under14),
-    ageGroup: optionalString(root.ageGroup),
+    ageGroup: parsePortalAgeGroup(root.ageGroup),
     postalCode: optionalString(root.postalCode),
     address: optionalString(root.address),
     addressDetail: optionalString(root.addressDetail),
@@ -153,6 +170,7 @@ export function parsePortalProfileResponse(payload: unknown): PortalProfileRespo
     external1365Id: optionalString(root.external1365Id),
     accountStatus: optionalString(root.accountStatus),
     joinedAt: optionalString(root.joinedAt),
+    guardian: parseGuardianProfile(root.guardian),
     instructorProfile: parseInstructorPortalProfile(root.instructorProfile),
     socialAccounts: optionalStringArray(root.socialAccounts),
     listMetrics: parseListMetrics(root.listMetrics),

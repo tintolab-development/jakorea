@@ -4,6 +4,7 @@ import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/
 import { applyEducationStructureReset } from './registration-wizard-structure'
 import {
   createDefaultRegistrationWizardUiValues,
+  createNewRegistrationWizardUiValues,
   type RegistrationWizardUiValues,
 } from './registration-wizard-ui-values'
 import { buildGeneralProgramCreateFromWizardRhf } from './build-registration-create-from-rhf'
@@ -108,5 +109,37 @@ describe('buildGeneralProgramCreateFromWizardRhf', () => {
       uiValues: values,
     })
     expect(result.program.generalCommonInfo?.curriculumSessions ?? []).toEqual([])
+  })
+
+  it('신규 작성 기본값(온라인·개인)이 폼 값과 CREATE 저장 본문에 실린다', () => {
+    const fresh = createNewRegistrationWizardUiValues()
+    expect(fresh.singleEducationForm).toBe('online')
+    expect(fresh.singleParticipation).toBe('individual')
+    // 복원·hydrate 기본값은 그대로 — 저장값을 덮지 않는다
+    expect(createDefaultRegistrationWizardUiValues().singleEducationForm).toBe('')
+    expect(createDefaultRegistrationWizardUiValues().singleParticipation).toBe('')
+
+    const filled = filledCurriculumValues()
+    const result = buildGeneralProgramCreateFromWizardRhf({
+      id: 'local-general-default',
+      uiValues: {
+        ...filled,
+        singleEducationForm: fresh.singleEducationForm,
+        singleParticipation: fresh.singleParticipation,
+        extras: {
+          ...filled.extras,
+          participant: { ...filled.extras.participant, individual: true, organization: false },
+        },
+      },
+      overlay: {},
+    })
+    expect(result.persistOverlay['generalRegistration.typeSettings.singleEducationForm']).toBe(
+      'online'
+    )
+    expect(result.persistOverlay['generalRegistration.typeSettings.singleParticipation']).toBe(
+      'individual'
+    )
+    expect(result.program.generalCommonInfo?.educationFormLabel).toBe('온라인')
+    expect(result.program.generalCommonInfo?.participationMethod).toBe('individual')
   })
 })

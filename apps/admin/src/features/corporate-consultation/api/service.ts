@@ -12,6 +12,7 @@ import {
   toConsultationListParams,
   toStatusUpdateRequest,
 } from './mappers'
+import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status'
 import {
   confirmCorporateConsultations as confirmLocal,
   getCorporateConsultationWithPrivacyLog as getWithLogLocal,
@@ -62,7 +63,8 @@ export async function getCorporateConsultationService(
     try {
       const row = await sponsorshipApi().detail8(numericId)
       return mapConsultationDetailToDomain(row)
-    } catch {
+    } catch (error) {
+      if (isAdminForbidden(error) || isAdminNotFound(error)) throw error
       return null
     }
   }

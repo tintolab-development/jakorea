@@ -292,7 +292,7 @@ export function ProgramCalendarView({
           overrideEventColorMap={overrideEventColorMap}
           eventsTooltipTrigger="cell"
           eventsTooltipScope="full-day"
-          formatEventsOverflowText={hiddenCount => `외 ${hiddenCount}개의 일정`}
+          formatEventsOverflowText={hiddenCount => `외 ${hiddenCount}개의 항목`}
           formatWeekEventsOverflowText={hiddenCount => `외 ${hiddenCount}개의 항목`}
         />
       </div>

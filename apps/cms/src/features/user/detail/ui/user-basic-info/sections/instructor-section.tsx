@@ -4,13 +4,9 @@
  */
 
 import type { ReactNode } from 'react'
-import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { isInstructorDualProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
-import {
-  parseSchoolTeacherEmploymentStatus,
-  SchoolTeacherEmploymentStatusDropdown,
-} from '@/features/user/detail/lib/school-teacher-employment-status'
+import { SchoolTeacherEmploymentStatusDropdown } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
 import {
@@ -66,56 +62,27 @@ function instructorBusinessIncomeView(user: BasicInfoSectionContext['user']) {
 }
 
 /**
- * 소속 — 여러 개면 콤마로 나열.
- * 교사 겸직(instructor_dual)이면 소속 기관명 옆에 재직 현황 태그(변경 가능).
+ * 소속 — 학교·기관만 콤마로 나열.
+ * 교사 겸직의 재직 현황은 별도 「재직 현황」 필드(교사 상세와 동일).
  */
-function InstructorAffiliationView({
-  user,
-  permissionInstructorDetail,
-}: {
-  user: BasicInfoSectionContext['user']
-  permissionInstructorDetail?: boolean
-}) {
+function InstructorAffiliationView({ user }: { user: BasicInfoSectionContext['user'] }) {
   const { schoolName, others } = resolveInstructorAffiliationParts(user)
-  const employmentLabel = user.listMetrics?.employmentStatusLabel
-  const showEmployment =
-    Boolean(schoolName) &&
-    (isInstructorDualProfile(user) || Boolean(permissionInstructorDetail)) &&
-    parseSchoolTeacherEmploymentStatus(employmentLabel) != null
+  const parts = [...(schoolName ? [schoolName] : []), ...others]
 
-  if (!schoolName && others.length === 0) {
+  if (parts.length === 0) {
     return <span>-</span>
   }
 
-  const schoolNode =
-    schoolName && showEmployment ? (
-      <span className="user-basic-info-section__inline-segments">
-        <span>{schoolName}</span>
-        <DetailInfoFormTdDivider />
-        <SchoolTeacherEmploymentStatusDropdown
-          userId={user.id}
-          employmentStatusLabel={employmentLabel}
-          emptyFallback={null}
-        />
-      </span>
-    ) : schoolName ? (
-      <span>{schoolName}</span>
-    ) : null
-
-  const segments: ReactNode[] = []
-  if (schoolNode) segments.push(schoolNode)
-  for (const other of others) {
-    segments.push(<span key={other}>{other}</span>)
+  if (parts.length === 1) {
+    return <span>{parts[0]}</span>
   }
-
-  if (segments.length === 1) return <>{segments[0]}</>
 
   return (
     <span className="user-basic-info-section__affiliation-multi">
-      {segments.map((seg, i) => (
-        <span key={i} className="user-basic-info-section__affiliation-multi-item">
+      {parts.map((name, i) => (
+        <span key={`${name}-${i}`} className="user-basic-info-section__affiliation-multi-item">
           {i > 0 ? <span className="user-basic-info-section__affiliation-multi-sep">, </span> : null}
-          {seg}
+          {name}
         </span>
       ))}
     </span>
@@ -338,19 +305,14 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         <ContactInfoViewRow user={user} personalInfoRevealed={personalInfoRevealed} />
       )}
 
-      <EditableRow type="double">
-        <EditableField
-          label="소속"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={
-            <InstructorAffiliationView
-              user={user}
-              permissionInstructorDetail={isInstructorPermissionDetail}
-            />
-          }
-          edit={
-            isInstructorDualProfile(user) ? (
-              <span className="user-basic-info-section__inline-segments">
+      {isInstructorDualProfile(user) ? (
+        <>
+          <EditableRow type="double">
+            <EditableField
+              label="소속"
+              readOnlyDisplay={editing.isReadOnlyDisplay}
+              view={<InstructorAffiliationView user={user} />}
+              edit={
                 <CmsInput
                   value={d?.affiliationInstitution ?? ''}
                   onChange={e =>
@@ -361,14 +323,55 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                   placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.affiliationName}
                   aria-label="소속"
                 />
-                <DetailInfoFormTdDivider />
+              }
+            />
+            <EditableField
+              label="재직 현황"
+              readOnlyDisplay={editing.isReadOnlyDisplay}
+              view={
                 <SchoolTeacherEmploymentStatusDropdown
                   userId={user.id}
                   employmentStatusLabel={user.listMetrics?.employmentStatusLabel}
                   onChange={ctx.onEmploymentStatusChange}
                 />
-              </span>
-            ) : (
+              }
+              edit={
+                <SchoolTeacherEmploymentStatusDropdown
+                  userId={user.id}
+                  employmentStatusLabel={user.listMetrics?.employmentStatusLabel}
+                  onChange={ctx.onEmploymentStatusChange}
+                />
+              }
+            />
+          </EditableRow>
+          <EditableRow type="single">
+            <EditableField
+              label="강사 경력"
+              fullRow
+              readOnlyDisplay={editing.isReadOnlyDisplay}
+              view={<span>{instructorCareerYearsLine(user)}</span>}
+              edit={
+                <CmsInput
+                  value={d?.instructorCareerSummaryLabel ?? ''}
+                  onChange={e =>
+                    onMemberInfoDraftChange?.({ instructorCareerSummaryLabel: e.target.value })
+                  }
+                  inputSize="small"
+                  width="100%"
+                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
+                  aria-label="강사 경력"
+                />
+              }
+            />
+          </EditableRow>
+        </>
+      ) : (
+        <EditableRow type="double">
+          <EditableField
+            label="소속"
+            readOnlyDisplay={editing.isReadOnlyDisplay}
+            view={<InstructorAffiliationView user={user} />}
+            edit={
               <span className="user-basic-info-section__affiliation-row">
                 <CmsInput
                   value={d?.affiliationNone ? '' : (d?.affiliationInstitution ?? '')}
@@ -399,27 +402,27 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                   소속 없음
                 </CmsCheckbox>
               </span>
-            )
-          }
-        />
-        <EditableField
-          label="강사 경력"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<span>{instructorCareerYearsLine(user)}</span>}
-          edit={
-            <CmsInput
-              value={d?.instructorCareerSummaryLabel ?? ''}
-              onChange={e =>
-                onMemberInfoDraftChange?.({ instructorCareerSummaryLabel: e.target.value })
-              }
-              inputSize="small"
-              width="100%"
-              placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
-              aria-label="강사 경력"
-            />
-          }
-        />
-      </EditableRow>
+            }
+          />
+          <EditableField
+            label="강사 경력"
+            readOnlyDisplay={editing.isReadOnlyDisplay}
+            view={<span>{instructorCareerYearsLine(user)}</span>}
+            edit={
+              <CmsInput
+                value={d?.instructorCareerSummaryLabel ?? ''}
+                onChange={e =>
+                  onMemberInfoDraftChange?.({ instructorCareerSummaryLabel: e.target.value })
+                }
+                inputSize="small"
+                width="100%"
+                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
+                aria-label="강사 경력"
+              />
+            }
+          />
+        </EditableRow>
+      )}
 
       <EditableRow type="double">
         <EditableField

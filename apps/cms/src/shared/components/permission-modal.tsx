@@ -279,6 +279,10 @@ export function PermissionModal({
   const unsupportedNotifyMessage = showNotifyTiming
     ? getUnsupportedNotifyTimingMessage(notifyTiming, notifyTimingCapability)
     : null
+  const notifyScheduleNotReady =
+    showNotifyTiming &&
+    notifyTiming === 'manual' &&
+    (manualNotifyAt == null || !isFutureNotificationTime(manualNotifyAt))
 
   const notifyTimingField = (
     <div className="permission-modal__field">
@@ -344,7 +348,12 @@ export function PermissionModal({
               size="medium"
               type="button"
               loading={confirmLoading}
-              disabled={confirmLoading || confirmDisabled || Boolean(unsupportedNotifyMessage)}
+              disabled={
+                confirmLoading ||
+                confirmDisabled ||
+                Boolean(unsupportedNotifyMessage) ||
+                notifyScheduleNotReady
+              }
               onClick={handleConfirm}
             >
               {confirmLabel}

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
   getOperationalFormSpec,
+  isSystemCatalogOnlyFormType,
   listAllRegistrationCreateFormSpecs,
   listRecruitmentRowApplicationBindings,
   listVisibleOperationalFormSpecs,
@@ -13,6 +14,16 @@ import {
   clearRegistrationStepTemplateSelections,
   setRegistrationStepTemplateSelection,
 } from '@/features/program/shared/lib/step-template-selection'
+
+describe('isSystemCatalogOnlyFormType', () => {
+  it('treats registration, issuance, and certificate forms as catalog-only', () => {
+    expect(isSystemCatalogOnlyFormType('REGISTRATION')).toBe(true)
+    expect(isSystemCatalogOnlyFormType('ISSUANCE')).toBe(true)
+    expect(isSystemCatalogOnlyFormType('CERTIFICATE')).toBe(true)
+    expect(isSystemCatalogOnlyFormType('APPLICATION')).toBe(false)
+    expect(isSystemCatalogOnlyFormType('RECRUITMENT')).toBe(false)
+  })
+})
 
 describe('listAllRegistrationCreateFormSpecs', () => {
   afterEach(() => {
@@ -158,7 +169,7 @@ describe('listAllRegistrationCreateFormSpecs', () => {
     ).toEqual([189456])
   })
 
-  it('서로 다른 스펙에 이미 선택된 bindingId를 다시 선택하면 실패한다', () => {
+  it('서로 다른 스펙에 이미 선택된 bindingId는 고르지 않는다', () => {
     const binding: ProgramFormBindingResponse = {
       bindingId: 189454,
       formType: 'APPLICATION',
@@ -166,13 +177,65 @@ describe('listAllRegistrationCreateFormSpecs', () => {
       targetRole: 'ORGANIZATION',
       templateName: '기관 신청',
     }
-    expect(() =>
+    expect(
       pickOperationalFormBinding(
         [binding],
         { formType: 'APPLICATION', targetRole: 'ORGANIZATION', nameHints: ['기관 신청'] },
         { claimedBindingIds: new Set([189454]) }
       )
-    ).toThrow('같은 운영 바인딩')
+    ).toBeUndefined()
+  })
+
+  it('역할이 있는 스펙은 APPLICATION이 하나여도 역할이 다르면 고르지 않는다', () => {
+    const instructorOnly: ProgramFormBindingResponse = {
+      bindingId: 189778,
+      formType: 'APPLICATION',
+      targetType: 'INSTRUCTOR',
+      targetRole: 'INSTRUCTOR',
+      targetScope: 'RECRUITMENT',
+      targetScopeId: 501,
+      templateVersionId: 68,
+      active: true,
+    }
+    expect(
+      pickOperationalFormBinding([instructorOnly], {
+        formType: 'APPLICATION',
+        targetRole: 'ORGANIZATION',
+        nameHints: ['기관 신청', '1사1교 신청'],
+      })
+    ).toBeUndefined()
+    expect(
+      pickOperationalFormBinding([instructorOnly], {
+        formType: 'APPLICATION',
+        targetRole: 'INSTRUCTOR',
+        nameHints: ['강사 신청'],
+      })?.bindingId
+    ).toBe(189778)
+  })
+
+  it('기존 활성 binding의 고정 templateVersionId를 최신 버전으로 치환하지 않는다', () => {
+    const pinnedBinding: ProgramFormBindingResponse = {
+      bindingId: 189289,
+      formType: 'APPLICATION',
+      targetType: 'ORGANIZATION',
+      targetRole: 'ORGANIZATION',
+      targetScope: 'RECRUITMENT',
+      targetScopeId: 186363,
+      templateId: 10,
+      templateVersionId: 70,
+      templateName: '기관 신청',
+      active: true,
+    }
+
+    const selected = pickOperationalFormBinding([pinnedBinding], {
+      formType: 'APPLICATION',
+      targetRole: 'ORGANIZATION',
+      nameHints: ['기관 신청'],
+      catalogTemplateId: 10,
+    })
+
+    expect(selected?.bindingId).toBe(189289)
+    expect(selected?.templateVersionId).toBe(70)
   })
 })
 
@@ -246,6 +309,26 @@ describe('신청 바인딩 대상 별칭 — BE canonicalTarget와 같은 규칙
   it('봉사자는 COLLEGE_STUDENT·VOLUNTEER 모두 인식한다', () => {
     expect(
       ids('VOLUNTEER', [row(1, 'COLLEGE_STUDENT', 'VOLUNTEER'), row(2, 'VOLUNTEER', 'MEMBER')])
+    ).toEqual([1, 2])
+  })
+  it('targetType이 비고 targetRole만 MEMBER인 봉사자 행도 인식한다', () => {
+    expect(ids('VOLUNTEER', [row(9, '', 'MEMBER')])).toEqual([9])
+  })
+  it('UJAT 봉사자 모집 TERM 2행도 RECRUITMENT scope로 모은다', () => {
+    const recruit = (bindingId: number, scopeId: number) =>
+      ({
+        bindingId,
+        formType: 'RECRUITMENT',
+        targetType: 'VOLUNTEER',
+        targetScope: 'RECRUITMENT',
+        targetScopeId: scopeId,
+        active: true,
+      }) as ProgramFormBindingResponse
+    expect(
+      listRecruitmentRowApplicationBindings(program, [recruit(1, 801), recruit(2, 802)], {
+        formType: 'RECRUITMENT',
+        targetRole: 'VOLUNTEER',
+      }).map(item => item.bindingId)
     ).toEqual([1, 2])
   })
   it('기관은 ORGANIZATION·SCHOOL·INSTITUTION, 개인은 INDIVIDUAL·PERSONAL을 인식한다', () => {

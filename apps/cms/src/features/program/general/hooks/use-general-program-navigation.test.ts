@@ -93,7 +93,7 @@ describe('resolveGeneralProgramNavigation', () => {
     expect(result.disabledLnbKeys.has('progress')).toBe(true)
   })
 
-  it('설문 관리는 navigation enabled=false여도 LNB를 숨기지 않는다', () => {
+  it('설문 관리는 navigation enabled=false여도 disabledLnbKeys에 넣지 않는다 (카테고리 유무는 사이드바가 판정)', () => {
     const result = resolveGeneralProgramNavigation([{ key: 'SURVEY', enabled: false }])
 
     expect(result.disabledLnbKeys.has('survey')).toBe(false)

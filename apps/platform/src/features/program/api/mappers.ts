@@ -15,7 +15,12 @@ import type {
   ProgramVolunteerInterviewSchedule,
 } from '../model/types'
 import { PROGRAM_TAB_LABEL, programTabLabels } from '../lib/constants.ts'
-import { fallbackPortalTab, isUjatProgramType, mapPortalTabs } from '../lib/portal-category.ts'
+import {
+  fallbackPortalTab,
+  isUjatProgramType,
+  mapPortalTabs,
+  resolveProgramDetailCategoryTabs,
+} from '../lib/portal-category.ts'
 import {
   programTabFromPortalTab,
   selectRecruitmentsForFocus,
@@ -33,6 +38,11 @@ import type {
   PortalVolunteerInterviewSchedule,
 } from './types'
 import { extraSection, rewriteAdminFileContentSrcsForPortal } from '../lib/html-body.ts'
+import { mapPortalSponsorDisplay } from '../lib/portal-sponsor-display.ts'
+import {
+  recruitmentGuideSectionTitle,
+  recruitmentPhaseGroupLabel,
+} from '../lib/detail-case.ts'
 import {
   educationScheduleDetailCardLabel,
   formatEducationScheduleRangeForDetailCard,
@@ -151,6 +161,20 @@ function readString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
+/**
+ * 모집 행에 키가 있으면 그 값(빈 값·null 포함)을 쓰고, 키가 없을 때만 프로그램 값을 쓴다.
+ * 기관 신청 상세 focus 시 상세 정보 이미지가 프로그램 HTML에만 있는 경우를 살린다.
+ */
+function pickFocusedRecruitmentCopy(
+  row: { additionalContentHtml?: string | null } | undefined,
+  rowValue: string | null | undefined,
+  remoteValue: string | null | undefined,
+): string {
+  if (!row) return readString(remoteValue) ?? ''
+  if (rowValue !== undefined) return readString(rowValue) ?? ''
+  return readString(remoteValue) ?? ''
+}
+
 /** 기관 참여자 모집 행. 강사·봉사자 행은 제외한다. */
 function resolvePortalProgramAudience(
   remote: PortalProgramDetail,
@@ -219,6 +243,23 @@ function formatYmd(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
+}
+
+const SEOUL_YMD_FORMAT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+/** Portal `trainingRequest*` — 날짜만 있으면 그대로, datetime은 Asia/Seoul 역일. */
+function toIsoDateOnlyFromPortal(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+  const date = toDate(trimmed)
+  if (!date) return null
+  return SEOUL_YMD_FORMAT.format(date)
 }
 
 function formatRange(start: Date | null, end: Date | null): string {
@@ -453,6 +494,8 @@ function recruitmentTypeLabel(value: string | undefined): string {
       return '강사 모집 기간'
     case 'VOLUNTEER':
       return '봉사자 모집 기간'
+    case 'ORGANIZATION':
+      return '기관 모집 기간'
     default:
       return '참여자 모집 기간'
   }
@@ -464,6 +507,8 @@ function recruitmentRoleShort(value: string | undefined): string {
       return '강사'
     case 'VOLUNTEER':
       return '봉사자'
+    case 'ORGANIZATION':
+      return '기관'
     default:
       return '참여자'
   }
@@ -692,19 +737,27 @@ export function formatPortalEducationVenue(
   return detailWithoutKind ? `${kindLabel} | ${detailWithoutKind}` : kindLabel
 }
 
-/** 참여자·기관·Gemini만 학습 지원. 강사·봉사자는 기타사항. */
+/** 참여자·기관·Gemini만 학습 지원. 강사·봉사자는 기타사항. Gemini 비고(notes)도 otherMatters. */
 function showsLearningSupport(detailCase: ProgramDetailCase): boolean {
   return detailCase === 'general' || detailCase === 'ujat-participant' || detailCase === 'gemini'
 }
 
 function showsOtherMatters(detailCase: ProgramDetailCase): boolean {
-  return detailCase === 'instructor' || detailCase === 'volunteer' || detailCase === 'ujat-volunteer'
+  return (
+    detailCase === 'instructor' ||
+    detailCase === 'volunteer' ||
+    detailCase === 'ujat-volunteer' ||
+    detailCase === 'gemini'
+  )
 }
 
-/** 빈 에디터(`<p></p>`, `<p><br></p>`)와 CMS 공란 표식은 섹션을 만들지 않는다. */
+/** 빈 에디터(`<p></p>`, `<p><br></p>`)와 CMS 공란 표식은 섹션을 만들지 않는다. 이미지만 있으면 유지한다. */
 function visibleCopy(value: string): string {
   const trimmed = value.trim()
   if (!trimmed || trimmed === '-' || trimmed === '해당 없음' || trimmed === '해당없음') return ''
+  if (/<img\b/i.test(trimmed) || /!\[[^\]]*]\(/i.test(trimmed) || /file-object:\d+/i.test(trimmed)) {
+    return trimmed
+  }
   const plain = trimmed
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;|&#160;/gi, ' ')
@@ -779,6 +832,33 @@ type EducationProgressRowVisibility = {
   showEducationForm: boolean
   /** 기간형 배정 정보는 교육받은 교사 프로그램에서만 공개한다. */
   showAssignmentPeriod: boolean
+  /** 개인 일반 「교육 진행 장소」 일정별일 때만 행마다 장소를 보인다. */
+  showEducationPlace: boolean
+}
+
+/** 사전 교육 행에는 교육 장소를 싣지 않는다. */
+function isPortalPreEducationRow(row: {
+  blockKind?: string
+  sessionLabel?: string
+  scheduleLabel?: string
+}): boolean {
+  if (row.blockKind === 'preEducation') return true
+  return [row.sessionLabel, row.scheduleLabel].some(label =>
+    /^사전\s*교육/.test(label?.trim() ?? '')
+  )
+}
+
+function educationPlaceRowLabel(
+  row: {
+    educationPlaceAddress?: string | null
+    blockKind?: string
+    sessionLabel?: string
+    scheduleLabel?: string
+  },
+  rows: EducationProgressRowVisibility
+): string | undefined {
+  if (!rows.showEducationPlace || isPortalPreEducationRow(row)) return undefined
+  return optionalText(row.educationPlaceAddress)
 }
 
 function mapPortalCurriculumSessions(
@@ -796,6 +876,7 @@ function mapPortalCurriculumSessions(
     const assignmentPeriod = rows.showAssignmentPeriod
       ? optionalText(session.assignmentPeriod)
       : undefined
+    const educationPlaceLabel = educationPlaceRowLabel(session, rows)
     return {
       sessionLabel: session.sessionLabel ?? '',
       title: session.title ?? '',
@@ -807,6 +888,7 @@ function mapPortalCurriculumSessions(
         ? { assignmentEnabled: session.assignmentEnabled }
         : {}),
       ...(assignmentPeriod ? { assignmentPeriod } : {}),
+      ...(educationPlaceLabel ? { educationPlaceLabel } : {}),
     }
   })
 }
@@ -861,6 +943,7 @@ function mapPortalScheduleDetails(
     const assignmentPeriod = rows.showAssignmentPeriod
       ? optionalText(detail.assignmentPeriod)
       : undefined
+    const educationPlaceLabel = educationPlaceRowLabel(detail, rows)
     const name = toDisplayEducationScheduleName(detail.name) ?? ''
     if (
       !name &&
@@ -868,6 +951,7 @@ function mapPortalScheduleDetails(
       !educationFormLabel &&
       !participationMethodLabel &&
       !assignmentPeriod &&
+      !educationPlaceLabel &&
       detail.assignmentEnabled === undefined
     ) {
       return []
@@ -885,6 +969,7 @@ function mapPortalScheduleDetails(
           ? { assignmentEnabled: detail.assignmentEnabled }
           : {}),
         ...(assignmentPeriod ? { assignmentPeriod } : {}),
+        ...(educationPlaceLabel ? { educationPlaceLabel } : {}),
       },
     ]
   })
@@ -1002,6 +1087,12 @@ function compactBasicInfoFields(fields: ProgramBasicInfoField[]): ProgramBasicIn
   return fields.filter(field => field.value.trim().length > 0 && field.value !== '-')
 }
 
+function formatGeminiMinStudentCountLabel(remote: PortalProgramDetail): string {
+  const raw = remote.minStudentCount ?? remote.totalParticipants
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) return ''
+  return `${raw}명`
+}
+
 /** 기본정보 그리드 레이아웃 — TRAINED_TEACHER는 강사 모집 카드가 아닌 교육 대상형. */
 function portalBasicInfoLayoutCase(
   programType: string | undefined,
@@ -1046,6 +1137,7 @@ function buildPortalBasicInfoFields(args: {
   recruitmentTargetGroupLabel: string
   recruitmentTargetDetailLabel: string
   educationVenueLabel: string
+  geminiMinStudentCountLabel?: string
 }): ProgramBasicInfoField[] {
   switch (args.detailCase) {
     case 'instructor':
@@ -1094,7 +1186,7 @@ function buildPortalBasicInfoFields(args: {
         { label: '교육 형태', value: args.educationFormLabel },
         { label: '교육 대상', value: args.educationTargetGroupLabel },
         { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
-        { label: '교육 장소', value: args.educationVenueLabel },
+        { label: '최소 수강 인원', value: args.geminiMinStudentCountLabel ?? '' },
       ])
     default: {
       const fields: ProgramBasicInfoField[] = [{ label: '사업 분야', value: args.businessFieldLabel }]
@@ -1152,19 +1244,19 @@ export function mapPortalProgramDetail(
     : selected?.ambiguous
       ? []
       : remote.recruitments
-  const focusedTab = focus?.portalTab
-  const categories = focusedTab
-    ? [programTabFromPortalTab(focusedTab)]
-    : mapPortalTabs(remote.portalCategories, remote.programType)
-  const category = focusedTab
-    ? programTabFromPortalTab(focusedTab)
-    : mapCategory(remote.portalCategories, remote.programType)
+  const focusedTab = focus?.portalTab ? programTabFromPortalTab(focus.portalTab) : undefined
   const detailCase =
     recruitmentResolved && selected
       ? detailCaseForFocus(remote.programType, selected.applicationTypes)
       : selected?.ambiguous && selected.applicationTypes.length === 1
         ? detailCaseForFocus(remote.programType, selected.applicationTypes)
         : mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
+  const categories = resolveProgramDetailCategoryTabs({
+    tabs: mapPortalTabs(remote.portalCategories, remote.programType),
+    detailCase,
+    focusedTab,
+  })
+  const category = categories[0] ?? fallbackPortalTab(remote.programType)
   const perScheduleEducationForm = remote.educationFormScheduleDetail === 'perSchedule'
   const educationForm = resolveEducationFormCode(remote.educationForm, remote.operationMethod)
   const programType = readString(remote.programType)?.toUpperCase()
@@ -1206,10 +1298,20 @@ export function mapPortalProgramDetail(
     ? undefined
     : optionalText(remote.educationFormLabel)
   const educationFormLabel = apiEducationFormLabel ?? EDUCATION_FORM_LABEL[educationForm]
-  const educationVenueLabel =
-    formatPortalEducationVenue(remote.venue, remote.venueKind) ||
-    venueFromSchedules(remote.schedules) ||
-    (perScheduleEducationForm ? '' : educationFormLabel)
+  // 개인 일반 「교육 진행 장소」: common은 공통 주소 → venue, perSchedule은 행마다 보이므로 단일 항목을 숨긴다.
+  // 새 필드가 없으면 기존 순서(venue → 첫 일정 주소 → 교육 형태)를 유지한다.
+  const educationPlaceMode =
+    remote.educationPlaceScheduleDetail === 'common' ||
+    remote.educationPlaceScheduleDetail === 'perSchedule'
+      ? remote.educationPlaceScheduleDetail
+      : null
+  const perScheduleEducationPlace = educationPlaceMode === 'perSchedule'
+  const educationVenueLabel = perScheduleEducationPlace
+    ? ''
+    : optionalText(remote.educationPlaceAddress) ||
+      formatPortalEducationVenue(remote.venue, remote.venueKind) ||
+      venueFromSchedules(remote.schedules) ||
+      (perScheduleEducationForm ? '' : educationFormLabel)
   const businessFieldLabel = readString(remote.businessField) || '-'
   const educationTargetGroupLabel = hasEducationTargetCodes ? targets.educationTargetGroupLabel : ''
   const educationTargetDetailLabel = mapEducationTargetDetailLabel(
@@ -1238,6 +1340,7 @@ export function mapPortalProgramDetail(
   const rowVisibility: EducationProgressRowVisibility = {
     showEducationForm: perScheduleEducationForm || !optionalText(remote.educationFormLabel),
     showAssignmentPeriod: isTrainedTeacher,
+    showEducationPlace: perScheduleEducationPlace,
   }
   const sessions = usesEducationProgressFields
     ? mapPortalCurriculumSessions(
@@ -1295,11 +1398,20 @@ export function mapPortalProgramDetail(
   const recruitmentPeriodLabel = formatRange(appStart, appEnd)
   const geminiTrainingRequestStart = toDate(remote.trainingRequestStartDate ?? undefined)
   const geminiTrainingRequestEnd = toDate(remote.trainingRequestEndDate ?? undefined)
+  const geminiTrainingRequestStartDate =
+    detailCase === 'gemini' ? toIsoDateOnlyFromPortal(remote.trainingRequestStartDate) : null
+  const geminiTrainingRequestEndDate =
+    detailCase === 'gemini' ? toIsoDateOnlyFromPortal(remote.trainingRequestEndDate) : null
   const geminiTrainingRequestPeriodLabel =
     detailCase === 'gemini' && (geminiTrainingRequestStart || geminiTrainingRequestEnd)
       ? formatRange(geminiTrainingRequestStart, geminiTrainingRequestEnd)
       : ''
-  const educationFormLabelForDetail = perScheduleEducationForm ? '' : educationFormLabel
+  const geminiMinStudentCountLabel =
+    detailCase === 'gemini' ? formatGeminiMinStudentCountLabel(remote) : ''
+  // 교육 형태 '일정 별 상이'(perSchedule) — 모집공고 공통 표기는 온/오프라인
+  const educationFormLabelForDetail = perScheduleEducationForm
+    ? EDUCATION_FORM_LABEL.hybrid
+    : educationFormLabel
 
   const programDescription = visibleCopy(
     readString(independentRow ? independentRow.programDescription : remote.description) ?? ''
@@ -1309,20 +1421,26 @@ export function mapPortalProgramDetail(
   )
   const additionalContent = visibleCopy(
     rewriteAdminFileContentSrcsForPortal(
-      readString(independentRow ? independentRow.additionalContentHtml : remote.additionalContentHtml) ??
-        ''
-    )
+      pickFocusedRecruitmentCopy(
+        independentRow,
+        independentRow?.additionalContentHtml,
+        remote.additionalContentHtml,
+      ),
+    ),
   )
   const learningSupportContent = visibleCopy(
     readString(independentRow ? independentRow.learningSupportContent : remote.learningSupportContent) ??
       ''
   )
   const otherMatters = visibleCopy(readString(remote.otherMatters) ?? '')
-  const remarks = visibleCopy(readString(independentRow ? independentRow.remarks : remote.remarks) ?? '')
+  // 비고 = remarks, 기타사항 = otherMatters. 서로 대체하지 않는다.
+  const remarks = visibleCopy(
+    readString(independentRow ? independentRow.remarks : remote.remarks) ?? ''
+  )
   const preEducationNoticeRequired = readPortalPreEducationNoticeRequired(remote, independentRow)
   const extraSections: ProgramExtraSection[] = [
-    extraSection('모집 안내', recruitmentGuide),
-    { title: '추가 내용', body: additionalContent, bodyFormat: 'html' as const },
+    extraSection(recruitmentGuideSectionTitle(detailCase), recruitmentGuide),
+    extraSection('추가 내용', additionalContent),
     ...(showsLearningSupport(detailCase)
       ? [extraSection('학습 지원 내용', learningSupportContent)]
       : []),
@@ -1353,6 +1471,11 @@ export function mapPortalProgramDetail(
     ...(geminiTrainingRequestPeriodLabel
       ? { geminiTrainingRequestPeriodLabel }
       : {}),
+    ...(geminiTrainingRequestStartDate
+      ? { geminiTrainingRequestStartDate }
+      : {}),
+    ...(geminiTrainingRequestEndDate ? { geminiTrainingRequestEndDate } : {}),
+    ...(geminiMinStudentCountLabel ? { geminiMinStudentCountLabel } : {}),
     recruitmentStatus,
     educationTargetKey: targets.key,
     educationTargetKeys: targets.keys,
@@ -1361,7 +1484,7 @@ export function mapPortalProgramDetail(
     educationFormLabel: educationFormLabelForDetail,
     thumbnailUrl,
     detailImageUrl: thumbnailUrl,
-    sponsor: (remote.sponsorNames ?? []).map(readString).filter(Boolean).join(', ') || '-',
+    sponsor: mapPortalSponsorDisplay(remote.sponsorNames),
     summary: independentRow
       ? programDescription
       : visibleCopy(readString(remote.description) ?? readString(remote.summary) ?? ''),
@@ -1399,7 +1522,7 @@ export function mapPortalProgramDetail(
       usesEducationProgressFields,
       businessFieldLabel,
       educationFormLabel: perScheduleEducationForm
-        ? ''
+        ? EDUCATION_FORM_LABEL.hybrid
         : usesEducationProgressFields
           ? (apiEducationFormLabel ?? '')
           : educationFormLabel,
@@ -1408,6 +1531,7 @@ export function mapPortalProgramDetail(
       recruitmentTargetGroupLabel,
       recruitmentTargetDetailLabel,
       educationVenueLabel,
+      geminiMinStudentCountLabel,
     }),
     educationStructure,
     sessionRound,
@@ -1421,14 +1545,17 @@ export function mapPortalProgramDetail(
     ),
     sessions,
     eventSchedules,
-    recruitmentPhaseGroupLabel:
-      detailCase === 'gemini' ? '신청 및 연수 기간' : '모집 및 선별 기간',
+    recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(
       selected?.ambiguous
         ? undefined
         : recruitmentResolved
           ? recruitmentRows
           : remote.recruitments,
+    ).map(phase =>
+      detailCase === 'gemini' && phase.label === '참여자 모집 기간'
+        ? { ...phase, label: '기관 모집 기간' }
+        : phase,
     ),
     educationSchedules:
       isUjatDetailCase

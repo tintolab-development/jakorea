@@ -11,7 +11,7 @@ import type { Dayjs } from 'dayjs'
 import { CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX } from '@/shared/constants/modal-z-index'
 import type { CmsControlSize } from './cms-control-size'
 import { formatAppDatepickerRangePlain } from './app-datepicker'
-import './cms-datepicker.css'
+import '@jakorea/admin-ui/date/styles'
 import './cms-period-datepicker.css'
 
 export type CmsPeriodDatePickerValue = [Dayjs | null, Dayjs | null]

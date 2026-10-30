@@ -1,3 +1,4 @@
+import type { PreferredScheduleBlock } from '@/shared/api/generated/dashboard/schemas/preferredScheduleBlock'
 import type { GeminiApprovedTrainingStatus } from '../approved/types'
 
 export type GeminiInstitutionApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -10,6 +11,7 @@ export type GeminiInstitutionApplicationRow = {
   institutionSigungu: string
   approvalStatus: GeminiInstitutionApprovalStatus
   preferredLectureSchedule: string
+  preferredScheduleBlocks: PreferredScheduleBlock[]
   studentCount: number
   teacherName: string
   programProgressStatus?: GeminiApprovedTrainingStatus

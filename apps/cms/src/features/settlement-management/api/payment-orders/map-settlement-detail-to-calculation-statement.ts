@@ -18,21 +18,24 @@ import type {
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import { formatPaymentOrderInstitutionDisplay } from '@/features/settlement-management/api/payment-orders/payment-order-line-amounts'
 import {
   formatBusinessIncomeEarnerLabel,
   formatBusinessPeriodDisplay,
-  formatLectureFeeStandardTitle,
+  resolveLectureFeeStandardTitleFromSettlement,
   formatLectureSessionLabel,
   formatProgramSessionProgressDisplay,
-  formatWonAmountDisplay,
   mapCalculationDetailToBasisDetail,
   mapSettlementFrontendItemTypeToLineKind,
   prepareSettlementFrontendItemsForStatement,
+  resolveLectureFeeStandardAmountDisplay,
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
 import {
+  isCanonicalLectureSessionDisplay,
   mapTransportationSnapshotToBasisDetail,
   type PaymentOrderCalculationBasisDetailTransportSnapshot,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
+import { mapSettlementPayeeToInstructorBasicFields } from '@/features/settlement-management/api/payment-orders/map-settlement-payee'
 
 type ProgramDetailLineRow = PaymentOrderAdminProgramDetailInstructorRow
 type InstructorDetailLineRow = PaymentOrderAdminInstructorDetailProgramRow
@@ -58,13 +61,18 @@ function mapItemToLine(
     amount
   )
 
+  const kind = mapSettlementFrontendItemTypeToLineKind(item.type, amount)
+  const taxIncomeTypeDisplay =
+    kind === 'withholding' ? item.taxIncomeTypeDisplay?.trim() || null : null
+
   return {
     id: `calc-line-remote-${index}`,
     itemLabel: formatPaymentOrderCalculationItemLabel(item.type, amount),
     description: item.description?.trim() || '—',
     amount,
-    kind: mapSettlementFrontendItemTypeToLineKind(item.type, amount),
+    kind,
     basisDetail,
+    taxIncomeTypeDisplay,
   }
 }
 
@@ -109,7 +117,7 @@ function resolveLectureSessionDisplay(
   sessionDisplay: 'range' | 'single'
 ): string {
   const fromApi = settlement.lectureSessionDisplay?.trim()
-  if (fromApi) return fromApi
+  if (fromApi && isCanonicalLectureSessionDisplay(fromApi)) return fromApi
 
   const sessionOrdinal = settlement.sessionOrdinal ?? lineRow.sessionOrdinal
   if (sessionOrdinal == null || sessionOrdinal <= 0) return '—'
@@ -139,12 +147,13 @@ function buildBlocks(
           },
         ]
 
+  /** settlement.institutionName만 (목록 행·프로그램명으로 보완 금지). null이면 '-' */
   const institutionName =
-    settlement.institutionName?.trim() || lineRow.institutionName?.trim() || '—'
+    formatPaymentOrderInstitutionDisplay(settlement.institutionName) || '-'
 
   return [
     {
-      institutionName: institutionName === '-' ? '—' : institutionName,
+      institutionName,
       lectureDateDisplay: formatIsoToKoreanWeekday(lineRow.lectureDate),
       lectureSessionDisplay: resolveLectureSessionDisplay(lineRow, settlement, sessionDisplay),
       lines,
@@ -158,8 +167,11 @@ function sumItems(items: SettlementFrontendItemResponse[] | undefined): number {
 
 function mapCalculationStatementSharedBasic(settlement: SettlementFrontendResponse) {
   return {
-    lectureFeeStandardTitle: formatLectureFeeStandardTitle(settlement.lectureFeeStandardTitle),
-    lectureFeeStandardAmount: formatWonAmountDisplay(settlement.lectureFeeStandardAmount),
+    lectureFeeStandardTitle: resolveLectureFeeStandardTitleFromSettlement(settlement),
+    lectureFeeStandardAmount: resolveLectureFeeStandardAmountDisplay(
+      settlement.lectureFeeStandardAmount,
+      settlement.items
+    ),
     businessIncomeEarnerLabel: formatBusinessIncomeEarnerLabel(
       settlement.businessIncomeEarnerLabel
     ),
@@ -237,6 +249,8 @@ export function mapSettlementDetailToInstructorPageCalculationStatement(
   const totalAmount =
     settlement.totalAmount ?? (itemsTotal !== 0 ? itemsTotal : lineRow.estimatedAmount)
 
+  const payeeFields = mapSettlementPayeeToInstructorBasicFields(settlement.payee)
+
   const { addressDisplay, addressBlurredTail } = addressDisplayForStatementBlur(
     instructorDetail.address
   )
@@ -255,14 +269,21 @@ export function mapSettlementDetailToInstructorPageCalculationStatement(
     sourceLineRowId: lineRow.id,
     basic: {
       nameKo: instructorDetail.nameKo,
-      nameEn: instructorDetail.nameEn,
-      phoneDisplay: MASKING_POLICY.phone(instructorDetail.phone),
-      emailDisplay: MASKING_POLICY.email(instructorDetail.email),
-      addressDisplay,
-      addressBlurredTail,
-      settlementAccountBankNumberPart: settlementBankPart || '—',
-      settlementAccountHolderPart: MASKING_POLICY.accountHolderName(instructorDetail.accountHolder),
-      genderBirthDisplay: '-',
+      nameEn: payeeFields?.nameEn ?? instructorDetail.nameEn,
+      phoneDisplay: payeeFields?.phoneDisplay ?? MASKING_POLICY.phone(instructorDetail.phone),
+      emailDisplay: payeeFields?.emailDisplay ?? MASKING_POLICY.email(instructorDetail.email),
+      addressDisplay: payeeFields?.addressDisplay ?? addressDisplay,
+      addressBlurredTail: payeeFields?.addressBlurredTail ?? addressBlurredTail,
+      settlementAccountBankNumberPart:
+        payeeFields?.settlementAccountBankNumberPart ?? (settlementBankPart || '—'),
+      settlementAccountHolderPart:
+        payeeFields?.settlementAccountHolderPart ??
+        MASKING_POLICY.accountHolderName(instructorDetail.accountHolder),
+      genderBirthDisplay: payeeFields?.genderBirthDisplay ?? '-',
+      affiliation: payeeFields?.affiliation,
+      residentRegistrationNumber: payeeFields?.residentRegistrationNumber,
+      addressRoad: payeeFields?.addressRoad,
+      addressDetail: payeeFields?.addressDetail,
       programName: resolvedProgramName,
       processingStatusDisplay: PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[lineRow.processingStatus],
       processingStatusClass: lineRow.processingStatus,

@@ -37,9 +37,11 @@ const DELETE_BLOCKED_BODY: Record<GeminiDeleteBlockedKind, string> = {
 }
 
 export function geminiRecruitmentDeleteBlocked(row: {
+  isDraft?: boolean
   organizationApplicationCount?: number
   approvedOrganizationApplicationCount?: number
 }): boolean {
+  if (row.isDraft) return false
   return (row.organizationApplicationCount ?? 0) > 0 || (row.approvedOrganizationApplicationCount ?? 0) > 0
 }
 

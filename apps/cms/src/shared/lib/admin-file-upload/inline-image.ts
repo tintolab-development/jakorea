@@ -74,6 +74,33 @@ export function shouldInsertRichTextImageLocally(
   return !isRealApiModuleEnabled('files') && owner == null
 }
 
+const draftProgramInlineImageFiles = new Map<number, File>()
+
+function isProgramInlineImageDraftOwner(owner: AdminFileUploadOwner): boolean {
+  return (
+    owner.filePurpose === ADMIN_FILE_PURPOSE.PROGRAM_INLINE_IMAGE &&
+    owner.ownerDomain === 'PROGRAM_CONTENT' &&
+    owner.ownerType === 'PROGRAM' &&
+    owner.ownerId == null
+  )
+}
+
+export function rememberProgramInlineImageDraft(fileObjectId: number, file: File): void {
+  if (fileObjectId < 1 || file.size < 1) return
+  draftProgramInlineImageFiles.set(fileObjectId, file)
+}
+
+export function takeProgramInlineImageDraft(fileObjectId: number): File | undefined {
+  const file = draftProgramInlineImageFiles.get(fileObjectId)
+  if (file == null) return undefined
+  draftProgramInlineImageFiles.delete(fileObjectId)
+  return file
+}
+
+export function resetProgramInlineImageDraftsForTests(): void {
+  draftProgramInlineImageFiles.clear()
+}
+
 /**
  * 인라인 이미지 upload-first.
  * 신규 공지·FAQ·프로그램 상세(PROGRAM_INLINE_IMAGE)는 ownerId null 로 prepare 한다.
@@ -90,6 +117,9 @@ export async function resolveRichTextInlineImageSrc(
   const persistSrc = contentUrlForFileObjectId(uploaded.fileObjectId).trim()
   if (!persistSrc || persistSrc.startsWith('data:') || fileObjectIdFromAdminFileUrl(persistSrc) == null) {
     throw new Error('이미지 주소를 받지 못했습니다. 다시 시도해 주세요.')
+  }
+  if (isProgramInlineImageDraftOwner(owner)) {
+    rememberProgramInlineImageDraft(uploaded.fileObjectId, file)
   }
   const src = URL.createObjectURL(file)
   if (!src.startsWith('blob:')) {

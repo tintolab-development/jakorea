@@ -107,6 +107,7 @@ export function useUjatEducationDocumentsForScheduleQuery(
 export function useUjatEducationFormBindingQuery(
   programId: number | null,
   bindingId: number | null,
+  templateVersionId: number | null,
   options?: { enabled?: boolean },
 ) {
   const enabled =
@@ -121,6 +122,7 @@ export function useUjatEducationFormBindingQuery(
     queryKey: platformQueryKeys.mypage.programApplications.formBinding({
       programId: String(programId ?? ''),
       bindingId: bindingId ?? 0,
+      templateVersionId: templateVersionId ?? undefined,
     }),
     queryFn: ({ signal }) =>
       fetchUjatEducationFormBindingRender(programId!, bindingId!, signal),

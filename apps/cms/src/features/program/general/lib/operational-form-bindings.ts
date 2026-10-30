@@ -32,6 +32,19 @@ import {
 
 export type OperationalFormType = 'APPLICATION' | 'RECRUITMENT' | 'REGISTRATION'
 
+/** BE: 등록/발급/인증서는 시스템 카탈로그만. 프로그램 전용 COPY 금지. */
+export function isSystemCatalogOnlyFormType(formType: string | null | undefined): boolean {
+  const normalized = String(formType ?? '')
+    .trim()
+    .toUpperCase()
+  return (
+    normalized === 'REGISTRATION' ||
+    normalized === 'ISSUANCE' ||
+    normalized === 'CERTIFICATE' ||
+    normalized === 'CERTIFICATION'
+  )
+}
+
 export type OperationalFormSpec = {
   templateCode: string
   formType: OperationalFormType
@@ -435,21 +448,23 @@ export function resolveRowApplicationBinding(
 }
 
 /**
- * CREATE 후 BE `fanOutProgramBindings`가 만든 모집 행(RECRUITMENT scope) 신청 바인딩 중
- * spec 역할과 맞는 활성 바인딩 목록. 행마다 독립 양식이므로 CREATE 후 양식 적용은 행 단위로 한다.
+ * CREATE 후 BE `fanOutProgramBindings`가 만든 모집 행(RECRUITMENT scope) 운영 바인딩 중
+ * spec 역할과 맞는 활성 바인딩 목록. 신청뿐 아니라 UJAT 봉사자 모집(TERM 2행)도 행 단위다.
+ * COPY는 templateCode당 1회이고 둘째 행은 같은 발행 버전으로 바인딩만 교체한다.
  */
 export function listRecruitmentRowApplicationBindings(
   program: Pick<Program, 'backendProgramType'>,
   bindings: readonly ProgramFormBindingResponse[],
   spec: Pick<OperationalFormSpec, 'formType' | 'targetRole'>
 ): ProgramFormBindingResponse[] {
-  if (normalizeBindingType(spec.formType) !== 'APPLICATION') return []
+  const formType = normalizeBindingType(spec.formType)
+  if (formType !== 'APPLICATION' && formType !== 'RECRUITMENT') return []
   const programType = program.backendProgramType?.trim().toUpperCase()
   if (programType == null || !RECRUITMENT_ROW_PROGRAM_TYPES.has(programType)) return []
   return bindings.filter(
     item =>
       item.active !== false &&
-      normalizeBindingType(item.formType) === 'APPLICATION' &&
+      normalizeBindingType(item.formType) === formType &&
       (item.targetScope ?? '').toUpperCase() === 'RECRUITMENT' &&
       item.targetScopeId != null &&
       roleMatches(item, spec.targetRole)
@@ -473,6 +488,7 @@ function roleMatches(binding: ProgramFormBindingResponse, targetRole: string | u
   if (!role) return false
   if (role === expected) return true
   if (expected === 'INDIVIDUAL') return role === 'PARTICIPANT' || role === 'MEMBER'
+  if (expected === 'VOLUNTEER' && role === 'MEMBER') return true
   return false
 }
 
@@ -502,9 +518,7 @@ export function pickOperationalFormBinding(
   const verifySelection = (binding: ProgramFormBindingResponse | undefined) => {
     const bindingId = binding?.bindingId
     if (bindingId != null && options?.claimedBindingIds?.has(Number(bindingId))) {
-      throw new Error(
-        `서로 다른 양식 스펙에 같은 운영 바인딩을 선택할 수 없습니다: ${String(bindingId)}`
-      )
+      return undefined
     }
     return binding
   }
@@ -538,5 +552,8 @@ export function pickOperationalFormBinding(
     return verifySelection(roleOrName[0])
   }
 
-  return ofType.length === 1 ? verifySelection(ofType[0]) : undefined
+  // 역할이 있는 스펙은 「APPLICATION이 하나뿐」이라는 이유만으로 그 바인딩을 쓰지 않는다.
+  // 1사1교 기관 신청이 강사 신청 바인딩을 가져가면 등록 후 강사 양식 적용이 실패한다.
+  if (!spec.targetRole && ofType.length === 1) return verifySelection(ofType[0])
+  return undefined
 }

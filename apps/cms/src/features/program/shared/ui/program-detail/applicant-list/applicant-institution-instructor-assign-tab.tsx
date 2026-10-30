@@ -4,7 +4,7 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
@@ -223,7 +223,7 @@ export function ApplicantInstitutionInstructorAssignTab({
   return (
     <div className="extra-tab-content school-detail-fullpage-view__instructor-tab applicant-institution-assign-tab">
       <h4 className="school-detail-fullpage-view__section-title">배정된 강사</h4>
-      <Table
+      <CmsDataTable
         rowKey="id"
         size="small"
         pagination={false}
@@ -233,7 +233,7 @@ export function ApplicantInstitutionInstructorAssignTab({
         locale={{ emptyText: '배정된 강사가 없습니다.' }}
       />
       <h4 className="school-detail-fullpage-view__section-title">배정 대기 강사</h4>
-      <Table
+      <CmsDataTable
         rowKey="id"
         size="small"
         pagination={false}

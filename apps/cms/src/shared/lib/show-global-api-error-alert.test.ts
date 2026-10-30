@@ -1,8 +1,6 @@
 import type { AxiosError } from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  getMemberDeleteCurrentPasswordInvalidAlertOptions,
-} from '@/features/user/api/get-member-api-error'
+import { getMemberDeleteCurrentPasswordInvalidAlertOptions } from '@/features/user/api/get-member-api-error'
 import {
   ADMIN_ACCESS_DENIED_ALERT_CONTENT,
   ADMIN_ACCESS_DENIED_ALERT_TITLE,
@@ -24,7 +22,10 @@ vi.mock('@/shared/utils/post-auth-redirect', async importOriginal => {
   }
 })
 
-function forbiddenError(url: string, message = '현재 계정에 필요한 권한 또는 접근 범위가 없습니다.'): AxiosError {
+function forbiddenError(
+  url: string,
+  message = '현재 계정에 필요한 권한 또는 접근 범위가 없습니다.'
+): AxiosError {
   return {
     isAxiosError: true,
     message,
@@ -61,6 +62,41 @@ describe('showGlobalApiErrorAlert 403', () => {
     vi.restoreAllMocks()
     clearForbiddenApiErrorAlertDedupe()
     vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
+  })
+
+  it('운영 기간 오류는 서버 공통 문구 대신 기간 안내를 한 번만 띄운다', () => {
+    const error = {
+      isAxiosError: true,
+      message: '입력값을 확인해 주세요.',
+      name: 'AxiosError',
+      toJSON: () => ({}),
+      response: {
+        status: 400,
+        data: {
+          success: false,
+          error: {
+            code: 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD',
+            message: '입력값을 확인해 주세요.',
+            field: 'recruitments.INSTRUCTOR.operationStartDate',
+            details: {
+              date: '2026-10-01',
+              openStart: '2026-10-03',
+              openEnd: '2026-11-30',
+            },
+          },
+        },
+      },
+      config: { method: 'post', url: '/api/admin/programs' },
+    } as AxiosError
+
+    expect(showGlobalApiErrorAlert(error)).toBe(true)
+    expect(cmsAlertModal.show).toHaveBeenCalledTimes(1)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: '운영 기간을 확인해 주세요',
+      content: expect.stringContaining('강사의 운영 시작일'),
+    })
+    expect(isGlobalApiErrorAlertShown(error)).toBe(true)
+    expect(showGlobalApiErrorAlert(error)).toBe(false)
   })
 
   it('서버 메시지 대신 권한 안내 고정 카피를 띄운다', () => {
@@ -153,5 +189,67 @@ describe('showGlobalApiErrorAlert CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID', (
       getMemberDeleteCurrentPasswordInvalidAlertOptions()
     )
     expect(isGlobalApiErrorAlertShown(error)).toBe(true)
+  })
+})
+
+function instructorCancelApprovalBlockedError(url: string): AxiosError {
+  return {
+    isAxiosError: true,
+    message: 'Conflict',
+    name: 'AxiosError',
+    toJSON: () => ({}),
+    response: {
+      status: 409,
+      data: {
+        success: false,
+        data: null,
+        message: '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.',
+        error: {
+          code: 'INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM',
+          message: '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.',
+          field: null,
+          details: null,
+        },
+      },
+    },
+    config: { method: 'post', url },
+  } as AxiosError
+}
+
+describe('showGlobalApiErrorAlert INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
+  })
+
+  it('강사 권한 승인 취소 요청이면 공통 409 알림을 띄우지 않는다', () => {
+    const error = instructorCancelApprovalBlockedError(
+      '/api/admin/instructor-role-requests/42/cancel-approval'
+    )
+    expect(showGlobalApiErrorAlert(error)).toBe(false)
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+    expect(isGlobalApiErrorAlertShown(error)).toBe(true)
+  })
+
+  it('강사 권한 종료 요청이면 공통 409 알림을 띄우지 않는다', () => {
+    const error = instructorCancelApprovalBlockedError('/api/admin/instructors/42/revoke')
+    expect(showGlobalApiErrorAlert(error)).toBe(false)
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+    expect(isGlobalApiErrorAlertShown(error)).toBe(true)
+  })
+
+  it('강사 권한 종료 요청의 다른 409는 공통 알림을 유지한다', () => {
+    const error = instructorCancelApprovalBlockedError('/api/admin/instructors/42/revoke')
+    if (error.response?.data && typeof error.response.data === 'object') {
+      const data = error.response.data as {
+        error: { code: string }
+      }
+      data.error.code = 'INSTRUCTOR_REVOKE_STATE_CHANGED'
+    }
+    expect(showGlobalApiErrorAlert(error)).toBe(true)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: '처리 불가',
+      content: '현재 데이터 또는 처리 상태와 충돌하여 요청을 완료할 수 없습니다.',
+    })
   })
 })

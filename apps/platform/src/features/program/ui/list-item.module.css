@@ -38,6 +38,17 @@
   text-align: left;
 }
 
+/* 모집 완료 — 시안: 운영기간만 cool-400, 나머지 텍스트는 기본색 유지 */
+.operatingPeriod .operatingPeriodTextClosed {
+  color: var(--color-neutral-cool-400);
+}
+
+/* 모집 완료 상태 배지 — 시안: cool-400 배경 + 흰 글자 */
+.bottomBlock .closedStateBadge {
+  background: var(--color-neutral-cool-400);
+  color: var(--color-neutral-white);
+}
+
 .bottomBlock {
   display: flex;
   width: 100%;

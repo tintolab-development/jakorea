@@ -40,7 +40,7 @@ function deps(overrides: Partial<ResolvedUjatDevDependencies> = {}): ResolvedUja
   }
 }
 
-const YEAR = 2027
+const YEAR = 2026
 
 function build(caseId: (typeof UJAT_DEV_AUTOFILL_CASE_IDS)[number], d = deps()): UjatDevAutofillFixture {
   return buildUjatDevAutofillFixture({ caseId, businessYear: YEAR }, d)
@@ -52,10 +52,9 @@ describe('UJAT DEV 자동입력 케이스 목록', () => {
     expect(Object.values(UJAT_DEV_AUTOFILL_CASE_LABELS).some(label => label.startsWith('NEG'))).toBe(false)
   })
 
-  it('기본 사업 연도는 첫 모집 시작일이 지나면 다음 연도다', () => {
-    expect(resolveUjatDevAutofillDefaultBusinessYear(new Date('2026-10-20T12:00:00'))).toBe(2027)
-    expect(resolveUjatDevAutofillDefaultBusinessYear(new Date('2027-01-03T23:00:00'))).toBe(2027)
-    expect(resolveUjatDevAutofillDefaultBusinessYear(new Date('2027-01-04T00:00:00'))).toBe(2028)
+  it('기본 사업 연도는 2026으로 고정한다', () => {
+    expect(resolveUjatDevAutofillDefaultBusinessYear(new Date('2026-10-20T12:00:00'))).toBe(2026)
+    expect(resolveUjatDevAutofillDefaultBusinessYear(new Date('2027-03-02T00:00:00'))).toBe(2026)
   })
 })
 
@@ -74,6 +73,32 @@ describe.each(UJAT_DEV_AUTOFILL_CASE_IDS)('%s Fixture 공통 불변식', caseId 
     expect(dayjs(plan.business.end).year()).toBe(YEAR)
     expect(plan.halves.h1.event).not.toEqual(plan.halves.h2.event)
     expect(dayjs(plan.halves.h1.event.end).isBefore(dayjs(plan.halves.h2.event.start))).toBe(true)
+  })
+
+  it('모집·면접·발표·사전/해단식 일정이 사업 기간 안에 있다', () => {
+    const { plan } = build(caseId)
+    const start = dayjs(plan.business.start)
+    const end = dayjs(plan.business.end)
+    const inside = (key: string) => {
+      expect(dayjs(key).isBefore(start, 'day'), key).toBe(false)
+      expect(dayjs(key).isAfter(end, 'day'), key).toBe(false)
+    }
+    inside(plan.institution.recruit.start)
+    inside(plan.institution.recruit.end)
+    inside(plan.institution.resultAnnounce)
+    for (const half of ['h1', 'h2'] as const) {
+      const row = plan.halves[half]
+      inside(row.recruit.start)
+      inside(row.recruit.end)
+      inside(row.docAnnounce)
+      inside(row.interview.start)
+      inside(row.interview.end)
+      inside(row.finalAnnounce)
+      inside(row.event.start)
+      inside(row.event.end)
+      row.preDates.forEach(inside)
+      row.closingDates.forEach(inside)
+    }
   })
 
   it('봉사자 H1/H2 모집·면접 기간이 서로 다르고 면접 시작 ≤ 종료', () => {
@@ -257,6 +282,15 @@ describe('Negative — 드롭다운 비노출, 정상 Fixture를 변조', () => 
     })
     expect(validateUjatDevAutofillFixture(fixture).map(issue => issue.code)).toContain(
       'INTERVIEW_RANGE_INVERTED'
+    )
+  })
+
+  it('NEG-DATE — 기관 모집이 사업 시작 전이면 DATE_OUTSIDE_BUSINESS', () => {
+    const fixture = mutate(f => {
+      f.plan.institution.recruit = { start: '2026-01-04', end: '2026-02-12' }
+    })
+    expect(validateUjatDevAutofillFixture(fixture).map(issue => issue.code)).toContain(
+      'DATE_OUTSIDE_BUSINESS'
     )
   })
 

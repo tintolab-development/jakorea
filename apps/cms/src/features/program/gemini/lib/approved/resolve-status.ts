@@ -7,22 +7,45 @@ import type {
 export type ApprovedTrainingStatusRow = Pick<
   GeminiApprovedTrainingRow,
   'instructorAssigned' | 'lastPreferredDate' | 'trainingDate'
->
+> & {
+  trainingDateCandidates?: ReadonlyArray<{ trainingDate: string }>
+}
 
-/** 연수일 필터·표시용 — 강사 매칭 시 trainingDate, 미매칭 시 lastPreferredDate */
+function toDay(value: string | undefined): Dayjs | null {
+  const raw = value?.trim()
+  if (!raw) return null
+  const day = dayjs(raw).startOf('day')
+  return day.isValid() ? day : null
+}
+
+/** 미지정 시 희망 연수 일정(1~3지망) 중 가장 늦은 날. 없으면 lastPreferredDate. */
+function latestUnmatchedScheduleDay(row: ApprovedTrainingStatusRow): Dayjs | null {
+  let latest: Dayjs | null = null
+  for (const candidate of row.trainingDateCandidates ?? []) {
+    const day = toDay(candidate.trainingDate)
+    if (day != null && (latest == null || day.isAfter(latest))) latest = day
+  }
+  const fallback = toDay(row.lastPreferredDate)
+  if (fallback != null && (latest == null || fallback.isAfter(latest))) latest = fallback
+  return latest
+}
+
+/** 연수일 필터·표시용 — 강사 지정 시 확정 연수일, 미지정 시 희망 연수 일정 마지막일 */
 export function resolveApprovedTrainingFilterDate(
-  row: Pick<GeminiApprovedTrainingRow, 'instructorAssigned' | 'lastPreferredDate' | 'trainingDate'>
+  row: ApprovedTrainingStatusRow
 ): string {
-  return row.instructorAssigned ? row.trainingDate : row.lastPreferredDate
+  if (row.instructorAssigned) return row.trainingDate
+  return latestUnmatchedScheduleDay(row)?.format('YYYY-MM-DD') ?? row.lastPreferredDate
 }
 
 /**
- * 승인 연수 진행 현황 파생
- * 1. 미매칭 + 3지망 마지막 날짜 경과 → 미진행
- * 2. 미매칭 + 3지망 남음 → 예정
- * 3. 매칭 + 연수일 전 → 예정
- * 4. 매칭 + 연수일 당일 → 진행 중
- * 5. 매칭 + 연수일 경과 → 완료
+ * 승인 연수 진행 현황 — 연수 일정 + 강사 지정/미지정만 본다.
+ * 연수 요청 가능기간·모집기간은 쓰지 않는다.
+ * 1. 미지정 + 희망 연수 일정 마지막일 경과 → 미진행
+ * 2. 미지정 + 희망 연수 일정이 남음 → 예정
+ * 3. 지정 + 확정 연수일 전 → 예정
+ * 4. 지정 + 확정 연수일 당일 → 진행 중
+ * 5. 지정 + 확정 연수일 경과 → 완료
  */
 export function resolveApprovedTrainingStatus(
   row: ApprovedTrainingStatusRow,
@@ -31,17 +54,17 @@ export function resolveApprovedTrainingStatus(
   const today = (typeof referenceDate === 'string' ? dayjs(referenceDate) : referenceDate).startOf(
     'day'
   )
-  const lastPreferred = dayjs(row.lastPreferredDate).startOf('day')
 
   if (!row.instructorAssigned) {
-    if (lastPreferred.isValid() && today.isAfter(lastPreferred)) {
+    const lastSchedule = latestUnmatchedScheduleDay(row)
+    if (lastSchedule != null && today.isAfter(lastSchedule)) {
       return 'NOT_CONDUCTED'
     }
     return 'SCHEDULED'
   }
 
-  const trainingDay = dayjs(row.trainingDate).startOf('day')
-  if (!trainingDay.isValid()) {
+  const trainingDay = toDay(row.trainingDate)
+  if (trainingDay == null) {
     return 'SCHEDULED'
   }
   if (today.isBefore(trainingDay)) {

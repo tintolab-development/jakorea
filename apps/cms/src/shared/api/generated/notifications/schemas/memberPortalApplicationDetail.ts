@@ -10,6 +10,7 @@ import type { EducationScreenSummary } from './educationScreenSummary';
 import type { MemberPortalApplicationDetailAnswers } from './memberPortalApplicationDetailAnswers';
 import type { MemberPortalApplicationDetailDisplayStatus } from './memberPortalApplicationDetailDisplayStatus';
 import type { MemberPortalApplicationDetailRecruitTerm } from './memberPortalApplicationDetailRecruitTerm';
+import type { MemberPortalOrganizationApplicationSnapshot } from './memberPortalOrganizationApplicationSnapshot';
 import type { MemberPortalProgramSummary } from './memberPortalProgramSummary';
 import type { MemberPortalTeacherAssignment } from './memberPortalTeacherAssignment';
 import type { ParticipationSummary } from './participationSummary';
@@ -60,4 +61,6 @@ export interface MemberPortalApplicationDetail {
   displayStatus?: MemberPortalApplicationDetailDisplayStatus;
   /** ORGANIZATION은 신청별 교재를 textbook으로 제공합니다. INDIVIDUAL은 동일 회원·동일 프로그램의 INSTRUCTOR 신청에 연결된 활성 배정이 있을 때 assignments를 제공합니다. 연결된 배정이 없으면 null이며, 개인 신청에는 동의서·교재를 자동으로 포함하지 않습니다. VOLUNTEER·INSTRUCTOR·비교사 회원은 null입니다. */
   teacherAssignment?: MemberPortalTeacherAssignment | null;
+  /** ORGANIZATION 신청의 기관 마스터·스냅샷. 비기관 신청이거나 저장값이 없으면 null. 가짜 기본값을 넣지 않는다. */
+  organizationApplication?: MemberPortalOrganizationApplicationSnapshot | null;
 }

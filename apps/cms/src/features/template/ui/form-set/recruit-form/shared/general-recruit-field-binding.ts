@@ -41,6 +41,7 @@ import {
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import type { ScopedRhfFieldForm } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
+import { filterUjatTypedRecruitmentOverlayPatch } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 
 function patchFieldForm(form: ScopedRhfFieldForm, partial: Record<string, unknown>): void {
   beginWizardRecruitmentRhfProjection()
@@ -55,6 +56,9 @@ export function writeGeneralRecruitFields(
   form: ScopedRhfFieldForm,
   partial: Record<string, unknown>
 ): void {
+  const allowed = filterUjatTypedRecruitmentOverlayPatch(partial)
+  if (allowed == null) return
+  partial = allowed
   if (peekTrainedTeachersRegistrationRhf() != null) {
     const rest = patchActiveTrainedTeachersRecruitmentOverlay(partial)
     if (Object.keys(rest).length === 0) return
@@ -97,6 +101,22 @@ export function updateGeneralRecruitField<T>(
   key: string,
   updater: (prev: T | undefined) => T
 ): void {
+  if (peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentOverlayKey(key)) {
+    const prev = readActiveTrainedTeachersRecruitmentOverlayValue(key, undefined) as T | undefined
+    const next = updater(prev)
+    const rest = patchActiveTrainedTeachersRecruitmentOverlay({ [key]: next })
+    if (Object.keys(rest).length === 0) return
+    form.updateKey(key, () => rest[key] as T)
+    return
+  }
+  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentOverlayKey(key)) {
+    const prev = readActiveCompanySchoolRecruitmentOverlayValue(key, undefined) as T | undefined
+    const next = updater(prev)
+    const rest = patchActiveCompanySchoolRecruitmentOverlay({ [key]: next })
+    if (Object.keys(rest).length === 0) return
+    form.updateKey(key, () => rest[key] as T)
+    return
+  }
   const api = peekGeneralRegistrationWizardRhf()
   if (api != null && isGeneralRecruitOwnedKey(key) && !isWizardRecruitmentRhfProjecting()) {
     const prev = readWizardRecruitmentKvValue<T | undefined>(key, undefined)
@@ -146,6 +166,20 @@ export function replaceGeneralRecruitFields(
   form: ScopedRhfFieldForm,
   next: Record<string, unknown>
 ): void {
+  if (peekTrainedTeachersRegistrationRhf() != null) {
+    const rest = patchActiveTrainedTeachersRecruitmentOverlay(next)
+    if (Object.keys(rest).length === 0) return
+    if (!isWizardRecruitmentRhfProjecting()) {
+      patchWizardRecruitmentKv(rest, { shouldDirty: false })
+    }
+    beginWizardRecruitmentRhfProjection()
+    try {
+      form.replace(rest)
+    } finally {
+      endWizardRecruitmentRhfProjection()
+    }
+    return
+  }
   if (peekCompanySchoolRegistrationRhf() != null) {
     const rest = patchActiveCompanySchoolRecruitmentOverlay(next)
     if (Object.keys(rest).length === 0) return

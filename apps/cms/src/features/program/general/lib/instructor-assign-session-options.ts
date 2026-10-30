@@ -81,9 +81,10 @@ export function resolveInstructorAssignSessionDisplayLabels(
   }
 }
 
-/** 참여 학교 회차 → 배정일 태그 (완료 회차는 비활성) */
+/** 참여 학교 회차 → 배정일 태그 (완료 회차·isSessionDisabled(예: 강사 정원 도달) 회차는 비활성) */
 export function mapParticipatingSessionsToInstructorAssignOptions(
-  sessions: ParticipatingSchoolSession[] | undefined | null
+  sessions: ParticipatingSchoolSession[] | undefined | null,
+  options?: { isSessionDisabled?: (session: ParticipatingSchoolSession) => boolean }
 ): InstructorAssignSessionOption[] {
   if (!sessions?.length) return []
   return sessions.map(s => {
@@ -97,7 +98,8 @@ export function mapParticipatingSessionsToInstructorAssignOptions(
       capacityLabel: '0명',
       disabled:
         s.status === 'completed' ||
-        resolveAssignableSchedulePayloadFromSession(s) == null,
+        resolveAssignableSchedulePayloadFromSession(s) == null ||
+        options?.isSessionDisabled?.(s) === true,
     }
   })
 }

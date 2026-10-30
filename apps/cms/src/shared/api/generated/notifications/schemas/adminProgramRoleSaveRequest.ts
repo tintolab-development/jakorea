@@ -8,6 +8,6 @@
 import type { ProgramRoleItem } from './programRoleItem';
 
 export interface AdminProgramRoleSaveRequest {
-  roles?: ProgramRoleItem[];
+  roles: ProgramRoleItem[];
   reason?: string;
 }

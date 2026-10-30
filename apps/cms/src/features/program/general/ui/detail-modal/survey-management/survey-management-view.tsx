@@ -138,6 +138,7 @@ import {
   pickLectureEvalSurveyFromRemote,
   resolveLectureEvalSubmitContext,
   resolveSurveyResultsParticipantTotal,
+  describeSurveyShareClipboardFailure,
   resolveSurveyShareClipboardUrl,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
 import { getPlatformPublicOrigin } from '@/features/program/general/lib/public-survey-origin'
@@ -858,7 +859,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               payload.targetScopeId = surveyTarget.targetScopeId
             }
           }
-          surveyBindingTargetScope = payload.targetScope
+          surveyBindingTargetScope = payload.targetScope ?? undefined
         }
         const result = await createBinding(payload)
         if (!result.ok) {
@@ -1017,16 +1018,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       }
       try {
         const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
+        const platformOrigin = getPlatformPublicOrigin()
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
+          ? resolveSurveyShareClipboardUrl(response, platformOrigin)
           : null
         if (!url) {
           void showAlert({
             title: '공유',
-            content:
-              response?.accessMode === 'MEMBER_AUTHENTICATED'
-                ? '회원 전용 설문은 비로그인 공유 링크를 만들 수 없습니다.'
-                : '공개 공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            content: describeSurveyShareClipboardFailure(response, platformOrigin, 'survey'),
           })
           return
         }
@@ -1063,16 +1062,18 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       }
       try {
         const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
+        const platformOrigin = getPlatformPublicOrigin()
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
+          ? resolveSurveyShareClipboardUrl(response, platformOrigin)
           : null
         if (!url) {
           void showAlert({
             title: '공유',
-            content:
-              response?.accessMode === 'MEMBER_AUTHENTICATED'
-                ? '회원 전용 만족도조사는 비로그인 공유 링크를 만들 수 없습니다.'
-                : '공개 공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            content: describeSurveyShareClipboardFailure(
+              response,
+              platformOrigin,
+              'satisfaction'
+            ),
           })
           return
         }

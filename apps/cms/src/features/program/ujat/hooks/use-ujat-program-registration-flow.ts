@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useWatch } from 'react-hook-form'
 import { useCmsAlert } from '@/shared/ui'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  buildRequiredFieldsIncompleteAlertContent,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { useCreateProgram } from '@/features/program/ujat/api/queries'
 import {
-  describeIncompleteUjatProgramRegistrationWizardRequiredFields,
+  formatUjatRegistrationRequiredFieldReasons,
   listIncompleteUjatProgramRegistrationRequiredFields,
   listIncompleteUjatProgramRecruitmentTypedRequiredFields,
   listIncompleteUjatProgramRegistrationWizardRequiredFields,
@@ -35,11 +34,12 @@ import { UJAT_WAGE_OVERLAY_PAYMENT_KEY } from '@/features/program/ujat/lib/ujat-
 import { toCreateRequest } from '@/features/program/ujat/api/adapters'
 import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import {
-  applyUjatRecruitFormValuesToProgram,
+  applyUjatRegistrationRecruitmentFormsToProgram,
   programToUjatRecruitCanonicalFormValues,
   type UjatRecruitDisplayKind,
 } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import {
   formatRegistrationStepTransitionLabel,
@@ -103,6 +103,7 @@ import {
   isDefaultOperationalTemplateSelection,
 } from '@/features/program/shared/lib/step-template-selection'
 import { applyRegistrationStepTemplateChange } from '@/features/program/shared/lib/step-template-apply'
+import { setUjatTypedRecruitmentOverlayWritesBlocked } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 
 export type UseUjatProgramRegistrationFlowOptions = {
   /** 필수 미입력 검증 실패 시 — 인라인 강조용 진단 키 */
@@ -118,6 +119,12 @@ export type UseUjatProgramRegistrationFlowOptions = {
 
 function createRegistrationIdempotencyKey(): string {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function ujatRequiredFieldsIncompleteAlertContent(keys: readonly string[]) {
+  return buildRequiredFieldsIncompleteAlertContent(
+    formatUjatRegistrationRequiredFieldReasons(keys)
+  )
 }
 
 /** 신규 UJAT Wizard의 모집 입력은 GET row/Typed RHF만 읽는다. */
@@ -168,6 +175,11 @@ export function useUjatProgramRegistrationFlow(
   }
   const [stepTemplateByKey, setStepTemplateByKey] = useState<Record<string, string>>({})
   const [wizardDraftRevision, setWizardDraftRevision] = useState(0)
+
+  useEffect(() => {
+    setUjatTypedRecruitmentOverlayWritesBlocked(open)
+    return () => setUjatTypedRecruitmentOverlayWritesBlocked(false)
+  }, [open])
 
   useEffect(() => {
     if (!open) {
@@ -309,36 +321,25 @@ export function useUjatProgramRegistrationFlow(
     mapToValues: mapVolunteerH2RecruitmentFormValues,
   })
 
-  const institutionRecruitmentValues = useWatch({
-    control: institutionRecruitmentForm.control,
-  }) as ProgramDetailEditFormValues
-  const volunteerH1RecruitmentValues = useWatch({
-    control: volunteerH1RecruitmentForm.control,
-  }) as ProgramDetailEditFormValues
-  const volunteerH2RecruitmentValues = useWatch({
-    control: volunteerH2RecruitmentForm.control,
-  }) as ProgramDetailEditFormValues
-
-  const registrationWizardLinkedProgram = useMemo(() => {
+  const buildRegistrationWizardLinkedProgram = useCallback(() => {
     if (!registrationWizardBaseProgram) return null
-    let next = applyUjatRecruitFormValuesToProgram(
-      registrationWizardBaseProgram,
-      'institution',
-      institutionRecruitmentValues,
-      { createMissing: true }
-    )
-    next = applyUjatRecruitFormValuesToProgram(next, 'volunteer_h1', volunteerH1RecruitmentValues, {
-      createMissing: true,
-    })
-    return applyUjatRecruitFormValuesToProgram(next, 'volunteer_h2', volunteerH2RecruitmentValues, {
-      createMissing: true,
+    return applyUjatRegistrationRecruitmentFormsToProgram(registrationWizardBaseProgram, {
+      institution: institutionRecruitmentForm.getValues(),
+      volunteerH1: volunteerH1RecruitmentForm.getValues(),
+      volunteerH2: volunteerH2RecruitmentForm.getValues(),
     })
   }, [
-    institutionRecruitmentValues,
+    institutionRecruitmentForm,
     registrationWizardBaseProgram,
-    volunteerH1RecruitmentValues,
-    volunteerH2RecruitmentValues,
+    volunteerH1RecruitmentForm,
+    volunteerH2RecruitmentForm,
   ])
+
+  // 키 입력마다 Program을 다시 만들지 않는다. 단계 전환·복원·미리보기·제출 시 getValues()로 합성한다.
+  const registrationWizardLinkedProgram = useMemo(
+    () => buildRegistrationWizardLinkedProgram(),
+    [activeStep, buildRegistrationWizardLinkedProgram, wizardDraftRevision]
+  )
 
   const persistTypedRecruitmentDraft = useCallback(async () => {
     const half = volunteerHalfFromRegistrationStep(activeStep)
@@ -361,25 +362,13 @@ export function useUjatProgramRegistrationFlow(
     const institution = institutionRecruitmentForm.getValues()
     const volunteerH1 = volunteerH1RecruitmentForm.getValues()
     const volunteerH2 = volunteerH2RecruitmentForm.getValues()
-    const recruitments = applyUjatRecruitFormValuesToProgram(
-      applyUjatRecruitFormValuesToProgram(
-        applyUjatRecruitFormValuesToProgram(
-          registrationWizardBaseProgram ??
-            ({
-              id: 'ujat-registration-draft',
-              programRecruitments: [],
-            } as unknown as Program),
-          'institution',
-          institution,
-          { createMissing: true }
-        ),
-        'volunteer_h1',
-        volunteerH1,
-        { createMissing: true }
-      ),
-      'volunteer_h2',
-      volunteerH2,
-      { createMissing: true }
+    const recruitments = applyUjatRegistrationRecruitmentFormsToProgram(
+      registrationWizardBaseProgram ??
+        ({
+          id: 'ujat-registration-draft',
+          programRecruitments: [],
+        } as unknown as Program),
+      { institution, volunteerH1, volunteerH2 }
     ).programRecruitments
     await persistRegistrationWizardFormDraft({
       programType,
@@ -424,15 +413,31 @@ export function useUjatProgramRegistrationFlow(
           : null
       const typedRecruitment = detail?.typedRecruitment
       if (typedRecruitment?.institution) {
-        institutionRecruitmentForm.reset(typedRecruitment.institution)
+        institutionRecruitmentForm.reset(
+          mergeDevAutofillSparse(
+            institutionRecruitmentForm.getValues() as Record<string, unknown>,
+            typedRecruitment.institution as Record<string, unknown>
+          ) as ProgramDetailEditFormValues
+        )
       }
       if (typedRecruitment?.volunteerH1) {
-        volunteerH1RecruitmentForm.reset(typedRecruitment.volunteerH1)
+        volunteerH1RecruitmentForm.reset(
+          mergeDevAutofillSparse(
+            volunteerH1RecruitmentForm.getValues() as Record<string, unknown>,
+            typedRecruitment.volunteerH1 as Record<string, unknown>
+          ) as ProgramDetailEditFormValues
+        )
       }
       if (typedRecruitment?.volunteerH2) {
-        volunteerH2RecruitmentForm.reset(typedRecruitment.volunteerH2)
+        volunteerH2RecruitmentForm.reset(
+          mergeDevAutofillSparse(
+            volunteerH2RecruitmentForm.getValues() as Record<string, unknown>,
+            typedRecruitment.volunteerH2 as Record<string, unknown>
+          ) as ProgramDetailEditFormValues
+        )
       }
       typedRecruitmentDraftHydratedRef.current = true
+      setWizardDraftRevision(value => value + 1)
       void persistTypedRecruitmentDraft()
     }
     window.addEventListener('cms:registration-dev-autofill-complete', handleDevAutofillComplete)
@@ -636,7 +641,6 @@ export function useUjatProgramRegistrationFlow(
       const fromPhase = getUjatProgramRegistrationPhase(activeStep)
       const toPhase = getUjatProgramRegistrationPhase(key)
       const validationTarget = getUjatProgramRegistrationPhaseValidationTarget(fromPhase, toPhase)
-      // RHF reset 직후에도 useWatch snapshot이 한 렌더 늦을 수 있다.
       // 단계 이동은 화면에 보이는 최신 RHF 값을 직접 읽어 검증한다.
       const currentBasicInfo = registrationVm.basicInfoForm.getValues()
       const incompleteKeys =
@@ -652,30 +656,25 @@ export function useUjatProgramRegistrationFlow(
         console.debug('[registration] UJAT 공통정보 필수항목 미입력:', incompleteKeys)
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          content: ujatRequiredFieldsIncompleteAlertContent(incompleteKeys),
         })
         return
       }
-      if (
-        validationTarget === 'recruitment' &&
-        listIncompleteUjatProgramRecruitmentTypedRequiredFields({
-          institution: institutionRecruitmentForm.getValues(),
-          volunteerH1: volunteerH1RecruitmentForm.getValues(),
-          volunteerH2: volunteerH2RecruitmentForm.getValues(),
-        }).length > 0
-      ) {
-        const incompleteKeys = listIncompleteUjatProgramRecruitmentTypedRequiredFields({
+      if (validationTarget === 'recruitment') {
+        const recruitIncompleteKeys = listIncompleteUjatProgramRecruitmentTypedRequiredFields({
           institution: institutionRecruitmentForm.getValues(),
           volunteerH1: volunteerH1RecruitmentForm.getValues(),
           volunteerH2: volunteerH2RecruitmentForm.getValues(),
         })
-        options?.reportValidationIncomplete?.(incompleteKeys)
-        console.debug('[registration] UJAT 모집정보 필수항목 미입력:', incompleteKeys[0])
-        showAlert({
-          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-        })
-        return
+        if (recruitIncompleteKeys.length > 0) {
+          options?.reportValidationIncomplete?.(recruitIncompleteKeys)
+          console.debug('[registration] UJAT 모집정보 필수항목 미입력:', recruitIncompleteKeys)
+          showAlert({
+            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+            content: ujatRequiredFieldsIncompleteAlertContent(recruitIncompleteKeys),
+          })
+          return
+        }
       }
       if (fromPhase !== toPhase) {
         const registrationOverlay: Record<string, unknown> = {}
@@ -794,7 +793,7 @@ export function useUjatProgramRegistrationFlow(
           }
         : undefined
     const applicationProgram =
-      registrationWizardLinkedProgram ??
+      buildRegistrationWizardLinkedProgram() ??
       buildUjatProgramListRowFromRegistrationSnapshot({
         id: 'ujat-registration-validation',
         overlay: {},
@@ -816,7 +815,7 @@ export function useUjatProgramRegistrationFlow(
       console.debug('[registration] UJAT 신청 양식 제공받는 곳 미입력:', applicationRecipientReason)
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        content: ujatRequiredFieldsIncompleteAlertContent(applicationIncompleteKeys),
       })
       return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
     }
@@ -826,38 +825,24 @@ export function useUjatProgramRegistrationFlow(
       volunteerH1: volunteerH1RecruitmentForm.getValues(),
       volunteerH2: volunteerH2RecruitmentForm.getValues(),
     }
-    if (
-      describeIncompleteUjatProgramRegistrationWizardRequiredFields(
-        registrationVm.basicInfoValues,
-        registrationVm.educationScheduleForm.getValues(),
-        typedRecruitment
-      ) != null
-    ) {
-      options?.reportValidationIncomplete?.(
-        listIncompleteUjatProgramRegistrationWizardRequiredFields(
-          registrationVm.basicInfoValues,
-          registrationVm.educationScheduleForm.getValues(),
-          typedRecruitment
-        )
-      )
-      console.debug(
-        '[registration] UJAT 등록 완료 필수항목 미입력:',
-        describeIncompleteUjatProgramRegistrationWizardRequiredFields(
-          registrationVm.basicInfoValues,
-          registrationVm.educationScheduleForm.getValues(),
-          typedRecruitment
-        )
-      )
+    const wizardIncompleteKeys = listIncompleteUjatProgramRegistrationWizardRequiredFields(
+      registrationVm.basicInfoValues,
+      registrationVm.educationScheduleForm.getValues(),
+      typedRecruitment
+    )
+    if (wizardIncompleteKeys.length > 0) {
+      options?.reportValidationIncomplete?.(wizardIncompleteKeys)
+      console.debug('[registration] UJAT 등록 완료 필수항목 미입력:', wizardIncompleteKeys)
       showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        content: ujatRequiredFieldsIncompleteAlertContent(wizardIncompleteKeys),
       })
       return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
     }
 
     const registrationOverlayForLog: Record<string, unknown> = {}
     const programForLog =
-      registrationWizardLinkedProgram ??
+      buildRegistrationWizardLinkedProgram() ??
       buildUjatProgramListRowFromRegistrationSnapshot({
         id: 'debug',
         overlay: registrationOverlayForLog,
@@ -903,7 +888,7 @@ export function useUjatProgramRegistrationFlow(
 
         if (shouldUseRegistrationCreateFormBindings()) {
           const program =
-            registrationWizardLinkedProgram ??
+            buildRegistrationWizardLinkedProgram() ??
             buildUjatProgramListRowFromRegistrationSnapshot({
               id: `ujat-pending-${idempotencyKeyRef.current}`,
               overlay: registrationOverlay,
@@ -968,7 +953,7 @@ export function useUjatProgramRegistrationFlow(
         }
         const snapshot = await registrationVm.persistDraft()
         const programForLog =
-          registrationWizardLinkedProgram ??
+          buildRegistrationWizardLinkedProgram() ??
           buildUjatProgramListRowFromRegistrationSnapshot({
             id: `ujat-pending-${idempotencyKeyRef.current}`,
             overlay: registrationOverlay,
@@ -1008,7 +993,7 @@ export function useUjatProgramRegistrationFlow(
     participantVm,
     persistTypedRecruitmentDraft,
     registrationVm,
-    registrationWizardLinkedProgram,
+    buildRegistrationWizardLinkedProgram,
     institutionRecruitmentForm,
     volunteerH1RecruitmentForm,
     volunteerH2RecruitmentForm,
@@ -1073,8 +1058,9 @@ export function useUjatProgramRegistrationFlow(
     handleCompleteRegistration,
     registrationVm,
     participantVm,
-    /** 모집 미리보기는 현재 Typed RHF 값으로 만든 canonical 행만 사용한다. */
+    /** 모집 미리보기는 클릭 시점 Typed RHF 값으로 만든 canonical 행만 사용한다. */
     recruitmentPreviewProgram: registrationWizardLinkedProgram,
+    buildRecruitmentPreviewProgram: buildRegistrationWizardLinkedProgram,
     isCompletingRegistration: createProgramMutation.isPending,
   }
 }

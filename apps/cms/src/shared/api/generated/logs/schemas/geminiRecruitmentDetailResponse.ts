@@ -48,7 +48,9 @@ export interface GeminiRecruitmentDetailResponse {
   contactPhone?: string | null;
   /** 문의처 이메일 */
   contactEmail?: string | null;
-  /** 비고. 해당없음이면 null */
+  /** 비고. geminiRecruitment.notes 저장값. 해당없음이면 null */
+  remarks?: string | null;
+  /** 기타사항. Gemini 찾아가는 연수 모집에는 입력란이 없어 항상 null. 하위 호환 필드로 유지한다. */
   otherMatters?: string | null;
   /** 섬네일 파일명 */
   thumbnailFileName?: string | null;

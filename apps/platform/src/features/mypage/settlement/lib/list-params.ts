@@ -68,13 +68,16 @@ export function readSettlementOverviewParams(
   }
 }
 
-export function buildSettlementOverviewPath(params: SettlementOverviewParams) {
-  const defaults = defaultSettlementOverviewParams()
+export function buildSettlementOverviewPath(
+  params: SettlementOverviewParams,
+  now = new Date(),
+) {
+  const defaults = defaultSettlementOverviewParams(now)
   const searchParams = new URLSearchParams()
 
   if (params.view !== defaults.view) searchParams.set('view', params.view)
   if (params.month !== defaults.month) searchParams.set('month', params.month)
-  if (params.date !== defaultDateInMonth(params.month)) searchParams.set('date', params.date)
+  if (params.date !== defaultDateInMonth(params.month, now)) searchParams.set('date', params.date)
   if (params.q) searchParams.set('q', params.q)
   if (params.status !== 'all') searchParams.set('status', params.status)
   if (params.fixture) searchParams.set('fixture', '1')

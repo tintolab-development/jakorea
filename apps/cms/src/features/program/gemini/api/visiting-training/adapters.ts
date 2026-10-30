@@ -1,4 +1,5 @@
 import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/approved/types'
+import { mapGeminiTrainingDateCandidates } from '@/features/program/gemini/lib/approved/training-date-candidates'
 import type {
   GeminiInstitutionApplicationRow,
   GeminiInstitutionApprovalStatus,
@@ -50,8 +51,57 @@ function optionalDate(value: string | null | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
+function pickEarlierIso(a?: string, b?: string): string | undefined {
+  if (!a) return b
+  if (!b) return a
+  const ta = Date.parse(a)
+  const tb = Date.parse(b)
+  if (Number.isNaN(ta)) return b
+  if (Number.isNaN(tb)) return a
+  return ta <= tb ? a : b
+}
+
+function pickLaterIso(a?: string, b?: string): string | undefined {
+  if (!a) return b
+  if (!b) return a
+  const ta = Date.parse(a)
+  const tb = Date.parse(b)
+  if (Number.isNaN(ta)) return b
+  if (Number.isNaN(tb)) return a
+  return ta >= tb ? a : b
+}
+
+/**
+ * Gemini 사업 운영 기간.
+ * 기관 모집 기간만 넣으면 모집 종료 직후 에디터 이미지 PATCH가
+ * PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED 로 거절된다.
+ * 모집·연수 요청 기간을 모두 덮는 구간을 쓴다.
+ */
+function geminiBusinessPeriod(persist: {
+  applicationPeriodStart?: string | null
+  applicationPeriodEnd?: string | null
+  trainingRequestPeriodStart?: string | null
+  trainingRequestPeriodEnd?: string | null
+}): { start?: string; end?: string } {
+  const applicationStart = optionalDate(persist.applicationPeriodStart)
+  const applicationEnd = optionalDate(persist.applicationPeriodEnd)
+  const trainingStart = optionalDate(persist.trainingRequestPeriodStart)
+  const trainingEnd = optionalDate(persist.trainingRequestPeriodEnd)
+  return {
+    start: pickEarlierIso(applicationStart, trainingStart),
+    end: pickLaterIso(applicationEnd, trainingEnd),
+  }
+}
+
 function trimmedOrEmpty(value: string | null | undefined): string {
   return value?.trim() ?? ''
+}
+
+/** Portal `date` 또는 ISO datetime → YYYY-MM-DD. 타임존 변환으로 하루 밀리지 않게 앞 10자리만 쓴다. */
+function toTrainingDateKey(value: string | null | undefined): string {
+  const trimmed = trimmedOrEmpty(value)
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(trimmed)
+  return match?.[1] ?? trimmed
 }
 
 function normalizeOptionalFileName(value: string | null | undefined): string | null {
@@ -207,12 +257,13 @@ export function mapGeminiRecruitmentSnapshotToCreateRequest(
     persist.educationTargetLevels,
     recruitmentTargetDetail
   )
+  const business = geminiBusinessPeriod(persist)
   const requestBody: ProgramCreateRequest = {
     programType: GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
     title: persist.title.trim() || undefined,
     description: persist.programDescription || undefined,
-    businessStartDate: optionalDate(persist.applicationPeriodStart),
-    businessEndDate: optionalDate(persist.applicationPeriodEnd),
+    businessStartDate: business.start,
+    businessEndDate: business.end,
     applicationStartDate: optionalDate(persist.applicationPeriodStart),
     applicationEndDate: optionalDate(persist.applicationPeriodEnd),
     trainingRequestStartDate: optionalDate(persist.trainingRequestPeriodStart),
@@ -337,10 +388,11 @@ export function mapGeminiRecruitmentDetailToUpdateRequest(
     persist.educationTargetLevels,
     recruitmentTargetDetail
   )
+  const business = geminiBusinessPeriod(persist)
   const body: ProgramUpdateRequest = {
     title: persist.title.trim() || undefined,
-    businessStartDate: optionalDate(persist.applicationPeriodStart),
-    businessEndDate: optionalDate(persist.applicationPeriodEnd),
+    businessStartDate: business.start,
+    businessEndDate: business.end,
     applicationStartDate: optionalDate(persist.applicationPeriodStart),
     applicationEndDate: optionalDate(persist.applicationPeriodEnd),
     ...(educationStructure != null ? { educationStructure } : {}),
@@ -492,6 +544,9 @@ export function mapGeminiOrganizationApplicationToRow(
     institutionSigungu: dto.regionSigungu?.trim() || '',
     approvalStatus: mapApplicationStatus(dto.applicationStatus),
     preferredLectureSchedule: resolveGeminiPreferredLectureSchedule(dto),
+    preferredScheduleBlocks: Array.isArray(dto.preferredScheduleBlocks)
+      ? dto.preferredScheduleBlocks.filter(block => block != null)
+      : [],
     studentCount: dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
     resultNotificationSentAt: dto.resultNotificationSentAt ?? null,
@@ -517,11 +572,14 @@ export function mapGeminiRecruitmentItemToApprovedRow(
   const rawName = dto.instructorName?.trim()
   const instructorAssigned = Boolean(rawName) && rawName !== '미지정'
   const instructorName = instructorAssigned ? rawName! : '미지정'
-  // 미매칭이면 확정 연수일로 취급하지 않음(스케줄 잔여 날짜 위장 금지)
-  const trainingDate = instructorAssigned ? trimmedOrEmpty(dto.trainingDate) : ''
-  const trainingTimeText = instructorAssigned ? trimmedOrEmpty(dto.trainingTimeText) : ''
-  // 목록에 lastPreferredDate가 오면 사용. 없으면 빈 문자열(trainingDate 복사 금지)
-  const lastPreferredDate = trimmedOrEmpty(dto.lastPreferredDate)
+  const trainingDate = toTrainingDateKey(dto.trainingDate)
+  const trainingTimeText = trimmedOrEmpty(dto.trainingTimeText)
+  const trainingDateCandidates = mapGeminiTrainingDateCandidates(dto.trainingDateCandidates)
+  // 목록에 lastPreferredDate가 오면 사용. 없으면 후보 마지막일. trainingDate 복사 금지
+  const lastPreferredDate =
+    toTrainingDateKey(dto.lastPreferredDate) ||
+    trainingDateCandidates[trainingDateCandidates.length - 1]?.trainingDate ||
+    ''
   return {
     id: toId(dto.id ?? dto.organizationApplicationId ?? dto.programId),
     no: index + 1,
@@ -534,7 +592,7 @@ export function mapGeminiRecruitmentItemToApprovedRow(
     instructorAssigned,
     trainingDate,
     trainingTimeText,
-    trainingDateCandidates: [],
+    trainingDateCandidates,
     studentCount: dto.studentCount ?? 0,
     instructorName,
     managerName: dto.managerName?.trim() || '-',

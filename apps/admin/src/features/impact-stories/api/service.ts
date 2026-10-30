@@ -21,6 +21,8 @@ import {
   mapCategoryResponseToDomain,
   mapStoryListItemToDomain,
   mapStoryResponseToDomain,
+  requireThumbnailAssetId,
+  resolvePrimaryAttachmentAssetId,
   toBulkDeleteRequest,
   toCategoryCreateRequest,
   toCategoryUpdateRequest,
@@ -41,7 +43,10 @@ import {
   setStoryPublic as setPublicLocal,
   updateStory as updateLocal,
 } from './store'
-import { uploadImpactStoryAttachmentAsset } from './upload-story-attachment'
+import {
+  uploadImpactStoryAttachmentAsset,
+  uploadImpactStoryThumbnailAsset,
+} from './upload-story-attachment'
 
 function impactStoryApi() {
   return getJAKoreaHomepageAdminAPIImpactStorySubset()
@@ -97,31 +102,30 @@ async function listRemoteStories(filter?: ImpactStoryListFilter): Promise<Impact
   return (response.items ?? []).map(mapStoryListItemToDomain)
 }
 
-async function resolveAssetId(
-  attachment: ImpactStoryAttachment | undefined,
+async function resolveAttachmentAssetId(
+  attachments: ImpactStoryAttachment[],
   fallbackAssetId?: number,
 ): Promise<number | undefined> {
-  if (attachment?.file instanceof File) {
-    return uploadImpactStoryAttachmentAsset(attachment.file)
+  const withFile = attachments.find(att => att.file instanceof File)
+  if (withFile?.file) {
+    return uploadImpactStoryAttachmentAsset(withFile.file)
   }
-  if (attachment?.assetId != null && attachment.assetId > 0) return attachment.assetId
+  const fromExisting = resolvePrimaryAttachmentAssetId(attachments)
+  if (fromExisting != null) return fromExisting
   return fallbackAssetId
 }
 
-async function resolveStoryAssetIds(
-  attachments: ImpactStoryAttachment[],
-  fallbackThumbnailAssetId?: number,
-  fallbackAttachmentAssetId?: number,
-): Promise<{ thumbnailAssetId: number; attachmentAssetId?: number }> {
-  const thumbnailAssetId = await resolveAssetId(attachments[0], fallbackThumbnailAssetId)
-  if (thumbnailAssetId == null) {
-    throw new Error('임팩트 스토리 섬네일 이미지는 필수입니다.')
+async function resolveThumbnailAssetId(
+  thumbnail: ImpactStoryAttachment | null | undefined,
+  fallbackAssetId?: number,
+): Promise<number | undefined> {
+  if (thumbnail?.file instanceof File) {
+    return uploadImpactStoryThumbnailAsset(thumbnail.file)
   }
-  const extra = attachments[1]
-  const attachmentAssetId = extra
-    ? await resolveAssetId(extra, fallbackAttachmentAssetId)
-    : undefined
-  return { thumbnailAssetId, attachmentAssetId }
+  if (thumbnail?.assetId != null && thumbnail.assetId > 0) {
+    return thumbnail.assetId
+  }
+  return fallbackAssetId
 }
 
 function isPinLimitApiError(error: unknown): boolean {
@@ -218,8 +222,16 @@ export async function createStoryService(
 ): Promise<ImpactStory> {
   if (shouldUseImpactStoriesRemoteApi()) {
     try {
+      const [attachmentAssetId, thumbnailAssetId] = await Promise.all([
+        resolveAttachmentAssetId(input.attachments),
+        resolveThumbnailAssetId(input.thumbnail),
+      ])
       const created = await impactStoryApi().create8(
-        toStoryCreateRequest(input, await resolveStoryAssetIds(input.attachments)),
+        toStoryCreateRequest(
+          input,
+          attachmentAssetId,
+          requireThumbnailAssetId(thumbnailAssetId),
+        ),
       )
       return mapStoryResponseToDomain(created)
     } catch (error) {
@@ -241,16 +253,20 @@ export async function updateStoryService(
       throw new Error(`Impact story not found: ${input.id}`)
     }
     try {
+      const [attachmentAssetId, thumbnailAssetId] = await Promise.all([
+        resolveAttachmentAssetId(
+          input.attachments,
+          current.attachments[0]?.assetId,
+        ),
+        resolveThumbnailAssetId(input.thumbnail, current.thumbnail?.assetId),
+      ])
       const updated = await impactStoryApi().update10(
         Number(input.id),
         toStoryUpdateRequest(
           input,
           current.version ?? 0,
-          await resolveStoryAssetIds(
-            input.attachments,
-            current.attachments[0]?.assetId,
-            current.attachments[1]?.assetId,
-          ),
+          attachmentAssetId,
+          requireThumbnailAssetId(thumbnailAssetId),
         ),
       )
       return mapStoryResponseToDomain(updated)

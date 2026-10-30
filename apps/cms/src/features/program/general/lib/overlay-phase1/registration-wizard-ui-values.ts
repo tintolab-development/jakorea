@@ -9,11 +9,11 @@ import type {
   ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { PRE_EDUCATION_SCHEDULE_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 import {
   DEFAULT_REGISTRATION_EDUCATION_FORM,
   DEFAULT_REGISTRATION_PARTICIPATION,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
-import { PRE_EDUCATION_SCHEDULE_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 import { emptyCurriculumMaps, emptyScheduleMaps } from './common-info-domain'
 import type {
   CommonInfoCurriculumMaps,
@@ -81,6 +81,14 @@ export type RegistrationWizardUiValues = {
   singleDateIso: string | null
   periodDateIso: string | null
   footerIpsType: CommonInfoIpsValue
+  /** 개인 대상 — 교육 진행 장소 일정 공통/일정 별 상이 */
+  educationPlaceScheduleDetail: ProgramRegistrationScheduleDetailKind
+  /** 일정 공통 교육 진행 장소(주소) */
+  educationPlaceAddress: string
+  /** 커리큘럼형 차시/회차 별 교육 진행 장소 */
+  educationPlaceBySession: Record<number, string>
+  /** 일정형 세부/행사 일정 별 교육 진행 장소 */
+  educationPlaceByDetail: Record<number, string>
   curriculum: CommonInfoCurriculumMaps
   schedule: CommonInfoScheduleMaps
   extras: RegistrationWizardUiExtras
@@ -121,8 +129,8 @@ export function createDefaultRegistrationWizardUiValues(
     detailedProgramId: '',
     detailedProgramName: '',
     businessField: '',
-    partnerInvolvement: 'yes',
-    educationVenueKind: 'inside',
+    partnerInvolvement: '',
+    educationVenueKind: '',
     educationVenueDetail: '',
     educationCourse: '',
     ipOwned: '',
@@ -145,16 +153,20 @@ export function createDefaultRegistrationWizardUiValues(
     wageGrade3Fee: undefined,
     paymentItemValues: [],
     paymentItemLabels: '',
-    singleEducationForm: DEFAULT_REGISTRATION_EDUCATION_FORM,
+    singleEducationForm: '',
     multiCommonEducationForm: '',
     legacyEducationForm: '',
-    singleParticipation: DEFAULT_REGISTRATION_PARTICIPATION,
+    singleParticipation: '',
     multiCommonParticipation: '',
     ipsType: { category: '', detail: '' },
     scheduleLines: [],
     singleDateIso: null,
     periodDateIso: null,
-    footerIpsType: { category: 'prepare', detail: 'none' },
+    footerIpsType: { category: '', detail: '' },
+    educationPlaceScheduleDetail: 'common',
+    educationPlaceAddress: '',
+    educationPlaceBySession: {},
+    educationPlaceByDetail: {},
     curriculum: {
       ...emptyCurriculumMaps(),
       preEducationScheduleName: PRE_EDUCATION_SCHEDULE_LABEL,
@@ -170,6 +182,21 @@ export function createDefaultRegistrationWizardUiValues(
     recruitment: {},
     recruitmentKv: {},
     applicationKv: {},
+  }
+}
+
+/**
+ * 신규 작성 시작값 — 단일 회차 교육 형태·참여 방식을 왼쪽 값(온라인·개인)으로 선택해 둔다.
+ * 임시저장 복원·재조회 hydrate 는 `createDefaultRegistrationWizardUiValues` 를 그대로 써서 저장값을 덮지 않는다.
+ * 복수 회차 일정 공통 값은 비워 두어 기존처럼 단일 회차 값에서 시드한다.
+ */
+export function createNewRegistrationWizardUiValues(
+  extras?: Partial<RegistrationWizardUiExtras>
+): RegistrationWizardUiValues {
+  return {
+    ...createDefaultRegistrationWizardUiValues(extras),
+    singleEducationForm: DEFAULT_REGISTRATION_EDUCATION_FORM,
+    singleParticipation: DEFAULT_REGISTRATION_PARTICIPATION,
   }
 }
 

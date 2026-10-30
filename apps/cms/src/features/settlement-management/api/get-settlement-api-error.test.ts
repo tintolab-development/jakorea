@@ -8,7 +8,7 @@ import {
 } from './get-settlement-api-error'
 
 describe('getSettlementApiErrorMessage', () => {
-  it('409 PAYMENT_STATEMENT_STATUS_CONFLICT → message 우선', () => {
+  it('409 PAYMENT_STATEMENT_STATUS_CONFLICT → 구체 message 우선', () => {
     const error = {
       response: {
         status: 409,
@@ -26,6 +26,27 @@ describe('getSettlementApiErrorMessage', () => {
       '지급조서 확인 완료 후 계좌 지급을 처리할 수 있습니다.'
     )
     expect(isPaymentStatementStatusConflictError(error)).toBe(true)
+  })
+
+  it('409 STATUS_CONFLICT + BE 공통 문구 → FE conflict 안내', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          message: '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+          error: {
+            code: 'PAYMENT_STATEMENT_STATUS_CONFLICT',
+            message: '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+            field: 'status',
+            details: { statementId: '1694948' },
+          },
+        },
+      },
+    }
+
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '이미 확인된 지급조서가 포함되어 있습니다. 목록을 새로고침한 뒤 다시 확인해 주세요.'
+    )
   })
 
   it('code만 있어도 conflict로 인식하고 fallback message', () => {

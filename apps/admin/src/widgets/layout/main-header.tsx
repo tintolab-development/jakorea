@@ -1,69 +1,113 @@
 /**
  * 콘텐츠 상단 GNB — CMS MainHeader 이식
- * (알림 API 연동 전: mock 알림 UI · 유저는 auth store)
+ * 시스템 알림은 Homepage Admin Inbox API만 사용한다.
  */
 
 import { Layout, Space, Typography, Dropdown } from 'antd'
 import { BellOutlined, BellFilled } from '@ant-design/icons'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useAdminGnbRoleLabel } from '@/features/auth/hooks/use-admin-gnb-role-label'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  isSystemInboxForbidden,
+  useReadSystemInboxItem,
+  useSystemInboxList,
+  useSystemInboxUnreadCount,
+} from '@/features/system-inbox/api/hooks'
+import { isAdminNotFound } from '@/features/system-inbox/lib/http-status'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
+import { useCmsAlert } from '@/shared/ui'
 import { NotificationDropdown, type HeaderNotification } from './notification-dropdown'
 import './main-header.css'
 
 const { Header: AntHeader } = Layout
 const { Text } = Typography
 
-const MOCK_NOTIFICATIONS: HeaderNotification[] = [
-  {
-    id: 'n1',
-    type: 'schedule',
-    message: '히어로 배너 게시 기간이 곧 만료됩니다.',
-    createdAt: '2026-08-03T09:00:00+09:00',
-    read: false,
-  },
-  {
-    id: 'n2',
-    type: 'matching',
-    message: '메인 콘텐츠 게시 요청이 승인 대기 중입니다.',
-    createdAt: '2026-08-02T11:20:00+09:00',
-    read: false,
-  },
-  {
-    id: 'n3',
-    type: 'settlement',
-    message: '후원 상담 신청 건이 등록되었습니다.',
-    createdAt: '2026-08-01T16:00:00+09:00',
-    read: true,
-  },
-  {
-    id: 'n4',
-    type: 'system',
-    message: '홈페이지 어드민 셸이 배포되었습니다.',
-    createdAt: '2026-08-01T14:30:00+09:00',
-    read: true,
-  },
-]
-
 export function MainHeader() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { showAlert } = useCmsAlert()
   const user = useAuthStore(state => state.user)
   const logout = useAuthStore(state => state.logout)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)
+  const pendingReadIds = useRef(new Set<string>())
+
+  const adminId = user?.id
+  const canQueryInbox = Boolean(adminId)
+  const listQuery = useSystemInboxList(adminId, canQueryInbox && dropdownOpen)
+  const unreadQuery = useSystemInboxUnreadCount(adminId, canQueryInbox)
+  const readMutation = useReadSystemInboxItem(adminId)
 
   const categoryName = useMemo(() => getCategoryNameByPath(location.pathname), [location.pathname])
 
-  const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications])
+  const notifications = useMemo<HeaderNotification[]>(
+    () =>
+      (listQuery.data ?? []).map(item => ({
+        id: item.id,
+        type: 'system',
+        message: item.title,
+        programName: item.body,
+        createdAt: item.createdAt,
+        read: item.read,
+        link: item.link,
+      })),
+    [listQuery.data],
+  )
 
-  const roleLabel = user?.adminLevel === 'MASTER' || !user?.adminLevel ? '최고관리자' : '관리자'
+  const listForbidden = isSystemInboxForbidden(listQuery.error)
+  const unreadForbidden = isSystemInboxForbidden(unreadQuery.error)
+  const unreadCount = unreadForbidden ? 0 : (unreadQuery.data ?? 0)
+  const dropdownStatus = listForbidden || unreadForbidden
+    ? 'forbidden'
+    : listQuery.isLoading
+      ? 'loading'
+      : listQuery.isError
+        ? 'error'
+        : 'ready'
+
+  const roleLabel = useAdminGnbRoleLabel()
   const displayName = user?.name?.trim() || user?.email || '관리자'
 
   const handleNotificationClick = (notification: HeaderNotification) => {
-    setNotifications(prev => prev.map(n => (n.id === notification.id ? { ...n, read: true } : n)))
+    const numericId = Number(notification.id)
+    if (!Number.isFinite(numericId) || numericId <= 0) return
+    if (notification.read) {
+      if (notification.link) navigate(notification.link)
+      return
+    }
+    if (pendingReadIds.current.has(notification.id)) return
+
+    pendingReadIds.current.add(notification.id)
+    void readMutation
+      .mutateAsync(numericId)
+      .then(() => {
+        if (notification.link) navigate(notification.link)
+      })
+      .catch(error => {
+        if (isSystemInboxForbidden(error)) {
+          showAlert({
+            title: '권한 없음',
+            content: '시스템 알림은 최고관리자만 확인할 수 있습니다.',
+          })
+          return
+        }
+        if (isAdminNotFound(error)) {
+          showAlert({
+            title: '알림 없음',
+            content: '알림을 찾을 수 없습니다.',
+          })
+          return
+        }
+        showAlert({
+          title: '알림 처리 실패',
+          content: '알림을 읽음 처리하지 못했습니다. 다시 시도해 주세요.',
+        })
+      })
+      .finally(() => {
+        pendingReadIds.current.delete(notification.id)
+      })
   }
 
   const handleLogout = () => {
@@ -84,7 +128,13 @@ export function MainHeader() {
           <Space size="middle" align="center">
             <Dropdown
               open={dropdownOpen}
-              onOpenChange={setDropdownOpen}
+              onOpenChange={open => {
+                setDropdownOpen(open)
+                if (open && canQueryInbox) {
+                  void listQuery.refetch()
+                  void unreadQuery.refetch()
+                }
+              }}
               trigger={['click']}
               placement="bottomRight"
               overlayStyle={{ overflow: 'visible' }}
@@ -92,7 +142,12 @@ export function MainHeader() {
                 <div className="main-header-notification-dropdown">
                   <NotificationDropdown
                     notifications={notifications}
+                    status={dropdownStatus}
                     onNotificationClick={handleNotificationClick}
+                    onRetry={() => {
+                      void listQuery.refetch()
+                      void unreadQuery.refetch()
+                    }}
                     onClose={() => setDropdownOpen(false)}
                   />
                 </div>

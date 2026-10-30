@@ -84,6 +84,7 @@ export function mapPublicStoryDetail(row: PublicStoryDetail): ImpactStoryDetail 
     body,
     bodyFormat: body ? detectStoryBodyFormat(body) : undefined,
     attachmentOriginalName: readString(row.attachmentOriginalName),
+    attachmentUrl: readString(row.attachmentUrl),
   }
 }
 

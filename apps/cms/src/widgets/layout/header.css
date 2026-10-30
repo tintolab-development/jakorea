@@ -14,7 +14,8 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  margin-bottom: var(--spacing-12);
+  /* 시안: 로고↔메뉴 gap 30 = 헤더 하단 패딩 30 (추가 여백 없음) */
+  margin-bottom: 0;
   cursor: pointer;
   flex-shrink: 0;
 }

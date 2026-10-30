@@ -35,8 +35,21 @@ export type InstructorMemberProfile = 'school_teacher' | 'instructor_dual' | 'in
 // 관리자 권한 레벨 (§2.2) — UI 배지·레거시 호환. 화면 가드는 `roleCode` 4역할을 쓴다.
 export type AdminLevel = 'MASTER' | 'ADMIN' | 'GENERAL'
 
-/** API `AdminMeResponse.roleCode` — 마스터 / PM / 파트너 / 뷰어 */
-export type AdminRoleCode = 'MASTER' | 'PM' | 'PARTNER' | 'VIEWER'
+/**
+ * API `AdminMeResponse.roleCode` — N-16 정본 4역할 + 레거시 응답 원문.
+ * 정본(쓰기·selectable): MASTER / ACCOUNTING_MANAGER / PROGRAM_MANAGER / PROGRAM_VIEWER
+ * 레거시 원문: MIDDLE / VIEWER / PM / PARTNER
+ * 세션 parse는 MIDDLE → PROGRAM_MANAGER.
+ */
+export type AdminRoleCode =
+  | 'MASTER'
+  | 'ACCOUNTING_MANAGER'
+  | 'PROGRAM_MANAGER'
+  | 'PROGRAM_VIEWER'
+  | 'MIDDLE'
+  | 'PM'
+  | 'PARTNER'
+  | 'VIEWER'
 
 // 프로그램 단위 역할 (§백오피스 권한 구조)
 export type ProgramRole = 'OWNER' | 'PARTNER' | 'ASSISTANT'
@@ -296,7 +309,7 @@ export interface UserListRowMetrics {
   /** 관리자: 현재 또는 과거 프로그램 담당자 배정 이력 (BE `hasProgramAssignmentHistory`) */
   hasProgramAssignmentHistory?: boolean
   /** 관리자 목록: 권한 유형 태그 (없으면 programRoles로 추론) */
-  adminPermissionVariant?: 'manager' | 'partner' | 'viewer'
+  adminPermissionVariant?: 'manager' | 'accounting' | 'partner' | 'viewer'
   /** 일반 교사 상세: 재직 현황 라벨 */
   employmentStatusLabel?: string
   /** 일반 교사 상세: 담당 학년 등 */

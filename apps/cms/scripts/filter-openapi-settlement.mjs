@@ -101,6 +101,37 @@ function ensureObject(target, key) {
   return target[key]
 }
 
+/** 지급 현황 list/detail — 참여 기관명(institutionName) 계약 보강 */
+const SETTLEMENT_INSTITUTION_NAME_LIST = {
+  type: 'string',
+  nullable: true,
+  description:
+    '참여 기관명. 배정 기관 → 일정 단일 기관 → 장소명 순. 개인 참여 등으로 기관이 없으면 null',
+}
+
+const SETTLEMENT_INSTITUTION_NAME_DETAIL = {
+  type: 'string',
+  nullable: true,
+  description:
+    '참여 기관명. 목록 institutionName과 동일 규칙. 개인 참여 등으로 기관이 없으면 null',
+}
+
+function patchSettlementInstitutionNameContract(subset) {
+  const schemas = ensureObject(ensureObject(subset, 'components'), 'schemas')
+
+  const listItem = schemas.SettlementListItemResponse
+  if (listItem?.type === 'object') {
+    listItem.properties = { ...(listItem.properties ?? {}) }
+    listItem.properties.institutionName = SETTLEMENT_INSTITUTION_NAME_LIST
+  }
+
+  const detail = schemas.SettlementFrontendResponse
+  if (detail?.type === 'object') {
+    detail.properties = { ...(detail.properties ?? {}) }
+    detail.properties.institutionName = SETTLEMENT_INSTITUTION_NAME_DETAIL
+  }
+}
+
 function patchAccountPaymentP0Contract(subset) {
   const schemas = ensureObject(ensureObject(subset, 'components'), 'schemas')
 
@@ -162,6 +193,7 @@ if (bearer && bearer.type === 'http' && 'name' in bearer) {
 }
 
 patchAccountPaymentP0Contract(subset)
+patchSettlementInstitutionNameContract(subset)
 
 normalizeOpenApiSchemaNode(subset)
 

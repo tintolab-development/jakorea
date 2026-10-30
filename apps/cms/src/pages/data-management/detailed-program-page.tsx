@@ -538,6 +538,7 @@ export default function DetailedProgramPage() {
         excelExport={{
           columns,
           data: tableDisplayData,
+          selectedRowKeys,
         }}
       >
         <CmsDataTable<DetailedProgramManagementRow>

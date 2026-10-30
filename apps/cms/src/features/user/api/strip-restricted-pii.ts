@@ -26,7 +26,7 @@ function copySettlementAccount(
   }
 }
 
-/** 파트너·뷰어는 주민번호·계좌 원문을 세션 유저에 남기지 않는다. */
+/** 주민번호·계좌 원문은 MASTER만 세션에 남긴다. */
 export function stripRestrictedPiiForRole(
   merged: Omit<User, 'password'>,
   previous: Omit<User, 'password'>,

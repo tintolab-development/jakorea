@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { InterviewItem, InterviewSaveItem } from '@/entities/recruit-guide/model/types'
 import {
@@ -36,10 +36,7 @@ export function InterviewSectionCard({ items }: Props) {
   const [picker, setPicker] = useState<PickerMode | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
-  const rows = useMemo(
-    () => [...items].sort((a, b) => a.displayOrder - b.displayOrder),
-    [items]
-  )
+  const rows = useMemo(() => [...items].sort((a, b) => a.displayOrder - b.displayOrder), [items])
   const atLimit = rows.length >= MAX_RECRUIT_INTERVIEWS
 
   const columns = useMemo<ColumnsType<InterviewItem>>(
@@ -127,10 +124,7 @@ export function InterviewSectionCard({ items }: Props) {
       setDeleteConfirmOpen(false)
     } catch (err) {
       showAlert(
-        recruitGuideSaveFailureAlert(
-          err,
-          '직무 인터뷰 삭제에 실패했습니다. 다시 시도해 주세요.'
-        )
+        recruitGuideSaveFailureAlert(err, '직무 인터뷰 삭제에 실패했습니다. 다시 시도해 주세요.')
       )
     }
   }, [removeMutation, selectedRowKeys, showAlert])
@@ -146,7 +140,7 @@ export function InterviewSectionCard({ items }: Props) {
         <div className="table-header-actions--wrapper">
           <CmsButton
             variant="delete"
-            size="large"
+            size="h40"
             type="button"
             loading={removeMutation.isPending}
             onClick={handleDeleteClick}
@@ -156,7 +150,7 @@ export function InterviewSectionCard({ items }: Props) {
           {atLimit ? null : (
             <CmsButton
               variant="primary"
-              size="large"
+              size="h40"
               type="button"
               disabled={pickerLoading}
               onClick={() => setPicker({ type: 'add' })}
@@ -167,7 +161,7 @@ export function InterviewSectionCard({ items }: Props) {
         </div>
       </div>
 
-      <Table<InterviewItem>
+      <CmsDataTable<InterviewItem>
         className="cms-data-table recruit-guide-interview-table"
         rowKey="id"
         columns={columns}

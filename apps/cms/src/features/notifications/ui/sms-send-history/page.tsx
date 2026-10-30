@@ -14,6 +14,7 @@ import type {
   SmsSendHistoryPendingFilters,
   SmsSendHistoryRow,
 } from '@/features/notifications/model/sms-send-history/types'
+import { notificationDeliveryDetailView } from '@/features/notifications/api/notification-delivery-detail-cache'
 import {
   useSmsSendHistoryDetailQuery,
   useSmsSendHistoryQuery,
@@ -77,13 +78,9 @@ export function SmsSendHistoryPage() {
     useState<SmsSendHistoryPendingFilters>(appliedFilters)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
 
-  const selectedListRow = useMemo(
-    () => rows.find(row => row.id === selectedRowId) ?? null,
-    [rows, selectedRowId]
-  )
   const detailQuery = useSmsSendHistoryDetailQuery(selectedRowId, Boolean(selectedRowId))
-  const detailLoading = Boolean(selectedRowId) && detailQuery.isLoading && !detailQuery.data
-  const selectedRow = detailQuery.data ?? (detailLoading ? null : selectedListRow)
+  const detailLoading = Boolean(selectedRowId) && detailQuery.isPending
+  const selectedRow = notificationDeliveryDetailView(detailQuery.data, detailQuery.isError)
 
   useEffect(() => {
     setPendingFilters(appliedFilters)

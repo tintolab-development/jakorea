@@ -40,6 +40,8 @@ export type BuildTeacherApplicationContentInput = {
   preferredScheduleOptionValues?: readonly string[]
   preferredEducationScheduleLabel?: string
   existing?: EducationTeacherApplicationContent
+  /** 신청·승인 상세의 기관 필드. answers가 비어 있을 때 보완 */
+  institutionOverlay?: Record<string, unknown> | null
 }
 
 export function buildTeacherApplicationContentFromPortal(
@@ -61,7 +63,11 @@ export function buildTeacherApplicationContentFromPortal(
   )
   if (!isOrganization) return input.existing
 
-  const answers = input.answers ?? {}
+  const overlay = input.institutionOverlay ?? {}
+  const answers = {
+    ...overlay,
+    ...(input.answers ?? {}),
+  }
   const hasAnswers = Object.keys(answers).length > 0
   const programGroup = resolveTeacherApplicationProgramGroup(programForAudience, input.programGroup)
 

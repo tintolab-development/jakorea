@@ -27,7 +27,7 @@ export interface InstructorRoleRequestCreateRequest {
   profile: InstructorCmsProfile;
   settlement: InstructorCmsSettlement;
   /**
-     * @minItems 4
+     * @minItems 3
      * @maxItems 4
      */
   termsAgreements: TermsAgreementRequest[];

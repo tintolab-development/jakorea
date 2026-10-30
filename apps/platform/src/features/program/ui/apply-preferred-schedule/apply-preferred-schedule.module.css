@@ -31,23 +31,45 @@
   align-self: stretch;
 }
 
-.scheduleForm .detail-info-form__body {
+.scheduleForm :global(.detail-info-form__body) {
   border: 1px solid var(--table-line, #e0e0e0);
 }
 
-.scheduleForm .detail-info-form__row--double {
+.scheduleForm :global(.detail-info-form__row--double) {
   flex-wrap: wrap;
 }
 
-.scheduleForm .detail-info-form__row--double > .detail-info-form__field:first-of-type {
-  flex: 1 1 360px;
-  min-width: min(100%, 360px);
+/*
+ * PC — 입력 한 줄(희망 교육일 220/240 · 교시+시작~종료)이 다 들어갈 폭을 Field 최소폭으로 둔다.
+ * 부족하면 입력이 셀 안에서 줄바꿈·말줄임되지 않고 Field 단위로 다음 줄로 내려간다.
+ */
+.scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field):first-of-type {
+  flex: 1 1 320px;
+  min-width: min(100%, calc(var(--detail-info-label-w, 180px) + 254px));
   max-width: none;
 }
 
-.scheduleForm .detail-info-form__row--double > .detail-info-form__field:last-of-type {
-  flex: 2 1 680px;
-  min-width: min(100%, 680px);
+.compactTime .scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field):first-of-type {
+  min-width: min(100%, calc(var(--detail-info-label-w, 180px) + 274px));
+}
+
+/*
+ * 두 Field 가 한 줄(넓은 PC)이면 오른쪽 선, 줄바꿈되면 아래 선 — 바깥쪽은 body 테두리와 겹쳐 보이지 않는다.
+ */
+.scheduleForm :global(.detail-info-form__body) :global(.detail-info-form__row--double) > :global(.detail-info-form__field):first-of-type:not(:last-of-type) {
+  position: relative;
+  z-index: 1;
+  border-right: 0;
+  box-shadow: 1px 1px 0 0 var(--Border-default, var(--table-line, #e0e0e0));
+}
+
+.scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field):last-of-type {
+  flex: 2 1 560px;
+  min-width: min(100%, calc(var(--detail-info-label-w, 180px) + 580px));
+}
+
+.scheduleForm :global(.detail-info-form__field-content--edit) {
+  overflow: visible;
 }
 
 .datePicker {
@@ -56,30 +78,45 @@
   max-width: 100%;
 }
 
+.compactTime .datePicker {
+  flex-basis: 240px;
+  width: 240px;
+}
+
 .timeInputs {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  gap: 0;
+  gap: 8px 0;
 }
 
-.timeInputs > :global(.pf-text-input) {
+.sessionRow,
+.timeRange {
+  display: contents;
+}
+
+.timeInputs > :global(.pf-text-input),
+.sessionRow > :global(.pf-text-input) {
   flex: 0 0 120px;
   width: 120px;
+  min-width: 120px;
 }
 
-.timeInputs .sessionSelect {
+.timeInputs .sessionSelect,
+.compactTime .timeInputs .sessionSelect {
   flex: 0 0 140px;
   width: 140px;
   min-width: 140px;
 }
 
-.timeInputs .timePicker {
-  flex: 0 0 140px;
-  width: 140px;
-  min-width: 140px;
+.timeInputs .timePicker,
+.compactTime .timeInputs .timePicker {
+  flex: 0 0 168px;
+  width: 168px;
+  min-width: 168px;
 }
 
 .tilde {
@@ -91,6 +128,21 @@
 .timeUnit {
   flex-shrink: 0;
   margin-right: 8px;
+}
+
+/*
+ * form-template-host `:is([class*="typo-"]) { all: unset }`(0,2,0)가 위 단일 클래스 규칙을 지워
+ * 「교시」가 줄어들며 「교/시」로 끊기고 「~」 간격이 사라진다 — 레이아웃 속성만 우선순위를 올려 복구.
+ */
+.root .timeInputs .tilde {
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+
+.root .timeInputs .timeUnit {
+  flex-shrink: 0;
+  margin: 0 8px;
+  word-break: keep-all;
 }
 
 .headerAddButton {
@@ -109,7 +161,7 @@
   height: 40px;
   align-items: center;
   justify-content: center;
-  padding: 6px 16px;
+  padding: 8px 24px;
   border: 1px solid var(--color-primary-500, #01a1af);
   border-radius: var(--radius-12, 12px);
   background:
@@ -118,8 +170,8 @@
   color: var(--color-primary-500, #01a1af);
   font-family: var(--font-family-base, Pretendard, system-ui, sans-serif);
   font-size: 14px;
-  font-weight: 600;
-  line-height: 1.5;
+  font-weight: 500;
+  line-height: 1.6;
   letter-spacing: normal;
   cursor: pointer;
 }
@@ -157,7 +209,31 @@
   mask-size: contain;
 }
 
-@media (max-width: 767px) {
+/* ≤1079 — 신청 페이지 480 단일 컬럼(program-page-shell)과 같은 기준으로 세로 카드형 */
+@media (--bp-below-pc) {
+  /*
+   * 시안(모바일 12767:66680) — 추가 버튼은 제목 옆이 아니라 설명 아래 전체 폭 한 줄.
+   * 런타임 마크업은 그대로 두고 제목·트레일링 래퍼를 풀어 헤더 column 안에서 순서만 바꾼다.
+   */
+  :global(.paragraph-card__header):has(.headerAddButton) :global(.paragraph-card__title-block--with-trailing) {
+    display: contents;
+  }
+
+  :global(.paragraph-card__header):has(.headerAddButton) :global(.paragraph-card__title-trailing) {
+    order: 1;
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  :global(.form-template-host) .headerAddButton {
+    width: 100%;
+  }
+
+  /* 시안 모바일 버튼은 텍스트만 */
+  .addButtonIcon {
+    display: none;
+  }
+
   .root {
     --detail-info-label-w: 100%;
     gap: 12px;
@@ -174,26 +250,27 @@
     color: var(--color-neutral-cool-700, #647780);
   }
 
-  .scheduleForm .detail-info-form__body {
+  .scheduleForm :global(.detail-info-form__body) {
+    overflow: visible;
     border: 0;
     border-radius: 12px;
     background: var(--color-neutral-cool-50, #f5f8f8);
     padding: 14px;
   }
 
-  .scheduleForm .detail-info-form__row {
+  .scheduleForm :global(.detail-info-form__row) {
     border-bottom: 0;
   }
 
-  .scheduleForm .detail-info-form__row--double {
+  .scheduleForm :global(.detail-info-form__row--double) {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
 
-  .scheduleForm .detail-info-form__row--double > .detail-info-form__field,
-  .scheduleForm .detail-info-form__row--double > .detail-info-form__field:first-of-type,
-  .scheduleForm .detail-info-form__row--double > .detail-info-form__field:last-of-type {
+  .scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field),
+  .scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field):first-of-type,
+  .scheduleForm :global(.detail-info-form__row--double) > :global(.detail-info-form__field):last-of-type {
     display: flex;
     width: 100%;
     min-width: 0;
@@ -202,7 +279,7 @@
     border-right: 0;
   }
 
-  .scheduleForm .detail-info-form__field-label {
+  .scheduleForm :global(.detail-info-form__field-label) {
     justify-content: flex-start;
     width: 100%;
     min-width: 0;
@@ -217,39 +294,87 @@
     text-align: left;
   }
 
-  .scheduleForm .detail-info-form__field-content {
+  .scheduleForm :global(.detail-info-form__body) :global(.detail-info-form__row--double) > :global(.detail-info-form__field):first-of-type:not(:last-of-type) {
+    border-right: 0;
+    box-shadow: none;
+  }
+
+  .scheduleForm :global(.detail-info-form__field) {
+    display: flex;
+    min-height: auto;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .scheduleForm :global(.detail-info-form__field-content) {
     width: 100%;
+    min-width: 0;
     min-height: 0;
+    align-items: stretch;
     padding: 0;
     background: transparent;
   }
 
-  .datePicker,
-  .sessionSelect {
-    flex: 1 1 100%;
+  .datePicker {
+    flex: 1 1 auto;
     width: 100%;
     min-width: 0;
   }
 
   .timeInputs {
-    flex-wrap: wrap;
-    gap: 8px 0;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 8px;
   }
 
-  .timeInputs > :global(.detail-info-form-inputs-separator) {
+  .sessionRow,
+  .timeRange {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .timeInputs > :global(.detail-info-form-inputs-separator),
+  .sessionRow > :global(.detail-info-form-inputs-separator) {
     display: none;
   }
 
   .timeInputs > :global(.pf-text-input),
-  .timeInputs > :global(.pf-time-input),
-  .timeInputs .sessionSelect {
-    flex: 1 1 100%;
+  .sessionRow > :global(.pf-text-input),
+  .timeInputs .sessionSelect,
+  .compactTime .timeInputs .sessionSelect {
+    flex: 1 1 auto;
     width: 100%;
+    min-width: 0;
   }
 
-  .timeInputs .timePicker {
+  .timeInputs .timePicker,
+  .compactTime .timeInputs .timePicker {
     flex: 1 1 0;
     width: auto;
+    min-width: 0;
+  }
+
+  :global(.form-template-host[data-surface='platformUser']) .sessionRow :global(.pf-select),
+  :global(.form-template-host[data-surface='platformUser']) .sessionRow :global(.pf-text-input) {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  :global(.form-template-host[data-surface='platformUser']) .timeRange :global(.pf-time-input) {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .timeInputs :global(.pf-select__trigger),
+  .timeInputs :global(.pf-time-input__trigger) {
     min-width: 0;
   }
 
@@ -260,9 +385,14 @@
     line-height: 150%;
   }
 
-  .tilde {
-    margin: 0 6px;
+  .tilde,
+  .root .timeInputs .tilde {
+    margin: 0;
     align-self: center;
+  }
+
+  .root .timeInputs .timeUnit {
+    margin: 0;
   }
 
   .deleteCell {

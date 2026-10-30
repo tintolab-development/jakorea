@@ -10,48 +10,24 @@
   min-height: calc(100vh - var(--header-height, 64px) - 64px);
 }
 
-.log-list-page__filter-card.admin-list-card {
-  flex-shrink: 0;
-  margin-bottom: 0;
-}
-
-.log-list-page__result-card.admin-list-card {
+.log-list-page .filter-table-layout {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   margin-bottom: 0;
-  overflow: auto;
 }
 
-.log-list-page__result-card .admin-list-toolbar {
-  flex-shrink: 0;
-  margin-bottom: 16px;
+.log-list-page .filter-table-layout__table {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
 /* 시안: 탭은 필터 카드 위(페이지 최상단) */
 .log-list-page__tabs {
   flex-shrink: 0;
   margin-bottom: 0;
-}
-
-.log-list-page__tabs .cms-text-tabs__list {
-  gap: 4px;
-}
-
-.log-list-page__tabs button.cms-text-tabs__tab {
-  padding: 6px 12px 10px;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  color: #7d7d7d;
-}
-
-.log-list-page__tabs button.cms-text-tabs__tab.cms-text-tabs__tab--active {
-  color: var(--color-mint-01, #01a1af);
-  font-weight: 700;
-  border-bottom-color: var(--color-mint-01, #01a1af);
 }
 
 .log-list-page .cms-data-table {

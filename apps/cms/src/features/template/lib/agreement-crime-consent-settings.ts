@@ -1,9 +1,8 @@
 export const AGREEMENT_CRIME_TEMPLATE_CODE = 'agreement-crime' as const
 
-export const CRIME_CONSENT_UPLOAD_ACCEPT = 'application/pdf,image/*,.pdf,.jpg,.jpeg,.png,.gif,.webp'
+export const CRIME_CONSENT_UPLOAD_ACCEPT = 'application/pdf,.pdf'
 
 const PDF_FILE_NAME_PATTERN = /\.pdf$/i
-const IMAGE_FILE_NAME_PATTERN = /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i
 
 export type AgreementCrimeConsentSettings = {
   documentImageUrl?: string
@@ -33,7 +32,7 @@ export function buildAgreementCrimeConsentSettings(args: {
   }
 }
 
-export async function readImageFileAsDataUrl(file: File): Promise<string> {
+export async function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => {
@@ -48,10 +47,13 @@ export async function readImageFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
+/** @deprecated use readFileAsDataUrl */
+export const readImageFileAsDataUrl = readFileAsDataUrl
+
 export function isCrimeConsentUploadFile(file: File): boolean {
   const mime = file.type.trim().toLowerCase()
-  if (mime === 'application/pdf' || mime.startsWith('image/')) return true
-  return PDF_FILE_NAME_PATTERN.test(file.name) || IMAGE_FILE_NAME_PATTERN.test(file.name)
+  if (mime === 'application/pdf') return true
+  return PDF_FILE_NAME_PATTERN.test(file.name)
 }
 
 export function isCrimeConsentPdfPreviewSrc(

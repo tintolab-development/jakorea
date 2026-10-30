@@ -20,6 +20,7 @@ env:
   ADMIN_ORIGIN: https://d2rdfkctvi6zhx.cloudfront.net
   VITE_API_BASE_URL: https://d3r1iaa0sy4tcq.cloudfront.net
   VITE_HOMEPAGE_API_BASE_URL: https://d388j6f4woncqy.cloudfront.net
+  VITE_CMS_ORIGIN: https://d39lkvqlx43zyt.cloudfront.net
   NODE_OPTIONS: --max-old-space-size=5120
 
 jobs:
@@ -57,6 +58,7 @@ jobs:
           test "$ADMIN_DISTRIBUTION_ID" = 'E2DGTFXBDMZU0O'
           test "$VITE_API_BASE_URL" = 'https://d3r1iaa0sy4tcq.cloudfront.net'
           test "$VITE_HOMEPAGE_API_BASE_URL" = 'https://d388j6f4woncqy.cloudfront.net'
+          test "$VITE_CMS_ORIGIN" = 'https://d39lkvqlx43zyt.cloudfront.net'
           echo "ADMIN_QA_COMMIT=$GITHUB_SHA"
           echo 'ADMIN_QA_TARGETS=PASS'
 
@@ -76,6 +78,7 @@ jobs:
           test -d apps/admin/dist/assets
           grep -RqlF "$VITE_API_BASE_URL" apps/admin/dist/assets
           grep -RqlF "$VITE_HOMEPAGE_API_BASE_URL" apps/admin/dist/assets
+          grep -RqlF "$VITE_CMS_ORIGIN" apps/admin/dist/assets
           echo 'ADMIN_QA_BUILD_AND_API_ORIGINS=PASS'
 
       - name: Assume QA Admin-only GitHub OIDC role

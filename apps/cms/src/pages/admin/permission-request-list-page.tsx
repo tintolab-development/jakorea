@@ -34,6 +34,7 @@ import {
 } from '@/features/user/permission-management/instructor-permission-cancel-approval-modal'
 import { resolveApprovalCancelModalCase } from '@/features/user/api/lib/approval-notification-case'
 import { INSTRUCTOR_PERMISSION_CANCEL_APPROVAL_UNKNOWN_CASE_ALERT } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-copy'
+import { resolveInstructorCancelApprovalBlockedAlert } from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-blocked'
 import { PermissionNotificationResendModal } from '@/features/user/permission-management/permission-notification-resend-modal'
 import {
   mapPermissionApprovalStatusForResend,
@@ -49,7 +50,10 @@ import {
   isNotifyTimingSupported,
 } from '@/shared/lib/notify-timing-capability'
 import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
-import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
+import {
+  isAdminPermissionTagVariant,
+  type AdminPermissionTagVariant,
+} from '@/features/user/shared/lib/admin-permission-display'
 import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
 import {
   isInstructorPermissionRevoked,
@@ -649,11 +653,9 @@ export function PermissionRequestListPage() {
       if (!adminApproveModal) return
       if (!acquirePermissionReviewLock(permissionReviewInFlightRef)) return
       try {
-      const approvedPermissionVariant = (
-        payload.feeGrade === 'partner' || payload.feeGrade === 'viewer'
-          ? payload.feeGrade
-          : 'manager'
-      ) as AdminPermissionTagVariant
+      const approvedPermissionVariant = isAdminPermissionTagVariant(payload.feeGrade)
+        ? payload.feeGrade
+        : 'manager'
 
       const finishSingle = (userId: string, displayName: string, source: 'list' | 'detail') => {
         if (!adminRemote) {
@@ -912,6 +914,12 @@ export function PermissionRequestListPage() {
         }
         setInstructorCancelApproval(null)
       } catch (error) {
+        const blockedAlert = resolveInstructorCancelApprovalBlockedAlert(error)
+        if (blockedAlert) {
+          setInstructorCancelApproval(null)
+          showAlert(blockedAlert)
+          return
+        }
         handleError(error, { defaultMessage: getRevokeError(error) })
       } finally {
         permissionReviewInFlightRef.current = false
@@ -924,6 +932,7 @@ export function PermissionRequestListPage() {
       instructorCancelApproval,
       instructorRemote,
       revokeMutation,
+      showAlert,
     ]
   )
 

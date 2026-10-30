@@ -14,6 +14,7 @@ import type {
   MailSendHistoryPendingFilters,
   MailSendHistoryRow,
 } from '@/features/notifications/model/mail-send-history/types'
+import { notificationDeliveryDetailView } from '@/features/notifications/api/notification-delivery-detail-cache'
 import {
   useMailSendHistoryDetailQuery,
   useMailSendHistoryQuery,
@@ -77,14 +78,9 @@ export function MailSendHistoryPage() {
     useState<MailSendHistoryPendingFilters>(appliedFilters)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
 
-  const selectedListRow = useMemo(
-    () => rows.find(row => row.id === selectedRowId) ?? null,
-    [rows, selectedRowId]
-  )
   const detailQuery = useMailSendHistoryDetailQuery(selectedRowId, Boolean(selectedRowId))
-  const detailLoading = Boolean(selectedRowId) && detailQuery.isLoading && !detailQuery.data
-  // 목록 row(preview 없음)로 빈 상세를 먼저 그리지 않음 — detail 우선
-  const selectedRow = detailQuery.data ?? (detailLoading ? null : selectedListRow)
+  const detailLoading = Boolean(selectedRowId) && detailQuery.isPending
+  const selectedRow = notificationDeliveryDetailView(detailQuery.data, detailQuery.isError)
 
   useEffect(() => {
     setPendingFilters(appliedFilters)

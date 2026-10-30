@@ -19,6 +19,7 @@ import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { handleError } from '@/shared/utils/error-handler'
 
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import { SocialConnectConsentModal } from '@/features/auth/ui/social-connect-consent-modal'
 
 import { SocialConnectProviderIcon } from './admin-register/social-connect-provider-icon'
@@ -59,7 +60,14 @@ interface SocialConnectProviderListProps {
   className?: string
 }
 
-export function SocialConnectProviderList({
+export function SocialConnectProviderList(props: SocialConnectProviderListProps) {
+  if (!SOCIAL_ACCOUNT_LINK_ENABLED) {
+    return null
+  }
+  return <SocialConnectProviderListInner {...props} />
+}
+
+function SocialConnectProviderListInner({
   redirectPath,
   onConnectSuccess: _onConnectSuccess,
   className,

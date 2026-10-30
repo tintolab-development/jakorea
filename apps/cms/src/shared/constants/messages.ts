@@ -7,7 +7,10 @@
 export const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 미입력'
 
 /** 폼 제출 — 필수 항목 미완 시 AlertModal 본문 (`*` 빨간색). 필드명 미안내 */
-export { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from './required-fields-incomplete-alert-message'
+export {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  buildRequiredFieldsIncompleteAlertContent,
+} from './required-fields-incomplete-alert-message'
 
 /** 회원 신규 등록 — 약관·동의 미완료 시 AlertModal 본문 */
 export const REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE = '필수 약관에 동의해주세요'
@@ -19,9 +22,9 @@ export const INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE =
 /** 성범죄 경력조회 동의서 — 제출 시 문서 미첨부 AlertModal 본문 */
 export const CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE = '동의서 파일을 첨부해 주세요.'
 
-/** 성범죄 경력조회 동의서 — PDF/이미지 외 파일 선택 시 AlertModal 본문 */
+/** 성범죄 경력조회 동의서 — PDF 외 파일 선택 시 AlertModal 본문 */
 export const CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE =
-  'PDF 또는 이미지 파일만 업로드할 수 있습니다.'
+  'PDF 파일만 업로드할 수 있습니다.'
 
 /** 개인 재학 소속 — 검색 미선택·불완전 선택(학교명만) 시 AlertModal 본문 */
 export const INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE =

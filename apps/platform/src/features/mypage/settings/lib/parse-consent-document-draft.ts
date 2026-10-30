@@ -87,9 +87,20 @@ function draftFromPortalConsentDocumentDetail(
   )
 }
 
+/** SIGNED 상세는 제출 당시 templateCode를 우선하고 최신 formTemplateVersion으로 보정하지 않는다. */
+export function resolveConsentPreviewTemplateId(
+  detail: PortalConsentDocumentDetail | null | undefined,
+  fallbackTemplateId: string,
+): string {
+  const submitted = detail?.filledDocument?.templateCode?.trim()
+  if (submitted) return submitted
+  return fallbackTemplateId
+}
+
 /**
  * 제출 동의서 상세 → 미리보기 draft.
  * remote에서 상세를 받았는데 파싱 실패 시 seed로 대체하지 않는다.
+ * 최신 `formTemplateVersion`으로 기존 작성본을 재렌더하지 않는다.
  */
 export function resolveConsentPreviewDraft(
   detail: PortalConsentDocumentDetail | null | undefined,

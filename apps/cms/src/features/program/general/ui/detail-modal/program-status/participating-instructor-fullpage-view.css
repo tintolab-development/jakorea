@@ -9,6 +9,20 @@
   padding: 0;
 }
 
+.participating-instructor-fullpage-view .school-detail-fullpage-view__tabs-row .cms-text-tabs__list {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.participating-instructor-fullpage-view
+  .school-detail-fullpage-view__tabs-row
+  .cms-text-tabs__trailing {
+  position: relative;
+  z-index: 3;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
 /* 내부 content 가 program-detail __content(flex:1)를 재사용해도 세로로 늘어나지 않게 */
 .participating-instructor-fullpage-view .program-detail-fullpage-modal__content {
   flex: 0 1 auto;
@@ -120,7 +134,8 @@
     .school-detail-fullpage-view__instructor-section--waiting
   )
   .participating-institutions-section__table-wrap {
-  overflow: clip;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .participating-instructor-fullpage-view
@@ -129,7 +144,8 @@
   )
   .participating-institutions-section__table-wrap
   .cms-data-table {
-  overflow: clip;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .participating-instructor-fullpage-view
@@ -137,6 +153,23 @@
   > tr:has(td.status-dropdown-cell__cell-status--tag-100)
   > td.status-dropdown-cell__cell-status--tag-100 {
   overflow: clip;
+}
+
+/* 역할 tag100 — 닫힘/열림 116px 고정, 열림 그림자 제거(가로 밀림 방지) */
+.participating-instructor-fullpage-view
+  .status-dropdown-cell__status-trigger--tag-100,
+.participating-instructor-fullpage-view
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding: 7px !important;
+  box-sizing: border-box !important;
+}
+
+.participating-instructor-fullpage-view
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  box-shadow: none !important;
 }
 
 /* 배정 대기 기관 목록 — 테이블 영역 개별 스크롤, 최대 높이 365px */

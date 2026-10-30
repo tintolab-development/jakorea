@@ -12,6 +12,8 @@ export type FormTemplateVersionCacheEntry = {
   /** 목록 API — 복제·사용자 생성 행의 카탈로그 원본 */
   baseTemplateCode?: string
   templateName?: string
+  /** 목록·payload — false면 사용자 복제/생성, 공용 카탈로그가 아님 */
+  systemTemplate?: boolean
 }
 
 const byTemplateCode = new Map<string, FormTemplateVersionCacheEntry>()
@@ -31,6 +33,7 @@ export function upsertFormTemplateVersionCacheEntry(
     ...entry,
     baseTemplateCode: entry.baseTemplateCode ?? existing?.baseTemplateCode,
     templateName: entry.templateName ?? existing?.templateName,
+    systemTemplate: entry.systemTemplate ?? existing?.systemTemplate,
   })
 }
 
@@ -51,6 +54,7 @@ export function upsertFormTemplateVersionCacheFromListItems(
     latestVersionNo?: number
     baseTemplateCode?: string
     templateName?: string
+    systemTemplate?: boolean
   }>
 ): void {
   for (const item of items) {
@@ -60,6 +64,7 @@ export function upsertFormTemplateVersionCacheFromListItems(
     const latestVersionId = item.latestVersionId ?? existing?.latestVersionId
     const baseTemplateCode = item.baseTemplateCode?.trim() || existing?.baseTemplateCode
     const templateName = item.templateName?.trim() || existing?.templateName
+    const systemTemplate = item.systemTemplate ?? existing?.systemTemplate
     byTemplateCode.set(templateCode, {
       templateCode,
       templateId: item.templateId,
@@ -68,6 +73,7 @@ export function upsertFormTemplateVersionCacheFromListItems(
       latestVersionNo: item.latestVersionNo ?? existing?.latestVersionNo,
       ...(baseTemplateCode != null && baseTemplateCode !== '' ? { baseTemplateCode } : {}),
       ...(templateName != null && templateName !== '' ? { templateName } : {}),
+      ...(systemTemplate != null ? { systemTemplate } : {}),
     })
   }
 }

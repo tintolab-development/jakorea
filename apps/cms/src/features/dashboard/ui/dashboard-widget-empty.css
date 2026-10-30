@@ -1,0 +1,83 @@
+/**
+ * 대시보드 위젯 빈 상태 (dashboard-widget-empty.tsx)
+ * 시안 14894:26706: 16px/600 + 14px/400 · #3d3d3d opacity 0.5 · line-height 150% · gap 4 · 남은 영역 세로 가운데
+ */
+
+.dashboard-widget-empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4, 4px);
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.dashboard-widget-empty__title,
+.dashboard-widget-empty__desc {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-style: normal;
+  line-height: 150%;
+  opacity: 0.5;
+  white-space: normal;
+}
+
+.dashboard-widget-empty__title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dashboard-widget-empty__desc {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/*
+ * 테이블형 위젯(모집 신청·문의·로그 알림) 0건: 헤더 유지, 테두리 박스가 본문 높이를 채우고
+ * 헤더 아래 남은 영역 가운데에 텍스트
+ */
+.dashboard-widget-table .ant-table-wrapper:has(.ant-table-placeholder) .ant-table-container {
+  height: 100%;
+}
+
+.dashboard-widget-table .ant-table-wrapper:has(.ant-table-placeholder) .ant-table-content {
+  flex: 1 1 auto;
+}
+
+.dashboard-widget-table .ant-table-wrapper:has(.ant-table-placeholder) .ant-table-content > table {
+  height: 100%;
+}
+
+.dashboard-widget-table .ant-table-wrapper .ant-table-tbody > tr.ant-table-placeholder {
+  height: auto !important;
+  max-height: none !important;
+}
+
+.dashboard-widget-table .ant-table-wrapper .ant-table-tbody > tr.ant-table-placeholder > td,
+.dashboard-widget-table .ant-table-wrapper .ant-table-tbody > tr.ant-table-placeholder:hover > td {
+  height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  border-bottom: none;
+  background: #fff !important;
+  vertical-align: middle;
+}
+
+.dashboard-widget-empty--in-table {
+  height: auto;
+  min-height: 120px;
+  padding: var(--spacing-24, 24px) 0;
+}
+
+/* KPI 0건: 본문이 카드 남은 높이를 채워 가운데 정렬 */
+.kpi-achievement-widget .ant-card-body:has(> .dashboard-widget-empty) {
+  flex: 1 1 auto;
+}

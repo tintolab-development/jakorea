@@ -47,6 +47,7 @@ import {
   applyProgramMissingCommonStringFieldsToUpdateRequest,
   mergeProgramResponseCommonStringFieldsIntoRecruitmentInfo,
   resolveOtherNotesFromProgramResponse,
+  resolveProgramInquiryContactName,
 } from '@/features/program/shared/lib/program-update-common-string-fields'
 import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
 import {
@@ -603,15 +604,22 @@ export function mapTrainedTeacherToUpdateRequest(
 }
 
 export function mapTrainedTeacherToCreateRequest(program: Program): ProgramCreateRequest {
-  return omitNullRecordValues({
-    ...mapTrainedTeacherToUpdateRequest(program, undefined, {
-      omitInfoDetailOwnedFields: false,
-      omitRegistrationOverlay: true,
-    }),
+  const update = mapTrainedTeacherToUpdateRequest(program, undefined, {
+    omitInfoDetailOwnedFields: false,
+    omitRegistrationOverlay: true,
+  })
+  // update 매퍼는 existing===merged 라 contactName 미변경으로 생략한다. CREATE는 값을 강제 실는다.
+  const contactName = resolveProgramInquiryContactName(program)
+  const body = omitNullRecordValues({
+    ...update,
+    ...(contactName ? { contactName } : {}),
     programType: TRAINED_TEACHER_PROGRAM_API_TYPE,
     applicationTargetMode: 'ORGANIZATION',
     businessStartDate: toDate(program.startDate),
     businessEndDate: toDate(program.endDate),
     autoApplyDefaultFormBindings: true,
   }) as ProgramCreateRequest
+  // TRAINED_TEACHER는 구조화 recruitments가 거부된다. 모집 기간은 applicationStart/EndDate만.
+  delete body.recruitments
+  return body
 }

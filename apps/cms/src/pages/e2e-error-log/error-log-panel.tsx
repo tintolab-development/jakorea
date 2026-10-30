@@ -3,7 +3,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Alert, Button, Space, Table, Tag, Typography } from 'antd'
+import { Alert, Button, Space, Tag, Typography } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { CopyOutlined, DownloadOutlined } from '@ant-design/icons'
 import { e2eErrorLogMockApi } from '@/features/e2e-error-log/api/e2e-error-log-mock-api'
@@ -342,7 +343,7 @@ export function E2eErrorLogPanel({ active }: Props) {
       </div>
 
       <div ref={tableWrapRef} className="e2e-error-log-page__table-wrap">
-        <Table
+        <CmsDataTable
           className="e2e-error-log-page__table"
           rowKey="id"
           size="middle"

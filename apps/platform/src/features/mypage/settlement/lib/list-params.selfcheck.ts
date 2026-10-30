@@ -11,7 +11,7 @@ assert.equal(defaults.date, '2026-10-25')
 assert.equal(defaults.q, '')
 assert.equal(defaults.status, 'all')
 assert.equal(defaults.fixture, false)
-assert.equal(buildSettlementOverviewPath(defaults), MYPAGE_SETTLEMENT_PATH)
+assert.equal(buildSettlementOverviewPath(defaults, now), MYPAGE_SETTLEMENT_PATH)
 
 const parsed = readSettlementOverviewParams(
   '?view=calendar&month=2026-01&date=2026-01-26&q=기업가&status=paid&fixture=1',

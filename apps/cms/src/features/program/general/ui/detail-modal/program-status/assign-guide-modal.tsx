@@ -1,10 +1,6 @@
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsRadio, CmsSelect, useCmsAlert } from '@/shared/ui'
-import {
-  PermissionModal,
-  type PermissionModalPayload,
-} from '@/shared/components/permission-modal'
-import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { useEffect, useState, type ReactNode } from 'react'
 import {
   INSTRUCTOR_ROLE_LABELS,
@@ -12,6 +8,12 @@ import {
 } from '@/features/program/general/model/school-detail-types'
 import type { InstructorAssignSessionOption } from '@/features/program/general/lib/instructor-assign-session-options'
 import { InstructorAssignSessionSlotChip } from '@/features/program/shared/ui/detail-modal/components/instructor-assign-session-slot-chip'
+import {
+  INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD,
+  type AssignmentModalStep,
+} from '@/features/program/general/lib/institution-select-assign'
+import { InstitutionSelectAssignConfirmModal } from './institution-select-assign-confirm-modal'
+import { InstitutionAssignCompleteModal } from './institution-assign-complete-modal'
 import './school-detail-add-instructor-assign-modal.css'
 
 type InstitutionOption = {
@@ -85,11 +87,14 @@ export interface AssignGuideModalProps {
   role: InstructorRoleKey
   sessionOptions: InstructorAssignSessionOption[]
   selectedSessionIds: string[]
+  currentCount: number | null
+  requiredCount: number | null
   onInstitutionChange: (id: string | null) => void
   onRoleChange: (role: InstructorRoleKey) => void
   onSessionIdsChange: (ids: string[]) => void
   onCancel: () => void
-  onConfirm: (payload: PermissionModalPayload) => void
+  onConfirm: (payload: PermissionModalPayload) => boolean | Promise<boolean>
+  onComplete: () => void
   confirmLoading?: boolean
 }
 
@@ -101,21 +106,32 @@ export function AssignGuideModal({
   role,
   sessionOptions,
   selectedSessionIds,
+  currentCount,
+  requiredCount,
   onInstitutionChange,
   onRoleChange,
   onSessionIdsChange,
   onCancel,
   onConfirm,
+  onComplete,
   confirmLoading = false,
 }: AssignGuideModalProps) {
   const { showAlert } = useCmsAlert()
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [step, setStep] = useState<AssignmentModalStep>('select')
+  const [confirmedInstitutionName, setConfirmedInstitutionName] = useState('')
 
   useEffect(() => {
-    if (!open) setConfirmOpen(false)
+    if (!open) {
+      setStep('select')
+      setConfirmedInstitutionName('')
+    }
   }, [open])
 
-  const handleConfirm = () => {
+  const selectedInstitutionName =
+    institutionOptions.find(option => option.value === selectedInstitutionId)?.label ??
+    confirmedInstitutionName
+
+  const handleSelectConfirm = () => {
     if (!selectedInstitutionId) {
       showAlert({
         title: '기관 추가 배정 안내',
@@ -130,19 +146,32 @@ export function AssignGuideModal({
       })
       return
     }
-    setConfirmOpen(true)
+    setConfirmedInstitutionName(
+      institutionOptions.find(option => option.value === selectedInstitutionId)?.label ?? ''
+    )
+    setStep('confirm')
   }
 
-  const handleFinalConfirm = (payload: PermissionModalPayload) => {
-    if (confirmLoading) return
-    setConfirmOpen(false)
-    onConfirm(payload)
+  const handleConfirmCancel = () => {
+    if (step === 'submitting' || confirmLoading) return
+    setStep('select')
+  }
+
+  const handleAssign = async () => {
+    if (step === 'submitting' || confirmLoading) return
+    setStep('submitting')
+    try {
+      const ok = await onConfirm(INSTITUTION_SELECT_ASSIGN_DEFAULT_NOTIFY_PAYLOAD)
+      setStep(ok ? 'complete' : 'confirm')
+    } catch {
+      setStep('confirm')
+    }
   }
 
   return (
     <>
       <ContentModal
-        open={open}
+        open={open && step === 'select'}
         onCancel={onCancel}
         title="기관 추가 배정 안내"
         width={MODAL_WIDTH}
@@ -152,7 +181,7 @@ export function AssignGuideModal({
             <CmsButton variant="secondary" size="medium" onClick={onCancel}>
               취소
             </CmsButton>
-            <CmsButton variant="primary" size="medium" onClick={handleConfirm}>
+            <CmsButton variant="primary" size="medium" onClick={handleSelectConfirm}>
               배정
             </CmsButton>
           </>
@@ -208,19 +237,24 @@ export function AssignGuideModal({
         </div>
       </ContentModal>
 
-      <PermissionModal
-        open={confirmOpen}
-        onCancel={() => setConfirmOpen(false)}
-        title="강사 배정 안내"
-        variant="approve"
-        width={600}
-        message={`선택하신 기관 일정에 [**${instructorName}**] 강사님을 새로 배정하시겠습니까?`}
-        confirmLabel="강사 배정"
-        requireReason={false}
-        notifyTimingOptions="two"
-        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.scheduledOnly}
-        confirmLoading={confirmLoading}
-        onConfirm={handleFinalConfirm}
+      <InstitutionSelectAssignConfirmModal
+        open={open && (step === 'confirm' || step === 'submitting')}
+        onCancel={handleConfirmCancel}
+        onConfirm={() => {
+          void handleAssign()
+        }}
+        institutionName={selectedInstitutionName}
+        instructorName={instructorName}
+        currentCount={currentCount}
+        requiredCount={requiredCount}
+        confirmLoading={step === 'submitting' || confirmLoading}
+      />
+
+      <InstitutionAssignCompleteModal
+        open={open && step === 'complete'}
+        onClose={onComplete}
+        institutionName={selectedInstitutionName}
+        instructorName={instructorName}
       />
     </>
   )

@@ -21,6 +21,7 @@ import {
   RecruitPostingFormModal,
   type RecruitPostingFormValues,
 } from '@/features/recruit-posting/ui/posting-form-modal'
+import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
 import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-display'
 import { downloadFile } from '@/shared/lib/file-download'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
@@ -140,7 +141,9 @@ export function RecruitPostingDetailPage() {
         <div className="recruit-posting-detail-page__inner">
           <div className="recruit-posting-detail-page__empty-wrap">
             <p className="recruit-posting-detail-page__empty" role="alert">
-              채용공고를 찾을 수 없습니다.
+              {isAdminForbidden(detailQuery.error)
+                ? '해당 채용공고를 조회할 권한이 없습니다.'
+                : '채용공고를 찾을 수 없습니다.'}
             </p>
             <CmsButton variant="secondary" size="large" type="button" onClick={() => goList()}>
               목록
@@ -308,6 +311,7 @@ function RecruitPostingDetailView({
               <RichTextViewer
                 content={posting.contentMarkdown}
                 contentFormat={resolveBodyFormat(posting.contentMarkdown)}
+                maxHeight="none"
               />
             ) : (
               <p className="recruit-posting-detail-page__body-empty">등록된 내용이 없습니다.</p>

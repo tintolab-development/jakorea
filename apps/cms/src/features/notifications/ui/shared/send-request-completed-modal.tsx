@@ -10,7 +10,7 @@ import {
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { ContentModal } from '@/shared/ui/content-modal'
-import '@/shared/ui/confirm-modal.css'
+import '@jakorea/admin-ui/modal/confirm.css'
 
 const MODAL_WIDTH = 600
 

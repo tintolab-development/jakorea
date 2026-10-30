@@ -53,3 +53,23 @@ describe('resolveInstructorAssignSessionDisplayLabels', () => {
     expect(options[0]?.timeLabel).toBe('10:00 ~ 12:00')
   })
 })
+
+describe('mapParticipatingSessionsToInstructorAssignOptions — isSessionDisabled', () => {
+  it('isSessionDisabled가 true인 회차(강사 정원 도달)는 disabled, 나머지는 선택 가능', () => {
+    const options = mapParticipatingSessionsToInstructorAssignOptions(
+      [
+        session({ round: 1, resolvedScheduleId: 101 }),
+        session({ round: 2, date: '2026.04.21', dayOfWeek: '화', resolvedScheduleId: 102 }),
+      ],
+      { isSessionDisabled: s => s.resolvedScheduleId === 101 }
+    )
+    expect(options.map(o => o.disabled)).toEqual([true, false])
+  })
+
+  it('옵션 미지정 시 기존 동작 유지', () => {
+    const options = mapParticipatingSessionsToInstructorAssignOptions([
+      session({ resolvedScheduleId: 101 }),
+    ])
+    expect(options[0]?.disabled).toBe(false)
+  })
+})

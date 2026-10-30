@@ -11,12 +11,45 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 export const adminRoot = join(__dirname, '../..')
 export const backendOpenApiPath = join(adminRoot, 'openapi/backend.openapi.json')
 
+function collectSchemaRefs(node, acc) {
+  if (node == null || typeof node !== 'object') return
+  if (Array.isArray(node)) {
+    for (const item of node) collectSchemaRefs(item, acc)
+    return
+  }
+  if (typeof node.$ref === 'string') {
+    const match = node.$ref.match(/^#\/components\/schemas\/([^/]+)$/)
+    if (match) acc.add(match[1])
+  }
+  for (const value of Object.values(node)) collectSchemaRefs(value, acc)
+}
+
+function pruneUnusedComponentSchemas(spec) {
+  const schemas = spec.components?.schemas
+  if (!schemas || typeof schemas !== 'object') return
+  const used = new Set()
+  collectSchemaRefs(spec.paths, used)
+  collectSchemaRefs(spec.components?.securitySchemes, used)
+  let previousSize = -1
+  while (used.size !== previousSize) {
+    previousSize = used.size
+    for (const name of [...used]) {
+      collectSchemaRefs(schemas[name], used)
+    }
+  }
+  spec.components.schemas = Object.fromEntries(
+    Object.entries(schemas).filter(([name]) => used.has(name)),
+  )
+}
+
 /**
  * @param {{
  *   outputFileName: string
  *   subsetTitle: string
  *   description: string
  *   matchPath: (path: string) => boolean
+ *   pruneUnusedSchemas?: boolean
+ *   afterFilter?: (subset: Record<string, unknown>) => void
  * }} options
  */
 export function writeOpenApiSubset({
@@ -24,6 +57,8 @@ export function writeOpenApiSubset({
   subsetTitle,
   description,
   matchPath,
+  pruneUnusedSchemas = false,
+  afterFilter,
 }) {
   const inputPath = backendOpenApiPath
   const outputPath = join(adminRoot, 'openapi', outputFileName)
@@ -55,6 +90,8 @@ export function writeOpenApiSubset({
   }
 
   normalizeOpenApiSchemaNode(subset)
+  afterFilter?.(subset)
+  if (pruneUnusedSchemas) pruneUnusedComponentSchemas(subset)
 
   writeFileSync(outputPath, `${JSON.stringify(subset, null, 2)}\n`)
   console.log(`Wrote ${outputPath} (${pathCount} paths)`)

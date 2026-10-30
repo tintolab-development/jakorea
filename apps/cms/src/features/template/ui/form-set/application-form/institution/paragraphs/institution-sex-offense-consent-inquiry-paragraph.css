@@ -1,14 +1,14 @@
 .institution-sex-offense-inquiry__notes {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 12px;
+  gap: 4px;
+  margin-top: 16px;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 24px */
+  line-height: 150%;
 }
 
 .institution-sex-offense-inquiry__note-list {
@@ -17,10 +17,10 @@
   list-style: none;
 }
 
-.institution-sex-offense-inquiry__note-list > li::before {
-  content: '• ';
+.institution-sex-offense-inquiry__note-list > li + li {
+  margin-top: 4px;
 }
 
-.institution-sex-offense-inquiry__caution {
-  margin: 0;
+.institution-sex-offense-inquiry__note-list > li::before {
+  content: '• ';
 }

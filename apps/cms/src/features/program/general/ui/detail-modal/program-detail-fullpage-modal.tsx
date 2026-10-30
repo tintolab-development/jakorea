@@ -65,6 +65,7 @@ import {
 import { ParticipatingVolunteersSection } from './program-status/participating-volunteers-section'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
+import type { ApplicantDetailMeta } from '../../../shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { generalOrganizationApplicationFilterFields } from '@/features/program/general/lib/application-filter-fields'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
 import { GeneralProgramApplicationView } from './info/application-view'
@@ -89,6 +90,8 @@ import {
   mergeCompanySchoolDetailSaveOverlay,
   readEconomyRegistrationOverlayForSave,
   resolveCompanySchoolDetailSaveAnnouncementTitle,
+  resolveCompanySchoolDetailSaveTitleFields,
+  resolveCompanySchoolDetailSaveLiveFormValues,
   seedEconomyRegistrationOverlayFromProgram,
   writeEconomyRegistrationOverlayFromProgramDraft,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
@@ -104,6 +107,7 @@ import {
   RegistrationWizardValidationHighlightSync,
   useDetailEditRequiredHighlightRequest,
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
+import { useProgramOperationDateErrorFocus } from '@/features/program/shared/lib/use-program-operation-date-error-focus'
 import {
   detailEditValuesToProgramPatch,
   narrowProgramDetailPatchForCommonInfoSave,
@@ -339,6 +343,9 @@ export function ProgramDetailFullPageModal({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
+  useProgramOperationDateErrorFocus(open, focus => {
+    detailRequiredHighlight.report(focus.highlightKeys)
+  })
   const programId = program?.id
   const {
     program: detailProgram,
@@ -971,19 +978,19 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          {
-            key: 'survey',
-            label: '설문 관리',
-            icon: <GeneralLnbSurveyManagementIcon />,
-            ...(surveyMenuItems.length > 0
-              ? {
+          ...(surveyMenuItems.length > 0
+            ? [
+                {
+                  key: 'survey',
+                  label: '설문 관리',
+                  icon: <GeneralLnbSurveyManagementIcon />,
                   children: surveyMenuItems.map(item => ({
                     key: item.key,
                     label: item.label,
                   })),
-                }
-              : {}),
-          },
+                },
+              ]
+            : []),
           ...(!hideManagers
             ? [{ key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> }]
             : []),
@@ -1031,19 +1038,19 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          {
-            key: 'survey',
-            label: '설문 관리',
-            icon: <GeneralLnbSurveyManagementIcon />,
-            ...(surveyMenuItems.length > 0
-              ? {
+          ...(surveyMenuItems.length > 0
+            ? [
+                {
+                  key: 'survey',
+                  label: '설문 관리',
+                  icon: <GeneralLnbSurveyManagementIcon />,
                   children: surveyMenuItems.map(item => ({
                     key: item.key,
                     label: item.label,
                   })),
-                }
-              : {}),
-          },
+                },
+              ]
+            : []),
           ...(!hideManagers
             ? [{ key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> }]
             : []),
@@ -1336,6 +1343,9 @@ export function ProgramDetailFullPageModal({
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
   const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
   const [volunteerDetailTitle, setVolunteerDetailTitle] = useState<string | null>(null)
+  /** 1사1교 기관 신청 상세 — 시안 헤더 제목·breadcrumb (`참여 기관 신청 상세 (기관명)`) */
+  const [companySchoolApplicantDetailMeta, setCompanySchoolApplicantDetailMeta] =
+    useState<ApplicantDetailMeta>(null)
   /** 교육받은 교사 — 신청 정보 양식 수정 모달·미리보기 갱신 키 */
   const [trainedTeachersFormEditOpen, setTrainedTeachersFormEditOpen] = useState(false)
   const [trainedTeachersFormEditPreflightLoading, setTrainedTeachersFormEditPreflightLoading] =
@@ -1366,8 +1376,17 @@ export function ProgramDetailFullPageModal({
   const programDisplayTitle = displayProgram
     ? resolveGeneralProgramDisplayTitle(displayProgram)
     : '프로그램 상세'
-  const title =
-    schoolIdFromUrl && schoolDetailTitle
+  const companySchoolInstitutionApplicantMeta =
+    isCompanySchoolDetail &&
+    !isTrainedTeachersDetail &&
+    activeLnb === 'applicants' &&
+    searchParams.get(APPLICANT_ID_PARAM) &&
+    companySchoolApplicantDetailMeta?.kind === 'institution'
+      ? companySchoolApplicantDetailMeta
+      : null
+  const title = companySchoolInstitutionApplicantMeta
+    ? companySchoolInstitutionApplicantMeta.title
+    : schoolIdFromUrl && schoolDetailTitle
       ? `참여 기관 상세 (${schoolDetailTitle})`
       : instructorIdFromUrl && instructorDetailTitle
         ? `참여 강사 상세 (${instructorDetailTitle})`
@@ -1403,6 +1422,8 @@ export function ProgramDetailFullPageModal({
           ? instructorDetailTitle
           : volunteerIdFromUrl && volunteerDetailTitle
             ? volunteerDetailTitle
+          : companySchoolInstitutionApplicantMeta
+            ? companySchoolInstitutionApplicantMeta.breadcrumbLabel
           : searchParams.get(APPLICANT_ID_PARAM)
             ? '신청자 상세'
             : null
@@ -1586,6 +1607,16 @@ export function ProgramDetailFullPageModal({
       })
       if (typeof liveAnnouncement === 'string') {
         infoForm.setValue('announcementTitle', liveAnnouncement)
+      }
+      // 등록 단락에서 바꾼 대표 프로그램명이 아래 overlay 재작성(폼 기준)에 덮이지 않고 PATCH에 실리게 한다.
+      const liveTitles = resolveCompanySchoolDetailSaveTitleFields(liveOverlay, displayProgram)
+      if (liveTitles.mainTitle !== undefined) infoForm.setValue('mainTitle', liveTitles.mainTitle)
+      if (liveTitles.title !== undefined) infoForm.setValue('title', liveTitles.title)
+      if (liveTitles.titleEn !== undefined) infoForm.setValue('titleEn', liveTitles.titleEn)
+      // 기본정보·공통정보 단락(overlay) 수정값도 폼에 올려, 아래 재작성·PATCH에서 이전 값으로 덮이지 않게 한다.
+      const liveFormValues = resolveCompanySchoolDetailSaveLiveFormValues(liveOverlay, displayProgram)
+      for (const [field, value] of Object.entries(liveFormValues)) {
+        infoForm.setValue(field as keyof typeof liveFormValues, value as never)
       }
       const valuesForPatch = infoForm.getValues()
       const patch = narrowProgramDetailPatchForCommonInfoSave(
@@ -2313,6 +2344,11 @@ export function ProgramDetailFullPageModal({
                   institutionColumnPreset="company-school"
                   detailVariant="general"
                   onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
+                  onApplicantDetailMetaChange={
+                    isCompanySchoolDetail && !isTrainedTeachersDetail
+                      ? setCompanySchoolApplicantDetailMeta
+                      : undefined
+                  }
                 />
               </div>
             ) : isCompanySchoolDetail && activeLnb === 'applicant_instructors' ? (

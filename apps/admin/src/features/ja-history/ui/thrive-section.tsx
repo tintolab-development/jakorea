@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
@@ -146,7 +146,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
             view={null}
             edit={
               <div className="ja-history-thrive-cards">
-                <Table<JaHistoryThriveCard>
+                <CmsDataTable<JaHistoryThriveCard>
                   className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
                   columns={columns}
                   dataSource={thrive.cards}

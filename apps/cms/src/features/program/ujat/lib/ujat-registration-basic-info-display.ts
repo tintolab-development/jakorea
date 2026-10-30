@@ -299,14 +299,11 @@ export function applyUjatRegistrationOverlayToProgram(
   const seal = readOperationRangeSeal(overlayInput)
 
   const repKo =
-    overlayString(overlayInput, 'ujat.basicInfo.repKo')?.trim() ||
-    (fillDefaults ? defaults!.repKo : program.mainTitle)
+    overlayString(overlayInput, 'ujat.basicInfo.repKo')?.trim() || program.mainTitle
   const repEn =
-    overlayString(overlayInput, 'ujat.basicInfo.repEn')?.trim() ||
-    (fillDefaults ? defaults!.repEn : program.titleEn)
+    overlayString(overlayInput, 'ujat.basicInfo.repEn')?.trim() || program.titleEn
   const title =
-    overlayString(overlayInput, 'ujat.basicInfo.programManagementName')?.trim() ||
-    (fillDefaults ? defaults!.programManagementName : program.title)
+    overlayString(overlayInput, 'ujat.basicInfo.programManagementName')?.trim() || program.title
   const businessArea = normalizeProgramBusinessAreaValue(
     overlayString(overlayInput, 'ujat.basicInfo.businessField') ??
       (fillDefaults ? defaults!.businessField : program.businessArea)

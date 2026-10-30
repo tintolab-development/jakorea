@@ -66,7 +66,8 @@ export function resolveGeneralProgramNavigation(items?: readonly MenuItem[] | nu
     }
 
     const mapped = LNB_KEY_ALIASES[normalizedKey]
-    // 설문 관리 1depth는 공통정보 체크와 무관하게 항상 노출. BE navigation enabled로 숨기지 않는다.
+    // 설문 관리 1depth는 BE navigation enabled로 숨기지 않는다.
+    // 카테고리(공통정보 설문 항목)가 없으면 사이드바에서 비노출한다.
     if (mapped === 'survey') continue
     if (mapped && item.enabled === false) disabledLnbKeys.add(mapped)
   }

@@ -1,16 +1,8 @@
-import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
-import { getSponsorNameFromCache } from '@/features/sponsor/lib/sponsor-lookup'
-import { useQueryClient } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 
 export function SponsorNameById({ sponsorId }: { sponsorId?: string | null }) {
-  const queryClient = useQueryClient()
-  useSponsorOptionsQuery(Boolean(sponsorId))
-
-  const name = useMemo(() => {
-    if (!sponsorId?.trim()) return '-'
-    return getSponsorNameFromCache(queryClient, sponsorId) ?? sponsorId
-  }, [queryClient, sponsorId])
-
-  return <>{name}</>
+  // 후원사 목록이 도착하면 다시 계산되도록 query data를 deps로 쓰는 공용 훅을 사용한다.
+  const name = useSponsorNameById(sponsorId)
+  if (!sponsorId?.trim()) return <>-</>
+  return <>{name ?? sponsorId}</>
 }

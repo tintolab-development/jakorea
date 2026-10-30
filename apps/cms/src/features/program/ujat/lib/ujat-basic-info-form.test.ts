@@ -59,7 +59,16 @@ describe('UJAT basic-info RHF migration boundary', () => {
 
   it('keeps explicit false values in the typed defaults contract', () => {
     const defaults = createUjatBasicInfoFormDefaults()
-    expect(defaults.partnerInvolvement).toBe(false)
+    expect(defaults.title).toBeUndefined()
+    expect(defaults.mainTitle).toBeUndefined()
+    expect(defaults.titleEn).toBeUndefined()
+    expect(defaults.partnerInvolvement).toBeUndefined()
+    expect(defaults.ipOwned).toBeUndefined()
+    expect(defaults.courseDeliveredBy).toBeUndefined()
+    expect(defaults.ipsCategory).toBeUndefined()
+    expect(defaults.businessArea).toBeUndefined()
+    expect(defaults.detailedProgramId).toBeUndefined()
+    expect(defaults.wagePaymentItemIds).toEqual([])
     expect(defaults.surveySurvey).toBe(true)
     expect(defaults.surveyVolunteerSatisfaction).toBe(true)
     expect(defaults.surveySchoolSatisfaction).toBe(true)

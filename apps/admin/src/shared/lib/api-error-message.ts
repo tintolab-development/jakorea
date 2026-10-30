@@ -34,6 +34,16 @@ export function readApiErrorCode(error: unknown): string | undefined {
   return typeof code === 'string' && code.trim() ? code.trim() : undefined
 }
 
+/** ApiErrorResponse.field — 검증 실패 필드명 */
+export function readApiErrorField(error: unknown): string | undefined {
+  if (!axios.isAxiosError(error)) return undefined
+  const data = error.response?.data
+  if (!data || typeof data !== 'object') return undefined
+  const record = data as { field?: unknown; error?: { field?: unknown } }
+  const field = record.field ?? record.error?.field
+  return typeof field === 'string' && field.trim() ? field.trim() : undefined
+}
+
 export function isOptimisticLockConflictError(error: unknown): boolean {
   const code = readApiErrorCode(error)
   if (code === 'OPTIMISTIC_LOCK_CONFLICT') return true

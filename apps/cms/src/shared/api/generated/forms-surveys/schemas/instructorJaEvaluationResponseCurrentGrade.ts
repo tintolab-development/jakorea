@@ -7,9 +7,9 @@
  */
 
 /**
- * 서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). 평가 전 null.
+ * 서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음).
  */
-export type InstructorJaEvaluationResponseCurrentGrade = typeof InstructorJaEvaluationResponseCurrentGrade[keyof typeof InstructorJaEvaluationResponseCurrentGrade] | null;
+export type InstructorJaEvaluationResponseCurrentGrade = typeof InstructorJaEvaluationResponseCurrentGrade[keyof typeof InstructorJaEvaluationResponseCurrentGrade];
 
 
 export const InstructorJaEvaluationResponseCurrentGrade = {

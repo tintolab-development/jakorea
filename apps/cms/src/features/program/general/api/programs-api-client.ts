@@ -174,7 +174,7 @@ export async function createAdminProgramRemote(
   )
   const createdId = created.id
   if (createdId) {
-    await syncProgramInlineImagesKeepProgram(createdId, [payload, created])
+    await syncProgramInlineImagesKeepProgram(createdId, payload)
   }
   return created
 }
@@ -191,7 +191,7 @@ export async function updateAdminProgramRemote(
       data: safePayload,
     })
   )
-  await syncProgramInlineImages(programId, [safePayload, updated])
+  await syncProgramInlineImages(programId, safePayload)
   return updated
 }
 

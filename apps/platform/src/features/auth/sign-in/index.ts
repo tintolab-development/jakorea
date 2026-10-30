@@ -22,13 +22,14 @@ export type {
   PasswordChangeRequest,
   PhoneIdentityChangeResponse,
   PhoneIdentityConfirmRequest,
+  PortalGuardianProfileUpdate,
   PortalProfileResponse,
   PortalSchoolSelectionRequest,
   PortalWithdrawalRequest,
   PortalWithdrawalResponse,
   UpdatePortalProfileRequest,
 } from './api'
-export { getLoginApiErrorMessage } from './lib'
+export { formatPortalProfileUpdateError, getLoginApiErrorMessage } from './lib'
 export {
   usePortalLoginMutation,
   usePortalMeQuery,

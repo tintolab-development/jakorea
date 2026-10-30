@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION } from '@jakorea/form-schema/program-application'
+import {
+  INSTRUCTOR_CRIME_RECORD_CONFIRM_LABEL,
+  INSTRUCTOR_CRIME_RECORD_GUIDE_CAUTION,
+  INSTRUCTOR_CRIME_RECORD_GUIDE_INTRO,
+  INSTRUCTOR_CRIME_RECORD_GUIDE_ITEMS,
+  INSTRUCTOR_CRIME_RECORD_GUIDE_SECTION,
+} from '@jakorea/form-schema/program-application'
 import {
   createProgramApplicationFormInstructorDraft,
   migrateProgramApplicationFormInstructorParagraphs,
@@ -10,6 +16,26 @@ import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-t
 const CRIME_RECORD_ID = PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord
 
 describe('공통_강사 신청 폼 성범죄경력 조회 동의서 제출 방법 안내 단락 migration', () => {
+  it('안내 본문·불릿·확인 문구가 Figma 시안과 같다', () => {
+    expect(INSTRUCTOR_CRIME_RECORD_GUIDE_INTRO).toBe(
+      '기관에 배정되면 마이페이지 > 해당 프로그램 상세에서 배정된 기관이 요청한 제출 방식을 꼭 확인해 주세요.'
+    )
+    expect(INSTRUCTOR_CRIME_RECORD_GUIDE_ITEMS).toEqual([
+      {
+        title: '온라인 제출 (기관이 온라인 제출을 요청한 경우)',
+        body: '기관 안내사항에 적힌 기관 ID와 검증번호로 범죄경력회보서 사이트에서 온라인으로 제출해 주세요.',
+      },
+      {
+        title: '직접 제출 (기관이 직접 제출을 요청한 경우)',
+        body: '범죄경력회보서를 출력하여 배정된 기관에 직접 제출해 주세요.',
+      },
+    ])
+    expect(INSTRUCTOR_CRIME_RECORD_GUIDE_CAUTION).toBe(
+      '※ 기관이 ‘JA 시스템 내에서 동의서 확인’을 요청한 경우, 강사 신청 시 제출하신 성범죄경력 조회 동의서 및 행정정보 공동이용 동의서가 배정된 기관에 자동 전달되어 기관에서 직접 조회합니다.'
+    )
+    expect(INSTRUCTOR_CRIME_RECORD_CONFIRM_LABEL).toBe('네, 상기 내용 모두 확인하였습니다.')
+  })
+
   it('시드는 새 제목과 빈 설명을 사용', () => {
     const paragraph = createProgramApplicationFormInstructorDraft().paragraphs.find(
       p => p.id === CRIME_RECORD_ID

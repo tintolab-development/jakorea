@@ -10,6 +10,7 @@ import type { CurriculumResponse } from './curriculumResponse';
 import type { CurriculumSessionItem } from './curriculumSessionItem';
 import type { ProgramDetailResponseEducationForm } from './programDetailResponseEducationForm';
 import type { ProgramDetailResponseEducationFormScheduleDetail } from './programDetailResponseEducationFormScheduleDetail';
+import type { ProgramDetailResponseEducationPlaceScheduleDetail } from './programDetailResponseEducationPlaceScheduleDetail';
 import type { ProgramDetailResponseEducationScheduleMode } from './programDetailResponseEducationScheduleMode';
 import type { ProgramDetailResponseEducationStructure } from './programDetailResponseEducationStructure';
 import type { ProgramDetailResponseEducationTarget } from './programDetailResponseEducationTarget';
@@ -44,9 +45,9 @@ export interface ProgramDetailResponse {
   periodStatus?: string;
   /** 모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개. */
   recruitmentStatus?: ProgramDetailResponseRecruitmentStatus;
-  /** Gemini 연수 요청 가능 기간 시작일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null. */
+  /** Gemini 연수 요청 가능 기간 시작일(Asia/Seoul 역일). gemini_program_detail 정본. 비Gemini·미설정은 null. 기관 모집 기간(applicationStartDate/applicationEndDate, recruitments startAt/endAt)으로 채우지 않는다. */
   trainingRequestStartDate?: string | null;
-  /** Gemini 연수 요청 가능 기간 종료일. gemini_program_detail 정본이 없거나 Gemini가 아니면 null. */
+  /** Gemini 연수 요청 가능 기간 종료일(Asia/Seoul 역일). gemini_program_detail 정본. 비Gemini·미설정은 null. 모집 기간·사업기간·operationStartDate로 대체하지 않는다. */
   trainingRequestEndDate?: string | null;
   /** 기관(ORGANIZATION) 참여자 모집의 사전 안내 사항 작성 여부. 기관 모집이 아니면 생략. 값이 없던 레거시 기관 설정은 true(작성)로 투영. */
   preEducationNoticeRequired?: boolean | null;
@@ -81,6 +82,7 @@ export interface ProgramDetailResponse {
   targetGradeFrom?: string;
   targetGradeTo?: string;
   thumbnailFileObjectId?: number;
+  /** 후원사 표시명 배열. GEMINI_TRAINING은 관계가 비면 ["Google for Education"]. 저장된 이름이 있으면 그대로 둔다. GENERAL/UJAT 등 다른 유형은 빈 배열을 채우지 않는다. recruitmentId·applicationType 포커스와 무관하다. */
   sponsorNames?: string[];
   recruitments?: RecruitmentResponse[];
   schedules?: ScheduleResponse[];
@@ -120,4 +122,10 @@ export interface ProgramDetailResponse {
   recruitmentStartAt?: string | null;
   /** recruitmentId 조회일 때 그 모집의 종료. 쿼리가 없으면 null. */
   recruitmentEndAt?: string | null;
+  /** 제미나이 최소 수강 인원(gemini_program_detail.min_participant_count). CMS minParticipantCount/minimumParticipants/minStudentCount와 같은 저장값. 비제미나이·미설정이면 null. */
+  minStudentCount?: number | null;
+  /** GENERAL_INDIVIDUAL 교육 진행 장소 공통/일정 별 상이. 기관·다른 유형은 null. */
+  educationPlaceScheduleDetail?: ProgramDetailResponseEducationPlaceScheduleDetail;
+  /** GENERAL_INDIVIDUAL 일정 공통 교육 장소 주소. perSchedule이거나 없으면 null. */
+  educationPlaceAddress?: string | null;
 }

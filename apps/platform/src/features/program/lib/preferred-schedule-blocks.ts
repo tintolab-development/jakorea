@@ -38,11 +38,20 @@ function isValidScheduleTime(value: string): boolean {
 export const PREFERRED_SCHEDULE_TIME_ORDER_ERROR_MESSAGE =
   '교육 종료 시간은 시작 시간 이후로 입력해 주세요.'
 
+export function formatPreferredSessionCountRangeMessage(range: {
+  min: number
+  max: number
+}): string {
+  return `${range.min}차시 이상 최대 ${range.max}차시까지 신청할 수 있습니다.`
+}
+
 export type PreferredScheduleBlocksMapOptions = {
   /** 일정형 단일 기간 — 희망 교육일만 (sessionTimes는 빈 배열) */
   dateOnly?: boolean
   /** UJAT 기관 — { preferenceRank, date }만. classPeriod/sessionTimes 없음. max 10 */
   dateFieldsOnly?: boolean
+  /** Gemini 기관 — 희망 차시 2~4만 제출 */
+  sessionCountRange?: { min: number; max: number }
 }
 
 export const UJAT_PREFERRED_SCHEDULE_BLOCK_MAX = 10
@@ -77,15 +86,25 @@ export function toPortalPreferredScheduleBlocks(
       rank += 1
       continue
     }
-    const classPeriod = block.classPeriod.trim()
     const startTime = normalizeScheduleTime(block.startTime)
     const endTime = normalizeScheduleTime(block.endTime)
-    /** BE: date·classPeriod·startTime·endTime 모두 필수 */
-    if (!date || !classPeriod || !startTime || !endTime) continue
+    const classPeriod = block.classPeriod.trim()
+    /** BE: date·startTime·endTime 필수. 일반·Gemini 기관은 차시도 필수 */
+    if (!date || !startTime || !endTime || !classPeriod) continue
+    const sessionCount = parsePreferredSessionCount(classPeriod)
+    const sessionCountRange = options?.sessionCountRange
+    if (
+      sessionCountRange &&
+      (sessionCount < sessionCountRange.min || sessionCount > sessionCountRange.max)
+    ) {
+      continue
+    }
     out.push({
       preferenceRank: rank,
       date,
-      sessionCount: parsePreferredSessionCount(classPeriod),
+      sessionCount,
+      startTime,
+      endTime,
       ...(block.session ? { session: block.session } : {}),
       sessionTimes: [
         {
@@ -178,6 +197,18 @@ export function findIncompletePreferredScheduleMessage(
     return options?.dateOnly
       ? '진행 희망 교육 일정에 희망 교육일을 입력해 주세요.'
       : '진행 희망 교육 일정에 날짜·차시(교시)·시작/종료 시간을 모두 입력해 주세요.'
+  }
+  const sessionCountRange = options?.sessionCountRange
+  if (sessionCountRange && !options?.dateOnly) {
+    const hasInvalidSessionCount = blocks.some(block => {
+      const classPeriod = block.classPeriod.trim()
+      if (!classPeriod) return false
+      const sessionCount = parsePreferredSessionCount(classPeriod)
+      return sessionCount < sessionCountRange.min || sessionCount > sessionCountRange.max
+    })
+    if (hasInvalidSessionCount) {
+      return formatPreferredSessionCountRangeMessage(sessionCountRange)
+    }
   }
   if (!options?.dateOnly) {
     const hasInvalidTimeRange = blocks.some(block => {

@@ -14,6 +14,7 @@ import {
   programPaymentItemLabelsFromIds,
   resolveProgramWageDeductionLabel,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { resolveCompanySchoolWageDefaultPaymentItemIds } from './company-school-wage-defaults'
 import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
@@ -210,15 +211,15 @@ export function buildCompanySchoolProgramFromCanonical(args: {
         { grade: WAGE_GRADE_LABELS[2], pricing: buildWagePricing(common.grade3Fee, common.grade3DistanceFee) },
       ]
     : []
-  const paymentItemIds = common.paymentItemValues
+  const paymentItemIds =
+    common.paymentItemValues === undefined
+      ? resolveCompanySchoolWageDefaultPaymentItemIds()
+      : common.paymentItemValues
   const paymentItemsFromIds = paymentItemIds
     ? programPaymentItemLabelsFromIds(paymentItemIds)
     : ''
-  const paymentItems =
-    paymentItemIds === undefined
-      ? PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
-      : paymentItemsFromIds || PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
-  const deductionItems = paymentItemIds
+  const paymentItems = paymentItemsFromIds || PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+  const deductionItems = paymentItemIds?.length
     ? resolveProgramWageDeductionLabel(paymentItemIds)
     : PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
 

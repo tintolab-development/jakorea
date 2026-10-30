@@ -1,4 +1,5 @@
 import customInstance from '@/shared/api/orval-mutator'
+import { syncProgramInlineImages } from '@/features/program/shared/api/program-inline-images'
 import type { AdminFilePurpose } from '@/shared/lib/admin-file-upload/purposes'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
 import { ADMIN_FILE_PURPOSE } from '@/shared/lib/admin-file-upload'
@@ -48,9 +49,11 @@ export async function patchProgramRecruitment(
   recruitmentId: number,
   body: ProgramRecruitmentRequest
 ): Promise<ProgramRecruitmentResponse> {
-  return unwrapApiBody(
+  const updated = unwrapApiBody<ProgramRecruitmentResponse>(
     await customInstance({ url: rowPath(programId, recruitmentId), method: 'PATCH', data: body })
   )
+  await syncProgramInlineImages(programId, [body, updated])
+  return updated
 }
 
 /** DELETE …/recruitments/{recruitmentId}. 신청자 409 RECRUITMENT_HAS_APPLICATIONS, 구조 잠금 409 PROGRAM_STRUCTURE_EDIT_PERIOD_ENDED. 실패 시 행을 지우지 않는다. */

@@ -1,5 +1,12 @@
+/* 긴 본문은 content 높이를 늘려 스크롤 끝에 하단 52px가 남게 한다. */
 .gemini-recruitment-detail-fullpage-modal .detail-fullpage-modal__content {
-  padding: 0 60px 48px;
+  flex: 1 0 auto;
+  min-height: auto;
+  padding: 0 var(--detail-fullpage-padding-x, 52px) var(--detail-fullpage-padding-bottom, 52px);
+}
+
+.gemini-recruitment-detail-fullpage-modal .program-detail-fullpage-modal__info-tab {
+  padding-bottom: 0;
 }
 
 .gemini-recruitment-detail__header-actions {

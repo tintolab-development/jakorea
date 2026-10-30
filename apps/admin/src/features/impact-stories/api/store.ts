@@ -86,6 +86,9 @@ function normalizeStory(raw: Partial<ImpactStory>, i: number): ImpactStory {
     createdAt: asString(raw.createdAt, now),
     updatedAt: asString(raw.updatedAt, now),
     viewCount: asNumber(raw.viewCount, 0),
+    thumbnail: raw.thumbnail
+      ? normalizeAttachment(raw.thumbnail as Partial<ImpactStoryAttachment>, 0)
+      : null,
     attachments: atts,
   }
 }
@@ -267,6 +270,7 @@ function buildSeedStories(categories: ImpactStoryCategory[]): ImpactStory[] {
         createdAt,
         updatedAt: publishedAt,
         viewCount: 800 + (i + 1) * 137,
+        thumbnail: i === 0 ? samplePng() : null,
         attachments: i === 1 ? [samplePng()] : [],
       },
       i
@@ -445,6 +449,7 @@ export function createStory(input: ImpactStoryCreateInput): ImpactStory {
     createdAt: now,
     updatedAt: now,
     viewCount: 0,
+    thumbnail: input.thumbnail,
     attachments: input.attachments,
   }
   writeStoriesFile([story, ...file.items])
@@ -468,6 +473,7 @@ export function updateStory(input: ImpactStoryUpdateInput): ImpactStory {
     isPinned: input.isPinned,
     authorName: input.authorName.trim() || prev.authorName,
     publishedAt: input.publishedAt,
+    thumbnail: input.thumbnail,
     attachments: input.attachments,
     updatedAt: new Date().toISOString(),
   }

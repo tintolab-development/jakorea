@@ -12,6 +12,7 @@ const STORED_FILE_SRC_RE =
   /(?:https?:\/\/[^"'\\\s)]+)?\/api\/(?:admin|portal\/public)\/files\/(\d+)\/(?:content|download)(?:\?[^"'\\\s)]*)?/g
 
 const FILE_OBJECT_REFERENCE_RE = /^file-object:(\d+)$/
+const FILE_OBJECT_TOKEN_RE = /file-object:(\d+)/g
 
 export function fileObjectIdFromStoredFileUrl(src: string): number | null {
   const referenceMatch = src.trim().match(FILE_OBJECT_REFERENCE_RE)
@@ -48,7 +49,11 @@ export const PORTAL_INLINE_IMAGE_PREVIEW_FAILURE_MESSAGE =
  * 배포 환경에서는 `apiOrigin`으로 절대 URL을 만들어 `<img>`·링크가 플랫폼 호스트로 가지 않게 한다.
  */
 export function rewriteAdminFileContentSrcsForPortal(content: string, apiOrigin = ''): string {
-  return content.replace(STORED_FILE_SRC_RE, (_match, fileObjectId: string) =>
+  const fromStored = content.replace(STORED_FILE_SRC_RE, (_match, fileObjectId: string) =>
+    portalPublicInlineImageUrl(Number(fileObjectId), apiOrigin),
+  )
+  FILE_OBJECT_TOKEN_RE.lastIndex = 0
+  return fromStored.replace(FILE_OBJECT_TOKEN_RE, (_match, fileObjectId: string) =>
     portalPublicInlineImageUrl(Number(fileObjectId), apiOrigin),
   )
 }

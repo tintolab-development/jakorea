@@ -1,15 +1,5 @@
-import {
-  PFFormControlCluster,
-  PFFormControlSuffix,
-  PFFormField,
-  PFFormFieldRow,
-  PFFormFieldTable,
-  PFFormInlineRow,
-  PFFormInlineSegment,
-  PFText,
-  PFTextInput,
-} from '@/shared/ui'
-import hostStyles from '../apply-form-field-host.module.css'
+import { DetailInfoForm } from '@/features/form-template'
+import { PFText, PFTextInput } from '@/shared/ui'
 import styles from './apply-gemini-institution-info.module.css'
 
 export type ApplyGeminiInstitutionTrainingInfoValues = {
@@ -105,38 +95,42 @@ type ApplyGeminiInstitutionTrainingInfoProps = {
   onChange: (next: ApplyGeminiInstitutionTrainingInfoValues) => void
 }
 
+/** CMS `GeminiVisitingTrainingTrainingInfoParagraph` — DetailInfoForm 격자 */
 export function ApplyGeminiInstitutionTrainingInfo({
   value,
   onChange,
 }: ApplyGeminiInstitutionTrainingInfoProps) {
   return (
-    <PFFormFieldTable className={[styles.root, hostStyles.root].join(' ')}>
-      <PFFormFieldRow type="single">
-        <PFFormField label="수강 인원" fullWidth>
-          <PFFormInlineRow>
-            <PFFormInlineSegment>
-              <PFFormControlCluster>
-                <PFText as="span" typo="bd-md-md" color="black">
-                  총
-                </PFText>
-                <span data-field="studentCount">
-                  <PFTextInput
-                    variant="formPage"
-                    size="large"
-                    width={160}
-                    inputMode="numeric"
-                    placeholder="총 학생 수"
-                    value={value.studentCount}
-                    onValueChange={next => onChange({ studentCount: next.replace(/\D/g, '') })}
-                  />
-                </span>
-                <PFFormControlSuffix>명</PFFormControlSuffix>
-              </PFFormControlCluster>
-            </PFFormInlineSegment>
-          </PFFormInlineRow>
-        </PFFormField>
-      </PFFormFieldRow>
-    </PFFormFieldTable>
+    <DetailInfoForm title="연수 정보" hideHeader mode="edit" className={styles.form}>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="수강 인원"
+          fullRow
+          view="-"
+          edit={
+            <div className={`detail-info-form-inputs-wrapper-no-gap ${styles.headcount}`}>
+              <PFText as="span" typo="bd-md-md" color="black">
+                총
+              </PFText>
+              <span data-field="studentCount">
+                <PFTextInput
+                  variant="formPage"
+                  size="large"
+                  width={120}
+                  inputMode="numeric"
+                  placeholder="학생 수"
+                  value={value.studentCount}
+                  onValueChange={next => onChange({ studentCount: next.replace(/\D/g, '') })}
+                />
+              </span>
+              <PFText as="span" typo="bd-md-md" color="black">
+                명
+              </PFText>
+            </div>
+          }
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
   )
 }
 
@@ -145,34 +139,43 @@ type ApplyGeminiInstitutionContactProps = {
   onChange: (next: ApplyGeminiInstitutionContactValues) => void
 }
 
+/** CMS `GeminiVisitingTrainingContactPersonParagraph` — DetailInfoForm 격자 */
 export function ApplyGeminiInstitutionContact({
   value,
   onChange,
 }: ApplyGeminiInstitutionContactProps) {
   return (
-    <PFFormFieldTable className={[styles.root, hostStyles.root].join(' ')}>
-      <PFFormFieldRow type="double">
-        <PFFormField label="직급">
-          <PFTextInput
-            variant="formPage"
-            size="large"
-            width="100%"
-            placeholder="직급을 입력해 주세요"
-            value={value.jobTitle}
-            onValueChange={jobTitle => onChange({ ...value, jobTitle })}
-          />
-        </PFFormField>
-        <PFFormField label="담당 과목">
-          <PFTextInput
-            variant="formPage"
-            size="large"
-            width="100%"
-            placeholder="담당 과목을 입력해 주세요"
-            value={value.subject}
-            onValueChange={subject => onChange({ ...value, subject })}
-          />
-        </PFFormField>
-      </PFFormFieldRow>
-    </PFFormFieldTable>
+    <DetailInfoForm title="담당 교사 정보" hideHeader mode="edit" className={styles.form}>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="직급"
+          view="-"
+          edit={
+            <PFTextInput
+              variant="formPage"
+              size="large"
+              width="100%"
+              placeholder="직급을 입력해 주세요"
+              value={value.jobTitle}
+              onValueChange={jobTitle => onChange({ ...value, jobTitle })}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="담당 과목"
+          view="-"
+          edit={
+            <PFTextInput
+              variant="formPage"
+              size="large"
+              width="100%"
+              placeholder="담당 과목을 입력해 주세요"
+              value={value.subject}
+              onValueChange={subject => onChange({ ...value, subject })}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
   )
 }

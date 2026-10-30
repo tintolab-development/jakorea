@@ -14,6 +14,11 @@ import {
 } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import { isGeneralRecruitmentRowProgram } from '@/features/program/general/lib/is-general-recruitment-row-program'
 import { recruitOverlayPatchFromDetailEditValues } from '@/features/program/general/lib/detail-operational-save-merge'
+import { getRecruitDetailInfoRecord } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
+import {
+  readRecruitDetailMediaFromOverlay,
+  recruitDetailInfoPrefixesForPreviewAudience,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import {
   detailEditValuesToProgramPatch,
@@ -157,14 +162,37 @@ export function buildRecruitmentEditPreviewDraft(input: {
     }
   }
 
+  const previewAudience =
+    audience === 'instructor'
+      ? 'instructors'
+      : audience === 'volunteer'
+        ? 'volunteers'
+        : 'institutions'
+  const mediaPrefixes = recruitDetailInfoPrefixesForPreviewAudience(previewAudience)
+  const liveMediaOverlay = pickLiveRecruitmentMediaOverlay(
+    getRecruitDetailInfoRecord(),
+    mediaPrefixes
+  )
   const extraOverlay = {
     ...(patch.registrationOverlay ?? {}),
     ...recruitOverlayPatchFromDetailEditValues(values, audience),
+    ...liveMediaOverlay,
   }
+  const liveThumbId = readRecruitDetailMediaFromOverlay(extraOverlay, mediaPrefixes)
+    .thumbFileObjectId
+  const recruitmentId = program.activeRecruitmentId
+  const baseRows = patch.programRecruitments ?? program.programRecruitments
+  const programRecruitments =
+    liveThumbId != null && recruitmentId != null && Array.isArray(baseRows)
+      ? baseRows.map(row =>
+          row.id === recruitmentId ? { ...row, thumbnailFileObjectId: liveThumbId } : row
+        )
+      : patch.programRecruitments
 
   const draft: Program = {
     ...program,
     ...patch,
+    ...(programRecruitments !== undefined ? { programRecruitments } : {}),
     generalCommonInfo: {
       ...program.generalCommonInfo,
       ...patch.generalCommonInfo,
@@ -176,4 +204,26 @@ export function buildRecruitmentEditPreviewDraft(input: {
   }
 
   return { program: draft, extraOverlay }
+}
+
+function pickLiveRecruitmentMediaOverlay(
+  record: Record<string, unknown>,
+  prefixes: readonly string[]
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(record)) {
+    const inPrefix = prefixes.some(prefix => key === prefix || key.startsWith(`${prefix}.`))
+    if (!inPrefix) continue
+    if (
+      key.endsWith('.thumbFileObjectId') ||
+      key.endsWith('.thumbContentUrl') ||
+      key.endsWith('.thumbFileName') ||
+      key.endsWith('.thumbObjectUrl') ||
+      key.endsWith('.attachmentFileNames') ||
+      key.endsWith('.attachmentFileObjectIds')
+    ) {
+      out[key] = value
+    }
+  }
+  return out
 }

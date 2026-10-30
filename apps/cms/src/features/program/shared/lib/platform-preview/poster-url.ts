@@ -3,6 +3,7 @@ import type { Program } from '@/types/domain'
 import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { getRecruitDetailInfoRecord } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-form-rhf'
 import {
   readRecruitDetailMediaFromOverlay,
   recruitDetailInfoPrefixesForPreviewAudience,
@@ -100,6 +101,7 @@ export function liveRecruitPreviewOverlay(
       ...(program.registrationOverlay ?? {}),
       ...(audience === 'institutions' ? getApplicantRecruitInstitutionOverlayRecord() : {}),
       ...catalogOverlays,
+      ...getRecruitDetailInfoRecord(),
       ...extraOverlay,
     },
     audience
@@ -153,12 +155,13 @@ export function resolveAudiencePreviewAttachmentNames(input: {
 export function usePreviewPosterUrl(
   program: Program | null,
   enabled: boolean,
-  audience: PreviewRecruitAudience = 'institutions'
+  audience: PreviewRecruitAudience = 'institutions',
+  extraOverlay?: Record<string, unknown>
 ): string | undefined {
   const [posterUrl, setPosterUrl] = useState<string | undefined>()
   const programId = program?.id
   const seedFileId = program
-    ? resolveAudiencePreviewPosterSeed({ program, audience }).fileObjectId
+    ? resolveAudiencePreviewPosterSeed({ program, audience, overlay: extraOverlay }).fileObjectId
     : undefined
 
   useEffect(() => {
@@ -166,7 +169,7 @@ export function usePreviewPosterUrl(
       setPosterUrl(undefined)
       return
     }
-    const seed = resolveAudiencePreviewPosterSeed({ program, audience })
+    const seed = resolveAudiencePreviewPosterSeed({ program, audience, overlay: extraOverlay })
     setPosterUrl(seed.displayUrl)
 
     let cancelled = false

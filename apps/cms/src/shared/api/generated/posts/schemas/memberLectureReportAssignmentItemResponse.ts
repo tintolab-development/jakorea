@@ -22,4 +22,8 @@ export interface MemberLectureReportAssignmentItemResponse {
   submitDueAt?: string;
   canSubmit?: boolean;
   reportId?: number;
+  instructorRole?: string;
+  institutionAddress?: string;
+  /** 자택-기관 거리(km) 숫자. 문자열 아님. 없으면 null */
+  distanceFromHome?: string | null;
 }

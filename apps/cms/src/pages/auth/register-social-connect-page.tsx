@@ -11,6 +11,7 @@ import {
   normalizeSocialConnectRedirectPath,
   resolveSocialConnectFinishPath,
 } from '@/features/auth/lib/register-social-connect-state'
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import { RegisterSocialConnectView } from '@/features/auth/ui/admin-register/register-social-connect-view'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -28,6 +29,19 @@ export function RegisterSocialConnectPage() {
   const socialConnectSelfPath = buildRegisterSocialConnectPath(params.redirect)
 
   useEffect(() => {
+    if (!SOCIAL_ACCOUNT_LINK_ENABLED) {
+      navigate(
+        isAuthenticated
+          ? resolveSocialConnectFinishPath({
+              isAuthenticated: true,
+              redirectPath: params.redirect,
+              fallbackPath,
+            })
+          : '/login',
+        { replace: true }
+      )
+      return
+    }
     if (!isAuthenticated) {
       navigate(
         resolveSocialConnectFinishPath({
@@ -38,7 +52,13 @@ export function RegisterSocialConnectPage() {
         { replace: true }
       )
     }
-  }, [isAuthenticated, navigate, socialConnectSelfPath])
+  }, [
+    fallbackPath,
+    isAuthenticated,
+    navigate,
+    params.redirect,
+    socialConnectSelfPath,
+  ])
 
   const finishPath = resolveSocialConnectFinishPath({
     isAuthenticated: true,
@@ -54,7 +74,7 @@ export function RegisterSocialConnectPage() {
     navigate(buildSocialConnectCompletePath(safeRedirectPath), { replace: true })
   }
 
-  if (!isAuthenticated) {
+  if (!SOCIAL_ACCOUNT_LINK_ENABLED || !isAuthenticated) {
     return null
   }
 

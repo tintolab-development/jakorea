@@ -19,7 +19,9 @@
   --calendar-sub-right-list-height: 743px;
   --calendar-sub-right-list-min-width: 280px;
   --calendar-sub-right-list-max-width: 400px;
-  /* shell 변형: `calendar-shell-variant.css` — stroke(기본) */
+  /* shell 변형: `calendar-shell-variant.css` — stroke(기본). 피그마 14741:1545 (상세 · 캘린더뷰): 1px Border/default · radius 16 */
+  --calendar-shell-border: 1px solid var(--Border-default, #e0e0e0);
+  --calendar-shell-radius: 16px;
   display: grid;
   grid-template-columns:
     minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 42px)), 1fr)
@@ -27,7 +29,8 @@
       var(--calendar-sub-right-list-min-width, 280px),
       var(--calendar-sub-right-list-max-width, 400px)
     );
-  gap: 16px;
+  /* 피그마 14741:1586 — 캘린더·우측 목록 카드 간격 20 */
+  gap: var(--calendar-split-card-column-gap, 20px);
   width: 100%;
   min-width: var(--calendar-split-card-min-width-month);
   min-height: var(--calendar-split-card-height);
@@ -69,7 +72,8 @@
   min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 42px));
   min-height: var(--calendar-split-card-height);
   height: auto;
-  padding: 16px 20px 20px;
+  /* 피그마 14741:1587 — padding 20 */
+  padding: 20px;
   overflow: visible;
 }
 

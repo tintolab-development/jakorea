@@ -14,6 +14,7 @@ export type UjatDevAutofillValidationCode =
   | 'HALF_INTERVIEW_DUPLICATED'
   | 'HALF_RECRUIT_DUPLICATED'
   | 'EVENT_OUTSIDE_BUSINESS'
+  | 'DATE_OUTSIDE_BUSINESS'
   | 'EVENT_NOT_FRIDAY'
   | 'NO_AVAILABLE_FRIDAY'
   | 'EXCLUSION_CONFLICT'
@@ -51,7 +52,21 @@ export function validateUjatDevAutofillFixture(
   holidayDateKeys: ReadonlySet<string> = new Set()
 ): UjatDevAutofillValidationIssue[] {
   const issues: UjatDevAutofillValidationIssue[] = []
-  const { business, halves } = fixture.plan
+  const { business, halves, institution } = fixture.plan
+
+  const pushIfOutside = (key: string, label: string, half?: UjatHalfSemesterKey) => {
+    if (!key.trim()) return
+    if (
+      dayjs(key).isBefore(dayjs(business.start), 'day') ||
+      dayjs(key).isAfter(dayjs(business.end), 'day')
+    ) {
+      issues.push({
+        code: 'DATE_OUTSIDE_BUSINESS',
+        half,
+        message: `${label}이(가) 사업 기간을 벗어납니다.`,
+      })
+    }
+  }
 
   if (dayjs(business.start).year() !== dayjs(business.end).year()) {
     issues.push({
@@ -63,8 +78,21 @@ export function validateUjatDevAutofillFixture(
     issues.push({ code: 'BUSINESS_RANGE_INVERTED', message: '사업 운영 기간 시작일이 종료일보다 늦습니다.' })
   }
 
+  pushIfOutside(institution.recruit.start, '기관 모집 시작일')
+  pushIfOutside(institution.recruit.end, '기관 모집 종료일')
+  pushIfOutside(institution.resultAnnounce, '기관 결과 발표일')
+
   for (const half of HALVES) {
     const plan = halves[half]
+    const halfLabel = half === 'h1' ? '상반기' : '하반기'
+    pushIfOutside(plan.recruit.start, `${halfLabel} 봉사자 모집 시작일`, half)
+    pushIfOutside(plan.recruit.end, `${halfLabel} 봉사자 모집 종료일`, half)
+    pushIfOutside(plan.docAnnounce, `${halfLabel} 서류 발표일`, half)
+    pushIfOutside(plan.interview.start, `${halfLabel} 면접 시작일`, half)
+    pushIfOutside(plan.interview.end, `${halfLabel} 면접 종료일`, half)
+    pushIfOutside(plan.finalAnnounce, `${halfLabel} 최종 발표일`, half)
+    for (const pre of plan.preDates) pushIfOutside(pre, `${halfLabel} 사전교육일`, half)
+    for (const closing of plan.closingDates) pushIfOutside(closing, `${halfLabel} 해단식일`, half)
     if (!isCompleteRange(plan.interview)) {
       issues.push({ code: 'INTERVIEW_REQUIRED', half, message: `${half} 면접 시작·종료일이 없습니다.` })
     } else if (isInverted(plan.interview)) {

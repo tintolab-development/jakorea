@@ -33,6 +33,7 @@ import {
   CmsDateRangePicker,
   CmsTextTabs,
   useCmsAlert,
+  FilterTableLayout,
 } from '@/shared/ui'
 
 import './page.css'
@@ -49,9 +50,7 @@ const INITIAL_PENDING: PendingFilters = {
 
 const periodSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 
-function periodAsPickerValue(
-  period: PendingDateRange
-): [Dayjs | null, Dayjs | null] {
+function periodAsPickerValue(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
   if (!period) return [null, null]
   return [period[0] ?? null, period[1] ?? null]
 }
@@ -91,10 +90,7 @@ const TAB_ITEMS = MENU_VIEW_TAB_IDS.map(key => ({
 export function MenuViewsStatsPage() {
   const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeTab = useMemo(
-    () => parseTab(searchParams.get('tab')),
-    [searchParams]
-  )
+  const activeTab = useMemo(() => parseTab(searchParams.get('tab')), [searchParams])
 
   const {
     pendingFilters,
@@ -160,53 +156,45 @@ export function MenuViewsStatsPage() {
 
   return (
     <div className="menu-views-stats-page">
-      <div className="admin-list-card menu-views-stats-page__filter-card">
-        <div className="admin-filter-area">
-          <div className="admin-filter-area__field admin-filter-area__field--date-range">
-            <span className="admin-filter-area__label">기간</span>
-            <CmsDateRangePicker
-              inputSize="large"
-              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={periodAsPickerValue(pendingFilters.periodRange)}
-              onChange={dates =>
-                setPendingFilters({
-                  periodRange: dates ?? null,
-                })
-              }
-              placeholder={['시작일', '종료일']}
-            />
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area">
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+              <span className="admin-filter-area__label">기간</span>
+              <CmsDateRangePicker
+                inputSize="medium"
+                width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                value={periodAsPickerValue(pendingFilters.periodRange)}
+                onChange={dates =>
+                  setPendingFilters({
+                    periodRange: dates ?? null,
+                  })
+                }
+                placeholder={['시작일', '종료일']}
+              />
+            </div>
+            <div className="admin-filter-area__actions">
+              <CmsButton
+                className="admin-filter-area__search-button"
+                variant="primary"
+                size="medium"
+                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                type="button"
+                onClick={handleSearch}
+              >
+                조회
+              </CmsButton>
+            </div>
           </div>
-          <div className="admin-filter-area__actions">
-            <CmsButton
-              className="admin-filter-area__search-button"
-              variant="primary"
-              size="large"
-              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              type="button"
-              onClick={handleSearch}
-            >
-              조회
-            </CmsButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card menu-views-stats-page__result-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">메뉴별 조회 통계</span>
-          </div>
-        </div>
-
+        }
+        title="메뉴별 조회 통계"
+      >
         {!hasApplied ? (
           <div className="menu-views-stats-page__placeholder" role="status">
             기간을 선택한 뒤 조회하면 메뉴별 조회 통계가 표시됩니다.
           </div>
         ) : statsQuery.isError ? (
-          <div
-            className="menu-views-stats-page__placeholder page-content-error"
-            role="alert"
-          >
+          <div className="menu-views-stats-page__placeholder page-content-error" role="alert">
             통계를 불러오지 못했습니다. 다시 조회해 주세요.
           </div>
         ) : (
@@ -242,7 +230,7 @@ export function MenuViewsStatsPage() {
             </div>
           </>
         )}
-      </div>
+      </FilterTableLayout>
     </div>
   )
 }

@@ -15,19 +15,19 @@
   width: 100%;
 }
 
-/* 컬럼 width 합 68+80+246+150+246+246+246 = 1282 */
+/* 컬럼 width 합 68+80+246+208+246+246+246 = 1340 */
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid .ant-table-container {
-  min-width: 1282px;
+  min-width: 1340px;
 }
 
-/* 권한 배지 — StatusDropdownCell style 지정 132×33 */
+/* 권한 배지 — Program Assistant 등 영문 라벨. 176×33, 트리거 192 = 8+176+8 */
 .program-managers-tab__role-badge {
   box-sizing: border-box;
   display: inline-flex;
   flex-direction: row;
-  width: 132px;
-  min-width: 132px;
-  max-width: 132px;
+  width: 176px;
+  min-width: 176px;
+  max-width: 176px;
   height: 33px;
   min-height: 33px;
   max-height: 33px;
@@ -48,9 +48,9 @@
   .program-managers-tab__managers-table.cms-data-table
   .status-dropdown-cell__trigger--cell-style
   .program-managers-tab__role-badge {
-  width: 132px !important;
-  min-width: 132px !important;
-  max-width: 132px !important;
+  width: 176px !important;
+  min-width: 176px !important;
+  max-width: 176px !important;
   height: 33px !important;
   min-height: 33px !important;
   max-height: 33px !important;
@@ -111,7 +111,7 @@
   overflow: visible;
 }
 
-/* 권한 열: cms-data-table 기본 좌우 padding(16px) 제거 — 150px 트리거가 셀을 넘어 연락처 열을 밀지 않도록 */
+/* 권한 열: cms-data-table 기본 좌우 padding(16px) 제거 — 192px 트리거가 셀을 넘어 연락처 열을 밀지 않도록 */
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
   .ant-table-tbody
@@ -138,13 +138,37 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 150px;
+  max-width: 192px;
   margin-inline: auto;
   box-sizing: border-box;
   vertical-align: middle;
 }
 
-/* style 지정 트리거: 닫힘·호버·행 hover 동일 외곽 치수 유지 */
+/* style 지정 트리거: 닫힘·열림·호버 동일 외곽 192px (8+176+8) */
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__trigger--cell-style,
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__trigger--cell-style:hover,
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__trigger--cell-style:focus-visible,
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__trigger--cell-style {
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+  padding: 8px !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
   .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open),
@@ -159,14 +183,6 @@
   .ant-table-tbody
   > tr:hover
   .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open) {
-  display: inline-flex !important;
-  box-sizing: border-box !important;
-  width: 150px !important;
-  min-width: 150px !important;
-  max-width: 150px !important;
-  padding: 8px !important;
-  justify-content: center !important;
-  align-items: center !important;
   border-width: 1px !important;
   border-style: solid !important;
   border-color: transparent !important;
@@ -195,4 +211,27 @@
   border-color: var(--JA-mint-01, #01a1af) !important;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
   background: #fff !important;
+}
+
+/* 드롭다운은 body 포털. 패널 136px 기본을 트리거와 같은 192px로 덮는다. */
+.status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
+    .status-dropdown-cell__dropdown-overlay--tag-100
+  ):not(.status-dropdown-cell__dropdown-overlay--tag-160):not(
+    .status-dropdown-cell__dropdown-overlay--payment-order-line
+  ):has(.program-managers-tab__role-badge),
+.status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
+    .status-dropdown-cell__dropdown-overlay--tag-100
+  ):not(.status-dropdown-cell__dropdown-overlay--tag-160):not(
+    .status-dropdown-cell__dropdown-overlay--payment-order-line
+  ):has(.program-managers-tab__role-badge)
+  .ant-dropdown-menu {
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+}
+
+.status-dropdown-cell__dropdown-item .program-managers-tab__role-badge {
+  width: 176px !important;
+  min-width: 176px !important;
+  max-width: 176px !important;
 }

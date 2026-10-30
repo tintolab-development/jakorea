@@ -102,6 +102,50 @@ describe('formatGeneralEducationScheduleLine', () => {
     ).toBe('2026.04.20(월) 09:30 ~ 12:20 | 3차시')
   })
 
+  it('커리큘럼·단일·날짜는 sessionNo와 무관하게 모든 줄에 총 차시를 붙인다', () => {
+    const shape = {
+      educationStructure: 'curriculum' as const,
+      sessionRound: 'single' as const,
+      educationScheduleMode: 'date' as const,
+      curriculumSessionCount: 2,
+      curriculumSessionLabels: ['1차시', '2차시'],
+    }
+    // 참여자 API sessions[] 매핑 형태: round = sessionNo(일정 순번), classNum = N교시, duration = N분
+    const first = baseSession({
+      round: 1,
+      date: '2026.11.11',
+      dayOfWeek: '수',
+      classNum: '1교시',
+      duration: '120분',
+      timeRange: '10:00 ~ 12:00',
+    })
+    const third = baseSession({
+      round: 3,
+      date: '2026.11.05',
+      dayOfWeek: '목',
+      classNum: '3교시',
+      duration: '60분',
+      timeRange: '18:57 ~ 19:57',
+    })
+    expect(formatGeneralEducationScheduleLine(first, shape)).toBe('2026.11.11(수) 10:00 ~ 12:00 | 2차시')
+    expect(formatGeneralEducationScheduleLine(third, shape)).toBe('2026.11.05(목) 18:57 ~ 19:57 | 2차시')
+    expect(
+      formatGeneralEducationScheduleLine(baseSession({ round: 2, classNum: '1차시' }), shape)
+    ).toBe('2026.01.09(금) 09:20 ~ 11:20 | 2차시')
+  })
+
+  it('커리큘럼·단일·날짜에서 차시가 1개면 일시만 보여 준다', () => {
+    expect(
+      formatGeneralEducationScheduleLine(baseSession({ round: 1 }), {
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+        curriculumSessionCount: 1,
+        curriculumSessionLabels: ['1차시'],
+      })
+    ).toBe('2026.01.09(금) 09:20 ~ 11:20')
+  })
+
   it('일정·복수는 일정별 날짜·시간만 보여 준다', () => {
     expect(
       formatGeneralEducationScheduleLine(

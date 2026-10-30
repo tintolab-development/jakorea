@@ -9,6 +9,7 @@ import {
   createGeneralProgramCommonInfoIndependentSave,
   GENERAL_COMMON_INFO_INDEPENDENT_SERIALIZE_OPTIONS,
 } from './common-info-independent-save'
+import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
 
 const UNIT_NAME_KEY = 'generalRegistration.educationCurriculum.unitNameBySession'
 
@@ -120,5 +121,44 @@ describe('createGeneralProgramCommonInfoIndependentSave', () => {
     )
     expect(parsed.generalCommonInfo?.curriculumSessions).toEqual([])
     expect(parsed.generalCommonInfo).toHaveProperty('scheduleDetails')
+  })
+
+  it('공고용 프로그램명만 바꾸면 draft overlay 공고명도 새 값으로 맞춘다', () => {
+    const existing: Program = {
+      ...baseProgram(),
+      registrationOverlay: {
+        ...baseProgram().registrationOverlay,
+        'generalRegistration.basicInfo.publicProgramTitle': '기존 공고',
+      },
+    }
+    const values = programToGeneralCommonInfoEditValues(existing)
+    const save = createGeneralProgramCommonInfoIndependentSave({
+      values: { ...values, announcementTitle: '새 공고' },
+      program: existing,
+      changedFormKeys: new Set(['announcementTitle']),
+    })
+    expect(save.patch.generalCommonInfo?.announcementTitle).toBe('새 공고')
+    expect(save.patch).not.toHaveProperty('registrationOverlay')
+    expect(
+      save.programDraft.registrationOverlay?.['generalRegistration.basicInfo.publicProgramTitle']
+    ).toBe('새 공고')
+    expect(resolvePublicProgramTitleDisplay(save.programDraft)).toBe('새 공고')
+  })
+
+  it('새 공고명이 대표명과 같아도 이전 overlay 공고명이 보이지 않는다', () => {
+    const existing: Program = {
+      ...baseProgram(),
+      registrationOverlay: {
+        ...baseProgram().registrationOverlay,
+        'generalRegistration.basicInfo.publicProgramTitle': '기존 공고',
+      },
+    }
+    const values = programToGeneralCommonInfoEditValues(existing)
+    const save = createGeneralProgramCommonInfoIndependentSave({
+      values: { ...values, announcementTitle: '기존 대표명' },
+      program: existing,
+      changedFormKeys: new Set(['announcementTitle']),
+    })
+    expect(resolvePublicProgramTitleDisplay(save.programDraft)).toBe('기존 대표명')
   })
 })

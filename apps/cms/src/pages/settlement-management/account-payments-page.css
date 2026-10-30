@@ -83,65 +83,8 @@
   margin-bottom: var(--spacing-16, 16px);
 }
 
-.account-payments-page__tabs {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 0;
-  width: 100%;
-}
-
-.account-payments-page__tab {
-  display: inline-flex;
-  /* 기획 91×43: 고정 width는 패딩 제외 폭이 좁아 "2026년"이 잘림·줄바꿈됨 → 최소 91px·한 줄 고정 */
-  box-sizing: border-box;
-  min-width: 91px;
-  width: max-content;
-  min-height: 43px;
-  padding: 6px 16px 10px 16px;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  white-space: nowrap;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: none;
-  color: #7d7d7d;
-  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  cursor: pointer;
-  transition:
-    color 0.2s,
-    border-color 0.2s;
-}
-
-/* 비활성 탭: hover/focus에서도 민트·하단 보더 없음 — 실적 관리 탭과 동일 */
-.account-payments-page__tab:not(.account-payments-page__tab--active):hover,
-.account-payments-page__tab:not(.account-payments-page__tab--active):focus,
-.account-payments-page__tab:not(.account-payments-page__tab--active):focus-visible {
-  color: #7d7d7d;
-  border-bottom-color: transparent;
-  outline: none;
-}
-
-.account-payments-page__tab--active,
-.account-payments-page__tab--active:hover,
-.account-payments-page__tab--active:focus,
-.account-payments-page__tab--active:focus-visible {
-  color: var(--JA-mint-01, #01a1af);
-  font-weight: 700;
-  border-bottom: 2px solid var(--JA-mint-01, #01a1af);
-  outline: none;
-}
-
-.account-payments-page__tab-label {
-  display: inline-block;
-  white-space: nowrap;
+.account-payments-page__tabs.cms-text-tabs .cms-text-tabs__row {
+  padding: 0;
 }
 
 /* disabled 버튼에 Tooltip 표시용 (포인터 이벤트가 자식 span으로 전달됨) */

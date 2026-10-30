@@ -116,3 +116,17 @@
 .program-list-page__divider-wrapper {
   padding: 0 20px 32px 20px;
 }
+
+/*
+ * 시안(12603:480517): 목록 카드 아래 여백 = 콘텐츠 padding-bottom 32.
+ * 무한스크롤 sentinel(1px)이 카드 뒤에 붙으면 카드가 :last-child 가 아니라 32+1 이 더해짐 → 카드 mb 0, sentinel 을 1px 겹쳐 32 유지.
+ * 대상: 카드 형제로 sentinel 을 두는 화면(program-list-page 기업·학교, general/page, trained-teachers/page)
+ * (sentinel 높이·관찰 로직은 그대로)
+ */
+.program-list-page > .filter-table-layout:has(+ .program-list-page__load-more-sentinel) {
+  margin-bottom: 0;
+}
+
+.program-list-page > .filter-table-layout + .program-list-page__load-more-sentinel {
+  margin-top: -1px;
+}

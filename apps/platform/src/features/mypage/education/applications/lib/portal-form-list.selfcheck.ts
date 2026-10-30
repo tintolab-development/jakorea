@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict'
+import { platformQueryKeys } from '../../../../../shared/api/query-keys.ts'
 import {
   dedupePortalFormListItems,
   indexScheduleAssignmentFormsByScheduleId,
   isPortalAssignmentFormType,
+  isPortalBoundFormVersionUsable,
   isPortalSurveyFormType,
+  mapAvailableProgramFormToListItem,
   mapPortalFormListItemToSurveyEntry,
   resolveCanonicalPortalFormBindingId,
   resolvePortalAssignmentScheduleId,
@@ -27,6 +30,38 @@ assert.equal(entry?.status, 'submitted')
 
 assert.equal(isPortalSurveyFormType('SURVEY'), true)
 assert.equal(isPortalSurveyFormType('SATISFACTION'), false)
+assert.equal(isPortalBoundFormVersionUsable('PUBLISHED'), true)
+assert.equal(isPortalBoundFormVersionUsable('ARCHIVED'), true)
+assert.equal(isPortalBoundFormVersionUsable(undefined), true)
+assert.equal(isPortalBoundFormVersionUsable('DRAFT'), false)
+
+const availableArchivedSnapshot = mapAvailableProgramFormToListItem({
+  bindingId: 189289,
+  programId: 186363,
+  templateId: 10,
+  templateVersionId: 70,
+  templateName: '기관 신청',
+  formType: 'APPLICATION',
+  targetScope: 'PROGRAM',
+  required: true,
+  alreadySubmitted: false,
+})
+assert.equal(availableArchivedSnapshot.bindingId, 189289)
+assert.equal(availableArchivedSnapshot.templateVersionId, 70)
+assert.equal(availableArchivedSnapshot.canSubmit, true)
+
+assert.notDeepEqual(
+  platformQueryKeys.mypage.programApplications.formBinding({
+    programId: '186363',
+    bindingId: 189289,
+    templateVersionId: 70,
+  }),
+  platformQueryKeys.mypage.programApplications.formBinding({
+    programId: '186363',
+    bindingId: 189289,
+    templateVersionId: 71,
+  })
+)
 
 const scheduleBinding = mapPortalFormListItemToSurveyEntry({
   bindingId: 188865,

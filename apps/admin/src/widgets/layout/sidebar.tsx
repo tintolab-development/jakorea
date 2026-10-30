@@ -7,6 +7,7 @@ import { getSidebarMenuItems, getOpenKeysForPath } from '@/shared/config/menu-co
 import { MenuDropdownChevronIcon } from '@/shared/ui/icons'
 import './sidebar.css'
 import { Header } from './header'
+import { collectMenuRouteKeys, resolveSidebarSelectedKey } from './sidebar-selected-key'
 
 const { Sider } = Layout
 
@@ -31,7 +32,13 @@ export function Sidebar() {
     })
   }, [pathOpenKeys])
 
-  const selectedKeys = useMemo(() => [location.pathname], [location.pathname])
+  const menuRouteKeys = useMemo(() => collectMenuRouteKeys(menuItems), [menuItems])
+
+  // 상세 경로(예: /ja-korea/notices/1)도 가장 가까운 메뉴 키를 선택 (CMS와 동일)
+  const selectedKeys = useMemo(
+    () => [resolveSidebarSelectedKey(location.pathname, menuRouteKeys)],
+    [location.pathname, menuRouteKeys]
+  )
 
   const expandIcon = useCallback(
     ({ isOpen }: { isOpen?: boolean }) => <MenuDropdownChevronIcon open={!!isOpen} />,

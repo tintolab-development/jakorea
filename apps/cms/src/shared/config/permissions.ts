@@ -20,7 +20,7 @@ export interface AdminPermission {
 
 export const ADMIN_PERMISSIONS: Record<AdminLevel, AdminPermission> = {
   MASTER: {
-    label: '마스터 관리자',
+    label: 'Master',
     description: '회원/권한 총괄 관리, 시스템 설정, 모든 기능 접근',
     canManageUsers: true,
     canManageSystemSettings: true,
@@ -29,7 +29,7 @@ export const ADMIN_PERMISSIONS: Record<AdminLevel, AdminPermission> = {
     canApprovePermissionRequests: true,
   },
   ADMIN: {
-    label: '중간관리자(PM/파트너)',
+    label: 'Program Manager',
     description: '프로그램 운영 전반, 신청 승인/반려, 강사 매칭, 정산',
     canManageUsers: false,
     canManageSystemSettings: false,
@@ -38,7 +38,7 @@ export const ADMIN_PERMISSIONS: Record<AdminLevel, AdminPermission> = {
     canApprovePermissionRequests: false,
   },
   GENERAL: {
-    label: '뷰어',
+    label: 'Program Viewer',
     description: '조회 기능만',
     canManageUsers: false,
     canManageSystemSettings: false,

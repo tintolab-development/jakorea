@@ -1,5 +1,5 @@
-import { impactStoryDetailPath } from '@/features/impact-story'
 import { readOptionalText, splitPublicTextLines } from '@/shared/lib/public-text'
+import { talentInterviewStoryHref } from './interview-href.ts'
 import type {
   MethodCardContent,
   MethodCardId,
@@ -62,16 +62,6 @@ export function overlayTalentMethodCards(
   })
 }
 
-function storyHref(linkedStoryId: unknown): string | null {
-  if (typeof linkedStoryId === 'number' && Number.isFinite(linkedStoryId) && linkedStoryId > 0) {
-    return impactStoryDetailPath(String(linkedStoryId))
-  }
-  if (typeof linkedStoryId === 'string' && linkedStoryId.trim()) {
-    return impactStoryDetailPath(linkedStoryId.trim())
-  }
-  return null
-}
-
 export function overlayTalentStories(
   remote: readonly PublicTalentInterview[] | undefined,
   fallback: readonly StoryContent[] = TALENT_STORIES,
@@ -88,7 +78,7 @@ export function overlayTalentStories(
       titleLines: splitPublicTextLines(item.mainText, seed.titleLines),
       descriptionLines: descriptionLinesFromText(item.subText, seed.descriptionLines),
       buttonLabel: readOptionalText(item.buttonLabel) ?? seed.buttonLabel,
-      href: storyHref(item.linkedStoryId),
+      href: talentInterviewStoryHref(item.linkedStoryId),
     })
   })
 

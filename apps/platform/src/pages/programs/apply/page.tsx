@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
@@ -35,7 +36,9 @@ import {
   getApplicationApiErrorCode,
   getProgramApplicationApiErrorMessage,
   isIndividualApplicationEnrolledGradeRequiredError,
+  PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE,
 } from '@/features/program/lib/application-api-error'
+import { clearProgramMinorPortraitAttempt } from '@/features/program/lib/program-minor-portrait-attempt'
 import {
   collectApplicationSubmitParagraphErrors,
   isApplicationAnswerValidationErrorCode,
@@ -72,6 +75,7 @@ import {
   isApplicationPreferredScheduleParagraphId,
   isGeminiInstitutionContactPersonParagraphId,
   isGeminiInstitutionTrainingInfoParagraphId,
+  isGeminiInstructorOfficialDocumentParagraphId,
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
@@ -97,6 +101,30 @@ import {
   shouldLockTeacherMobileEmailOnBasicInfo,
   shouldShowEducationPlaceOnBasicInfo,
 } from '@/features/program/lib/apply-form-paragraph-ids'
+import { ApplyEconomyPreferredSchedule } from '@/features/program/ui/apply-economy-preferred-schedule/apply-economy-preferred-schedule'
+import {
+  buildEconomyOrganizationSchedulePayload,
+  createEmptyEconomyPreferredScheduleBlocks,
+  economyPreferredScheduleBlocksFromDraftAnswer,
+  findIncompleteEconomyPreferredScheduleMessage,
+  shouldAttachEconomyRequestedSchedules,
+  toEconomyPortalPreferredScheduleBlocks,
+  toEconomyPreferredScheduleAnswerValue,
+  type EconomyPreferredScheduleBlock,
+} from '@/features/program/lib/economy-preferred-schedule'
+import {
+  ApplyEconomyEducationExperience,
+  ApplyEconomyLessonReply,
+  economyEducationExperienceValueFromDraftAnswer,
+  economyLessonReplyAnswerFromValues,
+  economyLessonReplyValuesFromDraftAnswer,
+  emptyEconomyLessonReply,
+  isEconomyEducationExperienceParagraphId,
+  isEconomyLessonReplyIncomplete,
+  isEconomyLessonReplyParagraphId,
+  type ApplyEconomyEducationExperienceValue,
+  type ApplyEconomyLessonReplyValues,
+} from '@/features/program/ui/apply-economy-institution-choices/apply-economy-institution-choices'
 import {
   ApplyGeminiInstitutionContact,
   ApplyGeminiInstitutionTrainingInfo,
@@ -111,6 +139,14 @@ import {
   type ApplyGeminiInstitutionContactValues,
   type ApplyGeminiInstitutionTrainingInfoValues,
 } from '@/features/program/ui/apply-gemini-institution-info/apply-gemini-institution-info'
+import {
+  ApplyGeminiInstructorOfficialDocument,
+  emptyGeminiInstructorOfficialDocument,
+  findIncompleteGeminiInstructorOfficialDocumentMessage,
+  geminiInstructorOfficialDocumentAnswerFromValues,
+  geminiInstructorOfficialDocumentValuesFromDraftAnswer,
+  type ApplyGeminiInstructorOfficialDocumentValues,
+} from '@/features/program/ui/apply-gemini-instructor-official-document/official-document'
 import { applyProgramLinkedApplicationDraftPatches } from '@/features/program/lib/application-form-program-link'
 import { readApplyScheduleMetaFromProgram } from '@/features/program/lib/apply-form-schedule-meta'
 import { resolvePortalApplicationHiddenParagraphIds } from '@/features/program/lib/portal-application-hidden-paragraph-ids'
@@ -131,7 +167,10 @@ import {
   mergeApplyScheduleVisibilityFields,
   findMissingRequiredBottomConsentId,
   hasPreferredScheduleDateOutsideRuntime,
+  hasPreferredScheduleDateOutsideBounds,
+  isGeminiTrainingRequestPeriodConfigured,
   isRuntimeScheduleNotConfigured,
+  readGeminiTrainingRequestDateBounds,
   isTrainedTeachersOrganizationPeriodDateRequests,
   readInstitutionAllowedSchedulePeriods,
   readInstitutionApplyScheduleDateBounds,
@@ -149,7 +188,11 @@ import {
   resolveApplyScheduleChoiceAnswerKey,
   resolveHiddenScheduleAutoSubmitIds,
   buildApplyPreferredSessionSelectOptions,
+  buildGeminiInstitutionSessionSelectOptions,
   createEmptyApplyPreferredScheduleBlocks,
+  GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+  geminiInstitutionPreferredScheduleMapOptions,
+  padPreferredScheduleBlocks,
   resolveApplyPreferredMaxSessionsPerDay,
   resolveApplyPreferredScheduleInitialBlockCount,
   resolveApplyPreferredScheduleMaxBlocks,
@@ -224,10 +267,14 @@ import {
   findIncompleteInstructorAvailableScheduleMessage,
   findIncompleteInterviewScheduleMessage,
   findIncompleteVolunteerActivityScheduleMessage,
+  GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE,
+  GEMINI_INSTRUCTOR_SCHEDULE_COPY,
   INDIVIDUAL_INTERVIEW_SCHEDULE_COPY,
   VOLUNTEER_ACTIVITY_SCHEDULE_COPY,
   instructorAvailableScheduleOptionValues,
   instructorAvailableScheduleValuesFromDraftAnswer,
+  pickInstructorAvailableScheduleParagraph,
+  readGeminiInstructorAvailableScheduleSlots,
   readPortalApplicationBindingOptionSlots,
   readRuntimeInstructorScheduleSlots,
   resolveApplyAvailableScheduleSlots,
@@ -361,6 +408,21 @@ function findDraftParagraph(
   return draft?.paragraphs.find(paragraph => match(paragraph.id))
 }
 
+function findInstructorScheduleDraftParagraph(
+  draft: WritingFormDraft | null,
+  preferGemini: boolean
+): WritingFormParagraph | undefined {
+  if (preferGemini) {
+    return (
+      findDraftParagraph(
+        draft,
+        id => id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule
+      ) ?? findDraftParagraph(draft, isInstructorAvailableScheduleParagraphId)
+    )
+  }
+  return findDraftParagraph(draft, isInstructorAvailableScheduleParagraphId)
+}
+
 function draftAnswerForParagraph(
   answers: Record<string, unknown> | null | undefined,
   paragraph: WritingFormParagraph | undefined
@@ -417,6 +479,7 @@ export function ProgramApplyPage() {
     missingConsents,
     findMissingRequiredConsents,
     openRequiredConsentModal,
+    minorPortraitGateModalProps,
   } = useProgramApplyGate(programId, applicationSelection)
   const [completeModalOpen, setCompleteModalOpen] = useState(false)
   const applyGatePromptedRef = useRef(false)
@@ -521,6 +584,8 @@ export function ProgramApplyPage() {
   const [geminiContact, setGeminiContact] = useState<ApplyGeminiInstitutionContactValues>(
     emptyGeminiInstitutionContact,
   )
+  const [geminiOfficialDocument, setGeminiOfficialDocument] =
+    useState<ApplyGeminiInstructorOfficialDocumentValues>(emptyGeminiInstructorOfficialDocument)
   const [trainedTeachersFixedSelectedIds, setTrainedTeachersFixedSelectedIds] = useState<string[]>(
     []
   )
@@ -542,6 +607,14 @@ export function ProgramApplyPage() {
     useState<ApplyInstructorAvailableScheduleValues>(emptyInstructorAvailableSchedule)
   const [volunteerPreviousJa, setVolunteerPreviousJa] =
     useState<ApplyVolunteerPreviousJaProgramValues>(emptyVolunteerPreviousJaProgram)
+  /** 1사1교 — 결연 금융 회사명 · 전년도 1사1교 진행 여부 */
+  const [economyLessonReply, setEconomyLessonReply] =
+    useState<ApplyEconomyLessonReplyValues>(emptyEconomyLessonReply)
+  const [economyEducationExperience, setEconomyEducationExperience] =
+    useState<ApplyEconomyEducationExperienceValue>('')
+  const [economyPreferredBlocks, setEconomyPreferredBlocks] = useState<
+    EconomyPreferredScheduleBlock[]
+  >(createEmptyEconomyPreferredScheduleBlocks)
   const [volunteerEvidenceFiles, setVolunteerEvidenceFiles] = useState<
     ApplyVolunteerEvidenceFile[]
   >([])
@@ -590,6 +663,14 @@ export function ProgramApplyPage() {
     program?.registrationKind === 'trainedTeachers' ||
     program?.programType === 'TRAINED_TEACHER'
   const showGeminiInstitutionApply = applyCase === 'institution-gemini'
+  const showGeminiInstructorApply = applyCase === 'instructor-gemini'
+  const geminiTrainingRequestDateBounds = useMemo(
+    () => readGeminiTrainingRequestDateBounds(program),
+    [program]
+  )
+  const geminiTrainingRequestPeriodConfigured = isGeminiTrainingRequestPeriodConfigured(
+    geminiTrainingRequestDateBounds
+  )
   const profileDefaults = useMemo(
     () => trainedTeachersProfileDefaults(profileQuery.data),
     [profileQuery.data]
@@ -755,6 +836,7 @@ export function ProgramApplyPage() {
     (institutionScheduleInputMode === 'date_time_requests' ||
       (institutionScheduleInputMode == null && shouldShowApplyPreferredSchedule(program)))
   const showEconomyPreferredSchedule = applyCase === 'institution-economy'
+  const showEconomyInstitutionApply = applyCase === 'institution-economy'
   const trainedTeachersScheduleVisibility = useMemo(
     () => ({
       educationStructure:
@@ -790,8 +872,13 @@ export function ProgramApplyPage() {
     if (!program || (!showGeneralPreferredSchedule && !showGeminiInstitutionApply)) {
       return { show: false, options: [] as { value: string; label: string }[] }
     }
-    const show =
-      showGeminiInstitutionApply || shouldShowApplyPreferredScheduleSessionSelect(program)
+    if (showGeminiInstitutionApply) {
+      return {
+        show: true,
+        options: buildGeminiInstitutionSessionSelectOptions(),
+      }
+    }
+    const show = shouldShowApplyPreferredScheduleSessionSelect(program)
     const maxSessionsPerDay = resolveApplyPreferredMaxSessionsPerDay(
       program,
       applicationFormRuntimeContext
@@ -818,15 +905,21 @@ export function ProgramApplyPage() {
   )
   const preferredScheduleMaxBlocks = useMemo(() => {
     if (!program) return 1
-    if (showGeminiInstitutionApply) return 3
+    if (showGeminiInstitutionApply) return GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT
     return resolveApplyPreferredScheduleMaxBlocks(program, applicationFormRuntimeContext)
   }, [applicationFormRuntimeContext, program, showGeminiInstitutionApply])
   const preferredScheduleMapOptions = useMemo(
     () =>
       institutionDateOnlyPreferred || trainedTeachersDateOnlyPreferred
-        ? { dateOnly: true }
-        : undefined,
-    [institutionDateOnlyPreferred, trainedTeachersDateOnlyPreferred]
+        ? { dateOnly: true as const }
+        : showGeminiInstitutionApply
+          ? geminiInstitutionPreferredScheduleMapOptions()
+          : undefined,
+    [
+      institutionDateOnlyPreferred,
+      showGeminiInstitutionApply,
+      trainedTeachersDateOnlyPreferred,
+    ]
   )
   const trainedTeachersEnabledDates = useMemo(() => {
     if (
@@ -889,30 +982,28 @@ export function ProgramApplyPage() {
     applyCase,
   })
   const runtimeInstructorScheduleSlots = useMemo(() => {
+    if (showGeminiInstructorApply) {
+      return readGeminiInstructorAvailableScheduleSlots(remoteForm ?? applicationFormDocument)
+    }
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
-    const scheduleParagraph = paragraphs.find(
-      paragraph =>
-        paragraph != null &&
-        typeof paragraph === 'object' &&
-        isInstructorAvailableScheduleParagraphId(String((paragraph as { id?: unknown }).id ?? ''))
-    )
+    const scheduleParagraph = pickInstructorAvailableScheduleParagraph(paragraphs, false)
     return readRuntimeInstructorScheduleSlots(scheduleParagraph)
-  }, [applicationFormDocument])
-  const instructorScheduleSlots = useMemo(
-    () =>
-      resolveApplyAvailableScheduleSlots({
-        runtimeSlots: runtimeInstructorScheduleSlots,
-        allowProgramDisplayFallback: !remoteApplyEnabled && !usesOsaAvailableSchedule,
-        program,
-      }),
-    [
+  }, [applicationFormDocument, remoteForm, showGeminiInstructorApply])
+  const instructorScheduleSlots = useMemo(() => {
+    return resolveApplyAvailableScheduleSlots({
+      runtimeSlots: runtimeInstructorScheduleSlots,
+      allowProgramDisplayFallback:
+        !showGeminiInstructorApply && !remoteApplyEnabled && !usesOsaAvailableSchedule,
       program,
-      remoteApplyEnabled,
-      runtimeInstructorScheduleSlots,
-      usesOsaAvailableSchedule,
-    ]
-  )
+    })
+  }, [
+    program,
+    remoteApplyEnabled,
+    runtimeInstructorScheduleSlots,
+    showGeminiInstructorApply,
+    usesOsaAvailableSchedule,
+  ])
   const interviewBindingParagraph = useMemo(() => {
     const paragraphs = applicationFormDocument?.paragraphs
     if (!Array.isArray(paragraphs)) return null
@@ -1022,7 +1113,9 @@ export function ProgramApplyPage() {
             }
           )
           const bindingMergedDraft =
-            isVolunteerApplyFormCase(applyCaseForDraft) || applyCaseForDraft === 'instructor'
+            isVolunteerApplyFormCase(applyCaseForDraft) ||
+            applyCaseForDraft === 'instructor' ||
+            applyCaseForDraft === 'instructor-gemini'
               ? mergeApplicationBindingRuntimeParagraphs(programLinkedDraft, remoteForm)
               : programLinkedDraft
           setDraft(
@@ -1057,14 +1150,22 @@ export function ProgramApplyPage() {
               PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule
           )
           setPreferredBlocks(
-            fromPreferred ??
-              (applyCaseForDraft === 'institution-general'
-                ? createEmptyApplyPreferredScheduleBlocks(
-                    resolveApplyPreferredScheduleInitialBlockCount(program)
-                  )
-                : applyCaseForDraft === 'institution-gemini'
-                  ? createEmptyApplyPreferredScheduleBlocks(3)
-                : [createEmptyPreferredBlock()])
+            applyCaseForDraft === 'institution-gemini'
+              ? padPreferredScheduleBlocks(
+                  fromPreferred ?? [],
+                  GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+                )
+              : fromPreferred ??
+                (applyCaseForDraft === 'institution-general'
+                  ? createEmptyApplyPreferredScheduleBlocks(
+                      resolveApplyPreferredScheduleInitialBlockCount(program)
+                    )
+                  : [createEmptyPreferredBlock()])
+          )
+          setEconomyPreferredBlocks(
+            economyPreferredScheduleBlocksFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, preferredParagraph ?? undefined)
+            ) ?? createEmptyEconomyPreferredScheduleBlocks()
           )
           setTrainedTeachersFixedSelectedIds(
             selectedFixedScheduleIdsFromDraftAnswer(
@@ -1109,6 +1210,15 @@ export function ProgramApplyPage() {
               draftAnswerForParagraph(draftAnswers, geminiContactParagraph),
             ) ?? emptyGeminiInstitutionContact(),
           )
+          const geminiOfficialDocumentParagraph = findDraftParagraph(
+            programLinkedDraft,
+            isGeminiInstructorOfficialDocumentParagraphId,
+          )
+          setGeminiOfficialDocument(
+            geminiInstructorOfficialDocumentValuesFromDraftAnswer(
+              draftAnswerForParagraph(draftAnswers, geminiOfficialDocumentParagraph),
+            ) ?? emptyGeminiInstructorOfficialDocument(),
+          )
           const teamParagraph = findDraftParagraph(remoteDraft, isApplicationTeamInfoParagraphId)
           setTeamInfo(
             teamInfoValuesFromDraftAnswer(draftAnswerForParagraph(draftAnswers, teamParagraph)) ??
@@ -1122,6 +1232,22 @@ export function ProgramApplyPage() {
             guidanceValuesFromDraftAnswer(
               draftAnswerForParagraph(draftAnswers, guidanceParagraph)
             ) ?? emptyInstitutionGuidanceAnswers()
+          )
+          setEconomyLessonReply(
+            economyLessonReplyValuesFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isEconomyLessonReplyParagraphId)
+              )
+            ) ?? emptyEconomyLessonReply()
+          )
+          setEconomyEducationExperience(
+            economyEducationExperienceValueFromDraftAnswer(
+              draftAnswerForParagraph(
+                draftAnswers,
+                findDraftParagraph(remoteDraft, isEconomyEducationExperienceParagraphId)
+              )
+            )
           )
           const submissionParagraph = findDraftParagraph(
             remoteDraft,
@@ -1143,9 +1269,9 @@ export function ProgramApplyPage() {
               draftAnswerForParagraph(draftAnswers, crimeParagraph)
             ) ?? emptyInstructorCrimeRecord()
           )
-          const instructorScheduleParagraph = findDraftParagraph(
+          const instructorScheduleParagraph = findInstructorScheduleDraftParagraph(
             remoteDraft,
-            isInstructorAvailableScheduleParagraphId
+            applyCaseForDraft === 'instructor-gemini'
           )
           setInstructorSchedule(
             instructorAvailableScheduleValuesFromDraftAnswer(
@@ -1259,11 +1385,14 @@ export function ProgramApplyPage() {
       setDraft(null)
       setPreferredBlocks(
         applyCase === 'institution-gemini'
-          ? createEmptyApplyPreferredScheduleBlocks(3)
+          ? createEmptyApplyPreferredScheduleBlocks(
+              GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+            )
           : [createEmptyPreferredBlock()],
       )
       setGeminiTrainingInfo(emptyGeminiInstitutionTrainingInfo())
       setGeminiContact(emptyGeminiInstitutionContact())
+      setGeminiOfficialDocument(emptyGeminiInstructorOfficialDocument())
       setBasicInfo(
         fillTrainedTeachersBasicInfoFromProfile(emptyTrainedTeachersBasicInfo(), profileDefaults)
       )
@@ -1274,6 +1403,9 @@ export function ProgramApplyPage() {
       setInstructorSchedule(emptyInstructorAvailableSchedule())
       setInterviewSchedule(emptyInstructorAvailableSchedule())
       setVolunteerPreviousJa(emptyVolunteerPreviousJaProgram())
+      setEconomyLessonReply(emptyEconomyLessonReply())
+      setEconomyEducationExperience('')
+      setEconomyPreferredBlocks(createEmptyEconomyPreferredScheduleBlocks())
       setVolunteerEvidenceFiles([])
       setVolunteerFreeText(emptyVolunteerFreeTextItems())
       setVolunteerActivitySchedule(emptyInstructorAvailableSchedule())
@@ -1301,11 +1433,14 @@ export function ProgramApplyPage() {
     )
     setPreferredBlocks(
       applyCase === 'institution-gemini'
-        ? createEmptyApplyPreferredScheduleBlocks(3)
+        ? createEmptyApplyPreferredScheduleBlocks(
+            GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
+          )
         : [createEmptyPreferredBlock()],
     )
     setGeminiTrainingInfo(emptyGeminiInstitutionTrainingInfo())
     setGeminiContact(emptyGeminiInstitutionContact())
+    setGeminiOfficialDocument(emptyGeminiInstructorOfficialDocument())
     setBasicInfo(emptyTrainedTeachersBasicInfo())
     setTeamInfo(emptyIndividualTeamInfo())
     setGuidanceAnswers(emptyInstitutionGuidanceAnswers())
@@ -1314,6 +1449,9 @@ export function ProgramApplyPage() {
     setInstructorSchedule(emptyInstructorAvailableSchedule())
     setInterviewSchedule(emptyInstructorAvailableSchedule())
     setVolunteerPreviousJa(emptyVolunteerPreviousJaProgram())
+    setEconomyLessonReply(emptyEconomyLessonReply())
+    setEconomyEducationExperience('')
+    setEconomyPreferredBlocks(createEmptyEconomyPreferredScheduleBlocks())
     setVolunteerEvidenceFiles([])
     setVolunteerFreeText(emptyVolunteerFreeTextItems())
     setVolunteerActivitySchedule(emptyInstructorAvailableSchedule())
@@ -1383,6 +1521,25 @@ export function ProgramApplyPage() {
     (paragraph: WritingFormParagraph) => {
       if (program == null) return undefined
 
+      if (showEconomyInstitutionApply && isEconomyLessonReplyParagraphId(paragraph.id)) {
+        return (
+          <ApplyEconomyLessonReply
+            value={economyLessonReply}
+            onChange={setEconomyLessonReply}
+            sponsorDisplayName={program.sponsor}
+          />
+        )
+      }
+
+      if (showEconomyInstitutionApply && isEconomyEducationExperienceParagraphId(paragraph.id)) {
+        return (
+          <ApplyEconomyEducationExperience
+            value={economyEducationExperience}
+            onChange={setEconomyEducationExperience}
+          />
+        )
+      }
+
       if (isGeminiInstitutionTrainingInfoParagraphId(paragraph.id)) {
         return (
           <ApplyGeminiInstitutionTrainingInfo
@@ -1394,6 +1551,15 @@ export function ProgramApplyPage() {
 
       if (isGeminiInstitutionContactPersonParagraphId(paragraph.id)) {
         return <ApplyGeminiInstitutionContact value={geminiContact} onChange={setGeminiContact} />
+      }
+
+      if (isGeminiInstructorOfficialDocumentParagraphId(paragraph.id)) {
+        return (
+          <ApplyGeminiInstructorOfficialDocument
+            value={geminiOfficialDocument}
+            onChange={setGeminiOfficialDocument}
+          />
+        )
       }
 
       if (isApplicationBasicInfoParagraphId(paragraph.id)) {
@@ -1462,6 +1628,7 @@ export function ProgramApplyPage() {
             slots={instructorScheduleSlots}
             value={instructorSchedule}
             onChange={setInstructorSchedule}
+            copy={showGeminiInstructorApply ? GEMINI_INSTRUCTOR_SCHEDULE_COPY : undefined}
           />
         )
       }
@@ -1674,6 +1841,17 @@ export function ProgramApplyPage() {
         )
       }
 
+      if (isPreferredScheduleSlot && showPreferredScheduleInput && showEconomyPreferredSchedule) {
+        return (
+          <ApplyEconomyPreferredSchedule
+            value={economyPreferredBlocks}
+            onChange={setEconomyPreferredBlocks}
+            minDate={program?.educationScheduleRange?.start ?? null}
+            maxDate={program?.educationScheduleRange?.end ?? null}
+          />
+        )
+      }
+
       if (isPreferredScheduleSlot && showPreferredScheduleInput) {
         const useInstitutionScheduleBounds =
           showGeneralPreferredSchedule && isInstitutionApplyScheduleChoiceParagraphId(paragraph.id)
@@ -1682,19 +1860,33 @@ export function ProgramApplyPage() {
             maxBlocks={preferredScheduleMaxBlocks}
             value={preferredBlocks}
             onChange={setPreferredBlocks}
+            allowRemove={!showGeminiInstitutionApply}
+            showSessionUnit={!showGeminiInstitutionApply}
+            datePlaceholder={
+              showGeminiInstitutionApply ? '날짜를 선택해 주세요' : '희망 교육 날짜를 선택하세요'
+            }
+            dateWidth={showGeminiInstitutionApply ? 240 : 220}
             minDate={
-              useInstitutionScheduleBounds
-                ? institutionScheduleDateBounds.minScheduleDate
-                : useTrainedTeachersOperatingPeriod
-                  ? trainedTeachersScheduleDateBounds.minScheduleDate
+              showGeminiInstitutionApply
+                ? geminiTrainingRequestPeriodConfigured
+                  ? geminiTrainingRequestDateBounds.minScheduleDate
                   : null
+                : useInstitutionScheduleBounds
+                  ? institutionScheduleDateBounds.minScheduleDate
+                  : useTrainedTeachersOperatingPeriod
+                    ? trainedTeachersScheduleDateBounds.minScheduleDate
+                    : null
             }
             maxDate={
-              useInstitutionScheduleBounds
-                ? institutionScheduleDateBounds.maxScheduleDate
-                : useTrainedTeachersOperatingPeriod
-                  ? trainedTeachersScheduleDateBounds.maxScheduleDate
+              showGeminiInstitutionApply
+                ? geminiTrainingRequestPeriodConfigured
+                  ? geminiTrainingRequestDateBounds.maxScheduleDate
                   : null
+                : useInstitutionScheduleBounds
+                  ? institutionScheduleDateBounds.maxScheduleDate
+                  : useTrainedTeachersOperatingPeriod
+                    ? trainedTeachersScheduleDateBounds.maxScheduleDate
+                    : null
             }
             enabledDates={
               useInstitutionScheduleBounds
@@ -1705,7 +1897,10 @@ export function ProgramApplyPage() {
                   ? trainedTeachersEnabledDates
                   : null
             }
-            disabled={trainedTeachersScheduleNotConfigured}
+            disabled={
+              trainedTeachersScheduleNotConfigured ||
+              (showGeminiInstitutionApply && !geminiTrainingRequestPeriodConfigured)
+            }
             showSessionSelect={
               (showGeneralPreferredSchedule || showGeminiInstitutionApply) &&
               institutionPreferredSessionSelect.show
@@ -1894,10 +2089,16 @@ export function ProgramApplyPage() {
       program,
       preferredBlocks,
       geminiContact,
+      geminiOfficialDocument,
       geminiTrainingInfo,
       basicInfo,
       teamInfo,
       guidanceAnswers,
+      economyLessonReply,
+      economyEducationExperience,
+      economyPreferredBlocks,
+      showEconomyInstitutionApply,
+      showEconomyPreferredSchedule,
       sexOffense,
       instructorCrimeRecord,
       instructorSchedule,
@@ -1924,6 +2125,10 @@ export function ProgramApplyPage() {
       showTrainedTeachersPreferredSchedule,
       showGeneralPreferredSchedule,
       showGeminiInstitutionApply,
+      showGeminiInstructorApply,
+      geminiTrainingRequestDateBounds.minScheduleDate,
+      geminiTrainingRequestDateBounds.maxScheduleDate,
+      geminiTrainingRequestPeriodConfigured,
       showPreferredScheduleInput,
       institutionPreferredSessionSelect,
       showPreferredEducationForm,
@@ -1981,6 +2186,7 @@ export function ProgramApplyPage() {
       }
 
       if (!isPreferredScheduleSlot || !showPreferredScheduleInput) return null
+      if (showGeminiInstitutionApply || showEconomyPreferredSchedule) return null
 
       const atPreferredScheduleMax = preferredBlocks.length >= preferredScheduleMaxBlocks
       const scheduleInputDisabled =
@@ -2000,6 +2206,8 @@ export function ProgramApplyPage() {
     },
     [
       showGeneralPreferredSchedule,
+      showGeminiInstitutionApply,
+      showEconomyPreferredSchedule,
       showTrainedTeachersApply,
       showPreferredScheduleInput,
       preferredBlocks.length,
@@ -2217,14 +2425,16 @@ export function ProgramApplyPage() {
         return
       }
     }
-    // 「제공받는 곳」은 CMS 양식 작성 칸이다. 포털 신청 화면에 입력 UI가 없어 필수로 보지 않는다.
-    if (showTrainedTeachersApply) {
-      const missingConsentId = findMissingRequiredBottomConsentId(displayDraft)
-      if (missingConsentId) {
-        setSubmitErrorField(missingConsentId)
-        setSubmitAlert({ description: '필수 동의 항목을 확인해 주세요.' })
-        return
+    // 하단 동의 라디오는 시드 미리보기 값이 지워지므로, 보이는 동의 단락은 제출 전 다시 확인한다.
+    const missingConsentId = findMissingRequiredBottomConsentId(displayDraft)
+    if (missingConsentId) {
+      pendingApplyIncompleteRef.current = {
+        message: '필수 동의 항목을 확인해 주세요.',
+        paragraphId: missingConsentId,
       }
+      setSubmitErrorField(missingConsentId)
+      setSubmitAlert({ description: '필수 동의 항목을 확인해 주세요.' })
+      return
     }
     const bundle = applicationFormQuery.bundle
     if (
@@ -2357,6 +2567,16 @@ export function ProgramApplyPage() {
       const skipPreferredScheduleInput =
         applyScheduleChoiceHidden || Boolean(hiddenScheduleAutoSubmitIds)
 
+      const attachEconomyRequestedSchedules =
+        showPreferredScheduleInput &&
+        !skipPreferredScheduleInput &&
+        shouldAttachEconomyRequestedSchedules({
+          applyCase,
+          applicationType: bundle.option.applicationType,
+        })
+      const economySchedulePayload = attachEconomyRequestedSchedules
+        ? buildEconomyOrganizationSchedulePayload(economyPreferredBlocks)
+        : null
       const preferredScheduleBlocks = isUjatInstitutionApplyFormCase(applyCase)
         ? toPortalPreferredScheduleBlocks(
             ujatPreferredScheduleOptions
@@ -2372,7 +2592,10 @@ export function ProgramApplyPage() {
         : showPreferredScheduleInput &&
             !isTrainedTeachersFixedScheduleTarget &&
             !skipPreferredScheduleInput
-          ? toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
+          ? showEconomyPreferredSchedule
+            ? (economySchedulePayload?.preferredScheduleBlocks ??
+              toEconomyPortalPreferredScheduleBlocks(economyPreferredBlocks))
+            : toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
           : undefined
       if (showPreferredScheduleInput && !skipPreferredScheduleInput) {
         if (trainedTeachersScheduleNotConfigured) {
@@ -2403,10 +2626,45 @@ export function ProgramApplyPage() {
             })
             return
           }
-          const preferredError = findIncompletePreferredScheduleMessage(
-            preferredBlocks,
-            preferredScheduleMapOptions
-          )
+          if (showGeminiInstitutionApply) {
+            const geminiPreferredParagraphId =
+              displayDraft?.paragraphs.find(paragraph =>
+                isApplicationPreferredScheduleParagraphId(paragraph.id)
+              )?.id ?? 'preferredScheduleBlocks'
+            if (!geminiTrainingRequestPeriodConfigured) {
+              setSubmitErrorField(geminiPreferredParagraphId)
+              setSubmitAlert({
+                description: PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE,
+              })
+              return
+            }
+            if (
+              hasPreferredScheduleDateOutsideBounds(
+                preferredBlocks,
+                geminiTrainingRequestDateBounds
+              )
+            ) {
+              setSubmitErrorField(geminiPreferredParagraphId)
+              setSubmitAlert({
+                description: PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE_MESSAGE,
+              })
+              return
+            }
+          }
+          const economyPreferredParagraph = showEconomyPreferredSchedule
+            ? displayDraft.paragraphs.find(paragraph =>
+                isApplicationPreferredScheduleParagraphId(paragraph.id)
+              )
+            : undefined
+          const preferredError = showEconomyPreferredSchedule
+            ? findIncompleteEconomyPreferredScheduleMessage(
+                economyPreferredBlocks,
+                economyPreferredParagraph == null || isRequiredParagraph(economyPreferredParagraph)
+              )
+            : findIncompletePreferredScheduleMessage(preferredBlocks, preferredScheduleMapOptions)
+          if (preferredError && economyPreferredParagraph) {
+            setSubmitErrorField(economyPreferredParagraph.id)
+          }
           if (preferredError) {
             if (useTrainedTeachersOperatingPeriod) {
               setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
@@ -2414,12 +2672,28 @@ export function ProgramApplyPage() {
             setSubmitAlert({ description: preferredError })
             return
           }
+          if (attachEconomyRequestedSchedules && economySchedulePayload == null) {
+            const fallbackParagraph =
+              economyPreferredParagraph ??
+              displayDraft.paragraphs.find(paragraph =>
+                isApplicationPreferredScheduleParagraphId(paragraph.id)
+              )
+            if (fallbackParagraph) setSubmitErrorField(fallbackParagraph.id)
+            setSubmitAlert({
+              description:
+                findIncompleteEconomyPreferredScheduleMessage(economyPreferredBlocks, true) ??
+                '진행 희망 교육 일정 1지망·2지망의 희망 교육일·희망 차시·교시·시간을 모두 입력해 주세요.',
+            })
+            return
+          }
         }
       }
       const preferredAnswer = isTrainedTeachersFixedScheduleTarget
         ? trainedTeachersFixedScheduleAnswer
         : showPreferredScheduleInput && !skipPreferredScheduleInput
-          ? toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
+          ? showEconomyPreferredSchedule
+            ? toEconomyPreferredScheduleAnswerValue(economyPreferredBlocks)
+            : toPreferredScheduleAnswerValue(preferredBlocks, preferredScheduleMapOptions)
           : null
       const applyScheduleChoiceParagraphId =
         applyScheduleChoiceParagraph &&
@@ -2532,7 +2806,12 @@ export function ProgramApplyPage() {
           geminiTrainingInfo,
         )
         if (trainingInfoError) {
-          setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+          pendingApplyIncompleteRef.current = {
+            message: trainingInfoError,
+            paragraphId: geminiTrainingInfoParagraph.id,
+          }
+          setSubmitErrorField(geminiTrainingInfoParagraph.id)
+          setSubmitAlert({ description: trainingInfoError })
           return
         }
       }
@@ -2545,6 +2824,26 @@ export function ProgramApplyPage() {
       if (geminiContactVisible && isRequiredParagraph(geminiContactParagraph)) {
         const contactError = findIncompleteGeminiInstitutionContactMessage(geminiContact)
         if (contactError) {
+          pendingApplyIncompleteRef.current = {
+            message: contactError,
+            paragraphId: geminiContactParagraph.id,
+          }
+          setSubmitErrorField(geminiContactParagraph.id)
+          setSubmitAlert({ description: contactError })
+          return
+        }
+      }
+      const geminiOfficialDocumentParagraph = findDraftParagraph(
+        displayDraft,
+        isGeminiInstructorOfficialDocumentParagraphId,
+      )
+      const geminiOfficialDocumentVisible =
+        geminiOfficialDocumentParagraph != null &&
+        !hiddenParagraphIds.has(geminiOfficialDocumentParagraph.id)
+      if (geminiOfficialDocumentVisible && isRequiredParagraph(geminiOfficialDocumentParagraph)) {
+        const officialDocumentError =
+          findIncompleteGeminiInstructorOfficialDocumentMessage(geminiOfficialDocument)
+        if (officialDocumentError) {
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
@@ -2591,9 +2890,9 @@ export function ProgramApplyPage() {
           return
         }
       }
-      const scheduleParagraphCandidate = findDraftParagraph(
+      const scheduleParagraphCandidate = findInstructorScheduleDraftParagraph(
         displayDraft,
-        isInstructorAvailableScheduleParagraphId
+        showGeminiInstructorApply
       )
       const instructorScheduleParagraph =
         scheduleParagraphCandidate && !hiddenParagraphIds.has(scheduleParagraphCandidate.id)
@@ -2605,7 +2904,10 @@ export function ProgramApplyPage() {
       ) {
         const scheduleError = findIncompleteInstructorAvailableScheduleMessage(
           instructorSchedule,
-          instructorScheduleSlots
+          instructorScheduleSlots,
+          showGeminiInstructorApply
+            ? GEMINI_INSTRUCTOR_AVAILABLE_SCHEDULE_EMPTY_MESSAGE
+            : undefined
         )
         if (scheduleError) {
           setSubmitAlert({ description: scheduleError })
@@ -2634,6 +2936,30 @@ export function ProgramApplyPage() {
       const visibleDraftParagraph = (match: (id: string) => boolean) => {
         const found = findDraftParagraph(displayDraft, match)
         return found && !hiddenParagraphIds.has(found.id) ? found : null
+      }
+      const economyLessonReplyParagraph = showEconomyInstitutionApply
+        ? visibleDraftParagraph(isEconomyLessonReplyParagraphId)
+        : null
+      const economyEducationExperienceParagraph = showEconomyInstitutionApply
+        ? visibleDraftParagraph(isEconomyEducationExperienceParagraphId)
+        : null
+      if (
+        economyLessonReplyParagraph &&
+        isRequiredParagraph(economyLessonReplyParagraph) &&
+        isEconomyLessonReplyIncomplete(economyLessonReply)
+      ) {
+        setSubmitErrorField(economyLessonReplyParagraph.id)
+        setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+        return
+      }
+      if (
+        economyEducationExperienceParagraph &&
+        isRequiredParagraph(economyEducationExperienceParagraph) &&
+        !economyEducationExperience
+      ) {
+        setSubmitErrorField(economyEducationExperienceParagraph.id)
+        setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+        return
       }
       const volunteerPreviousJaParagraph = visibleDraftParagraph(
         isVolunteerPreviousJaProgramParagraphId
@@ -2796,6 +3122,14 @@ export function ProgramApplyPage() {
           overrides[resolveApplicationAnswerKey(geminiContactParagraph)] = contactAnswer
         }
       }
+      if (geminiOfficialDocumentVisible && geminiOfficialDocumentParagraph) {
+        const officialDocumentAnswer =
+          geminiInstructorOfficialDocumentAnswerFromValues(geminiOfficialDocument)
+        if (officialDocumentAnswer) {
+          overrides[resolveApplicationAnswerKey(geminiOfficialDocumentParagraph)] =
+            officialDocumentAnswer
+        }
+      }
       if (hiddenScheduleAutoSubmitIds && applyScheduleChoiceAnswerKey) {
         overrides[applyScheduleChoiceAnswerKey] = hiddenScheduleAutoSubmitIds
       }
@@ -2837,6 +3171,15 @@ export function ProgramApplyPage() {
           interviewSchedule,
           interviewSlots
         )
+      }
+      const economyLessonReplyAnswer = economyLessonReplyAnswerFromValues(economyLessonReply)
+      if (economyLessonReplyParagraph && economyLessonReplyAnswer) {
+        overrides[resolveApplicationAnswerKey(economyLessonReplyParagraph)] =
+          economyLessonReplyAnswer
+      }
+      if (economyEducationExperienceParagraph && economyEducationExperience) {
+        overrides[resolveApplicationAnswerKey(economyEducationExperienceParagraph)] =
+          economyEducationExperience
       }
       if (volunteerPreviousJaParagraph) {
         overrides[resolveApplicationAnswerKey(volunteerPreviousJaParagraph)] =
@@ -2901,6 +3244,15 @@ export function ProgramApplyPage() {
       if (instructorCrimeParagraph && !instructorCrimeRecord.confirmed) {
         omitParagraphIds.add(instructorCrimeParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(instructorCrimeParagraph))
+      }
+      // 1사1교 슬롯 미응답(선택 단락) — placeholder 표 답을 보내지 않는다.
+      if (economyLessonReplyParagraph && !economyLessonReplyAnswer) {
+        omitParagraphIds.add(economyLessonReplyParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(economyLessonReplyParagraph))
+      }
+      if (economyEducationExperienceParagraph && !economyEducationExperience) {
+        omitParagraphIds.add(economyEducationExperienceParagraph.id)
+        omitParagraphIds.add(resolveApplicationAnswerKey(economyEducationExperienceParagraph))
       }
       for (const paragraph of displayDraft.paragraphs) {
         const key = resolveApplicationAnswerKey(paragraph)
@@ -2994,6 +3346,9 @@ export function ProgramApplyPage() {
         formBindingId: bundle.option.formBindingId,
         answers,
         preferredScheduleBlocks,
+        ...(economySchedulePayload
+          ? { requestedSchedules: economySchedulePayload.requestedSchedules }
+          : {}),
       }
       const submitDebug = summarizePortalApplicationSubmit({
         programId: numericProgramId,
@@ -3023,6 +3378,8 @@ export function ProgramApplyPage() {
           })(),
         })
         submittedSuccessfullyProgramIdRef.current = programId
+        // 미성년 프로그램 초상권: 신청 시도 단위 — 제출 성공 시 다음 신청에서 다시 받도록 초기화
+        clearProgramMinorPortraitAttempt(programId)
         setSubmitErrorField(null)
         setSubmitErrorMessages({})
         setGateModal(null)
@@ -3142,7 +3499,7 @@ export function ProgramApplyPage() {
           <PFText as="h2" typo="hl-sm" color="black">
             {program.title}
           </PFText>
-          <PFText as="p" typo="bd-md-md" color="primary-500">
+          <PFText as="p" typo="bd-md-rg" color="primary-500">
             {program.applicationPeriodLabel}
           </PFText>
         </div>
@@ -3208,6 +3565,7 @@ export function ProgramApplyPage() {
           }
         }}
         missingConsentTypes={missingConsents}
+        {...minorPortraitGateModalProps}
         onOpenConsents={() => {
           closeGateModal()
           navigate(programApplyGateConsentsPath)

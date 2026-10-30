@@ -6,7 +6,8 @@ const DEFAULT_COMMIT_DELAY_MS = 120
  * 타이핑 중 상위 draft 동기 갱신으로 무거운 에디터 트리가 버벅일 때 사용.
  * - 로컬 값은 즉시 반영
  * - 상위 `onCommit`은 debounce + startTransition
- * - blur/unmount 시 pending 값 flush
+ * - blur/unmount 시 pending 값 flush (동기 반영 — transition이면 blur 직후 단계 이탈·저장 클릭이
+ *   먼저 렌더돼 상위 draft 스냅샷에서 값이 빠진다)
  */
 export function useDeferredFieldCommit(
   committedValue: string,
@@ -28,10 +29,14 @@ export function useDeferredFieldCommit(
     timerRef.current = null
   }
 
-  const commitNow = useEffectEvent((next: string) => {
+  const commitNow = useEffectEvent((next: string, urgent: boolean) => {
     if (!onCommit) return
     if (next === committedRef.current) return
     committedRef.current = next
+    if (urgent) {
+      onCommit(next)
+      return
+    }
     startTransition(() => {
       onCommit(next)
     })
@@ -64,7 +69,7 @@ export function useDeferredFieldCommit(
 
   const flush = () => {
     clearTimer()
-    commitNow(valueRef.current)
+    commitNow(valueRef.current, true)
   }
 
   const setValue = (next: string) => {
@@ -74,7 +79,7 @@ export function useDeferredFieldCommit(
     clearTimer()
     timerRef.current = setTimeout(() => {
       timerRef.current = null
-      commitNow(valueRef.current)
+      commitNow(valueRef.current, false)
     }, delayMs)
   }
 

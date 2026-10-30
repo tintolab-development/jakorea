@@ -15,7 +15,7 @@ export type UjatEducationProgressVolunteerGrade =
   | '휴학'
   | '졸업유예'
 
-/** 회원 관리 > 개인 회원 — 봉사자 추가 등록 셀렉트 옵션 */
+/** 회원 관리 > 봉사자 — 봉사자 추가 등록 셀렉트 옵션 */
 export type UjatEducationProgressVolunteerMemberCandidate = {
   memberId: string
   volunteerName: string

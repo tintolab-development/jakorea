@@ -28,7 +28,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType, TableProps } from 'antd/es/table'
 
 type RowWithId = { id: string }
@@ -166,7 +166,7 @@ export function SortableDataTable<T extends RowWithId>({
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
-        <Table<T>
+        <CmsDataTable<T>
           className="admin-data-table"
           rowKey="id"
           dataSource={rows}

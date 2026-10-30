@@ -49,6 +49,20 @@ describe('alimtalk-delivery-adapters (4-2)', () => {
     expect(row?.phoneTemplate.buttons.some(button => button.name === '자세히 보기')).toBe(true)
   })
 
+  it('keeps detail recipient name and contact plaintext without remasking', () => {
+    const row = mapDeliveryDetailResponse({
+      delivery: {
+        deliveryId: 303,
+        recipientName: '홍길동',
+        recipientContactMasked: '010-2222-3333',
+        sendStatus: 'SENT',
+      },
+    })
+    expect(row?.receiverName).toBe('홍길동')
+    expect(row?.receiverPhone).toBe('010-2222-3333')
+    expect(row?.receiverInfo).toBe('홍길동 | 010-2222-3333')
+  })
+
   it('변수 누락 실패: SEND_FAILED + failedReason, 발송/수신일시 빈 값', () => {
     const row = mapDeliveryToSendHistoryRow({
       deliveryId: 202,
@@ -124,5 +138,81 @@ describe('alimtalk send-history 4-1 filters', () => {
     expect(params.sentFrom).toBe('2026-09-01')
     expect(params.sentTo).toBe('2026-09-07')
     expect(params.requestedFrom).toBeTruthy()
+  })
+})
+
+describe('alimtalk delivery detail — plain JSON preview/alimtalkMetadata (BE JSONB 수정 후)', () => {
+  const delivery = {
+    deliveryId: 1576,
+    templateDisplayName: '신청 접수',
+    senderDisplayName: '@jakorea',
+    sendStatus: 'SENT',
+  }
+
+  it.each([
+    ['ORGANIZATION', 'https://www.jakorea.org/mypage/education/ORGANIZATION/123'],
+    ['INDIVIDUAL', 'https://www.jakorea.org/mypage/education/INDIVIDUAL/123'],
+    ['VOLUNTEER', 'https://www.jakorea.org/mypage/volunteer/VOLUNTEER/123'],
+    ['INSTRUCTOR', 'https://www.jakorea.org/mypage/lectures/INSTRUCTOR/123'],
+  ])('%s: preview 객체 본문 + preview.alimtalkMetadata.buttons 링크를 서버 값 그대로 사용', (_type, url) => {
+    const row = mapDeliveryDetailResponse({
+      delivery,
+      preview: {
+        renderedContent: '신청이 접수되었습니다.',
+        alimtalkMetadata: {
+          buttons: [{ name: '신청 확인', type: 'WL', linkMo: url, linkPc: url, ordering: 1 }],
+        },
+      },
+    })
+    expect(row?.phoneTemplate.content).toBe('신청이 접수되었습니다.')
+    expect(row?.phoneTemplate.buttons).toHaveLength(1)
+    expect(row?.phoneTemplate.buttons[0]?.name).toBe('신청 확인')
+    expect(row?.phoneTemplate.buttons[0]?.destinations).toMatchObject({ mobile: url, pc: url })
+  })
+
+  it('신청 취소 알림: 서버 링크(미치환 포함)를 보정·재생성하지 않는다', () => {
+    const raw = 'https://www.jakorea.org#{알림 링크 경로}'
+    const row = mapDeliveryDetailResponse({
+      delivery,
+      preview: {
+        renderedContent: '신청이 취소되었습니다.',
+        alimtalkMetadata: { buttons: [{ name: '확인', type: 'WL', linkMo: raw, linkPc: raw }] },
+      },
+    })
+    expect(row?.phoneTemplate.buttons[0]?.destinations).toMatchObject({ mobile: raw, pc: raw })
+  })
+
+  it('응답 최상위 alimtalkMetadata가 함께 와도 오류 없이 preview 객체 기준으로 렌더', () => {
+    const row = mapDeliveryDetailResponse({
+      delivery,
+      preview: {
+        renderedContent: '본문',
+        alimtalkMetadata: { buttons: [{ name: '자세히', type: 'WL', linkMo: 'https://a', linkPc: 'https://a' }] },
+      },
+      alimtalkMetadata: { buttons: [{ name: '자세히', type: 'WL', linkMo: 'https://a', linkPc: 'https://a' }] },
+    } as Parameters<typeof mapDeliveryDetailResponse>[0])
+    expect(row?.phoneTemplate.buttons.map(button => button.name)).toEqual(['자세히'])
+  })
+
+  it('JSONB wrapper 없는 응답(alimtalkMetadata/preview 누락)에서도 오류 없이 빈 값', () => {
+    expect(() => mapDeliveryDetailResponse({ delivery, preview: { renderedContent: '본문' } })).not.toThrow()
+    const noMeta = mapDeliveryDetailResponse({ delivery, preview: { renderedContent: '본문' } })
+    expect(noMeta?.phoneTemplate.buttons).toEqual([])
+    const noPreview = mapDeliveryDetailResponse({ delivery })
+    expect(noPreview?.phoneTemplate.content).toBe('')
+    expect(noPreview?.phoneTemplate.buttons).toEqual([])
+  })
+
+  it('기존 실패 delivery: failedReason(알림 링크 경로 누락)을 그대로 실패로 표시', () => {
+    const row = mapDeliveryDetailResponse({
+      delivery: {
+        ...delivery,
+        sendStatus: 'FAILED',
+        failedReason: 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:알림 링크 경로',
+      },
+      preview: { renderedContent: '본문' },
+    })
+    expect(row?.sendStatus).toBe('발송 실패')
+    expect(row?.failedReason).toBe('자동입력 변수값이 없어 발송되지 않았습니다: 알림 링크 경로')
   })
 })

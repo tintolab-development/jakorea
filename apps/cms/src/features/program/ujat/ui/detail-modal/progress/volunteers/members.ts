@@ -1,6 +1,6 @@
 import { getUserById } from '@/entities/user/api/user-service'
-import { fetchAllMembersPagesRemote } from '@/features/user/api/fetch-all-members-pages-remote'
-import { rolesExactAnyOfForAllTabRoleFilter } from '@/features/user/api/map-roles-exact-any-of'
+import { mapAccountDirectoryItems } from '@/features/user/api/map-account-directory-item-to-user'
+import { fetchAllCmsMembersAndAdminsPageRemote } from '@/features/user/api/members-api-client'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { USER_AFFILIATION_PIPE_SEP } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
@@ -59,7 +59,7 @@ function parseGradeFromAffiliation(affiliation: string | undefined): UjatEducati
   return normalizeVolunteerGrade(gradePart)
 }
 
-export function mapIndividualUserToVolunteerMemberCandidate(
+export function mapVolunteerUserToMemberCandidate(
   user: Omit<User, 'password'>
 ): UjatEducationProgressVolunteerMemberCandidate {
   return {
@@ -72,20 +72,52 @@ export function mapIndividualUserToVolunteerMemberCandidate(
   }
 }
 
-/** 회원 관리 회원 목록 API와 동일 — 회원 유형 `개인`(INDIVIDUAL)만 조회 */
+function memberRolesIncludeVolunteer(roles: string[] | undefined): boolean {
+  return (roles ?? []).some(role => role.trim().toUpperCase() === 'VOLUNTEER')
+}
+
+const DIRECTORY_PAGE_SIZE = 20
+const MAX_DIRECTORY_PAGES = 50
+
+async function fetchVolunteerDirectoryMembers() {
+  const users: ReturnType<typeof mapAccountDirectoryItems> = []
+  for (let page = 0; page < MAX_DIRECTORY_PAGES; page += 1) {
+    const response = await fetchAllCmsMembersAndAdminsPageRemote({
+      accountType: 'MEMBER',
+      page,
+      size: DIRECTORY_PAGE_SIZE,
+    })
+    users.push(...mapAccountDirectoryItems(response.items))
+    const totalPages = response.totalPages ?? 1
+    const itemCount = response.items?.length ?? 0
+    if (page + 1 >= totalPages || itemCount === 0) break
+  }
+  return users.filter(user => memberRolesIncludeVolunteer(user.roles))
+}
+
+/**
+ * 회원 관리 봉사자 목록 — `GET /api/admin/members/all?accountType=MEMBER`
+ * 후 `roles`에 `VOLUNTEER`이 있는 회원만. (`memberType=INDIVIDUAL`은 강사·교사·일반이 섞인다)
+ */
 export async function fetchUjatEducationProgressVolunteerMemberCandidates(
-  excludeVolunteerNames: string[]
+  excludeVolunteerNames: string[],
+  excludeMemberIds: readonly string[] = []
 ): Promise<UjatEducationProgressVolunteerMemberCandidate[]> {
   if (!isMembersRemoteEnabled()) {
     throw new Error('회원 목록은 실 API만 지원합니다. VITE_API_SERVER 또는 VITE_API_BASE_URL을 설정하세요.')
   }
-  const users = await fetchAllMembersPagesRemote({
-    rolesExactAnyOf: rolesExactAnyOfForAllTabRoleFilter('INDIVIDUAL'),
-  })
-  const excluded = new Set(excludeVolunteerNames.map(name => name.trim()))
+  const users = await fetchVolunteerDirectoryMembers()
+  const excludedNames = new Set(excludeVolunteerNames.map(name => name.trim()).filter(Boolean))
+  const excludedIds = new Set(excludeMemberIds.map(id => id.trim()).filter(Boolean))
   return users
-    .filter(user => !excluded.has(user.name.trim()))
-    .map(mapIndividualUserToVolunteerMemberCandidate)
+    .filter(user => {
+      if (excludedNames.has(user.name.trim())) return false
+      if (excludedIds.has(user.id) || (user.memberId != null && excludedIds.has(String(user.memberId)))) {
+        return false
+      }
+      return true
+    })
+    .map(mapVolunteerUserToMemberCandidate)
 }
 
 export async function buildUjatEducationProgressVolunteerRowFromMember(
@@ -94,9 +126,10 @@ export async function buildUjatEducationProgressVolunteerRowFromMember(
   nextNo: number
 ): Promise<UjatEducationProgressVolunteerRow | null> {
   const user = await getUserById(memberId)
-  if (!user || user.role !== 'INDIVIDUAL') return null
+  if (!user) return null
+  if (user.roles?.length && !memberRolesIncludeVolunteer(user.roles)) return null
 
-  const member = mapIndividualUserToVolunteerMemberCandidate(user)
+  const member = mapVolunteerUserToMemberCandidate(user)
 
   return {
     id: `${half}-vol-added-${memberId}`,

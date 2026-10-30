@@ -10,9 +10,9 @@
   flex-direction: column;
   container-type: inline-size;
   container-name: program-schedule;
-  border-radius: 12px !important;
+  border-radius: 16px !important;
   border: none !important;
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.06);
 }
 
 .program-schedule-widget .ant-card-head {
@@ -385,8 +385,8 @@
   align-items: center !important;
   gap: 10px !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 60px !important;
-  background: var(--color-mint-01, #01a1af) !important;
+  border-radius: var(--Radius-60, 60px) !important;
+  background: var(--Brand-500, #00a0af) !important;
   border: none !important;
   box-sizing: border-box !important;
   color: var(--main-WT, #fff) !important;
@@ -426,23 +426,42 @@
   .program-calendar-cell--has-schedule:not(.program-calendar-cell--selected)
   .program-calendar-cell-date {
   display: flex;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
   padding: 0 10px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 10px;
   aspect-ratio: 1 / 1;
-  border-radius: 60px;
+  border-radius: var(--Radius-60, 60px);
   background: var(
-    --color-bg-mint,
+    --Brand-100,
     linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
     #fff
   );
   box-sizing: border-box;
+}
+
+/* 피그마(2단 월간): 날짜 원 34px, 글자 18px/130% — 일반·선택·일정 있는 날짜 공통 */
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell
+  .program-calendar-cell-date,
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--selected
+  .program-calendar-cell-date {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  font-size: 18px !important;
+  line-height: 130% !important;
 }
 
 .program-schedule-widget__month-cell-badge-host {
@@ -508,10 +527,11 @@
   min-height: 0;
   max-height: none;
   height: auto;
-  padding: var(--spacing-16);
+  /* 피그마 12215:206393 (Calendar 패널): padding 20, Border/default #e0e0e0 */
+  padding: var(--spacing-20, 20px);
   box-sizing: border-box;
-  /* 정상: 얕은 #f0f0f0. 다른 라우트에서 로드된 antd/도메인 CSS의 #d9 보더보다 우선 */
-  border: 1px solid #f0f0f0 !important;
+  /* 다른 라우트에서 로드된 antd/도메인 CSS의 #d9 보더보다 우선 */
+  border: 1px solid var(--Border-default, #e0e0e0) !important;
   border-radius: var(--radius-8);
   outline: none !important;
   box-shadow: none !important;
@@ -570,8 +590,8 @@
 .program-schedule-widget .program-calendar-week-header-cell {
   display: flex;
   min-width: 0;
-  min-height: 37px;
-  padding: 8px 20px !important;
+  min-height: 21px;
+  padding: 0 4px !important;
   justify-content: center;
   align-items: center;
   gap: 10px;
@@ -589,7 +609,7 @@
 .program-schedule-widget .program-calendar-week-body {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: minmax(127.4px, 1fr);
+  grid-template-rows: minmax(100px, 1fr);
   flex: 1;
   min-height: 0;
   min-width: 0;
@@ -602,12 +622,12 @@
 
 .program-schedule-widget.program-schedule-widget .program-calendar-week-cell {
   border: none !important;
-  border-right: 1px solid #f0f0f0 !important;
-  border-bottom: 1px solid #f0f0f0 !important;
-  padding: 8px;
+  border-right: 1px solid #e0e0e0 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  padding: 8px 9px 8px 8px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-8, 8px);
   cursor: pointer;
   min-height: 0;
   height: 100%;
@@ -619,11 +639,11 @@
 }
 
 .program-schedule-widget.program-schedule-widget .program-calendar-week-cell:nth-child(7n + 1) {
-  border-left: 1px solid #f0f0f0 !important;
+  border-left: 1px solid #e0e0e0 !important;
 }
 
 .program-schedule-widget.program-schedule-widget .program-calendar-week-cell:nth-child(-n + 7) {
-  border-top: 1px solid #f0f0f0 !important;
+  border-top: 1px solid #e0e0e0 !important;
 }
 
 .program-schedule-widget.program-schedule-widget .program-calendar-week-cell:first-child {
@@ -641,41 +661,62 @@
 }
 
 .program-schedule-widget .program-calendar-week-cell-date {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
   color: var(--default-BK, #3d3d3d);
-  text-align: left;
-  font-family: Outfit, sans-serif;
-  font-size: 16px;
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 18px;
   font-weight: 500;
   line-height: 130%;
-  letter-spacing: -0.312px;
   margin-bottom: 0;
   align-self: flex-start;
 }
 
+/* 피그마: 일요일 #c32f4a, 토요일 #017eaf — 주 시작=일요일(WEEKDAY_LABELS)이라 열 위치로만 지정 */
+.program-schedule-widget .program-calendar-week-cell:nth-child(7n + 1) .program-calendar-week-cell-date {
+  color: #c32f4a;
+}
+
+.program-schedule-widget .program-calendar-week-cell:nth-child(7n) .program-calendar-week-cell-date {
+  color: #017eaf;
+}
+
 .program-schedule-widget .program-calendar-week-cell-date--selected {
-  background: var(--JA-mint-01, #01a1af);
+  background: var(--Brand-500, #00a0af);
   color: #fff !important;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  border-radius: var(--Radius-60, 60px);
+  width: 34px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.program-schedule-widget.program-schedule-widget--week-view
-  .program-schedule-widget__week-cell--today
-  .program-calendar-week-cell-date:not(.program-calendar-week-cell-date--selected) {
-  color: var(--JA-mint-01, #01a1af);
-  font-weight: 600;
+/* 일정이 있는 날짜(선택일 제외) — 오늘 날짜는 별도 표기 없음 */
+.program-schedule-widget
+  .program-calendar-week-cell-date--has-events:not(.program-calendar-week-cell-date--selected) {
+  border-radius: var(--Radius-60, 60px);
+  background: var(
+    --Brand-100,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
+    #fff
+  );
 }
 
 .program-schedule-widget__week-events {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-6);
+  gap: var(--spacing-8, 8px);
   width: 100%;
   min-width: 0;
+  padding: 0 2px;
+  box-sizing: border-box;
 }
 
 /* antd Popover 트리거 래퍼가 inline span 이 되어 컬러 바가 줄어들지 않게 */
@@ -691,9 +732,9 @@
 .program-schedule-widget__week-event-card {
   width: 100%;
   min-width: 0;
-  height: 47px;
-  border-radius: var(--spacing-2);
-  padding: var(--spacing-6) var(--spacing-8);
+  height: 54px;
+  border-radius: var(--radius-8, 8px);
+  padding: var(--spacing-8, 8px) var(--spacing-10, 10px);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -707,13 +748,56 @@
   opacity: 0.9;
 }
 
+/* 피그마 태그 테두리 통일 — 배경색만 데이터(inline) 사용 */
+.program-schedule-widget__week-event-card:not(.program-schedule-widget__week-event-card--color-only) {
+  border: 1px solid rgba(61, 61, 61, 0.06);
+}
+
+/* 피그마: 1줄 '제목 | 시간', 2줄 설명 */
+.program-schedule-widget__week-event-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  width: 100%;
+  min-width: 0;
+}
+
+.program-schedule-widget__week-event-head .program-schedule-widget__week-event-title {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.program-schedule-widget__week-event-head .program-schedule-widget__week-event-time {
+  flex: 0 0 auto;
+}
+
+.program-schedule-widget__week-event-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 10px;
+  background: #3d3d3d;
+  opacity: 0.5;
+}
+
+.program-schedule-widget__week-event-desc {
+  overflow: hidden;
+  width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 130%;
+}
+
 .program-schedule-widget__week-event-title {
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   line-height: 130%;
 }
 
@@ -721,18 +805,19 @@
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: Pretendard;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 130%;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .program-schedule-widget.program-schedule-widget--dashboard-half
   .program-calendar-week-header-cell {
-  padding: 6px 2px !important;
-  min-height: 28px;
-  font-size: 12px;
+  padding: 0 2px !important;
+  min-height: 21px;
+  font-size: 16px;
 }
 
 .program-schedule-widget__week-event-preview-host {
@@ -744,14 +829,16 @@
 }
 
 .program-schedule-widget.program-schedule-widget--dashboard-half
-  .program-schedule-widget__week-event-time {
+  .program-schedule-widget__week-event-time,
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__week-event-divider {
   display: none;
 }
 
 .program-schedule-widget.program-schedule-widget--dashboard-half
   .program-schedule-widget__week-event-card:not(.program-schedule-widget__week-event-card--color-only) {
   height: auto !important;
-  min-height: 47px;
+  min-height: 54px;
   max-height: none;
   justify-content: flex-start;
   align-items: stretch;
@@ -777,7 +864,7 @@
   .program-schedule-widget__week-events--color-only {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-8, 8px);
   width: 100%;
   align-self: stretch;
   min-width: 0;
@@ -829,8 +916,35 @@
   flex-direction: column;
 }
 
+/* 피그마 14894:26706 — 아이콘 없이 2줄 문구, 목록 영역 가로·세로 중앙 */
 .program-schedule-widget__empty {
-  padding: var(--spacing-20) 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4, 4px);
+  padding: 0;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.program-schedule-widget__empty-title,
+.program-schedule-widget__empty-desc {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  line-height: 150%;
+  opacity: 0.5;
+}
+
+.program-schedule-widget__empty-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.program-schedule-widget__empty-desc {
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .program-schedule-widget__event-list {
@@ -851,7 +965,8 @@
   width: 100%;
   height: 75px;
   margin-block: 0;
-  padding: 12px 16px;
+  /* 피그마 14894:26661 Calendar / List / Item */
+  padding: 12px 16px 12px 12px;
   box-sizing: border-box;
   border-radius: var(--8, 8px);
   cursor: pointer;
@@ -862,15 +977,16 @@
   opacity: 0.9;
 }
 
+/* 피그마 14894:26662 (강조 항목): 흰 배경 + 2px Brand/500 테두리 + shadow/hover. 2px 테두리만큼 padding 1px 보정 */
 .program-schedule-widget__body--month .program-schedule-widget__event-list .ant-list-item:hover {
   display: flex;
-  padding: 12px 16px;
+  padding: 11px 15px 11px 11px;
   align-items: center;
   gap: 16px;
   align-self: stretch;
   opacity: 1;
   border-radius: var(--8, 8px);
-  border: 1px solid var(--color-mint-01, #01a1af) !important;
+  border: 2px solid var(--Brand-500, #00a0af) !important;
   background: var(--main-WT, #fff) !important;
   box-shadow:
     0 0 4px 0 rgba(0, 136, 148, 0.06),
@@ -885,7 +1001,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: 2px;
   justify-content: center;
   min-width: 0;
 }
@@ -1060,14 +1176,16 @@
 
 @container program-schedule (max-width: 880px) {
   .program-schedule-widget.program-schedule-widget--week-view
-    .program-schedule-widget__week-event-time {
+    .program-schedule-widget__week-event-time,
+  .program-schedule-widget.program-schedule-widget--week-view
+    .program-schedule-widget__week-event-divider {
     display: none;
   }
 
   .program-schedule-widget.program-schedule-widget--week-view
     .program-schedule-widget__week-event-card {
     height: auto !important;
-    min-height: 47px;
+    min-height: 54px;
     max-height: none;
     justify-content: flex-start;
     align-items: stretch;

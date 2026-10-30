@@ -18,4 +18,6 @@ export interface CurriculumSessionItem {
   educationFormLabel?: string;
   participationMethodLabel?: string;
   scheduleDateLabel?: string;
+  /** GENERAL_INDIVIDUAL 교육 진행 장소. 일정 별 상이일 때 이 회차 주소. 없으면 생략. */
+  educationPlaceAddress?: string | null;
 }

@@ -79,7 +79,8 @@ function LifecycleStatusView({
 
 function resolveVolunteerNotesDisplay(program: Program): string {
   if (program.generalCommonInfo?.volunteerRecruitmentInfo?.notesNotApplicable) return '-'
-  return (program.otherNotes ?? '').trim() || '-'
+  // 비고 = 봉사자 행 remarks(oneLineIntroduction). 기타사항(otherNotes)은 상세 정보 단락에서 따로 보인다.
+  return (program.oneLineIntroduction ?? '').trim() || '-'
 }
 
 function dateMethodLine(
@@ -131,7 +132,7 @@ export function UjatRecruitVolunteerInfoProgramView({
   const roundIndex = volunteerHalf === 'h1' ? 0 : 1
   const hasRound =
     isEdit && form
-      ? form.watch(`rounds.${roundIndex}`) != null
+      ? form.getValues(`rounds.${roundIndex}` as 'rounds.0') != null
       : program.rounds?.[roundIndex] != null
   const recruitStartName = (
     hasRound
@@ -588,7 +589,7 @@ export function UjatRecruitVolunteerInfoProgramView({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="비고"
-            validationKey={[recruitKey('notes'), recruitKey('otherNotes')]}
+            validationKey={recruitKey('notes')}
             fullRow
             view={notes}
             edit={isEdit && form ? <UjatRecruitVolunteerNotesField form={form} /> : undefined}

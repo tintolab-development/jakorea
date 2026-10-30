@@ -12,7 +12,7 @@ export type ProgramListDetailEntry = {
 }
 
 type ProgramListDetailEntryOptions = {
-  /** 기존 전체 목록의 프로그램 유형 구분. 1사1교는 승인 신청 목록을 사용한다. */
+  /** 기존 전체 목록의 프로그램 유형 구분. 1사1교 전용 목록은 공통정보로 연다. */
   programType?: 'company_school' | 'education' | 'all' | 'volunteer'
   /** 목록 위젯에서 선택한 진행 단계. 없으면 프로그램의 canonical lifecycleStatus를 사용한다. */
   statusFilter?: ProgramProgressPhaseFilter | ProgramLifecycleStatus | null
@@ -34,9 +34,9 @@ function resolveProgressPhase(
 /**
  * 프로그램 목록에서 상세로 진입할 때의 초기 LNB/tab을 한 곳에서 결정한다.
  * - 일반 프로그램 목록(`/programs/general`): 진행 상태와 무관하게 공통정보
+ * - 1사1교 목록(`/programs/company-school`): 진행 상태와 무관하게 공통정보
  * - 진행 중: 신청 목록
  * - 진행 완료: 참여자(진행) 목록
- * - 1사1교: 진행 중·완료 모두 기관 신청 목록
  * - 예정/알 수 없음: 공통정보
  */
 export function resolveProgramListDetailEntry(
@@ -47,11 +47,12 @@ export function resolveProgramListDetailEntry(
     return { lnb: 'info', tab: 'info' }
   }
 
+  if (options.programType === 'company_school') {
+    return { lnb: 'info', tab: 'info' }
+  }
+
   const phase = resolveProgressPhase(program, options.statusFilter)
 
-  if (options.programType === 'company_school' && (phase === 'in_progress' || phase === 'completed')) {
-    return { lnb: 'applicants', tab: 'institutions' }
-  }
   if (phase === 'in_progress') {
     return { lnb: 'applicants', tab: 'institutions' }
   }

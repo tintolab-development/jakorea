@@ -88,6 +88,46 @@ export function isRecruitmentOrApplicationWritingTemplateCode(
   return base.startsWith('recruitment-') || base.startsWith('application-')
 }
 
+export function resolveWritingFormCatalogCategory(
+  templateCode: string | undefined | null
+): string | null {
+  const code = templateCode?.trim() ?? ''
+  if (code === '') return null
+  return TEMPLATE_CODE_CATALOG[code]?.category ?? null
+}
+
+export function isCatalogSurveyOrGeneralAgreementTemplateCode(
+  templateCode: string | undefined | null
+): boolean {
+  const code = templateCode?.trim() ?? ''
+  if (code === '') return false
+  const category = resolveWritingFormCatalogCategory(code)
+  return category === 'SURVEY' || (category === 'AGREEMENT' && code !== 'agreement-crime')
+}
+
+export function isCatalogOperationalWritingTemplateCode(
+  templateCode: string | undefined | null
+): boolean {
+  const category = resolveWritingFormCatalogCategory(templateCode)
+  return category === 'REGISTRATION' || category === 'RECRUITMENT' || category === 'APPLICATION'
+}
+
+export function isDocumentOnlyAgreementTemplateCode(
+  templateCode: string | undefined | null
+): boolean {
+  return templateCode?.trim() === 'agreement-crime'
+}
+
+/** CATALOG 원본 PUT·새 버전 생성·게시 금지 (등록·모집·신청 원본 + 성범죄 PDF 전용) */
+export function isCatalogOriginalVersionWriteBlocked(
+  templateCode: string | undefined | null
+): boolean {
+  return (
+    isCatalogOperationalWritingTemplateCode(templateCode) ||
+    isDocumentOnlyAgreementTemplateCode(templateCode)
+  )
+}
+
 /**
  * 등록·모집 시스템 양식 PUT — BE `FORM_SCHEMA_IMMUTABLE`.
  * 에디터 draft 전체 schemaJson은 보내지 않고, 시드 구조 + 허용 카피만 schemaJson으로 보낸다(`operational-form-schema-copy-merge`).

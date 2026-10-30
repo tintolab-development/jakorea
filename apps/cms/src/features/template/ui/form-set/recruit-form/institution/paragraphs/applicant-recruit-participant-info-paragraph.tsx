@@ -92,7 +92,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
         <ApplicantRecruitInstitutionBridgeSync isTrainedTeachers={false} />
         <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
           <DetailInfoForm.Row type="single">
-            <ApplicantRecruitAnnouncementPublishedField fullRow size="large" />
+            <ApplicantRecruitAnnouncementPublishedField fullRow />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">
             <ApplicantRecruitMaxInstructorsField

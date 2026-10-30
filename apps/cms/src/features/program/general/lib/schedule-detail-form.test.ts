@@ -9,7 +9,10 @@ import {
   getScheduleEventPerScheduleExtraPlan,
   hasScheduleEventPerScheduleExtraRows,
   inferScheduleDetailBlockKind,
+  isGeneralPreEducationName,
   isIndividualAllPerScheduleLayout,
+  isPreEducationCurriculumSession,
+  isPreEducationScheduleBlock,
   PRE_EDUCATION_SCHEDULE_LABEL,
   trimTrailingBlankRegularCurriculumSessions,
   shouldAllowScheduleProgressGroupAdd,
@@ -43,6 +46,25 @@ const ALL_PER_SCHEDULE: Pick<
   participationScheduleDetail: 'perSchedule',
   ipsScheduleDetail: 'perSchedule',
 }
+
+describe('GENERAL 사전교육 판별', () => {
+  it('공백을 제거한 뒤 사전교육으로 시작하면 사전교육이다', () => {
+    expect(isGeneralPreEducationName('사전 교육')).toBe(true)
+    expect(isGeneralPreEducationName('사전교육 1회차')).toBe(true)
+    expect(isPreEducationCurriculumSession({ sessionLabel: '사전교육 1회차' })).toBe(true)
+    expect(
+      isPreEducationScheduleBlock({ scheduleLabel: '세부 일정 01', name: '사전 교육' })
+    ).toBe(true)
+    expect(isPreEducationScheduleBlock({ blockKind: 'preEducation' })).toBe(true)
+    expect(isPreEducationScheduleBlock({ isPreEducation: true })).toBe(true)
+  })
+
+  it('교사연수·UJAT 봉사자 사전교육을 GENERAL 사전교육으로 보지 않는다', () => {
+    expect(isGeneralPreEducationName('교육 연수')).toBe(false)
+    expect(isGeneralPreEducationName('봉사자 사전교육')).toBe(false)
+    expect(isPreEducationCurriculumSession({ sessionLabel: '교육 연수' })).toBe(false)
+  })
+})
 
 describe('shouldUseScheduleEventBlockLayout', () => {
   it('개인 + 복수 회차이면 유형 설정과 무관하게 행사 일정 레이아웃을 쓴다', () => {

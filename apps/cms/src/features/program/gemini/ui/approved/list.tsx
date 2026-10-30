@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { Alert, Spin } from 'antd'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -8,8 +8,10 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
-  CmsButton, DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert,
-  FilterTableToolbarButton
+  DeleteGuideModal,
+  showDeleteCompletedAlert,
+  useCmsAlert,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import { useDeleteGeminiApprovedTrainingsMutation } from '../../api/visiting-training/hooks'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -25,10 +27,10 @@ import {
 } from '../../lib/approved/build-excel-export'
 import {
   approvedTrainingStatusModifier,
+  formatConfirmedTrainingDatetimeDisplay,
   formatInstructorDisplay,
   formatRegionDisplay,
   formatStatusLabel,
-  formatTrainingDatetimeDisplay,
 } from '../../lib/approved/format-display'
 import { resolveApprovedTrainingStatus } from '../../lib/approved/resolve-status'
 import {
@@ -107,6 +109,14 @@ function instructorNameText(name: string) {
   return name
 }
 
+function TrainingDatetimeCell({ row }: { row: GeminiApprovedTrainingRow }) {
+  return (
+    <div className="gemini-approved-training-list__training-datetime-cell">
+      {renderProgramDetailPipeSeparated(formatConfirmedTrainingDatetimeDisplay(row))}
+    </div>
+  )
+}
+
 export function GeminiApprovedTrainingList() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
@@ -142,8 +152,6 @@ export function GeminiApprovedTrainingList() {
     remoteEnabled,
     isFetching,
     isFetchingNextPage,
-    isError,
-    refetch,
     fetchNextPage,
     hasNextPage,
     totalElements,
@@ -247,11 +255,7 @@ export function GeminiApprovedTrainingList() {
         key: 'trainingDatetime',
         width: COL.trainingDatetime,
         align: 'center',
-        render: (_: unknown, row) => (
-          <div className="gemini-approved-training-list__training-datetime-cell">
-            {renderProgramDetailPipeSeparated(formatTrainingDatetimeDisplay(row))}
-          </div>
-        ),
+        render: (_: unknown, row) => <TrainingDatetimeCell row={row} />,
       },
       {
         title: '수강 인원',
@@ -281,19 +285,6 @@ export function GeminiApprovedTrainingList() {
 
   return (
     <div className="program-list-page">
-      {remoteEnabled && isError ? (
-        <Alert
-          type="error"
-          showIcon
-          style={{ marginBottom: 16 }}
-          message="승인 연수 목록을 불러오지 못했습니다."
-          action={
-            <CmsButton variant="secondary" onClick={() => void refetch()}>
-              다시 시도
-            </CmsButton>
-          }
-        />
-      ) : null}
       <FilterTableLayout
         bordered={false}
         className="gemini-list-filter gemini-approved-training-list"
@@ -361,6 +352,7 @@ export function GeminiApprovedTrainingList() {
         excelExport={{
           columns: GEMINI_APPROVED_TRAINING_EXCEL_COLUMNS,
           data: excelRows,
+          selectedRowKeys: canWrite ? selectedRowKeys : undefined,
         }}
       >
         <CmsDataTable<GeminiApprovedTrainingRow>

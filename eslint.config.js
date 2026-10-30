@@ -196,6 +196,7 @@ export default tseslint.config(
       // allowlist: 쓰기 전에 COPY 또는 canWriteProgramFormVersionInPlace 가드를 거치는 모듈
       'apps/cms/src/features/program/general/lib/sync-registration-form-bindings.ts',
       'apps/cms/src/features/program/shared/lib/survey-management/save-program-survey-form-edit.ts',
+      'apps/cms/src/features/program/shared/lib/survey-management/resolve-published-survey-binding.ts',
       'apps/cms/src/features/template/lib/writing-form-template-local-save.ts',
     ],
     rules: {

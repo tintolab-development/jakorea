@@ -52,7 +52,7 @@ function byNewest(a: Notification, b: Notification): number {
 
 export interface NotificationDropdownProps {
   notifications: Notification[]
-  unreadCount: number
+  unreadCount: number | null
   onNotificationClick: (notification: Notification) => void
   onConfirm?: (notification: Notification) => void
   onClose?: () => void
@@ -132,7 +132,7 @@ export function NotificationDropdown({
 
   useEffect(() => {
     if (!fetchNextPage || !hasNextPage || isFetchingNextPage) return
-    if (unreadCount > unreadItems.length) fetchNextPage()
+    if (typeof unreadCount === 'number' && unreadCount > unreadItems.length) fetchNextPage()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, unreadCount, unreadItems.length])
 
   useEffect(() => {
@@ -158,7 +158,9 @@ export function NotificationDropdown({
 
   const isEmpty = filtered.length === 0 && !hasNextPage && !isFetchingNextPage
   const unreadLabelCount =
-    category === 'all' && unreadCount > 0 ? unreadCount : unreadItems.length
+    category === 'all' && typeof unreadCount === 'number' && unreadCount > 0
+      ? unreadCount
+      : unreadItems.length
 
   return (
     <div className="notification-dropdown-panel">
@@ -182,7 +184,8 @@ export function NotificationDropdown({
           </div>
         ) : (
           <div className="notification-dropdown-list">
-            {unreadItems.length > 0 || (category === 'all' && unreadCount > 0) ? (
+            {unreadItems.length > 0 ||
+            (category === 'all' && typeof unreadCount === 'number' && unreadCount > 0) ? (
               <div className="notification-dropdown-section">
                 <Text className="notification-dropdown-section-label">
                   미읽음 {unreadLabelCount}건

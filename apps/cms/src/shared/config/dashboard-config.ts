@@ -65,10 +65,10 @@ export interface DashboardWidgetConfig {
 export const DASHBOARD_SLOT_HEIGHT_HALF_PX = 400 as const
 
 /** 메뉴 바로가기 100% 슬롯 높이 — CSS `.menu-shortcut-widget` 슬롯 규칙과 동기화 */
-export const MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX = 248 as const
+export const MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX = 352 as const
 
 /** 프로그램 일정 위젯 100% 너비(colSpan 24) 슬롯 높이 */
-export const PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX = 383 as const
+export const PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX = 376 as const
 
 function programScheduleKindToWidgetType(kind: ProgramScheduleKind): DashboardWidgetType {
   switch (kind) {
@@ -102,14 +102,14 @@ export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[])
       slotHeightPx: { 24: MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX },
     },
     ...scheduleWidgets,
-    { type: 'recruitment-status-widget', colSpan: 24, order: orderAfterSchedules, height: 340 },
+    { type: 'recruitment-status-widget', colSpan: 24, order: orderAfterSchedules, height: 400 },
     {
       type: 'customer-inquiry-status-widget',
       colSpan: 24,
       order: orderAfterSchedules + 1,
-      height: 338,
+      height: 400,
     },
-    { type: 'kpi-achievement-widget', colSpan: 24, order: orderAfterSchedules + 2 },
+    { type: 'kpi-achievement-widget', colSpan: 24, order: orderAfterSchedules + 2, height: 372 },
   ]
 }
 

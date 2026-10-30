@@ -35,12 +35,14 @@ describe('sumCountablePaymentOrderLineAmounts', () => {
 })
 
 describe('formatPaymentOrderInstitutionDisplay', () => {
-  it('빈 값·하이픈은 공란(비노출)', () => {
+  it('빈 값·하이픈·대시는 공란(비노출). 없음/미지정으로 치환하지 않음', () => {
     expect(formatPaymentOrderInstitutionDisplay(null)).toBe('')
     expect(formatPaymentOrderInstitutionDisplay(undefined)).toBe('')
     expect(formatPaymentOrderInstitutionDisplay('')).toBe('')
     expect(formatPaymentOrderInstitutionDisplay('-')).toBe('')
     expect(formatPaymentOrderInstitutionDisplay('  -  ')).toBe('')
+    expect(formatPaymentOrderInstitutionDisplay('—')).toBe('')
+    expect(formatPaymentOrderInstitutionDisplay('–')).toBe('')
   })
 
   it('기관명은 trim 후 반환', () => {

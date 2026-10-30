@@ -31,12 +31,12 @@ export const MEMBER_CONSENT_TEMPLATE_MAP: Record<MemberConsentFieldKey, MemberCo
     consentAdministrativeJoint: {
       fieldKey: 'consentAdministrativeJoint',
       templateId: 'agreement-notice',
-      modalTitle: '행정정보 공동이용 사전동의서',
+      modalTitle: '행정정보 공동이용 동의서',
     },
     consentSexOffenseCheck: {
       fieldKey: 'consentSexOffenseCheck',
       templateId: 'agreement-crime',
-      modalTitle: '성범죄 경력조회 동의서',
+      modalTitle: '성범죄경력 조회 동의서',
     },
   }
 
@@ -56,6 +56,9 @@ const CONSENT_LABEL_TO_FIELD_KEY: Record<string, MemberConsentFieldKey> = {
   '교육진행자 서약서': 'consentFacilitatorPledge',
   '교육진행자 동의 서약서': 'consentFacilitatorPledge',
   'JA Korea 교육진행자 서약서(안)': 'consentFacilitatorPledge',
+  '행정정보 공동이용 동의서': 'consentAdministrativeJoint',
+  '성범죄경력 조회 동의서': 'consentSexOffenseCheck',
+  /** 구 라벨 별칭 — 2026-10-29 라벨 변경 전 문자열도 계속 매칭 */
   '행정정보 공동이용 사전동의서': 'consentAdministrativeJoint',
   '성범죄 경력 조회 동의서': 'consentSexOffenseCheck',
 }

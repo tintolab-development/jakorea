@@ -9,11 +9,25 @@ export type ParticipantRecruitmentAnnouncementPublishedValue =
 
 export function announcementPublishedToFormValue(
   value: boolean | undefined,
-  defaultValue: ParticipantRecruitmentAnnouncementPublishedValue = 'published'
-): ParticipantRecruitmentAnnouncementPublishedValue {
+  defaultValue: ParticipantRecruitmentAnnouncementPublishedValue | undefined = undefined
+): ParticipantRecruitmentAnnouncementPublishedValue | undefined {
   if (value === true) return 'published'
   if (value === false) return 'unpublished'
   return defaultValue
+}
+
+/** 게시/미게시를 아직 고르지 않음 */
+export function isAnnouncementPublishedChoiceMissing(value: unknown): boolean {
+  return (
+    value !== true &&
+    value !== false &&
+    value !== 'published' &&
+    value !== 'unpublished'
+  )
+}
+
+export function isAnnouncementUnpublished(value: unknown): boolean {
+  return value === false || value === 'unpublished'
 }
 
 export function announcementPublishedFromFormValue(

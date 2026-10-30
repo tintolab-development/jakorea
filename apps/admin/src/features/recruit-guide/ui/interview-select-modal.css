@@ -65,7 +65,11 @@
 }
 
 .recruit-guide-interview-modal__table .ant-table-tbody > tr > td,
-.recruit-guide-interview-modal__table .ant-table-tbody > tr:hover > td {
+.recruit-guide-interview-modal__table .ant-table-tbody > tr:hover > td,
+.recruit-guide-interview-modal__table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell-row-hover {
   height: auto !important;
   min-height: 54px;
   white-space: normal !important;

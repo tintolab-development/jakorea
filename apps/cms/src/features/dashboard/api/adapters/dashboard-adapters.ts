@@ -16,6 +16,7 @@ import type { DashboardRecruitmentResponse } from '@/shared/api/generated/dashbo
 import type { DashboardProgramInquirySummaryResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquirySummaryResponse'
 import type { DashboardProgramInquiryResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramInquiryResponse'
 import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
+import { buildScheduleEventDetailLabel } from '@/features/dashboard/lib/schedule-event-detail-label'
 import type { KpiMetric, KpiMetricKey, ProgramKpiItem } from '../admin-dashboard-service'
 
 export interface DashboardHomeSummary {
@@ -62,6 +63,20 @@ export interface DashboardScheduleEventDto {
   lifecycleStatus: ProgramLifecycleStatus
   startAt: string
   endAt?: string
+  sessionNo?: number | null
+  scheduleName?: string | null
+  /** BE 추가 예정(program-schedules). 배정 기관 1곳이면 그 이름, 여러 곳이면 이름순 첫 기관, 없으면 null */
+  organizationName?: string | null
+  /** BE 추가 예정. 유효 배정(CANCELLED 제외) 기관 수 */
+  organizationCount?: number | null
+  /** 주간 캘린더 태그 2줄 라벨. 없으면 위젯이 유형 라벨로 대체 */
+  detailLabel?: string
+}
+
+/** BE가 organizationName/organizationCount를 내려주기 전까지 generated 타입에 없으므로 선택 필드로 확장 */
+type DashboardProgramScheduleResponseWithOrganization = DashboardProgramScheduleResponse & {
+  organizationName?: string | null
+  organizationCount?: number | null
 }
 
 export interface DashboardProgramOption {
@@ -101,6 +116,20 @@ export function formatRecruitmentCount(
   return `${applied ?? '-'} / ${capacity ?? '-'}`
 }
 
+/** 헤더·위젯 건수. 누락이면 행 수/0으로 채우지 않는다. */
+export function formatDashboardCountLabel(count: number | null | undefined): string {
+  return typeof count === 'number' && Number.isFinite(count) ? `${count}건` : '-'
+}
+
+export function formatDashboardHeaderTotalCount(totalCount: number | null | undefined): string {
+  const label = formatDashboardCountLabel(totalCount)
+  return label === '-' ? '총 -' : `총 ${label}`
+}
+
+export function mapNotificationUnreadCount(unreadCount: number | undefined): number | null {
+  return nullableNumber(unreadCount)
+}
+
 type RecruitmentCountFields = {
   participantAppliedCount?: number
   participantCapacity?: number
@@ -114,6 +143,12 @@ function nullableNumber(value: number | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
+function ownFiniteNumber(record: object, key: string): number | null {
+  if (!Object.prototype.hasOwnProperty.call(record, key)) return null
+  const value = (record as Record<string, unknown>)[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
 /** counts 맵에 키가 있을 때만 정수. 없으면 undefined (0으로 채우지 않음) */
 export function readCountMapValue(
   counts: Record<string, number> | undefined,
@@ -122,6 +157,46 @@ export function readCountMapValue(
   if (!counts || !Object.prototype.hasOwnProperty.call(counts, key)) return undefined
   const value = counts[key]
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+}
+
+/** 바로가기 배지: 키 있고 양수일 때만 표시. 0·누락은 숨김. inquiries 대기도 GET 값 그대로. */
+export function shouldShowShortcutBadge(
+  counts: Record<string, number> | undefined,
+  key: string
+): boolean {
+  const value = readCountMapValue(counts, key)
+  return typeof value === 'number' && value > 0
+}
+
+/** GET이 PENDING 대기를 주는 키. 클릭해도 숫자를 지우지 않고 POST /read 도 보내지 않음. */
+export const DASHBOARD_PENDING_WAIT_SHORTCUT_IDS = [
+  'inquiries',
+  'permission-requests',
+] as const
+
+export function isDashboardPendingWaitShortcut(shortcutId: string): boolean {
+  return (DASHBOARD_PENDING_WAIT_SHORTCUT_IDS as readonly string[]).includes(shortcutId)
+}
+
+/** 신규 추적 키이고 배지가 있을 때만 lastReadAt POST. 대기 키·0·누락은 이동만. */
+export function shouldPostDashboardShortcutRead(
+  shortcutId: string,
+  counts: Record<string, number> | undefined
+): boolean {
+  if (isDashboardPendingWaitShortcut(shortcutId)) return false
+  return shouldShowShortcutBadge(counts, shortcutId)
+}
+
+/** 클릭 직후 캐시에서 해당 키만 제거. 0으로 채우지 않음. 대기 키는 그대로. */
+export function countsAfterShortcutReadOptimistic(
+  counts: Record<string, number> | undefined,
+  shortcutId: string
+): Record<string, number> | undefined {
+  if (!counts || isDashboardPendingWaitShortcut(shortcutId)) return counts
+  if (!Object.prototype.hasOwnProperty.call(counts, shortcutId)) return counts
+  const next = { ...counts }
+  delete next[shortcutId]
+  return next
 }
 
 type RecruitmentListTotalsDto = DashboardRecruitmentListResponse & {
@@ -141,10 +216,12 @@ function recruitmentCountsFromItem(item: RecruitmentCountFields): {
   volunteerCapacity: number | null
 } {
   return {
-    participantApplied: nullableNumber(item.participantAppliedCount) ?? nullableNumber(item.studentAppliedCount),
-    participantCapacity: nullableNumber(item.participantCapacity) ?? nullableNumber(item.studentCapacity),
-    volunteerApplied: nullableNumber(item.volunteerAppliedCount),
-    volunteerCapacity: nullableNumber(item.volunteerCapacity),
+    participantApplied:
+      ownFiniteNumber(item, 'participantAppliedCount') ?? ownFiniteNumber(item, 'studentAppliedCount'),
+    participantCapacity:
+      ownFiniteNumber(item, 'participantCapacity') ?? ownFiniteNumber(item, 'studentCapacity'),
+    volunteerApplied: ownFiniteNumber(item, 'volunteerAppliedCount'),
+    volunteerCapacity: ownFiniteNumber(item, 'volunteerCapacity'),
   }
 }
 
@@ -320,11 +397,8 @@ export function recruitmentItemMatchesWidgetProgramType(
   const param = normalizeRecruitmentProgramType(widgetProgramTypeParam)
   if (!param) return true
   if (item === param) return true
-  if (
-    param === 'general' &&
-    (item.includes('general') || item === 'trained_teachers' || item.includes('trained_teacher'))
-  ) {
-    return true
+  if (param === 'general') {
+    return item === 'general' || item.startsWith('general_')
   }
   if (
     param === 'company_school' &&
@@ -480,11 +554,14 @@ function formatScheduleTime(startAt: string | undefined, allDay?: boolean): stri
   return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-export function mapScheduleItem(item: DashboardProgramScheduleResponse): DashboardScheduleEventDto | null {
+export function mapScheduleItem(
+  item: DashboardProgramScheduleResponseWithOrganization
+): DashboardScheduleEventDto | null {
   if (item.scheduleId == null || item.programId == null || !item.startAt) return null
+  const type = mapScheduleType(item)
   return {
     id: String(item.scheduleId),
-    type: mapScheduleType(item),
+    type,
     title: toDisplayEducationScheduleName(item.scheduleName) ?? item.programNameKo ?? '일정',
     time: formatScheduleTime(item.startAt, item.allDay),
     programId: String(item.programId),
@@ -492,6 +569,17 @@ export function mapScheduleItem(item: DashboardProgramScheduleResponse): Dashboa
     lifecycleStatus: 'education_after_textbook',
     startAt: item.startAt,
     endAt: item.endAt,
+    sessionNo: item.sessionNo ?? null,
+    scheduleName: item.scheduleName ?? null,
+    organizationName: item.organizationName ?? null,
+    organizationCount: item.organizationCount ?? null,
+    detailLabel: buildScheduleEventDetailLabel({
+      type,
+      scheduleName: item.scheduleName,
+      sessionNo: item.sessionNo,
+      organizationName: item.organizationName,
+      organizationCount: item.organizationCount,
+    }),
   }
 }
 

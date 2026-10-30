@@ -31,9 +31,7 @@
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-24);
   background: var(--color-neutral-white);
-  box-shadow:
-    0 0 12px 3px rgb(14 42 53 / 8%),
-    0 14px 23px 0 rgb(14 42 53 / 10%);
+  box-shadow: var(--shadow-card-sm);
   outline: none;
 }
 

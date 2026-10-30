@@ -14,4 +14,9 @@ describe('formatJaEvaluationGradeCellDisplay', () => {
     expect(formatJaEvaluationGradeCellDisplay('B등급')).toBe('B등급')
     expect(formatJaEvaluationGradeCellDisplay('JA_A')).toBe('A등급')
   })
+
+  it('강사비 GRADE_2 원시 코드를 2급 강사비로 매핑한다', () => {
+    expect(formatJaEvaluationGradeCellDisplay('GRADE_2')).toBe('2급 강사비')
+    expect(formatJaEvaluationGradeCellDisplay('GRADE_1')).toBe('1급 강사비')
+  })
 })

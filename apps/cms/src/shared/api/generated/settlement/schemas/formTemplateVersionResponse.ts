@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FormCatalogDocumentResponse } from './formCatalogDocumentResponse';
 import type { FormTemplateVersionResponseVersionStatus } from './formTemplateVersionResponseVersionStatus';
 
 export interface FormTemplateVersionResponse {
@@ -24,4 +25,10 @@ export interface FormTemplateVersionResponse {
   createdAt?: string;
   updatedAt?: string;
   availableActions?: string[];
+  /** 성범죄 동의서 활성 PDF. agreement-crime 카탈로그 원본만 값이 있고 그 외는 null. */
+  catalogDocument?: FormCatalogDocumentResponse;
+  /** CATALOG | COPY | PROGRAM. GET version write-guard SSOT. */
+  templateScope?: string | null;
+  /** PROGRAM 전용 복사본의 소유 프로그램. CATALOG/COPY는 null. */
+  ownerProgramId?: number | null;
 }

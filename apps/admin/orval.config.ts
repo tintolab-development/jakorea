@@ -32,4 +32,5 @@ export default defineConfig({
   assets: domainConfig('assets'),
   me: domainConfig('me'),
   careers: domainConfig('careers'),
+  notifications: domainConfig('notifications'),
 })

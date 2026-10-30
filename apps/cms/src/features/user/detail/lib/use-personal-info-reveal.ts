@@ -28,8 +28,21 @@ import { queryClient } from '@/shared/lib/query-client'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { UserRole } from '@/types/user'
 import type { InstructorMemberProfile } from '@/types/user'
-import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
+import {
+  guardAdminAction,
+  resolveAdminRoleCodeFromUser,
+  showAdminAccessDeniedAlert,
+} from '@/shared/lib/admin-role-policy'
+import { canRevealProgramPrivacy } from '@/entities/program/lib/program-privacy-access'
+import {
+  canRevealProgramGeneralPii,
+  canRevealProgramSensitivePii,
+  evictProgramUnmaskDetailCaches,
+  isUnknownAssignmentRole,
+} from '@/features/program/shared/lib/program-my-assignment'
+import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import type { ProgramRole } from '@/types/user'
 
 export type PersonalInfoRevealControlMode =
   | 'toggleRemask'
@@ -60,10 +73,25 @@ export interface UsePersonalInfoRevealOptions {
   resetDeps: DependencyList
   controlMode: PersonalInfoRevealControlMode
   modalZIndex?: number
+  /**
+   * member: 회원 관리 전역 역할(MASTER / ACCOUNTING_MANAGER / PROGRAM_MANAGER).
+   * program: 해당 프로그램 PM/PARTNER. 전역 역할로 대체하지 않는다.
+   */
+  privacyScope?: 'member' | 'program'
+  /** 프로그램 담당자 API로 본인 역할을 조회할 프로그램 ID */
+  programId?: string | number | null
+  resolveProgramRole?: () => ProgramRole | null | undefined
+  /**
+   * 신청 unmask API는 SENSITIVE_PII_READ만 허용한다. 지정하지 않으면
+   * revealPersonalInfo가 있으면 신청 unmask로 본다.
+   */
+  programUnmaskRequiresSensitive?: boolean
 }
 
 export interface UsePersonalInfoRevealResult {
   personalInfoRevealed: boolean
+  /** 프로그램 담당 역할 조회 중·실패. 원문 버튼은 비활성이다. */
+  programPrivacyPending: boolean
   personalInfoRevealConfirmOpen: boolean
   onPrivacyControlClick: () => void
   /** 마스킹 해제 전에만 확인 모달을 연다 (회원 상세 헤더·신청자 헤더 등) */
@@ -181,7 +209,12 @@ export function usePersonalInfoReveal({
   resetDeps,
   controlMode,
   modalZIndex,
+  privacyScope = 'member',
+  programId,
+  resolveProgramRole,
+  programUnmaskRequiresSensitive = revealPersonalInfo != null,
 }: UsePersonalInfoRevealOptions): UsePersonalInfoRevealResult {
+  const programAssignment = useMyProgramPrivacyRole(privacyScope === 'program' ? programId : undefined)
   const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -192,20 +225,56 @@ export function usePersonalInfoReveal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, resetDeps)
 
+  const programCanReveal = programUnmaskRequiresSensitive
+    ? programAssignment.canRevealSensitive
+    : programAssignment.canRevealGeneral
+
+  useEffect(() => {
+    if (privacyScope !== 'program') return
+    if (programAssignment.pending || !programCanReveal) {
+      if (personalInfoRevealed) evictProgramUnmaskDetailCaches(programId)
+      setPersonalInfoRevealed(false)
+      setConfirmOpen(false)
+    }
+  }, [
+    privacyScope,
+    programId,
+    programAssignment.pending,
+    programCanReveal,
+    personalInfoRevealed,
+  ])
+
   const closePersonalInfoRevealConfirm = useCallback(() => {
     setConfirmOpen(false)
   }, [])
 
-  const guardPiiReveal = useCallback(() => {
+  const guardPiiReveal = useCallback(async () => {
+    if (privacyScope === 'program') {
+      if (programId != null && String(programId).trim() !== '') {
+        if (programAssignment.pending) return false
+        const fresh = await programAssignment.refetch()
+        const allowed = programUnmaskRequiresSensitive
+          ? canRevealProgramSensitivePii(fresh)
+          : canRevealProgramGeneralPii(fresh)
+        if (isUnknownAssignmentRole(fresh) || !allowed) {
+          if (!isUnknownAssignmentRole(fresh)) showAdminAccessDeniedAlert()
+          return false
+        }
+        return true
+      }
+      if (canRevealProgramPrivacy(resolveProgramRole?.() ?? null, 'general')) return true
+      showAdminAccessDeniedAlert()
+      return false
+    }
     const roleCode = resolveAdminRoleCodeFromUser(useAuthStore.getState().user)
     return guardAdminAction({ roleCode, action: 'pii' })
-  }, [])
+  }, [privacyScope, programId, programAssignment, programUnmaskRequiresSensitive, resolveProgramRole])
 
   const revealWithReason = useCallback(
     async (
       reason: string
     ): Promise<{ ok: true; payload?: unknown } | { ok: false }> => {
-      if (!guardPiiReveal()) return { ok: false }
+      if (!(await guardPiiReveal())) return { ok: false }
       if (revealPersonalInfo) {
         try {
           const payload = await revealPersonalInfo(reason)
@@ -214,17 +283,20 @@ export function usePersonalInfoReveal({
           setConfirmOpen(false)
           return { ok: true, payload }
         } catch (error) {
-          const hasHttpResponse =
-            error != null &&
-            typeof error === 'object' &&
-            'response' in error &&
-            (error as { response?: unknown }).response != null
+          const status =
+            error != null && typeof error === 'object' && 'response' in error
+              ? (error as { response?: { status?: number } }).response?.status
+              : undefined
+          setPersonalInfoRevealed(false)
+          evictProgramUnmaskDetailCaches(programId)
           const message =
-            !hasHttpResponse && error instanceof Error && error.message.trim()
-              ? error.message
-              : '개인정보 원문 조회에 실패했습니다.'
+            status === 403
+              ? '이 프로그램에서 원문을 열람할 권한이 없습니다.'
+              : !status && error instanceof Error && error.message.trim()
+                ? error.message
+                : '개인정보 원문 조회에 실패했습니다.'
           cmsAlertModal.show({
-            title: '열람 실패',
+            title: status === 403 ? '열람 권한 없음' : '열람 실패',
             content: message,
           })
           return { ok: false }
@@ -257,6 +329,7 @@ export function usePersonalInfoReveal({
       resolveInstructorRoleRequestId,
       revealPersonalInfo,
       guardPiiReveal,
+      programId,
     ]
   )
 
@@ -269,8 +342,9 @@ export function usePersonalInfoReveal({
 
   const openPersonalInfoRevealConfirm = useCallback(() => {
     if (personalInfoRevealed) return
-    if (!guardPiiReveal()) return
-    setConfirmOpen(true)
+    void guardPiiReveal().then(allowed => {
+      if (allowed) setConfirmOpen(true)
+    })
   }, [personalInfoRevealed, guardPiiReveal])
 
   const onPrivacyControlClick = useCallback(() => {
@@ -279,19 +353,22 @@ export function usePersonalInfoReveal({
         setPersonalInfoRevealed(false)
         return
       }
-      if (!guardPiiReveal()) return
-      setConfirmOpen(true)
+      void guardPiiReveal().then(allowed => {
+        if (allowed) setConfirmOpen(true)
+      })
       return
     }
     if (controlMode === 'hideWhenRevealed') {
       if (personalInfoRevealed) return
-      if (!guardPiiReveal()) return
-      setConfirmOpen(true)
+      void guardPiiReveal().then(allowed => {
+        if (allowed) setConfirmOpen(true)
+      })
       return
     }
     if (personalInfoRevealed) return
-    if (!guardPiiReveal()) return
-    setConfirmOpen(true)
+    void guardPiiReveal().then(allowed => {
+      if (allowed) setConfirmOpen(true)
+    })
   }, [controlMode, personalInfoRevealed, guardPiiReveal])
 
   const confirmModal = useMemo(
@@ -308,6 +385,8 @@ export function usePersonalInfoReveal({
 
   return {
     personalInfoRevealed,
+    programPrivacyPending:
+      privacyScope === 'program' && (programAssignment.pending || !programCanReveal),
     personalInfoRevealConfirmOpen: confirmOpen,
     onPrivacyControlClick,
     openPersonalInfoRevealConfirm,

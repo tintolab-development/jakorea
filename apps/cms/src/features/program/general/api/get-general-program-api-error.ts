@@ -2,12 +2,22 @@
  * 일반 프로그램 API 에러 메시지 추출 · CONFLICT 한글화
  */
 
-import { CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
+import {
+  CMS_MASTER_CANNOT_BE_PROGRAM_OWNER_MESSAGE,
+  CMS_OPERABLE_ADMIN_PROGRAM_VIEWER_FORBIDDEN_MESSAGE,
+  CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
+import { PROGRAM_CREATE_VIEWER_CANNOT_OWN_MESSAGE } from '@/features/program/shared/lib/program-create-admin-assignments'
+import {
+  PROGRAM_INLINE_IMAGE_ERROR_MESSAGES,
+  isProgramInlineImageBindError,
+} from '@/features/program/shared/api/program-inline-images'
 import {
   isProgramEducationStructureGuardCode,
   PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES,
 } from '@/features/program/general/lib/education-structure-guard'
 import { formatOrganizationApplicationApproveErrorMessage } from '@/features/program/general/lib/organization-application-approve-slots'
+import { INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES } from '@/features/program/general/lib/instructor-assignment-availability'
 import {
   programEditWindowErrorMessage,
   resolveProgramRecruitmentPolicyErrorMessage,
@@ -116,12 +126,24 @@ const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE =
 const PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_SURVEY_MESSAGE =
   '교육 진행 예정일만 설문 대상으로 지정할 수 있습니다.'
 
+const PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION_MESSAGE =
+  '새로 연결하거나 교체할 양식은 현재 발행된 버전만 선택할 수 있습니다.'
+
+const FORM_BINDING_TEMPLATE_LOCKED_MESSAGE =
+  '이미 응답이 있는 양식은 연결된 템플릿 버전을 변경할 수 없습니다.'
+
 export function getProgramFormBindingErrorMessage(
   error: unknown,
   fallback: string,
   context?: ProgramFormBindingErrorContext
 ): string {
   const code = extractApiErrorCode(error)
+  if (code === 'PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION') {
+    return PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION_MESSAGE
+  }
+  if (code === 'FORM_BINDING_TEMPLATE_LOCKED') {
+    return FORM_BINDING_TEMPLATE_LOCKED_MESSAGE
+  }
   if (code === 'TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY') {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
     if (raw && raw !== code) return raw
@@ -162,10 +184,17 @@ export function getGeneralProgramApiErrorCode(error: unknown): string | undefine
 }
 
 export function getGeneralProgramApiErrorMessage(error: unknown, fallback: string): string {
+  if (isProgramInlineImageBindError(error) && error.message.trim()) {
+    return error.message
+  }
+
   const organizationAssignmentMessage = formatOrganizationApplicationApproveErrorMessage(error)
   if (organizationAssignmentMessage) return organizationAssignmentMessage
 
   const code = extractApiErrorCode(error)
+  if (code && PROGRAM_INLINE_IMAGE_ERROR_MESSAGES[code]) {
+    return PROGRAM_INLINE_IMAGE_ERROR_MESSAGES[code]
+  }
   if (code === 'PUBLIC_SURVEY_FILE_QUESTION_NOT_SUPPORTED') {
     return PUBLIC_SURVEY_FILE_QUESTION_NOT_SUPPORTED_MESSAGE
   }
@@ -190,6 +219,9 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
     if (raw && raw !== code) return raw
     return PROGRAM_SCHEDULE_NOT_EDUCATION_SLOT_MESSAGE
   }
+  if (code === 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD') {
+    return '모집·운영 기간이 사업(오픈) 기간 밖입니다. 모집 창은 모집 행으로만 저장되고, 신청일·프로그램 운영일은 사업 기간 안에 있을 때만 함께 전송됩니다.'
+  }
   const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(
     code,
     extractRawApiMessage(error)
@@ -199,6 +231,23 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (editWindowMessage) return editWindowMessage
   if (code === 'INVALID_PROGRAM_ASSIGNMENT_ROLE') {
     return CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE
+  }
+  if (code === 'PROGRAM_OWNER_ROLE_REQUIRES_ACCOUNTING_OR_PROGRAM_MANAGER') {
+    return CMS_MASTER_CANNOT_BE_PROGRAM_OWNER_MESSAGE
+  }
+  if (code === 'ACCOUNTING_OR_PROGRAM_MANAGER_REQUIRED_FOR_OWNER_OR_ASSISTANT') {
+    return CMS_OPERABLE_ADMIN_PROGRAM_VIEWER_FORBIDDEN_MESSAGE
+  }
+  if (code === 'PROGRAM_VIEWER_GLOBAL_ROLE_CANNOT_BE_ELEVATED') {
+    return CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE
+  }
+  if (error instanceof Error && error.message === PROGRAM_CREATE_VIEWER_CANNOT_OWN_MESSAGE) {
+    return error.message
+  }
+  if (code && INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES[code]) {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES[code]
   }
   if (code && PROGRESS_INSTRUCTOR_ERROR_MESSAGES[code]) {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()

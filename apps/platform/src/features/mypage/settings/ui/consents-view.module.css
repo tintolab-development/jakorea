@@ -53,8 +53,20 @@
 .titleGroup {
   display: flex;
   min-width: 0;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
+}
+
+/* 긴 제목(만 14세 미만 법정대리인 동의 등)에서 필수/선택이 세로로 깨지지 않게 */
+.requirementLabel {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.cardTitle {
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .headerActions {
@@ -65,12 +77,14 @@
 }
 
 .cardHeader .termsViewButton {
+  flex-shrink: 0;
   min-width: 0;
   height: auto;
   padding: 0;
   color: var(--color-neutral-cool-500);
   text-decoration: underline;
   text-underline-offset: 2px;
+  white-space: nowrap;
 }
 
 .cardHeader .termsViewButton:hover:not(:disabled) {
@@ -98,6 +112,21 @@
 .statusBadge {
   width: auto;
   min-width: 52px;
+}
+
+/* 지정 안내 문구(미성년 초상권 미동의) 전용 — 줄바꿈 시 2번째 줄도 칩 오른쪽에서 시작 */
+.statusInfoHintBesideBadge {
+  flex-wrap: nowrap;
+  align-items: baseline;
+}
+
+.statusInfoHintBesideBadge > .statusBadge {
+  flex-shrink: 0;
+}
+
+.statusHintBesideBadge {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .statusToggle {

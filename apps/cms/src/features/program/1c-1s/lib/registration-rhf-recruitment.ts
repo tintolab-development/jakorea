@@ -88,7 +88,7 @@ export function emptyCompanySchoolRecruitFormState(): CompanySchoolRecruitFormSt
     inquiryContact: '',
     inquiryTel: '',
     inquiryEmail: '',
-    announcementPublished: 'published',
+    announcementPublished: '',
     preguidanceRequired: '',
     studentListRequired: '',
     certificateProvided: '',

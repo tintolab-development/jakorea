@@ -25,6 +25,7 @@ import {
   mapTextbookDeliveryStatusToBadge,
   mapTextbookStatusKeyToDeliveryStatus,
   mapPreferredEducationSchedulesToSessions,
+  resolveOrganizationApplicationHopeSessions,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
   mapOrganizationApplicationListSessionsToConfirmedSessions,
   mapOrganizationApplicationToApplicantSchoolRow,
@@ -258,8 +259,9 @@ describe('general-applications-adapters', () => {
     expect(row.educationGrade).toBe('-')
     expect(row.teacherName).toBe('-')
     expect(row.contact).toBeUndefined()
-    expect(row.sessions).toEqual([])
-    expect(row.preferredEducationSchedules).toEqual([])
+    expect(row.sessions).toHaveLength(1)
+    expect(row.sessions?.[0]?.date).toBe('2026-10-15')
+    expect(row.preferredEducationSchedules).toHaveLength(1)
     expect(row.detail?.educationType).toBeUndefined()
     expect(row.detail?.applicationReason).toBeUndefined()
     expect(row.detail?.teacherPhone).toBeUndefined()
@@ -602,6 +604,47 @@ describe('general-applications-adapters', () => {
     expect(row.sessions?.[0]?.resolvedScheduleId).toBeNull()
     expect(row.sessions?.[0]?.requestedScheduleId).toBe(184833)
     expect(row.sessions?.[0]?.timeRange).toContain('~')
+  })
+
+  it('maps participant preferredEducationSchedules when sessions are empty', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1695027,
+        organizationApplicationId: 1691546,
+        sourceApplicationId: 1691546,
+        organizationName: 'QA 제휴학교',
+        grade: '2',
+        sessions: [],
+        preferredEducationSchedules: [
+          {
+            scheduleId: null,
+            round: 1,
+            startAt: '2026-12-22T18:00:00Z',
+            endAt: '2026-12-22T21:00:00Z',
+            label: null,
+            unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH',
+            educationDate: '2026-12-23',
+          },
+          {
+            scheduleId: null,
+            round: 2,
+            startAt: '2026-12-29T19:00:00Z',
+            endAt: '2026-12-29T22:00:00Z',
+            label: null,
+            unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH',
+            educationDate: '2026-12-30',
+          },
+        ],
+      } as never,
+      0,
+      '186473'
+    )
+    expect(row.sessions).toBeUndefined()
+    expect(row.preferredEducationSchedules).toHaveLength(2)
+    expect(row.hopeEducationSessions).toHaveLength(2)
+    expect(row.hopeEducationSessions?.[0]?.date).toBe('2026.12.23')
+    expect(row.hopeEducationSessions?.[0]?.timeRange).toBe('03:00 ~ 06:00')
+    expect(row.hopeEducationSessions?.[1]?.date).toBe('2026.12.30')
   })
 
   it.each([
@@ -1838,5 +1881,219 @@ describe('mapOrganizationApplicationListSessionsToConfirmedSessions', () => {
     expect(sessions[0]?.sessionNo).toBe(3)
     expect(sessions[0]?.endAt).toBe('2026-10-27T09:40:00+09:00')
     expect(sessions[1]?.sessionNo).toBeNull()
+  })
+
+  const preferred1691544 = [
+    {
+      scheduleId: null,
+      round: 1,
+      startAt: '2026-12-14T00:00:00Z',
+      endAt: '2026-12-14T00:45:00Z',
+      label: null,
+      unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' as const,
+    },
+    {
+      scheduleId: null,
+      round: 2,
+      startAt: '2026-12-15T04:00:00Z',
+      endAt: '2026-12-15T04:45:00Z',
+      label: null,
+      unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' as const,
+    },
+  ]
+  const preferred1691545 = [
+    {
+      scheduleId: null,
+      round: 1,
+      startAt: '2026-12-21T18:00:00Z',
+      endAt: '2026-12-21T20:00:00Z',
+      label: null,
+      unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' as const,
+    },
+    {
+      scheduleId: null,
+      round: 2,
+      startAt: '2026-12-29T19:04:00Z',
+      endAt: '2026-12-30T00:00:00Z',
+      label: null,
+      unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' as const,
+    },
+  ]
+
+  it('maps COMPANY_SCHOOL preferred hope sessions when requested is missing', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691544,
+        programType: 'COMPANY_SCHOOL',
+        organizationName: '기관 A',
+        applicationStatus: 'WAITING_REVIEW',
+        preferredEducationSchedules: preferred1691544,
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186473'
+    )
+    expect(row.sessions).toHaveLength(2)
+    expect(row.sessions?.[0]).toMatchObject({
+      classNum: '1지망',
+      date: '2026.12.14',
+      dayOfWeek: '월',
+      timeRange: '09:00 ~ 09:45',
+      resolvedScheduleId: null,
+      scheduleUnresolved: true,
+    })
+    expect(row.sessions?.[1]).toMatchObject({
+      classNum: '2지망',
+      date: '2026.12.15',
+      dayOfWeek: '화',
+      timeRange: '13:00 ~ 13:45',
+    })
+  })
+
+  it('prefers requested schedules over preferred for COMPANY_SCHOOL', () => {
+    const requested = [
+      {
+        id: 1,
+        preferenceOrder: 1,
+        requestedDate: '2026-11-01',
+        startPeriod: null,
+        sessionCount: 1,
+        sessionTimes: [{ sessionOrder: 1, startTime: '10:00:00', endTime: '11:00:00' }],
+      },
+      {
+        id: 2,
+        preferenceOrder: 2,
+        requestedDate: '2026-11-02',
+        startPeriod: null,
+        sessionCount: 1,
+        sessionTimes: [{ sessionOrder: 1, startTime: '14:00:00', endTime: '15:00:00' }],
+      },
+    ]
+    const sessions = resolveOrganizationApplicationHopeSessions(
+      {
+        programType: 'COMPANY_SCHOOL',
+        availableActions: [],
+        sessions: [],
+        preferredEducationSchedules: [],
+      },
+      preferred1691544 as never,
+      requested as never
+    )
+    expect(sessions).toHaveLength(2)
+    expect(sessions[0]?.date).toBe('2026.11.01')
+    expect(sessions[0]?.timeRange).toBe('10:00 ~ 11:00')
+    expect(sessions[1]?.date).toBe('2026.11.02')
+  })
+
+  it('falls back to preferred when COMPANY_SCHOOL requested is an empty array', () => {
+    const sessions = resolveOrganizationApplicationHopeSessions(
+      {
+        programType: 'ONE_COMPANY_ONE_SCHOOL',
+        availableActions: [],
+        sessions: [],
+        preferredEducationSchedules: [],
+      },
+      preferred1691545 as never,
+      []
+    )
+    expect(sessions).toHaveLength(2)
+    expect(sessions[0]).toMatchObject({
+      date: '2026.12.22',
+      dayOfWeek: '화',
+      timeRange: '03:00 ~ 05:00',
+    })
+    expect(sessions[1]).toMatchObject({
+      date: '2026.12.30',
+      dayOfWeek: '수',
+      timeRange: '04:04 ~ 09:00',
+    })
+  })
+
+  it('keeps list preferred hope sessions when detail GET omits preferred', () => {
+    const listRow = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691544,
+        programType: 'COMPANY_SCHOOL',
+        organizationName: '기관 A',
+        applicationStatus: 'WAITING_REVIEW',
+        preferredEducationSchedules: preferred1691544,
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186473'
+    )
+    const detailRow = mapOrganizationApplicationDetailToApplicantSchoolRow(
+      {
+        id: 1691544,
+        programType: 'COMPANY_SCHOOL',
+        organizationName: '기관 A',
+        applicationStatus: 'WAITING_REVIEW',
+      } as Parameters<typeof mapOrganizationApplicationDetailToApplicantSchoolRow>[0],
+      listRow
+    )
+    expect(detailRow.preferredEducationSchedules).toHaveLength(2)
+    expect(detailRow.sessions).toHaveLength(2)
+    expect(detailRow.sessions?.[0]?.timeRange).toBe('09:00 ~ 09:45')
+    expect(detailRow.sessions?.[1]?.timeRange).toBe('13:00 ~ 13:45')
+  })
+
+  it('does not mix hope sessions between COMPANY_SCHOOL applications', () => {
+    const rowA = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691544,
+        programType: 'COMPANY_SCHOOL',
+        organizationName: '기관 A',
+        preferredEducationSchedules: preferred1691544,
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186473'
+    )
+    const rowB = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691545,
+        programType: 'COMPANY_SCHOOL',
+        organizationName: '기관 B',
+        preferredEducationSchedules: preferred1691545,
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      1,
+      '186473'
+    )
+    expect(rowA.id).toBe('1691544')
+    expect(rowB.id).toBe('1691545')
+    expect(rowA.sessions?.[0]?.timeRange).toBe('09:00 ~ 09:45')
+    expect(rowB.sessions?.[0]?.timeRange).toBe('03:00 ~ 05:00')
+    expect(rowA.sessions?.map(s => s.timeRange)).not.toEqual(rowB.sessions?.map(s => s.timeRange))
+  })
+
+  it('keeps unmatched preferred hope sessions out of confirmed assignment sessions', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691544,
+        programType: 'COMPANY_SCHOOL',
+        organizationName: '기관 A',
+        preferredEducationSchedules: preferred1691544,
+        sessions: [
+          {
+            scheduleId: 188001,
+            sessionNo: 1,
+            startAt: '2026-01-05T00:00:00Z',
+            assignmentStatus: 'CONFIRMED',
+          },
+        ],
+      } as unknown as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '186473'
+    )
+    expect(row.sessions?.[0]?.date).toBe('2026.12.14')
+    expect(row.sessions?.[0]?.resolvedScheduleId).toBeNull()
+    expect(row.confirmedListAssignmentSessions).toHaveLength(1)
+    expect(row.confirmedListAssignmentSessions?.[0]?.resolvedScheduleId).toBe(188001)
+    expect(row.confirmedListAssignmentSessions?.[0]?.date).toBe('2026.01.05')
+  })
+
+  it('maps unmatched preferred rows with null label and scheduleId as visible hope sessions', () => {
+    const sessions = mapPreferredEducationSchedulesToSessions(preferred1691544 as never)
+    expect(sessions).toHaveLength(2)
+    expect(sessions[0]?.scheduleLabel).toBeUndefined()
+    expect(sessions[0]?.resolvedScheduleId).toBeNull()
+    expect(sessions[0]?.timeRange).toBe('09:00 ~ 09:45')
   })
 })

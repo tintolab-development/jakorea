@@ -3,9 +3,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
 import type { Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type {
   ConsultationStatus,
@@ -18,6 +17,7 @@ import {
   useRemoveCorporateConsultations,
 } from '@/features/corporate-consultation/api/hooks'
 import { corporateConsultationQueryKeys } from '@/features/corporate-consultation/api/query-keys'
+import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status'
 import { getCorporateConsultationService } from '@/features/corporate-consultation/api/service'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
@@ -36,6 +36,7 @@ import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
+import { useUrlDetailId } from '@/shared/lib/use-url-detail-id'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
   applyDateRangeToSearchParams,
@@ -52,6 +53,7 @@ import {
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
+  FilterTableLayout,
 } from '@/shared/ui'
 
 import './page.css'
@@ -78,6 +80,7 @@ const INITIAL_PENDING: ConsultationPendingFilters = {
 
 const appliedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 const confirmedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
+const DETAIL_QUERY_KEYS = ['applicationId', 'consultationId'] as const
 
 const COL = {
   checkbox: TABLE_COLUMN_WIDTHS.checkbox,
@@ -192,8 +195,6 @@ function statusLabel(status: ConsultationStatus): string {
 
 export function CorporateConsultationsPage() {
   const { showAlert } = useCmsAlert()
-  const location = useLocation()
-  const navigate = useNavigate()
 
   const {
     pendingFilters,
@@ -201,6 +202,8 @@ export function CorporateConsultationsPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    searchParams,
+    patchSearchParams,
   } = useListFilterUrl<ConsultationPendingFilters, CorporateConsultationListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -265,10 +268,15 @@ export function CorporateConsultationsPage() {
   const totalCount = listQuery.data?.totalCount ?? rows.length
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [detailOpen, setDetailOpen] = useState(false)
   const [detailRow, setDetailRow] = useState<CorporateConsultation | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
+  const { detailId, openDetail, closeDetail } = useUrlDetailId(
+    searchParams,
+    patchSearchParams,
+    DETAIL_QUERY_KEYS
+  )
+  const detailOpen = detailId != null
 
   const rowNoMap = useMemo(() => {
     const map = new Map<string, number>()
@@ -284,105 +292,55 @@ export function CorporateConsultationsPage() {
     setSelectedRowKeys([])
   }, [applySearch])
 
-  const replaceSearchParams = useCallback(
-    (mutate: (params: URLSearchParams) => void) => {
-      const params = new URLSearchParams(location.search)
-      mutate(params)
-      const next = params.toString()
-      const current = location.search.startsWith('?') ? location.search.slice(1) : location.search
-      if (next === current) return
-      navigate({ search: next ? `?${next}` : '' }, { replace: true })
-    },
-    [location.search, navigate]
-  )
-
-  const openDetail = useCallback(
-    (row: CorporateConsultation) => {
-      setDetailRow(row)
-      setDetailOpen(true)
-      replaceSearchParams(params => {
-        params.set('applicationId', row.id)
-        params.delete('consultationId')
-      })
-      // 상세 진입 시 원문 연락처 조회 + 개인정보 감사 로그
-      void getCorporateConsultationService(row.id, DEFAULT_CONFIRM_ACTOR)
-        .then(item => {
-          if (item) setDetailRow(item)
-        })
-        .catch(() => {
-          /* 목록 행 데이터로 표시 유지 */
-        })
-    },
-    [replaceSearchParams]
-  )
-
-  const closeDetail = useCallback(() => {
-    setDetailOpen(false)
-    setDetailRow(null)
-    replaceSearchParams(params => {
-      params.delete('applicationId')
-      params.delete('consultationId')
-    })
-  }, [replaceSearchParams])
-
   useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const deepLinkId =
-      params.get('applicationId')?.trim() || params.get('consultationId')?.trim()
-    if (!deepLinkId || detailOpen || listQuery.isLoading || listQuery.isFetching) return
-
-    const row = rows.find(item => item.id === deepLinkId)
-    if (row) {
-      let cancelled = false
-      queueMicrotask(() => {
-        if (!cancelled) openDetail(row)
-      })
-      return () => {
-        cancelled = true
-      }
+    if (!detailId) {
+      setDetailRow(null)
+      return
     }
 
+    setDetailRow(prev => {
+      if (prev?.id === detailId) return prev
+      return rows.find(item => item.id === detailId) ?? prev
+    })
+
     let cancelled = false
-    void getCorporateConsultationService(deepLinkId, DEFAULT_CONFIRM_ACTOR)
+    void getCorporateConsultationService(detailId, DEFAULT_CONFIRM_ACTOR)
       .then(item => {
         if (cancelled || !item) return
         setDetailRow(item)
-        setDetailOpen(true)
-        replaceSearchParams(nextParams => {
-          nextParams.set('applicationId', item.id)
-          nextParams.delete('consultationId')
-        })
       })
-      .catch(() => {
-        /* 목록에 없는 상세 ID는 기존 목록 화면을 유지 */
+      .catch(error => {
+        if (cancelled) return
+        if (isAdminForbidden(error)) {
+          showAlert({
+            title: '권한 없음',
+            content: '해당 신청을 조회할 권한이 없습니다.',
+          })
+          return
+        }
+        if (isAdminNotFound(error)) {
+          showAlert({
+            title: '신청을 찾을 수 없음',
+            content: '신청 정보를 찾을 수 없습니다.',
+          })
+        }
       })
 
     return () => {
       cancelled = true
     }
-  }, [
-    detailOpen,
-    listQuery.isFetching,
-    listQuery.isLoading,
-    location.search,
-    openDetail,
-    replaceSearchParams,
-    rows,
-  ])
+    // 목록 갱신마다 상세 GET을 다시 치지 않는다. 시드는 detailId 변경 시의 rows만 쓴다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rows
+  }, [detailId, showAlert])
 
   const refreshDetailFromList = useCallback(
     async (id: string) => {
-      const next = await listQuery.refetch()
-      const found = (next.data?.items ?? []).find(r => r.id === id) ?? null
-      if (found) {
-        setDetailRow(found)
-        return
-      }
+      void listQuery.refetch()
       const detail = await getCorporateConsultationService(id, DEFAULT_CONFIRM_ACTOR)
       setDetailRow(detail)
-      if (!detail) setDetailOpen(false)
+      if (!detail) closeDetail()
     },
-    [listQuery]
+    [closeDetail, listQuery]
   )
 
   const handleBulkDeleteClick = useCallback(() => {
@@ -419,8 +377,8 @@ export function CorporateConsultationsPage() {
       showAlert(
         corporateConsultationMutationFailureAlert(
           error,
-          '상담 신청 삭제에 실패했습니다. 다시 시도해 주세요.',
-        ),
+          '상담 신청 삭제에 실패했습니다. 다시 시도해 주세요.'
+        )
       )
       void listQuery.refetch()
     }
@@ -441,19 +399,12 @@ export function CorporateConsultationsPage() {
       showAlert(
         corporateConsultationMutationFailureAlert(
           error,
-          '상담 신청 확인에 실패했습니다. 다시 시도해 주세요.',
-        ),
+          '상담 신청 확인에 실패했습니다. 다시 시도해 주세요.'
+        )
       )
       void listQuery.refetch()
     }
-  }, [
-    confirmMutation,
-    detailRow,
-    listQuery,
-    refreshDetailFromList,
-    selectedRowKeys,
-    showAlert,
-  ])
+  }, [confirmMutation, detailRow, listQuery, refreshDetailFromList, selectedRowKeys, showAlert])
 
   const handleDetailConfirm = useCallback(async () => {
     if (!detailRow) return
@@ -467,8 +418,8 @@ export function CorporateConsultationsPage() {
       showAlert(
         corporateConsultationMutationFailureAlert(
           error,
-          '상담 신청 확인에 실패했습니다. 다시 시도해 주세요.',
-        ),
+          '상담 신청 확인에 실패했습니다. 다시 시도해 주세요.'
+        )
       )
     }
   }, [confirmMutation, detailRow, refreshDetailFromList, showAlert])
@@ -483,8 +434,8 @@ export function CorporateConsultationsPage() {
       showAlert(
         corporateConsultationMutationFailureAlert(
           error,
-          '상담 신청 삭제에 실패했습니다. 다시 시도해 주세요.',
-        ),
+          '상담 신청 삭제에 실패했습니다. 다시 시도해 주세요.'
+        )
       )
     }
   }, [closeDetail, detailRow, removeMutation, showAlert])
@@ -574,134 +525,131 @@ export function CorporateConsultationsPage() {
 
   return (
     <div className="corp-consultations-page">
-      <div className="admin-list-card corp-consultations-page__filter-card">
-        <div className="admin-filter-area admin-filter-area--split corp-consultations-page__filter">
-          <div className="admin-filter-area__head">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">처리 상태</p>
-              <CmsSelect
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.status}
-                placeholder="전체"
-                options={[
-                  { value: 'pending', label: '확인 대기' },
-                  { value: 'confirmed', label: '확인 완료' },
-                ]}
-                onChange={v =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    status: (v as StatusPending) || '',
-                  }))
-                }
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">기업명</p>
-              <AdminFilterTextInput
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.companyName}
-                placeholder="기업명을 입력하세요"
-                onChange={value => patchPendingFilters(prev => ({ ...prev, companyName: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">담당자명</p>
-              <AdminFilterTextInput
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.contactName}
-                placeholder="담당자명을 입력하세요"
-                onChange={value => patchPendingFilters(prev => ({ ...prev, contactName: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">부서/직함명</p>
-              <AdminFilterTextInput
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.departmentTitle}
-                placeholder="부서/직함명을 입력하세요"
-                onChange={value => patchPendingFilters(prev => ({ ...prev, departmentTitle: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-          </div>
-          <div className="admin-filter-area__bottom">
-            <div className="admin-filter-area__bottom-fields">
-              <div className="admin-filter-area__field admin-filter-area__field--date-range">
-                <p className="admin-filter-area__label">신청일</p>
-                <CmsDateRangePicker
-                  inputSize="large"
-                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                  value={rangeAsPicker(pendingFilters.appliedRange)}
-                  placeholder={['시작일', '종료일']}
-                  allowClear
-                  onChange={dates => {
-                    if (!dates || (!dates[0] && !dates[1])) {
-                      setPendingFilters(prev => ({ ...prev, appliedRange: null }))
-                      return
-                    }
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area admin-filter-area--split corp-consultations-page__filter">
+            <div className="admin-filter-area__head">
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">처리 상태</p>
+                <CmsSelect
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  value={pendingFilters.status}
+                  placeholder="전체"
+                  options={[
+                    { value: 'pending', label: '확인 대기' },
+                    { value: 'confirmed', label: '확인 완료' },
+                  ]}
+                  onChange={v =>
                     setPendingFilters(prev => ({
                       ...prev,
-                      appliedRange: [dates[0] ?? null, dates[1] ?? null],
+                      status: (v as StatusPending) || '',
                     }))
-                  }}
+                  }
                 />
               </div>
-              <div className="admin-filter-area__field admin-filter-area__field--date-range">
-                <p className="admin-filter-area__label">확인일</p>
-                <CmsDateRangePicker
-                  inputSize="large"
-                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                  value={rangeAsPicker(pendingFilters.confirmedRange)}
-                  placeholder={['시작일', '종료일']}
-                  allowClear
-                  onChange={dates => {
-                    if (!dates || (!dates[0] && !dates[1])) {
-                      setPendingFilters(prev => ({ ...prev, confirmedRange: null }))
-                      return
-                    }
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      confirmedRange: [dates[0] ?? null, dates[1] ?? null],
-                    }))
-                  }}
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">기업명</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.companyName}
+                  placeholder="기업명을 입력하세요"
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, companyName: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">담당자명</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.contactName}
+                  placeholder="담당자명을 입력하세요"
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, contactName: value }))}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">부서/직함명</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.departmentTitle}
+                  placeholder="부서/직함명을 입력하세요"
+                  onChange={value =>
+                    patchPendingFilters(prev => ({ ...prev, departmentTitle: value }))
+                  }
+                  onPressEnter={handleSearch}
                 />
               </div>
             </div>
-            <div className="admin-filter-area__actions">
-              <CmsButton
-                className="admin-filter-area__search-button"
-                variant="primary"
-                size="large"
-                type="button"
-                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-                onClick={handleSearch}
-              >
-                조회
-              </CmsButton>
+            <div className="admin-filter-area__bottom">
+              <div className="admin-filter-area__bottom-fields">
+                <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                  <p className="admin-filter-area__label">신청일</p>
+                  <CmsDateRangePicker
+                    inputSize="medium"
+                    width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                    value={rangeAsPicker(pendingFilters.appliedRange)}
+                    placeholder={['시작일', '종료일']}
+                    allowClear
+                    onChange={dates => {
+                      if (!dates || (!dates[0] && !dates[1])) {
+                        setPendingFilters(prev => ({ ...prev, appliedRange: null }))
+                        return
+                      }
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        appliedRange: [dates[0] ?? null, dates[1] ?? null],
+                      }))
+                    }}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                  <p className="admin-filter-area__label">확인일</p>
+                  <CmsDateRangePicker
+                    inputSize="medium"
+                    width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                    value={rangeAsPicker(pendingFilters.confirmedRange)}
+                    placeholder={['시작일', '종료일']}
+                    allowClear
+                    onChange={dates => {
+                      if (!dates || (!dates[0] && !dates[1])) {
+                        setPendingFilters(prev => ({ ...prev, confirmedRange: null }))
+                        return
+                      }
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        confirmedRange: [dates[0] ?? null, dates[1] ?? null],
+                      }))
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="admin-filter-area__actions">
+                <CmsButton
+                  className="admin-filter-area__search-button"
+                  variant="primary"
+                  size="medium"
+                  width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                  type="button"
+                  onClick={handleSearch}
+                >
+                  조회
+                </CmsButton>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">기업 후원 상담 신청 목록</span>
-            <span className="table-description">
-              총 {totalCount.toLocaleString('ko-KR')}건
-            </span>
-          </div>
-          <div className="table-header-actions--wrapper">
+        }
+        title="기업 후원 상담 신청 목록"
+        description={`총 ${totalCount.toLocaleString('ko-KR')}건`}
+        actions={
+          <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               loading={removeMutation.isPending && !detailOpen}
               onClick={handleBulkDeleteClick}
@@ -710,18 +658,18 @@ export function CorporateConsultationsPage() {
             </CmsButton>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               type="button"
               loading={confirmMutation.isPending && !detailOpen}
               onClick={handleBulkConfirmClick}
             >
               선택 확인
             </CmsButton>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <div className="corp-consultations-page__table-scroll">
-          <Table<CorporateConsultation>
+          <CmsDataTable<CorporateConsultation>
             className="cms-data-table corp-consultations-page__table"
             rowKey="id"
             loading={listQuery.isLoading}
@@ -736,14 +684,15 @@ export function CorporateConsultationsPage() {
             onRow={record => ({
               onClick: e => {
                 if (isTableSelectionClick(e)) return
-                openDetail(record)
+                setDetailRow(record)
+                openDetail(record.id)
               },
               style: { cursor: 'pointer' },
             })}
             scroll={{ x: TABLE_MIN_WIDTH }}
           />
         </div>
-      </div>
+      </FilterTableLayout>
 
       <CorporateConsultationDetailModal
         open={detailOpen}

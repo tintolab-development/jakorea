@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { FormCatalogDocumentResponse } from './formCatalogDocumentResponse';
 import type { FormTemplateLatestPayloadResponseLatestVersionStatus } from './formTemplateLatestPayloadResponseLatestVersionStatus';
 import type { FormTemplateLatestPayloadResponseVersionStatus } from './formTemplateLatestPayloadResponseVersionStatus';
 
@@ -34,4 +35,6 @@ export interface FormTemplateLatestPayloadResponse {
   baseTemplateCode?: string;
   systemTemplate?: boolean;
   deletable?: boolean;
+  /** 성범죄 동의서 활성 PDF. agreement-crime 카탈로그 원본만 값이 있고 그 외는 null. */
+  catalogDocument?: FormCatalogDocumentResponse;
 }

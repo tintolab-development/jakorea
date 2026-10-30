@@ -7,6 +7,8 @@
  */
 
 export interface FormTemplateVersionCreateRequest {
+  /** 새 DRAFT의 기준 버전. 같은 템플릿의 버전만 허용하며, 생략 시 최신 PUBLISHED(없으면 최신 버전)를 사용합니다. */
+  sourceVersionId?: number;
   versionLabel?: string;
   schemaJson?: string;
   extensionJson?: string;

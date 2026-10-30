@@ -269,8 +269,17 @@ export function useGeneralProgramRegistrationFlow(
     tabVisibility,
   ])
 
+  // URL(generalStep) → activeStep 동기화. selectStep 직후 URL 반영 전 렌더에서 activeStep만 바뀌면
+  // 옛 URL 값으로 되돌렸다가 다시 오는 되튀김이 생긴다(참여자 편집기 언마운트·재로드 유발).
+  // URL 단계나 그 해석 결과가 바뀔 때만 따른다(일반·TT·1사1교 공통).
+  const lastUrlStepSyncRef = useRef<{ fromUrl: string; normalized: GeneralProgramRegistrationStepKey } | null>(
+    null
+  )
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      lastUrlStepSyncRef.current = null
+      return
+    }
     const fromUrl = options?.initialStep
     if (fromUrl == null) return
     const normalized = coerceRegistrationStepForVariant(
@@ -278,6 +287,9 @@ export function useGeneralProgramRegistrationFlow(
       participantFlags,
       registrationFormVariant
     )
+    const last = lastUrlStepSyncRef.current
+    if (last != null && last.fromUrl === fromUrl && last.normalized === normalized) return
+    lastUrlStepSyncRef.current = { fromUrl, normalized }
     if (normalized === activeStep) return
     setActiveStep(normalized)
   }, [
@@ -594,7 +606,12 @@ export function useGeneralProgramRegistrationFlow(
           excludeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
         })
       }
-      await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
+      // 일반·TT: 떠난 탭의 단락 타이틀·설명(세션 draft)도 함께 기록한다. 1사1교는 기존 동작 유지.
+      await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant, {
+        preferSessionDrafts:
+          registrationFormVariant === 'general' || registrationFormVariant === 'trainedTeachers',
+        activeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
+      })
       syncRegistrationProgramDraftSession({
         programType,
         registrationTemplateCode: registrationTemplateId,

@@ -8,6 +8,7 @@
 import type { SettlementFrontendApprovalHistoryResponse } from './settlementFrontendApprovalHistoryResponse';
 import type { SettlementFrontendAttachmentResponse } from './settlementFrontendAttachmentResponse';
 import type { SettlementFrontendItemResponse } from './settlementFrontendItemResponse';
+import type { SettlementFrontendPayeeResponse } from './settlementFrontendPayeeResponse';
 
 export interface SettlementFrontendResponse {
   id?: string;
@@ -27,7 +28,8 @@ export interface SettlementFrontendResponse {
   wageItemType?: string;
   feeGrade?: string;
   lectureSessionDisplay?: string;
-  institutionName?: string;
+  /** 참여 기관명. 목록 institutionName과 동일 규칙. 개인 참여 등으로 기관이 없으면 null */
+  institutionName?: string | null;
   instructorName?: string;
   businessIncomeEarnerLabel?: string;
   expectedTransferDate?: string;
@@ -47,5 +49,7 @@ export interface SettlementFrontendResponse {
   approvalHistories?: SettlementFrontendApprovalHistoryResponse[];
   createdAt?: string;
   updatedAt?: string;
+  /** 지급조서·산출 내역서 수취인 표시 블록(MASKED). instructorMemberId가 없으면 null */
+  payee?: SettlementFrontendPayeeResponse | null;
   availableActions?: string[];
 }

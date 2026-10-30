@@ -5,9 +5,11 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GeminiTrainingReportImportRequestDuplicateStrategy } from './geminiTrainingReportImportRequestDuplicateStrategy';
 import type { GeminiTrainingReportImportRow } from './geminiTrainingReportImportRow';
 
 export interface GeminiTrainingReportImportRequest {
   rows?: GeminiTrainingReportImportRow[];
-  duplicateStrategy?: string;
+  /** overwrite=동일 키 행 덮어쓰기(지급완료면 요청 전체 미커밋). append=중복이어도 신규 insert. 소문자 허용. */
+  duplicateStrategy?: GeminiTrainingReportImportRequestDuplicateStrategy;
 }

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-economy-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
@@ -16,6 +17,7 @@ import {
   isDynamicIndividualInterviewParagraph,
   isDynamicVolunteerActivityScheduleParagraph,
   isDynamicVolunteerInterviewParagraph,
+  isGeminiInstructorOfficialDocumentParagraphId,
   isInstructorAvailableScheduleParagraphId,
   isInstructorCrimeRecordParagraphId,
   isPortalDynamicOptionArrayParagraphId,
@@ -78,6 +80,10 @@ assert.equal(
   false,
 )
 assert.equal(
+  shouldLockTeacherMobileEmailOnBasicInfo(PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo),
+  true,
+)
+assert.equal(
   shouldShowEducationPlaceOnBasicInfo(PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo),
   true,
 )
@@ -93,6 +99,18 @@ assert.equal(
 )
 assert.equal(
   isPortalDynamicOptionArrayParagraphId(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule),
+  true,
+)
+assert.equal(
+  isGeminiInstructorOfficialDocumentParagraphId(
+    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.officialDocument,
+  ),
+  true,
+)
+assert.equal(
+  isInstructorAvailableScheduleParagraphId(
+    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+  ),
   true,
 )
 

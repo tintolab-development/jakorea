@@ -275,7 +275,7 @@ export function mapPatchUserBasicInfoToAdminAccountApiRequest(
   }
 
   if (Object.keys(body).length > 0) {
-    body.reason = 'CMS 관리자 회원 정보 수정'
+    body.reason = '회원 정보 수정'
   }
 
   return body

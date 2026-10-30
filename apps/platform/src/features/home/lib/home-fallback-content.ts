@@ -26,6 +26,8 @@ export type HomeHeroSlide = {
   placeholderBackground: string
   /** 에셋 수급 후 채우면 배경 이미지로 사용 */
   imageUrl?: string
+  href?: string
+  external?: boolean
 }
 
 export const HOME_HERO_AUTOPLAY_MS = 5000

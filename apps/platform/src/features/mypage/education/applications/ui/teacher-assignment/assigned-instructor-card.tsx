@@ -6,6 +6,12 @@ import {
   requestAssignedInstructorConsentDownload,
   type AssignedInstructorApplicationType,
 } from '../../api/assigned-instructors'
+import {
+  SEX_OFFENSE_INSTRUCTOR_CARD_DIRECT_MESSAGE,
+  SEX_OFFENSE_INSTRUCTOR_CARD_ONLINE_MESSAGE,
+  type SexOffenseInquiryCase,
+} from '@jakorea/form-schema/program-application'
+import { resolveAssignedInstructorCardBody } from '../../lib/teacher-assignment-aside'
 import { PFPageButton, PFText } from '@/shared/ui'
 import styles from './assigned-instructor-card.module.css'
 
@@ -14,6 +20,8 @@ export type TeacherAssignedInstructorCardProps = {
   applicationType?: AssignedInstructorApplicationType
   instructors: EducationTeacherAssignedInstructor[]
   onRefresh?: () => Promise<unknown>
+  /** 진행 중일 때만 기관 신청 조회 방식 CASE. 미설정이면 CASE 1로 간주하지 않음 */
+  sexOffenseInquiryCase?: SexOffenseInquiryCase | null
 }
 
 function readErrorCode(error: unknown): string | undefined {
@@ -160,11 +168,20 @@ function ConsentList({
   )
 }
 
+function SiteSubmissionMessage({ message }: { message: string }) {
+  return (
+    <PFText as="p" typo="bd-lg-rg" color="neutral-cool-500" className={styles.siteMessage}>
+      {message}
+    </PFText>
+  )
+}
+
 export function TeacherAssignedInstructorCard({
   applicationId,
   applicationType,
   instructors,
   onRefresh,
+  sexOffenseInquiryCase,
 }: TeacherAssignedInstructorCardProps) {
   const [index, setIndex] = useState(0)
   const total = instructors.length
@@ -172,6 +189,14 @@ export function TeacherAssignedInstructorCard({
 
   const safeIndex = Math.min(index, total - 1)
   const instructor = instructors[safeIndex]!
+  const cardBody = resolveAssignedInstructorCardBody(sexOffenseInquiryCase)
+  const siteMessage =
+    cardBody === 'site_direct'
+      ? SEX_OFFENSE_INSTRUCTOR_CARD_DIRECT_MESSAGE
+      : cardBody === 'site_online'
+        ? SEX_OFFENSE_INSTRUCTOR_CARD_ONLINE_MESSAGE
+        : null
+  const showConsentDocuments = cardBody === 'consents'
 
   return (
     <div className={styles.card}>
@@ -209,13 +234,27 @@ export function TeacherAssignedInstructorCard({
           />
         </div>
       </div>
+      {instructor.phone?.trim() || instructor.email?.trim() ? (
+        <>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            연락처 {instructor.phone?.trim() || '-'}
+          </PFText>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            이메일 {instructor.email?.trim() || '-'}
+          </PFText>
+        </>
+      ) : null}
 
-      <ConsentList
-        applicationId={applicationId}
-        applicationType={applicationType}
-        instructor={instructor}
-        onRefresh={onRefresh}
-      />
+      {siteMessage ? (
+        <SiteSubmissionMessage message={siteMessage} />
+      ) : showConsentDocuments ? (
+        <ConsentList
+          applicationId={applicationId}
+          applicationType={applicationType}
+          instructor={instructor}
+          onRefresh={onRefresh}
+        />
+      ) : null}
     </div>
   )
 }

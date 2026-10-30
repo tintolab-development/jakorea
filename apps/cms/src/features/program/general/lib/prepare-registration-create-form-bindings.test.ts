@@ -35,6 +35,17 @@ vi.mock('@/features/program/general/lib/registration-create-form-bindings-capabi
 vi.mock('@/features/program/general/lib/operational-form-bindings', () => ({
   listAllRegistrationCreateFormSpecs: (...args: unknown[]) =>
     listAllRegistrationCreateFormSpecs(...args),
+  isSystemCatalogOnlyFormType: (formType: string | null | undefined) => {
+    const normalized = String(formType ?? '')
+      .trim()
+      .toUpperCase()
+    return (
+      normalized === 'REGISTRATION' ||
+      normalized === 'ISSUANCE' ||
+      normalized === 'CERTIFICATE' ||
+      normalized === 'CERTIFICATION'
+    )
+  },
 }))
 
 vi.mock('@/features/program/general/lib/registration-wizard-form-draft', () => ({
@@ -107,13 +118,7 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
     expect(result).not.toHaveProperty('programDraftId')
     expect(result).not.toHaveProperty('formBindings')
     expect(result?.forms).toEqual([
-      {
-        templateCode: 'registration-general',
-        formType: 'REGISTRATION',
-        draft: registrationDraft,
-        overlay: { 'program.titleKo': '테스트' },
-        editorState: undefined,
-      },
+      // 등록 양식은 시스템 카탈로그만 사용하므로 COPY 목록에 넣지 않는다.
       // GENERAL 신청 양식은 수정이 없어도 항상 COPY 대상이다(본문은 적용 단계가 바인딩 버전에서 채운다).
       { templateCode: 'application-participant-individual', formType: 'APPLICATION', draft: null },
     ])

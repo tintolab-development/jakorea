@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { InputRef } from 'antd'
 import type { ImpactStory, ImpactStoryCategory } from '@/entities/impact-stories/model/types'
@@ -310,7 +310,7 @@ export function CategoryManagementModal({
       >
         <div className="is-category-modal__table-wrap">
           <div className="is-category-modal__table-scroll">
-            <Table<ImpactStoryCategory>
+            <CmsDataTable<ImpactStoryCategory>
               rowKey="id"
               bordered
               className="cms-data-table cms-data-table--skip-auto-no-col is-category-modal__table"
@@ -320,9 +320,9 @@ export function CategoryManagementModal({
               dataSource={draft}
               locale={{ emptyText: '등록된 카테고리가 없습니다.' }}
               summary={() => (
-                <Table.Summary>
-                  <Table.Summary.Row className="is-category-modal__summary">
-                    <Table.Summary.Cell index={0} align="center">
+                <CmsDataTable.Summary>
+                  <CmsDataTable.Summary.Row className="is-category-modal__summary">
+                    <CmsDataTable.Summary.Cell index={0} align="center">
                       <div className="is-category-modal__compose">
                         <CmsInput
                           ref={newInputRef}
@@ -335,8 +335,8 @@ export function CategoryManagementModal({
                           aria-label="새 카테고리명"
                         />
                       </div>
-                    </Table.Summary.Cell>
-                    <Table.Summary.Cell index={1} align="center">
+                    </CmsDataTable.Summary.Cell>
+                    <CmsDataTable.Summary.Cell index={1} align="center">
                       <div className="is-category-modal__actions">
                         <CmsButton
                           type="button"
@@ -359,9 +359,9 @@ export function CategoryManagementModal({
                           등록
                         </CmsButton>
                       </div>
-                    </Table.Summary.Cell>
-                  </Table.Summary.Row>
-                </Table.Summary>
+                    </CmsDataTable.Summary.Cell>
+                  </CmsDataTable.Summary.Row>
+                </CmsDataTable.Summary>
               )}
             />
           </div>

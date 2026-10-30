@@ -6,7 +6,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Card, Button, Space, Table, Tag, Spin } from 'antd'
+import { Card, Button, Space, Tag, Spin } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import { EmptyState } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
@@ -211,7 +212,7 @@ export function ProgramSatisfactionPage() {
         {programs.length === 0 ? (
           <EmptyState description="만족도 조사를 작성할 수 있는 완료된 프로그램이 없습니다." />
         ) : (
-          <Table
+          <CmsDataTable
             columns={columns}
             dataSource={programs}
             rowKey="id"

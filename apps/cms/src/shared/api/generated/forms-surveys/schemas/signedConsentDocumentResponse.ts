@@ -20,6 +20,7 @@ export interface SignedConsentDocumentResponse {
   contentFormat?: string;
   contentSnapshot?: string;
   version?: string;
+  templateVersionId?: number;
   documentStatus?: string;
   signedAt?: string;
   expiresAt?: string;

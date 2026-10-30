@@ -3,6 +3,7 @@ import type { SettlementListItemResponse } from '@/shared/api/generated/settleme
 import {
   mapSettlementItemToInstructorMemberRow,
   mapSettlementsToInstructorMemberRows,
+  resolveSettlementUiStatus,
 } from './map-settlement-to-instructor-member-row'
 
 function baseItem(overrides: Partial<SettlementListItemResponse> = {}): SettlementListItemResponse {
@@ -44,5 +45,33 @@ describe('mapSettlementsToInstructorMemberRows', () => {
     )
     expect(rows[0]?.statementId).toBe(10)
     expect(rows[1]?.statementId).toBe(20)
+  })
+})
+
+describe('resolveSettlementUiStatus', () => {
+  it('CONFIRMED + WAITING_PAYMENT → 지급조서 확인 완료(이체 대기)', () => {
+    expect(
+      resolveSettlementUiStatus(
+        baseItem({ statementStatus: 'CONFIRMED', paymentStatus: 'WAITING_PAYMENT' })
+      )
+    ).toBe('payment_statement_verified')
+  })
+
+  it('WAITING_CONFIRM → 확인 대기 중', () => {
+    expect(resolveSettlementUiStatus(baseItem({ statementStatus: 'WAITING_CONFIRM' }))).toBe(
+      'awaiting_confirmation'
+    )
+  })
+
+  it('REAPPLICATION → 지급조서 재신청', () => {
+    expect(resolveSettlementUiStatus(baseItem({ statementStatus: 'REAPPLICATION' }))).toBe(
+      'payment_statement_reapplication'
+    )
+  })
+
+  it('CONFIRMED + PAID → 계좌 지급 완료', () => {
+    expect(
+      resolveSettlementUiStatus(baseItem({ statementStatus: 'CONFIRMED', paymentStatus: 'PAID' }))
+    ).toBe('account_paid')
   })
 })

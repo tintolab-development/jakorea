@@ -80,6 +80,7 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
   const info = common?.instructorRecruitmentInfo as InstructorRecruitmentInfoLoose | undefined
   const row = pickAudienceRecruitmentWindow(program, 'instructor')
   const useRow = hasRecruitmentWindows(program)
+  const useContactRow = useRow && row != null
   const recruitmentStatus = getRecruitmentStatusFromDates(
     useRow ? row?.startAt ?? undefined : program.instructorApplicationStartDate,
     useRow ? row?.endAt ?? undefined : program.instructorApplicationEndDate
@@ -114,21 +115,23 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
     ),
     finalPassAnnouncementDate: finalAnnouncement.date,
     finalPassAnnouncementMethod: finalAnnouncement.method,
+    // 강사 모집 행이 없으면(1사1교 등 non-structured: 참여 행만 존재) 중첩 → 최상위 contactName 순으로 폴백
     contactOrganizationName: pickDisplayString(
       row?.contactName,
-      useRow ? undefined : info?.contactOrganizationName
+      useContactRow ? undefined : info?.contactOrganizationName,
+      useContactRow ? undefined : program.contactName
     ),
     contactPhone: pickDisplayString(
       row?.contactPhone,
-      useRow ? undefined : info?.inquiryTel,
-      useRow ? undefined : info?.tel,
-      useRow ? undefined : info?.contactPhone
+      useContactRow ? undefined : info?.inquiryTel,
+      useContactRow ? undefined : info?.tel,
+      useContactRow ? undefined : info?.contactPhone
     ),
     contactEmail: pickDisplayString(
       row?.contactEmail,
-      useRow ? undefined : info?.inquiryEmail,
-      useRow ? undefined : info?.email,
-      useRow ? undefined : info?.contactEmail
+      useContactRow ? undefined : info?.inquiryEmail,
+      useContactRow ? undefined : info?.email,
+      useContactRow ? undefined : info?.contactEmail
     ),
     notes: pickDisplayString(resolveRecruitmentRemarks(program, 'instructor')),
   }

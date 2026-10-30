@@ -1,5 +1,6 @@
-@import './shared/ui/cms-data-table.css';
+@import '@jakorea/admin-ui/table/styles';
 @import './shared/ui/list-table-layout.css';
+@import './shared/ui/filter-table-layout.css';
 @import './shared/ui/filter-controls-common.css';
 @import './shared/ui/admin-filter-area.css';
 @import './shared/ui/table-header-label.css';
@@ -32,16 +33,36 @@ a:hover {
   color: var(--color-link-hover);
 }
 
-html,
-body,
-#root {
-  margin: 0;
-  min-height: 100%;
+/*
+ * CMS와 동일: 스크롤바 거터를 항상 예약해 로그인 카드가 뷰포트 가로 중앙에서
+ * 스크롤바 유무로 밀리지 않게 한다.
+ */
+html {
+  scrollbar-gutter: stable;
+  height: 100%;
   background-color: var(--color-bg-tertiary, #f5f5f5);
 }
 
 body {
   margin: 0;
+  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--color-bg-tertiary, #f5f5f5);
+}
+
+#root {
+  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--color-bg-tertiary, #f5f5f5);
+}
+
+#root > .ant-app {
+  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--color-bg-tertiary, #f5f5f5);
 }
 
 * {

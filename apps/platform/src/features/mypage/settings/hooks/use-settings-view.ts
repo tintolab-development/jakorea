@@ -13,6 +13,7 @@ import {
 } from '../lib/constants'
 import type { SettingsProfileInput } from '../lib/map-view'
 import {
+  mapPortalGuardianToSettingsView,
   mapPortalProfileToSettingsView,
   type SettingsGuardianView,
   type SettingsViewModel,
@@ -54,14 +55,15 @@ export function useSettingsView(): {
 
   const profile = profileQuery.data ?? {}
   const isTeacher = isSchoolTeacherMypageProfile(member.profile)
+  const guardian = isTeacher ? null : mapPortalGuardianToSettingsView(profile.guardian)
 
   return {
     isRemoteSession: true,
     isLoading: member.isLoading || (profileQuery.isPending && !profileQuery.data),
     isError: Boolean(member.isError && profileQuery.isError && !profileQuery.data),
     profile,
-    guardian: null,
-    view: mapPortalProfileToSettingsView(profile, null, {
+    guardian,
+    view: mapPortalProfileToSettingsView(profile, guardian, {
       variant: isTeacher ? 'teacher' : 'individual',
     }),
   }

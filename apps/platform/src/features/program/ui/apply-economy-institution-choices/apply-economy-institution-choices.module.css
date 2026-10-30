@@ -1,0 +1,17 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+/* 기타 라디오 + 입력 — CMS `multiple-choice-row` 와 같이 한 줄 */
+.customRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.customRow :global(.ant-radio-wrapper) {
+  margin-inline-end: 0;
+}

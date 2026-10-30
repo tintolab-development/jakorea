@@ -8,6 +8,7 @@
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 
 export const BULK_TRANSFER_HEADER_LABELS = [
   '입금은행',
@@ -41,10 +42,22 @@ export type BulkTransferSheetRow = {
   mobile: string
 }
 
-function payoutMetaFromRow(row: AccountPaymentRow) {
+function payoutMetaFromRow(
+  row: AccountPaymentRow,
+  mode: 'preview' | 'download'
+) {
+  if (mode === 'preview') {
+    return {
+      bank: row.bankName ?? '',
+      acctNum: MASKING_POLICY.accountNumber(row.maskedAccountNo ?? ''),
+      holder: MASKING_POLICY.accountHolderName(row.accountHolder ?? ''),
+      mobile: MASKING_POLICY.phone(row.recipientMobile ?? ''),
+    }
+  }
   return {
     bank: row.bankName ?? '',
     acctNum: row.depositAccountNumber ?? '',
+    holder: row.accountHolder ?? row.instructorName,
     mobile: row.recipientMobile ?? '',
   }
 }
@@ -114,17 +127,19 @@ function dataCell(text: string | number): Cell {
   return { v: m, m, ht: 0, vt: 0 }
 }
 
-/** 미리보기·엑셀 공통: 지급 대기 목록 행당 이체 1행 */
-export function buildBulkTransferSheetRows(rows: AccountPaymentRow[]): BulkTransferSheetRow[] {
+function buildBulkTransferSheetRowsByMode(
+  rows: AccountPaymentRow[],
+  mode: 'preview' | 'download'
+): BulkTransferSheetRow[] {
   const ordered = getWaitingPaymentRowsOrderedForBulkTransfer(rows)
   const lines: BulkTransferSheetRow[] = []
   for (const row of ordered) {
-    const { bank, acctNum, mobile } = payoutMetaFromRow(row)
+    const { bank, acctNum, holder, mobile } = payoutMetaFromRow(row, mode)
     lines.push({
       depositBank: bank,
       depositAccount: acctNum,
       depositAmount: row.amount,
-      expectedDepositor: row.instructorName,
+      expectedDepositor: holder,
       depositStatement: DEPOSIT_LABEL,
       withdrawalStatement: DASH,
       memo: DASH,
@@ -133,6 +148,16 @@ export function buildBulkTransferSheetRows(rows: AccountPaymentRow[]): BulkTrans
     })
   }
   return lines
+}
+
+/** 미리보기: 목록 서버 마스킹 값만 표시. 원문 필드를 쓰지 않는다. */
+export function buildBulkTransferPreviewSheetRows(rows: AccountPaymentRow[]): BulkTransferSheetRow[] {
+  return buildBulkTransferSheetRowsByMode(rows, 'preview')
+}
+
+/** 클라이언트 엑셀 fallback. 서버 SERVER_FILE 원문 다운로드가 우선이다. */
+export function buildBulkTransferSheetRows(rows: AccountPaymentRow[]): BulkTransferSheetRow[] {
+  return buildBulkTransferSheetRowsByMode(rows, 'download')
 }
 
 function lineToCells(line: BulkTransferSheetRow): Cell[] {
@@ -151,7 +176,7 @@ function lineToCells(line: BulkTransferSheetRow): Cell[] {
 
 /** Fortune `Workbook`용 시트 1개 (celldata + 열 너비 + 첫 행 고정) */
 export function buildBulkTransferFortuneSheet(rows: AccountPaymentRow[]): Sheet {
-  const lines = buildBulkTransferSheetRows(rows)
+  const lines = buildBulkTransferPreviewSheetRows(rows)
   const dataRowCount = lines.length
   const totalRows = Math.max(36, 1 + dataRowCount + 8)
 

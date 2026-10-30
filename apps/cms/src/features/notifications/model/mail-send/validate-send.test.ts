@@ -7,7 +7,7 @@ import {
   validateMailSendVariables,
 } from './validate-send'
 
-const catalog = [{ key: '방문 안내', enabled: true, requiresProgram: false }]
+const catalog = [{ key: '방문 안내', sourceMode: 'MANUAL_ALLOWED' as const, enabled: true, requiresProgram: false }]
 
 function recipient(
   id: string,
@@ -81,7 +81,7 @@ describe('validateMailSendVariables', () => {
         actorId: 9,
       }
     )
-    const result = check([member], { programId: '77' })
+    const result = check([member], { programId: '77', catalog: [{ key: '방문 안내', sourceMode: 'SERVER_RESOLVED' as const, enabled: true, requiresProgram: false }] })
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.validRecipients).toEqual([member])

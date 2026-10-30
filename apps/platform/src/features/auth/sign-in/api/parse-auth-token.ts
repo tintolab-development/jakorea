@@ -1,14 +1,10 @@
+import type { AuthTokenResponse } from './types'
+import { parsePortalAgeGroup } from '../lib/portal-age-group'
+
 /** flat 또는 `{ success, data }` 래핑 토큰 응답 파싱 */
-export function parseAuthTokenResponse(payload: unknown): {
+export function parseAuthTokenResponse(payload: unknown): AuthTokenResponse & {
   accessToken: string
   refreshToken: string
-  tokenType?: string
-  expiresInSeconds?: number
-  passwordChangeRequired?: boolean
-  adminProvisionedOnboardingRequired?: boolean
-  adminProvisionedOnboardingStep?: string
-  registeredByAdmin?: boolean
-  identitySelfSignupCompletedAfterAdminRegistration?: boolean
 } {
   if (!payload || typeof payload !== 'object') {
     throw new Error('로그인 응답을 해석할 수 없습니다.')
@@ -53,6 +49,7 @@ export function parseAuthTokenResponse(payload: unknown): {
       typeof root.identitySelfSignupCompletedAfterAdminRegistration === 'boolean'
         ? root.identitySelfSignupCompletedAfterAdminRegistration
         : undefined,
+    ageGroup: parsePortalAgeGroup(root.ageGroup),
   }
 }
 

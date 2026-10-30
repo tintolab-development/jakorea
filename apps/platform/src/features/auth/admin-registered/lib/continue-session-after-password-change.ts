@@ -1,4 +1,5 @@
 import { expiresAtFromExpiresInSeconds, postPortalLogin } from '@/features/auth/sign-in'
+import { applyAuthTokenAgeGroupToMeCache } from '@/features/auth/sign-in/lib/apply-auth-token-age-group'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { queryClient } from '@/shared/lib/query-client'
 import { setAdminOnboardingRequired } from '@/shared/lib/admin-onboarding-session'
@@ -26,6 +27,8 @@ export async function continueAdminRegisteredSessionAfterPasswordChange(input: {
     refreshToken: tokens.refreshToken,
     expiresAt: expiresAtFromExpiresInSeconds(tokens.expiresInSeconds),
   })
+
+  applyAuthTokenAgeGroupToMeCache(tokens.ageGroup)
 
   syncAdminRegisteredOnboardingSession(input.email, tokens, 'first-login')
   setAdminOnboardingRequired(true)

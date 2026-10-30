@@ -15,13 +15,21 @@ describe('UJAT 자동입력 날짜 정렬', () => {
 
   it('프로그램 기간은 사업 기간 안에 둔다', () => {
     const next = alignUjatAutofillDatePlan(plan)
-    expect(dayjs(next.program.start).isSame(dayjs(next.business.start), 'day')).toBe(true)
-    expect(dayjs(next.program.end).isSame(dayjs(next.business.end), 'day')).toBe(true)
+    expect(!dayjs(next.program.start).isBefore(dayjs(next.business.start), 'day')).toBe(true)
+    expect(!dayjs(next.program.end).isAfter(dayjs(next.business.end), 'day')).toBe(true)
   })
 
-  it('모집·면접은 사업 시작 이전이고 면접은 모집 안에 있다', () => {
+  it('모집·면접·프로그램 일정은 모두 사업 기간 안에 있고 면접은 모집 안에 있다', () => {
     const next = alignUjatAutofillDatePlan(plan)
-    expect(!dayjs(next.recruit.end).isAfter(dayjs(next.business.start), 'day')).toBe(true)
+    const bizStart = dayjs(next.business.start)
+    const bizEnd = dayjs(next.business.end)
+    const inside = (start: string, end: string) => {
+      expect(!dayjs(start).isBefore(bizStart, 'day')).toBe(true)
+      expect(!dayjs(end).isAfter(bizEnd, 'day')).toBe(true)
+    }
+    inside(next.program.start, next.program.end)
+    inside(next.recruit.start, next.recruit.end)
+    inside(next.interview.start, next.interview.end)
     expect(!dayjs(next.interview.start).isBefore(dayjs(next.recruit.start), 'day')).toBe(true)
     expect(!dayjs(next.interview.end).isAfter(dayjs(next.recruit.end), 'day')).toBe(true)
   })

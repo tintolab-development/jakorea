@@ -15,6 +15,8 @@ export const platformQueryKeys = {
     me: () => [...platformQueryKeys.auth.all(), 'me'] as const,
     /** 회원 포탈 내정보 — GET /api/portal/me/profile */
     memberProfile: () => [...platformQueryKeys.auth.all(), 'member-profile'] as const,
+    /** AGE14 전환 상태 — GET /api/portal/me/age-transition */
+    ageTransition: () => [...platformQueryKeys.auth.all(), 'age-transition'] as const,
     /** 회원가입 이메일 가용성 (mutation 키·캐시 무효화용) */
     emailAvailability: (email: string) =>
       [...platformQueryKeys.auth.all(), 'email-availability', email] as const,
@@ -108,6 +110,9 @@ export const platformQueryKeys = {
 
   program: {
     all: () => [...platformQueryKeys.all, 'program'] as const,
+    /** 활성 프로그램 양식 binding — GET /api/portal/me/programs/{programId}/available-forms */
+    availableForms: (programId: string) =>
+      [...platformQueryKeys.program.all(), 'available-forms', programId] as const,
     /** 공개 목록 — GET /api/portal/programs (Class C, CMS 8080) */
     list: (params: {
       keyword: string
@@ -144,16 +149,20 @@ export const platformQueryKeys = {
     /** 홈 캐러셀 — GET /api/portal/programs?page=0&size=8&sort=LATEST (Class C) */
     homePreview: () => [...platformQueryKeys.program.all(), 'home-preview'] as const,
     /**
-     * 공개 상세 — GET /api/portal/programs/{programId}
-     * recruitmentId·applicationType 이 있으면 그 모집 케이스 캐시.
+     * 공개 상세 — GET /api/portal/programs/{programId} (Class D)
+     * applicationType·recruitmentId 가 있으면 동일 쿼리로 보낸다. 포커스 응답은
+     * recruitments[] 가 줄어들 수 있으므로 키에 포함한다.
      */
-    detail: (id: string, scope?: { recruitmentId?: number; applicationType?: string }) =>
+    detail: (
+      id: string,
+      params?: { applicationType?: string; recruitmentId?: number },
+    ) =>
       [
         ...platformQueryKeys.program.all(),
         'detail',
         id,
-        scope?.recruitmentId ?? '',
-        scope?.applicationType ?? '',
+        (params?.applicationType ?? '').trim().toUpperCase(),
+        params?.recruitmentId != null && params.recruitmentId > 0 ? params.recruitmentId : 0,
       ] as const,
     /** 프로그램 상세 전체 scope — 모집별 상세 캐시까지 함께 무효화할 때 사용 */
     detailPrefix: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
@@ -409,15 +418,22 @@ export const platformQueryKeys = {
           applicationId,
         ] as const,
       /**
-       * 제출된 신청 양식 런타임 — GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render
-       * 신청용 GET /api/portal/programs/.../form-bindings 는 제출 후 APPLICATION_ALREADY_SUBMITTED.
+       * 설문·만족도·강의보고서 등 non-APPLICATION 바인딩 렌더 —
+       * GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render
+       * APPLICATION(신청서) 바인딩에는 사용하지 않는다(403 PERMISSION_DENIED).
+       * 신청서는 GET /api/portal/programs/.../form-bindings/{bindingId}?recruitmentId&applicationType.
        */
-      formBindingRender: (programId: string, bindingId: number) =>
+      formBindingRender: (
+        programId: string,
+        bindingId: number,
+        templateVersionId?: number
+      ) =>
         [
           ...platformQueryKeys.mypage.programApplications.all(),
           'form-binding-render',
           programId,
           bindingId,
+          templateVersionId ?? 0,
         ] as const,
       educationJournals: (programId: string, organizationApplicationId: string) =>
         [
@@ -552,12 +568,17 @@ export const platformQueryKeys = {
           formType,
         ] as const,
       /** 설문 본문 — GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render (Class D) */
-      formBinding: (params: { programId: string; bindingId: number }) =>
+      formBinding: (params: {
+        programId: string
+        bindingId: number
+        templateVersionId?: number
+      }) =>
         [
           ...platformQueryKeys.mypage.programApplications.all(),
           'form-binding',
           params.programId,
           params.bindingId,
+          params.templateVersionId ?? 0,
         ] as const,
       /** 영수증 — GET .../expense-receipts (Class C) */
       expenseReceipts: (applicationType: string, applicationId: string) =>
@@ -576,6 +597,26 @@ export const platformQueryKeys = {
      */
     lectureReportAssignments: (programId: string) =>
       [...platformQueryKeys.mypage.all(), 'lecture-report-assignments', programId] as const,
+    /**
+     * Gemini 정산 요약 — GET /api/portal/me/program-applications/{type}/{id}/gemini-settlement-summary (Class C)
+     */
+    geminiSettlementSummary: (applicationType: string, applicationId: string) =>
+      [
+        ...platformQueryKeys.mypage.all(),
+        'gemini-settlement-summary',
+        applicationType,
+        applicationId,
+      ] as const,
+    /**
+     * Gemini 강의 일정 — GET /api/portal/me/program-applications/{type}/{id}/gemini-lecture-schedules (Class C)
+     */
+    geminiLectureSchedules: (applicationType: string, applicationId: string) =>
+      [
+        ...platformQueryKeys.mypage.all(),
+        'gemini-lecture-schedules',
+        applicationType,
+        applicationId,
+      ] as const,
     /**
      * 일반회원 일정 정산 — GET /api/portal/me/individual-settlements/applications/{id}/schedules (Class C)
      */

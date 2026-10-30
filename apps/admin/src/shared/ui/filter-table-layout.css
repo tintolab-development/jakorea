@@ -1,0 +1,114 @@
+/**
+ * Admin 필터형 목록 레이아웃 — CMS filter-table-layout.css 카드·구분선·툴바 계약만.
+ * Excel / permission / toolbarAdminAction 없음.
+ */
+
+.filter-table-layout {
+  --filter-table-toolbar-actions-gap: 8px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  background: var(--color-bg-base, #fff);
+  /* 시안: 카드 ↔ 카드 간격 32 (12603:480517 gap 32) */
+  margin-bottom: var(--spacing-32, 32px);
+  /* CMS 시안(목록 카드 12603:480518): p24 / r16 / drop-shadow 0 0 16px rgba(0,0,0,0.06) */
+  border-radius: 16px;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* 시안: 마지막 카드 아래 여백 = 콘텐츠 영역 pb 32 (카드 margin 32 이중 적용 방지) */
+.filter-table-layout:last-child {
+  margin-bottom: 0;
+}
+
+.filter-table-layout__filter {
+  width: 100%;
+  min-width: 0;
+}
+
+.filter-table-layout__divider {
+  padding: 32px 0;
+  margin: 0;
+  border: none;
+  line-height: 0;
+  font-size: 0;
+  box-sizing: border-box;
+}
+
+.filter-table-layout__divider::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid #c4cdd1;
+}
+
+.filter-table-layout__top-nav {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-16, 16px);
+}
+
+.filter-table-layout__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--filter-field-gap, var(--spacing-12, 12px));
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-16, 16px);
+}
+
+.filter-table-layout__toolbar-main {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.filter-table-layout__title-note {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.filter-table-layout__toolbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--filter-table-toolbar-actions-gap);
+  flex: 0 0 auto;
+  min-width: 0;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.filter-table-layout__toolbar-actions-slot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--filter-table-toolbar-actions-gap);
+  min-width: 0;
+}
+
+.filter-table-layout__table {
+  width: 100%;
+  min-width: 0;
+}
+
+.filter-table-layout.filter-table-layout--without-filter .filter-table-layout__toolbar {
+  margin-top: 0;
+}

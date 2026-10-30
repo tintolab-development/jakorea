@@ -246,6 +246,15 @@ function preferredSessionsHaveCalendarDate(sessions: ParticipatingSchoolSession[
   return sessions.some(session => resolveSessionCalendarDateKey(session) != null)
 }
 
+function hopeSessionsHaveDisplayableSchedule(sessions: ParticipatingSchoolSession[]): boolean {
+  return sessions.some(session => {
+    if (resolveSessionCalendarDateKey(session) != null) return true
+    const time = session.timeRange?.trim()
+    if (time && time !== '-') return true
+    return Boolean(session.scheduleLabel?.trim())
+  })
+}
+
 function isBlankOrMidnightClock(value: string | null | undefined): boolean {
   const trimmed = value?.trim() ?? ''
   if (!trimmed) return true
@@ -349,7 +358,10 @@ export function resolveOrganizationApplicationHopeSessions(
   requestedSchedules?: RequestedScheduleResponse[]
 ): ParticipatingSchoolSession[] {
   if (isCompanySchoolOrganizationApplication(dto)) {
-    return mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+    const fromRequested = mapRequestedSchedulesToSessions(requestedSchedules) ?? []
+    if (fromRequested.length > 0) return fromRequested
+    /** 1사1교: 날짜는 `educationDate`(Seoul 달력일) 우선 */
+    return mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
   }
   const storedPeriodHopes = mapStoredPeriodRequestedSchedulesToHopeSessions(requestedSchedules)
   if (storedPeriodHopes.length > 0) return storedPeriodHopes
@@ -657,14 +669,33 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   const teacherEmail = dto.teacherEmail?.trim()
   const detailFields = readOrganizationApplicationDetailExtendFields(dto)
   const requestedScheduleMemo = dto.requestedScheduleMemo?.trim()
-  const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const preferredFromDetail = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const preferred =
+    preferredFromDetail.length > 0
+      ? preferredFromDetail
+      : (base.preferredEducationSchedules ?? [])
   const preferredEducationDates = readOrganizationApplicationPreferredEducationDates(dto)
   const listItemShape = dto as OrganizationApplicationListItemResponse
-  const sessions = resolveOrganizationApplicationHopeSessions(
+  const requestedHope = options?.requestedSchedules
+  const sessionsFromHope = resolveOrganizationApplicationHopeSessions(
     listItemShape,
     preferred,
-    options?.requestedSchedules
+    requestedHope
   )
+  const listSessions = base.sessions ?? []
+  const detailHasPreferred = preferredFromDetail.length > 0
+  const requestedHasRows = (requestedHope?.length ?? 0) > 0
+  const sessions =
+    (detailHasPreferred || requestedHasRows) &&
+    hopeSessionsHaveDisplayableSchedule(sessionsFromHope)
+      ? sessionsFromHope
+      : hopeSessionsHaveDisplayableSchedule(listSessions)
+        ? listSessions
+        : hopeSessionsHaveDisplayableSchedule(sessionsFromHope)
+          ? sessionsFromHope
+          : listSessions.length > 0
+            ? listSessions
+            : sessionsFromHope
   return {
     ...base,
     id: toId(dto.id) || '',
@@ -1117,7 +1148,8 @@ function orderPreferredEducationSchedules(
 }
 
 export function mapPreferredEducationSchedulesToSessions(
-  schedules: PreferredEducationSchedule[] | undefined
+  schedules: PreferredEducationSchedule[] | undefined,
+  options?: { useEducationDate?: boolean }
 ): ParticipatingSchoolSession[] {
   return orderPreferredEducationSchedules([...(schedules ?? [])]).map((schedule, index) => {
     const scheduleLabel = preferredScheduleLabel(schedule)
@@ -1126,9 +1158,14 @@ export function mapPreferredEducationSchedulesToSessions(
     const validStart = start != null && !Number.isNaN(start.getTime())
     const validEnd = end != null && !Number.isNaN(end.getTime())
     const dateOnly = isOrganizationPreferredDateOnlyRange(schedule.startAt, schedule.endAt)
-    const dateParts = validStart
-      ? formatPreferredScheduleDate(start)
-      : { date: '-', dayOfWeek: '-' }
+    const educationDate = options?.useEducationDate ? schedule.educationDate?.trim() : undefined
+    const educationDay = educationDate ? new Date(`${educationDate}T00:00:00+09:00`) : null
+    const dateParts =
+      educationDay != null && !Number.isNaN(educationDay.getTime())
+        ? formatPreferredScheduleDate(educationDay)
+        : validStart
+          ? formatPreferredScheduleDate(start)
+          : { date: '-', dayOfWeek: '-' }
     const timeRange = dateOnly
       ? '-'
       : validStart && validEnd
@@ -1141,7 +1178,9 @@ export function mapPreferredEducationSchedulesToSessions(
     const scheduleId = schedule.scheduleId
     const hasResolvedSchedule = scheduleId != null && Number.isFinite(scheduleId) && scheduleId > 0
     const label = scheduleLabel || undefined
-    const scheduleUnresolved = !hasResolvedSchedule && Boolean(label)
+    const scheduleUnresolved =
+      !hasResolvedSchedule &&
+      (schedule.unresolvedReason != null || schedule.scheduleId == null || Boolean(label))
     const round = schedule.round ?? index + 1
     return {
       round,
@@ -1155,6 +1194,8 @@ export function mapPreferredEducationSchedulesToSessions(
       status: 'pending',
       ...(label ? { scheduleLabel: label } : {}),
       resolvedScheduleId: hasResolvedSchedule ? scheduleId : null,
+      ...(schedule.startAt?.trim() ? { startAt: schedule.startAt.trim() } : {}),
+      ...(schedule.endAt?.trim() ? { endAt: schedule.endAt.trim() } : {}),
       ...(scheduleUnresolved ? { scheduleUnresolved: true } : {}),
     }
   })
@@ -1736,6 +1777,11 @@ export function mapParticipantToParticipatingSchoolRow(
   const teacherEmail = dto.email?.trim() || undefined
   const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
   const sessions = mapSessionProgressToParticipatingSchoolSessions(dto.sessions ?? [])
+  const preferred = readOrganizationApplicationPreferredEducationSchedules(dto)
+  const hopeEducationSessions =
+    preferred.length > 0
+      ? mapPreferredEducationSchedulesToSessions(preferred, { useEducationDate: true })
+      : undefined
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId ?? undefined,
@@ -1759,6 +1805,8 @@ export function mapParticipantToParticipatingSchoolRow(
     addressDetail: dto.homeAddressSummary?.trim() || undefined,
     instructors: '',
     sessions: sessions.length > 0 ? sessions : undefined,
+    preferredEducationSchedules: preferred.length > 0 ? preferred : undefined,
+    hopeEducationSessions,
     programId,
     organizationApplicationId,
     participantStatus,

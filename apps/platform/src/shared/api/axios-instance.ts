@@ -44,6 +44,8 @@ type RetryableRequest = InternalAxiosRequestConfig & {
   _retry?: boolean
   skipRefresh?: boolean
   skipAuth?: boolean
+  /** verification-sessions 등 skipAuth 경로여도 Bearer를 유지한다. */
+  forceAuth?: boolean
 }
 
 const HOMEPAGE_AUTH_PREFIX = '/api/homepage/auth'
@@ -348,6 +350,14 @@ axiosClient.interceptors.request.use(
     config.baseURL = getApiBaseUrlForPath(config.url ?? '')
     const url = resolveRequestUrl(config)
 
+    if (retryable.forceAuth) {
+      const token = getAccessToken()
+      if (token) {
+        config.headers = setAuthorizationHeader(config.headers, token)
+      }
+      return config
+    }
+
     if (retryable.skipAuth || isExcludedFromAutoRefresh(url)) {
       config.headers = clearAuthorizationHeader(config.headers)
       return config
@@ -377,7 +387,10 @@ axiosClient.interceptors.response.use(
     const status = response.status
     const code = getErrorCode(response.data)
 
-    if (originalRequest.skipRefresh || isExcludedFromAutoRefresh(requestUrl)) {
+    if (
+      originalRequest.skipRefresh ||
+      (isExcludedFromAutoRefresh(requestUrl) && !originalRequest.forceAuth)
+    ) {
       return Promise.reject(error)
     }
 

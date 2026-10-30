@@ -6,8 +6,8 @@
   "scripts": {
     "predev": "pnpm run build:workspace-deps",
     "prebuild": "pnpm run build:workspace-deps",
-    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-schema --filter @jakorea/form-template-runtime --filter @jakorea/rich-text --filter @jakorea/domain build",
-    "dev": "vite",
+    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-schema --filter @jakorea/form-template-runtime --filter @jakorea/rich-text --filter @jakorea/domain --filter @jakorea/admin-ui build",
+    "dev": "node ../../packages/form-template-runtime/scripts/run-with-dev.mjs vite",
     "build": "vite build",
     "lint": "eslint . --max-warnings=-1",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
@@ -25,7 +25,8 @@
     "filter:openapi:assets": "node scripts/filter-openapi-assets.mjs",
     "filter:openapi:me": "node scripts/filter-openapi-me.mjs",
     "filter:openapi:careers": "node scripts/filter-openapi-careers.mjs",
-    "generate:api": "pnpm filter:openapi:main && pnpm filter:openapi:ja-korea && pnpm filter:openapi:impact-story && pnpm filter:openapi:education && pnpm filter:openapi:sponsorship && pnpm filter:openapi:participation && pnpm filter:openapi:site && pnpm filter:openapi:statistics && pnpm filter:openapi:logs && pnpm filter:openapi:assets && pnpm filter:openapi:me && pnpm filter:openapi:careers && orval --config orval.config.ts",
+    "filter:openapi:notifications": "node scripts/filter-openapi-notifications.mjs",
+    "generate:api": "pnpm filter:openapi:main && pnpm filter:openapi:ja-korea && pnpm filter:openapi:impact-story && pnpm filter:openapi:education && pnpm filter:openapi:sponsorship && pnpm filter:openapi:participation && pnpm filter:openapi:site && pnpm filter:openapi:statistics && pnpm filter:openapi:logs && pnpm filter:openapi:assets && pnpm filter:openapi:me && pnpm filter:openapi:careers && pnpm filter:openapi:notifications && orval --config orval.config.ts",
     "generate:api:watch": "orval --config orval.config.ts --watch openapi/main.openapi.json",
     "validate": "pnpm typecheck && pnpm lint && pnpm build"
   },
@@ -36,6 +37,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^3.9.1",
+    "@jakorea/admin-ui": "workspace:*",
     "@jakorea/domain": "workspace:*",
     "@jakorea/form-template-runtime": "workspace:^",
     "@jakorea/rich-text": "workspace:^",

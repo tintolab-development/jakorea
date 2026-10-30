@@ -11,6 +11,8 @@ export function useDashboardShortcutBadges(enabled = true) {
     queryFn: () => getDashboardShortcutBadges(),
     enabled: remoteEnabled,
     staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    placeholderData: previousData => previousData,
     retry: false,
   })
 }

@@ -80,6 +80,26 @@ describe('getGeneralProgramApiErrorMessage', () => {
     )
   })
 
+  it('PROGRAM_OWNER_ROLE_REQUIRES_ACCOUNTING_OR_PROGRAM_MANAGER를 Master 안내로 변환한다', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          success: false,
+          message: '필수 관련 정보 또는 선행 상태를 먼저 확인해 주세요.',
+          error: {
+            code: 'PROGRAM_OWNER_ROLE_REQUIRES_ACCOUNTING_OR_PROGRAM_MANAGER',
+            message: '필수 관련 정보 또는 선행 상태를 먼저 확인해 주세요.',
+            field: 'role',
+          },
+        },
+      },
+    }
+    expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe(
+      'Master 관리자는 프로그램 담당(PM)으로 지정할 수 없습니다. Accounting Manager 또는 Program Manager를 지정해 주세요.'
+    )
+  })
+
   it('PREFERRED_SCHEDULE_* code를 FE 메시지로 매핑한다', () => {
     const error = {
       response: {
@@ -288,6 +308,34 @@ describe('getProgramFormBindingErrorMessage', () => {
       })
     ).toBe('같은 프로그램 양식 슬롯에 이미 활성 양식이 연결되어 있습니다.')
   })
+
+  it('신규·교체 binding의 비발행 버전 409를 PUBLISHED-only 안내로 매핑한다', () => {
+    expect(
+      getProgramFormBindingErrorMessage(
+        {
+          response: {
+            status: 409,
+            data: { error: { code: 'PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION' } },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('현재 발행된 버전')
+  })
+
+  it('응답이 있는 binding의 버전 교체 잠금을 안내한다', () => {
+    expect(
+      getProgramFormBindingErrorMessage(
+        {
+          response: {
+            status: 409,
+            data: { error: { code: 'FORM_BINDING_TEMPLATE_LOCKED' } },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('템플릿 버전을 변경할 수 없습니다')
+  })
 })
 
 describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
@@ -322,6 +370,25 @@ describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
         'fallback'
       )
     ).toContain('EDUCATION')
+  })
+
+  it('maps PROGRAM_DATE_OUTSIDE_OPEN_PERIOD even when server message is generic', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            data: {
+              message: '입력값을 확인해 주세요.',
+              error: {
+                code: 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD',
+                message: '입력값을 확인해 주세요.',
+              },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('사업(오픈) 기간')
   })
 })
 
@@ -424,5 +491,28 @@ describe('교육구조 Guard 코드', () => {
         'fallback'
       )
     ).toBe('변경할 교육구조의 회차 또는 일정 정보를 입력해 주세요.')
+  })
+})
+
+describe('getGeneralProgramApiErrorMessage inline images', () => {
+  function errorFor(code: string, status = 400) {
+    return {
+      response: {
+        status,
+        data: { success: false, error: { code } },
+      },
+    }
+  }
+
+  it('403 소유권 불일치를 권한 안내로 변환한다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('INLINE_IMAGE_FILE_OWNER_MISMATCH', 403), 'fallback')
+    ).toContain('권한이 없습니다')
+  })
+
+  it('409 미완료 스캔을 AVAILABLE·CLEAN 확인 안내로 변환한다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(errorFor('INLINE_IMAGE_FILE_NOT_AVAILABLE', 409), 'fallback')
+    ).toContain('AVAILABLE·CLEAN')
   })
 })

@@ -7,9 +7,53 @@
   gap: var(--spacing-12);
 }
 
+/* regular — Figma Badge Category(PC): 14px SemiBold, 배지 간격 8px. 상태 배지는 small(32px·px12), 대상·형태는 icon large(32px·pl12·pr16·gap6) */
+.root.regular {
+  gap: var(--spacing-8);
+}
+
+.root.regular .badge {
+  font-size: 14px;
+}
+
+/*
+ * PC 목록 배지 글자 세로 중앙 — line-height·폰트 ascent/descent와 무관하게 cap~baseline 박스로 trim해서
+ * Figma items-center와 같게 맞춘다 (Pretendard 미설치 환경에서 글자가 위로 뜨는 문제).
+ * 마지막 자식 = 라벨 (PFCategoryBadge label / 상태 배지 badgeLabel). 모바일은 기존 그대로.
+ */
+/* 상태 배지 라벨 래퍼 (regular만) */
+.badgeLabel {
+  min-width: 0;
+}
+
+@media (--bp-pc-up) {
+  .root.regular .badge > :last-child {
+    text-box: trim-both cap alphabetic;
+  }
+}
+
+/* 학교 아이콘 20px (Figma IconType20) */
+.categoryIcon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
 @media (--bp-below-pc) {
-  .root {
+  .root,
+  .root.regular {
     gap: 6px;
+  }
+
+  /* 모바일은 Figma Badge mobile(12px) 유지 */
+  .root.regular .badge {
+    gap: 0;
+    font-size: 12px;
+  }
+
+  /* 아이콘은 PC만 — 모바일은 아이콘 없는 기존 배지 */
+  .root.regular .categoryIcon {
+    display: none;
   }
 
   .root .badge {

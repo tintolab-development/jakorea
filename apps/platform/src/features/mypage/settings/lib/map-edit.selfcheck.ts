@@ -3,6 +3,7 @@ import { MOCK_SETTINGS_PROFILE, MOCK_TEACHER_SETTINGS_PROFILE } from './constant
 import {
   applySettingsEditToSnapshot,
   applyTeacherSettingsEditToSnapshot,
+  attachGuardianToPortalProfileUpdate,
   isSettingsEditValid,
   isTeacherSettingsEditValid,
   mapProfileToSettingsEditForm,
@@ -72,6 +73,26 @@ assert.equal(nulled.external1365Id, null)
 assert.equal(nulled.grade, null)
 assert.equal(nulled.schoolName, '재희 고등학교')
 assert.equal(nulled.schoolOrganizationId, null)
+
+const withGuardian = attachGuardianToPortalProfileUpdate(
+  { address: '서울' } as Record<string, unknown>,
+  {
+    guardianName: '김보호',
+    guardianRelation: '부',
+    guardianPhone: '010-2000-1401',
+  },
+)
+assert.deepEqual(withGuardian.guardian, {
+  guardianName: '김보호',
+  guardianRelation: '부',
+  guardianPhone: '01020001401',
+})
+assert.equal('guardianName' in withGuardian, false)
+assert.equal(
+  attachGuardianToPortalProfileUpdate({ address: '서울' } as Record<string, unknown>, null)
+    .guardian,
+  undefined,
+)
 
 const sanitizedNone = sanitizeSettingsEditSchoolFields({
   schoolStatus: 'none' as const,

@@ -236,7 +236,7 @@ describe('curriculum multi date fixed schedule matrix', () => {
     ])
   })
 
-  it('커리큘럼 단일 날짜 — 라벨 우측 입력순 차시', () => {
+  it('커리큘럼 단일 날짜 — 모든 줄에 커리큘럼 총 차시', () => {
     const lines = [
       '26년 4월 20일(월) 09:30 ~ 12:20',
       '26년 4월 27일(월) 13:00 ~ 15:50',
@@ -252,9 +252,28 @@ describe('curriculum multi date fixed schedule matrix', () => {
       { curriculumChartSessionCount: 2 }
     )
     expect(items).toEqual([
-      { id: 'line:0', label: `${lines[0]} | 1차시` },
+      { id: 'line:0', label: `${lines[0]} | 2차시` },
       { id: 'line:1', label: `${lines[1]} | 2차시` },
     ])
+  })
+
+  it('커리큘럼 단일 날짜 — 예정일 줄 수가 차시 수보다 많아도 총 차시로 일괄 표기', () => {
+    const lines = [
+      '2026.11.11(수) 10:00 ~ 12:00',
+      '2026.11.03(화) 18:57 ~ 19:57',
+      '2026.11.05(목) 18:57 ~ 19:57',
+    ]
+    const items = resolveFixedScheduleLinesToChoiceItems(
+      {
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode: 'date',
+        educationScheduleLines: lines,
+      },
+      lines,
+      { curriculumChartSessionCount: 2 }
+    )
+    expect(items.map(item => item.label)).toEqual(lines.map(line => `${line} | 2차시`))
   })
 
   it('커리큘럼 단일 날짜 — 차시가 1개면 일시만', () => {

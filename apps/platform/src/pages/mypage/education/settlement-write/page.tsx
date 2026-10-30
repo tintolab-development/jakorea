@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ProgramBackButton } from '@/features/program'
 import {
@@ -19,6 +19,7 @@ import { INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE } from '@/features/mypage/educat
 import { useReceiptPaymentStatementConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
 import { PaymentStatementPreConsentModal } from '@/features/mypage/education/settlements/ui/payment-statement-pre-consent-modal'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { PFFormPage, PFText } from '@/shared/ui'
 
 export function MypageEducationSettlementWritePage() {
@@ -44,6 +45,12 @@ export function MypageEducationSettlementWritePage() {
   )
   const application = remoteQuery.application
   const programType = application?.programConfig?.programType ?? null
+  const hideGeminiPaymentStatementWrite =
+    documentKind === 'payment_statement' &&
+    isGeminiSettlementProgram({
+      programType,
+      detailCase: application?.detailCase,
+    })
   const remoteSettlements = useApplicationSettlementsQuery(
     applicationType,
     applicationId,
@@ -65,6 +72,15 @@ export function MypageEducationSettlementWritePage() {
   const backPath = applicationId
     ? buildSettlementTabPath(applicationId, area, applicationType)
     : educationApplicationDetailPath(applicationId)
+
+  useEffect(() => {
+    if (!hideGeminiPaymentStatementWrite) return
+    navigate(backPath, { replace: true })
+  }, [backPath, hideGeminiPaymentStatementWrite, navigate])
+
+  if (hideGeminiPaymentStatementWrite) {
+    return null
+  }
 
   if (!remoteEnabled) {
     return (

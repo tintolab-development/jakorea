@@ -37,16 +37,55 @@ export type RequestedScheduleWithResolved = Omit<
 }
 
 export type InstructorAssignmentCalendarItem = {
-  instructorMemberId?: number
-  lectureDate?: string
-  organizationApplicationId?: number
-  assignmentId?: number
-  scheduleId?: number
+  instructorMemberId?: number | null
+  lectureDate?: string | null
+  organizationApplicationId?: number | null
+  assignmentId?: number | null
+  scheduleId?: number | null
   activeYn?: boolean
 }
 
 export type InstructorAssignmentCalendarResponse = {
-  items?: InstructorAssignmentCalendarItem[]
+  items: InstructorAssignmentCalendarItem[]
+}
+
+/** 레거시 화면 내부 상태 표시용 타입. 조회 API 계약에는 사용하지 않는다. */
+export type InstructorAssignmentAvailabilityStatus =
+  | 'AVAILABLE'
+  | 'UNAVAILABLE'
+  | 'ASSIGNED'
+  | 'ASSIGNMENT_CANCELLED'
+
+export type InstructorAssignmentAvailabilityReason =
+  | 'CAPACITY_FULL'
+  | 'TIME_CONFLICT_OTHER_PROGRAM'
+  | 'TIME_CONFLICT_OTHER_ORGANIZATION'
+  | 'SAME_ORGANIZATION_OTHER_SCHEDULE_ASSIGNED'
+
+export type InstructorAssignmentAvailabilityConflict = {
+  programId: number
+  scheduleId: number | null
+  organizationApplicationId: number | null
+  startAt: string | null
+  endAt: string | null
+}
+
+export type InstructorAssignmentAvailabilityItem = {
+  organizationApplicationId: number | null
+  scheduleId: number
+  startAt: string | null
+  endAt: string | null
+  status: InstructorAssignmentAvailabilityStatus
+  reasons: InstructorAssignmentAvailabilityReason[]
+  assignedInstructorCount: number | null
+  maxAssignableInstructors: number | null
+  conflicts: InstructorAssignmentAvailabilityConflict[]
+}
+
+export type InstructorAssignmentAvailabilityResponse = {
+  programId: number
+  instructorMemberId: number
+  items: InstructorAssignmentAvailabilityItem[]
 }
 
 /** 지정은 scheduleLead 생략. 강등은 `scheduleLead: false` 또는 `role: 'ASSISTANT'` */

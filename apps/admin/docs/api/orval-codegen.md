@@ -21,7 +21,7 @@ Swagger UI: `{VITE_HOMEPAGE_API_SERVER}/swagger-ui/index.html`
 ## 설정
 
 - [`orval.config.ts`](../../orval.config.ts) — LNB·공유 도메인별 project
-- [`scripts/filter-openapi-*.mjs`](../../scripts/) — path prefix 필터 + bearerAuth 스키마 정리
+- [`scripts/filter-openapi-*.mjs`](../../scripts/) — path prefix 필터 + bearerAuth 스키마 정리. notifications subset는 unused `components.schemas` 를 prune한다.
 - [`src/shared/api/orval-mutator.ts`](../../src/shared/api/orval-mutator.ts) — `axiosInstance` 재사용
 
 **출력:** [`src/shared/api/generated/`](../../src/shared/api/generated/)
@@ -39,6 +39,7 @@ Swagger UI: `{VITE_HOMEPAGE_API_SERVER}/swagger-ui/index.html`
 | `logs` | `logs.openapi.json` | `/api/admin/logs` |
 | `assets` | `assets.openapi.json` | `/api/admin/assets` |
 | `me` | `me.openapi.json` | `/api/admin/me` |
+| `notifications` | `notifications.openapi.json` | `/api/admin/notifications/inbox` (GNB 시스템 Inbox. Outbox `/public-applications` 제외. unused schema prune) |
 
 ---
 

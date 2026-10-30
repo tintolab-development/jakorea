@@ -57,6 +57,8 @@ export type EducationTeacherAssignedInstructor = {
   /** 배정 강사 회원 번호. 동의서 download-requests 경로 */
   instructorMemberId?: number
   name: string
+  phone?: string
+  email?: string
   /**
    * 기관이 JA 시스템에서 동의서 확인을 요청한 경우에만 true.
    * true일 때 성범죄·행정정보 동의서 다운로드 노출.
@@ -168,6 +170,12 @@ export type EducationTeacherApplicationInstitution = {
   teacherContact: string
   reason: string
   otherRequests: string
+  /** 제미나이 연수 신청 — 수강 인원 */
+  studentCount?: string
+  /** 제미나이 연수 신청 — 담당 교사 직급 */
+  jobTitle?: string
+  /** 제미나이 연수 신청 — 담당 과목 */
+  subject?: string
 }
 
 /** 교사 회원 신청 내용 — 안내사항 */

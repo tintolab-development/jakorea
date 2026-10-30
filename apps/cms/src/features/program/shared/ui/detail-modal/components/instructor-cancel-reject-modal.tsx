@@ -11,10 +11,7 @@ import {
   type InstructorCancelRejectionNotifyVariant,
 } from '@/features/program/general/lib/instructor-cancel-rejection'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
-import {
-  PermissionModal,
-  type PermissionModalPayload,
-} from '@/shared/components/permission-modal'
+import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import './instructor-bulk-approve-modal.css'
@@ -57,14 +54,11 @@ function InstructorCancelRejectPendingNotificationModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="강사 반려 취소 안내"
+      title="프로그램 반려 취소 안내"
       width={MODAL_WIDTH}
       zIndex={zIndex}
       className="instructor-cancel-reject-modal"
-      description={buildInstructorCancelRejectionMessage(
-        instructorName,
-        'pendingNotification'
-      )}
+      description={buildInstructorCancelRejectionMessage(instructorName, 'pendingNotification')}
       footer={
         <>
           <CmsButton
@@ -113,7 +107,7 @@ function InstructorCancelRejectAlreadySentModal({
       open={open}
       variant="reject"
       className="instructor-cancel-reject-modal"
-      title="강사 반려 취소 안내"
+      title="프로그램 반려 취소 안내"
       message={buildInstructorCancelRejectionMessage(instructorName, 'alreadySent')}
       confirmLabel="반려 취소"
       confirmVariant="delete"

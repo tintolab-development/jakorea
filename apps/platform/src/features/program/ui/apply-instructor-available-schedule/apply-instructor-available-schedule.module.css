@@ -154,9 +154,18 @@
   color: inherit;
 }
 
+.slotGridEmpty {
+  min-height: 200px;
+  grid-template-columns: 1fr;
+  align-content: center;
+  justify-items: center;
+}
+
 .empty {
   grid-column: 1 / -1;
   margin: 0;
+  max-width: 32em;
+  text-align: center;
 }
 
 @media (--bp-pc-up) {

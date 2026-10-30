@@ -75,7 +75,6 @@ export function PermissionHeaderActions({
     (basicBodyKey === 'admin' && canAccessAdminCommentInAdminDetail(currentUser))
 
   const showCommentEditStart =
-    !isCommentEditing &&
     approvalStatus === 'APPROVED' &&
     shouldShowAdminCommentSectionForViewer(currentUser, displayUser) &&
     shouldShowAdminCommentForAdminPermissionApplicationDetail('permission', displayUser) &&
@@ -151,6 +150,7 @@ export function PermissionHeaderActions({
           key="admin-comment-edit"
           size="large"
           variant="primary"
+          disabled={isCommentEditing}
           onClick={pageShell.onStartAdminCommentEdit}
         >
           코멘트 작성

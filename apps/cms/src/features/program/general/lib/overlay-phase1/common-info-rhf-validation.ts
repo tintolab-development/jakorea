@@ -17,6 +17,7 @@ import {
 } from '@/shared/constants/messages'
 import {
   isPreEducationCurriculumSession,
+  isPreEducationScheduleBlock,
   trimTrailingBlankRegularCurriculumSessions,
 } from '@/features/program/general/lib/schedule-detail-form'
 
@@ -54,10 +55,10 @@ function scheduleDetailNumber(
   arrayIndex: number
 ): number | null {
   const row = details[arrayIndex]
-  if (row == null || row.blockKind === 'preEducation') return null
+  if (row == null || isPreEducationScheduleBlock(row)) return null
   let number = 0
   for (let i = 0; i <= arrayIndex; i += 1) {
-    if (details[i]?.blockKind !== 'preEducation') number += 1
+    if (!isPreEducationScheduleBlock(details[i] ?? {})) number += 1
   }
   return number > 0 ? number : null
 }
@@ -174,6 +175,7 @@ export function zodIssueToDetailHighlightKey(
       return curriculumRegularSessionIpsValidationKey(n)
     }
     if (field === 'assignmentPeriod') return `curriculum.assignment[${n}]`
+    if (field === 'educationPlace') return `curriculum.educationPlace[${n}]`
     return values.sessionRound === 'multi'
       ? `curriculum.progressSession[${n}]`
       : `curriculum.unitName[${n}]`
@@ -181,7 +183,7 @@ export function zodIssueToDetailHighlightKey(
   if (head === 'scheduleDetails' && typeof index === 'number') {
     const row = values.scheduleDetails[index]
     if (row == null) return null
-    if (row.blockKind === 'preEducation') {
+    if (isPreEducationScheduleBlock(row)) {
       if (field === 'scheduleDate') return SCHEDULE_PRE_EDUCATION_DATE_VALIDATION_KEY
       return SCHEDULE_PRE_EDUCATION_NAME_VALIDATION_KEY
     }
@@ -193,6 +195,7 @@ export function zodIssueToDetailHighlightKey(
       return scheduleRegularDetailIpsValidationKey(n)
     }
     if (field === 'assignmentPeriod') return scheduleRegularDetailAssignmentValidationKey(n)
+    if (field === 'educationPlace') return `scheduleCurriculum.educationPlace[${n}]`
     return scheduleRegularDetailNameValidationKey(n)
   }
   switch (head) {
@@ -216,6 +219,9 @@ export function zodIssueToDetailHighlightKey(
       return 'basicInfo.sponsorContactId'
     case 'venueDetail':
       return 'basicInfo.educationVenueDetail'
+    case 'educationPlaceAddress':
+    case 'educationPlaceScheduleDetail':
+      return 'typeSettings.educationPlace'
     case 'educationProcess':
       return 'basicInfo.educationCourse'
     case 'ipOwned':

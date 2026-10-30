@@ -3,6 +3,10 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { viteAppBuildDefine } from '../../scripts/vite-app-build-define'
+import {
+  FORM_TEMPLATE_RUNTIME_OPTIMIZE_DEPS_EXCLUDE,
+  formTemplateRuntimeWatchIgnored,
+} from '../../scripts/vite-form-template-runtime-watch'
 import { e2eErrorLogMockApiPlugin } from './vite-plugins/e2e-error-log-mock-api'
 import { e2eTestLogMockApiPlugin } from './vite-plugins/e2e-test-log-mock-api'
 import { platformPreviewBundlePlugin } from './vite-plugins/platform-preview-bundle'
@@ -88,15 +92,11 @@ export default defineConfig(({ mode }) => {
     ],
     optimizeDeps: {
       include: ['@fortune-sheet/react', '@fortune-sheet/core', 'lodash', 'immer', 'pdfjs-dist'],
+      exclude: [...FORM_TEMPLATE_RUNTIME_OPTIMIZE_DEPS_EXCLUDE],
     },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        /** CSS는 package exports가 dist만 가리킴 — CMS dev에서 src 수정이 바로 반영되도록 */
-        '@jakorea/form-template-runtime/detail-info-form.css': path.resolve(
-          __dirname,
-          '../../packages/form-template-runtime/src/detail-info-form/detail-info-form.css'
-        ),
         '@jakorea/social-auth': path.resolve(__dirname, '../../packages/social-auth/src/index.ts'),
         '@jakorea/rich-text/react': path.resolve(
           __dirname,
@@ -108,6 +108,9 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       port: 3000,
       proxy: devProxy,
+      watch: {
+        ignored: formTemplateRuntimeWatchIgnored,
+      },
     },
     build: {
       rollupOptions: {

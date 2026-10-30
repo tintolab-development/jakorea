@@ -21,16 +21,24 @@ import {
   programInlineImageOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
-import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
-import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+import {
+  loadProgramThumbnailPreviewUrl,
+  rememberProgramThumbnailPreviewBlob,
+} from '@/features/program/shared/api/program-thumbnail'
+import {
+  applyLiveRecruitmentThumbnailOverlay,
+  readRecruitDetailMediaFromOverlay,
+  trackRecruitDetailMediaUpload,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import {
   fetchProgramMediaAttachments,
   fetchProgramMediaThumbnail,
   hasProgramMediaTarget,
-  programMediaAttachmentOwner,
-  programMediaThumbnailOwner,
+  isUjatTypedRecruitmentDraftProgram,
   putProgramMediaAttachments,
   putProgramMediaThumbnail,
+  resolveProgramMediaAttachmentUploadOwner,
+  resolveProgramMediaThumbnailUploadOwner,
   usesRecruitmentRowMedia,
 } from '@/features/program/shared/api/program-media-target'
 import { useCmsAlert } from '@/shared/ui'
@@ -417,6 +425,7 @@ function useDetailInfoEditorBlock(
   }, [isEditMode, form, onRegisterGetAdditionalContentHtml])
 
   const isFormEdit = Boolean(isEditMode && form)
+  const typedDraftMedia = isUjatTypedRecruitmentDraftProgram(program)
   const rowMedia = usesRecruitmentRowMedia(program)
   const [linkedAttachmentNames, setLinkedAttachmentNames] = useState<string[] | null>(null)
   const [linkedAttachmentTotalBytes, setLinkedAttachmentTotalBytes] = useState(0)
@@ -427,11 +436,13 @@ function useDetailInfoEditorBlock(
     linkedAttachmentNames,
     programFallback: rowMedia ? undefined : program.attachmentFileNames,
   })
+  const draftThumbId =
+    typedDraftMedia && isFormEdit ? form!.watch('recruitmentThumbnailFileObjectId') : undefined
+  const draftThumbName =
+    typedDraftMedia && isFormEdit ? form!.watch('recruitmentThumbnailFileName') : undefined
 
   useEffect(() => {
     if (!hasProgramMediaTarget(program)) {
-      setLinkedAttachmentNames(null)
-      setLinkedAttachmentTotalBytes(0)
       return
     }
     let cancelled = false
@@ -467,15 +478,23 @@ function useDetailInfoEditorBlock(
   )?.thumbnailFileObjectId
 
   useEffect(() => {
-    if (!hasProgramMediaTarget(program)) {
-      setLinkedThumbnail(null)
-      return
-    }
     let cancelled = false
     let createdUrl: string | null = null
     void (async () => {
-      const thumbnail = await fetchProgramMediaThumbnail(program)
-      if (cancelled || thumbnail.fileObjectId == null) {
+      let fileObjectId: number | null = null
+      let fileName = ''
+      if (hasProgramMediaTarget(program)) {
+        const thumbnail = await fetchProgramMediaThumbnail(program)
+        fileObjectId = thumbnail.fileObjectId
+        fileName = thumbnail.originalFileName?.trim() || ''
+      } else if (typedDraftMedia) {
+        fileObjectId =
+          typeof draftThumbId === 'number' && draftThumbId > 0 ? draftThumbId : null
+        fileName = draftThumbName?.trim() || ''
+      } else {
+        return
+      }
+      if (cancelled || fileObjectId == null) {
         if (!cancelled) {
           setLinkedThumbnail(prev => {
             revokeBlobUrl(prev?.url)
@@ -484,7 +503,7 @@ function useDetailInfoEditorBlock(
         }
         return
       }
-      const nextUrl = await loadProgramThumbnailPreviewUrl(thumbnail.fileObjectId)
+      const nextUrl = await loadProgramThumbnailPreviewUrl(fileObjectId)
       if (cancelled) {
         revokeBlobUrl(nextUrl)
         return
@@ -494,7 +513,7 @@ function useDetailInfoEditorBlock(
         if (prev?.url !== nextUrl) revokeBlobUrl(prev?.url)
         return {
           url: nextUrl,
-          fileName: thumbnail.originalFileName?.trim() || '',
+          fileName,
         }
       })
     })().catch(() => {
@@ -510,7 +529,14 @@ function useDetailInfoEditorBlock(
       revokeBlobUrl(createdUrl)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- program 객체는 렌더마다 바뀐다
-  }, [program.id, program.activeRecruitmentId, activeRowThumbnailId])
+  }, [
+    program.id,
+    program.activeRecruitmentId,
+    activeRowThumbnailId,
+    typedDraftMedia,
+    draftThumbId,
+    draftThumbName,
+  ])
 
   const legacyThumbnailUrl = readableThumbnailUrl(
     (isFormEdit && form
@@ -605,37 +631,59 @@ function ThumbnailImageField({
                   const blobUrl = URL.createObjectURL(file)
                   setThumbnailPreviewBlobUrl(blobUrl)
                   setUploadingThumbnail(true)
-                  try {
-                    const owner = programMediaThumbnailOwner(program)
-                    if (owner == null) {
-                      throw new Error('프로그램 번호가 없어 대표 이미지를 저장할 수 없습니다.')
-                    }
-                    const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                    await putProgramMediaThumbnail(program, uploaded.fileObjectId)
-                    let previewUrl = blobUrl
+                  const task = (async () => {
                     try {
-                      previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
-                      if (previewUrl !== blobUrl) URL.revokeObjectURL(blobUrl)
-                    } catch {
-                      previewUrl = blobUrl
+                      const owner = resolveProgramMediaThumbnailUploadOwner(program)
+                      const uploaded = await uploadAdminFileMaybeMock({
+                        file,
+                        owner,
+                        waitUntilAvailable: true,
+                      })
+                      rememberProgramThumbnailPreviewBlob(uploaded.fileObjectId, file)
+                      if (hasProgramMediaTarget(program)) {
+                        await putProgramMediaThumbnail(program, uploaded.fileObjectId)
+                      }
+                      if (isUjatTypedRecruitmentDraftProgram(program) && form) {
+                        form.setValue('recruitmentThumbnailFileObjectId', uploaded.fileObjectId, {
+                          shouldDirty: true,
+                        })
+                        form.setValue('recruitmentThumbnailFileName', file.name, {
+                          shouldDirty: true,
+                        })
+                      } else {
+                        applyLiveRecruitmentThumbnailOverlay(
+                          program,
+                          uploaded.fileObjectId,
+                          file.name
+                        )
+                      }
+                      let previewUrl = blobUrl
+                      try {
+                        previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
+                        if (previewUrl !== blobUrl) URL.revokeObjectURL(blobUrl)
+                      } catch {
+                        previewUrl = blobUrl
+                      }
+                      setLinkedThumbnail(prev => {
+                        if (prev?.url !== previewUrl) revokeBlobUrl(prev?.url)
+                        return { url: previewUrl, fileName: file.name }
+                      })
+                      setThumbnailPreviewBlobUrl(null)
+                    } catch (error) {
+                      URL.revokeObjectURL(blobUrl)
+                      setThumbnailPreviewBlobUrl(null)
+                      showAlert({
+                        title: '안내',
+                        content: extractApiErrorMessage(axiosErrorData(error), {
+                          fallback: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                        }),
+                      })
+                    } finally {
+                      setUploadingThumbnail(false)
                     }
-                    setLinkedThumbnail(prev => {
-                      if (prev?.url !== previewUrl) revokeBlobUrl(prev?.url)
-                      return { url: previewUrl, fileName: file.name }
-                    })
-                    setThumbnailPreviewBlobUrl(null)
-                  } catch (error) {
-                    URL.revokeObjectURL(blobUrl)
-                    setThumbnailPreviewBlobUrl(null)
-                    showAlert({
-                      title: '안내',
-                      content: extractApiErrorMessage(axiosErrorData(error), {
-                        fallback: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-                      }),
-                    })
-                  } finally {
-                    setUploadingThumbnail(false)
-                  }
+                  })()
+                  trackRecruitDetailMediaUpload(task)
+                  await task
                 }
             : undefined
         }
@@ -654,6 +702,16 @@ function ThumbnailImageField({
                     revokeBlobUrl(prev?.url)
                     return null
                   })
+                  if (isUjatTypedRecruitmentDraftProgram(program) && form) {
+                    form.setValue('recruitmentThumbnailFileObjectId', undefined, {
+                      shouldDirty: true,
+                    })
+                    form.setValue('recruitmentThumbnailFileName', undefined, {
+                      shouldDirty: true,
+                    })
+                  } else {
+                    applyLiveRecruitmentThumbnailOverlay(program, null)
+                  }
                   if (hasProgramMediaTarget(program)) {
                     void putProgramMediaThumbnail(program, null).catch(() => {
                       showAlert({
@@ -728,8 +786,7 @@ function AttachmentDetailField({
         onFilesChange={
           isFormEdit
             ? async files => {
-                    const owner = programMediaAttachmentOwner(program)
-                    if (owner == null) return
+                    const owner = resolveProgramMediaAttachmentUploadOwner(program)
                     setUploading(true)
                     try {
                       const uploadedIds: number[] = []
@@ -738,6 +795,23 @@ function AttachmentDetailField({
                         uploadedIds.push(uploaded.fileObjectId)
                       }
                       if (uploadedIds.length === 0) return
+                      if (!hasProgramMediaTarget(program)) {
+                        const previous = form!.getValues('attachmentFileNames') ?? []
+                        const names = [...previous, ...files.map(file => file.name)]
+                        form!.setValue('attachmentFileNames', names)
+                        if (isUjatTypedRecruitmentDraftProgram(program)) {
+                          const previousIds =
+                            form!.getValues('recruitmentAttachmentFileObjectIds') ?? []
+                          form!.setValue(
+                            'recruitmentAttachmentFileObjectIds',
+                            [...previousIds, ...uploadedIds],
+                            { shouldDirty: true }
+                          )
+                        }
+                        onNamesChange?.(names)
+                        setAttachmentError(null)
+                        return
+                      }
                       const existing = await fetchProgramMediaAttachments(program).catch(() => [])
                       const existingIds = existing
                         .map(item => item.fileObjectId)
@@ -774,6 +848,14 @@ function AttachmentDetailField({
                       const list = form!.getValues('attachmentFileNames') ?? []
                       const next = list.filter((_, i) => i !== index)
                       form!.setValue('attachmentFileNames', next)
+                      if (isUjatTypedRecruitmentDraftProgram(program)) {
+                        const ids = form!.getValues('recruitmentAttachmentFileObjectIds') ?? []
+                        form!.setValue(
+                          'recruitmentAttachmentFileObjectIds',
+                          ids.filter((_, i) => i !== index),
+                          { shouldDirty: true }
+                        )
+                      }
                       onNamesChange?.(next)
                       return
                     }

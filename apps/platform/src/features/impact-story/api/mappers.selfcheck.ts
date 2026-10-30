@@ -53,6 +53,13 @@ const placeholder = mapPublicStoryListItem({
 assert.ok(placeholder)
 assert.equal(placeholder.imageUrl, undefined)
 
+const noThumbnail = mapPublicStoryListItem({
+  id: 2,
+  title: '섬네일 없음',
+})
+assert.ok(noThumbnail)
+assert.equal(noThumbnail.imageUrl, undefined)
+
 const detail = mapPublicStoryDetail({
   id: 42,
   title: '민재',
@@ -65,6 +72,21 @@ assert.ok(detail)
 assert.equal(detail.bodyFormat, 'html')
 assert.equal(detail.viewCount, 9)
 assert.equal(detail.blocks.length, 0)
+assert.equal(detail.attachmentOriginalName, undefined)
+assert.equal(detail.attachmentUrl, undefined)
+
+const detailWithAttachment = mapPublicStoryDetail({
+  id: 42,
+  title: '민재',
+  categoryName: '스토리',
+  publishAt: '2026-08-08T00:00:00.000Z',
+  body: '<p>본문</p>',
+  attachmentOriginalName: 'brief.pdf',
+  attachmentUrl: 'https://cdn.example/brief.pdf',
+})
+assert.ok(detailWithAttachment)
+assert.equal(detailWithAttachment.attachmentOriginalName, 'brief.pdf')
+assert.equal(detailWithAttachment.attachmentUrl, 'https://cdn.example/brief.pdf')
 
 const pinned = featuredFromPreview([
   { ...mapped!, id: '1', isFeatured: true },

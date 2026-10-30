@@ -25,6 +25,7 @@ import {
   CmsSelect,
   FilterTableLayout,
   FilterTableToolbarButton,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -75,6 +76,7 @@ import {
 } from '../../../lib/school-detail'
 import { useOrganizationStudentRosterRemote } from '../../../hooks/use-organization-student-roster-remote'
 import { fetchOrganizationStudentRosterPrivacyDetail } from '../../../api/student-roster-api-client'
+import { useMyProgramPrivacyRole } from '@/features/user/detail/lib/use-my-program-privacy-role'
 import { mapStudentRosterResponseToRows } from '../../../api/adapters/student-roster-adapters'
 import { getGeneralProgramApiErrorMessage } from '../../../api/get-general-program-api-error'
 import {
@@ -135,10 +137,8 @@ import {
 
 import { ButtonCheckIcon, ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 
-const STUDENT_ROSTER_EDIT_UNMASK_REASON = '정보 수정'
-
 const STUDENT_ROSTER_EDIT_UNMASK_CONFIRM_CONTENT =
-  "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 학생명단의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  '정보 수정 시 개인정보 마스킹이 해제됩니다.\n감사 사유는 서버가 기록합니다.\n해당 학생명단의 개인정보 열람 및 정보를 수정하시겠습니까?'
 
 const STUDENT_ROSTER_EDIT_UNMASK_MODAL_Z_INDEX = 1100
 
@@ -252,6 +252,12 @@ export function SchoolDetailStudentListSection({
   /** 학생 추가 모달 세션 */
   const rosterAddSessionRef = useRef<StudentRosterCommitSession | null>(null)
   const { showAlert } = useCmsAlert()
+  const { canRevealSensitive, pending: privacyRolePending } = useMyProgramPrivacyRole(programId)
+
+  const rosterHttpStatus = (error: unknown): number | undefined => {
+    if (error == null || typeof error !== 'object' || !('response' in error)) return undefined
+    return (error as { response?: { status?: number } }).response?.status
+  }
 
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const rosterRemote = useOrganizationStudentRosterRemote({
@@ -288,6 +294,12 @@ export function SchoolDetailStudentListSection({
     setAddedStudents([])
   }, [rosterRemote.remoteEnabled, rosterRemote.students])
 
+  useEffect(() => {
+    setUnmaskedRosterRows(null)
+    setIsStudentListEditMode(false)
+    rosterEditSessionRef.current = null
+  }, [organizationApplicationId, programId])
+
   const organizationApplicationKey =
     organizationApplicationId != null ? String(organizationApplicationId) : ''
 
@@ -306,6 +318,18 @@ export function SchoolDetailStudentListSection({
     () => mergedStudentList.filter(row => matchesStudentListFilters(row, appliedFilters)),
     [mergedStudentList, appliedFilters]
   )
+  const excelStudentList = useMemo(() => {
+    const source = rosterRemote.remoteEnabled
+      ? rosterRemote.students
+      : getSchoolDetailStudents(schoolId, studentCount)
+    return source.filter(row => matchesStudentListFilters(row, appliedFilters))
+  }, [
+    appliedFilters,
+    rosterRemote.remoteEnabled,
+    rosterRemote.students,
+    schoolId,
+    studentCount,
+  ])
 
   const handleCertificateIssueClick = useCallback(() => {
     if (isStudentListEditMode) {
@@ -657,6 +681,7 @@ export function SchoolDetailStudentListSection({
         setSelectedStudentKeys([])
         setIsStudentListEditMode(false)
         onSaveEdit?.(rows)
+        showUpdateCompletedAlert()
       } catch (error) {
         const conflictAlert = resolveStudentRosterCommitErrorAlert(error)
         if (conflictAlert) {
@@ -670,6 +695,7 @@ export function SchoolDetailStudentListSection({
     }
     onSaveEdit?.(rows)
     setIsStudentListEditMode(false)
+    showUpdateCompletedAlert()
   }, [
     getValues,
     onSaveEdit,
@@ -919,6 +945,13 @@ export function SchoolDetailStudentListSection({
         handleStudentListCancel()
       }
     } else if (rosterRemote.remoteEnabled && unmaskedRosterRows == null) {
+      if (privacyRolePending || !canRevealSensitive) {
+        showAlert({
+          title: '열람 불가',
+          content: '학생 명단 원문 조회 권한이 없습니다. 마스킹 목록을 유지합니다.',
+        })
+        return
+      }
       const entryCheck = validateStudentRosterEditEntry({
         remoteEnabled: true,
         isLoading: rosterRemote.isLoading,
@@ -950,6 +983,8 @@ export function SchoolDetailStudentListSection({
     showAlert,
     studentList,
     unmaskedRosterRows,
+    canRevealSensitive,
+    privacyRolePending,
   ])
 
   const closeEditUnmaskConfirm = useCallback(() => {
@@ -959,11 +994,15 @@ export function SchoolDetailStudentListSection({
 
   const confirmEditUnmaskAndStartEdit = useCallback(() => {
     if (editUnmaskConfirmLoading || !organizationApplicationKey) return
+    if (privacyRolePending || !canRevealSensitive) {
+      showAlert({
+        title: '열람 불가',
+        content: '학생 명단 원문 조회 권한이 없습니다. 마스킹 목록을 유지합니다.',
+      })
+      return
+    }
     setEditUnmaskConfirmLoading(true)
-    void fetchOrganizationStudentRosterPrivacyDetail(
-      organizationApplicationKey,
-      STUDENT_ROSTER_EDIT_UNMASK_REASON
-    )
+    void fetchOrganizationStudentRosterPrivacyDetail(organizationApplicationKey)
       .then(response => {
         const rows = mapStudentRosterResponseToRows(response)
         const revisionNo =
@@ -985,6 +1024,22 @@ export function SchoolDetailStudentListSection({
         enterStudentListEditMode({ rows, revisionNo })
       })
       .catch(error => {
+        const status = rosterHttpStatus(error)
+        setUnmaskedRosterRows(null)
+        if (status === 403) {
+          showAlert({
+            title: '열람 불가',
+            content: '학생 명단 원문 조회 권한이 없습니다. 마스킹 목록을 유지합니다.',
+          })
+          return
+        }
+        if (status != null && status >= 500) {
+          showAlert({
+            title: '열람 실패',
+            content: '감사 기록 또는 원문 조회에 실패했습니다. 원문을 표시하지 않습니다.',
+          })
+          return
+        }
         showAlert({
           title: '열람 실패',
           content: getGeneralProgramApiErrorMessage(error, '개인정보 원문 조회에 실패했습니다.'),
@@ -1000,6 +1055,8 @@ export function SchoolDetailStudentListSection({
     rosterRemote.revisionNo,
     rosterRemote.totalCount,
     showAlert,
+    canRevealSensitive,
+    privacyRolePending,
   ])
 
   const displayCount = isStudentListEditMode
@@ -1378,7 +1435,8 @@ export function SchoolDetailStudentListSection({
         actions={studentListToolbarActions}
         excelExport={{
           columns: studentColumnsView,
-          data: filteredStudentList,
+          data: excelStudentList,
+          selectedRowKeys: selectedStudentKeys,
         }}
       >
         <div

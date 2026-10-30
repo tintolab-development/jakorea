@@ -10,8 +10,7 @@ import { ujatInstitutionApplicationTableScrollX } from './columns'
 import type { UjatInstitutionApplicationRow } from './types'
 import { useUjatInstitutionApplicationList } from './use-list'
 import { UjatInstitutionApplicationActionModal } from './action-modal'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
-import { getUjatTempReleaseConfirmContent, UJAT_TEMP_RELEASE_CONFIRM_TITLE } from './temp-release'
+import { TemporaryActionModal } from '../temporary-action-modal'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './list.css'
@@ -44,10 +43,17 @@ export function UjatInstitutionApplicationList({
     handleBulkTempReject,
     handleBulkTempAssign,
     handleBulkTempRelease,
-    pendingTempReleaseModal,
-    tempReleasing,
-    closeTempReleaseModal,
+    handleBulkTempRejectCancel,
+    pendingTempAction,
+    tempActionLoading,
+    closeTempActionModal,
+    confirmBulkTempReject,
+    confirmBulkTempRejectCancel,
     confirmTempRelease,
+    eligibleTempRejectRows,
+    eligibleTempAssignCancelRows,
+    eligibleTempRejectCancelRows,
+    tempReleasing,
     pendingApplicationRejectModal,
     closeApplicationRejectModal,
     confirmApplicationRejectModal,
@@ -120,12 +126,8 @@ export function UjatInstitutionApplicationList({
               className="cms-button--action"
               width={180}
               onClick={() => {
-                if (selectedRowKeys.length === 0) {
-                  handleBulkTempAssign()
-                  return
-                }
+                if (!handleBulkTempAssign()) return
                 onOpenScheduleAssign?.()
-                handleBulkTempAssign()
               }}
             >
               임시 일정 배정
@@ -139,6 +141,16 @@ export function UjatInstitutionApplicationList({
               onClick={handleBulkTempRelease}
             >
               선택 임시 배정 해제
+            </FilterTableToolbarButton>
+            <FilterTableToolbarButton
+              type="button"
+              variant="secondary"
+              className="cms-button--action"
+              width={180}
+              disabled={tempReleasing || tempActionLoading}
+              onClick={handleBulkTempRejectCancel}
+            >
+              선택 임시 반려 취소
             </FilterTableToolbarButton>
             {viewMode === 'table' ? (
               <FilterTableToolbarButton
@@ -164,6 +176,7 @@ export function UjatInstitutionApplicationList({
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys,
         }}
       >
         {viewMode === 'table' ? (
@@ -213,16 +226,27 @@ export function UjatInstitutionApplicationList({
         <div className="ujat-institution-application-list__page-bottom-spacer" aria-hidden />
       ) : null}
 
-      <ConfirmModal
-        open={pendingTempReleaseModal}
-        title={UJAT_TEMP_RELEASE_CONFIRM_TITLE}
-        content={getUjatTempReleaseConfirmContent(selectedApplications.length)}
-        confirmText="해제"
-        danger
-        confirmLoading={tempReleasing}
-        onConfirm={() => void confirmTempRelease()}
-        onCancel={closeTempReleaseModal}
-      />
+      {pendingTempAction ? (
+        <TemporaryActionModal
+          open
+          kind={pendingTempAction}
+          institutionNames={(pendingTempAction === 'temp_reject'
+            ? eligibleTempRejectRows
+            : pendingTempAction === 'temp_assign_cancel'
+              ? eligibleTempAssignCancelRows
+              : eligibleTempRejectCancelRows
+          ).map(row => row.institutionName)}
+          loading={tempActionLoading || tempReleasing}
+          onCancel={closeTempActionModal}
+          onConfirm={
+            pendingTempAction === 'temp_reject'
+              ? confirmBulkTempReject
+              : pendingTempAction === 'temp_assign_cancel'
+                ? confirmTempRelease
+                : confirmBulkTempRejectCancel
+          }
+        />
+      ) : null}
 
       {pendingApplicationRejectModal ? (
         <UjatInstitutionApplicationActionModal

@@ -88,10 +88,7 @@ export async function unmaskRosterStudentForCertificateIssue(input: {
   applicationId: string | number
   rosterId: number
 }): Promise<Pick<SchoolDetailStudentRow, 'name' | 'birthDate'>> {
-  const response = await fetchOrganizationStudentRosterPrivacyDetail(
-    input.applicationId,
-    CERTIFICATE_ISSUE_PRIVACY_ACCESS_PURPOSE
-  )
+  const response = await fetchOrganizationStudentRosterPrivacyDetail(input.applicationId)
   invalidatePrivacyAccessLogsAfterCertificateIssue()
   const row = mapStudentRosterResponseToRows(response).find(
     item => item.serverRosterId === input.rosterId

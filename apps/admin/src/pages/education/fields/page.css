@@ -198,7 +198,11 @@
  * hover 규칙도 동일 — report-list와 같은 패턴.
  */
 .education-fields-table.cms-data-table .ant-table-tbody > tr > td,
-.education-fields-table.cms-data-table .ant-table-tbody > tr:hover > td {
+.education-fields-table.cms-data-table .ant-table-tbody > tr:hover > td,
+.education-fields-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell-row-hover {
   height: auto !important;
   min-height: 54px;
   vertical-align: middle !important;

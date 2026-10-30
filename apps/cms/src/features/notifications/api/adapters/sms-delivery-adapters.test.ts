@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   mapBatchBodySnapshotAttachments,
+  mapSmsDeliveryDetailResponse,
   mapSmsDeliveryToSendHistoryRow,
 } from './sms-delivery-adapters'
 
@@ -42,6 +43,18 @@ describe('mapSmsDeliveryToSendHistoryRow', () => {
     )
     expect(row?.content).toBe('목록 요약')
     expect(row?.bodyText).toBe('상세 본문 전체입니다.')
+  })
+
+  it('keeps detail recipientContactMasked plaintext without remasking', () => {
+    const row = mapSmsDeliveryDetailResponse({
+      delivery: {
+        deliveryId: 91,
+        recipientContactMasked: '010-1234-5678',
+        sendStatus: 'SENT',
+      },
+    })
+    expect(row?.receiverPhone).toBe('010-1234-5678')
+    expect(row?.receiverInfo).toBe('010-1234-5678')
   })
 })
 describe('mapBatchBodySnapshotAttachments', () => {

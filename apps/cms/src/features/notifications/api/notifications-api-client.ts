@@ -241,7 +241,11 @@ export async function fetchNotificationDeliveriesRemote(
 export async function fetchNotificationDeliveryRemote(
   deliveryId: number
 ): Promise<NotificationDeliveryDetailResponse> {
-  return unwrapApiBody(await notificationsRemoteApi.getNotificationDelivery(deliveryId))
+  return unwrapApiBody(
+    await notificationsRemoteApi.getNotificationDelivery(deliveryId, {
+      headers: { 'Cache-Control': 'no-store' },
+    })
+  )
 }
 
 /** 발송 배치 상세 — `GET /api/admin/notification-send-batches/{batchId}` (bodySnapshot.attachments 포함) */

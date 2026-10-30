@@ -5,7 +5,8 @@
 .main-header {
   background: var(--main-WT, #fff);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
-  padding: 7px 24px 7px 32px;
+  /* 시안 GNB(13192:232240): py 7 / pl 40 / pr 32 */
+  padding: 7px 32px 7px 40px;
   height: var(--header-height);
   line-height: var(--header-height);
   display: flex;
@@ -16,7 +17,8 @@
   left: var(--sidebar-width);
   right: 0;
   z-index: 99;
-  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+  /* 시안: drop-shadow 0 4px 6px rgba(0,0,0,0.04) */
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.04);
 }
 
 .main-header-content {
@@ -136,7 +138,8 @@
 .main-header-user-info {
   display: flex;
   align-items: center;
-  gap: var(--spacing-8);
+  /* 시안 user: gap 12 */
+  gap: var(--spacing-12, 12px);
   height: var(--spacing-32, 32px);
 }
 
@@ -151,8 +154,9 @@
 
 .main-header-user-divider {
   width: 1px;
-  height: var(--spacing-14);
-  background: var(--color-border-input);
+  /* 시안: 1×13, #3d3d3d opacity 0.5 */
+  height: 13px;
+  background: rgba(61, 61, 61, 0.5);
 }
 
 .main-header-user-name {
@@ -281,15 +285,17 @@
   align-items: center;
   justify-content: center;
   vertical-align: middle;
-  gap: var(--spacing-6);
-  height: var(--spacing-32, 32px);
-  padding: 0 var(--spacing-14);
+  /* 시안 notice: pl10 pr12 py6 · gap 3 · radius 50 · border rgba(1,161,175,0.06) */
+  gap: 3px;
+  box-sizing: border-box;
+  height: auto;
+  padding: 6px 12px 6px 10px;
   background: var(--color-bg-accent);
-  border-radius: var(--radius-16);
+  border-radius: 50px;
   cursor: pointer;
   transition: all 0.2s;
-  border: none;
-  line-height: var(--spacing-32, 32px);
+  border: 1px solid rgba(1, 161, 175, 0.06);
+  line-height: 1.3;
 }
 
 .main-header-notification-badge:hover {
@@ -301,6 +307,10 @@
   color: var(--color-brand-primary);
   display: flex;
   align-items: center;
+  /* 시안: 아이콘 박스 20×20 (글리프 크기는 유지) */
+  justify-content: center;
+  width: 20px;
+  height: 20px;
 }
 
 .main-header-notification-count {

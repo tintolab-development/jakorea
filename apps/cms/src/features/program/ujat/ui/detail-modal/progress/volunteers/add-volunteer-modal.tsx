@@ -72,7 +72,7 @@ export function UjatAddVolunteerModal({
       footer={footer}
       className="ujat-add-volunteer-modal"
       description={
-        '추가할 회원을 선택해 주세요.\n등록된 회원 정보가 없는 경우, **[회원 관리]**에서 회원 정보를 먼저 등록해 주세요.'
+        '추가할 봉사자를 선택해 주세요.\n등록된 봉사자 정보가 없는 경우, **[회원 관리]**에서 봉사자 정보를 먼저 등록해 주세요.'
       }
     >
       <div className="ujat-add-volunteer-modal__body">
@@ -87,13 +87,15 @@ export function UjatAddVolunteerModal({
               inputSize="large"
               width="100%"
               withAllOption={false}
-              placeholder="추가 등록할 회원을 선택해 주세요"
+              placeholder="추가 등록할 봉사자를 선택해 주세요"
+              showSearch
+              optionFilterProp="label"
               options={memberOptions.map(m => ({
                 value: m.memberId,
                 label: m.volunteerName,
               }))}
               notFoundContent={
-                memberOptions.length === 0 ? '추가 등록 가능한 회원이 없습니다' : undefined
+                memberOptions.length === 0 ? '추가 등록 가능한 봉사자가 없습니다' : undefined
               }
               getPopupContainer={() => document.body}
             />

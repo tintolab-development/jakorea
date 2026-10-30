@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import type { Plugin, ProxyOptions } from 'vite'
 import { viteAppBuildDefine } from '../../scripts/vite-app-build-define'
+import {
+  FORM_TEMPLATE_RUNTIME_OPTIMIZE_DEPS_EXCLUDE,
+  formTemplateRuntimeWatchIgnored,
+} from '../../scripts/vite-form-template-runtime-watch'
 import postcssCustomMedia from 'postcss-custom-media'
 import postcssGlobalData from '@csstools/postcss-global-data'
 
@@ -66,7 +70,8 @@ export default defineConfig(({ mode }) => {
   const cmsTarget =
     env.VITE_API_SERVER?.trim() ||
     env.VITE_DEV_PROXY_TARGET?.trim() ||
-    env.VITE_NGROK_SERVER?.trim()
+    env.VITE_NGROK_SERVER?.trim() ||
+    'http://localhost:8080'
   /** Homepage Admin (JAHOMEADMINBACK) — `/api/public/main` 등. 미설정 시 8081 */
   const homepageTarget =
     env.VITE_HOMEPAGE_API_SERVER?.trim() || 'http://localhost:8081'
@@ -160,11 +165,15 @@ export default defineConfig(({ mode }) => {
         '@tiptap/extension-dropcursor',
         '@tiptap/markdown',
       ],
+      exclude: [...FORM_TEMPLATE_RUNTIME_OPTIMIZE_DEPS_EXCLUDE],
     },
     server: {
       port: 5173,
       strictPort: true,
       proxy,
+      watch: {
+        ignored: formTemplateRuntimeWatchIgnored,
+      },
     },
   }
 })

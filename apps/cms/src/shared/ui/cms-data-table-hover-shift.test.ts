@@ -44,8 +44,8 @@ const FORBIDDEN_TBODY_DIMENSION_HOVER =
   /tr:not\(\.ant-table-placeholder\):not\(\.ant-table-measure-row\):hover\s*\n\s*> td/g
 
 describe('cms-data-table hover shift (CSS contract)', () => {
-  const cmsTableCss = readCss('apps/cms/src/shared/ui/cms-data-table.css')
-  const adminTableCss = readCss('apps/admin/src/shared/ui/cms-data-table.css')
+  const cmsTableCss = readCss('packages/admin-ui/src/table/admin-data-table.css')
+  const adminTableCss = readCss('packages/admin-ui/src/table/admin-data-table.css')
   it('CMS·Admin 공통 css: tbody 치수용 measure-row):hover 선택자 없음', () => {
     expect(cmsTableCss).not.toMatch(FORBIDDEN_TBODY_DIMENSION_HOVER)
     expect(adminTableCss).not.toMatch(FORBIDDEN_TBODY_DIMENSION_HOVER)

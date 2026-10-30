@@ -223,12 +223,20 @@ export interface PaymentOrderCalculationStatementInstructorBasicInfo {
   addressBlurredTail?: string
   settlementAccountBankNumberPart: string
   settlementAccountHolderPart: string
-  /** Mock 시드 기반. Remote 미제공 시 `-` */
+  /** settlement.payee 또는 stub. 없으면 `-` */
   genderBirthDisplay?: string
   /** 1 이상이면 성명 옆 일정 변경 배지 */
   scheduleChangeCancelCount?: number
   /** 지급조서 발급용 — UI 미노출 */
   programName?: string
+  /** settlement.payee — 발급 양식 소속 */
+  affiliation?: string
+  /** settlement.payee — 발급 양식 주민등록번호(MASKED) */
+  residentRegistrationNumber?: string
+  /** settlement.payee — 발급 양식 도로명 */
+  addressRoad?: string
+  /** settlement.payee — 발급 양식 상세주소 */
+  addressDetail?: string
   processingStatusDisplay: string
   processingStatusClass: PaymentOrderAdminLineProcessingStatus
   processingRejectionReason?: string
@@ -250,6 +258,8 @@ export interface PaymentOrderCalculationStatementLine {
   amountDisplayOverride?: string
   /** 산정 기준 상세 모달 payload (read-only) */
   basisDetail?: PaymentOrderCalculationBasisDetail
+  /** withholding 「구분」— BE taxIncomeTypeDisplay만. 없으면 `-` */
+  taxIncomeTypeDisplay?: string | null
 }
 
 export interface PaymentOrderCalculationStatementSessionBlock {

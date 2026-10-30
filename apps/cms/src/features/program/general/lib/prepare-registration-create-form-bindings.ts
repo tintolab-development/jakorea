@@ -1,7 +1,10 @@
 import type { Program } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
-import { listAllRegistrationCreateFormSpecs } from '@/features/program/general/lib/operational-form-bindings'
+import {
+  isSystemCatalogOnlyFormType,
+  listAllRegistrationCreateFormSpecs,
+} from '@/features/program/general/lib/operational-form-bindings'
 import { resolveProgramOperationalBindingKind } from '@/features/program/general/lib/program-operational-binding-profile'
 import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
@@ -71,18 +74,8 @@ export async function prepareRegistrationCreateFormBindings(args: {
   for (const spec of specs) {
     if (seenTemplateCodes.has(spec.templateCode)) continue
     seenTemplateCodes.add(spec.templateCode)
-    if (spec.formType === 'REGISTRATION') {
-      if (args.registration != null && args.registration.templateCode === spec.templateCode) {
-        forms.push({
-          templateCode: spec.templateCode,
-          formType: spec.formType,
-          draft: args.registration.draft,
-          overlay: args.registration.overlay,
-          editorState: args.registration.editorState,
-        })
-      }
-      continue
-    }
+    // 등록/발급/인증서는 시스템 제공 양식만 사용한다. CREATE 후 COPY하지 않는다.
+    if (isSystemCatalogOnlyFormType(spec.formType)) continue
 
     const override = overrideByCode.get(spec.templateCode)
     if (override != null) {

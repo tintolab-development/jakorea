@@ -9,17 +9,14 @@ import {
   type VisitorStatsQuery,
   type VisitorStatsUnit,
 } from '@/entities/visitor-stats/model/types'
-import {
-  useVisitorStats,
-  useVisitorStatsFilterOptions,
-} from '@/features/visitor-stats/api/hooks'
+import { useVisitorStats, useVisitorStatsFilterOptions } from '@/features/visitor-stats/api/hooks'
 import {
   VisitorStatsFilterCard,
   type VisitorStatsPendingFilters,
 } from '@/features/visitor-stats/ui/filter-card'
 import { VisitorStatsSummaryBar } from '@/features/visitor-stats/ui/summary-bar'
 import { VisitorStatsTable } from '@/features/visitor-stats/ui/stats-table'
-import { CmsTextTabs } from '@/shared/ui'
+import { CmsTextTabs, FilterTableLayout } from '@/shared/ui'
 import type { CmsSelectMultipleOption } from '@/shared/ui'
 
 import './page.css'
@@ -103,23 +100,20 @@ export function VisitorsStatsPage() {
 
   return (
     <div className="visitor-stats-page">
-      <VisitorStatsFilterCard
-        unit={unit}
-        pending={pending}
-        yearOptions={yearOptions}
-        monthOptions={monthOptions}
-        onPendingChange={setPending}
-        onSearch={handleSearch}
-        loading={loading}
-      />
-
-      <div className="admin-list-card visitor-stats-page__result-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">방문자 통계</span>
-          </div>
-        </div>
-
+      <FilterTableLayout
+        filter={
+          <VisitorStatsFilterCard
+            unit={unit}
+            pending={pending}
+            yearOptions={yearOptions}
+            monthOptions={monthOptions}
+            onPendingChange={setPending}
+            onSearch={handleSearch}
+            loading={loading}
+          />
+        }
+        title="방문자 통계"
+      >
         {statsQuery.isError ? (
           <div className="visitor-stats-page__placeholder page-content-error" role="alert">
             통계를 불러오지 못했습니다. 다시 조회해 주세요.
@@ -144,7 +138,7 @@ export function VisitorsStatsPage() {
             />
           </>
         )}
-      </div>
+      </FilterTableLayout>
     </div>
   )
 }

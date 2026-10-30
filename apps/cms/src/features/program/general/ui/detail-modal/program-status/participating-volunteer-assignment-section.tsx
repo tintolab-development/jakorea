@@ -291,6 +291,7 @@ export function ParticipatingVolunteerAssignmentSection({
   const assignedExportRows = useMemo(
     () =>
       assignedInstitutions.map(row => ({
+        id: row.id,
         no: row.no,
         schoolName: row.schoolName,
         educationGrade: row.educationGrade,
@@ -304,6 +305,7 @@ export function ParticipatingVolunteerAssignmentSection({
   const waitingExportRows = useMemo(
     () =>
       waitingInstitutions.map(row => ({
+        id: row.id,
         no: row.no,
         schoolName: row.schoolName,
         desiredGrade: row.desiredGrade,
@@ -321,6 +323,7 @@ export function ParticipatingVolunteerAssignmentSection({
       columns: assignedExportColumns,
       data: assignedExportRows,
       filename: '배정된 기관 목록',
+      selectedRowKeys: selectedAssignedKeys,
     })
 
   const { exportExcel: exportWaitingExcel, isExporting: isWaitingExcelExporting } =
@@ -328,6 +331,7 @@ export function ParticipatingVolunteerAssignmentSection({
       columns: waitingExportColumns,
       data: waitingExportRows,
       filename: '배정 대기 기관 목록',
+      selectedRowKeys: selectedWaitingKeys,
     })
 
   const handleUnassignClick = useCallback(() => {

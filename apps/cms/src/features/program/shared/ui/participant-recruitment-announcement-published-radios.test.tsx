@@ -20,12 +20,13 @@ describe('ParticipantRecruitmentAnnouncementPublishedRadios', () => {
     expect(container.querySelectorAll('.app-radio--medium')).toHaveLength(2)
   })
 
-  it('다른 모집 화면 기본 크기는 large다', () => {
+  it('모집 양식 라디오 기본 크기는 medium(14px)이다', () => {
     const { container } = render(
       <ParticipantRecruitmentAnnouncementPublishedRadios value="unpublished" onChange={() => {}} />
     )
 
-    expect(container.querySelector('.app-radio-group--large')).toBeTruthy()
-    expect(container.querySelectorAll('.app-radio--large')).toHaveLength(2)
+    expect(container.querySelector('.app-radio-group--medium')).toBeTruthy()
+    expect(container.querySelector('.app-radio--large')).toBeNull()
+    expect(container.querySelectorAll('.app-radio--medium')).toHaveLength(2)
   })
 })

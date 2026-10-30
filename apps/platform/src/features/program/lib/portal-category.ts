@@ -1,4 +1,4 @@
-import type { ProgramTab } from '../model/types'
+import type { ProgramDetailCase, ProgramTab } from '../model/types'
 import { programTabLabels } from './constants.ts'
 
 const PORTAL_CATEGORY_CODE: Record<string, ProgramTab> = {
@@ -58,4 +58,23 @@ export function mapPortalCategoryLabel(
   programType: string | undefined
 ): string {
   return programTabLabels(mapPortalTabs(categories, programType))
+}
+
+/**
+ * 프로그램 상세 상단 탭. 목록은 기관·강사를 같이 둘 수 있지만
+ * 상세 헤더는 둘 다 그리지 않는다. 진입 탭이 있으면 그것만, 없으면 상세 케이스에 맞는 한쪽만 남긴다.
+ */
+export function resolveProgramDetailCategoryTabs(input: {
+  tabs: readonly ProgramTab[]
+  detailCase: ProgramDetailCase
+  focusedTab?: ProgramTab | null
+}): ProgramTab[] {
+  if (input.focusedTab) return [input.focusedTab]
+  const hasInstructor = input.tabs.includes('instructor')
+  const hasInstitution = input.tabs.includes('institution')
+  if (!(hasInstructor && hasInstitution)) return [...input.tabs]
+  if (input.detailCase === 'instructor') {
+    return input.tabs.filter(tab => tab !== 'institution')
+  }
+  return input.tabs.filter(tab => tab !== 'instructor')
 }

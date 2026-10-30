@@ -11,10 +11,15 @@ import {
   ADMIN_REGISTERED_NOTICE_PATH,
 } from '@/features/auth/admin-registered'
 import {
+  beginAgeTransitionLoginScope,
+  resolvePostLoginPath,
+} from '@/features/auth/age-transition'
+import {
   expiresAtFromExpiresInSeconds,
   getLoginApiErrorMessage,
   usePortalLoginMutation,
 } from '@/features/auth/sign-in'
+import { applyAuthTokenAgeGroupToMeCache } from '@/features/auth/sign-in/lib/apply-auth-token-age-group'
 import {
   isPortalSocialAuthLoginRemoteEnabled,
   platformSocialAuthClient,
@@ -96,14 +101,18 @@ export function SignInPage() {
     accessToken: string
     refreshToken: string
     expiresInSeconds?: number
+    ageGroup?: string | null
   }) => {
     queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
     queryClient.removeQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
+    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.ageTransition() })
+    beginAgeTransitionLoginScope()
     setAuthTokens({
       accessToken: input.accessToken,
       refreshToken: input.refreshToken,
       expiresAt: expiresAtFromExpiresInSeconds(input.expiresInSeconds),
     })
+    applyAuthTokenAgeGroupToMeCache(input.ageGroup)
     setDevMemberProfile('individual')
     setDevAuthLoggedIn(false)
   }
@@ -140,6 +149,7 @@ export function SignInPage() {
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           expiresInSeconds: tokens.expiresInSeconds,
+          ageGroup: tokens.ageGroup,
         })
         const target =
           resolveAdminProvisionedOnboardingEntryPath(tokens) ?? ADMIN_REGISTERED_NOTICE_PATH
@@ -152,8 +162,10 @@ export function SignInPage() {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         expiresInSeconds: tokens.expiresInSeconds,
+        ageGroup: tokens.ageGroup,
       })
-      navigate(resolveRedirectPath())
+      const nextPath = await resolvePostLoginPath(resolveRedirectPath())
+      navigate(nextPath)
     } catch (error) {
       clearAuthTokens()
       setDevAuthLoggedIn(false)

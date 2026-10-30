@@ -2,10 +2,12 @@
  * 정산 관리 > 계좌 지급 확인 — 행 클릭 시 [계좌 지급 현황 상세] 풀페이지 모달
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canAccessAccountPayments } from '@/shared/lib/account-payments-access'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -59,6 +61,8 @@ export function AccountPaymentStatusDetailFullPageModal({
 }: AccountPaymentStatusDetailFullPageModalProps) {
   const location = useLocation()
   const [searchParams] = useSearchParams()
+  const { user } = useAuthStore()
+  const canCompleteAccountPayment = canAccessAccountPayments(user)
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
   const detailQuery = useAccountPaymentDetailQuery(row, open && accountPaymentsRemote)
 
@@ -71,15 +75,26 @@ export function AccountPaymentStatusDetailFullPageModal({
       : null
   const detailForbidden = getApiErrorHttpStatus(detailError) === 403
   const { showAlert } = useCmsAlert()
+  const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
+  const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
+  const detailRowId = row?.id ?? ''
+  const [overlayRowId, setOverlayRowId] = useState(detailRowId)
+  if (detailRowId !== overlayRowId) {
+    setOverlayRowId(detailRowId)
+    setPaymentCompleteConfirmOpen(false)
+    setIssuanceViewOpen(false)
+  }
+  const closeDetail = useCallback(() => {
+    setPaymentCompleteConfirmOpen(false)
+    setIssuanceViewOpen(false)
+    onClose()
+  }, [onClose])
 
   useEffect(() => {
     if (!open || !detailForbidden) return
     onClose()
     void showAlert({ title: '권한 없음', content: ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE })
   }, [open, detailForbidden, onClose, showAlert])
-
-  const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
-  const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
   const basisDetailContext = useMemo(() => {
     const subtotalBeforeWithholding = detail
       ? computePaymentOrderCalculationSubtotalBeforeWithholding(detail.blocks)
@@ -152,7 +167,7 @@ export function AccountPaymentStatusDetailFullPageModal({
     <>
       <DetailFullPageModal
         open={open}
-        onClose={onClose}
+        onClose={closeDetail}
         title={title}
         loading={detailLoading}
         error={
@@ -186,13 +201,12 @@ export function AccountPaymentStatusDetailFullPageModal({
                 formulaLabel={detail.formulaLabel}
                 totalAmount={detail.totalAmount}
                 lectureSessionSegmentLabel="round"
-                actionButtonSize="h32"
-                actionButtonWidth={176}
-                tableCellSpec="cms-data-table"
                 onBasisDetailClick={handleBasisDetailClick}
                 onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
                 headerActions={
-                  row.accountPaymentStatus === 'account_paid' ? undefined : (
+                  row.accountPaymentStatus === 'account_paid' || !canCompleteAccountPayment
+                    ? undefined
+                    : (
                     <CmsButton
                       variant="primary"
                       size="large"
@@ -210,7 +224,7 @@ export function AccountPaymentStatusDetailFullPageModal({
       </DetailFullPageModal>
 
       <AccountPaymentConfirmationModal
-        open={paymentCompleteConfirmOpen}
+        open={paymentCompleteConfirmOpen && canCompleteAccountPayment}
         onCancel={() => setPaymentCompleteConfirmOpen(false)}
         onConfirm={() => {
           onAccountPaymentCompleted?.(row.id)

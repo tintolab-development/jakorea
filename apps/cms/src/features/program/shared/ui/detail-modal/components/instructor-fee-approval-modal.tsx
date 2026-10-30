@@ -17,7 +17,6 @@ import type { InstructorApplicationFeePolicyContext } from '@/features/program/g
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { CmsFieldFrame } from '@/shared/ui/cms-field'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -40,6 +39,25 @@ const DATE_TIME_PICKER_Z_OFFSET = 100
 
 export type { InstructorFeeApprovalConfirmDetail }
 
+export const NO_ASSIGNABLE_INSTITUTION_SCHEDULE_NOTICE_LINES = [
+  '현재 배정 가능한 기관 일정이 없습니다.',
+  '기관의 프로그램 신청을 승인한 후,',
+  '기관 또는 강사의 배정 현황에서 교육 일정에 강사를 배정해 주세요.',
+] as const
+
+export function InstructorFeeNoAssignableScheduleNotice() {
+  return (
+    <p className="instructor-fee-approval-modal__no-schedule-notice" role="status">
+      {NO_ASSIGNABLE_INSTITUTION_SCHEDULE_NOTICE_LINES.map((line, index) => (
+        <span key={line}>
+          {index > 0 ? <br /> : null}
+          {line}
+        </span>
+      ))}
+    </p>
+  )
+}
+
 export type InstructorFeeApprovalModalProps = {
   open: boolean
   onCancel: () => void
@@ -50,10 +68,12 @@ export type InstructorFeeApprovalModalProps = {
   feePolicyError?: string | null
   onConfirm: (detail: InstructorFeeApprovalConfirmDetail) => void
   submitting?: boolean
+  /** 기관형에서 배정 가능한 기관 일정이 없어 배정 모달을 건너뛴 경우 */
+  showNoAssignableInstitutionScheduleNotice?: boolean
 }
 
 function buildDescription(instructorName: string): string {
-  return `[${instructorName}] 강사님의 강사비 책정 방식을 선택해 주세요.\n선택한 방식으로 강사비가 책정되며, 강사님에게 승인 알림이 발송됩니다.`
+  return `**[${instructorName}]**님의 강사비 책정 방식을 선택해 주세요.\n선택한 방식으로 강사비가 책정되며, 회원에게 승인 알림이 발송됩니다.`
 }
 
 export function InstructorFeeApprovalModal({
@@ -65,6 +85,7 @@ export function InstructorFeeApprovalModal({
   feePolicyError,
   onConfirm,
   submitting = false,
+  showNoAssignableInstitutionScheduleNotice = false,
 }: InstructorFeeApprovalModalProps) {
   const { showAlert } = useCmsAlert()
   const {
@@ -124,7 +145,11 @@ export function InstructorFeeApprovalModal({
         title="강사비 책정 및 승인 안내"
         width={MODAL_WIDTH}
         zIndex={MODAL_Z_INDEX}
-        className="instructor-fee-approval-modal"
+        className={
+          showNoAssignableInstitutionScheduleNotice
+            ? 'instructor-fee-approval-modal instructor-fee-approval-modal--with-schedule-notice'
+            : 'instructor-fee-approval-modal'
+        }
         description={buildDescription(instructorName)}
         footer={
           <div className="content-modal__footer-actions">
@@ -144,88 +169,79 @@ export function InstructorFeeApprovalModal({
         }
       >
         <div ref={modalContentRef} className="instructor-fee-approval-modal__content">
-          <CmsFieldFrame
-            size="medium"
-            label="강사비 책정 방식"
-            required
-            labelClassName="cms-input__label"
-            requiredClassName="cms-input__required"
-            className="instructor-fee-approval-modal__field"
-          >
-            <CmsRadio.Group
-              className="instructor-fee-approval-modal__radio-group"
-              size="large"
-              value={lectureFeeBasisType}
-              onChange={e =>
-                handleLectureFeeBasisTypeChange(
-                  e.target.value as ApplicantInstructorLectureFeeBasisType
-                )
-              }
-            >
-              {INSTRUCTOR_FEE_APPROVAL_BASIS_OPTIONS.map(option => (
-                <CmsRadio key={option.value} value={option.value}>
-                  {option.label}
-                </CmsRadio>
-              ))}
-            </CmsRadio.Group>
+          {showNoAssignableInstitutionScheduleNotice ? (
+            <InstructorFeeNoAssignableScheduleNotice />
+          ) : null}
 
-            {lectureFeeBasisType === 'program' ? (
-              <CmsSelect
-                className="instructor-fee-approval-modal__program-select"
-                inputSize="large"
-                width="100%"
-                withAllOption={false}
-                disabled
-                value={instructorFeeGrade}
-                options={INSTRUCTOR_FEE_GRADE_OPTIONS}
-                getPopupContainer={() => document.body}
-              />
-            ) : null}
+          <div className="instructor-fee-approval-modal__field-group">
+            <div>
+              <CmsRadio.Group
+                label="강사비 책정 방식"
+                required
+                size="medium"
+                value={lectureFeeBasisType}
+                onChange={e =>
+                  handleLectureFeeBasisTypeChange(
+                    e.target.value as ApplicantInstructorLectureFeeBasisType
+                  )
+                }
+              >
+                {INSTRUCTOR_FEE_APPROVAL_BASIS_OPTIONS.map(option => (
+                  <CmsRadio key={option.value} value={option.value}>
+                    {option.label}
+                  </CmsRadio>
+                ))}
+              </CmsRadio.Group>
 
-            {showAmountFields ? (
-              <div className="instructor-fee-approval-modal__amount-row">
-                <CmsSelect
-                  inputSize="large"
-                  width={150}
-                  withAllOption={false}
-                  placeholder="지급 기준"
-                  value={lectureFeeMeasure || undefined}
-                  options={LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS}
-                  onChange={v => setLectureFeeMeasure(v != null ? String(v) : '')}
-                  getPopupContainer={() => document.body}
-                />
-                <div className="instructor-fee-approval-modal__amount-field">
-                  <CmsNumericInput
-                    mode="currency"
-                    className="instructor-fee-approval-modal__amount-input"
-                    inputSize="large"
+              {lectureFeeBasisType === 'program' ? (
+                <div className="instructor-fee-approval-modal__amount-row">
+                  <CmsSelect
+                    inputSize="medium"
                     width="100%"
-                    placeholder="강사비를 입력해 주세요"
-                    value={lectureFeeAmount}
-                    onValueChange={setLectureFeeAmount}
+                    withAllOption={false}
+                    disabled
+                    value={instructorFeeGrade}
+                    options={INSTRUCTOR_FEE_GRADE_OPTIONS}
+                    getPopupContainer={() => document.body}
                   />
-                  <span className="instructor-fee-approval-modal__amount-unit">원</span>
                 </div>
-              </div>
-            ) : null}
-            {feePolicyError ? (
-              <span className="instructor-fee-approval-modal__field-error" role="alert">
-                {feePolicyError}
-              </span>
-            ) : null}
-          </CmsFieldFrame>
+              ) : null}
+              {showAmountFields ? (
+                <div className="instructor-fee-approval-modal__amount-row">
+                  <CmsSelect
+                    inputSize="medium"
+                    width={150}
+                    withAllOption={false}
+                    placeholder="지급 기준"
+                    value={lectureFeeMeasure || undefined}
+                    options={LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS}
+                    onChange={v => setLectureFeeMeasure(v != null ? String(v) : '')}
+                    getPopupContainer={() => document.body}
+                  />
+                  <div className="instructor-fee-approval-modal__amount-field">
+                    <CmsNumericInput
+                      mode="currency"
+                      inputSize="medium"
+                      width="100%"
+                      placeholder="강사비를 입력해 주세요"
+                      value={lectureFeeAmount}
+                      onValueChange={setLectureFeeAmount}
+                    />
+                    <span className="instructor-fee-approval-modal__amount-unit">원</span>
+                  </div>
+                </div>
+              ) : null}
+              {feePolicyError ? (
+                <span className="instructor-fee-approval-modal__field-error" role="alert">
+                  {feePolicyError}
+                </span>
+              ) : null}
+            </div>
 
-          <CmsFieldFrame
-            size="medium"
-            label="알림 발송"
-            required
-            labelClassName="cms-input__label"
-            requiredClassName="cms-input__required"
-            className="instructor-fee-approval-modal__field"
-          >
             <CmsRadio.Group
-              className="instructor-fee-approval-modal__radio-group"
-              size="large"
+              label="알림 발송"
+              required
+              size="medium"
               value={notifyTiming}
               onChange={e => handleNotifyTimingChange(e.target.value)}
             >
@@ -258,7 +274,7 @@ export function InstructorFeeApprovalModal({
                 {notifyError}
               </span>
             ) : null}
-          </CmsFieldFrame>
+          </div>
         </div>
       </ContentModal>
 

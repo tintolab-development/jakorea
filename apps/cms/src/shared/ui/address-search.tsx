@@ -1,6 +1,7 @@
 /**
- * 주소 검색: CmsInput 클릭 시 ContentModal + 행안부/주소기반산업지원 도로명주소 검색 API
- * @see useJusoAddressSearch — `VITE_ADDRESS_API_KEY` 또는 `VITE_JUSO_CONFM_KEY`, 선택 `VITE_JUSO_ADDRESS_API_URL`
+ * 주소 검색: CmsInput 클릭 시 ContentModal + 백엔드 주소 검색 프록시
+ * (`GET /api/portal/public/addresses/search`). 원격 API 미설정 시에만 Juso 직접 호출.
+ * @see useAddressSearch
  * 입력 중에는 debounce 자동완성, [검색] / Enter 시에는 전체 결과 조회를 사용한다.
  *
  * BE 거리 geocoding: roadAddr + 상세(addressDetail), 우편번호 제외 — `@jakorea/location/juso` `BE_MEMBER_ADDRESS_GEOCODING_QA_ONE_LINER`
@@ -15,7 +16,7 @@ import {
   getCmsJusoMissingKeyMessage,
   readJusoApiUrlFromEnv,
   readJusoConfmKeyFromEnv,
-  useJusoAddressSearch,
+  useAddressSearch,
   type JusoAddressItem,
 } from '@/shared/hooks'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -113,7 +114,7 @@ export function AddressSearch({
   const confmKey = confmKeyProp ?? readJusoConfmKeyFromEnv()
   const countPerPage = 10
 
-  const { addresses, totalCount, loading, error, search, reset } = useJusoAddressSearch({
+  const { addresses, totalCount, loading, error, search, reset } = useAddressSearch({
     confmKey,
     countPerPage,
     apiUrl: readJusoApiUrlFromEnv(),

@@ -18,6 +18,7 @@ describe('formatTrainingDatetimeDisplay', () => {
       trainingDate: '2026-11-10',
       trainingTimeText: '10:00~12:00',
       trainingDateCandidates: candidates,
+      lastPreferredDate: '2026-11-17',
     }
     expect(formatTrainingDatetimeDisplay(row)).toBe('2026.11.10 | 10:00~12:00')
     expect(formatConfirmedTrainingDatetimeDisplay(row)).toBe('2026.11.10 | 10:00~12:00')
@@ -29,11 +30,25 @@ describe('formatTrainingDatetimeDisplay', () => {
       trainingDate: '',
       trainingTimeText: '',
       trainingDateCandidates: candidates,
+      lastPreferredDate: '2026-11-17',
     }
     expect(formatTrainingDatetimeDisplay(row)).toBe(
       '1지망 11/10 10:00~12:00(1차시) | 2지망 11/12 10:00~12:00(1차시) | 3지망 11/17'
     )
-    expect(formatConfirmedTrainingDatetimeDisplay(row)).toBe('-')
+    expect(formatConfirmedTrainingDatetimeDisplay(row)).toBe(
+      '2026.11.10 | 10:00~12:00(1차시)'
+    )
+  })
+
+  it('강사 미지정이어도 승인 연수일시는 한 줄로 보여 준다', () => {
+    expect(
+      formatConfirmedTrainingDatetimeDisplay({
+        instructorAssigned: false,
+        trainingDate: '2026-10-08',
+        trainingTimeText: '01:00~02:00(1차시)',
+        trainingDateCandidates: candidates,
+      })
+    ).toBe('2026.10.08 | 01:00~02:00(1차시)')
   })
 
   it('강사가 매칭됐어도 확정 날짜가 없으면 후보를 표시한다', () => {
@@ -43,6 +58,7 @@ describe('formatTrainingDatetimeDisplay', () => {
         trainingDate: '',
         trainingTimeText: '',
         trainingDateCandidates: candidates.slice(0, 1),
+        lastPreferredDate: '2026-11-10',
       })
     ).toBe('1지망 11/10 10:00~12:00(1차시)')
   })
@@ -54,7 +70,31 @@ describe('formatTrainingDatetimeDisplay', () => {
         trainingDate: '',
         trainingTimeText: '',
         trainingDateCandidates: [],
+        lastPreferredDate: '',
       })
     ).toBe('-')
+  })
+
+  it('후보가 없고 lastPreferredDate만 있으면 그 날짜를 표시한다', () => {
+    expect(
+      formatTrainingDatetimeDisplay({
+        instructorAssigned: true,
+        trainingDate: '',
+        trainingTimeText: '',
+        trainingDateCandidates: [],
+        lastPreferredDate: '2026-11-10',
+      })
+    ).toBe('2026.11.10')
+  })
+
+  it('확정 날짜만 있고 시각이 없으면 날짜만 표시한다', () => {
+    expect(
+      formatConfirmedTrainingDatetimeDisplay({
+        instructorAssigned: true,
+        trainingDate: '2026-10-29',
+        trainingTimeText: '',
+        trainingDateCandidates: [],
+      })
+    ).toBe('2026.10.29')
   })
 })

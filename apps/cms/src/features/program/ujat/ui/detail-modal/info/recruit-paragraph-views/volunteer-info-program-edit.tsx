@@ -332,7 +332,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
             label="비고"
             edit={
               <Controller
-                name="otherNotes"
+                name="oneLineIntroduction"
                 control={form.control}
                 render={({ field }) => (
                   <CmsInput

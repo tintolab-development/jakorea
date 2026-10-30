@@ -34,12 +34,15 @@
     "memberDirectoryAllTab": {
       "rolesDisplayPriority": ["ADMIN", "INSTRUCTOR", "SCHOOL", "INDIVIDUAL"],
       "dualLabel": "학교(교사), 강사",
-      "revokedLabel": "강사(권한박탈)",
+      "revokedLabel": "강사(권한 종료)",
       "signupType": ["SELF", "ADMIN_REGISTERED"]
     },
     "instructorPermissionList": {
       "include": "pure instructor role requests only (instructor_only profile at request time)",
-      "exclude": ["active SCHOOL_TEACHER without pure instructor", "instructor_dual active at request"],
+      "exclude": [
+        "active SCHOOL_TEACHER without pure instructor",
+        "instructor_dual active at request"
+      ],
       "listMasking": true,
       "requestedActivityTypeColumn": false
     },
@@ -81,12 +84,44 @@
   },
   "memberDirectoryShowcase": {
     "allTab": [
-      { "caseId": "MD-INDIVIDUAL", "memberId": 171001, "roles": ["INDIVIDUAL"], "signupType": "SELF", "keyword": "김개인" },
-      { "caseId": "MD-SCHOOL-TEACHER", "memberId": 171002, "roles": ["SCHOOL_TEACHER"], "signupType": "SELF" },
-      { "caseId": "MD-INSTRUCTOR", "memberId": 171003, "roles": ["INSTRUCTOR"], "signupType": "SELF" },
-      { "caseId": "MD-INSTRUCTOR-DUAL", "memberId": 171004, "roles": ["SCHOOL_TEACHER", "INSTRUCTOR"], "signupType": "SELF" },
-      { "caseId": "MD-INSTRUCTOR-REVOKED", "memberId": 171005, "roles": ["INSTRUCTOR_REVOKED"], "signupType": "SELF" },
-      { "caseId": "MD-ADMIN", "adminAccountId": 171601, "roles": ["ADMIN"], "signupType": "SELF", "roleCode": "MASTER" }
+      {
+        "caseId": "MD-INDIVIDUAL",
+        "memberId": 171001,
+        "roles": ["INDIVIDUAL"],
+        "signupType": "SELF",
+        "keyword": "김개인"
+      },
+      {
+        "caseId": "MD-SCHOOL-TEACHER",
+        "memberId": 171002,
+        "roles": ["SCHOOL_TEACHER"],
+        "signupType": "SELF"
+      },
+      {
+        "caseId": "MD-INSTRUCTOR",
+        "memberId": 171003,
+        "roles": ["INSTRUCTOR"],
+        "signupType": "SELF"
+      },
+      {
+        "caseId": "MD-INSTRUCTOR-DUAL",
+        "memberId": 171004,
+        "roles": ["SCHOOL_TEACHER", "INSTRUCTOR"],
+        "signupType": "SELF"
+      },
+      {
+        "caseId": "MD-INSTRUCTOR-REVOKED",
+        "memberId": 171005,
+        "roles": ["INSTRUCTOR_REVOKED"],
+        "signupType": "SELF"
+      },
+      {
+        "caseId": "MD-ADMIN",
+        "adminAccountId": 171601,
+        "roles": ["ADMIN"],
+        "signupType": "SELF",
+        "roleCode": "MASTER"
+      }
     ],
     "schools": [
       {
@@ -177,7 +212,9 @@
               }
             ]
           },
-          "licenses": [{ "name": "경제교육지도사 2급", "year": "2019", "issuer": "한국경제교육학회" }],
+          "licenses": [
+            { "name": "경제교육지도사 2급", "year": "2019", "issuer": "한국경제교육학회" }
+          ],
           "awards": [{ "name": "우수강사상", "year": "2023", "issuer": "JA Korea" }],
           "jaKoreaActivities": [
             {

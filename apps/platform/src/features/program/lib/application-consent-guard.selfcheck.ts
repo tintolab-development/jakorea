@@ -29,9 +29,9 @@ const portraitOk = (extra: Partial<PortalConsentSummary> = {}) =>
 assert.deepEqual(resolveRequiredApplyConsentTypes({ programType: 'GENERAL' }), ['PORTRAIT_RIGHTS'])
 assert.deepEqual(resolveRequiredApplyConsentTypes({ programType: undefined }), ['PORTRAIT_RIGHTS'])
 assert.deepEqual(resolveRequiredApplyConsentTypes({ programType: 'TRAINED_TEACHER' }), ['PORTRAIT_RIGHTS'])
+// 행정정보 공동이용 동의서는 필수 아님(2026-10-29)
 const ujat = [
   'FACILITATOR_PLEDGE',
-  'ADMINISTRATIVE_INFO_CONSENT',
   'CRIMINAL_HISTORY_CHECK_CONSENT',
   'PORTRAIT_RIGHTS',
 ]
@@ -76,7 +76,21 @@ assert.deepEqual(
     ],
     ujatRequired,
   ),
-  ['ADMINISTRATIVE_INFO_CONSENT', 'CRIMINAL_HISTORY_CHECK_CONSENT'],
+  ['CRIMINAL_HISTORY_CHECK_CONSENT'],
+)
+
+// UJAT: 행정정보 공동이용 미동의만으로는 막지 않는다
+assert.deepEqual(
+  findMissingApplyConsents(
+    [
+      agreed('FACILITATOR_PLEDGE'),
+      notAgreed('ADMINISTRATIVE_INFO_CONSENT'),
+      agreed('CRIMINAL_HISTORY_CHECK_CONSENT'),
+      portraitOk(),
+    ],
+    ujatRequired,
+  ),
+  [],
 )
 
 // 만료·재동의·정책갱신·잘못된 status 는 agreed=true 여도 막힘

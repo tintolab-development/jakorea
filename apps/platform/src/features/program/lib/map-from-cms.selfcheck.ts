@@ -302,7 +302,7 @@ function testDetailCaseSsotMapping() {
   assert.equal(gemini.detailCase, 'gemini')
   assert.equal(gemini.category, 'institution')
   assert.equal(gemini.title, 'Gemini 프로그램_기관')
-  assert.ok(gemini.recruitmentPhases.some(p => p.label === '연수 신청 기간'))
+  assert.ok(gemini.recruitmentPhases.some(p => p.label === '기관 모집 기간'))
   assert.equal(gemini.educationTargetDetailLabel, '특성화고등학교 3학년')
 
   const economyChoice = mapCmsProgramToPlatformDetail(

@@ -23,6 +23,8 @@ export type PublicStoryListItem = {
 export type PublicStoryDetail = PublicStoryListItem & {
   body?: string
   attachmentOriginalName?: string
+  /** PublicStoryDetail.attachmentUrl. 없으면 null/생략. 가짜 URL 금지. */
+  attachmentUrl?: string | null
 }
 
 export type PublicStoryListPage = {

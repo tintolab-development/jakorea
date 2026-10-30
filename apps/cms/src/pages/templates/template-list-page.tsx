@@ -10,7 +10,7 @@ import { TemplateCreateModal } from '@/features/template/ui/modal/template-creat
 import './template-list-page.css'
 import './template-form-tab.css'
 import { CmsButton } from '@/shared/ui'
-import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
+import { CmsPageTabs } from '@/shared/ui/cms-text-tabs'
 
 const FORM_MANAGEMENT_BASE = '/templates/form-management'
 
@@ -84,12 +84,12 @@ export function TemplateListPage() {
     <>
       {isFormManagementSection && (
         <>
-          <CmsTextTabs
+          <CmsPageTabs
             className="template-list-page__tabs"
-            variant="list"
-            activeKey={activeKey}
+            value={activeKey}
             onChange={handleFormTabChange}
-            items={formTabItems.map(t => ({ key: t.key, label: t.label }))}
+            aria-label="양식 유형"
+            items={formTabItems.map(t => ({ value: t.key, label: t.label }))}
             trailing={
               activeKey === 'template-form' ? (
                 <CmsButton type="button" onClick={() => setCreateModalOpen(true)}>

@@ -1,9 +1,14 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   buildEconomyAutofillDatePlan,
+  buildEconomyAutofillPreferredScheduleBlocks,
   selectEconomyRegistrationAutofillPhrases,
   type EconomyAutofillPhraseSelection,
 } from '@/features/program/1c-1s/lib/dev-autofill-phrases'
+import {
+  collectCompanySchoolApplicationFormState,
+  companySchoolApplicationEditorState,
+} from '@/features/program/1c-1s/lib/application-form-state'
 import {
   fillBlankApplicationFormThirdPartyRecipients,
   seedDevAutofillApplicationThirdPartyRecipients,
@@ -27,6 +32,7 @@ import { completeTrainedTeachersDevAutofillOverlay } from '@/features/program/tr
 import type { TrainedTeachersRegistrationRequiredFieldContext } from '@/features/program/trained-teachers/lib/trained-teachers-program-registration-required-fields'
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
 import { applyDevAutofillRecruitOverlayPartials } from '@/features/program/shared/lib/dev-autofill-recruit-overlay'
+import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
 import { getDetailedProgramOptionsList } from '@/features/detailed-program/api/admin-detailed-programs-service'
 import {
   getSponsorContacts,
@@ -58,6 +64,7 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
+  getProgramRegistrationOverlayRecord,
   patchGeneralRegistrationSponsorSelectionOverlay,
   patchProgramRegistrationOverlay,
   replaceProgramRegistrationOverlayPrefixes,
@@ -117,7 +124,10 @@ import {
   VOLUNTEER_TARGET_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { createDefaultUnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
-import { replaceGeneralApplicationOverlayForScope } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import {
+  peekGeneralApplicationOverlayRecord,
+  replaceGeneralApplicationOverlayForScope,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS,
   replaceUjatApplicationInstitutionOverlayForScope,
@@ -211,12 +221,6 @@ function pickOptionValue(options: readonly { readonly value: string }[], fallbac
   return pick(options).value
 }
 
-function upcomingWeekday(daysAhead: number): Dayjs {
-  let date = dayjs().add(daysAhead, 'day').startOf('day')
-  while (date.day() === 0 || date.day() === 6) date = date.add(1, 'day')
-  return date
-}
-
 function atClock(date: Dayjs, hour: number, minute: number): Dayjs {
   return date.hour(hour).minute(minute).second(0).millisecond(0)
 }
@@ -270,6 +274,41 @@ function clampDayjs(date: Dayjs, lo: Dayjs, hi: Dayjs): Dayjs {
   return date
 }
 
+function orderedDayBounds(start: string | Dayjs, end: string | Dayjs): { lo: Dayjs; hi: Dayjs } {
+  const startDay = dayjs(start).startOf('day')
+  const endDay = dayjs(end).startOf('day')
+  return startDay.isAfter(endDay, 'day')
+    ? { lo: endDay, hi: startDay }
+    : { lo: startDay, hi: endDay }
+}
+
+function clampIsoRange(range: RangeIso, lo: Dayjs, hi: Dayjs): RangeIso {
+  const start = clampDayjs(dayjs(range.start).startOf('day'), lo, hi)
+  let end = clampDayjs(dayjs(range.end).startOf('day'), lo, hi)
+  if (end.isBefore(start, 'day')) end = start
+  return { start: dayIso(start), end: dayIso(end) }
+}
+
+function stretchIsoRange(range: RangeIso, lo: Dayjs, hi: Dayjs, minDays: number): RangeIso {
+  const start = clampDayjs(dayjs(range.start).startOf('day'), lo, hi)
+  let end = clampDayjs(dayjs(range.end).startOf('day'), lo, hi)
+  if (end.isBefore(start, 'day')) end = start
+  if (end.diff(start, 'day') >= minDays) return { start: dayIso(start), end: dayIso(end) }
+  end = clampDayjs(start.add(minDays, 'day'), start, hi)
+  return { start: dayIso(start), end: dayIso(end) }
+}
+
+function weekdayInsideRange(lo: Dayjs, hi: Dayjs, offsetDays: number): Dayjs {
+  let date = clampDayjs(lo.add(Math.max(0, offsetDays), 'day'), lo, hi)
+  while ((date.day() === 0 || date.day() === 6) && date.isBefore(hi, 'day')) {
+    date = date.add(1, 'day')
+  }
+  while ((date.day() === 0 || date.day() === 6) && date.isAfter(lo, 'day')) {
+    date = date.subtract(1, 'day')
+  }
+  return clampDayjs(date, lo, hi)
+}
+
 /** 사업 기간을 상·하반기로 나눈다. 두 구간 모두 bounds 안. */
 export function ujatAutofillHalfRanges(
   range: RangeIso
@@ -293,45 +332,27 @@ export function ujatAutofillHalfRanges(
 }
 
 /**
- * UJAT 자동입력 날짜 SSOT.
- * 프로그램·교육 일정 ⊆ 사업 기간. 모집·면접은 사업 시작 전~안으로만.
+ * 자동입력 날짜 SSOT.
+ * 모집·운영·면접·프로그램 일정은 모두 사업(오픈) 기간 안에 둔다.
+ * 모집 창은 모집 행으로만 저장되고, 신청일·운영일은 사업 기간 안에 있을 때만 함께 전송된다.
  */
 export function alignUjatAutofillDatePlan(
   plan: ReturnType<typeof buildRegistrationDatePlan>
 ): ReturnType<typeof buildRegistrationDatePlan> {
-  const bizStart = dayjs(plan.business.start).startOf('day')
-  const bizEnd = dayjs(plan.business.end).startOf('day')
-  const lo = bizStart.isAfter(bizEnd, 'day') ? bizEnd : bizStart
-  const hi = bizStart.isAfter(bizEnd, 'day') ? bizStart : bizEnd
-
-  const program = { start: dayIso(lo), end: dayIso(hi) }
-
-  const recruitLead = pickInt(3, 14)
-  const recruitStart = lo.subtract(recruitLead, 'day')
-  const recruitEnd = lo.subtract(1, 'day')
-  const recruit = recruitEnd.isBefore(recruitStart, 'day')
-    ? { start: dayIso(recruitStart), end: dayIso(recruitStart) }
-    : { start: dayIso(recruitStart), end: dayIso(recruitEnd) }
-
-  const rStart = dayjs(recruit.start)
-  const rEnd = dayjs(recruit.end)
-  const recruitDays = Math.max(0, rEnd.diff(rStart, 'day'))
-  const interviewStart = rStart.add(recruitDays <= 1 ? 0 : pickInt(0, recruitDays - 1), 'day')
-  const remain = Math.max(0, rEnd.diff(interviewStart, 'day'))
-  const interviewEnd = interviewStart.add(remain === 0 ? 0 : pickInt(0, remain), 'day')
-
+  const { lo, hi } = orderedDayBounds(plan.business.start, plan.business.end)
+  const program = clampIsoRange(plan.program, lo, hi)
+  const recruit = stretchIsoRange(clampIsoRange(plan.recruit, lo, hi), lo, hi, 3)
+  const recruitBounds = orderedDayBounds(recruit.start, recruit.end)
+  const interview = clampIsoRange(plan.interview, recruitBounds.lo, recruitBounds.hi)
   return {
     business: { start: dayIso(lo), end: dayIso(hi) },
     program,
     recruit,
-    interview: {
-      start: dayIso(clampDayjs(interviewStart, rStart, rEnd)),
-      end: dayIso(clampDayjs(interviewEnd, rStart, rEnd)),
-    },
+    interview,
   }
 }
 
-/** 사업 운영(10~12월) → 프로그램 운영(±1주) → 모집(시작일부터 최대 2주) → 면접(모집 기간 안) */
+/** 사업 운영(10~12월) 안에서 프로그램·모집·면접을 잡는다. */
 function buildRegistrationDatePlan(year = dayjs().year()): {
   business: RangeIso
   program: RangeIso
@@ -345,13 +366,18 @@ function buildRegistrationDatePlan(year = dayjs().year()): {
   const earliestBizEnd = bizStart.add(21, 'day')
   const bizEndFloor = earliestBizEnd.isAfter(windowEnd) ? windowEnd : earliestBizEnd
   const bizEnd = bizEndFloor.add(pickInt(0, Math.max(0, windowEnd.diff(bizEndFloor, 'day'))), 'day')
-
-  const programStart = bizStart.add(pickInt(-7, 7), 'day')
-  let programEnd = bizEnd.add(pickInt(-7, 7), 'day')
-  if (!programEnd.isAfter(programStart, 'day')) programEnd = programStart.add(7, 'day')
+  const span = Math.max(0, bizEnd.diff(bizStart, 'day'))
+  const programStartOffset = pickInt(0, Math.min(7, Math.max(0, span - 14)))
+  const programStart = bizStart.add(programStartOffset, 'day')
+  const remainAfterStart = Math.max(0, bizEnd.diff(programStart, 'day'))
+  const programEndTrim = pickInt(0, Math.min(7, Math.max(0, remainAfterStart - 7)))
+  let programEnd = bizEnd.subtract(programEndTrim, 'day')
+  if (!programEnd.isAfter(programStart, 'day')) programEnd = bizEnd
 
   const recruitStart = programStart
-  const recruitEnd = recruitStart.add(pickInt(3, 14), 'day')
+  const maxRecruitDays = Math.max(0, bizEnd.diff(recruitStart, 'day'))
+  const recruitSpan = pickInt(Math.min(3, maxRecruitDays), Math.min(14, maxRecruitDays))
+  const recruitEnd = recruitStart.add(recruitSpan, 'day')
 
   const recruitDays = Math.max(0, recruitEnd.diff(recruitStart, 'day'))
   const interviewStart = recruitStart.add(recruitDays <= 1 ? 0 : pickInt(0, recruitDays - 1), 'day')
@@ -361,12 +387,12 @@ function buildRegistrationDatePlan(year = dayjs().year()): {
     'day'
   )
 
-  return {
+  return alignUjatAutofillDatePlan({
     business: { start: dayIso(bizStart), end: dayIso(bizEnd) },
     program: { start: dayIso(programStart), end: dayIso(programEnd) },
     recruit: { start: dayIso(recruitStart), end: dayIso(recruitEnd) },
     interview: { start: dayIso(interviewStart), end: dayIso(interviewEnd) },
-  }
+  })
 }
 
 const RECRUIT_CONTACTS = ['김서연', '박지훈', '이하은', '정민재', '최수아'] as const
@@ -735,10 +761,11 @@ function buildDevAutofillSample(): DevAutofillSample {
   const venueKind = pick(VENUE_KINDS)
   const dates = buildRegistrationDatePlan()
   const bizStart = dayjs(dates.business.start)
+  const bizEnd = dayjs(dates.business.end)
   const periodEnd = bizStart.add(pickInt(3, 8), 'week')
   const slots = [...TIME_SLOTS].sort(() => Math.random() - 0.5).slice(0, 2)
   const scheduleLines = [0, 1].map(index => {
-    const date = bizStart.add(index * 7, 'day')
+    const date = clampDayjs(bizStart.add(index * 7, 'day'), bizStart, bizEnd)
     const slot = slots[index] ?? TIME_SLOTS[0]
     return formatEducationScheduleLineFromRange([
       atClock(date, slot.startHour, slot.startMinute),
@@ -1038,8 +1065,9 @@ function unitText(sample: DevAutofillSample, index: number, field: 'name' | 'con
   return unit?.[field] ?? ''
 }
 
-function scheduleLineAt(index: number): string {
-  const date = upcomingWeekday(14 + (index - 1) * 7)
+function scheduleLineAt(index: number, range: RangeIso): string {
+  const { lo, hi } = orderedDayBounds(range.start, range.end)
+  const date = weekdayInsideRange(lo, hi, 7 * (index - 1))
   const slot = TIME_SLOTS[(index - 1) % TIME_SLOTS.length] ?? TIME_SLOTS[0]
   return formatEducationScheduleLineFromRange([
     atClock(date, slot.startHour, slot.startMinute),
@@ -1083,17 +1111,23 @@ function buildTypeSettings(
   }
 }
 
-function periodScheduleLine(index: number): string {
-  const start = upcomingWeekday(18 + (index - 1) * 14)
-  let end = start.add(pickInt(4, 16), 'day')
-  while (end.day() === 0 || end.day() === 6) end = end.add(1, 'day')
+function periodScheduleLine(index: number, range: RangeIso): string {
+  const { lo, hi } = orderedDayBounds(range.start, range.end)
+  const start = weekdayInsideRange(lo, hi, 7 * (index - 1))
+  let end = clampDayjs(start.add(pickInt(4, 16), 'day'), start, hi)
+  while ((end.day() === 0 || end.day() === 6) && end.isBefore(hi, 'day')) end = end.add(1, 'day')
+  end = clampDayjs(end, start, hi)
   return formatEducationScheduleLineFromRange([start.startOf('day'), end.startOf('day')])
 }
 
-function buildEducationSchedulePreviewLines(mode: 'date' | 'period', lineCount?: number): string[] {
+function buildEducationSchedulePreviewLines(
+  mode: 'date' | 'period',
+  lineCount: number | undefined,
+  range: RangeIso
+): string[] {
   const count = lineCount ?? pickInt(1, 5)
   return Array.from({ length: count }, (_, index) =>
-    mode === 'period' ? periodScheduleLine(index + 1) : scheduleLineAt(index + 1)
+    mode === 'period' ? periodScheduleLine(index + 1, range) : scheduleLineAt(index + 1, range)
   )
 }
 
@@ -1102,12 +1136,13 @@ const DEV_AUTOFILL_FIXED_IPS = { category: 'prepare' as const, detail: 'none' }
 function assignmentEntryForPolicy(
   policy: GeneralRegistrationDevAutofillOverlayBehavior['assignmentPolicy'] | undefined,
   index: number,
+  range: RangeIso,
   legacyDefault?: boolean
 ): { enabled: boolean; period: string } {
   if (policy === 'disabled') return { enabled: false, period: '' }
-  if (policy === 'enabledWithPeriod') return { enabled: true, period: scheduleLineAt(index) }
+  if (policy === 'enabledWithPeriod') return { enabled: true, period: scheduleLineAt(index, range) }
   if (policy === 'none') return { enabled: false, period: '' }
-  if (legacyDefault) return { enabled: true, period: scheduleLineAt(index) }
+  if (legacyDefault) return { enabled: true, period: scheduleLineAt(index, range) }
   return { enabled: false, period: '' }
 }
 
@@ -1168,6 +1203,32 @@ function finalizeTypeSettings(
     sessionRoundType,
     educationScheduleMode,
   }
+}
+
+/** 사전 교육(index 0) 교육 형태를 담는 맵 — 자동채우기는 1..N만 만든다 */
+const PRE_EDUCATION_EDUCATION_FORM_KEYS = [
+  'generalRegistration.educationCurriculum.educationFormBySession',
+  'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
+] as const
+
+/**
+ * 자동채우기가 교육 형태 맵을 통째로 덮어써도 기존 사전 교육(0번) 값을 보존한다.
+ * 0번이 없으면 넣지 않는다 — 사전 교육이 켜져 있으면 paragraph effect가 'online'을 기록한다.
+ */
+function preservePreEducationEducationForm(
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  const current = getProgramRegistrationOverlayRecord()
+  const next = { ...overlay }
+  for (const key of PRE_EDUCATION_EDUCATION_FORM_KEYS) {
+    const filled = next[key]
+    if (filled == null || typeof filled !== 'object') continue
+    const prevZero = (current[key] as Record<number, unknown> | undefined)?.[0]
+    if (typeof prevZero === 'string' && prevZero.trim()) {
+      next[key] = { ...(filled as Record<number, string>), 0: prevZero }
+    }
+  }
+  return next
 }
 
 function buildGeneralLikeOverlay(
@@ -1242,6 +1303,9 @@ function buildGeneralLikeOverlay(
     [`${typeSettingsPrefix}.singleEducationForm`]: typeSettings.educationForm,
     [`${typeSettingsPrefix}.multiCommonEducationForm`]: typeSettings.educationForm,
     [`${typeSettingsPrefix}.educationForm`]: typeSettings.educationForm,
+    // 개인 대상 교육 진행 장소 (일정 공통). 온라인이면 저장 본문에서 빠진다
+    [`${typeSettingsPrefix}.educationPlaceScheduleDetail`]: 'common',
+    [`${typeSettingsPrefix}.educationPlaceAddress`]: '서울특별시 중구 세종대로 110',
     [`${typeSettingsPrefix}.singleParticipation`]: typeSettings.participation,
     [`${typeSettingsPrefix}.multiCommonParticipation`]: typeSettings.participation,
     [`${curriculumPrefix}.unitNameBySession`]: indexRecord(chartCount, index =>
@@ -1270,6 +1334,7 @@ function buildGeneralLikeOverlay(
               assignmentEntryForPolicy(
                 overlayBehavior?.assignmentPolicy,
                 index,
+                sample.operationRange,
                 overlayBehavior == null
               )
           ),
@@ -1278,7 +1343,7 @@ function buildGeneralLikeOverlay(
     [`${schedulePrefix}.scheduleLines`]: [...educationScheduleLines],
     'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': indexRecord(
       detailCount,
-      index => scheduleLineAt(index)
+      index => scheduleLineAt(index, sample.operationRange)
     ),
     'generalRegistration.educationScheduleCurriculum.eventNameByDetail': indexRecord(
       detailCount,
@@ -1300,6 +1365,7 @@ function buildGeneralLikeOverlay(
               assignmentEntryForPolicy(
                 overlayBehavior?.assignmentPolicy,
                 index,
+                sample.operationRange,
                 overlayBehavior == null
               )
           ),
@@ -1612,12 +1678,15 @@ function composeTrainedTeachersRegistrationDevAutofillOverlay(input: {
 }): Record<string, unknown> {
   const basicPrefix = 'trainedTeachersRegistration.basicInfo'
   const educationScheduleLine =
-    input.educationScheduleLines.find(line => line.trim()) ?? scheduleLineAt(1)
+    input.educationScheduleLines.find(line => line.trim()) ??
+    scheduleLineAt(1, input.sample.operationRange)
   // 교육 연수 진행 일정은 날짜만 있는 기간형 교육 일정과 달리 시간까지
   // 입력해야 한다. 기본 교육 일정의 period/date 선택값은 그대로 보존하고,
   // 교육 연수 필드에만 시간 포함 일정을 사용한다.
   const teacherTrainingScheduleLine =
-    input.layout.teacherTrainingEnabled === true ? scheduleLineAt(1) : educationScheduleLine
+    input.layout.teacherTrainingEnabled === true
+      ? scheduleLineAt(1, input.sample.operationRange)
+      : educationScheduleLine
   const participant = TRAINED_TEACHERS_AUTOFILL_PARTICIPANT
   const directScheduleEvents =
     input.typeSettings.programType === 'schedule' && input.typeSettings.sessionRoundType === 'multi'
@@ -1720,7 +1789,9 @@ export function previewTrainedTeachersRegistrationDevAutofill(input: {
 }): { overlay: Record<string, unknown>; programTitleKo: string } {
   const sample = buildTrainedTeachersDevAutofillSample()
   const educationScheduleLines = buildEducationSchedulePreviewLines(
-    input.typeSettings.educationScheduleMode
+    input.typeSettings.educationScheduleMode,
+    undefined,
+    sample.operationRange
   )
   return {
     programTitleKo: sample.titleKo,
@@ -1903,6 +1974,32 @@ function seedUjatApplicationAutofill(): void {
   }
 }
 
+const ECONOMY_APPLICATION_TEMPLATE_CODE = 'application-economy' as const
+
+/** 1사1교 개발용 자동입력의 신청 단계 seed — 1·2지망을 교육/사업 운영기간 안에 둔다. */
+function seedEconomyApplicationAutofill(range: RangeIso): void {
+  const schedule = buildEconomyAutofillPreferredScheduleBlocks(range)
+  const application = collectCompanySchoolApplicationFormState(
+    peekGeneralApplicationOverlayRecord(ECONOMY_APPLICATION_TEMPLATE_CODE)
+  )
+  application.schedule = schedule
+
+  const overlay = {
+    'application.economy.schedule.first': { ...schedule.first },
+    'application.economy.schedule.second': { ...schedule.second },
+  }
+  replaceGeneralApplicationOverlayForScope(ECONOMY_APPLICATION_TEMPLATE_CODE, overlay)
+
+  const draft = createSeedDraftForOperationalCatalogId(ECONOMY_APPLICATION_TEMPLATE_CODE)
+  if (draft == null) return
+  publishRegistrationWizardApplicationDraft({
+    templateCode: ECONOMY_APPLICATION_TEMPLATE_CODE,
+    draft: fillBlankApplicationFormThirdPartyRecipients(draft, 'JA코리아'),
+    editorState: companySchoolApplicationEditorState(application),
+    overlay,
+  })
+}
+
 /**
  * 프로그램 등록 공통정보 — 개발용 자동입력.
  * 셀렉트는 화면과 같은 옵션에서 고르고, 텍스트·일정은 호출마다 달라진다.
@@ -1968,9 +2065,14 @@ export async function applyDevProgramRegistrationAutofill(
     sample.operationRange = { ...dates.business }
     sample.periodRange = { ...dates.educationPeriod }
   }
+  sample.recruitDates = alignUjatAutofillDatePlan(sample.recruitDates)
+  sample.operationRange = { ...sample.recruitDates.business }
+  const businessBounds = orderedDayBounds(
+    sample.recruitDates.business.start,
+    sample.recruitDates.business.end
+  )
+  sample.periodRange = clampIsoRange(sample.periodRange, businessBounds.lo, businessBounds.hi)
   if (variant === 'ujat') {
-    sample.recruitDates = alignUjatAutofillDatePlan(sample.recruitDates)
-    sample.operationRange = { ...sample.recruitDates.business }
     sample.periodRange = { ...sample.recruitDates.business }
   }
   patchRecruitDatePlan(sample.recruitDates, sample.titleKo, {
@@ -1994,7 +2096,8 @@ export async function applyDevProgramRegistrationAutofill(
       : undefined
   const educationScheduleLines = buildEducationSchedulePreviewLines(
     typeSettings.educationScheduleMode,
-    scheduleLineCount
+    scheduleLineCount,
+    sample.operationRange
   )
 
   if (variant === 'ujat') {
@@ -2007,7 +2110,9 @@ export async function applyDevProgramRegistrationAutofill(
     const ujatOverlay = stripUjatKpiWageCapacityOverlay(
       buildUjatOverlay(sample, { ...resolved, contactId: contactSelectId })
     )
-    patchUjatProgramRegistrationOverlay(ujatOverlay)
+    patchUjatProgramRegistrationOverlay(
+      mergeDevAutofillSparse(getUjatProgramRegistrationOverlayRecord(), ujatOverlay)
+    )
     const interviewUnavailable = buildInterviewUnavailableSelection(
       dayjs(sample.recruitDates.interview.start),
       dayjs(sample.recruitDates.interview.end)
@@ -2097,6 +2202,7 @@ export async function applyDevProgramRegistrationAutofill(
       'generalRegistration.typeSettings.singleParticipation': typeSettings.participation,
       'generalRegistration.typeSettings.multiCommonParticipation': typeSettings.participation,
     })
+    seedEconomyApplicationAutofill(sample.periodRange)
     return {
       programTitleKo: sample.titleKo,
       sponsorId: sponsorContact.sponsorId || ECONOMY_ALL_VALUE,
@@ -2163,19 +2269,21 @@ export async function applyDevProgramRegistrationAutofill(
   }
 
   patchProgramRegistrationOverlay(
-    buildGeneralLikeOverlay(
-      sample,
-      'generalRegistration.basicInfo',
-      'generalRegistration.kpi',
-      'generalRegistration.educationCurriculum',
-      'generalRegistration.educationScheduleSettings',
-      GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
-      'generalRegistration.typeSettings',
-      effectiveLayout,
-      typeSettings,
-      educationScheduleLines,
-      resolved,
-      overlayBehavior
+    preservePreEducationEducationForm(
+      buildGeneralLikeOverlay(
+        sample,
+        'generalRegistration.basicInfo',
+        'generalRegistration.kpi',
+        'generalRegistration.educationCurriculum',
+        'generalRegistration.educationScheduleSettings',
+        GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+        'generalRegistration.typeSettings',
+        effectiveLayout,
+        typeSettings,
+        educationScheduleLines,
+        resolved,
+        overlayBehavior
+      )
     )
   )
   patchGeneralRegistrationSponsorSelectionOverlay({
@@ -2230,26 +2338,29 @@ export function previewGeneralRegistrationDevAutofillForCase(
   const typeSettings = preset.typeSettings
   const educationScheduleLines = buildEducationSchedulePreviewLines(
     typeSettings.educationScheduleMode,
-    typeSettings.sessionRoundType === 'multi' ? 2 : 1
+    typeSettings.sessionRoundType === 'multi' ? 2 : 1,
+    sample.operationRange
   )
   seedDevAutofillApplicationThirdPartyRecipients('general', preset.layout)
   patchProgramRegistrationOverlay(
-    buildGeneralLikeOverlay(
-      sample,
-      'generalRegistration.basicInfo',
-      'generalRegistration.kpi',
-      'generalRegistration.educationCurriculum',
-      'generalRegistration.educationScheduleSettings',
-      GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
-      'generalRegistration.typeSettings',
-      preset.layout,
-      typeSettings,
-      educationScheduleLines,
-      {
-        ...resolved,
-        contactId: resolved.contactId,
-      },
-      preset.overlayBehavior
+    preservePreEducationEducationForm(
+      buildGeneralLikeOverlay(
+        sample,
+        'generalRegistration.basicInfo',
+        'generalRegistration.kpi',
+        'generalRegistration.educationCurriculum',
+        'generalRegistration.educationScheduleSettings',
+        GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+        'generalRegistration.typeSettings',
+        preset.layout,
+        typeSettings,
+        educationScheduleLines,
+        {
+          ...resolved,
+          contactId: resolved.contactId,
+        },
+        preset.overlayBehavior
+      )
     )
   )
   return {

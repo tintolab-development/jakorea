@@ -59,6 +59,33 @@ describe('upsertAdminCommentByTargetRemote', () => {
     )
   })
 
+  it('강사 신청 대상에 관리자 코멘트를 POST한다', async () => {
+    mockedInstance
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({ commentId: 11, comment: '강사 메모' })
+
+    await upsertAdminCommentByTargetRemote({
+      targetType: 'INSTRUCTOR_APPLICATION',
+      targetId: 201,
+      screenCode: 'INSTRUCTOR_APPLICATION',
+      comment: '강사 메모',
+    })
+
+    expect(mockedInstance).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        url: '/api/admin/comments',
+        method: 'POST',
+        data: {
+          targetType: 'INSTRUCTOR_APPLICATION',
+          targetId: 201,
+          screenCode: 'INSTRUCTOR_APPLICATION',
+          comment: '강사 메모',
+        },
+      })
+    )
+  })
+
   it('PATCHes when latest commentId exists', async () => {
     mockedInstance
       .mockResolvedValueOnce([

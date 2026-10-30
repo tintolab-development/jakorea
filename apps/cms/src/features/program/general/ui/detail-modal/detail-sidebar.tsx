@@ -394,60 +394,47 @@ export function GeneralProgramDetailSidebar({
             </li>
           ) : null}
 
-          <li>
-            {surveyHasChildren ? (
-              <>
-                <button
-                  type="button"
-                  className={`detail-fullpage-modal__lnb-item ${activeLnb === 'survey' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
-                  onClick={() => toggleTopBody('survey')}
-                >
-                  <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                    <GeneralLnbSurveyManagementIcon />
-                  </span>
-                  <span className="detail-fullpage-modal__lnb-item-label">설문 관리</span>
-                  <DetailFullpageModalLnbArrowDown
-                    className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('survey') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
-                  />
-                </button>
-                <div
-                  className={childrenWrapClass(isTopBodyOpen('survey'))}
-                  aria-hidden={!isTopBodyOpen('survey')}
-                >
-                  <ul className="detail-fullpage-modal__lnb-children">
-                    {surveyItems.map(item => (
-                      <li key={item.key}>
-                        <button
-                          type="button"
-                          className={`detail-fullpage-modal__lnb-child ${activeLnb === 'survey' && activeTab === item.key ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                          onClick={() => handleSelectChildTab('survey', item.key)}
-                        >
-                          <span className="detail-fullpage-modal__lnb-child-dot" />
-                          <span
-                            className="detail-fullpage-modal__lnb-child-label"
-                            data-text={item.label}
-                          >
-                            {item.label}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            ) : (
+          {surveyHasChildren ? (
+            <li>
               <button
                 type="button"
                 className={`detail-fullpage-modal__lnb-item ${activeLnb === 'survey' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
-                onClick={() => handleSelectChildTab('survey', 'main')}
+                onClick={() => toggleTopBody('survey')}
               >
                 <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
                   <GeneralLnbSurveyManagementIcon />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">설문 관리</span>
+                <DetailFullpageModalLnbArrowDown
+                  className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('survey') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
+                />
               </button>
-            )}
-          </li>
+              <div
+                className={childrenWrapClass(isTopBodyOpen('survey'))}
+                aria-hidden={!isTopBodyOpen('survey')}
+              >
+                <ul className="detail-fullpage-modal__lnb-children">
+                  {surveyItems.map(item => (
+                    <li key={item.key}>
+                      <button
+                        type="button"
+                        className={`detail-fullpage-modal__lnb-child ${activeLnb === 'survey' && activeTab === item.key ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
+                        onClick={() => handleSelectChildTab('survey', item.key)}
+                      >
+                        <span className="detail-fullpage-modal__lnb-child-dot" />
+                        <span
+                          className="detail-fullpage-modal__lnb-child-label"
+                          data-text={item.label}
+                        >
+                          {item.label}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+          ) : null}
 
           {showManagers ? (
             <li>

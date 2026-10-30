@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GeminiTrainingReportItemPaymentExclusionReason } from './geminiTrainingReportItemPaymentExclusionReason';
 
 export interface GeminiTrainingReportItem {
   trainingReportId?: number;
@@ -25,7 +26,10 @@ export interface GeminiTrainingReportItem {
   deliveryType?: string;
   participantCount?: number;
   calculatedAmount?: number;
-  accountPaymentId?: number;
+  /** account_payment.payment_status=PAID 일 때만 채움. 미지급은 null. 0을 넣지 않음. */
+  accountPaymentId?: number | null;
   status?: string;
   createdAt?: string;
+  /** 계좌 지급 제외 사유. 지급 대상이면 null */
+  paymentExclusionReason?: GeminiTrainingReportItemPaymentExclusionReason;
 }

@@ -1531,28 +1531,56 @@ describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 �
             recruitmentType: 'PARTICIPANT',
             applicationType: 'ORGANIZATION',
             announcementTitle: '기관 공고',
-            operationStartDate: '2027-03-01',
-            operationEndDate: '2027-12-31',
+            operationStartDate: '2026-03-01',
+            operationEndDate: '2026-12-31',
           },
           {
             recruitmentType: 'VOLUNTEER',
             applicationType: 'VOLUNTEER',
             recruitTerm: 'FIRST_HALF',
             announcementTitle: 'H1 공고',
-            operationStartDate: '2027-03-01',
-            operationEndDate: '2027-06-30',
+            operationStartDate: '2026-03-01',
+            operationEndDate: '2026-06-30',
           },
         ],
       },
       { draft, overlay: {} }
     )
     expect(request.recruitments?.find(row => row.recruitmentType === 'PARTICIPANT')).toMatchObject({
-      operationStartDate: '2027-03-01',
-      operationEndDate: '2027-12-31',
+      operationStartDate: '2026-03-01',
+      operationEndDate: '2026-12-31',
     })
     expect(request.recruitments?.find(row => row.recruitTerm === 'FIRST_HALF')).toMatchObject({
-      operationStartDate: '2027-03-01',
-      operationEndDate: '2027-06-30',
+      operationStartDate: '2026-03-01',
+      operationEndDate: '2026-06-30',
     })
+  })
+
+  it('사업 기간 밖 운영일은 recruitments에서 빼고 모집 창은 남긴다', () => {
+    const request = toCreateRequest(
+      {
+        ...program,
+        startDate: '2026-09-01',
+        endDate: '2027-03-10',
+        programRecruitments: [
+          {
+            recruitmentType: 'PARTICIPANT',
+            applicationType: 'ORGANIZATION',
+            startAt: '2026-08-01',
+            endAt: '2026-08-31',
+            operationStartDate: '2027-03-01',
+            operationEndDate: '2027-12-31',
+          },
+        ],
+      },
+      { draft, overlay: {} }
+    )
+    const participant = request.recruitments?.find(row => row.recruitmentType === 'PARTICIPANT')
+    expect(participant).toMatchObject({
+      startAt: '2026-08-01',
+      endAt: '2026-08-31',
+      operationStartDate: '2027-03-01',
+    })
+    expect(participant).not.toHaveProperty('operationEndDate')
   })
 })

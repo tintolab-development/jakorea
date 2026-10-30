@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { DonateCta } from '@/entities/individual-donation/model/types'
 import { useSaveDonateCta } from '@/features/individual-donation/api/hooks'
@@ -135,7 +135,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending}
@@ -144,7 +144,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -155,14 +155,14 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}
         </div>
       </div>
 
-      <Table<Row>
+      <CmsDataTable<Row>
         className="cms-data-table cms-data-table--skip-auto-no-col individual-donation-cta-table"
         columns={columns}
         dataSource={rows}

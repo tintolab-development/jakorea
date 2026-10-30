@@ -1,3 +1,4 @@
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { CmsButton } from '@/shared/ui'
 
@@ -34,9 +35,11 @@ export function SocialConnectCompleteView({
           <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
             로그인하기
           </CmsButton>
-          <CmsButton variant="default" size="h52" width="100%" onClick={onConnectMore}>
-            다른 소셜 계정도 연결하기
-          </CmsButton>
+          {SOCIAL_ACCOUNT_LINK_ENABLED ? (
+            <CmsButton variant="default" size="h52" width="100%" onClick={onConnectMore}>
+              다른 소셜 계정도 연결하기
+            </CmsButton>
+          ) : null}
         </div>
       </div>
     </div>

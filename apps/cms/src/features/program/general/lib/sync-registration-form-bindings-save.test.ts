@@ -5,6 +5,7 @@ import { queryClient } from '@/shared/lib/query-client'
 
 const fetchFormTemplateVersionRemote = vi.fn()
 const copyFormTemplateVersionRemote = vi.fn()
+const createFormTemplateVersionRemote = vi.fn()
 const updateFormTemplateRemote = vi.fn()
 const loadFormTemplateVersionDraftByVersionId = vi.fn()
 const saveFormTemplateVersionDraftByVersionId = vi.fn()
@@ -18,6 +19,7 @@ const fetchProgramApplicationCountsRemote = vi.fn()
 vi.mock('@/features/template/api/form-templates-api-client', () => ({
   fetchFormTemplateVersionRemote: (...args: unknown[]) => fetchFormTemplateVersionRemote(...args),
   copyFormTemplateVersionRemote: (...args: unknown[]) => copyFormTemplateVersionRemote(...args),
+  createFormTemplateVersionRemote: (...args: unknown[]) => createFormTemplateVersionRemote(...args),
   updateFormTemplateRemote: (...args: unknown[]) => updateFormTemplateRemote(...args),
 }))
 
@@ -86,9 +88,11 @@ describe('saveProgramScopedOperationalFormVersion', () => {
 
   it('copies a published version, saves the draft, publishes, and rebinds', async () => {
     fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 55,
+      templateId: 10,
       templateVersionId: 501,
       versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
     })
     copyFormTemplateVersionRemote.mockResolvedValue({
       templateId: 88,
@@ -104,7 +108,7 @@ describe('saveProgramScopedOperationalFormVersion', () => {
       draft: userDraft,
     })
 
-    expect(copyFormTemplateVersionRemote).toHaveBeenCalledWith(55, {
+    expect(copyFormTemplateVersionRemote).toHaveBeenCalledWith(10, {
       sourceVersionId: 501,
       versionLabel: 'program-tt-program-1',
     })
@@ -132,9 +136,11 @@ describe('saveProgramScopedOperationalFormVersion', () => {
 
   it('copies even a DRAFT version when ownership is unknown (always COPY — shared data guard)', async () => {
     fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 55,
+      templateId: 10,
       templateVersionId: 502,
       versionStatus: 'DRAFT',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
     })
     copyFormTemplateVersionRemote.mockResolvedValue({ templateId: 88, templateVersionId: 881 })
     publishFormTemplateVersionById.mockResolvedValue(881)
@@ -155,9 +161,11 @@ describe('saveProgramScopedOperationalFormVersion', () => {
 
   it('모집 시작일이 오늘이어도 신청 0건이면 form-binding PATCH를 시도한다', async () => {
     fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 55,
+      templateId: 10,
       templateVersionId: 501,
       versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
     })
     copyFormTemplateVersionRemote.mockResolvedValue({
       templateId: 88,
@@ -256,12 +264,23 @@ describe('saveProgramScopedOperationalFormVersion', () => {
   })
 
   it.each([
-    ['ownerProgramId(CREATE 직후 적용)', { versionStatus: undefined }, { ownerProgramId: 186363 }],
-    ['ownerProgramId + DRAFT', { versionStatus: 'DRAFT' }, { ownerProgramId: 186363 }],
-    ['여러 바인딩이 공유하는 DRAFT', { versionStatus: 'DRAFT', activeBindingCount: 3 }, {}],
-    ['카탈로그(공용) 템플릿의 DRAFT', { versionStatus: 'DRAFT', templateId: 10 }, {}],
-  ])('공용 버전 보호: %s 이면 상태와 무관하게 COPY 후 저장한다', async (_label, version, extra) => {
-    fetchFormTemplateVersionRemote.mockResolvedValue({ templateId: 1, templateVersionId: 94, ...version })
+    [
+      '카탈로그 DRAFT',
+      { versionStatus: 'DRAFT', templateId: 10, templateScope: 'CATALOG', ownerProgramId: null },
+      {},
+    ],
+    [
+      '카탈로그 PUBLISHED + ownerProgramId(CREATE 직후 적용)',
+      {
+        versionStatus: 'PUBLISHED',
+        templateId: 10,
+        templateScope: 'CATALOG',
+        ownerProgramId: null,
+      },
+      { ownerProgramId: 186363 },
+    ],
+  ])('공용 버전 보호: %s 이면 COPY 후 저장한다', async (_label, version, extra) => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({ templateVersionId: 94, ...version })
     copyFormTemplateVersionRemote.mockReset()
     copyFormTemplateVersionRemote.mockResolvedValue({ templateId: 1, templateVersionId: 9401 })
     publishFormTemplateVersionById.mockResolvedValue(9401)
@@ -282,6 +301,148 @@ describe('saveProgramScopedOperationalFormVersion', () => {
       expect.objectContaining({ versionId: 94 })
     )
     expect(publishFormTemplateVersionById).not.toHaveBeenCalledWith(94)
+  })
+
+  it('autoApply가 이미 프로그램 전용 템플릿을 붙인 DRAFT면 copyVersion 없이 제자리 저장한다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 88,
+      templateVersionId: 94,
+      versionStatus: 'DRAFT',
+      templateScope: 'PROGRAM',
+      ownerProgramId: 186363,
+    })
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 10, templateVersionId: 100 })
+
+    await saveProgramScopedOperationalFormVersion({
+      program: { id: '186363' } as Program,
+      templateCode: 'application-trained-teachers',
+      versionId: 94,
+      draft: userDraft,
+      ownerProgramId: 186363,
+    })
+
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(createFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
+      expect.objectContaining({ versionId: 94 })
+    )
+    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(94)
+  })
+
+  it('프로그램 전용 PUBLISHED면 copyVersion 대신 같은 템플릿에 DRAFT version을 추가한다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 88,
+      templateVersionId: 94,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'PROGRAM',
+      ownerProgramId: 186363,
+    })
+    createFormTemplateVersionRemote.mockResolvedValue({ templateId: 88, templateVersionId: 9402 })
+    publishFormTemplateVersionById.mockResolvedValue(9402)
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 10, templateVersionId: 100 })
+
+    await saveProgramScopedOperationalFormVersion({
+      program: { id: '186363' } as Program,
+      templateCode: 'application-trained-teachers',
+      versionId: 94,
+      draft: userDraft,
+      ownerProgramId: 186363,
+    })
+
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(createFormTemplateVersionRemote).toHaveBeenCalledWith(88, {
+      versionLabel: 'program-186363',
+      sourceVersionId: 94,
+    })
+    expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledWith(
+      expect.objectContaining({ versionId: 9402 })
+    )
+  })
+
+  it('copyVersion이 카탈로그 원본만 허용하면 같은 템플릿에 DRAFT version을 추가한다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 88,
+      templateVersionId: 94,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'COPY',
+      ownerProgramId: null,
+    })
+    copyFormTemplateVersionRemote.mockRejectedValue({
+      response: {
+        data: {
+          error: {
+            code: 'BAD_REQUEST',
+            message: '신규 템플릿은 카탈로그 원본에서만 복제할 수 있습니다. 프로그램 전용 복사본은 같은 템플릿에 버전을 추가해 주세요.',
+          },
+        },
+      },
+    })
+    createFormTemplateVersionRemote.mockResolvedValue({ templateId: 88, templateVersionId: 9403 })
+    publishFormTemplateVersionById.mockResolvedValue(9403)
+
+    await saveProgramScopedOperationalFormVersion({
+      program: { id: '186363' } as Program,
+      templateCode: 'application-trained-teachers',
+      versionId: 94,
+      draft: userDraft,
+      ownerProgramId: 186363,
+    })
+
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(createFormTemplateVersionRemote).toHaveBeenCalledWith(88, {
+      versionLabel: 'program-186363',
+      sourceVersionId: 94,
+    })
+  })
+
+  it('copyVersion DATABASE_ERROR는 재시도하지 않는다', async () => {
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      templateId: 10,
+      templateVersionId: 94,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
+    })
+    const error = {
+      response: { data: { error: { code: 'DATABASE_ERROR', message: '데이터 처리 중 오류가 발생했습니다.' } } },
+    }
+    copyFormTemplateVersionRemote.mockRejectedValue(error)
+
+    await expect(
+      saveProgramScopedOperationalFormVersion({
+        program: { id: '186363' } as Program,
+        templateCode: 'application-trained-teachers',
+        versionId: 94,
+        draft: userDraft,
+        ownerProgramId: 186363,
+      })
+    ).rejects.toMatchObject({ response: { data: { error: { code: 'DATABASE_ERROR' } } } })
+    expect(copyFormTemplateVersionRemote).toHaveBeenCalledTimes(1)
+    expect(createFormTemplateVersionRemote).not.toHaveBeenCalled()
+  })
+
+  it('reusePublished이면 COPY/PUT/publish 없이 바인딩만 붙인다', async () => {
+    await saveProgramScopedOperationalFormVersion({
+      program,
+      templateCode: 'application-trained-teachers',
+      versionId: 501,
+      draft: userDraft,
+      ownerProgramId: 1,
+      reusePublished: { templateId: 900, templateVersionId: 901 },
+    })
+
+    expect(fetchFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
+    expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
+    expect(updateGeneralProgramFormBinding).toHaveBeenCalledWith(
+      'tt-program-1',
+      '7',
+      expect.objectContaining({
+        templateId: 900,
+        templateVersionId: 901,
+      })
+    )
   })
 
   it('바인딩이 없어도 대상 모집 신청이 있으면 COPY 전에 저장을 차단한다', async () => {
@@ -319,9 +480,11 @@ describe('saveProgramScopedOperationalFormVersion', () => {
 
   it('1사1교 form-binding POST에는 recruitments와 모집 행 scope를 넣지 않는다', async () => {
     fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 55,
+      templateId: 10,
       templateVersionId: 501,
       versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
     })
     copyFormTemplateVersionRemote.mockResolvedValue({
       templateId: 88,
@@ -360,9 +523,11 @@ describe('saveProgramScopedOperationalFormVersion', () => {
   it('같은 저장을 동시에 호출하면 COPY/publish를 한 번만 한다', async () => {
     let resolveCopy: ((value: { templateId: number; templateVersionId: number }) => void) | undefined
     fetchFormTemplateVersionRemote.mockResolvedValue({
-      templateId: 55,
+      templateId: 10,
       templateVersionId: 501,
       versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
     })
     copyFormTemplateVersionRemote.mockImplementation(
       () =>

@@ -10,6 +10,7 @@ export const ADMIN_PERMISSION_FILTER_OPTIONS: {
 }[] = [
   { label: '전체', value: '' },
   { label: ADMIN_PERMISSION_TAG_LABEL.manager, value: 'manager' },
+  { label: ADMIN_PERMISSION_TAG_LABEL.accounting, value: 'accounting' },
   { label: ADMIN_PERMISSION_TAG_LABEL.partner, value: 'partner' },
   { label: ADMIN_PERMISSION_TAG_LABEL.viewer, value: 'viewer' },
 ]

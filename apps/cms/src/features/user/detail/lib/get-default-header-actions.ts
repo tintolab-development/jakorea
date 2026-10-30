@@ -2,6 +2,8 @@ import type { User } from '@/types/user'
 import type { CmsButtonVariant } from '@/shared/ui/cms-button'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+import { INSTRUCTOR_PERMISSION_REVOKE_HEADER_LABEL } from '@/features/user/detail/lib/instructor-permission-revoke-copy'
+
 export type ActionConfig = {
   key: string
   label: string
@@ -45,7 +47,7 @@ export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): Action
       },
     })
   }
-  /** 일반교사·권한 박탈된 강사는 강사 권한 박탈 대상 아님 */
+  /** 일반교사·권한 종료된 강사는 강사 권한 종료 대상 아님 */
   if (
     displayUser.role === 'INSTRUCTOR' &&
     resolveInstructorMemberProfile(displayUser) !== 'school_teacher' &&
@@ -53,7 +55,7 @@ export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): Action
   ) {
     actions.push({
       key: 'revoke-instructor-permission',
-      label: '강사 권한 박탈',
+      label: INSTRUCTOR_PERMISSION_REVOKE_HEADER_LABEL,
       variant: 'delete',
       onClick: () => {
         onOpenInstructorPermissionRevoke()

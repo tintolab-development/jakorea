@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { HowItem, HowItemId } from '@/entities/talent-donation-intro/model/types'
 import { useSaveHowItems } from '@/features/talent-donation-intro/api/hooks'
@@ -166,7 +166,7 @@ export function HowSectionCard({ items }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending}
@@ -175,7 +175,7 @@ export function HowSectionCard({ items }: Props) {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -186,14 +186,14 @@ export function HowSectionCard({ items }: Props) {
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}
         </div>
       </div>
 
-      <Table<HowItem>
+      <CmsDataTable<HowItem>
         className="cms-data-table cms-data-table--skip-auto-no-col talent-intro-how-table"
         columns={columns}
         dataSource={items}

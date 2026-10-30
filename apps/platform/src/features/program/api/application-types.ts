@@ -63,18 +63,34 @@ export type PortalFormRuntimeContext = {
   [key: string]: unknown
 }
 
+/** 신청서 바인딩 조회 draftAttachments 항목 — 없으면 [] (null 아님) */
+export type PortalDraftAttachment = {
+  questionKey: string
+  fileObjectId: number
+  originalFileName: string
+  contentType: string | null
+  fileSize: number | null
+}
+
 export type PortalApplicationFormResponse = {
   programId?: number
   recruitmentId?: number
   applicationType?: string
   formBindingId?: number
   templateVersionId?: number
+  /**
+   * 런타임 작성 문서 객체. schemaJson 문자열이 아니다.
+   * 렌더는 `form.paragraphs` + `form.runtimeContext` 서버 값을 사용한다.
+   */
   form?: Record<string, unknown> | null
+  /** 임시저장 없으면 null */
   draftApplicationId?: number | null
+  /** 임시저장 없으면 null */
   draftFormResponseId?: number | null
-  draftAnswers?: Record<string, unknown> | null
-  /** 임시저장에 연결된 증빙. 없으면 [] */
-  draftAttachments?: unknown
+  /** 임시저장 없으면 {} */
+  draftAnswers?: Record<string, unknown>
+  /** 첨부 없으면 []. null로 취급하지 않는다. */
+  draftAttachments?: PortalDraftAttachment[]
 }
 
 export type PortalPreferredScheduleSessionTime = {
@@ -90,6 +106,9 @@ export type PortalPreferredScheduleSessionTime = {
 export type PortalPreferredScheduleBlock = {
   preferenceRank?: number
   date?: string
+  /** Gemini 기관 등 — 블록 루트 시각. sessionTimes와 함께 둘 수 있다. */
+  startTime?: string
+  endTime?: string
   /** OpenAPI `PreferredScheduleBlock.dayOfWeek` — 표시는 `date`에서 파생. */
   dayOfWeek?: string
   dateText?: string
@@ -106,12 +125,28 @@ export type PortalPreferredScheduleBlock = {
   scheduleStatus?: 'MATCHED' | 'INACTIVE_OR_DELETED' | 'UNMATCHED' | string | null
 }
 
+/** Portal `RequestedSessionTimeRequest` — 1사1교 기관 신청 requestedSchedules[].sessionTimes */
+export type PortalRequestedSessionTimeRequest = {
+  period: number
+  startTime: string
+  endTime: string
+}
+
+/** Portal `RequestedScheduleRequest` — 1사1교 기관 최종 제출 2지망 */
+export type PortalRequestedScheduleRequest = {
+  requestedDate: string
+  startPeriod: number
+  sessionCount: number
+  combinedClassYn: boolean
+  sessionTimes: PortalRequestedSessionTimeRequest[]
+}
+
 export type PortalSaveApplicationRequest = {
   recruitmentId: number
   applicationType: string
   formBindingId: number
   answers?: Record<string, unknown>
-  requestedSchedules?: unknown[]
+  requestedSchedules?: PortalRequestedScheduleRequest[]
   requestedClassCount?: number
   requestedStudentCount?: number
   requestedMaleCount?: number

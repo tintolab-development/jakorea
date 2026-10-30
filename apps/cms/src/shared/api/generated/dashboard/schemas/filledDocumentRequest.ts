@@ -12,6 +12,8 @@ import type { PaymentStatementBasicInfo } from './paymentStatementBasicInfo';
  * CMS 동의서 작성 완료 시점의 원문 스냅샷. schemaJson은 WritingFormDraft 객체 자체이며 JSON 문자열을 이중 인코딩하지 않습니다.
  */
 export interface FilledDocumentRequest {
+  /** 작성 화면에 고정된 CMS form_template_version ID. legacy 작성본은 null. */
+  templateVersionId?: number;
   templateCode?: string;
   /** @jakorea/form-schema WritingFormDraft 전체 객체. Jackson 구현체에 종속되지 않는 JSON object 형태로 전달합니다. */
   schemaJson?: FilledDocumentRequestSchemaJson;

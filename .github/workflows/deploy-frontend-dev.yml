@@ -118,11 +118,14 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ env.JABACK_ORIGIN }}
           VITE_HOMEPAGE_API_BASE_URL: ${{ env.JAHOME_ORIGIN }}
+          VITE_CMS_ORIGIN: ${{ env.CMS_ORIGIN }}
         run: pnpm --filter admin build
 
       - name: Verify Admin build output
         if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'admin' }}
-        run: test -f apps/admin/dist/index.html
+        run: |
+          test -f apps/admin/dist/index.html
+          grep -RqlF "$CMS_ORIGIN" apps/admin/dist/assets
 
       - name: Build CMS
         if: ${{ env.DEPLOY_APP == 'all' || env.DEPLOY_APP == 'cms' }}

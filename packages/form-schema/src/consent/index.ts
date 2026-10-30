@@ -1,3 +1,4 @@
+export * from './apply-agreement-notice-subject-member-name.js'
 export * from './consent-template-map.js'
 export * from './member-consent-validation.js'
 export * from './normalize-member-consent-write-draft.js'
