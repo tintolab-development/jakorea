@@ -21,6 +21,10 @@ import {
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
+import {
+  useComposedRegistrationBusinessPeriodDisabledDate,
+  useRegistrationBusinessPeriodPickerHint,
+} from '@/features/program/shared/ui/registration/registration-business-period-constraint'
 import './paragraph-date-picker.css'
 
 function formatTriggerClock(d: Dayjs): string {
@@ -159,6 +163,8 @@ interface ParagraphDatePickerBaseProps {
   readOnly?: boolean
   /** true를 반환하는 날짜는 캘린더에서 비활성화하고 선택을 막는다. */
   disabledDate?: (date: Dayjs) => boolean
+  /** 사업 운영 기간 입력란 — 등록 위저드 기간 제약을 적용하지 않는다. */
+  excludeBusinessPeriodConstraint?: boolean
 }
 
 interface ParagraphDatePickerRangeProps extends ParagraphDatePickerBaseProps {
@@ -709,6 +715,14 @@ function ParagraphDatePickerSingleInner({
   }, [])
 
   const handleApply = () => {
+    const isDisabled = (date: Dayjs) => disabledDate?.(date) === true
+    if (isRangeCalendarMode) {
+      const applyStart = rangeStart.isBefore(rangeEnd, 'day') ? rangeStart : rangeEnd
+      const applyEnd = rangeStart.isBefore(rangeEnd, 'day') ? rangeEnd : rangeStart
+      if (isDisabled(applyStart) || isDisabled(applyEnd)) return
+    } else if (isDisabled(draft)) {
+      return
+    }
     if (isRangeCalendarMode) {
       const sDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeStart : rangeEnd
       const eDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeEnd : rangeStart
@@ -1206,6 +1220,13 @@ function ParagraphDatePickerRangeBridge({
 
 export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
   const { label, className, style, disabled, readOnly } = props
+  const composedDisabledDate = useComposedRegistrationBusinessPeriodDisabledDate(
+    props.disabledDate,
+    props.excludeBusinessPeriodConstraint
+  )
+  const businessPeriodHint = useRegistrationBusinessPeriodPickerHint(
+    props.excludeBusinessPeriodConstraint
+  )
   const rootRef = useRef<HTMLDivElement>(null)
 
   const singlePresetMode =
@@ -1229,6 +1250,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
       className={[
         'paragraph-date-picker',
         dualFluidRoot && 'paragraph-date-picker--dual-fluid',
+        businessPeriodHint != null && 'paragraph-date-picker--with-hint',
         className,
       ]
         .filter(Boolean)
@@ -1246,7 +1268,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           inputSize={props.inputSize}
           disabled={disabled}
           readOnly={readOnly}
-          disabledDate={props.disabledDate}
+          disabledDate={composedDisabledDate}
         />
       ) : (
         <ParagraphDatePickerSingleInner
@@ -1261,7 +1283,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           inputSize={props.inputSize}
           disabled={disabled}
           readOnly={readOnly}
-          disabledDate={props.disabledDate}
+          disabledDate={composedDisabledDate}
           appliedSurfaceRange={props.appliedSurfaceRange}
           appliedSurfaceWithTime={props.appliedSurfaceWithTime}
           preferPeriodModeInPopover={props.preferPeriodModeInPopover ?? false}
@@ -1279,6 +1301,9 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           initialPopoverRange={props.mode === 'single' ? props.initialPopoverRange : null}
         />
       )}
+      {businessPeriodHint != null ? (
+        <span className="paragraph-date-picker__business-period-hint">{businessPeriodHint}</span>
+      ) : null}
     </div>
   )
 }

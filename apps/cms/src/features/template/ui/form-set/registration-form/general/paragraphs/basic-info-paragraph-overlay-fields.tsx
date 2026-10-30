@@ -116,6 +116,7 @@ export const ProgramRegistrationBasicInfoOperationRangeField = memo(
               placeholder="사업 운영 기간을 선택하세요"
               preferPeriodModeInPopover
               suppressAutoTodayWhenEmpty
+              excludeBusinessPeriodConstraint
               appliedSurfaceRange={operationRange}
               appliedSurfaceWithTime={operationRangeWithTime}
               onRangeChange={range => setOperationRange(range)}

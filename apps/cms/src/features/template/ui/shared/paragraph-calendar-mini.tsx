@@ -1,6 +1,7 @@
 import { useMemo, type ComponentProps } from 'react'
 import type { Dayjs } from 'dayjs'
 import { CalendarMini } from '@/shared/components/calendar'
+import { useComposedRegistrationBusinessPeriodDisabledDate } from '@/features/program/shared/ui/registration/registration-business-period-constraint'
 import './paragraph-calendar-mini.css'
 
 export interface ParagraphCalendarMiniProps
@@ -36,11 +37,14 @@ export function ParagraphCalendarMini({
   disabledDate: disabledDateProp,
   ...rest
 }: ParagraphCalendarMiniProps) {
-  const disabledDate = useMemo(() => {
-    if (disabledDateProp) return disabledDateProp
-    if (!clickableDates) return undefined
-    return (date: Dayjs) => !clickableDates.has(date.format('YYYY-MM-DD'))
+  const withClickableDates = useMemo(() => {
+    if (!clickableDates && !disabledDateProp) return undefined
+    return (date: Dayjs) => {
+      if (clickableDates && !clickableDates.has(date.format('YYYY-MM-DD'))) return true
+      return disabledDateProp?.(date) === true
+    }
   }, [clickableDates, disabledDateProp])
+  const disabledDate = useComposedRegistrationBusinessPeriodDisabledDate(withClickableDates)
 
   return (
     <div className={`paragraph-calendar-mini paragraph-calendar-mini--${size}`}>

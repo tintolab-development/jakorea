@@ -6,6 +6,7 @@ import type { PermissionModalPayload } from '@/shared/components/permission-moda
 import { toNestedDecisionNotification } from '@/features/program/general/lib/application-decision-notify-timing'
 import type { VolunteerDocumentCancelRejectionConfirmPayload } from '@/features/program/general/lib/volunteer-document-cancel-rejection'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { MESSAGES } from '@/shared/constants/messages'
 import {
   sortGeneralParticipantDocPassedVolunteerRows,
   sortGeneralVolunteerDocPassedApplicants,
@@ -372,8 +373,10 @@ export function useGeneralVolunteerDocPassed({
       )
       if (!ok) return
       setCancelApprovalTargetId(null)
+      // Figma 「Popup / Text / w600 / 공통 완료」 (1차 서류 승인 취소 완료)
+      showAlert({ title: '취소 완료', content: MESSAGES.success.cancelled })
     },
-    [applyDocumentScreeningCancelApproval, cancelApprovalVolunteer]
+    [applyDocumentScreeningCancelApproval, cancelApprovalVolunteer, showAlert]
   )
 
   const handleCancelRejectConfirm = useCallback(

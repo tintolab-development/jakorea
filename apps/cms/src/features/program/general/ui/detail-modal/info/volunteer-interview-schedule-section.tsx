@@ -11,7 +11,10 @@ import {
   resolveGeneralProgramVolunteerInterviewScheduleDisplay,
   resolveGeneralProgramVolunteerInterviewScheduleEditSeed,
 } from '@/features/program/general/lib/volunteer-interview-schedule-display'
-import { resolveGeneralProgramVolunteerRecruitmentDisplay } from '@/features/program/general/lib/volunteer-recruitment-display'
+import {
+  resolveGeneralProgramVolunteerRecruitmentDisplay,
+  resolveVolunteerRecruitmentInterviewEnabled,
+} from '@/features/program/general/lib/volunteer-recruitment-display'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import {
@@ -267,7 +270,7 @@ function GeneralProgramVolunteerInterviewScheduleEditSection({
     return start.isBefore(end, 'day') ? [start, end] : [end, start]
   }, [interviewEnd, interviewStart])
 
-  if (interviewEnabledField !== 'yes') return null
+  if (!resolveVolunteerRecruitmentInterviewEnabled(program, interviewEnabledField)) return null
 
   return (
     <section aria-label="면접 진행 가능 일정">

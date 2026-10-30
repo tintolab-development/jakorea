@@ -46,16 +46,14 @@ export function InstructorCancelApprovalModal({
       open={open}
       variant="reject"
       className="instructor-cancel-approval-modal"
-      title="강사 승인 취소 안내"
+      title="프로그램 승인 취소 안내"
       message={buildInstructorCancelApprovalMessage(instructorName, variant)}
       confirmLabel="승인 취소"
       confirmVariant="delete"
       requireReason
       reasonLabel={resolveInstructorCancelApprovalReasonLabel(variant)}
-      reasonPlaceholder="취소 사유를 입력해 주세요."
+      reasonPlaceholder="취소 사유를 입력해 주세요"
       reasonRequiredMessage="취소 사유를 입력해 주세요."
-      notifyTimingOptions={variant === 'alreadySent' ? 'two' : 'three'}
-      notifyBeforeReason
       faultPartyRequired
       onCancel={onCancel}
       onConfirm={onConfirm}

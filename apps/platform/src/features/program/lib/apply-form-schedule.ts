@@ -497,6 +497,103 @@ export function resolveInstitutionAllowedScheduleEnabledDates(
   return buildEnabledDatesFromAllowedSchedulePeriods(periods!)
 }
 
+export type EducationScheduleApplyConstraint = {
+  minDate: string | null
+  maxDate: string | null
+  enabledDates: ReadonlySet<string> | null
+  configured: boolean
+}
+
+export const PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE =
+  '희망 교육 일정이 교육 예정 기간을 벗어났습니다.'
+
+export const PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE =
+  '신청 가능한 교육 일정이 설정되지 않았습니다. 관리자에게 확인해 주세요.'
+
+function readEducationScheduleRangeBounds(
+  range: { start?: string | null; end?: string | null } | null | undefined
+): ApplyScheduleDateBounds {
+  const start = readIsoDateOrNull(range?.start)
+  const end = readIsoDateOrNull(range?.end)
+  if (start == null || end == null) {
+    return { minScheduleDate: null, maxScheduleDate: null }
+  }
+  return start <= end
+    ? { minScheduleDate: start, maxScheduleDate: end }
+    : { minScheduleDate: end, maxScheduleDate: start }
+}
+
+/**
+ * 기간형 희망 교육일 달력 SSOT.
+ * runtime 허용 기간 → runtime min/max → 프로그램 교육 예정 기간.
+ * 사업 운영 기간은 쓰지 않는다.
+ */
+export function resolveEducationScheduleApplyConstraint(input: {
+  runtime?: unknown
+  paragraph?: unknown
+  educationScheduleRange?: { start?: string | null; end?: string | null } | null
+  failClosed?: boolean
+}): EducationScheduleApplyConstraint {
+  const failClosed = input.failClosed === true
+  const config = readRuntimeScheduleConfig(input.runtime, input.paragraph)
+  if (hasRuntimeAllowedSchedulePeriods(config)) {
+    const enabledDates = buildEnabledDatesFromAllowedSchedulePeriods(config.allowedSchedulePeriods)
+    const sorted = [...enabledDates].sort()
+    return {
+      minDate: sorted[0] ?? config.minScheduleDate,
+      maxDate: sorted[sorted.length - 1] ?? config.maxScheduleDate,
+      enabledDates,
+      configured: enabledDates.size > 0,
+    }
+  }
+  if (config.minScheduleDate != null && config.maxScheduleDate != null) {
+    return {
+      minDate: config.minScheduleDate,
+      maxDate: config.maxScheduleDate,
+      enabledDates: null,
+      configured: true,
+    }
+  }
+  const fallback = readEducationScheduleRangeBounds(input.educationScheduleRange)
+  if (fallback.minScheduleDate != null && fallback.maxScheduleDate != null) {
+    return {
+      minDate: fallback.minScheduleDate,
+      maxDate: fallback.maxScheduleDate,
+      enabledDates: null,
+      configured: true,
+    }
+  }
+  if (failClosed) {
+    return {
+      minDate: null,
+      maxDate: null,
+      enabledDates: new Set<string>(),
+      configured: false,
+    }
+  }
+  return {
+    minDate: null,
+    maxDate: null,
+    enabledDates: null,
+    configured: true,
+  }
+}
+
+export function hasPreferredScheduleDateOutsideEducationConstraint(
+  blocks: readonly Pick<ApplyPreferredScheduleBlock, 'date'>[],
+  constraint: EducationScheduleApplyConstraint
+): boolean {
+  return blocks.some(block => {
+    const date = readIsoDateOrNull(block.date)
+    if (!date) return false
+    if (!constraint.configured) return true
+    if (constraint.enabledDates != null) return !constraint.enabledDates.has(date)
+    if (constraint.minDate != null && date < constraint.minDate) return true
+    if (constraint.maxDate != null && date > constraint.maxDate) return true
+    return false
+  })
+}
+
 export function buildEnabledDatesFromAllowedSchedulePeriods(
   periods: readonly ApplySchedulePeriodBounds[]
 ): ReadonlySet<string> {

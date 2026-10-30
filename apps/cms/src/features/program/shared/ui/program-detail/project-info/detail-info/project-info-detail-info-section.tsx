@@ -548,9 +548,10 @@ function useDetailInfoEditorBlock(
   const displayThumbnailUrl = rowMedia
     ? thumbnailPreviewBlobUrl || linkedThumbnail?.url
     : thumbnailPreviewBlobUrl || linkedThumbnail?.url || legacyThumbnailUrl
-  const overlayThumbnailName = readRecruitDetailMediaFromOverlay(
-    program.registrationOverlay ?? {}
-  ).thumbFileName
+  // 행 모드 파일명은 fetchProgramMediaThumbnail(활성 행 prefix)만 쓴다 — 다른 유형 overlay로 폴백하지 않는다.
+  const overlayThumbnailName = rowMedia
+    ? undefined
+    : readRecruitDetailMediaFromOverlay(program.registrationOverlay ?? {}).thumbFileName
   const thumbnailFilename =
     linkedThumbnail?.fileName ||
     overlayThumbnailName ||

@@ -67,15 +67,10 @@ describe('institution-cancel-approval', () => {
     expect(resolveInstitutionCancelApprovalNotificationResult({})).toBe('unknown')
   })
 
-  it('notificationEventId null 완료 문구는 알림 발송 완료로 표시하지 않는다', () => {
-    const description = buildInstitutionCancelApprovalCompleteDescription(
-      '진월초등학교',
-      '일정 변경',
-      'not-created'
-    )
-    expect(description).toContain('승인 취소')
-    expect(description).toContain('취소 안내 알림은 발송·예약되지 않았습니다.')
-    expect(description).not.toContain('알림톡 발송 완료')
+  it('완료 메시지는 Figma 공통 완료 문구다', () => {
+    expect(
+      buildInstitutionCancelApprovalCompleteDescription('진월초등학교', '일정 변경', 'not-created')
+    ).toBe('취소되었습니다.')
   })
 
   it('사유 라벨은 분기와 관계없이 취소 사유다', () => {
