@@ -731,6 +731,35 @@ export async function fetchConsentEvidenceBlobRemote(
   }
 }
 
+/** signed-document originalFileObjectId → 민감 파일 relay. 없으면 filled evidence 폴백. */
+export async function fetchConsentCrimeOriginalBlobRemote(input: {
+  memberId: number
+  consentType: string
+  reason: string
+  consentRecordId?: number
+  filled: FilledDocumentResponse
+}): Promise<Blob | null> {
+  try {
+    const signed = await fetchConsentSignedDocumentRemote(
+      input.memberId,
+      input.consentType,
+      { reason: input.reason },
+      input.consentRecordId
+    )
+    if (signed.originalFileObjectId != null) {
+      const blob = await loadSensitiveAdminFileBlob({
+        fileObjectId: signed.originalFileObjectId,
+        reason: input.reason,
+        claimPath: signed.originalDownloadApi,
+      })
+      return blobWithEvidenceMime(blob, 'crime-consent.pdf')
+    }
+  } catch {
+    /* filled evidence 폴백 */
+  }
+  return fetchConsentEvidenceBlobRemote(input.filled, input.reason)
+}
+
 export async function fetchMemberExternalIdentifiersRemote(
   memberId: number
 ): Promise<ExternalIdentifierResponse[]> {

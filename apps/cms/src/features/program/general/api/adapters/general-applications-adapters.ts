@@ -1151,6 +1151,7 @@ export function mapPreferredEducationSchedulesToSessions(
   schedules: PreferredEducationSchedule[] | undefined,
   options?: { useEducationDate?: boolean }
 ): ParticipatingSchoolSession[] {
+  const useEducationDate = options?.useEducationDate !== false
   return orderPreferredEducationSchedules([...(schedules ?? [])]).map((schedule, index) => {
     const scheduleLabel = preferredScheduleLabel(schedule)
     const start = schedule.startAt ? new Date(schedule.startAt) : null
@@ -1158,7 +1159,7 @@ export function mapPreferredEducationSchedulesToSessions(
     const validStart = start != null && !Number.isNaN(start.getTime())
     const validEnd = end != null && !Number.isNaN(end.getTime())
     const dateOnly = isOrganizationPreferredDateOnlyRange(schedule.startAt, schedule.endAt)
-    const educationDate = options?.useEducationDate ? schedule.educationDate?.trim() : undefined
+    const educationDate = useEducationDate ? schedule.educationDate?.trim() : undefined
     const educationDay = educationDate ? new Date(`${educationDate}T00:00:00+09:00`) : null
     const dateParts =
       educationDay != null && !Number.isNaN(educationDay.getTime())

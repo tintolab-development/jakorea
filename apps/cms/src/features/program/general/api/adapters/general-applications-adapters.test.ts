@@ -477,6 +477,17 @@ describe('general-applications-adapters', () => {
     expect(row.sessions?.[0]?.timeRange).toContain('~')
   })
 
+  it('uses educationDate (Seoul calendar) instead of UTC-sliced startAt', () => {
+    const sessions = mapPreferredEducationSchedulesToSessions([
+      {
+        startAt: '2026-11-01T15:30:00.000Z',
+        endAt: '2026-11-01T16:00:00.000Z',
+        educationDate: '2026-11-02',
+      },
+    ])
+    expect(sessions[0]?.date).toBe('2026.11.02')
+  })
+
   it('does not render 00:00 for a date-only preferred schedule', () => {
     const sessions = mapPreferredEducationSchedulesToSessions([
       {

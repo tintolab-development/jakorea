@@ -5,10 +5,11 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ApplicationDecisionResponse } from './applicationDecisionResponse';
-import type { ScopeResponse } from './scopeResponse';
 
 export interface Result {
-  decision?: ApplicationDecisionResponse;
-  educationScope?: ScopeResponse;
+  status?: string;
+  guardianConsentRowsDeleted?: number;
+  guardianSessionRowsDeleted?: number;
+  guardianIdentitySessionRowsDeleted?: number;
+  blockCode?: string;
 }

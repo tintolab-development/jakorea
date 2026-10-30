@@ -15,7 +15,7 @@ import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-man
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import { useConsentFilledDocumentMutation } from '@/features/user/api/hooks/use-consent-filled-document-mutation'
 import {
-  fetchConsentEvidenceBlobRemote,
+  fetchConsentCrimeOriginalBlobRemote,
   loadConsentSignedSignatureBlobRemote,
 } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
@@ -491,7 +491,13 @@ export function MemberConsentDocumentViewModal({
             return
           }
           try {
-            const blob = await fetchConsentEvidenceBlobRemote(response, reason)
+            const blob = await fetchConsentCrimeOriginalBlobRemote({
+              memberId,
+              consentType: consentType.trim(),
+              reason,
+              consentRecordId,
+              filled: response,
+            })
             if (blob == null || blob.size < 1) {
               setLoadFailed(true)
               return
