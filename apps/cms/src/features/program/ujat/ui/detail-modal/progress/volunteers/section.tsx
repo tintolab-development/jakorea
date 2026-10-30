@@ -361,6 +361,9 @@ export function UjatEducationProgressVolunteersSection({
         onCancel={() => setVolunteer1365PreviewOpen(false)}
         half={half}
         programId={program.id}
+        selectedMemberId={
+          tableData.find(row => String(row.id) === selectedVolunteerId)?.memberId ?? null
+        }
         volunteers={tableData.map(row => ({
           id: row.id,
           memberId: row.memberId,
