@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { Result } from 'antd'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
+import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import {
   revealGeminiApprovedTrainingPersonalInfo,
@@ -96,10 +97,20 @@ export function GeminiApprovedTrainingDetailFullPageModal({
       if (!detail) return Promise.reject(new Error('승인 연수 상세가 없습니다.'))
       return revealGeminiApprovedTrainingPersonalInfo(detail, reason)
     },
-    onPrivacyUnmasked: payload => setUnmasked(payload as GeminiApprovedTrainingPrivacyUnmasked),
+    onPrivacyUnmasked: payload =>
+      setUnmasked(
+        sanitizeProgramPrivacyOverlay(
+          detail?.programId ?? '',
+          payload as GeminiApprovedTrainingPrivacyUnmasked
+        )
+      ),
     resetDeps: [approvedTrainingId],
     controlMode: 'headerStickyNoop',
   })
+
+  useEffect(() => {
+    if (!personalInfoRevealed) setUnmasked(null)
+  }, [personalInfoRevealed])
 
   const displayedDetail = useMemo(() => {
     if (!detail || !unmasked || !personalInfoRevealed) return detail
