@@ -42,6 +42,8 @@ export interface GeneralVolunteerApplicantRow {
   email: string
   contactRaw: string
   emailRaw: string
+  /** 목록·상세 `homeAddressSummary`/`homeAddress`. 없으면 빈 문자열 */
+  homeAddress?: string
   id1365: string
   scheduleChangeCancelCount: number
   applicationType: GeneralVolunteerApplicationType

@@ -8,6 +8,7 @@ import {
   screeningApplicantNamePlaceholder,
   type ScreeningSubjectKind,
 } from './screening-subject-kind'
+import { APPROVAL_STATUS_LABELS } from '@/shared/components/textbook-status-badge'
 import {
   GENERAL_DOCUMENT_SCREENING_STATUS_LABELS,
   GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
@@ -52,6 +53,14 @@ const screeningStatusOptions = [
       string,
     ][]
   ).map(([value, label]) => ({ label, value })),
+]
+
+/** 면접 없음 목록 — 내부 값은 documentScreeningStatus, 라벨은 프로그램 승인 현황 */
+const applicationApprovalStatusOptions = [
+  { label: '전체', value: ALL },
+  { label: APPROVAL_STATUS_LABELS.pending, value: 'pending' },
+  { label: APPROVAL_STATUS_LABELS.approved, value: 'pass' },
+  { label: APPROVAL_STATUS_LABELS.rejected, value: 'fail' },
 ]
 
 const interviewAssignmentOptions = [
@@ -142,11 +151,16 @@ function buildGeneralFilterField(
   }
 }
 
-export function buildGeneralVolunteerDoc1FilterFields(): FilterFieldConfig[] {
-  return buildGeneralVolunteerDoc1FilterRows().flat()
+export function buildGeneralVolunteerDoc1FilterFields(options?: {
+  interviewEnabled?: boolean
+}): FilterFieldConfig[] {
+  return buildGeneralVolunteerDoc1FilterRows(options).flat()
 }
 
-export function buildGeneralVolunteerDoc1FilterRows(): FilterFieldConfig[][] {
+export function buildGeneralVolunteerDoc1FilterRows(options?: {
+  interviewEnabled?: boolean
+}): FilterFieldConfig[][] {
+  const interviewEnabled = options?.interviewEnabled !== false
   return [
     [
       buildGeneralFilterField({
@@ -155,33 +169,37 @@ export function buildGeneralVolunteerDoc1FilterRows(): FilterFieldConfig[][] {
         label: '신청 봉사자명',
         placeholder: '봉사자명을 입력하세요',
       }),
-      buildGeneralFilterField({
-        key: 'jaVolunteerExperience',
-        type: 'select',
-        label: 'JA 봉사 프로그램 진행 경험',
-        placeholder: '전체',
-        options: jaVolunteerExperienceOptions,
-      }),
-      buildGeneralFilterField({
-        key: 'managerAEvaluation',
-        type: 'select',
-        label: '담당자 A 평가',
-        placeholder: '전체',
-        options: managerEvaluationOptions,
-      }),
-      buildGeneralFilterField({
-        key: 'managerBEvaluation',
-        type: 'select',
-        label: '담당자 B 평가',
-        placeholder: '전체',
-        options: managerEvaluationOptions,
-      }),
+      ...(interviewEnabled
+        ? [
+            buildGeneralFilterField({
+              key: 'jaVolunteerExperience',
+              type: 'select',
+              label: 'JA 봉사 프로그램 진행 경험',
+              placeholder: '전체',
+              options: jaVolunteerExperienceOptions,
+            }),
+            buildGeneralFilterField({
+              key: 'managerAEvaluation',
+              type: 'select',
+              label: '담당자 A 평가',
+              placeholder: '전체',
+              options: managerEvaluationOptions,
+            }),
+            buildGeneralFilterField({
+              key: 'managerBEvaluation',
+              type: 'select',
+              label: '담당자 B 평가',
+              placeholder: '전체',
+              options: managerEvaluationOptions,
+            }),
+          ]
+        : []),
       buildGeneralFilterField({
         key: 'documentScreeningStatus',
         type: 'select',
-        label: '1차 서류 심사 현황',
+        label: interviewEnabled ? '1차 서류 심사 현황' : '프로그램 승인 현황',
         placeholder: '전체',
-        options: screeningStatusOptions,
+        options: interviewEnabled ? screeningStatusOptions : applicationApprovalStatusOptions,
       }),
     ],
   ]

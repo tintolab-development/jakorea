@@ -1,4 +1,4 @@
-import { useCallback, type CSSProperties, type MouseEvent } from 'react'
+import { useCallback, useMemo, type CSSProperties, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
@@ -14,7 +14,7 @@ import { GeneralVolunteerDocumentCancelRejectModal } from './general-volunteer-d
 import { GeneralVolunteerDocumentRejectModal } from './general-volunteer-document-reject-modal'
 import { buildGeneralVolunteerDoc1FilterFields } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import type { Program } from '@/types/domain'
-import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
+import { resolveGeneralDocScreeningTableScrollX } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
 import { isDocumentScreeningPendingForBulkSelect } from '@/features/program/general/lib/application-processed-selection-alert'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
@@ -27,16 +27,16 @@ import {
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import './volunteer-screening.css'
 
-const FILTER_FIELDS = buildGeneralVolunteerDoc1FilterFields()
-
 export function GeneralVolunteerDocScreeningSection({
   program,
   programId: programIdProp,
+  interviewEnabled = true,
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
   program?: Program
   programId?: string
+  interviewEnabled?: boolean
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
@@ -86,7 +86,12 @@ export function GeneralVolunteerDocScreeningSection({
     isFetchingNextPage,
     fetchNextPage,
     listQuery,
-  } = useGeneralVolunteerDocScreening({ programId })
+  } = useGeneralVolunteerDocScreening({ programId, interviewEnabled })
+  const filterFields = useMemo(
+    () => buildGeneralVolunteerDoc1FilterFields({ interviewEnabled }),
+    [interviewEnabled]
+  )
+  const tableScrollX = resolveGeneralDocScreeningTableScrollX(interviewEnabled)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
@@ -98,6 +103,7 @@ export function GeneralVolunteerDocScreeningSection({
     programId,
     list,
     variant: 'doc_screening',
+    interviewEnabled,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
   })
@@ -182,6 +188,7 @@ export function GeneralVolunteerDocScreeningSection({
         <GeneralVolunteerApplicantDetailView
           variant="doc_screening"
           applicant={selectedApplicant}
+          interviewEnabled={interviewEnabled}
           openManagerDropdown={openManagerDropdown}
           setOpenManagerDropdown={setOpenManagerDropdown}
           updatingManagerEvaluation={updatingManagerEvaluation}
@@ -212,11 +219,18 @@ export function GeneralVolunteerDocScreeningSection({
         <FilterTableLayout
           bordered={false}
           className="general-volunteer-screening__filter-layout"
-          fields={FILTER_FIELDS}
+          fields={filterFields}
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}
-          title={`봉사자 신청 목록 (${count.toLocaleString()})`}
+          title={
+            interviewEnabled
+              ? `봉사자 신청 목록 (${count.toLocaleString()})`
+              : '봉사자 신청 목록'
+          }
+          description={
+            interviewEnabled ? undefined : `총 ${count.toLocaleString()}건`
+          }
           actions={
             <div className="general-volunteer-screening__actions program-application-list-toolbar">
               <FilterTableToolbarButton
@@ -245,7 +259,7 @@ export function GeneralVolunteerDocScreeningSection({
             className="general-volunteer-screening__table-wrap"
             style={
               {
-                '--general-doc-screening-table-width': `${GENERAL_DOC_SCREENING_TABLE_SCROLL_X}px`,
+                '--general-doc-screening-table-width': `${tableScrollX}px`,
               } as CSSProperties
             }
           >
@@ -256,7 +270,7 @@ export function GeneralVolunteerDocScreeningSection({
               dataSource={tableData}
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: GENERAL_DOC_SCREENING_TABLE_SCROLL_X }}
+              scroll={{ x: tableScrollX }}
               rowSelection={{
                 fixed: true,
                 columnWidth: TABLE_COLUMN_WIDTHS.checkbox,

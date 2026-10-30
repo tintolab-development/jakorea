@@ -27,6 +27,7 @@ import {
   formatGeneralVolunteerEssayCellValue,
   type GeneralManagerEvaluation,
 } from '@/features/program/general/lib/volunteer-screening-constants'
+import { volunteerApplicationApprovalStatusLabel } from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import { buildGeneralVolunteerDoc1ListQuery } from '@/features/program/general/api/volunteer-list-query'
@@ -75,10 +76,33 @@ const EXPORT_COLUMNS: ColumnsType<Record<string, string | number>> = [
   },
 ]
 
-function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string | number> {
+const APPLICATION_EXPORT_COLUMNS: ColumnsType<Record<string, string | number>> = [
+  { title: 'No.', dataIndex: 'no', key: 'no' },
+  { title: '신청 봉사자명', dataIndex: 'name', key: 'name' },
+  { title: '자택 주소지', dataIndex: 'homeAddress', key: 'homeAddress' },
+  { title: '연락처', dataIndex: 'contact', key: 'contact' },
+  { title: '이메일', dataIndex: 'email', key: 'email' },
+  {
+    title: '프로그램 승인 현황',
+    dataIndex: 'documentScreeningStatusLabel',
+    key: 'documentScreeningStatusLabel',
+  },
+]
+
+function resolveDocScreeningExportColumns(
+  interviewEnabled: boolean
+): ColumnsType<Record<string, string | number>> {
+  return interviewEnabled ? EXPORT_COLUMNS : APPLICATION_EXPORT_COLUMNS
+}
+
+function toExportRow(
+  row: GeneralVolunteerApplicantRow,
+  interviewEnabled: boolean
+): Record<string, string | number> {
   return {
     no: row.no,
     name: row.name,
+    homeAddress: row.homeAddress?.trim() || '-',
     contact: row.contact,
     email: row.email,
     jaVolunteerExperience: formatGeneralJaVolunteerExperienceCell(row.hasJaVolunteerExperience),
@@ -104,12 +128,19 @@ function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string |
     ),
     managerAEvaluationLabel: GENERAL_MANAGER_EVALUATION_LABELS[row.managerAEvaluation],
     managerBEvaluationLabel: GENERAL_MANAGER_EVALUATION_LABELS[row.managerBEvaluation],
-    documentScreeningStatusLabel:
-      GENERAL_DOCUMENT_SCREENING_STATUS_LABELS[row.documentScreeningStatus],
+    documentScreeningStatusLabel: interviewEnabled
+      ? GENERAL_DOCUMENT_SCREENING_STATUS_LABELS[row.documentScreeningStatus]
+      : volunteerApplicationApprovalStatusLabel(row.documentScreeningStatus),
   }
 }
 
-export function useGeneralVolunteerDocScreening({ programId }: { programId: string }) {
+export function useGeneralVolunteerDocScreening({
+  programId,
+  interviewEnabled = true,
+}: {
+  programId: string
+  interviewEnabled?: boolean
+}) {
   const { showAlert } = useCmsAlert()
   const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
@@ -170,14 +201,17 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     [appliedFilters, list, volunteerRemote.remoteEnabled]
   )
 
-  const exportRows = useMemo(() => tableData.map(toExportRow), [tableData])
+  const exportRows = useMemo(
+    () => tableData.map(row => toExportRow(row, interviewEnabled)),
+    [interviewEnabled, tableData]
+  )
 
   const excelExport = useMemo<FilterTableExcelExportConfig>(
     () => ({
-      columns: EXPORT_COLUMNS,
+      columns: resolveDocScreeningExportColumns(interviewEnabled),
       data: exportRows,
     }),
-    [exportRows]
+    [exportRows, interviewEnabled]
   )
 
   const cancelApprovalVolunteer = useMemo(
@@ -457,6 +491,7 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   )
 
   const columns = useGeneralVolunteerDocScreeningColumns({
+    interviewEnabled,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     openManagerDropdown,

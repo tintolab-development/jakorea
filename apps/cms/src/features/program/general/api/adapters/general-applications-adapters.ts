@@ -1576,6 +1576,8 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     essayEducationExperience?: string | null
     essayNecessity?: string | null
     essayJaExperience?: string | null
+    homeAddressSummary?: string | null
+    homeAddress?: string | null
     interviewEvaluations?: InterviewEvaluationSlotSource[] | null
   }
   const assigned = formatAssignedInterviewFromIso(
@@ -1596,6 +1598,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     email: dto.email?.trim() || '-',
     contactRaw: dto.contact?.trim() || '',
     emailRaw: dto.email?.trim() || '',
+    homeAddress: enriched.homeAddressSummary?.trim() || enriched.homeAddress?.trim() || '',
     id1365: '',
     scheduleChangeCancelCount: 0,
     applicationType: dto.isReparticipation ? 'ujat-graduate' : 'new',
@@ -1640,7 +1643,13 @@ export function mapVolunteerApplicationDetailToApplicantRow(
   dto: VolunteerApplicationDetailResponse,
   base: GeneralVolunteerApplicantRow
 ): GeneralVolunteerApplicantRow {
-  const profile = dto.profile
+  const profile = dto.profile as
+    | (NonNullable<VolunteerApplicationDetailResponse['profile']> & {
+        homeAddress?: string | null
+        homeAddressSummary?: string | null
+      })
+    | undefined
+    | null
   const screening = dto.screening
   const assigned = formatAssignedInterviewFromIso(
     dto.assignedInterviewStartAt,
@@ -1658,6 +1667,11 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     email: profile?.email?.trim() || base.email,
     contactRaw: profile?.contact?.trim() || base.contactRaw,
     emailRaw: profile?.email?.trim() || base.emailRaw,
+    homeAddress:
+      profile?.homeAddressSummary?.trim() ||
+      profile?.homeAddress?.trim() ||
+      base.homeAddress ||
+      '',
     id1365: profile?.external1365Id?.trim() || base.id1365,
     scheduleChangeCancelCount:
       dto.application?.scheduleChangeCancelCount ?? base.scheduleChangeCancelCount,

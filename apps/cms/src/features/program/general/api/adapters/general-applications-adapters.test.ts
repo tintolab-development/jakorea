@@ -1292,6 +1292,21 @@ describe('general-applications-adapters', () => {
     expect(row.canEditManagerBEvaluation).toBe(false)
     expect(row.availableActions).toEqual(['VIEW', 'UPDATE_DOCUMENT_EVALUATION'])
     expect(row.essayIntro).toBe('')
+    expect(row.homeAddress).toBe('')
+  })
+
+  it('maps volunteer list homeAddressSummary when present', () => {
+    const row = mapVolunteerApplicationToGeneralVolunteerApplicantRow(
+      {
+        id: 57,
+        programId: 5001,
+        memberName: '김봉사',
+        homeAddressSummary: ' 서울특별시 ',
+      } as Parameters<typeof mapVolunteerApplicationToGeneralVolunteerApplicantRow>[0],
+      0,
+      '5001'
+    )
+    expect(row.homeAddress).toBe('서울특별시')
   })
 
   it('maps volunteer list essay fields and keeps null as empty', () => {
