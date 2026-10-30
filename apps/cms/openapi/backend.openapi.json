@@ -390,6 +390,10 @@
     },
     {
       "name": "기타 API",
+      "description": "1365 등록 양식 미리보기와 다운로드"
+    },
+    {
+      "name": "기타 API",
       "description": "UJAT 교육 지역 순서 마스터 API"
     },
     {
@@ -11116,6 +11120,236 @@
         }
       }
     },
+    "/api/portal/me/age-transition/nice/{sessionId}/validate": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "Non-consuming NICE 4-rule identity check",
+        "description": "### 이 API가 하는 일\n- Non-consuming NICE 4-rule identity check\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/age-transition/nice/{sessionId}/validate`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: AGE14_TRANSITION owned unused session; no consume; no PII; name mismatch does not fail",
+        "operationId": "validateTransitionNice",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseIdentityCheckResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/age-transition/nice/start": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "Start member-owned NICE verification for age-14 transition",
+        "description": "### 이 API가 하는 일\n- Start member-owned NICE verification for age-14 transition\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/age-transition/nice/start`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Requires eligibility plus stored TRANSITION choice; own NICE is not a prerequisite of choice; binds AGE14_TRANSITION session without completing transition",
+        "operationId": "startTransitionNice",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "헤더 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseNiceIdentityAuthStartResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/age-transition/guardian-data-cleanup": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "Age-14 guardian DB privacy cleanup",
+        "description": "### 이 API가 하는 일\n- Age-14 guardian DB privacy cleanup\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/age-transition/guardian-data-cleanup`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Explicit member-scoped guarded database cleanup; files remain untouched",
+        "operationId": "deleteGuardianData",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/age-transition/complete": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "Complete age-14 transition",
+        "description": "### 이 API가 하는 일\n- Complete age-14 transition\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/age-transition/complete`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: TRANSITION+AGE14 NICE; marketingAgreed true/false/null; DB cleanup atomic; file purge may stay EVIDENCE_PENDING until verified",
+        "operationId": "completeTransition",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "헤더 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCompletionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/age-transition/choice": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "Member age-14 transition choice",
+        "description": "### 이 API가 하는 일\n- Member age-14 transition choice\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/age-transition/choice`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Eligible child-origin members may store TRANSITION or LATER without own NICE; does not authorize guardian deletion",
+        "operationId": "choose",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseChoiceResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/portal/auth/sso/token-login": {
       "post": {
         "tags": [
@@ -13372,7 +13606,7 @@
           "폼/설문"
         ],
         "summary": "?? ?? ?? ??? ????? ?? ??",
-        "description": "### 이 API가 하는 일\n- ?? ?? ?? ??? ????? ?? ??\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/users/{memberId}/consent-records/{consentType}/signed-document`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MEMBER_READ+DYNAMIC_PRIVACY_PERMISSION 권한 필요\n- 접근 범위: MEMBER_SCOPE 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: RAW_PERSONAL_DATA_AND_SIGNATURE_METADATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Returns immutable signed snapshot; requires PRIVACY_RAW_READ reason and excludes withdrawn, expired, destroyed documents.",
+        "description": "### 이 API가 하는 일\n- ?? ?? ?? ??? ????? ?? ??\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/users/{memberId}/consent-records/{consentType}/signed-document`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: MEMBER_READ+DYNAMIC_PRIVACY_PERMISSION 권한 필요\n- 접근 범위: MEMBER_SCOPE 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: RAW_PERSONAL_DATA_AND_SIGNATURE_METADATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Returns immutable signed snapshot and nullable originalFileObjectId/originalDownloadApi; original PDF uses SENSITIVE_FILE_DOWNLOAD+MEMBER_READ audited relay. Requires PRIVACY_RAW_READ reason and excludes withdrawn, expired, destroyed documents.",
         "operationId": "signedConsentDocument",
         "parameters": [
           {
@@ -16230,6 +16464,157 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값 검증 실패",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "bad-request": {
+                    "summary": "요청 값 검증 실패",
+                    "description": "bad-request",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "BAD_REQUEST: request parameter is invalid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "인증 필요",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "인증 필요",
+                    "description": "unauthorized",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "UNAUTHORIZED: authentication is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 부족",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "forbidden": {
+                    "summary": "권한 부족",
+                    "description": "forbidden",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "PERMISSION_DENIED: admin permission is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "대상 리소스 없음",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "not-found": {
+                    "summary": "대상 리소스 없음",
+                    "description": "not-found",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "NOT_FOUND: requested resource was not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "비즈니스 상태 충돌 또는 중복 요청",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "summary": "비즈니스 상태 충돌",
+                    "description": "conflict",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "message": "CONFLICT: requested transition is not allowed in the current state"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/settlements/exports/scope": {
+      "post": {
+        "tags": [
+          "정산"
+        ],
+        "summary": "정산 원문 Export 범위 식별자 발급",
+        "description": "### 이 API가 하는 일\n- 정산 원문 Export 범위 식별자 발급\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/settlements/exports/scope`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: SETTLEMENT_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. 지급조서는 `WAITING_CONFIRM`, `REAPPLICATION`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, 계좌 지급은 `WAITING_PAYMENT`, `PAID`, `FAILED`를 별도 상태축으로 사용합니다.\n- 지급조서 legacy 입력 `REQUESTED`/`ISSUED`는 `WAITING_CONFIRM`, `RESUBMITTED`는 `REAPPLICATION` 호환 alias일 뿐 신규 응답/저장 상태로 사용하지 않습니다. 정정/재신청/지급 실패는 후속 처리 버튼과 감사 이력에 영향을 주므로 프론트는 canonical 응답 status를 그대로 보존합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 무필터 전체와 제한 범위를 구분하는 scopeToken. 원문 없음",
+        "operationId": "issueSettlementExportScope",
+        "parameters": [
+          {
+            "name": "exportType",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scope"
                 }
               }
             }
@@ -19310,6 +19695,72 @@
           },
           "409": {
             "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/participants/{participantId}/1365-registration-form": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 1365 봉사시간 등록 양식 원문",
+        "description": "### 이 API가 하는 일\n- UJAT 1365 봉사시간 등록 양식 원문\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/participants/{participantId}/1365-registration-form`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PRIVACY_RAW_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_MEMBER_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 자동 사유 1365 봉사시간 등록을 하기 위함. PREVIEW와 DOWNLOAD. 회원 unmask와 별도",
+        "operationId": "ujat1365RegistrationForm",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "participantId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "PREVIEW"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ujat1365RegistrationFormResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -22977,8 +23428,8 @@
         "tags": [
           "기타 API"
         ],
-        "summary": "학생명단 개인정보 원문 조회",
-        "description": "### 이 API가 하는 일\n- 학생명단 개인정보 원문 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/organization-applications/{applicationId}/student-roster/privacy-detail`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PRIVACY_RAW_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_STUDENT_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 사유 필수 및 감사기록 후 별도 원문 반환",
+        "summary": "학생명단·출석 개인정보 원문 조회",
+        "description": "### 이 API가 하는 일\n- 학생명단·출석 개인정보 원문 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/organization-applications/{applicationId}/student-roster/privacy-detail`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: PRIVACY_RAW_READ 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_STUDENT_DATA 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 자동 사유 참여 학생 명단을 확인하고 교육을 운영하기 위함. 호출자 reason은 무시. 감사 실패 시 원문 차단",
         "operationId": "revealRoster",
         "parameters": [
           {
@@ -22994,8 +23445,8 @@
           {
             "name": "reason",
             "in": "query",
-            "description": "원문 조회 사유",
-            "required": true,
+            "description": "무시됩니다. 감사 사유는 서버 고정값입니다.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -27564,7 +28015,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Result"
+                  "$ref": "#/components/schemas/IndividualApprovalWithScopeResult"
                 }
               }
             }
@@ -47558,6 +48009,45 @@
         }
       }
     },
+    "/api/portal/me/consents/documents/{documentId}/content": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "업로드한 성범죄 경력조회 동의서 원본 PDF 스트리밍",
+        "description": "### 이 API가 하는 일\n- 업로드한 성범죄 경력조회 동의서 원본 PDF 스트리밍\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/consents/documents/{documentId}/content`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_FILE_RELAY 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Authenticated owner-only server relay for the clean uploaded original",
+        "operationId": "streamOriginal",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/portal/me/certificates/{certificateIssueId}/download": {
       "get": {
         "tags": [
@@ -47641,6 +48131,86 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PortalCalendarResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/age-transition": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "Member age-14 transition status",
+        "description": "### 이 API가 하는 일\n- Member age-14 transition status\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/age-transition`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Returns origin eligibility status choice NICE-required completedAt and guardian deletion flags; do not infer eligibility from POLICY_HOLD or VERIFICATION_REQUIRED alone",
+        "operationId": "status_1",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePortalStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/age-transition/nice/{sessionId}": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "Read own age-14 transition NICE status",
+        "description": "### 이 API가 하는 일\n- Read own age-14 transition NICE status\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/me/age-transition/nice/{sessionId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: MEMBER_SELF 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SENSITIVE_PERSONAL_DATA 개인정보 정책\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Returns status only for an unexpired unused session bound to authenticated member; no NICE profile PII; VERIFIED is not 4-rule identity pass",
+        "operationId": "transitionNiceStatus",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVerificationSessionResponse"
                 }
               }
             }
@@ -59184,86 +59754,7 @@
     },
     "/api/admin/notification-send-batches/template-variables": {
       "get": {
-        "tags": [
-          "기타 API"
-        ],
-        "summary": "알림 발송 자동입력 변수 카탈로그",
-        "description": "### 이 API가 하는 일\n- 알림 발송 자동입력 변수 카탈로그\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/notification-send-batches/template-variables`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: NOTIFICATION_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: V78 AlimTalk CMS catalog / Notion alignment",
-        "operationId": "listNotificationTemplateVariables",
-        "parameters": [
-          {
-            "name": "category",
-            "in": "query",
-            "description": "카탈로그 카테고리 코드.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "NAME",
-                "EMAIL",
-                "PHONE",
-                "STATUS",
-                "TYPE",
-                "DATE",
-                "TIME",
-                "PLACE",
-                "TARGET",
-                "QUANTITY",
-                "AMOUNT",
-                "SYSTEM"
-              ]
-            }
-          },
-          {
-            "name": "keyword",
-            "in": "query",
-            "description": "key/description 부분 검색.",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "programId",
-            "in": "query",
-            "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "participantType",
-            "in": "query",
-            "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
-            }
-          },
-          {
-            "name": "memberType",
-            "in": "query",
-            "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
-            }
-          }
-        ],
+        "summary": "자동입력 변수 카탈로그 조회",
         "responses": {
           "200": {
             "description": "카탈로그. CatalogVariableItem.enabled 가 삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT.",
@@ -59274,7 +59765,7 @@
                 },
                 "examples": {
                   "participantContext": {
-                    "description": "participantContext",
+                    "summary": "programId+PARTICIPANT — 강사 전용 키 enabled=false",
                     "value": {
                       "totalCount": 2,
                       "categories": [
@@ -59317,18 +59808,107 @@
             }
           },
           "400": {
-            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
-          },
-          "401": {
-            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
-          },
-          "403": {
-            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
-          },
-          "500": {
-            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+            "description": "participantType/memberType enum 위반 등",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "requiredVariableMissing": {
+                    "summary": "발송 파이프라인 실패 코드(배치/delivery). GET catalog 자체는 아님",
+                    "value": {
+                      "success": false,
+                      "data": null,
+                      "error": {
+                        "code": "NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING",
+                        "message": "NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:교육 진행 수업 시간"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
+        "operationId": "listNotificationTemplateVariables",
+        "description": "메일·문자 템플릿 편집/발송 화면 우측 자동입력(변수값) 리스트 + 알림톡 발송 피커 변수 SSOT. Notion 사용 가능 항목과 CMS 수동 발송 불가(시스템 이벤트 전용) 키를 카테고리별로 반환(enabled=false 항목도 목록 유지). enabled=삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT(값 존재와 무관). FE는 enabled를 재계산하지 않는다. 축 분리: 카카오 승인(approved) ≠ CMS 변수 가능(catalog membership + enabled). 알림톡 발송 피커 Option A(프로그램 지정 시): 본문 #{키} ⊆ catalog && 모든 키 enabled=true. 예: 로그인 실패 횟수/마지막 로그인 실패일시 → catalog 등재 + enabled=false. requiresProgram=true 이고 programId 미전달이면 enabled=false. programId/participantType/memberType을 넘기면 enabled가 프로그램·모집·참여·회원 유형에 맞게 계산된다. participantType·memberType 둘 다 없으면 유형 특화 변수는 enabled=false. 실발송(EMAIL/SMS/ALIMTALK) 시 본문 또는 알림톡 메타데이터(버튼 등)의 #{키} 값이 비면 provider 전 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}…] fail-closed(프로바이더 원문「변수처리실패」에 의존하지 않음).",
+        "tags": [
+          "알림 발송 배치"
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "카탈로그 카테고리 코드.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NAME",
+                "EMAIL",
+                "PHONE",
+                "STATUS",
+                "TYPE",
+                "DATE",
+                "TIME",
+                "PLACE",
+                "TARGET",
+                "QUANTITY",
+                "AMOUNT",
+                "SYSTEM"
+              ]
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "description": "key/description 부분 검색.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "required": false,
+            "description": "대상 프로그램 id. 미지정(전체)이면 requiresProgram 항목은 enabled=false.",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 164003
+          },
+          {
+            "name": "participantType",
+            "in": "query",
+            "required": false,
+            "description": "프로그램 선택 시 참여 유형 필터. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PARTICIPANT",
+                "INSTRUCTOR",
+                "VOLUNTEER"
+              ]
+            },
+            "example": "PARTICIPANT"
+          },
+          {
+            "name": "memberType",
+            "in": "query",
+            "required": false,
+            "description": "프로그램 미선택(전체) 시 회원 유형 필터.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GENERAL",
+                "SCHOOL_TEACHER",
+                "INSTRUCTOR",
+                "TEACHER_AND_INSTRUCTOR",
+                "ADMIN"
+              ]
+            }
+          }
+        ],
         "x-jakorea-fe-notes": "enabled=삽입 허용 SSOT(값 존재와 무관). 누락 시 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}]. QA programId=164003 actorId=1799401."
       }
     },
@@ -59569,7 +60149,7 @@
           "관리자 운영 기능"
         ],
         "summary": "알림톡/문자/메일 발송 이력 상세 조회",
-        "description": "### 이 API가 하는 일\n- 알림톡/문자/메일 발송 이력 상세 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-deliveries/{deliveryId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-deliveries_deliveryId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: NOTIFICATION_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-23 Notion send-history detail: unmasked recipient identity/contact with automatic privacy access audit.",
+        "description": "### 이 API가 하는 일\n- 알림톡/문자/메일 발송 이력 상세 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-deliveries/{deliveryId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-deliveries_deliveryId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: NHN_NOTIFICATION_HUB 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: NOTIFICATION_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS-26: MASTER/PM/AM 감사 성공 후 원문. PROGRAM_VIEWER 403. 목록 GET은 마스킹.",
         "operationId": "getNotificationDelivery",
         "parameters": [
           {
@@ -74294,6 +74874,7 @@
               "PORTRAIT_CONSENT",
               "STUDENT_ROSTER",
               "CRIMINAL_HISTORY_EVIDENCE",
+              "CRIMINAL_HISTORY_CONSENT_ORIGINAL",
               "EDUCATION_JOURNAL",
               "EXPENSE_RECEIPT",
               "INSTRUCTOR_APPLICATION",
@@ -74680,7 +75261,7 @@
           "evidenceFileObjectId": {
             "type": "integer",
             "format": "int64",
-            "description": "Deprecated compatibility field. Current policy rejects evidence uploads with CONSENT_EVIDENCE_FILE_NOT_ALLOWED"
+            "description": "CRIMINAL_HISTORY_CHECK_CONSENT 전용, confirm 및 CLEAN 검사를 마친 원본 PDF fileObjectId"
           },
           "guardianVerificationToken": {
             "type": "string",
@@ -74789,6 +75370,246 @@
             "format": "date-time",
             "description": "마지막 다운로드 시각",
             "example": "2026-06-02T09:30:00Z"
+          }
+        }
+      },
+      "ApiResponseIdentityCheckResult": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/IdentityCheckResult",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "IdentityCheckResult": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "identityVerified": {
+            "type": "boolean"
+          },
+          "transitionCompleted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApiResponseNiceIdentityAuthStartResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/NiceIdentityAuthStartResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "ApiResponseResult": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/Result",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "Result": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "guardianConsentRowsDeleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "guardianSessionRowsDeleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "guardianIdentitySessionRowsDeleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "blockCode": {
+            "type": "string"
+          }
+        }
+      },
+      "CompleteRequest": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "marketingAgreed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApiResponseCompletionResult": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/CompletionResult",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CompletionResult": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "evidencePending": {
+            "type": "boolean"
+          },
+          "guardianConsentRowsDeleted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "filePiiCleanupStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "ChoiceRequest": {
+        "type": "object",
+        "properties": {
+          "choice": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseChoiceResult": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/ChoiceResult",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "ChoiceResult": {
+        "type": "object",
+        "properties": {
+          "choice": {
+            "type": "string"
+          },
+          "transitionSelected": {
+            "type": "boolean"
+          },
+          "guardianPersonalDataDeleted": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
           }
         }
       },
@@ -77420,6 +78241,15 @@
             "items": {
               "$ref": "#/components/schemas/SignedConsentSignatureField"
             }
+          },
+          "originalFileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "회원이 제출한 성범죄 동의서 원본 PDF ID. 연결된 원본이 없으면 null."
+          },
+          "originalDownloadApi": {
+            "type": "string",
+            "description": "원본 PDF의 관리자 민감 파일 relay 요청 API. 원본이 없으면 null. SENSITIVE_FILE_DOWNLOAD 권한과 사유가 필요합니다."
           }
         }
       },
@@ -79321,7 +80151,7 @@
           },
           "settlementIds": {
             "type": "array",
-            "description": "화면에서 선택한 정산 ID(settlement.id). 지정하면 필터 결과 중 해당 정산만 발급하며, 미지급/누락/권한 밖 ID가 섞이면 발급하지 않습니다. 계좌 지급 ID(account_payment.id)를 넣으면 안 됩니다.",
+            "description": "화면에서 선택한 정산 ID(settlement.id). 지정하면 필터 결과 중 해당 정산만 발급하며, 미지급/누락/권한 밖 ID가 섞이면 발급하지 않습니다. 계좌 지급 ID(account_payment.id)를 넣으면 안 됩니다. settlementIds와 accountPaymentIds가 모두 빈 배열이거나 생략되고 프로그램·강사·기간·상태 필터도 없으면 권한 안 전체 대상(전체 범위)입니다. 선택 건 발급은 승인 rowCount와 searchSnapshotHash가 이 조회 범위와 같을 때만 가능합니다.",
             "items": {
               "type": "integer",
               "format": "int64",
@@ -79332,7 +80162,7 @@
           },
           "accountPaymentIds": {
             "type": "array",
-            "description": "정산과 연결되지 않은 직접 계좌 지급 ID(account_payment.id, 예: Gemini 교육 보고서 지급). 대량이체에서만 허용하며 settlement 연결 지급 ID가 섞이면 발급하지 않습니다. 미지정 시 빈 배열입니다.",
+            "description": "정산과 연결되지 않은 직접 계좌 지급 ID(account_payment.id, 예: Gemini 교육 보고서 지급). 대량이체에서만 허용하며 settlement 연결 지급 ID가 섞이면 발급하지 않습니다. 미지정 시 빈 배열입니다. settlementIds와 함께 둘 다 빈 배열이면 상태별 전체 대상이며, 승인에 searchSnapshotHash가 없으면 이 전체 범위만 발급됩니다. 선택 ID보다 넓은 원문은 같은 approvalReference로 발급할 수 없습니다.",
             "items": {
               "type": "integer",
               "format": "int64",
@@ -79341,10 +80171,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -79352,6 +80182,34 @@
           "businessPurpose",
           "reason"
         ]
+      },
+      "Scope": {
+        "type": "object",
+        "properties": {
+          "exportType": {
+            "type": "string"
+          },
+          "fullCorpus": {
+            "type": "boolean"
+          },
+          "effectiveStatus": {
+            "type": "string"
+          },
+          "searchSnapshotHash": {
+            "type": "string"
+          },
+          "rowCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scopeToken": {
+            "type": "string"
+          },
+          "expiresAtEpochSecond": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
       },
       "ProviderRetryActionResponse": {
         "type": "object",
@@ -81775,6 +82633,56 @@
           }
         }
       },
+      "Ujat1365RegistrationFormResponse": {
+        "type": "object",
+        "description": "UJAT 1365 봉사시간 등록 양식에 필요한 최소 원문. 연락처·주소·계좌·주민번호는 포함하지 않습니다.",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "봉사자 이름. 2026-10-26 정책상 일반 이름은 마스킹하지 않습니다."
+          },
+          "birthDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "생년월일 원문. 없으면 null.",
+            "example": "2002-03-04"
+          },
+          "external1365Id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "1365 ID 원문. 없으면 null."
+          },
+          "volunteerMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "출석에 저장된 1365 인정 분 합계. 출석 행이 없으면 0."
+          },
+          "mode": {
+            "type": "string",
+            "description": "PREVIEW 또는 DOWNLOAD",
+            "example": "PREVIEW"
+          }
+        }
+      },
       "CreateMergeRequest": {
         "type": "object",
         "properties": {
@@ -83449,6 +84357,12 @@
             "format": "int64",
             "description": "프로그램 범위 원문 export 승인 요청인 경우 프로그램 ID. CMS 전역 요청은 생략합니다.",
             "minimum": 1
+          },
+          "scopeToken": {
+            "type": "string",
+            "description": "정산 원문 Export의 서버 발급 scopeToken. 선택·필터 발급은 필수이고, 무필터 전체 발급은 생략할 수 있습니다. 클라이언트가 만든 searchSnapshotHash는 정산 도메인에서 이 토큰 없이 승인되지 않습니다.",
+            "maxLength": 2000,
+            "minLength": 0
           }
         },
         "required": [
@@ -84756,7 +85670,7 @@
               "null"
             ],
             "format": "date-time",
-            "description": "선택 일정의 시작 시각."
+            "description": "선택 일정의 시작 시각(UTC Instant). 캘린더 날짜는 educationDate(Asia/Seoul)를 사용한다."
           },
           "endAt": {
             "type": [
@@ -84764,7 +85678,7 @@
               "null"
             ],
             "format": "date-time",
-            "description": "선택 일정의 종료 시각."
+            "description": "선택 일정의 종료 시각(UTC Instant)."
           },
           "label": {
             "type": [
@@ -84778,7 +85692,7 @@
               "string",
               "null"
             ],
-            "description": "scheduleId가 null인 이유. 연결되면 null, 연결할 공통 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH. AMBIGUOUS_SCHEDULE_MATCH는 하위 호환을 위해 enum에 남지만 일반(GENERAL) 희망 일정에서는 더 이상 반환하지 않는다."
+            "description": "scheduleId가 null인 이유. 연결되면 null, 연결할 슬롯이 없으면 NO_PROGRAM_DEFINED_SCHEDULE_MATCH. AMBIGUOUS_SCHEDULE_MATCH는 하위 호환을 위해 enum에 남지만 일반(GENERAL) 희망 일정에서는 더 이상 반환하지 않는다."
           },
           "scheduleIds": {
             "type": "array",
@@ -84787,6 +85701,14 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          "educationDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "희망 교육일(Asia/Seoul 달력 날짜). startAt Instant를 UTC 날짜로 자르면 하루 밀릴 수 있으므로 표시·비교에는 이 필드를 사용한다."
           }
         }
       },
@@ -87824,17 +88746,6 @@
           "expectedScopeRevision",
           "reason"
         ]
-      },
-      "Result": {
-        "type": "object",
-        "properties": {
-          "decision": {
-            "$ref": "#/components/schemas/ApplicationDecisionResponse"
-          },
-          "educationScope": {
-            "$ref": "#/components/schemas/ScopeResponse"
-          }
-        }
       },
       "IndividualApprovalWithScopeBulkRequest": {
         "type": "object",
@@ -102147,6 +103058,104 @@
           }
         }
       },
+      "ApiResponsePortalStatus": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/PortalStatus",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "PortalStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "transitionedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "noticePending": {
+            "type": "boolean"
+          },
+          "guardianPersonalDataDeleted": {
+            "type": "boolean"
+          },
+          "identityVerificationRequired": {
+            "type": "boolean"
+          },
+          "choice": {
+            "type": "string"
+          },
+          "signupAgeOrigin": {
+            "type": "string"
+          },
+          "signupUnder14": {
+            "type": "boolean"
+          },
+          "eligible": {
+            "type": "boolean"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "convertedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiResponseVerificationSessionResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/VerificationSessionResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
       "SignupTermsAgreementPayload": {
         "type": "object",
         "description": "회원 포탈 회원가입 약관 동의 요청 payload",
@@ -111385,6 +112394,11 @@
       },
       "NotificationCatalogCategory": {
         "type": "object",
+        "required": [
+          "categoryCode",
+          "categoryLabel",
+          "variables"
+        ],
         "properties": {
           "categoryCode": {
             "type": "string",
@@ -111405,6 +112419,16 @@
       "NotificationCatalogVariableItem": {
         "type": "object",
         "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
+        "required": [
+          "key",
+          "token",
+          "requiresProgram",
+          "enabled",
+          "programGroups",
+          "recruitmentTypes",
+          "participantTypes",
+          "memberTypes"
+        ],
         "properties": {
           "key": {
             "type": "string",
@@ -111417,10 +112441,8 @@
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
           },
           "requiresProgram": {
@@ -111433,37 +112455,47 @@
           },
           "programGroups": {
             "type": "array",
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
           },
           "recruitmentTypes": {
             "type": "array",
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "PARTICIPANT",
+                "INSTRUCTOR",
+                "VOLUNTEER"
+              ]
+            },
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "GENERAL",
+                "SCHOOL_TEACHER",
+                "INSTRUCTOR",
+                "TEACHER_AND_INSTRUCTOR",
+                "ADMIN"
+              ]
+            },
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
           },
           "sourceMode": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
+            "nullable": true,
             "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
             "enum": [
               "SERVER_RESOLVED",
@@ -111475,6 +112507,11 @@
       },
       "NotificationTemplateVariableCatalogResponse": {
         "type": "object",
+        "required": [
+          "totalCount",
+          "categories",
+          "systemManualSendQaEnabled"
+        ],
         "properties": {
           "totalCount": {
             "type": "integer",
@@ -111745,7 +112782,8 @@
             "description": "발송 채널 유형(ALIMTALK|SMS|EMAIL)"
           },
           "recipientContactMasked": {
-            "type": "string"
+            "type": "string",
+            "description": "목록 GET: 마스킹된 수신 연락처. 상세 GET: 감사 성공 후 원문. 레거시 필드명을 유지합니다."
           },
           "templateCodeSnapshot": {
             "type": "string"
@@ -111831,7 +112869,8 @@
             "type": "string"
           },
           "recipientName": {
-            "type": "string"
+            "type": "string",
+            "description": "수신자 이름. 2026-10-26 정책상 일반 이름은 마스킹하지 않습니다."
           },
           "templateDisplayName": {
             "type": "string",
@@ -111970,15 +113009,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -115825,6 +116864,102 @@
           }
         }
       },
+      "OrganizationApplicationSession": {
+        "type": "object",
+        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "className": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "OrganizationApplicationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "resolvedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleUnresolved": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "scheduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "InstructorApplicationApprovalCancellationRequest": {
         "type": "object",
         "description": "강사 신청 승인 취소 요청. 승인 취소 1건 = JA 감점 1건. 연쇄 배정 취소는 별도 집계하지 않는다.",
@@ -115846,6 +116981,18 @@
               "USER",
               "ADMIN"
             ]
+          }
+        }
+      },
+      "IndividualApprovalWithScopeResult": {
+        "type": "object",
+        "description": "개인 신청 교육 범위 승인 응답. Springdoc Result 이름 충돌을 피하기 위해 FE에서 분리한다.",
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/ApplicationDecisionResponse"
+          },
+          "educationScope": {
+            "$ref": "#/components/schemas/ScopeResponse"
           }
         }
       }
